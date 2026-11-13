@@ -1,4 +1,7 @@
-use std::num::NonZeroU32;
+use std::{
+    num::NonZeroU32,
+    ops::{Deref, DerefMut},
+};
 
 use memchr::memchr_iter;
 
@@ -8,12 +11,72 @@ use oxc_span::Span;
 
 use super::{Kind, Token};
 
+/// Buffer short comment lists before allocating their final arena storage.
+#[derive(Debug)]
+pub struct Comments<'a> {
+    inline: [Comment; 4],
+    len: usize,
+    vec: ArenaVec<'a, Comment>,
+}
+
+impl<'a> Comments<'a> {
+    fn new_in(allocator: &'a Allocator) -> Self {
+        Self {
+            inline: std::array::from_fn(|_| Comment::new(0, 0, CommentKind::Line)),
+            len: 0,
+            vec: ArenaVec::new_in(&allocator),
+        }
+    }
+
+    #[inline]
+    fn len(&self) -> usize {
+        self.len
+    }
+
+    fn push(&mut self, comment: Comment) {
+        if self.len < self.inline.len() {
+            self.inline[self.len] = comment;
+        } else {
+            if self.len == self.inline.len() {
+                self.vec.reserve(8);
+                self.vec.extend(self.inline.iter().cloned());
+            }
+            self.vec.push(comment);
+        }
+        self.len += 1;
+    }
+
+    pub(crate) fn into_vec(mut self) -> ArenaVec<'a, Comment> {
+        if self.vec.is_empty() {
+            self.vec.reserve_exact(self.len);
+            self.vec.extend(self.inline.into_iter().take(self.len));
+        }
+        self.vec
+    }
+}
+
+impl Deref for Comments<'_> {
+    type Target = [Comment];
+
+    #[inline]
+    fn deref(&self) -> &[Comment] {
+        if self.vec.is_empty() { &self.inline[..self.len] } else { &self.vec }
+    }
+}
+
+impl DerefMut for Comments<'_> {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut [Comment] {
+        if self.vec.is_empty() { &mut self.inline[..self.len] } else { &mut self.vec }
+    }
+}
+
 #[derive(Debug)]
 pub struct TriviaBuilder<'a> {
     // This is a set of unique comments. Duplicated
     // comments could be generated in case of rewind; they are
     // filtered out at insertion time.
-    pub(crate) comments: ArenaVec<'a, Comment>,
+    pub(crate) comments: Comments<'a>,
 
     pub(crate) irregular_whitespaces: Vec<Span>,
 
@@ -51,7 +114,7 @@ impl<'a> TriviaBuilder<'a> {
         let mut previous_token = Token::default();
         previous_token.set_kind(Kind::Undetermined);
         Self {
-            comments: ArenaVec::new_in(&allocator),
+            comments: Comments::new_in(allocator),
             irregular_whitespaces: vec![],
             processed: 0,
             saw_newline: true,

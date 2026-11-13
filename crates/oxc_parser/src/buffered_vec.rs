@@ -1,42 +1,51 @@
 use oxc_allocator::{ArenaVec, GetAllocator};
 
-/// Buffer the first list element to avoid growing a singleton arena allocation.
-pub struct BufferedVec<'a, T> {
-    first: Option<T>,
+/// Buffer the first list elements before allocating in the arena.
+pub struct BufferedVec<'a, T, const N: usize = 1> {
+    buffer: [Option<T>; N],
+    len: usize,
     vec: ArenaVec<'a, T>,
 }
 
-impl<'a, T> BufferedVec<'a, T> {
+impl<'a, T, const N: usize> BufferedVec<'a, T, N> {
     #[inline]
     pub fn new_in(allocator: &impl GetAllocator<'a>) -> Self {
-        Self { first: None, vec: ArenaVec::new_in(allocator) }
+        Self { buffer: std::array::from_fn(|_| None), len: 0, vec: ArenaVec::new_in(allocator) }
     }
 
     #[inline]
     pub fn push(&mut self, value: T) {
-        if let Some(first) = self.first.take() {
-            self.vec.extend([first, value]);
-        } else if self.vec.is_empty() {
-            self.first = Some(value);
+        if self.len < N {
+            self.buffer[self.len] = Some(value);
         } else {
+            if self.len == N {
+                self.vec.reserve(N * 2);
+                self.vec.extend(self.buffer.iter_mut().filter_map(Option::take));
+            }
             self.vec.push(value);
         }
+        self.len += 1;
     }
 
     #[inline]
     pub fn into_vec(mut self) -> ArenaVec<'a, T> {
-        self.vec.extend(self.first);
+        if self.len <= N {
+            self.vec.reserve_exact(self.len);
+            self.vec.extend(self.buffer.into_iter().flatten());
+        }
         self.vec
     }
 }
 
-impl<'a, T> IntoIterator for BufferedVec<'a, T> {
+impl<'a, T, const N: usize> IntoIterator for BufferedVec<'a, T, N> {
     type Item = T;
-    type IntoIter =
-        std::iter::Chain<std::option::IntoIter<T>, <ArenaVec<'a, T> as IntoIterator>::IntoIter>;
+    type IntoIter = std::iter::Chain<
+        std::iter::Flatten<std::array::IntoIter<Option<T>, N>>,
+        <ArenaVec<'a, T> as IntoIterator>::IntoIter,
+    >;
 
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
-        self.first.into_iter().chain(self.vec)
+        self.buffer.into_iter().flatten().chain(self.vec)
     }
 }
