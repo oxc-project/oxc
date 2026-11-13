@@ -59,13 +59,14 @@ use crate::{
     common::helper_loader::{Helper, helper_call_expr},
     context::TraverseCtx,
     state::TransformState,
-    utils::ast_builder::{
-        create_assignment, wrap_expression_in_arrow_function_iife,
-        wrap_statements_in_arrow_function_iife,
+    utils::{
+        ast_builder::{
+            create_assignment, wrap_expression_in_arrow_function_iife,
+            wrap_statements_in_arrow_function_iife,
+        },
+        class_name::contextual_class_name,
     },
 };
-
-use super::class_name::contextual_class_name;
 
 pub struct ClassStaticBlock<'a> {
     classes: Vec<ClassState<'a>>,

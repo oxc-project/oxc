@@ -4,7 +4,6 @@ use oxc_traverse::Traverse;
 
 use crate::{common::class_transform::ClassTransform, context::TraverseCtx, state::TransformState};
 
-mod class_name;
 mod class_properties;
 mod class_static_block;
 mod options;
