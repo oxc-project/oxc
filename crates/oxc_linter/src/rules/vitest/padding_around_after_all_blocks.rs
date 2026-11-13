@@ -49,6 +49,8 @@ fn test() {
         "const thing = 123;\n\n/**\n * JSDoc attached to afterAll\n */\nafterAll(() => {});",
         "const thing = 123; /* trailing on prev */\n\nafterAll(() => {});",
         "describe('foo', () => {\nafterAll(() => {});\n\nafterAll(() => {});\n});",
+        "const cleanUp = false; cleanUp && afterAll(() => {});",
+        "const cleanUp = false;\nif (cleanUp)\n  afterAll(() => {});",
     ];
 
     let fail = vec![

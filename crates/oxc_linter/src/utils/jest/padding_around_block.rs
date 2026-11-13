@@ -16,6 +16,23 @@ pub fn report_missing_padding_before_jest_block<'a>(
     ctx: &LintContext<'a>,
     name: &str,
 ) {
+    // Only match calls that are the leading expression of an `ExpressionStatement`
+    // (possibly through an `AwaitExpression`), matching eslint-plugin-jest's behavior.
+    // Otherwise code between the previous statement and the call (e.g. `slow && `)
+    // would be deleted by the whitespace-only fix.
+    let parent_node = ctx.nodes().parent_node(node.id());
+    let is_statement_leading_call = match parent_node.kind() {
+        AstKind::ExpressionStatement(_) => true,
+        AstKind::AwaitExpression(_) => {
+            let grandparent_node = ctx.nodes().parent_node(parent_node.id());
+            matches!(grandparent_node.kind(), AstKind::ExpressionStatement(_))
+        }
+        _ => false,
+    };
+    if !is_statement_leading_call {
+        return;
+    }
+
     let scope_node = ctx.nodes().get_node(ctx.scoping().get_node_id(node.scope_id()));
     let prev_statement_span = match scope_node.kind() {
         AstKind::Program(program) => get_statement_span_before_node(node, program.body.as_slice()),
