@@ -41,7 +41,7 @@ pub(super) const LANE_BITS: VecData128 =
 ///
 /// Every lane must be `0xFF` or `0x00`, or the lanes' sums carry into each other.
 ///
-/// Neon has no `movemask`, so each lane is ANDed with its bit value,
+/// Neon has no `movemask`, so each lane is masked with its bit value,
 /// and pairwise adds fold the lanes together until one `u32` holds the whole mask.
 #[cpu_version(Neon)]
 #[inline(always)]
