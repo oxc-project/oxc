@@ -148,7 +148,7 @@ ascii_byte_handler!(SPS(lexer) {
 // <VT> <FF> Irregular Whitespace
 ascii_byte_handler!(ISP(lexer) {
     lexer.consume_char();
-    lexer.trivia_builder.add_irregular_whitespace(lexer.token.start(), lexer.offset());
+    lexer.trivia_builder.add_irregular_whitespace(lexer.token_start, lexer.offset());
     Kind::Skip
 });
 
