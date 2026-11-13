@@ -10,6 +10,8 @@ use oxc_syntax::{
     symbol::{SymbolFlags, SymbolId},
 };
 
+use crate::traverse_context::redeclared_symbols;
+
 pub struct KeepVar<'a> {
     vars: Vec<(Ident<'a>, Span, Option<SymbolId>)>,
 }
@@ -81,9 +83,9 @@ impl<'a> KeepVar<'a> {
         for (name, span, symbol_id) in &mut self.vars {
             if let Some(symbol_id) = symbol_id {
                 *symbol_id = Self::declared_symbol(*name, *span, *symbol_id, scope_id, ctx);
-                // Tell the pass flush this declaration may still be live.
-                if !ctx.scoping().symbol_redeclarations(*symbol_id).is_empty() {
-                    ctx.state.pass_changes.reemitted_declarations.insert((*symbol_id, *span));
+                // Tell the pass flush these declarations may still be live.
+                for symbol_id in redeclared_symbols(*symbol_id, ctx.scoping.scoping()) {
+                    ctx.state.pass_changes.reemitted_declarations.insert((symbol_id, *span));
                 }
             }
         }

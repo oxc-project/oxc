@@ -1,6 +1,7 @@
 use oxc_ast::ast::*;
 use oxc_ast_visit::{Visit, walk::walk_call_expression};
 use oxc_semantic::Scoping;
+use oxc_syntax::symbol::SymbolId;
 
 use crate::state::PassChanges;
 
@@ -16,6 +17,19 @@ pub fn as_direct_eval_call<'a, 'b>(
     }
     let ident = call.callee.get_identifier_reference()?;
     (ident.name == "eval").then_some(ident)
+}
+
+/// The redeclared symbols a binding identifier of `symbol_id` declares: the
+/// symbol itself and, for a `var` redeclaring a catch parameter, the enclosing
+/// var binding (see `Scoping::catch_var_binding`). Only these need to be kept in
+/// sync with `Scoping::symbol_redeclarations`.
+pub fn redeclared_symbols(
+    symbol_id: SymbolId,
+    scoping: &Scoping,
+) -> impl Iterator<Item = SymbolId> + '_ {
+    std::iter::once(symbol_id)
+        .chain(scoping.catch_var_binding(symbol_id))
+        .filter(|&symbol_id| !scoping.symbol_redeclarations(symbol_id).is_empty())
 }
 
 /// Walks AST subtrees being dropped or replaced, collecting
@@ -70,9 +84,8 @@ impl<'a> Visit<'a> for DroppedSubtreeCollector<'a, '_> {
     }
 
     fn visit_binding_identifier(&mut self, it: &BindingIdentifier<'a>) {
-        if let Some(symbol_id) = it.symbol_id.get()
-            && !self.scoping.symbol_redeclarations(symbol_id).is_empty()
-        {
+        let Some(symbol_id) = it.symbol_id.get() else { return };
+        for symbol_id in redeclared_symbols(symbol_id, self.scoping) {
             self.pass_changes.removed_declarations.insert((symbol_id, it.span));
         }
     }
