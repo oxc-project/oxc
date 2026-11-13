@@ -8,6 +8,9 @@ pub trait BufferedVecBacking: IntoIterator {
     /// Whether the backing vector contains no elements.
     fn is_empty(&self) -> bool;
 
+    /// Number of elements the backing vector can hold without growing.
+    fn capacity(&self) -> usize;
+
     /// Reserve capacity for at least `additional` more elements.
     fn reserve(&mut self, additional: usize);
 
@@ -23,9 +26,10 @@ pub trait BufferedVecBacking: IntoIterator {
 
 /// Buffer the first `N` elements inline before using a backing vector.
 ///
-/// Short lists only allocate when converted with [`Self::into_vec`]. Consuming
-/// them through [`IntoIterator`] avoids allocating altogether. Longer lists spill
-/// into the backing vector with capacity for at least `2 * N` elements.
+/// Unless capacity is explicitly reserved, short lists only allocate when
+/// converted with [`Self::into_vec`], and consuming them through [`IntoIterator`]
+/// avoids allocating altogether. Longer lists spill into the backing vector with
+/// capacity for at least `2 * N` elements.
 pub struct BufferedVec<V: BufferedVecBacking, const N: usize = 4> {
     buffer: [Option<V::Item>; N],
     len: usize,
@@ -41,6 +45,34 @@ impl<V: BufferedVecBacking, const N: usize> BufferedVec<V, N> {
     pub fn new(vec: V) -> Self {
         assert!(vec.is_empty(), "BufferedVec requires an empty backing vector");
         Self { buffer: std::array::from_fn(|_| None), len: 0, vec }
+    }
+
+    /// Reserve space for a batch of additional elements, keeping batches that
+    /// fit in the inline buffer allocation-free.
+    ///
+    /// Larger batches round the required length up to a power of two and reserve
+    /// at least the first spill's capacity, so appending the batch does not
+    /// repeatedly grow the vector.
+    ///
+    /// # Panics
+    /// Panics if the required capacity overflows `usize` or exceeds the backing
+    /// vector's allocation limit.
+    #[inline]
+    pub fn reserve(&mut self, additional: usize) {
+        let required = self.len.checked_add(additional).expect("capacity overflow");
+        if required > N {
+            let capacity = self.vec.capacity();
+            let spill_capacity = N.checked_mul(2).expect("capacity overflow");
+            // A preallocated vector may fit the batch but not the first spill.
+            if required > capacity || (self.len <= N && spill_capacity > capacity) {
+                let capacity = required
+                    .checked_next_power_of_two()
+                    .expect("capacity overflow")
+                    .max(spill_capacity);
+                let len = if self.len <= N { 0 } else { self.len };
+                self.vec.reserve(capacity - len);
+            }
+        }
     }
 
     /// Append an element, spilling into the backing vector when the buffer fills.
@@ -85,6 +117,11 @@ impl<T> BufferedVecBacking for Vec<T> {
     #[inline]
     fn is_empty(&self) -> bool {
         self.is_empty()
+    }
+
+    #[inline]
+    fn capacity(&self) -> usize {
+        self.capacity()
     }
 
     #[inline]
