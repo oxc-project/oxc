@@ -1,11 +1,10 @@
 use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
+use oxc_data_structures::buffered_vec::BufferedVec;
 use oxc_span::{FileExtension, GetSpan, SPAN};
 
 use crate::{
-    Context, ParserConfig as Config, ParserImpl, StatementContext,
-    buffered_vec::BufferedVec,
-    diagnostics,
+    Context, ParserConfig as Config, ParserImpl, StatementContext, diagnostics,
     js::{FunctionKind, VariableDeclarationParent},
     lexer::Kind,
     modifiers::{ModifierKind, ModifierKinds, Modifiers},
@@ -269,7 +268,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let extends_span = self.cur_token().span();
         self.bump_any(); // bump `extends`
 
-        let mut extends = BufferedVec::<_, 1>::new_in(self);
+        let mut extends = BufferedVec::<_, 1>::new(ArenaVec::new_in(self));
         if self.at(Kind::LCurly) {
             self.error(diagnostics::empty_extends_clause(extends_span));
             return extends.into_vec();

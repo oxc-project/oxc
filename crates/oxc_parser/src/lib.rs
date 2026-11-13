@@ -67,7 +67,6 @@
 use std::any::Any;
 
 mod ast_builder;
-mod buffered_vec;
 pub mod config;
 mod context;
 mod cursor;
