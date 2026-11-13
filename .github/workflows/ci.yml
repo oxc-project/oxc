@@ -107,39 +107,40 @@ jobs:
             CARGO_HOME,{{ DEV_DRIVE }}/.cargo
             RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
       # Copy before installing: the Dev Drive action does not preserve pnpm 12 directory symlinks.
-      - parallel:
-          - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
-          - name: Install Rust
-            working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
-            shell: bash
-            run: |
-              # This `awk` command will find the value of our Minimum Supported Rust Version and store it as `MSRV`.
-              # NOTE: this will fail if there are any other items named `rust-version`. We assume there is only one in our `Cargo.toml`.
-              MSRV=$(awk -F'=' '/rust-version/ {gsub(/[" ]/, "", $2); printf "%s", ($2 + "")}' Cargo.toml)
-              # Set profile to minimal and channel to our Minimum Supported Rust Version.
-              # Running our tests on this channel ensures that our code uses APIs that are supported in our `MSRV`.
-              sed -i -e 's/profile = "default"/profile = "minimal"/g' -e "s/channel = .*/channel = \"$MSRV\"/g" rust-toolchain.toml
-              rustup set profile minimal
-              rustup show
-              git restore .
-
-      - name: Install dependencies on Dev Drive
-        id: dependencies
+      - name: Install Rust
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
-        run: pnpm install --frozen-lockfile --ignore-scripts
-        background: true
+        shell: bash
+        run: |
+          # This `awk` command will find the value of our Minimum Supported Rust Version and store it as `MSRV`.
+          # NOTE: this will fail if there are any other items named `rust-version`. We assume there is only one in our `Cargo.toml`.
+          MSRV=$(awk -F'=' '/rust-version/ {gsub(/[" ]/, "", $2); printf "%s", ($2 + "")}' Cargo.toml)
+          # Set profile to minimal and channel to our Minimum Supported Rust Version.
+          # Running our tests on this channel ensures that our code uses APIs that are supported in our `MSRV`.
+          sed -i -e 's/profile = "default"/profile = "minimal"/g' -e "s/channel = .*/channel = \"$MSRV\"/g" rust-toolchain.toml
+          rustup set profile minimal
+          rustup show
+          git restore .
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
           save-if: ${{ github.ref_name == 'main' }}
           shared-key: windows-latest
 
+      # Compiling tests does not read node_modules, so the install below overlaps it.
       - name: Compile tests
+        id: compile
         run: cargo test --all-features --no-run
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
         shell: bash
+        background: true
 
-      - wait: dependencies
+      # Installs in the Dev Drive copy, so the pnpm store this caches is the one
+      # the build fills, not the checkout's, which nothing here uses.
+      - uses: oxc-project/setup-node@bb7599e122bf1c7467f05e0b19028c168271f21e # install-working-directory
+        with:
+          working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+
+      - wait: compile
 
       - name: Run tests
         # No need for `cargo ck` because it's already checked in linux
@@ -413,8 +414,10 @@ jobs:
             CARGO_HOME,{{ DEV_DRIVE }}/.cargo
             RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
       # Copy before installing: the Dev Drive action does not preserve pnpm 12 directory symlinks.
-      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+      - uses: oxc-project/setup-node@bb7599e122bf1c7467f05e0b19028c168271f21e # install-working-directory
         if: steps.filter.outputs.changed == 'true'
+        with:
+          working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
       - uses: oxc-project/setup-rust@12a52e3caf7bac9d8b9ca550a82c425ed6343aee # v1.0.18
         if: steps.filter.outputs.changed == 'true'
         with:
@@ -426,10 +429,6 @@ jobs:
         with:
           babel: false
           node-compat-table: false
-      - name: Install dependencies on Dev Drive
-        if: steps.filter.outputs.changed == 'true'
-        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
-        run: pnpm install --frozen-lockfile --ignore-scripts
       - if: steps.filter.outputs.changed == 'true'
         name: Build packages
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
@@ -497,18 +496,16 @@ jobs:
             RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
       # Copy before installing: the Dev Drive action does not preserve pnpm 12 directory symlinks.
       - parallel:
-          - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+          - uses: oxc-project/setup-node@bb7599e122bf1c7467f05e0b19028c168271f21e # install-working-directory
             if: steps.filter.outputs.changed == 'true'
+            with:
+              working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
           - uses: oxc-project/setup-rust@12a52e3caf7bac9d8b9ca550a82c425ed6343aee # v1.0.18
             if: steps.filter.outputs.changed == 'true'
             with:
               workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
               cache-key: napi-oxlint-windows
               save-cache: ${{ github.ref_name == 'main' }}
-      - name: Install dependencies on Dev Drive
-        if: steps.filter.outputs.changed == 'true'
-        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
-        run: pnpm install --frozen-lockfile --ignore-scripts
       - if: steps.filter.outputs.changed == 'true'
         name: Run tests
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
@@ -544,18 +541,16 @@ jobs:
             RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
       # Copy before installing: the Dev Drive action does not preserve pnpm 12 directory symlinks.
       - parallel:
-          - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+          - uses: oxc-project/setup-node@bb7599e122bf1c7467f05e0b19028c168271f21e # install-working-directory
             if: steps.filter.outputs.changed == 'true'
+            with:
+              working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
           - uses: oxc-project/setup-rust@12a52e3caf7bac9d8b9ca550a82c425ed6343aee # v1.0.18
             if: steps.filter.outputs.changed == 'true'
             with:
               workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
               cache-key: napi-formatter-windows
               save-cache: ${{ github.ref_name == 'main' }}
-      - name: Install dependencies on Dev Drive
-        if: steps.filter.outputs.changed == 'true'
-        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
-        run: pnpm install --frozen-lockfile --ignore-scripts
       - if: steps.filter.outputs.changed == 'true'
         name: Run tests
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
