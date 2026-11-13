@@ -25,6 +25,81 @@ fn prefer_top_level_await_over_async_function_call_diagnostic(span: Span) -> Oxc
         .with_label(span)
 }
 
+fn is_schema_catch_object(expr: &Expression) -> bool {
+    const ALLOWED_SCHEMA_IDENTIFIER_METHODS: &[&str] =
+        &["catch", "default", "nullable", "nullish", "optional"];
+    const TERMINAL_SCHEMA_METHODS: &[&str] = &["parse", "safeParse", "spa"];
+    const PROMISE_LIKE_SCHEMA_METHODS: &[&str] = &["then", "finally"];
+    const ZOD_NAMESPACE_PROPERTIES: &[&str] = &["coerce"];
+
+    let mut expression = expr;
+    let mut has_call_expression = false;
+    let mut has_member_expression = false;
+    let mut is_current_member_called = false;
+    let mut has_uncalled_member_expression = false;
+    let mut has_called_member_expression_after_uncalled = false;
+    let mut method_names: Vec<&str> = Vec::new();
+    let mut uncalled_member_names: Vec<&str> = Vec::new();
+
+    loop {
+        match expression {
+            Expression::CallExpression(call) => {
+                has_call_expression = true;
+                is_current_member_called = true;
+                expression = &call.callee;
+            }
+            Expression::StaticMemberExpression(member) => {
+                let property_name = member.property.name.as_str();
+
+                if PROMISE_LIKE_SCHEMA_METHODS.contains(&property_name)
+                    || TERMINAL_SCHEMA_METHODS.contains(&property_name)
+                    || property_name.ends_with("Async")
+                    || (is_current_member_called
+                        && ZOD_NAMESPACE_PROPERTIES.contains(&property_name))
+                {
+                    return false;
+                }
+
+                has_member_expression = true;
+
+                if !is_current_member_called {
+                    has_uncalled_member_expression = true;
+                    uncalled_member_names.push(property_name);
+                } else if has_uncalled_member_expression {
+                    has_called_member_expression_after_uncalled = true;
+                }
+
+                method_names.push(property_name);
+                is_current_member_called = false;
+                expression = &member.object;
+            }
+            Expression::ComputedMemberExpression(_) => return false,
+            _ => break,
+        }
+    }
+
+    let Expression::Identifier(ident) = expression else {
+        return false;
+    };
+
+    let name = ident.name.as_str();
+
+    if name == "schema" || name.ends_with("Schema") {
+        return !has_uncalled_member_expression
+            && method_names
+                .iter()
+                .all(|method_name| ALLOWED_SCHEMA_IDENTIFIER_METHODS.contains(method_name));
+    }
+
+    name == "z"
+        && has_call_expression
+        && has_member_expression
+        && !has_called_member_expression_after_uncalled
+        && uncalled_member_names
+            .iter()
+            .all(|method_name| ZOD_NAMESPACE_PROPERTIES.contains(method_name))
+}
+
 #[derive(Debug, Default, Clone)]
 pub struct PreferTopLevelAwait;
 
@@ -134,6 +209,10 @@ impl Rule for PreferTopLevelAwait {
         if let Expression::StaticMemberExpression(member_expr) = &call_expr.callee
             && matches!(member_expr.property.name.as_str(), "then" | "catch" | "finally")
         {
+            if member_expr.property.name == "catch" && is_schema_catch_object(&member_expr.object) {
+                return;
+            }
+
             ctx.diagnostic(prefer_top_level_await_over_promise_chain_diagnostic(call_expr.span));
             return;
         }
@@ -397,6 +476,10 @@ fn test() {
             None,
             None,
         ),
+        ("z.string().catch('/')", None, None, None),
+        ("z.object({}).catch('/')", None, None, None),
+        ("schema.catch('/')", None, None, None),
+        ("searchSchema.catch('/')", None, None, None),
     ];
 
     let fail = vec![
