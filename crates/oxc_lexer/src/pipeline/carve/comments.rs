@@ -132,11 +132,12 @@ pub(super) unsafe fn lex_html_open_comment(
     kinds: Kinds,
     op_char: Bitmap,
     s: usize,
+    module: bool,
     lanes: &mut Lanes,
 ) -> usize {
     let cpu = BASELINE;
 
-    if lanes.module {
+    if module {
         lanes.push_diag(s as u32, 4, DiagCode::HtmlCommentInModule);
     }
     let end = find_line_terminator(src, s + 4, cpu);

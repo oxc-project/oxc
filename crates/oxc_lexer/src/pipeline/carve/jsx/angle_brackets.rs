@@ -5,7 +5,6 @@ use crate::error::DiagCode;
 use crate::pipeline::{
     bitmap::{Bitmap, Bitmaps},
     bytes::{is_id_start, is_word, line_break_in},
-    disambiguate::{TokensView, jsx_over_generic},
     kinds::Kinds,
     lanes::Lanes,
     source::Source,
@@ -39,19 +38,8 @@ pub(super) unsafe fn jsx_over_type_params(
         AngleVerdict::TypeParams => false,
         AngleVerdict::Jsx => true,
         AngleVerdict::Ambiguous { gt, lp } => {
-            let tokens = TokensView::new(
-                src,
-                bitmaps,
-                kinds,
-                ts,
-                0,
-                lanes.module,
-                &lanes.disambiguate.brackets,
-                &lanes.disambiguate.closers,
-                cpu,
-            );
             let (jsx, unterminated) =
-                jsx_over_generic(&tokens, &mut lanes.disambiguate.walks, lt, lp, cpu);
+                lanes.disambiguate.jsx_over_generic(src, bitmaps, kinds, lt, lp, cpu);
             if unterminated {
                 lanes.push_diag(lt as u32, (gt + 1 - lt) as u32, DiagCode::UnterminatedJsxElement);
             }

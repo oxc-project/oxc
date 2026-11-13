@@ -2,7 +2,7 @@ use std::mem;
 
 use oxc_simd::{Cpu, cpu_multiversion};
 
-use crate::token::tk;
+use crate::{options::LexOptions, token::tk};
 
 use crate::pipeline::{bitmap::Bitmaps, find::find, kinds::Kinds, lanes::Lanes, source::Source};
 
@@ -22,11 +22,12 @@ pub(super) unsafe fn carve_js(
     src: Source,
     bitmaps: &Bitmaps,
     kinds: Kinds,
-    ts: bool,
+    options: &LexOptions,
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) {
     let Bitmaps { token_start, op_char, .. } = *bitmaps;
+    let module = options.source_type_module;
     // Reuse the previous lex's allocation, which matters for small inputs
     let mut depth = mem::take(&mut lanes.template_depth);
     depth.clear();
@@ -42,7 +43,7 @@ pub(super) unsafe fn carve_js(
     }
     loop {
         // HTML close comments only exist in scripts, so modules needn't stop at closing brackets
-        let s = match (depth.is_empty(), lanes.module) {
+        let s = match (depth.is_empty(), module) {
             (true, false) => find(src, i, OPENER_BYTES, cpu),
             (true, true) => find(src, i, OPENER_MODULE_BYTES, cpu),
             (false, false) => find(src, i, OPENER8_BYTES, cpu),
@@ -105,19 +106,19 @@ pub(super) unsafe fn carve_js(
                 }
             }
             b'/' => {
-                i = lex_slash(src, bitmaps, kinds, ts, s, lanes, cpu);
+                i = lex_slash(src, bitmaps, kinds, s, lanes, cpu);
             }
             b'<' => {
                 // Annex B B.1.1: `<!--` begins a line comment.
-                i = if html_open_comment_at(src, s, lanes.module, cpu) {
-                    lex_html_open_comment(src, token_start, kinds, op_char, s, lanes)
+                i = if html_open_comment_at(src, s, module, cpu) {
+                    lex_html_open_comment(src, token_start, kinds, op_char, s, module, lanes)
                 } else {
                     s + 1
                 };
             }
             b'>' => {
                 // Annex B B.1.3: `-->` begins a line comment, but only at line start.
-                i = if html_close_comment_at(src, s, lanes.module, cpu) {
+                i = if html_close_comment_at(src, s, module, cpu) {
                     lex_html_close_comment(src, token_start, kinds, op_char, s, lanes)
                 } else {
                     s + 1

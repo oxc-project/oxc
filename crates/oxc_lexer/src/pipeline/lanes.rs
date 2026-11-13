@@ -41,7 +41,6 @@ pub(crate) struct Lanes {
     /// Carve's nesting stacks, kept between lexes to reuse their allocations.
     pub(super) template_depth: Vec<u32>,
     pub(super) jsx_stack: Vec<JFrame>,
-    pub(super) module: bool,
     /// What the disambiguation questions keep across the lex: the context walks,
     /// the bracket bitmap and the closers the forward scans resolved.
     pub(super) disambiguate: DisambiguateState,

@@ -112,15 +112,8 @@ impl Lexer {
         self.lanes.out = mem::take(&mut tokens.lanes);
         // SAFETY: lex_raw writes count + SPAN_SENTINELS valid kinds and spans into reserved space.
         let count = unsafe {
-            let count = self.lex_raw(
-                src,
-                tokens.kinds.as_mut_ptr().cast::<u8>(),
-                tokens.spans.as_mut_ptr(),
-                options.jsx,
-                options.ts,
-                options.source_type_module,
-                options.validate_utf8,
-            );
+            let out_kinds = tokens.kinds.as_mut_ptr().cast::<u8>();
+            let count = self.lex_raw(src, out_kinds, tokens.spans.as_mut_ptr(), options);
             let len = count + SPAN_SENTINELS;
             debug_assert_kind_bytes(slice::from_raw_parts(tokens.kinds.as_ptr().cast::<u8>(), len));
             tokens.kinds.set_len(len);
@@ -150,12 +143,9 @@ impl Lexer {
         src: Source,
         out_kinds: *mut u8,
         out_spans: *mut Span,
-        jsx: bool,
-        ts: bool,
-        module: bool,
-        vutf8: bool,
+        options: LexOptions,
     ) -> usize {
-        self.lex_raw_impl(src, out_kinds, out_spans, jsx, ts, module, vutf8, self.cpu)
+        self.lex_raw_impl(src, out_kinds, out_spans, options, self.cpu)
     }
 
     #[cpu_multiversion]
@@ -164,16 +154,12 @@ impl Lexer {
         src: Source,
         out_kinds: *mut u8,
         out_spans: *mut Span,
-        jsx: bool,
-        ts: bool,
-        module: bool,
-        vutf8: bool,
+        options: LexOptions,
         cpu: impl Cpu,
     ) -> usize {
         self.ensure(src, cpu);
         self.lanes.clear(cpu);
-        self.lanes.module = module;
-        self.lanes.disambiguate.begin(src.len(), module, cpu);
+        self.lanes.disambiguate.begin(src.len(), options.ts, options.source_type_module, cpu);
         if src.len() == 0 {
             write_sentinels(0, out_spans, out_kinds, cpu);
             return 0;
@@ -195,10 +181,10 @@ impl Lexer {
         // Keyword recognition is mode-scoped: the TS set (and its wider
         // keyword_initial letter class) only ever sees TS input, so JS lexing is
         // byte-identical to a build without it.
-        classify(ts, src, bitmaps, kinds, cpu);
-        let nesc = misc_pre(src, bitmaps, kinds, vutf8, &mut self.lanes, cpu);
-        carve(src, bitmaps, kinds, jsx, ts, &mut self.lanes, cpu);
-        coalesce(src, bitmaps, kinds, kwpos, evpos, ts, &mut self.lanes, cpu);
+        classify(src, bitmaps, kinds, &options, cpu);
+        let nesc = misc_pre(src, bitmaps, kinds, &options, &mut self.lanes, cpu);
+        carve(src, bitmaps, kinds, &options, &mut self.lanes, cpu);
+        coalesce(src, bitmaps, kinds, kwpos, evpos, &options, &mut self.lanes, cpu);
         misc_post(src, bitmaps, kinds, nesc, cpu);
         if !self.lanes.out.irregular_whitespaces.is_empty() {
             let spans = &mut self.lanes.out.irregular_whitespaces;
