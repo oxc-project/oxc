@@ -343,11 +343,7 @@ impl CliRunner {
                 }
             };
 
-        if misc_options.print_config {
-            return crate::mode::run_print_config(&lint_config, &external_plugin_store, stdout);
-        }
-
-        if self.options.list_rules {
+        if self.options.list_rules && !misc_options.print_config {
             return crate::mode::run_rules(&lint_config, &output_formatter, stdout);
         }
 
@@ -364,7 +360,7 @@ impl CliRunner {
             .filter(|path| !ignore_matcher.should_ignore(Path::new(path)))
             .collect::<Vec<Arc<OsStr>>>();
 
-        if debug_files {
+        if debug_files && !misc_options.print_config {
             return crate::mode::run_debug_files(
                 files_to_lint.iter().map(|path| Path::new(path.as_ref())),
                 &self.cwd,
@@ -372,25 +368,10 @@ impl CliRunner {
             );
         }
 
-        // If no external rules, discard `ExternalLinter`
-        let mut external_linter = self.external_linter;
-        if external_plugin_store.is_empty() {
-            external_linter = None;
-        }
-
         // TODO(refactor): pull this into a shared function, so that the language server can use
         // the same functionality.
         let use_cross_module = lint_config.plugins().has_import()
             || nested_configs.values().any(|config| config.plugins().has_import());
-        let mut options =
-            LintServiceOptions::new(self.cwd.clone()).with_cross_module(use_cross_module);
-
-        let mut suppression_manager = SuppressionManager::load(
-            options.cwd(),
-            "oxlint-suppressions.json",
-            suppression_options.suppress_all,
-            suppression_options.prune_suppressions || fix_options.is_enabled(),
-        );
 
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
         let type_check_only = self.options.type_check_only;
@@ -419,6 +400,27 @@ impl CliRunner {
             );
             return CliRunResult::InvalidOptionTypeCheckOnlyWithSuppressionUpdate;
         }
+
+        if misc_options.print_config {
+            return crate::mode::run_print_config(&config_store, stdout);
+        }
+
+        // If no external rules, discard `ExternalLinter`
+        let mut external_linter = self.external_linter;
+        if config_store.external_plugin_store().is_empty() {
+            external_linter = None;
+        }
+
+        let mut options =
+            LintServiceOptions::new(self.cwd.clone()).with_cross_module(use_cross_module);
+
+        let mut suppression_manager = SuppressionManager::load(
+            options.cwd(),
+            "oxlint-suppressions.json",
+            suppression_options.suppress_all,
+            suppression_options.prune_suppressions || fix_options.is_enabled(),
+        );
+
         let deny_warnings = config_store.deny_warnings();
         let max_warnings = config_store.max_warnings();
 
@@ -1474,6 +1476,84 @@ mod test {
         assert_eq!(printed["settings"]["react"]["custom"], settings["react"]["custom"]);
         assert_eq!(printed["settings"]["react"]["formComponents"], serde_json::json!([]));
         assert_eq!(printed["settings"]["jest"]["version"], 20);
+    }
+
+    #[test]
+    fn test_print_config_validates_option_combinations() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        fs::write(temp_dir.path().join("test.ts"), "").unwrap();
+        let tester = Tester::new().with_cwd(temp_dir.path().to_path_buf());
+        let cases: &[&[&str]] = &[
+            &["--type-check"],
+            &["--type-check-only", "--fix"],
+            &["--type-check-only", "--fix-suggestions"],
+            &["--type-check-only", "--fix-dangerously"],
+            &["--type-check-only", "--suppress-all"],
+            &["--type-check-only", "--prune-suppressions"],
+            &["--type-check-only", "--fix", "--suppress-all"],
+        ];
+        let modes: &[&[&str]] = &[&[], &["--rules"], &["--debug", "files"]];
+        for flags in cases {
+            let mut args = vec!["test.ts"];
+            args.extend_from_slice(flags);
+            let (lint_output, lint_result) = tester.test_output(&args);
+            assert!(matches!(
+                lint_result,
+                CliRunResult::InvalidOptionTypeCheckWithoutTypeAware
+                    | CliRunResult::InvalidOptionTypeCheckOnlyWithFix
+                    | CliRunResult::InvalidOptionTypeCheckOnlyWithSuppressionUpdate
+            ));
+
+            args.push("--print-config");
+            for mode in modes {
+                let mut print_args = args.clone();
+                print_args.extend_from_slice(mode);
+                let (print_output, print_result) = tester.test_output(&print_args);
+                assert_eq!(
+                    std::mem::discriminant(&print_result),
+                    std::mem::discriminant(&lint_result),
+                    "{print_args:?}"
+                );
+                assert_eq!(print_output, lint_output, "{print_args:?}");
+            }
+        }
+    }
+
+    #[test]
+    fn test_print_config_validates_inherited_type_check_options() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        fs::write(temp_dir.path().join("test.ts"), "").unwrap();
+        fs::write(
+            temp_dir.path().join("base.json"),
+            r#"{ "options": { "typeCheck": true, "typeAware": false } }"#,
+        )
+        .unwrap();
+        fs::write(temp_dir.path().join(DEFAULT_OXLINTRC_NAME), r#"{ "extends": ["./base.json"] }"#)
+            .unwrap();
+        let tester = Tester::new().with_cwd(temp_dir.path().to_path_buf());
+        let (lint_output, lint_result) = tester.test_output(&["test.ts"]);
+        let (print_output, print_result) = tester.test_output(&["--print-config"]);
+        assert!(matches!(lint_result, CliRunResult::InvalidOptionTypeCheckWithoutTypeAware));
+        assert!(matches!(print_result, CliRunResult::InvalidOptionTypeCheckWithoutTypeAware));
+        assert_eq!(print_output, lint_output);
+
+        let (output, result) = tester.test_output(&["--print-config", "--type-aware"]);
+        assert!(matches!(result, CliRunResult::PrintConfigResult));
+        let printed: serde_json::Value = serde_json::from_str(&output).unwrap();
+        assert_eq!(printed["options"]["typeAware"], true);
+        assert_eq!(printed["options"]["typeCheck"], true);
+    }
+
+    #[test]
+    fn test_inspection_modes_skip_lint_option_validation() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        fs::write(temp_dir.path().join("test.ts"), "").unwrap();
+        let tester = Tester::new().with_cwd(temp_dir.path().to_path_buf());
+        let (_, result) = tester.test_output(&["--rules", "--type-check"]);
+        assert!(matches!(result, CliRunResult::None));
+        let (output, result) = tester.test_output(&["--debug", "files", "--type-check", "test.ts"]);
+        assert!(matches!(result, CliRunResult::LintSucceeded));
+        assert_eq!(output, "test.ts\n");
     }
 
     #[test]

@@ -363,6 +363,14 @@ impl ConfigStore {
         }
     }
 
+    /// Serializes the built root configuration.
+    ///
+    /// # Panics
+    /// Panics if the configuration cannot be serialized as JSON.
+    pub fn to_config_file(&self) -> String {
+        self.base.to_config_file(&self.external_plugin_store)
+    }
+
     /// Returns the total number of rules, inclusive of JS Plugin rules and overrides, optionally filtering out tsgolint rules if type_aware_enabled is false.
     pub fn number_of_rules(&self, type_aware_enabled: bool) -> Option<usize> {
         // If there are nested configs the number of rules may vary per-file, so return `None`.
