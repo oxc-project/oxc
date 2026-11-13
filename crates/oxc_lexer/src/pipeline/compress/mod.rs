@@ -3,7 +3,7 @@ use oxc_span::Span;
 
 use crate::token::{SPAN_SENTINELS, tk};
 
-use crate::pipeline::{bitmap::Bitmap, lanes::Lanes};
+use crate::pipeline::{bitmap::Bitmap, lanes::Lanes, source::Source};
 
 mod avx2;
 mod common;
@@ -24,8 +24,7 @@ pub const STAGE_CAP: usize = STAGE_BLOCKS * 64 + 128;
 #[cpu_multiversion]
 #[inline(never)]
 pub unsafe fn compress(
-    src: &[u8],
-    n: usize,
+    src: Source,
     nb: usize,
     st: Bitmap,
     kind: *const u8,
@@ -51,11 +50,11 @@ pub unsafe fn compress(
         }
     }
     if c == 1 {
-        *stage_pos.add(1) = n as u32;
+        *stage_pos.add(1) = src.len() as u32;
         w += build_spans(stage_kind, stage_pos, 1, out_spans.add(w), out_kinds.add(w), cpu);
     }
-    write_sentinels(n as u32, out_spans.add(w), out_kinds.add(w), cpu);
-    lanes_post(src, out_kinds, out_spans, w, n as u32, lanes, cpu);
+    write_sentinels(src.len() as u32, out_spans.add(w), out_kinds.add(w), cpu);
+    lanes_post(src.padded(), out_kinds, out_spans, w, src.len() as u32, lanes, cpu);
     w
 }
 

@@ -14,18 +14,19 @@ use avx2::{scan_block_comment_avx2, scan_line_comment_avx2};
 use generic::{scan_block_comment_generic, scan_line_comment_generic};
 use neon::{scan_block_comment_neon, scan_line_comment_neon};
 
+use crate::pipeline::source::Source;
+
 #[cpu_multiversion]
 #[inline(always)]
 pub(super) unsafe fn scan_block_comment(
-    src: *const u8,
-    n: usize,
+    src: Source,
     i: usize,
     cpu: impl Cpu,
 ) -> (usize, bool, i64) {
     match DynCpu::from(cpu) {
-        DynCpu::Avx2(cpu) => scan_block_comment_avx2(src, n, i, cpu),
-        DynCpu::Neon(cpu) => scan_block_comment_neon(src, n, i, cpu),
-        DynCpu::Generic(_) => scan_block_comment_generic(src, n, i),
+        DynCpu::Avx2(cpu) => scan_block_comment_avx2(src.as_ptr(), src.len(), i, cpu),
+        DynCpu::Neon(cpu) => scan_block_comment_neon(src.as_ptr(), src.len(), i, cpu),
+        DynCpu::Generic(_) => scan_block_comment_generic(src.as_ptr(), src.len(), i),
     }
 }
 
@@ -33,15 +34,10 @@ pub(super) unsafe fn scan_block_comment(
 /// tracking the first `@license` / `@preserve` position for comment metadata.
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn scan_line_comment(
-    src: *const u8,
-    n: usize,
-    i: usize,
-    cpu: impl Cpu,
-) -> (usize, i64) {
+pub(super) unsafe fn scan_line_comment(src: Source, i: usize, cpu: impl Cpu) -> (usize, i64) {
     match DynCpu::from(cpu) {
-        DynCpu::Avx2(cpu) => scan_line_comment_avx2(src, n, i, cpu),
-        DynCpu::Neon(cpu) => scan_line_comment_neon(src, n, i, cpu),
-        DynCpu::Generic(_) => scan_line_comment_generic(src, n, i),
+        DynCpu::Avx2(cpu) => scan_line_comment_avx2(src.as_ptr(), src.len(), i, cpu),
+        DynCpu::Neon(cpu) => scan_line_comment_neon(src.as_ptr(), src.len(), i, cpu),
+        DynCpu::Generic(_) => scan_line_comment_generic(src.as_ptr(), src.len(), i),
     }
 }

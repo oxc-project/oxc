@@ -20,6 +20,7 @@ mod lexer;
 mod misc;
 mod operators;
 mod scan;
+mod source;
 mod unicode_leads;
 
 pub(crate) use lanes::TokenLanes;

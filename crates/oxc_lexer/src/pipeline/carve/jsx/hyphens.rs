@@ -1,6 +1,6 @@
 use oxc_simd::{Avx2, BASELINE, Cpu, DynCpu, Vec256, cpu_multiversion, cpu_version};
 
-use crate::pipeline::bitmap::Bitmap;
+use crate::pipeline::{bitmap::Bitmap, source::Source};
 
 /// JSXIdentifier admits `-`, so `data-x` and `aria-label` are one name token
 /// where JS would read three. Fuse every hyphen in `[a, b)` into the run
@@ -13,8 +13,7 @@ use crate::pipeline::bitmap::Bitmap;
 #[cpu_multiversion]
 #[inline(always)]
 pub(super) unsafe fn jsx_glue_hyphens(
-    src: *const u8,
-    n: usize,
+    src: Source,
     st: Bitmap,
     opch: Bitmap,
     word: Bitmap,
@@ -23,8 +22,10 @@ pub(super) unsafe fn jsx_glue_hyphens(
     cpu: impl Cpu,
 ) {
     match DynCpu::from(cpu) {
-        DynCpu::Avx2(cpu) => jsx_glue_hyphens_avx2(src, n, st, opch, word, a, b, cpu),
-        _ => jsx_glue_hyphens_generic(src, n, st, opch, word, a, b),
+        DynCpu::Avx2(cpu) => {
+            jsx_glue_hyphens_avx2(src.as_ptr(), src.len(), st, opch, word, a, b, cpu)
+        }
+        _ => jsx_glue_hyphens_generic(src.as_ptr(), src.len(), st, opch, word, a, b),
     }
 }
 

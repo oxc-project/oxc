@@ -2,13 +2,12 @@ use oxc_simd::{Cpu, cpu_multiversion};
 
 use crate::token::{KW_KIND_BASE, tk};
 
-use crate::pipeline::bitmap::Bitmap;
+use crate::pipeline::{bitmap::Bitmap, source::Source};
 
 #[cpu_multiversion]
 #[inline]
 pub unsafe fn misc_post(
-    src: *const u8,
-    n: usize,
+    src: Source,
     st: Bitmap,
     word: Bitmap,
     misc: Bitmap,
@@ -17,29 +16,28 @@ pub unsafe fn misc_post(
     cpu: impl Cpu,
 ) {
     if nesc != 0 {
-        misc_post_impl(src, n, st, word, misc, kind, cpu)
+        misc_post_impl(src, st, word, misc, kind, cpu)
     }
 }
 
 #[cpu_multiversion]
 #[inline(never)]
 unsafe fn misc_post_impl(
-    src: *const u8,
-    n: usize,
+    src: Source,
     st: Bitmap,
     word: Bitmap,
     misc: Bitmap,
     kind: *mut u8,
     cpu: impl Cpu,
 ) {
-    let nw = (n + 63) >> 6;
+    let nw = (src.len() + 63) >> 6;
     for w in 0..nw {
         let mut m = misc.block(w, cpu);
         while m != 0 {
             let bit = m.trailing_zeros() as usize;
             m &= m - 1;
             let p = (w << 6) + bit;
-            if *src.add(p) != b'\\' || *src.add(p + 1) != b'u' {
+            if src[p] != b'\\' || src[p + 1] != b'u' {
                 continue;
             }
             if !st.get(p, cpu) {
