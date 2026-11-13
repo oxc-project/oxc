@@ -1,6 +1,6 @@
 ## javascript
 
-1178/1284 (91.74%)
+1180/1284 (91.90%)
 
 ### Failed
 
@@ -33,8 +33,6 @@
 - externals/prettier/js/comments/between-head-and-body/between-head-and-body.js (💥, 90.85%)
   - ❓unclassified
 - externals/prettier/js/comments/between-head-and-body/empty-statement.js (💥, 86.05%)
-  - ❓unclassified
-- externals/prettier/js/comments/dangling-blank-lines.js (💥💥, 90.91%)
   - ❓unclassified
 - externals/prettier/js/comments/empty-statements.js (💥💥, 90.91%)
   - ❓unclassified
@@ -170,7 +168,7 @@
   - crates/oxc_formatter/DIVERGENCES.md#start-token-no-double-parens
 - externals/prettier/js/ignore/issue-11077.js (💥, 93.33%)
   - crates/oxc_formatter/DIVERGENCES.md#suppressed-terminator-per-semi
-- externals/prettier/js/last-argument-expansion/edge_case.js (💥, 73.53%)
+- externals/prettier/js/last-argument-expansion/edge_case.js (💥, 74.45%)
   - crates/oxc_formatter/DIVERGENCES.md#callee-arguments-gap-comment
 - externals/prettier/js/multiparser-css/styled-components.js (💥, 98.49%)
   - apps/oxfmt/DIVERGENCES.md#styled-extend-tag
@@ -201,7 +199,7 @@
 
 ## typescript
 
-637/699 (91.13%)
+640/699 (91.56%)
 
 ### Failed
 
@@ -272,8 +270,6 @@
 - externals/prettier/typescript/property-signature/consistent-with-flow/union.ts (💥, 80.00%)
   - ❓unclassified
 - externals/prettier/typescript/template-literals/member-expression.ts (💥, 65.12%)
-  - ❓unclassified
-- externals/prettier/typescript/tuple/dangling-comments.ts (💥💥💥, 95.65%)
   - ❓unclassified
 - externals/prettier/typescript/type-alias/conditional.ts (💥, 91.80%)
   - ❓unclassified
