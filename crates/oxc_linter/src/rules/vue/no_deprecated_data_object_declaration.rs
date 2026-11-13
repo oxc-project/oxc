@@ -1,7 +1,7 @@
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule, utils::is_vue_component_options_object};
 
@@ -53,7 +53,7 @@ declare_oxc_lint!(
     vue,
     correctness,
     recommended,
-    pending, // fixer will be implemented later
+    suggestion,
     version = "1.62.0",
     short_description = "Disallow object declarations for `data` (in Vue.js 3.0.0+).",
 );
@@ -83,7 +83,16 @@ impl Rule for NoDeprecatedDataObjectDeclaration {
             return;
         }
 
-        ctx.diagnostic(no_deprecated_data_object_declaration_diagnostic(prop.span));
+        ctx.diagnostic_with_suggestion(
+            no_deprecated_data_object_declaration_diagnostic(prop.span),
+            |fixer| {
+                let value_span = prop.value.span();
+                let value_text = ctx.source_range(value_span);
+                fixer
+                    .replace(value_span, format!("function() {{\nreturn {value_text};\n}}"))
+                    .with_message("Wrap `data` in a function that returns the object")
+            },
+        );
     }
 }
 
@@ -268,11 +277,161 @@ fn test() {
         ),
     ];
 
+    let fix = vec![
+        (
+            "
+        <script>
+        const app = createApp(App)
+        app.component('some-comp', {
+          data: {
+            foo: 'bar'
+          }
+        })
+        </script>
+      ",
+            "
+        <script>
+        const app = createApp(App)
+        app.component('some-comp', {
+          data: function() {
+return {
+            foo: 'bar'
+          };
+}
+        })
+        </script>
+      ",
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+        <script>
+        app.component('some-comp', {
+          data: {
+            foo: 'bar'
+          }
+        })
+        </script>
+      ",
+            "
+        <script>
+        app.component('some-comp', {
+          data: function() {
+return {
+            foo: 'bar'
+          };
+}
+        })
+        </script>
+      ",
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+        <script>
+        export default {
+          data: {
+            foo: 'bar'
+          }
+        }
+        </script>
+      ",
+            "
+        <script>
+        export default {
+          data: function() {
+return {
+            foo: 'bar'
+          };
+}
+        }
+        </script>
+      ",
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+        <script>
+        export default {
+          data: /*a*/ (/*b*/{
+            foo: 'bar'
+          })
+        }
+        </script>
+      ",
+            "
+        <script>
+        export default {
+          data: /*a*/ function() {
+return (/*b*/{
+            foo: 'bar'
+          });
+}
+        }
+        </script>
+      ",
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+        <script>
+        createApp({
+          data: {
+            foo: 'bar'
+          }
+        })
+        </script>
+      ",
+            "
+        <script>
+        createApp({
+          data: function() {
+return {
+            foo: 'bar'
+          };
+}
+        })
+        </script>
+      ",
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+        <script>
+        createApp({
+          data: {
+            foo: 'bar'
+          }
+        }).mount('#app')
+        </script>
+      ",
+            "
+        <script>
+        createApp({
+          data: function() {
+return {
+            foo: 'bar'
+          };
+}
+        }).mount('#app')
+        </script>
+      ",
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+    ];
+
     Tester::new(
         NoDeprecatedDataObjectDeclaration::NAME,
         NoDeprecatedDataObjectDeclaration::PLUGIN,
         pass,
         fail,
     )
+    .expect_fix(fix)
     .test_and_snapshot();
 }
