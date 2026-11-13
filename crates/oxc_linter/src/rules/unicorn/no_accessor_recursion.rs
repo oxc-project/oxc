@@ -136,12 +136,11 @@ impl Rule for NoAccessorRecursion {
                             return;
                         };
                         let is_same_key = {
-                            if matches!(member_expr, MemberExpressionKind::PrivateField(_)) {
-                                matches!(&property.key, PropertyKey::PrivateIdentifier(_))
-                                    && prop_key_name == expr_key_name
-                            } else {
-                                prop_key_name == expr_key_name
-                            }
+                            let key_is_private =
+                                matches!(property.key, PropertyKey::PrivateIdentifier(_));
+                            let member_is_private =
+                                matches!(member_expr, MemberExpressionKind::PrivateField(_));
+                            key_is_private == member_is_private && prop_key_name == expr_key_name
                         };
                         if !is_same_key {
                             return;
@@ -166,12 +165,11 @@ impl Rule for NoAccessorRecursion {
                             return;
                         };
                         let is_same_key = {
-                            if matches!(member_expr, MemberExpressionKind::PrivateField(_)) {
-                                matches!(&method_def.key, PropertyKey::PrivateIdentifier(_))
-                                    && prop_key_name == expr_key_name
-                            } else {
-                                prop_key_name == expr_key_name
-                            }
+                            let key_is_private =
+                                matches!(method_def.key, PropertyKey::PrivateIdentifier(_));
+                            let member_is_private =
+                                matches!(member_expr, MemberExpressionKind::PrivateField(_));
+                            key_is_private == member_is_private && prop_key_name == expr_key_name
                         };
                         if !is_same_key {
                             return;
@@ -410,6 +408,12 @@ fn test() {
                 get #bar() {
                     return 0;
                 }
+            }
+        ",
+        r"
+            class C {
+                get #x() { return this.x }
+                get x() { return 2 }
             }
         ",
         r"
