@@ -1,4 +1,6 @@
-use oxc_simd::{Cpu, cpu_multiversion};
+use std::str;
+
+use oxc_simd::{Cpu, cpu_multiversion, cpu_version};
 
 #[cpu_multiversion]
 #[inline(always)]
@@ -96,4 +98,30 @@ pub(super) fn hex_val(c: u8, _cpu: impl Cpu) -> u32 {
         return (l - b'a' + 10) as u32;
     }
     255
+}
+
+/// The char at byte i, or None if the bytes there are not valid UTF-8.
+#[cpu_version(Generic)]
+pub(super) fn decode_char_at(s: &[u8], i: usize) -> Option<char> {
+    let end = (i + 4).min(s.len());
+    let slice = s.get(i..end)?;
+    match str::from_utf8(slice) {
+        Ok(t) => t.chars().next(),
+        // a multi-byte char cut at end still has a decodable valid prefix
+        Err(e) if e.valid_up_to() > 0 => {
+            str::from_utf8(&slice[..e.valid_up_to()]).ok()?.chars().next()
+        }
+        Err(_) => None,
+    }
+}
+
+#[cpu_multiversion]
+#[inline(always)]
+pub(super) fn hexd(b: u8, _cpu: impl Cpu) -> Option<u8> {
+    match b {
+        b'0'..=b'9' => Some(b - b'0'),
+        b'a'..=b'f' => Some(b - b'a' + 10),
+        b'A'..=b'F' => Some(b - b'A' + 10),
+        _ => None,
+    }
 }
