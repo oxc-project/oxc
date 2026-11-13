@@ -181,10 +181,40 @@ ascii_byte_handler!(ISP(lexer) {
 });
 
 // '\r' '\n'
-ascii_byte_handler!(LIN(lexer) {
+#[expect(non_snake_case)]
+fn LIN<'a, C: Config>(
+    lexer: &mut Lexer<'a, C>,
+    pos: SourcePosition<'a>,
+) -> (Kind, SourcePosition<'a>) {
+    lexer.source.set_position(pos);
+    // SAFETY: The byte-handler table calls this for an in-bounds ASCII line break.
+    unsafe {
+        assert_unchecked!(!lexer.source.is_eof());
+        assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
+    }
     lexer.consume_char();
-    lexer.line_break_handler()
-});
+    let byte = lexer.line_break_handler();
+
+    // Read the next token here to avoid restarting the caller's token loop.
+    let pos = lexer.source.position();
+    lexer.token_start = lexer.source.offset_of(pos);
+    let Some(byte) = byte else {
+        return (Kind::Eof, pos);
+    };
+    // JSX attribute values scan quotes differently. Leave them for the caller's token loop.
+    if matches!(byte, b'"' | b'\'') {
+        return (Kind::Skip, pos);
+    }
+    if let Some(kind) = single_byte_token(byte) {
+        // SAFETY: Single-byte tokens are ASCII and `pos` is in bounds.
+        let end = unsafe { pos.add(1) };
+        lexer.source.set_position(end);
+        return (kind, end);
+    }
+    let byte_handlers = lexer.config.byte_handlers();
+    // SAFETY: `byte` is the current source byte at `pos`.
+    unsafe { byte_handlers[byte as usize](lexer, pos) }
+}
 
 // !
 ascii_byte_handler!(EXL(lexer) {

@@ -178,25 +178,31 @@ impl<'a> TriviaBuilder<'a> {
 
     // For block comments only. This function is not called after line comments because the lexer skips
     // newline after line comments.
+    #[inline]
     pub(super) fn handle_newline(&mut self, pending: &mut PendingToken) {
-        // The last unprocessed comment is on a newline.
         if pending.has_pending_comments() {
-            let len = self.comments.len();
-            let becomes_trailing = {
-                let comment = &mut self.comments[len - 1];
-                comment.set_followed_by_newline(true);
-                !pending.saw_newline() && !Self::should_stay_leading(comment)
-            };
-            if becomes_trailing {
-                self.attach_pending_comments(
-                    CommentPosition::Trailing,
-                    self.previous_token.end(),
-                    len,
-                    pending,
-                );
-            }
+            self.handle_newline_with_comments(pending);
         }
         pending.set_saw_newline();
+    }
+
+    #[cold]
+    fn handle_newline_with_comments(&mut self, pending: &mut PendingToken) {
+        // The last unprocessed comment is on a newline.
+        let len = self.comments.len();
+        let becomes_trailing = {
+            let comment = &mut self.comments[len - 1];
+            comment.set_followed_by_newline(true);
+            !pending.saw_newline() && !Self::should_stay_leading(comment)
+        };
+        if becomes_trailing {
+            self.attach_pending_comments(
+                CommentPosition::Trailing,
+                self.previous_token.end(),
+                len,
+                pending,
+            );
+        }
     }
 
     #[inline]
