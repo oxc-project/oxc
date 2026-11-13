@@ -2558,9 +2558,16 @@ fn compute_effects_for_legacy_signature<'a>(
         reason: return_value_reason,
     });
 
+    // Unlike the TS implementation, argument-dependent impurity (zero-argument
+    // `new Date()`) is only reported in the component or hook body, not inside
+    // nested functions. Callbacks passed to an unknown function such as
+    // `form.handleSubmit(onSubmit)` are assumed to run during render, which
+    // flagged `new Date()` in event-time callbacks after it became impure
+    // (oxc-project/oxc#29094). Always-impure functions such as `Date.now()` are
+    // unchanged.
     if signature.impure
         && env.config.validate_no_impure_functions_in_render
-        && (!signature.impure_if_no_args || args.is_empty())
+        && (!signature.impure_if_no_args || (args.is_empty() && !state.is_function_expression))
     {
         let diagnostic =
             diagnostics::impure_function(signature.canonical_name.as_deref(), span.copied());
