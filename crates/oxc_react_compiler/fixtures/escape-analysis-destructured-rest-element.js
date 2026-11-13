@@ -6,8 +6,16 @@ function Component(props) {
   return <div b={b} d={d}></div>;
 }
 
+const sproutInputs = [
+  [{a:{a:1,b:2},c:[3,4,5]}],
+  [{a:{a:6,b:7},c:[8,9]}],
+];
+
 export const FIXTURE_ENTRYPOINT = {
-  fn: Component,
-  params: ['TodoAdd'],
-  isComponent: 'TodoAdd',
+  fn: args => {
+    "use no memo";
+    return Component(...args);
+  },
+  params: [sproutInputs[0]],
+  sequentialRenders: [sproutInputs[0], sproutInputs[0], sproutInputs[1], sproutInputs[1], sproutInputs[0]],
 };

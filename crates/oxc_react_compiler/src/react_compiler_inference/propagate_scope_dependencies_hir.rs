@@ -1044,12 +1044,27 @@ fn get_assumed_invoked_functions_impl(
         }
     }
 
+    if temporaries.is_empty() {
+        return hoistable;
+    }
+
+    // Unlike the TS implementation, a call inside a conditional or a loop does
+    // not prove that a closure runs during render. Hoisting its property reads
+    // can throw even when the branch or loop body never executes.
+    let unconditional = crate::react_compiler_hir::dominator::compute_unconditional_blocks(
+        func,
+        env.next_block_id_counter,
+    )
+    .unwrap_or_default();
+
     // Step 2: Forward pass to analyze assumed function calls
-    for (_block_id, block) in &func.body.blocks {
+    for (block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
             let instr = &func.instructions[instr_id.index()];
             match &instr.value {
-                InstructionValue::CallExpression { callee, args, .. } => {
+                InstructionValue::CallExpression { callee, args, .. }
+                    if unconditional.contains(block_id) =>
+                {
                     let callee_ty = &env.types[env.identifiers[callee.identifier].type_];
                     let maybe_hook = env.get_hook_kind_for_type(callee_ty).ok().flatten();
                     if let Some(entry) = temporaries.get(&callee.identifier) {

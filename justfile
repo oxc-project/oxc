@@ -113,6 +113,10 @@ benchmark-one *args:
 
 # ==================== TESTING & CONFORMANCE ====================
 
+# Compare React Compiler fixture behavior before and after compilation
+sprout *args:
+  node tasks/sprout/src/runner.ts {{args}}
+
 # Run all conformance tests
 coverage:
   cargo coverage

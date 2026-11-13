@@ -2242,6 +2242,7 @@ struct OxcReplacement<'a> {
     original_kind: OriginalFnKind,
     codegen_fn: CodegenFunction<'a>,
     gating: Option<GatingConfig>,
+    referenced_before_declaration: bool,
 }
 
 /// The owned output of a [`compile`](crate::compile) that produced changes:
@@ -2493,6 +2494,7 @@ enum OxcVisitMode<'a, 'b> {
         /// Declarations to insert; drained on insertion, so leftovers mean
         /// the original statement was not found.
         decls: Vec<Statement<'a>>,
+        before: bool,
     },
 }
 
@@ -2666,12 +2668,16 @@ impl<'a> oxc_ast_visit::VisitMut<'a> for OxcVisitor<'a, '_> {
     }
 
     fn visit_statements(&mut self, stmts: &mut ArenaVec<'a, Statement<'a>>) {
-        if let OxcVisitMode::InsertOutlinedAfter { scope_id, decls } = &mut self.mode {
+        if let OxcVisitMode::InsertOutlinedAfter { scope_id, decls, before } = &mut self.mode {
             if decls.is_empty() {
                 return;
             }
             let scope_id = *scope_id;
             if let Some(idx) = stmts.iter().position(|s| ox_declares_fn_with_scope(s, scope_id)) {
+                if *before {
+                    stmts.splice(idx..idx, std::mem::take(decls));
+                    return;
+                }
                 // Babel inserts each outlined function via `originalFn.insertAfter(...)`,
                 // anchored at the same original node, so repeated insertions reverse the
                 // emitted order. Insert each at `idx + 1` to reproduce that.
@@ -2768,12 +2774,17 @@ fn ox_gating_call<'a>(ast: &AstBuilder<'a>, callee_name: &str) -> Expression<'a>
 fn ox_apply_gated_conditional<'a>(
     ast: &AstBuilder<'a>,
     program: &mut Program<'a>,
-    scope_id: ScopeId,
-    original_kind: OriginalFnKind,
-    codegen_fn: CodegenFunction<'a>,
-    gating_config: &GatingConfig,
-    context: &mut ProgramContext,
+    replacement: OxcReplacement<'a>,
+    context: &mut ProgramContext<'a>,
 ) {
+    let OxcReplacement {
+        fn_scope_id: scope_id,
+        original_kind,
+        codegen_fn,
+        gating,
+        referenced_before_declaration,
+    } = replacement;
+    let gating_config = gating.unwrap();
     let gating_import = context.add_import_specifier(
         &gating_config.source,
         &gating_config.import_specifier_name,
@@ -2789,6 +2800,19 @@ fn ox_apply_gated_conditional<'a>(
     };
 
     let compiled_expr = ox_build_compiled_expression(ast, codegen_fn, original_kind);
+
+    if referenced_before_declaration {
+        ox_apply_hoisted_gating(
+            ast,
+            program,
+            scope_id,
+            original_expr,
+            compiled_expr,
+            &gating_import.name,
+            context,
+        );
+        return;
+    }
 
     // gating() ? compiled : original
     let gating_expression = Expression::new_conditional_expression(
@@ -2807,6 +2831,117 @@ fn ox_apply_gated_conditional<'a>(
             export_default_name: None,
             done: false,
         },
+    };
+    oxc_ast_visit::VisitMut::visit_program(&mut visitor, program);
+}
+
+/// Preserve a hoisted declaration when gating a function referenced earlier.
+/// Mirrors upstream `insertAdditionalFunctionDeclaration` in Gating.ts.
+fn ox_apply_hoisted_gating<'a>(
+    ast: &AstBuilder<'a>,
+    program: &mut Program<'a>,
+    scope_id: ScopeId,
+    original: Expression<'a>,
+    compiled: Expression<'a>,
+    gate: &str,
+    context: &mut ProgramContext<'a>,
+) {
+    let (
+        Expression::FunctionExpression(mut original),
+        Expression::FunctionExpression(mut compiled),
+    ) = (original, compiled)
+    else {
+        unreachable!()
+    };
+    let id = original.id.as_ref().unwrap().clone_in(ast.allocator());
+    let condition = context.new_uid(&format!("{gate}_result"));
+    let unoptimized = context.new_uid(&format!("{}_unoptimized", id.name));
+    let optimized = context.new_uid(&format!("{}_optimized", id.name));
+    original.id.as_mut().unwrap().name = unoptimized;
+    compiled.id.as_mut().unwrap().name = optimized;
+    original.r#type = FunctionType::FunctionDeclaration;
+    compiled.r#type = FunctionType::FunctionDeclaration;
+
+    let mut params = original.params.clone_in(ast.allocator());
+    for (index, parameter) in params.items.iter_mut().enumerate() {
+        parameter.pattern =
+            BindingPattern::new_binding_identifier(SPAN, ox_atom(ast, &format!("arg{index}")), ast);
+        parameter.initializer = None;
+        parameter.type_annotation = None;
+    }
+    let rest_index = params.items.len();
+    if let Some(rest) = &mut params.rest {
+        rest.rest.argument = BindingPattern::new_binding_identifier(
+            SPAN,
+            ox_atom(ast, &format!("arg{rest_index}")),
+            ast,
+        );
+        rest.type_annotation = None;
+    }
+    let call = |callee: Ident<'a>| {
+        let mut args = ArenaVec::new_in(ast);
+        for parameter in &params.items {
+            let BindingPattern::BindingIdentifier(binding) = &parameter.pattern else {
+                unreachable!()
+            };
+            args.push(Argument::from(Expression::new_identifier(SPAN, binding.name, ast)));
+        }
+        if let Some(rest) = &params.rest {
+            let BindingPattern::BindingIdentifier(binding) = &rest.rest.argument else {
+                unreachable!()
+            };
+            args.push(Argument::new_spread_element(
+                SPAN,
+                Expression::new_identifier(SPAN, binding.name, ast),
+                ast,
+            ));
+        }
+        Expression::new_call_expression(
+            SPAN,
+            Expression::new_identifier(SPAN, callee, ast),
+            None,
+            args,
+            false,
+            ast,
+        )
+    };
+    let body = FunctionBody::boxed(
+        SPAN,
+        [],
+        [
+            Statement::new_if_statement(
+                SPAN,
+                Expression::new_identifier(SPAN, condition, ast),
+                Statement::new_return_statement(SPAN, Some(call(optimized)), ast),
+                None,
+                ast,
+            ),
+            Statement::new_return_statement(SPAN, Some(call(unoptimized)), ast),
+        ],
+        ast,
+    );
+    let wrapper = CodegenFunction {
+        span: Some(original.span),
+        id: Some(id),
+        params,
+        body,
+        generator: false,
+        is_async: false,
+        memo_slots_used: 1,
+        outlined: Vec::new(),
+    };
+    let replacements = FxHashMap::from_iter([(scope_id, wrapper)]);
+    let mut visitor =
+        OxcVisitor { ast, mode: OxcVisitMode::ReplaceFns { replacements, remaining: 1 } };
+    oxc_ast_visit::VisitMut::visit_program(&mut visitor, program);
+    let decls = vec![
+        Statement::FunctionDeclaration(compiled),
+        ox_build_gated_const_decl(ast, &ox_gating_call(ast, gate), condition.as_str(), SPAN, SPAN),
+        Statement::FunctionDeclaration(original),
+    ];
+    let mut visitor = OxcVisitor {
+        ast,
+        mode: OxcVisitMode::InsertOutlinedAfter { scope_id, decls, before: true },
     };
     oxc_ast_visit::VisitMut::visit_program(&mut visitor, program);
 }
@@ -2839,7 +2974,7 @@ fn ox_transform_program<'a>(
     ast: &AstBuilder<'a>,
     program: &mut Program<'a>,
     replacements: Vec<OxcReplacement<'a>>,
-    context: &mut ProgramContext,
+    context: &mut ProgramContext<'a>,
 ) {
     // Anchor generated top-level imports immediately before the first source
     // statement. Keep the span empty so the imports remain unmapped. The
@@ -2888,13 +3023,8 @@ fn ox_transform_program<'a>(
             ox_insert_outlined_after(ast, program, scope_id, sibling_outlined_decls);
         }
 
-        if let Some(gating_config) = replacement.gating {
-            gated_replacements.push((
-                scope_id,
-                original_kind,
-                replacement.codegen_fn,
-                gating_config,
-            ));
+        if replacement.gating.is_some() {
+            gated_replacements.push(replacement);
         } else {
             replace_map.insert(scope_id, replacement.codegen_fn);
         }
@@ -2912,16 +3042,8 @@ fn ox_transform_program<'a>(
         oxc_ast_visit::VisitMut::visit_program(&mut visitor, program);
     }
 
-    for (scope_id, original_kind, codegen_fn, gating_config) in gated_replacements {
-        ox_apply_gated_conditional(
-            ast,
-            program,
-            scope_id,
-            original_kind,
-            codegen_fn,
-            &gating_config,
-            context,
-        );
+    for replacement in gated_replacements {
+        ox_apply_gated_conditional(ast, program, replacement, context);
     }
 
     // Append outlined function declarations (from expression-parented originals) at
@@ -2960,7 +3082,7 @@ fn ox_insert_outlined_after<'a>(
 ) {
     let mut visitor = OxcVisitor {
         ast,
-        mode: OxcVisitMode::InsertOutlinedAfter { scope_id, decls: outlined_decls },
+        mode: OxcVisitMode::InsertOutlinedAfter { scope_id, decls: outlined_decls, before: false },
     };
     oxc_ast_visit::VisitMut::visit_program(&mut visitor, program);
     let OxcVisitMode::InsertOutlinedAfter { decls, .. } = visitor.mode else { unreachable!() };
@@ -3321,6 +3443,13 @@ pub fn compile_program<'a, const EMIT: bool>(
                 original_kind: cf.source.original_kind,
                 codegen_fn: cf.codegen_fn,
                 gating,
+                referenced_before_declaration: matches!(&cf.source.fn_node,
+                    FunctionNode::Function(function) if function.is_function_declaration()
+                    && function.id.as_ref().and_then(|id| id.symbol_id.get()).is_some_and(|symbol| {
+                        semantic.scoping().get_resolved_references(symbol).any(|reference| {
+                            semantic.nodes().get_node(reference.node_id()).kind().span().start < function.span.start
+                        })
+                    })),
             }
         })
         .collect();
