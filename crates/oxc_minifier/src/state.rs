@@ -64,6 +64,10 @@ pub struct PassChanges<'a> {
     /// Declarations `(symbol, binding span)` of redeclared symbols found in dropped
     /// subtrees, to remove from `Scoping::symbol_redeclarations` at flush time.
     pub(crate) removed_declarations: FxHashSet<(SymbolId, Span)>,
+
+    /// Declarations `(symbol, binding span)` of redeclared symbols that `KeepVar`
+    /// re-emitted. These may be in `removed_declarations` and still be live.
+    pub(crate) reemitted_declarations: FxHashSet<(SymbolId, Span)>,
 }
 
 impl<'a> PassChanges<'a> {
@@ -73,6 +77,7 @@ impl<'a> PassChanges<'a> {
             removed_references: BitSet::new_in(references_len, allocator),
             direct_eval_dropped: false,
             removed_declarations: FxHashSet::default(),
+            reemitted_declarations: FxHashSet::default(),
         }
     }
 }
@@ -190,6 +195,7 @@ impl<'a> MinifierState<'a> {
             && self.pass_changes.removed_references.is_empty()
             && !self.pass_changes.direct_eval_dropped
             && self.pass_changes.removed_declarations.is_empty()
+            && self.pass_changes.reemitted_declarations.is_empty()
     }
 }
 

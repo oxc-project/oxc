@@ -241,8 +241,9 @@ fn flush_pass_changes(program: &Program<'_>, ctx: &mut TraverseCtx<'_>) -> bool 
 
     // (3) Declarations — drop the redeclarations of removed declarations, so
     //     e.g. `catch (a) { var a }` can drop `a` once the `var` is gone (#27548).
-    //     `KeepVar` re-emits dropped `var`s with their symbol and span, so skip
-    //     declarations still in the program.
+    //     `KeepVar` re-emits dropped `var`s with their symbol and span; only when
+    //     it re-emitted a removed declaration is the program walked to check.
+    let reemitted = std::mem::take(&mut ctx.state.pass_changes.reemitted_declarations);
     if !ctx.state.pass_changes.removed_declarations.is_empty() {
         struct LiveDeclarations<'b> {
             removed: &'b mut FxHashSet<(SymbolId, Span)>,
@@ -255,7 +256,16 @@ fn flush_pass_changes(program: &Program<'_>, ctx: &mut TraverseCtx<'_>) -> bool 
             }
         }
         let mut removed = std::mem::take(&mut ctx.state.pass_changes.removed_declarations);
-        LiveDeclarations { removed: &mut removed }.visit_program(program);
+        let may_be_live = removed.iter().any(|declaration| reemitted.contains(declaration));
+        // Debug builds always walk, to check that only `KeepVar` revives a declaration.
+        if may_be_live || cfg!(debug_assertions) {
+            let removed_len = removed.len();
+            LiveDeclarations { removed: &mut removed }.visit_program(program);
+            debug_assert!(
+                may_be_live || removed.len() == removed_len,
+                "a dropped declaration is still in the program, but `KeepVar` did not re-emit it",
+            );
+        }
         for (symbol_id, span) in removed {
             ctx.scoping_mut().remove_symbol_declaration(symbol_id, span);
         }
