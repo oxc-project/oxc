@@ -12,6 +12,7 @@ mod blanket;
 mod concat;
 mod config;
 mod formatter;
+mod node_comments;
 mod primitives;
 mod sequences;
 mod strings;
@@ -22,6 +23,7 @@ use structs::ESTreeStructSerializer;
 pub use concat::{Concat2, Concat3, ConcatElement};
 pub use config::{Config, ConfigFixes, ConfigNoFixes};
 pub use formatter::{CompactFormatter, Formatter, PrettyFormatter};
+pub use node_comments::{NodeCommentPlacement, NodeComments};
 pub use sequences::SequenceSerializer;
 pub use strings::{JsonSafeString, LoneSurrogatesString};
 pub use structs::{ESTreeSpan, FlatStructSerializer, StructSerializer};
@@ -63,6 +65,12 @@ pub trait Serializer {
     /// "Fix paths" can be used on JS side to locate these nodes and set their `value` fields correctly.
     fn record_fix_path(&mut self);
 
+    /// Add comments owned by the node with ID `node_id` to the next struct serialized.
+    ///
+    /// Used when an AST node is not serialized itself, but replaced by one of its children.
+    /// The next struct must be serialized, or the comments are added to a later struct.
+    fn merge_node_comments(&mut self, node_id: usize);
+
     /// Get mutable reference to buffer.
     fn buffer_mut(&mut self) -> &mut CodeBuffer;
 
@@ -89,6 +97,8 @@ pub struct ESTreeSerializer<C: Config, F: Formatter> {
     trace_path: NonEmptyStack<TracePathPart>,
     fixes_buffer: CodeBuffer,
     config: C,
+    node_comments: Option<NodeComments>,
+    merged_node_ids: Vec<usize>,
 }
 
 impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
@@ -100,6 +110,8 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
             trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
             fixes_buffer: CodeBuffer::new(),
             config: C::new(include_ts_fields, ranges),
+            node_comments: None,
+            merged_node_ids: Vec::new(),
         }
     }
 
@@ -111,7 +123,16 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
             trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
             fixes_buffer: CodeBuffer::new(),
             config: C::new(include_ts_fields, ranges),
+            node_comments: None,
+            merged_node_ids: Vec::new(),
         }
+    }
+
+    /// Add a `comments` field to serialized nodes, containing the comments they own.
+    #[must_use]
+    pub fn with_node_comments(mut self, node_comments: NodeComments) -> Self {
+        self.node_comments = Some(node_comments);
+        self
     }
 
     /// Serialize `node` and output a `JSON` string containing
@@ -225,6 +246,12 @@ impl<'s, C: Config, F: Formatter> Serializer for &'s mut ESTreeSerializer<C, F> 
         }
 
         self.fixes_buffer.print_ascii_byte(b']');
+    }
+
+    fn merge_node_comments(&mut self, node_id: usize) {
+        if self.node_comments.is_some() && node_id != 0 {
+            self.merged_node_ids.push(node_id);
+        }
     }
 
     /// Get mutable reference to buffer.

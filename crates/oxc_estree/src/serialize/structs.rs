@@ -43,6 +43,17 @@ pub trait StructSerializer {
     /// * Otherwise, outputs only `start` and `end`.
     fn serialize_span<S: ESTreeSpan>(&mut self, span: S);
 
+    /// Serialize `comments` field containing comments owned by nodes with IDs `node_ids`.
+    ///
+    /// Does nothing unless the serializer was created with node comments.
+    /// Node ID 0 is skipped, because synthetic nodes share it with `Program`.
+    fn serialize_node_comments(&mut self, node_ids: &[usize]);
+
+    /// Serialize `comments` field containing comments owned by `Program`.
+    ///
+    /// Does nothing unless the serializer was created with node comments.
+    fn serialize_program_comments(&mut self);
+
     /// Finish serializing struct.
     fn end(self);
 
@@ -62,6 +73,8 @@ pub struct ESTreeStructSerializer<'s, C: Config, F: Formatter> {
     /// State of struct.
     /// Starts as `StructState::Empty`, transitions to `StructState::HasFields` on first field.
     state: StructState,
+    /// IDs of nodes whose comments are merged into this struct's comments.
+    merged_node_ids: Vec<usize>,
 }
 
 impl<'s, C: Config, F: Formatter> ESTreeStructSerializer<'s, C, F> {
@@ -75,18 +88,16 @@ impl<'s, C: Config, F: Formatter> ESTreeStructSerializer<'s, C, F> {
 
         serializer.buffer_mut().print_ascii_byte(b'{');
 
-        Self { serializer, state: StructState::Empty }
+        let merged_node_ids = if serializer.merged_node_ids.is_empty() {
+            Vec::new()
+        } else {
+            std::mem::take(&mut serializer.merged_node_ids)
+        };
+
+        Self { serializer, state: StructState::Empty, merged_node_ids }
     }
-}
 
-impl<C: Config, F: Formatter> StructSerializer for ESTreeStructSerializer<'_, C, F> {
-    type Config = C;
-    type Formatter = F;
-
-    /// Serialize struct field.
-    ///
-    /// `key` must not contain any characters which require escaping in JSON.
-    fn serialize_field<T: ESTree + ?Sized>(&mut self, key: &'static str, value: &T) {
+    fn serialize_field_key(&mut self, key: &'static str) {
         // Update last item in trace path to current key
         if self.serializer.config.fixes() {
             *self.serializer.trace_path.last_mut() = TracePathPart::Key(key);
@@ -103,6 +114,29 @@ impl<C: Config, F: Formatter> StructSerializer for ESTreeStructSerializer<'_, C,
 
         buffer.print_strs_array(["\"", key, "\":"]);
         formatter.before_field_value(buffer);
+    }
+
+    fn serialize_comments_field(&mut self, node_ids: &[usize]) {
+        if self.serializer.node_comments.is_none() {
+            return;
+        }
+        self.serialize_field_key("comments");
+        let serializer = &mut *self.serializer;
+        if let Some(node_comments) = &serializer.node_comments {
+            node_comments.print(node_ids, &mut serializer.buffer);
+        }
+    }
+}
+
+impl<C: Config, F: Formatter> StructSerializer for ESTreeStructSerializer<'_, C, F> {
+    type Config = C;
+    type Formatter = F;
+
+    /// Serialize struct field.
+    ///
+    /// `key` must not contain any characters which require escaping in JSON.
+    fn serialize_field<T: ESTree + ?Sized>(&mut self, key: &'static str, value: &T) {
+        self.serialize_field_key(key);
         value.serialize(&mut *self.serializer);
     }
 
@@ -149,6 +183,19 @@ impl<C: Config, F: Formatter> StructSerializer for ESTreeStructSerializer<'_, C,
         if self.serializer.ranges() {
             self.serialize_field("range", &range);
         }
+    }
+
+    fn serialize_node_comments(&mut self, node_ids: &[usize]) {
+        if self.serializer.node_comments.is_none() {
+            return;
+        }
+        let mut merged_node_ids = std::mem::take(&mut self.merged_node_ids);
+        merged_node_ids.extend(node_ids.iter().copied().filter(|&node_id| node_id != 0));
+        self.serialize_comments_field(&merged_node_ids);
+    }
+
+    fn serialize_program_comments(&mut self) {
+        self.serialize_comments_field(&[0]);
     }
 
     /// Finish serializing struct.
@@ -249,6 +296,12 @@ impl<'p, P: StructSerializer> Serializer for FlatStructSerializer<'p, P> {
         }
     }
 
+    fn merge_node_comments(&mut self, _node_id: usize) {
+        const {
+            panic!("Cannot call `merge_node_comments` on a `FlatStructSerializer`");
+        }
+    }
+
     /// Get whether output should contain TS fields.
     #[inline(always)]
     fn include_ts_fields(&self) -> bool {
@@ -323,6 +376,16 @@ impl<P: StructSerializer> StructSerializer for FlatStructSerializer<'_, P> {
     /// * Otherwise, outputs only `start` and `end`.
     fn serialize_span<S: ESTreeSpan>(&mut self, span: S) {
         self.0.serialize_span(span);
+    }
+
+    #[inline(always)]
+    fn serialize_node_comments(&mut self, node_ids: &[usize]) {
+        self.0.serialize_node_comments(node_ids);
+    }
+
+    #[inline(always)]
+    fn serialize_program_comments(&mut self) {
+        self.0.serialize_program_comments();
     }
 
     /// Finish serializing struct.
@@ -583,5 +646,52 @@ mod tests {
   "moreJs": 4
 }"#
         );
+    }
+
+    #[test]
+    fn serialize_node_comments() {
+        use super::super::{NodeCommentPlacement, NodeComments};
+
+        struct Node(&'static [usize]);
+
+        impl ESTree for Node {
+            fn serialize<S: Serializer>(&self, serializer: S) {
+                let mut state = serializer.serialize_struct();
+                state.serialize_field("type", &"Node");
+                if self.0.is_empty() {
+                    state.serialize_program_comments();
+                } else {
+                    state.serialize_node_comments(self.0);
+                }
+                state.end();
+            }
+        }
+
+        let mut serializer = CompactSerializer::default();
+        Node(&[1]).serialize(&mut serializer);
+        assert_eq!(&serializer.into_string(), r#"{"type":"Node"}"#);
+
+        let mut node_comments = NodeComments::new();
+        node_comments.push(0, NodeCommentPlacement::Dangling, "0".to_string());
+        node_comments.push(2, NodeCommentPlacement::Leading, "1".to_string());
+        node_comments.push(1, NodeCommentPlacement::Leading, "2".to_string());
+        node_comments.push(2, NodeCommentPlacement::Trailing, "3".to_string());
+        let cases: [(&[usize], &str); 5] = [
+            (&[], r#"{"leading":null,"trailing":null,"dangling":[0]}"#),
+            (&[0], "null"),
+            (&[3], "null"),
+            (&[1], r#"{"leading":[2],"trailing":null,"dangling":null}"#),
+            (&[2, 0, 1], r#"{"leading":[1,2],"trailing":[3],"dangling":null}"#),
+        ];
+        for (node_ids, expected) in cases {
+            let mut serializer =
+                CompactSerializer::default().with_node_comments(std::mem::take(&mut node_comments));
+            Node(node_ids).serialize(&mut serializer);
+            node_comments = serializer.node_comments.take().unwrap();
+            assert_eq!(
+                serializer.into_string(),
+                format!(r#"{{"type":"Node","comments":{expected}}}"#)
+            );
+        }
     }
 }

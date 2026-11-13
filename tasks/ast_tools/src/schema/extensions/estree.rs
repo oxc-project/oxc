@@ -33,6 +33,9 @@ pub struct ESTreeStruct {
     pub add_ts_def: Option<String>,
     /// If `true`
     pub no_parent: bool,
+    /// `true` if struct is an AST node with its own `node_id` field.
+    /// Set by the ESTree derive, not by an attribute.
+    pub has_node_id: bool,
 }
 
 /// Configuration for ESTree generator on an enum.

@@ -93,6 +93,7 @@ impl ESTree for TSExternalModuleDeclarationConverter<'_, '_> {
         state.serialize_field("declare", &module.declare);
         state.serialize_field("global", &false);
         state.serialize_span(module.span);
+        state.serialize_node_comments(&[module.node_id.get().index()]);
         state.end();
     }
 }
@@ -190,6 +191,7 @@ impl ESTree for TSNamespaceDeclarationConverter<'_, '_> {
 
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSModuleDeclaration"));
+        let mut node_ids = vec![namespace.node_id.get().index()];
 
         match &namespace.body {
             TSNamespaceDeclarationBody::TSNamespaceDeclaration(inner_namespace) => {
@@ -197,6 +199,7 @@ impl ESTree for TSNamespaceDeclarationConverter<'_, '_> {
                 // get the innermost `TSModuleBlock`.
                 let mut parts = Vec::with_capacity(4);
                 parts.push(&namespace.id);
+                node_ids.push(inner_namespace.node_id.get().index());
 
                 let mut body = &inner_namespace.body;
                 parts.push(&inner_namespace.id);
@@ -204,6 +207,7 @@ impl ESTree for TSNamespaceDeclarationConverter<'_, '_> {
                     match body {
                         TSNamespaceDeclarationBody::TSNamespaceDeclaration(inner_namespace) => {
                             parts.push(&inner_namespace.id);
+                            node_ids.push(inner_namespace.node_id.get().index());
                             body = &inner_namespace.body;
                         }
                         TSNamespaceDeclarationBody::TSModuleBlock(block) => {
@@ -224,6 +228,7 @@ impl ESTree for TSNamespaceDeclarationConverter<'_, '_> {
         state.serialize_field("declare", &namespace.declare);
         state.serialize_field("global", &false);
         state.serialize_span(namespace.span);
+        state.serialize_node_comments(&node_ids);
         state.end();
     }
 }
@@ -252,6 +257,7 @@ impl ESTree for TSModuleDeclarationIdParts<'_, '_> {
 
         let span = Span::new(parts[0].span.start, last.span.end);
         state.serialize_span(span);
+        state.serialize_node_comments(&[]);
 
         state.end();
     }
@@ -468,6 +474,7 @@ impl ESTree for TSTypeNameAsMemberExpression<'_, '_> {
                 state.serialize_field("optional", &false);
                 state.serialize_field("computed", &false);
                 state.serialize_span(name.span);
+                state.serialize_node_comments(&[name.node_id.get().index()]);
                 state.end();
             }
             TSTypeName::ThisExpression(e) => {
@@ -601,6 +608,7 @@ impl ESTree for TSParenthesizedTypeConverter<'_, '_> {
         state.serialize_field("type", &JsonSafeString("TSParenthesizedType"));
         state.serialize_field("typeAnnotation", &paren_type.type_annotation);
         state.serialize_span(paren_type.span);
+        state.serialize_node_comments(&[paren_type.node_id.get().index()]);
         state.end();
     }
 }

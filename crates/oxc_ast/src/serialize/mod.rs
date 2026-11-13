@@ -1,6 +1,6 @@
 use oxc_ast_macros::ast_meta;
 use oxc_estree::{
-    CompactFixesSerializer, CompactSerializer, Concat2, ESTree, JsonSafeString,
+    CompactFixesSerializer, CompactSerializer, Concat2, ESTree, JsonSafeString, NodeComments,
     PrettyFixesSerializer, PrettySerializer, Serializer, StructSerializer,
 };
 
@@ -61,6 +61,21 @@ impl Program<'_> {
     pub fn to_estree_json_with_fixes(&self, include_ts_fields: bool, ranges: bool) -> String {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_COMPACT;
         let serializer = CompactFixesSerializer::with_capacity(capacity, include_ts_fields, ranges);
+        serializer.serialize_with_fixes(self)
+    }
+
+    /// Serialize AST to ESTree JSON, with list of fixes, and a `comments` field on each node.
+    ///
+    /// `node_comments` contains the comments owned by each node, indexed by node ID.
+    pub fn to_estree_json_with_fixes_and_node_comments(
+        &self,
+        include_ts_fields: bool,
+        ranges: bool,
+        node_comments: NodeComments,
+    ) -> String {
+        let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_COMPACT;
+        let serializer = CompactFixesSerializer::with_capacity(capacity, include_ts_fields, ranges)
+            .with_node_comments(node_comments);
         serializer.serialize_with_fixes(self)
     }
 
@@ -129,6 +144,7 @@ impl ESTree for ProgramConverter<'_, '_> {
         state.serialize_field("sourceType", &program.source_type.module_kind());
         state.serialize_field("hashbang", &program.hashbang);
         state.serialize_span(program.span);
+        state.serialize_program_comments();
 
         state.end();
     }

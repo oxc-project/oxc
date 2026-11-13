@@ -181,6 +181,7 @@ impl ESTree for TemplateElementConverter<'_, '_> {
             span.end += if element.tail { 1 } else { 2 };
         }
         state.serialize_span(span);
+        state.serialize_node_comments(&[element.node_id.get().index()]);
 
         state.end();
     }

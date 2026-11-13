@@ -65,6 +65,7 @@ impl Derive for DeriveESTree {
     fn prepare(&self, schema: &mut Schema, codegen: &Codegen) {
         let derive_id = codegen.get_derive_id_by_name(self.trait_name());
         prepare_field_orders(schema, derive_id);
+        prepare_node_ids(schema, derive_id, codegen.get_derive_id_by_name("GetNodeId"));
     }
 
     fn prelude(&self) -> TokenStream {
@@ -334,6 +335,20 @@ fn prepare_field_orders(schema: &mut Schema, estree_derive_id: DeriveId) {
     }
 }
 
+/// Initialize `estree.has_node_id` on all structs.
+fn prepare_node_ids(
+    schema: &mut Schema,
+    estree_derive_id: DeriveId,
+    get_node_id_derive_id: DeriveId,
+) {
+    for type_def in &mut schema.types {
+        let Some(struct_def) = type_def.as_struct_mut() else { continue };
+        struct_def.estree.has_node_id = struct_def.generates_derive(estree_derive_id)
+            && struct_def.generates_derive(get_node_id_derive_id)
+            && struct_def.fields.iter().any(|field| field.name() == "node_id");
+    }
+}
+
 /// Generate implementation of `ESTree` for a struct or enum.
 fn generate_impl_for_type(type_def: StructOrEnum, schema: &Schema) -> TokenStream {
     let body = match type_def {
@@ -440,6 +455,11 @@ impl<'s> StructSerializerGenerator<'s> {
             self.stmts.extend(quote! {
                 state.serialize_span(#self_path.span);
             });
+            if struct_def.estree.has_node_id {
+                self.stmts.extend(quote! {
+                    state.serialize_node_comments(&[#self_path.node_id.get().index()]);
+                });
+            }
             return;
         }
 

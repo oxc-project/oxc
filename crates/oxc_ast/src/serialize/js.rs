@@ -211,14 +211,14 @@ impl ESTree for BindingPatternKindAndTsFields<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
 
-        let mut span = match &self.kind {
+        let (mut span, node_id) = match &self.kind {
             BindingPattern::BindingIdentifier(ident) => {
                 state.serialize_field("type", &JsonSafeString("Identifier"));
                 if let Some(d) = &self.decorators {
                     state.serialize_ts_field("decorators", d);
                 }
                 state.serialize_field("name", &JsonSafeString(ident.name.as_str()));
-                ident.span
+                (ident.span, ident.node_id.get())
             }
             BindingPattern::ObjectPattern(object) => {
                 state.serialize_field("type", &JsonSafeString("ObjectPattern"));
@@ -226,7 +226,7 @@ impl ESTree for BindingPatternKindAndTsFields<'_, '_> {
                     state.serialize_ts_field("decorators", d);
                 }
                 state.serialize_field("properties", &Concat2(&object.properties, &object.rest));
-                object.span
+                (object.span, object.node_id.get())
             }
             BindingPattern::ArrayPattern(array) => {
                 state.serialize_field("type", &JsonSafeString("ArrayPattern"));
@@ -234,7 +234,7 @@ impl ESTree for BindingPatternKindAndTsFields<'_, '_> {
                     state.serialize_ts_field("decorators", d);
                 }
                 state.serialize_field("elements", &Concat2(&array.elements, &array.rest));
-                array.span
+                (array.span, array.node_id.get())
             }
             BindingPattern::AssignmentPattern(assignment) => {
                 state.serialize_field("type", &JsonSafeString("AssignmentPattern"));
@@ -253,7 +253,7 @@ impl ESTree for BindingPatternKindAndTsFields<'_, '_> {
                     },
                 );
                 state.serialize_field("right", &assignment.right);
-                assignment.span
+                (assignment.span, assignment.node_id.get())
             }
         };
 
@@ -267,6 +267,7 @@ impl ESTree for BindingPatternKindAndTsFields<'_, '_> {
         }
 
         state.serialize_span(span);
+        state.serialize_node_comments(&[node_id.index()]);
 
         state.end();
     }
@@ -338,7 +339,8 @@ impl ESTree for VariableDeclaratorId<'_, '_> {
 pub struct CatchParameterConverter<'a, 'b>(pub &'b CatchParameter<'a>);
 
 impl ESTree for CatchParameterConverter<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
+    fn serialize<S: Serializer>(&self, mut serializer: S) {
+        serializer.merge_node_comments(self.0.node_id.get().index());
         BindingPatternKindAndTsFields {
             kind: &self.0.pattern,
             decorators: Some(&[]),
@@ -430,6 +432,10 @@ impl ESTree for FormalParameterRest<'_> {
         state.serialize_ts_field("typeAnnotation", &rest.type_annotation);
         state.serialize_ts_field("value", &Null(()));
         state.serialize_span(rest.span);
+        state.serialize_node_comments(&[
+            rest.node_id.get().index(),
+            rest.rest.node_id.get().index(),
+        ]);
         state.end();
     }
 }
@@ -592,8 +598,9 @@ impl ESTree for FormalParameterRest<'_> {
 pub struct FormalParameterConverter<'a, 'b>(pub &'b FormalParameter<'a>);
 
 impl ESTree for FormalParameterConverter<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
+    fn serialize<S: Serializer>(&self, mut serializer: S) {
         let param = self.0;
+        let node_id = param.node_id.get().index();
 
         if serializer.include_ts_fields() {
             if param.has_modifier() {
@@ -642,6 +649,7 @@ impl ESTree for FormalParameterConverter<'_, '_> {
                 state.serialize_field("readonly", &param.readonly);
                 state.serialize_field("static", &false);
                 state.serialize_span(param.span);
+                state.serialize_node_comments(&[node_id]);
                 state.end();
             } else if let Some(init) = &param.initializer {
                 let mut state = serializer.serialize_struct();
@@ -661,8 +669,10 @@ impl ESTree for FormalParameterConverter<'_, '_> {
                 state.serialize_field("optional", &param.optional);
                 state.serialize_field("typeAnnotation", &Null(()));
                 state.serialize_span(param.span);
+                state.serialize_node_comments(&[node_id]);
                 state.end();
             } else {
+                serializer.merge_node_comments(node_id);
                 BindingPatternKindAndTsFields {
                     kind: &param.pattern,
                     decorators: Some(&param.decorators),
@@ -678,8 +688,10 @@ impl ESTree for FormalParameterConverter<'_, '_> {
             state.serialize_field("left", &param.pattern);
             state.serialize_field("right", init);
             state.serialize_span(param.span);
+            state.serialize_node_comments(&[node_id]);
             state.end();
         } else {
+            serializer.merge_node_comments(node_id);
             param.pattern.serialize(serializer);
         }
     }
@@ -711,6 +723,7 @@ impl ESTree for TSParameterPropertyAssignmentPattern<'_, '_> {
         state.serialize_field("optional", &false);
         state.serialize_field("typeAnnotation", &Null(()));
         state.serialize_span(self.assignment_span);
+        state.serialize_node_comments(&[]);
         state.end();
     }
 }
@@ -930,6 +943,7 @@ impl ESTree for AssignmentTargetPropertyIdentifierInit<'_> {
             state.serialize_ts_field("optional", &false);
             state.serialize_ts_field("typeAnnotation", &Null(()));
             state.serialize_span(self.0.span);
+            state.serialize_node_comments(&[]);
             state.end();
         } else {
             self.0.binding.serialize(serializer);
@@ -976,6 +990,7 @@ impl ESTree for ParenthesizedExpressionConverter<'_, '_> {
         state.serialize_field("type", &JsonSafeString("ParenthesizedExpression"));
         state.serialize_field("expression", &paren_expr.expression);
         state.serialize_span(paren_expr.span);
+        state.serialize_node_comments(&[paren_expr.node_id.get().index()]);
         state.end();
     }
 }

@@ -2,7 +2,6 @@ use std::cell::Cell;
 
 use oxc_ast_macros::ast_meta;
 use oxc_estree::{ESTree, JsonSafeString, Serializer, StructSerializer};
-use oxc_syntax::node::NodeId;
 
 use crate::ast::*;
 
@@ -32,6 +31,7 @@ impl ESTree for JSXElementOpeningElement<'_, '_> {
         state.serialize_field("attributes", &opening_element.attributes);
         state.serialize_field("selfClosing", &element.closing_element.is_none());
         state.serialize_span(opening_element.span);
+        state.serialize_node_comments(&[opening_element.node_id.get().index()]);
         state.end();
     }
 }
@@ -68,7 +68,7 @@ impl ESTree for JSXElementIdentifierReference<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         JSXIdentifier {
             span: self.0.span,
-            node_id: Cell::new(NodeId::DUMMY),
+            node_id: Cell::new(self.0.node_id.get()),
             name: self.0.name.into(),
         }
         .serialize(serializer);
@@ -92,7 +92,7 @@ impl ESTree for JSXElementThisExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         JSXIdentifier {
             span: self.0.span,
-            node_id: Cell::new(NodeId::DUMMY),
+            node_id: Cell::new(self.0.node_id.get()),
             name: Str::from("this"),
         }
         .serialize(serializer);
