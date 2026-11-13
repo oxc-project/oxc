@@ -685,14 +685,14 @@
 
 ### Failed
 
-- externals/prettier/vue/interpolation/double-brace-string.vue (💥, 60.00%)
-  - ❓unclassified
-- externals/prettier/vue/interpolation/ng-non-bindable.vue (💥, 0.00%)
-  - ❓unclassified
 - externals/prettier/vue/event-binding/function-expression-ts.vue (💥, 64.29%)
   - apps/oxfmt/DIVERGENCES.md#js-in-vue-handler-statements
 - externals/prettier/vue/interpolation/bitwise-or-operator.vue (💥, 68.75%)
   - apps/oxfmt/DIVERGENCES.md#js-in-vue-bitwise-or
+- externals/prettier/vue/interpolation/double-brace-string.vue (💥, 60.00%)
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-interpolation-ends-at-first-close
+- externals/prettier/vue/interpolation/ng-non-bindable.vue (💥, 0.00%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#interpolation-element-as-text
 - externals/prettier/vue/multiparser/snippet: non-space (💥, 0.00%)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#vue-block-unicode-whitespace
 - externals/prettier/vue/ts-expression/filter.vue (💥, 64.29%)

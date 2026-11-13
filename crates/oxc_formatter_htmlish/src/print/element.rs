@@ -40,7 +40,7 @@ pub fn write_element<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'
             .and_then(|language| {
                 dispatch_fragment_ir(f, language, trim_preserving_indentation(content), None)
             });
-        // The opening tag prints the borrowed prefix, once (DIVERGENCES.md#pre-after-borrowed-closing-end)
+        // The opening tag prints the borrowed prefix, once
         write!(f, group(&format_with(|f| write_opening_tag(t, id, f))));
         match formatted {
             Some(ir) if ir.is_empty() => {}

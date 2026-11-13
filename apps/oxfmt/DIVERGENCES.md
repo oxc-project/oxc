@@ -249,6 +249,36 @@ In a `v-pre` element and its content, `{{ }}` is text and a directive a plain at
 they print as written, and lay out as text and attributes do.
 Prettier formats them, which changes what renders (`{{ a + b }}`) and the attribute values (`:a` is `b + c`), as `@vue/compiler-dom` 3.5.45 compiles them.
 
+## js-in-vue-interpolation-ends-at-first-close
+
+- Why: uniform-rule (a `{{ }}` ends where its dialect's compiler ends it: Vue's at the first `}}`, Angular's past a `}}` in a string literal; prettier/prettier#20117)
+- Pin: `conformance/fixtures/js-in-vue/interpolation-ends-at-first-close.vue`
+- Conformance:
+  - `externals/prettier/vue/interpolation/double-brace-string.vue`
+
+```vue
+<!-- input -->
+<template>
+  <div>{{"{{first}} / {{second}} files selected"}}</div>
+</template>
+
+<!-- ours -->
+<template>
+  <div>{{"{{first}} / {{ second }} files selected"}}</div>
+</template>
+
+<!-- prettier -->
+<template>
+  <div>{{ "{{first}} / {{second}} files selected" }}</div>
+</template>
+```
+
+Vue's compiler ends a `{{ }}` at the first `}}`, inside a string literal too (`@vue/compiler-sfc` 3.5.25):
+the template above is `{{"{{first}}`, text, `{{second}}` and text, and does not compile (`Unterminated string constant`).
+We split it as Vue does and format each part as Vue reads it: the broken `{{ }}` as written, `{{second}}` as code.
+Angular's compiler reads past a `}}` in a string literal, and so does the Angular dialect.
+Prettier reads past it in Vue too since #20117 (a fix for Angular, prettier/prettier#18939); its output does not compile either.
+
 ## js-in-vue-handler-statements
 
 - Why: semantics (Vue reads an event handler holding a `;` as statements, and one without as an expression; prettier/prettier#14270)
@@ -1076,7 +1106,7 @@ A `${}` expression in `pre`-like content (`pre`, `textarea`, ...) indents its li
 as an expression elsewhere does from the line its `${` starts on.
 A line of that content prints from the root, so the expression aligns there (`oxc_formatter_htmlish`'s `write_pre_like_text`);
 one on the line of an element before it (`<pre><b>x</b>${`) indents from that line, as elsewhere.
-Prettier 3.9.6 aligned an expression starting its line so; since 3.9.7 (prettier/prettier#19725, for idempotency) it indents it by the elements around the content instead,
+Prettier indents it by the elements around the content instead (prettier/prettier#19725, for idempotency),
 which leaves `})` right of the `${` it closes.
 Reformatting the expression changes no content: its source is code, not text in the element.
 
