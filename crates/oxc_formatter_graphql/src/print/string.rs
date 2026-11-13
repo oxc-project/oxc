@@ -1,18 +1,11 @@
-//! `StringValue` cooking and re-encoding.
-//!
-//! Prettier prints `StringValue` from graphql-js's *cooked* `node.value`
-//! (escapes decoded, block strings dedented), then re-encodes it.
-//! `oxc-graphql-parser`'s `StringValue.value` is cooked too, but NOT to spec:
-//! no block-string dedent / blank-line trimming, no surrogate pairing, and
-//! invalid escapes are silently dropped.
-//! So this module cooks them itself (GraphQL spec string/block-string value algorithms):
-//! a regular string from `raw`, a block string from `value`, which only has its line endings normalized.
-//! Then it applies Prettier's re-encoding (`"`/`\` escaped, newline as `\n`, `"""` as `\"""`).
+//! `StringValue` printing: block-string dedent (GraphQL spec `BlockStringValue`) and Prettier's re-encoding,
+//! see `AGENTS.md` "Strings".
 
 use std::borrow::Cow;
 
 use cow_utils::CowUtils;
 
+use oxc_allocator::StringBuilder;
 use oxc_formatter_core::{
     arena_cow_str,
     builders::{exact_line_breaks, hard_line_break, text},
@@ -23,14 +16,10 @@ use oxc_graphql_parser::ast::StringValue;
 use super::GraphqlFormatter;
 
 pub(super) fn write_string_value<'a>(sv: &StringValue<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
-    let raw = sv.raw;
     if sv.block {
         write_block_string(sv.value, f);
-    } else if let Some(body) = raw.strip_circumfix('"', '"') {
-        write_regular_string(body, f);
     } else {
-        // Defensive: malformed string (parse errors bail out before reaching here).
-        write!(f, text(raw));
+        write_regular_string(sv, f);
     }
 }
 
@@ -136,23 +125,23 @@ fn leading_whitespace_len(line: &str) -> usize {
     line.bytes().take_while(|&b| b == b' ' || b == b'\t').count()
 }
 
-/// Regular string: decode escapes (GraphQL `StringValue` semantics), then re-encode
-/// the Prettier way (`"` and `\` escaped, newline as `\n`, everything else verbatim).
-fn write_regular_string<'a>(body: &'a str, f: &mut GraphqlFormatter<'_, 'a>) {
+/// Regular string: the cooked value re-encoded the Prettier way
+/// (`"` and `\` escaped, newline as `\n`, everything else verbatim).
+fn write_regular_string<'a>(sv: &StringValue<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
     write!(f, "\"");
-    if !body.contains('\\') {
-        // No escapes: the body cannot contain `"` or raw line terminators either,
-        // so it round-trips verbatim.
-        if !body.is_empty() {
-            write!(f, text(body));
+    // Without an escape the value is the source text, which holds none of these either
+    let needs_escape = sv.raw.contains('\\')
+        && sv.value.bytes().any(|b| matches!(b, b'"' | b'\\' | b'\n' | b'\r'));
+    if !needs_escape {
+        if !sv.value.is_empty() {
+            write!(f, text(sv.value));
         }
         write!(f, "\"");
         return;
     }
 
-    let cooked = cook_string(body);
-    let mut out = String::with_capacity(cooked.len() + 2);
-    for c in cooked.chars() {
+    let mut out = StringBuilder::with_capacity_in(sv.value.len() + 2, f.allocator());
+    for c in sv.value.chars() {
         match c {
             '"' => out.push_str("\\\""),
             '\\' => out.push_str("\\\\"),
@@ -161,144 +150,5 @@ fn write_regular_string<'a>(body: &'a str, f: &mut GraphqlFormatter<'_, 'a>) {
             _ => out.push(c),
         }
     }
-    if !out.is_empty() {
-        write!(f, text(f.allocator().alloc_str(&out)));
-    }
-    write!(f, "\"");
-}
-
-/// Decodes GraphQL escape sequences. Invalid sequences are kept verbatim
-/// (they cannot appear after an error-free parse, but stay lossless just in case).
-/// Surrogate pairs (`😀`) are combined; lone surrogates are kept as
-/// their original escape text since Rust strings cannot represent them.
-fn cook_string(body: &str) -> String {
-    let mut out = String::with_capacity(body.len());
-    let mut chars = body.char_indices().peekable();
-    while let Some((_, c)) = chars.next() {
-        if c != '\\' {
-            out.push(c);
-            continue;
-        }
-        let Some(&(_, esc)) = chars.peek() else {
-            out.push('\\');
-            break;
-        };
-        match esc {
-            '"' | '\\' | '/' => {
-                chars.next();
-                out.push(esc);
-            }
-            'b' => {
-                chars.next();
-                out.push('\u{0008}');
-            }
-            'f' => {
-                chars.next();
-                out.push('\u{000C}');
-            }
-            'n' => {
-                chars.next();
-                out.push('\n');
-            }
-            'r' => {
-                chars.next();
-                out.push('\r');
-            }
-            't' => {
-                chars.next();
-                out.push('\t');
-            }
-            'u' => {
-                chars.next();
-                cook_unicode_escape(body, &mut chars, &mut out);
-            }
-            _ => {
-                // Invalid escape: keep verbatim.
-                out.push('\\');
-            }
-        }
-    }
-    out
-}
-
-/// Decodes `\uXXXX` (with surrogate pairing) and `\u{...}` after the `u` has been consumed.
-fn cook_unicode_escape(
-    body: &str,
-    chars: &mut std::iter::Peekable<std::str::CharIndices<'_>>,
-    out: &mut String,
-) {
-    // Variable-width form: `\u{1F600}`.
-    if chars.peek().is_some_and(|&(_, c)| c == '{') {
-        chars.next();
-        let mut value: u32 = 0;
-        let mut valid = false;
-        while let Some(&(_, c)) = chars.peek() {
-            if c == '}' {
-                chars.next();
-                break;
-            }
-            let Some(digit) = c.to_digit(16) else {
-                valid = false;
-                break;
-            };
-            value = value.saturating_mul(16).saturating_add(digit);
-            valid = true;
-            chars.next();
-        }
-        match char::from_u32(value).filter(|_| valid) {
-            Some(c) => out.push(c),
-            None => out.push_str("\\u"),
-        }
-        return;
-    }
-
-    // Fixed-width form: `\uXXXX`.
-    let Some(hi) = take_hex4(chars) else {
-        out.push_str("\\u");
-        return;
-    };
-    if (0xD800..=0xDBFF).contains(&hi) {
-        // High surrogate: try to pair with a following `\uXXXX` low surrogate.
-        let mut lookahead = chars.clone();
-        if lookahead.peek().is_some_and(|&(_, c)| c == '\\') {
-            lookahead.next();
-            if lookahead.peek().is_some_and(|&(_, c)| c == 'u') {
-                lookahead.next();
-                if let Some(lo) = take_hex4(&mut lookahead)
-                    && (0xDC00..=0xDFFF).contains(&lo)
-                {
-                    *chars = lookahead;
-                    let combined = 0x10000 + ((hi - 0xD800) << 10) + (lo - 0xDC00);
-                    if let Some(c) = char::from_u32(combined) {
-                        out.push(c);
-                        return;
-                    }
-                }
-            }
-        }
-        // Lone surrogate: not representable in a Rust string, keep the escape verbatim.
-        push_verbatim_u_escape(body, hi, out);
-        return;
-    }
-    match char::from_u32(hi) {
-        Some(c) => out.push(c),
-        None => push_verbatim_u_escape(body, hi, out),
-    }
-}
-
-fn take_hex4(chars: &mut std::iter::Peekable<std::str::CharIndices<'_>>) -> Option<u32> {
-    let mut value: u32 = 0;
-    let mut consumed = chars.clone();
-    for _ in 0..4 {
-        let (_, c) = consumed.next()?;
-        value = value * 16 + c.to_digit(16)?;
-    }
-    *chars = consumed;
-    Some(value)
-}
-
-fn push_verbatim_u_escape(_body: &str, value: u32, out: &mut String) {
-    use std::fmt::Write as _;
-    out.push_str("\\u");
-    let _ = std::write!(out, "{value:04X}");
+    write!(f, [text(out.into_str()), "\""]);
 }

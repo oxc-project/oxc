@@ -54,12 +54,13 @@ This crate instead collects comment spans into a positional cursor, drained in s
 ### Strings
 
 Prettier prints `StringValue` from `graphql-js`'s _cooked_ value and re-encodes it.
-`oxc-graphql-parser`'s `StringValue.value` is cooked but not to spec (no block-string dedent / blank-line trimming, no surrogate pairing), so `src/print/string.rs` cooks it itself,
-a regular string from `raw` and a block string from `value` (only its line endings normalized):
+`oxc-graphql-parser`'s `StringValue.value` is that for a regular string,
+but a block string's only has its line endings normalized, so `src/print/string.rs` adds:
 
 - the GraphQL spec `BlockStringValue` algorithm (dedent + blank-line trimming)
-- escape decoding for regular strings (incl. surrogate pairs)
 - Prettier's re-encoding (`"`/`\` escaped, newline as `\n`, `"""` as `\"""`)
+
+Dedenting in the parser would copy every indented block string into the arena: the formatter borrows its lines instead (measured +7.7% instructions on a description-heavy schema).
 
 Blank-line runs inside block strings are part of the string VALUE and are emitted with `exact_line_breaks()`. Values are written pre-trimmed, the core printer never trims.
 

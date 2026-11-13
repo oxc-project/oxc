@@ -530,28 +530,7 @@
 
 ## graphql
 
-110/119 (92.44%)
-
-### Error
-
-- externals/prettier/graphql/selection-set/dangling-comments.graphql: Syntax error: expected Selection
-  - ❓unclassified
-- externals/prettier/graphql/selection-set/empty-1.graphql: Syntax error: expected Selection
-  - ❓unclassified
-- externals/prettier/graphql/selection-set/empty-2.graphql: Syntax error: expected Selection
-  - ❓unclassified
-- externals/prettier/graphql/selection-set/empty-3.graphql: Syntax error: expected Selection
-  - ❓unclassified
-- externals/prettier/graphql/selection-set/empty-4.graphql: Syntax error: expected Selection
-  - ❓unclassified
-- externals/prettier/graphql/selection-set/empty-5.graphql: Syntax error: expected Selection
-  - ❓unclassified
-- externals/prettier/graphql/selection-set/empty-6.graphql: Syntax error: expected Selection
-  - ❓unclassified
-- externals/prettier/graphql/selection-set/empty-7.graphql: Syntax error: expected Selection
-  - ❓unclassified
-- externals/prettier/graphql/string/carriage-return.graphql: Syntax error: invalid unicode escape sequence
-  - ❓unclassified
+119/119 (100.00%)
 
 ## yaml
 
