@@ -699,9 +699,8 @@ impl<'a> SlotAssignment<'a> {
                 // The scopes this symbol is alive in: for each use, walk up to (but not including)
                 // `scope_id`, marking the descendant scopes it passes through.
                 let slot_liveness_bitset = &mut slot_liveness[assigned_slot as usize];
-                for used_scope_id in referenced_scope_ids
-                    .chain(redeclared_scope_ids)
-                    .chain([scope_id, declared_scope_id])
+                for used_scope_id in
+                    referenced_scope_ids.chain(redeclared_scope_ids).chain([declared_scope_id])
                 {
                     for ancestor_id in scoping.scope_ancestors(used_scope_id) {
                         let ancestor_index = ancestor_id.index();
