@@ -12,11 +12,12 @@ use crate::{
 };
 
 use crate::pipeline::{
-    bitmap::Bitmap,
+    bitmap::{Bitmap, Bitmaps},
     carve::carve,
     classify::classify,
     coalesce::{KWB, coalesce},
     compress::{STAGE_CAP, compress, init_pair_luts, write_sentinels},
+    kinds::Kinds,
     lanes::Lanes,
     misc::{misc_post, misc_pre, retain_code_whitespace},
     source::Source,
@@ -24,17 +25,17 @@ use crate::pipeline::{
 };
 
 pub struct Lexer {
+    token_start: Vec<u64>,
     word: Vec<u64>,
-    st: Vec<u64>,
-    kwinit: Vec<u64>,
-    opch: Vec<u64>,
+    keyword_initial: Vec<u64>,
+    op_char: Vec<u64>,
     digit: Vec<u64>,
     dot: Vec<u64>,
     misc: Vec<u64>,
-    kind: Vec<u8>,
+    kinds: Vec<u8>,
     kwpos: Vec<u32>,
     evpos: Vec<u32>,
-    nb_cap: usize,
+    block_capacity: usize,
     stage_pos: Vec<u32>,
     stage_kind: Vec<u8>,
     pub(super) lanes: Lanes,
@@ -69,17 +70,17 @@ impl Lexer {
         init_pair_luts(cpu);
 
         Lexer {
+            token_start: Vec::new(),
             word: Vec::new(),
-            st: Vec::new(),
-            kwinit: Vec::new(),
-            opch: Vec::new(),
+            keyword_initial: Vec::new(),
+            op_char: Vec::new(),
             digit: Vec::new(),
             dot: Vec::new(),
             misc: Vec::new(),
-            kind: Vec::new(),
+            kinds: Vec::new(),
             kwpos: Vec::new(),
             evpos: Vec::new(),
-            nb_cap: 0,
+            block_capacity: 0,
             stage_pos: vec![0; STAGE_CAP],
             stage_kind: vec![0; STAGE_CAP],
             lanes: Lanes::default(),
@@ -169,7 +170,7 @@ impl Lexer {
         vutf8: bool,
         cpu: impl Cpu,
     ) -> usize {
-        self.ensure(src.len(), cpu);
+        self.ensure(src, cpu);
         self.lanes.clear(cpu);
         self.lanes.module = module;
         self.lanes.disambiguate.begin(src.len(), module, cpu);
@@ -178,48 +179,35 @@ impl Lexer {
             return 0;
         }
 
-        let nb = src.len().div_ceil(64);
-        let word = Bitmap::new(self.word.as_mut_ptr());
-        let st = Bitmap::new(self.st.as_mut_ptr());
-        let kwinit = Bitmap::new(self.kwinit.as_mut_ptr());
-        let opch = Bitmap::new(self.opch.as_mut_ptr());
-        let digit = Bitmap::new(self.digit.as_mut_ptr());
-        let dot = Bitmap::new(self.dot.as_mut_ptr());
-        let misc = Bitmap::new(self.misc.as_mut_ptr());
-        let kind = self.kind.as_mut_ptr();
+        let bitmaps = &Bitmaps {
+            token_start: Bitmap::new(self.token_start.as_mut_ptr()),
+            word: Bitmap::new(self.word.as_mut_ptr()),
+            keyword_initial: Bitmap::new(self.keyword_initial.as_mut_ptr()),
+            op_char: Bitmap::new(self.op_char.as_mut_ptr()),
+            digit: Bitmap::new(self.digit.as_mut_ptr()),
+            dot: Bitmap::new(self.dot.as_mut_ptr()),
+            misc: Bitmap::new(self.misc.as_mut_ptr()),
+        };
+        let kinds = Kinds::new(self.kinds.as_mut_ptr());
         let kwpos = self.kwpos.as_mut_ptr();
         let evpos = self.evpos.as_mut_ptr();
 
         // Keyword recognition is mode-scoped: the TS set (and its wider
-        // kwinit letter class) only ever sees TS input, so JS lexing is
+        // keyword_initial letter class) only ever sees TS input, so JS lexing is
         // byte-identical to a build without it.
-        classify(ts, src, nb, word, st, kwinit, opch, digit, dot, misc, kind, cpu);
-        let nesc = misc_pre(src, nb, st, word, misc, kind, vutf8, &mut self.lanes, cpu);
-        carve(src, st, kind, opch, word, digit, dot, kwinit, jsx, ts, &mut self.lanes, cpu);
-        coalesce(
-            src,
-            st,
-            opch,
-            word,
-            digit,
-            dot,
-            kwinit,
-            kind,
-            kwpos,
-            evpos,
-            ts,
-            &mut self.lanes,
-            cpu,
-        );
-        misc_post(src, st, word, misc, kind, nesc, cpu);
+        classify(ts, src, bitmaps, kinds, cpu);
+        let nesc = misc_pre(src, bitmaps, kinds, vutf8, &mut self.lanes, cpu);
+        carve(src, bitmaps, kinds, jsx, ts, &mut self.lanes, cpu);
+        coalesce(src, bitmaps, kinds, kwpos, evpos, ts, &mut self.lanes, cpu);
+        misc_post(src, bitmaps, kinds, nesc, cpu);
         if !self.lanes.out.irregular_whitespaces.is_empty() {
-            retain_code_whitespace(&self.st, &self.kind, &mut self.lanes.out.irregular_whitespaces);
+            let spans = &mut self.lanes.out.irregular_whitespaces;
+            retain_code_whitespace(&self.token_start, &self.kinds, spans);
         }
         compress(
             src,
-            nb,
-            st,
-            kind,
+            bitmaps.token_start,
+            kinds,
             self.stage_pos.as_mut_ptr(),
             self.stage_kind.as_mut_ptr(),
             out_kinds,
@@ -231,18 +219,19 @@ impl Lexer {
 
     #[cpu_multiversion]
     #[inline(never)]
-    fn ensure(&mut self, n: usize, _cpu: impl Cpu) {
-        let nb = n.div_ceil(64) + 1;
-        if self.nb_cap < nb {
-            self.word.resize(nb, 0);
-            self.st.resize(nb, 0);
-            self.kwinit.resize(nb, 0);
-            self.opch.resize(nb, 0);
-            self.digit.resize(nb, 0);
-            self.dot.resize(nb, 0);
-            self.misc.resize(nb, 0);
-            self.kind.resize(nb * 64, 0);
-            self.nb_cap = nb;
+    fn ensure(&mut self, src: Source, _cpu: impl Cpu) {
+        // One spare block past the source, which the bit scans may read.
+        let blocks = src.block_count() + 1;
+        if self.block_capacity < blocks {
+            self.token_start.resize(blocks, 0);
+            self.word.resize(blocks, 0);
+            self.keyword_initial.resize(blocks, 0);
+            self.op_char.resize(blocks, 0);
+            self.digit.resize(blocks, 0);
+            self.dot.resize(blocks, 0);
+            self.misc.resize(blocks, 0);
+            self.kinds.resize(blocks * 64, 0);
+            self.block_capacity = blocks;
         }
         if self.kwpos.is_empty() {
             self.kwpos.resize(KWB * 64 + 8, 0);

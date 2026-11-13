@@ -61,7 +61,7 @@ static GT_SCAN_DELIM: [bool; 256] = {
 #[cpu_multiversion]
 #[inline(never)]
 pub fn lt_run_split(tokens: &TokensView, lt: usize, cpu: impl Cpu) -> bool {
-    let TokensView { src, st, n, .. } = *tokens;
+    let TokensView { src, token_start, n, .. } = *tokens;
     // A TypeParameter starts with an identifier (or the `const` modifier),
     // which is what makes `<<=` cost two bytes to reject.
     let head = skip_trivia_fwd(src, n, lt + 2, cpu);
@@ -73,7 +73,7 @@ pub fn lt_run_split(tokens: &TokensView, lt: usize, cpu: impl Cpu) -> bool {
         return false;
     }
     // Already fused by coalesce: a shift.
-    if !bits::get(st, lt + 1, cpu) {
+    if !bits::get(token_start, lt + 1, cpu) {
         return false;
     }
     let Some(gt) = list_closer(tokens, lt + 1, cpu) else {
@@ -154,8 +154,8 @@ fn group_closer(tokens: &TokensView, lp: usize, cpu: impl Cpu) -> Option<usize> 
 #[cpu_multiversion]
 #[inline]
 fn past_raw(tokens: &TokensView, lim: usize, i: usize, cpu: impl Cpu) -> Option<usize> {
-    let (src, kind) = (tokens.src, tokens.kind);
-    let j = skip_raw_literal(src, kind, lim, i, cpu);
+    let (src, kinds) = (tokens.src, tokens.kinds);
+    let j = skip_raw_literal(src, kinds, lim, i, cpu);
     if j != i {
         return (j < lim).then_some(j);
     }
@@ -174,7 +174,7 @@ fn past_raw(tokens: &TokensView, lim: usize, i: usize, cpu: impl Cpu) -> Option<
 #[cpu_multiversion]
 #[inline(never)]
 fn resolve_lists(tokens: &TokensView, start: usize, cpu: impl Cpu) -> Option<usize> {
-    let TokensView { src, st, opch, n, closers, .. } = *tokens;
+    let TokensView { src, token_start, op_char, n, closers, .. } = *tokens;
     let budget = start + FORWARD_SCAN_CAP;
     let mut stack = closers.lists.borrow_mut();
     stack.clear();
@@ -182,7 +182,7 @@ fn resolve_lists(tokens: &TokensView, start: usize, cpu: impl Cpu) -> Option<usi
     let (mut parens, mut brackets, mut braces) = (0i32, 0i32, 0i32);
     let mut i = start + 1;
     while i < n {
-        if bits::get(st, i, cpu) {
+        if bits::get(token_start, i, cpu) {
             match past_raw(tokens, n, i, cpu) {
                 Some(j) if j != i => {
                     i = j;
@@ -193,8 +193,8 @@ fn resolve_lists(tokens: &TokensView, start: usize, cpu: impl Cpu) -> Option<usi
             }
         }
         let c = src[i];
-        if GT_SCAN_DELIM[c as usize] && bits::get(st, i, cpu) {
-            let op = bits::get(opch, i, cpu);
+        if GT_SCAN_DELIM[c as usize] && bits::get(token_start, i, cpu) {
+            let op = bits::get(op_char, i, cpu);
             match c {
                 b'<' => {
                     if op && src[i + 1] != b'=' {
@@ -295,14 +295,14 @@ fn kill(
 #[cpu_multiversion]
 #[inline(never)]
 fn resolve_groups(tokens: &TokensView, start: usize, cpu: impl Cpu) -> Option<usize> {
-    let TokensView { src, st, n, closers, .. } = *tokens;
+    let TokensView { src, token_start, n, closers, .. } = *tokens;
     let budget = start + FORWARD_SCAN_CAP;
     let mut open = closers.groups.borrow_mut();
     open.clear();
     open.push(start as u32);
     let mut i = start + 1;
     while i < n {
-        if bits::get(st, i, cpu) {
+        if bits::get(token_start, i, cpu) {
             match past_raw(tokens, n, i, cpu) {
                 Some(j) if j != i => {
                     i = j;
@@ -343,12 +343,12 @@ fn resolve_groups(tokens: &TokensView, start: usize, cpu: impl Cpu) -> Option<us
 #[inline]
 pub(super) fn skip_raw_literal(
     src: &[u8],
-    kind: &[u8],
+    kinds: &[u8],
     n: usize,
     i: usize,
     cpu: impl Cpu,
 ) -> usize {
-    if kind[i] < OP_KIND_BASE {
+    if kinds[i] < OP_KIND_BASE {
         return i;
     }
     let c = src[i];

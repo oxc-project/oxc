@@ -6,6 +6,7 @@ use crate::{error::DiagCode, token::tk};
 use crate::pipeline::{
     bitmap::Bitmap,
     bytes::unicode_ws_len,
+    kinds::Kinds,
     lanes::Lanes,
     scan::{scan_block_comment, scan_line_comment},
     source::Source,
@@ -18,19 +19,19 @@ use super::common::find_line_terminator;
 #[inline(always)]
 pub(super) unsafe fn lex_line_comment(
     src: Source,
-    st: Bitmap,
-    kind: *mut u8,
+    token_start: Bitmap,
+    kinds: Kinds,
     s: usize,
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) -> usize {
     let (end, lic_q) = scan_line_comment(src, s + 2, cpu);
-    *kind.add(s) = tk!(LineComment);
+    kinds.set(s, tk!(LineComment));
     if end > s + 1 {
-        st.clear_range(s + 1, end - 1, cpu);
+        token_start.clear_range(s + 1, end - 1, cpu);
     }
     if end < src.len() {
-        st.set(end, cpu);
+        token_start.set(end, cpu);
     }
     let lic = lic_q >= 0 && (lic_q as usize) + 8 < end;
     let body = comment_body(src.bytes(), s as u32, end as u32, false, cpu);
@@ -46,8 +47,8 @@ pub(super) unsafe fn lex_line_comment(
 #[inline(always)]
 pub(super) unsafe fn lex_block_comment(
     src: Source,
-    st: Bitmap,
-    kind: *mut u8,
+    token_start: Bitmap,
+    kinds: Kinds,
     s: usize,
     lanes: &mut Lanes,
     cpu: impl Cpu,
@@ -57,9 +58,9 @@ pub(super) unsafe fn lex_block_comment(
     if e >= src.len() {
         lanes.push_diag(s as u32, (src.len() - s) as u32, DiagCode::UnterminatedBlockComment);
     }
-    *kind.add(s) = tk!(BlockComment);
+    kinds.set(s, tk!(BlockComment));
     if end > s + 1 {
-        st.clear_range(s + 1, end - 1, cpu);
+        token_start.clear_range(s + 1, end - 1, cpu);
     }
 
     let body = comment_body(src.bytes(), s as u32, end as u32, true, cpu);
@@ -127,9 +128,9 @@ pub(super) fn html_open_comment_at(src: Source, s: usize, module: bool, cpu: imp
 #[inline(never)]
 pub(super) unsafe fn lex_html_open_comment(
     src: Source,
-    st: Bitmap,
-    kind: *mut u8,
-    opch: Bitmap,
+    token_start: Bitmap,
+    kinds: Kinds,
+    op_char: Bitmap,
     s: usize,
     lanes: &mut Lanes,
 ) -> usize {
@@ -139,16 +140,15 @@ pub(super) unsafe fn lex_html_open_comment(
         lanes.push_diag(s as u32, 4, DiagCode::HtmlCommentInModule);
     }
     let end = find_line_terminator(src, s + 4, cpu);
-    *kind.add(s) = tk!(LineComment);
+    kinds.set(s, tk!(LineComment));
     if end > s + 1 {
-        st.clear_range(s + 1, end - 1, cpu);
+        token_start.clear_range(s + 1, end - 1, cpu);
     }
     if end < src.len() {
-        st.set(end, cpu);
+        token_start.set(end, cpu);
     }
-    // `<`, `!`, `-` are opchars: clear the span from `opch` or `coalesce`
-    // would re-tokenize `<!--` as operators.
-    opch.clear_range(s, end - 1, cpu);
+    // Clear the comment from op_char, or coalesce would read it as operators.
+    op_char.clear_range(s, end - 1, cpu);
     // `comment_body` skips a 2-byte delimiter; pass s + 2 so the 4-byte
     // `<!--` is skipped. The record keeps (s, end).
     let body = comment_body(src.bytes(), (s + 2) as u32, end as u32, false, cpu);
@@ -180,9 +180,9 @@ pub(super) fn html_close_comment_at(src: Source, s: usize, module: bool, cpu: im
 #[inline(never)]
 pub(super) unsafe fn lex_html_close_comment(
     src: Source,
-    st: Bitmap,
-    kind: *mut u8,
-    opch: Bitmap,
+    token_start: Bitmap,
+    kinds: Kinds,
+    op_char: Bitmap,
     s: usize,
     lanes: &mut Lanes,
 ) -> usize {
@@ -190,16 +190,16 @@ pub(super) unsafe fn lex_html_close_comment(
 
     let start = s - 2;
     let end = find_line_terminator(src, s + 1, cpu);
-    *kind.add(start) = tk!(LineComment);
-    st.set(start, cpu);
+    kinds.set(start, tk!(LineComment));
+    token_start.set(start, cpu);
     if end > start + 1 {
-        st.clear_range(start + 1, end - 1, cpu);
+        token_start.clear_range(start + 1, end - 1, cpu);
     }
     if end < src.len() {
-        st.set(end, cpu);
+        token_start.set(end, cpu);
     }
-    // Clear the span from `opch` (see `<!--` above).
-    opch.clear_range(start, end - 1, cpu);
+    // Clear the comment from op_char, as for the html open comment.
+    op_char.clear_range(start, end - 1, cpu);
     // `-->` is a 3-byte delimiter; pass start + 1 so the 2-byte-delimiter
     // body resolves to [s + 1, end).
     let body = comment_body(src.bytes(), (start + 1) as u32, end as u32, false, cpu);

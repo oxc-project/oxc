@@ -5,10 +5,11 @@ use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
 use crate::{error::DiagCode, token::tk};
 
 use crate::pipeline::{
-    bitmap::Bitmap,
+    bitmap::{Bitmap, Bitmaps},
     bytes::{is_digit, is_id_start, is_word},
     disambiguate::{TokensView, not_operator_position, prev_sig},
     find::find,
+    kinds::Kinds,
     lanes::Lanes,
     scan::scan_ident_esc,
     source::Source,
@@ -78,25 +79,16 @@ enum JFrameKind {
 /// JSX-aware carve: a 3-mode (JS / TAG / TEXT) pushdown over a single frame
 /// stack, emitting JSX_LT / JEND / JTEXT and raw (no-escape) attribute
 /// strings. All JSX logic lives here; `classify` is untouched.
-///
-/// Unlike `carve`, takes `digit`/`dot`/`kwinit` as `*mut`: a JTEXT run's
-/// start byte keeps its `st` bit yet may be a digit/keyword/operator char,
-/// so those bits are cleared there to keep `coalesce` and `keywords` from
-/// re-interpreting it.
 #[cpu_multiversion]
 pub(super) unsafe fn carve_jsx(
     src: Source,
-    st: Bitmap,
-    kind: *mut u8,
-    opch: Bitmap,
-    word: Bitmap,
-    digit: Bitmap,
-    dot: Bitmap,
-    kwinit: Bitmap,
+    bitmaps: &Bitmaps,
+    kinds: Kinds,
     ts: bool,
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) {
+    let Bitmaps { token_start, word, keyword_initial, op_char, digit, dot, .. } = *bitmaps;
     // Annex B B.1.3 (`-->` at line start) needs JS mode to stop at `>`, which JSX is full of.
     // The finders that do so are switched on only after a `<!--` has been lexed (the pair the
     // legacy comments come in, and `<!--` is caught free on the `<` path), so a module or a
@@ -110,10 +102,10 @@ pub(super) unsafe fn carve_jsx(
     let mut i = 0usize;
     if src.len() >= 2 && src[0] == b'#' && src[1] == b'!' {
         let end = find_line_terminator(src, 2, cpu);
-        *kind = tk!(Hashbang);
-        st.clear_range(1, end - 1, cpu);
+        kinds.set(0, tk!(Hashbang));
+        token_start.clear_range(1, end - 1, cpu);
         if end < src.len() {
-            st.set(end, cpu);
+            token_start.set(end, cpu);
         }
         i = end;
     }
@@ -137,13 +129,13 @@ pub(super) unsafe fn carve_jsx(
                 let c = src[s];
                 match c {
                     b'"' | b'\'' => {
-                        i = lex_string(src, st, kind, s, c, lanes, cpu);
+                        i = lex_string(src, token_start, kinds, s, c, lanes, cpu);
                     }
                     b'`' => {
                         let (end, opened_sub) = lex_template_segment(
                             src,
-                            st,
-                            kind,
+                            token_start,
+                            kinds,
                             s,
                             tk!(TemplateHead),
                             tk!(TemplateNoSub),
@@ -183,8 +175,8 @@ pub(super) unsafe fn carve_jsx(
                             stack.pop();
                             let (end, opened_sub) = lex_template_segment(
                                 src,
-                                st,
-                                kind,
+                                token_start,
+                                kinds,
                                 s,
                                 tk!(TemplateMiddle),
                                 tk!(TemplateTail),
@@ -214,13 +206,13 @@ pub(super) unsafe fn carve_jsx(
                         }
                     }
                     b'/' => {
-                        i = lex_slash(src, st, kind, opch, word, ts, s, lanes, cpu);
+                        i = lex_slash(src, bitmaps, kinds, ts, s, lanes, cpu);
                     }
                     b'<' => {
                         let c1 = if s + 1 < src.len() { src[s + 1] } else { 0 };
                         if c1 == b'!' && html_open_comment_at(src, s, lanes.module, cpu) {
                             // Annex B B.1.1: the goal, not the JSX setting, decides.
-                            i = lex_html_open_comment(src, st, kind, opch, s, lanes);
+                            i = lex_html_open_comment(src, token_start, kinds, op_char, s, lanes);
                             html_close = !lanes.module;
                             continue;
                         }
@@ -234,9 +226,8 @@ pub(super) unsafe fn carve_jsx(
                         } else if not_operator_position(
                             &TokensView::new(
                                 src,
-                                st,
-                                opch,
-                                kind,
+                                bitmaps,
+                                kinds,
                                 ts,
                                 0,
                                 lanes.module,
@@ -254,7 +245,7 @@ pub(super) unsafe fn carve_jsx(
                             let tc = if tpos < src.len() { src[tpos] } else { 0 };
                             if tc == b'>' {
                                 // fragment `<>`
-                                jsx_punct(kind, opch, s, tk!(JsxLt), cpu);
+                                jsx_punct(kinds, op_char, s, tk!(JsxLt), cpu);
                                 stack.push(JFrame {
                                     kind: JFrameKind::JsxTag,
                                     parent: JMode::Js,
@@ -265,12 +256,12 @@ pub(super) unsafe fn carve_jsx(
                                 mode = JMode::Tag;
                             } else if is_id_start(tc, cpu)
                                 && jsx_over_type_params(
-                                    src, st, opch, kind, word, s, tpos, ts, lanes, cpu,
+                                    src, bitmaps, kinds, s, tpos, ts, lanes, cpu,
                                 )
                             {
                                 // Element - unless `.tsx` says this is a
                                 // type-parameter list, which stays a less-than.
-                                jsx_punct(kind, opch, s, tk!(JsxLt), cpu);
+                                jsx_punct(kinds, op_char, s, tk!(JsxLt), cpu);
                                 stack.push(JFrame {
                                     kind: JFrameKind::JsxTag,
                                     parent: JMode::Js,
@@ -289,7 +280,7 @@ pub(super) unsafe fn carve_jsx(
                     b'>' => {
                         // Only a script's finder stops here: Annex B B.1.3 `-->` at line start.
                         i = if html_close_comment_at(src, s, lanes.module, cpu) {
-                            lex_html_close_comment(src, st, kind, opch, s, lanes)
+                            lex_html_close_comment(src, token_start, kinds, op_char, s, lanes)
                         } else {
                             s + 1
                         };
@@ -304,19 +295,17 @@ pub(super) unsafe fn carve_jsx(
                 if s >= src.len() {
                     break;
                 }
-                // Tag/attr names that spell reserved words must stay IDENT:
-                // clear their `kwinit` so the `keywords` pass skips them.
+                // Tag and attribute names that spell keywords stay identifiers.
                 if s > i {
-                    kwinit.clear_range(i, s - 1, cpu);
-                    jsx_glue_hyphens(src, st, opch, word, i, s, cpu);
+                    keyword_initial.clear_range(i, s - 1, cpu);
+                    jsx_glue_hyphens(src, bitmaps, i, s, cpu);
                 }
                 let c = src[s];
                 if c == b'<' {
                     let tokens = TokensView::new(
                         src,
-                        st,
-                        opch,
-                        kind,
+                        bitmaps,
+                        kinds,
                         ts,
                         0,
                         lanes.module,
@@ -324,9 +313,11 @@ pub(super) unsafe fn carve_jsx(
                         &lanes.disambiguate.closers,
                         cpu,
                     );
-                    if prev_sig(tokens.st, tokens.kind, s, cpu).is_some_and(|q| src[q] == b'=') {
+                    if prev_sig(tokens.token_start, tokens.kinds, s, cpu)
+                        .is_some_and(|q| src[q] == b'=')
+                    {
                         let tpos = jsx_skip_trivia(src, s + 1, cpu);
-                        jsx_punct(kind, opch, s, tk!(JsxLt), cpu);
+                        jsx_punct(kinds, op_char, s, tk!(JsxLt), cpu);
                         stack.push(JFrame {
                             kind: JFrameKind::JsxTag,
                             parent: JMode::Tag,
@@ -349,7 +340,7 @@ pub(super) unsafe fn carve_jsx(
                 if ts && c == b'<' {
                     let mut depth = 1i32;
                     let mut p = s + 1;
-                    jsx_punct(kind, opch, s, tk!(Lt), cpu);
+                    jsx_punct(kinds, op_char, s, tk!(Lt), cpu);
                     // Open template substitutions, each counting its own
                     // nested braces - the same shape `carve` keeps in its
                     // depth vector.
@@ -367,24 +358,24 @@ pub(super) unsafe fn carve_jsx(
                         match src[q] {
                             b'<' => {
                                 depth += 1;
-                                jsx_punct(kind, opch, q, tk!(Lt), cpu);
+                                jsx_punct(kinds, op_char, q, tk!(Lt), cpu);
                                 p = q + 1;
                             }
                             b'>' => {
                                 if !(q > 0 && src[q - 1] == b'=') {
                                     depth -= 1;
-                                    jsx_punct(kind, opch, q, tk!(Gt), cpu);
+                                    jsx_punct(kinds, op_char, q, tk!(Gt), cpu);
                                 }
                                 p = q + 1;
                             }
                             b'"' | b'\'' => {
-                                p = lex_string(src, st, kind, q, src[q], lanes, cpu);
+                                p = lex_string(src, token_start, kinds, q, src[q], lanes, cpu);
                             }
                             b'`' => {
                                 let (end, opened) = lex_template_segment(
                                     src,
-                                    st,
-                                    kind,
+                                    token_start,
+                                    kinds,
                                     q,
                                     tk!(TemplateHead),
                                     tk!(TemplateNoSub),
@@ -417,8 +408,8 @@ pub(super) unsafe fn carve_jsx(
                                 sub.pop();
                                 let (end, opened) = lex_template_segment(
                                     src,
-                                    st,
-                                    kind,
+                                    token_start,
+                                    kinds,
                                     q,
                                     tk!(TemplateMiddle),
                                     tk!(TemplateTail),
@@ -435,8 +426,12 @@ pub(super) unsafe fn carve_jsx(
                             // is left alone.
                             b'/' => {
                                 p = match src[q + 1] {
-                                    b'*' => lex_block_comment(src, st, kind, q, lanes, cpu),
-                                    b'/' => lex_line_comment(src, st, kind, q, lanes, cpu),
+                                    b'*' => {
+                                        lex_block_comment(src, token_start, kinds, q, lanes, cpu)
+                                    }
+                                    b'/' => {
+                                        lex_line_comment(src, token_start, kinds, q, lanes, cpu)
+                                    }
                                     _ => q + 1,
                                 };
                             }
@@ -462,9 +457,9 @@ pub(super) unsafe fn carve_jsx(
                             );
                         }
                         let end = if e < src.len() { e + 1 } else { src.len() };
-                        *kind.add(s) = tk!(String);
+                        kinds.set(s, tk!(String));
                         if end > s + 1 {
-                            st.clear_range(s + 1, end - 1, cpu);
+                            token_start.clear_range(s + 1, end - 1, cpu);
                         }
                         let be = if e < src.len() {
                             e
@@ -491,9 +486,9 @@ pub(super) unsafe fn carve_jsx(
                         let d = if s + 1 < src.len() { src[s + 1] } else { 0 };
                         if d == b'*' {
                             // comment inside a tag = whitespace
-                            i = lex_block_comment(src, st, kind, s, lanes, cpu);
+                            i = lex_block_comment(src, token_start, kinds, s, lanes, cpu);
                         } else if d == b'/' {
-                            i = lex_line_comment(src, st, kind, s, lanes, cpu);
+                            i = lex_line_comment(src, token_start, kinds, s, lanes, cpu);
                         } else {
                             // `/>` closes the tag, with any trivia (comments, Unicode
                             // whitespace) between the two.
@@ -509,16 +504,21 @@ pub(super) unsafe fn carve_jsx(
                                 let mut q = s + 1;
                                 while q < gp {
                                     q = match (src[q], src[q + 1]) {
-                                        (b'/', b'*') => {
-                                            lex_block_comment(src, st, kind, q, lanes, cpu)
-                                        }
+                                        (b'/', b'*') => lex_block_comment(
+                                            src,
+                                            token_start,
+                                            kinds,
+                                            q,
+                                            lanes,
+                                            cpu,
+                                        ),
                                         (b'/', b'/') => {
-                                            lex_line_comment(src, st, kind, q, lanes, cpu)
+                                            lex_line_comment(src, token_start, kinds, q, lanes, cpu)
                                         }
                                         _ => q + 1,
                                     };
                                 }
-                                jsx_punct(kind, opch, gp, tk!(JsxTagEnd), cpu);
+                                jsx_punct(kinds, op_char, gp, tk!(JsxTagEnd), cpu);
                                 let parent = stack.last().map_or(JMode::Js, |f| f.parent);
                                 stack.pop();
                                 mode = parent;
@@ -538,7 +538,7 @@ pub(super) unsafe fn carve_jsx(
                         {
                             f.kind = JFrameKind::JsxElem;
                         }
-                        jsx_punct(kind, opch, s, tk!(Gt), cpu);
+                        jsx_punct(kinds, op_char, s, tk!(Gt), cpu);
                         mode = JMode::Text;
                         text_start = s + 1;
                         i = s + 1;
@@ -554,14 +554,14 @@ pub(super) unsafe fn carve_jsx(
                 if runend > text_start {
                     // One JTEXT token for the run; neutralize its start byte
                     // against coalesce/keywords and clear the interior.
-                    st.set(text_start, cpu);
-                    *kind.add(text_start) = tk!(JsxText);
-                    opch.clear(text_start, cpu);
+                    token_start.set(text_start, cpu);
+                    kinds.set(text_start, tk!(JsxText));
+                    op_char.clear(text_start, cpu);
                     digit.clear(text_start, cpu);
                     dot.clear(text_start, cpu);
-                    kwinit.clear(text_start, cpu);
+                    keyword_initial.clear(text_start, cpu);
                     if runend > text_start + 1 {
-                        st.clear_range(text_start + 1, runend - 1, cpu);
+                        token_start.clear_range(text_start + 1, runend - 1, cpu);
                     }
                 }
                 if s >= src.len() {
@@ -570,7 +570,7 @@ pub(super) unsafe fn carve_jsx(
                 let c = src[s];
                 if c == b'{' {
                     if s >= 2 && src[s - 1] == b'u' && src[s - 2] == b'\\' {
-                        restore_escaped_container(src, st, word, kind, s);
+                        restore_escaped_container(src, token_start, word, kinds, s);
                     }
                     stack.push(JFrame {
                         kind: JFrameKind::JsxCont,
@@ -582,9 +582,8 @@ pub(super) unsafe fn carve_jsx(
                     mode = JMode::Js;
                     i = s + 1;
                 } else if c == b'>' || c == b'}' {
-                    // A stray `>`/`}` ends the run; clear its opch so
-                    // coalesce can't fuse adjacent strays into `>>`.
-                    opch.clear(s, cpu);
+                    // A stray > or } ends the run; clearing op_char stops coalesce fusing strays.
+                    op_char.clear(s, cpu);
                     lanes.push_diag(s as u32, 1, DiagCode::JsxTextInvalidCharacter);
                     text_start = s + 1;
                     i = s + 1;
@@ -605,8 +604,12 @@ pub(super) unsafe fn carve_jsx(
                         let mut q = s + 1;
                         while q < tpos {
                             q = match (src[q], src[q + 1]) {
-                                (b'/', b'*') => lex_block_comment(src, st, kind, q, lanes, cpu),
-                                (b'/', b'/') => lex_line_comment(src, st, kind, q, lanes, cpu),
+                                (b'/', b'*') => {
+                                    lex_block_comment(src, token_start, kinds, q, lanes, cpu)
+                                }
+                                (b'/', b'/') => {
+                                    lex_line_comment(src, token_start, kinds, q, lanes, cpu)
+                                }
                                 _ => q + 1,
                             };
                         }
@@ -617,21 +620,21 @@ pub(super) unsafe fn carve_jsx(
                                 break;
                             }
                             gp = match src[gp + 1] {
-                                b'*' => lex_block_comment(src, st, kind, gp, lanes, cpu),
-                                b'/' => lex_line_comment(src, st, kind, gp, lanes, cpu),
+                                b'*' => lex_block_comment(src, token_start, kinds, gp, lanes, cpu),
+                                b'/' => lex_line_comment(src, token_start, kinds, gp, lanes, cpu),
                                 _ => gp + 1,
                             };
                         }
                         if gp > tpos + 1 {
-                            kwinit.clear_range(tpos + 1, gp - 1, cpu);
+                            keyword_initial.clear_range(tpos + 1, gp - 1, cpu);
                             // `</data-x>`: the name region holds no
                             // expression container, so hyphens in it are
                             // always part of the JSXIdentifier.
-                            jsx_glue_hyphens(src, st, opch, word, tpos + 1, gp, cpu);
+                            jsx_glue_hyphens(src, bitmaps, tpos + 1, gp, cpu);
                         }
-                        jsx_punct(kind, opch, s, tk!(JsxLt), cpu);
+                        jsx_punct(kinds, op_char, s, tk!(JsxLt), cpu);
                         if gp < src.len() {
-                            jsx_punct(kind, opch, gp, tk!(JsxTagEnd), cpu);
+                            jsx_punct(kinds, op_char, gp, tk!(JsxTagEnd), cpu);
                         }
                         let after = if gp < src.len() { gp + 1 } else { src.len() };
                         if gp >= src.len() {
@@ -664,7 +667,7 @@ pub(super) unsafe fn carve_jsx(
                         i = after;
                     } else if tc == b'>' || is_id_start(tc, cpu) {
                         // child element / fragment
-                        jsx_punct(kind, opch, s, tk!(JsxLt), cpu);
+                        jsx_punct(kinds, op_char, s, tk!(JsxLt), cpu);
                         stack.push(JFrame {
                             kind: JFrameKind::JsxTag,
                             parent: JMode::Text,
@@ -675,8 +678,8 @@ pub(super) unsafe fn carve_jsx(
                         mode = JMode::Tag;
                         i = s + 1;
                     } else {
-                        // malformed lone `<` in text - clear opch, no `<<` fusion
-                        opch.clear(s, cpu);
+                        // Malformed lone < in text: clear op_char so no << is fused.
+                        op_char.clear(s, cpu);
                         text_start = s + 1;
                         i = s + 1;
                     }
@@ -712,33 +715,32 @@ pub(super) unsafe fn carve_jsx(
 #[inline(never)]
 unsafe fn restore_escaped_container(
     src: Source,
-    st: Bitmap,
+    token_start: Bitmap,
     word: Bitmap,
-    kind: *mut u8,
+    kinds: Kinds,
     s: usize,
 ) {
     let cpu = BASELINE;
-    st.set(s, cpu);
+    token_start.set(s, cpu);
     let mut i = s + 1;
     if word.get(i, cpu) {
-        st.set(i, cpu);
+        token_start.set(i, cpu);
         i = word.next0(i, src.len(), cpu);
     }
     if src[i] == b'\\' && src[i + 1] == b'u' {
-        st.set(i, cpu);
-        *kind.add(i) = tk!(IdentEscaped);
+        token_start.set(i, cpu);
+        kinds.set(i, tk!(IdentEscaped));
         i = scan_ident_esc(src, i, cpu);
     }
     if src[i] == b'}' {
-        st.set(i, cpu);
+        token_start.set(i, cpu);
     }
 }
 
-/// Stamp a single-byte JSX-structural punct: set its final `kind` and clear
-/// its `opch` bit so `coalesce` cannot re-fuse it (`<div>=` into `>=`).
+/// Set a JSX punctuator's kind and clear its op_char bit so coalesce cannot fuse it.
 #[cpu_multiversion]
 #[inline(always)]
-unsafe fn jsx_punct(kind: *mut u8, opch: Bitmap, off: usize, k: u8, cpu: impl Cpu) {
-    *kind.add(off) = k;
-    opch.clear(off, cpu);
+unsafe fn jsx_punct(kinds: Kinds, op_char: Bitmap, off: usize, k: u8, cpu: impl Cpu) {
+    kinds.set(off, k);
+    op_char.clear(off, cpu);
 }

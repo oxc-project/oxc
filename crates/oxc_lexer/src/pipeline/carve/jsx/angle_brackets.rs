@@ -3,9 +3,10 @@ use oxc_simd::{Cpu, cpu_multiversion};
 use crate::error::DiagCode;
 
 use crate::pipeline::{
-    bitmap::Bitmap,
+    bitmap::{Bitmap, Bitmaps},
     bytes::{is_id_start, is_word, line_break_in},
     disambiguate::{TokensView, jsx_over_generic},
+    kinds::Kinds,
     lanes::Lanes,
     source::Source,
 };
@@ -23,10 +24,8 @@ enum AngleVerdict {
 #[inline]
 pub(super) unsafe fn jsx_over_type_params(
     src: Source,
-    st: Bitmap,
-    opch: Bitmap,
-    kind: *const u8,
-    word: Bitmap,
+    bitmaps: &Bitmaps,
+    kinds: Kinds,
     lt: usize,
     tpos: usize,
     ts: bool,
@@ -36,15 +35,14 @@ pub(super) unsafe fn jsx_over_type_params(
     if !ts {
         return true;
     }
-    match ts_angle_verdict(src, tpos, word, cpu) {
+    match ts_angle_verdict(src, tpos, bitmaps.word, cpu) {
         AngleVerdict::TypeParams => false,
         AngleVerdict::Jsx => true,
         AngleVerdict::Ambiguous { gt, lp } => {
             let tokens = TokensView::new(
                 src,
-                st,
-                opch,
-                kind,
+                bitmaps,
+                kinds,
                 ts,
                 0,
                 lanes.module,

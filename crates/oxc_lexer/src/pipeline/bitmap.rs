@@ -115,6 +115,39 @@ impl Bitmap {
     }
 }
 
+/// The per-byte bitmaps classify fills in and the later stages refine.
+#[derive(Clone, Copy)]
+pub(super) struct Bitmaps {
+    pub token_start: Bitmap,
+    /// Identifier chars, including every non-ASCII byte.
+    pub word: Bitmap,
+    pub keyword_initial: Bitmap,
+    /// Chars a multi-byte operator is made of.
+    pub op_char: Bitmap,
+    pub digit: Bitmap,
+    pub dot: Bitmap,
+    /// Bytes the misc passes look at: hash, backslash, non-ASCII, vertical tab and form feed.
+    pub misc: Bitmap,
+}
+
+impl Bitmaps {
+    #[inline(always)]
+    pub(super) unsafe fn clear_block(&self, block_idx: usize) {
+        let all = [
+            self.token_start,
+            self.word,
+            self.keyword_initial,
+            self.op_char,
+            self.digit,
+            self.dot,
+            self.misc,
+        ];
+        for bitmap in all {
+            *bitmap.as_ptr().add(block_idx) = 0;
+        }
+    }
+}
+
 #[cpu_version(Avx2)]
 #[inline]
 unsafe fn any_avx2(bm: *const u64, nw: usize, cpu: Avx2) -> bool {

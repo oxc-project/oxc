@@ -1,6 +1,6 @@
 use oxc_simd::{Cpu, cpu_multiversion};
 
-use crate::pipeline::{bitmap::Bitmap, lanes::Lanes, source::Source};
+use crate::pipeline::{bitmap::Bitmaps, kinds::Kinds, lanes::Lanes, source::Source};
 
 mod comments;
 mod common;
@@ -15,21 +15,16 @@ use jsx::carve_jsx;
 #[inline(never)]
 pub unsafe fn carve(
     src: Source,
-    st: Bitmap,
-    kind: *mut u8,
-    opch: Bitmap,
-    word: Bitmap,
-    digit: Bitmap,
-    dot: Bitmap,
-    kwinit: Bitmap,
+    bitmaps: &Bitmaps,
+    kinds: Kinds,
     jsx: bool,
     ts: bool,
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) {
     if jsx {
-        carve_jsx(src, st, kind, opch, word, digit, dot, kwinit, ts, lanes, cpu);
+        carve_jsx(src, bitmaps, kinds, ts, lanes, cpu);
     } else {
-        carve_js(src, st, kind, opch, word, ts, lanes, cpu);
+        carve_js(src, bitmaps, kinds, ts, lanes, cpu);
     }
 }

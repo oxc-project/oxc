@@ -2,35 +2,21 @@ use oxc_simd::{Cpu, cpu_multiversion};
 
 use crate::token::{KW_KIND_BASE, tk};
 
-use crate::pipeline::{bitmap::Bitmap, source::Source};
+use crate::pipeline::{bitmap::Bitmaps, kinds::Kinds, source::Source};
 
 #[cpu_multiversion]
 #[inline]
-pub unsafe fn misc_post(
-    src: Source,
-    st: Bitmap,
-    word: Bitmap,
-    misc: Bitmap,
-    kind: *mut u8,
-    nesc: usize,
-    cpu: impl Cpu,
-) {
+pub unsafe fn misc_post(src: Source, bitmaps: &Bitmaps, kinds: Kinds, nesc: usize, cpu: impl Cpu) {
     if nesc != 0 {
-        misc_post_impl(src, st, word, misc, kind, cpu)
+        misc_post_impl(src, bitmaps, kinds, cpu)
     }
 }
 
 #[cpu_multiversion]
 #[inline(never)]
-unsafe fn misc_post_impl(
-    src: Source,
-    st: Bitmap,
-    word: Bitmap,
-    misc: Bitmap,
-    kind: *mut u8,
-    cpu: impl Cpu,
-) {
-    let nw = (src.len() + 63) >> 6;
+unsafe fn misc_post_impl(src: Source, bitmaps: &Bitmaps, kinds: Kinds, cpu: impl Cpu) {
+    let Bitmaps { token_start, word, misc, .. } = *bitmaps;
+    let nw = src.block_count();
     for w in 0..nw {
         let mut m = misc.block(w, cpu);
         while m != 0 {
@@ -40,17 +26,17 @@ unsafe fn misc_post_impl(
             if src[p] != b'\\' || src[p + 1] != b'u' {
                 continue;
             }
-            if !st.get(p, cpu) {
+            if !token_start.get(p, cpu) {
                 continue;
             }
             if p == 0 || !word.get(p - 1, cpu) {
                 continue;
             }
-            let tt = st.prev1(p, cpu);
-            let k = *kind.add(tt as usize);
+            let tt = token_start.prev1(p, cpu);
+            let k = kinds.get(tt as usize);
             if k == tk!(Ident) || (k >= KW_KIND_BASE && k != tk!(Invalid)) {
-                *kind.add(tt as usize) = tk!(IdentEscaped);
-                st.clear(p, cpu);
+                kinds.set(tt as usize, tk!(IdentEscaped));
+                token_start.clear(p, cpu);
             }
         }
     }

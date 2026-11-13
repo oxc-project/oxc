@@ -1,6 +1,6 @@
 use oxc_simd::{Cpu, DynCpu, cpu_multiversion};
 
-use crate::pipeline::{bitmap::Bitmap, source::Source};
+use crate::pipeline::{bitmap::Bitmaps, kinds::Kinds, source::Source};
 
 mod avx2;
 mod generic;
@@ -17,68 +17,57 @@ use neon::classify_neon;
 pub(super) unsafe fn classify(
     ts: bool,
     src: Source,
-    nb: usize,
-    word: Bitmap,
-    st: Bitmap,
-    kwinit: Bitmap,
-    opch: Bitmap,
-    digit: Bitmap,
-    dot: Bitmap,
-    misc: Bitmap,
-    kind: *mut u8,
+    bitmaps: &Bitmaps,
+    kinds: Kinds,
     cpu: impl Cpu,
 ) {
-    let (word, st, kwinit, opch) = (word.as_ptr(), st.as_ptr(), kwinit.as_ptr(), opch.as_ptr());
+    let Bitmaps { token_start, word, keyword_initial, op_char, digit, dot, misc } = *bitmaps;
+    let (src_ptr, src_len, kinds_ptr) = (src.as_ptr(), src.len(), kinds.as_ptr());
+    let (token_start, word, keyword_initial, op_char) =
+        (token_start.as_ptr(), word.as_ptr(), keyword_initial.as_ptr(), op_char.as_ptr());
     let (digit, dot, misc) = (digit.as_ptr(), dot.as_ptr(), misc.as_ptr());
     match DynCpu::from(cpu) {
         DynCpu::Avx2(cpu) => classify_avx2(
             ts,
-            src.as_ptr(),
-            src.len(),
+            src_ptr,
+            src_len,
             word,
-            st,
-            kwinit,
-            opch,
+            token_start,
+            keyword_initial,
+            op_char,
             digit,
             dot,
             misc,
-            kind,
+            kinds_ptr,
             cpu,
         ),
         DynCpu::Neon(cpu) => classify_neon(
             ts,
-            src.as_ptr(),
-            src.len(),
+            src_ptr,
+            src_len,
             word,
-            st,
-            kwinit,
-            opch,
+            token_start,
+            keyword_initial,
+            op_char,
             digit,
             dot,
             misc,
-            kind,
+            kinds_ptr,
             cpu,
         ),
         DynCpu::Generic(_) => classify_generic(
             ts,
-            src.as_ptr(),
-            src.len(),
+            src_ptr,
+            src_len,
             word,
-            st,
-            kwinit,
-            opch,
+            token_start,
+            keyword_initial,
+            op_char,
             digit,
             dot,
             misc,
-            kind,
+            kinds_ptr,
         ),
     };
-
-    *word.add(nb) = 0;
-    *st.add(nb) = 0;
-    *kwinit.add(nb) = 0;
-    *opch.add(nb) = 0;
-    *digit.add(nb) = 0;
-    *dot.add(nb) = 0;
-    *misc.add(nb) = 0;
+    bitmaps.clear_block(src.block_count());
 }

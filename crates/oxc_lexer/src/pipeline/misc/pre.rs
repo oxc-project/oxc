@@ -4,30 +4,28 @@ use oxc_span::Span;
 use crate::{error::DiagCode, token::tk};
 
 use crate::pipeline::{
-    bitmap::Bitmap, bytes::is_id_start, lanes::Lanes, scan::scan_ident_esc, source::Source,
+    bitmap::Bitmaps, bytes::is_id_start, kinds::Kinds, lanes::Lanes, scan::scan_ident_esc,
+    source::Source,
 };
 
 #[cpu_multiversion]
 #[inline(never)]
 pub unsafe fn misc_pre(
     src: Source,
-    nb: usize,
-    st: Bitmap,
-    word: Bitmap,
-    misc: Bitmap,
-    kind: *mut u8,
+    bitmaps: &Bitmaps,
+    kinds: Kinds,
     vutf8: bool,
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) -> usize {
-    if !misc.any(nb, cpu) {
+    if !bitmaps.misc.any(src.block_count(), cpu) {
         return 0;
     }
 
     if vutf8 {
-        misc_pre_impl::<true>(src, st, word, misc, kind, lanes, cpu)
+        misc_pre_impl::<true>(src, bitmaps, kinds, lanes, cpu)
     } else {
-        misc_pre_impl::<false>(src, st, word, misc, kind, lanes, cpu)
+        misc_pre_impl::<false>(src, bitmaps, kinds, lanes, cpu)
     }
 }
 
@@ -40,15 +38,14 @@ pub unsafe fn misc_pre(
 #[inline(always)]
 unsafe fn misc_pre_impl<const VUTF8: bool>(
     src: Source,
-    st: Bitmap,
-    word: Bitmap,
-    misc: Bitmap,
-    kind: *mut u8,
+    bitmaps: &Bitmaps,
+    kinds: Kinds,
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) -> usize {
+    let Bitmaps { token_start, word, misc, .. } = *bitmaps;
     let mut nesc = 0usize;
-    let nw = (src.len() + 63) >> 6;
+    let nw = src.block_count();
     // VUTF8 only: continuation bits spilling into the next word, and the
     // once-per-file latch for the UTF-8 diagnostic (parser parity; also
     // bounds the diag Vec on binary input).
@@ -109,12 +106,12 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                 }
                 let len = src.unicode_ws_len_at(p, cpu);
                 if len != 0 {
-                    *kind.add(p) = tk!(Whitespace);
+                    kinds.set(p, tk!(Whitespace));
                     word.clear_range(p, p + len - 1, cpu);
-                    st.set(p, cpu);
-                    st.clear_range(p + 1, p + len - 1, cpu);
+                    token_start.set(p, cpu);
+                    token_start.clear_range(p + 1, p + len - 1, cpu);
                     if p + len < src.len() {
-                        st.set(p + len, cpu);
+                        token_start.set(p + len, cpu);
                     }
                     lanes.out.irregular_whitespaces.push(Span::new(p as u32, (p + len) as u32));
                 } else if (0xC2..=0xF4).contains(&c) {
@@ -130,7 +127,7 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                 lanes.out.irregular_whitespaces.push(Span::new(p as u32, p as u32 + 1));
                 continue;
             }
-            if !st.get(p, cpu) {
+            if !token_start.get(p, cpu) {
                 continue;
             }
             if c == b'#' {
@@ -148,22 +145,22 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                 let e =
                     if src[e0] == b'\\' && src[e0 + 1] == b'u' && !holds_unicode_ws(src, p + 1, e0)
                     {
-                        *kind.add(p) = tk!(PrivateIdentEscaped);
+                        kinds.set(p, tk!(PrivateIdentEscaped));
                         nesc += 1;
                         scan_ident_esc(src, e0, cpu)
                     } else {
-                        *kind.add(p) = tk!(PrivateIdent);
+                        kinds.set(p, tk!(PrivateIdent));
                         e0
                     };
-                st.clear_range(p + 1, e - 1, cpu);
+                token_start.clear_range(p + 1, e - 1, cpu);
             } else {
                 if src[p + 1] != b'u' {
                     continue;
                 }
-                *kind.add(p) = tk!(IdentEscaped);
+                kinds.set(p, tk!(IdentEscaped));
                 nesc += 1;
                 let e = scan_ident_esc(src, p, cpu);
-                st.clear_range(p + 1, e - 1, cpu);
+                token_start.clear_range(p + 1, e - 1, cpu);
             }
         }
     }
