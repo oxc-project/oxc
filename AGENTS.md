@@ -167,6 +167,7 @@ Each crate follows distinct testing patterns:
 
 #### oxc_parser
 
+- Do not add unit tests to the lexer or parser unless explicitly instructed by the user.
 - **Conformance only** via `tasks/coverage`
 - **Command**: `cargo coverage parser`
 - **Suites**: Test262, Babel, TypeScript

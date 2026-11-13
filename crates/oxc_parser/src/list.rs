@@ -14,7 +14,7 @@ use crate::{
 
 impl<'a, C: Config> ParserImpl<'a, C> {
     /// Collect a parser list with one exact allocation for up to four elements.
-    /// Longer lists spill directly into an arena vector with capacity eight.
+    /// Small elements in longer lists use a separate buffer before spilling into the arena.
     #[inline]
     pub(crate) fn collect_list<T>(
         &mut self,
@@ -31,10 +31,45 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let Some(fifth) = next(self) else {
             return ArenaVec::from_array_in([first, second, third, fourth], self);
         };
+        let prefix = [first, second, third, fourth, fifth];
+        if size_of::<T>() <= 16 {
+            return self.collect_long_list(prefix, next);
+        }
         let mut list = ArenaVec::with_capacity_in(8, self);
-        list.extend([first, second, third, fourth, fifth]);
+        list.extend(prefix);
         while let Some(element) = next(self) {
             list.push(element);
+        }
+        list
+    }
+
+    /// Buffer small list elements separately from the common short-list path so
+    /// recursive parsing only pays for this stack space when a list is longer.
+    #[inline(never)]
+    fn collect_long_list<T>(
+        &mut self,
+        prefix: [T; 5],
+        mut next: impl FnMut(&mut Self) -> Option<T>,
+    ) -> ArenaVec<'a, T> {
+        let mut tail: [Option<T>; 11] = std::array::from_fn(|_| None);
+        for (index, slot) in tail.iter_mut().enumerate() {
+            let Some(element) = next(self) else {
+                let mut list = ArenaVec::with_capacity_in(5 + index, self);
+                list.extend(prefix);
+                list.extend(tail.into_iter().flatten());
+                return list;
+            };
+            *slot = Some(element);
+        }
+        let extra = next(self);
+        let mut list = ArenaVec::with_capacity_in(if extra.is_some() { 32 } else { 16 }, self);
+        list.extend(prefix);
+        list.extend(tail.into_iter().flatten());
+        if let Some(extra) = extra {
+            list.push(extra);
+            while let Some(element) = next(self) {
+                list.push(element);
+            }
         }
         list
     }
