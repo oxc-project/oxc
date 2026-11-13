@@ -674,8 +674,11 @@ impl PreferExportFrom {
             return;
         }
 
-        let mut parent_nodes: Vec<&AstNode> =
-            violations.iter().map(|v| ctx.nodes().get_node(v.export_node_id)).collect();
+        let mut parent_nodes: Vec<&AstNode> = violations
+            .iter()
+            .map(|v| ctx.nodes().get_node(v.export_node_id))
+            .unique_by(|node| node.id())
+            .collect();
         parent_nodes.sort_unstable_by_key(|node| node.span().start);
 
         let replace_export_spans: Vec<Span> = parent_nodes
@@ -683,9 +686,7 @@ impl PreferExportFrom {
             .map(|parent_node| Self::get_replace_span(ctx, parent_node.id()))
             .collect();
 
-        let end = parent_nodes.last().unwrap().span().end;
-        let start = parent_nodes.first().unwrap().span().start;
-        let delete_span = Span::new(start, end);
+        let delete_export_spans = Self::get_delete_export_spans(ctx, violations, &parent_nodes);
 
         let re_export_source_text =
             re_export_decl.map_or_default(|decl| ctx.source_range(decl.span()));
@@ -718,7 +719,7 @@ impl PreferExportFrom {
                             if is_namespace { "" } else { re_export_source_text },
                             replace_span,
                             &replace_export_spans,
-                            delete_span,
+                            &delete_export_spans,
                             if is_namespace { &violation.export_name } else { &joined_names },
                             &export_format,
                             is_namespace,
@@ -727,6 +728,107 @@ impl PreferExportFrom {
                 );
             }
         }
+    }
+
+    fn get_delete_export_spans(
+        ctx: &LintContext<'_>,
+        violations: &[Violation],
+        parent_nodes: &[&AstNode<'_>],
+    ) -> Vec<Span> {
+        let mut delete_spans = Vec::new();
+        let mut previous_declaration_was_fully_matched = false;
+
+        for parent_node in parent_nodes {
+            let AstKind::ExportNamedDeclaration(export_decl) = parent_node.kind() else {
+                Self::push_full_declaration_delete_span(
+                    ctx,
+                    &mut delete_spans,
+                    parent_node.span(),
+                    previous_declaration_was_fully_matched,
+                );
+                previous_declaration_was_fully_matched = true;
+                continue;
+            };
+
+            let matched_specifier_spans: Vec<Span> = violations
+                .iter()
+                .filter(|violation| violation.export_node_id == parent_node.id())
+                .filter_map(|violation| {
+                    let reference_node = ctx.nodes().get_node(violation.import_specifier_id);
+                    let specifier_node = ctx.nodes().parent_node(reference_node.id());
+                    matches!(specifier_node.kind(), AstKind::ExportSpecifier(_))
+                        .then(|| specifier_node.span())
+                })
+                .collect();
+
+            if matched_specifier_spans.len() == export_decl.specifiers.len() {
+                Self::push_full_declaration_delete_span(
+                    ctx,
+                    &mut delete_spans,
+                    parent_node.span(),
+                    previous_declaration_was_fully_matched,
+                );
+                previous_declaration_was_fully_matched = true;
+            } else {
+                previous_declaration_was_fully_matched = false;
+                delete_spans.extend(Self::get_specifier_delete_spans(
+                    &export_decl.specifiers,
+                    &matched_specifier_spans,
+                ));
+            }
+        }
+
+        delete_spans
+    }
+
+    fn push_full_declaration_delete_span(
+        ctx: &LintContext<'_>,
+        delete_spans: &mut Vec<Span>,
+        span: Span,
+        previous_declaration_was_fully_matched: bool,
+    ) {
+        if previous_declaration_was_fully_matched
+            && let Some(previous_span) = delete_spans.last_mut()
+            && ctx.source_range(Span::new(previous_span.end, span.start)).trim().is_empty()
+        {
+            previous_span.end = span.end;
+        } else {
+            delete_spans.push(span);
+        }
+    }
+
+    fn get_specifier_delete_spans(
+        specifiers: &[ExportSpecifier<'_>],
+        matched_specifier_spans: &[Span],
+    ) -> Vec<Span> {
+        let mut delete_spans = Vec::new();
+        let mut index = 0;
+
+        while index < specifiers.len() {
+            if !matched_specifier_spans.contains(&specifiers[index].span()) {
+                index += 1;
+                continue;
+            }
+
+            let first_matched = index;
+            while index + 1 < specifiers.len()
+                && matched_specifier_spans.contains(&specifiers[index + 1].span())
+            {
+                index += 1;
+            }
+            let last_matched = index;
+
+            let span = if let Some(next_specifier) = specifiers.get(last_matched + 1) {
+                Span::new(specifiers[first_matched].span().start, next_specifier.span().start)
+            } else {
+                let previous_specifier = &specifiers[first_matched - 1];
+                Span::new(previous_specifier.span().end, specifiers[last_matched].span().end)
+            };
+            delete_spans.push(span);
+            index += 1;
+        }
+
+        delete_spans
     }
 
     fn generate_export_format(
@@ -815,7 +917,7 @@ impl PreferExportFrom {
         re_export_source_text: &str,
         replace_span: Span,
         replace_export_spans: &[Span],
-        delete_span: Span,
+        delete_export_spans: &[Span],
         exports_str: &str,
         replacement_str: &str,
         is_namespace: bool,
@@ -839,7 +941,7 @@ impl PreferExportFrom {
                 re_export_source_text,
                 replace_span,
                 replace_export_spans,
-                delete_span,
+                delete_export_spans,
                 exports_str,
                 replacement_str,
                 is_namespace,
@@ -853,7 +955,7 @@ impl PreferExportFrom {
                 import_decl,
                 replace_span,
                 re_export_decl,
-                delete_span,
+                delete_export_spans,
                 exports_str,
                 replacement_str,
             );
@@ -869,7 +971,7 @@ impl PreferExportFrom {
         re_export_source_text: &str,
         replace_span: Span,
         replace_export_spans: &[Span],
-        delete_span: Span,
+        delete_export_spans: &[Span],
         exports_str: &str,
         replacement_str: &str,
         is_namespace: bool,
@@ -890,7 +992,9 @@ impl PreferExportFrom {
             rule_fixes.push(fixer.delete(&replace_span));
             rule_fixes.push(fixer.replace(import_decl.span(), replacement_str.to_string()));
         }
-        rule_fixes.push(fixer.replace(delete_span, ""));
+        for span in delete_export_spans {
+            rule_fixes.push(fixer.delete(span));
+        }
     }
 
     fn handle_reexport_case<'a>(
@@ -953,7 +1057,7 @@ impl PreferExportFrom {
         import_decl: &'a ImportDeclaration<'a>,
         replace_span: Span,
         re_export_decl: Option<&'a ExportFromDeclaration<'a>>,
-        delete_span: Span,
+        delete_export_spans: &[Span],
         exports_str: &str,
         replacement_str: &str,
     ) {
@@ -977,7 +1081,9 @@ impl PreferExportFrom {
                 rule_fixes.push(fixer.replace(import_decl.span(), new_import_replacement_str));
             }
 
-            rule_fixes.push(fixer.replace(delete_span, ""));
+            for span in delete_export_spans {
+                rule_fixes.push(fixer.delete(span));
+            }
         }
     }
 
@@ -1470,6 +1576,10 @@ fn test() {
     ];
 
     let fix = vec![
+        (
+            "import { a } from './x';\nimport { b } from './y';\nexport { a, b };",
+            "export { a } from './x';\nimport { b } from './y';\nexport { b };",
+        ),
         (r#"import {foo} from "foo'bar";export {foo};"#, "export { foo } from \"foo'bar\";\n"),
         (r"import {foo} from 'foo\\bar';export {foo};", "export { foo } from 'foo\\\\bar';\n"),
         // the `{` inside the comment is not the start of the specifier list; the
@@ -1585,7 +1695,7 @@ fn test() {
             "import * as foo from 'foo';
           import * as bar from 'foo';
          export {foo, bar};",
-            "export * as foo from 'foo';\nimport * as bar from 'foo';\n         ",
+            "export * as foo from 'foo';\nimport * as bar from 'foo';\n         export {bar};",
         ),
         (
             "import * as foo from 'foo';
@@ -1907,7 +2017,7 @@ fn test() {
             export {namespace as named};
             export {namespace as default};
             export const variable = namespace;",
-            "import * as namespace from 'foo';\nexport * as named from 'foo';\nexport * as variable from 'foo';\nnamespace.bar = 1;\n            ",
+            "import * as namespace from 'foo';\nexport * as named from 'foo';\nexport * as variable from 'foo';\nnamespace.bar = 1;\n            \n            export {namespace as default};\n            ",
         ),
         (
             "import foo from 'foo';
