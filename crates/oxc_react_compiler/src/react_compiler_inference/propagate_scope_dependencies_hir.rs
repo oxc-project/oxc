@@ -24,9 +24,9 @@ use crate::react_compiler_hir::visitors::{ScopeBlockInfo, ScopeBlockTraversal};
 use crate::react_compiler_hir::{
     BasicBlock, BlockId, DeclarationId, DependencyPathEntry, EvaluationOrder, FunctionId,
     GotoVariant, HirFunction, IdentifierId, Instruction, InstructionId, InstructionKind,
-    InstructionValue, JsxAttribute, ManualMemoDependencyRoot, MutableRange, ParamPattern, Place,
-    PlaceOrSpread, PropertyLiteral, ReactFunctionType, ReactiveScopeDeclaration,
-    ReactiveScopeDependency, ScopeId, Terminal, Type, is_ref_value_type, is_use_ref_type, visitors,
+    InstructionValue, ManualMemoDependencyRoot, MutableRange, ParamPattern, Place, PlaceOrSpread,
+    PropertyLiteral, ReactFunctionType, ReactiveScopeDeclaration, ReactiveScopeDependency, ScopeId,
+    Terminal, Type, is_ref_value_type, is_use_ref_type, visitors,
 };
 use crate::react_compiler_optimization::dead_code_elimination::find_semantic_only_caught_instructions;
 use oxc_span::Span;
@@ -1044,12 +1044,27 @@ fn get_assumed_invoked_functions_impl(
         }
     }
 
+    if temporaries.is_empty() {
+        return hoistable;
+    }
+
+    // Unlike the TS implementation, a call inside a conditional or a loop does
+    // not prove that a closure runs during render. Hoisting its property reads
+    // can throw even when the branch or loop body never executes.
+    let unconditional = crate::react_compiler_hir::dominator::compute_unconditional_blocks(
+        func,
+        env.next_block_id_counter,
+    )
+    .unwrap_or_default();
+
     // Step 2: Forward pass to analyze assumed function calls
-    for (_block_id, block) in &func.body.blocks {
+    for (block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
             let instr = &func.instructions[instr_id.index()];
             match &instr.value {
-                InstructionValue::CallExpression { callee, args, .. } => {
+                InstructionValue::CallExpression { callee, args, .. }
+                    if unconditional.contains(block_id) =>
+                {
                     let callee_ty = &env.types[env.identifiers[callee.identifier].type_];
                     let maybe_hook = env.get_hook_kind_for_type(callee_ty).ok().flatten();
                     if let Some(entry) = temporaries.get(&callee.identifier) {
@@ -1066,30 +1081,9 @@ fn get_assumed_invoked_functions_impl(
                         }
                     }
                 }
-                InstructionValue::JsxExpression { props, children, .. } => {
-                    // Assume JSX attributes and children are safe to invoke
-                    for prop in props {
-                        if let JsxAttribute::Attribute { place, .. } = prop
-                            && let Some(entry) = temporaries.get(&place.identifier)
-                        {
-                            hoistable.insert(entry.0);
-                        }
-                    }
-                    if let Some(children) = children {
-                        for child in children {
-                            if let Some(entry) = temporaries.get(&child.identifier) {
-                                hoistable.insert(entry.0);
-                            }
-                        }
-                    }
-                }
-                InstructionValue::JsxFragment { children, .. } => {
-                    for child in children {
-                        if let Some(entry) = temporaries.get(&child.identifier) {
-                            hoistable.insert(entry.0);
-                        }
-                    }
-                }
+                // Unlike the TS implementation, functions passed to JSX are not assumed
+                // invoked: event handlers run after render, if at all, so their property
+                // reads must not become cache guards that run during render.
                 InstructionValue::FunctionExpression { lowered_func, .. } => {
                     // Recursively traverse into other function expressions
                     // TS passes the shared temporaries map to the recursive call
@@ -1366,14 +1360,11 @@ fn recursively_propagate_non_null(
 
     let neighbors: Vec<BlockId> = match direction {
         PropagationDirection::Backward => {
-            block_successors.get(&node_id).map(|s| s.iter().copied().collect()).unwrap_or_default()
+            block_successors.get(&node_id).map_or_default(|s| s.iter().copied().collect())
         }
-        PropagationDirection::Forward => func
-            .body
-            .blocks
-            .get(&node_id)
-            .map(|b| b.preds.iter().copied().collect())
-            .unwrap_or_default(),
+        PropagationDirection::Forward => {
+            func.body.blocks.get(&node_id).map_or_default(|b| b.preds.iter().copied().collect())
+        }
     };
 
     let mut changed = false;
@@ -1800,6 +1791,16 @@ impl<'a, 'e> DependencyCollectionContext<'a, 'e> {
     }
 
     fn check_valid_dependency(&self, dep: &ReactiveScopeDependency, env: &Environment) -> bool {
+        self.current_scope()
+            .is_some_and(|scope| self.check_valid_dependency_in_scope(dep, scope, env))
+    }
+
+    fn check_valid_dependency_in_scope(
+        &self,
+        dep: &ReactiveScopeDependency,
+        scope: ScopeId,
+        env: &Environment,
+    ) -> bool {
         // Ref value is not a valid dep
         let ty = &env.types[env.identifiers[dep.identifier].type_];
         if is_ref_value_type(ty) {
@@ -1815,13 +1816,7 @@ impl<'a, 'e> DependencyCollectionContext<'a, 'e> {
             .as_ref()
             .or(self.declarations[ident.declaration_id].as_ref());
 
-        if let Some(current_scope) = self.current_scope()
-            && let Some(decl) = current_declaration
-        {
-            let scope_range_start = env.scopes[current_scope].range.start;
-            return decl.id < scope_range_start;
-        }
-        false
+        current_declaration.is_some_and(|decl| decl.id < env.scopes[scope].range.start)
     }
 
     fn visit_operand(&mut self, place: &Place, env: &mut Environment<'a>) {
@@ -1904,6 +1899,16 @@ impl<'a, 'e> DependencyCollectionContext<'a, 'e> {
                 path: ArenaVec::new_in(&env.allocator),
                 span: dep.span,
             }
+        } else if self.inner_fn_context.is_some()
+            && let Some(index) =
+                dep.path.iter().position(|entry| entry.property.is_string("current"))
+        {
+            // A function reads `x.current` when it runs, not during render, and `x` may
+            // be a ref the compiler could not type. Depend on the path up to `.current`
+            // so that the cache guard does not read the ref during render.
+            let mut dep = dep;
+            dep.path.truncate(index);
+            dep
         } else {
             dep
         };
@@ -1916,24 +1921,23 @@ impl<'a, 'e> DependencyCollectionContext<'a, 'e> {
     }
 
     fn visit_reassignment(&mut self, place: &Place, env: &mut Environment<'a>) {
-        if let Some(current_scope) = self.current_scope() {
-            let scope = &env.scopes[current_scope];
-            let already = scope.reassignments.iter().any(|id| {
-                env.identifiers[*id].declaration_id
-                    == env.identifiers[place.identifier].declaration_id
-            });
-            if !already
-                && self.check_valid_dependency(
-                    &ReactiveScopeDependency {
-                        identifier: place.identifier,
-                        reactive: place.reactive,
-                        path: ArenaVec::new_in(&env.allocator),
-                        span: place.span,
-                    },
-                    env,
-                )
-            {
-                env.scopes[current_scope].reassignments.push(place.identifier);
+        let dep = ReactiveScopeDependency {
+            identifier: place.identifier,
+            reactive: place.reactive,
+            path: ArenaVec::new_in(&env.allocator),
+            span: place.span,
+        };
+        let declaration_id = env.identifiers[place.identifier].declaration_id;
+        // Every enclosing scope that starts after the declaration must restore the
+        // variable when it is skipped, not only the innermost one, which may be
+        // pruned (for example inside a loop).
+        for &scope in &self.scope_stack {
+            let already = env.scopes[scope]
+                .reassignments
+                .iter()
+                .any(|id| env.identifiers[*id].declaration_id == declaration_id);
+            if !already && self.check_valid_dependency_in_scope(&dep, scope, env) {
+                env.scopes[scope].reassignments.push(place.identifier);
             }
         }
     }

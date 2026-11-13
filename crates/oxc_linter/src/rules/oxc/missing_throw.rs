@@ -39,9 +39,11 @@ declare_oxc_lint!(
     MissingThrow,
     oxc,
     correctness,
+    recommended,
     suggestion,
     version = "0.0.3",
-    short_description = "Checks whether the `throw` keyword is missing in front of a `new` expression.",
+    short_description =
+        "Checks whether the `throw` keyword is missing in front of a `new` expression.",
 );
 
 impl Rule for MissingThrow {

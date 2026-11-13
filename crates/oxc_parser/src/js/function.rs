@@ -67,111 +67,123 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         (this_param, formal_parameters)
     }
 
+    /// Parse an ambiguous JS arrow head, retaining whether its final comma prevents it
+    /// from also being a parenthesized expression.
+    pub(super) fn parse_cover_arrow_parameters(&mut self) -> (FormalParameters<'a>, bool) {
+        debug_assert!(!self.is_ts);
+        let start = self.cur_start();
+        let opening_span = self.cur_token().span();
+        self.expect(Kind::LParen);
+        let (list, rest) =
+            self.parse_formal_parameters_list(FunctionKind::Expression, opening_span);
+        let has_trailing_comma =
+            list.last().is_some_and(|param| param.span.end < self.prev_token_end);
+        self.expect(Kind::RParen);
+        let params = FormalParameters::new(
+            self.end_span(start),
+            FormalParameterKind::ArrowFormalParameters,
+            list,
+            rest,
+            self,
+        );
+        (params, has_trailing_comma)
+    }
+
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     fn parse_formal_parameters_list(
         &mut self,
         func_kind: FunctionKind,
         opening_span: Span,
     ) -> (ArenaVec<'a, FormalParameter<'a>>, Option<ArenaBox<'a, FormalParameterRest<'a>>>) {
-        let mut list = ArenaVec::new_in(self);
-        let rest = self.parse_formal_parameters_list_into(&mut list, func_kind, opening_span);
-        (list, rest)
-    }
-
-    #[expect(clippy::inline_always)]
-    #[inline(always)]
-    fn parse_formal_parameters_list_into(
-        &mut self,
-        list: &mut ArenaVec<'a, FormalParameter<'a>>,
-        func_kind: FunctionKind,
-        opening_span: Span,
-    ) -> Option<ArenaBox<'a, FormalParameterRest<'a>>> {
         let mut rest: Option<ArenaBox<'a, FormalParameterRest<'a>>> = None;
         let mut first = true;
         let mut has_optional = false;
 
-        loop {
-            let kind = self.cur_kind();
-            if kind == Kind::RParen
-                || matches!(kind, Kind::Eof | Kind::Undetermined)
-                || self.fatal_error.is_some()
-            {
-                break;
-            }
-
-            if first {
-                first = false;
-            } else {
-                let comma_span = self.cur_token().span();
-                if kind != Kind::Comma {
-                    let error = diagnostics::expect_closing_or_separator(
-                        Kind::RParen.to_str(),
-                        Kind::Comma.to_str(),
-                        kind.to_str(),
-                        comma_span,
-                        opening_span,
-                    );
-                    self.set_fatal_error(error);
-                    break;
+        let list = self.collect_list(|p| {
+            loop {
+                let kind = p.cur_kind();
+                if kind == Kind::RParen
+                    || matches!(kind, Kind::Eof | Kind::Undetermined)
+                    || p.fatal_error.is_some()
+                {
+                    return None;
                 }
-                self.bump_any();
-                let kind = self.cur_kind();
-                if kind == Kind::RParen {
-                    if rest.is_some() && !self.ctx.has_ambient() {
-                        self.error(diagnostics::rest_element_trailing_comma(comma_span));
+
+                if first {
+                    first = false;
+                } else {
+                    let comma_span = p.cur_token().span();
+                    if kind != Kind::Comma {
+                        let error = diagnostics::expect_closing_or_separator(
+                            Kind::RParen.to_str(),
+                            Kind::Comma.to_str(),
+                            kind.to_str(),
+                            comma_span,
+                            opening_span,
+                        );
+                        p.set_fatal_error(error);
+                        return None;
                     }
-                    break;
-                }
-            }
-
-            if let Some(r) = &rest {
-                self.set_fatal_error(diagnostics::rest_parameter_last(
-                    r.type_annotation.as_ref().map_or_else(
-                        || r.rest.span,
-                        |type_annotation| r.rest.span.merge(type_annotation.span()),
-                    ),
-                ));
-                break;
-            }
-
-            let start = self.cur_start();
-            let decorators = self.parse_decorators();
-
-            if self.at(Kind::Dot3) {
-                let rest_element = self.parse_rest_element_for_formal_parameter();
-                let type_annotation =
-                    if self.is_ts { self.parse_ts_type_annotation() } else { None };
-
-                let are_decorators_allowed =
-                    matches!(func_kind, FunctionKind::ClassMethod | FunctionKind::Constructor)
-                        && self.is_ts;
-                if !are_decorators_allowed {
-                    for decorator in &decorators {
-                        self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
+                    p.bump_any();
+                    let kind = p.cur_kind();
+                    if kind == Kind::RParen {
+                        if rest.is_some() && !p.ctx.has_ambient() {
+                            p.error(diagnostics::rest_element_trailing_comma(comma_span));
+                        }
+                        return None;
                     }
                 }
 
-                rest = Some(FormalParameterRest::boxed(
-                    self.end_span(start),
-                    decorators,
-                    rest_element,
-                    type_annotation,
-                    self,
-                ));
-            } else {
-                let param =
-                    self.parse_formal_parameter_with_decorators(func_kind, start, decorators);
-                if param.optional {
-                    has_optional = true;
-                } else if has_optional && param.initializer.is_none() {
-                    self.error(diagnostics::required_parameter_after_optional_parameter(
-                        param.span,
+                if let Some(r) = &rest {
+                    p.set_fatal_error(diagnostics::rest_parameter_last(
+                        r.type_annotation.as_ref().map_or_else(
+                            || r.rest.span,
+                            |type_annotation| r.rest.span.merge(type_annotation.span()),
+                        ),
                     ));
+                    return None;
                 }
-                list.push(param);
-            }
-        }
 
-        rest
+                let start = p.cur_start();
+                let decorators = p.parse_decorators();
+
+                if p.at(Kind::Dot3) {
+                    let rest_element = p.parse_rest_element_for_formal_parameter();
+                    let type_annotation = if p.is_ts { p.parse_ts_type_annotation() } else { None };
+
+                    let are_decorators_allowed =
+                        matches!(func_kind, FunctionKind::ClassMethod | FunctionKind::Constructor)
+                            && p.is_ts;
+                    if !are_decorators_allowed {
+                        for decorator in &decorators {
+                            p.error(diagnostics::decorators_are_not_valid_here(decorator.span));
+                        }
+                    }
+
+                    rest = Some(FormalParameterRest::boxed(
+                        p.end_span(start),
+                        decorators,
+                        rest_element,
+                        type_annotation,
+                        p,
+                    ));
+                } else {
+                    let param =
+                        p.parse_formal_parameter_with_decorators(func_kind, start, decorators);
+                    if param.optional {
+                        has_optional = true;
+                    } else if has_optional && param.initializer.is_none() {
+                        p.error(diagnostics::required_parameter_after_optional_parameter(
+                            param.span,
+                        ));
+                    }
+                    return Some(param);
+                }
+            }
+        });
+
+        (list, rest)
     }
 
     fn parse_formal_parameter_with_decorators(
@@ -530,6 +542,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         generator: bool,
     ) -> Option<BindingIdentifier<'a>> {
         let kind = self.cur_kind();
+        if kind == Kind::Ident {
+            return Some(self.parse_plain_binding_identifier());
+        }
         if kind.is_binding_identifier() {
             let mut ctx = self.ctx;
             if func_kind.is_expression() {

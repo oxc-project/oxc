@@ -206,7 +206,8 @@ declare_oxc_lint!(
     fix = conditional_dangerous_fix_or_suggestion,
     config = NoUnusedVarsConfig,
     version = "0.7.0",
-    short_description = "Disallows variable declarations, imports, or type declarations that are not used in code.",
+    short_description =
+        "Disallows variable declarations, imports, or type declarations that are not used in code.",
 );
 
 impl Deref for NoUnusedVars {
@@ -383,7 +384,12 @@ impl NoUnusedVars {
                 if self.is_allowed_type_parameter(symbol, declaration.id()) {
                     return;
                 }
-                ctx.diagnostic(diagnostic::declared(symbol, &self.vars_ignore_pattern, false));
+                Self::report_with_fix_mode(
+                    self.fix.variables,
+                    ctx,
+                    diagnostic::declared(symbol, &self.vars_ignore_pattern, false),
+                    |fixer| Self::remove_unused_type_parameter(fixer, symbol, declaration.id()),
+                );
             }
             // Mapped type keys are always used within the type definition
             AstKind::TSMappedType(_) => {}
@@ -449,14 +455,9 @@ impl NoUnusedVars {
         // get used in generated code. We don't have a way to detect
         // "jsxPragmas" or whether TSX files are using "jsx": "react-jsx", so we
         // just allow all cases.
-        if symbol.flags().contains(SymbolFlags::Import)
+        symbol.flags().contains(SymbolFlags::Import)
             && symbol.is_in_jsx()
             && symbol.is_possibly_jsx_factory()
-        {
-            return true;
-        }
-
-        false
     }
 }
 

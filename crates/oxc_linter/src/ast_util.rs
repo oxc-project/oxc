@@ -451,11 +451,7 @@ pub fn is_new_expression<'a>(
         return false;
     };
 
-    if !names.contains(&ident.name.as_str()) {
-        return false;
-    }
-
-    true
+    names.contains(&ident.name.as_str())
 }
 
 /// Returns the method span and UTF-8 name for rules matching known method names.

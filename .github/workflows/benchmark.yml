@@ -92,9 +92,12 @@ jobs:
               --bench ${{ matrix.component }} \
               --no-default-features --features ${{ matrix.feature }} --features codspeed
           fi
+          bench=$(cargo build --release -p oxc_benchmark --bench ${{ matrix.component }} \
+            --no-default-features --features ${{ matrix.feature }} --features codspeed \
+            --message-format=json \
+            | jq -r 'select(.reason == "compiler-artifact" and .target.kind == ["bench"]) | .executable')
           mkdir -p target/codspeed/analysis/oxc_benchmark
-          mv target/release/deps/${{ matrix.component }}-* target/codspeed/analysis/oxc_benchmark
-          rm target/codspeed/analysis/oxc_benchmark/*.d
+          mv "$bench" target/codspeed/analysis/oxc_benchmark
 
       - name: Run benchmark
         uses: CodSpeedHQ/action@c4fd08a3a159bd0cc208da1e0edf32b8c47d75e5 # v5.4.0

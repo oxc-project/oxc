@@ -1,10 +1,11 @@
+use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::Rule,
-    rules::shared::no_conditional_expect::{DOCUMENTATION, run_on_jest_node},
-    utils::PossibleJestNode,
+    rules::shared::no_conditional_expect::{DOCUMENTATION, run},
 };
 
 #[derive(Debug, Default, Clone)]
@@ -20,12 +21,13 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoConditionalExpect {
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        possible_jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        run_on_jest_node(possible_jest_node, ctx);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(_) = node.kind() else { return };
+        run(node, ctx);
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_test()
     }
 }
 
@@ -822,6 +824,22 @@ fn test() {
                 expect(getValue()).toBe(2);
             });
         ",
+        r"import { expect, test as baseTest } from 'vitest';
+        const customTest = baseTest.extend({});
+        function helper(customTest) {
+            customTest('foo', () => {
+                if (condition) expect(1).toBe(1);
+            });
+        }",
+        r"import { test as baseTest } from 'other';
+        const customTest = baseTest.extend({});
+        customTest('foo', () => {
+            if (condition) expect(1).toBe(1);
+        });",
+        r"const test = (name, callback) => callback();
+        test('foo', () => {
+            if (condition) expect(1).toBe(1);
+        });",
     ];
 
     let fail_vitest = vec![
@@ -868,6 +886,24 @@ fn test() {
                 something ? noop() : expect(something).toHaveBeenCalled();
             })
         ",
+        r"import { expect, test as baseTest } from 'vitest';
+        const extendedTest = baseTest.extend({});
+        const customTest = extendedTest.extend({});
+        customTest.only('foo', () => {
+            if (condition) expect(1).toBe(1);
+            promise.catch(() => expect(1).toBe(1));
+        });",
+        r"import { expect, it as customTest } from 'vitest';
+        function callback() {
+            condition && expect(1).toBe(1);
+        }
+        customTest('foo', callback);",
+        r"import { expect, test as baseTest } from 'vitest';
+        const customTest = baseTest.extend({});
+        function helper() {
+            if (condition) expect(1).toBe(1);
+        }
+        customTest.each([true])('foo', () => { helper(); });",
     ];
 
     pass.extend(pass_vitest.into_iter().map(|x| (x, None)));

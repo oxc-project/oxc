@@ -70,19 +70,17 @@ impl Rule for PreferTypeError {
 
         let parent = ctx.nodes().parent_node(node.id());
 
-        let AstKind::BlockStatement(block_stmt) = parent.kind() else {
+        let (if_kind, branch_id) = match parent.kind() {
+            AstKind::BlockStatement(block) if block.body.len() == 1 => {
+                (ctx.nodes().parent_kind(parent.id()), parent.id())
+            }
+            kind => (kind, node.id()),
+        };
+        let AstKind::IfStatement(if_stmt) = if_kind else {
             return;
         };
 
-        if block_stmt.body.len() != 1 {
-            return;
-        }
-
-        let AstKind::IfStatement(if_stmt) = ctx.nodes().parent_kind(parent.id()) else {
-            return;
-        };
-
-        if is_type_checking_expr(&if_stmt.test) {
+        if if_stmt.consequent.node_id() == branch_id && is_type_checking_expr(&if_stmt.test) {
             ctx.diagnostic_with_fix(
                 prefer_type_error_diagnostic(new_expr.callee.span()),
                 |fixer| fixer.replace(new_expr.callee.span(), "TypeError"),
@@ -411,6 +409,9 @@ fn test() {
         r#"if ((x.ready)) { throw new Error("bad"); }"#,
         r"if ((Array.isArray)()) { throw new Error(); }",
         r"if ((isArray)(value)) { throw new Error(); }",
+        r"if (typeof value === 'string') use(value); else throw new Error();",
+        r"if (typeof value === 'string') use(value); else { throw new Error(); }",
+        r"if (typeof value !== 'string') { { throw new Error(); } }",
     ];
 
     let fail = vec![
@@ -498,6 +499,10 @@ fn test() {
         r#"if (!(Array.isArray(x)) || ((typeof x !== "string"))) { throw new Error("bad"); }"#,
         r"if ((Array.isArray)(value)) { throw new Error(); }",
         r"if (!((isFinite))(value)) { throw new Error(); }",
+        concat!(
+            "if (typeof value !== 'string')\n",
+            "    throw new Error(`FormData entry value is not a string, but ${typeof value}`);",
+        ),
     ];
 
     let fix = vec![
@@ -564,6 +569,10 @@ fn test() {
         (
             r"if (!((isFinite))(value)) { throw new Error(); }",
             r"if (!((isFinite))(value)) { throw new TypeError(); }",
+        ),
+        (
+            r"if (typeof value !== 'string') throw new Error('Expected a string');",
+            r"if (typeof value !== 'string') throw new TypeError('Expected a string');",
         ),
     ];
 

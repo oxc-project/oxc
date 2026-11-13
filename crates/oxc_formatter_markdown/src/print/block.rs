@@ -182,7 +182,7 @@ fn ignore_kind(block: &Block<'_>, f: &MarkdownFormatter<'_, '_>) -> Option<Ignor
         return None;
     }
     let value = join_pieces(&html.lines, f);
-    let inner = value.strip_prefix("<!--")?.strip_suffix("-->")?.trim();
+    let inner = value.strip_circumfix("<!--", "-->")?.trim();
     if is_suppression_marker(inner) {
         return Some(IgnoreKind::Next);
     }

@@ -62,9 +62,11 @@ declare_oxc_lint!(
     OnlyUsedInRecursion,
     oxc,
     correctness,
+    recommended,
     dangerous_fix,
     version = "0.1.1",
-    short_description = "Checks for arguments that are only used in recursion with no side effects.",
+    short_description =
+        "Checks for arguments that are only used in recursion with no side effects.",
 );
 
 fn is_exported(id: &BindingIdentifier<'_>, ctx: &LintContext<'_>) -> bool {
@@ -381,13 +383,7 @@ fn is_function_reassigned(function_id: &BindingIdentifier, ctx: &LintContext) ->
 }
 
 fn get_jsx_element_symbol_id(node: &JSXElementName<'_>, ctx: &LintContext<'_>) -> Option<SymbolId> {
-    let identifier = match node {
-        JSXElementName::IdentifierReference(ident) => Some(ident.as_ref()),
-        JSXElementName::MemberExpression(expr) => expr.get_identifier(),
-        JSXElementName::Identifier(_)
-        | JSXElementName::NamespacedName(_)
-        | JSXElementName::ThisExpression(_) => None,
-    }?;
+    let identifier = node.get_identifier()?;
 
     ctx.scoping().get_reference(identifier.reference_id()).symbol_id()
 }

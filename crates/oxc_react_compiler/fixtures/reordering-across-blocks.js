@@ -42,3 +42,29 @@ function Component({config}) {
 
   return <Stringify value={object} />;
 }
+
+import {useMemo} from 'react';
+const sproutInputs = [[{
+  config: null
+}], [{
+  config: {
+    onA: () => {
+      "use no memo";
+
+      return 1;
+    },
+    onB: () => {
+      "use no memo";
+
+      return 2;
+    }
+  }
+}]];
+export const FIXTURE_ENTRYPOINT = {
+  fn: args => {
+    "use no memo";
+    return Component(...args);
+  },
+  params: [sproutInputs[0]],
+  sequentialRenders: [sproutInputs[0], sproutInputs[0], ...sproutInputs.slice(1), sproutInputs.at(-1), sproutInputs[0]],
+};

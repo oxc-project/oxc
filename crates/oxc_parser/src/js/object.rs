@@ -1,11 +1,11 @@
 use oxc_allocator::ArenaBox;
 use oxc_ast::ast::*;
-use oxc_syntax::operator::AssignmentOperator;
 
 use crate::{
     Context, ParserConfig as Config, ParserImpl, diagnostics,
     lexer::Kind,
     modifiers::{ModifierKind, ModifierKinds, Modifiers},
+    state::CoverInitializedName,
 };
 
 use super::FunctionKind;
@@ -17,9 +17,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///     { `PropertyDefinitionList`[?Yield, ?Await] }
     ///     { `PropertyDefinitionList`[?Yield, ?Await] , }
     pub(crate) fn parse_object_expression(&mut self) -> ArenaBox<'a, ObjectExpression<'a>> {
+        debug_assert!(self.at(Kind::LCurly));
         let start = self.cur_start();
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LCurly);
+        self.advance(Kind::LCurly);
         let (object_expression_properties, comma_start) = self.context_add(Context::In, |p| {
             p.parse_delimited_list(
                 Kind::RCurly,
@@ -107,20 +108,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             };
             // CoverInitializedName ({ foo = bar })
             if self.eat(Kind::Eq) {
-                let right = self.parse_assignment_expression_or_higher();
-                let left = AssignmentTarget::new_assignment_target_identifier(
-                    identifier_name.span,
-                    identifier_name.name,
-                    self,
-                );
-                let expr = AssignmentExpression::new(
-                    self.end_span(start),
-                    AssignmentOperator::Assign,
-                    left,
-                    right,
-                    self,
-                );
-                self.state.cover_initialized_name.insert(start, expr);
+                let initializer = self.parse_assignment_expression_or_higher();
+                let cover = CoverInitializedName { span: self.end_span(start), initializer };
+                self.state.cover_initialized_name.insert(start, cover);
             }
             Expression::new_identifier(identifier_name.span, identifier_name.name, self)
         } else {
@@ -154,7 +144,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_property_name(&mut self) -> (PropertyKey<'a>, bool) {
         let mut computed = false;
         let key = match self.cur_kind() {
-            Kind::Str => PropertyKey::from(self.parse_literal_expression()),
+            Kind::Ident => {
+                let ident = self.parse_known_identifier_name();
+                PropertyKey::StaticIdentifier(self.alloc(ident))
+            }
+            Kind::Str => {
+                let literal = self.parse_known_literal_string();
+                PropertyKey::StringLiteral(self.alloc(literal))
+            }
             kind if kind.is_number() => PropertyKey::from(self.parse_literal_expression()),
             // { [foo]() {} }
             Kind::LBrack => {

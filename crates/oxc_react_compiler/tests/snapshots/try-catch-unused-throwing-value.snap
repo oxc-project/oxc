@@ -13,7 +13,10 @@ function Component(t0) {
 		value = { count };
 		try {
 			maybe.item;
-			value.count = value.count + 1;
+			let t1 = value.count;
+			const t2 = t1++;
+			value.count = t1;
+			t2;
 		} catch {
 			value.count = value.count + 10;
 		}

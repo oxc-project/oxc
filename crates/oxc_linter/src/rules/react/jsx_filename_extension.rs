@@ -133,8 +133,7 @@ impl Rule for JsxFilenameExtension {
         let allow = config
             .and_then(|config| config.get("allow"))
             .and_then(Value::as_str)
-            .map(JsxFilenameExtensionAllowMode::from)
-            .unwrap_or_default();
+            .map_or_default(JsxFilenameExtensionAllowMode::from);
 
         let extensions = config
             .and_then(|v| v.get("extensions"))

@@ -5,7 +5,7 @@
 //!     * [rustc](https://github.com/rust-lang/rust/blob/1.82.0/compiler/rustc_lexer/src)
 //!     * [v8](https://v8.dev/blog/scanner)
 
-use std::{mem, num::NonZeroU32};
+use std::mem;
 
 use rustc_hash::FxHashMap;
 
@@ -24,6 +24,7 @@ mod byte_handlers;
 mod comment;
 mod identifier;
 mod jsx;
+mod keyword;
 mod kind;
 mod number;
 mod numeric;
@@ -46,15 +47,14 @@ pub use number::{parse_big_int, parse_float, parse_int};
 pub use token::Token;
 
 use source::{Source, SourcePosition};
-use trivia_builder::TriviaBuilder;
+use trivia_builder::{AnnotationComments, TriviaBuilder};
 
 #[derive(Debug)]
 pub struct LexerCheckpoint<'a> {
     source_position: SourcePosition<'a>,
     errors_snapshot: ErrorSnapshot<'a>,
     tokens_len: usize,
-    pure_comments: Option<(u32, NonZeroU32)>,
-    no_side_effects_comments: Option<(u32, NonZeroU32)>,
+    annotation_comments: AnnotationComments,
 }
 
 #[derive(Debug)]
@@ -82,6 +82,8 @@ pub struct Lexer<'a, C: Config> {
     source_type: SourceType,
 
     /// The token currently being built.
+    /// Only its start and flags are written here; its kind and end remain zero until
+    /// `Token::finish` constructs the completed token.
     ///
     /// Between lexer calls, `token` is always `Token::default()`. Every method which produces a token
     /// ends in `finish_next_inner` or `finish_re_lex`, and both reset it.
@@ -211,8 +213,7 @@ impl<'a, C: Config> Lexer<'a, C> {
             source_position: self.source.position(),
             errors_snapshot,
             tokens_len: self.tokens.len(),
-            pure_comments: self.trivia_builder.previous_token_pure_comments(),
-            no_side_effects_comments: self.trivia_builder.previous_token_no_side_effects_comments(),
+            annotation_comments: self.trivia_builder.annotation_comments,
         }
     }
 
@@ -232,8 +233,7 @@ impl<'a, C: Config> Lexer<'a, C> {
             source_position: self.source.position(),
             errors_snapshot,
             tokens_len: self.tokens.len(),
-            pure_comments: self.trivia_builder.previous_token_pure_comments(),
-            no_side_effects_comments: self.trivia_builder.previous_token_no_side_effects_comments(),
+            annotation_comments: self.trivia_builder.annotation_comments,
         }
     }
 
@@ -250,8 +250,7 @@ impl<'a, C: Config> Lexer<'a, C> {
 
         self.tokens.truncate(checkpoint.tokens_len);
         self.source.set_position(checkpoint.source_position);
-        self.trivia_builder.set_pure_comments(checkpoint.pure_comments);
-        self.trivia_builder.set_no_side_effects_comments(checkpoint.no_side_effects_comments);
+        self.trivia_builder.annotation_comments = checkpoint.annotation_comments;
     }
 
     pub fn peek_token(&mut self) -> Token {
@@ -314,9 +313,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     #[expect(clippy::inline_always)]
     #[inline(always)]
     fn finish_next_inner(&mut self, kind: Kind, mode: FinishTokenMode) -> Token {
-        self.token.set_kind(kind);
-        self.token.set_end(self.offset());
-        let token = self.token;
+        let token = self.token.finish(kind, self.offset());
         if self.config.tokens() {
             match mode {
                 FinishTokenMode::Push => {
@@ -342,9 +339,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// Finish a re-lexed token used only for parser disambiguation.
     /// This must not mutate the externally collected token stream.
     fn finish_re_lex(&mut self, kind: Kind) -> Token {
-        self.token.set_kind(kind);
-        self.token.set_end(self.offset());
-        let token = self.token;
+        let token = self.token.finish(kind, self.offset());
         self.token = Token::default();
         token
     }
@@ -502,34 +497,29 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// Whitespace and line terminators are skipped
     #[inline] // Make sure is inlined into `next_token`
     fn read_next_token(&mut self) -> Kind {
-        self.trivia_builder.clear_pure_comments();
-        self.trivia_builder.clear_no_side_effects_comments();
+        self.trivia_builder.clear_annotation_comments();
 
         let end_pos = self.source.end();
         loop {
             // Single spaces between tokens are common, so consume a space before processing the next token.
-            // Do this without a branch. This produces more instructions, but avoids an unpredictable branch.
             // Can only do this if there are at least 2 bytes left in source.
             // If there aren't 2 bytes left, delegate to `read_next_token_at_end` (cold branch).
             let mut pos = self.source.position();
             // SAFETY: `source.end()` is always equal to or after `source.position()`
             let remaining_bytes = unsafe { end_pos.offset_from(pos) };
             if remaining_bytes >= 2 {
-                // Read next byte.
                 // SAFETY: There are at least 2 bytes remaining in source.
-                let byte = unsafe { pos.read() };
+                let mut byte = unsafe { pos.read() };
 
-                // If next byte is a space, advance by 1 byte.
-                // Do this with maths, instead of a branch.
-                let is_space = byte == b' ';
-                // SAFETY: There are at least 2 bytes remaining in source, so advancing 1 byte cannot be out of bounds
-                pos = unsafe { pos.add(usize::from(is_space)) };
-                self.source.set_position(pos);
-
-                // Read next byte again, in case we skipped a space.
-                // SAFETY: We checked above that there were at least 2 bytes to read,
-                // and we skipped a maximum of 1 byte, so there's still at least 1 byte left to read.
-                let byte = unsafe { pos.read() };
+                // Only update the cursor and read again when consuming a space.
+                if byte == b' ' {
+                    // SAFETY: At least 2 bytes remain, so advancing past one ASCII space
+                    // leaves at least one byte to read.
+                    pos = unsafe { pos.add(1) };
+                    self.source.set_position(pos);
+                    // SAFETY: At least one byte remains after the space.
+                    byte = unsafe { pos.read() };
+                }
 
                 // Set token start
                 let offset = self.source.offset_of(pos);
@@ -570,8 +560,7 @@ impl<'a, C: Config> Lexer<'a, C> {
 
     #[inline]
     fn read_next_jsx_attribute_value(&mut self) -> Kind {
-        self.trivia_builder.clear_pure_comments();
-        self.trivia_builder.clear_no_side_effects_comments();
+        self.trivia_builder.clear_annotation_comments();
 
         let end_pos = self.source.end();
         loop {
@@ -580,16 +569,17 @@ impl<'a, C: Config> Lexer<'a, C> {
             let remaining_bytes = unsafe { end_pos.offset_from(pos) };
             if remaining_bytes >= 2 {
                 // SAFETY: There are at least 2 bytes remaining in source.
-                let byte = unsafe { pos.read() };
+                let mut byte = unsafe { pos.read() };
 
-                let is_space = byte == b' ';
-                // SAFETY: There are at least 2 bytes remaining in source, so advancing 1 byte cannot be out of bounds
-                pos = unsafe { pos.add(usize::from(is_space)) };
-                self.source.set_position(pos);
-
-                // SAFETY: We checked above that there were at least 2 bytes to read,
-                // and we skipped a maximum of 1 byte, so there's still at least 1 byte left to read.
-                let byte = unsafe { pos.read() };
+                // Only update the cursor and read again when consuming a space.
+                if byte == b' ' {
+                    // SAFETY: At least 2 bytes remain, so advancing past one ASCII space
+                    // leaves at least one byte to read.
+                    pos = unsafe { pos.add(1) };
+                    self.source.set_position(pos);
+                    // SAFETY: At least one byte remains after the space.
+                    byte = unsafe { pos.read() };
+                }
 
                 let offset = self.source.offset_of(pos);
                 self.token.set_start(offset);

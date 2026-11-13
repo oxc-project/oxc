@@ -1,55 +1,43 @@
-#[cfg(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-))]
+use oxc_simd::{Cpu, DynCpu, cpu_multiversion};
+
 mod avx2;
-#[cfg(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-))]
-use avx2::define_find_function_avx2 as define_find_function;
-#[cfg(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-))]
-pub(super) use avx2::{
-    bracket_bits_avx2 as bracket_bits, find1_avx2 as find1, find2_avx2 as find2,
-    find3_avx2 as find3, find4_avx2 as find4,
-};
-
-#[cfg(not(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-)))]
 mod generic;
-#[cfg(not(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-)))]
-use generic::define_find_function_generic as define_find_function;
-#[cfg(not(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-)))]
-pub(super) use generic::{
-    bracket_bits_generic as bracket_bits, find1_generic as find1, find2_generic as find2,
-    find3_generic as find3, find4_generic as find4,
-};
+mod neon;
 
-mod common;
-pub(super) use common::{
-    find_jsx_tag, find_jsx_text, find_line_terminator, find_opener, find_opener_jsx5,
-    find_opener_jsx7, find_opener6, find_regex, find_tmpl, unicode_ws_len,
-};
+use avx2::{bracket_bits_avx2, find_avx2};
+use generic::{bracket_bits_generic, find_generic};
+use neon::{bracket_bits_neon, find_neon};
+
+/// Ordered for speed, pairing `(` with `)`, `[` with `{` and `]` with `}`.
+/// See the comment on `any_of` in `avx2.rs`.
+const BRACKET_BYTES: [u8; 6] = [b'(', b')', b'[', b'{', b']', b'}'];
+
+/// First byte at or after `i` that is one of `needles`, or `n`.
+///
+/// Needle order matters for speed. See the comment on `any_of` in `avx2.rs`.
+#[cpu_multiversion]
+#[inline(always)]
+pub(super) unsafe fn find<const K: usize>(
+    src: *const u8,
+    n: usize,
+    i: usize,
+    needles: [u8; K],
+    cpu: impl Cpu,
+) -> usize {
+    match DynCpu::from(cpu) {
+        DynCpu::Avx2(cpu) => find_avx2(src, n, i, needles, cpu),
+        DynCpu::Neon(cpu) => find_neon(src, n, i, needles, cpu),
+        DynCpu::Generic(_) => find_generic(src, n, i, needles),
+    }
+}
+
+/// Bits of the 64 bytes at `base` that are brackets (`(){}[]`). Bit `i` is for byte `base + i`.
+#[cpu_multiversion]
+#[inline(always)]
+pub(super) fn bracket_bits(src: &[u8], base: usize, cpu: impl Cpu) -> u64 {
+    match DynCpu::from(cpu) {
+        DynCpu::Avx2(cpu) => bracket_bits_avx2(src, base, cpu),
+        DynCpu::Neon(cpu) => bracket_bits_neon(src, base, cpu),
+        DynCpu::Generic(_) => bracket_bits_generic(src, base),
+    }
+}

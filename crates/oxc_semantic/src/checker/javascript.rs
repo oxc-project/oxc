@@ -83,11 +83,22 @@ pub fn check_import_value_redeclarations(ctx: &SemanticBuilder<'_>) {
 
 pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
     let classes = &ctx.class_table_builder.classes;
+    let is_typescript = ctx.source_type.is_typescript();
     classes.iter_enumerated().for_each(|(class_id, _)| {
         let elements = &classes.elements[class_id];
-        let mut defined_elements =
-            FxHashMap::with_capacity_and_hasher(elements.len(), FxBuildHasher);
+        if elements.len() < 2 {
+            return;
+        }
+        let mut defined_elements = None;
         for (element_id, element) in elements.iter_enumerated() {
+            // JavaScript permits duplicate public names. Constructors are checked separately.
+            if !element.is_private && !is_typescript {
+                continue;
+            }
+            // All-public JavaScript classes need no duplicate-name map.
+            let defined_elements = defined_elements.get_or_insert_with(|| {
+                FxHashMap::with_capacity_and_hasher(elements.len(), FxBuildHasher)
+            });
             // Public and private names belong to separate namespaces.
             let previous =
                 defined_elements.entry((&element.name, element.is_private)).or_insert([None; 2]);
@@ -104,15 +115,13 @@ pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
             if let Some(prev_element_id) = prev_element_id {
                 let prev_element = &elements[prev_element_id];
 
-                let mut is_duplicate = element.is_private == prev_element.is_private
-                    && if element.kind.is_setter_or_getter()
-                        && prev_element.kind.is_setter_or_getter()
-                    {
-                        element.kind == prev_element.kind
-                            || element.r#static != prev_element.r#static
-                    } else {
-                        true
-                    };
+                let mut is_duplicate = if element.kind.is_setter_or_getter()
+                    && prev_element.kind.is_setter_or_getter()
+                {
+                    element.kind == prev_element.kind || element.r#static != prev_element.r#static
+                } else {
+                    true
+                };
 
                 // * It is a Syntax Error if PrivateBoundIdentifiers of ClassElementList contains any duplicate entries,
                 // unless the name is used once for a getter and once for a setter and in no other entries,
@@ -120,13 +129,9 @@ pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
                 // For TypeScript, public elements with different static status are allowed (overloads, etc.),
                 // but private identifiers follow the same rules as JavaScript - static and instance
                 // elements cannot share the same private name.
-                is_duplicate = if element.is_private {
-                    is_duplicate
-                } else if ctx.source_type.is_typescript() {
-                    element.r#static == prev_element.r#static && is_duplicate
-                } else {
-                    false
-                };
+                if !element.is_private {
+                    is_duplicate &= element.r#static == prev_element.r#static;
+                }
 
                 if is_duplicate {
                     #[cold]
@@ -276,7 +281,7 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
                         }
                         break;
                     }
-                    AstKind::Function(_) => break,
+                    AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => break,
                     _ => {}
                 }
             }
@@ -293,39 +298,17 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
 
     //  Static Semantics: AssignmentTargetType
     //  1. If this IdentifierReference is contained in strict mode code and StringValue of Identifier is "eval" or "arguments", return invalid.
-    if matches!(ident.name.as_str(), "arguments" | "eval") && ctx.strict_mode() {
-        for node_kind in ctx.ancestry().ancestor_kinds() {
-            match node_kind {
-                // Only check for actual assignment contexts, not member expression access
-                AstKind::ObjectAssignmentTarget(_)
-                | AstKind::AssignmentTargetPropertyIdentifier(_)
-                | AstKind::UpdateExpression(_)
-                | AstKind::ArrayAssignmentTarget(_) => {
-                    return ctx.error(diagnostics::unexpected_identifier_assign(
-                        &ident.name,
-                        ident.span,
-                        unexpected_identifier_assign_context(ctx),
-                    ));
-                }
-                AstKind::AssignmentExpression(assign_expr) => {
-                    // only throw error if arguments or eval are being assigned to
-                    if let AssignmentTarget::AssignmentTargetIdentifier(target_ident) =
-                        &assign_expr.left
-                        && target_ident.name == ident.name
-                    {
-                        return ctx.error(diagnostics::unexpected_identifier_assign(
-                            &ident.name,
-                            ident.span,
-                            unexpected_identifier_assign_context(ctx),
-                        ));
-                    }
-                }
-                m if m.is_member_expression_kind() => {
-                    break;
-                }
-                _ => {}
-            }
-        }
+    if matches!(ident.name.as_str(), "arguments" | "eval")
+        && ctx.strict_mode()
+        // Reference flags distinguish assignment targets (including for-in/of) from
+        // reads in computed keys and default initializers within the same pattern.
+        && ctx.scoping.get_reference(ident.reference_id.get().unwrap()).flags().is_write()
+    {
+        return ctx.error(diagnostics::unexpected_identifier_assign(
+            &ident.name,
+            ident.span,
+            unexpected_identifier_assign_context(ctx),
+        ));
     }
 
     // FieldDefinition : ClassElementName Initializeropt
@@ -333,7 +316,7 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
     // ClassStaticBlockBody : ClassStaticBlockStatementList
     //   It is a Syntax Error if ContainsArguments of ClassStaticBlockStatementList is true.
 
-    if ident.name == "arguments" {
+    if ident.name == "arguments" && ctx.class_table_builder.current_class_id.is_some() {
         let mut previous_node_address = ctx.ancestry().current_address();
         for node_kind in ctx.ancestry().ancestor_kinds() {
             match node_kind {
@@ -375,7 +358,11 @@ fn check_private_identifier(ctx: &SemanticBuilder<'_>) {
     if let Some(class_id) = ctx.class_table_builder.current_class_id {
         let mut available_names: Option<Vec<&str>> = None;
         for reference in ctx.class_table_builder.classes.iter_private_identifiers(class_id) {
-            if !ctx.class_table_builder.classes.ancestors(class_id).any(|class_id| {
+            // Reference creation already searched this class's complete element table.
+            if !reference.element_ids.is_empty() {
+                continue;
+            }
+            if !ctx.class_table_builder.classes.ancestors(class_id).skip(1).any(|class_id| {
                 ctx.class_table_builder.classes.has_private_definition(class_id, reference.name)
             }) {
                 let names = available_names.get_or_insert_with(|| {
@@ -441,7 +428,9 @@ pub fn check_string_literal(lit: &StringLiteral, ctx: &SemanticBuilder<'_>) {
     }
     let raw = lit.span.source_text(ctx.source_text);
     let raw_len = raw.len();
-    if raw_len != lit.value.len() {
+    // Quotes contribute two bytes, and every escape contracts the cooked WTF-8 value.
+    // Equal content lengths therefore prove that there are no escapes to check.
+    if raw_len != lit.value.len() + 2 {
         if raw_len >= MIN_STRING_SIZE_FOR_BATCH_CHECK {
             let raw_bytes = raw.as_bytes();
             // Exclude the last byte (closing quote) from the search haystack.

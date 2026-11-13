@@ -249,6 +249,16 @@ fn test() {
                     if ('bar') {}
                   })
                 "#,
+        r"import { test as baseTest } from 'vitest';
+        const customTest = baseTest.extend({});
+        function helper(customTest) {
+            customTest('foo', () => { if (condition) {} });
+        }",
+        r"import { test as baseTest } from 'other';
+        const customTest = baseTest.extend({});
+        customTest('foo', () => { if (condition) {} });",
+        r"const test = (name, callback) => callback();
+        test('foo', () => { if (condition) {} });",
     ]);
 
     let mut fail = vec![
@@ -531,6 +541,19 @@ fn test() {
                       switch('bar') {}
                     })
                   "#,
+        r"import { test as baseTest } from 'vitest';
+        const extendedTest = baseTest.extend({});
+        const customTest = extendedTest.extend({});
+        customTest.only('foo', () => {
+            if (condition) {}
+            switch (value) {}
+            const result = condition ? 1 : 0;
+            condition && doSomething();
+        });",
+        r"import { it as customTest } from 'vitest';
+        customTest.each([true])('foo', value => {
+            if (value) {}
+        });",
     ]);
 
     Tester::new(NoConditionalInTest::NAME, NoConditionalInTest::PLUGIN, pass, fail)

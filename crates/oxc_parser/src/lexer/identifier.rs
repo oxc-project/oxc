@@ -10,7 +10,7 @@ use oxc_syntax::identifier::{
 use crate::{config::LexerConfig as Config, diagnostics};
 
 use super::{
-    Kind, Lexer, SourcePosition, cold_branch,
+    Kind, Lexer, SourcePosition, cold_branch, keyword,
     search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
 };
 
@@ -28,30 +28,22 @@ fn is_identifier_start_ascii_byte(byte: u8) -> bool {
 }
 
 impl<'a, C: Config> Lexer<'a, C> {
-    /// Handle identifier with ASCII start character.
-    /// Returns text of the identifier, minus its first char.
+    /// Consume an identifier starting with an ASCII byte and return its kind.
+    /// `CHECK_KEYWORD` may be false only for starting bytes that cannot begin a keyword.
     ///
-    /// Start character should not be consumed from `self.source` prior to calling this.
-    ///
-    /// This function is the "fast path" for the most common identifiers in JS code -
-    /// purely consisting of ASCII characters: `a`-`z`, `A`-`Z`, `0`-`9`, `_`, `$`.
-    /// JS syntax also allows Unicode identifiers and escapes (e.g. `\u{FF}`) in identifiers,
-    /// but they are very rare in practice. So this fast path will handle 99% of JS code.
-    ///
-    /// When Unicode or an escape is encountered, this function de-opts to paths which handle those
-    /// cases, but those paths are marked `#[cold]` to keep the ASCII fast path as fast as possible.
-    ///
-    /// The fast path uses pointers and unsafe code to minimize bounds checks etc.
-    /// The functions it delegates to for uncommon cases are both more complex, and less critical,
-    /// so they stick to safe code only.
+    /// Leave the first byte unconsumed. ASCII scanning stays inline; Unicode characters
+    /// and escapes use the decoding routines below.
     ///
     /// # SAFETY
     /// * `self.source` must not be exhausted (at least 1 char remaining).
     /// * Next char must be ASCII.
-    pub(super) unsafe fn identifier_name_handler(&mut self) -> &'a str {
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub(super) unsafe fn identifier_name_handler<const CHECK_KEYWORD: bool>(&mut self) -> Kind {
         // Advance past 1st byte.
+        let start_pos = self.source.position();
         // SAFETY: Caller guarantees not at EOF, and next byte is ASCII.
-        let after_first = unsafe { self.source.position().add(1) };
+        let after_first = unsafe { start_pos.add(1) };
 
         // Consume bytes which are part of identifier
         let next_byte = byte_search! {
@@ -59,37 +51,55 @@ impl<'a, C: Config> Lexer<'a, C> {
             table: NOT_ASCII_ID_CONTINUE_TABLE,
             start: after_first,
             handle_eof: {
-                // Return identifier minus its first char.
-                // SAFETY: `lexer.source` is positioned at EOF, so there is no valid value
-                // of `after_first` which could be after current position.
-                return unsafe { self.source.str_from_pos_to_current_unchecked(after_first) };
+                if CHECK_KEYWORD {
+                    // SAFETY: The source is at EOF, after the saved identifier start.
+                    let id = unsafe { self.source.str_from_pos_to_current_unchecked(start_pos) };
+                    return keyword::match_keyword(id.as_bytes());
+                }
+                return Kind::Ident;
             },
         };
 
-        // Found a matching byte.
-        // Either end of identifier found, or a Unicode char, or `\` escape.
-        // Handle uncommon cases in cold branches to keep the common ASCII path
-        // as fast as possible.
+        // Keep decoding and keyword lookup in one cold call so KWD can tail-call it.
+        // IDT calls the decoders directly to avoid an extra call frame.
         if !next_byte.is_ascii() {
             cold_path();
-            // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
-            // makes `start_pos` `source`'s position as it was at start of this function
-            let start_pos = unsafe { after_first.sub(1) };
-            return &self.identifier_tail_unicode(start_pos)[1..];
+            if CHECK_KEYWORD {
+                return self.identifier_name_uncommon::<false>(start_pos);
+            }
+            self.identifier_tail_unicode(start_pos);
+            return Kind::Ident;
         }
         if next_byte == b'\\' {
             cold_path();
-            // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
-            // makes `start_pos` `source`'s position as it was at start of this function
-            let start_pos = unsafe { after_first.sub(1) };
-            return &self.identifier_backslash(start_pos, false)[1..];
+            if CHECK_KEYWORD {
+                return self.identifier_name_uncommon::<true>(start_pos);
+            }
+            self.identifier_backslash(start_pos, false);
+            return Kind::Ident;
         }
 
-        // Return identifier minus its first char.
-        // SAFETY: `after_first` was position of `lexer.source` at start of this search.
-        // Searching only proceeds in forwards direction, so `lexer.source.position()`
-        // cannot be before `after_first`.
-        unsafe { self.source.str_from_pos_to_current_unchecked(after_first) }
+        if CHECK_KEYWORD {
+            // SAFETY: The scanner only moves forwards from the saved identifier start.
+            let id = unsafe { self.source.str_from_pos_to_current_unchecked(start_pos) };
+            keyword::match_keyword(id.as_bytes())
+        } else {
+            Kind::Ident
+        }
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn identifier_name_uncommon<const IS_ESCAPE: bool>(
+        &mut self,
+        start_pos: SourcePosition<'a>,
+    ) -> Kind {
+        let id = if IS_ESCAPE {
+            self.identifier_backslash(start_pos, false)
+        } else {
+            self.identifier_tail_unicode(start_pos)
+        };
+        keyword::match_keyword(id.as_bytes())
     }
 
     /// Handle rest of identifier after first byte of a multi-byte Unicode char found.
@@ -98,35 +108,39 @@ impl<'a, C: Config> Lexer<'a, C> {
     fn identifier_tail_unicode(&mut self, start_pos: SourcePosition<'a>) -> &'a str {
         let c = self.peek_char().unwrap();
         if is_identifier_part_unicode(c) {
-            self.consume_char();
-            self.identifier_tail_after_unicode(start_pos)
+            self.identifier_tail_after_unicode(start_pos, c)
         } else {
             // Reached end of identifier. Return identifier.
             self.source.str_from_pos_to_current(start_pos)
         }
     }
 
-    /// Handle identifier after first char (which was Unicode) is dealt with.
+    /// Handle identifier after a Unicode character has been validated.
     ///
-    /// First char should have been consumed from `self.source` prior to calling this.
-    /// `start_pos` should be position of the start of the identifier (before first char was consumed).
+    /// `first_char` must be the next character in `self.source` and a valid identifier character.
+    /// `start_pos` must be the position of the start of the identifier.
     pub(super) fn identifier_tail_after_unicode(
         &mut self,
         start_pos: SourcePosition<'a>,
+        first_char: char,
     ) -> &'a str {
-        // Identifier contains a Unicode chars, so probably contains more.
-        // So just iterate over chars now, instead of bytes.
-        while let Some(c) = self.peek_char() {
+        let start = self.source.position();
+        let first_char_len = first_char.len_utf8();
+        for (offset, c) in self.source.remaining()[first_char_len..].char_indices() {
             if is_identifier_part(c) {
-                self.consume_char();
-            } else if c == '\\' {
-                // This branch marked cold as escapes are uncommon
+                continue;
+            }
+
+            // SAFETY: `first_char` was the next character in `source`, and `char_indices` yields
+            // in-bounds UTF-8 character boundaries relative to the end of that character.
+            self.source.set_position(unsafe { start.add(first_char_len + offset) });
+            if c == '\\' {
                 cold_path();
                 return self.identifier_backslash(start_pos, false);
-            } else {
-                break;
             }
+            return self.source.str_from_pos_to_current(start_pos);
         }
+        self.source.advance_to_end();
 
         // Return identifier
         self.source.str_from_pos_to_current(start_pos)
@@ -279,8 +293,7 @@ impl<'a, C: Config> Lexer<'a, C> {
             let c = self.peek_char().unwrap();
             if is_identifier_start_unicode(c) {
                 let start_pos = self.source.position();
-                self.consume_char();
-                self.identifier_tail_after_unicode(start_pos);
+                self.identifier_tail_after_unicode(start_pos, c);
                 return Kind::PrivateIdentifier;
             }
         } else if b == b'\\' {

@@ -6,6 +6,7 @@ name = "crates"
 root_crate = "oxc"
 versioned_files = [
   "Cargo.toml",
+  "crates/oxc_react_compiler/Cargo.toml",
   "napi/parser/package.json",
   "napi/transform/package.json",
   "napi/transform-react/package.json",
@@ -38,6 +39,7 @@ versioned_files = [
   "crates/oxc_formatter/Cargo.toml",
   "crates/oxc_formatter_json/Cargo.toml",
   "crates/oxc_formatter_graphql/Cargo.toml",
+  "crates/oxc_formatter_htmlish/Cargo.toml",
   "crates/oxc_formatter_css/Cargo.toml",
   "crates/oxc_formatter_yaml/Cargo.toml",
   "crates/oxc_formatter_markdown/Cargo.toml",

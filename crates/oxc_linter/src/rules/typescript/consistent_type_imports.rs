@@ -581,10 +581,6 @@ fn fix_insert_named_specifiers_in_named_specifier_list(
     insert_text: &str,
 ) -> FixerResult<RuleFix> {
     let FixOptions { fixer, import_decl, ctx, .. } = options;
-    let close_brace = import_decl.span().start + try_find_token(ctx, import_decl.span, "}")?;
-
-    // Anchor on the last named specifier so a separator between earlier specifiers isn't
-    // mistaken for a trailing comma.
     let last_named_specifier_end = import_decl.specifiers.as_ref().and_then(|specifiers| {
         specifiers
             .iter()
@@ -594,6 +590,15 @@ fn fix_insert_named_specifiers_in_named_specifier_list(
             })
             .next_back()
     });
+    let search_start = last_named_specifier_end.unwrap_or(import_decl.span.start);
+    let search_end = import_decl.source.span.start;
+    if search_start > search_end {
+        return fixer_error("Invalid named specifier list range");
+    }
+    let close_brace = search_start
+        + ctx
+            .find_next_token_within(search_start, search_end, "}")
+            .ok_or("Missing closing brace in named specifier list")?;
 
     let span = Span::empty(close_brace);
     if last_named_specifier_end
@@ -2286,6 +2291,10 @@ export class Foo extends Bar {}
             ",
             None,
         ),
+        (
+            r#"import type { "}" as A } from 'm'; import { B, C } from 'm'; type T = A | B; C();"#,
+            None,
+        ),
     ];
 
     let fix = vec![
@@ -3458,6 +3467,26 @@ export class Foo extends Bar {}
             "\nimport Foo from'{'; type k = Foo",
             "\nimport type Foo from'{'; type k = Foo",
             Some(serde_json::json!([{ "prefer": "type-imports" }])),
+        ),
+        (
+            r#"import type { "}" as A } from 'm'; import { B, C } from 'm'; type T = A | B; C();"#,
+            r#"import type { "}" as A , B} from 'm'; import { C } from 'm'; type T = A | B; C();"#,
+            None,
+        ),
+        (
+            r#"import type { "}" as A, /* }, */ } from 'm'; import { B, C } from 'm'; type T = A | B; C();"#,
+            r#"import type { "}" as A, /* }, */  B} from 'm'; import { C } from 'm'; type T = A | B; C();"#,
+            None,
+        ),
+        (
+            r#"import { B, C } from 'm'; import type { "}" as A, D } from 'm'; type T = A | B | D; C();"#,
+            r#"import { C } from 'm'; import type { "}" as A, D , B} from 'm'; type T = A | B | D; C();"#,
+            None,
+        ),
+        (
+            "import type { /* }, */ } from 'm'; import { B, C } from 'm'; type T = B; C();",
+            "import type { /* }, */  B} from 'm'; import { C } from 'm'; type T = B; C();",
+            None,
         ),
     ];
 

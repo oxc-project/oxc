@@ -187,7 +187,7 @@ fn find_directives_dynamic_gating<'a>(
 /// `^use memo if\(([^\)]*)\)$`: the condition may not contain `)` and the
 /// directive must end at the closing paren.
 fn parse_dynamic_gating_directive(value: &str) -> Option<&str> {
-    let condition = value.strip_prefix("use memo if(")?.strip_suffix(')')?;
+    let condition = value.strip_circumfix("use memo if(", ')')?;
     if condition.contains(')') {
         return None;
     }
@@ -810,7 +810,7 @@ fn is_valid_props_annotation(type_annotation: Option<&TSTypeAnnotation>) -> bool
 /// the flat params list; in oxc the rest lives in `params.rest`. So the logical
 /// param count is `items.len() + rest.is_some()`.
 fn is_valid_component_params(params: &FormalParameters) -> bool {
-    let logical_len = params.items.len() + usize::from(params.rest.is_some());
+    let logical_len = params.parameters_count();
     if logical_len == 0 {
         return true;
     }
@@ -1107,7 +1107,7 @@ fn outlined_compile_source<'b, 'a>(
         fn_scope_id: function.scope_id.get().expect("outlined function should have a scope"),
         fn_type,
         fn_node: FunctionNode::Function(function),
-        body_directives: function.body.as_deref().map(body_directive_values).unwrap_or_default(),
+        body_directives: function.body.as_deref().map_or_default(body_directive_values),
     }
 }
 
@@ -2065,24 +2065,22 @@ fn find_functions_to_compile<'b, 'ast>(
 // -----------------------------------------------------------------------
 
 /// Cheap, sound pre-check for [`find_functions_to_compile`]: `false` means the
-/// discovery walk cannot queue anything, so the compile is a no-op. Built from
-/// data `Semantic` already computed instead of walking the AST, and delegating
-/// all judgment to discovery's own helpers:
+/// discovery walk cannot queue anything, so the compile is a no-op.
 ///
-/// - every discoverable function creates a function scope, so the node behind
-///   each function scope is run through [`try_make_compile_source`] with the
-///   name discovery would infer — own id for declarations, the directly
-///   enclosing `const Foo = ...` declarator for expressions/arrows, the only
-///   name sources discovery uses outside forwardRef/memo. This covers the
-///   named and directive-opt-in selection paths, nested functions included;
-/// - the forwardRef/memo path needs an identifier named `memo`, `forwardRef`,
-///   or `React` in callee position of a call [`get_callee_name_if_react_api`]
-///   recognizes, so checking the reference shapes of those three names —
-///   bindings and unresolved globals — covers wrapped anonymous functions.
+/// `precise` (compile/emit) runs each function through [`try_make_compile_source`]
+/// so files like `react.development.js` — hook *implementations*, not callers —
+/// do not pay a discovery walk that queues nothing. Lint uses a name-only
+/// over-approximation: a PascalCase / `useX` name or a non-empty directive list
+/// is enough; the JSX/hook body scan is left to discovery.
+///
+/// The forwardRef/memo path needs an identifier named `memo`, `forwardRef`,
+/// or `React` in callee position of a call [`get_callee_name_if_react_api`]
+/// recognizes, so checking the reference shapes of those three names —
+/// bindings and unresolved globals — covers wrapped anonymous functions.
 ///
 /// Over-approximation is fine (the walk then finds an empty queue); a missed
 /// witness is not, since a skipped file is never compiled.
-fn may_have_functions_to_compile(semantic: &Semantic, opts: &PluginOptions) -> bool {
+fn may_have_functions_to_compile(semantic: &Semantic, opts: &PluginOptions, precise: bool) -> bool {
     // 'all' mode compiles every top-level function; always walk.
     if opts.compilation_mode == CompilationMode::All {
         return true;
@@ -2104,9 +2102,7 @@ fn may_have_functions_to_compile(semantic: &Semantic, opts: &PluginOptions) -> b
         }
     }
 
-    // Named components/hooks and directive opt-ins: run the node behind every
-    // function scope through discovery's candidate constructor. parent_callee
-    // is None — wrapper-selected functions are witnessed by reference shapes.
+    // Named components/hooks and directive opt-ins.
     let mut discarded = FxHashSet::default();
     for scope_id in scoping.scope_descendants_from_root() {
         if !scoping.scope_flags(scope_id).is_function() {
@@ -2124,7 +2120,6 @@ fn may_have_functions_to_compile(semantic: &Semantic, opts: &PluginOptions) -> b
                         (declarator_name_for(nodes, node.id()), OriginalFnKind::FunctionExpression)
                     }
                 };
-                // A nameless function without directives can never classify.
                 if name.is_none()
                     && func.body.as_ref().is_none_or(|body| body.directives.is_empty())
                 {
@@ -2143,8 +2138,21 @@ fn may_have_functions_to_compile(semantic: &Semantic, opts: &PluginOptions) -> b
             }
             _ => continue,
         };
-        if try_make_compile_source(fn_node, name, original_kind, None, opts, &mut discarded)
-            .is_some()
+        if precise {
+            if try_make_compile_source(fn_node, name, original_kind, None, opts, &mut discarded)
+                .is_some()
+            {
+                return true;
+            }
+        } else if name.is_some_and(|n| is_hook_name(n) || is_component_name(n))
+            || match fn_node {
+                FunctionNode::Function(func) => {
+                    func.body.as_ref().is_some_and(|body| !body.directives.is_empty())
+                }
+                FunctionNode::Arrow(arrow) => {
+                    arrow.get_function_body().is_some_and(|body| !body.directives.is_empty())
+                }
+            }
         {
             return true;
         }
@@ -2234,6 +2242,7 @@ struct OxcReplacement<'a> {
     original_kind: OriginalFnKind,
     codegen_fn: CodegenFunction<'a>,
     gating: Option<GatingConfig>,
+    referenced_before_declaration: bool,
 }
 
 /// The owned output of a [`compile`](crate::compile) that produced changes:
@@ -2485,6 +2494,7 @@ enum OxcVisitMode<'a, 'b> {
         /// Declarations to insert; drained on insertion, so leftovers mean
         /// the original statement was not found.
         decls: Vec<Statement<'a>>,
+        before: bool,
     },
 }
 
@@ -2658,12 +2668,16 @@ impl<'a> oxc_ast_visit::VisitMut<'a> for OxcVisitor<'a, '_> {
     }
 
     fn visit_statements(&mut self, stmts: &mut ArenaVec<'a, Statement<'a>>) {
-        if let OxcVisitMode::InsertOutlinedAfter { scope_id, decls } = &mut self.mode {
+        if let OxcVisitMode::InsertOutlinedAfter { scope_id, decls, before } = &mut self.mode {
             if decls.is_empty() {
                 return;
             }
             let scope_id = *scope_id;
             if let Some(idx) = stmts.iter().position(|s| ox_declares_fn_with_scope(s, scope_id)) {
+                if *before {
+                    stmts.splice(idx..idx, std::mem::take(decls));
+                    return;
+                }
                 // Babel inserts each outlined function via `originalFn.insertAfter(...)`,
                 // anchored at the same original node, so repeated insertions reverse the
                 // emitted order. Insert each at `idx + 1` to reproduce that.
@@ -2760,12 +2774,17 @@ fn ox_gating_call<'a>(ast: &AstBuilder<'a>, callee_name: &str) -> Expression<'a>
 fn ox_apply_gated_conditional<'a>(
     ast: &AstBuilder<'a>,
     program: &mut Program<'a>,
-    scope_id: ScopeId,
-    original_kind: OriginalFnKind,
-    codegen_fn: CodegenFunction<'a>,
-    gating_config: &GatingConfig,
-    context: &mut ProgramContext,
+    replacement: OxcReplacement<'a>,
+    context: &mut ProgramContext<'a>,
 ) {
+    let OxcReplacement {
+        fn_scope_id: scope_id,
+        original_kind,
+        codegen_fn,
+        gating,
+        referenced_before_declaration,
+    } = replacement;
+    let gating_config = gating.unwrap();
     let gating_import = context.add_import_specifier(
         &gating_config.source,
         &gating_config.import_specifier_name,
@@ -2781,6 +2800,19 @@ fn ox_apply_gated_conditional<'a>(
     };
 
     let compiled_expr = ox_build_compiled_expression(ast, codegen_fn, original_kind);
+
+    if referenced_before_declaration {
+        ox_apply_hoisted_gating(
+            ast,
+            program,
+            scope_id,
+            original_expr,
+            compiled_expr,
+            &gating_import.name,
+            context,
+        );
+        return;
+    }
 
     // gating() ? compiled : original
     let gating_expression = Expression::new_conditional_expression(
@@ -2799,6 +2831,117 @@ fn ox_apply_gated_conditional<'a>(
             export_default_name: None,
             done: false,
         },
+    };
+    oxc_ast_visit::VisitMut::visit_program(&mut visitor, program);
+}
+
+/// Preserve a hoisted declaration when gating a function referenced earlier.
+/// Mirrors upstream `insertAdditionalFunctionDeclaration` in Gating.ts.
+fn ox_apply_hoisted_gating<'a>(
+    ast: &AstBuilder<'a>,
+    program: &mut Program<'a>,
+    scope_id: ScopeId,
+    original: Expression<'a>,
+    compiled: Expression<'a>,
+    gate: &str,
+    context: &mut ProgramContext<'a>,
+) {
+    let (
+        Expression::FunctionExpression(mut original),
+        Expression::FunctionExpression(mut compiled),
+    ) = (original, compiled)
+    else {
+        unreachable!()
+    };
+    let id = original.id.as_ref().unwrap().clone_in(ast.allocator());
+    let condition = context.new_uid(&format!("{gate}_result"));
+    let unoptimized = context.new_uid(&format!("{}_unoptimized", id.name));
+    let optimized = context.new_uid(&format!("{}_optimized", id.name));
+    original.id.as_mut().unwrap().name = unoptimized;
+    compiled.id.as_mut().unwrap().name = optimized;
+    original.r#type = FunctionType::FunctionDeclaration;
+    compiled.r#type = FunctionType::FunctionDeclaration;
+
+    let mut params = original.params.clone_in(ast.allocator());
+    for (index, parameter) in params.items.iter_mut().enumerate() {
+        parameter.pattern =
+            BindingPattern::new_binding_identifier(SPAN, ox_atom(ast, &format!("arg{index}")), ast);
+        parameter.initializer = None;
+        parameter.type_annotation = None;
+    }
+    let rest_index = params.items.len();
+    if let Some(rest) = &mut params.rest {
+        rest.rest.argument = BindingPattern::new_binding_identifier(
+            SPAN,
+            ox_atom(ast, &format!("arg{rest_index}")),
+            ast,
+        );
+        rest.type_annotation = None;
+    }
+    let call = |callee: Ident<'a>| {
+        let mut args = ArenaVec::new_in(ast);
+        for parameter in &params.items {
+            let BindingPattern::BindingIdentifier(binding) = &parameter.pattern else {
+                unreachable!()
+            };
+            args.push(Argument::from(Expression::new_identifier(SPAN, binding.name, ast)));
+        }
+        if let Some(rest) = &params.rest {
+            let BindingPattern::BindingIdentifier(binding) = &rest.rest.argument else {
+                unreachable!()
+            };
+            args.push(Argument::new_spread_element(
+                SPAN,
+                Expression::new_identifier(SPAN, binding.name, ast),
+                ast,
+            ));
+        }
+        Expression::new_call_expression(
+            SPAN,
+            Expression::new_identifier(SPAN, callee, ast),
+            None,
+            args,
+            false,
+            ast,
+        )
+    };
+    let body = FunctionBody::boxed(
+        SPAN,
+        [],
+        [
+            Statement::new_if_statement(
+                SPAN,
+                Expression::new_identifier(SPAN, condition, ast),
+                Statement::new_return_statement(SPAN, Some(call(optimized)), ast),
+                None,
+                ast,
+            ),
+            Statement::new_return_statement(SPAN, Some(call(unoptimized)), ast),
+        ],
+        ast,
+    );
+    let wrapper = CodegenFunction {
+        span: Some(original.span),
+        id: Some(id),
+        params,
+        body,
+        generator: false,
+        is_async: false,
+        memo_slots_used: 1,
+        outlined: Vec::new(),
+    };
+    let replacements = FxHashMap::from_iter([(scope_id, wrapper)]);
+    let mut visitor =
+        OxcVisitor { ast, mode: OxcVisitMode::ReplaceFns { replacements, remaining: 1 } };
+    oxc_ast_visit::VisitMut::visit_program(&mut visitor, program);
+    let decls = vec![
+        Statement::FunctionDeclaration(compiled),
+        ox_build_gated_const_decl(ast, &ox_gating_call(ast, gate), condition.as_str(), SPAN, SPAN),
+        Statement::FunctionDeclaration(original),
+    ];
+    let mut visitor = OxcVisitor {
+        ast,
+        mode: OxcVisitMode::InsertOutlinedAfter { scope_id, decls, before: true },
     };
     oxc_ast_visit::VisitMut::visit_program(&mut visitor, program);
 }
@@ -2831,7 +2974,7 @@ fn ox_transform_program<'a>(
     ast: &AstBuilder<'a>,
     program: &mut Program<'a>,
     replacements: Vec<OxcReplacement<'a>>,
-    context: &mut ProgramContext,
+    context: &mut ProgramContext<'a>,
 ) {
     // Anchor generated top-level imports immediately before the first source
     // statement. Keep the span empty so the imports remain unmapped. The
@@ -2850,9 +2993,9 @@ fn ox_transform_program<'a>(
     //     original function (Babel `insertAfter`), however deeply nested it is.
     //   - (Arrow)FunctionExpression originals: appended at the end of the program
     //     body (Babel `pushContainer('body', ...)`), since inserting as a sibling
-    //     would corrupt the parent expression. For a nested original this can hoist
-    //     the outlined function past bindings it references — upstream has the same
-    //     behavior, so we reproduce it rather than diverge.
+    //     would corrupt the parent expression. Candidates whose HIR references
+    //     an outer lexical binding are kept inline for these roots, so this
+    //     placement cannot hoist them past the binding they reference.
     let mut appended_outlined_decls: Vec<Statement<'a>> = Vec::new();
     let needs_memo_import = replacements.iter().any(|r| codegen_uses_memo_cache(&r.codegen_fn));
 
@@ -2880,13 +3023,8 @@ fn ox_transform_program<'a>(
             ox_insert_outlined_after(ast, program, scope_id, sibling_outlined_decls);
         }
 
-        if let Some(gating_config) = replacement.gating {
-            gated_replacements.push((
-                scope_id,
-                original_kind,
-                replacement.codegen_fn,
-                gating_config,
-            ));
+        if replacement.gating.is_some() {
+            gated_replacements.push(replacement);
         } else {
             replace_map.insert(scope_id, replacement.codegen_fn);
         }
@@ -2904,16 +3042,8 @@ fn ox_transform_program<'a>(
         oxc_ast_visit::VisitMut::visit_program(&mut visitor, program);
     }
 
-    for (scope_id, original_kind, codegen_fn, gating_config) in gated_replacements {
-        ox_apply_gated_conditional(
-            ast,
-            program,
-            scope_id,
-            original_kind,
-            codegen_fn,
-            &gating_config,
-            context,
-        );
+    for replacement in gated_replacements {
+        ox_apply_gated_conditional(ast, program, replacement, context);
     }
 
     // Append outlined function declarations (from expression-parented originals) at
@@ -2952,7 +3082,7 @@ fn ox_insert_outlined_after<'a>(
 ) {
     let mut visitor = OxcVisitor {
         ast,
-        mode: OxcVisitMode::InsertOutlinedAfter { scope_id, decls: outlined_decls },
+        mode: OxcVisitMode::InsertOutlinedAfter { scope_id, decls: outlined_decls, before: false },
     };
     oxc_ast_visit::VisitMut::visit_program(&mut visitor, program);
     let OxcVisitMode::InsertOutlinedAfter { decls, .. } = visitor.mode else { unreachable!() };
@@ -3143,7 +3273,7 @@ pub fn compile_program<'a, const EMIT: bool>(
     // Find all functions to compile. An empty queue means no work, so return
     // before all the setup below, which only compilation needs. The pre-check
     // decides emptiness from semantic data without walking the AST.
-    if !may_have_functions_to_compile(semantic, &options) {
+    if !may_have_functions_to_compile(semantic, &options, EMIT) {
         return CompileResult::Success { output: None, diagnostics: Diagnostics::new() };
     }
     let queue = find_functions_to_compile(program, &options);
@@ -3193,10 +3323,10 @@ pub fn compile_program<'a, const EMIT: bool>(
     let ast = AstBuilder::new(allocator);
     let scope = ScopeResolver::new(semantic, allocator);
 
-    // Initialize known referenced names from scope bindings for UID collision detection
-    context.init_from_scope(&scope);
-
     if EMIT {
+        // Seed UID collision detection with every binding in the file. Lint
+        // does not generate identifiers, so skip the walk.
+        context.init_from_scope(&scope);
         // Pre-register instrumentation imports to get stable local names.
         // These are needed before compilation so codegen can use the correct names.
         let (instrument_fn_name, instrument_gating_name) = if let Some(ref instrument_config) =
@@ -3313,6 +3443,13 @@ pub fn compile_program<'a, const EMIT: bool>(
                 original_kind: cf.source.original_kind,
                 codegen_fn: cf.codegen_fn,
                 gating,
+                referenced_before_declaration: matches!(&cf.source.fn_node,
+                    FunctionNode::Function(function) if function.is_function_declaration()
+                    && function.id.as_ref().and_then(|id| id.symbol_id.get()).is_some_and(|symbol| {
+                        semantic.scoping().get_resolved_references(symbol).any(|reference| {
+                            semantic.nodes().get_node(reference.node_id()).kind().span().start < function.span.start
+                        })
+                    })),
             }
         })
         .collect();

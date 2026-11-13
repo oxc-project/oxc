@@ -1,6 +1,8 @@
 //! Utility functions for `Arena`.
 
-use std::{alloc::Layout, hint::unreachable_unchecked, ptr::NonNull};
+use std::{alloc::Layout, ptr::NonNull};
+
+use oxc_data_structures::unreachable_unchecked;
 
 pub use super::bumpalo_alloc::AllocErr;
 
@@ -62,8 +64,7 @@ pub unsafe fn round_up_to_unchecked(n: usize, divisor: usize) -> usize {
     if let Some(x) = round_up_to(n, divisor) {
         x
     } else {
-        debug_assert!(false, "round_up_to_unchecked failed");
-        unsafe { unreachable_unchecked() }
+        unsafe { unreachable_unchecked!("`round_up_to_unchecked` failed") };
     }
 }
 

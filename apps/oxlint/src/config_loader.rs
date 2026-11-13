@@ -361,7 +361,7 @@ impl<'a> ConfigLoader<'a> {
         for (dir, config_files) in by_dir {
             if config_files.len() > 1 {
                 errors.push(ConfigLoadError::Diagnostic(
-                    ConfigConflict::new(dir.clone(), config_files).into(),
+                    ConfigConflict::new(dir, config_files).into(),
                 ));
                 continue;
             }

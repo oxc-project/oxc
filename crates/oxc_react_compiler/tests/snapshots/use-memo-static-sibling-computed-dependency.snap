@@ -1,0 +1,263 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/use-memo-static-sibling-computed-dependency.js
+---
+import { c as _c } from "react/compiler-runtime";
+import { useEffect, useMemo } from "react";
+export function A(t0) {
+	const $ = _c(4);
+	const { id } = t0;
+	let t1;
+	if ($[0] !== id) {
+		t1 = [{ label: "Home" }, { label: `#${id}` }];
+		$[0] = id;
+		$[1] = t1;
+	} else {
+		t1 = $[1];
+	}
+	const items = t1;
+	let t2;
+	if ($[2] !== items) {
+		t2 = <List items={items} />;
+		$[2] = items;
+		$[3] = t2;
+	} else {
+		t2 = $[3];
+	}
+	return t2;
+}
+export function Binary(t0) {
+	const $ = _c(2);
+	const { id } = t0;
+	let t1;
+	if ($[0] !== id) {
+		t1 = [{ label: "Home" }, { label: "#" + id }];
+		$[0] = id;
+		$[1] = t1;
+	} else {
+		t1 = $[1];
+	}
+	return t1;
+}
+export function Unary(t0) {
+	const $ = _c(2);
+	const { id } = t0;
+	let t1;
+	if ($[0] !== id) {
+		t1 = [{ label: "Home" }, { label: -id }];
+		$[0] = id;
+		$[1] = t1;
+	} else {
+		t1 = $[1];
+	}
+	return t1;
+}
+export function ObjectWithMap(t0) {
+	const $ = _c(2);
+	const { id } = t0;
+	let t1;
+	if ($[0] !== id) {
+		t1 = {
+			entries: new Map(),
+			key: `k-${id}`
+		};
+		$[0] = id;
+		$[1] = t1;
+	} else {
+		t1 = $[1];
+	}
+	return t1;
+}
+export function MapWithEffect(t0) {
+	const $ = _c(10);
+	const { id } = t0;
+	let t1;
+	if ($[0] !== id) {
+		t1 = {
+			entries: new Map(),
+			key: `k-${id}`
+		};
+		$[0] = id;
+		$[1] = t1;
+	} else {
+		t1 = $[1];
+	}
+	const cache = t1;
+	let t2;
+	if ($[2] !== cache.entries || $[3] !== cache.key) {
+		t2 = () => {
+			cache.entries.set(cache.key, true);
+		};
+		$[2] = cache.entries;
+		$[3] = cache.key;
+		$[4] = t2;
+	} else {
+		t2 = $[4];
+	}
+	let t3;
+	if ($[5] !== cache) {
+		t3 = [cache];
+		$[5] = cache;
+		$[6] = t3;
+	} else {
+		t3 = $[6];
+	}
+	useEffect(t2, t3);
+	let t4;
+	if ($[7] !== cache.entries.size || $[8] !== cache.key) {
+		t4 = <div>{cache.key}:{cache.entries.size}</div>;
+		$[7] = cache.entries.size;
+		$[8] = cache.key;
+		$[9] = t4;
+	} else {
+		t4 = $[9];
+	}
+	return t4;
+}
+export function NestedProperty(t0) {
+	const $ = _c(2);
+	const { id } = t0;
+	let t1;
+	if ($[0] !== id.name) {
+		t1 = {
+			entries: new Map(),
+			key: `k-${id.name}`
+		};
+		$[0] = id.name;
+		$[1] = t1;
+	} else {
+		t1 = $[1];
+	}
+	return t1;
+}
+export function MultipleProperties(t0) {
+	const $ = _c(3);
+	const { id } = t0;
+	let t1;
+	if ($[0] !== id.name || $[1] !== id.prefix) {
+		t1 = {
+			entries: new Map(),
+			key: id.prefix + id.name
+		};
+		$[0] = id.name;
+		$[1] = id.prefix;
+		$[2] = t1;
+	} else {
+		t1 = $[2];
+	}
+	return t1;
+}
+export function ComputedProperty(t0) {
+	const $ = _c(3);
+	const { id, field } = t0;
+	let t1;
+	if ($[0] !== field || $[1] !== id) {
+		t1 = {
+			entries: new Map(),
+			key: id[field]
+		};
+		$[0] = field;
+		$[1] = id;
+		$[2] = t1;
+	} else {
+		t1 = $[2];
+	}
+	return t1;
+}
+export function RepeatedOperand(t0) {
+	const $ = _c(2);
+	const { id } = t0;
+	let t1;
+	if ($[0] !== id) {
+		t1 = [{ label: "Home" }, { label: "#" + (id + id) }];
+		$[0] = id;
+		$[1] = t1;
+	} else {
+		t1 = $[1];
+	}
+	return t1;
+}
+export function MultipleStaticScopes(t0) {
+	const $ = _c(2);
+	const { id } = t0;
+	let t1;
+	if ($[0] !== id) {
+		t1 = [
+			{ label: "Home" },
+			{ label: "Other" },
+			{ label: `#${id}` }
+		];
+		$[0] = id;
+		$[1] = t1;
+	} else {
+		t1 = $[1];
+	}
+	return t1;
+}
+export function LocalAlias(t0) {
+	const $ = _c(3);
+	const { id } = t0;
+	let t1;
+	if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+		t1 = { label: "Home" };
+		$[0] = t1;
+	} else {
+		t1 = $[0];
+	}
+	const home = t1;
+	const label = `#${id}`;
+	let t2;
+	if ($[1] !== label) {
+		t2 = [home, { label }];
+		$[1] = label;
+		$[2] = t2;
+	} else {
+		t2 = $[2];
+	}
+	return t2;
+}
+export function Property(t0) {
+	const $ = _c(2);
+	const { id } = t0;
+	let t1;
+	if ($[0] !== id.name) {
+		t1 = [{ label: "Home" }, { label: id.name }];
+		$[0] = id.name;
+		$[1] = t1;
+	} else {
+		t1 = $[1];
+	}
+	return t1;
+}
+export function Reversed(t0) {
+	const $ = _c(4);
+	const { id } = t0;
+	const t1 = `#${id}`;
+	let t2;
+	if ($[0] !== t1) {
+		t2 = { label: t1 };
+		$[0] = t1;
+		$[1] = t2;
+	} else {
+		t2 = $[1];
+	}
+	let t3;
+	if ($[2] !== t2) {
+		t3 = [t2, { label: "Home" }];
+		$[2] = t2;
+		$[3] = t3;
+	} else {
+		t3 = $[3];
+	}
+	return t3;
+}
+export const FIXTURE_ENTRYPOINT = {
+	fn: MapWithEffect,
+	params: [{ id: "a" }],
+	sequentialRenders: [
+		{ id: "a" },
+		{ id: "a" },
+		{ id: "b" },
+		{ id: "b" }
+	]
+};

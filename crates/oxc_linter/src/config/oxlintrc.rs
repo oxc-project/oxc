@@ -33,7 +33,7 @@ pub struct OxlintOptions {
     /// Note that this requires the `oxlint-tsgolint` package to be installed.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub type_aware: Option<bool>,
-    /// Enable experimental type checking (includes TypeScript compiler diagnostics).
+    /// Enable type checking (includes TypeScript compiler diagnostics).
     ///
     /// Equivalent to passing `--type-check` on the CLI.
     ///

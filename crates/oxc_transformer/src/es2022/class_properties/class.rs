@@ -6,9 +6,7 @@ use oxc_ast::ast::*;
 use oxc_span::SPAN;
 use oxc_str::{Ident, static_ident};
 use oxc_syntax::{
-    node::NodeId,
     reference::ReferenceFlags,
-    scope::ScopeFlags,
     symbol::{SymbolFlags, SymbolId},
 };
 use oxc_traverse::{Ancestor, BoundIdentifier};
@@ -21,7 +19,6 @@ use crate::{
 
 use super::{
     ClassBindings, ClassDetails, ClassProperties, IdentIndexMap, PrivateProp,
-    constructor::InstanceInitsInsertLocation,
     utils::{create_variable_declaration, exprs_into_stmts},
 };
 
@@ -95,13 +92,11 @@ impl<'a> ClassProperties<'a> {
                     }
 
                     // Create binding for private property key
-                    if let PropertyKey::PrivateIdentifier(ident) = &prop.key {
+                    if let Some(name) = prop.key.private_name() {
                         // Note: Current scope is outside class.
-                        let binding = ctx.generate_uid_in_current_hoist_scope(&ident.name);
-                        private_props.insert(
-                            ident.name,
-                            PrivateProp::new(binding, prop.r#static, None, false),
-                        );
+                        let binding = ctx.generate_uid_in_current_hoist_scope(&name);
+                        private_props
+                            .insert(name, PrivateProp::new(binding, prop.r#static, None, false));
                     }
 
                     if prop.r#static {
@@ -117,7 +112,7 @@ impl<'a> ClassProperties<'a> {
                     }
                 }
                 ClassElement::MethodDefinition(method) => {
-                    if let PropertyKey::PrivateIdentifier(ident) = &method.key {
+                    if let Some(private_name) = method.key.private_name() {
                         if method.r#static {
                             has_static_private_method_or_static_block = true;
                         } else {
@@ -125,9 +120,9 @@ impl<'a> ClassProperties<'a> {
                         }
 
                         let name = match method.kind {
-                            MethodDefinitionKind::Method => ident.name.as_str(),
-                            MethodDefinitionKind::Get => &format!("get_{}", ident.name),
-                            MethodDefinitionKind::Set => &format!("set_{}", ident.name),
+                            MethodDefinitionKind::Method => private_name.as_str(),
+                            MethodDefinitionKind::Get => &format!("get_{private_name}"),
+                            MethodDefinitionKind::Set => &format!("set_{private_name}"),
                             MethodDefinitionKind::Constructor => unreachable!(),
                         };
                         let (scope_id, flags) = if private_method_helpers_in_class_sequence {
@@ -137,13 +132,13 @@ impl<'a> ClassProperties<'a> {
                         };
                         let binding = ctx.generate_uid(name, scope_id, flags);
 
-                        if let Some(prop) = private_props.get_mut(&ident.name) {
+                        if let Some(prop) = private_props.get_mut(&private_name) {
                             // If there's already a binding for this private property,
                             // it's a setter or getter, so store the binding in `binding2`.
                             prop.set_binding2(binding);
                         } else {
                             private_props.insert(
-                                ident.name,
+                                private_name,
                                 PrivateProp::new(
                                     binding,
                                     method.r#static,
@@ -157,10 +152,10 @@ impl<'a> ClassProperties<'a> {
                 ClassElement::AccessorProperty(prop) => {
                     // TODO: Not sure what we should do here.
                     // Only added this to prevent panics in TS conformance tests.
-                    if let PropertyKey::PrivateIdentifier(ident) = &prop.key {
+                    if let Some(name) = prop.key.private_name() {
                         let dummy_binding = BoundIdentifier::new(Ident::empty(), SymbolId::new(0));
                         private_props.insert(
-                            ident.name,
+                            name,
                             PrivateProp::new(dummy_binding, prop.r#static, None, true),
                         );
                     }
@@ -267,8 +262,8 @@ impl<'a> ClassProperties<'a> {
             instance_inits.push(self.create_class_private_method_init_spec(ctx));
         }
 
-        let mut constructor = None;
-        for element in &mut body.body {
+        let mut constructor_index = None;
+        for (index, element) in body.body.iter_mut().enumerate() {
             #[expect(clippy::match_same_arms)]
             match element {
                 ClassElement::PropertyDefinition(prop) => {
@@ -282,7 +277,7 @@ impl<'a> ClassProperties<'a> {
                     if method.kind == MethodDefinitionKind::Constructor
                         && method.value.body.is_some()
                     {
-                        constructor = Some(method.value.as_mut());
+                        constructor_index = Some(index);
                     }
                 }
                 ClassElement::AccessorProperty(_) | ClassElement::TSIndexSignature(_) => {
@@ -292,101 +287,14 @@ impl<'a> ClassProperties<'a> {
             }
         }
 
-        // When `self.set_public_class_fields` and `self.remove_class_fields_without_initializer` are both true,
-        // we don't need to convert properties without initializers, that means `instance_prop_count != 0` but `instance_inits` may be empty.
-        if instance_inits.is_empty() {
-            return;
-        }
-
-        // Scope that instance property initializers will be inserted into.
-        // This is usually class constructor, but can also be a `_super` function which is created.
-        let instance_inits_scope_id;
-        // Scope of class constructor, if instance property initializers will be inserted into constructor.
-        // Used for checking for variable name clashes.
-        // e.g. `class C { prop = x(); constructor(x) {} }`
-        // - `x` in constructor needs to be renamed when `x()` is moved into constructor body.
-        // `None` if class has no existing constructor, as then there can't be any clashes.
-        let mut instance_inits_constructor_scope_id = None;
-
-        // Determine where to insert instance property initializers in constructor
-        let instance_inits_insert_location = if let Some(constructor) = constructor.as_deref_mut() {
-            if has_super_class {
-                let (insert_scopes, insert_location) =
-                    Self::replace_super_in_constructor(constructor, ctx);
-                instance_inits_scope_id = insert_scopes.insert_in_scope_id;
-                instance_inits_constructor_scope_id = insert_scopes.constructor_scope_id;
-                insert_location
-            } else {
-                let constructor_scope_id = constructor.scope_id();
-                instance_inits_scope_id = constructor_scope_id;
-                // Only record `constructor_scope_id` if constructor's scope has some bindings.
-                // If it doesn't, no need to check for shadowed symbols in instance prop initializers,
-                // because no bindings to clash with.
-                instance_inits_constructor_scope_id =
-                    if ctx.scoping().get_bindings(constructor_scope_id).is_empty() {
-                        None
-                    } else {
-                        Some(constructor_scope_id)
-                    };
-                InstanceInitsInsertLocation::ExistingConstructor(0)
-            }
-        } else {
-            // No existing constructor - create scope for one
-            let constructor_scope_id = ctx.scoping_mut().add_scope(
-                Some(class_scope_id),
-                NodeId::DUMMY,
-                ScopeFlags::Function | ScopeFlags::Constructor | ScopeFlags::StrictMode,
-            );
-            instance_inits_scope_id = constructor_scope_id;
-            InstanceInitsInsertLocation::NewConstructor
-        };
-
-        // Reparent property initializers scope to `instance_inits_scope_id`.
-        self.reparent_initializers_scope(
-            instance_inits.as_slice(),
-            instance_inits_scope_id,
-            instance_inits_constructor_scope_id,
+        self.insert_instance_initializers(
+            body,
+            instance_inits,
+            constructor_index,
+            class_scope_id,
+            has_super_class,
             ctx,
         );
-
-        // Insert instance initializers into constructor.
-        // Create a constructor if there isn't one.
-        match instance_inits_insert_location {
-            InstanceInitsInsertLocation::NewConstructor => {
-                Self::insert_constructor(
-                    body,
-                    instance_inits,
-                    has_super_class,
-                    instance_inits_scope_id,
-                    ctx,
-                );
-            }
-            InstanceInitsInsertLocation::ExistingConstructor(stmt_index) => {
-                self.insert_inits_into_constructor_as_statements(
-                    constructor.as_mut().unwrap(),
-                    instance_inits,
-                    stmt_index,
-                    ctx,
-                );
-            }
-            InstanceInitsInsertLocation::SuperFnInsideConstructor(super_binding) => {
-                self.create_super_function_inside_constructor(
-                    constructor.as_mut().unwrap(),
-                    instance_inits,
-                    &super_binding,
-                    instance_inits_scope_id,
-                    ctx,
-                );
-            }
-            InstanceInitsInsertLocation::SuperFnOutsideClass(super_binding) => {
-                self.create_super_function_outside_constructor(
-                    instance_inits,
-                    &super_binding,
-                    instance_inits_scope_id,
-                    ctx,
-                );
-            }
-        }
     }
 
     /// Transform class declaration on exit.
@@ -452,8 +360,58 @@ impl<'a> ClassProperties<'a> {
         // to before class
         self.transform_class_elements(class, ctx);
 
+        // Computed keys move outside the class. Reparent their first-level scopes as well,
+        // including functions containing brand checks against the lexical alias.
+        if !self.insert_before.is_empty() {
+            let keys = std::mem::take(&mut self.insert_before);
+            self.reparent_initializers_scope(&keys, ctx.current_scope_id(), None, ctx);
+            self.insert_before = keys;
+        }
+
         // Insert temp var for class if required. Name class if required.
         let class_details = self.classes_stack.last_mut();
+        let shadowed_name_declaration = if let Some(binding) = &class_details.bindings.shadowed_name
+        {
+            // Computed keys run before the class exists. Start with `undefined` so brand checks
+            // in keys can reject other objects without reading an uninitialized lexical binding.
+            // The `let` must be fresh for each evaluation of a declaration in a loop.
+            let declarator = VariableDeclarator::new(
+                SPAN,
+                binding.create_binding_pattern(ctx),
+                None,
+                None,
+                false,
+                ctx,
+            );
+            let declaration = Statement::new_variable_declaration(
+                SPAN,
+                VariableDeclarationKind::Let,
+                [declarator],
+                false,
+                ctx,
+            );
+
+            // A preserved static block runs during class evaluation, before after-class statements.
+            // Initialize the alias at the start of the first block, before its user code can call
+            // a method that uses it. Otherwise initialize before the extracted static initializers.
+            if let Some(block) = class.body.body.iter_mut().find_map(|element| match element {
+                ClassElement::StaticBlock(block) => Some(block),
+                _ => None,
+            }) {
+                let init = Expression::new_this_expression(SPAN, ctx);
+                let expr = create_assignment(binding, init, SPAN, ctx);
+                block.body.insert(0, Statement::new_expression_statement(SPAN, expr, ctx));
+            } else {
+                let init =
+                    class_details.bindings.name.as_ref().unwrap().create_read_expression(ctx);
+                let expr = create_assignment(binding, init, SPAN, ctx);
+                let stmt = Statement::new_expression_statement(SPAN, expr, ctx);
+                self.insert_after_stmts.insert(0, stmt);
+            }
+            Some(declaration)
+        } else {
+            None
+        };
         if let Some(temp_binding) = &class_details.bindings.temp {
             // Binding for class name is required
             if let Some(ident) = &class.id {
@@ -551,6 +509,11 @@ impl<'a> ClassProperties<'a> {
                     ctx.state.statement_injector.insert_many_before(&stmt_address, stmts);
                 }
             }
+        }
+
+        if let Some(declaration) = shadowed_name_declaration {
+            // `insert_many_before` prepends, so do this after inserting computed key evaluations.
+            ctx.state.statement_injector.insert_many_before(&stmt_address, [declaration]);
         }
 
         if !self.insert_after_stmts.is_empty() {

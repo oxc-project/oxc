@@ -303,6 +303,8 @@ export type PackageFrom = "package";
 export type AllowInterfaces = "never" | "always" | "with-single-extends";
 export type AllowObjectTypes = "never" | "always";
 export type AllowInGenericTypeArguments = boolean | string[];
+export type ChecksConditionals = boolean | ChecksConditionalsOptions;
+export type ChecksConditionalsFlagUnions = "none" | "strict" | "all";
 export type ChecksVoidReturn = boolean | ChecksVoidReturnOptions;
 /**
  * Represents the different ways a ban config can be specified in JSON.
@@ -831,7 +833,7 @@ export interface OxlintOptions {
    */
   typeAware?: boolean;
   /**
-   * Enable experimental type checking (includes TypeScript compiler diagnostics).
+   * Enable type checking (includes TypeScript compiler diagnostics).
    *
    * Equivalent to passing `--type-check` on the CLI.
    *
@@ -1324,7 +1326,7 @@ export interface DummyRuleMap {
   "react-perf/jsx-no-new-function-as-prop"?: RuleNoConfig | [AllowWarnDeny, ReactPerfConfig];
   "react-perf/jsx-no-new-object-as-prop"?: RuleNoConfig | [AllowWarnDeny, ReactPerfConfig];
   "react/button-has-type"?: RuleNoConfig | [AllowWarnDeny, ButtonHasType];
-  "react/capitalized-calls"?: RuleNoConfig;
+  "react/capitalized-calls"?: RuleNoConfig | [AllowWarnDeny, CapitalizedCallsConfig];
   "react/checked-requires-onchange-or-readonly"?: RuleNoConfig | [AllowWarnDeny, CheckedRequiresOnchangeOrReadonly];
   "react/display-name"?: RuleNoConfig | [AllowWarnDeny, DisplayNameConfig];
   "react/error-boundaries"?: RuleNoConfig;
@@ -1998,6 +2000,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, RadixType]
     | [AllowWarnDeny, ReactPerfConfig]
     | [AllowWarnDeny, ButtonHasType]
+    | [AllowWarnDeny, CapitalizedCallsConfig]
     | [AllowWarnDeny, CheckedRequiresOnchangeOrReadonly]
     | [AllowWarnDeny, DisplayNameConfig]
     | [AllowWarnDeny, ExhaustiveDepsConfig]
@@ -3869,6 +3872,11 @@ export interface NoRedeclare {
    * When set `true`, it flags redeclaring built-in globals (e.g., `let Object = 1;`).
    */
   builtinGlobals?: boolean;
+  /**
+   * When `true`, automatically merged declarations like namespace, class, etc. will be
+   * ignored when checking for redeclarations.
+   */
+  ignoreDeclarationMerge?: boolean;
 }
 export interface NoRestrictedExportsConfig {
   /**
@@ -4972,6 +4980,21 @@ export interface ButtonHasType {
    */
   submit?: boolean;
 }
+export interface CapitalizedCallsConfig {
+  /**
+   * Exact names of capitalized functions that may be called directly.
+   * Forwarded to the React Compiler's `validateNoCapitalizedCalls`
+   * environment option.
+   */
+  allow?: string[];
+  /**
+   * A regex pattern; capitalized functions whose name matches may be called
+   * directly, checked alongside `allow`. Useful when a codebase has a
+   * naming convention for capitalized non-component factories, such as
+   * generated event or schema builders (e.g. `"Event$"`).
+   */
+  allowPattern?: string;
+}
 export interface CheckedRequiresOnchangeOrReadonly {
   /**
    * Ignore the restriction that `checked` and `defaultChecked` should not be used together.
@@ -6041,9 +6064,9 @@ export interface NoMeaninglessVoidOperatorConfig {
 export interface NoMisusedPromisesConfig {
   /**
    * Whether to check if Promises are used in conditionals.
-   * When true, disallows using Promises in conditions where a boolean is expected.
+   * Can be a boolean to enable/disable the check, or an object to control union types.
    */
-  checksConditionals?: boolean;
+  checksConditionals?: ChecksConditionals;
   /**
    * Whether to check if Promises are used in spread syntax.
    * When true, disallows spreading Promise values.
@@ -6054,6 +6077,16 @@ export interface NoMisusedPromisesConfig {
    * Can be a boolean to enable/disable all checks, or an object for granular control.
    */
   checksVoidReturn?: ChecksVoidReturn;
+}
+export interface ChecksConditionalsOptions {
+  /**
+   * Controls which union types are reported in conditionals.
+   * - `"none"` only reports values that are always Promise-like.
+   * - `"strict"` also reports unions where the non-Promise types match the awaited Promise types,
+   * such as `Promise<number> | number`.
+   * - `"all"` reports any union containing a Promise-like type.
+   */
+  flagUnions?: ChecksConditionalsFlagUnions;
 }
 export interface ChecksVoidReturnOptions {
   /**

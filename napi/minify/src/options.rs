@@ -173,7 +173,7 @@ impl TryFrom<&CompressOptions> for oxc_minifier::CompressOptions {
                 },
                 None => default.unused,
             },
-            keep_names: o.keep_names.as_ref().map(Into::into).unwrap_or_default(),
+            keep_names: o.keep_names.as_ref().map_or_default(Into::into),
             treeshake: match &o.treeshake {
                 Some(ts) => oxc_minifier::TreeShakeOptions::try_from(ts)?,
                 None => oxc_minifier::TreeShakeOptions::default(),
@@ -181,8 +181,7 @@ impl TryFrom<&CompressOptions> for oxc_minifier::CompressOptions {
             drop_labels: o
                 .drop_labels
                 .as_ref()
-                .map(|labels| labels.iter().cloned().collect())
-                .unwrap_or_default(),
+                .map_or_default(|labels| labels.iter().cloned().collect()),
             max_iterations: o.max_iterations,
         })
     }

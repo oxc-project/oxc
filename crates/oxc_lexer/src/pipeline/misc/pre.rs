@@ -1,35 +1,37 @@
-use crate::{error::DiagCode, lanes::Lanes, token::tk};
+use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
+use oxc_span::Span;
+
+use crate::{error::DiagCode, token::tk};
 
 use crate::pipeline::{
-    bitmap::{bm_any, bm_clear_range, bm_get, bm_next0, bm_set},
-    bytes::is_id_start,
-    cpu::{Cpu, apply, cpu_versions},
-    find::unicode_ws_len,
+    bitmap::Bitmap,
+    bytes::{is_id_start, unicode_ws_len_at_unchecked},
+    lanes::Lanes,
     scan::scan_ident_esc,
 };
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(never)]
 pub unsafe fn misc_pre(
     src: *const u8,
     n: usize,
     nb: usize,
-    st: *mut u64,
-    word: *mut u64,
-    misc: *const u64,
+    st: Bitmap,
+    word: Bitmap,
+    misc: Bitmap,
     kind: *mut u8,
     vutf8: bool,
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) -> usize {
-    if !bm_any(misc, nb, cpu) {
+    if !misc.any(nb, cpu) {
         return 0;
     }
 
     if vutf8 {
-        misc_pre_impl::<true>(src, n, st, word, misc, kind, lanes)
+        misc_pre_impl::<true>(src, n, st, word, misc, kind, lanes, cpu)
     } else {
-        misc_pre_impl::<false>(src, n, st, word, misc, kind, lanes)
+        misc_pre_impl::<false>(src, n, st, word, misc, kind, lanes, cpu)
     }
 }
 
@@ -38,15 +40,17 @@ pub unsafe fn misc_pre(
 /// copy pays nothing for it.
 ///
 /// `#[inline(always)]` so it gets compiled as part of each of [`misc_pre`]'s entry points.
+#[cpu_multiversion]
 #[inline(always)]
 unsafe fn misc_pre_impl<const VUTF8: bool>(
     src: *const u8,
     n: usize,
-    st: *mut u64,
-    word: *mut u64,
-    misc: *const u64,
+    st: Bitmap,
+    word: Bitmap,
+    misc: Bitmap,
     kind: *mut u8,
     lanes: &mut Lanes,
+    cpu: impl Cpu,
 ) -> usize {
     let mut nesc = 0usize;
     let nw = (n + 63) >> 6;
@@ -56,7 +60,7 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
     let mut skip_lo: u64 = 0;
     let mut utf8_bad = false;
     for w in 0..nw {
-        let mut m = if VUTF8 { *misc.add(w) & !skip_lo } else { *misc.add(w) };
+        let mut m = if VUTF8 { misc.block(w, cpu) & !skip_lo } else { misc.block(w, cpu) };
         if VUTF8 {
             skip_lo = 0;
         }
@@ -70,7 +74,7 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
             // Continuation bytes and non-ws leads fall through cheaply.
             if c >= 0x80 {
                 if VUTF8 {
-                    let (ok, cont) = utf8_seq_check(src, p, n);
+                    let (ok, cont) = utf8_seq_check(src, p, n, cpu);
                     if ok {
                         // Consume the verified continuation bits so they are
                         // not re-visited; a continuation still visible to the
@@ -89,15 +93,16 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                         continue;
                     }
                 }
-                let len = unicode_ws_len(src, p);
+                let len = unicode_ws_len_at_unchecked(src, p, cpu);
                 if len != 0 {
                     *kind.add(p) = tk!(Whitespace);
-                    bm_clear_range(word, p, p + len - 1);
-                    bm_set(st, p);
-                    bm_clear_range(st, p + 1, p + len - 1);
+                    word.clear_range(p, p + len - 1, cpu);
+                    st.set(p, cpu);
+                    st.clear_range(p + 1, p + len - 1, cpu);
                     if p + len < n {
-                        bm_set(st, p + len);
+                        st.set(p + len, cpu);
                     }
+                    lanes.out.irregular_whitespaces.push(Span::new(p as u32, (p + len) as u32));
                 } else if (0xC2..=0xF4).contains(&c) {
                     // Non-whitespace lead: record the position only. The
                     // identifier-char check is deferred to drain, where leads
@@ -106,7 +111,12 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                 }
                 continue;
             }
-            if !bm_get(st, p) {
+            // Vertical tab or form feed, the only misc bytes below 0x20.
+            if c < 0x20 {
+                lanes.out.irregular_whitespaces.push(Span::new(p as u32, p as u32 + 1));
+                continue;
+            }
+            if !st.get(p, cpu) {
                 continue;
             }
             if c == b'#' {
@@ -117,30 +127,61 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                 // private name whose first char is itself an escape forms
                 // one token instead of `#` + escape.
                 let c1 = *src.add(p + 1);
-                if !(is_id_start(c1) || (c1 == b'\\' && *src.add(p + 2) == b'u')) {
+                if !(is_id_start(c1, cpu) || (c1 == b'\\' && *src.add(p + 2) == b'u')) {
                     continue;
                 }
-                let e0 = bm_next0(word, p + 1, n);
-                let e = if *src.add(e0) == b'\\' && *src.add(e0 + 1) == b'u' {
+                let e0 = word.next0(p + 1, n, cpu);
+                let e = if *src.add(e0) == b'\\'
+                    && *src.add(e0 + 1) == b'u'
+                    && !holds_unicode_ws(src, p + 1, e0)
+                {
                     *kind.add(p) = tk!(PrivateIdentEscaped);
-                    scan_ident_esc(src, n, e0)
+                    nesc += 1;
+                    scan_ident_esc(src, n, e0, cpu)
                 } else {
                     *kind.add(p) = tk!(PrivateIdent);
                     e0
                 };
-                bm_clear_range(st, p + 1, e - 1);
+                st.clear_range(p + 1, e - 1, cpu);
             } else {
                 if *src.add(p + 1) != b'u' {
                     continue;
                 }
                 *kind.add(p) = tk!(IdentEscaped);
                 nesc += 1;
-                let e = scan_ident_esc(src, n, p);
-                bm_clear_range(st, p + 1, e - 1);
+                let e = scan_ident_esc(src, n, p, cpu);
+                st.clear_range(p + 1, e - 1, cpu);
             }
         }
     }
     nesc
+}
+
+/// Drop the irregular whitespace candidates that carve put inside a literal, comment or JSX text.
+#[cpu_version(Generic)]
+#[cold]
+#[inline(never)]
+pub fn retain_code_whitespace(st: &[u64], kind: &[u8], spans: &mut Vec<Span>) {
+    spans.retain(|span| {
+        let p = span.start as usize;
+        let mut w = p >> 6;
+        let mut bits = st[w] & (u64::MAX >> (63 - (p & 63)));
+        while bits == 0 {
+            let Some(prev) = w.checked_sub(1) else { return false };
+            w = prev;
+            bits = st[w];
+        }
+        kind[(w << 6) + 63 - bits.leading_zeros() as usize] == tk!(Whitespace)
+    });
+}
+
+/// Cold: whether src[a..b] holds a multi-byte WhiteSpace or LineTerminator.
+#[cpu_version(Generic)]
+#[cold]
+#[inline(never)]
+unsafe fn holds_unicode_ws(src: *const u8, a: usize, b: usize) -> bool {
+    let cpu = BASELINE;
+    (a..b).any(|i| *src.add(i) >= 0x80 && unicode_ws_len_at_unchecked(src, i, cpu) != 0)
 }
 
 /// Validate the UTF-8 sequence led by the byte at `p` (>= 0x80). Returns
@@ -148,8 +189,9 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
 /// bytes after the lead. Second-byte ranges are per-lead, so overlongs,
 /// surrogates, and out-of-range sequences report the same maximal subpart
 /// as `std::str::from_utf8`'s `error_len`.
+#[cpu_multiversion]
 #[inline]
-unsafe fn utf8_seq_check(src: *const u8, p: usize, n: usize) -> (bool, usize) {
+unsafe fn utf8_seq_check(src: *const u8, p: usize, n: usize, _cpu: impl Cpu) -> (bool, usize) {
     let (need, lo, hi): (usize, u8, u8) = match *src.add(p) {
         0xC2..=0xDF => (1, 0x80, 0xBF),
         0xE0 => (2, 0xA0, 0xBF),

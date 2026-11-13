@@ -1,6 +1,10 @@
 # Rust
 target/
 **/*.rs.bk
+/tasks/track_memory_allocations/allocs_linter.yaml
+
+# Automated issue investigation scratch files and reports
+/triage/
 
 # Wasm
 **/*.wasm
@@ -15,6 +19,7 @@ target/
 /tasks/compat_data/node_modules/
 /tasks/compat_data/compat-table/
 /tasks/e2e/node_modules/
+/tasks/sprout/node_modules/
 /plugins/node_modules/
 /tasks/e2e/tests/nestjs/node_modules/
 /npm/*/node_modules
@@ -30,7 +35,6 @@ tasks/coverage/typescript/
 tasks/coverage/estree-conformance/
 tasks/coverage/estree-conformance-diff/
 tasks/coverage/node-compat-table/
-crates/oxc_formatter_tests/prettier/
 
 # Ignore accidental files from the root
 /*.js

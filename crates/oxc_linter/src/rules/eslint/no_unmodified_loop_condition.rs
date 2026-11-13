@@ -2,6 +2,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use schemars::JsonSchema;
 use serde::Deserialize;
+use smallvec::SmallVec;
 
 use oxc_allocator::GetAddress;
 use oxc_ast::{
@@ -64,7 +65,8 @@ declare_oxc_lint!(
     suspicious,
     config = NoUnmodifiedLoopCondition,
     version = "1.48.0",
-    short_description = "Disallow references in loop conditions that are never modified within the loop.",
+    short_description =
+        "Disallow references in loop conditions that are never modified within the loop.",
 );
 
 impl Rule for NoUnmodifiedLoopCondition {
@@ -145,6 +147,8 @@ impl LoopInfo {
     }
 }
 
+type ConditionSymbols = SmallVec<[(SymbolId, NodeId, bool); 2]>;
+
 impl NoUnmodifiedLoopCondition {
     fn check_loop_condition<'a>(
         &self,
@@ -155,18 +159,17 @@ impl NoUnmodifiedLoopCondition {
         let mut collector = ConditionSymbolsCollector::new(ctx, self.check_conditional_expressions);
         collector.visit_expression(condition);
 
-        let mut standalone_symbols: Vec<(SymbolId, NodeId, bool)> = vec![];
+        let mut standalone_symbols = ConditionSymbols::new();
         let mut standalone_seen: FxHashSet<SymbolId> = FxHashSet::default();
-        let mut grouped_symbols: FxHashMap<Span, Vec<(SymbolId, NodeId, bool)>> =
-            FxHashMap::default();
+        let mut grouped_symbols: FxHashMap<Span, ConditionSymbols> = FxHashMap::default();
         let mut grouped_seen: FxHashMap<Span, FxHashSet<SymbolId>> = FxHashMap::default();
-        let mut group_order: Vec<Span> = vec![];
+        let mut group_order: SmallVec<[Span; 2]> = SmallVec::new();
         for symbol in collector.symbols {
             if let Some(group_span) = symbol.group_span {
                 if let std::collections::hash_map::Entry::Vacant(entry) =
                     grouped_symbols.entry(group_span)
                 {
-                    entry.insert(vec![]);
+                    entry.insert(SmallVec::new());
                     group_order.push(group_span);
                 }
                 let seen = grouped_seen.entry(group_span).or_default();
@@ -187,7 +190,7 @@ impl NoUnmodifiedLoopCondition {
         }
 
         let mut modified_cache: FxHashMap<SymbolId, bool> = FxHashMap::default();
-        let mut diagnostics: Vec<NodeId> = vec![];
+        let mut diagnostics: SmallVec<[NodeId; 2]> = SmallVec::new();
         let mut reported_symbols: FxHashSet<SymbolId> = FxHashSet::default();
 
         for (symbol_id, reference_node_id, report_independently) in standalone_symbols {
@@ -330,8 +333,8 @@ struct ConditionSymbolsCollector<'a, 'ctx> {
     ctx: &'ctx LintContext<'a>,
     check_conditional_expressions: bool,
     conditional_expression_depth: u32,
-    symbols: Vec<ConditionSymbolInfo>,
-    group_stack: Vec<Span>,
+    symbols: SmallVec<[ConditionSymbolInfo; 2]>,
+    group_stack: SmallVec<[Span; 4]>,
     dynamic_groups: FxHashSet<Span>,
 }
 
@@ -341,8 +344,8 @@ impl<'a, 'ctx> ConditionSymbolsCollector<'a, 'ctx> {
             ctx,
             check_conditional_expressions,
             conditional_expression_depth: 0,
-            symbols: vec![],
-            group_stack: vec![],
+            symbols: SmallVec::new(),
+            group_stack: SmallVec::new(),
             dynamic_groups: FxHashSet::default(),
         }
     }

@@ -1,0 +1,24 @@
+# Clippy uses the nearest config file only, and doesn't merge it with the ones above it.
+# So this file repeats the workspace `.clippy.toml`, and adds one entry specific to `oxc_lexer`.
+# Keep the repeated part in sync with the workspace file.
+
+avoid-breaking-exported-api = false
+
+ignore-interior-mutability = ["oxc_linter::rules::RuleEnum"]
+
+disallowed-methods = [
+  # Copied from root config
+  { path = "str::to_ascii_lowercase", reason = "To avoid memory allocation, use `cow_utils::CowUtils::cow_to_ascii_lowercase` instead." },
+  { path = "str::to_ascii_uppercase", reason = "To avoid memory allocation, use `cow_utils::CowUtils::cow_to_ascii_uppercase` instead." },
+  { path = "str::to_lowercase", reason = "To avoid memory allocation, use `cow_utils::CowUtils::cow_to_lowercase` instead." },
+  { path = "str::to_uppercase", reason = "To avoid memory allocation, use `cow_utils::CowUtils::cow_to_uppercase` instead." },
+  { path = "str::replace", reason = "To avoid memory allocation, use `cow_utils::CowUtils::cow_replace` instead." },
+  { path = "str::replacen", reason = "To avoid memory allocation, use `cow_utils::CowUtils::cow_replacen` instead." },
+  # Specific to `oxc_lexer`
+  { path = "oxc_simd::DynCpu::detect", reason = "Tests must run with the CPU feature set `#[test_cpus]` provides. Pass in a `DynCpu` instead of detecting." },
+]
+
+disallowed-types = [
+  { path = "std::collections::HashMap", reason = "Use `rustc_hash::FxHashMap` instead, which is typically faster." },
+  { path = "std::collections::HashSet", reason = "Use `rustc_hash::FxHashSet` instead, which is typically faster." },
+]

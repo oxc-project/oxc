@@ -1,5 +1,6 @@
 use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator};
 use oxc_ast::ast::*;
+use oxc_data_structures::buffered_vec::BufferedVec;
 use oxc_ecmascript::PropName;
 use oxc_span::{GetSpan, Span};
 
@@ -77,7 +78,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             && !(self.at(Kind::Implements)
                 && self.lexer.peek_token().kind().is_identifier_or_keyword())
         {
-            Some(self.parse_binding_identifier())
+            Some(self.parse_known_binding_identifier())
         } else {
             None
         };
@@ -91,20 +92,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let type_parameters =
             if self.is_ts { self.parse_ts_type_parameters_with_variance() } else { None };
-        let (extends, implements) = self.parse_class_heritage_clause();
-        let mut heritage = None;
-        if let Some(mut extends) = extends
-            && !extends.is_empty()
-        {
-            let (expression, type_arguments) = extends.remove(0);
-            heritage = Some(ClassHeritage::new(expression, type_arguments, self));
-            for (expression, type_arguments) in extends {
-                let expression_span = expression.span();
-                let span = type_arguments.map_or(expression_span, |type_arguments| {
-                    expression_span.merge(type_arguments.span)
-                });
-                self.error(diagnostics::classes_can_only_extend_single_class(span));
-            }
+        let (extends, implements) = self.parse_heritage_clause(Self::parse_class_extends_clause);
+        let mut extends = extends.into_iter().flatten();
+        let heritage = extends.next().map(|(expression, type_arguments)| {
+            ClassHeritage::new(expression, type_arguments, self)
+        });
+        for (expression, type_arguments) in extends {
+            let expression_span = expression.span();
+            let span = type_arguments.map_or(expression_span, |type_arguments| {
+                expression_span.merge(type_arguments.span)
+            });
+            self.error(diagnostics::classes_can_only_extend_single_class(span));
         }
         let body = self.parse_class_body();
 
@@ -133,11 +131,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_heritage_clause<T, F>(
         &mut self,
         mut parse_extends_clause: F,
-    ) -> (Option<ArenaVec<'a, T>>, Option<ImplementsWithKeywordSpan<'a>>)
+    ) -> (Option<T>, Option<ImplementsWithKeywordSpan<'a>>)
     where
-        F: FnMut(&mut Self) -> ArenaVec<'a, T>,
+        F: FnMut(&mut Self) -> T,
     {
-        let mut extends: Option<ArenaVec<'a, T>> = None;
+        let mut extends = None;
         let mut implements: Option<ImplementsWithKeywordSpan> = None;
 
         loop {
@@ -183,27 +181,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         (extends, implements)
     }
 
-    #[expect(clippy::type_complexity)]
-    fn parse_class_heritage_clause(
-        &mut self,
-    ) -> (
-        Option<
-            ArenaVec<'a, (Expression<'a>, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>)>,
-        >,
-        Option<ImplementsWithKeywordSpan<'a>>,
-    ) {
-        self.parse_heritage_clause(Self::parse_class_extends_clause)
-    }
-
     /// `ClassHeritage`
     /// extends `LeftHandSideExpression`[?Yield, ?Await]
     fn parse_class_extends_clause(
         &mut self,
-    ) -> ArenaVec<'a, (Expression<'a>, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>)>
-    {
+    ) -> BufferedVec<
+        ArenaVec<'a, (Expression<'a>, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>)>,
+        1,
+    > {
         self.bump_any(); // bump `extends`
 
-        let mut extends = ArenaVec::with_capacity_in(1, self);
+        // A class has only one superclass. Keep it on the stack while preserving any
+        // additional entries for the existing multiple-superclass diagnostics.
+        let mut extends = BufferedVec::new(ArenaVec::new_in(self));
         loop {
             let mut extend = self.parse_lhs_expression_or_higher();
             if self.fatal_error.is_some() {
@@ -427,7 +417,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Context::Yield | Context::Return,
             Self::parse_block,
         );
-        ClassElement::new_static_block(self.end_span(start), block.unbox().body, self)
+        ClassElement::new_static_block(self.end_span(start), block.body, self)
     }
 
     /// <https://github.com/tc39/proposal-decorators>
@@ -602,14 +592,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn parse_constructor_name(&mut self) -> Option<PropertyKey<'a>> {
         if self.at(Kind::Constructor) {
-            let ident = self.parse_identifier_name();
+            let ident = self.parse_known_identifier_name();
             return Some(PropertyKey::StaticIdentifier(self.alloc(ident)));
         }
         if self.at(Kind::Str)
             && self.cur_js_string() == "constructor"
             && self.lexer.peek_token().kind() == Kind::LParen
         {
-            let string_literal = self.parse_literal_string();
+            let string_literal = self.parse_known_literal_string();
             return Some(PropertyKey::StringLiteral(self.alloc(string_literal)));
         }
         None
@@ -629,6 +619,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let optional_span = (cur_token.kind() == Kind::Question).then(|| {
             let span = cur_token.span();
             self.bump_any();
+            if !self.is_ts {
+                self.error(diagnostics::optional_class_member_in_ts(span));
+            }
             span
         });
 

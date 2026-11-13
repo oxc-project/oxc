@@ -472,6 +472,7 @@ pub fn placeholder_function<'a>(alloc: &'a Allocator) -> HirFunction<'a> {
             span: None,
         },
         context: ArenaVec::new_in(&alloc),
+        has_outer_lexical_reference: false,
         body: HIR { entry: BlockId::ENTRY, blocks: OrderedMap::default() },
         instructions: ArenaVec::new_in(&alloc),
         generator: false,

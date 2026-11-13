@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, ast_util::iter_outer_expressions, context::LintContext, rule::Rule};
 
 fn no_compare_neg_zero_diagnostic(operator: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Do not use the {operator} operator to compare against -0."))
@@ -70,7 +70,15 @@ declare_oxc_lint!(
 
 impl Rule for NoCompareNegZero {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::BinaryExpression(expr) = node.kind() else {
+        let AstKind::UnaryExpression(unary) = node.kind() else {
+            return;
+        };
+        if unary.operator != UnaryOperator::UnaryNegation {
+            return;
+        }
+        let Some(AstKind::BinaryExpression(expr)) =
+            iter_outer_expressions(ctx.nodes(), node.id()).next()
+        else {
             return;
         };
         if Self::should_check(expr.operator) {
@@ -78,6 +86,15 @@ impl Rule for NoCompareNegZero {
             let is_left_neg_zero = is_neg_zero(&expr.left);
             let is_right_neg_zero = is_neg_zero(&expr.right);
             if is_left_neg_zero || is_right_neg_zero {
+                let neg_zero = if is_left_neg_zero {
+                    expr.left.get_inner_expression()
+                } else {
+                    expr.right.get_inner_expression()
+                };
+                // When both operands are negative zero, report only from the left operand.
+                if neg_zero.span() != unary.span {
+                    return;
+                }
                 if expr.operator == BinaryOperator::StrictEquality {
                     ctx.diagnostic_with_suggestion(
                         no_compare_neg_zero_diagnostic(op, expr.span),
@@ -99,11 +116,6 @@ impl Rule for NoCompareNegZero {
                     ctx.diagnostic_with_fix(
                         no_compare_neg_zero_diagnostic(op, expr.span),
                         |fixer| {
-                            let neg_zero = if is_left_neg_zero {
-                                expr.left.get_inner_expression()
-                            } else {
-                                expr.right.get_inner_expression()
-                            };
                             let start = neg_zero.span().start;
                             let span = Span::new(start, start + 1);
                             fixer.delete(&span)
@@ -167,6 +179,9 @@ fn test() {
         ("x !== 0", None),
         ("0 !== x", None),
         ("Object.is(x, -0)", None),
+        ("x === -(-0)", None),
+        ("x === -(0)", None),
+        ("-0 + x", None),
     ];
 
     let fail = vec![
@@ -184,6 +199,8 @@ fn test() {
         ("-0 <= x", None),
         // BigInt Literal
         ("-0n <= x", None),
+        ("-0 === -0", None),
+        ("(-0 as number) < (-0 satisfies number)", None),
     ];
 
     let fix = vec![
@@ -205,6 +222,11 @@ fn test() {
         ("x <= (-0n)", "x <= (0n)", None),
         ("x > (-0 as number)", "x > (0 as number)", None),
         ("(-0 satisfies number) > x", "(0 satisfies number) > x", None),
+        ("-0 === -0", "Object.is(-0, -0)", None),
+        ("-0 < -0", "0 < -0", None),
+        ("-0n <= -0n", "0n <= -0n", None),
+        ("-1 > -0", "-1 > 0", None),
+        ("(-0 as number) < (-0 satisfies number)", "(0 as number) < (-0 satisfies number)", None),
     ];
 
     Tester::new(NoCompareNegZero::NAME, NoCompareNegZero::PLUGIN, pass, fail)

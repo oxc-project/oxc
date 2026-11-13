@@ -4,6 +4,38 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.76.0] - 2026-11-02
+
+### 💥 BREAKING CHANGES
+
+- 296623d oxfmt: [**BREAKING**] Format `parser:html` files by `oxc_formatter_htmlish` (#28273) (Yuji Sugiura)
+
+### ⚡ Performance
+
+- e9392c8 formatter_core: Search line terminators with memchr (#28699) (leaysgur)
+
+### 📚 Documentation
+
+- 6586050 formatter_core: Document tab width in text width policy (#28393) (leaysgur)
+- 49fbffb formatter_core: Tighten FORMATTER_POLICY (#28206) (leaysgur)
+
+## [0.75.0] - 2026-10-27
+
+### 🐛 Bug Fixes
+
+- 5f1fd3d formatter: Measure width heuristics by display width (#28098) (leaysgur)
+- 999496e formatter: Measure a short key by its display width (#28026) (vidigoat)
+- eb1d9f9 formatter_core: Count a flat `line` space in `fits` only when text follows (#27987) (leaysgur)
+
+### ⚡ Performance
+
+- 1ed93af data_structures: Copy short strings without a memcpy call (#27953) (leaysgur)
+- 7948f0b formatter_core: Shrink `FormatElement` to 16B (#28012) (leaysgur)
+
+### 📚 Documentation
+
+- db55461 formatter_core: Document text width divergence (#28095) (leaysgur)
+
 ## [0.74.0] - 2026-10-19
 
 ### 🐛 Bug Fixes

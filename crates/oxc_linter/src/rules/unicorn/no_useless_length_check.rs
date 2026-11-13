@@ -67,9 +67,9 @@ declare_oxc_lint!(
     short_description = "Disallow useless array length check.",
 );
 
-struct ConditionDTO<T: ToString> {
-    property_name: T,
-    binary_operators: Vec<BinaryOperator>,
+struct ConditionDTO {
+    property_name: &'static str,
+    binary_operators: &'static [BinaryOperator],
 }
 
 fn is_useless_check<'a>(
@@ -79,11 +79,11 @@ fn is_useless_check<'a>(
 ) -> Option<OxcDiagnostic> {
     let every_condition = ConditionDTO {
         property_name: "every",
-        binary_operators: vec![BinaryOperator::StrictEquality],
+        binary_operators: &[BinaryOperator::StrictEquality],
     };
     let some_condition = ConditionDTO {
         property_name: "some",
-        binary_operators: vec![BinaryOperator::StrictInequality, BinaryOperator::GreaterThan],
+        binary_operators: &[BinaryOperator::StrictInequality, BinaryOperator::GreaterThan],
     };
 
     let mut array_name: &str = "";

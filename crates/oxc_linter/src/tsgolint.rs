@@ -5,7 +5,9 @@ use std::{
     io::{ErrorKind, Read, Write, stderr},
     iter, mem,
     path::{Path, PathBuf},
-    sync::{Arc, Mutex},
+    process::Child,
+    sync::{Arc, Mutex, mpsc},
+    thread::JoinHandle,
     time::Duration,
 };
 
@@ -136,6 +138,9 @@ impl TsGoLintState {
         self
     }
 
+    /// Runs `tsgolint` on `paths` to completion. Equivalent to [`Self::start`] followed by
+    /// [`TsGoLintRun::finish`].
+    ///
     /// # Panics
     /// - when `stdin` of subprocess cannot be opened
     /// - when `stdout` of subprocess cannot be opened
@@ -152,15 +157,35 @@ impl TsGoLintState {
         diff_manager: &Arc<DiffManager>,
         rule_timing_store: Option<&RuleTimingStore>,
     ) -> Result<(), String> {
+        self.start(paths).finish(
+            disable_directives_map,
+            error_sender,
+            file_system,
+            diff_manager,
+            rule_timing_store,
+        )
+    }
+
+    /// Spawns `tsgolint` for `paths` and decodes its output on a background thread, so it can
+    /// run while the regular lint pass does.
+    ///
+    /// Nothing is reported until [`TsGoLintRun::finish`], which must run after the regular pass:
+    /// diagnostics are filtered by the disable directives that pass collects. Spawn errors are
+    /// reported by `finish` as well.
+    ///
+    /// # Panics
+    /// - when `stdin` of subprocess cannot be opened
+    /// - when `stdout` of subprocess cannot be opened
+    pub fn start(self, paths: &[Arc<OsStr>]) -> TsGoLintRun {
         if paths.is_empty() {
-            return Ok(());
+            return TsGoLintRun { started: None };
         }
 
         let mut resolved_configs: FxHashMap<PathBuf, ResolvedLinterState> = FxHashMap::default();
 
         let json_input = self.json_input(paths, None, &mut resolved_configs);
         if json_input.configs.is_empty() {
-            return Ok(());
+            return TsGoLintRun { started: None };
         }
 
         let all_paths = {
@@ -168,35 +193,103 @@ impl TsGoLintState {
             for path in paths {
                 if SourceType::from_path(Path::new(path)).is_ok() {
                     let path_buf = PathBuf::from(path);
-                    paths_buff.push(path_buf.clone());
+                    paths_buff.push(path_buf);
                 }
             }
             paths_buff
         };
 
-        let should_fix = self.fix || self.fix_suggestions;
-        let cwd = self.cwd.clone();
+        let process = self.spawn_tsgolint(&json_input).map(|mut child| {
+            let stdout = child.stdout.take().expect("Failed to open tsgolint stdout");
+            let (sender, messages) = mpsc::channel();
+            // Drain stdout as it is written so `tsgolint` never blocks on a full pipe. Message
+            // processing stops at the first error, so stop reading there too.
+            let reader = std::thread::spawn(move || {
+                for msg in TsGoLintMessageStream::new(stdout) {
+                    let is_error = !matches!(
+                        msg,
+                        Ok(TsGoLintMessage::Diagnostic(_) | TsGoLintMessage::Timing(_))
+                    );
+                    if sender.send(msg).is_err() || is_error {
+                        break;
+                    }
+                }
+            });
+            TsGoLintProcess { child, messages, reader }
+        });
+
+        TsGoLintRun {
+            started: Some(StartedRun { state: self, resolved_configs, all_paths, process }),
+        }
+    }
+}
+
+/// A `tsgolint` run started by [`TsGoLintState::start`].
+pub struct TsGoLintRun {
+    /// `None` when there was nothing to lint.
+    started: Option<StartedRun>,
+}
+
+struct StartedRun {
+    state: TsGoLintState,
+    resolved_configs: FxHashMap<PathBuf, ResolvedLinterState>,
+    all_paths: Vec<PathBuf>,
+    /// The spawned process, or the error from spawning it.
+    process: Result<TsGoLintProcess, String>,
+}
+
+struct TsGoLintProcess {
+    child: Child,
+    /// Messages decoded from stdout by `reader`, in the order `tsgolint` wrote them.
+    messages: mpsc::Receiver<Result<TsGoLintMessage, String>>,
+    reader: JoinHandle<()>,
+}
+
+impl TsGoLintRun {
+    /// Waits for `tsgolint` to exit and reports its diagnostics, filtered by the disable
+    /// directives that the regular lint pass collected, then applies its fixes.
+    ///
+    /// # Panics
+    /// - when `tsgolint` process cannot be awaited
+    ///
+    /// # Errors
+    /// A human-readable error message indicating why the linting failed.
+    pub fn finish(
+        mut self,
+        disable_directives_map: Arc<Mutex<FxHashMap<PathBuf, DisableDirectives>>>,
+        error_sender: DiagnosticSender,
+        file_system: &(dyn crate::RuntimeFileSystem + Sync + Send),
+        diff_manager: &Arc<DiffManager>,
+        rule_timing_store: Option<&RuleTimingStore>,
+    ) -> Result<(), String> {
+        let Some(StartedRun { state, resolved_configs, all_paths, process }) = self.started.take()
+        else {
+            return Ok(());
+        };
+
+        let should_fix = state.fix || state.fix_suggestions;
+        let cwd = state.cwd.clone();
         let sender_for_fixes = error_sender.clone();
 
         let diff_manager_clone_to_ts_go = Arc::<DiffManager>::clone(diff_manager);
 
         let handler = std::thread::spawn(move || {
-            let mut child = self.spawn_tsgolint(&json_input)?;
+            let TsGoLintProcess { mut child, messages, reader } = process?;
 
-            let stdout = child.stdout.take().expect("Failed to open tsgolint stdout");
-
-            // Process stdout stream in a separate thread to send diagnostics as they arrive
+            // Process messages in a separate thread to send diagnostics as they arrive
             let stdout_handler = std::thread::spawn(move || -> Result<TsGoLintOutput, String> {
                 let disable_directives_map =
                     disable_directives_map.lock().expect("disable_directives_map mutex poisoned");
 
-                let mut diagnostic_handler =
-                    DiagnosticHandler::new(self.cwd.clone(), self.silent, should_fix, error_sender);
+                let mut diagnostic_handler = DiagnosticHandler::new(
+                    state.cwd.clone(),
+                    state.silent,
+                    should_fix,
+                    error_sender,
+                );
                 let mut timings = vec![];
 
-                let msg_iter = TsGoLintMessageStream::new(stdout);
-
-                for msg in msg_iter {
+                for msg in messages {
                     match msg {
                         Ok(TsGoLintMessage::Error(err)) => {
                             return Err(err.error);
@@ -258,6 +351,12 @@ impl TsGoLintState {
                             return Err(e);
                         }
                     }
+                }
+
+                // The channel also closes when decoding panicked. Fail this thread then, as it
+                // did when it decoded stdout itself.
+                if let Err(panic) = reader.join() {
+                    std::panic::resume_unwind(panic);
                 }
 
                 Ok(TsGoLintOutput {
@@ -356,7 +455,20 @@ impl TsGoLintState {
             Err(err) => Err(format!("Error running tsgolint: {err:?}")),
         }
     }
+}
 
+impl Drop for TsGoLintRun {
+    /// Stops `tsgolint` when the run is dropped without [`TsGoLintRun::finish`] (e.g. the regular
+    /// pass unwound), so the process does not outlive the run.
+    fn drop(&mut self) {
+        if let Some(StartedRun { process: Ok(process), .. }) = &mut self.started {
+            let _ = process.child.kill();
+            let _ = process.child.wait();
+        }
+    }
+}
+
+impl TsGoLintState {
     /// Spawn the tsgolint process with the given input.
     fn spawn_tsgolint(&self, json_input: &Payload) -> Result<std::process::Child, String> {
         let mut cmd = std::process::Command::new(&self.executable_path);
@@ -1352,24 +1464,51 @@ fn parse_single_message(
     }
 }
 
-/// Tries to find the `tsgolint` executable. In priority order, this will check:
+/// Tries to find a type-aware linter executable. In priority order, this will check:
 /// 1. The `OXLINT_TSGOLINT_PATH` environment variable.
-/// 2. The `tsgolint` binary in the current working directory's `node_modules/.bin` directory.
+/// 2. `node_modules/.bin` in the current working directory and its ancestors.
+/// 3. The system `PATH`.
+///
+/// Within each directory, `tsrs-lint` is preferred over `tsgolint`, unless Go profiling
+/// is requested with `OXLINT_TSGOLINT_TRACE`, `OXLINT_TSGOLINT_CPU`,
+/// `OXLINT_TSGOLINT_HEAP`, or `OXLINT_TSGOLINT_ALLOCS`. In that case, only
+/// `tsgolint` is considered. An explicit executable path overrides this selection.
 ///
 /// # Errors
 /// Returns an error if `OXLINT_TSGOLINT_PATH` is set but does not exist or is not a file.
-/// Returns an error if the tsgolint executable could not be found.
+/// Returns an error if no supported executable could be found.
 pub fn try_find_tsgolint_executable(cwd: &Path) -> Result<PathBuf, String> {
-    // Check the environment variable first
+    let go_profiling = [
+        "OXLINT_TSGOLINT_TRACE",
+        "OXLINT_TSGOLINT_CPU",
+        "OXLINT_TSGOLINT_HEAP",
+        "OXLINT_TSGOLINT_ALLOCS",
+    ]
+    .iter()
+    .any(|name| std::env::var(name).is_ok());
+
+    // Package managers on Windows provide CMD shims or, in Bun's case, EXE shims.
+    #[cfg(windows)]
+    let files: &[&str] = if go_profiling {
+        &["tsgolint.CMD", "tsgolint.exe"]
+    } else {
+        &["tsrs-lint.CMD", "tsrs-lint.exe", "tsgolint.CMD", "tsgolint.exe"]
+    };
+    #[cfg(not(windows))]
+    let files: &[&str] = if go_profiling { &["tsgolint"] } else { &["tsrs-lint", "tsgolint"] };
+
     if let Ok(path_str) = std::env::var("OXLINT_TSGOLINT_PATH") {
         let path = PathBuf::from(&path_str);
         if path.is_dir() {
-            let tsgolint_path = path.join("tsgolint");
-            if tsgolint_path.exists() {
-                return Ok(tsgolint_path);
+            for file in files {
+                let executable_path = path.join(file);
+                if executable_path.is_file() {
+                    return Ok(executable_path);
+                }
             }
+            let expected = if go_profiling { "'tsgolint'" } else { "'tsrs-lint' or 'tsgolint'" };
             return Err(format!(
-                "Failed to find tsgolint executable: OXLINT_TSGOLINT_PATH points to directory '{path_str}' but 'tsgolint' binary not found inside"
+                "Failed to find type-aware linter executable: OXLINT_TSGOLINT_PATH points to directory '{path_str}' but no {expected} binary found inside"
             ));
         }
         if path.is_file() {
@@ -1380,34 +1519,20 @@ pub fn try_find_tsgolint_executable(cwd: &Path) -> Result<PathBuf, String> {
         ));
     }
 
-    // Executing a sub-command in Windows needs a `cmd` or `ps1` extension.
-    // Since `cmd` is the most compatible one with older systems, we use that one first,
-    // then check for `exe` which is also common. Bun, for example, does not create a `cmd`
-    // file but still produces an `exe` file (https://github.com/oxc-project/oxc/issues/13784).
-    #[cfg(windows)]
-    let files = &["tsgolint.CMD", "tsgolint.exe"];
-    #[cfg(not(windows))]
-    let files = &["tsgolint"];
-
-    // Move upwards until we find a `package.json`, then look at `node_modules/.bin/tsgolint`
     let mut current_dir = cwd.to_path_buf();
     loop {
         for file in files {
             let node_modules_bin = current_dir.join("node_modules").join(".bin").join(file);
-            if node_modules_bin.exists() {
+            if node_modules_bin.is_file() {
                 return Ok(node_modules_bin);
             }
         }
 
-        // If we reach the root directory, stop searching
         if !current_dir.pop() {
             break;
         }
     }
 
-    // Finally, search in the system PATH
-    // This supports package managers that install binaries globally and make them
-    // available via PATH
     if let Ok(path_env) = std::env::var("PATH") {
         for dir in std::env::split_paths(&path_env) {
             for file in files {
@@ -1419,7 +1544,11 @@ pub fn try_find_tsgolint_executable(cwd: &Path) -> Result<PathBuf, String> {
         }
     }
 
-    Err("Failed to find tsgolint executable. You may need to add the `oxlint-tsgolint` package to your project?".to_string())
+    if go_profiling {
+        Err("Failed to find tsgolint executable. Go profiling requires the `oxlint-tsgolint` package.".to_string())
+    } else {
+        Err("Failed to find type-aware linter executable. You may need to add the `tsrs` or `oxlint-tsgolint` package to your project?".to_string())
+    }
 }
 
 #[cfg(test)]

@@ -166,13 +166,13 @@ impl Rule for PreferNegativeIndex {
 
                 for member_expr in member_exprs {
                     let member_expr_span = member_expr.span();
-                    let member_expr_next_end = member_expr_span.end + 1;
-                    let member_expr_with_next_span =
-                        Span::new(member_expr_span.start, member_expr_next_end);
-                    let member_expr_with_next_str = ctx.source_range(member_expr_with_next_span);
+                    let next_text = &ctx.source_text()[member_expr_span.end as usize..];
 
-                    if member_expr_with_next_str.ends_with(' ') {
-                        fixes.push(Fix::delete(member_expr_with_next_span));
+                    if next_text.starts_with(' ') {
+                        fixes.push(Fix::delete(Span::new(
+                            member_expr_span.start,
+                            member_expr_span.end + 1,
+                        )));
                     } else {
                         fixes.push(Fix::delete(member_expr_span));
                     }
@@ -446,6 +446,8 @@ fn test() {
         "foo.subarray(foo.length - 3, foo.length - 6)",
         "Uint8Array.prototype.subarray.call(foo, foo.length - 3, foo.length - 6)",
         "Uint8Array.prototype.subarray.apply(foo, [foo.length - 3, foo.length - 6])",
+        "foo.slice(foo.length\u{a0}- 1);",
+        "foo.slice(foo.length\u{2028}- 1);",
     ];
 
     let fix = vec![
@@ -654,7 +656,8 @@ fn test() {
                                     BigUint64Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
                                     NOT_SUPPORTED.prototype.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
                                     NOT_SUPPORTED.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
-                                ", None)
+                                ", None),
+        ("foo.slice(foo.length\u{a0}- 1);", "foo.slice(\u{a0}- 1);", None),
     ];
     Tester::new(PreferNegativeIndex::NAME, PreferNegativeIndex::PLUGIN, pass, fail)
         .expect_fix(fix)

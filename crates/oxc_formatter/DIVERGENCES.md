@@ -6,7 +6,8 @@ Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md`
 
 - Why: invariant
 - Pin: `tests/fixtures/js/comments/array-holes.js`
-- Conformance: `js/arrays/numbers-with-holes.js`
+- Conformance:
+  - `externals/prettier/js/arrays/numbers-with-holes.js`
 
 ```js
 // input
@@ -49,6 +50,8 @@ a comment after it is spaced (`, /* c */`, as in `a, /* c */ b`), also after the
 
 - Why: uniform-rule (same construct, same output: exported type alias)
 - Pin: `tests/fixtures/ts/semicolons/trailing-comments.ts`
+- Conformance:
+  - `externals/prettier/typescript/union/union-parens.ts` (`type Aa3`)
 
 ```ts
 // input
@@ -156,7 +159,9 @@ Binary-like chains hoist the comment in both formatters; the own-line invariant 
 
 - Why: uniform-rule (same construct, same output: any other node after the same suppression comment, see #eol-suppression-after-assign-colon)
 - Pin: `tests/fixtures/ts/union/suppression.ts`
-- Conformance: `typescript/union/comments/18379.ts`, `typescript/union/consistent-with-flow/prettier-ignore.ts`
+- Conformance:
+  - `externals/prettier/typescript/union/comments/18379.ts`
+  - `externals/prettier/typescript/union/consistent-with-flow/prettier-ignore.ts`
 
 A suppression comment before a union covers the whole union, wherever it sits: own-line, on the operator's line, or inline.
 One after a `|` covers that member (both formatters).
@@ -230,7 +235,11 @@ Prettier moves the comment inside for `keyof`/type-operator operands while keepi
 
 - Why: invariant (prettier/prettier#14617)
 - Pin: `tests/fixtures/js/comments/assignment-eol-line-comment.js`, `tests/fixtures/ts/comments/operator-eol-line-comment.ts`
-- Conformance: `js/comments/array-and-object.js`, `js/comments/assignment/variable-declarator.js`, `js/comments/variable-declarator.js`, `typescript/comments/type-literals.ts`
+- Conformance:
+  - `externals/prettier/js/comments/array-and-object.js`
+  - `externals/prettier/js/comments/assignment/variable-declarator.js`
+  - `externals/prettier/js/comments/variable-declarator.js`
+  - `externals/prettier/typescript/comments/type-literals.ts`
 
 Prettier's output crosses user content (the value the comment precedes, then the `;`) or changes line (own-lined).
 An end-of-line line comment right after `=`/`:` keeps its position (`= // c` + mandatory break).
@@ -348,6 +357,34 @@ type NestedParens =
 ```
 
 Prettier does the same normalization except for nested single-member paren sources and multiline block comments starting their line, where it keeps `/* c */ | A` — an output it then reformats into `| /* c */ A` itself for the first shape (not a fixpoint); we normalize directly.
+
+## union-hug-comment-before-dropped-paren
+
+- Why: invariant
+- Pin: `tests/fixtures/ts/union/hug-comment-dropped-paren.ts`
+
+A single-line block comment before a hugged union's dropped `(` stops the hug on the first pass; the pin's output is not a fixpoint (idempotency).
+
+```ts
+// input
+type Alias = /* c */ ({ a: string; b: number } | null);
+
+// ours (broken)
+type Alias =
+  | /* c */ {
+      a: string;
+      b: number;
+    }
+  | null;
+
+// prettier (first pass; its second pass produces ours)
+type Alias = /* c */ {
+  a: string;
+  b: number;
+} | null;
+```
+
+Kept parentheses (`keyof (...)`, `(...)[]`) keep the comment outside and the hug, in both.
 
 ## deferred-own-line-comment-stays-own-line
 
@@ -519,10 +556,56 @@ The shapes, each pinned by its fixture:
 ## union-annotation-flat-retry
 
 - Why: style-hold (oxc#25841)
-- Pin: `tests/fixtures/ts/union/annotation-flat-retry.ts`
-- Oxfmt: `externals/vue-vben-admin/@core/ui-kit/shadcn-ui/src/components/render-content/render-content.vue`, `externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue`,
-  `externals/webawesome/badge/badge.ts`, `externals/webawesome/button/button.ts`, `externals/webawesome/callout/callout.ts`, `externals/webawesome/checkbox/checkbox.ts`, `externals/webawesome/color-picker/color-picker.ts`, `externals/webawesome/copy-button/copy-button.ts`, `externals/webawesome/details/details.ts`, `externals/webawesome/dropdown/dropdown.ts`, `externals/webawesome/dropdown-item/dropdown-item.ts`, `externals/webawesome/format-number/format-number.ts`, `externals/webawesome/icon/icon.ts`, `externals/webawesome/input/input.ts`,
-  `externals/webawesome/number-input/number-input.ts`, `externals/webawesome/page/page.ts`, `externals/webawesome/popup/popup.ts`, `externals/webawesome/qr-code/qr-code.ts`, `externals/webawesome/radio/radio.ts`, `externals/webawesome/radio-group/radio-group.ts`, `externals/webawesome/rating/rating.ts`, `externals/webawesome/select/select.ts`, `externals/webawesome/slider/slider.ts`, `externals/webawesome/switch/switch.ts`, `externals/webawesome/tag/tag.ts`, `externals/webawesome/textarea/textarea.ts`
+- Pin: `tests/fixtures/ts/union/annotation-flat-retry.ts`, `tests/fixtures/ts/union/alias-flat-retry.ts`
+- Conformance:
+  - `externals/ng-zorro-antd/components/button/button.component.ts`
+  - `externals/ng-zorro-antd/components/cdk/overflow/overflow-container.component.ts`
+  - `externals/ng-zorro-antd/components/date-picker/date-picker.component.ts`
+  - `externals/ng-zorro-antd/components/date-picker/date-range-popup.component.ts`
+  - `externals/ng-zorro-antd/components/date-picker/inner-popup.component.ts`
+  - `externals/ng-zorro-antd/components/drawer/drawer.component.ts`
+  - `externals/ng-zorro-antd/components/dropdown/dropdown-menu.component.ts`
+  - `externals/ng-zorro-antd/components/empty/embed-empty.component.ts`
+  - `externals/ng-zorro-antd/components/empty/empty.component.ts`
+  - `externals/ng-zorro-antd/components/form/form-control.component.ts`
+  - `externals/ng-zorro-antd/components/form/form-item.component.ts`
+  - `externals/ng-zorro-antd/components/modal/modal.component.ts`
+  - `externals/ng-zorro-antd/components/resizable/resize-handle.component.ts`
+  - `externals/ng-zorro-antd/components/slider/handle.component.ts`
+  - `externals/ng-zorro-antd/components/slider/slider.component.ts`
+  - `externals/ng-zorro-antd/components/steps/steps.component.ts`
+  - `externals/ng-zorro-antd/components/tabs/tab-body.component.ts`
+  - `externals/ng-zorro-antd/components/time-picker/time-picker-panel.component.ts`
+  - `externals/ng-zorro-antd/components/tree-select/tree-select.component.ts`
+  - `externals/ng-zorro-antd/components/upload/upload.component.ts`
+  - `externals/prettier/typescript/union/consistent-with-flow/81-characters.ts`
+  - `externals/prettier/typescript/union/union-parens.ts` (the `as (string | undefined)[]` cast)
+  - `externals/vue-vben-admin/@core/ui-kit/shadcn-ui/src/components/render-content/render-content.vue`
+  - `externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue`
+  - `externals/webawesome/badge/badge.ts`
+  - `externals/webawesome/button/button.ts`
+  - `externals/webawesome/callout/callout.ts`
+  - `externals/webawesome/checkbox/checkbox.ts`
+  - `externals/webawesome/color-picker/color-picker.ts`
+  - `externals/webawesome/copy-button/copy-button.ts`
+  - `externals/webawesome/details/details.ts`
+  - `externals/webawesome/dropdown/dropdown.ts`
+  - `externals/webawesome/dropdown-item/dropdown-item.ts`
+  - `externals/webawesome/format-number/format-number.ts`
+  - `externals/webawesome/icon/icon.ts`
+  - `externals/webawesome/input/input.ts`
+  - `externals/webawesome/number-input/number-input.ts`
+  - `externals/webawesome/page/page.ts`
+  - `externals/webawesome/popup/popup.ts`
+  - `externals/webawesome/qr-code/qr-code.ts`
+  - `externals/webawesome/radio/radio.ts`
+  - `externals/webawesome/radio-group/radio-group.ts`
+  - `externals/webawesome/rating/rating.ts`
+  - `externals/webawesome/select/select.ts`
+  - `externals/webawesome/slider/slider.ts`
+  - `externals/webawesome/switch/switch.ts`
+  - `externals/webawesome/tag/tag.ts`
+  - `externals/webawesome/textarea/textarea.ts`
 - Drop when: the wait-and-see on Prettier 3.9's union style resolves (follow, or re-classify)
 
 ```ts
@@ -547,10 +630,34 @@ Prettier 3.9 changed this to first retry the whole union FLAT on the indented ne
 Community pushback on the 3.9 style (users migrated to Oxfmt over it) put following on hold:
 ours deliberately matches Prettier 3.8's output for this construct.
 
+The same hold at a type alias's `=`:
+
+```ts
+/* input */
+type Narrow = "primary" | "danger" | "warning" | "muted" | "success" | "information";
+
+/* ours */
+type Narrow =
+  | "primary"
+  | "danger"
+  | "warning"
+  | "muted"
+  | "success"
+  | "information";
+
+/* prettier */
+type Narrow =
+  "primary" | "danger" | "warning" | "muted" | "success" | "information";
+```
+
+A union that would hug (`X | null`) expands the same way once a member has a comment (`/* c */ X | null`).
+
 ## arrow-exact-fill-signature
 
 - Why: uniform-rule (same construct, same output: arrow with a non-conditional body)
 - Pin: `tests/fixtures/js/arrow-function/exact-fill-signature.js`
+- Conformance:
+  - `externals/ng-zorro-antd/components/auto-complete/autocomplete.component.ts`
 
 ```js
 /* input (printWidth 80) */
@@ -602,7 +709,10 @@ In the head the declaration has no terminator of its own; we keep it verbatim an
 
 - Why: uniform-rule (same construct, same output: suppressed statement)
 - Pin: `tests/fixtures/js/semicolons/suppressed-statement.js`, `tests/fixtures/ts/semicolons/suppressed-class-member.ts`
-- Oxfmt: `externals/prettier/markdown/markdown/real-world-case.md`
+- Conformance:
+  - `externals/prettier/js/ignore/issue-11077.js`
+  - `externals/prettier/markdown/markdown/real-world-case.md`
+  - `externals/plugin-astro/other/prettier-ignore-js/input.astro`
 
 ```js
 // input (semi: true)
@@ -813,7 +923,9 @@ The full callee list is `contains_a_test_pattern` in `src/utils/call_expression.
 
 - Why: invariant
 - Pin: `tests/fixtures/js/calls/callee-opener-comment.js`, `tests/fixtures/ts/calls/callee-opener-comment.ts`
-- Conformance: `js/last-argument-expansion/edge_case.js`, `typescript/call/callee-comments.ts`
+- Conformance:
+  - `externals/prettier/js/last-argument-expansion/edge_case.js`
+  - `externals/prettier/typescript/call/callee-comments.ts`
 
 A call's `(` and `<` are delimiters (see AGENTS.md "Head-body and operator gaps (class 3)"), so a comment between the callee and the opener stays on the callee side (except AGENTS.md "Open debts").
 
@@ -897,11 +1009,51 @@ Prettier also drops the parens around an operand that binds looser than the type
 The type arguments then attach to its last piece only (`c ? a : b<T>`, `a as B<T>`), or the output no longer parses (`y++<T>`).
 Fixed in Prettier `main` by prettier/prettier#20345, which we follow.
 
+## generic-function-type-after-lt-parens
+
+- Why: semantics (Prettier's output no longer parses)
+- Pin: `tests/fixtures/ts/parenthesis/generic-function-type-after-lt-parens.ts`, `tests/fixtures/ts/parenthesis/generic-function-type-after-lt-parens-jsx.tsx`
+
+```ts
+// input
+var a = < <T>(x: T) => T>f;
+var b = <(<T>() => void)>f;
+class A extends B< <T>() => T> {}
+type G = typeof g< <T>() => T>;
+
+// ours
+var a = <(<T>(x: T) => T)>f;
+var b = <(<T>() => void)>f;
+class A extends B<(<T>() => T)> {}
+type G = typeof g<(<T>() => T)>;
+
+// prettier
+var a = <<T>(x: T) => T>f;
+var b = <<T>() => void>f;
+class A extends B<<T>() => T> {}
+type G = typeof g<<T>() => T>;
+```
+
+A generic function type printed right after a `<` starts with `<<`, which is read as a left shift.
+tsc splits it back in most type arguments (`Array<<T>() => T>`, `f<<T>() => T>()`),
+but not after the `<` of a type assertion or of the first type argument of a heritage clause (`extends`, `implements`), `typeof` or a JSX element,
+so it rejects Prettier's output there.
+We keep the type in parens in those positions, as Prettier does for a function type in other ambiguous positions (a union member, an arrow function's return type).
+A function type without type parameters, a constructor type (`<new <T>() => T>f`) and a function type nested inside another type don't start with `<` and print as before.
+
 ## export-default-leftmost-parens
 
 - Why: uniform-rule (same construct, same output: expression statement)
 - Pin: `tests/fixtures/ts/parenthesis/export-default-leftmost-parens.ts`
-- Conformance: `js/export-default/class_instance.js`, `js/export-default/function_tostring.js`, `typescript/as/export_default_as.ts`, `typescript/export-default/function_as.ts`, `typescript/satisfies-operators/export-default-as.ts`
+- Conformance:
+  - `externals/prettier/js/export-default/class_instance.js`
+  - `externals/prettier/js/export-default/function_tostring.js`
+  - `externals/prettier/js/export-default/parentheses/snippet: #9`
+  - `externals/prettier/js/export-default/parentheses/snippet: #11`
+  - `externals/prettier/js/export-default/parentheses/snippet: #12`
+  - `externals/prettier/typescript/as/export_default_as.ts`
+  - `externals/prettier/typescript/export-default/function_as.ts`
+  - `externals/prettier/typescript/satisfies-operators/export-default-as.ts`
 
 ```ts
 // input
@@ -926,9 +1078,10 @@ Prettier's wrapping came from a syntax fix (prettier/prettier#6133), whose chang
 
 ## start-token-no-double-parens
 
-- Why: uniform-rule (same construct, same output: `export default` and sequence arrow body)
+- Why: uniform-rule (same construct, same output: outside a statement or arrow body start, after `export default`, sequence and assignment arrow bodies)
 - Pin: `tests/fixtures/ts/parenthesis/start-token-no-double-parens.ts`
-- Conformance: `js/identifier/parentheses/let.js`
+- Conformance:
+  - `externals/prettier/js/identifier/parentheses/let.js`
 
 ```ts
 // input
@@ -954,8 +1107,11 @@ const get = (key: K) => (({ a: 1, b: 2 }) as const)[key];
 ```
 
 When an ancestor gets its own parens, a leading `{`/`function`/`class`/`let[` inside it needs none.
-Prettier already does this after `export default` (`` export default (function () {} + foo)`` ``) and for a sequence arrow body (`() => ({}, 1)`),
-but not at statement start or for other arrow bodies, e.g. the object lookup idiom above.
+These parens only guard a statement or arrow body start: unlike readability parens (e.g. the IIFE's `(function () {})()`),
+Prettier never prints them elsewhere, so the same object lookup idiom prints as ours there (`const get = ({ a: 1, b: 2 } as const)[key];`).
+Prettier also drops them under an ancestor's parens after `export default` (`` export default (function () {}.a && b) || c; ``)
+and for a sequence or assignment arrow body (`() => ({}.a, 1)`, `() => ({}.a = 1)`),
+but not at statement start or for other arrow bodies.
 
 ## inline-logical-chain-indent
 
@@ -1079,3 +1235,161 @@ class A {
 A class member named `in` or `instanceof` would continue the previous property's value as a binary operator, so the `;` before it is kept.
 Prettier checks only an identifier key, but also prints the string key `"in"` unquoted, producing a syntax error.
 We check a string key by its value, which also keeps the `;` before a key that stays quoted (TypeScript, `quoteProps: "preserve"`), where Prettier's output stays valid.
+
+## private-member-like-static
+
+- Why: uniform-rule (same construct, same output: `a.b`)
+- Pin: `tests/fixtures/js/private-fields/private-member-like-static.js`
+
+```js
+// input (printWidth: 80)
+foo(someIdentifierName.#privateFieldWithAVeryLongNameThatDoesNotFitOnTheLineEvenAfterBreaking);
+this.#Factory.someMethodName(argumentOne).anotherMethodName(argumentTwo).third();
+const a = obj.#decorator(someArgument)((aaaaaaaaaaaa, bbbbbbbbbbbbbbbb, cccccccccccccccc) => {
+  return a;
+});
+@A.#decorator a() {}
+
+// ours: the same as `.b`
+foo(
+  someIdentifierName.#privateFieldWithAVeryLongNameThatDoesNotFitOnTheLineEvenAfterBreaking,
+);
+this.#Factory.someMethodName(argumentOne)
+  .anotherMethodName(argumentTwo)
+  .third();
+const a = obj.#decorator(someArgument)((
+  aaaaaaaaaaaa,
+  bbbbbbbbbbbbbbbb,
+  cccccccccccccccc,
+) => {
+  return a;
+});
+@A.#decorator a() {}
+
+// prettier
+foo(
+  someIdentifierName
+    .#privateFieldWithAVeryLongNameThatDoesNotFitOnTheLineEvenAfterBreaking,
+);
+this.#Factory
+  .someMethodName(argumentOne)
+  .anotherMethodName(argumentTwo)
+  .third();
+const a = obj.#decorator(someArgument)(
+  (aaaaaaaaaaaa, bbbbbbbbbbbbbbbb, cccccccccccccccc) => {
+    return a;
+  },
+);
+@(A.#decorator) a() {}
+```
+
+Both are a non-computed member access, so `.#b` follows every rule of `.b`.
+Prettier prints `.b` like ours in all four, only `.#b` differently.
+`@A.#decorator` is valid without parens (`DecoratorMemberExpression` accepts a `PrivateIdentifier`).
+
+## member-property-own-line-comment
+
+- Why: invariant
+- Pin: `tests/fixtures/js/comments/member-property-own-line-comment.js`
+
+```js
+// input
+x = a
+  // comment
+  .b;
+x = a
+  // comment
+  .#b;
+
+// ours
+x =
+  a
+    // comment
+    .b;
+x =
+  a
+    // comment
+    .#b;
+
+// prettier
+x =
+  // comment
+  a.b;
+x =
+  a
+    .// comment
+    #b;
+```
+
+An own-line comment before a member's `.` stays before it, for `.b` and `.#b` alike.
+Prettier moves it before the object for `.b`, and after the `.` for `.#b`; both cross a token.
+
+## computed-member-object-paren-break
+
+- Why: uniform-rule (same construct, same output: `(a + b).c` and `(await a)[c]`)
+- Pin: `tests/fixtures/js/parenthesis/computed-member-object-paren-break.js`
+- Conformance:
+  - `externals/prettier/js/ternaries/indent-after-paren.js`
+
+```js
+// input (printWidth: 80)
+(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa + bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb)[c];
+(someCondition ? someVeryLongConsequentValueeeeeeeeeeeeeeeeeeee : someVeryLongAlternateValueeeeeeeeeee)[c];
+
+// ours: the same as `.c`
+(
+  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa +
+  bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+)[c];
+(someCondition
+  ? someVeryLongConsequentValueeeeeeeeeeeeeeeeeeee
+  : someVeryLongAlternateValueeeeeeeeeee
+)[c];
+
+// prettier
+(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa +
+  bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb)[c];
+(someCondition
+  ? someVeryLongConsequentValueeeeeeeeeeeeeeeeeeee
+  : someVeryLongAlternateValueeeeeeeeeee)[c];
+```
+
+A binary-like or conditional object of a member breaks its parens the same way for `.c`, `[c]` and `?.[c]`.
+Prettier does so for `.c` only, while an `await` / `as` object breaks them for `[c]` too.
+The computed property (`a[b + c]`) keeps its own layout.
+
+## single-level-member-no-break
+
+- Why: uniform-rule (same construct, same output: `foo.b`)
+- Pin: `tests/fixtures/js/member-expression/single-level-member-no-break.mjs`
+
+```js
+// input (printWidth: 80)
+foo.sql`DELETE FROM some_table_with_a_long_name WHERE some_column_name = ${someIdentifierName}`;
+this.sql`DELETE FROM some_table_with_a_long_name WHERE some_column_name = ${someIdentifierName}`;
+call(super.someVeryLongPropertyNameThatDoesNotFitOnTheLineEvenAfterBreakingXXXXXXXXXXXXXXXXXXXXXXXXX);
+
+// ours: the same as `foo.sql`
+foo.sql`DELETE FROM some_table_with_a_long_name WHERE some_column_name = ${someIdentifierName}`;
+this.sql`DELETE FROM some_table_with_a_long_name WHERE some_column_name = ${someIdentifierName}`;
+call(
+  super.someVeryLongPropertyNameThatDoesNotFitOnTheLineEvenAfterBreakingXXXXXXXXXXXXXXXXXXXXXXXXX,
+);
+
+// prettier
+foo.sql`DELETE FROM some_table_with_a_long_name WHERE some_column_name = ${someIdentifierName}`;
+this
+  .sql`DELETE FROM some_table_with_a_long_name WHERE some_column_name = ${someIdentifierName}`;
+call(
+  super
+    .someVeryLongPropertyNameThatDoesNotFitOnTheLineEvenAfterBreakingXXXXXXXXXXXXXXXXXXXXXXXXX,
+);
+```
+
+A single-level member is not split after its object when the object is a single word: an identifier, `this` or `super`.
+The break would leave the word alone on its line for a single property, which rarely fits either.
+A longer path (`a.b.c`) still breaks into a list of properties.
+
+Prettier keeps it only for an identifier object (prettier/prettier#1036, which has no case for `this` or `super`).
+Elsewhere it groups them with an identifier: all three count as a single word for a simple call argument,
+and `this` stays attached as a member chain head like a short identifier (`this.foo()` + break + `.bar()`, prettier/prettier#782).

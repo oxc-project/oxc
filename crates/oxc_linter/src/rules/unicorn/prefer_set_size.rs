@@ -10,7 +10,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{
     AstNode,
     ast_util::variable_declaration_kind,
-    ast_util::{get_declaration_of_variable, is_method_call},
+    ast_util::{get_declaration_of_variable, is_method_call, outermost_paren_parent},
     context::LintContext,
     fixer::Fix,
     rule::Rule,
@@ -52,12 +52,27 @@ declare_oxc_lint!(
     recommended,
     fix,
     version = "0.0.19",
-    short_description = "Prefer `Set#size` over `Set#length` when the `Set` is converted to an array.",
+    short_description =
+        "Prefer `Set#size` over `Set#length` when the `Set` is converted to an array.",
 );
 
 impl Rule for PreferSetSize {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::StaticMemberExpression(member_expr) = node.kind() else {
+        let conversion_node = match node.kind() {
+            AstKind::SpreadElement(_) => {
+                let parent = ctx.nodes().parent_node(node.id());
+                if !matches!(parent.kind(), AstKind::ArrayExpression(_)) {
+                    return;
+                }
+                parent
+            }
+            AstKind::CallExpression(_) => node,
+            _ => return,
+        };
+        let Some(parent) = outermost_paren_parent(conversion_node, ctx) else {
+            return;
+        };
+        let AstKind::StaticMemberExpression(member_expr) = parent.kind() else {
             return;
         };
 
@@ -165,6 +180,10 @@ fn test() {
 
     let pass = vec![
         "new Set(foo).size",
+        "[...new Set(array), ...new Set(other)].length",
+        "foo(...new Set(array)).length",
+        "({...new Set(array)}).length",
+        "[...[...new Set(array)]].length",
         "for (const foo of bar) console.log([...foo].length)",
         "[...new Set(array), foo].length",
         "[foo, ...new Set(array), ].length",

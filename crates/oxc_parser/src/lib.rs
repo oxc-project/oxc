@@ -71,6 +71,7 @@ pub mod config;
 mod context;
 mod cursor;
 mod error_handler;
+mod list;
 mod modifiers;
 mod module_record;
 mod state;
@@ -785,7 +786,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             self.lexer.finalize_tokens()
         };
 
-        program.comments = self.lexer.trivia_builder.comments;
+        program.comments = self.lexer.trivia_builder.comments.into_vec();
 
         ParserReturn {
             program,
@@ -996,11 +997,10 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     }
 
     fn check_unfinished_errors(&mut self) {
-        use oxc_span::GetSpan;
         // PropertyDefinition : cover_initialized_name
         // It is a Syntax Error if any source text is matched by this production.
-        for expr in self.state.cover_initialized_name.values() {
-            self.errors.push(diagnostics::cover_initialized_name(expr.span()));
+        for cover in self.state.cover_initialized_name.values() {
+            self.errors.push(diagnostics::cover_initialized_name(cover.span));
         }
     }
 
@@ -1073,6 +1073,87 @@ mod test {
         let source_type = SourceType::default();
         for source in ["a b", "a;", "let x = 1"] {
             assert!(Parser::new(&allocator, source, source_type).parse_expression().is_err());
+        }
+    }
+
+    #[test]
+    fn asserted_exponentiation_preserve_parens() {
+        for preserve_parens in [true, false] {
+            for source in [
+                "(-value) as number ** 2",
+                "(-value as number) ** 2",
+                "(-value) as any satisfies number ** 2",
+                "(<number>value) satisfies number ** 2",
+                "async () => (await value) as number ** 2",
+            ] {
+                let allocator = Allocator::default();
+                let result = Parser::new(&allocator, source, SourceType::ts())
+                    .with_options(ParseOptions { preserve_parens, ..ParseOptions::default() })
+                    .parse_expression();
+                assert!(result.is_ok(), "{source}, preserve_parens={preserve_parens}");
+            }
+
+            for (source, operand) in [
+                ("-value as any satisfies number ** 2", "-value"),
+                ("<number>value as number ** 2", "<number>value"),
+                ("async () => await value as number ** 2", "await value"),
+            ] {
+                let allocator = Allocator::default();
+                let diagnostics = Parser::new(&allocator, source, SourceType::ts())
+                    .with_options(ParseOptions { preserve_parens, ..ParseOptions::default() })
+                    .parse_expression()
+                    .unwrap_err();
+                assert_eq!(diagnostics.len(), 1, "{source}, preserve_parens={preserve_parens}");
+                let label = &diagnostics[0].labels[0];
+                let start = label.offset() as usize;
+                let end = start + label.len() as usize;
+                assert_eq!(&source[start..end], operand);
+            }
+        }
+    }
+
+    #[test]
+    fn simple_arrow_no_side_effects_annotations() {
+        for source in [
+            "/*#__NO_SIDE_EFFECTS__*/ value => value",
+            "/*#__NO_SIDE_EFFECTS__*/ async value => value",
+            "/*#__NO_SIDE_EFFECTS__*/ async of => of",
+        ] {
+            let allocator = Allocator::default();
+            let expr =
+                Parser::new(&allocator, source, SourceType::default()).parse_expression().unwrap();
+            let Expression::ArrowFunctionExpression(arrow) = expr else { panic!("{source}") };
+            assert!(arrow.pure, "{source}");
+        }
+    }
+
+    #[test]
+    fn identifier_continuation_pure_annotations() {
+        for source in [
+            "/*#__PURE__*/ callee()",
+            "/*#__PURE__*/ callee<T>()",
+            "/*#__PURE__*/ callee!.method()",
+        ] {
+            let allocator = Allocator::default();
+            let expr =
+                Parser::new(&allocator, source, SourceType::ts()).parse_expression().unwrap();
+            let Expression::CallExpression(call) = expr else { panic!("{source}") };
+            assert!(call.pure, "{source}");
+        }
+
+        // Check both the assignment-expression entry and a binary RHS continuation.
+        for (source, annotated_left) in [
+            ("/*#__PURE__*/ callee() + other()", true),
+            ("other() + /*#__PURE__*/ callee()", false),
+        ] {
+            let allocator = Allocator::default();
+            let expr =
+                Parser::new(&allocator, source, SourceType::default()).parse_expression().unwrap();
+            let Expression::BinaryExpression(binary) = expr else { panic!("{source}") };
+            let Expression::CallExpression(left) = &binary.left else { panic!("{source}") };
+            let Expression::CallExpression(right) = &binary.right else { panic!("{source}") };
+            assert_eq!(left.pure, annotated_left, "{source}");
+            assert_eq!(right.pure, !annotated_left, "{source}");
         }
     }
 
@@ -1166,6 +1247,43 @@ mod test {
     }
 
     #[test]
+    fn template_raw_normalizes_line_terminators() {
+        // `(raw, cooked)` of each quasi, as `strings.raw` and `strings` in a tag function (V8).
+        type Quasis = &'static [(&'static str, Option<&'static str>)];
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+        let cases: &[(&str, Quasis)] = &[
+            ("tag`\\unicode\r\n`", &[("\\unicode\n", None)]),
+            ("tag`\\xZ\r`", &[("\\xZ\n", None)]),
+            ("tag`\\xZ\r\r\n`", &[("\\xZ\n\n", None)]),
+            ("tag`a\r\n\\u{}`", &[("a\n\\u{}", None)]),
+            ("tag`\\\r\n\\8`", &[("\\\n\\8", None)]),
+            (
+                "tag`h\\xZ\r\n${0}m\\u{}\r${1}t\\8\r\n`",
+                &[("h\\xZ\n", None), ("m\\u{}\n", None), ("t\\8\n", None)],
+            ),
+            ("tag`\\n\r\n`", &[("\\n\n", Some("\n\n"))]),
+            ("tag`a\\\rb`", &[("a\\\nb", Some("ab"))]),
+            ("tag`ok\r\n`", &[("ok\n", Some("ok\n"))]),
+            ("tag`ok\rx`", &[("ok\nx", Some("ok\nx"))]),
+        ];
+        for &(source, expected) in cases {
+            let expr = Parser::new(&allocator, source, source_type).parse_expression().unwrap();
+            let Expression::TaggedTemplateExpression(tagged) = expr else { panic!("{source:?}") };
+            let values = tagged
+                .quasi
+                .quasis
+                .iter()
+                .map(|quasi| {
+                    let cooked = quasi.value.cooked.map(|cooked| cooked.as_str().unwrap());
+                    (quasi.value.raw.as_str(), cooked)
+                })
+                .collect::<Vec<_>>();
+            assert_eq!(values, expected, "{source:?}");
+        }
+    }
+
+    #[test]
     fn directives() {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
@@ -1173,11 +1291,16 @@ mod test {
             ("import x from 'foo'; 'use strict';", 2),
             ("export {x} from 'foo'; 'use strict';", 2),
             (";'use strict';", 2),
+            ("('use strict'); 'use strict';", 2),
         ];
-        for (source, body_length) in sources {
-            let ret = Parser::new(&allocator, source, source_type).parse();
-            assert!(ret.program.directives.is_empty(), "{source}");
-            assert_eq!(ret.program.body.len(), body_length, "{source}");
+        for preserve_parens in [true, false] {
+            for (source, body_length) in sources {
+                let ret = Parser::new(&allocator, source, source_type)
+                    .with_options(ParseOptions { preserve_parens, ..ParseOptions::default() })
+                    .parse();
+                assert!(ret.program.directives.is_empty(), "{source}");
+                assert_eq!(ret.program.body.len(), body_length, "{source}");
+            }
         }
     }
 

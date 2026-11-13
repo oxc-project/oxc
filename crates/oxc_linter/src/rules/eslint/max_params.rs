@@ -100,8 +100,7 @@ impl MaxParams {
 
     #[expect(clippy::cast_possible_truncation)] // the length of parameters can't be over u32::MAX, because the source code is already limited by u32::MAX.
     fn ts_function_type_param_count(&self, function: &TSFunctionType) -> u32 {
-        let mut real_len =
-            (function.params.items.len() + usize::from(function.params.rest.is_some())) as u32;
+        let mut real_len = function.params.parameters_count() as u32;
         if let Some(this_params) = &function.this_param {
             let is_void_this = this_params
                 .type_annotation
@@ -161,7 +160,8 @@ declare_oxc_lint!(
     style,
     config = MaxParamsConfigEnum,
     version = "0.2.14",
-    short_description = "Enforce a maximum number of parameters in function definitions which by default is three.",
+    short_description =
+        "Enforce a maximum number of parameters in function definitions which by default is three.",
 );
 
 impl Rule for MaxParams {
@@ -185,8 +185,7 @@ impl Rule for MaxParams {
                 if !function.is_declaration() & !function.is_expression() {
                     return;
                 }
-                let params = &function.params;
-                let mut real_len = (params.items.len() + usize::from(params.rest.is_some())) as u32;
+                let mut real_len = function.params.parameters_count() as u32;
                 if let Some(this_params) = &function.this_param {
                     let is_void_this = this_params
                         .type_annotation
@@ -217,9 +216,7 @@ impl Rule for MaxParams {
                 }
             }
             AstKind::ArrowFunctionExpression(function) => {
-                let real_len = (function.params.items.len()
-                    + usize::from(function.params.rest.is_some()))
-                    as u32;
+                let real_len = function.params.parameters_count() as u32;
                 if real_len > self.max {
                     let error_msg = format!(
                         "Arrow function has too many parameters ({}). Maximum allowed is {}.",

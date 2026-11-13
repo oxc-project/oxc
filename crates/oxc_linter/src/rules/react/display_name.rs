@@ -23,8 +23,8 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
     utils::{
         InnermostFunction, arrow_function_returns, expression_returns,
-        find_innermost_function_with_jsx, function_returns, is_es6_component_class, is_hoc_call,
-        is_react_component_name,
+        find_innermost_function_with_jsx, function_returns, is_component_wrapper_call,
+        is_es6_component_class, is_react_component_name,
     },
 };
 
@@ -421,14 +421,44 @@ fn is_react_component_node<'a>(
                 && let Some(callee_name) = call.callee_name()
             {
                 // Check for HOC patterns
-                if is_hoc_call(callee_name, ctx) {
+                if is_component_wrapper_call(call, ctx) {
+                    let mut inner_component =
+                        call.arguments.first()?.as_expression()?.get_inner_expression();
+                    while let Expression::CallExpression(inner_call) = inner_component {
+                        if !is_component_wrapper_call(inner_call, ctx) {
+                            return None;
+                        }
+                        inner_component =
+                            inner_call.arguments.first()?.as_expression()?.get_inner_expression();
+                    }
+                    match inner_component {
+                        Expression::ClassExpression(class) => {
+                            if !is_es6_component_class(class)
+                                || class_has_static_display_name(class)
+                            {
+                                return None;
+                            }
+                            let reported_via_class_symbol = class.id.as_ref().is_some_and(|id| {
+                                is_react_component_name(&id.name) && class_returns_jsx(class, ctx)
+                            });
+                            if class.id.is_some()
+                                && (!ignore_transpiler_name || reported_via_class_symbol)
+                            {
+                                return None;
+                            }
+                        }
+                        Expression::FunctionExpression(_)
+                        | Expression::ArrowFunctionExpression(_)
+                        | Expression::Identifier(_) => {}
+                        _ => return None,
+                    }
+
                     // Handle React.memo(React.forwardRef(...)) - skip if version compatible
                     if callee_name.ends_with("memo")
                         && let Some(first_arg) = call.arguments.first()
                         && let Some(Expression::CallExpression(inner_call)) =
                             first_arg.as_expression()
-                        && let Some(inner_callee_name) = inner_call.callee_name()
-                        && is_hoc_call(inner_callee_name, ctx)
+                        && is_component_wrapper_call(inner_call, ctx)
                         && version_cache.get_memo_forwardref_compatible(ctx)
                     {
                         return None;
@@ -1778,6 +1808,37 @@ fn test() {
             None,
             None,
         ),
+        (
+            r#"
+                const createMemo = (fn) => fn;
+                export function useLookup() {
+                    const memo = createMemo((a, b) => a + b);
+                    const value = memo("x", "y");
+                    return value;
+                }
+            "#,
+            None,
+            None,
+        ),
+        ("const memo = fn => fn; const Component = memo(() => <li />);", None, None),
+        (r#"const forwardRef = fn => fn; const value = forwardRef("x");"#, None, None),
+        (r#"import { memo } from 'react'; const value = memo("x");"#, None, None),
+        (r#"import { forwardRef } from 'react'; const value = forwardRef("x");"#, None, None),
+        ("const forwardRef = fn => fn; const Component = forwardRef(() => <li />);", None, None),
+        ("import { memo } from 'other'; const Component = memo(() => <li />);", None, None),
+        ("import { memo } from 'react'; function useValue(memo) { const value = memo(() => <li />); }", None, None),
+        ("const utils = { memo: fn => fn }; const Component = utils.memo(() => <li />);", None, None),
+        ("const memo = fn => fn; const make = () => memo(() => <li />);", None, None),
+        ("import { memo } from 'react'; const value = memo();", None, None),
+        ("const value = React.memo(42);", None, None),
+        ("const value = React.forwardRef(null);", None, None),
+        ("const value = React.memo({});", None, None),
+        ("const value = React.memo(...components);", None, None),
+        ("const value = React.memo(getComponent());", None, None),
+        (r#"const value = React.memo(React.forwardRef("x"));"#, None, None),
+        ("const C = React.memo(class C extends React.Component { render() { return <div />; } });", None, None),
+        (r#"const C = React.memo(class extends React.Component { static displayName = "C"; render() { return <div />; } });"#, None, None),
+        ("const C = React.memo(class { render() { return <div />; } });", None, None),
     ];
 
     let fail = vec![
@@ -2244,6 +2305,40 @@ fn test() {
             "export default function Hello() {
   return <div>Hello {this.props.name}</div>;
 }",
+            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
+            None,
+        ),
+        ("import { memo } from 'react'; const Component = memo(() => <li />);", None, None),
+        ("import { forwardRef } from 'react'; const Component = forwardRef(() => <li />);", None, None),
+        (r#"const { memo } = require("react"); const Component = memo(() => <li />);"#, None, None),
+        ("const { forwardRef } = React; const Component = forwardRef(() => <li />);", None, None),
+        ("const memo = React.memo; const Component = memo(() => <li />);", None, None),
+        (r#"const forwardRef = require("react").forwardRef; const Component = forwardRef(() => <li />);"#, None, None),
+        ("import { memo } from 'react'; const Component = memo(function () {});", None, None),
+        (
+            "const memo = fn => fn; const Component = memo(() => <li />);",
+            None,
+            Some(serde_json::json!({ "settings": { "react": { "componentWrapperFunctions": ["memo"] } } })),
+        ),
+        ("const C = React.memo(class extends React.Component { render() { return <div />; } });", None, None),
+        ("const C = React.memo(class extends React.Component {});", None, None),
+        (
+            "const C = React.memo(class Named extends React.Component { render() { return null; } });",
+            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
+            None,
+        ),
+        (
+            "const C = React.memo(class Named extends React.Component {});",
+            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
+            None,
+        ),
+        (
+            "const C = React.memo(class named extends React.Component { render() { return <div />; } });",
+            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
+            None,
+        ),
+        (
+            "const C = React.memo(class Named extends React.Component { render() { return <div />; } });",
             Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
             None,
         ),

@@ -169,3 +169,13 @@ export { result, customStr, allowedSpread, notAllowedSpread, literalConst, optio
 Promise.all([1, Promise.resolve(2)]);
 // This SHOULD error because the array contains only synchronous values
 Promise.all([1, 2]);
+
+declare const matchingPromiseUnion: Promise<number> | number;
+if (matchingPromiseUnion) {
+  result += 1;
+}
+
+declare const differentPromiseUnion: Promise<number> | string;
+if (differentPromiseUnion) {
+  result += 1;
+}

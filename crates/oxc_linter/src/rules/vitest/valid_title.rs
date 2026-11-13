@@ -1,10 +1,12 @@
+use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 use serde_json::Value;
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::Rule,
-    rules::{PossibleJestNode, shared::valid_title as SharedValidTitle},
+    rules::shared::valid_title as SharedValidTitle,
 };
 
 #[derive(Debug, Default, Clone)]
@@ -29,12 +31,13 @@ impl Rule for ValidTitle {
             .map(|config| Self(Box::new(config)))
     }
 
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        SharedValidTitle::ValidTitleConfig::run_rule(&self.0, jest_node, ctx);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(_) = node.kind() else { return };
+        SharedValidTitle::ValidTitleConfig::run_rule(&self.0, node, ctx);
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_test()
     }
 }
 
@@ -220,7 +223,7 @@ fn test() {
                 ],
             })
 
-            test('', () => {})",
+            test('foo', () => {})",
             None,
         ),
         // https://github.com/oxc-project/oxc/issues/22268
@@ -655,6 +658,24 @@ fn test() {
         // https://github.com/oxc-project/oxc/issues/22268
         ("it(Object.raw`foo`, () => {})", None),
         ("it(String.raw(`foo`), () => {})", None),
+        // Vitest-specific tests with .extend()
+        (
+            "import { it } from 'vitest'
+
+            const test = it.extend({
+                fixture: [
+                    async ({}, use) => {
+                        setup()
+                        await use()
+                        teardown()
+                    },
+                    { auto: true }
+                ],
+            })
+
+            test('', () => {})",
+            None,
+        ),
     ];
 
     let fix = vec![

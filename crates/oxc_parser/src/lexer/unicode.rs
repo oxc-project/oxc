@@ -37,8 +37,7 @@ impl<'a, C: Config> Lexer<'a, C> {
             '\u{FFFD}' => self.handle_binary_file(),
             c if is_identifier_start_unicode(c) => {
                 let start_pos = self.source.position();
-                self.consume_char();
-                self.identifier_tail_after_unicode(start_pos);
+                self.identifier_tail_after_unicode(start_pos, c);
                 Kind::Ident
             }
             c if is_irregular_whitespace(c) => self.handle_irregular_whitespace(c),
@@ -136,9 +135,8 @@ impl<'a, C: Config> Lexer<'a, C> {
     ///   \u{ `CodePoint` }
     fn string_unicode_escape_sequence(
         &mut self,
-        text: &mut JSStrBuilder<'a>,
         is_valid_escape_sequence: &mut bool,
-    ) {
+    ) -> Option<JSChar> {
         let value = match self.peek_byte() {
             Some(b'{') => {
                 self.consume_char();
@@ -150,14 +148,14 @@ impl<'a, C: Config> Lexer<'a, C> {
         let Some(value) = value else {
             // error raised within the parser by `diagnostics::template_literal`
             *is_valid_escape_sequence = false;
-            return;
+            return None;
         };
 
         match value {
-            UnicodeEscape::CodePoint(ch) | UnicodeEscape::SurrogatePair(ch) => text.push(ch),
+            UnicodeEscape::CodePoint(ch) | UnicodeEscape::SurrogatePair(ch) => Some(ch.into()),
             UnicodeEscape::LoneSurrogate(code_point) => {
                 // Escape decoding restricts this value to the surrogate range.
-                text.push_js_char(JSChar::from_u32(code_point).unwrap());
+                Some(JSChar::from_u32(code_point).unwrap())
             }
         }
     }
@@ -298,88 +296,115 @@ impl<'a, C: Config> Lexer<'a, C> {
         in_template: bool,
         is_valid_escape_sequence: &mut bool,
     ) {
-        match self.next_char() {
-            None => {
-                self.error(diagnostics::unterminated_string(self.unterminated_range()));
+        if let Some(value) =
+            self.decode_string_escape_sequence(in_template, is_valid_escape_sequence)
+        {
+            if let Some(c) = value.to_char() {
+                text.push(c);
+            } else {
+                text.push_js_char(value);
             }
-            Some(c) => match c {
-                // \ LineTerminatorSequence
-                // LineTerminatorSequence ::
-                // <LF>
-                // <CR> [lookahead ≠ <LF>]
-                // <LS>
-                // <PS>
-                // <CR> <LF>
-                LF | LS | PS => {}
-                CR => {
-                    self.next_ascii_byte_eq(b'\n');
-                }
-                // SingleEscapeCharacter :: one of
-                //   ' " \ b f n r t v
-                '\'' | '"' | '\\' => text.push(c),
-                'b' => text.push('\u{8}'),
-                'f' => text.push(FF),
-                'n' => text.push(LF),
-                'r' => text.push(CR),
-                't' => text.push(TAB),
-                'v' => text.push(VT),
-                // HexEscapeSequence
-                'x' => {
-                    self.hex_digit()
-                        .and_then(|value1| {
-                            let value2 = self.hex_digit()?;
-                            Some((value1, value2))
-                        })
-                        .map(|(value1, value2)| (value1 << 4) | value2)
-                        .and_then(|value| char::try_from(value).ok())
-                        .map_or_else(
-                            || {
-                                *is_valid_escape_sequence = false;
-                            },
-                            |c| {
-                                text.push(c);
-                            },
-                        );
-                }
-                // UnicodeEscapeSequence
-                'u' => {
-                    self.string_unicode_escape_sequence(text, is_valid_escape_sequence);
-                }
-                // 0 [lookahead ∉ DecimalDigit]
-                '0' if !self.peek_byte().is_some_and(|b| b.is_ascii_digit()) => text.push('\0'),
-                // Section 12.9.4 String Literals
-                // LegacyOctalEscapeSequence
-                // NonOctalDecimalEscapeSequence
-                c @ '0'..='7' if !in_template => {
-                    let first_digit = c as u8 - b'0';
-                    let mut value = first_digit;
+        }
+    }
 
-                    if matches!(self.peek_byte(), Some(b'0'..=b'7')) {
+    /// Decode an escape without allocating storage for its value.
+    /// Line continuations and invalid escapes produce no text.
+    pub(super) fn decode_string_escape_sequence(
+        &mut self,
+        in_template: bool,
+        is_valid_escape_sequence: &mut bool,
+    ) -> Option<JSChar> {
+        let Some(c) = self.next_char() else {
+            self.error(diagnostics::unterminated_string(self.unterminated_range()));
+            return None;
+        };
+        let value = match c {
+            // \ LineTerminatorSequence
+            // LineTerminatorSequence ::
+            // <LF>
+            // <CR> [lookahead ≠ <LF>]
+            // <LS>
+            // <PS>
+            // <CR> <LF>
+            LF | LS | PS => return None,
+            CR => {
+                self.next_ascii_byte_eq(b'\n');
+                return None;
+            }
+            // SingleEscapeCharacter :: one of
+            //   ' " \ b f n r t v
+            '\'' | '"' | '\\' => c,
+            'b' => '\u{8}',
+            'f' => FF,
+            'n' => LF,
+            'r' => CR,
+            't' => TAB,
+            'v' => VT,
+            // HexEscapeSequence
+            'x' => {
+                let value = self
+                    .hex_digit()
+                    .and_then(|value1| {
+                        let value2 = self.hex_digit()?;
+                        Some((value1, value2))
+                    })
+                    .map(|(value1, value2)| {
+                        #[expect(
+                            clippy::cast_possible_truncation,
+                            reason = "Two hex digits are at most 0xFF"
+                        )]
+                        let value = ((value1 << 4) | value2) as u8;
+                        char::from(value)
+                    });
+                let Some(value) = value else {
+                    *is_valid_escape_sequence = false;
+                    return None;
+                };
+                value
+            }
+            // UnicodeEscapeSequence
+            'u' => {
+                return self.string_unicode_escape_sequence(is_valid_escape_sequence);
+            }
+            // 0 [lookahead ∉ DecimalDigit]
+            '0' if !self.peek_byte().is_some_and(|b| b.is_ascii_digit()) => '\0',
+            // Section 12.9.4 String Literals
+            // LegacyOctalEscapeSequence
+            // NonOctalDecimalEscapeSequence
+            c @ '0'..='7' if !in_template => {
+                let first_digit = c as u8 - b'0';
+                let mut value = first_digit;
+
+                if matches!(self.peek_byte(), Some(b'0'..=b'7')) {
+                    let digit = self.consume_char() as u8 - b'0';
+                    value = value * 8 + digit;
+                    if first_digit < 4 && matches!(self.peek_byte(), Some(b'0'..=b'7')) {
                         let digit = self.consume_char() as u8 - b'0';
                         value = value * 8 + digit;
-                        if first_digit < 4 && matches!(self.peek_byte(), Some(b'0'..=b'7')) {
-                            let digit = self.consume_char() as u8 - b'0';
-                            value = value * 8 + digit;
-                        }
                     }
+                }
 
-                    text.push(char::from(value));
-                }
-                '0' if in_template && self.peek_byte().is_some_and(|b| b.is_ascii_digit()) => {
-                    self.consume_char();
-                    // error raised within the parser by `diagnostics::template_literal`
-                    *is_valid_escape_sequence = false;
-                }
-                // NotEscapeSequence :: DecimalDigit but not 0
-                '1'..='9' if in_template => {
-                    // error raised within the parser by `diagnostics::template_literal`
-                    *is_valid_escape_sequence = false;
-                }
-                other => {
-                    // NonOctalDecimalEscapeSequence \8 \9 in strict mode
-                    text.push(other);
-                }
-            },
-        }
+                char::from(value)
+            }
+            '0' => {
+                // The previous zero and octal arms handled every other case.
+                debug_assert!(in_template && self.peek_byte().is_some_and(|b| b.is_ascii_digit()));
+                self.consume_char();
+                // error raised within the parser by `diagnostics::template_literal`
+                *is_valid_escape_sequence = false;
+                return None;
+            }
+            // NotEscapeSequence :: DecimalDigit but not 0
+            '1'..='9' if in_template => {
+                // error raised within the parser by `diagnostics::template_literal`
+                *is_valid_escape_sequence = false;
+                return None;
+            }
+            other => {
+                // NonOctalDecimalEscapeSequence \8 \9 in strict mode
+                other
+            }
+        };
+        Some(value.into())
     }
 }

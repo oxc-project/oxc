@@ -710,7 +710,28 @@ source: crates/oxc_linter/src/tester.rs
  1 │ [...((0, []))]
    ·  ───
    ╰────
-  help: `(0, [])` returns a new array. Spreading it into an array expression to create a new array is redundant.
+  help: `0, []` returns a new array. Spreading it into an array expression to create a new array is redundant.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.mjs:1:2]
+ 1 │ [...( 0, [])]
+   ·  ───
+   ╰────
+  help: `0, []` returns a new array. Spreading it into an array expression to create a new array is redundant.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.mjs:1:2]
+ 1 │ [...(0, [] )]
+   ·  ───
+   ╰────
+  help: `0, []` returns a new array. Spreading it into an array expression to create a new array is redundant.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.mjs:1:2]
+ 1 │ [...( 0, [] )]
+   ·  ───
+   ╰────
+  help: `0, []` returns a new array. Spreading it into an array expression to create a new array is redundant.
 
   ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
@@ -774,3 +795,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ───
    ╰────
   help: This expression returns a new object. Spreading it into an object expression to create a new object is redundant.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
+   ╭─[no_useless_spread.mjs:1:15]
+ 1 │ const obj = { ...( 0, {} ) }
+   ·               ───
+   ╰────
+  help: `0, {}` returns a new object. Spreading it into an object expression to create a new object is redundant.

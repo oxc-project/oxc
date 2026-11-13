@@ -7,6 +7,7 @@ use oxc_ast::{
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::BoundNames;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
@@ -136,7 +137,7 @@ impl Rule for PreferConst {
         if is_for_statement_init && decl.declarations.len() > 1 {
             let any_reassigned = decl.declarations.iter().any(|declarator| {
                 let has_init = declarator.init.is_some();
-                declarator.id.get_binding_identifiers().iter().any(|ident| {
+                declarator.id.any_binding_identifiers(&mut |ident| {
                     !self.should_be_const(ident.symbol_id(), has_init, is_for_in_of_init, ctx)
                 })
             });
@@ -148,11 +149,10 @@ impl Rule for PreferConst {
 
         let mut all_declarators_const = true;
         for (declarator_index, declarator) in decl.declarations.iter().enumerate() {
-            let binding_identifiers = declarator.id.get_binding_identifiers();
             let has_init = declarator.init.is_some();
             let is_destructuring = declarator.id.is_destructuring_pattern();
 
-            let all_const = binding_identifiers.iter().all(|ident| {
+            let all_const = declarator.id.all_binding_identifiers(&mut |ident| {
                 let symbol_id = ident.symbol_id();
                 self.should_be_const(symbol_id, has_init, is_for_in_of_init, ctx)
             });
@@ -162,7 +162,7 @@ impl Rule for PreferConst {
             if matches!(self.0.destructuring, Destructuring::All) && is_destructuring {
                 if all_const {
                     // Flag all variables in the destructuring pattern
-                    for ident in binding_identifiers {
+                    declarator.id.bound_names(&mut |ident| {
                         ctx.diagnostic_with_fix(
                             prefer_const_diagnostic(ident.name.as_str(), ident.span),
                             |fixer| {
@@ -176,12 +176,12 @@ impl Rule for PreferConst {
                                 )
                             },
                         );
-                    }
+                    });
                 }
                 // If not all_const, don't flag any of them in "all" mode
             } else {
                 // "any" mode (default): check each binding identifier independently
-                for ident in binding_identifiers {
+                declarator.id.bound_names(&mut |ident| {
                     if self.should_be_const(ident.symbol_id(), has_init, is_for_in_of_init, ctx) {
                         ctx.diagnostic_with_fix(
                             prefer_const_diagnostic(ident.name.as_str(), ident.span),
@@ -197,7 +197,7 @@ impl Rule for PreferConst {
                             },
                         );
                     }
-                }
+                });
             }
         }
     }
@@ -327,10 +327,13 @@ impl PreferConst {
             return false;
         }
 
-        let references: Vec<_> = symbol_table.get_resolved_references(symbol_id).collect();
+        let references = symbol_table
+            .get_resolved_reference_ids(symbol_id)
+            .iter()
+            .map(|&reference_id| symbol_table.get_reference(reference_id));
         let symbol_scope = symbol_table.symbol_scope_id(symbol_id);
         let has_cross_scope_write = references
-            .iter()
+            .clone()
             .filter(|r| r.is_write())
             .any(|r| ctx.nodes().get_node(r.node_id()).scope_id() != symbol_scope);
         if has_cross_scope_write {
@@ -338,7 +341,7 @@ impl PreferConst {
         }
 
         if matches!(self.0.destructuring, Destructuring::All) {
-            let write_count = references.iter().filter(|r| r.is_write()).count();
+            let write_count = references.filter(|r| r.is_write()).count();
             if write_count > 1
                 || matches!(ctx.nodes().kind(decl_node), AstKind::VariableDeclarator(decl) if decl.init.is_some())
             {
@@ -474,10 +477,13 @@ impl PreferConst {
         let symbol_table = ctx.scoping();
 
         // Get all references to this symbol
-        let references: Vec<_> = symbol_table.get_resolved_references(symbol_id).collect();
+        let references = symbol_table
+            .get_resolved_reference_ids(symbol_id)
+            .iter()
+            .map(|&reference_id| symbol_table.get_reference(reference_id));
 
         // Count write references (assignments)
-        let write_count = references.iter().filter(|r| r.is_write()).count();
+        let write_count = references.clone().filter(|r| r.is_write()).count();
 
         // If configured to ignore reads before the initial assignment and this variable has an
         // initializer, then suppress the suggestion when there exists a read that appears before
@@ -487,7 +493,7 @@ impl PreferConst {
             let decl_node_id = symbol_table.symbol_declaration(symbol_id);
             let decl_start = ctx.nodes().get_node(decl_node_id).span().start;
 
-            let has_read_before_decl = references.iter().any(|r| {
+            let has_read_before_decl = references.clone().any(|r| {
                 if !r.is_read() {
                     return false;
                 }
@@ -513,7 +519,7 @@ impl PreferConst {
 
         // Handle ignoreReadBeforeAssign option
         if self.0.ignore_read_before_assign && !has_init && write_count == 1 {
-            let mut write_only_refs = references.iter().filter(|r| r.is_write() && !r.is_read());
+            let mut write_only_refs = references.clone().filter(|r| r.is_write() && !r.is_read());
 
             if let Some(write_ref) = write_only_refs.next()
                 && write_only_refs.next().is_none()
@@ -522,7 +528,7 @@ impl PreferConst {
 
                 // Check if there are any reads before the write
                 let mut has_seen_write = false;
-                let has_read_before_write = references.iter().any(|r| {
+                let has_read_before_write = references.clone().any(|r| {
                     if r.node_id() == write_node_id {
                         has_seen_write = true;
                         return false;
@@ -553,7 +559,7 @@ impl PreferConst {
             return false;
         }
 
-        let mut write_only_refs = references.iter().filter(|r| r.is_write() && !r.is_read());
+        let mut write_only_refs = references.filter(|r| r.is_write() && !r.is_read());
 
         let Some(write_ref) = write_only_refs.next() else {
             return false;
@@ -723,11 +729,7 @@ impl PreferConst {
             }
         }
 
-        if is_invalid_destructuring {
-            return false;
-        }
-
-        true
+        !is_invalid_destructuring
     }
 }
 

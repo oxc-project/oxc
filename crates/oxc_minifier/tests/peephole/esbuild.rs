@@ -373,8 +373,8 @@ fn js_parser_test() {
     test("a = 'abc'[NaN]", "a = 'abc'[NaN];");
     test("a = 'abc'[-1e100]", "a = 'abc'[-1e100];");
     test("a = 'abc'[1e100]", "a = 'abc'[1e100];");
-    test("a = 'abc'[-Infinity]", "a = 'abc'[-Infinity];");
-    test("a = 'abc'[Infinity]", "a = 'abc'[Infinity];");
+    test("a = 'abc'[-Infinity]", "a = 'abc'[-1e400];");
+    test("a = 'abc'[Infinity]", "a = 'abc'[1e400];");
     test("a = !(b == c)", "a = b != c;");
     test("a = !(b != c)", "a = b == c;");
     test("a = !(b === c)", "a = b !== c;");
@@ -937,10 +937,10 @@ fn constant_evaluation_test() {
     test("x = 3 % 6", "x = 3;");
     test("x = 3 ** 6", "x = 729;");
     test("x = 0 / 0", "x = NaN;");
-    test("x = 123 / 0", "x = Infinity;");
-    test("x = 123 / -0", "x = -Infinity;");
-    test("x = -123 / 0", "x = -Infinity;");
-    test("x = -123 / -0", "x = Infinity;");
+    test("x = 123 / 0", "x = 1e400;");
+    test("x = 123 / -0", "x = -1e400;");
+    test("x = -123 / 0", "x = -1e400;");
+    test("x = -123 / -0", "x = 1e400;");
     test("x = 3 < 6", "x = !0;");
     test("x = 3 > 6", "x = !1;");
     test("x = 3 <= 6", "x = !0;");
@@ -2225,37 +2225,38 @@ fn test_inline_single_use_variable() {
         "function wrapper(arg0, arg1) { let x = arg0.foo; x[bar]()}",
         "function wrapper(arg0, arg1) { arg0.foo[bar]();}",
     );
+    // esbuild keeps these; oxc inlines with `(0, ...)` to keep the call unbound.
     test(
         "function wrapper(arg0, arg1) { let x = arg0.foo; x()}",
-        "function wrapper(arg0, arg1) { let x = arg0.foo; x();}",
+        "function wrapper(arg0, arg1) { (0, arg0.foo)();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0[foo]; x()}",
-        "function wrapper(arg0, arg1) { let x = arg0[foo]; x();}",
+        "function wrapper(arg0, arg1) { (0, arg0[foo])();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0?.foo; x()}",
-        "function wrapper(arg0, arg1) { let x = arg0?.foo; x();}",
+        "function wrapper(arg0, arg1) { (0, arg0?.foo)();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0?.[foo]; x()}",
-        "function wrapper(arg0, arg1) { let x = arg0?.[foo]; x();}",
+        "function wrapper(arg0, arg1) { (0, arg0?.[foo])();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0.foo; (0, x)()}",
-        "function wrapper(arg0, arg1) { let x = arg0.foo; x();}",
+        "function wrapper(arg0, arg1) { (0, arg0.foo)();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0[foo]; (0, x)()}",
-        "function wrapper(arg0, arg1) { let x = arg0[foo]; x();}",
+        "function wrapper(arg0, arg1) { (0, arg0[foo])();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0?.foo; (0, x)()}",
-        "function wrapper(arg0, arg1) { let x = arg0?.foo; x();}",
+        "function wrapper(arg0, arg1) { (0, arg0?.foo)();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0?.[foo]; (0, x)()}",
-        "function wrapper(arg0, arg1) { let x = arg0?.[foo]; x();}",
+        "function wrapper(arg0, arg1) { (0, arg0?.[foo])();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0(); arg1() + x}",

@@ -97,7 +97,8 @@ declare_oxc_lint!(
     pedantic,
     fix,
     version = "1.59.0",
-    short_description = "Prefer `import.meta.{dirname,filename}` over legacy techniques for getting file paths.",
+    short_description =
+        "Prefer `import.meta.{dirname,filename}` over legacy techniques for getting file paths.",
 );
 
 impl Rule for PreferImportMetaProperties {

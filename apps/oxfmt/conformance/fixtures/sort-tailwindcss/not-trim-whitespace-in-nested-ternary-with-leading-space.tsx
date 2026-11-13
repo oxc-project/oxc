@@ -1,0 +1,1 @@
+const A = <div className={`MuiApi-item-root${isExtendable ? ' MuiApi-item-header-extendable' : ''}`} />;
