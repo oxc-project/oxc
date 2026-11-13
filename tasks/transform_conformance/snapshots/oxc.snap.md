@@ -1,6 +1,6 @@
 commit: d7a0cccb
 
-Passed: 321/450
+Passed: 325/452
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -48,12 +48,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (44/64)
-* allow-declare-fields-false/input.ts
-Unresolved references mismatch:
-after transform: ["dce"]
-rebuilt        : []
-
+# babel-plugin-transform-typescript (48/66)
 * computed-constant-value/input.ts
 x Output mismatch
 
@@ -182,11 +177,6 @@ rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable)
 Symbol redeclarations mismatch for "B":
 after transform: SymbolId(2): [Span { start: 289, end: 290 }, Span { start: 304, end: 305 }]
 rebuilt        : SymbolId(2): []
-
-* remove-class-properties-without-initializer/input.ts
-Unresolved references mismatch:
-after transform: ["dce"]
-rebuilt        : []
 
 * remove-unused-import-equals/input.ts
 Bindings mismatch:

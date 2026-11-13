@@ -1,0 +1,4 @@
+{
+  "assumptions": { "setPublicClassFields": false },
+  "plugins": [["transform-typescript", { "allowDeclareFields": false }]]
+}

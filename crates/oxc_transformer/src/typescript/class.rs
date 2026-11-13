@@ -374,6 +374,7 @@ impl<'a> TypeScript<'a> {
         class.body.body.retain(|element| {
             if let ClassElement::PropertyDefinition(prop) = element
                 && prop.value.is_none()
+                && (self.set_public_class_fields || prop.decorators.is_empty())
                 && !prop.key.is_private_identifier()
             {
                 if let Some(key) = prop.key.as_expression() {
