@@ -54,7 +54,8 @@ declare_oxc_lint!(
     style,
     pending,
     version = "0.2.16",
-    short_description = "Enforces the use of a `for...of` loop instead of a `for` loop with simple iteration.",
+    short_description =
+        "Enforces the use of a `for...of` loop instead of a `for` loop with simple iteration.",
 );
 
 trait ExpressionExt {

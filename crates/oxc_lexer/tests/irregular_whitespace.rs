@@ -1,14 +1,11 @@
 #![cfg(target_endian = "little")]
 
-use oxc_lexer::{LexOptions, PAD, testing::lex_with_cpu};
+use oxc_lexer::{LexOptions, testing::lex_with_cpu};
 use oxc_simd::{DynCpu, test_cpus};
 
 fn irregular_whitespaces(source: &str, jsx: bool, cpu: DynCpu) -> Vec<(u32, u32)> {
-    let mut buf = source.as_bytes().to_vec();
-    buf.resize(source.len() + PAD, 0);
     let options = LexOptions { jsx, ..LexOptions::default() };
-    #[expect(clippy::cast_possible_truncation, reason = "lengths fit u32")]
-    let tokens = lex_with_cpu(&buf, source.len() as u32, options, cpu);
+    let tokens = lex_with_cpu(source, options, cpu);
     assert!(tokens.diagnostics().is_empty(), "{source:?}");
     tokens.irregular_whitespaces().iter().map(|span| (span.start, span.end)).collect()
 }

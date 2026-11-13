@@ -291,3 +291,20 @@ source: crates/oxc_linter/src/tester.rs
  35 │ 
     ╰────
   help: This should be done within a hook
+
+  ⚠ vitest(require-hook): Require setup and teardown code to be within a hook.
+   ╭─[require_hook.tsx:4:17]
+ 3 │             suite('suite', () => {
+ 4 │                 setup();
+   ·                 ───────
+ 5 │                 customTest('foo', () => {});
+   ╰────
+  help: This should be done within a hook
+
+  ⚠ vitest(require-hook): Require setup and teardown code to be within a hook.
+   ╭─[require_hook.tsx:3:13]
+ 2 │             const customTest = baseTest.extend({});
+ 3 │             customTest('foo', () => {});
+   ·             ───────────────────────────
+   ╰────
+  help: This should be done within a hook

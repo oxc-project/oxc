@@ -8,6 +8,7 @@ packages:
   - tasks/e2e
   - tasks/transform_conformance
   - tasks/compat_data
+  - tasks/sprout
 
 catalog:
   "@emnapi/core": 2.0.0-alpha.6
@@ -30,6 +31,11 @@ catalog:
 overrides:
   rolldown: "catalog:"
   emnapi: "catalog:"
+
+packageExtensions:
+  fbt@1.0.2:
+    dependencies:
+      object-assign: ^4.1.1
 
 allowBuilds:
   "@vscode/vsce-sign@2.0.8": true
@@ -59,3 +65,4 @@ minimumReleaseAgeExclude:
   - vite
   - vite-plus
   - vitest
+  - prettier@3.10.1

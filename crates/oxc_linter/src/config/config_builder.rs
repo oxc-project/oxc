@@ -603,8 +603,7 @@ impl ConfigStoreBuilder {
                 severity: *severity,
                 config: rule_name_to_rule
                     .get(&get_name(r.plugin_name(), r.name()))
-                    .map(|r| r.config.clone())
-                    .unwrap_or_default(),
+                    .map_or_default(|r| r.config.clone()),
             })
             .collect();
 

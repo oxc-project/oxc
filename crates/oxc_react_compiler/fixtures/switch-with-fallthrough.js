@@ -26,8 +26,19 @@ function foo(x) {
   }
 }
 
+const sproutInputs = [
+  [0],
+  [2],
+  [3],
+  [4],
+  [6],
+];
+
 export const FIXTURE_ENTRYPOINT = {
-  fn: foo,
-  params: ['TodoAdd'],
-  isComponent: 'TodoAdd',
+  fn: args => {
+    "use no memo";
+    return foo(...args);
+  },
+  params: [sproutInputs[0]],
+  sequentialRenders: [sproutInputs[0], sproutInputs[0], sproutInputs[1], sproutInputs[1], sproutInputs[2], sproutInputs[2], sproutInputs[3], sproutInputs[3], sproutInputs[4], sproutInputs[4], sproutInputs[0]],
 };

@@ -314,7 +314,10 @@ fn test_handle_switch_statement() {
     test("switch ('\\v') { case '\\u000B': foo();}", "foo();");
 
     test("x: switch (a) { case 1: break x;}", "x: switch (a) { case 1: break x; }"); // x: if (a === 1) break x;
-    test_same("x: switch (a) { case 2: break x; case 1: break x;}"); // x: { a; break x; }
+    test(
+        "x: switch (a) { case 2: break x; case 1: break x;}",
+        "x: switch (a) { case 2: case 1: break x; }",
+    ); // x: { a; break x; }
     test("x: switch (2) { case 2: f(); break outer; }", "x:switch(2){case 2:f();break outer}"); // x: { f(); break outer; }
     test(
         "x: switch (x) { case 2: f(); for (;;){break outer;}}",

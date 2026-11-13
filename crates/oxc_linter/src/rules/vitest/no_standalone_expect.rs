@@ -239,6 +239,32 @@ fn test() {
             r"setup.beforeEach(() => { expect(1).toBe(1); });",
             Some(serde_json::json!([{ "additionalTestBlockFunctions": ["setup.beforeEach"] }])),
         ),
+        // https://github.com/oxc-project/oxc/issues/29167
+        (
+            r"import { expect, test as baseTest } from 'vitest';
+            const test = baseTest.extend('foo', () => 'foo');
+            test('foo', () => {
+                expect('foo').toBe('foo');
+            });",
+            None,
+        ),
+        (
+            r"import { expect, test as baseTest } from 'vitest';
+            const customTest = baseTest.extend({ foo: 'foo' });
+            customTest('foo', ({ foo }) => {
+                expect(foo).toBe('foo');
+            });",
+            None,
+        ),
+        (
+            r"import { expect, it as baseTest } from 'vitest';
+            const customTest = baseTest.extend({ foo: 'foo' });
+            const test = customTest.extend({ bar: 'bar' });
+            test.skip('foo', ({ foo }) => {
+                expect(foo).toBe('foo');
+            });",
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -381,6 +407,29 @@ fn test() {
                 beforeAll(() => { expect(1).toBe(1); });
             });",
             Some(serde_json::json!([{ "additionalTestBlockFunctions": ["beforeEach"] }])),
+        ),
+        (
+            r"import { expect } from 'vitest';
+            const customTest = unrelated.extend({ foo: 'foo' });
+            customTest('foo', () => {
+                expect('foo').toBe('foo');
+            });",
+            None,
+        ),
+        (
+            r"import { expect, test as baseTest } from 'vitest';
+            describe('shadowed base', (baseTest) => {
+                const customTest = baseTest.extend({});
+                customTest('foo', () => expect('foo').toBe('foo'));
+            });",
+            None,
+        ),
+        (
+            r"import { expect } from 'vitest';
+            const first = second.extend({});
+            const second = first.extend({});
+            first('foo', () => expect('foo').toBe('foo'));",
+            None,
         ),
     ];
 

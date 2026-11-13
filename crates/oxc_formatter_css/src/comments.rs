@@ -230,8 +230,7 @@ pub fn flush_trailing_inside_comments(
 pub fn is_suppression_comment(source: SourceText<'_>, comment: CssComment) -> bool {
     let content = source.text_for(&comment.span);
     let content = content
-        .strip_prefix("/*")
-        .and_then(|c| c.strip_suffix("*/"))
+        .strip_circumfix("/*", "*/")
         .or_else(|| content.strip_prefix("//"))
         .unwrap_or(content);
     is_suppression_marker(content)

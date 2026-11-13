@@ -493,7 +493,7 @@ impl StringSpan {
 
 #[cfg(test)]
 mod tests {
-    use oxc_simd::{BASELINE, Cpu, DynCpu, test_cpus};
+    use oxc_simd::{Cpu, DynCpu, test_cpus};
 
     use crate::{LexOptions, Lexer, PAD, Tokens};
 
@@ -578,7 +578,7 @@ mod tests {
                 Lexer::new_with_cpu(cpu).lex(&bytes, n, opts, &mut tokens);
                 for kind in tokens.kinds() {
                     assert_eq!(
-                        TokenKind::from_u8(*kind as u8, BASELINE),
+                        TokenKind::from_u8(*kind as u8, cpu),
                         Some(*kind),
                         "undeclared kind {} from {src:?}",
                         *kind as u8

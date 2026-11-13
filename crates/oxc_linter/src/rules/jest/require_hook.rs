@@ -261,6 +261,13 @@ fn tests() {
             ",
             None,
         ),
+        (
+            r"import { describe as suite, test as customTest } from '@jest/globals';
+            suite('suite', () => {
+                customTest('foo', () => { setup(); });
+            });",
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -410,6 +417,11 @@ fn tests() {
                     setup();
                 });
             ",
+            None,
+        ),
+        (
+            r"import { describe as suite } from '@jest/globals';
+            suite('suite', () => { setup(); });",
             None,
         ),
     ];

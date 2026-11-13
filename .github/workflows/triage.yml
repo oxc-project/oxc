@@ -1,0 +1,99 @@
+# Automatically investigates bug reports and can open a pull request with a verified fix.
+# Repository setup required before this job will run:
+#   - Install the oxc-captain GitHub App on this repository with Contents, Issues,
+#     and Pull requests write access.
+#   - CAPTAIN_ID: the oxc-captain GitHub App's client ID, as a repository secret.
+#   - CAPTAIN_KEY: the oxc-captain GitHub App's private key.
+#   - CLOUDFLARE_API_KEY: a Workers AI API token with Workers AI Read and Edit.
+#   - CLOUDFLARE_ACCOUNT_ID: the Cloudflare account ID.
+
+name: Issue Triage
+
+on:
+  issues:
+    types: [opened, reopened, closed]
+  issue_comment:
+    types: [created]
+
+permissions: {}
+
+env:
+  INSTA_REQUIRE_FULL_MATCH: 1
+
+concurrency:
+  # Bot comments can enqueue another event before the issue's label is updated.
+  group: triage-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  triage:
+    if: >-
+      !github.event.issue.pull_request &&
+      (github.event.action != 'created' ||
+       (github.event.comment.user.login != 'github-actions[bot]' &&
+        github.event.comment.user.login != 'oxc-captain[bot]'))
+    runs-on: ubuntu-latest
+    # GitHub App installation tokens expire after one hour.
+    timeout-minutes: 55
+    permissions:
+      contents: read
+      issues: read
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+
+      - name: Set up Rust
+        uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
+        with:
+          # Issue events can restore main's caches but cannot save into that scope.
+          save-cache: false
+          cache-key: warm
+          tools: just,cargo-shear@1.13.1,cargo-insta,ast-grep
+          components: clippy rustfmt
+
+      - name: Create oxc-captain token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        id: app-token
+        with:
+          client-id: ${{ secrets.CAPTAIN_ID }}
+          private-key: ${{ secrets.CAPTAIN_KEY }}
+          permission-contents: write
+          permission-issues: write
+          permission-pull-requests: write
+
+      - name: Configure Git identity
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          bot_user_id="$(gh api 'users/oxc-captain[bot]' --jq .id)"
+          git config user.name "oxc-captain[bot]"
+          git config user.email "${bot_user_id}+oxc-captain[bot]@users.noreply.github.com"
+
+      # The pinned action expects its state labels plus at least one "- P" and
+      # "pkg:" label, but does not create them itself.
+      - name: Create missing triage labels
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: .github/scripts/setup-triagebot-labels.sh
+
+      - name: Triage the issue
+        # Cloudflare Workers AI support is newer than v0.4.0. Pin the upstream
+        # commit rather than following its moving main branch.
+        uses: withastro/triagebot-action@51d30da13c0bd571a3822fc56882de40fead0086 # main, 2026-08-28
+        with:
+          read-token: ${{ github.token }}
+          write-token: ${{ steps.app-token.outputs.token }}
+          cloudflare-api-key: ${{ secrets.CLOUDFLARE_API_KEY }}
+          cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          triage-model: cloudflare-workers-ai/@cf/moonshotai/kimi-k2.7-code
+          verification-model: cloudflare-workers-ai/@cf/moonshotai/kimi-k2.6
+          triage-skill: .agents/skills/triage
+          pr-skill: .agents/skills/pr-writer
+          auto-pr-on-fix: true
+          bot-logins: oxc-captain[bot]

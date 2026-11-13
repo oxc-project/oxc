@@ -3,7 +3,7 @@ use oxc_simd::{Cpu, cpu_multiversion};
 use crate::{error::DiagCode, token::tk};
 
 use crate::pipeline::{
-    bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0},
+    bitmap::Bitmap,
     bytes::hex_val,
     disambiguate::{TokensView, not_operator_position},
     find::find,
@@ -19,6 +19,12 @@ pub(super) const OPENER_BYTES: [u8; 6] = [b'"', b'`', b'\'', b'/', b'<', b'>'];
 /// Ordered for speed, pairing `'` with `/` and `<` with `>` (see `any_of` in `find/avx2.rs`).
 pub(super) const OPENER8_BYTES: [u8; 8] = [b'"', b'`', b'\'', b'/', b'{', b'}', b'<', b'>'];
 
+/// [`OPENER_BYTES`] without the closing angle bracket, which only scripts need.
+pub(super) const OPENER_MODULE_BYTES: [u8; 5] = [b'"', b'`', b'\'', b'/', b'<'];
+
+/// [`OPENER8_BYTES`] without the closing angle bracket, which only scripts need.
+pub(super) const OPENER8_MODULE_BYTES: [u8; 7] = [b'"', b'`', b'\'', b'/', b'{', b'}', b'<'];
+
 /// Lex the string literal opening at `s`. Returns the resume index. Shared
 /// by `carve` and `carve_jsx` JS mode.
 #[cpu_multiversion]
@@ -27,7 +33,7 @@ pub(super) unsafe fn lex_string(
     src: *const u8,
     srcs: &[u8],
     n: usize,
-    st: *mut u64,
+    st: Bitmap,
     kind: *mut u8,
     s: usize,
     c: u8,
@@ -45,7 +51,7 @@ pub(super) unsafe fn lex_string(
     }
     *kind.add(s) = tk!(String);
     if end > s + 1 {
-        bm_clear_range(st, s + 1, end - 1, cpu);
+        st.clear_range(s + 1, end - 1, cpu);
     }
     let be = if e < n {
         e
@@ -68,7 +74,7 @@ pub(super) unsafe fn lex_template_segment(
     src: *const u8,
     srcs: &[u8],
     n: usize,
-    st: *mut u64,
+    st: Bitmap,
     kind: *mut u8,
     s: usize,
     head_kind: u8,
@@ -83,7 +89,7 @@ pub(super) unsafe fn lex_template_segment(
     }
     *kind.add(s) = if term == 2 { head_kind } else { flat_kind };
     if end > s + 1 {
-        bm_clear_range(st, s + 1, end - 1, cpu);
+        st.clear_range(s + 1, end - 1, cpu);
     }
     lanes.push_template(srcs, s + 1, end - [0usize, 1, 2][term as usize], cpu);
     (end, term == 2)
@@ -97,10 +103,10 @@ pub(super) unsafe fn lex_slash(
     src: *const u8,
     srcs: &[u8],
     n: usize,
-    st: *mut u64,
+    st: Bitmap,
     kind: *mut u8,
-    opch: *mut u64,
-    word: *const u64,
+    opch: Bitmap,
+    word: Bitmap,
     ts: bool,
     s: usize,
     lanes: &mut Lanes,
@@ -133,8 +139,8 @@ pub(super) unsafe fn lex_slash(
     } else if s + 1 < n && *src.add(s + 1) == b'=' {
         // `/=`: absorb the `=`.
         *kind.add(s) = tk!(SlashEq);
-        bm_clear(st, s + 1, cpu);
-        bm_clear(opch, s + 1, cpu);
+        st.clear(s + 1, cpu);
+        opch.clear(s + 1, cpu);
         s + 2
     } else {
         s + 1
@@ -149,9 +155,9 @@ unsafe fn lex_regex(
     src: *const u8,
     srcs: &[u8],
     n: usize,
-    st: *mut u64,
+    st: Bitmap,
     kind: *mut u8,
-    word: *const u64,
+    word: Bitmap,
     s: usize,
     lanes: &mut Lanes,
     cpu: impl Cpu,
@@ -168,12 +174,12 @@ unsafe fn lex_regex(
         lanes.push_diag(s as u32, (n - s) as u32, DiagCode::UnterminatedRegexp);
     }
     let mut end = fs;
-    if end < n && bm_get(word, end, cpu) {
-        end = bm_next0(word, end, n, cpu);
+    if end < n && word.get(end, cpu) {
+        end = word.next0(end, n, cpu);
     }
     *kind.add(s) = tk!(RegExp);
     if end > s + 1 {
-        bm_clear_range(st, s + 1, end - 1, cpu);
+        st.clear_range(s + 1, end - 1, cpu);
     }
     lanes.push_regex_flags(srcs, fs, end, cpu);
     end

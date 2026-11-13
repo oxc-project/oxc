@@ -1,19 +1,14 @@
-use oxc_simd::{Avx2, Vec128, Vec256, VecData128, VecData256, cpu_version};
+use oxc_simd::{Avx2, Vec128, Vec256, VecData256, cpu_version};
 use oxc_span::Span;
 
 use crate::token::{TRIVIA_MAX, TRIVIA_MIN, is_trivia_byte, tk};
 
 use crate::pipeline::lanes::Lanes;
 
-use super::common::{emit_value, invalid_diags};
-
-mod pair_luts;
-
-use pair_luts::get_pair_luts;
-pub(super) use pair_luts::init_pair_luts_avx2;
-
-#[cfg(test)]
-mod tests;
+use super::{
+    common::{BCOMPACT, emit_value, invalid_diags},
+    pair_luts::get_pair_luts,
+};
 
 static QCOMPACT: [VecData256; 16] = {
     let mut t = [VecData256::from_u32s([0; 8]); 16];
@@ -33,23 +28,6 @@ static QCOMPACT: [VecData256; 16] = {
     t
 };
 
-static BCOMPACT: [VecData128; 256] = {
-    let mut t = [VecData128::from_bytes([0x80; 16]); 256];
-    let mut mask = 0usize;
-    while mask < 256 {
-        let (mut b, mut k) = (0usize, 0usize);
-        while b < 8 {
-            if mask & (1 << b) != 0 {
-                t[mask].as_bytes_mut()[k] = b as u8;
-                k += 1;
-            }
-            b += 1;
-        }
-        mask += 1;
-    }
-    t
-};
-
 #[cpu_version(Avx2)]
 #[inline(never)]
 pub(super) unsafe fn compress_blocks_avx2(
@@ -62,7 +40,7 @@ pub(super) unsafe fn compress_blocks_avx2(
     cpu: Avx2,
 ) -> usize {
     // SAFETY: `Lexer::new` calls `init_pair_luts`, which initializes `PairLuts` if the CPU supports AVX2
-    let pair_luts = unsafe { get_pair_luts(cpu) };
+    let pair_luts = unsafe { get_pair_luts() };
     let lut0z = &pair_luts.lut0z;
     let lutpad = pair_luts.lutpad.as_ptr().cast::<u8>();
 

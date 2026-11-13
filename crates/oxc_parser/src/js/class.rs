@@ -1,12 +1,11 @@
 use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator};
 use oxc_ast::ast::*;
+use oxc_data_structures::buffered_vec::BufferedVec;
 use oxc_ecmascript::PropName;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    Context, ParserConfig as Config, ParserImpl, StatementContext,
-    buffered_vec::BufferedVec,
-    diagnostics,
+    Context, ParserConfig as Config, ParserImpl, StatementContext, diagnostics,
     lexer::Kind,
     modifiers::{ModifierKind, ModifierKinds, Modifiers},
 };
@@ -186,13 +185,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// extends `LeftHandSideExpression`[?Yield, ?Await]
     fn parse_class_extends_clause(
         &mut self,
-    ) -> BufferedVec<'a, (Expression<'a>, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>)>
-    {
+    ) -> BufferedVec<
+        ArenaVec<'a, (Expression<'a>, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>)>,
+        1,
+    > {
         self.bump_any(); // bump `extends`
 
         // A class has only one superclass. Keep it on the stack while preserving any
         // additional entries for the existing multiple-superclass diagnostics.
-        let mut extends = BufferedVec::new_in(self);
+        let mut extends = BufferedVec::new(ArenaVec::new_in(self));
         loop {
             let mut extend = self.parse_lhs_expression_or_higher();
             if self.fatal_error.is_some() {

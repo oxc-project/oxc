@@ -13,6 +13,7 @@ use std::mem::replace;
 use oxc_allocator::{CloneIn, Vec as ArenaVec};
 
 use rustc_hash::FxHashSet;
+use smallvec::SmallVec;
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_index::IndexVec;
@@ -24,6 +25,7 @@ use crate::react_compiler_hir::{
     ReactiveStatement, ReactiveValue, ScopeId, Type,
     environment::Environment,
     object_shape::{BUILT_IN_ARRAY_ID, BUILT_IN_FUNCTION_ID, BUILT_IN_JSX_ID, BUILT_IN_OBJECT_ID},
+    visitors::each_instruction_value_operand,
 };
 
 use crate::react_compiler_reactive_scopes::visitors::{
@@ -299,6 +301,7 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
                                     next_scope_id,
                                     self.env,
                                     &self.temporaries,
+                                    &block[c.to..i],
                                 );
                             }
                             // Merge: extend the current scope's range
@@ -526,10 +529,8 @@ fn can_merge_scopes<'a>(
     false
 }
 
-/// Whether a scope without dependencies can merge into the next scope of the same
-/// `useMemo` callback. On its own such a scope is computed once per mount, so a
-/// value such as `new Map()` would outlive the memo's dependencies, while the
-/// author asked for a new one whenever they change.
+/// Unlike the TS implementation, merge constant scopes within `useMemo` to recreate
+/// nested allocations when dependencies change.
 fn can_merge_constant_scope_in_manual_memo<'a>(
     current_id: ScopeId,
     next_id: ScopeId,
@@ -544,29 +545,107 @@ fn can_merge_constant_scope_in_manual_memo<'a>(
 }
 
 /// Give a scope without dependencies the dependencies of the next scope it is
-/// merged with, except those on its own declarations.
+/// merged with, resolving intervening computations to their external inputs.
 fn inherit_dependencies<'a>(
     current_id: ScopeId,
     next_id: ScopeId,
     env: &mut Environment<'a>,
     temporaries: &TemporariesMap,
+    intervening: &[ReactiveStatement<'a>],
 ) {
     let current_declarations: Vec<DeclarationId> = env.scopes[current_id]
         .declarations
         .iter()
         .map(|(_key, decl)| env.identifiers[decl.identifier].declaration_id)
         .collect();
-    let mut dependencies = ArenaVec::new_in(&env.allocator);
-    for dep in &env.scopes[next_id].dependencies {
-        let dep_decl = env.identifiers[dep.identifier].declaration_id;
-        let is_own_declaration = current_declarations
-            .iter()
-            .any(|&decl| decl == dep_decl || temporaries[dep_decl] == Some(decl));
-        if !is_own_declaration {
-            dependencies.push(dep.clone_in(env.allocator));
+    let mut dependencies = env.scopes[next_id].dependencies.clone_in(env.allocator);
+    for statement in intervening.iter().rev() {
+        let ReactiveStatement::Instruction(instruction) = statement else { continue };
+        let ReactiveValue::Instruction(value) = &instruction.value else { continue };
+        let lvalue = instruction
+            .lvalue
+            .as_ref()
+            .map(|place| env.identifiers[place.identifier].declaration_id);
+        let store_lvalue = match value {
+            InstructionValue::StoreLocal { lvalue, .. } => {
+                Some(env.identifiers[lvalue.place.identifier].declaration_id)
+            }
+            _ => None,
+        };
+        let mut replaced: SmallVec<[_; 1]> = SmallVec::new();
+        let mut index = 0;
+        while index < dependencies.len() {
+            let declaration = env.identifiers[dependencies[index].identifier].declaration_id;
+            if Some(declaration) == lvalue || Some(declaration) == store_lvalue {
+                replaced.push(dependencies.swap_remove(index));
+            } else {
+                index += 1;
+            }
+        }
+        for mut dependency in replaced {
+            match value {
+                InstructionValue::LoadLocal { place, .. }
+                | InstructionValue::StoreLocal { value: place, .. } => {
+                    dependency.identifier = place.identifier;
+                    push_dependency(&mut dependencies, dependency, env);
+                }
+                InstructionValue::PropertyLoad {
+                    object,
+                    property,
+                    computed,
+                    property_span,
+                    ..
+                } => {
+                    dependency.identifier = object.identifier;
+                    dependency.path.insert(
+                        0,
+                        DependencyPathEntry {
+                            property: *property,
+                            computed: *computed,
+                            optional: false,
+                            span: *property_span,
+                        },
+                    );
+                    push_dependency(&mut dependencies, dependency, env);
+                }
+                _ => {
+                    for operand in each_instruction_value_operand(value, env) {
+                        push_dependency(
+                            &mut dependencies,
+                            ReactiveScopeDependency {
+                                identifier: operand.identifier,
+                                reactive: operand.reactive,
+                                path: ArenaVec::new_in(&env.allocator),
+                                span: operand.span,
+                            },
+                            env,
+                        );
+                    }
+                }
+            }
         }
     }
+    dependencies.retain(|dep| {
+        let dep_decl = env.identifiers[dep.identifier].declaration_id;
+        !current_declarations
+            .iter()
+            .any(|&decl| decl == dep_decl || temporaries[dep_decl] == Some(decl))
+    });
     env.scopes[current_id].dependencies = dependencies;
+}
+
+fn push_dependency<'a>(
+    dependencies: &mut ArenaVec<'a, ReactiveScopeDependency<'a>>,
+    dependency: ReactiveScopeDependency<'a>,
+    env: &Environment<'a>,
+) {
+    let declaration = env.identifiers[dependency.identifier].declaration_id;
+    if !dependencies.iter().any(|existing| {
+        env.identifiers[existing.identifier].declaration_id == declaration
+            && are_equal_paths(&existing.path, &dependency.path)
+    }) {
+        dependencies.push(dependency);
+    }
 }
 
 /// Check if a type is always invalidating (guaranteed to change when inputs change).

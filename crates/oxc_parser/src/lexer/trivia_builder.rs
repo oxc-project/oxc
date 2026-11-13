@@ -1,4 +1,7 @@
-use std::num::NonZeroU32;
+use std::{
+    num::NonZeroU32,
+    ops::{Deref, DerefMut},
+};
 
 use memchr::memchr_iter;
 
@@ -6,28 +9,80 @@ use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::{Comment, CommentContent, CommentKind, CommentPosition};
 use oxc_span::Span;
 
-use super::{Kind, Token};
+use super::{Kind, PendingToken, Token};
+
+/// Buffer short comment lists before allocating their final arena storage.
+#[derive(Debug)]
+pub struct Comments<'a> {
+    inline: [Comment; 16],
+    len: usize,
+    vec: ArenaVec<'a, Comment>,
+}
+
+impl<'a> Comments<'a> {
+    fn new_in(allocator: &'a Allocator) -> Self {
+        Self {
+            inline: std::array::from_fn(|_| Comment::new(0, 0, CommentKind::Line)),
+            len: 0,
+            vec: ArenaVec::new_in(&allocator),
+        }
+    }
+
+    #[inline]
+    fn len(&self) -> usize {
+        self.len
+    }
+
+    fn push(&mut self, comment: Comment) {
+        if self.len < self.inline.len() {
+            self.inline[self.len] = comment;
+        } else {
+            if self.len == self.inline.len() {
+                self.vec.reserve(self.inline.len() * 2);
+                self.vec.extend(self.inline.iter().cloned());
+            }
+            self.vec.push(comment);
+        }
+        self.len += 1;
+    }
+
+    pub(crate) fn into_vec(mut self) -> ArenaVec<'a, Comment> {
+        if self.vec.is_empty() {
+            self.vec.reserve_exact(self.len);
+            self.vec.extend(self.inline.into_iter().take(self.len));
+        }
+        self.vec
+    }
+}
+
+impl Deref for Comments<'_> {
+    type Target = [Comment];
+
+    #[inline]
+    fn deref(&self) -> &[Comment] {
+        if self.vec.is_empty() { &self.inline[..self.len] } else { &self.vec }
+    }
+}
+
+impl DerefMut for Comments<'_> {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut [Comment] {
+        if self.vec.is_empty() { &mut self.inline[..self.len] } else { &mut self.vec }
+    }
+}
 
 #[derive(Debug)]
 pub struct TriviaBuilder<'a> {
     // This is a set of unique comments. Duplicated
     // comments could be generated in case of rewind; they are
     // filtered out at insertion time.
-    pub(crate) comments: ArenaVec<'a, Comment>,
+    pub(crate) comments: Comments<'a>,
 
     pub(crate) irregular_whitespaces: Vec<Span>,
 
     // states
     /// index of processed comments
     processed: usize,
-
-    /// Saw a newline before this position (since last token).
-    /// Used to determine if comments are trailing comments of the previous token.
-    saw_newline: bool,
-
-    /// Saw a newline before this position (since last comment or token).
-    /// Used to set `preceded_by_newline` on comments.
-    saw_newline_for_comment: bool,
 
     /// Previous token, used to attach trailing comments to its end.
     previous_token: Token,
@@ -51,11 +106,9 @@ impl<'a> TriviaBuilder<'a> {
         let mut previous_token = Token::default();
         previous_token.set_kind(Kind::Undetermined);
         Self {
-            comments: ArenaVec::new_in(&allocator),
+            comments: Comments::new_in(allocator),
             irregular_whitespaces: vec![],
             processed: 0,
-            saw_newline: true,
-            saw_newline_for_comment: true,
             previous_token,
             annotation_comments: AnnotationComments::default(),
         }
@@ -101,58 +154,71 @@ impl<'a> TriviaBuilder<'a> {
         self.irregular_whitespaces.push(Span::new(start, end));
     }
 
-    pub fn add_line_comment(&mut self, start: u32, end: u32, kind: CommentKind, source_text: &str) {
-        self.add_comment(Comment::new(start, end, kind), source_text);
-    }
-
-    pub fn add_block_comment(
+    pub(super) fn add_line_comment(
         &mut self,
         start: u32,
         end: u32,
         kind: CommentKind,
         source_text: &str,
+        pending: &mut PendingToken,
     ) {
-        self.add_comment(Comment::new(start, end, kind), source_text);
+        self.add_comment(Comment::new(start, end, kind), source_text, pending);
+    }
+
+    pub(super) fn add_block_comment(
+        &mut self,
+        start: u32,
+        end: u32,
+        kind: CommentKind,
+        source_text: &str,
+        pending: &mut PendingToken,
+    ) {
+        self.add_comment(Comment::new(start, end, kind), source_text, pending);
     }
 
     // For block comments only. This function is not called after line comments because the lexer skips
     // newline after line comments.
-    pub fn handle_newline(&mut self) {
+    #[inline]
+    pub(super) fn handle_newline(&mut self, pending: &mut PendingToken) {
+        if pending.has_pending_comments() {
+            self.handle_newline_with_comments(pending);
+        }
+        pending.set_saw_newline();
+    }
+
+    #[cold]
+    fn handle_newline_with_comments(&mut self, pending: &mut PendingToken) {
         // The last unprocessed comment is on a newline.
         let len = self.comments.len();
-        if self.processed < len {
-            let becomes_trailing = {
-                let comment = &mut self.comments[len - 1];
-                comment.set_followed_by_newline(true);
-                !self.saw_newline && !Self::should_stay_leading(comment)
-            };
-            if becomes_trailing {
-                self.attach_pending_comments(
-                    CommentPosition::Trailing,
-                    self.previous_token.end(),
-                    len,
-                );
-            }
+        let becomes_trailing = {
+            let comment = &mut self.comments[len - 1];
+            comment.set_followed_by_newline(true);
+            !pending.saw_newline() && !Self::should_stay_leading(comment)
+        };
+        if becomes_trailing {
+            self.attach_pending_comments(
+                CommentPosition::Trailing,
+                self.previous_token.end(),
+                len,
+                pending,
+            );
         }
-        self.saw_newline = true;
-        self.saw_newline_for_comment = true;
     }
 
     #[inline]
-    pub fn handle_token(&mut self, token: Token) {
-        self.saw_newline = false;
-        self.saw_newline_for_comment = false;
+    pub(super) fn handle_token(&mut self, token: Token, pending: PendingToken) {
+        debug_assert_eq!(pending.has_pending_comments(), self.processed < self.comments.len());
         // Cold path: attach any unprocessed comments between the previous token and this one.
         // For files with no comments (or once all comments are consumed), this branch is skipped.
-        let len = self.comments.len();
-        if self.processed < len {
-            self.attach_pending_comments_to_token(token, len);
+        if pending.has_pending_comments() {
+            self.attach_pending_comments_to_token(token);
         }
         self.previous_token = token;
     }
 
     #[cold]
-    fn attach_pending_comments_to_token(&mut self, token: Token, len: usize) {
+    fn attach_pending_comments_to_token(&mut self, token: Token) {
+        let len = self.comments.len();
         let previous_kind = self.previous_token.kind();
         let can_attach_to_previous = previous_kind != Kind::Undetermined
             && (token.kind() == Kind::Eof
@@ -175,12 +241,19 @@ impl<'a> TriviaBuilder<'a> {
     }
 
     #[cold]
-    fn attach_pending_comments(&mut self, position: CommentPosition, attached_to: u32, len: usize) {
+    fn attach_pending_comments(
+        &mut self,
+        position: CommentPosition,
+        attached_to: u32,
+        len: usize,
+        pending: &mut PendingToken,
+    ) {
         for comment in &mut self.comments[self.processed..len] {
             comment.position = position;
             comment.attached_to = attached_to;
         }
         self.processed = len;
+        pending.set_has_pending_comments(false);
     }
 
     /// Whether a token can form the completed left-hand side of an infix or suffix boundary.
@@ -244,8 +317,8 @@ impl<'a> TriviaBuilder<'a> {
     /// Treating a comment after `:` as trailing drops it (it anchors to the
     /// previous token rather than the following operand), which breaks codegen
     /// idempotency once a transform emits `? consequent : // comment\nalternate`.
-    fn should_be_treated_as_trailing_comment(&self) -> bool {
-        !self.saw_newline
+    fn should_be_treated_as_trailing_comment(&self, pending: PendingToken) -> bool {
+        !pending.saw_newline()
             && !matches!(self.previous_token.kind(), Kind::Eq | Kind::LParen | Kind::Colon)
     }
 
@@ -287,7 +360,7 @@ impl<'a> TriviaBuilder<'a> {
         self.annotation_comments.ends[range] = Some(end);
     }
 
-    fn add_comment(&mut self, mut comment: Comment, source_text: &str) {
+    fn add_comment(&mut self, mut comment: Comment, source_text: &str, pending: &mut PendingToken) {
         // The comments array is an ordered vec, only add the comment if its not added before,
         // to avoid situations where the parser needs to rewind and tries to reinsert the comment.
         if let Some(last_comment) = self.comments.last()
@@ -315,19 +388,18 @@ impl<'a> TriviaBuilder<'a> {
         // This newly added comment may be preceded by a newline.
         // Use `saw_newline_for_comment` which tracks newlines since the last comment or token,
         // not just since the last token.
-        comment.set_preceded_by_newline(self.saw_newline_for_comment);
+        comment.set_preceded_by_newline(pending.saw_newline_for_comment());
         let becomes_trailing = if comment.is_line() {
             // A line comment is always followed by a newline. This is never set in `handle_newline`.
             comment.set_followed_by_newline(true);
-            let becomes_trailing = self.should_be_treated_as_trailing_comment()
+            let becomes_trailing = self.should_be_treated_as_trailing_comment(*pending)
                 && !Self::should_stay_leading(&comment);
-            self.saw_newline = true;
-            self.saw_newline_for_comment = true;
+            pending.set_saw_newline();
             becomes_trailing
         } else {
             // Block comments don't end with a newline, so reset saw_newline_for_comment.
             // If there's a newline after the block comment, `handle_newline` will set it back to true.
-            self.saw_newline_for_comment = false;
+            pending.clear_saw_newline_for_comment();
             false
         };
 
@@ -340,7 +412,10 @@ impl<'a> TriviaBuilder<'a> {
                 CommentPosition::Trailing,
                 self.previous_token.end(),
                 self.comments.len(),
+                pending,
             );
+        } else {
+            pending.set_has_pending_comments(true);
         }
     }
 
@@ -508,7 +583,6 @@ fn contains_license_or_preserve_comment(s: &str) -> bool {
         // SAFETY: `search_len` only includes candidate starts with at least `LICENSE_LEN` bytes
         // remaining, so `i + 1` and the full `@license` range are in bounds.
         match unsafe { hay.get_unchecked(i + 1) } {
-            // spellchecker:off
             b'l'
                 // SAFETY: The candidate bound proves the full `@license` range is in bounds.
                 if unsafe { hay.get_unchecked(i + 2..i + LICENSE_LEN) } == b"icense" =>
@@ -521,7 +595,6 @@ fn contains_license_or_preserve_comment(s: &str) -> bool {
             {
                 return true;
             }
-            // spellchecker:on
             _ => {}
         }
     }
@@ -554,7 +627,7 @@ mod test {
 
     use crate::Parser;
 
-    use super::TriviaBuilder;
+    use super::{PendingToken, TriviaBuilder};
 
     #[test]
     fn annotation_flags_restored_when_replaying_comments() {
@@ -566,11 +639,13 @@ mod test {
                     let source_end = u32::try_from(source.len()).unwrap();
                     let allocator = Allocator::default();
                     let mut builder = TriviaBuilder::new_in(&allocator);
+                    let mut pending = PendingToken::START_OF_FILE;
                     builder.add_block_comment(
                         0,
                         annotation_end,
                         CommentKind::SingleLineBlock,
                         &source,
+                        &mut pending,
                     );
                     if !suffix.is_empty() {
                         builder.add_block_comment(
@@ -578,6 +653,7 @@ mod test {
                             source_end,
                             CommentKind::SingleLineBlock,
                             &source,
+                            &mut pending,
                         );
                     }
 
@@ -601,6 +677,7 @@ mod test {
                         annotation_end,
                         CommentKind::SingleLineBlock,
                         &source,
+                        &mut pending,
                     );
                     assert_eq!(builder.previous_token_pure_comments(), pure);
                     assert_eq!(builder.previous_token_no_side_effects_comments(), no_side_effects);
@@ -1246,9 +1323,7 @@ function bar() {}";
             ("/* foo @license*/", CommentContent::Legal),
             ("/* foo @licensed*/", CommentContent::Legal),
             ("/* foo @License*/", CommentContent::None),
-            // spellchecker:disable-next-line
             ("/* foo @licens*/", CommentContent::None),
-            // spellchecker:disable-next-line
             ("/* foo @preserv*/", CommentContent::None),
             ("/* @foo @preserve */", CommentContent::Legal),
             ("/* @foo @license */", CommentContent::Legal),

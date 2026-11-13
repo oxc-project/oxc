@@ -4,6 +4,7 @@
     @input="(foo?.bar);"
     @change="foo()?.bar;"
     @blur="foo?.();"
+    @dblclick="a = !a;"
     @focus=""
     @keyup="  "
     @keydown=" ; "

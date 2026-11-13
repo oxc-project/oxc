@@ -10,9 +10,14 @@
 use std::hash::{BuildHasher, Hasher};
 
 /// Read 4 bytes from `s` at `offset` as a little-endian `u32`.
+///
+/// # SAFETY
+/// `i + 4 <= s.len()`
 #[inline]
-const fn read_u32(s: &[u8], i: usize) -> u32 {
-    (s[i] as u32) | ((s[i + 1] as u32) << 8) | ((s[i + 2] as u32) << 16) | ((s[i + 3] as u32) << 24)
+const unsafe fn read_u32(s: &[u8], i: usize) -> u32 {
+    debug_assert!(i + 4 <= s.len());
+    // SAFETY: Caller guarantees `i + 4 <= s.len()`
+    u32::from_le_bytes(unsafe { s.as_ptr().add(i).cast::<[u8; 4]>().read_unaligned() })
 }
 
 /// Fold two `u32` values into one via 64-bit multiply + XOR-fold.
@@ -44,35 +49,32 @@ pub const fn ident_hash(s: &[u8]) -> u32 {
     const SEED2: u32 = 0x85EB_CA6B;
 
     let len = s.len();
-    if len == 0 {
-        return 0;
-    }
-
     if len < 4 {
+        if len == 0 {
+            return 0;
+        }
         // 1-3 bytes: wyhash trick — read first, middle, last byte.
         // Captures all bytes regardless of length (middle overlaps for len=1,2).
         let packed = ((s[0] as u32) << 16) | ((s[len >> 1] as u32) << 8) | (s[len - 1] as u32);
-        mix(packed ^ SEED1, packed ^ SEED2)
-    } else if len <= 8 {
-        // 4-8 bytes: read first 4 + last 4 (covers all bytes, may overlap).
-        // XOR with different seeds so even when head == tail (len=4), the mix inputs differ.
-        let head = read_u32(s, 0);
-        let tail = read_u32(s, len - 4);
-        mix(head ^ SEED1, tail ^ SEED2)
-    } else if len <= 16 {
-        // 9-16 bytes: head + middle + tail (12 bytes sampled).
-        let head = read_u32(s, 0);
-        let mid = read_u32(s, (len >> 1) - 2);
-        let tail = read_u32(s, len - 4);
-        mix(head ^ mid ^ SEED1, tail ^ SEED2)
-    } else {
-        // 17+ bytes: 4 evenly-spaced samples (16 bytes total).
-        let head = read_u32(s, 0);
-        let mid1 = read_u32(s, len / 3);
-        let mid2 = read_u32(s, 2 * len / 3);
-        let tail = read_u32(s, len - 4);
-        mix(head ^ mid1 ^ SEED1, mid2 ^ tail ^ SEED2)
+        return mix(packed ^ SEED1, packed ^ SEED2);
     }
+
+    // Sample without branching on length, as identifier lengths are unpredictable.
+    // Samples which a length class does not use are read from an in-bounds offset and masked out.
+    // * 4-8 bytes: first 4 + last 4 (covers all bytes, may overlap).
+    //   XOR with different seeds so even when head == tail (len=4), the mix inputs differ.
+    // * 9-16 bytes: head + middle + tail (12 bytes sampled).
+    // * 17+ bytes: 4 evenly-spaced samples (16 bytes total).
+    let is_long = len > 16;
+    let mid1_offset = if is_long { len / 3 } else { (len >> 1) - 2 };
+    let mid2_offset = if is_long { 2 * len / 3 } else { 0 };
+    let mid1_mask = if len > 8 { u32::MAX } else { 0 };
+    let mid2_mask = if is_long { u32::MAX } else { 0 };
+    // SAFETY: `len >= 4`, and all offsets are at most `len - 4`
+    let (head, mid1, mid2, tail) = unsafe {
+        (read_u32(s, 0), read_u32(s, mid1_offset), read_u32(s, mid2_offset), read_u32(s, len - 4))
+    };
+    mix(head ^ (mid1 & mid1_mask) ^ SEED1, (mid2 & mid2_mask) ^ tail ^ SEED2)
 }
 
 /// Compose the final hash state used by hashbrown.
@@ -143,7 +145,10 @@ impl Hasher for IdentHasher {
 
 #[cfg(test)]
 mod test {
-    use std::hash::{BuildHasher, Hasher};
+    use std::{
+        hash::{BuildHasher, Hasher},
+        str,
+    };
 
     use super::{IdentBuildHasher, IdentHasher, hashbrown_state, ident_hash, unpack_len_hash};
 
@@ -165,12 +170,7 @@ mod test {
         for s in
             &[b"x" as &[u8], b"ab", b"abc", b"abcd", b"hello", b"useState", b"longIdentifierName"]
         {
-            assert_ne!(
-                ident_hash(s),
-                0,
-                "hash should be non-zero for {:?}",
-                std::str::from_utf8(s)
-            );
+            assert_ne!(ident_hash(s), 0, "hash should be non-zero for {:?}", str::from_utf8(s));
         }
     }
 
@@ -183,7 +183,7 @@ mod test {
         assert_ne!(ident_hash(b"useState"), ident_hash(b"useEffect"));
         assert_ne!(ident_hash(b"fooBar"), ident_hash(b"fooBaz"));
         assert_ne!(ident_hash(b"a"), ident_hash(b"b"));
-        assert_ne!(ident_hash(b"ab"), ident_hash(b"ba")); // spellchecker:disable-line
+        assert_ne!(ident_hash(b"ab"), ident_hash(b"ba"));
     }
 
     #[test]
@@ -210,8 +210,27 @@ mod test {
         // Strings that differ only in the middle — the 17+ path must catch this
         assert_ne!(
             ident_hash(b"privateInterfaceWithPrivatePropertyTypes"),
-            ident_hash(b"privateInterfaceWithPrivateParmeterTypes"), // spellchecker:disable-line
+            ident_hash(b"privateInterfaceWithPrivateParmeterTypes"),
         );
+    }
+
+    #[test]
+    fn hash_values_are_stable() {
+        // Strings at the boundaries of each length class
+        for (s, hash) in [
+            (b"x" as &[u8], 0xA772_3236),
+            (b"abc", 0xE8E3_9000),
+            (b"this", 0xA950_64E1),
+            (b"useState", 0x6AFE_4A11),
+            (b"undefined", 0x23DC_F446),
+            (b"getElementById", 0xA7AA_1CE3),
+            (b"addEventListener", 0xB65B_D165),
+            (b"removeEventListen", 0xCC4E_F731),
+            (b"exportedFunctionName", 0x75C3_2F4C),
+            (b"privateInterfaceWithPrivatePropertyTypes", 0xECA0_5934),
+        ] {
+            assert_eq!(ident_hash(s), hash, "{:?}", str::from_utf8(s));
+        }
     }
 
     // ---- IdentHasher tests ----

@@ -28,19 +28,23 @@ this crate only quotes it (`write_quoted`: the `"`, `&quot;` for a `"` in it, a 
 #### What Vue reads
 
 The output compiles as the input does, a template that does not compile included: to the same values and side effects.
-A handler's value is no part of it: Vue uses it only to report a promise it rejects, and a `;` the formatter adds or drops inside changes it (`$event => (…)` or `{…}`).
+A handler's value is part of it: Vue reports a promise it rejects, and vue-tsc types it; a `;` decides whether the handler returns it (`$event => (…)` or `{…}`).
 The oracle is `@vue/compiler-sfc`, which compiles every `.vue` file (`@vue/compiler-dom`'s Node build);
 the browser build, which reads some code otherwise (`isFnExpression` is a regex there), is none: it compiles in-DOM templates, no `.vue` file.
+vue-tsc (`@vue/language-core` 3.3.14) is one where it agrees with the compiler, and the compiler wins where it does not:
+vue-tsc returns the value of a lone expression statement whose last token is no `;` (`foo(() => { a(); })` too, which the compiler reads as statements),
+a `function` in parens included (which the compiler reads as the handler).
 
 Vue reads a value by its AST, but for its text in these places (`@vue/compiler-core` 3.5.45), the only ones formatting can change what it reads by:
 
-| Where       | What of the text                                                      | Kept by                                                                                                                                                                                 |
-| ----------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `{{ }}`     | the first `}}` ends it                                                | parens around an object (`oxc_formatter`'s AGENTS.md "js-in-xxx" names the known gap)                                                                                                   |
-| `v-on`      | but for a reference or a function, a `;` anywhere makes it statements | the handler's `;` (`ProgramSemicolons::MarksStatements`), parens around a leading `function` / `{` (`reads_as_statements`); `oxc_formatter`'s AGENTS.md "js-in-xxx" names the known gap |
-| `v-for`     | split at `in` / `of` and the last commas                              | the alias printed as the params Vue splits (`JsRoot::FunctionParams { parens_when_many }`), as written holding `in` / `of`                                                              |
-| `:style`    | a leading `[`                                                         | no rule: no formatting moves the first token                                                                                                                                            |
-| every value | put in the render function as written                                 | a line comment closed, a top-level sequence in no parens as written (`JsEmbeddedIn::inlines_code`)                                                                                      |
+| Where       | What of the text                                       | Kept by                                                                                                                                                                                  |
+| ----------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `{{ }}`     | the first `}}` ends it                                 | parens around an object (`oxc_formatter`'s AGENTS.md "js-in-xxx" names the known gap)                                                                                                    |
+| `v-on`      | but for a function, a `;` anywhere makes it statements | the handler's `;` (`ProgramSemicolons::MarksStatements`), parens around a leading `function` / `{` (`reads_as_statements`); `oxc_formatter`'s AGENTS.md "js-in-xxx" names the known gaps |
+| `v-for`     | split at `in` / `of` and the last commas               | the alias printed as the params Vue splits (`JsRoot::FunctionParams { parens_when_many }`), as written holding `in` / `of`                                                               |
+| `:style`    | a leading `[`                                          | no rule: no formatting moves the first token                                                                                                                                             |
+| every value | put in the render function as written                  | a line comment closed, a top-level sequence in no parens as written (`JsEmbeddedIn::inlines_code`)                                                                                       |
+| every value | character references, decoded before the code is read  | as written when it holds one (apps/oxfmt/DIVERGENCES.md#character-reference-in-code-as-written); a `{{ }}` is not checked                                                                |
 
 A Vue release reading more of the text adds a row here, and its rule.
 

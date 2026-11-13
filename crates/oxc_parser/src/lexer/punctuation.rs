@@ -38,8 +38,8 @@ impl<C: Config> Lexer<'_, C> {
             // the `<` byte-handler's stack frame on the common `<`/`<<`/`<=` path.
             Some(b'!') if self.remaining().starts_with("!--") => cold_branch(|| {
                 if self.source_type.is_module() {
-                    if self.token.is_on_new_line() {
-                        let span = Span::sized(self.token.start(), 4);
+                    if self.pending.is_on_new_line() {
+                        let span = Span::sized(self.token_start, 4);
                         self.errors.push(diagnostics::html_comment_in_module(span));
                         None
                     } else {
@@ -61,7 +61,7 @@ impl<C: Config> Lexer<'_, C> {
             Some(b'-') => {
                 self.consume_char();
                 // `-->` HTML comment (Annex B.1.1) - not recognized in strict mode (.mjs)
-                if self.token.is_on_new_line()
+                if self.pending.is_on_new_line()
                     && !self.source_type.is_strict()
                     && self.next_ascii_byte_eq(b'>')
                 {
@@ -82,13 +82,13 @@ impl<C: Config> Lexer<'_, C> {
     /// Defer HTML comment error for unambiguous mode (emitted if file resolves to module)
     fn defer_html_comment_error(&mut self, len: u32) {
         if self.source_type.is_unambiguous() {
-            let span = Span::sized(self.token.start(), len);
+            let span = Span::sized(self.token_start, len);
             self.deferred_module_errors.push(diagnostics::html_comment_in_module(span));
         }
     }
 
     pub(crate) fn re_lex_right_angle(&mut self) -> Token {
-        self.token.set_start(self.offset() - 1);
+        self.token_start = self.offset() - 1;
         let kind = self.read_right_angle();
         self.finish_next_retokenized(kind)
     }

@@ -4,7 +4,7 @@
 
 #![cfg(target_endian = "little")]
 
-use oxc_lexer::{LexOptions, PAD, TokenKind, testing::lex_with_cpu};
+use oxc_lexer::{LexOptions, TokenKind, testing::lex_with_cpu};
 use oxc_simd::{DynCpu, test_cpus};
 
 /// All 35 TS-mode additions, mirroring `KEYWORDS_TS_EXTRA` (kept literal so
@@ -49,11 +49,8 @@ const TS_WORDS: [(&str, TokenKind); 35] = [
 
 /// Lex and return the non-trivia kinds (EOF dropped).
 fn kinds(code: &str, ts: bool, jsx: bool, cpu: DynCpu) -> Vec<TokenKind> {
-    let mut buf = code.as_bytes().to_vec();
-    let n = buf.len();
-    buf.resize(n + PAD, 0);
     let opts = LexOptions { jsx, ts, ..Default::default() };
-    let res = lex_with_cpu(&buf, u32::try_from(n).unwrap(), opts, cpu);
+    let res = lex_with_cpu(code, opts, cpu);
     let count = res.token_count();
     res.kinds()[..count].iter().copied().filter(|kk| !kk.is_trivia()).collect()
 }
@@ -112,7 +109,6 @@ fn ts_key_separates_narrow_key_collisions(cpu: DynCpu) {
 #[test_cpus]
 fn near_misses_stay_ident(cpu: DynCpu) {
     for w in [
-        // spellchecker:off
         "types",
         "strin",
         "stringg",
@@ -129,7 +125,6 @@ fn near_misses_stay_ident(cpu: DynCpu) {
         "prototype",
         "Number",
         "String",
-        // spellchecker:on
     ] {
         assert_eq!(first_kind(w, true, cpu), TokenKind::Ident, "ts near-miss: {w}");
         assert_eq!(first_kind(w, false, cpu), TokenKind::Ident, "js near-miss: {w}");

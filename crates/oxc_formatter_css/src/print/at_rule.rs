@@ -255,17 +255,17 @@ fn write_verbatim_prelude(span: oxc_span::Span, f: &mut CssFormatter<'_, '_>) {
 fn write_apply_prelude<'a>(raw: &'a str, f: &mut CssFormatter<'_, 'a>) -> bool {
     let raw = raw.trim();
 
-    let (wrapper, class_list, important_tail) =
-        if let Some(inner) = raw.strip_prefix("~\"").and_then(|r| r.strip_suffix('"')) {
-            (Some("\""), inner, None)
-        } else if let Some(inner) = raw.strip_prefix("~'").and_then(|r| r.strip_suffix('\'')) {
-            (Some("'"), inner, None)
-        } else {
-            match split_important_tail(raw) {
-                Some((classes, tail)) => (None, classes, Some(tail)),
-                None => (None, raw, None),
-            }
-        };
+    let (wrapper, class_list, important_tail) = if let Some(inner) = raw.strip_circumfix("~\"", '"')
+    {
+        (Some("\""), inner, None)
+    } else if let Some(inner) = raw.strip_circumfix("~'", '\'') {
+        (Some("'"), inner, None)
+    } else {
+        match split_important_tail(raw) {
+            Some((classes, tail)) => (None, classes, Some(tail)),
+            None => (None, raw, None),
+        }
+    };
 
     let class_list = class_list.trim();
     if class_list.is_empty() {
@@ -2068,7 +2068,7 @@ fn write_media_in_parens<'a>(in_parens: &MediaInParens<'a>, f: &mut CssFormatter
             if f.context().source_text().text_for(&to_span(in_parens.span)).starts_with('(') {
                 write_general_enclosed(seq, f);
             } else {
-                write_token_seq_normalized(seq, f);
+                write_tokens_normalized(&seq.tokens, f);
             }
         }
     }
@@ -2076,41 +2076,41 @@ fn write_media_in_parens<'a>(in_parens: &MediaInParens<'a>, f: &mut CssFormatter
 
 /// `<general-enclosed>` prints its `TokenSeq` inside its own parens,
 /// tokens verbatim but whitespace normalized:
-/// a source gap becomes one space, paren inner edges stay tight, `:`/`,` space right only.
-/// Gap-based spacing never fuses tokens the source kept apart
-/// (`and (color)` can't collapse into a function token `and(`).
+/// a source gap becomes one space, and none before `)` / `]` / `,` / `;` or after `(` / `[`.
+/// Gap-based spacing never splits or fuses tokens the source kept glued or apart
+/// (`and (color)` can't collapse into a function token `and(`, `:hover` stays one pseudo-class).
 /// NOTE: Deliberately more normalized than Prettier.
 fn write_general_enclosed<'a>(seq: &TokenSeq<'a>, f: &mut CssFormatter<'_, 'a>) {
     write!(f, "(");
-    write_token_seq_normalized(seq, f);
+    write_tokens_normalized(&seq.tokens, f);
     write!(f, ")");
 }
 
-/// The `<general-enclosed>` token stream without the surrounding parens.
-fn write_token_seq_normalized<'a>(seq: &TokenSeq<'a>, f: &mut CssFormatter<'_, 'a>) {
+/// The `<general-enclosed>` tokens without the surrounding parens.
+fn write_tokens_normalized<'a, 'b>(
+    tokens: impl IntoIterator<Item = &'b TokenWithSpan<'a>>,
+    f: &mut CssFormatter<'_, 'a>,
+) where
+    'a: 'b,
+{
     let source = f.context().source_text();
-    for (i, tok) in seq.tokens.iter().enumerate() {
-        if i > 0 {
-            let prev = &seq.tokens[i - 1];
+    let mut prev: Option<&TokenWithSpan<'a>> = None;
+    for tok in tokens {
+        if let Some(prev) = prev {
             let needs_space = match (&prev.token, &tok.token) {
                 (Token::LParen(_) | Token::LBracket(_), _)
                 | (
                     _,
-                    Token::RParen(_)
-                    | Token::RBracket(_)
-                    | Token::Comma(_)
-                    | Token::Semicolon(_)
-                    | Token::Colon(_),
+                    Token::RParen(_) | Token::RBracket(_) | Token::Comma(_) | Token::Semicolon(_),
                 ) => false,
-                (Token::Comma(_) | Token::Colon(_), _) => true,
                 _ => !is_glued(prev.span, tok.span),
             };
             if needs_space {
                 write!(f, space());
             }
         }
-        let span = to_span(tok.span);
-        write!(f, text(source.text_for(&span)));
+        write!(f, text(source.text_for(&to_span(tok.span))));
+        prev = Some(tok);
     }
 }
 
@@ -2279,9 +2279,27 @@ fn write_supports_in_parens<'a>(in_parens: &SupportsInParens<'a>, f: &mut CssFor
                 });
                 write!(f, [indent(&body), hard_line_break(), ")"]);
             } else {
-                selector::write_selector_list(list, selector::SelectorListStyle::Line, f);
-                write!(f, ")");
+                // As a rule's selectors: one per line, the parens open when broken
+                let content = format_with(|f| {
+                    selector::write_selector_list(list, selector::SelectorListStyle::Hard, f);
+                });
+                write!(f, group(&format_args!(soft_block_indent(&content), ")")));
             }
+        }
+        // `selector()` with a non-selector argument (`selector(A < B)`) prints as `<general-enclosed>`
+        SupportsInParensKind::Function(func)
+            if value::function_name_text(func).eq_ignore_ascii_case("selector")
+                && func.args.iter().all(|arg| matches!(arg, ComponentValue::TokenWithSpan(_))) =>
+        {
+            write!(f, [text(source.text_for(&to_span(func.name.span()))), "("]);
+            write_tokens_normalized(
+                func.args.iter().filter_map(|arg| match arg {
+                    ComponentValue::TokenWithSpan(token) => Some(token),
+                    _ => None,
+                }),
+                f,
+            );
+            write!(f, ")");
         }
         SupportsInParensKind::Function(func) => {
             value::write_function(func, ValueContext::default(), f);

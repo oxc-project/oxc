@@ -89,7 +89,7 @@ A host dispatches a part of its document (`format_to_ir`), its marker translated
 - `JsRoot`: what the code parses as, and how its kind prints
 - `JsEmbeddedIn`: what the host does with it, whatever the kind
 
-The formatter knows nothing about the host's vocabulary; it wraps the source to parse it as the root says.
+This formatter knows nothing about the host's vocabulary; it wraps the source to parse it as the root says.
 It drives the context-dependent decisions: the layout in the host's delimiters, the quote style, the handler's semicolons.
 The IR goes between the host's delimiters as is: the host names the layout (`ProgramLayout` / `ExpressionLayout`), and this builds it, hugging as the AST says.
 
@@ -98,15 +98,21 @@ The markers say how it reads (`JsEmbeddedIn`, `ExpressionRoot`'s flags, `Program
 
 - Where a print rule keeps the reading with what the formatter owns (a `;`, parens, a line break), it applies
 - Where none does, or the output would read otherwise for the host (code it does not accept would be accepted), `format_to_ir` returns `Err`: the host prints the code as written
-- Known gap: under `ExpressionRoot::ends_at_double_brace`, only an object is kept from printing `}}` (`print/embedded/expression.rs`);
+
+Known gaps, left as is for their cost (loud: the host fails to compile the output; silent: it reads otherwise unnoticed):
+
+- `ExpressionRoot::ends_at_double_brace` keeps only an object from printing `}}` (`print/embedded/expression.rs`);
   a function or class body right before another `}` can still print it (`${() => {}}`, `{a() {}}` without bracket spacing).
-  Left as is for the cost: which code prints a `}` last is every node kind ending in one (a body, a class, a TS type literal), or the printed text,
-  and whether a `}` follows it without bracket spacing is the printer's breaks; an object is the common case, and the one Prettier keeps (a property's value).
-  It is loud, not wrong: the host fails to compile the output, nothing reads otherwise unnoticed
-- Known gap: under `ProgramSemicolons::MarksStatements` with `semi: true`, code whose only `;` are empty statements can print none (`if (a) {};` prints `if (a) {}`),
-  which the host reads as an expression (Vue's `@click` fails to compile it).
-  Left as is for the cost: `semi: true` adds nested statements' `;` (`if (a) { b() };` prints `b();`), so telling it is a walk of every statement, function bodies included,
-  for code that runs next to nothing. Loud, not wrong, as above
+  Which code prints a `}` last is every node kind ending in one, and whether a `}` follows is the printer's breaks;
+  an object is the common case, and the one Prettier keeps. Loud
+- A `;` the formatter adds or drops below the top level can decide whether the code holds one, which the host reads it by (Vue's `exp.content.includes(';')`).
+  Telling it is a walk of every nested statement and TS type member:
+  - `ProgramSemicolons::MarksStatements` with `semi: true`: code whose only `;` are empty statements prints none (`if (a) {};` prints `if (a) {}`). Loud
+  - `ExpressionRoot::reads_as_statements`: a body's or a TS type literal's `;` becomes or stops being the only one
+    (`foo(() => { a() })` under `semi: true`, `(foo as { a: 1, b: 2 }).bar`).
+    Vue calls a reference or no longer does, or reports a rejected promise or no longer does. Silent, and rare (none in 2,350 real `.vue` files)
+- `JsEmbeddedIn::inlines_code` prints a TS `as` / `satisfies` the code is without its parens (`(foo as any)`),
+  which the host may put in code that reads it otherwise (Vue's cached handler `foo as any && foo as any(...args)` does not parse in a Vite build). Loud
 
 Each kind's wrapper, checks and printing live in `print/embedded/`, one module per kind;
 a host's new use is a new policy of a kind (Astro's frontmatter is a `Program`), or a new `JsRoot` variant and module there (Svelte's `{@const}`).
@@ -121,7 +127,7 @@ so no statement rule applies to it (no `;`, no ASI guard):
 - A root the host reads as statements (`ExpressionRoot::reads_as_statements`) starts one, as an expression statement does (`parentheses::expression::starts_statement`):
   a leading `{`, `function`, `class` or `let[` prints in parens
 
-The Svelte / Astro `<script>` Prettier formats goes through `prettier-plugin-oxfmt` (`format_with_session`). See `apps/oxfmt` in details.
+For now, Svelte and Astro are hosted (formatted) by Prettier, but `<script>` goes through `prettier-plugin-oxfmt` (`format_with_session`). See `apps/oxfmt` in details.
 
 ## Comments
 
@@ -149,6 +155,11 @@ each node's generated `fmt` prints its leading and trailing runs (`formatter/tri
   - the cursor-based ones (`comments_before` and friends, the unprinted view) are for PRINTING
   - the position-based ones (`all_comments_*`) are for LAYOUT DECISIONS
 - A decision evaluated more than once for a node (cached bodies, a re-entered `fmt`) must not depend on the cursor
+  - A range inside the node's own span (between its members, before its closer) reads the same in both views
+  - Whether the node prints a comment before it itself (no parent printed it first) is derived from the tree, not read off the cursor:
+    a parent starting after the comment prints it as its leading comment, kept parentheses print those outside them
+    (`leading_comments` in `print/union_type.rs`, a coupling to list below)
+  - Or the parent asks only when it prints nothing between its decision and the node's print, so both asks see the same cursor (a coupling to list below)
 - A parent hands a decision to a node by a position-keyed mark when the cursor cannot carry it (`mark_as_type_cast_node`, `mark_suppressed_after_operator`);
   marks are never cleared, node starts are unique
 
@@ -222,7 +233,7 @@ A suppression comment protects content; the token classes above still apply to w
   a node without a terminator of its own prints its whole span.
   Prettier re-adds a statement's `;` only when the source had one and prints class members whole (DIVERGENCES.md#suppressed-terminator-per-semi)
   - A statement is decided before its own generated `fmt`, so leading and trailing comments take one path and a pre-`export` decorator is inside the ignored range (`statement_span`)
-  - A `for` head declaration has no terminator of its own and stays verbatim (DIVERGENCES.md#suppressed-for-head-declaration)
+  - A `for` head declaration has no terminator of its own and stays verbatim
 - Expressions: `write_suppressed_expression` (`utils/suppressed.rs`) owns the whole sequence for expression-shaped nodes
   (the generated `fmt` and the arrow sequence-body site call it before anything of the node is printed),
   so a cast target keeps its source cast parens (`utils/typecast.rs`'s `write_suppressed_cast_target`) and in-paren comments print in place via the verbatim range
@@ -231,6 +242,28 @@ Accepted edge (semantically inert, idempotent):
 the `semi: false` ASI guard is decided from the guarded statement alone, never from the previous statement's output.
 Sound because no statement leaves its own trailing `;` (a suppressed one hands it back to the formatter),
 except a verbatim empty-statement body (`with (1) ;`, that `;` IS the body, i.e. content), where guard plus verbatim `;` re-parse as one extra inert `EmptyStatement`.
+
+### Comments and layout
+
+`uniform-rule (comment presence never changes layout)` (FORMATTER_POLICY, reason (3)) is about which layout rule applies, not about identical output:
+
+- A line comment rides a `line_suffix` and takes no width;
+  an inline block comment takes width like any token, so it can change what fits
+- Where Prettier lets a comment switch the rule and we follow it, the sites are a compat table (FORMATTER_POLICY "Comment placement invariants")
+
+Hugging (content glued to its opener, a union printed inline) is such a table.
+A same-line block comment right before the hugged content, pinned in `tests/fixtures/ts/comments/hug-block-comment.ts`:
+
+- stops the hug: a sole object or array argument, a last-argument arrow, a sole object-pattern parameter
+- keeps the hug: an object type after a `:` (parameter, return type), a sole type argument, the right side of `=`
+
+A union that hugs (`{ ... } | null`), pinned in `tests/fixtures/ts/union/hug-comments.ts`:
+
+- a member's comment stops the hug, and the union expands like any other (DIVERGENCES.md#union-annotation-flat-retry)
+- a single-line block comment right before the union, on its line, is the first member's
+  (`| /* c */ A`, DIVERGENCES.md#union-leading-pipe-comment-normalization),
+  with a dropped `(` in between too (DIVERGENCES.md#union-hug-comment-before-dropped-paren)
+- a line-ending or multiline comment before the union stays before it, and keeps the hug
 
 ### Couplings to keep in step
 
@@ -256,6 +289,13 @@ The second line of each item is the drift symptom.
   - the right-hand side after `= // prettier-ignore` is reformatted
 - `union_prints_itself` (the layout arms of `AssignmentLike` and the cast site) ⇄ the union's generated `fmt` suppression check
   - a suppressed union prints from column 0, its leading comment hoisted onto the operator's line
+- the union's leading comments derived from the tree (`leading_comments` in `print/union_type.rs`) ⇄ what its parents print before it
+  (their generated `fmt`'s leading pass, kept parentheses, `AssignmentLike`'s operator line run);
+  `TSUnionType::write` asserts in debug builds that the first member's comment is the one left to print
+  - a new parent that prints the comments before a union another way (no leading pass of its own, a claim of its own) fires the assertion
+- `alias_union_hugs` and `alias_union_breaks_after_operator` asked by `AssignmentLike::layout` ⇄ asked again by `TSUnionType::write`:
+  the layout returns `BreakAfterOperator` before asking when it prints the operator's line run, the only comments it prints in between
+  - the `=` is laid out for one answer and the union prints the other (hug or expand, who indents)
 - `Comments::is_quiet` (the generated `fmt` fast path) ⇄ the bound of `get_trailing_comments` (the parent's end), `is_span_suppressed`, `classify_type_cast`
   - a comment near no other one is dropped or misplaced
 
@@ -276,6 +316,14 @@ Behavior our own rules want otherwise, mostly where it follows Prettier. Not acc
   Bounding them also moves a same-line comment right after the `(` own-line (`f<T>( // eslint-disable-line`), so it waits for the opener exception (FORMATTER_POLICY) to be revisited
 - A line comment right after the `<` of a hugged single type argument keeps the unbreakable hug: `f<// c` + break + `T>()` prints `T` at column 0.
   Breaking the hug also decides whether the comment goes own-line or stays on the `<` line, so it waits for the same revisit
+- A same-line block comment after a line-ending one stays before the union's `|` (`// a` + break + `/* b */ | A`),
+  where DIVERGENCES.md#union-leading-pipe-comment-normalization wants `| /* b */ A` (Prettier prints that):
+  the all-or-nothing split in `union_type.rs` keeps the whole list before the `|`
+- An own-line comment right after a kept union's `(` prints outside it (`keyof (` + break + `/* c */ X | null)` -> `keyof /* c */ (X | null)`),
+  crossing the `(` onto the previous line (`outer_leading_comments_len`); Prettier keeps it inside, behind the first `|`.
+  The hug decision follows that placement (`first_member_comment`), so a fix changes both
+- A type predicate's object type is not a fixpoint: `function f(x: unknown): x is { ... } {}` breaks the parameters on the first pass
+  and rejoins them on the second (Prettier too); a plain return type (`): { ... } {}`) is stable
 
 The flat JSX arrow body is a limitation, not a debt: the paren decision is a group fit, unknowable at comment time (DIVERGENCES.md#paren-comment-fixpoint).
 

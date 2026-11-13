@@ -237,17 +237,14 @@ pub fn infer_mutation_aliasing_effects<'a>(
                 let ident_info = env.identifiers.get(uninitialized_id);
                 let name = ident_info
                     .and_then(|ident| ident.name.as_ref())
-                    .map(|n| n.value().to_string())
-                    .unwrap_or_default();
+                    .map_or_default(|n| n.value().to_string());
                 // Use usage_span if available, otherwise fall back to identifier's own span
                 let error_span = usage_span.or_else(|| ident_info.and_then(|i| i.span));
                 // Match TS printPlace format: "<unknown> name$id:type"
-                let type_str = ident_info
-                    .map(|ident| {
-                        let ty = &env.types[ident.type_];
-                        format_type_for_print(ty)
-                    })
-                    .unwrap_or_default();
+                let type_str = ident_info.map_or_default(|ident| {
+                    let ty = &env.types[ident.type_];
+                    format_type_for_print(ty)
+                });
                 let description =
                     format!("<unknown> {}${}{}", name, uninitialized_id.index(), type_str);
                 let diag = diagnostics::uninitialized_value(description, error_span);
@@ -1433,6 +1430,13 @@ fn apply_signature<'a>(
                             &variable,
                             mutate_value.span,
                             ident.span,
+                            matches!(
+                                effect,
+                                AliasingEffect::Mutate {
+                                    reason: Some(MutationReason::AssignCurrentProperty),
+                                    ..
+                                }
+                            ),
                         );
                         let error =
                             env.intern_aliasing_diagnostic(mutate_value.identifier, diagnostic);
@@ -2070,8 +2074,19 @@ fn apply_effect_ref<'a>(
                         }
                         _ => "value".to_string(),
                     };
-                    let diagnostic =
-                        diagnostics::immutable_value(reason_str, &variable, value.span, ident.span);
+                    let diagnostic = diagnostics::immutable_value(
+                        reason_str,
+                        &variable,
+                        value.span,
+                        ident.span,
+                        matches!(
+                            effect,
+                            AliasingEffect::Mutate {
+                                reason: Some(MutationReason::AssignCurrentProperty),
+                                ..
+                            }
+                        ),
+                    );
 
                     let error = env.intern_aliasing_diagnostic(value.identifier, diagnostic);
                     let error_kind = if abstract_value.kind == ValueKind::Frozen {
@@ -2543,9 +2558,16 @@ fn compute_effects_for_legacy_signature<'a>(
         reason: return_value_reason,
     });
 
+    // Unlike the TS implementation, argument-dependent impurity (zero-argument
+    // `new Date()`) is only reported in the component or hook body, not inside
+    // nested functions. Callbacks passed to an unknown function such as
+    // `form.handleSubmit(onSubmit)` are assumed to run during render, which
+    // flagged `new Date()` in event-time callbacks after it became impure
+    // (oxc-project/oxc#29094). Always-impure functions such as `Date.now()` are
+    // unchanged.
     if signature.impure
         && env.config.validate_no_impure_functions_in_render
-        && (!signature.impure_if_no_args || args.is_empty())
+        && (!signature.impure_if_no_args || (args.is_empty() && !state.is_function_expression))
     {
         let diagnostic =
             diagnostics::impure_function(signature.canonical_name.as_deref(), span.copied());

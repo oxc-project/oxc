@@ -3,7 +3,7 @@ use oxc_simd::{Cpu, cpu_multiversion};
 use crate::error::DiagCode;
 
 use crate::pipeline::{
-    bitmap::bm_get,
+    bitmap::Bitmap,
     bytes::{is_id_start, is_word, line_break_in},
     disambiguate::{TokensView, jsx_over_generic},
     lanes::Lanes,
@@ -23,10 +23,10 @@ enum AngleVerdict {
 pub(super) unsafe fn jsx_over_type_params(
     src: *const u8,
     srcs: &[u8],
-    st: *const u64,
-    opch: *const u64,
+    st: Bitmap,
+    opch: Bitmap,
     kind: *const u8,
-    word: *const u64,
+    word: Bitmap,
     n: usize,
     lt: usize,
     tpos: usize,
@@ -82,7 +82,7 @@ unsafe fn ts_angle_verdict(
     src: &[u8],
     n: usize,
     t: usize,
-    word: *const u64,
+    word: Bitmap,
     cpu: impl Cpu,
 ) -> AngleVerdict {
     let mut p = t;
@@ -99,7 +99,7 @@ unsafe fn ts_angle_verdict(
             p = qq; // `const` was a modifier; advance to the real param
         }
     }
-    while p < n && bm_get(word, p, cpu) {
+    while p < n && word.get(p, cpu) {
         p += 1; // first type-parameter identifier
     }
     // The signal may sit behind whitespace (Unicode too) or a comment: `<T /*c*/ extends U>`.
@@ -122,7 +122,7 @@ unsafe fn ts_angle_verdict(
     }
     // `extends` is also a legal JSX attribute name; it signals a generic only
     // as a full word not followed by `=` (attr value) or `>` (boolean attr).
-    if n - p >= 7 && &src[p..p + 7] == b"extends" && !bm_get(word, p + 7, cpu) {
+    if n - p >= 7 && &src[p..p + 7] == b"extends" && !word.get(p + 7, cpu) {
         let qq = jsx_skip_trivia_fast(src.as_ptr(), n, p + 7, cpu);
         let d = if qq < n { src[qq] } else { 0 };
         if d == b'/' && !matches!(if qq + 1 < n { src[qq + 1] } else { 0 }, b'*' | b'/') {

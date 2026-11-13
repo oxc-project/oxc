@@ -7,7 +7,7 @@ Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md`
 - Why: invariant
 - Pin: `tests/fixtures/js/comments/array-holes.js`
 - Conformance:
-  - `externals/prettier/js/arrays/numbers-with-holes.js`
+  - `externals/prettier/js/array-exprssion/numbers-with-holes.js`
 
 ```js
 // input
@@ -50,6 +50,8 @@ a comment after it is spaced (`, /* c */`, as in `a, /* c */ b`), also after the
 
 - Why: uniform-rule (same construct, same output: exported type alias)
 - Pin: `tests/fixtures/ts/semicolons/trailing-comments.ts`
+- Conformance:
+  - `externals/prettier/typescript/union/union-parens.ts` (`type Aa3`)
 
 ```ts
 // input
@@ -356,6 +358,34 @@ type NestedParens =
 
 Prettier does the same normalization except for nested single-member paren sources and multiline block comments starting their line, where it keeps `/* c */ | A` — an output it then reformats into `| /* c */ A` itself for the first shape (not a fixpoint); we normalize directly.
 
+## union-hug-comment-before-dropped-paren
+
+- Why: invariant
+- Pin: `tests/fixtures/ts/union/hug-comment-dropped-paren.ts`
+
+A single-line block comment before a hugged union's dropped `(` stops the hug on the first pass; the pin's output is not a fixpoint (idempotency).
+
+```ts
+// input
+type Alias = /* c */ ({ a: string; b: number } | null);
+
+// ours (broken)
+type Alias =
+  | /* c */ {
+      a: string;
+      b: number;
+    }
+  | null;
+
+// prettier (first pass; its second pass produces ours)
+type Alias = /* c */ {
+  a: string;
+  b: number;
+} | null;
+```
+
+Kept parentheses (`keyof (...)`, `(...)[]`) keep the comment outside and the hug, in both.
+
 ## deferred-own-line-comment-stays-own-line
 
 - Why: invariant
@@ -393,36 +423,29 @@ Comment placements printing Prettier's second-pass fixpoint directly, where the 
 
 ```js
 // input
-assigned = (a = c /* c1 */);
-((/* c2 */ a), b);
-chained = (a) => ((b) => {
-  c();
-} /* c3 */)
-asiLeaf = (someValue /* c4 */)
+parenthesized = (someValue /* c1 */);
+asiLeaf = (someValue /* c2 */)
+const arrowPlainBody = (a) => (b /* c3 */);
 
 // ours
-assigned = a = c; /* c1 */
-/* c2 */ (a, b);
-chained = (a) => (b) => {
-  c();
-}; /* c3 */
-asiLeaf = someValue; /* c4 */
+parenthesized = someValue; /* c1 */
+asiLeaf = someValue; /* c2 */
+const arrowPlainBody = (a) => b; /* c3 */
 
 // prettier (first pass; its second pass produces ours)
-assigned = a = c /* c1 */;
-(/* c2 */ a, b);
-chained = (a) => (b) => {
-  c();
-} /* c3 */;
-asiLeaf = someValue /* c4 */;
+parenthesized = someValue /* c1 */;
+asiLeaf = someValue /* c2 */;
+const arrowPlainBody = (a) => b /* c3 */;
 ```
 
 - A trailing comment inside a statement's dropped parentheses moves behind the `;`, including the chain-leaf shapes prettier/prettier#19893 left out
 - The chain passes through arrow expression bodies, and a dropped `)` counts as the terminator even without a source `;`
-  - prettier/prettier#19930 covers assignment/arrow links, prettier/prettier#19956 the rest; ours is one uniform rule
+  - Prettier moves it on the first pass for an assignment chain, a sequence and a block-bodied arrow (prettier/prettier#19893, #19930, #19956), not for a plain leaf or an expression body; ours is one uniform rule
 - The walk stops where the comment stays inside re-added parens (sequence, assignment, JSX); conditional bodies move
+  - Prettier keeps a conditional body's comment inside its parens since 3.10 (`(a) => (a ? b : c /* c */)`, a fixpoint there); ours keeps the one rule
 - Applied at every semicolon-terminated site: expression statements, export defaults, variable declarations, class property values, return arguments
-- A class member's same-line comment moves even when an own-line comment sits between it and the `;` (the pinned Prettier cancels the move on its first pass, then moves on its second — the `d = 4` and `dmixed` pins); the own-line one defers to the next element, like statements
+- A class member's same-line comment moves even when an own-line comment sits between it and the `;` (the pinned Prettier cancels the move on its first pass, then moves on its second — the `dmixed` pin); the own-line one defers to the next element, like statements
+  - Prettier 3.10 pulls that own-line comment onto the next member's line (`/* own line */ e = 5;`), changing its line
 - A comment inside a sequence's parenthesized first element leads the sequence, outside the formatter-added parens
 
 Known limitation, shared with upstream: whether these parens survive is a group-fit decision, unknowable when the content end is chosen, so the comment settles only on the second pass when they end up dropped — a short JSX arrow body (`x = (a) => (<div /> /* c */)`), or a `;`-less return argument whose parenthesized binary fits flat (the `asiReturn` pin).
@@ -441,38 +464,23 @@ Comments around the operator keep their source side and their line-start side �
 
 ```ts
 // input
-const t1 = {
-  prop1: 1,
-} satisfies
-// Comment
-Record<string, number>;
 const eolLine = 1 as // c
 Foo;
 const eolBlock = {} satisfies /* c */
 {};
 
 // ours
-const t1 = {
-  prop1: 1,
-} satisfies
-  // Comment
-  Record<string, number>;
 const eolLine = 1 as // c
   Foo;
 const eolBlock = {} satisfies /* c */ {};
 
-// prettier (pinned): pulls the own-line comment beside the operator (three passes
-// to settle), relocates the line comment across the type and the `;`,
+// prettier: relocates the line comment across the type and the `;`,
 // and the block comment backward across the operator
-const t1 = {
-  prop1: 1,
-} satisfies // Comment
-Record<string, number>;
 const eolLine = 1 as Foo; // c
 const eolBlock = {} /* c */ satisfies {};
 ```
 
-Prettier is converging on its own piecewise fixes (own-line comments in prettier/prettier#19939, endOfLine comments reattached in prettier/prettier#19958, both normalizing toward own-line); we preserve the written position instead, so the entry outlives them.
+Prettier is converging on its own piecewise fixes: an own-line comment leads the type on its own line since prettier/prettier#19939, as ours; endOfLine comments are still relocated (prettier/prettier#19958 would normalize them toward own-line); we preserve the written position instead, so the entry outlives them.
 
 `as const` follows the same policy (`const` is a type like any other; the pinned Prettier relocates its comments across `const` and the `;`).
 A union type claims the after-operator comments as its leading comments and places them itself (own-line and line comments lead the members, inline blocks go behind the `|`, see #union-leading-pipe-comment-normalization), the same placement as after a type alias's `=`; the glued line comment keeps the operator's line either way (`1 as // c` + break, where the pinned Prettier relocates it across the type and the `;`).
@@ -526,8 +534,30 @@ The shapes, each pinned by its fixture:
 ## union-annotation-flat-retry
 
 - Why: style-hold (oxc#25841)
-- Pin: `tests/fixtures/ts/union/annotation-flat-retry.ts`
+- Pin: `tests/fixtures/ts/union/annotation-flat-retry.ts`, `tests/fixtures/ts/union/alias-flat-retry.ts`
 - Conformance:
+  - `externals/ng-zorro-antd/components/button/button.component.ts`
+  - `externals/ng-zorro-antd/components/cdk/overflow/overflow-container.component.ts`
+  - `externals/ng-zorro-antd/components/date-picker/date-picker.component.ts`
+  - `externals/ng-zorro-antd/components/date-picker/date-range-popup.component.ts`
+  - `externals/ng-zorro-antd/components/date-picker/inner-popup.component.ts`
+  - `externals/ng-zorro-antd/components/drawer/drawer.component.ts`
+  - `externals/ng-zorro-antd/components/dropdown/dropdown-menu.component.ts`
+  - `externals/ng-zorro-antd/components/empty/embed-empty.component.ts`
+  - `externals/ng-zorro-antd/components/empty/empty.component.ts`
+  - `externals/ng-zorro-antd/components/form/form-control.component.ts`
+  - `externals/ng-zorro-antd/components/form/form-item.component.ts`
+  - `externals/ng-zorro-antd/components/modal/modal.component.ts`
+  - `externals/ng-zorro-antd/components/resizable/resize-handle.component.ts`
+  - `externals/ng-zorro-antd/components/slider/handle.component.ts`
+  - `externals/ng-zorro-antd/components/slider/slider.component.ts`
+  - `externals/ng-zorro-antd/components/steps/steps.component.ts`
+  - `externals/ng-zorro-antd/components/tabs/tab-body.component.ts`
+  - `externals/ng-zorro-antd/components/time-picker/time-picker-panel.component.ts`
+  - `externals/ng-zorro-antd/components/tree-select/tree-select.component.ts`
+  - `externals/ng-zorro-antd/components/upload/upload.component.ts`
+  - `externals/prettier/typescript/union/consistent-with-flow/81-characters.ts`
+  - `externals/prettier/typescript/union/union-parens.ts` (the `as (string | undefined)[]` cast)
   - `externals/vue-vben-admin/@core/ui-kit/shadcn-ui/src/components/render-content/render-content.vue`
   - `externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue`
   - `externals/webawesome/badge/badge.ts`
@@ -578,10 +608,34 @@ Prettier 3.9 changed this to first retry the whole union FLAT on the indented ne
 Community pushback on the 3.9 style (users migrated to Oxfmt over it) put following on hold:
 ours deliberately matches Prettier 3.8's output for this construct.
 
+The same hold at a type alias's `=`:
+
+```ts
+/* input */
+type Narrow = "primary" | "danger" | "warning" | "muted" | "success" | "information";
+
+/* ours */
+type Narrow =
+  | "primary"
+  | "danger"
+  | "warning"
+  | "muted"
+  | "success"
+  | "information";
+
+/* prettier */
+type Narrow =
+  "primary" | "danger" | "warning" | "muted" | "success" | "information";
+```
+
+A union that would hug (`X | null`) expands the same way once a member has a comment (`/* c */ X | null`).
+
 ## arrow-exact-fill-signature
 
 - Why: uniform-rule (same construct, same output: arrow with a non-conditional body)
 - Pin: `tests/fixtures/js/arrow-function/exact-fill-signature.js`
+- Conformance:
+  - `externals/ng-zorro-antd/components/auto-complete/autocomplete.component.ts`
 
 ```js
 /* input (printWidth 80) */
@@ -608,26 +662,6 @@ its hug layout puts a literal space after `=>`, outside the group that may break
 so the space is counted although it is trimmed whenever the body breaks.
 As the last call argument, Prettier breaks all the arguments instead of hugging the arrow.
 One char over and the outputs converge.
-
-## suppressed-for-head-declaration
-
-- Why: semantics (Prettier's output no longer parses)
-- Pin: `tests/fixtures/js/semicolons/suppressed-for-head-declaration.js`
-
-```js
-// input
-for (/* prettier-ignore */ var i   =   1;;) [].sort();
-
-// ours
-for (/* prettier-ignore */ var i   =   1; ;) [].sort();
-
-// prettier
-for (/* prettier-ignore */ var i   =   1;; ;) [].sort();
-```
-
-Prettier's `shouldIgnoredNodePrintSemicolon` lists `VariableDeclaration` unconditionally,
-so a suppressed declaration in a `for` head gets an extra `;` and the head no longer parses (a `for (;;)` head admits exactly two semicolons).
-In the head the declaration has no terminator of its own; we keep it verbatim and let the `for` statement print its separators.
 
 ## suppressed-terminator-per-semi
 
@@ -663,37 +697,9 @@ class C {
 
 A suppression comment protects content; a terminator the formatter owns (a statement's or class member's `;`, the token-class table in AGENTS.md) follows `semi` as it does everywhere else.
 Prettier prints that way for statements whose source had a `;` (its `__contentEnd`), but leaves a `;`-less statement alone (the output above re-parses as `stmt(   )(a) => a`, a syntax error),
-and prints class members, type aliases and `declare function`s whole, `;` included, so `semi: false` keeps a `;` there and `semi: true` never adds one.
+and prints a class property whole under `semi: true`, so it never adds one there (under `semi: false` it drops the source `;` since prettier/prettier#20429),
+and type aliases, `declare function`s, abstract methods and index signatures whole under both, `;` included.
 One rule instead, the statement's, for every terminator-owned node.
-
-## suppressed-source-paren-asi-guard
-
-- Why: semantics (Prettier's output re-parses as a call)
-- Pin: `tests/fixtures/js/semicolons/suppressed-source-paren-asi-guard.js`
-
-```js
-// input (semi: false)
-let x = 1;
-
-// prettier-ignore
-(sourceParen).sort();
-
-// ours
-let x = 1
-
-// prettier-ignore
-;(sourceParen).sort()
-
-// prettier
-let x = 1
-
-// prettier-ignore
-(sourceParen).sort()
-```
-
-A suppressed expression statement prints its source text, which keeps parens the reprint would drop, so the line starts with `(` and needs the `semi: false` ASI guard.
-Prettier's `expressionNeedsAsiProtection` walks the AST's naked left side and never sees the source paren, so its output re-parses as `1(sourceParen)...`.
-We check the verbatim range's first byte instead and print the guard.
 
 ## suppressed-cast-comment-asi-guard
 
@@ -722,23 +728,24 @@ we reuse the reprint path's split (`write_leading_comments_with_asi_guard`, call
 
 ## cast-comment-inside-added-parens
 
-- Why: semantics (Prettier's placement rebinds the cast to the added parens; verified with tsc; prettier/prettier#19645, fixed on main by prettier/prettier#19652)
+- Why: semantics (Prettier's placement rebinds the cast to the added parens; verified with tsc; prettier/prettier#19645, prettier/prettier#19652)
 - Pin: `tests/fixtures/js/comments/type-cast-comment-inside-added-parens.js`
 
 ```js
 // input
-var target = x ? y : /** @type {Document} */ (root).head ?? fallback;
+var p = (/** @type {D} */ (a), b);
 
 // ours
-var target = x ? y : (/** @type {Document} */ (root).head ?? fallback);
+var p = (/** @type {D} */ (a), b);
 
 // prettier
-var target = x ? y : /** @type {Document} */ ((root).head ?? fallback);
+var p = /** @type {D} */ ((a), b);
 ```
 
 A cast comment types the parenthesized expression directly after it.
-When the comment binds to an inner expression and the formatter adds parentheses around the whole (a `??` in a conditional branch, a sequence, a return argument), it prints inside the added pair so the cast keeps its target.
-Printed outside, the cast covers the whole expression and tsc types `root` as its uncast type again (`Property 'head' does not exist on type 'Node'`).
+When the comment binds to an inner expression and the formatter adds parentheses around the whole (a `??` in a conditional branch, a sequence), it prints inside the added pair so the cast keeps its target.
+Printed outside, the cast covers the whole expression and tsc types the inner expression as its uncast type again.
+Prettier keeps it inside for a `??` in a conditional branch since #19652, and still moves it outside a sequence.
 
 ## triple-star-jsdoc-hard-break
 
@@ -770,40 +777,6 @@ Prettier keeps the Markdown hard break in `/**` only, following jsdoc3.
 Tools disagree on `/***`: TypeScript (`isJSDocLikeText`, so editor hovers) treats it as JSDoc, jsdoc3 ignores it.
 Formatting it as JSDoc does not break jsdoc3, which ignores it either way.
 Type cast comments already follow the rule, in Prettier too.
-
-## test-call-comment-order
-
-- Why: invariant (prettier/prettier#20029, prettier/prettier#20043)
-- Pin: `tests/fixtures/js/calls/test-call-comment-order.js`
-
-```js
-// input
-test("x", () => {
-  run();
-}, // first
-// second
-60000);
-
-// ours
-test(
-  "x",
-  () => {
-    run();
-  }, // first
-  // second
-  60000,
-);
-
-// prettier
-test("x", () => {
-  run();
-}, // second // first
-60000);
-```
-
-Prettier's compact test call layout merges and reverses the comments, and is not a fixpoint.
-We fall back to the regular argument layout when comments sit around the arguments, following prettier/prettier#20043.
-A same-line block comment also falls back, the same output as the other special call layouts (React hook, `require`).
 
 ## vitest-test-call
 
@@ -886,52 +859,30 @@ Before an optional call's `?.`, Prettier moves an own-line comment into the argu
 
 ## instantiation-expression-parens
 
-- Why: semantics (Prettier's output no longer parses or changes structure; prettier/prettier#20177, prettier/prettier#20345)
+- Why: semantics (Prettier's output no longer parses; prettier/prettier#20177, prettier/prettier#20345)
 - Pin: `tests/fixtures/ts/parenthesis/instantiation-expression-parens.ts`
 
 ```ts
-// input
-const a = (make<T>)!;
-(make<T>)<U>();
-x = (make<T>) + y;
-export default (class {})<string>;
+// input (the `#p` line in a method of a class declaring `#p`)
 (class {})<string>;
-x = (c ? a : b)<T>;
-x = (y++)<T>;
-x = (a as B)<T>;
+(function () {})<string>;
+x = #p in (make<T>) > y;
 
 // ours
-const a = (make<T>)!;
-(make<T>)<U>();
-x = (make<T>) + y;
-export default (class {})<string>;
 (class {})<string>;
-x = (c ? a : b)<T>;
-x = (y++)<T>;
-x = (a as B)<T>;
+(function () {})<string>;
+x = #p in (make<T>) > y;
 
 // prettier
-const a = make<T>!;
-make<T><U>();
-x = make<T> + y;
-export default class {}<string>;
 class {}<string>;
-x = c ? a : b<T>;
-x = y++<T>;
-x = a as B<T>;
+function () {}<string>;
+x = #p in make<T> > y;
 ```
 
-Prettier drops the parens around an instantiation expression before `!`,
-and the ones that keep a leading `class`/`function` from starting a declaration or statement.
-Fixed in Prettier `main` by prettier/prettier#20177, which we follow except after `export default` (DIVERGENCES.md#export-default-leftmost-parens).
-
-Prettier `main` still drops them before type arguments (`make<T><U>()` does not parse)
-and before a binary `+`, `-`, `<` or `>`-led operator, also when `make<T>` only ends the left operand
-(`make<T> + y` and `a + make<T> - y` parse as `make < T > +y`).
-
-Prettier also drops the parens around an operand that binds looser than the type arguments.
-The type arguments then attach to its last piece only (`c ? a : b<T>`, `a as B<T>`), or the output no longer parses (`y++<T>`).
-Fixed in Prettier `main` by prettier/prettier#20345, which we follow.
+An instantiation expression keeps the parens its output needs to parse.
+Prettier drops the ones that keep a leading `class` / `function` from starting a statement (TypeScript: `Expression expected`),
+and the ones around `make<T>` as the right operand of `#p in` before `>` (`make < T >> y`).
+It keeps the others since prettier/prettier#20177 and prettier/prettier#20345, as we do; after `export default` see DIVERGENCES.md#export-default-leftmost-parens.
 
 ## generic-function-type-after-lt-parens
 
@@ -978,6 +929,8 @@ A function type without type parameters, a constructor type (`<new <T>() => T>f`
   - `externals/prettier/typescript/as/export_default_as.ts`
   - `externals/prettier/typescript/export-default/function_as.ts`
   - `externals/prettier/typescript/satisfies-operators/export-default-as.ts`
+  - `externals/prettier/typescript/instantiation-expression/export-default-class.ts`
+  - `externals/prettier/typescript/instantiation-expression/export-default-function.ts`
 
 ```ts
 // input
@@ -1037,66 +990,26 @@ Prettier also drops them under an ancestor's parens after `export default` (`` e
 and for a sequence or assignment arrow body (`() => ({}.a, 1)`, `() => ({}.a = 1)`),
 but not at statement start or for other arrow bodies.
 
-## inline-logical-chain-indent
-
-- Why: uniform-rule (same construct, same output: a single-link inline chain `a ?? [...]`; prettier/prettier#5183, prettier/prettier#19792)
-- Pin: `tests/fixtures/js/logicals/inline-logical-chain-indent.js`
-
-```js
-// input
-const x = $abilities ?? ["foo", "bar", "bar"] ?? ["foo", "bar", "bar", "veryVeryVeryVeryVeryVeryVeryVeryVeryLongKey"];
-
-// ours
-const x = $abilities ?? ["foo", "bar", "bar"] ?? [
-  "foo",
-  "bar",
-  "bar",
-  "veryVeryVeryVeryVeryVeryVeryVeryVeryLongKey",
-];
-
-// prettier
-const x = $abilities ?? ["foo", "bar", "bar"] ?? [
-    "foo",
-    "bar",
-    "bar",
-    "veryVeryVeryVeryVeryVeryVeryVeryVeryLongKey",
-  ];
-```
-
-When every right side of a logical chain is an inlined object/array/JSX literal, the chain never breaks at an operator.
-Prettier prints a single-link chain without an indent, but a flattened one indents its tail, which only shifts the last literal.
-A chain with a non-inlined right side breaks at the operators and keeps the indent.
-Prettier `main` drops the indent since #19792; the pin (3.9.10) still indents.
-
 ## text-display-width
 
 - Why: uniform-rule (text width is the display width; oxc#23863, prettier/prettier#19538)
 - Pin: `tests/fixtures/js/unicode/text-display-width.js`
 
 ```js
-// input (printWidth 80)
-export default moment.defineLocale("bo", {
-  monthsShort: "ཟླ་1_ཟླ་2_ཟླ་3_ཟླ་4_ཟླ་5_ཟླ་6_ཟླ་7_ཟླ་8_ཟླ་9_ཟླ་10_ཟླ་11_ཟླ་12".split("_"),
-});
+// input (printWidth 100; the string is NBSP and ZWNJ (`U+200C`) pairs, as an email preview pads)
+const preview = " ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌";
 
 // ours
-export default moment.defineLocale("bo", {
-  monthsShort: "ཟླ་1_ཟླ་2_ཟླ་3_ཟླ་4_ཟླ་5_ཟླ་6_ཟླ་7_ཟླ་8_ཟླ་9_ཟླ་10_ཟླ་11_ཟླ་12".split("_"),
-});
+const preview = " ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌";
 
 // prettier
-export default moment.defineLocale("bo", {
-  monthsShort:
-    "ཟླ་1_ཟླ་2_ཟླ་3_ཟླ་4_ཟླ་5_ཟླ་6_ཟླ་7_ཟླ་8_ཟླ་9_ཟླ་10_ཟླ་11_ཟླ་12".split("_"),
-});
+const preview =
+  " ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌";
 ```
 
 Zero-width characters count as 0 toward the print width (FORMATTER_POLICY.md "Text width"), so the line above fits.
-Prettier counts the Tibetan subjoined letter `ླ` (`U+0FB3`, a nonspacing mark) as 1 and breaks.
-Fixed in Prettier `main` by prettier/prettier#19538, which we follow.
-
-Format characters (`U+200B..U+200F`, `U+FEFF`) are 1 on Prettier `main` too,
-so a string padded with NBSP / ZWNJ pairs, as in an email preview, breaks in Prettier and stays on one line in ours.
+Prettier counts nonspacing marks as 0 since prettier/prettier#19538 (the Tibetan `ླ`, `U+0FB3`),
+but format characters (`U+200B..U+200F`, `U+FEFF`) still as 1, so it breaks.
 
 Prettier measures some width heuristics by a JS `.length`, so a wide character counts 1 there and 2 in ours:
 a lone call argument of 14 CJK characters (`translateTheThing(漢字…)`) is short for Prettier's `printWidth * 0.25` and not for ours,

@@ -144,9 +144,13 @@ fn is_test_call<'a>(
     call_node: &AstNode<'a>,
     ctx: &LintContext<'a>,
 ) -> bool {
+    let Some(jest_node) = PossibleJestNode::from_call_expression(call_node, call_expr, ctx) else {
+        return false;
+    };
+
     is_type_of_jest_fn_call(
         call_expr,
-        &PossibleJestNode { node: call_node, original: None },
+        &jest_node,
         ctx,
         &[JestFnKind::General(JestGeneralFnKind::Test)],
     )

@@ -59,9 +59,8 @@ impl Context {
         let default = if *turned_on_by_default { "true" } else { "false" };
         let type_aware = if *is_tsgolint_rule { "true" } else { "false" };
         let fix = autofix.to_string();
-        let upstream_line = upstream_docs_url(plugin, name)
-            .map(|url| format!("upstream: \"{url}\"\n"))
-            .unwrap_or_default();
+        let upstream_line =
+            upstream_docs_url(plugin, name).map_or_default(|url| format!("upstream: \"{url}\"\n"));
 
         let file = file!();
         #[cfg(windows)]
@@ -115,8 +114,7 @@ const source = `{}`;{}
                 .metadata
                 .as_ref()
                 .and_then(|m| m.description.as_ref())
-                .map(|desc| format!("\n{desc}\n"))
-                .unwrap_or_default();
+                .map_or_default(|desc| format!("\n{desc}\n"));
             if !config_section.trim().is_empty() {
                 writeln!(self.page, "\n## Configuration\n{section_description}{config_section}")?;
             }
@@ -400,7 +398,7 @@ fn ordinal(n: usize) -> String {
         11..=13 => "th",
         _ => match n % 10 {
             1 => "st",
-            2 => "nd", // spellchecker:disable-line
+            2 => "nd",
             3 => "rd",
             _ => "th",
         },

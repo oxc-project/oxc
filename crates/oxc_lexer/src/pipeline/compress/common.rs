@@ -1,9 +1,30 @@
-use oxc_simd::{Cpu, cpu_multiversion, cpu_version};
+use oxc_simd::{Cpu, VecData128, cpu_multiversion, cpu_version};
 use oxc_span::Span;
 
 use crate::{error::DiagCode, token::tk};
 
 use crate::pipeline::lanes::Lanes;
+
+/// For each 8-bit "keep" mask, the indexes of its set bits in ascending order, padded with `0x80`.
+///
+/// Used as a byte shuffle control, to squeeze 8 staged kinds down to the ones which survive.
+/// `0x80` zeroes its lane on every CPU, and the next group's store lands on top of those lanes.
+pub(super) static BCOMPACT: [VecData128; 256] = {
+    let mut t = [VecData128::from_bytes([0x80; 16]); 256];
+    let mut mask = 0usize;
+    while mask < 256 {
+        let (mut b, mut k) = (0usize, 0usize);
+        while b < 8 {
+            if mask & (1 << b) != 0 {
+                t[mask].as_bytes_mut()[k] = b as u8;
+                k += 1;
+            }
+            b += 1;
+        }
+        mask += 1;
+    }
+    t
+};
 
 #[cpu_multiversion]
 #[inline(always)]

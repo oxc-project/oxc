@@ -43,3 +43,28 @@ fn class_set_character_values_and_ranges() {
         assert_eq!(error.labels[0].len(), span.size());
     }
 }
+
+#[test]
+fn range_endpoints_do_not_need_temporary_allocations() {
+    for pattern in ["[a-z]", r"[\x30-\x39\u0061-\u007a]"] {
+        // Unicode-set parsing already keeps range endpoints on the stack. The other
+        // modes should produce the same AST without retaining temporary character boxes.
+        let expected_allocator = Allocator::default();
+        let expected =
+            LiteralParser::new(&expected_allocator, pattern, Some("v"), Options::default())
+                .parse()
+                .unwrap();
+        for flags in ["", "u"] {
+            let allocator = Allocator::default();
+            let parsed = LiteralParser::new(&allocator, pattern, Some(flags), Options::default())
+                .parse()
+                .unwrap();
+            assert_eq!(format!("{parsed:?}"), format!("{expected:?}"), "/{pattern}/{flags}");
+            assert_eq!(
+                allocator.used_bytes(),
+                expected_allocator.used_bytes(),
+                "/{pattern}/{flags}"
+            );
+        }
+    }
+}

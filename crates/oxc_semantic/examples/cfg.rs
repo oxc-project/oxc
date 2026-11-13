@@ -109,12 +109,9 @@ fn main() -> std::io::Result<()> {
             format!(
                 "bb{i}: {{\n{}\n---\n{}\n}}",
                 it.lines().map(|x| format!("\t{}", x.trim())).join("\n"),
-                ast_nodes_by_block
-                    .get(&i)
-                    .map(|nodes| {
-                        nodes.iter().map(|node| format!("{}", node.kind().debug_name())).join("\n")
-                    })
-                    .unwrap_or_default()
+                ast_nodes_by_block.get(&i).map_or_default(|nodes| {
+                    nodes.iter().map(|node| format!("{}", node.kind().debug_name())).join("\n")
+                })
             )
         })
         .join("\n\n");

@@ -5,9 +5,10 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use rustc_hash::FxHashSet;
 
 use crate::{
-    AstNode, ast_util::get_declaration_of_variable, context::LintContext,
+    AstNode, ast_util::get_symbol_id_of_variable, context::LintContext,
     globals::GLOBAL_OBJECT_NAMES, rule::Rule,
 };
 
@@ -94,28 +95,34 @@ impl Rule for NoDocumentCookie {
 }
 
 fn is_document_cookie_reference<'a, 'b>(
-    expr: &'a Expression<'b>,
+    mut expr: &'a Expression<'b>,
     ctx: &'a LintContext<'b>,
 ) -> bool {
-    match expr {
-        Expression::Identifier(ident) => {
-            if ident.name.as_str() != "document" {
-                let Some(var_decl) = get_declaration_of_variable(ident, ctx) else {
-                    return false;
-                };
-
-                let AstKind::VariableDeclarator(var_decl) = var_decl.kind() else {
-                    return false;
-                };
-
-                let Some(init) = &var_decl.init else {
-                    return false;
-                };
-
-                return is_document_cookie_reference(init, ctx);
-            }
-            true
+    let mut visited = FxHashSet::default();
+    while let Expression::Identifier(ident) = expr {
+        if ident.name.as_str() == "document" {
+            return true;
         }
+
+        let Some(symbol_id) = get_symbol_id_of_variable(ident, ctx) else {
+            return false;
+        };
+        if !visited.insert(symbol_id) {
+            return false;
+        }
+
+        let declaration_id = ctx.scoping().symbol_declaration(symbol_id);
+        let AstKind::VariableDeclarator(var_decl) = ctx.nodes().kind(declaration_id) else {
+            return false;
+        };
+
+        let Some(init) = &var_decl.init else {
+            return false;
+        };
+        expr = init;
+    }
+
+    match expr {
         match_member_expression!(Expression) => {
             let member_expr = expr.to_member_expression();
             let Some(static_prop_name) = member_expr.static_property_name() else {
@@ -153,6 +160,10 @@ fn test() {
         r#"document[cookie] = "foo=bar""#,
         r#"const CONSTANTS_COOKIE = "cookie";
             document[CONSTANTS_COOKIE] = "foo=bar";"#,
+        "var a = a; a.cookie = 0;",
+        "var a = b; var b = a; a.cookie = 0;",
+        "var a = b; var b = c; var c = a; a.cookie = 0;",
+        "var a = b; var b = b; a.cookie = 0;",
     ];
 
     let fail = vec![
@@ -166,6 +177,8 @@ fn test() {
         r#"let doc = document; doc.cookie = "foo=bar""#,
         r#"const doc = globalThis.document; doc.cookie = "foo=bar""#,
         r#"window.document.cookie = "foo=bar""#,
+        "const doc = globalThis.document; { const alias = doc; { const doc = alias; doc.cookie = 0; } }",
+        "var a = a; a.cookie = 0; document.cookie = 0;",
     ];
 
     Tester::new(NoDocumentCookie::NAME, NoDocumentCookie::PLUGIN, pass, fail).test_and_snapshot();

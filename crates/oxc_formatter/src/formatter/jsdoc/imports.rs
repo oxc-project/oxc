@@ -31,7 +31,7 @@ fn parse_import_tag(comment_text: &str) -> Option<ImportInfo> {
         Some(b'"' | b'\'') => module_part.as_bytes()[0] as char,
         _ => return None,
     };
-    let module_path = module_part.strip_prefix(quote)?.strip_suffix(quote)?;
+    let module_path = module_part.strip_circumfix(quote, quote)?;
     if module_path.is_empty() {
         return None;
     }

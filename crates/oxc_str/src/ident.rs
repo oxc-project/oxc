@@ -10,13 +10,16 @@ use std::{
     slice, str,
 };
 
+#[cfg(feature = "serialize")]
+use serde::{Serialize, Serializer as SerdeSerializer};
+
 use oxc_allocator::{
     Allocator, ArenaStringBuilder, CloneIn, CloneInSemanticIds, Dummy, FromIn, GetAllocator,
 };
+use oxc_span::ContentEq;
+
 #[cfg(feature = "serialize")]
 use oxc_estree::{ESTree, JsonSafeString, Serializer as ESTreeSerializer};
-#[cfg(feature = "serialize")]
-use serde::{Serialize, Serializer as SerdeSerializer};
 
 use crate::{
     CompactStr, JSStr, Str,
@@ -455,6 +458,13 @@ impl Debug for Ident<'_> {
     }
 }
 
+impl ContentEq for Ident<'_> {
+    #[inline]
+    fn content_eq(&self, other: &Self) -> bool {
+        self == other
+    }
+}
+
 impl<'new_alloc> CloneIn<'new_alloc> for Ident<'_> {
     type Cloned = Ident<'new_alloc>;
 
@@ -632,9 +642,9 @@ mod test {
     #[test]
     fn ident_size() {
         #[cfg(target_pointer_width = "64")]
-        assert_eq!(std::mem::size_of::<Ident<'_>>(), 16);
+        assert_eq!(size_of::<Ident<'_>>(), 16);
         #[cfg(target_pointer_width = "32")]
-        assert_eq!(std::mem::size_of::<Ident<'_>>(), 12);
+        assert_eq!(size_of::<Ident<'_>>(), 12);
     }
 
     #[test]
@@ -734,7 +744,7 @@ mod test {
     fn ident_deref() {
         let ident = Ident::from("hello");
         // Should be able to call str methods
-        assert!(ident.starts_with("hel")); // spellchecker:disable-line
+        assert!(ident.starts_with("hel"));
         assert_eq!(ident.len(), 5);
     }
 

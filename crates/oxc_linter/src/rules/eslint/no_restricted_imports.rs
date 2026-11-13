@@ -3714,8 +3714,8 @@ fn test_invalid_regex_configuration() {
         for regex in ["^(?!snappyjs/)[^./][^/]*/.+$", "["] {
             let pattern = serde_json::json!({field: regex});
             for config in [
-                serde_json::json!([{"patterns": [pattern.clone()]}]),
-                serde_json::json!({"patterns": [pattern.clone()]}),
+                serde_json::json!([{"patterns": [pattern]}]),
+                serde_json::json!({"patterns": [pattern]}),
             ] {
                 let error = NoRestrictedImports::from_configuration(config).unwrap_err();
                 assert!(error.to_string().contains("regex parse error"), "{error}");

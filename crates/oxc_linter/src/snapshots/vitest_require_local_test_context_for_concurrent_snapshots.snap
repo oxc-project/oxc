@@ -84,3 +84,55 @@ source: crates/oxc_linter/src/tester.rs
    ·                                      ───────────────────────────────────────────────────────
    ╰────
   help: Use local Test Context instead
+
+  ⚠ vitest(require-local-test-context-for-concurrent-snapshots): Require local Test Context for concurrent snapshot tests
+   ╭─[require_local_test_context_for_concurrent_snapshots.tsx:2:50]
+ 1 │ import { test as customTest } from 'vitest';
+ 2 │             customTest.concurrent('foo', () => { expect(true).toMatchSnapshot(); });
+   ·                                                  ──────────────────────────────
+   ╰────
+  help: Use local Test Context instead
+
+  ⚠ vitest(require-local-test-context-for-concurrent-snapshots): Require local Test Context for concurrent snapshot tests
+   ╭─[require_local_test_context_for_concurrent_snapshots.tsx:3:50]
+ 2 │             const customTest = test.extend({});
+ 3 │             customTest.concurrent('foo', () => { expect(true).toMatchSnapshot(); });
+   ·                                                  ──────────────────────────────
+   ╰────
+  help: Use local Test Context instead
+
+  ⚠ vitest(require-local-test-context-for-concurrent-snapshots): Require local Test Context for concurrent snapshot tests
+   ╭─[require_local_test_context_for_concurrent_snapshots.tsx:5:17]
+ 4 │             customTest.concurrent.only('foo', () => {
+ 5 │                 expect(true).toMatchInlineSnapshot();
+   ·                 ────────────────────────────────────
+ 6 │             });
+   ╰────
+  help: Use local Test Context instead
+
+  ⚠ vitest(require-local-test-context-for-concurrent-snapshots): Require local Test Context for concurrent snapshot tests
+   ╭─[require_local_test_context_for_concurrent_snapshots.tsx:4:17]
+ 3 │             customTest.concurrent.each([1])('foo', () => {
+ 4 │                 expect(true).toMatchSnapshot();
+   ·                 ──────────────────────────────
+ 5 │             });
+   ╰────
+  help: Use local Test Context instead
+
+  ⚠ vitest(require-local-test-context-for-concurrent-snapshots): Require local Test Context for concurrent snapshot tests
+   ╭─[require_local_test_context_for_concurrent_snapshots.tsx:4:43]
+ 3 │             customDescribe.concurrent('suite', () => {
+ 4 │                 customTest('foo', () => { expect(true).toMatchSnapshot(); });
+   ·                                           ──────────────────────────────
+ 5 │             });
+   ╰────
+  help: Use local Test Context instead
+
+  ⚠ vitest(require-local-test-context-for-concurrent-snapshots): Require local Test Context for concurrent snapshot tests
+   ╭─[require_local_test_context_for_concurrent_snapshots.tsx:4:17]
+ 3 │             customTest.only.concurrent('foo', () => {
+ 4 │                 expect(true).toMatchSnapshot();
+   ·                 ──────────────────────────────
+ 5 │             });
+   ╰────
+  help: Use local Test Context instead

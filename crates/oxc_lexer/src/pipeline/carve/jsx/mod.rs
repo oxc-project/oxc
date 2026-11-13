@@ -1,9 +1,11 @@
+use std::mem;
+
 use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
 
 use crate::{error::DiagCode, token::tk};
 
 use crate::pipeline::{
-    bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0, bm_set},
+    bitmap::Bitmap,
     bytes::{is_digit, is_id_start, is_word},
     disambiguate::{TokensView, not_operator_position, prev_sig},
     find::find,
@@ -50,7 +52,7 @@ enum JMode {
 }
 
 #[derive(Clone, Copy)]
-struct JFrame {
+pub(in crate::pipeline) struct JFrame {
     kind: JFrameKind,
     /// Mode to restore when this frame pops.
     parent: JMode,
@@ -84,13 +86,13 @@ enum JFrameKind {
 pub(super) unsafe fn carve_jsx(
     srcs: &[u8],
     n: usize,
-    st: *mut u64,
+    st: Bitmap,
     kind: *mut u8,
-    opch: *mut u64,
-    word: *const u64,
-    digit: *mut u64,
-    dot: *mut u64,
-    kwinit: *mut u64,
+    opch: Bitmap,
+    word: Bitmap,
+    digit: Bitmap,
+    dot: Bitmap,
+    kwinit: Bitmap,
     ts: bool,
     lanes: &mut Lanes,
     cpu: impl Cpu,
@@ -101,16 +103,18 @@ pub(super) unsafe fn carve_jsx(
     // legacy comments come in, and `<!--` is caught free on the `<` path), so a module or a
     // JSX script without HTML comments never pays; a `-->` before any `<!--` stays operators.
     let mut html_close = false;
-    let mut stack: Vec<JFrame> = Vec::with_capacity(64);
+    // Reuse the previous lex's allocation, which matters for small inputs
+    let mut stack = mem::take(&mut lanes.jsx_stack);
+    stack.clear();
     let mut mode = JMode::Js;
     let mut text_start = 0usize;
     let mut i = 0usize;
     if n >= 2 && *src == b'#' && *src.add(1) == b'!' {
         let end = find_line_terminator(src, n, 2, cpu);
         *kind = tk!(Hashbang);
-        bm_clear_range(st, 1, end - 1, cpu);
+        st.clear_range(1, end - 1, cpu);
         if end < n {
-            bm_set(st, end, cpu);
+            st.set(end, cpu);
         }
         i = end;
     }
@@ -309,7 +313,7 @@ pub(super) unsafe fn carve_jsx(
                 // Tag/attr names that spell reserved words must stay IDENT:
                 // clear their `kwinit` so the `keywords` pass skips them.
                 if s > i {
-                    bm_clear_range(kwinit, i, s - 1, cpu);
+                    kwinit.clear_range(i, s - 1, cpu);
                     jsx_glue_hyphens(src, n, st, opch, word, i, s, cpu);
                 }
                 let c = *src.add(s);
@@ -470,7 +474,7 @@ pub(super) unsafe fn carve_jsx(
                         let end = if e < n { e + 1 } else { n };
                         *kind.add(s) = tk!(String);
                         if end > s + 1 {
-                            bm_clear_range(st, s + 1, end - 1, cpu);
+                            st.clear_range(s + 1, end - 1, cpu);
                         }
                         let be = if e < n {
                             e
@@ -560,14 +564,14 @@ pub(super) unsafe fn carve_jsx(
                 if runend > text_start {
                     // One JTEXT token for the run; neutralize its start byte
                     // against coalesce/keywords and clear the interior.
-                    bm_set(st, text_start, cpu);
+                    st.set(text_start, cpu);
                     *kind.add(text_start) = tk!(JsxText);
-                    bm_clear(opch, text_start, cpu);
-                    bm_clear(digit, text_start, cpu);
-                    bm_clear(dot, text_start, cpu);
-                    bm_clear(kwinit, text_start, cpu);
+                    opch.clear(text_start, cpu);
+                    digit.clear(text_start, cpu);
+                    dot.clear(text_start, cpu);
+                    kwinit.clear(text_start, cpu);
                     if runend > text_start + 1 {
-                        bm_clear_range(st, text_start + 1, runend - 1, cpu);
+                        st.clear_range(text_start + 1, runend - 1, cpu);
                     }
                 }
                 if s >= n {
@@ -590,7 +594,7 @@ pub(super) unsafe fn carve_jsx(
                 } else if c == b'>' || c == b'}' {
                     // A stray `>`/`}` ends the run; clear its opch so
                     // coalesce can't fuse adjacent strays into `>>`.
-                    bm_clear(opch, s, cpu);
+                    opch.clear(s, cpu);
                     lanes.push_diag(s as u32, 1, DiagCode::JsxTextInvalidCharacter);
                     text_start = s + 1;
                     i = s + 1;
@@ -633,7 +637,7 @@ pub(super) unsafe fn carve_jsx(
                             };
                         }
                         if gp > tpos + 1 {
-                            bm_clear_range(kwinit, tpos + 1, gp - 1, cpu);
+                            kwinit.clear_range(tpos + 1, gp - 1, cpu);
                             // `</data-x>`: the name region holds no
                             // expression container, so hyphens in it are
                             // always part of the JSXIdentifier.
@@ -682,7 +686,7 @@ pub(super) unsafe fn carve_jsx(
                         i = s + 1;
                     } else {
                         // malformed lone `<` in text - clear opch, no `<<` fusion
-                        bm_clear(opch, s, cpu);
+                        opch.clear(s, cpu);
                         text_start = s + 1;
                         i = s + 1;
                     }
@@ -705,6 +709,7 @@ pub(super) unsafe fn carve_jsx(
             JFrameKind::TemplateSub => {}
         }
     }
+    lanes.jsx_stack = stack;
 }
 
 /// Cold: misc_pre read a backslash-u in JSX text as an escape running into the container at s.
@@ -714,25 +719,25 @@ pub(super) unsafe fn carve_jsx(
 unsafe fn restore_escaped_container(
     src: *const u8,
     n: usize,
-    st: *mut u64,
-    word: *const u64,
+    st: Bitmap,
+    word: Bitmap,
     kind: *mut u8,
     s: usize,
 ) {
     let cpu = BASELINE;
-    bm_set(st, s, cpu);
+    st.set(s, cpu);
     let mut i = s + 1;
-    if bm_get(word, i, cpu) {
-        bm_set(st, i, cpu);
-        i = bm_next0(word, i, n, cpu);
+    if word.get(i, cpu) {
+        st.set(i, cpu);
+        i = word.next0(i, n, cpu);
     }
     if *src.add(i) == b'\\' && *src.add(i + 1) == b'u' {
-        bm_set(st, i, cpu);
+        st.set(i, cpu);
         *kind.add(i) = tk!(IdentEscaped);
         i = scan_ident_esc(src, n, i, cpu);
     }
     if *src.add(i) == b'}' {
-        bm_set(st, i, cpu);
+        st.set(i, cpu);
     }
 }
 
@@ -740,7 +745,7 @@ unsafe fn restore_escaped_container(
 /// its `opch` bit so `coalesce` cannot re-fuse it (`<div>=` into `>=`).
 #[cpu_multiversion]
 #[inline(always)]
-unsafe fn jsx_punct(kind: *mut u8, opch: *mut u64, off: usize, k: u8, cpu: impl Cpu) {
+unsafe fn jsx_punct(kind: *mut u8, opch: Bitmap, off: usize, k: u8, cpu: impl Cpu) {
     *kind.add(off) = k;
-    bm_clear(opch, off, cpu);
+    opch.clear(off, cpu);
 }

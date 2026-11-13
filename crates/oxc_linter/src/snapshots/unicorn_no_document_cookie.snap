@@ -73,3 +73,19 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use the Cookie Store API or a cookie library instead.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Cookie_Store_API
+
+  ⚠ unicorn(no-document-cookie): Do not use `document.cookie` directly.
+   ╭─[no_document_cookie.tsx:1:76]
+ 1 │ const doc = globalThis.document; { const alias = doc; { const doc = alias; doc.cookie = 0; } }
+   ·                                                                            ──────────
+   ╰────
+  help: Use the Cookie Store API or a cookie library instead.
+  note: https://developer.mozilla.org/en-US/docs/Web/API/Cookie_Store_API
+
+  ⚠ unicorn(no-document-cookie): Do not use `document.cookie` directly.
+   ╭─[no_document_cookie.tsx:1:26]
+ 1 │ var a = a; a.cookie = 0; document.cookie = 0;
+   ·                          ───────────────
+   ╰────
+  help: Use the Cookie Store API or a cookie library instead.
+  note: https://developer.mozilla.org/en-US/docs/Web/API/Cookie_Store_API

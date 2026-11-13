@@ -367,18 +367,15 @@ impl ExtensionsConfig {
             value.get("checkTypeImports").and_then(Value::as_bool).unwrap_or_default();
 
         // Parse pathGroupOverrides if present
-        let path_group_overrides = value
-            .get("pathGroupOverrides")
-            .and_then(Value::as_array)
-            .map(|overrides| {
+        let path_group_overrides =
+            value.get("pathGroupOverrides").and_then(Value::as_array).map_or_default(|overrides| {
                 overrides
                     .iter()
                     .filter_map(|override_val| {
                         serde_json::from_value::<PathGroupOverride>(override_val.clone()).ok()
                     })
                     .collect::<Vec<_>>()
-            })
-            .unwrap_or_default();
+            });
 
         // Pre-allocate HashMap with estimated capacity for better performance
         let capacity = if let Some(obj) = value.as_object() {

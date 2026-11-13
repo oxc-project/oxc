@@ -319,9 +319,20 @@ pub fn get_symbol_id_of_variable(
 }
 
 pub fn extract_regex_flags<'a>(args: &'a ArenaVec<'a, Argument<'a>>) -> Option<RegExpFlags> {
-    if args.len() <= 1 {
+    if args.is_empty() {
         return Some(RegExpFlags::empty());
     }
+
+    if args.len() == 1 {
+        return match args[0].as_expression()?.get_inner_expression() {
+            Expression::RegExpLiteral(regexp_literal) => Some(regexp_literal.regex.flags),
+            expr if expr.is_literal() || matches!(expr, Expression::TemplateLiteral(_)) => {
+                Some(RegExpFlags::empty())
+            }
+            _ => None,
+        };
+    }
+
     let flag_arg = match &args[1] {
         Argument::StringLiteral(flag_arg) => flag_arg.value,
         Argument::TemplateLiteral(template) => template.single_quasi()?,
@@ -451,11 +462,7 @@ pub fn is_new_expression<'a>(
         return false;
     };
 
-    if !names.contains(&ident.name.as_str()) {
-        return false;
-    }
-
-    true
+    names.contains(&ident.name.as_str())
 }
 
 /// Returns the method span and UTF-8 name for rules matching known method names.

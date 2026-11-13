@@ -2,22 +2,14 @@
 //! `*_never_flagged` counterpart: valid input must emit nothing.
 
 #![cfg(target_endian = "little")]
-#![expect(
-    clippy::cast_possible_truncation,
-    clippy::unreadable_literal,
-    reason = "test helpers: lengths fit u32; the fuzz PRNG uses raw constants"
-)]
 
 use std::str;
 
-use oxc_lexer::{DiagCode, Diagnostic, LexOptions, PAD, TokenKind, testing::lex_with_cpu};
+use oxc_lexer::{DiagCode, Diagnostic, LexOptions, TokenKind, testing::lex_with_cpu};
 use oxc_simd::{DynCpu, test_cpus};
 
 fn diags(code: &str, cpu: DynCpu) -> Vec<Diagnostic> {
-    let mut buf = code.as_bytes().to_vec();
-    let len = buf.len() as u32;
-    buf.resize(buf.len() + PAD, 0); // lexer over-reads up to PAD bytes past `len`
-    let res = lex_with_cpu(&buf, len, LexOptions::default(), cpu);
+    let res = lex_with_cpu(code, LexOptions::default(), cpu);
     res.diagnostics().to_vec()
 }
 
@@ -26,20 +18,14 @@ fn codes(code: &str, cpu: DynCpu) -> Vec<DiagCode> {
 }
 
 fn codes_jsx(code: &str, cpu: DynCpu) -> Vec<DiagCode> {
-    let mut buf = code.as_bytes().to_vec();
-    let len = buf.len() as u32;
-    buf.resize(buf.len() + PAD, 0);
     let opts = LexOptions { jsx: true, ..Default::default() };
-    let res = lex_with_cpu(&buf, len, opts, cpu);
+    let res = lex_with_cpu(code, opts, cpu);
     res.diagnostics().iter().map(|d| d.code).collect()
 }
 
 fn codes_tsx(code: &str, cpu: DynCpu) -> Vec<DiagCode> {
-    let mut buf = code.as_bytes().to_vec();
-    let len = buf.len() as u32;
-    buf.resize(buf.len() + PAD, 0);
     let opts = LexOptions { jsx: true, ts: true, ..Default::default() };
-    let res = lex_with_cpu(&buf, len, opts, cpu);
+    let res = lex_with_cpu(code, opts, cpu);
     res.diagnostics().iter().map(|d| d.code).collect()
 }
 
@@ -382,7 +368,6 @@ fn invalid_unicode_character(cpu: DynCpu) {
 fn valid_unicode_never_flagged(cpu: DynCpu) {
     // identifier chars, whitespace, and anything inside literal content
     for src in [
-        // spellchecker:disable-next-line
         "var caf\u{E9} = 1;",                   // é: ID_Continue
         "var \u{4F60}\u{597D} = 1;",            // CJK idents
         "let \u{3C0} = 3.14;",                  // π
@@ -398,11 +383,8 @@ fn valid_unicode_never_flagged(cpu: DynCpu) {
 }
 
 fn diags_bytes(code: &[u8], cpu: DynCpu) -> Vec<Diagnostic> {
-    let mut buf = code.to_vec();
-    let len = buf.len() as u32;
-    buf.resize(buf.len() + PAD, 0);
     let opts = LexOptions { validate_utf8: true, ..Default::default() };
-    let res = lex_with_cpu(&buf, len, opts, cpu);
+    let res = lex_with_cpu(code, opts, cpu);
     res.diagnostics().to_vec()
 }
 
@@ -433,11 +415,29 @@ fn invalid_utf8(cpu: DynCpu) {
 }
 
 #[test_cpus]
+fn invalid_utf8_in_tsx_type_arguments(cpu: DynCpu) {
+    let opts = LexOptions { jsx: true, ts: true, validate_utf8: true, ..Default::default() };
+
+    // The content-blind TSX type-arg skip drops diagnostics inside the type-argument list,
+    // but must not drop UTF-8 validation's diagnostic
+    let res = lex_with_cpu(b"const el = <Foo<'\xFF'> x/>;", opts, cpu);
+    let d = res.diagnostics();
+    assert_eq!(d.len(), 1, "{d:?}");
+    assert_eq!((d[0].off, d[0].len, d[0].code), (17, 1, DiagCode::InvalidUtf8));
+
+    // A raw U+FFFD at code level is a binary-file error, not a UTF-8 validation error,
+    // but it's also retained in type arguments
+    let res = lex_with_cpu("const el = <Foo<\u{FFFD}> x/>;", opts, cpu);
+    let d = res.diagnostics();
+    assert_eq!(d.len(), 1, "{d:?}");
+    assert_eq!((d[0].off, d[0].len, d[0].code), (16, 3, DiagCode::InvalidUtf8));
+}
+
+#[test_cpus]
 fn valid_utf8_never_flagged(cpu: DynCpu) {
     let codes_v =
         |s: &str| diags_bytes(s.as_bytes(), cpu).iter().map(|d| d.code).collect::<Vec<_>>();
     for src in [
-        // spellchecker:disable-next-line
         "let caf\u{e9} = 1;",        // 2-byte
         "x = '\u{1F600}';",          // 4-byte emoji in string
         "a\u{a0}b",                  // NBSP (ws-reclass path preserved)
@@ -457,12 +457,14 @@ fn utf8_fuzz_against_std(cpu: DynCpu) {
     // Deterministic LCG fuzz against std::str::from_utf8: a diag iff std
     // errors, offset == valid_up_to(), len == error_len() when std has one.
     let mut s: u64 = 0x243F_6A88_85A3_08D3;
+    #[expect(clippy::unreadable_literal)]
     for _ in 0..4000 {
         let mut buf = vec![b' ']; // keep offset 0 clear of hashbang/BOM handling
         s = s.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
         let len = 3 + (s >> 59) as usize;
         for _ in 0..len {
             s = s.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            #[expect(clippy::cast_possible_truncation)]
             let r = (s >> 33) as u8;
             buf.push(if r & 1 == 0 { 0x40 + (r >> 3) } else { r });
         }
@@ -650,10 +652,7 @@ fn template_cooked_invalid_marker(cpu: DynCpu) {
     // A NotEscapeSequence makes the cooked value None; legality depends on
     // tagged-ness, so the span carries a marker bit, not a diagnostic.
     let get = |code: &str| -> Vec<bool> {
-        let mut buf = code.as_bytes().to_vec();
-        let len = buf.len() as u32;
-        buf.resize(buf.len() + PAD, 0);
-        let res = lex_with_cpu(&buf, len, LexOptions::default(), cpu);
+        let res = lex_with_cpu(code, LexOptions::default(), cpu);
         res.templates().iter().map(|t| t.cooked_invalid()).collect()
     };
     assert_eq!(get(r"t = `\uZZ`;"), [true]); // bad unicode escape
@@ -751,11 +750,8 @@ fn valid_jsx_never_flagged(cpu: DynCpu) {
 }
 
 fn diags_jsx(code: &str, cpu: DynCpu) -> Vec<Diagnostic> {
-    let mut buf = code.as_bytes().to_vec();
-    let len = buf.len() as u32;
-    buf.resize(buf.len() + PAD, 0);
     let opts = LexOptions { jsx: true, ..Default::default() };
-    let res = lex_with_cpu(&buf, len, opts, cpu);
+    let res = lex_with_cpu(code, opts, cpu);
     res.diagnostics().to_vec()
 }
 
@@ -871,11 +867,8 @@ fn value_lanes_hold_exactly_one_entry_per_value_token(cpu: DynCpu) {
             9,
         ),
     ] {
-        let mut buf = code.as_bytes().to_vec();
-        let len = buf.len() as u32;
-        buf.resize(buf.len() + PAD, 0);
         let opts = LexOptions { ts, ..Default::default() };
-        let res = lex_with_cpu(&buf, len, opts, cpu);
+        let res = lex_with_cpu(code, opts, cpu);
         assert_eq!(res.numbers().len(), numbers, "numbers lane for {code:?}");
         assert_eq!(res.atoms().len(), atoms, "atoms lane for {code:?}");
         assert_eq!(res.diagnostics().len(), 0, "diagnostics for {code:?}: {:?}", res.diagnostics());
@@ -895,10 +888,7 @@ fn block_comment_star_plus_slash_is_not_a_terminator(cpu: DynCpu) {
             1,
         ),
     ] {
-        let mut buf = code.as_bytes().to_vec();
-        let len = buf.len() as u32;
-        buf.resize(buf.len() + PAD, 0);
-        let res = lex_with_cpu(&buf, len, LexOptions::default(), cpu);
+        let res = lex_with_cpu(code, LexOptions::default(), cpu);
         let kinds = res.kinds();
         let non_trivia = kinds.iter().filter(|k| !k.is_trivia() && **k != TokenKind::Eof).count();
         assert_eq!(non_trivia, tokens, "{code:?}: {kinds:?}");
