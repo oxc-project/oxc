@@ -8,6 +8,7 @@ Vendored from the complete published `@babel/runtime@8.0.8` package, including a
 
 - `setFunctionName.js` and `esm/setFunctionName.js` preserve `"[]"` for `Symbol("")`, matching native computed method names. Babel 8.0.8 returns an empty name. These files are unchanged from Oxc's existing helpers and are the only patches to the upstream helper tree.
 - Oxc retains its three TypeScript legacy decorator helpers: `decorate`, `decorateParam`, and `decorateMetadata`. They are adapted from TypeScript and are absent from Babel 8.
+- The five standard decorator helpers `decorateElement`, `decoratorStart`, `runInitializers`, `decoratorMetadata`, and `setClassName` are also Oxc-owned. Their CommonJS, ESM, and coverage runtime copies are generated from the shared sources in `scripts/helpers/`. All eight Oxc-owned helpers are listed under `customHelpers` in `upstream.json`.
 - The 26 older Babel helpers removed in Babel 8 remain available for compatibility with previously generated code. Their names are listed in `upstream.json`; they are outside the Babel 8 source snapshot.
 - Package identity, Oxc's version and Node.js requirements, and the `src/` layout remain Oxc-specific. Babel's export targets and `sideEffects: false` are synchronized while preserving Oxc's existing conditional-export precedence; explicit `helpers/esm/*` and older package exports remain supported.
 
@@ -19,9 +20,17 @@ Download and extract a specific published version of `@babel/runtime`, then run 
 node scripts/sync.mjs /path/to/extracted/babel-runtime
 ```
 
-The script copies every unpatched upstream helper and the license, updates exports and the hash manifest, and preserves compatibility helpers and recorded local patches. Before writing, it checks that each patched helper still matches its recorded local hash and that its upstream source is unchanged. If upstream changes a patched helper, the script stops so its local changes can be reviewed against the new version.
+The script copies every unpatched upstream helper and the license, updates exports and the hash manifest, and preserves compatibility helpers, Oxc-owned helpers, and recorded local patches. Before writing, it rejects upstream names that collide with Oxc-owned helpers and checks that each patched helper still matches its recorded local hash and that its upstream source is unchanged. If upstream changes a patched helper, the script stops so its local changes can be reviewed against the new version.
 
 The manifest uses the script's generated JSON formatting and is excluded from repository formatting. Repeating the command with the recorded upstream version leaves the runtime tree unchanged. Tests reconstruct that upstream tree offline, using the vendored helpers and the original sources of the two patched helpers.
+
+After editing a standard decorator helper in `scripts/helpers/`, regenerate both module formats and `tasks/coverage/src/runtime/decoratorHelpers.js` with:
+
+```sh
+node --run generate
+```
+
+`node scripts/generate-decorator-helpers.mjs --check` checks that these generated files are current without writing. The runtime tests also check them against their shared sources.
 
 Run the import, integrity, and runtime behavior tests with:
 
