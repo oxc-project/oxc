@@ -255,17 +255,17 @@ fn write_verbatim_prelude(span: oxc_span::Span, f: &mut CssFormatter<'_, '_>) {
 fn write_apply_prelude<'a>(raw: &'a str, f: &mut CssFormatter<'_, 'a>) -> bool {
     let raw = raw.trim();
 
-    let (wrapper, class_list, important_tail) =
-        if let Some(inner) = raw.strip_prefix("~\"").and_then(|r| r.strip_suffix('"')) {
-            (Some("\""), inner, None)
-        } else if let Some(inner) = raw.strip_prefix("~'").and_then(|r| r.strip_suffix('\'')) {
-            (Some("'"), inner, None)
-        } else {
-            match split_important_tail(raw) {
-                Some((classes, tail)) => (None, classes, Some(tail)),
-                None => (None, raw, None),
-            }
-        };
+    let (wrapper, class_list, important_tail) = if let Some(inner) = raw.strip_circumfix("~\"", '"')
+    {
+        (Some("\""), inner, None)
+    } else if let Some(inner) = raw.strip_circumfix("~'", '\'') {
+        (Some("'"), inner, None)
+    } else {
+        match split_important_tail(raw) {
+            Some((classes, tail)) => (None, classes, Some(tail)),
+            None => (None, raw, None),
+        }
+    };
 
     let class_list = class_list.trim();
     if class_list.is_empty() {

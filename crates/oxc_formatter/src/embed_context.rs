@@ -41,8 +41,7 @@ pub const HTML_PLACEHOLDER_SUFFIX: &str = "_IN_JS";
 /// One in a `<script>` stands in for an expression of any precedence (`f((${a + b}) / 2)`),
 /// so the parens around it in the source stay.
 pub fn is_html_placeholder(name: &str) -> bool {
-    name.strip_prefix(HTML_PLACEHOLDER_PREFIX)
-        .and_then(|id| id.strip_suffix(HTML_PLACEHOLDER_SUFFIX))
+    name.strip_circumfix(HTML_PLACEHOLDER_PREFIX, HTML_PLACEHOLDER_SUFFIX)
         .is_some_and(|id| !id.is_empty() && id.bytes().all(|b| b.is_ascii_digit() || b == b'_'))
 }
 

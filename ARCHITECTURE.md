@@ -380,7 +380,7 @@ Correctness and reliability are taken extremely seriously in Oxc. We spend signi
 
 ### Build and Development Tools
 
-- **Rust**: MSRV 1.86.0+ with clippy and rustfmt integration
+- **Rust**: MSRV 1.98.0+ with clippy and rustfmt integration
 - **Just**: Command runner for development tasks (`just --list` for available commands)
 - **Performance Monitoring**: Continuous benchmarking and performance regression detection
 - **Cross-platform**: Support for Linux, macOS, and Windows

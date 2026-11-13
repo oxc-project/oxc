@@ -1360,14 +1360,11 @@ fn recursively_propagate_non_null(
 
     let neighbors: Vec<BlockId> = match direction {
         PropagationDirection::Backward => {
-            block_successors.get(&node_id).map(|s| s.iter().copied().collect()).unwrap_or_default()
+            block_successors.get(&node_id).map_or_default(|s| s.iter().copied().collect())
         }
-        PropagationDirection::Forward => func
-            .body
-            .blocks
-            .get(&node_id)
-            .map(|b| b.preds.iter().copied().collect())
-            .unwrap_or_default(),
+        PropagationDirection::Forward => {
+            func.body.blocks.get(&node_id).map_or_default(|b| b.preds.iter().copied().collect())
+        }
     };
 
     let mut changed = false;

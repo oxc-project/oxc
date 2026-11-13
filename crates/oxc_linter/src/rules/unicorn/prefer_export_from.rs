@@ -688,7 +688,7 @@ impl PreferExportFrom {
         let delete_span = Span::new(start, end);
 
         let re_export_source_text =
-            re_export_decl.map(|decl| ctx.source_range(decl.span())).unwrap_or_default();
+            re_export_decl.map_or_default(|decl| ctx.source_range(decl.span()));
 
         let joined_names = format_export_names(violations);
         let exported_specifiers: FxHashSet<SymbolId> =
@@ -1027,8 +1027,7 @@ impl PreferExportFrom {
             let with_clause = import_decl
                 .with_clause
                 .as_ref()
-                .map(|with_clause| format!(" {}", ctx.source_range(with_clause.span)))
-                .unwrap_or_default();
+                .map_or_default(|with_clause| format!(" {}", ctx.source_range(with_clause.span)));
             let source = ctx.source_range(import_decl.source.span);
 
             format!("import{import_kind} {} from {source}{with_clause};\n", result_parts.join(", "))

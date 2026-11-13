@@ -161,8 +161,7 @@ impl LanguageServer for Backend {
                     .find(|workspace_option| {
                         worker.get_root_uri() == &workspace_option.workspace_uri
                     })
-                    .map(|workspace_options| workspace_options.options.clone())
-                    .unwrap_or_default();
+                    .map_or_default(|workspace_options| workspace_options.options.clone());
 
                 debug!("starting worker in initialize with options: {option:?}");
 
@@ -391,7 +390,7 @@ impl LanguageServer for Backend {
 
         let mut needs_diagnostics_refresh = false;
         let diagnostic_mode =
-            self.capabilities.get().map(|cap| cap.diagnostic_mode.clone()).unwrap_or_default();
+            self.capabilities.get().map_or_default(|cap| cap.diagnostic_mode.clone());
         let fs = if diagnostic_mode == DiagnosticMode::Push {
             Some(self.file_system.as_ref())
         } else {
@@ -456,7 +455,7 @@ impl LanguageServer for Backend {
 
         let mut needs_diagnostics_refresh = false;
         let diagnostic_mode =
-            self.capabilities.get().map(|cap| cap.diagnostic_mode.clone()).unwrap_or_default();
+            self.capabilities.get().map_or_default(|cap| cap.diagnostic_mode.clone());
         let fs = if diagnostic_mode == DiagnosticMode::Push {
             Some(self.file_system.as_ref())
         } else {
@@ -521,7 +520,7 @@ impl LanguageServer for Backend {
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_didChangeWorkspaceFolders>
     async fn did_change_workspace_folders(&self, params: DidChangeWorkspaceFoldersParams) {
         let capabilities = self.capabilities.get();
-        let diagnostic_mode = capabilities.map(|c| c.diagnostic_mode.clone()).unwrap_or_default();
+        let diagnostic_mode = capabilities.map_or_default(|c| c.diagnostic_mode.clone());
 
         // === Phase 1: Update worker state (brief write lock, no async I/O) ===
         // Extract workers that need to be shut down and update the mode flags.
@@ -681,8 +680,7 @@ impl LanguageServer for Backend {
         // In single file mode, dynamically create a workspace worker for file:// URIs.
         if self.worker_manager.is_single_file_mode() && uri.scheme().as_str() == "file" {
             let capabilities = self.capabilities.get();
-            let diagnostic_mode =
-                capabilities.map(|c| c.diagnostic_mode.clone()).unwrap_or_default();
+            let diagnostic_mode = capabilities.map_or_default(|c| c.diagnostic_mode.clone());
             let dynamic_watchers = capabilities.is_some_and(|c| c.dynamic_watchers);
             let (registrations, client_messages) = self
                 .worker_manager
@@ -764,11 +762,8 @@ impl LanguageServer for Backend {
                 self.worker_manager.try_shutdown_empty_workspace(&root_uri, &open_uris).await;
 
             if let Some((uris, unregistrations)) = result {
-                let diagnostic_mode = self
-                    .capabilities
-                    .get()
-                    .map(|cap| cap.diagnostic_mode.clone())
-                    .unwrap_or_default();
+                let diagnostic_mode =
+                    self.capabilities.get().map_or_default(|cap| cap.diagnostic_mode.clone());
 
                 if diagnostic_mode == DiagnosticMode::Push && !uris.is_empty() {
                     self.clear_diagnostics(uris).await;

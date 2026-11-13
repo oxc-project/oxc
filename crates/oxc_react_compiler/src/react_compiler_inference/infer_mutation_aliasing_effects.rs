@@ -237,17 +237,14 @@ pub fn infer_mutation_aliasing_effects<'a>(
                 let ident_info = env.identifiers.get(uninitialized_id);
                 let name = ident_info
                     .and_then(|ident| ident.name.as_ref())
-                    .map(|n| n.value().to_string())
-                    .unwrap_or_default();
+                    .map_or_default(|n| n.value().to_string());
                 // Use usage_span if available, otherwise fall back to identifier's own span
                 let error_span = usage_span.or_else(|| ident_info.and_then(|i| i.span));
                 // Match TS printPlace format: "<unknown> name$id:type"
-                let type_str = ident_info
-                    .map(|ident| {
-                        let ty = &env.types[ident.type_];
-                        format_type_for_print(ty)
-                    })
-                    .unwrap_or_default();
+                let type_str = ident_info.map_or_default(|ident| {
+                    let ty = &env.types[ident.type_];
+                    format_type_for_print(ty)
+                });
                 let description =
                     format!("<unknown> {}${}{}", name, uninitialized_id.index(), type_str);
                 let diag = diagnostics::uninitialized_value(description, error_span);

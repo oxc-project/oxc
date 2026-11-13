@@ -94,7 +94,7 @@ pub fn parse_pragma(source: &str) -> (SourceType, PluginOptions) {
 
 /// Strip surrounding double quotes: `"annotation"` → `annotation`.
 fn unquote(value: &str) -> String {
-    value.strip_prefix('"').and_then(|v| v.strip_suffix('"')).unwrap_or(value).to_string()
+    value.strip_circumfix('"', '"').unwrap_or(value).to_string()
 }
 
 /// Apply a non-boolean `EnvironmentConfig` directive, delegating plain booleans to
@@ -117,10 +117,10 @@ fn set_environment_directive(env: &mut EnvironmentConfig, camel_key: &str, value
         // Allow/block lists — a bare directive is `Some([])` (upstream
         // `testComplexConfigDefaults`), else the parsed JSON array.
         "validate_no_capitalized_calls" => {
-            env.validate_no_capitalized_calls = Some(value.map(json_strings).unwrap_or_default());
+            env.validate_no_capitalized_calls = Some(value.map_or_default(json_strings));
         }
         "validate_blocklisted_imports" => {
-            env.validate_blocklisted_imports = Some(value.map(json_strings).unwrap_or_default());
+            env.validate_blocklisted_imports = Some(value.map_or_default(json_strings));
         }
         // Upstream keeps only the macro name (before the first `.`).
         "custom_macros" => {

@@ -1756,27 +1756,22 @@ impl CallableState {
                             .is_some_and(|summary| summary.generator),
                         deferred_captures: function_returns
                             .get(&id)
-                            .map(|summary| summary.deferred_captures.clone())
-                            .unwrap_or_default(),
+                            .map_or_default(|summary| summary.deferred_captures.clone()),
                         context_values: Rc::new(contexts),
                         returned: function_returns.get(&id).cloned().map(Rc::new),
                         snapshot_captures: function_returns
                             .get(&id)
-                            .map(|summary| summary.snapshot_captures.clone())
-                            .unwrap_or_default(),
+                            .map_or_default(|summary| summary.snapshot_captures.clone()),
                         bound_arguments: Arguments::default(),
                         eager_captures: function_returns
                             .get(&id)
-                            .map(|summary| summary.eager_captures.clone())
-                            .unwrap_or_default(),
+                            .map_or_default(|summary| summary.eager_captures.clone()),
                         capture_reads: function_returns
                             .get(&id)
-                            .map(|summary| summary.capture_reads.clone())
-                            .unwrap_or_default(),
+                            .map_or_default(|summary| summary.capture_reads.clone()),
                         capture_members: function_returns
                             .get(&id)
-                            .map(|summary| summary.capture_members.clone())
-                            .unwrap_or_default(),
+                            .map_or_default(|summary| summary.capture_members.clone()),
                     },
                 );
             }
@@ -1829,27 +1824,22 @@ impl CallableState {
                                 .is_some_and(|summary| summary.generator),
                             deferred_captures: function_returns
                                 .get(value)
-                                .map(|summary| summary.deferred_captures.clone())
-                                .unwrap_or_default(),
+                                .map_or_default(|summary| summary.deferred_captures.clone()),
                             context_values: Rc::new(self.context_values.clone()),
                             returned: function_returns.get(value).cloned().map(Rc::new),
                             snapshot_captures: function_returns
                                 .get(value)
-                                .map(|summary| summary.snapshot_captures.clone())
-                                .unwrap_or_default(),
+                                .map_or_default(|summary| summary.snapshot_captures.clone()),
                             bound_arguments: Arguments::default(),
                             eager_captures: function_returns
                                 .get(value)
-                                .map(|summary| summary.eager_captures.clone())
-                                .unwrap_or_default(),
+                                .map_or_default(|summary| summary.eager_captures.clone()),
                             capture_reads: function_returns
                                 .get(value)
-                                .map(|summary| summary.capture_reads.clone())
-                                .unwrap_or_default(),
+                                .map_or_default(|summary| summary.capture_reads.clone()),
                             capture_members: function_returns
                                 .get(value)
-                                .map(|summary| summary.capture_members.clone())
-                                .unwrap_or_default(),
+                                .map_or_default(|summary| summary.capture_members.clone()),
                         },
                     );
                     self.values.insert(lvalue.place.identifier, values);

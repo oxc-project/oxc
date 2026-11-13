@@ -187,7 +187,7 @@ fn find_directives_dynamic_gating<'a>(
 /// `^use memo if\(([^\)]*)\)$`: the condition may not contain `)` and the
 /// directive must end at the closing paren.
 fn parse_dynamic_gating_directive(value: &str) -> Option<&str> {
-    let condition = value.strip_prefix("use memo if(")?.strip_suffix(')')?;
+    let condition = value.strip_circumfix("use memo if(", ')')?;
     if condition.contains(')') {
         return None;
     }
@@ -1107,7 +1107,7 @@ fn outlined_compile_source<'b, 'a>(
         fn_scope_id: function.scope_id.get().expect("outlined function should have a scope"),
         fn_type,
         fn_node: FunctionNode::Function(function),
-        body_directives: function.body.as_deref().map(body_directive_values).unwrap_or_default(),
+        body_directives: function.body.as_deref().map_or_default(body_directive_values),
     }
 }
 

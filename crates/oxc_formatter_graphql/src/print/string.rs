@@ -26,7 +26,7 @@ pub(super) fn write_string_value<'a>(sv: &StringValue<'a>, f: &mut GraphqlFormat
     let raw = sv.raw;
     if sv.block {
         write_block_string(sv.value, f);
-    } else if let Some(body) = raw.strip_prefix('"').and_then(|r| r.strip_suffix('"')) {
+    } else if let Some(body) = raw.strip_circumfix('"', '"') {
         write_regular_string(body, f);
     } else {
         // Defensive: malformed string (parse errors bail out before reaching here).
