@@ -4,7 +4,7 @@ use oxc_simd::{Cpu, cpu_multiversion};
 
 use crate::token::tk;
 
-use crate::pipeline::{bitmap::Bitmap, find::find, lanes::Lanes, source::Source};
+use crate::pipeline::{bitmap::Bitmaps, find::find, kinds::Kinds, lanes::Lanes, source::Source};
 
 use super::{
     comments::{
@@ -20,24 +20,23 @@ use super::{
 #[cpu_multiversion]
 pub(super) unsafe fn carve_js(
     src: Source,
-    st: Bitmap,
-    kind: *mut u8,
-    opch: Bitmap,
-    word: Bitmap,
+    bitmaps: &Bitmaps,
+    kinds: Kinds,
     ts: bool,
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) {
+    let Bitmaps { token_start, op_char, .. } = *bitmaps;
     // Reuse the previous lex's allocation, which matters for small inputs
     let mut depth = mem::take(&mut lanes.template_depth);
     depth.clear();
     let mut i = 0usize;
     if src.len() >= 2 && src[0] == b'#' && src[1] == b'!' {
         let end = find_line_terminator(src, 2, cpu);
-        *kind = tk!(Hashbang);
-        st.clear_range(1, end - 1, cpu);
+        kinds.set(0, tk!(Hashbang));
+        token_start.clear_range(1, end - 1, cpu);
         if end < src.len() {
-            st.set(end, cpu);
+            token_start.set(end, cpu);
         }
         i = end;
     }
@@ -55,13 +54,13 @@ pub(super) unsafe fn carve_js(
         let c = src[s];
         match c {
             b'"' | b'\'' => {
-                i = lex_string(src, st, kind, s, c, lanes, cpu);
+                i = lex_string(src, token_start, kinds, s, c, lanes, cpu);
             }
             b'`' => {
                 let (end, opened_sub) = lex_template_segment(
                     src,
-                    st,
-                    kind,
+                    token_start,
+                    kinds,
                     s,
                     tk!(TemplateHead),
                     tk!(TemplateNoSub),
@@ -91,8 +90,8 @@ pub(super) unsafe fn carve_js(
                     depth.pop();
                     let (end, opened_sub) = lex_template_segment(
                         src,
-                        st,
-                        kind,
+                        token_start,
+                        kinds,
                         s,
                         tk!(TemplateMiddle),
                         tk!(TemplateTail),
@@ -106,12 +105,12 @@ pub(super) unsafe fn carve_js(
                 }
             }
             b'/' => {
-                i = lex_slash(src, st, kind, opch, word, ts, s, lanes, cpu);
+                i = lex_slash(src, bitmaps, kinds, ts, s, lanes, cpu);
             }
             b'<' => {
                 // Annex B B.1.1: `<!--` begins a line comment.
                 i = if html_open_comment_at(src, s, lanes.module, cpu) {
-                    lex_html_open_comment(src, st, kind, opch, s, lanes)
+                    lex_html_open_comment(src, token_start, kinds, op_char, s, lanes)
                 } else {
                     s + 1
                 };
@@ -119,7 +118,7 @@ pub(super) unsafe fn carve_js(
             b'>' => {
                 // Annex B B.1.3: `-->` begins a line comment, but only at line start.
                 i = if html_close_comment_at(src, s, lanes.module, cpu) {
-                    lex_html_close_comment(src, st, kind, opch, s, lanes)
+                    lex_html_close_comment(src, token_start, kinds, op_char, s, lanes)
                 } else {
                     s + 1
                 };

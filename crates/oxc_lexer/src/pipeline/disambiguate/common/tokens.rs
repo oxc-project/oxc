@@ -7,9 +7,10 @@ use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
 use crate::token::{KW_KIND_BASE, OP_KIND_BASE, TokenKind, is_trivia_byte, tk};
 
 use crate::pipeline::{
-    bitmap::Bitmap,
+    bitmap::Bitmaps,
     bytes::{is_digit, line_break_in},
     keywords::kw_match_at,
+    kinds::Kinds,
     operators::opmap_longest,
     source::Source,
 };
@@ -25,11 +26,11 @@ pub struct TokensView<'a> {
     /// The source, followed by at least `PAD` zero bytes.
     pub src: &'a [u8],
     /// Token starts.
-    pub st: &'a [u64],
+    pub token_start: &'a [u64],
     /// Operator characters.
-    pub opch: &'a [u64],
+    pub op_char: &'a [u64],
     /// The kind at each token start.
-    pub kind: &'a [u8],
+    pub kinds: &'a [u8],
     /// Source length.
     pub n: usize,
     pub ts: bool,
@@ -80,8 +81,7 @@ impl<'a> TokensView<'a> {
     ///
     /// # SAFETY
     ///
-    /// - `st` and `opch` must be valid for reads of `n.div_ceil(64) + 1` words.
-    /// - `kind` must be valid for reads of `(n.div_ceil(64) + 1) * 64` bytes.
+    /// - token_start and op_char: block_count() + 1 readable words, kinds: 64 bytes per word.
     /// - Nothing may write to them while the view is alive.
     ///   A question reads, answers and returns before the stage writes again.
     ///
@@ -90,9 +90,8 @@ impl<'a> TokensView<'a> {
     #[inline(always)]
     pub unsafe fn new(
         src: Source<'a>,
-        st: Bitmap,
-        opch: Bitmap,
-        kind: *const u8,
+        bitmaps: &Bitmaps,
+        kinds: Kinds,
         ts: bool,
         kw_final: usize,
         module: bool,
@@ -100,12 +99,13 @@ impl<'a> TokensView<'a> {
         closers: &'a Closers,
         _cpu: impl Cpu,
     ) -> Self {
-        let nb = src.len().div_ceil(64) + 1;
+        let Bitmaps { token_start, op_char, .. } = *bitmaps;
+        let blocks = src.block_count() + 1;
         Self {
             src: src.padded(),
-            st: slice::from_raw_parts(st.as_ptr(), nb),
-            opch: slice::from_raw_parts(opch.as_ptr(), nb),
-            kind: slice::from_raw_parts(kind, nb * 64),
+            token_start: slice::from_raw_parts(token_start.as_ptr(), blocks),
+            op_char: slice::from_raw_parts(op_char.as_ptr(), blocks),
+            kinds: slice::from_raw_parts(kinds.as_ptr(), blocks * 64),
             n: src.len(),
             ts,
             module,
@@ -119,7 +119,7 @@ impl<'a> TokensView<'a> {
     #[cpu_multiversion]
     #[inline(always)]
     pub fn base_kind(&self, pos: usize, _cpu: impl Cpu) -> u8 {
-        let k = self.kind[pos];
+        let k = self.kinds[pos];
         if k >= KW_KIND_BASE {
             return tk!(Ident);
         }
@@ -136,7 +136,7 @@ impl<'a> TokensView<'a> {
     #[cpu_multiversion]
     #[inline]
     pub fn word_kw(&self, pos: usize, len: usize, cpu: impl Cpu) -> u8 {
-        let raw = self.kind[pos];
+        let raw = self.kinds[pos];
         if raw >= KW_KIND_BASE {
             return raw;
         }
@@ -163,7 +163,7 @@ impl<'a> TokensView<'a> {
     #[cpu_multiversion]
     #[inline(always)]
     pub fn next_start(&self, i: usize, cpu: impl Cpu) -> usize {
-        bits::next1(self.st, i, self.n, cpu)
+        bits::next1(self.token_start, i, self.n, cpu)
     }
 
     /// The significant token start at or after `i` (skipping trivia), or `n`.
@@ -175,7 +175,7 @@ impl<'a> TokensView<'a> {
             if i >= self.n {
                 return self.n;
             }
-            if is_trivia_byte(self.kind[i], cpu) {
+            if is_trivia_byte(self.kinds[i], cpu) {
                 i += 1;
                 continue;
             }
@@ -195,7 +195,7 @@ impl<'a> TokensView<'a> {
     #[cpu_multiversion]
     #[inline]
     pub fn prev_sig(&self, pos: usize, cpu: impl Cpu) -> Option<usize> {
-        walk::prev_sig(self.st, self.kind, pos, cpu)
+        walk::prev_sig(self.token_start, self.kinds, pos, cpu)
     }
 
     /// The significant token before `p`.
@@ -219,7 +219,7 @@ impl<'a> TokensView<'a> {
     #[inline]
     pub fn property_name(&self, w: usize, cpu: impl Cpu) -> bool {
         self.prev_sig(w, cpu)
-            .is_some_and(|q| self.kind[q] >= OP_KIND_BASE && self.member_dot(q, cpu))
+            .is_some_and(|q| self.kinds[q] >= OP_KIND_BASE && self.member_dot(q, cpu))
     }
 
     /// Is the operator at q a member access dot, not a spread dot or the start of ?.5?
@@ -242,12 +242,12 @@ impl<'a> TokensView<'a> {
     /// Does the . at q end a decimal integer literal (1.) rather than access a member?
     #[cpu_multiversion]
     pub fn numeric_dot(&self, q: usize, cpu: impl Cpu) -> bool {
-        let Some(p) = bits::prev1(self.st, q, cpu) else {
+        let Some(p) = bits::prev1(self.token_start, q, cpu) else {
             return false;
         };
         let digits = &self.src[p..q];
         // A fraction, a prefixed or exponent literal, or a legacy octal takes no dot.
-        self.kind[p] == tk!(Number)
+        self.kinds[p] == tk!(Number)
             && (p == 0 || self.src[p - 1] != b'.')
             && digits.iter().all(|&c| is_digit(c, cpu) || c == b'_')
             && !(digits.len() > 1 && digits[0] == b'0' && digits.iter().all(|&c| c < b'8'))

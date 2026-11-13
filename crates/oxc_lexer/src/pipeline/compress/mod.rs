@@ -3,7 +3,7 @@ use oxc_span::Span;
 
 use crate::token::{SPAN_SENTINELS, tk};
 
-use crate::pipeline::{bitmap::Bitmap, lanes::Lanes, source::Source};
+use crate::pipeline::{bitmap::Bitmap, kinds::Kinds, lanes::Lanes, source::Source};
 
 mod avx2;
 mod common;
@@ -25,9 +25,8 @@ pub const STAGE_CAP: usize = STAGE_BLOCKS * 64 + 128;
 #[inline(never)]
 pub unsafe fn compress(
     src: Source,
-    nb: usize,
-    st: Bitmap,
-    kind: *const u8,
+    token_start: Bitmap,
+    kinds: Kinds,
     stage_pos: *mut u32,
     stage_kind: *mut u8,
     out_kinds: *mut u8,
@@ -38,9 +37,10 @@ pub unsafe fn compress(
     let mut c = 0usize;
     let mut w = 0usize;
     let mut b = 0usize;
-    while b < nb {
-        let b1 = (b + STAGE_BLOCKS).min(nb);
-        c += compress_blocks(st, kind, b, b1, stage_pos.add(c), stage_kind.add(c), cpu);
+    let block_count = src.block_count();
+    while b < block_count {
+        let b1 = (b + STAGE_BLOCKS).min(block_count);
+        c += compress_blocks(token_start, kinds, b, b1, stage_pos.add(c), stage_kind.add(c), cpu);
         b = b1;
         if c > 1 {
             w += build_spans(stage_kind, stage_pos, c - 1, out_spans.add(w), out_kinds.add(w), cpu);
@@ -82,18 +82,41 @@ pub(super) fn init_pair_luts(cpu: DynCpu) {
 #[cpu_multiversion]
 #[inline(always)]
 unsafe fn compress_blocks(
-    st: Bitmap,
-    kind: *const u8,
+    token_start: Bitmap,
+    kinds: Kinds,
     b0: usize,
     b1: usize,
     starts: *mut u32,
-    kinds: *mut u8,
+    stage_kinds: *mut u8,
     cpu: impl Cpu,
 ) -> usize {
     match DynCpu::from(cpu) {
-        DynCpu::Avx2(cpu) => compress_blocks_avx2(st.as_ptr(), kind, b0, b1, starts, kinds, cpu),
-        DynCpu::Neon(cpu) => compress_blocks_neon(st.as_ptr(), kind, b0, b1, starts, kinds, cpu),
-        DynCpu::Generic(_) => compress_blocks_generic(st.as_ptr(), kind, b0, b1, starts, kinds),
+        DynCpu::Avx2(cpu) => compress_blocks_avx2(
+            token_start.as_ptr(),
+            kinds.as_ptr(),
+            b0,
+            b1,
+            starts,
+            stage_kinds,
+            cpu,
+        ),
+        DynCpu::Neon(cpu) => compress_blocks_neon(
+            token_start.as_ptr(),
+            kinds.as_ptr(),
+            b0,
+            b1,
+            starts,
+            stage_kinds,
+            cpu,
+        ),
+        DynCpu::Generic(_) => compress_blocks_generic(
+            token_start.as_ptr(),
+            kinds.as_ptr(),
+            b0,
+            b1,
+            starts,
+            stage_kinds,
+        ),
     }
 }
 

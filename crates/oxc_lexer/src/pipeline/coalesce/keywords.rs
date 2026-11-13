@@ -10,7 +10,7 @@ use oxc_simd::{Cpu, cpu_multiversion};
 
 use crate::token::TokenKind;
 
-use crate::pipeline::{bitmap::Bitmap, keywords::kw_match, source::Source};
+use crate::pipeline::{bitmap::Bitmap, keywords::kw_match, kinds::Kinds, source::Source};
 
 pub const KWB: usize = 64;
 
@@ -22,15 +22,15 @@ pub(super) unsafe fn kw_flush(
     ts: bool,
     src: Source,
     word: Bitmap,
-    kind: *mut u8,
+    kinds: Kinds,
     kwpos: *const u32,
     k: usize,
     cpu: impl Cpu,
 ) {
     if ts {
-        kw_verify_batch::<true>(src, word, kind, kwpos, k, cpu);
+        kw_verify_batch::<true>(src, word, kinds, kwpos, k, cpu);
     } else {
-        kw_verify_batch::<false>(src, word, kind, kwpos, k, cpu);
+        kw_verify_batch::<false>(src, word, kinds, kwpos, k, cpu);
     }
 }
 
@@ -46,7 +46,7 @@ pub(super) unsafe fn kw_flush(
 unsafe fn kw_verify_batch<const IS_TS: bool>(
     src: Source,
     word: Bitmap,
-    kind: *mut u8,
+    kinds: Kinds,
     pos: *const u32,
     k: usize,
     cpu: impl Cpu,
@@ -57,7 +57,7 @@ unsafe fn kw_verify_batch<const IS_TS: bool>(
         // Candidates are code-level identifier starts (carve cleared every
         // literal interior and JSX start from the masks), so the incumbent
         // kind is IDENT: select over it instead of a read-modify-write.
-        *kind.add(p) = kw_match::<IS_TS>(src.as_ptr().add(p), len, cpu) as u8;
+        kinds.set(p, kw_match::<IS_TS>(src.as_ptr().add(p), len, cpu) as u8);
     }
 }
 
@@ -152,7 +152,7 @@ mod tests {
                     is_ts,
                     Source::new(&src, src.len() - PAD),
                     Bitmap::new(word_bitmap.as_mut_ptr()),
-                    kinds.as_mut_ptr(),
+                    Kinds::new(kinds.as_mut_ptr()),
                     positions.as_ptr(),
                     positions.len(),
                     cpu,

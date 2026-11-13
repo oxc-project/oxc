@@ -21,6 +21,10 @@ impl<'a> Source<'a> {
         self.padded.len().checked_sub(PAD).unwrap()
     }
 
+    pub(super) fn block_count(self) -> usize {
+        self.len().div_ceil(64)
+    }
+
     /// The source without its padding.
     pub(super) fn bytes(self) -> &'a [u8] {
         &self.padded[..self.len()]

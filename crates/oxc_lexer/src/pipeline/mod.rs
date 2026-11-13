@@ -15,6 +15,7 @@ mod compress;
 mod disambiguate;
 mod find;
 mod keywords;
+mod kinds;
 mod lanes;
 mod lexer;
 mod misc;

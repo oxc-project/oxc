@@ -64,11 +64,11 @@ pub fn not_operator_position(
     let ts = tokens.ts;
     let module = tokens.module;
     let src = tokens.src;
-    let mut q = bits::prev1(tokens.st, p, cpu);
+    let mut q = bits::prev1(tokens.token_start, p, cpu);
     while let Some(qi) = q {
-        let k = tokens.kind[qi];
+        let k = tokens.kinds[qi];
         if is_trivia_byte(k, cpu) {
-            q = bits::prev1(tokens.st, qi, cpu);
+            q = bits::prev1(tokens.token_start, qi, cpu);
             continue;
         }
         if k == tk!(String) {
@@ -170,7 +170,7 @@ fn ends_decl(
 #[cpu_multiversion]
 fn paren_close_is_regex(tokens: &TokensView, qi: usize, cpu: impl Cpu) -> bool {
     let word = |p: Option<usize>| {
-        p.filter(|&w| tokens.kind[w] == tk!(Ident) && !tokens.property_name(w, cpu))
+        p.filter(|&w| tokens.kinds[w] == tk!(Ident) && !tokens.property_name(w, cpu))
     };
     let Some(w) = tokens.match_delim_back(qi, cpu).and_then(|lp| word(tokens.prev_sig(lp, cpu)))
     else {

@@ -3,10 +3,11 @@ use oxc_simd::{Cpu, cpu_multiversion};
 use crate::{error::DiagCode, token::tk};
 
 use crate::pipeline::{
-    bitmap::Bitmap,
+    bitmap::{Bitmap, Bitmaps},
     bytes::hex_val,
     disambiguate::{TokensView, not_operator_position},
     find::find,
+    kinds::Kinds,
     lanes::Lanes,
     scan::{scan_quoted, scan_regex, scan_tmpl_text},
     source::Source,
@@ -32,8 +33,8 @@ pub(super) const OPENER8_MODULE_BYTES: [u8; 7] = [b'"', b'`', b'\'', b'/', b'{',
 #[inline(always)]
 pub(super) unsafe fn lex_string(
     src: Source,
-    st: Bitmap,
-    kind: *mut u8,
+    token_start: Bitmap,
+    kinds: Kinds,
     s: usize,
     c: u8,
     lanes: &mut Lanes,
@@ -48,9 +49,9 @@ pub(super) unsafe fn lex_string(
     } else if e >= src.len() {
         lanes.push_diag(s as u32, (src.len() - s) as u32, DiagCode::UnterminatedString);
     }
-    *kind.add(s) = tk!(String);
+    kinds.set(s, tk!(String));
     if end > s + 1 {
-        st.clear_range(s + 1, end - 1, cpu);
+        token_start.clear_range(s + 1, end - 1, cpu);
     }
     let be = if e < src.len() {
         e
@@ -71,8 +72,8 @@ pub(super) unsafe fn lex_string(
 #[inline(always)]
 pub(super) unsafe fn lex_template_segment(
     src: Source,
-    st: Bitmap,
-    kind: *mut u8,
+    token_start: Bitmap,
+    kinds: Kinds,
     s: usize,
     head_kind: u8,
     flat_kind: u8,
@@ -84,9 +85,9 @@ pub(super) unsafe fn lex_template_segment(
     if term == 0 {
         lanes.push_diag(s as u32, (end - s) as u32, DiagCode::UnterminatedTemplate);
     }
-    *kind.add(s) = if term == 2 { head_kind } else { flat_kind };
+    kinds.set(s, if term == 2 { head_kind } else { flat_kind });
     if end > s + 1 {
-        st.clear_range(s + 1, end - 1, cpu);
+        token_start.clear_range(s + 1, end - 1, cpu);
     }
     lanes.push_template(src.padded(), s + 1, end - [0usize, 1, 2][term as usize], cpu);
     (end, term == 2)
@@ -98,26 +99,24 @@ pub(super) unsafe fn lex_template_segment(
 #[inline(always)]
 pub(super) unsafe fn lex_slash(
     src: Source,
-    st: Bitmap,
-    kind: *mut u8,
-    opch: Bitmap,
-    word: Bitmap,
+    bitmaps: &Bitmaps,
+    kinds: Kinds,
     ts: bool,
     s: usize,
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) -> usize {
+    let Bitmaps { token_start, word, op_char, .. } = *bitmaps;
     let d = if s + 1 < src.len() { src[s + 1] } else { 0 };
     if d == b'/' {
-        lex_line_comment(src, st, kind, s, lanes, cpu)
+        lex_line_comment(src, token_start, kinds, s, lanes, cpu)
     } else if d == b'*' {
-        lex_block_comment(src, st, kind, s, lanes, cpu)
+        lex_block_comment(src, token_start, kinds, s, lanes, cpu)
     } else if not_operator_position(
         &TokensView::new(
             src,
-            st,
-            opch,
-            kind,
+            bitmaps,
+            kinds,
             ts,
             0,
             lanes.module,
@@ -129,12 +128,12 @@ pub(super) unsafe fn lex_slash(
         s,
         cpu,
     ) {
-        lex_regex(src, st, kind, word, s, lanes, cpu)
+        lex_regex(src, token_start, kinds, word, s, lanes, cpu)
     } else if s + 1 < src.len() && src[s + 1] == b'=' {
         // `/=`: absorb the `=`.
-        *kind.add(s) = tk!(SlashEq);
-        st.clear(s + 1, cpu);
-        opch.clear(s + 1, cpu);
+        kinds.set(s, tk!(SlashEq));
+        token_start.clear(s + 1, cpu);
+        op_char.clear(s + 1, cpu);
         s + 2
     } else {
         s + 1
@@ -147,8 +146,8 @@ pub(super) unsafe fn lex_slash(
 #[inline(always)]
 unsafe fn lex_regex(
     src: Source,
-    st: Bitmap,
-    kind: *mut u8,
+    token_start: Bitmap,
+    kinds: Kinds,
     word: Bitmap,
     s: usize,
     lanes: &mut Lanes,
@@ -169,9 +168,9 @@ unsafe fn lex_regex(
     if end < src.len() && word.get(end, cpu) {
         end = word.next0(end, src.len(), cpu);
     }
-    *kind.add(s) = tk!(RegExp);
+    kinds.set(s, tk!(RegExp));
     if end > s + 1 {
-        st.clear_range(s + 1, end - 1, cpu);
+        token_start.clear_range(s + 1, end - 1, cpu);
     }
     lanes.push_regex_flags(src.padded(), fs, end, cpu);
     end
