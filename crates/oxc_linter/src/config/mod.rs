@@ -1,4 +1,6 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, sync::Arc};
+
+use rustc_hash::FxHashSet;
 
 mod categories;
 mod config_builder;
@@ -25,11 +27,13 @@ pub use settings::{OxlintSettings, ReactVersion, jsdoc::JSDocPluginSettings};
 
 pub use oxc_config::GlobSet;
 
-use crate::config::oxlintrc::OxlintOptions;
+use crate::config::{external_plugins::ExternalPluginEntry, oxlintrc::OxlintOptions};
 
 #[derive(Debug, Default, Clone)]
 pub struct LintConfig {
     pub(crate) plugins: LintPlugins,
+    /// External JS plugin declarations.
+    pub(crate) external_plugins: Option<Arc<FxHashSet<ExternalPluginEntry>>>,
     pub(crate) settings: OxlintSettings,
     /// Environments enable and disable collections of global variables.
     pub(crate) env: OxlintEnv,
@@ -45,6 +49,7 @@ impl From<Oxlintrc> for LintConfig {
     fn from(config: Oxlintrc) -> Self {
         Self {
             plugins: config.plugins.unwrap_or_default(),
+            external_plugins: config.external_plugins.map(Arc::new),
             settings: config.settings,
             env: config.env,
             globals: config.globals,
