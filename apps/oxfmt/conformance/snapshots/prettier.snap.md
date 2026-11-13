@@ -1,6 +1,6 @@
 ## javascript
 
-1180/1284 (91.90%)
+1185/1284 (92.29%)
 
 ### Failed
 
@@ -12,13 +12,9 @@
   - ❓unclassified
 - externals/prettier/js/await-expression/await-with-parens.js (💥, 85.71%)
   - ❓unclassified
-- externals/prettier/js/binary-expression/inline-object-array.js (💥💥, 95.59%)
-  - ❓unclassified
-- externals/prettier/js/binary-expression/logic-expression.js (💥💥, 88.24%)
+- externals/prettier/js/binary-expression/inline-object-array.js (💥💥, 99.26%)
   - ❓unclassified
 - externals/prettier/js/binary-expression/mutiple-comments/17192.js (💥✨, 95.83%)
-  - ❓unclassified
-- externals/prettier/js/binary-expression/return.js (💥💥, 98.15%)
   - ❓unclassified
 - externals/prettier/js/call-expression/no-argument/no-arguments.js (💥, 79.49%)
   - ❓unclassified
@@ -127,8 +123,6 @@
 - externals/prettier/js/logical-expression/in-unary-expression.js (💥, 79.49%)
   - ❓unclassified
 - externals/prettier/js/multiparser-comments/tagged.js (💥, 0.00%)
-  - ❓unclassified
-- externals/prettier/js/return-statement/binaryish.js (💥, 86.84%)
   - ❓unclassified
 - externals/prettier/js/switch/comments.js (💥, 94.74%)
   - ❓unclassified

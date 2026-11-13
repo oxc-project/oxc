@@ -102,7 +102,6 @@ use self::{
     object_like::ObjectLike,
     object_pattern_like::ObjectPatternLike,
     program::FormatStatementsWithImports,
-    return_or_throw_statement::FormatAdjacentArgument,
     semicolon::{
         FormatContentWithSemicolon, OptionalSemicolon, semicolon_terminated_expression_content_end,
         write_trailing_comments_inside_parens,
@@ -1151,15 +1150,6 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, BindingProperty<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, BindingRestElement<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, ["...", self.argument()]);
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'_, 'a, YieldExpression<'a>> {
-    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        write!(f, ["yield", self.delegate().then_some("*")]);
-        if let Some(argument) = &self.argument() {
-            write!(f, [space(), FormatAdjacentArgument(argument)]);
-        }
     }
 }
 
