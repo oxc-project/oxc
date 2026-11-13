@@ -17,6 +17,8 @@ concurrency:
 
 env:
   INSTA_REQUIRE_FULL_MATCH: 1
+  # Workflow-level, so every job's `Swatinem/rust-cache` key hashes the same `CARGO_*` env vars.
+  CARGO_BUILD_WARNINGS: deny
 
 jobs:
   test-ubuntu:
@@ -598,8 +600,6 @@ jobs:
   lint:
     name: Lint
     runs-on: namespace-profile-linux-x64-default
-    env:
-      CARGO_BUILD_WARNINGS: deny
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
       - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
@@ -721,7 +721,6 @@ jobs:
     runs-on: ubuntu-24.04-arm
     if: ${{ github.ref_name != 'main' }}
     env:
-      CARGO_BUILD_WARNINGS: deny
       # Fail if the CPU doesn't support Neon, so Neon can't quietly go untested.
       # See `DynCpu::for_each_supported` in `oxc_simd` crate.
       OXC_SIMD_EXPECT: Neon
