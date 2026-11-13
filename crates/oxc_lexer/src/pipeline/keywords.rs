@@ -666,7 +666,6 @@ mod tests {
     #[test_cpus]
     fn test_kw_match_non_keywords(cpu: impl Cpu) {
         let words: &[&[u8]] = &[
-            // spellchecker:off
             b"lets",
             b"iff",
             b"i",
@@ -679,7 +678,6 @@ mod tests {
             b"intrinsics",
             b"undefine",
             b"satisfiess",
-            // spellchecker:on
             b"get",
             b"set",
             b"Class",
