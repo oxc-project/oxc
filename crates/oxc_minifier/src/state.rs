@@ -1,9 +1,9 @@
 use oxc_allocator::{Allocator, BitSet};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::Scoping;
-use oxc_span::SourceType;
+use oxc_span::{SourceType, Span};
 use oxc_str::{Ident, IdentHashSet};
-use oxc_syntax::scope::ScopeId;
+use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
 
 use crate::{CompressOptions, symbol_state::SymbolState};
 
@@ -59,6 +59,14 @@ pub struct PassChanges<'a> {
     /// At least one direct `eval(...)` call was dropped this pass. Gates
     /// the small `LiveDirectEvalCollector` walk at flush time.
     pub(crate) direct_eval_dropped: bool,
+
+    /// Declarations of redeclared symbols (`Scoping::symbol_redeclarations`) found in
+    /// dropped subtrees, as `(symbol, binding span)`.
+    ///
+    /// Unlike a `ReferenceId`, a binding can reappear in a replacement: `KeepVar`
+    /// regenerates a dropped `var` with its symbol and span. So these are candidates only;
+    /// the flush removes those no longer in the live program.
+    pub(crate) removed_declarations: Vec<(SymbolId, Span)>,
 }
 
 impl<'a> PassChanges<'a> {
@@ -67,6 +75,7 @@ impl<'a> PassChanges<'a> {
             revisit_requested: false,
             removed_references: BitSet::new_in(references_len, allocator),
             direct_eval_dropped: false,
+            removed_declarations: Vec::new(),
         }
     }
 }
@@ -183,6 +192,7 @@ impl<'a> MinifierState<'a> {
         !self.pass_changes.revisit_requested
             && self.pass_changes.removed_references.is_empty()
             && !self.pass_changes.direct_eval_dropped
+            && self.pass_changes.removed_declarations.is_empty()
     }
 }
 

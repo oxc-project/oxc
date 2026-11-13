@@ -2,8 +2,8 @@ use oxc_span::SourceType;
 
 use crate::{
     CompressOptions, CompressOptionsKeepNames, CompressOptionsUnused, default_options, test,
-    test_options, test_same, test_same_options, test_same_options_source_type, test_smallest,
-    test_target_same,
+    test_options, test_same, test_same_options, test_same_options_source_type, test_same_smallest,
+    test_smallest, test_target_same,
 };
 
 #[test]
@@ -921,6 +921,47 @@ fn optional_catch_binding() {
     );
 
     test_target_same("try { foo } catch(e) {}", "chrome65");
+}
+
+/// Once a `var` redeclaring a catch parameter is removed, the catch parameter is no
+/// longer redeclared and can be removed in the same run.
+/// <https://github.com/oxc-project/oxc/issues/27548>
+#[test]
+fn optional_catch_binding_after_removed_var() {
+    test_smallest(
+        "export function f() { try { x() } catch (a) { var a } }",
+        "export function f() { try { x() } catch {} }",
+    );
+    test_smallest(
+        "export function f() { try { x() } catch (e) { var e = 1 } }",
+        "export function f() { try { x() } catch {} }",
+    );
+    test_smallest(
+        "export function f() { try { x() } catch (e) { var e; var e } }",
+        "export function f() { try { x() } catch {} }",
+    );
+    // Removed by dead code elimination.
+    test_smallest(
+        "export function f() { try { x() } catch (e) { if (0) { var e } } }",
+        "export function f() { try { x() } catch {} }",
+    );
+    test_smallest(
+        "export function f() { return; try { x() } catch (e) { var e } }",
+        "export function f() {}",
+    );
+    // Nested catches with the same name.
+    test_smallest(
+        "export function f() { try { x() } catch (e) { try { y() } catch (e) { var e } } }",
+        "export function f() { try { x() } catch { try { y() } catch {} } }",
+    );
+
+    // The `var` is kept, so the catch parameter stays.
+    test_same_smallest("export function f() { try { x() } catch (e) { if (0) var e } return e }");
+    test_smallest(
+        "export function f() { try { x() } catch (e) { g(e); if (0) { var e } } }",
+        "export function f() { try { x() } catch (e) { if (g(e), 0) var e } }",
+    );
+    test_same_smallest("export function f() { try { x() } catch (e) { eval('e'); var e } }");
 }
 
 #[test]
