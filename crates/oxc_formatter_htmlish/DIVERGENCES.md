@@ -141,28 +141,6 @@ The `html` in any doctype prints lowercase (`<!DOCTYPE html PUBLIC …>`), as in
 Prettier's output is not a fixpoint: it lowercases the `HTML` and the `<!DOCTYPE` in different passes.
 `<!DOCTYPE HTML>` prints `<!doctype html>` in one.
 
-## cdata-as-written
-
-- Why: uniform-rule (a section's content prints as written, as a comment's does: in HTML content it is a bogus comment to browsers; prettier/prettier#20256, prettier/prettier#16147)
-- Pin: `tests/fixtures/html/cdata-as-written.html`
-
-```html
-<!-- input -->
-<div><p><![CDATA[x]]></p></div>
-
-<!-- ours -->
-<div><p><![CDATA[x]]></p></div>
-
-<!-- prettier -->
-<div>
-  <p><![CDATA[x]]></p>
-</div>
-```
-
-A CDATA section is one unbreakable word, together with any text touching it; the text around it wraps as usual.
-In HTML the section is comment data, and in SVG / MathML its text.
-Prettier prints it as written too since #20256, as a node of its own laid out like a comment (the parent breaks around it), where we print it as part of the text.
-
 ## class-ascii-whitespace
 
 - Why: semantics (class names are separated by ASCII whitespace only)

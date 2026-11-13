@@ -156,7 +156,7 @@ fn ends_at_indentation(
 ) -> bool {
     let value = match t.kind(last) {
         NodeKind::Comment(comment) => comment.content.slice(t.source()),
-        NodeKind::Text(_) | NodeKind::Cdata if t[id].pre_like => t[last].span.slice(t.source()),
+        NodeKind::Text(_) if t[id].pre_like => t[last].span.slice(t.source()),
         _ => return false,
     };
     let Some((_, tail)) = value.rsplit_once('\n') else { return false };

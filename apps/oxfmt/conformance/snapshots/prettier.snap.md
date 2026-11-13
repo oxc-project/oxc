@@ -600,18 +600,10 @@
 
 ## html
 
-227/237 (95.78%)
+231/237 (97.47%)
 
 ### Failed
 
-- externals/prettier/html/cdata/adjacent.html (💥, 96.08%)
-  - ❓unclassified
-- externals/prettier/html/cdata/example.html (💥, 88.46%)
-  - ❓unclassified
-- externals/prettier/html/cdata/multiline.html (💥, 95.65%)
-  - ❓unclassified
-- externals/prettier/html/cdata/nested.html (💥, 92.68%)
-  - ❓unclassified
 - externals/prettier/html/basics/broken-html.html (💥, 88.89%)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#unclosed-at-end
 - externals/prettier/html/basics/with-colon.html (💥, 98.37%)
