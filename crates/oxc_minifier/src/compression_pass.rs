@@ -1,9 +1,8 @@
 //! Completion of Normalize and peephole compression passes.
 //!
-//! AST mutations accumulate removed semantic references, dropped direct
-//! `eval` calls and dropped declarations of redeclared symbols on
-//! [`crate::state::PassChanges`]. Both Normalize and each peephole pass cross
-//! the same completion boundary: prune those references and declarations,
+//! AST mutations accumulate removed semantic references and dropped direct
+//! `eval` calls on [`crate::state::PassChanges`]. Both Normalize and each
+//! peephole pass cross the same completion boundary: prune those references,
 //! refresh direct-eval scope flags, then derive function reachability from the
 //! settled semantic state.
 
@@ -17,11 +16,8 @@ use oxc_span::Span;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 use crate::{
-    ReusableTraverseCtx, TraverseCtx,
-    minifier_traverse::traverse_mut_with_ctx,
-    peephole::PeepholeOptimizations,
-    symbol_liveness,
-    traverse_context::{as_direct_eval_call, declared_symbols},
+    ReusableTraverseCtx, TraverseCtx, minifier_traverse::traverse_mut_with_ctx,
+    peephole::PeepholeOptimizations, symbol_liveness, traverse_context::as_direct_eval_call,
 };
 
 /// The fixed-point decision produced by one completed peephole pass.
@@ -143,90 +139,6 @@ pub fn debug_assert_no_under_prune(
     }
 }
 
-/// Sort key for `(symbol, binding span)` declaration entries.
-fn declaration_key(&(symbol_id, span): &(SymbolId, Span)) -> (SymbolId, u32, u32) {
-    (symbol_id, span.start, span.end)
-}
-
-/// Visit every binding identifier in `program` with each redeclared symbol it
-/// declares (see [`declared_symbols`]).
-fn for_each_live_declaration(
-    program: &Program<'_>,
-    scoping: &Scoping,
-    f: impl FnMut((SymbolId, Span)),
-) {
-    struct LiveDeclarations<'s, F> {
-        scoping: &'s Scoping,
-        f: F,
-    }
-    impl<'a, F: FnMut((SymbolId, Span))> Visit<'a> for LiveDeclarations<'_, F> {
-        fn visit_binding_identifier(&mut self, it: &BindingIdentifier<'a>) {
-            let Some(symbol_id) = it.symbol_id.get() else { return };
-            for symbol_id in declared_symbols(symbol_id, self.scoping) {
-                (self.f)((symbol_id, it.span));
-            }
-        }
-    }
-    LiveDeclarations { scoping, f }.visit_program(program);
-}
-
-/// Remove declarations marked in
-/// [`crate::state::PassChanges::removed_declarations`] from
-/// `Scoping::symbol_redeclarations`, unless the binding is still in the live
-/// program (`KeepVar` regenerates dropped `var`s with their symbol and span).
-///
-/// Without this a removed `var` keeps its symbol looking redeclared, which keeps
-/// e.g. `catch (a) { var a }` from dropping the catch binding until the output is
-/// minified again (#27548).
-fn prune_removed_declarations(program: &Program<'_>, ctx: &mut TraverseCtx<'_>) {
-    let mut removed = std::mem::take(&mut ctx.state.pass_changes.removed_declarations);
-    removed.sort_unstable_by_key(declaration_key);
-    removed.dedup();
-    let mut live = vec![false; removed.len()];
-    for_each_live_declaration(program, ctx.scoping(), |declaration| {
-        let key = declaration_key(&declaration);
-        if let Ok(index) = removed.binary_search_by_key(&key, declaration_key) {
-            live[index] = true;
-        }
-    });
-    let scoping = ctx.scoping.scoping_mut();
-    for (&(symbol_id, span), live) in removed.iter().zip(live) {
-        if !live {
-            scoping.remove_symbol_declaration(symbol_id, span);
-        }
-    }
-    // Keep the allocation for the next pass.
-    removed.clear();
-    ctx.state.pass_changes.removed_declarations = removed;
-}
-
-/// Debug-only converse of [`prune_removed_declarations`], run once by the
-/// `Compressor` driver after the fixed-point loop: every declaration in
-/// `Scoping::symbol_redeclarations` must still be in the live program. A
-/// violation means a site discarded a declaration without routing it through a
-/// `drop_*` / `replace_*` helper, so a stale redeclaration keeps optimizations
-/// conservative. Over-pruning cannot happen: the flush prunes only declarations
-/// it did not find in the live program.
-#[cfg(debug_assertions)]
-pub fn debug_assert_no_stale_redeclarations(program: &Program<'_>, scoping: &Scoping) {
-    let mut live = Vec::new();
-    for_each_live_declaration(program, scoping, |declaration| live.push(declaration));
-    live.sort_unstable_by_key(declaration_key);
-    for symbol_id in scoping.symbol_ids() {
-        for redeclaration in scoping.symbol_redeclarations(symbol_id) {
-            let key = (symbol_id, redeclaration.span.start, redeclaration.span.end);
-            assert!(
-                live.binary_search_by_key(&key, declaration_key).is_ok(),
-                "stale redeclaration: symbol {symbol_id:?} `{}` still records a declaration at \
-                 {:?} that is gone from the program — a drop site bypassed the `drop_*` / \
-                 `replace_*` helpers",
-                scoping.symbol_name(symbol_id),
-                redeclaration.span,
-            );
-        }
-    }
-}
-
 /// Debug-only guard for the gated direct-eval refresh: every live direct
 /// `eval(...)` call must already have `ScopeFlags::DirectEval` on its
 /// reference's recorded scope and every ancestor (the exact postcondition of
@@ -327,10 +239,26 @@ fn flush_pass_changes(program: &Program<'_>, ctx: &mut TraverseCtx<'_>) -> bool 
     #[cfg(debug_assertions)]
     debug_assert_no_stale_direct_eval(program, ctx.scoping());
 
-    // (3) Declarations — gated walk only when a redeclared symbol's declaration
-    //     was dropped.
+    // (3) Declarations — drop the redeclarations of removed declarations, so
+    //     e.g. `catch (a) { var a }` can drop `a` once the `var` is gone (#27548).
+    //     `KeepVar` re-emits dropped `var`s with their symbol and span, so skip
+    //     declarations still in the program.
     if !ctx.state.pass_changes.removed_declarations.is_empty() {
-        prune_removed_declarations(program, ctx);
+        struct LiveDeclarations<'b> {
+            removed: &'b mut FxHashSet<(SymbolId, Span)>,
+        }
+        impl<'a> Visit<'a> for LiveDeclarations<'_> {
+            fn visit_binding_identifier(&mut self, it: &BindingIdentifier<'a>) {
+                if let Some(symbol_id) = it.symbol_id.get() {
+                    self.removed.remove(&(symbol_id, it.span));
+                }
+            }
+        }
+        let mut removed = std::mem::take(&mut ctx.state.pass_changes.removed_declarations);
+        LiveDeclarations { removed: &mut removed }.visit_program(program);
+        for (symbol_id, span) in removed {
+            ctx.scoping_mut().remove_symbol_declaration(symbol_id, span);
+        }
     }
 
     // (4) Reset the accumulator for the next pass. `references_len` only grows

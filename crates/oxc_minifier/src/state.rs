@@ -4,6 +4,7 @@ use oxc_semantic::Scoping;
 use oxc_span::{SourceType, Span};
 use oxc_str::{Ident, IdentHashSet};
 use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
+use rustc_hash::FxHashSet;
 
 use crate::{CompressOptions, symbol_state::SymbolState};
 
@@ -60,13 +61,9 @@ pub struct PassChanges<'a> {
     /// the small `LiveDirectEvalCollector` walk at flush time.
     pub(crate) direct_eval_dropped: bool,
 
-    /// Declarations of redeclared symbols (`Scoping::symbol_redeclarations`) found in
-    /// dropped subtrees, as `(symbol, binding span)`.
-    ///
-    /// Unlike a `ReferenceId`, a binding can reappear in a replacement: `KeepVar`
-    /// regenerates a dropped `var` with its symbol and span. So these are candidates only;
-    /// the flush removes those no longer in the live program.
-    pub(crate) removed_declarations: Vec<(SymbolId, Span)>,
+    /// Declarations `(symbol, binding span)` of redeclared symbols found in dropped
+    /// subtrees, to remove from `Scoping::symbol_redeclarations` at flush time.
+    pub(crate) removed_declarations: FxHashSet<(SymbolId, Span)>,
 }
 
 impl<'a> PassChanges<'a> {
@@ -75,7 +72,7 @@ impl<'a> PassChanges<'a> {
             revisit_requested: false,
             removed_references: BitSet::new_in(references_len, allocator),
             direct_eval_dropped: false,
-            removed_declarations: Vec::new(),
+            removed_declarations: FxHashSet::default(),
         }
     }
 }

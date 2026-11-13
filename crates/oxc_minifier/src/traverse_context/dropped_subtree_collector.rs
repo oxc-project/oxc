@@ -1,7 +1,6 @@
 use oxc_ast::ast::*;
 use oxc_ast_visit::{Visit, walk::walk_call_expression};
 use oxc_semantic::Scoping;
-use oxc_syntax::symbol::SymbolId;
 
 use crate::state::PassChanges;
 
@@ -19,22 +18,8 @@ pub fn as_direct_eval_call<'a, 'b>(
     (ident.name == "eval").then_some(ident)
 }
 
-/// The redeclared symbols a binding identifier carrying `symbol_id` declares: the symbol
-/// itself and, for a `var` redeclaring a catch parameter, the enclosing var binding (see
-/// `Scoping::catch_var_binding`). Symbols without redeclarations are skipped, as only
-/// `Scoping::symbol_redeclarations` needs to be kept in sync with the program.
-pub fn declared_symbols(
-    symbol_id: SymbolId,
-    scoping: &Scoping,
-) -> impl Iterator<Item = SymbolId> + '_ {
-    std::iter::once(symbol_id)
-        .chain(scoping.catch_var_binding(symbol_id))
-        .filter(|&symbol_id| !scoping.symbol_redeclarations(symbol_id).is_empty())
-}
-
 /// Walks AST subtrees being dropped or replaced, collecting
-/// `IdentifierReference`s, direct `eval(...)` calls and declarations of redeclared
-/// symbols into the per-pass
+/// `IdentifierReference`s and direct `eval(...)` calls into the per-pass
 /// [`PassChanges`] accumulator. Use via the `Visit` entry point matching the
 /// dropped node (`visit_expression`, `visit_variable_declarator`, ...).
 ///
@@ -51,10 +36,7 @@ pub fn declared_symbols(
 /// moved out of the old slot into the new value leave id-less `TakeIn` dummies
 /// behind, so the removed-subtree walk never sees their ids; and replacements
 /// are built with fresh references, never cloned ids (see
-/// `substitute_is_object_and_not_null`). Bindings are the exception: `KeepVar`
-/// regenerates a dropped `var` with its symbol and span, so
-/// `pass_changes.removed_declarations` only lists candidates that the flush
-/// checks against the live program.
+/// `substitute_is_object_and_not_null`).
 pub struct DroppedSubtreeCollector<'a, 's> {
     pass_changes: &'s mut PassChanges<'a>,
     scoping: &'s Scoping,
@@ -84,9 +66,10 @@ impl<'a> Visit<'a> for DroppedSubtreeCollector<'a, '_> {
     }
 
     fn visit_binding_identifier(&mut self, it: &BindingIdentifier<'a>) {
-        let Some(symbol_id) = it.symbol_id.get() else { return };
-        for symbol_id in declared_symbols(symbol_id, self.scoping) {
-            self.pass_changes.removed_declarations.push((symbol_id, it.span));
+        if let Some(symbol_id) = it.symbol_id.get()
+            && !self.scoping.symbol_redeclarations(symbol_id).is_empty()
+        {
+            self.pass_changes.removed_declarations.insert((symbol_id, it.span));
         }
     }
 
