@@ -6,7 +6,7 @@ use crate::{
     diagnostics,
 };
 
-use super::{Kind, Lexer};
+use super::{Kind, Lexer, SourcePosition};
 
 impl<C: Config> Lexer<'_, C> {
     /// Handle next byte of source.
@@ -28,7 +28,7 @@ impl<C: Config> Lexer<'_, C> {
         }
         let byte_handlers = self.config.byte_handlers();
         // SAFETY: Caller guarantees to uphold safety invariants.
-        unsafe { byte_handlers[byte as usize](self) }
+        unsafe { byte_handlers[byte as usize](self, self.source.position()).0 }
     }
 }
 
@@ -59,7 +59,10 @@ static SINGLE_BYTE_TOKENS: [Kind; 256] = {
     table
 };
 
-pub type ByteHandler<C> = unsafe fn(&mut Lexer<'_, C>) -> Kind;
+/// Byte handlers take and return the current position of `lexer.source`, so it stays in a register
+/// between tokens instead of being stored and reloaded.
+pub type ByteHandler<C> =
+    for<'a> unsafe fn(&mut Lexer<'a, C>, SourcePosition<'a>) -> (Kind, SourcePosition<'a>);
 pub type ByteHandlers<C> = [ByteHandler<C>; 256];
 
 /// Macro to create a lookup table mapping any incoming byte to a handler function defined below.
@@ -124,28 +127,36 @@ pub mod byte_handler_tables {
 ///
 /// ```rust,ignore
 /// #[expect(non_snake_case)]
-/// fn SPS<C: Config>(lexer: &mut Lexer<'_, C>) -> Kind {
+/// fn SPS<'a, C: Config>(lexer: &mut Lexer<'a, C>, pos: SourcePosition<'a>) -> (Kind, SourcePosition<'a>) {
+///     lexer.source.set_position(pos);
 ///     // SAFETY: This macro is only used for ASCII characters
 ///     unsafe {
 ///         assert_unchecked!(!lexer.source.is_eof());
 ///         assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
 ///     }
-///     {
+///     let kind = {
 ///         lexer.consume_char();
 ///         Kind::WhiteSpace
-///     }
+///     };
+///     (kind, lexer.source.position())
 /// }
 /// ```
 macro_rules! ascii_byte_handler {
     ($id:ident($lex:ident) $body:expr) => {
         #[expect(non_snake_case)]
-        fn $id<C: Config>($lex: &mut Lexer<'_, C>) -> Kind {
+        fn $id<'a, C: Config>(
+            $lex: &mut Lexer<'a, C>,
+            pos: SourcePosition<'a>,
+        ) -> (Kind, SourcePosition<'a>) {
+            // No-op store, so the compiler uses `pos` from register instead of reloading it
+            $lex.source.set_position(pos);
             // SAFETY: This macro is only used for ASCII characters
             unsafe {
                 assert_unchecked!(!$lex.source.is_eof());
                 assert_unchecked!($lex.source.peek_byte_unchecked() < 128);
             }
-            $body
+            let kind = $body;
+            (kind, $lex.source.position())
         }
     };
 }
@@ -214,16 +225,22 @@ ascii_byte_handler!(HAS(lexer) {
 
 // `A..=Z`, `h`, `j`, `q`, `x`, `z`, `_`, `$`: no keyword starts with these bytes.
 #[expect(non_snake_case)]
-fn IDT<C: Config>(lexer: &mut Lexer<'_, C>) -> Kind {
+fn IDT<'a, C: Config>(
+    lexer: &mut Lexer<'a, C>,
+    pos: SourcePosition<'a>,
+) -> (Kind, SourcePosition<'a>) {
     // SAFETY: This handler is only selected for ASCII identifier-start bytes.
-    unsafe { lexer.identifier_name_handler::<false>() }
+    unsafe { lexer.identifier_name_handler::<false>(pos) }
 }
 
 // Share one indirect-call target for all first letters which can begin a keyword.
 #[expect(non_snake_case)]
-fn KWD<C: Config>(lexer: &mut Lexer<'_, C>) -> Kind {
+fn KWD<'a, C: Config>(
+    lexer: &mut Lexer<'a, C>,
+    pos: SourcePosition<'a>,
+) -> (Kind, SourcePosition<'a>) {
     // SAFETY: This handler is only selected for ASCII identifier-start bytes.
-    unsafe { lexer.identifier_name_handler::<true>() }
+    unsafe { lexer.identifier_name_handler::<true>(pos) }
 }
 
 // %
@@ -423,8 +440,12 @@ ascii_byte_handler!(PIP(lexer) {
 //
 // Note: Must not use `ascii_byte_handler!` macro, as this handler is for non-ASCII chars.
 #[expect(non_snake_case)]
-fn UNI<C: Config>(lexer: &mut Lexer<'_, C>) -> Kind {
-    lexer.unicode_char_handler()
+fn UNI<'a, C: Config>(
+    lexer: &mut Lexer<'a, C>,
+    _pos: SourcePosition<'a>,
+) -> (Kind, SourcePosition<'a>) {
+    let kind = lexer.unicode_char_handler();
+    (kind, lexer.source.position())
 }
 
 // Single-byte tokens dispatched via `SINGLE_BYTE_TOKENS`, and invalid UTF-8 start bytes.
@@ -437,6 +458,9 @@ fn UNI<C: Config>(lexer: &mut Lexer<'_, C>) -> Kind {
 //
 // Note: Must not use `ascii_byte_handler!` macro, as this handler also covers non-ASCII bytes.
 #[expect(non_snake_case)]
-fn UER<C: Config>(_lexer: &mut Lexer<'_, C>) -> Kind {
+fn UER<'a, C: Config>(
+    _lexer: &mut Lexer<'a, C>,
+    _pos: SourcePosition<'a>,
+) -> (Kind, SourcePosition<'a>) {
     unreachable!();
 }
