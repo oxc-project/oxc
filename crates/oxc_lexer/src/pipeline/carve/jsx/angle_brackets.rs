@@ -3,10 +3,10 @@ use oxc_simd::{Cpu, cpu_multiversion};
 use crate::error::DiagCode;
 
 use crate::pipeline::{
-    bitmap::{Bitmap, Bitmaps},
+    bitmap::Bitmap,
     bytes::{is_id_start, is_word, line_break_in},
-    kinds::Kinds,
     lanes::Lanes,
+    lex::Lex,
     source::Source,
 };
 
@@ -22,24 +22,20 @@ enum AngleVerdict {
 #[cpu_multiversion]
 #[inline]
 pub(super) unsafe fn jsx_over_type_params(
-    src: Source,
-    bitmaps: &Bitmaps,
-    kinds: Kinds,
+    lex: Lex,
     lt: usize,
     name_pos: usize,
-    is_ts: bool,
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) -> bool {
-    if !is_ts {
+    if !lex.options.ts {
         return true;
     }
-    match ts_angle_verdict(src, name_pos, bitmaps.word, cpu) {
+    match ts_angle_verdict(lex.src, name_pos, lex.bitmaps.word, cpu) {
         AngleVerdict::TypeParams => false,
         AngleVerdict::Jsx => true,
         AngleVerdict::Ambiguous { gt, lp } => {
-            let (jsx, unterminated) =
-                lanes.disambiguate.jsx_over_generic(src, bitmaps, kinds, lt, lp, cpu);
+            let (jsx, unterminated) = lanes.disambiguate.jsx_over_generic(lex, lt, lp, cpu);
             if unterminated {
                 lanes.push_diag(lt as u32, (gt + 1 - lt) as u32, DiagCode::UnterminatedJsxElement);
             }

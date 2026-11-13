@@ -19,6 +19,7 @@ use crate::pipeline::{
     compress::{STAGE_CAP, compress, init_pair_luts, write_sentinels},
     kinds::Kinds,
     lanes::Lanes,
+    lex::Lex,
     misc::{misc_post, misc_pre, retain_code_whitespace},
     source::Source,
     unicode_leads::resolve_unicode_leads,
@@ -175,25 +176,24 @@ impl Lexer {
             misc: Bitmap::new(self.misc.as_mut_ptr()),
         };
         let kinds = Kinds::new(self.kinds.as_mut_ptr());
+        let lex = Lex { src, bitmaps, kinds, options: &options };
         let kw_candidates = self.kw_candidates.as_mut_ptr();
         let events = self.events.as_mut_ptr();
 
         // Keyword recognition is mode-scoped: the TS set (and its wider
         // keyword_initial letter class) only ever sees TS input, so JS lexing is
         // byte-identical to a build without it.
-        classify(src, bitmaps, kinds, &options, cpu);
-        let escaped_ident_count = misc_pre(src, bitmaps, kinds, &options, &mut self.lanes, cpu);
-        carve(src, bitmaps, kinds, &options, &mut self.lanes, cpu);
-        coalesce(src, bitmaps, kinds, kw_candidates, events, &options, &mut self.lanes, cpu);
-        misc_post(src, bitmaps, kinds, escaped_ident_count, cpu);
+        classify(lex, cpu);
+        let escaped_ident_count = misc_pre(lex, &mut self.lanes, cpu);
+        carve(lex, &mut self.lanes, cpu);
+        coalesce(lex, kw_candidates, events, &mut self.lanes, cpu);
+        misc_post(lex, escaped_ident_count, cpu);
         if !self.lanes.out.irregular_whitespaces.is_empty() {
             let spans = &mut self.lanes.out.irregular_whitespaces;
             retain_code_whitespace(&self.token_start, &self.kinds, spans);
         }
         compress(
-            src,
-            bitmaps.token_start,
-            kinds,
+            lex,
             self.stage_pos.as_mut_ptr(),
             self.stage_kind.as_mut_ptr(),
             out_kinds,

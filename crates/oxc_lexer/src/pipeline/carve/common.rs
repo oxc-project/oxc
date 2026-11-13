@@ -8,6 +8,7 @@ use crate::pipeline::{
     find::find,
     kinds::Kinds,
     lanes::Lanes,
+    lex::Lex,
     scan::{scan_quoted, scan_regex, scan_tmpl_text},
     source::Source,
 };
@@ -96,21 +97,15 @@ pub(super) unsafe fn lex_template_segment(
 /// block comment, regex, `/=`, or a bare slash left for `coalesce`.
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn lex_slash(
-    src: Source,
-    bitmaps: &Bitmaps,
-    kinds: Kinds,
-    s: usize,
-    lanes: &mut Lanes,
-    cpu: impl Cpu,
-) -> usize {
+pub(super) unsafe fn lex_slash(lex: Lex, s: usize, lanes: &mut Lanes, cpu: impl Cpu) -> usize {
+    let Lex { src, bitmaps, kinds, .. } = lex;
     let Bitmaps { token_start, word, op_char, .. } = *bitmaps;
     let d = if s + 1 < src.len() { src[s + 1] } else { 0 };
     if d == b'/' {
         lex_line_comment(src, token_start, kinds, s, lanes, cpu)
     } else if d == b'*' {
         lex_block_comment(src, token_start, kinds, s, lanes, cpu)
-    } else if lanes.disambiguate.not_operator_position(src, bitmaps, kinds, s, cpu) {
+    } else if lanes.disambiguate.not_operator_position(lex, s, cpu) {
         lex_regex(src, token_start, kinds, word, s, lanes, cpu)
     } else if s + 1 < src.len() && src[s + 1] == b'=' {
         // `/=`: absorb the `=`.

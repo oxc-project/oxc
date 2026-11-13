@@ -17,6 +17,7 @@ mod find;
 mod keywords;
 mod kinds;
 mod lanes;
+mod lex;
 mod lexer;
 mod misc;
 mod operators;

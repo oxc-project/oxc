@@ -2,9 +2,9 @@ use std::mem;
 
 use oxc_simd::{Cpu, cpu_multiversion};
 
-use crate::{options::LexOptions, token::tk};
+use crate::token::tk;
 
-use crate::pipeline::{bitmap::Bitmaps, find::find, kinds::Kinds, lanes::Lanes, source::Source};
+use crate::pipeline::{bitmap::Bitmaps, find::find, lanes::Lanes, lex::Lex};
 
 use super::{
     comments::{
@@ -18,14 +18,8 @@ use super::{
 };
 
 #[cpu_multiversion]
-pub(super) unsafe fn carve_js(
-    src: Source,
-    bitmaps: &Bitmaps,
-    kinds: Kinds,
-    options: &LexOptions,
-    lanes: &mut Lanes,
-    cpu: impl Cpu,
-) {
+pub(super) unsafe fn carve_js(lex: Lex, lanes: &mut Lanes, cpu: impl Cpu) {
+    let Lex { src, bitmaps, kinds, options } = lex;
     let Bitmaps { token_start, op_char, .. } = *bitmaps;
     let module = options.source_type_module;
     // Reuse the previous lex's allocation, which matters for small inputs
@@ -106,7 +100,7 @@ pub(super) unsafe fn carve_js(
                 }
             }
             b'/' => {
-                i = lex_slash(src, bitmaps, kinds, s, lanes, cpu);
+                i = lex_slash(lex, s, lanes, cpu);
             }
             b'<' => {
                 // Annex B B.1.1: `<!--` begins a line comment.

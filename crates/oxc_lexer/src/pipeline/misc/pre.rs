@@ -1,31 +1,24 @@
 use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
 use oxc_span::Span;
 
-use crate::{error::DiagCode, options::LexOptions, token::tk};
+use crate::{error::DiagCode, token::tk};
 
 use crate::pipeline::{
-    bitmap::Bitmaps, bytes::is_id_start, kinds::Kinds, lanes::Lanes, scan::scan_ident_esc,
+    bitmap::Bitmaps, bytes::is_id_start, lanes::Lanes, lex::Lex, scan::scan_ident_esc,
     source::Source,
 };
 
 #[cpu_multiversion]
 #[inline(never)]
-pub unsafe fn misc_pre(
-    src: Source,
-    bitmaps: &Bitmaps,
-    kinds: Kinds,
-    options: &LexOptions,
-    lanes: &mut Lanes,
-    cpu: impl Cpu,
-) -> usize {
-    if !bitmaps.misc.any(src.block_count(), cpu) {
+pub unsafe fn misc_pre(lex: Lex, lanes: &mut Lanes, cpu: impl Cpu) -> usize {
+    if !lex.bitmaps.misc.any(lex.src.block_count(), cpu) {
         return 0;
     }
 
-    if options.validate_utf8 {
-        misc_pre_impl::<true>(src, bitmaps, kinds, lanes, cpu)
+    if lex.options.validate_utf8 {
+        misc_pre_impl::<true>(lex, lanes, cpu)
     } else {
-        misc_pre_impl::<false>(src, bitmaps, kinds, lanes, cpu)
+        misc_pre_impl::<false>(lex, lanes, cpu)
     }
 }
 
@@ -37,12 +30,11 @@ pub unsafe fn misc_pre(
 #[cpu_multiversion]
 #[inline(always)]
 unsafe fn misc_pre_impl<const VALIDATE_UTF8: bool>(
-    src: Source,
-    bitmaps: &Bitmaps,
-    kinds: Kinds,
+    lex: Lex,
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) -> usize {
+    let Lex { src, bitmaps, kinds, .. } = lex;
     let Bitmaps { token_start, word, misc, .. } = *bitmaps;
     let mut escaped_ident_count = 0usize;
     let block_count = src.block_count();

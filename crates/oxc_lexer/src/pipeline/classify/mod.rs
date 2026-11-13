@@ -1,8 +1,6 @@
 use oxc_simd::{Cpu, DynCpu, cpu_multiversion};
 
-use crate::options::LexOptions;
-
-use crate::pipeline::{bitmap::Bitmaps, kinds::Kinds, source::Source};
+use crate::pipeline::{bitmap::Bitmaps, lex::Lex};
 
 mod avx2;
 mod generic;
@@ -16,13 +14,8 @@ use neon::classify_neon;
 
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn classify(
-    src: Source,
-    bitmaps: &Bitmaps,
-    kinds: Kinds,
-    options: &LexOptions,
-    cpu: impl Cpu,
-) {
+pub(super) unsafe fn classify(lex: Lex, cpu: impl Cpu) {
+    let Lex { src, bitmaps, kinds, options } = lex;
     let Bitmaps { token_start, word, keyword_initial, op_char, digit, dot, misc } = *bitmaps;
     let (src_ptr, src_len, kinds_ptr) = (src.as_ptr(), src.len(), kinds.as_ptr());
     let (token_start, word, keyword_initial, op_char) =

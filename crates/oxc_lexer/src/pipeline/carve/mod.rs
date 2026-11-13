@@ -1,8 +1,6 @@
 use oxc_simd::{Cpu, cpu_multiversion};
 
-use crate::options::LexOptions;
-
-use crate::pipeline::{bitmap::Bitmaps, kinds::Kinds, lanes::Lanes, source::Source};
+use crate::pipeline::{lanes::Lanes, lex::Lex};
 
 mod comments;
 mod common;
@@ -15,17 +13,10 @@ use jsx::carve_jsx;
 
 #[cpu_multiversion]
 #[inline(never)]
-pub unsafe fn carve(
-    src: Source,
-    bitmaps: &Bitmaps,
-    kinds: Kinds,
-    options: &LexOptions,
-    lanes: &mut Lanes,
-    cpu: impl Cpu,
-) {
-    if options.jsx {
-        carve_jsx(src, bitmaps, kinds, options, lanes, cpu);
+pub unsafe fn carve(lex: Lex, lanes: &mut Lanes, cpu: impl Cpu) {
+    if lex.options.jsx {
+        carve_jsx(lex, lanes, cpu);
     } else {
-        carve_js(src, bitmaps, kinds, options, lanes, cpu);
+        carve_js(lex, lanes, cpu);
     }
 }
