@@ -6,7 +6,7 @@ use crate::{
     diagnostics,
 };
 
-use super::{Kind, Lexer};
+use super::{Kind, Lexer, SourcePosition};
 
 impl<C: Config> Lexer<'_, C> {
     /// Handle next byte of source.
@@ -20,29 +20,49 @@ impl<C: Config> Lexer<'_, C> {
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub(super) unsafe fn handle_byte(&mut self, byte: u8) -> Kind {
-        // Bypass indirect dispatch for these common one-byte tokens.
-        // Keep this match small: adding other handlers regressed ARM64 parser benchmarks
-        // through extra dispatch work and reduced inlining into parser callers.
-        // Re-benchmark before extending this set.
-        let kind = match byte {
-            b'(' => Kind::LParen,
-            b')' => Kind::RParen,
-            b';' => Kind::Semicolon,
-            _ => {
-                let byte_handlers = self.config.byte_handlers();
-                // SAFETY: Caller guarantees to uphold safety invariants.
-                return unsafe { byte_handlers[byte as usize](self) };
-            }
-        };
-
-        // SAFETY: Caller guarantees `byte` is the current source byte, and these are single-byte ASCII characters.
-        let next = unsafe { self.source.position().add(1) };
-        self.source.set_position(next);
-        kind
+        if let Some(kind) = single_byte_token(byte) {
+            // SAFETY: Caller guarantees `byte` is the current source byte, and single-byte tokens are ASCII.
+            let next = unsafe { self.source.position().add(1) };
+            self.source.set_position(next);
+            return kind;
+        }
+        let byte_handlers = self.config.byte_handlers();
+        // SAFETY: Caller guarantees to uphold safety invariants.
+        unsafe { byte_handlers[byte as usize](self, self.source.position()).0 }
     }
 }
 
-pub type ByteHandler<C> = unsafe fn(&mut Lexer<'_, C>) -> Kind;
+/// `Kind` of a token which is always exactly the single byte `byte`, if there is one.
+/// These tokens are completed without an indirect call to a byte handler.
+#[expect(clippy::inline_always)]
+#[inline(always)]
+pub(super) fn single_byte_token(byte: u8) -> Option<Kind> {
+    let kind = SINGLE_BYTE_TOKENS[byte as usize];
+    if kind == Kind::Eof { None } else { Some(kind) }
+}
+
+/// `>` is included because `>=`, `>>` etc are produced by re-lexing (see `re_lex_right_angle`).
+static SINGLE_BYTE_TOKENS: [Kind; 256] = {
+    let mut table = [Kind::Eof; 256];
+    table[b'(' as usize] = Kind::LParen;
+    table[b')' as usize] = Kind::RParen;
+    table[b';' as usize] = Kind::Semicolon;
+    table[b',' as usize] = Kind::Comma;
+    table[b':' as usize] = Kind::Colon;
+    table[b'[' as usize] = Kind::LBrack;
+    table[b']' as usize] = Kind::RBrack;
+    table[b'{' as usize] = Kind::LCurly;
+    table[b'}' as usize] = Kind::RCurly;
+    table[b'~' as usize] = Kind::Tilde;
+    table[b'@' as usize] = Kind::At;
+    table[b'>' as usize] = Kind::RAngle;
+    table
+};
+
+/// Byte handlers take and return the current position of `lexer.source`, so it stays in a register
+/// between tokens instead of being stored and reloaded.
+pub type ByteHandler<C> =
+    for<'a> unsafe fn(&mut Lexer<'a, C>, SourcePosition<'a>) -> (Kind, SourcePosition<'a>);
 pub type ByteHandlers<C> = [ByteHandler<C>; 256];
 
 /// Macro to create a lookup table mapping any incoming byte to a handler function defined below.
@@ -54,12 +74,12 @@ macro_rules! byte_handlers {
         //  0    1    2    3    4    5    6    7    8    9    A    B    C    D    E    F    //
             ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, SPS, LIN, ISP, ISP, LIN, ERR, ERR, // 0
             ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, // 1
-            SPS, EXL, QOD, HAS, IDT, PRC, AMP, QOS, UER, UER, ATR, PLS, COM, MIN, PRD, SLH, // 2
-            ZER, DIG, DIG, DIG, DIG, DIG, DIG, DIG, DIG, DIG, COL, UER, LSS, EQL, GTR, QST, // 3
-            AT_, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, // 4
-            IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, BTO, ESC, BTC, CRT, IDT, // 5
+            SPS, EXL, QOD, HAS, IDT, PRC, AMP, QOS, UER, UER, ATR, PLS, UER, MIN, PRD, SLH, // 2
+            ZER, DIG, DIG, DIG, DIG, DIG, DIG, DIG, DIG, DIG, UER, UER, LSS, EQL, UER, QST, // 3
+            UER, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, // 4
+            IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, UER, ESC, UER, CRT, IDT, // 5
             TPL, KWD, KWD, KWD, KWD, KWD, KWD, KWD, IDT, KWD, IDT, KWD, KWD, KWD, KWD, KWD, // 6
-            KWD, IDT, KWD, KWD, KWD, KWD, KWD, KWD, IDT, KWD, IDT, BEO, PIP, BEC, TLD, ERR, // 7
+            KWD, IDT, KWD, KWD, KWD, KWD, KWD, KWD, IDT, KWD, IDT, UER, PIP, UER, UER, ERR, // 7
             UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, // 8
             UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, // 9
             UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, // A
@@ -107,28 +127,36 @@ pub mod byte_handler_tables {
 ///
 /// ```rust,ignore
 /// #[expect(non_snake_case)]
-/// fn SPS<C: Config>(lexer: &mut Lexer<'_, C>) -> Kind {
+/// fn SPS<'a, C: Config>(lexer: &mut Lexer<'a, C>, pos: SourcePosition<'a>) -> (Kind, SourcePosition<'a>) {
+///     lexer.source.set_position(pos);
 ///     // SAFETY: This macro is only used for ASCII characters
 ///     unsafe {
 ///         assert_unchecked!(!lexer.source.is_eof());
 ///         assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
 ///     }
-///     {
+///     let kind = {
 ///         lexer.consume_char();
 ///         Kind::WhiteSpace
-///     }
+///     };
+///     (kind, lexer.source.position())
 /// }
 /// ```
 macro_rules! ascii_byte_handler {
     ($id:ident($lex:ident) $body:expr) => {
         #[expect(non_snake_case)]
-        fn $id<C: Config>($lex: &mut Lexer<'_, C>) -> Kind {
+        fn $id<'a, C: Config>(
+            $lex: &mut Lexer<'a, C>,
+            pos: SourcePosition<'a>,
+        ) -> (Kind, SourcePosition<'a>) {
+            // No-op store, so the compiler uses `pos` from register instead of reloading it
+            $lex.source.set_position(pos);
             // SAFETY: This macro is only used for ASCII characters
             unsafe {
                 assert_unchecked!(!$lex.source.is_eof());
                 assert_unchecked!($lex.source.peek_byte_unchecked() < 128);
             }
-            $body
+            let kind = $body;
+            (kind, $lex.source.position())
         }
     };
 }
@@ -148,15 +176,45 @@ ascii_byte_handler!(SPS(lexer) {
 // <VT> <FF> Irregular Whitespace
 ascii_byte_handler!(ISP(lexer) {
     lexer.consume_char();
-    lexer.trivia_builder.add_irregular_whitespace(lexer.token.start(), lexer.offset());
+    lexer.trivia_builder.add_irregular_whitespace(lexer.token_start, lexer.offset());
     Kind::Skip
 });
 
 // '\r' '\n'
-ascii_byte_handler!(LIN(lexer) {
+#[expect(non_snake_case)]
+fn LIN<'a, C: Config>(
+    lexer: &mut Lexer<'a, C>,
+    pos: SourcePosition<'a>,
+) -> (Kind, SourcePosition<'a>) {
+    lexer.source.set_position(pos);
+    // SAFETY: The byte-handler table calls this for an in-bounds ASCII line break.
+    unsafe {
+        assert_unchecked!(!lexer.source.is_eof());
+        assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
+    }
     lexer.consume_char();
-    lexer.line_break_handler()
-});
+    let byte = lexer.line_break_handler();
+
+    // Read the next token here to avoid restarting the caller's token loop.
+    let pos = lexer.source.position();
+    lexer.token_start = lexer.source.offset_of(pos);
+    let Some(byte) = byte else {
+        return (Kind::Eof, pos);
+    };
+    // JSX attribute values scan quotes differently. Leave them for the caller's token loop.
+    if matches!(byte, b'"' | b'\'') {
+        return (Kind::Skip, pos);
+    }
+    if let Some(kind) = single_byte_token(byte) {
+        // SAFETY: Single-byte tokens are ASCII and `pos` is in bounds.
+        let end = unsafe { pos.add(1) };
+        lexer.source.set_position(end);
+        return (kind, end);
+    }
+    let byte_handlers = lexer.config.byte_handlers();
+    // SAFETY: `byte` is the current source byte at `pos`.
+    unsafe { byte_handlers[byte as usize](lexer, pos) }
+}
 
 // !
 ascii_byte_handler!(EXL(lexer) {
@@ -197,16 +255,22 @@ ascii_byte_handler!(HAS(lexer) {
 
 // `A..=Z`, `h`, `j`, `q`, `x`, `z`, `_`, `$`: no keyword starts with these bytes.
 #[expect(non_snake_case)]
-fn IDT<C: Config>(lexer: &mut Lexer<'_, C>) -> Kind {
+fn IDT<'a, C: Config>(
+    lexer: &mut Lexer<'a, C>,
+    pos: SourcePosition<'a>,
+) -> (Kind, SourcePosition<'a>) {
     // SAFETY: This handler is only selected for ASCII identifier-start bytes.
-    unsafe { lexer.identifier_name_handler::<false>() }
+    unsafe { lexer.identifier_name_handler::<false>(pos) }
 }
 
 // Share one indirect-call target for all first letters which can begin a keyword.
 #[expect(non_snake_case)]
-fn KWD<C: Config>(lexer: &mut Lexer<'_, C>) -> Kind {
+fn KWD<'a, C: Config>(
+    lexer: &mut Lexer<'a, C>,
+    pos: SourcePosition<'a>,
+) -> (Kind, SourcePosition<'a>) {
     // SAFETY: This handler is only selected for ASCII identifier-start bytes.
-    unsafe { lexer.identifier_name_handler::<true>() }
+    unsafe { lexer.identifier_name_handler::<true>(pos) }
 }
 
 // %
@@ -263,12 +327,6 @@ ascii_byte_handler!(PLS(lexer) {
     }
 });
 
-// ,
-ascii_byte_handler!(COM(lexer) {
-    lexer.consume_char();
-    Kind::Comma
-});
-
 // -
 ascii_byte_handler!(MIN(lexer) {
     lexer.consume_char();
@@ -316,12 +374,6 @@ ascii_byte_handler!(DIG(lexer) {
     lexer.decimal_literal_after_first_digit()
 });
 
-// :
-ascii_byte_handler!(COL(lexer) {
-    lexer.consume_char();
-    Kind::Colon
-});
-
 // <
 ascii_byte_handler!(LSS(lexer) {
     lexer.consume_char();
@@ -342,13 +394,6 @@ ascii_byte_handler!(EQL(lexer) {
     } else {
         Kind::Eq
     }
-});
-
-// >
-ascii_byte_handler!(GTR(lexer) {
-    lexer.consume_char();
-    // `>=` is re-lexed with [Lexer::next_jsx_child]
-    Kind::RAngle
 });
 
 // ?
@@ -379,27 +424,9 @@ ascii_byte_handler!(QST(lexer) {
     }
 });
 
-// @
-ascii_byte_handler!(AT_(lexer) {
-    lexer.consume_char();
-    Kind::At
-});
-
-// [
-ascii_byte_handler!(BTO(lexer) {
-    lexer.consume_char();
-    Kind::LBrack
-});
-
 // \
 ascii_byte_handler!(ESC(lexer) {
     lexer.identifier_backslash_handler()
-});
-
-// ]
-ascii_byte_handler!(BTC(lexer) {
-    lexer.consume_char();
-    Kind::RBrack
 });
 
 // ^
@@ -416,12 +443,6 @@ ascii_byte_handler!(CRT(lexer) {
 ascii_byte_handler!(TPL(lexer) {
     lexer.consume_char();
     lexer.read_template_literal(Kind::TemplateHead, Kind::NoSubstitutionTemplate)
-});
-
-// {
-ascii_byte_handler!(BEO(lexer) {
-    lexer.consume_char();
-    Kind::LCurly
 });
 
 // |
@@ -445,27 +466,19 @@ ascii_byte_handler!(PIP(lexer) {
     }
 });
 
-// }
-ascii_byte_handler!(BEC(lexer) {
-    lexer.consume_char();
-    Kind::RCurly
-});
-
-// ~
-ascii_byte_handler!(TLD(lexer) {
-    lexer.consume_char();
-    Kind::Tilde
-});
-
 // Non-ASCII characters.
 //
 // Note: Must not use `ascii_byte_handler!` macro, as this handler is for non-ASCII chars.
 #[expect(non_snake_case)]
-fn UNI<C: Config>(lexer: &mut Lexer<'_, C>) -> Kind {
-    lexer.unicode_char_handler()
+fn UNI<'a, C: Config>(
+    lexer: &mut Lexer<'a, C>,
+    _pos: SourcePosition<'a>,
+) -> (Kind, SourcePosition<'a>) {
+    let kind = lexer.unicode_char_handler();
+    (kind, lexer.source.position())
 }
 
-// Punctuation dispatched directly in `handle_byte`, and invalid UTF-8 start bytes.
+// Single-byte tokens dispatched via `SINGLE_BYTE_TOKENS`, and invalid UTF-8 start bytes.
 //
 // UTF-8 continuation bytes (0x80 - 0xBF) (i.e. middle of a multi-byte UTF-8 sequence)
 // + and byte values which are not legal in UTF-8 strings (0xC0, 0xC1, 0xF5 - 0xFF).
@@ -475,6 +488,9 @@ fn UNI<C: Config>(lexer: &mut Lexer<'_, C>) -> Kind {
 //
 // Note: Must not use `ascii_byte_handler!` macro, as this handler also covers non-ASCII bytes.
 #[expect(non_snake_case)]
-fn UER<C: Config>(_lexer: &mut Lexer<'_, C>) -> Kind {
+fn UER<'a, C: Config>(
+    _lexer: &mut Lexer<'a, C>,
+    _pos: SourcePosition<'a>,
+) -> (Kind, SourcePosition<'a>) {
     unreachable!();
 }

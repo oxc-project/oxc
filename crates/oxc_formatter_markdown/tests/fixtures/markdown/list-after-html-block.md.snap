@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_formatter_markdown/tests/fixtures/mod.rs
-assertion_line: 50
 ---
 ==================== Input ====================
 - list
@@ -66,6 +65,7 @@ assertion_line: 50
 - list
 
   <!-- closed by its end marker -->
+
   - item
 
 -------------------
@@ -99,6 +99,7 @@ assertion_line: 50
 - list
 
   <!-- closed by its end marker -->
+
   - item
 
 ===================== End =====================

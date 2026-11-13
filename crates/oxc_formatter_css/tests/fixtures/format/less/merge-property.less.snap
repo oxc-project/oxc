@@ -3,7 +3,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
 // Less merge markers glue to the property name, leaving only `:`
-// (Prettier 3.9.5, prettier#19517)
+// (as Prettier, prettier#19517)
 a {
   box-shadow  +  : 0 0 1px #000;
   box-shadow+: inset 0 0 10px #555;
@@ -23,7 +23,7 @@ a {
 { printWidth: 80 }
 ------------------
 // Less merge markers glue to the property name, leaving only `:`
-// (Prettier 3.9.5, prettier#19517)
+// (as Prettier, prettier#19517)
 a {
   box-shadow+: 0 0 1px #000;
   box-shadow+: inset 0 0 10px #555;
@@ -42,7 +42,7 @@ a {
 { printWidth: 100 }
 -------------------
 // Less merge markers glue to the property name, leaving only `:`
-// (Prettier 3.9.5, prettier#19517)
+// (as Prettier, prettier#19517)
 a {
   box-shadow+: 0 0 1px #000;
   box-shadow+: inset 0 0 10px #555;

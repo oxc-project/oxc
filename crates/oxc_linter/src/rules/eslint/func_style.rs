@@ -246,10 +246,18 @@ impl FuncStyle {
         let FuncStyle(style, config) = self;
 
         if func.body.is_none()
-            || func
-                .id
-                .as_ref()
-                .is_some_and(|id| !ctx.scoping().symbol_redeclarations(id.symbol_id()).is_empty())
+            || (ctx.source_type().is_typescript()
+                && func.id.as_ref().is_some_and(|id| {
+                    ctx.scoping().symbol_redeclarations(id.symbol_id()).iter().any(|rd| {
+                        rd.flags.is_function()
+                            && ctx
+                                .nodes()
+                                .get_node(rd.declaration)
+                                .kind()
+                                .as_function()
+                                .is_some_and(Function::is_ts_declare_function)
+                    })
+                }))
         {
             return;
         }
@@ -897,4 +905,110 @@ fn test() {
     ];
 
     Tester::new(FuncStyle::NAME, FuncStyle::PLUGIN, pass, fail).test_and_snapshot();
+}
+
+#[test]
+fn test_shared_type_names() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        ("function F(x: string): string; function F(x: string) { return x; }", None),
+        (
+            "type F = string; function F(x: string): string; function F(x: string) { return x; }",
+            None,
+        ),
+        ("function F(x: string): string; function F(x: string) { return x; } interface F {}", None),
+        (
+            "function F(x: string): string; function F(x: string) { return x; } namespace F { export const value = 1; }",
+            None,
+        ),
+        (
+            "export type F = string; export function F(x: string): string; export function F(x: string) { return x; }",
+            Some(
+                serde_json::json!(["declaration", { "overrides": { "namedExports": "expression" } }]),
+            ),
+        ),
+        (
+            "export type F = string; export function F() {}",
+            Some(
+                serde_json::json!(["expression", { "overrides": { "namedExports": "declaration" } }]),
+            ),
+        ),
+        (
+            "export interface F {} export function F() {}",
+            Some(serde_json::json!(["expression", { "overrides": { "namedExports": "ignore" } }])),
+        ),
+    ];
+
+    let fail = vec![
+        (
+            "
+            export type input = string;
+            export function input() {
+              return '';
+            }
+            ",
+            Some(serde_json::json!(["expression"])),
+        ),
+        (
+            "
+            interface Output {
+              value: string;
+            }
+            function Output() {
+              return 1;
+            }
+            ",
+            Some(serde_json::json!(["expression"])),
+        ),
+        (
+            "
+            namespace Ns {
+              export type Value = number;
+            }
+            function Ns() {
+              return 1;
+            }
+            ",
+            Some(serde_json::json!(["expression"])),
+        ),
+        (
+            "
+            export function Merged() {
+              return 1;
+            }
+            export namespace Merged {
+              export const value = 1;
+            }
+            ",
+            Some(serde_json::json!(["expression"])),
+        ),
+        ("function F() {} type F = string;", None),
+        ("function F() {} interface F {}", None),
+        ("declare function F(): void; { function F() {} }", None),
+        (
+            "export type F = string; export function F() {}",
+            Some(
+                serde_json::json!(["declaration", { "overrides": { "namedExports": "expression" } }]),
+            ),
+        ),
+    ];
+
+    Tester::new(FuncStyle::NAME, FuncStyle::PLUGIN, pass, fail).test();
+}
+
+#[test]
+fn test_js_redeclarations() {
+    use crate::tester::Tester;
+
+    let pass = vec![("function F() {} function F() {}", Some(serde_json::json!(["declaration"])))];
+    let fail = vec![
+        ("function F() {} function F() {}", None),
+        ("var F; function F() {}", None),
+        ("function F() {} var F;", None),
+    ];
+
+    Tester::new(FuncStyle::NAME, FuncStyle::PLUGIN, pass, fail)
+        .change_rule_path_extension("cjs")
+        .test();
 }

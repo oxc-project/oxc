@@ -28,7 +28,7 @@ fn is_identifier_start_ascii_byte(byte: u8) -> bool {
 }
 
 impl<'a, C: Config> Lexer<'a, C> {
-    /// Consume an identifier starting with an ASCII byte and return its kind.
+    /// Consume an identifier starting with an ASCII byte and return its kind and end position.
     /// `CHECK_KEYWORD` may be false only for starting bytes that cannot begin a keyword.
     ///
     /// Leave the first byte unconsumed. ASCII scanning stays inline; Unicode characters
@@ -37,11 +37,15 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// # SAFETY
     /// * `self.source` must not be exhausted (at least 1 char remaining).
     /// * Next char must be ASCII.
+    /// * `start_pos` must be the current position of `self.source`.
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    pub(super) unsafe fn identifier_name_handler<const CHECK_KEYWORD: bool>(&mut self) -> Kind {
+    pub(super) unsafe fn identifier_name_handler<const CHECK_KEYWORD: bool>(
+        &mut self,
+        start_pos: SourcePosition<'a>,
+    ) -> (Kind, SourcePosition<'a>) {
+        debug_assert_eq!(start_pos, self.source.position());
         // Advance past 1st byte.
-        let start_pos = self.source.position();
         // SAFETY: Caller guarantees not at EOF, and next byte is ASCII.
         let after_first = unsafe { start_pos.add(1) };
 
@@ -54,38 +58,32 @@ impl<'a, C: Config> Lexer<'a, C> {
                 if CHECK_KEYWORD {
                     // SAFETY: The source is at EOF, after the saved identifier start.
                     let id = unsafe { self.source.str_from_pos_to_current_unchecked(start_pos) };
-                    return keyword::match_keyword(id.as_bytes());
+                    return (keyword::match_keyword(id.as_bytes()), self.source.position());
                 }
-                return Kind::Ident;
+                return (Kind::Ident, self.source.position());
             },
         };
 
-        // Keep decoding and keyword lookup in one cold call so KWD can tail-call it.
-        // IDT calls the decoders directly to avoid an extra call frame.
+        // Keep decoding and keyword lookup in one cold call so IDT and KWD can both tail-call it.
+        // For IDT the keyword lookup always gives `Kind::Ident`, but skipping it would make the
+        // returned `Kind` a constant, which stops the call being a tail call.
         if !next_byte.is_ascii() {
             cold_path();
-            if CHECK_KEYWORD {
-                return self.identifier_name_uncommon::<false>(start_pos);
-            }
-            self.identifier_tail_unicode(start_pos);
-            return Kind::Ident;
+            return self.identifier_name_uncommon::<false>(start_pos);
         }
         if next_byte == b'\\' {
             cold_path();
-            if CHECK_KEYWORD {
-                return self.identifier_name_uncommon::<true>(start_pos);
-            }
-            self.identifier_backslash(start_pos, false);
-            return Kind::Ident;
+            return self.identifier_name_uncommon::<true>(start_pos);
         }
 
-        if CHECK_KEYWORD {
+        let kind = if CHECK_KEYWORD {
             // SAFETY: The scanner only moves forwards from the saved identifier start.
             let id = unsafe { self.source.str_from_pos_to_current_unchecked(start_pos) };
             keyword::match_keyword(id.as_bytes())
         } else {
             Kind::Ident
-        }
+        };
+        (kind, self.source.position())
     }
 
     #[cold]
@@ -93,13 +91,13 @@ impl<'a, C: Config> Lexer<'a, C> {
     fn identifier_name_uncommon<const IS_ESCAPE: bool>(
         &mut self,
         start_pos: SourcePosition<'a>,
-    ) -> Kind {
+    ) -> (Kind, SourcePosition<'a>) {
         let id = if IS_ESCAPE {
             self.identifier_backslash(start_pos, false)
         } else {
             self.identifier_tail_unicode(start_pos)
         };
-        keyword::match_keyword(id.as_bytes())
+        (keyword::match_keyword(id.as_bytes()), self.source.position())
     }
 
     /// Handle rest of identifier after first byte of a multi-byte Unicode char found.

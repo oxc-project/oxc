@@ -301,8 +301,8 @@ impl<'a, C: Config> Lexer<'a, C> {
     }
 
     fn save_js_string(&mut self, value: JSStr<'a>) {
-        self.escaped_strings.insert(self.token.start(), value);
-        self.token.set_escaped(true);
+        self.escaped_strings.insert(self.token_start, value);
+        self.pending.set_escaped();
     }
 
     pub(crate) fn get_js_string(&self, token: Token) -> JSStr<'a> {
@@ -328,8 +328,8 @@ impl<'a, C: Config> Lexer<'a, C> {
 
     #[cold]
     fn save_escaped_string(&mut self, s: &'a str) {
-        self.escaped_strings.insert(self.token.start(), s.into());
-        self.token.set_escaped(true);
+        self.escaped_strings.insert(self.token_start, s.into());
+        self.pending.set_escaped();
     }
 
     pub(crate) fn get_string(&self, token: Token) -> &'a str {

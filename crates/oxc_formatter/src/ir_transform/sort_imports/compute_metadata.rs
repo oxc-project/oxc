@@ -151,7 +151,6 @@ fn extract_source_path(source: &str) -> &str {
     source.split('?').next().unwrap_or(source)
 }
 
-// spellchecker:off
 static STYLE_EXTENSIONS: phf::Set<&'static str> = phf_set! {
     "css",
     "scss",
@@ -161,7 +160,6 @@ static STYLE_EXTENSIONS: phf::Set<&'static str> = phf_set! {
     "pcss",
     "sss",
 };
-// spellchecker:on
 
 /// Check if an import source is a style file based on its extension.
 fn is_style(source: &str) -> bool {

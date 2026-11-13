@@ -2,9 +2,6 @@
 source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
-# `trailing-spaces-kept-when-last` DIVERGES from the pinned Prettier
-# (it drops the spaces, corrupting the value);
-# see DIVERGENCES.md#block-scalar-trailing-whitespace (prettier#19764).
 fold-blocked-by-trailing-spaces: >
   word1 word2  
   word3
@@ -19,9 +16,6 @@ trailing-spaces-kept-when-last: >-
 ------------------
 { printWidth: 80 }
 ------------------
-# `trailing-spaces-kept-when-last` DIVERGES from the pinned Prettier
-# (it drops the spaces, corrupting the value);
-# see DIVERGENCES.md#block-scalar-trailing-whitespace (prettier#19764).
 fold-blocked-by-trailing-spaces: >
   word1 word2  
   word3
@@ -35,9 +29,6 @@ trailing-spaces-kept-when-last: >-
 -------------------
 { printWidth: 100 }
 -------------------
-# `trailing-spaces-kept-when-last` DIVERGES from the pinned Prettier
-# (it drops the spaces, corrupting the value);
-# see DIVERGENCES.md#block-scalar-trailing-whitespace (prettier#19764).
 fold-blocked-by-trailing-spaces: >
   word1 word2  
   word3
@@ -51,9 +42,6 @@ trailing-spaces-kept-when-last: >-
 ---------------------------------------
 { printWidth: 80, proseWrap: "always" }
 ---------------------------------------
-# `trailing-spaces-kept-when-last` DIVERGES from the pinned Prettier
-# (it drops the spaces, corrupting the value);
-# see DIVERGENCES.md#block-scalar-trailing-whitespace (prettier#19764).
 fold-blocked-by-trailing-spaces: >
   word1 word2  
   word3
@@ -67,9 +55,6 @@ trailing-spaces-kept-when-last: >-
 ----------------------------------------
 { printWidth: 100, proseWrap: "always" }
 ----------------------------------------
-# `trailing-spaces-kept-when-last` DIVERGES from the pinned Prettier
-# (it drops the spaces, corrupting the value);
-# see DIVERGENCES.md#block-scalar-trailing-whitespace (prettier#19764).
 fold-blocked-by-trailing-spaces: >
   word1 word2  
   word3
@@ -83,9 +68,6 @@ trailing-spaces-kept-when-last: >-
 --------------------------------------
 { printWidth: 80, proseWrap: "never" }
 --------------------------------------
-# `trailing-spaces-kept-when-last` DIVERGES from the pinned Prettier
-# (it drops the spaces, corrupting the value);
-# see DIVERGENCES.md#block-scalar-trailing-whitespace (prettier#19764).
 fold-blocked-by-trailing-spaces: >
   word1 word2  
   word3
@@ -99,9 +81,6 @@ trailing-spaces-kept-when-last: >-
 ---------------------------------------
 { printWidth: 100, proseWrap: "never" }
 ---------------------------------------
-# `trailing-spaces-kept-when-last` DIVERGES from the pinned Prettier
-# (it drops the spaces, corrupting the value);
-# see DIVERGENCES.md#block-scalar-trailing-whitespace (prettier#19764).
 fold-blocked-by-trailing-spaces: >
   word1 word2  
   word3

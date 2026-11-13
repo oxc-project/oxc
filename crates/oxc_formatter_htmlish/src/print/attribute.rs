@@ -220,7 +220,7 @@ fn write_quoted_value<'a>(raw: &'a str, f: &mut HtmlishFormatter<'_, 'a>) {
 }
 
 /// `&apos;` and `&quot;` read back.
-fn unescaped<'a>(value: &'a str, f: &HtmlishFormatter<'_, 'a>) -> &'a str {
+pub(super) fn unescaped<'a>(value: &'a str, f: &HtmlishFormatter<'_, 'a>) -> &'a str {
     if !value.contains('&') {
         return value;
     }

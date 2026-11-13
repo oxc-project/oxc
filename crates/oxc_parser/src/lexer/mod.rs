@@ -47,6 +47,7 @@ pub use number::{parse_big_int, parse_float, parse_int};
 pub use token::Token;
 
 use source::{Source, SourcePosition};
+use token::PendingToken;
 use trivia_builder::{AnnotationComments, TriviaBuilder};
 
 #[derive(Debug)]
@@ -81,18 +82,20 @@ pub struct Lexer<'a, C: Config> {
 
     source_type: SourceType,
 
-    /// The token currently being built.
-    /// Only its start and flags are written here; its kind and end remain zero until
-    /// `Token::finish` constructs the completed token.
+    /// Start of the token currently being lexed.
+    token_start: u32,
+
+    /// Flags of the token currently being lexed, and trivia state since the previous token.
+    /// The `Token` itself is only constructed by `Token::new` once its kind and end are known.
     ///
-    /// Between lexer calls, `token` is always `Token::default()`. Every method which produces a token
-    /// ends in `finish_next_inner` or `finish_re_lex`, and both reset it.
+    /// Between lexer calls, `pending` is always `PendingToken::NONE`. Every method which produces
+    /// a token ends in `finish_next_inner`, which resets it, or `finish_re_lex`, which never alters it.
     ///
-    /// The one exception is before the first token is lexed, when it is `Token::new_on_new_line()`.
+    /// The one exception is before the first token is lexed, when it is `PendingToken::START_OF_FILE`.
     /// `checkpoint` and `rewind` can never see that state, because the parser lexes the first token
-    /// before it does anything else, and they are the only things which depend on `token` being
-    /// `Token::default()`. Both assert it.
-    token: Token,
+    /// before it does anything else, and they are the only things which depend on `pending` being
+    /// `PendingToken::NONE`. Both assert it.
+    pending: PendingToken,
 
     pub(crate) errors: Vec<ParserDiagnostic<'a>>,
 
@@ -154,13 +157,13 @@ impl<'a, C: Config> Lexer<'a, C> {
             ArenaVec::new_in(&allocator)
         };
 
-        // The first token is at the start of file, so is allows on a new line
-        let token = Token::new_on_new_line();
         Self {
             allocator,
             source,
             source_type,
-            token,
+            token_start: 0,
+            // The first token is at the start of file, so is always on a new line
+            pending: PendingToken::START_OF_FILE,
             errors: vec![],
             deferred_module_errors: vec![],
             trivia_builder: TriviaBuilder::new_in(allocator),
@@ -200,8 +203,8 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// Creates a checkpoint storing the current lexer state.
     /// Use `rewind` to restore the lexer to the state stored in the checkpoint.
     pub fn checkpoint(&self) -> LexerCheckpoint<'a> {
-        // `token` is always `Token::default()` here, so it does not need to be saved. See `token` field docs.
-        debug_assert_eq!(self.token, Token::default());
+        // `pending` is always `PendingToken::NONE` here, so it does not need to be saved. See `pending` field docs.
+        debug_assert_eq!(self.pending, PendingToken::NONE);
 
         let errors_snapshot = if self.errors.is_empty() {
             ErrorSnapshot::Empty
@@ -220,8 +223,8 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// Create a checkpoint that can handle error popping.
     /// This is more expensive as it clones the errors vector.
     pub(crate) fn checkpoint_with_error_recovery(&self) -> LexerCheckpoint<'a> {
-        // `token` is always `Token::default()` here, so it does not need to be saved. See `token` field docs.
-        debug_assert_eq!(self.token, Token::default());
+        // `pending` is always `PendingToken::NONE` here, so it does not need to be saved. See `pending` field docs.
+        debug_assert_eq!(self.pending, PendingToken::NONE);
 
         let errors_snapshot = if self.errors.is_empty() {
             ErrorSnapshot::Empty
@@ -239,8 +242,8 @@ impl<'a, C: Config> Lexer<'a, C> {
 
     /// Rewinds the lexer to the same state as when the passed in `checkpoint` was created.
     pub fn rewind(&mut self, checkpoint: LexerCheckpoint<'a>) {
-        // `token` is always `Token::default()` here, so it does not need to be restored. See `token` field docs.
-        debug_assert_eq!(self.token, Token::default());
+        // `pending` is always `PendingToken::NONE` here, so it does not need to be restored. See `pending` field docs.
+        debug_assert_eq!(self.pending, PendingToken::NONE);
 
         match checkpoint.errors_snapshot {
             ErrorSnapshot::Empty => self.errors.clear(),
@@ -268,18 +271,18 @@ impl<'a, C: Config> Lexer<'a, C> {
             // SAFETY: Next 2 bytes are `#!`
             let kind = unsafe { self.read_hashbang_comment() };
             // Hashbangs are not included in tokens
-            self.finish_next_inner(kind, FinishTokenMode::Discard)
+            self.finish_next_inner(kind, self.source.position(), FinishTokenMode::Discard)
         } else {
-            let kind = self.read_next_token();
-            self.finish_next(kind)
+            let (kind, end) = self.read_next_token();
+            self.finish_next_inner(kind, end, FinishTokenMode::Push)
         }
     }
 
     /// Read next token in file.
     /// Use `first_token` for first token, and this method for all further tokens.
     pub fn next_token(&mut self) -> Token {
-        let kind = self.read_next_token();
-        self.finish_next(kind)
+        let (kind, end) = self.read_next_token();
+        self.finish_next_inner(kind, end, FinishTokenMode::Push)
     }
 
     /// Read the next token after `=` in a JSX attribute.
@@ -294,26 +297,33 @@ impl<'a, C: Config> Lexer<'a, C> {
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn next_token_for_benchmarks(&mut self) -> Token {
-        let kind = self.read_next_token();
-        self.finish_next(kind)
+        let (kind, end) = self.read_next_token();
+        self.finish_next_inner(kind, end, FinishTokenMode::Push)
     }
 
     #[inline]
     fn finish_next(&mut self, kind: Kind) -> Token {
-        self.finish_next_inner(kind, FinishTokenMode::Push)
+        self.finish_next_inner(kind, self.source.position(), FinishTokenMode::Push)
     }
 
     #[inline]
     fn finish_next_retokenized(&mut self, kind: Kind) -> Token {
-        self.finish_next_inner(kind, FinishTokenMode::Replace)
+        self.finish_next_inner(kind, self.source.position(), FinishTokenMode::Replace)
     }
 
     // `#[inline(always)]` to ensure is inlined into `finish_next` and `finish_next_retokenized`,
     // so that `mode` is statically known
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    fn finish_next_inner(&mut self, kind: Kind, mode: FinishTokenMode) -> Token {
-        let token = self.token.finish(kind, self.offset());
+    fn finish_next_inner(
+        &mut self,
+        kind: Kind,
+        end: SourcePosition<'a>,
+        mode: FinishTokenMode,
+    ) -> Token {
+        debug_assert_eq!(end, self.source.position());
+        let pending = mem::replace(&mut self.pending, PendingToken::NONE);
+        let token = Token::new(kind, self.token_start, self.source.offset_of(end), pending);
         if self.config.tokens() {
             match mode {
                 FinishTokenMode::Push => {
@@ -331,17 +341,15 @@ impl<'a, C: Config> Lexer<'a, C> {
                 FinishTokenMode::Discard => {}
             }
         }
-        self.trivia_builder.handle_token(token);
-        self.token = Token::default();
+        self.trivia_builder.handle_token(token, pending);
         token
     }
 
     /// Finish a re-lexed token used only for parser disambiguation.
     /// This must not mutate the externally collected token stream.
-    fn finish_re_lex(&mut self, kind: Kind) -> Token {
-        let token = self.token.finish(kind, self.offset());
-        self.token = Token::default();
-        token
+    fn finish_re_lex(&self, kind: Kind) -> Token {
+        debug_assert_eq!(self.pending, PendingToken::NONE);
+        Token::new(kind, self.token_start, self.offset(), PendingToken::NONE)
     }
 
     /// Overwrite the last token in the collected token stream.
@@ -422,7 +430,7 @@ impl<'a, C: Config> Lexer<'a, C> {
 
     /// Get the current unterminated token range
     fn unterminated_range(&self) -> Span {
-        Span::new(self.token.start(), self.offset())
+        Span::new(self.token_start, self.offset())
     }
 
     /// Consume the current char if not at EOF
@@ -495,16 +503,17 @@ impl<'a, C: Config> Lexer<'a, C> {
 
     /// Read each char and set the current token
     /// Whitespace and line terminators are skipped
+    /// Returns the `Kind` of the token, and the position of its end, which is current position of source.
     #[inline] // Make sure is inlined into `next_token`
-    fn read_next_token(&mut self) -> Kind {
+    fn read_next_token(&mut self) -> (Kind, SourcePosition<'a>) {
         self.trivia_builder.clear_annotation_comments();
 
         let end_pos = self.source.end();
+        let mut pos = self.source.position();
         loop {
             // Single spaces between tokens are common, so consume a space before processing the next token.
             // Can only do this if there are at least 2 bytes left in source.
             // If there aren't 2 bytes left, delegate to `read_next_token_at_end` (cold branch).
-            let mut pos = self.source.position();
             // SAFETY: `source.end()` is always equal to or after `source.position()`
             let remaining_bytes = unsafe { end_pos.offset_from(pos) };
             if remaining_bytes >= 2 {
@@ -523,17 +532,27 @@ impl<'a, C: Config> Lexer<'a, C> {
 
                 // Set token start
                 let offset = self.source.offset_of(pos);
-                self.token.set_start(offset);
+                self.token_start = offset;
 
+                if let Some(kind) = byte_handlers::single_byte_token(byte) {
+                    // SAFETY: Single-byte tokens are ASCII, and at least 1 byte remains after `pos`
+                    let end = unsafe { pos.add(1) };
+                    self.source.set_position(end);
+                    return (kind, end);
+                }
+
+                let byte_handlers = self.config.byte_handlers();
+                let kind;
                 // SAFETY: `byte` is byte value at current position in source
-                let kind = unsafe { self.handle_byte(byte) };
+                (kind, pos) = unsafe { byte_handlers[byte as usize](self, pos) };
                 if kind != Kind::Skip {
-                    return kind;
+                    return (kind, pos);
                 }
             } else {
                 // Only 0 or 1 bytes left in source.
                 // Delegate to `#[cold]` function as this is a very rare case.
-                return self.read_next_token_at_end();
+                let kind = self.read_next_token_at_end();
+                return (kind, self.source.position());
             }
         }
     }
@@ -543,7 +562,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     #[cold]
     fn read_next_token_at_end(&mut self) -> Kind {
         let offset = self.offset();
-        self.token.set_start(offset);
+        self.token_start = offset;
 
         if let Some(byte) = self.peek_byte() {
             // SAFETY: `byte` is byte value at current position in source
@@ -552,7 +571,7 @@ impl<'a, C: Config> Lexer<'a, C> {
                 return kind;
             }
             // Last byte was whitespace/line break (`Kind::Skip`), so now at EOF
-            self.token.set_start(offset + 1);
+            self.token_start = offset + 1;
         }
 
         Kind::Eof
@@ -582,7 +601,7 @@ impl<'a, C: Config> Lexer<'a, C> {
                 }
 
                 let offset = self.source.offset_of(pos);
-                self.token.set_start(offset);
+                self.token_start = offset;
 
                 if matches!(byte, b'"' | b'\'') {
                     // SAFETY: `byte` is the current ASCII quote delimiter.
@@ -604,7 +623,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     #[cold]
     fn read_next_jsx_attribute_value_at_end(&mut self) -> Kind {
         let offset = self.offset();
-        self.token.set_start(offset);
+        self.token_start = offset;
 
         if let Some(byte) = self.peek_byte() {
             if matches!(byte, b'"' | b'\'') {
@@ -617,7 +636,7 @@ impl<'a, C: Config> Lexer<'a, C> {
             if kind != Kind::Skip {
                 return kind;
             }
-            self.token.set_start(offset + 1);
+            self.token_start = offset + 1;
         }
 
         Kind::Eof

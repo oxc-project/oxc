@@ -1,6 +1,5 @@
 //! The names Prettier's HTML parser lowercases (DIVERGENCES.md#tag-name-case):
-//! `@prettier/html-tags` 2.2.0 and `@prettier/html-attributes` 0.1.0, as Prettier `main` reads them
-//! (DIVERGENCES.md#known-attribute-names).
+//! `@prettier/html-tags` 2.2.0 and `@prettier/html-attributes` 0.1.0, as Prettier reads them.
 //! Read only for a name holding an uppercase letter, so the tables are sorted slices.
 
 const ELEMENTS: &[&str] = &[

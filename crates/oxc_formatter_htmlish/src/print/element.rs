@@ -40,7 +40,7 @@ pub fn write_element<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'
             .and_then(|language| {
                 dispatch_fragment_ir(f, language, trim_preserving_indentation(content), None)
             });
-        // The opening tag prints the borrowed prefix, once (DIVERGENCES.md#pre-after-borrowed-closing-end)
+        // The opening tag prints the borrowed prefix, once
         write!(f, group(&format_with(|f| write_opening_tag(t, id, f))));
         match formatted {
             Some(ir) if ir.is_empty() => {}
@@ -156,7 +156,7 @@ fn ends_at_indentation(
 ) -> bool {
     let value = match t.kind(last) {
         NodeKind::Comment(comment) => comment.content.slice(t.source()),
-        NodeKind::Text(_) | NodeKind::Cdata if t[id].pre_like => t[last].span.slice(t.source()),
+        NodeKind::Text(_) if t[id].pre_like => t[last].span.slice(t.source()),
         _ => return false,
     };
     let Some((_, tail)) = value.rsplit_once('\n') else { return false };

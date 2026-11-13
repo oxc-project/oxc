@@ -65,3 +65,4 @@ minimumReleaseAgeExclude:
   - vite
   - vite-plus
   - vitest
+  - prettier@3.10.1

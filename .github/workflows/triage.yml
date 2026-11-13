@@ -54,7 +54,7 @@ jobs:
           # Issue events can restore main's caches but cannot save into that scope.
           save-cache: false
           cache-key: warm
-          tools: just,cargo-shear@1.13.1,cargo-insta,typos-cli,ast-grep
+          tools: just,cargo-shear@1.13.1,cargo-insta,ast-grep
           components: clippy rustfmt
 
       - name: Create oxc-captain token

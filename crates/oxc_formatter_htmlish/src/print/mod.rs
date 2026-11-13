@@ -102,7 +102,7 @@ fn write_node<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'_, 'a>)
             write_opening_tag_start(t, id, f);
             write_closing_tag_end(t, id, f);
         }
-        NodeKind::Text(_) | NodeKind::Cdata => write_text(t, id, f),
+        NodeKind::Text(_) => write_text(t, id, f),
         // `{{ }}`: Vue's expression formatted; Angular's keeps its lines until it is formatted
         NodeKind::Interpolation(interpolation) => {
             let expression = interpolation.expression.slice(t.source());
@@ -136,9 +136,9 @@ fn write_node<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'_, 'a>)
             );
             write_closing_tag_end(t, id, f);
         }
-        // Comments are printed as written,
+        // Comments and CDATA sections are printed as written,
         // a `</ div>` too (DIVERGENCES.md#end-tag-with-space-is-comment), and an omitted element's end tag (`</body>`).
-        NodeKind::Comment(_) | NodeKind::EndTag(_) => write!(
+        NodeKind::Comment(_) | NodeKind::Cdata | NodeKind::EndTag(_) => write!(
             f,
             [
                 opening_tag_prefix(t, id),
