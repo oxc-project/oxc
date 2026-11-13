@@ -11,7 +11,7 @@ Original    | minified    | minified    | gzip        | gzip        | Iterations
 
 544.10 kB   | 69,872 B    | 72.48 kB    | 25,577 B    | 26.20 kB    |           2 | lodash.js
 
-555.77 kB   | 262,720 B   | 270.13 kB   | 87,652 B    | 90.80 kB    |           2 | d3.js
+555.77 kB   | 262,720 B   | 270.13 kB   | 87,605 B    | 90.80 kB    |           2 | d3.js
 
 1.01 MB     | 435,866 B   | 458.89 kB   | 121,774 B   | 126.71 kB   |           2 | bundle.min.js
 
@@ -19,9 +19,9 @@ Original    | minified    | minified    | gzip        | gzip        | Iterations
 
 2.14 MB     | 707,506 B   | 724.14 kB   | 160,017 B   | 181.07 kB   |           2 | victory.js
 
-3.20 MB     | 958,210 B   | 1.01 MB     | 316,891 B   | 331.56 kB   |           2 | echarts.js
+3.20 MB     | 958,210 B   | 1.01 MB     | 316,881 B   | 331.56 kB   |           2 | echarts.js
 
 6.69 MB     | 2,119,887 B | 2.31 MB     | 453,309 B   | 488.28 kB   |           4 | antd.js
 
-10.95 MB    | 3,309,379 B | 3.49 MB     | 849,226 B   | 915.50 kB   |           4 | typescript.js
+10.95 MB    | 3,309,379 B | 3.49 MB     | 849,125 B   | 915.50 kB   |           4 | typescript.js
 
