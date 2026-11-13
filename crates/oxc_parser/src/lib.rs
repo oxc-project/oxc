@@ -67,6 +67,7 @@
 use std::any::Any;
 
 mod ast_builder;
+mod comment_attachment;
 pub mod config;
 mod context;
 mod cursor;
@@ -91,16 +92,17 @@ pub mod lexer;
 
 use oxc_allocator::{Allocator, ArenaBox, ArenaVec, Dummy, GetAllocator};
 use oxc_ast::{
-    ast::{Expression, Program, Statement},
+    ast::{Directive, Expression, Program, Statement},
     builder::{AstBuilder, GetAstBuilder},
 };
 use oxc_diagnostics::Diagnostics;
-use oxc_span::{SourceType, Span};
+use oxc_span::{GetSpan, SourceType, Span};
 use oxc_syntax::module_record::ModuleRecord;
 
 pub use crate::lexer::{Kind, Token};
 use crate::{
     ast_builder::ParserAstBuilder,
+    comment_attachment::CommentAttacher,
     config::{
         LexerConfig, NoTokensParserConfig, ParserConfig, RuntimeParserConfig, TokensParserConfig,
     },
@@ -171,6 +173,14 @@ pub struct ParserReturn<'a> {
     /// Every node has a unique node ID within this AST. Program has ID zero;
     /// other IDs follow construction order and may have gaps from discarded nodes.
     /// Semantic analysis replaces these with its own dense node IDs.
+    ///
+    /// Every comment in [`Program::comments`] is assigned an owning node in this AST, with a
+    /// [`CommentPlacement`](oxc_ast::CommentPlacement) relative to it. Within the deepest node
+    /// containing it, a comment trails the child before it if it is at the end of that child's
+    /// line, and otherwise leads the child after it. If only one of those children is adjacent,
+    /// it is assigned to that one, and if neither is, it is dangling in that node. Annotation
+    /// comments lead the call or function they apply to. Comments are dangling in Program after a
+    /// fatal error.
     ///
     /// ## Validity
     /// It is possible for the AST to be present and semantically invalid. This will happen if
@@ -657,6 +667,11 @@ struct ParserImpl<'a, C: ParserConfig> {
     /// The end range of the previous token
     prev_token_end: u32,
 
+    /// Number of comments assigned to a node.
+    assigned_comments: u32,
+
+    comment_attacher: CommentAttacher,
+
     /// Parser state
     state: ParserState<'a>,
 
@@ -698,6 +713,8 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             fatal_error: None,
             token: Token::default(),
             prev_token_end: 0,
+            assigned_comments: 0,
+            comment_attacher: CommentAttacher::default(),
             state: ParserState::new(),
             ctx: Self::default_context(source_type, options),
             ast: ParserAstBuilder::new(allocator),
@@ -736,6 +753,12 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             self.lexer.errors.clear();
             self.errors.clear();
             self.error(overlong_error);
+        }
+
+        if has_fatal_error {
+            comment_attachment::attach_comments_to_program(&mut self.lexer.trivia_builder.comments);
+        } else {
+            self.attach_remaining_comments(&program);
         }
 
         let mut is_flow_language = false;
@@ -844,7 +867,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             && self.module_record_builder.has_module_syntax()
             && !self.state.potential_await_reparse.is_empty()
         {
-            self.reparse_potential_top_level_awaits(&mut statements);
+            self.reparse_potential_top_level_awaits(&directives, &mut statements);
         }
 
         let span = Span::new(0, self.source_text.len() as u32);
@@ -868,7 +891,11 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     /// In unambiguous mode, statements like `await /x/u` are initially parsed as
     /// `await / x / u` (identifier with divisions). If ESM syntax is detected,
     /// we need to reparse them with the await context enabled.
-    fn reparse_potential_top_level_awaits(&mut self, statements: &mut ArenaVec<'a, Statement<'a>>) {
+    fn reparse_potential_top_level_awaits(
+        &mut self,
+        directives: &[Directive<'a>],
+        statements: &mut ArenaVec<'a, Statement<'a>>,
+    ) {
         let original_tokens =
             if self.lexer.config.tokens() { Some(self.lexer.take_tokens()) } else { None };
         let original = original_tokens.as_ref().map_or(&[][..], |tokens| tokens.as_slice());
@@ -881,8 +908,21 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             if self.lexer.config.tokens() { checkpoints.len() } else { 0 },
             self,
         );
+        // Comments after the first reparsed statement may be owned by replaced nodes. Unassign
+        // them once rather than on each rewind, and assign those not owned by reparsed statements
+        // by walking Program. Annotation comments are assigned to the calls and functions they
+        // apply to while parsing, so keep them, and unassign those in each statement before it is
+        // reparsed.
+        if let Some((_, checkpoint)) = checkpoints.first() {
+            self.unassign_comments_keeping_annotations(Span::new(
+                checkpoint.prev_token_end(),
+                u32::MAX,
+            ));
+        }
         for (stmt_index, checkpoint) in checkpoints {
-            self.rewind(checkpoint);
+            let end = statements.get(stmt_index).map_or(u32::MAX, |stmt| stmt.span().end);
+            self.unassign_comments(Span::new(checkpoint.prev_token_end(), end));
+            self.rewind_keeping_comments(checkpoint);
             let replacement_start = replacements.len();
 
             if self.lexer.config.tokens() {
@@ -897,8 +937,15 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             let edit_start = original_index;
 
             // Parse the statement with await context enabled (TopLevel context is already set)
+            let previous = stmt_index.checked_sub(1).and_then(|index| statements.get(index));
+            let list_comments = self.start_list_comments();
             let stmt = self.context_add(Context::Await, |p| {
-                p.parse_statement_list_item(StatementContext::Program)
+                p.parse_statement_in_list(
+                    StatementContext::Program,
+                    &list_comments,
+                    directives,
+                    previous,
+                )
             });
 
             // Replace the statement if the index is valid

@@ -37,6 +37,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         {
             self.state.trailing_commas.insert(start, self.end_span(comma_start));
         }
+        self.attach_comments_after_last(&object_expression_properties);
         self.expect(Kind::RCurly);
         ObjectExpression::boxed(self.end_span(start), object_expression_properties, self)
     }
@@ -115,7 +116,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Expression::new_identifier(identifier_name.span, identifier_name.name, self)
         } else {
             self.expect(Kind::Colon);
-            self.parse_assignment_expression_or_higher()
+            self.parse_after_delimiter(Self::parse_assignment_expression_or_higher)
         };
         ObjectProperty::boxed(
             self.end_span(start),

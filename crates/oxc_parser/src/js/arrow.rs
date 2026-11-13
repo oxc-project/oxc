@@ -97,7 +97,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let Expression::Identifier(ident) = &expr else {
                 return self.unexpected();
             };
-            BindingIdentifier::new(ident.span, ident.name, self)
+            let binding = BindingIdentifier::new(ident.span, ident.name, self);
+            binding.set_node_id(ident.node_id());
+            binding
         };
         // It is a Syntax Error if ArrowParameters Contains AwaitExpression is true.
         if ident.name == "await" {
@@ -313,6 +315,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if let Some(this_param) = this_param {
             // const x = (this: number) => {};
             self.error(diagnostics::ts_arrow_function_this_parameter(this_param.span));
+            self.unassign_comments(this_param.span);
         }
 
         let return_type = if self.is_ts { self.parse_ts_return_type_annotation() } else { None };
@@ -453,11 +456,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return None;
         }
         let checkpoint = self.checkpoint_with_error_recovery();
+        let comments = self.comment_checkpoint();
         let errors_len = self.errors.len();
         let (params, has_trailing_comma) = self.parse_cover_arrow_parameters();
         if !self.at(Kind::Arrow) {
             // Reuse the successful parameter parse, including its initializers and property
             // keys, when it also represents an ordinary parenthesized expression.
+            let span = params.span;
             if !self.has_fatal_error()
                 && self.errors.len() == errors_len
                 && !has_trailing_comma
@@ -465,6 +470,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 && !params.items.is_empty()
                 && let Some(expression) = self.cover_arrow_parameters_as_expression(params)
             {
+                self.discard_cover_parameter_comments(comments, span);
                 return Some(expression);
             }
             self.state.not_parenthesized_arrow.insert(pos);

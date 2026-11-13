@@ -4,10 +4,13 @@ use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 use oxc_str::Str;
+use oxc_syntax::node::NodeId;
 
 use super::{VariableDeclarationParent, grammar::CoverGrammar};
 use crate::{
-    Context, ParserConfig as Config, ParserImpl, StatementContext, diagnostics,
+    Context, ParserConfig as Config, ParserImpl, StatementContext,
+    comment_attachment::ListComments,
+    diagnostics,
     lexer::Kind,
     modifiers::{ModifierKind, Modifiers},
 };
@@ -50,7 +53,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let track_await_reparse = is_top_level && self.source_type.is_unambiguous();
 
         let mut expecting_directives = true;
-        let statements = self.collect_list(|p| {
+        let list_comments = self.start_list_comments();
+        let statements = self.collect_list_with_previous(|p, previous| {
             while !p.has_fatal_error() && (is_top_level || !p.at(Kind::RCurly)) {
                 // Commit once module syntax is detected (`export` commits eagerly in
                 // `parse_export_declaration`; `has_module_syntax()` excludes TS's
@@ -78,22 +82,31 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     let start = p.cur_start();
                     let expression = p.parse_expr();
                     p.asi();
-                    match ExpressionStatement::new(p.end_span(start), expression, p) {
+                    let statement = ExpressionStatement::new(p.end_span(start), expression, p);
+                    p.finish_list_element_comments(&statement, &list_comments, &directives, None);
+                    match statement {
                         ExpressionStatement {
                             span,
+                            node_id,
                             expression: Expression::StringLiteral(string),
                             ..
                         } => {
                             let string = string.unbox();
                             let src = &p.source_text
                                 [string.span.start as usize + 1..string.span.end as usize - 1];
-                            directives.push(Directive::new(span, string, Str::from(src), p));
+                            let directive = Directive::new(span, string, Str::from(src), p);
+                            p.replace_statement_comment_owner(
+                                node_id.get(),
+                                directive.node_id(),
+                                span,
+                            );
+                            directives.push(directive);
                             continue;
                         }
                         statement => Statement::ExpressionStatement(p.alloc(statement)),
                     }
                 } else {
-                    p.parse_statement_list_item(stmt_ctx)
+                    p.parse_statement_in_list(stmt_ctx, &list_comments, &directives, previous)
                 };
 
                 // Don't reparse a module declaration: `export` already committed to the
@@ -126,7 +139,27 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             None
         });
 
+        if statements.is_empty() {
+            self.attach_comments_after_last(&directives);
+        } else {
+            self.attach_comments_after_last(&statements);
+        }
         (directives, statements)
+    }
+
+    /// Parse a statement in a statement list, and assign comments in and before it.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub(crate) fn parse_statement_in_list(
+        &mut self,
+        stmt_ctx: StatementContext,
+        list: &ListComments,
+        directives: &[Directive<'a>],
+        previous: Option<&Statement<'a>>,
+    ) -> Statement<'a> {
+        let stmt = self.parse_statement_list_item(stmt_ctx);
+        self.finish_list_element_comments(&stmt, list, directives, previous);
+        stmt
     }
 
     /// `StatementListItem`[Yield, Await, Return] :
@@ -215,52 +248,52 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         comments: (u32, NonZeroU32),
         stmt: &mut Statement<'a>,
     ) {
-        if Self::set_pure_on_function_stmt(stmt) {
-            self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+        if let Some(node_id) = Self::set_pure_on_function_stmt(stmt) {
+            self.apply_no_side_effects_comments(comments, node_id);
         }
     }
 
-    fn set_pure_on_function_stmt(stmt: &mut Statement<'a>) -> bool {
+    fn set_pure_on_function_stmt(stmt: &mut Statement<'a>) -> Option<NodeId> {
         match stmt {
             Statement::FunctionDeclaration(func) => {
                 func.pure = true;
-                true
+                Some(func.node_id())
             }
             Statement::ExportDefaultDeclaration(decl) => match &mut decl.declaration {
                 ExportDefaultDeclarationKind::FunctionExpression(func)
                 | ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
                     func.pure = true;
-                    true
+                    Some(func.node_id())
                 }
                 ExportDefaultDeclarationKind::ArrowFunctionExpression(func) => {
                     func.pure = true;
-                    true
+                    Some(func.node_id())
                 }
-                _ => false,
+                _ => None,
             },
             Statement::ExportDeclaration(decl) => match &mut decl.declaration {
                 Declaration::FunctionDeclaration(func) => {
                     func.pure = true;
-                    true
+                    Some(func.node_id())
                 }
                 Declaration::VariableDeclaration(var_decl) if var_decl.kind.is_const() => {
                     if let Some(Some(expr)) = var_decl.declarations.first_mut().map(|d| &mut d.init)
                     {
                         Self::set_pure_on_function_expr(expr)
                     } else {
-                        false
+                        None
                     }
                 }
-                _ => false,
+                _ => None,
             },
             Statement::VariableDeclaration(var_decl) if var_decl.kind.is_const() => {
                 if let Some(Some(expr)) = var_decl.declarations.first_mut().map(|d| &mut d.init) {
                     Self::set_pure_on_function_expr(expr)
                 } else {
-                    false
+                    None
                 }
             }
-            _ => false,
+            _ => None,
         }
     }
 
@@ -282,7 +315,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Section 14.2 Block Statement
     pub(crate) fn parse_block(&mut self) -> BlockStatement<'a> {
         let start = self.cur_start();
-        let body = self.parse_normal_list(Kind::LCurly, Kind::RCurly, |p| {
+        let body = self.parse_braced_list::<false, _>(|p| {
             p.parse_statement_list_item(StatementContext::StatementList)
         });
         BlockStatement::new(self.end_span(start), body, self)
@@ -723,7 +756,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let argument = if self.eat(Kind::Semicolon) || self.can_insert_semicolon() {
             None
         } else {
-            let expr = self.context_add(Context::In, ParserImpl::parse_expr);
+            let expr =
+                self.parse_after_delimiter(|p| p.context_add(Context::In, ParserImpl::parse_expr));
             self.asi();
             Some(expr)
         };
@@ -760,7 +794,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // and report only the first duplicate, all in the single parsing pass.
         let mut first_default: Option<Span> = None;
         let mut reported_duplicate = false;
-        let cases = self.parse_normal_list(Kind::LCurly, Kind::RCurly, |p| {
+        let cases = self.parse_braced_list::<false, _>(|p| {
             let case = p.parse_switch_case();
             if case.test.is_none() {
                 match first_default {
@@ -786,7 +820,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             Kind::Case => {
                 self.bump_any();
-                let expression = self.parse_expr();
+                let expression = self.parse_after_delimiter(Self::parse_expr);
+                self.attach_comments_before_token(&expression);
                 Some(expression)
             }
             _ => {
@@ -795,31 +830,40 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         };
         self.expect(Kind::Colon);
-        let consequent = self.collect_list(|p| {
-            let kind = p.cur_kind();
-            if matches!(
-                kind,
-                Kind::Case | Kind::Default | Kind::RCurly | Kind::Eof | Kind::Undetermined
-            ) || p.fatal_error.is_some()
-            {
-                return None;
-            }
-            let stmt = p.parse_statement_list_item(StatementContext::StatementList);
-            if let Statement::VariableDeclaration(var_decl) = &stmt
-                && var_decl.kind.is_using()
-            {
-                // It is a Syntax Error if UsingDeclaration is contained directly within the StatementList of either a CaseClause or DefaultClause.
-                // It is a Syntax Error if AwaitUsingDeclaration is contained directly within the StatementList of either a CaseClause or DefaultClause.
-                p.error(if var_decl.kind.is_await_using() {
-                    diagnostics::await_using_declaration_not_allowed_in_switch_bare_case(
-                        stmt.span(),
-                    )
-                } else {
-                    diagnostics::using_declaration_not_allowed_in_switch_bare_case(stmt.span())
-                });
-            }
-            Some(stmt)
-        });
+        let list_comments = self.start_list_comments();
+        let consequent = self.collect_list_with_previous(
+            #[inline(always)]
+            |p, previous| {
+                let kind = p.cur_kind();
+                if matches!(
+                    kind,
+                    Kind::Case | Kind::Default | Kind::RCurly | Kind::Eof | Kind::Undetermined
+                ) || p.fatal_error.is_some()
+                {
+                    return None;
+                }
+                let stmt = p.parse_statement_in_list(
+                    StatementContext::StatementList,
+                    &list_comments,
+                    &[],
+                    previous,
+                );
+                if let Statement::VariableDeclaration(var_decl) = &stmt
+                    && var_decl.kind.is_using()
+                {
+                    // It is a Syntax Error if UsingDeclaration is contained directly within the StatementList of either a CaseClause or DefaultClause.
+                    // It is a Syntax Error if AwaitUsingDeclaration is contained directly within the StatementList of either a CaseClause or DefaultClause.
+                    p.error(if var_decl.kind.is_await_using() {
+                        diagnostics::await_using_declaration_not_allowed_in_switch_bare_case(
+                            stmt.span(),
+                        )
+                    } else {
+                        diagnostics::using_declaration_not_allowed_in_switch_bare_case(stmt.span())
+                    });
+                }
+                Some(stmt)
+            },
+        );
         SwitchCase::new(self.end_span(start), test, consequent, self)
     }
 

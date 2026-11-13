@@ -100,7 +100,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut first = true;
         let mut has_optional = false;
 
-        let list = self.collect_list(|p| {
+        let list = self.collect_list_with_previous(|p, previous| {
             loop {
                 let kind = p.cur_kind();
                 if kind == Kind::RParen
@@ -126,6 +126,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         return None;
                     }
                     p.bump_any();
+                    if p.cur_token().follows_comment() {
+                        if let Some(rest) = rest.as_deref() {
+                            p.attach_comments_after_separator(rest);
+                        } else if let Some(param) = previous {
+                            p.attach_comments_after_separator(param);
+                        }
+                    }
                     let kind = p.cur_kind();
                     if kind == Kind::RParen {
                         if rest.is_some() && !p.ctx.has_ambient() {

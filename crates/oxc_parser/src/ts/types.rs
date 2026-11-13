@@ -68,6 +68,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if let Some(this_param) = &this_param {
                 // type Foo = new (this: number) => any;
                 self.error(diagnostics::ts_constructor_this_parameter(this_param.span));
+                self.unassign_comments(this_param.span);
             }
             TSType::new_ts_constructor_type(
                 span,
@@ -1474,6 +1475,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         {
             // interface Foo { new(this: number): Foo }
             self.error(diagnostics::ts_constructor_this_parameter(this_param.span));
+            self.unassign_comments(this_param.span);
         }
         let return_type = self.parse_ts_return_type_annotation();
         self.parse_type_member_semicolon();
@@ -1638,7 +1640,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     break;
                 }
                 parameter_count += 1;
+                let checkpoint = self.comment_checkpoint();
                 let _ = self.parse_ts_index_signature_name();
+                self.discard_comments(checkpoint);
             }
             parameter
         };
