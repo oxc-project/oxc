@@ -199,7 +199,7 @@
 
 ## typescript
 
-640/699 (91.56%)
+641/699 (91.70%)
 
 ### Failed
 
@@ -241,8 +241,6 @@
   - ❓unclassified
 - externals/prettier/typescript/conformance/types/union/unionTypeIndexSignature.ts (💥, 83.64%)
   - ❓unclassified
-- externals/prettier/typescript/index-signature/comment.ts (💥, 80.00%)
-  - ❓unclassified
 - externals/prettier/typescript/instantiation-expression/before-operator.ts (💥, 39.39%)
   - ❓unclassified
 - externals/prettier/typescript/instantiation-expression/operand.ts (💥, 95.45%)
@@ -265,7 +263,7 @@
   - ❓unclassified
 - externals/prettier/typescript/prettier-ignore/mapped-types.ts (💥, 92.19%)
   - ❓unclassified
-- externals/prettier/typescript/property-signature/consistent-with-flow/comments.ts (💥, 83.33%)
+- externals/prettier/typescript/property-signature/consistent-with-flow/comments.ts (💥, 89.36%)
   - ❓unclassified
 - externals/prettier/typescript/property-signature/consistent-with-flow/union.ts (💥, 80.00%)
   - ❓unclassified

@@ -1391,7 +1391,15 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSTypeAnnotation<'a>> {
                 // Line comment after the `:` drops the type to column 0 (`let v: // c` + `Foo`, Prettier too);
                 // a break + indent as after `=` would keep it under the name.
                 // See AGENTS.md "Open debts".
-                write!(f, [":", space(), self.type_annotation()]);
+                let type_annotation = self.type_annotation();
+                if f.comments().has_comment_in_range(self.span.start, type_annotation.span().start)
+                {
+                    // A group of its own, or an enclosing break (a member list's) puts a block comment after `:`
+                    // on its own line: `a: /** c */ B` stays on one line when it fits
+                    write!(f, [":", space(), group(&type_annotation)]);
+                } else {
+                    write!(f, [":", space(), type_annotation]);
+                }
             }
         }
     }
@@ -1746,9 +1754,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSPropertySignature<'a>> {
         if self.optional() {
             write!(f, "?");
         }
-        if let Some(type_annotation) = &self.type_annotation() {
-            write!(f, type_annotation);
-        }
+        write!(f, self.type_annotation());
     }
 }
 
