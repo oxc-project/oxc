@@ -699,6 +699,8 @@ export const out2 = s.replace(/a/g, "b");"#,
             r"const RE = /a/g; const first = RE; const second = (first); foo.replace(first, bar); foo.replace(second, bar); foo.replace(RE, bar)",
             r"const RE = /a/g; const first = RE; const second = (first); foo.replaceAll(first, bar); foo.replaceAll(second, bar); foo.replaceAll(RE, bar)",
         ),
+        (r"foo.replace(new RegExp(/a/g), bar)", r"foo.replaceAll(new RegExp(/a/g), bar)"),
+        (r"foo.replace(new RegExp((/a/g)), bar)", r"foo.replaceAll(new RegExp((/a/g)), bar)"),
     ];
 
     Tester::new(PreferStringReplaceAll::NAME, PreferStringReplaceAll::PLUGIN, pass, fail)

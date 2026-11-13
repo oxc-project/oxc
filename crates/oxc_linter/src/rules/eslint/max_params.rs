@@ -160,7 +160,8 @@ declare_oxc_lint!(
     style,
     config = MaxParamsConfigEnum,
     version = "0.2.14",
-    short_description = "Enforce a maximum number of parameters in function definitions which by default is three.",
+    short_description =
+        "Enforce a maximum number of parameters in function definitions which by default is three.",
 );
 
 impl Rule for MaxParams {

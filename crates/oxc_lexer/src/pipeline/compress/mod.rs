@@ -3,14 +3,20 @@ use oxc_span::Span;
 
 use crate::token::{SPAN_SENTINELS, tk};
 
-use crate::pipeline::lanes::Lanes;
+use crate::pipeline::{bitmap::Bitmap, lanes::Lanes};
 
 mod avx2;
 mod common;
 mod generic;
+mod neon;
+mod pair_luts;
 
-use avx2::{build_spans_avx2, compress_blocks_avx2, init_pair_luts_avx2, lanes_post_avx2};
+#[cfg(test)]
+mod tests;
+
+use avx2::{build_spans_avx2, compress_blocks_avx2, lanes_post_avx2};
 use generic::{build_spans_generic, compress_blocks_generic, lanes_post_generic};
+use neon::{build_spans_neon, compress_blocks_neon, lanes_post_neon};
 
 const STAGE_BLOCKS: usize = 32;
 pub const STAGE_CAP: usize = STAGE_BLOCKS * 64 + 128;
@@ -21,7 +27,7 @@ pub unsafe fn compress(
     src: &[u8],
     n: usize,
     nb: usize,
-    st: *const u64,
+    st: Bitmap,
     kind: *const u8,
     stage_pos: *mut u32,
     stage_kind: *mut u8,
@@ -66,18 +72,18 @@ pub unsafe fn write_sentinels(n: u32, spans: *mut Span, sig_kinds: *mut u8, _cpu
 ///
 /// This function must be called before calling [`compress`].
 ///
-/// `PairLuts` is only used by AVX2 implementation, so this function is a no-op on other CPUs.
+/// `PairLuts` is only used by the SIMD implementations, so this function is a no-op on other CPUs.
 #[cpu_version(Generic)]
 pub(super) fn init_pair_luts(cpu: DynCpu) {
-    if let DynCpu::Avx2(cpu) = cpu {
-        init_pair_luts_avx2(cpu);
+    if matches!(cpu, DynCpu::Avx2(_) | DynCpu::Neon(_)) {
+        pair_luts::init_pair_luts();
     }
 }
 
 #[cpu_multiversion]
 #[inline(always)]
 unsafe fn compress_blocks(
-    st: *const u64,
+    st: Bitmap,
     kind: *const u8,
     b0: usize,
     b1: usize,
@@ -86,8 +92,9 @@ unsafe fn compress_blocks(
     cpu: impl Cpu,
 ) -> usize {
     match DynCpu::from(cpu) {
-        DynCpu::Avx2(cpu) => compress_blocks_avx2(st, kind, b0, b1, starts, kinds, cpu),
-        _ => compress_blocks_generic(st, kind, b0, b1, starts, kinds),
+        DynCpu::Avx2(cpu) => compress_blocks_avx2(st.as_ptr(), kind, b0, b1, starts, kinds, cpu),
+        DynCpu::Neon(cpu) => compress_blocks_neon(st.as_ptr(), kind, b0, b1, starts, kinds, cpu),
+        DynCpu::Generic(_) => compress_blocks_generic(st.as_ptr(), kind, b0, b1, starts, kinds),
     }
 }
 
@@ -103,7 +110,8 @@ unsafe fn build_spans(
 ) -> usize {
     match DynCpu::from(cpu) {
         DynCpu::Avx2(cpu) => build_spans_avx2(stage_kind, stage_pos, m, spans, sig_kinds, cpu),
-        _ => build_spans_generic(stage_kind, stage_pos, m, spans, sig_kinds),
+        DynCpu::Neon(cpu) => build_spans_neon(stage_kind, stage_pos, m, spans, sig_kinds, cpu),
+        DynCpu::Generic(_) => build_spans_generic(stage_kind, stage_pos, m, spans, sig_kinds),
     }
 }
 
@@ -120,6 +128,7 @@ unsafe fn lanes_post(
 ) {
     match DynCpu::from(cpu) {
         DynCpu::Avx2(cpu) => lanes_post_avx2(src, out_kinds, out_spans, m, nn, lanes, cpu),
-        _ => lanes_post_generic(src, out_kinds, out_spans, m, nn, lanes),
+        DynCpu::Neon(cpu) => lanes_post_neon(src, out_kinds, out_spans, m, nn, lanes, cpu),
+        DynCpu::Generic(_) => lanes_post_generic(src, out_kinds, out_spans, m, nn, lanes),
     };
 }

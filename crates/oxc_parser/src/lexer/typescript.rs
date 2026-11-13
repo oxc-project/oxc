@@ -24,7 +24,7 @@ impl<C: Config> Lexer<'_, C> {
     /// as the last collected token, and the caller (`expression.rs`) restores the original
     /// compound token over it via `rewrite_last_collected_token`.
     pub(crate) fn re_lex_as_typescript_l_angle(&mut self, offset: u32) -> Token {
-        self.token.set_start(self.offset() - offset);
+        self.token_start = self.offset() - offset;
         self.source.back(offset as usize - 1);
         let token = self.finish_re_lex(Kind::LAngle);
         self.rewrite_last_collected_token(token);
@@ -46,7 +46,7 @@ impl<C: Config> Lexer<'_, C> {
     /// the parse. Since both the original push and the Replace are at a post-checkpoint
     /// position, `truncate(checkpoint.tokens_len)` on rewind removes it automatically.
     pub(crate) fn re_lex_as_typescript_r_angle(&mut self, offset: u32) -> Token {
-        self.token.set_start(self.offset() - offset);
+        self.token_start = self.offset() - offset;
         self.source.back(offset as usize - 1);
         self.finish_re_lex(Kind::RAngle)
     }

@@ -108,7 +108,8 @@ declare_oxc_lint!(
     restriction,
     config = NoCommonjs,
     version = "0.11.0",
-    short_description = "Forbid the use of CommonJS `require` calls and `module.exports` or `exports.*`.",
+    short_description =
+        "Forbid the use of CommonJS `require` calls and `module.exports` or `exports.*`.",
 );
 
 fn is_conditional(parent_node: &AstNode, ctx: &LintContext) -> bool {

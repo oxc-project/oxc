@@ -127,17 +127,14 @@ impl Rule for ConsistentVitestVi {
                 ctx.diagnostic_with_fix(
                     consistent_vitest_vi_diagnostic(vitest_import.span(), &self.function),
                     |fixer| {
-                        let mut specifiers_without_opposite_accessor: Vec<&str> = import
-                            .specifiers
-                            .as_ref()
-                            .map(|specs| {
+                        let mut specifiers_without_opposite_accessor: Vec<&str> =
+                            import.specifiers.as_ref().map_or_default(|specs| {
                                 specs
                                     .iter()
                                     .filter(|spec| spec.name() != opposite.as_str())
                                     .map(|spec| fixer.source_range(spec.span()))
                                     .collect()
-                            })
-                            .unwrap_or_default();
+                            });
 
                         if specifiers_without_opposite_accessor.is_empty() {
                             fixer.replace(vitest_import.local().span, self.function.as_str())

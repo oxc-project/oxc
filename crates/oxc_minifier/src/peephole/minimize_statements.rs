@@ -1258,10 +1258,7 @@ impl<'a> PeepholeOptimizations {
                 prev_decl_init.may_have_side_effects(ctx),
                 ctx,
             );
-            if replaced != Some(true) {
-                return true;
-            }
-            false
+            replaced != Some(true)
         });
         match last_non_inlined_index {
             None => 0,

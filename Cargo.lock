@@ -1679,18 +1679,18 @@ dependencies = [
 
 [[package]]
 name = "oxc-css-parser"
-version = "0.0.21"
+version = "0.0.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "feac027dd27017bf6f79dffd74928f3ec6c1f2b56068803bd6fdbc6bb0798219"
+checksum = "8e5e8f4fcfe5796d4e23bec581cf049823c9303cb27bbcbbaa31342bce0d48bd"
 dependencies = [
  "oxc_allocator",
 ]
 
 [[package]]
 name = "oxc-graphql-parser"
-version = "0.0.9"
+version = "0.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "432777a8667de07a380b8e7785e1871ce0b39fd180dde50923b9c128792c0d6e"
+checksum = "b3fc1511951d1795365d2a61104de6a5d9876613559134b4265051baa1555060"
 dependencies = [
  "memchr",
  "oxc_allocator",
@@ -1699,9 +1699,9 @@ dependencies = [
 
 [[package]]
 name = "oxc-htmlish-parser"
-version = "0.0.3"
+version = "0.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "374d8f58d73d57bce8f703272cb82537f6af1f4b1cd506200dce8bf327078b43"
+checksum = "b2c0fa3b9937f2ed404940d7c3d2c5fdfbc02ba9220d3cbb2577c7152642f0cc"
 dependencies = [
  "memchr",
  "oxc_allocator",
@@ -2568,6 +2568,7 @@ dependencies = [
  "insta",
  "oxc_allocator",
  "oxc_ast_macros",
+ "oxc_data_structures",
  "oxc_diagnostics",
  "oxc_span",
  "oxc_str",
@@ -2697,6 +2698,21 @@ dependencies = [
  "oxc_ast_macros",
  "oxc_estree",
  "serde",
+]
+
+[[package]]
+name = "oxc_sprout"
+version = "0.0.0"
+dependencies = [
+ "convert_case",
+ "oxc_allocator",
+ "oxc_codegen",
+ "oxc_parser",
+ "oxc_react_compiler",
+ "oxc_semantic",
+ "oxc_span",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

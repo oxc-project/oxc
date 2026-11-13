@@ -1,7 +1,7 @@
 use std::{ptr, str};
 
 use oxc_ast::ast::{Comment, RegExpFlags};
-use oxc_simd::{Avx2, BASELINE, Cpu, DynCpu, Vec256, cpu_multiversion, cpu_version};
+use oxc_simd::{Avx2, BASELINE, Cpu, DynCpu, Neon, Vec128, Vec256, cpu_multiversion, cpu_version};
 use oxc_span::Span;
 use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
@@ -10,7 +10,7 @@ use crate::{
     token::StringSpan,
 };
 
-use crate::pipeline::disambiguate::DisambiguateState;
+use crate::pipeline::{carve::JFrame, chunk::mm32, disambiguate::DisambiguateState};
 
 #[derive(Debug, Default)]
 pub(crate) struct TokenLanes {
@@ -38,6 +38,9 @@ pub(crate) struct Lanes {
     /// code-level survivors pay the identifier-char check. Empty for
     /// pure-ASCII input.
     pub unicode_leads: Vec<u32>,
+    /// Carve's nesting stacks, kept between lexes to reuse their allocations.
+    pub(super) template_depth: Vec<u32>,
+    pub(super) jsx_stack: Vec<JFrame>,
     pub(super) module: bool,
     /// What the disambiguation questions keep across the lex: the context walks,
     /// the bracket bitmap and the closers the forward scans resolved.
@@ -488,7 +491,45 @@ fn cook_short<const EMIT: bool, const CRLF: bool>(
         DynCpu::Avx2(cpu) => {
             cook_short_avx2::<EMIT, CRLF>(src, bs, be, base, ss, body_len, diags, cpu)
         }
-        _ => cook_short_generic::<EMIT, CRLF>(src, bs, be, base, ss, body_len, diags),
+        DynCpu::Neon(cpu) => {
+            cook_short_neon::<EMIT, CRLF>(src, bs, be, base, ss, body_len, diags, cpu)
+        }
+        DynCpu::Generic(_) => {
+            cook_short_generic::<EMIT, CRLF>(src, bs, be, base, ss, body_len, diags)
+        }
+    }
+}
+
+/// [`cook_short`] for Neon.
+#[cpu_version(Neon)]
+#[inline]
+fn cook_short_neon<const EMIT: bool, const CRLF: bool>(
+    src: &[u8],
+    bs: u32,
+    be: u32,
+    base: *mut u8,
+    ss: u32,
+    body_len: usize,
+    diags: &mut Vec<Diagnostic>,
+    cpu: Neon,
+) -> (u32, bool, bool) {
+    let p = unsafe { src.as_ptr().add(bs as usize) };
+    let (v0, v1) =
+        unsafe { (Vec128::load_unaligned(p, cpu), Vec128::load_unaligned(p.add(16), cpu)) };
+    let (mut hit0, mut hit1) = (v0.eq_u8(b'\\'), v1.eq_u8(b'\\'));
+    if CRLF {
+        // Templates also decode when a raw CR needs LF-normalizing.
+        hit0 |= v0.eq_u8(b'\r');
+        hit1 |= v1.eq_u8(b'\r');
+    }
+    if mm32(hit0, hit1) & ((1u32 << body_len) - 1) == 0 {
+        unsafe {
+            v0.store_unaligned(base.add(ss as usize));
+            v1.store_unaligned(base.add(ss as usize + 16));
+        }
+        (ss + (be - bs), false, false)
+    } else {
+        unsafe { cook_decode::<EMIT, CRLF>(src.as_ptr(), bs, be, base, ss, diags, cpu) }
     }
 }
 
@@ -559,7 +600,8 @@ fn cook_short_generic<const EMIT: bool, const CRLF: bool>(
 fn span_has_bs(src: &[u8], bs: usize, be: usize, cpu: impl Cpu) -> bool {
     match DynCpu::from(cpu) {
         DynCpu::Avx2(cpu) => span_has_bs_avx2(src, bs, be, cpu),
-        _ => span_has_bs_generic(src, bs, be),
+        DynCpu::Neon(cpu) => span_has_neon::<false>(src, bs, be, cpu),
+        DynCpu::Generic(_) => span_has_bs_generic(src, bs, be),
     }
 }
 
@@ -598,8 +640,27 @@ fn span_has_bs_generic(src: &[u8], bs: usize, be: usize) -> bool {
 fn span_has_bs_or_cr(src: &[u8], bs: usize, be: usize, cpu: impl Cpu) -> bool {
     match DynCpu::from(cpu) {
         DynCpu::Avx2(cpu) => span_has_bs_or_cr_avx2(src, bs, be, cpu),
-        _ => span_has_bs_or_cr_generic(src, bs, be),
+        DynCpu::Neon(cpu) => span_has_neon::<true>(src, bs, be, cpu),
+        DynCpu::Generic(_) => span_has_bs_or_cr_generic(src, bs, be),
     }
+}
+
+/// [`span_has_bs`] for Neon, or [`span_has_bs_or_cr`] if CR. Reads up to 15 bytes into the padding.
+#[cpu_version(Neon)]
+#[inline]
+fn span_has_neon<const CR: bool>(src: &[u8], bs: usize, be: usize, cpu: Neon) -> bool {
+    let hits = |i: usize| {
+        let v = unsafe { Vec128::load_unaligned(src.as_ptr().add(i), cpu) };
+        (if CR { v.eq_u8(b'\\') | v.eq_u8(b'\r') } else { v.eq_u8(b'\\') }).nibble_mask()
+    };
+    let mut i = bs;
+    while i + 16 <= be {
+        if hits(i) != 0 {
+            return true;
+        }
+        i += 16;
+    }
+    i < be && hits(i) & ((1u64 << (4 * (be - i))) - 1) != 0
 }
 
 /// [`span_has_bs_or_cr`] for AVX2.
@@ -1026,9 +1087,7 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                 wi += 1;
             }
             b'0' => {
-                // spellchecker:disable-next-line
                 let nd = i < be && (*src.add(i as usize)).is_ascii_digit();
-                // spellchecker:disable-next-line
                 if !nd {
                     *out.add(wi as usize) = 0;
                     wi += 1;

@@ -1,0 +1,38 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/new-date-in-callback.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Cannot call impure function during render", labels: [LabeledSpan { label: Some("Cannot call impure function"), span: Span { start: 898, end: 908 }, primary: true }], help: Some("`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component re-renders"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Purity") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/purity") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Cannot call impure function during render", labels: [LabeledSpan { label: Some("Cannot call impure function"), span: Span { start: 1058, end: 1068 }, primary: true }], help: Some("`Date` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component re-renders"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Purity") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/purity") } }
+
+// @validateNoImpureFunctionsInRender @outputMode:"lint" @compilationMode:"infer" @panicThreshold:"none"
+// Zero-argument `new Date()` is only reported in the component or hook body, not in
+// callbacks, even when they are passed to an unknown function that might call them.
+// The submit handler only runs on submit.
+export function SubmitHandler({ form, create }) {
+	const onSubmit = async (data) => {
+		await create({
+			...data,
+			createdAt: new Date(),
+			updatedAt: new Date()
+		});
+	};
+	return <form onSubmit={form.handleSubmit(onSubmit)} />;
+}
+// Other wrappers behave the same.
+export function WrappedHandler({ create }) {
+	const onClick = () => create(new Date());
+	return <button onClick={debounce(onClick)} />;
+}
+// Always-impure functions in callbacks passed to unknown functions are still reported.
+export function DateNowInWrappedHandler({ create }) {
+	const onClick = () => create(Date.now());
+	return <button onClick={debounce(onClick)} />;
+}
+// `new Date()` in render is still reported.
+export function NewDateInRender() {
+	const now = new Date();
+	return <div>{now.getTime()}</div>;
+}

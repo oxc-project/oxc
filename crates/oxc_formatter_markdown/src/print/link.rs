@@ -193,7 +193,7 @@ fn print_label<'a>(pieces: &[Segment], f: &MarkdownFormatter<'_, 'a>) -> &'a str
     out.into_str()
 }
 
-/// The destination as Prettier `main` prints it (prettier/prettier#19482, #19849, #19891):
+/// The destination as Prettier prints it (prettier/prettier#19482, #19849, #19891):
 ///
 /// - `\` followed by ASCII punctuation, or last, is doubled (it would start an escape)
 /// - `&` that would start a character reference becomes `\&`

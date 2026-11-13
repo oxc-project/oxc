@@ -53,7 +53,8 @@ declare_oxc_lint!(
     correctness,
     recommended,
     version = "1.12.0",
-    short_description = "This rule disallows type constituents of unions and intersections that are redundant.",
+    short_description =
+        "This rule disallows type constituents of unions and intersections that are redundant.",
 );
 
 impl Rule for NoRedundantTypeConstituents {}

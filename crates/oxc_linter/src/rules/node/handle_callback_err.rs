@@ -234,7 +234,7 @@ fn test() {
         ),
         (
             "var test = function(any_error) { console.log(any_error); };",
-            Some(serde_json::json!(["^.+(e|E)rror$"])), // spellchecker:disable-line
+            Some(serde_json::json!(["^.+(e|E)rror$"])),
         ),
     ];
 

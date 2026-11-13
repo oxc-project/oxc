@@ -696,8 +696,10 @@ impl NeedsParentheses<'_> for AstNode<'_, '_, SequenceExpression<'_>> {
         }
 
         match self.parent() {
+            // These print the parentheses themselves
             AstNodes::ReturnStatement(_)
             | AstNodes::ThrowStatement(_)
+            | AstNodes::YieldExpression(_)
             | AstNodes::ArrowFunctionExpression(_)
             // There's a precedence for writing `x++, y++`
             | AstNodes::ForStatement(_) => false,

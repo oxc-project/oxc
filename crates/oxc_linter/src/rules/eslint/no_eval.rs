@@ -6,8 +6,7 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
-    AstNode,
-    ast_util::{self},
+    AstNode, ast_util,
     config::GlobalValue,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},

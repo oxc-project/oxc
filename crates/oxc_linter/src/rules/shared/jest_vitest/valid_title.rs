@@ -152,8 +152,7 @@ impl ValidTitleConfig {
         let disallowed_words: Vec<&str> = config
             .and_then(|v| v.get("disallowedWords"))
             .and_then(|v| v.as_array())
-            .map(|v| v.iter().filter_map(|v| v.as_str()).collect())
-            .unwrap_or_default();
+            .map_or_default(|v| v.iter().filter_map(|v| v.as_str()).collect());
         let disallowed_words_reg = (!disallowed_words.is_empty()).then(|| {
             let disallowed_words_pattern =
                 disallowed_words.iter().map(|word| regex::escape(word)).join("|");

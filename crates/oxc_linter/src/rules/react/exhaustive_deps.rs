@@ -277,7 +277,7 @@ declare_oxc_lint!(
     react,
     correctness,
     recommended,
-    safe_fixes_and_dangerous_suggestions,
+    dangerous_suggestion,
     config = ExhaustiveDepsConfig,
     version = "0.12.0",
     short_description = "Verifies the list of dependencies for Hooks like `useEffect` and similar.",
@@ -323,10 +323,7 @@ impl Rule for ExhaustiveDeps {
 
         if dependencies_node.is_none() && !is_effect {
             if HOOKS_USELESS_WITHOUT_DEPENDENCIES.contains(&hook_name) {
-                ctx.diagnostic_with_fix(
-                    dependency_array_required_diagnostic(hook_name, call_expr.span()),
-                    |fixer| fixer.insert_text_after(callback_node, ", []"),
-                );
+                ctx.diagnostic(dependency_array_required_diagnostic(hook_name, call_expr.span()));
             }
             return;
         }
@@ -776,11 +773,7 @@ fn is_symbol_declaration_referentially_unique(symbol_id: SymbolId, ctx: &LintCon
 
             let Some(init) = &decl.init else { return false };
 
-            if is_expression_referentially_unique(init) {
-                return true;
-            }
-
-            false
+            is_expression_referentially_unique(init)
         }
         _ => false,
     }
@@ -1189,7 +1182,7 @@ fn is_stable_value<'a, 'b>(
                 return false;
             };
 
-            if (init_name == "useState"
+            (init_name == "useState"
                 || init_name == "useReducer"
                 || init_name == "useTransition"
                 || init_name == "useActionState")
@@ -1210,11 +1203,6 @@ fn is_stable_value<'a, 'b>(
                             false
                         }
                     })
-            {
-                return true;
-            }
-
-            false
         }
         AstKind::ArrowFunctionExpression(arrow_func) => is_function_stable(
             CallbackBody::Arrow(&arrow_func.body),
@@ -4447,17 +4435,10 @@ const Component = ({ filter }) => {
     )];
 
     let fix = vec![
-        (
-            "const useHook = x => useCallback(() => x)",
-            "const useHook = x => useCallback(() => x, [])",
-            // None,
-            // FixKind::SafeFix,
-        ),
+        ("const useHook = x => useCallback(() => x)", "const useHook = x => useCallback(() => x)"),
         (
             "const useHook = x => useCallback(() => { return x; })",
-            "const useHook = x => useCallback(() => { return x; }, [])",
-            // None,
-            // FixKind::SafeFix,
+            "const useHook = x => useCallback(() => { return x; })",
         ),
         (
             r"const useHook = () => {
@@ -4547,14 +4528,13 @@ const Component = ({ filter }) => {
             "function MyComponent(props) { const local = someFunc(); useEffect(() => { console.log(props.foo, local); }, [props.foo]); }",
             "function MyComponent(props) { const local = someFunc(); useEffect(() => { console.log(props.foo, local); }, [props.foo, local]); }",
         ),
-        // Test dependency array creation for hooks that require it
         (
             "function MyComponent() { const fn = useCallback(() => { alert('foo'); }); }",
-            "function MyComponent() { const fn = useCallback(() => { alert('foo'); }, []); }",
+            "function MyComponent() { const fn = useCallback(() => { alert('foo'); }); }",
         ),
         (
             "function MyComponent() { const value = useMemo(() => { return 2*2; }); }",
-            "function MyComponent() { const value = useMemo(() => { return 2*2; }, []); }",
+            "function MyComponent() { const value = useMemo(() => { return 2*2; }); }",
         ),
         // Test unnecessary dependency removal for non-effect hooks
         (
@@ -4590,4 +4570,37 @@ const Component = ({ filter }) => {
     )
     .expect_fix(fix)
     .test_and_snapshot();
+}
+
+#[test]
+fn test_missing_dependency_array() {
+    use crate::{fixer::FixKind, tester::Tester};
+
+    let fail = vec![
+        r#"import { useCallback, useMemo } from "react";
+        export const useThing = (compute: () => number, onDone: () => void) => {
+          const value = useMemo(() => compute());
+          const done = useCallback(() => onDone());
+          return { done, value };
+        };"#,
+        r"function MyComponent({ compute, onDone }) {
+          const value = React.useMemo(() => compute(),);
+          const done = React.useCallback(() => onDone(),);
+          return { done, value };
+        }",
+        r"function MyComponent({ compute, onDone }) {
+          const value = useMemo(compute);
+          const done = useCallback(onDone);
+          return { done, value };
+        }",
+    ];
+
+    let fix = fail
+        .iter()
+        .flat_map(|&source| {
+            [FixKind::SafeFix, FixKind::All].map(|kind| (source, source, None, kind))
+        })
+        .collect::<Vec<_>>();
+
+    Tester::new(ExhaustiveDeps::NAME, ExhaustiveDeps::PLUGIN, vec![], fail).expect_fix(fix).test();
 }

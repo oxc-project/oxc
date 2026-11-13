@@ -744,7 +744,7 @@ mod test {
     fn ident_deref() {
         let ident = Ident::from("hello");
         // Should be able to call str methods
-        assert!(ident.starts_with("hel")); // spellchecker:disable-line
+        assert!(ident.starts_with("hel"));
         assert_eq!(ident.len(), 5);
     }
 

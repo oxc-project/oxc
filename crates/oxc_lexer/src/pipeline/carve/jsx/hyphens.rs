@@ -1,6 +1,6 @@
 use oxc_simd::{Avx2, BASELINE, Cpu, DynCpu, Vec256, cpu_multiversion, cpu_version};
 
-use crate::pipeline::bitmap::{bm_clear, bm_get};
+use crate::pipeline::bitmap::Bitmap;
 
 /// JSXIdentifier admits `-`, so `data-x` and `aria-label` are one name token
 /// where JS would read three. Fuse every hyphen in `[a, b)` into the run
@@ -15,9 +15,9 @@ use crate::pipeline::bitmap::{bm_clear, bm_get};
 pub(super) unsafe fn jsx_glue_hyphens(
     src: *const u8,
     n: usize,
-    st: *mut u64,
-    opch: *mut u64,
-    word: *const u64,
+    st: Bitmap,
+    opch: Bitmap,
+    word: Bitmap,
     a: usize,
     b: usize,
     cpu: impl Cpu,
@@ -34,9 +34,9 @@ pub(super) unsafe fn jsx_glue_hyphens(
 unsafe fn jsx_glue_hyphens_avx2(
     src: *const u8,
     n: usize,
-    st: *mut u64,
-    opch: *mut u64,
-    word: *const u64,
+    st: Bitmap,
+    opch: Bitmap,
+    word: Bitmap,
     a: usize,
     b: usize,
     cpu: Avx2,
@@ -64,9 +64,9 @@ unsafe fn jsx_glue_hyphens_avx2(
 unsafe fn jsx_glue_hyphens_generic(
     src: *const u8,
     n: usize,
-    st: *mut u64,
-    opch: *mut u64,
-    word: *const u64,
+    st: Bitmap,
+    opch: Bitmap,
+    word: Bitmap,
     a: usize,
     b: usize,
 ) {
@@ -86,20 +86,20 @@ unsafe fn jsx_glue_hyphens_generic(
 #[inline(always)]
 unsafe fn glue_hyphen_at(
     n: usize,
-    st: *mut u64,
-    opch: *mut u64,
-    word: *const u64,
+    st: Bitmap,
+    opch: Bitmap,
+    word: Bitmap,
     h: usize,
     last: &mut usize,
     cpu: impl Cpu,
 ) {
-    if h == 0 || !(bm_get(word, h - 1, cpu) || *last == h - 1) {
+    if h == 0 || !(word.get(h - 1, cpu) || *last == h - 1) {
         return;
     }
-    bm_clear(st, h, cpu);
-    bm_clear(opch, h, cpu);
-    if h + 1 < n && bm_get(word, h + 1, cpu) {
-        bm_clear(st, h + 1, cpu);
+    st.clear(h, cpu);
+    opch.clear(h, cpu);
+    if h + 1 < n && word.get(h + 1, cpu) {
+        st.clear(h + 1, cpu);
     }
     *last = h;
 }

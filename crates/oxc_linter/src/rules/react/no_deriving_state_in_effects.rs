@@ -50,7 +50,8 @@ declare_react_compiler_lint!(
     react,
     perf,
     version = "1.79.0",
-    short_description = "Disallow deriving values from state in an effect instead of computing them during render.",
+    short_description =
+        "Disallow deriving values from state in an effect instead of computing them during render.",
 );
 
 impl Rule for NoDerivingStateInEffects {

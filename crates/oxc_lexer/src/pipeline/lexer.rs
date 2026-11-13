@@ -5,12 +5,14 @@ use oxc_span::Span;
 
 use crate::{
     PAD,
+    error::DiagCode,
     options::LexOptions,
     token::{SPAN_SENTINELS, debug_assert_kind_bytes},
     tokens::Tokens,
 };
 
 use crate::pipeline::{
+    bitmap::Bitmap,
     carve::carve,
     classify::classify,
     coalesce::{KWB, coalesce},
@@ -30,6 +32,7 @@ pub struct Lexer {
     misc: Vec<u64>,
     kind: Vec<u8>,
     kwpos: Vec<u32>,
+    evpos: Vec<u32>,
     nb_cap: usize,
     stage_pos: Vec<u32>,
     stage_kind: Vec<u8>,
@@ -74,6 +77,7 @@ impl Lexer {
             misc: Vec::new(),
             kind: Vec::new(),
             kwpos: Vec::new(),
+            evpos: Vec::new(),
             nb_cap: 0,
             stage_pos: vec![0; STAGE_CAP],
             stage_kind: vec![0; STAGE_CAP],
@@ -87,11 +91,15 @@ impl Lexer {
     /// Panics if `src` does not extend at least [`PAD`] zeroed bytes past `n`.
     #[cpu_version(Generic)]
     pub fn lex(&mut self, src: &[u8], n: usize, options: LexOptions, tokens: &mut Tokens) {
+        // `n.saturating_add(PAD)` not `n + PAD` to ensure this assertion catches
+        // e.g. `src.len() == 100, n == usize::MAX`, where `n + PAD` would wrap around to `PAD - 1`
+        // so `src.len() >= n + PAD` would be true.
+        // Slices are at most `isize::MAX` bytes, so cannot be >= a saturated `usize::MAX`.
         assert!(
-            src.len() >= n + PAD,
-            "lexer: src must have >= {PAD} bytes of padding past len {n} (got {})",
-            src.len()
+            src.len() >= n.saturating_add(PAD),
+            "lexer: src must have >= {PAD} bytes of padding past len {n}"
         );
+        // Can't wrap. `n + PAD <= src.len() <= isize::MAX`, and `SPAN_SENTINELS` is small.
         let capacity = n + PAD + SPAN_SENTINELS;
         tokens.kinds.clear();
         tokens.kinds.reserve(capacity);
@@ -122,8 +130,13 @@ impl Lexer {
             resolve_unicode_leads(&mut self.lanes, &src[..n], kinds, spans);
         }
         if !self.lanes.diag_suppress.is_empty() {
+            // Keep `InvalidUtf8` diagnostics, even in a range where diagnostics are dropped.
+            // Otherwise source which isn't valid UTF-8 could lex with no diagnostic.
             let (diags, sup) = (&mut self.lanes.out.diags, &self.lanes.diag_suppress);
-            diags.retain(|d| !sup.iter().any(|&(a, b)| d.off >= a && d.off < b));
+            diags.retain(|d| {
+                d.code == DiagCode::InvalidUtf8
+                    || !sup.iter().any(|&(a, b)| d.off >= a && d.off < b)
+            });
         }
         tokens.lanes = mem::take(&mut self.lanes.out);
     }
@@ -181,15 +194,16 @@ impl Lexer {
 
         let nb = n.div_ceil(64);
         let sp = src.as_ptr();
-        let word = self.word.as_mut_ptr();
-        let st = self.st.as_mut_ptr();
-        let kwinit = self.kwinit.as_mut_ptr();
-        let opch = self.opch.as_mut_ptr();
-        let digit = self.digit.as_mut_ptr();
-        let dot = self.dot.as_mut_ptr();
-        let misc = self.misc.as_mut_ptr();
+        let word = Bitmap::new(self.word.as_mut_ptr());
+        let st = Bitmap::new(self.st.as_mut_ptr());
+        let kwinit = Bitmap::new(self.kwinit.as_mut_ptr());
+        let opch = Bitmap::new(self.opch.as_mut_ptr());
+        let digit = Bitmap::new(self.digit.as_mut_ptr());
+        let dot = Bitmap::new(self.dot.as_mut_ptr());
+        let misc = Bitmap::new(self.misc.as_mut_ptr());
         let kind = self.kind.as_mut_ptr();
         let kwpos = self.kwpos.as_mut_ptr();
+        let evpos = self.evpos.as_mut_ptr();
 
         // Keyword recognition is mode-scoped: the TS set (and its wider
         // kwinit letter class) only ever sees TS input, so JS lexing is
@@ -197,7 +211,22 @@ impl Lexer {
         classify(ts, sp, n, nb, word, st, kwinit, opch, digit, dot, misc, kind, cpu);
         let nesc = misc_pre(sp, n, nb, st, word, misc, kind, vutf8, &mut self.lanes, cpu);
         carve(src, n, st, kind, opch, word, digit, dot, kwinit, jsx, ts, &mut self.lanes, cpu);
-        coalesce(sp, n, st, opch, word, digit, dot, kwinit, kind, kwpos, ts, &mut self.lanes, cpu);
+        coalesce(
+            sp,
+            n,
+            st,
+            opch,
+            word,
+            digit,
+            dot,
+            kwinit,
+            kind,
+            kwpos,
+            evpos,
+            ts,
+            &mut self.lanes,
+            cpu,
+        );
         misc_post(sp, n, st, word, misc, kind, nesc, cpu);
         if !self.lanes.out.irregular_whitespaces.is_empty() {
             retain_code_whitespace(&self.st, &self.kind, &mut self.lanes.out.irregular_whitespaces);
@@ -234,6 +263,7 @@ impl Lexer {
         }
         if self.kwpos.is_empty() {
             self.kwpos.resize(KWB * 64 + 8, 0);
+            self.evpos.resize(KWB * 64 + 8, 0);
         }
     }
 }
@@ -242,5 +272,22 @@ impl Default for Lexer {
     #[cpu_version(Generic)]
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use oxc_simd::{DynCpu, test_cpus};
+
+    use crate::{LexOptions, PAD, Tokens};
+
+    use super::Lexer;
+
+    #[test_cpus]
+    #[should_panic(expected = "bytes of padding past len")]
+    fn lex_panics_if_n_plus_pad_overflows(cpu: DynCpu) {
+        let src = [0; PAD];
+        let mut tokens = Tokens::new();
+        Lexer::new_with_cpu(cpu).lex(&src, usize::MAX, LexOptions::default(), &mut tokens);
     }
 }

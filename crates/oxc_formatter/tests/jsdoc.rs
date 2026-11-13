@@ -97,7 +97,7 @@ fn collect_fixture_pairs() -> Vec<(PathBuf, PathBuf)> {
         }
 
         // Skip non-source files (options.json, etc.)
-        let ext = path.extension().map(|e| e.to_string_lossy()).unwrap_or_default();
+        let ext = path.extension().map_or_default(|e| e.to_string_lossy());
         if !matches!(ext.as_ref(), "js" | "ts" | "jsx" | "tsx") {
             continue;
         }

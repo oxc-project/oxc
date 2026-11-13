@@ -1,0 +1,5 @@
+{
+  "original": "export const FIXTURE_ENTRYPOINT={fn:42,params:[]};",
+  "compiled": "export const FIXTURE_ENTRYPOINT={fn:42,params:[]};",
+  "expected": "invalid"
+}

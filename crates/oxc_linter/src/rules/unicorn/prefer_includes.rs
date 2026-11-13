@@ -63,7 +63,8 @@ declare_oxc_lint!(
     recommended,
     suggestion,
     version = "0.0.18",
-    short_description = "Prefer `includes()` over `indexOf()` when checking for existence/non-existence.",
+    short_description =
+        "Prefer `includes()` over `indexOf()` when checking for existence/non-existence.",
 );
 
 impl Rule for PreferIncludes {

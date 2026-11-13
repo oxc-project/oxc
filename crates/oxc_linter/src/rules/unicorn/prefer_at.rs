@@ -113,15 +113,14 @@ impl Rule for PreferAt {
             get_last_element_functions: config
                 .and_then(|c| c.get("getLastElementFunctions"))
                 .and_then(|v| v.as_array())
-                .map(|arr| {
+                .map_or_default(|arr| {
                     arr.iter()
                         .filter_map(|v| v.as_str())
                         .map(str::trim)
                         .filter(|s| !s.is_empty())
                         .map(str::to_string)
                         .collect()
-                })
-                .unwrap_or_default(),
+                }),
         })))
     }
 
@@ -680,7 +679,6 @@ fn get_negative_integer(expr: &Expression, max_abs_value: Option<u32>) -> Option
         }
         Expression::NumericLiteral(num) if num.value < 0.0 && num.value.fract() == 0.0 => {
             #[expect(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
-            #[expect(clippy::collapsible_match)]
             if num.value >= i64::MIN as f64 {
                 num.value as i64
             } else {

@@ -173,8 +173,9 @@ impl ExpectExpectConfig {
         let additional_test_block_functions = config
             .and_then(|config| config.get("additionalTestBlockFunctions"))
             .and_then(serde_json::Value::as_array)
-            .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
-            .unwrap_or_default();
+            .map_or_default(|v| {
+                v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect()
+            });
 
         Ok(ExpectExpectConfig {
             assert_function_names_jest,

@@ -380,7 +380,7 @@ mod tests {
 
         for (input, output) in cases {
             let mut serializer = CompactSerializer::default();
-            input.clone().serialize(&mut serializer);
+            input.serialize(&mut serializer);
             let s = serializer.into_string();
             assert_eq!(&s, output);
         }

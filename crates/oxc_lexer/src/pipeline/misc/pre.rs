@@ -4,7 +4,7 @@ use oxc_span::Span;
 use crate::{error::DiagCode, token::tk};
 
 use crate::pipeline::{
-    bitmap::{bm_any, bm_clear_range, bm_get, bm_next0, bm_set},
+    bitmap::Bitmap,
     bytes::{is_id_start, unicode_ws_len_at_unchecked},
     lanes::Lanes,
     scan::scan_ident_esc,
@@ -16,15 +16,15 @@ pub unsafe fn misc_pre(
     src: *const u8,
     n: usize,
     nb: usize,
-    st: *mut u64,
-    word: *mut u64,
-    misc: *const u64,
+    st: Bitmap,
+    word: Bitmap,
+    misc: Bitmap,
     kind: *mut u8,
     vutf8: bool,
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) -> usize {
-    if !bm_any(misc, nb, cpu) {
+    if !misc.any(nb, cpu) {
         return 0;
     }
 
@@ -45,9 +45,9 @@ pub unsafe fn misc_pre(
 unsafe fn misc_pre_impl<const VUTF8: bool>(
     src: *const u8,
     n: usize,
-    st: *mut u64,
-    word: *mut u64,
-    misc: *const u64,
+    st: Bitmap,
+    word: Bitmap,
+    misc: Bitmap,
     kind: *mut u8,
     lanes: &mut Lanes,
     cpu: impl Cpu,
@@ -59,15 +59,30 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
     // bounds the diag Vec on binary input).
     let mut skip_lo: u64 = 0;
     let mut utf8_bad = false;
-    for w in 0..nw {
-        let mut m = if VUTF8 { *misc.add(w) & !skip_lo } else { *misc.add(w) };
+    let mut w = 0usize;
+    loop {
+        // Skip empty words in a tight loop, as the walk below keeps the word index on the stack
+        let from = w;
+        while w < nw && misc.block(w, cpu) == 0 {
+            w += 1;
+        }
+        if w == nw {
+            break;
+        }
+        if VUTF8 && w != from {
+            // A skipped word consumed the carried continuation bits
+            skip_lo = 0;
+        }
+        let blk = w;
+        w += 1;
+        let mut m = if VUTF8 { misc.block(blk, cpu) & !skip_lo } else { misc.block(blk, cpu) };
         if VUTF8 {
             skip_lo = 0;
         }
         while m != 0 {
             let bit = m.trailing_zeros() as usize;
             m &= m - 1;
-            let p = (w << 6) + bit;
+            let p = (blk << 6) + bit;
             let c = *src.add(p);
             // Multi-byte Unicode whitespace was bulk-classified as an
             // identifier char; re-mark it as a whitespace token boundary.
@@ -96,11 +111,11 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                 let len = unicode_ws_len_at_unchecked(src, p, cpu);
                 if len != 0 {
                     *kind.add(p) = tk!(Whitespace);
-                    bm_clear_range(word, p, p + len - 1, cpu);
-                    bm_set(st, p, cpu);
-                    bm_clear_range(st, p + 1, p + len - 1, cpu);
+                    word.clear_range(p, p + len - 1, cpu);
+                    st.set(p, cpu);
+                    st.clear_range(p + 1, p + len - 1, cpu);
                     if p + len < n {
-                        bm_set(st, p + len, cpu);
+                        st.set(p + len, cpu);
                     }
                     lanes.out.irregular_whitespaces.push(Span::new(p as u32, (p + len) as u32));
                 } else if (0xC2..=0xF4).contains(&c) {
@@ -116,7 +131,7 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                 lanes.out.irregular_whitespaces.push(Span::new(p as u32, p as u32 + 1));
                 continue;
             }
-            if !bm_get(st, p, cpu) {
+            if !st.get(p, cpu) {
                 continue;
             }
             if c == b'#' {
@@ -130,7 +145,7 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                 if !(is_id_start(c1, cpu) || (c1 == b'\\' && *src.add(p + 2) == b'u')) {
                     continue;
                 }
-                let e0 = bm_next0(word, p + 1, n, cpu);
+                let e0 = word.next0(p + 1, n, cpu);
                 let e = if *src.add(e0) == b'\\'
                     && *src.add(e0 + 1) == b'u'
                     && !holds_unicode_ws(src, p + 1, e0)
@@ -142,7 +157,7 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                     *kind.add(p) = tk!(PrivateIdent);
                     e0
                 };
-                bm_clear_range(st, p + 1, e - 1, cpu);
+                st.clear_range(p + 1, e - 1, cpu);
             } else {
                 if *src.add(p + 1) != b'u' {
                     continue;
@@ -150,7 +165,7 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                 *kind.add(p) = tk!(IdentEscaped);
                 nesc += 1;
                 let e = scan_ident_esc(src, n, p, cpu);
-                bm_clear_range(st, p + 1, e - 1, cpu);
+                st.clear_range(p + 1, e - 1, cpu);
             }
         }
     }

@@ -82,6 +82,8 @@ fn test() {
         r"withSpaces();",
         // new RegExp
         r"withSpaces.replaceAll(new RegExp('\s+', 'g'), ',');",
+        r"withSpaces.replaceAll(new RegExp(/\s+/g), ',');",
+        r"function test(pattern) { withSpaces.replaceAll(new RegExp(pattern), ','); }",
         // new replaceAll
         r"new replaceAll(/\s+/, ',');",
         // resolved vars
@@ -91,6 +93,10 @@ fn test() {
         // resolved vars
         r"const foo = new RegExp('\s+', 'g'); withSpaces.replaceAll(foo, ',');",
         r"const foo = new RegExp('\s+', isWindows ? 'g' : 'gi'); withSpaces.replaceAll(foo, ',');",
+        r"withSpaces.replaceAll(new RegExp((/\s+/g)), ',');",
+        r"withSpaces.replaceAll(RegExp(/\s+/g), ',');",
+        r"withSpaces.replaceAll(new RegExp(/\s+/, 'g'), ',');",
+        r"function test(pattern) { withSpaces.replaceAll(RegExp(pattern), ','); }",
     ];
 
     let fail = vec![
@@ -98,6 +104,7 @@ fn test() {
         r"withSpaces.replaceAll(/\s+/i, ',');",
         r"withSpaces.replaceAll(new RegExp('\s+'), ',');",
         r"withSpaces.replaceAll(new RegExp('\s+','i'), ',');",
+        r"withSpaces.replaceAll(new RegExp(/\s+/), ',');",
         // resolved vars
         r"
             const foo = /\s+/;
@@ -114,6 +121,10 @@ fn test() {
 
             withSpaces.replaceAll(foo, ',');
         ",
+        r"withSpaces.replaceAll(new RegExp((/\s+/)), ',');",
+        r"withSpaces.replaceAll(RegExp(1), ',');",
+        r"withSpaces.replaceAll(new RegExp(), ',');",
+        r"withSpaces.replaceAll(new RegExp(/\s+/g, 'i'), ',');",
     ];
 
     Tester::new(BadReplaceAllArg::NAME, BadReplaceAllArg::PLUGIN, pass, fail).test_and_snapshot();

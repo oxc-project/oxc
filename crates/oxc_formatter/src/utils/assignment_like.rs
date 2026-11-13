@@ -706,6 +706,9 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
                     let is_generic = |ts_type: &TSType<'a>| -> bool {
                         match ts_type {
                             TSType::TSFunctionType(function) => function.type_parameters.is_some(),
+                            TSType::TSConstructorType(constructor) => {
+                                constructor.type_parameters.is_some()
+                            }
                             TSType::TSTypeReference(reference) => {
                                 reference.type_arguments.is_some()
                             }

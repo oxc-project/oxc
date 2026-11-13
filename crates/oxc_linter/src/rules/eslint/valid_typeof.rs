@@ -75,8 +75,8 @@ declare_oxc_lint!(
     /// ```js
     /// typeof foo === "strnig"
     /// typeof foo == "undefimed"
-    /// typeof bar != "nunber"     // spellchecker:disable-line
-    /// typeof bar !== "fucntion"     // spellchecker:disable-line
+    /// typeof bar != "nunber"
+    /// typeof bar !== "fucntion"
     /// ```
     ///
     /// Examples of **correct** code for this rule:
@@ -264,12 +264,12 @@ fn test() {
             Some(serde_json::json!([{ "requireStringLiterals": true }])),
         ),
         // Typo suggestions for each valid typeof type
-        ("typeof foo === 'biigint'", None), // spellchecker:disable-line
-        ("typeof foo === 'bolean'", None),  // spellchecker:disable-line
-        ("typeof foo === 'fucntion'", None), // spellchecker:disable-line
-        ("typeof foo === 'nunber'", None),  // spellchecker:disable-line
-        ("typeof foo === 'obejct'", None),  // spellchecker:disable-line
-        ("typeof foo === 'symol'", None),   // spellchecker:disable-line
+        ("typeof foo === 'biigint'", None),
+        ("typeof foo === 'bolean'", None),
+        ("typeof foo === 'fucntion'", None),
+        ("typeof foo === 'nunber'", None),
+        ("typeof foo === 'obejct'", None),
+        ("typeof foo === 'symol'", None),
     ];
 
     let fix = vec![("typeof foo === undefined", r#"typeof foo === "undefined""#)];

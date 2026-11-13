@@ -52,7 +52,8 @@ declare_oxc_lint!(
     recommended,
     fix,
     version = "0.0.19",
-    short_description = "Prefer `Set#size` over `Set#length` when the `Set` is converted to an array.",
+    short_description =
+        "Prefer `Set#size` over `Set#length` when the `Set` is converted to an array.",
 );
 
 impl Rule for PreferSetSize {

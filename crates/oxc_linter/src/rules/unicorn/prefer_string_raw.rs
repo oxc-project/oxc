@@ -213,11 +213,7 @@ fn ends_with_keyword(source: &str) -> bool {
         }
     }
 
-    if source.ends_with("of") {
-        return true;
-    }
-
-    false
+    source.ends_with("of")
 }
 
 #[test]

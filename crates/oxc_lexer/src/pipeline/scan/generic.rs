@@ -38,7 +38,8 @@ pub unsafe fn scan_block_comment_generic(
         }
         i += 8;
     }
-    while i + 1 < n {
+    // The last byte can still be a newline. Reading the byte after it reads the PAD
+    while i < n {
         let c = *src.add(i);
         if c == b'*' && *src.add(i + 1) == b'/' {
             return (i + 1, saw_nl, lic_q);

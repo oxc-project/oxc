@@ -65,7 +65,8 @@ declare_oxc_lint!(
     recommended,
     suggestion,
     version = "1.28.0",
-    short_description = "Disallow useless values or fallbacks in `Set`, `Map`, `WeakSet`, or `WeakMap`.",
+    short_description =
+        "Disallow useless values or fallbacks in `Set`, `Map`, `WeakSet`, or `WeakMap`.",
 );
 
 impl Rule for NoUselessCollectionArgument {

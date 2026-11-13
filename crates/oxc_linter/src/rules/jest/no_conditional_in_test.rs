@@ -234,6 +234,8 @@ fn test() {
                     if ('bar') {}
                   })
                 ",
+        r"const test = (name, callback) => callback();
+        test('foo', () => { if (condition) {} });",
     ];
 
     let fail = vec![
@@ -536,6 +538,8 @@ fn test() {
                       }
                     });
                   "#,
+        r"import { test as customTest } from '@jest/globals';
+        customTest('foo', () => { if (condition) {} });",
     ];
 
     Tester::new(NoConditionalInTest::NAME, NoConditionalInTest::PLUGIN, pass, fail)

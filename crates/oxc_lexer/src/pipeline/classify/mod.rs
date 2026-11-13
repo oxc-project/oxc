@@ -1,5 +1,7 @@
 use oxc_simd::{Cpu, DynCpu, cpu_multiversion};
 
+use crate::pipeline::bitmap::Bitmap;
+
 mod avx2;
 mod generic;
 mod luts;
@@ -17,16 +19,18 @@ pub(super) unsafe fn classify(
     src: *const u8,
     n: usize,
     nb: usize,
-    word: *mut u64,
-    st: *mut u64,
-    kwinit: *mut u64,
-    opch: *mut u64,
-    digit: *mut u64,
-    dot: *mut u64,
-    misc: *mut u64,
+    word: Bitmap,
+    st: Bitmap,
+    kwinit: Bitmap,
+    opch: Bitmap,
+    digit: Bitmap,
+    dot: Bitmap,
+    misc: Bitmap,
     kind: *mut u8,
     cpu: impl Cpu,
 ) {
+    let (word, st, kwinit, opch) = (word.as_ptr(), st.as_ptr(), kwinit.as_ptr(), opch.as_ptr());
+    let (digit, dot, misc) = (digit.as_ptr(), dot.as_ptr(), misc.as_ptr());
     match DynCpu::from(cpu) {
         DynCpu::Avx2(cpu) => {
             classify_avx2(ts, src, n, word, st, kwinit, opch, digit, dot, misc, kind, cpu)

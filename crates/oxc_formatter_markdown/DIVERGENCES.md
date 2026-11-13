@@ -2,70 +2,6 @@
 
 Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md` "Known divergences".
 
-## leading-thematic-break
-
-- Why: semantics (prettier/prettier#19839)
-- Pin: `tests/fixtures/markdown/leading-thematic-break.md`
-- Conformance:
-  - `externals/prettier/markdown/thematicBreak/simple.md`
-  - `externals/prettier/markdown/commonmark-test-suite/snippet: example-11.md*`
-  - `externals/prettier/markdown/commonmark-test-suite/snippet: example-50.md*`
-  - `externals/prettier/markdown/commonmark-test-suite/snippet: example-51.md*`
-  - `externals/prettier/markdown/commonmark-test-suite/snippet: example-52.md*`
-  - `externals/prettier/markdown/commonmark-test-suite/snippet: example-53.md*`
-  - `externals/prettier/markdown/commonmark-test-suite/snippet: example-54.md*`
-
-```markdown
-<!-- input -->
----
-
-text
-
-***
-
-<!-- ours -->
-***
-
-text
-
----
-
-<!-- prettier -->
----
-
-text
-
----
-```
-
-A document whose first block is a thematic break gets `***`, never `---`:
-the next run (Prettier's and ours) would read `---` ... `---` as front matter and swallow `text` into it,
-which is what the input itself would be with a `---` at the end (`front-matter.md`).
-Prettier `main` prints `***` since #19839; the pin (3.9.10) still prints `---`.
-
-## url-escaping
-
-- Why: semantics (prettier/prettier#19482, prettier/prettier#19849, prettier/prettier#19891)
-- Pin: `tests/fixtures/markdown/url-escaping.md`
-- Conformance:
-  - `externals/prettier/markdown/link/encodedLink.md`
-
-```markdown
-<!-- input -->
-[a](https://x/()foo->bar)
-
-<!-- ours -->
-[a](<https://x/()foo-\>bar>)
-
-<!-- prettier -->
-[a](<https://x/()foo-%3Ebar>)
-```
-
-Destinations follow Prettier `main`: `<`, `>` inside the angle brackets are backslash-escaped (the pin percent-encodes them, which changes the URL),
-a `\` that would start an escape is doubled, and `&` that would start a character reference becomes `\&`
-(the pin drops the escape and the reference is decoded on the next parse).
-Titles get the same `\&` treatment.
-
 ## indented-code-tab
 
 - Why: uniform-rule (same construct, same output: space-indented code block)
@@ -236,37 +172,6 @@ In a tight list item the line stays lazy, and the block's other lines keep the i
   b
 ```
 
-## list-after-html-block
-
-- Why: semantics (prettier/prettier#17690)
-- Pin: `tests/fixtures/markdown/list-after-html-block.md`
-
-```markdown
-<!-- input -->
-- a
-
-  <div>
-
-  - b
-
-<!-- ours -->
-- a
-
-  <div>
-
-  - b
-
-<!-- prettier (the list item becomes html, one per pass) -->
-- a
-
-  <div>
-  - b
-```
-
-A nested list after a type 6 / 7 HTML block keeps its blank line: only a blank line ends such a block.
-Prettier joins any list in a list item to the previous block, and the next parse reads the first list line as part of the html.
-Types 1 to 5 end at their end marker, so a list after them is printed adjacent as Prettier does.
-
 ## list-marker-after-ignored-list
 
 - Why: semantics
@@ -299,8 +204,6 @@ Prettier alternates from the marker it would have printed (`-`), prints `*` next
 
 - Why: semantics
 - Pin: `tests/fixtures/markdown/prose-wrap/container-directive.md`
-- Conformance:
-  - `externals/prettier/markdown/paragraph/cjk.md`
 
 ```markdown
 <!-- input -->
@@ -529,19 +432,17 @@ Prettier prints it as written (the leading blank line that kept it out of front 
 
 ## cj-line-break
 
-- Why: semantics (prettier/prettier#20143, prettier/prettier#16805)
+- Why: uniform-rule (whitespace keeps its kind only between two CJ characters; prettier/prettier#16805, prettier/prettier#20143)
 - Pin: `tests/fixtures/markdown/prose-wrap/cj-line-break.md`
 - Conformance:
   - `externals/prettier/markdown/splitCjkText/symbolSpaceNewLine.md`
+  - `externals/prettier/markdown/splitCjkText/cjkMixed.md`
 
 ```markdown
 <!-- input, proseWrap always -->
 日本語の文章は
 改行しても
 そのままです。
-
-営業時間は月〜
-金の9時〜18時です。
 
 中文！
 한국어
@@ -554,29 +455,27 @@ Prettier prints it as written (the leading blank line that kept it out of front 
 改行しても
 そのままです。
 
-営業時間は月〜
-金の9時〜18時です。
-
 中文！ 한국어
 
 見て http://x.y2. 。次
 
 <!-- prettier -->
-日本語の文章は改行してもそのままです。
+日本語の文章は
+改行しても
+そのままです。
 
-営業時間は月〜金の9時〜18時です。
+中文！
+한국어
 
-中文！한국어
-
-見て http://x.y2.。次
+見て http://x.y2.
+。次
 ```
 
 A line break between two Chinese / Japanese characters (letters or CJK punctuation) is kept under every `proseWrap`, and a space there never becomes one:
-Firefox 159 drops such a break and Chrome 138 renders a space. Next to one only, every browser renders a space, so a line break there is one.
+Firefox 159 drops such a break and Chrome 138 renders a space.
+Next to one only, every browser renders a space, so a break there is whitespace like any other and re-wraps under `always` / `never`, as in DIVERGENCES.md#cj-adjacent-space-wraps.
 
-- The pin (3.9.10) removes some of these breaks, next to one CJ character only too (`中文！한국어`);
-  joined, an autolink literal also takes the CJ punctuation after it (`http://x.y2.。次`)
-- Prettier `main` keeps every break next to a CJ character (#20143)
+- Prettier keeps every break next to a CJ character under every `proseWrap` (#20143)
 - Prettier 4 is to treat a break next to one only as a space, as here (#16805)
 
 ## cj-adjacent-space-wraps

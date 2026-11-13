@@ -13,10 +13,7 @@ use crate::{
         trivia::{FormatTrailingComments, format_dangling_comments},
     },
     options::Semicolons,
-    utils::{
-        expression::is_member_expression_without_chain_wrappers, is_dropped_statement,
-        statement_span,
-    },
+    utils::{is_dropped_statement, statement_span},
     write,
 };
 
@@ -71,7 +68,6 @@ fn top_level_semicolons(
     semi: Semicolons,
 ) -> TopLevelSemicolons {
     match semicolons {
-        ProgramSemicolons::AsOptions => TopLevelSemicolons::AsOptions,
         ProgramSemicolons::LoneJsxOmitted | ProgramSemicolons::LoneExpressionOmitted => {
             match program.body.as_slice() {
                 [Statement::ExpressionStatement(statement)]
@@ -84,35 +80,14 @@ fn top_level_semicolons(
                 _ => TopLevelSemicolons::AsOptions,
             }
         }
-        ProgramSemicolons::MarksStatements => marking_statements(program, semi),
-    }
-}
-
-/// [`ProgramSemicolons::MarksStatements`]: under `semi: false`, the program writes the top level's `;`
-/// (`FormatSeparatedStatements`) where the host would not read it as statements without it:
-/// between the statements, and after a lone one that is no expression (`if (a) b();`) or that the host calls.
-/// Another lone expression reads the same without it ([`ProgramSemicolons::MarksStatements`]).
-fn marking_statements(program: &Program<'_>, semi: Semicolons) -> TopLevelSemicolons {
-    let mut statements = program.body.iter().filter(|stmt| !is_dropped_statement(stmt));
-    match (statements.next(), statements.next()) {
-        (Some(Statement::ExpressionStatement(statement)), None)
-            if program.directives.is_empty() && !is_called_by_host(&statement.expression) =>
+        // Under `semi: false`, the program writes the top level's `;` (`FormatSeparatedStatements`)
+        ProgramSemicolons::MarksStatements
+            if semi == Semicolons::AsNeeded && !is_empty_block(&program.body) =>
         {
-            TopLevelSemicolons::Omitted(statement.span)
+            TopLevelSemicolons::Separated
         }
-        (Some(_), _) if semi == Semicolons::AsNeeded => TopLevelSemicolons::Separated,
-        _ => TopLevelSemicolons::AsOptions,
-    }
-}
-
-/// An expression the host calls when it is the whole code, which runs nothing as a statement
-/// (Vue calls a reference or a function `@click` holds):
-/// a reference (`a.b?.c` too, not `undefined`) or a function, past TS's type-only wrappers.
-fn is_called_by_host(expression: &Expression<'_>) -> bool {
-    match expression.get_inner_expression() {
-        Expression::Identifier(identifier) => !identifier.is_undefined(),
-        expression => {
-            is_member_expression_without_chain_wrappers(expression) || expression.is_function()
+        ProgramSemicolons::AsOptions | ProgramSemicolons::MarksStatements => {
+            TopLevelSemicolons::AsOptions
         }
     }
 }

@@ -1,6 +1,6 @@
 use oxc_simd::{Avx2, Vec256, cpu_version};
 
-use super::common::lic_verify_at;
+use super::common::{lic_first, lic_verify_at};
 
 #[cpu_version(Avx2)]
 pub unsafe fn scan_block_comment_avx2(
@@ -35,7 +35,8 @@ pub unsafe fn scan_block_comment_avx2(
         }
         i += 32;
     }
-    while i + 1 < n {
+    // The last byte can still be a newline. Reading the byte after it reads the PAD
+    while i < n {
         let c = *src.add(i);
         if c == b'*' && *src.add(i + 1) == b'/' {
             return (i + 1, saw_nl, lic_q);
@@ -108,17 +109,4 @@ pub unsafe fn scan_line_comment_avx2(
         i += 1;
     }
     (n, lic_q)
-}
-
-#[cpu_version(Avx2)]
-#[inline(always)]
-unsafe fn lic_first(src: *const u8, base: usize, mut am: u32, cpu: Avx2) -> i64 {
-    while am != 0 {
-        let q = base + am.trailing_zeros() as usize;
-        am &= am - 1;
-        if lic_verify_at(src, q, cpu) {
-            return q as i64;
-        }
-    }
-    -1
 }

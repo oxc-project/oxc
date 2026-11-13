@@ -48,11 +48,11 @@ Avoid editing `generated` subdirectories.
 
 ## Development Commands
 
-Prerequisites: Rust (MSRV: 1.97), Node.js, pnpm, just
+Prerequisites: Rust (MSRV: 1.98), Node.js, pnpm, just
 
 **Setup Notes:**
 
-- All tools already installed (`cargo-insta`, `typos-cli`, `cargo-shear`, `ast-grep`)
+- All tools already installed (`cargo-insta`, `cargo-shear`, `ast-grep`)
 - Rust components already installed (`clippy`, `rust-docs`, `rustfmt`)
 - Use Conventional Commits for commit messages; `.github/workflows/pr.yml` requires a scoped title like `fix(parser): handle trailing comma`
 - Choose verification from the changed code; reserve `just ready` for an optional broad integration checkpoint as described below.
@@ -87,7 +87,7 @@ Before selecting verification checks, read the [verification guidance](.agents/v
 
 - Select checks from changed code and affected consumers; for a stack, use each PR's diff against its parent.
 - Reuse passing results while tested inputs remain unchanged. Reserve `just ready` for stable integration checkpoints when broad validation is needed.
-- Preserve required subsystem checks and per-PR CI; a passing stack tip does not establish that intermediate PRs pass.
+- Preserve required subsystem checks; a passing stack tip does not establish that intermediate PRs pass. In a native GitHub stack, CI runs every job only on the lowest unmerged and top PRs; PRs in between get `Lint` and `Test Linux` (see `.github/workflows/ci.yml`).
 
 ## Manual Testing & Examples
 
@@ -167,6 +167,7 @@ Each crate follows distinct testing patterns:
 
 #### oxc_parser
 
+- Do not add unit tests to the lexer or parser unless explicitly instructed by the user.
 - **Conformance only** via `tasks/coverage`
 - **Command**: `cargo coverage parser`
 - **Suites**: Test262, Babel, TypeScript
