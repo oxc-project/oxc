@@ -39,8 +39,11 @@ pub trait Serializer {
     /// Type of `Formatter` this serializer uses.
     type Formatter: Formatter;
 
+    /// Borrowed handle to source text associated with this serializer.
+    type SourceText: AsRef<str> + Copy;
+
     /// Type of struct serializer this serializer uses.
-    type StructSerializer: StructSerializer;
+    type StructSerializer: StructSerializer<SourceText = Self::SourceText>;
     /// Type of sequence serializer this serializer uses.
     type SequenceSerializer: SequenceSerializer;
 
@@ -49,6 +52,9 @@ pub trait Serializer {
 
     /// Get whether output should contain `range` fields.
     fn ranges(&self) -> bool;
+
+    /// Get the source text associated with this serialization, if provided.
+    fn source_text(&self) -> Option<Self::SourceText>;
 
     /// Serialize struct.
     fn serialize_struct(self) -> Self::StructSerializer;
@@ -71,27 +77,28 @@ pub trait Serializer {
 }
 
 /// ESTree serializer which produces compact JSON.
-pub type CompactSerializer = ESTreeSerializer<ConfigNoFixes, CompactFormatter>;
+pub type CompactSerializer = ESTreeSerializer<'static, ConfigNoFixes, CompactFormatter>;
 
 /// ESTree serializer which produces pretty JSON.
-pub type PrettySerializer = ESTreeSerializer<ConfigNoFixes, PrettyFormatter>;
+pub type PrettySerializer = ESTreeSerializer<'static, ConfigNoFixes, PrettyFormatter>;
 
 /// ESTree serializer which produces compact JSON.
-pub type CompactFixesSerializer = ESTreeSerializer<ConfigFixes, CompactFormatter>;
+pub type CompactFixesSerializer = ESTreeSerializer<'static, ConfigFixes, CompactFormatter>;
 
 /// ESTree serializer which produces pretty JSON.
-pub type PrettyFixesSerializer = ESTreeSerializer<ConfigFixes, PrettyFormatter>;
+pub type PrettyFixesSerializer = ESTreeSerializer<'static, ConfigFixes, PrettyFormatter>;
 
 /// ESTree serializer.
-pub struct ESTreeSerializer<C: Config, F: Formatter> {
+pub struct ESTreeSerializer<'a, C: Config, F: Formatter> {
     buffer: CodeBuffer,
     formatter: F,
     trace_path: NonEmptyStack<TracePathPart>,
     fixes_buffer: CodeBuffer,
     config: C,
+    source_text: Option<&'a str>,
 }
 
-impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
+impl<C: Config, F: Formatter> ESTreeSerializer<'static, C, F> {
     /// Create new [`ESTreeSerializer`].
     pub fn new(include_ts_fields: bool, ranges: bool) -> Self {
         Self {
@@ -100,6 +107,7 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
             trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
             fixes_buffer: CodeBuffer::new(),
             config: C::new(include_ts_fields, ranges),
+            source_text: None,
         }
     }
 
@@ -111,6 +119,21 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
             trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
             fixes_buffer: CodeBuffer::new(),
             config: C::new(include_ts_fields, ranges),
+            source_text: None,
+        }
+    }
+}
+
+impl<C: Config, F: Formatter> ESTreeSerializer<'_, C, F> {
+    /// Associate source text with this serializer.
+    pub fn with_source_text(self, source_text: &'_ str) -> ESTreeSerializer<'_, C, F> {
+        ESTreeSerializer {
+            buffer: self.buffer,
+            formatter: self.formatter,
+            trace_path: self.trace_path,
+            fixes_buffer: self.fixes_buffer,
+            config: self.config,
+            source_text: Some(source_text),
         }
     }
 
@@ -157,17 +180,18 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
     }
 }
 
-impl<C: Config, F: Formatter> Default for ESTreeSerializer<C, F> {
+impl<C: Config, F: Formatter> Default for ESTreeSerializer<'static, C, F> {
     #[inline(always)]
     fn default() -> Self {
         Self::new(true, false)
     }
 }
 
-impl<'s, C: Config, F: Formatter> Serializer for &'s mut ESTreeSerializer<C, F> {
+impl<'s, 'a, C: Config, F: Formatter> Serializer for &'s mut ESTreeSerializer<'a, C, F> {
     type Formatter = F;
-    type StructSerializer = ESTreeStructSerializer<'s, C, F>;
-    type SequenceSerializer = ESTreeSequenceSerializer<'s, C, F>;
+    type SourceText = &'a str;
+    type StructSerializer = ESTreeStructSerializer<'s, 'a, C, F>;
+    type SequenceSerializer = ESTreeSequenceSerializer<'s, 'a, C, F>;
 
     /// Get whether output should contain TS fields.
     #[inline(always)]
@@ -181,15 +205,21 @@ impl<'s, C: Config, F: Formatter> Serializer for &'s mut ESTreeSerializer<C, F> 
         self.config.ranges()
     }
 
+    /// Get the source text associated with this serialization, if provided.
+    #[inline(always)]
+    fn source_text(&self) -> Option<Self::SourceText> {
+        self.source_text
+    }
+
     /// Serialize struct.
     #[inline(always)]
-    fn serialize_struct(self) -> ESTreeStructSerializer<'s, C, F> {
+    fn serialize_struct(self) -> ESTreeStructSerializer<'s, 'a, C, F> {
         ESTreeStructSerializer::new(self)
     }
 
     /// Serialize sequence.
     #[inline(always)]
-    fn serialize_sequence(self) -> ESTreeSequenceSerializer<'s, C, F> {
+    fn serialize_sequence(self) -> ESTreeSequenceSerializer<'s, 'a, C, F> {
         ESTreeSequenceSerializer::new(self)
     }
 
@@ -249,4 +279,26 @@ pub enum TracePathPart {
 
 impl TracePathPart {
     pub const DUMMY: Self = TracePathPart::Index(0);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct SourceText;
+
+    impl ESTree for SourceText {
+        fn serialize<S: Serializer>(&self, serializer: S) {
+            let source_text = serializer.source_text().unwrap();
+            JsonSafeString(source_text.as_ref()).serialize(serializer);
+        }
+    }
+
+    #[test]
+    fn serializer_provides_source_text() {
+        let mut serializer =
+            CompactSerializer::new(false, false).with_source_text("let answer = 42;");
+        SourceText.serialize(&mut serializer);
+        assert_eq!(serializer.into_string(), r#""let answer = 42;""#);
+    }
 }
