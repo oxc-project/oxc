@@ -159,20 +159,27 @@ Heads that still never break in Prettier's value-parse (`@for` bounds, `@namespa
 ```css
 /* input */
 @media (not ( screen and ( color ) )) { }
+@media (foo bar:baz , qux) { }
 
 /* ours */
 @media (not (screen and (color))) {
+}
+@media (foo bar:baz, qux) {
 }
 
 /* prettier */
 @media (not ( screen and ( color ) )) {
 }
+@media (foo bar: baz , qux) {
+}
 ```
 
 `<general-enclosed>` preludes (unparsable as `<media-condition>`) normalize whitespace fully: source gap → one space, paren inner edges tight.
+So does a `@supports` one, and a `selector()` whose argument is not a selector (`selector(A < B)`).
 Prettier only collapses space RUNS inside the unparsable paren;
 reproducing that half-normalization is pure tokenizer-artifact matching.
-Gap-based spacing never fuses tokens the source kept apart (`and (` can't become a function token `and(`).
+Gap-based spacing never splits or fuses tokens: `and (` can't become a function token `and(`,
+and no space is added where the source has none, so a pseudo-class keeps its `:` (`selector(:before)`), unlike Prettier's `: ` after any colon.
 
 ## value-glued-bracket
 
@@ -1623,6 +1630,43 @@ Prettier glues it only between SCSS `if()` branches and keeps the source space e
 
 A broken function call inside a `@supports` declaration indents its arguments one level, as the same declaration does inside a rule;
 Prettier indents the arguments and `)` one level further there, its prelude value group adding its own indent.
+
+## supports-declaration-long-value
+
+- Why: uniform-rule (same construct, same output: the declaration in a rule)
+- Pin: `tests/fixtures/format/css/supports-declaration-long-value.css`
+- Conformance:
+  - `externals/prettier/css/atrule/supports.css`
+
+```css
+/* input */
+@supports (text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-and-longer) {}
+a {
+  text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-long-long;
+}
+
+/* ours */
+@supports (
+  text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-and-longer
+) {
+}
+a {
+  text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-long-long;
+}
+
+/* prettier */
+@supports (
+  text-decoration-skip-ink:
+    an-experimental-keyword-value-that-is-quite-long-and-longer
+) {
+}
+a {
+  text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-long-long;
+}
+```
+
+An over-wide `@supports` declaration opens its parens and stays on one line, as the same declaration does in a rule;
+Prettier breaks after its `:` there too, its prelude value group allowing a break the declaration printer does not.
 
 ## grid-value-broken-in-function
 

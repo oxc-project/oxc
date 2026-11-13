@@ -33,6 +33,19 @@ a {
 }
 @supports (transform-style: preserve-3d) or ((-moz-transform-style: preserve-3d) or (-webkit-transform-style: preserve-3d)) {}
 @supports not (background-image: light-dark(url("light.png"), url("dark.png"))) {}
+/* Selectors in `selector()` print as a rule's: one per line, the parens open when broken */
+@supports selector(.a,.b) {}
+@supports (display: grid) and selector(.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa .bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) {}
+/* Not a selector: `<general-enclosed>`, whitespace normalized as the parenthesized one */
+@supports selector(A < B) {}
+@supports selector(
+A
+<
+B
+) {}
+@supports selector() {}
+@supports selector(selector(:focus-visible)) {}
+@supports not (selector(:before) or not (not (selector(:before)))) {}
 
 ==================== Output ====================
 ------------------
@@ -87,6 +100,28 @@ a {
   background-image: light-dark(url("light.png"), url("dark.png"))
 ) {
 }
+/* Selectors in `selector()` print as a rule's: one per line, the parens open when broken */
+@supports selector(
+  .a,
+  .b
+) {
+}
+@supports (display: grid) and
+  selector(
+    .aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa .bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+  ) {
+}
+/* Not a selector: `<general-enclosed>`, whitespace normalized as the parenthesized one */
+@supports selector(A < B) {
+}
+@supports selector(A < B) {
+}
+@supports selector() {
+}
+@supports selector(selector(:focus-visible)) {
+}
+@supports not (selector(:before) or not (not (selector(:before)))) {
+}
 
 -------------------
 { printWidth: 100 }
@@ -133,6 +168,26 @@ a {
   ((-moz-transform-style: preserve-3d) or (-webkit-transform-style: preserve-3d)) {
 }
 @supports not (background-image: light-dark(url("light.png"), url("dark.png"))) {
+}
+/* Selectors in `selector()` print as a rule's: one per line, the parens open when broken */
+@supports selector(
+  .a,
+  .b
+) {
+}
+@supports (display: grid) and
+  selector(.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa .bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) {
+}
+/* Not a selector: `<general-enclosed>`, whitespace normalized as the parenthesized one */
+@supports selector(A < B) {
+}
+@supports selector(A < B) {
+}
+@supports selector() {
+}
+@supports selector(selector(:focus-visible)) {
+}
+@supports not (selector(:before) or not (not (selector(:before)))) {
 }
 
 ===================== End =====================

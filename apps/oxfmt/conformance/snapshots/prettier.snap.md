@@ -365,6 +365,8 @@
 
 ### Failed
 
+- externals/prettier/css/atrule/supports.css (💥, 95.22%)
+  - crates/oxc_formatter_css/DIVERGENCES.md#supports-declaration-long-value
 - externals/prettier/css/comments/declaration.css (💥, 98.88%)
   - crates/oxc_formatter_css/DIVERGENCES.md#terminator-gap-normalized
 - externals/prettier/css/fill-value/fill.css (💥, 93.33%)
@@ -387,8 +389,6 @@
 
 ### Error
 
-- externals/prettier/css/atrule/supports.css: Syntax error: expect token `)`, but found `<`
-  - ❓unclassified
 - externals/prettier/css/atrule/charset.css: Syntax error: expect token `<string>`, but found `<ident>`
   - crates/oxc_formatter_css/DIVERGENCES.md#grammar-owner-rejected
 - externals/prettier/css/atrule/import.css: Syntax error: expect token `<ident>`, but found `(`

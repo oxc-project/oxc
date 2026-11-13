@@ -4,7 +4,8 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ==================== Input ====================
 /* `<general-enclosed>` media preludes (unparsable as `<media-condition>`,
    e.g. parenthesized `not all` or a media TYPE inside parens):
-   tokens kept, whitespace normalized (gap -> one space, paren edges tight).
+   tokens kept, whitespace normalized (gap -> one space, paren edges tight),
+   and no space added where the source has none (`bar:baz` stays).
    Known divergence (DIVERGENCES.md#general-enclosed-whitespace): the nested query below prints
    `(not (screen and (color)))`; Prettier only collapses space runs
    inside the unparsable paren and keeps `(not ( screen and ( color ) ))`. */
@@ -14,6 +15,8 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 }
 @media (  not (   screen     and   (  color  )  )   ), print and (  color ) {
 }
+@media (foo bar:baz , qux) {
+}
 
 ==================== Output ====================
 ------------------
@@ -21,7 +24,8 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ------------------
 /* `<general-enclosed>` media preludes (unparsable as `<media-condition>`,
    e.g. parenthesized `not all` or a media TYPE inside parens):
-   tokens kept, whitespace normalized (gap -> one space, paren edges tight).
+   tokens kept, whitespace normalized (gap -> one space, paren edges tight),
+   and no space added where the source has none (`bar:baz` stays).
    Known divergence (DIVERGENCES.md#general-enclosed-whitespace): the nested query below prints
    `(not (screen and (color)))`; Prettier only collapses space runs
    inside the unparsable paren and keeps `(not ( screen and ( color ) ))`. */
@@ -30,6 +34,8 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 @media (not all) and (monochrome) {
 }
 @media (not (screen and (color))), print and (color) {
+}
+@media (foo bar:baz, qux) {
 }
 
 -------------------
@@ -37,7 +43,8 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 -------------------
 /* `<general-enclosed>` media preludes (unparsable as `<media-condition>`,
    e.g. parenthesized `not all` or a media TYPE inside parens):
-   tokens kept, whitespace normalized (gap -> one space, paren edges tight).
+   tokens kept, whitespace normalized (gap -> one space, paren edges tight),
+   and no space added where the source has none (`bar:baz` stays).
    Known divergence (DIVERGENCES.md#general-enclosed-whitespace): the nested query below prints
    `(not (screen and (color)))`; Prettier only collapses space runs
    inside the unparsable paren and keeps `(not ( screen and ( color ) ))`. */
@@ -46,6 +53,8 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 @media (not all) and (monochrome) {
 }
 @media (not (screen and (color))), print and (color) {
+}
+@media (foo bar:baz, qux) {
 }
 
 ===================== End =====================

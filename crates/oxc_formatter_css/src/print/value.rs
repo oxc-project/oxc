@@ -475,7 +475,7 @@ fn is_possible_font_size(value: &ComponentValue<'_>) -> bool {
     }
 }
 
-fn function_name_text<'a>(func: &Function<'a>) -> &'a str {
+pub(super) fn function_name_text<'a>(func: &Function<'a>) -> &'a str {
     match &func.name {
         FunctionName::Ident(InterpolableIdent::Literal(ident)) => ident.raw,
         _ => "",
