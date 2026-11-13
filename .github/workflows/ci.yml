@@ -260,7 +260,6 @@ jobs:
           cache: |
             rust
             pnpm
-      - wait: napi-fixtures
       - if: steps.filter.outputs.changed == 'true'
         name: Build packages
         run: pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" --filter "./napi/transform-react" --filter "./napi/transform-relay" build-test
@@ -268,6 +267,9 @@ jobs:
         name: Run runtime helper tests
         working-directory: npm/runtime
         run: node --run test
+      # Building and the runtime helpers do not read the fixtures, so the clone
+      # overlaps them; only the tests below need it.
+      - wait: napi-fixtures
       - parallel:
           - if: steps.filter.outputs.changed == 'true'
             name: Run tests
