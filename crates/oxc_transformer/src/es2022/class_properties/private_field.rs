@@ -1416,7 +1416,9 @@ impl<'a> ClassProperties<'a> {
         if bind_context {
             // `(Foo?.#m)();` -> `(Foo === null || Foo === void 0 ? void 0 : _m._.bind(Foo))();`
             // Only bind when the private field is the chain's result, not an intermediate object.
-            *expr = self.transform_bindable_private_field(field_expr, ctx);
+            let optional =
+                matches!(ctx.ancestor(1), Ancestor::CallExpressionCallee(call) if *call.optional());
+            *expr = self.transform_bindable_private_field(field_expr, optional, ctx);
         } else {
             self.transform_private_field_expression(expr, ctx);
         }
@@ -1854,27 +1856,30 @@ impl<'a> ClassProperties<'a> {
             );
             Expression::from(replacement)
         } else {
-            self.transform_bindable_private_field(field_expr, ctx)
+            self.transform_bindable_private_field(field_expr, false, ctx)
         }
     }
 
     fn transform_bindable_private_field(
         &mut self,
         field_expr: &mut PrivateFieldExpression<'a>,
+        optional: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let (callee, context) = self.transform_private_field_callee(field_expr, ctx);
 
-        // Return `<callee>.bind(object)`, to be substituted as tag of tagged template expression
+        // Preserve the receiver for tagged templates and parenthesized optional chains.
         let callee = Expression::new_static_member_expression(
             SPAN,
             callee,
             IdentifierName::new(SPAN, "bind", ctx),
-            false,
+            optional,
             ctx,
         );
         let arguments = ArenaVec::from_value_in(Argument::from(context), ctx);
-        Expression::new_call_expression(field_expr.span, callee, None, arguments, false, ctx)
+        let call =
+            Expression::new_call_expression(field_expr.span, callee, None, arguments, false, ctx);
+        Self::ensure_optional_expression_wrapped_by_chain_expression(call, ctx)
     }
 
     /// Transform private field in assignment pattern.
