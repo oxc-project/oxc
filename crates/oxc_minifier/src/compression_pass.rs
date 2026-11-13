@@ -1,8 +1,9 @@
 //! Completion of Normalize and peephole compression passes.
 //!
-//! AST mutations accumulate removed semantic references and dropped direct
-//! `eval` calls on [`crate::state::PassChanges`]. Both Normalize and each
-//! peephole pass cross the same completion boundary: prune those references,
+//! AST mutations accumulate removed semantic references, dropped direct
+//! `eval` calls and dropped declarations of redeclared symbols on
+//! [`crate::state::PassChanges`]. Both Normalize and each peephole pass cross
+//! the same completion boundary: prune those references and declarations,
 //! refresh direct-eval scope flags, then derive function reachability from the
 //! settled semantic state.
 
@@ -17,7 +18,8 @@ use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 use crate::{
     ReusableTraverseCtx, TraverseCtx, minifier_traverse::traverse_mut_with_ctx,
-    peephole::PeepholeOptimizations, symbol_liveness, traverse_context::as_direct_eval_call,
+    peephole::PeepholeOptimizations, state::PassChanges, symbol_liveness,
+    traverse_context::as_direct_eval_call,
 };
 
 /// The fixed-point decision produced by one completed peephole pass.
@@ -198,9 +200,31 @@ fn debug_assert_no_stale_direct_eval(program: &Program<'_>, scoping: &Scoping) {
     DirectEvalFlagCheck { scoping }.visit_program(program);
 }
 
+/// Remove [`PassChanges::removed_declarations`] from
+/// `Scoping::symbol_redeclarations`, so e.g. `catch (a) { var a }` can drop `a`
+/// once the `var` is gone (#27548).
+///
+/// Unlike a `ReferenceId`, a dropped binding can reappear: `KeepVar` re-emits
+/// dropped `var`s with their symbol and span, and records them in
+/// [`PassChanges::reemitted_declarations`]. Only when a removed declaration was
+/// re-emitted is the program walked to skip those still present. Debug builds
+/// always walk, and assert that nothing else revived a dropped declaration.
+fn prune_removed_declarations(program: &Program<'_>, ctx: &mut TraverseCtx<'_>) {
+    let PassChanges { removed_declarations: removed, reemitted_declarations: reemitted, .. } =
+        &mut ctx.state.pass_changes;
+    if cfg!(debug_assertions) || removed.iter().any(|declaration| reemitted.contains(declaration)) {
+        LiveDeclarations { removed, reemitted }.visit_program(program);
+    }
+    let scoping = ctx.scoping.scoping_mut();
+    for (symbol_id, span) in removed.drain() {
+        scoping.remove_symbol_declaration(symbol_id, span);
+    }
+}
+
 /// Consume the [`crate::state::PassChanges`] accumulator: batch-prune removed
 /// resolved references from scoping, refresh direct-eval flags if an
-/// `eval(...)` call was dropped, and re-initialize the accumulator.
+/// `eval(...)` call was dropped, remove dropped redeclarations, and
+/// re-initialize the accumulator.
 ///
 /// Pass completion calls this after Normalize (so the fixed-point loop starts
 /// against already-pruned scoping and Normalize's drops cost no extra
@@ -239,36 +263,9 @@ fn flush_pass_changes(program: &Program<'_>, ctx: &mut TraverseCtx<'_>) -> bool 
     #[cfg(debug_assertions)]
     debug_assert_no_stale_direct_eval(program, ctx.scoping());
 
-    // (3) Declarations — drop the redeclarations of removed declarations, so
-    //     e.g. `catch (a) { var a }` can drop `a` once the `var` is gone (#27548).
-    //     `KeepVar` re-emits dropped `var`s with their symbol and span; only when
-    //     it re-emitted a removed declaration is the program walked to check.
-    let reemitted = std::mem::take(&mut ctx.state.pass_changes.reemitted_declarations);
+    // (3) Declarations — drop the redeclarations of removed declarations.
     if !ctx.state.pass_changes.removed_declarations.is_empty() {
-        struct LiveDeclarations<'b> {
-            removed: &'b mut FxHashSet<(SymbolId, Span)>,
-        }
-        impl<'a> Visit<'a> for LiveDeclarations<'_> {
-            fn visit_binding_identifier(&mut self, it: &BindingIdentifier<'a>) {
-                if let Some(symbol_id) = it.symbol_id.get() {
-                    self.removed.remove(&(symbol_id, it.span));
-                }
-            }
-        }
-        let mut removed = std::mem::take(&mut ctx.state.pass_changes.removed_declarations);
-        let may_be_live = removed.iter().any(|declaration| reemitted.contains(declaration));
-        // Debug builds always walk, to check that only `KeepVar` revives a declaration.
-        if may_be_live || cfg!(debug_assertions) {
-            let removed_len = removed.len();
-            LiveDeclarations { removed: &mut removed }.visit_program(program);
-            debug_assert!(
-                may_be_live || removed.len() == removed_len,
-                "a dropped declaration is still in the program, but `KeepVar` did not re-emit it",
-            );
-        }
-        for (symbol_id, span) in removed {
-            ctx.scoping_mut().remove_symbol_declaration(symbol_id, span);
-        }
+        prune_removed_declarations(program, ctx);
     }
 
     // (4) Reset the accumulator for the next pass. `references_len` only grows
@@ -285,6 +282,7 @@ fn flush_pass_changes(program: &Program<'_>, ctx: &mut TraverseCtx<'_>) -> bool 
         ctx.state.pass_changes.removed_references = BitSet::new_in(refs_len, ctx.allocator());
     }
     ctx.state.pass_changes.direct_eval_dropped = false;
+    ctx.state.pass_changes.reemitted_declarations.clear();
     liveness_inputs_changed
 }
 
@@ -365,5 +363,28 @@ impl<'a> VisitJs<'a> for LiveDirectEvalCollector<'_> {
         }
         // Recurse — `eval` may be nested in another call's arguments, e.g. `foo(eval('x'))`.
         walk_call_expression(self, it);
+    }
+}
+
+/// Walks the live program to keep declarations that are still present out of
+/// [`PassChanges::removed_declarations`]. Used by
+/// [`prune_removed_declarations`].
+struct LiveDeclarations<'b> {
+    removed: &'b mut FxHashSet<(SymbolId, Span)>,
+    reemitted: &'b FxHashSet<(SymbolId, Span)>,
+}
+
+impl<'a> Visit<'a> for LiveDeclarations<'_> {
+    fn visit_binding_identifier(&mut self, it: &BindingIdentifier<'a>) {
+        if let Some(symbol_id) = it.symbol_id.get() {
+            let declaration = (symbol_id, it.span);
+            if self.removed.remove(&declaration) {
+                debug_assert!(
+                    self.reemitted.contains(&declaration),
+                    "declaration {declaration:?} was dropped and is still in the program, but \
+                     `KeepVar` did not re-emit it",
+                );
+            }
+        }
     }
 }
