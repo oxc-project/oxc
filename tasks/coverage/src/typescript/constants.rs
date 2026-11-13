@@ -48,7 +48,6 @@
 //   - When OXC has limited support for these, we cannot ignore it by error code alone
 //     - We have to ignore by file path, then manually add some parts separately to `misc` cases
 
-// spellchecker:off
 pub static NOT_SUPPORTED_TEST_PATHS: phf::Set<&'static str> = phf::phf_set![
     // TSC: "use strict" with non-simple parameter list is allowed in ES5
     // OXC: Always ESNext, so not allowed
@@ -102,9 +101,7 @@ pub static NOT_SUPPORTED_TEST_PATHS: phf::Set<&'static str> = phf::phf_set![
     // OXC: Rejects per TC39 spec — `using` is not allowed at the top level of scripts
     "usingDeclarations.14.ts",
 ];
-// spellchecker:on
 
-// spellchecker:off
 pub static NOT_SUPPORTED_ERROR_CODES: phf::Set<&'static str> = phf::phf_set![
     "1006",  // A file cannot have a reference to itself.
     "1055", // Type 'PromiseAlias' is not a valid async function return type in ES5 because it does not refer to a Promise-compatible constructor value.
@@ -649,7 +646,6 @@ pub static NOT_SUPPORTED_ERROR_CODES: phf::Set<&'static str> = phf::phf_set![
     "18062", // Regular expression pattern modifiers are only available when targeting 'es2025' or later.
     "18063", // Duplicate named capturing groups are only available when targeting 'es2025' or later.
 ];
-// spellchecker:on
 
 /// Error messages that can be suppressed by `@ts-ignore` or `@ts-expect-error` comments.
 /// These are errors that TypeScript would normally report, but are intentionally ignored

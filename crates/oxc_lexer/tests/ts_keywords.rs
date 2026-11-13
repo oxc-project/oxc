@@ -109,7 +109,6 @@ fn ts_key_separates_narrow_key_collisions(cpu: DynCpu) {
 #[test_cpus]
 fn near_misses_stay_ident(cpu: DynCpu) {
     for w in [
-        // spellchecker:off
         "types",
         "strin",
         "stringg",
@@ -126,7 +125,6 @@ fn near_misses_stay_ident(cpu: DynCpu) {
         "prototype",
         "Number",
         "String",
-        // spellchecker:on
     ] {
         assert_eq!(first_kind(w, true, cpu), TokenKind::Ident, "ts near-miss: {w}");
         assert_eq!(first_kind(w, false, cpu), TokenKind::Ident, "js near-miss: {w}");

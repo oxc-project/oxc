@@ -398,7 +398,7 @@ fn ordinal(n: usize) -> String {
         11..=13 => "th",
         _ => match n % 10 {
             1 => "st",
-            2 => "nd", // spellchecker:disable-line
+            2 => "nd",
             3 => "rd",
             _ => "th",
         },

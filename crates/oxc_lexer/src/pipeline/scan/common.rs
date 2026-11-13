@@ -290,7 +290,6 @@ unsafe fn scan_fraction_exponent(
 #[inline(always)]
 pub(super) unsafe fn lic_verify_at(src: *const u8, q: usize, _cpu: impl Cpu) -> bool {
     let c1 = *src.add(q + 1);
-    // spellchecker:disable-next-line
     (c1 == b'l' && slice::from_raw_parts(src.add(q + 2), 6) == b"icense")
         || (c1 == b'p' && slice::from_raw_parts(src.add(q + 2), 7) == b"reserve")
 }
