@@ -1,3 +1,4 @@
+mod accessor;
 mod legacy;
 mod options;
 
