@@ -481,6 +481,8 @@ impl<'a> ReactRefresh<'a> {
         is_variable_declarator: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> bool {
+        // This search runs in `enter_program`, before TypeScript wrappers in descendants are erased.
+        let expr = expr.get_inner_expression_mut();
         match expr {
             Expression::Identifier(ident) => {
                 // For case like:
