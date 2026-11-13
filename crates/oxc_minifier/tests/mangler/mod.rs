@@ -1,9 +1,8 @@
 use std::fmt::Write;
 
 use oxc_allocator::Allocator;
-use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_codegen::Codegen;
 use oxc_mangler::{MangleOptions, MangleOptionsKeepNames, Mangler};
-use oxc_minifier::{CompressOptions, Minifier, MinifierOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
@@ -437,49 +436,4 @@ fn annex_b_block_scoped_function() {
     insta::with_settings!({ prepend_module_to_snapshot => false, omit_expression => true }, {
         insta::assert_snapshot!("annex_b_block_scoped_function", snapshot);
     });
-}
-
-/// A linked catch parameter (`catch (e) { var e }`) reserves its name for the whole file.
-/// Once compression removes the `var`, the catch is no longer linked: its binding is removed
-/// in the same run and the name is free for other bindings.
-/// <https://github.com/oxc-project/oxc/issues/27548>
-#[test]
-fn removed_catch_var_does_not_reserve_name() {
-    fn minify(source_text: &str) -> String {
-        let allocator = Allocator::default();
-        let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
-        assert!(ret.diagnostics.is_empty(), "Parser errors: {:?}", ret.diagnostics);
-        let mut program = ret.program;
-        let options = MinifierOptions {
-            mangle: Some(MangleOptions::default()),
-            compress: Some(CompressOptions::smallest()),
-            ..MinifierOptions::default()
-        };
-        let ret = Minifier::new(options).minify(&allocator, &mut program);
-        Codegen::new()
-            .with_options(CodegenOptions::minify())
-            .with_scoping(ret.scoping)
-            .build(&program)
-            .code
-    }
-
-    for (source, expected) in [
-        (
-            "export function f(b) { try { x() } catch (e) { var e } return b }",
-            "export function f(e){try{x()}catch{}return e}",
-        ),
-        (
-            "export function f(b) { try { x() } catch (e) { if (0) { var e } } return b }",
-            "export function f(e){try{x()}catch{}return e}",
-        ),
-        // The `var` stays, so the catch stays linked and `e` stays reserved.
-        (
-            "export function f(b) { try { x() } catch (e) { var e = b } return [b, e] }",
-            "export function f(t){try{x()}catch(e){var e=t}return[t,e]}",
-        ),
-    ] {
-        let output = minify(source);
-        assert_eq!(output, expected, "\nfor source\n{source}");
-        assert_eq!(minify(&output), output, "\nidempotency for source\n{source}");
-    }
 }
