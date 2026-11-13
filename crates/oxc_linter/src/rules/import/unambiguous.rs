@@ -52,9 +52,13 @@ declare_oxc_lint!(
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/unambiguous.md>
 impl Rule for Unambiguous {
     fn run_once(&self, ctx: &LintContext<'_>) {
-        if !ctx.module_record().has_module_syntax {
-            ctx.diagnostic(unambiguous_diagnostic(Span::default()));
+        // If the parse goal is already fixed as a module (e.g. `.mjs`/`.mts`,
+        // Vue/Svelte script blocks), or the file contains ESM syntax, there is
+        // no ambiguity that needs to be resolved.
+        if ctx.source_type().is_module() || ctx.module_record().has_module_syntax {
+            return;
         }
+        ctx.diagnostic(unambiguous_diagnostic(Span::default()));
     }
 }
 
@@ -83,4 +87,19 @@ fn test() {
         .change_rule_path("index.ts")
         .with_import_plugin(true)
         .test_and_snapshot();
+}
+
+#[test]
+fn test_module_extension() {
+    use crate::tester::Tester;
+
+    // `.mjs` and `.mts` extensions fix the parse goal as module, so the rule
+    // should not report even when there is no import/export syntax.
+    let pass = vec!["const a = 1", "let b = 2"];
+    let fail: Vec<&str> = vec![];
+
+    Tester::new(Unambiguous::NAME, Unambiguous::PLUGIN, pass, fail)
+        .change_rule_path("index.mjs")
+        .with_import_plugin(true)
+        .test();
 }
