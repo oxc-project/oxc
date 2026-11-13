@@ -17,7 +17,7 @@ pub enum JsonVariant {
     Json,
     /// Prettier's `parser: jsonc` equivalent.
     /// Output: double-quoted strings, quoted object keys,
-    /// trailing commas follow the user option.
+    /// trailing commas forced off (regardless of user option).
     /// Empty input is allowed.
     Jsonc,
     /// Prettier's `parser: json5` equivalent.
@@ -55,19 +55,18 @@ impl JsonFormatOptions {
     /// Whether a trailing comma may follow the last entry of a multi-line object/array,
     /// per the active variant and [`Self::trailing_commas`].
     ///
-    /// `json` and `json-stringify` never emit one, but Prettier achieves this differently:
-    /// - `json`: the option is force-normalized to `trailingComma: "none"`
-    /// - `json-stringify`: a separate `estree-json` printer is used and never emits a trailing comma
+    /// `json`, `jsonc` and `json-stringify` never emit one. `jsonc` forces trailing
+    /// commas off because the JSONC specification makes them optional, so strict
+    /// JSONC parsers (and consumers such as VS Code's validator) may reject them.
     ///
-    /// `jsonc` and `json5` follow the user option (`Always` emits, `Never` does not).
-    /// Both go through Prettier's shared `estree` printer with `shouldPrintTrailingComma` fixed at the `es5` level,
-    /// which is why Prettier's `all` and `es5` are indistinguishable here (both map to `Always`).
+    /// `json5` follows the user option (`Always` emits, `Never` does not).
+    /// It goes through Prettier's shared `estree` printer with `shouldPrintTrailingComma`
+    /// fixed at the `es5` level, which is why Prettier's `all` and `es5` are indistinguishable
+    /// here (both map to `Always`).
     pub fn allow_trailing_comma(&self) -> bool {
         match self.variant {
-            JsonVariant::Json | JsonVariant::JsonStringify => false,
-            JsonVariant::Jsonc | JsonVariant::Json5 => {
-                matches!(self.trailing_commas, TrailingCommas::Always)
-            }
+            JsonVariant::Json | JsonVariant::JsonStringify | JsonVariant::Jsonc => false,
+            JsonVariant::Json5 => matches!(self.trailing_commas, TrailingCommas::Always),
         }
     }
 

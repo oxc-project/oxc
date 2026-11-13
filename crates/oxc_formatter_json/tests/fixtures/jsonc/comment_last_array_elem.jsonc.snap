@@ -13,7 +13,7 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
 ------------------------------------
 [
   1,
-  2, // last element trailing comment
+  2 // last element trailing comment
 ]
 
 -------------------------------------
@@ -21,7 +21,7 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
 -------------------------------------
 [
   1,
-  2, // last element trailing comment
+  2 // last element trailing comment
 ]
 
 -----------------------------------------------------------
