@@ -324,13 +324,11 @@ pub fn extract_regex_flags<'a>(args: &'a ArenaVec<'a, Argument<'a>>) -> Option<R
     }
 
     if args.len() == 1 {
-        return match &args[0] {
-            // `new RegExp(/pattern/flags)` preserves the source regex's flags.
-            Argument::RegExpLiteral(regexp_literal) => Some(regexp_literal.regex.flags),
-            // `new RegExp("...")` / `new RegExp(`...`)` have no flags when no second
-            // argument is supplied.
-            Argument::StringLiteral(_) | Argument::TemplateLiteral(_) => Some(RegExpFlags::empty()),
-            // Unknown / non-literal argument: flags cannot be statically determined.
+        return match args[0].as_expression()?.get_inner_expression() {
+            Expression::RegExpLiteral(regexp_literal) => Some(regexp_literal.regex.flags),
+            expr if expr.is_literal() || matches!(expr, Expression::TemplateLiteral(_)) => {
+                Some(RegExpFlags::empty())
+            }
             _ => None,
         };
     }
