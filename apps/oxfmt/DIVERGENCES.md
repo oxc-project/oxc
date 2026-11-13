@@ -321,7 +321,7 @@ Prettier reads past it in Vue too since #20117 (a fix for Angular, prettier/pret
 ```
 
 Under `semi: false`, `;` still separates an event handler's top-level statements, all but after the last,
-and ends a lone one that is no expression (`if (a) b();`); the statements in them follow `semi`.
+and ends a lone one (`if (a) b();`); the statements in them follow `semi`.
 Vue's compiler reads a handler as statements when its value holds a `;` (`exp.content.includes(';')`), wrapped in braces, and as an expression otherwise:
 Prettier drops every `;`, and the statements no longer compile (`@vue/compiler-dom` 3.5.45: `Error parsing JavaScript expression`).
 Under `semi: true` both print the statements' own `;` (a known gap: `crates/oxc_formatter/AGENTS.md` "js-in-xxx").
@@ -338,8 +338,6 @@ Under `semi: true` both print the statements' own `;` (a known gap: `crates/oxc_
 ```
 
 Statements without a `;` print as written: Vue reads them as an expression, which does not compile, and the `;` Prettier adds makes them compile.
-A `;` added or dropped in a handler's code otherwise (`a();` printing `a()`, a callback's body under `semi`) changes no more than its value,
-which is no part of what Vue reads (`crates/oxc_formatter_htmlish/AGENTS.md` "What Vue reads").
 
 ```vue
 <!-- input (any semi) -->
@@ -405,6 +403,40 @@ and a `{` a block. Prettier drops the parens, and the handler no longer compiles
 An arrow function reads as itself either way.
 A handler whose code holds a `;` already and starts so (`function () { a(); }`) prints as written:
 Vue reads it as statements, which do not compile, and the parens would make it compile.
+vue-tsc reads a `function` in parens otherwise, and the compiler wins (`crates/oxc_formatter_htmlish/AGENTS.md` "What Vue reads").
+
+## js-in-vue-handler-lone-statement
+
+- Why: semantics (Vue returns a handler's value only when its code holds no `;`, and vue-tsc types it; oxc#24361)
+- Pin: `conformance/fixtures/js-in-vue/handler-lone-statement.vue`
+- Conformance:
+  - `externals/prettier/vue/event-binding/assignment.vue`
+  - `externals/prettier/vue/vue/attributes.vue`
+
+```vue
+<!-- input (any semi) -->
+<template>
+  <button @click="a = !a;"></button>
+</template>
+
+<!-- ours -->
+<template>
+  <button @click="a = !a;"></button>
+</template>
+
+<!-- prettier -->
+<template>
+  <button @click="a = !a"></button>
+</template>
+```
+
+An event handler's lone expression statement keeps its `;`, whatever `semi` says.
+Vue's compiler reads `a = !a;` as statements and `a = !a` as an expression (DIVERGENCES.md#js-in-vue-handler-statements):
+both run the same, but only the expression returns its value, whose rejected promise Vue reports
+(`$event => { a = !a; }`, `$event => (a = !a)`; `@vue/compiler-dom` 3.5.45).
+vue-tsc reads it so too, and types the value (`@vue/language-core` 3.3.14):
+for a prop typed `() => void | Promise<void>`, `a = !a` does not type-check (`TS2322: Type '($event?: undefined) => boolean' is not assignable to type '() => void | Promise<void>'`).
+Prettier keeps the `;` of a reference only (`foo.bar;`, which Vue calls without it).
 
 ## tsx-in-vue-template-expressions
 

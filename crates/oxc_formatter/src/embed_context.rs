@@ -85,11 +85,9 @@ pub enum ProgramSemicolons {
     /// `;` tells statements from an expression: the host reads code holding one as statements,
     /// other code as an expression it calls or evaluates (Vue's `@click`).
     ///
-    /// A lone expression statement keeps its `;` only when it is a reference or a function, whatever `semi` says:
-    /// without it, the host calls it (Vue `foo;` runs nothing, `foo` calls it).
-    /// Another one reads the same without it, but for its value, which is no part of what the host reads
-    /// (Vue uses a handler's value only to report a promise it rejects).
-    /// Under `semi: false`, `;` still separates statements, but after the last, and ends a lone one that is no expression.
+    /// Under `semi: false`, `;` still ends each top-level statement but the last, and a lone one, an expression's too:
+    /// without it, the host reads the code otherwise
+    /// (Vue calls `foo`, where `foo;` runs nothing; vue-tsc types `a = 1`'s value, where `a = 1;` has none).
     MarksStatements,
 }
 

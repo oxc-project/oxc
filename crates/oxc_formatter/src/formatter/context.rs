@@ -123,7 +123,7 @@ pub enum TopLevelSemicolons {
     AsOptions,
     /// The expression statement (by its span) prints without its semicolon, and no ASI guard.
     Omitted(Span),
-    /// A `;` the program writes ends each statement but the last, so none needs an ASI guard (`semi: false`).
+    /// A `;` the program writes ends each statement but the last, and a lone one, so none needs an ASI guard (`semi: false`).
     Separated,
 }
 
