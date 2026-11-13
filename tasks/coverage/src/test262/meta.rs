@@ -100,24 +100,14 @@ impl MetaData {
             // es5id: yaml["es5id"].as_str().map(Into::into),
             // es6id: yaml["es6id"].as_str().map(Into::into),
             // info: yaml["info"].as_str().unwrap_or_default().into(),
-            features: yaml
-                .as_mapping_get("features")
-                .map(Self::get_vec_of_string)
-                .unwrap_or_default(),
-            includes: yaml
-                .as_mapping_get("includes")
-                .map(Self::get_vec_of_string)
-                .unwrap_or_default(),
-            flags: yaml
-                .as_mapping_get("flags")
-                .and_then(|v| v.as_vec())
-                .map(|vec| {
-                    vec.iter()
-                        .map(|v| v.as_str().map(TestFlag::from_str).unwrap())
-                        .collect::<Vec<_>>()
-                        .into_boxed_slice()
-                })
-                .unwrap_or_default(),
+            features: yaml.as_mapping_get("features").map_or_default(Self::get_vec_of_string),
+            includes: yaml.as_mapping_get("includes").map_or_default(Self::get_vec_of_string),
+            flags: yaml.as_mapping_get("flags").and_then(|v| v.as_vec()).map_or_default(|vec| {
+                vec.iter()
+                    .map(|v| v.as_str().map(TestFlag::from_str).unwrap())
+                    .collect::<Vec<_>>()
+                    .into_boxed_slice()
+            }),
             negative: yaml
                 .as_mapping_get("negative")
                 .filter(|yaml| !yaml.is_null() && !yaml.is_badvalue())

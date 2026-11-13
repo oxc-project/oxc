@@ -776,11 +776,7 @@ fn is_symbol_declaration_referentially_unique(symbol_id: SymbolId, ctx: &LintCon
 
             let Some(init) = &decl.init else { return false };
 
-            if is_expression_referentially_unique(init) {
-                return true;
-            }
-
-            false
+            is_expression_referentially_unique(init)
         }
         _ => false,
     }
@@ -1189,7 +1185,7 @@ fn is_stable_value<'a, 'b>(
                 return false;
             };
 
-            if (init_name == "useState"
+            (init_name == "useState"
                 || init_name == "useReducer"
                 || init_name == "useTransition"
                 || init_name == "useActionState")
@@ -1210,11 +1206,6 @@ fn is_stable_value<'a, 'b>(
                             false
                         }
                     })
-            {
-                return true;
-            }
-
-            false
         }
         AstKind::ArrowFunctionExpression(arrow_func) => is_function_stable(
             CallbackBody::Arrow(&arrow_func.body),

@@ -42,8 +42,8 @@ impl AlignedChunk {
     /// <https://godbolt.org/z/E7jc51Mf5>
     #[inline]
     fn contains_unicode(&self) -> bool {
-        for index in 0..CHUNK_SIZE {
-            if !self.0[index].is_ascii() {
+        for byte in &self.0 {
+            if !byte.is_ascii() {
                 return true;
             }
         }

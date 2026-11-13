@@ -350,12 +350,8 @@ fn get_target_name<'a>(target: &'a AssignmentTarget<'a>) -> Option<&'a str> {
 }
 
 fn check_expr(expr: &MemberExpression) -> bool {
-    if matches!(expr, MemberExpression::PrivateFieldExpression(_))
-        || matches!(expr.object(), Expression::Super(_))
-    {
-        return false;
-    }
-    true
+    !(matches!(expr, MemberExpression::PrivateFieldExpression(_))
+        || matches!(expr.object(), Expression::Super(_)))
 }
 
 /// Returns the span of the object expression, stripping redundant parentheses for expressions

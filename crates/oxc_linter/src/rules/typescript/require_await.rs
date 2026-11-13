@@ -77,7 +77,8 @@ declare_oxc_lint!(
     recommended,
     suggestion,
     version = "1.12.0",
-    short_description = "This rule disallows async functions which do not have an await expression.",
+    short_description =
+        "This rule disallows async functions which do not have an await expression.",
 );
 
 impl Rule for RequireAwait {}

@@ -104,6 +104,8 @@ use_self = "allow"
 significant_drop_tightening = "allow"
 branches_sharing_code = "allow"
 fallible_impl_from = "allow"
+# `serde::Deserialize` derive generates empty field enums for structs whose fields are all skipped.
+empty_enums = "allow"
 useless_let_if_seq = "allow"
 impl_trait_in_params = "allow"
 significant_drop_in_scrutinee = "warn"
@@ -118,6 +120,12 @@ question_mark = "allow"
 # cargo
 cargo = { level = "warn", priority = -1 }
 multiple_crate_versions = "allow"
+
+# Unused dependencies are checked by `cargo shear`, which supports ignoring dependencies
+# that are only used by feature-gated benchmarks or release tooling.
+[workspace.lints.cargo]
+unused_dependencies = "allow"
+unused_workspace_dependencies = "allow"
 
 [workspace.dependencies]
 # publish = true

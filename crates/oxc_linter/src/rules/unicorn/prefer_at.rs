@@ -680,7 +680,6 @@ fn get_negative_integer(expr: &Expression, max_abs_value: Option<u32>) -> Option
         }
         Expression::NumericLiteral(num) if num.value < 0.0 && num.value.fract() == 0.0 => {
             #[expect(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
-            #[expect(clippy::collapsible_match)]
             if num.value >= i64::MIN as f64 {
                 num.value as i64
             } else {

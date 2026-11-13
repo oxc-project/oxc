@@ -50,7 +50,8 @@ declare_oxc_lint!(
     vitest,
     correctness,
     version = "1.37.0",
-    short_description = "This rule warns about usage of `.todo` in `describe`, `it`, or `test` functions.",
+    short_description =
+        "This rule warns about usage of `.todo` in `describe`, `it`, or `test` functions.",
 );
 
 impl Rule for WarnTodo {

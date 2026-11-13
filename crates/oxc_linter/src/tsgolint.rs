@@ -193,7 +193,7 @@ impl TsGoLintState {
             for path in paths {
                 if SourceType::from_path(Path::new(path)).is_ok() {
                     let path_buf = PathBuf::from(path);
-                    paths_buff.push(path_buf.clone());
+                    paths_buff.push(path_buf);
                 }
             }
             paths_buff

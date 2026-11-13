@@ -112,7 +112,8 @@ declare_oxc_lint!(
     pending,
     config = RequireParamConfig,
     version = "0.4.3",
-    short_description = "Requires that all function parameters are documented with JSDoc `@param` tags.",
+    short_description =
+        "Requires that all function parameters are documented with JSDoc `@param` tags.",
 );
 
 impl Rule for RequireParam {
@@ -366,14 +367,10 @@ fn is_first_fn_param_typed(params: &FormalParameters) -> bool {
 }
 
 fn is_parent_fn_typed(node_id: NodeId, ctx: &LintContext) -> bool {
-    if matches!(
+    matches!(
         ctx.nodes().parent_node(node_id).kind(),
         AstKind::VariableDeclarator(var) if var.type_annotation.is_some()
-    ) {
-        return true;
-    }
-
-    false
+    )
 }
 
 #[test]

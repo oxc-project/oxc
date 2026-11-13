@@ -73,7 +73,8 @@ declare_oxc_lint!(
     recommended,
     dangerous_fix,
     version = "0.13.2",
-    short_description = "Prefer `Set#has()` over `Array#includes()` when checking for existence or non-existence.",
+    short_description =
+        "Prefer `Set#has()` over `Array#includes()` when checking for existence or non-existence.",
 );
 
 fn is_array_of_or_from(callee: &MemberExpression) -> bool {

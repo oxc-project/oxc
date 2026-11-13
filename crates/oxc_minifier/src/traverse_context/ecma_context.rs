@@ -298,10 +298,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
 
     #[inline]
     pub fn is_identifier_undefined(&self, ident: &IdentifierReference) -> bool {
-        if ident.name == "undefined" && ident.is_global_reference(self.scoping()) {
-            return true;
-        }
-        false
+        ident.name == "undefined" && ident.is_global_reference(self.scoping())
     }
 
     pub fn init_value(
