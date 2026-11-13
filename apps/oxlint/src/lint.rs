@@ -345,12 +345,7 @@ impl CliRunner {
         };
 
         if misc_options.print_config {
-            return crate::mode::run_print_config(
-                &lint_config,
-                root_config,
-                &external_plugin_store,
-                stdout,
-            );
+            return crate::mode::run_print_config(&lint_config, &external_plugin_store, stdout);
         }
 
         if self.options.list_rules {
