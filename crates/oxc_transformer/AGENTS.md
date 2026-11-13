@@ -83,31 +83,7 @@ Do not add ordinary transform output regressions there when a `tasks/transform_c
 
 ## Pull request descriptions
 
-A behavior fix should let a reviewer see the failure without reconstructing it. Lead with the problem in prose, then include an example in this shape:
-
-### Example
-
-Input:
-
-```js
-// the smallest code that reproduces the bug
-```
-
-Before output:
-
-```js
-// output from the transformer example at the parent commit
-```
-
-After output:
-
-```js
-// output from the transformer example at the change
-```
-
-Explain the observable difference after the outputs, such as a runtime value or a thrown error, when the output alone does not show it.
-
-Capture both outputs with the transformer example rather than writing them by hand. Save the input outside the repository and run the example while the bug still reproduces:
+Follow the shared [PR description guidance](../../.agents/pr-descriptions.md), including a runnable example and playground link. Capture the before and after outputs with the transformer example. Save the input outside the repository and run the example while the bug still reproduces:
 
 ```sh
 cargo run -p oxc_transformer --example transformer -- /tmp/repro.ts --target es2015
@@ -115,8 +91,4 @@ cargo run -p oxc_transformer --example transformer -- /tmp/repro.ts --target es2
 
 Use its `Transformed:` block as the before output, apply the change, run the same command again, and use the new block as the after output. If you no longer have the original checkout, run it in a detached worktree of the parent commit (`git worktree add --detach /tmp/oxc-parent <parent-commit>`); that checkout builds in its own `target/` directory.
 
-State the options and target used for the example when the result depends on them. When the case reproduces on the [playground](https://playground.oxc.rs/), include a link containing the example code and options; the playground runs the released version. The repository's `oxc-playground-url` skill builds the share link.
-
-When the printed output looks correct but behaves differently, add the case as a conformance fixture with an `exec.js` assertion and run it with `--exec`. Report the runtime value or thrown error, and state the target or the fixture's `options.json` when the result depends on them.
-
-For a refactor, say what must stay identical and how it was compared, such as byte-identical conformance reports and exec results between the parent commit and the change.
+State the target and any other transform options used. For runtime bugs, add a conformance fixture with an `exec.js` assertion and run it with `--exec`. State the fixture's `options.json` when the result depends on it.
