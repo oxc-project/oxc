@@ -416,6 +416,25 @@ fn invalid_utf8(cpu: DynCpu) {
 }
 
 #[test_cpus]
+fn invalid_utf8_in_tsx_type_arguments(cpu: DynCpu) {
+    let opts = LexOptions { jsx: true, ts: true, validate_utf8: true, ..Default::default() };
+
+    // The content-blind TSX type-arg skip drops diagnostics inside the type-argument list,
+    // but must not drop UTF-8 validation's diagnostic
+    let res = lex_with_cpu(b"const el = <Foo<'\xFF'> x/>;", opts, cpu);
+    let d = res.diagnostics();
+    assert_eq!(d.len(), 1, "{d:?}");
+    assert_eq!((d[0].off, d[0].len, d[0].code), (17, 1, DiagCode::InvalidUtf8));
+
+    // A raw U+FFFD at code level is a binary-file error, not a UTF-8 validation error,
+    // but it's also retained in type arguments
+    let res = lex_with_cpu("const el = <Foo<\u{FFFD}> x/>;", opts, cpu);
+    let d = res.diagnostics();
+    assert_eq!(d.len(), 1, "{d:?}");
+    assert_eq!((d[0].off, d[0].len, d[0].code), (16, 3, DiagCode::InvalidUtf8));
+}
+
+#[test_cpus]
 fn valid_utf8_never_flagged(cpu: DynCpu) {
     let codes_v =
         |s: &str| diags_bytes(s.as_bytes(), cpu).iter().map(|d| d.code).collect::<Vec<_>>();

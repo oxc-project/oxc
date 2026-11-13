@@ -5,6 +5,7 @@ use oxc_span::Span;
 
 use crate::{
     PAD,
+    error::DiagCode,
     options::LexOptions,
     token::{SPAN_SENTINELS, debug_assert_kind_bytes},
     tokens::Tokens,
@@ -127,8 +128,13 @@ impl Lexer {
             resolve_unicode_leads(&mut self.lanes, &src[..n], kinds, spans);
         }
         if !self.lanes.diag_suppress.is_empty() {
+            // Keep `InvalidUtf8` diagnostics, even in a range where diagnostics are dropped.
+            // Otherwise source which isn't valid UTF-8 could lex with no diagnostic.
             let (diags, sup) = (&mut self.lanes.out.diags, &self.lanes.diag_suppress);
-            diags.retain(|d| !sup.iter().any(|&(a, b)| d.off >= a && d.off < b));
+            diags.retain(|d| {
+                d.code == DiagCode::InvalidUtf8
+                    || !sup.iter().any(|&(a, b)| d.off >= a && d.off < b)
+            });
         }
         tokens.lanes = mem::take(&mut self.lanes.out);
     }
