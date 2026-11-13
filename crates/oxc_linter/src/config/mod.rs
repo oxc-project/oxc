@@ -20,14 +20,14 @@ pub use env::OxlintEnv;
 pub use globals::{GlobalValue, OxlintGlobals};
 pub use ignore_matcher::LintIgnoreMatcher;
 pub use overrides::OxlintOverrides;
-pub use oxlintrc::Oxlintrc;
+pub use oxlintrc::{OxlintOptions, Oxlintrc};
 pub use plugins::LintPlugins;
 pub use rules::{ESLintRule, OxlintRules, RuleConfig, normalize_rule_name};
 pub use settings::{OxlintSettings, ReactVersion, jsdoc::JSDocPluginSettings};
 
 pub use oxc_config::GlobSet;
 
-use crate::config::{external_plugins::ExternalPluginEntry, oxlintrc::OxlintOptions};
+use crate::config::external_plugins::ExternalPluginEntry;
 
 #[derive(Debug, Default)]
 pub struct ConfigFileMetadata {

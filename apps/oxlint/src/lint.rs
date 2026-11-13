@@ -24,9 +24,7 @@ use oxc_linter::{
 #[cfg(feature = "napi")]
 use crate::js_config::JsConfigLoaderCb;
 use crate::{
-    cli::{
-        CliRunResult, DebugOption, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions,
-    },
+    cli::{CliRunResult, DebugOption, LintCommand, MiscOptions, WarningOptions},
     config_loader::{
         CliConfigLoadError, ConfigLoadError, ConfigLoader, LoadedConfigs, config_discovery,
     },
@@ -79,6 +77,7 @@ impl CliRunner {
         let debug_files = self.options.output_options.debug.contains(DebugOption::Files);
         let debug_timings = self.options.output_options.debug.contains(DebugOption::Timings);
         let output_formatter = OutputFormatter::new(format_str);
+        let config_options = self.options.config_options();
 
         let LintCommand {
             paths,
@@ -90,7 +89,6 @@ impl CliRunner {
             enable_plugins,
             misc_options,
             disable_nested_config,
-            inline_config_options,
             suppression_options,
             ..
         } = self.options;
@@ -330,19 +328,20 @@ impl CliRunner {
             }
         };
 
-        let lint_config = match config_builder.build(&mut external_plugin_store) {
-            Ok(config) => config,
-            Err(e) => {
-                print_and_flush_stdout(
-                    stdout,
-                    &format!(
-                        "Failed to build configuration.\n{}\n",
-                        render_config_builder_error(&handler, e)
-                    ),
-                );
-                return CliRunResult::InvalidOptionConfig;
-            }
-        };
+        let lint_config =
+            match config_builder.with_options(&config_options).build(&mut external_plugin_store) {
+                Ok(config) => config,
+                Err(e) => {
+                    print_and_flush_stdout(
+                        stdout,
+                        &format!(
+                            "Failed to build configuration.\n{}\n",
+                            render_config_builder_error(&handler, e)
+                        ),
+                    );
+                    return CliRunResult::InvalidOptionConfig;
+                }
+            };
 
         if misc_options.print_config {
             return crate::mode::run_print_config(&lint_config, &external_plugin_store, stdout);
@@ -395,10 +394,8 @@ impl CliRunner {
 
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
         let type_check_only = self.options.type_check_only;
-        let type_aware =
-            type_check_only || self.options.type_aware || config_store.type_aware_enabled();
-        let type_check =
-            type_check_only || self.options.type_check || config_store.type_check_enabled();
+        let type_aware = config_store.type_aware_enabled();
+        let type_check = config_store.type_check_enabled();
         if type_check && !type_aware {
             print_and_flush_stdout(
                 stdout,
@@ -422,25 +419,13 @@ impl CliRunner {
             );
             return CliRunResult::InvalidOptionTypeCheckOnlyWithSuppressionUpdate;
         }
-        let deny_warnings = warning_options.deny_warnings || config_store.deny_warnings();
-        let max_warnings = warning_options.max_warnings.or(config_store.max_warnings());
+        let deny_warnings = config_store.deny_warnings();
+        let max_warnings = config_store.max_warnings();
 
         // Only propagate Warn/Deny; treat Allow (off) as disabling reports.
-        let report_unused_directives = if type_check_only {
-            None
-        } else {
-            match inline_config_options.report_unused_directives {
-                ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),
-                ReportUnusedDirectives::WithSeverity(Some(severity)) if severity.is_warn_deny() => {
-                    Some(severity)
-                }
-                ReportUnusedDirectives::WithSeverity(Some(_)) => None,
-                _ => match config_store.report_unused_disable_directives() {
-                    Some(severity) if severity.is_warn_deny() => Some(severity),
-                    _ => None,
-                },
-            }
-        };
+        let report_unused_directives = config_store
+            .report_unused_disable_directives()
+            .filter(|severity| severity.is_warn_deny());
         let (mut diagnostic_service, tx_error) = Self::get_diagnostic_service(
             &output_formatter,
             &warning_options,
@@ -1398,6 +1383,74 @@ mod test {
             "--print-config",
         ];
         Tester::new().test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_print_config_cli_option_precedence() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let options = serde_json::json!({
+            "typeAware": false,
+            "typeCheck": false,
+            "denyWarnings": false,
+            "maxWarnings": 5,
+            "reportUnusedDisableDirectives": "deny",
+            "respectEslintDisableDirectives": false
+        });
+        fs::write(
+            temp_dir.path().join("base.json"),
+            serde_json::to_string(&serde_json::json!({ "options": options })).unwrap(),
+        )
+        .unwrap();
+        fs::write(temp_dir.path().join(DEFAULT_OXLINTRC_NAME), r#"{ "extends": ["./base.json"] }"#)
+            .unwrap();
+        let tester = Tester::new().with_cwd(temp_dir.path().to_path_buf());
+        let cases: &[(&[&str], serde_json::Value)] = &[
+            (&[], serde_json::json!({})),
+            (
+                &[
+                    "--type-aware",
+                    "--type-check",
+                    "--deny-warnings",
+                    "--max-warnings",
+                    "0",
+                    "--report-unused-disable-directives-severity",
+                    "off",
+                ],
+                serde_json::json!({
+                    "typeAware": true,
+                    "typeCheck": true,
+                    "denyWarnings": true,
+                    "maxWarnings": 0,
+                    "reportUnusedDisableDirectives": "allow"
+                }),
+            ),
+            (
+                &["--report-unused-disable-directives"],
+                serde_json::json!({ "reportUnusedDisableDirectives": "warn" }),
+            ),
+            (
+                &["--report-unused-disable-directives-severity", "warn"],
+                serde_json::json!({ "reportUnusedDisableDirectives": "warn" }),
+            ),
+            (
+                &["--type-check-only", "--report-unused-disable-directives"],
+                serde_json::json!({
+                    "typeAware": true,
+                    "typeCheck": true,
+                    "reportUnusedDisableDirectives": "allow"
+                }),
+            ),
+        ];
+        for (flags, overrides) in cases {
+            let mut args = vec!["--print-config"];
+            args.extend_from_slice(flags);
+            let (output, result) = tester.test_output(&args);
+            assert!(matches!(result, CliRunResult::PrintConfigResult), "{args:?}: {output}");
+            let printed: serde_json::Value = serde_json::from_str(&output).unwrap();
+            let mut expected = options.clone();
+            expected.as_object_mut().unwrap().extend(overrides.as_object().unwrap().clone());
+            assert_eq!(printed["options"], expected, "{args:?}");
+        }
     }
 
     #[test]
