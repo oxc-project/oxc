@@ -2,12 +2,11 @@ use std::mem;
 
 use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
 
-use crate::{error::DiagCode, token::tk};
+use crate::{error::DiagCode, options::LexOptions, token::tk};
 
 use crate::pipeline::{
     bitmap::{Bitmap, Bitmaps},
     bytes::{is_digit, is_id_start, is_word},
-    disambiguate::{TokensView, not_operator_position, prev_sig},
     find::find,
     kinds::Kinds,
     lanes::Lanes,
@@ -84,11 +83,12 @@ pub(super) unsafe fn carve_jsx(
     src: Source,
     bitmaps: &Bitmaps,
     kinds: Kinds,
-    ts: bool,
+    options: &LexOptions,
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) {
     let Bitmaps { token_start, word, keyword_initial, op_char, digit, dot, .. } = *bitmaps;
+    let module = options.source_type_module;
     // Annex B B.1.3 (`-->` at line start) needs JS mode to stop at `>`, which JSX is full of.
     // The finders that do so are switched on only after a `<!--` has been lexed (the pair the
     // legacy comments come in, and `<!--` is caught free on the `<` path), so a module or a
@@ -206,14 +206,22 @@ pub(super) unsafe fn carve_jsx(
                         }
                     }
                     b'/' => {
-                        i = lex_slash(src, bitmaps, kinds, ts, s, lanes, cpu);
+                        i = lex_slash(src, bitmaps, kinds, s, lanes, cpu);
                     }
                     b'<' => {
                         let c1 = if s + 1 < src.len() { src[s + 1] } else { 0 };
-                        if c1 == b'!' && html_open_comment_at(src, s, lanes.module, cpu) {
+                        if c1 == b'!' && html_open_comment_at(src, s, module, cpu) {
                             // Annex B B.1.1: the goal, not the JSX setting, decides.
-                            i = lex_html_open_comment(src, token_start, kinds, op_char, s, lanes);
-                            html_close = !lanes.module;
+                            i = lex_html_open_comment(
+                                src,
+                                token_start,
+                                kinds,
+                                op_char,
+                                s,
+                                module,
+                                lanes,
+                            );
+                            html_close = !module;
                             continue;
                         }
                         if c1 == b'<' {
@@ -223,22 +231,10 @@ pub(super) unsafe fn carve_jsx(
                         } else if c1 == b'=' || is_digit(c1, cpu) {
                             // `<=` / `a<5`: leave for coalesce.
                             i = s + 1;
-                        } else if not_operator_position(
-                            &TokensView::new(
-                                src,
-                                bitmaps,
-                                kinds,
-                                ts,
-                                0,
-                                lanes.module,
-                                &lanes.disambiguate.brackets,
-                                &lanes.disambiguate.closers,
-                                cpu,
-                            ),
-                            &mut lanes.disambiguate.walks,
-                            s,
-                            cpu,
-                        ) {
+                        } else if lanes
+                            .disambiguate
+                            .not_operator_position(src, bitmaps, kinds, s, cpu)
+                        {
                             // Operand position: candidate JSX. Whitespace (Unicode too) and
                             // comments may separate `<` from the name.
                             let tpos = jsx_skip_trivia_fast(src, s + 1, cpu);
@@ -256,7 +252,7 @@ pub(super) unsafe fn carve_jsx(
                                 mode = JMode::Tag;
                             } else if is_id_start(tc, cpu)
                                 && jsx_over_type_params(
-                                    src, bitmaps, kinds, s, tpos, ts, lanes, cpu,
+                                    src, bitmaps, kinds, s, tpos, options.ts, lanes, cpu,
                                 )
                             {
                                 // Element - unless `.tsx` says this is a
@@ -279,7 +275,7 @@ pub(super) unsafe fn carve_jsx(
                     }
                     b'>' => {
                         // Only a script's finder stops here: Annex B B.1.3 `-->` at line start.
-                        i = if html_close_comment_at(src, s, lanes.module, cpu) {
+                        i = if html_close_comment_at(src, s, module, cpu) {
                             lex_html_close_comment(src, token_start, kinds, op_char, s, lanes)
                         } else {
                             s + 1
@@ -302,20 +298,8 @@ pub(super) unsafe fn carve_jsx(
                 }
                 let c = src[s];
                 if c == b'<' {
-                    let tokens = TokensView::new(
-                        src,
-                        bitmaps,
-                        kinds,
-                        ts,
-                        0,
-                        lanes.module,
-                        &lanes.disambiguate.brackets,
-                        &lanes.disambiguate.closers,
-                        cpu,
-                    );
-                    if prev_sig(tokens.token_start, tokens.kinds, s, cpu)
-                        .is_some_and(|q| src[q] == b'=')
-                    {
+                    let prev = lanes.disambiguate.prev_sig(src, bitmaps, kinds, s, cpu);
+                    if prev.is_some_and(|q| src[q] == b'=') {
                         let tpos = jsx_skip_trivia(src, s + 1, cpu);
                         jsx_punct(kinds, op_char, s, tk!(JsxLt), cpu);
                         stack.push(JFrame {
@@ -337,7 +321,7 @@ pub(super) unsafe fn carve_jsx(
                 // its own token and a `<`/`>` written inside one cannot
                 // desync the depth count. Cold: a type-argument list on an
                 // element name.
-                if ts && c == b'<' {
+                if options.ts && c == b'<' {
                     let mut depth = 1i32;
                     let mut p = s + 1;
                     jsx_punct(kinds, op_char, s, tk!(Lt), cpu);

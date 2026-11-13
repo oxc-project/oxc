@@ -1,7 +1,7 @@
 use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
 use oxc_span::Span;
 
-use crate::{error::DiagCode, token::tk};
+use crate::{error::DiagCode, options::LexOptions, token::tk};
 
 use crate::pipeline::{
     bitmap::Bitmaps, bytes::is_id_start, kinds::Kinds, lanes::Lanes, scan::scan_ident_esc,
@@ -14,7 +14,7 @@ pub unsafe fn misc_pre(
     src: Source,
     bitmaps: &Bitmaps,
     kinds: Kinds,
-    vutf8: bool,
+    options: &LexOptions,
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) -> usize {
@@ -22,7 +22,7 @@ pub unsafe fn misc_pre(
         return 0;
     }
 
-    if vutf8 {
+    if options.validate_utf8 {
         misc_pre_impl::<true>(src, bitmaps, kinds, lanes, cpu)
     } else {
         misc_pre_impl::<false>(src, bitmaps, kinds, lanes, cpu)

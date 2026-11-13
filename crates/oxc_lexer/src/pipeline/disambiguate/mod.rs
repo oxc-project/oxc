@@ -24,6 +24,8 @@
 
 use oxc_simd::{Cpu, cpu_multiversion, cpu_version};
 
+use crate::pipeline::{bitmap::Bitmaps, kinds::Kinds, source::Source};
+
 mod common;
 mod context;
 mod operator;
@@ -32,10 +34,8 @@ mod type_context;
 #[cfg(test)]
 mod tests;
 
-pub(super) use common::{Brackets, Closers, TokensView, prev_sig};
-pub(super) use context::Walks;
-pub(super) use operator::not_operator_position;
-pub(super) use type_context::{gt_run_split, jsx_over_generic, lt_run_split};
+use common::{Brackets, Closers, TokensView};
+use context::Walks;
 
 // Every scan is exact past its budget; the budget only bounds the work one site can spend.
 
@@ -63,32 +63,144 @@ const FORWARD_SCAN_CAP: usize = 4096;
 /// the forward scans resolved. Owned by the lexer, begun at each lex, restarted when `coalesce`
 /// starts asking.
 pub(super) struct DisambiguateState {
-    pub walks: Walks,
-    pub brackets: Brackets,
-    pub closers: Closers,
+    walks: Walks,
+    shared: Shared,
+}
+
+/// What every view of the lex reads besides the stage's buffers.
+#[derive(Default)]
+pub struct Shared {
+    brackets: Brackets,
+    closers: Closers,
+    is_ts: bool,
+    is_module: bool,
 }
 
 impl Default for DisambiguateState {
     #[cpu_version(Generic)]
     fn default() -> Self {
-        Self { walks: Walks::new(), brackets: Brackets::default(), closers: Closers::default() }
+        Self { walks: Walks::new(), shared: Shared::default() }
     }
 }
 
 impl DisambiguateState {
     /// A new lex over `n` bytes of a script or module.
     #[cpu_multiversion]
-    pub fn begin(&mut self, n: usize, module: bool, cpu: impl Cpu) {
-        self.walks.restart(module, cpu);
-        self.brackets.begin(n, cpu);
-        self.closers.clear(cpu);
+    pub fn begin(&mut self, n: usize, is_ts: bool, is_module: bool, cpu: impl Cpu) {
+        self.shared.is_ts = is_ts;
+        self.shared.is_module = is_module;
+        self.walks.restart(is_module, cpu);
+        self.shared.brackets.begin(n, cpu);
+        self.shared.closers.clear(cpu);
     }
 
     /// `coalesce` starts asking: it sees keyword kinds `carve` did not, so the walks start over.
     #[cpu_multiversion]
-    pub fn restart(&mut self, module: bool, cpu: impl Cpu) {
-        self.walks.restart(module, cpu);
+    pub fn restart(&mut self, cpu: impl Cpu) {
+        self.walks.restart(self.shared.is_module, cpu);
         // carve has hidden the JSX brackets these were computed over.
-        self.closers.clear(cpu);
+        self.shared.closers.clear(cpu);
+    }
+
+    #[cpu_multiversion]
+    #[inline(always)]
+    unsafe fn view<'a>(
+        &'a self,
+        src: Source<'a>,
+        bitmaps: &Bitmaps,
+        kinds: Kinds,
+        kw_final: usize,
+        cpu: impl Cpu,
+    ) -> TokensView<'a> {
+        TokensView::new(src, bitmaps, kinds, kw_final, &self.shared, cpu)
+    }
+
+    #[cpu_multiversion]
+    #[inline(always)]
+    unsafe fn view_and_walks<'a>(
+        &'a mut self,
+        src: Source<'a>,
+        bitmaps: &Bitmaps,
+        kinds: Kinds,
+        kw_final: usize,
+        cpu: impl Cpu,
+    ) -> (TokensView<'a>, &'a mut Walks) {
+        (TokensView::new(src, bitmaps, kinds, kw_final, &self.shared, cpu), &mut self.walks)
+    }
+
+    /// Safety: as for TokensView::new.
+    #[cpu_multiversion]
+    #[inline(always)]
+    pub unsafe fn prev_sig(
+        &self,
+        src: Source,
+        bitmaps: &Bitmaps,
+        kinds: Kinds,
+        pos: usize,
+        cpu: impl Cpu,
+    ) -> Option<usize> {
+        self.view(src, bitmaps, kinds, 0, cpu).prev_sig(pos, cpu)
+    }
+
+    /// Safety: as for TokensView::new.
+    #[cpu_multiversion]
+    #[inline(always)]
+    pub unsafe fn not_operator_position(
+        &mut self,
+        src: Source,
+        bitmaps: &Bitmaps,
+        kinds: Kinds,
+        p: usize,
+        cpu: impl Cpu,
+    ) -> bool {
+        let (tokens, walks) = self.view_and_walks(src, bitmaps, kinds, 0, cpu);
+        operator::not_operator_position(&tokens, walks, p, cpu)
+    }
+
+    /// Safety: as for TokensView::new.
+    #[cpu_multiversion]
+    #[inline(always)]
+    pub unsafe fn gt_run_split(
+        &mut self,
+        src: Source,
+        bitmaps: &Bitmaps,
+        kinds: Kinds,
+        kw_final: usize,
+        p: usize,
+        run: usize,
+        cpu: impl Cpu,
+    ) -> usize {
+        let (tokens, walks) = self.view_and_walks(src, bitmaps, kinds, kw_final, cpu);
+        type_context::gt_run_split(&tokens, walks, p, run, cpu)
+    }
+
+    /// Safety: as for TokensView::new.
+    #[cpu_multiversion]
+    #[inline(always)]
+    pub unsafe fn lt_run_split(
+        &self,
+        src: Source,
+        bitmaps: &Bitmaps,
+        kinds: Kinds,
+        lt: usize,
+        cpu: impl Cpu,
+    ) -> bool {
+        type_context::lt_run_split(&self.view(src, bitmaps, kinds, 0, cpu), lt, cpu)
+    }
+
+    /// Safety: as for TokensView::new.
+    #[cpu_multiversion]
+    #[inline(always)]
+    pub unsafe fn jsx_over_generic(
+        &mut self,
+        src: Source,
+        bitmaps: &Bitmaps,
+        kinds: Kinds,
+        lt: usize,
+        lp: usize,
+        cpu: impl Cpu,
+    ) -> (bool, bool) {
+        let (tokens, walks) = self.view_and_walks(src, bitmaps, kinds, 0, cpu);
+        type_context::jsx_over_generic(&tokens, walks, lt, lp, cpu)
     }
 }

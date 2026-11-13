@@ -4,13 +4,13 @@ use oxc_simd::{Cpu, cpu_multiversion, prefetch};
 
 use crate::{
     error::DiagCode,
+    options::LexOptions,
     token::{TokenKind, tk},
 };
 
 use crate::pipeline::{
     bitmap::Bitmaps,
     bytes::{is_digit, is_word, is_ws},
-    disambiguate::{TokensView, gt_run_split, lt_run_split},
     kinds::Kinds,
     lanes::Lanes,
     operators::{is_op_char, opmap_longest, opmap_pack2, opmap_pack3},
@@ -34,12 +34,13 @@ pub unsafe fn coalesce(
     kinds: Kinds,
     kwpos: *mut u32,
     evpos: *mut u32,
-    ts: bool,
+    options: &LexOptions,
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) {
     let Bitmaps { token_start, word, keyword_initial, op_char, digit, dot, .. } = *bitmaps;
-    lanes.disambiguate.restart(lanes.module, cpu);
+    let ts = options.ts;
+    lanes.disambiguate.restart(cpu);
     // Events are collected branchlessly and handled per batch. Unset masks are never read
     let mut rarem = [const { MaybeUninit::<u64>::uninit() }; KWB];
     let mut e = 0usize;
@@ -194,18 +195,7 @@ unsafe fn coalesce_events(
             if b0 == b'>' && ts && (b1 == b'>' || (b1 == b'=' && p > 0 && !is_ws(src[p - 1], cpu)))
             {
                 let kw_final = (w & !(KWB - 1)) << 6;
-                let tokens = TokensView::new(
-                    src,
-                    bitmaps,
-                    kinds,
-                    true,
-                    kw_final,
-                    lanes.module,
-                    &lanes.disambiguate.brackets,
-                    &lanes.disambiguate.closers,
-                    cpu,
-                );
-                let g = gt_run_split(&tokens, &mut lanes.disambiguate.walks, p, run, cpu);
+                let g = lanes.disambiguate.gt_run_split(src, bitmaps, kinds, kw_final, p, run, cpu);
                 if g != 0 {
                     // Only `>`s stay split; the rest still munches, or `>>&&` would emit two `&`s.
                     cursor = munch_walk(ts, src, bitmaps, kinds, p + g, lanes, cpu);
@@ -333,18 +323,15 @@ unsafe fn glue_number(
                 let end = op_char.next0(e2, src.len(), cpu);
                 // Keyword kinds are final only below this window's batch.
                 let kw_final = ((e2 >> 6) & !(KWB - 1)) << 6;
-                let tokens = TokensView::new(
+                let g = lanes.disambiguate.gt_run_split(
                     src,
                     bitmaps,
                     kinds,
-                    true,
                     kw_final,
-                    lanes.module,
-                    &lanes.disambiguate.brackets,
-                    &lanes.disambiguate.closers,
+                    e2,
+                    end - e2,
                     cpu,
                 );
-                let g = gt_run_split(&tokens, &mut lanes.disambiguate.walks, e2, end - e2, cpu);
                 if g != 0 {
                     // The split `>`s stay single tokens, but whatever borders on them is still an operator run and has to be
                     // munched, or a following `&&` / `??` / `**` is emitted a byte at a time.
@@ -387,22 +374,12 @@ unsafe fn munch_walk(
         let (opk, opl) = opmap_longest(bytes, rem as u32, cpu);
         if let Some(opk) = opk {
             // Two list openers, not a shift: Array<<T>(x: T) => T>, a?.<<T>(x: T) => T>(b).
-            if ts && opk == TokenKind::LShift {
-                let tokens = TokensView::new(
-                    src,
-                    bitmaps,
-                    kinds,
-                    true,
-                    0,
-                    lanes.module,
-                    &lanes.disambiguate.brackets,
-                    &lanes.disambiguate.closers,
-                    cpu,
-                );
-                if lt_run_split(&tokens, pos, cpu) {
-                    pos += 2;
-                    continue;
-                }
+            if ts
+                && opk == TokenKind::LShift
+                && lanes.disambiguate.lt_run_split(src, bitmaps, kinds, pos, cpu)
+            {
+                pos += 2;
+                continue;
             }
             kinds.set(pos, opk as u8);
             let mut j = 1usize;

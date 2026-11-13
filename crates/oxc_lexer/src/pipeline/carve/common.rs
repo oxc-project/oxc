@@ -5,7 +5,6 @@ use crate::{error::DiagCode, token::tk};
 use crate::pipeline::{
     bitmap::{Bitmap, Bitmaps},
     bytes::hex_val,
-    disambiguate::{TokensView, not_operator_position},
     find::find,
     kinds::Kinds,
     lanes::Lanes,
@@ -101,7 +100,6 @@ pub(super) unsafe fn lex_slash(
     src: Source,
     bitmaps: &Bitmaps,
     kinds: Kinds,
-    ts: bool,
     s: usize,
     lanes: &mut Lanes,
     cpu: impl Cpu,
@@ -112,22 +110,7 @@ pub(super) unsafe fn lex_slash(
         lex_line_comment(src, token_start, kinds, s, lanes, cpu)
     } else if d == b'*' {
         lex_block_comment(src, token_start, kinds, s, lanes, cpu)
-    } else if not_operator_position(
-        &TokensView::new(
-            src,
-            bitmaps,
-            kinds,
-            ts,
-            0,
-            lanes.module,
-            &lanes.disambiguate.brackets,
-            &lanes.disambiguate.closers,
-            cpu,
-        ),
-        &mut lanes.disambiguate.walks,
-        s,
-        cpu,
-    ) {
+    } else if lanes.disambiguate.not_operator_position(src, bitmaps, kinds, s, cpu) {
         lex_regex(src, token_start, kinds, word, s, lanes, cpu)
     } else if s + 1 < src.len() && src[s + 1] == b'=' {
         // `/=`: absorb the `=`.

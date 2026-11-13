@@ -15,7 +15,7 @@ use crate::pipeline::{
     source::Source,
 };
 
-use super::{Brackets, Closers, bits, walk};
+use super::{super::Shared, Brackets, Closers, bits, walk};
 
 /// A read-only view of a lex in progress.
 ///
@@ -76,9 +76,6 @@ impl Prev {
 impl<'a> TokensView<'a> {
     /// Create a [`TokensView`], as a view over the buffers [`Lexer::ensure`] sized.
     ///
-    /// `brackets` is the lex's bracket cache, `lanes.disambiguate.brackets`.
-    /// `closers` is the lex's closer cache, `lanes.disambiguate.closers`.
-    ///
     /// # SAFETY
     ///
     /// - token_start and op_char: block_count() + 1 readable words, kinds: 64 bytes per word.
@@ -92,11 +89,8 @@ impl<'a> TokensView<'a> {
         src: Source<'a>,
         bitmaps: &Bitmaps,
         kinds: Kinds,
-        ts: bool,
         kw_final: usize,
-        module: bool,
-        brackets: &'a Brackets,
-        closers: &'a Closers,
+        shared: &'a Shared,
         _cpu: impl Cpu,
     ) -> Self {
         let Bitmaps { token_start, op_char, .. } = *bitmaps;
@@ -107,11 +101,11 @@ impl<'a> TokensView<'a> {
             op_char: slice::from_raw_parts(op_char.as_ptr(), blocks),
             kinds: slice::from_raw_parts(kinds.as_ptr(), blocks * 64),
             n: src.len(),
-            ts,
-            module,
+            ts: shared.is_ts,
+            module: shared.is_module,
             kw_final,
-            brackets,
-            closers,
+            brackets: &shared.brackets,
+            closers: &shared.closers,
         }
     }
 
