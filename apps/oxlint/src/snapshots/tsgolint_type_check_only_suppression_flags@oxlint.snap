@@ -6,7 +6,7 @@ arguments: --type-check-only --suppress-all index.ts
 working directory: fixtures/suppression/type_check_only_with_regular_rule
 ----------
 The `--type-check-only` option cannot be used with suppression update flags.
-Remove `--suppress-all` and `--prune-suppressions`.
+Remove `--suppress-all`, `--suppress-rule`, and `--prune-suppressions`.
 ----------
 CLI result: InvalidOptionTypeCheckOnlyWithSuppressionUpdate
 ----------
@@ -16,7 +16,17 @@ arguments: --type-check-only --prune-suppressions index.ts
 working directory: fixtures/suppression/type_check_only_with_regular_rule
 ----------
 The `--type-check-only` option cannot be used with suppression update flags.
-Remove `--suppress-all` and `--prune-suppressions`.
+Remove `--suppress-all`, `--suppress-rule`, and `--prune-suppressions`.
+----------
+CLI result: InvalidOptionTypeCheckOnlyWithSuppressionUpdate
+----------
+
+########## 
+arguments: --type-check-only --suppress-rule no-console index.ts
+working directory: fixtures/suppression/type_check_only_with_regular_rule
+----------
+The `--type-check-only` option cannot be used with suppression update flags.
+Remove `--suppress-all`, `--suppress-rule`, and `--prune-suppressions`.
 ----------
 CLI result: InvalidOptionTypeCheckOnlyWithSuppressionUpdate
 ----------
