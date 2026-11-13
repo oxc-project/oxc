@@ -35,32 +35,52 @@ concurrency:
 jobs:
   miri:
     name: Miri
-    runs-on: namespace-profile-linux-x64-default
+    # GitHub-hosted, not Namespace: this long job would hold a slot in the Namespace pool which "CI" workflow's jobs
+    # queue for. Its compile is small, so a GitHub Actions cache is enough (see "Restore cache" below).
+    runs-on: ubuntu-latest
     env:
       # Pin Miri to a known-good nightly.
       MIRI_TOOLCHAIN: nightly-2026-10-04
+      # Override the workspace's `rust-toolchain.toml` so any `cargo` or `rustc` invocation without an explicit
+      # `+TOOLCHAIN` uses this toolchain, instead of `rustup` installing the workspace Rust version.
+      # Must match `MIRI_TOOLCHAIN` above.
+      RUSTUP_TOOLCHAIN: nightly-2026-10-04
+      # Incremental compilation data is most of `target/miri`'s size, and a CI build doesn't reuse it.
+      CARGO_INCREMENTAL: 0
     steps:
       - name: Checkout
         uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
+      # Same as `paths` of the triggers above. Paths-only mode doesn't run `cargo tree`, so it needs no Rust toolchain.
       - uses: $/.github/actions/check-changes
         id: filter
         with:
-          packages: oxc_allocator,oxc_ast,oxc_data_structures,oxc_parser,oxc_str,oxc_transformer
-          paths: .github/workflows/miri.yml
+          paths: crates/oxc_allocator/,crates/oxc_ast/src/utf8_to_utf16.rs,crates/oxc_ast/src/generated/utf8_to_utf16_converter.rs,crates/oxc_data_structures/,crates/oxc_parser/,crates/oxc_str/,crates/oxc_traverse/,.github/workflows/miri.yml
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
-      - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
+      # The Miri toolchain, Miri's sysroot (built by `cargo miri setup`), downloaded crates and compiled dependencies.
+      # Saved only on `main`, and only when the key changes. PRs restore `main`'s cache.
+      - name: Restore cache
+        id: cache
         if: steps.filter.outputs.changed == 'true'
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: /home/runner/.rustup
-          cache: rust
+          path: &cache-paths |
+            ~/.rustup/toolchains/${{ env.MIRI_TOOLCHAIN }}-x86_64-unknown-linux-gnu
+            ~/.rustup/update-hashes/${{ env.MIRI_TOOLCHAIN }}-x86_64-unknown-linux-gnu
+            ~/.cache/miri
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            target/miri
+          key: miri-${{ env.MIRI_TOOLCHAIN }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: miri-${{ env.MIRI_TOOLCHAIN }}-
 
+      # With the cache restored, both commands find everything up to date.
       - name: Install Miri
         if: steps.filter.outputs.changed == 'true'
         run: |
-          rustup toolchain install "${MIRI_TOOLCHAIN}" --component miri
+          rustup toolchain install "${MIRI_TOOLCHAIN}" --profile minimal --component miri,rust-src
           cargo +"${MIRI_TOOLCHAIN}" miri setup
 
       - name: Test with Miri
@@ -71,3 +91,10 @@ jobs:
         run: |
           cargo +"${MIRI_TOOLCHAIN}" miri test --all-features -p oxc_allocator -p oxc_ast -p oxc_data_structures -p oxc_str
           cargo +"${MIRI_TOOLCHAIN}" miri test -p oxc_parser -p oxc_transformer
+
+      - name: Save cache
+        if: steps.filter.outputs.changed == 'true' && github.ref_name == 'main' && steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: *cache-paths
+          key: ${{ steps.cache.outputs.cache-primary-key }}
