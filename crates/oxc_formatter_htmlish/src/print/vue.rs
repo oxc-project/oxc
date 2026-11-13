@@ -8,10 +8,14 @@ use oxc_formatter_core::{
     },
     dispatch_fragment_ir, format_args, write,
 };
-use oxc_htmlish_parser::ast::{Attribute, AttributeKind, NodeId};
+use oxc_htmlish_parser::{
+    Span,
+    ast::{Attribute, AttributeKind, NodeId, VueFor},
+};
 
 use super::{
     HtmlishFormatter,
+    attribute::unescaped,
     embed::{self, dispatch_attribute_value, write_quoted},
     format_ir,
     tag::closing_end_borrowed,
@@ -52,8 +56,8 @@ pub enum JsInVueTemplate {
 #[derive(Clone, Copy)]
 pub enum Value {
     Fragment(JsInVueTemplate),
-    /// `v-for`'s `alias in source`.
-    For,
+    /// `v-for`'s `aliases in source`; `None` for a value Vue does not read so.
+    For(Option<VueFor>),
     /// An event handler's: an expression, or statements.
     Handler,
 }
@@ -94,7 +98,7 @@ pub fn value_kind(
     };
     let has_argument = directive.argument.is_some();
     Some(match directive.name.slice(source) {
-        "for" if name == "v-for" => Value::For,
+        "for" if name == "v-for" => Value::For(directive.for_expression.as_deref().copied()),
         "#" | "slot" => Value::Fragment(JsInVueTemplate::SlotProps),
         "@" => Value::Handler,
         "on" if has_argument => Value::Handler,
@@ -126,19 +130,23 @@ pub fn write_attribute_value<'a>(
             embed::write_attribute_value(language, &JsInVueTemplate::HandlerExpression, value, f)
                 || embed::write_attribute_value(language, &JsInVueTemplate::Handler, value, f)
         }
-        Value::For => {
-            let Some(v_for) = split_v_for(value) else { return false };
-            let dispatch = |part: JsInVueTemplate, text, f: &HtmlishFormatter<'_, 'a>| {
-                dispatch_attribute_value(language, &part, text, f)
-            };
-            let Some(alias) = dispatch(JsInVueTemplate::ForAlias, v_for.alias, f) else {
+        Value::For(v_for) => {
+            let source = t.source();
+            let Some(v_for) = v_for.filter(|v_for| formats_v_for(v_for, source)) else {
                 return false;
             };
-            let Some(source) = dispatch(JsInVueTemplate::ForSource, v_for.source, f) else {
+            let dispatch = |part: JsInVueTemplate, span: Span, f: &HtmlishFormatter<'_, 'a>| {
+                dispatch_attribute_value(language, &part, unescaped(span.slice(source), f), f)
+            };
+            let Some(aliases) = dispatch(JsInVueTemplate::ForAlias, v_for.aliases, f) else {
                 return false;
             };
-            let (alias, source) = (format_ir(alias), format_ir(source));
-            write_quoted(&format_args!(alias, space(), v_for.operator, space(), source), f);
+            let Some(iterated) = dispatch(JsInVueTemplate::ForSource, v_for.source, f) else {
+                return false;
+            };
+            let operator = text(v_for.operator.slice(source));
+            let (aliases, iterated) = (format_ir(aliases), format_ir(iterated));
+            write_quoted(&format_args!(aliases, space(), operator, space(), iterated), f);
             true
         }
     }
@@ -191,60 +199,16 @@ pub fn write_interpolation<'a>(
     }
 }
 
-struct VFor<'a> {
-    /// As written, without the parens.
-    alias: &'a str,
-    operator: &'static str,
-    source: &'a str,
-}
-
-/// `v-for`'s value split as Vue's `parseForExpression`:
-/// `alias in source` / `alias of source`, the alias in parens or not, up to three names.
-/// `None` for a value Vue does not read so, or one formatting would make it read otherwise, which prints as written.
-fn split_v_for(value: &str) -> Option<VFor<'_>> {
-    // `/(.*?)\s+(in|of)\s+(.*)/s`: the first whitespace run with `in` / `of` and whitespace after it
-    let bytes = value.as_bytes();
-    let (alias, operator, source) = (0..bytes.len()).find_map(|i| {
-        if !bytes[i].is_ascii_whitespace() || (i > 0 && bytes[i - 1].is_ascii_whitespace()) {
-            return None;
-        }
-        let rest = value[i..].trim_ascii_start();
-        let operator = ["in", "of"].into_iter().find(|operator| rest.starts_with(operator))?;
-        let after = &rest[2..];
-        after
-            .starts_with(|c: char| c.is_ascii_whitespace())
-            .then(|| (&value[..i], operator, after.trim_ascii()))
-    })?;
-    // A spaced `in` / `of` in the alias (`'k'in o` formats as `'k' in o`) would read as the operator.
+/// Whether `v-for`'s parts format: not when formatting would make Vue read them otherwise, which prints as written.
+fn formats_v_for(v_for: &VueFor, source: &str) -> bool {
+    // A spaced `in` / `of` in the aliases (`'k'in o` formats as `'k' in o`) would read as the operator.
     // One in a string or a comment counts too, for nothing; an AST check needs a `v-for` marker on `JsRoot::FunctionParams`
-    if source.is_empty()
-        || alias
-            .split(|c: char| !(c.is_ascii_alphanumeric() || c == '_' || c == '$'))
-            .any(|word| word == "in" || word == "of")
-    {
-        return None;
-    }
-
-    // `/^\(|\)$/g`, then the iterators: `/,([^,\]}]*)(?:,([^,\]}]*))?$/`
-    // `LHS.trim().replace(stripParensRE, '').trim()`, as Vue reads it
-    let alias = alias.trim_ascii();
-    let alias = alias.strip_prefix('(').unwrap_or(alias);
-    let alias = alias.strip_suffix(')').unwrap_or(alias).trim_ascii();
-    // The last one or two commas with no `]` / `}` after them
-    let tail = alias.rfind([']', '}']).map_or(0, |end| end + 1);
-    let mut commas = alias[tail..].rmatch_indices(',').map(|(i, _)| tail + i);
-    let parts = match (commas.next(), commas.next()) {
-        (None, _) => [alias, "", ""],
-        (Some(last), None) => [alias[..last].trim_ascii(), alias[last + 1..].trim_ascii(), ""],
-        (Some(last), Some(first)) => [
-            alias[..first].trim_ascii(),
-            alias[first + 1..last].trim_ascii(),
-            alias[last + 1..].trim_ascii(),
-        ],
-    };
+    let operator_in_aliases = v_for
+        .aliases
+        .slice(source)
+        .split(|c: char| !(c.is_ascii_alphanumeric() || c == '_' || c == '$'))
+        .any(|word| word == "in" || word == "of");
     // A name is missing before one that is not (`, i`)
-    if parts[0].is_empty() || (parts[1].is_empty() && !parts[2].is_empty()) {
-        return None;
-    }
-    Some(VFor { alias, operator, source })
+    let name_missing = v_for.value.is_none() || (v_for.key.is_none() && v_for.index.is_some());
+    !operator_in_aliases && !name_missing
 }
