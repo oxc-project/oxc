@@ -235,6 +235,11 @@ fn test_imported_test_function_keeps_its_binding() {
     // `test` is imported under another name: not renamed to the alias (reported without a fix).
     let test_as_t = "import { it, test as t } from \"vitest\";\nit(\"example\", () => {});";
     let effect = "import { it, test } from \"@effect/vitest\";\nit(\"example\", () => {});";
+    // A call through `test.extend` keeps its fixtures only under its own name: no rename.
+    let extended = "import { it, test } from \"vitest\";\nconst myTest = test.extend({});\nmyTest(\"example\", () => {});";
+    let extended_in_describe = "import { describe, it, test } from \"vitest\";\nconst myTest = test.extend({});\ndescribe(\"suite\", () => { myTest(\"example\", () => {}); });";
+    let within_it = Some(serde_json::json!([{ "withinDescribe": "it" }]));
+    let fn_it_top = Some(serde_json::json!([{ "fn": "it" }]));
     let fail = vec![
         (only_it, fn_test.clone()),
         (both, fn_test.clone()),
@@ -243,6 +248,8 @@ fn test_imported_test_function_keeps_its_binding() {
         (local_test, fn_test.clone()),
         (test_as_t, fn_test.clone()),
         (effect, fn_test.clone()),
+        (extended, fn_it_top.clone()),
+        (extended_in_describe, within_it.clone()),
     ];
     let fix = vec![
         (only_it, only_it, fn_test.clone()),
@@ -260,6 +267,8 @@ fn test_imported_test_function_keeps_its_binding() {
             "import { it, test } from \"@effect/vitest\";\ntest(\"example\", () => {});",
             fn_test,
         ),
+        (extended, extended, fn_it_top),
+        (extended_in_describe, extended_in_describe, within_it),
     ];
     Tester::new(ConsistentTestIt::NAME, ConsistentTestIt::PLUGIN, vec![], fail)
         .expect_fix(fix)

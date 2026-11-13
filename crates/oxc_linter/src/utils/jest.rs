@@ -352,7 +352,6 @@ fn resolve_extended_vitest_test<'a>(
     None
 }
 
-/// Find name in the Import Declaration, not use name because of lifetime not long enough.
 /// Whether `source` is a module that exports test functions: `@jest/globals` or a Vitest module.
 pub fn is_test_framework_import_source(source: &str) -> bool {
     source == "@jest/globals" || super::is_vitest_import_source(source)
@@ -376,6 +375,7 @@ pub fn test_framework_imported_name<'a>(
     find_original_name(import_decl, scoping.symbol_name(symbol_id))
 }
 
+/// Find name in the Import Declaration, not use name because of lifetime not long enough.
 fn find_original_name<'a>(import_decl: &'a ImportDeclaration<'a>, name: &str) -> Option<&'a str> {
     import_decl.specifiers.iter().flatten().find_map(|specifier| match specifier {
         ImportDeclarationSpecifier::ImportSpecifier(import_specifier) => {
