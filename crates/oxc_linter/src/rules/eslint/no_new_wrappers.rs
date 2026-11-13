@@ -64,7 +64,7 @@ declare_oxc_lint!(
     NoNewWrappers,
     eslint,
     pedantic,
-    fix,
+    suggestion,
     version = "0.2.10",
     short_description =
         "Disallow `new` operators with the `String`, `Number`, and `Boolean` objects.",
@@ -89,12 +89,12 @@ impl Rule for NoNewWrappers {
         };
         match name {
             "String" | "Number" | "Boolean" => {
-                ctx.diagnostic_with_fix(no_new_wrappers_diagnostic(name, span), |fixer| {
+                ctx.diagnostic_with_suggestion(no_new_wrappers_diagnostic(name, span), |fixer| {
                     remove_new_operator(fixer, expr, name)
                 });
             }
             "Symbol" => {
-                ctx.diagnostic_with_fix(not_a_constructor_diagnostic(name, span), |fixer| {
+                ctx.diagnostic_with_suggestion(not_a_constructor_diagnostic(name, span), |fixer| {
                     remove_new_operator(fixer, expr, name)
                 });
             }
@@ -125,7 +125,7 @@ fn remove_new_operator<'a>(
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::{fixer::FixKind, tester::Tester};
 
     let pass = vec![
         "var a = new Object();",
@@ -170,20 +170,20 @@ fn test() {
         ",
     ];
     let fix = vec![
-        ("var a = new Number(foo);", "var a = Number(foo);"),
-        ("var a = new Number(1 + 1);", "var a = Number(1 + 1);"),
-        ("var a = new String(foo);", "var a = String(foo);"),
-        ("var a = new Boolean(foo);", "var a = Boolean(foo);"),
-        ("var a = new Boolean(!!x);", "var a = Boolean(!!x);"),
-        ("var a = new Symbol('foo');", "var a = Symbol('foo');"),
+        ("var a = new Number(foo);", "var a = Number(foo);", None, FixKind::Suggestion),
+        ("var a = new Number(1 + 1);", "var a = Number(1 + 1);", None, FixKind::Suggestion),
+        ("var a = new String(foo);", "var a = String(foo);", None, FixKind::Suggestion),
+        ("var a = new Boolean(foo);", "var a = Boolean(foo);", None, FixKind::Suggestion),
+        ("var a = new Boolean(!!x);", "var a = Boolean(!!x);", None, FixKind::Suggestion),
+        ("var a = new Symbol('foo');", "var a = Symbol('foo');", None, FixKind::Suggestion),
         // literals dont need to be wrapped
-        ("var a = new Boolean(false);", "var a = false;"),
-        ("var a = new Boolean(true);", "var a = true;"),
-        ("var a = new String('hello');", "var a = 'hello';"),
-        ("var a = new String((((('hello')))));", "var a = 'hello';"),
-        ("var a = new Number(10);", "var a = 10;"),
-        ("var a = new Number(10 as number);", "var a = 10;"),
-        ("(new Number())", "(Number())"),
+        ("var a = new Boolean(false);", "var a = false;", None, FixKind::Suggestion),
+        ("var a = new Boolean(true);", "var a = true;", None, FixKind::Suggestion),
+        ("var a = new String('hello');", "var a = 'hello';", None, FixKind::Suggestion),
+        ("var a = new String((((('hello')))));", "var a = 'hello';", None, FixKind::Suggestion),
+        ("var a = new Number(10);", "var a = 10;", None, FixKind::Suggestion),
+        ("var a = new Number(10 as number);", "var a = 10;", None, FixKind::Suggestion),
+        ("(new Number())", "(Number())", None, FixKind::Suggestion),
     ];
 
     Tester::new(NoNewWrappers::NAME, NoNewWrappers::PLUGIN, pass, fail)
