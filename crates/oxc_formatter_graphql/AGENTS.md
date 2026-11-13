@@ -22,7 +22,7 @@ This means it is not locked to a specific GraphQL version and can parse a wide r
 On the other hand, `apollo-parser`, the upstream we selected, strictly follows its versioning and currently only supports syntax up to Oct2021.
 Therefore, we forked it as [`oxc-graphql-parser`](https://crates.io/crates/oxc-graphql-parser) and added some support ourselves, pinned via the workspace `Cargo.toml`.
 
-The fork aligns with graphql-js v17.x, which Prettier 3.9 targets:
+The fork aligns with graphql-js v17.x, which Prettier targets:
 
 - executable descriptions (Sep2025 spec) and directive extensions (`extend directive`) are always-on
 - fragment arguments (`...F(size: $size)`) are behind the `experimental_fragment_arguments` flag
@@ -68,8 +68,6 @@ Blank-line runs inside block strings are part of the string VALUE and are emitte
 - Blank-line preservation classifies the inter-token gap (`classify_gap`):
   a blank line is a whitespace-only line strictly inside the gap.
   Counting raw newlines would over-report when tokens (e.g. the `&` between two `implements` comments, or an insignificant comma) sit on their own line.
-- A cooked `\r` escape in a string value is re-emitted as `\r`
-  (Prettier emits a raw CR byte, which the core `text()` builder forbids; the string VALUE is identical).
 
 ## Verification
 

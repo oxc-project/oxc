@@ -157,9 +157,6 @@ fn write_regular_string<'a>(body: &'a str, f: &mut GraphqlFormatter<'_, 'a>) {
             '"' => out.push_str("\\\""),
             '\\' => out.push_str("\\\\"),
             '\n' => out.push_str("\\n"),
-            // DIVERGENCE: Prettier emits a cooked `\r` as a raw CR byte;
-            // the core `text()` builder forbids raw `\r` (line-width accounting),
-            // so keep it as an escape. The string VALUE is identical.
             '\r' => out.push_str("\\r"),
             _ => out.push(c),
         }

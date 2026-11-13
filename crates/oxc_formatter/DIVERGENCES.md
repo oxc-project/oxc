@@ -7,7 +7,7 @@ Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md`
 - Why: invariant
 - Pin: `tests/fixtures/js/comments/array-holes.js`
 - Conformance:
-  - `externals/prettier/js/arrays/numbers-with-holes.js`
+  - `externals/prettier/js/array-exprssion/numbers-with-holes.js`
 
 ```js
 // input

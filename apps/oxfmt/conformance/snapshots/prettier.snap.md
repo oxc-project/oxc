@@ -1,22 +1,32 @@
 ## javascript
 
-1223/1303 (93.86%)
+1174/1295 (90.66%)
 
 ### Failed
 
-- externals/prettier/js/arrows/arrow-chain-with-trailing-comments.js (💥💥, 93.75%)
+- externals/prettier/js/arrow-function/comments/multiple-comments-before-arrow.js (💥, 71.43%)
   - ❓unclassified
-- externals/prettier/js/arrows/issue-17421.js (💥💥, 88.70%)
+- externals/prettier/js/arrow-function/issue-17421.js (💥💥, 88.70%)
   - ❓unclassified
-- externals/prettier/js/assignment-comments/string.js (💥, 96.59%)
+- externals/prettier/js/assignment-expression/comments/string.js (💥, 96.59%)
   - ❓unclassified
-- externals/prettier/js/babel-plugins/v8intrinsic.js (💥, 95.83%)
+- externals/prettier/js/await-expression/await-with-parens.js (💥, 85.71%)
   - ❓unclassified
-- externals/prettier/js/binary-expressions/mutiple-comments/17192.js (💥✨, 95.83%)
+- externals/prettier/js/binary-expression/inline-object-array.js (💥💥, 95.59%)
   - ❓unclassified
-- externals/prettier/js/call/no-argument/no-arguments.js (💥, 79.49%)
+- externals/prettier/js/binary-expression/logic-expression.js (💥💥, 88.24%)
+  - ❓unclassified
+- externals/prettier/js/binary-expression/mutiple-comments/17192.js (💥✨, 95.83%)
+  - ❓unclassified
+- externals/prettier/js/binary-expression/return.js (💥💥, 98.15%)
+  - ❓unclassified
+- externals/prettier/js/binary-math/parens.js (💥, 92.31%)
+  - ❓unclassified
+- externals/prettier/js/call-expression/no-argument/no-arguments.js (💥, 79.49%)
   - ❓unclassified
 - externals/prettier/js/class-comment/misc.js (💥, 66.67%)
+  - ❓unclassified
+- externals/prettier/js/class-comment/superclass-2.js (💥, 50.00%)
   - ❓unclassified
 - externals/prettier/js/class-comment/superclass.js (💥, 70.33%)
   - ❓unclassified
@@ -25,6 +35,8 @@
 - externals/prettier/js/comments/between-head-and-body/between-head-and-body.js (💥, 90.85%)
   - ❓unclassified
 - externals/prettier/js/comments/between-head-and-body/empty-statement.js (💥, 86.05%)
+  - ❓unclassified
+- externals/prettier/js/comments/dangling-blank-lines.js (💥💥, 90.91%)
   - ❓unclassified
 - externals/prettier/js/comments/empty-statements.js (💥💥, 90.91%)
   - ❓unclassified
@@ -42,31 +54,69 @@
   - ❓unclassified
 - externals/prettier/js/comments/return-statement.js (💥💥, 97.25%)
   - ❓unclassified
-- externals/prettier/js/comments/tagged-template-literal.js (💥💥, 89.66%)
-  - ❓unclassified
 - externals/prettier/js/comments/try.js (💥💥, 66.67%)
+  - ❓unclassified
+- externals/prettier/js/decorators/export-comments.js (💥, 32.79%)
   - ❓unclassified
 - externals/prettier/js/explicit-resource-management/valid-await-using-comments.js (💥, 88.24%)
   - ❓unclassified
-- externals/prettier/js/for-of/comments.js (💥, 44.83%)
+- externals/prettier/js/for-of-statement/comments-before-keyword.js (💥, 59.57%)
   - ❓unclassified
-- externals/prettier/js/for/9812-2.js (💥, 88.89%)
+- externals/prettier/js/for-of-statement/comments.js (💥, 51.52%)
   - ❓unclassified
-- externals/prettier/js/for/continue-and-break-comment-without-blocks.js (💥, 67.59%)
+- externals/prettier/js/for-statement/9812-2.js (💥, 88.89%)
+  - ❓unclassified
+- externals/prettier/js/for-statement/continue-and-break-comment-without-blocks.js (💥, 67.59%)
   - ❓unclassified
 - externals/prettier/js/function/iife.js (💥, 14.43%)
   - ❓unclassified
 - externals/prettier/js/function/issue-12967.js (💥, 0.00%)
   - ❓unclassified
-- externals/prettier/js/if/condition-break/boolean-expression.js (💥, 97.01%)
+- externals/prettier/js/identifier/await/snippet: #0 (💥, 0.00%)
   - ❓unclassified
-- externals/prettier/js/if/condition-break/unary-expression.js (💥, 61.38%)
+- externals/prettier/js/identifier/await/snippet: #1 (💥, 0.00%)
   - ❓unclassified
-- externals/prettier/js/if/expr_and_same_line_comments.js (💥, 81.93%)
+- externals/prettier/js/identifier/await/snippet: #10 (💥, 0.00%)
   - ❓unclassified
-- externals/prettier/js/if/issue-15168.js (💥, 91.43%)
+- externals/prettier/js/identifier/await/snippet: #11 (💥, 0.00%)
   - ❓unclassified
-- externals/prettier/js/if/non-block.js (💥, 82.35%)
+- externals/prettier/js/identifier/await/snippet: #12 (💥, 0.00%)
+  - ❓unclassified
+- externals/prettier/js/identifier/await/snippet: #13 (💥, 0.00%)
+  - ❓unclassified
+- externals/prettier/js/identifier/await/snippet: #14 (💥, 0.00%)
+  - ❓unclassified
+- externals/prettier/js/identifier/await/snippet: #15 (💥, 0.00%)
+  - ❓unclassified
+- externals/prettier/js/identifier/await/snippet: #16 (💥, 0.00%)
+  - ❓unclassified
+- externals/prettier/js/identifier/await/snippet: #17 (💥, 0.00%)
+  - ❓unclassified
+- externals/prettier/js/identifier/await/snippet: #2 (💥, 0.00%)
+  - ❓unclassified
+- externals/prettier/js/identifier/await/snippet: #3 (💥, 0.00%)
+  - ❓unclassified
+- externals/prettier/js/identifier/await/snippet: #4 (💥, 0.00%)
+  - ❓unclassified
+- externals/prettier/js/identifier/await/snippet: #5 (💥, 0.00%)
+  - ❓unclassified
+- externals/prettier/js/identifier/await/snippet: #6 (💥, 0.00%)
+  - ❓unclassified
+- externals/prettier/js/identifier/await/snippet: #7 (💥, 0.00%)
+  - ❓unclassified
+- externals/prettier/js/identifier/await/snippet: #8 (💥, 0.00%)
+  - ❓unclassified
+- externals/prettier/js/identifier/await/snippet: #9 (💥, 0.00%)
+  - ❓unclassified
+- externals/prettier/js/if-statement/condition-break/boolean-expression.js (💥, 97.01%)
+  - ❓unclassified
+- externals/prettier/js/if-statement/condition-break/unary-expression.js (💥, 61.38%)
+  - ❓unclassified
+- externals/prettier/js/if-statement/expr_and_same_line_comments.js (💥, 81.93%)
+  - ❓unclassified
+- externals/prettier/js/if-statement/issue-15168.js (💥, 91.43%)
+  - ❓unclassified
+- externals/prettier/js/if-statement/non-block.js (💥, 82.35%)
   - ❓unclassified
 - externals/prettier/js/ignore/issue-10661.js (💥, 75.47%)
   - ❓unclassified
@@ -78,11 +128,15 @@
   - ❓unclassified
 - externals/prettier/js/last-argument-expansion/dangling-comment-in-arrow-function.js (💥, 0.00%)
   - ❓unclassified
-- externals/prettier/js/logical-expressions/in-unary-expression.js (💥, 79.49%)
+- externals/prettier/js/logical-expression/in-unary-expression.js (💥, 79.49%)
   - ❓unclassified
-- externals/prettier/js/sequence-expression/parenthesized-trailing-comment-unstable.js (💥, 66.67%)
+- externals/prettier/js/multiparser-comments/tagged.js (💥, 0.00%)
   - ❓unclassified
-- externals/prettier/js/sequence-expression/parenthesized.js (💥, 85.71%)
+- externals/prettier/js/return-statement/binaryish.js (💥, 86.84%)
+  - ❓unclassified
+- externals/prettier/js/sequence-expression/unary.js (💥, 16.67%)
+  - ❓unclassified
+- externals/prettier/js/sequence-expression/yield.js (💥, 68.42%)
   - ❓unclassified
 - externals/prettier/js/switch/comments.js (💥, 94.74%)
   - ❓unclassified
@@ -92,11 +146,15 @@
   - ❓unclassified
 - externals/prettier/js/trailing-comma/trailing_whitespace.js (💥💥💥, 96.55%)
   - ❓unclassified
-- externals/prettier/js/try/try.js (💥, 44.44%)
+- externals/prettier/js/try-statement/try.js (💥, 44.44%)
+  - ❓unclassified
+- externals/prettier/js/yield-exprsssion/comment.js (💥, 97.73%)
+  - ❓unclassified
+- externals/prettier/jsx/comments/in-opening-tag-name.js (💥, 42.86%)
   - ❓unclassified
 - externals/prettier/misc/embedded-language-formatting/in-javascript/test.js (💥✨, 98.00%)
   - ❓unclassified
-- externals/prettier/js/arrays/numbers-with-holes.js (💥, 92.86%)
+- externals/prettier/js/array-exprssion/numbers-with-holes.js (💥, 92.86%)
   - crates/oxc_formatter/DIVERGENCES.md#array-hole-comments
 - externals/prettier/js/comments/array-and-object.js (💥💥, 62.50%)
   - crates/oxc_formatter/DIVERGENCES.md#eol-comment-after-assign-colon
@@ -120,12 +178,10 @@
   - crates/oxc_formatter/DIVERGENCES.md#start-token-no-double-parens
 - externals/prettier/js/ignore/issue-11077.js (💥, 93.33%)
   - crates/oxc_formatter/DIVERGENCES.md#suppressed-terminator-per-semi
-- externals/prettier/js/last-argument-expansion/edge_case.js (💥, 74.07%)
+- externals/prettier/js/last-argument-expansion/edge_case.js (💥, 73.53%)
   - crates/oxc_formatter/DIVERGENCES.md#callee-arguments-gap-comment
 - externals/prettier/js/multiparser-css/styled-components.js (💥, 98.49%)
   - apps/oxfmt/DIVERGENCES.md#styled-extend-tag
-- externals/prettier/js/multiparser-markdown/codeblock.js (💥, 77.78%)
-  - apps/oxfmt/DIVERGENCES.md#nested-fence-length
 - externals/prettier/js/ternaries/indent-after-paren.js (💥💥💥💥, 99.14%)
   - crates/oxc_formatter/DIVERGENCES.md#computed-member-object-paren-break
 
@@ -133,7 +189,8 @@
 
 - externals/prettier/js/comments/first-argument/first-argument.js
 - externals/prettier/js/comments/return-statement.js
-- externals/prettier/js/for/continue-and-break-comment-without-blocks.js
+- externals/prettier/js/for-of-statement/comments-before-keyword.js
+- externals/prettier/js/for-statement/continue-and-break-comment-without-blocks.js
 - externals/prettier/js/function/issue-12967.js
 - externals/prettier/js/ignore/semi/class-expression-decorator.js
 - externals/prettier/js/ignore/semi/head-ignored.js
@@ -146,13 +203,38 @@
 - externals/prettier/js/shebang/shebang.js (BOM)
 - externals/prettier/js/shebang/snippet: Empty file with shebang (BOM)
 
+### Error
+
+- externals/prettier/js/commonjs/snippet: new-target.mjs: Unexpected new.target expression
+  - ❓unclassified
+- externals/prettier/js/commonjs/snippet: new-target.unknown: Unexpected new.target expression
+  - ❓unclassified
+- externals/prettier/js/commonjs/snippet: return/in-static-block.cjs: A 'return' statement cannot be used inside a class static block.
+  - ❓unclassified
+- externals/prettier/js/commonjs/snippet: return/in-static-block.mjs: A 'return' statement cannot be used inside a class static block.
+  - ❓unclassified
+- externals/prettier/js/commonjs/snippet: return/in-static-block.unknown: A 'return' statement cannot be used inside a class static block.
+  - ❓unclassified
+- externals/prettier/js/decorators/rest-parameters/constructor.js: Decorators are not valid here.
+  - ❓unclassified
+- externals/prettier/js/decorators/rest-parameters/method.js: Decorators are not valid here.
+  - ❓unclassified
+- externals/prettier/js/decorators/rest-parameters/setter.js: Decorators are not valid here.
+  - ❓unclassified
+- externals/prettier/js/explicit-resource-management/for-using-of-escaped-of-binding.js: Keywords cannot contain escape characters
+  - ❓unclassified
+- externals/prettier/js/explicit-resource-management/valid-for-await-using-binding-escaped-of-of.js: Keywords cannot contain escape characters
+  - ❓unclassified
+- externals/prettier/js/explicit-resource-management/valid-for-using-binding-escaped-of-of.js: Keywords cannot contain escape characters
+  - ❓unclassified
+
 ## jsx
 
-39/39 (100.00%)
+44/44 (100.00%)
 
 ## typescript
 
-633/679 (93.23%)
+636/702 (90.60%)
 
 ### Failed
 
@@ -164,13 +246,27 @@
   - ❓unclassified
 - externals/prettier/typescript/as/comments/17407.ts (💥, 47.06%)
   - ❓unclassified
-- externals/prettier/typescript/as/comments/18160.ts (💥, 54.21%)
+- externals/prettier/typescript/as/comments/18160.ts (💥, 73.24%)
+  - ❓unclassified
+- externals/prettier/typescript/binary-expressions/less-than-greater-than.ts (💥, 0.00%)
   - ❓unclassified
 - externals/prettier/typescript/cast/18406.ts (💥, 84.21%)
   - ❓unclassified
-- externals/prettier/typescript/class-comment/class-implements.ts (💥, 93.33%)
+- externals/prettier/typescript/chain-expression/call-expression.ts (💥, 98.72%)
+  - ❓unclassified
+- externals/prettier/typescript/chain-expression/new-expression.ts (💥, 93.75%)
+  - ❓unclassified
+- externals/prettier/typescript/chain-expression/tagged-template-literals.ts (💥, 93.51%)
+  - ❓unclassified
+- externals/prettier/typescript/class-comment/class-implements.ts (💥, 85.71%)
   - ❓unclassified
 - externals/prettier/typescript/class-comment/declare.ts (💥, 72.00%)
+  - ❓unclassified
+- externals/prettier/typescript/class-comment/issue-16228.ts (💥, 75.00%)
+  - ❓unclassified
+- externals/prettier/typescript/comments/before-body/before-body.ts (💥, 57.89%)
+  - ❓unclassified
+- externals/prettier/typescript/comments/consistent-with-flow/19903.ts (💥, 69.23%)
   - ❓unclassified
 - externals/prettier/typescript/comments/first-argument/first-argument.ts (💥, 81.16%)
   - ❓unclassified
@@ -181,6 +277,16 @@
 - externals/prettier/typescript/conformance/types/union/unionTypeConstructSignatures.ts (💥, 91.62%)
   - ❓unclassified
 - externals/prettier/typescript/conformance/types/union/unionTypeIndexSignature.ts (💥, 83.64%)
+  - ❓unclassified
+- externals/prettier/typescript/index-signature/comment.ts (💥, 80.00%)
+  - ❓unclassified
+- externals/prettier/typescript/instantiation-expression/before-operator.ts (💥, 39.39%)
+  - ❓unclassified
+- externals/prettier/typescript/instantiation-expression/export-default-class.ts (💥, 0.00%)
+  - ❓unclassified
+- externals/prettier/typescript/instantiation-expression/export-default-function.ts (💥, 0.00%)
+  - ❓unclassified
+- externals/prettier/typescript/instantiation-expression/operand.ts (💥, 95.45%)
   - ❓unclassified
 - externals/prettier/typescript/interface/comments-generic.ts (💥💥, 91.80%)
   - ❓unclassified
@@ -194,15 +300,21 @@
   - ❓unclassified
 - externals/prettier/typescript/intersection/intersection-parens.ts (💥💥✨, 99.29%)
   - ❓unclassified
+- externals/prettier/typescript/mapped-type/comments.ts (💥, 95.24%)
+  - ❓unclassified
+- externals/prettier/typescript/non-null/comments.ts (💥, 66.67%)
+  - ❓unclassified
 - externals/prettier/typescript/prettier-ignore/mapped-types.ts (💥, 92.19%)
   - ❓unclassified
-- externals/prettier/typescript/property-signature/consistent-with-flow/comments.ts (💥, 80.00%)
+- externals/prettier/typescript/property-signature/consistent-with-flow/comments.ts (💥, 83.33%)
   - ❓unclassified
 - externals/prettier/typescript/property-signature/consistent-with-flow/union.ts (💥, 80.00%)
   - ❓unclassified
-- externals/prettier/typescript/satisfies-operators/comments-unstable.ts (💥💥, 61.54%)
-  - ❓unclassified
 - externals/prettier/typescript/template-literals/member-expression.ts (💥, 65.12%)
+  - ❓unclassified
+- externals/prettier/typescript/tuple/dangling-comments.ts (💥💥💥, 95.65%)
+  - ❓unclassified
+- externals/prettier/typescript/type-alias/conditional.ts (💥, 91.80%)
   - ❓unclassified
 - externals/prettier/typescript/type-parameters-arguments/18041.ts (💥, 91.43%)
   - ❓unclassified
@@ -245,13 +357,26 @@
 ### Not idempotent
 
 - externals/prettier/typescript/as/comments/17407.ts
+- externals/prettier/typescript/binary-expressions/less-than-greater-than.ts
 - externals/prettier/typescript/method-chain/object/issue-17239.ts
 - externals/prettier/typescript/prettier-ignore/issue-14238.ts
 - externals/prettier/typescript/prettier-ignore/mapped-types.ts
+- externals/prettier/typescript/property-signature/consistent-with-flow/comments.ts
+
+### Error
+
+- externals/prettier/misc/filename-matters/jsx-file-extension/snippet: test.cts: Expected `>` but found `/`
+  - ❓unclassified
+- externals/prettier/misc/filename-matters/jsx-file-extension/snippet: test.mts: Expected `>` but found `/`
+  - ❓unclassified
+- externals/prettier/misc/filename-matters/jsx-file-extension/snippet: test.ts: Expected `>` but found `/`
+  - ❓unclassified
+- externals/prettier/typescript/instantiation-expression/super-class.ts: Expected `{` but found `<`
+  - ❓unclassified
 
 ## tsx
 
-20/20 (100.00%)
+22/22 (100.00%)
 
 ## json
 
@@ -267,7 +392,7 @@
 
 ## css
 
-137/161 (85.09%)
+140/164 (85.37%)
 
 ### Failed
 
@@ -277,7 +402,7 @@
   - crates/oxc_formatter_css/DIVERGENCES.md#signed-value-resplit
 - externals/prettier/css/parens/empty-lines.css (💥, 31.58%)
   - crates/oxc_formatter_css/DIVERGENCES.md#postcss-simple-var-raw-verbatim
-- externals/prettier/css/parens/parens.css (💥, 93.13%)
+- externals/prettier/css/parens/parens.css (💥, 92.41%)
   - crates/oxc_formatter_css/DIVERGENCES.md#unary-plus-glue
   - crates/oxc_formatter_css/DIVERGENCES.md#css-glued-minus-paren
 - externals/prettier/css/postcss-8-improment/test.css (💥, 88.24%)
@@ -322,7 +447,7 @@
 
 ## scss
 
-112/143 (78.32%)
+121/153 (79.08%)
 
 ### Failed
 
@@ -342,21 +467,20 @@
   - crates/oxc_formatter_css/DIVERGENCES.md#terminator-gap-normalized
 - externals/prettier/scss/map/15193.scss (💥✨, 92.86%)
   - crates/oxc_formatter_css/DIVERGENCES.md#terminator-gap-normalized
-- externals/prettier/scss/map/comment.scss (💥💥, 73.91%)
-  - crates/oxc_formatter_css/DIVERGENCES.md#comment-preceded-map-indent
-  - crates/oxc_formatter_css/DIVERGENCES.md#map-leading-comment-layout
+- externals/prettier/scss/map/empty-line-after-function.scss (💥💥, 87.50%)
+  - crates/oxc_formatter_css/DIVERGENCES.md#line-comment-after-comma
 - externals/prettier/scss/map/function-argument/functional-argument.scss (💥, 96.00%)
   - crates/oxc_formatter_css/DIVERGENCES.md#terminator-gap-normalized
-- externals/prettier/scss/parens/2.scss (💥, 75.00%)
-  - crates/oxc_formatter_css/DIVERGENCES.md#comment-preceded-map-indent
 - externals/prettier/scss/parens/issue-16594.scss (💥, 71.43%)
   - crates/oxc_formatter_css/DIVERGENCES.md#terminator-gap-normalized
-- externals/prettier/scss/trailing-comma/comments.scss (💥💥, 87.18%)
+- externals/prettier/scss/trailing-comma/comments.scss (💥💥, 92.31%)
   - crates/oxc_formatter_css/DIVERGENCES.md#terminator-gap-normalized
   - crates/oxc_formatter_css/DIVERGENCES.md#line-comment-after-comma
+- externals/prettier/scss/trailing-comma/issue-6356.scss (💥💥, 80.00%)
+  - crates/oxc_formatter_css/DIVERGENCES.md#own-line-trailing-comment-keeps-line
 - externals/prettier/scss/trailing-comma/issue-6920.scss (💥💥, 66.67%)
   - crates/oxc_formatter_css/DIVERGENCES.md#line-comment-after-comma
-- externals/prettier/scss/trailing-comma/list.scss (💥💥, 95.56%)
+- externals/prettier/scss/trailing-comma/list.scss (💥💥, 97.78%)
   - crates/oxc_formatter_css/DIVERGENCES.md#terminator-gap-normalized
 - externals/prettier/scss/trailing-comma/variable.scss (💥💥, 50.00%)
   - crates/oxc_formatter_css/DIVERGENCES.md#terminator-gap-normalized
@@ -382,7 +506,7 @@
 
 ## less
 
-222/245 (90.61%)
+230/252 (91.27%)
 
 ### Failed
 
@@ -409,8 +533,6 @@
   - crates/oxc_formatter_css/DIVERGENCES.md#less-guard-list-inline
 - externals/prettier/less/less-test-suite/snippet: tests-unit/mixins-guards/mixins-guards.less (💥, 99.48%)
   - crates/oxc_formatter_css/DIVERGENCES.md#less-guard-list-inline
-- externals/prettier/less/less-test-suite/snippet: tests-unit/namespace-targeted/namespace-targeted.less (💥, 96.88%)
-  - crates/oxc_formatter_css/DIVERGENCES.md#less-lookup-glue
 - externals/prettier/less/less-test-suite/snippet: tests-unit/property-name-interp/property-name-interp.less (💥, 98.28%)
   - crates/oxc_formatter_css/DIVERGENCES.md#less-variable-value-comments
 - externals/prettier/less/less-test-suite/snippet: tests-unit/strings/strings.less (💥, 98.68%)
@@ -439,198 +561,71 @@
 
 ## graphql
 
-105/105 (100.00%)
+110/119 (92.44%)
+
+### Error
+
+- externals/prettier/graphql/selection-set/dangling-comments.graphql: Syntax error: expected Selection
+  - ❓unclassified
+- externals/prettier/graphql/selection-set/empty-1.graphql: Syntax error: expected Selection
+  - ❓unclassified
+- externals/prettier/graphql/selection-set/empty-2.graphql: Syntax error: expected Selection
+  - ❓unclassified
+- externals/prettier/graphql/selection-set/empty-3.graphql: Syntax error: expected Selection
+  - ❓unclassified
+- externals/prettier/graphql/selection-set/empty-4.graphql: Syntax error: expected Selection
+  - ❓unclassified
+- externals/prettier/graphql/selection-set/empty-5.graphql: Syntax error: expected Selection
+  - ❓unclassified
+- externals/prettier/graphql/selection-set/empty-6.graphql: Syntax error: expected Selection
+  - ❓unclassified
+- externals/prettier/graphql/selection-set/empty-7.graphql: Syntax error: expected Selection
+  - ❓unclassified
+- externals/prettier/graphql/string/carriage-return.graphql: Syntax error: invalid unicode escape sequence
+  - ❓unclassified
 
 ## yaml
 
-1520/1619 (93.89%)
+1604/1625 (98.71%)
 
 ### Failed
 
-- externals/prettier/yaml/block-folded/block-folded-strip.yml (💥💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: >-\n  x\n   \n" (💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: >-\n  x\n   \n\n..." (💥, 85.71%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: >-\n  x\n   \n\n" (💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: >-\n  x\n   \n\n\n..." (💥, 85.71%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: >-\n  x\n   \n\n\n" (💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: >-\n  x\n   \n\n\n\n..." (💥, 85.71%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: >-\n  x\n   \n\n\n\n" (💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: >-\n  x\n   \n\n\n\n\n..." (💥, 85.71%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: >-\n  x\n  \t\n" (💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: >-\n  x\n  \t\n\n..." (💥, 85.71%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: >-\n  x\n  \t\n\n" (💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: >-\n  x\n  \t\n\n\n..." (💥, 85.71%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: >-\n  x\n  \t\n\n\n" (💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: >-\n  x\n  \t\n\n\n\n..." (💥, 85.71%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: >-\n  x\n  \t\n\n\n\n" (💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: >-\n  x\n  \t\n\n\n\n\n..." (💥, 85.71%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: >\n  x\n   \n" (💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: >\n  x\n   \n\n..." (💥, 85.71%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: >\n  x\n   \n\n" (💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: >\n  x\n   \n\n\n..." (💥, 85.71%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: >\n  x\n   \n\n\n" (💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: >\n  x\n   \n\n\n\n..." (💥, 85.71%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: >\n  x\n   \n\n\n\n" (💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: >\n  x\n   \n\n\n\n\n..." (💥, 85.71%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: >\n  x\n  \t\n" (💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: >\n  x\n  \t\n\n..." (💥, 85.71%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: >\n  x\n  \t\n\n" (💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: >\n  x\n  \t\n\n\n..." (💥, 85.71%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: >\n  x\n  \t\n\n\n" (💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: >\n  x\n  \t\n\n\n\n..." (💥, 85.71%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: >\n  x\n  \t\n\n\n\n" (💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: >\n  x\n  \t\n\n\n\n\n..." (💥, 85.71%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
 - externals/prettier/yaml/block-value/snippet: "foo: >+\n" (💥💥💥, 0.00%)
   - crates/oxc_formatter_yaml/DIVERGENCES.md#eof-blank-lines
-- externals/prettier/yaml/block-value/snippet: "foo: |-\n  x\n   \n" (💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: |-\n  x\n   \n\n..." (💥, 85.71%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: |-\n  x\n   \n\n" (💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: |-\n  x\n   \n\n\n..." (💥, 85.71%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: |-\n  x\n   \n\n\n" (💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: |-\n  x\n   \n\n\n\n..." (💥, 85.71%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: |-\n  x\n   \n\n\n\n" (💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: |-\n  x\n   \n\n\n\n\n..." (💥, 85.71%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: |-\n  x\n  \t\n" (💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: |-\n  x\n  \t\n\n..." (💥, 85.71%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: |-\n  x\n  \t\n\n" (💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: |-\n  x\n  \t\n\n\n..." (💥, 85.71%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: |-\n  x\n  \t\n\n\n" (💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: |-\n  x\n  \t\n\n\n\n..." (💥, 85.71%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: |-\n  x\n  \t\n\n\n\n" (💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: |-\n  x\n  \t\n\n\n\n\n..." (💥, 85.71%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: |\n  x\n   \n" (💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: |\n  x\n   \n\n..." (💥, 85.71%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: |\n  x\n   \n\n" (💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: |\n  x\n   \n\n\n..." (💥, 85.71%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: |\n  x\n   \n\n\n" (💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: |\n  x\n   \n\n\n\n..." (💥, 85.71%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: |\n  x\n   \n\n\n\n" (💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: |\n  x\n   \n\n\n\n\n..." (💥, 85.71%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: |\n  x\n  \t\n" (💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: |\n  x\n  \t\n\n..." (💥, 85.71%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: |\n  x\n  \t\n\n" (💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: |\n  x\n  \t\n\n\n..." (💥, 85.71%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: |\n  x\n  \t\n\n\n" (💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: |\n  x\n  \t\n\n\n\n..." (💥, 85.71%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: |\n  x\n  \t\n\n\n\n" (💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/block-value/snippet: "foo: |\n  x\n  \t\n\n\n\n\n..." (💥, 85.71%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
 - externals/prettier/yaml/block-value/snippet: "foo: |+\n" (💥💥💥, 0.00%)
   - crates/oxc_formatter_yaml/DIVERGENCES.md#eof-blank-lines
 - externals/prettier/yaml/flow-mapping/comments/key.yml (💥, 43.75%)
   - crates/oxc_formatter_yaml/DIVERGENCES.md#flow-flat-with-newline
 - externals/prettier/yaml/mapping/duplicated-keys/flow-mapping.yml (💥, 85.71%)
   - crates/oxc_formatter_yaml/DIVERGENCES.md#blank-lines
-- externals/prettier/yaml/spec/anchors-and-tags.yml (💥💥, 75.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#anchor-tag-props-order
-- externals/prettier/yaml/spec/node-anchor-and-tag-on-seperate-lines.yml (💥💥, 50.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#anchor-tag-props-order
 - externals/prettier/yaml/spec/spec-example-6-1-indentation-spaces.yml (💥💥, 84.62%)
   - crates/oxc_formatter_yaml/DIVERGENCES.md#flow-comment-position
 - externals/prettier/yaml/spec/spec-example-7-20-single-pair-explicit-entry.yml (💥✨, 62.50%)
   - crates/oxc_formatter_yaml/DIVERGENCES.md#flow-flat-with-newline
 - externals/prettier/yaml/spec/spec-example-9-4-explicit-documents.yml (💥✨, 83.33%)
   - crates/oxc_formatter_yaml/DIVERGENCES.md#flow-flat-with-newline
-- externals/prettier/yaml/spec/various-combinations-of-tags-and-anchors.yml (💥💥, 75.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#anchor-tag-props-order
 - externals/prettier/yaml/yaml-test-suite/snippet: 2G84-4.yaml - Literal modifers (💥, 50.00%)
   - crates/oxc_formatter_yaml/DIVERGENCES.md#eof-blank-lines
 - externals/prettier/yaml/yaml-test-suite/snippet: 6HB6.yaml - Spec Example 6.1. Indentation Spaces (💥, 84.62%)
   - crates/oxc_formatter_yaml/DIVERGENCES.md#flow-comment-position
-- externals/prettier/yaml/yaml-test-suite/snippet: 9KAX.yaml - Various combinations of tags and anchors (💥, 75.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#anchor-tag-props-order
 - externals/prettier/yaml/yaml-test-suite/snippet: 9SA2.yaml - Multiline double quoted flow mapping key (💥, 50.00%)
   - crates/oxc_formatter_yaml/DIVERGENCES.md#flow-flat-with-newline
-- externals/prettier/yaml/yaml-test-suite/snippet: BU8L.yaml - Node Anchor and Tag on Seperate Lines (💥, 50.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#anchor-tag-props-order
 - externals/prettier/yaml/yaml-test-suite/snippet: CT4Q.yaml - Spec Example 7.20. Single Pair Explicit Entry (💥, 25.00%)
   - crates/oxc_formatter_yaml/DIVERGENCES.md#flow-flat-with-newline
-- externals/prettier/yaml/yaml-test-suite/snippet: F2C7.yaml - Anchors and Tags (💥, 75.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#anchor-tag-props-order
 - externals/prettier/yaml/yaml-test-suite/snippet: HWV9.yaml - Document-end marker (💥, 66.67%)
   - crates/oxc_formatter_yaml/DIVERGENCES.md#empty-document-end-marker
 - externals/prettier/yaml/yaml-test-suite/snippet: JEF9-3.yaml - Trailing whitespace in streams (💥, 66.67%)
   - crates/oxc_formatter_yaml/DIVERGENCES.md#keep-chomped-space-only-eof-line
 - externals/prettier/yaml/yaml-test-suite/snippet: K3WX.yaml - Colon and adjacent value after comment on next line (💥, 25.00%)
   - crates/oxc_formatter_yaml/DIVERGENCES.md#flow-flat-with-newline
-- externals/prettier/yaml/yaml-test-suite/snippet: L24T-2.yaml - Trailing line of spaces (💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- externals/prettier/yaml/yaml-test-suite/snippet: L24T.yaml - Trailing line of spaces (💥, 80.00%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
 - externals/prettier/yaml/yaml-test-suite/snippet: NJ66.yaml - Multiline plain flow mapping key (💥, 50.00%)
   - crates/oxc_formatter_yaml/DIVERGENCES.md#flow-flat-with-newline
 - externals/prettier/yaml/yaml-test-suite/snippet: UT92.yaml - Spec Example 9.4. Explicit Documents (💥, 66.67%)
   - crates/oxc_formatter_yaml/DIVERGENCES.md#flow-flat-with-newline
-- externals/prettier/yaml/yaml-test-suite/snippet: Y79Y-2.yaml - Tabs in various contexts (💥, 66.67%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
 
 ## markdown
 
-1527/1548 (98.64%)
+1489/1501 (99.20%)
 
 ### Failed
 
@@ -640,43 +635,35 @@
   - crates/oxc_formatter_markdown/DIVERGENCES.md#line-shapes
 - externals/prettier/markdown/code/lwc/lwc.md (💥✨, 90.00%)
   - apps/oxfmt/DIVERGENCES.md#lwc-code-block
-- externals/prettier/markdown/commonmark-test-suite/snippet: example-11.md (Tabs) (💥, 0.00%)
-  - crates/oxc_formatter_markdown/DIVERGENCES.md#leading-thematic-break
 - externals/prettier/markdown/commonmark-test-suite/snippet: example-2.md (Tabs) (💥, 0.00%)
   - crates/oxc_formatter_markdown/DIVERGENCES.md#indented-code-tab
 - externals/prettier/markdown/commonmark-test-suite/snippet: example-412.md (Emphasis and strong emphasis) (💥, 0.00%)
   - crates/oxc_formatter_markdown/DIVERGENCES.md#stray-delimiters
-- externals/prettier/markdown/commonmark-test-suite/snippet: example-50.md (Thematic breaks) (💥, 0.00%)
-  - crates/oxc_formatter_markdown/DIVERGENCES.md#leading-thematic-break
-- externals/prettier/markdown/commonmark-test-suite/snippet: example-51.md (Thematic breaks) (💥, 0.00%)
-  - crates/oxc_formatter_markdown/DIVERGENCES.md#leading-thematic-break
-- externals/prettier/markdown/commonmark-test-suite/snippet: example-52.md (Thematic breaks) (💥, 0.00%)
-  - crates/oxc_formatter_markdown/DIVERGENCES.md#leading-thematic-break
-- externals/prettier/markdown/commonmark-test-suite/snippet: example-53.md (Thematic breaks) (💥, 0.00%)
-  - crates/oxc_formatter_markdown/DIVERGENCES.md#leading-thematic-break
-- externals/prettier/markdown/commonmark-test-suite/snippet: example-54.md (Thematic breaks) (💥, 0.00%)
-  - crates/oxc_formatter_markdown/DIVERGENCES.md#leading-thematic-break
-- externals/prettier/markdown/link/encodedLink.md (💥, 86.67%)
-  - crates/oxc_formatter_markdown/DIVERGENCES.md#url-escaping
 - externals/prettier/markdown/markdown/real-world-case.md (💥💥, 99.81%)
   - crates/oxc_formatter/DIVERGENCES.md#suppressed-terminator-per-semi
-- externals/prettier/markdown/paragraph/cjk.md (💥💥✨, 93.33%)
-  - crates/oxc_formatter_markdown/DIVERGENCES.md#container-directive
-- externals/prettier/markdown/splitCjkText/chinese-japanese.md (💥, 88.89%)
+- externals/prettier/markdown/splitCjkText/chinese-japanese.md (💥, 78.79%)
   - crates/oxc_formatter_markdown/DIVERGENCES.md#cj-adjacent-space-wraps
+- externals/prettier/markdown/splitCjkText/cjkMixed.md (💥, 36.36%)
+  - crates/oxc_formatter_markdown/DIVERGENCES.md#cj-line-break
 - externals/prettier/markdown/splitCjkText/space.md (💥, 0.00%)
   - crates/oxc_formatter_markdown/DIVERGENCES.md#cj-adjacent-space-wraps
-- externals/prettier/markdown/splitCjkText/symbolSpaceNewLine.md (💥, 23.88%)
+- externals/prettier/markdown/splitCjkText/symbolSpaceNewLine.md (💥, 81.36%)
   - crates/oxc_formatter_markdown/DIVERGENCES.md#cj-line-break
-- externals/prettier/markdown/thematicBreak/simple.md (💥, 0.00%)
-  - crates/oxc_formatter_markdown/DIVERGENCES.md#leading-thematic-break
 
 ## html
 
-222/228 (97.37%)
+227/237 (95.78%)
 
 ### Failed
 
+- externals/prettier/html/cdata/adjacent.html (💥, 96.08%)
+  - ❓unclassified
+- externals/prettier/html/cdata/example.html (💥, 88.46%)
+  - ❓unclassified
+- externals/prettier/html/cdata/multiline.html (💥, 95.65%)
+  - ❓unclassified
+- externals/prettier/html/cdata/nested.html (💥, 92.68%)
+  - ❓unclassified
 - externals/prettier/html/basics/broken-html.html (💥, 88.89%)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#unclosed-at-end
 - externals/prettier/html/basics/with-colon.html (💥, 98.37%)
@@ -690,14 +677,18 @@
 
 ## angular-html
 
-104/104 (100.00%)
+128/128 (100.00%)
 
 ## vue
 
-169/184 (91.85%)
+170/187 (90.91%)
 
 ### Failed
 
+- externals/prettier/vue/interpolation/double-brace-string.vue (💥, 60.00%)
+  - ❓unclassified
+- externals/prettier/vue/interpolation/ng-non-bindable.vue (💥, 0.00%)
+  - ❓unclassified
 - externals/prettier/vue/event-binding/function-expression-ts.vue (💥, 64.29%)
   - apps/oxfmt/DIVERGENCES.md#js-in-vue-handler-statements
 - externals/prettier/vue/interpolation/bitwise-or-operator.vue (💥, 68.75%)

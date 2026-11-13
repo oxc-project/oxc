@@ -731,42 +731,6 @@ Prettier falls back to the source shape when the content fails to format, while 
 The verbatim content cannot be re-indented, so its source indentation stays and may look misaligned once hugged (as with any verbatim template Prettier hugs).
 Under `embeddedLanguageFormatting: off`, the source shape still decides, like Prettier.
 
-## nested-fence-length
-
-- Why: semantics (prettier/prettier#19908)
-- Pin: `conformance/fixtures/xxx-in-md/nested-fence-length.md`
-- Conformance:
-  - `externals/prettier/js/multiparser-markdown/codeblock.js`
-
-`````markdown
-<!-- input -->
-```md
-~~~js
-const  a = 1
-~~~
-```
-
-<!-- ours -->
-````md
-```js
-const a = 1;
-```
-````
-
-<!-- prettier -->
-```md
-```js
-const a = 1;
-```
-```
-`````
-
-A fenced code block's fence outnumbers the backtick (or tilde) runs of the content it prints, the embedded formatter's output included.
-Markdown in a code block formats its own fences, so `~~~` becomes a backtick fence the outer one must outnumber;
-Prettier keeps the outer fence at three and the inner fence closes it on the next parse.
-The same holds for markdown-in-js, whose fences are `~`.
-Prettier `main` counts the printed content since #19908; the pin (3.9.10) still counts the source.
-
 ## line-ranged-code-block
 
 - Why: uniform-rule (same construct, same output: `` ```js{1,3} ``)

@@ -1698,7 +1698,7 @@ pub(super) fn write_component_value<'a>(
             // NOTE: `(x,)` is a single-element list in Sass,
             // so adding it to `($a + $b)` / `(a b)` / `(-$a)` changes the value
             // and `2 * ($a + $b,)` fails to compile.
-            // (Prettier 3.9.1 does all of these; #19091 exempted single-node scalars only)
+            // (Prettier does all of these; #19091 exempted single-node scalars only)
             //
             // The reverse also holds: `("a",)` keeps its comma regardless of `trailing_commas`
             // (see `is_single_item_list`; prettier#19928 preserves it too).
