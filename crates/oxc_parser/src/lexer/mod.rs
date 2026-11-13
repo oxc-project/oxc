@@ -271,18 +271,18 @@ impl<'a, C: Config> Lexer<'a, C> {
             // SAFETY: Next 2 bytes are `#!`
             let kind = unsafe { self.read_hashbang_comment() };
             // Hashbangs are not included in tokens
-            self.finish_next_inner(kind, FinishTokenMode::Discard)
+            self.finish_next_inner(kind, self.source.position(), FinishTokenMode::Discard)
         } else {
-            let kind = self.read_next_token();
-            self.finish_next(kind)
+            let (kind, end) = self.read_next_token();
+            self.finish_next_inner(kind, end, FinishTokenMode::Push)
         }
     }
 
     /// Read next token in file.
     /// Use `first_token` for first token, and this method for all further tokens.
     pub fn next_token(&mut self) -> Token {
-        let kind = self.read_next_token();
-        self.finish_next(kind)
+        let (kind, end) = self.read_next_token();
+        self.finish_next_inner(kind, end, FinishTokenMode::Push)
     }
 
     /// Read the next token after `=` in a JSX attribute.
@@ -297,27 +297,33 @@ impl<'a, C: Config> Lexer<'a, C> {
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn next_token_for_benchmarks(&mut self) -> Token {
-        let kind = self.read_next_token();
-        self.finish_next(kind)
+        let (kind, end) = self.read_next_token();
+        self.finish_next_inner(kind, end, FinishTokenMode::Push)
     }
 
     #[inline]
     fn finish_next(&mut self, kind: Kind) -> Token {
-        self.finish_next_inner(kind, FinishTokenMode::Push)
+        self.finish_next_inner(kind, self.source.position(), FinishTokenMode::Push)
     }
 
     #[inline]
     fn finish_next_retokenized(&mut self, kind: Kind) -> Token {
-        self.finish_next_inner(kind, FinishTokenMode::Replace)
+        self.finish_next_inner(kind, self.source.position(), FinishTokenMode::Replace)
     }
 
     // `#[inline(always)]` to ensure is inlined into `finish_next` and `finish_next_retokenized`,
     // so that `mode` is statically known
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    fn finish_next_inner(&mut self, kind: Kind, mode: FinishTokenMode) -> Token {
+    fn finish_next_inner(
+        &mut self,
+        kind: Kind,
+        end: SourcePosition<'a>,
+        mode: FinishTokenMode,
+    ) -> Token {
+        debug_assert_eq!(end, self.source.position());
         let pending = mem::replace(&mut self.pending, PendingToken::NONE);
-        let token = Token::new(kind, self.token_start, self.offset(), pending);
+        let token = Token::new(kind, self.token_start, self.source.offset_of(end), pending);
         if self.config.tokens() {
             match mode {
                 FinishTokenMode::Push => {
@@ -497,16 +503,17 @@ impl<'a, C: Config> Lexer<'a, C> {
 
     /// Read each char and set the current token
     /// Whitespace and line terminators are skipped
+    /// Returns the `Kind` of the token, and the position of its end, which is current position of source.
     #[inline] // Make sure is inlined into `next_token`
-    fn read_next_token(&mut self) -> Kind {
+    fn read_next_token(&mut self) -> (Kind, SourcePosition<'a>) {
         self.trivia_builder.clear_annotation_comments();
 
         let end_pos = self.source.end();
+        let mut pos = self.source.position();
         loop {
             // Single spaces between tokens are common, so consume a space before processing the next token.
             // Can only do this if there are at least 2 bytes left in source.
             // If there aren't 2 bytes left, delegate to `read_next_token_at_end` (cold branch).
-            let mut pos = self.source.position();
             // SAFETY: `source.end()` is always equal to or after `source.position()`
             let remaining_bytes = unsafe { end_pos.offset_from(pos) };
             if remaining_bytes >= 2 {
@@ -529,20 +536,23 @@ impl<'a, C: Config> Lexer<'a, C> {
 
                 if let Some(kind) = byte_handlers::single_byte_token(byte) {
                     // SAFETY: Single-byte tokens are ASCII, and at least 1 byte remains after `pos`
-                    self.source.set_position(unsafe { pos.add(1) });
-                    return kind;
+                    let end = unsafe { pos.add(1) };
+                    self.source.set_position(end);
+                    return (kind, end);
                 }
 
                 let byte_handlers = self.config.byte_handlers();
+                let kind;
                 // SAFETY: `byte` is byte value at current position in source
-                let kind = unsafe { byte_handlers[byte as usize](self) };
+                (kind, pos) = unsafe { byte_handlers[byte as usize](self, pos) };
                 if kind != Kind::Skip {
-                    return kind;
+                    return (kind, pos);
                 }
             } else {
                 // Only 0 or 1 bytes left in source.
                 // Delegate to `#[cold]` function as this is a very rare case.
-                return self.read_next_token_at_end();
+                let kind = self.read_next_token_at_end();
+                return (kind, self.source.position());
             }
         }
     }
