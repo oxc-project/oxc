@@ -14,13 +14,23 @@ pub struct StandardAllocatorPool {
     /// and those are the operations we do while `Mutex` lock is held.
     /// The shorter the time lock is held, the less contention there is.
     allocators: Mutex<Stack<Allocator>>,
+    /// Number of allocators created when the pool was constructed.
+    /// The pool can grow past this if [`get`] creates extras.
+    ///
+    /// [`get`]: Self::get
+    len: usize,
 }
 
 impl StandardAllocatorPool {
     /// Create a new [`StandardAllocatorPool`] for use across the specified number of threads.
     pub fn new(thread_count: usize) -> StandardAllocatorPool {
         let allocators = iter::repeat_with(Allocator::new).take(thread_count).collect();
-        StandardAllocatorPool { allocators: Mutex::new(allocators) }
+        StandardAllocatorPool { allocators: Mutex::new(allocators), len: thread_count }
+    }
+
+    /// Number of allocators created when the pool was constructed.
+    pub fn len(&self) -> usize {
+        self.len
     }
 
     /// Retrieve an [`Allocator`] from the pool, or create a new one if the pool is empty.
