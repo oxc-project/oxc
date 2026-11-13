@@ -52,7 +52,7 @@ Prerequisites: Rust (MSRV: 1.98), Node.js, pnpm, just
 
 **Setup Notes:**
 
-- All tools already installed (`cargo-insta`, `typos-cli`, `cargo-shear`, `ast-grep`)
+- All tools already installed (`cargo-insta`, `cargo-shear`, `ast-grep`)
 - Rust components already installed (`clippy`, `rust-docs`, `rustfmt`)
 - Use Conventional Commits for commit messages; `.github/workflows/pr.yml` requires a scoped title like `fix(parser): handle trailing comma`
 - Choose verification from the changed code; reserve `just ready` for an optional broad integration checkpoint as described below.
