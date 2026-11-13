@@ -16,7 +16,7 @@ declare_oxc_lint!(
     vitest,
     style,
     recommended,
-    fix,
+    suggestion,
     docs = DOCUMENTATION,
     version = "1.39.0",
 );
