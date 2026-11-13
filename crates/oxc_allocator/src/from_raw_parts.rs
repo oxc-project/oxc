@@ -3,7 +3,6 @@
 //! * [`Allocator::from_raw_parts`]
 //! * [`Allocator::set_cursor_ptr`]
 //! * `Allocator::data_end_ptr` (private within crate)
-//! * `Allocator::cursor_ptr` (private within crate, only used in tests for fixed-sized allocators on Windows)
 
 use std::{alloc::Layout, ptr::NonNull};
 
@@ -66,16 +65,6 @@ impl Allocator {
         // SAFETY: Safety requirements of `Arena::from_raw_parts` are the same as for this method
         let arena = unsafe { Arena::from_raw_parts(start_ptr, size, backing_alloc_ptr, layout) };
         Self::from_arena(arena)
-    }
-
-    /// Get the current cursor pointer for this [`Allocator`]'s current chunk.
-    ///
-    /// If the `Allocator` is empty (has no chunks), this returns a dangling pointer.
-    ///
-    /// Only used in tests for fixed-sized allocators on Windows.
-    #[cfg(all(test, target_os = "windows"))]
-    pub(crate) fn cursor_ptr(&self) -> NonNull<u8> {
-        self.arena().cursor_ptr()
     }
 
     /// Set cursor pointer for this [`Allocator`]'s current chunk.
