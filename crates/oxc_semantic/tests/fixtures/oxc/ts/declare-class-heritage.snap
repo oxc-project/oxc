@@ -83,7 +83,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/declare-class-heritage.ts
         ]
       },
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable | AnonymousClassName)",
         "id": 2,
         "name": "LocalBase",
         "node": "VariableDeclarator(LocalBase)",

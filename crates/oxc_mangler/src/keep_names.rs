@@ -1,7 +1,5 @@
 use oxc_allocator::{Allocator, BitSet};
-
-use oxc_ast::{AstKind, ast::*};
-use oxc_semantic::{AstNode, AstNodes, ReferenceId, Scoping, SymbolId};
+use oxc_semantic::{Scoping, SymbolFlags};
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct MangleOptionsKeepNames {
@@ -32,205 +30,27 @@ impl From<bool> for MangleOptionsKeepNames {
     }
 }
 
-pub fn collect_name_symbols<'a>(
+/// Collects symbols whose names become the `name` property of a function or class: function and
+/// class names, and bindings that name an anonymous function or class.
+pub fn collect_name_symbols<'t>(
     options: MangleOptionsKeepNames,
-    allocator: &'a Allocator,
-    scoping: &Scoping,
-    ast_nodes: &AstNodes,
-) -> BitSet<'a> {
-    let collector = NameSymbolCollector::new(options, allocator, scoping, ast_nodes);
-    collector.collect()
-}
-
-/// Collects symbols that are used to set `name` properties of functions and classes.
-struct NameSymbolCollector<'a, 'b, 't> {
-    options: MangleOptionsKeepNames,
-    scoping: &'b Scoping,
-    ast_nodes: &'b AstNodes<'a>,
     allocator: &'t Allocator,
-}
-
-impl<'a, 'b: 'a, 't> NameSymbolCollector<'a, 'b, 't> {
-    fn new(
-        options: MangleOptionsKeepNames,
-        allocator: &'t Allocator,
-        scoping: &'b Scoping,
-        ast_nodes: &'b AstNodes<'a>,
-    ) -> Self {
-        Self { options, scoping, ast_nodes, allocator }
+    scoping: &Scoping,
+) -> BitSet<'t> {
+    let mut keep_flags = SymbolFlags::empty();
+    if options.function {
+        keep_flags |= SymbolFlags::Function | SymbolFlags::AnonymousFunctionName;
     }
-
-    fn collect(self) -> BitSet<'t> {
-        let mut symbol_ids = BitSet::new_in(self.scoping.symbols_len(), self.allocator);
-        self.scoping
-            .symbol_ids()
-            .filter(|symbol_id| {
-                let decl_node =
-                    self.ast_nodes.get_node(self.scoping.symbol_declaration(*symbol_id));
-                self.is_name_set_declare_node(decl_node, *symbol_id)
-                    || self.has_name_set_reference_node(*symbol_id)
-            })
-            .for_each(|symbol_id| symbol_ids.set_bit(symbol_id.index()));
-        symbol_ids
+    if options.class {
+        keep_flags |= SymbolFlags::Class | SymbolFlags::AnonymousClassName;
     }
-
-    fn has_name_set_reference_node(&self, symbol_id: SymbolId) -> bool {
-        self.scoping
-            .get_resolved_reference_ids(symbol_id)
-            .iter()
-            .any(|&reference_id| self.is_name_set_reference_node(reference_id))
-    }
-
-    fn is_name_set_declare_node(&self, node: &'a AstNode, symbol_id: SymbolId) -> bool {
-        match node.kind() {
-            AstKind::Function(function) => {
-                self.options.function
-                    && function.id.as_ref().is_some_and(|id| id.symbol_id() == symbol_id)
-            }
-            AstKind::Class(cls) => {
-                self.options.class && cls.id.as_ref().is_some_and(|id| id.symbol_id() == symbol_id)
-            }
-            AstKind::VariableDeclarator(decl) => {
-                if let BindingPattern::BindingIdentifier(id) = &decl.id
-                    && id.symbol_id() == symbol_id
-                {
-                    return decl
-                        .init
-                        .as_ref()
-                        .is_some_and(|init| self.is_expression_whose_name_needs_to_be_kept(init));
-                }
-                if let Some(assign_pattern) =
-                    Self::find_assign_binding_pattern_kind_of_specific_symbol(&decl.id, symbol_id)
-                {
-                    return self.is_expression_whose_name_needs_to_be_kept(&assign_pattern.right);
-                }
-                false
-            }
-            _ => false,
+    let mut symbol_ids = BitSet::new_in(scoping.symbols_len(), allocator);
+    for symbol_id in scoping.symbol_ids() {
+        if scoping.symbol_flags(symbol_id).intersects(keep_flags) {
+            symbol_ids.set_bit(symbol_id.index());
         }
     }
-
-    fn is_name_set_reference_node(&self, reference_id: ReferenceId) -> bool {
-        let node_id = self.scoping.get_reference(reference_id).node_id();
-        let parent_node_id = self.ast_nodes.parent_id(node_id);
-        match self.ast_nodes.kind(parent_node_id) {
-            // Check for direct assignment: foo = function() {}
-            AstKind::AssignmentExpression(assign_expr) => {
-                Self::is_assignment_target_id_of_specific_reference(&assign_expr.left, reference_id)
-                    && self.is_expression_whose_name_needs_to_be_kept(&assign_expr.right)
-            }
-            // Check for assignments within assignment targets with defaults: [foo = function() {}] = []
-            AstKind::AssignmentTargetWithDefault(assign_target) => {
-                Self::is_assignment_target_id_of_specific_reference(
-                    &assign_target.binding,
-                    reference_id,
-                ) && self.is_expression_whose_name_needs_to_be_kept(&assign_target.init)
-            }
-            AstKind::IdentifierReference(_)
-            | AstKind::TSAsExpression(_)
-            | AstKind::TSSatisfiesExpression(_)
-            | AstKind::TSNonNullExpression(_)
-            | AstKind::TSTypeAssertion(_)
-            | AstKind::ComputedMemberExpression(_)
-            | AstKind::PrivateFieldExpression(_)
-            | AstKind::StaticMemberExpression(_) => {
-                let grand_parent_node_kind = self.ast_nodes.parent_kind(parent_node_id);
-
-                match grand_parent_node_kind {
-                    AstKind::AssignmentExpression(assign_expr) => {
-                        Self::is_assignment_target_id_of_specific_reference(
-                            &assign_expr.left,
-                            reference_id,
-                        ) && self.is_expression_whose_name_needs_to_be_kept(&assign_expr.right)
-                    }
-                    AstKind::AssignmentTargetWithDefault(assign_target) => {
-                        Self::is_assignment_target_id_of_specific_reference(
-                            &assign_target.binding,
-                            reference_id,
-                        ) && self.is_expression_whose_name_needs_to_be_kept(&assign_target.init)
-                    }
-                    _ => false,
-                }
-            }
-            AstKind::AssignmentTargetPropertyIdentifier(ident) => {
-                if ident.binding.reference_id() == reference_id {
-                    return ident
-                        .init
-                        .as_ref()
-                        .is_some_and(|init| self.is_expression_whose_name_needs_to_be_kept(init));
-                }
-                false
-            }
-            _ => false,
-        }
-    }
-
-    fn find_assign_binding_pattern_kind_of_specific_symbol(
-        kind: &'a BindingPattern,
-        symbol_id: SymbolId,
-    ) -> Option<&'a AssignmentPattern<'a>> {
-        match kind {
-            BindingPattern::BindingIdentifier(_) => None,
-            BindingPattern::ObjectPattern(object_pattern) => {
-                object_pattern.properties.iter().find_map(|property| {
-                    Self::find_assign_binding_pattern_kind_of_specific_symbol(
-                        &property.value,
-                        symbol_id,
-                    )
-                })
-            }
-            BindingPattern::ArrayPattern(array_pattern) => {
-                array_pattern.elements.iter().flatten().find_map(|binding| {
-                    Self::find_assign_binding_pattern_kind_of_specific_symbol(binding, symbol_id)
-                })
-            }
-            BindingPattern::AssignmentPattern(assign_pattern) => {
-                if Self::is_binding_id_of_specific_symbol(&assign_pattern.left, symbol_id) {
-                    return Some(assign_pattern);
-                }
-                Self::find_assign_binding_pattern_kind_of_specific_symbol(
-                    &assign_pattern.left,
-                    symbol_id,
-                )
-            }
-        }
-    }
-
-    fn is_binding_id_of_specific_symbol(
-        pattern_kind: &BindingPattern,
-        symbol_id: SymbolId,
-    ) -> bool {
-        if let BindingPattern::BindingIdentifier(id) = pattern_kind {
-            id.symbol_id() == symbol_id
-        } else {
-            false
-        }
-    }
-
-    fn is_assignment_target_id_of_specific_reference(
-        target_kind: &AssignmentTarget,
-        reference_id: ReferenceId,
-    ) -> bool {
-        if let AssignmentTarget::AssignmentTargetIdentifier(id) = target_kind {
-            id.reference_id() == reference_id
-        } else {
-            false
-        }
-    }
-
-    fn is_expression_whose_name_needs_to_be_kept(&self, expr: &Expression) -> bool {
-        let is_anonymous = expr.is_anonymous_function_definition();
-        if !is_anonymous {
-            return false;
-        }
-
-        if self.options.class && self.options.function {
-            return true;
-        }
-
-        let is_class = matches!(expr.without_parentheses(), Expression::ClassExpression(_));
-        (self.options.class && is_class) || (self.options.function && !is_class)
-    }
+    symbol_ids
 }
 
 #[cfg(test)]
@@ -245,13 +65,14 @@ mod test {
 
     fn collect(opts: MangleOptionsKeepNames, source_text: &str) -> FxHashSet<String> {
         let allocator = Allocator::default();
-        let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
-        assert!(!ret.fatal_error, "{source_text}");
-        assert!(ret.diagnostics.is_empty(), "{source_text}");
-        let ret = SemanticBuilder::new().with_build_nodes(true).build(&ret.program);
+        let parser_ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
+        assert!(!parser_ret.fatal_error, "{source_text}");
+        assert!(parser_ret.diagnostics.is_empty(), "{source_text}");
+        let program = parser_ret.program;
+        let ret = SemanticBuilder::new().build(&program);
         assert!(ret.diagnostics.is_empty(), "{source_text}");
         let semantic = ret.semantic;
-        let symbols = collect_name_symbols(opts, &allocator, semantic.scoping(), semantic.nodes());
+        let symbols = collect_name_symbols(opts, &allocator, semantic.scoping());
         symbols
             .ones()
             .map(|symbol_id| {
@@ -262,6 +83,10 @@ mod test {
 
     fn data(s: &str) -> FxHashSet<String> {
         FxHashSet::from_iter([s.to_string()])
+    }
+
+    fn none() -> FxHashSet<String> {
+        FxHashSet::default()
     }
 
     fn function_only() -> MangleOptionsKeepNames {
@@ -276,6 +101,10 @@ mod test {
     fn test_declarations() {
         assert_eq!(collect(function_only(), "function foo() {}"), data("foo"));
         assert_eq!(collect(class_only(), "class Foo {}"), data("Foo"));
+        assert_eq!(collect(function_only(), "(function foo() {})"), data("foo"));
+        assert_eq!(collect(class_only(), "(class Foo {})"), data("Foo"));
+        assert_eq!(collect(class_only(), "function foo() {}"), none());
+        assert_eq!(collect(function_only(), "class Foo {}"), none());
     }
 
     #[test]
@@ -286,6 +115,11 @@ mod test {
         assert_eq!(collect(function_only(), "var foo = (() => {})"), data("foo"));
         assert_eq!(collect(class_only(), "var Foo = class {}"), data("Foo"));
         assert_eq!(collect(class_only(), "var Foo = (class {})"), data("Foo"));
+        assert_eq!(collect(class_only(), "var foo = function() {}"), none());
+        assert_eq!(collect(function_only(), "var Foo = class {}"), none());
+        let all = MangleOptionsKeepNames::all_true();
+        assert_eq!(collect(all, "var foo = function bar() {}"), data("bar"));
+        assert_eq!(collect(all, "var foo = 1"), none());
     }
 
     #[test]
@@ -297,6 +131,12 @@ mod test {
         assert_eq!(collect(function_only(), "var foo; foo ||= function() {}"), data("foo"));
         assert_eq!(collect(function_only(), "var foo = 1; foo &&= function() {}"), data("foo"));
         assert_eq!(collect(function_only(), "var foo; foo ??= function() {}"), data("foo"));
+        assert_eq!(collect(function_only(), "var foo; foo += function() {}"), none());
+        assert_eq!(collect(function_only(), "foo = function() {}"), none());
+        assert_eq!(
+            collect(function_only(), "var foo; (function() { foo = function() {} })"),
+            data("foo")
+        );
     }
 
     #[test]
@@ -305,6 +145,19 @@ mod test {
         assert_eq!(collect(function_only(), "var [foo = () => {}] = []"), data("foo"));
         assert_eq!(collect(class_only(), "var [Foo = class {}] = []"), data("Foo"));
         assert_eq!(collect(function_only(), "var { foo = function() {} } = {}"), data("foo"));
+        assert_eq!(collect(function_only(), "var { bar: foo = function() {} } = {}"), data("foo"));
+        assert_eq!(collect(function_only(), "var [[foo = () => {}] = []] = []"), data("foo"));
+        assert_eq!(collect(function_only(), "var [...[foo = () => {}]] = []"), data("foo"));
+        assert_eq!(collect(class_only(), "var [foo = function() {}] = []"), none());
+    }
+
+    #[test]
+    fn test_default_parameters() {
+        assert_eq!(collect(function_only(), "(function(foo = () => {}) {})"), data("foo"));
+        assert_eq!(collect(class_only(), "((Foo = class {}) => {})"), data("Foo"));
+        assert_eq!(collect(function_only(), "(function([foo = () => {}]) {})"), data("foo"));
+        assert_eq!(collect(function_only(), "(function(...[foo = () => {}]) {})"), data("foo"));
+        assert_eq!(collect(function_only(), "try {} catch ({ foo = () => {} }) {}"), data("foo"));
     }
 
     #[test]
@@ -316,6 +169,11 @@ mod test {
             collect(function_only(), "var foo; ({ foo = function() {} } = {})"),
             data("foo")
         );
+        assert_eq!(
+            collect(function_only(), "var foo; ({ bar: foo = function() {} } = {})"),
+            data("foo")
+        );
+        assert_eq!(collect(class_only(), "var foo; [foo = function() {}] = []"), none());
     }
 
     #[test]
@@ -323,5 +181,16 @@ mod test {
         assert_eq!(collect(function_only(), "for (var foo = function() {} in []) {}"), data("foo"));
         assert_eq!(collect(function_only(), "for (var foo = () => {} in []) {}"), data("foo"));
         assert_eq!(collect(class_only(), "for (var Foo = class {} in []) {}"), data("Foo"));
+    }
+
+    #[test]
+    fn test_redeclarations() {
+        assert_eq!(collect(function_only(), "var foo = 1; var foo = function() {}"), data("foo"));
+        assert_eq!(
+            collect(function_only(), "(function() { var foo; function foo() {} })"),
+            data("foo")
+        );
+        assert_eq!(collect(class_only(), "var Foo = 1; var Foo = class {}"), data("Foo"));
+        assert_eq!(collect(class_only(), "var Foo = 1; Foo = class {}"), data("Foo"));
     }
 }

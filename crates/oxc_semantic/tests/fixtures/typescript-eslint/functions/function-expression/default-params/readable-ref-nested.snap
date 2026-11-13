@@ -20,7 +20,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
         "node": "Function(<anonymous>)",
         "symbols": [
           {
-            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "flags": "SymbolFlags(FunctionScopedVariable | AnonymousFunctionName)",
             "id": 2,
             "name": "b",
             "node": "FormalParameter(b)",
@@ -49,7 +49,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
         ]
       },
       {
-        "flags": "SymbolFlags(BlockScopedVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable | AnonymousFunctionName)",
         "id": 1,
         "name": "foo",
         "node": "VariableDeclarator(foo)",

@@ -93,7 +93,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/functions/return-type.ts
         "references": []
       },
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable | AnonymousFunctionName)",
         "id": 3,
         "name": "Bar",
         "node": "VariableDeclarator(Bar)",

@@ -153,8 +153,8 @@ impl<'a> AncestryStack<'a> {
 ///
 /// Dispatches between two backends so the checker/binder code is written once:
 ///
-/// - [`Ancestry::Nodes`] — when the full [`AstNodes`] store is built (linter,
-///   mangler), ancestry is read from the store via `current_node_id`. No
+/// - [`Ancestry::Nodes`] — when the full [`AstNodes`] store is built (e.g. by
+///   the linter), ancestry is read from the store via `current_node_id`. No
 ///   separate stack is maintained, so this path has no per-node overhead.
 /// - [`Ancestry::Stack`] — when the store is *not* built (compiler pipeline),
 ///   ancestry is read from the [`AncestryStack`] maintained during traversal.

@@ -24,6 +24,10 @@ pub type UnresolvedReferences<'a> = ArenaIdentHashMap<'a, ArenaVec<'a, Reference
 pub struct Redeclaration {
     pub span: Span,
     pub declaration: NodeId,
+    /// The scope that was current when this declaration was bound.
+    ///
+    /// See [`Scoping::symbol_declaration_scope_id`].
+    pub scope_id: ScopeId,
     pub flags: SymbolFlags,
 }
 
@@ -39,6 +43,7 @@ impl CloneIn<'_> for Redeclaration {
         Self {
             span: self.span,
             declaration: self.declaration.clone_in_impl(with_semantic_ids, allocator),
+            scope_id: self.scope_id.clone_in_impl(with_semantic_ids, allocator),
             flags: self.flags,
         }
     }
@@ -61,14 +66,15 @@ multi_index_vec! {
 multi_index_vec! {
     /// Symbol table stored as struct-of-arrays in a single allocation.
     ///
-    /// Contains spans, flags, scope IDs, and declaration node IDs for all symbols.
-    /// Using a single allocation with one `len`/`cap` instead of 4 separate `IndexVec`s
+    /// Contains spans, flags, scope IDs, declaration node IDs, and declaration scope IDs for all
+    /// symbols. Using a single allocation with one `len`/`cap` instead of 5 separate `IndexVec`s
     /// saves memory and CPU.
     struct SymbolTable<SymbolId> {
         symbol_spans => symbol_spans_mut: Span,
         symbol_flags => symbol_flags_mut: SymbolFlags,
         symbol_scope_ids => symbol_scope_ids_mut: ScopeId,
         symbol_declarations => symbol_declarations_mut: NodeId,
+        symbol_declaration_scope_ids => symbol_declaration_scope_ids_mut: ScopeId,
     }
 }
 
@@ -449,6 +455,21 @@ impl Scoping {
         *self.symbol_table.symbol_declarations(symbol_id)
     }
 
+    /// Get the ID of the scope that was current when a symbol's binding was declared.
+    ///
+    /// This is usually the same as [`Scoping::symbol_scope_id`]. They differ when the binding
+    /// belongs to an outer scope: a `var` or an Annex B function declaration inside a block (this
+    /// returns the block scope, [`Scoping::symbol_scope_id`] the scope it was hoisted to), or
+    /// `infer T` (this returns the scope containing the `infer`, [`Scoping::symbol_scope_id`] the
+    /// conditional type's scope).
+    ///
+    /// Moving a binding with [`Scoping::set_symbol_scope_id`] or
+    /// [`Scoping::move_binding_by_symbol_id`] does not change this scope.
+    #[inline]
+    pub fn symbol_declaration_scope_id(&self, symbol_id: SymbolId) -> ScopeId {
+        *self.symbol_table.symbol_declaration_scope_ids(symbol_id)
+    }
+
     /// Get all declaration node IDs for a symbol.
     ///
     /// Most symbols have a single declaration, but TypeScript allows merged type/value
@@ -475,7 +496,7 @@ impl Scoping {
             cell.symbol_names.push(name.clone_in(allocator));
             cell.resolved_references.push(ArenaVec::new_in(&allocator));
         });
-        self.symbol_table.push(span, flags, scope_id, node_id)
+        self.symbol_table.push(span, flags, scope_id, node_id, scope_id)
     }
 
     /// Create a new symbol, append symbol metadata to the symbol table, and bind it to a scope.
@@ -487,8 +508,10 @@ impl Scoping {
         symbol_scope_id: ScopeId,
         binding_scope_id: ScopeId,
         node_id: NodeId,
+        declaration_scope_id: ScopeId,
     ) -> SymbolId {
-        let symbol_id = self.symbol_table.push(span, flags, symbol_scope_id, node_id);
+        let symbol_id =
+            self.symbol_table.push(span, flags, symbol_scope_id, node_id, declaration_scope_id);
         self.cell.with_dependent_mut(|allocator, cell| {
             let name = name.clone_in(allocator);
             cell.symbol_names.push(name);
@@ -504,6 +527,7 @@ impl Scoping {
         symbol_id: SymbolId,
         flags: SymbolFlags,
         declaration: NodeId,
+        scope_id: ScopeId,
         span: Span,
     ) {
         let is_first_redeclared =
@@ -513,11 +537,12 @@ impl Scoping {
         let first_declaration = is_first_redeclared.then(|| Redeclaration {
             span: self.symbol_span(symbol_id),
             declaration: self.symbol_declaration(symbol_id),
+            scope_id: self.symbol_declaration_scope_id(symbol_id),
             flags: self.symbol_flags(symbol_id),
         });
 
         self.cell.with_dependent_mut(|allocator, cell| {
-            let redeclaration = Redeclaration { span, declaration, flags };
+            let redeclaration = Redeclaration { span, declaration, scope_id, flags };
             match cell.symbol_redeclarations.entry(symbol_id) {
                 Entry::Occupied(occupied) => {
                     occupied.into_mut().push(redeclaration);
@@ -563,6 +588,7 @@ impl Scoping {
         if let Some((replacement, flags)) = replacement {
             *self.symbol_table.symbol_spans_mut(symbol_id) = replacement.span;
             *self.symbol_table.symbol_declarations_mut(symbol_id) = replacement.declaration;
+            *self.symbol_table.symbol_declaration_scope_ids_mut(symbol_id) = replacement.scope_id;
             *self.symbol_table.symbol_flags_mut(symbol_id) = flags;
         }
     }

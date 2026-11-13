@@ -92,6 +92,9 @@ pub struct SemanticBuilder<'a> {
     /// declarations in that scope can still detect redeclarations via `check_redeclaration`.
     /// A single flat map avoids allocating a per-scope inner map for every hoisting scope.
     pub(crate) hoisting_variables: FxHashMap<(ScopeId, Ident<'a>), SymbolId>,
+    /// Write references that name an anonymous function or class, e.g. `f` in `f = () => {}`,
+    /// with the flag to add to the referenced symbol once references are resolved.
+    anonymous_name_references: Vec<(ReferenceId, SymbolFlags)>,
 
     // builders
     /// Node-id counter, current-node cursor/flags, and the node storage (full
@@ -158,6 +161,7 @@ impl<'a> SemanticBuilder<'a> {
             module_instance_state_cache: FxHashMap::default(),
             node_store: AstNodeStore::default(),
             hoisting_variables: FxHashMap::default(),
+            anonymous_name_references: Vec::new(),
             scoping,
             unresolved_references: UnresolvedReferences::new(),
             unused_labels: UnusedLabels::default(),
@@ -201,7 +205,7 @@ impl<'a> SemanticBuilder<'a> {
     /// be overridden with the `with_*` methods.
     ///
     /// Tools that need the node store but not the linter analyses or syntax
-    /// checking (e.g. the mangler) should use `new().with_build_nodes(true)`
+    /// checking (e.g. the React Compiler) should use `new().with_build_nodes(true)`
     /// instead.
     #[must_use]
     pub fn new_linter() -> Self {
@@ -230,7 +234,7 @@ impl<'a> SemanticBuilder<'a> {
     /// Disabled by default: [`Semantic::nodes`] is empty and only the ancestry
     /// stack and node-id counter are maintained while traversing — cheaper for
     /// the compiler pipeline, which does not need random access to nodes. Enable
-    /// it for the linter and mangler, which read [`Semantic::nodes`].
+    /// it for consumers that read [`Semantic::nodes`], such as the linter.
     #[must_use]
     pub fn with_build_nodes(mut self, yes: bool) -> Self {
         self.node_store.set_build_nodes(yes);
@@ -401,6 +405,24 @@ impl<'a> SemanticBuilder<'a> {
         self.errors.borrow_mut().push(error);
     }
 
+    /// Flag `ident`'s symbol if it names `init` by NamedEvaluation.
+    fn record_binding_name(&mut self, ident: &BindingIdentifier<'a>, init: &Expression<'a>) {
+        if let Some(flag) = anonymous_name_flag(init)
+            && let Some(symbol_id) = ident.symbol_id.get()
+        {
+            self.scoping.union_symbol_flag(symbol_id, flag);
+        }
+    }
+
+    /// Flag the symbol `ident` resolves to if it names `init` by NamedEvaluation.
+    fn record_reference_name(&mut self, ident: &IdentifierReference<'a>, init: &Expression<'a>) {
+        if let Some(flag) = anonymous_name_flag(init)
+            && let Some(reference_id) = ident.reference_id.get()
+        {
+            self.anonymous_name_references.push((reference_id, flag));
+        }
+    }
+
     /// Upward-walking view of the current node's ancestors.
     ///
     /// This is the only ancestry information the syntax checker and binder read.
@@ -562,6 +584,7 @@ impl<'a> SemanticBuilder<'a> {
             scope_id,
             scope_id,
             self.node_store.current_node_id,
+            self.current_scope_id,
         )
     }
 
@@ -652,6 +675,7 @@ impl<'a> SemanticBuilder<'a> {
             self.current_scope_id,
             scope_id,
             self.node_store.current_node_id,
+            self.current_scope_id,
         )
     }
 
@@ -865,6 +889,7 @@ impl<'a> SemanticBuilder<'a> {
             symbol_id,
             flags,
             self.node_store.current_node_id,
+            self.current_scope_id,
             span,
         );
     }
@@ -1024,6 +1049,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // Resolve all remaining unresolved references by walking up the scope chain.
         // This replaces the old bubble-up approach where references were merged on every scope exit.
         self.resolve_all_references();
+        for (reference_id, flag) in mem::take(&mut self.anonymous_name_references) {
+            if let Some(symbol_id) = self.scoping.get_reference(reference_id).symbol_id() {
+                self.scoping.union_symbol_flag(symbol_id, flag);
+            }
+        }
 
         self.leave_node(kind);
         self.leave_ambient_context(is_ambient);
@@ -1343,6 +1373,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             }
         });
         /* cfg */
+
+        if (expr.operator.is_assign() || expr.operator.is_logical())
+            && let AssignmentTarget::AssignmentTargetIdentifier(ident) = &expr.left
+        {
+            self.record_reference_name(ident, &expr.right);
+        }
 
         self.leave_node(kind);
     }
@@ -2428,8 +2464,16 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_identifier_reference(&it.binding);
         if let Some(init) = &it.init {
             self.visit_expression(init);
+            self.record_reference_name(&it.binding, init);
         }
         self.leave_node(kind);
+    }
+
+    fn visit_assignment_target_with_default(&mut self, it: &AssignmentTargetWithDefault<'a>) {
+        oxc_ast_visit::walk::walk_assignment_target_with_default(self, it);
+        if let AssignmentTarget::AssignmentTargetIdentifier(ident) = &it.binding {
+            self.record_reference_name(ident, &it.init);
+        }
     }
 
     fn visit_export_default_declaration_kind(&mut self, it: &ExportDefaultDeclarationKind<'a>) {
@@ -2673,6 +2717,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let kind = AstKind::VariableDeclarator(self.alloc(decl));
         self.enter_node(kind);
         decl.bind(self);
+        if let BindingPattern::BindingIdentifier(ident) = &decl.id
+            && let Some(init) = &decl.init
+        {
+            self.record_binding_name(ident, init);
+        }
         self.visit_span(&decl.span);
         self.visit_binding_pattern(&decl.id);
         if let Some(type_annotation) = &decl.type_annotation {
@@ -2716,10 +2765,22 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
+    fn visit_assignment_pattern(&mut self, pattern: &AssignmentPattern<'a>) {
+        if let BindingPattern::BindingIdentifier(ident) = &pattern.left {
+            self.record_binding_name(ident, &pattern.right);
+        }
+        oxc_ast_visit::walk::walk_assignment_pattern(self, pattern);
+    }
+
     fn visit_formal_parameter(&mut self, param: &FormalParameter<'a>) {
         let kind = AstKind::FormalParameter(self.alloc(param));
         self.enter_node(kind);
         param.bind(self);
+        if let BindingPattern::BindingIdentifier(ident) = &param.pattern
+            && let Some(initializer) = &param.initializer
+        {
+            self.record_binding_name(ident, initializer);
+        }
         self.visit_span(&param.span);
         self.visit_parameter_decorators(&param.decorators);
         self.visit_binding_pattern(&param.pattern);
@@ -3056,6 +3117,21 @@ fn is_delete_member_target(expr: &Expression<'_>) -> bool {
             ChainElement::CallExpression(_) | ChainElement::TSNonNullExpression(_) => false,
         },
         inner => inner.is_member_expression(),
+    }
+}
+
+/// The flag for a binding that names `init` by NamedEvaluation, if `init` is an anonymous
+/// function or class definition.
+fn anonymous_name_flag(init: &Expression<'_>) -> Option<SymbolFlags> {
+    match init.without_parentheses() {
+        Expression::ArrowFunctionExpression(_) => Some(SymbolFlags::AnonymousFunctionName),
+        Expression::FunctionExpression(func) if func.id.is_none() => {
+            Some(SymbolFlags::AnonymousFunctionName)
+        }
+        Expression::ClassExpression(class) if class.id.is_none() => {
+            Some(SymbolFlags::AnonymousClassName)
+        }
+        _ => None,
     }
 }
 

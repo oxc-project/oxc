@@ -123,7 +123,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/functions/type-parameter-c
         "references": []
       },
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable | AnonymousFunctionName)",
         "id": 4,
         "name": "Bar",
         "node": "VariableDeclarator(Bar)",
