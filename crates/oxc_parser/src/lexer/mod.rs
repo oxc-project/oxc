@@ -527,8 +527,15 @@ impl<'a, C: Config> Lexer<'a, C> {
                 let offset = self.source.offset_of(pos);
                 self.token_start = offset;
 
+                if let Some(kind) = byte_handlers::single_byte_token(byte) {
+                    // SAFETY: Single-byte tokens are ASCII, and at least 1 byte remains after `pos`
+                    self.source.set_position(unsafe { pos.add(1) });
+                    return kind;
+                }
+
+                let byte_handlers = self.config.byte_handlers();
                 // SAFETY: `byte` is byte value at current position in source
-                let kind = unsafe { self.handle_byte(byte) };
+                let kind = unsafe { byte_handlers[byte as usize](self) };
                 if kind != Kind::Skip {
                     return kind;
                 }
