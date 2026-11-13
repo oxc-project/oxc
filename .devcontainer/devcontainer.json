@@ -21,8 +21,7 @@
         "EditorConfig.EditorConfig",
         "tamasfe.even-better-toml",
         "eamodio.gitlens",
-        "nefrob.vscode-just-syntax",
-        "tekumara.typos-vscode"
+        "nefrob.vscode-just-syntax"
       ]
     }
   },

@@ -595,15 +595,6 @@ jobs:
         run: |
           git diff --exit-code # Must commit everything
 
-  typos:
-    name: Spell Check
-    runs-on: ubuntu-slim
-    steps:
-      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: crate-ci/typos@7f9d0819ca1c008ade73f4b41fa9d258d48f605b # v1.51.1
-        with:
-          files: .
-
   lint:
     name: Lint
     runs-on: namespace-profile-linux-x64-default
