@@ -1,4 +1,4 @@
-use std::{mem::MaybeUninit, ptr, slice};
+use std::mem::MaybeUninit;
 
 use oxc_simd::{Cpu, cpu_multiversion, prefetch};
 
@@ -14,6 +14,7 @@ use crate::pipeline::{
     lanes::Lanes,
     operators::{is_op_char, opmap_longest, opmap_pack2, opmap_pack3},
     scan::scan_number,
+    source::Source,
 };
 
 mod keywords;
@@ -27,8 +28,7 @@ const _: () = assert!(tk!(BigInt) == tk!(Number) + 1);
 #[cpu_multiversion]
 #[inline(never)]
 pub unsafe fn coalesce(
-    src: *const u8,
-    n: usize,
+    src: Source,
     st: Bitmap,
     opch: Bitmap,
     word: Bitmap,
@@ -47,7 +47,7 @@ pub unsafe fn coalesce(
     let mut rarem = [const { MaybeUninit::<u64>::uninit() }; KWB];
     let mut e = 0usize;
     let mut prev_empty = false;
-    let nw = (n + 63) >> 6;
+    let nw = (src.len() + 63) >> 6;
     let mut opprev: u64 = 0;
     let mut dtprev: u64 = 0;
     let mut cursor: usize = 0;
@@ -105,7 +105,7 @@ pub unsafe fn coalesce(
         if !(empty && prev_empty) {
             let base = (w << 6) as u32;
             let cnt = kwc.count_ones() as usize;
-            prefetch(src.add(base as usize), cpu);
+            prefetch(src.as_ptr().add(base as usize), cpu);
             prefetch(kind.add(base as usize) as *const u8, cpu);
             for j in 0..8 {
                 *kwpos.add(k + j) = base + kwc.trailing_zeros();
@@ -141,7 +141,7 @@ pub unsafe fn coalesce(
         if w & (KWB - 1) == KWB - 1 {
             if e != 0 {
                 cursor = coalesce_events(
-                    ts, src, n, st, opch, word, kind, lanes, evpos, e, &rarem, cursor, cpu,
+                    ts, src, st, opch, word, kind, lanes, evpos, e, &rarem, cursor, cpu,
                 );
                 e = 0;
             }
@@ -150,7 +150,7 @@ pub unsafe fn coalesce(
         }
     }
     if e != 0 {
-        coalesce_events(ts, src, n, st, opch, word, kind, lanes, evpos, e, &rarem, cursor, cpu);
+        coalesce_events(ts, src, st, opch, word, kind, lanes, evpos, e, &rarem, cursor, cpu);
     }
     kw_flush(ts, src, word, kind, kwpos, k, cpu);
 }
@@ -160,8 +160,7 @@ pub unsafe fn coalesce(
 #[inline(never)]
 unsafe fn coalesce_events(
     ts: bool,
-    src: *const u8,
-    n: usize,
+    src: Source,
     st: Bitmap,
     opch: Bitmap,
     word: Bitmap,
@@ -173,7 +172,7 @@ unsafe fn coalesce_events(
     mut cursor: usize,
     cpu: impl Cpu,
 ) -> usize {
-    let nw = (n + 63) >> 6;
+    let nw = (src.len() + 63) >> 6;
     for i in 0..count {
         let p = *evpos.add(i) as usize;
         if p < cursor {
@@ -183,20 +182,18 @@ unsafe fn coalesce_events(
         let rare = rarem[w & (KWB - 1)].assume_init();
         let has_next = w + 1 < nw;
         if (rare >> bit) & 1 != 0 {
-            cursor = glue_number(ts, src, n, st, opch, word, kind, p, lanes, cpu);
+            cursor = glue_number(ts, src, st, opch, word, kind, p, lanes, cpu);
         } else {
             let op = opch.block(w, cpu);
             let opnext = if has_next { opch.block(w + 1, cpu) } else { 0 };
             let y2 = (op >> bit) | ((opnext << (63 - bit)) << 1);
             let run = (!y2).trailing_zeros() as usize;
-            let q = ptr::read_unaligned(src.add(p) as *const u32);
+            let q = src.u32_at(p);
             let b0 = q as u8;
             let b1 = (q >> 8) as u8;
             // In TS, `>` may close nested type args including `Foo<T>= 1`, so fusing can diverge.
             // Cheap inline byte checks handle this
-            if b0 == b'>'
-                && ts
-                && (b1 == b'>' || (b1 == b'=' && p > 0 && !is_ws(*src.add(p - 1), cpu)))
+            if b0 == b'>' && ts && (b1 == b'>' || (b1 == b'=' && p > 0 && !is_ws(src[p - 1], cpu)))
             {
                 let kw_final = (w & !(KWB - 1)) << 6;
                 let tokens = TokensView::new(
@@ -204,7 +201,6 @@ unsafe fn coalesce_events(
                     st,
                     opch,
                     kind,
-                    n,
                     true,
                     kw_final,
                     lanes.module,
@@ -215,13 +211,13 @@ unsafe fn coalesce_events(
                 let g = gt_run_split(&tokens, &mut lanes.disambiguate.walks, p, run, cpu);
                 if g != 0 {
                     // Only `>`s stay split; the rest still munches, or `>>&&` would emit two `&`s.
-                    cursor = munch_walk(ts, src, n, st, opch, kind, p + g, lanes, cpu);
+                    cursor = munch_walk(ts, src, st, opch, kind, p + g, lanes, cpu);
                     continue;
                 }
             }
             // A << may open two lists; longer runs always reach munch_walk.
             if b1 == b'<' && ts && (b0 == b'<' || (q >> 16) as u8 == b'<') {
-                cursor = munch_walk(ts, src, n, st, opch, kind, p, lanes, cpu);
+                cursor = munch_walk(ts, src, st, opch, kind, p, lanes, cpu);
                 continue;
             }
             if run == 2 {
@@ -238,7 +234,7 @@ unsafe fn coalesce_events(
                 continue;
             }
             if run > 3 {
-                cursor = munch_walk(ts, src, n, st, opch, kind, p, lanes, cpu);
+                cursor = munch_walk(ts, src, st, opch, kind, p, lanes, cpu);
                 continue;
             }
             let b2 = (q >> 16) as u8;
@@ -277,8 +273,7 @@ unsafe fn coalesce_events(
 #[cpu_multiversion]
 unsafe fn glue_number(
     ts: bool,
-    src: *const u8,
-    n: usize,
+    src: Source,
     st: Bitmap,
     opch: Bitmap,
     word: Bitmap,
@@ -288,22 +283,21 @@ unsafe fn glue_number(
     cpu: impl Cpu,
 ) -> usize {
     loop {
-        let e2 = scan_number(src, n, p, cpu);
-        *kind.add(p) = tk!(Number) + (*src.add(e2 - 1) == b'n') as u8;
+        let e2 = scan_number(src, p, cpu);
+        *kind.add(p) = tk!(Number) + (src[e2 - 1] == b'n') as u8;
         if e2 > p + 1 {
             st.clear_range(p + 1, e2 - 1, cpu);
             opch.clear_range(p, e2 - 1, cpu);
         }
-        if e2 >= n {
-            return n;
+        if e2 >= src.len() {
+            return src.len();
         }
         st.set(e2, cpu);
-        let c = *src.add(e2);
+        let c = src[e2];
         // A word char abutting the number end (`1.5n`, `3in`, `0b12`, `1π`)
         // is a spec-invalid adjacency. Never true on valid input, so the
         // whole arm is cold.
         if is_word(c, cpu) {
-            let srcs = slice::from_raw_parts(src, n);
             if c < 0x80 {
                 // A surviving `n` is a misplaced bigint suffix; scan_number
                 // consumes legal ones. Token spans are unchanged either way.
@@ -312,7 +306,7 @@ unsafe fn glue_number(
                 } else {
                     DiagCode::InvalidNumericLiteral
                 };
-                lanes.push_num_end_diag(srcs, e2, code);
+                lanes.push_num_end_diag(src.bytes(), e2, code);
                 if is_digit(c, cpu) {
                     // Digit invalid for the radix (`0b12`) or after a bigint
                     // suffix (`1n2`): keep gluing from it.
@@ -324,7 +318,7 @@ unsafe fn glue_number(
                 // + KW_IN). Same inputs as kw_verify_batch: length from the
                 // word bitmap, no match right after a member `.` (a number
                 // ending in `.` is that dot-run's first dot).
-                if *src.add(e2 - 1) != b'.' {
+                if src[e2 - 1] != b'.' {
                     let kk = kw_match_word(ts, src, word, e2, cpu);
                     if kk != TokenKind::Ident {
                         *kind.add(e2) = kk as u8;
@@ -332,15 +326,15 @@ unsafe fn glue_number(
                 }
             } else {
                 // Cold decode; flags only a real Unicode IdentifierStart.
-                lanes.push_num_end_diag_unicode(srcs, e2);
+                lanes.push_num_end_diag_unicode(src.bytes(), e2);
             }
             return e2; // token start already set at e2
         }
-        if e2 + 1 < n && is_op_char(c, cpu) && opch.get(e2 + 1, cpu) {
+        if e2 + 1 < src.len() && is_op_char(c, cpu) && opch.get(e2 + 1, cpu) {
             // A numeric literal type ends its type argument list here (`Map<A, 1.5>>`); without this the number's own munch
             // reaches the `>` run before `coalesce` ever raises it as an event.
-            if c == b'>' && ts && matches!(*src.add(e2 + 1), b'>' | b'=') {
-                let end = opch.next0(e2, n, cpu);
+            if c == b'>' && ts && matches!(src[e2 + 1], b'>' | b'=') {
+                let end = opch.next0(e2, src.len(), cpu);
                 // Keyword kinds are final only below this window's batch.
                 let kw_final = ((e2 >> 6) & !(KWB - 1)) << 6;
                 let tokens = TokensView::new(
@@ -348,7 +342,6 @@ unsafe fn glue_number(
                     st,
                     opch,
                     kind,
-                    n,
                     true,
                     kw_final,
                     lanes.module,
@@ -360,11 +353,11 @@ unsafe fn glue_number(
                 if g != 0 {
                     // The split `>`s stay single tokens, but whatever borders on them is still an operator run and has to be
                     // munched, or a following `&&` / `??` / `**` is emitted a byte at a time.
-                    return munch_walk(ts, src, n, st, opch, kind, e2 + g, lanes, cpu);
+                    return munch_walk(ts, src, st, opch, kind, e2 + g, lanes, cpu);
                 }
             }
-            let q = munch_walk(ts, src, n, st, opch, kind, e2, lanes, cpu);
-            if q < n && *src.add(q) == b'.' && is_digit(*src.add(q + 1), cpu) && st.get(q, cpu) {
+            let q = munch_walk(ts, src, st, opch, kind, e2, lanes, cpu);
+            if q < src.len() && src[q] == b'.' && is_digit(src[q + 1], cpu) && st.get(q, cpu) {
                 p = q;
                 continue;
             }
@@ -379,8 +372,7 @@ unsafe fn glue_number(
 #[inline(never)]
 unsafe fn munch_walk(
     ts: bool,
-    src: *const u8,
-    n: usize,
+    src: Source,
     st: Bitmap,
     opch: Bitmap,
     kind: *mut u8,
@@ -388,11 +380,11 @@ unsafe fn munch_walk(
     lanes: &Lanes,
     cpu: impl Cpu,
 ) -> usize {
-    let end = opch.next0(pos, n, cpu);
+    let end = opch.next0(pos, src.len(), cpu);
     while end - pos >= 2 {
         st.set(pos, cpu);
         let rem = end - pos;
-        let bytes = *src.add(pos).cast::<[u8; 4]>();
+        let bytes = src.u32_at(pos).to_le_bytes();
         let (opk, opl) = opmap_longest(bytes, rem as u32, cpu);
         if let Some(opk) = opk {
             // Two list openers, not a shift: Array<<T>(x: T) => T>, a?.<<T>(x: T) => T>(b).
@@ -402,7 +394,6 @@ unsafe fn munch_walk(
                     st,
                     opch,
                     kind,
-                    n,
                     true,
                     0,
                     lanes.module,

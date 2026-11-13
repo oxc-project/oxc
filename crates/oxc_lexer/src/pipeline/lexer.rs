@@ -19,6 +19,7 @@ use crate::pipeline::{
     compress::{STAGE_CAP, compress, init_pair_luts, write_sentinels},
     lanes::Lanes,
     misc::{misc_post, misc_pre, retain_code_whitespace},
+    source::Source,
     unicode_leads::resolve_unicode_leads,
 };
 
@@ -99,6 +100,7 @@ impl Lexer {
             src.len() >= n.saturating_add(PAD),
             "lexer: src must have >= {PAD} bytes of padding past len {n}"
         );
+        let src = Source::new(src, n);
         // Can't wrap. `n + PAD <= src.len() <= isize::MAX`, and `SPAN_SENTINELS` is small.
         let capacity = n + PAD + SPAN_SENTINELS;
         tokens.kinds.clear();
@@ -111,7 +113,6 @@ impl Lexer {
         let count = unsafe {
             let count = self.lex_raw(
                 src,
-                n,
                 tokens.kinds.as_mut_ptr().cast::<u8>(),
                 tokens.spans.as_mut_ptr(),
                 options.jsx,
@@ -127,7 +128,7 @@ impl Lexer {
         };
         if !self.lanes.unicode_leads.is_empty() && count > 0 {
             let (kinds, spans) = (&tokens.kinds[..count], &tokens.spans[..count]);
-            resolve_unicode_leads(&mut self.lanes, &src[..n], kinds, spans);
+            resolve_unicode_leads(&mut self.lanes, src.bytes(), kinds, spans);
         }
         if !self.lanes.diag_suppress.is_empty() {
             // Keep `InvalidUtf8` diagnostics, even in a range where diagnostics are dropped.
@@ -141,24 +142,11 @@ impl Lexer {
         tokens.lanes = mem::take(&mut self.lanes.out);
     }
 
-    /// Run the full pipeline over `src[..n]`, writing the trivia-free token
-    /// stream into `out_kinds`/`out_spans` ([`SPAN_SENTINELS`] EOF entries
-    /// spanning `(n, n)` follow the last token) and the value lanes and
-    /// diagnostics into `self.lanes`. Returns the significant token count,
-    /// excluding the sentinels.
-    ///
-    /// # SAFETY
-    ///
-    /// - `src` must extend at least [`PAD`] zeroed bytes past `n`.
-    /// - `out_kinds` must be valid for `n + PAD + SPAN_SENTINELS` byte writes
-    ///   and `out_spans` for the same number of [`Span`] writes: `build_spans`
-    ///   stores full 4-lane groups past the last token, and the sentinels
-    ///   follow it.
+    /// Safety: out_kinds and out_spans must hold src.len() + PAD + SPAN_SENTINELS entries.
     #[cpu_version(Generic)]
     unsafe fn lex_raw(
         &mut self,
-        src: &[u8],
-        n: usize,
+        src: Source,
         out_kinds: *mut u8,
         out_spans: *mut Span,
         jsx: bool,
@@ -166,14 +154,13 @@ impl Lexer {
         module: bool,
         vutf8: bool,
     ) -> usize {
-        self.lex_raw_impl(src, n, out_kinds, out_spans, jsx, ts, module, vutf8, self.cpu)
+        self.lex_raw_impl(src, out_kinds, out_spans, jsx, ts, module, vutf8, self.cpu)
     }
 
     #[cpu_multiversion]
     unsafe fn lex_raw_impl(
         &mut self,
-        src: &[u8],
-        n: usize,
+        src: Source,
         out_kinds: *mut u8,
         out_spans: *mut Span,
         jsx: bool,
@@ -182,18 +169,16 @@ impl Lexer {
         vutf8: bool,
         cpu: impl Cpu,
     ) -> usize {
-        debug_assert!(src.len() >= n + PAD, "source must extend PAD zeroed bytes past n");
-        self.ensure(n, cpu);
+        self.ensure(src.len(), cpu);
         self.lanes.clear(cpu);
         self.lanes.module = module;
-        self.lanes.disambiguate.begin(n, module, cpu);
-        if n == 0 {
+        self.lanes.disambiguate.begin(src.len(), module, cpu);
+        if src.len() == 0 {
             write_sentinels(0, out_spans, out_kinds, cpu);
             return 0;
         }
 
-        let nb = n.div_ceil(64);
-        let sp = src.as_ptr();
+        let nb = src.len().div_ceil(64);
         let word = Bitmap::new(self.word.as_mut_ptr());
         let st = Bitmap::new(self.st.as_mut_ptr());
         let kwinit = Bitmap::new(self.kwinit.as_mut_ptr());
@@ -208,12 +193,11 @@ impl Lexer {
         // Keyword recognition is mode-scoped: the TS set (and its wider
         // kwinit letter class) only ever sees TS input, so JS lexing is
         // byte-identical to a build without it.
-        classify(ts, sp, n, nb, word, st, kwinit, opch, digit, dot, misc, kind, cpu);
-        let nesc = misc_pre(sp, n, nb, st, word, misc, kind, vutf8, &mut self.lanes, cpu);
-        carve(src, n, st, kind, opch, word, digit, dot, kwinit, jsx, ts, &mut self.lanes, cpu);
+        classify(ts, src, nb, word, st, kwinit, opch, digit, dot, misc, kind, cpu);
+        let nesc = misc_pre(src, nb, st, word, misc, kind, vutf8, &mut self.lanes, cpu);
+        carve(src, st, kind, opch, word, digit, dot, kwinit, jsx, ts, &mut self.lanes, cpu);
         coalesce(
-            sp,
-            n,
+            src,
             st,
             opch,
             word,
@@ -227,13 +211,12 @@ impl Lexer {
             &mut self.lanes,
             cpu,
         );
-        misc_post(sp, n, st, word, misc, kind, nesc, cpu);
+        misc_post(src, st, word, misc, kind, nesc, cpu);
         if !self.lanes.out.irregular_whitespaces.is_empty() {
             retain_code_whitespace(&self.st, &self.kind, &mut self.lanes.out.irregular_whitespaces);
         }
         compress(
             src,
-            n,
             nb,
             st,
             kind,

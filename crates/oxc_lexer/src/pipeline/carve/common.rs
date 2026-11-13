@@ -9,6 +9,7 @@ use crate::pipeline::{
     find::find,
     lanes::Lanes,
     scan::{scan_quoted, scan_regex, scan_tmpl_text},
+    source::Source,
 };
 
 use super::comments::{lex_block_comment, lex_line_comment};
@@ -30,9 +31,7 @@ pub(super) const OPENER8_MODULE_BYTES: [u8; 7] = [b'"', b'`', b'\'', b'/', b'{',
 #[cpu_multiversion]
 #[inline(always)]
 pub(super) unsafe fn lex_string(
-    src: *const u8,
-    srcs: &[u8],
-    n: usize,
+    src: Source,
     st: Bitmap,
     kind: *mut u8,
     s: usize,
@@ -41,26 +40,26 @@ pub(super) unsafe fn lex_string(
     cpu: impl Cpu,
 ) -> usize {
     let mut saw_nl = false;
-    let e = scan_quoted(src, n, s + 1, c, &mut saw_nl, cpu);
-    let end = if e < n { e + 1 } else { n };
+    let e = scan_quoted(src, s + 1, c, &mut saw_nl, cpu);
+    let end = if e < src.len() { e + 1 } else { src.len() };
     if saw_nl {
         // The terminator wins over unterminated-at-EOF, same as oxc_parser.
-        lanes.push_line_terminator_in_string(srcs, s, end);
-    } else if e >= n {
-        lanes.push_diag(s as u32, (n - s) as u32, DiagCode::UnterminatedString);
+        lanes.push_line_terminator_in_string(src.padded(), s, end);
+    } else if e >= src.len() {
+        lanes.push_diag(s as u32, (src.len() - s) as u32, DiagCode::UnterminatedString);
     }
     *kind.add(s) = tk!(String);
     if end > s + 1 {
         st.clear_range(s + 1, end - 1, cpu);
     }
-    let be = if e < n {
+    let be = if e < src.len() {
         e
-    } else if n > s + 1 && *src.add(n - 1) == c {
-        n - 1
+    } else if src.len() > s + 1 && src[src.len() - 1] == c {
+        src.len() - 1
     } else {
-        n
+        src.len()
     };
-    lanes.push_string(srcs, s + 1, be, cpu);
+    lanes.push_string(src.padded(), s + 1, be, cpu);
     end
 }
 
@@ -71,9 +70,7 @@ pub(super) unsafe fn lex_string(
 #[cpu_multiversion]
 #[inline(always)]
 pub(super) unsafe fn lex_template_segment(
-    src: *const u8,
-    srcs: &[u8],
-    n: usize,
+    src: Source,
     st: Bitmap,
     kind: *mut u8,
     s: usize,
@@ -83,7 +80,7 @@ pub(super) unsafe fn lex_template_segment(
     cpu: impl Cpu,
 ) -> (usize, bool) {
     let mut term = 0i32;
-    let end = scan_tmpl_text(src, n, s + 1, &mut term, cpu);
+    let end = scan_tmpl_text(src, s + 1, &mut term, cpu);
     if term == 0 {
         lanes.push_diag(s as u32, (end - s) as u32, DiagCode::UnterminatedTemplate);
     }
@@ -91,7 +88,7 @@ pub(super) unsafe fn lex_template_segment(
     if end > s + 1 {
         st.clear_range(s + 1, end - 1, cpu);
     }
-    lanes.push_template(srcs, s + 1, end - [0usize, 1, 2][term as usize], cpu);
+    lanes.push_template(src.padded(), s + 1, end - [0usize, 1, 2][term as usize], cpu);
     (end, term == 2)
 }
 
@@ -100,9 +97,7 @@ pub(super) unsafe fn lex_template_segment(
 #[cpu_multiversion]
 #[inline(always)]
 pub(super) unsafe fn lex_slash(
-    src: *const u8,
-    srcs: &[u8],
-    n: usize,
+    src: Source,
     st: Bitmap,
     kind: *mut u8,
     opch: Bitmap,
@@ -112,18 +107,17 @@ pub(super) unsafe fn lex_slash(
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) -> usize {
-    let d = if s + 1 < n { *src.add(s + 1) } else { 0 };
+    let d = if s + 1 < src.len() { src[s + 1] } else { 0 };
     if d == b'/' {
-        lex_line_comment(src, srcs, n, st, kind, s, lanes, cpu)
+        lex_line_comment(src, st, kind, s, lanes, cpu)
     } else if d == b'*' {
-        lex_block_comment(src, srcs, n, st, kind, s, lanes, cpu)
+        lex_block_comment(src, st, kind, s, lanes, cpu)
     } else if not_operator_position(
         &TokensView::new(
             src,
             st,
             opch,
             kind,
-            n,
             ts,
             0,
             lanes.module,
@@ -135,8 +129,8 @@ pub(super) unsafe fn lex_slash(
         s,
         cpu,
     ) {
-        lex_regex(src, srcs, n, st, kind, word, s, lanes, cpu)
-    } else if s + 1 < n && *src.add(s + 1) == b'=' {
+        lex_regex(src, st, kind, word, s, lanes, cpu)
+    } else if s + 1 < src.len() && src[s + 1] == b'=' {
         // `/=`: absorb the `=`.
         *kind.add(s) = tk!(SlashEq);
         st.clear(s + 1, cpu);
@@ -152,9 +146,7 @@ pub(super) unsafe fn lex_slash(
 #[cpu_multiversion]
 #[inline(always)]
 unsafe fn lex_regex(
-    src: *const u8,
-    srcs: &[u8],
-    n: usize,
+    src: Source,
     st: Bitmap,
     kind: *mut u8,
     word: Bitmap,
@@ -163,25 +155,25 @@ unsafe fn lex_regex(
     cpu: impl Cpu,
 ) -> usize {
     let mut nl_at = usize::MAX;
-    let e = scan_regex(src, n, s + 1, &mut nl_at, cpu);
-    let fs = if e < n { e + 1 } else { n };
+    let e = scan_regex(src, s + 1, &mut nl_at, cpu);
+    let fs = if e < src.len() { e + 1 } else { src.len() };
     if nl_at != usize::MAX {
         // oxc_parser reports a line terminator in the body as "unterminated"
         // with a span ending just past the first one, even when a later `/`
         // closes our token.
         lanes.push_diag(s as u32, (nl_at + 1 - s) as u32, DiagCode::LineTerminatorInRegexp);
-    } else if e >= n {
-        lanes.push_diag(s as u32, (n - s) as u32, DiagCode::UnterminatedRegexp);
+    } else if e >= src.len() {
+        lanes.push_diag(s as u32, (src.len() - s) as u32, DiagCode::UnterminatedRegexp);
     }
     let mut end = fs;
-    if end < n && word.get(end, cpu) {
-        end = word.next0(end, n, cpu);
+    if end < src.len() && word.get(end, cpu) {
+        end = word.next0(end, src.len(), cpu);
     }
     *kind.add(s) = tk!(RegExp);
     if end > s + 1 {
         st.clear_range(s + 1, end - 1, cpu);
     }
-    lanes.push_regex_flags(srcs, fs, end, cpu);
+    lanes.push_regex_flags(src.padded(), fs, end, cpu);
     end
 }
 
@@ -190,17 +182,12 @@ unsafe fn lex_regex(
 /// braces must not count toward substitution nesting.
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn skip_unicode_brace_escape(
-    src: *const u8,
-    n: usize,
-    s: usize,
-    cpu: impl Cpu,
-) -> usize {
+pub(super) fn skip_unicode_brace_escape(src: Source, s: usize, cpu: impl Cpu) -> usize {
     let mut j = s + 1;
-    while j < n && hex_val(*src.add(j), cpu) != 255 {
+    while j < src.len() && hex_val(src[j], cpu) != 255 {
         j += 1;
     }
-    if j < n && *src.add(j) == b'}' {
+    if j < src.len() && src[j] == b'}' {
         j += 1;
     }
     j
@@ -212,21 +199,16 @@ pub(super) unsafe fn skip_unicode_brace_escape(
 /// past a trailing 0xE2 reads the pad, which can never match 0x80.
 #[cpu_multiversion]
 #[inline]
-pub(super) unsafe fn find_line_terminator(
-    src: *const u8,
-    n: usize,
-    mut i: usize,
-    cpu: impl Cpu,
-) -> usize {
+pub(super) unsafe fn find_line_terminator(src: Source, mut i: usize, cpu: impl Cpu) -> usize {
     loop {
-        let p = find(src, n, i, [b'\n', b'\r', 0xE2], cpu);
-        if p >= n {
-            return n;
+        let p = find(src, i, [b'\n', b'\r', 0xE2], cpu);
+        if p >= src.len() {
+            return src.len();
         }
-        if *src.add(p) != 0xE2 {
+        if src[p] != 0xE2 {
             return p;
         }
-        if *src.add(p + 1) == 0x80 && (*src.add(p + 2) == 0xA8 || *src.add(p + 2) == 0xA9) {
+        if src[p + 1] == 0x80 && (src[p + 2] == 0xA8 || src[p + 2] == 0xA9) {
             return p;
         }
         i = p + 1;

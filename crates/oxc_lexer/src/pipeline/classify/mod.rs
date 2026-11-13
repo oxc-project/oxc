@@ -1,6 +1,6 @@
 use oxc_simd::{Cpu, DynCpu, cpu_multiversion};
 
-use crate::pipeline::bitmap::Bitmap;
+use crate::pipeline::{bitmap::Bitmap, source::Source};
 
 mod avx2;
 mod generic;
@@ -16,8 +16,7 @@ use neon::classify_neon;
 #[inline(always)]
 pub(super) unsafe fn classify(
     ts: bool,
-    src: *const u8,
-    n: usize,
+    src: Source,
     nb: usize,
     word: Bitmap,
     st: Bitmap,
@@ -32,15 +31,47 @@ pub(super) unsafe fn classify(
     let (word, st, kwinit, opch) = (word.as_ptr(), st.as_ptr(), kwinit.as_ptr(), opch.as_ptr());
     let (digit, dot, misc) = (digit.as_ptr(), dot.as_ptr(), misc.as_ptr());
     match DynCpu::from(cpu) {
-        DynCpu::Avx2(cpu) => {
-            classify_avx2(ts, src, n, word, st, kwinit, opch, digit, dot, misc, kind, cpu)
-        }
-        DynCpu::Neon(cpu) => {
-            classify_neon(ts, src, n, word, st, kwinit, opch, digit, dot, misc, kind, cpu)
-        }
-        DynCpu::Generic(_) => {
-            classify_generic(ts, src, n, word, st, kwinit, opch, digit, dot, misc, kind)
-        }
+        DynCpu::Avx2(cpu) => classify_avx2(
+            ts,
+            src.as_ptr(),
+            src.len(),
+            word,
+            st,
+            kwinit,
+            opch,
+            digit,
+            dot,
+            misc,
+            kind,
+            cpu,
+        ),
+        DynCpu::Neon(cpu) => classify_neon(
+            ts,
+            src.as_ptr(),
+            src.len(),
+            word,
+            st,
+            kwinit,
+            opch,
+            digit,
+            dot,
+            misc,
+            kind,
+            cpu,
+        ),
+        DynCpu::Generic(_) => classify_generic(
+            ts,
+            src.as_ptr(),
+            src.len(),
+            word,
+            st,
+            kwinit,
+            opch,
+            digit,
+            dot,
+            misc,
+            kind,
+        ),
     };
 
     *word.add(nb) = 0;

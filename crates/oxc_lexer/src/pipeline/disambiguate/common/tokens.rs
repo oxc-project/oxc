@@ -4,16 +4,14 @@ use std::slice;
 
 use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
 
-use crate::{
-    PAD,
-    token::{KW_KIND_BASE, OP_KIND_BASE, TokenKind, is_trivia_byte, tk},
-};
+use crate::token::{KW_KIND_BASE, OP_KIND_BASE, TokenKind, is_trivia_byte, tk};
 
 use crate::pipeline::{
     bitmap::Bitmap,
     bytes::{is_digit, line_break_in},
     keywords::kw_match_at,
     operators::opmap_longest,
+    source::Source,
 };
 
 use super::{Brackets, Closers, bits, walk};
@@ -82,7 +80,6 @@ impl<'a> TokensView<'a> {
     ///
     /// # SAFETY
     ///
-    /// - `src` must be valid for reads of `n + PAD` bytes.
     /// - `st` and `opch` must be valid for reads of `n.div_ceil(64) + 1` words.
     /// - `kind` must be valid for reads of `(n.div_ceil(64) + 1) * 64` bytes.
     /// - Nothing may write to them while the view is alive.
@@ -92,11 +89,10 @@ impl<'a> TokensView<'a> {
     #[cpu_multiversion]
     #[inline(always)]
     pub unsafe fn new(
-        src: *const u8,
+        src: Source<'a>,
         st: Bitmap,
         opch: Bitmap,
         kind: *const u8,
-        n: usize,
         ts: bool,
         kw_final: usize,
         module: bool,
@@ -104,13 +100,13 @@ impl<'a> TokensView<'a> {
         closers: &'a Closers,
         _cpu: impl Cpu,
     ) -> Self {
-        let nb = n.div_ceil(64) + 1;
+        let nb = src.len().div_ceil(64) + 1;
         Self {
-            src: slice::from_raw_parts(src, n + PAD),
+            src: src.padded(),
             st: slice::from_raw_parts(st.as_ptr(), nb),
             opch: slice::from_raw_parts(opch.as_ptr(), nb),
             kind: slice::from_raw_parts(kind, nb * 64),
-            n,
+            n: src.len(),
             ts,
             module,
             kw_final,

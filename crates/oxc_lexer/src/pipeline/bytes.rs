@@ -47,24 +47,10 @@ pub(super) const fn unicode_ws_len(c0: u8, c1: u8, c2: u8, _cpu: impl Cpu) -> us
 ///
 /// The non-ASCII set:
 /// U+0085, U+00A0, U+1680, U+2000..=U+200B, U+2028, U+2029, U+202F, U+205F, U+3000, U+FEFF.
-///
-/// Safe version of [`unicode_ws_len_at_unchecked`].
 #[cpu_multiversion]
 #[inline]
 pub(super) fn unicode_ws_len_at(src: &[u8], p: usize, cpu: impl Cpu) -> usize {
     unicode_ws_len(src[p], src[p + 1], src[p + 2], cpu)
-}
-
-/// Byte length (2 or 3) of the multi-byte ECMAScript WhiteSpace / LineTerminator at `p`, or 0.
-///
-/// The non-ASCII set:
-/// U+0085, U+00A0, U+1680, U+2000..=U+200B, U+2028, U+2029, U+202F, U+205F, U+3000, U+FEFF.
-///
-/// Unsafe version of [`unicode_ws_len_at`].
-#[cpu_multiversion]
-#[inline(always)]
-pub(super) unsafe fn unicode_ws_len_at_unchecked(src: *const u8, p: usize, cpu: impl Cpu) -> usize {
-    unicode_ws_len(*src.add(p), *src.add(p + 1), *src.add(p + 2), cpu)
 }
 
 /// The first line terminator (LF, CR, LS or PS) at or after i, or n.
