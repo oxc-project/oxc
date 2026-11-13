@@ -4,13 +4,14 @@ use std::{
     sync::{Arc, mpsc},
 };
 
+use bitflags::bitflags;
 use cow_utils::CowUtils;
 use ignore::DirEntry;
 
 use oxc_config::{
     ConfigConflict, ConfigDiscovery, DiscoveredConfigFile, is_js_config_path, vp_version,
 };
-use oxc_diagnostics::OxcDiagnostic;
+use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_linter::{
     Config, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore, LintFilter, Oxlintrc,
 };
@@ -219,6 +220,100 @@ pub enum ConfigLoadError {
     Diagnostic(OxcDiagnostic),
 }
 
+impl ConfigLoadError {
+    /// The directory of the config this error is about, when it is about one.
+    fn dir(&self) -> Option<&Path> {
+        match self {
+            Self::Parse { path, .. } | Self::Build { path, .. } => path.parent(),
+            Self::JsConfigFileFoundButJsRuntimeNotAvailable | Self::Diagnostic(_) => None,
+        }
+    }
+}
+
+/// A problem found while loading configuration files.
+#[derive(Debug)]
+pub enum ConfigLoadDiagnostic {
+    /// A config file could not be loaded and is skipped. The CLI stops, the language server
+    /// lints without it.
+    Error(ConfigLoadError),
+    /// A config file was loaded, and this is only reported, e.g. an option which is ignored. Its
+    /// severity is the one of the diagnostic, a warning or an advice.
+    Warning(OxcDiagnostic),
+}
+
+impl From<ConfigLoadError> for ConfigLoadDiagnostic {
+    fn from(error: ConfigLoadError) -> Self {
+        Self::Error(error)
+    }
+}
+
+impl ConfigLoadDiagnostic {
+    /// Splits `diagnostics` into the errors and everything else, keeping their order.
+    pub fn partition(diagnostics: Vec<Self>) -> (Vec<ConfigLoadError>, Vec<OxcDiagnostic>) {
+        let mut errors = Vec::new();
+        let mut warnings = Vec::new();
+        for diagnostic in diagnostics {
+            match diagnostic {
+                Self::Error(error) => errors.push(error),
+                Self::Warning(warning) => warnings.push(warning),
+            }
+        }
+        (errors, warnings)
+    }
+}
+
+bitflags! {
+    /// What the CLI flags, the editor settings or the kind of run decided for every file, whatever
+    /// the configs say. Built by [`RunOverrides::for_cli`] and
+    /// [`RunOverrides::for_language_server`].
+    ///
+    /// Also the mask of the warnings the loader builds, see [`ConfigLoader::with_run_overrides`].
+    /// Which nested config warning is reported in which run (the type-aware rules one is only for a config which leaves `typeAware` unset):
+    ///
+    /// | Run                     | deny/max warnings | `typeCheck` | type-aware rules |
+    /// | ----------------------- | ----------------- | ----------- | ---------------- |
+    /// | CLI                     | yes               | yes         | yes              |
+    /// | CLI `--type-aware`      | yes               | yes         | no               |
+    /// | CLI `--type-check`      | yes               | no          | yes              |
+    /// | CLI `--type-check-only` | yes               | no          | no               |
+    /// | LSP                     | no                | no          | yes              |
+    /// | LSP, `typeAware` set    | no                | no          | no               |
+    #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+    pub struct RunOverrides: u8 {
+        /// Whether files are type-checked does not depend on `options.typeCheck`: `--type-check`
+        /// and `--type-check-only` type-check every file given to `tsgolint`, and the language
+        /// server never type-checks.
+        const TYPE_CHECK_OVERRIDDEN = 1 << 0;
+        /// The exit code does not depend on `options.denyWarnings` and `options.maxWarnings`: the
+        /// language server has none, and reads neither option.
+        const EXIT_CODE_OVERRIDDEN = 1 << 1;
+        /// `--type-aware`, `--type-check-only`, or the editor's `typeAware: true`: every file is
+        /// linted with type-aware rules.
+        const TYPE_AWARE_FORCED = 1 << 2;
+        /// The editor's `typeAware: false`: no file is linted with type-aware rules.
+        const TYPE_AWARE_DISABLED = 1 << 3;
+    }
+}
+
+impl RunOverrides {
+    /// What a CLI run decided. `type_aware_flag` is `--type-aware` or `--type-check-only`,
+    /// `type_check_flag` is `--type-check` or `--type-check-only`.
+    pub fn for_cli(type_aware_flag: bool, type_check_flag: bool) -> Self {
+        let mut overrides = Self::empty();
+        overrides.set(Self::TYPE_AWARE_FORCED, type_aware_flag);
+        overrides.set(Self::TYPE_CHECK_OVERRIDDEN, type_check_flag);
+        overrides
+    }
+
+    /// What a language server run decided. `type_aware` is the editor's `typeAware` setting.
+    pub fn for_language_server(type_aware: Option<bool>) -> Self {
+        let mut overrides = Self::TYPE_CHECK_OVERRIDDEN | Self::EXIT_CODE_OVERRIDDEN;
+        overrides.set(Self::TYPE_AWARE_FORCED, type_aware == Some(true));
+        overrides.set(Self::TYPE_AWARE_DISABLED, type_aware == Some(false));
+        overrides
+    }
+}
+
 /// High-level errors that can occur when loading CLI configurations.
 ///
 /// This groups together failures related to the root configuration file
@@ -241,6 +336,9 @@ pub struct LoadedConfigs {
     pub nested: FxHashMap<PathBuf, Config>,
     /// Ignore patterns from nested configs, paired with the directory they apply to.
     pub nested_ignore_patterns: Vec<(Vec<String>, PathBuf)>,
+    /// Problems found while loading nested configs which did not stop the load, e.g. a root-only
+    /// option set in a nested config.
+    pub warnings: Vec<OxcDiagnostic>,
 }
 
 pub fn materialize_default_plugins(config: &mut Oxlintrc) {
@@ -252,6 +350,7 @@ pub struct ConfigLoader<'a> {
     external_plugin_store: &'a mut ExternalPluginStore,
     filters: &'a [LintFilter],
     workspace_uri: Option<&'a str>,
+    overrides: RunOverrides,
     #[cfg(feature = "napi")]
     #[expect(clippy::struct_field_names)]
     js_config_loader: Option<&'a js_config::JsConfigLoaderCb>,
@@ -276,8 +375,31 @@ impl<'a> ConfigLoader<'a> {
             external_plugin_store,
             filters,
             workspace_uri,
+            overrides: RunOverrides::empty(),
             #[cfg(feature = "napi")]
             js_config_loader: None,
+        }
+    }
+
+    /// What the run decided before the configs load. A warning about something which `overrides`
+    /// settles is not built.
+    #[must_use]
+    pub fn with_run_overrides(mut self, overrides: RunOverrides) -> Self {
+        self.overrides = overrides;
+        self
+    }
+
+    /// Every warning is built here: it is dropped when the run sets any of the `unless` overrides,
+    /// which settle what the warning is about.
+    fn push_warning(
+        &self,
+        diagnostics: &mut Vec<ConfigLoadDiagnostic>,
+        diagnostic: OxcDiagnostic,
+        unless: RunOverrides,
+    ) {
+        debug_assert!(diagnostic.severity != Severity::Error, "a warning cannot be an error");
+        if !self.overrides.intersects(unless) {
+            diagnostics.push(ConfigLoadDiagnostic::Warning(diagnostic));
         }
     }
 
@@ -334,13 +456,16 @@ impl<'a> ConfigLoader<'a> {
     /// Load multiple configs, returning successes and errors separately
     ///
     /// This allows callers to decide how to handle errors (fail fast vs continue)
+    ///
+    /// Config paths in warnings are relative to `display_root`, or absolute without one.
     fn load_many(
         &mut self,
         paths: impl IntoIterator<Item = DiscoveredConfigFile>,
         root_config_dir: Option<&Path>,
-    ) -> (Vec<LoadedConfig>, Vec<ConfigLoadError>) {
+        display_root: Option<&Path>,
+    ) -> (Vec<LoadedConfig>, Vec<ConfigLoadDiagnostic>) {
         let mut configs = Vec::new();
-        let mut errors = Vec::new();
+        let mut diagnostics = Vec::new();
 
         // Group by parent dir to catch multiple configs in the same directory.
         // NOTE: CLI path (`discover_configs_in_ancestors`) already enforces uniqueness,
@@ -356,13 +481,21 @@ impl<'a> ConfigLoader<'a> {
             by_dir.entry(dir).or_default().push(config);
         }
 
+        // Sorted, so the configs, and the problems found in them, come in the same order on every
+        // machine: the hash of a path depends on where the project is checked out. The files are
+        // read in directory order, JavaScript configs in one batch after the JSON ones, and the
+        // configs are then built in directory order whatever their kind.
+        let mut by_dir: Vec<_> = by_dir.into_iter().collect();
+        by_dir.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
+
         let mut js_configs = Vec::new();
 
         for (dir, config_files) in by_dir {
             if config_files.len() > 1 {
-                errors.push(ConfigLoadError::Diagnostic(
-                    ConfigConflict::new(dir, config_files).into(),
-                ));
+                diagnostics.push(
+                    ConfigLoadError::Diagnostic(ConfigConflict::new(dir, config_files).into())
+                        .into(),
+                );
                 continue;
             }
 
@@ -370,7 +503,7 @@ impl<'a> ConfigLoader<'a> {
                 Some(DiscoveredConfigFile::Json(path) | DiscoveredConfigFile::Jsonc(path)) => {
                     match Self::load(path.as_path()) {
                         Ok(config) => configs.push(config),
-                        Err(e) => errors.push(e),
+                        Err(e) => diagnostics.push(e.into()),
                     }
                 }
                 Some(DiscoveredConfigFile::Js(path) | DiscoveredConfigFile::Vite(path)) => {
@@ -389,9 +522,13 @@ impl<'a> ConfigLoader<'a> {
         match self.load_js_configs(&js_configs) {
             Ok(loaded_js_configs) => {
                 configs.extend(loaded_js_configs.into_iter().filter_map(|c| c.config));
+                // Both kinds are already in directory order, the order `by_dir` gives, so this
+                // stable sort only merges two runs. By directory rather than by file path, which
+                // can disagree: `a/-x/.oxlintrc.json` comes before `a/.oxlintrc.json`.
+                configs.sort_by(|a, b| a.path.parent().cmp(&b.path.parent()));
             }
-            Err(mut js_errors) => {
-                errors.append(&mut js_errors);
+            Err(js_errors) => {
+                diagnostics.extend(js_errors.into_iter().map(ConfigLoadDiagnostic::from));
             }
         }
 
@@ -405,43 +542,57 @@ impl<'a> ConfigLoader<'a> {
                 .and_then(|root| path.parent().map(|parent| parent == root))
                 .unwrap_or(false);
 
+            // `denyWarnings` and `maxWarnings` control the process exit code, which is a property
+            // of the whole run and cannot be scoped to a directory. Every other option in
+            // `options` is resolved per file from the config which governs it, so nested configs
+            // may set them freely.
+            //
+            // A nested config which sets one of the two remaining root-only options used to be
+            // dropped entirely, which silently removed every diagnostic for that package. Warn
+            // and ignore just the offending option instead. A value inherited through `extends`
+            // is ignored without a warning, which would otherwise fire for every package of a
+            // shared base.
             if !is_root_config {
-                let options = &config.options;
-                if options.type_aware.is_some() {
-                    errors
-                        .push(ConfigLoadError::Diagnostic(nested_type_aware_not_supported(&path)));
-                    continue;
+                // Only computed for a config which is warned about.
+                let display_path = || config_display_path(&path, display_root);
+                for (option, is_set) in [
+                    ("denyWarnings", config.options.deny_warnings.is_some()),
+                    ("maxWarnings", config.options.max_warnings.is_some()),
+                ] {
+                    if is_set {
+                        self.push_warning(
+                            &mut diagnostics,
+                            nested_root_only_option(option, &display_path()),
+                            RunOverrides::EXIT_CODE_OVERRIDDEN,
+                        );
+                    }
                 }
-                if options.type_check.is_some() {
-                    errors
-                        .push(ConfigLoadError::Diagnostic(nested_type_check_not_supported(&path)));
-                    continue;
-                }
-                if options.deny_warnings.is_some() {
-                    errors.push(ConfigLoadError::Diagnostic(nested_deny_warnings_not_supported(
-                        &path,
-                    )));
-                    continue;
-                }
-                if options.max_warnings.is_some() {
-                    errors.push(ConfigLoadError::Diagnostic(nested_max_warnings_not_supported(
-                        &path,
-                    )));
-                    continue;
-                }
-                if options.report_unused_disable_directives.is_some() {
-                    errors.push(ConfigLoadError::Diagnostic(
-                        nested_report_unused_disable_directives_not_supported(&path),
-                    ));
-                    continue;
-                }
-                if options.respect_eslint_disable_directives.is_some() {
-                    errors.push(ConfigLoadError::Diagnostic(
-                        nested_respect_eslint_disable_directives_not_supported(&path),
-                    ));
-                    continue;
+                // Unlike `typeAware`, `typeCheck` cannot be scoped to the files this config
+                // governs, because `tsgolint` reports type-checking diagnostics for a whole run.
+                // The option keeps working, and a warning points out that it belongs in the root
+                // config. Not reported when the run decides type checking regardless of the
+                // configs. A nested `typeCheck: false` gets no hint, although it does not stop the
+                // run-wide type check either.
+                if config.options.type_check == Some(true) {
+                    self.push_warning(
+                        &mut diagnostics,
+                        nested_type_check_is_run_wide(&display_path()),
+                        RunOverrides::TYPE_CHECK_OVERRIDDEN,
+                    );
                 }
             }
+
+            // Captured before the config is consumed, to warn below if these rules can never run.
+            // Only nested configs are checked: this is where dropping the implicit inheritance from
+            // the root config changes behaviour. Skipped when the config sets `typeAware` itself,
+            // either way: its own value wins over any config it extends, and `false` is a
+            // deliberate opt-out.
+            let explicit_type_aware_rules = if is_root_config || config.options.type_aware.is_some()
+            {
+                Vec::new()
+            } else {
+                config.rules.explicitly_enabled_type_aware_rules()
+            };
 
             let builder = match ConfigStoreBuilder::from_oxlintrc(
                 false,
@@ -452,7 +603,7 @@ impl<'a> ConfigLoader<'a> {
             ) {
                 Ok(builder) => builder,
                 Err(e) => {
-                    errors.push(ConfigLoadError::Build { path, error: e.to_string() });
+                    diagnostics.push(ConfigLoadError::Build { path, error: e.to_string() }.into());
                     continue;
                 }
             };
@@ -464,25 +615,45 @@ impl<'a> ConfigLoader<'a> {
                 .build(self.external_plugin_store)
                 .map_err(|e| ConfigLoadError::Build { path: path.clone(), error: e.to_string() })
             {
-                Ok(config) => built_configs.push(LoadedConfig {
-                    dir,
-                    config,
-                    ignore_patterns,
-                    extended_paths,
-                }),
-                Err(e) => errors.push(e),
+                Ok(config) => {
+                    // `typeAware` is resolved from the config which governs the file, and is not
+                    // inherited from the root config, so a nested config which names type-aware
+                    // rules without setting the option, itself or through `extends`, silently
+                    // runs none of them. An explicit `false` is a deliberate opt-out.
+                    if !explicit_type_aware_rules.is_empty() && config.type_aware().is_none() {
+                        // Not reported when the run turns type-aware linting on or off for every
+                        // file, whatever the configs say.
+                        self.push_warning(
+                            &mut diagnostics,
+                            nested_type_aware_rules_without_type_aware(
+                                &config_display_path(&path, display_root),
+                                &explicit_type_aware_rules,
+                            ),
+                            RunOverrides::TYPE_AWARE_FORCED | RunOverrides::TYPE_AWARE_DISABLED,
+                        );
+                    }
+                    built_configs.push(LoadedConfig {
+                        dir,
+                        config,
+                        ignore_patterns,
+                        extended_paths,
+                    });
+                }
+                Err(e) => diagnostics.push(e.into()),
             }
         }
 
-        (built_configs, errors)
+        (built_configs, diagnostics)
     }
 
     pub(crate) fn load_discovered_with_root_dir(
         &mut self,
         root_dir: &Path,
         configs: impl IntoIterator<Item = DiscoveredConfigFile>,
-    ) -> (Vec<LoadedConfig>, Vec<ConfigLoadError>) {
-        self.load_many(configs, Some(root_dir))
+    ) -> (Vec<LoadedConfig>, Vec<ConfigLoadDiagnostic>) {
+        // A language server may serve several workspace folders, so their warnings name config
+        // files by their absolute path.
+        self.load_many(configs, Some(root_dir), None)
     }
 
     /// Try to load config from a specific directory.
@@ -628,6 +799,7 @@ impl<'a> ConfigLoader<'a> {
                 root: oxlintrc,
                 nested: FxHashMap::default(),
                 nested_ignore_patterns: vec![],
+                warnings: Vec::new(),
             });
         }
 
@@ -637,15 +809,26 @@ impl<'a> ConfigLoader<'a> {
         let (discovered_configs, conflicts) =
             discover_configs_in_ancestors(&config_paths, &oxlintrc.path);
 
-        let (configs, mut errors) = self.load_many(discovered_configs, Some(cwd));
+        let (configs, diagnostics) = self.load_many(discovered_configs, Some(cwd), Some(cwd));
 
-        // Propagate upstream conflicts as load errors alongside parse/build failures.
-        for conflict in conflicts {
-            errors.push(ConfigLoadError::Diagnostic(conflict.into()));
-        }
+        let (errors, warnings) = ConfigLoadDiagnostic::partition(diagnostics);
+
+        // Propagate upstream conflicts as load errors alongside parse/build failures, in the
+        // order of their directories: the CLI reports the first one, which must not depend on the
+        // order the files were walked in.
+        let mut errors: Vec<(Option<PathBuf>, ConfigLoadError)> = errors
+            .into_iter()
+            .map(|error| (error.dir().map(Path::to_path_buf), error))
+            .chain(conflicts.into_iter().map(|conflict| {
+                (Some(conflict.dir().to_path_buf()), ConfigLoadError::Diagnostic(conflict.into()))
+            }))
+            .collect();
+        errors.sort_by(|(a, _), (b, _)| a.cmp(b));
 
         // Fail if any config failed (CLI requires all configs to be valid)
         if !errors.is_empty() {
+            let errors = errors.into_iter().map(|(_, error)| error).collect();
+            // The run stops here, so the warnings are dropped.
             return Err(CliConfigLoadError::NestedConfigs(errors));
         }
 
@@ -653,7 +836,12 @@ impl<'a> ConfigLoader<'a> {
         let mut nested_ignore_patterns = Vec::with_capacity(configs.len());
         let nested_configs = build_nested_configs(configs, &mut nested_ignore_patterns, None);
 
-        Ok(LoadedConfigs { root: oxlintrc, nested: nested_configs, nested_ignore_patterns })
+        Ok(LoadedConfigs {
+            root: oxlintrc,
+            nested: nested_configs,
+            nested_ignore_patterns,
+            warnings,
+        })
     }
 }
 
@@ -694,52 +882,43 @@ fn js_config_not_supported_diagnostic(path: &Path) -> OxcDiagnostic {
     .with_help("Run oxlint via the npm package, or use JSON config files (.oxlintrc.json or .oxlintrc.jsonc).")
 }
 
-fn nested_type_aware_not_supported(path: &Path) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!(
-        "The `options.typeAware` option is only supported in the root config, but it was found in {}.",
-        path.display()
-    ))
-    .with_help("Move `options.typeAware` to the root configuration file.")
+/// Formats a config file path for a diagnostic, relative to `root` if given, with `/` separators.
+///
+/// The CLI passes the directory the config search started from: an absolute path would make the
+/// rendered message wrap at a different column on every machine, which snapshot tests cannot rely
+/// on.
+pub fn config_display_path(path: &Path, root: Option<&Path>) -> String {
+    let relative = root.and_then(|root| path.strip_prefix(root).ok()).unwrap_or(path);
+    let lossy = relative.to_string_lossy();
+    lossy.cow_replace('\\', "/").into_owned()
 }
 
-fn nested_type_check_not_supported(path: &Path) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!(
-        "The `options.typeCheck` option is only supported in the root config, but it was found in {}.",
-        path.display()
+fn nested_root_only_option(option: &str, path: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "The `options.{option}` option is only supported in the root config. It was found in {path} and is ignored."
     ))
-    .with_help("Move `options.typeCheck` to the root configuration file.")
+    .with_help(format!("Move `options.{option}` to the root configuration file."))
 }
 
-fn nested_deny_warnings_not_supported(path: &Path) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!(
-        "The `options.denyWarnings` option is only supported in the root config, but it was found in {}.",
-        path.display()
+fn nested_type_aware_rules_without_type_aware(path: &str, rules: &[String]) -> OxcDiagnostic {
+    let (plural, subject) =
+        if rules.len() == 1 { ("", "it never runs") } else { ("s", "they never run") };
+    OxcDiagnostic::warn(format!(
+        "{path} enables the type-aware rule{plural} {}, but does not set `options.typeAware`, so {subject}.",
+        rules.join(", "),
     ))
-    .with_help("Move `options.denyWarnings` to the root configuration file.")
+    .with_help(
+        "Set `options.typeAware` to `true` in this config, or `extends` a config which does. It is not inherited from the root config.",
+    )
 }
 
-fn nested_max_warnings_not_supported(path: &Path) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!(
-        "The `options.maxWarnings` option is only supported in the root config, but it was found in {}.",
-        path.display()
+fn nested_type_check_is_run_wide(path: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "The `options.typeCheck` option was found in {path}, but it applies to every file linted with type-aware rules, not only to that directory."
     ))
-    .with_help("Move `options.maxWarnings` to the root configuration file.")
-}
-
-fn nested_report_unused_disable_directives_not_supported(path: &Path) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!(
-        "The `options.reportUnusedDisableDirectives` option is only supported in the root config, but it was found in {}.",
-        path.display()
-    ))
-    .with_help("Move `options.reportUnusedDisableDirectives` to the root configuration file.")
-}
-
-fn nested_respect_eslint_disable_directives_not_supported(path: &Path) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!(
-        "The `options.respectEslintDisableDirectives` option is only supported in the root config, but it was found in {}.",
-        path.display()
-    ))
-    .with_help("Move `options.respectEslintDisableDirectives` to the root configuration file.")
+    .with_help(
+        "Move `options.typeCheck` to the root configuration file, or remove it if only this directory should be type-checked.",
+    )
 }
 
 #[cfg(test)]
@@ -748,7 +927,10 @@ mod test {
 
     use oxc_linter::{ConfigStoreBuilder, ExternalPluginStore};
 
-    use super::{ConfigLoadError, ConfigLoader};
+    use super::{
+        CliConfigLoadError, ConfigLoadDiagnostic, ConfigLoadError, ConfigLoader, LoadedConfig,
+        RunOverrides,
+    };
     #[cfg(feature = "napi")]
     use crate::js_config::{JsConfigLoaderCb, JsConfigResult};
     use oxc_config::DiscoveredConfigFile;
@@ -765,15 +947,8 @@ mod test {
     }
 
     #[cfg(feature = "napi")]
-    fn make_js_config(
-        path: PathBuf,
-        type_aware: Option<bool>,
-        type_check: Option<bool>,
-    ) -> JsConfigResult {
-        let mut config: oxc_linter::Oxlintrc = serde_json::from_value(serde_json::json!({
-            "options": { "typeAware": type_aware, "typeCheck": type_check }
-        }))
-        .unwrap();
+    fn make_js_config_from(path: PathBuf, config: serde_json::Value) -> JsConfigResult {
+        let mut config: oxc_linter::Oxlintrc = serde_json::from_value(config).unwrap();
         config.path = path.clone();
         if let Some(config_dir) = path.parent() {
             config.set_config_dir(config_dir);
@@ -782,16 +957,20 @@ mod test {
     }
 
     #[cfg(feature = "napi")]
+    fn make_js_config(
+        path: PathBuf,
+        type_aware: Option<bool>,
+        type_check: Option<bool>,
+    ) -> JsConfigResult {
+        make_js_config_from(
+            path,
+            serde_json::json!({ "options": { "typeAware": type_aware, "typeCheck": type_check } }),
+        )
+    }
+
+    #[cfg(feature = "napi")]
     fn make_js_config_with_rules(path: PathBuf, rules: &serde_json::Value) -> JsConfigResult {
-        let mut config: oxc_linter::Oxlintrc = serde_json::from_value(serde_json::json!({
-            "rules": rules
-        }))
-        .unwrap();
-        config.path = path.clone();
-        if let Some(config_dir) = path.parent() {
-            config.set_config_dir(config_dir);
-        }
-        JsConfigResult { path, config: Some(config) }
+        make_js_config_from(path, serde_json::json!({ "rules": rules }))
     }
 
     #[test]
@@ -859,99 +1038,380 @@ mod test {
         std::fs::remove_dir_all(&temp_dir).expect("Failed to cleanup temporary test directory");
     }
 
+    /// Problems come in the order of the config paths, whatever order the configs are found in.
     #[test]
-    fn test_nested_json_config_rejects_type_aware() {
+    fn test_nested_configs_are_loaded_in_path_order() {
         let root_dir = tempfile::tempdir().unwrap();
-        let nested_path = root_dir.path().join("nested/.oxlintrc.json");
-        std::fs::create_dir_all(nested_path.parent().unwrap()).unwrap();
-        std::fs::write(&nested_path, r#"{ "options": { "typeAware": true } }"#).unwrap();
+        let names = ["b", "c", "a", "e", "d"];
+        let paths: Vec<PathBuf> =
+            names.iter().map(|name| root_dir.path().join(name).join(".oxlintrc.json")).collect();
+        for path in &paths {
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(path, "{ invalid").unwrap();
+        }
 
         let mut external_plugin_store = ExternalPluginStore::new(false);
         let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
-        let (_configs, errors) = loader.load_discovered_with_root_dir(
+        let (_configs, diagnostics) = loader.load_discovered_with_root_dir(
             root_dir.path(),
-            [DiscoveredConfigFile::Json(nested_path)],
+            paths.into_iter().map(DiscoveredConfigFile::Json),
         );
-        assert_eq!(errors.len(), 1);
-        assert!(matches!(errors[0], ConfigLoadError::Diagnostic(_)));
+        let error_paths: Vec<_> = diagnostics
+            .iter()
+            .map(|diagnostic| match diagnostic {
+                ConfigLoadDiagnostic::Error(ConfigLoadError::Parse { path, .. }) => {
+                    path.strip_prefix(root_dir.path()).unwrap()
+                }
+                diagnostic => panic!("unexpected diagnostic: {diagnostic:?}"),
+            })
+            .collect();
+        let expected: Vec<PathBuf> = ["a", "b", "c", "d", "e"]
+            .iter()
+            .map(|name| PathBuf::from(name).join(".oxlintrc.json"))
+            .collect();
+        assert_eq!(error_paths, expected);
     }
 
+    /// Conflicts and load failures of the nested configs come in the order of their directories,
+    /// whatever order the linted files, and so the discovered configs, are in.
     #[test]
-    fn test_nested_json_config_rejects_deny_warnings() {
+    fn test_nested_config_errors_are_reported_in_path_order() {
         let root_dir = tempfile::tempdir().unwrap();
-        let nested_path = root_dir.path().join("nested/.oxlintrc.json");
-        std::fs::create_dir_all(nested_path.parent().unwrap()).unwrap();
-        std::fs::write(&nested_path, r#"{ "options": { "denyWarnings": true } }"#).unwrap();
-        let mut external_plugin_store = ExternalPluginStore::new(false);
-        let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
-        let (_configs, errors) = loader.load_discovered_with_root_dir(
-            root_dir.path(),
-            [DiscoveredConfigFile::Json(nested_path)],
-        );
-        assert_eq!(errors.len(), 1);
-        assert!(matches!(errors[0], ConfigLoadError::Diagnostic(_)));
-    }
-
-    #[test]
-    fn test_nested_json_config_rejects_report_unused_disable_directives() {
-        let root_dir = tempfile::tempdir().unwrap();
-        let nested_path = root_dir.path().join("nested/.oxlintrc.json");
-        std::fs::create_dir_all(nested_path.parent().unwrap()).unwrap();
-        std::fs::write(
-            &nested_path,
-            r#"{ "options": { "reportUnusedDisableDirectives": "warn" } }"#,
-        )
-        .unwrap();
-
-        let mut external_plugin_store = ExternalPluginStore::new(false);
-        let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
-        let (_configs, errors) = loader.load_discovered_with_root_dir(
-            root_dir.path(),
-            [DiscoveredConfigFile::Json(nested_path)],
-        );
-        assert_eq!(errors.len(), 1);
-        assert!(matches!(errors[0], ConfigLoadError::Diagnostic(_)));
-    }
-
-    #[test]
-    fn test_nested_json_config_rejects_respect_eslint_disable_directives() {
-        let root_dir = tempfile::tempdir().unwrap();
-        let nested_path = root_dir.path().join("nested/.oxlintrc.json");
-        std::fs::create_dir_all(nested_path.parent().unwrap()).unwrap();
-        std::fs::write(
-            &nested_path,
-            r#"{ "options": { "respectEslintDisableDirectives": false } }"#,
-        )
-        .unwrap();
+        std::fs::write(root_dir.path().join(".oxlintrc.json"), "{}").unwrap();
+        // Created and linted in reverse order: `z` and `a` hold two configs, `m` an invalid one.
+        let mut files = Vec::new();
+        for name in ["z", "m", "a"] {
+            let dir = root_dir.path().join(name);
+            std::fs::create_dir_all(&dir).unwrap();
+            if name == "m" {
+                std::fs::write(dir.join(".oxlintrc.json"), "{ invalid").unwrap();
+            } else {
+                std::fs::write(dir.join(".oxlintrc.json"), "{}").unwrap();
+                std::fs::write(dir.join(".oxlintrc.jsonc"), "{}").unwrap();
+            }
+            files.push(std::sync::Arc::<std::ffi::OsStr>::from(
+                dir.join("index.js").into_os_string(),
+            ));
+        }
 
         let mut external_plugin_store = ExternalPluginStore::new(false);
         let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
-        let (_configs, errors) = loader.load_discovered_with_root_dir(
+        let Err(CliConfigLoadError::NestedConfigs(errors)) =
+            loader.load_root_and_nested(root_dir.path(), None, &files, true)
+        else {
+            panic!("expected the nested configs to fail");
+        };
+
+        let dirs: Vec<_> = errors
+            .iter()
+            .map(|error| match error {
+                ConfigLoadError::Parse { path, .. } => path.parent().unwrap().to_path_buf(),
+                ConfigLoadError::Diagnostic(diagnostic) => ["a", "z"]
+                    .iter()
+                    .map(|name| root_dir.path().join(name))
+                    .find(|dir| diagnostic.message.contains(&*dir.to_string_lossy()))
+                    .unwrap_or_else(|| panic!("unexpected diagnostic: {diagnostic:?}")),
+                error => panic!("unexpected error: {error:?}"),
+            })
+            .map(|dir| dir.strip_prefix(root_dir.path()).unwrap().to_path_buf())
+            .collect();
+        assert_eq!(dirs, [PathBuf::from("a"), PathBuf::from("m"), PathBuf::from("z")]);
+    }
+
+    /// JavaScript configs are read in a batch after the JSON ones, but built, and so reported, in
+    /// directory order with them.
+    #[cfg(feature = "napi")]
+    #[test]
+    fn test_nested_js_and_json_configs_are_built_in_path_order() {
+        let root_dir = tempfile::tempdir().unwrap();
+        let invalid_rules = serde_json::json!({ "no-such-rule": "error" });
+        let mut discovered = Vec::new();
+        // `a/-x` sorts before `a` by file path, since `-` comes before `.`, but after it by
+        // directory, the order the files were read in.
+        for (name, is_js) in [("c", true), ("b", false), ("a/-x", false), ("a", true)] {
+            let dir = root_dir.path().join(name);
+            std::fs::create_dir_all(&dir).unwrap();
+            if is_js {
+                let path = dir.join("oxlint.config.ts");
+                std::fs::write(&path, "export default {};").unwrap();
+                discovered.push(DiscoveredConfigFile::Js(path));
+            } else {
+                let path = dir.join(".oxlintrc.json");
+                std::fs::write(&path, r#"{ "rules": { "no-such-rule": "error" } }"#).unwrap();
+                discovered.push(DiscoveredConfigFile::Json(path));
+            }
+        }
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+        let js_loader = make_js_loader(move |paths| {
+            Ok(paths
+                .into_iter()
+                .map(|path| make_js_config_with_rules(PathBuf::from(path), &invalid_rules))
+                .collect())
+        });
+        loader = loader.with_js_config_loader(Some(&js_loader));
+
+        let (_configs, diagnostics) =
+            loader.load_discovered_with_root_dir(root_dir.path(), discovered);
+        let error_paths: Vec<_> = diagnostics
+            .iter()
+            .map(|diagnostic| match diagnostic {
+                ConfigLoadDiagnostic::Error(ConfigLoadError::Build { path, .. }) => {
+                    path.strip_prefix(root_dir.path()).unwrap()
+                }
+                diagnostic => panic!("unexpected diagnostic: {diagnostic:?}"),
+            })
+            .collect();
+        let expected: Vec<PathBuf> =
+            ["a/oxlint.config.ts", "a/-x/.oxlintrc.json", "b/.oxlintrc.json", "c/oxlint.config.ts"]
+                .iter()
+                .map(PathBuf::from)
+                .collect();
+        assert_eq!(error_paths, expected);
+    }
+
+    /// Loads a single nested config from a temporary directory and returns
+    /// `(number of configs, diagnostics)`.
+    fn load_nested_json(contents: &str) -> (usize, Vec<ConfigLoadDiagnostic>) {
+        load_nested_json_in_run(contents, RunOverrides::empty())
+    }
+
+    /// Like [`load_nested_json`], in a run which decided `overrides` before the load.
+    fn load_nested_json_in_run(
+        contents: &str,
+        overrides: RunOverrides,
+    ) -> (usize, Vec<ConfigLoadDiagnostic>) {
+        let root_dir = tempfile::tempdir().unwrap();
+        let nested_path = root_dir.path().join("nested/.oxlintrc.json");
+        std::fs::create_dir_all(nested_path.parent().unwrap()).unwrap();
+        std::fs::write(&nested_path, contents).unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None)
+            .with_run_overrides(overrides);
+        let (configs, diagnostics) = loader.load_discovered_with_root_dir(
             root_dir.path(),
             [DiscoveredConfigFile::Json(nested_path)],
         );
-        assert_eq!(errors.len(), 1);
-        assert!(matches!(errors[0], ConfigLoadError::Diagnostic(_)));
+        (configs.len(), diagnostics)
+    }
+
+    /// The messages of `diagnostics`, asserting that they are all warnings.
+    fn warning_messages(diagnostics: &[ConfigLoadDiagnostic]) -> Vec<&str> {
+        diagnostics
+            .iter()
+            .map(|diagnostic| match diagnostic {
+                ConfigLoadDiagnostic::Warning(warning) => warning.message.as_ref(),
+                ConfigLoadDiagnostic::Error(error) => panic!("unexpected error: {error:?}"),
+            })
+            .collect()
     }
 
     #[test]
-    fn test_nested_json_config_allows_type_aware_from_extends() {
+    fn test_nested_json_config_allows_type_aware() {
+        let (configs, diagnostics) = load_nested_json(r#"{ "options": { "typeAware": true } }"#);
+        assert_eq!(configs, 1);
+        assert!(diagnostics.is_empty());
+    }
+
+    #[test]
+    fn test_nested_json_config_warns_about_type_check() {
+        let (configs, diagnostics) =
+            load_nested_json(r#"{ "options": { "typeAware": true, "typeCheck": true } }"#);
+        // `typeCheck` still applies, but it cannot be scoped to this directory.
+        assert_eq!(configs, 1);
+        let messages = warning_messages(&diagnostics);
+        assert_eq!(messages.len(), 1);
+        assert!(messages[0].contains("options.typeCheck"));
+    }
+
+    /// Which warning is built in which kind of run, as documented on [`RunOverrides`]. A new
+    /// warning goes in this table, with the runs where it is true and can be acted on.
+    #[test]
+    fn test_warnings_by_run() {
+        let runs = [
+            ("CLI", RunOverrides::for_cli(false, false)),
+            ("CLI --type-aware", RunOverrides::for_cli(true, false)),
+            ("CLI --type-check", RunOverrides::for_cli(false, true)),
+            ("CLI --type-check-only", RunOverrides::for_cli(true, true)),
+            ("language server", RunOverrides::for_language_server(None)),
+            ("language server, typeAware: true", RunOverrides::for_language_server(Some(true))),
+            ("language server, typeAware: false", RunOverrides::for_language_server(Some(false))),
+        ];
+        let warnings = [
+            (
+                "denyWarnings",
+                r#"{ "options": { "denyWarnings": true } }"#,
+                [true, true, true, true, false, false, false],
+            ),
+            (
+                "maxWarnings",
+                r#"{ "options": { "maxWarnings": 1 } }"#,
+                [true, true, true, true, false, false, false],
+            ),
+            (
+                "typeCheck",
+                r#"{ "options": { "typeAware": true, "typeCheck": true } }"#,
+                [true, true, false, false, false, false, false],
+            ),
+            (
+                "type-aware rules, typeAware unset",
+                r#"{ "rules": { "typescript/no-floating-promises": "error" } }"#,
+                [true, false, true, false, true, false, false],
+            ),
+        ];
+        for (warning, config, expected) in warnings {
+            for ((run, overrides), expected) in runs.iter().zip(expected) {
+                let (_, diagnostics) = load_nested_json_in_run(config, *overrides);
+                assert_eq!(
+                    warning_messages(&diagnostics).len(),
+                    usize::from(expected),
+                    "{warning} in {run}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_nested_json_config_does_not_warn_about_type_check_false() {
+        let (configs, diagnostics) = load_nested_json(r#"{ "options": { "typeCheck": false } }"#);
+        assert_eq!(configs, 1);
+        assert!(diagnostics.is_empty());
+    }
+
+    #[test]
+    fn test_nested_json_config_warns_about_deny_warnings() {
+        let (configs, diagnostics) = load_nested_json(r#"{ "options": { "denyWarnings": true } }"#);
+        // The option is ignored, but the rest of the config still applies.
+        assert_eq!(configs, 1);
+        let messages = warning_messages(&diagnostics);
+        assert_eq!(messages.len(), 1);
+        assert!(messages[0].contains("options.denyWarnings"));
+    }
+
+    /// Naming type-aware rules without enabling `options.typeAware` is reported, unless the run
+    /// turns type-aware linting on (the rules run after all) or off (the editor's choice) for
+    /// every file.
+    #[test]
+    fn test_nested_json_config_warns_about_type_aware_rules_without_type_aware() {
+        let (configs, diagnostics) =
+            load_nested_json(r#"{ "rules": { "typescript/no-floating-promises": "error" } }"#);
+        assert_eq!(configs, 1);
+        let messages = warning_messages(&diagnostics);
+        assert_eq!(messages.len(), 1);
+        assert!(messages[0].contains("typescript/no-floating-promises"));
+        assert!(messages[0].contains("does not set `options.typeAware`"));
+        for overrides in [RunOverrides::TYPE_AWARE_FORCED, RunOverrides::TYPE_AWARE_DISABLED] {
+            let (configs, diagnostics) = load_nested_json_in_run(
+                r#"{ "rules": { "typescript/no-floating-promises": "error" } }"#,
+                overrides,
+            );
+            assert_eq!(configs, 1);
+            assert!(diagnostics.is_empty());
+        }
+    }
+
+    /// An explicit `typeAware: false` is a deliberate opt-out.
+    #[test]
+    fn test_nested_json_config_does_not_warn_about_type_aware_rules_with_type_aware_false() {
+        let (configs, diagnostics) = load_nested_json(
+            r#"{ "options": { "typeAware": false }, "rules": { "typescript/no-floating-promises": "error" } }"#,
+        );
+        assert_eq!(configs, 1);
+        assert!(diagnostics.is_empty());
+    }
+
+    /// An explicit `typeAware: false` in a config which is extended is a deliberate opt-out too.
+    #[test]
+    fn test_nested_json_config_does_not_warn_about_type_aware_rules_with_extended_type_aware_false()
+    {
+        let (configs, diagnostics) = load_nested_json_extending(
+            r#"{ "options": { "typeAware": false } }"#,
+            r#"{ "extends": ["../base/.oxlintrc.json"], "rules": { "typescript/no-floating-promises": "error" } }"#,
+        );
+        assert!(diagnostics.is_empty());
+        assert_eq!(configs.len(), 1);
+        assert_eq!(configs[0].config.type_aware(), Some(false));
+    }
+
+    #[test]
+    fn test_nested_json_config_does_not_warn_about_type_aware_rules_with_type_aware() {
+        let (configs, diagnostics) = load_nested_json(
+            r#"{ "options": { "typeAware": true }, "rules": { "typescript/no-floating-promises": "error" } }"#,
+        );
+        assert_eq!(configs, 1);
+        assert!(diagnostics.is_empty());
+    }
+
+    #[test]
+    fn test_nested_json_config_warns_about_max_warnings() {
+        let (configs, diagnostics) = load_nested_json(r#"{ "options": { "maxWarnings": 10 } }"#);
+        assert_eq!(configs, 1);
+        let messages = warning_messages(&diagnostics);
+        assert_eq!(messages.len(), 1);
+        assert!(messages[0].contains("options.maxWarnings"));
+    }
+
+    #[test]
+    fn test_nested_json_config_allows_report_unused_disable_directives() {
+        let (configs, diagnostics) =
+            load_nested_json(r#"{ "options": { "reportUnusedDisableDirectives": "warn" } }"#);
+        assert_eq!(configs, 1);
+        assert!(diagnostics.is_empty());
+    }
+
+    #[test]
+    fn test_nested_json_config_allows_respect_eslint_disable_directives() {
+        let (configs, diagnostics) =
+            load_nested_json(r#"{ "options": { "respectEslintDisableDirectives": false } }"#);
+        assert_eq!(configs, 1);
+        assert!(diagnostics.is_empty());
+    }
+
+    /// `options` is not inherited from the root config, so `extends` is how a package picks up a
+    /// shared `typeAware`. Returns the loaded nested configs and the diagnostics.
+    fn load_nested_json_extending(
+        base: &str,
+        nested: &str,
+    ) -> (Vec<LoadedConfig>, Vec<ConfigLoadDiagnostic>) {
         let root_dir = tempfile::tempdir().unwrap();
         let base_path = root_dir.path().join("base/.oxlintrc.json");
         let nested_path = root_dir.path().join("nested/.oxlintrc.json");
         std::fs::create_dir_all(base_path.parent().unwrap()).unwrap();
         std::fs::create_dir_all(nested_path.parent().unwrap()).unwrap();
-        std::fs::write(&base_path, r#"{ "options": { "typeAware": true } }"#).unwrap();
-        std::fs::write(&nested_path, r#"{ "extends": ["../base/.oxlintrc.json"] }"#).unwrap();
+        std::fs::write(&base_path, base).unwrap();
+        std::fs::write(&nested_path, nested).unwrap();
 
         let mut external_plugin_store = ExternalPluginStore::new(false);
         let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
-        let (configs, errors) = loader.load_discovered_with_root_dir(
+        loader.load_discovered_with_root_dir(
             root_dir.path(),
             [DiscoveredConfigFile::Json(nested_path)],
+        )
+    }
+
+    #[test]
+    fn test_nested_json_config_allows_type_aware_from_extends() {
+        let (configs, diagnostics) = load_nested_json_extending(
+            r#"{ "options": { "typeAware": true } }"#,
+            r#"{ "extends": ["../base/.oxlintrc.json"] }"#,
         );
-        assert!(errors.is_empty());
+        assert!(diagnostics.is_empty());
         assert_eq!(configs.len(), 1);
+        assert_eq!(configs[0].config.type_aware(), Some(true));
+    }
+
+    #[test]
+    fn test_nested_json_config_can_turn_off_extended_type_aware() {
+        // The child wins over the config it extends, so a package can opt out of a shared setting.
+        let (configs, diagnostics) = load_nested_json_extending(
+            r#"{ "options": { "typeAware": true } }"#,
+            r#"{ "extends": ["../base/.oxlintrc.json"], "options": { "typeAware": false } }"#,
+        );
+        assert!(diagnostics.is_empty());
+        assert_eq!(configs.len(), 1);
+        assert_eq!(configs[0].config.type_aware(), Some(false));
     }
 
     #[cfg(feature = "napi")]
@@ -1044,7 +1504,7 @@ mod test {
 
     #[cfg(feature = "napi")]
     #[test]
-    fn test_nested_oxlint_config_ts_rejects_type_aware() {
+    fn test_nested_oxlint_config_ts_allows_type_aware() {
         let root_dir = tempfile::tempdir().unwrap();
         let nested_path = root_dir.path().join("nested/oxlint.config.ts");
         std::fs::create_dir_all(nested_path.parent().unwrap()).unwrap();
@@ -1056,22 +1516,22 @@ mod test {
         let js_loader = make_js_loader(move |paths| {
             Ok(paths
                 .into_iter()
-                .map(|path| make_js_config(PathBuf::from(path), Some(false), None))
+                .map(|path| make_js_config(PathBuf::from(path), Some(true), None))
                 .collect())
         });
         loader = loader.with_js_config_loader(Some(&js_loader));
 
-        let (_configs, errors) = loader.load_discovered_with_root_dir(
+        let (configs, diagnostics) = loader.load_discovered_with_root_dir(
             root_dir.path(),
             [DiscoveredConfigFile::Js(nested_path)],
         );
-        assert_eq!(errors.len(), 1);
-        assert!(matches!(errors[0], ConfigLoadError::Diagnostic(_)));
+        assert!(diagnostics.is_empty());
+        assert_eq!(configs.len(), 1);
     }
 
     #[cfg(feature = "napi")]
     #[test]
-    fn test_nested_oxlint_config_ts_rejects_type_check() {
+    fn test_nested_oxlint_config_ts_allows_type_check() {
         let root_dir = tempfile::tempdir().unwrap();
         let nested_path = root_dir.path().join("nested/oxlint.config.ts");
         std::fs::create_dir_all(nested_path.parent().unwrap()).unwrap();
@@ -1088,17 +1548,53 @@ mod test {
         });
         loader = loader.with_js_config_loader(Some(&js_loader));
 
-        let (_configs, errors) = loader.load_discovered_with_root_dir(
+        let (configs, diagnostics) = loader.load_discovered_with_root_dir(
             root_dir.path(),
             [DiscoveredConfigFile::Js(nested_path)],
         );
-        assert_eq!(errors.len(), 1);
-        assert!(matches!(errors[0], ConfigLoadError::Diagnostic(_)));
+        assert!(diagnostics.is_empty());
+        assert_eq!(configs.len(), 1);
     }
 
     #[cfg(feature = "napi")]
     #[test]
-    fn test_nested_oxlint_config_ts_rejects_deny_warnings() {
+    fn test_nested_oxlint_config_ts_warns_about_type_check() {
+        for (overrides, warns) in
+            [(RunOverrides::empty(), true), (RunOverrides::TYPE_CHECK_OVERRIDDEN, false)]
+        {
+            let root_dir = tempfile::tempdir().unwrap();
+            let nested_path = root_dir.path().join("nested/oxlint.config.ts");
+            std::fs::create_dir_all(nested_path.parent().unwrap()).unwrap();
+            std::fs::write(&nested_path, "export default {};").unwrap();
+
+            let mut external_plugin_store = ExternalPluginStore::new(false);
+            let js_loader = make_js_loader(move |paths| {
+                Ok(paths
+                    .into_iter()
+                    .map(|path| make_js_config(PathBuf::from(path), Some(true), Some(true)))
+                    .collect())
+            });
+            let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None)
+                .with_run_overrides(overrides)
+                .with_js_config_loader(Some(&js_loader));
+
+            let (configs, diagnostics) = loader.load_discovered_with_root_dir(
+                root_dir.path(),
+                [DiscoveredConfigFile::Js(nested_path)],
+            );
+            // `typeCheck` still applies, but it cannot be scoped to this directory.
+            assert_eq!(configs.len(), 1);
+            let messages = warning_messages(&diagnostics);
+            assert_eq!(messages.len(), usize::from(warns), "{overrides:?}");
+            if warns {
+                assert!(messages[0].contains("options.typeCheck"));
+            }
+        }
+    }
+
+    #[cfg(feature = "napi")]
+    #[test]
+    fn test_nested_oxlint_config_ts_warns_about_deny_warnings() {
         let root_dir = tempfile::tempdir().unwrap();
         let nested_path = root_dir.path().join("nested/oxlint.config.ts");
         std::fs::create_dir_all(nested_path.parent().unwrap()).unwrap();
@@ -1120,12 +1616,14 @@ mod test {
         });
         loader = loader.with_js_config_loader(Some(&js_loader));
 
-        let (_configs, errors) = loader.load_discovered_with_root_dir(
+        let (configs, diagnostics) = loader.load_discovered_with_root_dir(
             root_dir.path(),
             [DiscoveredConfigFile::Js(nested_path)],
         );
-        assert_eq!(errors.len(), 1);
-        assert!(matches!(errors[0], ConfigLoadError::Diagnostic(_)));
+        assert_eq!(configs.len(), 1);
+        let messages = warning_messages(&diagnostics);
+        assert_eq!(messages.len(), 1);
+        assert!(messages[0].contains("options.denyWarnings"));
     }
 
     #[cfg(feature = "napi")]
