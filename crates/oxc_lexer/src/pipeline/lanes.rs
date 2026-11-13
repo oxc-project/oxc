@@ -10,7 +10,7 @@ use crate::{
     token::StringSpan,
 };
 
-use crate::pipeline::{carve::JFrame, chunk::mm32, disambiguate::DisambiguateState};
+use crate::pipeline::{carve::JsxFrame, chunk::mm32, disambiguate::DisambiguateState};
 
 #[derive(Debug, Default)]
 pub(crate) struct TokenLanes {
@@ -40,7 +40,7 @@ pub(crate) struct Lanes {
     pub unicode_leads: Vec<u32>,
     /// Carve's nesting stacks, kept between lexes to reuse their allocations.
     pub(super) template_depth: Vec<u32>,
-    pub(super) jsx_stack: Vec<JFrame>,
+    pub(super) jsx_stack: Vec<JsxFrame>,
     /// What the disambiguation questions keep across the lex: the context walks,
     /// the bracket bitmap and the closers the forward scans resolved.
     pub(super) disambiguate: DisambiguateState,
@@ -139,16 +139,16 @@ impl Lanes {
 
     /// IdentifierStart or digit right after a numeric literal (`1.5n`,
     /// `3in`, `0b12`), with oxc_parser's `invalid_number_end` span: the char
-    /// at `e2` plus the run of identifier-start chars after it.
+    /// at number_end plus the run of identifier-start chars after it.
     ///
     /// As it's cold code, it's compiled only once, not separately for each CPU feature set.
     /// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
     #[cpu_version(Generic)]
     #[cold]
     #[inline(never)]
-    pub(super) fn push_num_end_diag(&mut self, src: &[u8], e2: usize, code: DiagCode) {
-        let end = ident_start_run_end(src, e2 + 1);
-        self.push_diag(e2 as u32, (end - e2) as u32, code);
+    pub(super) fn push_num_end_diag(&mut self, src: &[u8], number_end: usize, code: DiagCode) {
+        let end = ident_start_run_end(src, number_end + 1);
+        self.push_diag(number_end as u32, (end - number_end) as u32, code);
     }
 
     /// Non-ASCII byte right after a numeric literal: a Unicode
@@ -161,13 +161,17 @@ impl Lanes {
     #[cpu_version(Generic)]
     #[cold]
     #[inline(never)]
-    pub(super) fn push_num_end_diag_unicode(&mut self, src: &[u8], e2: usize) {
-        let Some(ch) = decode_char_at(src, e2) else { return };
+    pub(super) fn push_num_end_diag_unicode(&mut self, src: &[u8], number_end: usize) {
+        let Some(ch) = decode_char_at(src, number_end) else { return };
         if !is_identifier_start(ch) {
             return;
         }
-        let end = ident_start_run_end(src, e2 + ch.len_utf8());
-        self.push_diag(e2 as u32, (end - e2) as u32, DiagCode::InvalidNumericLiteral);
+        let end = ident_start_run_end(src, number_end + ch.len_utf8());
+        self.push_diag(
+            number_end as u32,
+            (end - number_end) as u32,
+            DiagCode::InvalidNumericLiteral,
+        );
     }
 
     /// `EMIT`: report malformed escapes while cooking - strings only, since
@@ -410,18 +414,18 @@ impl Lanes {
                 && src[k] == b'\\'
                 && src[k + 1] == b'u'
             {
-                let (l1, e2) = hex4(src, k + 2, be);
-                if let Some(low) = l1
+                let (low, low_end) = hex4(src, k + 2, be);
+                if let Some(low) = low
                     && (0xDC00..=0xDFFF).contains(&low)
                 {
                     // A well-formed pair is still invalid in identifiers:
                     // one diag over both escapes.
                     self.push_diag(
                         start as u32,
-                        (e2 - start) as u32,
+                        (low_end - start) as u32,
                         DiagCode::InvalidIdentifierEscape,
                     );
-                    i = e2;
+                    i = low_end;
                     continue;
                 }
                 // Not a valid low: fall through - the parser rewinds and

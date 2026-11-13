@@ -26,15 +26,15 @@ pub(super) unsafe fn jsx_over_type_params(
     bitmaps: &Bitmaps,
     kinds: Kinds,
     lt: usize,
-    tpos: usize,
-    ts: bool,
+    name_pos: usize,
+    is_ts: bool,
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) -> bool {
-    if !ts {
+    if !is_ts {
         return true;
     }
-    match ts_angle_verdict(src, tpos, bitmaps.word, cpu) {
+    match ts_angle_verdict(src, name_pos, bitmaps.word, cpu) {
         AngleVerdict::TypeParams => false,
         AngleVerdict::Jsx => true,
         AngleVerdict::Ambiguous { gt, lp } => {

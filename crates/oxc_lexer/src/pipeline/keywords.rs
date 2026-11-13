@@ -392,7 +392,7 @@ const fn keyword_hash_ts(first_8: u64, _cpu: impl Cpu) -> usize {
 #[cpu_multiversion]
 #[inline]
 pub(super) fn kw_match_at(
-    ts: bool,
+    is_ts: bool,
     src: &[u8],
     pos: usize,
     len: usize,
@@ -413,7 +413,7 @@ pub(super) fn kw_match_at(
 
     // SAFETY: `word` is 16 bytes, and `len` is between 1 and 16
     unsafe {
-        if ts {
+        if is_ts {
             kw_match::<true>(word.as_ptr(), len, cpu)
         } else {
             kw_match::<false>(word.as_ptr(), len, cpu)

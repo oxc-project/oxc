@@ -169,7 +169,7 @@ impl Walk {
         let cpu = BASELINE;
 
         // Declaration type parameters, an assertion or generic arrow, type arguments, or less-than.
-        let list = if !tokens.ts {
+        let list = if !tokens.is_ts {
             None
         } else if self.type_params_expected() {
             Some(AngleList::Value)
