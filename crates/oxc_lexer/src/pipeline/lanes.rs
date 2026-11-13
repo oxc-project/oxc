@@ -957,6 +957,74 @@ fn push_escape_diag(diags: &mut Vec<Diagnostic>, off: u32, end: u32) {
     });
 }
 
+/// Canonicalize surrogate pairs in the just-emitted cooked bytes.
+///
+/// `cook_decode` emits each decoded surrogate as a 3-byte WTF-8 sequence.
+/// A lead surrogate immediately followed by a trail surrogate must be
+/// re-encoded as one 4-byte supplementary character (canonical WTF-8), even
+/// when the two escapes used different forms (`\uD834\u{DF06}`) or were
+/// separated by a LineContinuation that contributes no bytes.
+///
+/// This runs only when at least one surrogate was emitted, which is a cold
+/// path. It returns the new end offset and whether any lone surrogates remain.
+#[cpu_version(Generic)]
+#[cold]
+#[inline(never)]
+unsafe fn canonicalize_surrogate_pairs(out: *mut u8, start: u32, end: u32) -> (u32, bool) {
+    let mut read = start;
+    let mut write = start;
+    let mut has_lone = false;
+
+    while read < end {
+        // Lead surrogate encoding `ED A0..AF 80..BF` followed immediately
+        // by trail surrogate encoding `ED B0..BF 80..BF`.
+        if read + 6 <= end
+            && *out.add(read as usize) == 0xED
+            && (0xA0..=0xAF).contains(&*out.add((read + 1) as usize))
+            && (0x80..=0xBF).contains(&*out.add((read + 2) as usize))
+            && *out.add((read + 3) as usize) == 0xED
+            && (0xB0..=0xBF).contains(&*out.add((read + 4) as usize))
+            && (0x80..=0xBF).contains(&*out.add((read + 5) as usize))
+        {
+            let lead_hi = *out.add((read + 1) as usize);
+            let lead_lo = *out.add((read + 2) as usize);
+            let lead = 0xD800 + (((lead_hi & 0x0F) as u32) << 6) + ((lead_lo & 0x3F) as u32);
+
+            let trail_hi = *out.add((read + 4) as usize);
+            let trail_lo = *out.add((read + 5) as usize);
+            let trail = 0xDC00 + (((trail_hi & 0x0F) as u32) << 6) + ((trail_lo & 0x3F) as u32);
+
+            let cp = 0x10000 + ((lead - 0xD800) << 10) + (trail - 0xDC00);
+
+            *out.add(write as usize) = 0xF0 | ((cp >> 18) as u8);
+            *out.add((write + 1) as usize) = 0x80 | (((cp >> 12) & 0x3F) as u8);
+            *out.add((write + 2) as usize) = 0x80 | (((cp >> 6) & 0x3F) as u8);
+            *out.add((write + 3) as usize) = 0x80 | ((cp & 0x3F) as u8);
+
+            read += 6;
+            write += 4;
+            continue;
+        }
+
+        // Any remaining surrogate encoding (lead not followed by trail, or
+        // a trail surrogate) is a lone surrogate.
+        if *out.add(read as usize) == 0xED
+            && read + 3 <= end
+            && ((0xA0..=0xAF).contains(&*out.add((read + 1) as usize))
+                || (0xB0..=0xBF).contains(&*out.add((read + 1) as usize)))
+            && (0x80..=0xBF).contains(&*out.add((read + 2) as usize))
+        {
+            has_lone = true;
+        }
+
+        *out.add(write as usize) = *out.add(read as usize);
+        read += 1;
+        write += 1;
+    }
+
+    (write, has_lone)
+}
+
 #[cpu_multiversion]
 unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
     src: *const u8,
@@ -1217,6 +1285,8 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
             }
         }
     }
+    let (wi, lone) =
+        if lone { unsafe { canonicalize_surrogate_pairs(out, ss, wi) } } else { (wi, false) };
     (wi, lone, nes)
 }
 
@@ -1253,6 +1323,14 @@ mod tests {
         assert_eq!(push_tpl(br"\r\n", cpu), b"\r\n");
         assert_eq!(push_tpl(br"\r", cpu), b"\r");
         assert_eq!(push_tpl(b"\r\n", cpu), b"\n");
+    }
+
+    #[test_cpus]
+    fn push_template_combines_surrogate_pairs(cpu: impl Cpu) {
+        let want = "\u{1D306}".as_bytes();
+        assert_eq!(push_tpl(br"\uD834\uDF06", cpu), want);
+        assert_eq!(push_tpl(br"\u{D834}\u{DF06}", cpu), want);
+        assert_eq!(push_tpl(b"\\uD834\\\n\\uDF06", cpu), want);
     }
 
     /// Cook string `body` with [`cook_decode`] and CPU feature set `cpu`.
@@ -1384,24 +1462,40 @@ mod tests {
         assert_eq!(out, [0xED, 0xA0, 0xBD]);
     }
 
-    /// Adjacent 4-digit escapes forming a surrogate pair combine into one
-    /// code point (oxc_parser's SurrogatePair rule); the braced form does not.
+    /// Adjacent escapes forming a surrogate pair combine into one
+    /// supplementary character (canonical WTF-8), whatever escape forms are
+    /// used or whether a LineContinuation sits between them.
     #[test_cpus]
     fn cook_decode_surrogate_pairs(cpu: impl Cpu) {
+        let want = "\u{1D306}".as_bytes();
+
         let (out, lone) = cook(br"\uD834\uDF06", cpu);
-        assert!(!lone, "a combined pair is not a lone surrogate");
-        assert_eq!(out, "\u{1D306}".as_bytes());
+        assert!(!lone, "plain 4-digit pair is not a lone surrogate");
+        assert_eq!(out, want);
+
+        let (out, lone) = cook(br"\uD834\u{DF06}", cpu);
+        assert!(!lone, "mixed 4-digit/braced pair combines");
+        assert_eq!(out, want);
+
+        let (out, lone) = cook(br"\u{D834}\uDF06", cpu);
+        assert!(!lone, "mixed braced/4-digit pair combines");
+        assert_eq!(out, want);
+
+        let (out, lone) = cook(br"\u{D834}\u{DF06}", cpu);
+        assert!(!lone, "braced pair combines");
+        assert_eq!(out, want);
+
+        // Pair split by a LineContinuation: the continuation contributes no
+        // bytes, so the two surrogates are still adjacent in the cooked value.
+        let (out, lone) = cook(b"\\uD834\\\n\\uDF06", cpu);
+        assert!(!lone, "pair split by line continuation combines");
+        assert_eq!(out, want);
 
         // A high escape followed by a non-low stays lone; the next escape
         // decodes independently.
         let (out, lone) = cook(br"\uD834\u0041", cpu);
         assert!(lone);
         assert_eq!(out, [0xED, 0xA0, 0xB4, b'A']);
-
-        // Braced escapes never pair (parser parity).
-        let (out, lone) = cook(br"\u{D834}\u{DF06}", cpu);
-        assert!(lone, "braced surrogates stay lone");
-        assert_eq!(out, [0xED, 0xA0, 0xB4, 0xED, 0xBC, 0x86]);
     }
 
     /// `\` + LS/PS is a LineContinuation: cooks to nothing (like `\<LF>`).
