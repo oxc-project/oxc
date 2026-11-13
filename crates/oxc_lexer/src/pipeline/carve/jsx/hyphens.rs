@@ -1,6 +1,6 @@
-use oxc_simd::{Avx2, BASELINE, Cpu, DynCpu, Neon, Vec128, Vec256, cpu_multiversion, cpu_version};
+use oxc_simd::{Avx2, BASELINE, Cpu, DynCpu, Vec256, cpu_multiversion, cpu_version};
 
-use crate::pipeline::{bitmap::Bitmap, chunk::mm32};
+use crate::pipeline::bitmap::Bitmap;
 
 /// JSXIdentifier admits `-`, so `data-x` and `aria-label` are one name token
 /// where JS would read three. Fuse every hyphen in `[a, b)` into the run
@@ -24,8 +24,7 @@ pub(super) unsafe fn jsx_glue_hyphens(
 ) {
     match DynCpu::from(cpu) {
         DynCpu::Avx2(cpu) => jsx_glue_hyphens_avx2(src, n, st, opch, word, a, b, cpu),
-        DynCpu::Neon(cpu) => jsx_glue_hyphens_neon(src, n, st, opch, word, a, b, cpu),
-        DynCpu::Generic(_) => jsx_glue_hyphens_generic(src, n, st, opch, word, a, b),
+        _ => jsx_glue_hyphens_generic(src, n, st, opch, word, a, b),
     }
 }
 
@@ -46,38 +45,6 @@ unsafe fn jsx_glue_hyphens_avx2(
     let mut last = usize::MAX;
     while i < b {
         let mut m = Vec256::load_unaligned(src.add(i), cpu).eq_u8(b'-').movemask();
-        let rem = b - i;
-        if rem < 32 {
-            m &= (1u32 << rem) - 1;
-        }
-        while m != 0 {
-            let h = i + m.trailing_zeros() as usize;
-            m &= m - 1;
-            glue_hyphen_at(n, st, opch, word, h, &mut last, cpu);
-        }
-        i += 32;
-    }
-}
-
-/// [`jsx_glue_hyphens`] for Neon.
-#[cpu_version(Neon)]
-#[inline(always)]
-unsafe fn jsx_glue_hyphens_neon(
-    src: *const u8,
-    n: usize,
-    st: Bitmap,
-    opch: Bitmap,
-    word: Bitmap,
-    a: usize,
-    b: usize,
-    cpu: Neon,
-) {
-    let mut i = a;
-    let mut last = usize::MAX;
-    while i < b {
-        let v0 = Vec128::load_unaligned(src.add(i), cpu);
-        let v1 = Vec128::load_unaligned(src.add(i + 16), cpu);
-        let mut m = mm32(v0.eq_u8(b'-'), v1.eq_u8(b'-'));
         let rem = b - i;
         if rem < 32 {
             m &= (1u32 << rem) - 1;

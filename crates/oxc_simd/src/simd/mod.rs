@@ -19,7 +19,8 @@
 //! Some methods only exist for one CPU, because the other CPU has no matching instruction:
 //!
 //! - AVX2 only: [`movemask`] (Neon has no equivalent of x86's `pmovmskb`) and [`shuffle_u32s`].
-//! - Neon only: [`shl_u8`], [`shr_u8`], [`pairwise_add_u8`] and [`test_u8`].
+//! - Neon only: [`shl_u8`], [`shr_u8`], [`pairwise_add_u8`], [`sum_u8`], [`nibble_mask`]
+//!   and [`test_u8`].
 //!
 //! Most methods do the same on every CPU type, but these differ in behavior:
 //!
@@ -85,6 +86,8 @@
 //! [`shr_u8`]: Vec128::shr_u8
 //! [`pairwise_add_u8`]: Vec128::pairwise_add_u8
 //! [`test_u8`]: Vec128::test_u8
+//! [`sum_u8`]: Vec128::sum_u8
+//! [`nibble_mask`]: Vec128::nibble_mask
 //! [`cpu_select!`]: macros::cpu_select
 //! [`cpu`]: crate::cpu
 //! [`unused!`]: macros::unused

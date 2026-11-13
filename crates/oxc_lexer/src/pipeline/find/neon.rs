@@ -6,9 +6,7 @@ use super::BRACKET_BYTES;
 
 /// First byte at or after i that is one of needles, or n.
 ///
-/// Searches stop at the first hit, so each chunk's mask is on the path to the exit branch.
-/// 16-byte chunks with a nibble mask keep that path to 2 instructions after the compares,
-/// where a 32-byte `mm32` would take 6.
+/// 16 bytes at a time, as a nibble mask is the cheapest way to find the first hit on Neon.
 #[cpu_version(Neon)]
 #[inline]
 pub unsafe fn find_neon<const K: usize>(

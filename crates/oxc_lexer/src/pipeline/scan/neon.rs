@@ -2,10 +2,7 @@ use oxc_simd::{Neon, Vec128, cpu_version};
 
 use crate::pipeline::chunk::mm32;
 
-use super::common::lic_verify_at;
-
-// Unlike `find`, these scans do bit arithmetic on the mask after the test, so they build
-// a `movemask`-style mask with `mm32` and share the AVX2 implementation's logic.
+use super::common::{lic_first, lic_verify_at};
 
 #[cpu_version(Neon)]
 pub unsafe fn scan_block_comment_neon(
@@ -19,11 +16,15 @@ pub unsafe fn scan_block_comment_neon(
     while i + 32 <= n {
         let v0 = Vec128::load_unaligned(src.add(i), cpu);
         let v1 = Vec128::load_unaligned(src.add(i + 16), cpu);
-        // Reads 1 byte past n at most, into the caller-guaranteed PAD.
+        // Reads 1 byte past n at most, into the PAD
         let w0 = Vec128::load_unaligned(src.add(i + 1), cpu);
         let w1 = Vec128::load_unaligned(src.add(i + 17), cpu);
         let term = mm32(v0.eq_u8(b'*') & w0.eq_u8(b'/'), v1.eq_u8(b'*') & w1.eq_u8(b'/'));
-        let nl = if saw_nl { 0 } else { mm32(newline(v0), newline(v1)) };
+        let nl = if saw_nl {
+            0
+        } else {
+            mm32(v0.eq_u8(b'\n') | v0.eq_u8(b'\r'), v1.eq_u8(b'\n') | v1.eq_u8(b'\r'))
+        };
         let at = if lic_q < 0 { mm32(v0.eq_u8(b'@'), v1.eq_u8(b'@')) } else { 0 };
         if term != 0 {
             let j = term.trailing_zeros() as usize;
@@ -43,7 +44,8 @@ pub unsafe fn scan_block_comment_neon(
         }
         i += 32;
     }
-    while i + 1 < n {
+    // The last byte can still be a newline. Reading the byte after it reads the PAD
+    while i < n {
         let c = *src.add(i);
         if c == b'*' && *src.add(i + 1) == b'/' {
             return (i + 1, saw_nl, lic_q);
@@ -75,7 +77,9 @@ pub unsafe fn scan_line_comment_neon(
     while i + 32 <= n {
         let v0 = Vec128::load_unaligned(src.add(i), cpu);
         let v1 = Vec128::load_unaligned(src.add(i + 16), cpu);
-        let mut term = mm32(newline(v0) | v0.eq_u8(0xE2), newline(v1) | v1.eq_u8(0xE2));
+        let term0 = v0.eq_u8(b'\n') | v0.eq_u8(b'\r') | v0.eq_u8(0xE2);
+        let term1 = v1.eq_u8(b'\n') | v1.eq_u8(b'\r') | v1.eq_u8(0xE2);
+        let mut term = mm32(term0, term1);
         let at = mm32(v0.eq_u8(b'@'), v1.eq_u8(b'@'));
         while term != 0 {
             let t = term.trailing_zeros() as usize;
@@ -117,23 +121,4 @@ pub unsafe fn scan_line_comment_neon(
         i += 1;
     }
     (n, lic_q)
-}
-
-#[cpu_version(Neon)]
-#[inline(always)]
-fn newline(v: Vec128<Neon>) -> Vec128<Neon> {
-    v.eq_u8(b'\n') | v.eq_u8(b'\r')
-}
-
-#[cpu_version(Neon)]
-#[inline(always)]
-unsafe fn lic_first(src: *const u8, base: usize, mut am: u32, cpu: Neon) -> i64 {
-    while am != 0 {
-        let q = base + am.trailing_zeros() as usize;
-        am &= am - 1;
-        if lic_verify_at(src, q, cpu) {
-            return q as i64;
-        }
-    }
-    -1
 }

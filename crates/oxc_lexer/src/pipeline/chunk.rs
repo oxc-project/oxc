@@ -34,7 +34,7 @@ pub fn eqm(x: u64, b: u8) -> u64 {
 /// One bit per lane, which [`mm32`] and [`mm64`] sum into place.
 ///
 /// The pattern repeats every 8 bytes, because each 8 lanes sum into 1 byte of the result.
-const LANE_BITS: VecData128 =
+pub(super) const LANE_BITS: VecData128 =
     VecData128::from_bytes([1, 2, 4, 8, 16, 32, 64, 128, 1, 2, 4, 8, 16, 32, 64, 128]);
 
 /// Gather the top bit of each byte of `a` then `b` into a 32-bit mask.

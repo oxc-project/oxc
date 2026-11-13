@@ -1,7 +1,7 @@
 use std::{ptr, str};
 
 use oxc_ast::ast::{Comment, RegExpFlags};
-use oxc_simd::{Avx2, BASELINE, Cpu, DynCpu, Neon, Vec256, cpu_multiversion, cpu_version};
+use oxc_simd::{Avx2, BASELINE, Cpu, DynCpu, Vec256, cpu_multiversion, cpu_version};
 use oxc_span::Span;
 use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
@@ -10,7 +10,7 @@ use crate::{
     token::StringSpan,
 };
 
-use crate::pipeline::{disambiguate::DisambiguateState, find::find};
+use crate::pipeline::disambiguate::DisambiguateState;
 
 #[derive(Debug, Default)]
 pub(crate) struct TokenLanes {
@@ -488,12 +488,7 @@ fn cook_short<const EMIT: bool, const CRLF: bool>(
         DynCpu::Avx2(cpu) => {
             cook_short_avx2::<EMIT, CRLF>(src, bs, be, base, ss, body_len, diags, cpu)
         }
-        DynCpu::Neon(cpu) => {
-            cook_short_neon::<EMIT, CRLF>(src, bs, be, base, ss, body_len, diags, cpu)
-        }
-        DynCpu::Generic(_) => {
-            cook_short_generic::<EMIT, CRLF>(src, bs, be, base, ss, body_len, diags)
-        }
+        _ => cook_short_generic::<EMIT, CRLF>(src, bs, be, base, ss, body_len, diags),
     }
 }
 
@@ -518,46 +513,6 @@ fn cook_short_avx2<const EMIT: bool, const CRLF: bool>(
     }
     let bs_mask = hit.movemask() & ((1u32 << body_len) - 1);
     if bs_mask == 0 {
-        unsafe { v.store_unaligned(base.add(ss as usize)) };
-        (ss + (be - bs), false, false)
-    } else {
-        unsafe { cook_decode::<EMIT, CRLF>(src.as_ptr(), bs, be, base, ss, diags, cpu) }
-    }
-}
-
-/// 32 bytes of `0xFF` then 32 of `0x00`. 32 bytes from `32 - len` keeps the first `len` bytes.
-static PREFIX_MASK: [u8; 64] = {
-    let mut mask = [0; 64];
-    let mut i = 0;
-    while i < 32 {
-        mask[i] = 0xFF;
-        i += 1;
-    }
-    mask
-};
-
-/// [`cook_short`] for Neon.
-#[cpu_version(Neon)]
-#[inline]
-fn cook_short_neon<const EMIT: bool, const CRLF: bool>(
-    src: &[u8],
-    bs: u32,
-    be: u32,
-    base: *mut u8,
-    ss: u32,
-    body_len: usize,
-    diags: &mut Vec<Diagnostic>,
-    cpu: Neon,
-) -> (u32, bool, bool) {
-    let v = unsafe { Vec256::load_unaligned(src.as_ptr().add(bs as usize), cpu) };
-    let mut hit = v.eq_u8(b'\\');
-    if CRLF {
-        // Templates also decode when a raw CR needs LF-normalizing.
-        hit |= v.eq_u8(b'\r');
-    }
-    // Neon has no movemask, so mask the lanes past the body instead.
-    let body = unsafe { Vec256::load_unaligned(PREFIX_MASK.as_ptr().add(32 - body_len), cpu) };
-    if (hit & body).is_zero() {
         unsafe { v.store_unaligned(base.add(ss as usize)) };
         (ss + (be - bs), false, false)
     } else {
@@ -604,9 +559,7 @@ fn cook_short_generic<const EMIT: bool, const CRLF: bool>(
 fn span_has_bs(src: &[u8], bs: usize, be: usize, cpu: impl Cpu) -> bool {
     match DynCpu::from(cpu) {
         DynCpu::Avx2(cpu) => span_has_bs_avx2(src, bs, be, cpu),
-        // SAFETY: `find` reads no further than `be`, which is within `src`
-        DynCpu::Neon(cpu) => unsafe { find(src[..be].as_ptr(), be, bs, [b'\\'], cpu) < be },
-        DynCpu::Generic(_) => span_has_bs_generic(src, bs, be),
+        _ => span_has_bs_generic(src, bs, be),
     }
 }
 
@@ -645,9 +598,7 @@ fn span_has_bs_generic(src: &[u8], bs: usize, be: usize) -> bool {
 fn span_has_bs_or_cr(src: &[u8], bs: usize, be: usize, cpu: impl Cpu) -> bool {
     match DynCpu::from(cpu) {
         DynCpu::Avx2(cpu) => span_has_bs_or_cr_avx2(src, bs, be, cpu),
-        // SAFETY: `find` reads no further than `be`, which is within `src`
-        DynCpu::Neon(cpu) => unsafe { find(src[..be].as_ptr(), be, bs, [b'\\', b'\r'], cpu) < be },
-        DynCpu::Generic(_) => span_has_bs_or_cr_generic(src, bs, be),
+        _ => span_has_bs_or_cr_generic(src, bs, be),
     }
 }
 

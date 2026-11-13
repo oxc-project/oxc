@@ -75,7 +75,7 @@ pub unsafe fn write_sentinels(n: u32, spans: *mut Span, sig_kinds: *mut u8, _cpu
 /// `PairLuts` is only used by the SIMD implementations, so this function is a no-op on other CPUs.
 #[cpu_version(Generic)]
 pub(super) fn init_pair_luts(cpu: DynCpu) {
-    if !matches!(cpu, DynCpu::Generic(_)) {
+    if matches!(cpu, DynCpu::Avx2(_) | DynCpu::Neon(_)) {
         pair_luts::init_pair_luts();
     }
 }

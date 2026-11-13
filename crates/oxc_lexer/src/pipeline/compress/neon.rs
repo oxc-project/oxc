@@ -4,7 +4,7 @@ use oxc_span::Span;
 use crate::token::{TRIVIA_MAX, TRIVIA_MIN, is_trivia_byte, tk};
 
 use crate::pipeline::{
-    chunk::{mm32, mm64},
+    chunk::{LANE_BITS, mm32, mm64},
     lanes::Lanes,
 };
 
@@ -13,32 +13,23 @@ use super::{
     pair_luts::get_pair_luts,
 };
 
-/// Bit value of each of the 8 lanes which `build_spans_neon` loads, and 0 for the rest.
-const KEEP_BITS: VecData128 =
-    VecData128::from_bytes([1, 2, 4, 8, 16, 32, 64, 128, 0, 0, 0, 0, 0, 0, 0, 0]);
-
-/// For each 4-bit "keep" mask, the shuffle control which gathers the first 2 kept spans
-/// out of a window of 4 spans. [`SPAN_HI`] gathers the next 2.
+/// For each 4-bit "keep" mask, the shuffle controls which gather the kept spans out of
+/// a window of 4 spans: the first 2 kept spans, then the next 2.
 ///
 /// A `Span` is 8 bytes, so span `k` of the window is bytes `8 * k` to `8 * k + 7`.
 /// Unused lanes are `0x80`, which zeroes them, and the next group's store lands on top of them.
-static SPAN_LO: [VecData128; 16] = span_ctrl(0);
-static SPAN_HI: [VecData128; 16] = span_ctrl(2);
-
-const fn span_ctrl(skip: usize) -> [VecData128; 16] {
-    let mut t = [VecData128::from_bytes([0x80; 16]); 16];
+static SPAN_COMPACT: [[VecData128; 2]; 16] = {
+    let mut t = [[VecData128::from_bytes([0x80; 16]); 2]; 16];
     let mut mask = 0usize;
     while mask < 16 {
         let (mut span, mut kept) = (0usize, 0usize);
         while span < 4 {
             if mask & (1 << span) != 0 {
-                if kept >= skip && kept < skip + 2 {
-                    let out = (kept - skip) * 8;
-                    let mut byte = 0usize;
-                    while byte < 8 {
-                        t[mask].as_bytes_mut()[out + byte] = (span * 8 + byte) as u8;
-                        byte += 1;
-                    }
+                let mut byte = 0usize;
+                while byte < 8 {
+                    t[mask][kept / 2].as_bytes_mut()[(kept % 2) * 8 + byte] =
+                        (span * 8 + byte) as u8;
+                    byte += 1;
                 }
                 kept += 1;
             }
@@ -47,12 +38,11 @@ const fn span_ctrl(skip: usize) -> [VecData128; 16] {
         mask += 1;
     }
     t
-}
+};
 
 /// Turn the token-start bitmap into a list of token positions and kinds, 16 bits at a time.
 ///
-/// Uses `PairLuts` the same way as the AVX2 implementation. A `0x80` control byte zeroes its lane
-/// on Neon too, so the tables need no changes.
+/// Same as the AVX2 implementation. A `0x80` control byte zeroes its lane on Neon too.
 #[cpu_version(Neon)]
 #[inline(never)]
 pub(super) unsafe fn compress_blocks_neon(
@@ -101,7 +91,11 @@ pub(super) unsafe fn compress_blocks_neon(
 
 /// Compress 16 bits of a block's token-start mask `mword`: bits `16 * p` to `16 * p + 15`.
 ///
-/// Same as `compress_pair` in the AVX2 implementation.
+/// Writes the positions of the tokens which start at those bits to `starts`,
+/// from index `m + off`, and returns their kinds, gathered into the low bytes of a [`Vec128`].
+///
+/// Each lane of `basev` holds the position of bit `16 * p`.
+/// Adds 16 to it, ready for the next 16 bits.
 ///
 /// # SAFETY
 ///
@@ -159,11 +153,11 @@ pub(super) unsafe fn build_spans_neon(
     while j + 8 <= m {
         let k8 = Vec128::load_low_unaligned(stage_kind.add(j), cpu);
         let triv = k8.sub_u8(TRIVIA_MIN).saturating_sub_u8(TRIVIA_MAX - TRIVIA_MIN).eq_u8(0);
-        let keep = !triv | k8.eq_u8(tk!(Hashbang));
-        let sig = usize::from((keep & KEEP_BITS.read(cpu)).sum_u8());
+        // The 8 lanes past the kinds are zero, which is never dropped
+        let drop = triv & !k8.eq_u8(tk!(Hashbang));
+        let sig = usize::from(!(drop & LANE_BITS.read(cpu)).sum_u8());
 
-        // Minified input stages almost no trivia, so nearly every group keeps all 8,
-        // and both compactions would be the identity.
+        // Minified input stages almost no trivia, so this is the common case
         if sig == 0xff {
             for g in [0, 4] {
                 let (v0, v1) = span_window(stage_pos.add(j + g), cpu);
@@ -219,8 +213,9 @@ unsafe fn span_window(pos: *const u32, cpu: Neon) -> (Vec128<Neon>, Vec128<Neon>
 unsafe fn compact_spans(dst: *mut u64, pos: *const u32, mask: usize, cpu: Neon) {
     let (v0, v1) = span_window(pos, cpu);
     let window = Vec256::from_halves(v0.unpack_lo_u32(v1), v0.unpack_hi_u32(v1));
-    window.shuffle_u8s(SPAN_LO[mask].read(cpu)).store_unaligned(dst.cast::<u8>());
-    window.shuffle_u8s(SPAN_HI[mask].read(cpu)).store_unaligned(dst.add(2).cast::<u8>());
+    let [lo, hi] = &SPAN_COMPACT[mask];
+    window.shuffle_u8s(lo.read(cpu)).store_unaligned(dst.cast::<u8>());
+    window.shuffle_u8s(hi.read(cpu)).store_unaligned(dst.add(2).cast::<u8>());
 }
 
 #[cpu_version(Neon)]
@@ -254,13 +249,12 @@ pub(super) unsafe fn lanes_post_neon(
     }
     let mut inv_dirty = !inv.is_zero();
     while i < m {
-        // Reads up to 15 bytes past m, into the PAD. Both masks are clamped to m below.
-        let v = Vec128::load_unaligned(out_kinds.add(i), cpu);
-        let zero = Vec128::zero(cpu);
-        let mut mask = mm32(hits(v), zero);
-        let mut invm = mm32(v.eq_u8(tk!(Invalid)), zero);
+        let v0 = Vec128::load_unaligned(out_kinds.add(i), cpu);
+        let v1 = Vec128::load_unaligned(out_kinds.add(i + 16), cpu);
+        let mut mask = mm32(hits(v0), hits(v1));
+        let mut invm = mm32(v0.eq_u8(tk!(Invalid)), v1.eq_u8(tk!(Invalid)));
         let rem = m - i;
-        if rem < 16 {
+        if rem < 32 {
             mask &= (1u32 << rem) - 1;
             invm &= (1u32 << rem) - 1;
         }
@@ -269,7 +263,7 @@ pub(super) unsafe fn lanes_post_neon(
             emit_value(src, out_kinds, out_spans, i + mask.trailing_zeros() as usize, lanes, cpu);
             mask &= mask - 1;
         }
-        i += 16;
+        i += 32;
     }
     if inv_dirty {
         invalid_diags(src, out_kinds, out_spans, m, nn, lanes);

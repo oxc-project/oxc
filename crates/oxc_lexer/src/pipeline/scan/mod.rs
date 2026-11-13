@@ -5,6 +5,9 @@ mod common;
 mod generic;
 mod neon;
 
+#[cfg(test)]
+mod tests;
+
 pub(super) use common::{scan_ident_esc, scan_number, scan_quoted, scan_regex, scan_tmpl_text};
 
 use avx2::{scan_block_comment_avx2, scan_line_comment_avx2};
