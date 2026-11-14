@@ -458,6 +458,13 @@ source: crates/oxc_linter/src/tester.rs
   help: `for…of` can iterate over iterable, it's unnecessary to convert to an array.
 
   ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.mjs:1:43]
+ 1 │ const items = [1, 2]; for (const item of [...items]) console.log(items.indexOf(item));
+   ·                                           ───
+   ╰────
+  help: `for…of` can iterate over iterable, it's unnecessary to convert to an array.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:39]
  1 │ async () => {for await (const foo of [...iterable]);}
    ·                                       ───
