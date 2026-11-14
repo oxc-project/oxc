@@ -387,8 +387,12 @@ impl ExtensionsConfig {
 
         let mut extensions = FxHashMap::with_capacity_and_hasher(capacity, FxBuildHasher);
 
+        // Like eslint-plugin-import, per-extension rules come from `pattern` when it is
+        // given; `ignorePackages`, `checkTypeImports` and `pathGroupOverrides` stay next to it.
+        let extension_rules = value.get("pattern").unwrap_or(value);
+
         // Process known extensions from the configuration
-        if let Some(obj) = value.as_object() {
+        if let Some(obj) = extension_rules.as_object() {
             for (key, val) in obj {
                 // Skip non-extension config fields
                 if matches!(
@@ -522,9 +526,7 @@ impl Rule for Extensions {
             let default = ExtensionRule::from_str(first_arg);
 
             if let Some(val) = value.get(1) {
-                let root = val.get("pattern").unwrap_or(val);
-
-                let config = ExtensionsConfig::from_json_value(root, default);
+                let config = ExtensionsConfig::from_json_value(val, default);
 
                 Ok(Self(Box::new(config)))
             } else {
@@ -1341,6 +1343,21 @@ fn test() {
         //     r##"import internalZ from "#internal/z.js";"##,
         //     Some(json!(["always"])),
         // ),
+        // Options next to `pattern` still apply
+        (
+            r"import notes from './notes.md?raw';",
+            Some(json!([
+                "never",
+                {
+                    "pattern": { "js": "never" },
+                    "pathGroupOverrides": [{ "pattern": "**/*.md?raw", "action": "ignore" }]
+                }
+            ])),
+        ),
+        (
+            r"import lodash from 'lodash';",
+            Some(json!(["always", { "pattern": { "js": "always" }, "ignorePackages": true }])),
+        ),
     ];
 
     let fail = vec![
