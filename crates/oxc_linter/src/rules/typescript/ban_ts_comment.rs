@@ -190,7 +190,7 @@ declare_oxc_lint!(
     typescript,
     pedantic,
     recommended,
-    conditional_fix,
+    conditional_suggestion,
     config = BanTsCommentConfig,
     version = "0.0.8",
     short_description =
@@ -221,7 +221,7 @@ impl Rule for BanTsComment {
                     DirectiveConfig::Boolean(on) => {
                         if *on {
                             if directive == TsCommentDirective::Ignore {
-                                ctx.diagnostic_with_fix(
+                                ctx.diagnostic_with_suggestion(
                                     ignore_instead_of_expect_error(comm.content_span()),
                                     |fixer| {
                                         fixer.replace(
