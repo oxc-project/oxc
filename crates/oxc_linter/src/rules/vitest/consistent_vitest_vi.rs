@@ -1,9 +1,10 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -24,6 +25,60 @@ fn consistent_vitest_vi_diagnostic(span: Span, fn_value: &VitestFnName) -> OxcDi
             fn_value.not().as_str()
         ))
         .with_label(span)
+}
+
+/// Returns `true` when every resolved reference to `symbol_id` is the object of
+/// a member expression used as the callee of a call expression.
+///
+/// This is the only shape that can be safely renamed by the import/call fixes
+/// without leaving other references unbound.
+fn is_safe_to_rename_binding(symbol_id: SymbolId, ctx: &LintContext<'_>) -> bool {
+    ctx.semantic().symbol_references(symbol_id).all(|reference| {
+        let reference_node = ctx.semantic().nodes().get_node(reference.node_id());
+
+        let AstKind::IdentifierReference(ident) = reference_node.kind() else {
+            return false;
+        };
+
+        let parent = ctx.semantic().nodes().parent_node(reference_node.id());
+
+        let (member_span, object_span) = match parent.kind() {
+            AstKind::StaticMemberExpression(member) => (member.span, member.object.span()),
+            AstKind::ComputedMemberExpression(member) => (member.span, member.object.span()),
+            _ => return false,
+        };
+
+        if object_span != ident.span {
+            return false;
+        }
+
+        let call_parent = ctx.semantic().nodes().parent_node(parent.id());
+
+        let AstKind::CallExpression(call_expr) = call_parent.kind() else {
+            return false;
+        };
+
+        call_expr.callee.span() == member_span
+    })
+}
+
+/// Determine whether the object of a `vitest.<method>(...)`-style member call
+/// belongs to a binding that has non-call references. When it does, rewriting
+/// the call alone would leave other references unbound, so the fix must not be
+/// applied automatically.
+fn can_fix_call_member_object<'a>(
+    member_expression: &oxc_ast::ast::MemberExpression<'a>,
+    ctx: &LintContext<'a>,
+) -> bool {
+    let Expression::Identifier(ident) = member_expression.object() else {
+        return true;
+    };
+
+    ident
+        .reference_id
+        .get()
+        .and_then(|reference_id| ctx.semantic().scoping().get_reference(reference_id).symbol_id())
+        .is_none_or(|symbol_id| is_safe_to_rename_binding(symbol_id, ctx))
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]
@@ -124,53 +179,64 @@ impl Rule for ConsistentVitestVi {
                     return;
                 };
 
-                ctx.diagnostic_with_fix(
-                    consistent_vitest_vi_diagnostic(vitest_import.span(), &self.function),
-                    |fixer| {
-                        let mut specifiers_without_opposite_accessor: Vec<&str> =
-                            import.specifiers.as_ref().map_or_default(|specs| {
-                                specs
-                                    .iter()
-                                    .filter(|spec| spec.name() != opposite.as_str())
-                                    .map(|spec| fixer.source_range(spec.span()))
-                                    .collect()
-                            });
-
-                        if specifiers_without_opposite_accessor.is_empty() {
-                            fixer.replace(vitest_import.local().span, self.function.as_str())
-                        } else {
-                            let target_already_bound =
-                                import.specifiers.as_ref().is_some_and(|specs| {
-                                    specs.iter().any(|spec| {
-                                        spec.name() != opposite.as_str()
-                                            && spec.name() == self.function.as_str()
-                                    })
+                let symbol_id = vitest_import.symbol_id();
+                if is_safe_to_rename_binding(symbol_id, ctx) {
+                    ctx.diagnostic_with_fix(
+                        consistent_vitest_vi_diagnostic(vitest_import.span(), &self.function),
+                        |fixer| {
+                            let mut specifiers_without_opposite_accessor: Vec<&str> =
+                                import.specifiers.as_ref().map_or_default(|specs| {
+                                    specs
+                                        .iter()
+                                        .filter(|spec| spec.name() != opposite.as_str())
+                                        .map(|spec| fixer.source_range(spec.span()))
+                                        .collect()
                                 });
-                            if !target_already_bound {
-                                specifiers_without_opposite_accessor.push(self.function.as_str());
+
+                            if specifiers_without_opposite_accessor.is_empty() {
+                                fixer.replace(vitest_import.local().span, self.function.as_str())
+                            } else {
+                                let target_already_bound =
+                                    import.specifiers.as_ref().is_some_and(|specs| {
+                                        specs.iter().any(|spec| {
+                                            spec.name() != opposite.as_str()
+                                                && spec.name() == self.function.as_str()
+                                        })
+                                    });
+                                if !target_already_bound {
+                                    specifiers_without_opposite_accessor
+                                        .push(self.function.as_str());
+                                }
+
+                                let import_text = specifiers_without_opposite_accessor.join(", ");
+
+                                let Some(first_specifier) =
+                                    import.specifiers.as_ref().and_then(|specs| specs.first())
+                                else {
+                                    return fixer.noop();
+                                };
+
+                                let Some(last_specifier) =
+                                    import.specifiers.as_ref().and_then(|specs| specs.last())
+                                else {
+                                    return fixer.noop();
+                                };
+
+                                let specifiers_span = Span::new(
+                                    first_specifier.span().start,
+                                    last_specifier.span().end,
+                                );
+
+                                fixer.replace(specifiers_span, import_text)
                             }
-
-                            let import_text = specifiers_without_opposite_accessor.join(", ");
-
-                            let Some(first_specifier) =
-                                import.specifiers.as_ref().and_then(|specs| specs.first())
-                            else {
-                                return fixer.noop();
-                            };
-
-                            let Some(last_specifier) =
-                                import.specifiers.as_ref().and_then(|specs| specs.last())
-                            else {
-                                return fixer.noop();
-                            };
-
-                            let specifiers_span =
-                                Span::new(first_specifier.span().start, last_specifier.span().end);
-
-                            fixer.replace(specifiers_span, import_text)
-                        }
-                    },
-                );
+                        },
+                    );
+                } else {
+                    ctx.diagnostic(consistent_vitest_vi_diagnostic(
+                        vitest_import.span(),
+                        &self.function,
+                    ));
+                }
             }
             AstKind::CallExpression(call_expr) => {
                 let Some(vitest_fn) = parse_general_jest_fn_call(
@@ -190,15 +256,18 @@ impl Rule for ConsistentVitestVi {
                         return;
                     };
 
-                    ctx.diagnostic_with_fix(
-                        consistent_vitest_vi_diagnostic(
-                            member_expression.object().span(),
-                            &self.function,
-                        ),
-                        |fixer| {
-                            fixer.replace(member_expression.object().span(), self.function.as_str())
-                        },
+                    let diagnostic = consistent_vitest_vi_diagnostic(
+                        member_expression.object().span(),
+                        &self.function,
                     );
+
+                    if can_fix_call_member_object(member_expression, ctx) {
+                        ctx.diagnostic_with_fix(diagnostic, |fixer| {
+                            fixer.replace(member_expression.object().span(), self.function.as_str())
+                        });
+                    } else {
+                        ctx.diagnostic(diagnostic);
+                    }
                 }
             }
             _ => {}
@@ -242,6 +311,28 @@ fn test() {
         (
             r#"vi.stubEnv("NODE_ENV", "production");
 			vi.clearAllMocks();"#,
+            Some(serde_json::json!([{ "fn": "vitest" }])),
+        ),
+        // Non-call references make the import rename unsafe (#29477)
+        (
+            r#"import { vitest } from "vitest";
+			const mocker = vitest;"#,
+            None,
+        ),
+        (
+            r#"import { vitest } from "vitest";
+			const fn = vitest.fn;"#,
+            None,
+        ),
+        (
+            r#"import { vitest } from "vitest";
+			vitest.fn();
+			export { vitest };"#,
+            None,
+        ),
+        (
+            r#"import { vi } from "vitest";
+			const mocker = vi;"#,
             Some(serde_json::json!([{ "fn": "vitest" }])),
         ),
     ];
