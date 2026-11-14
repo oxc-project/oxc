@@ -17,7 +17,7 @@ use oxc_linter::{
 };
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
-use crate::utils::normalize_path;
+use crate::{command::EnablePlugins, utils::normalize_path};
 
 const GIT_DIR: &str = ".git";
 const NODE_MODULES_DIR: &str = "node_modules";
@@ -228,16 +228,20 @@ pub enum ConfigLoadError {
 pub enum CliConfigLoadError {
     /// An error that occurred while loading or parsing the root configuration.
     RootConfig(OxcDiagnostic),
+    /// An error that occurred while preparing the root configuration.
+    RootConfigBuild(ConfigBuilderError),
     /// One or more errors that occurred while loading nested configuration files.
     NestedConfigs(Vec<ConfigLoadError>),
 }
 
-/// Collection of the root configuration and all successfully loaded nested configs.
+/// Collection of the prepared root configuration and all successfully loaded nested configs.
 ///
 /// Returned by [`ConfigLoader::load_root_and_nested`].
 pub struct LoadedConfigs {
     /// The root `oxlintrc` configuration used as the base for all linting.
     pub root: Oxlintrc,
+    /// The root configuration builder with CLI plugin overrides and rule filters applied.
+    pub root_builder: ConfigStoreBuilder,
     /// Mapping from directory paths to the effective [`Config`] for that directory.
     pub nested: FxHashMap<PathBuf, Config>,
     /// Ignore patterns from nested configs, paired with the directory they apply to.
@@ -604,64 +608,80 @@ impl<'a> ConfigLoader<'a> {
         }
     }
 
-    /// Load the root configuration and optionally discover and load nested configs.
+    /// Load root and nested configs, then prepare the root configuration builder.
     ///
     /// This is the main entry point for CLI config loading. It first loads the root
     /// `oxlintrc` configuration, then optionally discovers and loads nested configs
-    /// by walking up from each file path's directory.
+    /// by walking up from each file path's directory. Finally, it applies CLI plugin
+    /// overrides and prepares the root configuration builder.
     ///
     /// # Arguments
     /// * `cwd` - Current working directory for resolving relative paths
     /// * `config_path` - Optional explicit path to the root config file
     /// * `paths` - File paths to lint (used for discovering nested configs)
     /// * `search_for_nested_configs` - Whether to discover nested configs in ancestor directories
+    /// * `enable_plugins` - CLI plugin overrides to apply to the root config
     ///
     /// # Errors
     /// Returns [`CliConfigLoadError::RootConfig`] if the root config fails to load,
-    /// or [`CliConfigLoadError::NestedConfigs`] if any nested config fails to load.
+    /// [`CliConfigLoadError::NestedConfigs`] if any nested config fails to load,
+    /// or [`CliConfigLoadError::RootConfigBuild`] if the root builder cannot be prepared.
     pub fn load_root_and_nested(
         &mut self,
         cwd: &Path,
         config_path: Option<&PathBuf>,
         paths: &[Arc<OsStr>],
         search_for_nested_configs: bool,
+        enable_plugins: &EnablePlugins,
     ) -> Result<LoadedConfigs, CliConfigLoadError> {
-        let oxlintrc = match self.load_root_config(cwd, config_path) {
+        let mut oxlintrc = match self.load_root_config(cwd, config_path) {
             Ok(config) => config,
             Err(err) => return Err(CliConfigLoadError::RootConfig(err)),
         };
 
-        if !search_for_nested_configs {
-            return Ok(LoadedConfigs {
-                root: oxlintrc,
-                nested: FxHashMap::default(),
-                nested_ignore_patterns: vec![],
-            });
-        }
+        let configs = if search_for_nested_configs {
+            // Discover config files by walking up from each file's directory
+            let config_paths: Vec<_> =
+                paths.iter().map(|p| Path::new(p.as_ref()).to_path_buf()).collect();
+            let (discovered_configs, conflicts) =
+                discover_configs_in_ancestors(&config_paths, &oxlintrc.path);
 
-        // Discover config files by walking up from each file's directory
-        let config_paths: Vec<_> =
-            paths.iter().map(|p| Path::new(p.as_ref()).to_path_buf()).collect();
-        let (discovered_configs, conflicts) =
-            discover_configs_in_ancestors(&config_paths, &oxlintrc.path);
+            let (configs, mut errors) = self.load_many(discovered_configs, Some(cwd));
 
-        let (configs, mut errors) = self.load_many(discovered_configs, Some(cwd));
+            // Propagate upstream conflicts as load errors alongside parse/build failures.
+            for conflict in conflicts {
+                errors.push(ConfigLoadError::Diagnostic(conflict.into()));
+            }
 
-        // Propagate upstream conflicts as load errors alongside parse/build failures.
-        for conflict in conflicts {
-            errors.push(ConfigLoadError::Diagnostic(conflict.into()));
-        }
+            // Fail if any config failed (CLI requires all configs to be valid)
+            if !errors.is_empty() {
+                return Err(CliConfigLoadError::NestedConfigs(errors));
+            }
 
-        // Fail if any config failed (CLI requires all configs to be valid)
-        if !errors.is_empty() {
-            return Err(CliConfigLoadError::NestedConfigs(errors));
-        }
+            configs
+        } else {
+            Vec::new()
+        };
 
         // Convert loaded configs to nested config format
         let mut nested_ignore_patterns = Vec::with_capacity(configs.len());
         let nested_configs = build_nested_configs(configs, &mut nested_ignore_patterns, None);
 
-        Ok(LoadedConfigs { root: oxlintrc, nested: nested_configs, nested_ignore_patterns })
+        materialize_default_plugins(&mut oxlintrc);
+        let mut plugins = oxlintrc.plugins.unwrap_or_default();
+        enable_plugins.apply_overrides(&mut plugins);
+        oxlintrc.plugins = Some(plugins);
+
+        let root_builder = self
+            .create_config_builder(oxlintrc.clone())
+            .map_err(CliConfigLoadError::RootConfigBuild)?;
+
+        Ok(LoadedConfigs {
+            root: oxlintrc,
+            root_builder,
+            nested: nested_configs,
+            nested_ignore_patterns,
+        })
     }
 }
 
