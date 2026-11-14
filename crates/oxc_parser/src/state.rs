@@ -3,7 +3,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use oxc_ast::ast::Expression;
 use oxc_span::Span;
 
-use crate::cursor::ParserCheckpoint;
+use crate::{cursor::ParserCheckpoint, ts::TypeArgumentLookahead};
 
 /// The initializer and diagnostic span of a shorthand property awaiting cover validation.
 pub struct CoverInitializedName<'a> {
@@ -13,6 +13,12 @@ pub struct CoverInitializedName<'a> {
 
 pub struct ParserState<'a> {
     pub not_parenthesized_arrow: FxHashSet<u32>,
+
+    /// Zero outside speculative expression type arguments; otherwise their nesting depth.
+    pub type_argument_depth: u32,
+
+    /// Allocated only after nested speculation fails or needs delimiter lookahead.
+    pub type_argument_lookahead: Option<Box<TypeArgumentLookahead>>,
 
     /// Temporary storage for `CoverInitializedName` `({ foo = bar })`.
     /// Keyed by `ObjectProperty`'s span.start.
@@ -42,6 +48,8 @@ impl ParserState<'_> {
     pub fn new() -> Self {
         Self {
             not_parenthesized_arrow: FxHashSet::default(),
+            type_argument_depth: 0,
+            type_argument_lookahead: None,
             cover_initialized_name: FxHashMap::default(),
             trailing_commas: FxHashMap::default(),
             potential_await_reparse: Vec::new(),

@@ -11,7 +11,11 @@ use crate::{
     modifiers::{ModifierKind, ModifierKinds, Modifiers},
 };
 
-use super::{super::js::FunctionKind, statement::CallOrConstructorSignature};
+use super::{
+    super::js::FunctionKind,
+    statement::CallOrConstructorSignature,
+    type_arguments::{TYPE_ARGUMENT_LOOKAHEAD_DEPTH, TypeArgumentFailure},
+};
 
 impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_ts_type(&mut self) -> TSType<'a> {
@@ -948,6 +952,35 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_type_arguments_of_type_reference_impl(
         &mut self,
     ) -> Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>> {
+        let depth = self.state.type_argument_depth;
+        if depth == 0 || self.fatal_error.is_some() {
+            return self.parse_type_arguments_of_type_reference_worker();
+        }
+        let start = self.cur_start();
+        let context = self.ctx;
+        if self.state.type_argument_lookahead.as_ref().is_some_and(|lookahead| {
+            lookahead.has_failed(start, context, TypeArgumentFailure::Type)
+        }) || (depth >= TYPE_ARGUMENT_LOOKAHEAD_DEPTH
+            && !self.speculative_type_arguments_can_close())
+        {
+            // This failure belongs to an enclosing speculative parse, which will rewind it.
+            self.expect(Kind::RAngle);
+            return None;
+        }
+        self.state.type_argument_depth = depth + 1;
+        let result = self.parse_type_arguments_of_type_reference_worker();
+        self.state.type_argument_depth = depth;
+        if self.fatal_error.is_some() {
+            self.record_type_argument_failure(start, context, TypeArgumentFailure::Type, depth);
+        }
+        result
+    }
+
+    #[expect(clippy::inline_always)]
+    #[inline(always)] // Avoid an extra call on the ordinary generic-type path.
+    fn parse_type_arguments_of_type_reference_worker(
+        &mut self,
+    ) -> Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>> {
         if self.re_lex_ts_l_angle() {
             let start = self.cur_start();
             let opening_span = self.cur_token().span();
@@ -986,6 +1019,37 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if !matches!(self.cur_kind(), Kind::LAngle | Kind::ShiftLeft) {
             return None;
         }
+        if self.state.type_argument_lookahead.as_ref().is_some_and(|lookahead| {
+            lookahead.cannot_close(self.cur_start())
+                || lookahead.has_failed(self.cur_start(), self.ctx, TypeArgumentFailure::Expression)
+        }) {
+            return None;
+        }
+        let depth = self.state.type_argument_depth;
+        if depth >= TYPE_ARGUMENT_LOOKAHEAD_DEPTH && !self.speculative_type_arguments_can_close() {
+            return None;
+        }
+        let start = self.cur_start();
+        let context = self.ctx;
+        self.state.type_argument_depth = depth + 1;
+        let result = self.parse_type_arguments_in_expression_worker();
+        self.state.type_argument_depth = depth;
+        if result.is_none() {
+            self.record_type_argument_failure(
+                start,
+                context,
+                TypeArgumentFailure::Expression,
+                depth,
+            );
+        }
+        result
+    }
+
+    #[expect(clippy::inline_always)]
+    #[inline(always)] // Keep the existing grammar body inside the speculation wrapper.
+    fn parse_type_arguments_in_expression_worker(
+        &mut self,
+    ) -> Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>> {
         let checkpoint = self.checkpoint();
         let start = self.cur_start();
         if !self.re_lex_ts_l_angle() {
