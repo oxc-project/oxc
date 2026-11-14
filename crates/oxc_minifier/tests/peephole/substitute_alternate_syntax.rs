@@ -186,14 +186,16 @@ fn test_fold_literal_array_constructors() {
     // One argument
     test("x = new Array(0)", "x = []");
     test("x = new Array(\"a\")", "x = [\"a\"]");
-    test("x = new Array(1)", "x = [,]");
-    test("x = new Array(6)", "x = [,,,,,,]");
+    test_same("x = new Array(1)");
+    test_same("x = new Array(4)");
+    test_same("x = new Array(6)");
+    test("x = Array(4)", "x = [,,,,]");
     test("x = new Array(7)", "x = Array(7)");
     test("x = new Array(7n)", "x = [7n]");
     test("x = new Array(y)", "x = Array(y)");
     test("x = new Array(foo())", "x = Array(foo())");
     test_same("x = new Array(...y)");
-    test("x = new Array(...[3])", "x = [,,,]");
+    test("x = new Array(...[3])", "x = new Array(3)");
     test("x = Array(0)", "x = []");
     test("x = Array(\"a\")", "x = [\"a\"]");
     test_same("x = Array(7)");
@@ -215,7 +217,7 @@ fn test_fold_literal_array_constructors() {
     test("x = Array(foo, ...bar, baz)", "x = [foo, ...bar, baz]");
     test("x = new Array(...foo, bar, baz)", "x = [...foo, bar, baz]");
     test("x = Array(...foo, bar, baz)", "x = [...foo, bar, baz]");
-    test("x = new Array(3, ...[])", "x = [,,,]");
+    test("x = new Array(3, ...[])", "x = new Array(3)");
     test("x = Array(3, ...[])", "x = [,,,]");
     test("x = new Array('a', 1, 2, 'bc', 3, {}, 'abc')", "x = ['a', 1, 2, 'bc', 3, {}, 'abc']");
     test("x = Array('a', 1, 2, 'bc', 3, {}, 'abc')", "x = ['a', 1, 2, 'bc', 3, {}, 'abc']");
