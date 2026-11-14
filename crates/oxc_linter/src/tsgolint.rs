@@ -41,6 +41,8 @@ pub struct TsGoLintState {
     fix: bool,
     /// If `true`, request that suggestions be returned from `tsgolint`.
     fix_suggestions: bool,
+    /// Hide diagnostics with fixes instead of applying them.
+    hide_fixable: bool,
     /// If `true`, include TypeScript compiler syntactic and semantic diagnostics.
     type_check: bool,
     /// If `true`, skip type-aware lint rules while retaining TypeScript diagnostics.
@@ -63,6 +65,7 @@ impl TsGoLintState {
             silent: false,
             fix: fix_kind.contains(FixKind::Fix),
             fix_suggestions: fix_kind.contains(FixKind::Suggestion),
+            hide_fixable: false,
             type_check: false,
             type_check_only: false,
             timings: false,
@@ -88,6 +91,7 @@ impl TsGoLintState {
             silent: false,
             fix: fix_kind.contains(FixKind::Fix),
             fix_suggestions: fix_kind.contains(FixKind::Suggestion),
+            hide_fixable: false,
             type_check: false,
             type_check_only: false,
             timings: false,
@@ -102,6 +106,12 @@ impl TsGoLintState {
     #[must_use]
     pub fn with_silent(mut self, yes: bool) -> Self {
         self.silent = yes;
+        self
+    }
+
+    #[must_use]
+    pub fn with_hide_fixable(mut self, yes: bool) -> Self {
+        self.hide_fixable = yes;
         self
     }
 
@@ -268,6 +278,7 @@ impl TsGoLintRun {
         };
 
         let should_fix = state.fix || state.fix_suggestions;
+        let hide_fixable = state.hide_fixable;
         let cwd = state.cwd.clone();
         let sender_for_fixes = error_sender.clone();
 
@@ -400,7 +411,25 @@ impl TsGoLintRun {
                     }));
                 }
 
-                for (path, source_text, messages) in messages_requiring_fixes {
+                for (path, source_text, mut messages) in messages_requiring_fixes {
+                    if hide_fixable {
+                        // Keep suppression counts accurate even though these diagnostics are hidden.
+                        if !diff_manager.skip() {
+                            messages = diff_manager.collect_file(&path, &cwd, messages);
+                        }
+                        messages.retain(|message| !message.has_safe_fix(&source_text));
+                        if !messages.is_empty() {
+                            let diagnostics = DiagnosticService::wrap_diagnostics(
+                                &cwd,
+                                &path,
+                                &source_text,
+                                messages.into_iter().map(Into::into).collect(),
+                            );
+                            sender_for_fixes.send(diagnostics).expect("Failed to send diagnostics");
+                        }
+                        continue;
+                    }
+
                     let source_type = SourceType::from_path(&path)
                         .ok()
                         .map(|st| if st.is_javascript() { st.with_jsx(true) } else { st });

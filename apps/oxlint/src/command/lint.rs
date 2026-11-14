@@ -230,13 +230,18 @@ pub struct FixOptions {
     /// Apply dangerous fixes and suggestions
     #[bpaf(switch, hide_usage)]
     pub fix_dangerously: bool,
+
+    /// Hide diagnostics with a safe automatic fix, without modifying files.
+    /// Cannot be combined with fix flags. Suggestions and dangerous fixes are still reported.
+    #[bpaf(switch, hide_usage)]
+    pub hide_fixable: bool,
 }
 
 impl FixOptions {
     pub fn fix_kind(&self) -> FixKind {
         let mut kind = FixKind::None;
 
-        if self.fix {
+        if self.fix || self.hide_fixable {
             kind.set(FixKind::SafeFix, true);
         }
 

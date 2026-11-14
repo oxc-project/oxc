@@ -11,6 +11,8 @@ pub use filter::{InvalidFilterKind, LintFilter, LintFilterKind};
 #[cfg_attr(test, derive(PartialEq, Eq))]
 pub struct LintOptions {
     pub fix: FixKind,
+    /// Collect fixes to hide fixable diagnostics instead of applying them.
+    pub hide_fixable: bool,
     pub framework_hints: FrameworkFlags,
     pub report_unused_directive: Option<AllowWarnDeny>,
     // If true, the linter will create "ignore this section / line" fixes for all diagnostics

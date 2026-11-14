@@ -268,6 +268,21 @@ impl Message {
         Self { error, fixes, span }
     }
 
+    /// Whether an available safe fix would change the source text.
+    pub(crate) fn has_safe_fix(&self, source_text: &str) -> bool {
+        let changes_source = |fix: &Fix| {
+            fix.kind == FixKind::SafeFix
+                && source_text
+                    .get(fix.span.start as usize..fix.span.end as usize)
+                    .is_some_and(|original| original != fix.content)
+        };
+        match &self.fixes {
+            PossibleFixes::None => false,
+            PossibleFixes::Single(fix) => changes_source(fix),
+            PossibleFixes::Multiple(fixes) => fixes.iter().any(changes_source),
+        }
+    }
+
     /// move the offset of all spans to the right
     pub fn move_offset(&mut self, offset: u32) -> &mut Self {
         debug_assert!(offset != 0);
@@ -443,6 +458,35 @@ mod test {
     use super::{
         CompositeFix, Fix, FixResult, Fixer, Message, PossibleFixes, format_replace_message,
     };
+
+    #[test]
+    fn has_safe_fix_requires_a_source_change() {
+        let source = "before";
+        let replacement = Fix::new("after", Span::new(0, 6)).with_kind(FixKind::SafeFix);
+        for (fixes, expected) in [
+            (PossibleFixes::None, false),
+            (PossibleFixes::Single(replacement.clone()), true),
+            (
+                PossibleFixes::Single(
+                    Fix::new(source, Span::new(0, 6)).with_kind(FixKind::SafeFix),
+                ),
+                false,
+            ),
+            (PossibleFixes::Single(Fix::empty().with_kind(FixKind::SafeFix)), false),
+            (PossibleFixes::Single(replacement.clone().with_kind(FixKind::Suggestion)), false),
+            (PossibleFixes::Single(replacement.clone().with_kind(FixKind::DangerousFix)), false),
+            (
+                PossibleFixes::Multiple(vec![
+                    replacement.clone().with_kind(FixKind::Suggestion),
+                    replacement,
+                ]),
+                true,
+            ),
+        ] {
+            let message = Message::new(OxcDiagnostic::warn("test"), fixes);
+            assert_eq!(message.has_safe_fix(source), expected, "{message:?}");
+        }
+    }
 
     fn insert_at_end() -> OxcDiagnostic {
         OxcDiagnostic::warn("End")
