@@ -645,6 +645,12 @@ pub fn check_function_redeclaration(func: &Function, ctx: &SemanticBuilder<'_>) 
     // Skip that case.
     let Some(id) = &func.id else { return };
 
+    // An Annex B alias writes an outer var; it is not a lexical redeclaration
+    // in this block. Same-block declarations still follow the ordinary checks.
+    if ctx.annex_b_function_aliases.contains(&id.span) {
+        return;
+    }
+
     // Redeclarations are rare, so put the expensive logic for handling them in a separate `#[cold]` function,
     // so that this function can be inlined.
     // The redeclarations list is only ever empty or has 2+ entries (it is created with its first two

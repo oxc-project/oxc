@@ -5,7 +5,7 @@ use std::{
     mem,
 };
 
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 use smallvec::SmallVec;
 
 use oxc_allocator::{Address, ArenaVec};
@@ -93,6 +93,9 @@ pub struct SemanticBuilder<'a> {
     /// A single flat map avoids allocating a per-scope inner map for every hoisting scope.
     pub(crate) hoisting_variables: FxHashMap<(ScopeId, Ident<'a>), SymbolId>,
 
+    /// Block-function declarations that reuse an outer Annex B var binding.
+    pub(crate) annex_b_function_aliases: FxHashSet<Span>,
+
     // builders
     /// Node-id counter, current-node cursor/flags, and the node storage (full
     /// store or ancestry stack). See [`AstNodeStore`].
@@ -158,6 +161,7 @@ impl<'a> SemanticBuilder<'a> {
             module_instance_state_cache: FxHashMap::default(),
             node_store: AstNodeStore::default(),
             hoisting_variables: FxHashMap::default(),
+            annex_b_function_aliases: FxHashSet::default(),
             scoping,
             unresolved_references: UnresolvedReferences::new(),
             unused_labels: UnusedLabels::default(),
