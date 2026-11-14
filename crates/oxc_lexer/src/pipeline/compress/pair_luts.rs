@@ -1,10 +1,7 @@
 //! Lookup tables which the SIMD implementations of `compress_blocks` use to turn
 //! the token-start bitmap into a list of token positions, 16 bits at a time.
 
-use std::{
-    mem::{MaybeUninit, offset_of},
-    sync::OnceLock,
-};
+use std::{mem::offset_of, sync::OnceLock};
 
 use oxc_simd::cpu_version;
 
@@ -51,35 +48,12 @@ impl PairLuts {
     /// for `PairLuts`, then a second copy of `PairLuts` from the stack to the heap.
     #[cpu_version(Generic)]
     fn new() -> Box<Self> {
-        // Allocate space for `PairLuts` on the heap, uninitialized
-        let mut luts = Box::<Self>::new_uninit();
+        // SAFETY: the tables are bytes, for which zero is a value.
+        let mut luts = unsafe { Box::<Self>::new_zeroed().assume_init() };
+        let PairLuts { lut0z, lutpad } = &mut *luts;
 
-        // Get mut references to the fields of `PairLuts` as arrays of `MaybeUninit`s.
-        // SAFETY: These references are valid as they're the same type as the struct fields.
-        // Using `&raw mut` ensures no intermediate references are created to uninitialized data.
-        let (lut0z, lutpad) = unsafe {
-            unsafe fn uninit_array_mut<'a, const N: usize, T>(
-                ptr: *mut [T; N],
-            ) -> &'a mut [MaybeUninit<T>; N] {
-                unsafe { ptr.cast::<[MaybeUninit<T>; N]>().as_mut().unwrap_unchecked() }
-            }
-
-            let ptr = luts.as_mut_ptr();
-            let lut0z = uninit_array_mut(&raw mut (*ptr).lut0z);
-            let lutpad = uninit_array_mut(&raw mut (*ptr).lutpad);
-            (lut0z, lutpad)
-        };
-
-        for m in 0..256usize {
-            let lut0z_line = lut0z[m].write([0; 8]);
-
-            #[rustfmt::skip]
-            let lutpad_line = lutpad[m].write([
-                0,    0,    0,    0,    0,    0,    0,    0,
-                0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
-                0,    0,    0,    0,    0,    0,    0,    0,
-                0,    0,    0,    0,    0,    0,    0,    0,
-            ]);
+        for (m, (lut0z_line, lutpad_line)) in lut0z.iter_mut().zip(lutpad.iter_mut()).enumerate() {
+            lutpad_line[8..16].fill(0x80);
 
             let mut k = 0usize;
             for bit in 0..8usize {
@@ -91,8 +65,7 @@ impl PairLuts {
             }
         }
 
-        // SAFETY: All bytes of both arrays are now initialized
-        unsafe { luts.assume_init() }
+        luts
     }
 }
 
