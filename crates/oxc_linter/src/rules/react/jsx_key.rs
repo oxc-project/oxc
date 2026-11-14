@@ -102,6 +102,10 @@ declare_oxc_lint!(
     /// ```jsx
     /// [1, 2, 3].map(x => <App key={x} />);
     /// [1, 2, 3]?.map(x => <ListItem key={x} />)
+    ///
+    /// // PascalCase and single-letter namespaces are single-value maps, not arrays.
+    /// R.map(name => <Page />);
+    /// Result.map(name => <Page />);
     /// ```
     ///
     /// NOTE: This rule's option defaults differ from the defaults in the original ESLint plugin. It is recommended to keep
@@ -304,6 +308,12 @@ fn is_in_array_or_iter<'a, 'b>(
                         return None;
                     }
 
+                    // `R.map` / `Result.map` read one value. `Array.from` and
+                    // `[1, 2].map` / `arr.map` / `ITEMS.map` stay array iterators.
+                    if ident != "from" && is_single_value_namespace_map(member_expr.object()) {
+                        return None;
+                    }
+
                     // Array.from uses 2nd argument (index 1), others use 1st argument (index 0)
                     let target_arg_index = if ident == "from" { 1 } else { 0 };
                     if is_node_within_call_argument(jsx_node, v, target_arg_index) {
@@ -326,6 +336,29 @@ fn is_in_array_or_iter<'a, 'b>(
     }
 
     None
+}
+
+/// `map` / `flatMap` on a PascalCase object or a single-letter namespace (`Result.map`, `R.map`)
+/// maps one value, not an array. All-caps bindings (`ITEMS.map`) stay iterators.
+fn is_single_value_namespace_map(object: &Expression<'_>) -> bool {
+    let Expression::Identifier(ident) = object.get_inner_expression() else {
+        return false;
+    };
+    is_pascal_or_namespace_name(ident.name.as_str())
+}
+
+fn is_pascal_or_namespace_name(name: &str) -> bool {
+    let mut chars = name.chars();
+    let Some(first) = chars.next() else { return false };
+    if !first.is_ascii_uppercase() {
+        return false;
+    }
+    // `R` is a namespace alias. A later lowercase letter is PascalCase (`Result`).
+    // `ITEMS` has neither, so it is still treated as an array.
+    match chars.next() {
+        None => true,
+        Some(second) => second.is_ascii_lowercase() || chars.any(|c| c.is_ascii_lowercase()),
+    }
 }
 
 fn check_jsx_element<'a>(node: &AstNode<'a>, jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
@@ -632,6 +665,14 @@ fn test() {
             Some(serde_json::json!([{ "checkFragmentShorthand": true }])),
             None,
         ),
+        // https://github.com/oxc-project/oxc/issues/28391
+        ("R.map(name => <Page />);", None, None),
+        ("Result.map(name => <Page />);", None, None),
+        ("(Result).map(name => <Page />);", None, None),
+        ("R?.map(name => <Page />);", None, None),
+        ("Result.flatMap(name => <Page />);", None, None),
+        ("R.map(name => { return <Page />; });", None, None),
+        ("arr.map(x => R.map(name => <Page />));", None, None),
     ];
 
     let fail = vec![
@@ -650,6 +691,11 @@ fn test() {
         ("[<App key={0}/>, <App />];", None, None),
         ("[1, 2 ,3].map(function(x) { return <App /> });", None, None),
         ("[1, 2 ,3].map(x => <App />);", None, None),
+        // https://github.com/oxc-project/oxc/issues/28391
+        ("[1, 2].map(x => <App />);", None, None),
+        ("arr.map(x => <App />);", None, None),
+        ("ITEMS.map(x => <App />);", None, None),
+        ("R.map(name => arr.map(x => <App />));", None, None),
         ("[1, 2 ,3].map(x => x && <App x={x} />);", None, None),
         (r#"[1, 2 ,3].map(x => x ? <App x={x} key="1" /> : <OtherApp x={x} />);"#, None, None),
         (r#"[1, 2 ,3].map(x => x ? <App x={x} /> : <OtherApp x={x} key="2" />);"#, None, None),
