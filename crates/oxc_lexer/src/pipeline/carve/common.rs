@@ -315,7 +315,7 @@ pub(super) fn skip_unicode_brace_escape(src: Source, s: usize, cpu: impl Cpu) ->
 /// past a trailing 0xE2 reads the pad, which can never match 0x80.
 #[cpu_multiversion]
 #[inline]
-pub(super) unsafe fn find_line_terminator(src: Source, mut i: usize, cpu: impl Cpu) -> usize {
+pub(super) fn find_line_terminator(src: Source, mut i: usize, cpu: impl Cpu) -> usize {
     loop {
         let p = find(src, i, [b'\n', b'\r', 0xE2], cpu);
         if p >= src.len() {

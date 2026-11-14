@@ -52,7 +52,7 @@ fn is_jsx_name_byte_at(src: Source, i: usize, cpu: impl Cpu) -> bool {
 }
 
 #[cpu_multiversion]
-unsafe fn jsx_name_continues_after(src: Source, i: usize, cpu: impl Cpu) -> bool {
+fn jsx_name_continues_after(src: Source, i: usize, cpu: impl Cpu) -> bool {
     let t = jsx_skip_trivia(src, i, cpu);
     t < src.len() && matches!(src[t], b'.' | b':')
 }
@@ -62,7 +62,7 @@ unsafe fn jsx_name_continues_after(src: Source, i: usize, cpu: impl Cpu) -> bool
 /// non-ASCII lead) takes the full skip. Kept inline: this runs once per JSX element.
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn jsx_skip_trivia_fast(src: Source, mut i: usize, cpu: impl Cpu) -> usize {
+pub(super) fn jsx_skip_trivia_fast(src: Source, mut i: usize, cpu: impl Cpu) -> usize {
     while i < src.len() && src[i] == b' ' {
         i += 1;
     }
@@ -76,7 +76,7 @@ pub(super) unsafe fn jsx_skip_trivia_fast(src: Source, mut i: usize, cpu: impl C
 }
 
 #[cpu_multiversion]
-pub(super) unsafe fn jsx_skip_trivia(src: Source, mut i: usize, cpu: impl Cpu) -> usize {
+pub(super) fn jsx_skip_trivia(src: Source, mut i: usize, cpu: impl Cpu) -> usize {
     loop {
         if i >= src.len() {
             return src.len();
@@ -115,7 +115,7 @@ pub(super) unsafe fn jsx_skip_trivia(src: Source, mut i: usize, cpu: impl Cpu) -
 }
 
 #[cpu_multiversion]
-unsafe fn jsx_names_equal(src: Source, a: usize, b: usize, lim_b: usize, cpu: impl Cpu) -> bool {
+fn jsx_names_equal(src: Source, a: usize, b: usize, lim_b: usize, cpu: impl Cpu) -> bool {
     let lim_b = lim_b.min(src.len());
     let mut i = a;
     let mut j = b;
@@ -140,13 +140,7 @@ unsafe fn jsx_names_equal(src: Source, a: usize, b: usize, lim_b: usize, cpu: im
 }
 
 #[cpu_multiversion]
-unsafe fn jsx_name_next(
-    src: Source,
-    i: usize,
-    lim: usize,
-    after_sep: bool,
-    cpu: impl Cpu,
-) -> usize {
+fn jsx_name_next(src: Source, i: usize, lim: usize, after_sep: bool, cpu: impl Cpu) -> usize {
     let lim = lim.min(src.len());
     if i >= lim {
         return lim;
