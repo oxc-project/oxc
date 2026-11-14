@@ -6,8 +6,13 @@ use oxc_span::Span;
 use crate::{error::DiagCode, options::LexOptions, token::TokenKind};
 
 use crate::pipeline::{
-    bitmap::Bitmaps, carve::JsxFrame, disambiguate::DisambiguateState, kinds::Kinds, lanes::Lanes,
-    source::Source, unicode_leads::resolve_unicode_leads,
+    bitmap::Bitmaps,
+    carve::{JsxFrame, Substitutions},
+    disambiguate::DisambiguateState,
+    kinds::Kinds,
+    lanes::Lanes,
+    source::Source,
+    unicode_leads::resolve_unicode_leads,
 };
 
 /// One lex as the stages see it: the source, the options and the per-block buffers.
@@ -31,7 +36,7 @@ pub(super) struct LexState {
     /// Ranges lexed content-blind (the tsx type-argument skip), whose diagnostics are dropped.
     pub diag_suppress: Vec<(u32, u32)>,
     /// Carve's nesting stacks.
-    pub template_depth: Vec<u32>,
+    pub substitutions: Substitutions,
     pub jsx_stack: Vec<JsxFrame>,
 }
 

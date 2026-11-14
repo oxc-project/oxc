@@ -7,6 +7,7 @@ mod common;
 mod js;
 mod jsx;
 
+pub(super) use common::Substitutions;
 use js::carve_js;
 pub(super) use jsx::JsxFrame;
 use jsx::carve_jsx;

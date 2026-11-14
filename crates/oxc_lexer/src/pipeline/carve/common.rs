@@ -43,13 +43,52 @@ pub(super) unsafe fn lex_string(
 ) -> usize {
     let mut saw_nl = false;
     let e = scan_quoted(src, s + 1, c, &mut saw_nl, cpu);
-    let end = if e < src.len() { e + 1 } else { src.len() };
     if saw_nl {
         // The terminator wins over unterminated-at-EOF, same as oxc_parser.
+        let end = if e < src.len() { e + 1 } else { src.len() };
         lanes.push_line_terminator_in_string(src.padded(), s, end);
     } else if e >= src.len() {
         lanes.push_diag(s as u32, (src.len() - s) as u32, DiagCode::UnterminatedString);
     }
+    let (end, be) = mark_string(src, token_start, kinds, s, c, e, cpu);
+    lanes.push_string(src.padded(), s + 1, be, cpu);
+    end
+}
+
+/// Lex the JSX attribute string at s, which has no escapes and ends at the next matching quote.
+#[cpu_multiversion]
+#[inline(always)]
+pub(super) unsafe fn lex_jsx_attribute_string(
+    src: Source,
+    token_start: Bitmap,
+    kinds: Kinds,
+    s: usize,
+    c: u8,
+    lanes: &mut Lanes,
+    cpu: impl Cpu,
+) -> usize {
+    let e = find(src, s + 1, [c], cpu);
+    if e >= src.len() {
+        lanes.push_diag(s as u32, (src.len() - s) as u32, DiagCode::UnterminatedString);
+    }
+    let (end, be) = mark_string(src, token_start, kinds, s, c, e, cpu);
+    lanes.push_string_raw(src.padded(), s + 1, be, cpu);
+    end
+}
+
+/// Mark the string at s, closed by the quote at e unless e is the end; returns end and body end.
+#[cpu_multiversion]
+#[inline(always)]
+unsafe fn mark_string(
+    src: Source,
+    token_start: Bitmap,
+    kinds: Kinds,
+    s: usize,
+    c: u8,
+    e: usize,
+    cpu: impl Cpu,
+) -> (usize, usize) {
+    let end = if e < src.len() { e + 1 } else { src.len() };
     kinds.set(s, tk!(String));
     if end > s + 1 {
         token_start.clear_range(s + 1, end - 1, cpu);
@@ -61,8 +100,7 @@ pub(super) unsafe fn lex_string(
     } else {
         src.len()
     };
-    lanes.push_string(src.padded(), s + 1, be, cpu);
-    end
+    (end, be)
 }
 
 /// Lex the template text segment starting at `s` (a backtick or a
@@ -92,6 +130,101 @@ pub(super) unsafe fn lex_template_segment(
     }
     lanes.push_template(src.padded(), s + 1, end - [0usize, 1, 2][term as usize], cpu);
     (end, term == 2)
+}
+
+/// The template substitutions open at the carve position, innermost last, with their open braces.
+#[derive(Default)]
+pub(in crate::pipeline) struct Substitutions(Vec<u32>);
+
+impl Substitutions {
+    pub(super) fn clear(&mut self) {
+        self.0.clear();
+    }
+
+    pub(super) fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    /// Lex the template at the backtick at s, opening a substitution if it ends in a dollar brace.
+    #[cpu_multiversion]
+    #[inline(always)]
+    pub(super) unsafe fn lex_template(
+        &mut self,
+        src: Source,
+        token_start: Bitmap,
+        kinds: Kinds,
+        s: usize,
+        lanes: &mut Lanes,
+        cpu: impl Cpu,
+    ) -> usize {
+        let (head, flat) = (tk!(TemplateHead), tk!(TemplateNoSub));
+        let (end, opened) =
+            lex_template_segment(src, token_start, kinds, s, head, flat, lanes, cpu);
+        if opened {
+            self.0.push(0);
+        }
+        end
+    }
+
+    pub(super) fn open_brace(&mut self) {
+        let top = self.0.len() - 1;
+        self.0[top] += 1;
+    }
+
+    /// Close a nested brace, or else the substitution and lex the template text after it.
+    #[cpu_multiversion]
+    #[inline(always)]
+    pub(super) unsafe fn close_brace(
+        &mut self,
+        src: Source,
+        token_start: Bitmap,
+        kinds: Kinds,
+        s: usize,
+        lanes: &mut Lanes,
+        cpu: impl Cpu,
+    ) -> usize {
+        let top = self.0.len() - 1;
+        if self.0[top] > 0 {
+            self.0[top] -= 1;
+            return s + 1;
+        }
+        self.0.pop();
+        let (middle, tail) = (tk!(TemplateMiddle), tk!(TemplateTail));
+        let (end, opened) =
+            lex_template_segment(src, token_start, kinds, s, middle, tail, lanes, cpu);
+        if opened {
+            self.0.push(0);
+        }
+        end
+    }
+}
+
+/// Lex a hashbang line at the start of the source; returns where carving resumes, 0 without one.
+#[cpu_multiversion]
+#[inline(always)]
+pub(super) unsafe fn lex_hashbang(
+    src: Source,
+    token_start: Bitmap,
+    kinds: Kinds,
+    cpu: impl Cpu,
+) -> usize {
+    if !(src.len() >= 2 && src[0] == b'#' && src[1] == b'!') {
+        return 0;
+    }
+    let end = find_line_terminator(src, 2, cpu);
+    kinds.set(0, tk!(Hashbang));
+    token_start.clear_range(1, end - 1, cpu);
+    if end < src.len() {
+        token_start.set(end, cpu);
+    }
+    end
+}
+
+/// Whether the brace at s opens the code point of a backslash-u escape.
+#[cpu_multiversion]
+#[inline(always)]
+pub(super) fn is_unicode_escape_brace(src: Source, s: usize, _cpu: impl Cpu) -> bool {
+    s >= 2 && src[s - 1] == b'u' && src[s - 2] == b'\\'
 }
 
 /// The `/` dispatch shared by `carve` and `carve_jsx` JS mode: line comment,

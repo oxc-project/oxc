@@ -2,8 +2,6 @@ use std::mem;
 
 use oxc_simd::{Cpu, cpu_multiversion};
 
-use crate::token::tk;
-
 use crate::pipeline::{
     bitmap::Bitmaps,
     find::find,
@@ -16,8 +14,7 @@ use super::{
     },
     common::{
         OPENER_BYTES, OPENER_MODULE_BYTES, OPENER8_BYTES, OPENER8_MODULE_BYTES,
-        find_line_terminator, lex_slash, lex_string, lex_template_segment,
-        skip_unicode_brace_escape,
+        is_unicode_escape_brace, lex_hashbang, lex_slash, lex_string, skip_unicode_brace_escape,
     },
 };
 
@@ -25,24 +22,15 @@ use super::{
 pub(super) unsafe fn carve_js(lex: Lex, state: &mut LexState, cpu: impl Cpu) {
     let Lex { src, bitmaps, kinds, options } = lex;
     let Bitmaps { token_start, op_char, .. } = *bitmaps;
-    let LexState { lanes, disambiguate, template_depth, .. } = state;
+    let LexState { lanes, disambiguate, substitutions, .. } = state;
     let module = options.source_type_module;
     // Reuse the previous lex's allocation, which matters for small inputs
-    let mut depth = mem::take(template_depth);
-    depth.clear();
-    let mut i = 0usize;
-    if src.len() >= 2 && src[0] == b'#' && src[1] == b'!' {
-        let end = find_line_terminator(src, 2, cpu);
-        kinds.set(0, tk!(Hashbang));
-        token_start.clear_range(1, end - 1, cpu);
-        if end < src.len() {
-            token_start.set(end, cpu);
-        }
-        i = end;
-    }
+    let mut subs = mem::take(substitutions);
+    subs.clear();
+    let mut i = lex_hashbang(src, token_start, kinds, cpu);
     loop {
         // HTML close comments only exist in scripts, so modules needn't stop at closing brackets
-        let s = match (depth.is_empty(), module) {
+        let s = match (subs.is_empty(), module) {
             (true, false) => find(src, i, OPENER_BYTES, cpu),
             (true, true) => find(src, i, OPENER_MODULE_BYTES, cpu),
             (false, false) => find(src, i, OPENER8_BYTES, cpu),
@@ -57,52 +45,18 @@ pub(super) unsafe fn carve_js(lex: Lex, state: &mut LexState, cpu: impl Cpu) {
                 i = lex_string(src, token_start, kinds, s, c, lanes, cpu);
             }
             b'`' => {
-                let (end, opened_sub) = lex_template_segment(
-                    src,
-                    token_start,
-                    kinds,
-                    s,
-                    tk!(TemplateHead),
-                    tk!(TemplateNoSub),
-                    lanes,
-                    cpu,
-                );
-                if opened_sub {
-                    depth.push(0);
-                }
-                i = end;
+                i = subs.lex_template(src, token_start, kinds, s, lanes, cpu);
             }
             b'{' => {
-                if s >= 2 && src[s - 1] == b'u' && src[s - 2] == b'\\' {
+                if is_unicode_escape_brace(src, s, cpu) {
                     i = skip_unicode_brace_escape(src, s, cpu);
                 } else {
-                    let top = depth.len() - 1;
-                    depth[top] += 1;
+                    subs.open_brace();
                     i = s + 1;
                 }
             }
             b'}' => {
-                let top = depth.len() - 1;
-                if depth[top] > 0 {
-                    depth[top] -= 1;
-                    i = s + 1;
-                } else {
-                    depth.pop();
-                    let (end, opened_sub) = lex_template_segment(
-                        src,
-                        token_start,
-                        kinds,
-                        s,
-                        tk!(TemplateMiddle),
-                        tk!(TemplateTail),
-                        lanes,
-                        cpu,
-                    );
-                    if opened_sub {
-                        depth.push(0);
-                    }
-                    i = end;
-                }
+                i = subs.close_brace(src, token_start, kinds, s, lanes, cpu);
             }
             b'/' => {
                 i = lex_slash(lex, s, lanes, disambiguate, cpu);
@@ -128,5 +82,5 @@ pub(super) unsafe fn carve_js(lex: Lex, state: &mut LexState, cpu: impl Cpu) {
             }
         }
     }
-    *template_depth = depth;
+    *substitutions = subs;
 }

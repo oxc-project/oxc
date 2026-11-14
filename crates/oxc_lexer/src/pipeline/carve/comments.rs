@@ -112,6 +112,24 @@ pub(super) unsafe fn lex_block_comment(
     end
 }
 
+/// Lex the comment starting at s and return its end, or s + 1 if no comment starts there.
+#[cpu_multiversion]
+#[inline(always)]
+pub(super) unsafe fn lex_comment_at(
+    src: Source,
+    token_start: Bitmap,
+    kinds: Kinds,
+    s: usize,
+    lanes: &mut Lanes,
+    cpu: impl Cpu,
+) -> usize {
+    match (src[s], src[s + 1]) {
+        (b'/', b'*') => lex_block_comment(src, token_start, kinds, s, lanes, cpu),
+        (b'/', b'/') => lex_line_comment(src, token_start, kinds, s, lanes, cpu),
+        _ => s + 1,
+    }
+}
+
 /// Annex B B.1.1: does the `<` at `s` open a `<!--` comment? Always in a script; in a module
 /// only at line start, where it is diagnosed rather than read as operators. Shared by `carve`
 /// and `carve_jsx` JS mode: the goal, not the JSX setting, decides.
