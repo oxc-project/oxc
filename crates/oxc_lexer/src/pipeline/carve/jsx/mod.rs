@@ -9,8 +9,7 @@ use crate::pipeline::{
     bytes::{is_digit, is_id_start, is_word},
     find::find,
     kinds::Kinds,
-    lanes::Lanes,
-    lex::Lex,
+    lex::{Lex, LexState},
     scan::scan_ident_esc,
     source::Source,
 };
@@ -80,9 +79,10 @@ enum JsxFrameKind {
 /// stack, emitting JSX_LT / JEND / JTEXT and raw (no-escape) attribute
 /// strings. All JSX logic lives here; `classify` is untouched.
 #[cpu_multiversion]
-pub(super) unsafe fn carve_jsx(lex: Lex, lanes: &mut Lanes, cpu: impl Cpu) {
+pub(super) unsafe fn carve_jsx(lex: Lex, state: &mut LexState, cpu: impl Cpu) {
     let Lex { src, bitmaps, kinds, options } = lex;
     let Bitmaps { token_start, word, keyword_initial, op_char, digit, dot, .. } = *bitmaps;
+    let LexState { lanes, disambiguate, jsx_stack, diag_suppress, .. } = state;
     let module = options.source_type_module;
     // Annex B B.1.3 (`-->` at line start) needs JS mode to stop at `>`, which JSX is full of.
     // The finders that do so are switched on only after a `<!--` has been lexed (the pair the
@@ -90,7 +90,7 @@ pub(super) unsafe fn carve_jsx(lex: Lex, lanes: &mut Lanes, cpu: impl Cpu) {
     // JSX script without HTML comments never pays; a `-->` before any `<!--` stays operators.
     let mut html_close = false;
     // Reuse the previous lex's allocation, which matters for small inputs
-    let mut stack = mem::take(&mut lanes.jsx_stack);
+    let mut stack = mem::take(jsx_stack);
     stack.clear();
     let mut mode = JsxMode::Js;
     let mut text_start = 0usize;
@@ -201,7 +201,7 @@ pub(super) unsafe fn carve_jsx(lex: Lex, lanes: &mut Lanes, cpu: impl Cpu) {
                         }
                     }
                     b'/' => {
-                        i = lex_slash(lex, s, lanes, cpu);
+                        i = lex_slash(lex, s, lanes, disambiguate, cpu);
                     }
                     b'<' => {
                         let c1 = if s + 1 < src.len() { src[s + 1] } else { 0 };
@@ -226,7 +226,7 @@ pub(super) unsafe fn carve_jsx(lex: Lex, lanes: &mut Lanes, cpu: impl Cpu) {
                         } else if c1 == b'=' || is_digit(c1, cpu) {
                             // `<=` / `a<5`: leave for coalesce.
                             i = s + 1;
-                        } else if lanes.disambiguate.not_operator_position(lex, s, cpu) {
+                        } else if disambiguate.not_operator_position(lex, s, cpu) {
                             // Operand position: candidate JSX. Whitespace (Unicode too) and
                             // comments may separate `<` from the name.
                             let name_pos = jsx_skip_trivia_fast(src, s + 1, cpu);
@@ -243,7 +243,7 @@ pub(super) unsafe fn carve_jsx(lex: Lex, lanes: &mut Lanes, cpu: impl Cpu) {
                                 });
                                 mode = JsxMode::Tag;
                             } else if is_id_start(name_byte, cpu)
-                                && jsx_over_type_params(lex, s, name_pos, lanes, cpu)
+                                && jsx_over_type_params(lex, s, name_pos, lanes, disambiguate, cpu)
                             {
                                 // Element - unless `.tsx` says this is a
                                 // type-parameter list, which stays a less-than.
@@ -288,7 +288,7 @@ pub(super) unsafe fn carve_jsx(lex: Lex, lanes: &mut Lanes, cpu: impl Cpu) {
                 }
                 let c = src[s];
                 if c == b'<' {
-                    let prev = lanes.disambiguate.prev_sig(lex, s, cpu);
+                    let prev = disambiguate.prev_sig(lex, s, cpu);
                     if prev.is_some_and(|q| src[q] == b'=') {
                         let name_pos = jsx_skip_trivia(src, s + 1, cpu);
                         jsx_punct(kinds, op_char, s, tk!(JsxLt), cpu);
@@ -415,7 +415,7 @@ pub(super) unsafe fn carve_jsx(lex: Lex, lanes: &mut Lanes, cpu: impl Cpu) {
                     // Later passes can still emit spurious diagnostics from
                     // the run; record the span so drain-time filtering drops
                     // them.
-                    lanes.diag_suppress.push((s as u32, p as u32));
+                    diag_suppress.push((s as u32, p as u32));
                     i = p;
                     continue;
                 }
@@ -680,7 +680,7 @@ pub(super) unsafe fn carve_jsx(lex: Lex, lanes: &mut Lanes, cpu: impl Cpu) {
             JsxFrameKind::TemplateSub => {}
         }
     }
-    lanes.jsx_stack = stack;
+    *jsx_stack = stack;
 }
 
 /// Cold: misc_pre read a backslash-u in JSX text as an escape running into the container at s.

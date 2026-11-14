@@ -5,6 +5,7 @@ use crate::{error::DiagCode, token::tk};
 use crate::pipeline::{
     bitmap::{Bitmap, Bitmaps},
     bytes::hex_val,
+    disambiguate::DisambiguateState,
     find::find,
     kinds::Kinds,
     lanes::Lanes,
@@ -97,7 +98,13 @@ pub(super) unsafe fn lex_template_segment(
 /// block comment, regex, `/=`, or a bare slash left for `coalesce`.
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn lex_slash(lex: Lex, s: usize, lanes: &mut Lanes, cpu: impl Cpu) -> usize {
+pub(super) unsafe fn lex_slash(
+    lex: Lex,
+    s: usize,
+    lanes: &mut Lanes,
+    disambiguate: &mut DisambiguateState,
+    cpu: impl Cpu,
+) -> usize {
     let Lex { src, bitmaps, kinds, .. } = lex;
     let Bitmaps { token_start, word, op_char, .. } = *bitmaps;
     let d = if s + 1 < src.len() { src[s + 1] } else { 0 };
@@ -105,7 +112,7 @@ pub(super) unsafe fn lex_slash(lex: Lex, s: usize, lanes: &mut Lanes, cpu: impl 
         lex_line_comment(src, token_start, kinds, s, lanes, cpu)
     } else if d == b'*' {
         lex_block_comment(src, token_start, kinds, s, lanes, cpu)
-    } else if lanes.disambiguate.not_operator_position(lex, s, cpu) {
+    } else if disambiguate.not_operator_position(lex, s, cpu) {
         lex_regex(src, token_start, kinds, word, s, lanes, cpu)
     } else if s + 1 < src.len() && src[s + 1] == b'=' {
         // `/=`: absorb the `=`.

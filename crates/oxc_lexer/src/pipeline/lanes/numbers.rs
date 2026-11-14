@@ -53,7 +53,7 @@ impl Lanes {
                 d = ((d & 0x0f00_0f00_0f00_0f00) >> 8) + (d & 0x000f_000f_000f_000f) * 10;
                 d = ((d & 0x00ff_0000_00ff_0000) >> 16) + (d & 0x0000_00ff_0000_00ff) * 100;
                 d = ((d & 0x0000_ffff_0000_0000) >> 32) + (d & 0x0000_0000_0000_ffff) * 10000;
-                self.out.numbers.push(d as f64);
+                self.numbers.push(d as f64);
                 return;
             }
         }
@@ -62,7 +62,7 @@ impl Lanes {
         if code != DiagCode::Ok {
             self.push_diag(s as u32, (e - s) as u32, code);
         }
-        self.out.numbers.push(parse_number(src, s, e, cpu));
+        self.numbers.push(parse_number(src, s, e, cpu));
     }
 }
 

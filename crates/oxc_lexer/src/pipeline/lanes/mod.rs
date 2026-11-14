@@ -7,13 +7,12 @@ use crate::{
     token::StringSpan,
 };
 
-use crate::pipeline::{carve::JsxFrame, disambiguate::DisambiguateState};
-
 mod numbers;
 mod strings;
 
+/// The per-token values besides kinds and spans, owned by Tokens and lent to the lexer.
 #[derive(Debug, Default)]
-pub(crate) struct TokenLanes {
+pub(crate) struct Lanes {
     pub numbers: Vec<f64>,
     pub strings: Vec<StringSpan>,
     pub templates: Vec<StringSpan>,
@@ -27,34 +26,18 @@ pub(crate) struct TokenLanes {
     pub irregular_whitespaces: Vec<Span>,
 }
 
-#[derive(Default)]
-pub(crate) struct Lanes {
-    pub out: TokenLanes,
-    /// Ranges lexed content-blind (the tsx type-argument skip), whose diagnostics are dropped.
-    pub diag_suppress: Vec<(u32, u32)>,
-    /// Non-ASCII lead bytes, checked as identifier chars once the tokens are known.
-    pub unicode_leads: Vec<u32>,
-    /// Carve's nesting stacks, kept between lexes to reuse their allocations.
-    pub(super) template_depth: Vec<u32>,
-    pub(super) jsx_stack: Vec<JsxFrame>,
-    /// What the disambiguation questions keep across the lex.
-    pub(super) disambiguate: DisambiguateState,
-}
-
 impl Lanes {
     #[cpu_multiversion]
     pub(crate) fn clear(&mut self, _cpu: impl Cpu) {
-        self.out.numbers.clear();
-        self.out.strings.clear();
-        self.out.templates.clear();
-        self.out.atoms.clear();
-        self.out.regex_flags.clear();
-        self.out.cooked.clear();
-        self.out.comments.clear();
-        self.out.diags.clear();
-        self.diag_suppress.clear();
-        self.unicode_leads.clear();
-        self.out.irregular_whitespaces.clear();
+        self.numbers.clear();
+        self.strings.clear();
+        self.templates.clear();
+        self.atoms.clear();
+        self.regex_flags.clear();
+        self.cooked.clear();
+        self.comments.clear();
+        self.diags.clear();
+        self.irregular_whitespaces.clear();
     }
 
     #[cpu_multiversion]
@@ -81,7 +64,7 @@ impl Lanes {
             }
             f |= bit;
         }
-        self.out.regex_flags.push(RegExpFlags::from_bits_retain(f));
+        self.regex_flags.push(RegExpFlags::from_bits_retain(f));
     }
 
     /// Cold and compiled once, so the push stays out of the hot loops of every CPU version.
@@ -89,6 +72,6 @@ impl Lanes {
     #[cold]
     #[inline(never)]
     pub(crate) fn push_diag(&mut self, off: u32, len: u32, code: DiagCode) {
-        self.out.diags.push(Diagnostic { off, len, code, severity: DiagSeverity::Error });
+        self.diags.push(Diagnostic { off, len, code, severity: DiagSeverity::Error });
     }
 }

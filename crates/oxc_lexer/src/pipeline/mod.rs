@@ -25,5 +25,5 @@ mod scan;
 mod source;
 mod unicode_leads;
 
-pub(crate) use lanes::TokenLanes;
+pub(crate) use lanes::Lanes;
 pub use lexer::Lexer;
