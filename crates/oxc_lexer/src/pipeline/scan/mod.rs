@@ -8,7 +8,9 @@ mod neon;
 #[cfg(test)]
 mod tests;
 
-pub(super) use common::{scan_ident_esc, scan_number, scan_quoted, scan_regex, scan_tmpl_text};
+pub(super) use common::{
+    TemplateEnd, scan_ident_esc, scan_number, scan_quoted, scan_regex, scan_tmpl_text,
+};
 
 use avx2::{scan_block_comment_avx2, scan_line_comment_avx2};
 use generic::{scan_block_comment_generic, scan_line_comment_generic};
@@ -22,7 +24,7 @@ pub(super) unsafe fn scan_block_comment(
     src: Source,
     i: usize,
     cpu: impl Cpu,
-) -> (usize, bool, i64) {
+) -> (usize, bool, Option<u32>) {
     match DynCpu::from(cpu) {
         DynCpu::Avx2(cpu) => scan_block_comment_avx2(src.as_ptr(), src.len(), i, cpu),
         DynCpu::Neon(cpu) => scan_block_comment_neon(src.as_ptr(), src.len(), i, cpu),
@@ -34,7 +36,11 @@ pub(super) unsafe fn scan_block_comment(
 /// tracking the first `@license` / `@preserve` position for comment metadata.
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn scan_line_comment(src: Source, i: usize, cpu: impl Cpu) -> (usize, i64) {
+pub(super) unsafe fn scan_line_comment(
+    src: Source,
+    i: usize,
+    cpu: impl Cpu,
+) -> (usize, Option<u32>) {
     match DynCpu::from(cpu) {
         DynCpu::Avx2(cpu) => scan_line_comment_avx2(src.as_ptr(), src.len(), i, cpu),
         DynCpu::Neon(cpu) => scan_line_comment_neon(src.as_ptr(), src.len(), i, cpu),

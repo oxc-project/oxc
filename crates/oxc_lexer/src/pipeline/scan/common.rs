@@ -50,12 +50,13 @@ pub unsafe fn scan_quoted(
 
 #[cpu_multiversion]
 #[inline]
-pub unsafe fn scan_regex(src: Source, mut i: usize, nl_at: &mut usize, cpu: impl Cpu) -> usize {
+pub unsafe fn scan_regex(src: Source, mut i: usize, cpu: impl Cpu) -> (usize, Option<usize>) {
     let mut incl = false;
+    let mut nl_at = None;
     loop {
         let p = find(src, i, REGEX_BYTES, cpu);
         if p >= src.len() {
-            return src.len();
+            return (src.len(), nl_at);
         }
         let c = src[p];
         if c == b'\\' {
@@ -65,16 +66,15 @@ pub unsafe fn scan_regex(src: Source, mut i: usize, nl_at: &mut usize, cpu: impl
             // bytes after a `\` at EOF out of the diagnostics.
             if p + 1 < src.len() {
                 let c1 = src[p + 1];
-                if (c1 == b'\n' || c1 == b'\r') && *nl_at == usize::MAX {
-                    *nl_at = p + 1;
+                if c1 == b'\n' || c1 == b'\r' {
+                    nl_at.get_or_insert(p + 1);
                 } else if c1 == 0xE2
-                    && *nl_at == usize::MAX
                     && p + 3 < src.len()
                     && is_ls_ps_tail(src[p + 2], src[p + 3], cpu)
                 {
                     // Escaped LS/PS: span ends past the whole char; the p+2
                     // skip lands mid-sequence (unwatched 0x80) and sails on.
-                    *nl_at = p + 3;
+                    nl_at.get_or_insert(p + 3);
                 }
             }
             i = p + 2;
@@ -84,20 +84,15 @@ pub unsafe fn scan_regex(src: Source, mut i: usize, nl_at: &mut usize, cpu: impl
             // Raw line terminator: invalid anywhere in the body, `[...]`
             // included. Record the first; keep scanning so the token end
             // (and every downstream span) is unchanged.
-            if *nl_at == usize::MAX {
-                *nl_at = p;
-            }
+            nl_at.get_or_insert(p);
             i = p + 1;
             continue;
         }
         if c == 0xE2 {
             // LS/PS are line terminators too; other E2-led chars (em dash,
             // arrows) fall through untouched.
-            if *nl_at == usize::MAX
-                && p + 2 < src.len()
-                && is_ls_ps_tail(src[p + 1], src[p + 2], cpu)
-            {
-                *nl_at = p + 2; // span ends past the whole char
+            if p + 2 < src.len() && is_ls_ps_tail(src[p + 1], src[p + 2], cpu) {
+                nl_at.get_or_insert(p + 2); // span ends past the whole char
             }
             i = p + 1;
             continue;
@@ -115,20 +110,38 @@ pub unsafe fn scan_regex(src: Source, mut i: usize, nl_at: &mut usize, cpu: impl
             continue;
         }
         if c == b'/' {
-            return p;
+            return (p, nl_at);
         }
         i = p + 1;
     }
 }
 
+/// What ends a template text: the end of the source, a backtick, or a substitution.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum TemplateEnd {
+    Unterminated,
+    Backtick,
+    Substitution,
+}
+
+impl TemplateEnd {
+    /// Bytes of the closing delimiter, which the text excludes.
+    pub fn delimiter_len(self) -> usize {
+        match self {
+            Self::Unterminated => 0,
+            Self::Backtick => 1,
+            Self::Substitution => 2,
+        }
+    }
+}
+
 #[cpu_multiversion]
 #[inline]
-pub unsafe fn scan_tmpl_text(src: Source, mut i: usize, term: &mut i32, cpu: impl Cpu) -> usize {
+pub unsafe fn scan_tmpl_text(src: Source, mut i: usize, cpu: impl Cpu) -> (usize, TemplateEnd) {
     loop {
         let p = find(src, i, [b'`', b'\\', b'$'], cpu);
         if p >= src.len() {
-            *term = 0;
-            return src.len();
+            return (src.len(), TemplateEnd::Unterminated);
         }
         let c = src[p];
         if c == b'\\' {
@@ -136,12 +149,10 @@ pub unsafe fn scan_tmpl_text(src: Source, mut i: usize, term: &mut i32, cpu: imp
             continue;
         }
         if c == b'`' {
-            *term = 1;
-            return p + 1;
+            return (p + 1, TemplateEnd::Backtick);
         }
         if src[p + 1] == b'{' {
-            *term = 2;
-            return p + 2;
+            return (p + 2, TemplateEnd::Substitution);
         }
         i = p + 1;
     }
@@ -273,7 +284,6 @@ pub(super) unsafe fn is_license_at(src: *const u8, q: usize, _cpu: impl Cpu) -> 
 }
 
 /// First `@license` or `@preserve` among the `@`s in `am`, where bit `i` is for byte `base + i`.
-/// Returns -1 if there is none.
 #[cpu_multiversion]
 #[inline(always)]
 pub(super) unsafe fn first_license_at(
@@ -281,13 +291,13 @@ pub(super) unsafe fn first_license_at(
     base: usize,
     mut am: u32,
     cpu: impl Cpu,
-) -> i64 {
+) -> Option<u32> {
     while am != 0 {
         let q = base + am.trailing_zeros() as usize;
         am &= am - 1;
         if is_license_at(src, q, cpu) {
-            return q as i64;
+            return Some(q as u32);
         }
     }
-    -1
+    None
 }

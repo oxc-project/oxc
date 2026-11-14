@@ -43,30 +43,29 @@ impl Bitmap {
         if r < n { r } else { n }
     }
 
-    /// Last set bit before p, or -1 if there is none.
+    /// Last set bit before p.
     #[cpu_multiversion]
     #[inline(always)]
-    pub(super) unsafe fn prev1(self, p: usize, _cpu: impl Cpu) -> i64 {
+    pub(super) unsafe fn prev1(self, p: usize, _cpu: impl Cpu) -> Option<usize> {
         if p == 0 {
-            return -1;
+            return None;
         }
         let i = p - 1;
-        let mut w = (i >> 6) as i64;
+        let mut w = i >> 6;
         let lim = i & 63;
         let mask = if lim == 63 { !0u64 } else { (1u64 << (lim + 1)) - 1 };
-        let x = *self.0.add(w as usize) & mask;
+        let x = *self.0.add(w) & mask;
         if x != 0 {
-            return (w << 6) + (63 - x.leading_zeros() as i64);
+            return Some((w << 6) + (63 - x.leading_zeros() as usize));
         }
-        w -= 1;
-        while w >= 0 {
-            let x = *self.0.add(w as usize);
-            if x != 0 {
-                return (w << 6) + (63 - x.leading_zeros() as i64);
-            }
+        while w > 0 {
             w -= 1;
+            let x = *self.0.add(w);
+            if x != 0 {
+                return Some((w << 6) + (63 - x.leading_zeros() as usize));
+            }
         }
-        -1
+        None
     }
 
     #[cpu_multiversion]
