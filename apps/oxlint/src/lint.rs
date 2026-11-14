@@ -1401,6 +1401,38 @@ mod test {
     }
 
     #[test]
+    fn test_print_config_options_roundtrip() {
+        for (rule, options, source) in [
+            (
+                "max-params",
+                serde_json::json!({ "max": 2 }),
+                "export function f(a, b, c) { return a + b + c; }",
+            ),
+            (
+                "max-statements",
+                serde_json::json!({ "max": 1 }),
+                "export function f(x) { const a = x * 2; return a; }",
+            ),
+        ] {
+            let temp_dir = tempfile::tempdir().unwrap();
+            let tester = Tester::new().with_cwd(temp_dir.path().to_path_buf());
+            fs::write(temp_dir.path().join("index.js"), source).unwrap();
+            let config = serde_json::json!({
+                "categories": { "correctness": "off" },
+                "rules": { rule: ["error", options] },
+            });
+            fs::write(temp_dir.path().join(".oxlintrc.json"), config.to_string()).unwrap();
+            let (_, original) = tester.test_output(&["index.js"]);
+            assert!(matches!(original, CliRunResult::LintFoundErrors), "{rule}: {original:?}");
+            let (printed, result) = tester.test_output(&["--print-config"]);
+            assert!(matches!(result, CliRunResult::PrintConfigResult));
+            fs::write(temp_dir.path().join("printed.json"), printed).unwrap();
+            let (_, reloaded) = tester.test_output(&["-c", "printed.json", "index.js"]);
+            assert!(matches!(reloaded, CliRunResult::LintFoundErrors), "{rule}: {reloaded:?}");
+        }
+    }
+
+    #[test]
     fn test_print_config_ban_rules() {
         let args = &[
             "-c",
