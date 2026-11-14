@@ -69,16 +69,12 @@ impl<'a> IsolatedDeclarations<'a> {
         let mut init = None;
         if decl.type_annotation.is_none() {
             if let Some(init_expr) = &decl.init {
-                // if kind is const and it doesn't need to infer type from expression
-                if kind.is_const() && !Self::is_need_to_infer_type_from_expression(init_expr) {
-                    if let Expression::TemplateLiteral(lit) = init_expr {
-                        init =
-                            self.transform_template_to_string(lit).map(Expression::StringLiteral);
-                    } else {
-                        init = Some(init_expr.clone_in(self.allocator()));
-                    }
-                } else if !kind.is_const() || !matches!(init_expr, Expression::TemplateLiteral(_)) {
-                    // otherwise, we need to infer type from expression
+                if kind.is_const() {
+                    init = self.get_literal_initializer_without_const_assertion(init_expr);
+                }
+                if init.is_none()
+                    && (!kind.is_const() || !matches!(init_expr, Expression::TemplateLiteral(_)))
+                {
                     binding_type = self.infer_type_from_expression(init_expr);
                 }
             }

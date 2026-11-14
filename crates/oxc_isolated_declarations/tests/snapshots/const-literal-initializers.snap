@@ -1,0 +1,110 @@
+---
+source: crates/oxc_isolated_declarations/tests/mod.rs
+input_file: crates/oxc_isolated_declarations/tests/fixtures/const-literal-initializers.ts
+---
+```
+==================== .D.TS ====================
+
+export declare const enabled_plain = true;
+export declare let enabled_plain_let: boolean;
+export declare var enabled_plain_var: boolean;
+export declare const enabled_plain_annotated: boolean;
+export declare const enabled_parenthesized = true;
+export declare let enabled_parenthesized_let: boolean;
+export declare var enabled_parenthesized_var: boolean;
+export declare const enabled_parenthesized_annotated: boolean;
+export declare const enabled_nested = true;
+export declare let enabled_nested_let: boolean;
+export declare var enabled_nested_var: boolean;
+export declare const enabled_nested_annotated: boolean;
+export declare const disabled_plain = false;
+export declare let disabled_plain_let: boolean;
+export declare var disabled_plain_var: boolean;
+export declare const disabled_plain_annotated: boolean;
+export declare const disabled_parenthesized = false;
+export declare let disabled_parenthesized_let: boolean;
+export declare var disabled_parenthesized_var: boolean;
+export declare const disabled_parenthesized_annotated: boolean;
+export declare const disabled_nested = false;
+export declare let disabled_nested_let: boolean;
+export declare var disabled_nested_var: boolean;
+export declare const disabled_nested_annotated: boolean;
+export declare const number_plain = 1;
+export declare let number_plain_let: number;
+export declare var number_plain_var: number;
+export declare const number_plain_annotated: number;
+export declare const number_parenthesized = 1;
+export declare let number_parenthesized_let: number;
+export declare var number_parenthesized_var: number;
+export declare const number_parenthesized_annotated: number;
+export declare const number_nested = 1;
+export declare let number_nested_let: number;
+export declare var number_nested_var: number;
+export declare const number_nested_annotated: number;
+export declare const negative_plain = -1;
+export declare let negative_plain_let: number;
+export declare var negative_plain_var: number;
+export declare const negative_plain_annotated: number;
+export declare const negative_parenthesized = -1;
+export declare let negative_parenthesized_let: number;
+export declare var negative_parenthesized_var: number;
+export declare const negative_parenthesized_annotated: number;
+export declare const negative_nested = -1;
+export declare let negative_nested_let: number;
+export declare var negative_nested_var: number;
+export declare const negative_nested_annotated: number;
+export declare const bigint_plain = 1n;
+export declare let bigint_plain_let: bigint;
+export declare var bigint_plain_var: bigint;
+export declare const bigint_plain_annotated: bigint;
+export declare const bigint_parenthesized = 1n;
+export declare let bigint_parenthesized_let: bigint;
+export declare var bigint_parenthesized_var: bigint;
+export declare const bigint_parenthesized_annotated: bigint;
+export declare const bigint_nested = 1n;
+export declare let bigint_nested_let: bigint;
+export declare var bigint_nested_var: bigint;
+export declare const bigint_nested_annotated: bigint;
+export declare const string_plain = "";
+export declare let string_plain_let: string;
+export declare var string_plain_var: string;
+export declare const string_plain_annotated: string;
+export declare const string_parenthesized = "";
+export declare let string_parenthesized_let: string;
+export declare var string_parenthesized_var: string;
+export declare const string_parenthesized_annotated: string;
+export declare const string_nested = "";
+export declare let string_nested_let: string;
+export declare var string_nested_var: string;
+export declare const string_nested_annotated: string;
+export declare const template_plain = "text";
+export declare let template_plain_let: string;
+export declare var template_plain_var: string;
+export declare const template_plain_annotated: string;
+export declare const template_parenthesized = "text";
+export declare let template_parenthesized_let: string;
+export declare var template_parenthesized_var: string;
+export declare const template_parenthesized_annotated: string;
+export declare const template_nested = "text";
+export declare let template_nested_let: string;
+export declare var template_nested_var: string;
+export declare const template_nested_annotated: string;
+declare const separate_true = true;
+declare const separate_false = false;
+declare const separate_parenthesized = true;
+export { separate_true, separate_false, separate_parenthesized };
+export declare const asserted: true;
+export declare const object: {
+	x: boolean;
+};
+export declare const nil: null;
+export declare const positive_plain = 1;
+export declare const positive_parenthesized = 1;
+export declare const positive_nested = 1;
+export declare let positive_mutable: number;
+export declare const positive_annotated: number;
+export declare class Positive {
+	readonly plain = 1;
+	readonly parenthesized = 1;
+	readonly negative = -1;
+}
