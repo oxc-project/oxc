@@ -13,6 +13,26 @@ source: crates/oxc_linter/src/tester.rs
   note: Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
+   ╭─[no_accumulating_spread.tsx:1:5]
+ 1 │ arr.reduce((acc, x, index) => [...acc, x], []);
+   ·     ───┬──                     ───┬──
+   ·        │                          ╰── From this spread
+   ·        ╰── For this reduce
+   ╰────
+  help: It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.
+  note: Using spreads within accumulators leads to `O(n^2)` time complexity.
+
+  ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
+   ╭─[no_accumulating_spread.tsx:1:5]
+ 1 │ arr.reduceRight((acc, x, index, array) => ({ ...acc, [x]: index }), {});
+   ·     ─────┬─────                              ───┬──
+   ·          │                                      ╰── From this spread
+   ·          ╰── For this reduce
+   ╰────
+  help: It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.
+  note: Using spreads within accumulators leads to `O(n^2)` time complexity.
+
+  ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
    ╭─[no_accumulating_spread.tsx:1:7]
  1 │ (arr?.reduceRight)((acc, x) => ({ ...acc, [x]: x }), {})
    ·       ─────┬─────                 ───┬──

@@ -180,9 +180,10 @@ fn check_reduce_usage<'a>(
         return;
     }
 
-    // invalid number of parameters to reduce callback
+    // A reduce callback takes the accumulator, the current value and, optionally,
+    // the index and the array.
     let params_count = params.parameters_count();
-    if params_count != 2 {
+    if !(2..=4).contains(&params_count) {
         return;
     }
 
@@ -389,6 +390,7 @@ fn test() {
         "(arr?.reduce)((acc, x) => [...acc, x], [], 123)",
         "(arr?.reduce)((acc, x) => [...x], [])",
         "(arr?.reduce)((acc) => [...acc], [])",
+        "arr.reduce((acc, x, index, array, extra) => [...acc, x], [])",
         "(arr?.reduce())((acc, x) => [...acc, x], [])",
         // bad practice, but not a spread on acc
         "arr.reduce((acc, x) => {
@@ -466,6 +468,8 @@ fn test() {
 
     let fail = vec![
         "(arr?.reduce)((acc, x) => [...acc, x], []);",
+        "arr.reduce((acc, x, index) => [...acc, x], []);",
+        "arr.reduceRight((acc, x, index, array) => ({ ...acc, [x]: index }), {});",
         "(arr?.reduceRight)((acc, x) => ({ ...acc, [x]: x }), {})",
         "(arr?.['reduce'])((acc, x) => [...acc, x])",
         "(arr?.[`reduceRight`])((acc, x) => ({ ...acc, [x]: x }), {})",
