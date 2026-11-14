@@ -70,22 +70,28 @@ impl Lanes {
             return (StringSpan::new(ss, ss & StringSpan::END_MASK, false, cpu), false);
         }
         let body_len = (be - bs) as usize;
-
+        // Every read below stays in src: the body, and the 32 bytes the short path loads.
+        assert!(be as usize <= src.len() && bs as usize + 32 <= src.len());
         self.cooked.reserve(body_len.max(32) + 8);
         let base = self.cooked.as_mut_ptr();
 
         let needs_decode = if body_len < 32 {
-            return self.cook_short_dispatch::<EMIT, CRLF>(src, bs, be, base, ss, body_len, cpu);
+            // SAFETY: the assert and reserve above are the short path's contract.
+            return unsafe {
+                self.cook_short_dispatch::<EMIT, CRLF>(src, bs, be, base, ss, body_len, cpu)
+            };
         } else if CRLF {
             span_has_bs_or_cr(src, bs as usize, be as usize, cpu)
         } else {
             span_has_bs(src, bs as usize, be as usize, cpu)
         };
         let (wi, lone, nes) = if needs_decode {
+            // SAFETY: src holds the body, and cooked has room for it, as decoding never lengthens.
             unsafe {
                 cook_decode::<EMIT, CRLF>(src.as_ptr(), bs, be, base, ss, &mut self.diags, cpu)
             }
         } else {
+            // SAFETY: src holds the body, and cooked has room for it.
             unsafe {
                 ptr::copy_nonoverlapping(
                     src.as_ptr().add(bs as usize),
@@ -95,13 +101,15 @@ impl Lanes {
             }
             (ss + (be - bs), false, false)
         };
+        // SAFETY: cooking wrote every byte up to wi.
         unsafe { self.cooked.set_len(wi as usize) };
         (StringSpan::new(ss, wi & StringSpan::END_MASK, lone, cpu), nes)
     }
 
+    /// cook's short path: src holds 32 bytes from bs, and base is cooked's, 32 free past ss.
     #[cpu_multiversion]
     #[inline(always)]
-    fn cook_short_dispatch<const EMIT: bool, const CRLF: bool>(
+    unsafe fn cook_short_dispatch<const EMIT: bool, const CRLF: bool>(
         &mut self,
         src: &[u8],
         bs: u32,
@@ -111,8 +119,11 @@ impl Lanes {
         body_len: usize,
         cpu: impl Cpu,
     ) -> (StringSpan, bool) {
-        let (wi, lone, nes) =
-            cook_short::<EMIT, CRLF>(src, bs, be, base, ss, body_len, &mut self.diags, cpu);
+        // SAFETY: the caller gives src 32 bytes from bs, and cooked 32 free bytes past ss.
+        let (wi, lone, nes) = unsafe {
+            cook_short::<EMIT, CRLF>(src, bs, be, base, ss, body_len, &mut self.diags, cpu)
+        };
+        // SAFETY: cooking wrote every byte up to wi.
         unsafe { self.cooked.set_len(wi as usize) };
         (StringSpan::new(ss, wi & StringSpan::END_MASK, lone, cpu), nes)
     }
@@ -144,14 +155,9 @@ impl Lanes {
             self.strings.push(StringSpan::new(ss, ss & StringSpan::END_MASK, false, cpu));
             return;
         }
-        let body_len = be - bs;
-        self.cooked.reserve(body_len + 8);
-        unsafe {
-            let base = self.cooked.as_mut_ptr();
-            ptr::copy_nonoverlapping(src.as_ptr().add(bs), base.add(ss as usize), body_len);
-            self.cooked.set_len(ss as usize + body_len);
-        }
-        let we = ss + body_len as u32;
+        let body = &src[bs..be];
+        self.cooked.extend_from_slice(body);
+        let we = ss + body.len() as u32;
         self.strings.push(StringSpan::new(ss, we & StringSpan::END_MASK, false, cpu));
     }
 
@@ -315,9 +321,10 @@ impl Lanes {
     }
 }
 
+/// Cook a body under 32 bytes long; src must hold 32 bytes from bs, and base room for 32 from ss.
 #[cpu_multiversion]
 #[inline(always)]
-fn cook_short<const EMIT: bool, const CRLF: bool>(
+unsafe fn cook_short<const EMIT: bool, const CRLF: bool>(
     src: &[u8],
     bs: u32,
     be: u32,
@@ -343,7 +350,7 @@ fn cook_short<const EMIT: bool, const CRLF: bool>(
 /// [`cook_short`] for Neon.
 #[cpu_version(Neon)]
 #[inline]
-fn cook_short_neon<const EMIT: bool, const CRLF: bool>(
+unsafe fn cook_short_neon<const EMIT: bool, const CRLF: bool>(
     src: &[u8],
     bs: u32,
     be: u32,
@@ -376,7 +383,7 @@ fn cook_short_neon<const EMIT: bool, const CRLF: bool>(
 /// [`cook_short`] for AVX2.
 #[cpu_version(Avx2)]
 #[inline]
-fn cook_short_avx2<const EMIT: bool, const CRLF: bool>(
+unsafe fn cook_short_avx2<const EMIT: bool, const CRLF: bool>(
     src: &[u8],
     bs: u32,
     be: u32,
@@ -404,7 +411,7 @@ fn cook_short_avx2<const EMIT: bool, const CRLF: bool>(
 /// [`cook_short`] for all other CPUs.
 #[cpu_version(Generic)]
 #[inline]
-fn cook_short_generic<const EMIT: bool, const CRLF: bool>(
+unsafe fn cook_short_generic<const EMIT: bool, const CRLF: bool>(
     src: &[u8],
     bs: u32,
     be: u32,
@@ -449,9 +456,10 @@ fn span_has_bs(src: &[u8], bs: usize, be: usize, cpu: impl Cpu) -> bool {
 #[cpu_version(Avx2)]
 #[inline]
 fn span_has_bs_avx2(src: &[u8], bs: usize, be: usize, cpu: Avx2) -> bool {
+    let src = &src[..be];
     let mut i = bs;
     while i + 32 <= be {
-        let v = unsafe { Vec256::load_unaligned(src.as_ptr().add(i), cpu) };
+        let v = Vec256::read_unaligned(src[i..].first_chunk::<32>().unwrap(), cpu);
         let m = v.eq_u8(b'\\').movemask();
         if m != 0 {
             return true;
@@ -490,7 +498,7 @@ fn span_has_bs_or_cr(src: &[u8], bs: usize, be: usize, cpu: impl Cpu) -> bool {
 #[inline]
 fn span_has_neon<const CR: bool>(src: &[u8], bs: usize, be: usize, cpu: Neon) -> bool {
     let hits = |i: usize| {
-        let v = unsafe { Vec128::load_unaligned(src.as_ptr().add(i), cpu) };
+        let v = Vec128::read_unaligned(src[i..].first_chunk::<16>().unwrap(), cpu);
         (if CR { v.eq_u8(b'\\') | v.eq_u8(b'\r') } else { v.eq_u8(b'\\') }).nibble_mask()
     };
     let mut i = bs;
@@ -507,9 +515,10 @@ fn span_has_neon<const CR: bool>(src: &[u8], bs: usize, be: usize, cpu: Neon) ->
 #[cpu_version(Avx2)]
 #[inline]
 fn span_has_bs_or_cr_avx2(src: &[u8], bs: usize, be: usize, cpu: Avx2) -> bool {
+    let src = &src[..be];
     let mut i = bs;
     while i + 32 <= be {
-        let v = unsafe { Vec256::load_unaligned(src.as_ptr().add(i), cpu) };
+        let v = Vec256::read_unaligned(src[i..].first_chunk::<32>().unwrap(), cpu);
         let m = (v.eq_u8(b'\\') | v.eq_u8(b'\r')).movemask();
         if m != 0 {
             return true;
