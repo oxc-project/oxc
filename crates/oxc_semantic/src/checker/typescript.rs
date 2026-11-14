@@ -10,15 +10,14 @@ use oxc_str::{JSStr, Str};
 
 use crate::{builder::SemanticBuilder, diagnostics};
 
-pub fn check_ts_type_annotation(annotation: &TSTypeAnnotation<'_>, ctx: &SemanticBuilder<'_>) {
-    let (modifier, is_start, span_with_illegal_modifier) = match &annotation.type_annotation {
-        TSType::JSDocNonNullableType(ty) => ('!', !ty.postfix, ty.span()),
-        TSType::JSDocNullableType(ty) => ('?', !ty.postfix, ty.span()),
-        _ => {
-            return;
-        }
-    };
-
+/// JSDoc `?T`, `T?`, `!T` and `T!` are not valid TypeScript syntax anywhere in a type.
+pub fn check_jsdoc_type(
+    modifier: char,
+    postfix: bool,
+    span_with_illegal_modifier: Span,
+    ctx: &SemanticBuilder<'_>,
+) {
+    let is_start = !postfix;
     let valid_type_span = if is_start {
         span_with_illegal_modifier.shrink_left(1)
     } else {

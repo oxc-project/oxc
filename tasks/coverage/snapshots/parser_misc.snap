@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 135/135 (100.00%)
-Positive Passed: 135/135 (100.00%)
-Negative Passed: 273/273 (100.00%)
+AST Parsed     : 136/136 (100.00%)
+Positive Passed: 136/136 (100.00%)
+Negative Passed: 284/284 (100.00%)
 
   × TS(1029): 'declare' modifier must precede 'abstract' modifier.
    ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
@@ -4864,6 +4864,80 @@ Negative Passed: 273/273 (100.00%)
    ·            ────────
  5 │ }
    ╰────
+
+  × Expected `{` but found `>`
+   ╭─[misc/fail/oxc-29314-1.ts:1:8]
+ 1 │ f<class>(h);
+   ·        ┬
+   ·        ╰── `{` expected
+   ╰────
+
+  × TS(17020): '!' at the start of a type is not valid TypeScript syntax.
+   ╭─[misc/fail/oxc-29314-10.ts:1:5]
+ 1 │ f<A<!B> >(h);
+   ·     ──
+   ╰────
+  help: Did you mean to write 'B'?
+
+  × Unexpected token
+   ╭─[misc/fail/oxc-29314-11.ts:1:10]
+ 1 │ let x: A<class>;
+   ·          ─────
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/oxc-29314-2.ts:1:3]
+ 1 │ f<return>(h);
+   ·   ──────
+   ╰────
+
+  × Expected `{` but found `>`
+   ╭─[misc/fail/oxc-29314-3.ts:1:10]
+ 1 │ f<A<class>>(h);
+   ·          ┬
+   ·          ╰── `{` expected
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/oxc-29314-4.ts:1:5]
+ 1 │ f<A<return>>(h);
+   ·     ──────
+   ╰────
+
+  × Expected `,` or `>` but found `.`
+   ╭─[misc/fail/oxc-29314-5.ts:1:14]
+ 1 │ let x: A<null.x>;
+   ·         ┬    ┬
+   ·         │    ╰── `,` or `>` expected
+   ·         ╰── Opened here
+   ╰────
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+   ╭─[misc/fail/oxc-29314-6.ts:1:5]
+ 1 │ f<A<B?> >(h);
+   ·     ──
+   ╰────
+  help: Did you mean to write 'B | null | undefined'?
+
+  × TS(8020): JSDoc types can only be used inside documentation comments.
+   ╭─[misc/fail/oxc-29314-7.ts:1:5]
+ 1 │ f<A<?> >(h);
+   ·     ─
+   ╰────
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+   ╭─[misc/fail/oxc-29314-8.ts:1:5]
+ 1 │ f<A<?B> >(h);
+   ·     ──
+   ╰────
+  help: Did you mean to write 'B | null | undefined'?
+
+  × TS(17019): '!' at the end of a type is not valid TypeScript syntax.
+   ╭─[misc/fail/oxc-29314-9.ts:1:5]
+ 1 │ f<A<B!> >(h);
+   ·     ──
+   ╰────
+  help: Did you mean to write 'B'?
 
   × Expected `:` but found `[`
    ╭─[misc/fail/oxc-3320.tsx:1:8]
