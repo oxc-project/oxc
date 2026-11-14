@@ -19,16 +19,22 @@ const BRACKET_BYTES: [u8; 6] = [b'(', b')', b'[', b'{', b']', b'}'];
 /// Needle order matters for speed. See the comment on `any_of` in `avx2.rs`.
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn find<const K: usize>(
+pub(super) fn find<const K: usize>(
     src: Source,
     i: usize,
     needles: [u8; K],
     cpu: impl Cpu,
 ) -> usize {
-    match DynCpu::from(cpu) {
-        DynCpu::Avx2(cpu) => find_avx2(src.as_ptr(), src.len(), i, needles, cpu),
-        DynCpu::Neon(cpu) => find_neon(src.as_ptr(), src.len(), i, needles, cpu),
-        DynCpu::Generic(_) => find_generic(src.as_ptr(), src.len(), i, needles),
+    if i > src.len() {
+        return src.len();
+    }
+    // SAFETY: the finders read only src[i..src.len()], which src holds.
+    unsafe {
+        match DynCpu::from(cpu) {
+            DynCpu::Avx2(cpu) => find_avx2(src.as_ptr(), src.len(), i, needles, cpu),
+            DynCpu::Neon(cpu) => find_neon(src.as_ptr(), src.len(), i, needles, cpu),
+            DynCpu::Generic(_) => find_generic(src.as_ptr(), src.len(), i, needles),
+        }
     }
 }
 

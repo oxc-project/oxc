@@ -17,13 +17,7 @@ const REGEX_BYTES: [u8; 7] = [b'\\', b']', b'\n', b'\r', b'/', b'[', 0xE2];
 
 #[cpu_multiversion]
 #[inline]
-pub unsafe fn scan_quoted(
-    src: Source,
-    mut i: usize,
-    q: u8,
-    saw_nl: &mut bool,
-    cpu: impl Cpu,
-) -> usize {
+pub fn scan_quoted(src: Source, mut i: usize, q: u8, saw_nl: &mut bool, cpu: impl Cpu) -> usize {
     loop {
         // LF/CR are watched too: raw line terminators in strings are diagnosed.
         let p = find(src, i, [q, b'\\', b'\n', b'\r'], cpu);
@@ -50,7 +44,7 @@ pub unsafe fn scan_quoted(
 
 #[cpu_multiversion]
 #[inline]
-pub unsafe fn scan_regex(src: Source, mut i: usize, cpu: impl Cpu) -> (usize, Option<usize>) {
+pub fn scan_regex(src: Source, mut i: usize, cpu: impl Cpu) -> (usize, Option<usize>) {
     let mut incl = false;
     let mut nl_at = None;
     loop {
@@ -137,7 +131,7 @@ impl TemplateEnd {
 
 #[cpu_multiversion]
 #[inline]
-pub unsafe fn scan_tmpl_text(src: Source, mut i: usize, cpu: impl Cpu) -> (usize, TemplateEnd) {
+pub fn scan_tmpl_text(src: Source, mut i: usize, cpu: impl Cpu) -> (usize, TemplateEnd) {
     loop {
         let p = find(src, i, [b'`', b'\\', b'$'], cpu);
         if p >= src.len() {
