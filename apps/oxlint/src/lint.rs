@@ -1406,6 +1406,29 @@ mod test {
     }
 
     #[test]
+    fn test_print_config_custom_settings() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let settings = serde_json::json!({
+            "custom": { "values": [null, true, 42, "value"] },
+            "react": { "custom": { "enabled": true } },
+            "jest": { "version": "20.1.23" }
+        });
+        fs::write(
+            temp_dir.path().join(DEFAULT_OXLINTRC_NAME),
+            serde_json::to_string(&serde_json::json!({ "settings": settings })).unwrap(),
+        )
+        .unwrap();
+        let (output, result) =
+            Tester::new().with_cwd(temp_dir.path().to_path_buf()).test_output(&["--print-config"]);
+        assert!(matches!(result, CliRunResult::PrintConfigResult));
+        let printed: serde_json::Value = serde_json::from_str(&output).unwrap();
+        assert_eq!(printed["settings"]["custom"], settings["custom"]);
+        assert_eq!(printed["settings"]["react"]["custom"], settings["react"]["custom"]);
+        assert_eq!(printed["settings"]["react"]["formComponents"], serde_json::json!([]));
+        assert_eq!(printed["settings"]["jest"]["version"], 20);
+    }
+
+    #[test]
     fn test_print_config_validates_overrides() {
         let temp_dir = tempfile::tempdir().unwrap();
         fs::write(temp_dir.path().join("test.ts"), "").unwrap();
