@@ -3353,6 +3353,16 @@ impl RuleRunner for crate::rules::unicorn::no_immediate_mutation::NoImmediateMut
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::unicorn::no_incorrect_query_selector::NoIncorrectQuerySelector {
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::BinaryExpression,
+        AstType::CallExpression,
+        AstType::ComputedMemberExpression,
+        AstType::IdentifierReference,
+    ]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner for crate::rules::unicorn::no_instanceof_array::NoInstanceofArray {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::BinaryExpression]));
