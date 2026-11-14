@@ -1365,6 +1365,19 @@ impl<'a> VisitJs<'a> for ExhaustiveDepsVisitor<'a, '_> {
         if let Ok(source) = analyze_property_chain(&it.object, self.semantic) {
             if let Some(source) = source {
                 if is_parent_call_expr {
+                    // For method calls on `ref.current` (e.g. `ref.current.focus()`),
+                    // also track the base object (`ref`), same as for `.current` reads.
+                    if source.chain.last().is_some_and(|part| part == "current") {
+                        let mut base_chain = source.chain.clone();
+                        base_chain.pop();
+                        self.found_dependencies.insert(Dependency {
+                            name: source.name,
+                            reference_id: source.reference_id,
+                            span: source.span,
+                            chain: base_chain,
+                            symbol_id: source.symbol_id,
+                        });
+                    }
                     self.found_dependencies.insert(source);
                 } else {
                     let new_chain = Vec::from([Str::from(it.property.name)]);
@@ -1670,6 +1683,13 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        // https://github.com/oxc-project/oxc/issues/27269
+        r"function MyComponent({ x }) {
+          const ref = useCustomRef();
+          useLayoutEffect(() => {
+            ref.current?.setValue(x);
+          }, [ref, x]);
+        }",
         r"function MyComponent() {
           const local = {};
           useEffect(() => {
@@ -3396,6 +3416,19 @@ const Component = ({ filter }) => {
           useEffect(() => {
             console.log(ref.current);
           }, [ref.current, ref]);
+        }",
+        // https://github.com/oxc-project/oxc/issues/27269
+        r"function MyComponent({ x }) {
+          const ref = useCustomRef();
+          useLayoutEffect(() => {
+            ref.current?.setValue(x);
+          }, [ref.current, x]);
+        }",
+        r"function MyComponent({ x }) {
+          const ref = useCustomRef();
+          useLayoutEffect(() => {
+            ref.current.setValue(x);
+          }, [ref.current, x]);
         }",
         r"const MyComponent = forwardRef((props, ref) => {
           useImperativeHandle(ref, () => ({

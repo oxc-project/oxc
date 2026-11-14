@@ -1182,7 +1182,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'props.color', and 'props.someOtherRefs.current.innerHTML'
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'props.someOtherRefs.current.innerHTML', and 'props.color'
     ╭─[exhaustive_deps.tsx:9:14]
   6 │             console.log(ref2.current.textContent);
   7 │             alert(props.someOtherRefs.current.innerHTML);
@@ -1293,6 +1293,30 @@ source: crates/oxc_linter/src/tester.rs
  6 │         }
    ╰────
   help: Consider removing it from the dependency array. Mutable values aren't valid dependencies because mutating them doesn't re-render the component.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useLayoutEffect has a missing dependency: 'ref'. Mutable values like 'ref.current' aren't valid dependencies because mutating them doesn't re-render the component.
+   ╭─[exhaustive_deps.tsx:5:14]
+ 3 │           useLayoutEffect(() => {
+ 4 │             ref.current?.setValue(x);
+   ·             ─────┬─────
+   ·                  ╰── useLayoutEffect uses `ref` here
+ 5 │           }, [ref.current, x]);
+   ·              ────────────────
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useLayoutEffect has a missing dependency: 'ref'. Mutable values like 'ref.current' aren't valid dependencies because mutating them doesn't re-render the component.
+   ╭─[exhaustive_deps.tsx:5:14]
+ 3 │           useLayoutEffect(() => {
+ 4 │             ref.current.setValue(x);
+   ·             ─────┬─────
+   ·                  ╰── useLayoutEffect uses `ref` here
+ 5 │           }, [ref.current, x]);
+   ·              ────────────────
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
 
   ⚠ react-hooks(exhaustive-deps): React Hook useImperativeHandle has a missing dependency: 'props.hello'
    ╭─[exhaustive_deps.tsx:6:15]
