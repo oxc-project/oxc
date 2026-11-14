@@ -8,7 +8,7 @@ use crate::{
     token::TokenKind,
 };
 
-use crate::pipeline::lanes::{Lanes, decode_char_at};
+use crate::pipeline::{bytes::decode_char_at, lanes::Lanes};
 
 /// Report non-ASCII chars in code which aren't valid identifier chars.
 ///
