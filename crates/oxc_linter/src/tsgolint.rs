@@ -5,8 +5,12 @@ use std::{
     io::{ErrorKind, Read, Write, stderr},
     iter, mem,
     path::{Path, PathBuf},
-    process::Child,
-    sync::{Arc, Mutex, mpsc},
+    process::{Child, ChildStdin},
+    sync::{
+        Arc, Mutex,
+        atomic::{AtomicU64, Ordering},
+        mpsc,
+    },
     thread::JoinHandle,
     time::Duration,
 };
@@ -49,6 +53,9 @@ pub struct TsGoLintState {
     timings: bool,
     /// If `true`, the linter will create "ignore this section / line" fixes for all diagnostics
     with_ignore_fixes: bool,
+    /// If `true`, keep `tsrs-lint` running to answer type queries from JS plugins
+    /// during the regular lint pass. See [`type_query`].
+    serve_type_queries: bool,
 }
 
 impl TsGoLintState {
@@ -67,6 +74,7 @@ impl TsGoLintState {
             type_check_only: false,
             timings: false,
             with_ignore_fixes: false,
+            serve_type_queries: false,
         }
     }
 
@@ -92,6 +100,7 @@ impl TsGoLintState {
             type_check_only: false,
             timings: false,
             with_ignore_fixes: false,
+            serve_type_queries: false,
         })
     }
 
@@ -136,6 +145,23 @@ impl TsGoLintState {
     pub fn with_ignore_fixes(mut self, yes: bool) -> Self {
         self.with_ignore_fixes = yes;
         self
+    }
+
+    /// Set to `true` to answer type queries from JS plugins with the same `tsrs-lint` process
+    /// that runs type-aware rules. Ignored for `tsgolint`, which cannot answer them.
+    ///
+    /// Default is `false`.
+    #[must_use]
+    pub fn with_type_queries(mut self, yes: bool) -> Self {
+        self.serve_type_queries = yes && self.executable_is_tsrs();
+        self
+    }
+
+    fn executable_is_tsrs(&self) -> bool {
+        self.executable_path
+            .file_stem()
+            .and_then(OsStr::to_str)
+            .is_some_and(|stem| stem.starts_with("tsrs"))
     }
 
     /// Runs `tsgolint` on `paths` to completion. Equivalent to [`Self::start`] followed by
@@ -199,13 +225,26 @@ impl TsGoLintState {
             paths_buff
         };
 
-        let process = self.spawn_tsgolint(&json_input).map(|mut child| {
+        let process = self.spawn_tsgolint(&json_input, self.serve_type_queries).map(|mut child| {
             let stdout = child.stdout.take().expect("Failed to open tsgolint stdout");
+            let queries = child.stdin.take().map(|stdin| {
+                let queries = Arc::new(TypeQueries::new(stdin));
+                *TYPE_QUERIES.lock().expect("type queries mutex poisoned") =
+                    Some(Arc::clone(&queries));
+                queries
+            });
+            let reader_queries = queries.clone();
             let (sender, messages) = mpsc::channel();
             // Drain stdout as it is written so `tsgolint` never blocks on a full pipe. Message
             // processing stops at the first error, so stop reading there too.
             let reader = std::thread::spawn(move || {
                 for msg in TsGoLintMessageStream::new(stdout) {
+                    if let Ok(TsGoLintMessage::Response(response)) = msg {
+                        if let Some(queries) = &reader_queries {
+                            queries.respond(response);
+                        }
+                        continue;
+                    }
                     let is_error = !matches!(
                         msg,
                         Ok(TsGoLintMessage::Diagnostic(_) | TsGoLintMessage::Timing(_))
@@ -214,8 +253,11 @@ impl TsGoLintState {
                         break;
                     }
                 }
+                if let Some(queries) = &reader_queries {
+                    queries.abandon();
+                }
             });
-            TsGoLintProcess { child, messages, reader }
+            TsGoLintProcess { child, messages, reader, queries }
         });
 
         TsGoLintRun {
@@ -243,6 +285,135 @@ struct TsGoLintProcess {
     /// Messages decoded from stdout by `reader`, in the order `tsgolint` wrote them.
     messages: mpsc::Receiver<Result<TsGoLintMessage, String>>,
     reader: JoinHandle<()>,
+    /// Type queries answered by this process, when it serves them.
+    queries: Option<Arc<TypeQueries>>,
+}
+
+impl TsGoLintProcess {
+    /// Stop sending type queries, and close `stdin` so the process can exit.
+    fn close_queries(&self) {
+        if let Some(queries) = &self.queries {
+            let mut registered = TYPE_QUERIES.lock().expect("type queries mutex poisoned");
+            if registered.as_ref().is_some_and(|registered| Arc::ptr_eq(registered, queries)) {
+                *registered = None;
+            }
+            drop(registered);
+            queries.close();
+        }
+    }
+}
+
+/// Type queries of the current type-aware run, if its `tsrs-lint` process serves them.
+static TYPE_QUERIES: Mutex<Option<Arc<TypeQueries>>> = Mutex::new(None);
+
+/// Input frame types for `tsrs-lint headless --serve`, framed as its output is.
+const INPUT_PAYLOAD: u8 = 0;
+const INPUT_REQUEST: u8 = 1;
+
+type TypeQueryResult = Result<serde_json::Value, String>;
+
+/// Client for the requests a `tsrs-lint headless --serve` process answers on its stdin.
+/// Responses arrive on stdout, among diagnostics, and are matched to requests by ID.
+struct TypeQueries {
+    stdin: Mutex<Option<ChildStdin>>,
+    /// `None` once the process stopped answering.
+    pending: Mutex<Option<FxHashMap<u64, mpsc::Sender<TypeQueryResult>>>>,
+    next_id: AtomicU64,
+}
+
+impl TypeQueries {
+    fn new(stdin: ChildStdin) -> Self {
+        Self {
+            stdin: Mutex::new(Some(stdin)),
+            pending: Mutex::new(Some(FxHashMap::default())),
+            next_id: AtomicU64::new(0),
+        }
+    }
+
+    fn request(&self, mut request: serde_json::Map<String, serde_json::Value>) -> TypeQueryResult {
+        let id = self.next_id.fetch_add(1, Ordering::Relaxed);
+        request.insert("id".to_string(), id.into());
+        let body = serde_json::to_vec(&request).map_err(|err| err.to_string())?;
+
+        let (sender, receiver) = mpsc::channel();
+        match self.pending.lock().expect("pending type queries mutex poisoned").as_mut() {
+            Some(pending) => pending.insert(id, sender),
+            None => return Err("`tsrs-lint` stopped answering type queries".to_string()),
+        };
+
+        let written = match self.stdin.lock().expect("type queries stdin mutex poisoned").as_mut() {
+            Some(stdin) => write_frame(stdin, INPUT_REQUEST, &body).map_err(|err| err.to_string()),
+            None => Err("type queries are closed".to_string()),
+        };
+        if let Err(err) = written {
+            if let Some(pending) =
+                self.pending.lock().expect("pending type queries mutex poisoned").as_mut()
+            {
+                pending.remove(&id);
+            }
+            return Err(format!("Failed to send type query to `tsrs-lint`: {err}"));
+        }
+
+        receiver
+            .recv()
+            .map_err(|_| "`tsrs-lint` exited before answering a type query".to_string())?
+    }
+
+    fn respond(&self, response: TypeQueryResponse) {
+        let sender = self
+            .pending
+            .lock()
+            .expect("pending type queries mutex poisoned")
+            .as_mut()
+            .and_then(|pending| pending.remove(&response.id));
+        if let Some(sender) = sender {
+            let _ = sender.send(response.error.map_or(Ok(response.result), Err));
+        }
+    }
+
+    /// Fail current and future requests: the process no longer answers them.
+    fn abandon(&self) {
+        self.pending.lock().expect("pending type queries mutex poisoned").take();
+    }
+
+    fn close(&self) {
+        self.stdin.lock().expect("type queries stdin mutex poisoned").take();
+    }
+}
+
+fn write_frame(writer: &mut impl Write, message_type: u8, body: &[u8]) -> std::io::Result<()> {
+    let size = u32::try_from(body.len()).map_err(std::io::Error::other)?;
+    let mut frame = Vec::with_capacity(body.len() + 5);
+    frame.extend_from_slice(&size.to_le_bytes());
+    frame.push(message_type);
+    frame.extend_from_slice(body);
+    writer.write_all(&frame)?;
+    writer.flush()
+}
+
+/// Ask the `tsrs-lint` process of the current type-aware run for type information about the
+/// source range `start..end` (UTF-16 offsets) in `file_path`.
+///
+/// `method` is a request understood by `tsrs-lint headless --serve`, e.g. `typeAtLocation`.
+/// Blocks until `tsrs-lint` answers, which is after it has run the type-aware rules.
+///
+/// # Panics
+/// Panics if a mutex guarding type queries is poisoned.
+///
+/// # Errors
+/// Returns an error if no `tsrs-lint` process is serving type queries, or the query failed.
+pub fn type_query(method: &str, file_path: &str, start: u32, end: u32) -> TypeQueryResult {
+    let queries = TYPE_QUERIES.lock().expect("type queries mutex poisoned").clone().ok_or_else(
+        || {
+            "Type information is unavailable. It requires `--type-aware` with `tsrs-lint`, and is not available with `--fix`.".to_string()
+        },
+    )?;
+    let mut request = serde_json::Map::new();
+    request.insert("method".to_string(), method.into());
+    request.insert("file".to_string(), file_path.into());
+    request.insert("start".to_string(), start.into());
+    request.insert("end".to_string(), end.into());
+    queries.request(request)
 }
 
 impl TsGoLintRun {
@@ -274,7 +445,10 @@ impl TsGoLintRun {
         let diff_manager_clone_to_ts_go = Arc::<DiffManager>::clone(diff_manager);
 
         let handler = std::thread::spawn(move || {
-            let TsGoLintProcess { mut child, messages, reader } = process?;
+            let process = process?;
+            // The regular pass, and so every JS plugin type query, has finished.
+            process.close_queries();
+            let TsGoLintProcess { mut child, messages, reader, queries: _ } = process;
 
             // Process messages in a separate thread to send diagnostics as they arrive
             let stdout_handler = std::thread::spawn(move || -> Result<TsGoLintOutput, String> {
@@ -346,6 +520,9 @@ impl TsGoLintRun {
                         }
                         Ok(TsGoLintMessage::Timing(payload)) => {
                             timings.extend(payload.rules);
+                        }
+                        Ok(TsGoLintMessage::Response(_)) => {
+                            debug_assert!(false, "responses are handled by the stdout reader");
                         }
                         Err(e) => {
                             return Err(e);
@@ -462,6 +639,7 @@ impl Drop for TsGoLintRun {
     /// pass unwound), so the process does not outlive the run.
     fn drop(&mut self) {
         if let Some(StartedRun { process: Ok(process), .. }) = &mut self.started {
+            process.close_queries();
             let _ = process.child.kill();
             let _ = process.child.wait();
         }
@@ -470,12 +648,23 @@ impl Drop for TsGoLintRun {
 
 impl TsGoLintState {
     /// Spawn the tsgolint process with the given input.
-    fn spawn_tsgolint(&self, json_input: &Payload) -> Result<std::process::Child, String> {
+    ///
+    /// With `serve`, `tsrs-lint` answers type queries after linting, and the returned child keeps
+    /// its `stdin` open for them. It exits once `stdin` is closed.
+    fn spawn_tsgolint(
+        &self,
+        json_input: &Payload,
+        serve: bool,
+    ) -> Result<std::process::Child, String> {
         let mut cmd = std::process::Command::new(&self.executable_path);
         cmd.arg("headless")
             .stdin(std::process::Stdio::piped())
             .stdout(std::process::Stdio::piped())
             .stderr(stderr());
+
+        if serve {
+            cmd.arg("--serve");
+        }
 
         if self.timings {
             cmd.args(["-debug", "timings"]);
@@ -515,12 +704,21 @@ impl TsGoLintState {
         let mut stdin = child.stdin.take().expect("Failed to open tsgolint stdin");
 
         let json = serde_json::to_string(json_input).expect("Failed to serialize JSON");
-        if let Err(e) = stdin.write_all(json.as_bytes())
+        let written = if serve {
+            write_frame(&mut stdin, INPUT_PAYLOAD, json.as_bytes())
+        } else {
+            stdin.write_all(json.as_bytes())
+        };
+        if let Err(e) = written
             && e.kind() != ErrorKind::BrokenPipe
         {
             return Err(format!("Failed to write to tsgolint stdin: {e}"));
         }
-        drop(stdin);
+        if serve {
+            child.stdin = Some(stdin);
+        } else {
+            drop(stdin);
+        }
 
         Ok(child)
     }
@@ -565,7 +763,7 @@ impl TsGoLintState {
         let path_file_name =
             Path::new(paths[0].as_ref()).file_name().unwrap_or_default().to_os_string();
 
-        let mut child = self.spawn_tsgolint(&json_input)?;
+        let mut child = self.spawn_tsgolint(&json_input, false)?;
         let stdout = child.stdout.take().expect("Failed to open tsgolint stdout");
         let diagnostics = (|| -> Result<Vec<Message>, String> {
             let msg_iter = TsGoLintMessageStream::new(stdout);
@@ -653,7 +851,7 @@ impl TsGoLintState {
                             }
                         }
                     }
-                    Ok(TsGoLintMessage::Timing(_)) => {}
+                    Ok(TsGoLintMessage::Timing(_) | TsGoLintMessage::Response(_)) => {}
                     Err(e) => {
                         return Err(e);
                     }
@@ -889,6 +1087,16 @@ pub enum TsGoLintMessage {
     Diagnostic(TsGoLintDiagnostic),
     Error(TsGoLintError),
     Timing(TsGoLintTimingPayload),
+    Response(TypeQueryResponse),
+}
+
+/// The answer to a type query, from `tsrs-lint headless --serve`.
+#[derive(Debug, Clone, Deserialize)]
+pub struct TypeQueryResponse {
+    pub id: u64,
+    #[serde(default)]
+    pub result: serde_json::Value,
+    pub error: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -1049,6 +1257,7 @@ pub enum MessageType {
     Error = 0,
     Diagnostic = 1,
     Timing = 2,
+    Response = 3,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -1070,6 +1279,7 @@ impl TryFrom<u8> for MessageType {
             0 => Ok(Self::Error),
             1 => Ok(Self::Diagnostic),
             2 => Ok(Self::Timing),
+            3 => Ok(Self::Response),
             _ => Err(InvalidMessageType(value)),
         }
     }
@@ -1134,6 +1344,7 @@ enum TsGoLintMessageParseError {
     InvalidErrorPayload(serde_json::Error),
     InvalidDiagnosticPayload(serde_json::Error),
     InvalidTimingPayload(serde_json::Error),
+    InvalidResponsePayload(serde_json::Error),
 }
 
 impl std::fmt::Display for TsGoLintMessageParseError {
@@ -1149,6 +1360,9 @@ impl std::fmt::Display for TsGoLintMessageParseError {
             }
             TsGoLintMessageParseError::InvalidTimingPayload(e) => {
                 write!(f, "Failed to parse tsgolint timing payload: {e}")
+            }
+            TsGoLintMessageParseError::InvalidResponsePayload(e) => {
+                write!(f, "Failed to parse tsrs-lint type query response: {e}")
             }
         }
     }
@@ -1460,6 +1674,12 @@ fn parse_single_message(
                 .map_err(TsGoLintMessageParseError::InvalidTimingPayload)?;
 
             Ok(TsGoLintMessage::Timing(timing_payload))
+        }
+        MessageType::Response => {
+            let response = serde_json::from_str::<TypeQueryResponse>(&payload_str)
+                .map_err(TsGoLintMessageParseError::InvalidResponsePayload)?;
+
+            Ok(TsGoLintMessage::Response(response))
         }
     }
 }
