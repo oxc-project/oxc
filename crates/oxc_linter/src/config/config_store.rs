@@ -916,6 +916,8 @@ mod test {
         external_plugin_store.register_plugin(
             "./plugin.js".into(),
             "custom".into(),
+            false,
+            None,
             0,
             vec!["no-debugger".into()],
         );
@@ -1311,6 +1313,8 @@ mod test {
         store.register_plugin(
             PathBuf::from("path/to/custom"),
             "custom".to_string(),
+            false,
+            None,
             0,
             vec!["my-rule".to_string()],
         );
