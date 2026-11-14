@@ -62,6 +62,11 @@ impl PreferTagOverRole {
     }
 
     fn check_role(role: &str, jsx_name: &str, span: Span, ctx: &LintContext) {
+        // `<img>` can't replace an inline `<svg>`: `role="img"` is how an SVG
+        // graphic gets its accessible name.
+        if role == "img" && jsx_name == "svg" {
+            return;
+        }
         let tags = get_tags_for_role(role);
         if !tags.is_empty() && !tags.contains(&jsx_name) {
             let tag = tags.join(", ");
@@ -140,6 +145,7 @@ fn test() {
         "<th role=\"columnheader\" />",
         "<input role=\"searchbox\" />",
         "<input role=\"spinbutton\" />",
+        r##"<svg role="img" aria-label="Logo"><use href="#l" /></svg>"##,
     ];
     let fail: Vec<&str> = vec![
         r#"<div role="checkbox" />"#,
