@@ -14,6 +14,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_linter::{
     Config, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore, LintFilter, Oxlintrc,
 };
+use rayon::prelude::*;
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
 use crate::utils::normalize_path;
@@ -54,6 +55,12 @@ pub fn config_file_names() -> Vec<&'static str> {
 ///
 /// In Vite+ mode, only `vite.config.*` is discovered.
 ///
+/// The walk for each file stops at the directory that contains `base_config_path`
+/// (that directory is still checked), or at a directory that an earlier file already queued.
+/// The base config itself is not returned.
+/// If `base_config_path` has no parent (for example, an empty path because no root config
+/// was found), the walk continues up to the file system root.
+///
 /// Conflicts (multiple configs in the same dir) are returned in the second
 /// tuple element so callers can surface them as load errors alongside other
 /// parse/build failures.
@@ -62,38 +69,44 @@ pub fn discover_configs_in_ancestors<P: AsRef<Path>>(
     base_config_path: &Path,
 ) -> (FxHashSet<DiscoveredConfigFile>, Vec<ConfigConflict>) {
     let discovery = config_discovery();
-    let mut config_paths = FxHashSet::<DiscoveredConfigFile>::default();
-    let mut visited_dirs = FxHashSet::default();
-    let mut conflicts = Vec::new();
 
+    // Collect the distinct directories first without any I/O,
+    // then `read_dir` them in parallel instead of one by one on the main thread.
+    let base_dir = base_config_path.parent();
+    let mut visited_dirs = FxHashSet::<&Path>::default();
+    let mut dirs: Vec<&Path> = Vec::new();
     for file in files {
-        let path = file.as_ref();
-        let mut base_config_found = false;
-        // Start from the file's parent directory and walk up the tree
-        let mut current = path.parent();
+        let mut current = file.as_ref().parent();
         while let Some(dir) = current {
-            if base_config_found {
-                // Stop if we've reached the base config file (e.g., root oxlintrc)
-                // to avoid duplicate loading and filling nested config with configs outside from the root config.
-                break;
-            }
             // Stop if we've already checked this directory (and its ancestors)
-            let inserted = visited_dirs.insert(dir.to_path_buf());
-            if !inserted {
+            if !visited_dirs.insert(dir) {
                 break;
             }
-            match discovery.find_unique_config_by_readdir(dir) {
-                Ok(Some(config)) => {
-                    if config.path() == base_config_path {
-                        base_config_found = true;
-                    } else {
-                        config_paths.insert(config);
-                    }
-                }
-                Ok(None) => {}
-                Err(conflict) => conflicts.push(conflict),
+            dirs.push(dir);
+            // Stop at the base config's directory
+            // to avoid filling nested configs with configs outside the root config.
+            if Some(dir) == base_dir {
+                break;
             }
             current = dir.parent();
+        }
+    }
+
+    // The output keeps the order of `dirs`, so `conflicts` are reported in a stable order.
+    let results: Vec<_> =
+        dirs.par_iter().map(|dir| discovery.find_unique_config_by_readdir(dir)).collect();
+
+    let mut config_paths = FxHashSet::<DiscoveredConfigFile>::default();
+    let mut conflicts = Vec::new();
+    for result in results {
+        match result {
+            Ok(Some(config)) => {
+                if config.path() != base_config_path {
+                    config_paths.insert(config);
+                }
+            }
+            Ok(None) => {}
+            Err(conflict) => conflicts.push(conflict),
         }
     }
 
@@ -1360,5 +1373,179 @@ mod test {
             "Expected config in packages/foo, got: {}",
             path.display()
         );
+    }
+
+    /// `discover_configs_in_ancestors` uses the global rayon pool. Build it with 1 thread first,
+    /// like `Tester::new`, because the first user of the pool fixes its size for the whole
+    /// test binary, and snapshot tests expect 1 thread.
+    fn init_single_thread_pool() {
+        let _ = rayon::ThreadPoolBuilder::new().num_threads(1).build_global();
+    }
+
+    fn write_file(path: &std::path::Path, content: &str) {
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(path, content).unwrap();
+    }
+
+    #[test]
+    fn test_discover_configs_in_ancestors_dedups_shared_ancestors() {
+        use super::discover_configs_in_ancestors;
+
+        init_single_thread_pool();
+        let root_dir = tempfile::tempdir().unwrap();
+
+        let base_config = root_dir.path().join(".oxlintrc.json");
+        write_file(&base_config, r#"{ "rules": {} }"#);
+
+        let package_config = root_dir.path().join("packages/app/.oxlintrc.json");
+        write_file(&package_config, r#"{ "rules": {} }"#);
+
+        let files = [
+            root_dir.path().join("packages/app/src/a.js"),
+            root_dir.path().join("packages/app/src/b.js"),
+            root_dir.path().join("packages/app/test/c.js"),
+        ];
+        for file in &files {
+            write_file(file, "const foo = 1;");
+        }
+
+        let (discovered, conflicts) = discover_configs_in_ancestors(&files, &base_config);
+
+        assert_eq!(conflicts, vec![]);
+        let paths: Vec<_> = discovered.iter().map(DiscoveredConfigFile::path).collect();
+        assert_eq!(paths, vec![package_config.as_path()]);
+    }
+
+    #[test]
+    fn test_discover_configs_in_ancestors_stops_at_base_config_dir() {
+        use super::discover_configs_in_ancestors;
+
+        init_single_thread_pool();
+        let root_dir = tempfile::tempdir().unwrap();
+
+        // A config above the base config must not be discovered.
+        let outer_config = root_dir.path().join(".oxlintrc.json");
+        write_file(&outer_config, r#"{ "rules": {} }"#);
+
+        let base_config = root_dir.path().join("project/.oxlintrc.json");
+        write_file(&base_config, r#"{ "rules": {} }"#);
+
+        let nested_config = root_dir.path().join("project/src/.oxlintrc.json");
+        write_file(&nested_config, r#"{ "rules": {} }"#);
+
+        let file = root_dir.path().join("project/src/index.js");
+        write_file(&file, "const foo = 1;");
+
+        let (discovered, conflicts) = discover_configs_in_ancestors(&[file], &base_config);
+
+        assert_eq!(conflicts, vec![]);
+        let paths: Vec<_> = discovered.iter().map(DiscoveredConfigFile::path).collect();
+        assert_eq!(paths, vec![nested_config.as_path()]);
+    }
+
+    #[test]
+    fn test_discover_configs_in_ancestors_without_base_config() {
+        use super::discover_configs_in_ancestors;
+
+        init_single_thread_pool();
+        let root_dir = tempfile::tempdir().unwrap();
+
+        let outer_config = root_dir.path().join(".oxlintrc.json");
+        write_file(&outer_config, r#"{ "rules": {} }"#);
+
+        let nested_config = root_dir.path().join("project/src/.oxlintrc.json");
+        write_file(&nested_config, r#"{ "rules": {} }"#);
+
+        let file = root_dir.path().join("project/src/index.js");
+        write_file(&file, "const foo = 1;");
+
+        // With no root config, the base config path is empty, so the walk does not stop early.
+        let (discovered, _conflicts) =
+            discover_configs_in_ancestors(&[file], std::path::Path::new(""));
+
+        // The walk continues above the temp dir, so only check the configs inside it.
+        let paths: Vec<_> = discovered
+            .iter()
+            .map(DiscoveredConfigFile::path)
+            .filter(|path| path.starts_with(root_dir.path()))
+            .collect();
+        assert_eq!(paths.len(), 2);
+        assert!(paths.contains(&outer_config.as_path()));
+        assert!(paths.contains(&nested_config.as_path()));
+    }
+
+    #[test]
+    fn test_discover_configs_in_ancestors_reports_conflicts() {
+        use super::discover_configs_in_ancestors;
+
+        init_single_thread_pool();
+        let root_dir = tempfile::tempdir().unwrap();
+
+        let base_config = root_dir.path().join(".oxlintrc.json");
+        write_file(&base_config, r#"{ "rules": {} }"#);
+
+        let package_dir = root_dir.path().join("packages/app");
+        write_file(&package_dir.join(".oxlintrc.json"), r#"{ "rules": {} }"#);
+        write_file(&package_dir.join(".oxlintrc.jsonc"), r#"{ "rules": {} }"#);
+
+        // Both files share `packages/app`, so the conflict is reported once.
+        let files = [package_dir.join("a.js"), package_dir.join("src/b.js")];
+        for file in &files {
+            write_file(file, "const foo = 1;");
+        }
+
+        let (discovered, conflicts) = discover_configs_in_ancestors(&files, &base_config);
+
+        assert!(discovered.is_empty());
+        assert_eq!(conflicts.len(), 1);
+        let diagnostic = oxc_diagnostics::OxcDiagnostic::from(conflicts[0].clone());
+        assert!(
+            diagnostic.to_string().contains(&package_dir.display().to_string()),
+            "Expected conflict in {}, got: {diagnostic}",
+            package_dir.display()
+        );
+    }
+
+    #[test]
+    fn test_discover_configs_in_ancestors_keeps_conflict_order() {
+        use super::discover_configs_in_ancestors;
+
+        init_single_thread_pool();
+        let root_dir = tempfile::tempdir().unwrap();
+
+        let base_config = root_dir.path().join(".oxlintrc.json");
+        write_file(&base_config, r#"{ "rules": {} }"#);
+
+        let package_dirs: Vec<_> =
+            (0..8).map(|i| root_dir.path().join(format!("packages/pkg{i}"))).collect();
+        let files: Vec<_> = package_dirs
+            .iter()
+            .map(|dir| {
+                write_file(&dir.join(".oxlintrc.json"), r#"{ "rules": {} }"#);
+                write_file(&dir.join(".oxlintrc.jsonc"), r#"{ "rules": {} }"#);
+                let file = dir.join("index.js");
+                write_file(&file, "const foo = 1;");
+                file
+            })
+            .collect();
+
+        // Use a local pool with several threads, so that an implementation that does not keep
+        // the input order fails. `install` does not change the global pool.
+        let pool = rayon::ThreadPoolBuilder::new().num_threads(4).build().unwrap();
+        let (_discovered, conflicts) =
+            pool.install(|| discover_configs_in_ancestors(&files, &base_config));
+
+        let messages: Vec<_> = conflicts
+            .into_iter()
+            .map(|conflict| oxc_diagnostics::OxcDiagnostic::from(conflict).to_string())
+            .collect();
+        assert_eq!(messages.len(), package_dirs.len());
+        for (message, dir) in messages.iter().zip(&package_dirs) {
+            assert!(
+                message.contains(&format!("{}.", dir.display())),
+                "Expected conflict in {}, got: {message}",
+                dir.display()
+            );
+        }
     }
 }
