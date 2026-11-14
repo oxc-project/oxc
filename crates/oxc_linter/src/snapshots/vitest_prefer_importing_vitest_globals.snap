@@ -38,6 +38,39 @@ source: crates/oxc_linter/src/tester.rs
   help: Import global functions `describe` from `vitest` package instead of using globals.
 
   ⚠ vitest(prefer-importing-vitest-globals): Do not use Vitest global functions
+   ╭─[prefer_importing_vitest_globals.tsx:1:35]
+ 1 │ import { test } from 'node:test'; test('x', () => {});
+   ·                                   ─────────┬─────────
+   ·                                            ╰── Add this global vitest import
+   ╰────
+  help: Import global functions `test` from `vitest` package instead of using globals.
+
+  ⚠ vitest(prefer-importing-vitest-globals): Do not use Vitest global functions
+   ╭─[prefer_importing_vitest_globals.tsx:1:50]
+ 1 │ import { expect, test } from '@playwright/test'; test('x', async () => {});
+   ·                                                  ────────────┬────────────
+   ·                                                              ╰── Add this global vitest import
+   ╰────
+  help: Import global functions `test` from `vitest` package instead of using globals.
+
+  ⚠ vitest(prefer-importing-vitest-globals): Do not use Vitest global functions
+   ╭─[prefer_importing_vitest_globals.tsx:1:34]
+ 1 │ import { describe } from 'jest'; it('test', () => {}); describe('suite', () => {});
+   ·                                  ─┬                    ─────────────┬─────────────
+   ·                                   │                                 ╰── Add this global vitest import
+   ·                                   ╰── Add this global vitest import
+   ╰────
+  help: Import global functions `describe, it` from `vitest` package instead of using globals.
+
+  ⚠ vitest(prefer-importing-vitest-globals): Do not use Vitest global functions
+   ╭─[prefer_importing_vitest_globals.tsx:1:41]
+ 1 │ import type { describe } from 'vitest'; describe('suite', () => {});
+   ·                                         ────┬───
+   ·                                             ╰── Add this global vitest import
+   ╰────
+  help: Import global functions `describe` from `vitest` package instead of using globals.
+
+  ⚠ vitest(prefer-importing-vitest-globals): Do not use Vitest global functions
    ╭─[prefer_importing_vitest_globals.tsx:2:13]
  1 │ import vitest from 'vitest';
  2 │             describe('suite', () => {});

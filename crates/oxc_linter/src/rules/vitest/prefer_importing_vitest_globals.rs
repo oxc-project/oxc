@@ -102,6 +102,10 @@ impl Rule for PreferImportingVitestGlobals {
 
         let mut missing_globals: FxHashSet<&str> = FxHashSet::default();
         let mut globals_spans: Vec<Span> = vec![];
+        // Globals bound by another import (e.g. from `node:test`, `jest` or a type-only import).
+        // Importing these from Vitest too would declare the same binding twice, so they are
+        // reported but left out of the fix.
+        let mut imported_elsewhere: FxHashSet<&str> = FxHashSet::default();
 
         for (name, references_ids) in scoping.root_unresolved_references() {
             if !VITEST_GLOBALS.contains(&CompactStr::new(name.as_str())) {
@@ -109,6 +113,10 @@ impl Rule for PreferImportingVitestGlobals {
             }
 
             missing_globals.insert(name.as_str());
+            // A type-only import does not bind the value, so `describe()` stays unresolved
+            if scoping.get_binding(root_scope, name.as_str().into()).is_some() {
+                imported_elsewhere.insert(name.as_str());
+            }
 
             for &reference_id in references_ids {
                 let reference = scoping.get_reference(reference_id);
@@ -155,6 +163,7 @@ impl Rule for PreferImportingVitestGlobals {
                 {
                     globals_spans.push(call_expr.span);
                     missing_globals.insert(identifier.name.as_str());
+                    imported_elsewhere.insert(identifier.name.as_str());
                 }
             }
         }
@@ -164,11 +173,19 @@ impl Rule for PreferImportingVitestGlobals {
         }
 
         let globals_imports = missing_globals.iter().join(", ");
+        let diagnostic =
+            prefer_importing_vitest_globals_diagnostic(globals_spans.as_ref(), &globals_imports);
 
-        ctx.diagnostic_with_fix(
-            prefer_importing_vitest_globals_diagnostic(globals_spans.as_ref(), &globals_imports),
-            |fixer| Self::build_fix(ctx, &globals_imports, fixer),
-        );
+        let fixable_imports =
+            missing_globals.iter().filter(|name| !imported_elsewhere.contains(*name)).join(", ");
+
+        if fixable_imports.is_empty() {
+            ctx.diagnostic(diagnostic);
+        } else {
+            ctx.diagnostic_with_fix(diagnostic, |fixer| {
+                Self::build_fix(ctx, &fixable_imports, fixer)
+            });
+        }
     }
 }
 
@@ -357,6 +374,10 @@ fn test() {
             describe('suite', () => {});",
         "import { describe } from 'jest';
             describe('suite', () => {});",
+        "import { test } from 'node:test'; test('x', () => {});",
+        "import { expect, test } from '@playwright/test'; test('x', async () => {});",
+        "import { describe } from 'jest'; it('test', () => {}); describe('suite', () => {});",
+        "import type { describe } from 'vitest'; describe('suite', () => {});",
         "import vitest from 'vitest';
             describe('suite', () => {});",
         "import * as abc from 'vitest';
@@ -398,11 +419,26 @@ fn test() {
             "import { it, describe } from 'vite-plus/test';
             describe('suite', () => {});",
         ),
+        // `describe` is already bound by the `jest` import, importing it from Vitest too
+        // would declare it twice, so there is no fix
         (
             "import { describe } from 'jest';
             describe('suite', () => {});",
-            "import { describe } from 'vitest';\nimport { describe } from 'jest';
+            "import { describe } from 'jest';
             describe('suite', () => {});",
+        ),
+        (
+            "import { test } from 'node:test'; test('x', () => {});",
+            "import { test } from 'node:test'; test('x', () => {});",
+        ),
+        (
+            "import type { describe } from 'vitest'; describe('suite', () => {});",
+            "import type { describe } from 'vitest'; describe('suite', () => {});",
+        ),
+        // only the real global is imported
+        (
+            "import { describe } from 'jest'; it('test', () => {}); describe('suite', () => {});",
+            "import { it } from 'vitest';\nimport { describe } from 'jest'; it('test', () => {}); describe('suite', () => {});",
         ),
         (
             "import vitest from 'vitest';
