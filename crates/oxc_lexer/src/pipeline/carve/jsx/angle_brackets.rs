@@ -5,6 +5,7 @@ use crate::error::DiagCode;
 use crate::pipeline::{
     bitmap::Bitmap,
     bytes::{is_id_start, is_word, line_break_in},
+    disambiguate::DisambiguateState,
     lanes::Lanes,
     lex::Lex,
     source::Source,
@@ -26,6 +27,7 @@ pub(super) unsafe fn jsx_over_type_params(
     lt: usize,
     name_pos: usize,
     lanes: &mut Lanes,
+    disambiguate: &mut DisambiguateState,
     cpu: impl Cpu,
 ) -> bool {
     if !lex.options.ts {
@@ -35,7 +37,7 @@ pub(super) unsafe fn jsx_over_type_params(
         AngleVerdict::TypeParams => false,
         AngleVerdict::Jsx => true,
         AngleVerdict::Ambiguous { gt, lp } => {
-            let (jsx, unterminated) = lanes.disambiguate.jsx_over_generic(lex, lt, lp, cpu);
+            let (jsx, unterminated) = disambiguate.jsx_over_generic(lex, lt, lp, cpu);
             if unterminated {
                 lanes.push_diag(lt as u32, (gt + 1 - lt) as u32, DiagCode::UnterminatedJsxElement);
             }

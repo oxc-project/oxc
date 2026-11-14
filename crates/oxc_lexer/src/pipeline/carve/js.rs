@@ -4,7 +4,11 @@ use oxc_simd::{Cpu, cpu_multiversion};
 
 use crate::token::tk;
 
-use crate::pipeline::{bitmap::Bitmaps, find::find, lanes::Lanes, lex::Lex};
+use crate::pipeline::{
+    bitmap::Bitmaps,
+    find::find,
+    lex::{Lex, LexState},
+};
 
 use super::{
     comments::{
@@ -18,12 +22,13 @@ use super::{
 };
 
 #[cpu_multiversion]
-pub(super) unsafe fn carve_js(lex: Lex, lanes: &mut Lanes, cpu: impl Cpu) {
+pub(super) unsafe fn carve_js(lex: Lex, state: &mut LexState, cpu: impl Cpu) {
     let Lex { src, bitmaps, kinds, options } = lex;
     let Bitmaps { token_start, op_char, .. } = *bitmaps;
+    let LexState { lanes, disambiguate, template_depth, .. } = state;
     let module = options.source_type_module;
     // Reuse the previous lex's allocation, which matters for small inputs
-    let mut depth = mem::take(&mut lanes.template_depth);
+    let mut depth = mem::take(template_depth);
     depth.clear();
     let mut i = 0usize;
     if src.len() >= 2 && src[0] == b'#' && src[1] == b'!' {
@@ -100,7 +105,7 @@ pub(super) unsafe fn carve_js(lex: Lex, lanes: &mut Lanes, cpu: impl Cpu) {
                 }
             }
             b'/' => {
-                i = lex_slash(lex, s, lanes, cpu);
+                i = lex_slash(lex, s, lanes, disambiguate, cpu);
             }
             b'<' => {
                 // Annex B B.1.1: `<!--` begins a line comment.
@@ -123,5 +128,5 @@ pub(super) unsafe fn carve_js(lex: Lex, lanes: &mut Lanes, cpu: impl Cpu) {
             }
         }
     }
-    lanes.template_depth = depth;
+    *template_depth = depth;
 }

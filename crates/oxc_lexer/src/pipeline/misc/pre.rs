@@ -4,21 +4,24 @@ use oxc_span::Span;
 use crate::{error::DiagCode, token::tk};
 
 use crate::pipeline::{
-    bitmap::Bitmaps, bytes::is_id_start, lanes::Lanes, lex::Lex, scan::scan_ident_esc,
+    bitmap::Bitmaps,
+    bytes::is_id_start,
+    lex::{Lex, LexState},
+    scan::scan_ident_esc,
     source::Source,
 };
 
 #[cpu_multiversion]
 #[inline(never)]
-pub unsafe fn misc_pre(lex: Lex, lanes: &mut Lanes, cpu: impl Cpu) -> usize {
+pub unsafe fn misc_pre(lex: Lex, state: &mut LexState, cpu: impl Cpu) -> usize {
     if !lex.bitmaps.misc.any(lex.src.block_count(), cpu) {
         return 0;
     }
 
     if lex.options.validate_utf8 {
-        misc_pre_impl::<true>(lex, lanes, cpu)
+        misc_pre_impl::<true>(lex, state, cpu)
     } else {
-        misc_pre_impl::<false>(lex, lanes, cpu)
+        misc_pre_impl::<false>(lex, state, cpu)
     }
 }
 
@@ -31,11 +34,12 @@ pub unsafe fn misc_pre(lex: Lex, lanes: &mut Lanes, cpu: impl Cpu) -> usize {
 #[inline(always)]
 unsafe fn misc_pre_impl<const VALIDATE_UTF8: bool>(
     lex: Lex,
-    lanes: &mut Lanes,
+    state: &mut LexState,
     cpu: impl Cpu,
 ) -> usize {
     let Lex { src, bitmaps, kinds, .. } = lex;
     let Bitmaps { token_start, word, misc, .. } = *bitmaps;
+    let LexState { lanes, unicode_leads, .. } = state;
     let mut escaped_ident_count = 0usize;
     let block_count = src.block_count();
     // VALIDATE_UTF8 only: continuation bits spilling into the next word, and the
@@ -106,18 +110,18 @@ unsafe fn misc_pre_impl<const VALIDATE_UTF8: bool>(
                     if p + len < src.len() {
                         token_start.set(p + len, cpu);
                     }
-                    lanes.out.irregular_whitespaces.push(Span::new(p as u32, (p + len) as u32));
+                    lanes.irregular_whitespaces.push(Span::new(p as u32, (p + len) as u32));
                 } else if (0xC2..=0xF4).contains(&c) {
                     // Non-whitespace lead: record the position only. The
                     // identifier-char check is deferred to drain, where leads
                     // inside literal tokens drop before ever paying for it.
-                    lanes.unicode_leads.push(p as u32);
+                    unicode_leads.push(p as u32);
                 }
                 continue;
             }
             // Vertical tab or form feed, the only misc bytes below 0x20.
             if c < 0x20 {
-                lanes.out.irregular_whitespaces.push(Span::new(p as u32, p as u32 + 1));
+                lanes.irregular_whitespaces.push(Span::new(p as u32, p as u32 + 1));
                 continue;
             }
             if !token_start.get(p, cpu) {

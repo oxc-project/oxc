@@ -5,7 +5,6 @@ use oxc_span::Span;
 
 use crate::{
     PAD,
-    error::DiagCode,
     options::LexOptions,
     token::{SPAN_SENTINELS, debug_assert_kind_bytes},
     tokens::Tokens,
@@ -18,11 +17,9 @@ use crate::pipeline::{
     coalesce::{KWB, coalesce},
     compress::{STAGE_CAP, compress, init_pair_luts, write_sentinels},
     kinds::Kinds,
-    lanes::Lanes,
-    lex::Lex,
+    lex::{Lex, LexState},
     misc::{misc_post, misc_pre, retain_code_whitespace},
     source::Source,
-    unicode_leads::resolve_unicode_leads,
 };
 
 pub struct Lexer {
@@ -39,7 +36,7 @@ pub struct Lexer {
     block_capacity: usize,
     stage_pos: Vec<u32>,
     stage_kind: Vec<u8>,
-    pub(super) lanes: Lanes,
+    pub(super) state: LexState,
     cpu: DynCpu,
 }
 
@@ -84,7 +81,7 @@ impl Lexer {
             block_capacity: 0,
             stage_pos: vec![0; STAGE_CAP],
             stage_kind: vec![0; STAGE_CAP],
-            lanes: Lanes::default(),
+            state: LexState::default(),
             cpu,
         }
     }
@@ -110,7 +107,7 @@ impl Lexer {
         tokens.spans.clear();
         tokens.spans.reserve(capacity);
         // Lend the caller's lane buffers to the stages, so they fill them in place.
-        self.lanes.out = mem::take(&mut tokens.lanes);
+        self.state.begin(mem::take(&mut tokens.lanes), src.len(), &options, self.cpu);
         // SAFETY: lex_raw writes count + SPAN_SENTINELS valid kinds and spans into reserved space.
         let count = unsafe {
             let out_kinds = tokens.kinds.as_mut_ptr().cast::<u8>();
@@ -121,20 +118,8 @@ impl Lexer {
             tokens.spans.set_len(len);
             count
         };
-        if !self.lanes.unicode_leads.is_empty() && count > 0 {
-            let (kinds, spans) = (&tokens.kinds[..count], &tokens.spans[..count]);
-            resolve_unicode_leads(&mut self.lanes, src.bytes(), kinds, spans);
-        }
-        if !self.lanes.diag_suppress.is_empty() {
-            // Keep `InvalidUtf8` diagnostics, even in a range where diagnostics are dropped.
-            // Otherwise source which isn't valid UTF-8 could lex with no diagnostic.
-            let (diags, sup) = (&mut self.lanes.out.diags, &self.lanes.diag_suppress);
-            diags.retain(|d| {
-                d.code == DiagCode::InvalidUtf8
-                    || !sup.iter().any(|&(a, b)| d.off >= a && d.off < b)
-            });
-        }
-        tokens.lanes = mem::take(&mut self.lanes.out);
+        tokens.lanes =
+            self.state.finish(src.bytes(), &tokens.kinds[..count], &tokens.spans[..count]);
     }
 
     /// Safety: out_kinds and out_spans must hold src.len() + PAD + SPAN_SENTINELS entries.
@@ -159,8 +144,6 @@ impl Lexer {
         cpu: impl Cpu,
     ) -> usize {
         self.ensure(src, cpu);
-        self.lanes.clear(cpu);
-        self.lanes.disambiguate.begin(src.len(), options.ts, options.source_type_module, cpu);
         if src.len() == 0 {
             write_sentinels(0, out_spans, out_kinds, cpu);
             return 0;
@@ -184,12 +167,12 @@ impl Lexer {
         // keyword_initial letter class) only ever sees TS input, so JS lexing is
         // byte-identical to a build without it.
         classify(lex, cpu);
-        let escaped_ident_count = misc_pre(lex, &mut self.lanes, cpu);
-        carve(lex, &mut self.lanes, cpu);
-        coalesce(lex, kw_candidates, events, &mut self.lanes, cpu);
+        let escaped_ident_count = misc_pre(lex, &mut self.state, cpu);
+        carve(lex, &mut self.state, cpu);
+        coalesce(lex, kw_candidates, events, &mut self.state, cpu);
         misc_post(lex, escaped_ident_count, cpu);
-        if !self.lanes.out.irregular_whitespaces.is_empty() {
-            let spans = &mut self.lanes.out.irregular_whitespaces;
+        if !self.state.lanes.irregular_whitespaces.is_empty() {
+            let spans = &mut self.state.lanes.irregular_whitespaces;
             retain_code_whitespace(&self.token_start, &self.kinds, spans);
         }
         compress(
@@ -198,7 +181,7 @@ impl Lexer {
             self.stage_kind.as_mut_ptr(),
             out_kinds,
             out_spans,
-            &mut self.lanes,
+            &mut self.state.lanes,
             cpu,
         )
     }

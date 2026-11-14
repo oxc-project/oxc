@@ -62,14 +62,14 @@ impl Lanes {
         be: u32,
         cpu: impl Cpu,
     ) -> (StringSpan, bool) {
-        let ss = self.out.cooked.len() as u32;
+        let ss = self.cooked.len() as u32;
         if be <= bs {
             return (StringSpan::new(ss, ss & StringSpan::END_MASK, false, cpu), false);
         }
         let body_len = (be - bs) as usize;
 
-        self.out.cooked.reserve(body_len.max(32) + 8);
-        let base = self.out.cooked.as_mut_ptr();
+        self.cooked.reserve(body_len.max(32) + 8);
+        let base = self.cooked.as_mut_ptr();
 
         let needs_decode = if body_len < 32 {
             return self.cook_short_dispatch::<EMIT, CRLF>(src, bs, be, base, ss, body_len, cpu);
@@ -80,7 +80,7 @@ impl Lanes {
         };
         let (wi, lone, nes) = if needs_decode {
             unsafe {
-                cook_decode::<EMIT, CRLF>(src.as_ptr(), bs, be, base, ss, &mut self.out.diags, cpu)
+                cook_decode::<EMIT, CRLF>(src.as_ptr(), bs, be, base, ss, &mut self.diags, cpu)
             }
         } else {
             unsafe {
@@ -92,7 +92,7 @@ impl Lanes {
             }
             (ss + (be - bs), false, false)
         };
-        unsafe { self.out.cooked.set_len(wi as usize) };
+        unsafe { self.cooked.set_len(wi as usize) };
         (StringSpan::new(ss, wi & StringSpan::END_MASK, lone, cpu), nes)
     }
 
@@ -109,8 +109,8 @@ impl Lanes {
         cpu: impl Cpu,
     ) -> (StringSpan, bool) {
         let (wi, lone, nes) =
-            cook_short::<EMIT, CRLF>(src, bs, be, base, ss, body_len, &mut self.out.diags, cpu);
-        unsafe { self.out.cooked.set_len(wi as usize) };
+            cook_short::<EMIT, CRLF>(src, bs, be, base, ss, body_len, &mut self.diags, cpu);
+        unsafe { self.cooked.set_len(wi as usize) };
         (StringSpan::new(ss, wi & StringSpan::END_MASK, lone, cpu), nes)
     }
 
@@ -118,7 +118,7 @@ impl Lanes {
     #[inline(always)]
     pub(crate) fn push_string(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
         let (sp, _) = self.cook::<true, false>(src, bs as u32, be as u32, cpu);
-        self.out.strings.push(sp);
+        self.strings.push(sp);
     }
 
     #[cpu_multiversion]
@@ -128,7 +128,7 @@ impl Lanes {
         // A NotEscapeSequence means cooked = None per the grammar; legality
         // depends on tagged-ness (parser context), so the span carries a
         // marker instead of a diagnostic.
-        self.out.templates.push(if nes { sp.with_cooked_invalid(cpu) } else { sp });
+        self.templates.push(if nes { sp.with_cooked_invalid(cpu) } else { sp });
     }
 
     /// Push a string value verbatim. JSX attribute strings have no backslash
@@ -136,20 +136,20 @@ impl Lanes {
     #[cpu_multiversion]
     #[inline]
     pub(crate) fn push_string_raw(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
-        let ss = self.out.cooked.len() as u32;
+        let ss = self.cooked.len() as u32;
         if be <= bs {
-            self.out.strings.push(StringSpan::new(ss, ss & StringSpan::END_MASK, false, cpu));
+            self.strings.push(StringSpan::new(ss, ss & StringSpan::END_MASK, false, cpu));
             return;
         }
         let body_len = be - bs;
-        self.out.cooked.reserve(body_len + 8);
+        self.cooked.reserve(body_len + 8);
         unsafe {
-            let base = self.out.cooked.as_mut_ptr();
+            let base = self.cooked.as_mut_ptr();
             ptr::copy_nonoverlapping(src.as_ptr().add(bs), base.add(ss as usize), body_len);
-            self.out.cooked.set_len(ss as usize + body_len);
+            self.cooked.set_len(ss as usize + body_len);
         }
         let we = ss + body_len as u32;
-        self.out.strings.push(StringSpan::new(ss, we & StringSpan::END_MASK, false, cpu));
+        self.strings.push(StringSpan::new(ss, we & StringSpan::END_MASK, false, cpu));
     }
 
     #[cpu_multiversion]
@@ -159,7 +159,7 @@ impl Lanes {
         // identifier escape passes through, so validation rides here.
         self.validate_ident_escapes(src, bs, be);
         let (sp, _) = self.cook::<false, false>(src, bs as u32, be as u32, cpu);
-        self.out.atoms.push(sp);
+        self.atoms.push(sp);
     }
 
     /// A well-formed escape decoding to a non-identifier char (`var \u0020 = 1`):
@@ -893,10 +893,10 @@ mod tests {
         padded.extend_from_slice(&[0u8; 64]);
         let mut l = Lanes::default();
         l.push_template(&padded, 0, body.len(), cpu);
-        let sp = l.out.templates[0];
+        let sp = l.templates[0];
         let s = (sp.start & StringSpan::START_MASK) as usize;
         let e = (sp.end_and_flags & StringSpan::END_MASK) as usize;
-        l.out.cooked[s..e].to_vec()
+        l.cooked[s..e].to_vec()
     }
 
     #[test_cpus]
