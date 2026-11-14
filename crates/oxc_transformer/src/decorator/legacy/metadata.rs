@@ -154,15 +154,25 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecoratorMetadata<'a> {
         );
     }
 
-    // `#[inline]` because this is a hot path and most `Statement`s are not `TSEnumDeclaration`s.
+    // `#[inline]` because this is a hot path and most `Statement`s are not enum declarations.
     // We want to avoid overhead of a function call for the common case.
     #[inline]
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         // Collect enum types here instead of in `enter_ts_enum_declaration` because the TypeScript
         // plugin transforms enum declarations in `enter_statement`, and we need to collect the
         // enum type before it gets transformed.
-        if let Statement::TSEnumDeclaration(decl) = stmt {
-            self.collect_enum_type(decl, ctx);
+        //
+        // A bare `enum E` is `Statement::TSEnumDeclaration`. `export enum E` is an
+        // `ExportDeclaration` (ESTree `ExportNamedDeclaration`) wrapping that declaration.
+        // Collect it here so same-file exported enums emit `Number` / `String`.
+        match stmt {
+            Statement::TSEnumDeclaration(decl) => self.collect_enum_type(decl, ctx),
+            Statement::ExportDeclaration(export) => {
+                if let Declaration::TSEnumDeclaration(decl) = &export.declaration {
+                    self.collect_enum_type(decl, ctx);
+                }
+            }
+            _ => {}
         }
     }
 
@@ -471,8 +481,9 @@ impl<'a> LegacyDecoratorMetadata<'a> {
     /// - `A.B` → `typeof A === "undefined" || typeof A.B === "undefined" ? Object : A.B`
     /// - `A.B.C` → `typeof A === "undefined" || typeof A.B === "undefined" || typeof A.B.C === "undefined" ? Object : A.B.C`
     ///
-    /// Local enums are pre-classified through [`Self::enum_types`] and emit `String` /
-    /// `Number` / `Object` directly (matching SWC and tsc).
+    /// Same-file enums, including `export enum`, are pre-classified through
+    /// [`Self::enum_types`] and emit `String` / `Number` / `Object` directly
+    /// (matching SWC and tsc).
     /// Type-only references and `this`-typed entity names emit `Object` without a
     /// runtime check (matching tsc).
     ///
