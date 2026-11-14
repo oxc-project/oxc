@@ -1,5 +1,6 @@
 import Tinypool from "tinypool";
 import { toFormatFileResult, toNullable } from "../libs/napi-callbacks";
+import { hasWorkerTeardownBug } from "./worker-runtime";
 import type { FormatFileResult } from "../libs/napi-callbacks";
 import type {
   FormatFileParam,
@@ -41,6 +42,14 @@ async function getPool(): Promise<Tinypool> {
     minThreads: 1,
     maxThreads: poolSize,
     idleTimeout: 2 ** 31 - 1,
+    // Avoid freeing `worker_threads` on Node.js versions that crash doing it, see `hasWorkerTeardownBug()`
+    ...(hasWorkerTeardownBug(process.versions.node)
+      ? {
+          runtime: "child_process" as const,
+          // With `runtime: child_process`, `process.env` is not inherited, so pass it explicitly
+          env: process.env as Record<string, string>,
+        }
+      : {}),
   });
   return pool;
 }
