@@ -156,6 +156,8 @@ fn test() {
 			  .catch(console.error)
 			  .finally(console.log)
 			",
+        "import * as utils from './utils'; utils.then(first, second, third)",
+        "import * as tasks from './tasks'; tasks.catch(program, handler)",
     ];
 
     let fail = vec![
