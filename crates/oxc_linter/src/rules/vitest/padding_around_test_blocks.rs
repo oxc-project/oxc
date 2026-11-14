@@ -44,6 +44,8 @@ fn test() {
         "{ test('foo', () => {}); }",
         "describe('foo', () => {\ntest('bar', () => {});\n});",
         "const thing = 123;\n\n/* one */\n/* two */\ntest('foo', () => {});",
+        "const slow = false; slow && test('slow', () => {});",
+        "const slow = false;\nif (slow)\n  test('slow', () => {});",
     ];
 
     let fail = vec![
