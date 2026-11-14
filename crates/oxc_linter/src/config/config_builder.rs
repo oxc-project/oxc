@@ -628,9 +628,17 @@ impl ConfigStoreBuilder {
     ) -> Result<(), ConfigBuilderError> {
         // Resolve the specifier relative to the config directory
         let resolved = resolver.resolve(resolve_dir, plugin_specifier).map_err(|e| {
+            // Say where a relative path or package name was looked up: for a config object passed
+            // through `extends`, it is not the directory of the package that defines the object.
+            let error =
+                if is_resolved_from_dir(plugin_specifier) && !resolve_dir.as_os_str().is_empty() {
+                    format!("{e}\n  Looked up from '{}'", resolve_dir.display())
+                } else {
+                    e.to_string()
+                };
             ConfigBuilderError::PluginLoadFailed {
                 plugin_specifier: plugin_specifier.to_string(),
-                error: e.to_string(),
+                error,
             }
         })?;
         let plugin_path = resolved.full_path();
@@ -710,6 +718,16 @@ impl ConfigStoreBuilder {
             Err(ConfigBuilderError::ReservedExternalPluginName { plugin_name })
         }
     }
+}
+
+/// Whether resolving a plugin specifier depends on the directory it starts from: true for relative
+/// paths and package names, false for absolute paths, drive paths (`C:\…`) and URLs (`file:…`).
+fn is_resolved_from_dir(specifier: &str) -> bool {
+    let has_scheme = specifier.split_once(':').is_some_and(|(scheme, _)| {
+        scheme.starts_with(|c: char| c.is_ascii_alphabetic())
+            && scheme.chars().all(|c| c.is_ascii_alphanumeric() || matches!(c, '+' | '-' | '.'))
+    });
+    !Path::new(specifier).is_absolute() && !specifier.starts_with(['/', '\\']) && !has_scheme
 }
 
 fn get_name(plugin_name: &str, rule_name: &str) -> CompactStr {
@@ -846,7 +864,8 @@ impl Display for ConfigBuilderError {
                      \n\
                      Found: {plugin_specifier:?}\n\
                      \n\
-                     Use a package name (e.g. \"eslint-plugin-foo\") or an absolute path instead."
+                     Use an absolute path or URL instead, such as one returned by `import.meta.resolve` (or\n\
+                     `require.resolve` in CommonJS) in the module that defines the config."
                 )
             }
             ConfigBuilderError::RuleConfigurationErrors { errors } => {
@@ -924,6 +943,24 @@ mod test {
         let builder = ConfigStoreBuilder::empty();
         assert_eq!(builder.plugins(), LintPlugins::default());
         assert!(builder.rules.is_empty());
+    }
+
+    #[test]
+    fn test_is_resolved_from_dir() {
+        for specifier in
+            ["./plugin.js", "../plugin.js", "./a:b.js", "eslint-plugin-foo", "@scope/foo/plugin"]
+        {
+            assert!(is_resolved_from_dir(specifier), "{specifier}");
+        }
+        for specifier in [
+            "/abs/plugin.js",
+            "\\abs\\plugin.js",
+            "C:\\abs\\plugin.js",
+            "file:///abs/plugin.js",
+            "FILE:///abs/plugin.js",
+        ] {
+            assert!(!is_resolved_from_dir(specifier), "{specifier}");
+        }
     }
 
     #[test]

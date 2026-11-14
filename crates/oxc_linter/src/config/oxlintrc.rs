@@ -298,6 +298,15 @@ pub struct Oxlintrc {
     /// export default defineConfig({ extends: [baseConfig] });
     /// ```
     ///
+    /// Package names in the `jsPlugins` of an extended configuration object, at any depth of
+    /// `extends`, are resolved from the directory of the `oxlint.config.*` or `vite.config.*` file
+    /// being loaded, not from the package that defines the object. A shared configuration package
+    /// that depends on a plugin should resolve it itself (with `require.resolve` in CommonJS):
+    ///
+    /// ```js
+    /// export default { jsPlugins: [import.meta.resolve("eslint-plugin-foo")] };
+    /// ```
+    ///
     /// Configurations are merged from the first to the last, with the last configuration
     /// overriding the previous ones.
     #[serde(skip_serializing_if = "Vec::is_empty")]

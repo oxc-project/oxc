@@ -7,6 +7,7 @@ Failed to parse oxlint configuration file.
 
   x Failed to load JS plugin: ./plugin.js
   |   Cannot find module './plugin.js'
+  |   Looked up from '<fixture>'
 ```
 
 # stderr
