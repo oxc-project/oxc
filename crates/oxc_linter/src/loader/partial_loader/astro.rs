@@ -55,7 +55,9 @@ impl<'a> AstroPartialLoader<'a> {
         // move start to the end of the ASTRO_SPLIT
         let start = start + ASTRO_SPLIT.len() as u32;
         let js_code = Span::new(start, end).source_text(self.source_text);
-        let frontmatter = JavaScriptSource::partial(js_code, SourceType::ts(), start);
+        // Astro frontmatter is always evaluated as an ES module.
+        let frontmatter =
+            JavaScriptSource::partial(js_code, SourceType::ts().with_module(true), start);
 
         Some((frontmatter, end as usize + ASTRO_SPLIT.len()))
     }
@@ -203,6 +205,7 @@ mod test {
             sources[0].source_text.trim(),
             "const { message = 'Welcome, world!' } = Astro.props;"
         );
+        assert!(sources[0].source_type.is_module());
         assert_eq!(sources[0].start, 12);
         assert_eq!(sources[1].source_text.trim(), r#"console.log("Hi");"#);
         assert_eq!(sources[1].start, 141);
