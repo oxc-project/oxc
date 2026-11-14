@@ -102,3 +102,6 @@ a.b
 // c
 = // d
   1;
+// A complex destructuring target keeps it too, instead of breaking its left-hand side
+const { a, b: c, d } = // c
+  foo;
