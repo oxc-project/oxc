@@ -2985,6 +2985,15 @@ export interface RequireParamConfig {
    */
   checkTypesPattern?: string;
   /**
+   * Extra AST node names to check, in addition to functions and arrow functions.
+   *
+   * Recognized names are `TSMethodSignature`, `TSFunctionType`, `TSDeclareFunction`,
+   * and `TSCallSignatureDeclaration`. Other names are ignored. For example,
+   * `{ "contexts": ["TSMethodSignature"] }` also requires `@param` on a documented
+   * interface method. Defaults to an empty list, which leaves the built-in checks unchanged.
+   */
+  contexts?: string[];
+  /**
    * List of JSDoc tags that exempt functions from `@param` checking.
    */
   exemptedBy?: string[];

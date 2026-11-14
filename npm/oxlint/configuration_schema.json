@@ -18684,6 +18684,15 @@
           "type": "string",
           "markdownDescription": "Regex pattern to match types that exempt parameters from checking."
         },
+        "contexts": {
+          "description": "Extra AST node names to check, in addition to functions and arrow functions.\n\nRecognized names are `TSMethodSignature`, `TSFunctionType`, `TSDeclareFunction`,\nand `TSCallSignatureDeclaration`. Other names are ignored. For example,\n`{ \"contexts\": [\"TSMethodSignature\"] }` also requires `@param` on a documented\ninterface method. Defaults to an empty list, which leaves the built-in checks unchanged.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Extra AST node names to check, in addition to functions and arrow functions.\n\nRecognized names are `TSMethodSignature`, `TSFunctionType`, `TSDeclareFunction`,\nand `TSCallSignatureDeclaration`. Other names are ignored. For example,\n`{ \"contexts\": [\"TSMethodSignature\"] }` also requires `@param` on a documented\ninterface method. Defaults to an empty list, which leaves the built-in checks unchanged."
+        },
         "exemptedBy": {
           "description": "List of JSDoc tags that exempt functions from `@param` checking.",
           "default": [
