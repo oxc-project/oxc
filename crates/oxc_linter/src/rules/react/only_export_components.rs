@@ -627,6 +627,9 @@ impl OnlyExportComponents {
         span: Span,
         is_default_export: bool,
     ) -> ExportType {
+        // `export { name }` must see the same initializer as `export const name = …`.
+        // Default-export identifiers stay name-based, except for object expressions, which
+        // compound-component checks already inspect.
         let init = ctx.and_then(|ctx| {
             let scoping = ctx.scoping();
             let symbol_id = scoping.get_binding(scoping.root_scope_id(), local_name.into())?;
@@ -638,11 +641,12 @@ impl OnlyExportComponents {
             if !matches!(declarator.id, BindingPattern::BindingIdentifier(_)) {
                 return None;
             }
-            let init = declarator.init.as_ref()?.get_inner_expression();
-            (matches!(init, Expression::ObjectExpression(_))
-                || (!is_default_export
-                    && matches!(init, Expression::JSXElement(_) | Expression::JSXFragment(_))))
-            .then_some(init)
+            let init = declarator.init.as_ref()?;
+            if is_default_export {
+                let inner = init.get_inner_expression();
+                return matches!(inner, Expression::ObjectExpression(_)).then_some(inner);
+            }
+            Some(init)
         });
         self.classify_export(name, span, self.can_be_react_function_component(init), init)
     }
@@ -1163,6 +1167,21 @@ export function Button(props: PropsWithChildren): ReactNode {
             None,
         ),
         ("const App = React.unknown(() => <div />);", None),
+        // https://github.com/oxc-project/oxc/issues/28338
+        // A factory or hook exported with `export { … }` is the same module as `export const`.
+        (
+            "export const createThing = () => {\n  const Inner = (): unknown => null;\n  return { Inner };\n};",
+            None,
+        ),
+        (
+            "const createThing = () => {\n  const Inner = (): unknown => null;\n  return { Inner };\n};\n\nexport { createThing };",
+            None,
+        ),
+        ("export const ACCEPT = 'x';\nexport const useThing = (): unknown => null;", None),
+        (
+            "const ACCEPT = 'x';\nconst useThing = (): unknown => null;\n\nexport { ACCEPT, useThing };",
+            None,
+        ),
     ];
 
     let fail = vec![
