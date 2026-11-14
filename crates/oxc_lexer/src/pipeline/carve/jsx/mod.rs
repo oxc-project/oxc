@@ -20,7 +20,7 @@ use super::{
         lex_html_close_comment, lex_html_open_comment, lex_line_comment,
     },
     common::{
-        OPENER_BYTES, OPENER8_BYTES, Substitutions, is_unicode_escape_brace, lex_hashbang,
+        OPENER_BYTES, OPENER8_BYTES, is_unicode_escape_brace, lex_hashbang,
         lex_jsx_attribute_string, lex_slash, lex_string, lex_template_segment,
         skip_unicode_brace_escape,
     },
@@ -30,7 +30,7 @@ mod angle_brackets;
 mod hyphens;
 mod names;
 
-use angle_brackets::jsx_over_type_params;
+use angle_brackets::{jsx_over_type_params, lex_type_arguments};
 use hyphens::jsx_glue_hyphens;
 use names::{jsx_name_end, jsx_names_equal_fast, jsx_skip_trivia, jsx_skip_trivia_fast};
 
@@ -295,68 +295,9 @@ pub(super) unsafe fn carve_jsx(lex: Lex, state: &mut LexState, cpu: impl Cpu) {
                         continue;
                     }
                 }
-                // `.tsx`: a type-argument list on the element
-                // (`<Box<number> ...>`) puts a balanced `<...>` run inside
-                // the opening tag, and its inner `>` must not close the tag.
-                // Literals are carved as the run is crossed rather than
-                // skipped over, so a string or template type argument gets
-                // its own token and a `<`/`>` written inside one cannot
-                // desync the depth count. Cold: a type-argument list on an
-                // element name.
+                // A tsx type-argument list on the element name ends in a > that keeps the tag open.
                 if options.ts && c == b'<' {
-                    let mut depth = 1i32;
-                    let mut p = s + 1;
-                    jsx_punct(kinds, op_char, s, tk!(Lt), cpu);
-                    let mut sub = Substitutions::default();
-                    while p < src.len() && depth != 0 {
-                        let q = if !sub.is_empty() {
-                            find(src, p, OPENER8_BYTES, cpu)
-                        } else {
-                            find(src, p, OPENER_BYTES, cpu)
-                        };
-                        if q >= src.len() {
-                            p = src.len();
-                            break;
-                        }
-                        match src[q] {
-                            b'<' => {
-                                depth += 1;
-                                jsx_punct(kinds, op_char, q, tk!(Lt), cpu);
-                                p = q + 1;
-                            }
-                            b'>' => {
-                                if !(q > 0 && src[q - 1] == b'=') {
-                                    depth -= 1;
-                                    jsx_punct(kinds, op_char, q, tk!(Gt), cpu);
-                                }
-                                p = q + 1;
-                            }
-                            b'"' | b'\'' => {
-                                p = lex_string(src, token_start, kinds, q, src[q], lanes, cpu);
-                            }
-                            b'`' => {
-                                p = sub.lex_template(src, token_start, kinds, q, lanes, cpu);
-                            }
-                            // Braces only reach here through the OPENER8_BYTES search,
-                            // which is only selected while a substitution is
-                            // open - the guards say so rather than leaving it
-                            // to the finder choice.
-                            b'{' if !sub.is_empty() => {
-                                sub.open_brace();
-                                p = q + 1;
-                            }
-                            b'}' if !sub.is_empty() => {
-                                p = sub.close_brace(src, token_start, kinds, q, lanes, cpu);
-                            }
-                            // A comment inside a type-argument list is
-                            // trivia; a lone `/` cannot start a type, so it
-                            // is left alone.
-                            b'/' => {
-                                p = lex_comment_at(src, token_start, kinds, q, lanes, cpu);
-                            }
-                            _ => p = q + 1,
-                        }
-                    }
+                    let p = lex_type_arguments(lex, s, lanes, cpu);
                     // Later passes can still emit spurious diagnostics from
                     // the run; record the span so drain-time filtering drops
                     // them.
