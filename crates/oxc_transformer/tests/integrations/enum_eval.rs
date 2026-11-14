@@ -1,5 +1,6 @@
 use std::path::Path;
 
+use crate::test_with_source_type;
 use oxc_allocator::Allocator;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
@@ -28,4 +29,14 @@ fn transforms_enum_when_enum_eval_enabled() {
 #[cfg(debug_assertions)]
 fn panics_when_enum_eval_disabled() {
     run(false);
+}
+
+#[test]
+fn removes_import_only_used_by_export_in_declare_namespace() {
+    // https://github.com/oxc-project/oxc/issues/27563
+    let source =
+        "import { X } from './b';\ndeclare namespace N {\n  export { X };\n}\nexport type { N };\n";
+    let output = test_with_source_type(source, SourceType::ts(), &TransformOptions::default())
+        .expect("transform should succeed");
+    assert_eq!(output, "export {};\n");
 }
