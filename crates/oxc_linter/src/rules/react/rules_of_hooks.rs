@@ -865,8 +865,7 @@ fn is_effect_or_effect_event_call(
         || is_react_function_call(call, "useInsertionEffect")
         || is_react_function_call(call, "useEffectEvent")
         || additional_effect_hooks.is_some_and(|regex| {
-            call.callee_name()
-                .is_some_and(|name| is_react_function_call(call, name) && regex.is_match(name))
+            call.callee_name().is_some_and(|name| regex.is_match(name))
         })
 }
 
@@ -1728,7 +1727,7 @@ fn test() {
               useMyEffect(() => {
                 onClick();
               });
-              useServerEffect(() => {
+              EffectHooks.useServerEffect(() => {
                 onClick();
               });
             }
