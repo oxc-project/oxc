@@ -10,7 +10,7 @@ use crate::{
     modifiers::{ModifierKind, ModifierKinds, Modifiers},
 };
 
-use super::FunctionKind;
+use super::{FunctionKind, expression::split_unparenthesized_instantiation};
 
 type ImplementsWithKeywordSpan<'a> = (Span, ArenaVec<'a, TSClassImplements<'a>>);
 
@@ -195,18 +195,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // additional entries for the existing multiple-superclass diagnostics.
         let mut extends = BufferedVec::new(ArenaVec::new_in(self));
         loop {
-            let mut extend = self.parse_lhs_expression_or_higher();
+            let start = self.cur_start();
+            let extend = self.parse_lhs_expression_or_higher();
             if self.fatal_error.is_some() {
                 break;
             }
-            let type_argument;
-            if let Expression::TSInstantiationExpression(expr) = extend {
-                let expr = expr.unbox();
-                extend = expr.expression;
-                type_argument = Some(expr.type_arguments);
-            } else {
-                type_argument = self.try_parse_type_arguments();
-            }
+            let (extend, type_argument) = split_unparenthesized_instantiation(extend, start);
+            let type_argument = type_argument.or_else(|| self.try_parse_type_arguments());
 
             extends.push((extend, type_argument));
 
