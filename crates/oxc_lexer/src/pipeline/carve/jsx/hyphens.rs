@@ -13,33 +13,22 @@ use crate::pipeline::{bitmap::Bitmaps, source::Source};
 #[cpu_multiversion]
 #[inline(always)]
 pub(super) fn jsx_glue_hyphens(src: Source, bitmaps: &Bitmaps, a: usize, b: usize, cpu: impl Cpu) {
-    let b = b.min(src.len());
-    // SAFETY: the scans read at most 32 bytes from below b, inside the padding src holds.
-    unsafe {
-        match DynCpu::from(cpu) {
-            DynCpu::Avx2(cpu) => {
-                jsx_glue_hyphens_avx2(src.as_ptr(), src.len(), bitmaps, a, b, cpu);
-            }
-            _ => jsx_glue_hyphens_generic(src.as_ptr(), src.len(), bitmaps, a, b),
-        }
+    match DynCpu::from(cpu) {
+        DynCpu::Avx2(cpu) => jsx_glue_hyphens_avx2(src, bitmaps, a, b, cpu),
+        _ => jsx_glue_hyphens_generic(src, bitmaps, a, b),
     }
 }
 
 /// [`jsx_glue_hyphens`] for AVX2.
 #[cpu_version(Avx2)]
 #[inline(always)]
-unsafe fn jsx_glue_hyphens_avx2(
-    src: *const u8,
-    n: usize,
-    bitmaps: &Bitmaps,
-    a: usize,
-    b: usize,
-    cpu: Avx2,
-) {
+fn jsx_glue_hyphens_avx2(src: Source, bitmaps: &Bitmaps, a: usize, b: usize, cpu: Avx2) {
+    let n = src.len();
     let mut i = a;
     let mut last = usize::MAX;
     while i < b {
-        let mut m = Vec256::load_unaligned(src.add(i), cpu).eq_u8(b'-').movemask();
+        let chunk = src.padded()[i..].first_chunk::<32>().unwrap();
+        let mut m = Vec256::read_unaligned(chunk, cpu).eq_u8(b'-').movemask();
         let rem = b - i;
         if rem < 32 {
             m &= (1u32 << rem) - 1;
@@ -56,19 +45,14 @@ unsafe fn jsx_glue_hyphens_avx2(
 /// [`jsx_glue_hyphens`] for all other CPUs.
 #[cpu_version(Generic)]
 #[inline(always)]
-unsafe fn jsx_glue_hyphens_generic(
-    src: *const u8,
-    n: usize,
-    bitmaps: &Bitmaps,
-    a: usize,
-    b: usize,
-) {
+fn jsx_glue_hyphens_generic(src: Source, bitmaps: &Bitmaps, a: usize, b: usize) {
     let cpu = BASELINE;
 
+    let n = src.len();
     let mut last = usize::MAX;
     let mut h = a;
     while h < b {
-        if *src.add(h) == b'-' {
+        if src[h] == b'-' {
             glue_hyphen_at(n, bitmaps, h, &mut last, cpu);
         }
         h += 1;

@@ -1,3 +1,6 @@
+// Raw kernels: the unsafe fn boundary is the reviewed surface, not each operation inside.
+#![allow(unsafe_op_in_unsafe_fn, clippy::missing_safety_doc, clippy::undocumented_unsafe_blocks)]
+
 use std::ptr;
 
 use oxc_simd::{Avx2, BASELINE, Cpu, DynCpu, Neon, Vec128, Vec256, cpu_multiversion, cpu_version};

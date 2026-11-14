@@ -231,18 +231,21 @@ impl Bitmaps<'_> {
 #[inline]
 unsafe fn any_avx2(bm: *const u64, block_count: usize, cpu: Avx2) -> bool {
     let mut w = 0usize;
-    while w + 4 <= block_count {
-        let v = Vec256::load_unaligned(bm.add(w).cast::<u8>(), cpu);
-        if !v.is_zero() {
-            return true;
+    // SAFETY: the caller's pointer holds block_count blocks, and every read stays below that.
+    unsafe {
+        while w + 4 <= block_count {
+            let v = Vec256::load_unaligned(bm.add(w).cast::<u8>(), cpu);
+            if !v.is_zero() {
+                return true;
+            }
+            w += 4;
         }
-        w += 4;
-    }
-    while w < block_count {
-        if *bm.add(w) != 0 {
-            return true;
+        while w < block_count {
+            if *bm.add(w) != 0 {
+                return true;
+            }
+            w += 1;
         }
-        w += 1;
     }
     false
 }

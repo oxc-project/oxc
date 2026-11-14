@@ -1,7 +1,4 @@
-// Kernel lint policy (this module tree and `lanes`):
-// the `unsafe fn` boundary is the reviewed surface, and the pedantic/nursery
-// style lints fight the SIMD idiom. API modules keep the full workspace bar.
-#![allow(unsafe_op_in_unsafe_fn, clippy::missing_safety_doc, clippy::undocumented_unsafe_blocks)]
+// The pedantic and nursery style lints fight the SIMD idiom.
 #![allow(clippy::pedantic, clippy::nursery)]
 #![allow(clippy::needless_range_loop, clippy::manual_range_contains)]
 
