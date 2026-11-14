@@ -493,32 +493,30 @@ pub use modifier_kinds::ModifierKinds;
 impl<C: Config> ParserImpl<'_, C> {
     pub(crate) fn eat_modifiers_before_declaration(&mut self) -> Modifiers {
         let mut modifiers = Modifiers::empty();
-        while let Some(modifier_kind) = self.get_modifier() {
-            let modifier = Modifier::new(self.cur_start(), modifier_kind);
-            self.bump_any();
+        while let Some(modifier) = self.eat_modifier_before_declaration() {
             self.check_modifier(modifiers.kinds(), modifier);
             modifiers.add(modifier.kind, modifier.start);
         }
         modifiers
     }
 
-    fn get_modifier(&mut self) -> Option<ModifierKind> {
+    fn eat_modifier_before_declaration(&mut self) -> Option<Modifier> {
         let cur_kind = self.cur_kind();
         let modifier_kind = ModifierKind::try_from(cur_kind).ok()?;
-        // Peek the token after the modifier keyword to decide whether the keyword really is a
-        // modifier (e.g. distinguish `static x` from `static` used as an identifier).
-        // `peek_token` performs a single lexer-level re-lex, avoiding the heavier parser-level
-        // `lookahead` (checkpoint + `bump_any` + rewind) that this previously used.
-        let next = self.lexer.peek_token();
-        let next_kind = next.kind();
-        let is_modifier = match cur_kind {
-            Kind::Const => next_kind == Kind::Enum,
-            // These modifiers can cross line.
-            Kind::Accessor | Kind::Static => Self::can_follow_modifier(next_kind),
-            // Rest modifiers cannot cross line
-            _ => Self::can_follow_modifier(next_kind) && !next.is_on_new_line(),
-        };
-        if is_modifier { Some(modifier_kind) } else { None }
+        let start = self.cur_start();
+        // The token after the keyword decides whether the keyword really is a modifier
+        // (e.g. distinguish `static x` from `static` used as an identifier).
+        let is_modifier = self.eat_if_next(|next| {
+            let next_kind = next.kind();
+            match cur_kind {
+                Kind::Const => next_kind == Kind::Enum,
+                // These modifiers can cross line.
+                Kind::Accessor | Kind::Static => Self::can_follow_modifier(next_kind),
+                // Rest modifiers cannot cross line
+                _ => Self::can_follow_modifier(next_kind) && !next.is_on_new_line(),
+            }
+        });
+        if is_modifier { Some(Modifier::new(start, modifier_kind)) } else { None }
     }
 
     fn modifier(&mut self, kind: Kind, start: u32) -> Modifier {
@@ -583,25 +581,24 @@ impl<C: Config> ParserImpl<'_, C> {
             // We need to ensure that any subsequent modifiers appear on the same line
             // so that when 'const' is a standalone declaration, we don't issue
             // an error.
-            if !self.next_token_is_on_same_line_and_can_follow_modifier() {
+            if !self.eat_if_next(|next| {
+                !next.is_on_new_line() && Self::can_follow_modifier(next.kind())
+            }) {
                 return None;
             }
-            self.bump_any();
         } else if kind == Kind::Static {
             // ClassStaticBlock : `static { ClassStaticBlockBody }`   e.g. `static { x = 1; }`
             // member named `static`                                  e.g. `static() {}`, `static = 1`, `static;`
             // repeated `static`                                      e.g. `static static x`
-            //
-            // Peek once and reuse it — `peek_token` is not cached, so checking `== LCurly` separately
-            // from the peek inside `next_token_can_follow_modifier` re-lexed this token twice.
-            let next_kind = self.lexer.peek_token().kind();
-            if (stop_on_start_of_class_static_block && next_kind == Kind::LCurly)
-                || seen_modifier_kinds.contains(ModifierKind::Static)
-                || !Self::can_follow_modifier(next_kind)
+            if seen_modifier_kinds.contains(ModifierKind::Static)
+                || !self.eat_if_next(|next| {
+                    let next_kind = next.kind();
+                    !(stop_on_start_of_class_static_block && next_kind == Kind::LCurly)
+                        && Self::can_follow_modifier(next_kind)
+                })
             {
                 return None;
             }
-            self.bump_any();
         } else if !self.parse_any_contextual_modifier() {
             // next token is not a modifier
             return None;
@@ -610,47 +607,27 @@ impl<C: Config> ParserImpl<'_, C> {
     }
 
     pub(crate) fn parse_contextual_modifier(&mut self, kind: Kind) -> bool {
-        if self.at(kind) && !self.cur_token().escaped() && self.next_token_can_follow_modifier() {
-            self.bump_any();
-            true
-        } else {
-            false
-        }
+        self.at(kind) && !self.cur_token().escaped() && self.eat_if_next_can_follow_modifier()
     }
 
     fn parse_any_contextual_modifier(&mut self) -> bool {
-        if self.cur_kind().is_modifier_kind() && self.next_token_can_follow_modifier() {
-            self.bump_any();
-            true
-        } else {
-            false
-        }
+        self.cur_kind().is_modifier_kind() && self.eat_if_next_can_follow_modifier()
     }
 
-    /// Returns `true` if the token following the current (modifier) token can follow a modifier,
-    /// i.e. the current token really is a modifier rather than an identifier/expression.
-    ///
-    /// Inspects the single peeked next token via `peek_token` (one lexer-level re-lex) instead of
-    /// the heavier parser-level `lookahead` (checkpoint + `bump_any` + rewind). The result is
-    /// identical: the speculative `bump_any` in the old form could push an escaped-keyword error,
-    /// but `lookahead`'s rewind always discarded it, and the real error still fires on the
-    /// non-speculative bump performed by the caller once this returns `true`.
-    pub(crate) fn next_token_can_follow_modifier(&mut self) -> bool {
+    /// Consume the current keyword if the token after it shows that the keyword is a modifier
+    /// rather than a name: `readonly x` but not `readonly: T`, `get x() {}` but not `get() {}`.
+    fn eat_if_next_can_follow_modifier(&mut self) -> bool {
         let cur_kind = self.cur_kind();
-        let next = self.lexer.peek_token();
-        let next_kind = next.kind();
-        match cur_kind {
-            Kind::Const => next_kind == Kind::Enum,
-            Kind::Static => Self::can_follow_modifier(next_kind),
-            Kind::Get | Kind::Set => Self::can_follow_get_or_set_keyword(next_kind),
-            // Other modifiers cannot cross a line.
-            _ => !next.is_on_new_line() && Self::can_follow_modifier(next_kind),
-        }
-    }
-
-    fn next_token_is_on_same_line_and_can_follow_modifier(&mut self) -> bool {
-        let next = self.lexer.peek_token();
-        !next.is_on_new_line() && Self::can_follow_modifier(next.kind())
+        self.eat_if_next(|next| {
+            let next_kind = next.kind();
+            match cur_kind {
+                Kind::Const => next_kind == Kind::Enum,
+                Kind::Static => Self::can_follow_modifier(next_kind),
+                Kind::Get | Kind::Set => Self::can_follow_get_or_set_keyword(next_kind),
+                // Other modifiers cannot cross a line.
+                _ => !next.is_on_new_line() && Self::can_follow_modifier(next_kind),
+            }
+        })
     }
 
     fn can_follow_modifier(kind: Kind) -> bool {
