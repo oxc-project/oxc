@@ -15160,18 +15160,22 @@
     },
     "NoNodejsModulesConfig": {
       "type": "object",
-      "required": [
-        "allow"
-      ],
       "properties": {
         "allow": {
           "description": "Array of names of allowed modules. Defaults to an empty array.",
+          "default": [],
           "type": "array",
           "items": {
             "type": "string"
           },
           "uniqueItems": true,
           "markdownDescription": "Array of names of allowed modules. Defaults to an empty array."
+        },
+        "ignoreTypeImports": {
+          "description": "Ignore type-only imports and exports, which TypeScript erases from the output.\n\n```ts\n// Not reported if `ignoreTypeImports` is true:\nimport type { Readable } from 'stream';\nimport { type SecureVersion } from 'tls';\nexport type { Socket } from 'net';\n```\n\nAn import with any value specifier, e.g. `import { type A, B } from 'fs'`, is still reported.\nUnder `verbatimModuleSyntax`, `import { type A } from 'fs'` is emitted as `import {} from 'fs'`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Ignore type-only imports and exports, which TypeScript erases from the output.\n\n```ts\n// Not reported if `ignoreTypeImports` is true:\nimport type { Readable } from 'stream';\nimport { type SecureVersion } from 'tls';\nexport type { Socket } from 'net';\n```\n\nAn import with any value specifier, e.g. `import { type A, B } from 'fs'`, is still reported.\nUnder `verbatimModuleSyntax`, `import { type A } from 'fs'` is emitted as `import {} from 'fs'`."
         }
       },
       "additionalProperties": false
