@@ -125,7 +125,7 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
         &text[(colon_pos + 1) as usize..text.len()]
     );
 
-    if suggestion.ends_with(';') {
+    if suggestion.ends_with([';', ',']) {
         suggestion.pop();
     }
 
@@ -487,6 +487,9 @@ fn test() {
 
     let fix = vec![
         ("interface Foo { (): string; }", "type Foo = () => string;"),
+        ("interface Foo { (): string, }", "type Foo = () => string;"),
+        ("type Foo = { (): void, }", "type Foo = () => void"),
+        ("let x: { (): void, };", "let x: () => void;"),
         (
             r"
 interface Foo {
