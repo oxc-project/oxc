@@ -209,10 +209,7 @@ impl<'a, 'b> PossibleJestNode<'a, 'b> {
             else {
                 return None;
             };
-            if !matches!(
-                import_decl.source.value.as_str(),
-                Some("@jest/globals" | "vitest" | "vite-plus/test" | "@effect/vitest")
-            ) {
+            if !import_decl.source.value.as_str().is_some_and(is_test_framework_import_source) {
                 return None;
             }
             find_original_name(import_decl, ident.name.as_str())
@@ -301,10 +298,7 @@ fn collect_ids_referenced_to_import<'a, 'c>(
                 };
                 let name = semantic.scoping().symbol_name(symbol_id);
 
-                if !matches!(
-                    import_decl.source.value.as_str(),
-                    Some("@jest/globals" | "vitest" | "vite-plus/test" | "@effect/vitest")
-                ) {
+                if !import_decl.source.value.as_str().is_some_and(is_test_framework_import_source) {
                     return None;
                 }
                 find_original_name(import_decl, name)
@@ -348,10 +342,7 @@ fn resolve_extended_vitest_test<'a>(
             let declaration_id = semantic.scoping().symbol_declaration(symbol_id);
             let import_decl =
                 semantic.nodes().parent_kind(declaration_id).as_import_declaration()?;
-            if !matches!(
-                import_decl.source.value.as_str(),
-                Some("vitest" | "vite-plus/test" | "@effect/vitest")
-            ) {
+            if !import_decl.source.value.as_str().is_some_and(super::is_vitest_import_source) {
                 return None;
             }
             return find_original_name(import_decl, base.name.as_str())
@@ -359,6 +350,29 @@ fn resolve_extended_vitest_test<'a>(
         }
     }
     None
+}
+
+/// Whether `source` is a module that exports test functions: `@jest/globals` or a Vitest module.
+pub fn is_test_framework_import_source(source: &str) -> bool {
+    source == "@jest/globals" || super::is_vitest_import_source(source)
+}
+
+/// The name `symbol_id` is imported as when it is a named import from a test framework module:
+/// `test` for `import { test as t } from "vitest"`; `None` for anything else.
+pub fn test_framework_imported_name<'a>(
+    ctx: &LintContext<'a>,
+    symbol_id: SymbolId,
+) -> Option<&'a str> {
+    let scoping = ctx.scoping();
+    if !scoping.symbol_flags(symbol_id).is_import() {
+        return None;
+    }
+    let import_decl =
+        ctx.nodes().parent_kind(scoping.symbol_declaration(symbol_id)).as_import_declaration()?;
+    if !import_decl.source.value.as_str().is_some_and(is_test_framework_import_source) {
+        return None;
+    }
+    find_original_name(import_decl, scoping.symbol_name(symbol_id))
 }
 
 /// Find name in the Import Declaration, not use name because of lifetime not long enough.
