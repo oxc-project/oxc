@@ -30,6 +30,55 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Change `home url` to a valid value for `autocomplete`.
 
+  ⚠ jsx-a11y(autocomplete-valid): `work name` is not a valid value for `autocomplete`.
+   ╭─[autocomplete_valid.tsx:1:20]
+ 1 │ <input type='text' autocomplete='work name' />;
+   ·                    ────────────────────────
+   ╰────
+  help: Change `work name` to a valid value for `autocomplete`.
+
+  ⚠ jsx-a11y(autocomplete-valid): `billing off` is not a valid value for `autocomplete`.
+   ╭─[autocomplete_valid.tsx:1:20]
+ 1 │ <input type='text' autocomplete='billing off' />;
+   ·                    ──────────────────────────
+   ╰────
+  help: Change `billing off` to a valid value for `autocomplete`.
+
+  ⚠ jsx-a11y(autocomplete-valid): `section-a on` is not a valid value for `autocomplete`.
+   ╭─[autocomplete_valid.tsx:1:20]
+ 1 │ <input type='text' autocomplete='section-a on' />;
+   ·                    ───────────────────────────
+   ╰────
+  help: Change `section-a on` to a valid value for `autocomplete`.
+
+  ⚠ jsx-a11y(autocomplete-valid): `shipping section-a email` is not a valid value for `autocomplete`.
+   ╭─[autocomplete_valid.tsx:1:20]
+ 1 │ <input type='text' autocomplete='shipping section-a email' />;
+   ·                    ───────────────────────────────────────
+   ╰────
+  help: Change `shipping section-a email` to a valid value for `autocomplete`.
+
+  ⚠ jsx-a11y(autocomplete-valid): `work billing email` is not a valid value for `autocomplete`.
+   ╭─[autocomplete_valid.tsx:1:20]
+ 1 │ <input type='text' autocomplete='work billing email' />;
+   ·                    ─────────────────────────────────
+   ╰────
+  help: Change `work billing email` to a valid value for `autocomplete`.
+
+  ⚠ jsx-a11y(autocomplete-valid): `billing shipping email` is not a valid value for `autocomplete`.
+   ╭─[autocomplete_valid.tsx:1:20]
+ 1 │ <input type='text' autocomplete='billing shipping email' />;
+   ·                    ─────────────────────────────────────
+   ╰────
+  help: Change `billing shipping email` to a valid value for `autocomplete`.
+
+  ⚠ jsx-a11y(autocomplete-valid): `home work tel` is not a valid value for `autocomplete`.
+   ╭─[autocomplete_valid.tsx:1:20]
+ 1 │ <input type='text' autocomplete='home work tel' />;
+   ·                    ────────────────────────────
+   ╰────
+  help: Change `home work tel` to a valid value for `autocomplete`.
+
   ⚠ jsx-a11y(autocomplete-valid): `baz` is not a valid value for `autocomplete`.
    ╭─[autocomplete_valid.tsx:1:6]
  1 │ <Bar autocomplete='baz'></Bar>;
