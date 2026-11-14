@@ -277,3 +277,17 @@ source: crates/oxc_linter/src/tester.rs
    ·                                        ─────────────────────────────────────────────────────────────────────
    ╰────
   help: Preserve the original error by using the `cause` property when re-throwing errors.
+
+  ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
+   ╭─[preserve_caught_error.tsx:1:24]
+ 1 │ try {} catch (error) { throw new Error("Something failed", { cause: error, cause: anotherError }); }
+   ·                        ───────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Preserve the original error by using the `cause` property when re-throwing errors.
+
+  ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
+   ╭─[preserve_caught_error.tsx:1:24]
+ 1 │ try {} catch (error) { throw new Error("Something failed", { cause: error, "cause": anotherError }); }
+   ·                        ─────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Preserve the original error by using the `cause` property when re-throwing errors.
