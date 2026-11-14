@@ -47,6 +47,12 @@ impl TryFrom<&Uri> for ResolvedPath {
     }
 }
 
+impl AsRef<Path> for ResolvedPath {
+    fn as_ref(&self) -> &Path {
+        &self.0
+    }
+}
+
 impl ResolvedPath {
     pub fn as_path(&self) -> &Path {
         &self.0
