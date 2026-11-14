@@ -1,0 +1,10 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:35]
+ 1 │ <Component response={new Response("", {status: 204})} />
+   ·                                   ──
+   ╰────
+  help: Replace the response body with `void 0`.
