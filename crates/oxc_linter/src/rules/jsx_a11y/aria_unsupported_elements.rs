@@ -1,6 +1,12 @@
 use cow_utils::CowUtils;
-use oxc_ast::{AstKind, ast::JSXAttributeItem};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, IdentifierReference, JSXAttributeItem, JSXAttributeValue, JSXExpression},
+};
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::side_effects::{
+    MayHaveSideEffects, MayHaveSideEffectsContext, PropertyReadSideEffects,
+};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -10,6 +16,7 @@ use crate::{
     rule::Rule,
     utils::{get_element_type, get_jsx_attribute_name},
 };
+use oxc_semantic::IsGlobalReference;
 
 declare_oxc_lint!(
     /// ### What it does
@@ -39,7 +46,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     recommended,
-    fix,
+    conditional_fix_suggestion,
     version = "0.1.1",
     short_description =
         "Enforces that reserved DOM elements do not contain ARIA roles, states, or properties.",
@@ -67,14 +74,64 @@ impl Rule for AriaUnsupportedElements {
                     let attr_name = get_jsx_attribute_name(&attr.name);
                     let attr_name = attr_name.cow_to_ascii_lowercase();
                     if attr_name == "role" || is_valid_aria_property(&attr_name) {
-                        ctx.diagnostic_with_fix(
-                            aria_unsupported_elements_diagnostic(attr.span, &attr_name),
-                            |fixer| fixer.delete(&attr.span),
-                        );
+                        let diagnostic =
+                            aria_unsupported_elements_diagnostic(attr.span, &attr_name);
+                        if is_safe_to_delete_attribute(ctx, attr.value.as_ref()) {
+                            ctx.diagnostic_with_fix(diagnostic, |fixer| fixer.delete(&attr.span));
+                        } else {
+                            ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
+                                fixer.delete(&attr.span)
+                            });
+                        }
                     }
                 }
             }
         }
+    }
+}
+
+fn is_safe_to_delete_attribute<'a>(
+    ctx: &LintContext<'a>,
+    value: Option<&JSXAttributeValue<'a>>,
+) -> bool {
+    match value {
+        None | Some(JSXAttributeValue::StringLiteral(_)) => true,
+        Some(JSXAttributeValue::ExpressionContainer(container)) => match &container.expression {
+            JSXExpression::EmptyExpression(_) => true,
+            expr => {
+                let side_effects_ctx = AttributeValueSideEffectsContext { ctx };
+                !expr.to_expression().may_have_side_effects(&side_effects_ctx)
+            }
+        },
+        Some(JSXAttributeValue::Element(_) | JSXAttributeValue::Fragment(_)) => false,
+    }
+}
+
+struct AttributeValueSideEffectsContext<'c, 'a> {
+    ctx: &'c LintContext<'a>,
+}
+
+impl<'a> oxc_ecmascript::GlobalContext<'a> for AttributeValueSideEffectsContext<'_, 'a> {
+    fn is_global_reference(&self, reference: &IdentifierReference<'a>) -> bool {
+        reference.is_global_reference(self.ctx.scoping())
+    }
+}
+
+impl<'a> MayHaveSideEffectsContext<'a> for AttributeValueSideEffectsContext<'_, 'a> {
+    fn annotations(&self) -> bool {
+        false
+    }
+
+    fn manual_pure_functions(&self, _callee: &Expression) -> bool {
+        false
+    }
+
+    fn property_read_side_effects(&self) -> PropertyReadSideEffects {
+        PropertyReadSideEffects::All
+    }
+
+    fn unknown_global_side_effects(&self) -> bool {
+        true
     }
 }
 
@@ -376,6 +433,8 @@ fn test() {
         (r#"<style aria-hidden aria-role="none" {...props} />"#, None),
         (r#"<title aria-hidden aria-role="none" {...props} />"#, None),
         (r#"<track aria-hidden aria-role="none" {...props} />"#, None),
+        // Regression: expression values may have side effects.
+        (r"<meta aria-hidden={track()} />", None),
     ];
 
     let fix = vec![
@@ -384,6 +443,12 @@ fn test() {
             r#"<meta aria-hidden aria-role="none" {...props} />"#,
             r#"<meta  aria-role="none" {...props} />"#,
         ),
+        // Safe to delete: boolean shorthand, string literal, side-effect-free expression.
+        (r"<meta aria-hidden />", r"<meta  />"),
+        (r#"<meta aria-hidden="true" />"#, r"<meta  />"),
+        (r"<meta aria-hidden={true} />", r"<meta  />"),
+        // Unsafe to auto-fix: expression may have side effects, but suggestion works.
+        (r"<meta aria-hidden={track()} />", r"<meta  />"),
     ];
 
     Tester::new(AriaUnsupportedElements::NAME, AriaUnsupportedElements::PLUGIN, pass, fail)
