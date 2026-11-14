@@ -108,3 +108,13 @@ fn test_nested_classes() {
         } new Outer();",
     );
 }
+
+#[test]
+fn test_keep_decorated_unused_private_members() {
+    // Decorators are applied when the class definition is evaluated, so removing
+    // the element would drop their side effects.
+    test_same("class C { @dec #unused() {} } new C();");
+    test_same("class C { @dec #unused = 1; } new C();");
+    test_same("class C { @dec #unused; } new C();");
+    test_same("class C { @dec static #unused() {} } new C();");
+}
