@@ -4,6 +4,7 @@
 use std::{any::Any, borrow::Cow};
 
 use cow_utils::CowUtils;
+use rustc_hash::FxHashSet;
 
 use oxc_allocator::{Allocator, StringBuilder};
 use oxc_formatter_core::{
@@ -15,7 +16,7 @@ use oxc_formatter_core::{
     spec::is_suppression_marker,
     write,
 };
-use oxc_htmlish_parser::ast::{Attribute, NodeId, NodeKind, Quote};
+use oxc_htmlish_parser::ast::{Attribute, AttributeKind, NodeId, NodeKind, Quote};
 
 use super::{
     HtmlishFormatter,
@@ -68,6 +69,59 @@ pub fn write_attributes<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatte
         })
     };
 
+    let sorted = f
+        .options()
+        .sort_attributes
+        .as_ref()
+        .filter(|_| el.attributes.len() > 1 && ignored.is_none())
+        .and_then(|options| {
+            let mut names = FxHashSet::default();
+            let mut attributes = Vec::with_capacity(el.attributes.len());
+            for attribute in &el.attributes {
+                let name = t.attribute_name(id, attribute.name.slice(t.source()));
+                let mut key = if t.rules().vue_sfc {
+                    // Distinct source names can resolve to the same declared component prop.
+                    vue::prop_name(name)
+                } else {
+                    Cow::Borrowed(name)
+                };
+                if t.rules().names_ignore_case && key.bytes().any(|byte| byte.is_ascii_uppercase())
+                {
+                    key.to_mut().make_ascii_lowercase();
+                }
+                if !names.insert(key) {
+                    return None;
+                }
+                let name = if t.rules().names_ignore_case {
+                    name.cow_to_ascii_lowercase()
+                } else {
+                    Cow::Borrowed(name)
+                };
+                attributes.push((options.group_index(&name), name, attribute));
+            }
+            for chunk in attributes.split_mut(|(_, _, attribute)| {
+                // A directive can evaluate JS, generate props also written by another
+                // attribute, or run lifecycle hooks. Keep it in place, and never move
+                // another attribute across it: even a simple binding can read a getter.
+                (t.rules().vue_sfc && matches!(attribute.kind, AttributeKind::Vue(_)))
+                    || f.context().embedded_in().is_some_and(|embedded| {
+                        // Match against the source: sort keys may have folded the marker's case.
+                        embedded.has_placeholder(attribute.name.slice(t.source()))
+                            || attribute.value.is_some_and(|value| {
+                                embedded.has_placeholder(value.span.slice(t.source()))
+                            })
+                    })
+            }) {
+                chunk.sort_by(|(a_group, a_name, _), (b_group, b_name, _)| {
+                    a_group.cmp(b_group).then_with(|| {
+                        let order = a_name.cmp(b_name);
+                        if options.descending { order.reverse() } else { order }
+                    })
+                });
+            }
+            Some(attributes)
+        });
+
     write!(
         f,
         indent(&format_with(|f| {
@@ -76,7 +130,9 @@ pub fn write_attributes<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatte
             } else {
                 write!(f, soft_line_break_or_space());
             }
-            for (i, attribute) in el.attributes.iter().enumerate() {
+            for i in 0..el.attributes.len() {
+                let attribute =
+                    sorted.as_ref().map_or(&el.attributes[i], |attributes| attributes[i].2);
                 if i > 0 {
                     if per_line {
                         write!(f, hard_line_break());

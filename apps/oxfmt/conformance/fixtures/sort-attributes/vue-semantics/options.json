@@ -1,0 +1,5 @@
+[
+  { "sortAttributes": true },
+  { "sortAttributes": { "order": "desc" } },
+  { "sortAttributes": { "groups": ["^v-", "^@", "^:", "$DEFAULT"] } }
+]

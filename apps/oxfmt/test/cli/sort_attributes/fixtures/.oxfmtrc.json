@@ -1,0 +1,20 @@
+{
+  "sortAttributes": {
+    "groups": ["^id$", "$DEFAULT", "^data-"],
+    "order": "desc"
+  },
+  "overrides": [
+    {
+      "files": ["*.tsx"],
+      "options": {
+        "sortAttributes": true
+      }
+    },
+    {
+      "files": ["keep.html"],
+      "options": {
+        "sortAttributes": false
+      }
+    }
+  ]
+}

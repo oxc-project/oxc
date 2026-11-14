@@ -1,3 +1,7 @@
+use std::sync::Arc;
+
+use lazy_regex::Regex;
+
 use oxc_formatter_core::{
     CoreFormatOptions, FormatOptions, IndentStyle, IndentWidth, LineEnding, LineWidth,
 };
@@ -30,7 +34,7 @@ impl HtmlishVariant {
 }
 
 /// Format options for htmlish (HTML and the template languages built on it).
-#[derive(Debug, Default, Clone, Eq, PartialEq)]
+#[derive(Debug, Default, Clone)]
 pub struct HtmlishFormatOptions {
     pub indent_style: IndentStyle,
     pub indent_width: IndentWidth,
@@ -48,6 +52,28 @@ pub struct HtmlishFormatOptions {
     /// Sort Tailwind CSS classes (by the session's sorter, as prettier-plugin-tailwindcss does):
     /// those of `class`, and of the attributes listed here; `None` leaves them as they are.
     pub sort_tailwindcss: Option<Vec<String>>,
+    /// Sort attributes using compiled groups. By default disabled.
+    pub sort_attributes: Option<Arc<SortAttributesOptions>>,
+}
+
+/// Compiled attribute groups, matched in order, and the ordering within each group.
+#[derive(Debug, Default)]
+pub struct SortAttributesOptions {
+    /// Group indices and their regular expressions. Compile once and share between files.
+    pub groups: Vec<(usize, Regex)>,
+    /// Group for unmatched names; may precede explicitly matched groups.
+    pub default_group: usize,
+    /// Sort names descending within each group, preserving the order of equal names.
+    pub descending: bool,
+}
+
+impl SortAttributesOptions {
+    pub(crate) fn group_index(&self, name: &str) -> usize {
+        self.groups
+            .iter()
+            .find(|(_, pattern)| pattern.is_match(name))
+            .map_or(self.default_group, |(index, _)| *index)
+    }
 }
 
 /// Which whitespace between elements is significant.

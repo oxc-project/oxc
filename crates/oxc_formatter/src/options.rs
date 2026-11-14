@@ -1,5 +1,7 @@
 use std::{fmt, str::FromStr, sync::Arc};
 
+use lazy_regex::Regex;
+
 use oxc_formatter_core::{
     CoreFormatOptions, Format, IndentStyle, IndentWidth, LineEnding, LineWidth,
 };
@@ -63,6 +65,8 @@ pub struct JsFormatOptions {
 
     /// Sort import statements. By default disabled.
     pub sort_imports: Option<SortImportsOptions>,
+    /// Sort JSX attributes. By default disabled.
+    pub sort_attributes: Option<Arc<SortAttributesOptions>>,
     /// Enable Tailwind CSS class sorting in JSX class/className attributes.
     /// When enabled, class strings will be collected and passed to a callback for sorting.
     /// Defaults to None (disabled).
@@ -72,6 +76,26 @@ pub struct JsFormatOptions {
     /// When enabled, JSDoc comments will be normalized and reformatted.
     /// Defaults to None (disabled).
     pub jsdoc: Option<JsdocOptions>,
+}
+
+/// Compiled attribute groups, matched in order, and the ordering within each group.
+#[derive(Debug, Default)]
+pub struct SortAttributesOptions {
+    /// Group indices and their regular expressions. Compile once and share between files.
+    pub groups: Vec<(usize, Regex)>,
+    /// Group for unmatched names; may precede explicitly matched groups.
+    pub default_group: usize,
+    /// Sort names descending within each group, preserving the order of equal names.
+    pub descending: bool,
+}
+
+impl SortAttributesOptions {
+    pub(crate) fn group_index(&self, name: &str) -> usize {
+        self.groups
+            .iter()
+            .find(|(_, pattern)| pattern.is_match(name))
+            .map_or(self.default_group, |(index, _)| *index)
+    }
 }
 
 /// How to format JSDoc comment blocks: single-line, multi-line, or preserve original.
