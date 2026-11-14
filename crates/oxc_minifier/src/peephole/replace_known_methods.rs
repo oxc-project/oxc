@@ -7,7 +7,7 @@ use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
     ArrayJoin, ToBigInt, ToIntegerIndex, ToJsString,
-    constant_evaluation::{ConstantEvaluation, DetermineValueType, ValueType},
+    constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType, ValueType},
     side_effects::{MayHaveSideEffects, is_regexp_syntax_supported},
 };
 use oxc_span::SPAN;
@@ -27,6 +27,21 @@ impl<'a> PeepholeOptimizations {
 
         // Use constant evaluation for known method calls
         if let Some(constant_value) = ce.evaluate_value(ctx) {
+            // A string result can be longer than the call that produces it,
+            // e.g. `'aaaaaaa'.replaceAll('a', 'aaaaaaa')`, so keep the call then.
+            // A call that is the object of a member expression still folds, because
+            // the member access (`[0]`, `.charAt(0)`, ...) folds only on a literal.
+            if let ConstantValue::String(result) = &constant_value
+                && !matches!(
+                    ctx.parent(),
+                    Ancestor::StaticMemberExpressionObject(_)
+                        | Ancestor::ComputedMemberExpressionObject(_)
+                )
+                && Self::method_call_size_lower_bound(ce, ctx)
+                    .is_some_and(|size| result.len() + 2 > size)
+            {
+                return;
+            }
             let new_expr = ctx.value_to_expr(ce.span, constant_value);
             ctx.replace_expression(node, new_expr);
             return;
@@ -59,6 +74,34 @@ impl<'a> PeepholeOptimizations {
         if let Some(replacement) = replacement {
             ctx.replace_expression(node, replacement);
         }
+    }
+
+    /// Approximate minified size of a method call such as `'abc'.replaceAll('b', 'x')`:
+    /// receiver, member, arguments, commas and parentheses. Like the result it is compared
+    /// with, it does not count escapes. `None` when an operand cannot be sized.
+    fn method_call_size_lower_bound(
+        ce: &CallExpression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Option<usize> {
+        let operand_size = |expr: &Expression<'a>| {
+            Self::string_expression_size_lower_bound(expr, ctx).map(|(size, _)| size)
+        };
+        let (object, property_len) = match &ce.callee {
+            Expression::StaticMemberExpression(member) => {
+                (&member.object, member.property.name.len())
+            }
+            // `'abc'['replaceAll']` prints as `'abc'.replaceAll`.
+            Expression::ComputedMemberExpression(member) => match &member.expression {
+                Expression::StringLiteral(key) => (&member.object, key.value.len()),
+                _ => return None,
+            },
+            _ => return None,
+        };
+        let mut size = operand_size(object)? + 1 + property_len;
+        for arg in &ce.arguments {
+            size += operand_size(arg.as_expression()?)?;
+        }
+        Some(size + ce.arguments.len().saturating_sub(1) + 2)
     }
 
     /// `Math.pow(a, b)` -> `+(a) ** +b`

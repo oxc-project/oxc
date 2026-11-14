@@ -227,6 +227,27 @@ fn test_fold_string_replace_all() {
 }
 
 #[test]
+fn test_fold_string_replace_all_size() {
+    // The folded literal would be longer than the call.
+    test_same("x = 'aaaaaaa'.replaceAll('a', 'aaaaaaa')");
+    test_same("x = 'aaaaa'.replaceAll('a', 'aaaaaaa')");
+    test_same("x = 'abcdef'.replaceAll('', 'xxxxx')");
+    test("x = 'aaaaaaa'['replaceAll']('a', 'aaaaaaa')", "x = 'aaaaaaa'.replaceAll('a', 'aaaaaaa')");
+    // Same size as the call (32 characters): folds.
+    test("x = 'aaaaa'.replaceAll('a', 'aaaaaa')", "x = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'");
+    // The folded literal is shorter.
+    test("x = 'aaaaaaa'.replaceAll('a', 'aaa')", "x = 'aaaaaaaaaaaaaaaaaaaaa'");
+    test("x = 'abcdef'.replaceAll('', 'x')", "x = 'xaxbxcxdxexfx'");
+    // A member access on the result folds the whole chain.
+    test("x = 'aaaaaaa'.replaceAll('a', 'aaaaaaa')[0]", "x = 'a'");
+    test("x = 'aaaaaaa'.replaceAll('a', 'aaaaaaa').charAt(1)", "x = 'a'");
+    test("x = 'aaaaaaa'.replaceAll('a', 'aaaaaaa').length", "x = 49");
+    // An operand that cannot be sized folds as before.
+    test("x = /abcdefghij/.toString()", "x = '/abcdefghij/'");
+    test("x = (-1234567890).toString()", "x = '-1234567890'");
+}
+
+#[test]
 fn test_fold_string_replace_all_empty_search_utf16() {
     test(r"x = 'a😀z'.replaceAll('', '-')", r"x = '-a-\uD83D-\uDE00-z-'");
     test(r"x = '😀😀'.replaceAll('', '-')", r"x = '-\uD83D-\uDE00-\uD83D-\uDE00-'");

@@ -522,9 +522,10 @@ impl<'a> PeepholeOptimizations {
         Some(Self::number_literal_source_len(result)? <= original_len)
     }
 
-    /// Lower bound for the minified size of a string addition operand, along with
-    /// whether folding it would materialize a non-inlineable tracked constant.
-    fn string_expression_size_lower_bound(
+    /// Lower bound for the minified size of a string operand (of an addition or a method
+    /// call), along with whether folding it would materialize a non-inlineable tracked
+    /// constant.
+    pub(super) fn string_expression_size_lower_bound(
         expr: &Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Option<(usize, bool)> {
