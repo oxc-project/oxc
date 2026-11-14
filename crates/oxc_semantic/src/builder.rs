@@ -108,7 +108,7 @@ pub struct SemanticBuilder<'a> {
     excess_capacity: f64,
 
     /// Should enum member values be evaluated?
-    enum_eval: bool,
+    pub(crate) enum_eval: bool,
 
     /// Should additional syntax checks be performed?
     ///
