@@ -300,7 +300,7 @@ impl PreferToBe {
             let new_matcher =
                 if is_cmp_mem_expr { "[\"toBeUndefined\"]()" } else { "toBeUndefined()" };
 
-            ctx.diagnostic_with_fix(
+            ctx.diagnostic_with_suggestion(
                 use_to_be_undefined(source_text, new_matcher, replacement_span),
                 |fixer| fixer.replace(replacement_span, new_matcher),
             );
@@ -314,7 +314,7 @@ impl PreferToBe {
             let source_text = ctx.source_range(replacement_span);
             let new_matcher = if is_cmp_mem_expr { "[\"toBeDefined\"]()" } else { "toBeDefined()" };
 
-            ctx.diagnostic_with_fix(
+            ctx.diagnostic_with_suggestion(
                 use_to_be_defined(source_text, new_matcher, replacement_span),
                 |fixer| fixer.replace(replacement_span, new_matcher),
             );
@@ -333,7 +333,7 @@ impl PreferToBe {
             let replacement_span = Span::new(source_start, end);
             let source_text = ctx.source_range(replacement_span);
 
-            ctx.diagnostic_with_fix(
+            ctx.diagnostic_with_suggestion(
                 use_to_be_null(source_text, &suggestion, replacement_span),
                 |fixer| fixer.replace(replacement_span, suggestion),
             );
@@ -352,7 +352,7 @@ impl PreferToBe {
             let replacement_span = Span::new(source_start, end);
             let source_text = ctx.source_range(replacement_span);
 
-            ctx.diagnostic_with_fix(
+            ctx.diagnostic_with_suggestion(
                 use_to_be_na_n(source_text, &suggestion, replacement_span),
                 |fixer| fixer.replace(replacement_span, suggestion),
             );
@@ -360,7 +360,7 @@ impl PreferToBe {
             let source_text = ctx.source_range(span);
             let new_matcher = if is_cmp_mem_expr { "\"toBe\"" } else { "toBe" };
 
-            ctx.diagnostic_with_fix(use_to_be(source_text, new_matcher, span), |fixer| {
+            ctx.diagnostic_with_suggestion(use_to_be(source_text, new_matcher, span), |fixer| {
                 fixer.replace(span, new_matcher)
             });
         }
@@ -369,9 +369,9 @@ impl PreferToBe {
 
 #[test]
 fn test_computed_matcher_trivia() {
-    use crate::tester::Tester;
+    use crate::{fixer::FixKind, tester::Tester};
 
-    let fix = vec![
+    let fix: Vec<_> = vec![
         ("expect(value)[\u{a0}\"toEqual\"](null);", "expect(value)[\"toBeNull\"]();"),
         ("expect(value)[\u{2003}\"toEqual\"](NaN);", "expect(value)[\"toBeNaN\"]();"),
         ("expect(value)[ \"toEqual\" ](null);", "expect(value)[\"toBeNull\"]();"),
@@ -404,14 +404,17 @@ fn test_computed_matcher_trivia() {
         ),
         ("expect(value).not?.[\u{a0}\"toEqual\"](null);", "expect(value).not?.[\"toBeNull\"]();"),
         ("expect(value)?.[\u{a0}\"not\"].toEqual?.(NaN);", "expect(value)?.[\"not\"].toBeNaN?.();"),
-    ];
+    ]
+    .into_iter()
+    .map(|(source, expected)| (source, expected, None, FixKind::Suggestion))
+    .collect();
 
     for plugin in ["jest", "vitest"] {
         Tester::new(
             "prefer-to-be",
             plugin,
-            fix.iter().map(|(_, fixed)| *fixed).collect(),
-            fix.iter().map(|(source, _)| *source).collect(),
+            fix.iter().map(|(_, fixed, _, _)| *fixed).collect(),
+            fix.iter().map(|(source, _, _, _)| *source).collect(),
         )
         .with_jest_plugin(plugin == "jest")
         .with_vitest_plugin(plugin == "vitest")
