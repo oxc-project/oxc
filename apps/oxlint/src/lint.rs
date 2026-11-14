@@ -24,7 +24,7 @@ use oxc_linter::{
 #[cfg(feature = "napi")]
 use crate::js_config::JsConfigLoaderCb;
 use crate::{
-    cli::{CliRunResult, DebugOption, LintCommand, MiscOptions, WarningOptions},
+    cli::{CliRunResult, DebugOption, LintCommand, MiscOptions, PrintConfig, WarningOptions},
     config_loader::{
         CliConfigLoadError, ConfigLoadError, ConfigLoader, LoadedConfigs, config_discovery,
     },
@@ -100,7 +100,7 @@ impl CliRunner {
         let external_linter = self.external_linter.as_ref();
 
         let mut paths = paths;
-        let provided_path_count = paths.len();
+        let print_config = misc_options.print_config.is_some();
         let now = Instant::now();
 
         let filters = match Self::get_filters(filter) {
@@ -124,6 +124,38 @@ impl CliRunner {
         let absolutize = |p: &Path| -> std::io::Result<PathBuf> {
             if p.is_absolute() { absolute(p) } else { absolute(self.cwd.join(p)) }
         };
+
+        let print_config_path = if let Some(PrintConfig::File(path)) = &misc_options.print_config {
+            if !paths.is_empty() {
+                print_and_flush_stdout(
+                    stdout,
+                    "Cannot combine `--print-config <FILE>` with other paths.\n",
+                );
+                return CliRunResult::InvalidOptionPrintConfig;
+            }
+            let resolved = absolutize(path).and_then(|path| {
+                if path.metadata()?.is_file() {
+                    Ok(path)
+                } else {
+                    Err(std::io::Error::new(ErrorKind::InvalidInput, "target is not a file"))
+                }
+            });
+            let path = match resolved {
+                Ok(path) => path,
+                Err(error) => {
+                    print_and_flush_stdout(
+                        stdout,
+                        &format!("Cannot print configuration for `{}`: {error}.\n", path.display()),
+                    );
+                    return CliRunResult::InvalidOptionPrintConfig;
+                }
+            };
+            paths.push(path.clone());
+            Some(path)
+        } else {
+            None
+        };
+        let provided_path_count = paths.len();
 
         let mut override_builder = None;
 
@@ -197,6 +229,9 @@ impl CliRunner {
         // If explicit paths were provided but all have been filtered,
         // or the default cwd target is gitignored, return early.
         if paths.is_empty() {
+            if let Some(path) = &print_config_path {
+                return Self::handle_print_config_not_linted(stdout, path);
+            }
             if debug_files {
                 return crate::mode::run_debug_files(
                     std::iter::empty::<&Path>(),
@@ -244,8 +279,8 @@ impl CliRunner {
             // If the `--config` option is explicitly passed, we should not search for nested config files
             // as the passed config file takes absolute precedence.
             basic_options.config.is_none() &&
-            !misc_options.print_config &&
-            !self.options.list_rules &&
+            (!print_config || print_config_path.is_some()) &&
+            (!self.options.list_rules || print_config) &&
             config_discovery().nested_configs();
 
         let mut config_loader =
@@ -343,7 +378,7 @@ impl CliRunner {
                 }
             };
 
-        if self.options.list_rules && !misc_options.print_config {
+        if self.options.list_rules && !print_config {
             return crate::mode::run_rules(&lint_config, &output_formatter, stdout);
         }
 
@@ -360,7 +395,7 @@ impl CliRunner {
             .filter(|path| !ignore_matcher.should_ignore(Path::new(path)))
             .collect::<Vec<Arc<OsStr>>>();
 
-        if debug_files && !misc_options.print_config {
+        if debug_files && !print_config {
             return crate::mode::run_debug_files(
                 files_to_lint.iter().map(|path| Path::new(path.as_ref())),
                 &self.cwd,
@@ -401,8 +436,17 @@ impl CliRunner {
             return CliRunResult::InvalidOptionTypeCheckOnlyWithSuppressionUpdate;
         }
 
-        if misc_options.print_config {
-            return crate::mode::run_print_config(&config_store, stdout);
+        if print_config {
+            if let Some(path) = &print_config_path
+                && files_to_lint.is_empty()
+            {
+                return Self::handle_print_config_not_linted(stdout, path);
+            }
+            return crate::mode::run_print_config(
+                &config_store,
+                print_config_path.as_deref(),
+                stdout,
+            );
         }
 
         // If no external rules, discard `ExternalLinter`
@@ -646,6 +690,17 @@ impl CliRunner {
                 .with_max_warnings(max_warnings),
             sender,
         )
+    }
+
+    fn handle_print_config_not_linted(stdout: &mut dyn Write, path: &Path) -> CliRunResult {
+        print_and_flush_stdout(
+            stdout,
+            &format!(
+                "Cannot print configuration for `{}`: file is not selected for linting (ignored or unsupported).\n",
+                path.display()
+            ),
+        );
+        CliRunResult::InvalidOptionPrintConfig
     }
 
     fn handle_no_files_found(
@@ -1385,6 +1440,141 @@ mod test {
             "--print-config",
         ];
         Tester::new().test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_print_config_file_resolution() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::create_dir(dir.path().join("nested")).unwrap();
+        fs::create_dir(dir.path().join("unrelated")).unwrap();
+        fs::write(dir.path().join("unrelated").join(DEFAULT_OXLINTRC_NAME), "{invalid}").unwrap();
+        fs::write(dir.path().join("unrelated/file.js"), "").unwrap();
+        fs::write(
+            dir.path().join(DEFAULT_OXLINTRC_NAME),
+            r#"{
+                "plugins": [],
+                "categories": { "correctness": "off" },
+                "options": { "maxWarnings": 1 },
+                "rules": { "no-debugger": "error" }
+            }"#,
+        )
+        .unwrap();
+        fs::write(
+            dir.path().join("nested").join(DEFAULT_OXLINTRC_NAME),
+            r#"{
+                "plugins": [],
+                "categories": { "correctness": "off" },
+                "rules": { "no-console": ["error", { "allow": ["warn"] }] },
+                "overrides": [{
+                    "files": ["*.test.js"],
+                    "excludeFiles": ["*.skip.test.js"],
+                    "rules": { "no-console": ["warn", { "allow": ["info"] }] }
+                }]
+            }"#,
+        )
+        .unwrap();
+        for file in ["file.js", "nested/file.js", "nested/file.test.js", "nested/file.skip.test.js"]
+        {
+            fs::write(dir.path().join(file), "debugger; console.log(1);").unwrap();
+        }
+        let tester = Tester::new().with_cwd(dir.path().to_path_buf());
+        let root_rules = serde_json::json!({ "no-debugger": "deny" });
+        let nested_rules = serde_json::json!({ "no-console": ["deny", { "allow": ["warn"] }] });
+        let override_rules = serde_json::json!({ "no-console": ["warn", { "allow": ["info"] }] });
+        let absolute = dir.path().join("nested/file.test.js");
+        let cases: &[(&str, &[&str], &serde_json::Value)] = &[
+            ("file.js", &[], &root_rules),
+            ("nested/file.js", &[], &nested_rules),
+            ("nested/file.test.js", &[], &override_rules),
+            (absolute.to_str().unwrap(), &["--no-ignore"], &override_rules),
+            ("nested/file.skip.test.js", &[], &nested_rules),
+            ("nested/file.test.js", &["--disable-nested-config"], &root_rules),
+            ("nested/file.test.js", &["-c", DEFAULT_OXLINTRC_NAME], &root_rules),
+            ("nested/file.test.js", &["--rules"], &override_rules),
+            ("nested/file.test.js", &["--debug", "files"], &override_rules),
+            (
+                "nested/file.test.js",
+                &["-A", "all", "-D", "eqeqeq"],
+                &serde_json::json!({
+                    "eqeqeq": "deny",
+                    "no-console": ["warn", { "allow": ["info"] }]
+                }),
+            ),
+        ];
+        for (file, flags, expected) in cases {
+            let mut args = vec!["--print-config", file, "--max-warnings", "2"];
+            args.extend_from_slice(flags);
+            let (output, result) = tester.test_output(&args);
+            assert!(matches!(result, CliRunResult::PrintConfigResult), "{args:?}: {output}");
+            let printed: serde_json::Value = serde_json::from_str(&output).unwrap();
+            assert_eq!(&printed["rules"], *expected, "{args:?}");
+            assert_eq!(printed["options"]["maxWarnings"], 2);
+            assert!(printed.get("overrides").is_none());
+        }
+
+        let (output, result) = tester.test_output(&["--print-config"]);
+        assert!(matches!(result, CliRunResult::PrintConfigResult), "{output}");
+        assert_eq!(
+            serde_json::from_str::<serde_json::Value>(&output).unwrap()["rules"],
+            root_rules
+        );
+
+        fs::write(dir.path().join("nested").join(DEFAULT_OXLINTRC_NAME), "{invalid}").unwrap();
+        let (lint_output, lint_result) = tester.test_output(&["nested/file.js"]);
+        let (print_output, print_result) =
+            tester.test_output(&["--print-config", "nested/file.js"]);
+        assert!(matches!(lint_result, CliRunResult::InvalidOptionConfig), "{lint_output}");
+        assert!(matches!(print_result, CliRunResult::InvalidOptionConfig), "{print_output}");
+        assert_eq!(print_output, lint_output);
+    }
+
+    #[test]
+    fn test_print_config_file_validation() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(
+            dir.path().join(DEFAULT_OXLINTRC_NAME),
+            r#"{ "ignorePatterns": ["ignored.js"] }"#,
+        )
+        .unwrap();
+        for file in ["file.js", "ignored.js", "file.min.js", "file.txt"] {
+            fs::write(dir.path().join(file), "").unwrap();
+        }
+        let tester = Tester::new().with_cwd(dir.path().to_path_buf());
+        for (args, message) in [
+            (&["--print-config", "."][..], "target is not a file"),
+            (&["--print-config", "missing.js"], "Cannot print configuration"),
+            (&["--print-config", "file.js", "ignored.js"], "with other paths"),
+            (&["--print-config", "ignored.js"], "ignored or unsupported"),
+            (&["--print-config", "file.min.js"], "ignored or unsupported"),
+            (&["--print-config", "file.txt"], "ignored or unsupported"),
+            (
+                &["--print-config", "file.js", "--ignore-pattern", "file.js"],
+                "ignored or unsupported",
+            ),
+            (
+                &[
+                    "--print-config",
+                    "file.js",
+                    "--ignore-pattern",
+                    "file.js",
+                    "--no-error-on-unmatched-pattern",
+                ],
+                "ignored or unsupported",
+            ),
+        ] {
+            let (output, result) = tester.test_output(args);
+            assert!(matches!(result, CliRunResult::InvalidOptionPrintConfig), "{args:?}: {output}");
+            assert!(output.contains(message), "{args:?}: {output}");
+            assert_eq!(result.report(), std::process::ExitCode::FAILURE);
+        }
+        let (output, result) = tester.test_output(&[
+            "--print-config",
+            "file.js",
+            "--ignore-pattern",
+            "file.js",
+            "--no-ignore",
+        ]);
+        assert!(matches!(result, CliRunResult::PrintConfigResult), "{output}");
     }
 
     #[test]
