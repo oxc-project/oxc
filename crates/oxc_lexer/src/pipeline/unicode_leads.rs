@@ -1,5 +1,3 @@
-use std::mem;
-
 use oxc_span::Span;
 use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
@@ -8,12 +6,12 @@ use crate::{
     token::TokenKind,
 };
 
-use crate::pipeline::lanes::{Lanes, decode_char_at};
+use crate::pipeline::{bytes::decode_char_at, lanes::Lanes};
 
 /// Report non-ASCII chars in code which aren't valid identifier chars.
 ///
 /// [`misc_pre`] records the position of each non-ASCII char which isn't whitespace
-/// in [`Lanes::unicode_leads`], before it's known which token the char is in.
+/// in [LexState::unicode_leads], before it's known which token the char is in.
 /// This runs once the tokens are known. It skips chars outside code-level tokens
 /// (see [`candidate_is_code_level`]) and invalid UTF-8.
 ///
@@ -23,21 +21,22 @@ use crate::pipeline::lanes::{Lanes, decode_char_at};
 /// or [`InvalidUtf8`] if it's U+FFFD, because `oxc_parser` treats that as a binary file.
 ///
 /// Positions are in ascending order, so one forward pass over the tokens
-/// finds each char's token. Empties [`Lanes::unicode_leads`], keeping its allocation.
+/// finds each char's token. Empties leads, keeping its allocation.
 ///
 /// [`misc_pre`]: crate::pipeline::misc::misc_pre
+/// [LexState::unicode_leads]: crate::pipeline::lex::LexState::unicode_leads
 /// [`UnexpectedCharacter`]: DiagCode::UnexpectedCharacter
 /// [`InvalidUtf8`]: DiagCode::InvalidUtf8
 pub(super) fn resolve_unicode_leads(
+    leads: &mut Vec<u32>,
     lanes: &mut Lanes,
     src: &[u8],
     kinds_all: &[TokenKind],
     spans_all: &[Span],
 ) {
     let k = kinds_all.len();
-    let mut leads = mem::take(&mut lanes.unicode_leads);
     let mut ti = 0usize;
-    for &off in &leads {
+    for &off in leads.iter() {
         // Leads can be many tokens apart, so gallop then binary search past the current token
         if ti + 1 < k && spans_all[ti].end <= off {
             let rest = &spans_all[ti + 1..k - 1];
@@ -73,10 +72,9 @@ pub(super) fn resolve_unicode_leads(
         };
         #[expect(clippy::cast_possible_truncation, reason = "char lengths are 1..=4")]
         let len = ch.len_utf8() as u32;
-        lanes.out.diags.push(Diagnostic { off, len, code, severity: DiagSeverity::Error });
+        lanes.diags.push(Diagnostic { off, len, code, severity: DiagSeverity::Error });
     }
     leads.clear();
-    lanes.unicode_leads = leads;
 }
 
 /// Literal interiors, trivia, and JSX text may legally contain any char.

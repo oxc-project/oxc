@@ -1,4 +1,4 @@
-use std::{mem::MaybeUninit, ptr, slice};
+use std::mem::MaybeUninit;
 
 use oxc_simd::{Cpu, cpu_multiversion, prefetch};
 
@@ -8,10 +8,11 @@ use crate::{
 };
 
 use crate::pipeline::{
-    bitmap::Bitmap,
+    bitmap::Bitmaps,
     bytes::{is_digit, is_word, is_ws},
-    disambiguate::{TokensView, gt_run_split, lt_run_split},
+    disambiguate::DisambiguateState,
     lanes::Lanes,
+    lex::{Lex, LexState},
     operators::{is_op_char, opmap_longest, opmap_pack2, opmap_pack3},
     scan::scan_number,
 };
@@ -27,53 +28,50 @@ const _: () = assert!(tk!(BigInt) == tk!(Number) + 1);
 #[cpu_multiversion]
 #[inline(never)]
 pub unsafe fn coalesce(
-    src: *const u8,
-    n: usize,
-    st: Bitmap,
-    opch: Bitmap,
-    word: Bitmap,
-    digit: Bitmap,
-    dot: Bitmap,
-    kwinit: Bitmap,
-    kind: *mut u8,
-    kwpos: *mut u32,
-    evpos: *mut u32,
-    ts: bool,
-    lanes: &mut Lanes,
+    lex: Lex,
+    kw_candidates: *mut u32,
+    events: *mut u32,
+    state: &mut LexState,
     cpu: impl Cpu,
 ) {
-    lanes.disambiguate.restart(lanes.module, cpu);
+    let Lex { src, bitmaps, kinds, options } = lex;
+    let Bitmaps { token_start, word, keyword_initial, op_char, digit, dot, .. } = *bitmaps;
+    let is_ts = options.ts;
+    state.disambiguate.restart(cpu);
     // Events are collected branchlessly and handled per batch. Unset masks are never read
     let mut rarem = [const { MaybeUninit::<u64>::uninit() }; KWB];
     let mut e = 0usize;
     let mut prev_empty = false;
-    let nw = (n + 63) >> 6;
+    let block_count = src.block_count();
     let mut opprev: u64 = 0;
     let mut dtprev: u64 = 0;
     let mut cursor: usize = 0;
     let mut k = 0usize;
-    for w in 0..nw {
-        let op = opch.block(w, cpu);
-        let opnext = if w + 1 < nw { opch.block(w + 1, cpu) } else { 0 };
+    for w in 0..block_count {
+        let op = op_char.block(w, cpu);
+        let opnext = if w + 1 < block_count { op_char.block(w + 1, cpu) } else { 0 };
         let dg = digit.block(w, cpu);
-        let dgnext = if w + 1 < nw { digit.block(w + 1, cpu) } else { 0 };
+        let dgnext = if w + 1 < block_count { digit.block(w + 1, cpu) } else { 0 };
         let dt = dot.block(w, cpu);
-        let stw = st.block(w, cpu);
+        let stw = token_start.block(w, cpu);
         let wd = word.block(w, cpu);
-        let wnext = if w + 1 < nw { word.block(w + 1, cpu) } else { 0 };
+        let wnext = if w + 1 < block_count { word.block(w + 1, cpu) } else { 0 };
         // The whole keywords stage lives inside this walk: the candidate
         // filter (token-start keyword-initial word char, next char also
         // word, not right after a member `.`, length <= 10 by the word-local
         // run filter) computes from values already in registers, candidates
-        // extract into `kwpos`, and the batch verifies every KWB words while
+        // extract into kw_candidates, and the batch verifies every KWB words while
         // this window's src/kind lines are still warm. The only token start
         // minted behind the filter is glue_number's invalid adjacency, which
         // resolves its keyword kind inline with the same inputs, so the two
         // writes agree even when both fire.
         let dm = dt & !((dt << 1) | (dtprev >> 63));
         let dcarry = ((dtprev >> 63) & !(dtprev >> 62)) & 1;
-        let mut kwc =
-            stw & wd & kwinit.block(w, cpu) & ((wd >> 1) | (wnext << 63)) & !((dm << 1) | dcarry);
+        let mut kwc = stw
+            & wd
+            & keyword_initial.block(w, cpu)
+            & ((wd >> 1) | (wnext << 63))
+            & !((dm << 1) | dcarry);
         let r2 = wd & (wd >> 1);
         let r4 = r2 & (r2 >> 2);
         let r8 = r4 & (r4 >> 4);
@@ -90,7 +88,7 @@ pub unsafe fn coalesce(
             let mut glue = ((sum & !rdg).reverse_bits() << 1) | u64::from(out);
             if dg >> 63 != 0 {
                 let tail = (!dgnext).trailing_zeros();
-                let dtnext = if w + 1 < nw { dot.block(w + 1, cpu) } else { 0 };
+                let dtnext = if w + 1 < block_count { dot.block(w + 1, cpu) } else { 0 };
                 if tail == 64 || ((wnext | dtnext) >> tail) & 1 != 0 {
                     glue |= 1u64 << (64 - (!dg).leading_zeros());
                 }
@@ -105,16 +103,16 @@ pub unsafe fn coalesce(
         if !(empty && prev_empty) {
             let base = (w << 6) as u32;
             let cnt = kwc.count_ones() as usize;
-            prefetch(src.add(base as usize), cpu);
-            prefetch(kind.add(base as usize) as *const u8, cpu);
+            prefetch(src.as_ptr().add(base as usize), cpu);
+            prefetch(kinds.as_ptr().add(base as usize) as *const u8, cpu);
             for j in 0..8 {
-                *kwpos.add(k + j) = base + kwc.trailing_zeros();
+                *kw_candidates.add(k + j) = base + kwc.trailing_zeros();
                 kwc &= kwc.wrapping_sub(1);
             }
             if cnt > 8 {
                 let mut kk = k + 8;
                 while kwc != 0 {
-                    *kwpos.add(kk) = base + kwc.trailing_zeros();
+                    *kw_candidates.add(kk) = base + kwc.trailing_zeros();
                     kk += 1;
                     kwc &= kwc - 1;
                 }
@@ -124,13 +122,13 @@ pub unsafe fn coalesce(
             let cnt = ev.count_ones() as usize;
             let mut evm = ev;
             for j in 0..2 {
-                *evpos.add(e + j) = base + evm.trailing_zeros();
+                *events.add(e + j) = base + evm.trailing_zeros();
                 evm &= evm.wrapping_sub(1);
             }
             if cnt > 2 {
                 let mut ee = e + 2;
                 while evm != 0 {
-                    *evpos.add(ee) = base + evm.trailing_zeros();
+                    *events.add(ee) = base + evm.trailing_zeros();
                     ee += 1;
                     evm &= evm - 1;
                 }
@@ -140,88 +138,71 @@ pub unsafe fn coalesce(
         prev_empty = empty;
         if w & (KWB - 1) == KWB - 1 {
             if e != 0 {
-                cursor = coalesce_events(
-                    ts, src, n, st, opch, word, kind, lanes, evpos, e, &rarem, cursor, cpu,
-                );
+                cursor = coalesce_events(lex, state, events, e, &rarem, cursor, cpu);
                 e = 0;
             }
-            kw_flush(ts, src, word, kind, kwpos, k, cpu);
+            kw_flush(is_ts, src, word, kinds, kw_candidates, k, cpu);
             k = 0;
         }
     }
     if e != 0 {
-        coalesce_events(ts, src, n, st, opch, word, kind, lanes, evpos, e, &rarem, cursor, cpu);
+        coalesce_events(lex, state, events, e, &rarem, cursor, cpu);
     }
-    kw_flush(ts, src, word, kind, kwpos, k, cpu);
+    kw_flush(is_ts, src, word, kinds, kw_candidates, k, cpu);
 }
 
-/// Handle a batch's events in order. Rereading opch is safe, as events only clear it below cursor.
+/// Handle a batch's events in order. Rereading op_char is safe: events only clear it below cursor.
 #[cpu_multiversion]
 #[inline(never)]
 unsafe fn coalesce_events(
-    ts: bool,
-    src: *const u8,
-    n: usize,
-    st: Bitmap,
-    opch: Bitmap,
-    word: Bitmap,
-    kind: *mut u8,
-    lanes: &mut Lanes,
-    evpos: *const u32,
+    lex: Lex,
+    state: &mut LexState,
+    events: *const u32,
     count: usize,
     rarem: &[MaybeUninit<u64>; KWB],
     mut cursor: usize,
     cpu: impl Cpu,
 ) -> usize {
-    let nw = (n + 63) >> 6;
+    let Lex { src, bitmaps, kinds, options } = lex;
+    let Bitmaps { token_start, op_char, .. } = *bitmaps;
+    let LexState { lanes, disambiguate, .. } = state;
+    let is_ts = options.ts;
+    let block_count = src.block_count();
     for i in 0..count {
-        let p = *evpos.add(i) as usize;
+        let p = *events.add(i) as usize;
         if p < cursor {
             continue;
         }
         let (w, bit) = (p >> 6, p & 63);
         let rare = rarem[w & (KWB - 1)].assume_init();
-        let has_next = w + 1 < nw;
+        let has_next = w + 1 < block_count;
         if (rare >> bit) & 1 != 0 {
-            cursor = glue_number(ts, src, n, st, opch, word, kind, p, lanes, cpu);
+            cursor = glue_number(lex, p, lanes, disambiguate, cpu);
         } else {
-            let op = opch.block(w, cpu);
-            let opnext = if has_next { opch.block(w + 1, cpu) } else { 0 };
+            let op = op_char.block(w, cpu);
+            let opnext = if has_next { op_char.block(w + 1, cpu) } else { 0 };
             let y2 = (op >> bit) | ((opnext << (63 - bit)) << 1);
             let run = (!y2).trailing_zeros() as usize;
-            let q = ptr::read_unaligned(src.add(p) as *const u32);
+            let q = src.u32_at(p);
             let b0 = q as u8;
             let b1 = (q >> 8) as u8;
             // In TS, `>` may close nested type args including `Foo<T>= 1`, so fusing can diverge.
             // Cheap inline byte checks handle this
             if b0 == b'>'
-                && ts
-                && (b1 == b'>' || (b1 == b'=' && p > 0 && !is_ws(*src.add(p - 1), cpu)))
+                && is_ts
+                && (b1 == b'>' || (b1 == b'=' && p > 0 && !is_ws(src[p - 1], cpu)))
             {
                 let kw_final = (w & !(KWB - 1)) << 6;
-                let tokens = TokensView::new(
-                    src,
-                    st,
-                    opch,
-                    kind,
-                    n,
-                    true,
-                    kw_final,
-                    lanes.module,
-                    &lanes.disambiguate.brackets,
-                    &lanes.disambiguate.closers,
-                    cpu,
-                );
-                let g = gt_run_split(&tokens, &mut lanes.disambiguate.walks, p, run, cpu);
+                let g = disambiguate.gt_run_split(lex, kw_final, p, run, cpu);
                 if g != 0 {
                     // Only `>`s stay split; the rest still munches, or `>>&&` would emit two `&`s.
-                    cursor = munch_walk(ts, src, n, st, opch, kind, p + g, lanes, cpu);
+                    cursor = munch_walk(lex, p + g, disambiguate, cpu);
                     continue;
                 }
             }
             // A << may open two lists; longer runs always reach munch_walk.
-            if b1 == b'<' && ts && (b0 == b'<' || (q >> 16) as u8 == b'<') {
-                cursor = munch_walk(ts, src, n, st, opch, kind, p, lanes, cpu);
+            if b1 == b'<' && is_ts && (b0 == b'<' || (q >> 16) as u8 == b'<') {
+                cursor = munch_walk(lex, p, disambiguate, cpu);
                 continue;
             }
             if run == 2 {
@@ -231,14 +212,14 @@ unsafe fn coalesce_events(
                 let kk = (pack >> 24) as u8;
                 ok &= !((kk == tk!(OptionalChain)) && is_digit((q >> 16) as u8, cpu));
                 let hm: u8 = 0u8.wrapping_sub(ok as u8);
-                *kind.add(p) = (*kind.add(p) & !hm) | (kk & hm);
+                kinds.set(p, (kinds.get(p) & !hm) | (kk & hm));
                 let clr = (ok as u64) << ((p + 1) & 63);
-                *st.as_ptr().add((p + 1) >> 6) &= !clr;
+                *token_start.as_ptr().add((p + 1) >> 6) &= !clr;
                 cursor = p + 1 + ok as usize;
                 continue;
             }
             if run > 3 {
-                cursor = munch_walk(ts, src, n, st, opch, kind, p, lanes, cpu);
+                cursor = munch_walk(lex, p, disambiguate, cpu);
                 continue;
             }
             let b2 = (q >> 16) as u8;
@@ -260,13 +241,13 @@ unsafe fn coalesce_events(
             let c2 = ok3 | sel2b; // `p + 2` is not a token start
             let m0: u8 = 0u8.wrapping_sub(c1 as u8);
             let k0v: u8 = if ok3 { (p3 >> 24) as u8 } else { ka };
-            *kind.add(p) = (*kind.add(p) & !m0) | (k0v & m0);
+            kinds.set(p, (kinds.get(p) & !m0) | (k0v & m0));
             let m1: u8 = 0u8.wrapping_sub(sel2b as u8);
-            *kind.add(p + 1) = (*kind.add(p + 1) & !m1) | (kb & m1);
+            kinds.set(p + 1, (kinds.get(p + 1) & !m1) | (kb & m1));
             let clr1 = (c1 as u64) << ((p + 1) & 63);
-            *st.as_ptr().add((p + 1) >> 6) &= !clr1;
+            *token_start.as_ptr().add((p + 1) >> 6) &= !clr1;
             let clr2 = (c2 as u64) << ((p + 2) & 63);
-            *st.as_ptr().add((p + 2) >> 6) &= !clr2;
+            *token_start.as_ptr().add((p + 2) >> 6) &= !clr2;
             // `run == 3` in this arm
             cursor = p + 2 + c2 as usize;
         }
@@ -276,34 +257,31 @@ unsafe fn coalesce_events(
 
 #[cpu_multiversion]
 unsafe fn glue_number(
-    ts: bool,
-    src: *const u8,
-    n: usize,
-    st: Bitmap,
-    opch: Bitmap,
-    word: Bitmap,
-    kind: *mut u8,
+    lex: Lex,
     mut p: usize,
     lanes: &mut Lanes,
+    disambiguate: &mut DisambiguateState,
     cpu: impl Cpu,
 ) -> usize {
+    let Lex { src, bitmaps, kinds, options } = lex;
+    let Bitmaps { token_start, word, op_char, .. } = *bitmaps;
+    let is_ts = options.ts;
     loop {
-        let e2 = scan_number(src, n, p, cpu);
-        *kind.add(p) = tk!(Number) + (*src.add(e2 - 1) == b'n') as u8;
-        if e2 > p + 1 {
-            st.clear_range(p + 1, e2 - 1, cpu);
-            opch.clear_range(p, e2 - 1, cpu);
+        let number_end = scan_number(src, p, cpu);
+        kinds.set(p, tk!(Number) + (src[number_end - 1] == b'n') as u8);
+        if number_end > p + 1 {
+            token_start.clear_range(p + 1, number_end - 1, cpu);
+            op_char.clear_range(p, number_end - 1, cpu);
         }
-        if e2 >= n {
-            return n;
+        if number_end >= src.len() {
+            return src.len();
         }
-        st.set(e2, cpu);
-        let c = *src.add(e2);
+        token_start.set(number_end, cpu);
+        let c = src[number_end];
         // A word char abutting the number end (`1.5n`, `3in`, `0b12`, `1π`)
         // is a spec-invalid adjacency. Never true on valid input, so the
         // whole arm is cold.
         if is_word(c, cpu) {
-            let srcs = slice::from_raw_parts(src, n);
             if c < 0x80 {
                 // A surviving `n` is a misplaced bigint suffix; scan_number
                 // consumes legal ones. Token spans are unchanged either way.
@@ -312,11 +290,11 @@ unsafe fn glue_number(
                 } else {
                     DiagCode::InvalidNumericLiteral
                 };
-                lanes.push_num_end_diag(srcs, e2, code);
+                lanes.push_num_end_diag(src.bytes(), number_end, code);
                 if is_digit(c, cpu) {
                     // Digit invalid for the radix (`0b12`) or after a bigint
                     // suffix (`1n2`): keep gluing from it.
-                    p = e2;
+                    p = number_end;
                     continue;
                 }
                 // This token start postdates the kwc mask built in the word
@@ -324,53 +302,44 @@ unsafe fn glue_number(
                 // + KW_IN). Same inputs as kw_verify_batch: length from the
                 // word bitmap, no match right after a member `.` (a number
                 // ending in `.` is that dot-run's first dot).
-                if *src.add(e2 - 1) != b'.' {
-                    let kk = kw_match_word(ts, src, word, e2, cpu);
+                if src[number_end - 1] != b'.' {
+                    let kk = kw_match_word(is_ts, src, word, number_end, cpu);
                     if kk != TokenKind::Ident {
-                        *kind.add(e2) = kk as u8;
+                        kinds.set(number_end, kk as u8);
                     }
                 }
             } else {
                 // Cold decode; flags only a real Unicode IdentifierStart.
-                lanes.push_num_end_diag_unicode(srcs, e2);
+                lanes.push_num_end_diag_unicode(src.bytes(), number_end);
             }
-            return e2; // token start already set at e2
+            return number_end; // token start already set at number_end
         }
-        if e2 + 1 < n && is_op_char(c, cpu) && opch.get(e2 + 1, cpu) {
+        if number_end + 1 < src.len() && is_op_char(c, cpu) && op_char.get(number_end + 1, cpu) {
             // A numeric literal type ends its type argument list here (`Map<A, 1.5>>`); without this the number's own munch
             // reaches the `>` run before `coalesce` ever raises it as an event.
-            if c == b'>' && ts && matches!(*src.add(e2 + 1), b'>' | b'=') {
-                let end = opch.next0(e2, n, cpu);
+            if c == b'>' && is_ts && matches!(src[number_end + 1], b'>' | b'=') {
+                let end = op_char.next0(number_end, src.len(), cpu);
                 // Keyword kinds are final only below this window's batch.
-                let kw_final = ((e2 >> 6) & !(KWB - 1)) << 6;
-                let tokens = TokensView::new(
-                    src,
-                    st,
-                    opch,
-                    kind,
-                    n,
-                    true,
-                    kw_final,
-                    lanes.module,
-                    &lanes.disambiguate.brackets,
-                    &lanes.disambiguate.closers,
-                    cpu,
-                );
-                let g = gt_run_split(&tokens, &mut lanes.disambiguate.walks, e2, end - e2, cpu);
+                let kw_final = ((number_end >> 6) & !(KWB - 1)) << 6;
+                let g = disambiguate.gt_run_split(lex, kw_final, number_end, end - number_end, cpu);
                 if g != 0 {
                     // The split `>`s stay single tokens, but whatever borders on them is still an operator run and has to be
                     // munched, or a following `&&` / `??` / `**` is emitted a byte at a time.
-                    return munch_walk(ts, src, n, st, opch, kind, e2 + g, lanes, cpu);
+                    return munch_walk(lex, number_end + g, disambiguate, cpu);
                 }
             }
-            let q = munch_walk(ts, src, n, st, opch, kind, e2, lanes, cpu);
-            if q < n && *src.add(q) == b'.' && is_digit(*src.add(q + 1), cpu) && st.get(q, cpu) {
+            let q = munch_walk(lex, number_end, disambiguate, cpu);
+            if q < src.len()
+                && src[q] == b'.'
+                && is_digit(src[q + 1], cpu)
+                && token_start.get(q, cpu)
+            {
                 p = q;
                 continue;
             }
             return q;
         }
-        return e2;
+        return number_end;
     }
 }
 
@@ -378,47 +347,30 @@ unsafe fn glue_number(
 #[cpu_multiversion]
 #[inline(never)]
 unsafe fn munch_walk(
-    ts: bool,
-    src: *const u8,
-    n: usize,
-    st: Bitmap,
-    opch: Bitmap,
-    kind: *mut u8,
+    lex: Lex,
     mut pos: usize,
-    lanes: &Lanes,
+    disambiguate: &DisambiguateState,
     cpu: impl Cpu,
 ) -> usize {
-    let end = opch.next0(pos, n, cpu);
+    let Lex { src, bitmaps, kinds, options } = lex;
+    let Bitmaps { token_start, op_char, .. } = *bitmaps;
+    let is_ts = options.ts;
+    let end = op_char.next0(pos, src.len(), cpu);
     while end - pos >= 2 {
-        st.set(pos, cpu);
+        token_start.set(pos, cpu);
         let rem = end - pos;
-        let bytes = *src.add(pos).cast::<[u8; 4]>();
+        let bytes = src.u32_at(pos).to_le_bytes();
         let (opk, opl) = opmap_longest(bytes, rem as u32, cpu);
         if let Some(opk) = opk {
             // Two list openers, not a shift: Array<<T>(x: T) => T>, a?.<<T>(x: T) => T>(b).
-            if ts && opk == TokenKind::LShift {
-                let tokens = TokensView::new(
-                    src,
-                    st,
-                    opch,
-                    kind,
-                    n,
-                    true,
-                    0,
-                    lanes.module,
-                    &lanes.disambiguate.brackets,
-                    &lanes.disambiguate.closers,
-                    cpu,
-                );
-                if lt_run_split(&tokens, pos, cpu) {
-                    pos += 2;
-                    continue;
-                }
+            if is_ts && opk == TokenKind::LShift && disambiguate.lt_run_split(lex, pos, cpu) {
+                pos += 2;
+                continue;
             }
-            *kind.add(pos) = opk as u8;
+            kinds.set(pos, opk as u8);
             let mut j = 1usize;
             while j < opl as usize {
-                st.clear(pos + j, cpu);
+                token_start.clear(pos + j, cpu);
                 j += 1;
             }
             pos += opl as usize;
@@ -427,7 +379,7 @@ unsafe fn munch_walk(
         }
     }
     if end - pos == 1 {
-        st.set(pos, cpu);
+        token_start.set(pos, cpu);
     }
     pos
 }

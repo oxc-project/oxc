@@ -4,59 +4,57 @@ use oxc_simd::{Cpu, cpu_multiversion};
 
 use crate::pipeline::{
     bitmap::Bitmap,
-    bytes::{is_word, is_ws, unicode_ws_len_at_unchecked},
+    bytes::{is_word, is_ws},
     carve::common::find_line_terminator,
     scan::scan_block_comment,
+    source::Source,
 };
 
 #[cpu_multiversion]
 #[inline]
 pub(super) unsafe fn jsx_names_equal_fast(
-    src: *const u8,
+    src: Source,
     word: Bitmap,
-    n: usize,
     a: usize,
     b: usize,
     lim_b: usize,
     cpu: impl Cpu,
 ) -> bool {
-    let e = word.next0(a, n, cpu);
+    let e = word.next0(a, src.len(), cpu);
     let len = e - a;
-    let ce = *src.add(e);
+    let ce = src[e];
     // The fast path compares one plain word; a comment or Unicode whitespace after it
     // (`<A/*c*/.B>`, `<A\u{a0}.B>`) may hide a member name, so those take the trivia-aware
     // path (a non-ASCII byte here is whitespace: `misc_pre` cleared it from `word`).
     if len <= 8
         && !matches!(ce, b'.' | b':' | b'-' | b'/')
         && ce < 0x80
-        && !(is_ws(ce, cpu)
-            && !is_word(*src.add(e + 1), cpu)
-            && jsx_name_continues_after(src, n, e, cpu))
+        && !(is_ws(ce, cpu) && !is_word(src[e + 1], cpu) && jsx_name_continues_after(src, e, cpu))
     {
-        let x = ptr::read_unaligned(src.add(a) as *const u64);
-        let y = ptr::read_unaligned(src.add(b) as *const u64);
+        let x = ptr::read_unaligned(src.as_ptr().add(a) as *const u64);
+        let y = ptr::read_unaligned(src.as_ptr().add(b) as *const u64);
         let mask = if len == 8 { !0u64 } else { (1u64 << (len * 8)) - 1 };
         if (x ^ y) & mask != 0 {
             return false;
         }
         return b + len >= lim_b || !is_jsx_name_byte_at(src, b + len, cpu);
     }
-    jsx_names_equal(src, n, a, b, lim_b, cpu)
+    jsx_names_equal(src, a, b, lim_b, cpu)
 }
 
 /// Is the byte at `i` part of a JSX name? A non-ASCII lead byte is, unless it starts Unicode
 /// whitespace (`</a\u{a0}>` closes `a`).
 #[cpu_multiversion]
 #[inline]
-unsafe fn is_jsx_name_byte_at(src: *const u8, i: usize, cpu: impl Cpu) -> bool {
-    let c = *src.add(i);
-    is_jsx_name_byte(c, cpu) && (c < 0x80 || unicode_ws_len_at_unchecked(src, i, cpu) == 0)
+fn is_jsx_name_byte_at(src: Source, i: usize, cpu: impl Cpu) -> bool {
+    let c = src[i];
+    is_jsx_name_byte(c, cpu) && (c < 0x80 || src.unicode_ws_len_at(i, cpu) == 0)
 }
 
 #[cpu_multiversion]
-unsafe fn jsx_name_continues_after(src: *const u8, lim: usize, i: usize, cpu: impl Cpu) -> bool {
-    let t = jsx_skip_trivia(src, lim, i, cpu);
-    t < lim && matches!(*src.add(t), b'.' | b':')
+unsafe fn jsx_name_continues_after(src: Source, i: usize, cpu: impl Cpu) -> bool {
+    let t = jsx_skip_trivia(src, i, cpu);
+    t < src.len() && matches!(src[t], b'.' | b':')
 }
 
 /// [`jsx_skip_trivia`] with the hot shapes inline: nothing to skip (`<div`), or plain spaces
@@ -64,58 +62,49 @@ unsafe fn jsx_name_continues_after(src: *const u8, lim: usize, i: usize, cpu: im
 /// non-ASCII lead) takes the full skip. Kept inline: this runs once per JSX element.
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn jsx_skip_trivia_fast(
-    src: *const u8,
-    n: usize,
-    mut i: usize,
-    cpu: impl Cpu,
-) -> usize {
-    while i < n && *src.add(i) == b' ' {
+pub(super) unsafe fn jsx_skip_trivia_fast(src: Source, mut i: usize, cpu: impl Cpu) -> usize {
+    while i < src.len() && src[i] == b' ' {
         i += 1;
     }
-    let c = *src.add(i);
-    if i < n && (is_ws(c, cpu) || c == b'/' || c >= 0x80) {
-        jsx_skip_trivia(src, n, i, cpu)
-    } else {
-        i
+    if i < src.len() {
+        let c = src[i];
+        if is_ws(c, cpu) || c == b'/' || c >= 0x80 {
+            return jsx_skip_trivia(src, i, cpu);
+        }
     }
+    i
 }
 
 #[cpu_multiversion]
-pub(super) unsafe fn jsx_skip_trivia(
-    src: *const u8,
-    n: usize,
-    mut i: usize,
-    cpu: impl Cpu,
-) -> usize {
+pub(super) unsafe fn jsx_skip_trivia(src: Source, mut i: usize, cpu: impl Cpu) -> usize {
     loop {
-        if i >= n {
-            return n;
+        if i >= src.len() {
+            return src.len();
         }
-        let c = *src.add(i);
+        let c = src[i];
         if is_ws(c, cpu) {
             i += 1;
             continue;
         }
-        if c == b'/' && i + 1 < n {
-            match *src.add(i + 1) {
+        if c == b'/' && i + 1 < src.len() {
+            match src[i + 1] {
                 b'*' => {
-                    let e = scan_block_comment(src, n, i + 2, cpu).0;
-                    if e >= n {
-                        return n;
+                    let e = scan_block_comment(src, i + 2, cpu).0;
+                    if e >= src.len() {
+                        return src.len();
                     }
                     i = e + 1;
                     continue;
                 }
                 b'/' => {
-                    i = find_line_terminator(src, n, i + 2, cpu);
+                    i = find_line_terminator(src, i + 2, cpu);
                     continue;
                 }
                 _ => {}
             }
         }
         if c >= 0x80 {
-            let w = unicode_ws_len_at_unchecked(src, i, cpu);
+            let w = src.unicode_ws_len_at(i, cpu);
             if w != 0 {
                 i += w;
                 continue;
@@ -126,23 +115,17 @@ pub(super) unsafe fn jsx_skip_trivia(
 }
 
 #[cpu_multiversion]
-unsafe fn jsx_names_equal(
-    src: *const u8,
-    n: usize,
-    a: usize,
-    b: usize,
-    lim_b: usize,
-    cpu: impl Cpu,
-) -> bool {
+unsafe fn jsx_names_equal(src: Source, a: usize, b: usize, lim_b: usize, cpu: impl Cpu) -> bool {
+    let lim_b = lim_b.min(src.len());
     let mut i = a;
     let mut j = b;
     let mut after_sep = false;
     loop {
-        i = jsx_name_next(src, i, n, after_sep, cpu);
+        i = jsx_name_next(src, i, src.len(), after_sep, cpu);
         j = jsx_name_next(src, j, lim_b, after_sep, cpu);
-        let x = if i < n { *src.add(i) } else { 0 };
-        let y = if j < lim_b { *src.add(j) } else { 0 };
-        let xn = i < n && is_jsx_name_byte_at(src, i, cpu);
+        let x = if i < src.len() { src[i] } else { 0 };
+        let y = if j < lim_b { src[j] } else { 0 };
+        let xn = i < src.len() && is_jsx_name_byte_at(src, i, cpu);
         let yn = j < lim_b && is_jsx_name_byte_at(src, j, cpu);
         if !xn && !yn {
             return true;
@@ -158,28 +141,28 @@ unsafe fn jsx_names_equal(
 
 #[cpu_multiversion]
 unsafe fn jsx_name_next(
-    src: *const u8,
+    src: Source,
     i: usize,
     lim: usize,
     after_sep: bool,
     cpu: impl Cpu,
 ) -> usize {
+    let lim = lim.min(src.len());
     if i >= lim {
         return lim;
     }
-    let c = *src.add(i);
-    let trivia =
-        is_ws(c, cpu) || c == b'/' || (c >= 0x80 && unicode_ws_len_at_unchecked(src, i, cpu) != 0);
+    let c = src[i];
+    let trivia = is_ws(c, cpu) || c == b'/' || (c >= 0x80 && src.unicode_ws_len_at(i, cpu) != 0);
     if !trivia {
         return i;
     }
-    let t = jsx_skip_trivia(src, lim, i, cpu);
-    if after_sep || (t < lim && matches!(*src.add(t), b'.' | b':')) { t } else { i }
+    let t = jsx_skip_trivia(src.until(lim), i, cpu);
+    if after_sep || (t < lim && matches!(src[t], b'.' | b':')) { t } else { i }
 }
 
 #[cpu_multiversion]
-pub(super) unsafe fn jsx_name_end(src: *const u8, n: usize, mut i: usize, cpu: impl Cpu) -> usize {
-    while i < n && is_jsx_name_byte(*src.add(i), cpu) {
+pub(super) fn jsx_name_end(src: Source, mut i: usize, cpu: impl Cpu) -> usize {
+    while i < src.len() && is_jsx_name_byte(src[i], cpu) {
         i += 1;
     }
     i

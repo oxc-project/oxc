@@ -4,7 +4,7 @@ use oxc_span::Span;
 
 use oxc_simd::{DynCpu, test_cpus};
 
-use crate::pipeline::bitmap::Bitmap;
+use crate::pipeline::{bitmap::Bitmap, kinds::Kinds};
 
 use crate::token::{TRIVIA_MAX, TRIVIA_MIN, tk};
 
@@ -56,7 +56,7 @@ fn compress_blocks_matches_scalar_reference(cpu: DynCpu) {
         let m = unsafe {
             compress_blocks(
                 Bitmap::new(st.as_mut_ptr()),
-                kind.as_ptr(),
+                Kinds::new(kind.as_mut_ptr()),
                 0,
                 nb,
                 starts.as_mut_ptr(),

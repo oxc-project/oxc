@@ -4,7 +4,11 @@ use oxc_simd::{Cpu, cpu_multiversion};
 
 use crate::token::tk;
 
-use crate::pipeline::{bitmap::Bitmap, find::find, lanes::Lanes};
+use crate::pipeline::{
+    bitmap::Bitmaps,
+    find::find,
+    lex::{Lex, LexState},
+};
 
 use super::{
     comments::{
@@ -18,54 +22,45 @@ use super::{
 };
 
 #[cpu_multiversion]
-pub(super) unsafe fn carve_js(
-    srcs: &[u8],
-    n: usize,
-    st: Bitmap,
-    kind: *mut u8,
-    opch: Bitmap,
-    word: Bitmap,
-    ts: bool,
-    lanes: &mut Lanes,
-    cpu: impl Cpu,
-) {
-    let src = srcs.as_ptr();
+pub(super) unsafe fn carve_js(lex: Lex, state: &mut LexState, cpu: impl Cpu) {
+    let Lex { src, bitmaps, kinds, options } = lex;
+    let Bitmaps { token_start, op_char, .. } = *bitmaps;
+    let LexState { lanes, disambiguate, template_depth, .. } = state;
+    let module = options.source_type_module;
     // Reuse the previous lex's allocation, which matters for small inputs
-    let mut depth = mem::take(&mut lanes.template_depth);
+    let mut depth = mem::take(template_depth);
     depth.clear();
     let mut i = 0usize;
-    if n >= 2 && *src == b'#' && *src.add(1) == b'!' {
-        let end = find_line_terminator(src, n, 2, cpu);
-        *kind = tk!(Hashbang);
-        st.clear_range(1, end - 1, cpu);
-        if end < n {
-            st.set(end, cpu);
+    if src.len() >= 2 && src[0] == b'#' && src[1] == b'!' {
+        let end = find_line_terminator(src, 2, cpu);
+        kinds.set(0, tk!(Hashbang));
+        token_start.clear_range(1, end - 1, cpu);
+        if end < src.len() {
+            token_start.set(end, cpu);
         }
         i = end;
     }
     loop {
         // HTML close comments only exist in scripts, so modules needn't stop at closing brackets
-        let s = match (depth.is_empty(), lanes.module) {
-            (true, false) => find(src, n, i, OPENER_BYTES, cpu),
-            (true, true) => find(src, n, i, OPENER_MODULE_BYTES, cpu),
-            (false, false) => find(src, n, i, OPENER8_BYTES, cpu),
-            (false, true) => find(src, n, i, OPENER8_MODULE_BYTES, cpu),
+        let s = match (depth.is_empty(), module) {
+            (true, false) => find(src, i, OPENER_BYTES, cpu),
+            (true, true) => find(src, i, OPENER_MODULE_BYTES, cpu),
+            (false, false) => find(src, i, OPENER8_BYTES, cpu),
+            (false, true) => find(src, i, OPENER8_MODULE_BYTES, cpu),
         };
-        if s >= n {
+        if s >= src.len() {
             break;
         }
-        let c = *src.add(s);
+        let c = src[s];
         match c {
             b'"' | b'\'' => {
-                i = lex_string(src, srcs, n, st, kind, s, c, lanes, cpu);
+                i = lex_string(src, token_start, kinds, s, c, lanes, cpu);
             }
             b'`' => {
                 let (end, opened_sub) = lex_template_segment(
                     src,
-                    srcs,
-                    n,
-                    st,
-                    kind,
+                    token_start,
+                    kinds,
                     s,
                     tk!(TemplateHead),
                     tk!(TemplateNoSub),
@@ -78,8 +73,8 @@ pub(super) unsafe fn carve_js(
                 i = end;
             }
             b'{' => {
-                if s >= 2 && *src.add(s - 1) == b'u' && *src.add(s - 2) == b'\\' {
-                    i = skip_unicode_brace_escape(src, n, s, cpu);
+                if s >= 2 && src[s - 1] == b'u' && src[s - 2] == b'\\' {
+                    i = skip_unicode_brace_escape(src, s, cpu);
                 } else {
                     let top = depth.len() - 1;
                     depth[top] += 1;
@@ -95,10 +90,8 @@ pub(super) unsafe fn carve_js(
                     depth.pop();
                     let (end, opened_sub) = lex_template_segment(
                         src,
-                        srcs,
-                        n,
-                        st,
-                        kind,
+                        token_start,
+                        kinds,
                         s,
                         tk!(TemplateMiddle),
                         tk!(TemplateTail),
@@ -112,20 +105,20 @@ pub(super) unsafe fn carve_js(
                 }
             }
             b'/' => {
-                i = lex_slash(src, srcs, n, st, kind, opch, word, ts, s, lanes, cpu);
+                i = lex_slash(lex, s, lanes, disambiguate, cpu);
             }
             b'<' => {
                 // Annex B B.1.1: `<!--` begins a line comment.
-                i = if html_open_comment_at(srcs, n, s, lanes.module, cpu) {
-                    lex_html_open_comment(src, srcs, n, st, kind, opch, s, lanes)
+                i = if html_open_comment_at(src, s, module, cpu) {
+                    lex_html_open_comment(src, token_start, kinds, op_char, s, module, lanes)
                 } else {
                     s + 1
                 };
             }
             b'>' => {
                 // Annex B B.1.3: `-->` begins a line comment, but only at line start.
-                i = if html_close_comment_at(srcs, s, lanes.module, cpu) {
-                    lex_html_close_comment(src, srcs, n, st, kind, opch, s, lanes)
+                i = if html_close_comment_at(src, s, module, cpu) {
+                    lex_html_close_comment(src, token_start, kinds, op_char, s, lanes)
                 } else {
                     s + 1
                 };
@@ -135,5 +128,5 @@ pub(super) unsafe fn carve_js(
             }
         }
     }
-    lanes.template_depth = depth;
+    *template_depth = depth;
 }

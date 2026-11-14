@@ -1,16 +1,10 @@
-//! Keyword recognition for `coalesce`.
-//!
-//! `coalesce` collects the positions of words which may be keywords (candidates) in `kwpos`,
-//! and every [`KWB`] words of the bitmaps calls [`kw_flush`] to check them with [`kw_match`].
-//! A candidate which is a keyword has its kind changed from `Ident` to the keyword's [`TokenKind`].
-
 use std::ptr;
 
 use oxc_simd::{Cpu, cpu_multiversion};
 
 use crate::token::TokenKind;
 
-use crate::pipeline::{bitmap::Bitmap, keywords::kw_match};
+use crate::pipeline::{bitmap::Bitmap, keywords::kw_match, kinds::Kinds, source::Source};
 
 pub const KWB: usize = 64;
 
@@ -19,18 +13,18 @@ pub const KWB: usize = 64;
 #[cpu_multiversion]
 #[inline(always)]
 pub(super) unsafe fn kw_flush(
-    ts: bool,
-    src: *const u8,
+    is_ts: bool,
+    src: Source,
     word: Bitmap,
-    kind: *mut u8,
-    kwpos: *const u32,
+    kinds: Kinds,
+    kw_candidates: *const u32,
     k: usize,
     cpu: impl Cpu,
 ) {
-    if ts {
-        kw_verify_batch::<true>(src, word, kind, kwpos, k, cpu);
+    if is_ts {
+        kw_verify_batch::<true>(src, word, kinds, kw_candidates, k, cpu);
     } else {
-        kw_verify_batch::<false>(src, word, kind, kwpos, k, cpu);
+        kw_verify_batch::<false>(src, word, kinds, kw_candidates, k, cpu);
     }
 }
 
@@ -44,9 +38,9 @@ pub(super) unsafe fn kw_flush(
 #[cpu_multiversion]
 #[inline(never)]
 unsafe fn kw_verify_batch<const IS_TS: bool>(
-    src: *const u8,
+    src: Source,
     word: Bitmap,
-    kind: *mut u8,
+    kinds: Kinds,
     pos: *const u32,
     k: usize,
     cpu: impl Cpu,
@@ -57,7 +51,7 @@ unsafe fn kw_verify_batch<const IS_TS: bool>(
         // Candidates are code-level identifier starts (carve cleared every
         // literal interior and JSX start from the masks), so the incumbent
         // kind is IDENT: select over it instead of a read-modify-write.
-        *kind.add(p) = kw_match::<IS_TS>(src.add(p), len, cpu) as u8;
+        kinds.set(p, kw_match::<IS_TS>(src.as_ptr().add(p), len, cpu) as u8);
     }
 }
 
@@ -76,17 +70,17 @@ unsafe fn kw_verify_batch<const IS_TS: bool>(
 #[cpu_multiversion]
 #[inline]
 pub(super) unsafe fn kw_match_word(
-    ts: bool,
-    src: *const u8,
+    is_ts: bool,
+    src: Source,
     word: Bitmap,
     pos: usize,
     cpu: impl Cpu,
 ) -> TokenKind {
     let len = word_len(word, pos, cpu);
-    if ts {
-        kw_match::<true>(src.add(pos), len, cpu)
+    if is_ts {
+        kw_match::<true>(src.as_ptr().add(pos), len, cpu)
     } else {
-        kw_match::<false>(src.add(pos), len, cpu)
+        kw_match::<false>(src.as_ptr().add(pos), len, cpu)
     }
 }
 
@@ -113,7 +107,7 @@ unsafe fn word_len(word: Bitmap, pos: usize, _cpu: impl Cpu) -> usize {
 mod tests {
     use oxc_simd::test_cpus;
 
-    use crate::token::tk;
+    use crate::{PAD, token::tk};
 
     use super::*;
 
@@ -150,9 +144,9 @@ mod tests {
             unsafe {
                 kw_flush(
                     is_ts,
-                    src.as_ptr(),
+                    Source::new(&src, src.len() - PAD),
                     Bitmap::new(word_bitmap.as_mut_ptr()),
-                    kinds.as_mut_ptr(),
+                    Kinds::new(kinds.as_mut_ptr()),
                     positions.as_ptr(),
                     positions.len(),
                     cpu,

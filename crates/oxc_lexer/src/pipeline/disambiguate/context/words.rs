@@ -118,7 +118,7 @@ impl Walk {
                 let at_stmt = self.at_stmt_start()
                     || self.prev_kw == tk!(KwDefault)
                     || (kw == tk!(KwNamespace) && self.stmt_reg() == StmtReg::ExportAs);
-                tokens.ts
+                tokens.is_ts
                     && matches_tk!(nx.kind, Ident | String)
                     && !tokens.line_break_between(end, nx.pos, cpu)
                     && at_stmt
@@ -129,7 +129,7 @@ impl Walk {
                 let export_as = kw == tk!(KwAs) && self.prev_kw == tk!(KwExport);
                 let in_module_clause = self.top_kind() == FrameKind::ModuleSpec
                     || matches!(self.stmt_reg(), StmtReg::Import | StmtReg::Export);
-                export_as || (tokens.ts && !self.operand_allowed() && !in_module_clause)
+                export_as || (tokens.is_ts && !self.operand_allowed() && !in_module_clause)
             }
             tk!(KwStatic) => {
                 self.top_kind() == FrameKind::ClassBody && self.top().member == Member::KeyPos

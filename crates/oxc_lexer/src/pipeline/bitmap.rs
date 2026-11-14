@@ -115,18 +115,51 @@ impl Bitmap {
     }
 }
 
+/// The per-byte bitmaps classify fills in and the later stages refine.
+#[derive(Clone, Copy)]
+pub(super) struct Bitmaps {
+    pub token_start: Bitmap,
+    /// Identifier chars, including every non-ASCII byte.
+    pub word: Bitmap,
+    pub keyword_initial: Bitmap,
+    /// Chars a multi-byte operator is made of.
+    pub op_char: Bitmap,
+    pub digit: Bitmap,
+    pub dot: Bitmap,
+    /// Bytes the misc passes look at: hash, backslash, non-ASCII, vertical tab and form feed.
+    pub misc: Bitmap,
+}
+
+impl Bitmaps {
+    #[inline(always)]
+    pub(super) unsafe fn clear_block(&self, block_idx: usize) {
+        let all = [
+            self.token_start,
+            self.word,
+            self.keyword_initial,
+            self.op_char,
+            self.digit,
+            self.dot,
+            self.misc,
+        ];
+        for bitmap in all {
+            *bitmap.as_ptr().add(block_idx) = 0;
+        }
+    }
+}
+
 #[cpu_version(Avx2)]
 #[inline]
-unsafe fn any_avx2(bm: *const u64, nw: usize, cpu: Avx2) -> bool {
+unsafe fn any_avx2(bm: *const u64, block_count: usize, cpu: Avx2) -> bool {
     let mut w = 0usize;
-    while w + 4 <= nw {
+    while w + 4 <= block_count {
         let v = Vec256::load_unaligned(bm.add(w).cast::<u8>(), cpu);
         if !v.is_zero() {
             return true;
         }
         w += 4;
     }
-    while w < nw {
+    while w < block_count {
         if *bm.add(w) != 0 {
             return true;
         }
@@ -137,15 +170,15 @@ unsafe fn any_avx2(bm: *const u64, nw: usize, cpu: Avx2) -> bool {
 
 #[cpu_version(Generic)]
 #[inline]
-unsafe fn any_generic(bm: *const u64, nw: usize) -> bool {
+unsafe fn any_generic(bm: *const u64, block_count: usize) -> bool {
     let mut w = 0usize;
-    while w + 4 <= nw {
+    while w + 4 <= block_count {
         if (*bm.add(w) | *bm.add(w + 1) | *bm.add(w + 2) | *bm.add(w + 3)) != 0 {
             return true;
         }
         w += 4;
     }
-    while w < nw {
+    while w < block_count {
         if *bm.add(w) != 0 {
             return true;
         }

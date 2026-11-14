@@ -3,7 +3,7 @@ use oxc_span::Span;
 
 use crate::token::{SPAN_SENTINELS, tk};
 
-use crate::pipeline::{bitmap::Bitmap, lanes::Lanes};
+use crate::pipeline::{bitmap::Bitmap, kinds::Kinds, lanes::Lanes, lex::Lex};
 
 mod avx2;
 mod common;
@@ -24,11 +24,7 @@ pub const STAGE_CAP: usize = STAGE_BLOCKS * 64 + 128;
 #[cpu_multiversion]
 #[inline(never)]
 pub unsafe fn compress(
-    src: &[u8],
-    n: usize,
-    nb: usize,
-    st: Bitmap,
-    kind: *const u8,
+    lex: Lex,
     stage_pos: *mut u32,
     stage_kind: *mut u8,
     out_kinds: *mut u8,
@@ -36,12 +32,15 @@ pub unsafe fn compress(
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) -> usize {
+    let Lex { src, bitmaps, kinds, .. } = lex;
+    let token_start = bitmaps.token_start;
     let mut c = 0usize;
     let mut w = 0usize;
     let mut b = 0usize;
-    while b < nb {
-        let b1 = (b + STAGE_BLOCKS).min(nb);
-        c += compress_blocks(st, kind, b, b1, stage_pos.add(c), stage_kind.add(c), cpu);
+    let block_count = src.block_count();
+    while b < block_count {
+        let b1 = (b + STAGE_BLOCKS).min(block_count);
+        c += compress_blocks(token_start, kinds, b, b1, stage_pos.add(c), stage_kind.add(c), cpu);
         b = b1;
         if c > 1 {
             w += build_spans(stage_kind, stage_pos, c - 1, out_spans.add(w), out_kinds.add(w), cpu);
@@ -51,11 +50,11 @@ pub unsafe fn compress(
         }
     }
     if c == 1 {
-        *stage_pos.add(1) = n as u32;
+        *stage_pos.add(1) = src.len() as u32;
         w += build_spans(stage_kind, stage_pos, 1, out_spans.add(w), out_kinds.add(w), cpu);
     }
-    write_sentinels(n as u32, out_spans.add(w), out_kinds.add(w), cpu);
-    lanes_post(src, out_kinds, out_spans, w, n as u32, lanes, cpu);
+    write_sentinels(src.len() as u32, out_spans.add(w), out_kinds.add(w), cpu);
+    lanes_post(src.padded(), out_kinds, out_spans, w, src.len() as u32, lanes, cpu);
     w
 }
 
@@ -83,18 +82,41 @@ pub(super) fn init_pair_luts(cpu: DynCpu) {
 #[cpu_multiversion]
 #[inline(always)]
 unsafe fn compress_blocks(
-    st: Bitmap,
-    kind: *const u8,
+    token_start: Bitmap,
+    kinds: Kinds,
     b0: usize,
     b1: usize,
     starts: *mut u32,
-    kinds: *mut u8,
+    stage_kinds: *mut u8,
     cpu: impl Cpu,
 ) -> usize {
     match DynCpu::from(cpu) {
-        DynCpu::Avx2(cpu) => compress_blocks_avx2(st.as_ptr(), kind, b0, b1, starts, kinds, cpu),
-        DynCpu::Neon(cpu) => compress_blocks_neon(st.as_ptr(), kind, b0, b1, starts, kinds, cpu),
-        DynCpu::Generic(_) => compress_blocks_generic(st.as_ptr(), kind, b0, b1, starts, kinds),
+        DynCpu::Avx2(cpu) => compress_blocks_avx2(
+            token_start.as_ptr(),
+            kinds.as_ptr(),
+            b0,
+            b1,
+            starts,
+            stage_kinds,
+            cpu,
+        ),
+        DynCpu::Neon(cpu) => compress_blocks_neon(
+            token_start.as_ptr(),
+            kinds.as_ptr(),
+            b0,
+            b1,
+            starts,
+            stage_kinds,
+            cpu,
+        ),
+        DynCpu::Generic(_) => compress_blocks_generic(
+            token_start.as_ptr(),
+            kinds.as_ptr(),
+            b0,
+            b1,
+            starts,
+            stage_kinds,
+        ),
     }
 }
 
@@ -122,13 +144,13 @@ unsafe fn lanes_post(
     out_kinds: *const u8,
     out_spans: *const Span,
     m: usize,
-    nn: u32,
+    src_len: u32,
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) {
     match DynCpu::from(cpu) {
-        DynCpu::Avx2(cpu) => lanes_post_avx2(src, out_kinds, out_spans, m, nn, lanes, cpu),
-        DynCpu::Neon(cpu) => lanes_post_neon(src, out_kinds, out_spans, m, nn, lanes, cpu),
-        DynCpu::Generic(_) => lanes_post_generic(src, out_kinds, out_spans, m, nn, lanes),
+        DynCpu::Avx2(cpu) => lanes_post_avx2(src, out_kinds, out_spans, m, src_len, lanes, cpu),
+        DynCpu::Neon(cpu) => lanes_post_neon(src, out_kinds, out_spans, m, src_len, lanes, cpu),
+        DynCpu::Generic(_) => lanes_post_generic(src, out_kinds, out_spans, m, src_len, lanes),
     };
 }

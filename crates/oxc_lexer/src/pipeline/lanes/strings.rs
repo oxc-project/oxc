@@ -1,8 +1,6 @@
-use std::{ptr, str};
+use std::ptr;
 
-use oxc_ast::ast::{Comment, RegExpFlags};
 use oxc_simd::{Avx2, BASELINE, Cpu, DynCpu, Neon, Vec128, Vec256, cpu_multiversion, cpu_version};
-use oxc_span::Span;
 use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
 use crate::{
@@ -10,98 +8,11 @@ use crate::{
     token::StringSpan,
 };
 
-use crate::pipeline::{carve::JFrame, chunk::mm32, disambiguate::DisambiguateState};
+use crate::pipeline::{bytes::hexd, chunk::mm32};
 
-#[derive(Debug, Default)]
-pub(crate) struct TokenLanes {
-    pub numbers: Vec<f64>,
-    pub strings: Vec<StringSpan>,
-    pub templates: Vec<StringSpan>,
-    pub atoms: Vec<StringSpan>,
-    pub regex_flags: Vec<RegExpFlags>,
-    pub cooked: Vec<u8>,
-    pub comments: Vec<Comment>,
-    /// Lexer diagnostics, pushed only on cold error paths; empty for valid input.
-    pub diags: Vec<Diagnostic>,
-    /// Code-level whitespace chars other than space, tab, LF and CR, one span per char.
-    pub irregular_whitespaces: Vec<Span>,
-}
-
-#[derive(Default)]
-pub(crate) struct Lanes {
-    pub out: TokenLanes,
-    /// Byte ranges lexed content-blind (the `.tsx` type-argument skip): diagnostics landing in one are dropped at drain time.
-    pub diag_suppress: Vec<(u32, u32)>,
-    /// Positions of non-whitespace non-ASCII lead bytes, recorded by
-    /// `misc_pre` before carve clears literal interiors. Resolved at drain:
-    /// leads inside literal tokens are legal content and drop cheaply; only
-    /// code-level survivors pay the identifier-char check. Empty for
-    /// pure-ASCII input.
-    pub unicode_leads: Vec<u32>,
-    /// Carve's nesting stacks, kept between lexes to reuse their allocations.
-    pub(super) template_depth: Vec<u32>,
-    pub(super) jsx_stack: Vec<JFrame>,
-    pub(super) module: bool,
-    /// What the disambiguation questions keep across the lex: the context walks,
-    /// the bracket bitmap and the closers the forward scans resolved.
-    pub(super) disambiguate: DisambiguateState,
-}
+use super::Lanes;
 
 impl Lanes {
-    #[cpu_multiversion]
-    pub(super) fn clear(&mut self, _cpu: impl Cpu) {
-        self.out.numbers.clear();
-        self.out.strings.clear();
-        self.out.templates.clear();
-        self.out.atoms.clear();
-        self.out.regex_flags.clear();
-        self.out.cooked.clear();
-        self.out.comments.clear();
-        self.out.diags.clear();
-        self.diag_suppress.clear();
-        self.unicode_leads.clear();
-        self.out.irregular_whitespaces.clear();
-    }
-
-    #[cpu_multiversion]
-    #[inline]
-    pub(super) fn push_regex_flags(&mut self, src: &[u8], fs: usize, fe: usize, _cpu: impl Cpu) {
-        let mut f: u8 = 0;
-        for (k, &c) in src[fs..fe].iter().enumerate() {
-            let bit: u8 = match c {
-                b'g' => RegExpFlags::G.bits(),
-                b'i' => RegExpFlags::I.bits(),
-                b'm' => RegExpFlags::M.bits(),
-                b's' => RegExpFlags::S.bits(),
-                b'u' => RegExpFlags::U.bits(),
-                b'y' => RegExpFlags::Y.bits(),
-                b'd' => RegExpFlags::D.bits(),
-                b'v' => RegExpFlags::V.bits(),
-                _ => 0,
-            };
-            // Unknown or repeated flag: diagnostic. At most 8 flag chars.
-            if bit == 0 {
-                self.push_diag((fs + k) as u32, 1, DiagCode::InvalidRegexpFlag);
-            } else if f & bit != 0 {
-                self.push_diag((fs + k) as u32, 1, DiagCode::DuplicateRegexpFlag);
-            }
-            f |= bit;
-        }
-        self.out.regex_flags.push(RegExpFlags::from_bits_retain(f));
-    }
-
-    /// Record a diagnostic. Cold and non-inlined so the push stays out of
-    /// the hot carve body.
-    ///
-    /// As it's cold code, it's compiled only once, not separately for each CPU feature set.
-    /// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
-    #[cpu_version(Generic)]
-    #[cold]
-    #[inline(never)]
-    pub(super) fn push_diag(&mut self, off: u32, len: u32, code: DiagCode) {
-        self.out.diags.push(Diagnostic { off, len, code, severity: DiagSeverity::Error });
-    }
-
     /// Line terminator in a string, with oxc_parser's exact span: opener
     /// through the first unescaped CR/LF (for CRLF only the CR). Escaped
     /// terminators are legal LineContinuations and are skipped the way the
@@ -112,7 +23,7 @@ impl Lanes {
     #[cpu_version(Generic)]
     #[cold]
     #[inline(never)]
-    pub(super) fn push_line_terminator_in_string(&mut self, src: &[u8], s: usize, end: usize) {
+    pub(crate) fn push_line_terminator_in_string(&mut self, src: &[u8], s: usize, end: usize) {
         let mut i = s + 1; // past the opening quote
         let mut term_end = end; // fallback (unreachable: the scanner saw a terminator)
         while i < end {
@@ -138,39 +49,6 @@ impl Lanes {
         self.push_diag(s as u32, (term_end - s) as u32, DiagCode::LineTerminatorInString);
     }
 
-    /// IdentifierStart or digit right after a numeric literal (`1.5n`,
-    /// `3in`, `0b12`), with oxc_parser's `invalid_number_end` span: the char
-    /// at `e2` plus the run of identifier-start chars after it.
-    ///
-    /// As it's cold code, it's compiled only once, not separately for each CPU feature set.
-    /// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
-    #[cpu_version(Generic)]
-    #[cold]
-    #[inline(never)]
-    pub(super) fn push_num_end_diag(&mut self, src: &[u8], e2: usize, code: DiagCode) {
-        let end = ident_start_run_end(src, e2 + 1);
-        self.push_diag(e2 as u32, (end - e2) as u32, code);
-    }
-
-    /// Non-ASCII byte right after a numeric literal: a Unicode
-    /// IdentifierStart (`1π`) is the same invalid adjacency as the ASCII
-    /// case; Unicode whitespace is legal and invalid UTF-8 emits nothing
-    /// here.
-    ///
-    /// As it's cold code, it's compiled only once, not separately for each CPU feature set.
-    /// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
-    #[cpu_version(Generic)]
-    #[cold]
-    #[inline(never)]
-    pub(super) fn push_num_end_diag_unicode(&mut self, src: &[u8], e2: usize) {
-        let Some(ch) = decode_char_at(src, e2) else { return };
-        if !is_identifier_start(ch) {
-            return;
-        }
-        let end = ident_start_run_end(src, e2 + ch.len_utf8());
-        self.push_diag(e2 as u32, (end - e2) as u32, DiagCode::InvalidNumericLiteral);
-    }
-
     /// `EMIT`: report malformed escapes while cooking - strings only, since
     /// template escapes are legal when tagged (the parser owns that error).
     /// `CRLF`: normalize raw CRLF/CR to LF per the template TV rule
@@ -184,14 +62,14 @@ impl Lanes {
         be: u32,
         cpu: impl Cpu,
     ) -> (StringSpan, bool) {
-        let ss = self.out.cooked.len() as u32;
+        let ss = self.cooked.len() as u32;
         if be <= bs {
             return (StringSpan::new(ss, ss & StringSpan::END_MASK, false, cpu), false);
         }
         let body_len = (be - bs) as usize;
 
-        self.out.cooked.reserve(body_len.max(32) + 8);
-        let base = self.out.cooked.as_mut_ptr();
+        self.cooked.reserve(body_len.max(32) + 8);
+        let base = self.cooked.as_mut_ptr();
 
         let needs_decode = if body_len < 32 {
             return self.cook_short_dispatch::<EMIT, CRLF>(src, bs, be, base, ss, body_len, cpu);
@@ -202,7 +80,7 @@ impl Lanes {
         };
         let (wi, lone, nes) = if needs_decode {
             unsafe {
-                cook_decode::<EMIT, CRLF>(src.as_ptr(), bs, be, base, ss, &mut self.out.diags, cpu)
+                cook_decode::<EMIT, CRLF>(src.as_ptr(), bs, be, base, ss, &mut self.diags, cpu)
             }
         } else {
             unsafe {
@@ -214,7 +92,7 @@ impl Lanes {
             }
             (ss + (be - bs), false, false)
         };
-        unsafe { self.out.cooked.set_len(wi as usize) };
+        unsafe { self.cooked.set_len(wi as usize) };
         (StringSpan::new(ss, wi & StringSpan::END_MASK, lone, cpu), nes)
     }
 
@@ -231,57 +109,57 @@ impl Lanes {
         cpu: impl Cpu,
     ) -> (StringSpan, bool) {
         let (wi, lone, nes) =
-            cook_short::<EMIT, CRLF>(src, bs, be, base, ss, body_len, &mut self.out.diags, cpu);
-        unsafe { self.out.cooked.set_len(wi as usize) };
+            cook_short::<EMIT, CRLF>(src, bs, be, base, ss, body_len, &mut self.diags, cpu);
+        unsafe { self.cooked.set_len(wi as usize) };
         (StringSpan::new(ss, wi & StringSpan::END_MASK, lone, cpu), nes)
     }
 
     #[cpu_multiversion]
     #[inline(always)]
-    pub(super) fn push_string(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
+    pub(crate) fn push_string(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
         let (sp, _) = self.cook::<true, false>(src, bs as u32, be as u32, cpu);
-        self.out.strings.push(sp);
+        self.strings.push(sp);
     }
 
     #[cpu_multiversion]
     #[inline(always)]
-    pub(super) fn push_template(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
+    pub(crate) fn push_template(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
         let (sp, nes) = self.cook::<false, true>(src, bs as u32, be as u32, cpu);
         // A NotEscapeSequence means cooked = None per the grammar; legality
         // depends on tagged-ness (parser context), so the span carries a
         // marker instead of a diagnostic.
-        self.out.templates.push(if nes { sp.with_cooked_invalid(cpu) } else { sp });
+        self.templates.push(if nes { sp.with_cooked_invalid(cpu) } else { sp });
     }
 
     /// Push a string value verbatim. JSX attribute strings have no backslash
     /// escapes; the value is the raw slice between the quotes.
     #[cpu_multiversion]
     #[inline]
-    pub(super) fn push_string_raw(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
-        let ss = self.out.cooked.len() as u32;
+    pub(crate) fn push_string_raw(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
+        let ss = self.cooked.len() as u32;
         if be <= bs {
-            self.out.strings.push(StringSpan::new(ss, ss & StringSpan::END_MASK, false, cpu));
+            self.strings.push(StringSpan::new(ss, ss & StringSpan::END_MASK, false, cpu));
             return;
         }
         let body_len = be - bs;
-        self.out.cooked.reserve(body_len + 8);
+        self.cooked.reserve(body_len + 8);
         unsafe {
-            let base = self.out.cooked.as_mut_ptr();
+            let base = self.cooked.as_mut_ptr();
             ptr::copy_nonoverlapping(src.as_ptr().add(bs), base.add(ss as usize), body_len);
-            self.out.cooked.set_len(ss as usize + body_len);
+            self.cooked.set_len(ss as usize + body_len);
         }
         let we = ss + body_len as u32;
-        self.out.strings.push(StringSpan::new(ss, we & StringSpan::END_MASK, false, cpu));
+        self.strings.push(StringSpan::new(ss, we & StringSpan::END_MASK, false, cpu));
     }
 
     #[cpu_multiversion]
     #[inline(always)]
-    pub(super) fn push_atom(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
+    pub(crate) fn push_atom(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
         // Escaped-identifier atoms are the one funnel every code-level
         // identifier escape passes through, so validation rides here.
         self.validate_ident_escapes(src, bs, be);
         let (sp, _) = self.cook::<false, false>(src, bs as u32, be as u32, cpu);
-        self.out.atoms.push(sp);
+        self.atoms.push(sp);
     }
 
     /// A well-formed escape decoding to a non-identifier char (`var \u0020 = 1`):
@@ -411,18 +289,18 @@ impl Lanes {
                 && src[k] == b'\\'
                 && src[k + 1] == b'u'
             {
-                let (l1, e2) = hex4(src, k + 2, be);
-                if let Some(low) = l1
+                let (low, low_end) = hex4(src, k + 2, be);
+                if let Some(low) = low
                     && (0xDC00..=0xDFFF).contains(&low)
                 {
                     // A well-formed pair is still invalid in identifiers:
                     // one diag over both escapes.
                     self.push_diag(
                         start as u32,
-                        (e2 - start) as u32,
+                        (low_end - start) as u32,
                         DiagCode::InvalidIdentifierEscape,
                     );
-                    i = e2;
+                    i = low_end;
                     continue;
                 }
                 // Not a valid low: fall through - the parser rewinds and
@@ -432,48 +310,7 @@ impl Lanes {
             i = k;
         }
     }
-
-    #[cpu_multiversion]
-    #[inline]
-    pub(super) fn push_number(&mut self, src: &[u8], s: usize, e: usize, cpu: impl Cpu) {
-        let len = e - s;
-        if len.wrapping_sub(1) <= 7 && !(len > 1 && src[s] == b'0') {
-            let keep = KEEP[len];
-            let raw = unsafe { ptr::read_unaligned(src.as_ptr().add(s) as *const u64) };
-            let w = raw & keep;
-            let f0 = 0xF0F0_F0F0_F0F0_F0F0 & keep;
-            let three = 0x3030_3030_3030_3030 & keep;
-            let digits =
-                (w & f0) == three && (w.wrapping_add(0x0606_0606_0606_0606 & keep) & f0) == three;
-            if digits {
-                let mut d = (w.wrapping_sub(three)) << ((8 - len) * 8);
-                d = ((d & 0x0f00_0f00_0f00_0f00) >> 8) + (d & 0x000f_000f_000f_000f) * 10;
-                d = ((d & 0x00ff_0000_00ff_0000) >> 16) + (d & 0x0000_00ff_0000_00ff) * 100;
-                d = ((d & 0x0000_ffff_0000_0000) >> 32) + (d & 0x0000_0000_0000_ffff) * 10000;
-                self.out.numbers.push(d as f64);
-                return;
-            }
-        }
-        // Only non-SWAR numbers (floats, radix-prefixed, bigint, separators, leading zeros, long) reach the validation walk.
-        let code = validate_number(src, s, e, cpu);
-        if code != DiagCode::Ok {
-            self.push_diag(s as u32, (e - s) as u32, code);
-        }
-        self.out.numbers.push(parse_number(src, s, e, cpu));
-    }
 }
-
-static KEEP: [u64; 9] = [
-    0x0000_0000_0000_0000,
-    0x0000_0000_0000_00ff,
-    0x0000_0000_0000_ffff,
-    0x0000_0000_00ff_ffff,
-    0x0000_0000_ffff_ffff,
-    0x0000_00ff_ffff_ffff,
-    0x0000_ffff_ffff_ffff,
-    0x00ff_ffff_ffff_ffff,
-    0xffff_ffff_ffff_ffff,
-];
 
 #[cpu_multiversion]
 #[inline(always)]
@@ -690,243 +527,6 @@ fn span_has_bs_or_cr_avx2(src: &[u8], bs: usize, be: usize, cpu: Avx2) -> bool {
 #[inline]
 fn span_has_bs_or_cr_generic(src: &[u8], bs: usize, be: usize) -> bool {
     memchr::memchr2(b'\\', b'\r', &src[bs..be]).is_some()
-}
-
-/// Decode the single `char` at byte `i`, or `None` if the bytes there are
-/// not valid UTF-8.
-#[cpu_version(Generic)]
-pub(crate) fn decode_char_at(s: &[u8], i: usize) -> Option<char> {
-    let end = (i + 4).min(s.len());
-    let slice = s.get(i..end)?;
-    match str::from_utf8(slice) {
-        Ok(t) => t.chars().next(),
-        // a multi-byte char cut at `end` still has a decodable valid prefix
-        Err(e) if e.valid_up_to() > 0 => {
-            str::from_utf8(&slice[..e.valid_up_to()]).ok()?.chars().next()
-        }
-        Err(_) => None,
-    }
-}
-
-/// End of the run of IdentifierStart chars beginning at `i` - the tail of
-/// oxc_parser's `invalid_number_end` span (a digit ends the run).
-#[cpu_version(Generic)]
-fn ident_start_run_end(s: &[u8], mut i: usize) -> usize {
-    while i < s.len() {
-        let b = s[i];
-        if b < 0x80 {
-            if !(b.is_ascii_alphabetic() || b == b'_' || b == b'$') {
-                break;
-            }
-            i += 1;
-        } else {
-            let Some(c) = decode_char_at(s, i) else { break };
-            if !is_identifier_start(c) {
-                break;
-            }
-            i += c.len_utf8();
-        }
-    }
-    i
-}
-
-#[cpu_multiversion]
-#[inline(always)]
-fn hexd(b: u8, _cpu: impl Cpu) -> Option<u8> {
-    match b {
-        b'0'..=b'9' => Some(b - b'0'),
-        b'a'..=b'f' => Some(b - b'a' + 10),
-        b'A'..=b'F' => Some(b - b'A' + 10),
-        _ => None,
-    }
-}
-
-#[cpu_multiversion]
-fn parse_number(src: &[u8], s: usize, e: usize, cpu: impl Cpu) -> f64 {
-    let mut i = s;
-    let mut radix: u64 = 0;
-    if e - s >= 2 && src[s] == b'0' {
-        let d = src[s + 1];
-        radix = match d {
-            b'x' | b'X' => 16,
-            b'b' | b'B' => 2,
-            b'o' | b'O' => 8,
-            _ => 0,
-        };
-        if radix != 0 {
-            i = s + 2;
-        }
-    }
-    if radix != 0 {
-        let mut v: u64 = 0;
-        while i < e {
-            let c = src[i];
-            i += 1;
-            if c == b'_' {
-                continue;
-            }
-            if c == b'n' {
-                break;
-            }
-            match hexd(c, cpu) {
-                Some(h) => v = v.wrapping_mul(radix).wrapping_add(h as u64),
-                None => break,
-            }
-        }
-        return v as f64;
-    }
-
-    let mut flt = false;
-    let mut dl = 0usize;
-    let mut v: u64 = 0;
-    for k in s..e {
-        let c = src[k];
-        if c == b'.' || c == b'e' || c == b'E' {
-            flt = true;
-        } else if c.is_ascii_digit() {
-            dl += 1;
-            v = v.wrapping_mul(10).wrapping_add((c - b'0') as u64);
-        }
-    }
-    if !flt && dl <= 19 {
-        return v as f64;
-    }
-
-    let mut buf = [0u8; 512];
-    let mut bl = 0usize;
-    let mut k = s;
-    while k < e && bl < buf.len() - 1 {
-        let c = src[k];
-        k += 1;
-        if c == b'_' || c == b'n' {
-            continue;
-        }
-        buf[bl] = c;
-        bl += 1;
-    }
-    str::from_utf8(&buf[..bl]).ok().and_then(|st| st.parse::<f64>().ok()).unwrap_or(0.0)
-}
-
-#[cpu_multiversion]
-#[inline]
-fn radix_digit(c: u8, _cpu: impl Cpu) -> Option<u8> {
-    match c {
-        b'0'..=b'9' => Some(c - b'0'),
-        b'a'..=b'f' => Some(c - b'a' + 10),
-        b'A'..=b'F' => Some(c - b'A' + 10),
-        _ => None,
-    }
-}
-
-/// First error code for the numeric literal `src[s..e]`, or `diag_code::OK`.
-/// Conservative by design: it must never flag a valid number, so anything
-/// ambiguous returns OK. Covers what survives as one token span - separator
-/// misplacement, empty radix (`0x`), legacy-octal-like decimals with a
-/// separator/bigint suffix/bad exponent. Shapes the scanner pre-splits
-/// (`0b12`, `1.5n`, `3in`) are detected at the adjacency in coalesce, not
-/// here. Detection only; `parse_number` still produces a lenient value.
-#[cpu_multiversion]
-#[inline(never)]
-fn validate_number(src: &[u8], s: usize, e: usize, cpu: impl Cpu) -> DiagCode {
-    let bytes = &src[s..e];
-    let Some((&last, head)) = bytes.split_last() else { return DiagCode::Ok };
-    let is_bigint = last == b'n';
-    let body = if is_bigint { head } else { bytes };
-    if body.is_empty() {
-        return DiagCode::Ok;
-    }
-
-    // Radix-prefixed integer: separator placement and the empty-radix case.
-    // An out-of-range digit cannot appear (the scanner stops before it), so
-    // that arm is a safety net.
-    if body.len() >= 2 && body[0] == b'0' {
-        let radix = match body[1] | 0x20 {
-            b'x' => 16u8,
-            b'o' => 8,
-            b'b' => 2,
-            _ => 0,
-        };
-        if radix != 0 {
-            let mut prev_us = true; // a '_' immediately after the prefix is invalid
-            let mut any = false;
-            for &c in &body[2..] {
-                if c == b'_' {
-                    if prev_us {
-                        return DiagCode::InvalidNumericSeparator;
-                    }
-                    prev_us = true;
-                } else if matches!(radix_digit(c, cpu), Some(v) if v < radix) {
-                    any = true;
-                    prev_us = false;
-                } else {
-                    return DiagCode::InvalidNumericLiteral;
-                }
-            }
-            if any && prev_us {
-                return DiagCode::InvalidNumericSeparator; // trailing '_'
-            }
-            if !any {
-                return DiagCode::InvalidNumericLiteral; // empty radix, e.g. `0x`
-            }
-            return DiagCode::Ok;
-        }
-
-        // Legacy-octal-like decimal (leading `0` + digit/`_`): oxc_parser
-        // consumes only `[0-9]` for the integer part - no separators, no bigint suffix -
-        // and accepts an exponent after an `8`/`9` flipped the run to
-        // NonOctalDecimal (`08e1` and `08E1` valid; `00e1` not).
-        // Bare `00`/`08` are valid sloppy-mode Annex B, and `.` never flags.
-        if matches!(body[1], b'0'..=b'9' | b'_') {
-            // Only the integer part is checked here. A fraction or exponent after an `8`/`9`
-            // is ordinary digits, so separators there are valid (`09.1_1`, `09e1_1`),
-            // and the generic checks below catch any that are misplaced.
-            if bytes.iter().take_while(|&&c| c.is_ascii_digit() || c == b'_').any(|&c| c == b'_') {
-                return DiagCode::InvalidNumericSeparator;
-            }
-            if is_bigint {
-                return DiagCode::InvalidBigint;
-            }
-            let run = bytes.iter().take_while(|c| c.is_ascii_digit()).count();
-            match bytes.get(run) {
-                // `08e1` / `08E1`: valid NonOctalDecimal exponent; its digits are
-                // still checked below (`08e` stays flagged).
-                Some(&b'e' | &b'E') if bytes[..run].iter().any(|&c| c >= b'8') => {}
-                Some(&b'e' | &b'E') => return DiagCode::InvalidNumericLiteral,
-                _ => {}
-            }
-            // fall through: the valid shapes still get the generic checks
-        }
-    }
-
-    // Every '_' must sit between two digits.
-    let mut prev_digit = false;
-    let mut exp_at: Option<usize> = None;
-    for (i, &c) in body.iter().enumerate() {
-        if c == b'_' {
-            let next_digit = matches!(body.get(i + 1), Some(&d) if d.is_ascii_digit());
-            if !prev_digit || !next_digit {
-                return DiagCode::InvalidNumericSeparator;
-            }
-            prev_digit = false;
-        } else {
-            prev_digit = c.is_ascii_digit();
-            if (c | 0x20) == b'e' && exp_at.is_none() {
-                exp_at = Some(i); // radix bodies returned above, so this is the marker
-            }
-        }
-    }
-    // Empty exponent (`1e`, `1e+`, `.5e`): the marker and optional sign were
-    // consumed but no digits followed - never true for a valid literal.
-    if let Some(ep) = exp_at {
-        let mut k = ep + 1;
-        if matches!(body.get(k), Some(&s) if s == b'+' || s == b'-') {
-            k += 1;
-        }
-        if !matches!(body.get(k), Some(d) if d.is_ascii_digit()) {
-            return DiagCode::InvalidNumericLiteral;
-        }
-    }
-    DiagCode::Ok
 }
 
 #[cpu_multiversion]
@@ -1293,10 +893,10 @@ mod tests {
         padded.extend_from_slice(&[0u8; 64]);
         let mut l = Lanes::default();
         l.push_template(&padded, 0, body.len(), cpu);
-        let sp = l.out.templates[0];
+        let sp = l.templates[0];
         let s = (sp.start & StringSpan::START_MASK) as usize;
         let e = (sp.end_and_flags & StringSpan::END_MASK) as usize;
-        l.out.cooked[s..e].to_vec()
+        l.cooked[s..e].to_vec()
     }
 
     #[test_cpus]

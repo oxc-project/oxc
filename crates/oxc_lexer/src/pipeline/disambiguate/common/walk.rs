@@ -32,7 +32,7 @@ use super::{TokensView, bits};
 /// every [`TokensView`] of the lex, so the words are cells.
 #[derive(Default)]
 pub struct Brackets {
-    /// Bracket bytes of the source. `st` is applied when a word is read, not stored, because
+    /// Bracket bytes of the source. token_start is applied when a word is read, not stored, because
     /// `carve` is still clearing literal interiors while the matches run.
     bits: Vec<Cell<u64>>,
     /// One bit per word of `bits`: built this lex.
@@ -106,17 +106,18 @@ pub(super) fn match_delim_back(
     close: u8,
     cpu: impl Cpu,
 ) -> Option<usize> {
-    let (src, st, kind, n, b) = (tokens.src, tokens.st, tokens.kind, tokens.n, tokens.brackets);
+    let (src, token_start, kinds, n, b) =
+        (tokens.src, tokens.token_start, tokens.kinds, tokens.n, tokens.brackets);
     let mut depth: i32 = 1;
     let mut steps: u32 = 0;
     let mut w = from >> 6;
-    let mut bits = b.word(src, n, w, cpu) & st[w] & ((1u64 << (from & 63)) - 1);
+    let mut bits = b.word(src, n, w, cpu) & token_start[w] & ((1u64 << (from & 63)) - 1);
     loop {
         while bits != 0 {
             let i = 63 - bits.leading_zeros() as usize;
             bits &= !(1u64 << i);
             let pos = (w << 6) | i;
-            if kind[pos] >= OP_KIND_BASE {
+            if kinds[pos] >= OP_KIND_BASE {
                 let c = src[pos];
                 if c == close {
                     depth += 1;
@@ -136,21 +137,22 @@ pub(super) fn match_delim_back(
             return None;
         }
         w -= 1;
-        bits = b.word(src, n, w, cpu) & st[w];
+        bits = b.word(src, n, w, cpu) & token_start[w];
     }
 }
 
 #[cpu_multiversion]
 #[inline(never)]
 fn delim_memo_opener(tokens: &TokensView, from: usize, cpu: impl Cpu) -> Option<usize> {
-    let (src, st, kind, n, b) = (tokens.src, tokens.st, tokens.kind, tokens.n, tokens.brackets);
+    let (src, token_start, kinds, n, b) =
+        (tokens.src, tokens.token_start, tokens.kinds, tokens.n, tokens.brackets);
     let mut m = b.pairs.borrow_mut();
     if from >= m.built_to {
         let first = m.built_to >> 6;
         let last = from >> 6;
         let mut w = first;
         while w <= last {
-            let mut bits = b.word(src, n, w, cpu) & st[w];
+            let mut bits = b.word(src, n, w, cpu) & token_start[w];
             if w == first {
                 bits &= !((1u64 << (m.built_to & 63)) - 1);
             }
@@ -160,7 +162,7 @@ fn delim_memo_opener(tokens: &TokensView, from: usize, cpu: impl Cpu) -> Option<
             while bits != 0 {
                 let p = (w << 6) | bits.trailing_zeros() as usize;
                 bits &= bits - 1;
-                if kind[p] >= OP_KIND_BASE {
+                if kinds[p] >= OP_KIND_BASE {
                     let c = src[p];
                     match c {
                         b'(' | b'[' | b'{' => m.open[delim_slot(c, cpu)].push(p as u32),
@@ -216,13 +218,13 @@ pub(super) fn ident_is(src: &[u8], pos: usize, kw: &[u8], cpu: impl Cpu) -> bool
 /// Previous significant token start before `pos` (skipping trivia), or `None` at start of input.
 #[cpu_multiversion]
 #[inline]
-pub fn prev_sig(st: &[u64], kind: &[u8], pos: usize, cpu: impl Cpu) -> Option<usize> {
-    let mut q = bits::prev1(st, pos, cpu);
+pub fn prev_sig(token_start: &[u64], kinds: &[u8], pos: usize, cpu: impl Cpu) -> Option<usize> {
+    let mut q = bits::prev1(token_start, pos, cpu);
     while let Some(p) = q {
-        if !is_trivia_byte(kind[p], cpu) {
+        if !is_trivia_byte(kinds[p], cpu) {
             break;
         }
-        q = bits::prev1(st, p, cpu);
+        q = bits::prev1(token_start, p, cpu);
     }
     q
 }

@@ -1,4 +1,6 @@
-use oxc_simd::{Cpu, cpu_multiversion};
+use std::str;
+
+use oxc_simd::{Cpu, cpu_multiversion, cpu_version};
 
 #[cpu_multiversion]
 #[inline(always)]
@@ -47,24 +49,10 @@ pub(super) const fn unicode_ws_len(c0: u8, c1: u8, c2: u8, _cpu: impl Cpu) -> us
 ///
 /// The non-ASCII set:
 /// U+0085, U+00A0, U+1680, U+2000..=U+200B, U+2028, U+2029, U+202F, U+205F, U+3000, U+FEFF.
-///
-/// Safe version of [`unicode_ws_len_at_unchecked`].
 #[cpu_multiversion]
 #[inline]
 pub(super) fn unicode_ws_len_at(src: &[u8], p: usize, cpu: impl Cpu) -> usize {
     unicode_ws_len(src[p], src[p + 1], src[p + 2], cpu)
-}
-
-/// Byte length (2 or 3) of the multi-byte ECMAScript WhiteSpace / LineTerminator at `p`, or 0.
-///
-/// The non-ASCII set:
-/// U+0085, U+00A0, U+1680, U+2000..=U+200B, U+2028, U+2029, U+202F, U+205F, U+3000, U+FEFF.
-///
-/// Unsafe version of [`unicode_ws_len_at`].
-#[cpu_multiversion]
-#[inline(always)]
-pub(super) unsafe fn unicode_ws_len_at_unchecked(src: *const u8, p: usize, cpu: impl Cpu) -> usize {
-    unicode_ws_len(*src.add(p), *src.add(p + 1), *src.add(p + 2), cpu)
 }
 
 /// The first line terminator (LF, CR, LS or PS) at or after i, or n.
@@ -110,4 +98,30 @@ pub(super) fn hex_val(c: u8, _cpu: impl Cpu) -> u32 {
         return (l - b'a' + 10) as u32;
     }
     255
+}
+
+/// The char at byte i, or None if the bytes there are not valid UTF-8.
+#[cpu_version(Generic)]
+pub(super) fn decode_char_at(s: &[u8], i: usize) -> Option<char> {
+    let end = (i + 4).min(s.len());
+    let slice = s.get(i..end)?;
+    match str::from_utf8(slice) {
+        Ok(t) => t.chars().next(),
+        // a multi-byte char cut at end still has a decodable valid prefix
+        Err(e) if e.valid_up_to() > 0 => {
+            str::from_utf8(&slice[..e.valid_up_to()]).ok()?.chars().next()
+        }
+        Err(_) => None,
+    }
+}
+
+#[cpu_multiversion]
+#[inline(always)]
+pub(super) fn hexd(b: u8, _cpu: impl Cpu) -> Option<u8> {
+    match b {
+        b'0'..=b'9' => Some(b - b'0'),
+        b'a'..=b'f' => Some(b - b'a' + 10),
+        b'A'..=b'F' => Some(b - b'A' + 10),
+        _ => None,
+    }
 }
