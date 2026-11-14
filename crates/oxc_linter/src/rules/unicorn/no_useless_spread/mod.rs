@@ -647,6 +647,13 @@ fn test() {
         "[...new Float64Array(buf).slice(0)]",
         "[...new BigInt64Array(buf).slice(0)]",
         "[...new BigUint64Array(buf).slice(0)]",
+        // Issue: <https://github.com/oxc-project/oxc/issues/29055>
+        "[...map.keys().filter((n) => n % 2 === 0)]",
+        "[...set.values().map(f)]",
+        "[...arr.entries().flatMap(f)]",
+        "[...str.matchAll(re).map(f)]",
+        "[...Iterator.from(x).filter(f)]",
+        "[...map.values().take(3).map(f)]",
     ];
 
     #[expect(clippy::literal_string_with_formatting_args)]
@@ -739,6 +746,7 @@ fn test() {
         r#"[...foo.split("|")]"#,
         r"[...new Array(3)]",
         r"[...Object.keys(foo)]",
+        r"[...Object.keys(foo).filter(bar)]",
         r"[...Object.values(foo)]",
         r"[...Array.from(foo)]",
         r"[...Array.of()]",

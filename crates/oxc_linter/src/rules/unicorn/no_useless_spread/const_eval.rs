@@ -177,7 +177,7 @@ impl ConstEval for CallExpression<'_> {
             ValueHint::NewTypedArray
         } else if is_split_method(self)
             || is_array_factory(self)
-            || is_functional_array_method(self)
+            || (is_functional_array_method(self) && !has_iterator_receiver(self))
             || is_array_producing_obj_method(self)
         {
             ValueHint::NewArray
@@ -247,6 +247,30 @@ fn is_functional_array_method(call_expr: &CallExpression) -> bool {
         None,
         None,
     )
+}
+
+/// `map.keys().filter(f)`, `str.matchAll(re).map(f)` or `Iterator.from(x).flatMap(f)`.
+///
+/// Iterator helpers share names with array methods but return an iterator, so
+/// only receivers that are iterators by syntax are recognized.
+fn has_iterator_receiver(call_expr: &CallExpression) -> bool {
+    call_expr.callee.get_member_expr().is_some_and(|member_expr| is_iterator(member_expr.object()))
+}
+
+fn is_iterator(expr: &Expression) -> bool {
+    let Expression::CallExpression(call_expr) = expr.get_inner_expression() else {
+        return false;
+    };
+    is_method_call(call_expr, Some(&["Iterator"]), Some(&["from"]), None, None)
+        || is_method_call(call_expr, None, Some(&["matchAll"]), None, None)
+        || is_method_call(call_expr, None, Some(&["keys", "values", "entries"]), Some(0), Some(0))
+        || (is_method_call(
+            call_expr,
+            None,
+            Some(&["drop", "filter", "flatMap", "map", "take"]),
+            None,
+            None,
+        ) && has_iterator_receiver(call_expr))
 }
 
 /// Matches `<expr>.reduce(a, b)`, which usually looks like

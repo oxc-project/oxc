@@ -627,6 +627,13 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
+ 1 │ [...Object.keys(foo).filter(bar)]
+   ·  ───
+   ╰────
+  help: `Object.keys(foo).filter` returns a new array. Spreading it into an array expression to create a new array is redundant.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.mjs:1:2]
  1 │ [...Object.values(foo)]
    ·  ───
    ╰────
