@@ -134,7 +134,7 @@ impl Config {
         oxlintrc: Oxlintrc,
         external_plugin_store: &ExternalPluginStore,
     ) -> String {
-        let LintConfig { plugins, settings, env, globals, path: _, options } =
+        let LintConfig { plugins, external_plugins, settings, env, globals, path: _, options } =
             self.base.config.as_ref();
         let mut overrides = oxlintrc.overrides;
         overrides.clear();
@@ -154,7 +154,7 @@ impl Config {
         let oxlintrc = Oxlintrc {
             schema: oxlintrc.schema,
             plugins: Some(*plugins),
-            external_plugins: oxlintrc.external_plugins,
+            external_plugins: external_plugins.as_deref().cloned(),
             categories: oxlintrc.categories,
             rules: OxlintRules::from_resolved(
                 &self.base_rules,
@@ -1067,6 +1067,7 @@ mod test {
         // Root config with react, typescript, unicorn plugins and restriction category
         let base_config = LintConfig {
             plugins: LintPlugins::REACT | LintPlugins::TYPESCRIPT | LintPlugins::UNICORN,
+            external_plugins: None,
             env: OxlintEnv::default(),
             settings: OxlintSettings::default(),
             globals: OxlintGlobals::default(),
@@ -1161,6 +1162,7 @@ mod test {
         // Root config with only typescript plugin
         let base_config = LintConfig {
             plugins: (LintPlugins::TYPESCRIPT),
+            external_plugins: None,
             env: OxlintEnv::default(),
             settings: OxlintSettings::default(),
             globals: OxlintGlobals::default(),
@@ -1271,6 +1273,7 @@ mod test {
         // Root config with react plugin
         let base_config = LintConfig {
             plugins: (LintPlugins::REACT),
+            external_plugins: None,
             env: OxlintEnv::default(),
             settings: OxlintSettings::default(),
             globals: OxlintGlobals::default(),
@@ -1659,6 +1662,48 @@ mod test {
                 "rules": { "no-unused-vars": ["warn", { "args": "none" }] }
             }])
         );
+    }
+
+    #[test]
+    fn test_print_config_inherited_js_plugins() {
+        let path = PathBuf::from("fixtures/extends_config/js_plugins.json");
+        let base = Oxlintrc::from_file(&path).unwrap();
+        let root: Oxlintrc = serde_json::from_value(json!({
+            "jsPlugins": ["eslint-plugin-root"],
+            "overrides": [{
+                "files": ["*.ts"],
+                "jsPlugins": ["eslint-plugin-override"]
+            }]
+        }))
+        .unwrap();
+        let configs = [
+            Oxlintrc { extends: vec![path], ..root.clone() },
+            Oxlintrc { extends_configs: vec![base.clone()], ..root.clone() },
+            Oxlintrc {
+                extends_configs: vec![Oxlintrc { extends_configs: vec![base], ..root }],
+                ..Oxlintrc::default()
+            },
+        ];
+        let expected: Oxlintrc = serde_json::from_value(json!({
+            "jsPlugins": [
+                "eslint-plugin-root",
+                "eslint-plugin-inherited",
+                { "name": "custom", "specifier": "eslint-plugin-shared" }
+            ]
+        }))
+        .unwrap();
+
+        for oxlintrc in configs {
+            let mut store = ExternalPluginStore::new(false);
+            let config =
+                ConfigStoreBuilder::from_oxlintrc(true, oxlintrc.clone(), None, &mut store, None)
+                    .unwrap()
+                    .build(&mut store)
+                    .unwrap();
+            let printed: Oxlintrc =
+                serde_json::from_str(&config.to_config_file(oxlintrc, &store)).unwrap();
+            assert_eq!(printed.external_plugins, expected.external_plugins);
+        }
     }
 
     #[test]

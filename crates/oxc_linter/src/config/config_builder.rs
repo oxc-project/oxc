@@ -1,6 +1,7 @@
 use std::{
     fmt::{self, Debug, Display},
     path::{Component as PathComponent, Path, PathBuf},
+    sync::Arc,
 };
 
 use itertools::Itertools;
@@ -294,6 +295,7 @@ impl ConfigStoreBuilder {
 
         let config = LintConfig {
             plugins,
+            external_plugins: oxlintrc.external_plugins.map(Arc::new),
             settings: oxlintrc.settings,
             env: oxlintrc.env,
             globals: oxlintrc.globals,
