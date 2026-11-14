@@ -70,28 +70,24 @@ source: crates/oxc_linter/src/tester.rs
  1 │ A: "use strict"
    · ─
    ╰────
-  help: Replace `A: "use strict"` with `"use strict"`.
 
   ⚠ eslint(no-unused-labels): 'foo:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:15]
  1 │ "use strict"; foo: "bar"
    ·               ───
    ╰────
-  help: Replace `foo: "bar"` with `"bar"`.
 
   ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:1]
  1 │ A: ("use strict")
    · ─
    ╰────
-  help: Replace `A: ("use strict")` with `("use strict")`.
 
   ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:1]
  1 │ A: `use strict`
    · ─
    ╰────
-  help: Replace `A: `use strict`` with ``use strict``.
 
   ⚠ eslint(no-unused-labels): 'bar:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:12]
@@ -105,7 +101,6 @@ source: crates/oxc_linter/src/tester.rs
  1 │ A: B: 'foo'
    ·    ─
    ╰────
-  help: Replace `B: 'foo'` with `'foo'`.
 
   ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:1]
@@ -119,7 +114,6 @@ source: crates/oxc_linter/src/tester.rs
  1 │ A: B: C: 'foo'
    ·       ─
    ╰────
-  help: Replace `C: 'foo'` with `'foo'`.
 
   ⚠ eslint(no-unused-labels): 'B:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:4]
@@ -140,7 +134,6 @@ source: crates/oxc_linter/src/tester.rs
  1 │ A: B: C: D: 'foo'
    ·          ─
    ╰────
-  help: Replace `D: 'foo'` with `'foo'`.
 
   ⚠ eslint(no-unused-labels): 'C:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:7]
@@ -168,7 +161,6 @@ source: crates/oxc_linter/src/tester.rs
  1 │ A: B: C: D: E: 'foo'
    ·             ─
    ╰────
-  help: Replace `E: 'foo'` with `'foo'`.
 
   ⚠ eslint(no-unused-labels): 'D:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:10]

@@ -70,7 +70,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     recommended,
-    fix,
+    suggestion,
     config = NoUnsafeNegation,
     version = "0.0.3",
     short_description = "Disallow negating the left side of relational operators.",
@@ -114,14 +114,14 @@ impl Rule for NoUnsafeNegation {
                 fixer.replace(expr.span, modified_code)
             };
 
-            ctx.diagnostic_with_fix(diagnostic, fix_producer);
+            ctx.diagnostic_with_suggestion(diagnostic, fix_producer);
         }
     }
 }
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::{fixer::FixKind, tester::Tester};
 
     let pass = vec![
         ("a in b", None),
@@ -197,6 +197,16 @@ fn test() {
             Some(serde_json::json!([{ "enforceForOrderingRelations": true }])),
         ),
     ];
+
+    let fix = fix
+        .into_iter()
+        .flat_map(|(source, expected, config): (_, _, Option<serde_json::Value>)| {
+            [
+                (source, source, config.clone(), FixKind::SafeFix),
+                (source, expected, config, FixKind::Suggestion),
+            ]
+        })
+        .collect::<Vec<_>>();
 
     Tester::new(NoUnsafeNegation::NAME, NoUnsafeNegation::PLUGIN, pass, fail)
         .expect_fix(fix)

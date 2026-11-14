@@ -19,6 +19,9 @@ declare_oxc_lint!(
     /// Note: This rule does not flag template literals without substitution expressions.
     /// For example, `` `hello` `` is allowed even though it could be written as `'hello'`.
     ///
+    /// Removing a template around a literal, branded string, or type parameter can
+    /// change the inferred type. Such removals are offered as suggestions.
+    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
@@ -63,7 +66,7 @@ declare_oxc_lint!(
     NoUnnecessaryTemplateExpression(tsgolint),
     typescript,
     suspicious,
-    fix,
+    conditional_fix_suggestion,
     version = "1.12.0",
     short_description =
         "Disallows unnecessary template expressions (interpolations) that can be simplified.",

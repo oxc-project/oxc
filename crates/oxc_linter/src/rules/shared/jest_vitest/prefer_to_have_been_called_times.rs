@@ -4,14 +4,9 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
-    fixer::RuleFixer,
     utils::{ParsedExpectFnCall, PossibleJestNode, parse_expect_jest_fn_call},
 };
-use oxc_ast::{
-    AstKind,
-    ast::{CallExpression, Expression, MemberExpression},
-    match_member_expression,
-};
+use oxc_ast::{AstKind, ast::CallExpression};
 
 fn prefer_to_have_been_called_times_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
@@ -82,75 +77,40 @@ fn check_and_fix<'a>(
         return;
     }
 
-    let matcher_argument = parsed_expect_call.matcher_arguments.and_then(|args| args.first());
-    if matcher_argument.is_none() {
+    if parsed_expect_call.matcher_arguments.is_none_or(|args| args.is_empty()) {
         return;
     }
 
-    let expect_argument = parsed_expect_call.expect_arguments.and_then(|args| args.first());
-
-    let expect_argument_mem_expr =
-        expect_argument.and_then(|arg| arg.as_expression()).and_then(|arg| match arg {
-            expr @ match_member_expression!(Expression) => Some(expr.to_member_expression()),
-            _ => None,
-        });
-
-    let is_expect_argument_mock_calls = expect_argument_mem_expr.is_some_and(|mem_expr| {
-        let is_last_member_calls =
-            mem_expr.static_property_name().is_some_and(|name| name == "calls");
-
-        let is_reversed_second_member_mock = match mem_expr.object() {
-            expr_inner @ match_member_expression!(Expression) => {
-                let inner_mem_expr = expr_inner.to_member_expression();
-                inner_mem_expr.static_property_name().is_some_and(|name| name == "mock")
-            }
-            _ => false,
-        };
-
-        is_last_member_calls && is_reversed_second_member_mock
-    });
-
-    let should_fix =
-        matcher_argument.is_some() && is_expect_argument_mock_calls && is_wanted_matcher;
-
-    if !should_fix {
+    let Some(calls_member) = parsed_expect_call
+        .expect_arguments
+        .and_then(|args| args.first())
+        .and_then(|arg| arg.as_expression())
+        .and_then(|expr| expr.as_member_expression())
+    else {
+        return;
+    };
+    let Some(mock_member) = calls_member.object().as_member_expression() else {
+        return;
+    };
+    if !calls_member.static_property_name().is_some_and(|name| name == "calls")
+        || !mock_member.static_property_name().is_some_and(|name| name == "mock")
+    {
         return;
     }
 
     ctx.diagnostic_with_fix(prefer_to_have_been_called_times_diagnostic(call_expr.span), |fixer| {
-        let matcher_arg_text = if let Some(arg) = matcher_argument {
-            fixer.source_range(arg.span())
-        } else {
-            return fixer.noop();
+        let replacement = match fixer.source_range(matcher.span).chars().next() {
+            Some('\'') => "'toHaveBeenCalledTimes'",
+            Some('"') => "\"toHaveBeenCalledTimes\"",
+            Some('`') => "`toHaveBeenCalledTimes`",
+            _ => "toHaveBeenCalledTimes",
         };
-
-        let param_text = build_expect_argument(expect_argument_mem_expr, fixer);
-
-        let modifier_text =
-            parsed_expect_call.modifiers().fold(String::new(), |mut acc, modifier| {
-                use std::fmt::Write;
-                write!(&mut acc, ".{}", fixer.source_range(modifier.span)).unwrap();
-                acc
-            });
-
-        let method_text = "toHaveBeenCalledTimes";
-
-        let code = format!("expect({param_text}){modifier_text}.{method_text}({matcher_arg_text})");
-
-        fixer.replace(call_expr.span, code)
+        let fixer = fixer.for_multifix();
+        let mut fix = fixer.new_fix_with_capacity(2);
+        fix.push(
+            fixer.delete_range(Span::new(mock_member.object().span().end, calls_member.span().end)),
+        );
+        fix.push(fixer.replace(matcher.span, replacement));
+        fix.with_message("Use `toHaveBeenCalledTimes()` to check the mock call count.")
     });
-}
-
-fn build_expect_argument<'a>(
-    expect_argument_mem_expr: Option<&MemberExpression<'_>>,
-    fixer: RuleFixer<'_, 'a>,
-) -> &'a str {
-    if let Some(mem_expr) = expect_argument_mem_expr
-        && mem_expr.static_property_name().unwrap().eq("calls")
-        && let Some(expr) = mem_expr.object().as_member_expression()
-        && expr.static_property_name().is_some_and(|name| name == "mock")
-    {
-        return fixer.source_range(expr.object().span());
-    }
-    ""
 }

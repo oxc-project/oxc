@@ -71,7 +71,9 @@ fn test() {
             "expect(method.mock.calls).toHaveLength(
                 1,
             );",
-            "expect(method).toHaveBeenCalledTimes(1);",
+            "expect(method).toHaveBeenCalledTimes(
+                1,
+            );",
             None,
         ),
         (
@@ -79,7 +81,10 @@ fn test() {
                 /* number of calls (one) */
                 1,
             );",
-            "expect(method).toHaveBeenCalledTimes(1);",
+            "expect(method).toHaveBeenCalledTimes(
+                /* number of calls (one) */
+                1,
+            );",
             None,
         ),
         (
@@ -98,6 +103,35 @@ fn test() {
             None,
         ),
     ];
+
+    let mut fix = fix;
+    fix.extend([
+        (
+            "import { expect as check } from 'vitest'; check(fn.mock.calls, message()).toHaveLength(1);",
+            "import { expect as check } from 'vitest'; check(fn, message()).toHaveBeenCalledTimes(1);",
+            None,
+        ),
+        (
+            "expect(fn.mock.calls)['not'].toHaveLength(1);",
+            "expect(fn)['not'].toHaveBeenCalledTimes(1);",
+            None,
+        ),
+        (
+            "expect(fn.mock.calls)[\"toHaveLength\"](1);",
+            "expect(fn)[\"toHaveBeenCalledTimes\"](1);",
+            None,
+        ),
+        (
+            "expect(fn['mock'][`calls`])[`not`][`toHaveLength`](1);",
+            "expect(fn)[`not`][`toHaveBeenCalledTimes`](1);",
+            None,
+        ),
+        (
+            "expect((fn).mock.calls, 'once').toHaveLength(1, extra());",
+            "expect((fn), 'once').toHaveBeenCalledTimes(1, extra());",
+            None,
+        ),
+    ]);
 
     Tester::new(PreferToHaveBeenCalledTimes::NAME, PreferToHaveBeenCalledTimes::PLUGIN, pass, fail)
         .with_vitest_plugin(true)

@@ -24,7 +24,10 @@ use oxc_syntax::operator::UnaryOperator;
 use oxc_syntax::scope::ScopeFlags;
 
 use crate::{LintContext, OxlintSettings};
-use crate::{globals::HTML_TAG, utils::is_import_from_module};
+use crate::{
+    globals::HTML_TAG,
+    utils::{is_import_from_module, is_import_symbol},
+};
 
 pub fn is_create_element_call(call_expr: &CallExpression) -> bool {
     match &call_expr.callee {
@@ -830,13 +833,38 @@ pub fn is_react_function_call(call: &CallExpression, expected_call: &str) -> boo
 }
 
 /// Checks if a JSX opening element is a React Fragment.
-/// Recognizes both `<Fragment>` and `<React.Fragment>` forms.
-pub fn is_jsx_fragment(elem: &JSXOpeningElement) -> bool {
+/// Recognizes React imports and the unbound `<Fragment>` / `<React.Fragment>` forms.
+/// A local binding with the same name must not be mistaken for React's fragment.
+pub fn is_jsx_fragment(elem: &JSXOpeningElement, ctx: &LintContext) -> bool {
     match &elem.name {
-        JSXElementName::IdentifierReference(ident) => ident.name == "Fragment",
+        JSXElementName::IdentifierReference(ident) => {
+            if ctx.is_reference_to_global_variable(ident) {
+                ident.name == "Fragment"
+            } else {
+                is_import_symbol(ident, "react", "Fragment", ctx)
+            }
+        }
         JSXElementName::MemberExpression(mem_expr) => {
             if let JSXMemberExpressionObject::IdentifierReference(ident) = &mem_expr.object {
-                ident.name == "React" && mem_expr.property.name == "Fragment"
+                mem_expr.property.name == "Fragment"
+                    && if ctx.is_reference_to_global_variable(ident) {
+                        ident.name == "React"
+                    } else {
+                        is_import_from_module(ident, "react", ctx)
+                            && ctx
+                                .scoping()
+                                .get_reference(ident.reference_id())
+                                .symbol_id()
+                                .is_some_and(|symbol_id| {
+                                    matches!(
+                                        ctx.nodes()
+                                            .get_node(ctx.scoping().symbol_declaration(symbol_id))
+                                            .kind(),
+                                        AstKind::ImportDefaultSpecifier(_)
+                                            | AstKind::ImportNamespaceSpecifier(_)
+                                    ) || is_import_symbol(ident, "react", "default", ctx)
+                                })
+                    }
             } else {
                 false
             }

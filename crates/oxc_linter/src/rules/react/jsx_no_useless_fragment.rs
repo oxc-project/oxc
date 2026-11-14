@@ -77,7 +77,7 @@ impl Rule for JsxNoUselessFragment {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::JSXElement(jsx_elem) => {
-                if !is_jsx_fragment(&jsx_elem.opening_element) {
+                if !is_jsx_fragment(&jsx_elem.opening_element, ctx) {
                     return;
                 }
                 self.check_element(node, jsx_elem, ctx);
@@ -264,7 +264,7 @@ fn can_fix(node: &AstNode, children: &ArenaVec<'_, JSXChild<'_>>, ctx: &LintCont
             .name
             .get_identifier_name()
             .is_some_and(|ident| ident.chars().all(char::is_lowercase))
-        && !is_jsx_fragment(&el.opening_element)
+        && !is_jsx_fragment(&el.opening_element, ctx)
     {
         return false;
     }
@@ -543,4 +543,28 @@ fn test() {
     Tester::new(JsxNoUselessFragment::NAME, JsxNoUselessFragment::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn test_fragment_bindings() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        "function Fragment({ children }) { return <section>{children}</section>; } <div><Fragment><p>hi</p></Fragment></div>;",
+        "import { Fragment } from './components'; <div><Fragment><p>hi</p></Fragment></div>;",
+        "const React = { Fragment: Component }; <div><React.Fragment><p>hi</p></React.Fragment></div>;",
+    ];
+    let fix = vec![
+        (
+            "import { Fragment as Group } from 'react'; <div><Group><p>hi</p></Group></div>;",
+            "import { Fragment as Group } from 'react'; <div><p>hi</p></div>;",
+        ),
+        (
+            "function Fragment({ children }) { return <section>{children}</section>; } <Fragment><><p>hi</p></></Fragment>;",
+            "function Fragment({ children }) { return <section>{children}</section>; } <Fragment><><p>hi</p></></Fragment>;",
+        ),
+    ];
+    Tester::new(JsxNoUselessFragment::NAME, JsxNoUselessFragment::PLUGIN, pass, vec![])
+        .expect_fix(fix)
+        .test();
 }
