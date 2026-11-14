@@ -125,6 +125,132 @@ pub type CfgOps = IndexVec<BasicBlockId, BlockOps>;
 
 pub type CfgTraverseState<'a> = IndexVec<BasicBlockId, BitSet<'a>>;
 
+struct LoopAnalysis<'a> {
+    incoming: IndexVec<BasicBlockId, Vec<usize>>,
+    seen: BitSet<'a>,
+    queued: BitSet<'a>,
+    worklist: Vec<BlockNodeId>,
+    scratch: Vec<usize>,
+    symbol_indices: Vec<u32>,
+    num_symbols: usize,
+}
+
+impl<'a> LoopAnalysis<'a> {
+    fn new(num_blocks: usize, tracked_symbols: &[TrackedSymbol], allocator: &'a Allocator) -> Self {
+        let mut num_symbols = 0_usize;
+        let symbol_indices = tracked_symbols
+            .iter()
+            .map(|symbol| {
+                if symbol.is_used {
+                    let index = num_symbols;
+                    num_symbols += 1;
+                    u32::try_from(index).expect("too many tracked symbols")
+                } else {
+                    u32::MAX
+                }
+            })
+            .collect();
+        let mut incoming = IndexVec::with_capacity(num_blocks);
+        incoming.resize_with(num_blocks, Vec::new);
+        Self {
+            incoming,
+            seen: BitSet::new_in(num_blocks, allocator),
+            queued: BitSet::new_in(num_blocks, allocator),
+            worklist: Vec::new(),
+            scratch: vec![0; num_symbols.div_ceil(usize::BITS as usize)],
+            symbol_indices,
+            num_symbols,
+        }
+    }
+
+    fn enqueue(&mut self, graph: &Graph, node: BlockNodeId, values: &[usize]) {
+        if values.iter().all(|word| *word == 0) {
+            return;
+        }
+
+        let block_id = *graph.node_weight(node).expect("expected a valid node id in graph");
+        let incoming = &mut self.incoming[block_id];
+        let changed = if self.seen.has_bit(block_id.index()) {
+            let mut changed = false;
+            for (old, new) in incoming.iter_mut().zip(values) {
+                let merged = *old | *new;
+                changed |= merged != *old;
+                *old = merged;
+            }
+            changed
+        } else {
+            incoming.clear();
+            incoming.extend_from_slice(values);
+            self.seen.set_bit(block_id.index());
+            true
+        };
+
+        if changed && !self.queued.has_bit(block_id.index()) {
+            self.queued.set_bit(block_id.index());
+            self.worklist.push(node);
+        }
+    }
+
+    fn analyze(
+        &mut self,
+        graph: &Graph,
+        loop_header: BlockNodeId,
+        cfg_ops: &CfgOps,
+        result: &mut BitSet,
+    ) {
+        self.seen.clear();
+        self.queued.clear();
+        self.worklist.clear();
+        let mut scratch = std::mem::take(&mut self.scratch);
+        scratch.fill(usize::MAX);
+        let remainder = self.num_symbols % usize::BITS as usize;
+        if remainder != 0 {
+            *scratch.last_mut().expect("at least one tracked symbol") = (1 << remainder) - 1;
+        }
+        self.enqueue(graph, loop_header, &scratch);
+
+        while let Some(node) = self.worklist.pop() {
+            let block_id = *graph.node_weight(node).expect("expected a valid node id in graph");
+            self.queued.unset_bit(block_id.index());
+            scratch.copy_from_slice(&self.incoming[block_id]);
+
+            // An exception can bypass writes in the block before reaching its handler.
+            for edge in graph.edges_directed(node, Direction::Outgoing) {
+                if matches!(edge.weight(), EdgeType::Error(_)) && edge.target() != loop_header {
+                    self.enqueue(graph, edge.target(), &scratch);
+                }
+            }
+
+            for op in &cfg_ops[block_id] {
+                let index = self.symbol_indices[op.compact_idx as usize] as usize;
+                if index == u32::MAX as usize {
+                    continue;
+                }
+                let word = &mut scratch[index / usize::BITS as usize];
+                let mask = 1 << (index % usize::BITS as usize);
+                if *word & mask != 0 {
+                    if op.op == Operation::Read {
+                        result.set_bit(op.compact_idx as usize);
+                    }
+                    // A read or write settles this value's use along the current path.
+                    *word &= !mask;
+                }
+            }
+
+            for edge in graph.edges_directed(node, Direction::Outgoing) {
+                if matches!(
+                    edge.weight(),
+                    EdgeType::Normal | EdgeType::Jump | EdgeType::NewFunction | EdgeType::Backedge
+                ) && edge.target() != loop_header
+                {
+                    self.enqueue(graph, edge.target(), &scratch);
+                }
+            }
+        }
+        self.scratch = scratch;
+    }
+}
+
 struct TrackedSymbol {
     symbol_id: SymbolId,
     scope_id: ScopeId,
@@ -368,10 +494,8 @@ impl Rule for NoUselessAssignment {
         let mut scratch_live = BitSet::new_in(num_tracked, &allocator);
         let mut scratch_catch = BitSet::new_in(num_tracked, &allocator);
 
-        // Pre-allocate scratch BitSets for loop analysis (reused via clear())
         let mut scratch_loop_req = BitSet::new_in(num_tracked, &allocator);
-        let mut scratch_loop_visited = BitSet::new_in(num_blocks, &allocator);
-        let mut scratch_loop_killed = BitSet::new_in(num_tracked, &allocator);
+        let mut loop_analysis = None;
         let mut scratch_find_loop = BitSet::new_in(graph.node_count(), &allocator);
         let mut cached_loop_liveness: Vec<Option<BitSet<'_>>> =
             std::iter::repeat_with(|| None).take(graph.node_count()).collect();
@@ -419,8 +543,8 @@ impl Rule for NoUselessAssignment {
                                         &mut cached_loop_liveness,
                                         &mut scratch_loop_req,
                                         &mut scratch_live,
-                                        &mut scratch_loop_visited,
-                                        &mut scratch_loop_killed,
+                                        &mut loop_analysis,
+                                        &tracked_symbols,
                                     );
                                 }
                             }
@@ -449,8 +573,8 @@ impl Rule for NoUselessAssignment {
                                         &mut cached_loop_liveness,
                                         &mut scratch_loop_req,
                                         &mut scratch_live,
-                                        &mut scratch_loop_visited,
-                                        &mut scratch_loop_killed,
+                                        &mut loop_analysis,
+                                        &tracked_symbols,
                                     );
                                 }
                             }
@@ -852,75 +976,7 @@ impl NoUselessAssignment {
                 == Self::get_parent_variable_scope(ctx, scope_id_b)
     }
 
-    fn analyze_loop_recursive(
-        graph: &Graph,
-        node: BlockNodeId,
-        loop_header_id: BlockNodeId,
-        cfg_ops: &CfgOps,
-        result_gen: &mut BitSet,
-        killed_on_path: &mut BitSet,
-        visited: &mut BitSet,
-    ) {
-        let block_id = *graph.node_weight(node).expect("expected a valid node id in graph");
-
-        if visited.has_bit(block_id.index()) {
-            return;
-        }
-        visited.set_bit(block_id.index());
-
-        // Track bits we set in THIS block so we can undo them later
-        let mut newly_killed: SmallVec<[usize; 8]> = SmallVec::new();
-
-        for op in &cfg_ops[block_id] {
-            let compact_idx = op.compact_idx as usize;
-
-            if result_gen.has_bit(compact_idx) || killed_on_path.has_bit(compact_idx) {
-                continue;
-            }
-
-            match op.op {
-                Operation::Read => {
-                    result_gen.set_bit(compact_idx);
-                }
-                Operation::Write => {
-                    killed_on_path.set_bit(compact_idx);
-                    newly_killed.push(compact_idx);
-                }
-            }
-        }
-
-        for edge in graph.edges_directed(node, Direction::Outgoing) {
-            match edge.weight() {
-                EdgeType::Normal
-                | EdgeType::Jump
-                | EdgeType::NewFunction
-                | EdgeType::Backedge
-                | EdgeType::Error(_) => {
-                    let target = edge.target();
-                    if target == loop_header_id {
-                        continue;
-                    }
-
-                    Self::analyze_loop_recursive(
-                        graph,
-                        target,
-                        loop_header_id,
-                        cfg_ops,
-                        result_gen,
-                        killed_on_path,
-                        visited,
-                    );
-                }
-                EdgeType::Finalize | EdgeType::Join | EdgeType::Unreachable => {}
-            }
-        }
-
-        // BACKTRACK: Remove only the bits that this specific block call added
-        for sym_idx in newly_killed {
-            killed_on_path.unset_bit(sym_idx);
-        }
-    }
-
+    #[expect(clippy::too_many_arguments)]
     fn merge_loop_liveness<'a>(
         allocator: &'a Allocator,
         graph: &Graph,
@@ -929,8 +985,8 @@ impl NoUselessAssignment {
         cached_loop_liveness: &mut [Option<BitSet<'a>>],
         scratch_loop_req: &mut BitSet<'a>,
         scratch_live: &mut BitSet<'a>,
-        scratch_loop_visited: &mut BitSet<'a>,
-        scratch_loop_killed: &mut BitSet<'a>,
+        loop_analysis: &mut Option<LoopAnalysis<'a>>,
+        tracked_symbols: &[TrackedSymbol],
     ) {
         if let Some(loop_liveness) = cached_loop_liveness[loop_header.index()].as_ref() {
             scratch_live.union(loop_liveness);
@@ -938,18 +994,9 @@ impl NoUselessAssignment {
         }
 
         scratch_loop_req.clear();
-        scratch_loop_visited.clear();
-        scratch_loop_killed.clear();
-
-        Self::analyze_loop_recursive(
-            graph,
-            loop_header,
-            loop_header,
-            cfg_ops,
-            scratch_loop_req,
-            scratch_loop_killed,
-            scratch_loop_visited,
-        );
+        let analysis = loop_analysis
+            .get_or_insert_with(|| LoopAnalysis::new(cfg_ops.len(), tracked_symbols, allocator));
+        analysis.analyze(graph, loop_header, cfg_ops, scratch_loop_req);
 
         cached_loop_liveness[loop_header.index()] = Some(scratch_loop_req.clone_in(allocator));
         scratch_live.union(scratch_loop_req);
@@ -1610,6 +1657,64 @@ function useResource(unsafe: (resource: { readonly release: () => void }) => voi
         "function f(p, q = (p = 1), r = (p = 2)) { return p; }",
         "function f(p, { [p = 1]: q } = (p = 2, {})) { return p; }",
         "function f(p, { a = (p = 1) } = (p = 2, {})) { return p; }",
+        "export function poll(fetchOnce, wait) {
+            let delay = 1000;
+            for (let attempt = 0; attempt < 5; attempt++) {
+                try {
+                    fetchOnce();
+                    delay = 1000;
+                } catch {
+                    wait(delay);
+                    delay *= 2;
+                }
+            }
+        }",
+        "function f() {
+            let x = 0;
+            while (condition) {
+                try { call(); x = 1; }
+                catch { use(x); x = 2; continue; }
+            }
+        }",
+        "function f() {
+            let x = 0;
+            while (condition) {
+                if (flag) x = 1;
+                try { call(); x = 2; }
+                catch { use(x); x = 3; }
+            }
+        }",
+        "function f() {
+            let x = 0;
+            while (condition) {
+                try { try { call(); x = 1; } finally { cleanup(); } }
+                catch { use(x); x = 2; }
+            }
+        }",
+        "function f() {
+            let x = 0;
+            while (condition) {
+                if (flag) {} else x = 1;
+                try { call(); x = 2; }
+                catch { use(x); x = 3; }
+            }
+        }",
+        "function f() {
+            let x = 0;
+            while (condition) {
+                try { call(); } catch { x = 2; }
+                use(x);
+                x = 3;
+            }
+        }",
+        "function f() {
+            let x = 0;
+            while (condition) {
+                try { call(); x = 1; }
+                catch { use(x); x = 3; }
+                finally { cleanup(); }
+            }
+        }",
     ];
 
     let fail = vec![
@@ -1978,8 +2083,76 @@ function useResource(unsafe: (resource: { readonly release: () => void }) => voi
         "function f(p) { use(p); p = 1; }",
         "function f(p, q = p) { p = 1; return q; }",
         "function f(cb = p => { p = 1; p = 2; return p; }) { return cb; }",
+        "function f() {
+            let x = 0;
+            while (condition) {
+                x = 1;
+                try { call(); x = 2; }
+                catch { use(x); x = 3; }
+            }
+        }",
+        "function f() {
+            let x = 0;
+            while (condition) {
+                try { call(); x = 1; }
+                catch { use(x); x = 2; x = 3; }
+            }
+        }",
+        "function f() {
+            let x = 0;
+            while (condition) {
+                try {
+                    try { if (flag) throw 0; x = 1; }
+                    finally { cleanup(); }
+                    use(x);
+                } catch { x = 3; }
+            }
+        }",
+        "function f() {
+            let x = 0;
+            while (condition) {
+                try {
+                    try { if (flag) throw 0; x = 1; }
+                    catch { throw 0; }
+                    finally { cleanup(); }
+                    use(x);
+                } catch { x = 3; }
+            }
+        }",
     ];
 
     Tester::new(NoUselessAssignment::NAME, NoUselessAssignment::PLUGIN, pass, fail)
         .test_and_snapshot();
+}
+
+#[test]
+fn test_loop_liveness_across_words() {
+    use std::fmt::Write;
+
+    use crate::tester::Tester;
+
+    let mut source = String::from("function f() {\nlet first = 0;\n");
+    for index in 0..63 {
+        writeln!(source, "let padding_{index}; use(padding_{index});").unwrap();
+    }
+    source.push_str("let middle = 0;\n");
+    for index in 63..126 {
+        writeln!(source, "let padding_{index}; use(padding_{index});").unwrap();
+    }
+    source.push_str(
+        "let last = 0;
+        while (condition) {
+            if (flag) {} else { first = 1; middle = 1; last = 1; }
+            try { call(); first = 2; middle = 2; last = 2; }
+            catch { use(first, middle, last); first = 3; middle = 3; last = 3; }
+        }
+        while (other_condition) {
+            if (flag) {} else { first = 1; middle = 1; last = 1; }
+            try { call(); first = 2; middle = 2; last = 2; }
+            catch { use(first, middle, last); first = 3; middle = 3; last = 3; }
+        }
+        }",
+    );
+    Tester::new(NoUselessAssignment::NAME, NoUselessAssignment::PLUGIN, vec![source], vec![])
+        .test();
 }
