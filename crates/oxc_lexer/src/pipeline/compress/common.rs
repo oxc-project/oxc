@@ -28,18 +28,18 @@ pub(super) static BCOMPACT: [VecData128; 256] = {
 
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn emit_value(
+pub(super) fn emit_value(
     src: &[u8],
-    out_kinds: *const u8,
-    out_spans: *const Span,
+    kinds: &[u8],
+    spans: &[Span],
     j: usize,
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) {
-    let sp = *out_spans.add(j);
+    let sp = spans[j];
     let s = sp.start as usize;
     let e = sp.end as usize;
-    let k = *out_kinds.add(j);
+    let k = kinds[j];
     if k < tk!(IdentEscaped) {
         lanes.push_number(src, s, e, cpu);
     } else if k == tk!(IdentEscaped) {
@@ -57,11 +57,10 @@ pub(super) unsafe fn emit_value(
 #[cpu_version(Generic)]
 #[cold]
 #[inline(never)]
-pub(super) unsafe fn invalid_diags(
+pub(super) fn invalid_diags(
     src: &[u8],
-    out_kinds: *const u8,
-    out_spans: *const Span,
-    m: usize,
+    kinds: &[u8],
+    spans: &[Span],
     src_len: u32,
     lanes: &mut Lanes,
 ) {
@@ -83,9 +82,8 @@ pub(super) unsafe fn invalid_diags(
         };
         l.min(src_len - cs)
     };
-    for j in 0..m {
-        if *out_kinds.add(j) == tk!(Invalid) {
-            let sp = *out_spans.add(j);
+    for (&k, sp) in kinds.iter().zip(spans) {
+        if k == tk!(Invalid) {
             let (s, e) = (sp.start, sp.end);
             let b0 = src[s as usize];
             if b0 == b'\\' {

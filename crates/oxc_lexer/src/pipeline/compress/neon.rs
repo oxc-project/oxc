@@ -54,8 +54,7 @@ pub(super) unsafe fn compress_blocks_neon(
     kinds: *mut u8,
     cpu: Neon,
 ) -> usize {
-    // SAFETY: `Lexer::new` calls `init_pair_luts`, which initializes `PairLuts` if the CPU supports Neon
-    let pair_luts = unsafe { get_pair_luts() };
+    let pair_luts = get_pair_luts();
     let lut0z = &pair_luts.lut0z;
     let lutpad = pair_luts.lutpad.as_ptr().cast::<u8>();
 
@@ -227,11 +226,10 @@ unsafe fn compact_spans(dst: *mut u64, pos: *const u32, mask: usize, cpu: Neon) 
 }
 
 #[cpu_version(Neon)]
-pub(super) unsafe fn lanes_post_neon(
+pub(super) fn lanes_post_neon(
     src: &[u8],
-    out_kinds: *const u8,
-    out_spans: *const Span,
-    m: usize,
+    kinds: &[u8],
+    spans: &[Span],
     src_len: u32,
     lanes: &mut Lanes,
     cpu: Neon,
@@ -239,42 +237,42 @@ pub(super) unsafe fn lanes_post_neon(
     // `tk!(Invalid)` is the byte-class default for stray/control bytes and
     // reaches the output as a 1-byte token. Track "any seen" alongside the
     // value sweep; localize cold.
+    let m = kinds.len();
+    let spans = &spans[..m];
     let mut inv = Vec128::zero(cpu);
     let mut i = 0usize;
     while i + 64 <= m {
-        let v0 = Vec128::load_unaligned(out_kinds.add(i), cpu);
-        let v1 = Vec128::load_unaligned(out_kinds.add(i + 16), cpu);
-        let v2 = Vec128::load_unaligned(out_kinds.add(i + 32), cpu);
-        let v3 = Vec128::load_unaligned(out_kinds.add(i + 48), cpu);
+        let v0 = Vec128::read_unaligned(kinds[i..].first_chunk::<16>().unwrap(), cpu);
+        let v1 = Vec128::read_unaligned(kinds[i + 16..].first_chunk::<16>().unwrap(), cpu);
+        let v2 = Vec128::read_unaligned(kinds[i + 32..].first_chunk::<16>().unwrap(), cpu);
+        let v3 = Vec128::read_unaligned(kinds[i + 48..].first_chunk::<16>().unwrap(), cpu);
         inv |= (v0.eq_u8(tk!(Invalid)) | v1.eq_u8(tk!(Invalid)))
             | (v2.eq_u8(tk!(Invalid)) | v3.eq_u8(tk!(Invalid)));
         let mut mask = mm64(hits(v0), hits(v1), hits(v2), hits(v3));
         while mask != 0 {
-            emit_value(src, out_kinds, out_spans, i + mask.trailing_zeros() as usize, lanes, cpu);
+            emit_value(src, kinds, spans, i + mask.trailing_zeros() as usize, lanes, cpu);
             mask &= mask - 1;
         }
         i += 64;
     }
     let mut inv_dirty = !inv.is_zero();
     while i < m {
-        let v0 = Vec128::load_unaligned(out_kinds.add(i), cpu);
-        let v1 = Vec128::load_unaligned(out_kinds.add(i + 16), cpu);
+        // The last kinds, padded with Eof, which is neither a value nor invalid.
+        let mut tail = [tk!(Eof); 32];
+        let rem = (m - i).min(32);
+        tail[..rem].copy_from_slice(&kinds[i..i + rem]);
+        let v0 = Vec128::read_unaligned(tail.first_chunk::<16>().unwrap(), cpu);
+        let v1 = Vec128::read_unaligned(tail.last_chunk::<16>().unwrap(), cpu);
         let mut mask = mm32(hits(v0), hits(v1));
-        let mut invm = mm32(v0.eq_u8(tk!(Invalid)), v1.eq_u8(tk!(Invalid)));
-        let rem = m - i;
-        if rem < 32 {
-            mask &= (1u32 << rem) - 1;
-            invm &= (1u32 << rem) - 1;
-        }
-        inv_dirty |= invm != 0;
+        inv_dirty |= mm32(v0.eq_u8(tk!(Invalid)), v1.eq_u8(tk!(Invalid))) != 0;
         while mask != 0 {
-            emit_value(src, out_kinds, out_spans, i + mask.trailing_zeros() as usize, lanes, cpu);
+            emit_value(src, kinds, spans, i + mask.trailing_zeros() as usize, lanes, cpu);
             mask &= mask - 1;
         }
         i += 32;
     }
     if inv_dirty {
-        invalid_diags(src, out_kinds, out_spans, m, src_len, lanes);
+        invalid_diags(src, kinds, spans, src_len, lanes);
     }
 }
 

@@ -8,6 +8,9 @@ use crate::pipeline::{bitmap::Bitmap, keywords::kw_match, kinds::Kinds, source::
 
 pub const KWB: usize = 64;
 
+/// Positions a batch can push: 64 a block, plus the 8 slots push_positions always fills.
+pub const BATCH_SLOTS: usize = KWB * 64 + 8;
+
 /// Dispatch to the key-monomorphized verify without duplicating `coalesce`
 /// itself: one predictable branch per flush, not per candidate.
 #[cpu_multiversion]

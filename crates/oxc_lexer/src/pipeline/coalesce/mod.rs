@@ -20,15 +20,15 @@ use crate::pipeline::{
 
 mod keywords;
 
-pub use keywords::KWB;
+pub use keywords::{BATCH_SLOTS, KWB};
 use keywords::{kw_flush, kw_match_word};
 
 #[cpu_multiversion]
 #[inline(never)]
-pub unsafe fn coalesce(
+pub fn coalesce(
     lex: Lex,
-    kw_candidates: *mut u32,
-    events: *mut u32,
+    kw_candidates: &mut [u32],
+    events: &mut [u32],
     state: &mut LexState,
     cpu: impl Cpu,
 ) {
@@ -36,6 +36,13 @@ pub unsafe fn coalesce(
     let block_count = src.block_count();
     let Bitmaps { token_start, word, keyword_initial, op_char, digit, dot, .. } =
         bitmaps.first(block_count + 1);
+    let kinds = kinds.first((block_count + 1) * 64);
+    if src.len() < block_count * 64 {
+        // Classify clears these already; clearing here keeps kw_match inside the padding.
+        word.clear_range(src.len(), block_count * 64 - 1, cpu);
+    }
+    let kw_candidates = kw_candidates[..BATCH_SLOTS].as_mut_ptr();
+    let events = events[..BATCH_SLOTS].as_mut_ptr();
     let is_ts = options.ts;
     state.disambiguate.restart(cpu);
     // Events are collected branchlessly and handled per batch. Unset masks are never read
@@ -94,26 +101,37 @@ pub unsafe fn coalesce(
         let empty = (candidates | event_bits) == 0;
         if !(empty && prev_empty) {
             let base = (w << 6) as u32;
-            prefetch(src.as_ptr().add(base as usize), cpu);
-            prefetch(kinds.as_ptr().add(base as usize) as *const u8, cpu);
-            candidate_count = push_positions::<8>(kw_candidates, candidate_count, base, candidates);
+            prefetch(src.as_ptr().wrapping_add(base as usize), cpu);
+            prefetch(kinds.as_ptr().wrapping_add(base as usize) as *const u8, cpu);
             rare_masks[w & (KWB - 1)].write(rare);
-            event_count = push_positions::<2>(events, event_count, base, event_bits);
+            // SAFETY: a batch pushes at most 64 positions a block, plus up to 8 slots past them.
+            unsafe {
+                candidate_count =
+                    push_positions::<8>(kw_candidates, candidate_count, base, candidates);
+                event_count = push_positions::<2>(events, event_count, base, event_bits);
+            }
         }
         prev_empty = empty;
         if w & (KWB - 1) == KWB - 1 {
-            if event_count != 0 {
-                cursor = coalesce_events(lex, state, events, event_count, &rare_masks, cursor, cpu);
-                event_count = 0;
+            // SAFETY: the batch's positions lie in the source, whose blocks the handles hold.
+            unsafe {
+                if event_count != 0 {
+                    cursor =
+                        coalesce_events(lex, state, events, event_count, &rare_masks, cursor, cpu);
+                    event_count = 0;
+                }
+                kw_flush(is_ts, src, word, kinds, kw_candidates, candidate_count, cpu);
             }
-            kw_flush(is_ts, src, word, kinds, kw_candidates, candidate_count, cpu);
             candidate_count = 0;
         }
     }
-    if event_count != 0 {
-        coalesce_events(lex, state, events, event_count, &rare_masks, cursor, cpu);
+    // SAFETY: as for the batches flushed in the loop.
+    unsafe {
+        if event_count != 0 {
+            coalesce_events(lex, state, events, event_count, &rare_masks, cursor, cpu);
+        }
+        kw_flush(is_ts, src, word, kinds, kw_candidates, candidate_count, cpu);
     }
-    kw_flush(is_ts, src, word, kinds, kw_candidates, candidate_count, cpu);
 }
 
 /// One block's bitmap words, and the next block's where a run carries over.

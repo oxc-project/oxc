@@ -3,10 +3,7 @@ use oxc_span::Span;
 
 use crate::token::{is_trivia_byte, matches_tk, tk};
 
-use crate::pipeline::{
-    chunk::{eqm, load64},
-    lanes::Lanes,
-};
+use crate::pipeline::{chunk::eqm, lanes::Lanes};
 
 use super::common::{emit_value, invalid_diags};
 
@@ -64,48 +61,42 @@ pub(super) unsafe fn build_spans_generic(
 }
 
 #[cpu_version(Generic)]
-pub(super) unsafe fn lanes_post_generic(
+pub(super) fn lanes_post_generic(
     src: &[u8],
-    out_kinds: *const u8,
-    out_spans: *const Span,
-    m: usize,
+    kinds: &[u8],
+    spans: &[Span],
     src_len: u32,
     lanes: &mut Lanes,
 ) {
     let cpu = BASELINE;
 
+    let m = kinds.len();
+    let spans = &spans[..m];
     let mut inv = 0u64;
     let mut i = 0usize;
     while i + 8 <= m {
-        let x = load64(out_kinds, i);
+        let x = u64::from_le_bytes(kinds[i..i + 8].try_into().unwrap());
         let mut hits = eqm(x, tk!(Number))
             | eqm(x, tk!(BigInt))
             | eqm(x, tk!(IdentEscaped))
             | eqm(x, tk!(PrivateIdentEscaped));
         inv |= eqm(x, tk!(Invalid));
         while hits != 0 {
-            emit_value(
-                src,
-                out_kinds,
-                out_spans,
-                i + (hits.trailing_zeros() >> 3) as usize,
-                lanes,
-                cpu,
-            );
+            emit_value(src, kinds, spans, i + (hits.trailing_zeros() >> 3) as usize, lanes, cpu);
             hits &= hits - 1;
         }
         i += 8;
     }
     let mut inv_dirty = inv != 0;
     while i < m {
-        let k = *out_kinds.add(i);
+        let k = kinds[i];
         if matches_tk!(k, Number | BigInt | IdentEscaped | PrivateIdentEscaped) {
-            emit_value(src, out_kinds, out_spans, i, lanes, cpu);
+            emit_value(src, kinds, spans, i, lanes, cpu);
         }
         inv_dirty |= k == tk!(Invalid);
         i += 1;
     }
     if inv_dirty {
-        invalid_diags(src, out_kinds, out_spans, m, src_len, lanes);
+        invalid_diags(src, kinds, spans, src_len, lanes);
     }
 }

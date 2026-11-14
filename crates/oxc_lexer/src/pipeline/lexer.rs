@@ -1,4 +1,4 @@
-use std::{mem, slice};
+use std::mem;
 
 use oxc_simd::{Cpu, DynCpu, cpu_multiversion, cpu_version};
 use oxc_span::Span;
@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{
     PAD,
     options::LexOptions,
-    token::{SPAN_SENTINELS, debug_assert_kind_bytes},
+    token::{TokenKind, kind_bytes},
     tokens::Tokens,
 };
 
@@ -14,8 +14,8 @@ use crate::pipeline::{
     bitmap::{Bitmap, Bitmaps},
     carve::carve,
     classify::classify,
-    coalesce::{KWB, coalesce},
-    compress::{STAGE_CAP, compress, init_pair_luts, write_sentinels},
+    coalesce::{BATCH_SLOTS, coalesce},
+    compress::{STAGE_CAP, compress, init_pair_luts, lanes_post},
     kinds::Kinds,
     lex::{Lex, LexState},
     misc::{misc_post, misc_pre, retain_code_whitespace},
@@ -34,8 +34,8 @@ pub struct Lexer {
     kw_candidates: Vec<u32>,
     events: Vec<u32>,
     block_capacity: usize,
-    stage_pos: Vec<u32>,
-    stage_kind: Vec<u8>,
+    stage_pos: Box<[u32; STAGE_CAP]>,
+    stage_kind: Box<[u8; STAGE_CAP]>,
     pub(super) state: LexState,
     cpu: DynCpu,
 }
@@ -79,8 +79,8 @@ impl Lexer {
             kw_candidates: Vec::new(),
             events: Vec::new(),
             block_capacity: 0,
-            stage_pos: vec![0; STAGE_CAP],
-            stage_kind: vec![0; STAGE_CAP],
+            stage_pos: Box::new([0; STAGE_CAP]),
+            stage_kind: Box::new([0; STAGE_CAP]),
             state: LexState::default(),
             cpu,
         }
@@ -100,54 +100,34 @@ impl Lexer {
             "lexer: src must have >= {PAD} bytes of padding past len {n}"
         );
         let src = Source::new(src, n);
-        // Can't wrap. `n + PAD <= src.len() <= isize::MAX`, and `SPAN_SENTINELS` is small.
-        let capacity = n + PAD + SPAN_SENTINELS;
-        tokens.kinds.clear();
-        tokens.kinds.reserve(capacity);
-        tokens.spans.clear();
-        tokens.spans.reserve(capacity);
         // Lend the caller's lane buffers to the stages, so they fill them in place.
         self.state.begin(mem::take(&mut tokens.lanes), src.len(), &options, self.cpu);
-        // SAFETY: lex_raw writes count + SPAN_SENTINELS valid kinds and spans into reserved space.
-        let count = unsafe {
-            let out_kinds = tokens.kinds.as_mut_ptr().cast::<u8>();
-            let count = self.lex_raw(src, out_kinds, tokens.spans.as_mut_ptr(), options);
-            let len = count + SPAN_SENTINELS;
-            debug_assert_kind_bytes(slice::from_raw_parts(tokens.kinds.as_ptr().cast::<u8>(), len));
-            tokens.kinds.set_len(len);
-            tokens.spans.set_len(len);
-            count
-        };
+        let count = self.lex_raw(src, &mut tokens.kinds, &mut tokens.spans, options);
         tokens.lanes =
             self.state.finish(src.bytes(), &tokens.kinds[..count], &tokens.spans[..count]);
     }
 
-    /// Safety: out_kinds and out_spans must hold src.len() + PAD + SPAN_SENTINELS entries.
     #[cpu_version(Generic)]
-    unsafe fn lex_raw(
+    fn lex_raw(
         &mut self,
         src: Source,
-        out_kinds: *mut u8,
-        out_spans: *mut Span,
+        out_kinds: &mut Vec<TokenKind>,
+        out_spans: &mut Vec<Span>,
         options: LexOptions,
     ) -> usize {
         self.lex_raw_impl(src, out_kinds, out_spans, options, self.cpu)
     }
 
     #[cpu_multiversion]
-    unsafe fn lex_raw_impl(
+    fn lex_raw_impl(
         &mut self,
         src: Source,
-        out_kinds: *mut u8,
-        out_spans: *mut Span,
+        out_kinds: &mut Vec<TokenKind>,
+        out_spans: &mut Vec<Span>,
         options: LexOptions,
         cpu: impl Cpu,
     ) -> usize {
         self.ensure(src, cpu);
-        if src.len() == 0 {
-            write_sentinels(0, out_spans, out_kinds, cpu);
-            return 0;
-        }
 
         let bitmaps = &Bitmaps {
             token_start: Bitmap::new(&mut self.token_start),
@@ -158,32 +138,36 @@ impl Lexer {
             dot: Bitmap::new(&mut self.dot),
             misc: Bitmap::new(&mut self.misc),
         };
-        let kinds = Kinds::new(&mut self.kinds);
+        // SAFETY: the buffer starts zeroed, which is Eof, and the stages write only declared kinds.
+        let kinds = unsafe { Kinds::new(&mut self.kinds) };
         let lex = Lex { src, bitmaps, kinds, options: &options };
-        let kw_candidates = self.kw_candidates.as_mut_ptr();
-        let events = self.events.as_mut_ptr();
-
+        if src.len() == 0 {
+            return compress(
+                lex,
+                &mut self.stage_pos,
+                &mut self.stage_kind,
+                out_kinds,
+                out_spans,
+                cpu,
+            );
+        }
         // Keyword recognition is mode-scoped: the TS set (and its wider
         // keyword_initial letter class) only ever sees TS input, so JS lexing is
         // byte-identical to a build without it.
         classify(lex, cpu);
         let escaped_ident_count = misc_pre(lex, &mut self.state, cpu);
         carve(lex, &mut self.state, cpu);
-        coalesce(lex, kw_candidates, events, &mut self.state, cpu);
+        coalesce(lex, &mut self.kw_candidates, &mut self.events, &mut self.state, cpu);
         misc_post(lex, escaped_ident_count, cpu);
         if !self.state.lanes.irregular_whitespaces.is_empty() {
             let spans = &mut self.state.lanes.irregular_whitespaces;
             retain_code_whitespace(bitmaps.token_start, kinds, spans);
         }
-        compress(
-            lex,
-            self.stage_pos.as_mut_ptr(),
-            self.stage_kind.as_mut_ptr(),
-            out_kinds,
-            out_spans,
-            &mut self.state.lanes,
-            cpu,
-        )
+        let count =
+            compress(lex, &mut self.stage_pos, &mut self.stage_kind, out_kinds, out_spans, cpu);
+        let (values, spans) = (kind_bytes(&out_kinds[..count]), &out_spans[..count]);
+        lanes_post(src.padded(), values, spans, src.len() as u32, &mut self.state.lanes, cpu);
+        count
     }
 
     #[cpu_multiversion]
@@ -203,8 +187,8 @@ impl Lexer {
             self.block_capacity = blocks;
         }
         if self.kw_candidates.is_empty() {
-            self.kw_candidates.resize(KWB * 64 + 8, 0);
-            self.events.resize(KWB * 64 + 8, 0);
+            self.kw_candidates.resize(BATCH_SLOTS, 0);
+            self.events.resize(BATCH_SLOTS, 0);
         }
     }
 }

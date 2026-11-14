@@ -97,20 +97,14 @@ impl PairLuts {
 }
 
 /// Initialize the global [`PairLuts`] instance.
-///
-/// This function must be called before calling [`get_pair_luts`].
 #[cpu_version(Generic)]
 pub(super) fn init_pair_luts() {
     PAIR_LUTS.get_or_init(PairLuts::new);
 }
 
-/// Get reference to [`PairLuts`].
-///
-/// # SAFETY
-///
-/// [`init_pair_luts`] must have been called before calling this.
+/// Get the PairLuts, initializing them on first use.
 #[cpu_version(Generic)]
 #[inline]
-pub(super) unsafe fn get_pair_luts() -> &'static PairLuts {
-    unsafe { PAIR_LUTS.get().unwrap_unchecked() }
+pub(super) fn get_pair_luts() -> &'static PairLuts {
+    PAIR_LUTS.get_or_init(PairLuts::new)
 }
