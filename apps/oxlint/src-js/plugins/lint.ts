@@ -55,6 +55,8 @@ const OPTIONS_DESCRIPTOR: PropertyDescriptor = { value: null };
  * @param globalsJSON - Globals for this file, as JSON string
  * @param collectTimings - Whether to collect per-rule timing information
  * @param workspaceUri - Workspace URI (`null` in CLI, string in LSP)
+ * @param actualSourceText - Full source text of file, or `null` if file is not partially loaded
+ * @param sourceTextOffset - Offset of linted section within `actualSourceText`
  * @returns Diagnostics and optional timing records, or an error serialized to JSON
  */
 export function lintFile(
@@ -67,6 +69,8 @@ export function lintFile(
   globalsJSON: string,
   collectTimings: boolean,
   workspaceUri: string | null,
+  actualSourceText: string | null,
+  sourceTextOffset: number,
 ): string | null {
   const start = collectTimings ? performance.now() : 0;
   const timings: RuleTiming[] | null = collectTimings ? [] : null;
@@ -81,6 +85,8 @@ export function lintFile(
       settingsJSON,
       globalsJSON,
       workspaceUri,
+      actualSourceText,
+      sourceTextOffset,
       timings,
     );
 
@@ -126,6 +132,8 @@ export function lintFile(
  * @param settingsJSON - Settings for this file, as JSON string
  * @param globalsJSON - Globals for this file, as JSON string
  * @param workspaceUri - Workspace URI (`null` in CLI, string in LSP)
+ * @param actualSourceText - Full source text of file, or `null` if file is not partially loaded
+ * @param sourceTextOffset - Offset of linted section within `actualSourceText`
  * @param timings - Timing accumulators, or `null` if timings are not being collected
  * @throws {Error} If any parameters are invalid
  * @throws {*} If any rule throws
@@ -139,6 +147,8 @@ export function lintFileImpl(
   settingsJSON: string,
   globalsJSON: string,
   workspaceUri: string | null,
+  actualSourceText: string | null,
+  sourceTextOffset: number,
   timings: RuleTiming[] | null = null,
 ): void {
   // If new buffer, add it to `buffers` array. Otherwise, get existing buffer from array.
@@ -203,7 +213,7 @@ export function lintFileImpl(
   // But... source text and AST can be accessed in body of `create` method, or `before` hook, via `context.sourceCode`.
   // So we pass the buffer to source code module here, so it can decode source text / deserialize AST on demand.
   const hasBOM = buffer[HAS_BOM_FLAG_POS] === 1;
-  setupSourceForFile(buffer, hasBOM);
+  setupSourceForFile(buffer, hasBOM, actualSourceText, sourceTextOffset);
 
   // Pass settings and globals JSON to modules that handle them
   setSettingsForFile(settingsJSON);

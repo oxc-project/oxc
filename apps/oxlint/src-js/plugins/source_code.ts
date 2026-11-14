@@ -39,6 +39,11 @@ export let buffer: BufferWithArrays | null = null;
 // Indicates if the original source text has a BOM. Set before linting a file by `setupSourceForFile`.
 let hasBOM = false;
 
+// Full source text of a partially-loaded file (e.g. Vue), and offset of the linted section within it.
+// Set before linting a file by `setupSourceForFile`. `null` and 0 for other files.
+let actualSourceText: string | null = null;
+let actualSourceTextOffset = 0;
+
 // Lazily populated when `SOURCE_CODE.text` or `SOURCE_CODE.ast` is accessed,
 // or `initAst()` is called before the AST is walked.
 export let sourceText: string | null = null;
@@ -50,10 +55,19 @@ export let ast: Program | null = null;
  * Set up source for the file about to be linted.
  * @param bufferInput - Buffer containing AST
  * @param hasBOMInput - `true` if file's original source text has Unicode BOM
+ * @param actualSourceTextInput - Full source text of file, or `null` if file is not partially loaded
+ * @param actualSourceTextOffsetInput - Offset of linted section within `actualSourceTextInput`
  */
-export function setupSourceForFile(bufferInput: BufferWithArrays, hasBOMInput: boolean): void {
+export function setupSourceForFile(
+  bufferInput: BufferWithArrays,
+  hasBOMInput: boolean,
+  actualSourceTextInput: string | null,
+  actualSourceTextOffsetInput: number,
+): void {
   buffer = bufferInput;
   hasBOM = hasBOMInput;
+  actualSourceText = actualSourceTextInput;
+  actualSourceTextOffset = actualSourceTextOffsetInput;
 }
 
 /**
@@ -141,6 +155,8 @@ function fixES3Node(node: any): void {
 export function resetSourceAndAst(): void {
   buffer = null;
   sourceText = null;
+  actualSourceText = null;
+  actualSourceTextOffset = 0;
   ast = null;
   resetBuffer();
   resetLinesAndLocs();
@@ -195,6 +211,27 @@ export const SOURCE_CODE = Object.freeze({
    */
   get hasBOM(): boolean {
     return hasBOM;
+  },
+
+  /**
+   * Source text of the whole file.
+   *
+   * Differs from `text` only for files where just part of the file is linted as JS
+   * (e.g. `<script>` blocks of Vue, Astro and Svelte files).
+   * Offsets in this text are what `actualRange` in `context.report()` expects.
+   */
+  get actualText(): string {
+    if (actualSourceText !== null) return actualSourceText;
+    if (sourceText === null) initSourceText();
+    debugAssertIsNonNull(sourceText);
+    return sourceText;
+  },
+
+  /**
+   * Offset of `text` within `actualText`.
+   */
+  get actualOffset(): number {
+    return actualSourceTextOffset;
   },
 
   /**
