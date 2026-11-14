@@ -1,0 +1,8 @@
+{
+  "$schema": "inherited-schema",
+  "categories": {
+    "pedantic": "warn",
+    "restriction": "off"
+  },
+  "ignorePatterns": ["inherited-dist"]
+}

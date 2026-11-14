@@ -12,8 +12,9 @@ use crate::{
 };
 
 use super::{
-    GlobSet, LintConfig, LintPlugins, OxlintEnv, OxlintGlobals, OxlintRules, Oxlintrc, RuleConfig,
-    categories::OxlintCategories, external_plugins::ExternalPluginEntry, overrides::OxlintOverride,
+    ConfigFileMetadata, GlobSet, LintConfig, LintPlugins, OxlintEnv, OxlintGlobals,
+    OxlintOverrides, OxlintRules, Oxlintrc, RuleConfig, categories::OxlintCategories,
+    external_plugins::ExternalPluginEntry, overrides::OxlintOverride,
 };
 
 // TODO: support `categories` et. al. in overrides.
@@ -125,19 +126,23 @@ impl Config {
         self.base.rules.len()
     }
 
-    /// Serializes the built configuration, retaining source metadata such as ignore patterns.
+    /// Serializes the built configuration, including resolved categories and retained file metadata.
     ///
     /// # Panics
     /// Panics if the configuration cannot be serialized as JSON.
-    pub fn to_config_file(
-        &self,
-        oxlintrc: Oxlintrc,
-        external_plugin_store: &ExternalPluginStore,
-    ) -> String {
-        let LintConfig { plugins, external_plugins, settings, env, globals, path: _, options } =
-            self.base.config.as_ref();
-        let mut overrides = oxlintrc.overrides;
-        overrides.clear();
+    pub fn to_config_file(&self, external_plugin_store: &ExternalPluginStore) -> String {
+        let LintConfig {
+            plugins,
+            external_plugins,
+            settings,
+            env,
+            globals,
+            path,
+            options,
+            metadata,
+        } = self.base.config.as_ref();
+        let ConfigFileMetadata { schema, ignore_patterns, extends } = metadata.as_ref();
+        let mut overrides = OxlintOverrides::default();
         overrides.extend(self.overrides.iter().map(|override_config| OxlintOverride {
             files: override_config.files.clone(),
             exclude_files: override_config.exclude_files.clone(),
@@ -152,10 +157,10 @@ impl Config {
             ),
         }));
         let oxlintrc = Oxlintrc {
-            schema: oxlintrc.schema,
+            schema: schema.clone(),
             plugins: Some(*plugins),
             external_plugins: external_plugins.as_deref().cloned(),
-            categories: oxlintrc.categories,
+            categories: self.categories.clone(),
             rules: OxlintRules::from_resolved(
                 &self.base_rules,
                 &self.base.external_rules,
@@ -166,10 +171,10 @@ impl Config {
             globals: globals.clone(),
             overrides,
             options: options.clone(),
-            path: oxlintrc.path,
-            ignore_patterns: oxlintrc.ignore_patterns,
-            extends: oxlintrc.extends,
-            extends_configs: oxlintrc.extends_configs,
+            path: path.clone().unwrap_or_default(),
+            ignore_patterns: ignore_patterns.clone(),
+            extends: extends.clone(),
+            extends_configs: Vec::new(),
         };
         serde_json::to_string_pretty(&oxlintrc).unwrap()
     }
@@ -491,6 +496,7 @@ mod test {
     use std::{
         path::{Path, PathBuf},
         str::FromStr,
+        sync::Arc,
     };
 
     use rustc_hash::FxHashMap;
@@ -1067,6 +1073,7 @@ mod test {
         // Root config with react, typescript, unicorn plugins and restriction category
         let base_config = LintConfig {
             plugins: LintPlugins::REACT | LintPlugins::TYPESCRIPT | LintPlugins::UNICORN,
+            metadata: Arc::default(),
             external_plugins: None,
             env: OxlintEnv::default(),
             settings: OxlintSettings::default(),
@@ -1162,6 +1169,7 @@ mod test {
         // Root config with only typescript plugin
         let base_config = LintConfig {
             plugins: (LintPlugins::TYPESCRIPT),
+            metadata: Arc::default(),
             external_plugins: None,
             env: OxlintEnv::default(),
             settings: OxlintSettings::default(),
@@ -1273,6 +1281,7 @@ mod test {
         // Root config with react plugin
         let base_config = LintConfig {
             plugins: (LintPlugins::REACT),
+            metadata: Arc::default(),
             external_plugins: None,
             env: OxlintEnv::default(),
             settings: OxlintSettings::default(),
@@ -1634,14 +1643,12 @@ mod test {
             .unwrap(),
         );
         let mut store = ExternalPluginStore::new(false);
-        let config =
-            ConfigStoreBuilder::from_oxlintrc(true, oxlintrc.clone(), None, &mut store, None)
-                .unwrap()
-                .with_builtin_plugins(LintPlugins::empty())
-                .build(&mut store)
-                .unwrap();
-        let printed: Value =
-            serde_json::from_str(&config.to_config_file(oxlintrc, &store)).unwrap();
+        let config = ConfigStoreBuilder::from_oxlintrc(true, oxlintrc, None, &mut store, None)
+            .unwrap()
+            .with_builtin_plugins(LintPlugins::empty())
+            .build(&mut store)
+            .unwrap();
+        let printed: Value = serde_json::from_str(&config.to_config_file(&store)).unwrap();
 
         assert_eq!(printed["$schema"], "test-schema");
         assert_eq!(printed["ignorePatterns"], json!(["dist"]));
@@ -1662,6 +1669,57 @@ mod test {
                 "rules": { "no-unused-vars": ["warn", { "args": "none" }] }
             }])
         );
+    }
+
+    #[test]
+    fn test_print_config_resolved_metadata() {
+        let path = PathBuf::from("fixtures/extends_config/metadata.json");
+        let base = Oxlintrc::from_file(&path).unwrap();
+        let root: Oxlintrc = serde_json::from_value(json!({
+            "categories": { "pedantic": "error" },
+            "ignorePatterns": ["dist"]
+        }))
+        .unwrap();
+        let configs = [
+            Oxlintrc { extends: vec![path], ..root.clone() },
+            Oxlintrc { extends_configs: vec![base.clone()], ..root.clone() },
+            Oxlintrc {
+                extends_configs: vec![Oxlintrc {
+                    extends_configs: vec![base],
+                    ..Oxlintrc::default()
+                }],
+                ..root
+            },
+        ];
+
+        for oxlintrc in configs {
+            for schema in [None, Some("root-schema".to_string())] {
+                let expected_extends = oxlintrc.extends.clone();
+                let mut store = ExternalPluginStore::default();
+                let config = ConfigStoreBuilder::from_oxlintrc(
+                    false,
+                    Oxlintrc { schema: schema.clone(), ..oxlintrc.clone() },
+                    None,
+                    &mut store,
+                    None,
+                )
+                .unwrap()
+                .build(&mut store)
+                .unwrap();
+                let printed: Oxlintrc =
+                    serde_json::from_str(&config.to_config_file(&store)).unwrap();
+                assert_eq!(
+                    printed.schema.as_deref(),
+                    Some(schema.as_deref().unwrap_or("inherited-schema"))
+                );
+                assert_eq!(printed.ignore_patterns, ["dist"]);
+                assert_eq!(printed.extends, expected_extends);
+                assert_eq!(
+                    serde_json::to_value(printed.categories).unwrap(),
+                    json!({ "correctness": "warn", "pedantic": "deny", "restriction": "allow" })
+                );
+            }
+        }
     }
 
     #[test]
@@ -1695,13 +1753,11 @@ mod test {
 
         for oxlintrc in configs {
             let mut store = ExternalPluginStore::new(false);
-            let config =
-                ConfigStoreBuilder::from_oxlintrc(true, oxlintrc.clone(), None, &mut store, None)
-                    .unwrap()
-                    .build(&mut store)
-                    .unwrap();
-            let printed: Oxlintrc =
-                serde_json::from_str(&config.to_config_file(oxlintrc, &store)).unwrap();
+            let config = ConfigStoreBuilder::from_oxlintrc(true, oxlintrc, None, &mut store, None)
+                .unwrap()
+                .build(&mut store)
+                .unwrap();
+            let printed: Oxlintrc = serde_json::from_str(&config.to_config_file(&store)).unwrap();
             assert_eq!(printed.external_plugins, expected.external_plugins);
         }
     }
@@ -1732,13 +1788,11 @@ mod test {
             ]
         }))
         .unwrap();
-        let config =
-            ConfigStoreBuilder::from_oxlintrc(true, oxlintrc.clone(), None, &mut store, None)
-                .unwrap()
-                .build(&mut store)
-                .unwrap();
-        let printed: Value =
-            serde_json::from_str(&config.to_config_file(oxlintrc, &store)).unwrap();
+        let config = ConfigStoreBuilder::from_oxlintrc(true, oxlintrc, None, &mut store, None)
+            .unwrap()
+            .build(&mut store)
+            .unwrap();
+        let printed: Value = serde_json::from_str(&config.to_config_file(&store)).unwrap();
 
         assert_eq!(
             printed["rules"],

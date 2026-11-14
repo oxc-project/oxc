@@ -11,7 +11,9 @@ working directory:
     "typescript",
     "oxc"
   ],
-  "categories": {},
+  "categories": {
+    "correctness": "warn"
+  },
   "rules": {
     "eqeqeq": "deny"
   },

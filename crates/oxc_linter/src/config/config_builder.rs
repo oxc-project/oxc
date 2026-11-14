@@ -1,7 +1,6 @@
 use std::{
     fmt::{self, Debug, Display},
     path::{Component as PathComponent, Path, PathBuf},
-    sync::Arc,
 };
 
 use itertools::Itertools;
@@ -228,7 +227,8 @@ impl ConfigStoreBuilder {
 
         validate_ignore_patterns(&oxlintrc)?;
 
-        let (oxlintrc, extended_paths) = resolve_oxlintrc_config(oxlintrc, false, &mut Vec::new())?;
+        let (mut oxlintrc, extended_paths) =
+            resolve_oxlintrc_config(oxlintrc, false, &mut Vec::new())?;
 
         // Collect external plugins from both base config and overrides
         let mut external_plugins: FxHashSet<&ExternalPluginEntry> = FxHashSet::default();
@@ -293,33 +293,27 @@ impl ConfigStoreBuilder {
             categories.entry(RuleCategory::Correctness).or_insert(AllowWarnDeny::Warn);
         }
 
-        let config = LintConfig {
-            plugins,
-            external_plugins: oxlintrc.external_plugins.map(Arc::new),
-            settings: oxlintrc.settings,
-            env: oxlintrc.env,
-            globals: oxlintrc.globals,
-            path: Some(oxlintrc.path),
-            options: oxlintrc.options,
-        };
+        let configured_categories = std::mem::take(&mut oxlintrc.categories);
+        let configured_rules = std::mem::take(&mut oxlintrc.rules);
+        let overrides = std::mem::take(&mut oxlintrc.overrides);
 
         let mut builder = Self {
             rules,
             external_rules: FxHashMap::default(),
-            config,
+            config: oxlintrc.into(),
             categories,
-            overrides: oxlintrc.overrides,
+            overrides,
             extended_paths,
         };
 
-        for filter in oxlintrc.categories.filters() {
+        for filter in configured_categories.filters() {
             builder = builder.with_filter(&filter);
         }
 
         {
             let all_rules = builder.get_all_rules();
 
-            oxlintrc.rules.override_rules(
+            configured_rules.override_rules(
                 &mut builder.rules,
                 &mut builder.external_rules,
                 &all_rules,
@@ -937,7 +931,7 @@ mod test {
                 .build(&mut store)
                 .unwrap();
                 let printed: serde_json::Value =
-                    serde_json::from_str(&config.to_config_file(oxlintrc.clone(), &store)).unwrap();
+                    serde_json::from_str(&config.to_config_file(&store)).unwrap();
                 assert_eq!(printed["rules"], expected);
             }
         }

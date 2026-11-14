@@ -29,6 +29,13 @@ pub use oxc_config::GlobSet;
 
 use crate::config::{external_plugins::ExternalPluginEntry, oxlintrc::OxlintOptions};
 
+#[derive(Debug, Default)]
+pub struct ConfigFileMetadata {
+    schema: Option<String>,
+    ignore_patterns: Vec<String>,
+    extends: Vec<PathBuf>,
+}
+
 #[derive(Debug, Default, Clone)]
 pub struct LintConfig {
     pub(crate) plugins: LintPlugins,
@@ -43,18 +50,37 @@ pub struct LintConfig {
     pub(crate) path: Option<PathBuf>,
     /// Options for the linter.
     pub(crate) options: OxlintOptions,
+    /// File-level metadata shared across per-file override results.
+    pub(crate) metadata: Arc<ConfigFileMetadata>,
 }
 
 impl From<Oxlintrc> for LintConfig {
     fn from(config: Oxlintrc) -> Self {
+        let Oxlintrc {
+            schema,
+            plugins,
+            external_plugins,
+            categories: _,
+            rules: _,
+            settings,
+            env,
+            globals,
+            overrides: _,
+            options,
+            path,
+            ignore_patterns,
+            extends,
+            extends_configs: _,
+        } = config;
         Self {
-            plugins: config.plugins.unwrap_or_default(),
-            external_plugins: config.external_plugins.map(Arc::new),
-            settings: config.settings,
-            env: config.env,
-            globals: config.globals,
-            path: Some(config.path),
-            options: config.options,
+            plugins: plugins.unwrap_or_default(),
+            external_plugins: external_plugins.map(Arc::new),
+            settings,
+            env,
+            globals,
+            path: Some(path),
+            options,
+            metadata: Arc::new(ConfigFileMetadata { schema, ignore_patterns, extends }),
         }
     }
 }
