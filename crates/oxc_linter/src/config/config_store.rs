@@ -208,11 +208,18 @@ impl Config {
         let mut env = self.base.config.env.clone();
         let mut globals = self.base.config.globals.clone();
         let mut plugins = self.base.config.plugins;
+        let mut external_plugins = self.base.config.external_plugins.clone();
         let settings = self.base.config.settings.clone();
 
         for override_config in overrides_to_apply.clone() {
             if let Some(override_plugins) = override_config.plugins {
                 plugins |= override_plugins;
+            }
+            if let Some(override_plugins) = &override_config.external_plugins
+                && !override_plugins.is_empty()
+            {
+                Arc::make_mut(external_plugins.get_or_insert_default())
+                    .extend(override_plugins.iter().cloned());
             }
         }
 
@@ -302,6 +309,7 @@ impl Config {
         }
 
         let config: Arc<LintConfig> = if plugins == self.base.config.plugins
+            && external_plugins == self.base.config.external_plugins
             && env == self.base.config.env
             && globals == self.base.config.globals
             && settings == self.base.config.settings
@@ -311,6 +319,7 @@ impl Config {
             let mut config = (*self.base.config).clone();
 
             config.plugins = plugins;
+            config.external_plugins = external_plugins;
             config.env = env;
             config.globals = globals;
             config.settings = settings;
@@ -1823,6 +1832,7 @@ mod test {
             "jsPlugins": ["eslint-plugin-root"],
             "overrides": [{
                 "files": ["*.ts"],
+                "excludeFiles": ["*.skip.ts"],
                 "jsPlugins": ["eslint-plugin-override"]
             }]
         }))
@@ -1852,6 +1862,18 @@ mod test {
                 .unwrap();
             let printed: Oxlintrc = serde_json::from_str(&config.to_config_file(&store)).unwrap();
             assert_eq!(printed.external_plugins, expected.external_plugins);
+
+            let store = ConfigStore::new(config, FxHashMap::default(), store);
+            for path in ["file.js", "file.ts", "file.skip.ts"] {
+                let printed: Oxlintrc =
+                    serde_json::from_str(&store.to_config_file_for_path(Path::new(path))).unwrap();
+                let mut expected_plugins = expected.external_plugins.clone().unwrap();
+                if path == "file.ts" {
+                    expected_plugins
+                        .insert(serde_json::from_value(json!("eslint-plugin-override")).unwrap());
+                }
+                assert_eq!(printed.external_plugins, Some(expected_plugins));
+            }
         }
     }
 
@@ -1901,6 +1923,22 @@ mod test {
             })
         );
         assert_eq!(printed["overrides"][1]["rules"], json!({ "custom/my-rule": "allow" }));
+
+        let store = ConfigStore::new(config, FxHashMap::default(), store);
+        for (path, rule) in [
+            ("file.js", json!(["warn", { "base": true }])),
+            ("file.ts", json!(["deny", ["nested"], null, true, 3])),
+            ("file.test.ts", Value::Null),
+        ] {
+            let printed: Value =
+                serde_json::from_str(&store.to_config_file_for_path(Path::new(path))).unwrap();
+            assert_eq!(printed["rules"]["custom/my-rule"], rule);
+            assert_eq!(printed["rules"]["custom/no-options"], "deny");
+            assert_eq!(
+                printed["rules"].as_object().unwrap().len(),
+                if rule.is_null() { 1 } else { 2 }
+            );
+        }
     }
 
     #[test]
