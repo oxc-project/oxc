@@ -709,6 +709,34 @@ impl<'a> Printer<'a> {
         indent_stack: &mut PrintIndentStack,
         args: PrintElementArgs,
     ) -> PrintResult<()> {
+        // A text alone, or a soft line alone printed flat (the words and separators of a filled paragraph):
+        // printed as `print_element` prints it, without the entry frame and the walk
+        if let Some(element) = queue.single_element_entry() {
+            let printed = match element {
+                FormatElement::Token { text } => {
+                    self.print_text(Text::Token(text));
+                    true
+                }
+                FormatElement::Text { text, width } => {
+                    self.print_text(Text::Text { text, width: *width });
+                    true
+                }
+                FormatElement::Line(line_mode @ (LineMode::Soft | LineMode::SoftOrSpace))
+                    if args.mode().is_flat() =>
+                {
+                    if *line_mode == LineMode::SoftOrSpace && self.state.line_width > 0 {
+                        self.state.pending_space = true;
+                    }
+                    true
+                }
+                _ => false,
+            };
+            if printed {
+                queue.skip_single_element_entry();
+                return Ok(());
+            }
+        }
+
         let start_entry = queue.top();
 
         if !matches!(start_entry, Some(&FormatElement::Tag(Tag::StartEntry))) {
@@ -1183,7 +1211,7 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                     // counts a pending `Space` once text follows, like Prettier measuring
                     // `[content, separator, next content]` together
                     if predicate.is_end(element)? {
-                        return Ok(self.state.line_width <= usize::from(self.options().print_width));
+                        return Ok(self.fits_at_entry_end());
                     }
                 }
             }
@@ -1199,6 +1227,12 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
     fn overflows(&self) -> bool {
         self.state.line_width + usize::from(self.state.pending_space)
             > usize::from(self.options().print_width)
+    }
+
+    /// The check at a fill entry boundary whose line goes on (see `fits`):
+    /// unlike [`Self::overflows`], a pending `Space` is left for the next entry to count.
+    fn fits_at_entry_end(&self) -> bool {
+        self.state.line_width <= usize::from(self.options().print_width)
     }
 
     /// Tests if the content of a `Fill` item fits in [PrintMode::Flat].
@@ -1223,6 +1257,10 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
     /// Returns `Err` if the queue isn't positioned at a [Tag::StartEntry] or if
     /// the matching [Tag::EndEntry] is missing.
     fn fill_entry_fits(&mut self, mode: PrintMode) -> PrintResult<bool> {
+        if let Some(fits) = self.simple_fill_entry_fits(mode) {
+            return Ok(fits);
+        }
+
         let start_entry = self.queue.top();
 
         if !matches!(start_entry, Some(&FormatElement::Tag(Tag::StartEntry))) {
@@ -1238,6 +1276,28 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
         }
 
         Ok(fits)
+    }
+
+    /// [`Self::fill_entry_fits`] of an entry holding a single-line text alone, or a soft line alone measured flat
+    /// (the words and separators of a filled paragraph): the same measurement, without the frames and the walk.
+    /// `None` for any other entry.
+    ///
+    /// When it doesn't fit, the measurement ends there, like the walk's early `Fits::No` exit.
+    fn simple_fill_entry_fits(&mut self, mode: PrintMode) -> Option<bool> {
+        let fits = match self.queue.single_element_entry()? {
+            FormatElement::Token { text } => self.fits_text(Text::Token(text)) != Fits::No,
+            FormatElement::Text { text, width } if !width.is_multiline() => {
+                self.fits_text(Text::Text { text, width: *width }) != Fits::No
+            }
+            FormatElement::Line(LineMode::SoftOrSpace) if mode.is_flat() => {
+                self.state.pending_line_space = true;
+                true
+            }
+            FormatElement::Line(LineMode::Soft) if mode.is_flat() => true,
+            _ => return None,
+        };
+        self.queue.skip_single_element_entry();
+        Some(fits && self.fits_at_entry_end())
     }
 
     /// Tests if the passed element fits on the current line or not.
