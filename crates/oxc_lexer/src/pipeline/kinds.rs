@@ -38,4 +38,12 @@ impl<'a> Kinds<'a> {
     pub(super) fn set(self, i: usize, kind: TokenKind) {
         self.0[i].set(kind as u8);
     }
+
+    /// Set the kind at i if cond, without a branch.
+    #[inline(always)]
+    pub(super) fn set_if(self, i: usize, cond: bool, kind: TokenKind) {
+        let cell = &self.0[i];
+        let mask = 0u8.wrapping_sub(u8::from(cond));
+        cell.set((cell.get() & !mask) | (kind as u8 & mask));
+    }
 }
