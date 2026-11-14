@@ -1,0 +1,54 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: 
+working directory: fixtures/cli/no_cycle_script_sections
+----------
+
+  x import(no-cycle): Dependency cycle detected
+   ,-[card.svelte:2:28]
+ 1 | <script module lang="ts">
+ 2 |   import { registry } from './registry';
+   :                            ^^^^^^^^^^^^
+ 3 | 
+   `----
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./registry (fixtures/cli/no_cycle_script_sections/registry.ts)
+           │         ⬇ imports
+           │    ./card.svelte (fixtures/cli/no_cycle_script_sections/card.svelte)
+           ╰─────────╯ imports the current file
+
+  x import(no-cycle): Dependency cycle detected
+   ,-[card.svelte:8:25]
+ 7 | <script lang="ts">
+ 8 |   import { theme } from './theme';
+   :                         ^^^^^^^^^
+ 9 | 
+   `----
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./theme (fixtures/cli/no_cycle_script_sections/theme.ts)
+           │         ⬇ imports
+           │    ./card.svelte (fixtures/cli/no_cycle_script_sections/card.svelte)
+           ╰─────────╯ imports the current file
+
+  x import(no-cycle): Dependency cycle detected
+   ,-[theme.ts:1:22]
+ 1 | import { kind } from './card.svelte';
+   :                      ^^^^^^^^^^^^^^^
+ 2 | 
+   `----
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./card.svelte (fixtures/cli/no_cycle_script_sections/card.svelte)
+           │         ⬇ imports
+           │    ./theme (fixtures/cli/no_cycle_script_sections/theme.ts)
+           ╰─────────╯ imports the current file
+
+Found 0 warnings and 3 errors.
+Finished in <variable>ms on 3 files with 1 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

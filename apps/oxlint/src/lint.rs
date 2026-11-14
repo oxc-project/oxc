@@ -1846,6 +1846,17 @@ mod test {
     }
 
     #[test]
+    fn test_no_cycle_script_sections() {
+        // Each `<script>` of `card.svelte` is its own module record, and imports of the file resolve
+        // to its last section. The module script is in a cycle through `registry.ts` only because
+        // the walks match the file by path. `registry.ts` itself is not reported: its import lands
+        // on the instance script, which never leads back to it.
+        Tester::new()
+            .with_cwd("fixtures/cli/no_cycle_script_sections".into())
+            .test_and_snapshot(&[]);
+    }
+
+    #[test]
     fn test_import_plugin_detects_cycles_with_auto_discovered_tsconfig_paths() {
         let args = &["--import-plugin", "-D", "import/no-cycle", "deep/src/dep-a.ts"];
         Tester::new().with_cwd("fixtures/lsp/ts_path_alias".into()).test_and_snapshot(args);

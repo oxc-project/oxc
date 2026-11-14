@@ -50,6 +50,7 @@ mod external_plugin_store;
 mod fixer;
 mod frameworks;
 mod globals;
+mod module_graph_scc;
 mod module_graph_visitor;
 mod module_record;
 mod options;

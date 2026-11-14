@@ -2,10 +2,10 @@ use std::{
     borrow::Cow,
     ffi::OsStr,
     fs,
-    hash::BuildHasherDefault,
+    hash::{BuildHasherDefault, Hash, Hasher},
     mem::take,
     path::{Path, PathBuf},
-    sync::{Arc, Mutex, mpsc},
+    sync::{Arc, Mutex, atomic::Ordering, mpsc},
 };
 
 use indexmap::IndexSet;
@@ -14,7 +14,7 @@ use rayon::{
     iter::IntoParallelRefIterator,
     prelude::{ParallelIterator, ParallelSliceMut},
 };
-use rustc_hash::{FxBuildHasher, FxHashMap, FxHasher};
+use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet, FxHasher};
 use self_cell::self_cell;
 use smallvec::SmallVec;
 
@@ -31,6 +31,7 @@ use crate::{
     context::{ContextSubHost, ContextSubHostOptions},
     disable_directives::DisableDirectives,
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
+    module_graph_scc::{ImportGraphGroup, ImportGraphRun, cyclic_components},
     module_record::ModuleRecord,
     suppression::DiffManager,
     utils::read_to_arena_str,
@@ -40,6 +41,39 @@ use super::LintServiceOptions;
 
 type ModulesByPath =
     papaya::HashMap<Arc<OsStr>, SmallVec<[Arc<ModuleRecord>; 1]>, BuildHasherDefault<FxHasher>>;
+
+/// A module path compared as a [`Path`], so one file under two spellings is caught.
+struct NodePath(Arc<OsStr>);
+
+impl PartialEq for NodePath {
+    fn eq(&self, other: &Self) -> bool {
+        Path::new(&self.0) == Path::new(&other.0)
+    }
+}
+
+impl Eq for NodePath {}
+
+impl Hash for NodePath {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        Path::new(&self.0).hash(state);
+    }
+}
+
+/// Import-graph SCC labeling in one run of [`Runtime::resolve_modules`].
+#[derive(Default)]
+struct ImportGraphState {
+    run: Arc<ImportGraphRun>,
+    paths: FxHashSet<NodePath>,
+}
+
+impl ImportGraphState {
+    /// `false` if `path` equals an earlier path as a [`Path`] but not as a key, so one file would
+    /// be two graph nodes, or if a labeled record was relinked. Either way, stop labeling. Labels
+    /// of finished groups stay valid: they cannot reach modules discovered later.
+    fn register_path(&mut self, path: &Arc<OsStr>) -> bool {
+        self.run.valid.load(Ordering::Acquire) && self.paths.insert(NodePath(Arc::clone(path)))
+    }
+}
 
 pub struct Runtime {
     cwd: Box<Path>,
@@ -204,6 +238,69 @@ impl<'alloc_pool> ModuleGroups<'alloc_pool> {
                 group.merged_into.is_some() || group.finished,
                 "group {id} is still unfinished at the end of the graph walk"
             );
+        }
+    }
+}
+
+/// Writes `loaded_modules` for the records of a finished group.
+///
+/// With `import_graph`, it also labels every file of the group with its strongly connected
+/// component in the import graph, from the edges seen while linking. A finished group never
+/// imports a later one, so its SCCs are complete, and imports into earlier groups cannot lead back.
+fn link_group(
+    modules_by_path: &ModulesByPath,
+    requests_by_path: Vec<(Arc<OsStr>, ModuleResolvedRequests)>,
+    import_graph: Option<&ImportGraphState>,
+) {
+    let modules = modules_by_path.pin();
+    // Borrow the graph's keys, so request specifiers can still move into `loaded_modules`.
+    let mut nodes: Vec<_> = requests_by_path
+        .into_iter()
+        .map(|(path, sections)| {
+            let (path, records) = modules.get_key_value(&path).unwrap();
+            (path, records, sections)
+        })
+        .collect();
+    let import_graph = import_graph.filter(|state| state.run.valid.load(Ordering::Acquire));
+    let mut edges = import_graph.map(|_| vec![Vec::new(); nodes.len()]);
+    let indices: FxHashMap<&OsStr, usize> = if edges.is_some() {
+        nodes.iter().enumerate().map(|(index, (path, _, _))| ((*path).as_ref(), index)).collect()
+    } else {
+        FxHashMap::default()
+    };
+
+    for (index, (_, records, sections)) in nodes.iter_mut().enumerate() {
+        assert_eq!(
+            records.len(),
+            sections.len(),
+            "This is an internal logic error. Please file an issue at https://github.com/oxc-project/oxc/issues",
+        );
+        for (record, requests) in records.iter().zip(take(sections)) {
+            let mut loaded_modules = record.write_loaded_modules();
+            for request in requests {
+                // TODO: revise how to store multiple sections in loaded_modules
+                let Some(target) = modules.get(&request.resolved_requested_path).unwrap().last()
+                else {
+                    continue;
+                };
+                if let Some(edges) = &mut edges
+                    && let Some(&dependency) = indices.get(request.resolved_requested_path.as_ref())
+                {
+                    edges[index].push(dependency);
+                }
+                loaded_modules.insert(request.specifier, Arc::downgrade(target));
+            }
+        }
+    }
+
+    let (Some(import_graph), Some(edges)) = (import_graph, edges) else {
+        return;
+    };
+    let components = cyclic_components(&edges);
+    let group = Arc::new(ImportGraphGroup { run: Arc::clone(&import_graph.run), components });
+    for (index, (_, records, _)) in nodes.into_iter().enumerate() {
+        for record in records {
+            record.set_import_graph_component(Arc::clone(&group), index);
         }
     }
 }
@@ -594,6 +691,9 @@ impl Runtime {
         // This channel is for posting `ModuleProcessOutput` from module threads to the graph thread.
         let (tx_process_output, rx_process_output) = mpsc::channel::<ModuleProcessOutput>();
 
+        // Labels files with their import-graph SCCs while linking; see `link_group`.
+        let mut import_graph = Some(ImportGraphState::default());
+
         // Whether the graph thread is one of rayon's worker threads. It's not when `scope` was created by
         // `rayon::in_place_scope` outside of the thread pool.
         let is_worker_thread = rayon::current_thread_index().is_some();
@@ -663,6 +763,10 @@ impl Runtime {
                 // hung in that situation as well (spinning), so blocking here is not a new failure mode.
                 rx_process_output.recv().unwrap()
             };
+
+            if import_graph.as_mut().is_some_and(|state| !state.register_path(&path)) {
+                import_graph = None;
+            }
 
             let mut group_id = groups.find(encountered_paths[&path]);
             groups.get_mut(group_id).pending_module_count -= 1;
@@ -743,32 +847,11 @@ impl Runtime {
             // This stays serial: from a non-worker graph thread, a parallel iterator is injected behind the parses
             // already queued, and the graph thread would block until they all ran. It must also finish before the
             // lint jobs below are spawned, because they read `loaded_modules` of this group and finished groups.
-            let modules_by_path = self.modules_by_path.pin();
-            for (path, requested_module_paths) in
-                take(&mut group.module_paths_and_resolved_requests)
-            {
-                if requested_module_paths.is_empty() {
-                    continue;
-                }
-                let records = modules_by_path.get(&path).unwrap();
-                assert_eq!(
-                    records.len(),
-                    requested_module_paths.len(),
-                    "This is an internal logic error. Please file an issue at https://github.com/oxc-project/oxc/issues",
-                );
-                for (record, requested_module_paths) in records.iter().zip(requested_module_paths) {
-                    let mut loaded_modules = record.write_loaded_modules();
-                    for request in requested_module_paths {
-                        // TODO: revise how to store multiple sections in loaded_modules
-                        let Some(dep_module_record) =
-                            modules_by_path.get(&request.resolved_requested_path).unwrap().last()
-                        else {
-                            continue;
-                        };
-                        loaded_modules.insert(request.specifier, Arc::downgrade(dep_module_record));
-                    }
-                }
-            }
+            link_group(
+                &self.modules_by_path,
+                take(&mut group.module_paths_and_resolved_requests),
+                import_graph.as_ref(),
+            );
 
             // From a non-worker these land on rayon's FIFO injector, behind parses already queued.
             // Running them first was measured on VS Code and AFFiNE (4 cores) and did not lower peak RSS.
@@ -1528,5 +1611,121 @@ mod module_groups {
         assert_eq!(groups.get_mut(2).merged_into, Some(1));
         assert_eq!(groups.get_mut(2).entry_count, 0);
         assert_eq!(groups.get_mut(1).entry_count, 5);
+    }
+}
+
+#[cfg(test)]
+mod import_graph_tests {
+    use std::{ffi::OsStr, sync::Arc};
+
+    use smallvec::SmallVec;
+
+    use super::{
+        ImportGraphState, ModuleResolvedRequests, ModulesByPath, ResolvedModuleRequest, link_group,
+    };
+    use crate::module_record::ModuleRecord;
+
+    type Requests = Vec<(Arc<OsStr>, ModuleResolvedRequests)>;
+    /// A file's path and the imports of each of its sections.
+    type File<'a> = (&'a str, &'a [&'a [&'a str]]);
+
+    /// Adds `files` to `modules`, one record per section. Specifiers are the targets' paths.
+    fn add(modules: &ModulesByPath, files: &[File]) -> Requests {
+        let mut requests = Vec::new();
+        for &(path, sections) in files {
+            let (mut records, mut resolved) = (SmallVec::new(), SmallVec::new());
+            for imports in sections {
+                let mut record = ModuleRecord::default();
+                record.resolved_absolute_path.push(path);
+                records.push(Arc::new(record));
+                resolved.push(
+                    imports
+                        .iter()
+                        .map(|&target| ResolvedModuleRequest {
+                            specifier: target.into(),
+                            resolved_requested_path: Arc::from(OsStr::new(target)),
+                        })
+                        .collect(),
+                );
+            }
+            let path = Arc::<OsStr>::from(OsStr::new(path));
+            modules.pin().insert(Arc::clone(&path), records);
+            requests.push((path, resolved));
+        }
+        requests
+    }
+
+    fn record(modules: &ModulesByPath, path: &str, section: usize) -> Arc<ModuleRecord> {
+        Arc::clone(&modules.pin().get(OsStr::new(path)).unwrap()[section])
+    }
+
+    #[test]
+    fn sections_of_a_file_share_its_component() {
+        let modules = ModulesByPath::default();
+        // `a.vue` reaches `b.ts` only from its second section; `c.ts` is outside the cycle.
+        let requests = add(
+            &modules,
+            &[("a.vue", &[&[], &["b.ts"]]), ("b.ts", &[&["a.vue"]]), ("c.ts", &[&["a.vue"]])],
+        );
+        link_group(&modules, requests, Some(&ImportGraphState::default()));
+        let a = record(&modules, "a.vue", 0);
+        let component = a.import_graph_component().unwrap();
+        assert!(component.is_cyclic());
+        assert!(record(&modules, "a.vue", 1).import_graph_component().unwrap().is_cyclic());
+        assert!(!component.excludes_module(&record(&modules, "a.vue", 1)));
+        assert!(!component.excludes_module(&record(&modules, "b.ts", 0)));
+        let c = record(&modules, "c.ts", 0);
+        assert!(!c.import_graph_component().unwrap().is_cyclic());
+        assert!(component.excludes_module(&c));
+    }
+
+    #[test]
+    fn earlier_groups_are_excluded_but_other_runs_and_unlabeled_links_are_not() {
+        let modules = ModulesByPath::default();
+        let state = ImportGraphState::default();
+        link_group(
+            &modules,
+            add(&modules, &[("a.ts", &[&["b.ts"]]), ("b.ts", &[&["a.ts"]])]),
+            Some(&state),
+        );
+        link_group(&modules, add(&modules, &[("c.ts", &[&["a.ts"]])]), Some(&state));
+        let c = record(&modules, "c.ts", 0);
+        let c = c.import_graph_component().unwrap();
+        assert!(!c.is_cyclic());
+        // Group-local IDs may collide, but a finished group never imports a later one.
+        assert!(c.excludes_module(&record(&modules, "a.ts", 0)));
+
+        let other_run = ModulesByPath::default();
+        link_group(
+            &other_run,
+            add(&other_run, &[("a.ts", &[&[]])]),
+            Some(&ImportGraphState::default()),
+        );
+        assert!(!c.excludes_module(&record(&other_run, "a.ts", 0)));
+
+        let unlabeled = ModulesByPath::default();
+        link_group(&unlabeled, add(&unlabeled, &[("a.ts", &[&["a.ts"]])]), None);
+        let a = record(&unlabeled, "a.ts", 0);
+        assert!(a.import_graph_component().is_none());
+        assert_eq!(a.loaded_modules().len(), 1);
+    }
+
+    #[test]
+    fn relinking_a_labeled_record_disables_the_whole_run() {
+        let modules = ModulesByPath::default();
+        let requests = add(&modules, &[("a.ts", &[&["b.ts"]]), ("b.ts", &[&["a.ts"]])]);
+        link_group(&modules, requests, Some(&ImportGraphState::default()));
+        assert!(record(&modules, "a.ts", 0).import_graph_component().is_some());
+        drop(record(&modules, "b.ts", 0).write_loaded_modules());
+        assert!(record(&modules, "a.ts", 0).import_graph_component().is_none());
+    }
+
+    #[test]
+    fn path_equivalent_aliases_stop_labeling() {
+        let mut state = ImportGraphState::default();
+        assert!(state.register_path(&Arc::from(OsStr::new("dir/a.ts"))));
+        assert!(state.register_path(&Arc::from(OsStr::new("dir/b.ts"))));
+        // The same file under another spelling would become a second graph node.
+        assert!(!state.register_path(&Arc::from(OsStr::new("dir/./a.ts"))));
     }
 }

@@ -152,12 +152,17 @@ impl Rule for NoCycle {
 
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.module_record();
+        let unbounded = self.max_depth == u32::MAX;
+        // The import graph's SCCs include every import, so the edges these walks follow (a subset)
+        // cannot form a cycle outside them.
+        let component = module_record.import_graph_component();
 
-        // Gated on unbounded `max_depth` (the default), where the walks below explore the whole
-        // reachable subgraph anyway so the prefilter replaces their work. Under a shallow depth cap
-        // they are cheap and an unbounded prefilter could cost more than it saves.
-        if self.max_depth == u32::MAX && !self.can_be_in_cycle(module_record) {
-            return;
+        // Without labels, check reachability once. Under a shallow `maxDepth` the walks below are
+        // cheap, and an unbounded check could cost more than it saves.
+        match component {
+            Some(component) if !component.is_cyclic() => return,
+            None if unbounded && !self.can_be_in_cycle(module_record) => return,
+            _ => {}
         }
 
         let needle = &module_record.resolved_absolute_path;
@@ -165,8 +170,14 @@ impl Rule for NoCycle {
 
         let mut stack = Vec::new();
         let mut traversed = FxHashSet::default();
+        // Skip imports outside this file's SCC: they cannot lead back to it. Not under `maxDepth`,
+        // where the visitor ends the whole walk at the depth limit, so pruning could change results.
+        let component = component.filter(|_| unbounded);
         for (key, weak_module_record) in direct_imports.iter() {
             let loaded_module_record = weak_module_record.upgrade().unwrap();
+            if component.is_some_and(|component| component.excludes_module(&loaded_module_record)) {
+                continue;
+            }
             if !self.should_traverse_module(key, &loaded_module_record, module_record) {
                 continue;
             }
@@ -184,7 +195,10 @@ impl Rule for NoCycle {
             let visitor_result = ModuleGraphVisitorBuilder::default()
                 .max_depth(self.max_depth.saturating_sub(1))
                 .reuse_traversed(traversed)
-                .filter(|(key, val), parent| self.should_traverse_module(key, val, parent))
+                .filter(|(key, val), parent| {
+                    !component.is_some_and(|component| component.excludes_module(val))
+                        && self.should_traverse_module(key, val, parent)
+                })
                 .event(|event, (key, val), _| match event {
                     ModuleGraphVisitorEvent::Enter => {
                         stack.push((key.clone(), Arc::clone(val)));
