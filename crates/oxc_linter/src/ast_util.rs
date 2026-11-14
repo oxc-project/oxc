@@ -1085,7 +1085,7 @@ fn is_utf8_char_boundary(b: u8) -> bool {
 }
 
 /// Find the last meaningful (non-whitespace, non-comment) character before `end_pos`.
-fn find_last_meaningful_char(source_text: &str, end_pos: u32, ctx: &LintContext) -> Option<char> {
+pub fn find_last_meaningful_char(source_text: &str, end_pos: u32, ctx: &LintContext) -> Option<char> {
     let bytes = source_text.as_bytes();
     let comments = ctx.semantic().comments();
 

@@ -70,14 +70,12 @@ source: crates/oxc_linter/src/tester.rs
  1 │ A: "use strict"
    · ─
    ╰────
-  help: Replace `A: "use strict"` with `"use strict"`.
 
   ⚠ eslint(no-unused-labels): 'foo:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:15]
  1 │ "use strict"; foo: "bar"
    ·               ───
    ╰────
-  help: Replace `foo: "bar"` with `"bar"`.
 
   ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:1]
@@ -91,7 +89,6 @@ source: crates/oxc_linter/src/tester.rs
  1 │ A: `use strict`
    · ─
    ╰────
-  help: Replace `A: `use strict`` with ``use strict``.
 
   ⚠ eslint(no-unused-labels): 'bar:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:12]
@@ -225,3 +222,35 @@ source: crates/oxc_linter/src/tester.rs
    · ─────
    ╰────
   help: Replace `label: while (true) { (() => { label: while (false) {} })(); }` with `while (true) { (() => { label: while (false) {} })(); }`.
+
+  ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
+   ╭─[no_unused_labels.tsx:1:16]
+ 1 │ function f() { A: "use strict"; }
+   ·                ─
+   ╰────
+
+  ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
+   ╭─[no_unused_labels.tsx:1:21]
+ 1 │ function f(a = 1) { A: "use strict"; }
+   ·                     ─
+   ╰────
+
+  ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
+   ╭─[no_unused_labels.tsx:1:16]
+ 1 │ function f() { A: `use strict`; }
+   ·                ─
+   ╰────
+
+  ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
+   ╭─[no_unused_labels.tsx:2:1]
+ 1 │ foo()
+ 2 │ A: [0].forEach(x => x)
+   · ─
+   ╰────
+
+  ⚠ eslint(no-unused-labels): 'unused:' is defined but never used.
+   ╭─[no_unused_labels.tsx:2:1]
+ 1 │ const a = [10, 20]
+ 2 │ unused: [0].forEach((i) => console.log("item", i))
+   · ──────
+   ╰────
