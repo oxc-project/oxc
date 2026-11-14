@@ -11,6 +11,13 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
    ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <div onclick={() => {}} />;
+   ·  ───
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
  1 │ <a tabIndex="0" onClick={() => {}} />
    ·  ─
    ╰────

@@ -32,6 +32,13 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ jsx-a11y(mouse-events-have-key-events): `onMouseOver` must be accompanied by `onFocus` for accessibility.
    ╭─[mouse_events_have_key_events.tsx:1:6]
+ 1 │ <div onmouseover={() => void 0} />;
+   ·      ──────────────────────────
+   ╰────
+  help: Try to add `onFocus`.
+
+  ⚠ jsx-a11y(mouse-events-have-key-events): `onMouseOver` must be accompanied by `onFocus` for accessibility.
+   ╭─[mouse_events_have_key_events.tsx:1:6]
  1 │ <div onMouseOver={() => void 0} {...props} />
    ·      ──────────────────────────
    ╰────

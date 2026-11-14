@@ -14,7 +14,7 @@ use crate::{
     context::LintContext,
     globals::HTML_TAG,
     rule::{DefaultRuleConfig, Rule},
-    utils::{get_element_type, get_prop_value, has_jsx_prop},
+    utils::{get_element_type, get_prop_value, has_jsx_prop_ignore_case},
 };
 
 fn miss_on_focus(span: Span, attr_name: &str) -> OxcDiagnostic {
@@ -99,12 +99,14 @@ impl Rule for MouseEventsHaveKeyEvents {
         }
 
         for handler in &self.0.hover_in_handlers {
-            if let Some(jsx_attr) = has_jsx_prop(jsx_opening_el, handler) {
+            if let Some(jsx_attr) = has_jsx_prop_ignore_case(jsx_opening_el, handler) {
                 if !has_handler_value(jsx_attr) {
                     continue;
                 }
 
-                if !has_jsx_prop(jsx_opening_el, "onFocus").is_some_and(has_handler_value) {
+                if !has_jsx_prop_ignore_case(jsx_opening_el, "onFocus")
+                    .is_some_and(has_handler_value)
+                {
                     ctx.diagnostic(miss_on_focus(jsx_attr.span(), handler));
                 }
 
@@ -113,12 +115,14 @@ impl Rule for MouseEventsHaveKeyEvents {
         }
 
         for handler in &self.0.hover_out_handlers {
-            if let Some(jsx_attr) = has_jsx_prop(jsx_opening_el, handler) {
+            if let Some(jsx_attr) = has_jsx_prop_ignore_case(jsx_opening_el, handler) {
                 if !has_handler_value(jsx_attr) {
                     continue;
                 }
 
-                if !has_jsx_prop(jsx_opening_el, "onBlur").is_some_and(has_handler_value) {
+                if !has_jsx_prop_ignore_case(jsx_opening_el, "onBlur")
+                    .is_some_and(has_handler_value)
+                {
                     ctx.diagnostic(miss_on_blur(jsx_attr.span(), handler));
                 }
 
@@ -153,6 +157,7 @@ fn test() {
 
     let pass = vec![
         ("<div onMouseOver={() => void 0} onFocus={() => void 0} />;", None),
+        ("<div onMouseOver={() => void 0} onfocus={() => void 0} />;", None),
         ("<div onMouseOver={() => void 0} onFocus={() => void 0} {...props} />;", None),
         ("<div onMouseOver={handleMouseOver} onFocus={handleFocus} />;", None),
         ("<div onMouseOver={handleMouseOver} onFocus={handleFocus} {...props} />;", None),
@@ -224,6 +229,7 @@ fn test() {
         ("<div onMouseOut={() => void 0} />", None),
         ("<div onMouseOver={() => void 0} onFocus={undefined} />;", None),
         ("<div onMouseOut={() => void 0} onBlur={undefined} />", None),
+        ("<div onmouseover={() => void 0} />;", None),
         ("<div onMouseOver={() => void 0} {...props} />", None),
         ("<div onMouseOut={() => void 0} {...props} />", None),
         (

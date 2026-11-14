@@ -9,8 +9,8 @@ use crate::{
     globals::HTML_TAG,
     rule::Rule,
     utils::{
-        get_element_type, has_jsx_prop, is_hidden_from_screen_reader, is_interactive_element,
-        is_presentation_role,
+        get_element_type, has_jsx_prop_ignore_case, is_hidden_from_screen_reader,
+        is_interactive_element, is_presentation_role,
     },
 };
 
@@ -58,7 +58,7 @@ impl Rule for ClickEventsHaveKeyEvents {
             return;
         };
 
-        if has_jsx_prop(jsx_opening_el, "onClick").is_none() {
+        if has_jsx_prop_ignore_case(jsx_opening_el, "onClick").is_none() {
             return;
         }
 
@@ -80,7 +80,7 @@ impl Rule for ClickEventsHaveKeyEvents {
 
         if ["onKeyUp", "onKeyDown", "onKeyPress"]
             .iter()
-            .find_map(|prop| has_jsx_prop(jsx_opening_el, prop))
+            .find_map(|prop| has_jsx_prop_ignore_case(jsx_opening_el, prop))
             .is_some()
         {
             return;
@@ -96,6 +96,7 @@ fn test() {
 
     let pass = vec![
         (r"<div onClick={() => void 0} onKeyDown={foo}/>;", None, None),
+        (r"<div onClick={() => void 0} onkeydown={foo} />;", None, None),
         (r"<div onClick={() => void 0} onKeyUp={foo} />;", None, None),
         (r"<div onClick={() => void 0} onKeyPress={foo}/>;", None, None),
         (r"<div onClick={() => void 0} onKeyDown={foo} onKeyUp={bar} />;", None, None),
@@ -123,6 +124,7 @@ fn test() {
     let fail = vec![
         (r"<div onClick={() => void 0} />;", None, None),
         (r"<div onClick={() => void 0} role={undefined} />;", None, None),
+        (r"<div onclick={() => void 0} />;", None, None),
         (r"<div onClick={() => void 0} {...props} />;", None, None),
         (r"<section onClick={() => void 0} />;", None, None),
         (r"<main onClick={() => void 0} />;", None, None),
