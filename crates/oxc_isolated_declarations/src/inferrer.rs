@@ -132,7 +132,8 @@ impl<'a> IsolatedDeclarations<'a> {
 
     pub(crate) fn is_need_to_infer_type_from_expression(expr: &Expression<'a>) -> bool {
         match expr {
-            Expression::NumericLiteral(_)
+            Expression::BooleanLiteral(_)
+            | Expression::NumericLiteral(_)
             | Expression::BigIntLiteral(_)
             | Expression::StringLiteral(_) => false,
             Expression::TemplateLiteral(lit) => !lit.expressions.is_empty(),
