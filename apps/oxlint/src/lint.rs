@@ -79,7 +79,8 @@ impl CliRunner {
         let format_str = self.options.output_options.format;
         let debug_files = self.options.output_options.debug.contains(DebugOption::Files);
         let debug_timings = self.options.output_options.debug.contains(DebugOption::Timings);
-        let output_formatter = OutputFormatter::new(format_str);
+        let output_formatter =
+            OutputFormatter::new(format_str, self.options.output_options.no_summary);
 
         let LintCommand {
             paths,

@@ -69,7 +69,7 @@ const DEFAULT_OXLINTRC_NAME: &str = ".oxlintrc.json";
 pub fn get_all_rules_json() -> String {
     use crate::output_formatter::{OutputFormat, OutputFormatter};
 
-    OutputFormatter::new(OutputFormat::Json)
+    OutputFormatter::new(OutputFormat::Json, false)
         .all_rules(FxHashSet::default())
         .expect("Failed to generate rules JSON")
 }
