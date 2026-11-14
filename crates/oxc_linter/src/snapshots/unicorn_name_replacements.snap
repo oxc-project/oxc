@@ -1,0 +1,1153 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const err = new Error();
+   ·       ───
+   ╰────
+  help: Replace `err` with `error`.
+
+  ⚠ unicorn(name-replacements): The variable `cb` should be named `callback`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const cb = () => {};
+   ·       ──
+   ╰────
+  help: Replace `cb` with `callback`.
+
+  ⚠ unicorn(name-replacements): The variable `btn` should be named `button`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const btn = document.querySelector('button');
+   ·       ───
+   ╰────
+  help: Replace `btn` with `button`.
+
+  ⚠ unicorn(name-replacements): The variable `msg` should be named `message`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const msg = 'hello';
+   ·       ───
+   ╰────
+  help: Replace `msg` with `message`.
+
+  ⚠ unicorn(name-replacements): The variable `str` should be named `string`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const str = 'text';
+   ·       ───
+   ╰────
+  help: Replace `str` with `string`.
+
+  ⚠ unicorn(name-replacements): The variable `num` should be named `number`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const num = 42;
+   ·       ───
+   ╰────
+  help: Replace `num` with `number`.
+
+  ⚠ unicorn(name-replacements): The variable `obj` should be named `object`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const obj = {};
+   ·       ───
+   ╰────
+  help: Replace `obj` with `object`.
+
+  ⚠ unicorn(name-replacements): The variable `arr` should be named `array`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const arr = [];
+   ·       ───
+   ╰────
+  help: Replace `arr` with `array`.
+
+  ⚠ unicorn(name-replacements): The variable `idx` should be named `index`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const idx = 0;
+   ·       ───
+   ╰────
+  help: Replace `idx` with `index`.
+
+  ⚠ unicorn(name-replacements): The variable `ctx` should be named `context`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const ctx = {};
+   ·       ───
+   ╰────
+  help: Replace `ctx` with `context`.
+
+  ⚠ unicorn(name-replacements): The variable `buf` should be named `buffer`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:18]
+ 1 │ function process(buf) { return buf; }
+   ·                  ───
+   ╰────
+  help: Rename `buf` to `buffer`
+
+  ⚠ unicorn(name-replacements): The variable `cfg` should be named `config`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const cfg = {};
+   ·       ───
+   ╰────
+  help: Replace `cfg` with `config`.
+
+  ⚠ unicorn(name-replacements): The variable `attr` should be named `attribute`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const attr = '';
+   ·       ────
+   ╰────
+  help: Replace `attr` with `attribute`.
+
+  ⚠ unicorn(name-replacements): The variable `len` should be named `length`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const len = 10;
+   ·       ───
+   ╰────
+  help: Replace `len` with `length`.
+
+  ⚠ unicorn(name-replacements): The variable `val` should be named `value`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const val = 5;
+   ·       ───
+   ╰────
+  help: Replace `val` with `value`.
+
+  ⚠ unicorn(name-replacements): The variable `ref` should be named `reference`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const ref = {};
+   ·       ───
+   ╰────
+  help: Replace `ref` with `reference`.
+
+  ⚠ unicorn(name-replacements): The variable `src` should be named `source`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const src = '';
+   ·       ───
+   ╰────
+  help: Replace `src` with `source`.
+
+  ⚠ unicorn(name-replacements): Please rename the variable `e`. Suggested names are: `error`, `event`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const e = new Error();
+   ·       ─
+   ╰────
+  help: Choose the replacement that best fits the context.
+
+  ⚠ unicorn(name-replacements): Please rename the variable `res`. Suggested names are: `resource`, `response`, `result`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const res = fetch('/api');
+   ·       ───
+   ╰────
+  help: Choose the replacement that best fits the context.
+
+  ⚠ unicorn(name-replacements): Please rename the variable `def`. Suggested names are: `defer`, `deferred`, `define`, `definition`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const def = {};
+   ·       ───
+   ╰────
+  help: Choose the replacement that best fits the context.
+
+  ⚠ unicorn(name-replacements): Please rename the variable `dir`. Suggested names are: `direction`, `directory`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const dir = './';
+   ·       ───
+   ╰────
+  help: Choose the replacement that best fits the context.
+
+  ⚠ unicorn(name-replacements): Please rename the variable `rel`. Suggested names are: `related`, `relationship`, `relative`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const rel = {};
+   ·       ───
+   ╰────
+  help: Choose the replacement that best fits the context.
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:8]
+ 1 │ import err from './module'
+   ·        ───
+   ╰────
+  help: Replace `err` with `error`.
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:13]
+ 1 │ import * as err from './module'
+   ·             ───
+   ╰────
+  help: Replace `err` with `error`.
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:10]
+ 1 │ import { err } from './module'
+   ·          ───
+   ╰────
+  help: Replace `err` with `error`.
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:6]
+ 1 │ type err = string
+   ·      ───
+   ╰────
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:11]
+ 1 │ interface err {}
+   ·           ───
+   ╰────
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:6]
+ 1 │ enum err { A }
+   ·      ───
+   ╰────
+
+  ⚠ unicorn(name-replacements): The variable `Err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:11]
+ 1 │ namespace Err {}
+   ·           ───
+   ╰────
+
+  ⚠ unicorn(name-replacements): The variable `Err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:11]
+ 1 │ namespace Err {}
+   ·           ───
+   ╰────
+  help: Replace `Err` with `error`.
+
+  ⚠ unicorn(name-replacements): The variable `Msg` should be named `message`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:8]
+ 1 │ module Msg { export const x = 1; }
+   ·        ───
+   ╰────
+
+  ⚠ unicorn(name-replacements): The variable `Msg` should be named `message`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:8]
+ 1 │ module Msg { export const x = 1; }
+   ·        ───
+   ╰────
+  help: Replace `Msg` with `message`.
+
+  ⚠ unicorn(name-replacements): The variable `obj` should be named `object`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const obj = { err: 1 }
+   ·       ───
+   ╰────
+  help: Replace `obj` with `object`.
+
+  ⚠ unicorn(name-replacements): The property `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:15]
+ 1 │ const obj = { err: 1 }
+   ·               ───
+   ╰────
+
+  ⚠ unicorn(name-replacements): The property `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:11]
+ 1 │ class C { err = 1 }
+   ·           ───
+   ╰────
+
+  ⚠ unicorn(name-replacements): The variable `errMsg` should be named `errorMessage`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const errMsg = 'oops';
+   ·       ──────
+   ╰────
+  help: Replace `errMsg` with `errorMessage`.
+
+  ⚠ unicorn(name-replacements): The variable `btnClick` should be named `buttonClick`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const btnClick = () => {};
+   ·       ────────
+   ╰────
+  help: Replace `btnClick` with `buttonClick`.
+
+  ⚠ unicorn(name-replacements): Please rename the variable `eCbOpts`. Suggested names are: `errorCallbackOptions`, `eventCallbackOptions`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const eCbOpts = {};
+   ·       ───────
+   ╰────
+  help: Choose the replacement that best fits the context.
+
+  ⚠ unicorn(name-replacements): The variable `custom` should be named `replacement`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const custom = 1;
+   ·       ──────
+   ╰────
+  help: Replace `custom` with `replacement`.
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:8]
+ 1 │ import err from 'lodash'
+   ·        ───
+   ╰────
+  help: Replace `err` with `error`.
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:10]
+ 1 │ import { err } from 'lodash'
+   ·          ───
+   ╰────
+  help: Replace `err` with `error`.
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:9]
+ 1 │ const { err } = obj
+   ·         ───
+   ╰────
+  help: Replace `err` with `err: error`.
+
+  ⚠ unicorn(name-replacements): The variable `propTypes` should be named `propertyTypes`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const propTypes = {}
+   ·       ─────────
+   ╰────
+  help: Replace `propTypes` with `propertyTypes`.
+
+  ⚠ unicorn(name-replacements): The variable `foo` should be named `foobar`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const foo = 1
+   ·       ───
+   ╰────
+  help: Replace `foo` with `foobar`.
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const err = require('./module')
+   ·       ───
+   ╰────
+  help: Replace `err` with `error`.
+
+  ⚠ unicorn(name-replacements): The property `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:17]
+ 1 │ export { foo as err }
+   ·                 ───
+   ╰────
+
+  ⚠ unicorn(name-replacements): The property `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:5]
+ 1 │ obj.err++
+   ·     ───
+   ╰────
+
+  ⚠ unicorn(name-replacements): The property `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ ++obj.err
+   ·       ───
+   ╰────
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:14]
+ 1 │ export const err = new Error();
+   ·              ───
+   ╰────
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:31]
+ 1 │ class C { constructor(private err: Error) {} }
+   ·                               ───
+   ╰────
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:15]
+ 1 │ try {} catch (err) {}
+   ·               ───
+   ╰────
+  help: Replace `err` with `error`.
+
+  ⚠ unicorn(name-replacements): Please rename the variable `e`. Suggested names are: `error`, `event`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:15]
+ 1 │ try {} catch (e) {}
+   ·               ─
+   ╰────
+  help: Choose the replacement that best fits the context.
+
+  ⚠ unicorn(name-replacements): The variable `i` should be named `index`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:10]
+ 1 │ for (let i = 0; i < 10; i++) {}
+   ·          ─
+   ╰────
+  help: Rename `i` to `index`
+
+  ⚠ unicorn(name-replacements): The variable `idx` should be named `index`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:10]
+ 1 │ for (let idx = 0; idx < arr.length; idx++) {}
+   ·          ───
+   ╰────
+  help: Rename `idx` to `index`
+
+  ⚠ unicorn(name-replacements): The variable `el` should be named `element`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:12]
+ 1 │ for (const el of elements) {}
+   ·            ──
+   ╰────
+  help: Replace `el` with `element`.
+
+  ⚠ unicorn(name-replacements): The variable `attr` should be named `attribute`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:12]
+ 1 │ for (const attr in obj) {}
+   ·            ────
+   ╰────
+  help: Replace `attr` with `attribute`.
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:18]
+ 1 │ const handler = (err) => err
+   ·                  ───
+   ╰────
+  help: Rename `err` to `error`
+
+  ⚠ unicorn(name-replacements): The variable `cb` should be named `callback`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:18]
+ 1 │ const handler = (cb) => cb()
+   ·                  ──
+   ╰────
+  help: Rename `cb` to `callback`
+
+  ⚠ unicorn(name-replacements): The variable `el` should be named `element`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:11]
+ 1 │ array.map(el => el)
+   ·           ──
+   ╰────
+  help: Rename `el` to `element`
+
+  ⚠ unicorn(name-replacements): The variable `elem` should be named `element`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:15]
+ 1 │ array.forEach(elem => console.log(elem))
+   ·               ────
+   ╰────
+  help: Rename `elem` to `element`
+
+  ⚠ unicorn(name-replacements): The variable `val` should be named `value`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:14]
+ 1 │ array.filter(val => val > 0)
+   ·              ───
+   ╰────
+  help: Rename `val` to `value`
+
+  ⚠ unicorn(name-replacements): The variable `acc` should be named `accumulator`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:15]
+ 1 │ array.reduce((acc, cur) => acc + cur, 0)
+   ·               ───
+   ╰────
+  help: Rename `acc` to `accumulator`
+
+  ⚠ unicorn(name-replacements): The variable `cur` should be named `current`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:20]
+ 1 │ array.reduce((acc, cur) => acc + cur, 0)
+   ·                    ───
+   ╰────
+  help: Rename `cur` to `current`
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:22]
+ 1 │ async function fetch(err) {}
+   ·                      ───
+   ╰────
+  help: Replace `err` with `error`.
+
+  ⚠ unicorn(name-replacements): The variable `idx` should be named `index`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:15]
+ 1 │ function* gen(idx) {}
+   ·               ───
+   ╰────
+  help: Replace `idx` with `index`.
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:12]
+ 1 │ function f(err = null) {}
+   ·            ───
+   ╰────
+  help: Replace `err` with `error`.
+
+  ⚠ unicorn(name-replacements): The variable `cb` should be named `callback`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:13]
+ 1 │ const fn = (cb = () => {}) => cb()
+   ·             ──
+   ╰────
+  help: Rename `cb` to `callback`
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:26]
+ 1 │ const handler = function(err) { return err; }
+   ·                          ───
+   ╰────
+  help: Rename `err` to `error`
+
+  ⚠ unicorn(name-replacements): The property `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:11]
+ 1 │ class C { err() {} }
+   ·           ───
+   ╰────
+
+  ⚠ unicorn(name-replacements): The property `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:18]
+ 1 │ class C { static err() {} }
+   ·                  ───
+   ╰────
+
+  ⚠ unicorn(name-replacements): The property `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:4]
+ 1 │ ({ err() {} })
+   ·    ───
+   ╰────
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:18]
+ 1 │ const { outer: { err } } = obj
+   ·                  ───
+   ╰────
+  help: Replace `err` with `err: error`.
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:8]
+ 1 │ const [err] = arr
+   ·        ───
+   ╰────
+  help: Replace `err` with `error`.
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:10]
+ 1 │ const [, err] = arr
+   ·          ───
+   ╰────
+  help: Replace `err` with `error`.
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:5]
+ 1 │ let err, cb, msg;
+   ·     ───
+   ╰────
+  help: Replace `err` with `error`.
+
+  ⚠ unicorn(name-replacements): The variable `cb` should be named `callback`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:10]
+ 1 │ let err, cb, msg;
+   ·          ──
+   ╰────
+  help: Replace `cb` with `callback`.
+
+  ⚠ unicorn(name-replacements): The variable `msg` should be named `message`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:14]
+ 1 │ let err, cb, msg;
+   ·              ───
+   ╰────
+  help: Replace `msg` with `message`.
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const err = 1, cb = 2;
+   ·       ───
+   ╰────
+  help: Replace `err` with `error`.
+
+  ⚠ unicorn(name-replacements): The variable `cb` should be named `callback`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:16]
+ 1 │ const err = 1, cb = 2;
+   ·                ──
+   ╰────
+  help: Replace `cb` with `callback`.
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:14]
+ 1 │ function f({ err, cb }) {}
+   ·              ───
+   ╰────
+  help: Replace `err` with `err: error`.
+
+  ⚠ unicorn(name-replacements): The variable `cb` should be named `callback`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:19]
+ 1 │ function f({ err, cb }) {}
+   ·                   ──
+   ╰────
+  help: Replace `cb` with `cb: callback`.
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:13]
+ 1 │ function f([err, cb]) {}
+   ·             ───
+   ╰────
+  help: Replace `err` with `error`.
+
+  ⚠ unicorn(name-replacements): The variable `cb` should be named `callback`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:18]
+ 1 │ function f([err, cb]) {}
+   ·                  ──
+   ╰────
+  help: Replace `cb` with `callback`.
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:20]
+ 1 │ const x = function err() {}
+   ·                    ───
+   ╰────
+  help: Replace `err` with `error`.
+
+  ⚠ unicorn(name-replacements): The property `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:5]
+ 1 │ obj.err = 1
+   ·     ───
+   ╰────
+
+  ⚠ unicorn(name-replacements): The property `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:6]
+ 1 │ this.err = value
+   ·      ───
+   ╰────
+
+  ⚠ unicorn(name-replacements): The property `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:5]
+ 1 │ obj.err += 1
+   ·     ───
+   ╰────
+
+  ⚠ unicorn(name-replacements): The variable `cbFn` should be named `callbackFunction`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const cbFn = () => {};
+   ·       ────
+   ╰────
+  help: Replace `cbFn` with `callbackFunction`.
+
+  ⚠ unicorn(name-replacements): The variable `errHandler` should be named `errorHandler`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const errHandler = () => {};
+   ·       ──────────
+   ╰────
+  help: Replace `errHandler` with `errorHandler`.
+
+  ⚠ unicorn(name-replacements): The variable `msgText` should be named `messageText`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const msgText = '';
+   ·       ───────
+   ╰────
+  help: Replace `msgText` with `messageText`.
+
+  ⚠ unicorn(name-replacements): The variable `strValue` should be named `stringValue`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const strValue = '';
+   ·       ────────
+   ╰────
+  help: Replace `strValue` with `stringValue`.
+
+  ⚠ unicorn(name-replacements): The variable `numCount` should be named `numberCount`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const numCount = 0;
+   ·       ────────
+   ╰────
+  help: Replace `numCount` with `numberCount`.
+
+  ⚠ unicorn(name-replacements): The variable `objData` should be named `objectData`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const objData = {};
+   ·       ───────
+   ╰────
+  help: Replace `objData` with `objectData`.
+
+  ⚠ unicorn(name-replacements): The variable `arrItems` should be named `arrayItems`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const arrItems = [];
+   ·       ────────
+   ╰────
+  help: Replace `arrItems` with `arrayItems`.
+
+  ⚠ unicorn(name-replacements): The variable `errCbOpts` should be named `errorCallbackOptions`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const errCbOpts = {};
+   ·       ─────────
+   ╰────
+  help: Replace `errCbOpts` with `errorCallbackOptions`.
+
+  ⚠ unicorn(name-replacements): The variable `btnClickHandler` should be named `buttonClickHandler`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const btnClickHandler = () => {};
+   ·       ───────────────
+   ╰────
+  help: Replace `btnClickHandler` with `buttonClickHandler`.
+
+  ⚠ unicorn(name-replacements): The property `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:18]
+ 1 │ class C { static err = 1 }
+   ·                  ───
+   ╰────
+
+  ⚠ unicorn(name-replacements): The property `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:15]
+ 1 │ class C { get err() {} }
+   ·               ───
+   ╰────
+
+  ⚠ unicorn(name-replacements): The property `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:15]
+ 1 │ class C { set err(v) {} }
+   ·               ───
+   ╰────
+
+  ⚠ unicorn(name-replacements): The property `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:8]
+ 1 │ ({ get err() {} })
+   ·        ───
+   ╰────
+
+  ⚠ unicorn(name-replacements): The property `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:8]
+ 1 │ ({ set err(v) {} })
+   ·        ───
+   ╰────
+
+  ⚠ unicorn(name-replacements): The property `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:19]
+ 1 │ export { error as err }
+   ·                   ───
+   ╰────
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:19]
+ 1 │ import { error as err } from './module'
+   ·                   ───
+   ╰────
+  help: Replace `err` with `error`.
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:12]
+ 1 │ function f(err) { const cb = () => {}; return cb(err); }
+   ·            ───
+   ╰────
+  help: Rename `err` to `error`
+
+  ⚠ unicorn(name-replacements): The variable `cb` should be named `callback`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:25]
+ 1 │ function f(err) { const cb = () => {}; return cb(err); }
+   ·                         ──
+   ╰────
+  help: Rename `cb` to `callback`
+
+  ⚠ unicorn(name-replacements): The variable `ErrHandler` should be named `errorHandler`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:6]
+ 1 │ type ErrHandler = (err: Error) => void
+   ·      ──────────
+   ╰────
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:20]
+ 1 │ type ErrHandler = (err: Error) => void
+   ·                    ───
+   ╰────
+  help: Replace `err` with `error`.
+
+  ⚠ unicorn(name-replacements): The variable `IErr` should be named `indexError`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:11]
+ 1 │ interface IErr { msg: string }
+   ·           ────
+   ╰────
+
+  ⚠ unicorn(name-replacements): The variable `arg` should be named `argument`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:22]
+ 1 │ function identity<T>(arg: T): T { return arg; }
+   ·                      ───
+   ╰────
+  help: Rename `arg` to `argument`
+
+  ⚠ unicorn(name-replacements): The variable `el` should be named `element`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:17]
+ 1 │ err: for (const el of arr) { break err; }
+   ·                 ──
+   ╰────
+  help: Replace `el` with `element`.
+
+  ⚠ unicorn(name-replacements): The variable `stdDev` should be named `stdDevelopment`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const stdDev = 1
+   ·       ──────
+   ╰────
+  help: Replace `stdDev` with `stdDevelopment`.
+
+  ⚠ unicorn(name-replacements): The variable `perfBudget` should be named `performanceBudget`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const perfBudget = {}
+   ·       ──────────
+   ╰────
+  help: Replace `perfBudget` with `performanceBudget`.
+
+  ⚠ unicorn(name-replacements): The variable `repo` should be named `repository`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const repo = 'github.com'
+   ·       ────
+   ╰────
+  help: Replace `repo` with `repository`.
+
+  ⚠ unicorn(name-replacements): The variable `repoUrl` should be named `repositoryUrl`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const repoUrl = 'https://github.com'
+   ·       ───────
+   ╰────
+  help: Replace `repoUrl` with `repositoryUrl`.
+
+  ⚠ unicorn(name-replacements): The variable `proto` should be named `prototype`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const proto = {}
+   ·       ─────
+   ╰────
+  help: Replace `proto` with `prototype`.
+
+  ⚠ unicorn(name-replacements): The variable `ident` should be named `identifier`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const ident = 'abc'
+   ·       ─────
+   ╰────
+  help: Replace `ident` with `identifier`.
+
+  ⚠ unicorn(name-replacements): The variable `idents` should be named `identifiers`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const idents = []
+   ·       ──────
+   ╰────
+  help: Replace `idents` with `identifiers`.
+
+  ⚠ unicorn(name-replacements): The variable `stmt` should be named `statement`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const stmt = 'SELECT *'
+   ·       ────
+   ╰────
+  help: Replace `stmt` with `statement`.
+
+  ⚠ unicorn(name-replacements): The variable `stmts` should be named `statements`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const stmts = []
+   ·       ─────
+   ╰────
+  help: Replace `stmts` with `statements`.
+
+  ⚠ unicorn(name-replacements): The variable `decl` should be named `declaration`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const decl = {}
+   ·       ────
+   ╰────
+  help: Replace `decl` with `declaration`.
+
+  ⚠ unicorn(name-replacements): The variable `decls` should be named `declarations`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const decls = []
+   ·       ─────
+   ╰────
+  help: Replace `decls` with `declarations`.
+
+  ⚠ unicorn(name-replacements): The variable `expr` should be named `expression`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const expr = {}
+   ·       ────
+   ╰────
+  help: Replace `expr` with `expression`.
+
+  ⚠ unicorn(name-replacements): The variable `exprs` should be named `expressions`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const exprs = []
+   ·       ─────
+   ╰────
+  help: Replace `exprs` with `expressions`.
+
+  ⚠ unicorn(name-replacements): The variable `cmd` should be named `command`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const cmd = 'npm'
+   ·       ───
+   ╰────
+  help: Replace `cmd` with `command`.
+
+  ⚠ unicorn(name-replacements): The variable `dep` should be named `dependency`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const dep = {}
+   ·       ───
+   ╰────
+  help: Replace `dep` with `dependency`.
+
+  ⚠ unicorn(name-replacements): The variable `deps` should be named `dependencies`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const deps = []
+   ·       ────
+   ╰────
+  help: Replace `deps` with `dependencies`.
+
+  ⚠ unicorn(name-replacements): The variable `application` should be named `app`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const application = {}
+   ·       ───────────
+   ╰────
+  help: Replace `application` with `app`.
+
+  ⚠ unicorn(name-replacements): The variable `applications` should be named `apps`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const applications = []
+   ·       ────────────
+   ╰────
+  help: Replace `applications` with `apps`.
+
+  ⚠ unicorn(name-replacements): The variable `configuration` should be named `config`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const configuration = {}
+   ·       ─────────────
+   ╰────
+  help: Replace `configuration` with `config`.
+
+  ⚠ unicorn(name-replacements): The variable `webApplication` should be named `webApp`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const webApplication = {}
+   ·       ──────────────
+   ╰────
+  help: Replace `webApplication` with `webApp`.
+
+  ⚠ unicorn(name-replacements): The variable `buildConfiguration` should be named `buildConfig`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const buildConfiguration = {}
+   ·       ──────────────────
+   ╰────
+  help: Replace `buildConfiguration` with `buildConfig`.
+
+  ⚠ unicorn(name-replacements): The variable `cb` should be named `callback`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ class cb {}
+   ·       ──
+   ╰────
+  help: Replace `cb` with `callback`.
+
+  ⚠ unicorn(name-replacements): The variable `Err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ class Err {}
+   ·       ───
+   ╰────
+  help: Replace `Err` with `error`.
+
+  ⚠ unicorn(name-replacements): The variable `Cb` should be named `callback`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ class Cb {}
+   ·       ──
+   ╰────
+  help: Replace `Cb` with `callback`.
+
+  ⚠ unicorn(name-replacements): Please rename the variable `Res`. Suggested names are: `resource`, `response`, `result`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ class Res {}
+   ·       ───
+   ╰────
+  help: Choose the replacement that best fits the context.
+
+  ⚠ unicorn(name-replacements): The variable `Ctx` should be named `context`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:16]
+ 1 │ abstract class Ctx { abstract handle(ctx: any): void; }
+   ·                ───
+   ╰────
+  help: Replace `Ctx` with `context`.
+
+  ⚠ unicorn(name-replacements): The variable `ctx` should be named `context`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:38]
+ 1 │ abstract class Ctx { abstract handle(ctx: any): void; }
+   ·                                      ───
+   ╰────
+  help: Replace `ctx` with `context`.
+
+  ⚠ unicorn(name-replacements): The variable `val` should be named `value`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:19]
+ 1 │ function isString(val: unknown): val is string { return typeof val === 'string'; }
+   ·                   ───
+   ╰────
+  help: Rename `val` to `value`
+
+  ⚠ unicorn(name-replacements): Please rename the variable `e`. Suggested names are: `error`, `event`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:16]
+ 1 │ function check(e: unknown): e is Error { return e instanceof Error; }
+   ·                ─
+   ╰────
+  help: Choose the replacement that best fits the context.
+
+  ⚠ unicorn(name-replacements): The property `Err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:3]
+ 1 │ ({Err: 1})
+   ·   ───
+   ╰────
+
+  ⚠ unicorn(name-replacements): Please rename the property `Res`. Suggested names are: `resource`, `response`, `result`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:3]
+ 1 │ ({Res: 1})
+   ·   ───
+   ╰────
+  help: Choose the replacement that best fits the context.
+
+  ⚠ unicorn(name-replacements): The variable `errCb` should be named `errorCallback`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ { let errCb = 1; } { let errorCb = 2; }
+   ·       ─────
+   ╰────
+  help: Replace `errCb` with `errorCallback`.
+
+  ⚠ unicorn(name-replacements): The variable `errorCb` should be named `errorCallback`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:26]
+ 1 │ { let errCb = 1; } { let errorCb = 2; }
+   ·                          ───────
+   ╰────
+  help: Replace `errorCb` with `errorCallback`.
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:16]
+ 1 │ function outer(err: Error) { const cb = () => {}; }
+   ·                ───
+   ╰────
+  help: Replace `err` with `error`.
+
+  ⚠ unicorn(name-replacements): The variable `cb` should be named `callback`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:36]
+ 1 │ function outer(err: Error) { const cb = () => {}; }
+   ·                                    ──
+   ╰────
+  help: Replace `cb` with `callback`.
+
+  ⚠ unicorn(name-replacements): The variable `errCbOptsObj` should be named `errorCallbackOptionsObject`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const errCbOptsObj = {}
+   ·       ────────────
+   ╰────
+  help: Replace `errCbOptsObj` with `errorCallbackOptionsObject`.
+
+  ⚠ unicorn(name-replacements): The variable `btnClickHandlerFn` should be named `buttonClickHandlerFunction`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const btnClickHandlerFn = () => {}
+   ·       ─────────────────
+   ╰────
+  help: Replace `btnClickHandlerFn` with `buttonClickHandlerFunction`.
+
+  ⚠ unicorn(name-replacements): The variable `propTypes` should be named `propertyTypes`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const propTypes = 1
+   ·       ─────────
+   ╰────
+  help: Replace `propTypes` with `propertyTypes`.
+
+  ⚠ unicorn(name-replacements): The variable `bar` should be named `barFull`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const bar = 1
+   ·       ───
+   ╰────
+  help: Replace `bar` with `barFull`.
+
+  ⚠ unicorn(name-replacements): The variable `xyz` should be named `xyzFull`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const xyz = 1
+   ·       ───
+   ╰────
+  help: Replace `xyz` with `xyzFull`.
+
+  ⚠ unicorn(name-replacements): The variable `prop` should be named `property`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:8]
+ 1 │ const [prop = 1] = []
+   ·        ────
+   ╰────
+  help: Replace `prop` with `property`.
+
+  ⚠ unicorn(name-replacements): The variable `prop` should be named `property`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:8]
+ 1 │ const {prop = 1} = {}
+   ·        ────
+   ╰────
+  help: Replace `prop` with `property`.
+
+  ⚠ unicorn(name-replacements): The variable `extraParams` should be named `extraParameters`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:2]
+ 1 │ (extraParams?: string) => {}
+   ·  ───────────
+   ╰────
+  help: Replace `extraParams` with `extraParameters`.
+
+  ⚠ unicorn(name-replacements): The variable `ctx` should be named `context`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:21]
+ 1 │ class M { handle = (ctx: any) => ctx.body; }
+   ·                     ───
+   ╰────
+  help: Rename `ctx` to `context`
+
+  ⚠ unicorn(name-replacements): The variable `Cb` should be named `callback`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:6]
+ 1 │ type Cb = () => void
+   ·      ──
+   ╰────
+
+  ⚠ unicorn(name-replacements): The variable `ErrMsg` should be named `errorMessage`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:11]
+ 1 │ interface ErrMsg { code: number }
+   ·           ──────
+   ╰────
+
+  ⚠ unicorn(name-replacements): The variable `Btn` should be named `button`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:6]
+ 1 │ enum Btn { Primary, Secondary }
+   ·      ───
+   ╰────
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:14]
+ 1 │ const { foo: err } = obj
+   ·              ───
+   ╰────
+  help: Replace `err` with `error`.
+
+  ⚠ unicorn(name-replacements): The variable `obj` should be named `object`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const obj = { err() {} }
+   ·       ───
+   ╰────
+  help: Replace `obj` with `object`.
+
+  ⚠ unicorn(name-replacements): The property `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:15]
+ 1 │ const obj = { err() {} }
+   ·               ───
+   ╰────
+
+  ⚠ unicorn(name-replacements): The variable `cb` should be named `callback`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:10]
+ 1 │ import { cb } from './handlers'
+   ·          ──
+   ╰────
+  help: Replace `cb` with `callback`.
+
+  ⚠ unicorn(name-replacements): The variable `cb` should be named `callback`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:14]
+ 1 │ export const cb = () => {}
+   ·              ──
+   ╰────
+
+  ⚠ unicorn(name-replacements): The property `cb` should be named `callback`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:17]
+ 1 │ export { foo as cb } from './module'
+   ·                 ──
+   ╰────
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:26]
+ 1 │ function outer() { const err = 1; return () => err; }
+   ·                          ───
+   ╰────
+  help: Rename `err` to `error`
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const err = 1; function f(err: Error) { return err; }
+   ·       ───
+   ╰────
+  help: Replace `err` with `error`.
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:27]
+ 1 │ const err = 1; function f(err: Error) { return err; }
+   ·                           ───
+   ╰────
+  help: Rename `err` to `error`
+
+  ⚠ unicorn(name-replacements): The variable `cb` should be named `callback`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:9]
+ 1 │ { const cb = 1; } { const cb = 2; }
+   ·         ──
+   ╰────
+  help: Replace `cb` with `callback`.
+
+  ⚠ unicorn(name-replacements): The variable `cb` should be named `callback`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:27]
+ 1 │ { const cb = 1; } { const cb = 2; }
+   ·                           ──
+   ╰────
+  help: Replace `cb` with `callback`.
+
+  ⚠ unicorn(name-replacements): The variable `err` should be named `error`. A more descriptive name will do too.
+   ╭─[name_replacements.tsx:1:7]
+ 1 │ const err = require(`./\u0065rr`)
+   ·       ───
+   ╰────
+  help: Replace `err` with `error`.
