@@ -281,9 +281,10 @@ impl<'a> MayHaveSideEffects<'a> for ArrayExpressionElement<'a> {
                 Expression::ArrayExpression(arr) => arr.may_have_side_effects(ctx),
                 Expression::StringLiteral(_) => false,
                 Expression::TemplateLiteral(t) => t.may_have_side_effects(ctx),
+                // `arguments` is bound only inside non-arrow functions; at the top level
+                // of a module or script reading it throws a `ReferenceError`.
                 Expression::Identifier(ident) => {
-                    // FIXME: we should treat `arguments` outside a function scope to have sideeffects
-                    !(ident.name == "arguments" && ctx.is_global_reference(ident))
+                    ident.name != "arguments" || !ctx.is_inside_function_scope()
                 }
                 _ => true,
             },

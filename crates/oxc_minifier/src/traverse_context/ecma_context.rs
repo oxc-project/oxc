@@ -108,6 +108,22 @@ impl<'a> MayHaveSideEffectsContext<'a> for TraverseCtx<'a, MinifierState<'a>> {
     fn unknown_global_side_effects(&self) -> bool {
         self.options().treeshake.unknown_global_side_effects
     }
+
+    fn is_inside_function_scope(&self) -> bool {
+        let scoping = self.scoping();
+        let mut scope_id = Some(self.current_scope_id());
+        while let Some(id) = scope_id {
+            let flags = scoping.scope_flags(id);
+            if flags.contains(ScopeFlags::Function)
+                && !flags.contains(ScopeFlags::Arrow)
+                && !flags.contains(ScopeFlags::ClassStaticBlock)
+            {
+                return true;
+            }
+            scope_id = scoping.scope_parent_id(id);
+        }
+        false
+    }
 }
 
 impl<'a> MayHaveSideEffectsContext<'a> for &TraverseCtx<'a, MinifierState<'a>> {
@@ -133,6 +149,10 @@ impl<'a> MayHaveSideEffectsContext<'a> for &TraverseCtx<'a, MinifierState<'a>> {
 
     fn unknown_global_side_effects(&self) -> bool {
         (*self).unknown_global_side_effects()
+    }
+
+    fn is_inside_function_scope(&self) -> bool {
+        (*self).is_inside_function_scope()
     }
 }
 
