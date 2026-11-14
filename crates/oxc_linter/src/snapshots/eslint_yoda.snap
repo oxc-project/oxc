@@ -610,3 +610,24 @@ source: crates/oxc_linter/src/tester.rs
    ·    ─────
    ╰────
   help: Expected literal to be on the left side of ==.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (/x/ < value) {}
+   ·     ───────────
+   ╰────
+  help: Expected literal to be on the right side of <.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (value > /x/) {}
+   ·     ───────────
+   ╰────
+  help: Expected literal to be on the left side of >.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (/x/ === value) {}
+   ·     ─────────────
+   ╰────
+  help: Expected literal to be on the right side of ===.

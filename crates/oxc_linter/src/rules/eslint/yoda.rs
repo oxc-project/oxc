@@ -278,6 +278,21 @@ fn is_not_yoda(expr: &BinaryExpression) -> bool {
 #[expect(clippy::cast_possible_truncation)]
 fn do_diagnostic_with_fix(expr: &BinaryExpression, ctx: &LintContext, never: bool) {
     ctx.diagnostic_with_fix(yoda_diagnostic(expr.span, never, expr.operator.as_str()), |fix| {
+        // The operands of a relational comparison are converted to primitives
+        // in a left-first order that is reversed when the operands are swapped.
+        // A regex literal is an object, so its conversion is observable and the
+        // swap is not behavior-preserving; skip the safe fix in that case.
+        if expr.operator.is_compare() {
+            let literal_expr = if never {
+                expr.left.get_inner_expression()
+            } else {
+                expr.right.get_inner_expression()
+            };
+            if matches!(literal_expr, Expression::RegExpLiteral(_)) {
+                return fix.noop();
+            }
+        }
+
         let left_span = expr.left.span();
         let right_span = expr.right.span();
 
@@ -878,6 +893,13 @@ fn test() {
         ("if (0 < a && b < max) {}", Some(serde_json::json!(["never", { "exceptRange": true }]))),
         // Issue: <https://github.com/oxc-project/oxc/issues/7714>
         ("{( t=='' )}", Some(serde_json::json!(["always", { "onlyEquality": true }]))),
+        // Issue: <https://github.com/oxc-project/oxc/issues/29471>
+        // Regex literals are objects, so relational comparisons with them are
+        // not safely fixable because swapping reverses ToPrimitive order.
+        ("if (/x/ < value) {}", Some(serde_json::json!(["never"]))),
+        ("if (value > /x/) {}", Some(serde_json::json!(["always"]))),
+        // Equality with a regex literal is still safely fixable.
+        ("if (/x/ === value) {}", Some(serde_json::json!(["never"]))),
     ];
 
     let fix = vec![
@@ -1237,6 +1259,10 @@ fn test() {
             "function a(){return new Foo()===\"x\"}",
             Some(serde_json::json!(["never"])),
         ),
+        // Issue: <https://github.com/oxc-project/oxc/issues/29471>
+        ("if (/x/ < value) {}", "if (/x/ < value) {}", Some(serde_json::json!(["never"]))),
+        ("if (value > /x/) {}", "if (value > /x/) {}", Some(serde_json::json!(["always"]))),
+        ("if (/x/ === value) {}", "if (value === /x/) {}", Some(serde_json::json!(["never"]))),
     ];
 
     Tester::new(Yoda::NAME, Yoda::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
