@@ -1,7 +1,10 @@
 use std::{mem, ops::ControlFlow, path::Path};
 
 use oxc_allocator::Allocator;
-use oxc_ast::ast::Program;
+use oxc_ast::{
+    ast::{ImportOrExportKind, Program, Statement},
+    builder::AstBuilder,
+};
 use oxc_codegen::{Codegen, CodegenOptions, CodegenReturn};
 use oxc_diagnostics::Diagnostics;
 use oxc_isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions};
@@ -9,7 +12,7 @@ use oxc_mangler::{MangleOptions, Mangler, ManglerReturn};
 use oxc_minifier::{CompressOptions, Compressor};
 use oxc_parser::{ParseOptions, Parser, ParserReturn};
 use oxc_semantic::{Scoping, SemanticBuilder, SemanticBuilderReturn, Stats};
-use oxc_span::SourceType;
+use oxc_span::{SPAN, SourceType};
 use oxc_transformer::{TransformOptions, Transformer, TransformerReturn};
 use oxc_transformer_plugins::{
     InjectGlobalVariables, InjectGlobalVariablesConfig, ReplaceGlobalDefines,
@@ -220,6 +223,14 @@ pub trait CompilerInterface {
             self.compress(&allocator, &mut program, scoping, options);
         } else if has_define {
             // Run DCE if minification is disabled.
+            // TS elision already ran, before `define`. DCE then turns a binding import whose
+            // value use was folded away into `import "mod"`. Elide that for TS inputs that
+            // still drop unused value imports; keep imports that were already side-effect-only.
+            let elide_stripped_imports =
+                elides_unused_ts_value_imports(source_type, self.transform_options());
+            let side_effect_import_sources =
+                elide_stripped_imports.then(|| side_effect_import_sources(&program));
+
             if scoping_dirty {
                 scoping = rebuild_scoping(&program, stats, transform);
             }
@@ -228,6 +239,10 @@ pub trait CompilerInterface {
                 scoping,
                 CompressOptions::dce(),
             );
+
+            if let Some(sources) = side_effect_import_sources {
+                elide_imports_stripped_by_dce(&allocator, &mut program, &sources);
+            }
         }
 
         /* Mangler */
@@ -335,6 +350,65 @@ pub trait CompilerInterface {
             .with_private_member_mappings(class_private_mappings)
             .build(program)
     }
+}
+
+/// TS input that still drops value imports with no remaining value use.
+///
+/// `only_remove_type_imports` keeps those imports, so the bare module load stays too.
+fn elides_unused_ts_value_imports(
+    source_type: SourceType,
+    options: Option<&TransformOptions>,
+) -> bool {
+    source_type.is_typescript()
+        && options.is_some_and(|options| !options.typescript.only_remove_type_imports)
+}
+
+/// Specifiers of imports that are already `import "mod"` before define's DCE pass.
+fn side_effect_import_sources(program: &Program<'_>) -> Vec<String> {
+    program
+        .body
+        .iter()
+        .filter_map(|stmt| {
+            let Statement::ImportDeclaration(decl) = stmt else { return None };
+            if decl.specifiers.is_some() {
+                return None;
+            }
+            decl.source.value.as_str().map(ToOwned::to_owned)
+        })
+        .collect()
+}
+
+/// Drop binding imports that DCE reduced to `import "mod"`.
+///
+/// Imports listed in `side_effect_import_sources` stay. If nothing import/export remains, append
+/// `export {}` so the file stays a module.
+fn elide_imports_stripped_by_dce<'a>(
+    allocator: &'a Allocator,
+    program: &mut Program<'a>,
+    side_effect_import_sources: &[String],
+) {
+    let before = program.body.len();
+    program.body.retain(|stmt| match stmt {
+        Statement::ImportDeclaration(decl) => match decl.specifiers {
+            Some(_) => true,
+            None => match decl.source.value.as_str() {
+                Some(source) => side_effect_import_sources.iter().any(|kept| kept == source),
+                // Lone surrogates cannot be compared. Keep the import.
+                None => true,
+            },
+        },
+        _ => true,
+    });
+    if program.body.len() == before || program.body.iter().any(Statement::is_module_declaration) {
+        return;
+    }
+    let ast = AstBuilder::new(allocator);
+    program.body.push(Statement::new_export_named_declaration(
+        SPAN,
+        [],
+        ImportOrExportKind::Value,
+        &ast,
+    ));
 }
 
 /// Rebuild [`Scoping`] from scratch, reusing prior `stats` to size allocations.
