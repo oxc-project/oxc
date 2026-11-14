@@ -484,3 +484,17 @@ source: crates/oxc_linter/src/tester.rs
    ·                ───────────
    ╰────
   help: Remove the redundant role `link` from the element `area`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `button` element has an implicit role of `button`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <button role="button link" />
+   ·         ──────────────────
+   ╰────
+  help: Remove the redundant role `button` from the element `button`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `button` element has an implicit role of `button`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <button role="button foo" />
+   ·         ─────────────────
+   ╰────
+  help: Remove the redundant role `button` from the element `button`.

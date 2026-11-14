@@ -14,6 +14,7 @@ use oxc_str::{CompactStr, JSStr};
 use crate::{
     AstNode,
     context::LintContext,
+    globals::VALID_ARIA_ROLES,
     rule::{DefaultRuleConfig, Rule},
     utils::{
         get_element_implicit_roles, get_element_type, get_prop_value,
@@ -111,19 +112,45 @@ impl Rule for NoRedundantRoles {
         let component = get_element_type(ctx, jsx_el);
         if let Some(JSXAttributeItem::Attribute(attr)) = has_jsx_prop_ignore_case(jsx_el, "role")
             && let Some(JSXAttributeValue::StringLiteral(role_values)) = &attr.value
+            && let Some(value) = role_values.value.as_str()
         {
-            for role in role_values.value.as_str().into_iter().flat_map(str::split_whitespace) {
-                if let Some(implicit_role) = get_redundant_implicit_role(&component, jsx_el, role)
-                    && !self.is_allowed_redundant_role(&component, implicit_role)
-                {
-                    ctx.diagnostic_with_fix(
-                        no_redundant_roles_diagnostic(attr.span, &component, implicit_role),
-                        |fixer| fixer.delete_range(attr.span),
-                    );
+            // Browsers use only the first valid non-abstract ARIA role token
+            // in the `role` attribute (WAI-ARIA 1.2 §4.1). Later tokens are
+            // fallbacks and are ignored when the first token matches a role.
+            let Some(first_valid_role) =
+                value.split_whitespace().find(|role| is_valid_aria_role(role))
+            else {
+                return;
+            };
+
+            if let Some(implicit_role) =
+                get_redundant_implicit_role(&component, jsx_el, first_valid_role)
+                && !self.is_allowed_redundant_role(&component, implicit_role)
+            {
+                let diagnostic =
+                    no_redundant_roles_diagnostic(attr.span, &component, implicit_role);
+                // Only safe-fix the whole attribute when it consists of a
+                // single valid token. With multiple tokens, deleting the
+                // attribute could change the effective role by removing
+                // fallbacks that are not redundant.
+                if value.split_whitespace().count() == 1 {
+                    ctx.diagnostic_with_fix(diagnostic, |fixer| fixer.delete_range(attr.span));
+                } else {
+                    ctx.diagnostic(diagnostic);
                 }
             }
         }
     }
+}
+
+/// Returns whether `role` is a non-abstract WAI-ARIA role name.
+///
+/// Matching is case-insensitive to stay consistent with how
+/// `get_redundant_implicit_role` compares explicit and implicit roles, and
+/// with `eslint-plugin-jsx-a11y`'s lowercased lookup.
+fn is_valid_aria_role(role: &str) -> bool {
+    VALID_ARIA_ROLES.contains(role)
+        || VALID_ARIA_ROLES.iter().any(|valid| valid.eq_ignore_ascii_case(role))
 }
 
 impl NoRedundantRoles {
@@ -387,6 +414,11 @@ fn test() {
         (r#"<Area role="link" />"#, None, Some(settings())),
         (r#"<a href="/" role="link" />"#, Some(serde_json::json!([{ "a": ["link"] }])), None),
         (r#"<area href="/" role="link" />"#, Some(serde_json::json!([{ "area": ["link"] }])), None),
+        // Browsers use the first valid ARIA role token; `link` is not
+        // redundant on `<button>`, so the later `button` token must not be
+        // flagged. See #29469.
+        (r#"<button role="link button" />"#, None, None),
+        (r#"<button role="link  button">Docs</button>"#, None, None),
     ];
 
     let fail = vec![
@@ -466,6 +498,11 @@ fn test() {
         (r#"<area href="" role="link" />"#, None, None),
         (r#"<Link href="/" role="link" />"#, None, Some(settings())),
         (r#"<Area href="/" role="link" />"#, None, Some(settings())),
+        // The first valid ARIA role token is redundant, but the attribute
+        // contains other tokens, so it must still be reported while the safe
+        // fix is withheld. See #29469.
+        (r#"<button role="button link" />"#, None, None),
+        (r#"<button role="button foo" />"#, None, None),
     ];
 
     let fix = vec![
