@@ -16,12 +16,13 @@ use crate::pipeline::{
 
 use super::{
     comments::{
-        html_close_comment_at, html_open_comment_at, lex_block_comment, lex_html_close_comment,
-        lex_html_open_comment, lex_line_comment,
+        html_close_comment_at, html_open_comment_at, lex_block_comment, lex_comment_at,
+        lex_html_close_comment, lex_html_open_comment, lex_line_comment,
     },
     common::{
-        OPENER_BYTES, OPENER8_BYTES, find_line_terminator, lex_slash, lex_string,
-        lex_template_segment, skip_unicode_brace_escape,
+        OPENER_BYTES, OPENER8_BYTES, Substitutions, is_unicode_escape_brace, lex_hashbang,
+        lex_jsx_attribute_string, lex_slash, lex_string, lex_template_segment,
+        skip_unicode_brace_escape,
     },
 };
 
@@ -94,16 +95,7 @@ pub(super) unsafe fn carve_jsx(lex: Lex, state: &mut LexState, cpu: impl Cpu) {
     stack.clear();
     let mut mode = JsxMode::Js;
     let mut text_start = 0usize;
-    let mut i = 0usize;
-    if src.len() >= 2 && src[0] == b'#' && src[1] == b'!' {
-        let end = find_line_terminator(src, 2, cpu);
-        kinds.set(0, tk!(Hashbang));
-        token_start.clear_range(1, end - 1, cpu);
-        if end < src.len() {
-            token_start.set(end, cpu);
-        }
-        i = end;
-    }
+    let mut i = lex_hashbang(src, token_start, kinds, cpu);
     loop {
         match mode {
             JsxMode::Js => {
@@ -149,7 +141,7 @@ pub(super) unsafe fn carve_jsx(lex: Lex, state: &mut LexState, cpu: impl Cpu) {
                         i = end;
                     }
                     b'{' => {
-                        if s >= 2 && src[s - 1] == b'u' && src[s - 2] == b'\\' {
+                        if is_unicode_escape_brace(src, s, cpu) {
                             i = skip_unicode_brace_escape(src, s, cpu);
                         } else {
                             if let Some(f) = stack.last_mut() {
@@ -315,10 +307,7 @@ pub(super) unsafe fn carve_jsx(lex: Lex, state: &mut LexState, cpu: impl Cpu) {
                     let mut depth = 1i32;
                     let mut p = s + 1;
                     jsx_punct(kinds, op_char, s, tk!(Lt), cpu);
-                    // Open template substitutions, each counting its own
-                    // nested braces - the same shape `carve` keeps in its
-                    // depth vector.
-                    let mut sub: Vec<u32> = Vec::new();
+                    let mut sub = Substitutions::default();
                     while p < src.len() && depth != 0 {
                         let q = if !sub.is_empty() {
                             find(src, p, OPENER8_BYTES, cpu)
@@ -346,68 +335,24 @@ pub(super) unsafe fn carve_jsx(lex: Lex, state: &mut LexState, cpu: impl Cpu) {
                                 p = lex_string(src, token_start, kinds, q, src[q], lanes, cpu);
                             }
                             b'`' => {
-                                let (end, opened) = lex_template_segment(
-                                    src,
-                                    token_start,
-                                    kinds,
-                                    q,
-                                    tk!(TemplateHead),
-                                    tk!(TemplateNoSub),
-                                    lanes,
-                                    cpu,
-                                );
-                                p = end;
-                                if opened {
-                                    sub.push(0);
-                                }
+                                p = sub.lex_template(src, token_start, kinds, q, lanes, cpu);
                             }
                             // Braces only reach here through the OPENER8_BYTES search,
                             // which is only selected while a substitution is
                             // open - the guards say so rather than leaving it
                             // to the finder choice.
                             b'{' if !sub.is_empty() => {
-                                if let Some(top) = sub.last_mut() {
-                                    *top += 1;
-                                }
+                                sub.open_brace();
                                 p = q + 1;
                             }
                             b'}' if !sub.is_empty() => {
-                                if let Some(top) = sub.last_mut()
-                                    && *top != 0
-                                {
-                                    *top -= 1;
-                                    p = q + 1;
-                                    continue;
-                                }
-                                sub.pop();
-                                let (end, opened) = lex_template_segment(
-                                    src,
-                                    token_start,
-                                    kinds,
-                                    q,
-                                    tk!(TemplateMiddle),
-                                    tk!(TemplateTail),
-                                    lanes,
-                                    cpu,
-                                );
-                                p = end;
-                                if opened {
-                                    sub.push(0);
-                                }
+                                p = sub.close_brace(src, token_start, kinds, q, lanes, cpu);
                             }
                             // A comment inside a type-argument list is
                             // trivia; a lone `/` cannot start a type, so it
                             // is left alone.
                             b'/' => {
-                                p = match src[q + 1] {
-                                    b'*' => {
-                                        lex_block_comment(src, token_start, kinds, q, lanes, cpu)
-                                    }
-                                    b'/' => {
-                                        lex_line_comment(src, token_start, kinds, q, lanes, cpu)
-                                    }
-                                    _ => q + 1,
-                                };
+                                p = lex_comment_at(src, token_start, kinds, q, lanes, cpu);
                             }
                             _ => p = q + 1,
                         }
@@ -421,29 +366,7 @@ pub(super) unsafe fn carve_jsx(lex: Lex, state: &mut LexState, cpu: impl Cpu) {
                 }
                 match c {
                     b'"' | b'\'' => {
-                        // JSX attribute string: no escapes, ends at next quote.
-                        let e = find(src, s + 1, [c], cpu);
-                        if e >= src.len() {
-                            lanes.push_diag(
-                                s as u32,
-                                (src.len() - s) as u32,
-                                DiagCode::UnterminatedString,
-                            );
-                        }
-                        let end = if e < src.len() { e + 1 } else { src.len() };
-                        kinds.set(s, tk!(String));
-                        if end > s + 1 {
-                            token_start.clear_range(s + 1, end - 1, cpu);
-                        }
-                        let be = if e < src.len() {
-                            e
-                        } else if src.len() > s + 1 && src[src.len() - 1] == c {
-                            src.len() - 1
-                        } else {
-                            src.len()
-                        };
-                        lanes.push_string_raw(src.padded(), s + 1, be, cpu);
-                        i = end;
+                        i = lex_jsx_attribute_string(src, token_start, kinds, s, c, lanes, cpu);
                     }
                     b'{' => {
                         stack.push(JsxFrame {
@@ -477,20 +400,7 @@ pub(super) unsafe fn carve_jsx(lex: Lex, state: &mut LexState, cpu: impl Cpu) {
                                 // the `>`.
                                 let mut q = s + 1;
                                 while q < gt {
-                                    q = match (src[q], src[q + 1]) {
-                                        (b'/', b'*') => lex_block_comment(
-                                            src,
-                                            token_start,
-                                            kinds,
-                                            q,
-                                            lanes,
-                                            cpu,
-                                        ),
-                                        (b'/', b'/') => {
-                                            lex_line_comment(src, token_start, kinds, q, lanes, cpu)
-                                        }
-                                        _ => q + 1,
-                                    };
+                                    q = lex_comment_at(src, token_start, kinds, q, lanes, cpu);
                                 }
                                 jsx_punct(kinds, op_char, gt, tk!(JsxTagEnd), cpu);
                                 let parent = stack.last().map_or(JsxMode::Js, |f| f.parent);
@@ -543,7 +453,7 @@ pub(super) unsafe fn carve_jsx(lex: Lex, state: &mut LexState, cpu: impl Cpu) {
                 }
                 let c = src[s];
                 if c == b'{' {
-                    if s >= 2 && src[s - 1] == b'u' && src[s - 2] == b'\\' {
+                    if is_unicode_escape_brace(src, s, cpu) {
                         restore_escaped_container(src, token_start, word, kinds, s);
                     }
                     stack.push(JsxFrame {
@@ -577,15 +487,7 @@ pub(super) unsafe fn carve_jsx(lex: Lex, state: &mut LexState, cpu: impl Cpu) {
                         // past the `>` and would otherwise leave its bytes as operators.
                         let mut q = s + 1;
                         while q < name_pos {
-                            q = match (src[q], src[q + 1]) {
-                                (b'/', b'*') => {
-                                    lex_block_comment(src, token_start, kinds, q, lanes, cpu)
-                                }
-                                (b'/', b'/') => {
-                                    lex_line_comment(src, token_start, kinds, q, lanes, cpu)
-                                }
-                                _ => q + 1,
-                            };
+                            q = lex_comment_at(src, token_start, kinds, q, lanes, cpu);
                         }
                         let mut gt = name_pos + 1;
                         loop {
@@ -593,11 +495,7 @@ pub(super) unsafe fn carve_jsx(lex: Lex, state: &mut LexState, cpu: impl Cpu) {
                             if gt >= src.len() || src[gt] == b'>' {
                                 break;
                             }
-                            gt = match src[gt + 1] {
-                                b'*' => lex_block_comment(src, token_start, kinds, gt, lanes, cpu),
-                                b'/' => lex_line_comment(src, token_start, kinds, gt, lanes, cpu),
-                                _ => gt + 1,
-                            };
+                            gt = lex_comment_at(src, token_start, kinds, gt, lanes, cpu);
                         }
                         if gt > name_pos + 1 {
                             keyword_initial.clear_range(name_pos + 1, gt - 1, cpu);
