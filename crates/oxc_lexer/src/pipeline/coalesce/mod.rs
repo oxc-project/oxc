@@ -8,9 +8,10 @@ use crate::{
 };
 
 use crate::pipeline::{
-    bitmap::Bitmaps,
+    bitmap::{Bitmap, Bitmaps},
     bytes::{is_digit, is_word, is_ws},
     disambiguate::DisambiguateState,
+    kinds::Kinds,
     lanes::Lanes,
     lex::{Lex, LexState},
     operators::{is_op_char, opmap_longest, opmap_pack2, opmap_pack3},
@@ -39,23 +40,26 @@ pub unsafe fn coalesce(
     let is_ts = options.ts;
     state.disambiguate.restart(cpu);
     // Events are collected branchlessly and handled per batch. Unset masks are never read
-    let mut rarem = [const { MaybeUninit::<u64>::uninit() }; KWB];
-    let mut e = 0usize;
+    let mut rare_masks = [const { MaybeUninit::<u64>::uninit() }; KWB];
+    let mut event_count = 0usize;
     let mut prev_empty = false;
     let block_count = src.block_count();
-    let mut opprev: u64 = 0;
-    let mut dtprev: u64 = 0;
+    let mut op_prev: u64 = 0;
+    let mut dot_prev: u64 = 0;
     let mut cursor: usize = 0;
-    let mut k = 0usize;
+    let mut candidate_count = 0usize;
     for w in 0..block_count {
-        let op = op_char.block(w, cpu);
-        let opnext = if w + 1 < block_count { op_char.block(w + 1, cpu) } else { 0 };
-        let dg = digit.block(w, cpu);
-        let dgnext = if w + 1 < block_count { digit.block(w + 1, cpu) } else { 0 };
-        let dt = dot.block(w, cpu);
-        let stw = token_start.block(w, cpu);
-        let wd = word.block(w, cpu);
-        let wnext = if w + 1 < block_count { word.block(w + 1, cpu) } else { 0 };
+        let has_next = w + 1 < block_count;
+        let masks = BlockMasks {
+            op: op_char.block(w, cpu),
+            op_next: if has_next { op_char.block(w + 1, cpu) } else { 0 },
+            digit: digit.block(w, cpu),
+            digit_next: if has_next { digit.block(w + 1, cpu) } else { 0 },
+            dot: dot.block(w, cpu),
+            token_start: token_start.block(w, cpu),
+            word: word.block(w, cpu),
+            word_next: if has_next { word.block(w + 1, cpu) } else { 0 },
+        };
         // The whole keywords stage lives inside this walk: the candidate
         // filter (token-start keyword-initial word char, next char also
         // word, not right after a member `.`, length <= 10 by the word-local
@@ -65,90 +69,125 @@ pub unsafe fn coalesce(
         // minted behind the filter is glue_number's invalid adjacency, which
         // resolves its keyword kind inline with the same inputs, so the two
         // writes agree even when both fire.
-        let dm = dt & !((dt << 1) | (dtprev >> 63));
-        let dcarry = ((dtprev >> 63) & !(dtprev >> 62)) & 1;
-        let mut kwc = stw
-            & wd
-            & keyword_initial.block(w, cpu)
-            & ((wd >> 1) | (wnext << 63))
-            & !((dm << 1) | dcarry);
-        let r2 = wd & (wd >> 1);
-        let r4 = r2 & (r2 >> 2);
-        let r8 = r4 & (r4 >> 4);
-        kwc &= !(r8 & (r2 >> 8) & (wd >> 10));
-        dtprev = dt;
-        let multi = op & !((op << 1) | (opprev >> 63)) & ((op >> 1) | (opnext << 63)) & stw;
-        let dote = stw & dt & ((dg >> 1) | (dgnext << 63));
-        let mut dige = stw & dg;
-        if dige != 0 {
+        let candidates = masks.keyword_candidates(keyword_initial.block(w, cpu), dot_prev);
+        dot_prev = masks.dot;
+        let op_runs = masks.operator_run_starts(op_prev);
+        let dot_digits = masks.dot_digit_starts();
+        let mut digit_runs = masks.token_start & masks.digit;
+        if digit_runs != 0 {
             // Runs ending at a word char or dot need gluing, found by carrying back reversed
-            let bad = !dg & (dg << 1) & (wd | dt);
-            let rdg = dg.reverse_bits();
-            let (sum, out) = rdg.overflowing_add((bad >> 1).reverse_bits());
-            let mut glue = ((sum & !rdg).reverse_bits() << 1) | u64::from(out);
-            if dg >> 63 != 0 {
-                let tail = (!dgnext).trailing_zeros();
-                let dtnext = if w + 1 < block_count { dot.block(w + 1, cpu) } else { 0 };
-                if tail == 64 || ((wnext | dtnext) >> tail) & 1 != 0 {
-                    glue |= 1u64 << (64 - (!dg).leading_zeros());
+            let glue_after = !masks.digit & (masks.digit << 1) & (masks.word | masks.dot);
+            let digits_rev = masks.digit.reverse_bits();
+            let (sum, out) = digits_rev.overflowing_add((glue_after >> 1).reverse_bits());
+            let mut glue = ((sum & !digits_rev).reverse_bits() << 1) | u64::from(out);
+            if masks.digit >> 63 != 0 {
+                let tail = (!masks.digit_next).trailing_zeros();
+                let dot_next = if has_next { dot.block(w + 1, cpu) } else { 0 };
+                if tail == 64 || ((masks.word_next | dot_next) >> tail) & 1 != 0 {
+                    glue |= 1u64 << (64 - (!masks.digit).leading_zeros());
                 }
             }
-            dige &= glue;
+            digit_runs &= glue;
         }
-        let ev = multi | dige | dote;
-        let rare = dige | dote;
-        opprev = op;
+        let event_bits = op_runs | digit_runs | dot_digits;
+        let rare = digit_runs | dot_digits;
+        op_prev = masks.op;
         // Only skip within runs of empty blocks, so an isolated empty block never mispredicts
-        let empty = (kwc | ev) == 0;
+        let empty = (candidates | event_bits) == 0;
         if !(empty && prev_empty) {
             let base = (w << 6) as u32;
-            let cnt = kwc.count_ones() as usize;
             prefetch(src.as_ptr().add(base as usize), cpu);
             prefetch(kinds.as_ptr().add(base as usize) as *const u8, cpu);
-            for j in 0..8 {
-                *kw_candidates.add(k + j) = base + kwc.trailing_zeros();
-                kwc &= kwc.wrapping_sub(1);
-            }
-            if cnt > 8 {
-                let mut kk = k + 8;
-                while kwc != 0 {
-                    *kw_candidates.add(kk) = base + kwc.trailing_zeros();
-                    kk += 1;
-                    kwc &= kwc - 1;
-                }
-            }
-            k += cnt;
-            rarem[w & (KWB - 1)].write(rare);
-            let cnt = ev.count_ones() as usize;
-            let mut evm = ev;
-            for j in 0..2 {
-                *events.add(e + j) = base + evm.trailing_zeros();
-                evm &= evm.wrapping_sub(1);
-            }
-            if cnt > 2 {
-                let mut ee = e + 2;
-                while evm != 0 {
-                    *events.add(ee) = base + evm.trailing_zeros();
-                    ee += 1;
-                    evm &= evm - 1;
-                }
-            }
-            e += cnt;
+            candidate_count = push_positions::<8>(kw_candidates, candidate_count, base, candidates);
+            rare_masks[w & (KWB - 1)].write(rare);
+            event_count = push_positions::<2>(events, event_count, base, event_bits);
         }
         prev_empty = empty;
         if w & (KWB - 1) == KWB - 1 {
-            if e != 0 {
-                cursor = coalesce_events(lex, state, events, e, &rarem, cursor, cpu);
-                e = 0;
+            if event_count != 0 {
+                cursor = coalesce_events(lex, state, events, event_count, &rare_masks, cursor, cpu);
+                event_count = 0;
             }
-            kw_flush(is_ts, src, word, kinds, kw_candidates, k, cpu);
-            k = 0;
+            kw_flush(is_ts, src, word, kinds, kw_candidates, candidate_count, cpu);
+            candidate_count = 0;
         }
     }
-    if e != 0 {
-        coalesce_events(lex, state, events, e, &rarem, cursor, cpu);
+    if event_count != 0 {
+        coalesce_events(lex, state, events, event_count, &rare_masks, cursor, cpu);
     }
-    kw_flush(is_ts, src, word, kinds, kw_candidates, k, cpu);
+    kw_flush(is_ts, src, word, kinds, kw_candidates, candidate_count, cpu);
+}
+
+/// One block's bitmap words, and the next block's where a run carries over.
+#[derive(Clone, Copy)]
+struct BlockMasks {
+    op: u64,
+    op_next: u64,
+    digit: u64,
+    digit_next: u64,
+    dot: u64,
+    token_start: u64,
+    word: u64,
+    word_next: u64,
+}
+
+impl BlockMasks {
+    /// Token starts that can begin a keyword: a keyword initial, 2 to 10 word chars, not a member.
+    #[inline(always)]
+    fn keyword_candidates(self, keyword_initial: u64, dot_prev: u64) -> u64 {
+        let Self { token_start, word, word_next, dot, .. } = self;
+        // The first dot of each dot run, and one ending the previous block.
+        let run_dot = dot & !((dot << 1) | (dot_prev >> 63));
+        let carried_dot = ((dot_prev >> 63) & !(dot_prev >> 62)) & 1;
+        let mut candidates = token_start
+            & word
+            & keyword_initial
+            & ((word >> 1) | (word_next << 63))
+            & !((run_dot << 1) | carried_dot);
+        let r2 = word & (word >> 1);
+        let r4 = r2 & (r2 >> 2);
+        let r8 = r4 & (r4 >> 4);
+        // No keyword is longer than ten chars.
+        candidates &= !(r8 & (r2 >> 8) & (word >> 10));
+        candidates
+    }
+
+    /// Token starts that begin a run of two or more operator chars.
+    #[inline(always)]
+    fn operator_run_starts(self, op_prev: u64) -> u64 {
+        let Self { token_start, op, op_next, .. } = self;
+        op & !((op << 1) | (op_prev >> 63)) & ((op >> 1) | (op_next << 63)) & token_start
+    }
+
+    /// Token-start dots followed by a digit, the numbers like .5.
+    #[inline(always)]
+    fn dot_digit_starts(self) -> u64 {
+        self.token_start & self.dot & ((self.digit >> 1) | (self.digit_next << 63))
+    }
+}
+
+/// Write mask's bit positions to out[len..], always filling N slots; returns the new len.
+#[inline(always)]
+unsafe fn push_positions<const N: usize>(
+    out: *mut u32,
+    len: usize,
+    base: u32,
+    mut mask: u64,
+) -> usize {
+    let count = mask.count_ones() as usize;
+    for j in 0..N {
+        *out.add(len + j) = base + mask.trailing_zeros();
+        mask &= mask.wrapping_sub(1);
+    }
+    if count > N {
+        let mut at = len + N;
+        while mask != 0 {
+            *out.add(at) = base + mask.trailing_zeros();
+            at += 1;
+            mask &= mask - 1;
+        }
+    }
+    len + count
 }
 
 /// Handle a batch's events in order. Rereading op_char is safe: events only clear it below cursor.
@@ -159,7 +198,7 @@ unsafe fn coalesce_events(
     state: &mut LexState,
     events: *const u32,
     count: usize,
-    rarem: &[MaybeUninit<u64>; KWB],
+    rare_masks: &[MaybeUninit<u64>; KWB],
     mut cursor: usize,
     cpu: impl Cpu,
 ) -> usize {
@@ -174,14 +213,14 @@ unsafe fn coalesce_events(
             continue;
         }
         let (w, bit) = (p >> 6, p & 63);
-        let rare = rarem[w & (KWB - 1)].assume_init();
+        let rare = rare_masks[w & (KWB - 1)].assume_init();
         let has_next = w + 1 < block_count;
         if (rare >> bit) & 1 != 0 {
             cursor = glue_number(lex, p, lanes, disambiguate, cpu);
         } else {
             let op = op_char.block(w, cpu);
-            let opnext = if has_next { op_char.block(w + 1, cpu) } else { 0 };
-            let y2 = (op >> bit) | ((opnext << (63 - bit)) << 1);
+            let op_next = if has_next { op_char.block(w + 1, cpu) } else { 0 };
+            let y2 = (op >> bit) | ((op_next << (63 - bit)) << 1);
             let run = (!y2).trailing_zeros() as usize;
             let q = src.u32_at(p);
             let b0 = q as u8;
@@ -206,53 +245,66 @@ unsafe fn coalesce_events(
                 continue;
             }
             if run == 2 {
-                let key = q & 0xFFFF;
-                let pack = opmap_pack2(key, cpu);
-                let mut ok = pack as u16 == q as u16;
-                let kk = (pack >> 24) as u8;
-                ok &= !((kk == tk!(OptionalChain)) && is_digit((q >> 16) as u8, cpu));
-                let hm: u8 = 0u8.wrapping_sub(ok as u8);
-                kinds.set(p, (kinds.get(p) & !hm) | (kk & hm));
-                let clr = (ok as u64) << ((p + 1) & 63);
-                *token_start.as_ptr().add((p + 1) >> 6) &= !clr;
-                cursor = p + 1 + ok as usize;
+                cursor = fuse_pair(kinds, token_start, p, q, cpu);
                 continue;
             }
             if run > 3 {
                 cursor = munch_walk(lex, p, disambiguate, cpu);
                 continue;
             }
-            let b2 = (q >> 16) as u8;
-            let key3 = q & 0xFF_FFFF;
-            let p3 = opmap_pack3(key3, cpu);
-            let ok3 = ((p3 ^ q) & 0xFF_FFFF) == 0;
-            let key2a = q & 0xFFFF;
-            let pa = opmap_pack2(key2a, cpu);
-            let ka = (pa >> 24) as u8;
-            let mut ok2a = pa as u16 == q as u16;
-            ok2a &= !((ka == tk!(OptionalChain)) && is_digit(b2, cpu));
-            let key2b = key3 >> 8;
-            let pb = opmap_pack2(key2b, cpu);
-            let kb = (pb >> 24) as u8;
-            let mut ok2b = pb as u16 == key2b as u16;
-            ok2b &= !((kb == tk!(OptionalChain)) && is_digit((q >> 24) as u8, cpu));
-            let c1 = ok3 | ok2a; // token at `p` is 2+ bytes
-            let sel2b = !c1 & ok2b; // 2-byte token starts at `p + 1`
-            let c2 = ok3 | sel2b; // `p + 2` is not a token start
-            let m0: u8 = 0u8.wrapping_sub(c1 as u8);
-            let k0v: u8 = if ok3 { (p3 >> 24) as u8 } else { ka };
-            kinds.set(p, (kinds.get(p) & !m0) | (k0v & m0));
-            let m1: u8 = 0u8.wrapping_sub(sel2b as u8);
-            kinds.set(p + 1, (kinds.get(p + 1) & !m1) | (kb & m1));
-            let clr1 = (c1 as u64) << ((p + 1) & 63);
-            *token_start.as_ptr().add((p + 1) >> 6) &= !clr1;
-            let clr2 = (c2 as u64) << ((p + 2) & 63);
-            *token_start.as_ptr().add((p + 2) >> 6) &= !clr2;
-            // `run == 3` in this arm
-            cursor = p + 2 + c2 as usize;
+            cursor = fuse_triple(kinds, token_start, p, q, cpu);
         }
     }
     cursor
+}
+
+/// Fuse the operator pair at p into one token if it spells one; returns the cursor.
+#[cpu_multiversion]
+#[inline(always)]
+unsafe fn fuse_pair(kinds: Kinds, token_start: Bitmap, p: usize, q: u32, cpu: impl Cpu) -> usize {
+    let key = q & 0xFFFF;
+    let pack = opmap_pack2(key, cpu);
+    let mut ok = pack as u16 == q as u16;
+    let kk = (pack >> 24) as u8;
+    ok &= !((kk == tk!(OptionalChain)) && is_digit((q >> 16) as u8, cpu));
+    let hm: u8 = 0u8.wrapping_sub(ok as u8);
+    kinds.set(p, (kinds.get(p) & !hm) | (kk & hm));
+    let clr = (ok as u64) << ((p + 1) & 63);
+    *token_start.as_ptr().add((p + 1) >> 6) &= !clr;
+    p + 1 + ok as usize
+}
+
+/// Fuse the 3-char operator run at p into one token, or a pair at p or p + 1; returns the cursor.
+#[cpu_multiversion]
+#[inline(always)]
+unsafe fn fuse_triple(kinds: Kinds, token_start: Bitmap, p: usize, q: u32, cpu: impl Cpu) -> usize {
+    let b2 = (q >> 16) as u8;
+    let key3 = q & 0xFF_FFFF;
+    let p3 = opmap_pack3(key3, cpu);
+    let ok3 = ((p3 ^ q) & 0xFF_FFFF) == 0;
+    let key2a = q & 0xFFFF;
+    let pa = opmap_pack2(key2a, cpu);
+    let ka = (pa >> 24) as u8;
+    let mut ok2a = pa as u16 == q as u16;
+    ok2a &= !((ka == tk!(OptionalChain)) && is_digit(b2, cpu));
+    let key2b = key3 >> 8;
+    let pb = opmap_pack2(key2b, cpu);
+    let kb = (pb >> 24) as u8;
+    let mut ok2b = pb as u16 == key2b as u16;
+    ok2b &= !((kb == tk!(OptionalChain)) && is_digit((q >> 24) as u8, cpu));
+    let c1 = ok3 | ok2a; // the token at p is 2 or more bytes
+    let sel2b = !c1 & ok2b; // a 2-byte token starts at p + 1
+    let c2 = ok3 | sel2b; // p + 2 is not a token start
+    let m0: u8 = 0u8.wrapping_sub(c1 as u8);
+    let k0v: u8 = if ok3 { (p3 >> 24) as u8 } else { ka };
+    kinds.set(p, (kinds.get(p) & !m0) | (k0v & m0));
+    let m1: u8 = 0u8.wrapping_sub(sel2b as u8);
+    kinds.set(p + 1, (kinds.get(p + 1) & !m1) | (kb & m1));
+    let clr1 = (c1 as u64) << ((p + 1) & 63);
+    *token_start.as_ptr().add((p + 1) >> 6) &= !clr1;
+    let clr2 = (c2 as u64) << ((p + 2) & 63);
+    *token_start.as_ptr().add((p + 2) >> 6) &= !clr2;
+    p + 2 + c2 as usize
 }
 
 #[cpu_multiversion]
@@ -297,7 +349,7 @@ unsafe fn glue_number(
                     p = number_end;
                     continue;
                 }
-                // This token start postdates the kwc mask built in the word
+                // This token start postdates the keyword candidates built in the word
                 // prelude, so resolve any keyword kind inline (`3in` is `3`
                 // + KW_IN). Same inputs as kw_verify_batch: length from the
                 // word bitmap, no match right after a member `.` (a number
