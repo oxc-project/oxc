@@ -320,6 +320,13 @@ impl<C: CpuSimd> Vec256<C> {
         // is valid for aligned writes of 32 bytes
         unsafe { self.store(dst.as_mut_ptr()) };
     }
+
+    /// Write a Vec256 to 32 bytes, with no alignment requirement.
+    #[inline(always)]
+    pub fn write_unaligned(self, dst: &mut [u8; 32]) {
+        // SAFETY: dst is valid for writing 32 bytes.
+        unsafe { self.store_unaligned(dst.as_mut_ptr()) };
+    }
 }
 
 /// Bitwise ops.

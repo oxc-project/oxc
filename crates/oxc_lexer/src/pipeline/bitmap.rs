@@ -207,20 +207,4 @@ impl Bitmaps<'_> {
             misc: self.misc.first(count),
         }
     }
-
-    #[inline(always)]
-    pub(super) fn clear_block(&self, block_idx: usize) {
-        let all = [
-            self.token_start,
-            self.word,
-            self.keyword_initial,
-            self.op_char,
-            self.digit,
-            self.dot,
-            self.misc,
-        ];
-        for bitmap in all {
-            bitmap.0[block_idx].set(0);
-        }
-    }
 }
