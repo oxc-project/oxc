@@ -145,9 +145,9 @@ enum ImportExtensionsObject {
 /// ```jsonc
 /// {
 ///   "rules": {
-///     // this would require extensions for all imports, *including from packages*
-///     // e.g. `import React from 'react';` would be disallowed.
-///     // You should generally always set `ignorePackages` to `true` when using `always`.
+///     // Require extensions for relative imports and package subpaths.
+///     // Root packages such as `import React from 'react'` are allowed.
+///     // Set `ignorePackages` to also allow subpaths like `import fp from 'lodash/fp'`.
 ///     "import/extensions": ["error", "always"]
 ///   }
 /// }
@@ -175,7 +175,7 @@ enum ImportExtensionsObject {
 ///   "rules": {
 ///     "import/extensions": [
 ///       "error",
-///       "always", // by default, require extensions for all imports
+///       "always", // require extensions for relative imports and package subpaths
 ///       {
 ///         "ts": "never", // override the global value and disallow extensions on imports for specific file types
 ///         "ignorePackages": true
@@ -193,9 +193,9 @@ pub struct ExtensionsConfig {
     /// Whether to ignore package imports when enforcing extension rules.
     ///
     /// > [!IMPORTANT]
-    /// > When setting this rule to `always`, you should also set `ignorePackages` to `true`.
-    /// > Otherwise, package imports without extensions (such as `import React from 'react';`)
-    /// > will be disallowed, which is not desirable and is not fixable.
+    /// > Root package specifiers (`import React from 'react'`, `import ts from 'typescript'`)
+    /// > are never required to have an extension, matching eslint-plugin-import.
+    /// > Package subpaths (`import fp from 'lodash/fp'`) still are, unless `ignorePackages` is `true`.
     ///
     /// A boolean option (not per-extension) that exempts package imports from the "always" rule.
     ///
@@ -203,10 +203,10 @@ pub struct ExtensionsConfig {
     ///
     /// Legacy shorthand: `["error", "ignorePackages"]` is equivalent to `["error", "always", { "ignorePackages": true }]`
     ///
-    /// - **With "always"**: When `true`, package imports (e.g., `lodash`, `@babel/core`) don't require extensions
+    /// - **With "always"**: When `true`, package subpaths (e.g., `lodash/fp`, `@babel/core/lib`) don't require extensions. Root packages are already exempt.
     /// - **With "never"**: This option has no effect; extensions are still forbidden on package imports
     ///
-    /// Example: `["error", "always", { "ignorePackages": true }]` allows `import foo from "lodash"` but requires `import bar from "./bar.js"`
+    /// Example: `["error", "always", { "ignorePackages": true }]` allows `import foo from "lodash/fp"` but requires `import bar from "./bar.js"`
     ignore_packages: bool,
     #[serde(skip)] // skipped because it cannot actually be set directly in the config object.
     require_extension: Option<ExtensionRule>,
@@ -470,6 +470,8 @@ declare_oxc_lint!(
     /// import bar from './bar.json';
     /// import Component from './Component.jsx';
     /// import * as path from 'path';
+    /// import ts from 'typescript';
+    /// import minimist from 'minimist';
     /// import foo from '@/foo.js';
     /// ```
     ///
@@ -694,6 +696,17 @@ impl Extensions {
 
         // Built-in Node modules are always skipped
         if is_nodejs_builtin_module(module_name) || ctx.globals().is_enabled(module_name) {
+            return;
+        }
+
+        // Root package specifiers (`typescript`, `@scope/pkg`, `decimal.js`) are not files.
+        // eslint-plugin-import never requires an extension on them, including under `"always"`.
+        // Package subpaths (`lodash/fp`) stay subject to the rule unless `ignorePackages` is set.
+        // A path-group `"enforce"` override opts back into validation.
+        // https://github.com/oxc-project/oxc/issues/29098
+        if !matches!(path_group_action, Some(PathGroupAction::Enforce))
+            && is_root_package_import(module_name)
+        {
             return;
         }
 
@@ -1299,6 +1312,23 @@ fn test() {
         ),
         // This should also be allowed when set to `never`.
         (r"import React from 'react';", Some(json!(["never"]))),
+        // Root package specifiers are not files, so `"always"` does not require an extension.
+        // Matches eslint-plugin-import, including when `ignorePackages` is left at its default.
+        // https://github.com/oxc-project/oxc/issues/29098
+        (r#"import ts from "typescript";"#, Some(json!(["always"]))),
+        (r#"import minimist from "minimist";"#, Some(json!(["always"]))),
+        (r#"import React from "react";"#, Some(json!(["always"]))),
+        (r#"import pkg from "@scope/pkg";"#, Some(json!(["always"]))),
+        (r#"import Decimal from "decimal.js";"#, Some(json!(["always"]))),
+        (r#"import lib from "@name/pkg.js";"#, Some(json!(["always"]))),
+        (r#"const ts = require("typescript");"#, Some(json!(["always"]))),
+        (r#"export { ts } from "typescript";"#, Some(json!(["always"]))),
+        // Names that merely resemble a built-in are still root packages.
+        (r#"import crypto from "node_crypto";"#, Some(json!(["always"]))),
+        (r#"import fs from "some-package";"#, Some(json!(["always"]))),
+        (r#"import fs from "@fs/some-package";"#, Some(json!(["always"]))),
+        (r#"import { default as crypto } from "@fs/some-package";"#, Some(json!(["always"]))),
+        (r#"import * as fs from "@fs/some-package";"#, Some(json!(["always"]))),
         // Built-in Node modules should always be allowed without extension
         (r"import fs from 'fs';", Some(json!(["always"]))),
         (r"import crypto from 'crypto';", Some(json!(["always"]))),
@@ -1779,16 +1809,19 @@ fn test() {
         (r"import x from './foo.JS';", Some(json!(["never", { "js": "never" }]))),
         // Edge case fail: Case-insensitive - mixed case extension should still fail with "never"
         (r"import x from './foo.Ts';", Some(json!(["never", { "ts": "never" }]))),
-        // Fails because ignorePackages defaults to false. (not great default behavior, but matches ESLint)
-        (r"import React from 'react';", Some(json!(["always"]))),
-        // Not a real node: protocol import, so should fail when extension is required and ignorePackages is false.
-        (r"import crypto from 'node_crypto';", Some(json!(["always"]))),
-        // If an import has the same name as a built-in module, but isn't actually _from_ a built-in module,
-        // it should fail (assuming ignorePackages is false).
-        (r"import fs from 'some-package';", Some(json!(["always"]))),
-        (r"import fs from '@fs/some-package';", Some(json!(["always"]))),
-        (r"import { default as crypto } from '@fs/some-package';", Some(json!(["always"]))),
-        (r"import * as fs from '@fs/some-package';", Some(json!(["always"]))),
+        // https://github.com/oxc-project/oxc/issues/29098
+        // Bare root packages are allowed; a relative import without an extension still fails.
+        (
+            r#"
+                import ts from "typescript";
+                import minimist from "minimist";
+                import x from "./local";
+            "#,
+            Some(json!(["always"])),
+        ),
+        (r#"import x from "./local";"#, Some(json!(["always"]))),
+        // Package subpaths are not root packages, so `"always"` still requires an extension.
+        (r#"import fp from "lodash/fp";"#, Some(json!(["always"]))),
         // When requiring no extension but ignoring packages, still fail when the import is a package subpath.
         (
             r"import useState from 'react/useState.ts';",
