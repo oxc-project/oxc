@@ -163,6 +163,20 @@ impl<'a> Source<'a> {
         unsafe { SourcePosition::new(self.ptr) }
     }
 
+    /// Move current position to byte `offset` of the source text.
+    ///
+    /// # Panics
+    /// If `offset` is past the end of the source text or not on a UTF-8 character boundary.
+    pub(super) fn set_offset(&mut self, offset: u32) {
+        let offset = offset as usize;
+        assert!(
+            self.whole().is_char_boundary(offset),
+            "offset {offset} is not a character boundary of the source text"
+        );
+        // SAFETY: `offset` is at most the length of the source text, and on a character boundary.
+        self.ptr = unsafe { self.start.add(offset) };
+    }
+
     /// Move current position.
     #[inline]
     pub(super) fn set_position(&mut self, pos: SourcePosition<'a>) {
