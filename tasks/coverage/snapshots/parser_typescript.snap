@@ -14549,13 +14549,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  192 │ declare let u2: U2
  193 │ u1.email = e // error, but only because boolean isn't in email's type
  194 │ u2.email = e // error, and suggest adding undefined
- 195 │ u2 = {
- 196 │     name: 'hi',
- 197 │     email: undefined
- 198 │ }
- 199 │ 
- 200 │ // Repro from #44437
- 201 │ 
+ ... · 
  202 │ declare var a: {[x: string]: number | string }
  203 │ declare var b: {a: number, b: string}
  204 │ declare var c: {a: number, b?: string}
@@ -24673,33 +24667,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
   6 │ │   
   7 │ │       //super call in class member function with no base type
   8 │ │       fn() {
-  9 │ │           super();
- 10 │ │       }
- 11 │ │   
- 12 │ │       //super call in class accessor (get and set) with no base type
- 13 │ │       get foo() {
- 14 │ │           super();
- 15 │ │           return null;
- 16 │ │       }
- 17 │ │       set foo(v) {
- 18 │ │           super();
- 19 │ │       }
- 20 │ │   
- 21 │ │       //super call in class member initializer with no base type
- 22 │ │       p = super();
- 23 │ │   
- 24 │ │       //super call in static class member function with no base type
- 25 │ │       static fn() {
- 26 │ │           super();
- 27 │ │       }
- 28 │ │   
- 29 │ │       //super call in static class member initializer with no base type
- 30 │ │       static k = super();
- 31 │ │   
- 32 │ │       //super call in static class accessor (get and set) with no base type
- 33 │ │       static get q() {
- 34 │ │           super();
- 35 │ │           return null;
+... · │   
  36 │ │       }
  37 │ │       static set q(n) {
  38 │ │           super();

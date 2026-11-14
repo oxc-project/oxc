@@ -205,21 +205,7 @@ source: crates/oxc_linter/src/tester.rs
   3 │ │                   ((
   4 │ │                       // comment
   5 │ │                       (
-  6 │ │                           // comment
-  7 │ │                           foo
-  8 │ │                           // comment
-  9 │ │                       )
- 10 │ │                       // comment
- 11 │ │                   ))
- 12 │ │                   // comment
- 13 │ │               )
- 14 │ │               // comment before instanceof
- 15 │ │               instanceof
- 16 │ │               // comment after instanceof
- 17 │ │               (
- 18 │ │                   // comment
- 19 │ │                   (
- 20 │ │                       // comment
+... · │   
  21 │ │                       Array
  22 │ │                       // comment
  23 │ │                   )

@@ -1,0 +1,23 @@
+---
+source: crates/oxc_diagnostics/src/handlers/graphical/snippet.rs
+expression: output
+---
+    ,-[2:1]
+  1 | statement();
+  2 | statement();
+    : ^^^^|^^^^
+    :     `-- first
+  3 | statement();
+  4 | statement();
+  5 | statement();
+  6 | statement();
+... : 
+ 25 | statement();
+ 26 | statement();
+ 27 | statement();
+ 28 | statement();
+ 29 | statement();
+    : ^^^^|^^^^
+    :     `-- last
+ 30 | statement();
+    `----

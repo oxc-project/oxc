@@ -737,11 +737,7 @@ source: crates/oxc_linter/src/tester.rs
   7 │ │                             class A {
   8 │ │                               method1 () {
   9 │ │                                 resolve();
- 10 │ │                               }
- 11 │ │                               @dec(function () {
- 12 │ │                                 resolve()
- 13 │ │                               })
- 14 │ │                               method2 () {
+... · │   
  15 │ │                                 resolve(true);
  16 │ │                               }
  17 │ │                             }
@@ -759,9 +755,7 @@ source: crates/oxc_linter/src/tester.rs
   7 │ │                             class A {
   8 │ │                               method1 () {
   9 │ │                                 resolve();
- 10 │ │                               }
- 11 │ │                               @dec(function () {
- 12 │ │                                 resolve(true)
+... · │   
  13 │ │                               })
  14 │ │                               method2 () {}
  15 │ │                             }
@@ -779,9 +773,7 @@ source: crates/oxc_linter/src/tester.rs
   7 │ │                             const a = class {
   8 │ │                               [b] () {
   9 │ │                                 resolve();
- 10 │ │                               }
- 11 │ │                               method1 () {
- 12 │ │                                 resolve(true);
+... · │   
  13 │ │                               }
  14 │ │                               method2 () {}
  15 │ │                             }

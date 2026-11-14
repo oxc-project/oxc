@@ -1996,6 +1996,7 @@ version = "0.158.0"
 dependencies = [
  "bytecount",
  "cow-utils",
+ "insta",
  "itoa",
  "memchr",
  "oxc_span",
