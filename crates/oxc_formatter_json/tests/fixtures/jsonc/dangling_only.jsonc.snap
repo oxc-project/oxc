@@ -32,7 +32,7 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
     /* p */
     /* q */
   ],
-  "f": {/* r */},
+  "f": {/* r */}
 }
 
 -------------------------------------
@@ -51,7 +51,7 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
     /* p */
     /* q */
   ],
-  "f": {/* r */},
+  "f": {/* r */}
 }
 
 -----------------------------------------------------------

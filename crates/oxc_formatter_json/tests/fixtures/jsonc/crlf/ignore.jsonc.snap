@@ -21,7 +21,7 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
   "b": {
     "c":   2
   },
-  "d": [1, 2, 3],
+  "d": [1, 2, 3]
 }
 
 ------------------------------------------------------
@@ -33,7 +33,7 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
   "b": {
     "c":   2
   },
-  "d": [1, 2, 3],
+  "d": [1, 2, 3]
 }
 
 -------------------------------------------------------
@@ -45,7 +45,7 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
   "b": {
     "c":   2
   },
-  "d": [1, 2, 3],
+  "d": [1, 2, 3]
 }
 
 --------------------------------------------------------
@@ -57,7 +57,7 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
   "b": {
     "c":   2
   },
-  "d": [1, 2, 3],
+  "d": [1, 2, 3]
 }
 
 ===================== End =====================

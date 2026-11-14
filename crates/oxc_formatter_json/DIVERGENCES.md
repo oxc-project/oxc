@@ -2,6 +2,34 @@
 
 Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md` "Known divergences".
 
+## jsonc-no-trailing-comma
+
+- Why: semantics
+- Pin: `tests/fixtures/jsonc/no_trailing_comma.jsonc`
+
+```jsonc
+// input
+{
+  "foo": "bar"
+}
+
+// ours
+{
+  "foo": "bar"
+}
+
+// prettier
+{
+  "foo": "bar",
+}
+```
+
+The JSONC specification says trailing commas are optional (`MAY` be supported).
+Strict JSONC consumers, including VS Code's built-in JSONC validator, reject them.
+`jsonc` therefore forces trailing commas off (like `json` and `json-stringify`) so the
+formatted output is accepted by the widest set of JSONC parsers. `json5` still follows
+the user option, where trailing commas are part of the JSON5 grammar.
+
 ## array-hole-comments
 
 - Why: invariant
