@@ -1,9 +1,10 @@
 use oxc_allocator::{Allocator, BitSet};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::Scoping;
-use oxc_span::SourceType;
+use oxc_span::{SourceType, Span};
 use oxc_str::{Ident, IdentHashSet};
-use oxc_syntax::scope::ScopeId;
+use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
+use rustc_hash::FxHashSet;
 
 use crate::{CompressOptions, symbol_state::SymbolState};
 
@@ -59,6 +60,14 @@ pub struct PassChanges<'a> {
     /// At least one direct `eval(...)` call was dropped this pass. Gates
     /// the small `LiveDirectEvalCollector` walk at flush time.
     pub(crate) direct_eval_dropped: bool,
+
+    /// Declarations `(symbol, binding span)` of redeclared symbols found in dropped
+    /// subtrees, to remove from `Scoping::symbol_redeclarations` at flush time.
+    pub(crate) removed_declarations: FxHashSet<(SymbolId, Span)>,
+
+    /// Declarations `(symbol, binding span)` of redeclared symbols that `KeepVar`
+    /// re-emitted. These may be in `removed_declarations` and still be live.
+    pub(crate) reemitted_declarations: FxHashSet<(SymbolId, Span)>,
 }
 
 impl<'a> PassChanges<'a> {
@@ -67,6 +76,8 @@ impl<'a> PassChanges<'a> {
             revisit_requested: false,
             removed_references: BitSet::new_in(references_len, allocator),
             direct_eval_dropped: false,
+            removed_declarations: FxHashSet::default(),
+            reemitted_declarations: FxHashSet::default(),
         }
     }
 }
@@ -183,6 +194,8 @@ impl<'a> MinifierState<'a> {
         !self.pass_changes.revisit_requested
             && self.pass_changes.removed_references.is_empty()
             && !self.pass_changes.direct_eval_dropped
+            && self.pass_changes.removed_declarations.is_empty()
+            && self.pass_changes.reemitted_declarations.is_empty()
     }
 }
 
