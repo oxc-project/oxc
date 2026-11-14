@@ -2,6 +2,7 @@ import { Worker } from "node:worker_threads";
 import { describe, expect, it } from "vitest";
 
 import { minify, minifySync } from "../index";
+import type { CodegenOptions } from "../index";
 
 describe("simple", () => {
   const code = "/*! legal comment */\nfunction foo() { var bar; bar(undefined) } foo();";
@@ -74,6 +75,97 @@ describe("simple", () => {
     });
     expect(ret.code).toBe("OTHER:baz();");
     expect(ret.errors.length).toBe(0);
+  });
+});
+
+describe("codegen comments", () => {
+  const source = `
+    // regular comment
+    /*! legal comment */
+    /** JSDoc comment */
+    export function documented(value) { return value; }
+    export const a = /* @__PURE__ */ make();
+    export const b = /* #__PURE__ -- @preserve */ make();
+    export const c = /* #__PURE__ */ new Thing();
+    /* @__NO_SIDE_EFFECTS__ */
+    export function factory(value) { return value; }
+    /* #__PURE__ -- unused call */ unused();
+  `;
+
+  it.each([
+    [undefined, false, false],
+    [false, false, false],
+    [true, true, true],
+    [{}, false, false],
+    [{ annotation: true }, true, false],
+    [{ jsdoc: true }, false, true],
+    [{ annotation: true, jsdoc: true }, true, true],
+  ] satisfies [CodegenOptions["comments"], boolean, boolean][])(
+    "comments=%j preserves annotations=%s, jsdoc=%s",
+    (comments, annotation, jsdoc) => {
+      const result = minifySync("test.mjs", source, { codegen: { comments } });
+
+      expect(result.errors).toHaveLength(0);
+      for (const comment of [
+        "/* @__PURE__ */",
+        "/* #__PURE__ -- @preserve */",
+        "/* #__PURE__ */",
+        "/* @__NO_SIDE_EFFECTS__ */",
+      ]) {
+        expect(result.code.includes(comment)).toBe(annotation);
+      }
+      expect(result.code.includes("/** JSDoc comment */")).toBe(jsdoc);
+      expect(result.code).not.toContain("regular comment");
+      expect(result.code).not.toContain("legal comment");
+      expect(result.code).not.toContain("unused");
+      expect(result.code).not.toContain("value");
+    },
+  );
+
+  it.each([true, false])("preserves annotations with removeWhitespace=%s", (removeWhitespace) => {
+    const result = minifySync("test.mjs", "export const a = /* @__PURE__ */ make();", {
+      compress: false,
+      mangle: false,
+      codegen: { comments: { annotation: true }, removeWhitespace },
+    });
+
+    expect(result.errors).toHaveLength(0);
+    expect(result.code).toBe(
+      removeWhitespace
+        ? "export const a=/* @__PURE__ */ make();"
+        : "export const a = /* @__PURE__ */ make();\n",
+    );
+  });
+
+  it.each([true, false])("handles legal comments separately with comments=%s", (comments) => {
+    const result = minifySync("test.mjs", source, {
+      codegen: { comments, legalComments: "external" },
+    });
+
+    expect(result.errors).toHaveLength(0);
+    expect(result.legalComments).toEqual(["/*! legal comment */"]);
+    expect(result.code).not.toContain("legal comment");
+    expect(result.code.includes("/* #__PURE__ -- @preserve */")).toBe(comments);
+  });
+
+  it("preserves bundler annotations", () => {
+    const result = minifySync(
+      "test.mjs",
+      'export const load = () => import(/* webpackChunkName: "chunk" */ /* @vite-ignore */ "chunk");',
+      { codegen: { comments: { annotation: true } } },
+    );
+
+    expect(result.errors).toHaveLength(0);
+    expect(result.code).toContain('/* webpackChunkName: "chunk" */');
+    expect(result.code).toContain("/* @vite-ignore */");
+  });
+
+  it("produces the same result through the async API", async () => {
+    const options = { codegen: { comments: true } };
+    const syncResult = minifySync("test.mjs", source, options);
+    const asyncResult = await minify("test.mjs", source, options);
+
+    expect(asyncResult).toEqual(syncResult);
   });
 });
 
