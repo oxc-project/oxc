@@ -3,7 +3,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::Span;
-use oxc_str::JSStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -13,16 +12,10 @@ use crate::{
     utils::{PossibleJestNode, parse_general_jest_fn_call},
 };
 
-fn prefer_import_in_mock_diagnostic(span: Span, path: JSStr) -> OxcDiagnostic {
-    // Debug supplies a quoted, escaped spelling when the path has a lone surrogate.
-    let help = match path.as_str() {
-        Some(path) => format!(
-            "Dynamic import improves the type information and IntelliSense. Substitute `{path}` with `import('{path}')`"
-        ),
-        None => format!(
-            "Dynamic import improves the type information and IntelliSense. Substitute `{path:?}` with `import({path:?})`"
-        ),
-    };
+fn prefer_import_in_mock_diagnostic(span: Span, path: &str) -> OxcDiagnostic {
+    let help = format!(
+        "Dynamic import improves the type information and IntelliSense. Substitute `{path}` with `import({path})`"
+    );
 
     OxcDiagnostic::warn("Mocked modules must be dynamic imported.").with_help(help).with_label(span)
 }
@@ -129,20 +122,21 @@ impl PreferImportInMock {
             return;
         };
 
-        let value = import_value.value;
+        // Use the raw source text so the fix preserves the original quote style
+        // and escapes; re-serializing the cooked value can change the module
+        // specifier or produce invalid syntax.
+        let raw = import_value
+            .raw
+            .map_or_else(|| ctx.source_range(import_value.span), |raw| raw.as_str());
+
         ctx.diagnostic_with_fix(
-            prefer_import_in_mock_diagnostic(call_expr.arguments_span().unwrap(), value),
+            prefer_import_in_mock_diagnostic(call_expr.arguments_span().unwrap(), raw),
             |fixer| {
                 if !self.fixable {
                     return fixer.noop();
                 }
-                // The fix is built from `&str`, so a path with a lone surrogate is
-                // reported without it.
-                let Some(value) = value.as_str() else {
-                    return fixer.noop();
-                };
 
-                fixer.replace(import_value.span, format!("import('{value}')"))
+                fixer.replace(import_value.span, format!("import({raw})"))
             },
         );
     }
@@ -199,6 +193,8 @@ fn test() {
         ),
         ("vi.mock('foo', () => {})", None),
         (r#"vi.mock("node:fs/promises")"#, None),
+        (r#"vi.mock("./it's.js", () => ({ x: 1 }))"#, None),
+        (r"vi.mock('./dir\\file.js', () => ({ x: 2 }))", None),
         (r#"vi.mock("./foo.js", () => ({ Foo: vi.fn() }))"#, None),
         (
             "
@@ -210,13 +206,22 @@ fn test() {
     ];
 
     let fix = vec![
-        // A path with a lone surrogate gets no fix.
-        (r#"vi.mock("\uD800")"#, r#"vi.mock("\uD800")"#),
+        // Paths with a lone surrogate are preserved as-is.
+        (r#"vi.mock("\uD800")"#, r#"vi.mock(import("\uD800"))"#),
+        (r#"vi.doMock("a\uDC00b", () => ({}))"#, r#"vi.doMock(import("a\uDC00b"), () => ({}))"#),
         ("vi.mock('foo', () => {})", "vi.mock(import('foo'), () => {})"),
-        (r#"vi.mock("node:fs/promises")"#, "vi.mock(import('node:fs/promises'))"),
+        (
+            r#"vi.mock("./it's.js", () => ({ x: 1 }))"#,
+            r#"vi.mock(import("./it's.js"), () => ({ x: 1 }))"#,
+        ),
+        (
+            r"vi.mock('./dir\\file.js', () => ({ x: 2 }))",
+            r"vi.mock(import('./dir\\file.js'), () => ({ x: 2 }))",
+        ),
+        (r#"vi.mock("node:fs/promises")"#, r#"vi.mock(import("node:fs/promises"))"#),
         (
             r#"vi.mock("./foo.js", () => ({ Foo: vi.fn() }))"#,
-            "vi.mock(import('./foo.js'), () => ({ Foo: vi.fn() }))",
+            r#"vi.mock(import("./foo.js"), () => ({ Foo: vi.fn() }))"#,
         ),
         (
             "
@@ -229,10 +234,10 @@ fn test() {
                   ",
         ),
         ("vi.doMock('foo', () => {})", "vi.doMock(import('foo'), () => {})"),
-        (r#"vi.doMock("node:fs/promises")"#, "vi.doMock(import('node:fs/promises'))"),
+        (r#"vi.doMock("node:fs/promises")"#, r#"vi.doMock(import("node:fs/promises"))"#),
         (
             r#"vi.doMock("./foo.js", () => ({ Foo: vi.fn() }))"#,
-            "vi.doMock(import('./foo.js'), () => ({ Foo: vi.fn() }))",
+            r#"vi.doMock(import("./foo.js"), () => ({ Foo: vi.fn() }))"#,
         ),
         (
             "
