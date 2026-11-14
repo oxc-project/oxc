@@ -1231,6 +1231,14 @@ mod test {
     }
 
     #[test]
+    fn lint_svelte_script_in_html_expression() {
+        let (output, result) =
+            Tester::new().test_output(&["fixtures/cli/svelte/script-in-html-expression.svelte"]);
+
+        assert!(matches!(result, CliRunResult::LintSucceeded), "{output}");
+    }
+
+    #[test]
     fn lint_svelte_module_and_instance_scripts() {
         let output =
             Tester::new().test_output_verbose(&["fixtures/cli/svelte/module-script.svelte"]);
