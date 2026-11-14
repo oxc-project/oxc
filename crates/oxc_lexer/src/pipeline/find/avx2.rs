@@ -1,5 +1,3 @@
-use std::mem::{self, MaybeUninit};
-
 use oxc_simd::{Avx2, Vec256, cpu_version};
 
 use super::BRACKET_BYTES;
@@ -64,7 +62,11 @@ pub fn bracket_bits_avx2(src: &[u8], base: usize, cpu: Avx2) -> u64 {
 #[cpu_version(Avx2)]
 #[inline(always)]
 fn any_of<const N: usize>(v: Vec256<Avx2>, needles: [u8; N]) -> Vec256<Avx2> {
-    let mut m = array_map(needles, |c| v.eq_u8(c), v.cpu());
+    // Not needles.map, which is std code built without AVX2 and may call the compares out of line.
+    let mut m = [Vec256::zero(v.cpu()); N];
+    for (slot, &c) in m.iter_mut().zip(&needles) {
+        *slot = v.eq_u8(c);
+    }
     let mut len = N;
     while len > 1 {
         let half = len / 2;
@@ -77,25 +79,4 @@ fn any_of<const N: usize>(v: Vec256<Avx2>, needles: [u8; N]) -> Vec256<Avx2> {
         len = half + len % 2;
     }
     m[0]
-}
-
-/// Equivalent of `<[T; N]>::map`, which is guaranteed to be inlined.
-///
-/// `map` is `std` code, which is compiled without AVX2.
-/// If LLVM doesn't inline it into the caller, it calls the intrinsics out of line.
-#[cpu_version(Avx2)]
-#[inline(always)]
-fn array_map<T, U, const N: usize>(array: [T; N], f: impl Fn(T) -> U, _cpu: Avx2) -> [U; N] {
-    // If `f` panics, the values already in `out` aren't dropped. Ensure that can't leak memory.
-    const { assert!(!mem::needs_drop::<U>()) };
-
-    let mut out = [const { MaybeUninit::<U>::uninit() }; N];
-
-    for (slot, value) in out.iter_mut().zip(array) {
-        slot.write(f(value));
-    }
-
-    // SAFETY: `out` and `array` are both `N` long, so the loop initialized every element of `out`.
-    // `MaybeUninit<U>` has the same layout as `U`.
-    unsafe { mem::transmute_copy::<[MaybeUninit<U>; N], [U; N]>(&out) }
 }
