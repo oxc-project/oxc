@@ -875,19 +875,19 @@ fn is_effect_or_effect_event_call(
 /// Returns the name to match against `settings["react-hooks"].additionalEffectHooks`.
 ///
 /// Accepts a bare call (`useMyEffect()`) and a call on a PascalCase namespace
-/// (`EffectHooks.useMyEffect()`, `React.useMyEffect()`), which is the same namespace
-/// form this rule recognizes for hook calls (see [`is_react_hook`]).
-fn additional_effect_hook_name<'a>(callee: &Expression<'a>) -> Option<&'a str> {
-    match callee {
-        Expression::Identifier(ident) => Some(ident.name.as_str()),
-        Expression::StaticMemberExpression(member) => match &member.object {
-            Expression::Identifier(object) if is_react_component_name(&object.name) => {
-                Some(member.property.name.as_str())
-            }
-            _ => None,
-        },
-        _ => None,
+/// (`EffectHooks.useMyEffect()`, `React.useMyEffect()`, `React['useMyEffect']()`),
+/// which is the same namespace form this rule recognizes for hook calls
+/// (see [`is_react_hook`]).
+fn additional_effect_hook_name<'a>(callee: &'a Expression<'a>) -> Option<&'a str> {
+    if let Expression::Identifier(ident) = callee {
+        return Some(ident.name.as_str());
     }
+    let member = callee.as_member_expression()?;
+    let Expression::Identifier(object) = member.object() else { return None };
+    if !is_react_component_name(&object.name) {
+        return None;
+    }
+    member.static_property_name()?.as_str()
 }
 
 fn is_reference_call_callee(nodes: &AstNodes<'_>, node_id: NodeId, span: Span) -> bool {
@@ -1774,6 +1774,12 @@ fn test() {
                 onClick();
               });
               React.useMyEffect(() => {
+                onClick();
+              });
+              React['useMyEffect'](() => {
+                onClick();
+              });
+              EffectHooks['useMyEffect'](() => {
                 onClick();
               });
             }
