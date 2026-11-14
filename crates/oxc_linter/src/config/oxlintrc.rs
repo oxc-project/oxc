@@ -262,7 +262,6 @@ pub struct Oxlintrc {
     /// Plugin-specific configuration for both built-in and custom plugins.
     /// This includes settings for built-in plugins such as `react` and `jsdoc`
     /// as well as configuring settings for JS custom plugins loaded via `jsPlugins`.
-    /// Serialization preserves custom keys alongside normalized built-in settings.
     #[serde(serialize_with = "OxlintSettings::serialize_with_custom")]
     pub settings: OxlintSettings,
     /// Environments enable and disable collections of global variables.
