@@ -456,6 +456,9 @@ impl Tester {
     /// // the first argument is normally `MyRuleStruct::NAME`.
     /// Tester::new("no-undef", pass, fail).expect_fix(fix).test();
     /// ```
+    ///
+    /// Calling it again adds to the cases already given, so a test can group its fix cases
+    /// (by fix kind, say) in separate calls.
     #[must_use]
     pub fn expect_fix<F: Into<ExpectFixTestCase>>(mut self, expect_fix: Vec<F>) -> Self {
         // prevent `expect_fix` abuse
@@ -464,8 +467,9 @@ impl Tester {
             "You must provide at least one fixer test case to `expect_fix`"
         );
 
-        self.expect_fix =
-            Some(expect_fix.into_iter().map(std::convert::Into::into).collect::<Vec<_>>());
+        self.expect_fix
+            .get_or_insert_with(Vec::new)
+            .extend(expect_fix.into_iter().map(std::convert::Into::into));
         self
     }
 
@@ -895,4 +899,29 @@ fn format_fix_failures(failures: &[FixFailure]) -> String {
         let _ = writeln!(output);
     }
     output
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Tester;
+
+    /// Every `expect_fix` call's cases run, not only the last call's (#29155): a wrong
+    /// expectation in the first of two calls fails the test.
+    #[test]
+    #[should_panic(expected = "Some tests failed for rule eslint/no-debugger")]
+    fn chained_expect_fix_runs_the_cases_of_every_call() {
+        Tester::new("no-debugger", "eslint", vec!["let x = 1;"], vec!["if (foo) debugger"])
+            .expect_fix(vec![("let x; debugger; let y;", "let x; WRONG; let y;")])
+            .expect_fix(vec![("if (foo) debugger", "if (foo) {}")])
+            .test();
+    }
+
+    /// And the cases of both calls pass when they are right.
+    #[test]
+    fn chained_expect_fix_passes_when_every_call_is_right() {
+        Tester::new("no-debugger", "eslint", vec!["let x = 1;"], vec!["if (foo) debugger"])
+            .expect_fix(vec![("let x; debugger; let y;", "let x;  let y;")])
+            .expect_fix(vec![("if (foo) debugger", "if (foo) {}")])
+            .test();
+    }
 }
