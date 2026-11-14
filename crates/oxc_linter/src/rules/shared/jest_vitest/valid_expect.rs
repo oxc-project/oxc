@@ -33,8 +33,12 @@ Checks that `expect()` is called correctly.
 ### Why is this bad?
 
 `expect()` is a function that is used to assert values in tests.
-It should be called with a single argument, which is the value to be tested.
-If you call `expect()` with no arguments, or with more than one argument, it will not work as expected.
+It needs a value to test and a matcher call to perform the assertion.
+By default, `jest/valid-expect` requires a single argument, which is the value to be tested.
+
+`vitest/valid-expect` also accepts a string literal or template literal as a second argument
+for a custom assertion message, even with the default `maxArgs: 1`.
+String-valued variables do not receive this exception; set `maxArgs` to `2` to allow them.
 
 ### Examples
 
@@ -52,6 +56,12 @@ expect('something').toEqual('something');
 expect(true).toBeDefined();
 await expect(Promise.resolve('Hi!')).resolves.toBe('Hi!');
 ```
+
+These examples are also **correct** for `vitest/valid-expect` with the default options:
+```javascript
+expect(1, 'sum is incorrect').toBe(1);
+expect(1 + 2, `sum is ${label}`).toBe(3);
+```
 ";
 
 #[derive(Debug, Clone, JsonSchema)]
@@ -62,6 +72,8 @@ pub struct ValidExpectConfig {
     /// Minimum number of arguments `expect` should be called with.
     min_args: u32,
     /// Maximum number of arguments `expect` should be called with.
+    /// For `vitest/valid-expect`, a string literal or template literal as the second argument
+    /// is allowed even when this is `1`. Set this to `2` to also allow message variables.
     max_args: u32,
     /// When `true`, allow a string or template literal second argument as a custom message.
     #[serde(skip)]
