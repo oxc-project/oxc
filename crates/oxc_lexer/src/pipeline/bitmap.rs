@@ -110,28 +110,10 @@ impl<'a> Bitmap<'a> {
         block.set(block.get() | (1u64 << (i & 63)));
     }
 
-    /// set without the bounds check, so i must be below the bitmap's length in bits.
-    #[cpu_multiversion]
-    #[inline(always)]
-    pub(super) unsafe fn set_unchecked(self, i: usize, _cpu: impl Cpu) {
-        // SAFETY: the caller keeps i below the bitmap's length in bits.
-        let block = unsafe { self.0.get_unchecked(i >> 6) };
-        block.set(block.get() | (1u64 << (i & 63)));
-    }
-
     #[cpu_multiversion]
     #[inline(always)]
     pub(super) fn clear(self, i: usize, _cpu: impl Cpu) {
         let block = &self.0[i >> 6];
-        block.set(block.get() & !(1u64 << (i & 63)));
-    }
-
-    /// clear without the bounds check, so i must be below the bitmap's length in bits.
-    #[cpu_multiversion]
-    #[inline(always)]
-    pub(super) unsafe fn clear_unchecked(self, i: usize, _cpu: impl Cpu) {
-        // SAFETY: the caller keeps i below the bitmap's length in bits.
-        let block = unsafe { self.0.get_unchecked(i >> 6) };
         block.set(block.get() & !(1u64 << (i & 63)));
     }
 
@@ -143,17 +125,6 @@ impl<'a> Bitmap<'a> {
             return;
         }
         clear_bits(&self.0[a >> 6..=b >> 6], a, b);
-    }
-
-    /// clear_range without the bounds check, so b must be below the bitmap's length in bits.
-    #[cpu_multiversion]
-    #[inline(always)]
-    pub(super) unsafe fn clear_range_unchecked(self, a: usize, b: usize, _cpu: impl Cpu) {
-        if a > b {
-            return;
-        }
-        // SAFETY: the caller keeps b, and so a, below the bitmap's length in bits.
-        clear_bits(unsafe { self.0.get_unchecked(a >> 6..=b >> 6) }, a, b);
     }
 
     #[cpu_multiversion]
