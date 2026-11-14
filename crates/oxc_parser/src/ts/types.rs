@@ -938,6 +938,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_type_arguments_of_type_reference(
         &mut self,
     ) -> Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>> {
+        // Type references attach `<...>` only when `<` is on the same line as the name.
+        // The contents of the list may span lines. The expression rule below is separate.
         if self.cur_token().is_on_new_line()
             || !matches!(
                 self.cur_kind(),
@@ -954,6 +956,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>> {
         let depth = self.state.type_argument_depth;
         if depth == 0 || self.fatal_error.is_some() {
+            // Committed type syntax must keep its normal diagnostics. Also do not cache
+            // a failure inherited from an earlier token as a failure of this type list.
             return self.parse_type_arguments_of_type_reference_worker();
         }
         let start = self.cur_start();
@@ -963,13 +967,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }) || (depth >= TYPE_ARGUMENT_LOOKAHEAD_DEPTH
             && !self.speculative_type_arguments_can_close())
         {
-            // This failure belongs to an enclosing speculative parse, which will rewind it.
+            // We are still at an opening `<`, so expecting `>` marks this attempt fatal.
+            // It belongs to an enclosing speculative expression parse, which rewinds it;
+            // returning None alone would allow the enclosing type to appear successful.
             self.expect(Kind::RAngle);
             return None;
         }
         self.state.type_argument_depth = depth + 1;
         let result = self.parse_type_arguments_of_type_reference_worker();
         self.state.type_argument_depth = depth;
+        // Recoverable diagnostics (for example an empty list) do not reject speculation.
         if self.fatal_error.is_some() {
             self.record_type_argument_failure(start, context, TypeArgumentFailure::Type, depth);
         }
@@ -1003,23 +1010,24 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// Speculatively parse a `<T, U>` type-argument list in an expression
-    /// position (e.g. `foo<T>(arg)` vs `foo < T`). Returns `None` and rewinds
-    /// any parser/lexer state when the upcoming tokens turn out not to be a
-    /// valid type-argument list.
+    /// position (e.g. `foo<T>(arg)` vs `foo < T`). Returns `None` if a cached failure
+    /// rules it out, or rewinds to the checkpoint when a fresh attempt fails.
     pub(crate) fn parse_type_arguments_in_expression(
         &mut self,
     ) -> Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>> {
         // A type-argument list can only open with `<`, or `<<` for nested generics like
         // `f<<T>() => U>()`. This mirrors TypeScript's `reScanLessThanToken`, which re-scans only
-        // `<`/`<<`. `<=`/`<<=` can never open one — splitting off the leading `<` leaves a `=`, and
-        // no type starts with `=` — so although `re_lex_ts_l_angle` would accept them (it is shared
-        // with type-context callers), speculating here can only fail and rewind to `None`. Bail
+        // `<`/`<<`. `<=`/`<<=` can never open one: splitting their leading angles eventually
+        // leaves `=` where a type or type parameter must start. `re_lex_ts_l_angle` also serves
+        // type-context callers and accepts them, but expression speculation can only fail. Bail
         // before the checkpoint for any non-`<`-opening token (the common `a?.(`, `a?.b` paths),
         // avoiding a checkpoint/rewind round-trip that returns `None` anyway.
         if !matches!(self.cur_kind(), Kind::LAngle | Kind::ShiftLeft) {
             return None;
         }
         if self.state.type_argument_lookahead.as_ref().is_some_and(|lookahead| {
+            // Missing delimiters rule out both contexts. Actual parse failures must also
+            // match the grammar flags, and can include the expression-only follow rule.
             lookahead.cannot_close(self.cur_start())
                 || lookahead.has_failed(self.cur_start(), self.ctx, TypeArgumentFailure::Expression)
         }) {
@@ -1061,7 +1069,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.advance(Kind::LAngle);
         let (params, _) =
             self.parse_delimited_list(Kind::RAngle, Kind::Comma, opening_span, Self::parse_ts_type);
-        // `a < b> = c` is valid but `a < b >= c` is BinaryExpression
+        // A contiguous `>=` remains a relational operator: `a < b >= c`. A separated
+        // `> =` can end an instantiation before `=`; assignment validity is checked later.
+        // Re-lex before consuming `>` so whitespace between these spellings matters.
         if matches!(self.re_lex_right_angle(), Kind::GtEq) {
             self.rewind(checkpoint);
             return None;
@@ -1081,9 +1091,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn can_follow_type_arguments_in_expr(&mut self) -> bool {
         match self.cur_kind() {
+            // Prefer generic calls and tagged templates over relational expressions:
+            // `f<T>(x)`, ``f<T>`text` `` and ``f<T>`text${x}` ``.
             Kind::LParen | Kind::NoSubstitutionTemplate | Kind::TemplateHead => true,
+            // `<` cannot continue an instantiation here; `>` may belong to a shift.
+            // In `a < b > +c` / `a < b > -c`, preserve the unary operand of the comparison.
+            // These exclusions take precedence even when there is a line break.
             Kind::LAngle | Kind::RAngle | Kind::Plus | Kind::Minus => false,
             _ => {
+                // Instantiations need not be called: `const g = f<T>;` is valid. A line
+                // break, another binary operator, or a token that cannot start an operand
+                // favors that interpretation. A same-line operand as in `a < b > c`
+                // instead leaves `<` and `>` to the relational-expression parser.
                 self.cur_token().is_on_new_line()
                     || self.is_binary_operator()
                     || !self.is_start_of_expression()
