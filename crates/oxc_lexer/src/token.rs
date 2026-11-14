@@ -1,6 +1,6 @@
 use std::{
     fmt::{self, Display},
-    mem,
+    mem, slice,
 };
 
 use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
@@ -399,6 +399,13 @@ pub fn debug_assert_kind_bytes(bytes: &[u8]) {
         bytes.iter().all(|&b| TokenKind::from_u8(b, cpu).is_some()),
         "lexer wrote a byte that is not a declared TokenKind discriminant"
     );
+}
+
+/// The kinds as their discriminant bytes.
+#[inline]
+pub fn kind_bytes(kinds: &[TokenKind]) -> &[u8] {
+    // SAFETY: TokenKind is repr(u8), so each kind is one initialized byte.
+    unsafe { slice::from_raw_parts(kinds.as_ptr().cast::<u8>(), kinds.len()) }
 }
 
 pub const SPAN_SENTINELS: usize = 8;

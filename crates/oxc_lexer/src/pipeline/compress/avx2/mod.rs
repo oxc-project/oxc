@@ -39,8 +39,7 @@ pub(super) unsafe fn compress_blocks_avx2(
     kinds: *mut u8,
     cpu: Avx2,
 ) -> usize {
-    // SAFETY: `Lexer::new` calls `init_pair_luts`, which initializes `PairLuts` if the CPU supports AVX2
-    let pair_luts = unsafe { get_pair_luts() };
+    let pair_luts = get_pair_luts();
     let lut0z = &pair_luts.lut0z;
     let lutpad = pair_luts.lutpad.as_ptr().cast::<u8>();
 
@@ -170,11 +169,10 @@ pub(super) unsafe fn build_spans_avx2(
 }
 
 #[cpu_version(Avx2)]
-pub(super) unsafe fn lanes_post_avx2(
+pub(super) fn lanes_post_avx2(
     src: &[u8],
-    out_kinds: *const u8,
-    out_spans: *const Span,
-    m: usize,
+    kinds: &[u8],
+    spans: &[Span],
     src_len: u32,
     lanes: &mut Lanes,
     cpu: Avx2,
@@ -182,41 +180,40 @@ pub(super) unsafe fn lanes_post_avx2(
     // `tk!(Invalid)` is the byte-class default for stray/control bytes and
     // reaches the output as a 1-byte token. Track "any seen" alongside the
     // value sweep; localize cold.
+    let m = kinds.len();
+    let spans = &spans[..m];
     let mut inv = Vec256::zero(cpu);
     let mut i = 0usize;
     while i + 64 <= m {
-        let v0 = Vec256::load_unaligned(out_kinds.add(i), cpu);
-        let v1 = Vec256::load_unaligned(out_kinds.add(i + 32), cpu);
+        let v0 = Vec256::read_unaligned(kinds[i..].first_chunk::<32>().unwrap(), cpu);
+        let v1 = Vec256::read_unaligned(kinds[i + 32..].first_chunk::<32>().unwrap(), cpu);
         let h0 = hits(v0);
         let h1 = hits(v1);
         inv |= v0.eq_u8(tk!(Invalid)) | v1.eq_u8(tk!(Invalid));
         let mut mask = (h0.movemask() as u64) | ((h1.movemask() as u64) << 32);
         while mask != 0 {
-            emit_value(src, out_kinds, out_spans, i + mask.trailing_zeros() as usize, lanes, cpu);
+            emit_value(src, kinds, spans, i + mask.trailing_zeros() as usize, lanes, cpu);
             mask &= mask - 1;
         }
         i += 64;
     }
     let mut inv_dirty = inv.movemask() != 0;
     while i < m {
-        let v = Vec256::load_unaligned(out_kinds.add(i), cpu);
-        let hit = hits(v);
-        let mut mask = hit.movemask();
-        let mut invm = v.eq_u8(tk!(Invalid)).movemask();
-        let rem = m - i;
-        if rem < 32 {
-            mask &= (1u32 << rem) - 1;
-            invm &= (1u32 << rem) - 1;
-        }
-        inv_dirty |= invm != 0;
+        // The last kinds, padded with Eof, which is neither a value nor invalid.
+        let mut tail = [tk!(Eof); 32];
+        let rem = (m - i).min(32);
+        tail[..rem].copy_from_slice(&kinds[i..i + rem]);
+        let v = Vec256::read_unaligned(&tail, cpu);
+        let mut mask = hits(v).movemask();
+        inv_dirty |= v.eq_u8(tk!(Invalid)).movemask() != 0;
         while mask != 0 {
-            emit_value(src, out_kinds, out_spans, i + mask.trailing_zeros() as usize, lanes, cpu);
+            emit_value(src, kinds, spans, i + mask.trailing_zeros() as usize, lanes, cpu);
             mask &= mask - 1;
         }
         i += 32;
     }
     if inv_dirty {
-        invalid_diags(src, out_kinds, out_spans, m, src_len, lanes);
+        invalid_diags(src, kinds, spans, src_len, lanes);
     }
 }
 
