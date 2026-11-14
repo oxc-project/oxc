@@ -1981,7 +1981,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.visit_block_statement(finalizer);
 
             /* cfg */
-            control_flow!(self, |cfg| Some(cfg.current_node_ix))
+            control_flow!(self, |cfg| {
+                cfg.finish_finalizer(before_finalizer_graph_ix.unwrap());
+                Some(cfg.current_node_ix)
+            })
             /* cfg */
         } else {
             None

@@ -1,0 +1,678 @@
+---
+source: crates/oxc_semantic/tests/integration/cfg.rs
+expression: snapshot
+input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/finally_jumps.js
+---
+bb0: {
+
+}
+
+bb1: {
+
+}
+
+bb2: {
+
+}
+
+bb3: {
+	statement
+}
+
+bb4: {
+	condition
+}
+
+bb5: {
+	statement
+	statement
+}
+
+bb6: {
+
+}
+
+bb7: {
+	statement
+	break
+}
+
+bb8: {
+	unreachable
+}
+
+bb9: {
+	statement
+	statement
+}
+
+bb10: {
+
+}
+
+bb11: {
+	statement
+	return
+}
+
+bb12: {
+
+}
+
+bb13: {
+
+}
+
+bb14: {
+	statement
+	statement
+}
+
+bb15: {
+	condition
+}
+
+bb16: {
+
+}
+
+bb17: {
+	statement
+	statement
+}
+
+bb18: {
+
+}
+
+bb19: {
+	statement
+	continue
+}
+
+bb20: {
+	unreachable
+}
+
+bb21: {
+	statement
+	statement
+}
+
+bb22: {
+
+}
+
+bb23: {
+	statement
+	return
+}
+
+bb24: {
+
+}
+
+bb25: {
+
+}
+
+bb26: {
+	statement
+	statement
+}
+
+bb27: {
+	condition
+}
+
+bb28: {
+	statement
+	statement
+}
+
+bb29: {
+
+}
+
+bb30: {
+	statement
+	statement
+}
+
+bb31: {
+
+}
+
+bb32: {
+	statement
+	break <label>
+}
+
+bb33: {
+	unreachable
+}
+
+bb34: {
+	statement
+	statement
+}
+
+bb35: {
+
+}
+
+bb36: {
+	statement
+	statement
+}
+
+bb37: {
+
+}
+
+bb38: {
+
+}
+
+bb39: {
+	statement
+	return
+}
+
+bb40: {
+
+}
+
+bb41: {
+
+}
+
+bb42: {
+	statement
+}
+
+bb43: {
+
+}
+
+bb44: {
+	statement
+	statement
+}
+
+bb45: {
+	condition
+}
+
+bb46: {
+	statement
+	break
+}
+
+bb47: {
+	unreachable
+}
+
+bb48: {
+	statement
+}
+
+bb49: {
+	statement
+	statement
+}
+
+bb50: {
+	statement
+	return
+}
+
+bb51: {
+
+}
+
+bb52: {
+
+}
+
+bb53: {
+	statement
+}
+
+bb54: {
+	condition
+}
+
+bb55: {
+	statement
+	statement
+}
+
+bb56: {
+
+}
+
+bb57: {
+	statement
+	break
+}
+
+bb58: {
+	unreachable
+}
+
+bb59: {
+	statement
+	return <implicit undefined>
+}
+
+bb60: {
+	unreachable
+}
+
+bb61: {
+
+}
+
+bb62: {
+	statement
+	return
+}
+
+bb63: {
+
+}
+
+bb64: {
+
+}
+
+bb65: {
+	statement
+	statement
+}
+
+bb66: {
+	condition
+}
+
+bb67: {
+	statement
+	statement
+}
+
+bb68: {
+
+}
+
+bb69: {
+	statement
+	statement
+}
+
+bb70: {
+	condition
+}
+
+bb71: {
+	statement
+	continue <label>
+}
+
+bb72: {
+	unreachable
+}
+
+bb73: {
+
+}
+
+bb74: {
+	statement
+	statement
+}
+
+bb75: {
+
+}
+
+bb76: {
+
+}
+
+bb77: {
+	statement
+	return
+}
+
+bb78: {
+
+}
+
+digraph {
+    0 [ label = "bb0" shape = box]
+    1 [ label = "bb1" shape = box]
+    2 [ label = "bb2" shape = box]
+    3 [ label = "bb3
+WhileStatement" shape = box]
+    4 [ label = "bb4
+Condition(true)" shape = box]
+    5 [ label = "bb5
+BlockStatement
+TryStatement" shape = box]
+    6 [ label = "bb6" shape = box]
+    7 [ label = "bb7
+BlockStatement
+break" shape = box]
+    8 [ label = "bb8
+unreachable" shape = box]
+    9 [ label = "bb9
+BlockStatement
+ExpressionStatement" shape = box]
+    10 [ label = "bb10" shape = box]
+    11 [ label = "bb11
+ExpressionStatement
+return" shape = box]
+    12 [ label = "bb12" shape = box]
+    13 [ label = "bb13" shape = box]
+    14 [ label = "bb14
+ForStatement
+VariableDeclaration" shape = box]
+    15 [ label = "bb15
+Condition(BinaryExpression(<))" shape = box]
+    16 [ label = "bb16" shape = box]
+    17 [ label = "bb17
+BlockStatement
+TryStatement" shape = box]
+    18 [ label = "bb18" shape = box]
+    19 [ label = "bb19
+BlockStatement
+continue" shape = box]
+    20 [ label = "bb20
+unreachable" shape = box]
+    21 [ label = "bb21
+BlockStatement
+ExpressionStatement" shape = box]
+    22 [ label = "bb22" shape = box]
+    23 [ label = "bb23
+ExpressionStatement
+return" shape = box]
+    24 [ label = "bb24" shape = box]
+    25 [ label = "bb25" shape = box]
+    26 [ label = "bb26
+LabeledStatement(outer)
+WhileStatement" shape = box]
+    27 [ label = "bb27
+Condition(CallExpression(condition))" shape = box]
+    28 [ label = "bb28
+BlockStatement
+TryStatement" shape = box]
+    29 [ label = "bb29" shape = box]
+    30 [ label = "bb30
+BlockStatement
+TryStatement" shape = box]
+    31 [ label = "bb31" shape = box]
+    32 [ label = "bb32
+BlockStatement
+break <outer>" shape = box]
+    33 [ label = "bb33
+unreachable" shape = box]
+    34 [ label = "bb34
+BlockStatement
+ExpressionStatement" shape = box]
+    35 [ label = "bb35" shape = box]
+    36 [ label = "bb36
+BlockStatement
+ExpressionStatement" shape = box]
+    37 [ label = "bb37" shape = box]
+    38 [ label = "bb38" shape = box]
+    39 [ label = "bb39
+ExpressionStatement
+return" shape = box]
+    40 [ label = "bb40" shape = box]
+    41 [ label = "bb41" shape = box]
+    42 [ label = "bb42
+TryStatement" shape = box]
+    43 [ label = "bb43" shape = box]
+    44 [ label = "bb44
+BlockStatement
+WhileStatement" shape = box]
+    45 [ label = "bb45
+Condition(CallExpression(condition))" shape = box]
+    46 [ label = "bb46
+BlockStatement
+break" shape = box]
+    47 [ label = "bb47
+unreachable" shape = box]
+    48 [ label = "bb48
+ExpressionStatement" shape = box]
+    49 [ label = "bb49
+BlockStatement
+ExpressionStatement" shape = box]
+    50 [ label = "bb50
+ExpressionStatement
+return" shape = box]
+    51 [ label = "bb51" shape = box]
+    52 [ label = "bb52" shape = box]
+    53 [ label = "bb53
+WhileStatement" shape = box]
+    54 [ label = "bb54
+Condition(true)" shape = box]
+    55 [ label = "bb55
+BlockStatement
+TryStatement" shape = box]
+    56 [ label = "bb56" shape = box]
+    57 [ label = "bb57
+BlockStatement
+break" shape = box]
+    58 [ label = "bb58
+unreachable" shape = box]
+    59 [ label = "bb59
+BlockStatement
+return <implicit undefined>" shape = box]
+    60 [ label = "bb60
+unreachable" shape = box]
+    61 [ label = "bb61" shape = box]
+    62 [ label = "bb62
+ExpressionStatement
+return" shape = box]
+    63 [ label = "bb63" shape = box]
+    64 [ label = "bb64" shape = box]
+    65 [ label = "bb65
+LabeledStatement(outer)
+WhileStatement" shape = box]
+    66 [ label = "bb66
+Condition(CallExpression(condition))" shape = box]
+    67 [ label = "bb67
+BlockStatement
+TryStatement" shape = box]
+    68 [ label = "bb68" shape = box]
+    69 [ label = "bb69
+BlockStatement
+WhileStatement" shape = box]
+    70 [ label = "bb70
+Condition(CallExpression(condition))" shape = box]
+    71 [ label = "bb71
+BlockStatement
+continue <outer>" shape = box]
+    72 [ label = "bb72
+unreachable" shape = box]
+    73 [ label = "bb73" shape = box]
+    74 [ label = "bb74
+BlockStatement
+ExpressionStatement" shape = box]
+    75 [ label = "bb75" shape = box]
+    76 [ label = "bb76" shape = box]
+    77 [ label = "bb77
+ExpressionStatement
+return" shape = box]
+    78 [ label = "bb78" shape = box]
+    1 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    3 -> 2 [ label="Error(Implicit)", color=red, style=dashed]
+    1 -> 3 [ label="NewFunction"]
+    4 -> 2 [ label="Error(Implicit)", color=red, style=dashed]
+    5 -> 2 [ label="Error(Implicit)", color=red, style=dashed]
+    7 -> 2 [ label="Error(Implicit)", color=red, style=dashed]
+    7 -> 6 [ label="Finalize"]
+    8 -> 2 [ label="Error(Implicit)", style=dashed, color=red]
+    8 -> 6 [ label="Finalize", style="dotted"]
+    7 -> 8 [ label="Unreachable", style="dotted"]
+    9 -> 2 [ label="Error(Implicit)", color=red, style=dashed]
+    6 -> 9 [ label="Normal"]
+    5 -> 7 [ label="Normal"]
+    10 -> 2 [ label="Error(Implicit)", style=dashed, color=red]
+    9 -> 10 [ label="Unreachable", style="dotted"]
+    11 -> 2 [ label="Error(Implicit)", color=red, style=dashed]
+    3 -> 4 [ label="Normal"]
+    4 -> 5 [ label="Jump", color=green]
+    10 -> 4 [ label="Backedge", style="dotted", color=grey]
+    4 -> 11 [ label="Normal"]
+    7 -> 11 [ label="Jump", color=green]
+    9 -> 11 [ label="Liveness"]
+    12 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    1 -> 12 [ label="Normal"]
+    14 -> 13 [ label="Error(Implicit)", color=red, style=dashed]
+    12 -> 14 [ label="NewFunction"]
+    15 -> 13 [ label="Error(Implicit)", color=red, style=dashed]
+    16 -> 13 [ label="Error(Implicit)", color=red, style=dashed]
+    17 -> 13 [ label="Error(Implicit)", color=red, style=dashed]
+    19 -> 13 [ label="Error(Implicit)", color=red, style=dashed]
+    19 -> 18 [ label="Finalize"]
+    20 -> 13 [ label="Error(Implicit)", style=dashed, color=red]
+    20 -> 18 [ label="Finalize", style="dotted"]
+    19 -> 20 [ label="Unreachable", style="dotted"]
+    21 -> 13 [ label="Error(Implicit)", color=red, style=dashed]
+    18 -> 21 [ label="Normal"]
+    17 -> 19 [ label="Normal"]
+    22 -> 13 [ label="Error(Implicit)", style=dashed, color=red]
+    21 -> 22 [ label="Unreachable", style="dotted"]
+    23 -> 13 [ label="Error(Implicit)", color=red, style=dashed]
+    14 -> 15 [ label="Normal"]
+    15 -> 17 [ label="Jump", color=green]
+    22 -> 16 [ label="Backedge", style="dotted", color=grey]
+    16 -> 15 [ label="Backedge", color=grey]
+    15 -> 23 [ label="Normal"]
+    19 -> 16 [ label="Jump", color=green]
+    21 -> 16 [ label="Liveness"]
+    24 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    12 -> 24 [ label="Normal"]
+    26 -> 25 [ label="Error(Implicit)", color=red, style=dashed]
+    24 -> 26 [ label="NewFunction"]
+    27 -> 25 [ label="Error(Implicit)", color=red, style=dashed]
+    28 -> 25 [ label="Error(Implicit)", color=red, style=dashed]
+    30 -> 25 [ label="Error(Implicit)", color=red, style=dashed]
+    30 -> 29 [ label="Finalize"]
+    32 -> 25 [ label="Error(Implicit)", color=red, style=dashed]
+    32 -> 31 [ label="Finalize"]
+    33 -> 25 [ label="Error(Implicit)", style=dashed, color=red]
+    33 -> 31 [ label="Finalize", style="dotted"]
+    32 -> 33 [ label="Unreachable", style="dotted"]
+    34 -> 25 [ label="Error(Implicit)", color=red, style=dashed]
+    34 -> 29 [ label="Finalize"]
+    31 -> 34 [ label="Normal"]
+    30 -> 32 [ label="Normal"]
+    35 -> 25 [ label="Error(Implicit)", style=dashed, color=red]
+    35 -> 29 [ label="Finalize", style="dotted"]
+    34 -> 35 [ label="Unreachable", style="dotted"]
+    36 -> 25 [ label="Error(Implicit)", color=red, style=dashed]
+    29 -> 36 [ label="Normal"]
+    28 -> 30 [ label="Normal"]
+    37 -> 25 [ label="Error(Implicit)", style=dashed, color=red]
+    36 -> 37 [ label="Unreachable", style="dotted"]
+    38 -> 25 [ label="Error(Implicit)", color=red, style=dashed]
+    26 -> 27 [ label="Normal"]
+    27 -> 28 [ label="Jump", color=green]
+    37 -> 27 [ label="Backedge", style="dotted", color=grey]
+    27 -> 38 [ label="Normal"]
+    39 -> 25 [ label="Error(Implicit)", color=red, style=dashed]
+    38 -> 39 [ label="Normal"]
+    32 -> 39 [ label="Jump", color=green]
+    36 -> 39 [ label="Liveness"]
+    40 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    24 -> 40 [ label="Normal"]
+    42 -> 41 [ label="Error(Implicit)", color=red, style=dashed]
+    40 -> 42 [ label="NewFunction"]
+    44 -> 41 [ label="Error(Implicit)", color=red, style=dashed]
+    44 -> 43 [ label="Finalize"]
+    45 -> 41 [ label="Error(Implicit)", color=red, style=dashed]
+    45 -> 43 [ label="Finalize"]
+    46 -> 41 [ label="Error(Implicit)", color=red, style=dashed]
+    46 -> 43 [ label="Finalize"]
+    47 -> 41 [ label="Error(Implicit)", style=dashed, color=red]
+    47 -> 43 [ label="Finalize", style="dotted"]
+    46 -> 47 [ label="Unreachable", style="dotted"]
+    48 -> 41 [ label="Error(Implicit)", color=red, style=dashed]
+    48 -> 43 [ label="Finalize"]
+    44 -> 45 [ label="Normal"]
+    45 -> 46 [ label="Jump", color=green]
+    47 -> 45 [ label="Backedge", style="dotted", color=grey]
+    45 -> 48 [ label="Normal"]
+    46 -> 48 [ label="Jump", color=green]
+    49 -> 41 [ label="Error(Implicit)", color=red, style=dashed]
+    43 -> 49 [ label="Normal"]
+    42 -> 44 [ label="Normal"]
+    50 -> 41 [ label="Error(Implicit)", color=red, style=dashed]
+    49 -> 50 [ label="Join"]
+    51 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    40 -> 51 [ label="Normal"]
+    53 -> 52 [ label="Error(Implicit)", color=red, style=dashed]
+    51 -> 53 [ label="NewFunction"]
+    54 -> 52 [ label="Error(Implicit)", color=red, style=dashed]
+    55 -> 52 [ label="Error(Implicit)", color=red, style=dashed]
+    57 -> 52 [ label="Error(Implicit)", color=red, style=dashed]
+    57 -> 56 [ label="Finalize"]
+    58 -> 52 [ label="Error(Implicit)", style=dashed, color=red]
+    58 -> 56 [ label="Finalize", style="dotted"]
+    57 -> 58 [ label="Unreachable", style="dotted"]
+    59 -> 52 [ label="Error(Implicit)", color=red, style=dashed]
+    56 -> 59 [ label="Normal"]
+    60 -> 52 [ label="Error(Implicit)", style=dashed, color=red]
+    59 -> 60 [ label="Unreachable", style="dotted"]
+    55 -> 57 [ label="Normal"]
+    61 -> 52 [ label="Error(Implicit)", style=dashed, color=red]
+    60 -> 61 [ label="Unreachable", style="dotted"]
+    62 -> 52 [ label="Error(Implicit)", color=red, style=dashed]
+    53 -> 54 [ label="Normal"]
+    54 -> 55 [ label="Jump", color=green]
+    61 -> 54 [ label="Backedge", style="dotted", color=grey]
+    54 -> 62 [ label="Normal"]
+    57 -> 62 [ label="Jump", color=green]
+    60 -> 62 [ label="Liveness", style="dotted"]
+    63 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    51 -> 63 [ label="Normal"]
+    65 -> 64 [ label="Error(Implicit)", color=red, style=dashed]
+    63 -> 65 [ label="NewFunction"]
+    66 -> 64 [ label="Error(Implicit)", color=red, style=dashed]
+    67 -> 64 [ label="Error(Implicit)", color=red, style=dashed]
+    69 -> 64 [ label="Error(Implicit)", color=red, style=dashed]
+    69 -> 68 [ label="Finalize"]
+    70 -> 64 [ label="Error(Implicit)", color=red, style=dashed]
+    70 -> 68 [ label="Finalize"]
+    71 -> 64 [ label="Error(Implicit)", color=red, style=dashed]
+    71 -> 68 [ label="Finalize"]
+    72 -> 64 [ label="Error(Implicit)", style=dashed, color=red]
+    72 -> 68 [ label="Finalize", style="dotted"]
+    71 -> 72 [ label="Unreachable", style="dotted"]
+    73 -> 64 [ label="Error(Implicit)", color=red, style=dashed]
+    73 -> 68 [ label="Finalize"]
+    69 -> 70 [ label="Normal"]
+    70 -> 71 [ label="Jump", color=green]
+    72 -> 70 [ label="Backedge", style="dotted", color=grey]
+    70 -> 73 [ label="Normal"]
+    74 -> 64 [ label="Error(Implicit)", color=red, style=dashed]
+    68 -> 74 [ label="Normal"]
+    67 -> 69 [ label="Normal"]
+    75 -> 64 [ label="Error(Implicit)", color=red, style=dashed]
+    74 -> 75 [ label="Join"]
+    76 -> 64 [ label="Error(Implicit)", color=red, style=dashed]
+    65 -> 66 [ label="Normal"]
+    66 -> 67 [ label="Jump", color=green]
+    75 -> 66 [ label="Backedge", color=grey]
+    66 -> 76 [ label="Normal"]
+    71 -> 66 [ label="Jump", color=green]
+    74 -> 66 [ label="Liveness"]
+    77 -> 64 [ label="Error(Implicit)", color=red, style=dashed]
+    76 -> 77 [ label="Normal"]
+    78 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    63 -> 78 [ label="Normal"]
+}

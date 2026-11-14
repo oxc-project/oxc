@@ -709,3 +709,17 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ─
    ╰────
   help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:86]
+ 1 │ function f() { let fin = 0; use(fin); while (condition()) { try { break; } finally { fin = 1; } } }
+   ·                                                                                      ───
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:76]
+ 1 │ function f() { let fin = 0; while (condition()) { try { break; } finally { fin = 1; fin = 2; } } return fin; }
+   ·                                                                            ───
+   ╰────
+  help: Consider removing or reusing the assigned value.
