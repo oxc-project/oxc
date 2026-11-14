@@ -22,7 +22,10 @@ fn use_have_been_called_with(span: Span) -> OxcDiagnostic {
 
 pub const DOCUMENTATION: &str = r"### What it does
 
-Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`
+Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`.
+
+With `--fix-suggestions`, this rule will rewrite `toBeCalled()` and
+`toHaveBeenCalled()` to their `...With()` counterparts.
 
 ### Why is this bad?
 
@@ -31,6 +34,12 @@ that a function was called AND what arguments it was called with.
 Using `toBeCalled()` or `toHaveBeenCalled()` only verifies the function
 was invoked, but doesn't validate the arguments, potentially missing
 bugs where functions are called with incorrect parameters.
+
+This rewrite is provided as a suggestion rather than a safe fix because
+`toBeCalledWith()` and `toHaveBeenCalledWith()` with no arguments require
+a call with exactly zero arguments, which is a stricter assertion than the
+original matchers. The replacement changes which calls pass the assertion,
+so the author must decide what arguments to assert.
 
 ### Examples
 
@@ -72,13 +81,14 @@ pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
         && let Some(matcher_name) = matcher_property.name()
     {
         if matcher_name == "toBeCalled" {
-            ctx.diagnostic_with_fix(use_to_be_called_with(matcher_property.span), |fixer| {
+            ctx.diagnostic_with_suggestion(use_to_be_called_with(matcher_property.span), |fixer| {
                 fixer.replace(matcher_property.span, "toBeCalledWith")
             });
         } else if matcher_name == "toHaveBeenCalled" {
-            ctx.diagnostic_with_fix(use_have_been_called_with(matcher_property.span), |fixer| {
-                fixer.replace(matcher_property.span, "toHaveBeenCalledWith")
-            });
+            ctx.diagnostic_with_suggestion(
+                use_have_been_called_with(matcher_property.span),
+                |fixer| fixer.replace(matcher_property.span, "toHaveBeenCalledWith"),
+            );
         }
     }
 }
