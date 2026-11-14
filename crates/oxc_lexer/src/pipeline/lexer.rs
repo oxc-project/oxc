@@ -13,7 +13,7 @@ use crate::{
 use crate::pipeline::{
     bitmap::{Bitmap, Bitmaps},
     carve::carve,
-    classify::classify,
+    classify::{Planes, classify},
     coalesce::{BATCH_SLOTS, coalesce},
     compress::{STAGE_CAP, compress, init_pair_luts, lanes_post},
     kinds::Kinds,
@@ -128,6 +128,18 @@ impl Lexer {
         cpu: impl Cpu,
     ) -> usize {
         self.ensure(src, cpu);
+        let planes = Planes {
+            token_start: &mut self.token_start,
+            word: &mut self.word,
+            keyword_initial: &mut self.keyword_initial,
+            op_char: &mut self.op_char,
+            digit: &mut self.digit,
+            dot: &mut self.dot,
+            misc: &mut self.misc,
+            kinds: self.kinds.as_chunks_mut().0,
+        };
+        // Only TS input gets the TS keyword initials.
+        classify(src, options.ts, planes, cpu);
 
         let bitmaps = &Bitmaps {
             token_start: Bitmap::new(&mut self.token_start),
@@ -138,7 +150,7 @@ impl Lexer {
             dot: Bitmap::new(&mut self.dot),
             misc: Bitmap::new(&mut self.misc),
         };
-        // SAFETY: the buffer starts zeroed, which is Eof, and the stages write only declared kinds.
+        // SAFETY: zeroed is Eof, and classify and the stages write only declared kinds.
         let kinds = unsafe { Kinds::new(&mut self.kinds) };
         let lex = Lex { src, bitmaps, kinds, options: &options };
         if src.len() == 0 {
@@ -151,10 +163,6 @@ impl Lexer {
                 cpu,
             );
         }
-        // Keyword recognition is mode-scoped: the TS set (and its wider
-        // keyword_initial letter class) only ever sees TS input, so JS lexing is
-        // byte-identical to a build without it.
-        classify(lex, cpu);
         let escaped_ident_count = misc_pre(lex, &mut self.state, cpu);
         carve(lex, &mut self.state, cpu);
         coalesce(lex, &mut self.kw_candidates, &mut self.events, &mut self.state, cpu);
