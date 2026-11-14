@@ -9,7 +9,8 @@ Failed to parse oxlint configuration file.
   | 
   | Found: "./plugin.ts"
   | 
-  | Use a package name (e.g. "eslint-plugin-foo") or an absolute path instead.
+  | Use an absolute path or URL instead, such as one returned by `import.meta.resolve` (or
+  | `require.resolve` in CommonJS) in the module that defines the config.
 ```
 
 # stderr

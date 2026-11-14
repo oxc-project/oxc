@@ -13,7 +13,8 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 /// External plugin entry containing the plugin specifier and optional custom name
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ExternalPluginEntry {
-    /// Directory containing the config file that specified this plugin
+    /// Directory containing the config file that specified this plugin. For a config object
+    /// passed through `extends` in a JS config, the directory of that JS config file.
     pub config_dir: PathBuf,
     /// Plugin specifier (path, package name, or URL)
     pub specifier: String,
