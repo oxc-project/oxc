@@ -141,7 +141,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             //      ({ x }) => { }
             //      ([ x ])
             //      ({ x })
-            Kind::LBrack | Kind::LCurly => Tristate::Maybe,
+            // unless its first element shows that it is an array or object literal.
+            // Examples:
+            //      ([ 1 ])
+            //      ({ x: y.z })
+            //      ({ ...x, y })
+            Kind::LBrack | Kind::LCurly => {
+                if self.can_start_binding_pattern_after(second) {
+                    Tristate::Maybe
+                } else {
+                    Tristate::False
+                }
+            }
             // Simple case: "(..."
             // This is an arrow function with a rest parameter.
             Kind::Dot3 => {
@@ -155,6 +166,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
             }
             _ => {
+                // A parameter starts with a binding identifier, `this` or a modifier. Anything
+                // else is decided without reading the token after it.
+                if !second.is_binding_identifier()
+                    && second != Kind::This
+                    && !second.is_modifier_kind()
+                {
+                    return Tristate::False;
+                }
+
                 let third = self.lexer.next_token().kind();
 
                 // Check for "(xxx yyy", where xxx is a modifier and yyy is an identifier. This
@@ -206,6 +226,74 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     _ => Tristate::False,
                 }
             }
+        }
+    }
+
+    /// Whether a `BindingPattern` can begin with the `{` or `[` which the lexer has just read.
+    ///
+    /// ```text
+    /// ObjectBindingPattern : `{` (BindingProperty `,`)* (BindingProperty | BindingRestProperty)? `}`
+    /// ArrayBindingPattern  : `[` (BindingElement? `,`)* (BindingElement | BindingRestElement)? `]`
+    /// BindingProperty      : SingleNameBinding | PropertyName `:` BindingElement
+    /// BindingElement       : SingleNameBinding | BindingPattern Initializer?
+    /// SingleNameBinding    : BindingIdentifier Initializer?
+    /// BindingRestProperty  : `...` BindingIdentifier
+    /// BindingRestElement   : `...` (BindingIdentifier | BindingPattern)
+    /// ```
+    ///
+    /// A binding target is therefore a binding identifier or a nested pattern, and a binding
+    /// identifier is followed by `=`, `,` or the closing bracket. The first element of an array
+    /// or object literal usually breaks one of those rules (`{ x: y.z }`, `{ x: 1 }`, `{ x() {} }`,
+    /// `{ ...x, y }`, `[x.y]`, `[1]`), which makes parsing it as a parameter certain to fail.
+    ///
+    /// Returns `false` only in those cases, so the caller can skip the speculative parameter
+    /// parse. Only the first element is examined, and computed keys, initializers and nested
+    /// patterns are left to that parse. Only lexer state changes; the caller restores it.
+    ///
+    /// The checks mirror `parse_binding_property`, `parse_rest_element` and
+    /// `parse_delimited_list_with_rest`, and must be kept in step with them.
+    fn can_start_binding_pattern_after(&mut self, opening: Kind) -> bool {
+        let close = if opening == Kind::LCurly { Kind::RCurly } else { Kind::RBrack };
+        let mut kind = self.lexer.next_token().kind();
+        if kind == close {
+            return true;
+        }
+        if kind == Kind::Dot3 {
+            let argument = self.lexer.next_token().kind();
+            if !argument.is_binding_identifier() {
+                return matches!(argument, Kind::LCurly | Kind::LBrack);
+            }
+            return match self.lexer.next_token().kind() {
+                // Only a trailing comma may follow a rest element.
+                Kind::Comma => self.lexer.next_token().kind() == close,
+                // `=`, and `?` or `:` in TypeScript, are reported without abandoning the parse.
+                Kind::Eq | Kind::Question | Kind::Colon => true,
+                kind => kind == close,
+            };
+        }
+        if opening == Kind::LCurly {
+            if kind.is_identifier_name() {
+                match self.lexer.next_token().kind() {
+                    Kind::Colon => {}
+                    kind => return matches!(kind, Kind::Comma | Kind::RCurly | Kind::Eq),
+                }
+            } else if kind == Kind::Str || kind.is_number() {
+                if self.lexer.next_token().kind() != Kind::Colon {
+                    return false;
+                }
+            } else {
+                return true;
+            }
+            kind = self.lexer.next_token().kind();
+        } else if kind == Kind::Comma {
+            // Elision.
+            return true;
+        }
+        if kind.is_binding_identifier() {
+            let kind = self.lexer.next_token().kind();
+            kind == close || matches!(kind, Kind::Comma | Kind::Eq)
+        } else {
+            matches!(kind, Kind::LCurly | Kind::LBrack)
         }
     }
 
