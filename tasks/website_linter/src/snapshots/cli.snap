@@ -135,8 +135,11 @@ Arguments:
   Do not exit with an error when no files are selected for linting (for example, after applying ignore patterns)
 - **`    --threads`**=_`INT`_ &mdash; 
   Number of threads to use. Set to 1 for using only 1 CPU core.
+- **`--print-config`** \[_`FILE`_\]
 - **`    --print-config`** &mdash; 
-  This option outputs the configuration to be used. When present, no linting is performed and only config-related options are valid.
+  Print the root configuration, or the effective configuration for FILE. FILE must be an existing file immediately after this flag. No linting is performed.
+
+
 
 
 

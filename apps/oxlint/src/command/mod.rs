@@ -1,9 +1,9 @@
 mod ignore;
 mod lint;
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
-use bpaf::Bpaf;
+use bpaf::{Bpaf, Parser, construct, long, positional};
 
 pub use self::{
     ignore::IgnoreOptions,
@@ -31,26 +31,42 @@ pub struct MiscOptions {
     #[bpaf(argument("INT"), hide_usage)]
     pub threads: Option<usize>,
 
-    /// This option outputs the configuration to be used.
-    /// When present, no linting is performed and only config-related options are valid.
-    #[bpaf(switch, hide_usage)]
-    pub print_config: bool,
+    #[bpaf(external, optional, hide_usage)]
+    pub print_config: Option<PrintConfig>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum PrintConfig {
+    Root,
+    File(PathBuf),
+}
+
+fn print_config() -> impl Parser<PrintConfig> {
+    let flag = long("print-config")
+        .help("Print the root configuration, or the effective configuration for FILE. No linting is performed.")
+        .req_flag(());
+    let file = positional::<PathBuf>("FILE")
+        .guard(|path| validate_path(path), PATHS_ERROR_MESSAGE)
+        .optional();
+    construct!(flag, file)
+        .adjacent()
+        .map(|((), file)| file.map_or(PrintConfig::Root, PrintConfig::File))
+}
+
+fn validate_path(path: &Path) -> bool {
+    path.components().all(|c| c != std::path::Component::ParentDir)
 }
 
 #[expect(clippy::ptr_arg)]
 fn validate_paths(paths: &Vec<PathBuf>) -> bool {
-    if paths.is_empty() {
-        true
-    } else {
-        paths.iter().all(|p| p.components().all(|c| c != std::path::Component::ParentDir))
-    }
+    paths.iter().all(|path| validate_path(path))
 }
 
 const PATHS_ERROR_MESSAGE: &str = "PATH must not contain \"..\"";
 
 #[cfg(test)]
 mod misc_options {
-    use super::{MiscOptions, lint::lint_command};
+    use super::{MiscOptions, PrintConfig, lint::lint_command};
 
     fn get_misc_options(arg: &str) -> MiscOptions {
         let args = arg.split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();
@@ -74,5 +90,42 @@ mod misc_options {
     fn threads() {
         let options = get_misc_options("--threads 4 .");
         assert_eq!(options.threads, Some(4));
+    }
+
+    #[test]
+    fn print_config() {
+        let cases: &[(&[&str], Option<PrintConfig>, &[&str])] = &[
+            (&[], None, &[]),
+            (&["--print-config"], Some(PrintConfig::Root), &[]),
+            (&["files", "--print-config"], Some(PrintConfig::Root), &["files"]),
+            (&["--print-config", "--type-aware", "files"], Some(PrintConfig::Root), &["files"]),
+            (
+                &["--print-config", "-c", "config.json", "files"],
+                Some(PrintConfig::Root),
+                &["files"],
+            ),
+            (&["--print-config", "file.ts"], Some(PrintConfig::File("file.ts".into())), &[]),
+            (
+                &["--print-config", "file.ts", "--type-aware"],
+                Some(PrintConfig::File("file.ts".into())),
+                &[],
+            ),
+        ];
+        for (args, expected, paths) in cases {
+            let options = lint_command().run_inner(*args).unwrap();
+            assert_eq!(&options.misc_options.print_config, expected, "{args:?}");
+            assert_eq!(
+                options.paths,
+                paths.iter().map(std::path::PathBuf::from).collect::<Vec<_>>(),
+                "{args:?}"
+            );
+        }
+        for args in [
+            &["--print-config", "../file.ts"][..],
+            &["--print-config", "--unknown"],
+            &["--print-config", "one.ts", "--print-config", "two.ts"],
+        ] {
+            assert!(lint_command().run_inner(args).is_err(), "{args:?}");
+        }
     }
 }
