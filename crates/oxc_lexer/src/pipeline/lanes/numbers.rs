@@ -1,4 +1,4 @@
-use std::{ptr, str};
+use std::str;
 
 use oxc_simd::{Cpu, cpu_multiversion, cpu_version};
 use oxc_syntax::identifier::is_identifier_start;
@@ -42,7 +42,7 @@ impl Lanes {
         let len = e - s;
         if len.wrapping_sub(1) <= 7 && !(len > 1 && src[s] == b'0') {
             let keep = KEEP[len];
-            let raw = unsafe { ptr::read_unaligned(src.as_ptr().add(s) as *const u64) };
+            let raw = u64::from_le_bytes(src[s..s + 8].try_into().unwrap());
             let w = raw & keep;
             let f0 = 0xF0F0_F0F0_F0F0_F0F0 & keep;
             let three = 0x3030_3030_3030_3030 & keep;
