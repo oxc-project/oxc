@@ -1,3 +1,5 @@
+use std::num::NonZeroU32;
+
 use cow_utils::CowUtils;
 use oxc_ast::{
     AstKind,
@@ -6,10 +8,14 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use schemars::{JsonSchema, SchemaGenerator, schema::Schema};
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn numeric_separators_style_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Invalid group length in numeric value.")
@@ -20,7 +26,7 @@ fn numeric_separators_style_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
 pub struct NumericSeparatorsStyle(Box<NumericSeparatorsStyleConfig>);
 
-#[derive(Debug, Clone, PartialEq, Eq, JsonSchema, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NumericSeparatorsStyleConfig {
     /// Only enforce the rule when the numeric literal already contains a separator (`_`).
@@ -30,16 +36,16 @@ pub struct NumericSeparatorsStyleConfig {
     only_if_contains_separator: bool,
     /// Configuration for hexadecimal literals (e.g. `0xAB_CD`, `0Xab_cd`, and bigint variants).
     /// Controls how digits are grouped and when separators are applied.
-    #[schemars(schema_with = "NumericBaseConfig::schema_with_defaults::<2, 0>")]
-    hexadecimal: NumericBaseConfig,
+    #[schemars(schema_with = "NumericBaseConfig::<2, 0>::json_schema")]
+    hexadecimal: NumericBaseConfig<2, 0>,
     /// Configuration for binary literals (e.g. `0b1010_0001` and bigint variants).
     /// Controls how digits are grouped and when separators are applied.
-    #[schemars(schema_with = "NumericBaseConfig::schema_with_defaults::<4, 0>")]
-    binary: NumericBaseConfig,
+    #[schemars(schema_with = "NumericBaseConfig::<4, 0>::json_schema")]
+    binary: NumericBaseConfig<4, 0>,
     /// Configuration for octal literals (e.g. `0o1234_5670` and bigint variants).
     /// Controls how digits are grouped and when separators are applied.
-    #[schemars(schema_with = "NumericBaseConfig::schema_with_defaults::<4, 0>")]
-    octal: NumericBaseConfig,
+    #[schemars(schema_with = "NumericBaseConfig::<4, 0>::json_schema")]
+    octal: NumericBaseConfig<4, 0>,
     /// Configuration for decimal numbers (integers, fraction parts, and exponents).
     /// Controls how digits are grouped and when separators are applied.
     number: NumericNumberConfig,
@@ -53,33 +59,13 @@ impl std::ops::Deref for NumericSeparatorsStyle {
     }
 }
 
-impl Default for NumericSeparatorsStyleConfig {
-    fn default() -> Self {
-        Self {
-            only_if_contains_separator: false,
-            binary: NumericBaseConfig {
-                group_length: 4,
-                minimum_digits: 0,
-                only_if_contains_separator: None,
-            },
-            hexadecimal: NumericBaseConfig {
-                group_length: 2,
-                minimum_digits: 0,
-                only_if_contains_separator: None,
-            },
-            number: NumericNumberConfig::default(),
-            octal: NumericBaseConfig {
-                group_length: 4,
-                minimum_digits: 0,
-                only_if_contains_separator: None,
-            },
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Default, JsonSchema, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
-struct NumericBaseConfig {
+#[derive(Debug, Clone, PartialEq, Eq, JsonSchema, Deserialize, Serialize)]
+#[serde(
+    rename_all = "camelCase",
+    default = "NumericBaseConfig::<DEFAULT_GROUP_LENGTH, DEFAULT_MINIMUM_DIGITS>::default",
+    deny_unknown_fields
+)]
+struct NumericBaseConfig<const DEFAULT_GROUP_LENGTH: u32, const DEFAULT_MINIMUM_DIGITS: u32> {
     /// Only enforce the rule when the numeric literal already contains a separator (`_`).
     ///
     /// When `true`, numbers without separators are left as-is; when `false` (default),
@@ -88,37 +74,20 @@ struct NumericBaseConfig {
     only_if_contains_separator: Option<bool>,
     /// The number of digits per group when inserting numeric separators.
     /// For example, a `groupLength` of 3 formats `1234567` as `1_234_567`.
-    group_length: u32,
+    group_length: NonZeroU32,
     /// The minimum number of digits required before grouping is applied.
     /// Values with fewer digits than this threshold will not be grouped.
     minimum_digits: u32,
 }
 
-impl NumericBaseConfig {
-    // The shared type's defaults differ from the defaults for each numeric base.
-    fn schema_with_defaults<const GROUP_LENGTH: u32, const MINIMUM_DIGITS: u32>(
-        generator: &mut SchemaGenerator,
-    ) -> Schema {
-        let mut schema = Self::json_schema(generator).into_object();
-        let properties = &mut schema.object.as_mut().unwrap().properties;
-        for (name, value) in [("groupLength", GROUP_LENGTH), ("minimumDigits", MINIMUM_DIGITS)] {
-            if let Schema::Object(property) = properties.get_mut(name).unwrap() {
-                property.metadata().default = Some(value.into());
-            }
-        }
-        schema.into()
-    }
-
-    pub(self) fn set_numeric_base_from_config(&mut self, val: &serde_json::Value) {
-        if let Some(group_length) = val.get("groupLength").and_then(serde_json::Value::as_u64) {
-            self.group_length = u32::try_from(group_length).unwrap();
-        }
-        if let Some(minimum_digits) = val.get("minimumDigits").and_then(serde_json::Value::as_u64) {
-            self.minimum_digits = u32::try_from(minimum_digits).unwrap();
-        }
-
-        if let Some(val) = val.get("onlyIfContainsSeparator").map(serde_json::Value::as_bool) {
-            self.only_if_contains_separator = val;
+impl<const DEFAULT_GROUP_LENGTH: u32, const DEFAULT_MINIMUM_DIGITS: u32> Default
+    for NumericBaseConfig<DEFAULT_GROUP_LENGTH, DEFAULT_MINIMUM_DIGITS>
+{
+    fn default() -> Self {
+        Self {
+            group_length: NonZeroU32::new(DEFAULT_GROUP_LENGTH).unwrap(),
+            minimum_digits: DEFAULT_MINIMUM_DIGITS,
+            only_if_contains_separator: None,
         }
     }
 }
@@ -127,33 +96,15 @@ impl NumericBaseConfig {
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct NumericNumberConfig {
     #[serde(flatten)]
-    #[schemars(schema_with = "NumericBaseConfig::schema_with_defaults::<3, 5>")]
-    base: NumericBaseConfig,
+    #[schemars(schema_with = "NumericBaseConfig::<3, 5>::json_schema")]
+    base: NumericBaseConfig<3, 5>,
     /// The size a group of digits in the fractional part (after the decimal point) should be.
-    fraction_group_length: u32,
-}
-
-impl NumericNumberConfig {
-    pub(self) fn set_numeric_number_from_config(&mut self, val: &serde_json::Value) {
-        self.base.set_numeric_base_from_config(val);
-        if let Some(fraction_group_length) =
-            val.get("fractionGroupLength").and_then(serde_json::Value::as_u64)
-        {
-            self.fraction_group_length = u32::try_from(fraction_group_length).unwrap();
-        }
-    }
+    fraction_group_length: NonZeroU32,
 }
 
 impl Default for NumericNumberConfig {
     fn default() -> Self {
-        Self {
-            base: NumericBaseConfig {
-                group_length: 3,
-                minimum_digits: 5,
-                only_if_contains_separator: None,
-            },
-            fraction_group_length: u32::MAX,
-        }
+        Self { base: NumericBaseConfig::default(), fraction_group_length: NonZeroU32::MAX }
     }
 }
 declare_oxc_lint!(
@@ -215,30 +166,7 @@ declare_oxc_lint!(
 
 impl Rule for NumericSeparatorsStyle {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let mut cfg = NumericSeparatorsStyleConfig::default();
-
-        if let Some(config) = value.get(0) {
-            if let Some(config) = config.get("binary") {
-                cfg.binary.set_numeric_base_from_config(config);
-            }
-            if let Some(config) = config.get("hexadecimal") {
-                cfg.hexadecimal.set_numeric_base_from_config(config);
-            }
-            if let Some(config) = config.get("number") {
-                cfg.number.set_numeric_number_from_config(config);
-            }
-            if let Some(config) = config.get("octal") {
-                cfg.octal.set_numeric_base_from_config(config);
-            }
-
-            if let Some(val) =
-                config.get("onlyIfContainsSeparator").and_then(serde_json::Value::as_bool)
-            {
-                cfg.only_if_contains_separator = val;
-            }
-        }
-
-        Ok(Self(Box::new(cfg)))
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -286,8 +214,8 @@ impl NumericSeparatorsStyle {
     fn is_short_decimal_integer(&self, raw: &str) -> bool {
         let minimum_digits =
             usize::try_from(self.number.base.minimum_digits).expect("u32 size must fit into usize");
-        let group_length =
-            usize::try_from(self.number.base.group_length).expect("u32 size must fit into usize");
+        let group_length = usize::try_from(self.number.base.group_length.get())
+            .expect("u32 size must fit into usize");
         (raw.len() < minimum_digits || raw.len() <= group_length)
             && raw.bytes().all(|byte| byte.is_ascii_digit())
     }
@@ -443,18 +371,18 @@ enum SeparatorDir {
     Right,
 }
 
-fn add_separators(
+fn add_separators<const GROUP_LENGTH: u32, const MINIMUM_DIGITS: u32>(
     s: &mut String,
     dir: &SeparatorDir,
-    config: &NumericBaseConfig,
-    fraction_group_length: Option<u32>,
+    config: &NumericBaseConfig<GROUP_LENGTH, MINIMUM_DIGITS>,
+    fraction_group_length: Option<NonZeroU32>,
 ) {
-    let length = if *dir == SeparatorDir::Left && fraction_group_length.is_some() {
-        usize::try_from(fraction_group_length.unwrap_or(u32::MAX))
-            .expect("u32 size must fit into usize for fraction group length")
+    let group_length = if *dir == SeparatorDir::Left {
+        fraction_group_length.unwrap_or(config.group_length)
     } else {
-        usize::try_from(config.group_length).expect("u32 size must fit into usize for group length")
+        config.group_length
     };
+    let length = usize::try_from(group_length.get()).expect("u32 size must fit into usize");
 
     if s.len() < usize::try_from(config.minimum_digits).expect("u32 size must fit into usize")
         || s.len() < length.saturating_add(1)
@@ -978,16 +906,19 @@ mod internal_tests {
                 "octal": {"groupLength": 128, "minimumDigits": 256},
                 "onlyIfContainsSeparator": true
         }]);
+        let deserialized =
+            serde_json::from_value::<NumericSeparatorsStyle>(config[0].clone()).unwrap();
         let rule = NumericSeparatorsStyle::from_configuration(config).unwrap();
+        assert_eq!(rule, deserialized);
 
-        assert_eq!(rule.binary.group_length, 2);
+        assert_eq!(rule.binary.group_length.get(), 2);
         assert_eq!(rule.binary.minimum_digits, 4);
-        assert_eq!(rule.hexadecimal.group_length, 8);
+        assert_eq!(rule.hexadecimal.group_length.get(), 8);
         assert_eq!(rule.hexadecimal.minimum_digits, 16);
-        assert_eq!(rule.number.base.group_length, 32);
+        assert_eq!(rule.number.base.group_length.get(), 32);
         assert_eq!(rule.number.base.minimum_digits, 64);
-        assert_eq!(rule.number.fraction_group_length, 128);
-        assert_eq!(rule.octal.group_length, 128);
+        assert_eq!(rule.number.fraction_group_length.get(), 128);
+        assert_eq!(rule.octal.group_length.get(), 128);
         assert_eq!(rule.octal.minimum_digits, 256);
         assert!(rule.only_if_contains_separator);
     }
@@ -996,5 +927,88 @@ mod internal_tests {
     fn test_from_empty_configuration() {
         let rule = NumericSeparatorsStyle::from_configuration(json!([])).unwrap();
         assert_eq!(rule, NumericSeparatorsStyle::default());
+    }
+
+    #[test]
+    fn test_deserialize_partial_configuration_defaults() {
+        assert_eq!(
+            serde_json::from_value::<NumericSeparatorsStyle>(json!({})).unwrap(),
+            NumericSeparatorsStyle::default()
+        );
+        for base in ["binary", "hexadecimal", "number", "octal"] {
+            assert_eq!(
+                serde_json::from_value::<NumericSeparatorsStyle>(json!({base: {}})).unwrap(),
+                NumericSeparatorsStyle::default(),
+                "incorrect defaults for {base}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_invalid_numeric_configuration() {
+        let assert_invalid = |config: serde_json::Value| {
+            assert!(
+                NumericSeparatorsStyle::from_configuration(json!([config])).is_err(),
+                "expected invalid rule configuration: {config}"
+            );
+            assert!(
+                serde_json::from_value::<NumericSeparatorsStyle>(config.clone()).is_err(),
+                "expected direct deserialization to fail: {config}"
+            );
+        };
+
+        for base in ["binary", "hexadecimal", "number", "octal"] {
+            for option in ["groupLength", "minimumDigits"] {
+                for value in [
+                    json!(u64::from(u32::MAX) + 1),
+                    json!(u64::MAX),
+                    json!(-1),
+                    json!(1.5),
+                    json!("3"),
+                    json!(null),
+                    json!(true),
+                ] {
+                    assert_invalid(json!({base: {option: value}}));
+                }
+            }
+
+            assert_invalid(json!({base: {"groupLength": 0}}));
+        }
+
+        for value in [
+            json!(0),
+            json!(u64::from(u32::MAX) + 1),
+            json!(u64::MAX),
+            json!(-1),
+            json!(1.5),
+            json!("3"),
+            json!(null),
+            json!(true),
+        ] {
+            assert_invalid(json!({"number": {"fractionGroupLength": value}}));
+        }
+    }
+
+    #[test]
+    fn test_numeric_configuration_boundaries() {
+        for base in ["binary", "hexadecimal", "number", "octal"] {
+            for group_length in [1, u32::MAX] {
+                for minimum_digits in [0, u32::MAX] {
+                    NumericSeparatorsStyle::from_configuration(json!([{
+                        base: {"groupLength": group_length, "minimumDigits": minimum_digits}
+                    }]))
+                    .unwrap();
+                }
+            }
+        }
+
+        for fraction_group_length in [1, u32::MAX] {
+            let rule = NumericSeparatorsStyle::from_configuration(json!([{
+                "number": {"fractionGroupLength": fraction_group_length}
+            }]))
+            .unwrap();
+            assert_eq!(rule.number.fraction_group_length.get(), fraction_group_length);
+            assert_eq!(rule.number.base, NumericNumberConfig::default().base);
+        }
     }
 }
