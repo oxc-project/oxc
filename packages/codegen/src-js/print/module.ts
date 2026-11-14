@@ -280,6 +280,8 @@ export function printExportNamedDeclaration(
     return;
   }
 
+  if (node.phase != null) write(state, `${node.phase} `, CAT_OTHER);
+
   if (TS && node.exportKind === "type") write(state, "type ", CAT_OTHER);
 
   write(state, "{", CAT_OTHER);
@@ -319,7 +321,8 @@ export function printExportNamedDeclaration(
 }
 
 /**
- * Print `export * from "…"`, with the `as name` form where the AST has one.
+ * Print `export * from "…"`, with the `as name` form where the AST has one,
+ * and the `defer` phase of `export defer * as name from "…"`.
  *
  * @param node - Export all declaration
  * @param state - Printer state
@@ -327,14 +330,10 @@ export function printExportNamedDeclaration(
 export function printExportAllDeclaration(node: ESTree.ExportAllDeclaration, state: State): void {
   printIndent(state);
 
-  writeWithMap(
-    state,
-    TS && node.exportKind === "type" ? "export type *" : "export *",
-    CAT_OTHER,
-    node.start,
-    node.end,
-    node,
-  );
+  let keyword = node.phase == null ? "export" : `export ${node.phase}`;
+  if (TS && node.exportKind === "type") keyword += " type";
+
+  writeWithMap(state, `${keyword} *`, CAT_OTHER, node.start, node.end, node);
 
   if (node.exported != null) {
     write(state, " as ", CAT_OTHER);

@@ -6090,6 +6090,11 @@ impl<'parent, 'a> AstNode<'parent, 'a, ExportFromDeclaration<'a>> {
     }
 
     #[inline]
+    pub fn phase(&self) -> Option<ImportPhase> {
+        self.inner.phase
+    }
+
+    #[inline]
     pub fn export_kind(&self) -> ImportOrExportKind {
         self.inner.export_kind
     }
@@ -6164,6 +6169,11 @@ impl<'parent, 'a> AstNode<'parent, 'a, ExportAllDeclaration<'a>> {
             parent: AstNodes::ExportAllDeclaration(self),
             following_span_start,
         }
+    }
+
+    #[inline]
+    pub fn phase(&self) -> Option<ImportPhase> {
+        self.inner.phase
     }
 
     #[inline]

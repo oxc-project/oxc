@@ -2710,6 +2710,7 @@ pub enum ImportAttributeKey<'a> {
             declaration: Declaration | null;
             specifiers: Array<ExportSpecifier>;
             source: StringLiteral | null;
+            phase: ImportPhase | null;
             exportKind?: ImportOrExportKind;
             attributes: Array<ImportAttribute>;
             parent/* IF !LINTER */?/* END IF */: Node;
@@ -2718,10 +2719,11 @@ pub enum ImportAttributeKey<'a> {
     add_fields(
         specifiers = EmptyArray,
         source = Null,
+        phase = Null,
         exportKind = ExportDeclarationExportKind,
         attributes = EmptyArray,
     ),
-    field_order(declaration, specifiers, source, exportKind, attributes, span),
+    field_order(declaration, specifiers, source, phase, exportKind, attributes, span),
 )]
 pub struct ExportDeclaration<'a> {
     pub node_id: Cell<NodeId>,
@@ -2747,8 +2749,8 @@ pub struct ExportDeclaration<'a> {
 #[estree(
     rename = "ExportNamedDeclaration",
     ts_alias = "ExportNamedDeclaration",
-    add_fields(declaration = Null, source = Null, attributes = EmptyArray),
-    field_order(declaration, specifiers, source, export_kind, attributes, span),
+    add_fields(declaration = Null, source = Null, phase = Null, attributes = EmptyArray),
+    field_order(declaration, specifiers, source, phase, export_kind, attributes, span),
 )]
 pub struct ExportNamedDeclaration<'a> {
     pub node_id: Cell<NodeId>,
@@ -2766,6 +2768,7 @@ pub struct ExportNamedDeclaration<'a> {
 /// ```ts
 /// export { Foo, Bar } from 'module';
 /// export type { Baz } from 'baz';
+/// export defer { Qux } from 'qux';
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
@@ -2775,13 +2778,18 @@ pub struct ExportNamedDeclaration<'a> {
     rename = "ExportNamedDeclaration",
     ts_alias = "ExportNamedDeclaration",
     add_fields(declaration = Null),
-    field_order(declaration, specifiers, source, export_kind, with_clause, span),
+    field_order(declaration, specifiers, source, phase, export_kind, with_clause, span),
 )]
 pub struct ExportFromDeclaration<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
     pub specifiers: Vec<'a, ExportSpecifier<'a>>,
     pub source: StringLiteral<'a>,
+    /// `Some(ImportPhase::Defer)` for `export defer { foo } from 'module'`.
+    /// `ImportPhase::Source` is never valid here.
+    ///
+    /// <https://github.com/tc39/proposal-deferred-reexports>
+    pub phase: Option<ImportPhase>,
     /// `export type { foo } from 'module'`
     #[ts]
     pub export_kind: ImportOrExportKind,
@@ -2829,6 +2837,11 @@ pub struct ExportAllDeclaration<'a> {
     /// If this declaration is re-named
     pub exported: Option<ModuleExportName<'a>>,
     pub source: StringLiteral<'a>,
+    /// `Some(ImportPhase::Defer)` for `export defer * as ns from 'module'`.
+    /// `ImportPhase::Source` is never valid here.
+    ///
+    /// <https://github.com/tc39/proposal-deferred-reexports>
+    pub phase: Option<ImportPhase>,
     /// Will be `Some(vec![])` for empty assertion
     #[estree(rename = "attributes", via = ExportAllDeclarationWithClause)]
     pub with_clause: Option<Box<'a, WithClause<'a>>>, // Some(vec![]) for empty assertion
