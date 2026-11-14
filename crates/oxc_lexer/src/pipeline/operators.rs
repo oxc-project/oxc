@@ -185,6 +185,7 @@ impl<const TABLE_SIZE: usize> OpTable<TABLE_SIZE> {
     }
 
     /// Hash `key` and get the packed value for an operator from this hash table.
+    /// Also returns the slot's kind as a TokenKind, which is Eof for an empty slot.
     ///
     /// `key` must contain:
     /// - Bytes 0-1: First 2 bytes of source
@@ -203,9 +204,9 @@ impl<const TABLE_SIZE: usize> OpTable<TABLE_SIZE> {
     /// - `(pack & 0xFF_FFFF) == key` for 3-byte operators.
     #[cpu_multiversion]
     #[inline(always)]
-    fn pack(&self, key: u32, cpu: impl Cpu) -> u32 {
+    fn pack(&self, key: u32, cpu: impl Cpu) -> (u32, TokenKind) {
         let slot = self.data.slot(key, self.mul, cpu);
-        self.data.values[slot]
+        (self.data.values[slot], self.kinds[slot])
     }
 
     /// Check if `bytes` starts with an operator from this hash table.
@@ -279,6 +280,7 @@ impl<const TABLE_SIZE: usize> OpTableData<TABLE_SIZE> {
 }
 
 /// Hash `key` and get the packed value for a 2-byte operator from the hash table.
+/// Also returns the slot's kind as a TokenKind, which is Eof for an empty slot.
 ///
 /// `key` must contain:
 /// - Bytes 0-1: 2 bytes of source
@@ -295,11 +297,12 @@ impl<const TABLE_SIZE: usize> OpTableData<TABLE_SIZE> {
 /// `(pack & 0xFFFF) == key` to confirm a match.
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) fn opmap_pack2(key: u32, cpu: impl Cpu) -> u32 {
+pub(super) fn opmap_pack2(key: u32, cpu: impl Cpu) -> (u32, TokenKind) {
     OP2_TABLE.pack(key, cpu)
 }
 
 /// Hash `key` and get the packed value for a 3-byte operator from the hash table.
+/// Also returns the slot's kind as a TokenKind, which is Eof for an empty slot.
 ///
 /// `key` must contain:
 /// - Bytes 0-2: 3 bytes of source
@@ -315,7 +318,7 @@ pub(super) fn opmap_pack2(key: u32, cpu: impl Cpu) -> u32 {
 /// `(pack & 0xFF_FFFF) == key` to confirm a match.
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) fn opmap_pack3(key: u32, cpu: impl Cpu) -> u32 {
+pub(super) fn opmap_pack3(key: u32, cpu: impl Cpu) -> (u32, TokenKind) {
     OP3_TABLE.pack(key, cpu)
 }
 

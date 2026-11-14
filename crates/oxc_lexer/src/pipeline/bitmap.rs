@@ -117,6 +117,14 @@ impl<'a> Bitmap<'a> {
         block.set(block.get() & !(1u64 << (i & 63)));
     }
 
+    /// Clear bit i if cond, without a branch.
+    #[cpu_multiversion]
+    #[inline(always)]
+    pub(super) fn clear_if(self, i: usize, cond: bool, _cpu: impl Cpu) {
+        let block = &self.0[i >> 6];
+        block.set(block.get() & !(u64::from(cond) << (i & 63)));
+    }
+
     /// Clears bits a..=b, or nothing if a > b.
     #[cpu_multiversion]
     #[inline(always)]
