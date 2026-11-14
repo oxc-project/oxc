@@ -145,7 +145,7 @@ pub fn scan_tmpl_text(src: Source, mut i: usize, cpu: impl Cpu) -> (usize, Templ
         if c == b'`' {
             return (p + 1, TemplateEnd::Backtick);
         }
-        if src[p + 1] == b'{' {
+        if p + 1 < src.len() && src[p + 1] == b'{' {
             return (p + 2, TemplateEnd::Substitution);
         }
         i = p + 1;

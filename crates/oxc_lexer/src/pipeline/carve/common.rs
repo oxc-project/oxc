@@ -1,6 +1,6 @@
 use oxc_simd::{Cpu, cpu_multiversion};
 
-use crate::{error::DiagCode, token::tk};
+use crate::{error::DiagCode, token::TokenKind};
 
 use crate::pipeline::{
     bitmap::{Bitmap, Bitmaps},
@@ -28,11 +28,31 @@ pub(super) const OPENER_MODULE_BYTES: [u8; 5] = [b'"', b'`', b'\'', b'/', b'<'];
 /// [`OPENER8_BYTES`] without the closing angle bracket, which only scripts need.
 pub(super) const OPENER8_MODULE_BYTES: [u8; 7] = [b'"', b'`', b'\'', b'/', b'{', b'}', b'<'];
 
+/// Kind the token at s and fold s + 1..end in, unchecked: s < end <= n, on handles carve cut.
+#[cpu_multiversion]
+#[inline(always)]
+pub(super) unsafe fn mark_token(
+    token_start: Bitmap,
+    kinds: Kinds,
+    s: usize,
+    end: usize,
+    kind: TokenKind,
+    cpu: impl Cpu,
+) {
+    // SAFETY: s < end <= src.len(), and carve cut the handles to the source's blocks.
+    unsafe {
+        kinds.set_unchecked(s, kind);
+        if end > s + 1 {
+            token_start.clear_range_unchecked(s + 1, end - 1, cpu);
+        }
+    }
+}
+
 /// Lex the string literal opening at `s`. Returns the resume index. Shared
 /// by `carve` and `carve_jsx` JS mode.
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn lex_string(
+pub(super) fn lex_string(
     src: Source,
     token_start: Bitmap,
     kinds: Kinds,
@@ -58,7 +78,7 @@ pub(super) unsafe fn lex_string(
 /// Lex the JSX attribute string at s, which has no escapes and ends at the next matching quote.
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn lex_jsx_attribute_string(
+pub(super) fn lex_jsx_attribute_string(
     src: Source,
     token_start: Bitmap,
     kinds: Kinds,
@@ -79,7 +99,7 @@ pub(super) unsafe fn lex_jsx_attribute_string(
 /// Mark the string at s, closed by the quote at e unless e is the end; returns end and body end.
 #[cpu_multiversion]
 #[inline(always)]
-unsafe fn mark_string(
+fn mark_string(
     src: Source,
     token_start: Bitmap,
     kinds: Kinds,
@@ -89,10 +109,8 @@ unsafe fn mark_string(
     cpu: impl Cpu,
 ) -> (usize, usize) {
     let end = if e < src.len() { e + 1 } else { src.len() };
-    kinds.set(s, tk!(String));
-    if end > s + 1 {
-        token_start.clear_range(s + 1, end - 1, cpu);
-    }
+    // SAFETY: end is at most src.len().
+    unsafe { mark_token(token_start, kinds, s, end, TokenKind::String, cpu) };
     let be = if e < src.len() {
         e
     } else if src.len() > s + 1 && src[src.len() - 1] == c {
@@ -109,13 +127,13 @@ unsafe fn mark_string(
 /// the caller pushes its own nesting frame.
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn lex_template_segment(
+pub(super) fn lex_template_segment(
     src: Source,
     token_start: Bitmap,
     kinds: Kinds,
     s: usize,
-    head_kind: u8,
-    flat_kind: u8,
+    head_kind: TokenKind,
+    flat_kind: TokenKind,
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) -> (usize, bool) {
@@ -124,10 +142,9 @@ pub(super) unsafe fn lex_template_segment(
         lanes.push_diag(s as u32, (end - s) as u32, DiagCode::UnterminatedTemplate);
     }
     let opens_substitution = ended_by == TemplateEnd::Substitution;
-    kinds.set(s, if opens_substitution { head_kind } else { flat_kind });
-    if end > s + 1 {
-        token_start.clear_range(s + 1, end - 1, cpu);
-    }
+    let kind = if opens_substitution { head_kind } else { flat_kind };
+    // SAFETY: scan_tmpl_text ends at most at src.len().
+    unsafe { mark_token(token_start, kinds, s, end, kind, cpu) };
     lanes.push_template(src.padded(), s + 1, end - ended_by.delimiter_len(), cpu);
     (end, opens_substitution)
 }
@@ -148,7 +165,7 @@ impl Substitutions {
     /// Lex the template at the backtick at s, opening a substitution if it ends in a dollar brace.
     #[cpu_multiversion]
     #[inline(always)]
-    pub(super) unsafe fn lex_template(
+    pub(super) fn lex_template(
         &mut self,
         src: Source,
         token_start: Bitmap,
@@ -157,7 +174,7 @@ impl Substitutions {
         lanes: &mut Lanes,
         cpu: impl Cpu,
     ) -> usize {
-        let (head, flat) = (tk!(TemplateHead), tk!(TemplateNoSub));
+        let (head, flat) = (TokenKind::TemplateHead, TokenKind::TemplateNoSub);
         let (end, opened) =
             lex_template_segment(src, token_start, kinds, s, head, flat, lanes, cpu);
         if opened {
@@ -174,7 +191,7 @@ impl Substitutions {
     /// Close a nested brace, or else the substitution and lex the template text after it.
     #[cpu_multiversion]
     #[inline(always)]
-    pub(super) unsafe fn close_brace(
+    pub(super) fn close_brace(
         &mut self,
         src: Source,
         token_start: Bitmap,
@@ -189,7 +206,7 @@ impl Substitutions {
             return s + 1;
         }
         self.0.pop();
-        let (middle, tail) = (tk!(TemplateMiddle), tk!(TemplateTail));
+        let (middle, tail) = (TokenKind::TemplateMiddle, TokenKind::TemplateTail);
         let (end, opened) =
             lex_template_segment(src, token_start, kinds, s, middle, tail, lanes, cpu);
         if opened {
@@ -202,17 +219,12 @@ impl Substitutions {
 /// Lex a hashbang line at the start of the source; returns where carving resumes, 0 without one.
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn lex_hashbang(
-    src: Source,
-    token_start: Bitmap,
-    kinds: Kinds,
-    cpu: impl Cpu,
-) -> usize {
+pub(super) fn lex_hashbang(src: Source, token_start: Bitmap, kinds: Kinds, cpu: impl Cpu) -> usize {
     if !(src.len() >= 2 && src[0] == b'#' && src[1] == b'!') {
         return 0;
     }
     let end = find_line_terminator(src, 2, cpu);
-    kinds.set(0, tk!(Hashbang));
+    kinds.set(0, TokenKind::Hashbang);
     token_start.clear_range(1, end - 1, cpu);
     if end < src.len() {
         token_start.set(end, cpu);
@@ -231,7 +243,7 @@ pub(super) fn is_unicode_escape_brace(src: Source, s: usize, _cpu: impl Cpu) -> 
 /// block comment, regex, `/=`, or a bare slash left for `coalesce`.
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn lex_slash(
+pub(super) fn lex_slash(
     lex: Lex,
     s: usize,
     lanes: &mut Lanes,
@@ -249,7 +261,7 @@ pub(super) unsafe fn lex_slash(
         lex_regex(src, token_start, kinds, word, s, lanes, cpu)
     } else if s + 1 < src.len() && src[s + 1] == b'=' {
         // `/=`: absorb the `=`.
-        kinds.set(s, tk!(SlashEq));
+        kinds.set(s, TokenKind::SlashEq);
         token_start.clear(s + 1, cpu);
         op_char.clear(s + 1, cpu);
         s + 2
@@ -262,7 +274,7 @@ pub(super) unsafe fn lex_slash(
 /// made): body, flag run, diagnostics. Returns the resume index.
 #[cpu_multiversion]
 #[inline(always)]
-unsafe fn lex_regex(
+fn lex_regex(
     src: Source,
     token_start: Bitmap,
     kinds: Kinds,
@@ -285,10 +297,8 @@ unsafe fn lex_regex(
     if end < src.len() && word.get(end, cpu) {
         end = word.next0(end, src.len(), cpu);
     }
-    kinds.set(s, tk!(RegExp));
-    if end > s + 1 {
-        token_start.clear_range(s + 1, end - 1, cpu);
-    }
+    // SAFETY: the regex and its flags end at most at src.len().
+    unsafe { mark_token(token_start, kinds, s, end, TokenKind::RegExp, cpu) };
     lanes.push_regex_flags(src.padded(), fs, end, cpu);
     end
 }

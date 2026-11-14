@@ -19,8 +19,8 @@ use crate::pipeline::{
 #[derive(Clone, Copy)]
 pub(super) struct Lex<'a> {
     pub src: Source<'a>,
-    pub bitmaps: &'a Bitmaps,
-    pub kinds: Kinds,
+    pub bitmaps: &'a Bitmaps<'a>,
+    pub kinds: Kinds<'a>,
     pub options: &'a LexOptions,
 }
 

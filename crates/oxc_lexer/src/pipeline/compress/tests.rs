@@ -2,11 +2,11 @@ use std::iter;
 
 use oxc_span::Span;
 
-use oxc_simd::{DynCpu, test_cpus};
+use oxc_simd::{BASELINE, DynCpu, test_cpus};
 
 use crate::pipeline::{bitmap::Bitmap, kinds::Kinds};
 
-use crate::token::{TRIVIA_MAX, TRIVIA_MIN, tk};
+use crate::token::{TRIVIA_MAX, TRIVIA_MIN, TokenKind, tk};
 
 use super::{build_spans, compress_blocks, init_pair_luts};
 
@@ -49,14 +49,15 @@ fn compress_blocks_matches_scalar_reference(cpu: DynCpu) {
         let mut kind = vec![0u8; n];
         let mut ks = 0xdead_beef_cafe_f00du64;
         for b in kind.iter_mut() {
-            *b = (xorshift(&mut ks) & 0xff) as u8;
+            let byte = (xorshift(&mut ks) & 0xff) as u8;
+            *b = TokenKind::from_u8(byte, BASELINE).map_or(tk!(Ident), |kind| kind as u8);
         }
         let mut starts = vec![0u32; n + 64];
         let mut kinds = vec![0u8; n + 64];
         let m = unsafe {
             compress_blocks(
-                Bitmap::new(st.as_mut_ptr()),
-                Kinds::new(kind.as_mut_ptr()),
+                Bitmap::new(st),
+                Kinds::new(&mut kind),
                 0,
                 nb,
                 starts.as_mut_ptr(),

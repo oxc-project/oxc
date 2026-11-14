@@ -14,7 +14,11 @@ use jsx::carve_jsx;
 
 #[cpu_multiversion]
 #[inline(never)]
-pub unsafe fn carve(lex: Lex, state: &mut LexState, cpu: impl Cpu) {
+pub fn carve(lex: Lex, state: &mut LexState, cpu: impl Cpu) {
+    // The token markers write unchecked, so cut the handles to the source's blocks and a spare.
+    let blocks = lex.src.block_count() + 1;
+    let bitmaps = lex.bitmaps.first(blocks);
+    let lex = Lex { bitmaps: &bitmaps, kinds: lex.kinds.first(blocks * 64), ..lex };
     if lex.options.jsx {
         carve_jsx(lex, state, cpu);
     } else {

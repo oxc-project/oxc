@@ -150,15 +150,15 @@ impl Lexer {
         }
 
         let bitmaps = &Bitmaps {
-            token_start: Bitmap::new(self.token_start.as_mut_ptr()),
-            word: Bitmap::new(self.word.as_mut_ptr()),
-            keyword_initial: Bitmap::new(self.keyword_initial.as_mut_ptr()),
-            op_char: Bitmap::new(self.op_char.as_mut_ptr()),
-            digit: Bitmap::new(self.digit.as_mut_ptr()),
-            dot: Bitmap::new(self.dot.as_mut_ptr()),
-            misc: Bitmap::new(self.misc.as_mut_ptr()),
+            token_start: Bitmap::new(&mut self.token_start),
+            word: Bitmap::new(&mut self.word),
+            keyword_initial: Bitmap::new(&mut self.keyword_initial),
+            op_char: Bitmap::new(&mut self.op_char),
+            digit: Bitmap::new(&mut self.digit),
+            dot: Bitmap::new(&mut self.dot),
+            misc: Bitmap::new(&mut self.misc),
         };
-        let kinds = Kinds::new(self.kinds.as_mut_ptr());
+        let kinds = Kinds::new(&mut self.kinds);
         let lex = Lex { src, bitmaps, kinds, options: &options };
         let kw_candidates = self.kw_candidates.as_mut_ptr();
         let events = self.events.as_mut_ptr();
@@ -173,7 +173,7 @@ impl Lexer {
         misc_post(lex, escaped_ident_count, cpu);
         if !self.state.lanes.irregular_whitespaces.is_empty() {
             let spans = &mut self.state.lanes.irregular_whitespaces;
-            retain_code_whitespace(&self.token_start, &self.kinds, spans);
+            retain_code_whitespace(bitmaps.token_start, kinds, spans);
         }
         compress(
             lex,
