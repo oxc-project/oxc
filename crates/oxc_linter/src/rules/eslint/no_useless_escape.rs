@@ -92,7 +92,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     recommended,
-    fix,
+    suggestion,
     config = NoUselessEscapeConfig,
     version = "0.0.5",
     short_description = "Disallow unnecessary escape characters.",
@@ -120,9 +120,10 @@ impl Rule for NoUselessEscape {
                             continue;
                         }
 
-                        ctx.diagnostic_with_fix(no_useless_escape_diagnostic(c, span), |fixer| {
-                            fixer.replace(span, c.to_string())
-                        });
+                        ctx.diagnostic_with_suggestion(
+                            no_useless_escape_diagnostic(c, span),
+                            |fixer| fixer.replace(span, c.to_string()),
+                        );
                     }
                 }
             }
@@ -166,7 +167,7 @@ fn check(ctx: &LintContext<'_>, node_id: NodeId, start: u32, offsets: &[usize]) 
 
         if !is_within_jsx_attribute(node_id, ctx) {
             let span = Span::new(offset - 1, offset + len);
-            ctx.diagnostic_with_fix(no_useless_escape_diagnostic(c, span), |fixer| {
+            ctx.diagnostic_with_suggestion(no_useless_escape_diagnostic(c, span), |fixer| {
                 fixer.replace(span, c.to_string())
             });
         }
@@ -763,4 +764,27 @@ fn test() {
     Tester::new(NoUselessEscape::NAME, NoUselessEscape::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn test_safe_fix_does_not_apply() {
+    use crate::{FixKind, tester::Tester};
+
+    // Removing a useless escape can create a Use Strict Directive or change
+    // `RegExp.prototype.source`, so it must not be applied as a safe fix.
+    // Regression for https://github.com/oxc-project/oxc/issues/29467
+    let fix = vec![
+        (r#""use\ strict";"#, r#""use\ strict";"#, None, FixKind::SafeFix),
+        (r"const re = /\!/;", r"const re = /\!/;", None, FixKind::SafeFix),
+        (r#""use\ strict";"#, r#""use strict";"#, None, FixKind::Suggestion),
+    ];
+
+    Tester::new(
+        NoUselessEscape::NAME,
+        NoUselessEscape::PLUGIN,
+        Vec::<&str>::new(),
+        Vec::<&str>::new(),
+    )
+    .expect_fix(fix)
+    .test();
 }
