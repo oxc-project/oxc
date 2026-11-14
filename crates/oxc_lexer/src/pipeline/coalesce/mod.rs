@@ -329,7 +329,7 @@ unsafe fn fuse_triple(kinds: Kinds, token_start: Bitmap, p: usize, q: u32, cpu: 
 }
 
 #[cpu_multiversion]
-unsafe fn glue_number(
+fn glue_number(
     lex: Lex,
     mut p: usize,
     lanes: &mut Lanes,

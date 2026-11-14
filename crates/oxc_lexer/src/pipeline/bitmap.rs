@@ -1,6 +1,6 @@
 use std::cell::Cell;
 
-use oxc_simd::{Avx2, Cpu, DynCpu, Vec256, cpu_multiversion, cpu_version};
+use oxc_simd::{Cpu, cpu_multiversion};
 
 /// One bit per source byte, a u64 per 64-byte block, shared by the stages that refine it.
 #[derive(Clone, Copy)]
@@ -152,13 +152,11 @@ impl<'a> Bitmap<'a> {
 
     #[cpu_multiversion]
     #[inline(always)]
-    pub(super) fn any(self, block_count: usize, cpu: impl Cpu) -> bool {
-        let blocks = &self.0[..block_count];
-        match DynCpu::from(cpu) {
-            // SAFETY: blocks holds block_count blocks.
-            DynCpu::Avx2(cpu) => unsafe { any_avx2(blocks.as_ptr().cast(), block_count, cpu) },
-            _ => blocks.iter().any(|block| block.get() != 0),
-        }
+    pub(super) fn any(self, block_count: usize, _cpu: impl Cpu) -> bool {
+        // One test per 16 blocks keeps the scan cheap when no block has a misc byte.
+        let (runs, rest) = self.0[..block_count].as_chunks::<16>();
+        runs.iter().any(|run| run.iter().fold(0, |acc, block| acc | block.get()) != 0)
+            || rest.iter().any(|block| block.get() != 0)
     }
 }
 
@@ -225,27 +223,4 @@ impl Bitmaps<'_> {
             bitmap.0[block_idx].set(0);
         }
     }
-}
-
-#[cpu_version(Avx2)]
-#[inline]
-unsafe fn any_avx2(bm: *const u64, block_count: usize, cpu: Avx2) -> bool {
-    let mut w = 0usize;
-    // SAFETY: the caller's pointer holds block_count blocks, and every read stays below that.
-    unsafe {
-        while w + 4 <= block_count {
-            let v = Vec256::load_unaligned(bm.add(w).cast::<u8>(), cpu);
-            if !v.is_zero() {
-                return true;
-            }
-            w += 4;
-        }
-        while w < block_count {
-            if *bm.add(w) != 0 {
-                return true;
-            }
-            w += 1;
-        }
-    }
-    false
 }
