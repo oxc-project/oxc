@@ -4,7 +4,7 @@ use crate::{error::DiagCode, token::tk};
 
 use crate::pipeline::{
     bitmap::{Bitmap, Bitmaps},
-    bytes::hex_val,
+    bytes::{hex_digit, is_ls_ps_tail},
     disambiguate::DisambiguateState,
     find::find,
     kinds::Kinds,
@@ -301,7 +301,7 @@ unsafe fn lex_regex(
 #[inline(always)]
 pub(super) fn skip_unicode_brace_escape(src: Source, s: usize, cpu: impl Cpu) -> usize {
     let mut j = s + 1;
-    while j < src.len() && hex_val(src[j], cpu) != 255 {
+    while j < src.len() && hex_digit(src[j], cpu).is_some() {
         j += 1;
     }
     if j < src.len() && src[j] == b'}' {
@@ -322,10 +322,7 @@ pub(super) unsafe fn find_line_terminator(src: Source, mut i: usize, cpu: impl C
         if p >= src.len() {
             return src.len();
         }
-        if src[p] != 0xE2 {
-            return p;
-        }
-        if src[p + 1] == 0x80 && (src[p + 2] == 0xA8 || src[p + 2] == 0xA9) {
+        if src[p] != 0xE2 || is_ls_ps_tail(src[p + 1], src[p + 2], cpu) {
             return p;
         }
         i = p + 1;

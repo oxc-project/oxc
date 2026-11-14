@@ -26,6 +26,13 @@ pub(super) const fn is_digit(c: u8, _cpu: impl Cpu) -> bool {
     c >= b'0' && c <= b'9'
 }
 
+/// Whether the two bytes after an 0xE2 lead make LS (U+2028) or PS (U+2029).
+#[cpu_multiversion]
+#[inline(always)]
+pub(super) const fn is_ls_ps_tail(c1: u8, c2: u8, _cpu: impl Cpu) -> bool {
+    c1 == 0x80 && (c2 == 0xA8 || c2 == 0xA9)
+}
+
 /// Byte length (2 or 3) of the multi-byte WhiteSpace or LineTerminator starting at c0, or 0.
 #[cpu_multiversion]
 #[inline(always)]
@@ -57,11 +64,11 @@ pub(super) fn unicode_ws_len_at(src: &[u8], p: usize, cpu: impl Cpu) -> usize {
 
 /// The first line terminator (LF, CR, LS or PS) at or after i, or n.
 #[cpu_multiversion]
-pub(super) fn line_terminator_after(src: &[u8], n: usize, mut i: usize, _cpu: impl Cpu) -> usize {
+pub(super) fn line_terminator_after(src: &[u8], n: usize, mut i: usize, cpu: impl Cpu) -> usize {
     while i < n {
         match src[i] {
             b'\n' | b'\r' => return i,
-            0xE2 if src[i + 1] == 0x80 && matches!(src[i + 2], 0xA8 | 0xA9) => return i,
+            0xE2 if is_ls_ps_tail(src[i + 1], src[i + 2], cpu) => return i,
             _ => i += 1,
         }
     }
@@ -87,19 +94,6 @@ pub(super) fn block_comment_end(src: &[u8], n: usize, mut i: usize, _cpu: impl C
     n
 }
 
-#[cpu_multiversion]
-#[inline(always)]
-pub(super) fn hex_val(c: u8, _cpu: impl Cpu) -> u32 {
-    if c >= b'0' && c <= b'9' {
-        return (c - b'0') as u32;
-    }
-    let l = c | 0x20;
-    if l >= b'a' && l <= b'f' {
-        return (l - b'a' + 10) as u32;
-    }
-    255
-}
-
 /// The char at byte i, or None if the bytes there are not valid UTF-8.
 #[cpu_version(Generic)]
 pub(super) fn decode_char_at(s: &[u8], i: usize) -> Option<char> {
@@ -117,11 +111,11 @@ pub(super) fn decode_char_at(s: &[u8], i: usize) -> Option<char> {
 
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) fn hexd(b: u8, _cpu: impl Cpu) -> Option<u8> {
-    match b {
-        b'0'..=b'9' => Some(b - b'0'),
-        b'a'..=b'f' => Some(b - b'a' + 10),
-        b'A'..=b'F' => Some(b - b'A' + 10),
+pub(super) fn hex_digit(c: u8, _cpu: impl Cpu) -> Option<u8> {
+    match c {
+        b'0'..=b'9' => Some(c - b'0'),
+        b'a'..=b'f' => Some(c - b'a' + 10),
+        b'A'..=b'F' => Some(c - b'A' + 10),
         _ => None,
     }
 }

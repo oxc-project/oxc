@@ -1,5 +1,7 @@
 use oxc_simd::{Avx2, Vec256, cpu_version};
 
+use crate::pipeline::bytes::is_ls_ps_tail;
+
 use super::common::{first_license_at, is_license_at};
 
 #[cpu_version(Avx2)]
@@ -72,10 +74,7 @@ pub unsafe fn scan_line_comment_avx2(
         while term != 0 {
             let t = term.trailing_zeros() as usize;
             let c = *src.add(i + t);
-            if c == 0xE2
-                && !(*src.add(i + t + 1) == 0x80
-                    && (*src.add(i + t + 2) == 0xA8 || *src.add(i + t + 2) == 0xA9))
-            {
+            if c == 0xE2 && !is_ls_ps_tail(*src.add(i + t + 1), *src.add(i + t + 2), cpu) {
                 term &= term - 1; // not LS/PS: clear and keep scanning
                 continue;
             }
@@ -97,10 +96,7 @@ pub unsafe fn scan_line_comment_avx2(
         if c == b'\n' || c == b'\r' {
             return (i, license_at);
         }
-        if c == 0xE2
-            && *src.add(i + 1) == 0x80
-            && (*src.add(i + 2) == 0xA8 || *src.add(i + 2) == 0xA9)
-        {
+        if c == 0xE2 && is_ls_ps_tail(*src.add(i + 1), *src.add(i + 2), cpu) {
             return (i, license_at);
         }
         if c == b'@' && license_at < 0 && is_license_at(src, i, cpu) {
