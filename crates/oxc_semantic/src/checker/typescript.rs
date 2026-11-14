@@ -252,15 +252,17 @@ pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
                 let next_is_same = b.is_some_and(|b| {
                     matches!(b,
                         ClassElement::MethodDefinition(b)
-                            if b.key.static_name() == a.key.static_name()
+                            if is_same_overload_name(&a.key, &b.key)
                     )
                 });
                 if next_is_same {
                     is_in_overload_group = true;
-                } else if a.key.static_name().is_some() || is_in_overload_group {
+                } else if has_statically_known_overload_name(&a.key) || is_in_overload_group {
                     // Report error for:
-                    // 1. Methods with static names that are not followed by an implementation
-                    // 2. The last overload in a computed-name overload group (e.g. [Symbol.iterator])
+                    // 1. Methods with statically known names (including private names and
+                    //    well-known-symbol keys like `[Symbol.iterator]`) that are not followed
+                    //    by an implementation with the same name
+                    // 2. The last overload in a computed-name overload group
                     if a.kind.is_constructor() {
                         ctx.error(diagnostics::constructor_implementation_missing(a.key.span()));
                     } else {
@@ -274,6 +276,53 @@ pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
                 is_in_overload_group = false;
             }
         }
+    }
+}
+
+/// Whether two class method keys declare the same overload name.
+///
+/// Conservative for computed keys: returns `false` only when the keys are provably
+/// different names (e.g. `[Symbol.iterator]` vs `[Symbol.asyncIterator]`), so unknown
+/// computed keys never break an overload group and never gain a false diagnostic.
+fn is_same_overload_name(a: &PropertyKey<'_>, b: &PropertyKey<'_>) -> bool {
+    if a.is_private_identifier() || b.is_private_identifier() {
+        return match (a, b) {
+            (PropertyKey::PrivateIdentifier(a), PropertyKey::PrivateIdentifier(b)) => {
+                a.name == b.name
+            }
+            _ => false,
+        };
+    }
+    match (a.static_name(), b.static_name()) {
+        (Some(name_a), Some(name_b)) => name_a == name_b,
+        (None, None) => computed_keys_may_be_same(a, b),
+        // A computed member-expression key (e.g. `[Symbol.iterator]`) evaluates to a
+        // symbol, which is never the string name of a static key.
+        (None, Some(_)) => !matches!(a, PropertyKey::StaticMemberExpression(_)),
+        (Some(_), None) => !matches!(b, PropertyKey::StaticMemberExpression(_)),
+    }
+}
+
+/// Whether the overload's name is statically known, so a missing implementation can be
+/// reported without risk of a false positive.
+fn has_statically_known_overload_name(key: &PropertyKey<'_>) -> bool {
+    key.static_name().is_some()
+        || key.is_private_identifier()
+        || matches!(key, PropertyKey::StaticMemberExpression(_))
+}
+
+/// Conservative equality for computed keys: returns `false` only for provably
+/// different names.
+fn computed_keys_may_be_same(a: &PropertyKey<'_>, b: &PropertyKey<'_>) -> bool {
+    match (a, b) {
+        (PropertyKey::StaticMemberExpression(a), PropertyKey::StaticMemberExpression(b)) => {
+            a.property.name == b.property.name
+                && match (&a.object, &b.object) {
+                    (Expression::Identifier(a), Expression::Identifier(b)) => a.name == b.name,
+                    _ => true,
+                }
+        }
+        _ => true,
     }
 }
 
