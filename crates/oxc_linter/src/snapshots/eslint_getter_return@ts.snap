@@ -1,0 +1,52 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
+   ╭─[getter_return.tsx:1:37]
+ 1 │ Object.defineProperty({}, 'c', { get() { console.log(3); } });
+   ·                                     ──────────────────────
+   ╰────
+  help: Return a value from all code paths in getter.
+
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
+   ╭─[getter_return.tsx:1:39]
+ 1 │ Object.defineProperty({}, 'd', { get: () => { console.log(4); } });
+   ·                                       ─────────────────────────
+   ╰────
+  help: Return a value from all code paths in getter.
+
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
+   ╭─[getter_return.tsx:1:39]
+ 1 │ Object.defineProperty({}, 'e', { get: function () { console.log(5); } });
+   ·                                       ───────────────────────────────
+   ╰────
+  help: Return a value from all code paths in getter.
+
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
+   ╭─[getter_return.tsx:1:38]
+ 1 │ Reflect.defineProperty({}, 'f', { get() {} });
+   ·                                      ─────
+   ╰────
+  help: Return a value from all code paths in getter.
+
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
+   ╭─[getter_return.tsx:1:31]
+ 1 │ Object.create(null, { g: { get(): number { if (x) { return 1; } } } });
+   ·                               ───────────────────────────────────
+   ╰────
+  help: Return a value from all code paths in getter.
+
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
+   ╭─[getter_return.tsx:1:39]
+ 1 │ Object.defineProperties({}, { h: { get() {} } });
+   ·                                       ─────
+   ╰────
+  help: Return a value from all code paths in getter.
+
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
+   ╭─[getter_return.tsx:1:37]
+ 1 │ Object.defineProperty({}, 'i', { get() { if (x) { return 1; } } });
+   ·                                     ───────────────────────────
+   ╰────
+  help: Return a value from all code paths in getter.
