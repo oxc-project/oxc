@@ -1,7 +1,31 @@
+import { runInNewContext } from "node:vm";
 import { describe, expect, test } from "vitest";
 import { moduleRunnerTransform, moduleRunnerTransformSync } from "../index";
 
 describe("moduleRunnerTransformSync", () => {
+  test.each(["(fn)()", "(((fn)))()", "fn?.()", "(fn)?.()", "(((fn)))?.()"])(
+    "keeps imported calls unbound: %s",
+    async (call) => {
+      const result = moduleRunnerTransformSync(
+        "index.js",
+        `import { fn } from './dep'; const receiver = ${call};`,
+      );
+      expect(result.errors).toEqual([]);
+
+      const receiver = await runInNewContext(
+        `(async () => { "use strict"; ${result.code} return receiver; })()`,
+        {
+          __vite_ssr_import__: () => ({
+            fn(this: unknown) {
+              return this;
+            },
+          }),
+        },
+      );
+      expect(receiver).toBeUndefined();
+    },
+  );
+
   test("dynamic import", async () => {
     const result = moduleRunnerTransformSync("index.js", `export const i = () => import('./foo')`);
     expect(result?.code).toMatchInlineSnapshot(`

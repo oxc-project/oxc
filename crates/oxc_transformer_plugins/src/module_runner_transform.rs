@@ -31,7 +31,7 @@
 //!
 //! Based on [Vite](https://github.com/vitejs/vite/blob/00deea4ff88e30e299cb40a801b5dc0205ac913d/packages/vite/src/node/ssr/ssrTransform.ts)'s ssrTransform.
 //!
-//! All tests are copy-pasted from [ssrTransform.spec.ts](https://github.com/vitejs/vite/blob/00deea4ff88e30e299cb40a801b5dc0205ac913d/packages/vite/src/node/ssr/__tests__/ssrTransform.spec.ts).
+//! Tests are adapted from [ssrTransform.spec.ts](https://github.com/vitejs/vite/blob/00deea4ff88e30e299cb40a801b5dc0205ac913d/packages/vite/src/node/ssr/__tests__/ssrTransform.spec.ts), with additional regression cases.
 //!
 //! ## Integrate into main `Transformer` in future
 //!
@@ -237,7 +237,7 @@ impl<'a> ModuleRunnerTransform<'a> {
                 create_compute_property_access(ident.span, object, property, ctx)
             };
 
-            if matches!(ctx.parent(), Ancestor::CallExpressionCallee(_)) {
+            if Self::is_call_callee(ctx) {
                 // wrap with (0, ...) to avoid method binding `this`
                 // <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Property_accessors#method_binding>
                 let zero =
@@ -249,6 +249,23 @@ impl<'a> ModuleRunnerTransform<'a> {
         } else {
             object
         };
+    }
+
+    /// Parentheses and TypeScript wrappers preserve the callee reference, including its `this`.
+    fn is_call_callee(ctx: &TraverseCtx<'a>) -> bool {
+        ctx.ancestors()
+            .find(|ancestor| {
+                !matches!(
+                    ancestor,
+                    Ancestor::ParenthesizedExpressionExpression(_)
+                        | Ancestor::TSAsExpressionExpression(_)
+                        | Ancestor::TSSatisfiesExpressionExpression(_)
+                        | Ancestor::TSNonNullExpressionExpression(_)
+                        | Ancestor::TSTypeAssertionExpression(_)
+                        | Ancestor::TSInstantiationExpressionExpression(_)
+                )
+            })
+            .is_some_and(|ancestor| matches!(ancestor, Ancestor::CallExpressionCallee(_)))
     }
 
     /// Transform `import(source, ...arguments)` to `__vite_ssr_dynamic_import__(source, ...arguments)`.
@@ -951,13 +968,15 @@ mod test {
         dynamic_deps: FxHashSet<String>,
     }
 
-    fn transform(source_text: &str, is_jsx: bool) -> Result<TransformReturn, Diagnostics> {
-        let source_type = SourceType::default().with_jsx(is_jsx);
+    fn transform(
+        source_text: &str,
+        source_type: SourceType,
+    ) -> Result<TransformReturn, Diagnostics> {
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
         let mut program = ret.program;
         let mut scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
-        if is_jsx {
+        if source_type.is_jsx() {
             let mut options = TransformOptions::default();
             options.jsx.runtime = JsxRuntime::Classic;
             let ret = Transformer::new(&allocator, Path::new(""), &options)
@@ -992,8 +1011,7 @@ mod test {
         })
     }
 
-    fn format_expected_code(source_text: &str) -> String {
-        let source_type = SourceType::default();
+    fn format_expected_code(source_text: &str, source_type: SourceType) -> String {
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
         assert!(ret.diagnostics.is_empty());
@@ -1010,18 +1028,18 @@ mod test {
 
     #[track_caller]
     fn test_same(source_text: &str, expected: &str) {
-        let expected = format_expected_code(expected);
-        let result = transform(source_text, false).unwrap().code;
-        if result != expected {
-            print_diff_in_terminal(&expected, &result);
-            panic!("Expected code does not match the result");
-        }
+        test_same_with_source_type(source_text, expected, SourceType::mjs());
     }
 
     #[track_caller]
     fn test_same_jsx(source_text: &str, expected: &str) {
-        let expected = format_expected_code(expected);
-        let result = transform(source_text, true).unwrap().code;
+        test_same_with_source_type(source_text, expected, SourceType::jsx());
+    }
+
+    #[track_caller]
+    fn test_same_with_source_type(source_text: &str, expected: &str, source_type: SourceType) {
+        let expected = format_expected_code(expected, source_type);
+        let result = transform(source_text, source_type).unwrap().code;
         if result != expected {
             print_diff_in_terminal(&expected, &result);
             panic!("Expected code does not match the result");
@@ -1030,9 +1048,9 @@ mod test {
 
     #[track_caller]
     fn test_same_and_deps(source_text: &str, expected: &str, deps: &[&str], dynamic_deps: &[&str]) {
-        let expected = format_expected_code(expected);
+        let expected = format_expected_code(expected, SourceType::mjs());
         let TransformReturn { code, deps: result_deps, dynamic_deps: result_dynamic_deps } =
-            transform(source_text, false).unwrap();
+            transform(source_text, SourceType::mjs()).unwrap();
         if code != expected {
             print_diff_in_terminal(&expected, &code);
             panic!("Expected code does not match the result");
@@ -1062,6 +1080,115 @@ console.log(__vite_ssr_import_0__.default.bar);",
 function foo() {
   return (0, __vite_ssr_import_0__.ref)(0);
 }",
+        );
+    }
+
+    #[test]
+    fn wrapped_import_calls_are_unbound() {
+        test_same(
+            "import { fn } from './dep';
+            (fn)();
+            (((fn)))();
+            fn?.();
+            (fn)?.();
+            (((fn)))?.();",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('./dep', { importedNames: ['fn'] });
+            (0, __vite_ssr_import_0__.fn)();
+            (0, __vite_ssr_import_0__.fn)();
+            (0, __vite_ssr_import_0__.fn)?.();
+            (0, __vite_ssr_import_0__.fn)?.();
+            (0, __vite_ssr_import_0__.fn)?.();",
+        );
+    }
+
+    #[test]
+    fn wrapped_import_calls_are_unbound_in_typescript() {
+        test_same_with_source_type(
+            "import { fn } from './dep';
+            (fn as Callable)();
+            (fn satisfies Callable)();
+            fn!();
+            (<Callable>fn)();
+            (fn<number>)();
+            (fn as Callable)?.();
+            (fn satisfies Callable)?.();
+            fn!?.();
+            (<Callable>fn)?.();
+            (fn<number>)?.();
+            (((fn as Callable)!) satisfies Callable)();",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('./dep', { importedNames: ['fn'] });
+            ((0, __vite_ssr_import_0__.fn) as Callable)();
+            ((0, __vite_ssr_import_0__.fn) satisfies Callable)();
+            (0, __vite_ssr_import_0__.fn)!();
+            (<Callable>(0, __vite_ssr_import_0__.fn))();
+            ((0, __vite_ssr_import_0__.fn)<number>)();
+            ((0, __vite_ssr_import_0__.fn) as Callable)?.();
+            ((0, __vite_ssr_import_0__.fn) satisfies Callable)?.();
+            (0, __vite_ssr_import_0__.fn)!?.();
+            (<Callable>(0, __vite_ssr_import_0__.fn))?.();
+            ((0, __vite_ssr_import_0__.fn)<number>)?.();
+            ((((0, __vite_ssr_import_0__.fn) as Callable)!) satisfies Callable)();",
+            SourceType::ts(),
+        );
+    }
+
+    #[test]
+    fn wrapped_import_methods_keep_their_receivers() {
+        test_same(
+            "import { obj } from './dep';
+            import * as ns from './dep';
+            ((obj.method))();
+            (obj).method();
+            (obj.method)?.();
+            (ns.method)();",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('./dep', { importedNames: ['obj'] });
+            const __vite_ssr_import_1__ = await __vite_ssr_import__('./dep');
+            __vite_ssr_import_0__.obj.method();
+            __vite_ssr_import_0__.obj.method();
+            __vite_ssr_import_0__.obj.method?.();
+            __vite_ssr_import_1__.method();",
+        );
+        test_same_with_source_type(
+            "import { obj } from './dep';
+            (obj as Obj).method();
+            (obj.method as Callable)();
+            (obj['method']!)?.();",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('./dep', { importedNames: ['obj'] });
+            (__vite_ssr_import_0__.obj as Obj).method();
+            (__vite_ssr_import_0__.obj.method as Callable)();
+            (__vite_ssr_import_0__.obj['method']!)?.();",
+            SourceType::ts(),
+        );
+    }
+
+    #[test]
+    fn wrapped_imports_in_non_call_contexts() {
+        test_same(
+            "import { fn } from './dep';
+            const reference = (fn);
+            consume((fn));
+            new (fn)();
+            (condition ? fn : fallback)();
+            (fn || fallback)();
+            (0, fn)();",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('./dep', { importedNames: ['fn'] });
+            const reference = __vite_ssr_import_0__.fn;
+            consume(__vite_ssr_import_0__.fn);
+            new __vite_ssr_import_0__.fn();
+            (condition ? __vite_ssr_import_0__.fn : fallback)();
+            (__vite_ssr_import_0__.fn || fallback)();
+            (0, __vite_ssr_import_0__.fn)();",
+        );
+        test_same_with_source_type(
+            "import { fn } from './dep';
+            const reference = (fn as Callable);
+            consume(fn!);
+            new (fn as Constructor)();",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('./dep', { importedNames: ['fn'] });
+            const reference = (__vite_ssr_import_0__.fn as Callable);
+            consume(__vite_ssr_import_0__.fn!);
+            new (__vite_ssr_import_0__.fn as Constructor)();",
+            SourceType::ts(),
         );
     }
 
