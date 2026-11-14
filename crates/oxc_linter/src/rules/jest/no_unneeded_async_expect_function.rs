@@ -15,7 +15,7 @@ declare_oxc_lint!(
     NoUnneededAsyncExpectFunction,
     jest,
     style,
-    fix,
+    suggestion,
     docs = DOCUMENTATION,
     version = "1.39.0",
 );
