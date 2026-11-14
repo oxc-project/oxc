@@ -3371,6 +3371,12 @@ impl RuleRunner for crate::rules::unicorn::no_invalid_fetch_options::NoInvalidFe
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::unicorn::no_invalid_intl_options::NoInvalidIntlOptions {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression, AstType::NewExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner
     for crate::rules::unicorn::no_invalid_remove_event_listener::NoInvalidRemoveEventListener
 {

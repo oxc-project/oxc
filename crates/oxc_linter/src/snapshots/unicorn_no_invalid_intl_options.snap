@@ -1,0 +1,1302 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(no-invalid-intl-options): `maximumSignificantDigits` must be a number between 1 and 21.
+   ╭─[no_invalid_intl_options.ts:1:56]
+ 1 │ new Intl.NumberFormat("en", {maximumFractionDigits: 0, maximumSignificantDigits: Symbol.iterator})
+   ·                                                        ────────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "decimal", "percent", "currency", "unit".
+   ╭─[no_invalid_intl_options.ts:1:66]
+ 1 │ const {['NumberFormat']: Formatter} = Intl; new Formatter('en', {style: 'wrong'})
+   ·                                                                  ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "decimal", "percent", "currency", "unit".
+   ╭─[no_invalid_intl_options.ts:1:71]
+ 1 │ const {NumberFormat: Formatter = Custom} = Intl; new Formatter('en', {style: 'wrong'})
+   ·                                                                       ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `sensitivity` must be one of "base", "accent", "case", "variant".
+   ╭─[no_invalid_intl_options.ts:1:70]
+ 1 │ function run(text: string) { text.slice(1).localeCompare('x', 'en', {sensitivity: 'wrong'}); }
+   ·                                                                      ───────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `sensitivity` must be one of "base", "accent", "case", "variant".
+   ╭─[no_invalid_intl_options.ts:1:65]
+ 1 │ const value = "a".slice(0); value.localeCompare("other", "en", {sensitivity: "wrong"});
+   ·                                                                 ───────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `typo` is not a recognized Intl.Collator option.
+   ╭─[no_invalid_intl_options.ts:1:26]
+ 1 │ new Intl.Collator('en', {typo: true})
+   ·                          ────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `typo` is not a recognized Intl.DateTimeFormat option.
+   ╭─[no_invalid_intl_options.ts:1:32]
+ 1 │ new Intl.DateTimeFormat('en', {typo: true})
+   ·                                ────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `typo` is not a recognized Intl.DisplayNames option.
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.DisplayNames('en', {typo: true})
+   ·                              ────
+   ╰────
+  help: Rename `typo` to `type`.
+
+  ⚠ unicorn(no-invalid-intl-options): The `type` option is required for Intl.DisplayNames.
+   ╭─[no_invalid_intl_options.ts:1:29]
+ 1 │ new Intl.DisplayNames('en', {typo: true})
+   ·                             ────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `typo` is not a recognized Intl.DurationFormat option.
+   ╭─[no_invalid_intl_options.ts:1:32]
+ 1 │ new Intl.DurationFormat('en', {typo: true})
+   ·                                ────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `typo` is not a recognized Intl.ListFormat option.
+   ╭─[no_invalid_intl_options.ts:1:28]
+ 1 │ new Intl.ListFormat('en', {typo: true})
+   ·                            ────
+   ╰────
+  help: Rename `typo` to `type`.
+
+  ⚠ unicorn(no-invalid-intl-options): `typo` is not a recognized Intl.Locale option.
+   ╭─[no_invalid_intl_options.ts:1:24]
+ 1 │ new Intl.Locale('en', {typo: true})
+   ·                        ────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `typo` is not a recognized Intl.NumberFormat option.
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {typo: true})
+   ·                              ────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `typo` is not a recognized Intl.PluralRules option.
+   ╭─[no_invalid_intl_options.ts:1:29]
+ 1 │ new Intl.PluralRules('en', {typo: true})
+   ·                             ────
+   ╰────
+  help: Rename `typo` to `type`.
+
+  ⚠ unicorn(no-invalid-intl-options): `typo` is not a recognized Intl.RelativeTimeFormat option.
+   ╭─[no_invalid_intl_options.ts:1:36]
+ 1 │ new Intl.RelativeTimeFormat('en', {typo: true})
+   ·                                    ────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `typo` is not a recognized Intl.Segmenter option.
+   ╭─[no_invalid_intl_options.ts:1:27]
+ 1 │ new Intl.Segmenter('en', {typo: true})
+   ·                           ────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` is not a recognized Intl.Collator.supportedLocalesOf option.
+   ╭─[no_invalid_intl_options.ts:1:41]
+ 1 │ Intl.Collator.supportedLocalesOf('en', {style: 'short'})
+   ·                                         ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` is not a recognized Intl.DateTimeFormat.supportedLocalesOf option.
+   ╭─[no_invalid_intl_options.ts:1:47]
+ 1 │ Intl.DateTimeFormat.supportedLocalesOf('en', {style: 'short'})
+   ·                                               ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` is not a recognized Intl.DisplayNames.supportedLocalesOf option.
+   ╭─[no_invalid_intl_options.ts:1:45]
+ 1 │ Intl.DisplayNames.supportedLocalesOf('en', {style: 'short'})
+   ·                                             ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` is not a recognized Intl.DurationFormat.supportedLocalesOf option.
+   ╭─[no_invalid_intl_options.ts:1:47]
+ 1 │ Intl.DurationFormat.supportedLocalesOf('en', {style: 'short'})
+   ·                                               ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` is not a recognized Intl.ListFormat.supportedLocalesOf option.
+   ╭─[no_invalid_intl_options.ts:1:43]
+ 1 │ Intl.ListFormat.supportedLocalesOf('en', {style: 'short'})
+   ·                                           ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` is not a recognized Intl.NumberFormat.supportedLocalesOf option.
+   ╭─[no_invalid_intl_options.ts:1:45]
+ 1 │ Intl.NumberFormat.supportedLocalesOf('en', {style: 'short'})
+   ·                                             ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` is not a recognized Intl.PluralRules.supportedLocalesOf option.
+   ╭─[no_invalid_intl_options.ts:1:44]
+ 1 │ Intl.PluralRules.supportedLocalesOf('en', {style: 'short'})
+   ·                                            ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` is not a recognized Intl.RelativeTimeFormat.supportedLocalesOf option.
+   ╭─[no_invalid_intl_options.ts:1:51]
+ 1 │ Intl.RelativeTimeFormat.supportedLocalesOf('en', {style: 'short'})
+   ·                                                   ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` is not a recognized Intl.Segmenter.supportedLocalesOf option.
+   ╭─[no_invalid_intl_options.ts:1:42]
+ 1 │ Intl.Segmenter.supportedLocalesOf('en', {style: 'short'})
+   ·                                          ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `maximumFractionDigit` is not a recognized Intl.NumberFormat option.
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {maximumFractionDigit: 0})
+   ·                              ────────────────────
+   ╰────
+  help: Rename `maximumFractionDigit` to `maximumFractionDigits`.
+
+  ⚠ unicorn(no-invalid-intl-options): `Style` is not a recognized Intl.NumberFormat option.
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {Style: "decimal"})
+   ·                              ─────
+   ╰────
+  help: Rename `Style` to `style`.
+
+  ⚠ unicorn(no-invalid-intl-options): `currencyDispaly` is not a recognized Intl.NumberFormat option.
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {currencyDispaly: "code"})
+   ·                              ───────────────
+   ╰────
+  help: Rename `currencyDispaly` to `currencyDisplay`.
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "decimal", "percent", "currency", "unit".
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {style: "curreny"})
+   ·                              ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): The `currency` option is required when `style` is "currency".
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {style: "currency"})
+   ·                              ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): The `currency` option is required when `style` is "currency".
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {style: "currency", currency: undefined})
+   ·                              ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): The `unit` option is required when `style` is "unit".
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {style: "unit"})
+   ·                              ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `unit` must be a well-formed identifier.
+   ╭─[no_invalid_intl_options.ts:1:45]
+ 1 │ new Intl.NumberFormat('en', {style: "unit", unit: "MILE"})
+   ·                                             ────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `unit` must be a well-formed identifier.
+   ╭─[no_invalid_intl_options.ts:1:45]
+ 1 │ new Intl.NumberFormat('en', {style: "unit", unit: "meter-per-second-per-hour"})
+   ·                                             ────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `currency` must be a well-formed identifier.
+   ╭─[no_invalid_intl_options.ts:1:49]
+ 1 │ new Intl.NumberFormat('en', {style: "currency", currency: "US"})
+   ·                                                 ────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `currency` must be a well-formed identifier.
+   ╭─[no_invalid_intl_options.ts:1:49]
+ 1 │ new Intl.NumberFormat('en', {style: "currency", currency: 123})
+   ·                                                 ────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `currency` is ignored unless `style` is "currency".
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {currency: "USD", currencyDisplay: "code", currencySign: "accounting"})
+   ·                              ────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `currencyDisplay` is ignored unless `style` is "currency".
+   ╭─[no_invalid_intl_options.ts:1:47]
+ 1 │ new Intl.NumberFormat('en', {currency: "USD", currencyDisplay: "code", currencySign: "accounting"})
+   ·                                               ───────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `currencySign` is ignored unless `style` is "currency".
+   ╭─[no_invalid_intl_options.ts:1:72]
+ 1 │ new Intl.NumberFormat('en', {currency: "USD", currencyDisplay: "code", currencySign: "accounting"})
+   ·                                                                        ────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `unit` is ignored unless `style` is "unit".
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {unit: "meter", unitDisplay: "long"})
+   ·                              ────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `unitDisplay` is ignored unless `style` is "unit".
+   ╭─[no_invalid_intl_options.ts:1:45]
+ 1 │ new Intl.NumberFormat('en', {unit: "meter", unitDisplay: "long"})
+   ·                                             ───────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `compactDisplay` is ignored unless `notation` is "compact".
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {compactDisplay: "long"})
+   ·                              ──────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `currencyDisplay` must be one of "code", "symbol", "narrowSymbol", "name".
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {currencyDisplay: "wrong"})
+   ·                              ───────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `useGrouping` must be one of "min2", "auto", "always", "true", "false".
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {useGrouping: 1})
+   ·                              ───────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `useGrouping` must be one of "min2", "auto", "always", "true", "false".
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {useGrouping: "sometimes"})
+   ·                              ───────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `minimumIntegerDigits` must be a number between 1 and 21.
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {minimumIntegerDigits: 0})
+   ·                              ────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `maximumFractionDigits` must be a number between 0 and 100.
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {maximumFractionDigits: 100.1})
+   ·                              ─────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `maximumFractionDigits` must be a number between 0 and 100.
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {maximumFractionDigits: NaN})
+   ·                              ─────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `maximumFractionDigits` must be a number between 0 and 100.
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {maximumFractionDigits: Infinity})
+   ·                              ─────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `maximumFractionDigits` must be a number between 0 and 100.
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {maximumFractionDigits: 1n})
+   ·                              ─────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `maximumFractionDigits` must be greater than or equal to `minimumFractionDigits`.
+   ╭─[no_invalid_intl_options.ts:1:56]
+ 1 │ new Intl.NumberFormat('en', {minimumFractionDigits: 3, maximumFractionDigits: 2})
+   ·                                                        ─────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `maximumSignificantDigits` must be greater than or equal to `minimumSignificantDigits`.
+   ╭─[no_invalid_intl_options.ts:1:59]
+ 1 │ new Intl.NumberFormat('en', {minimumSignificantDigits: 3, maximumSignificantDigits: 2})
+   ·                                                           ────────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `maximumFractionDigits` is ignored when significant-digit rounding takes precedence.
+   ╭─[no_invalid_intl_options.ts:1:59]
+ 1 │ new Intl.NumberFormat('en', {maximumSignificantDigits: 3, maximumFractionDigits: -1})
+   ·                                                           ─────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `minimumFractionDigits` is ignored when significant-digit rounding takes precedence.
+   ╭─[no_invalid_intl_options.ts:1:59]
+ 1 │ new Intl.NumberFormat('en', {maximumSignificantDigits: 3, minimumFractionDigits: 2, maximumFractionDigits: 1})
+   ·                                                           ─────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `maximumFractionDigits` is ignored when significant-digit rounding takes precedence.
+   ╭─[no_invalid_intl_options.ts:1:85]
+ 1 │ new Intl.NumberFormat('en', {maximumSignificantDigits: 3, minimumFractionDigits: 2, maximumFractionDigits: 1})
+   ·                                                                                     ─────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `roundingIncrement` must be one of 1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 2500, 5000.
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {roundingIncrement: 3})
+   ·                              ─────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `roundingIncrement` requires `roundingPriority` to be "auto".
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {roundingIncrement: 2, roundingPriority: "morePrecision"})
+   ·                              ─────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `roundingIncrement` cannot be combined with significant-digit rounding.
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {roundingIncrement: 2, maximumSignificantDigits: 3})
+   ·                              ─────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `roundingIncrement` requires equal `minimumFractionDigits` and `maximumFractionDigits`.
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {roundingIncrement: 2, minimumFractionDigits: 1, maximumFractionDigits: 2})
+   ·                              ─────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `minimumIntegerDigits` must be a number between 1 and 21.
+   ╭─[no_invalid_intl_options.ts:1:29]
+ 1 │ new Intl.PluralRules('en', {minimumIntegerDigits: 22})
+   ·                             ────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `type` must be one of "cardinal", "ordinal".
+   ╭─[no_invalid_intl_options.ts:1:29]
+ 1 │ new Intl.PluralRules('en', {type: "plural"})
+   ·                             ────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `compactDisplay` is ignored unless `notation` is "compact".
+   ╭─[no_invalid_intl_options.ts:1:29]
+ 1 │ new Intl.PluralRules('en', {compactDisplay: "long"})
+   ·                             ──────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `year` cannot be combined with `dateStyle`.
+   ╭─[no_invalid_intl_options.ts:1:52]
+ 1 │ new Intl.DateTimeFormat('en', {dateStyle: "short", year: "numeric"})
+   ·                                                    ────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `fractionalSecondDigits` cannot be combined with `timeStyle`.
+   ╭─[no_invalid_intl_options.ts:1:52]
+ 1 │ new Intl.DateTimeFormat('en', {timeStyle: "short", fractionalSecondDigits: 3})
+   ·                                                    ──────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `timeZoneName` cannot be combined with `dateStyle`.
+   ╭─[no_invalid_intl_options.ts:1:52]
+ 1 │ new Intl.DateTimeFormat('en', {dateStyle: "short", timeZoneName: "long"})
+   ·                                                    ────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `formatMatcher` is ignored when `dateStyle` or `timeStyle` is used.
+   ╭─[no_invalid_intl_options.ts:1:52]
+ 1 │ new Intl.DateTimeFormat('en', {dateStyle: "short", formatMatcher: "basic"})
+   ·                                                    ─────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `hourCycle` is ignored when `hour12` is provided.
+   ╭─[no_invalid_intl_options.ts:1:64]
+ 1 │ new Intl.DateTimeFormat('en', {hour: "numeric", hour12: false, hourCycle: "h23"})
+   ·                                                                ─────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `year` must be one of "numeric", "2-digit".
+   ╭─[no_invalid_intl_options.ts:1:32]
+ 1 │ new Intl.DateTimeFormat('en', {year: "long"})
+   ·                                ────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `fractionalSecondDigits` must be a number between 1 and 3.
+   ╭─[no_invalid_intl_options.ts:1:32]
+ 1 │ new Intl.DateTimeFormat('en', {fractionalSecondDigits: 0})
+   ·                                ──────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `calendar` must be a well-formed identifier.
+   ╭─[no_invalid_intl_options.ts:1:32]
+ 1 │ new Intl.DateTimeFormat('en', {calendar: "ab"})
+   ·                                ────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `sensitivity` must be one of "base", "accent", "case", "variant".
+   ╭─[no_invalid_intl_options.ts:1:26]
+ 1 │ new Intl.Collator('en', {sensitivity: "wrong"})
+   ·                          ───────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `collation` must be a well-formed identifier.
+   ╭─[no_invalid_intl_options.ts:1:26]
+ 1 │ new Intl.Collator('en', {collation: "ab"})
+   ·                          ─────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `language` must be a well-formed identifier.
+   ╭─[no_invalid_intl_options.ts:1:24]
+ 1 │ new Intl.Locale('en', {language: "abcd", script: "Latin", region: "USA", variants: "fonipa-FONIPA"})
+   ·                        ────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `script` must be a well-formed identifier.
+   ╭─[no_invalid_intl_options.ts:1:42]
+ 1 │ new Intl.Locale('en', {language: "abcd", script: "Latin", region: "USA", variants: "fonipa-FONIPA"})
+   ·                                          ──────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `region` must be a well-formed identifier.
+   ╭─[no_invalid_intl_options.ts:1:59]
+ 1 │ new Intl.Locale('en', {language: "abcd", script: "Latin", region: "USA", variants: "fonipa-FONIPA"})
+   ·                                                           ──────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `variants` must be a well-formed identifier.
+   ╭─[no_invalid_intl_options.ts:1:74]
+ 1 │ new Intl.Locale('en', {language: "abcd", script: "Latin", region: "USA", variants: "fonipa-FONIPA"})
+   ·                                                                          ────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `firstDayOfWeek` must be a well-formed identifier.
+   ╭─[no_invalid_intl_options.ts:1:24]
+ 1 │ new Intl.Locale('en', {firstDayOfWeek: "8"})
+   ·                        ──────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `localeMatcher` is not a recognized Intl.Locale option.
+   ╭─[no_invalid_intl_options.ts:1:24]
+ 1 │ new Intl.Locale('en', {localeMatcher: "lookup"})
+   ·                        ─────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): The `type` option is required for Intl.DisplayNames.
+   ╭─[no_invalid_intl_options.ts:1:29]
+ 1 │ new Intl.DisplayNames('en', {})
+   ·                             ──
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): The `type` option is required for Intl.DisplayNames.
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.DisplayNames('en', {type: undefined})
+   ·                              ────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `type` must be one of "language", "region", "script", "currency", "calendar", "dateTimeField".
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.DisplayNames('en', {type: "languages"})
+   ·                              ────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `languageDisplay` is ignored unless `type` is "language".
+   ╭─[no_invalid_intl_options.ts:1:46]
+ 1 │ new Intl.DisplayNames('en', {type: "region", languageDisplay: "standard"})
+   ·                                              ───────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `type` must be one of "conjunction", "disjunction", "unit".
+   ╭─[no_invalid_intl_options.ts:1:28]
+ 1 │ new Intl.ListFormat('en', {type: "and", style: "full"})
+   ·                            ────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "long", "short", "narrow".
+   ╭─[no_invalid_intl_options.ts:1:41]
+ 1 │ new Intl.ListFormat('en', {type: "and", style: "full"})
+   ·                                         ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `numeric` must be one of "always", "auto".
+   ╭─[no_invalid_intl_options.ts:1:36]
+ 1 │ new Intl.RelativeTimeFormat('en', {numeric: true, style: "full"})
+   ·                                    ───────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "long", "short", "narrow".
+   ╭─[no_invalid_intl_options.ts:1:51]
+ 1 │ new Intl.RelativeTimeFormat('en', {numeric: true, style: "full"})
+   ·                                                   ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `granularity` must be one of "grapheme", "word", "sentence".
+   ╭─[no_invalid_intl_options.ts:1:27]
+ 1 │ new Intl.Segmenter('en', {granularity: "character"})
+   ·                           ───────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "long", "short", "narrow", "digital".
+   ╭─[no_invalid_intl_options.ts:1:32]
+ 1 │ new Intl.DurationFormat('en', {style: "full", fractionalDigits: 10})
+   ·                                ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `fractionalDigits` must be a number between 0 and 9.
+   ╭─[no_invalid_intl_options.ts:1:47]
+ 1 │ new Intl.DurationFormat('en', {style: "full", fractionalDigits: 10})
+   ·                                               ────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `years` must be one of "long", "short", "narrow".
+   ╭─[no_invalid_intl_options.ts:1:32]
+ 1 │ new Intl.DurationFormat('en', {years: "numeric"})
+   ·                                ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `seconds` must continue the preceding numeric or fractional unit style.
+   ╭─[no_invalid_intl_options.ts:1:50]
+ 1 │ new Intl.DurationFormat('en', {hours: "numeric", seconds: "long"})
+   ·                                                  ───────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `minutes` must continue the preceding numeric or fractional unit style.
+   ╭─[no_invalid_intl_options.ts:1:50]
+ 1 │ new Intl.DurationFormat('en', {style: "digital", minutes: "long"})
+   ·                                                  ───────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `microseconds` must continue the preceding numeric or fractional unit style.
+   ╭─[no_invalid_intl_options.ts:1:57]
+ 1 │ new Intl.DurationFormat('en', {milliseconds: "numeric", microseconds: "long"})
+   ·                                                         ────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `millisecondsDisplay` cannot be "always" for a fractional unit.
+   ╭─[no_invalid_intl_options.ts:1:57]
+ 1 │ new Intl.DurationFormat('en', {milliseconds: "numeric", millisecondsDisplay: "always"})
+   ·                                                         ───────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "decimal", "percent", "currency", "unit".
+   ╭─[no_invalid_intl_options.ts:1:26]
+ 1 │ Intl.NumberFormat("en", {style: "wrong"})
+   ·                          ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `dateStyle` must be one of "full", "long", "medium", "short".
+   ╭─[no_invalid_intl_options.ts:1:28]
+ 1 │ Intl.DateTimeFormat("en", {dateStyle: "wrong"})
+   ·                            ─────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `usage` must be one of "sort", "search".
+   ╭─[no_invalid_intl_options.ts:1:22]
+ 1 │ Intl.Collator("en", {usage: "wrong"})
+   ·                      ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "decimal", "percent", "currency", "unit".
+   ╭─[no_invalid_intl_options.ts:1:62]
+ 1 │ const {NumberFormat: Formatter} = Intl; new Formatter("en", {style: "wrong"})
+   ·                                                              ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "decimal", "percent", "currency", "unit".
+   ╭─[no_invalid_intl_options.ts:1:37]
+ 1 │ globalThis.Intl.NumberFormat("en", {style: "wrong"})
+   ·                                     ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "decimal", "percent", "currency", "unit".
+   ╭─[no_invalid_intl_options.ts:1:33]
+ 1 │ new Intl["NumberFormat"]("en", {style: "wrong"})
+   ·                                 ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "decimal", "percent", "currency", "unit".
+   ╭─[no_invalid_intl_options.ts:1:29]
+ 1 │ Intl?.NumberFormat?.("en", {style: "wrong"})
+   ·                             ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `maximumFractionDigit` is not a recognized Intl.NumberFormat option.
+   ╭─[no_invalid_intl_options.ts:1:31]
+ 1 │ new Intl.NumberFormat("en", {["maximumFractionDigit"]: 0})
+   ·                               ──────────────────────
+   ╰────
+  help: Rename `maximumFractionDigit` to `maximumFractionDigits`.
+
+  ⚠ unicorn(no-invalid-intl-options): `maximumFractionDigit` is not a recognized Intl.NumberFormat option.
+   ╭─[no_invalid_intl_options.ts:1:31]
+ 1 │ new Intl.NumberFormat("en", {[`maximumFractionDigit`]: 0})
+   ·                               ──────────────────────
+   ╰────
+  help: Rename `maximumFractionDigit` to `maximumFractionDigits`.
+
+  ⚠ unicorn(no-invalid-intl-options): `maximumFractionDigit` is not a recognized Intl.NumberFormat option.
+   ╭─[no_invalid_intl_options.ts:1:62]
+ 1 │ const maximumFractionDigit = 0; new Intl.NumberFormat("en", {maximumFractionDigit})
+   ·                                                              ────────────────────
+   ╰────
+  help: Rename `maximumFractionDigit` to `maximumFractionDigits`.
+
+  ⚠ unicorn(no-invalid-intl-options): `maximumFractionDigit` is not a recognized Intl.NumberFormat option.
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat("en", {maximumFractionDigit: 0, maximumFractionDigits: 2})
+   ·                              ────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `ear` is not a recognized Intl.DateTimeFormat option.
+   ╭─[no_invalid_intl_options.ts:1:32]
+ 1 │ new Intl.DateTimeFormat("en", {ear: "numeric"})
+   ·                                ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `maximumFractionDigit` is not a recognized Intl.NumberFormat option.
+   ╭─[no_invalid_intl_options.ts:1:42]
+ 1 │ new Intl.NumberFormat("en", {[/* keep */ "maximumFractionDigit"]: 0})
+   ·                                          ──────────────────────
+   ╰────
+  help: Rename `maximumFractionDigit` to `maximumFractionDigits`.
+
+  ⚠ unicorn(no-invalid-intl-options): `maximumFractionDigit` is not a recognized Intl.NumberFormat option.
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat("en", {maximumFractionDigit /* keep */: 0})
+   ·                              ────────────────────
+   ╰────
+  help: Rename `maximumFractionDigit` to `maximumFractionDigits`.
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "decimal", "percent", "currency", "unit".
+   ╭─[no_invalid_intl_options.ts:1:53]
+ 1 │ const style = "wrong"; new Intl.NumberFormat("en", {style})
+   ·                                                     ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "decimal", "percent", "currency", "unit".
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat("en", {style: "wrong"}, ...extra)
+   ·                              ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `sensitivity` must be one of "base", "accent", "case", "variant".
+   ╭─[no_invalid_intl_options.ts:1:38]
+ 1 │ "text".localeCompare("other", "en", {sensitivity: "wrong"})
+   ·                                      ───────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `sensitivity` must be one of "base", "accent", "case", "variant".
+   ╭─[no_invalid_intl_options.ts:1:41]
+ 1 │ "text"?.localeCompare?.("other", "en", {sensitivity: "wrong"})
+   ·                                         ───────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): The `currency` option is required when `style` is "currency".
+   ╭─[no_invalid_intl_options.ts:1:27]
+ 1 │ (1).toLocaleString("en", {style: "currency"})
+   ·                           ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `maximumFractionDigits` must be a number between 0 and 100.
+   ╭─[no_invalid_intl_options.ts:1:26]
+ 1 │ 1n.toLocaleString("en", {maximumFractionDigits: -1})
+   ·                          ─────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "decimal", "percent", "currency", "unit".
+   ╭─[no_invalid_intl_options.ts:1:37]
+ 1 │ new Number(1).toLocaleString("en", {style: "wrong"})
+   ·                                     ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "decimal", "percent", "currency", "unit".
+   ╭─[no_invalid_intl_options.ts:1:41]
+ 1 │ new Uint8Array(2).toLocaleString("en", {style: "wrong"})
+   ·                                         ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "decimal", "percent", "currency", "unit".
+   ╭─[no_invalid_intl_options.ts:1:44]
+ 1 │ BigInt64Array.of(1n).toLocaleString("en", {style: "wrong"})
+   ·                                            ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `dateStyle` must be one of "full", "long", "medium", "short".
+   ╭─[no_invalid_intl_options.ts:1:34]
+ 1 │ new Date().toLocaleString("en", {dateStyle: "wrong"})
+   ·                                  ─────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `timeStyle` cannot be used with `toLocaleDateString()`.
+   ╭─[no_invalid_intl_options.ts:1:38]
+ 1 │ new Date().toLocaleDateString("en", {timeStyle: "short"})
+   ·                                      ─────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `dateStyle` cannot be used with `toLocaleTimeString()`.
+   ╭─[no_invalid_intl_options.ts:1:38]
+ 1 │ new Date().toLocaleTimeString("en", {dateStyle: "short"})
+   ·                                      ─────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `dateStyle` must be one of "full", "long", "medium", "short".
+   ╭─[no_invalid_intl_options.ts:1:53]
+ 1 │ const date = new Date(); date.toLocaleString("en", {dateStyle: "wrong"})
+   ·                                                     ─────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `maximumFractionDigit` is not a recognized Intl.NumberFormat option.
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {maximumFractionDigit: 0} as Intl.NumberFormatOptions)
+   ·                              ────────────────────
+   ╰────
+  help: Rename `maximumFractionDigit` to `maximumFractionDigits`.
+
+  ⚠ unicorn(no-invalid-intl-options): `maximumFractionDigit` is not a recognized Intl.NumberFormat option.
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {maximumFractionDigit: 0} satisfies Intl.NumberFormatOptions)
+   ·                              ────────────────────
+   ╰────
+  help: Rename `maximumFractionDigit` to `maximumFractionDigits`.
+
+  ⚠ unicorn(no-invalid-intl-options): `maximumFractionDigit` is not a recognized Intl.NumberFormat option.
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {maximumFractionDigit: 0} !)
+   ·                              ────────────────────
+   ╰────
+  help: Rename `maximumFractionDigit` to `maximumFractionDigits`.
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "decimal", "percent", "currency", "unit".
+   ╭─[no_invalid_intl_options.ts:1:59]
+ 1 │ function run(value: number) { value.toLocaleString("en", {style: "wrong"}); }
+   ·                                                           ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "decimal", "percent", "currency", "unit".
+   ╭─[no_invalid_intl_options.ts:1:59]
+ 1 │ function run(value: bigint) { value.toLocaleString("en", {style: "wrong"}); }
+   ·                                                           ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `timeStyle` cannot be used with `toLocaleDateString()`.
+   ╭─[no_invalid_intl_options.ts:1:61]
+ 1 │ function run(value: Date) { value.toLocaleDateString("en", {timeStyle: "short"}); }
+   ·                                                             ─────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "decimal", "percent", "currency", "unit".
+   ╭─[no_invalid_intl_options.ts:1:63]
+ 1 │ function run(value: Uint8Array) { value.toLocaleString("en", {style: "wrong"}); }
+   ·                                                               ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `timeStyle` cannot be used with `toLocaleDateString()`.
+   ╭─[no_invalid_intl_options.ts:1:74]
+ 1 │ function run(value: Date | undefined) { value?.toLocaleDateString("en", {timeStyle: "short"}); }
+   ·                                                                          ─────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `minimumIntegerDigits` must be a number between 1 and 21.
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {minimumIntegerDigits: 21.1})
+   ·                              ────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `minimumFractionDigits` must be a number between 0 and 100.
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {minimumFractionDigits: -0.1})
+   ·                              ─────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `maximumSignificantDigits` must be a number between 1 and 21.
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {maximumSignificantDigits: 21.1})
+   ·                              ────────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `minimumSignificantDigits` must be a number between 1 and 21.
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {minimumSignificantDigits: 0.9})
+   ·                              ────────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `roundingIncrement` must be a number between 1 and 5000.
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {roundingIncrement: 5000.1})
+   ·                              ─────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `roundingMode` must be one of "ceil", "floor", "expand", "trunc", "halfCeil", "halfFloor", "halfExpand", "halfTrunc", "halfEven".
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {roundingMode: "up"})
+   ·                              ────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `roundingPriority` must be one of "auto", "morePrecision", "lessPrecision".
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {roundingPriority: "both"})
+   ·                              ────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `trailingZeroDisplay` must be one of "auto", "stripIfInteger".
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {trailingZeroDisplay: "never"})
+   ·                              ───────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `notation` must be one of "standard", "scientific", "engineering", "compact".
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {notation: "decimal"})
+   ·                              ────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `maximumFractionDigits` must be greater than or equal to `minimumFractionDigits`.
+   ╭─[no_invalid_intl_options.ts:1:91]
+ 1 │ new Intl.NumberFormat('en', {roundingPriority: "lessPrecision", minimumFractionDigits: 2, maximumFractionDigits: 1})
+   ·                                                                                           ─────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `minimumIntegerDigits` must be a number between 1 and 21.
+   ╭─[no_invalid_intl_options.ts:1:29]
+ 1 │ new Intl.PluralRules('en', {minimumIntegerDigits: 21.1})
+   ·                             ────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `minimumFractionDigits` must be a number between 0 and 100.
+   ╭─[no_invalid_intl_options.ts:1:29]
+ 1 │ new Intl.PluralRules('en', {minimumFractionDigits: -0.1})
+   ·                             ─────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `maximumSignificantDigits` must be a number between 1 and 21.
+   ╭─[no_invalid_intl_options.ts:1:29]
+ 1 │ new Intl.PluralRules('en', {maximumSignificantDigits: 21.1})
+   ·                             ────────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `minimumSignificantDigits` must be a number between 1 and 21.
+   ╭─[no_invalid_intl_options.ts:1:29]
+ 1 │ new Intl.PluralRules('en', {minimumSignificantDigits: 0.9})
+   ·                             ────────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `roundingIncrement` must be a number between 1 and 5000.
+   ╭─[no_invalid_intl_options.ts:1:29]
+ 1 │ new Intl.PluralRules('en', {roundingIncrement: 5000.1})
+   ·                             ─────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `roundingMode` must be one of "ceil", "floor", "expand", "trunc", "halfCeil", "halfFloor", "halfExpand", "halfTrunc", "halfEven".
+   ╭─[no_invalid_intl_options.ts:1:29]
+ 1 │ new Intl.PluralRules('en', {roundingMode: "up"})
+   ·                             ────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `roundingPriority` must be one of "auto", "morePrecision", "lessPrecision".
+   ╭─[no_invalid_intl_options.ts:1:29]
+ 1 │ new Intl.PluralRules('en', {roundingPriority: "both"})
+   ·                             ────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `trailingZeroDisplay` must be one of "auto", "stripIfInteger".
+   ╭─[no_invalid_intl_options.ts:1:29]
+ 1 │ new Intl.PluralRules('en', {trailingZeroDisplay: "never"})
+   ·                             ───────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `notation` must be one of "standard", "scientific", "engineering", "compact".
+   ╭─[no_invalid_intl_options.ts:1:29]
+ 1 │ new Intl.PluralRules('en', {notation: "decimal"})
+   ·                             ────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `maximumFractionDigits` must be greater than or equal to `minimumFractionDigits`.
+   ╭─[no_invalid_intl_options.ts:1:90]
+ 1 │ new Intl.PluralRules('en', {roundingPriority: "lessPrecision", minimumFractionDigits: 2, maximumFractionDigits: 1})
+   ·                                                                                          ─────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `fractionalSecondDigits` must be a number between 1 and 3.
+   ╭─[no_invalid_intl_options.ts:1:32]
+ 1 │ new Intl.DateTimeFormat('en', {fractionalSecondDigits: 3.1})
+   ·                                ──────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `fractionalDigits` must be a number between 0 and 9.
+   ╭─[no_invalid_intl_options.ts:1:32]
+ 1 │ new Intl.DurationFormat('en', {fractionalDigits: -0.1})
+   ·                                ────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `minutes` must continue the preceding numeric or fractional unit style.
+   ╭─[no_invalid_intl_options.ts:1:50]
+ 1 │ new Intl.DurationFormat('en', {hours: "2-digit", minutes: "short"})
+   ·                                                  ───────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `microsecondsDisplay` cannot be "always" for a fractional unit.
+   ╭─[no_invalid_intl_options.ts:1:50]
+ 1 │ new Intl.DurationFormat('en', {style: "digital", microsecondsDisplay: "always"})
+   ·                                                  ───────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `nanoseconds` must continue the preceding numeric or fractional unit style.
+   ╭─[no_invalid_intl_options.ts:1:52]
+ 1 │ new Intl.DurationFormat('en', {seconds: "numeric", nanoseconds: "long"})
+   ·                                                    ───────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `nanoseconds` must continue the preceding numeric or fractional unit style.
+   ╭─[no_invalid_intl_options.ts:1:57]
+ 1 │ new Intl.DurationFormat('en', {microseconds: "numeric", nanoseconds: "short"})
+   ·                                                         ───────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `currency` must be a well-formed identifier.
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {currency: "US", unitDisplay: "wide"})
+   ·                              ────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `unitDisplay` must be one of "short", "narrow", "long".
+   ╭─[no_invalid_intl_options.ts:1:46]
+ 1 │ new Intl.NumberFormat('en', {currency: "US", unitDisplay: "wide"})
+   ·                                              ───────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `languageDisplay` must be one of "dialect", "standard".
+   ╭─[no_invalid_intl_options.ts:1:46]
+ 1 │ new Intl.DisplayNames('en', {type: "region", languageDisplay: "wrong"})
+   ·                                              ───────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `hourCycle` must be one of "h11", "h12", "h23", "h24".
+   ╭─[no_invalid_intl_options.ts:1:46]
+ 1 │ new Intl.DateTimeFormat('en', {hour12: true, hourCycle: "wrong"})
+   ·                                              ─────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `variants` must be a well-formed identifier.
+   ╭─[no_invalid_intl_options.ts:1:24]
+ 1 │ new Intl.Locale('en', {variants: "", calendar: "too-long-identifier"})
+   ·                        ────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `calendar` must be a well-formed identifier.
+   ╭─[no_invalid_intl_options.ts:1:38]
+ 1 │ new Intl.Locale('en', {variants: "", calendar: "too-long-identifier"})
+   ·                                      ────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `roundingIncrement` requires fraction-digit rounding instead of the default compact rounding.
+   ╭─[no_invalid_intl_options.ts:1:51]
+ 1 │ new Intl.NumberFormat('en', {notation: "compact", roundingIncrement: 2})
+   ·                                                   ─────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `roundingIncrement` requires fraction-digit rounding instead of the default compact rounding.
+   ╭─[no_invalid_intl_options.ts:1:50]
+ 1 │ new Intl.PluralRules('en', {notation: "compact", roundingIncrement: 2})
+   ·                                                  ─────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `variants` must be a well-formed identifier.
+   ╭─[no_invalid_intl_options.ts:1:24]
+ 1 │ new Intl.Locale('en', {variants: "fonipK"})
+   ·                        ────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "decimal", "percent", "currency", "unit".
+   ╭─[no_invalid_intl_options.ts:1:52]
+ 1 │ const key = "style"; new Intl.NumberFormat("en", {[key]: "wrong"})
+   ·                                                    ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `maximumFractionDigit` is not a recognized Intl.NumberFormat option.
+   ╭─[no_invalid_intl_options.ts:1:67]
+ 1 │ const key = "maximumFractionDigit"; new Intl.NumberFormat("en", {[key]: 2})
+   ·                                                                   ───
+   ╰────
+  help: Rename `maximumFractionDigit` to `maximumFractionDigits`.
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "decimal", "percent", "currency", "unit".
+   ╭─[no_invalid_intl_options.ts:1:53]
+ 1 │ const method = "toLocaleString"; (1)[method]("en", {style: "wrong"})
+   ·                                                     ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `sensitivity` must be one of "base", "accent", "case", "variant".
+   ╭─[no_invalid_intl_options.ts:1:43]
+ 1 │ new String("a").localeCompare("b", "en", {sensitivity: "wrong"})
+   ·                                           ───────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `sensitivity` must be one of "base", "accent", "case", "variant".
+   ╭─[no_invalid_intl_options.ts:1:67]
+ 1 │ function run(value: String) { value.localeCompare("other", "en", {sensitivity: "wrong"}); }
+   ·                                                                   ───────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `localeMathcer` is not a recognized Intl.Collator.supportedLocalesOf option.
+   ╭─[no_invalid_intl_options.ts:1:73]
+ 1 │ const {supportedLocalesOf: supported} = Intl.Collator; supported("en", {localeMathcer: "lookup"})
+   ·                                                                         ─────────────
+   ╰────
+  help: Rename `localeMathcer` to `localeMatcher`.
+
+  ⚠ unicorn(no-invalid-intl-options): `stylee` is not a recognized Intl.NumberFormat option.
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat("en", {stylee: "decimal", styl: "decimal", stxle: "decimal"})
+   ·                              ──────
+   ╰────
+  help: Rename `stylee` to `style`.
+
+  ⚠ unicorn(no-invalid-intl-options): `styl` is not a recognized Intl.NumberFormat option.
+   ╭─[no_invalid_intl_options.ts:1:49]
+ 1 │ new Intl.NumberFormat("en", {stylee: "decimal", styl: "decimal", stxle: "decimal"})
+   ·                                                 ────
+   ╰────
+  help: Rename `styl` to `style`.
+
+  ⚠ unicorn(no-invalid-intl-options): `stxle` is not a recognized Intl.NumberFormat option.
+   ╭─[no_invalid_intl_options.ts:1:66]
+ 1 │ new Intl.NumberFormat("en", {stylee: "decimal", styl: "decimal", stxle: "decimal"})
+   ·                                                                  ─────
+   ╰────
+  help: Rename `stxle` to `style`.
+
+  ⚠ unicorn(no-invalid-intl-options): `maximumFractionDigit` is not a recognized Intl.NumberFormat option.
+   ╭─[no_invalid_intl_options.ts:1:31]
+ 1 │ new Intl.NumberFormat("en", {["maximum" + /* keep */ "FractionDigit"]: 0})
+   ·                               ──────────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `maximumFractionDigit` is not a recognized Intl.NumberFormat option.
+   ╭─[no_invalid_intl_options.ts:1:57]
+ 1 │ new Intl.NumberFormat("en", (<Intl.NumberFormatOptions>{maximumFractionDigit: 0}))
+   ·                                                         ────────────────────
+   ╰────
+  help: Rename `maximumFractionDigit` to `maximumFractionDigits`.
+
+  ⚠ unicorn(no-invalid-intl-options): `sensitivity` must be one of "base", "accent", "case", "variant".
+   ╭─[no_invalid_intl_options.ts:1:67]
+ 1 │ function run(value: string) { value.localeCompare("other", "en", {sensitivity: "wrong"}); }
+   ·                                                                   ───────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "decimal", "percent", "currency", "unit".
+   ╭─[no_invalid_intl_options.ts:1:54]
+ 1 │ function run(value: 1) { value.toLocaleString('en', {style: 'wrong'}); }
+   ·                                                      ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "decimal", "percent", "currency", "unit".
+   ╭─[no_invalid_intl_options.ts:1:55]
+ 1 │ function run(value: 1n) { value.toLocaleString('en', {style: 'wrong'}); }
+   ·                                                       ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "decimal", "percent", "currency", "unit".
+   ╭─[no_invalid_intl_options.ts:1:55]
+ 1 │ function run(value: -1) { value.toLocaleString('en', {style: 'wrong'}); }
+   ·                                                       ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "decimal", "percent", "currency", "unit".
+   ╭─[no_invalid_intl_options.ts:1:56]
+ 1 │ function run(value: -1n) { value.toLocaleString('en', {style: 'wrong'}); }
+   ·                                                        ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "decimal", "percent", "currency", "unit".
+   ╭─[no_invalid_intl_options.ts:1:66]
+ 1 │ function run(value: number) { (value as 1).toLocaleString("en", {style: "wrong"}); }
+   ·                                                                  ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be convertible to a string.
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {style: Symbol.iterator})
+   ·                              ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `maximumFractionDigits` must be a number between 0 and 100.
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {maximumFractionDigits: Symbol.iterator})
+   ·                              ─────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `useGrouping` must be convertible to a string.
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat('en', {useGrouping: Symbol.iterator})
+   ·                              ───────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `timeZone` must be convertible to a string.
+   ╭─[no_invalid_intl_options.ts:1:32]
+ 1 │ new Intl.DateTimeFormat('en', {timeZone: Symbol.iterator})
+   ·                                ────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `seconds` must continue the preceding numeric or fractional unit style.
+   ╭─[no_invalid_intl_options.ts:1:71]
+ 1 │ new Intl.DurationFormat('en', {style: dynamicStyle, hours: "numeric", seconds: "long"})
+   ·                                                                       ───────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `millisecondsDisplay` cannot be "always" for a fractional unit.
+   ╭─[no_invalid_intl_options.ts:1:73]
+ 1 │ new Intl.DurationFormat('en', {style: dynamicStyle, seconds: "numeric", millisecondsDisplay: "always"})
+   ·                                                                         ───────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `nanoseconds` must continue the preceding numeric or fractional unit style.
+   ╭─[no_invalid_intl_options.ts:1:78]
+ 1 │ new Intl.DurationFormat('en', {style: dynamicStyle, milliseconds: "numeric", nanoseconds: "long"})
+   ·                                                                              ───────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `sensitivity` must be one of "base", "accent", "case", "variant".
+   ╭─[no_invalid_intl_options.ts:1:80]
+ 1 │ function run(value: string | undefined) { value?.localeCompare('other', 'en', {sensitivity: 'wrong'}); }
+   ·                                                                                ───────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `sensitivity` must be one of "base", "accent", "case", "variant".
+   ╭─[no_invalid_intl_options.ts:1:72]
+ 1 │ function run(value: "a" | null) { value?.localeCompare('other', 'en', {sensitivity: 'wrong'}); }
+   ·                                                                        ───────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `sensitivity` must be one of "base", "accent", "case", "variant".
+   ╭─[no_invalid_intl_options.ts:1:80]
+ 1 │ function run(value: String | undefined) { value?.localeCompare('other', 'en', {sensitivity: 'wrong'}); }
+   ·                                                                                ───────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `sensitivity` must be one of "base", "accent", "case", "variant".
+   ╭─[no_invalid_intl_options.ts:1:80]
+ 1 │ function run(value: string | undefined) { value?.localeCompare("other", "en", {sensitivity: "wrong"}); }
+   ·                                                                                ───────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "decimal", "percent", "currency", "unit".
+   ╭─[no_invalid_intl_options.ts:1:60]
+ 1 │ new (Intl.NumberFormat as typeof Intl.NumberFormat)('en', {style: 'wrong'})
+   ·                                                            ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "decimal", "percent", "currency", "unit".
+   ╭─[no_invalid_intl_options.ts:1:34]
+ 1 │ new (Intl.NumberFormat !)('en', {style: 'wrong'})
+   ·                                  ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "decimal", "percent", "currency", "unit".
+   ╭─[no_invalid_intl_options.ts:1:67]
+ 1 │ new (Intl.NumberFormat satisfies typeof Intl.NumberFormat)('en', {style: 'wrong'})
+   ·                                                                   ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "decimal", "percent", "currency", "unit".
+   ╭─[no_invalid_intl_options.ts:1:87]
+ 1 │ const Formatter = Intl.NumberFormat as typeof Intl.NumberFormat; new Formatter("en", {style: "wrong"})
+   ·                                                                                       ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `maximumFractionDigit` is not a recognized Intl.NumberFormat option.
+   ╭─[no_invalid_intl_options.ts:1:62]
+ 1 │ const maximumFractionDigit = 2; new Intl.NumberFormat("en", {maximumFractionDigit /* keep */})
+   ·                                                              ────────────────────
+   ╰────
+  help: Rename `maximumFractionDigit` to `maximumFractionDigits`.
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "decimal", "percent", "currency", "unit".
+   ╭─[no_invalid_intl_options.ts:1:94]
+ 1 │ function run(value: number | bigint | Uint8Array | undefined) { value?.toLocaleString("en", {style: "wrong"}); }
+   ·                                                                                              ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `maximumFractionDigits` is ignored when significant-digit rounding takes precedence.
+   ╭─[no_invalid_intl_options.ts:1:59]
+ 1 │ new Intl.NumberFormat('en', {maximumSignificantDigits: 3, maximumFractionDigits: Symbol.iterator})
+   ·                                                           ─────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `usage` must be one of "sort", "search".
+   ╭─[no_invalid_intl_options.ts:1:62]
+ 1 │ function check(text: `abc`) { text.localeCompare("x", "en", {usage: "invalid"}); }
+   ·                                                              ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "decimal", "percent", "currency", "unit".
+   ╭─[no_invalid_intl_options.ts:1:59]
+ 1 │ const Formatter = Intl.NumberFormat; new Formatter("en", {style: "wrong"})
+   ·                                                           ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "decimal", "percent", "currency", "unit".
+   ╭─[no_invalid_intl_options.ts:1:76]
+ 1 │ const {Intl: {NumberFormat: Formatter}} = globalThis; new Formatter("en", {style: "wrong"})
+   ·                                                                            ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `localeMatcher` must be one of "lookup", "best fit".
+   ╭─[no_invalid_intl_options.ts:1:80]
+ 1 │ const {NumberFormat: {supportedLocalesOf: supported}} = Intl; supported("en", {localeMatcher: "wrong"})
+   ·                                                                                ─────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "decimal", "percent", "currency", "unit".
+   ╭─[no_invalid_intl_options.ts:1:106]
+ 1 │ const internationalization = Intl; const Formatter = internationalization.NumberFormat; Formatter("en", {style: "wrong"})
+   ·                                                                                                          ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "decimal", "percent", "currency", "unit".
+   ╭─[no_invalid_intl_options.ts:1:37]
+ 1 │ new window.Intl.NumberFormat("en", {style: "wrong"})
+   ·                                     ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): The `currency` option is required when `style` is "currency".
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat("en", {style: `curr${"ency"}`})
+   ·                              ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `minimumIntegerDigits` must be a number between 1 and 21.
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat("en", {minimumIntegerDigits: "0x16"})
+   ·                              ────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `minimumIntegerDigits` must be a number between 1 and 21.
+   ╭─[no_invalid_intl_options.ts:1:30]
+ 1 │ new Intl.NumberFormat("en", {minimumIntegerDigits: "\u00a0 22 \u00a0"})
+   ·                              ────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `calendar` must be a well-formed identifier.
+   ╭─[no_invalid_intl_options.ts:1:24]
+ 1 │ new Intl.Locale("en", {calendar: "foo--bar"})
+   ·                        ────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `variants` must be a well-formed identifier.
+   ╭─[no_invalid_intl_options.ts:1:24]
+ 1 │ new Intl.Locale("en", {variants: "1901-1901"})
+   ·                        ────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `millisecondsDisplay` cannot be "always" for a fractional unit.
+   ╭─[no_invalid_intl_options.ts:1:50]
+ 1 │ new Intl.DurationFormat("en", {style: "digital", millisecondsDisplay: "always"})
+   ·                                                  ───────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `maximumFractionDigits` is ignored when significant-digit rounding takes precedence.
+   ╭─[no_invalid_intl_options.ts:1:59]
+ 1 │ new Intl.NumberFormat("en", {maximumSignificantDigits: 3, maximumFractionDigits: Symbol.iterator})
+   ·                                                           ─────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "decimal", "percent", "currency", "unit".
+   ╭─[no_invalid_intl_options.ts:1:70]
+ 1 │ function run(value: (number | bigint)) { value.toLocaleString("en", {style: "wrong"}); }
+   ·                                                                      ─────
+   ╰────
