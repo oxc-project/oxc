@@ -16,6 +16,13 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `tabIndex={0}` to make the element reachable via sequential keyboard navigation.
 
+  ⚠ jsx-a11y(interactive-supports-focus): Elements with the 'button' interactive role must be tabbable.
+   ╭─[interactive_supports_focus.tsx:1:1]
+ 1 │ <div role="button" onclick={() => void 0} />
+   · ────────────────────────────────────────────
+   ╰────
+  help: Add `tabIndex={0}` to make the element reachable via sequential keyboard navigation.
+
   ⚠ jsx-a11y(interactive-supports-focus): Elements with the 'checkbox' interactive role must be tabbable.
    ╭─[interactive_supports_focus.tsx:1:1]
  1 │ <div role="checkbox" onClick={() => void 0} />

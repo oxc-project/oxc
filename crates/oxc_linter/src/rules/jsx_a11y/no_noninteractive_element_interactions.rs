@@ -233,7 +233,7 @@ fn has_active_handler(
     if ignored_handlers.iter().any(|ignored| ignored.as_str() == handler) {
         return false;
     }
-    let Some(prop) = has_jsx_prop(jsx_el, handler) else {
+    let Some(prop) = has_jsx_prop_ignore_case(jsx_el, handler) else {
         return false;
     };
 
@@ -618,6 +618,7 @@ fn test() {
     let mut fail: Vec<TestCase> = vec![
         (r"<main onClick={() => void 0} />", None, None).into(),
         (r"<li onClick={() => void 0} />", None, None).into(),
+        (r"<li onclick={() => void 0} />", None, None).into(),
         (r"<img onClick={() => void 0} />", None, None).into(),
         (r"<iframe onClick={() => void 0} />", None, None).into(),
         (r"<label onClick={() => void 0} />", None, None).into(),
