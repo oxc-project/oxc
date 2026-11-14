@@ -16,9 +16,9 @@ use oxc_diagnostics::{
     DiagnosticSender, DiagnosticService, GraphicalReportHandler, GraphicalTheme, OxcDiagnostic,
 };
 use oxc_linter::{
-    AllowWarnDeny, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ExternalLinter,
-    ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintRunner,
-    LintServiceOptions, Linter, OxlintSuppressionFileAction, RuleTimingStore, SuppressionManager,
+    AllowWarnDeny, ConfigBuilderError, ConfigStore, ExternalLinter, ExternalPluginStore,
+    InvalidFilterKind, LintFilter, LintOptions, LintRunner, LintServiceOptions, Linter,
+    OxlintSuppressionFileAction, RuleTimingStore, SuppressionManager,
 };
 
 #[cfg(feature = "napi")]
@@ -251,20 +251,18 @@ impl CliRunner {
             !self.options.list_rules &&
             config_discovery().nested_configs();
 
-        let config_result = {
-            let mut config_loader =
-                ConfigLoader::new(external_linter, &mut external_plugin_store, &filters, None);
-            #[cfg(feature = "napi")]
-            {
-                config_loader = config_loader.with_js_config_loader(self.js_config_loader.as_ref());
-            }
-            config_loader.load_root_and_nested(
-                &self.cwd,
-                basic_options.config.as_ref(),
-                &paths,
-                search_for_nested_configs,
-            )
-        };
+        let mut config_loader =
+            ConfigLoader::new(external_linter, &mut external_plugin_store, &filters, None);
+        #[cfg(feature = "napi")]
+        {
+            config_loader = config_loader.with_js_config_loader(self.js_config_loader.as_ref());
+        }
+        let config_result = config_loader.load_root_and_nested(
+            &self.cwd,
+            basic_options.config.as_ref(),
+            &paths,
+            search_for_nested_configs,
+        );
 
         let (mut root_config, nested_configs, nested_ignore_patterns) = match config_result {
             Ok(loaded) => (loaded.root, loaded.nested, loaded.nested_ignore_patterns),
@@ -323,13 +321,7 @@ impl CliRunner {
         enable_plugins.apply_overrides(&mut plugins);
         root_config.plugins = Some(plugins);
 
-        let config_builder = match ConfigStoreBuilder::from_oxlintrc(
-            false,
-            root_config.clone(),
-            external_linter,
-            &mut external_plugin_store,
-            None,
-        ) {
+        let config_builder = match config_loader.create_config_builder(root_config.clone()) {
             Ok(builder) => builder,
             Err(e) => {
                 print_and_flush_stdout(
@@ -341,8 +333,7 @@ impl CliRunner {
                 );
                 return CliRunResult::InvalidOptionConfig;
             }
-        }
-        .with_filters(&filters);
+        };
 
         if misc_options.print_config {
             return crate::mode::run_print_config(&config_builder, root_config, stdout);
