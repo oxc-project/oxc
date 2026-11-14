@@ -16,7 +16,8 @@ use crate::{
         KEYBOARD_EVENT_HANDLERS, MOUSE_EVENT_HANDLERS, get_element_type,
         get_string_literal_prop_value, has_jsx_prop, has_jsx_prop_ignore_case, is_disabled_element,
         is_hidden_from_screen_reader, is_interactive_element, is_interactive_role,
-        is_non_interactive_element, is_non_interactive_role, is_presentation_role,
+        is_maybe_interactive_role, is_non_interactive_element, is_non_interactive_role,
+        is_presentation_role,
     },
 };
 
@@ -131,7 +132,10 @@ impl Rule for InteractiveSupportsFocus {
             return;
         }
 
-        if !is_interactive_role(role) || is_non_interactive_role(role) {
+        if !is_interactive_role(role)
+            || is_non_interactive_role(role)
+            || is_maybe_interactive_role(role)
+        {
             return;
         }
 
@@ -286,6 +290,9 @@ fn test() {
         (r#"<div role="slider" onClick={() => void 0} tabIndex="0" />"#, None, None),
         (r#"<div role="tab" onClick={() => void 0} tabIndex="0" />"#, None, None),
         (r#"<div role="treeitem" onClick={() => void 0} tabIndex="0" />"#, None, None),
+        // maybe-interactive roles: authors MAY manage focus of descendants instead
+        (r#"<div role="toolbar" onClick={() => void 0} />"#, None, None),
+        (r#"<div role="toolbar" onMouseDown={(e) => e.preventDefault()} />"#, None, None),
     ];
 
     let fail = vec![
