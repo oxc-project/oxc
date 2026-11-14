@@ -1,8 +1,4 @@
-use std::{ptr, str};
-
-use oxc_ast::ast::{Comment, RegExpFlags};
 use oxc_simd::{Avx2, BASELINE, Cpu, DynCpu, Neon, Vec128, Vec256, cpu_multiversion, cpu_version};
-use oxc_span::Span;
 use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
 use crate::{
@@ -10,98 +6,14 @@ use crate::{
     token::StringSpan,
 };
 
-use crate::pipeline::{carve::JFrame, chunk::mm32, disambiguate::DisambiguateState};
+use crate::pipeline::{
+    bytes::{hex_digit, is_ls_ps_tail},
+    chunk::mm32,
+};
 
-#[derive(Debug, Default)]
-pub(crate) struct TokenLanes {
-    pub numbers: Vec<f64>,
-    pub strings: Vec<StringSpan>,
-    pub templates: Vec<StringSpan>,
-    pub atoms: Vec<StringSpan>,
-    pub regex_flags: Vec<RegExpFlags>,
-    pub cooked: Vec<u8>,
-    pub comments: Vec<Comment>,
-    /// Lexer diagnostics, pushed only on cold error paths; empty for valid input.
-    pub diags: Vec<Diagnostic>,
-    /// Code-level whitespace chars other than space, tab, LF and CR, one span per char.
-    pub irregular_whitespaces: Vec<Span>,
-}
-
-#[derive(Default)]
-pub(crate) struct Lanes {
-    pub out: TokenLanes,
-    /// Byte ranges lexed content-blind (the `.tsx` type-argument skip): diagnostics landing in one are dropped at drain time.
-    pub diag_suppress: Vec<(u32, u32)>,
-    /// Positions of non-whitespace non-ASCII lead bytes, recorded by
-    /// `misc_pre` before carve clears literal interiors. Resolved at drain:
-    /// leads inside literal tokens are legal content and drop cheaply; only
-    /// code-level survivors pay the identifier-char check. Empty for
-    /// pure-ASCII input.
-    pub unicode_leads: Vec<u32>,
-    /// Carve's nesting stacks, kept between lexes to reuse their allocations.
-    pub(super) template_depth: Vec<u32>,
-    pub(super) jsx_stack: Vec<JFrame>,
-    pub(super) module: bool,
-    /// What the disambiguation questions keep across the lex: the context walks,
-    /// the bracket bitmap and the closers the forward scans resolved.
-    pub(super) disambiguate: DisambiguateState,
-}
+use super::Lanes;
 
 impl Lanes {
-    #[cpu_multiversion]
-    pub(super) fn clear(&mut self, _cpu: impl Cpu) {
-        self.out.numbers.clear();
-        self.out.strings.clear();
-        self.out.templates.clear();
-        self.out.atoms.clear();
-        self.out.regex_flags.clear();
-        self.out.cooked.clear();
-        self.out.comments.clear();
-        self.out.diags.clear();
-        self.diag_suppress.clear();
-        self.unicode_leads.clear();
-        self.out.irregular_whitespaces.clear();
-    }
-
-    #[cpu_multiversion]
-    #[inline]
-    pub(super) fn push_regex_flags(&mut self, src: &[u8], fs: usize, fe: usize, _cpu: impl Cpu) {
-        let mut f: u8 = 0;
-        for (k, &c) in src[fs..fe].iter().enumerate() {
-            let bit: u8 = match c {
-                b'g' => RegExpFlags::G.bits(),
-                b'i' => RegExpFlags::I.bits(),
-                b'm' => RegExpFlags::M.bits(),
-                b's' => RegExpFlags::S.bits(),
-                b'u' => RegExpFlags::U.bits(),
-                b'y' => RegExpFlags::Y.bits(),
-                b'd' => RegExpFlags::D.bits(),
-                b'v' => RegExpFlags::V.bits(),
-                _ => 0,
-            };
-            // Unknown or repeated flag: diagnostic. At most 8 flag chars.
-            if bit == 0 {
-                self.push_diag((fs + k) as u32, 1, DiagCode::InvalidRegexpFlag);
-            } else if f & bit != 0 {
-                self.push_diag((fs + k) as u32, 1, DiagCode::DuplicateRegexpFlag);
-            }
-            f |= bit;
-        }
-        self.out.regex_flags.push(RegExpFlags::from_bits_retain(f));
-    }
-
-    /// Record a diagnostic. Cold and non-inlined so the push stays out of
-    /// the hot carve body.
-    ///
-    /// As it's cold code, it's compiled only once, not separately for each CPU feature set.
-    /// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
-    #[cpu_version(Generic)]
-    #[cold]
-    #[inline(never)]
-    pub(super) fn push_diag(&mut self, off: u32, len: u32, code: DiagCode) {
-        self.out.diags.push(Diagnostic { off, len, code, severity: DiagSeverity::Error });
-    }
-
     /// Line terminator in a string, with oxc_parser's exact span: opener
     /// through the first unescaped CR/LF (for CRLF only the CR). Escaped
     /// terminators are legal LineContinuations and are skipped the way the
@@ -112,7 +24,7 @@ impl Lanes {
     #[cpu_version(Generic)]
     #[cold]
     #[inline(never)]
-    pub(super) fn push_line_terminator_in_string(&mut self, src: &[u8], s: usize, end: usize) {
+    pub(crate) fn push_line_terminator_in_string(&mut self, src: &[u8], s: usize, end: usize) {
         let mut i = s + 1; // past the opening quote
         let mut term_end = end; // fallback (unreachable: the scanner saw a terminator)
         while i < end {
@@ -138,39 +50,6 @@ impl Lanes {
         self.push_diag(s as u32, (term_end - s) as u32, DiagCode::LineTerminatorInString);
     }
 
-    /// IdentifierStart or digit right after a numeric literal (`1.5n`,
-    /// `3in`, `0b12`), with oxc_parser's `invalid_number_end` span: the char
-    /// at `e2` plus the run of identifier-start chars after it.
-    ///
-    /// As it's cold code, it's compiled only once, not separately for each CPU feature set.
-    /// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
-    #[cpu_version(Generic)]
-    #[cold]
-    #[inline(never)]
-    pub(super) fn push_num_end_diag(&mut self, src: &[u8], e2: usize, code: DiagCode) {
-        let end = ident_start_run_end(src, e2 + 1);
-        self.push_diag(e2 as u32, (end - e2) as u32, code);
-    }
-
-    /// Non-ASCII byte right after a numeric literal: a Unicode
-    /// IdentifierStart (`1π`) is the same invalid adjacency as the ASCII
-    /// case; Unicode whitespace is legal and invalid UTF-8 emits nothing
-    /// here.
-    ///
-    /// As it's cold code, it's compiled only once, not separately for each CPU feature set.
-    /// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
-    #[cpu_version(Generic)]
-    #[cold]
-    #[inline(never)]
-    pub(super) fn push_num_end_diag_unicode(&mut self, src: &[u8], e2: usize) {
-        let Some(ch) = decode_char_at(src, e2) else { return };
-        if !is_identifier_start(ch) {
-            return;
-        }
-        let end = ident_start_run_end(src, e2 + ch.len_utf8());
-        self.push_diag(e2 as u32, (end - e2) as u32, DiagCode::InvalidNumericLiteral);
-    }
-
     /// `EMIT`: report malformed escapes while cooking - strings only, since
     /// template escapes are legal when tagged (the parser owns that error).
     /// `CRLF`: normalize raw CRLF/CR to LF per the template TV rule
@@ -184,104 +63,82 @@ impl Lanes {
         be: u32,
         cpu: impl Cpu,
     ) -> (StringSpan, bool) {
-        let ss = self.out.cooked.len() as u32;
+        let ss = self.cooked.len() as u32;
         if be <= bs {
             return (StringSpan::new(ss, ss & StringSpan::END_MASK, false, cpu), false);
         }
         let body_len = (be - bs) as usize;
 
-        self.out.cooked.reserve(body_len.max(32) + 8);
-        let base = self.out.cooked.as_mut_ptr();
-
         let needs_decode = if body_len < 32 {
-            return self.cook_short_dispatch::<EMIT, CRLF>(src, bs, be, base, ss, body_len, cpu);
+            let window = src[bs as usize..].first_chunk::<32>().unwrap();
+            if !short_needs_decode::<CRLF>(window, body_len, cpu) {
+                // Copying the whole window is one 32-byte move, and the cut keeps the body.
+                self.cooked.extend_from_slice(window);
+                self.cooked.truncate(ss as usize + body_len);
+                let we = ss + (be - bs);
+                return (StringSpan::new(ss, we & StringSpan::END_MASK, false, cpu), false);
+            }
+            true
         } else if CRLF {
             span_has_bs_or_cr(src, bs as usize, be as usize, cpu)
         } else {
             span_has_bs(src, bs as usize, be as usize, cpu)
         };
-        let (wi, lone, nes) = if needs_decode {
-            unsafe {
-                cook_decode::<EMIT, CRLF>(src.as_ptr(), bs, be, base, ss, &mut self.out.diags, cpu)
-            }
+        let body = &src[bs as usize..be as usize];
+        let (lone, nes) = if !needs_decode {
+            self.cooked.extend_from_slice(body);
+            (false, false)
+        } else if CRLF && memchr::memchr(b'\\', body).is_none() {
+            normalize_crs(body, &mut self.cooked);
+            (false, false)
         } else {
-            unsafe {
-                ptr::copy_nonoverlapping(
-                    src.as_ptr().add(bs as usize),
-                    base.add(ss as usize),
-                    body_len,
-                );
-            }
-            (ss + (be - bs), false, false)
+            cook_decode::<EMIT, CRLF>(src, bs, be, &mut self.cooked, &mut self.diags, cpu)
         };
-        unsafe { self.out.cooked.set_len(wi as usize) };
-        (StringSpan::new(ss, wi & StringSpan::END_MASK, lone, cpu), nes)
+        let we = self.cooked.len() as u32;
+        (StringSpan::new(ss, we & StringSpan::END_MASK, lone, cpu), nes)
     }
 
     #[cpu_multiversion]
     #[inline(always)]
-    fn cook_short_dispatch<const EMIT: bool, const CRLF: bool>(
-        &mut self,
-        src: &[u8],
-        bs: u32,
-        be: u32,
-        base: *mut u8,
-        ss: u32,
-        body_len: usize,
-        cpu: impl Cpu,
-    ) -> (StringSpan, bool) {
-        let (wi, lone, nes) =
-            cook_short::<EMIT, CRLF>(src, bs, be, base, ss, body_len, &mut self.out.diags, cpu);
-        unsafe { self.out.cooked.set_len(wi as usize) };
-        (StringSpan::new(ss, wi & StringSpan::END_MASK, lone, cpu), nes)
-    }
-
-    #[cpu_multiversion]
-    #[inline(always)]
-    pub(super) fn push_string(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
+    pub(crate) fn push_string(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
         let (sp, _) = self.cook::<true, false>(src, bs as u32, be as u32, cpu);
-        self.out.strings.push(sp);
+        self.strings.push(sp);
     }
 
     #[cpu_multiversion]
     #[inline(always)]
-    pub(super) fn push_template(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
+    pub(crate) fn push_template(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
         let (sp, nes) = self.cook::<false, true>(src, bs as u32, be as u32, cpu);
         // A NotEscapeSequence means cooked = None per the grammar; legality
         // depends on tagged-ness (parser context), so the span carries a
         // marker instead of a diagnostic.
-        self.out.templates.push(if nes { sp.with_cooked_invalid(cpu) } else { sp });
+        self.templates.push(if nes { sp.with_cooked_invalid(cpu) } else { sp });
     }
 
     /// Push a string value verbatim. JSX attribute strings have no backslash
     /// escapes; the value is the raw slice between the quotes.
     #[cpu_multiversion]
     #[inline]
-    pub(super) fn push_string_raw(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
-        let ss = self.out.cooked.len() as u32;
+    pub(crate) fn push_string_raw(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
+        let ss = self.cooked.len() as u32;
         if be <= bs {
-            self.out.strings.push(StringSpan::new(ss, ss & StringSpan::END_MASK, false, cpu));
+            self.strings.push(StringSpan::new(ss, ss & StringSpan::END_MASK, false, cpu));
             return;
         }
-        let body_len = be - bs;
-        self.out.cooked.reserve(body_len + 8);
-        unsafe {
-            let base = self.out.cooked.as_mut_ptr();
-            ptr::copy_nonoverlapping(src.as_ptr().add(bs), base.add(ss as usize), body_len);
-            self.out.cooked.set_len(ss as usize + body_len);
-        }
-        let we = ss + body_len as u32;
-        self.out.strings.push(StringSpan::new(ss, we & StringSpan::END_MASK, false, cpu));
+        let body = &src[bs..be];
+        self.cooked.extend_from_slice(body);
+        let we = ss + body.len() as u32;
+        self.strings.push(StringSpan::new(ss, we & StringSpan::END_MASK, false, cpu));
     }
 
     #[cpu_multiversion]
     #[inline(always)]
-    pub(super) fn push_atom(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
+    pub(crate) fn push_atom(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
         // Escaped-identifier atoms are the one funnel every code-level
         // identifier escape passes through, so validation rides here.
         self.validate_ident_escapes(src, bs, be);
         let (sp, _) = self.cook::<false, false>(src, bs as u32, be as u32, cpu);
-        self.out.atoms.push(sp);
+        self.atoms.push(sp);
     }
 
     /// A well-formed escape decoding to a non-identifier char (`var \u0020 = 1`):
@@ -320,7 +177,7 @@ impl Lanes {
                 if k >= be {
                     return (None, k);
                 }
-                let Some(h) = hexd(src[k], cpu) else { return (None, k) };
+                let Some(h) = hex_digit(src[k], cpu) else { return (None, k) };
                 v = (v << 4) | u32::from(h);
                 k += 1;
             }
@@ -357,7 +214,7 @@ impl Lanes {
                 let mut any = false;
                 let mut over = false;
                 while k < be {
-                    let Some(h) = hexd(src[k], cpu) else { break };
+                    let Some(h) = hex_digit(src[k], cpu) else { break };
                     value = (value << 4) | u32::from(h);
                     any = true;
                     k += 1;
@@ -411,18 +268,18 @@ impl Lanes {
                 && src[k] == b'\\'
                 && src[k + 1] == b'u'
             {
-                let (l1, e2) = hex4(src, k + 2, be);
-                if let Some(low) = l1
+                let (low, low_end) = hex4(src, k + 2, be);
+                if let Some(low) = low
                     && (0xDC00..=0xDFFF).contains(&low)
                 {
                     // A well-formed pair is still invalid in identifiers:
                     // one diag over both escapes.
                     self.push_diag(
                         start as u32,
-                        (e2 - start) as u32,
+                        (low_end - start) as u32,
                         DiagCode::InvalidIdentifierEscape,
                     );
-                    i = e2;
+                    i = low_end;
                     continue;
                 }
                 // Not a valid low: fall through - the parser rewinds and
@@ -432,166 +289,56 @@ impl Lanes {
             i = k;
         }
     }
-
-    #[cpu_multiversion]
-    #[inline]
-    pub(super) fn push_number(&mut self, src: &[u8], s: usize, e: usize, cpu: impl Cpu) {
-        let len = e - s;
-        if len.wrapping_sub(1) <= 7 && !(len > 1 && src[s] == b'0') {
-            let keep = KEEP[len];
-            let raw = unsafe { ptr::read_unaligned(src.as_ptr().add(s) as *const u64) };
-            let w = raw & keep;
-            let f0 = 0xF0F0_F0F0_F0F0_F0F0 & keep;
-            let three = 0x3030_3030_3030_3030 & keep;
-            let digits =
-                (w & f0) == three && (w.wrapping_add(0x0606_0606_0606_0606 & keep) & f0) == three;
-            if digits {
-                let mut d = (w.wrapping_sub(three)) << ((8 - len) * 8);
-                d = ((d & 0x0f00_0f00_0f00_0f00) >> 8) + (d & 0x000f_000f_000f_000f) * 10;
-                d = ((d & 0x00ff_0000_00ff_0000) >> 16) + (d & 0x0000_00ff_0000_00ff) * 100;
-                d = ((d & 0x0000_ffff_0000_0000) >> 32) + (d & 0x0000_0000_0000_ffff) * 10000;
-                self.out.numbers.push(d as f64);
-                return;
-            }
-        }
-        // Only non-SWAR numbers (floats, radix-prefixed, bigint, separators, leading zeros, long) reach the validation walk.
-        let code = validate_number(src, s, e, cpu);
-        if code != DiagCode::Ok {
-            self.push_diag(s as u32, (e - s) as u32, code);
-        }
-        self.out.numbers.push(parse_number(src, s, e, cpu));
-    }
 }
 
-static KEEP: [u64; 9] = [
-    0x0000_0000_0000_0000,
-    0x0000_0000_0000_00ff,
-    0x0000_0000_0000_ffff,
-    0x0000_0000_00ff_ffff,
-    0x0000_0000_ffff_ffff,
-    0x0000_00ff_ffff_ffff,
-    0x0000_ffff_ffff_ffff,
-    0x00ff_ffff_ffff_ffff,
-    0xffff_ffff_ffff_ffff,
-];
-
+/// Whether the first len bytes of window have a backslash, or a raw CR when CR is set.
 #[cpu_multiversion]
 #[inline(always)]
-fn cook_short<const EMIT: bool, const CRLF: bool>(
-    src: &[u8],
-    bs: u32,
-    be: u32,
-    base: *mut u8,
-    ss: u32,
-    body_len: usize,
-    diags: &mut Vec<Diagnostic>,
-    cpu: impl Cpu,
-) -> (u32, bool, bool) {
+fn short_needs_decode<const CR: bool>(window: &[u8; 32], len: usize, cpu: impl Cpu) -> bool {
     match DynCpu::from(cpu) {
-        DynCpu::Avx2(cpu) => {
-            cook_short_avx2::<EMIT, CRLF>(src, bs, be, base, ss, body_len, diags, cpu)
-        }
-        DynCpu::Neon(cpu) => {
-            cook_short_neon::<EMIT, CRLF>(src, bs, be, base, ss, body_len, diags, cpu)
-        }
-        DynCpu::Generic(_) => {
-            cook_short_generic::<EMIT, CRLF>(src, bs, be, base, ss, body_len, diags)
-        }
+        DynCpu::Avx2(cpu) => short_needs_decode_avx2::<CR>(window, len, cpu),
+        DynCpu::Neon(cpu) => short_needs_decode_neon::<CR>(window, len, cpu),
+        DynCpu::Generic(_) => short_needs_decode_generic::<CR>(window, len),
     }
 }
 
-/// [`cook_short`] for Neon.
+/// short_needs_decode for Neon.
 #[cpu_version(Neon)]
 #[inline]
-fn cook_short_neon<const EMIT: bool, const CRLF: bool>(
-    src: &[u8],
-    bs: u32,
-    be: u32,
-    base: *mut u8,
-    ss: u32,
-    body_len: usize,
-    diags: &mut Vec<Diagnostic>,
-    cpu: Neon,
-) -> (u32, bool, bool) {
-    let p = unsafe { src.as_ptr().add(bs as usize) };
-    let (v0, v1) =
-        unsafe { (Vec128::load_unaligned(p, cpu), Vec128::load_unaligned(p.add(16), cpu)) };
+fn short_needs_decode_neon<const CR: bool>(window: &[u8; 32], len: usize, cpu: Neon) -> bool {
+    let v0 = Vec128::read_unaligned(window.first_chunk::<16>().unwrap(), cpu);
+    let v1 = Vec128::read_unaligned(window.last_chunk::<16>().unwrap(), cpu);
     let (mut hit0, mut hit1) = (v0.eq_u8(b'\\'), v1.eq_u8(b'\\'));
-    if CRLF {
+    if CR {
         // Templates also decode when a raw CR needs LF-normalizing.
         hit0 |= v0.eq_u8(b'\r');
         hit1 |= v1.eq_u8(b'\r');
     }
-    if mm32(hit0, hit1) & ((1u32 << body_len) - 1) == 0 {
-        unsafe {
-            v0.store_unaligned(base.add(ss as usize));
-            v1.store_unaligned(base.add(ss as usize + 16));
-        }
-        (ss + (be - bs), false, false)
-    } else {
-        unsafe { cook_decode::<EMIT, CRLF>(src.as_ptr(), bs, be, base, ss, diags, cpu) }
-    }
+    mm32(hit0, hit1) & ((1u32 << len) - 1) != 0
 }
 
-/// [`cook_short`] for AVX2.
+/// short_needs_decode for AVX2.
 #[cpu_version(Avx2)]
 #[inline]
-fn cook_short_avx2<const EMIT: bool, const CRLF: bool>(
-    src: &[u8],
-    bs: u32,
-    be: u32,
-    base: *mut u8,
-    ss: u32,
-    body_len: usize,
-    diags: &mut Vec<Diagnostic>,
-    cpu: Avx2,
-) -> (u32, bool, bool) {
-    let v = unsafe { Vec256::load_unaligned(src.as_ptr().add(bs as usize), cpu) };
+fn short_needs_decode_avx2<const CR: bool>(window: &[u8; 32], len: usize, cpu: Avx2) -> bool {
+    let v = Vec256::read_unaligned(window, cpu);
     let mut hit = v.eq_u8(b'\\');
-    if CRLF {
+    if CR {
         // Templates also decode when a raw CR needs LF-normalizing.
         hit |= v.eq_u8(b'\r');
     }
-    let bs_mask = hit.movemask() & ((1u32 << body_len) - 1);
-    if bs_mask == 0 {
-        unsafe { v.store_unaligned(base.add(ss as usize)) };
-        (ss + (be - bs), false, false)
-    } else {
-        unsafe { cook_decode::<EMIT, CRLF>(src.as_ptr(), bs, be, base, ss, diags, cpu) }
-    }
+    hit.movemask() & ((1u32 << len) - 1) != 0
 }
 
-/// [`cook_short`] for all other CPUs.
+/// short_needs_decode for all other CPUs.
 #[cpu_version(Generic)]
 #[inline]
-fn cook_short_generic<const EMIT: bool, const CRLF: bool>(
-    src: &[u8],
-    bs: u32,
-    be: u32,
-    base: *mut u8,
-    ss: u32,
-    body_len: usize,
-    diags: &mut Vec<Diagnostic>,
-) -> (u32, bool, bool) {
-    let cpu = BASELINE;
-
-    let body = &src[bs as usize..be as usize];
-    let plain = if CRLF {
-        memchr::memchr2(b'\\', b'\r', body).is_none()
+fn short_needs_decode_generic<const CR: bool>(window: &[u8; 32], len: usize) -> bool {
+    let body = &window[..len];
+    if CR {
+        memchr::memchr2(b'\\', b'\r', body).is_some()
     } else {
-        memchr::memchr(b'\\', body).is_none()
-    };
-    if plain {
-        unsafe {
-            ptr::copy_nonoverlapping(
-                src.as_ptr().add(bs as usize),
-                base.add(ss as usize),
-                body_len,
-            );
-        }
-        (ss + (be - bs), false, false)
-    } else {
-        unsafe { cook_decode::<EMIT, CRLF>(src.as_ptr(), bs, be, base, ss, diags, cpu) }
+        memchr::memchr(b'\\', body).is_some()
     }
 }
 
@@ -609,9 +356,10 @@ fn span_has_bs(src: &[u8], bs: usize, be: usize, cpu: impl Cpu) -> bool {
 #[cpu_version(Avx2)]
 #[inline]
 fn span_has_bs_avx2(src: &[u8], bs: usize, be: usize, cpu: Avx2) -> bool {
+    let src = &src[..be];
     let mut i = bs;
     while i + 32 <= be {
-        let v = unsafe { Vec256::load_unaligned(src.as_ptr().add(i), cpu) };
+        let v = Vec256::read_unaligned(src[i..].first_chunk::<32>().unwrap(), cpu);
         let m = v.eq_u8(b'\\').movemask();
         if m != 0 {
             return true;
@@ -650,7 +398,7 @@ fn span_has_bs_or_cr(src: &[u8], bs: usize, be: usize, cpu: impl Cpu) -> bool {
 #[inline]
 fn span_has_neon<const CR: bool>(src: &[u8], bs: usize, be: usize, cpu: Neon) -> bool {
     let hits = |i: usize| {
-        let v = unsafe { Vec128::load_unaligned(src.as_ptr().add(i), cpu) };
+        let v = Vec128::read_unaligned(src[i..].first_chunk::<16>().unwrap(), cpu);
         (if CR { v.eq_u8(b'\\') | v.eq_u8(b'\r') } else { v.eq_u8(b'\\') }).nibble_mask()
     };
     let mut i = bs;
@@ -667,9 +415,10 @@ fn span_has_neon<const CR: bool>(src: &[u8], bs: usize, be: usize, cpu: Neon) ->
 #[cpu_version(Avx2)]
 #[inline]
 fn span_has_bs_or_cr_avx2(src: &[u8], bs: usize, be: usize, cpu: Avx2) -> bool {
+    let src = &src[..be];
     let mut i = bs;
     while i + 32 <= be {
-        let v = unsafe { Vec256::load_unaligned(src.as_ptr().add(i), cpu) };
+        let v = Vec256::read_unaligned(src[i..].first_chunk::<32>().unwrap(), cpu);
         let m = (v.eq_u8(b'\\') | v.eq_u8(b'\r')).movemask();
         if m != 0 {
             return true;
@@ -692,274 +441,37 @@ fn span_has_bs_or_cr_generic(src: &[u8], bs: usize, be: usize) -> bool {
     memchr::memchr2(b'\\', b'\r', &src[bs..be]).is_some()
 }
 
-/// Decode the single `char` at byte `i`, or `None` if the bytes there are
-/// not valid UTF-8.
-#[cpu_version(Generic)]
-pub(crate) fn decode_char_at(s: &[u8], i: usize) -> Option<char> {
-    let end = (i + 4).min(s.len());
-    let slice = s.get(i..end)?;
-    match str::from_utf8(slice) {
-        Ok(t) => t.chars().next(),
-        // a multi-byte char cut at `end` still has a decodable valid prefix
-        Err(e) if e.valid_up_to() > 0 => {
-            str::from_utf8(&slice[..e.valid_up_to()]).ok()?.chars().next()
-        }
-        Err(_) => None,
-    }
-}
-
-/// End of the run of IdentifierStart chars beginning at `i` - the tail of
-/// oxc_parser's `invalid_number_end` span (a digit ends the run).
-#[cpu_version(Generic)]
-fn ident_start_run_end(s: &[u8], mut i: usize) -> usize {
-    while i < s.len() {
-        let b = s[i];
-        if b < 0x80 {
-            if !(b.is_ascii_alphabetic() || b == b'_' || b == b'$') {
-                break;
-            }
-            i += 1;
-        } else {
-            let Some(c) = decode_char_at(s, i) else { break };
-            if !is_identifier_start(c) {
-                break;
-            }
-            i += c.len_utf8();
-        }
-    }
-    i
-}
-
-#[cpu_multiversion]
-#[inline(always)]
-fn hexd(b: u8, _cpu: impl Cpu) -> Option<u8> {
-    match b {
-        b'0'..=b'9' => Some(b - b'0'),
-        b'a'..=b'f' => Some(b - b'a' + 10),
-        b'A'..=b'F' => Some(b - b'A' + 10),
-        _ => None,
-    }
-}
-
-#[cpu_multiversion]
-fn parse_number(src: &[u8], s: usize, e: usize, cpu: impl Cpu) -> f64 {
-    let mut i = s;
-    let mut radix: u64 = 0;
-    if e - s >= 2 && src[s] == b'0' {
-        let d = src[s + 1];
-        radix = match d {
-            b'x' | b'X' => 16,
-            b'b' | b'B' => 2,
-            b'o' | b'O' => 8,
-            _ => 0,
-        };
-        if radix != 0 {
-            i = s + 2;
-        }
-    }
-    if radix != 0 {
-        let mut v: u64 = 0;
-        while i < e {
-            let c = src[i];
-            i += 1;
-            if c == b'_' {
-                continue;
-            }
-            if c == b'n' {
-                break;
-            }
-            match hexd(c, cpu) {
-                Some(h) => v = v.wrapping_mul(radix).wrapping_add(h as u64),
-                None => break,
-            }
-        }
-        return v as f64;
-    }
-
-    let mut flt = false;
-    let mut dl = 0usize;
-    let mut v: u64 = 0;
-    for k in s..e {
-        let c = src[k];
-        if c == b'.' || c == b'e' || c == b'E' {
-            flt = true;
-        } else if c.is_ascii_digit() {
-            dl += 1;
-            v = v.wrapping_mul(10).wrapping_add((c - b'0') as u64);
-        }
-    }
-    if !flt && dl <= 19 {
-        return v as f64;
-    }
-
-    let mut buf = [0u8; 512];
-    let mut bl = 0usize;
-    let mut k = s;
-    while k < e && bl < buf.len() - 1 {
-        let c = src[k];
-        k += 1;
-        if c == b'_' || c == b'n' {
-            continue;
-        }
-        buf[bl] = c;
-        bl += 1;
-    }
-    str::from_utf8(&buf[..bl]).ok().and_then(|st| st.parse::<f64>().ok()).unwrap_or(0.0)
-}
-
 #[cpu_multiversion]
 #[inline]
-fn radix_digit(c: u8, _cpu: impl Cpu) -> Option<u8> {
-    match c {
-        b'0'..=b'9' => Some(c - b'0'),
-        b'a'..=b'f' => Some(c - b'a' + 10),
-        b'A'..=b'F' => Some(c - b'A' + 10),
-        _ => None,
-    }
-}
-
-/// First error code for the numeric literal `src[s..e]`, or `diag_code::OK`.
-/// Conservative by design: it must never flag a valid number, so anything
-/// ambiguous returns OK. Covers what survives as one token span - separator
-/// misplacement, empty radix (`0x`), legacy-octal-like decimals with a
-/// separator/bigint suffix/bad exponent. Shapes the scanner pre-splits
-/// (`0b12`, `1.5n`, `3in`) are detected at the adjacency in coalesce, not
-/// here. Detection only; `parse_number` still produces a lenient value.
-#[cpu_multiversion]
-#[inline(never)]
-fn validate_number(src: &[u8], s: usize, e: usize, cpu: impl Cpu) -> DiagCode {
-    let bytes = &src[s..e];
-    let Some((&last, head)) = bytes.split_last() else { return DiagCode::Ok };
-    let is_bigint = last == b'n';
-    let body = if is_bigint { head } else { bytes };
-    if body.is_empty() {
-        return DiagCode::Ok;
-    }
-
-    // Radix-prefixed integer: separator placement and the empty-radix case.
-    // An out-of-range digit cannot appear (the scanner stops before it), so
-    // that arm is a safety net.
-    if body.len() >= 2 && body[0] == b'0' {
-        let radix = match body[1] | 0x20 {
-            b'x' => 16u8,
-            b'o' => 8,
-            b'b' => 2,
-            _ => 0,
-        };
-        if radix != 0 {
-            let mut prev_us = true; // a '_' immediately after the prefix is invalid
-            let mut any = false;
-            for &c in &body[2..] {
-                if c == b'_' {
-                    if prev_us {
-                        return DiagCode::InvalidNumericSeparator;
-                    }
-                    prev_us = true;
-                } else if matches!(radix_digit(c, cpu), Some(v) if v < radix) {
-                    any = true;
-                    prev_us = false;
-                } else {
-                    return DiagCode::InvalidNumericLiteral;
-                }
-            }
-            if any && prev_us {
-                return DiagCode::InvalidNumericSeparator; // trailing '_'
-            }
-            if !any {
-                return DiagCode::InvalidNumericLiteral; // empty radix, e.g. `0x`
-            }
-            return DiagCode::Ok;
-        }
-
-        // Legacy-octal-like decimal (leading `0` + digit/`_`): oxc_parser
-        // consumes only `[0-9]` for the integer part - no separators, no bigint suffix -
-        // and accepts an exponent after an `8`/`9` flipped the run to
-        // NonOctalDecimal (`08e1` and `08E1` valid; `00e1` not).
-        // Bare `00`/`08` are valid sloppy-mode Annex B, and `.` never flags.
-        if matches!(body[1], b'0'..=b'9' | b'_') {
-            // Only the integer part is checked here. A fraction or exponent after an `8`/`9`
-            // is ordinary digits, so separators there are valid (`09.1_1`, `09e1_1`),
-            // and the generic checks below catch any that are misplaced.
-            if bytes.iter().take_while(|&&c| c.is_ascii_digit() || c == b'_').any(|&c| c == b'_') {
-                return DiagCode::InvalidNumericSeparator;
-            }
-            if is_bigint {
-                return DiagCode::InvalidBigint;
-            }
-            let run = bytes.iter().take_while(|c| c.is_ascii_digit()).count();
-            match bytes.get(run) {
-                // `08e1` / `08E1`: valid NonOctalDecimal exponent; its digits are
-                // still checked below (`08e` stays flagged).
-                Some(&b'e' | &b'E') if bytes[..run].iter().any(|&c| c >= b'8') => {}
-                Some(&b'e' | &b'E') => return DiagCode::InvalidNumericLiteral,
-                _ => {}
-            }
-            // fall through: the valid shapes still get the generic checks
-        }
-    }
-
-    // Every '_' must sit between two digits.
-    let mut prev_digit = false;
-    let mut exp_at: Option<usize> = None;
-    for (i, &c) in body.iter().enumerate() {
-        if c == b'_' {
-            let next_digit = matches!(body.get(i + 1), Some(&d) if d.is_ascii_digit());
-            if !prev_digit || !next_digit {
-                return DiagCode::InvalidNumericSeparator;
-            }
-            prev_digit = false;
-        } else {
-            prev_digit = c.is_ascii_digit();
-            if (c | 0x20) == b'e' && exp_at.is_none() {
-                exp_at = Some(i); // radix bodies returned above, so this is the marker
-            }
-        }
-    }
-    // Empty exponent (`1e`, `1e+`, `.5e`): the marker and optional sign were
-    // consumed but no digits followed - never true for a valid literal.
-    if let Some(ep) = exp_at {
-        let mut k = ep + 1;
-        if matches!(body.get(k), Some(&s) if s == b'+' || s == b'-') {
-            k += 1;
-        }
-        if !matches!(body.get(k), Some(d) if d.is_ascii_digit()) {
-            return DiagCode::InvalidNumericLiteral;
-        }
-    }
-    DiagCode::Ok
-}
-
-#[cpu_multiversion]
-#[inline]
-unsafe fn push_cp(out: *mut u8, mut wi: u32, cp: u32, lone: &mut bool, _cpu: impl Cpu) -> u32 {
+fn push_cp(out: &mut [u8], mut wi: u32, cp: u32, lone: &mut bool, _cpu: impl Cpu) -> u32 {
     if cp <= 0x7F {
-        *out.add(wi as usize) = cp as u8;
+        out[wi as usize] = cp as u8;
         wi += 1;
     } else if cp <= 0x7FF {
-        *out.add(wi as usize) = 0xC0 | ((cp >> 6) as u8);
-        *out.add((wi + 1) as usize) = 0x80 | ((cp & 0x3F) as u8);
+        out[wi as usize] = 0xC0 | ((cp >> 6) as u8);
+        out[(wi + 1) as usize] = 0x80 | ((cp & 0x3F) as u8);
         wi += 2;
     } else if (0xD800..=0xDFFF).contains(&cp) {
         *lone = true;
-        *out.add(wi as usize) = 0xE0 | ((cp >> 12) as u8);
-        *out.add((wi + 1) as usize) = 0x80 | (((cp >> 6) & 0x3F) as u8);
-        *out.add((wi + 2) as usize) = 0x80 | ((cp & 0x3F) as u8);
+        out[wi as usize] = 0xE0 | ((cp >> 12) as u8);
+        out[(wi + 1) as usize] = 0x80 | (((cp >> 6) & 0x3F) as u8);
+        out[(wi + 2) as usize] = 0x80 | ((cp & 0x3F) as u8);
         wi += 3;
     } else if cp <= 0xFFFF {
-        *out.add(wi as usize) = 0xE0 | ((cp >> 12) as u8);
-        *out.add((wi + 1) as usize) = 0x80 | (((cp >> 6) & 0x3F) as u8);
-        *out.add((wi + 2) as usize) = 0x80 | ((cp & 0x3F) as u8);
+        out[wi as usize] = 0xE0 | ((cp >> 12) as u8);
+        out[(wi + 1) as usize] = 0x80 | (((cp >> 6) & 0x3F) as u8);
+        out[(wi + 2) as usize] = 0x80 | ((cp & 0x3F) as u8);
         wi += 3;
     } else if cp <= 0x10FFFF {
-        *out.add(wi as usize) = 0xF0 | ((cp >> 18) as u8);
-        *out.add((wi + 1) as usize) = 0x80 | (((cp >> 12) & 0x3F) as u8);
-        *out.add((wi + 2) as usize) = 0x80 | (((cp >> 6) & 0x3F) as u8);
-        *out.add((wi + 3) as usize) = 0x80 | ((cp & 0x3F) as u8);
+        out[wi as usize] = 0xF0 | ((cp >> 18) as u8);
+        out[(wi + 1) as usize] = 0x80 | (((cp >> 12) & 0x3F) as u8);
+        out[(wi + 2) as usize] = 0x80 | (((cp >> 6) & 0x3F) as u8);
+        out[(wi + 3) as usize] = 0x80 | ((cp & 0x3F) as u8);
         wi += 4;
     } else {
-        *out.add(wi as usize) = 0xEF;
-        *out.add((wi + 1) as usize) = 0xBF;
-        *out.add((wi + 2) as usize) = 0xBD;
+        out[wi as usize] = 0xEF;
+        out[(wi + 1) as usize] = 0xBF;
+        out[(wi + 2) as usize] = 0xBD;
         wi += 3;
     }
     wi
@@ -967,9 +479,9 @@ unsafe fn push_cp(out: *mut u8, mut wi: u32, cp: u32, lone: &mut bool, _cpu: imp
 
 #[cpu_multiversion]
 #[inline]
-unsafe fn emit_oct(
-    src: *const u8,
-    out: *mut u8,
+fn emit_oct(
+    src: &[u8],
+    out: &mut [u8],
     mut wi: u32,
     mut i: u32,
     be: u32,
@@ -978,7 +490,7 @@ unsafe fn emit_oct(
 ) -> (u32, u32) {
     let mut cnt = 1;
     while cnt < 3 && i < be {
-        let dd = *src.add(i as usize);
+        let dd = src[i as usize];
         if !(b'0'..=b'7').contains(&dd) {
             break;
         }
@@ -991,11 +503,11 @@ unsafe fn emit_oct(
         cnt += 1;
     }
     if val < 0x80 {
-        *out.add(wi as usize) = val as u8;
+        out[wi as usize] = val as u8;
         wi += 1;
     } else {
-        *out.add(wi as usize) = 0xC0 | ((val >> 6) as u8);
-        *out.add((wi + 1) as usize) = 0x80 | ((val & 0x3F) as u8);
+        out[wi as usize] = 0xC0 | ((val >> 6) as u8);
+        out[(wi + 1) as usize] = 0x80 | ((val & 0x3F) as u8);
         wi += 2;
     }
     (wi, i)
@@ -1018,17 +530,36 @@ fn push_escape_diag(diags: &mut Vec<Diagnostic>, off: u32, end: u32) {
     });
 }
 
+/// Cook a template body with no backslash, where each raw CR or CRLF cooks to an LF.
+#[cpu_version(Generic)]
+#[inline(never)]
+fn normalize_crs(body: &[u8], out: &mut Vec<u8>) {
+    let mut rest = body;
+    while let Some(cr) = memchr::memchr(b'\r', rest) {
+        out.extend_from_slice(&rest[..cr]);
+        out.push(b'\n');
+        let crlf = rest.get(cr + 1) == Some(&b'\n');
+        rest = &rest[cr + 1 + usize::from(crlf)..];
+    }
+    out.extend_from_slice(rest);
+}
+
 #[cpu_multiversion]
-unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
-    src: *const u8,
+#[inline(never)]
+fn cook_decode<const EMIT: bool, const CRLF: bool>(
+    src: &[u8],
     bs: u32,
     be: u32,
-    out: *mut u8,
-    ss: u32,
+    cooked: &mut Vec<u8>,
     diags: &mut Vec<Diagnostic>,
     cpu: impl Cpu,
-) -> (u32, bool, bool) {
-    let mut wi = ss;
+) -> (bool, bool) {
+    let src = &src[..be as usize];
+    let ss = cooked.len();
+    // Decoding never lengthens, so the body's length in zeroed bytes is enough room.
+    cooked.resize(ss + (be - bs) as usize, 0);
+    let out = &mut cooked[ss..];
+    let mut wi = 0;
     let mut i = bs;
     let mut lone = false;
     // NotEscapeSequence per the template grammar (bad \u or \x, octal, \8,
@@ -1036,60 +567,60 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
     // for oxc_parser's cooked = None.
     let mut nes = false;
     while i < be {
-        let b = *src.add(i as usize);
+        let b = src[i as usize];
         if b != b'\\' {
             // template TV: raw CRLF / CR normalize to LF
             if CRLF && b == b'\r' {
-                *out.add(wi as usize) = b'\n';
+                out[wi as usize] = b'\n';
                 wi += 1;
                 i += 1;
-                if i < be && *src.add(i as usize) == b'\n' {
+                if i < be && src[i as usize] == b'\n' {
                     i += 1;
                 }
                 continue;
             }
-            *out.add(wi as usize) = b;
+            out[wi as usize] = b;
             wi += 1;
             i += 1;
             continue;
         }
         if i + 1 >= be {
-            *out.add(wi as usize) = b;
+            out[wi as usize] = b;
             wi += 1;
             i += 1;
             continue;
         }
-        let nb = *src.add((i + 1) as usize);
+        let nb = src[(i + 1) as usize];
         i += 2;
         match nb {
             b'b' => {
-                *out.add(wi as usize) = 0x08;
+                out[wi as usize] = 0x08;
                 wi += 1;
             }
             b'f' => {
-                *out.add(wi as usize) = 0x0C;
+                out[wi as usize] = 0x0C;
                 wi += 1;
             }
             b'n' => {
-                *out.add(wi as usize) = b'\n';
+                out[wi as usize] = b'\n';
                 wi += 1;
             }
             b'r' => {
-                *out.add(wi as usize) = b'\r';
+                out[wi as usize] = b'\r';
                 wi += 1;
             }
             b't' => {
-                *out.add(wi as usize) = b'\t';
+                out[wi as usize] = b'\t';
                 wi += 1;
             }
             b'v' => {
-                *out.add(wi as usize) = 0x0B;
+                out[wi as usize] = 0x0B;
                 wi += 1;
             }
             b'0' => {
-                let nd = i < be && (*src.add(i as usize)).is_ascii_digit();
+                let nd = i < be && src[i as usize].is_ascii_digit();
                 if !nd {
-                    *out.add(wi as usize) = 0;
+                    out[wi as usize] = 0;
                     wi += 1;
                 } else {
                     nes = true; // octal after backslash-0: NotEscapeSequence in templates
@@ -1099,33 +630,33 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                 }
             }
             b'\\' | b'\'' | b'"' | b'`' => {
-                *out.add(wi as usize) = nb;
+                out[wi as usize] = nb;
                 wi += 1;
             }
             b'\n' => {}
             b'\r' => {
-                if i < be && *src.add(i as usize) == b'\n' {
+                if i < be && src[i as usize] == b'\n' {
                     i += 1;
                 }
             }
             b'x' => {
                 // The parser's span runs to just past the leading valid hex.
                 if i + 2 <= be {
-                    let a = hexd(*src.add(i as usize), cpu);
-                    let c = hexd(*src.add((i + 1) as usize), cpu);
+                    let a = hex_digit(src[i as usize], cpu);
+                    let c = hex_digit(src[(i + 1) as usize], cpu);
                     if let (Some(a), Some(c)) = (a, c) {
                         let v = (u32::from(a) << 4) | u32::from(c);
                         if v < 0x80 {
-                            *out.add(wi as usize) = v as u8;
+                            out[wi as usize] = v as u8;
                             wi += 1;
                         } else {
-                            *out.add(wi as usize) = 0xC0 | ((v >> 6) as u8);
-                            *out.add((wi + 1) as usize) = 0x80 | ((v & 0x3F) as u8);
+                            out[wi as usize] = 0xC0 | ((v >> 6) as u8);
+                            out[(wi + 1) as usize] = 0x80 | ((v & 0x3F) as u8);
                             wi += 2;
                         }
                         i += 2;
                     } else {
-                        *out.add(wi as usize) = b'x';
+                        out[wi as usize] = b'x';
                         wi += 1;
                         nes = true;
                         if EMIT {
@@ -1133,18 +664,18 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                         }
                     }
                 } else {
-                    *out.add(wi as usize) = b'x';
+                    out[wi as usize] = b'x';
                     wi += 1;
                     nes = true;
                     if EMIT {
-                        let k = i < be && hexd(*src.add(i as usize), cpu).is_some();
+                        let k = i < be && hex_digit(src[i as usize], cpu).is_some();
                         push_escape_diag(diags, i - 2, i + u32::from(k));
                     }
                 }
             }
             b'u' => {
                 let esc = i - 2; // backslash offset, for code-7 spans
-                if i < be && *src.add(i as usize) == b'{' {
+                if i < be && src[i as usize] == b'{' {
                     let mut k = i + 1;
                     let mut cp: u32 = 0;
                     let mut any = false;
@@ -1153,8 +684,8 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                     // a post-loop range check would miss inputs like
                     // `\u{100000041}`.
                     let mut over_end: u32 = 0;
-                    while k < be && *src.add(k as usize) != b'}' {
-                        if let Some(h) = hexd(*src.add(k as usize), cpu) {
+                    while k < be && src[k as usize] != b'}' {
+                        if let Some(h) = hex_digit(src[k as usize], cpu) {
                             cp = (cp << 4) | (h as u32);
                             any = true;
                             k += 1;
@@ -1165,7 +696,7 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                             break;
                         }
                     }
-                    if k < be && *src.add(k as usize) == b'}' && any {
+                    if k < be && src[k as usize] == b'}' && any {
                         wi = push_cp(out, wi, cp, &mut lone, cpu);
                         i = k + 1;
                         if over_end != 0 {
@@ -1177,7 +708,7 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                             push_escape_diag(diags, esc, over_end);
                         }
                     } else {
-                        *out.add(wi as usize) = b'u';
+                        out[wi as usize] = b'u';
                         wi += 1;
                         i = k;
                         nes = true;
@@ -1186,10 +717,10 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                         }
                     }
                 } else if i + 4 <= be {
-                    let a = hexd(*src.add(i as usize), cpu);
-                    let b2 = hexd(*src.add((i + 1) as usize), cpu);
-                    let c = hexd(*src.add((i + 2) as usize), cpu);
-                    let d = hexd(*src.add((i + 3) as usize), cpu);
+                    let a = hex_digit(src[i as usize], cpu);
+                    let b2 = hex_digit(src[(i + 1) as usize], cpu);
+                    let c = hex_digit(src[(i + 2) as usize], cpu);
+                    let d = hex_digit(src[(i + 3) as usize], cpu);
                     if let (Some(a), Some(b2), Some(c), Some(d)) = (a, b2, c, d) {
                         let cp = ((a as u32) << 12)
                             | ((b2 as u32) << 8)
@@ -1202,13 +733,13 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                         let mut cp = cp;
                         if (0xD800..=0xDBFF).contains(&cp)
                             && i + 6 <= be
-                            && *src.add(i as usize) == b'\\'
-                            && *src.add((i + 1) as usize) == b'u'
+                            && src[i as usize] == b'\\'
+                            && src[(i + 1) as usize] == b'u'
                         {
-                            let l0 = hexd(*src.add((i + 2) as usize), cpu);
-                            let l1 = hexd(*src.add((i + 3) as usize), cpu);
-                            let l2 = hexd(*src.add((i + 4) as usize), cpu);
-                            let l3 = hexd(*src.add((i + 5) as usize), cpu);
+                            let l0 = hex_digit(src[(i + 2) as usize], cpu);
+                            let l1 = hex_digit(src[(i + 3) as usize], cpu);
+                            let l2 = hex_digit(src[(i + 4) as usize], cpu);
+                            let l3 = hex_digit(src[(i + 5) as usize], cpu);
                             if let (Some(l0), Some(l1), Some(l2), Some(l3)) = (l0, l1, l2, l3) {
                                 let lo = ((l0 as u32) << 12)
                                     | ((l1 as u32) << 8)
@@ -1222,7 +753,7 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                         }
                         wi = push_cp(out, wi, cp, &mut lone, cpu);
                     } else {
-                        *out.add(wi as usize) = b'u';
+                        out[wi as usize] = b'u';
                         wi += 1;
                         nes = true;
                         if EMIT {
@@ -1234,12 +765,12 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                         }
                     }
                 } else {
-                    *out.add(wi as usize) = b'u';
+                    out[wi as usize] = b'u';
                     wi += 1;
                     nes = true;
                     if EMIT {
                         let mut k = i;
-                        while k < be && hexd(*src.add(k as usize), cpu).is_some() {
+                        while k < be && hex_digit(src[k as usize], cpu).is_some() {
                             k += 1;
                         }
                         push_escape_diag(diags, esc, k);
@@ -1256,7 +787,7 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                 // NonOctalDecimalEscape: cooks to the digit, valid in sloppy
                 // strings, NotEscapeSequence in templates.
                 nes = true;
-                *out.add(wi as usize) = nb;
+                out[wi as usize] = nb;
                 wi += 1;
             }
             _ => {
@@ -1265,18 +796,18 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                 // through (the lead here, continuations via the plain copy).
                 if nb == 0xE2
                     && i + 2 <= be
-                    && *src.add(i as usize) == 0x80
-                    && matches!(*src.add((i + 1) as usize), 0xA8 | 0xA9)
+                    && is_ls_ps_tail(src[i as usize], src[(i + 1) as usize], cpu)
                 {
                     i += 2;
                 } else {
-                    *out.add(wi as usize) = nb;
+                    out[wi as usize] = nb;
                     wi += 1;
                 }
             }
         }
     }
-    (wi, lone, nes)
+    cooked.truncate(ss + wi as usize);
+    (lone, nes)
 }
 
 #[cfg(test)]
@@ -1293,10 +824,10 @@ mod tests {
         padded.extend_from_slice(&[0u8; 64]);
         let mut l = Lanes::default();
         l.push_template(&padded, 0, body.len(), cpu);
-        let sp = l.out.templates[0];
+        let sp = l.templates[0];
         let s = (sp.start & StringSpan::START_MASK) as usize;
         let e = (sp.end_and_flags & StringSpan::END_MASK) as usize;
-        l.out.cooked[s..e].to_vec()
+        l.cooked[s..e].to_vec()
     }
 
     #[test_cpus]
@@ -1320,20 +851,10 @@ mod tests {
     fn cook(body: &[u8], cpu: impl Cpu) -> (Vec<u8>, bool) {
         let mut padded = body.to_vec();
         padded.extend_from_slice(&[0u8; 32]);
-        let mut out = vec![0u8; body.len() + 32];
+        let mut out = Vec::new();
         let mut diags = Vec::new();
-        let (wi, lone, _) = unsafe {
-            cook_decode::<true, false>(
-                padded.as_ptr(),
-                0,
-                body.len() as u32,
-                out.as_mut_ptr(),
-                0,
-                &mut diags,
-                cpu,
-            )
-        };
-        out.truncate(wi as usize);
+        let (lone, _) =
+            cook_decode::<true, false>(&padded, 0, body.len() as u32, &mut out, &mut diags, cpu);
         (out, lone)
     }
 
@@ -1353,33 +874,12 @@ mod tests {
         ] {
             let mut padded = body.to_vec();
             padded.extend_from_slice(&[0u8; 32]);
-            let mut out_t = vec![0u8; body.len() + 32];
-            let mut out_f = vec![0u8; body.len() + 32];
+            let (mut out_t, mut out_f) = (Vec::new(), Vec::new());
             let mut diags = Vec::new();
-            let (wt, _, _) = unsafe {
-                cook_decode::<true, false>(
-                    padded.as_ptr(),
-                    0,
-                    body.len() as u32,
-                    out_t.as_mut_ptr(),
-                    0,
-                    &mut diags,
-                    cpu,
-                )
-            };
-            let (wf, _, _) = unsafe {
-                cook_decode::<false, false>(
-                    padded.as_ptr(),
-                    0,
-                    body.len() as u32,
-                    out_f.as_mut_ptr(),
-                    0,
-                    &mut Vec::new(),
-                    cpu,
-                )
-            };
-            assert_eq!(wt, wf);
-            assert_eq!(out_t[..wt as usize], out_f[..wf as usize]);
+            let n = body.len() as u32;
+            cook_decode::<true, false>(&padded, 0, n, &mut out_t, &mut diags, cpu);
+            cook_decode::<false, false>(&padded, 0, n, &mut out_f, &mut Vec::new(), cpu);
+            assert_eq!(out_t, out_f);
             assert!(
                 !diags.is_empty(),
                 "expected a diagnostic for {:?}",
@@ -1485,34 +985,13 @@ mod tests {
     /// `\r` survives; the string monomorph (CRLF=false) never normalizes.
     #[test_cpus]
     fn cook_decode_template_cr_normalization(cpu: impl Cpu) {
-        /// Cook template `body` with [`cook_decode`] and CPU feature set `cpu`,
-        /// and return the cooked bytes.
-        #[cpu_multiversion]
-        fn cook_tpl(body: &[u8], cpu: impl Cpu) -> Vec<u8> {
-            let mut padded = body.to_vec();
-            padded.extend_from_slice(&[0u8; 32]);
-            let mut out = vec![0u8; body.len() + 32];
-            let (wi, _, _) = unsafe {
-                cook_decode::<false, true>(
-                    padded.as_ptr(),
-                    0,
-                    body.len() as u32,
-                    out.as_mut_ptr(),
-                    0,
-                    &mut Vec::new(),
-                    cpu,
-                )
-            };
-            out.truncate(wi as usize);
-            out
-        }
-        assert_eq!(cook_tpl(b"a\r\nb", cpu), b"a\nb");
-        assert_eq!(cook_tpl(b"a\rb", cpu), b"a\nb");
-        assert_eq!(cook_tpl(b"a\r\r\nb", cpu), b"a\n\nb");
+        assert_eq!(push_tpl(b"a\r\nb", cpu), b"a\nb");
+        assert_eq!(push_tpl(b"a\rb", cpu), b"a\nb");
+        assert_eq!(push_tpl(b"a\r\r\nb", cpu), b"a\n\nb");
         // Escape-produced CR is content, not a line ending.
-        assert_eq!(cook_tpl(br"a\rb", cpu), b"a\rb");
+        assert_eq!(push_tpl(br"a\rb", cpu), b"a\rb");
         // `\<CR><LF>` line continuation still cooks to nothing.
-        assert_eq!(cook_tpl(b"a\\\r\nb", cpu), b"ab");
+        assert_eq!(push_tpl(b"a\\\r\nb", cpu), b"ab");
         // The string monomorph is untouched by design.
         assert_eq!(cook(b"a\r\nb", cpu).0, b"a\r\nb");
     }

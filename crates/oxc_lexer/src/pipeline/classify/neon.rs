@@ -3,6 +3,7 @@ use oxc_simd::{Neon, Vec128, Vec256, cpu_version};
 use crate::{pipeline::chunk::mm64, token::tk};
 
 use super::{
+    Planes,
     luts::{
         DIGIT_MASK, DOT_MASK, KWINIT_MASK, MERGED_LUTS, OPCH_MASK, VT_FF_MASK, WORD_LUTS,
         WORD_MASK, WS_MASK,
@@ -34,20 +35,7 @@ struct Classified {
 
 #[cpu_version(Neon)]
 #[inline(never)]
-pub(super) unsafe fn classify_neon(
-    ts: bool,
-    src: *const u8,
-    n: usize,
-    word: *mut u64,
-    st: *mut u64,
-    kwinit: *mut u64,
-    opch: *mut u64,
-    digit: *mut u64,
-    dot: *mut u64,
-    misc: *mut u64,
-    kind: *mut u8,
-    cpu: Neon,
-) {
+pub(super) fn classify_neon(ts: bool, src: &[[u8; 64]], n: usize, out: Planes, cpu: Neon) {
     let mrg_lo = if ts { MERGED_LUTS.lo_ts } else { MERGED_LUTS.lo };
     let l = Luts {
         wb_lo: WORD_LUTS.lo.read(cpu),
@@ -61,52 +49,60 @@ pub(super) unsafe fn classify_neon(
 
     let mut cw: u64 = 0;
     let mut cs: u64 = 0;
-    let mut b = 0usize;
-    let mut i = 0usize;
     let nb_ceil = n.div_ceil(64);
-    while b < nb_ceil {
-        // The last block overreads up to 63 bytes into the caller-guaranteed zeroed PAD.
-        let c0 = chunk(Vec128::load_unaligned(src.add(i), cpu), &l);
-        let c1 = chunk(Vec128::load_unaligned(src.add(i + 16), cpu), &l);
-        let c2 = chunk(Vec128::load_unaligned(src.add(i + 32), cpu), &l);
-        let c3 = chunk(Vec128::load_unaligned(src.add(i + 48), cpu), &l);
+    let (src, out) = (&src[..nb_ceil], out.first(nb_ceil));
+    let Planes {
+        token_start: st,
+        word,
+        keyword_initial: kwinit,
+        op_char: opch,
+        digit,
+        dot,
+        misc,
+        kinds: kind,
+    } = out;
+    for b in 0..nb_ceil {
+        // The last block reads up to 63 bytes of PAD past n, masked out below.
+        let (q, _) = src[b].as_chunks::<16>();
+        let c0 = chunk(Vec128::read_unaligned(&q[0], cpu), &l);
+        let c1 = chunk(Vec128::read_unaligned(&q[1], cpu), &l);
+        let c2 = chunk(Vec128::read_unaligned(&q[2], cpu), &l);
+        let c3 = chunk(Vec128::read_unaligned(&q[3], cpu), &l);
 
-        c0.kind.store_unaligned(kind.add(i));
-        c1.kind.store_unaligned(kind.add(i + 16));
-        c2.kind.store_unaligned(kind.add(i + 32));
-        c3.kind.store_unaligned(kind.add(i + 48));
+        let (k, _) = kind[b].as_chunks_mut::<16>();
+        c0.kind.write_unaligned(&mut k[0]);
+        c1.kind.write_unaligned(&mut k[1]);
+        c2.kind.write_unaligned(&mut k[2]);
+        c3.kind.write_unaligned(&mut k[3]);
 
         let wordm = mm64(c0.word, c1.word, c2.word, c3.word);
         let wsm = mm64(c0.ws, c1.ws, c2.ws, c3.ws);
-        *word.add(b) = wordm;
-        *digit.add(b) = mm64(c0.digit, c1.digit, c2.digit, c3.digit);
-        *dot.add(b) = mm64(c0.dot, c1.dot, c2.dot, c3.dot);
-        *kwinit.add(b) = mm64(c0.kwinit, c1.kwinit, c2.kwinit, c3.kwinit);
-        *opch.add(b) = mm64(c0.opch, c1.opch, c2.opch, c3.opch);
-        *misc.add(b) = mm64(c0.misc, c1.misc, c2.misc, c3.misc);
+        word[b] = wordm;
+        digit[b] = mm64(c0.digit, c1.digit, c2.digit, c3.digit);
+        dot[b] = mm64(c0.dot, c1.dot, c2.dot, c3.dot);
+        kwinit[b] = mm64(c0.kwinit, c1.kwinit, c2.kwinit, c3.kwinit);
+        opch[b] = mm64(c0.opch, c1.opch, c2.opch, c3.opch);
+        misc[b] = mm64(c0.misc, c1.misc, c2.misc, c3.misc);
 
         let wprev = (wordm << 1) | cw;
         let sprev = (wsm << 1) | cs;
         cw = wordm >> 63;
         cs = wsm >> 63;
         // A byte starts a token unless it continues a whitespace or word run
-        *st.add(b) = !((wsm & sprev) | (wordm & wprev));
-
-        i += 64;
-        b += 1;
+        st[b] = !((wsm & sprev) | (wordm & wprev));
     }
     // Zero PAD bytes classify as a token start, which would mint spurious tokens past n.
     let rem = n & 63;
     if rem != 0 {
         let last = nb_ceil - 1;
         let m = (1u64 << rem) - 1;
-        *word.add(last) &= m;
-        *st.add(last) &= m;
-        *kwinit.add(last) &= m;
-        *opch.add(last) &= m;
-        *digit.add(last) &= m;
-        *dot.add(last) &= m;
-        *misc.add(last) &= m;
+        word[last] &= m;
+        st[last] &= m;
+        kwinit[last] &= m;
+        opch[last] &= m;
+        digit[last] &= m;
+        dot[last] &= m;
+        misc[last] &= m;
     }
 }
 

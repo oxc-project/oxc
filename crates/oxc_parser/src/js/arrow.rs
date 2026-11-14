@@ -4,7 +4,10 @@ use oxc_span::{FileExtension, GetSpan, Span};
 use oxc_syntax::precedence::Precedence;
 
 use super::{FunctionKind, Tristate, grammar::CoverGrammar};
-use crate::{Context, ParserConfig as Config, ParserImpl, diagnostics, lexer::Kind};
+use crate::{
+    Context, ParserConfig as Config, ParserImpl, diagnostics,
+    lexer::{Kind, Token},
+};
 
 struct ArrowFunctionHead<'a> {
     type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
@@ -52,12 +55,28 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 // This check only reads lexer tokens. Keep one checkpoint for both the
                 // literal fast path and the remaining lookahead, so the first token is read once.
                 let checkpoint = self.lexer.checkpoint();
-                let second = self.lexer.next_token().kind();
-                let result = if second.is_literal() {
+                let second = self.lexer.next_token();
+                let mut parameters_end = None;
+                let result = if second.kind().is_literal() {
                     Tristate::False
                 } else {
-                    self.is_parenthesized_arrow_function_expression_after_lparen(second, false)
+                    self.is_parenthesized_arrow_function_expression_after_lparen(
+                        second,
+                        false,
+                        &mut parameters_end,
+                    )
                 };
+                // The parameters `()` and `(x)` end where the lookahead does, so the lexer has
+                // read all of them. Keep its tokens rather than rewinding to read them again.
+                if let Some((rparen, next)) = parameters_end {
+                    let parameter = (second.kind() != Kind::RParen).then_some(second);
+                    return Some(self.parse_arrow_function_expression_after_parameters(
+                        parameter,
+                        rparen,
+                        next,
+                        allow_return_type_in_arrow_function,
+                    ));
+                }
                 self.lexer.rewind(checkpoint);
                 result
             }
@@ -111,21 +130,27 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         )
     }
 
-    // `second` follows `(` and the lexer is positioned after it. Only lexer state changes;
+    // `second_token` follows `(` and the lexer is positioned after it. Only lexer state changes;
     // callers must rewind their checkpoint before parsing the expression.
+    //
+    // The exception is an arrow function whose parameters are `()` or `(x)`, which the lexer
+    // has then read in full. `parameters_end` is set to the `)` and the token after it, so that
+    // a caller which holds no other state may carry on from there instead of rewinding.
     fn is_parenthesized_arrow_function_expression_after_lparen(
         &mut self,
-        second: Kind,
+        second_token: Token,
         is_async: bool,
+        parameters_end: &mut Option<(Token, Token)>,
     ) -> Tristate {
+        let second = second_token.kind();
         match second {
             // Simple cases: "() =>", "(): ", and "() {".
             // This is an arrow function with no parameters.
             // The last one is not actually an arrow function,
             // but this is probably what the user intended.
             Kind::RParen => {
-                let third = self.lexer.next_token().kind();
-                match third {
+                let third = self.lexer.next_token();
+                let result = match third.kind() {
                     // `async()` can be a call on the true side of a conditional.
                     Kind::Colon if self.is_ts && is_async => Tristate::Maybe,
                     // Bare `()` cannot be a parenthesized expression, so the colon
@@ -133,7 +158,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     Kind::Colon if self.is_ts => Tristate::True,
                     Kind::Arrow | Kind::LCurly => Tristate::True,
                     _ => Tristate::False,
+                };
+                if result == Tristate::True {
+                    *parameters_end = Some((second_token, third));
                 }
+                result
             }
             // If encounter "([" or "({", this could be the start of a binding pattern.
             // Examples:
@@ -141,7 +170,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             //      ({ x }) => { }
             //      ([ x ])
             //      ({ x })
-            Kind::LBrack | Kind::LCurly => Tristate::Maybe,
+            // unless its first element shows that it is an array or object literal.
+            // Examples:
+            //      ([ 1 ])
+            //      ({ x: y.z })
+            //      ({ ...x, y })
+            Kind::LBrack | Kind::LCurly => {
+                if self.can_start_binding_pattern_after(second) {
+                    Tristate::Maybe
+                } else {
+                    Tristate::False
+                }
+            }
             // Simple case: "(..."
             // This is an arrow function with a rest parameter.
             Kind::Dot3 => {
@@ -155,7 +195,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
             }
             _ => {
-                let third = self.lexer.next_token().kind();
+                // A parameter starts with a binding identifier, `this` or a modifier. Anything
+                // else is decided without reading the token after it.
+                if !second.is_binding_identifier()
+                    && second != Kind::This
+                    && !second.is_modifier_kind()
+                {
+                    return Tristate::False;
+                }
+
+                let third_token = self.lexer.next_token();
+                let third = third_token.kind();
 
                 // Check for "(xxx yyy", where xxx is a modifier and yyy is an identifier. This
                 // isn't actually allowed, but we want to treat it as a lambda so we can provide
@@ -193,8 +243,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     // `yield`, and `this` on the existing contextual/error-recovery paths.
                     // A TS return type can still be ambiguous with a conditional's colon.
                     Kind::RParen if second.is_identifier() => {
-                        match self.lexer.next_token().kind() {
-                            Kind::Arrow => Tristate::True,
+                        let fourth = self.lexer.next_token();
+                        match fourth.kind() {
+                            Kind::Arrow => {
+                                // Keywords and escapes are left to the parameter parser.
+                                if second == Kind::Ident && !second_token.escaped() {
+                                    *parameters_end = Some((third_token, fourth));
+                                }
+                                Tristate::True
+                            }
                             Kind::Colon if self.is_ts => Tristate::Maybe,
                             _ => Tristate::False,
                         }
@@ -209,15 +266,85 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
+    /// Whether a `BindingPattern` can begin with the `{` or `[` which the lexer has just read.
+    ///
+    /// ```text
+    /// ObjectBindingPattern : `{` (BindingProperty `,`)* (BindingProperty | BindingRestProperty)? `}`
+    /// ArrayBindingPattern  : `[` (BindingElement? `,`)* (BindingElement | BindingRestElement)? `]`
+    /// BindingProperty      : SingleNameBinding | PropertyName `:` BindingElement
+    /// BindingElement       : SingleNameBinding | BindingPattern Initializer?
+    /// SingleNameBinding    : BindingIdentifier Initializer?
+    /// BindingRestProperty  : `...` BindingIdentifier
+    /// BindingRestElement   : `...` (BindingIdentifier | BindingPattern)
+    /// ```
+    ///
+    /// A binding target is therefore a binding identifier or a nested pattern, and a binding
+    /// identifier is followed by `=`, `,` or the closing bracket. The first element of an array
+    /// or object literal usually breaks one of those rules (`{ x: y.z }`, `{ x: 1 }`, `{ x() {} }`,
+    /// `{ ...x, y }`, `[x.y]`, `[1]`), which makes parsing it as a parameter certain to fail.
+    ///
+    /// Returns `false` only in those cases, so the caller can skip the speculative parameter
+    /// parse. Only the first element is examined, and computed keys, initializers and nested
+    /// patterns are left to that parse. Only lexer state changes; the caller restores it.
+    ///
+    /// The checks mirror `parse_binding_property`, `parse_rest_element` and
+    /// `parse_delimited_list_with_rest`, and must be kept in step with them.
+    fn can_start_binding_pattern_after(&mut self, opening: Kind) -> bool {
+        let close = if opening == Kind::LCurly { Kind::RCurly } else { Kind::RBrack };
+        let mut kind = self.lexer.next_token().kind();
+        if kind == close {
+            return true;
+        }
+        if kind == Kind::Dot3 {
+            let argument = self.lexer.next_token().kind();
+            if !argument.is_binding_identifier() {
+                return matches!(argument, Kind::LCurly | Kind::LBrack);
+            }
+            return match self.lexer.next_token().kind() {
+                // Only a trailing comma may follow a rest element.
+                Kind::Comma => self.lexer.next_token().kind() == close,
+                // `=`, and `?` or `:` in TypeScript, are reported without abandoning the parse.
+                Kind::Eq | Kind::Question | Kind::Colon => true,
+                kind => kind == close,
+            };
+        }
+        if opening == Kind::LCurly {
+            if kind.is_identifier_name() {
+                match self.lexer.next_token().kind() {
+                    Kind::Colon => {}
+                    kind => return matches!(kind, Kind::Comma | Kind::RCurly | Kind::Eq),
+                }
+            } else if kind == Kind::Str || kind.is_number() {
+                if self.lexer.next_token().kind() != Kind::Colon {
+                    return false;
+                }
+            } else {
+                return true;
+            }
+            kind = self.lexer.next_token().kind();
+        } else if kind == Kind::Comma {
+            // Elision.
+            return true;
+        }
+        if kind.is_binding_identifier() {
+            let kind = self.lexer.next_token().kind();
+            kind == close || matches!(kind, Kind::Comma | Kind::Eq)
+        } else {
+            matches!(kind, Kind::LCurly | Kind::LBrack)
+        }
+    }
+
     fn is_parenthesized_arrow_function_expression_worker(&mut self, is_async: bool) -> Tristate {
         let first = self.cur_kind();
         self.bump_any();
         let second = self.cur_kind();
 
         match first {
-            Kind::LParen => {
-                self.is_parenthesized_arrow_function_expression_after_lparen(second, is_async)
-            }
+            Kind::LParen => self.is_parenthesized_arrow_function_expression_after_lparen(
+                self.cur_token(),
+                is_async,
+                &mut None,
+            ),
             Kind::LAngle => {
                 // If we have "<" not followed by an identifier,
                 // then this definitely is not an arrow function.
@@ -372,6 +499,46 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let head = self.parse_parenthesized_arrow_function_head();
         self.expect_arrow();
         self.parse_arrow_function_expression_body(head, allow_return_type_in_arrow_function)
+    }
+
+    /// Parse the rest of an arrow function whose parameters the lexer has read in full, along
+    /// with the token after them, `next`. The parameters are `()`, or `(x)` where `parameter`
+    /// is an identifier which is not a keyword and has no escape. The current token is the `(`.
+    ///
+    /// This builds what `parse_parenthesized_arrow_function_expression` does for the same source.
+    fn parse_arrow_function_expression_after_parameters(
+        &mut self,
+        parameter: Option<Token>,
+        rparen: Token,
+        next: Token,
+        allow_return_type_in_arrow_function: bool,
+    ) -> Expression<'a> {
+        let start = self.cur_start();
+        let items = if let Some(parameter) = parameter {
+            let span = parameter.span();
+            let name = self.ident(self.token_source(&parameter));
+            let ident = BindingIdentifier::new(span, name, self);
+            let pattern = BindingPattern::BindingIdentifier(self.alloc(ident));
+            ArenaVec::from_value_in(FormalParameter::new_plain(span, pattern, self), self)
+        } else {
+            ArenaVec::new_in(self)
+        };
+        let params = FormalParameters::boxed(
+            Span::new(start, rparen.end()),
+            FormalParameterKind::ArrowFormalParameters,
+            items,
+            None,
+            self,
+        );
+        self.prev_token_end = rparen.end();
+        self.token = next;
+
+        let return_type = if self.is_ts { self.parse_ts_return_type_annotation() } else { None };
+        self.expect_arrow();
+        self.parse_arrow_function_expression_body(
+            ArrowFunctionHead { type_parameters: None, params, return_type, r#async: false, start },
+            allow_return_type_in_arrow_function,
+        )
     }
 
     fn expect_arrow_after_head(&mut self) {

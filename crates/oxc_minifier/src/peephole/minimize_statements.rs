@@ -88,7 +88,7 @@ impl<'a> PeepholeOptimizations {
                 is_control_flow_dead = true;
             }
         }
-        if let Some(stmt) = keep_var.get_variable_declaration_statement(&ctx.ast) {
+        if let Some(stmt) = keep_var.get_variable_declaration_statement(ctx) {
             match Self::remove_unused_variable_declaration(stmt, ctx) {
                 // Multiple identity-dropped `var x;`s coalesce into a single
                 // `var x, y;`. The individual drops looked byte-identical, but
@@ -1225,9 +1225,9 @@ impl<'a> PeepholeOptimizations {
                 return true;
             };
             // Don't inline `var e` inside `catch (e) { ... }`. Removing the var declarator
-            // would lose the function-scoped hoisting that `var` provides. The catch parameter
-            // and the var share one symbol (with CatchVariable flag) due to the redeclaration
-            // semantics in https://tc39.es/ecma262/#sec-variablestatements-in-catch-blocks
+            // would lose the function-scoped hoisting that `var` provides. The declarator
+            // carries the catch parameter's symbol because its initializer assigns there;
+            // `Scoping::catch_var_binding` identifies the separate enclosing binding.
             if ctx.scoping().symbol_flags(prev_decl_id.symbol_id()).is_catch_variable() {
                 return true;
             }

@@ -537,10 +537,14 @@ impl<'a> Constraints<'a> {
         };
         let (keep_name_names, keep_name_symbols) =
             collect_keep_name_symbols(options.keep_names, allocator, scoping, ast_nodes);
-        let reserved = ArenaIdentHashSet::from_iter_in(
+        let mut reserved = ArenaIdentHashSet::from_iter_in(
             options.reserved.iter().map(|name| Ident::from(name.as_str())),
             allocator,
         );
+        // A `var` that redeclares a catch parameter prints one name for two bindings (see
+        // `Scoping::catch_var_binding`), and a block function in that catch can assign the same
+        // name (Annex B.3.3). Keep every binding with that name, as for `options.reserved`.
+        reserved.extend(scoping.catch_var_bindings().map(|(catch, _)| scoping.symbol_ident(catch)));
         Self {
             top_level,
             reserved,
