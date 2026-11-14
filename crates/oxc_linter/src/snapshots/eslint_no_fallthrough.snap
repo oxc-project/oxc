@@ -286,3 +286,45 @@ source: crates/oxc_linter/src/tester.rs
    ·                                      ─────────────────────
    ╰────
   help: Remove the fallthrough comment or add code that allows fallthrough (e.g. remove `break`).
+
+  ⚠ eslint(no-fallthrough): Expected a `break` statement before `case`.
+   ╭─[no_fallthrough.tsx:1:41]
+ 1 │ switch (a === b ? c : d) { case 1: a(); case 2: b(); }
+   ·                                         ────────────
+   ╰────
+  help: Use a `break` statement to prevent fallthrough, or add a comment to indicate intentional fallthrough.
+
+  ⚠ eslint(no-fallthrough): Expected a `break` statement before `case`.
+   ╭─[no_fallthrough.tsx:1:35]
+ 1 │ switch (obj?.kind) { case 0: a(); case 1: b(); }
+   ·                                   ────────────
+   ╰────
+  help: Use a `break` statement to prevent fallthrough, or add a comment to indicate intentional fallthrough.
+
+  ⚠ eslint(no-fallthrough): Expected a `break` statement before `default`.
+   ╭─[no_fallthrough.tsx:1:37]
+ 1 │ switch (getKind?.()) { case 0: a(); default: b(); }
+   ·                                     ─────────────
+   ╰────
+  help: Use a `break` statement to prevent fallthrough, or add a comment to indicate intentional fallthrough.
+
+  ⚠ eslint(no-fallthrough): Expected a `break` statement before `case`.
+   ╭─[no_fallthrough.tsx:1:43]
+ 1 │ switch (obj?.[key]?.kind) { default: a(); case 1: b(); }
+   ·                                           ────────────
+   ╰────
+  help: Use a `break` statement to prevent fallthrough, or add a comment to indicate intentional fallthrough.
+
+  ⚠ eslint(no-fallthrough): Expected a `break` statement before `case`.
+   ╭─[no_fallthrough.tsx:1:35]
+ 1 │ switch (obj?.kind) { case 0: a(); case 1: b(); case 2: c(); }
+   ·                                   ────────────
+   ╰────
+  help: Use a `break` statement to prevent fallthrough, or add a comment to indicate intentional fallthrough.
+
+  ⚠ eslint(no-fallthrough): Expected a `break` statement before `case`.
+   ╭─[no_fallthrough.tsx:1:48]
+ 1 │ switch (obj?.kind) { case 0: a(); case 1: b(); case 2: c(); }
+   ·                                                ────────────
+   ╰────
+  help: Use a `break` statement to prevent fallthrough, or add a comment to indicate intentional fallthrough.

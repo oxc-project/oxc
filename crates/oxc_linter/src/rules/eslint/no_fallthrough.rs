@@ -265,12 +265,22 @@ impl Rule for NoFallthrough {
         let cfg = ctx.cfg();
         let switch_id = ctx.nodes().cfg_id(node.id());
         let graph = cfg.graph();
+        let switch_id = switch
+            .cases
+            .first()
+            .and_then(|case| {
+                graph
+                    .edges_directed(ctx.nodes().cfg_id(case.node_id()), Direction::Incoming)
+                    .filter(|edge| matches!(edge.weight(), EdgeType::Normal))
+                    .exactly_one()
+                    .ok()
+                    .map(|edge| edge.source())
+            })
+            .unwrap_or(switch_id);
 
-        let (cfg_ids, tests, default, exit) = get_switch_semantic_cases(ctx, node, switch);
+        let (cfg_ids, tests, default, exit) = get_switch_semantic_cases(ctx, switch_id, switch);
 
         if default.or(exit).is_none() {
-            // TODO: our `get_switch_semantic_cases` can't evaluate cfg_ids for switch statements
-            // with conditional discriminant. If we can access the IDs correctly it should never be `None`.
             return;
         }
 
@@ -454,7 +464,7 @@ impl NoFallthrough {
 // Issue: <https://github.com/oxc-project/oxc/issues/3662>
 fn get_switch_semantic_cases(
     ctx: &LintContext,
-    node: &AstNode,
+    switch_id: BlockNodeId,
     switch: &SwitchStatement,
 ) -> (
     Vec<BlockNodeId>,
@@ -466,7 +476,7 @@ fn get_switch_semantic_cases(
     let graph = cfg.graph();
     let has_default = switch.cases.iter().any(SwitchCase::is_default_case);
     let (mut cfg_ids, tests, exit) = graph
-        .edges_directed(ctx.nodes().cfg_id(node.id()), Direction::Outgoing)
+        .edges_directed(switch_id, Direction::Outgoing)
         .fold((Vec::new(), Vec::new(), None), |(mut cfg_ids, mut conds, exit), it| {
             let target = it.target();
             if !matches!(it.weight(), EdgeType::Normal) {
@@ -664,6 +674,9 @@ fn test() {
         ("switch(foo) { case 0: do { bar(); } while ((true)); case 1: baz(); }", None),
         ("switch(foo) { case 0: for (; (true); bar()) {} case 1: baz(); }", None),
         ("switch(foo) { case 0: while (true) { throw x; break; } case 1: baz(); }", None),
+        ("switch (obj?.kind) { case 0: a(); break; case 1: b(); }", None),
+        ("switch (obj?.kind) { case 0: a(); /* falls through */ case 1: b(); }", None),
+        ("switch (obj?.kind) {}", None),
     ];
 
     let fail = vec![
@@ -744,8 +757,11 @@ fn test() {
             "switch(foo) { case 0: while (true) {} /* falls through */ case 1: baz(); }",
             Some(serde_json::json!([{ "reportUnusedFallthroughComment": true }])),
         ),
-        // TODO: it should fail but doesn't, we ignore conditional discriminants for now.
-        // ("switch (a === b ? c : d) { case 1: ; case 2: ; case 3: ; }", None)
+        ("switch (a === b ? c : d) { case 1: a(); case 2: b(); }", None),
+        ("switch (obj?.kind) { case 0: a(); case 1: b(); }", None),
+        ("switch (getKind?.()) { case 0: a(); default: b(); }", None),
+        ("switch (obj?.[key]?.kind) { default: a(); case 1: b(); }", None),
+        ("switch (obj?.kind) { case 0: a(); case 1: b(); case 2: c(); }", None),
     ];
 
     Tester::new(NoFallthrough::NAME, NoFallthrough::PLUGIN, pass, fail).test_and_snapshot();
