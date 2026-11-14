@@ -5,7 +5,7 @@ use oxc_syntax::identifier::is_identifier_start;
 
 use crate::error::DiagCode;
 
-use crate::pipeline::bytes::{decode_char_at, hexd};
+use crate::pipeline::bytes::{decode_char_at, hex_digit};
 
 use super::Lanes;
 
@@ -126,7 +126,7 @@ fn parse_number(src: &[u8], s: usize, e: usize, cpu: impl Cpu) -> f64 {
             if c == b'n' {
                 break;
             }
-            match hexd(c, cpu) {
+            match hex_digit(c, cpu) {
                 Some(h) => v = v.wrapping_mul(radix).wrapping_add(h as u64),
                 None => break,
             }
@@ -165,17 +165,6 @@ fn parse_number(src: &[u8], s: usize, e: usize, cpu: impl Cpu) -> f64 {
     str::from_utf8(&buf[..bl]).ok().and_then(|st| st.parse::<f64>().ok()).unwrap_or(0.0)
 }
 
-#[cpu_multiversion]
-#[inline]
-fn radix_digit(c: u8, _cpu: impl Cpu) -> Option<u8> {
-    match c {
-        b'0'..=b'9' => Some(c - b'0'),
-        b'a'..=b'f' => Some(c - b'a' + 10),
-        b'A'..=b'F' => Some(c - b'A' + 10),
-        _ => None,
-    }
-}
-
 /// First error in the number src[s..e], or Ok when unsure, so no valid number is ever flagged.
 #[cpu_multiversion]
 #[inline(never)]
@@ -205,7 +194,7 @@ fn validate_number(src: &[u8], s: usize, e: usize, cpu: impl Cpu) -> DiagCode {
                         return DiagCode::InvalidNumericSeparator;
                     }
                     prev_us = true;
-                } else if matches!(radix_digit(c, cpu), Some(v) if v < radix) {
+                } else if matches!(hex_digit(c, cpu), Some(v) if v < radix) {
                     any = true;
                     prev_us = false;
                 } else {

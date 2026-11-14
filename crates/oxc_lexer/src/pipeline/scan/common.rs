@@ -3,7 +3,7 @@ use std::slice;
 use oxc_simd::{Cpu, cpu_multiversion};
 
 use crate::pipeline::{
-    bytes::{hex_val, is_digit, is_word},
+    bytes::{hex_digit, is_digit, is_ls_ps_tail, is_word},
     find::find,
     source::Source,
 };
@@ -70,8 +70,7 @@ pub unsafe fn scan_regex(src: Source, mut i: usize, nl_at: &mut usize, cpu: impl
                 } else if c1 == 0xE2
                     && *nl_at == usize::MAX
                     && p + 3 < src.len()
-                    && src[p + 2] == 0x80
-                    && (src[p + 3] == 0xA8 || src[p + 3] == 0xA9)
+                    && is_ls_ps_tail(src[p + 2], src[p + 3], cpu)
                 {
                     // Escaped LS/PS: span ends past the whole char; the p+2
                     // skip lands mid-sequence (unwatched 0x80) and sails on.
@@ -96,8 +95,7 @@ pub unsafe fn scan_regex(src: Source, mut i: usize, nl_at: &mut usize, cpu: impl
             // arrows) fall through untouched.
             if *nl_at == usize::MAX
                 && p + 2 < src.len()
-                && src[p + 1] == 0x80
-                && (src[p + 2] == 0xA8 || src[p + 2] == 0xA9)
+                && is_ls_ps_tail(src[p + 1], src[p + 2], cpu)
             {
                 *nl_at = p + 2; // span ends past the whole char
             }
@@ -158,7 +156,7 @@ pub fn scan_ident_esc(src: Source, p: usize, cpu: impl Cpu) -> usize {
             i += 2;
             if i < src.len() && src[i] == b'{' {
                 i += 1;
-                while i < src.len() && hex_val(src[i], cpu) != 255 {
+                while i < src.len() && hex_digit(src[i], cpu).is_some() {
                     i += 1;
                 }
                 if i < src.len() && src[i] == b'}' {
@@ -166,7 +164,7 @@ pub fn scan_ident_esc(src: Source, p: usize, cpu: impl Cpu) -> usize {
                 }
             } else {
                 let mut k = 0;
-                while k < 4 && i < src.len() && hex_val(src[i], cpu) != 255 {
+                while k < 4 && i < src.len() && hex_digit(src[i], cpu).is_some() {
                     i += 1;
                     k += 1;
                 }
@@ -202,7 +200,7 @@ pub fn scan_number(src: Source, pos: usize, cpu: impl Cpu) -> usize {
                     i += 1;
                     continue;
                 }
-                if hex_val(d, cpu) < radix {
+                if hex_digit(d, cpu).is_some_and(|v| v < radix) {
                     i += 1;
                 } else {
                     break;

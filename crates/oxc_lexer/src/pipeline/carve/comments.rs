@@ -5,7 +5,7 @@ use crate::{error::DiagCode, token::tk};
 
 use crate::pipeline::{
     bitmap::Bitmap,
-    bytes::unicode_ws_len,
+    bytes::{is_ls_ps_tail, is_ws, unicode_ws_len},
     kinds::Kinds,
     lanes::Lanes,
     scan::{scan_block_comment, scan_line_comment},
@@ -88,7 +88,7 @@ pub(super) unsafe fn lex_block_comment(
 
     let mut q = end;
     let mut followed_by_newline = false;
-    while q < src.len() && is_lex_ws(src[q], cpu) {
+    while q < src.len() && is_ws(src[q], cpu) {
         if src[q] == b'\n' || src[q] == b'\r' {
             followed_by_newline = true;
             break;
@@ -240,7 +240,7 @@ pub(super) unsafe fn lex_html_close_comment(
 /// whitespace and block comments; a newline inside a crossed block comment
 /// also qualifies. Cold: called only on a literal `-->`.
 #[cpu_multiversion]
-fn html_close_at_line_start(src: Source, mut q: usize, _cpu: impl Cpu) -> bool {
+fn html_close_at_line_start(src: Source, mut q: usize, cpu: impl Cpu) -> bool {
     loop {
         if q == 0 {
             return true; // start of input
@@ -251,7 +251,7 @@ fn html_close_at_line_start(src: Source, mut q: usize, _cpu: impl Cpu) -> bool {
             b'\n' | b'\r' => return true,
             // LS/PS ending at q-1.
             0xA8 | 0xA9 => {
-                return q >= 3 && src[q - 2] == 0x80 && src[q - 3] == 0xE2;
+                return q >= 3 && src[q - 3] == 0xE2 && is_ls_ps_tail(src[q - 2], c, cpu);
             }
             // `*/` at (q-2, q-1): skip back to its `/*`; a newline inside the
             // comment body satisfies the rule.
@@ -464,7 +464,7 @@ fn push_comment_record(
         if b == b'\n' || b == b'\r' {
             break true;
         }
-        if !is_lex_ws(b, cpu) {
+        if !is_ws(b, cpu) {
             break b >= 0x80 && preceded_by_line_terminator(src, q);
         }
         q -= 1;
@@ -473,18 +473,6 @@ fn push_comment_record(
     c.set_followed_by_newline(followed_by_newline);
 
     lanes.comments.push(c);
-}
-
-#[cpu_multiversion]
-#[inline]
-fn is_lex_ws(c: u8, _cpu: impl Cpu) -> bool {
-    matches!(c, b' ' | b'\t' | b'\n' | b'\r' | 0x0b | 0x0c)
-}
-
-/// LS (U+2028) or PS (U+2029).
-#[inline]
-fn is_ls_ps(c0: u8, c1: u8, c2: u8) -> bool {
-    c0 == 0xE2 && c1 == 0x80 && (c2 == 0xA8 || c2 == 0xA9)
 }
 
 /// Cold: scan forward from q over WhiteSpace, including non-ASCII.
@@ -498,7 +486,7 @@ fn followed_by_line_terminator(src: Source, mut q: usize) -> bool {
         if b == b'\n' || b == b'\r' {
             return true;
         }
-        if is_lex_ws(b, cpu) {
+        if is_ws(b, cpu) {
             q += 1;
             continue;
         }
@@ -509,7 +497,7 @@ fn followed_by_line_terminator(src: Source, mut q: usize) -> bool {
         if len == 0 {
             return false;
         }
-        if is_ls_ps(src[q], src[q + 1], src[q + 2]) {
+        if src[q] == 0xE2 && is_ls_ps_tail(src[q + 1], src[q + 2], cpu) {
             return true;
         }
         q += len;
@@ -531,7 +519,7 @@ fn preceded_by_line_terminator(src: Source, mut q: usize) -> bool {
         if b == b'\n' || b == b'\r' {
             return true;
         }
-        if is_lex_ws(b, cpu) {
+        if is_ws(b, cpu) {
             q -= 1;
             continue;
         }
@@ -541,7 +529,7 @@ fn preceded_by_line_terminator(src: Source, mut q: usize) -> bool {
         if q >= 3 {
             let (c0, c1, c2) = (src[q - 3], src[q - 2], src[q - 1]);
             if unicode_ws_len(c0, c1, c2, cpu) == 3 {
-                if is_ls_ps(c0, c1, c2) {
+                if c0 == 0xE2 && is_ls_ps_tail(c1, c2, cpu) {
                     return true;
                 }
                 q -= 3;

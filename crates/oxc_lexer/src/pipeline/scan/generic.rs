@@ -1,6 +1,9 @@
 use oxc_simd::{BASELINE, cpu_version};
 
-use crate::pipeline::chunk::{eqm, load64};
+use crate::pipeline::{
+    bytes::is_ls_ps_tail,
+    chunk::{eqm, load64},
+};
 
 use super::common::is_license_at;
 
@@ -72,10 +75,7 @@ pub unsafe fn scan_line_comment_generic(src: *const u8, n: usize, mut i: usize) 
         while term != 0 {
             let t = (term.trailing_zeros() >> 3) as usize;
             let c = *src.add(i + t);
-            if c == 0xE2
-                && !(*src.add(i + t + 1) == 0x80
-                    && (*src.add(i + t + 2) == 0xA8 || *src.add(i + t + 2) == 0xA9))
-            {
+            if c == 0xE2 && !is_ls_ps_tail(*src.add(i + t + 1), *src.add(i + t + 2), cpu) {
                 term &= term - 1;
                 continue;
             }
@@ -97,10 +97,7 @@ pub unsafe fn scan_line_comment_generic(src: *const u8, n: usize, mut i: usize) 
         if c == b'\n' || c == b'\r' {
             return (i, license_at);
         }
-        if c == 0xE2
-            && *src.add(i + 1) == 0x80
-            && (*src.add(i + 2) == 0xA8 || *src.add(i + 2) == 0xA9)
-        {
+        if c == 0xE2 && is_ls_ps_tail(*src.add(i + 1), *src.add(i + 2), cpu) {
             return (i, license_at);
         }
         if c == b'@' && license_at < 0 && is_license_at(src, i, cpu) {

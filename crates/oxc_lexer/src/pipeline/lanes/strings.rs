@@ -8,7 +8,10 @@ use crate::{
     token::StringSpan,
 };
 
-use crate::pipeline::{bytes::hexd, chunk::mm32};
+use crate::pipeline::{
+    bytes::{hex_digit, is_ls_ps_tail},
+    chunk::mm32,
+};
 
 use super::Lanes;
 
@@ -198,7 +201,7 @@ impl Lanes {
                 if k >= be {
                     return (None, k);
                 }
-                let Some(h) = hexd(src[k], cpu) else { return (None, k) };
+                let Some(h) = hex_digit(src[k], cpu) else { return (None, k) };
                 v = (v << 4) | u32::from(h);
                 k += 1;
             }
@@ -235,7 +238,7 @@ impl Lanes {
                 let mut any = false;
                 let mut over = false;
                 while k < be {
-                    let Some(h) = hexd(src[k], cpu) else { break };
+                    let Some(h) = hex_digit(src[k], cpu) else { break };
                     value = (value << 4) | u32::from(h);
                     any = true;
                     k += 1;
@@ -711,8 +714,8 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
             b'x' => {
                 // The parser's span runs to just past the leading valid hex.
                 if i + 2 <= be {
-                    let a = hexd(*src.add(i as usize), cpu);
-                    let c = hexd(*src.add((i + 1) as usize), cpu);
+                    let a = hex_digit(*src.add(i as usize), cpu);
+                    let c = hex_digit(*src.add((i + 1) as usize), cpu);
                     if let (Some(a), Some(c)) = (a, c) {
                         let v = (u32::from(a) << 4) | u32::from(c);
                         if v < 0x80 {
@@ -737,7 +740,7 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                     wi += 1;
                     nes = true;
                     if EMIT {
-                        let k = i < be && hexd(*src.add(i as usize), cpu).is_some();
+                        let k = i < be && hex_digit(*src.add(i as usize), cpu).is_some();
                         push_escape_diag(diags, i - 2, i + u32::from(k));
                     }
                 }
@@ -754,7 +757,7 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                     // `\u{100000041}`.
                     let mut over_end: u32 = 0;
                     while k < be && *src.add(k as usize) != b'}' {
-                        if let Some(h) = hexd(*src.add(k as usize), cpu) {
+                        if let Some(h) = hex_digit(*src.add(k as usize), cpu) {
                             cp = (cp << 4) | (h as u32);
                             any = true;
                             k += 1;
@@ -786,10 +789,10 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                         }
                     }
                 } else if i + 4 <= be {
-                    let a = hexd(*src.add(i as usize), cpu);
-                    let b2 = hexd(*src.add((i + 1) as usize), cpu);
-                    let c = hexd(*src.add((i + 2) as usize), cpu);
-                    let d = hexd(*src.add((i + 3) as usize), cpu);
+                    let a = hex_digit(*src.add(i as usize), cpu);
+                    let b2 = hex_digit(*src.add((i + 1) as usize), cpu);
+                    let c = hex_digit(*src.add((i + 2) as usize), cpu);
+                    let d = hex_digit(*src.add((i + 3) as usize), cpu);
                     if let (Some(a), Some(b2), Some(c), Some(d)) = (a, b2, c, d) {
                         let cp = ((a as u32) << 12)
                             | ((b2 as u32) << 8)
@@ -805,10 +808,10 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                             && *src.add(i as usize) == b'\\'
                             && *src.add((i + 1) as usize) == b'u'
                         {
-                            let l0 = hexd(*src.add((i + 2) as usize), cpu);
-                            let l1 = hexd(*src.add((i + 3) as usize), cpu);
-                            let l2 = hexd(*src.add((i + 4) as usize), cpu);
-                            let l3 = hexd(*src.add((i + 5) as usize), cpu);
+                            let l0 = hex_digit(*src.add((i + 2) as usize), cpu);
+                            let l1 = hex_digit(*src.add((i + 3) as usize), cpu);
+                            let l2 = hex_digit(*src.add((i + 4) as usize), cpu);
+                            let l3 = hex_digit(*src.add((i + 5) as usize), cpu);
                             if let (Some(l0), Some(l1), Some(l2), Some(l3)) = (l0, l1, l2, l3) {
                                 let lo = ((l0 as u32) << 12)
                                     | ((l1 as u32) << 8)
@@ -839,7 +842,7 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                     nes = true;
                     if EMIT {
                         let mut k = i;
-                        while k < be && hexd(*src.add(k as usize), cpu).is_some() {
+                        while k < be && hex_digit(*src.add(k as usize), cpu).is_some() {
                             k += 1;
                         }
                         push_escape_diag(diags, esc, k);
@@ -865,8 +868,7 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                 // through (the lead here, continuations via the plain copy).
                 if nb == 0xE2
                     && i + 2 <= be
-                    && *src.add(i as usize) == 0x80
-                    && matches!(*src.add((i + 1) as usize), 0xA8 | 0xA9)
+                    && is_ls_ps_tail(*src.add(i as usize), *src.add((i + 1) as usize), cpu)
                 {
                     i += 2;
                 } else {
