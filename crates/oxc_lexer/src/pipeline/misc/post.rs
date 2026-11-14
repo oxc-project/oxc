@@ -2,25 +2,20 @@ use oxc_simd::{Cpu, cpu_multiversion};
 
 use crate::token::{KW_KIND_BASE, tk};
 
-use crate::pipeline::{bitmap::Bitmaps, kinds::Kinds, source::Source};
+use crate::pipeline::{bitmap::Bitmaps, lex::Lex};
 
 #[cpu_multiversion]
 #[inline]
-pub unsafe fn misc_post(
-    src: Source,
-    bitmaps: &Bitmaps,
-    kinds: Kinds,
-    escaped_ident_count: usize,
-    cpu: impl Cpu,
-) {
+pub unsafe fn misc_post(lex: Lex, escaped_ident_count: usize, cpu: impl Cpu) {
     if escaped_ident_count != 0 {
-        misc_post_impl(src, bitmaps, kinds, cpu)
+        misc_post_impl(lex, cpu)
     }
 }
 
 #[cpu_multiversion]
 #[inline(never)]
-unsafe fn misc_post_impl(src: Source, bitmaps: &Bitmaps, kinds: Kinds, cpu: impl Cpu) {
+unsafe fn misc_post_impl(lex: Lex, cpu: impl Cpu) {
+    let Lex { src, bitmaps, kinds, .. } = lex;
     let Bitmaps { token_start, word, misc, .. } = *bitmaps;
     let block_count = src.block_count();
     for w in 0..block_count {

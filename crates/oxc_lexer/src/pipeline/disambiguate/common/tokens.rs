@@ -10,9 +10,8 @@ use crate::pipeline::{
     bitmap::Bitmaps,
     bytes::{is_digit, line_break_in},
     keywords::kw_match_at,
-    kinds::Kinds,
+    lex::Lex,
     operators::opmap_longest,
-    source::Source,
 };
 
 use super::{super::Shared, Brackets, Closers, bits, walk};
@@ -85,14 +84,8 @@ impl<'a> TokensView<'a> {
     /// [`Lexer::ensure`]: crate::pipeline::lexer::Lexer::ensure
     #[cpu_multiversion]
     #[inline(always)]
-    pub unsafe fn new(
-        src: Source<'a>,
-        bitmaps: &Bitmaps,
-        kinds: Kinds,
-        kw_final: usize,
-        shared: &'a Shared,
-        _cpu: impl Cpu,
-    ) -> Self {
+    pub unsafe fn new(lex: Lex<'a>, kw_final: usize, shared: &'a Shared, _cpu: impl Cpu) -> Self {
+        let Lex { src, bitmaps, kinds, .. } = lex;
         let Bitmaps { token_start, op_char, .. } = *bitmaps;
         let blocks = src.block_count() + 1;
         Self {

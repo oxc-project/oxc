@@ -2,7 +2,7 @@ use std::mem;
 
 use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
 
-use crate::{error::DiagCode, options::LexOptions, token::tk};
+use crate::{error::DiagCode, token::tk};
 
 use crate::pipeline::{
     bitmap::{Bitmap, Bitmaps},
@@ -10,6 +10,7 @@ use crate::pipeline::{
     find::find,
     kinds::Kinds,
     lanes::Lanes,
+    lex::Lex,
     scan::scan_ident_esc,
     source::Source,
 };
@@ -79,14 +80,8 @@ enum JsxFrameKind {
 /// stack, emitting JSX_LT / JEND / JTEXT and raw (no-escape) attribute
 /// strings. All JSX logic lives here; `classify` is untouched.
 #[cpu_multiversion]
-pub(super) unsafe fn carve_jsx(
-    src: Source,
-    bitmaps: &Bitmaps,
-    kinds: Kinds,
-    options: &LexOptions,
-    lanes: &mut Lanes,
-    cpu: impl Cpu,
-) {
+pub(super) unsafe fn carve_jsx(lex: Lex, lanes: &mut Lanes, cpu: impl Cpu) {
+    let Lex { src, bitmaps, kinds, options } = lex;
     let Bitmaps { token_start, word, keyword_initial, op_char, digit, dot, .. } = *bitmaps;
     let module = options.source_type_module;
     // Annex B B.1.3 (`-->` at line start) needs JS mode to stop at `>`, which JSX is full of.
@@ -206,7 +201,7 @@ pub(super) unsafe fn carve_jsx(
                         }
                     }
                     b'/' => {
-                        i = lex_slash(src, bitmaps, kinds, s, lanes, cpu);
+                        i = lex_slash(lex, s, lanes, cpu);
                     }
                     b'<' => {
                         let c1 = if s + 1 < src.len() { src[s + 1] } else { 0 };
@@ -231,10 +226,7 @@ pub(super) unsafe fn carve_jsx(
                         } else if c1 == b'=' || is_digit(c1, cpu) {
                             // `<=` / `a<5`: leave for coalesce.
                             i = s + 1;
-                        } else if lanes
-                            .disambiguate
-                            .not_operator_position(src, bitmaps, kinds, s, cpu)
-                        {
+                        } else if lanes.disambiguate.not_operator_position(lex, s, cpu) {
                             // Operand position: candidate JSX. Whitespace (Unicode too) and
                             // comments may separate `<` from the name.
                             let name_pos = jsx_skip_trivia_fast(src, s + 1, cpu);
@@ -251,9 +243,7 @@ pub(super) unsafe fn carve_jsx(
                                 });
                                 mode = JsxMode::Tag;
                             } else if is_id_start(name_byte, cpu)
-                                && jsx_over_type_params(
-                                    src, bitmaps, kinds, s, name_pos, options.ts, lanes, cpu,
-                                )
+                                && jsx_over_type_params(lex, s, name_pos, lanes, cpu)
                             {
                                 // Element - unless `.tsx` says this is a
                                 // type-parameter list, which stays a less-than.
@@ -298,7 +288,7 @@ pub(super) unsafe fn carve_jsx(
                 }
                 let c = src[s];
                 if c == b'<' {
-                    let prev = lanes.disambiguate.prev_sig(src, bitmaps, kinds, s, cpu);
+                    let prev = lanes.disambiguate.prev_sig(lex, s, cpu);
                     if prev.is_some_and(|q| src[q] == b'=') {
                         let name_pos = jsx_skip_trivia(src, s + 1, cpu);
                         jsx_punct(kinds, op_char, s, tk!(JsxLt), cpu);

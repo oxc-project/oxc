@@ -3,7 +3,7 @@ use oxc_span::Span;
 
 use crate::token::{SPAN_SENTINELS, tk};
 
-use crate::pipeline::{bitmap::Bitmap, kinds::Kinds, lanes::Lanes, source::Source};
+use crate::pipeline::{bitmap::Bitmap, kinds::Kinds, lanes::Lanes, lex::Lex};
 
 mod avx2;
 mod common;
@@ -24,9 +24,7 @@ pub const STAGE_CAP: usize = STAGE_BLOCKS * 64 + 128;
 #[cpu_multiversion]
 #[inline(never)]
 pub unsafe fn compress(
-    src: Source,
-    token_start: Bitmap,
-    kinds: Kinds,
+    lex: Lex,
     stage_pos: *mut u32,
     stage_kind: *mut u8,
     out_kinds: *mut u8,
@@ -34,6 +32,8 @@ pub unsafe fn compress(
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) -> usize {
+    let Lex { src, bitmaps, kinds, .. } = lex;
+    let token_start = bitmaps.token_start;
     let mut c = 0usize;
     let mut w = 0usize;
     let mut b = 0usize;

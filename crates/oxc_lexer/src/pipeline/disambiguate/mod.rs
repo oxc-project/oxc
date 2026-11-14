@@ -24,7 +24,7 @@
 
 use oxc_simd::{Cpu, cpu_multiversion, cpu_version};
 
-use crate::pipeline::{bitmap::Bitmaps, kinds::Kinds, source::Source};
+use crate::pipeline::lex::Lex;
 
 mod common;
 mod context;
@@ -104,56 +104,33 @@ impl DisambiguateState {
 
     #[cpu_multiversion]
     #[inline(always)]
-    unsafe fn view<'a>(
-        &'a self,
-        src: Source<'a>,
-        bitmaps: &Bitmaps,
-        kinds: Kinds,
-        kw_final: usize,
-        cpu: impl Cpu,
-    ) -> TokensView<'a> {
-        TokensView::new(src, bitmaps, kinds, kw_final, &self.shared, cpu)
+    unsafe fn view<'a>(&'a self, lex: Lex<'a>, kw_final: usize, cpu: impl Cpu) -> TokensView<'a> {
+        TokensView::new(lex, kw_final, &self.shared, cpu)
     }
 
     #[cpu_multiversion]
     #[inline(always)]
     unsafe fn view_and_walks<'a>(
         &'a mut self,
-        src: Source<'a>,
-        bitmaps: &Bitmaps,
-        kinds: Kinds,
+        lex: Lex<'a>,
         kw_final: usize,
         cpu: impl Cpu,
     ) -> (TokensView<'a>, &'a mut Walks) {
-        (TokensView::new(src, bitmaps, kinds, kw_final, &self.shared, cpu), &mut self.walks)
+        (TokensView::new(lex, kw_final, &self.shared, cpu), &mut self.walks)
     }
 
     /// Safety: as for TokensView::new.
     #[cpu_multiversion]
     #[inline(always)]
-    pub unsafe fn prev_sig(
-        &self,
-        src: Source,
-        bitmaps: &Bitmaps,
-        kinds: Kinds,
-        pos: usize,
-        cpu: impl Cpu,
-    ) -> Option<usize> {
-        self.view(src, bitmaps, kinds, 0, cpu).prev_sig(pos, cpu)
+    pub unsafe fn prev_sig(&self, lex: Lex, pos: usize, cpu: impl Cpu) -> Option<usize> {
+        self.view(lex, 0, cpu).prev_sig(pos, cpu)
     }
 
     /// Safety: as for TokensView::new.
     #[cpu_multiversion]
     #[inline(always)]
-    pub unsafe fn not_operator_position(
-        &mut self,
-        src: Source,
-        bitmaps: &Bitmaps,
-        kinds: Kinds,
-        p: usize,
-        cpu: impl Cpu,
-    ) -> bool {
-        let (tokens, walks) = self.view_and_walks(src, bitmaps, kinds, 0, cpu);
+    pub unsafe fn not_operator_position(&mut self, lex: Lex, p: usize, cpu: impl Cpu) -> bool {
+        let (tokens, walks) = self.view_and_walks(lex, 0, cpu);
         operator::not_operator_position(&tokens, walks, p, cpu)
     }
 
@@ -162,30 +139,21 @@ impl DisambiguateState {
     #[inline(always)]
     pub unsafe fn gt_run_split(
         &mut self,
-        src: Source,
-        bitmaps: &Bitmaps,
-        kinds: Kinds,
+        lex: Lex,
         kw_final: usize,
         p: usize,
         run: usize,
         cpu: impl Cpu,
     ) -> usize {
-        let (tokens, walks) = self.view_and_walks(src, bitmaps, kinds, kw_final, cpu);
+        let (tokens, walks) = self.view_and_walks(lex, kw_final, cpu);
         type_context::gt_run_split(&tokens, walks, p, run, cpu)
     }
 
     /// Safety: as for TokensView::new.
     #[cpu_multiversion]
     #[inline(always)]
-    pub unsafe fn lt_run_split(
-        &self,
-        src: Source,
-        bitmaps: &Bitmaps,
-        kinds: Kinds,
-        lt: usize,
-        cpu: impl Cpu,
-    ) -> bool {
-        type_context::lt_run_split(&self.view(src, bitmaps, kinds, 0, cpu), lt, cpu)
+    pub unsafe fn lt_run_split(&self, lex: Lex, lt: usize, cpu: impl Cpu) -> bool {
+        type_context::lt_run_split(&self.view(lex, 0, cpu), lt, cpu)
     }
 
     /// Safety: as for TokensView::new.
@@ -193,14 +161,12 @@ impl DisambiguateState {
     #[inline(always)]
     pub unsafe fn jsx_over_generic(
         &mut self,
-        src: Source,
-        bitmaps: &Bitmaps,
-        kinds: Kinds,
+        lex: Lex,
         lt: usize,
         lp: usize,
         cpu: impl Cpu,
     ) -> (bool, bool) {
-        let (tokens, walks) = self.view_and_walks(src, bitmaps, kinds, 0, cpu);
+        let (tokens, walks) = self.view_and_walks(lex, 0, cpu);
         type_context::jsx_over_generic(&tokens, walks, lt, lp, cpu)
     }
 }
