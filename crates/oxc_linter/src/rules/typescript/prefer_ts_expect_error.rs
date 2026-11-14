@@ -56,7 +56,7 @@ declare_oxc_lint!(
     PreferTsExpectError,
     typescript,
     pedantic,
-    fix,
+    suggestion,
     version = "0.2.11",
     short_description = "Enforce using @ts-expect-error over @ts-ignore.",
 );
@@ -74,20 +74,26 @@ impl Rule for PreferTsExpectError {
 
             if comment.is_line() {
                 let comment_span = comment.span;
-                ctx.diagnostic_with_fix(prefer_ts_expect_error_diagnostic(comment_span), |fixer| {
-                    fixer.replace(
-                        comment_span,
-                        format!("//{}", raw.cow_replace("@ts-ignore", "@ts-expect-error")),
-                    )
-                });
+                ctx.diagnostic_with_suggestion(
+                    prefer_ts_expect_error_diagnostic(comment_span),
+                    |fixer| {
+                        fixer.replace(
+                            comment_span,
+                            format!("//{}", raw.cow_replace("@ts-ignore", "@ts-expect-error")),
+                        )
+                    },
+                );
             } else {
                 let comment_span = comment.span;
-                ctx.diagnostic_with_fix(prefer_ts_expect_error_diagnostic(comment_span), |fixer| {
-                    fixer.replace(
-                        comment_span,
-                        format!("/*{}*/", raw.cow_replace("@ts-ignore", "@ts-expect-error")),
-                    )
-                });
+                ctx.diagnostic_with_suggestion(
+                    prefer_ts_expect_error_diagnostic(comment_span),
+                    |fixer| {
+                        fixer.replace(
+                            comment_span,
+                            format!("/*{}*/", raw.cow_replace("@ts-ignore", "@ts-expect-error")),
+                        )
+                    },
+                );
             }
         }
     }
