@@ -2,6 +2,42 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
+  ⚠ eslint(block-scoped-var): 'x' is used outside of binding context.
+   ╭─[block_scoped_var.mjs:1:21]
+ 1 │ function f(x) { use(x); try {} catch (x) { var x = 1; } use(x); }
+   ·                     ┬                          ┬
+   ·                     │                          ╰── It is declared in a different scope here
+   ·                     ╰── 'x' is used here
+   ╰────
+  help: Variable 'x' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
+
+  ⚠ eslint(block-scoped-var): 'x' is used outside of binding context.
+   ╭─[block_scoped_var.mjs:1:48]
+ 1 │ function f(x) { use(x); try {} catch (x) { var x = 1; } use(x); }
+   ·                                                ┬            ┬
+   ·                                                │            ╰── 'x' is used here
+   ·                                                ╰── It is declared in a different scope here
+   ╰────
+  help: Variable 'x' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
+
+  ⚠ eslint(block-scoped-var): 'x' is used outside of binding context.
+   ╭─[block_scoped_var.mjs:1:39]
+ 1 │ function f() { try {} catch (x) { var x = 1; } try {} catch (x) { var x = 2; } use(x); }
+   ·                                       ┬                                            ┬
+   ·                                       │                                            ╰── 'x' is used here
+   ·                                       ╰── It is declared in a different scope here
+   ╰────
+  help: Variable 'x' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
+
+  ⚠ eslint(block-scoped-var): 'x' is used outside of binding context.
+   ╭─[block_scoped_var.mjs:1:71]
+ 1 │ function f() { try {} catch (x) { var x = 1; } try {} catch (x) { var x = 2; } use(x); }
+   ·                                                                       ┬            ┬
+   ·                                                                       │            ╰── 'x' is used here
+   ·                                                                       ╰── It is declared in a different scope here
+   ╰────
+  help: Variable 'x' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
+
   ⚠ eslint(block-scoped-var): 'a' is used outside of binding context.
    ╭─[block_scoped_var.mjs:3:21]
  2 │             if (true) {

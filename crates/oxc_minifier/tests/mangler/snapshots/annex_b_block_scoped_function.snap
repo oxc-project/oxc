@@ -91,3 +91,17 @@ if (true) {
 		return 1;
 	}
 }
+
+function _() { try { throw 1 } catch (e) { var e = 2; { function e() {} } use(e); } use(e); }
+function _() {
+	try {
+		throw 1;
+	} catch (e) {
+		var e = 2;
+		{
+			function e() {}
+		}
+		use(e);
+	}
+	use(e);
+}

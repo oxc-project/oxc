@@ -39,6 +39,15 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── `a` has already been declared here
    ╰────
 
+  ⚠ eslint(no-redeclare): 'e' is already defined.
+   ╭─[no_redeclare..cts:1:39]
+ 1 │ function f() { try {} catch (e) { var e; var e; } }
+   ·                                       ┬      ┬
+   ·                                       │      ╰── It can not be redeclared here.
+   ·                                       ╰── 'e' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
   ⚠ eslint(no-redeclare): 'a' is already defined.
    ╭─[no_redeclare..cts:1:10]
  1 │ function a() {} function a() {}

@@ -586,7 +586,18 @@ impl<'a> SemanticBuilder<'a> {
         excludes: SymbolFlags,
     ) -> Option<SymbolId> {
         let binding_id = self.scoping.get_binding(scope_id, name);
+        self.check_redeclaration_with_binding(scope_id, binding_id, span, name, excludes)
+    }
 
+    /// Check a local binding that has already been looked up, including conflicts with hoisted vars.
+    pub(crate) fn check_redeclaration_with_binding(
+        &self,
+        scope_id: ScopeId,
+        binding_id: Option<SymbolId>,
+        span: Span,
+        name: Ident<'a>,
+        excludes: SymbolFlags,
+    ) -> Option<SymbolId> {
         if let Some(symbol_id) = binding_id {
             let flags = self.scoping.symbol_flags(symbol_id);
 

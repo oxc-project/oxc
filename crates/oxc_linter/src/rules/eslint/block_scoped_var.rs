@@ -1,4 +1,4 @@
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::declarator_initializes};
 use oxc_ast::{AstKind, ast::BindingPattern};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::BoundNames;
@@ -189,21 +189,29 @@ fn run_for_all_redeclarations(
                 declare_scope_id,
                 declaration.scope_id(),
                 ctx.scoping(),
-            ) && redeclaration_has_write(declaration, redeclaration.span, ctx)
+            ) && redeclaration_has_write(declaration, redeclaration.span, *symbol, ctx)
         })
         .for_each(|redeclaration| {
             ctx.diagnostic(redeclaration_diagnostic(pattern.span(), redeclaration.span, &name));
         });
 }
 
-fn redeclaration_has_write(node: &AstNode, span: Span, ctx: &LintContext) -> bool {
+fn redeclaration_has_write(
+    node: &AstNode,
+    span: Span,
+    symbol_id: SymbolId,
+    ctx: &LintContext,
+) -> bool {
     let pattern = match node.kind() {
         AstKind::VariableDeclarator(decl) => {
-            return decl.init.is_some()
-                || matches!(
-                    ctx.nodes().parent_kind(ctx.nodes().parent_id(node.id())),
-                    AstKind::ForInStatement(_) | AstKind::ForOfStatement(_)
-                );
+            // An initializer in another catch writes to its catch parameter,
+            // even though the declaration also contributes to this hoisted var.
+            return declarator_initializes(decl, symbol_id)
+                && (decl.init.is_some()
+                    || matches!(
+                        ctx.nodes().parent_kind(ctx.nodes().parent_id(node.id())),
+                        AstKind::ForInStatement(_) | AstKind::ForOfStatement(_)
+                    ));
         }
         AstKind::FormalParameter(param) => {
             if param.initializer.is_some() {
@@ -232,9 +240,10 @@ fn run_for_declaration(pattern: &BindingPattern, node_scope_id: ScopeId, ctx: &L
     // e.g. "var [a, b] = [1, 2]"
     pattern.bound_names(&mut |ident| {
         let name = ident.name;
-        let Some(symbol) = ctx.scoping().find_binding(node_scope_id, name) else {
-            return;
-        };
+        // The declarator's identifier is attached to the catch parameter when
+        // its initializer assigns there. This rule checks the hoisted var's uses.
+        let symbol = ident.symbol_id();
+        let symbol = ctx.scoping().catch_var_binding(symbol).unwrap_or(symbol);
 
         let binding = (pattern, name, &symbol);
 
@@ -261,6 +270,7 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        "function f() { try {} catch (x) { { var x = 1; } use(x); } }",
         "if (1) {
             var a = 4;
         } else {
@@ -367,6 +377,8 @@ fn test() {
     ];
 
     let fail = vec![
+        "function f(x) { use(x); try {} catch (x) { var x = 1; } use(x); }",
+        "function f() { try {} catch (x) { var x = 1; } try {} catch (x) { var x = 2; } use(x); }",
         r"
             if (true) {
                 var a = 3;

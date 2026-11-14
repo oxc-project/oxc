@@ -6,6 +6,39 @@ use crate::{
     test_same_options, test_same_options_source_type, test_same_smallest, test_smallest,
 };
 
+#[test]
+fn catch_var_preserves_enclosing_binding() {
+    test_same_smallest("function f() { try { throw 0 } catch (y) { var y = 1 } return y } use(f);");
+    test_smallest(
+        "function f() { while (false) { try {} catch (y) { var y = 1 } } return y } use(f);",
+        "function f() { var y; return y } use(f);",
+    );
+}
+
+#[test]
+fn catch_var_shadows_named_function_expression() {
+    test_smallest(
+        "(function a() { try {} catch (a) { var a } console.log(typeof a) })();",
+        "(function() { try {} catch (a) { var a } console.log(typeof a) })();",
+    );
+}
+
+#[test]
+fn regenerated_var_links_enclosing_catch() {
+    test_smallest(
+        "function f() { try {} catch (a) { try { throw 2 } catch (a) { var a = 3 } a = 4 } return a } use(f);",
+        "function f() { try {} catch (a) { var a } return a } use(f);",
+    );
+}
+
+#[test]
+fn regenerated_var_preserves_surviving_catch_binding() {
+    test_smallest(
+        "function f() { try { throw 0 } catch (y) { while (0) { try {} catch (y) { var y } } y = 2; use(y) } return y } use(f);",
+        "function f() { try { throw 0 } catch (y) { var y = 2; use(y) } return y } use(f);",
+    );
+}
+
 // Leak regression: dropping an unused declarator must walk the whole
 // declarator, not just the init — references can also live in the binding's
 // TS type annotation (e.g. computed keys in a type literal). A leaked type
