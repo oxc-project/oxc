@@ -12,7 +12,7 @@ use crate::{
     AllowWarnDeny, ExternalPluginStore, LintConfig, LintFilter, LintFilterKind, Oxlintrc,
     RuleCategory, RuleEnum,
     config::{
-        ESLintRule, OxlintOverrides, OxlintRules,
+        ESLintRule, OxlintOverrides,
         external_plugins::ExternalPluginEntry,
         plugins::{LintPlugins, is_normal_plugin_name, normalize_plugin_name},
         rules::{OverrideRulesError, RuleConfig, RuleSet},
@@ -557,6 +557,7 @@ impl ConfigStoreBuilder {
                     env: override_config.env,
                     globals: override_config.globals,
                     plugins: override_config.plugins,
+                    external_plugins: override_config.external_plugins,
                     rules: ResolvedOxlintOverrideRules { builtin_rules, external_rules },
                 })
             })
@@ -578,33 +579,6 @@ impl ConfigStoreBuilder {
             })
             .map(|rule| (rule.clone(), RuleConfig::new(AllowWarnDeny::Warn)))
             .collect()
-    }
-
-    /// # Panics
-    /// This function will panic if the `oxlintrc` is not valid JSON.
-    pub fn resolve_final_config_file(&self, oxlintrc: Oxlintrc) -> String {
-        let mut oxlintrc = oxlintrc;
-
-        let new_rules = self
-            .rules
-            .iter()
-            .sorted_unstable_by_key(|(r, _)| (r.plugin_name(), r.name()))
-            .map(|(r, config)| ESLintRule {
-                plugin_name: r.plugin_name().to_string(),
-                rule_name: r.name().to_string(),
-                severity: config.severity,
-                config: config.options.as_deref().unwrap_or_default().iter().cloned().collect(),
-            })
-            .collect();
-
-        oxlintrc.plugins = Some(self.config.plugins);
-        oxlintrc.settings.clone_from(&self.config.settings);
-        oxlintrc.env.clone_from(&self.config.env);
-        oxlintrc.globals.clone_from(&self.config.globals);
-        oxlintrc.overrides.clone_from(&self.overrides);
-        oxlintrc.options = self.config.options.clone();
-        oxlintrc.rules = OxlintRules::new(new_rules);
-        serde_json::to_string_pretty(&oxlintrc).unwrap()
     }
 
     fn load_external_plugin(
@@ -925,36 +899,45 @@ mod test {
         ];
 
         for oxlintrc in configs {
-            let mut store = ExternalPluginStore::default();
-            let builder =
-                ConfigStoreBuilder::from_oxlintrc(true, oxlintrc.clone(), None, &mut store, None)
-                    .unwrap();
-            let expected: OxlintRules = serde_json::from_value(serde_json::json!({
-                "no-console": ["error", { "allow": ["warn"] }],
-                "no-unused-vars": ["warn", { "args": "none" }]
-            }))
-            .unwrap();
-            let printed: serde_json::Value =
-                serde_json::from_str(&builder.resolve_final_config_file(oxlintrc.clone())).unwrap();
-            assert_eq!(printed["rules"], serde_json::to_value(expected).unwrap());
-
-            let builder =
-                builder.with_filter(&LintFilter::new(AllowWarnDeny::Warn, "no-console").unwrap());
-            let expected: OxlintRules = serde_json::from_value(serde_json::json!({
-                "no-console": ["warn", { "allow": ["warn"] }],
-                "no-unused-vars": ["warn", { "args": "none" }]
-            }))
-            .unwrap();
-            let printed: serde_json::Value =
-                serde_json::from_str(&builder.resolve_final_config_file(oxlintrc.clone())).unwrap();
-            assert_eq!(printed["rules"], serde_json::to_value(expected).unwrap());
-
-            let builder = builder
-                .with_filter(&LintFilter::new(AllowWarnDeny::Allow, "all").unwrap())
-                .with_filter(&LintFilter::new(AllowWarnDeny::Deny, "no-console").unwrap());
-            let printed: serde_json::Value =
-                serde_json::from_str(&builder.resolve_final_config_file(oxlintrc)).unwrap();
-            assert_eq!(printed["rules"], serde_json::json!({ "no-console": "deny" }));
+            for (filters, expected) in [
+                (
+                    vec![],
+                    serde_json::json!({
+                        "no-console": ["deny", { "allow": ["warn"] }],
+                        "no-unused-vars": ["warn", { "args": "none" }]
+                    }),
+                ),
+                (
+                    vec![LintFilter::new(AllowWarnDeny::Warn, "no-console").unwrap()],
+                    serde_json::json!({
+                        "no-console": ["warn", { "allow": ["warn"] }],
+                        "no-unused-vars": ["warn", { "args": "none" }]
+                    }),
+                ),
+                (
+                    vec![
+                        LintFilter::new(AllowWarnDeny::Allow, "all").unwrap(),
+                        LintFilter::new(AllowWarnDeny::Deny, "no-console").unwrap(),
+                    ],
+                    serde_json::json!({ "no-console": "deny" }),
+                ),
+            ] {
+                let mut store = ExternalPluginStore::default();
+                let config = ConfigStoreBuilder::from_oxlintrc(
+                    true,
+                    oxlintrc.clone(),
+                    None,
+                    &mut store,
+                    None,
+                )
+                .unwrap()
+                .with_filters(&filters)
+                .build(&mut store)
+                .unwrap();
+                let printed: serde_json::Value =
+                    serde_json::from_str(&config.to_config_file(oxlintrc.clone(), &store)).unwrap();
+                assert_eq!(printed["rules"], expected);
+            }
         }
     }
 

@@ -147,6 +147,13 @@ impl ExternalPluginStore {
         (&plugin.name, &external_rule.name)
     }
 
+    pub(crate) fn resolve_rule_options(
+        &self,
+        options_id: ExternalOptionsId,
+    ) -> &[serde_json::Value] {
+        &self.options[options_id].1
+    }
+
     /// Add options to the store and return its [`ExternalOptionsId`].
     /// If `options` is empty, returns [`ExternalOptionsId::NONE`] without adding to the store.
     pub fn add_options(

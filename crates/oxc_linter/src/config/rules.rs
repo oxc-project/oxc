@@ -104,6 +104,38 @@ impl OxlintRules {
         Self { rules }
     }
 
+    pub(super) fn from_resolved(
+        builtin_rules: &[(RuleEnum, RuleConfig)],
+        external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
+        external_plugin_store: &ExternalPluginStore,
+    ) -> Self {
+        let builtin_rules = builtin_rules.iter().map(|(rule, config)| ESLintRule {
+            plugin_name: rule.plugin_name().to_string(),
+            rule_name: rule.name().to_string(),
+            severity: config.severity,
+            config: config.options.as_deref().unwrap_or_default().iter().cloned().collect(),
+        });
+        let external_rules = external_rules.iter().map(|(rule_id, options_id, severity)| {
+            let (plugin_name, rule_name) =
+                external_plugin_store.resolve_plugin_rule_names(*rule_id);
+            ESLintRule {
+                plugin_name: plugin_name.to_string(),
+                rule_name: rule_name.to_string(),
+                severity: *severity,
+                config: external_plugin_store
+                    .resolve_rule_options(*options_id)
+                    .iter()
+                    .cloned()
+                    .collect(),
+            }
+        });
+        let mut rules: Vec<_> = builtin_rules.chain(external_rules).collect();
+        rules.sort_unstable_by(|a, b| {
+            (&a.plugin_name, &a.rule_name).cmp(&(&b.plugin_name, &b.rule_name))
+        });
+        Self::new(rules)
+    }
+
     /// Returns `true` if there are no rules.
     pub fn is_empty(&self) -> bool {
         self.rules.is_empty()
