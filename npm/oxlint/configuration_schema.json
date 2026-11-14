@@ -6110,6 +6110,9 @@
         "oxc/no-const-enum": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "oxc/no-file-disable": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "oxc/no-map-spread": {
           "anyOf": [
             {
