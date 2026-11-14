@@ -44,12 +44,11 @@ use rewrite_extensions::TypeScriptRewriteExtensions;
 pub struct TypeScript<'a> {
     annotations: TypeScriptAnnotations<'a>,
     r#enum: TypeScriptEnum,
-    namespace: TypeScriptNamespace,
+    namespace: TypeScriptNamespace<'a>,
     module: TypeScriptModule,
     rewrite_extensions: Option<TypeScriptRewriteExtensions>,
     // Options
     source_type_is_typescript_definition: bool,
-    is_class_properties_plugin_enabled: bool,
     set_public_class_fields: bool,
     remove_class_fields_without_initializer: bool,
 }
@@ -63,7 +62,6 @@ impl<'a> TypeScript<'a> {
             module: TypeScriptModule::new(options.only_remove_type_imports, state.module),
             rewrite_extensions: TypeScriptRewriteExtensions::new(options),
             source_type_is_typescript_definition: state.source_type.is_typescript_definition(),
-            is_class_properties_plugin_enabled: state.is_class_properties_plugin_enabled,
             set_public_class_fields: state.assumptions.set_public_class_fields,
             remove_class_fields_without_initializer: !options.allow_declare_fields
                 || options.remove_class_fields_without_initializer,
@@ -118,9 +116,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
     fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         self.annotations.enter_class(class, ctx);
 
-        // Avoid converting class fields when class-properties plugin is enabled, that plugin has covered all
-        // this transformation does.
-        if !self.is_class_properties_plugin_enabled {
+        // Class-properties owns field lowering and initialization order when enabled.
+        if !ctx.state.class_transform.transforms_fields() {
             if self.set_public_class_fields {
                 self.transform_class_fields(class, ctx);
             } else {
@@ -135,9 +132,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
     fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         self.annotations.exit_class(class, ctx);
 
-        // Avoid converting class fields when class-properties plugin is enabled, that plugin has covered all
-        // this transformation does.
-        if !self.is_class_properties_plugin_enabled {
+        // Class-properties owns field lowering and initialization order when enabled.
+        if !ctx.state.class_transform.transforms_fields() {
             self.transform_class_on_exit(class, ctx);
         }
     }
@@ -189,7 +185,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.annotations.enter_method_definition(def, ctx);
-        if self.is_class_properties_plugin_enabled || !self.set_public_class_fields {
+        if ctx.state.class_transform.transforms_fields() || !self.set_public_class_fields {
             Self::transform_class_constructor(def, ctx);
         }
     }
@@ -223,7 +219,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
     }
 
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.r#enum.enter_statement(stmt, ctx);
+        self.r#enum.transform_statement(stmt, &self.namespace, ctx);
         self.module.enter_statement(stmt, ctx);
     }
 

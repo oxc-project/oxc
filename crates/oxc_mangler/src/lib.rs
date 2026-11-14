@@ -567,7 +567,8 @@ impl<'a> Constraints<'a> {
     ///
     /// Every symbol assigned a slot is a candidate, so the slot assignment becomes the final
     /// rename set.
-    #[inline]
+    #[expect(clippy::inline_always, reason = "per-symbol slot assignment hot path")]
+    #[inline(always)]
     fn is_mangle_candidate(&self, symbol_id: SymbolId, scoping: &Scoping) -> bool {
         let scope_id = scoping.symbol_scope_id(symbol_id);
 
@@ -698,9 +699,8 @@ impl<'a> SlotAssignment<'a> {
                 // The scopes this symbol is alive in: for each use, walk up to (but not including)
                 // `scope_id`, marking the descendant scopes it passes through.
                 let slot_liveness_bitset = &mut slot_liveness[assigned_slot as usize];
-                for used_scope_id in referenced_scope_ids
-                    .chain(redeclared_scope_ids)
-                    .chain([scope_id, declared_scope_id])
+                for used_scope_id in
+                    referenced_scope_ids.chain(redeclared_scope_ids).chain([declared_scope_id])
                 {
                     for ancestor_id in scoping.scope_ancestors(used_scope_id) {
                         let ancestor_index = ancestor_id.index();

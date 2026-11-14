@@ -34,7 +34,6 @@ use crate::react_compiler_hir::{
     PropertyNameKind, ReactFunctionType, Terminal, Type, TypeId,
 };
 use crate::react_compiler_ssa::enter_ssa::placeholder_function;
-use oxc_ast::ast::BinaryOperator;
 use oxc_span::Span;
 
 // =============================================================================
@@ -147,27 +146,6 @@ fn pre_resolve_globals_recursive<'a>(
     }
 }
 
-fn is_primitive_binary_op(op: &BinaryOperator) -> bool {
-    matches!(
-        op,
-        BinaryOperator::Addition
-            | BinaryOperator::Subtraction
-            | BinaryOperator::Division
-            | BinaryOperator::Remainder
-            | BinaryOperator::Multiplication
-            | BinaryOperator::Exponential
-            | BinaryOperator::BitwiseAnd
-            | BinaryOperator::BitwiseOR
-            | BinaryOperator::ShiftRight
-            | BinaryOperator::ShiftLeft
-            | BinaryOperator::BitwiseXOR
-            | BinaryOperator::GreaterThan
-            | BinaryOperator::LessThan
-            | BinaryOperator::GreaterEqualThan
-            | BinaryOperator::LessEqualThan
-    )
-}
-
 /// Resolve a property type from the shapes registry.
 /// If `custom_hook_type` is provided and the property name looks like a hook,
 /// it will be used as a fallback when no matching property is found (matching
@@ -239,7 +217,7 @@ fn is_ref_like_name(object_name: &str, property_name: &PropertyNameKind) -> bool
     object_name == "ref"
         || (object_name.len() > 3
             && object_name.ends_with("Ref")
-            && object_name[..1]
+            && object_name
                 .chars()
                 .next()
                 .is_some_and(|c| c.is_ascii_alphabetic() || c == '$' || c == '_'))
@@ -510,15 +488,11 @@ fn generate_instruction_types<'a>(
             unifier.unify(left, value_type, shapes)?;
         }
 
-        InstructionValue::BinaryExpression {
-            operator, left: bin_left, right: bin_right, ..
-        } => {
-            if is_primitive_binary_op(operator) {
-                let left_operand_type = get_type(bin_left.identifier, identifiers);
-                unifier.unify(left_operand_type, Type::Primitive, shapes)?;
-                let right_operand_type = get_type(bin_right.identifier, identifiers);
-                unifier.unify(right_operand_type, Type::Primitive, shapes)?;
-            }
+        InstructionValue::BinaryExpression { .. } => {
+            // Unlike the TS implementation, do not infer operand types from
+            // coercing operators. A value used in arithmetic in one branch can
+            // still be a mutable object in another branch; global unification
+            // would otherwise suppress its mutations and reuse stale caches.
             unifier.unify(left, Type::Primitive, shapes)?;
         }
 

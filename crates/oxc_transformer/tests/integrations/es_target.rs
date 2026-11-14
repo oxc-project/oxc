@@ -83,6 +83,6 @@ fn target_list_fail() {
 
     for (target, expected) in targets {
         let result = TransformOptions::from_target(target);
-        assert_eq!(result.unwrap_err().clone(), expected);
+        assert_eq!(result.unwrap_err(), expected);
     }
 }

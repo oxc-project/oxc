@@ -15,7 +15,7 @@ mod names;
 use oxc_allocator::{Allocator, ArenaVec, StringBuilder};
 use oxc_htmlish_parser::{
     Span,
-    ast::{Element, Namespace, NodeId, NodeKind, Root},
+    ast::{Block, Element, Namespace, NodeId, NodeKind, Root},
 };
 
 use crate::rules::DialectRules;
@@ -50,10 +50,8 @@ pub struct Facts {
     /// The node is pre-like without an end tag, or ends in one through its last children without end tags:
     /// what follows it up to the end tag that closes them is `pre` content.
     pub ends_in_pre: bool,
-    /// A CDATA section, or a text that merged one: its sections are never re-wrapped.
-    pub has_cdata: bool,
-    /// The previous sibling is `<!-- prettier-ignore -->`.
-    pub prettier_ignore: bool,
+    /// The previous sibling is a suppression comment (`<!-- prettier-ignore -->`, `<!-- oxfmt-ignore -->`): the node prints as written.
+    pub suppressed: bool,
     /// An SVG / MathML element, or one under it (`DialectRules::lowercase_known_names` only).
     pub foreign: bool,
     /// The tag name prints lowercase, written otherwise in the start or end tag (`Tree::printed_name`).
@@ -119,6 +117,8 @@ pub struct Tree<'a> {
     /// Texts whose merged value differs from their source
     /// (an element merged in had whitespace in a tag), sorted by `NodeId`.
     merged_texts: ArenaVec<'a, (NodeId, &'a str)>,
+    /// See [`Self::vue_script_language`].
+    vue_script_language: &'static str,
 }
 
 impl std::ops::Index<NodeId> for Tree<'_> {
@@ -142,9 +142,71 @@ impl<'a> Tree<'a> {
         self.rules
     }
 
+    /// A Vue single-file component block: an element of the root but `html`.
+    pub fn is_sfc_block(&self, id: NodeId) -> bool {
+        self.rules.vue_sfc
+            && self.root[id].parent == Some(NodeId::DOCUMENT)
+            && self.element(id).is_some_and(|el| !el.key.eq_ignore_ascii_case("html"))
+    }
+
+    /// A Vue block whose content is no markup: a custom block (`<i18n>`), or a `<template lang="pug">`.
+    pub fn is_non_html_sfc_block(&self, id: NodeId) -> bool {
+        self.is_sfc_block(id)
+            && match self.tag(id) {
+                "script" | "style" => false,
+                "template" => self.lang(id).is_some_and(|lang| lang != "html"),
+                _ => true,
+            }
+    }
+
+    /// Element `id`'s `lang`; `lang=""` names none.
+    pub fn lang(&self, id: NodeId) -> Option<&'a str> {
+        self.attribute_value(id, "lang").filter(|lang| !lang.is_empty())
+    }
+
+    /// The value of element `id`'s attribute `name` (empty for one without a value).
+    pub fn attribute_value(&self, id: NodeId, name: &str) -> Option<&'a str> {
+        let attribute = self
+            .element(id)?
+            .attributes
+            .iter()
+            .find(|attribute| self.attribute_is(attribute.name.slice(self.source), name))?;
+        Some(attribute.value.map_or("", |value| value.span.slice(self.source)))
+    }
+
+    /// The language a Vue file's template expressions are in: TS when one of its `<script>` blocks is,
+    /// TSX for `lang="tsx"` (`apps/oxfmt/DIVERGENCES.md#tsx-in-vue-template-expressions`).
+    pub fn vue_script_language(&self) -> &'static str {
+        self.vue_script_language
+    }
+
     /// An Angular control flow block: transparent, its markers print no box (`@if (a) {` … `}`).
     pub fn is_block(&self, id: NodeId) -> bool {
         self.rules.has_blocks && matches!(self.kind(id), NodeKind::Block(_))
+    }
+
+    /// `next` is a block that continues `prev` (`@if` … `@else`), printed after its `}`.
+    pub fn continues_block(&self, prev: NodeId, next: NodeId) -> bool {
+        let (NodeKind::Block(prev), NodeKind::Block(next)) = (self.kind(prev), self.kind(next))
+        else {
+            return false;
+        };
+        let next = self.block_name(next);
+        match self.block_name(prev) {
+            "if" | "else if" => matches!(next, "else if" | "else"),
+            "for" => next == "empty",
+            "defer" | "placeholder" | "loading" | "error" => {
+                matches!(next, "placeholder" | "loading" | "error")
+            }
+            "boundary" => next == "error",
+            _ => false,
+        }
+    }
+
+    /// The block's name, whitespace collapsed unless it spans lines (`else\n if` is no `else if`, DIVERGENCES.md#angular-block-name-with-line-break).
+    pub fn block_name(&self, block: &Block<'_>) -> &'a str {
+        let name = block.name.slice(self.source);
+        if name.contains('\n') { name } else { self.collapsed(block.name) }
     }
 
     /// A `display: none` element in a parent that renders: the whitespace on both its sides is one run
@@ -160,9 +222,13 @@ impl<'a> Tree<'a> {
         matches!(self.kind(id), NodeKind::Interpolation(_))
     }
 
-    /// A text or a CDATA section, which print as one text next to each other.
+    /// A text or `{{ }}`: what renders as text, no markup.
+    pub fn is_text_content(&self, id: NodeId) -> bool {
+        self.is_text(id) || self.is_interpolation(id)
+    }
+
     pub fn is_text(&self, id: NodeId) -> bool {
-        matches!(self.kind(id), NodeKind::Text(_) | NodeKind::Cdata)
+        matches!(self.kind(id), NodeKind::Text(_))
     }
 
     pub fn element(&self, id: NodeId) -> Option<&'a Element<'a>> {

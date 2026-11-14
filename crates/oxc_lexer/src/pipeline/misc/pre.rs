@@ -1,76 +1,88 @@
+use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
+use oxc_span::Span;
+
 use crate::{error::DiagCode, token::tk};
 
 use crate::pipeline::{
-    bitmap::{bm_any, bm_clear_range, bm_get, bm_next0, bm_set},
-    bytes::{is_id_start, unicode_ws_len_at_unchecked},
-    cpu::{Cpu, apply, cpu_versions},
-    lanes::Lanes,
+    bitmap::Bitmaps,
+    bytes::is_id_start,
+    lex::{Lex, LexState},
     scan::scan_ident_esc,
+    source::Source,
 };
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(never)]
-pub unsafe fn misc_pre(
-    src: *const u8,
-    n: usize,
-    nb: usize,
-    st: *mut u64,
-    word: *mut u64,
-    misc: *const u64,
-    kind: *mut u8,
-    vutf8: bool,
-    lanes: &mut Lanes,
-    cpu: impl Cpu,
-) -> usize {
-    if !bm_any(misc, nb, cpu) {
+pub unsafe fn misc_pre(lex: Lex, state: &mut LexState, cpu: impl Cpu) -> usize {
+    if !lex.bitmaps.misc.any(lex.src.block_count(), cpu) {
         return 0;
     }
 
-    if vutf8 {
-        misc_pre_impl::<true>(src, n, st, word, misc, kind, lanes)
+    if lex.options.validate_utf8 {
+        misc_pre_impl::<true>(lex, state, cpu)
     } else {
-        misc_pre_impl::<false>(src, n, st, word, misc, kind, lanes)
+        misc_pre_impl::<false>(lex, state, cpu)
     }
 }
 
-/// `VUTF8` (`LexOptions::validate_utf8`) adds UTF-8 well-formedness
+/// VALIDATE_UTF8 (LexOptions::validate_utf8) adds UTF-8 well-formedness
 /// validation to the non-ASCII walk. Monomorphized so the default `false`
 /// copy pays nothing for it.
 ///
 /// `#[inline(always)]` so it gets compiled as part of each of [`misc_pre`]'s entry points.
+#[cpu_multiversion]
 #[inline(always)]
-unsafe fn misc_pre_impl<const VUTF8: bool>(
-    src: *const u8,
-    n: usize,
-    st: *mut u64,
-    word: *mut u64,
-    misc: *const u64,
-    kind: *mut u8,
-    lanes: &mut Lanes,
+unsafe fn misc_pre_impl<const VALIDATE_UTF8: bool>(
+    lex: Lex,
+    state: &mut LexState,
+    cpu: impl Cpu,
 ) -> usize {
-    let mut nesc = 0usize;
-    let nw = (n + 63) >> 6;
-    // VUTF8 only: continuation bits spilling into the next word, and the
+    let Lex { src, bitmaps, kinds, .. } = lex;
+    let Bitmaps { token_start, word, misc, .. } = *bitmaps;
+    let LexState { lanes, unicode_leads, .. } = state;
+    let mut escaped_ident_count = 0usize;
+    let block_count = src.block_count();
+    // VALIDATE_UTF8 only: continuation bits spilling into the next word, and the
     // once-per-file latch for the UTF-8 diagnostic (parser parity; also
     // bounds the diag Vec on binary input).
     let mut skip_lo: u64 = 0;
     let mut utf8_bad = false;
-    for w in 0..nw {
-        let mut m = if VUTF8 { *misc.add(w) & !skip_lo } else { *misc.add(w) };
-        if VUTF8 {
+    let mut w = 0usize;
+    loop {
+        // Skip empty words in a tight loop, as the walk below keeps the word index on the stack
+        let from = w;
+        while w < block_count && misc.block(w, cpu) == 0 {
+            w += 1;
+        }
+        if w == block_count {
+            break;
+        }
+        if VALIDATE_UTF8 && w != from {
+            // A skipped word consumed the carried continuation bits
+            skip_lo = 0;
+        }
+        let blk = w;
+        w += 1;
+        let mut m =
+            if VALIDATE_UTF8 { misc.block(blk, cpu) & !skip_lo } else { misc.block(blk, cpu) };
+        if VALIDATE_UTF8 {
             skip_lo = 0;
         }
         while m != 0 {
             let bit = m.trailing_zeros() as usize;
             m &= m - 1;
-            let p = (w << 6) + bit;
-            let c = *src.add(p);
+            let p = (blk << 6) + bit;
+            // Never taken: classify clears every bit past the end, but the compiler cannot know.
+            if p >= src.len() {
+                break;
+            }
+            let c = src[p];
             // Multi-byte Unicode whitespace was bulk-classified as an
             // identifier char; re-mark it as a whitespace token boundary.
             // Continuation bytes and non-ws leads fall through cheaply.
             if c >= 0x80 {
-                if VUTF8 {
-                    let (ok, cont) = utf8_seq_check(src, p, n);
+                if VALIDATE_UTF8 {
+                    let (ok, cont) = utf8_seq_check(src, p, cpu);
                     if ok {
                         // Consume the verified continuation bits so they are
                         // not re-visited; a continuation still visible to the
@@ -89,58 +101,94 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                         continue;
                     }
                 }
-                let len = unicode_ws_len_at_unchecked(src, p);
+                let len = src.unicode_ws_len_at(p, cpu);
                 if len != 0 {
-                    *kind.add(p) = tk!(Whitespace);
-                    bm_clear_range(word, p, p + len - 1);
-                    bm_set(st, p);
-                    bm_clear_range(st, p + 1, p + len - 1);
-                    if p + len < n {
-                        bm_set(st, p + len);
+                    kinds.set(p, tk!(Whitespace));
+                    word.clear_range(p, p + len - 1, cpu);
+                    token_start.set(p, cpu);
+                    token_start.clear_range(p + 1, p + len - 1, cpu);
+                    if p + len < src.len() {
+                        token_start.set(p + len, cpu);
                     }
+                    lanes.irregular_whitespaces.push(Span::new(p as u32, (p + len) as u32));
                 } else if (0xC2..=0xF4).contains(&c) {
                     // Non-whitespace lead: record the position only. The
                     // identifier-char check is deferred to drain, where leads
                     // inside literal tokens drop before ever paying for it.
-                    lanes.unicode_leads.push(p as u32);
+                    unicode_leads.push(p as u32);
                 }
                 continue;
             }
-            if !bm_get(st, p) {
+            // Vertical tab or form feed, the only misc bytes below 0x20.
+            if c < 0x20 {
+                lanes.irregular_whitespaces.push(Span::new(p as u32, p as u32 + 1));
+                continue;
+            }
+            if !token_start.get(p, cpu) {
                 continue;
             }
             if c == b'#' {
-                if p == 0 && n > 1 && *src.add(1) == b'!' {
+                if p == 0 && src.len() > 1 && src[1] == b'!' {
                     continue;
                 }
                 // Accept an id-start or a leading unicode escape, so a
                 // private name whose first char is itself an escape forms
                 // one token instead of `#` + escape.
-                let c1 = *src.add(p + 1);
-                if !(is_id_start(c1) || (c1 == b'\\' && *src.add(p + 2) == b'u')) {
+                let c1 = src[p + 1];
+                if !(is_id_start(c1, cpu) || (c1 == b'\\' && src[p + 2] == b'u')) {
                     continue;
                 }
-                let e0 = bm_next0(word, p + 1, n);
-                let e = if *src.add(e0) == b'\\' && *src.add(e0 + 1) == b'u' {
-                    *kind.add(p) = tk!(PrivateIdentEscaped);
-                    scan_ident_esc(src, n, e0)
-                } else {
-                    *kind.add(p) = tk!(PrivateIdent);
-                    e0
-                };
-                bm_clear_range(st, p + 1, e - 1);
+                let e0 = word.next0(p + 1, src.len(), cpu);
+                let e =
+                    if src[e0] == b'\\' && src[e0 + 1] == b'u' && !holds_unicode_ws(src, p + 1, e0)
+                    {
+                        kinds.set(p, tk!(PrivateIdentEscaped));
+                        escaped_ident_count += 1;
+                        scan_ident_esc(src, e0, cpu)
+                    } else {
+                        kinds.set(p, tk!(PrivateIdent));
+                        e0
+                    };
+                token_start.clear_range(p + 1, e - 1, cpu);
             } else {
-                if *src.add(p + 1) != b'u' {
+                if src[p + 1] != b'u' {
                     continue;
                 }
-                *kind.add(p) = tk!(IdentEscaped);
-                nesc += 1;
-                let e = scan_ident_esc(src, n, p);
-                bm_clear_range(st, p + 1, e - 1);
+                kinds.set(p, tk!(IdentEscaped));
+                escaped_ident_count += 1;
+                let e = scan_ident_esc(src, p, cpu);
+                token_start.clear_range(p + 1, e - 1, cpu);
             }
         }
     }
-    nesc
+    escaped_ident_count
+}
+
+/// Drop the irregular whitespace candidates that carve put inside a literal, comment or JSX text.
+#[cpu_version(Generic)]
+#[cold]
+#[inline(never)]
+pub fn retain_code_whitespace(st: &[u64], kind: &[u8], spans: &mut Vec<Span>) {
+    spans.retain(|span| {
+        let p = span.start as usize;
+        let mut w = p >> 6;
+        let mut bits = st[w] & (u64::MAX >> (63 - (p & 63)));
+        while bits == 0 {
+            let Some(prev) = w.checked_sub(1) else { return false };
+            w = prev;
+            bits = st[w];
+        }
+        kind[(w << 6) + 63 - bits.leading_zeros() as usize] == tk!(Whitespace)
+    });
+}
+
+/// Cold: whether src[a..b] holds a multi-byte WhiteSpace or LineTerminator.
+#[cpu_version(Generic)]
+#[cold]
+#[inline(never)]
+fn holds_unicode_ws(src: Source, a: usize, b: usize) -> bool {
+    let cpu = BASELINE;
+    (a..b).any(|i| src[i] >= 0x80 && src.unicode_ws_len_at(i, cpu) != 0)
 }
 
 /// Validate the UTF-8 sequence led by the byte at `p` (>= 0x80). Returns
@@ -148,9 +196,10 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
 /// bytes after the lead. Second-byte ranges are per-lead, so overlongs,
 /// surrogates, and out-of-range sequences report the same maximal subpart
 /// as `std::str::from_utf8`'s `error_len`.
+#[cpu_multiversion]
 #[inline]
-unsafe fn utf8_seq_check(src: *const u8, p: usize, n: usize) -> (bool, usize) {
-    let (need, lo, hi): (usize, u8, u8) = match *src.add(p) {
+fn utf8_seq_check(src: Source, p: usize, _cpu: impl Cpu) -> (bool, usize) {
+    let (need, lo, hi): (usize, u8, u8) = match src[p] {
         0xC2..=0xDF => (1, 0x80, 0xBF),
         0xE0 => (2, 0xA0, 0xBF),
         0xE1..=0xEC | 0xEE..=0xEF => (2, 0x80, 0xBF),
@@ -162,10 +211,10 @@ unsafe fn utf8_seq_check(src: *const u8, p: usize, n: usize) -> (bool, usize) {
         _ => return (false, 0),
     };
     let mut cont = 0usize;
-    if p + 1 < n && *src.add(p + 1) >= lo && *src.add(p + 1) <= hi {
+    if p + 1 < src.len() && src[p + 1] >= lo && src[p + 1] <= hi {
         cont = 1;
-        while cont < need && p + 1 + cont < n {
-            let b = *src.add(p + 1 + cont);
+        while cont < need && p + 1 + cont < src.len() {
+            let b = src[p + 1 + cont];
             if !(0x80..=0xBF).contains(&b) {
                 break;
             }

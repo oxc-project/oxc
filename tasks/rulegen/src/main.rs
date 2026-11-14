@@ -20,7 +20,7 @@ use oxc_ast::ast::{
     TaggedTemplateExpression, TemplateLiteral,
 };
 use oxc_ast_visit::VisitJs;
-use oxc_parser::Parser;
+use oxc_parser::{ParseOptions, Parser};
 use oxc_span::{GetSpan, SourceType, Span};
 use oxc_str::JSStr;
 use oxc_tasks_common::project_root;
@@ -129,38 +129,35 @@ impl TestCase {
     }
 
     fn code(&self, need_config: bool, need_settings: bool, need_filename: bool) -> String {
-        self.code
-            .as_ref()
-            .map(|code| {
-                let code_str = format_code_snippet(code);
-                let config = self.config.as_ref().map_or_else(
-                    || "None".to_string(),
-                    |config| format!("Some(serde_json::json!({config}))"),
-                );
-                let settings = self.settings.as_ref().map_or_else(
-                    || "None".to_string(),
-                    |settings| format!(r#"Some(serde_json::json!({{ "settings": {settings} }}))"#),
-                );
-                let filename = self.filename.as_ref().map_or_else(
-                    || "None".to_string(),
-                    |filename| format!(r#"Some(PathBuf::from("{filename}"))"#),
-                );
-                let code_str = if need_filename {
-                    format!("({code_str}, {config}, {settings}, {filename})")
-                } else if need_settings {
-                    format!("({code_str}, {config}, {settings})")
-                } else if need_config {
-                    format!("({code_str}, {config})")
-                } else {
-                    code_str
-                };
-                if let Some(language_options) = &self.language_options {
-                    format!("{code_str}, // {language_options}")
-                } else {
-                    code_str
-                }
-            })
-            .unwrap_or_default()
+        self.code.as_ref().map_or_default(|code| {
+            let code_str = format_code_snippet(code);
+            let config = self.config.as_ref().map_or_else(
+                || "None".to_string(),
+                |config| format!("Some(serde_json::json!({config}))"),
+            );
+            let settings = self.settings.as_ref().map_or_else(
+                || "None".to_string(),
+                |settings| format!(r#"Some(serde_json::json!({{ "settings": {settings} }}))"#),
+            );
+            let filename = self.filename.as_ref().map_or_else(
+                || "None".to_string(),
+                |filename| format!(r#"Some(PathBuf::from("{filename}"))"#),
+            );
+            let code_str = if need_filename {
+                format!("({code_str}, {config}, {settings}, {filename})")
+            } else if need_settings {
+                format!("({code_str}, {config}, {settings})")
+            } else if need_config {
+                format!("({code_str}, {config})")
+            } else {
+                code_str
+            };
+            if let Some(language_options) = &self.language_options {
+                format!("{code_str}, // {language_options}")
+            } else {
+                code_str
+            }
+        })
     }
 
     fn group_comment(&self) -> Option<&str> {
@@ -1524,7 +1521,12 @@ fn main() {
         Ok(Ok(body)) => {
             let allocator = Allocator::default();
             let source_type = SourceType::from_path(rule_test_path).unwrap();
-            let ret = Parser::new(&allocator, &body, source_type).parse();
+            let ret = Parser::new(&allocator, &body, source_type)
+                .with_options(ParseOptions {
+                    enable_ident_hashes: false,
+                    ..ParseOptions::default()
+                })
+                .parse();
             if !ret.diagnostics.is_empty() {
                 let first_error = ret.diagnostics.first().map_or_else(
                     || "unknown parse error".to_string(),
@@ -1624,7 +1626,12 @@ fn main() {
         Ok(Ok(body)) => {
             let allocator = Allocator::default();
             let source_type = SourceType::from_path(rule_src_path).unwrap();
-            let ret = Parser::new(&allocator, &body, source_type).parse();
+            let ret = Parser::new(&allocator, &body, source_type)
+                .with_options(ParseOptions {
+                    enable_ident_hashes: false,
+                    ..ParseOptions::default()
+                })
+                .parse();
             if !ret.diagnostics.is_empty() {
                 eprintln!(
                     "Warning: {} parse error(s) in rule source file (possibly due to Flow types). Attempting to extract rule config anyway.",

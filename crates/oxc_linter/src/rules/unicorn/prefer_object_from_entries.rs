@@ -109,7 +109,9 @@ impl Rule for PreferObjectFromEntries {
             return;
         }
 
-        if call_expr.optional || call_expr.callee.to_member_expression().optional() {
+        if call_expr.optional
+            || call_expr.callee.get_member_expr().is_none_or(MemberExpression::optional)
+        {
             return;
         }
 
@@ -265,6 +267,8 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        ("(x.reduce)(0,0);", None),
+        ("(pairs.reduce!)(0,0);", None),
         ("pairs.reduce(object => ({...object, key}));", None),
         ("pairs.reduce(object => ({...object, key}), {}, extraArgument);", None),
         ("pairs.reduce({}, object => ({...object, key}));", None),
@@ -272,6 +276,9 @@ fn test() {
         ("new reduce(object => ({...object, key}), {});", None),
         ("pairs.reduce?.(object => ({...object, key}), {});", None),
         ("pairs?.reduce(object => ({...object, key}), {});", None),
+        ("(pairs.reduce)?.(object => ({...object, key}), {});", None),
+        ("(pairs?.reduce)(object => ({...object, key}), {});", None),
+        ("((pairs?.['reduce']))(object => ({...object, key}), {});", None),
         ("pairs.notReduce(object => ({...object, key}), {});", None),
         ("pairs.reduce(object => ({...object, key}), {notEmpty});", None),
         ("pairs.reduce(object => ({...object, key}), []);", None),
@@ -353,6 +360,10 @@ fn test() {
 
     let fail = vec![
         ("pairs.reduce(object => ({...object, key}), {});", None),
+        ("(pairs.reduce)(object => ({...object, key}), {});", None),
+        ("((pairs['reduce']))(object => ({...object, key}), {});", None),
+        ("(pairs.reduce!)(object => ({...object, key}), {});", None),
+        ("(pairs.reduce)(object => Object.assign(object, {key}), {});", None),
         ("pairs.reduce(object => ({...object, key}), {},);", None),
         ("pairs.reduce(object => ({...object, key,}), {});", None),
         ("pairs.reduce(object => ({...object, key}), Object.create(null));", None),

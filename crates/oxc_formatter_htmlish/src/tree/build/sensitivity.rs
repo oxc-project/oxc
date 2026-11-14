@@ -24,6 +24,10 @@ impl Builder<'_> {
                 _ => Display::Inline,
             };
         };
+        // Every block of a Vue file is a block
+        if self.tree.is_sfc_block(id) {
+            return Display::Block;
+        }
         if el.namespace == Namespace::Svg {
             return if el.key == "svg" {
                 Display::InlineBlock
@@ -181,23 +185,25 @@ impl Builder<'_> {
     ) -> bool {
         let t = &self.tree;
         let parent = &t[parent_id];
-        let text_or_interpolation = |id: NodeId| t.is_text(id) || t.is_interpolation(id);
-        let sensitive =
-            if text_or_interpolation(flow_item) && neighbor.is_some_and(text_or_interpolation) {
-                true
-            } else if parent.display == Display::None {
-                false
-            } else if parent.pre_like {
-                true
-            } else if let Some(neighbor) = neighbor {
-                self.display_of(neighbor).sides_sensitive()
-            } else {
-                // An HTML `pre`'s own edges, not those of all pre-like content
-                !(parent_id == NodeId::DOCUMENT
-                    || t.element(id).is_some_and(is_pre_like)
-                    || parent.script_like
-                    || !parent.display.edges_sensitive())
-            };
+        let sensitive = if t.is_text_content(flow_item)
+            && neighbor.is_some_and(|neighbor| t.is_text_content(neighbor))
+        {
+            true
+        } else if parent.display == Display::None {
+            false
+        } else if parent.pre_like {
+            true
+        } else if let Some(neighbor) = neighbor {
+            self.display_of(neighbor).sides_sensitive()
+        } else {
+            // An HTML `pre`'s own edges, not those of all pre-like content
+            !(parent_id == NodeId::DOCUMENT
+                || t.element(id).is_some_and(is_pre_like)
+                || parent.script_like
+                || !(parent.display.edges_sensitive()
+                    // Unless whitespace is ignored (comments are blocks then)
+                    || (self.display_of(id).sides_sensitive() && self.holds_only_glued_comments(parent_id))))
+        };
         // The line break HTML drops after `<pre>` is not content
         if leading
             && sensitive
@@ -207,6 +213,18 @@ impl Builder<'_> {
             return t.is_interpolation(id);
         }
         sensitive
+    }
+
+    /// An element of comments only and no whitespace, which matches `:empty` until a line break goes in
+    /// (DIVERGENCES.md#comment-only-element-edges); a `template`'s content is no child of it, so it always does.
+    fn holds_only_glued_comments(&self, id: NodeId) -> bool {
+        let t = &self.tree;
+        t.element(id).is_some_and(|el| el.key != "template")
+            && t.children(id).all(|child| {
+                matches!(t.kind(child), NodeKind::Comment(_) | NodeKind::ConditionalComment(_))
+                    && !t[child].has_leading_spaces
+                    && !t[child].has_trailing_spaces
+            })
     }
 
     /// The node a whitespace run meets at `id`'s start (`start`) or end, looking into blocks:

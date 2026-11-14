@@ -37,7 +37,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         in_ts_namespace_body: bool,
     ) -> (ArenaVec<'a, Directive<'a>>, ArenaVec<'a, Statement<'a>>) {
         let mut directives = ArenaVec::new_in(self);
-        let mut statements = ArenaVec::new_in(self);
+        let mut statement_index = 0;
 
         let is_top_level = self.ctx.has_top_level();
         let stmt_ctx =
@@ -50,80 +50,81 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let track_await_reparse = is_top_level && self.source_type.is_unambiguous();
 
         let mut expecting_directives = true;
-        while !self.has_fatal_error() {
-            if !is_top_level && self.at(Kind::RCurly) {
-                break;
-            }
-
-            // Commit once module syntax is detected (`export` commits eagerly in
-            // `parse_export_declaration`; `has_module_syntax()` excludes TS's
-            // script-compatible `import x = ns.foo`). Until committed, checkpoint each
-            // statement so an `await` identifier in it can be reparsed.
-            let checkpoint = if track_await_reparse && !self.ctx.has_await() {
-                if self.module_record_builder.has_module_syntax() {
-                    self.ctx = self.ctx.and_await(true);
-                    None
+        let statements = self.collect_list(|p| {
+            while !p.has_fatal_error() && (is_top_level || !p.at(Kind::RCurly)) {
+                // Commit once module syntax is detected (`export` commits eagerly in
+                // `parse_export_declaration`; `has_module_syntax()` excludes TS's
+                // script-compatible `import x = ns.foo`). Until committed, checkpoint each
+                // statement so an `await` identifier in it can be reparsed.
+                let checkpoint = if track_await_reparse && !p.ctx.has_await() {
+                    if p.module_record_builder.has_module_syntax() {
+                        p.ctx = p.ctx.and_await(true);
+                        None
+                    } else {
+                        p.state.encountered_await_identifier = false;
+                        Some(p.checkpoint())
+                    }
                 } else {
-                    self.state.encountered_await_identifier = false;
-                    Some((statements.len(), self.checkpoint()))
-                }
-            } else {
-                None
-            };
+                    None
+                };
 
-            let stmt = self.parse_statement_list_item(stmt_ctx);
-
-            // Don't reparse a module declaration: `export` already committed to the
-            // Module goal while parsing, so reparsing would record the export twice.
-            // e.g. `@foo export default class C { x = await + 1 }`
-            if let Some((stmt_index, checkpoint)) = checkpoint
-                && self.state.encountered_await_identifier
-                && !stmt.is_module_declaration()
-            {
-                self.state.potential_await_reparse.push((stmt_index, checkpoint));
-            }
-
-            // Section 11.2.1 Directive Prologue
-            // The only way to get a correct directive is to parse the statement first and check if it is a string literal.
-            // All other method are flawed, see test cases in [babel](https://github.com/babel/babel/blob/v7.26.2/packages/babel-parser/test/fixtures/core/categorized/not-directive/input.js)
-            let stmt = if expecting_directives {
-                match stmt {
-                    // span start will mismatch if they are parenthesized when `preserve_parens = false`
-                    Statement::ExpressionStatement(expr)
-                        if matches!(&expr.expression, Expression::StringLiteral(string)
-                            if expr.span.start == string.span.start) =>
-                    {
-                        let ExpressionStatement { span, expression, .. } = expr.unbox();
-                        let Expression::StringLiteral(string) = expression else { unreachable!() };
-                        let string = string.unbox();
-                        let src = &self.source_text
-                            [string.span.start as usize + 1..string.span.end as usize - 1];
-                        directives.push(Directive::new(span, string, Str::from(src), self));
-                        continue;
+                // Section 11.2.1 Directive Prologue
+                // Parse the complete expression statement before recognizing a directive:
+                // a string followed by an operator or member access is not a directive.
+                // See babel's core/categorized/not-directive fixture.
+                // Starting at a string token also excludes parenthesized strings when
+                // `preserve_parens = false`.
+                let stmt = if expecting_directives && p.at(Kind::Str) {
+                    let start = p.cur_start();
+                    let expression = p.parse_expr();
+                    p.asi();
+                    match ExpressionStatement::new(p.end_span(start), expression, p) {
+                        ExpressionStatement {
+                            span,
+                            expression: Expression::StringLiteral(string),
+                            ..
+                        } => {
+                            let string = string.unbox();
+                            let src = &p.source_text
+                                [string.span.start as usize + 1..string.span.end as usize - 1];
+                            directives.push(Directive::new(span, string, Str::from(src), p));
+                            continue;
+                        }
+                        statement => Statement::ExpressionStatement(p.alloc(statement)),
                     }
-                    stmt => {
-                        expecting_directives = false;
-                        stmt
-                    }
+                } else {
+                    p.parse_statement_list_item(stmt_ctx)
+                };
+
+                // Don't reparse a module declaration: `export` already committed to the
+                // Module goal while parsing, so reparsing would record the export twice.
+                // e.g. `@foo export default class C { x = await + 1 }`
+                if let Some(checkpoint) = checkpoint
+                    && p.state.encountered_await_identifier
+                    && !stmt.is_module_declaration()
+                {
+                    p.state.potential_await_reparse.push((statement_index, checkpoint));
                 }
-            } else {
-                stmt
-            };
-            // In an internal namespace body, module-referencing `import`/`export` statements are
-            // not permitted. Validated here as each direct statement is parsed (no second pass).
-            if in_ts_namespace_body {
-                self.check_namespace_body_statement(&stmt);
+
+                expecting_directives = false;
+                // In an internal namespace body, module-referencing `import`/`export` statements are
+                // not permitted. Validated here as each direct statement is parsed (no second pass).
+                if in_ts_namespace_body {
+                    p.check_namespace_body_statement(&stmt);
+                }
+                if is_ambient_block
+                    && !reported_ambient_statement
+                    && !stmt.is_declaration()
+                    && !stmt.is_module_declaration()
+                {
+                    p.error(diagnostics::statement_in_ambient_context(stmt.span()));
+                    reported_ambient_statement = true;
+                }
+                statement_index += 1;
+                return Some(stmt);
             }
-            if is_ambient_block
-                && !reported_ambient_statement
-                && !stmt.is_declaration()
-                && !stmt.is_module_declaration()
-            {
-                self.error(diagnostics::statement_in_ambient_context(stmt.span()));
-                reported_ambient_statement = true;
-            }
-            statements.push(stmt);
-        }
+            None
+        });
 
         (directives, statements)
     }
@@ -279,17 +280,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// Section 14.2 Block Statement
-    pub(crate) fn parse_block(&mut self) -> ArenaBox<'a, BlockStatement<'a>> {
+    pub(crate) fn parse_block(&mut self) -> BlockStatement<'a> {
         let start = self.cur_start();
         let body = self.parse_normal_list(Kind::LCurly, Kind::RCurly, |p| {
             p.parse_statement_list_item(StatementContext::StatementList)
         });
-        BlockStatement::boxed(self.end_span(start), body, self)
+        BlockStatement::new(self.end_span(start), body, self)
     }
 
     pub(crate) fn parse_block_statement(&mut self) -> Statement<'a> {
         let block = self.parse_block();
-        Statement::BlockStatement(block)
+        Statement::BlockStatement(self.alloc(block))
     }
 
     /// Section 14.3.2 Variable Statement
@@ -794,23 +795,22 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         };
         self.expect(Kind::Colon);
-        let mut consequent = ArenaVec::new_in(self);
-        loop {
-            let kind = self.cur_kind();
+        let consequent = self.collect_list(|p| {
+            let kind = p.cur_kind();
             if matches!(
                 kind,
                 Kind::Case | Kind::Default | Kind::RCurly | Kind::Eof | Kind::Undetermined
-            ) || self.fatal_error.is_some()
+            ) || p.fatal_error.is_some()
             {
-                break;
+                return None;
             }
-            let stmt = self.parse_statement_list_item(StatementContext::StatementList);
+            let stmt = p.parse_statement_list_item(StatementContext::StatementList);
             if let Statement::VariableDeclaration(var_decl) = &stmt
                 && var_decl.kind.is_using()
             {
                 // It is a Syntax Error if UsingDeclaration is contained directly within the StatementList of either a CaseClause or DefaultClause.
                 // It is a Syntax Error if AwaitUsingDeclaration is contained directly within the StatementList of either a CaseClause or DefaultClause.
-                self.error(if var_decl.kind.is_await_using() {
+                p.error(if var_decl.kind.is_await_using() {
                     diagnostics::await_using_declaration_not_allowed_in_switch_bare_case(
                         stmt.span(),
                     )
@@ -818,8 +818,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     diagnostics::using_declaration_not_allowed_in_switch_bare_case(stmt.span())
                 });
             }
-            consequent.push(stmt);
-        }
+            Some(stmt)
+        });
         SwitchCase::new(self.end_span(start), test, consequent, self)
     }
 
@@ -845,10 +845,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.bump_any(); // bump `try`
 
         let block = self.parse_block();
+        let block = self.alloc(block);
 
         let handler = self.at(Kind::Catch).then(|| self.parse_catch_clause());
 
-        let finalizer = self.eat(Kind::Finally).then(|| self.parse_block());
+        let finalizer = self.eat(Kind::Finally).then(|| {
+            let block = self.parse_block();
+            self.alloc(block)
+        });
 
         if handler.is_none() && finalizer.is_none() {
             let range = Span::empty(block.span.end);
@@ -869,6 +873,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             None
         };
         let body = self.parse_block();
+        let body = self.alloc(body);
         let param = pattern.map(|(pattern, type_annotation)| {
             CatchParameter::new(
                 Span::new(

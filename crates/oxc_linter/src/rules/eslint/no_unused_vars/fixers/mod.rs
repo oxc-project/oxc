@@ -2,6 +2,7 @@ mod fix_conflicts;
 mod fix_imports;
 mod fix_params;
 mod fix_symbol;
+mod fix_type_params;
 mod fix_vars;
 
 use fix_symbol::BindingInfo;

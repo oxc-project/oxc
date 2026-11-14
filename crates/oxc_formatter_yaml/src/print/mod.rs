@@ -72,7 +72,6 @@ pub fn source_starts_with_document_marker(offset: u32, f: &YamlFormatter<'_, '_>
 }
 
 /// Emits a node's properties (anchor/tag) in their source order.
-/// NOTE: Prettier 3.9.5 normalizes to `tag anchor` order; we keep the source order instead.
 ///
 /// The separator after the props is a hard line for block collections and a space otherwise.
 fn write_props(props: &Props, is_block_collection: bool, f: &mut YamlFormatter<'_, '_>) {
@@ -155,12 +154,14 @@ pub fn write_node<'a>(node: &'a Node<'a>, f: &mut YamlFormatter<'_, 'a>) {
     }
 
     match content {
-        Content::Plain(scalar) => scalar::write_plain(to_span(scalar.span), f),
+        Content::Plain(scalar) => scalar::write_plain(to_span(scalar.span), scalar.multiline, f),
         Content::QuoteSingle(scalar) => {
-            scalar::write_quoted(scalar::FlowScalarKind::QuoteSingle, to_span(scalar.span), f);
+            let kind = scalar::FlowScalarKind::QuoteSingle;
+            scalar::write_quoted(kind, to_span(scalar.span), scalar.multiline, f);
         }
         Content::QuoteDouble(scalar) => {
-            scalar::write_quoted(scalar::FlowScalarKind::QuoteDouble, to_span(scalar.span), f);
+            let kind = scalar::FlowScalarKind::QuoteDouble;
+            scalar::write_quoted(kind, to_span(scalar.span), scalar.multiline, f);
         }
         Content::Alias(alias) => {
             // Verbatim: `*name` has no layout freedom, and no comment can lie inside

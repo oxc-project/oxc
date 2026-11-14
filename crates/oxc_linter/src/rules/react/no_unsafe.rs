@@ -88,7 +88,8 @@ declare_oxc_lint!(
     correctness,
     config = NoUnsafeConfig,
     version = "1.35.0",
-    short_description = "This rule identifies and restricts the use of unsafe React lifecycle methods.",
+    short_description =
+        "This rule identifies and restricts the use of unsafe React lifecycle methods.",
 );
 
 impl Rule for NoUnsafe {

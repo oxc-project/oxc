@@ -1,5 +1,6 @@
 use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
+use oxc_data_structures::buffered_vec::BufferedVec;
 use oxc_span::{GetSpan, SPAN, Span};
 use oxc_str::Ident;
 use oxc_syntax::operator::UnaryOperator;
@@ -189,16 +190,21 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.parse_ts_type_parameters_impl(false)
     }
 
+    #[inline]
     fn parse_ts_type_parameters_impl(
         &mut self,
         allow_variance: bool,
     ) -> (Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>, bool) {
-        if !self.is_ts {
+        if !self.is_ts || !self.at(Kind::LAngle) {
             return (None, false);
         }
-        if !self.at(Kind::LAngle) {
-            return (None, false);
-        }
+        self.parse_ts_type_parameters_worker(allow_variance)
+    }
+
+    fn parse_ts_type_parameters_worker(
+        &mut self,
+        allow_variance: bool,
+    ) -> (Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>, bool) {
         let start = self.cur_start();
         let opening_span = self.cur_token().span();
         self.advance(Kind::LAngle);
@@ -216,12 +222,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     pub(crate) fn parse_ts_implements_clause(&mut self) -> ArenaVec<'a, TSClassImplements<'a>> {
         self.expect(Kind::Implements);
-        let first = self.parse_ts_implement_name();
-        let mut implements = ArenaVec::from_value_in(first, self);
-        while self.eat(Kind::Comma) {
-            implements.push(self.parse_ts_implement_name());
-        }
-        implements
+        let mut first = Some(self.parse_ts_implement_name());
+        self.collect_list(|p| {
+            first.take().or_else(|| p.eat(Kind::Comma).then(|| p.parse_ts_implement_name()))
+        })
     }
 
     fn parse_ts_type_parameter(&mut self, allow_variance: bool) -> TSTypeParameter<'a> {
@@ -303,11 +307,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     where
         F: Fn(&mut Self) -> TSType<'a>,
     {
-        let mut types = ArenaVec::from_value_in(ty, self);
-        while self.eat(kind) {
-            let ty = parse_constituent_type(self);
-            types.push(ty);
-        }
+        let mut first = Some(ty);
+        let types = self.collect_list(|p| {
+            first.take().or_else(|| p.eat(kind).then(|| parse_constituent_type(p)))
+        });
         let span = self.end_span(start);
         match kind {
             Kind::Pipe => TSType::new_ts_union_type(span, types, self),
@@ -461,13 +464,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             | Kind::Never
             | Kind::Object
             // Parse `null` as `TSNullKeyword` instead of null literal to align with typescript eslint.
-            | Kind::Null => {
-                if self.lexer.peek_token().kind() == Kind::Dot {
-                    self.parse_type_reference()
-                } else {
-                    self.parse_keyword_type()
-                }
-            }
+            | Kind::Null => self.parse_keyword_type(),
             // TODO: js doc types: `JSDocAllType`, `JSDocFunctionType`
             // Kind::StarEq => {
             // scanner.reScanAsteriskEqualsToken();
@@ -548,53 +545,35 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn parse_keyword_type(&mut self) -> TSType<'a> {
-        let start = self.cur_start();
-        match self.cur_kind() {
-            Kind::Any => {
-                self.bump_any();
-                TSType::new_ts_any_keyword(self.end_span(start), self)
-            }
-            Kind::BigInt => {
-                self.bump_any();
-                TSType::new_ts_big_int_keyword(self.end_span(start), self)
-            }
-            Kind::Boolean => {
-                self.bump_any();
-                TSType::new_ts_boolean_keyword(self.end_span(start), self)
-            }
-            Kind::Never => {
-                self.bump_any();
-                TSType::new_ts_never_keyword(self.end_span(start), self)
-            }
-            Kind::Number => {
-                self.bump_any();
-                TSType::new_ts_number_keyword(self.end_span(start), self)
-            }
-            Kind::Object => {
-                self.bump_any();
-                TSType::new_ts_object_keyword(self.end_span(start), self)
-            }
-            Kind::String => {
-                self.bump_any();
-                TSType::new_ts_string_keyword(self.end_span(start), self)
-            }
-            Kind::Symbol => {
-                self.bump_any();
-                TSType::new_ts_symbol_keyword(self.end_span(start), self)
-            }
-            Kind::Undefined => {
-                self.bump_any();
-                TSType::new_ts_undefined_keyword(self.end_span(start), self)
-            }
-            Kind::Unknown => {
-                self.bump_any();
-                TSType::new_ts_unknown_keyword(self.end_span(start), self)
-            }
-            Kind::Null => {
-                self.bump_any();
-                TSType::new_ts_null_keyword(self.end_span(start), self)
-            }
-            _ => self.unexpected(),
+        let token = self.cur_token();
+        // Escaped keywords are allowed as the first part of a qualified type name,
+        // but not as keyword types. Keep lookahead only for this uncommon case.
+        if token.escaped() && self.lexer.peek_token().kind() == Kind::Dot {
+            return self.parse_type_reference();
+        }
+        self.bump_any();
+        let span = token.span();
+        // A keyword and a qualified name both consume the first token, so decide
+        // between them afterwards instead of lexing the following token twice.
+        if self.at(Kind::Dot) {
+            let ident = IdentifierName::new(span, self.ident(self.token_source(&token)), self);
+            let name = TSTypeName::new_identifier_reference(ident.span, ident.name, self);
+            let name = self.parse_ts_qualified_type_name(span.start, name);
+            return self.parse_type_reference_with_name(span.start, name);
+        }
+        match token.kind() {
+            Kind::Any => TSType::new_ts_any_keyword(span, self),
+            Kind::BigInt => TSType::new_ts_big_int_keyword(span, self),
+            Kind::Boolean => TSType::new_ts_boolean_keyword(span, self),
+            Kind::Never => TSType::new_ts_never_keyword(span, self),
+            Kind::Number => TSType::new_ts_number_keyword(span, self),
+            Kind::Object => TSType::new_ts_object_keyword(span, self),
+            Kind::String => TSType::new_ts_string_keyword(span, self),
+            Kind::Symbol => TSType::new_ts_symbol_keyword(span, self),
+            Kind::Undefined => TSType::new_ts_undefined_keyword(span, self),
+            Kind::Unknown => TSType::new_ts_unknown_keyword(span, self),
+            Kind::Null => TSType::new_ts_null_keyword(span, self),
+            _ => unreachable!(),
         }
     }
 
@@ -743,8 +722,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn parse_type_literal(&mut self, opening_span: Span) -> TSType<'a> {
-        let mut member_list = ArenaVec::new_in(self);
-        self.parse_normal_list_into(&mut member_list, Kind::RCurly, Self::parse_ts_type_signature);
+        let member_list = self.collect_list(|p| {
+            if p.at(Kind::RCurly) || p.has_fatal_error() {
+                None
+            } else {
+                Some(p.parse_ts_type_signature())
+            }
+        });
         self.expect_closing(Kind::RCurly, opening_span);
         TSType::new_ts_type_literal(self.end_span(opening_span.start), member_list, self)
     }
@@ -809,8 +793,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn parse_template_type(&mut self, tagged: bool) -> TSType<'a> {
         let start = self.cur_start();
-        let mut types = ArenaVec::new_in(self);
-        let mut quasis = ArenaVec::new_in(self);
+        let mut types = BufferedVec::<_, 4>::new(ArenaVec::new_in(self));
+        let mut quasis = BufferedVec::<_, 4>::new(ArenaVec::new_in(self));
         match self.cur_kind() {
             Kind::NoSubstitutionTemplate => {
                 quasis.push(self.parse_template_element(tagged));
@@ -842,7 +826,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             _ => unreachable!("parse_template_literal"),
         }
 
-        TSType::new_ts_template_literal_type(self.end_span(start), quasis, types, self)
+        TSType::new_ts_template_literal_type(
+            self.end_span(start),
+            quasis.into_vec(),
+            types.into_vec(),
+            self,
+        )
     }
 
     fn parse_asserts_type_predicate(&mut self, asserts_start: u32) -> TSType<'a> {
@@ -941,10 +930,25 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         None
     }
 
+    #[inline]
     pub(crate) fn parse_type_arguments_of_type_reference(
         &mut self,
     ) -> Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>> {
-        if !self.cur_token().is_on_new_line() && self.re_lex_ts_l_angle() {
+        if self.cur_token().is_on_new_line()
+            || !matches!(
+                self.cur_kind(),
+                Kind::LAngle | Kind::ShiftLeft | Kind::LtEq | Kind::ShiftLeftEq
+            )
+        {
+            return None;
+        }
+        self.parse_type_arguments_of_type_reference_impl()
+    }
+
+    fn parse_type_arguments_of_type_reference_impl(
+        &mut self,
+    ) -> Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>> {
+        if self.re_lex_ts_l_angle() {
             let start = self.cur_start();
             let opening_span = self.cur_token().span();
             debug_assert!(self.at(Kind::LAngle));

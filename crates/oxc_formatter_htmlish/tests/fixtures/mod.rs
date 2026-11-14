@@ -35,30 +35,34 @@ impl FixtureFormatter for HtmlishHarness {
                     };
                 }
             }
+            "vueIndentScriptAndStyle" => {
+                if let Some(b) = value.as_bool() {
+                    options.vue_indent_script_and_style = b;
+                }
+            }
             _ => return false,
         }
         true
     }
 
-    fn format(source: &str, path: &Path, options: &Self::Options) -> String {
+    fn format(
+        source: &str,
+        path: &Path,
+        options: &Self::Options,
+    ) -> Result<String, Box<dyn std::error::Error>> {
         let allocator = Allocator::default();
         let options = HtmlishFormatOptions { variant: variant_of(path), ..options.clone() };
-        format(&allocator, source, options)
-            .expect("format should succeed")
-            .print()
-            .expect("print should succeed")
-            .into_code()
+        Ok(format(&allocator, source, options)?.print()?.into_code())
     }
 
     fn fingerprint(source: &str, path: &Path, options: &Self::Options) -> String {
         let options = HtmlishFormatOptions { variant: variant_of(path), ..options.clone() };
         let allocator = Allocator::default();
         let parsed = parse_for_format(&allocator, source, &options).expect("source should parse");
-        fingerprint::fingerprint(
-            parsed.source,
-            parsed.root,
-            options.variant == HtmlishVariant::Html,
-        )
+        // As `DialectRules::lowercase_known_names`, for a file of its own
+        let fold_names = options.variant == HtmlishVariant::Html
+            || (options.variant == HtmlishVariant::Vue && !parsed.root.sfc);
+        fingerprint::fingerprint(parsed.source, parsed.root, fold_names)
     }
 }
 

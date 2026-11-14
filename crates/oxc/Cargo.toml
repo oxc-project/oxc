@@ -1,6 +1,6 @@
 [package]
 name = "oxc"
-version = "0.156.0"
+version = "0.158.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -74,6 +74,7 @@ serialize = [
   "oxc_ast_visit/serialize",
   "oxc_semantic?/serialize",
   "oxc_span/serialize",
+  "oxc_str/serialize",
   "oxc_syntax/serialize",
 ]
 

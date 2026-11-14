@@ -13,3 +13,24 @@ const List = forwardRef(function({ items }, ref) {
 	return renderListComponent();
 });
 export { Grid, List };
+const sproutInputs = [[{
+	label: "first",
+	items: [1, 2]
+}], [{
+	label: "second",
+	items: [3]
+}]];
+export const FIXTURE_ENTRYPOINT = {
+	fn: (args) => {
+		"use no memo";
+		return <><Grid {...args[0]} /><List {...args[0]} /></>;
+	},
+	params: [sproutInputs[0]],
+	sequentialRenders: [
+		sproutInputs[0],
+		sproutInputs[0],
+		...sproutInputs.slice(1),
+		sproutInputs.at(-1),
+		sproutInputs[0]
+	]
+};

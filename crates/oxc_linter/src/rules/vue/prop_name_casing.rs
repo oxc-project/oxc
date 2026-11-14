@@ -107,7 +107,8 @@ declare_oxc_lint!(
     recommended,
     config = Config,
     version = "1.69.0",
-    short_description = "Enforce a specific casing (camelCase or snake_case) for Vue component prop names.",
+    short_description =
+        "Enforce a specific casing (camelCase or snake_case) for Vue component prop names.",
 );
 
 impl Rule for PropNameCasing {

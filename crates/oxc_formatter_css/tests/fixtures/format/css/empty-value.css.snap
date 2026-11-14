@@ -4,7 +4,8 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ==================== Input ====================
 /* An empty value prints as `prop:;`.
    A custom property's whitespace-only value IS its value
-   (`var(--x)` substitutes a space for `--x: ;`, nothing for `--x:;`), so it stays verbatim. */
+   (`var(--x)` substitutes a space for `--x: ;`, nothing for `--x:;`), so it stays verbatim,
+   with an `!important` glued to it. */
 a {
   color: ;
   color:;
@@ -12,6 +13,10 @@ a {
   --x: ;
   --y:;
   --z:   ;
+  --x1:!important;
+  --x2: !important;
+  --x3:   !IMPORTANT;
+  --x4: /* c */ !important;
 }
 $e: ;
 $f:;
@@ -22,7 +27,8 @@ $f:;
 ------------------
 /* An empty value prints as `prop:;`.
    A custom property's whitespace-only value IS its value
-   (`var(--x)` substitutes a space for `--x: ;`, nothing for `--x:;`), so it stays verbatim. */
+   (`var(--x)` substitutes a space for `--x: ;`, nothing for `--x:;`), so it stays verbatim,
+   with an `!important` glued to it. */
 a {
   color:;
   color:;
@@ -30,6 +36,10 @@ a {
   --x: ;
   --y:;
   --z:   ;
+  --x1:!important;
+  --x2: !important;
+  --x3:   !important;
+  --x4: /* c */ !important;
 }
 $e:;
 $f:;
@@ -39,7 +49,8 @@ $f:;
 -------------------
 /* An empty value prints as `prop:;`.
    A custom property's whitespace-only value IS its value
-   (`var(--x)` substitutes a space for `--x: ;`, nothing for `--x:;`), so it stays verbatim. */
+   (`var(--x)` substitutes a space for `--x: ;`, nothing for `--x:;`), so it stays verbatim,
+   with an `!important` glued to it. */
 a {
   color:;
   color:;
@@ -47,6 +58,10 @@ a {
   --x: ;
   --y:;
   --z:   ;
+  --x1:!important;
+  --x2: !important;
+  --x3:   !important;
+  --x4: /* c */ !important;
 }
 $e:;
 $f:;

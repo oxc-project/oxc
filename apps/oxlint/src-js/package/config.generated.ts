@@ -303,6 +303,8 @@ export type PackageFrom = "package";
 export type AllowInterfaces = "never" | "always" | "with-single-extends";
 export type AllowObjectTypes = "never" | "always";
 export type AllowInGenericTypeArguments = boolean | string[];
+export type ChecksConditionals = boolean | ChecksConditionalsOptions;
+export type ChecksConditionalsFlagUnions = "none" | "strict" | "all";
 export type ChecksVoidReturn = boolean | ChecksVoidReturnOptions;
 /**
  * Represents the different ways a ban config can be specified in JSON.
@@ -831,7 +833,7 @@ export interface OxlintOptions {
    */
   typeAware?: boolean;
   /**
-   * Enable experimental type checking (includes TypeScript compiler diagnostics).
+   * Enable type checking (includes TypeScript compiler diagnostics).
    *
    * Equivalent to passing `--type-check` on the CLI.
    *
@@ -3869,6 +3871,11 @@ export interface NoRedeclare {
    * When set `true`, it flags redeclaring built-in globals (e.g., `let Object = 1;`).
    */
   builtinGlobals?: boolean;
+  /**
+   * When `true`, automatically merged declarations like namespace, class, etc. will be
+   * ignored when checking for redeclarations.
+   */
+  ignoreDeclarationMerge?: boolean;
 }
 export interface NoRestrictedExportsConfig {
   /**
@@ -6056,9 +6063,9 @@ export interface NoMeaninglessVoidOperatorConfig {
 export interface NoMisusedPromisesConfig {
   /**
    * Whether to check if Promises are used in conditionals.
-   * When true, disallows using Promises in conditions where a boolean is expected.
+   * Can be a boolean to enable/disable the check, or an object to control union types.
    */
-  checksConditionals?: boolean;
+  checksConditionals?: ChecksConditionals;
   /**
    * Whether to check if Promises are used in spread syntax.
    * When true, disallows spreading Promise values.
@@ -6069,6 +6076,16 @@ export interface NoMisusedPromisesConfig {
    * Can be a boolean to enable/disable all checks, or an object for granular control.
    */
   checksVoidReturn?: ChecksVoidReturn;
+}
+export interface ChecksConditionalsOptions {
+  /**
+   * Controls which union types are reported in conditionals.
+   * - `"none"` only reports values that are always Promise-like.
+   * - `"strict"` also reports unions where the non-Promise types match the awaited Promise types,
+   * such as `Promise<number> | number`.
+   * - `"all"` reports any union containing a Promise-like type.
+   */
+  flagUnions?: ChecksConditionalsFlagUnions;
 }
 export interface ChecksVoidReturnOptions {
   /**

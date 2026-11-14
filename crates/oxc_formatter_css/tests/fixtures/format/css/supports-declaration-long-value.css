@@ -1,0 +1,4 @@
+@supports (text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-and-longer) {}
+a {
+  text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-long-long;
+}

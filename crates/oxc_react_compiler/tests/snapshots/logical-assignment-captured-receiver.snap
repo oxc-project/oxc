@@ -1,0 +1,77 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/logical-assignment-captured-receiver.js
+---
+import { c as _c } from "react/compiler-runtime";
+function Component(t0) {
+	const $ = _c(12);
+	const { value, initial, operator } = t0;
+	let obj;
+	let other;
+	let result;
+	let stored;
+	if ($[0] !== initial || $[1] !== operator || $[2] !== value) {
+		stored = { x: null };
+		other = { x: "other" };
+		obj = {};
+		Object.defineProperty(obj, "x", {
+			get() {
+				obj = other;
+				return initial;
+			},
+			set(value_0) {
+				stored.x = value_0;
+			}
+		});
+		if (operator === "??=") {
+			const t1 = obj;
+			result = t1.x ?? (t1.x = value);
+		} else {
+			if (operator === "||=") {
+				const t1 = obj;
+				result = t1.x || (t1.x = value);
+			} else {
+				const t1 = obj;
+				result = t1.x && (t1.x = value);
+			}
+		}
+		$[0] = initial;
+		$[1] = operator;
+		$[2] = value;
+		$[3] = obj;
+		$[4] = other;
+		$[5] = result;
+		$[6] = stored;
+	} else {
+		obj = $[3];
+		other = $[4];
+		result = $[5];
+		stored = $[6];
+	}
+	const t1 = obj === other;
+	let t2;
+	if ($[7] !== other.x || $[8] !== result || $[9] !== stored.x || $[10] !== t1) {
+		t2 = [
+			result,
+			stored.x,
+			t1,
+			other.x
+		];
+		$[7] = other.x;
+		$[8] = result;
+		$[9] = stored.x;
+		$[10] = t1;
+		$[11] = t2;
+	} else {
+		t2 = $[11];
+	}
+	return t2;
+}
+export const FIXTURE_ENTRYPOINT = {
+	fn: Component,
+	params: [{
+		value: 42,
+		initial: null,
+		operator: "??="
+	}]
+};

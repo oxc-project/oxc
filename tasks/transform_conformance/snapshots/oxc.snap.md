@@ -1,6 +1,6 @@
-commit: b835f0c6
+commit: d7a0cccb
 
-Passed: 306/435
+Passed: 322/451
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -34,7 +34,7 @@ after transform: SymbolId(1) "C"
 rebuilt        : SymbolId(3) "C"
 
 
-# babel-plugin-transform-class-properties (31/35)
+# babel-plugin-transform-class-properties (36/40)
 * private-field-resolve-to-method/input.js
 x Output mismatch
 
@@ -48,7 +48,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (43/63)
+# babel-plugin-transform-typescript (44/64)
 * allow-declare-fields-false/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]
@@ -210,7 +210,7 @@ after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4), ReferenceId(9)
 rebuilt        : [ReferenceId(5)]
 
 
-# babel-plugin-transform-react-jsx (55/58)
+# babel-plugin-transform-react-jsx (56/59)
 * refresh/import-after-component/input.js
 Missing ScopeId
 Missing ReferenceId: "useFoo"

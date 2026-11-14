@@ -1,5 +1,5 @@
 //! Root `SessionServices` assembly: [`for_root`] builds the build's default service set,
-//! installed by every session-taking root (JS / CSS / Markdown / Vue-Svelte script).
+//! installed by every session-taking root (JS / CSS / Markdown / HTML / Svelte-Astro script).
 //! One name, one definition per build; the napi one additionally takes the `ExternalServices` transport.
 //!
 //! "Which languages may dispatch at all from this host" is the host crate's own gate
@@ -55,14 +55,15 @@ pub fn for_root(dispatch_config: &Arc<ResolvedDispatchConfig>) -> SessionService
 /// 1. Standalone JS/TS (`className` / functions / custom attributes):
 ///    `oxc_formatter` collects classes into `FormatElement::TailwindClass`.
 ///    When the entry document is finalized, the printer sorts them in one host batch via the session's `tailwind_sorter`.
-/// 2. Standalone CSS / SCSS / LESS (`@apply` at top level), and Markdown:
-///    the CSS / Markdown root's session carries the same sorter (`CssFormatOptions::sort_tailwindcss` only switches collection);
+/// 2. Standalone CSS / SCSS / LESS (`@apply` at top level), Markdown, and HTML / Vue (`class` and the listed attributes):
+///    the root's session carries the same sorter (`CssFormatOptions::sort_tailwindcss` / `HtmlishFormatOptions::sort_tailwindcss` only switch collection);
 ///    classes sort once at finalize, no embedded boundary involved.
-/// 3. Embedded CSS (css-in-js + Angular `@Component({ styles })`, Markdown css code blocks):
-///    `oxc_formatter_css::format_to_ir()` adds pre-sort `@apply` classes into the session's class scope, shared with the JS / Markdown parent,
+/// 3. Embedded parts (css-in-js + Angular `@Component({ styles })`, Markdown code blocks,
+///    HTML / Vue `<script>` / `<style>` bodies and attribute values, Vue's `{{ }}` and directive values):
+///    each child's `format_to_ir()` adds pre-sort classes into the session's class scope, shared with the parent,
 ///    so they ride the SAME parent batch as its root.
-///    The standalone CSS sort closure is NOT invoked here.
-/// 4. JSDoc fenced CSS (Markdown code fence in JSDoc descriptions):
+///    No sort closure is invoked for the child itself.
+/// 4. JSDoc fenced blocks (Markdown code fence in JSDoc descriptions):
 ///    Goes through the string embedder's fence adapter, which returns a formatted string (not parent-integrated IR),
 ///    so there is no parent index space to join:
 ///    `FormatSession::dispatch_to_string` collects the child's classes in a fresh scope and sorts it before printing.

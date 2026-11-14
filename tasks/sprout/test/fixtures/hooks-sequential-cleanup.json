@@ -1,0 +1,5 @@
+{
+  "original": "import {useState, useEffect} from \"react\";\nfunction Component({value}) {const [state,setState]=useState(0);useEffect(()=>{setState(value);return ()=>console.log(\"cleanup\",value)},[value]);return <span>{state}</span>}\nexport const FIXTURE_ENTRYPOINT={fn:Component,params:[],sequentialRenders:[{value:1},{value:2}]};",
+  "compiled": "import {useState, useEffect} from \"react\";\nfunction Component({value}) {const [state,setState]=useState(0);useEffect(()=>{setState(value);return ()=>console.log(\"cleanup\",value)},[value]);return <span>{state}</span>}\nexport const FIXTURE_ENTRYPOINT={fn:Component,params:[],sequentialRenders:[{value:1},{value:2}]};",
+  "expected": "success"
+}

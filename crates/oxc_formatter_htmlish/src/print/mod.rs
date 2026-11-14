@@ -1,9 +1,10 @@
 //! The printer: dispatch by node kind; elements, text and blocks get their own module,
 //! besides the separators between siblings (`children`), the tag markers (`tag`) and attributes (`attribute`).
 
+use oxc_allocator::ArenaVec;
 use oxc_formatter_core::{
-    Format, Formatter,
-    builders::{FormatWith, group, soft_space_or_block_indent, space, text, token},
+    Format, FormatElement, Formatter,
+    builders::{FormatOnce, FormatWith, group, soft_space_or_block_indent, space, text, token},
     write,
 };
 use oxc_htmlish_parser::ast::{NodeId, NodeKind};
@@ -17,8 +18,10 @@ mod element;
 mod embed;
 mod tag;
 mod text;
+mod vue;
 
 pub use embed::{CssInHtmlStyleAttribute, JsInHtmlEventHandler};
+pub use vue::JsInVueTemplate;
 
 use block::write_block;
 use children::write_children;
@@ -49,13 +52,20 @@ where
     FormatWith::new(formatter)
 }
 
+/// Writes a child's IR (a dispatched part), once.
+pub fn format_ir<'a>(
+    ir: ArenaVec<'a, FormatElement<'a>>,
+) -> FormatOnce<impl FnOnce(&mut HtmlishFormatter<'_, 'a>)> {
+    FormatOnce::new(move |f: &mut HtmlishFormatter<'_, 'a>| f.write_elements(ir))
+}
+
 pub fn write_root(f: &mut HtmlishFormatter<'_, '_>) {
     let t = f.context().tree();
     write!(f, group(&format_with(|f| write_children(t, NodeId::DOCUMENT, false, f))));
 }
 
 fn write_child<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'_, 'a>) {
-    if !t[id].prettier_ignore {
+    if !t[id].suppressed {
         write_node(t, id, f);
         return;
     }
@@ -92,12 +102,14 @@ fn write_node<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'_, 'a>)
             write_opening_tag_start(t, id, f);
             write_closing_tag_end(t, id, f);
         }
-        NodeKind::Text(_) | NodeKind::Cdata => write_text(t, id, f),
-        // `{{ }}`; the expression keeps its lines until it is formatted
+        NodeKind::Text(_) => write_text(t, id, f),
+        // `{{ }}`: Vue's expression formatted; Angular's keeps its lines until it is formatted
         NodeKind::Interpolation(interpolation) => {
-            write_opening_tag_start(t, id, f);
             let expression = interpolation.expression.slice(t.source());
-            if !expression.trim_ascii().is_empty() {
+            write_opening_tag_start(t, id, f);
+            if t.rules().vue_sfc {
+                vue::write_interpolation(t, id, expression, f);
+            } else if !expression.trim_ascii().is_empty() {
                 write!(
                     f,
                     soft_space_or_block_indent(&format_with(|f| write_dedented_lines(
@@ -124,9 +136,9 @@ fn write_node<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'_, 'a>)
             );
             write_closing_tag_end(t, id, f);
         }
-        // Comments are printed as written,
+        // Comments and CDATA sections are printed as written,
         // a `</ div>` too (DIVERGENCES.md#end-tag-with-space-is-comment), and an omitted element's end tag (`</body>`).
-        NodeKind::Comment(_) | NodeKind::EndTag(_) => write!(
+        NodeKind::Comment(_) | NodeKind::Cdata | NodeKind::EndTag(_) => write!(
             f,
             [
                 opening_tag_prefix(t, id),

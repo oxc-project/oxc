@@ -14,23 +14,25 @@
 
 use std::cell::{Cell, RefCell};
 
-use super::{Tokens, bits};
-use crate::{
-    pipeline::{
-        bytes::{is_word, unicode_ws_len_at},
-        disambiguate::BRACKET_STEP_CAP,
-        find::bracket_bits,
-    },
-    token::{OP_KIND_BASE, is_trivia_byte},
+use oxc_simd::{Cpu, cpu_multiversion};
+
+use crate::token::{OP_KIND_BASE, is_trivia_byte};
+
+use crate::pipeline::{
+    bytes::{is_word, unicode_ws_len_at},
+    disambiguate::BRACKET_STEP_CAP,
+    find::bracket_bits,
 };
+
+use super::{TokensView, bits};
 
 /// The source's bracket bytes (`(){}[]`) as a bitmap, built per lex a 64-byte word at a time
 /// as the matches reach it: crossing a group costs a step per bracket, not per token, and a file
 /// whose queries stay local never has the whole bitmap built. Owned by the lexer and shared with
-/// every [`Tokens`] view of the lex, so the words are cells.
+/// every [`TokensView`] of the lex, so the words are cells.
 #[derive(Default)]
 pub struct Brackets {
-    /// Bracket bytes of the source. `st` is applied when a word is read, not stored, because
+    /// Bracket bytes of the source. token_start is applied when a word is read, not stored, because
     /// `carve` is still clearing literal interiors while the matches run.
     bits: Vec<Cell<u64>>,
     /// One bit per word of `bits`: built this lex.
@@ -49,7 +51,8 @@ struct Pairs {
 
 impl Brackets {
     /// A new lex over `n` bytes: size the buffers and forget every word of the previous one.
-    pub fn begin(&mut self, n: usize) {
+    #[cpu_multiversion]
+    pub fn begin(&mut self, n: usize, _cpu: impl Cpu) {
         let nwords = n.div_ceil(64) + 1;
         self.bits.resize(nwords, Cell::new(0));
         self.built.clear();
@@ -63,12 +66,13 @@ impl Brackets {
     }
 
     /// The bracket bits of word `w`, built on first use.
+    #[cpu_multiversion]
     #[inline]
-    fn word(&self, src: &[u8], n: usize, w: usize) -> u64 {
+    fn word(&self, src: &[u8], n: usize, w: usize, cpu: impl Cpu) -> u64 {
         let (i, b) = (w >> 6, 1u64 << (w & 63));
         let built = &self.built[i];
         if built.get() & b == 0 {
-            self.bits[w].set(bracket_word(src, w << 6, n));
+            self.bits[w].set(bracket_word(src, w << 6, n, cpu));
             built.set(built.get() | b);
         }
         self.bits[w].get()
@@ -77,11 +81,12 @@ impl Brackets {
 
 /// Bits of the 64 bytes at `base` that are brackets (bytes at or past `n` are clear). The source
 /// carries `PAD` bytes past `n`, so a whole word is readable whenever `base < n`.
-fn bracket_word(src: &[u8], base: usize, n: usize) -> u64 {
+#[cpu_multiversion]
+fn bracket_word(src: &[u8], base: usize, n: usize, cpu: impl Cpu) -> u64 {
     if base >= n {
         return 0;
     }
-    let mut out = bracket_bits(src, base);
+    let mut out = bracket_bits(src, base, cpu);
     if base + 64 > n {
         out &= (1u64 << (n - base)) - 1;
     }
@@ -92,19 +97,27 @@ fn bracket_word(src: &[u8], base: usize, n: usize) -> u64 {
 /// only punctuator delimiters - template-closing `}`s and cleared literal interiors are
 /// invisible. Past [`BRACKET_STEP_CAP`] bracket steps the answer comes from a per-lex
 /// closer-to-opener table built once, so it stays exact; None if unbalanced.
+#[cpu_multiversion]
 #[inline]
-pub(super) fn match_delim_back(tokens: &Tokens, from: usize, open: u8, close: u8) -> Option<usize> {
-    let (src, st, kind, n, b) = (tokens.src, tokens.st, tokens.kind, tokens.n, tokens.brackets);
+pub(super) fn match_delim_back(
+    tokens: &TokensView,
+    from: usize,
+    open: u8,
+    close: u8,
+    cpu: impl Cpu,
+) -> Option<usize> {
+    let (src, token_start, kinds, n, b) =
+        (tokens.src, tokens.token_start, tokens.kinds, tokens.n, tokens.brackets);
     let mut depth: i32 = 1;
     let mut steps: u32 = 0;
     let mut w = from >> 6;
-    let mut bits = b.word(src, n, w) & st[w] & ((1u64 << (from & 63)) - 1);
+    let mut bits = b.word(src, n, w, cpu) & token_start[w] & ((1u64 << (from & 63)) - 1);
     loop {
         while bits != 0 {
             let i = 63 - bits.leading_zeros() as usize;
             bits &= !(1u64 << i);
             let pos = (w << 6) | i;
-            if kind[pos] >= OP_KIND_BASE {
+            if kinds[pos] >= OP_KIND_BASE {
                 let c = src[pos];
                 if c == close {
                     depth += 1;
@@ -117,27 +130,29 @@ pub(super) fn match_delim_back(tokens: &Tokens, from: usize, open: u8, close: u8
             }
             steps += 1;
             if steps > BRACKET_STEP_CAP {
-                return delim_memo_opener(tokens, from);
+                return delim_memo_opener(tokens, from, cpu);
             }
         }
         if w == 0 {
             return None;
         }
         w -= 1;
-        bits = b.word(src, n, w) & st[w];
+        bits = b.word(src, n, w, cpu) & token_start[w];
     }
 }
 
+#[cpu_multiversion]
 #[inline(never)]
-fn delim_memo_opener(tokens: &Tokens, from: usize) -> Option<usize> {
-    let (src, st, kind, n, b) = (tokens.src, tokens.st, tokens.kind, tokens.n, tokens.brackets);
+fn delim_memo_opener(tokens: &TokensView, from: usize, cpu: impl Cpu) -> Option<usize> {
+    let (src, token_start, kinds, n, b) =
+        (tokens.src, tokens.token_start, tokens.kinds, tokens.n, tokens.brackets);
     let mut m = b.pairs.borrow_mut();
     if from >= m.built_to {
         let first = m.built_to >> 6;
         let last = from >> 6;
         let mut w = first;
         while w <= last {
-            let mut bits = b.word(src, n, w) & st[w];
+            let mut bits = b.word(src, n, w, cpu) & token_start[w];
             if w == first {
                 bits &= !((1u64 << (m.built_to & 63)) - 1);
             }
@@ -147,12 +162,12 @@ fn delim_memo_opener(tokens: &Tokens, from: usize) -> Option<usize> {
             while bits != 0 {
                 let p = (w << 6) | bits.trailing_zeros() as usize;
                 bits &= bits - 1;
-                if kind[p] >= OP_KIND_BASE {
+                if kinds[p] >= OP_KIND_BASE {
                     let c = src[p];
                     match c {
-                        b'(' | b'[' | b'{' => m.open[delim_slot(c)].push(p as u32),
+                        b'(' | b'[' | b'{' => m.open[delim_slot(c, cpu)].push(p as u32),
                         b')' | b']' | b'}' => {
-                            if let Some(o) = m.open[delim_slot(c)].pop() {
+                            if let Some(o) = m.open[delim_slot(c, cpu)].pop() {
                                 m.pairs.push((p as u32, o));
                             }
                         }
@@ -170,7 +185,8 @@ fn delim_memo_opener(tokens: &Tokens, from: usize) -> Option<usize> {
     }
 }
 
-fn delim_slot(c: u8) -> usize {
+#[cpu_multiversion]
+fn delim_slot(c: u8, _cpu: impl Cpu) -> usize {
     match c {
         b'(' | b')' => 0,
         b'[' | b']' => 1,
@@ -178,10 +194,11 @@ fn delim_slot(c: u8) -> usize {
     }
 }
 
+#[cpu_multiversion]
 #[inline(always)]
-pub fn word_len(src: &[u8], w: usize) -> usize {
+pub fn word_len(src: &[u8], w: usize, cpu: impl Cpu) -> usize {
     let mut e = w + 1;
-    while is_word(src[e]) {
+    while is_word(src[e], cpu) {
         e += 1;
     }
     e - w
@@ -189,23 +206,25 @@ pub fn word_len(src: &[u8], w: usize) -> usize {
 
 /// Does the identifier at `pos` equal exactly `kw`? The following-byte check
 /// rejects longer identifiers (the source pad makes it safe at EOF).
+#[cpu_multiversion]
 #[inline]
-pub(super) fn ident_is(src: &[u8], pos: usize, kw: &[u8]) -> bool {
+pub(super) fn ident_is(src: &[u8], pos: usize, kw: &[u8], cpu: impl Cpu) -> bool {
     src[pos..].starts_with(kw) && {
         let after = pos + kw.len();
-        !is_word(src[after]) || unicode_ws_len_at(src, after) != 0
+        !is_word(src[after], cpu) || unicode_ws_len_at(src, after, cpu) != 0
     }
 }
 
 /// Previous significant token start before `pos` (skipping trivia), or `None` at start of input.
+#[cpu_multiversion]
 #[inline]
-pub fn prev_sig(st: &[u64], kind: &[u8], pos: usize) -> Option<usize> {
-    let mut q = bits::prev1(st, pos);
+pub fn prev_sig(token_start: &[u64], kinds: &[u8], pos: usize, cpu: impl Cpu) -> Option<usize> {
+    let mut q = bits::prev1(token_start, pos, cpu);
     while let Some(p) = q {
-        if !is_trivia_byte(kind[p]) {
+        if !is_trivia_byte(kinds[p], cpu) {
             break;
         }
-        q = bits::prev1(st, p);
+        q = bits::prev1(token_start, p, cpu);
     }
     q
 }

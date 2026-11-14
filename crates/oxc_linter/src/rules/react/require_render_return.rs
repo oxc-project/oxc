@@ -72,7 +72,8 @@ declare_oxc_lint!(
     nursery,
     recommended,
     version = "0.2.0",
-    short_description = "Require render methods in ES5 and ES2015 React components to return a value.",
+    short_description =
+        "Require render methods in ES5 and ES2015 React components to return a value.",
 );
 
 impl Rule for RequireRenderReturn {

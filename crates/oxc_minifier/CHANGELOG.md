@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.158.0] - 2026-11-09
+
+### 🐛 Bug Fixes
+
+- 7243594 minifier: Preserve throwing ArrayBuffer and URI calls (#29012) (camc314)
+- 595f3c2 minifier: Preserve left-hand side effects in instanceof checks (#29011) (camc314)
+- 0b48483 minifier: Preserve UTF-16 boundaries in empty-search replaceAll folding (#28807) (huuya)
+- 1e57a4e codegen: Print infinite numeric literals as `1e400` instead of `Infinity` (#28812) (Dominic Elm)
+- ae7474e minifier: Keep array concat chain reads before later side effects (#28261) (Dunqing)
+
+## [0.157.0] - 2026-11-02
+
+### 🐛 Bug Fixes
+
+- eaa8e90 ecmascript: Avoid numeric `+` folding when an operand may be a string (#28544) (camc314)
+
+### ⚡ Performance
+
+- df42953 minifier: Don't request another pass for block unwrapping (#28315) (Dunqing)
+
 ## [0.156.0] - 2026-10-27
 
 ### 💥 BREAKING CHANGES

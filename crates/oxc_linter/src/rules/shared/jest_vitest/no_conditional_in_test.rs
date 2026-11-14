@@ -103,11 +103,14 @@ pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
 
     let is_if_statement_in_test = ctx.nodes().ancestors(node.id()).any(|node| {
         let AstKind::CallExpression(call_expr) = node.kind() else { return false };
-        let vitest_node = PossibleJestNode { node, original: None };
+        let Some(possible_jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx)
+        else {
+            return false;
+        };
 
         is_type_of_jest_fn_call(
             call_expr,
-            &vitest_node,
+            &possible_jest_node,
             ctx,
             &[JestFnKind::General(JestGeneralFnKind::Test)],
         )

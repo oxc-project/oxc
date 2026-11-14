@@ -8,7 +8,7 @@ use oxc_formatter_core::{
 };
 
 use crate::{
-    comments::{write_gap, write_leading_comments},
+    comments::{classify_gap, write_comments, write_statement_separator},
     context::CssFormatContext,
 };
 
@@ -56,7 +56,7 @@ fn write_placeholder<'a>(placeholder: &Placeholder<'a>, f: &mut CssFormatter<'_,
 
 /// No source gap between two spans (postcss's `hasEmptyRawBefore`):
 /// the signal for a glued `and(` / `not(`, a `(` that makes a function, and the like.
-pub fn is_glued(left: &oxc_css_parser::pos::Span, right: &oxc_css_parser::pos::Span) -> bool {
+pub fn is_glued(left: oxc_css_parser::pos::Span, right: oxc_css_parser::pos::Span) -> bool {
     left.end == right.start
 }
 
@@ -82,13 +82,24 @@ pub fn normalize_whitespace(raw: &str) -> String {
 /// Mirrors Prettier's `maybeToLowerCase`.
 /// Lowercase unless the identifier contains variable/interpolation markers.
 pub fn write_maybe_lowercase<'a>(value: &'a str, f: &mut CssFormatter<'_, 'a>) {
-    if value.contains('$')
-        || value.contains('@')
-        || value.contains('#')
+    // One pass over the (short) identifier, rather than a search per marker
+    let (mut open, mut close, mut upper) = (false, false, false);
+    for b in value.bytes() {
+        match b {
+            b'$' | b'@' | b'#' => {
+                write!(f, text(value));
+                return;
+            }
+            b'(' => open = true,
+            b')' => close = true,
+            _ => upper |= b.is_ascii_uppercase(),
+        }
+    }
+    if !upper
+        || (open && close)
         || value.starts_with('%')
         || value.starts_with("--")
         || value.starts_with(":--")
-        || (value.contains('(') && value.contains(')'))
     {
         write!(f, text(value));
         return;
@@ -102,17 +113,23 @@ pub fn write_maybe_lowercase<'a>(value: &'a str, f: &mut CssFormatter<'_, 'a>) {
 ///
 /// Mirrors Prettier's `css-root` + `printSequence`.
 pub fn write_stylesheet<'a>(stylesheet: &Stylesheet<'a>, f: &mut CssFormatter<'_, 'a>) {
-    statement::write_statement_sequence_bounded(&stylesheet.statements, u32::MAX, f);
+    let style_attribute = f.context().is_style_attribute();
+    statement::write_statement_sequence_bounded(
+        &stylesheet.statements,
+        u32::MAX,
+        style_attribute,
+        f,
+    );
 
     // Comments after the last statement (or in an otherwise empty file).
     let remaining = f.context().comments().take_remaining();
     if !remaining.is_empty() {
-        if !stylesheet.statements.is_empty() {
+        if let Some(last) = stylesheet.statements.last() {
             let source = f.context().source_text();
-            let prev_end = stylesheet.statements.last().map_or(0, |s| statement::stmt_end(s, f));
-            write_gap(source.bytes_range(prev_end, remaining[0].span.start), f);
+            let prev_end = statement::stmt_end(last, f);
+            let gap = classify_gap(source.bytes_range(prev_end, remaining[0].span.start));
+            write_statement_separator(gap, style_attribute, f);
         }
-        let last_end = remaining.last().unwrap().span.end;
-        write_leading_comments(remaining, last_end, f);
+        write_comments(remaining, style_attribute, f);
     }
 }

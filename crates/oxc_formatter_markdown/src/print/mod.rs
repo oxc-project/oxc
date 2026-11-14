@@ -12,7 +12,6 @@ use crate::context::MarkdownFormatContext;
 
 mod block;
 mod blockquote;
-mod cjk;
 mod code;
 mod escape;
 mod inline;

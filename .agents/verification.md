@@ -1,10 +1,24 @@
-# Verification for local and stacked development
+# Verification
 
-- For Rust implementation or test changes, run `just lint -p <crate>` for affected crates and, where unit/integration tests exist, unfiltered `just test -p <crate>` when the change is ready. Use filtered regressions such as `just test -p <crate> --tests <filter>` while reproducing or debugging. If the complete affected suite already covers the regression on current inputs, do not add a separate filtered run. Treat unexpected zero-test results as incomplete, even if Cargo exits successfully.
-- Prose-only documentation needs formatting and typo checks. For Rustdoc-only changes, use `just doc -p <crate>` and, when executable examples change, `cargo test -p <crate> --all-features --doc`; do not add runtime crate tests or lint solely for documentation edits. For implementation changes that affect documentation, scope Rustdoc checks to affected crates; use whole-workspace documentation only when the affected scope requires it.
-- Select checks from each change, or each PR's diff against its parent. Include affected consumers when changing shared AST, string, syntax, or other common APIs.
-- Run the owning subsystem's required generators, conformance, and bindings checks in the root [AGENTS.md](../AGENTS.md#testing); crate tests alone do not cover them. Build and test affected NAPI packages with their package-specific commands; use all-package binding builds and tests when the affected consumers require that scope. For conformance-only crates such as the parser, use the prescribed conformance suite instead of repeating empty crate-test runs.
-- Rerun checks when their tested code, dependencies, generated inputs, toolchain, or build configuration changes. A commit alone does not require repeating unchanged checks. Report the commands, scope, and results, including any skipped or incomplete checks.
-- Reuse Cargo build artifacts and keep toolchains, profiles, and features consistent. When both filtered and unfiltered tests are needed, keep the selected package group consistent too: changing `-p` selections can change dependency features even with `--all-features`. Preserve required standalone and feature-configuration checks; grouped builds can mask feature-wiring errors. Run Cargo commands serially when sharing a target directory.
-- At a stable integration checkpoint, use `just ready` when broad local validation is still needed, especially after shared API, dependency, or workspace changes. Choose it or the relevant individual checks before running them; do not repeat equivalent checks on unchanged inputs. For a stack, use one run on the stable tip instead of repeating it for every intermediate commit. It requires a clean tracked worktree; review any changes it produces.
-- When the affected scope is unclear or spans the workspace, broaden tests and lint with `just test` and `just lint`, plus relevant subsystem checks. Each independently mergeable PR still needs its required CI; a passing stack tip does not establish that intermediate PRs pass.
+Choose checks from the diff, including affected consumers; for stacks, compare
+each PR with its parent. Follow owning guides in [AGENTS.md](../AGENTS.md#testing)
+for generators, conformance, and bindings.
+
+- **Rust code/tests:** `just lint -p <crate>` and unfiltered `just test -p <crate>`
+  where tests exist. Use filtered tests while debugging; unexpected zero tests
+  are incomplete. Use conformance for syntax regressions where prescribed.
+- **Prose:** formatting only.
+- **Rustdoc:** `just doc -p <crate>`; add
+  `cargo test -p <crate> --all-features --doc` for changed executable examples.
+
+Reuse passing results until tested code, dependencies, generated inputs,
+toolchain, or build configuration changes; commits alone do not invalidate them.
+Keep profiles, features, and package selections consistent. Run required
+standalone/feature checks separately because grouped builds can mask errors.
+Serialize Cargo commands sharing a target directory.
+
+For unclear/workspace-wide impact, broaden to `just test`, `just lint`, and
+subsystem checks. Use `just ready` as an optional stable checkpoint instead of
+equivalent repeated checks; it needs a clean tracked worktree. Review its output.
+For stacks, run the broad checkpoint once at the tip; every mergeable PR still
+needs its required CI.

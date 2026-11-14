@@ -32,9 +32,13 @@ impl<'a> Tree<'a> {
                 source,
                 facts,
                 merged_texts: ArenaVec::new_in(&allocator),
+                vue_script_language: "js",
             },
             sensitivity,
         };
+        if builder.tree.rules.vue_sfc {
+            builder.tree.vue_script_language = builder.vue_script_language();
+        }
         builder.facts(NodeId::DOCUMENT).display = builder.display(NodeId::DOCUMENT);
         builder.children(NodeId::DOCUMENT);
         builder.facts(NodeId::DOCUMENT).borrows = builder.borrows(NodeId::DOCUMENT);
@@ -50,6 +54,23 @@ struct Builder<'a> {
 }
 
 impl Builder<'_> {
+    /// See [`Tree::vue_script_language`].
+    fn vue_script_language(&self) -> &'static str {
+        let t = &self.tree;
+        let languages = t.root.children(NodeId::DOCUMENT).filter_map(|(id, _)| {
+            (t.is_sfc_block(id) && t.tag(id) == "script").then(|| t.lang(id))?
+        });
+        let mut language = "js";
+        for lang in languages {
+            match lang {
+                "ts" | "typescript" => language = "ts",
+                "tsx" => return "tsx",
+                _ => {}
+            }
+        }
+        language
+    }
+
     fn facts(&mut self, id: NodeId) -> &mut Facts {
         &mut self.tree.facts[id.index()]
     }
@@ -89,13 +110,24 @@ impl Builder<'_> {
 
         let mut prev: Option<NodeId> = None;
         let mut pending_space = false;
-        let mut any_cdata = false;
         let mut any_hidden = false;
         for (id, node) in nodes() {
             if let Some(element) = self.absorbing_element(id) {
                 let facts = self.facts(element);
                 facts.condition = Some(id);
                 facts.span.start = node.span.start;
+                continue;
+            }
+            // The blocks continuing an ignored one are ignored with it (DIVERGENCES.md#angular-ignored-block-chain)
+            if let Some(prev) = prev
+                && self.tree[prev].suppressed
+                && self.tree.continues_block(prev, id)
+            {
+                let facts = self.facts(prev);
+                facts.span.end = node.span.end;
+                // The whitespace before it is now inside the ignored source
+                facts.has_trailing_spaces = false;
+                pending_space = false;
                 continue;
             }
             let (leading, trailing, whitespace_only) = match &node.kind {
@@ -121,10 +153,6 @@ impl Builder<'_> {
             }
 
             self.node(id, whitespace_sensitive);
-            if matches!(node.kind, NodeKind::Cdata) {
-                any_cdata = true;
-                self.facts(id).has_cdata = true;
-            }
             let facts = self.facts(id);
             facts.parent = Some(parent);
             facts.prev = prev;
@@ -136,10 +164,12 @@ impl Builder<'_> {
                         && !comment.bogus
                     {
                         let content = comment.content.slice(self.tree.source);
-                        let facts = self.facts(id);
-                        facts.prettier_ignore = is_suppression_marker(content);
-                        if let Some(display) = display_comment(content) {
-                            facts.display = display;
+                        self.facts(id).suppressed = is_suppression_marker(content);
+                        // Every block of a Vue file is a block
+                        if let Some(display) = display_comment(content)
+                            && !self.tree.is_sfc_block(id)
+                        {
+                            self.facts(id).display = display;
                         }
                     }
                     self.facts(prev).next = Some(id);
@@ -174,9 +204,6 @@ impl Builder<'_> {
             facts.ends_in_pre = ends_in_pre;
         }
 
-        if any_cdata {
-            self.merge_cdata(parent);
-        }
         self.merge_simple_elements(parent);
 
         let mut next = self.tree[parent].first_child;
@@ -250,8 +277,6 @@ impl Builder<'_> {
             }
             _ => {}
         }
-        // CDATA reads as text, merged with the texts around it,
-        // and prints as written (DIVERGENCES.md#cdata-as-written).
         let text_like = matches!(
             node.kind,
             NodeKind::Text(_) | NodeKind::Comment(_) | NodeKind::Cdata | NodeKind::EndTag(_)

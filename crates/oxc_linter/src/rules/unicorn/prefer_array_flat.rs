@@ -217,14 +217,18 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
     };
 
     if first_argument.r#async
-        || first_argument.params.parameters_count() != 2
+        || first_argument.params.rest.is_some()
         || !is_empty_array_expression(second_argument)
     {
         return;
     }
 
+    let [first_parameter, second_parameter] = first_argument.params.items.as_slice() else {
+        return;
+    };
+
     let Some((first_parameter, second_parameter)) = ({
-        match (&first_argument.params.items[0].pattern, &first_argument.params.items[1].pattern) {
+        match (&first_parameter.pattern, &second_parameter.pattern) {
             (
                 BindingPattern::BindingIdentifier(first_param),
                 BindingPattern::BindingIdentifier(second_param),
@@ -573,6 +577,10 @@ fn test() {
         r#"const text = "" as string; text.flatMap(x => x);"#,
         "const handler = (() => {}) as Function; handler.flatMap(x => x);",
         "const collection = new Foo() satisfies Foo; collection.flatMap(x => x);",
+        "array.reduce((a, ...b) => a.concat(b), [])",
+        "array.reduce((a, ...b) => [...a, ...b], [])",
+        "array.reduce((a, b, ...rest) => a.concat(b), [])",
+        "array.reduce((a, b, ...rest) => [...a, ...b], [])",
     ];
 
     let fail = vec![

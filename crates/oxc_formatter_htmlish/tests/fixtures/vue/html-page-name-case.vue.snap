@@ -1,0 +1,29 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<!DOCTYPE html>
+<HTML><BODY><P CLASS="a">x</P></BODY></HTML>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<!doctype html>
+<html>
+  <body>
+    <p class="a">x</p>
+  </body>
+</html>
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<!doctype html>
+<html>
+  <body>
+    <p class="a">x</p>
+  </body>
+</html>
+
+===================== End =====================

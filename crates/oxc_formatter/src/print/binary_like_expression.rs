@@ -161,10 +161,18 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
     /// There are some cases where the indentation is done by the parent, so if the parent is already doing
     /// the indentation, then there's no need to do a second indentation.
     /// [Prettier applies]: <https://github.com/prettier/prettier/blob/b0201e01ef99db799eb3716f15b7dfedb0a2e62b/src/language-js/print/binaryish.js#L122-L125>
-    pub fn should_not_indent_if_parent_indents(&self, parent: &AstNodes<'_, 'a>) -> bool {
+    pub fn should_not_indent_if_parent_indents(
+        &self,
+        parent: &AstNodes<'_, 'a>,
+        f: &JsFormatter<'_, 'a>,
+    ) -> bool {
         match parent {
+            // An embedded expression's root, which the host's delimiters indent (apps/oxfmt/DIVERGENCES.md#js-in-vue-bitwise-or)
+            parent if f.context().is_embedded_root(parent) => true,
+            // The parent already indents a broken expression
             AstNodes::ReturnStatement(_)
             | AstNodes::ThrowStatement(_)
+            | AstNodes::YieldExpression(_)
             | AstNodes::ForStatement(_)
             | AstNodes::TemplateLiteral(_)
             | AstNodes::ArrowFunctionExpression(_) => true,
@@ -248,7 +256,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for BinaryLikeExpression<'a, '_> {
         }
 
         // Check if we can take another early-exit path before building the Vec
-        let should_not_indent = self.should_not_indent_if_parent_indents(self.parent());
+        let should_not_indent = self.should_not_indent_if_parent_indents(self.parent(), f);
 
         // Optimize: if should_not_indent is true, we can skip building the Vec entirely
         if should_not_indent {
@@ -268,7 +276,6 @@ impl<'a> Format<'a, JsFormatContext<'a>> for BinaryLikeExpression<'a, '_> {
         let parts = split_into_left_and_right_sides(*self, false, f);
         // Every operator of the flattened chain inlines its right side (`a ?? [..] ?? [..]`),
         // so the chain never breaks at an operator and an indent would only shift the last literal.
-        // See DIVERGENCES.md#inline-logical-chain-indent
         let inline_chain = inline_logical_expression
             && parts.iter().all(|part| match part {
                 BinaryLeftOrRightSide::Left { .. } => true,
@@ -669,7 +676,14 @@ pub fn should_flatten(parent_operator: BinaryLikeOperator, operator: BinaryLikeO
         return false;
     }
 
-    match (parent_operator.precedence(), operator.precedence()) {
+    match (parent_precedence, precedence) {
+        // `(a < b) > c`: TypeScript reads `a < b > (c)` as a call of `a<b>`
+        (Precedence::Compare, Precedence::Compare)
+            if parent_operator == BinaryOperator::GreaterThan.into()
+                && operator == BinaryOperator::LessThan.into() =>
+        {
+            false
+        }
         // `**` is right associative
         (Precedence::Exponentiation, _) |
         // `a == b == c` => `(a == b) == c`

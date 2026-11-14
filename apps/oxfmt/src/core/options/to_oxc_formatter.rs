@@ -126,11 +126,11 @@ pub fn to_oxc_formatter(
         // `config` / `stylesheet` / `preserve_duplicates` are JS-sorter-only
         // and travel through `to_prettier::inject_tailwind_plugin_payload`,
         // not the Rust formatter options.
-        format_options.sort_tailwindcss = Some(SortTailwindcssOptions {
+        format_options.sort_tailwindcss = Some(std::sync::Arc::new(SortTailwindcssOptions {
             functions: tw_config.functions.unwrap_or_default(),
             attributes: tw_config.attributes.unwrap_or_default(),
             preserve_whitespace: tw_config.preserve_whitespace.unwrap_or(false),
-        });
+        }));
     }
 
     format_options

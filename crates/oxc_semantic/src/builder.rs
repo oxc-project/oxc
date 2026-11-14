@@ -544,7 +544,12 @@ impl<'a> SemanticBuilder<'a> {
         includes: SymbolFlags,
         excludes: SymbolFlags,
     ) -> SymbolId {
-        if let Some(symbol_id) = self.check_redeclaration(scope_id, span, name, excludes) {
+        // A `var` hoisted through this scope is bound in an outer scope. Interfaces and type aliases
+        // live in a separate declaration space, so they get their own symbol in this scope.
+        if let Some(symbol_id) = self.check_redeclaration(scope_id, span, name, excludes)
+            && (includes.intersects(SymbolFlags::Value)
+                || self.scoping.scope_has_binding(scope_id, name))
+        {
             self.add_redeclare_variable(symbol_id, includes, span);
             self.scoping.union_symbol_flag(symbol_id, includes);
             return symbol_id;
@@ -580,25 +585,37 @@ impl<'a> SemanticBuilder<'a> {
         name: Ident<'a>,
         excludes: SymbolFlags,
     ) -> Option<SymbolId> {
-        let symbol_id = self
-            .scoping
-            .get_binding(scope_id, name)
-            .or_else(|| self.hoisting_variables.get(&(scope_id, name)).copied())?;
+        let binding_id = self.scoping.get_binding(scope_id, name);
 
-        let flags = self.scoping.symbol_flags(symbol_id);
+        if let Some(symbol_id) = binding_id {
+            let flags = self.scoping.symbol_flags(symbol_id);
 
-        // A named function expression binds its own name in the function's scope, so a same-named
-        // parameter is not a redeclaration: `(function n(n) {})` - param `n` is fine.
-        if flags.contains(SymbolFlags::FunctionExpression) {
-            return None;
+            // A named function expression binds its own name in the function's scope, so a same-named
+            // parameter is not a redeclaration: `(function n(n) {})` - param `n` is fine.
+            if flags.contains(SymbolFlags::FunctionExpression) {
+                return None;
+            }
+
+            if flags.intersects(excludes) {
+                let symbol_span = self.scoping.symbol_span(symbol_id);
+                self.error(redeclaration(&name, symbol_span, span));
+                return Some(symbol_id);
+            }
         }
 
-        if flags.intersects(excludes) {
+        // A type-only binding in this scope must not hide a conflicting hoisted `var`:
+        // `{ var x; interface x {} let x; }`
+        // Only the value meaning conflicts. A type sharing the symbol belongs to the outer scope:
+        // `type x = 0; { var x; interface x {} }`
+        let hoisted_id = self.hoisting_variables.get(&(scope_id, name)).copied();
+        if let Some(symbol_id) = hoisted_id
+            && self.scoping.symbol_flags(symbol_id).intersects(excludes & SymbolFlags::Value)
+        {
             let symbol_span = self.scoping.symbol_span(symbol_id);
             self.error(redeclaration(&name, symbol_span, span));
         }
 
-        Some(symbol_id)
+        binding_id.or(hoisted_id)
     }
 
     /// Declare an unresolved reference in the current scope.
@@ -1187,15 +1204,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             cfg.add_edge(before_do_while_stmt_graph_ix, start_body_graph_ix, EdgeType::Normal);
             // body of do-while to start of condition
             cfg.add_edge(after_body_graph_ix, start_of_condition_graph_ix, EdgeType::Normal);
-            // end of condition to after do while
-            cfg.add_edge(end_of_condition_graph_ix, end_do_while_graph_ix, EdgeType::Normal);
-            // end of condition to after start of body
-            cfg.add_edge(end_of_condition_graph_ix, start_body_graph_ix, EdgeType::Backedge);
-
             cfg.ctx(None)
                 .mark_break(end_do_while_graph_ix)
                 .mark_continue(start_of_condition_graph_ix)
                 .resolve_with_upper_label();
+            // end of condition to after do while
+            cfg.add_edge(end_of_condition_graph_ix, end_do_while_graph_ix, EdgeType::Normal);
+            // end of condition to after start of body
+            cfg.add_edge(end_of_condition_graph_ix, start_body_graph_ix, EdgeType::Backedge);
         });
         /* cfg */
 

@@ -6,28 +6,40 @@
 // Rule::from_configuration returns Result but documenting errors is not useful here.
 #![expect(clippy::missing_errors_doc)]
 
+use std::{path::Path, rc::Rc};
+
+use oxc_allocator::{Allocator, AllocatorPool};
+use oxc_ast::ast_kind::AST_TYPE_MAX;
+use oxc_ast_macros::ast;
+use oxc_data_structures::box_macros::boxed_array;
+use oxc_semantic::{AstNode, Semantic};
+
+// JS plugins are only supported on 64-bit little-endian platforms
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
 use std::{
     iter,
-    path::Path,
     ptr::{self, NonNull},
-    rc::Rc,
     string::ToString,
     time::Duration,
 };
 
-use oxc_allocator::{Allocator, AllocatorPool, ArenaVec, CloneIn, TakeIn};
-use oxc_ast::{
-    ast::{Comment, CommentContent, CommentKind, Program},
-    ast_kind::AST_TYPE_MAX,
-};
-use oxc_ast_macros::ast;
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+use oxc_allocator::{ArenaVec, CloneIn, TakeIn};
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+use oxc_ast::ast::{Comment, CommentContent, CommentKind, Program};
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
-use oxc_data_structures::box_macros::boxed_array;
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
 use oxc_diagnostics::OxcDiagnostic;
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
 use oxc_estree_tokens::update_tokens_as_js;
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
 use oxc_parser::Token;
-use oxc_semantic::{AstNode, Semantic};
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
 use oxc_span::Span;
+
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+use crate::external_linter::GlobalsAndEnvs;
 
 mod ast_util;
 mod config;
@@ -67,7 +79,7 @@ mod lint_runner;
 pub use crate::config::{normalize_rule_name, plugins::normalize_plugin_name};
 pub use crate::disable_directives::{
     DirectivePrefix, DisableDirectives, DisableRuleComment, RuleCommentRule, RuleCommentType,
-    create_unused_directives_diagnostics,
+    create_unused_directives_messages,
 };
 pub use crate::{
     config::{
@@ -95,13 +107,12 @@ pub use crate::{
     service::{LintService, LintServiceOptions, OsFileSystem, RuntimeFileSystem},
     suppression::{OxlintSuppressionFileAction, SuppressionManager},
     timing::{RuleTimingRecord, RuleTimingSource, RuleTimingStore},
-    tsgolint::TsGoLintState,
+    tsgolint::{TsGoLintRun, TsGoLintState},
     utils::{read_to_arena_str, read_to_string},
 };
 use crate::{
     config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings},
     context::ContextHost,
-    external_linter::GlobalsAndEnvs,
     fixer::CompositeFix,
     loader::LINT_PARTIAL_LOADER_EXTENSIONS,
     rules::RuleEnum,
@@ -499,7 +510,7 @@ impl Linter {
         {
             ctx_host.rewind_sub_hosts();
             loop {
-                ctx_host.report_unused_directives(severity.into());
+                ctx_host.report_unused_directives(severity);
 
                 if !ctx_host.next_sub_host() {
                     break;
@@ -958,6 +969,7 @@ impl Linter {
         }
     }
 
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
     fn record_external_timings(
         &self,
         rule_timing_store: Option<&RuleTimingStore>,
@@ -979,6 +991,7 @@ impl Linter {
         );
     }
 
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
     fn external_rule_timing_record(
         &self,
         external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
@@ -998,6 +1011,7 @@ impl Linter {
         })
     }
 
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
     fn duration_from_millis(duration_ms: f64) -> Option<Duration> {
         Duration::try_from_secs_f64(duration_ms / 1000.0).ok()
     }

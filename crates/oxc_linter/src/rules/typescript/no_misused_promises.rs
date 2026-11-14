@@ -16,8 +16,8 @@ pub struct NoMisusedPromises(Box<NoMisusedPromisesConfig>);
 #[expect(clippy::struct_field_names)]
 pub struct NoMisusedPromisesConfig {
     /// Whether to check if Promises are used in conditionals.
-    /// When true, disallows using Promises in conditions where a boolean is expected.
-    pub checks_conditionals: bool,
+    /// Can be a boolean to enable/disable the check, or an object to control union types.
+    pub checks_conditionals: ChecksConditionals,
     /// Whether to check if Promises are used in spread syntax.
     /// When true, disallows spreading Promise values.
     pub checks_spreads: bool,
@@ -30,11 +30,38 @@ pub struct NoMisusedPromisesConfig {
 impl Default for NoMisusedPromisesConfig {
     fn default() -> Self {
         Self {
-            checks_conditionals: true,
+            checks_conditionals: ChecksConditionals::Boolean(true),
             checks_spreads: true,
             checks_void_return: ChecksVoidReturn::Boolean(true),
         }
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(untagged)]
+pub enum ChecksConditionals {
+    Boolean(bool),
+    Options(ChecksConditionalsOptions),
+}
+
+#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct ChecksConditionalsOptions {
+    /// Controls which union types are reported in conditionals.
+    /// - `"none"` only reports values that are always Promise-like.
+    /// - `"strict"` also reports unions where the non-Promise types match the awaited Promise types,
+    ///   such as `Promise<number> | number`.
+    /// - `"all"` reports any union containing a Promise-like type.
+    pub flag_unions: ChecksConditionalsFlagUnions,
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum ChecksConditionalsFlagUnions {
+    #[default]
+    None,
+    Strict,
+    All,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]

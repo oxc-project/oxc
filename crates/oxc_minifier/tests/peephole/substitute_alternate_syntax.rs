@@ -720,8 +720,8 @@ fn test_property_key() {
     test_same("var { [-2]: _ } = {}");
     test_same("class C { [-2] = _; static [-3]() {} }");
     test_same("class C { accessor [-2] = _ }");
-    test_same("var { [Infinity]: _ } = {}");
-    test_same("var { [-Infinity]: _ } = {}");
+    test("var { [Infinity]: _ } = {}", "var { [1e400]: _ } = {}");
+    test("var { [-Infinity]: _ } = {}", "var { [-1e400]: _ } = {}");
     test_same("class C { [NaN]() {} }");
     test_same("v = { [-0]: _ }");
 

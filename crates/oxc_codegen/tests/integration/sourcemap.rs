@@ -1,6 +1,5 @@
-use std::{env, path::PathBuf};
+use std::path::PathBuf;
 
-use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{Expression, Statement};
 use oxc_codegen::{Codegen, CodegenOptions};
@@ -353,6 +352,18 @@ fn tagged_template_after_call_resolves_to_source() {
     assert!(has_mapping(&tokens, pos(0, 3), pos(0, 3)), "backtick after `f()`");
 }
 
+// Codegen prints `(c).pos;` in a block as `c.pos;`. The statement starts at the `(`, but the
+// printed `c` must map to the source `c`. Source map consumers use the first mapping at a
+// generated position, so there must be only one mapping at the start of `c.pos;`.
+#[test]
+fn removed_paren_maps_to_inner_token() {
+    let tokens = sourcemap_tokens("function g(c) { (c).pos; }", SourceType::mjs());
+    let at_start: Vec<_> =
+        tokens.iter().filter(|token| token.dst.line == 1 && token.dst.col == 1).collect();
+    assert_eq!(at_start.len(), 1, "only one mapping at the start of `c.pos;`");
+    assert_eq!((at_start[0].src.line, at_start[0].src.col), (0, 17), "`c` maps to the source `c`");
+}
+
 #[test]
 #[cfg(all(not(target_endian = "big"), target_pointer_width = "64"))] // we run big endian tests on docker that does not have node installed; skip 32-bit as well
 fn stacktrace_is_correct() {
@@ -440,6 +451,22 @@ const make = () => ({
 make().prop",
     ];
 
+    // The identifier is first mapped by its enclosing AssignmentExpression. The map must retain
+    // the later identifier mapping's original name so Node can restore the inferred function name.
+    // `export {}` makes this a module, allowing the enclosing function to be mangled as well.
+    let mangled_case = r"
+export {};
+function longFunctionName(longName) {
+    (longName = () => {
+        Error.stackTraceLimit = 2;
+        throw new Error();
+    })();
+}
+longFunctionName(0);
+";
+    let (mangled_output, mangled_sourcemap_url, mangled_names) = codegen_mangled(mangled_case);
+    assert_eq!(mangled_names, ["longFunctionName", "longName"]);
+
     let node_version = std::process::Command::new("node").arg("--version").output().map_or_else(
         |_| "unknown".to_string(),
         |output| String::from_utf8_lossy(&output.stdout).trim().to_string(),
@@ -454,12 +481,19 @@ make().prop",
                 cases.iter().map(|s| {
                     let (output, sourcemap_url) = codegen(s);
                     format!("## Input\n{}\n\n## Output\n{}\n\n## Stderr\n{}", s, output, execute_with_node(&output, &sourcemap_url))
-                }).collect::<Vec<_>>().join("\n------------------------------------------------------\n")
+                }).chain(std::iter::once(format!(
+                    "## Mangled identifier source-map names\n{:?}\n\n## Input\n{}\n\n## Output\n{}\n\n## Stderr\n{}",
+                    mangled_names,
+                    mangled_case.trim(),
+                    mangled_output,
+                    execute_with_node(&mangled_output, &mangled_sourcemap_url),
+                ))).collect::<Vec<_>>().join("\n------------------------------------------------------\n")
             )
         );
     });
 }
 
+#[cfg(all(not(target_endian = "big"), target_pointer_width = "64"))]
 fn codegen(code: &str) -> (String, String) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, code, SourceType::mjs()).parse();
@@ -511,8 +545,35 @@ fn private_identifier_is_named_only_when_mangled() {
     assert_eq!(mangled_private_names(source_text, &[("ab", "a")]), vec!["#ab".to_string()]);
 }
 
+#[cfg(all(not(target_endian = "big"), target_pointer_width = "64"))]
+fn codegen_mangled(code: &str) -> (String, String, Vec<String>) {
+    use oxc_mangler::{MangleOptions, Mangler};
+
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, code, SourceType::mjs()).parse();
+    assert!(ret.diagnostics.is_empty());
+    let program = ret.program;
+    let mangler = Mangler::new()
+        .with_options(MangleOptions { top_level: Some(true), ..MangleOptions::default() })
+        .build(&program);
+    let ret = Codegen::new()
+        .with_options(CodegenOptions {
+            source_map_path: Some(PathBuf::from("input.js")),
+            ..Default::default()
+        })
+        .with_scoping(Some(mangler.scoping))
+        .with_private_member_mappings(Some(mangler.class_private_mappings))
+        .build(&program);
+    let map = ret.map.unwrap();
+    let names = map.get_names().map(str::to_owned).collect();
+    (ret.code, map.to_data_url(), names)
+}
+
+#[cfg(all(not(target_endian = "big"), target_pointer_width = "64"))]
 fn execute_with_node(code: &str, sourcemap_url: &str) -> String {
-    let cwd = env::current_dir().unwrap().join("input.js");
+    use cow_utils::CowUtils;
+
+    let cwd = std::env::current_dir().unwrap().join("input.js");
     let cwd = cwd.to_str().unwrap();
 
     let code = format!("{code}\n//# sourceMappingURL={sourcemap_url}\n");

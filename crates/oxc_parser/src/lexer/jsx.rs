@@ -55,7 +55,7 @@ impl<C: Config> Lexer<'_, C> {
     }
 
     pub(crate) fn next_jsx_child(&mut self) -> Token {
-        self.token.set_start(self.offset());
+        self.token_start = self.offset();
         let kind = self.read_jsx_child();
         self.finish_next(kind)
     }
@@ -115,7 +115,7 @@ impl<C: Config> Lexer<'_, C> {
         if self.peek_byte() != Some(b'-') {
             return None;
         }
-        self.token.set_start(start);
+        self.token_start = start;
         self.consume_char();
 
         // Consume bytes which are part of identifier tail

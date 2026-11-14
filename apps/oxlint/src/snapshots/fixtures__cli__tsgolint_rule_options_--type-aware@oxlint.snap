@@ -130,6 +130,7 @@ working directory: fixtures/cli/tsgolint_rule_options
      :             ^^^|^^|^
      :                |  `-- This expression is not Promise-like
      :                `-- Promise aggregator input
+ 172 | 
      `----
   help: Pass an iterable of Promise-like values, or wrap each synchronous value in `Promise.resolve(...)` before calling the aggregator.
 
@@ -140,11 +141,21 @@ working directory: fixtures/cli/tsgolint_rule_options
      :             ^^^|^^|^
      :                |  `-- This expression is not Promise-like
      :                `-- Promise aggregator input
+ 172 | 
      `----
   help: Pass an iterable of Promise-like values, or wrap each synchronous value in `Promise.resolve(...)` before calling the aggregator.
 
-Found 0 warnings and 16 errors.
-Finished in <variable>ms on 1 file with 17 rules using 1 threads.
+  x typescript(no-misused-promises): Expected non-Promise value in a boolean conditional.
+     ,-[test.ts:174:5]
+ 173 | declare const matchingPromiseUnion: Promise<number> | number;
+ 174 | if (matchingPromiseUnion) {
+     :     ^^^^^^^^^^|^^^^^^^^^^
+     :               `-- This expression has type `number | Promise<number>`.
+ 175 |   result += 1;
+     `----
+
+Found 0 warnings and 17 errors.
+Finished in <variable>ms on 1 file with 18 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

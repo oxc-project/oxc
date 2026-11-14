@@ -5,24 +5,29 @@ import { globSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, extname, join, relative } from "node:path";
 import { parseArgs } from "node:util";
 import { format, type Language } from "../dist/index.js";
-import { assertDownloaded } from "./download-fixtures.ts";
+import { assertDownloaded } from "./download-externals.ts";
 import {
   PRETTIER_SUITE,
-  FIXTURES_DIR,
+  CONFORMANCE_DIR,
   SNAPSHOTS_DIR,
   collectDivergences,
   type Divergence,
   listDivergences,
   checkStaleDivergences,
+  inputVariants,
+  readLineEndings,
+  showLineEndings,
 } from "./shared.ts";
 
 // Compares oxfmt with the committed outputs of Prettier's own test suite (`tests/format/**/__snapshots__`),
 // so Prettier itself never runs here.
 // `--filter <substring>` runs only the matching paths and prints their diffs instead of writing the report.
 
-const SUITE_DIR = join(FIXTURES_DIR, PRETTIER_SUITE);
+const SUITE_DIR = join(CONFORMANCE_DIR, PRETTIER_SUITE);
 
-/** Extension of the filename oxfmt is given → its language (the `associations` name), in the report's order */
+const ANGULAR_EXT = ".component.html";
+
+/** Extension of the filename oxfmt is given (Angular's: a longer suffix) → its language (the `associations` name), in the report's order */
 const LANGUAGES: Record<string, Language> = {
   ".js": "javascript",
   ".mjs": "javascript",
@@ -43,8 +48,12 @@ const LANGUAGES: Record<string, Language> = {
   ".yaml": "yaml",
   ".md": "markdown",
   ".html": "html",
+  ".xhtml": "html",
+  [ANGULAR_EXT]: "angular-html",
   ".vue": "vue",
 };
+const languageOf = (filename: string) =>
+  LANGUAGES[filename.endsWith(ANGULAR_EXT) ? ANGULAR_EXT : extname(filename)];
 
 const withExt = (ext: string) => (name: string) => name.replace(/\.[^. ]*$/, "") + ext;
 // A JS/TS file keeps its own extension, as oxfmt parses it by that (e.g. a `.js` listing `typescript` stays JS);
@@ -74,12 +83,12 @@ const PARSERS: Record<string, (name: string) => string> = {
   graphql: withExt(".graphql"),
   yaml: withExt(".yaml"),
   markdown: withExt(".md"),
-  html: withExt(".html"),
-  // The whole file goes to Prettier, but its `<script>` is formatted by oxc.
-  // A `.html` page under `vue` (e.g. `vue/html-vue/`) fails only on the doctype case for now:
-  // Prettier lowercases `<!DOCTYPE html>` for a `.html` filepath only, and this runs it as `.vue`.
-  // oxfmt's own Vue lowercases it everywhere (`crates/oxc_formatter_htmlish/DIVERGENCES.md#doctype-case`).
+  // An HTML extension is kept, as oxfmt reads some differently (`.xhtml`)
+  html: (name) => (languageOf(name) === "html" ? name : withExt(".html")(name)),
   vue: withExt(".vue"),
+  // Still Prettier's own output through oxfmt, the baseline before the native formatter;
+  // its `__ng_*` parsers format a bare expression, which no filename routes to
+  angular: withExt(ANGULAR_EXT),
 };
 
 /**
@@ -91,11 +100,11 @@ const IGNORE = [
   "typescript/conformance/classes/constructorDeclarations/constructorParameters/readonlyReadonly.ts",
   // Expression syntax: `a?.b = c`
   "js/optional-chaining-assignment/",
-  "js/babel-plugins/optional-chaining-assignment.js",
+  "js/babel-plugins/optional-chaining-assign.js",
   // Experimental syntax: `do {}`
-  "js/async-do-expressions/",
-  "js/do",
-  "jsx/do/",
+  "js/do-expression/",
+  "js/parentheses/do-expression.js",
+  "jsx/do-expression/",
   "js/babel-plugins/async-do-expressions.js",
   "js/babel-plugins/do-expressions.js",
   // Experimental syntax: `export X from "mod"`
@@ -103,32 +112,46 @@ const IGNORE = [
   "js/export-default/escaped",
   "js/babel-plugins/export-default-from.js",
   // Experimental syntax: `module <id> {}`
-  "js/module-blocks",
+  "js/module-block/",
   "js/babel-plugins/module-blocks.js",
   "js/explicit-resource-management/valid-module-block-",
   // Experimental syntax: pipeline operator `|>`
-  "js/comments-pipeline-own-line",
   "js/partial-application",
   "js/pipeline-operator",
   "js/babel-plugins/partial-application.js",
-  "js/babel-plugins/pipeline-operator-",
+  "js/babel-plugins/pipeline-operator.js",
   // Experimental syntax: `::`
-  "js/arrows-bind",
-  "js/bind-expressions",
+  "js/arrow-function/arrows-bind/",
+  "js/bind-expression/",
   "js/objects/expression.js",
-  "js/no-semi-babylon-extensions/no-semi.js",
+  "js/ignore/semi/asi-bind-expression.js",
   "js/babel-plugins/function-bind.js",
+  "js/babel-plugins/function-bind-2.js",
   // Experimental syntax: `let { #x: x } = ...`
   "js/destructuring-private-fields",
   "js/babel-plugins/destructuring-private.js",
   // Experimental syntax: `throw` expressions
-  "js/throw_expressions",
+  "js/throw-expression/",
   "js/babel-plugins/throw-expressions.js",
   // Experimental syntax: discard bindings `void`
   "js/discard-binding/",
   "js/babel-plugins/discard-binding.js",
   // Experimental syntax: `function.sent`
+  "js/function-sent/",
   "js/babel-plugins/function-sent.js",
+  // Experimental syntax: `struct`
+  "js/structs/",
+  "js/babel-plugins/structs.js",
+  // Experimental syntax: `export defer`
+  "js/deferred-reexports/",
+  "js/babel-plugins/deferred-reexports.js",
+  // Experimental syntax: `import.sync()`
+  "js/import-sync/",
+  "js/babel-plugins/import-sync.js",
+  // Experimental syntax: `import { x } as ns from "mod"`
+  "js/filtered-namespaces/",
+  "typescript/filtered-namespaces/",
+  "js/babel-plugins/namespace-import-filter.js",
   // Syntax recovery
   "typescript/error-recovery/",
   // Trailing comma after rest element
@@ -155,16 +178,27 @@ const IGNORE = [
   "js/import-attributes/multi-types.js",
   "js/multiparser-invalid/text.js",
   "js/new-target/outside-functions.js",
+  "js/commonjs/snippet: new-target.mjs",
+  "js/commonjs/snippet: new-target.unknown",
+  "js/commonjs/snippet: return/in-static-block.",
+  // An escaped `of` as a `using` binding: not supported, the round-trip costs too much (oxc#18386)
+  "js/explicit-resource-management/for-using-of-escaped-of-binding.js",
+  "js/explicit-resource-management/valid-for-await-using-binding-escaped-of-of.js",
+  "js/explicit-resource-management/valid-for-using-binding-escaped-of-of.js",
+  // Decorators on parameters are TypeScript's legacy syntax, not JS
+  "js/decorators/rest-parameters/",
   "typescript/conformance/types/functions/functionOverloadErrorsSyntax.ts",
   "typescript/module/keyword.ts",
   "typescript/namespace/invalid-await.ts",
   "typescript/definite/definite.ts",
-  "typescript/definite/without-annotation.ts",
   // TS syntax in a JS file, which Prettier parses with `typescript` but oxfmt as JS
-  "jsx/expression-with-types/expression.js",
   "typescript/tsx/comma/snippet: test.js",
   "typescript/tsx/comma/snippet: test.cjs",
   "typescript/tsx/comma/snippet: test.mjs",
+  // JSX in a `.ts` file, which Prettier retries as TSX
+  "misc/filename-matters/jsx-file-extension/snippet: test.ts",
+  "misc/filename-matters/jsx-file-extension/snippet: test.cts",
+  "misc/filename-matters/jsx-file-extension/snippet: test.mts",
   // No known filepath for Prettier, which keeps `<T,>` and the doctype case, but run here as `.ts` / `.html`
   "typescript/tsx/comma/snippet: test.unknown",
   "typescript/tsx/comma/snippet: unnamed",
@@ -179,7 +213,7 @@ const IGNORE = [
   "js/explicit-resource-management/valid-using-as-identifier-for-await-of.js",
   // Top-level `await (1)` with no import/export: Prettier always parses `.js` as ESM (await expression),
   // while our unambiguous detection leans to script (call expression), whose output is valid under both
-  "js/await/like-call.js",
+  "js/await-expression/like-call.js",
   // ES5 vs ES6+ identifier: Prettier uses ES5 validation, OXC uses ES6+
   // Characters outside BMP (like U+102A7) are valid ES6+ identifiers but not ES5
   "js/quotes/objects.js",
@@ -222,10 +256,6 @@ const OPTIONS_HEADER = `${separator("options")}\n`;
 const INPUT_SEPARATOR = `\n${separator("input")}\n`;
 const OUTPUT_SEPARATOR = `\n${separator("output")}\n`;
 const END_SEPARATOR = `\n${separator()}`;
-
-const BOM = "\uFEFF";
-const EOL_BY_NAME: Record<string, string> = { LF: "\n", CRLF: "\r\n", CR: "\r" };
-const NAME_BY_EOL: Record<string, string> = { "\n": "LF", "\r\n": "CRLF", "\r": "CR" };
 
 type Options = Record<string, unknown>;
 type Row = {
@@ -272,7 +302,7 @@ for (const snapPath of globSync("**/__snapshots__/format.test.js.snap", {
     const { parsers, options, expected } = section;
     const input = name.startsWith("snippet: ")
       ? "endOfLine" in options
-        ? section.input.replace(/<(CRLF|CR|LF)>\n/g, (_, eol: string) => EOL_BY_NAME[eol])
+        ? readLineEndings(section.input)
         : section.input
       : readFileSync(join(SUITE_DIR, path), "utf8");
 
@@ -289,7 +319,7 @@ for (const snapPath of globSync("**/__snapshots__/format.test.js.snap", {
       const result = await runCase(`${dir}/${filename}`, input, options, expected);
       if (filter) printResult(`${path} [${parser}]`, options, expected, result);
 
-      const language = LANGUAGES[extname(filename)];
+      const language = languageOf(filename);
       const rows = rowsByLanguage.get(language) ?? new Map<string, Row>();
       rowsByLanguage.set(language, rows);
       // Named by its fixture path, as DIVERGENCES.md lists it
@@ -377,22 +407,10 @@ async function runCase(filename: string, input: string, options: Options, expect
   const actual = first.code;
 
   // Prettier visualizes the line endings of both input and output when `endOfLine` is set
-  const compared =
-    "endOfLine" in options
-      ? actual.replace(/\r\n?|\n/g, (eol) => `<${NAME_BY_EOL[eol]}>\n`)
-      : actual;
+  const compared = "endOfLine" in options ? showLineEndings(actual) : actual;
   const passed = compared === expected;
 
-  // Line endings are normalized and a BOM is kept, so these must produce the same output.
-  // Inputs already containing `\r` or a BOM are skipped, their variants would not be equivalent.
-  const variants: [name: string, input: string, output: string][] = [];
-  if (!input.includes("\r")) {
-    variants.push(
-      ["CRLF", input.replaceAll("\n", "\r\n"), actual],
-      ["CR", input.replaceAll("\n", "\r"), actual],
-    );
-  }
-  if (!input.startsWith(BOM)) variants.push(["BOM", BOM + input, BOM + actual]);
+  const variants = inputVariants(input, actual);
 
   // The second pass (idempotency) and the variants are independent of each other
   const [second, ...outputs] = await Promise.all(

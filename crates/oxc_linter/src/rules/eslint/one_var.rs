@@ -108,7 +108,8 @@ declare_oxc_lint!(
     conditional_fix,
     config = OneVar,
     version = "1.78.0",
-    short_description = "Enforce variables to be declared either together or separately in functions.",
+    short_description =
+        "Enforce variables to be declared either together or separately in functions.",
 );
 
 impl Rule for OneVar {

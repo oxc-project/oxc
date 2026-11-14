@@ -768,6 +768,10 @@ fn run_estree_test262_impl(
 
             let allocator = Allocator::new();
             let ret = Parser::new(&allocator, source_text, source_type)
+                .with_options(ParseOptions {
+                    enable_ident_hashes: false,
+                    ..ParseOptions::default()
+                })
                 .with_config(parser_config)
                 .parse();
 
@@ -842,6 +846,10 @@ fn run_estree_acorn_jsx_impl(
 
             let allocator = Allocator::new();
             let ret = Parser::new(&allocator, source_text, source_type)
+                .with_options(ParseOptions {
+                    enable_ident_hashes: false,
+                    ..ParseOptions::default()
+                })
                 .with_config(parser_config)
                 .parse();
 
@@ -977,7 +985,11 @@ fn run_estree_typescript_impl(
             for (unit, &expected_json) in test_file.units.iter().zip(snapshot_units.iter()) {
                 let source_type = unit.source_type;
                 let source_text = unit.content.as_str();
-                let parse_options = ParseOptions { preserve_parens: false, ..Default::default() };
+                let parse_options = ParseOptions {
+                    preserve_parens: false,
+                    enable_ident_hashes: false,
+                    ..Default::default()
+                };
 
                 let allocator = Allocator::new();
                 let ret = Parser::new(&allocator, source_text, source_type)

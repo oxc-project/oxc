@@ -420,6 +420,7 @@ impl ConfigStore {
         None
     }
 
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
     pub(crate) fn resolve_plugin_rule_names(
         &self,
         external_rule_id: ExternalRuleId,

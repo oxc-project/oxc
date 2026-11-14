@@ -194,3 +194,41 @@ if let Expression::BinaryExpression(e) = expr {
 - Document assumptions clearly
 - Test with real-world code
 - Learn from other minifiers
+
+## Pull request descriptions
+
+A behavior fix or optimization should let a reviewer see the problem without reconstructing it. Lead with the problem in prose, then include an example in this shape:
+
+### Example
+
+Input:
+
+```js
+// code that demonstrates the bug or missed optimization
+```
+
+Before output:
+
+```js
+// output from the minifier example at the parent commit
+```
+
+After output:
+
+```js
+// output from the minifier example at the change
+```
+
+Explain the difference after the outputs. For a correctness fix, show the runtime value, side effects, or thrown error when the output alone does not show the failure. For a size improvement, report the before and after byte counts with the same options.
+
+Capture both outputs with the minifier example rather than writing them by hand. Save the input outside the repository and run the example before making the change:
+
+```sh
+cargo run -p oxc_minifier --example minifier -- /tmp/repro.js --nospace
+```
+
+Keep the printed JavaScript as the before output, apply the change, and run the same command again for the after output. The example compresses by default; add `--mangle` when the case needs identifier mangling. State the options used and keep them identical between runs. For readable output, omit `--nospace` from both runs; measure byte counts with `--nospace` enabled.
+
+When the case reproduces on the [playground](https://playground.oxc.rs/), include a link containing the example code and options; the playground runs the released version. The repository's `oxc-playground-url` skill builds the share link.
+
+For a refactor, say what must stay identical and how it was compared, such as byte-identical minified output and unchanged conformance results between the parent commit and the change.

@@ -56,15 +56,17 @@ pub(super) fn list_marker(line: &str) -> Option<ListMarker> {
 /// - `>`-prefixed words: blockquote (`>` needs no space, so even `>=` starts one)
 /// - `#`…`######`: ATX headings
 /// - `1.` / `1)`: ordered list markers (any digit count), `1-`: legacy JSDoc ordered marker
+/// - `@`-prefixed words: JSDoc block tag, per `oxc_jsdoc::parser::starts_block_tag` (`@scope/pkg` stays prose)
 ///
 /// Wrapping must never move such a word to a line start:
-/// the next format pass re-parses the comment as markdown
-/// and the word would change meaning (prose → list item), breaking idempotency.
-/// Same alphabet as Prettier's markdown printer (`shouldPreventBreak`, regex `/^>|^(?:[*+-]|#{1,6}|\d+[).])$/`)
+/// the next format pass re-parses the comment
+/// and the word would change meaning (prose → list item / tag), breaking idempotency.
+/// The markdown part is the same alphabet as Prettier's markdown printer (`shouldPreventBreak`, regex `/^>|^(?:[*+-]|#{1,6}|\d+[).])$/`)
 /// In particular any digit count is guarded, not just `1.`, and `>` matches as a prefix.
 pub(super) fn is_block_marker_token(word: &str) -> bool {
     match word.as_bytes() {
         [b'-' | b'+' | b'*'] | [b'>', ..] => true,
+        [b'@', ..] => oxc_jsdoc::parser::starts_block_tag(word),
         // ATX headings: `#`…`######`
         hashes @ [b'#', ..] => hashes.len() <= 6 && hashes.iter().all(|&b| b == b'#'),
         // Ordered list markers: digits followed by `.`, `)`, or legacy `-`
@@ -124,6 +126,8 @@ mod tests {
         assert!(is_block_marker_token("12)"));
         assert!(is_block_marker_token("5.")); // any digit count, matching Prettier's `\d+[).]`
         assert!(is_block_marker_token("3-")); // legacy JSDoc ordered marker
+        assert!(is_block_marker_token("@foo")); // would start a JSDoc tag
+        assert!(!is_block_marker_token("@scope/pkg")); // `/` keeps it prose
         assert!(!is_block_marker_token("word"));
         assert!(!is_block_marker_token("--"));
         assert!(!is_block_marker_token("#hash"));

@@ -1361,6 +1361,40 @@
       },
       "additionalProperties": false
     },
+    "ChecksConditionals": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "$ref": "#/definitions/ChecksConditionalsOptions"
+        }
+      ]
+    },
+    "ChecksConditionalsFlagUnions": {
+      "type": "string",
+      "enum": [
+        "none",
+        "strict",
+        "all"
+      ]
+    },
+    "ChecksConditionalsOptions": {
+      "type": "object",
+      "properties": {
+        "flagUnions": {
+          "description": "Controls which union types are reported in conditionals.\n- `\"none\"` only reports values that are always Promise-like.\n- `\"strict\"` also reports unions where the non-Promise types match the awaited Promise types,\nsuch as `Promise<number> | number`.\n- `\"all\"` reports any union containing a Promise-like type.",
+          "default": "none",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ChecksConditionalsFlagUnions"
+            }
+          ],
+          "markdownDescription": "Controls which union types are reported in conditionals.\n- `\"none\"` only reports values that are always Promise-like.\n- `\"strict\"` also reports unions where the non-Promise types match the awaited Promise types,\nsuch as `Promise<number> | number`.\n- `\"all\"` reports any union containing a Promise-like type."
+        }
+      },
+      "additionalProperties": false
+    },
     "ChecksVoidReturn": {
       "anyOf": [
         {
@@ -14997,10 +15031,14 @@
       "type": "object",
       "properties": {
         "checksConditionals": {
-          "description": "Whether to check if Promises are used in conditionals.\nWhen true, disallows using Promises in conditions where a boolean is expected.",
+          "description": "Whether to check if Promises are used in conditionals.\nCan be a boolean to enable/disable the check, or an object to control union types.",
           "default": true,
-          "type": "boolean",
-          "markdownDescription": "Whether to check if Promises are used in conditionals.\nWhen true, disallows using Promises in conditions where a boolean is expected."
+          "allOf": [
+            {
+              "$ref": "#/definitions/ChecksConditionals"
+            }
+          ],
+          "markdownDescription": "Whether to check if Promises are used in conditionals.\nCan be a boolean to enable/disable the check, or an object to control union types."
         },
         "checksSpreads": {
           "description": "Whether to check if Promises are used in spread syntax.\nWhen true, disallows spreading Promise values.",
@@ -15349,6 +15387,12 @@
           "default": true,
           "type": "boolean",
           "markdownDescription": "When set `true`, it flags redeclaring built-in globals (e.g., `let Object = 1;`)."
+        },
+        "ignoreDeclarationMerge": {
+          "description": "When `true`, automatically merged declarations like namespace, class, etc. will be\nignored when checking for redeclarations.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "When `true`, automatically merged declarations like namespace, class, etc. will be\nignored when checking for redeclarations."
         }
       },
       "additionalProperties": false
@@ -17213,9 +17257,9 @@
           "markdownDescription": "Enable rules that require type information.\n\nEquivalent to passing `--type-aware` on the CLI.\n\nNote that this requires the `oxlint-tsgolint` package to be installed."
         },
         "typeCheck": {
-          "description": "Enable experimental type checking (includes TypeScript compiler diagnostics).\n\nEquivalent to passing `--type-check` on the CLI.\n\nNote that this requires the `oxlint-tsgolint` package to be installed.",
+          "description": "Enable type checking (includes TypeScript compiler diagnostics).\n\nEquivalent to passing `--type-check` on the CLI.\n\nNote that this requires the `oxlint-tsgolint` package to be installed.",
           "type": "boolean",
-          "markdownDescription": "Enable experimental type checking (includes TypeScript compiler diagnostics).\n\nEquivalent to passing `--type-check` on the CLI.\n\nNote that this requires the `oxlint-tsgolint` package to be installed."
+          "markdownDescription": "Enable type checking (includes TypeScript compiler diagnostics).\n\nEquivalent to passing `--type-check` on the CLI.\n\nNote that this requires the `oxlint-tsgolint` package to be installed."
         }
       },
       "additionalProperties": false,

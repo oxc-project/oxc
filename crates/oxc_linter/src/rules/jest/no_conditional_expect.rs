@@ -311,6 +311,13 @@ fn test() {
         ("it('foo', function callback() { expect(1).toBe(1); });", None),
         ("const callback = function () { if (x) { expect(1).toBe(1); } };", None),
         ("const callback = function named() { if (x) { expect(1).toBe(1); } };", None),
+        (
+            r"const test = (name, callback) => callback();
+            test('foo', () => {
+                if (condition) expect(1).toBe(1);
+            });",
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -772,6 +779,13 @@ fn test() {
         ("test.only('foo', function () { x && expect(1).toBe(1); });", None),
         ("test.each([1])('foo', function () { x ? expect(1).toBe(1) : noop(); });", None),
         ("it('foo', function () { promise.catch(function () { expect(1).toBe(1); }); });", None),
+        (
+            r"import { expect, test as customTest } from '@jest/globals';
+            customTest('foo', () => {
+                if (condition) expect(1).toBe(1);
+            });",
+            None,
+        ),
     ];
 
     Tester::new(NoConditionalExpect::NAME, NoConditionalExpect::PLUGIN, pass, fail)

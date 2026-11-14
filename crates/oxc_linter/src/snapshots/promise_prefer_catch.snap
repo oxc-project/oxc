@@ -3,45 +3,194 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
-   ╭─[prefer_catch.tsx:1:1]
+   ╭─[prefer_catch.tsx:1:6]
  1 │ prom.then(fn1, fn2)
-   · ───────────────────
+   ·      ────
    ╰────
   help: Handle promise errors in a `catch` instead of using the second argument of `then`.
 
   ⚠ promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
-   ╭─[prefer_catch.tsx:1:1]
+   ╭─[prefer_catch.tsx:1:6]
  1 │ prom.then(fn1, (fn2))
-   · ─────────────────────
+   ·      ────
    ╰────
   help: Handle promise errors in a `catch` instead of using the second argument of `then`.
 
   ⚠ promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
-   ╭─[prefer_catch.tsx:1:1]
+   ╭─[prefer_catch.tsx:1:6]
  1 │ prom.then(null, fn2)
-   · ────────────────────
+   ·      ────
    ╰────
   help: Handle promise errors in a `catch` instead of using the second argument of `then`.
 
   ⚠ promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
-   ╭─[prefer_catch.tsx:1:1]
+   ╭─[prefer_catch.tsx:1:6]
  1 │ prom.then(undefined, fn2)
-   · ─────────────────────────
+   ·      ────
    ╰────
   help: Handle promise errors in a `catch` instead of using the second argument of `then`.
 
   ⚠ promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
-   ╭─[prefer_catch.tsx:1:18]
+   ╭─[prefer_catch.tsx:1:23]
  1 │ function foo() { prom.then(x => {}, () => {}) }
-   ·                  ────────────────────────────
+   ·                       ────
    ╰────
   help: Handle promise errors in a `catch` instead of using the second argument of `then`.
 
   ⚠ promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
-   ╭─[prefer_catch.tsx:2:6]
+   ╭─[prefer_catch.tsx:2:57]
  1 │ function foo() {
  2 │            prom.then(function a() { }, function b() {}).then(fn1, fn2)
-   ·            ───────────────────────────────────────────────────────────
- 3 │          }
+   ·                                                         ────
+ 3 │         }
+   ╰────
+  help: Handle promise errors in a `catch` instead of using the second argument of `then`.
+
+  ⚠ promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
+   ╭─[prefer_catch.tsx:2:17]
+ 1 │ function foo() {
+ 2 │            prom.then(function a() { }, function b() {}).then(fn1, fn2)
+   ·                 ────
+ 3 │         }
+   ╰────
+  help: Handle promise errors in a `catch` instead of using the second argument of `then`.
+
+  ⚠ promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
+   ╭─[prefer_catch.tsx:1:16]
+ 1 │ const x = prom.then(fn1, fn2)
+   ·                ────
+   ╰────
+  help: Handle promise errors in a `catch` instead of using the second argument of `then`.
+
+  ⚠ promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
+   ╭─[prefer_catch.tsx:1:7]
+ 1 │ prom?.then(fn1, fn2)
+   ·       ────
+   ╰────
+  help: Handle promise errors in a `catch` instead of using the second argument of `then`.
+
+  ⚠ promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
+   ╭─[prefer_catch.tsx:1:7]
+ 1 │ prom?.then(null, fn2)
+   ·       ────
+   ╰────
+  help: Handle promise errors in a `catch` instead of using the second argument of `then`.
+
+  ⚠ promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
+   ╭─[prefer_catch.tsx:1:6]
+ 1 │ prom.then(fn1, ...rest)
+   ·      ────
+   ╰────
+  help: Handle promise errors in a `catch` instead of using the second argument of `then`.
+
+  ⚠ promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
+   ╭─[prefer_catch.tsx:1:6]
+ 1 │ prom.then(...args, fn2)
+   ·      ────
+   ╰────
+  help: Handle promise errors in a `catch` instead of using the second argument of `then`.
+
+  ⚠ promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
+   ╭─[prefer_catch.tsx:1:6]
+ 1 │ prom.then(void sideEffect(), fn2)
+   ·      ────
+   ╰────
+  help: Handle promise errors in a `catch` instead of using the second argument of `then`.
+
+  ⚠ promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
+   ╭─[prefer_catch.tsx:1:6]
+ 1 │ prom.then(getHandler(), fn2)
+   ·      ────
+   ╰────
+  help: Handle promise errors in a `catch` instead of using the second argument of `then`.
+
+  ⚠ promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
+   ╭─[prefer_catch.tsx:1:6]
+ 1 │ prom.then((null), (fn2))
+   ·      ────
+   ╰────
+  help: Handle promise errors in a `catch` instead of using the second argument of `then`.
+
+  ⚠ promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
+   ╭─[prefer_catch.tsx:1:23]
+ 1 │ function foo() { prom.then((undefined), fn2) }
+   ·                       ────
+   ╰────
+  help: Handle promise errors in a `catch` instead of using the second argument of `then`.
+
+  ⚠ promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
+   ╭─[prefer_catch.tsx:1:6]
+ 1 │ prom.then(null, fn2, extra())
+   ·      ────
+   ╰────
+  help: Handle promise errors in a `catch` instead of using the second argument of `then`.
+
+  ⚠ promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
+   ╭─[prefer_catch.tsx:1:6]
+ 1 │ prom.then(null, ...handlers)
+   ·      ────
+   ╰────
+  help: Handle promise errors in a `catch` instead of using the second argument of `then`.
+
+  ⚠ promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
+   ╭─[prefer_catch.tsx:1:10]
+ 1 │ x = prom.then(fn1, fn2)
+   ·          ────
+   ╰────
+  help: Handle promise errors in a `catch` instead of using the second argument of `then`.
+
+  ⚠ promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
+   ╭─[prefer_catch.tsx:1:30]
+ 1 │ function foo() { return prom.then(fn1, fn2) }
+   ·                              ────
+   ╰────
+  help: Handle promise errors in a `catch` instead of using the second argument of `then`.
+
+  ⚠ promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
+   ╭─[prefer_catch.tsx:1:35]
+ 1 │ async function foo() { await prom.then(fn1, fn2) }
+   ·                                   ────
+   ╰────
+  help: Handle promise errors in a `catch` instead of using the second argument of `then`.
+
+  ⚠ promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
+   ╭─[prefer_catch.tsx:1:7]
+ 1 │ (prom.then(fn1, fn2))
+   ·       ────
+   ╰────
+  help: Handle promise errors in a `catch` instead of using the second argument of `then`.
+
+  ⚠ promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
+   ╭─[prefer_catch.tsx:1:6]
+ 1 │ prom.then(fn1, fn2).finally(fn3)
+   ·      ────
+   ╰────
+  help: Handle promise errors in a `catch` instead of using the second argument of `then`.
+
+  ⚠ promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
+   ╭─[prefer_catch.tsx:1:10]
+ 1 │ foo(prom.then(fn1, fn2))
+   ·          ────
+   ╰────
+  help: Handle promise errors in a `catch` instead of using the second argument of `then`.
+
+  ⚠ promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
+   ╭─[prefer_catch.tsx:1:13]
+ 1 │ cond ? prom.then(fn1, fn2) : other
+   ·             ────
+   ╰────
+  help: Handle promise errors in a `catch` instead of using the second argument of `then`.
+
+  ⚠ promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
+   ╭─[prefer_catch.tsx:1:21]
+ 1 │ export default prom.then(fn1, fn2)
+   ·                     ────
+   ╰────
+  help: Handle promise errors in a `catch` instead of using the second argument of `then`.
+
+  ⚠ promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
+   ╭─[prefer_catch.tsx:1:32]
+ 1 │ function foo(undefined) { prom.then(undefined, fn2) }
+   ·                                ────
    ╰────
   help: Handle promise errors in a `catch` instead of using the second argument of `then`.

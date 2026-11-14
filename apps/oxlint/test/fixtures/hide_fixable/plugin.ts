@@ -22,6 +22,14 @@ export default {
               });
             } else if (node.name === "noFix") {
               context.report({ node, message: "No fix available", fix: () => null });
+            } else if (node.name === "noOp") {
+              context.report({
+                node,
+                message: "Fix leaves source unchanged",
+                fix: (fixer) => fixer.replaceText(node, node.name),
+              });
+            } else if (node.name === "emptyFix") {
+              context.report({ node, message: "No edits available", fix: () => [] });
             } else {
               context.report({ node, message: "Needs a manual fix" });
             }

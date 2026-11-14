@@ -24,9 +24,25 @@
  3 | suggestion;
  4 | noFix;
    : ^^^^^
+ 5 | noOp;
    `----
 
-Found 0 warnings and 3 errors.
+  x hide-fixable(check): Fix leaves source unchanged
+   ,-[files/index.js:5:1]
+ 4 | noFix;
+ 5 | noOp;
+   : ^^^^
+ 6 | emptyFix;
+   `----
+
+  x hide-fixable(check): No edits available
+   ,-[files/index.js:6:1]
+ 5 | noOp;
+ 6 | emptyFix;
+   : ^^^^^^^^
+   `----
+
+Found 0 warnings and 5 errors.
 Finished in Xms on 1 file with 1 rules using X threads.
 ```
 
