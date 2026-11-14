@@ -9,8 +9,8 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use url::Url;
 
 use crate::{
-    AllowWarnDeny, ExternalPluginStore, LintConfig, LintFilter, LintFilterKind, Oxlintrc,
-    RuleCategory, RuleEnum,
+    AllowWarnDeny, ExternalPluginStore, LintConfig, LintFilter, LintFilterKind, OxlintOptions,
+    Oxlintrc, RuleCategory, RuleEnum,
     config::{
         ESLintRule, OxlintOverrides,
         external_plugins::ExternalPluginEntry,
@@ -381,6 +381,12 @@ impl ConfigStoreBuilder {
     #[inline]
     pub fn report_unused_disable_directives(&self) -> Option<AllowWarnDeny> {
         self.config.options.report_unused_disable_directives
+    }
+
+    /// Applies option overrides, preserving configured values for unspecified options.
+    pub fn with_options(mut self, options: &OxlintOptions) -> Self {
+        self.config.options = options.merge(&self.config.options);
+        self
     }
 
     #[cfg(test)]
