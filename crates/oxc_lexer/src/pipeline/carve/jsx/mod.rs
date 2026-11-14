@@ -328,15 +328,12 @@ impl JsxCarve<'_> {
         let start = self.text_start;
         if run_end > start {
             // One text token for the run, its start byte cleared of everything coalesce reads.
-            // SAFETY: start < run_end <= src.len(), and carve cut the handles to the source.
-            unsafe {
-                token_start.set_unchecked(start, cpu);
-                op_char.clear_unchecked(start, cpu);
-                digit.clear_unchecked(start, cpu);
-                dot.clear_unchecked(start, cpu);
-                keyword_initial.clear_unchecked(start, cpu);
-                mark_token(token_start, kinds, start, run_end, TokenKind::JsxText, cpu);
-            }
+            token_start.set(start, cpu);
+            op_char.clear(start, cpu);
+            digit.clear(start, cpu);
+            dot.clear(start, cpu);
+            keyword_initial.clear(start, cpu);
+            mark_token(token_start, kinds, start, run_end, TokenKind::JsxText, cpu);
         }
         if s >= src.len() {
             return None;

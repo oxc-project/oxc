@@ -28,10 +28,10 @@ pub(super) const OPENER_MODULE_BYTES: [u8; 5] = [b'"', b'`', b'\'', b'/', b'<'];
 /// [`OPENER8_BYTES`] without the closing angle bracket, which only scripts need.
 pub(super) const OPENER8_MODULE_BYTES: [u8; 7] = [b'"', b'`', b'\'', b'/', b'{', b'}', b'<'];
 
-/// Kind the token at s and fold s + 1..end in, unchecked: s < end <= n, on handles carve cut.
+/// Kind the token at s and fold s + 1..end into it.
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn mark_token(
+pub(super) fn mark_token(
     token_start: Bitmap,
     kinds: Kinds,
     s: usize,
@@ -39,12 +39,9 @@ pub(super) unsafe fn mark_token(
     kind: TokenKind,
     cpu: impl Cpu,
 ) {
-    // SAFETY: s < end <= src.len(), and carve cut the handles to the source's blocks.
-    unsafe {
-        kinds.set_unchecked(s, kind);
-        if end > s + 1 {
-            token_start.clear_range_unchecked(s + 1, end - 1, cpu);
-        }
+    kinds.set(s, kind);
+    if end > s + 1 {
+        token_start.clear_range(s + 1, end - 1, cpu);
     }
 }
 
@@ -109,8 +106,7 @@ fn mark_string(
     cpu: impl Cpu,
 ) -> (usize, usize) {
     let end = if e < src.len() { e + 1 } else { src.len() };
-    // SAFETY: end is at most src.len().
-    unsafe { mark_token(token_start, kinds, s, end, TokenKind::String, cpu) };
+    mark_token(token_start, kinds, s, end, TokenKind::String, cpu);
     let be = if e < src.len() {
         e
     } else if src.len() > s + 1 && src[src.len() - 1] == c {
@@ -143,8 +139,7 @@ pub(super) fn lex_template_segment(
     }
     let opens_substitution = ended_by == TemplateEnd::Substitution;
     let kind = if opens_substitution { head_kind } else { flat_kind };
-    // SAFETY: scan_tmpl_text ends at most at src.len().
-    unsafe { mark_token(token_start, kinds, s, end, kind, cpu) };
+    mark_token(token_start, kinds, s, end, kind, cpu);
     lanes.push_template(src.padded(), s + 1, end - ended_by.delimiter_len(), cpu);
     (end, opens_substitution)
 }
@@ -297,8 +292,7 @@ fn lex_regex(
     if end < src.len() && word.get(end, cpu) {
         end = word.next0(end, src.len(), cpu);
     }
-    // SAFETY: the regex and its flags end at most at src.len().
-    unsafe { mark_token(token_start, kinds, s, end, TokenKind::RegExp, cpu) };
+    mark_token(token_start, kinds, s, end, TokenKind::RegExp, cpu);
     lanes.push_regex_flags(src.padded(), fs, end, cpu);
     end
 }

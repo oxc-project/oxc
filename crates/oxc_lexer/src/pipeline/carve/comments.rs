@@ -26,8 +26,7 @@ pub(super) fn lex_line_comment(
     cpu: impl Cpu,
 ) -> usize {
     let (end, license_at) = scan_line_comment(src, s + 2, cpu);
-    // SAFETY: scan_line_comment ends at most at src.len().
-    unsafe { mark_token(token_start, kinds, s, end, TokenKind::LineComment, cpu) };
+    mark_token(token_start, kinds, s, end, TokenKind::LineComment, cpu);
     if end < src.len() {
         token_start.set(end, cpu);
     }
@@ -60,8 +59,7 @@ pub(super) fn lex_block_comment(
     if e >= src.len() {
         lanes.push_diag(s as u32, (src.len() - s) as u32, DiagCode::UnterminatedBlockComment);
     }
-    // SAFETY: end is at most src.len().
-    unsafe { mark_token(token_start, kinds, s, end, TokenKind::BlockComment, cpu) };
+    mark_token(token_start, kinds, s, end, TokenKind::BlockComment, cpu);
 
     let body = comment_body(src.bytes(), s as u32, end as u32, true, cpu);
     let m = if e < src.len() {

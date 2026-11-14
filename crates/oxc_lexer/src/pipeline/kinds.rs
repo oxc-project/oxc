@@ -38,11 +38,4 @@ impl<'a> Kinds<'a> {
     pub(super) fn set(self, i: usize, kind: TokenKind) {
         self.0[i].set(kind as u8);
     }
-
-    /// set without the bounds check, so i must be below the kinds' length.
-    #[inline(always)]
-    pub(super) unsafe fn set_unchecked(self, i: usize, kind: TokenKind) {
-        // SAFETY: the caller keeps i below the kinds' length.
-        unsafe { self.0.get_unchecked(i) }.set(kind as u8);
-    }
 }
