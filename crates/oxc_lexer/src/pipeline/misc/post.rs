@@ -33,10 +33,10 @@ unsafe fn misc_post_impl(lex: Lex, cpu: impl Cpu) {
             if p == 0 || !word.get(p - 1, cpu) {
                 continue;
             }
-            let tt = token_start.prev1(p, cpu);
-            let k = kinds.get(tt as usize);
+            let Some(tt) = token_start.prev1(p, cpu) else { continue };
+            let k = kinds.get(tt);
             if k == tk!(Ident) || (k >= KW_KIND_BASE && k != tk!(Invalid)) {
-                kinds.set(tt as usize, tk!(IdentEscaped));
+                kinds.set(tt, tk!(IdentEscaped));
                 token_start.clear(p, cpu);
             }
         }

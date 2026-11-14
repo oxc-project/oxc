@@ -10,7 +10,7 @@ use crate::pipeline::{
     kinds::Kinds,
     lanes::Lanes,
     lex::Lex,
-    scan::{scan_quoted, scan_regex, scan_tmpl_text},
+    scan::{TemplateEnd, scan_quoted, scan_regex, scan_tmpl_text},
     source::Source,
 };
 
@@ -119,17 +119,17 @@ pub(super) unsafe fn lex_template_segment(
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) -> (usize, bool) {
-    let mut term = 0i32;
-    let end = scan_tmpl_text(src, s + 1, &mut term, cpu);
-    if term == 0 {
+    let (end, ended_by) = scan_tmpl_text(src, s + 1, cpu);
+    if ended_by == TemplateEnd::Unterminated {
         lanes.push_diag(s as u32, (end - s) as u32, DiagCode::UnterminatedTemplate);
     }
-    kinds.set(s, if term == 2 { head_kind } else { flat_kind });
+    let opens_substitution = ended_by == TemplateEnd::Substitution;
+    kinds.set(s, if opens_substitution { head_kind } else { flat_kind });
     if end > s + 1 {
         token_start.clear_range(s + 1, end - 1, cpu);
     }
-    lanes.push_template(src.padded(), s + 1, end - [0usize, 1, 2][term as usize], cpu);
-    (end, term == 2)
+    lanes.push_template(src.padded(), s + 1, end - ended_by.delimiter_len(), cpu);
+    (end, opens_substitution)
 }
 
 /// The template substitutions open at the carve position, innermost last, with their open braces.
@@ -271,10 +271,9 @@ unsafe fn lex_regex(
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) -> usize {
-    let mut nl_at = usize::MAX;
-    let e = scan_regex(src, s + 1, &mut nl_at, cpu);
+    let (e, nl_at) = scan_regex(src, s + 1, cpu);
     let fs = if e < src.len() { e + 1 } else { src.len() };
-    if nl_at != usize::MAX {
+    if let Some(nl_at) = nl_at {
         // oxc_parser reports a line terminator in the body as "unterminated"
         // with a span ending just past the first one, even when a later `/`
         // closes our token.

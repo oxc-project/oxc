@@ -10,9 +10,9 @@ pub unsafe fn scan_block_comment_neon(
     n: usize,
     mut i: usize,
     cpu: Neon,
-) -> (usize, bool, i64) {
+) -> (usize, bool, Option<u32>) {
     let mut saw_nl = false;
-    let mut license_at: i64 = -1;
+    let mut license_at = None;
     while i + 32 <= n {
         let v0 = Vec128::load_unaligned(src.add(i), cpu);
         let v1 = Vec128::load_unaligned(src.add(i + 16), cpu);
@@ -25,12 +25,12 @@ pub unsafe fn scan_block_comment_neon(
         } else {
             mm32(v0.eq_u8(b'\n') | v0.eq_u8(b'\r'), v1.eq_u8(b'\n') | v1.eq_u8(b'\r'))
         };
-        let at = if license_at < 0 { mm32(v0.eq_u8(b'@'), v1.eq_u8(b'@')) } else { 0 };
+        let at = if license_at.is_none() { mm32(v0.eq_u8(b'@'), v1.eq_u8(b'@')) } else { 0 };
         if term != 0 {
             let j = term.trailing_zeros() as usize;
             let bodymask: u32 = if j > 0 { (1u32 << j) - 1 } else { 0 };
             saw_nl |= (nl & bodymask) != 0;
-            if license_at < 0 {
+            if license_at.is_none() {
                 let am = at & bodymask;
                 if am != 0 {
                     license_at = first_license_at(src, i, am, cpu);
@@ -39,7 +39,7 @@ pub unsafe fn scan_block_comment_neon(
             return (i + j + 1, saw_nl, license_at);
         }
         saw_nl |= nl != 0;
-        if license_at < 0 && at != 0 {
+        if license_at.is_none() && at != 0 {
             license_at = first_license_at(src, i, at, cpu);
         }
         i += 32;
@@ -53,8 +53,8 @@ pub unsafe fn scan_block_comment_neon(
         if c == b'\n' || c == b'\r' {
             saw_nl = true;
         }
-        if c == b'@' && license_at < 0 && is_license_at(src, i, cpu) {
-            license_at = i as i64;
+        if c == b'@' && license_at.is_none() && is_license_at(src, i, cpu) {
+            license_at = Some(i as u32);
         }
         i += 1;
     }
@@ -72,8 +72,8 @@ pub unsafe fn scan_line_comment_neon(
     n: usize,
     mut i: usize,
     cpu: Neon,
-) -> (usize, i64) {
-    let mut license_at: i64 = -1;
+) -> (usize, Option<u32>) {
+    let mut license_at = None;
     while i + 32 <= n {
         let v0 = Vec128::load_unaligned(src.add(i), cpu);
         let v1 = Vec128::load_unaligned(src.add(i + 16), cpu);
@@ -88,7 +88,7 @@ pub unsafe fn scan_line_comment_neon(
                 term &= term - 1; // not LS/PS: clear and keep scanning
                 continue;
             }
-            if license_at < 0 {
+            if license_at.is_none() {
                 let am = at & if t > 0 { (1u32 << t) - 1 } else { 0 };
                 if am != 0 {
                     license_at = first_license_at(src, i, am, cpu);
@@ -96,7 +96,7 @@ pub unsafe fn scan_line_comment_neon(
             }
             return (i + t, license_at);
         }
-        if license_at < 0 && at != 0 {
+        if license_at.is_none() && at != 0 {
             license_at = first_license_at(src, i, at, cpu);
         }
         i += 32;
@@ -109,8 +109,8 @@ pub unsafe fn scan_line_comment_neon(
         if c == 0xE2 && is_ls_ps_tail(*src.add(i + 1), *src.add(i + 2), cpu) {
             return (i, license_at);
         }
-        if c == b'@' && license_at < 0 && is_license_at(src, i, cpu) {
-            license_at = i as i64;
+        if c == b'@' && license_at.is_none() && is_license_at(src, i, cpu) {
+            license_at = Some(i as u32);
         }
         i += 1;
     }

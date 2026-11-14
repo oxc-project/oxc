@@ -33,7 +33,7 @@ pub(super) unsafe fn lex_line_comment(
     if end < src.len() {
         token_start.set(end, cpu);
     }
-    let legal = license_at >= 0 && (license_at as usize) + 8 < end;
+    let legal = license_at.is_some_and(|at| at as usize + 8 < end);
     let body = comment_body(src.bytes(), s as u32, end as u32, false, cpu);
     let m = comment_content(body, false, legal, cpu);
     debug_assert_eq!(
@@ -69,7 +69,7 @@ pub(super) unsafe fn lex_block_comment(
 
     let body = comment_body(src.bytes(), s as u32, end as u32, true, cpu);
     let m = if e < src.len() {
-        let legal = license_at >= 0 && (license_at as usize) + 8 < e - 1;
+        let legal = license_at.is_some_and(|at| at as usize + 8 < e - 1);
         let m = comment_content(body, true, legal, cpu);
         debug_assert_eq!(
             m,
