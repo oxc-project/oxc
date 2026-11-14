@@ -1,0 +1,10 @@
+{
+  "jsPlugins": ["./plugin.ts"],
+  "categories": { "correctness": "off" },
+  "rules": {
+    "program-only/enter-and-exit": "error",
+    "program-only/exit-only": "error",
+    "program-only/selector": "error",
+    "program-only/create-once": "error"
+  }
+}

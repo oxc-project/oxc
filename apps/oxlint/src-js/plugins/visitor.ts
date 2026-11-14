@@ -150,11 +150,19 @@ interface CompilingNonLeafVisitorEntry {
 // Visitor state.
 // Returned by `finalizeCompiledVisitor`.
 // This a "poor man's enum", which compiles down better than TS enums.
-export type VisitorState = typeof VISITOR_EMPTY | typeof VISITOR_NOT_EMPTY | typeof VISITOR_CFG;
+export type VisitorState =
+  | typeof VISITOR_EMPTY
+  | typeof VISITOR_NOT_EMPTY
+  | typeof VISITOR_CFG
+  | typeof VISITOR_PROGRAM_ONLY;
 
 export const VISITOR_EMPTY = 0; // Empty visitor (no need to walk AST)
 export const VISITOR_NOT_EMPTY = 1; // Not empty visitor (need to walk AST)
 export const VISITOR_CFG = 2; // Not empty visitor, and contains CFG event listeners (need to construct CFG)
+export const VISITOR_PROGRAM_ONLY = 3; // Only visits `Program` (enter and/or exit). No need to walk rest of AST.
+
+// Type ID of `Program` node
+export const PROGRAM_TYPE_ID = NODE_TYPE_IDS_MAP.get("Program")!;
 
 // Count of non-leaf node types
 const NON_LEAF_NODE_TYPES_COUNT = NODE_TYPES_COUNT - LEAF_NODE_TYPES_COUNT;
@@ -477,6 +485,19 @@ export function finalizeCompiledVisitor(): VisitorState {
 
   // Merge visitors for CFG events
   let visitState: VisitorState = VISITOR_NOT_EMPTY;
+
+  // If the only visitors are for `Program` (enter and/or exit), there's no need to walk the AST.
+  // `Program` is the root, so its visit functions can be called directly on it.
+  // This is common for rules which only use `Program` or `Program:exit` to inspect the whole file
+  // via `context.sourceCode` (e.g. comments, tokens, source text).
+  // If there are any CFG event listeners, `visitState` is overwritten with `VISITOR_CFG` below.
+  if (
+    activeNonLeafVisitorsCount === 1
+    && activeLeafVisitorsCount === 0
+    && activeNonLeafVisitorTypeIds[0] === PROGRAM_TYPE_ID
+  ) {
+    visitState = VISITOR_PROGRAM_ONLY;
+  }
 
   if (activeCfgVisitorsCount > 0) {
     visitState = VISITOR_CFG;
