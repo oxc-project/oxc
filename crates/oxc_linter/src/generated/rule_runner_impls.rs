@@ -4612,8 +4612,13 @@ impl RuleRunner for crate::rules::jsdoc::no_defaults::NoDefaults {
 }
 
 impl RuleRunner for crate::rules::jsdoc::require_param::RequireParam {
-    const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::ArrowFunctionExpression, AstType::Function]));
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ArrowFunctionExpression,
+        AstType::Function,
+        AstType::TSCallSignatureDeclaration,
+        AstType::TSFunctionType,
+        AstType::TSMethodSignature,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
