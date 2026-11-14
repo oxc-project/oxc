@@ -11,7 +11,7 @@ use crate::{
 #[derive(Debug, Default, Clone)]
 pub struct PreferToBe;
 
-declare_oxc_lint!(PreferToBe, vitest, style, fix, docs = DOCUMENTATION, version = "0.2.14",);
+declare_oxc_lint!(PreferToBe, vitest, style, suggestion, docs = DOCUMENTATION, version = "0.2.14",);
 
 impl Rule for PreferToBe {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -26,7 +26,7 @@ impl Rule for PreferToBe {
 
 #[test]
 fn tests() {
-    use crate::tester::Tester;
+    use crate::{fixer::FixKind, tester::Tester};
 
     let pass = vec![
         ("expect(null).toBeNull();", None),
@@ -157,7 +157,7 @@ fn tests() {
         ("expect(\"a string\").toEqual(undefined as number);", None),
     ];
 
-    let fix = vec![
+    let fix: Vec<_> = vec![
         ("expect(value).toEqual(\"my string\");", "expect(value).toBe(\"my string\");", None),
         ("expect(value).toStrictEqual(\"my string\");", "expect(value).toBe(\"my string\");", None),
         ("expect(value).toStrictEqual(1);", "expect(value).toBe(1);", None),
@@ -312,7 +312,10 @@ fn tests() {
             "expect(\"a string\").toBeUndefined();",
             None,
         ),
-    ];
+    ]
+    .into_iter()
+    .map(|(source, expected, config)| (source, expected, config, FixKind::Suggestion))
+    .collect();
 
     Tester::new(PreferToBe::NAME, PreferToBe::PLUGIN, pass, fail)
         .with_vitest_plugin(true)
