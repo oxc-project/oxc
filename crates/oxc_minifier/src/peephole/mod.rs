@@ -29,6 +29,7 @@ use oxc_ecmascript::constant_evaluation::IsLiteralValue;
 
 use crate::{Traverse, TraverseCtx, generated::ancestor::Ancestor, state::BodyFrame};
 
+pub use self::minimize_statements::ObjectMergeTarget;
 pub use self::normalize::{Normalize, NormalizeOptions};
 
 /// Stateless peephole optimizer. Configuration and the per-pass

@@ -1,6 +1,9 @@
-use std::iter;
+use std::{
+    hash::{Hash, Hasher},
+    iter,
+};
 
-use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
+use oxc_allocator::{Address, ArenaBox, ArenaVec, GetAddress, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_ecmascript::{
@@ -9,6 +12,8 @@ use oxc_ecmascript::{
 };
 use oxc_semantic::ScopeFlags;
 use oxc_span::{ContentEq, GetSpan, GetSpanMut, SPAN};
+use oxc_syntax::number::ToJsString;
+use rustc_hash::FxHashMap;
 
 use crate::{
     TraverseCtx, generated::ancestor::Ancestor, is_terminated::IsTerminated, keep_var::KeepVar,
@@ -51,6 +56,8 @@ impl<'a> PeepholeOptimizations {
     /// ## MinimizeExitPoints:
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/MinimizeExitPoints.java>
     pub fn minimize_statements(stmts: &mut ArenaVec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+        // Traversal can rewrite object keys between two calls, so no key analysis carries over.
+        ctx.state.object_merge_target = ObjectMergeTarget::default();
         let mut new_stmts = ArenaVec::with_capacity_in(stmts.len(), ctx);
         let mut old_stmts = stmts.take_in(ctx).into_iter();
         let mut is_control_flow_dead = false;
@@ -334,13 +341,13 @@ impl<'a> PeepholeOptimizations {
     fn merge_assignment_to_declaration(
         assign_expr: &mut AssignmentExpression<'a>,
         result: &mut ArenaVec<'a, Statement<'a>>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> bool {
         if assign_expr.operator != AssignmentOperator::Assign {
             return false;
         }
         let AssignmentTarget::AssignmentTargetIdentifier(id) = &assign_expr.left else {
-            return false;
+            return Self::merge_property_assignment_to_object(assign_expr, result, ctx);
         };
         let Some(Statement::VariableDeclaration(var_decl)) = result.last_mut() else {
             return false;
@@ -381,6 +388,106 @@ impl<'a> PeepholeOptimizations {
             }
         }
         false
+    }
+
+    /// Merge a property assignment into the object literal that initializes the
+    /// last declarator of the variable declaration immediately preceding it.
+    ///
+    /// `var o = { a: 1 }; o.a = 2; o.b = 3;` => `var o = { a: 2, b: 3 };`
+    ///
+    /// Defining a key that is not in the literal assumes that `Object.prototype`
+    /// has no setter or read-only property with that key (see `docs/ASSUMPTIONS.md`).
+    fn merge_property_assignment_to_object(
+        assign_expr: &mut AssignmentExpression<'a>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> bool {
+        if ctx.is_tree_shake_only() {
+            return false;
+        }
+        let Some(member) = assign_expr.left.as_member_expression() else {
+            return false;
+        };
+        let Some(key) = KeyName::from_member_expression(member) else {
+            return false;
+        };
+        // `__proto__` changes the prototype instead of defining a property.
+        if matches!(key, KeyName::Str("__proto__")) {
+            return false;
+        }
+        let Expression::Identifier(object) = member.object() else {
+            return false;
+        };
+        let Some(Statement::VariableDeclaration(var_decl)) = result.last_mut() else {
+            return false;
+        };
+        if var_decl.kind.is_using() {
+            return false;
+        }
+        let Some(decl) = var_decl.declarations.last_mut() else {
+            return false;
+        };
+        let BindingPattern::BindingIdentifier(binding) = &decl.id else {
+            return false;
+        };
+        let scoping = ctx.scoping();
+        let symbol_id = binding.symbol_id();
+        if scoping.get_reference(object.reference_id()).symbol_id() != Some(symbol_id) {
+            return false;
+        }
+        // A Script's top-level bindings are shared with other scripts, and a `var` may be a
+        // global accessor (`var name = {}` in browsers).
+        if ctx.source_type().is_script()
+            && scoping.symbol_scope_id(symbol_id) == scoping.root_scope_id()
+        {
+            return false;
+        }
+        let Some(Expression::ObjectExpression(object_expr)) = &mut decl.init else {
+            return false;
+        };
+        // `v` now runs before `o` is initialized, so it must not throw or read `o`.
+        if !assign_expr.right.is_literal_value(true, ctx) {
+            return false;
+        }
+        let target = &mut ctx.state.object_merge_target;
+        if !target.analyze(object_expr) {
+            return false;
+        }
+        if let Some(index) = target.find(key, &object_expr.properties)
+            && let ObjectPropertyKind::ObjectProperty(property) = &mut object_expr.properties[index]
+            && !property.method
+            && !property.value.may_have_side_effects(ctx)
+        {
+            // "var o = { a: 1 }; o.a = 2" => "var o = { a: 2 }"
+            let value = assign_expr.right.take_in(ctx);
+            ctx.replace_expression(&mut property.value, value);
+            // "var o = { a }; o.a = 2" => "var o = { a: 2 }"
+            property.shorthand = false;
+        } else {
+            // "var o = { ...a }; o.b = 1" => "var o = { ...a, b: 1 }"
+            let property_key = match &mut assign_expr.left {
+                AssignmentTarget::StaticMemberExpression(e) => {
+                    PropertyKey::new_static_identifier(e.property.span, e.property.name, ctx)
+                }
+                AssignmentTarget::ComputedMemberExpression(e) => {
+                    PropertyKey::from(e.expression.take_in(ctx))
+                }
+                _ => unreachable!(),
+            };
+            let value = assign_expr.right.take_in(ctx);
+            object_expr.properties.push(ObjectPropertyKind::new_object_property(
+                assign_expr.span,
+                PropertyKind::Init,
+                property_key,
+                value,
+                false,
+                false,
+                false,
+                ctx,
+            ));
+            ctx.state.object_merge_target.push(key);
+        }
+        true
     }
 
     /// Fold leading assignments in `expr` into the variable declaration.
@@ -1937,5 +2044,196 @@ impl<'a> VisitJs<'a> for FindNestedBreak {
             }
             _ => walk_js::walk_statement(self, it),
         }
+    }
+}
+
+/// A property name known statically.
+///
+/// `PropertyKey::static_name` names numbers with Rust's `Display` (`1e21` is not `1e+21`),
+/// and `static_property_name` has no name for numbers, so neither fits key equality.
+#[derive(Clone, Copy)]
+enum KeyName<'a> {
+    Str(&'a str),
+    /// A finite number, which names the property `ToString(n)`.
+    Num(f64),
+}
+
+impl<'a> KeyName<'a> {
+    /// The name of a string or finite number literal key.
+    fn from_literal(expr: &Expression<'a>) -> Option<Self> {
+        match expr {
+            Expression::StringLiteral(s) => s.value.as_str().map(Self::Str),
+            Expression::NumericLiteral(n) if n.value.is_finite() => Some(Self::Num(n.value)),
+            _ => None,
+        }
+    }
+
+    /// The property name of a member expression, or `None` if it is not known statically.
+    fn from_member_expression(member: &MemberExpression<'a>) -> Option<Self> {
+        match member {
+            MemberExpression::StaticMemberExpression(e) => {
+                Some(Self::Str(e.property.name.as_str()))
+            }
+            MemberExpression::ComputedMemberExpression(e) => Self::from_literal(&e.expression),
+            MemberExpression::PrivateFieldExpression(_) => None,
+        }
+    }
+
+    /// The name of a property key, or `None` if it is not known statically.
+    fn from_property_key(key: &PropertyKey<'a>) -> Option<Self> {
+        match key {
+            PropertyKey::StaticIdentifier(id) => Some(Self::Str(id.name.as_str())),
+            _ => key.as_expression().and_then(Self::from_literal),
+        }
+    }
+
+    /// The key name of a property, or `None` for a spread or a key not known statically.
+    fn from_object_property(property: &ObjectPropertyKind<'a>) -> Option<Self> {
+        match property {
+            ObjectPropertyKind::ObjectProperty(property) => Self::from_property_key(&property.key),
+            ObjectPropertyKind::SpreadProperty(_) => None,
+        }
+    }
+
+    /// Whether both name the same property. Numbers compare by value: distinct finite
+    /// numbers have distinct `ToString`, and `0 == -0`.
+    #[expect(clippy::float_cmp)]
+    fn same_as(self, other: Self) -> bool {
+        match (self, other) {
+            (Self::Str(a), Self::Str(b)) => a == b,
+            (Self::Num(a), Self::Num(b)) => a == b,
+            (Self::Str(s), Self::Num(n)) | (Self::Num(n), Self::Str(s)) => {
+                s.starts_with(|c: char| c.is_ascii_digit() || c == '-') && s == n.to_js_string()
+            }
+        }
+    }
+}
+
+impl PartialEq for KeyName<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.same_as(*other)
+    }
+}
+
+impl Eq for KeyName<'_> {}
+
+impl Hash for KeyName<'_> {
+    /// Names that are `same_as` each other hash the same: a string that parses as a finite
+    /// number hashes as that number, because `ToString(n)` parses back to `n`.
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        let n = match *self {
+            Self::Str(s) => match s.parse::<f64>() {
+                Ok(n) if n.is_finite() => n,
+                _ => return s.hash(state),
+            },
+            Self::Num(n) => n,
+        };
+        // `0` and `-0` are the same key.
+        (if n == 0.0 { 0.0 } else { n }).to_bits().hash(state);
+    }
+}
+
+/// The key analysis of the object literal that the last property assignment was checked
+/// against. The next assignment in a run of merges into the same object reuses it, so the
+/// run reads each property a few times in total instead of once per assignment.
+#[derive(Default)]
+pub struct ObjectMergeTarget<'a> {
+    /// The object literal and its property count when it was last analyzed or merged into.
+    /// Within one statement list, only these merges change an object literal that is already
+    /// in `result`, so the same address and count mean that the analysis is current.
+    object: Option<(Address, usize)>,
+    /// The index after the last spread or unknown computed key, which may define any key again,
+    /// or `None` if an accessor or a `__proto__` key may run code on every assignment.
+    first_candidate: Option<usize>,
+    /// The last index of each key from `first_candidate` on, built once a run of merges
+    /// outgrows a scan.
+    last_index: Option<FxHashMap<KeyName<'a>, usize>>,
+}
+
+impl<'a> ObjectMergeTarget<'a> {
+    /// A reused analysis indexes its candidates once there are more than this many.
+    /// Scanning a few keys is cheaper than hashing them, and allocates nothing.
+    const MAX_SCANNED: usize = 8;
+
+    /// Analyze `object` unless this analysis is still current, and return whether a property
+    /// assignment may merge into it.
+    fn analyze(&mut self, object: &ArenaBox<'a, ObjectExpression<'a>>) -> bool {
+        let properties = object.properties.as_slice();
+        let current = Some((object.address(), properties.len()));
+        if self.object == current {
+            debug_assert_eq!(self.first_candidate, Self::first_candidate_in(properties));
+            if self.last_index.is_none()
+                && let Some(first) = self.first_candidate
+                && properties.len() - first > Self::MAX_SCANNED
+            {
+                self.last_index = Some(
+                    (first..)
+                        .zip(&properties[first..])
+                        .filter_map(|(index, property)| {
+                            Some((KeyName::from_object_property(property)?, index))
+                        })
+                        .collect(),
+                );
+            }
+        } else {
+            *self = Self {
+                object: current,
+                first_candidate: Self::first_candidate_in(properties),
+                last_index: None,
+            };
+        }
+        self.first_candidate.is_some()
+    }
+
+    /// The index of the last property named `key` that no later property may define again,
+    /// in the object that `analyze` accepted.
+    fn find(&self, key: KeyName<'a>, properties: &[ObjectPropertyKind<'a>]) -> Option<usize> {
+        let first = self.first_candidate?;
+        let scan = || {
+            properties[first..]
+                .iter()
+                .rposition(|property| {
+                    KeyName::from_object_property(property).is_some_and(|name| name.same_as(key))
+                })
+                .map(|index| first + index)
+        };
+        match &self.last_index {
+            Some(last_index) => {
+                let found = last_index.get(&key).copied();
+                debug_assert_eq!(found, scan());
+                found
+            }
+            None => scan(),
+        }
+    }
+
+    /// Record that a property named `key` was appended to the object that `analyze` accepted.
+    fn push(&mut self, key: KeyName<'a>) {
+        let Some((_, len)) = &mut self.object else { unreachable!() };
+        if let Some(last_index) = &mut self.last_index {
+            last_index.insert(key, *len);
+        }
+        *len += 1;
+    }
+
+    /// The index after the last spread or unknown computed key, or `None` if an accessor or a
+    /// `__proto__` key means that assigning any property may run code.
+    fn first_candidate_in(properties: &[ObjectPropertyKind<'a>]) -> Option<usize> {
+        let mut first = 0;
+        for (index, property) in properties.iter().enumerate() {
+            if let ObjectPropertyKind::ObjectProperty(property) = property {
+                // An accessor runs on assignment, and so can a setter on a `__proto__: p` prototype.
+                if property.kind != PropertyKind::Init
+                    || property.key.is_specific_static_name("__proto__")
+                {
+                    return None;
+                }
+                if KeyName::from_property_key(&property.key).is_some() {
+                    continue;
+                }
+            }
+            first = index + 1;
+        }
+        Some(first)
     }
 }
