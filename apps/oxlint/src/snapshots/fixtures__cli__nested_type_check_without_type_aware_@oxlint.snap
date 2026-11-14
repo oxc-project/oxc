@@ -1,0 +1,13 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: 
+working directory: fixtures/cli/nested_type_check_without_type_aware
+----------
+The `options.typeCheck` option requires type-aware linting, but no config enables `options.typeAware`.
+`options.typeCheck` is set in: packages/app/.oxlintrc.json
+Enable `options.typeAware` in those configs, or pass `--type-aware`.
+----------
+CLI result: InvalidOptionTypeCheckWithoutTypeAware
+----------

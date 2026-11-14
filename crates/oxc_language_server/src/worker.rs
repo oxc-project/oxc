@@ -1,4 +1,7 @@
-use std::{path::Path, sync::Arc};
+use std::{
+    path::Path,
+    sync::{Arc, PoisonError, RwLock as StdRwLock},
+};
 
 use rustc_hash::FxHashSet;
 use serde_json::json;
@@ -14,10 +17,11 @@ use tower_lsp_server::{
 use tracing::debug;
 
 use crate::{
-    CodeActionParams, TextDocument, ToolRestartChanges,
+    BuildContext, CodeActionParams, TextDocument, ToolRestartChanges,
     capabilities::DiagnosticMode,
-    file_system::LSPFileSystem,
-    tool::{ClientMessage, DiagnosticResult, Tool, ToolBuilder},
+    file_system::{LSPFileSystem, ResolvedPath},
+    tool::{ClientMessage, ContextBuilder, DiagnosticResult, Tool, ToolBuilder},
+    utils::roots_are_equal,
 };
 
 pub struct WorkerToolChangeResult {
@@ -38,11 +42,21 @@ pub struct WorkerToolChangeResult {
 /// The [`WorkerManager`](crate::worker_manager::WorkerManager) is responsible to target the correct worker for a given file URI.
 pub struct WorkspaceWorker {
     root_uri: Uri,
+    // The path of `root_uri`, resolved when the worker is created and again whenever its tool is
+    // built or the manager reconciles its workers, so routing a request only resolves the path of
+    // the file. `None` for a root which is not a `file://` URI.
+    resolved_root: StdRwLock<Option<Arc<Path>>>,
+    // The workspace folder this worker belongs to, when it was created for a `workingDirectories`
+    // entry. `None` for a worker created from a client workspace folder.
+    parent_uri: Option<Uri>,
     tool: RwLock<Option<Box<dyn Tool>>>,
     builder: Arc<dyn ToolBuilder>,
     // Initialized options from the client
     // If None, the worker has not been initialized yet
     pub(crate) options: Mutex<Option<serde_json::Value>>,
+    // The resolved `workingDirectories` of this worker. They are owned by their own sub worker,
+    // so the tool of this worker must not eagerly load anything below them.
+    excluded_roots: RwLock<Vec<Uri>>,
 
     // Whether the client is in diagnostic pull mode / push mode, or not supporting diagnostics at all
     diagnostic_mode: DiagnosticMode,
@@ -60,13 +74,33 @@ impl WorkspaceWorker {
         diagnostic_mode: DiagnosticMode,
     ) -> Self {
         Self {
+            resolved_root: StdRwLock::new(resolve_root(&root_uri)),
             root_uri,
+            parent_uri: None,
             tool: RwLock::new(None),
             builder,
             options: Mutex::new(None),
+            excluded_roots: RwLock::new(Vec::new()),
             diagnostic_mode,
             published_diagnostics: Mutex::new(FxHashSet::default()),
         }
+    }
+
+    /// Create a worker for a `workingDirectories` entry of the workspace folder `parent_uri`.
+    ///
+    /// A sub worker is an ordinary worker: it uses its own root as the tool working directory and
+    /// resolves its configuration from there. It deliberately does **not** inherit the resolved
+    /// configuration of its workspace folder, so a working directory behaves exactly like opening
+    /// that directory as a workspace folder.
+    pub(crate) fn new_sub_worker(
+        root_uri: Uri,
+        parent_uri: Uri,
+        builder: Arc<dyn ToolBuilder>,
+        diagnostic_mode: DiagnosticMode,
+    ) -> Self {
+        let mut worker = Self::new(root_uri, builder, diagnostic_mode);
+        worker.parent_uri = Some(parent_uri);
+        worker
     }
 
     /// Get the root URI of the worker
@@ -74,13 +108,102 @@ impl WorkspaceWorker {
         &self.root_uri
     }
 
+    /// The path of the root, as resolved by the last [`Self::refresh_resolved_root`].
+    pub(crate) fn resolved_root(&self) -> Option<Arc<Path>> {
+        self.resolved_root.read().unwrap_or_else(PoisonError::into_inner).clone()
+    }
+
+    /// Resolve the path of the root again. The root URI never changes, but where it resolves to
+    /// can, e.g. when a directory is replaced by a symbolic link. No LSP event reports that.
+    pub(crate) fn refresh_resolved_root(&self) {
+        *self.resolved_root.write().unwrap_or_else(PoisonError::into_inner) =
+            resolve_root(&self.root_uri);
+    }
+
+    /// Install a freshly built tool, and resolve the root again: the tool was built from where the
+    /// root resolves to now, so the cached path follows it. This is the only place which sets the
+    /// tool, whether it comes from the start, a rebuild or a configuration change.
+    fn install_tool<'a>(
+        &self,
+        slot: &'a mut Option<Box<dyn Tool>>,
+        tool: Box<dyn Tool>,
+    ) -> &'a mut Box<dyn Tool> {
+        self.refresh_resolved_root();
+        slot.insert(tool)
+    }
+
+    /// Replace the cached root path, to simulate a root which resolves elsewhere than it did.
+    #[cfg(test)]
+    pub(crate) fn set_resolved_root_for_test(&self, root: Option<Arc<Path>>) {
+        *self.resolved_root.write().unwrap_or_else(PoisonError::into_inner) = root;
+    }
+
+    /// Whether `root` is the root of this worker, compared with the cached resolved root.
+    pub(crate) fn is_root(&self, root: &Uri) -> bool {
+        match (self.resolved_root(), ResolvedPath::try_from(root)) {
+            (Some(own), Ok(other)) => own.as_ref() == other.as_path(),
+            // non `file://` URIs have no path to normalize
+            (None, Err(_)) => &self.root_uri == root,
+            _ => false,
+        }
+    }
+
+    /// Get the workspace folder URI of a sub worker, `None` for a workspace folder worker.
+    pub(crate) fn get_parent_uri(&self) -> Option<&Uri> {
+        self.parent_uri.as_ref()
+    }
+
+    /// Whether this worker was created for a `workingDirectories` entry.
+    pub(crate) fn is_sub_worker(&self) -> bool {
+        self.parent_uri.is_some()
+    }
+
+    /// Whether this is the workspace folder worker rooted at `root`, not one of its sub workers.
+    pub(crate) fn is_folder_root(&self, root: &Uri) -> bool {
+        !self.is_sub_worker() && self.is_root(root)
+    }
+
+    /// Whether this is a sub worker of the workspace folder rooted at `parent`.
+    pub(crate) fn is_sub_worker_of(&self, parent: &Uri) -> bool {
+        self.parent_uri.as_ref().is_some_and(|uri| roots_are_equal(uri, parent))
+    }
+
+    /// Get the current options of the worker, [`serde_json::Value::Null`] when not started yet.
+    pub async fn get_options(&self) -> serde_json::Value {
+        self.options.lock().await.clone().unwrap_or_default()
+    }
+
+    /// Set the roots which belong to other workers, the resolved `workingDirectories` of this worker.
+    /// Must be called before [`start_worker`](Self::start_worker) so the tool can exclude them.
+    pub(crate) async fn set_excluded_roots(&self, roots: Vec<Uri>) {
+        *self.excluded_roots.write().await = roots;
+    }
+
+    /// Get the roots which belong to other workers, see [`Self::set_excluded_roots`].
+    pub(crate) async fn get_excluded_roots(&self) -> Vec<Uri> {
+        self.excluded_roots.read().await.clone()
+    }
+
     /// Start all programs (linter, formatter) for the worker.
     /// This should be called after the client has sent the workspace configuration.
     ///
     /// Returns messages to be sent to the client.
     pub async fn start_worker(&self, options: serde_json::Value) -> Vec<ClientMessage> {
-        let result = self.builder.build(&self.root_uri, options.clone());
-        *self.tool.write().await = Some(result.tool);
+        // The excluded roots are read *inside* the critical section, like in `rebuild_tool`: a
+        // reconciliation which lands while this build runs must not be undone by its stale tool.
+        let mut tool_guard = self.tool.write().await;
+        let excluded_roots = self.get_excluded_roots().await;
+        let result = self.builder.build_with_context(
+            &self.root_uri,
+            options.clone(),
+            BuildContext {
+                excluded_roots: &excluded_roots,
+                parent_root: self.parent_uri.as_ref(),
+                first_build: true,
+            },
+        );
+        self.install_tool(&mut tool_guard, result.tool);
+        drop(tool_guard);
 
         *self.options.lock().await = Some(options);
 
@@ -100,6 +223,71 @@ impl WorkspaceWorker {
         } else {
             Some(registration_watcher_id(&self.root_uri, patterns))
         }
+    }
+
+    /// Rebuild the tool of this worker, with `new_options` when given, else with its current ones.
+    ///
+    /// Needed when the [`BuildContext`] changed without the options changing, which happens when
+    /// the `workingDirectories` of this worker are added or removed: the tool has to be rebuilt
+    /// with the new set of excluded roots, otherwise it keeps the configs and ignore files of a
+    /// directory which is now owned by another worker (or misses the ones it just took back).
+    /// The open documents are not linted again, the caller revalidates them.
+    ///
+    /// Returns the messages for the client and, when the watcher patterns of the rebuilt tool
+    /// differ, the registrations which have to replace the current ones. Losing or gaining a
+    /// config which is extended from outside the root changes those patterns.
+    pub async fn rebuild_tool(
+        &self,
+        new_options: Option<serde_json::Value>,
+    ) -> (Vec<ClientMessage>, Vec<Unregistration>, Vec<Registration>) {
+        // Lock order is the tool first, then the options and the excluded roots, the same way
+        // `handle_tool_changes` does it. Both are read *inside* the critical section: a
+        // reconciliation which lands in between is either fully before or fully after this
+        // rebuild, so the tool is never built from excluded roots which were already replaced
+        // while this rebuild waited for the lock.
+        let (client_messages, patterns_before, patterns_after) = {
+            let mut tool_guard = self.tool.write().await;
+            let current_options = self.get_options().await;
+            let replaces_options = new_options.is_some();
+            let options = new_options.unwrap_or_else(|| current_options.clone());
+            let excluded_roots = self.excluded_roots.read().await.clone();
+
+            let patterns_before = tool_guard
+                .as_ref()
+                .map_or_default(|tool| tool.get_watcher_patterns(current_options));
+
+            self.builder.shutdown(&self.root_uri);
+            let result = self.builder.build_with_context(
+                &self.root_uri,
+                options.clone(),
+                BuildContext {
+                    excluded_roots: &excluded_roots,
+                    parent_root: self.parent_uri.as_ref(),
+                    first_build: false,
+                },
+            );
+
+            let patterns_after = result.tool.get_watcher_patterns(options.clone());
+            self.install_tool(&mut tool_guard, result.tool);
+            if replaces_options {
+                *self.options.lock().await = Some(options);
+            }
+
+            (result.client_messages, patterns_before, patterns_after)
+        };
+
+        if patterns_before == patterns_after {
+            return (client_messages, vec![], vec![]);
+        }
+
+        let unregistrations = vec![unregistration_watcher_id(&self.root_uri)];
+        let registrations = if patterns_after.is_empty() {
+            vec![]
+        } else {
+            vec![registration_watcher_id(&self.root_uri, patterns_after)]
+        };
+
+        (client_messages, unregistrations, registrations)
     }
 
     /// Check if the worker needs to be initialized with options
@@ -247,6 +435,7 @@ impl WorkspaceWorker {
         file_event: &FileEvent,
         needs_diagnostic_refresh: &mut bool,
         file_system: Option<&LSPFileSystem>,
+        owned_uris: &[Uri],
     ) -> WorkerToolChangeResult {
         // Scope the first lock so it is dropped before the second lock
         let options = {
@@ -254,9 +443,14 @@ impl WorkspaceWorker {
             options_guard.clone().unwrap_or_default()
         };
 
-        self.handle_tool_changes(file_system, needs_diagnostic_refresh, move |tool, builder| {
-            tool.handle_watched_file_change(builder, &file_event.uri, &self.root_uri, options)
-        })
+        self.handle_tool_changes(
+            file_system,
+            owned_uris,
+            needs_diagnostic_refresh,
+            move |tool, builder| {
+                tool.handle_watched_file_change(builder, &file_event.uri, &self.root_uri, options)
+            },
+        )
         .await
     }
 
@@ -269,6 +463,7 @@ impl WorkspaceWorker {
         changed_options_json: serde_json::Value,
         needs_diagnostic_refresh: &mut bool,
         file_system: Option<&LSPFileSystem>,
+        owned_uris: &[Uri],
     ) -> WorkerToolChangeResult {
         // Scope the first lock so it is dropped before the second lock
         let old_options = {
@@ -284,14 +479,19 @@ impl WorkspaceWorker {
         );
 
         let result = self
-            .handle_tool_changes(file_system, needs_diagnostic_refresh, |tool, builder| {
-                tool.handle_configuration_change(
-                    builder,
-                    &self.root_uri,
-                    &old_options,
-                    changed_options_json.clone(),
-                )
-            })
+            .handle_tool_changes(
+                file_system,
+                owned_uris,
+                needs_diagnostic_refresh,
+                |tool, builder| {
+                    tool.handle_configuration_change(
+                        builder,
+                        &self.root_uri,
+                        &old_options,
+                        changed_options_json.clone(),
+                    )
+                },
+            )
             .await;
 
         {
@@ -304,9 +504,15 @@ impl WorkspaceWorker {
 
     /// Common implementation for handling tool changes that may result in
     /// diagnostics updates, watcher registrations/unregistrations, and tool replacement
+    ///
+    /// `owned_uris` holds the open documents this worker is responsible for, as decided by the
+    /// [`WorkerManager`](crate::worker_manager::WorkerManager) routing. A file below one of the
+    /// `workingDirectories` of this worker (or below a nested workspace folder) belongs to that
+    /// other worker and must not be linted twice, with two different configurations.
     async fn handle_tool_changes<F>(
         &self,
         file_system: Option<&LSPFileSystem>,
+        owned_uris: &[Uri],
         needs_diagnostic_refresh: &mut bool,
         change_handler: F,
     ) -> WorkerToolChangeResult
@@ -318,6 +524,18 @@ impl WorkspaceWorker {
         let mut diagnostics: Option<Vec<(Uri, Vec<Diagnostic>)>> = None;
 
         let mut tools = self.tool.write().await;
+        // The excluded roots are read *inside* the critical section, like in `rebuild_tool`: a
+        // reconciliation which lands while this handler waits for the tool lock must not be undone
+        // by a tool built from the excluded roots it started from.
+        let excluded_roots = self.excluded_roots.read().await.clone();
+        let builder = ContextBuilder {
+            inner: self.builder.as_ref(),
+            context: BuildContext {
+                excluded_roots: &excluded_roots,
+                parent_root: self.parent_uri.as_ref(),
+                first_build: false,
+            },
+        };
         let Some(tool) = tools.as_mut() else {
             // No tool to update, return early
             return WorkerToolChangeResult {
@@ -327,7 +545,7 @@ impl WorkspaceWorker {
                 client_messages: Vec::new(), // TODO: Should we return a message to the client if the tool is not initialized?
             };
         };
-        let change = change_handler(tool, self.builder.as_ref());
+        let change = change_handler(tool, &builder);
 
         if let Some(patterns) = change.watch_patterns {
             unregistrations.push(unregistration_watcher_id(&self.root_uri));
@@ -336,7 +554,7 @@ impl WorkspaceWorker {
             }
         }
         if let Some(replaced_tool) = change.tool {
-            *tool = replaced_tool;
+            let tool = self.install_tool(&mut tools, replaced_tool);
             *needs_diagnostic_refresh = true;
 
             let Some(file_system) = file_system else {
@@ -348,8 +566,8 @@ impl WorkspaceWorker {
                 };
             };
 
-            for uri in file_system.keys() {
-                let document = file_system.get_document(&uri);
+            for uri in owned_uris {
+                let document = file_system.get_document(uri);
                 let Ok(mut reports) = tool.run_diagnostic(document) else {
                     // If diagnostics could not be run, skip this URI, but continue with others
                     // TODO: Should we aggregate errors instead? One by one, or all together?
@@ -390,6 +608,11 @@ impl WorkspaceWorker {
     }
 }
 
+/// The path of `root_uri` as [`ResolvedPath`] spells it, `None` for a non `file://` URI.
+fn resolve_root(root_uri: &Uri) -> Option<Arc<Path>> {
+    ResolvedPath::try_from(root_uri).ok().map(|resolved| Arc::from(resolved.as_path()))
+}
+
 /// Create an unregistration for a file system watcher
 fn unregistration_watcher_id(root_uri: &Uri) -> Unregistration {
     Unregistration {
@@ -427,7 +650,7 @@ fn registration_watcher_id(root_uri: &Uri, patterns: Vec<String>) -> Registratio
 
 #[cfg(test)]
 mod tests {
-    use std::{str::FromStr, sync::Arc};
+    use std::{future::Future, str::FromStr, sync::Arc};
     use tower_lsp_server::{
         gen_lsp_types::{
             CodeActionContext, CodeActionResponse, FileChangeType, FileEvent, Message, MessageType,
@@ -519,6 +742,80 @@ mod tests {
         }
     }
 
+    /// A rebuild reads the working directories inside the tool critical section: a reconciliation
+    /// which lands while this rebuild waits for the lock must not be undone by a tool built from
+    /// the excluded roots it started from.
+    #[tokio::test(flavor = "multi_thread", worker_threads = 3)]
+    async fn test_rebuild_does_not_use_stale_working_directories() {
+        let contexts = Arc::new(std::sync::Mutex::new(vec![]));
+        // the second build, the first rebuild, waits for the test
+        let (builder, mut gate) = FakeToolBuilder::default().with_held_build(1);
+        let worker = Arc::new(WorkspaceWorker::new(
+            Uri::from_str("file:///root/").unwrap(),
+            Arc::new(builder.with_build_context_tracking(Arc::clone(&contexts))),
+            DiagnosticMode::None,
+        ));
+        worker.set_excluded_roots(vec![Uri::from_str("file:///root/packages/a/").unwrap()]).await;
+        worker.start_worker(serde_json::json!({ "version": 1 })).await;
+
+        // the first rebuild holds the tool lock while it builds
+        let first = Arc::clone(&worker);
+        let first = tokio::spawn(async move { first.rebuild_tool(None).await });
+        gate.started().await;
+
+        // the second one queues behind it, before the working directories change
+        let mut second = std::pin::pin!(worker.rebuild_tool(None));
+        let mut context = std::task::Context::from_waker(std::task::Waker::noop());
+        assert!(second.as_mut().poll(&mut context).is_pending());
+
+        // a reconciliation takes the working directory back while the second rebuild waits
+        worker.set_excluded_roots(vec![]).await;
+
+        gate.release();
+        first.await.unwrap();
+        second.await;
+
+        let contexts = contexts.lock().unwrap().clone();
+        // the initial build, the first rebuild, then the one which waited: it has to see the
+        // roots as they are now, not the ones it would have read before the lock
+        assert_eq!(contexts, vec![1, 1, 0]);
+    }
+
+    /// `start_worker` builds under the tool lock: a reconciliation which lands while it builds
+    /// rebuilds the tool afterwards, and the stale tool does not overwrite that rebuild.
+    #[tokio::test(flavor = "multi_thread", worker_threads = 3)]
+    async fn test_start_worker_does_not_overwrite_a_concurrent_rebuild() {
+        let contexts = Arc::new(std::sync::Mutex::new(vec![]));
+        // the first build, the one of `start_worker`, waits for the test
+        let (builder, mut gate) = FakeToolBuilder::new(DiagnosticMode::Push).with_held_build(0);
+        let worker = Arc::new(WorkspaceWorker::new(
+            Uri::from_str("file:///root/").unwrap(),
+            Arc::new(builder.with_diagnostic_context_tracking(Arc::clone(&contexts))),
+            DiagnosticMode::None,
+        ));
+
+        let starting = Arc::clone(&worker);
+        let start =
+            tokio::spawn(async move { starting.start_worker(serde_json::Value::Null).await });
+        gate.started().await;
+
+        // a working directory appears while the tool is being built: the rebuild has to wait for
+        // the tool lock of `start_worker`
+        worker.set_excluded_roots(vec![Uri::from_str("file:///root/packages/a/").unwrap()]).await;
+        let mut rebuild = std::pin::pin!(worker.rebuild_tool(None));
+        let mut context = std::task::Context::from_waker(std::task::Waker::noop());
+        assert!(rebuild.as_mut().poll(&mut context).is_pending());
+
+        gate.release();
+        start.await.unwrap();
+        rebuild.await;
+
+        let uri = Uri::from_str("file:///root/diagnostics.config").unwrap();
+        worker.run_diagnostic(TextDocument::new(&uri, LanguageId::default(), None)).await.unwrap();
+        // the tool which lints is the rebuilt one, it excludes the working directory
+        assert_eq!(contexts.lock().unwrap().clone(), vec![1]);
+    }
+
     #[tokio::test]
     async fn test_execute_command() {
         let worker = WorkspaceWorker::new(
@@ -568,6 +865,7 @@ mod tests {
                 },
                 &mut needs_diagnostic_refresh,
                 Some(&fs),
+                &fs.keys(),
             )
             .await;
 
@@ -585,6 +883,7 @@ mod tests {
                 },
                 &mut needs_diagnostic_refresh,
                 Some(&fs),
+                &fs.keys(),
             )
             .await;
 
@@ -604,6 +903,7 @@ mod tests {
                 },
                 &mut needs_diagnostic_refresh,
                 Some(&fs),
+                &fs.keys(),
             )
             .await;
 
@@ -623,6 +923,7 @@ mod tests {
                 },
                 &mut needs_diagnostic_refresh,
                 None,
+                &[],
             )
             .await;
 
@@ -654,20 +955,24 @@ mod tests {
                 serde_json::json!({"some_option": false}),
                 &mut needs_diagnostic_refresh,
                 Some(&fs),
+                &fs.keys(),
             )
             .await;
 
-        // Since FakeToolBuilder does not change anything based on configuration, no diagnostics or registrations are expected
-        assert!(result.diagnostics.is_none());
+        // `FakeTool` restarts for a changed object option, like a real tool does, so the
+        // documents it owns are linted again with the new tool
+        assert_eq!(result.diagnostics.map(|diagnostics| diagnostics.len()), Some(1));
         assert_eq!(result.new_watchers.len(), 0); // No new registrations expected
         assert_eq!(result.removed_watchers.len(), 0); // No unregistrations expected
-        assert!(!needs_diagnostic_refresh); // No need to refresh diagnostics
+        assert!(needs_diagnostic_refresh); // the restarted tool can report other diagnostics
+        needs_diagnostic_refresh = false;
 
         let result = worker
             .did_change_configuration(
                 serde_json::json!(2),
                 &mut needs_diagnostic_refresh,
                 Some(&fs),
+                &fs.keys(),
             )
             .await;
 
@@ -684,6 +989,7 @@ mod tests {
                 serde_json::json!(3),
                 &mut needs_diagnostic_refresh,
                 Some(&fs),
+                &fs.keys(),
             )
             .await;
 
@@ -706,7 +1012,12 @@ mod tests {
 
         let mut needs_diagnostic_refresh = false;
         let result = worker
-            .did_change_configuration(serde_json::json!(4), &mut needs_diagnostic_refresh, None)
+            .did_change_configuration(
+                serde_json::json!(4),
+                &mut needs_diagnostic_refresh,
+                None,
+                &[],
+            )
             .await;
 
         assert!(result.diagnostics.is_none());
@@ -740,6 +1051,7 @@ mod tests {
                 },
                 &mut needs_diagnostic_refresh,
                 None,
+                &[],
             )
             .await;
 

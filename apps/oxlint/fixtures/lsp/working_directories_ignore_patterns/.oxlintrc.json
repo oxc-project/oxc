@@ -1,0 +1,6 @@
+{
+  "ignorePatterns": ["packages/a/legacy/**"],
+  "rules": {
+    "no-debugger": "error"
+  }
+}
