@@ -1,0 +1,101 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(no-multiple-promise-resolver-calls): Promise executor resolver functions may be called multiple times on the same execution path.
+   ╭─[no_multiple_promise_resolver_calls.tsx:1:47]
+ 1 │ new Promise(resolve => { object[resolve()]++; resolve(); });
+   ·                                               ─────────
+   ╰────
+  help: Return after settling the Promise, or make the resolver calls mutually exclusive.
+
+  ⚠ unicorn(no-multiple-promise-resolver-calls): Promise executor resolver functions may be called multiple times on the same execution path.
+   ╭─[no_multiple_promise_resolver_calls.tsx:1:44]
+ 1 │ new Promise(resolve => { resolve(); object[resolve()]++; });
+   ·                                            ─────────
+   ╰────
+  help: Return after settling the Promise, or make the resolver calls mutually exclusive.
+
+  ⚠ unicorn(no-multiple-promise-resolver-calls): Promise executor resolver functions may be called multiple times on the same execution path.
+   ╭─[no_multiple_promise_resolver_calls.tsx:1:54]
+ 1 │ new Promise(resolve => { ([value = resolve()] = []); resolve(); });
+   ·                                                      ─────────
+   ╰────
+  help: Return after settling the Promise, or make the resolver calls mutually exclusive.
+
+  ⚠ unicorn(no-multiple-promise-resolver-calls): Promise executor resolver functions may be called multiple times on the same execution path.
+   ╭─[no_multiple_promise_resolver_calls.tsx:1:40]
+ 1 │ new Promise(resolve => { resolve(); ({[resolve()]: target} = {}); });
+   ·                                        ─────────
+   ╰────
+  help: Return after settling the Promise, or make the resolver calls mutually exclusive.
+
+  ⚠ unicorn(no-multiple-promise-resolver-calls): Promise executor resolver functions may be called multiple times on the same execution path.
+   ╭─[no_multiple_promise_resolver_calls.tsx:1:63]
+ 1 │ new Promise(resolve => { try { resolve(); return; } finally { resolve(); } });
+   ·                                                               ─────────
+   ╰────
+  help: Return after settling the Promise, or make the resolver calls mutually exclusive.
+
+  ⚠ unicorn(no-multiple-promise-resolver-calls): Promise executor resolver functions may be called multiple times on the same execution path.
+   ╭─[no_multiple_promise_resolver_calls.tsx:1:47]
+ 1 │ new Promise(resolve => { if (0x1n) resolve(); resolve(); });
+   ·                                               ─────────
+   ╰────
+  help: Return after settling the Promise, or make the resolver calls mutually exclusive.
+
+  ⚠ unicorn(no-multiple-promise-resolver-calls): Promise executor resolver functions may be called multiple times on the same execution path.
+   ╭─[no_multiple_promise_resolver_calls.tsx:1:58]
+ 1 │ new Promise((resolve, reject, {a = resolve()} = {}) => { resolve(); });
+   ·                                                          ─────────
+   ╰────
+  help: Return after settling the Promise, or make the resolver calls mutually exclusive.
+
+  ⚠ unicorn(no-multiple-promise-resolver-calls): Promise executor resolver functions may be called multiple times on the same execution path.
+   ╭─[no_multiple_promise_resolver_calls.tsx:1:58]
+ 1 │ new Promise((resolve, reject, [a = resolve()] = []) => { resolve(); });
+   ·                                                          ─────────
+   ╰────
+  help: Return after settling the Promise, or make the resolver calls mutually exclusive.
+
+  ⚠ unicorn(no-multiple-promise-resolver-calls): Promise executor resolver functions may be called multiple times on the same execution path.
+   ╭─[no_multiple_promise_resolver_calls.tsx:1:60]
+ 1 │ new Promise(resolve => { outer: inner: while (condition) { resolve(); continue outer; } });
+   ·                                                            ─────────
+   ╰────
+  help: Return after settling the Promise, or make the resolver calls mutually exclusive.
+
+  ⚠ unicorn(no-multiple-promise-resolver-calls): Promise executor resolver functions may be called multiple times on the same execution path.
+   ╭─[no_multiple_promise_resolver_calls.tsx:1:37]
+ 1 │ new Promise(resolve => { do { try { resolve(); } finally {} } while (condition); });
+   ·                                     ─────────
+   ╰────
+  help: Return after settling the Promise, or make the resolver calls mutually exclusive.
+
+  ⚠ unicorn(no-multiple-promise-resolver-calls): Promise executor resolver functions may be called multiple times on the same execution path.
+   ╭─[no_multiple_promise_resolver_calls.tsx:1:52]
+ 1 │ new Promise(resolve => { while (condition) { try { resolve(); } finally { if (stop) break; } } });
+   ·                                                    ─────────
+   ╰────
+  help: Return after settling the Promise, or make the resolver calls mutually exclusive.
+
+  ⚠ unicorn(no-multiple-promise-resolver-calls): Promise executor resolver functions may be called multiple times on the same execution path.
+   ╭─[no_multiple_promise_resolver_calls.tsx:1:73]
+ 1 │ new Promise(resolve => { const node = <Element value={resolve()} other={resolve()} />; });
+   ·                                                                         ─────────
+   ╰────
+  help: Return after settling the Promise, or make the resolver calls mutually exclusive.
+
+  ⚠ unicorn(no-multiple-promise-resolver-calls): Promise executor resolver functions may be called multiple times on the same execution path.
+   ╭─[no_multiple_promise_resolver_calls.tsx:1:68]
+ 1 │ new Promise(resolve => { enum Result { First = resolve(), Second = resolve() } });
+   ·                                                                    ─────────
+   ╰────
+  help: Return after settling the Promise, or make the resolver calls mutually exclusive.
+
+  ⚠ unicorn(no-multiple-promise-resolver-calls): Promise executor resolver functions may be called multiple times on the same execution path.
+   ╭─[no_multiple_promise_resolver_calls.tsx:1:53]
+ 1 │ new Promise(resolve => { consume(() => { resolve(); resolve(); }); });
+   ·                                                     ─────────
+   ╰────
+  help: Return after settling the Promise, or make the resolver calls mutually exclusive.

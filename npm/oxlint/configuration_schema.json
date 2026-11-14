@@ -9253,6 +9253,9 @@
         "unicorn/no-magic-array-flat-depth": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/no-multiple-promise-resolver-calls": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/no-negated-condition": {
           "$ref": "#/definitions/RuleNoConfig"
         },
