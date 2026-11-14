@@ -1,17 +1,25 @@
 use oxc_simd::{Cpu, cpu_multiversion};
 
-use crate::error::DiagCode;
+use crate::{error::DiagCode, token::tk};
 
 use crate::pipeline::{
-    bitmap::Bitmap,
+    bitmap::{Bitmap, Bitmaps},
     bytes::{is_id_start, is_word, line_break_in},
     disambiguate::DisambiguateState,
+    find::find,
     lanes::Lanes,
     lex::Lex,
     source::Source,
 };
 
-use super::names::jsx_skip_trivia_fast;
+use super::{
+    super::{
+        comments::lex_comment_at,
+        common::{OPENER_BYTES, OPENER8_BYTES, Substitutions, lex_string},
+    },
+    jsx_punct,
+    names::jsx_skip_trivia_fast,
+};
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum AngleVerdict {
@@ -44,6 +52,61 @@ pub(super) unsafe fn jsx_over_type_params(
             jsx
         }
     }
+}
+
+/// Lex the type-argument list at s, carving literals so a < or > inside one leaves the depth alone.
+#[cpu_multiversion]
+#[cold]
+#[inline(never)]
+pub(super) unsafe fn lex_type_arguments(
+    lex: Lex,
+    s: usize,
+    lanes: &mut Lanes,
+    cpu: impl Cpu,
+) -> usize {
+    let Lex { src, bitmaps, kinds, .. } = lex;
+    let Bitmaps { token_start, op_char, .. } = *bitmaps;
+    jsx_punct(kinds, op_char, s, tk!(Lt), cpu);
+    let mut depth = 1i32;
+    let mut subs = Substitutions::default();
+    let mut p = s + 1;
+    while p < src.len() && depth != 0 {
+        // Braces only matter inside a template substitution.
+        let q = if subs.is_empty() {
+            find(src, p, OPENER_BYTES, cpu)
+        } else {
+            find(src, p, OPENER8_BYTES, cpu)
+        };
+        if q >= src.len() {
+            return src.len();
+        }
+        p = match src[q] {
+            b'<' => {
+                depth += 1;
+                jsx_punct(kinds, op_char, q, tk!(Lt), cpu);
+                q + 1
+            }
+            b'>' => {
+                // The > of an arrow in a function type closes nothing.
+                if !(q > 0 && src[q - 1] == b'=') {
+                    depth -= 1;
+                    jsx_punct(kinds, op_char, q, tk!(Gt), cpu);
+                }
+                q + 1
+            }
+            b'"' | b'\'' => lex_string(src, token_start, kinds, q, src[q], lanes, cpu),
+            b'`' => subs.lex_template(src, token_start, kinds, q, lanes, cpu),
+            b'{' if !subs.is_empty() => {
+                subs.open_brace();
+                q + 1
+            }
+            b'}' if !subs.is_empty() => subs.close_brace(src, token_start, kinds, q, lanes, cpu),
+            // A comment is trivia, and a lone slash cannot start a type.
+            b'/' => lex_comment_at(src, token_start, kinds, q, lanes, cpu),
+            _ => q + 1,
+        };
+    }
+    p
 }
 
 /// `.tsx` disambiguation: at an operand-position `<IDENT...`, is this a TS
