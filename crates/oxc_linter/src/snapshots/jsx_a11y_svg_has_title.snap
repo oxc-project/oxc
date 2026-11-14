@@ -1,0 +1,172 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ jsx-a11y(svg-has-title): SVG elements must have an accessible name.
+   ╭─[svg_has_title.tsx:1:2]
+ 1 │ <svg />
+   ·  ───
+   ╰────
+  help: Add a non-empty `title` as the first child, or use `role="img"` with `aria-label` or `aria-labelledby`. Mark decorative SVGs with `aria-hidden="true"`.
+
+  ⚠ jsx-a11y(svg-has-title): SVG elements must have an accessible name.
+   ╭─[svg_has_title.tsx:1:2]
+ 1 │ <svg>foo</svg>
+   ·  ───
+   ╰────
+  help: Add a non-empty `title` as the first child, or use `role="img"` with `aria-label` or `aria-labelledby`. Mark decorative SVGs with `aria-hidden="true"`.
+
+  ⚠ jsx-a11y(svg-has-title): SVG elements must have an accessible name.
+   ╭─[svg_has_title.tsx:1:2]
+ 1 │ <svg><title></title><circle /></svg>
+   ·  ───
+   ╰────
+  help: Add a non-empty `title` as the first child, or use `role="img"` with `aria-label` or `aria-labelledby`. Mark decorative SVGs with `aria-hidden="true"`.
+
+  ⚠ jsx-a11y(svg-has-title): SVG elements must have an accessible name.
+   ╭─[svg_has_title.tsx:1:2]
+ 1 │ <svg><rect /><rect /><g><title>foo</title><circle /><circle /></g></svg>
+   ·  ───
+   ╰────
+  help: Add a non-empty `title` as the first child, or use `role="img"` with `aria-label` or `aria-labelledby`. Mark decorative SVGs with `aria-hidden="true"`.
+
+  ⚠ jsx-a11y(svg-has-title): SVG elements must have an accessible name.
+   ╭─[svg_has_title.tsx:1:2]
+ 1 │ <svg><circle /><title>Search</title></svg>
+   ·  ───
+   ╰────
+  help: Add a non-empty `title` as the first child, or use `role="img"` with `aria-label` or `aria-labelledby`. Mark decorative SVGs with `aria-hidden="true"`.
+
+  ⚠ jsx-a11y(svg-has-title): SVG elements must have an accessible name.
+   ╭─[svg_has_title.tsx:1:2]
+ 1 │ <svg><title /></svg>
+   ·  ───
+   ╰────
+  help: Add a non-empty `title` as the first child, or use `role="img"` with `aria-label` or `aria-labelledby`. Mark decorative SVGs with `aria-hidden="true"`.
+
+  ⚠ jsx-a11y(svg-has-title): SVG elements must have an accessible name.
+   ╭─[svg_has_title.tsx:1:2]
+ 1 │ <svg><title> 
+   ·  ───
+ 2 │  </title></svg>
+   ╰────
+  help: Add a non-empty `title` as the first child, or use `role="img"` with `aria-label` or `aria-labelledby`. Mark decorative SVGs with `aria-hidden="true"`.
+
+  ⚠ jsx-a11y(svg-has-title): SVG elements must have an accessible name.
+   ╭─[svg_has_title.tsx:1:2]
+ 1 │ <svg><title>{/* comment */}</title></svg>
+   ·  ───
+   ╰────
+  help: Add a non-empty `title` as the first child, or use `role="img"` with `aria-label` or `aria-labelledby`. Mark decorative SVGs with `aria-hidden="true"`.
+
+  ⚠ jsx-a11y(svg-has-title): SVG elements must have an accessible name.
+   ╭─[svg_has_title.tsx:1:2]
+ 1 │ <svg><title>{''}</title></svg>
+   ·  ───
+   ╰────
+  help: Add a non-empty `title` as the first child, or use `role="img"` with `aria-label` or `aria-labelledby`. Mark decorative SVGs with `aria-hidden="true"`.
+
+  ⚠ jsx-a11y(svg-has-title): SVG elements must have an accessible name.
+   ╭─[svg_has_title.tsx:1:2]
+ 1 │ <svg><title>{` `}</title></svg>
+   ·  ───
+   ╰────
+  help: Add a non-empty `title` as the first child, or use `role="img"` with `aria-label` or `aria-labelledby`. Mark decorative SVGs with `aria-hidden="true"`.
+
+  ⚠ jsx-a11y(svg-has-title): SVG elements must have an accessible name.
+   ╭─[svg_has_title.tsx:1:2]
+ 1 │ <svg><title>{null}</title></svg>
+   ·  ───
+   ╰────
+  help: Add a non-empty `title` as the first child, or use `role="img"` with `aria-label` or `aria-labelledby`. Mark decorative SVGs with `aria-hidden="true"`.
+
+  ⚠ jsx-a11y(svg-has-title): SVG elements must have an accessible name.
+   ╭─[svg_has_title.tsx:1:2]
+ 1 │ <svg><title>{undefined}</title></svg>
+   ·  ───
+   ╰────
+  help: Add a non-empty `title` as the first child, or use `role="img"` with `aria-label` or `aria-labelledby`. Mark decorative SVGs with `aria-hidden="true"`.
+
+  ⚠ jsx-a11y(svg-has-title): SVG elements must have an accessible name.
+   ╭─[svg_has_title.tsx:1:2]
+ 1 │ <svg><title>{void 0}</title></svg>
+   ·  ───
+   ╰────
+  help: Add a non-empty `title` as the first child, or use `role="img"` with `aria-label` or `aria-labelledby`. Mark decorative SVGs with `aria-hidden="true"`.
+
+  ⚠ jsx-a11y(svg-has-title): SVG elements must have an accessible name.
+   ╭─[svg_has_title.tsx:1:2]
+ 1 │ <svg><title>{false}</title></svg>
+   ·  ───
+   ╰────
+  help: Add a non-empty `title` as the first child, or use `role="img"` with `aria-label` or `aria-labelledby`. Mark decorative SVGs with `aria-hidden="true"`.
+
+  ⚠ jsx-a11y(svg-has-title): SVG elements must have an accessible name.
+   ╭─[svg_has_title.tsx:1:2]
+ 1 │ <svg><title>{true}</title></svg>
+   ·  ───
+   ╰────
+  help: Add a non-empty `title` as the first child, or use `role="img"` with `aria-label` or `aria-labelledby`. Mark decorative SVGs with `aria-hidden="true"`.
+
+  ⚠ jsx-a11y(svg-has-title): SVG elements must have an accessible name.
+   ╭─[svg_has_title.tsx:1:2]
+ 1 │ <svg><title><></></title></svg>
+   ·  ───
+   ╰────
+  help: Add a non-empty `title` as the first child, or use `role="img"` with `aria-label` or `aria-labelledby`. Mark decorative SVGs with `aria-hidden="true"`.
+
+  ⚠ jsx-a11y(svg-has-title): SVG elements must have an accessible name.
+   ╭─[svg_has_title.tsx:1:2]
+ 1 │ <svg><title aria-hidden>Search</title></svg>
+   ·  ───
+   ╰────
+  help: Add a non-empty `title` as the first child, or use `role="img"` with `aria-label` or `aria-labelledby`. Mark decorative SVGs with `aria-hidden="true"`.
+
+  ⚠ jsx-a11y(svg-has-title): SVG elements must have an accessible name.
+   ╭─[svg_has_title.tsx:1:2]
+ 1 │ <svg><title><TranslatedTitle aria-hidden /></title></svg>
+   ·  ───
+   ╰────
+  help: Add a non-empty `title` as the first child, or use `role="img"` with `aria-label` or `aria-labelledby`. Mark decorative SVGs with `aria-hidden="true"`.
+
+  ⚠ jsx-a11y(svg-has-title): SVG elements must have an accessible name.
+   ╭─[svg_has_title.tsx:1:2]
+ 1 │ <svg aria-hidden="false" />
+   ·  ───
+   ╰────
+  help: Add a non-empty `title` as the first child, or use `role="img"` with `aria-label` or `aria-labelledby`. Mark decorative SVGs with `aria-hidden="true"`.
+
+  ⚠ jsx-a11y(svg-has-title): SVG elements must have an accessible name.
+   ╭─[svg_has_title.tsx:1:2]
+ 1 │ <svg aria-hidden={false} />
+   ·  ───
+   ╰────
+  help: Add a non-empty `title` as the first child, or use `role="img"` with `aria-label` or `aria-labelledby`. Mark decorative SVGs with `aria-hidden="true"`.
+
+  ⚠ jsx-a11y(svg-has-title): SVG elements must have an accessible name.
+   ╭─[svg_has_title.tsx:1:2]
+ 1 │ <svg role="img" />
+   ·  ───
+   ╰────
+  help: Add a non-empty `title` as the first child, or use `role="img"` with `aria-label` or `aria-labelledby`. Mark decorative SVGs with `aria-hidden="true"`.
+
+  ⚠ jsx-a11y(svg-has-title): SVG elements must have an accessible name.
+   ╭─[svg_has_title.tsx:1:2]
+ 1 │ <svg aria-label="Search" />
+   ·  ───
+   ╰────
+  help: Add a non-empty `title` as the first child, or use `role="img"` with `aria-label` or `aria-labelledby`. Mark decorative SVGs with `aria-hidden="true"`.
+
+  ⚠ jsx-a11y(svg-has-title): SVG elements must have an accessible name.
+   ╭─[svg_has_title.tsx:1:2]
+ 1 │ <svg role="graphics-symbol" aria-label="Search" />
+   ·  ───
+   ╰────
+  help: Add a non-empty `title` as the first child, or use `role="img"` with `aria-label` or `aria-labelledby`. Mark decorative SVGs with `aria-hidden="true"`.
+
+  ⚠ jsx-a11y(svg-has-title): SVG elements must have an accessible name.
+   ╭─[svg_has_title.tsx:1:2]
+ 1 │ <svg {...props} />
+   ·  ───
+   ╰────
+  help: Add a non-empty `title` as the first child, or use `role="img"` with `aria-label` or `aria-labelledby`. Mark decorative SVGs with `aria-hidden="true"`.
