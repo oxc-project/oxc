@@ -15,6 +15,19 @@ use super::{super::js::FunctionKind, statement::CallOrConstructorSignature};
 
 impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_ts_type(&mut self) -> TSType<'a> {
+        // All type nesting comes back through here (e.g. parenthesized types), so this
+        // bounds the recursion for types just like statement/expression nesting.
+        if self.nesting_depth >= crate::MAX_NESTING_DEPTH {
+            let error = diagnostics::nesting_depth_exceeded(self.cur_token().span());
+            return self.fatal_error(error);
+        }
+        self.nesting_depth += 1;
+        let ty = self.parse_ts_type_inner();
+        self.nesting_depth -= 1;
+        ty
+    }
+
+    fn parse_ts_type_inner(&mut self) -> TSType<'a> {
         if self.is_start_of_function_type_or_constructor_type() {
             return self.parse_function_or_constructor_type();
         }
