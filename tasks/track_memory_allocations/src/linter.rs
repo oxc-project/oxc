@@ -36,11 +36,11 @@ pub fn run(files: &TestFiles) -> io::Result<()> {
         ));
 
         let mut entries = Vec::new();
-        for (rule, severity) in state.rules.iter().filter(|(rule, _)| !rule.is_tsgolint_rule()) {
+        for (rule, config) in state.rules.iter().filter(|(rule, _)| !rule.is_tsgolint_rule()) {
             let rule_name = format!("{}/{}", rule.plugin_name(), rule.name());
             let arena_before = allocator.used_bytes();
             let ((), mut stats) = record_stats_in(&allocator, || {
-                Rc::clone(&host).run_rule_for_allocations(rule, *severity);
+                Rc::clone(&host).run_rule_for_allocations(rule, config.severity);
             });
             stats.arena_used_bytes = allocator.used_bytes().saturating_sub(arena_before);
             entries.push((rule_name, stats));
