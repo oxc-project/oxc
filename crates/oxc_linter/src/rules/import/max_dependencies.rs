@@ -1,5 +1,9 @@
 use std::borrow::Cow;
 
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ImportDeclarationSpecifier},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -66,7 +70,7 @@ enum MaxDependenciesConfigJson {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Forbid modules to have too many dependencies (`import` statements only).
+    /// Forbid modules to have too many dependencies.
     ///
     /// ### Why is this bad?
     ///
@@ -74,7 +78,8 @@ declare_oxc_lint!(
     /// and usually indicates the module is doing too much and/or should be broken up into
     /// smaller modules.
     ///
-    /// **NOTE**: This rule only counts `import` statements, and does not count dependencies from
+    /// **NOTE**: This rule counts `import` statements, re-exports, and dynamic `import()`
+    /// expressions with string literal sources. It does not count dependencies from
     /// CommonJS `require()` statements. This is a difference from the original
     /// eslint-import-plugin rule.
     ///
@@ -99,7 +104,7 @@ declare_oxc_lint!(
     pedantic,
     config = MaxDependenciesConfigJson,
     version = "0.5.0",
-    short_description = "Forbid modules to have too many dependencies (`import` statements only).",
+    short_description = "Forbid modules to have too many dependencies.",
 );
 
 impl Rule for MaxDependencies {
@@ -120,20 +125,41 @@ impl Rule for MaxDependencies {
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
-        let module_record = ctx.module_record();
         let mut dependency_sources = FxHashSet::default();
         let mut module_count = 0;
         let mut first_exceeding_span = None;
 
-        for entry in &module_record.import_entries {
-            if self.ignore_type_imports && entry.is_type {
-                continue;
-            }
+        for node in ctx.nodes() {
+            let source = match node.kind() {
+                AstKind::ImportDeclaration(declaration) => {
+                    if self.ignore_type_imports
+                        && (declaration.import_kind.is_type()
+                            || declaration.specifiers.as_ref().is_some_and(|specifiers| {
+                                !specifiers.is_empty() && specifiers.iter().all(|specifier| {
+                                    matches!(specifier, ImportDeclarationSpecifier::ImportSpecifier(specifier) if specifier.import_kind.is_type())
+                                })
+                            }))
+                    {
+                        continue;
+                    }
+                    &declaration.source
+                }
+                AstKind::ExportFromDeclaration(declaration) => &declaration.source,
+                AstKind::ExportAllDeclaration(declaration) => &declaration.source,
+                AstKind::ImportExpression(expression) => {
+                    let Expression::StringLiteral(source) = expression.source.without_parentheses()
+                    else {
+                        continue;
+                    };
+                    source
+                }
+                _ => continue,
+            };
 
-            if dependency_sources.insert(entry.module_request.name()) {
+            if dependency_sources.insert(source.value) {
                 module_count += 1;
                 if module_count > self.max && first_exceeding_span.is_none() {
-                    first_exceeding_span = Some(entry.module_request.span);
+                    first_exceeding_span = Some(source.span);
                 }
             }
         }
@@ -240,6 +266,23 @@ fn test() {
             ",
             Some(json!([{ "max": 2, "ignoreTypeImports": true }])),
         ),
+        (
+            "import './foo'; export { x, y } from './foo'; export * from './foo'; import('./foo');",
+            Some(json!([{ "max": 1 }])),
+        ),
+        (
+            "export const x = 1; export { x }; import(name); import(`./foo`); import('./' + name); require('./bar');",
+            Some(json!([{ "max": 0 }])),
+        ),
+        (
+            "import type { X } from './types'; import { type Y } from './more-types'; import('./foo');",
+            Some(json!([{ "max": 1, "ignoreTypeImports": true }])),
+        ),
+        (r"import './foo'; import('./f\u006fo');", Some(json!([{ "max": 1 }]))),
+        (
+            "export * from './foo'; export { x } from './bar'; import('./foo');",
+            Some(json!([{ "max": 2 }])),
+        ),
     ];
 
     let fail = vec![
@@ -323,6 +366,28 @@ fn test() {
             ",
             Some(json!([{ "max": 2 }])),
         ),
+        ("export { x } from './foo'; export { y } from './bar';", Some(json!([{ "max": 1 }]))),
+        ("export * from './foo'; export * from './bar';", Some(json!([{ "max": 1 }]))),
+        (
+            "export * as foo from './foo'; export * as bar from './bar';",
+            Some(json!([{ "max": 1 }])),
+        ),
+        (
+            "async function load() { await import('./foo'); await import('./bar'); }",
+            Some(json!([{ "max": 1 }])),
+        ),
+        ("import('./foo'); export * from './bar'; import './baz';", Some(json!([{ "max": 1 }]))),
+        (
+            "export type { X } from './foo'; export type * from './bar';",
+            Some(json!([{ "max": 1, "ignoreTypeImports": true }])),
+        ),
+        ("export {} from './foo'; export {} from './bar';", Some(json!([{ "max": 1 }]))),
+        (
+            "import('./foo', { with: { type: 'json' } }); import('./bar');",
+            Some(json!([{ "max": 1 }])),
+        ),
+        ("import(('./foo')); import('./bar');", Some(json!([{ "max": 1 }]))),
+        ("import('./foo');", Some(json!([{ "max": 0 }]))),
     ];
 
     Tester::new(MaxDependencies::NAME, MaxDependencies::PLUGIN, pass, fail)
