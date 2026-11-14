@@ -13,7 +13,7 @@ use crate::{
     context::ContextHost,
     rule::Rule,
     utils::{
-        NativeAllowList, ReactPerfConfig, is_constructor_matching_name,
+        NativeAllowList, ReactPerfConfig, find_initialized_binding, is_constructor_matching_name,
         react_perf_from_configuration, run_react_perf_rule, should_run_react_perf,
     },
 };
@@ -77,16 +77,24 @@ impl JsxNoNewFunctionAsProp {
 
     fn check_for_violation_on_ast_kind(
         kind: &AstKind<'_>,
-        _symbol_id: SymbolId,
+        symbol_id: SymbolId,
     ) -> Option<(/* decl */ Span, /* init */ Option<Span>)> {
+        // don't report init span, b/c thats usually an arrow function
+        // expression which gets quite large. It also doesn't add any value.
         match kind {
-            AstKind::VariableDeclarator(decl)
-                if decl.init.as_ref().and_then(check_expression).is_some() =>
-            {
-                // don't report init span, b/c thats usually an arrow
-                // function expression which gets quite large. It also
-                // doesn't add any value.
-                Some((decl.id.span(), None))
+            AstKind::VariableDeclarator(decl) => {
+                if decl.init.as_ref().and_then(check_expression).is_some() {
+                    return Some((decl.id.span(), None));
+                }
+                // look for destructuring defaults, e.g. `const { x = () => {} } = props`
+                let (id, init) = find_initialized_binding(&decl.id, symbol_id)?;
+                check_expression(init)?;
+                Some((id.span(), None))
+            }
+            AstKind::FormalParameter(param) => {
+                let (id, init) = find_initialized_binding(&param.pattern, symbol_id)?;
+                check_expression(init)?;
+                Some((id.span(), None))
             }
             AstKind::Function(f) => Some((f.id.as_ref().map_or(f.span, GetSpan::span), None)),
             _ => None,
@@ -176,6 +184,12 @@ fn test() {
           }",
             None,
         ),
+        (
+            r"const Foo = (props) => { const { x = () => {}, y } = props; return <Item prop={y} /> }",
+            None,
+        ),
+        (r"const Foo = (props) => { const { x = 5 } = props; return <Item prop={x} /> }", None),
+        (r"const DEFAULT_X = () => {}; const Foo = ({ x = DEFAULT_X }) => <Item prop={x} />", None),
         (r"<Item prop={function(){return true}} />", None),
         (r"<Item prop={() => true} />", None),
         (r"<Item prop={new Function('a', 'alert(a)')}/>", None),
@@ -226,6 +240,19 @@ fn test() {
     ];
 
     let fail = vec![
+        (r"const Foo = ({ x = () => {} }) => <Item prop={x} />", None),
+        (
+            r"const Foo = (props) => { const { x = () => {} } = props; return <Item prop={x} /> }",
+            None,
+        ),
+        (
+            r"const Foo = (props) => { const [x = () => {}] = props; return <Item prop={x} /> }",
+            None,
+        ),
+        (
+            r"const Foo = (props) => { const { a: { x = function() {} } } = props; return <Item prop={x} /> }",
+            None,
+        ),
         (r"const Foo = () => (<Item prop={function(){return true}} />)", None),
         (r"const Foo = () => (<Item prop={() => true} />)", None),
         (r"const Foo = () => (<Item prop={new Function('a', 'alert(a)')}/>)", None),
