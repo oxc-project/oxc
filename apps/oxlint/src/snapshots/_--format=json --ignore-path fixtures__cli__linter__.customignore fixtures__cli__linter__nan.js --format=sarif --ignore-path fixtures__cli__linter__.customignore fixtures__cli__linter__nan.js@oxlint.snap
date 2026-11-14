@@ -1,0 +1,41 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=json --ignore-path fixtures/cli/linter/.customignore fixtures/cli/linter/nan.js
+working directory: 
+----------
+{ "diagnostics": [],
+              "number_of_files": 0,
+              "number_of_rules": null,
+              "threads_count": 1,
+              "start_time": <variable>
+            }
+            ----------
+CLI result: LintNoFilesFound
+----------
+
+########## 
+arguments: --format=sarif --ignore-path fixtures/cli/linter/.customignore fixtures/cli/linter/nan.js
+working directory: 
+----------
+{
+  "version": "2.1.0",
+  "$schema": "https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "oxlint",
+          "version": "<variable>",
+          "semanticVersion": "<variable>",
+          "informationUri": "https://oxc.rs/docs/guide/usage/linter.html",
+          "rules": []
+        }
+      },
+      "results": []
+    }
+  ]
+}----------
+CLI result: LintNoFilesFound
+----------

@@ -21,6 +21,10 @@ const CONFIGURATION_NOTIFICATION_ID: &str = "OXL0999";
 pub struct SarifOutputFormatter;
 
 impl InternalFormatter for SarifOutputFormatter {
+    fn is_machine_readable(&self) -> bool {
+        true
+    }
+
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
         Box::<SarifReporter>::default()
     }
