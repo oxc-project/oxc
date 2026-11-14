@@ -315,6 +315,17 @@ fn build_object_fix<'a>(
         sorted_text.push(',');
     }
 
+    // A lifted trailing line comment must end before the untouched object suffix.
+    let suffix = ctx.source_range(Span::new(props.last()?.span.end, object.span.end));
+    if props[*indices.last()?].consumed_trailing_comma
+        && !suffix
+            .chars()
+            .take_while(|c| c.is_whitespace())
+            .any(|c| matches!(c, '\n' | '\r' | '\u{2028}' | '\u{2029}'))
+    {
+        sorted_text.push('\n');
+    }
+
     Some((Span::new(props[0].span.start, props[props.len() - 1].span.end), sorted_text))
 }
 
@@ -1475,6 +1486,15 @@ fn test() {
     // Add comprehensive fixer tests: the rule now advertises conditional fixes,
     // so provide expect_fix cases.
     let fix = vec![
+        // A moved line comment must not swallow the closing brace.
+        (
+            "export const config = { b: 1, // bee\n  a: 2 };",
+            "export const config = { a: 2,\n  b: 1, // bee\n };",
+        ),
+        (
+            "const config = { b: 1, // bee\r\n  a: 2 };",
+            "const config = { a: 2,\r\n  b: 1, // bee\n };",
+        ),
         // Past 20 properties, an unstable sort could swap the duplicate `b` keys.
         (
             "var obj = {n:0, b:1, g:2, t:3, i:4, s:5, h:6, b:7, c:8, u:9, r:10, q:11, d:12, f:13, j:14, l:15, p:16, e:17, a:18, k:19, o:20, m:21}",
