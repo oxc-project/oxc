@@ -6,7 +6,7 @@ use std::{
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
-    AllowWarnDeny,
+    AllowWarnDeny, RuleCategory,
     external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
     rules::{RULES, RuleEnum},
 };
@@ -80,6 +80,30 @@ pub struct Config {
     pub(crate) overrides: ResolvedOxlintOverrides,
 }
 
+impl LintConfig {
+    fn to_oxlintrc(&self, rules: OxlintRules) -> Oxlintrc {
+        let Self { plugins, external_plugins, settings, env, globals, path, options, metadata } =
+            self;
+        let ConfigFileMetadata { schema, ignore_patterns, extends } = metadata.as_ref();
+        Oxlintrc {
+            schema: schema.clone(),
+            plugins: Some(*plugins),
+            external_plugins: external_plugins.as_deref().cloned(),
+            categories: OxlintCategories::default(),
+            rules,
+            settings: settings.clone(),
+            env: env.clone(),
+            globals: globals.clone(),
+            overrides: OxlintOverrides::default(),
+            options: options.clone(),
+            path: path.clone().unwrap_or_default(),
+            ignore_patterns: ignore_patterns.clone(),
+            extends: extends.clone(),
+            extends_configs: Vec::new(),
+        }
+    }
+}
+
 impl Config {
     fn builtin_rule_plugins(plugins: LintPlugins) -> LintPlugins {
         plugins
@@ -131,19 +155,13 @@ impl Config {
     /// # Panics
     /// Panics if the configuration cannot be serialized as JSON.
     pub fn to_config_file(&self, external_plugin_store: &ExternalPluginStore) -> String {
-        let LintConfig {
-            plugins,
-            external_plugins,
-            settings,
-            env,
-            globals,
-            path,
-            options,
-            metadata,
-        } = self.base.config.as_ref();
-        let ConfigFileMetadata { schema, ignore_patterns, extends } = metadata.as_ref();
-        let mut overrides = OxlintOverrides::default();
-        overrides.extend(self.overrides.iter().map(|override_config| OxlintOverride {
+        let mut oxlintrc = self.base.config.to_oxlintrc(OxlintRules::from_resolved(
+            &self.base_rules,
+            &self.base.external_rules,
+            external_plugin_store,
+        ));
+        oxlintrc.categories = self.categories.clone();
+        oxlintrc.overrides.extend(self.overrides.iter().map(|override_config| OxlintOverride {
             files: override_config.files.clone(),
             exclude_files: override_config.exclude_files.clone(),
             env: override_config.env.clone(),
@@ -156,26 +174,6 @@ impl Config {
                 external_plugin_store,
             ),
         }));
-        let oxlintrc = Oxlintrc {
-            schema: schema.clone(),
-            plugins: Some(*plugins),
-            external_plugins: external_plugins.as_deref().cloned(),
-            categories: self.categories.clone(),
-            rules: OxlintRules::from_resolved(
-                &self.base_rules,
-                &self.base.external_rules,
-                external_plugin_store,
-            ),
-            settings: settings.clone(),
-            env: env.clone(),
-            globals: globals.clone(),
-            overrides,
-            options: options.clone(),
-            path: path.clone().unwrap_or_default(),
-            ignore_patterns: ignore_patterns.clone(),
-            extends: extends.clone(),
-            extends_configs: Vec::new(),
-        };
         serde_json::to_string_pretty(&oxlintrc).unwrap()
     }
 
@@ -369,6 +367,24 @@ impl ConfigStore {
     /// Panics if the configuration cannot be serialized as JSON.
     pub fn to_config_file(&self) -> String {
         self.base.to_config_file(&self.external_plugin_store)
+    }
+
+    /// Serializes the effective configuration selected by [`Self::resolve`] for a file.
+    ///
+    /// # Panics
+    /// Panics if the configuration cannot be serialized as JSON.
+    pub fn to_config_file_for_path(&self, path: &Path) -> String {
+        let resolved = self.resolve(path);
+        let mut oxlintrc = resolved.config.to_oxlintrc(OxlintRules::from_resolved(
+            &resolved.rules,
+            &resolved.external_rules,
+            &self.external_plugin_store,
+        ));
+        oxlintrc.categories.insert(RuleCategory::Correctness, AllowWarnDeny::Allow);
+        oxlintrc.extends.clear();
+        oxlintrc.ignore_patterns.clear();
+        oxlintrc.options = self.base.base.config.options.clone();
+        serde_json::to_string_pretty(&oxlintrc).unwrap()
     }
 
     /// Returns the total number of rules, inclusive of JS Plugin rules and overrides, optionally filtering out tsgolint rules if type_aware_enabled is false.
@@ -1731,6 +1747,75 @@ mod test {
     }
 
     #[test]
+    fn test_print_config_for_path_flattens_selected_config() {
+        let root = config_from_str_with_defaults(
+            r#"{
+                "options": { "maxWarnings": 3, "typeAware": true },
+                "globals": { "rootGlobal": "readonly" }
+            }"#,
+        );
+        let mut nested = config_from_str_with_defaults(
+            r#"{
+                "$schema": "nested-schema",
+                "plugins": ["unicorn"],
+                "extends": ["fixtures/extends_config/metadata.json"],
+                "ignorePatterns": ["dist"],
+                "env": { "browser": true },
+                "globals": { "nestedGlobal": "readonly" },
+                "settings": { "custom": { "enabled": true } },
+                "options": { "maxWarnings": 99, "typeAware": false },
+                "overrides": [{
+                    "files": ["src/*.ts"],
+                    "excludeFiles": ["src/*.skip.ts"],
+                    "plugins": ["react"],
+                    "env": { "browser": false, "node": true },
+                    "globals": { "nestedGlobal": "off", "typedGlobal": "writable" },
+                    "rules": { "react/no-danger": "error" }
+                }]
+            }"#,
+        );
+        Arc::make_mut(&mut nested.base.config).path = Some(PathBuf::from("nested/.oxlintrc.json"));
+        let store = ConfigStore::new(
+            root,
+            FxHashMap::from_iter([(PathBuf::from("nested"), nested)]),
+            ExternalPluginStore::default(),
+        );
+
+        for (path, matches_override) in
+            [("nested/src/file.ts", true), ("nested/src/file.skip.ts", false)]
+        {
+            let printed: Value =
+                serde_json::from_str(&store.to_config_file_for_path(Path::new(path))).unwrap();
+            assert_eq!(printed["$schema"], "nested-schema");
+            assert_eq!(printed["categories"], json!({ "correctness": "allow" }));
+            assert!(printed.get("extends").is_none());
+            assert_eq!(printed["ignorePatterns"], json!([]));
+            assert!(printed.get("overrides").is_none());
+            assert_eq!(printed["env"]["browser"], !matches_override);
+            assert_eq!(printed["env"].get("node"), matches_override.then_some(&json!(true)));
+            assert_eq!(
+                printed["globals"]["nestedGlobal"],
+                if matches_override { "off" } else { "readonly" }
+            );
+            assert!(printed["globals"].get("rootGlobal").is_none());
+            assert_eq!(
+                printed["globals"].get("typedGlobal"),
+                matches_override.then_some(&json!("writable"))
+            );
+            assert_eq!(printed["settings"]["custom"], json!({ "enabled": true }));
+            assert_eq!(printed["options"], json!({ "maxWarnings": 3, "typeAware": true }));
+            assert_eq!(
+                printed["plugins"].as_array().unwrap().contains(&json!("react")),
+                matches_override
+            );
+            assert_eq!(
+                printed["rules"].get("react/no-danger"),
+                matches_override.then_some(&json!("deny"))
+            );
+        }
+    }
+
+    #[test]
     fn test_print_config_inherited_js_plugins() {
         let path = PathBuf::from("fixtures/extends_config/js_plugins.json");
         let base = Oxlintrc::from_file(&path).unwrap();
@@ -1822,7 +1907,10 @@ mod test {
     fn test_resolved_rule_options() {
         let root = config_from_str_with_defaults(
             r#"{
-                "rules": { "no-console": ["error", { "allow": ["warn"] }] },
+                "rules": {
+                    "no-console": ["error", { "allow": ["warn"] }],
+                    "no-unused-vars": "off"
+                },
                 "overrides": [
                     {
                         "files": ["**/*.ts"],
@@ -1871,6 +1959,34 @@ mod test {
 
         let disabled = store.resolve(Path::new("file.disabled.ts"));
         assert!(!disabled.rules.iter().any(|(rule, _)| rule.name() == "no-console"));
+
+        for path in [
+            "file.js",
+            "file.ts",
+            "file.skip.ts",
+            "file.test.ts",
+            "file.defaults.ts",
+            "file.reenabled.ts",
+            "file.disabled.ts",
+            "nested/file.ts",
+        ] {
+            let resolved = store.resolve(Path::new(path));
+            let printed = store.to_config_file_for_path(Path::new(path));
+            let reloaded = config_from_str_with_defaults(&printed);
+            assert_eq!(
+                reloaded
+                    .rules()
+                    .iter()
+                    .map(|(rule, config)| (rule.id(), config))
+                    .collect::<FxHashMap<_, _>>(),
+                resolved
+                    .rules
+                    .iter()
+                    .map(|(rule, config)| (rule.id(), config))
+                    .collect::<FxHashMap<_, _>>(),
+                "{path}"
+            );
+        }
     }
 
     #[test]
