@@ -51,7 +51,7 @@ unsafe fn kw_verify_batch<const IS_TS: bool>(
         // Candidates are code-level identifier starts (carve cleared every
         // literal interior and JSX start from the masks), so the incumbent
         // kind is IDENT: select over it instead of a read-modify-write.
-        kinds.set(p, kw_match::<IS_TS>(src.as_ptr().add(p), len, cpu) as u8);
+        kinds.as_ptr().add(p).write(kw_match::<IS_TS>(src.as_ptr().add(p), len, cpu) as u8);
     }
 }
 
@@ -145,8 +145,8 @@ mod tests {
                 kw_flush(
                     is_ts,
                     Source::new(&src, src.len() - PAD),
-                    Bitmap::new(word_bitmap.as_mut_ptr()),
-                    Kinds::new(kinds.as_mut_ptr()),
+                    Bitmap::new(&mut word_bitmap),
+                    Kinds::new(&mut kinds),
                     positions.as_ptr(),
                     positions.len(),
                     cpu,

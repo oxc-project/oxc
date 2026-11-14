@@ -1,5 +1,3 @@
-use std::ptr;
-
 use oxc_simd::{Cpu, cpu_multiversion};
 
 use crate::pipeline::{
@@ -12,7 +10,7 @@ use crate::pipeline::{
 
 #[cpu_multiversion]
 #[inline]
-pub(super) unsafe fn jsx_names_equal_fast(
+pub(super) fn jsx_names_equal_fast(
     src: Source,
     word: Bitmap,
     a: usize,
@@ -31,8 +29,7 @@ pub(super) unsafe fn jsx_names_equal_fast(
         && ce < 0x80
         && !(is_ws(ce, cpu) && !is_word(src[e + 1], cpu) && jsx_name_continues_after(src, e, cpu))
     {
-        let x = ptr::read_unaligned(src.as_ptr().add(a) as *const u64);
-        let y = ptr::read_unaligned(src.as_ptr().add(b) as *const u64);
+        let (x, y) = (src.u64_at(a), src.u64_at(b));
         let mask = if len == 8 { !0u64 } else { (1u64 << (len * 8)) - 1 };
         if (x ^ y) & mask != 0 {
             return false;

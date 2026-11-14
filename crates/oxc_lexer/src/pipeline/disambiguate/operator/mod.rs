@@ -28,7 +28,7 @@ use crate::token::{OP_KIND_BASE, is_trivia_byte, matches_tk, tk};
 use crate::pipeline::keywords::is_regex_keyword;
 
 use super::{
-    common::{TokensView, bits},
+    common::TokensView,
     context::{self, After, Walks},
 };
 
@@ -64,11 +64,11 @@ pub fn not_operator_position(
     let is_ts = tokens.is_ts;
     let is_module = tokens.is_module;
     let src = tokens.src;
-    let mut q = bits::prev1(tokens.token_start, p, cpu);
+    let mut q = tokens.token_start.prev1(p, cpu);
     while let Some(qi) = q {
-        let k = tokens.kinds[qi];
+        let k = tokens.kinds.get(qi);
         if is_trivia_byte(k, cpu) {
-            q = bits::prev1(tokens.token_start, qi, cpu);
+            q = tokens.token_start.prev1(qi, cpu);
             continue;
         }
         if k == tk!(String) {
@@ -170,7 +170,7 @@ fn ends_decl(
 #[cpu_multiversion]
 fn paren_close_is_regex(tokens: &TokensView, qi: usize, cpu: impl Cpu) -> bool {
     let word = |p: Option<usize>| {
-        p.filter(|&w| tokens.kinds[w] == tk!(Ident) && !tokens.property_name(w, cpu))
+        p.filter(|&w| tokens.kinds.get(w) == tk!(Ident) && !tokens.property_name(w, cpu))
     };
     let Some(w) = tokens.match_delim_back(qi, cpu).and_then(|lp| word(tokens.prev_sig(lp, cpu)))
     else {

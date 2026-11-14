@@ -1,6 +1,6 @@
 use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
 
-use crate::{error::DiagCode, options::LexOptions, token::tk};
+use crate::{error::DiagCode, options::LexOptions, token::TokenKind};
 
 use crate::pipeline::{
     bitmap::{Bitmap, Bitmaps},
@@ -21,7 +21,7 @@ use super::{
     },
     common::{
         OPENER_BYTES, OPENER8_BYTES, is_unicode_escape_brace, lex_hashbang,
-        lex_jsx_attribute_string, lex_slash, lex_string, lex_template_segment,
+        lex_jsx_attribute_string, lex_slash, lex_string, lex_template_segment, mark_token,
         skip_unicode_brace_escape,
     },
 };
@@ -78,7 +78,7 @@ enum JsxFrameKind {
 
 /// JSX-aware carve: JS, tag and text modes over one stack of open frames.
 #[cpu_multiversion]
-pub(super) unsafe fn carve_jsx(lex: Lex, state: &mut LexState, cpu: impl Cpu) {
+pub(super) fn carve_jsx(lex: Lex, state: &mut LexState, cpu: impl Cpu) {
     let LexState { lanes, disambiguate, jsx_stack, diag_suppress, .. } = state;
     jsx_stack.clear();
     let mut carve = JsxCarve {
@@ -104,7 +104,7 @@ pub(super) unsafe fn carve_jsx(lex: Lex, state: &mut LexState, cpu: impl Cpu) {
 struct JsxCarve<'a> {
     lex: Lex<'a>,
     /// Copies of the bitmaps and options in lex, so each stop doesn't load them again.
-    bitmaps: Bitmaps,
+    bitmaps: Bitmaps<'a>,
     options: LexOptions,
     lanes: &'a mut Lanes,
     disambiguate: &'a mut DisambiguateState,
@@ -121,7 +121,7 @@ impl JsxCarve<'_> {
     /// Carve from i to the next stop of the current mode; None once the source is done.
     #[cpu_multiversion]
     #[inline(always)]
-    unsafe fn step(&mut self, i: usize, cpu: impl Cpu) -> Option<usize> {
+    fn step(&mut self, i: usize, cpu: impl Cpu) -> Option<usize> {
         match self.mode {
             JsxMode::Js => self.js(i, cpu),
             JsxMode::Tag => self.tag(i, cpu),
@@ -131,7 +131,7 @@ impl JsxCarve<'_> {
 
     #[cpu_multiversion]
     #[inline(always)]
-    unsafe fn js(&mut self, i: usize, cpu: impl Cpu) -> Option<usize> {
+    fn js(&mut self, i: usize, cpu: impl Cpu) -> Option<usize> {
         let Lex { src, kinds, .. } = self.lex;
         let Bitmaps { token_start, op_char, .. } = self.bitmaps;
         let module = self.options.source_type_module;
@@ -151,7 +151,7 @@ impl JsxCarve<'_> {
         let c = src[s];
         Some(match c {
             b'"' | b'\'' => lex_string(src, token_start, kinds, s, c, self.lanes, cpu),
-            b'`' => self.template(s, tk!(TemplateHead), tk!(TemplateNoSub), cpu),
+            b'`' => self.template(s, TokenKind::TemplateHead, TokenKind::TemplateNoSub, cpu),
             b'{' if is_unicode_escape_brace(src, s, cpu) => skip_unicode_brace_escape(src, s, cpu),
             b'{' => {
                 if let Some(f) = self.stack.last_mut() {
@@ -173,7 +173,7 @@ impl JsxCarve<'_> {
     /// A < in JS mode: an HTML open comment, a shift, a comparison, or the start of an element.
     #[cpu_multiversion]
     #[inline(always)]
-    unsafe fn js_less_than(&mut self, s: usize, cpu: impl Cpu) -> usize {
+    fn js_less_than(&mut self, s: usize, cpu: impl Cpu) -> usize {
         let Lex { src, kinds, .. } = self.lex;
         let Bitmaps { token_start, op_char, .. } = self.bitmaps;
         let module = self.options.source_type_module;
@@ -211,7 +211,7 @@ impl JsxCarve<'_> {
     /// A } in JS mode closes a nested brace, a template substitution or an expression container.
     #[cpu_multiversion]
     #[inline(always)]
-    unsafe fn close_brace(&mut self, s: usize, cpu: impl Cpu) -> usize {
+    fn close_brace(&mut self, s: usize, cpu: impl Cpu) -> usize {
         match self.stack.last_mut() {
             Some(f) if f.depth > 0 => {
                 f.depth -= 1;
@@ -219,7 +219,7 @@ impl JsxCarve<'_> {
             }
             Some(f) if f.kind == JsxFrameKind::TemplateSub => {
                 self.stack.pop();
-                self.template(s, tk!(TemplateMiddle), tk!(TemplateTail), cpu)
+                self.template(s, TokenKind::TemplateMiddle, TokenKind::TemplateTail, cpu)
             }
             Some(f) if f.kind == JsxFrameKind::Container => self.close(s + 1),
             _ => s + 1,
@@ -229,7 +229,7 @@ impl JsxCarve<'_> {
     /// Lex the template segment at s, opening a substitution frame if it ends in a dollar brace.
     #[cpu_multiversion]
     #[inline(always)]
-    unsafe fn template(&mut self, s: usize, head: u8, flat: u8, cpu: impl Cpu) -> usize {
+    fn template(&mut self, s: usize, head: TokenKind, flat: TokenKind, cpu: impl Cpu) -> usize {
         let Lex { src, kinds, .. } = self.lex;
         let token_start = self.bitmaps.token_start;
         let (end, opened) =
@@ -242,7 +242,7 @@ impl JsxCarve<'_> {
 
     #[cpu_multiversion]
     #[inline(always)]
-    unsafe fn tag(&mut self, i: usize, cpu: impl Cpu) -> Option<usize> {
+    fn tag(&mut self, i: usize, cpu: impl Cpu) -> Option<usize> {
         let Lex { src, bitmaps, kinds, .. } = self.lex;
         let Bitmaps { token_start, keyword_initial, op_char, .. } = self.bitmaps;
         let s = find(src, i, JSX_TAG_BYTES, cpu);
@@ -283,7 +283,7 @@ impl JsxCarve<'_> {
                 if let Some(f @ JsxFrame { kind: JsxFrameKind::Tag, .. }) = self.stack.last_mut() {
                     f.kind = JsxFrameKind::Element;
                 }
-                jsx_punct(kinds, op_char, s, tk!(Gt), cpu);
+                jsx_punct(kinds, op_char, s, TokenKind::Gt, cpu);
                 self.mode = JsxMode::Text;
                 self.text_start = s + 1;
                 s + 1
@@ -295,7 +295,7 @@ impl JsxCarve<'_> {
     /// A / in a tag: a comment, or the /> that closes the tag, with any trivia between the two.
     #[cpu_multiversion]
     #[inline(always)]
-    unsafe fn tag_slash(&mut self, s: usize, cpu: impl Cpu) -> usize {
+    fn tag_slash(&mut self, s: usize, cpu: impl Cpu) -> usize {
         let Lex { src, kinds, .. } = self.lex;
         let Bitmaps { token_start, op_char, .. } = self.bitmaps;
         let d = if s + 1 < src.len() { src[s + 1] } else { 0 };
@@ -314,13 +314,13 @@ impl JsxCarve<'_> {
         };
         // Carve the comments between the / and the >, since the carve resumes past the >.
         self.lex_comments(s + 1, gt, cpu);
-        jsx_punct(kinds, op_char, gt, tk!(JsxTagEnd), cpu);
+        jsx_punct(kinds, op_char, gt, TokenKind::JsxTagEnd, cpu);
         self.close(gt + 1)
     }
 
     #[cpu_multiversion]
     #[inline(always)]
-    unsafe fn text(&mut self, i: usize, cpu: impl Cpu) -> Option<usize> {
+    fn text(&mut self, i: usize, cpu: impl Cpu) -> Option<usize> {
         let Lex { src, kinds, .. } = self.lex;
         let Bitmaps { token_start, word, keyword_initial, op_char, digit, dot, .. } = self.bitmaps;
         let s = find(src, i, JSX_TEXT_BYTES, cpu);
@@ -328,14 +328,14 @@ impl JsxCarve<'_> {
         let start = self.text_start;
         if run_end > start {
             // One text token for the run, its start byte cleared of everything coalesce reads.
-            token_start.set(start, cpu);
-            kinds.set(start, tk!(JsxText));
-            op_char.clear(start, cpu);
-            digit.clear(start, cpu);
-            dot.clear(start, cpu);
-            keyword_initial.clear(start, cpu);
-            if run_end > start + 1 {
-                token_start.clear_range(start + 1, run_end - 1, cpu);
+            // SAFETY: start < run_end <= src.len(), and carve cut the handles to the source.
+            unsafe {
+                token_start.set_unchecked(start, cpu);
+                op_char.clear_unchecked(start, cpu);
+                digit.clear_unchecked(start, cpu);
+                dot.clear_unchecked(start, cpu);
+                keyword_initial.clear_unchecked(start, cpu);
+                mark_token(token_start, kinds, start, run_end, TokenKind::JsxText, cpu);
             }
         }
         if s >= src.len() {
@@ -363,7 +363,7 @@ impl JsxCarve<'_> {
     /// A < in text: a closing tag, a child element or fragment, or a stray < left in the text.
     #[cpu_multiversion]
     #[inline(always)]
-    unsafe fn text_less_than(&mut self, s: usize, cpu: impl Cpu) -> usize {
+    fn text_less_than(&mut self, s: usize, cpu: impl Cpu) -> usize {
         let src = self.lex.src;
         // Trivia may follow: a comment, or Unicode whitespace whose lead byte passes for a name.
         let c1 = if s + 1 < src.len() { src[s + 1] } else { 0 };
@@ -389,7 +389,7 @@ impl JsxCarve<'_> {
     /// The closing tag whose < is at s and / at slash: carve its trivia, check its name, close it.
     #[cpu_multiversion]
     #[inline(always)]
-    unsafe fn close_tag(&mut self, s: usize, slash: usize, cpu: impl Cpu) -> usize {
+    fn close_tag(&mut self, s: usize, slash: usize, cpu: impl Cpu) -> usize {
         let Lex { src, bitmaps, kinds, .. } = self.lex;
         let Bitmaps { token_start, word, keyword_initial, op_char, .. } = self.bitmaps;
         // Carve the comments between the < and the /, since the carve resumes past the >.
@@ -407,9 +407,9 @@ impl JsxCarve<'_> {
             // A closing tag name holds no expression container, so its hyphens all belong to it.
             jsx_glue_hyphens(src, bitmaps, slash + 1, gt, cpu);
         }
-        jsx_punct(kinds, op_char, s, tk!(JsxLt), cpu);
+        jsx_punct(kinds, op_char, s, TokenKind::JsxLt, cpu);
         if gt < src.len() {
-            jsx_punct(kinds, op_char, gt, tk!(JsxTagEnd), cpu);
+            jsx_punct(kinds, op_char, gt, TokenKind::JsxTagEnd, cpu);
         }
         let after = if gt < src.len() { gt + 1 } else { src.len() };
         if gt >= src.len() {
@@ -432,7 +432,7 @@ impl JsxCarve<'_> {
     /// Lex the comments between from and to, where there is only trivia.
     #[cpu_multiversion]
     #[inline(always)]
-    unsafe fn lex_comments(&mut self, from: usize, to: usize, cpu: impl Cpu) {
+    fn lex_comments(&mut self, from: usize, to: usize, cpu: impl Cpu) {
         let Lex { src, kinds, .. } = self.lex;
         let mut q = from;
         while q < to {
@@ -443,8 +443,8 @@ impl JsxCarve<'_> {
     /// Open the tag whose < is at s and whose name starts at name_pos.
     #[cpu_multiversion]
     #[inline(always)]
-    unsafe fn open_tag(&mut self, s: usize, name_pos: usize, cpu: impl Cpu) {
-        jsx_punct(self.lex.kinds, self.bitmaps.op_char, s, tk!(JsxLt), cpu);
+    fn open_tag(&mut self, s: usize, name_pos: usize, cpu: impl Cpu) {
+        jsx_punct(self.lex.kinds, self.bitmaps.op_char, s, TokenKind::JsxLt, cpu);
         self.open(JsxFrameKind::Tag, s, name_pos);
     }
 
@@ -496,7 +496,7 @@ impl JsxCarve<'_> {
 #[cpu_version(Generic)]
 #[cold]
 #[inline(never)]
-unsafe fn restore_escaped_container(
+fn restore_escaped_container(
     src: Source,
     token_start: Bitmap,
     word: Bitmap,
@@ -512,7 +512,7 @@ unsafe fn restore_escaped_container(
     }
     if src[i] == b'\\' && src[i + 1] == b'u' {
         token_start.set(i, cpu);
-        kinds.set(i, tk!(IdentEscaped));
+        kinds.set(i, TokenKind::IdentEscaped);
         i = scan_ident_esc(src, i, cpu);
     }
     if src[i] == b'}' {
@@ -523,7 +523,7 @@ unsafe fn restore_escaped_container(
 /// Set a JSX punctuator's kind and clear its op_char bit so coalesce cannot fuse it.
 #[cpu_multiversion]
 #[inline(always)]
-unsafe fn jsx_punct(kinds: Kinds, op_char: Bitmap, off: usize, k: u8, cpu: impl Cpu) {
+fn jsx_punct(kinds: Kinds, op_char: Bitmap, off: usize, k: TokenKind, cpu: impl Cpu) {
     kinds.set(off, k);
     op_char.clear(off, cpu);
 }

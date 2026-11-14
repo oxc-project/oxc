@@ -1,11 +1,15 @@
 use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
 use oxc_span::Span;
 
-use crate::{error::DiagCode, token::tk};
+use crate::{
+    error::DiagCode,
+    token::{TokenKind, tk},
+};
 
 use crate::pipeline::{
-    bitmap::Bitmaps,
+    bitmap::{Bitmap, Bitmaps},
     bytes::is_id_start,
+    kinds::Kinds,
     lex::{Lex, LexState},
     scan::scan_ident_esc,
     source::Source,
@@ -13,7 +17,7 @@ use crate::pipeline::{
 
 #[cpu_multiversion]
 #[inline(never)]
-pub unsafe fn misc_pre(lex: Lex, state: &mut LexState, cpu: impl Cpu) -> usize {
+pub fn misc_pre(lex: Lex, state: &mut LexState, cpu: impl Cpu) -> usize {
     if !lex.bitmaps.misc.any(lex.src.block_count(), cpu) {
         return 0;
     }
@@ -32,7 +36,7 @@ pub unsafe fn misc_pre(lex: Lex, state: &mut LexState, cpu: impl Cpu) -> usize {
 /// `#[inline(always)]` so it gets compiled as part of each of [`misc_pre`]'s entry points.
 #[cpu_multiversion]
 #[inline(always)]
-unsafe fn misc_pre_impl<const VALIDATE_UTF8: bool>(
+fn misc_pre_impl<const VALIDATE_UTF8: bool>(
     lex: Lex,
     state: &mut LexState,
     cpu: impl Cpu,
@@ -103,7 +107,7 @@ unsafe fn misc_pre_impl<const VALIDATE_UTF8: bool>(
                 }
                 let len = src.unicode_ws_len_at(p, cpu);
                 if len != 0 {
-                    kinds.set(p, tk!(Whitespace));
+                    kinds.set(p, TokenKind::Whitespace);
                     word.clear_range(p, p + len - 1, cpu);
                     token_start.set(p, cpu);
                     token_start.clear_range(p + 1, p + len - 1, cpu);
@@ -142,11 +146,11 @@ unsafe fn misc_pre_impl<const VALIDATE_UTF8: bool>(
                 let e =
                     if src[e0] == b'\\' && src[e0 + 1] == b'u' && !holds_unicode_ws(src, p + 1, e0)
                     {
-                        kinds.set(p, tk!(PrivateIdentEscaped));
+                        kinds.set(p, TokenKind::PrivateIdentEscaped);
                         escaped_ident_count += 1;
                         scan_ident_esc(src, e0, cpu)
                     } else {
-                        kinds.set(p, tk!(PrivateIdent));
+                        kinds.set(p, TokenKind::PrivateIdent);
                         e0
                     };
                 token_start.clear_range(p + 1, e - 1, cpu);
@@ -154,7 +158,7 @@ unsafe fn misc_pre_impl<const VALIDATE_UTF8: bool>(
                 if src[p + 1] != b'u' {
                     continue;
                 }
-                kinds.set(p, tk!(IdentEscaped));
+                kinds.set(p, TokenKind::IdentEscaped);
                 escaped_ident_count += 1;
                 let e = scan_ident_esc(src, p, cpu);
                 token_start.clear_range(p + 1, e - 1, cpu);
@@ -168,17 +172,12 @@ unsafe fn misc_pre_impl<const VALIDATE_UTF8: bool>(
 #[cpu_version(Generic)]
 #[cold]
 #[inline(never)]
-pub fn retain_code_whitespace(st: &[u64], kind: &[u8], spans: &mut Vec<Span>) {
+pub fn retain_code_whitespace(token_start: Bitmap, kinds: Kinds, spans: &mut Vec<Span>) {
+    let cpu = BASELINE;
+
     spans.retain(|span| {
-        let p = span.start as usize;
-        let mut w = p >> 6;
-        let mut bits = st[w] & (u64::MAX >> (63 - (p & 63)));
-        while bits == 0 {
-            let Some(prev) = w.checked_sub(1) else { return false };
-            w = prev;
-            bits = st[w];
-        }
-        kind[(w << 6) + 63 - bits.leading_zeros() as usize] == tk!(Whitespace)
+        let token = token_start.prev1(span.start as usize + 1, cpu);
+        token.is_some_and(|q| kinds.get(q) == tk!(Whitespace))
     });
 }
 

@@ -1,7 +1,7 @@
 use oxc_ast::{Comment, CommentContent, CommentKind};
 use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
 
-use crate::{error::DiagCode, token::tk};
+use crate::{error::DiagCode, token::TokenKind};
 
 use crate::pipeline::{
     bitmap::Bitmap,
@@ -12,12 +12,12 @@ use crate::pipeline::{
     source::Source,
 };
 
-use super::common::find_line_terminator;
+use super::common::{find_line_terminator, mark_token};
 
 /// Lex the `//` line comment at `s`. Returns the resume index.
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn lex_line_comment(
+pub(super) fn lex_line_comment(
     src: Source,
     token_start: Bitmap,
     kinds: Kinds,
@@ -26,10 +26,8 @@ pub(super) unsafe fn lex_line_comment(
     cpu: impl Cpu,
 ) -> usize {
     let (end, license_at) = scan_line_comment(src, s + 2, cpu);
-    kinds.set(s, tk!(LineComment));
-    if end > s + 1 {
-        token_start.clear_range(s + 1, end - 1, cpu);
-    }
+    // SAFETY: scan_line_comment ends at most at src.len().
+    unsafe { mark_token(token_start, kinds, s, end, TokenKind::LineComment, cpu) };
     if end < src.len() {
         token_start.set(end, cpu);
     }
@@ -49,7 +47,7 @@ pub(super) unsafe fn lex_line_comment(
 /// Returns the resume index.
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn lex_block_comment(
+pub(super) fn lex_block_comment(
     src: Source,
     token_start: Bitmap,
     kinds: Kinds,
@@ -62,10 +60,8 @@ pub(super) unsafe fn lex_block_comment(
     if e >= src.len() {
         lanes.push_diag(s as u32, (src.len() - s) as u32, DiagCode::UnterminatedBlockComment);
     }
-    kinds.set(s, tk!(BlockComment));
-    if end > s + 1 {
-        token_start.clear_range(s + 1, end - 1, cpu);
-    }
+    // SAFETY: end is at most src.len().
+    unsafe { mark_token(token_start, kinds, s, end, TokenKind::BlockComment, cpu) };
 
     let body = comment_body(src.bytes(), s as u32, end as u32, true, cpu);
     let m = if e < src.len() {
@@ -115,7 +111,7 @@ pub(super) unsafe fn lex_block_comment(
 /// Lex the comment starting at s and return its end, or s + 1 if no comment starts there.
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn lex_comment_at(
+pub(super) fn lex_comment_at(
     src: Source,
     token_start: Bitmap,
     kinds: Kinds,
@@ -152,7 +148,7 @@ pub(super) fn html_open_comment_at(src: Source, s: usize, module: bool, cpu: imp
 #[cpu_version(Generic)]
 #[cold]
 #[inline(never)]
-pub(super) unsafe fn lex_html_open_comment(
+pub(super) fn lex_html_open_comment(
     src: Source,
     token_start: Bitmap,
     kinds: Kinds,
@@ -167,7 +163,7 @@ pub(super) unsafe fn lex_html_open_comment(
         lanes.push_diag(s as u32, 4, DiagCode::HtmlCommentInModule);
     }
     let end = find_line_terminator(src, s + 4, cpu);
-    kinds.set(s, tk!(LineComment));
+    kinds.set(s, TokenKind::LineComment);
     if end > s + 1 {
         token_start.clear_range(s + 1, end - 1, cpu);
     }
@@ -205,7 +201,7 @@ pub(super) fn html_close_comment_at(src: Source, s: usize, module: bool, cpu: im
 #[cpu_version(Generic)]
 #[cold]
 #[inline(never)]
-pub(super) unsafe fn lex_html_close_comment(
+pub(super) fn lex_html_close_comment(
     src: Source,
     token_start: Bitmap,
     kinds: Kinds,
@@ -217,7 +213,7 @@ pub(super) unsafe fn lex_html_close_comment(
 
     let start = s - 2;
     let end = find_line_terminator(src, s + 1, cpu);
-    kinds.set(start, tk!(LineComment));
+    kinds.set(start, TokenKind::LineComment);
     token_start.set(start, cpu);
     if end > start + 1 {
         token_start.clear_range(start + 1, end - 1, cpu);

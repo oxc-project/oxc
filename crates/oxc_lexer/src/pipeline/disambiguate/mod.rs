@@ -104,13 +104,13 @@ impl DisambiguateState {
 
     #[cpu_multiversion]
     #[inline(always)]
-    unsafe fn view<'a>(&'a self, lex: Lex<'a>, kw_final: usize, cpu: impl Cpu) -> TokensView<'a> {
+    fn view<'a>(&'a self, lex: Lex<'a>, kw_final: usize, cpu: impl Cpu) -> TokensView<'a> {
         TokensView::new(lex, kw_final, &self.shared, cpu)
     }
 
     #[cpu_multiversion]
     #[inline(always)]
-    unsafe fn view_and_walks<'a>(
+    fn view_and_walks<'a>(
         &'a mut self,
         lex: Lex<'a>,
         kw_final: usize,
@@ -119,25 +119,22 @@ impl DisambiguateState {
         (TokensView::new(lex, kw_final, &self.shared, cpu), &mut self.walks)
     }
 
-    /// Safety: as for TokensView::new.
     #[cpu_multiversion]
     #[inline(always)]
-    pub unsafe fn prev_sig(&self, lex: Lex, pos: usize, cpu: impl Cpu) -> Option<usize> {
+    pub fn prev_sig(&self, lex: Lex, pos: usize, cpu: impl Cpu) -> Option<usize> {
         self.view(lex, 0, cpu).prev_sig(pos, cpu)
     }
 
-    /// Safety: as for TokensView::new.
     #[cpu_multiversion]
     #[inline(always)]
-    pub unsafe fn not_operator_position(&mut self, lex: Lex, p: usize, cpu: impl Cpu) -> bool {
+    pub fn not_operator_position(&mut self, lex: Lex, p: usize, cpu: impl Cpu) -> bool {
         let (tokens, walks) = self.view_and_walks(lex, 0, cpu);
         operator::not_operator_position(&tokens, walks, p, cpu)
     }
 
-    /// Safety: as for TokensView::new.
     #[cpu_multiversion]
     #[inline(always)]
-    pub unsafe fn gt_run_split(
+    pub fn gt_run_split(
         &mut self,
         lex: Lex,
         kw_final: usize,
@@ -149,17 +146,15 @@ impl DisambiguateState {
         type_context::gt_run_split(&tokens, walks, p, run, cpu)
     }
 
-    /// Safety: as for TokensView::new.
     #[cpu_multiversion]
     #[inline(always)]
-    pub unsafe fn lt_run_split(&self, lex: Lex, lt: usize, cpu: impl Cpu) -> bool {
+    pub fn lt_run_split(&self, lex: Lex, lt: usize, cpu: impl Cpu) -> bool {
         type_context::lt_run_split(&self.view(lex, 0, cpu), lt, cpu)
     }
 
-    /// Safety: as for TokensView::new.
     #[cpu_multiversion]
     #[inline(always)]
-    pub unsafe fn jsx_over_generic(
+    pub fn jsx_over_generic(
         &mut self,
         lex: Lex,
         lt: usize,

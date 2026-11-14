@@ -23,9 +23,6 @@ mod keywords;
 pub use keywords::KWB;
 use keywords::{kw_flush, kw_match_word};
 
-/// [`glue_number`] computes the kind as `NUM + is_bigint` - keep them adjacent.
-const _: () = assert!(tk!(BigInt) == tk!(Number) + 1);
-
 #[cpu_multiversion]
 #[inline(never)]
 pub unsafe fn coalesce(
@@ -36,14 +33,15 @@ pub unsafe fn coalesce(
     cpu: impl Cpu,
 ) {
     let Lex { src, bitmaps, kinds, options } = lex;
-    let Bitmaps { token_start, word, keyword_initial, op_char, digit, dot, .. } = *bitmaps;
+    let block_count = src.block_count();
+    let Bitmaps { token_start, word, keyword_initial, op_char, digit, dot, .. } =
+        bitmaps.first(block_count + 1);
     let is_ts = options.ts;
     state.disambiguate.restart(cpu);
     // Events are collected branchlessly and handled per batch. Unset masks are never read
     let mut rare_masks = [const { MaybeUninit::<u64>::uninit() }; KWB];
     let mut event_count = 0usize;
     let mut prev_empty = false;
-    let block_count = src.block_count();
     let mut op_prev: u64 = 0;
     let mut dot_prev: u64 = 0;
     let mut cursor: usize = 0;
@@ -218,8 +216,8 @@ unsafe fn coalesce_events(
         if (rare >> bit) & 1 != 0 {
             cursor = glue_number(lex, p, lanes, disambiguate, cpu);
         } else {
-            let op = op_char.block(w, cpu);
-            let op_next = if has_next { op_char.block(w + 1, cpu) } else { 0 };
+            let op = *op_char.as_ptr().add(w);
+            let op_next = if has_next { *op_char.as_ptr().add(w + 1) } else { 0 };
             let y2 = (op >> bit) | ((op_next << (63 - bit)) << 1);
             let run = (!y2).trailing_zeros() as usize;
             let q = src.u32_at(p);
@@ -268,7 +266,8 @@ unsafe fn fuse_pair(kinds: Kinds, token_start: Bitmap, p: usize, q: u32, cpu: im
     let kk = (pack >> 24) as u8;
     ok &= !((kk == tk!(OptionalChain)) && is_digit((q >> 16) as u8, cpu));
     let hm: u8 = 0u8.wrapping_sub(ok as u8);
-    kinds.set(p, (kinds.get(p) & !hm) | (kk & hm));
+    let k = kinds.as_ptr().add(p);
+    *k = (*k & !hm) | (kk & hm);
     let clr = (ok as u64) << ((p + 1) & 63);
     *token_start.as_ptr().add((p + 1) >> 6) &= !clr;
     p + 1 + ok as usize
@@ -297,9 +296,10 @@ unsafe fn fuse_triple(kinds: Kinds, token_start: Bitmap, p: usize, q: u32, cpu: 
     let c2 = ok3 | sel2b; // p + 2 is not a token start
     let m0: u8 = 0u8.wrapping_sub(c1 as u8);
     let k0v: u8 = if ok3 { (p3 >> 24) as u8 } else { ka };
-    kinds.set(p, (kinds.get(p) & !m0) | (k0v & m0));
+    let k = kinds.as_ptr().add(p);
+    *k = (*k & !m0) | (k0v & m0);
     let m1: u8 = 0u8.wrapping_sub(sel2b as u8);
-    kinds.set(p + 1, (kinds.get(p + 1) & !m1) | (kb & m1));
+    *k.add(1) = (*k.add(1) & !m1) | (kb & m1);
     let clr1 = (c1 as u64) << ((p + 1) & 63);
     *token_start.as_ptr().add((p + 1) >> 6) &= !clr1;
     let clr2 = (c2 as u64) << ((p + 2) & 63);
@@ -320,7 +320,8 @@ unsafe fn glue_number(
     let is_ts = options.ts;
     loop {
         let number_end = scan_number(src, p, cpu);
-        kinds.set(p, tk!(Number) + (src[number_end - 1] == b'n') as u8);
+        let bigint = src[number_end - 1] == b'n';
+        kinds.set(p, if bigint { TokenKind::BigInt } else { TokenKind::Number });
         if number_end > p + 1 {
             token_start.clear_range(p + 1, number_end - 1, cpu);
             op_char.clear_range(p, number_end - 1, cpu);
@@ -357,7 +358,7 @@ unsafe fn glue_number(
                 if src[number_end - 1] != b'.' {
                     let kk = kw_match_word(is_ts, src, word, number_end, cpu);
                     if kk != TokenKind::Ident {
-                        kinds.set(number_end, kk as u8);
+                        kinds.set(number_end, kk);
                     }
                 }
             } else {
@@ -398,12 +399,7 @@ unsafe fn glue_number(
 /// Cold path. Kept out of line so it does not slow the coalesce loop.
 #[cpu_multiversion]
 #[inline(never)]
-unsafe fn munch_walk(
-    lex: Lex,
-    mut pos: usize,
-    disambiguate: &DisambiguateState,
-    cpu: impl Cpu,
-) -> usize {
+fn munch_walk(lex: Lex, mut pos: usize, disambiguate: &DisambiguateState, cpu: impl Cpu) -> usize {
     let Lex { src, bitmaps, kinds, options } = lex;
     let Bitmaps { token_start, op_char, .. } = *bitmaps;
     let is_ts = options.ts;
@@ -419,7 +415,7 @@ unsafe fn munch_walk(
                 pos += 2;
                 continue;
             }
-            kinds.set(pos, opk as u8);
+            kinds.set(pos, opk);
             let mut j = 1usize;
             while j < opl as usize {
                 token_start.clear(pos + j, cpu);
