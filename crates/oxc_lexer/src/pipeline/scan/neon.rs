@@ -1,24 +1,28 @@
 use oxc_simd::{Neon, Vec128, cpu_version};
 
-use crate::pipeline::{bytes::is_ls_ps_tail, chunk::mm32};
+use crate::pipeline::{bytes::is_ls_ps_tail, chunk::mm32, source::Source};
 
 use super::common::{first_license_at, is_license_at};
 
 #[cpu_version(Neon)]
-pub unsafe fn scan_block_comment_neon(
-    src: *const u8,
-    n: usize,
-    mut i: usize,
-    cpu: Neon,
-) -> (usize, bool, Option<u32>) {
+pub fn scan_block_comment_neon(src: Source, mut i: usize, cpu: Neon) -> (usize, bool, Option<u32>) {
+    let n = src.len();
+    if i > n {
+        return (n, false, None);
+    }
     let mut saw_nl = false;
     let mut license_at = None;
     while i + 32 <= n {
-        let v0 = Vec128::load_unaligned(src.add(i), cpu);
-        let v1 = Vec128::load_unaligned(src.add(i + 16), cpu);
-        // Reads 1 byte past n at most, into the PAD
-        let w0 = Vec128::load_unaligned(src.add(i + 1), cpu);
-        let w1 = Vec128::load_unaligned(src.add(i + 17), cpu);
+        // SAFETY: the guard keeps i <= n, so i + 33 cannot wrap, and src holds PAD bytes past n.
+        let (v0, v1, w0, w1) = unsafe {
+            let p = src.as_ptr().add(i);
+            (
+                Vec128::load_unaligned(p, cpu),
+                Vec128::load_unaligned(p.add(16), cpu),
+                Vec128::load_unaligned(p.add(1), cpu),
+                Vec128::load_unaligned(p.add(17), cpu),
+            )
+        };
         let term = mm32(v0.eq_u8(b'*') & w0.eq_u8(b'/'), v1.eq_u8(b'*') & w1.eq_u8(b'/'));
         let nl = if saw_nl {
             0
@@ -46,8 +50,8 @@ pub unsafe fn scan_block_comment_neon(
     }
     // The last byte can still be a newline. Reading the byte after it reads the PAD
     while i < n {
-        let c = *src.add(i);
-        if c == b'*' && *src.add(i + 1) == b'/' {
+        let c = src[i];
+        if c == b'*' && src[i + 1] == b'/' {
             return (i + 1, saw_nl, license_at);
         }
         if c == b'\n' || c == b'\r' {
@@ -67,24 +71,26 @@ pub unsafe fn scan_block_comment_neon(
 /// cleared from the mask and the scan continues; the LS/PS confirm can read
 /// the pad, which never matches 0x80.
 #[cpu_version(Neon)]
-pub unsafe fn scan_line_comment_neon(
-    src: *const u8,
-    n: usize,
-    mut i: usize,
-    cpu: Neon,
-) -> (usize, Option<u32>) {
+pub fn scan_line_comment_neon(src: Source, mut i: usize, cpu: Neon) -> (usize, Option<u32>) {
+    let n = src.len();
+    if i > n {
+        return (n, None);
+    }
     let mut license_at = None;
     while i + 32 <= n {
-        let v0 = Vec128::load_unaligned(src.add(i), cpu);
-        let v1 = Vec128::load_unaligned(src.add(i + 16), cpu);
+        // SAFETY: the guard keeps i <= n, so i + 32 cannot wrap, and the 32 bytes at i are in src.
+        let (v0, v1) = unsafe {
+            let p = src.as_ptr().add(i);
+            (Vec128::load_unaligned(p, cpu), Vec128::load_unaligned(p.add(16), cpu))
+        };
         let term0 = v0.eq_u8(b'\n') | v0.eq_u8(b'\r') | v0.eq_u8(0xE2);
         let term1 = v1.eq_u8(b'\n') | v1.eq_u8(b'\r') | v1.eq_u8(0xE2);
         let mut term = mm32(term0, term1);
         let at = mm32(v0.eq_u8(b'@'), v1.eq_u8(b'@'));
         while term != 0 {
             let t = term.trailing_zeros() as usize;
-            let c = *src.add(i + t);
-            if c == 0xE2 && !is_ls_ps_tail(*src.add(i + t + 1), *src.add(i + t + 2), cpu) {
+            let c = src[i + t];
+            if c == 0xE2 && !is_ls_ps_tail(src[i + t + 1], src[i + t + 2], cpu) {
                 term &= term - 1; // not LS/PS: clear and keep scanning
                 continue;
             }
@@ -102,11 +108,11 @@ pub unsafe fn scan_line_comment_neon(
         i += 32;
     }
     while i < n {
-        let c = *src.add(i);
+        let c = src[i];
         if c == b'\n' || c == b'\r' {
             return (i, license_at);
         }
-        if c == 0xE2 && is_ls_ps_tail(*src.add(i + 1), *src.add(i + 2), cpu) {
+        if c == 0xE2 && is_ls_ps_tail(src[i + 1], src[i + 2], cpu) {
             return (i, license_at);
         }
         if c == b'@' && license_at.is_none() && is_license_at(src, i, cpu) {

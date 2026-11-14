@@ -1,6 +1,3 @@
-// Raw kernels: the unsafe fn boundary is the reviewed surface, not each operation inside.
-#![allow(unsafe_op_in_unsafe_fn, clippy::missing_safety_doc, clippy::undocumented_unsafe_blocks)]
-
 use oxc_simd::{Cpu, DynCpu, cpu_multiversion};
 
 mod avx2;
@@ -28,16 +25,10 @@ pub(super) fn find<const K: usize>(
     needles: [u8; K],
     cpu: impl Cpu,
 ) -> usize {
-    if i > src.len() {
-        return src.len();
-    }
-    // SAFETY: the finders read only src[i..src.len()], which src holds.
-    unsafe {
-        match DynCpu::from(cpu) {
-            DynCpu::Avx2(cpu) => find_avx2(src.as_ptr(), src.len(), i, needles, cpu),
-            DynCpu::Neon(cpu) => find_neon(src.as_ptr(), src.len(), i, needles, cpu),
-            DynCpu::Generic(_) => find_generic(src.as_ptr(), src.len(), i, needles),
-        }
+    match DynCpu::from(cpu) {
+        DynCpu::Avx2(cpu) => find_avx2(src.bytes(), i, needles, cpu),
+        DynCpu::Neon(cpu) => find_neon(src.bytes(), i, needles, cpu),
+        DynCpu::Generic(_) => find_generic(src.bytes(), i, needles),
     }
 }
 

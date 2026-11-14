@@ -1,5 +1,3 @@
-use std::slice;
-
 use oxc_simd::{Cpu, cpu_multiversion};
 
 use crate::pipeline::{
@@ -271,17 +269,17 @@ fn scan_fraction_exponent(src: Source, mut i: usize, cpu: impl Cpu) -> (usize, b
 
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn is_license_at(src: *const u8, q: usize, _cpu: impl Cpu) -> bool {
-    let c1 = *src.add(q + 1);
-    (c1 == b'l' && slice::from_raw_parts(src.add(q + 2), 6) == b"icense")
-        || (c1 == b'p' && slice::from_raw_parts(src.add(q + 2), 7) == b"reserve")
+pub(super) fn is_license_at(src: Source, q: usize, _cpu: impl Cpu) -> bool {
+    let c1 = src[q + 1];
+    (c1 == b'l' && src[q + 2..q + 8] == *b"icense")
+        || (c1 == b'p' && src[q + 2..q + 9] == *b"reserve")
 }
 
 /// First `@license` or `@preserve` among the `@`s in `am`, where bit `i` is for byte `base + i`.
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn first_license_at(
-    src: *const u8,
+pub(super) fn first_license_at(
+    src: Source,
     base: usize,
     mut am: u32,
     cpu: impl Cpu,

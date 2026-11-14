@@ -1,18 +1,18 @@
 use oxc_simd::cpu_version;
 
-use crate::pipeline::chunk::{eqm, load64};
+use crate::pipeline::chunk::eqm;
 
-/// First byte at or after i that is one of needles, or n.
+/// First byte at or after i that is one of needles, or src.len().
 #[cpu_version(Generic)]
 #[inline(always)]
-pub unsafe fn find_generic<const K: usize>(
-    src: *const u8,
-    n: usize,
-    mut i: usize,
-    needles: [u8; K],
-) -> usize {
+pub fn find_generic<const K: usize>(src: &[u8], mut i: usize, needles: [u8; K]) -> usize {
+    let n = src.len();
+    if i > n {
+        return n;
+    }
     while i + 8 <= n {
-        let x = load64(src, i);
+        // SAFETY: the guard keeps i <= n, so i + 8 cannot wrap, and the 8 bytes at i are in src.
+        let x = u64::from_le_bytes(unsafe { src.as_ptr().add(i).cast::<[u8; 8]>().read() });
         let mut m = 0u64;
         for c in needles {
             m |= eqm(x, c);
@@ -23,7 +23,7 @@ pub unsafe fn find_generic<const K: usize>(
         i += 8;
     }
     while i < n {
-        if needles.contains(&*src.add(i)) {
+        if needles.contains(&src[i]) {
             return i;
         }
         i += 1;
