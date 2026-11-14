@@ -1,0 +1,14 @@
+{
+    "options": {
+        "noInlineConfig": false,
+        "reportUnusedDisableDirectives": "error",
+        "respectEslintDisableDirectives": true
+    },
+    "categories": {
+        "correctness": "off"
+    },
+    "rules": {
+        "no-console": "warn",
+        "no-debugger": "error"
+    }
+}

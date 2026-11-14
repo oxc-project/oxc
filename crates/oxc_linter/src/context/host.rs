@@ -75,7 +75,10 @@ impl<'a> ContextSubHost<'a> {
 
         let disable_directives = DisableDirectivesBuilder::new()
             .with_respect_eslint_disable_directives(options.respect_eslint_disable_directives)
-            .build(semantic.source_text(), semantic.comments());
+            .build(
+                semantic.source_text(),
+                if options.no_inline_config { &[] } else { semantic.comments() },
+            );
 
         Self {
             semantic,
@@ -121,6 +124,7 @@ pub struct ContextSubHostOptions<'a> {
     pub framework_options: FrameworkOptions,
     pub parser_tokens: ArenaBox<'a, [Token]>,
     pub respect_eslint_disable_directives: bool,
+    pub no_inline_config: bool,
 }
 
 impl Default for ContextSubHostOptions<'_> {
@@ -129,6 +133,7 @@ impl Default for ContextSubHostOptions<'_> {
             framework_options: FrameworkOptions::Default,
             parser_tokens: ArenaBox::new_empty_boxed_slice(),
             respect_eslint_disable_directives: true,
+            no_inline_config: false,
         }
     }
 }
@@ -182,6 +187,8 @@ pub struct ContextHost<'a> {
     pub(super) frameworks: FrameworkFlags,
     /// If true, the linter will create "ignore this section / line" fixes for all diagnostics
     with_ignore_fixes: bool,
+    /// If true, inline disable and enable comment directives are ignored.
+    no_inline_config: bool,
     /// Lazily-computed shared result of the React Compiler lint run, reused by
     /// every rule in the React Compiler family (`react/hooks`, `react/refs`, …).
     /// Stays empty until the first such rule runs on this file.
@@ -228,6 +235,7 @@ impl<'a> ContextHost<'a> {
             config,
             frameworks: options.framework_hints,
             with_ignore_fixes: options.with_ignore_fixes,
+            no_inline_config: options.no_inline_config,
             react_compiler_results: OnceCell::new(),
             react_compiler_env_options: ReactCompilerEnvOptions::default(),
         }
@@ -289,6 +297,11 @@ impl<'a> ContextHost<'a> {
     /// Shared reference to the [`DisableDirectives`] of the current script block.
     pub fn disable_directives(&self) -> &DisableDirectives {
         &self.current_sub_host().disable_directives
+    }
+
+    /// Whether inline disable and enable comment directives are ignored.
+    pub(crate) fn no_inline_config(&self) -> bool {
+        self.no_inline_config
     }
 
     /// Shared reference to the parser tokens collected for this script block.
