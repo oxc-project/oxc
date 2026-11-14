@@ -678,6 +678,17 @@ impl PreferExportFrom {
             violations.iter().map(|v| ctx.nodes().get_node(v.export_node_id)).collect();
         parent_nodes.sort_unstable_by_key(|node| node.span().start);
 
+        // The fix rewrites each of these export lists as a whole, so it would drop
+        // names in a list that don't come from this import
+        // (`import {a} from './x'; import {b} from './y'; export {a, b};`).
+        let drops_other_exports = parent_nodes.iter().any(|node| {
+            let AstKind::ExportNamedDeclaration(decl) = node.kind() else {
+                return false;
+            };
+            let covered = violations.iter().filter(|v| v.export_node_id == node.id()).count();
+            decl.specifiers.len() > covered
+        });
+
         let replace_export_spans: Vec<Span> = parent_nodes
             .iter()
             .map(|parent_node| Self::get_replace_span(ctx, parent_node.id()))
@@ -697,7 +708,12 @@ impl PreferExportFrom {
         for violation in violations {
             let specifier_node = ctx.nodes().get_node(violation.import_specifier_id);
 
-            if violation.needs_source {
+            if drops_other_exports {
+                ctx.diagnostic(prefer_export_from_diagnostic(
+                    import_decl.span(),
+                    specifier_node.span(),
+                ));
+            } else if violation.needs_source {
                 let export_node = ctx.nodes().get_node(violation.export_node_id);
                 ctx.diagnostic_with_suggestion(
                     prefer_export_from_diagnostic(import_decl.span(), specifier_node.span()),
@@ -1581,11 +1597,14 @@ fn test() {
             export * from 'foo';",
             "export * as foo from 'foo';\n\n            export * from 'foo';",
         ),
+        // `foo` and `bar` come from two imports: no fix, which would drop `bar` from the exports
         (
             "import * as foo from 'foo';
           import * as bar from 'foo';
          export {foo, bar};",
-            "export * as foo from 'foo';\nimport * as bar from 'foo';\n         ",
+            "import * as foo from 'foo';
+          import * as bar from 'foo';
+         export {foo, bar};",
         ),
         (
             "import * as foo from 'foo';
@@ -1925,6 +1944,16 @@ fn test() {
         (
             "import {a} from \"\\uD800\";\nexport {a};\nexport {b} from \"\\uD800\";",
             "export {b, a} from \"\\uD800\";",
+        ),
+        // the export list also holds a name from another import: no fix, which would
+        // drop `b` from the exports
+        (
+            "import { a } from './x';\nimport { b } from './y';\nexport { a, b };",
+            "import { a } from './x';\nimport { b } from './y';\nexport { a, b };",
+        ),
+        (
+            "import { a } from './x';\nconst local = 1;\nexport { a, local };",
+            "import { a } from './x';\nconst local = 1;\nexport { a, local };",
         ),
     ];
     Tester::new(PreferExportFrom::NAME, PreferExportFrom::PLUGIN, pass, fail)
