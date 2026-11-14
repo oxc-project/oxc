@@ -100,26 +100,29 @@ pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
         return;
     };
 
-    ctx.diagnostic_with_fix(use_to_be_comparison(prefer_matcher_name, matcher.span), |fixer| {
-        // This is to handle the case can be transform into the following case:
-        // expect(value > 1,).toEqual(true,) => expect(value,).toBeGreaterThan(1,)
-        //                 ^              ^
-        // Therefore the range starting after ',' and before '.' is called as call_span_end,
-        // and the same as `arg_span_end`.
-        let call_span_end =
-            fixer.source_range(Span::new(binary_expr.span.end, parent_call_expr.span.end));
-        let arg_span_end =
-            fixer.source_range(Span::new(matcher_arg_value.span.end, call_expr.span.end));
-        let content = building_code(
-            binary_expr,
-            call_span_end,
-            arg_span_end,
-            &parse_expect_jest_fn,
-            prefer_matcher_name,
-            fixer,
-        );
-        fixer.replace(call_expr.span, content)
-    });
+    ctx.diagnostic_with_suggestion(
+        use_to_be_comparison(prefer_matcher_name, matcher.span),
+        |fixer| {
+            // This is to handle the case can be transform into the following case:
+            // expect(value > 1,).toEqual(true,) => expect(value,).toBeGreaterThan(1,)
+            //                 ^              ^
+            // Therefore the range starting after ',' and before '.' is called as call_span_end,
+            // and the same as `arg_span_end`.
+            let call_span_end =
+                fixer.source_range(Span::new(binary_expr.span.end, parent_call_expr.span.end));
+            let arg_span_end =
+                fixer.source_range(Span::new(matcher_arg_value.span.end, call_expr.span.end));
+            let content = building_code(
+                binary_expr,
+                call_span_end,
+                arg_span_end,
+                &parse_expect_jest_fn,
+                prefer_matcher_name,
+                fixer,
+            );
+            fixer.replace(call_expr.span, content)
+        },
+    );
 }
 
 fn is_comparing_to_string(expr: &BinaryExpression) -> bool {

@@ -1,9 +1,12 @@
-use oxc_ast::AstKind;
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, LabeledStatement, Statement},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_unused_labels_diagnostic(label_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("'{label_name}:' is defined but never used.")).with_label(span)
@@ -47,7 +50,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     recommended,
-    fix,
+    conditional_fix,
     version = "0.0.3",
     short_description = "Disallow unused labels.",
 );
@@ -61,7 +64,13 @@ impl Rule for NoUnusedLabels {
             };
             ctx.diagnostic_with_fix(
                 no_unused_labels_diagnostic(stmt.label.name.as_str(), stmt.label.span),
-                |fixer| fixer.replace_with(stmt, &stmt.body),
+                |fixer| {
+                    if can_remove_label(node, stmt, ctx) {
+                        fixer.replace_with(stmt, &stmt.body)
+                    } else {
+                        fixer.noop()
+                    }
+                },
             );
         }
     }
@@ -69,6 +78,38 @@ impl Rule for NoUnusedLabels {
     fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
         ctx.file_extension().is_some_and(|ext| ext != "svelte")
     }
+}
+
+fn can_remove_label(node: &AstNode, stmt: &LabeledStatement, ctx: &LintContext) -> bool {
+    let Statement::ExpressionStatement(body) = &stmt.body else {
+        return true;
+    };
+
+    // These tokens can continue the previous statement once the label is gone.
+    if ctx.source_range(body.span).starts_with(['[', '(', '`', '/', '+', '-', '<']) {
+        return false;
+    }
+
+    if !matches!(body.expression, Expression::StringLiteral(_)) {
+        return true;
+    }
+
+    // A labeled string terminates the directive prologue. Removing even a
+    // non-"use strict" string's label can make a later "use strict" a directive.
+    let mut outer_span = stmt.span;
+    for ancestor in ctx.nodes().ancestors(node.id()) {
+        match ancestor.kind() {
+            AstKind::LabeledStatement(outer) => outer_span = outer.span,
+            AstKind::Program(program) => {
+                return program.body.first().is_none_or(|first| first.span() != outer_span);
+            }
+            AstKind::FunctionBody(body) => {
+                return body.statements.first().is_none_or(|first| first.span() != outer_span);
+            }
+            _ => return true,
+        }
+    }
+    true
 }
 
 #[test]
@@ -139,6 +180,28 @@ fn test() {
         // ("A: B: C: D: 'foo'", "B: D: 'foo'"),
         // ("A: B: C: D: E: 'foo'", "B: D: E: 'foo'"),
         ("A: 42", "42"),
+        (r#"A: "use strict""#, r#"A: "use strict""#),
+        (
+            r#"function f(a = 1) { unused: "use strict"; return a; }"#,
+            r#"function f(a = 1) { unused: "use strict"; return a; }"#,
+        ),
+        (
+            r#"function f() { unused: "hello"; "use strict"; return this; }"#,
+            r#"function f() { unused: "hello"; "use strict"; return this; }"#,
+        ),
+        (
+            r#"function f() { foo(); unused: "use strict"; }"#,
+            r#"function f() { foo(); "use strict"; }"#,
+        ),
+        (
+            "const a = [10, 20]\nunused: [0].forEach(console.log)",
+            "const a = [10, 20]\nunused: [0].forEach(console.log)",
+        ),
+        ("foo()\nunused: (bar)()", "foo()\nunused: (bar)()"),
+        ("foo()\nunused: `bar`", "foo()\nunused: `bar`"),
+        ("foo()\nunused: /bar/.test(value)", "foo()\nunused: /bar/.test(value)"),
+        ("foo()\nunused: +bar", "foo()\nunused: +bar"),
+        ("foo()\nunused: -bar", "foo()\nunused: -bar"),
     ];
 
     Tester::new(NoUnusedLabels::NAME, NoUnusedLabels::PLUGIN, pass, fail)

@@ -11,7 +11,14 @@ use crate::{
 #[derive(Debug, Default, Clone)]
 pub struct PreferToContain;
 
-declare_oxc_lint!(PreferToContain, jest, style, fix, docs = DOCUMENTATION, version = "0.2.14",);
+declare_oxc_lint!(
+    PreferToContain,
+    jest,
+    style,
+    suggestion,
+    docs = DOCUMENTATION,
+    version = "0.2.14",
+);
 
 impl Rule for PreferToContain {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -26,7 +33,7 @@ impl Rule for PreferToContain {
 
 #[test]
 fn tests() {
-    use crate::tester::Tester;
+    use crate::{fixer::FixKind, tester::Tester};
 
     #[expect(clippy::literal_string_with_formatting_args)]
     let pass = vec![
@@ -198,6 +205,16 @@ fn tests() {
         ),
         ("expect(a.includes(b)).toEqual(false as boolean);", "expect(a).not.toContain(b);", None),
     ];
+
+    let fix = fix
+        .into_iter()
+        .flat_map(|(source, expected, config): (_, _, Option<serde_json::Value>)| {
+            [
+                (source, source, config.clone(), FixKind::SafeFix),
+                (source, expected, config, FixKind::Suggestion),
+            ]
+        })
+        .collect::<Vec<_>>();
 
     Tester::new(PreferToContain::NAME, PreferToContain::PLUGIN, pass, fail)
         .expect_fix(fix)

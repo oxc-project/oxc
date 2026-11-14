@@ -17,6 +17,9 @@ declare_oxc_lint!(
     /// Additionally, for simple string searches, `.includes()` is often preferred over
     /// regex `.test()` for better performance and clarity.
     ///
+    /// Replacing `indexOf` is offered as a suggestion because `includes` treats
+    /// `NaN` and holes in sparse arrays differently.
+    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
@@ -74,7 +77,7 @@ declare_oxc_lint!(
     PreferIncludes(tsgolint),
     typescript,
     pedantic,
-    fix,
+    conditional_fix_suggestion,
     version = "1.29.0",
     short_description =
         "Enforce using `.includes()` instead of `.indexOf() !== -1` or `/regex/.test()`.",

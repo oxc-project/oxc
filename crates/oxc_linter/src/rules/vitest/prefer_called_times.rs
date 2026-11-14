@@ -1,18 +1,14 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
-use oxc_span::{GetSpan, Span};
+use oxc_span::Span;
 
 use crate::{
     context::{ContextHost, LintContext},
-    fixer::RuleFixer,
     rule::Rule,
     utils::{ParsedExpectFnCall, PossibleJestNode, parse_expect_jest_fn_call},
 };
-use oxc_ast::{
-    AstKind,
-    ast::{Argument, CallExpression},
-};
+use oxc_ast::{AstKind, ast::CallExpression};
 
 fn prefer_called_times_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use `toBeCalledTimes(1)` or `toHaveBeenCalledTimes(1)` instead of `toBeCalledOnce()` or `toHaveBeenCalledOnce()`")
@@ -57,7 +53,7 @@ declare_oxc_lint!(
     PreferCalledTimes,
     vitest,
     style,
-    fix,
+    conditional_fix,
     version = "1.35.0",
     short_description = "This rule aims to enforce the use of `toBeCalledTimes(1)` or `toHaveBeenCalledTimes(1)` over `toBeCalledOnce()` or `toHaveBeenCalledOnce()`.",
 );
@@ -99,17 +95,10 @@ impl PreferCalledTimes {
             return;
         }
 
-        let expect_argument = parsed_expect_call.expect_arguments.and_then(|args| args.first());
-
         ctx.diagnostic_with_fix(prefer_called_times_diagnostic(call_expr.span), |fixer| {
-            let param_text = Self::build_expect_argument(expect_argument, fixer);
-
-            let modifier_text =
-                parsed_expect_call.modifiers().fold(String::new(), |mut acc, modifier| {
-                    use std::fmt::Write;
-                    write!(&mut acc, ".{}", fixer.source_range(modifier.span)).unwrap();
-                    acc
-                });
+            if !call_expr.arguments.is_empty() {
+                return fixer.noop();
+            }
 
             let method_text = if matcher.is_name_equal("toBeCalledOnce") {
                 "toBeCalledTimes"
@@ -117,20 +106,16 @@ impl PreferCalledTimes {
                 "toHaveBeenCalledTimes"
             };
 
-            let code = format!("expect({param_text}){modifier_text}.{method_text}(1)");
-
-            fixer.replace(call_expr.span, code)
+            let replacement = match fixer.source_range(matcher.span).chars().next() {
+                Some(quote @ ('\'' | '"' | '`')) => format!("{quote}{method_text}{quote}"),
+                _ => method_text.to_string(),
+            };
+            let fixer = fixer.for_multifix();
+            let mut fix = fixer.new_fix_with_capacity(2);
+            fix.push(fixer.replace(matcher.span, replacement));
+            fix.push(fixer.insert_text_before_range(Span::empty(call_expr.span.end - 1), "1"));
+            fix.with_message(format!("Replace with `{method_text}(1)`."))
         });
-    }
-
-    fn build_expect_argument<'a>(
-        expect_argument: Option<&Argument<'_>>,
-        fixer: RuleFixer<'_, 'a>,
-    ) -> &'a str {
-        if let Some(arg) = expect_argument {
-            return fixer.source_range(arg.span());
-        }
-        ""
     }
 }
 
@@ -173,6 +158,17 @@ fn test() {
             "expect(fn).resolves.toHaveBeenCalledOnce();",
             "expect(fn).resolves.toHaveBeenCalledTimes(1);",
         ),
+        (
+            "import { expect as check } from 'vitest'; check(fn, message()).toHaveBeenCalledOnce();",
+            "import { expect as check } from 'vitest'; check(fn, message()).toHaveBeenCalledTimes(1);",
+        ),
+        ("expect(fn)['not'].toBeCalledOnce();", "expect(fn)['not'].toBeCalledTimes(1);"),
+        ("expect(fn)['toHaveBeenCalledOnce']();", "expect(fn)['toHaveBeenCalledTimes'](1);"),
+        (
+            "expect(fn)[`toBeCalledOnce`](/* once */);",
+            "expect(fn)[`toBeCalledTimes`](/* once */1);",
+        ),
+        ("expect(fn).toBeCalledOnce(sideEffect());", "expect(fn).toBeCalledOnce(sideEffect());"),
     ];
 
     Tester::new(PreferCalledTimes::NAME, PreferCalledTimes::PLUGIN, pass, fail)

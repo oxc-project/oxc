@@ -118,7 +118,7 @@ impl Rule for JsxFragments {
                 let Some(closing_element) = &jsx_elem.closing_element else {
                     return;
                 };
-                if !is_jsx_fragment(&jsx_elem.opening_element)
+                if !is_jsx_fragment(&jsx_elem.opening_element, ctx)
                     || !jsx_elem.opening_element.attributes.is_empty()
                 {
                     return;
@@ -194,6 +194,17 @@ fn test() {
         (r#"<React.Fragment key="key"><Foo /></React.Fragment>"#, None),
         ("<Fragment />", None),
         ("<React.Fragment />", None),
+        (
+            "function Fragment({ children }) { return <section>{children}</section>; } <Fragment><p>hi</p></Fragment>;",
+            None,
+        ),
+        ("import { Fragment } from './components'; <Fragment><Foo /></Fragment>;", None),
+        ("const React = { Fragment: Component }; <React.Fragment><Foo /></React.Fragment>;", None),
+        ("import { Other as React } from 'react'; <React.Fragment><Foo /></React.Fragment>;", None),
+        (
+            "import React from 'react'; function render(React) { return <React.Fragment><Foo /></React.Fragment>; }",
+            None,
+        ),
         // Configuration can be done via a string directly, or an object with the `mode` field.
         ("<><Foo /></>", Some(json!(["syntax"]))),
         ("<><Foo /></>", Some(json!([{"mode": "syntax"}]))),
@@ -211,6 +222,21 @@ fn test() {
     let fix = vec![
         ("<Fragment><Foo /></Fragment>", "<><Foo /></>", None),
         ("<React.Fragment><Foo /></React.Fragment>", "<><Foo /></>", None),
+        (
+            "import { Fragment as Group } from 'react'; <Group><Foo /></Group>;",
+            "import { Fragment as Group } from 'react'; <><Foo /></>;",
+            None,
+        ),
+        (
+            "import * as R from 'react'; <R.Fragment><Foo /></R.Fragment>;",
+            "import * as R from 'react'; <><Foo /></>;",
+            None,
+        ),
+        (
+            "import React from 'react'; <React.Fragment><Foo /></React.Fragment>;",
+            "import React from 'react'; <><Foo /></>;",
+            None,
+        ),
         ("<><Foo /></>", "<React.Fragment><Foo /></React.Fragment>", Some(json!(["element"]))),
         (
             "<><Foo /></>",

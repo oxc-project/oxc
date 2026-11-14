@@ -1,7 +1,7 @@
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use oxc_str::JSStr;
 
 use crate::{AstNode, context::LintContext, rule::Rule, utils::PROMISE_STATIC_METHODS};
@@ -42,7 +42,7 @@ declare_oxc_lint!(
     promise,
     correctness,
     recommended,
-    fix,
+    suggestion,
     version = "0.6.1",
     short_description = "Disallows calling new on static `Promise` methods.",
 );
@@ -70,12 +70,24 @@ impl Rule for NoNewStatics {
         };
 
         if PROMISE_STATIC_METHODS.contains(&prop_name) {
-            ctx.diagnostic_with_fix(
+            ctx.diagnostic_with_suggestion(
                 static_promise_diagnostic(
                     prop_name,
                     Span::new(new_expr.span.start, ident.span.start - 1),
                 ),
-                |fixer| fixer.delete_range(Span::new(new_expr.span.start, ident.span.start)),
+                |fixer| {
+                    let callee_span = new_expr.callee.span();
+                    let source = ctx.source_range(Span::new(callee_span.start, new_expr.span.end));
+                    let callee_end = new_expr
+                        .type_arguments
+                        .as_ref()
+                        .map_or(callee_span.end, |arguments| arguments.span.end);
+                    if callee_end == new_expr.span.end {
+                        fixer.replace(new_expr.span, format!("{source}()"))
+                    } else {
+                        fixer.replace(new_expr.span, source.to_string())
+                    }
+                },
             );
         }
     }
@@ -83,7 +95,7 @@ impl Rule for NoNewStatics {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::{fixer::FixKind, tester::Tester};
 
     let pass = vec![
         "Promise.resolve()",
@@ -116,7 +128,21 @@ fn test() {
         ("new Promise.allSettled()", "Promise.allSettled()", None),
         ("new Promise.any()", "Promise.any()", None),
         ("new Promise.race()", "Promise.race()", None),
+        ("new Promise.resolve;", "Promise.resolve();", None),
+        ("new (Promise.resolve);", "(Promise.resolve)();", None),
+        ("new (Promise.resolve)(1);", "(Promise.resolve)(1);", None),
+        ("new Promise.resolve<string>;", "Promise.resolve<string>();", None),
+        ("new Promise['resolve'];", "Promise['resolve']();", None),
     ];
+    let fix = fix
+        .into_iter()
+        .flat_map(|(source, expected, config): (_, _, Option<serde_json::Value>)| {
+            [
+                (source, source, config.clone(), FixKind::SafeFix),
+                (source, expected, config, FixKind::Suggestion),
+            ]
+        })
+        .collect::<Vec<_>>();
     Tester::new(NoNewStatics::NAME, NoNewStatics::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();

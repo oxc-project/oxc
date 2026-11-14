@@ -58,28 +58,55 @@ impl Rule for BanTslintComment {
         for comment in comments {
             let raw = ctx.source_range(comment.content_span());
             if is_tslint_enable_disable_comment(raw) {
-                let comment_span = get_full_comment(ctx, comment.span);
+                let (comment_span, replacement) = comment_replacement(ctx, comment.span);
                 ctx.diagnostic_with_fix(
                     ban_tslint_comment_diagnostic(raw.trim(), comment_span),
-                    |fixer| fixer.delete_range(comment_span),
+                    |fixer| {
+                        if replacement.is_empty() {
+                            fixer.delete_range(comment_span)
+                        } else {
+                            fixer.replace(comment_span, replacement)
+                        }
+                    },
                 );
             }
         }
     }
 }
 
-fn get_full_comment(ctx: &LintContext, span: Span) -> Span {
+fn comment_replacement(ctx: &LintContext, span: Span) -> (Span, String) {
     let mut span = span;
+    let source = ctx.source_text();
+    let before = &source[..span.start as usize];
+    let after = &source[span.end as usize..];
+    let is_line_terminator = |c| matches!(c, '\n' | '\r' | '\u{2028}' | '\u{2029}');
+    let starts_line = before.rsplit(is_line_terminator).next().unwrap().trim().is_empty();
 
-    let source_size = u32::try_from(ctx.source_text().len()).unwrap();
-    let tokens = ctx.source_range(Span::new(span.end, source_size));
-
-    // Take into account new line at the end of the comment
-    if matches!(tokens.chars().next(), Some('\n')) {
-        span.end += 1;
+    // Only consume the following newline when the comment is alone on its line.
+    if starts_line {
+        let newline_len = if after.starts_with("\r\n") {
+            2
+        } else {
+            after.chars().next().filter(|c| is_line_terminator(*c)).map_or(0, char::len_utf8)
+        };
+        if newline_len > 0 {
+            span.end += u32::try_from(newline_len).unwrap();
+            return (span, String::new());
+        }
     }
 
-    span
+    // Line terminators inside block comments participate in ASI too.
+    let mut replacement: String =
+        ctx.source_range(span).chars().filter(|c| is_line_terminator(*c)).collect();
+    if replacement.is_empty()
+        && !before.is_empty()
+        && !after.is_empty()
+        && !before.ends_with(char::is_whitespace)
+        && !after.starts_with(char::is_whitespace)
+    {
+        replacement.push(' ');
+    }
+    (span, replacement)
 }
 
 #[test]
@@ -131,6 +158,17 @@ fn test() {
         ("/* tslint:disable-line */", "", None),
         // Issue: <https://github.com/oxc-project/oxc/issues/8090>
         (r"/*tslint:disable*/É", r"É", None),
+        ("function f() { return /* tslint:disable */\n7; }", "function f() { return \n7; }", None),
+        ("const a = 1 // tslint:disable-line\nconst b = 2", "const a = 1 \nconst b = 2", None),
+        ("function f() { return /* tslint:disable\n*/ 7; }", "function f() { return \n 7; }", None),
+        ("const a = 1 // tslint:disable-line\r\nconst b = 2", "const a = 1 \r\nconst b = 2", None),
+        ("// tslint:disable\r\nconst a = 1", "const a = 1", None),
+        (
+            "function f() { return /* tslint:disable\u{2028}*/ 7; }",
+            "function f() { return \u{2028} 7; }",
+            None,
+        ),
+        ("let/* tslint:disable */value = 1", "let value = 1", None),
     ];
 
     Tester::new(BanTslintComment::NAME, BanTslintComment::PLUGIN, pass, fail)
