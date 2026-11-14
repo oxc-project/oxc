@@ -18,7 +18,8 @@ use const_eval::{ConstEval, is_array_from, is_new_typed_array};
 use crate::{
     AstNode,
     ast_util::{
-        get_new_expr_ident_name, is_method_call, is_new_expression, outermost_paren_parent,
+        get_new_expr_ident_name, get_symbol_id_of_variable, is_method_call, is_new_expression,
+        outermost_paren_parent,
     },
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
@@ -339,7 +340,11 @@ fn check_useless_iterable_to_array<'a>(
     match parent.kind() {
         AstKind::ForOfStatement(for_of_stmt) => {
             if for_of_stmt.right.without_parentheses().span() == array_expr.span {
-                ctx.diagnostic(iterable_to_array_in_for_of(span));
+                // The copy is needed when the loop body changes the original:
+                // `for (const x of [...items]) items.splice(i, 1);`
+                if !is_mutated_within(&spread_elem.argument, for_of_stmt.body.span(), ctx) {
+                    ctx.diagnostic(iterable_to_array_in_for_of(span));
+                }
                 return true;
             }
             false
@@ -397,6 +402,52 @@ fn check_useless_iterable_to_array<'a>(
         }
         _ => false,
     }
+}
+
+/// Methods that change an array, `Set` or `Map` in place.
+const MUTATING_METHODS: [&str; 13] = [
+    "add",
+    "clear",
+    "copyWithin",
+    "delete",
+    "fill",
+    "pop",
+    "push",
+    "reverse",
+    "set",
+    "shift",
+    "sort",
+    "splice",
+    "unshift",
+];
+
+/// Whether `target` is a variable that is reassigned, or has a mutating method
+/// called on it, inside `span`.
+fn is_mutated_within<'a>(target: &Expression<'a>, span: Span, ctx: &LintContext<'a>) -> bool {
+    let Expression::Identifier(ident) = target.get_inner_expression() else {
+        return false;
+    };
+    let Some(symbol_id) = get_symbol_id_of_variable(ident, ctx.semantic()) else {
+        return false;
+    };
+    ctx.semantic().symbol_references(symbol_id).any(|reference| {
+        let node = ctx.nodes().get_node(reference.node_id());
+        if !span.contains_inclusive(node.span()) {
+            return false;
+        }
+        if reference.is_write() {
+            return true;
+        }
+        let member = ctx.nodes().parent_node(reference.node_id());
+        let AstKind::StaticMemberExpression(member_expr) = member.kind() else {
+            return false;
+        };
+        MUTATING_METHODS.contains(&member_expr.property.name.as_str())
+            && matches!(
+                ctx.nodes().parent_kind(member.id()),
+                AstKind::CallExpression(call) if call.callee.span() == member_expr.span
+            )
+    })
 }
 
 /// Matches `new {Set,WeakSet,Map,WeakMap}(iterable)`
@@ -590,6 +641,9 @@ fn test() {
         r"for (const foo of bar) [...iterable];",
         r"for (const foo of [,...iterable]);",
         r"for (const foo of [...iterable, extraElement]);",
+        r"const items = [1, 2, 3]; for (const item of [...items]) { items.splice(items.indexOf(item), 1); }",
+        r"const set = new Set([1]); for (const item of [...set]) set.add(item + 1);",
+        r"let list = []; for (const item of [...list]) list = list.concat(item);",
         r"for (const foo of {...iterable});",
         r"for (const foo in [...iterable]);",
         r"function * fn() {yield [...iterable];}",
@@ -715,6 +769,7 @@ fn test() {
         r"const typed = BigUint64Array.from([...iterable])",
         r"const object = Object.fromEntries([...iterable])",
         r"for (const foo of [...iterable]);",
+        r"const items = [1, 2]; for (const item of [...items]) console.log(items.indexOf(item));",
         r"async () => {for await (const foo of [...iterable]);}",
         r"const map = new Map([...iterable,])",
         r"for (const foo of [...iterable]);",
