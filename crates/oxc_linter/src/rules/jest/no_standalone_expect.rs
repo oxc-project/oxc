@@ -298,3 +298,52 @@ fn test() {
         .with_jest_plugin(true)
         .test_and_snapshot();
 }
+
+#[test]
+fn test_failing_each() {
+    use crate::tester::Tester;
+
+    let mut pass = vec![
+        "it.concurrent.failing('a failing test', () => expect(1).toBe(2));".to_string(),
+        "test.concurrent.failing('a failing test', () => expect(1).toBe(2));".to_string(),
+        "it['failing']['each']([[1]])('%i is not zero', n => expect(n).toBe(0));".to_string(),
+        "import { test as check } from '@jest/globals'; check.failing.each([[1]])('%i is not zero', n => expect(n).toBe(0));".to_string(),
+    ];
+
+    for chain in [
+        "it.failing.each",
+        "test.failing.each",
+        "it.only.failing.each",
+        "test.only.failing.each",
+        "it.skip.failing.each",
+        "test.skip.failing.each",
+        "fit.failing.each",
+        "xit.failing.each",
+        "xtest.failing.each",
+        "it.concurrent.failing.each",
+        "test.concurrent.failing.each",
+        "it.concurrent.failing.only.each",
+        "test.concurrent.failing.only.each",
+        "it.concurrent.failing.skip.each",
+        "test.concurrent.failing.skip.each",
+    ] {
+        pass.push(format!("{chain}([[1], [2]])('%i is not zero', n => {{ expect(n).toBe(0); }});"));
+        pass.push(format!(
+            "{chain}`n\n${{1}}\n${{2}}`('$n is not zero', ({{ n }}) => {{ expect(n).toBe(0); }});"
+        ));
+    }
+
+    let fail = vec![
+        "it.failing.each([[1]])('%i is not zero', n => expect(n).toBe(0)); expect(1).toBe(0);"
+            .to_string(),
+        "it.concurrent.failing.only('a test', () => expect(1).toBe(0));".to_string(),
+        "it.concurrent.failing.only.each.extra('a test', () => expect(1).toBe(0));".to_string(),
+        "it.concurrent.failing.each([[1]])('%i is not zero', n => expect(n).toBe(0)); expect(1).toBe(0);"
+            .to_string(),
+    ];
+
+    Tester::new(NoStandaloneExpect::NAME, NoStandaloneExpect::PLUGIN, pass, fail)
+        .with_jest_plugin(true)
+        .with_snapshot_suffix("failing_each")
+        .test_and_snapshot();
+}
