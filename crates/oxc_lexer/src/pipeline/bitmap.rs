@@ -22,6 +22,12 @@ impl<'a> Bitmap<'a> {
         Self(&self.0[..count])
     }
 
+    /// The number of blocks.
+    #[inline(always)]
+    pub(super) fn len(self) -> usize {
+        self.0.len()
+    }
+
     #[cpu_multiversion]
     #[inline(always)]
     pub(super) fn block(self, block_idx: usize, _cpu: impl Cpu) -> u64 {

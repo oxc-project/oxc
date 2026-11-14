@@ -23,6 +23,12 @@ impl<'a> Kinds<'a> {
         Self(&self.0[..len])
     }
 
+    /// The number of kinds.
+    #[inline(always)]
+    pub(super) fn len(self) -> usize {
+        self.0.len()
+    }
+
     #[inline(always)]
     pub(super) fn get(self, i: usize) -> u8 {
         self.0[i].get()
