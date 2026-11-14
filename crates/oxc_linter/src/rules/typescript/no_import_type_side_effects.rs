@@ -71,7 +71,7 @@ declare_oxc_lint!(
     NoImportTypeSideEffects,
     typescript,
     restriction,
-    fix,
+    suggestion,
     version = "0.5.0",
     short_description = "Enforce the use of top-level `import type` qualifier when an import only has specifiers with inline type qualifiers.",
 );
@@ -103,7 +103,7 @@ impl Rule for NoImportTypeSideEffects {
         }
         // Can report and fix only if all specifiers are inline `type` qualifier:
         // `import { type A, type B } from 'foo.js'`
-        ctx.diagnostic_with_fix(
+        ctx.diagnostic_with_suggestion(
             no_import_type_side_effects_diagnostic(import_decl.span),
             |fixer| {
                 let mut fix = fixer.new_fix_with_capacity(type_specifiers.len() + 2);
@@ -138,6 +138,7 @@ impl Rule for NoImportTypeSideEffects {
 
 #[test]
 fn test() {
+    use crate::FixKind;
     use crate::tester::Tester;
 
     let pass = vec![
@@ -162,12 +163,29 @@ fn test() {
     ];
 
     let fix = vec![
-        ("import { type A } from 'mod';", "import type { A } from 'mod';"),
-        ("import { type A as AA } from 'mod';", "import type { A as AA } from 'mod';"),
-        ("import { type A, type B } from 'mod';", "import type { A, B } from 'mod';"),
+        (
+            "import { type A } from 'mod';",
+            "import type { A } from 'mod';",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "import { type A as AA } from 'mod';",
+            "import type { A as AA } from 'mod';",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "import { type A, type B } from 'mod';",
+            "import type { A, B } from 'mod';",
+            None,
+            FixKind::Suggestion,
+        ),
         (
             "import { type A as AA, type B as BB } from 'mod';",
             "import type { A as AA, B as BB } from 'mod';",
+            None,
+            FixKind::Suggestion,
         ),
     ];
 
