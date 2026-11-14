@@ -1,3 +1,6 @@
+// Raw kernels: the unsafe fn boundary is the reviewed surface, not each operation inside.
+#![allow(unsafe_op_in_unsafe_fn, clippy::missing_safety_doc, clippy::undocumented_unsafe_blocks)]
+
 use std::slice;
 
 use oxc_simd::{Cpu, DynCpu, cpu_multiversion, cpu_version};
