@@ -44,7 +44,7 @@ declare_oxc_lint!(
     NoGeneratedEmptyObjectType(tsgolint),
     typescript,
     suspicious,
-    version = "next",
+    version = "1.86.0",
     short_description = "Disallow type operations that resolve to the empty object type.",
 );
 
