@@ -1,4 +1,4 @@
-use std::{borrow::Cow, fmt};
+use std::{borrow::Cow, fmt, sync::Arc};
 
 use cow_utils::CowUtils;
 use itertools::Itertools;
@@ -73,7 +73,20 @@ impl From<ExternalRuleLookupError> for OverrideRulesError {
     }
 }
 
-type RuleSet = FxHashMap<RuleEnum, AllowWarnDeny>;
+pub(super) type RuleSet = FxHashMap<RuleEnum, RuleConfig>;
+
+/// Keeps original JSON options with the compiled rule's severity for config printing.
+#[derive(Debug, Clone)]
+pub struct RuleConfig {
+    pub severity: AllowWarnDeny,
+    pub options: Option<Arc<[serde_json::Value]>>,
+}
+
+impl RuleConfig {
+    pub fn new(severity: AllowWarnDeny) -> Self {
+        Self { severity, options: None }
+    }
+}
 
 // TS type is `Record<string, RuleConf>`
 //   - type SeverityConf = 0 | 1 | 2 | "off" | "warn" | "error";
@@ -173,7 +186,14 @@ impl OxlintRules {
                         };
                         match rule.from_configuration(config) {
                             Ok(configured_rule) => {
-                                rules_to_replace.push((configured_rule, severity));
+                                rules_to_replace.push((
+                                    configured_rule,
+                                    RuleConfig {
+                                        severity,
+                                        options: (!rule_config.config.is_empty())
+                                            .then(|| Arc::from(rule_config.config.as_slice())),
+                                    },
+                                ));
                             }
                             Err(e) => {
                                 errors.push(OverrideRulesError::RuleConfiguration {
@@ -231,9 +251,9 @@ impl OxlintRules {
             return Err(errors);
         }
 
-        for (rule, severity) in rules_to_replace {
+        for (rule, config) in rules_to_replace {
             let _ = rules_for_override.remove(&rule);
-            rules_for_override.insert(rule, severity);
+            rules_for_override.insert(rule, config);
         }
 
         Ok(())
@@ -754,7 +774,7 @@ mod test {
         rules::{RULES, RuleEnum},
     };
 
-    use super::{OxlintRules, RuleSet};
+    use super::{OxlintRules, RuleConfig, RuleSet};
 
     #[test]
     fn test_parse_rules() {
@@ -846,19 +866,22 @@ mod test {
             r#override(&mut rules, &config);
 
             assert_eq!(rules.len(), 1, "{config:?}");
-            let (rule, severity) = rules.iter().next().unwrap();
+            let (rule, config) = rules.iter().next().unwrap();
             assert_eq!(rule.name(), "no-console", "{config:?}");
-            assert_eq!(severity, &AllowWarnDeny::Deny, "{config:?}");
+            assert_eq!(config.severity, AllowWarnDeny::Deny, "{config:?}");
         }
     }
 
     #[test]
     fn test_override_allow() {
         let mut rules = RuleSet::default();
-        rules.insert(RuleEnum::EslintNoConsole(Default::default()), AllowWarnDeny::Deny);
+        rules.insert(
+            RuleEnum::EslintNoConsole(Default::default()),
+            RuleConfig::new(AllowWarnDeny::Deny),
+        );
         r#override(&mut rules, &json!({ "eslint/no-console": "off" }));
 
-        assert!(!rules.iter().any(|(_, severity)| severity.is_warn_deny()));
+        assert!(!rules.values().any(|config| config.severity.is_warn_deny()));
     }
 
     #[test]
@@ -874,20 +897,23 @@ mod test {
             r#override(&mut rules, config);
 
             assert_eq!(rules.len(), 1, "{config:?}");
-            let (rule, severity) = rules.iter().next().unwrap();
+            let (rule, config) = rules.iter().next().unwrap();
             assert_eq!(rule.name(), "no-unused-vars", "{config:?}");
-            assert_eq!(severity, &AllowWarnDeny::Deny, "{config:?}");
+            assert_eq!(config.severity, AllowWarnDeny::Deny, "{config:?}");
         }
 
         for config in &configs {
             let mut rules = RuleSet::default();
-            rules.insert(RuleEnum::EslintNoUnusedVars(Default::default()), AllowWarnDeny::Warn);
+            rules.insert(
+                RuleEnum::EslintNoUnusedVars(Default::default()),
+                RuleConfig::new(AllowWarnDeny::Warn),
+            );
             r#override(&mut rules, config);
 
             assert_eq!(rules.len(), 1, "{config:?}");
-            let (rule, severity) = rules.iter().next().unwrap();
+            let (rule, config) = rules.iter().next().unwrap();
             assert_eq!(rule.name(), "no-unused-vars", "{config:?}");
-            assert_eq!(severity, &AllowWarnDeny::Deny, "{config:?}");
+            assert_eq!(config.severity, AllowWarnDeny::Deny, "{config:?}");
         }
     }
 
