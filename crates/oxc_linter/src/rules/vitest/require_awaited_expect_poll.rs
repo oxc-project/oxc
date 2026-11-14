@@ -1,8 +1,9 @@
 use oxc_allocator::GetAddress;
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{
     AstNode,
@@ -121,7 +122,15 @@ impl RequireAwaitedExpectPoll {
             return;
         }
 
-        let top_most_node = skip_sequence_expressions(skip_matchers_and_modifiers(node, ctx), ctx);
+        let mut top_most_node =
+            skip_sequence_expressions(skip_matchers_and_modifiers(node, ctx), ctx);
+
+        // `await Promise.all([expect.poll(...).toBe(1)])` awaits the assertion through the
+        // combinator, so check the `Promise.*` call instead of the array element.
+        if let Some(promise_call) = get_promise_combinator_call(top_most_node, ctx) {
+            top_most_node =
+                skip_sequence_expressions(skip_matchers_and_modifiers(promise_call, ctx), ctx);
+        }
 
         if is_returned_or_awaited(top_most_node, ctx) {
             return;
@@ -143,6 +152,34 @@ impl RequireAwaitedExpectPoll {
 
 fn is_awaited_member(member: &KnownMemberExpressionProperty<'_>) -> bool {
     member.is_name_equal("poll") || member.is_name_equal("element")
+}
+
+/// If `node` is an element of the array passed to `Promise.all`, `Promise.allSettled`,
+/// `Promise.race` or `Promise.any`, returns that call.
+fn get_promise_combinator_call<'a, 'c>(
+    node: &AstNode<'a>,
+    ctx: &'c LintContext<'a>,
+) -> Option<&'c AstNode<'a>> {
+    let array = ctx.nodes().parent_node(node.id());
+    let AstKind::ArrayExpression(_) = array.kind() else { return None };
+
+    let call_node = ctx.nodes().parent_node(array.id());
+    let AstKind::CallExpression(call_expr) = call_node.kind() else { return None };
+    if call_expr.arguments.first().is_none_or(|arg| arg.span() != array.span()) {
+        return None;
+    }
+
+    let member = call_expr.callee.as_member_expression()?;
+    let Expression::Identifier(object) = member.object() else { return None };
+    if object.name != "Promise" {
+        return None;
+    }
+
+    matches!(
+        member.static_property_name().and_then(JSStr::as_str),
+        Some("all" | "allSettled" | "race" | "any")
+    )
+    .then_some(call_node)
 }
 
 fn skip_sequence_expressions<'a, 'c>(
@@ -264,6 +301,29 @@ fn test() {
                     test('should pass', () => {
                       return (sideEffect(), expect.poll(() => element).toBeInTheDocument());
                     });
+                  ",
+"
+                    test('should pass', async () => {
+                      await Promise.all([expect.poll(() => value).toBe(1)]);
+                    });
+                  ",
+"
+                    test('should pass', async () => {
+                      await Promise.allSettled([
+                        expect.poll(() => a).toBe(1),
+                        expect.element(element).toBeInTheDocument(),
+                      ]);
+                    });
+                  ",
+"
+                    test('should pass', () => {
+                      return Promise.race([expect.poll(() => value).toBe(1), timeout()]);
+                    });
+                  ",
+"
+                    test('should pass', async () => {
+                      await Promise.any([sideEffect(), expect.poll(() => value).toBe(1)]);
+                    });
                   "
     ];
 
@@ -306,6 +366,21 @@ fn test() {
 "
                     test('should fail', () => {
                       expect.poll(() => element).toBeInTheDocument().then;
+                    });
+                  ",
+"
+                    test('should fail', () => {
+                      Promise.all([expect.poll(() => value).toBe(1)]);
+                    });
+                  ",
+"
+                    test('should fail', async () => {
+                      await notPromise.all([expect.poll(() => value).toBe(1)]);
+                    });
+                  ",
+"
+                    test('should fail', async () => {
+                      await Promise.all([[expect.poll(() => value).toBe(1)]]);
                     });
                   ",
     ];

@@ -73,3 +73,30 @@ source: crates/oxc_linter/src/tester.rs
  4 │                     });
    ╰────
   help: Add `await` to the `expect.poll` call.
+
+  ⚠ vitest(require-awaited-expect-poll): `expect.poll` must be awaited or returned
+   ╭─[require_awaited_expect_poll.tsx:3:36]
+ 2 │                     test('should fail', () => {
+ 3 │                       Promise.all([expect.poll(() => value).toBe(1)]);
+   ·                                    ────────────────────────────────
+ 4 │                     });
+   ╰────
+  help: Add `await` to the `expect.poll` call.
+
+  ⚠ vitest(require-awaited-expect-poll): `expect.poll` must be awaited or returned
+   ╭─[require_awaited_expect_poll.tsx:3:45]
+ 2 │                     test('should fail', async () => {
+ 3 │                       await notPromise.all([expect.poll(() => value).toBe(1)]);
+   ·                                             ────────────────────────────────
+ 4 │                     });
+   ╰────
+  help: Add `await` to the `expect.poll` call.
+
+  ⚠ vitest(require-awaited-expect-poll): `expect.poll` must be awaited or returned
+   ╭─[require_awaited_expect_poll.tsx:3:43]
+ 2 │                     test('should fail', async () => {
+ 3 │                       await Promise.all([[expect.poll(() => value).toBe(1)]]);
+   ·                                           ────────────────────────────────
+ 4 │                     });
+   ╰────
+  help: Add `await` to the `expect.poll` call.
