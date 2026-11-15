@@ -6,7 +6,7 @@ use crate::{
     diagnostics,
 };
 
-use super::{FinishTokenMode, Kind, Lexer, SourcePosition, Token};
+use super::{FinishTokenMode, Kind, Lexer, SourcePosition, Token, numeric::ends_decimal_integer};
 
 impl<C: Config> Lexer<'_, C> {
     /// Handle next byte of source.
@@ -113,7 +113,7 @@ type TokenHandler<C> = for<'a> unsafe fn(&mut Lexer<'a, C>, SourcePosition<'a>) 
 /// Token handlers, each named after the byte handler for the same byte.
 /// See [`TokenHandler`] for what callers must guarantee.
 mod token_handlers {
-    use super::{Config, Kind, Lexer, SourcePosition, Token};
+    use super::{Config, Kind, Lexer, SourcePosition, Token, ends_decimal_integer};
 
     impl<C: Config> Lexer<'_, C> {
         /// Lookup table mapping any byte to the token handler for tokens which start with that byte.
@@ -130,6 +130,11 @@ mod token_handlers {
     ///
     /// * `fresh` is for byte handlers which only ever produce a token, without flags.
     ///   They must not return `Kind::Skip`, nor alter `lexer.pending`.
+    /// * `zero` is for the byte handler for `0`. A lone `0` is the most common number which
+    ///   starts with it, and is finished without calling the byte handler.
+    /// * `string` is for the byte handlers for quotes. A string which contains no escapes has
+    ///   no flags, and is finished without calling the byte handler. Other strings are uncommon,
+    ///   and are finished from where the first escape in them is found.
     /// * `general` is for all other byte handlers.
     macro_rules! token_handlers {
         (fresh: $($name:ident),+ $(,)?) => {
@@ -141,6 +146,47 @@ mod token_handlers {
                 ) -> Token {
                     let (kind, end) = super::$name(lexer, pos);
                     lexer.finish_fresh_token(kind, pos, end)
+                }
+            )+
+        };
+        (zero: $($name:ident),+ $(,)?) => {
+            $(
+                #[expect(non_snake_case)]
+                pub unsafe fn $name<'a, C: Config>(
+                    lexer: &mut Lexer<'a, C>,
+                    pos: SourcePosition<'a>,
+                ) -> Token {
+                    // SAFETY: Caller guarantees `TOKEN_HANDLER_MIN_BYTES` bytes can be read
+                    // from `pos`. A digit is ASCII, so `pos + 1` is on a UTF-8 char boundary.
+                    let (after_digit, next_byte) = unsafe {
+                        let after_digit = pos.add(1);
+                        (after_digit, after_digit.read())
+                    };
+                    if ends_decimal_integer(next_byte) {
+                        lexer.source.set_position(after_digit);
+                        return lexer.finish_fresh_token(Kind::Decimal, pos, after_digit);
+                    }
+                    // Decimal points, other radixes, legacy octal.
+                    // SAFETY: Caller guarantees `pos` is the position of a byte which this handler,
+                    // and so the byte handler of the same name, is for.
+                    unsafe { lexer.token_from_byte_handler(pos, super::$name) }
+                }
+            )+
+        };
+        (string: $($name:ident => $read_plain_string:ident, $string_token_rest:ident);+ $(;)?) => {
+            $(
+                #[expect(non_snake_case)]
+                pub unsafe fn $name<'a, C: Config>(
+                    lexer: &mut Lexer<'a, C>,
+                    pos: SourcePosition<'a>,
+                ) -> Token {
+                    // SAFETY: Caller guarantees `pos` is the position of the quote
+                    // which this handler, and so `$read_plain_string`, is for
+                    match unsafe { lexer.$read_plain_string(pos) } {
+                        Ok(end) => lexer.finish_fresh_token(Kind::Str, pos, end),
+                        // SAFETY: As above, and position of source has not been altered since
+                        Err(next_byte) => unsafe { lexer.$string_token_rest(pos, next_byte) },
+                    }
                 }
             )+
         };
@@ -161,8 +207,16 @@ mod token_handlers {
 
     token_handlers!(fresh: AMP, ATR, CRT, EXL, PIP, PLS, PRC, QST);
 
+    token_handlers!(zero: ZER);
+
     token_handlers!(
-        general: DIG, ERR, ESC, HAS, ISP, QOD, QOS, SLH, SPS, TPL, UER, UNI, ZER,
+        string:
+        QOD => read_plain_string_literal_double_quote, string_token_rest_double_quote;
+        QOS => read_plain_string_literal_single_quote, string_token_rest_single_quote;
+    );
+
+    token_handlers!(
+        general: ERR, ESC, HAS, ISP, SLH, SPS, TPL, UER, UNI,
     );
 
     // `A..=Z`, `h`, `j`, `q`, `x`, `z`, `_`, `$`: no keyword starts with these bytes.
@@ -207,6 +261,39 @@ mod token_handlers {
         }
         lexer.source.set_position(after_dot);
         lexer.finish_fresh_token(Kind::Dot, pos, after_dot)
+    }
+
+    // `1` to `9`
+    //
+    // Most numbers are integers of a few digits, particularly in minified code.
+    // They have no flags, and are finished without calling the byte handler.
+    #[expect(non_snake_case)]
+    pub unsafe fn DIG<'a, C: Config>(lexer: &mut Lexer<'a, C>, pos: SourcePosition<'a>) -> Token {
+        // SAFETY: Caller guarantees `TOKEN_HANDLER_MIN_BYTES` bytes can be read from `pos`.
+        // A digit is ASCII, so `pos + 1` is on a UTF-8 char boundary.
+        let (mut end, mut byte) = unsafe {
+            let after_digit = pos.add(1);
+            (after_digit, after_digit.read())
+        };
+        while byte.is_ascii_digit() {
+            // SAFETY: `byte` is the byte at `end`, and it is ASCII, so `end + 1` is in bounds
+            // and on a UTF-8 char boundary
+            end = unsafe { end.add(1) };
+            if !end.is_not_end_of(&lexer.source) {
+                // A number at the very end of the source. Any byte which does not end a number.
+                byte = b'.';
+                break;
+            }
+            // SAFETY: `end` is not the end of the source
+            byte = unsafe { end.read() };
+        }
+        if ends_decimal_integer(byte) {
+            lexer.source.set_position(end);
+            return lexer.finish_fresh_token(Kind::Decimal, pos, end);
+        }
+        // Decimal points, exponents, separators, BigInts
+        // SAFETY: Caller guarantees `pos` is the position of a digit, which `DIG` is for
+        unsafe { lexer.token_from_byte_handler(pos, super::DIG) }
     }
 
     // `<`
