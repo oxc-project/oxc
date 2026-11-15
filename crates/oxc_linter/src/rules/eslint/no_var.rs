@@ -147,15 +147,14 @@ fn can_fix<'a>(node: &AstNode<'a>, dec: &VariableDeclaration<'a>, ctx: &LintCont
     }
 
     dec.declarations.iter().all(|decl| {
-        for_each_binding(&decl.id, None, &mut |ident, default_value| {
-            can_fix_binding(ident, default_value, decl, node, parent.span(), in_loop, ctx)
+        decl.id.all_binding_identifiers(&mut |ident| {
+            can_fix_binding(ident, decl, node, parent.span(), in_loop, ctx)
         })
     })
 }
 
 fn can_fix_binding<'a>(
     ident: &BindingIdentifier<'a>,
-    default_value: Option<Span>,
     decl: &VariableDeclarator<'a>,
     node: &AstNode<'a>,
     scope_span: Span,
@@ -193,9 +192,18 @@ fn can_fix_binding<'a>(
 
         // `var a = a`, `var {a = a} = {}` and `var {a = b, b} = {}` read the
         // binding before it is initialized.
+        if decl.id.span().contains_inclusive(span)
+            && ctx.nodes().ancestors(reference.node_id()).any(|ancestor| {
+                matches!(ancestor.kind(), AstKind::AssignmentPattern(pattern)
+                    if pattern.left.span().contains_inclusive(ident.span)
+                        && pattern.right.span().contains_inclusive(span))
+            })
+        {
+            return false;
+        }
+
         if let Some(init) = init
             && (span.start < ident.span.start
-                || default_value.is_some_and(|default| default.contains_inclusive(span))
                 || (!init.is_function() && init.span().contains_inclusive(span)))
         {
             return false;
@@ -211,37 +219,6 @@ fn can_fix_binding<'a>(
 
         !is_in_function_called_before(reference_node.scope_id(), var_scope, decl.span.start, ctx)
     })
-}
-
-/// Calls `f` for every binding in `pattern`, with the span of the default value
-/// when the binding is the target of an `AssignmentPattern`, e.g. `a` in `{a = b}`.
-fn for_each_binding<'a>(
-    pattern: &BindingPattern<'a>,
-    default_value: Option<Span>,
-    f: &mut impl FnMut(&BindingIdentifier<'a>, Option<Span>) -> bool,
-) -> bool {
-    match pattern {
-        BindingPattern::BindingIdentifier(ident) => f(ident, default_value),
-        BindingPattern::AssignmentPattern(pattern) => {
-            let default_value = matches!(pattern.left, BindingPattern::BindingIdentifier(_))
-                .then(|| pattern.right.span());
-            for_each_binding(&pattern.left, default_value, f)
-        }
-        BindingPattern::ObjectPattern(pattern) => {
-            pattern.properties.iter().all(|property| for_each_binding(&property.value, None, f))
-                && pattern
-                    .rest
-                    .as_ref()
-                    .is_none_or(|rest| for_each_binding(&rest.argument, None, f))
-        }
-        BindingPattern::ArrayPattern(pattern) => {
-            pattern.elements.iter().flatten().all(|element| for_each_binding(element, None, f))
-                && pattern
-                    .rest
-                    .as_ref()
-                    .is_none_or(|rest| for_each_binding(&rest.argument, None, f))
-        }
-    }
 }
 
 /// Whether `node` is inside a loop of its own function.
@@ -597,6 +574,9 @@ fn test() {
         // ESLint does not fix exports either: during a circular import, reading an
         // exported `let` or `const` before it is initialized throws.
         ("export var foo = 1;", "export var foo = 1;"),
+        ("var {a: {b} = {b}} = {};", "var {a: {b} = {b}} = {};"),
+        ("var [[a] = [a]] = [];", "var [[a] = [a]] = [];"),
+        ("for (var {a = a} of [{}]) {}", "for (var {a = a} of [{}]) {}"),
     ];
 
     Tester::new(NoVar::NAME, NoVar::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
