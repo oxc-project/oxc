@@ -127,6 +127,10 @@ mod test {
         assert_eq!(collect(function_only(), "var foo; foo = function() {}"), data("foo"));
         assert_eq!(collect(function_only(), "var foo; foo = () => {}"), data("foo"));
         assert_eq!(collect(class_only(), "var Foo; Foo = class {}"), data("Foo"));
+        assert_eq!(collect(class_only(), "var foo; foo = () => {}"), none());
+        assert_eq!(collect(function_only(), "var Foo; Foo = class {}"), none());
+        assert_eq!(collect(function_only(), "var x = () => {}; x = class {}"), data("x"));
+        assert_eq!(collect(class_only(), "var x = () => {}; x = class {}"), data("x"));
 
         assert_eq!(collect(function_only(), "var foo; foo ||= function() {}"), data("foo"));
         assert_eq!(collect(function_only(), "var foo = 1; foo &&= function() {}"), data("foo"));
@@ -155,6 +159,8 @@ mod test {
     fn test_default_parameters() {
         assert_eq!(collect(function_only(), "(function(foo = () => {}) {})"), data("foo"));
         assert_eq!(collect(class_only(), "((Foo = class {}) => {})"), data("Foo"));
+        assert_eq!(collect(class_only(), "(function(foo = () => {}) {})"), none());
+        assert_eq!(collect(function_only(), "(function(foo = 1) {})"), none());
         assert_eq!(collect(function_only(), "(function([foo = () => {}]) {})"), data("foo"));
         assert_eq!(collect(function_only(), "(function(...[foo = () => {}]) {})"), data("foo"));
         assert_eq!(collect(function_only(), "try {} catch ({ foo = () => {} }) {}"), data("foo"));
