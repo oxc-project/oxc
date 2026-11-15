@@ -414,9 +414,6 @@ fn test() {
         (r#"<Area role="link" />"#, None, Some(settings())),
         (r#"<a href="/" role="link" />"#, Some(serde_json::json!([{ "a": ["link"] }])), None),
         (r#"<area href="/" role="link" />"#, Some(serde_json::json!([{ "area": ["link"] }])), None),
-        // Browsers use the first valid ARIA role token; `link` is not
-        // redundant on `<button>`, so the later `button` token must not be
-        // flagged. See #29469.
         (r#"<button role="link button" />"#, None, None),
         (r#"<button role="link  button">Docs</button>"#, None, None),
     ];
@@ -498,9 +495,6 @@ fn test() {
         (r#"<area href="" role="link" />"#, None, None),
         (r#"<Link href="/" role="link" />"#, None, Some(settings())),
         (r#"<Area href="/" role="link" />"#, None, Some(settings())),
-        // The first valid ARIA role token is redundant, but the attribute
-        // contains other tokens, so it must still be reported while the safe
-        // fix is withheld. See #29469.
         (r#"<button role="button link" />"#, None, None),
         (r#"<button role="button foo" />"#, None, None),
     ];
