@@ -9,7 +9,9 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::ScopeId;
 use oxc_span::{GetSpan, SPAN, Span};
+use oxc_str::static_ident;
 
 mod const_eval;
 
@@ -246,7 +248,7 @@ fn check_useless_spread_in_list<'a>(
                 }) && call_expr_args_span.contains_inclusive(array_expr.span)
                 {
                     // compute replacer before the closure so we don't capture `ctx` by reference inside the fixer closure
-                    let replacer = spread_arguments_text(array_expr, ctx);
+                    let replacer = spread_arguments_text(array_expr, node.scope_id(), ctx);
 
                     ctx.diagnostic_with_fix(spread_in_arguments(span), move |fixer| {
                         fixer.replace(spread_elem.span(), replacer)
@@ -263,17 +265,27 @@ fn check_useless_spread_in_list<'a>(
 /// The elements of `array_expr` as arguments: `...[a, , b]` becomes `a, undefined, b`.
 /// A hole is not allowed in an argument list. Its span is the comma after it, which is
 /// kept, except after the last element: `...[a,,]` becomes `a,undefined`.
-fn spread_arguments_text(array_expr: &ArrayExpression, ctx: &LintContext) -> String {
+/// Uses `void 0` when `undefined` is shadowed.
+fn spread_arguments_text(
+    array_expr: &ArrayExpression,
+    scope_id: ScopeId,
+    ctx: &LintContext,
+) -> String {
     let (Some(first), Some(last)) = (array_expr.elements.first(), array_expr.elements.last())
     else {
         return String::new();
+    };
+    let undefined = if ctx.scoping().find_binding(scope_id, static_ident!("undefined")).is_some() {
+        "void 0"
+    } else {
+        "undefined"
     };
     let mut text = String::new();
     let mut pos = first.span().start;
     for element in &array_expr.elements {
         if let ArrayExpressionElement::Elision(elision) = element {
             text.push_str(ctx.source_range(Span::new(pos, elision.span.start)));
-            text.push_str("undefined");
+            text.push_str(undefined);
             pos = elision.span.start;
         }
     }
@@ -810,6 +822,12 @@ fn test() {
         (
             "foo(...[,, ,(( a )), ,,(0, b), ,,])",
             "foo(undefined,undefined, undefined,(( a )), undefined,undefined,(0, b), undefined,undefined)",
+        ),
+        ("function f(undefined) { foo(...[,]); }", "function f(undefined) { foo(void 0); }"),
+        ("{ foo(...[,,]); const undefined = 1; }", "{ foo(void 0,void 0); const undefined = 1; }"),
+        (
+            "function f(undefined) { new Foo(...[1,,]); }",
+            "function f(undefined) { new Foo(1,void 0); }",
         ),
         // object literals
         ("const obj = { a, ...{ b, c } }", "const obj = ({\n\ta,\n\tb,\n\tc\n})"),
