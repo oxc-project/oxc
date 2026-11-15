@@ -1,0 +1,73 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(no-invalid-intl-options): `sensitivity` must be one of "base", "accent", "case", "variant".
+   ╭─[no_invalid_intl_options.tsx:1:81]
+ 1 │ /** @type {string} */ const value = getValue(); value.localeCompare('x', 'en', {sensitivity: 'bad'});
+   ·                                                                                 ───────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `sensitivity` must be one of "base", "accent", "case", "variant".
+   ╭─[no_invalid_intl_options.tsx:3:67]
+ 2 │         // eslint-disable-next-line no-unused-vars
+ 3 │         const value = getValue(); value.localeCompare('x', 'en', {sensitivity: 'bad'});
+   ·                                                                   ───────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `sensitivity` must be one of "base", "accent", "case", "variant".
+   ╭─[no_invalid_intl_options.tsx:3:67]
+ 2 │         /* eslint-disable no-unused-vars */
+ 3 │         const value = getValue(); value.localeCompare('x', 'en', {sensitivity: 'bad'});
+   ·                                                                   ───────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `sensitivity` must be one of "base", "accent", "case", "variant".
+   ╭─[no_invalid_intl_options.tsx:4:67]
+ 3 │         /* eslint-enable no-unused-vars */
+ 4 │         const value = getValue(); value.localeCompare('x', 'en', {sensitivity: 'bad'});
+   ·                                                                   ───────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `sensitivity` must be one of "base", "accent", "case", "variant".
+   ╭─[no_invalid_intl_options.tsx:1:81]
+ 1 │ /** @type {String} */ const value = getValue(); value.localeCompare('x', 'en', {sensitivity: 'bad'});
+   ·                                                                                 ───────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `sensitivity` must be one of "base", "accent", "case", "variant".
+   ╭─[no_invalid_intl_options.tsx:4:67]
+ 3 │          */
+ 4 │         const value = getValue(); value.localeCompare('x', 'en', {sensitivity: 'bad'});
+   ·                                                                   ───────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `sensitivity` must be one of "base", "accent", "case", "variant".
+   ╭─[no_invalid_intl_options.tsx:1:88]
+ 1 │ /** @type {string} */ export const value = getValue(); value.localeCompare('x', 'en', {sensitivity: 'bad'});
+   ·                                                                                        ───────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `sensitivity` must be one of "base", "accent", "case", "variant".
+   ╭─[no_invalid_intl_options.tsx:1:101]
+ 1 │ const other = getValue(), /** @type {string} */ value = getValue(); value.localeCompare('x', 'en', {sensitivity: 'bad'});
+   ·                                                                                                     ───────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `sensitivity` must be one of "base", "accent", "case", "variant".
+   ╭─[no_invalid_intl_options.tsx:1:108]
+ 1 │ /** @type {string} */ const original = getValue(); const value = original; value.localeCompare('x', 'en', {sensitivity: 'bad'});
+   ·                                                                                                            ───────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `timeStyle` cannot be used with `toLocaleDateString()`.
+   ╭─[no_invalid_intl_options.tsx:1:79]
+ 1 │ /** @type {Date} */ const value = getValue(); value.toLocaleDateString('en', {timeStyle: 'short'});
+   ·                                                                               ─────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-intl-options): `style` must be one of "decimal", "percent", "currency", "unit".
+   ╭─[no_invalid_intl_options.tsx:1:77]
+ 1 │ /** @type {BigInt} */ const value = getValue(); value.toLocaleString('en', {style: 'bad'});
+   ·                                                                             ─────
+   ╰────

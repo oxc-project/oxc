@@ -7,7 +7,7 @@ use rustc_hash::FxHashSet;
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, BindingPattern, Expression, IdentifierReference, ObjectExpression,
+        Argument, BindingPattern, Comment, Expression, IdentifierReference, ObjectExpression,
         ObjectProperty, ObjectPropertyKind, PropertyKey, PropertyKind, TSLiteral, TSType,
         TSTypeName,
     },
@@ -42,7 +42,8 @@ declare_oxc_lint!(
     ///
     /// Only inline options objects are checked. Objects containing spreads,
     /// accessors, duplicate keys, or unknown computed keys are skipped. Receivers
-    /// are recognized from syntax and explicit TypeScript annotations. Results of
+    /// are recognized from syntax, explicit TypeScript annotations, and simple
+    /// JSDoc `@type` annotations on variable declarations. Results of
     /// arbitrary calls and property reads are not inferred: for example,
     /// `Math.random()`, typed-array `slice()`, or `holder.value`
     /// need an explicit receiver annotation or a directly recognizable expression.
@@ -498,6 +499,78 @@ fn annotation(ty: &TSType<'_>, ctx: &LintContext<'_>, depth: u8) -> Option<Recei
     }
 }
 
+fn is_jsdoc_transparent_directive(comment: &Comment, ctx: &LintContext<'_>) -> bool {
+    let text = ctx.source_range(comment.content_span());
+    match text.split_whitespace().next() {
+        Some("eslint-disable-next-line" | "eslint-disable-line") => true,
+        Some("eslint-disable" | "eslint-enable") => comment.is_block(),
+        _ => false,
+    }
+}
+
+// Do not scan the file for each receiver. Semantic JSDoc ownership narrows
+// the candidates to the declarator, its single-binding declaration and export.
+// Only recognized directives are transparent; an ordinary intervening comment
+// prevents an older annotation from being associated with this declaration.
+fn jsdoc_receiver(id: &IdentifierReference<'_>, ctx: &LintContext<'_>) -> Option<Receiver> {
+    let symbol = ctx.scoping().get_reference(id.reference_id()).symbol_id()?;
+    let node = ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol));
+    let parent = ctx.nodes().parent_node(node.id());
+    let declaration =
+        matches!(parent.kind(), AstKind::VariableDeclaration(decl) if decl.declarations.len() == 1)
+            .then_some(parent);
+    let export = declaration.and_then(|declaration| {
+        let parent = ctx.nodes().parent_node(declaration.id());
+        matches!(parent.kind(), AstKind::ExportNamedDeclaration(_) | AstKind::ExportDeclaration(_))
+            .then_some(parent)
+    });
+    let owners = [Some(node), declaration, export];
+    if !owners.iter().flatten().any(|owner| ctx.nodes().flags(owner.id()).has_jsdoc()) {
+        return None;
+    }
+    for owner in owners.into_iter().flatten() {
+        let mut end = owner.kind().span().start;
+        let comments = ctx.comments();
+        let preceding = comments.partition_point(|comment| comment.span.end <= end);
+        // A bounded chain also keeps pathological runs of directives cheap.
+        for comment in comments[..preceding].iter().rev().take(32) {
+            if !ctx.source_range(Span::new(comment.span.end, end)).chars().all(char::is_whitespace)
+            {
+                break;
+            }
+            if is_jsdoc_transparent_directive(comment, ctx) {
+                end = comment.span.start;
+                continue;
+            }
+            if !comment.is_jsdoc() {
+                return None;
+            }
+            let jsdoc = ctx.jsdoc().get_one_by_node(ctx.nodes(), owner)?;
+            let mut type_tag = None;
+            for tag in jsdoc.tags() {
+                match tag.kind.parsed() {
+                    "typedef" | "callback" | "overload" => return None,
+                    "type" => {
+                        if type_tag.is_some() {
+                            return None;
+                        }
+                        type_tag = Some(tag);
+                    }
+                    _ => {}
+                }
+            }
+            let ty = type_tag?.r#type()?.parsed();
+            return match ty {
+                "string" => Some(Receiver::String),
+                "number" | "bigint" => Some(Receiver::Numeric),
+                name => receiver_builtin(name)
+                    .filter(|_| ctx.scoping().find_binding(node.scope_id(), name.into()).is_none()),
+            };
+        }
+    }
+    None
+}
+
 // Inferring the return type of String#slice also requires that the receiver's
 // method has not been replaced. Reject escaped objects and member writes; a
 // bounded reference scan keeps this conservative proof independent of file size.
@@ -603,6 +676,9 @@ fn receiver<'a>(expr: &'a Expression<'a>, ctx: &LintContext<'a>, depth: u8) -> O
                 {
                     if let Some(ty) = &decl.type_annotation {
                         return annotation(&ty.type_annotation, ctx, 0);
+                    }
+                    if let Some(receiver) = jsdoc_receiver(id, ctx) {
+                        return Some(receiver);
                     }
                     receiver(decl.init.as_ref()?, ctx, depth + 1)
                 }
@@ -1988,6 +2064,71 @@ fn test() {
     Tester::new(NoInvalidIntlOptions::NAME, NoInvalidIntlOptions::PLUGIN, pass, fail)
         .change_rule_path_extension("ts")
         .expect_fix(fix)
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_jsdoc_receivers() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        r"/** @type {string} */ const value = getValue(); value.localeCompare('x', 'en', {sensitivity: 'base'});",
+        r"/** @type {unknown} */ const value = getValue(); value.localeCompare('x', 'en', {sensitivity: 'bad'});",
+        r"/** @type {string|number} */ const value = getValue(); value.localeCompare('x', 'en', {sensitivity: 'bad'});",
+        r"/** @type {Array<string>} */ const value = getValue(); value.localeCompare('x', 'en', {sensitivity: 'bad'});",
+        r"/** @type {?string} */ const value = getValue(); value.localeCompare('x', 'en', {sensitivity: 'bad'});",
+        r"/** @type {string=} */ const value = getValue(); value.localeCompare('x', 'en', {sensitivity: 'bad'});",
+        r"/** @type {string} */
+        // ordinary comment
+        const value = getValue(); value.localeCompare('x', 'en', {sensitivity: 'bad'});",
+        r"/** @type {string} */
+        /* ordinary comment */
+        const value = getValue(); value.localeCompare('x', 'en', {sensitivity: 'bad'});",
+        r"/** @type {string} */
+        // eslint-disable-next-line-invalid no-unused-vars
+        const value = getValue(); value.localeCompare('x', 'en', {sensitivity: 'bad'});",
+        r"/** @type {string} */ const value = getValue(), other = getValue(); value.localeCompare('x', 'en', {sensitivity: 'bad'});",
+        r"/** @type {string} */ const other = getValue(), value = getValue(); value.localeCompare('x', 'en', {sensitivity: 'bad'});",
+        r"/** @type {string} */ let value = getValue(); value = {}; value.localeCompare('x', 'en', {sensitivity: 'bad'});",
+        r"/** @type {string} */ const value = getValue(); { const value = getOther(); value.localeCompare('x', 'en', {sensitivity: 'bad'}); }",
+        r"/** @type {string} */
+        /** A closer, unrelated documentation comment. */
+        const value = getValue(); value.localeCompare('x', 'en', {sensitivity: 'bad'});",
+        r"/**
+         * @type {string}
+         * @type {number}
+         */
+        const value = getValue(); value.localeCompare('x', 'en', {sensitivity: 'bad'});",
+        r"const String = class {}; /** @type {String} */ const value = getValue(); value.localeCompare('x', 'en', {sensitivity: 'bad'});",
+        r"/** @type string */ const value = getValue(); value.localeCompare('x', 'en', {sensitivity: 'bad'});",
+        r"/** @type a note about {string} */ const value = getValue(); value.localeCompare('x', 'en', {sensitivity: 'bad'});",
+    ];
+    let fail = vec![
+        r"/** @type {string} */ const value = getValue(); value.localeCompare('x', 'en', {sensitivity: 'bad'});",
+        r"/** @type {string} */
+        // eslint-disable-next-line no-unused-vars
+        const value = getValue(); value.localeCompare('x', 'en', {sensitivity: 'bad'});",
+        r"/** @type {string} */
+        /* eslint-disable no-unused-vars */
+        const value = getValue(); value.localeCompare('x', 'en', {sensitivity: 'bad'});",
+        r"/* eslint-disable no-unused-vars */
+        /** @type {string} */
+        /* eslint-enable no-unused-vars */
+        const value = getValue(); value.localeCompare('x', 'en', {sensitivity: 'bad'});",
+        r"/** @type {String} */ const value = getValue(); value.localeCompare('x', 'en', {sensitivity: 'bad'});",
+        r"/**
+         * @type {string}
+         */
+        const value = getValue(); value.localeCompare('x', 'en', {sensitivity: 'bad'});",
+        r"/** @type {string} */ export const value = getValue(); value.localeCompare('x', 'en', {sensitivity: 'bad'});",
+        r"const other = getValue(), /** @type {string} */ value = getValue(); value.localeCompare('x', 'en', {sensitivity: 'bad'});",
+        r"/** @type {string} */ const original = getValue(); const value = original; value.localeCompare('x', 'en', {sensitivity: 'bad'});",
+        r"/** @type {Date} */ const value = getValue(); value.toLocaleDateString('en', {timeStyle: 'short'});",
+        r"/** @type {BigInt} */ const value = getValue(); value.toLocaleString('en', {style: 'bad'});",
+    ];
+    Tester::new(NoInvalidIntlOptions::NAME, NoInvalidIntlOptions::PLUGIN, pass, fail)
+        .with_snapshot_suffix("jsdoc")
+        .intentionally_allow_no_fix_tests()
         .test_and_snapshot();
 }
 
