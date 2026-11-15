@@ -411,7 +411,7 @@ pub static STRUCTS: phf::Map<&'static str, StructDetails> = ::phf::Map {
         (
             "TaggedTemplateExpression",
             StructDetails {
-                field_order: Some(&[1, 0, 2, 3, 4]),
+                field_order: Some(&[1, 0, 3, 4, 5, 2]),
                 is_node: true,
                 is_transparent: false,
             },

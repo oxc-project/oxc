@@ -2418,7 +2418,19 @@ impl Gen for TemplateLiteral<'_> {
 
 impl GenExpr for TaggedTemplateExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, _precedence: Precedence, ctx: Context) {
+        let is_statement = p.start_of_stmt == p.code_len();
+        let is_export_default = p.start_of_default_export == p.code_len();
+        let pure = self.pure && p.options.print_annotation_comment();
+
         p.add_source_mapping(self.span);
+        if pure {
+            p.print_annotation_comment(self.span.start, AnnotationKind::Pure, false);
+        }
+        if is_export_default {
+            p.start_of_default_export = p.code_len();
+        } else if is_statement {
+            p.start_of_stmt = p.code_len();
+        }
         // Propagate `FORBID_CALL` to the tag so a `new` callee like `f()` wraps.
         self.tag.print_expr(p, Precedence::Postfix, ctx.intersection(Context::FORBID_CALL));
         if let Some(type_parameters) = &self.type_arguments {

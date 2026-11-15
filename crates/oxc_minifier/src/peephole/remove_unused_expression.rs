@@ -33,6 +33,9 @@ impl<'a> PeepholeOptimizations {
                 }
                 Expression::LogicalExpression(_) => Self::remove_unused_logical_expr(e, ctx),
                 Expression::NewExpression(_) => Self::remove_unused_new_expr(e, ctx),
+                Expression::TaggedTemplateExpression(_) => {
+                    Self::remove_unused_tagged_template_expr(e, ctx)
+                }
                 Expression::ObjectExpression(_) => Self::remove_unused_object_expr(e, ctx),
                 Expression::SequenceExpression(_) => Self::remove_unused_sequence_expr(e, ctx),
                 Expression::TemplateLiteral(_) => Self::remove_unused_template_literal(e, ctx),
@@ -703,6 +706,46 @@ impl<'a> PeepholeOptimizations {
         !Self::has_side_effects_or_preserved_iife(e, ctx)
     }
 
+    fn remove_unused_tagged_template_expr(
+        e: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> bool {
+        let Expression::TaggedTemplateExpression(tagged) = e else { return false };
+
+        let is_pure = (tagged.pure && ctx.annotations())
+            || ctx.manual_pure_functions(&tagged.tag)
+            || (if let Expression::Identifier(id) = &tagged.tag
+                && let Some(symbol_id) = ctx.scoping().get_reference(id.reference_id()).symbol_id()
+            {
+                ctx.state.symbols.function_summary(symbol_id).is_side_effect_free()
+            } else {
+                false
+            });
+
+        if is_pure {
+            let mut exprs = ArenaVec::new_in(ctx);
+            for mut expr in tagged.quasi.expressions.drain(..) {
+                if Self::remove_unused_expression(&mut expr, ctx) {
+                    ctx.drop_expression(&expr);
+                } else {
+                    exprs.push(expr);
+                }
+            }
+            if exprs.is_empty() {
+                return true;
+            } else if exprs.len() == 1 {
+                let new_expr = exprs.pop().unwrap();
+                ctx.replace_expression(e, new_expr);
+                return false;
+            }
+            let new_expr = Expression::new_sequence_expression(tagged.span, exprs, ctx);
+            ctx.replace_expression(e, new_expr);
+            return false;
+        }
+
+        !Self::has_side_effects_or_preserved_iife(e, ctx)
+    }
+
     /// `Expression::may_have_side_effects`, except that in tree-shake-only mode
     /// an IIFE call (`(function () {...})()` / `(() => {...})()`) is reported as
     /// effectful so its structure survives — matching Rollup / esbuild
@@ -1187,6 +1230,7 @@ impl<'a> PeepholeOptimizations {
                 | Expression::NewExpression(_)
                 | Expression::ObjectExpression(_)
                 | Expression::SequenceExpression(_)
+                | Expression::TaggedTemplateExpression(_)
                 | Expression::TemplateLiteral(_)
                 | Expression::UnaryExpression(_)
                 | Expression::ThisExpression(_)

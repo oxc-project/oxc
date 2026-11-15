@@ -440,6 +440,10 @@ pub struct TaggedTemplateExpression<'a> {
     #[ts]
     pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     pub quasi: TemplateLiteral<'a>,
+    /// `true` if the tagged template expression is marked with a `/* @__PURE__ */` comment
+    #[builder(default)]
+    #[estree(skip)]
+    pub pure: bool,
 }
 
 /// `Hello, ` in `` `Hello, ${name}` ``

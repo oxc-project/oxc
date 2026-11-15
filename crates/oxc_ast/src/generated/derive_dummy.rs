@@ -218,6 +218,7 @@ impl<'a> Dummy<'a> for TaggedTemplateExpression<'a> {
             tag: Dummy::dummy(allocator),
             type_arguments: Dummy::dummy(allocator),
             quasi: Dummy::dummy(allocator),
+            pure: Dummy::dummy(allocator),
         }
     }
 }

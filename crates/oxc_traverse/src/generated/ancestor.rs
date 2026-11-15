@@ -3061,6 +3061,8 @@ pub(crate) const OFFSET_TAGGED_TEMPLATE_EXPRESSION_TYPE_ARGUMENTS: usize =
     offset_of!(TaggedTemplateExpression, type_arguments);
 pub(crate) const OFFSET_TAGGED_TEMPLATE_EXPRESSION_QUASI: usize =
     offset_of!(TaggedTemplateExpression, quasi);
+pub(crate) const OFFSET_TAGGED_TEMPLATE_EXPRESSION_PURE: usize =
+    offset_of!(TaggedTemplateExpression, pure);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -3098,6 +3100,13 @@ impl<'a, 't> TaggedTemplateExpressionWithoutTag<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TAGGED_TEMPLATE_EXPRESSION_QUASI)
                 as *const TemplateLiteral<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TAGGED_TEMPLATE_EXPRESSION_PURE) as *const bool)
         }
     }
 }
@@ -3147,6 +3156,13 @@ impl<'a, 't> TaggedTemplateExpressionWithoutTypeArguments<'a, 't> {
                 as *const TemplateLiteral<'a>)
         }
     }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TAGGED_TEMPLATE_EXPRESSION_PURE) as *const bool)
+        }
+    }
 }
 
 impl<'a, 't> GetAddress for TaggedTemplateExpressionWithoutTypeArguments<'a, 't> {
@@ -3192,6 +3208,13 @@ impl<'a, 't> TaggedTemplateExpressionWithoutQuasi<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TAGGED_TEMPLATE_EXPRESSION_TYPE_ARGUMENTS)
                 as *const Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TAGGED_TEMPLATE_EXPRESSION_PURE) as *const bool)
         }
     }
 }
