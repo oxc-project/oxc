@@ -82,11 +82,22 @@ impl Rule for NoNewStatics {
                         .type_arguments
                         .as_ref()
                         .map_or(callee_span.end, |arguments| arguments.span.end);
-                    if callee_end == new_expr.span.end {
-                        fixer.replace(new_expr.span, format!("{source}()"))
+                    let parent = ctx.nodes().parent_node(node.id());
+                    let prefix = if source.starts_with('(')
+                        && matches!(parent.kind(), AstKind::ExpressionStatement(_))
+                        && matches!(
+                            ctx.nodes().parent_kind(parent.id()),
+                            AstKind::Program(_)
+                                | AstKind::FunctionBody(_)
+                                | AstKind::BlockStatement(_)
+                                | AstKind::SwitchCase(_)
+                        ) {
+                        ";"
                     } else {
-                        fixer.replace(new_expr.span, source.to_string())
-                    }
+                        ""
+                    };
+                    let suffix = if callee_end == new_expr.span.end { "()" } else { "" };
+                    fixer.replace(new_expr.span, format!("{prefix}{source}{suffix}"))
                 },
             );
         }
@@ -129,10 +140,17 @@ fn test() {
         ("new Promise.any()", "Promise.any()", None),
         ("new Promise.race()", "Promise.race()", None),
         ("new Promise.resolve;", "Promise.resolve();", None),
-        ("new (Promise.resolve);", "(Promise.resolve)();", None),
-        ("new (Promise.resolve)(1);", "(Promise.resolve)(1);", None),
+        ("new (Promise.resolve);", ";(Promise.resolve)();", None),
+        ("new (Promise.resolve)(1);", ";(Promise.resolve)(1);", None),
         ("new Promise.resolve<string>;", "Promise.resolve<string>();", None),
         ("new Promise['resolve'];", "Promise['resolve']();", None),
+        ("let value = 1\nnew (Promise.resolve)(2);", "let value = 1\n;(Promise.resolve)(2);", None),
+        ("if (condition) new (Promise.resolve)(2);", "if (condition) (Promise.resolve)(2);", None),
+        (
+            "function f() { 'use strict'\nnew (Promise.resolve); }",
+            "function f() { 'use strict'\n;(Promise.resolve)(); }",
+            None,
+        ),
     ];
     let fix = fix
         .into_iter()
