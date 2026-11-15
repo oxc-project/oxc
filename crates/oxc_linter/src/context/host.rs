@@ -53,6 +53,7 @@ pub struct ContextSubHost<'a> {
 }
 
 impl<'a> ContextSubHost<'a> {
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
     pub(crate) fn source_text_offset(&self) -> u32 {
         self.source_text_offset
     }

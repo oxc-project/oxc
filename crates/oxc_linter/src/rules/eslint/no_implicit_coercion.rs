@@ -181,7 +181,8 @@ declare_oxc_lint!(
     fix,
     config = NoImplicitCoercionConfig,
     version = "1.33.0",
-    short_description = "Disallow shorthand type conversions using operators like `!!`, unary `+`, and `\"\" +`.",
+    short_description =
+        "Disallow shorthand type conversions using operators like `!!`, unary `+`, and `\"\" +`.",
 );
 
 impl Rule for NoImplicitCoercion {

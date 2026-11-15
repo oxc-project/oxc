@@ -7,7 +7,7 @@ for generators, conformance, and bindings.
 - **Rust code/tests:** `just lint -p <crate>` and unfiltered `just test -p <crate>`
   where tests exist. Use filtered tests while debugging; unexpected zero tests
   are incomplete. Use conformance for syntax regressions where prescribed.
-- **Prose:** formatting and typos only.
+- **Prose:** formatting only.
 - **Rustdoc:** `just doc -p <crate>`; add
   `cargo test -p <crate> --all-features --doc` for changed executable examples.
 

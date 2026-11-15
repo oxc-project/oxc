@@ -116,8 +116,7 @@ fn outline_jsx_impl<'a>(
                 InstructionValue::JsxExpression { children, .. } => {
                     let child_ids = children
                         .as_ref()
-                        .map(|kids| kids.iter().map(|c| c.identifier).collect())
-                        .unwrap_or_default();
+                        .map_or_default(|kids| kids.iter().map(|c| c.identifier).collect());
                     actions.push(InstrAction::JsxExpr {
                         lvalue_id,
                         instr_idx: iid.index(),

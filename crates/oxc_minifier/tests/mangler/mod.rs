@@ -135,6 +135,7 @@ fn mangler() {
         "function _() { var x; try { throw 0 } catch (e) { e } }", // e can shadow x
         "function _() { var x; try { throw 0 } catch (e) { var e } }", // e can shadow x (not implemented)
         "function _() { var x; try { throw 0 } catch { var e } }",     // e should not shadow x
+        "function _() { var y; try { throw 0 } catch (y) { var y = 2; () => { let w; y } } }", // w should not shadow the catch y
         "function _() { var x; var y; }", // x and y should have different names
         "function _() { var x; let y; }", // x and y should have different names
         "function _() { { var x; var y; } }", // x and y should have different names
@@ -162,6 +163,7 @@ fn mangler() {
         "function _() { var foo = () => { var x } }",
         "function _() { class Foo { foo() { var x } } }",
         "function _() { var Foo = class { foo() { var x } } }",
+        "function _() { var foo; try {} catch (foo) { var foo = function() {} } }",
     ];
 
     let mut snapshot = String::new();
@@ -419,6 +421,9 @@ fn annex_b_block_scoped_function() {
         "function _() { function foo() { var x; use(x); } function bar() { if (true) { function baz() {} use(baz); } } }",
         // typeof must not be replaced with a constant (reviewer request)
         "console.log(typeof foo); if (true) { function foo() { return 1; } }",
+        // Block function in a catch whose parameter a `var` redeclares: it assigns the
+        // enclosing binding, so it must keep the same name
+        "function _() { try { throw 1 } catch (e) { var e = 2; { function e() {} } use(e); } use(e); }",
     ];
 
     let mut snapshot = String::new();

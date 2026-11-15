@@ -9,9 +9,9 @@ use oxc_span::SourceType;
 use crate::{
     CompilerAssumptions, HelperLoaderOptions, Module, TransformOptions,
     common::{
-        helper_loader::HelperLoaderStore, module_imports::ModuleImportsStore,
-        statement_injector::StatementInjectorStore, top_level_statements::TopLevelStatementsStore,
-        var_declarations::VarDeclarationsStore,
+        class_transform::ClassTransform, helper_loader::HelperLoaderStore,
+        module_imports::ModuleImportsStore, statement_injector::StatementInjectorStore,
+        top_level_statements::TopLevelStatementsStore, var_declarations::VarDeclarationsStore,
     },
 };
 
@@ -45,8 +45,8 @@ pub struct TransformState<'a> {
     pub top_level_statements: TopLevelStatementsStore<'a>,
 
     // State for multiple plugins interacting
-    /// `true` if class properties plugin is enabled
-    pub is_class_properties_plugin_enabled: bool,
+    /// Ownership of class field and static block lowering, shared by cooperating transforms.
+    pub class_transform: ClassTransform,
 }
 
 impl Default for TransformState<'_> {
@@ -64,7 +64,7 @@ impl Default for TransformState<'_> {
             var_declarations: VarDeclarationsStore::new(),
             statement_injector: StatementInjectorStore::new(),
             top_level_statements: TopLevelStatementsStore::new(),
-            is_class_properties_plugin_enabled: false,
+            class_transform: ClassTransform::default(),
         }
     }
 }
@@ -88,7 +88,7 @@ impl TransformState<'_> {
             var_declarations: VarDeclarationsStore::new(),
             statement_injector: StatementInjectorStore::new(),
             top_level_statements: TopLevelStatementsStore::new(),
-            is_class_properties_plugin_enabled: options.env.es2022.class_properties.is_some(),
+            class_transform: ClassTransform::new(options.env.es2022),
         }
     }
 

@@ -63,7 +63,8 @@ declare_oxc_lint!(
     correctness,
     recommended,
     version = "0.4.4",
-    short_description = "Disallow unreachable code after `return`, `throw`, `continue`, and `break` statements.",
+    short_description =
+        "Disallow unreachable code after `return`, `throw`, `continue`, and `break` statements.",
 );
 
 impl Rule for NoUnreachable {

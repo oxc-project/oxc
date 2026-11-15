@@ -172,7 +172,8 @@ impl<'a> Transformer<'a> {
             ),
             x2_es2026: ES2026::new(self.env.es2026),
             x2_es2022: ES2022::new(
-                self.env.es2022,
+                self.env.es2022.top_level_await,
+                self.state.class_transform,
                 !self.typescript.allow_declare_fields
                     || self.typescript.remove_class_fields_without_initializer,
             ),

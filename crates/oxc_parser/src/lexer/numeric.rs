@@ -69,7 +69,7 @@ impl<C: Config> Lexer<'_, C> {
                     // This seems to be a waste. It also requires us to put this
                     // call here instead of after we ensure the next character
                     // is a number character
-                    self.token.set_has_separator(true);
+                    self.pending.set_has_separator();
                     if self.peek_byte().is_some_and(|b| kind.matches_number_byte(b)) {
                         self.consume_char();
                     } else {
@@ -167,7 +167,7 @@ impl<C: Config> Lexer<'_, C> {
                     // This seems to be a waste. It also requires us to put this
                     // call here instead of after we ensure the next character
                     // is an ASCII digit
-                    self.token.set_has_separator(true);
+                    self.pending.set_has_separator();
                     if self.peek_byte().is_some_and(|b| b.is_ascii_digit()) {
                         self.consume_char();
                     } else {

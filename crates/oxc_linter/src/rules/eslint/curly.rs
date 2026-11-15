@@ -426,11 +426,7 @@ fn apply_rule_fix<'a>(
     let fixed = if should_have_braces {
         format!("{{{source}}}")
     } else {
-        let mut trimmed = source
-            .strip_prefix('{')
-            .and_then(|s| s.strip_suffix('}'))
-            .unwrap_or(source)
-            .to_string();
+        let mut trimmed = source.strip_circumfix('{', '}').unwrap_or(source).to_string();
         if is_do_while {
             trimmed.insert(0, ' ');
         }

@@ -71,6 +71,7 @@ pub mod config;
 mod context;
 mod cursor;
 mod error_handler;
+mod list;
 mod modifiers;
 mod module_record;
 mod state;
@@ -785,7 +786,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             self.lexer.finalize_tokens()
         };
 
-        program.comments = self.lexer.trivia_builder.comments;
+        program.comments = self.lexer.trivia_builder.comments.into_vec();
 
         ParserReturn {
             program,
@@ -1290,11 +1291,16 @@ mod test {
             ("import x from 'foo'; 'use strict';", 2),
             ("export {x} from 'foo'; 'use strict';", 2),
             (";'use strict';", 2),
+            ("('use strict'); 'use strict';", 2),
         ];
-        for (source, body_length) in sources {
-            let ret = Parser::new(&allocator, source, source_type).parse();
-            assert!(ret.program.directives.is_empty(), "{source}");
-            assert_eq!(ret.program.body.len(), body_length, "{source}");
+        for preserve_parens in [true, false] {
+            for (source, body_length) in sources {
+                let ret = Parser::new(&allocator, source, source_type)
+                    .with_options(ParseOptions { preserve_parens, ..ParseOptions::default() })
+                    .parse();
+                assert!(ret.program.directives.is_empty(), "{source}");
+                assert_eq!(ret.program.body.len(), body_length, "{source}");
+            }
         }
     }
 

@@ -366,19 +366,21 @@ fn has_problematic_comments(ctx: &LintContext, decl: &ImportDeclaration) -> bool
         return true;
     }
 
-    let open_brace = brace_position(ctx, decl, "{");
-    let close_brace = brace_position(ctx, decl, "}");
+    let braces = specifier_braces(ctx, decl);
     comments.iter().filter(|c| c.span.start > span.start && c.span.end < span.end).any(|c| {
-        match (open_brace, close_brace) {
-            (Some(open), Some(close)) => c.span.end <= open || c.span.start >= close,
-            _ => true,
+        match braces {
+            Some((open, close)) => c.span.end <= open || c.span.start >= close,
+            None => true,
         }
     })
 }
 
-fn brace_position(ctx: &LintContext, decl: &ImportDeclaration, brace: &str) -> Option<u32> {
-    ctx.find_next_token_within(decl.span.start, decl.span.end, brace)
-        .map(|offset| decl.span.start + offset)
+fn specifier_braces(ctx: &LintContext, decl: &ImportDeclaration) -> Option<(u32, u32)> {
+    let start = decl.span.start;
+    let end = decl.source.span.start;
+    let open = start + ctx.find_next_token_within(start, end, "{")?;
+    let close = start + ctx.find_prev_token_within(start, end, "}")?;
+    (open < close).then_some((open, close))
 }
 
 struct MergeSpecifier<'a> {
@@ -425,8 +427,7 @@ fn merge_imports_fix<'a>(
         .iter()
         .copied()
         .filter_map(|decl| {
-            let open = brace_position(ctx, decl, "{")?;
-            let close = brace_position(ctx, decl, "}")?;
+            let (open, close) = specifier_braces(ctx, decl)?;
             let identifiers =
                 ctx.source_range(Span::new(open + 1, close)).split(',').collect::<Vec<_>>();
             Some(MergeSpecifier {
@@ -457,16 +458,13 @@ fn merge_imports_fix<'a>(
         return fixer.noop();
     }
 
-    let open_brace = brace_position(ctx, first, "{");
-    let close_brace = open_brace.and_then(|open| {
-        ctx.find_next_token_within(open + 1, first.span.end, "}").map(|o| open + 1 + o)
-    });
+    let braces = specifier_braces(ctx, first);
     let import_keyword_end = first.span.start + u32::try_from("import".len()).unwrap();
 
     let first_is_empty = !has_named_specifiers(first);
-    let first_brace_content = match (open_brace, close_brace) {
-        (Some(open), Some(close)) => ctx.source_range(Span::new(open + 1, close)),
-        _ => "",
+    let first_brace_content = match braces {
+        Some((open, close)) => ctx.source_range(Span::new(open + 1, close)),
+        None => "",
     };
     let first_has_trailing_comma = !first_is_empty && first_brace_content.trim_end().ends_with(',');
 
@@ -510,17 +508,17 @@ fn merge_imports_fix<'a>(
     }
 
     let default_name = default_import_names.first().copied().unwrap_or("");
-    if should_add_default && open_brace.is_none() && should_add_specifiers {
+    if should_add_default && braces.is_none() && should_add_specifiers {
         fixes.push(fixer.insert_text_before_range(
             Span::empty(import_keyword_end),
             format!(" {default_name}, {{{specifiers_text}}} from"),
         ));
-    } else if should_add_default && open_brace.is_none() {
+    } else if should_add_default && braces.is_none() {
         fixes.push(fixer.insert_text_before_range(
             Span::empty(import_keyword_end),
             format!(" {default_name} from"),
         ));
-    } else if should_add_default && let (Some(open), Some(close)) = (open_brace, close_brace) {
+    } else if should_add_default && let Some((open, close)) = braces {
         fixes.push(fixer.insert_text_before_range(
             Span::empty(import_keyword_end),
             format!(" {default_name},"),
@@ -528,7 +526,7 @@ fn merge_imports_fix<'a>(
         if should_add_specifiers {
             fixes.push(merge_into_braces(&fixer, ctx, open, close, &specifiers_text));
         }
-    } else if !should_add_default && open_brace.is_none() && should_add_specifiers {
+    } else if !should_add_default && braces.is_none() && should_add_specifiers {
         if first.specifiers.as_ref().is_none_or(|s| s.is_empty()) {
             fixes.push(fixer.insert_text_before_range(
                 Span::empty(import_keyword_end),
@@ -537,7 +535,7 @@ fn merge_imports_fix<'a>(
         } else if let Some(first_default) = first.specifiers.as_ref().and_then(|s| s.first()) {
             fixes.push(fixer.insert_text_after(first_default, format!(", {{{specifiers_text}}}")));
         }
-    } else if !should_add_default && let (Some(open), Some(close)) = (open_brace, close_brace) {
+    } else if !should_add_default && let Some((open, close)) = braces {
         fixes.push(merge_into_braces(&fixer, ctx, open, close, &specifiers_text));
     }
 
@@ -1008,6 +1006,7 @@ import { compile as compileNoMacro } from "../src/macro.ts";"#,
             r"import * as x from './foo' with { mode: 'one' }; import * as y from './foo' with { mode: 'one' };",
             None,
         ),
+        (r"import '}{'; import '}{';", None),
     ];
 
     let fix = vec![
@@ -1120,6 +1119,34 @@ import type {Bar // comment
         (
             r"import {x} from './foo' with { type: 'json' }; import {y} from './foo' with { type: 'json' }",
             r"import {x} from './foo' with { type: 'json' }; import {y} from './foo' with { type: 'json' }",
+            None,
+        ),
+        (r"import '}{'; import '}{';", r"import '}{'; ", None),
+        (r"import '{}'; import '{}';", r"import '{}'; ", None),
+        (r"import '{'; import '{';", r"import '{'; ", None),
+        (r"import '}'; import '}';", r"import '}'; ", None),
+        (r"import '{}'; import {x} from '{}';", r"import {x} from '{}'; ", None),
+        (r"import '}{'; import def from '}{';", r"import def from '}{'; ", None),
+        (r"import def from '}{'; import '}{';", r"import def from '}{'; ", None),
+        (r"import def from '{}'; import {x} from '{}';", r"import def, {x} from '{}'; ", None),
+        (r"import {x} from '}{'; import '}{';", r"import {x} from '}{'; ", None),
+        (r"import {} from '}{'; import {x} from '}{';", r"import {x} from '}{'; ", None),
+        (r"import def, {} from '}{'; import {x} from '}{';", r"import def, {x} from '}{'; ", None),
+        (
+            r"import {x} from 'foo'; import {'}{' as y} from 'foo';",
+            r"import {x,'}{' as y} from 'foo'; ",
+            None,
+        ),
+        (
+            r"import {'}' as x} from 'foo'; import {y} from 'foo';",
+            r"import {'}' as x,y} from 'foo'; ",
+            None,
+        ),
+        (
+            r"import {x} from '}{';
+import { /* }{ */ y } from '}{';",
+            r"import {x,/* }{ */ y} from '}{';
+",
             None,
         ),
     ];
