@@ -433,11 +433,10 @@ fn preceding_separator_start(ctx: &LintContext, span: Span) -> u32 {
     let mut start =
         skip_to_next_char(source, span.start, Direction::Backward).unwrap_or(span.start);
     if start > 0
-        && ctx
-            .semantic()
-            .get_comment_at(start - 1)
-            .is_some_and(|comment| comment.is_line() && comment.span.end == start)
+        && let Some(comment) = ctx.semantic().get_comment_at(start - 1)
+        && comment.is_line()
     {
+        start = comment.span.end;
         let rest = &source[start as usize..];
         start += if rest.starts_with("\r\n") {
             2
@@ -773,6 +772,30 @@ function writeChunks(a,callac){writeChunks(m,callac)}writeChunks(i,{})",
         (
             "function Test({a, // first\n  b}) {\n  a++;\n  return <Test a={a} b={b}/>;\n}",
             "function Test({a, // first\n}) {\n  a++;\n  return <Test a={a} />;\n}",
+        ),
+        (
+            "function test(arg0, // first \n  arg1) {\n  return test(\"\", // first,\n    arg1);\n}\ntest(\"\", // first\t\n  0);",
+            "function test(arg0, // first \n) {\n  return test(\"\", // first,\n);\n}\ntest(\"\", // first\t\n);",
+        ),
+        (
+            "function test(arg0, // first,\t\r\n  arg1) {\r\n  return test(\"\", arg1);\r\n}",
+            "function test(arg0, // first,\t\r\n) {\r\n  return test(\"\");\r\n}",
+        ),
+        (
+            "function test(arg0, // first \r  arg1) {\r  return test(\"\", arg1);\r}",
+            "function test(arg0, // first \r) {\r  return test(\"\");\r}",
+        ),
+        (
+            "function test(arg0, // first,\u{2028}  arg1) { return test(\"\", arg1); }",
+            "function test(arg0, // first,\u{2028}) { return test(\"\"); }",
+        ),
+        (
+            "function test(arg0, // first\u{a0}\u{2029}  arg1) { return test(\"\", arg1); }",
+            "function test(arg0, // first\u{a0}\u{2029}) { return test(\"\"); }",
+        ),
+        (
+            "function Test({a, // first, \n  b}) {\n  a++;\n  return <Test a={a} b={b}/>;\n}",
+            "function Test({a, // first, \n}) {\n  a++;\n  return <Test a={a} />;\n}",
         ),
         // Expecting no fix: function is exported
         (
