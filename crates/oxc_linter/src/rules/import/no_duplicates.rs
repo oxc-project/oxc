@@ -629,7 +629,7 @@ fn last_token_end(ctx: &LintContext, open: u32, close: u32) -> u32 {
         let text = ctx.source_range(Span::new(open + 1, end)).trim_end();
         let text_end = open + 1 + u32::try_from(text.len()).unwrap();
         match ctx.semantic().comments_range(open + 1..text_end).last() {
-            Some(comment) if comment.span.end == text_end => end = comment.span.start,
+            Some(comment) if comment.span.end >= text_end => end = comment.span.start,
             _ => return text_end,
         }
     }
@@ -676,7 +676,7 @@ fn merge_into_braces<'a>(
             .semantic()
             .comments_range(open + 1..content_end)
             .last()
-            .is_some_and(|comment| comment.is_line() && comment.span.end == content_end);
+            .is_some_and(|comment| comment.is_line() && comment.span.end >= content_end);
         let separator = if after_line_comment
             && !specifiers_text.is_empty()
             && !specifiers_text.starts_with('\n')
@@ -1219,6 +1219,21 @@ import { /* }{ */ y } from '}{';",
         (
             "import {\n  a, /* comment */\n} from 'foo';\nimport { b } from 'foo';",
             "import {\n  a, /* comment */b\n} from 'foo';\n",
+            None,
+        ),
+        (
+            "import { a, // comment  \n} from 'foo';\nimport { b } from 'foo';",
+            "import { a, // comment\nb  \n} from 'foo';\n",
+            None,
+        ),
+        (
+            "import { a, //   \n} from 'foo';\nimport { b } from 'foo';",
+            "import { a, //\nb   \n} from 'foo';\n",
+            None,
+        ),
+        (
+            "import { a, /* first */ // comment \t\n} from 'foo';\nimport { b } from 'foo';",
+            "import { a, /* first */ // comment\nb \t\n} from 'foo';\n",
             None,
         ),
         // A comment after the trailing comma of a later import.
