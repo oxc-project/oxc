@@ -102,10 +102,6 @@ impl Rule for PreferImportingVitestGlobals {
 
         let mut missing_globals: FxHashSet<&str> = FxHashSet::default();
         let mut globals_spans: Vec<Span> = vec![];
-        // Globals bound by another import (e.g. from `node:test`, `jest` or a type-only import).
-        // Importing these from Vitest too would declare the same binding twice, so they are
-        // reported but left out of the fix.
-        let mut imported_elsewhere: FxHashSet<&str> = FxHashSet::default();
 
         for (name, references_ids) in scoping.root_unresolved_references() {
             if !VITEST_GLOBALS.contains(&CompactStr::new(name.as_str())) {
@@ -113,10 +109,6 @@ impl Rule for PreferImportingVitestGlobals {
             }
 
             missing_globals.insert(name.as_str());
-            // A type-only import does not bind the value, so `describe()` stays unresolved
-            if scoping.get_binding(root_scope, name.as_str().into()).is_some() {
-                imported_elsewhere.insert(name.as_str());
-            }
 
             for &reference_id in references_ids {
                 let reference = scoping.get_reference(reference_id);
@@ -163,7 +155,6 @@ impl Rule for PreferImportingVitestGlobals {
                 {
                     globals_spans.push(call_expr.span);
                     missing_globals.insert(identifier.name.as_str());
-                    imported_elsewhere.insert(identifier.name.as_str());
                 }
             }
         }
@@ -176,8 +167,10 @@ impl Rule for PreferImportingVitestGlobals {
         let diagnostic =
             prefer_importing_vitest_globals_diagnostic(globals_spans.as_ref(), &globals_imports);
 
-        let fixable_imports =
-            missing_globals.iter().filter(|name| !imported_elsewhere.contains(*name)).join(", ");
+        let fixable_imports = missing_globals
+            .iter()
+            .filter(|name| scoping.get_binding(root_scope, (**name).into()).is_none())
+            .join(", ");
 
         if fixable_imports.is_empty() {
             ctx.diagnostic(diagnostic);
