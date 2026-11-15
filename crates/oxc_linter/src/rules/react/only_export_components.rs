@@ -1164,7 +1164,6 @@ export function Button(props: PropsWithChildren): ReactNode {
             None,
         ),
         ("const App = React.unknown(() => <div />);", None),
-        // https://github.com/oxc-project/oxc/issues/28338
         (
             "export const createThing = () => {\n  const Inner = (): unknown => null;\n  return { Inner };\n};",
             None,
