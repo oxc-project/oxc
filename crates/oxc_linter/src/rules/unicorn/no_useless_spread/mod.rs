@@ -246,16 +246,7 @@ fn check_useless_spread_in_list<'a>(
                 }) && call_expr_args_span.contains_inclusive(array_expr.span)
                 {
                     // compute replacer before the closure so we don't capture `ctx` by reference inside the fixer closure
-                    let replacer = if let Some(first) = array_expr.elements.first() {
-                        let mut snippet_span = first.span();
-                        if array_expr.elements.len() != 1 {
-                            let last = array_expr.elements.last().unwrap();
-                            snippet_span = Span::new(first.span().start, last.span().end);
-                        }
-                        ctx.source_range(snippet_span).to_string()
-                    } else {
-                        String::new()
-                    };
+                    let replacer = spread_arguments_text(array_expr, ctx);
 
                     ctx.diagnostic_with_fix(spread_in_arguments(span), move |fixer| {
                         fixer.replace(spread_elem.span(), replacer)
@@ -267,6 +258,29 @@ fn check_useless_spread_in_list<'a>(
             _ => false,
         },
     }
+}
+
+/// The elements of `array_expr` as arguments: `...[a, , b]` becomes `a, undefined, b`.
+/// A hole is not allowed in an argument list. Its span is the comma after it, which is
+/// kept, except after the last element: `...[a,,]` becomes `a,undefined`.
+fn spread_arguments_text(array_expr: &ArrayExpression, ctx: &LintContext) -> String {
+    let (Some(first), Some(last)) = (array_expr.elements.first(), array_expr.elements.last())
+    else {
+        return String::new();
+    };
+    let mut text = String::new();
+    let mut pos = first.span().start;
+    for element in &array_expr.elements {
+        if let ArrayExpressionElement::Elision(elision) = element {
+            text.push_str(ctx.source_range(Span::new(pos, elision.span.start)));
+            text.push_str("undefined");
+            pos = elision.span.start;
+        }
+    }
+    let end =
+        if matches!(last, ArrayExpressionElement::Elision(_)) { pos } else { last.span().end };
+    text.push_str(ctx.source_range(Span::new(pos, end)));
+    text
 }
 
 /// `...[ ...[] ]`. May contain multiple spread elements.
@@ -786,6 +800,17 @@ fn test() {
         ("[...[1,2,3], ...x]", "[...[1,2,3], ...x]"),
         ("[...[...[1,2,3]]]", "[...[1,2,3]]"),
         ("const array = [...[a, , b,]]", "const array = [a, , b,]"),
+        // holes are not allowed in arguments, so they become `undefined`
+        ("foo(...[,])", "foo(undefined)"),
+        ("new Foo(...[,])", "new Foo(undefined)"),
+        ("foo(...[,,])", "foo(undefined,undefined)"),
+        ("foo(...[a, , b])", "foo(a, undefined, b)"),
+        ("foo(...[a,,])", "foo(a,undefined)"),
+        ("foo(...[a, /* hole */ , b])", "foo(a, /* hole */ undefined, b)"),
+        (
+            "foo(...[,, ,(( a )), ,,(0, b), ,,])",
+            "foo(undefined,undefined, undefined,(( a )), undefined,undefined,(0, b), undefined,undefined)",
+        ),
         // object literals
         ("const obj = { a, ...{ b, c } }", "const obj = ({\n\ta,\n\tb,\n\tc\n})"),
         ("const obj = { a, ...{ b, c, } }", "const obj = ({\n\ta,\n\tb,\n\tc\n})"),
