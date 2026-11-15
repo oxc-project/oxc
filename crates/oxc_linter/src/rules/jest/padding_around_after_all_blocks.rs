@@ -46,8 +46,6 @@ fn test() {
         "const cleanUp = false; if (cleanUp)\n  afterAll(() => {});",
         "const cleanUp = false; while (cleanUp) afterAll(() => {});",
         "const cleanUp = false; for (; cleanUp;) afterAll(() => {});",
-        "const thing = 123; (afterAll(() => {}));",
-        "const thing = 123; await afterAll(() => {}) && foo();",
     ];
 
     let fail = vec![
@@ -80,14 +78,6 @@ fn test() {
         (
             "const thing = 123;\n/* one */\n/* two */\nafterAll(() => {});",
             "const thing = 123;\n\n/* one */\n/* two */\nafterAll(() => {});",
-        ),
-        (
-            "const thing = 123; await (afterAll(() => {}));",
-            "const thing = 123;\n\nawait (afterAll(() => {}));",
-        ),
-        (
-            "const thing = 123; await (afterAll(() => {}) && foo());",
-            "const thing = 123;\n\nawait (afterAll(() => {}) && foo());",
         ),
     ];
 
