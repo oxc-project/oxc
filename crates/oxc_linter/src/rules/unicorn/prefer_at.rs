@@ -381,12 +381,7 @@ impl PreferAt {
                     if is_arguments_object(&slice_static.object) {
                         return fixer.noop();
                     }
-                    create_at_fix(
-                        &fixer,
-                        slice_static.object.span(),
-                        Span::new(slice_static.object.span().start, call_expr.span.end),
-                        -1,
-                    )
+                    create_at_fix(&fixer, slice_static.object.span(), call_expr.span, -1)
                 },
             );
         }
@@ -416,7 +411,7 @@ impl PreferAt {
                     create_at_fix(
                         &fixer,
                         slice_static.object.span(),
-                        Span::new(slice_static.object.span().start, call_expr.span.end),
+                        call_expr.span,
                         first_negative,
                     )
                 },
@@ -436,7 +431,7 @@ impl PreferAt {
                         create_at_fix(
                             &fixer,
                             slice_static.object.span(),
-                            Span::new(slice_static.object.span().start, call_expr.span.end),
+                            call_expr.span,
                             first_negative,
                         )
                     },
@@ -1156,6 +1151,11 @@ fn test() {
         ("result = ((array.slice(-1)))[0]", "result = array.at(-1)", None),
         ("([a = array.slice(-1)[0]] = [])", "([a = array.at(-1)] = [])", None),
         ("({a: b = array.slice(-1)[0]} = {})", "({a: b = array.at(-1)} = {})", None),
+        // Parentheses inside the call are replaced along with it, as for `[0]` above.
+        ("(( array.slice(-1) )).pop();", "array.at(-1);", None),
+        ("(( array.slice(-1).pop ))();", "array.at(-1);", None),
+        ("(( array.slice(-9, -8).shift ))()", "array.at(-9)", None),
+        ("(( (( array.slice( ((-9)), ((unknown)), ).shift ))() ));", "(( array.at(-9) ));", None),
     ];
 
     Tester::new(PreferAt::NAME, PreferAt::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
