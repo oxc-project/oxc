@@ -290,6 +290,14 @@ impl Rule for PreferFunctionType {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::TSInterfaceDeclaration(decl) => {
+                // Checked by the `ExportDefaultDeclaration` arm below.
+                if matches!(
+                    ctx.nodes().parent_kind(node.id()),
+                    AstKind::ExportDefaultDeclaration(_)
+                ) {
+                    return;
+                }
+
                 let body = &decl.body.body;
 
                 if !has_one_super_type(decl) && body.len() == 1 {
@@ -297,6 +305,7 @@ impl Rule for PreferFunctionType {
                 }
             }
 
+            // Reported without a fix, as `export default type Foo = ...` is not valid.
             AstKind::ExportDefaultDeclaration(decl) => {
                 if let ExportDefaultDeclarationKind::TSInterfaceDeclaration(interface_decl) =
                     &decl.declaration
@@ -405,6 +414,7 @@ fn test() {
     let fail = vec![
         "interface Foo { (): string; }",
         "export default interface Foo { /** comment */ (): string; }",
+        "export default interface Foo<T> { (): T }",
         r"
         interface Foo {
           // comment
@@ -684,6 +694,12 @@ type X = {} & (() => void);
             "export type AnyFn = (...args: any[]) => any;",
         ),
         ("type K = { new(): T };", "type K = new() => T;"),
+        // `export default type` is not valid, so typescript-eslint doesn't fix these.
+        (
+            "export default interface Foo { /** comment */ (): string; }",
+            "export default interface Foo { /** comment */ (): string; }",
+        ),
+        ("export default interface Foo<T> { (): T }", "export default interface Foo<T> { (): T }"),
     ];
 
     Tester::new(PreferFunctionType::NAME, PreferFunctionType::PLUGIN, pass, fail)
