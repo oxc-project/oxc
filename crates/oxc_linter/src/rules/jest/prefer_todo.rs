@@ -40,8 +40,6 @@ fn tests() {
         ("test('foo', 1)", None),
         ("test('stub', () => expect(1).toBe(1));", None),
         ("test.concurrent('stub', () => expect(1).toBe(1));", None),
-        // Non-`skip` modifiers and call-chain forms cannot be safely auto-fixed,
-        // so they are treated as valid code.
         ("test.only('focused test', () => {});", None),
         ("test.only('focused test', function () {});", None),
         ("test.fails('is expected to fail', () => {});", None),

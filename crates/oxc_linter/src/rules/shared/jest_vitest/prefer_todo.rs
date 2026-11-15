@@ -100,12 +100,7 @@ fn build_fix<'a>(fixer: RuleFixer<'_, 'a>, call_expr: &CallExpression<'a>) -> Ru
         Expression::ComputedMemberExpression(mem_expr) => {
             fixer.replace(mem_expr.expression.span(), "'todo'")
         }
-        _ => {
-            // Only reachable in practice if `is_safe_fix_target` returns true
-            // for an unexpected shape (e.g. a `skip` call expression). Fall back
-            // to a no-op to avoid deleting code.
-            return fixer.noop();
-        }
+        _ => return fixer.noop(),
     };
 
     if call_expr.arguments.len() == 1 {
@@ -137,13 +132,8 @@ fn should_filter_case(expr: &CallExpression) -> bool {
     }
 
     let Some(mem_expr) = expr.callee.as_member_expression() else {
-        // `test.each(...)()`, `test.runIf(...)()` and similar call-chain
-        // callees are not targetable with a behavior-preserving fix.
         return true;
     };
-    // Only `.skip` members can be safely rewritten. All other modifiers
-    // (`.only`, `.fails`, `.concurrent`, dynamic computed members, etc.) are
-    // intentionally skipped.
     !matches!(mem_expr.object(), Expression::Identifier(_))
         || mem_expr.static_property_name() != Some("skip")
 }
