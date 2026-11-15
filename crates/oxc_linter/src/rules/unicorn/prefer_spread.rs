@@ -693,6 +693,14 @@ str.split("")"#,
             "class A extends B { method() { return super.items.slice(); } }",
             "class A extends B { method() { return [...super.items]; } }",
         ),
+        (
+            "// leading\nfoo() // trailing\n// above\nArray.from(set).map(() => {})",
+            "// leading\nfoo() // trailing\n// above\n;[...set].map(() => {})",
+        ),
+        (
+            "foo(/* a */) /* b */ /* c */\nArray.from(set).map(() => {})",
+            "foo(/* a */) /* b */ /* c */\n;[...set].map(() => {})",
+        ),
     ];
 
     Tester::new(PreferSpread::NAME, PreferSpread::PLUGIN, pass, fail)
