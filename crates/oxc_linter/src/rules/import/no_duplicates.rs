@@ -1245,7 +1245,7 @@ import { /* }{ */ y } from '}{';",
         ),
         (
             "import { a } from 'foo';\nimport { b, // note\n c } from 'foo';",
-            "import { a,b,// note\n c\n } from 'foo';\n",
+            "import { a,b,// note\n c } from 'foo';\n",
             None,
         ),
         (
@@ -1255,7 +1255,7 @@ import { /* }{ */ y } from '}{';",
         ),
         (
             "import { a } from 'foo';\nimport { b, // note\r\n c } from 'foo';",
-            "import { a,b,// note\r\n c\n } from 'foo';\n",
+            "import { a,b,// note\r\n c } from 'foo';\n",
             None,
         ),
         (
