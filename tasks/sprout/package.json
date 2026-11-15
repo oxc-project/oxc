@@ -16,7 +16,7 @@
     "@testing-library/react": "^16.3.0",
     "@types/babel__core": "^7.20.5",
     "@types/fbt": "^1.0.4",
-    "@types/jsdom": "^21.1.7",
+    "@types/jsdom": "^30.0.0",
     "@types/node": "catalog:",
     "@types/react": "^19.2.0",
     "babel-plugin-fbt": "^1.0.0",
@@ -24,11 +24,11 @@
     "babel-plugin-idx": "^3.0.3",
     "fbt": "^1.0.2",
     "invariant": "^2.2.4",
-    "jsdom": "^22.1.0",
+    "jsdom": "^31.0.0",
     "object-assign": "^4.1.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "zod": "^4.0.0",
-    "zod-validation-error": "^4.0.0"
+    "zod-validation-error": "^5.0.0"
   }
 }
