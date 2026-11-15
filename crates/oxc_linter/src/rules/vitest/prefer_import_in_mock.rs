@@ -206,7 +206,6 @@ fn test() {
     ];
 
     let fix = vec![
-        // Paths with a lone surrogate are preserved as-is.
         (r#"vi.mock("\uD800")"#, r#"vi.mock(import("\uD800"))"#),
         (r#"vi.doMock("a\uDC00b", () => ({}))"#, r#"vi.doMock(import("a\uDC00b"), () => ({}))"#),
         ("vi.mock('foo', () => {})", "vi.mock(import('foo'), () => {})"),
