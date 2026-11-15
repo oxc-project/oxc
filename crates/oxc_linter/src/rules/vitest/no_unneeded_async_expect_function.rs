@@ -313,7 +313,14 @@ function load(id) {
 it('rejects without an id', async () => {
     await expect(async () => { await load(''); }).rejects.toThrow('missing id');
 });";
-    let expected = source.replace("async () => { await load(''); }", "load('')");
+    let expected = r"
+function load(id) {
+    if (!id) throw new Error('missing id');
+    return Promise.resolve({ id });
+}
+it('rejects without an id', async () => {
+    await expect(load('')).rejects.toThrow('missing id');
+});";
 
     Tester::new(
         NoUnneededAsyncExpectFunction::NAME,
@@ -324,7 +331,7 @@ it('rejects without an id', async () => {
     .with_vitest_plugin(true)
     .expect_fix(vec![
         (source, source, None, FixKind::SafeFix),
-        (source, expected.as_str(), None, FixKind::Suggestion),
+        (source, expected, None, FixKind::Suggestion),
     ])
     .test();
 }
