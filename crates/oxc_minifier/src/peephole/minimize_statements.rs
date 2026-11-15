@@ -492,6 +492,15 @@ impl<'a> PeepholeOptimizations {
         {
             return;
         }
+        // A hoisted sloppy block declaration is bound in the enclosing var scope, so a
+        // direct eval there can read it even when this block has no eval. `DirectEval`
+        // propagates upward and the binding scope encloses this list, so its flag
+        // covers every eval that can see the binding.
+        let binding_scope_flags =
+            ctx.scoping().scope_flags(ctx.scoping().symbol_scope_id(symbol_id));
+        if binding_scope_flags.contains_direct_eval() {
+            return;
+        }
         // Creating a function has no side effects, and this assignment holds the only
         // reference, so no statement in between can observe the move. Searching the
         // whole list keeps the result independent of which statements a pass has
@@ -507,12 +516,20 @@ impl<'a> PeepholeOptimizations {
         // A sloppy block declaration can also initialize an enclosing var binding.
         // Converting it to an expression loses that Annex B write. Check this even
         // when `unused: false` disables function-liveness registration.
-        let binding_scope_flags =
-            ctx.scoping().scope_flags(ctx.scoping().symbol_scope_id(symbol_id));
         if !function.r#async
             && !function.generator
             && !binding_scope_flags.is_var()
             && !binding_scope_flags.is_strict_mode()
+        {
+            return;
+        }
+        // The reverse Annex B write: a sloppy block function of the same name that
+        // semantic left block-scoped still assigns itself to this var binding when
+        // it is evaluated, with no resolved reference. Within this var scope, only
+        // the statements already in `result` run before this assignment.
+        if !binding_scope_flags.is_strict_mode()
+            && let Some(id) = &function.id
+            && result.iter().any(|stmt| Self::nests_annex_b_function(stmt, id.name, false))
         {
             return;
         }
@@ -530,6 +547,46 @@ impl<'a> PeepholeOptimizations {
         // symbol has no live uses. Compression can keep that metadata; mangling
         // rebuilds the function-expression binding from the transformed AST.
         ctx.replace_expression(&mut assignment.right, Expression::FunctionExpression(function));
+    }
+
+    /// Whether `stmt` nests a plain function declaration named `name` below a
+    /// block, `if`, `switch`, loop, `try` or `with`, without crossing into an
+    /// expression or function body (a different var scope). In sloppy mode,
+    /// evaluating such a declaration also writes the enclosing var binding
+    /// (Annex B.3.2.1, B.3.4).
+    fn nests_annex_b_function(stmt: &Statement<'a>, name: Ident<'a>, nested: bool) -> bool {
+        let any = |stmts: &[Statement<'a>]| {
+            stmts.iter().any(|stmt| Self::nests_annex_b_function(stmt, name, true))
+        };
+        match stmt {
+            Statement::FunctionDeclaration(function) => {
+                nested
+                    && !function.r#async
+                    && !function.generator
+                    && function.id.as_ref().is_some_and(|id| id.name == name)
+            }
+            Statement::LabeledStatement(s) => Self::nests_annex_b_function(&s.body, name, nested),
+            Statement::BlockStatement(s) => any(&s.body),
+            Statement::IfStatement(s) => {
+                Self::nests_annex_b_function(&s.consequent, name, true)
+                    || s.alternate
+                        .as_ref()
+                        .is_some_and(|s| Self::nests_annex_b_function(s, name, true))
+            }
+            Statement::SwitchStatement(s) => s.cases.iter().any(|case| any(&case.consequent)),
+            Statement::TryStatement(s) => {
+                any(&s.block.body)
+                    || s.handler.as_ref().is_some_and(|handler| any(&handler.body.body))
+                    || s.finalizer.as_ref().is_some_and(|finalizer| any(&finalizer.body))
+            }
+            Statement::WithStatement(s) => Self::nests_annex_b_function(&s.body, name, true),
+            Statement::ForStatement(s) => Self::nests_annex_b_function(&s.body, name, true),
+            Statement::ForInStatement(s) => Self::nests_annex_b_function(&s.body, name, true),
+            Statement::ForOfStatement(s) => Self::nests_annex_b_function(&s.body, name, true),
+            Statement::WhileStatement(s) => Self::nests_annex_b_function(&s.body, name, true),
+            Statement::DoWhileStatement(s) => Self::nests_annex_b_function(&s.body, name, true),
+            _ => false,
+        }
     }
 
     /// Check if a switch case can be inlined by verifying:

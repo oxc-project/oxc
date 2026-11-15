@@ -456,6 +456,20 @@ fn test_inline_single_use_function_declaration() {
         SourceType::script(),
         &CompressOptions::default(),
     );
+    // Sloppy block functions with another name, or inside a nested function body,
+    // do not write this var binding.
+    test_options_source_type(
+        "function main(x) { function f() { return 1; } if (x) { function g() { return 2; } } r.f = f; }",
+        "function main(x) { r.f = function() { return 1; }; }",
+        SourceType::script(),
+        &CompressOptions::default(),
+    );
+    test_options_source_type(
+        "function main() { function f() { return 1; } function h() { { function f() { return 2; } } } r.h = h; r.f = f; }",
+        "function main() { r.h = function() {}, r.f = function() { return 1; }; }",
+        SourceType::script(),
+        &CompressOptions::default(),
+    );
 }
 
 #[test]
@@ -463,6 +477,13 @@ fn test_inline_function_declaration_preserves_annex_b_aliases() {
     let cases = [
         "function main() { var f; { function f() { return 1; } r.f = f; } return f(); } main();",
         "function main() { { function f() { return 1; } r.a = f; } { function f() { return 2; } r.b = f; } return f(); } main();",
+        // The block declaration overwrites the outer `f` before the assignment reads it.
+        "function main() { function f() { return 1; } { function f() { return 2; } } r.f = f; } main();",
+        "function main(x) { function f() { return 1; } if (x) { function f() { return 2; } } r.f = f; } main(1);",
+        "function main(x) { function f() { return 1; } for (;;) { if (x === 1) { function f() { return 2; } } break; } r.f = f; } main(1);",
+        "function main(x) { function f() { return 1; } l: for (; x;) { try { function f() { return 2; } } catch {} break l; } r.f = f; } main(1);",
+        // A direct eval outside the block can read the hoisted var binding.
+        "function main() { { function f() { return 1; } r.f = f; } return eval('typeof f'); } main();",
     ];
     for unused in [
         CompressOptionsUnused::Keep,
