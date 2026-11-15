@@ -1,14 +1,22 @@
-use crate::fixer::{RuleFix, RuleFixer};
-use crate::rule::TupleRuleConfig;
-use crate::{AstNode, context::LintContext, rule::Rule};
-use oxc_ast::{AstKind, ast::BlockStatement, ast::IfStatement, ast::Statement};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+
+use oxc_ast::{
+    AstKind,
+    ast::{BlockStatement, IfStatement, Statement},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::identifier::is_identifier_part;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
+
+use crate::{
+    AstNode,
+    context::LintContext,
+    fixer::{RuleFix, RuleFixer},
+    rule::{Rule, TupleRuleConfig},
+};
 
 fn curly_diagnostic(span: Span, keyword: &str, expected: bool) -> OxcDiagnostic {
     let condition_if_needed =
