@@ -140,21 +140,14 @@ impl NoUntypedMockFactory {
         };
 
         if let Expression::StringLiteral(string_literal) = expr {
-            let value = string_literal.value;
             ctx.diagnostic_with_fix(
-                add_type_parameter_to_module_mock_diagnostic(value, property_span),
+                add_type_parameter_to_module_mock_diagnostic(string_literal.value, property_span),
                 |fixer| {
-                    // The fix is built from `&str`, so a name with a lone surrogate is
-                    // reported without it.
-                    let Some(value) = value.as_str() else {
-                        return fixer.noop();
-                    };
-                    let mut code = String::with_capacity(value.len() + 20);
-                    code.push_str("<typeof import('");
-                    code.push_str(value);
-                    code.push_str("')>");
-
-                    fixer.insert_text_after(&call_expr.callee, code)
+                    // Copy the literal as written, as eslint-plugin-jest does, so its quotes
+                    // and escapes stay valid, e.g. `"it's"` or `'a\\b'`.
+                    let literal = fixer.source_range(string_literal.span);
+                    fixer
+                        .insert_text_after(&call_expr.callee, format!("<typeof import({literal})>"))
                 },
             );
         } else if let Expression::Identifier(ident) = expr {
@@ -345,8 +338,6 @@ fn test() {
     ];
 
     let fix = vec![
-        // A name with a lone surrogate gets no fix.
-        (r"jest.mock('\uD800', () => ({}))", r"jest.mock('\uD800', () => ({}))", None),
         (
             "
                 jest.mock('../moduleName', () => {
@@ -424,6 +415,21 @@ fn test() {
   'foo',
   () => {}
 );",
+            None,
+        ),
+        (
+            r"jest.mock('\uD800', () => ({}))",
+            r"jest.mock<typeof import('\uD800')>('\uD800', () => ({}))",
+            None,
+        ),
+        (
+            r#"jest.mock("it's", () => ({}))"#,
+            r#"jest.mock<typeof import("it's")>("it's", () => ({}))"#,
+            None,
+        ),
+        (
+            r"jest.mock('a\\b', () => ({}))",
+            r"jest.mock<typeof import('a\\b')>('a\\b', () => ({}))",
             None,
         ),
     ];
