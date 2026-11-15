@@ -462,7 +462,7 @@ fn test() {
             r#"import { vitest } from "vitest"; const alias = vitest; vitest.fn().mockReturnValue(1);"#,
             None,
         ),
-        (r#"vitest.fn().mockReturnValue(1);"#, None),
+        ("vitest.fn().mockReturnValue(1);", None),
         (r#"import { vitest } from "vitest"; const vi = {}; vitest.fn();"#, None),
         (r#"import { vitest } from "vitest"; const vi = {};"#, None),
         (r#"import { vitest } from "vitest"; function run(vi) { vitest.fn(); }"#, None),
@@ -472,7 +472,7 @@ fn test() {
             r#"import { vi } from "vitest"; function run(vitest) { vi.fn(); }"#,
             Some(serde_json::json!([{ "fn": "vitest" }])),
         ),
-        (r#"function run(vi) { vitest.fn(); }"#, None),
+        ("function run(vi) { vitest.fn(); }", None),
         (
             r#"// oxlint-disable-next-line vitest/consistent-vitest-vi
 import { vitest } from "vitest";
