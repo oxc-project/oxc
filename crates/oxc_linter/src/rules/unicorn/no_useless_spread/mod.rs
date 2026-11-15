@@ -2,13 +2,15 @@ use oxc_allocator::{Allocator, ArenaVec, CloneIn};
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrayExpression, ArrayExpressionElement, CallExpression, Expression, NewExpression,
-        ObjectExpression, ObjectPropertyKind, SpreadElement,
+        ArrayExpression, ArrayExpressionElement, CallExpression, Expression, IdentifierReference,
+        NewExpression, ObjectExpression, ObjectPropertyKind, SpreadElement, Statement,
     },
     builder::AstBuilder,
 };
+use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, SPAN, Span};
 
 mod const_eval;
@@ -342,7 +344,7 @@ fn check_useless_iterable_to_array<'a>(
             if for_of_stmt.right.without_parentheses().span() == array_expr.span {
                 // The copy is needed when the loop body changes the original:
                 // `for (const x of [...items]) items.splice(i, 1);`
-                if !is_mutated_within(&spread_elem.argument, for_of_stmt.body.span(), ctx) {
+                if !is_mutated_within(&spread_elem.argument, &for_of_stmt.body, ctx) {
                     ctx.diagnostic(iterable_to_array_in_for_of(span));
                 }
                 return true;
@@ -422,32 +424,61 @@ const MUTATING_METHODS: [&str; 13] = [
 ];
 
 /// Whether `target` is a variable that is reassigned, or has a mutating method
-/// called on it, inside `span`.
-fn is_mutated_within<'a>(target: &Expression<'a>, span: Span, ctx: &LintContext<'a>) -> bool {
+/// called on it, inside `body`.
+fn is_mutated_within<'a>(
+    target: &Expression<'a>,
+    body: &Statement<'a>,
+    ctx: &LintContext<'a>,
+) -> bool {
     let Expression::Identifier(ident) = target.get_inner_expression() else {
         return false;
     };
     let Some(symbol_id) = get_symbol_id_of_variable(ident, ctx.semantic()) else {
         return false;
     };
-    ctx.semantic().symbol_references(symbol_id).any(|reference| {
-        let node = ctx.nodes().get_node(reference.node_id());
-        if !span.contains_inclusive(node.span()) {
-            return false;
+    let mut visitor = MutationVisitor { ctx, symbol_id, mutated: false };
+    visitor.visit_statement(body);
+    visitor.mutated
+}
+
+struct MutationVisitor<'a, 'c> {
+    ctx: &'c LintContext<'a>,
+    symbol_id: SymbolId,
+    mutated: bool,
+}
+
+impl<'a> Visit<'a> for MutationVisitor<'a, '_> {
+    fn visit_statement(&mut self, statement: &Statement<'a>) {
+        if !self.mutated {
+            walk::walk_statement(self, statement);
+        }
+    }
+
+    fn visit_expression(&mut self, expression: &Expression<'a>) {
+        if !self.mutated {
+            walk::walk_expression(self, expression);
+        }
+    }
+
+    fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
+        let reference = self.ctx.scoping().get_reference(ident.reference_id());
+        if reference.symbol_id() != Some(self.symbol_id) {
+            return;
         }
         if reference.is_write() {
-            return true;
+            self.mutated = true;
+            return;
         }
-        let member = ctx.nodes().parent_node(reference.node_id());
+        let member = self.ctx.nodes().parent_node(reference.node_id());
         let AstKind::StaticMemberExpression(member_expr) = member.kind() else {
-            return false;
+            return;
         };
-        MUTATING_METHODS.contains(&member_expr.property.name.as_str())
+        self.mutated |= MUTATING_METHODS.contains(&member_expr.property.name.as_str())
             && matches!(
-                ctx.nodes().parent_kind(member.id()),
+                self.ctx.nodes().parent_kind(member.id()),
                 AstKind::CallExpression(call) if call.callee.span() == member_expr.span
-            )
-    })
+            );
+    }
 }
 
 /// Matches `new {Set,WeakSet,Map,WeakMap}(iterable)`
