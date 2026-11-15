@@ -304,7 +304,6 @@ impl Rule for PreferFunctionType {
                 }
             }
 
-            // Reported without a fix, as `export default type Foo = ...` is not valid.
             AstKind::ExportDefaultDeclaration(decl) => {
                 if let ExportDefaultDeclarationKind::TSInterfaceDeclaration(interface_decl) =
                     &decl.declaration
