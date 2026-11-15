@@ -361,8 +361,8 @@ impl ExtensionsConfig {
                 (default, false)
             };
 
-        let ignore_packages =
-            value.get("ignorePackages").and_then(Value::as_bool).unwrap_or(default_ignore_packages);
+        let ignore_packages = default_ignore_packages
+            || value.get("ignorePackages").and_then(Value::as_bool).unwrap_or_default();
         let check_type_imports =
             value.get("checkTypeImports").and_then(Value::as_bool).unwrap_or_default();
 
@@ -1346,6 +1346,17 @@ fn test() {
         (
             r"import lodash from 'lodash';",
             Some(json!(["always", { "pattern": { "js": "always" }, "ignorePackages": true }])),
+        ),
+        (
+            r"import foo from '@scope/pkg/subpath';",
+            Some(json!([
+                "ignorePackages",
+                { "pattern": { "js": "always" }, "ignorePackages": false }
+            ])),
+        ),
+        (
+            r"import foo from '@scope/pkg/subpath';",
+            Some(json!(["ignorePackages", { "js": "always", "ignorePackages": false }])),
         ),
     ];
 
