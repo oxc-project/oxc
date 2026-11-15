@@ -59,6 +59,15 @@ fn is_safe_to_rename_binding(symbol_id: SymbolId, ctx: &LintContext<'_>) -> bool
         };
 
         call_expr.callee.span() == member_span
+            && parse_general_jest_fn_call(
+                call_expr,
+                &PossibleJestNode { node: call_parent, original: None },
+                ctx,
+            )
+            .is_some_and(|call| {
+                call.kind == JestFnKind::General(JestGeneralFnKind::Vitest)
+                    && call.name == ident.name.as_str()
+            })
     })
 }
 
@@ -71,7 +80,7 @@ fn can_fix_call_member_object<'a>(
     ctx: &LintContext<'a>,
 ) -> bool {
     let Expression::Identifier(ident) = member_expression.object() else {
-        return true;
+        return false;
     };
 
     ident
@@ -337,7 +346,7 @@ fn test() {
         ),
     ];
 
-    let fix = vec![
+    let mut fix = vec![
         (r#"import { vitest } from "vitest";"#, r#"import { vi } from "vitest";"#, None), // WORKING
         (
             r#"import { vitest } from "vite-plus/test";"#,
@@ -396,6 +405,25 @@ fn test() {
             Some(serde_json::json!([{ "fn": "vitest" }])),
         ),
     ];
+    let no_fix = [
+        (r#"import { vitest } from "vitest"; const mocker = vitest;"#, None),
+        (r#"import { vitest } from "vitest"; const fn = vitest.fn;"#, None),
+        (r#"import { vitest } from "vitest"; vitest.fn(); export { vitest };"#, None),
+        (
+            r#"import { vi } from "vitest"; const mocker = vi; vi.fn();"#,
+            Some(serde_json::json!([{ "fn": "vitest" }])),
+        ),
+        (r#"import { vitest } from "vitest"; const mocker = vitest; vitest.fn();"#, None),
+        (r#"import { vitest } from "vitest"; use(vitest); vitest.fn();"#, None),
+        (r#"import { vitest } from "vitest"; const mock = vitest.fn().mock;"#, None),
+        (r#"import { vitest } from "vitest"; vitest.fn()();"#, None),
+        (
+            r#"import { vitest } from "vitest"; const alias = vitest; vitest.fn().mockReturnValue(1);"#,
+            None,
+        ),
+        (r#"vitest.fn().mockReturnValue(1);"#, None),
+    ];
+    fix.extend(no_fix.into_iter().map(|(source, config)| (source, source, config)));
     Tester::new(ConsistentVitestVi::NAME, ConsistentVitestVi::PLUGIN, pass, fail)
         .expect_fix(fix)
         .with_vitest_plugin(true)
