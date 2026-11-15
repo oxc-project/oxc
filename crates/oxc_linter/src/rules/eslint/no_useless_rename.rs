@@ -545,12 +545,6 @@ fn test() {
     let fix = vec![
         ("let {foo: foo} = obj;", "let {foo} = obj;"),
         ("({foo: (foo)} = obj);", "({foo} = obj);"),
-        ("({foo: (foo) = a} = obj);", "({foo: (foo) = a} = obj);"),
-        ("({foo: foo /* ) */ = 1} = obj);", "({foo /* ) */ = 1} = obj);"),
-        ("({foo: foo = /* ) */ 1} = obj);", "({foo = /* ) */ 1} = obj);"),
-        ("({foo: foo // )\n = 1} = obj);", "({foo // )\n = 1} = obj);"),
-        ("({foo: ((foo)) = (a)} = obj);", "({foo: ((foo)) = (a)} = obj);"),
-        ("({foo: foo = (a)} = obj);", "({foo = (a)} = obj);"),
         (r"let {\u0061: a} = obj;", "let {a} = obj;"),
         (r"let {a: \u0061} = obj;", r"let {\u0061} = obj;"),
         (r"let {\u0061: \u0061} = obj;", r"let {\u0061} = obj;"),
@@ -704,6 +698,12 @@ fn test() {
             "let foo, bar; export {foo//comment
             ,bar};",
         ),
+        ("({foo: (foo) = a} = obj);", "({foo: (foo) = a} = obj);"),
+        ("({foo: foo /* ) */ = 1} = obj);", "({foo /* ) */ = 1} = obj);"),
+        ("({foo: foo = /* ) */ 1} = obj);", "({foo = /* ) */ 1} = obj);"),
+        ("({foo: foo // )\n = 1} = obj);", "({foo // )\n = 1} = obj);"),
+        ("({foo: ((foo)) = (a)} = obj);", "({foo: ((foo)) = (a)} = obj);"),
+        ("({foo: foo = (a)} = obj);", "({foo = (a)} = obj);"),
     ];
 
     Tester::new(NoUselessRename::NAME, NoUselessRename::PLUGIN, pass, fail)
