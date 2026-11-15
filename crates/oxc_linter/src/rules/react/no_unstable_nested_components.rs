@@ -278,8 +278,8 @@ fn class_candidate<'a>(
     }
 }
 
-/// Like eslint-plugin-react, a function passed as a prop is a component only when it returns
-/// JSX. A callback that puts JSX into an object or array it returns (`(row) => ({ icon: <Icon /> })`)
+/// A function passed as a prop is a component only when it returns JSX.
+/// A callback that puts JSX into an object or array it returns (`(row) => ({ icon: <Icon /> })`)
 /// is a plain function.
 fn function_body_returns_jsx<'a>(body: &FunctionBody<'a>, ctx: &LintContext<'a>) -> bool {
     let mut finder = ReturnsJsx { found: false, ctx };
@@ -674,22 +674,6 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        (
-            r"
-            declare const Column: (props: any) => any;
-            export const Table = () => (
-              <Column
-                metadata={(row) => ({ icon: <span>{row.id}</span> })}
-                compare={(row) => {
-                  if (!row.id) return null
-                  return { children: <span>{row.id}</span> }
-                }}
-                actions={(row) => [{ icon: <span>{row.id}</span> }]}
-              />
-            );
-        ",
-            None,
-        ),
         (
             "function Component() { return <Thing {...{ 0: () => <div /> }} />; }",
             Some(serde_json::json!([{ "propNamePattern": "*" }])),
@@ -1318,6 +1302,22 @@ fn test() {
             Some(serde_json::json!([{ "propNamePattern": "render*" }])),
         ),
         (
+            r"
+            declare const Column: (props: any) => any;
+            export const Table = () => (
+              <Column
+                metadata={(row) => ({ icon: <span>{row.id}</span> })}
+                compare={(row) => {
+                  if (!row.id) return null
+                  return { children: <span>{row.id}</span> }
+                }}
+                actions={(row) => [{ icon: <span>{row.id}</span> }]}
+              />
+            );
+        ",
+            None,
+        ),
+        (
             "function Parent() { return <Thing footer={() => { const element = { icon: <div /> }; return element; }} />; }",
             None,
         ),
@@ -1336,21 +1336,6 @@ fn test() {
     ];
 
     let fail = vec![
-        (
-            r"
-            function ParentComponent() {
-              return (
-                <Column
-                  cell={(row) => {
-                    if (!row.id) return null
-                    return <span>{row.id}</span>
-                  }}
-                />
-              );
-            }
-        ",
-            None,
-        ),
         (
             "function Component() { return <Thing {...{ 0: () => <div /> }} />; }",
             Some(serde_json::json!([{ "propNamePattern": "render*" }])),
@@ -2036,6 +2021,21 @@ fn test() {
                       );
                     }
                   ",
+            None,
+        ),
+        (
+            r"
+            function ParentComponent() {
+              return (
+                <Column
+                  cell={(row) => {
+                    if (!row.id) return null
+                    return <span>{row.id}</span>
+                  }}
+                />
+              );
+            }
+        ",
             None,
         ),
         (
