@@ -96,7 +96,5 @@ pub fn report_missing_padding_before_jest_block<'a>(
 }
 
 fn get_statement_span_before_node(node: &AstNode, statements: &[Statement]) -> Option<Span> {
-    statements
-        .windows(2)
-        .find_map(|pair| (pair[1].span() == node.span()).then(|| pair[0].span()))
+    statements.windows(2).find_map(|pair| (pair[1].span() == node.span()).then(|| pair[0].span()))
 }
