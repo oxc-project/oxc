@@ -137,7 +137,7 @@ impl<'a> MayHaveSideEffectsContext<'a> for AttributeValueSideEffectsContext<'_, 
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::{fixer::FixKind, tester::Tester};
 
     let pass = vec![
         (r"<a role />", None),
@@ -438,17 +438,25 @@ fn test() {
     ];
 
     let fix = vec![
-        (r"<col role {...props} />", r"<col  {...props} />"),
+        (r"<col role {...props} />", r"<col  {...props} />", None, FixKind::SafeFix),
         (
             r#"<meta aria-hidden aria-role="none" {...props} />"#,
             r#"<meta  aria-role="none" {...props} />"#,
+            None,
+            FixKind::SafeFix,
         ),
         // Safe to delete: boolean shorthand, string literal, side-effect-free expression.
-        (r"<meta aria-hidden />", r"<meta  />"),
-        (r#"<meta aria-hidden="true" />"#, r"<meta  />"),
-        (r"<meta aria-hidden={true} />", r"<meta  />"),
+        (r"<meta aria-hidden />", r"<meta  />", None, FixKind::SafeFix),
+        (r#"<meta aria-hidden="true" />"#, r"<meta  />", None, FixKind::SafeFix),
+        (r"<meta aria-hidden={true} />", r"<meta  />", None, FixKind::SafeFix),
         // Unsafe to auto-fix: expression may have side effects, but suggestion works.
-        (r"<meta aria-hidden={track()} />", r"<meta  />"),
+        (
+            r"<meta aria-hidden={track()} />",
+            r"<meta aria-hidden={track()} />",
+            None,
+            FixKind::SafeFix,
+        ),
+        (r"<meta aria-hidden={track()} />", r"<meta  />", None, FixKind::Suggestion),
     ];
 
     Tester::new(AriaUnsupportedElements::NAME, AriaUnsupportedElements::PLUGIN, pass, fail)
