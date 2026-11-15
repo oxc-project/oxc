@@ -56,10 +56,6 @@ it forms the most grammatically natural sentence. For `null`,
 `undefined`, and `NaN` this rule recommends using their specific `toBe`
 matchers, as they give better error messages as well.
 
-These rewrites are suggestions because `toEqual` and `toStrictEqual`
-honor custom equality testers, while the recommended matchers do not.
-Applying a suggestion can therefore change whether an assertion passes.
-
 ### Examples
 
 Examples of **incorrect** code for this rule:
