@@ -528,7 +528,7 @@ fn test() {
         (r#"<button role="button link" />"#, r#"<button role="button link" />"#),
         (r#"<button role="button foo" />"#, r#"<button role="button foo" />"#),
         (r#"<button role="foo button" />"#, r#"<button role="foo button" />"#),
-        (r#"<button role="  button  " />"#, r#"<button  />"#),
+        (r#"<button role="  button  " />"#, "<button  />"),
     ];
 
     Tester::new(NoRedundantRoles::NAME, NoRedundantRoles::PLUGIN, pass, fail)
