@@ -188,11 +188,9 @@ impl Rule for PreferSingleCall {
 
                 // Determine separator. Check whether the target call ends with a
                 // trailing comma (like `push(a,)`) to avoid generating `push(a,, b)`.
-                let target_src = target_call.span.source_text(src);
-                let before_paren = target_src[..target_src.len().saturating_sub(1)].trim_end();
                 let separator = if target_call.arguments.is_empty() {
                     ""
-                } else if before_paren.ends_with(',') {
+                } else if has_trailing_comma(target_call, ctx) {
                     " "
                 } else {
                     ", "
@@ -219,6 +217,21 @@ impl Rule for PreferSingleCall {
 
             fix
         });
+    }
+}
+
+/// Whether the last token before the closing `)` of `call` is a `,`, skipping comments,
+/// e.g. `push(a, /* b */)`.
+fn has_trailing_comma(call: &CallExpression, ctx: &LintContext) -> bool {
+    let start = call.span.start;
+    let mut end = call.span.end - 1;
+    loop {
+        let text = ctx.source_range(Span::new(start, end)).trim_end();
+        let text_end = start + u32::try_from(text.len()).unwrap();
+        match ctx.comments_range(start..text_end).last() {
+            Some(comment) if comment.span.end == text_end => end = comment.span.start,
+            _ => return text.ends_with(','),
+        }
     }
 }
 
@@ -454,6 +467,9 @@ mod tests {
             "foo.push(); foo.push(1);",
             // Trailing comma in first call.
             "foo.push(1,); foo.push(2);",
+            // Trailing comma followed by a comment.
+            "foo.push(1, /* comment */); foo.push(2);",
+            "foo.push(1, // comment\n); foo.push(2);",
             // Multi-line, both with semicolons.
             "foo.push(1);\nfoo.push(2);",
             // ASI: first statement lacks a semicolon.
@@ -496,6 +512,8 @@ mod tests {
             ("foo.push(1); foo.push();", "foo.push(1);"),
             ("foo.push(); foo.push(1);", "foo.push(1);"),
             ("foo.push(1,); foo.push(2);", "foo.push(1, 2);"),
+            ("foo.push(1, /* comment */); foo.push(2);", "foo.push(1, /* comment */ 2);"),
+            ("foo.push(1, // comment\n); foo.push(2);", "foo.push(1, // comment\n 2);"),
             ("foo.push(1);\nfoo.push(2);", "foo.push(1, 2);"),
             // ASI: semicolon from second statement is preserved.
             ("foo.push(1)\nfoo.push(2);", "foo.push(1, 2);"),
