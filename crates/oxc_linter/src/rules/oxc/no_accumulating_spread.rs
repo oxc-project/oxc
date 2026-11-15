@@ -180,8 +180,6 @@ fn check_reduce_usage<'a>(
         return;
     }
 
-    // A reduce callback takes the accumulator, the current value and, optionally,
-    // the index and the array.
     let params_count = params.parameters_count();
     if !(2..=4).contains(&params_count) {
         return;
