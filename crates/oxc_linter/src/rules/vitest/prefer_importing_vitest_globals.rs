@@ -412,8 +412,6 @@ fn test() {
             "import { it, describe } from 'vite-plus/test';
             describe('suite', () => {});",
         ),
-        // `describe` is already bound by the `jest` import, importing it from Vitest too
-        // would declare it twice, so there is no fix
         (
             "import { describe } from 'jest';
             describe('suite', () => {});",
@@ -428,7 +426,6 @@ fn test() {
             "import type { describe } from 'vitest'; describe('suite', () => {});",
             "import type { describe } from 'vitest'; describe('suite', () => {});",
         ),
-        // only the real global is imported
         (
             "import { describe } from 'jest'; it('test', () => {}); describe('suite', () => {});",
             "import { it } from 'vitest';\nimport { describe } from 'jest'; it('test', () => {}); describe('suite', () => {});",
