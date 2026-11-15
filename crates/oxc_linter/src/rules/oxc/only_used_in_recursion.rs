@@ -760,7 +760,6 @@ function writeChunks(a,callac){writeChunks(m,callac)}writeChunks(i,{})",
             }
             "#,
         ),
-        // The line break after a line comment is kept, or `)` would end up in the comment.
         (
             "function test(arg0, // first\n  arg1) {\n  return test(\"\", // first\n    arg1);\n}",
             "function test(arg0, // first\n) {\n  return test(\"\", // first\n);\n}",
