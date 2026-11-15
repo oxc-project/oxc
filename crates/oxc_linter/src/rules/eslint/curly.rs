@@ -2200,7 +2200,6 @@ fn test() {
             "if (foo) { var foo = function*() {} } else {}",
             Some(serde_json::json!(["multi"])),
         ),
-        // `else` needs a space before the body.
         (
             "if (foo) bar(); else{baz();}",
             "if (foo) bar(); else baz();",
