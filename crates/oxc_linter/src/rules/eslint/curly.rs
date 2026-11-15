@@ -2159,7 +2159,6 @@ fn test() {
         ("if(I){if(t)s}þ", "if(I){if(t){s}}þ", None),
         ("if (foo) {while(bar){}}", "if (foo) while(bar){}", Some(serde_json::json!(["multi"]))),
         ("if (foo) {if(bar){}}", "if (foo) if(bar){}", Some(serde_json::json!(["multi"]))),
-        // Removing the braces would need a semicolon, so ESLint does not fix these.
         (
             "if (a) { if (b) console.log(1); else console.log(2) } else console.log(3)",
             "if (a) { if (b) console.log(1); else console.log(2) } else console.log(3)",
