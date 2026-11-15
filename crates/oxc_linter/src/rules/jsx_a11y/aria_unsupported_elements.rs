@@ -1,12 +1,9 @@
 use cow_utils::CowUtils;
 use oxc_ast::{
     AstKind,
-    ast::{Expression, IdentifierReference, JSXAttributeItem, JSXAttributeValue, JSXExpression},
+    ast::{JSXAttributeItem, JSXAttributeValue, JSXExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_ecmascript::side_effects::{
-    MayHaveSideEffects, MayHaveSideEffectsContext, PropertyReadSideEffects,
-};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -16,7 +13,6 @@ use crate::{
     rule::Rule,
     utils::{get_element_type, get_jsx_attribute_name},
 };
-use oxc_semantic::IsGlobalReference;
 
 declare_oxc_lint!(
     /// ### What it does
@@ -76,7 +72,7 @@ impl Rule for AriaUnsupportedElements {
                     if attr_name == "role" || is_valid_aria_property(&attr_name) {
                         let diagnostic =
                             aria_unsupported_elements_diagnostic(attr.span, &attr_name);
-                        if is_safe_to_delete_attribute(ctx, attr.value.as_ref()) {
+                        if is_safe_to_delete_attribute(attr.value.as_ref()) {
                             ctx.diagnostic_with_fix(diagnostic, |fixer| fixer.delete(&attr.span));
                         } else {
                             ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
@@ -90,48 +86,14 @@ impl Rule for AriaUnsupportedElements {
     }
 }
 
-fn is_safe_to_delete_attribute<'a>(
-    ctx: &LintContext<'a>,
-    value: Option<&JSXAttributeValue<'a>>,
-) -> bool {
+fn is_safe_to_delete_attribute(value: Option<&JSXAttributeValue<'_>>) -> bool {
     match value {
         None | Some(JSXAttributeValue::StringLiteral(_)) => true,
         Some(JSXAttributeValue::ExpressionContainer(container)) => match &container.expression {
             JSXExpression::EmptyExpression(_) => true,
-            expr => {
-                let side_effects_ctx = AttributeValueSideEffectsContext { ctx };
-                !expr.to_expression().may_have_side_effects(&side_effects_ctx)
-            }
+            expr => expr.to_expression().get_inner_expression().is_literal(),
         },
         Some(JSXAttributeValue::Element(_) | JSXAttributeValue::Fragment(_)) => false,
-    }
-}
-
-struct AttributeValueSideEffectsContext<'c, 'a> {
-    ctx: &'c LintContext<'a>,
-}
-
-impl<'a> oxc_ecmascript::GlobalContext<'a> for AttributeValueSideEffectsContext<'_, 'a> {
-    fn is_global_reference(&self, reference: &IdentifierReference<'a>) -> bool {
-        reference.is_global_reference(self.ctx.scoping())
-    }
-}
-
-impl<'a> MayHaveSideEffectsContext<'a> for AttributeValueSideEffectsContext<'_, 'a> {
-    fn annotations(&self) -> bool {
-        false
-    }
-
-    fn manual_pure_functions(&self, _callee: &Expression) -> bool {
-        false
-    }
-
-    fn property_read_side_effects(&self) -> PropertyReadSideEffects {
-        PropertyReadSideEffects::All
-    }
-
-    fn unknown_global_side_effects(&self) -> bool {
-        true
     }
 }
 
@@ -436,7 +398,7 @@ fn test() {
         (r"<meta aria-hidden={track()} />", None),
     ];
 
-    let fix = vec![
+    let mut fix = vec![
         (r"<col role {...props} />", r"<col  {...props} />", None, FixKind::SafeFix),
         (
             r#"<meta aria-hidden aria-role="none" {...props} />"#,
@@ -447,6 +409,13 @@ fn test() {
         (r"<meta aria-hidden />", r"<meta  />", None, FixKind::SafeFix),
         (r#"<meta aria-hidden="true" />"#, r"<meta  />", None, FixKind::SafeFix),
         (r"<meta aria-hidden={true} />", r"<meta  />", None, FixKind::SafeFix),
+        (r"<meta aria-hidden={null} />", r"<meta  />", None, FixKind::SafeFix),
+        (r"<meta aria-hidden={0} />", r"<meta  />", None, FixKind::SafeFix),
+        (r"<meta aria-hidden={1n} />", r"<meta  />", None, FixKind::SafeFix),
+        (r#"<meta role={"none"} />"#, r"<meta  />", None, FixKind::SafeFix),
+        (r"<meta role={/none/} />", r"<meta  />", None, FixKind::SafeFix),
+        (r"<meta aria-hidden={(true)} />", r"<meta  />", None, FixKind::SafeFix),
+        (r"<meta aria-hidden={true as boolean} />", r"<meta  />", None, FixKind::SafeFix),
         (
             r"<meta aria-hidden={track()} />",
             r"<meta aria-hidden={track()} />",
@@ -455,6 +424,27 @@ fn test() {
         ),
         (r"<meta aria-hidden={track()} />", r"<meta  />", None, FixKind::Suggestion),
     ];
+
+    for (source, suggested) in [
+        (
+            r"const value = { valueOf() { track(); return 0; } }; <meta aria-hidden={value < 1} />",
+            r"const value = { valueOf() { track(); return 0; } }; <meta  />",
+        ),
+        (r"<meta aria-hidden={pending} />; let pending = true;", r"<meta  />; let pending = true;"),
+        (
+            r#"const key = { toString() { track(); return "hidden"; } }; <meta aria-hidden={{ [key]: true }} />"#,
+            r#"const key = { toString() { track(); return "hidden"; } }; <meta  />"#,
+        ),
+        (
+            r"const value = { get hidden() { track(); return true; } }; <meta aria-hidden={value.hidden} />",
+            r"const value = { get hidden() { track(); return true; } }; <meta  />",
+        ),
+        (r"<meta role=<Component /> />", r"<meta  />"),
+        (r"<meta role=<>{track()}</> />", r"<meta  />"),
+    ] {
+        fix.push((source, source, None, FixKind::SafeFix));
+        fix.push((source, suggested, None, FixKind::Suggestion));
+    }
 
     Tester::new(AriaUnsupportedElements::NAME, AriaUnsupportedElements::PLUGIN, pass, fail)
         .expect_fix(fix)
