@@ -894,11 +894,8 @@ fn test() {
         // Issue: <https://github.com/oxc-project/oxc/issues/7714>
         ("{( t=='' )}", Some(serde_json::json!(["always", { "onlyEquality": true }]))),
         // Issue: <https://github.com/oxc-project/oxc/issues/29471>
-        // Regex literals are objects, so relational comparisons with them are
-        // not safely fixable because swapping reverses ToPrimitive order.
         ("if (/x/ < value) {}", Some(serde_json::json!(["never"]))),
         ("if (value > /x/) {}", Some(serde_json::json!(["always"]))),
-        // Equality with a regex literal is still safely fixable.
         ("if (/x/ === value) {}", Some(serde_json::json!(["never"]))),
     ];
 
