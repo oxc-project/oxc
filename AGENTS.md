@@ -324,6 +324,10 @@ Tests are TypeScript files in each package's `test/` directory.
 
 When changing linter codegen files such as `tasks/linter_codegen/**` or generated linter rule runner files under `crates/oxc_linter/src/generated/`, run `cargo lintgen` and `cargo lint-timings` so generated rule metadata and linter timing data stay in sync.
 
+## Pull request guidance
+
+Before opening or updating a pull request, read [the PR guidance](.agents/pr-guidance.md). It defines the required example layout and evidence for behavior fixes and optimizations, and when to include a playground link.
+
 ## Notes
 
 - Rapidly evolving project - APIs may change
