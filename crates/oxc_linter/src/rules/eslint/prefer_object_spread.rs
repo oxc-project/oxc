@@ -1061,19 +1061,9 @@ fn test() {
         ("Object.assign({}, a, b())", "Object.assign({}, a, b())", None, FixKind::Fix),
         ("Object.assign({}, a, b())", "({ ...a, ...b()})", None, FixKind::Suggestion),
         ("Object.assign({}, { ...src })", "({ ...src})", None, FixKind::Suggestion),
-        (
-            "Object.assign({}, { ...src })",
-            "Object.assign({}, { ...src })",
-            None,
-            FixKind::Fix,
-        ),
+        ("Object.assign({}, { ...src })", "Object.assign({}, { ...src })", None, FixKind::Fix),
         ("Object.assign({}, { [key]: p })", "({ [key]: p})", None, FixKind::Suggestion),
-        (
-            "Object.assign({}, { [key]: p })",
-            "Object.assign({}, { [key]: p })",
-            None,
-            FixKind::Fix,
-        ),
+        ("Object.assign({}, { [key]: p })", "Object.assign({}, { [key]: p })", None, FixKind::Fix),
         (
             "Object.assign({ __proto__: proto }, { x: 42 })",
             "({__proto__: proto, x: 42})",
