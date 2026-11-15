@@ -288,3 +288,31 @@ fn test() {
     .expect_fix(fix)
     .test_and_snapshot();
 }
+
+#[test]
+fn test_fix_kind() {
+    use crate::{fixer::FixKind, tester::Tester};
+
+    let source = r"
+function load(id) {
+    if (!id) throw new Error('missing id');
+    return Promise.resolve({ id });
+}
+it('rejects without an id', async () => {
+    await expect(async () => { await load(''); }).rejects.toThrow('missing id');
+});";
+    let expected = source.replace("async () => { await load(''); }", "load('')");
+
+    Tester::new(
+        NoUnneededAsyncExpectFunction::NAME,
+        NoUnneededAsyncExpectFunction::PLUGIN,
+        vec![],
+        vec![source],
+    )
+    .with_jest_plugin(true)
+    .expect_fix(vec![
+        (source, source, None, FixKind::SafeFix),
+        (source, expected.as_str(), None, FixKind::Suggestion),
+    ])
+    .test();
+}
