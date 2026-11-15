@@ -183,7 +183,7 @@ fn test() {
         ("var a = new String((((('hello')))));", "var a = 'hello';", None, FixKind::Suggestion),
         ("var a = new Number(10);", "var a = 10;", None, FixKind::Suggestion),
         ("var a = new Number(10 as number);", "var a = 10;", None, FixKind::Suggestion),
-        ("(new Number())", "(Number())", None, FixKind::Suggestion),
+        ("(new\u{00a0}Number())", "(Number())", None, FixKind::Suggestion),
     ];
 
     Tester::new(NoNewWrappers::NAME, NoNewWrappers::PLUGIN, pass, fail)
