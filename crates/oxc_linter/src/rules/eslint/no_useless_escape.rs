@@ -92,7 +92,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     recommended,
-    suggestion,
+    dangerous_suggestion,
     config = NoUselessEscapeConfig,
     version = "0.0.5",
     short_description = "Disallow unnecessary escape characters.",
@@ -167,9 +167,17 @@ fn check(ctx: &LintContext<'_>, node_id: NodeId, start: u32, offsets: &[usize]) 
 
         if !is_within_jsx_attribute(node_id, ctx) {
             let span = Span::new(offset - 1, offset + len);
-            ctx.diagnostic_with_suggestion(no_useless_escape_diagnostic(c, span), |fixer| {
-                fixer.replace(span, c.to_string())
-            });
+            let fix_kind = match ctx.nodes().parent_kind(node_id) {
+                AstKind::Directive(directive) if directive.expression.value == "use strict" => {
+                    FixKind::DangerousSuggestion
+                }
+                _ => FixKind::Suggestion,
+            };
+            ctx.diagnostic_with_fix_of_kind(
+                no_useless_escape_diagnostic(c, span),
+                fix_kind,
+                |fixer| fixer.replace(span, c.to_string()),
+            );
         }
     }
 }
@@ -776,7 +784,39 @@ fn test_safe_fix_does_not_apply() {
     let fix = vec![
         (r#""use\ strict";"#, r#""use\ strict";"#, None, FixKind::SafeFix),
         (r"const re = /\!/;", r"const re = /\!/;", None, FixKind::SafeFix),
-        (r#""use\ strict";"#, r#""use strict";"#, None, FixKind::Suggestion),
+        (r#""use\ strict";"#, r#""use strict";"#, None, FixKind::DangerousSuggestion),
+    ];
+
+    Tester::new(
+        NoUselessEscape::NAME,
+        NoUselessEscape::PLUGIN,
+        Vec::<&str>::new(),
+        Vec::<&str>::new(),
+    )
+    .expect_fix(fix)
+    .test();
+}
+
+#[test]
+fn test_strict_directive_suggestions() {
+    use crate::{FixKind, tester::Tester};
+
+    let fix = vec![
+        (
+            r#"function f(a = 0) { "use\ strict"; }"#,
+            r#"function f(a = 0) { "use\ strict"; }"#,
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            r#"function f() { "use\ strict"; }"#,
+            r#"function f() { "use strict"; }"#,
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (r#"const s = "use\ strict";"#, r#"const s = "use strict";"#, None, FixKind::Suggestion),
+        (r#""some\ directive";"#, r#""some directive";"#, None, FixKind::Suggestion),
+        (r"const re = /\!/;", r"const re = /!/;", None, FixKind::Suggestion),
     ];
 
     Tester::new(
