@@ -62,8 +62,7 @@ impl PreferTagOverRole {
     }
 
     fn check_role(role: &str, jsx_name: &str, span: Span, ctx: &LintContext) {
-        // `<img>` can't replace an inline `<svg>`: `role="img"` is how an SVG
-        // graphic gets its accessible name.
+        // An <img> cannot preserve an inline SVG's contents.
         if role == "img" && jsx_name == "svg" {
             return;
         }
