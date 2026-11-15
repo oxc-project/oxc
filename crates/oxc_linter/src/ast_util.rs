@@ -1081,16 +1081,13 @@ pub fn could_be_asi_hazard(node: &AstNode, ctx: &LintContext) -> bool {
 /// Find the last meaningful (non-whitespace, non-comment) character before `end_pos`.
 fn find_last_meaningful_char(source_text: &str, end_pos: u32, ctx: &LintContext) -> Option<char> {
     let comments = ctx.semantic().comments();
-    // Comments before `idx` start before the end of `text`.
     let mut idx = comments.partition_point(|c| c.span.start < end_pos);
     let mut text = &source_text[..end_pos as usize];
     loop {
-        // Skip whitespace, including irregular whitespace (NBSP, ZWNBSP, etc.)
         text =
             text.trim_end_matches(|c: char| c.is_ascii_whitespace() || is_irregular_whitespace(c));
         #[expect(clippy::cast_possible_truncation)]
         let text_end = text.len() as u32;
-        // Skip a comment that `text` ends with, or that contains `end_pos`.
         match idx.checked_sub(1).map(|i| &comments[i]) {
             Some(comment) if comment.span.end >= text_end => {
                 text = &source_text[..comment.span.start as usize];
