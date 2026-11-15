@@ -80,7 +80,8 @@ fn comment_replacement(ctx: &LintContext, span: Span) -> (Span, String) {
     let before = &source[..span.start as usize];
     let after = &source[span.end as usize..];
     let is_line_terminator = |c| matches!(c, '\n' | '\r' | '\u{2028}' | '\u{2029}');
-    let starts_line = before.rsplit(is_line_terminator).next().unwrap().trim().is_empty();
+    let starts_line =
+        before.chars().rev().take_while(|c| !is_line_terminator(*c)).all(char::is_whitespace);
 
     // Only consume the following newline when the comment is alone on its line.
     if starts_line {
