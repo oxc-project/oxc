@@ -78,6 +78,10 @@ pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
 }
 
 fn is_safe_fix_target(call_expr: &CallExpression) -> bool {
+    if call_expr.arguments.len() > 2 {
+        return false;
+    }
+
     if let Some(name) =
         call_expr.callee.as_member_expression().and_then(MemberExpression::static_property_name)
     {

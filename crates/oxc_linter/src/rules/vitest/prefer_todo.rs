@@ -76,6 +76,15 @@ fn tests() {
     ];
 
     let fix = vec![
+        ("test('title', () => {});", "test('title', () => {});"),
+        (
+            "test.skip('title', () => {}, registerTimeout());",
+            "test.skip('title', () => {}, registerTimeout());",
+        ),
+        (
+            "test['skip']('title', function () {}, ...timeouts);",
+            "test['skip']('title', function () {}, ...timeouts);",
+        ),
         ("test('i need to write this test');", "test.todo('i need to write this test');"),
         ("test('i need to write this test',);", "test.todo('i need to write this test',);"),
         ("test(`i need to write this test`);", "test.todo(`i need to write this test`);"),
