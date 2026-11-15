@@ -1278,18 +1278,19 @@ mod test {
     }
 
     #[test]
-    fn test_fix() {
+    fn test_fix_no_new_wrappers() {
         let tester = Tester::new().with_cwd("fixtures/cli/fix_argument".into());
-        tester.test_fix(
-            "fix.js",
-            "var x = new String('Hello world');\n",
-            "var x = 'Hello world';\n",
-        );
-        tester.test_fix(
-            "fix.vue",
-            "<script>var x = new String('Hello world');</script>\n<script>var y = new String('Hello world');</script>\n",
-            "<script>var x = 'Hello world';</script>\n<script>var y = 'Hello world';</script>\n",
-        );
+        for (file, before, after) in [
+            ("fix.js", "var x = new String('Hello world');\n", "var x = 'Hello world';\n"),
+            (
+                "fix.vue",
+                "<script>var x = new String('Hello world');</script>\n<script>var y = new String('Hello world');</script>\n",
+                "<script>var x = 'Hello world';</script>\n<script>var y = 'Hello world';</script>\n",
+            ),
+        ] {
+            tester.test_fix(file, before, before);
+            tester.test_fix_with_args(file, before, after, &["--fix-suggestions"]);
+        }
     }
 
     #[test]
