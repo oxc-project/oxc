@@ -374,7 +374,10 @@ impl<'a> Visit<'a> for UselessEscapeFinder<'a> {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::{
+        FixKind,
+        tester::{ExpectFixTestCase, Tester},
+    };
 
     let pass = vec![
         ("var foo = /\\./", None),
@@ -700,7 +703,7 @@ fn test() {
         (r"/[\@\@]/v", Some(serde_json::json!([{ "allowRegexCharacters": ["#"] }]))), // { "ecmaVersion": 2024 }
     ];
 
-    let fix = vec![
+    let mut fix: Vec<ExpectFixTestCase> = vec![
         ("var foo = /\\#/;", "var foo = /#/;", None),
         ("var foo = /\\;/;", "var foo = /;/;", None),
         ("var foo = \"\\'\";", "var foo = \"'\";", None),
@@ -767,64 +770,45 @@ fn test() {
             r"const regex = /(https?:\/\/github\.com\/(([^\s]+)\/([^\s]+))\/([^\s]+\/)?(issues|pull)\/([0-9]+))|(([^\s]+)\/([^\s]+))?#([1-9][0-9]*)($|[\s:\;\-(\=])/;",
             None,
         ),
-    ];
-
-    Tester::new(NoUselessEscape::NAME, NoUselessEscape::PLUGIN, pass, fail)
-        .expect_fix(fix)
-        .test_and_snapshot();
-}
-
-#[test]
-fn test_safe_fix_does_not_apply() {
-    use crate::{FixKind, tester::Tester};
+    ]
+    .into_iter()
+    .map(Into::into)
+    .collect();
 
     // Removing a useless escape can create a Use Strict Directive or change
     // `RegExp.prototype.source`, so it must not be applied as a safe fix.
     // Regression for https://github.com/oxc-project/oxc/issues/29467
-    let fix = vec![
-        (r#""use\ strict";"#, r#""use\ strict";"#, None, FixKind::SafeFix),
-        (r"const re = /\!/;", r"const re = /\!/;", None, FixKind::SafeFix),
-        (r#""use\ strict";"#, r#""use strict";"#, None, FixKind::DangerousSuggestion),
-    ];
+    fix.extend(
+        [
+            (r#""use\ strict";"#, r#""use\ strict";"#, None, FixKind::SafeFix),
+            (r"const re = /\!/;", r"const re = /\!/;", None, FixKind::SafeFix),
+            (r#""use\ strict";"#, r#""use strict";"#, None, FixKind::DangerousSuggestion),
+            (
+                r#"function f(a = 0) { "use\ strict"; }"#,
+                r#"function f(a = 0) { "use\ strict"; }"#,
+                None,
+                FixKind::Suggestion,
+            ),
+            (
+                r#"function f() { "use\ strict"; }"#,
+                r#"function f() { "use strict"; }"#,
+                None,
+                FixKind::DangerousSuggestion,
+            ),
+            (
+                r#"const s = "use\ strict";"#,
+                r#"const s = "use strict";"#,
+                None,
+                FixKind::Suggestion,
+            ),
+            (r#""some\ directive";"#, r#""some directive";"#, None, FixKind::Suggestion),
+            (r"const re = /\!/;", r"const re = /!/;", None, FixKind::Suggestion),
+        ]
+        .into_iter()
+        .map(Into::into),
+    );
 
-    Tester::new(
-        NoUselessEscape::NAME,
-        NoUselessEscape::PLUGIN,
-        Vec::<&str>::new(),
-        Vec::<&str>::new(),
-    )
-    .expect_fix(fix)
-    .test();
-}
-
-#[test]
-fn test_strict_directive_suggestions() {
-    use crate::{FixKind, tester::Tester};
-
-    let fix = vec![
-        (
-            r#"function f(a = 0) { "use\ strict"; }"#,
-            r#"function f(a = 0) { "use\ strict"; }"#,
-            None,
-            FixKind::Suggestion,
-        ),
-        (
-            r#"function f() { "use\ strict"; }"#,
-            r#"function f() { "use strict"; }"#,
-            None,
-            FixKind::DangerousSuggestion,
-        ),
-        (r#"const s = "use\ strict";"#, r#"const s = "use strict";"#, None, FixKind::Suggestion),
-        (r#""some\ directive";"#, r#""some directive";"#, None, FixKind::Suggestion),
-        (r"const re = /\!/;", r"const re = /!/;", None, FixKind::Suggestion),
-    ];
-
-    Tester::new(
-        NoUselessEscape::NAME,
-        NoUselessEscape::PLUGIN,
-        Vec::<&str>::new(),
-        Vec::<&str>::new(),
-    )
-    .expect_fix(fix)
-    .test();
+    Tester::new(NoUselessEscape::NAME, NoUselessEscape::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }
