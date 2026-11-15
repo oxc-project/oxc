@@ -179,6 +179,11 @@ fn can_fix_binding<'a>(
     let var_scope = scoping.symbol_scope_id(symbol_id);
     let var_function_scope = enclosing_function_scope(scoping, var_scope);
     let init = decl.init.as_ref().map(Expression::without_parentheses);
+    let loop_right = match ctx.nodes().parent_kind(node.id()) {
+        AstKind::ForInStatement(stmt) => Some(stmt.right.span()),
+        AstKind::ForOfStatement(stmt) => Some(stmt.right.span()),
+        _ => None,
+    };
 
     ctx.symbol_references(symbol_id).all(|reference| {
         let reference_node = ctx.nodes().get_node(reference.node_id());
@@ -186,7 +191,10 @@ fn can_fix_binding<'a>(
 
         // A lexical binding cannot be accessed outside of its block or before
         // its declaration.
-        if !scope_span.contains_inclusive(span) || span.start < decl.span.start {
+        if !scope_span.contains_inclusive(span)
+            || span.start < decl.span.start
+            || loop_right.is_some_and(|right| right.contains_inclusive(span))
+        {
             return false;
         }
 
@@ -577,6 +585,8 @@ fn test() {
         ("var {a: {b} = {b}} = {};", "var {a: {b} = {b}} = {};"),
         ("var [[a] = [a]] = [];", "var [[a] = [a]] = [];"),
         ("for (var {a = a} of [{}]) {}", "for (var {a = a} of [{}]) {}"),
+        ("for (var a of [a]) {}", "for (var a of [a]) {}"),
+        ("for (var a in { [a]: 1 }) {}", "for (var a in { [a]: 1 }) {}"),
     ];
 
     Tester::new(NoVar::NAME, NoVar::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
