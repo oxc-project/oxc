@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::Statement};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, Statement},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
@@ -20,18 +23,23 @@ pub fn report_missing_padding_before_jest_block<'a>(
     // (possibly through an `AwaitExpression`), matching eslint-plugin-jest's behavior.
     // Otherwise code between the previous statement and the call (e.g. `slow && `)
     // would be deleted by the whitespace-only fix.
-    let parent_node = ctx.nodes().parent_node(node.id());
-    let statement_node = match parent_node.kind() {
-        AstKind::ExpressionStatement(_) => parent_node,
-        AstKind::AwaitExpression(_) => {
-            let grandparent_node = ctx.nodes().parent_node(parent_node.id());
-            if !matches!(grandparent_node.kind(), AstKind::ExpressionStatement(_)) {
-                return;
-            }
-            grandparent_node
+    let mut statement_node = ctx.nodes().parent_node(node.id());
+    let statement = loop {
+        match statement_node.kind() {
+            AstKind::ExpressionStatement(statement) => break statement,
+            AstKind::AwaitExpression(_) => {}
+            _ if statement_node.span().start == node.span().start => {}
+            _ => return,
         }
-        _ => return,
+        statement_node = ctx.nodes().parent_node(statement_node.id());
     };
+    let leading_expression = match &statement.expression {
+        Expression::AwaitExpression(await_expr) => &await_expr.argument,
+        expression => expression,
+    };
+    if leading_expression.span().start != node.span().start {
+        return;
+    }
 
     let scope_node = ctx.nodes().get_node(ctx.scoping().get_node_id(node.scope_id()));
     let prev_statement_span = match scope_node.kind() {

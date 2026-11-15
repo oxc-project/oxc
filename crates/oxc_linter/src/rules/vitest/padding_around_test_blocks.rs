@@ -91,6 +91,14 @@ describe('other bar', function() {
 
     let fix = vec![
         (
+            "const thing = 123; test('foo', () => {}), foo();",
+            "const thing = 123;\n\ntest('foo', () => {}), foo();",
+        ),
+        (
+            "const thing = 123; test('foo', () => {}) && foo();",
+            "const thing = 123;\n\ntest('foo', () => {}) && foo();",
+        ),
+        (
             "const thing = 123; await test('foo', () => {});",
             "const thing = 123;\n\nawait test('foo', () => {});",
         ),
