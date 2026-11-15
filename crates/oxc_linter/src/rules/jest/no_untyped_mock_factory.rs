@@ -339,21 +339,6 @@ fn test() {
 
     let fix = vec![
         (
-            r"jest.mock('\uD800', () => ({}))",
-            r"jest.mock<typeof import('\uD800')>('\uD800', () => ({}))",
-            None,
-        ),
-        (
-            r#"jest.mock("it's", () => ({}))"#,
-            r#"jest.mock<typeof import("it's")>("it's", () => ({}))"#,
-            None,
-        ),
-        (
-            r"jest.mock('a\\b', () => ({}))",
-            r"jest.mock<typeof import('a\\b')>('a\\b', () => ({}))",
-            None,
-        ),
-        (
             "
                 jest.mock('../moduleName', () => {
                     return jest.fn(() => 42);
@@ -430,6 +415,21 @@ fn test() {
   'foo',
   () => {}
 );",
+            None,
+        ),
+        (
+            r"jest.mock('\uD800', () => ({}))",
+            r"jest.mock<typeof import('\uD800')>('\uD800', () => ({}))",
+            None,
+        ),
+        (
+            r#"jest.mock("it's", () => ({}))"#,
+            r#"jest.mock<typeof import("it's")>("it's", () => ({}))"#,
+            None,
+        ),
+        (
+            r"jest.mock('a\\b', () => ({}))",
+            r"jest.mock<typeof import('a\\b')>('a\\b', () => ({}))",
             None,
         ),
     ];
