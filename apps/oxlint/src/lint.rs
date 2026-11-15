@@ -1332,11 +1332,6 @@ mod test {
     fn test_fix_skip_ts_expect_error_suggestion() {
         let tester = Tester::new().with_cwd("fixtures/cli/fix_argument".into());
         let ts_ignore = "// @ts-ignore\nconst n: number = 1;\n";
-        // `typescript/prefer-ts-expect-error` and `typescript/ban-ts-comment`
-        // used to auto-fix `@ts-ignore` to `@ts-expect-error`, but that can
-        // introduce an unused `@ts-expect-error` when the next line has no
-        // TypeScript error. The rewrite is now offered only as a suggestion,
-        // so `--fix` must leave the file unchanged.
         tester.test_fix_with_args(
             "skip_ts_expect_error_suggestion.ts",
             ts_ignore,
