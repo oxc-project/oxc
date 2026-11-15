@@ -313,7 +313,6 @@ fn test() {
 			vi.clearAllMocks();"#,
             Some(serde_json::json!([{ "fn": "vitest" }])),
         ),
-        // Non-call references make the import rename unsafe (#29477)
         (
             r#"import { vitest } from "vitest";
 			const mocker = vitest;"#,
@@ -338,7 +337,7 @@ fn test() {
     ];
 
     let mut fix = vec![
-        (r#"import { vitest } from "vitest";"#, r#"import { vi } from "vitest";"#, None), // WORKING
+        (r#"import { vitest } from "vitest";"#, r#"import { vi } from "vitest";"#, None),
         (
             r#"import { vitest } from "vite-plus/test";"#,
             r#"import { vi } from "vite-plus/test";"#,
