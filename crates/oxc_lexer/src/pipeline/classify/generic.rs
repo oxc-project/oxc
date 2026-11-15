@@ -1,5 +1,3 @@
-use std::ptr;
-
 use oxc_simd::{BASELINE, cpu_version};
 
 use crate::token::tk;
@@ -10,7 +8,7 @@ use crate::pipeline::{
     operators::is_op_char,
 };
 
-use super::punct::PUNCT_CHARS;
+use super::{Planes, punct::PUNCT_CHARS};
 
 const FL_WORD: u32 = 0;
 const FL_WS: u32 = 1;
@@ -74,40 +72,39 @@ const fn cls_table(ts: bool) -> [u16; 256] {
 
 #[cpu_version(Generic)]
 #[inline(never)]
-pub(super) unsafe fn classify_generic(
-    ts: bool,
-    src: *const u8,
-    n: usize,
-    word: *mut u64,
-    st: *mut u64,
-    kwinit: *mut u64,
-    opch: *mut u64,
-    digit: *mut u64,
-    dot: *mut u64,
-    misc: *mut u64,
-    kind: *mut u8,
-) {
+pub(super) fn classify_generic(ts: bool, src: &[[u8; 64]], n: usize, out: Planes) {
     let t16: &[u16; 256] = if ts { &CLS_TS } else { &CLS_JS };
+    let nb_ceil = n.div_ceil(64);
+    let (src, out) = (&src[..nb_ceil], out.first(nb_ceil));
+    let Planes {
+        token_start: st,
+        word,
+        keyword_initial: kwinit,
+        op_char: opch,
+        digit,
+        dot,
+        misc,
+        kinds: kind,
+    } = out;
     let mut cw: u64 = 0;
     let mut cs: u64 = 0;
     let nbf = n / 64;
     for b in 0..nbf {
-        let base = b * 64;
         let (mut mw, mut ms, mut mdg, mut mdt, mut mop, mut mkw, mut mmi) =
             (0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64);
         let mut g = 0usize;
         while g < 8 {
-            let p = base + g * 8;
+            let p = g * 8;
             let mut fw = 0u64;
             let mut kw = 0u64;
             let mut j = 0usize;
             while j < 8 {
-                let v = t16[*src.add(p + j) as usize] as u64;
+                let v = t16[src[b][p + j] as usize] as u64;
                 fw |= (v >> 8) << (j * 8);
                 kw |= (v & 0xff) << (j * 8);
                 j += 1;
             }
-            ptr::write_unaligned(kind.add(p) as *mut u64, kw);
+            kind[b][p..p + 8].copy_from_slice(&kw.to_le_bytes());
             let sh = (g * 8) as u32;
             mw |= pk(fw, FL_WORD) << sh;
             ms |= pk(fw, FL_WS) << sh;
@@ -121,15 +118,15 @@ pub(super) unsafe fn classify_generic(
         let wprev = (mw << 1) | cw;
         let sprev = (ms << 1) | cs;
         // A byte starts a token unless it continues a whitespace or word run
-        *st.add(b) = !((ms & sprev) | (mw & wprev));
+        st[b] = !((ms & sprev) | (mw & wprev));
         cw = mw >> 63;
         cs = ms >> 63;
-        *word.add(b) = mw;
-        *kwinit.add(b) = mkw;
-        *opch.add(b) = mop;
-        *digit.add(b) = mdg;
-        *dot.add(b) = mdt;
-        *misc.add(b) = mmi;
+        word[b] = mw;
+        kwinit[b] = mkw;
+        opch[b] = mop;
+        digit[b] = mdg;
+        dot[b] = mdt;
+        misc[b] = mmi;
     }
     let i = nbf * 64;
     if i < n {
@@ -140,7 +137,7 @@ pub(super) unsafe fn classify_generic(
         let mut prev_word = cw & 1;
         let mut prev_ws = cs & 1;
         for kk in 0..tail {
-            let v = t16[*src.add(i + kk) as usize];
+            let v = t16[src[b][kk] as usize];
             let f = (v >> 8) as u64;
             w |= ((f >> FL_WORD) & 1) << kk;
             kwi |= ((f >> FL_KWINIT) & 1) << kk;
@@ -156,17 +153,17 @@ pub(super) unsafe fn classify_generic(
             if start {
                 stw |= 1u64 << kk;
             }
-            *kind.add(i + kk) = (v & 0xff) as u8;
+            kind[b][kk] = (v & 0xff) as u8;
             prev_word = isw;
             prev_ws = isws;
         }
-        *word.add(b) = w;
-        *st.add(b) = stw;
-        *kwinit.add(b) = kwi;
-        *opch.add(b) = opw;
-        *digit.add(b) = dgw;
-        *dot.add(b) = dtw;
-        *misc.add(b) = msw;
+        word[b] = w;
+        st[b] = stw;
+        kwinit[b] = kwi;
+        opch[b] = opw;
+        digit[b] = dgw;
+        dot[b] = dtw;
+        misc[b] = msw;
     }
 }
 

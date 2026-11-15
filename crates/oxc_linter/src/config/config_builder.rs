@@ -8,16 +8,14 @@ use oxc_resolver::{ResolveOptions, Resolver};
 use rustc_hash::{FxHashMap, FxHashSet};
 use url::Url;
 
-use oxc_str::{CompactStr, format_compact_str};
-
 use crate::{
-    AllowWarnDeny, ExternalPluginStore, LintConfig, LintFilter, LintFilterKind, Oxlintrc,
-    RuleCategory, RuleEnum,
+    AllowWarnDeny, ExternalPluginStore, LintConfig, LintFilter, LintFilterKind, OxlintOptions,
+    Oxlintrc, RuleCategory, RuleEnum,
     config::{
-        ESLintRule, OxlintOverrides, OxlintRules,
+        ESLintRule, OxlintOverrides,
         external_plugins::ExternalPluginEntry,
         plugins::{LintPlugins, is_normal_plugin_name, normalize_plugin_name},
-        rules::OverrideRulesError,
+        rules::{OverrideRulesError, RuleConfig, RuleSet},
     },
     external_linter::ExternalLinter,
     external_plugin_store::{ExternalOptionsId, ExternalRuleId},
@@ -32,7 +30,7 @@ use super::{
 
 #[must_use = "You dropped your builder without building a Linter! Did you mean to call .build()?"]
 pub struct ConfigStoreBuilder {
-    pub(super) rules: FxHashMap<RuleEnum, AllowWarnDeny>,
+    pub(super) rules: RuleSet,
     pub(super) external_rules: FxHashMap<ExternalRuleId, (ExternalOptionsId, AllowWarnDeny)>,
     config: LintConfig,
     categories: OxlintCategories,
@@ -73,7 +71,8 @@ impl ConfigStoreBuilder {
         let config = LintConfig { plugins: LintPlugins::all(), ..LintConfig::default() };
         let overrides = OxlintOverrides::default();
         let categories: OxlintCategories = OxlintCategories::default();
-        let rules = RULES.iter().map(|rule| (rule.clone(), AllowWarnDeny::Warn)).collect();
+        let rules =
+            RULES.iter().map(|rule| (rule.clone(), RuleConfig::new(AllowWarnDeny::Warn))).collect();
         let external_rules = FxHashMap::default();
         let extended_paths = Vec::new();
         Self { rules, external_rules, config, categories, overrides, extended_paths }
@@ -228,7 +227,8 @@ impl ConfigStoreBuilder {
 
         validate_ignore_patterns(&oxlintrc)?;
 
-        let (oxlintrc, extended_paths) = resolve_oxlintrc_config(oxlintrc, false, &mut Vec::new())?;
+        let (mut oxlintrc, extended_paths) =
+            resolve_oxlintrc_config(oxlintrc, false, &mut Vec::new())?;
 
         // Collect external plugins from both base config and overrides
         let mut external_plugins: FxHashSet<&ExternalPluginEntry> = FxHashSet::default();
@@ -293,32 +293,27 @@ impl ConfigStoreBuilder {
             categories.entry(RuleCategory::Correctness).or_insert(AllowWarnDeny::Warn);
         }
 
-        let config = LintConfig {
-            plugins,
-            settings: oxlintrc.settings,
-            env: oxlintrc.env,
-            globals: oxlintrc.globals,
-            path: Some(oxlintrc.path),
-            options: oxlintrc.options,
-        };
+        let configured_categories = std::mem::take(&mut oxlintrc.categories);
+        let configured_rules = std::mem::take(&mut oxlintrc.rules);
+        let overrides = std::mem::take(&mut oxlintrc.overrides);
 
         let mut builder = Self {
             rules,
             external_rules: FxHashMap::default(),
-            config,
+            config: oxlintrc.into(),
             categories,
-            overrides: oxlintrc.overrides,
+            overrides,
             extended_paths,
         };
 
-        for filter in oxlintrc.categories.filters() {
+        for filter in configured_categories.filters() {
             builder = builder.with_filter(&filter);
         }
 
         {
             let all_rules = builder.get_all_rules();
 
-            oxlintrc.rules.override_rules(
+            configured_rules.override_rules(
                 &mut builder.rules,
                 &mut builder.external_rules,
                 &all_rules,
@@ -388,9 +383,15 @@ impl ConfigStoreBuilder {
         self.config.options.report_unused_disable_directives
     }
 
+    /// Applies option overrides, preserving configured values for unspecified options.
+    pub fn with_options(mut self, options: &OxlintOptions) -> Self {
+        self.config.options = options.merge(&self.config.options);
+        self
+    }
+
     #[cfg(test)]
     pub(crate) fn with_rule(mut self, rule: RuleEnum, severity: AllowWarnDeny) -> Self {
-        self.rules.insert(rule, severity);
+        self.rules.insert(rule, RuleConfig::new(severity));
         self
     }
 
@@ -474,9 +475,9 @@ impl ConfigStoreBuilder {
             // Otherwise, add it to the map.
 
             if let Some(existing_rule) = self.rules.get_mut(rule) {
-                *existing_rule = severity;
+                existing_rule.severity = severity;
             } else {
-                self.rules.insert(rule.clone(), severity);
+                self.rules.insert(rule.clone(), RuleConfig::new(severity));
             }
         }
     }
@@ -558,6 +559,7 @@ impl ConfigStoreBuilder {
                     env: override_config.env,
                     globals: override_config.globals,
                     plugins: override_config.plugins,
+                    external_plugins: override_config.external_plugins,
                     rules: ResolvedOxlintOverrideRules { builtin_rules, external_rules },
                 })
             })
@@ -567,7 +569,7 @@ impl ConfigStoreBuilder {
     }
 
     /// Warn for all correctness rules in the given set of plugins.
-    fn warn_correctness(plugins: LintPlugins) -> FxHashMap<RuleEnum, AllowWarnDeny> {
+    fn warn_correctness(plugins: LintPlugins) -> RuleSet {
         RULES
             .iter()
             .filter(|rule| {
@@ -577,45 +579,8 @@ impl ConfigStoreBuilder {
                     && LintPlugins::try_from(rule.plugin_name())
                         .is_ok_and(|plugin_flag| plugins.contains(plugin_flag))
             })
-            .map(|rule| (rule.clone(), AllowWarnDeny::Warn))
+            .map(|rule| (rule.clone(), RuleConfig::new(AllowWarnDeny::Warn)))
             .collect()
-    }
-
-    /// # Panics
-    /// This function will panic if the `oxlintrc` is not valid JSON.
-    pub fn resolve_final_config_file(&self, oxlintrc: Oxlintrc) -> String {
-        let mut oxlintrc = oxlintrc;
-        let previous_rules = std::mem::take(&mut oxlintrc.rules);
-
-        let rule_name_to_rule = previous_rules
-            .rules
-            .into_iter()
-            .map(|r| (get_name(&r.plugin_name, &r.rule_name), r))
-            .collect::<rustc_hash::FxHashMap<_, _>>();
-
-        let new_rules = self
-            .rules
-            .iter()
-            .sorted_unstable_by_key(|(r, _)| (r.plugin_name(), r.name()))
-            .map(|(r, severity)| ESLintRule {
-                plugin_name: r.plugin_name().to_string(),
-                rule_name: r.name().to_string(),
-                severity: *severity,
-                config: rule_name_to_rule
-                    .get(&get_name(r.plugin_name(), r.name()))
-                    .map(|r| r.config.clone())
-                    .unwrap_or_default(),
-            })
-            .collect();
-
-        oxlintrc.plugins = Some(self.config.plugins);
-        oxlintrc.settings.clone_from(&self.config.settings);
-        oxlintrc.env.clone_from(&self.config.env);
-        oxlintrc.globals.clone_from(&self.config.globals);
-        oxlintrc.overrides.clone_from(&self.overrides);
-        oxlintrc.options = self.config.options.clone();
-        oxlintrc.rules = OxlintRules::new(new_rules);
-        serde_json::to_string_pretty(&oxlintrc).unwrap()
     }
 
     fn load_external_plugin(
@@ -710,14 +675,6 @@ impl ConfigStoreBuilder {
             // before calling `load_plugin` above.
             Err(ConfigBuilderError::ReservedExternalPluginName { plugin_name })
         }
-    }
-}
-
-fn get_name(plugin_name: &str, rule_name: &str) -> CompactStr {
-    if plugin_name == "eslint" {
-        CompactStr::from(rule_name)
-    } else {
-        format_compact_str!("{plugin_name}/{rule_name}")
     }
 }
 
@@ -907,9 +864,9 @@ mod test {
 
         // populated with all correctness-level ESLint rules at a "warn" severity
         assert!(!builder.rules.is_empty());
-        for (rule, severity) in &builder.rules {
+        for (rule, config) in &builder.rules {
             assert_eq!(rule.category(), RuleCategory::Correctness);
-            assert_eq!(*severity, AllowWarnDeny::Warn);
+            assert_eq!(config.severity, AllowWarnDeny::Warn);
             let plugin_name = rule.plugin_name();
             let plugin = LintPlugins::try_from(plugin_name);
             let name = rule.name();
@@ -925,6 +882,65 @@ mod test {
         let builder = ConfigStoreBuilder::empty();
         assert_eq!(builder.plugins(), LintPlugins::default());
         assert!(builder.rules.is_empty());
+    }
+
+    #[test]
+    fn test_print_config_inherited_rule_options() {
+        let path = PathBuf::from("fixtures/extends_config/rule_options.json");
+        let base = Oxlintrc::from_file(&path).unwrap();
+        let configs = [
+            Oxlintrc { extends: vec![path], ..Oxlintrc::default() },
+            Oxlintrc { extends_configs: vec![base.clone()], ..Oxlintrc::default() },
+            Oxlintrc {
+                extends_configs: vec![Oxlintrc {
+                    extends_configs: vec![base],
+                    ..Oxlintrc::default()
+                }],
+                ..Oxlintrc::default()
+            },
+        ];
+
+        for oxlintrc in configs {
+            for (filters, expected) in [
+                (
+                    vec![],
+                    serde_json::json!({
+                        "no-console": ["deny", { "allow": ["warn"] }],
+                        "no-unused-vars": ["warn", { "args": "none" }]
+                    }),
+                ),
+                (
+                    vec![LintFilter::new(AllowWarnDeny::Warn, "no-console").unwrap()],
+                    serde_json::json!({
+                        "no-console": ["warn", { "allow": ["warn"] }],
+                        "no-unused-vars": ["warn", { "args": "none" }]
+                    }),
+                ),
+                (
+                    vec![
+                        LintFilter::new(AllowWarnDeny::Allow, "all").unwrap(),
+                        LintFilter::new(AllowWarnDeny::Deny, "no-console").unwrap(),
+                    ],
+                    serde_json::json!({ "no-console": "deny" }),
+                ),
+            ] {
+                let mut store = ExternalPluginStore::default();
+                let config = ConfigStoreBuilder::from_oxlintrc(
+                    true,
+                    oxlintrc.clone(),
+                    None,
+                    &mut store,
+                    None,
+                )
+                .unwrap()
+                .with_filters(&filters)
+                .build(&mut store)
+                .unwrap();
+                let printed: serde_json::Value =
+                    serde_json::from_str(&config.to_config_file(&store)).unwrap();
+                assert_eq!(printed["rules"], expected);
+            }
+        }
     }
 
     #[test]
@@ -963,9 +979,9 @@ mod test {
         assert!(!builder.rules.is_empty());
         assert_eq!(initial_rule_count, rule_count_after_deny);
 
-        for (rule, severity) in &builder.rules {
+        for (rule, config) in &builder.rules {
             assert_eq!(rule.category(), RuleCategory::Correctness);
-            assert_eq!(*severity, AllowWarnDeny::Deny);
+            assert_eq!(config.severity, AllowWarnDeny::Deny);
 
             let plugin_name = rule.plugin_name();
             let plugin = LintPlugins::try_from(plugin_name);
@@ -992,12 +1008,12 @@ mod test {
                 "Changing a single rule from warn to deny should not add a new one, just modify what's already there."
             );
 
-            let (_, severity) = builder
+            let (_, config) = builder
                 .rules
                 .iter()
                 .find(|(r, _)| r.plugin_name() == "eslint" && r.name() == "no-const-assign")
                 .expect("Could not find eslint/no-const-assign after configuring it to 'deny'");
-            assert_eq!(*severity, AllowWarnDeny::Deny);
+            assert_eq!(config.severity, AllowWarnDeny::Deny);
         }
     }
 
@@ -1011,13 +1027,13 @@ mod test {
             // sanity check: not already turned on
             assert!(!builder.rules.iter().any(|(r, _)| r.name() == "no-console"));
             let builder = builder.with_filter(&filter);
-            let (_, severity) = builder
+            let (_, config) = builder
                 .rules
                 .iter()
                 .find(|(r, _)| r.plugin_name() == "eslint" && r.name() == "no-console")
                 .expect("Could not find eslint/no-console after configuring it to 'warn'");
 
-            assert_eq!(*severity, AllowWarnDeny::Warn);
+            assert_eq!(config.severity, AllowWarnDeny::Warn);
         }
     }
 
@@ -1032,11 +1048,11 @@ mod test {
             !builder.rules.is_empty(),
             "warning on categories after allowing all rules should populate the rules set"
         );
-        for (rule, severity) in &builder.rules {
+        for (rule, config) in &builder.rules {
             let plugin = rule.plugin_name();
             let name = rule.name();
             assert_eq!(
-                *severity,
+                config.severity,
                 AllowWarnDeny::Warn,
                 "{plugin}/{name} should have a warning severity"
             );
@@ -1133,19 +1149,18 @@ mod test {
         let builder = ConfigStoreBuilder::default().and_builtin_plugins(LintPlugins::REACT, true);
 
         // Assert rule doesn't exist by default
-        assert_eq!(
-            builder
+        assert!(
+            !builder
                 .rules
-                .iter()
-                .find(|(r, _)| r.plugin_name() == "react" && r.name() == "exhaustive-deps"),
-            None
+                .keys()
+                .any(|r| r.plugin_name() == "react" && r.name() == "exhaustive-deps")
         );
 
         let builder = builder.with_filter(
             &LintFilter::new(AllowWarnDeny::Deny, "react-hooks/exhaustive-deps").unwrap(),
         );
 
-        let (rule, sev) = builder
+        let (rule, config) = builder
             .rules
             .iter()
             .find(|(r, _)| r.plugin_name() == "react" && r.name() == "exhaustive-deps")
@@ -1153,19 +1168,18 @@ mod test {
 
         assert_eq!(rule.plugin_name(), "react");
         assert_eq!(rule.name(), "exhaustive-deps");
-        assert_eq!(sev, &AllowWarnDeny::Deny);
+        assert_eq!(config.severity, AllowWarnDeny::Deny);
 
         let builder = builder.with_filter(
             &LintFilter::new(AllowWarnDeny::Allow, "react-hooks/exhaustive-deps").unwrap(),
         );
 
         // Allowing the rule removes it from rules "overlay"
-        assert_eq!(
-            builder
+        assert!(
+            !builder
                 .rules
-                .iter()
-                .find(|(r, _)| r.plugin_name() == "react" && r.name() == "exhaustive-deps"),
-            None
+                .keys()
+                .any(|r| r.plugin_name() == "react" && r.name() == "exhaustive-deps")
         );
     }
 
@@ -1196,7 +1210,7 @@ mod test {
             )
             .unwrap()
         };
-        for (rule, severity) in &builder.rules {
+        for (rule, config) in &builder.rules {
             let name = rule.name();
             let plugin = rule.plugin_name();
             let category = rule.category();
@@ -1204,20 +1218,24 @@ mod test {
                 RuleCategory::Correctness => {
                     if name == "no-const-assign" {
                         assert_eq!(
-                            *severity,
+                            config.severity,
                             AllowWarnDeny::Deny,
                             "no-const-assign should be denied",
                         );
                     } else {
                         assert_eq!(
-                            *severity,
+                            config.severity,
                             AllowWarnDeny::Warn,
                             "{plugin}/{name} should be a warning"
                         );
                     }
                 }
                 RuleCategory::Suspicious => {
-                    assert_eq!(*severity, AllowWarnDeny::Deny, "{plugin}/{name} should be denied");
+                    assert_eq!(
+                        config.severity,
+                        AllowWarnDeny::Deny,
+                        "{plugin}/{name} should be denied"
+                    );
                 }
                 invalid => {
                     panic!("Found rule {plugin}/{name} with an unexpected category {invalid:?}");
@@ -1264,10 +1282,10 @@ mod test {
             "override should enable the promise plugin"
         );
         assert!(resolved.rules.len() == 1, "only rules from the override should be applied");
-        let (rule, severity) = &resolved.rules[0];
+        let (rule, config) = &resolved.rules[0];
         assert_eq!(rule.plugin_name(), "typescript");
         assert_eq!(rule.name(), "no-inferrable-types");
-        assert_eq!(*severity, AllowWarnDeny::Deny);
+        assert_eq!(config.severity, AllowWarnDeny::Deny);
     }
 
     #[test]
@@ -1305,26 +1323,25 @@ mod test {
             update_rules_config
                 .rules()
                 .iter()
-                .any(|(r, severity)| r.name() == "no-debugger" && *severity == AllowWarnDeny::Warn)
+                .any(|(r, config)| r.name() == "no-debugger"
+                    && config.severity == AllowWarnDeny::Warn)
         );
         assert!(
             update_rules_config
                 .rules()
                 .iter()
-                .any(|(r, severity)| r.name() == "no-console" && *severity == AllowWarnDeny::Warn)
+                .any(|(r, config)| r.name() == "no-console"
+                    && config.severity == AllowWarnDeny::Warn)
         );
         assert!(
             !update_rules_config
                 .rules()
                 .iter()
-                .any(|(r, severity)| r.name() == "no-null" && *severity == AllowWarnDeny::Allow)
+                .any(|(r, config)| r.name() == "no-null" && config.severity == AllowWarnDeny::Allow)
         );
         assert!(
-            update_rules_config
-                .rules()
-                .iter()
-                .any(|(r, severity)| r.name() == "prefer-as-const"
-                    && *severity == AllowWarnDeny::Warn)
+            update_rules_config.rules().iter().any(|(r, config)| r.name() == "prefer-as-const"
+                && config.severity == AllowWarnDeny::Warn)
         );
     }
 
@@ -1341,7 +1358,7 @@ mod test {
         }
         "#,
         );
-        assert!(warn_all.rules().iter().all(|(_, severity)| *severity == AllowWarnDeny::Warn));
+        assert!(warn_all.rules().iter().all(|(_, config)| config.severity == AllowWarnDeny::Warn));
 
         let deny_all = config_store_from_str(
             r#"
@@ -1354,7 +1371,7 @@ mod test {
         }
         "#,
         );
-        assert!(deny_all.rules().iter().all(|(_, severity)| *severity == AllowWarnDeny::Deny));
+        assert!(deny_all.rules().iter().all(|(_, config)| config.severity == AllowWarnDeny::Deny));
 
         let allow_all = config_store_from_str(
             r#"
@@ -1367,7 +1384,9 @@ mod test {
         }
         "#,
         );
-        assert!(allow_all.rules().iter().all(|(_, severity)| *severity == AllowWarnDeny::Allow));
+        assert!(
+            allow_all.rules().iter().all(|(_, config)| config.severity == AllowWarnDeny::Allow)
+        );
         assert_eq!(allow_all.number_of_rules(), 0);
 
         let allow_and_override_config = config_store_from_str(
@@ -1389,20 +1408,20 @@ mod test {
             allow_and_override_config
                 .rules()
                 .iter()
-                .any(|(r, severity)| r.name() == "no-var" && *severity == AllowWarnDeny::Warn)
+                .any(|(r, config)| r.name() == "no-var" && config.severity == AllowWarnDeny::Warn)
         );
         assert!(
             allow_and_override_config
                 .rules()
                 .iter()
-                .any(|(r, severity)| r.name() == "approx-constant"
-                    && *severity == AllowWarnDeny::Deny)
+                .any(|(r, config)| r.name() == "approx-constant"
+                    && config.severity == AllowWarnDeny::Deny)
         );
         assert!(
             allow_and_override_config
                 .rules()
                 .iter()
-                .any(|(r, severity)| r.name() == "no-null" && *severity == AllowWarnDeny::Deny)
+                .any(|(r, config)| r.name() == "no-null" && config.severity == AllowWarnDeny::Deny)
         );
     }
 

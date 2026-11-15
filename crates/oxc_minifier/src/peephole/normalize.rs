@@ -3,7 +3,7 @@ use oxc_allocator::{ArenaVec, ReplaceWith};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
     constant_evaluation::{ConstantValue, DetermineValueType, ValueType},
-    side_effects::{is_typed_array_constructor, is_valid_array_buffer, is_valid_regexp},
+    side_effects::{MayHaveSideEffects, is_pure_global_constructor, is_typed_array_constructor},
 };
 use oxc_semantic::IsGlobalReference;
 use oxc_syntax::scope::ScopeFlags;
@@ -476,21 +476,22 @@ impl<'a> Normalize {
                     ValueType::Object,
                 ],
             ),
-            "ArrayBuffer" => {
-                if Self::can_set_pure(ident, ctx) && is_valid_array_buffer(&new_expr.arguments, ctx)
-                {
-                    new_expr.pure = true;
-                }
-                return;
-            }
             "Date" => (false, false, &[ValueType::BigInt]),
             "Boolean" | "Error" | "EvalError" | "RangeError" | "ReferenceError" | "SyntaxError"
             | "TypeError" | "URIError" | "Number" | "Object" | "String" => (false, false, &[]),
-            // RegExp needs special validation using the regex parser
-            "RegExp" => {
-                if Self::can_set_pure(ident, ctx) && is_valid_regexp(&new_expr.arguments, ctx) {
-                    new_expr.pure = true;
+            "ArrayBuffer" | "RegExp" => {
+                if !Self::can_set_pure(ident, ctx) {
+                    return;
                 }
+                // Preserve ArrayBuffer's conservative flagging: unlike RegExp,
+                // it previously required argument evaluation to be effect-free too.
+                if ident.name == "ArrayBuffer"
+                    && new_expr.arguments.iter().any(|arg| arg.may_have_side_effects(ctx))
+                {
+                    return;
+                }
+                new_expr.pure =
+                    is_pure_global_constructor(ident.name.as_str(), &new_expr.arguments, ctx);
                 return;
             }
             // Typed arrays allocate a zeroed buffer and run no user code when the

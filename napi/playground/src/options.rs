@@ -60,6 +60,8 @@ pub struct OxcLinterOptions {
 #[derive(Default, Clone)]
 pub struct OxcTransformerOptions {
     pub target: Option<String>,
+    /// Overrides the runtime helper import prefix, passed to `TransformOptions.helper_loader.module_name`.
+    pub helper_module_name: Option<String>,
     pub use_define_for_class_fields: bool,
     pub experimental_decorators: bool,
     pub emit_decorator_metadata: bool,

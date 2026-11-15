@@ -65,6 +65,15 @@ fn test() {
               }
               return 2;
             });",
+        "const state = { open: false }; aVariable.mockImplementation(() => (state.open = true));",
+        "const state = { open: false }; aVariable.mockImplementationOnce(() => { return state.open ||= true; });",
+        "const state = { open: false }; aVariable.mockImplementation(() => ((state.open = true) as boolean));",
+        "const state = { open: false }; aVariable.mockImplementation(function () { return (state.open = true); });",
+        "const state = { open: false }; aVariable.mockImplementation(() => ([state.open] = [true]));",
+        "const state = { count: 0 }; aVariable.mockImplementation(() => (state.count++ as number));",
+        "const state = { count: 0 }; aVariable.mockImplementation(() => [state.count++]);",
+        "const state = { open: false }; aVariable.mockImplementation(() => ({ value: (state.open = true) }));",
+        "const state = { open: false }; aVariable.mockImplementation(() => (true ? (state.open = true) : false));",
         "aVariable.mockImplementation(() => value++)",
         "aVariable.mockImplementationOnce(() => --value)",
         "const aValue = 0;

@@ -651,9 +651,7 @@ fn test() {
         (r"var foo = /\（([^\）\（]+)\）$|\(([^\)\)]+)\)$/;", None),
         (r#"var stringLiteralWithNextLine = "line 1\line 2";"#, None),
         (r"var stringLiteralWithNextLine = `line 1\line 2`;", None),
-        // spellchecker:off
         (r#"({ foo() { "foo"; "bar"; "ba\z" } })"#, None), // { "ecmaVersion": 6 },
-        // spellchecker:on
         // Carets
         (r"/[^\^]/", None),
         (r"/[^\^]/u", None), // { "ecmaVersion": 2015 },
@@ -720,9 +718,7 @@ fn test() {
         ("let foo = /\\ /;", "let foo = / /;", None),
         ("var foo = `\\$\\{{${foo}`;", "var foo = `$\\{{${foo}`;", None),
         (r#""use\ strict";"#, r#""use strict";"#, None),
-        // spellchecker:off
         (r#"({ foo() { "foo"; "bar"; "ba\z" } })"#, r#"({ foo() { "foo"; "bar"; "baz" } })"#, None), // { "ecmaVersion": 6 }
-        // spellchecker:on
         // Carets
         (r"/[^\^]/", r"/[^^]/", None),
         (r"/[^\^]/u", r"/[^^]/u", None), // { "ecmaVersion": 2015 },

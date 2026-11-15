@@ -552,7 +552,7 @@ impl Kind {
         }
     }
 
-    pub fn to_str(self) -> &'static str {
+    pub const fn to_str(self) -> &'static str {
         #[expect(clippy::match_same_arms)]
         match self {
             Undetermined => "Unknown",

@@ -121,11 +121,7 @@ pub fn is_node_value_not_dom_node(expr: &Expression) -> bool {
 pub fn is_empty_stmt(stmt: &Statement) -> bool {
     match stmt {
         Statement::BlockStatement(block_stmt) => {
-            if block_stmt.body.is_empty() || block_stmt.body.iter().all(|node| is_empty_stmt(node))
-            {
-                return true;
-            }
-            false
+            block_stmt.body.is_empty() || block_stmt.body.iter().all(|node| is_empty_stmt(node))
         }
         Statement::EmptyStatement(_) => true,
         _ => false,

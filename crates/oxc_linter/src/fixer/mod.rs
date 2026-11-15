@@ -263,8 +263,7 @@ impl Message {
             .iter()
             .find(|span| span.primary())
             .or_else(|| error.labels.first())
-            .map(|span| Span::new(span.offset(), span.offset() + span.len()))
-            .unwrap_or_default();
+            .map_or_default(|span| Span::new(span.offset(), span.offset() + span.len()));
 
         Self { error, fixes, span }
     }
@@ -416,6 +415,7 @@ impl<'a> Fixer<'a> {
                 .with_options(ParseOptions {
                     parse_regular_expression: true,
                     allow_return_outside_function: true,
+                    enable_ident_hashes: false,
                     ..ParseOptions::default()
                 })
                 .parse();

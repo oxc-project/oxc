@@ -46,6 +46,7 @@ declare_oxc_lint!(
     ErasingOp,
     oxc,
     correctness,
+    recommended,
     dangerous_fix,
     version = "0.1.1",
     short_description = "Checks for erasing operations, e.g., `x * 0`.",

@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::AstNode;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
@@ -229,38 +229,44 @@ impl PreferToBe {
         matcher_name: &str,
         not_modifier: Option<&KnownMemberExpressionProperty>,
         is_cmp_mem_expr: bool,
-        span_start: u32,
-    ) -> (u32, String) {
-        if let Some(not_modifier) = not_modifier {
-            let not_is_computed =
-                matches!(not_modifier.parent, Some(Expression::ComputedMemberExpression(_)));
-
-            if not_is_computed {
-                // ["not"]["toBe"](value) -> ["not"]["toBeMatcher"]()
-                let start = not_modifier.span.start - 1; // Include opening bracket of ["not"]
-                let suggestion = if is_cmp_mem_expr {
-                    format!("[\"not\"][\"{matcher_name}\"]()")
-                } else {
-                    format!("[\"not\"].{matcher_name}()")
-                };
-                (start, suggestion)
-            } else if is_cmp_mem_expr {
-                // .not["toBe"](value) -> .not["toBeMatcher"]()
-                (not_modifier.span.start, format!("not[\"{matcher_name}\"]()"))
-            } else {
-                // .not.toBe(value) -> .not.toBeMatcher()
-                (not_modifier.span.start, format!("not.{matcher_name}()"))
-            }
+        matcher: &KnownMemberExpressionProperty,
+        call_expr: &CallExpression,
+        ctx: &LintContext,
+    ) -> Option<(u32, String)> {
+        let first_member = not_modifier.unwrap_or(matcher);
+        let start = if let Some(Expression::ComputedMemberExpression(member)) = first_member.parent
+        {
+            let object_end = member.object.span().end;
+            object_end + ctx.find_next_token_within(object_end, first_member.span.start, "[")?
         } else {
-            // No "not" modifier
-            let start = if is_cmp_mem_expr { span_start - 1 } else { span_start };
-            let suggestion = if is_cmp_mem_expr {
-                format!("[\"{matcher_name}\"]()")
+            first_member.span.start
+        };
+
+        let (not_prefix, member_operator) = if let Some(not_modifier) = not_modifier {
+            let prefix =
+                if matches!(not_modifier.parent, Some(Expression::ComputedMemberExpression(_))) {
+                    r#"["not"]"#
+                } else {
+                    "not"
+                };
+            let operator = if matcher.parent?.as_member_expression()?.optional() {
+                "?."
+            } else if is_cmp_mem_expr {
+                ""
             } else {
-                format!("{matcher_name}()")
+                "."
             };
-            (start, suggestion)
-        }
+            (prefix, operator)
+        } else {
+            ("", "")
+        };
+        let call_operator = if call_expr.optional { "?." } else { "" };
+        let suggestion = if is_cmp_mem_expr {
+            format!(r#"{not_prefix}{member_operator}["{matcher_name}"]{call_operator}()"#)
+        } else {
+            format!("{not_prefix}{member_operator}{matcher_name}{call_operator}()")
+        };
+        Some((start, suggestion))
     }
 
     fn check_and_fix(
@@ -313,12 +319,16 @@ impl PreferToBe {
                 |fixer| fixer.replace(replacement_span, new_matcher),
             );
         } else if kind == &PreferToBeKind::Null {
-            let (source_start, suggestion) = Self::build_suggestion_with_not_modifier(
+            let Some((source_start, suggestion)) = Self::build_suggestion_with_not_modifier(
                 "toBeNull",
                 maybe_not_modifier,
                 is_cmp_mem_expr,
-                span.start,
-            );
+                matcher,
+                call_expr,
+                ctx,
+            ) else {
+                return;
+            };
 
             let replacement_span = Span::new(source_start, end);
             let source_text = ctx.source_range(replacement_span);
@@ -328,12 +338,16 @@ impl PreferToBe {
                 |fixer| fixer.replace(replacement_span, suggestion),
             );
         } else if kind == &PreferToBeKind::NaN {
-            let (source_start, suggestion) = Self::build_suggestion_with_not_modifier(
+            let Some((source_start, suggestion)) = Self::build_suggestion_with_not_modifier(
                 "toBeNaN",
                 maybe_not_modifier,
                 is_cmp_mem_expr,
-                span.start,
-            );
+                matcher,
+                call_expr,
+                ctx,
+            ) else {
+                return;
+            };
 
             let replacement_span = Span::new(source_start, end);
             let source_text = ctx.source_range(replacement_span);
@@ -350,5 +364,58 @@ impl PreferToBe {
                 fixer.replace(span, new_matcher)
             });
         }
+    }
+}
+
+#[test]
+fn test_computed_matcher_trivia() {
+    use crate::tester::Tester;
+
+    let fix = vec![
+        ("expect(value)[\u{a0}\"toEqual\"](null);", "expect(value)[\"toBeNull\"]();"),
+        ("expect(value)[\u{2003}\"toEqual\"](NaN);", "expect(value)[\"toBeNaN\"]();"),
+        ("expect(value)[ \"toEqual\" ](null);", "expect(value)[\"toBeNull\"]();"),
+        (
+            "expect(value) /* [ */ [ /* [ ] */ \"toEqual\" /* ] */ ](NaN);",
+            "expect(value) /* [ */ [\"toBeNaN\"]();",
+        ),
+        ("expect(value)[ // [\n \"toEqual\"\n](null);", "expect(value)[\"toBeNull\"]();"),
+        ("expect(value)[\u{a0}\"not\"].toEqual(null);", "expect(value)[\"not\"].toBeNull();"),
+        (
+            "expect(value)[\u{2003}\"not\"][\u{a0}\"toEqual\"](NaN);",
+            "expect(value)[\"not\"][\"toBeNaN\"]();",
+        ),
+        ("expect(value).not[\u{a0}\"toEqual\"](null);", "expect(value).not[\"toBeNull\"]();"),
+        (
+            "expect(value).resolves /* [ */ [ /* [ ] */ \"not\" ].toEqual(null);",
+            "expect(value).resolves /* [ */ [\"not\"].toBeNull();",
+        ),
+        (
+            "expect(value).rejects[\u{a0}`not`][\u{2003}`toStrictEqual`](NaN);",
+            "expect(value).rejects[\"not\"][\"toBeNaN\"]();",
+        ),
+        ("expect(value)[\u{a0}`toEqual`](null);", "expect(value)[\"toBeNull\"]();"),
+        ("expect(value)?.[\u{a0}\"toEqual\"](null);", "expect(value)?.[\"toBeNull\"]();"),
+        ("expect(value)[\u{a0}\"toEqual\"]?.(null);", "expect(value)[\"toBeNull\"]?.();"),
+        ("expect(value)[\u{a0}\"not\"]?.toEqual(null);", "expect(value)[\"not\"]?.toBeNull();"),
+        (
+            "expect(value)[\u{a0}\"not\"]?.[\"toEqual\"]?.(NaN);",
+            "expect(value)[\"not\"]?.[\"toBeNaN\"]?.();",
+        ),
+        ("expect(value).not?.[\u{a0}\"toEqual\"](null);", "expect(value).not?.[\"toBeNull\"]();"),
+        ("expect(value)?.[\u{a0}\"not\"].toEqual?.(NaN);", "expect(value)?.[\"not\"].toBeNaN?.();"),
+    ];
+
+    for plugin in ["jest", "vitest"] {
+        Tester::new(
+            "prefer-to-be",
+            plugin,
+            fix.iter().map(|(_, fixed)| *fixed).collect(),
+            fix.iter().map(|(source, _)| *source).collect(),
+        )
+        .with_jest_plugin(plugin == "jest")
+        .with_vitest_plugin(plugin == "vitest")
+        .expect_fix(fix.clone())
+        .test();
     }
 }

@@ -82,20 +82,94 @@ impl fmt::Debug for Token {
 }
 
 impl Token {
-    /// Finish the lexer's scratch token without writing its fields back to memory first.
-    pub(super) fn finish(self, kind: Kind, end: u32) -> Self {
-        debug_assert_eq!(self.kind(), Kind::Eof);
-        debug_assert_eq!(self.end(), 0);
-        debug_assert!(end >= self.start());
-        Self(self.0 | (u128::from(end) << END_SHIFT) | ((kind as u128) << KIND_SHIFT))
+    #[inline]
+    pub(super) fn new(kind: Kind, start: u32, end: u32, pending: PendingToken) -> Self {
+        debug_assert!(end >= start);
+        Self(
+            (u128::from(start) << START_SHIFT)
+                | (u128::from(end) << END_SHIFT)
+                | ((kind as u128) << KIND_SHIFT)
+                | (u128::from(pending.0 & PendingToken::TOKEN_FLAGS) << IS_ON_NEW_LINE_SHIFT),
+        )
+    }
+}
+
+/// Flags of the token being lexed, and trivia state since the previous token, packed in one `u32`
+/// so the lexer reads and resets all per-token state with one load and one store.
+///
+/// The low 3 bytes are `is_on_new_line`, `escaped` and `has_separator`, in the same layout as in
+/// [`Token`]. The other bits are trivia state, used by `TriviaBuilder`.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub(super) struct PendingToken(u32);
+
+impl PendingToken {
+    const IS_ON_NEW_LINE: u32 = 1;
+    const ESCAPED: u32 = 1 << (ESCAPED_SHIFT - IS_ON_NEW_LINE_SHIFT);
+    const HAS_SEPARATOR: u32 = 1 << (HAS_SEPARATOR_SHIFT - IS_ON_NEW_LINE_SHIFT);
+    const TOKEN_FLAGS: u32 = Self::IS_ON_NEW_LINE | Self::ESCAPED | Self::HAS_SEPARATOR;
+    /// Saw a newline since the last token.
+    const SAW_NEWLINE: u32 = 1 << 24;
+    /// Saw a newline since the last comment or token.
+    const SAW_NEWLINE_FOR_COMMENT: u32 = 1 << 25;
+    /// Comments have been added which are not yet attached to a token.
+    const HAS_PENDING_COMMENTS: u32 = 1 << 26;
+
+    pub(super) const NONE: Self = Self(0);
+    pub(super) const START_OF_FILE: Self =
+        Self(Self::IS_ON_NEW_LINE | Self::SAW_NEWLINE | Self::SAW_NEWLINE_FOR_COMMENT);
+
+    #[inline]
+    pub(super) fn is_on_new_line(self) -> bool {
+        self.0 & Self::IS_ON_NEW_LINE != 0
     }
 
     #[inline]
-    pub(super) fn new_on_new_line() -> Self {
-        // Start with a default token, then set the flag
-        let mut token = Self::default();
-        token.set_is_on_new_line(true);
-        token
+    pub(super) fn set_is_on_new_line(&mut self) {
+        self.0 |= Self::IS_ON_NEW_LINE;
+    }
+
+    #[inline]
+    pub(super) fn set_escaped(&mut self) {
+        self.0 |= Self::ESCAPED;
+    }
+
+    #[inline]
+    pub(super) fn set_has_separator(&mut self) {
+        self.0 |= Self::HAS_SEPARATOR;
+    }
+
+    #[inline]
+    pub(super) fn saw_newline(self) -> bool {
+        self.0 & Self::SAW_NEWLINE != 0
+    }
+
+    #[inline]
+    pub(super) fn saw_newline_for_comment(self) -> bool {
+        self.0 & Self::SAW_NEWLINE_FOR_COMMENT != 0
+    }
+
+    #[inline]
+    pub(super) fn set_saw_newline(&mut self) {
+        self.0 |= Self::SAW_NEWLINE | Self::SAW_NEWLINE_FOR_COMMENT;
+    }
+
+    #[inline]
+    pub(super) fn clear_saw_newline_for_comment(&mut self) {
+        self.0 &= !Self::SAW_NEWLINE_FOR_COMMENT;
+    }
+
+    #[inline]
+    pub(super) fn has_pending_comments(self) -> bool {
+        self.0 & Self::HAS_PENDING_COMMENTS != 0
+    }
+
+    #[inline]
+    pub(super) fn set_has_pending_comments(&mut self, value: bool) {
+        if value {
+            self.0 |= Self::HAS_PENDING_COMMENTS;
+        } else {
+            self.0 &= !Self::HAS_PENDING_COMMENTS;
+        }
     }
 }
 
@@ -223,60 +297,24 @@ impl Token {
     pub fn is_on_new_line(&self) -> bool {
         // Use a pointer read rather than arithmetic as it produces less instructions.
         // SAFETY: 8 bits starting at `IS_ON_NEW_LINE_SHIFT` are only set in `Token::default` and
-        // `Token::set_is_on_new_line`. Both only set these bits to 0 or 1, so valid to read as a `bool`.
+        // `Token::new`. Both only set these bits to 0 or 1, so valid to read as a `bool`.
         unsafe { self.read_bool(IS_ON_NEW_LINE_SHIFT) }
-    }
-
-    #[inline]
-    pub(super) fn set_is_on_new_line(&mut self, value: bool) {
-        /*
-        // Original version. Perf regressed in Rust 1.95.0.
-        self.0 &= !(BOOL_MASK << IS_ON_NEW_LINE_SHIFT); // Clear current `is_on_new_line` bits
-        self.0 |= u128::from(value) << IS_ON_NEW_LINE_SHIFT;
-        */
-
-        // SAFETY: `IS_ON_NEW_LINE_SHIFT` is a valid `bool` field position in `Token`
-        unsafe { self.write_bool(IS_ON_NEW_LINE_SHIFT, value) };
     }
 
     #[inline]
     pub fn escaped(&self) -> bool {
         // Use a pointer read rather than arithmetic as it produces less instructions.
         // SAFETY: 8 bits starting at `ESCAPED_SHIFT` are only set in `Token::default` and
-        // `Token::set_escaped`. Both only set these bits to 0 or 1, so valid to read as a `bool`.
+        // `Token::new`. Both only set these bits to 0 or 1, so valid to read as a `bool`.
         unsafe { self.read_bool(ESCAPED_SHIFT) }
-    }
-
-    #[inline]
-    pub(super) fn set_escaped(&mut self, escaped: bool) {
-        /*
-        // Original version. Perf regressed in Rust 1.95.0.
-        self.0 &= !(BOOL_MASK << ESCAPED_SHIFT); // Clear current `escaped` bits
-        self.0 |= u128::from(escaped) << ESCAPED_SHIFT;
-        */
-
-        // SAFETY: `ESCAPED_SHIFT` is a valid `bool` field position in `Token`
-        unsafe { self.write_bool(ESCAPED_SHIFT, escaped) };
     }
 
     #[inline]
     pub fn has_separator(&self) -> bool {
         // Use a pointer read rather than arithmetic as it produces less instructions.
         // SAFETY: 8 bits starting at `HAS_SEPARATOR_SHIFT` are only set in `Token::default` and
-        // `Token::set_has_separator`. Both only set these bits to 0 or 1, so valid to read as a `bool`.
+        // `Token::new`. Both only set these bits to 0 or 1, so valid to read as a `bool`.
         unsafe { self.read_bool(HAS_SEPARATOR_SHIFT) }
-    }
-
-    #[inline]
-    pub(super) fn set_has_separator(&mut self, value: bool) {
-        /*
-        // Original version. Perf regressed in Rust 1.95.0.
-        self.0 &= !(BOOL_MASK << HAS_SEPARATOR_SHIFT); // Clear current `has_separator` bits
-        self.0 |= u128::from(value) << HAS_SEPARATOR_SHIFT;
-        */
-
-        // SAFETY: `HAS_SEPARATOR_SHIFT` is a valid `bool` field position in `Token`
-        unsafe { self.write_bool(HAS_SEPARATOR_SHIFT, value) };
     }
 
     /// Read `bool` from 8 bits starting at bit position `shift`.
@@ -327,29 +365,6 @@ impl Token {
         }
     }
 
-    /// Write `bool` to the 8 bits starting at bit position `shift`.
-    ///
-    /// # SAFETY
-    ///
-    /// `shift` must be the location of a valid boolean "field" in [`Token`] e.g. `ESCAPED_SHIFT`.
-    ///
-    /// # Performance analysis
-    ///
-    /// Writing the whole byte via a pointer avoids a read-modify-write of the underlying `u128`.
-    /// LLVM stopped folding the safe `self.0 &= !mask; self.0 |= val << shift` pattern
-    /// into a single byte store as of rustc 1.95.0 - see <https://github.com/rust-lang/rust/issues/155422>.
-    /// This implementation produces `mov byte ptr [rdi + N], sil` on both affected and unaffected Rust versions.
-    #[expect(clippy::inline_always)]
-    #[inline(always)] // So `shift` is statically known
-    unsafe fn write_bool(&mut self, shift: usize, value: bool) {
-        // Byte offset depends on endianness of the system
-        let offset = if cfg!(target_endian = "little") { shift / 8 } else { 15 - (shift / 8) };
-        // SAFETY: Caller guarantees `shift` points to a valid `bool` field.
-        // `Token` is borrowed mutably, so the write is unaliased.
-        // `as_mut` produces a `&mut bool` with `noalias` metadata for LLVM.
-        unsafe { *NonNull::from(self).cast::<bool>().add(offset).as_mut() = value };
-    }
-
     /// Write `u32` to the 32 bits starting at bit position `shift`.
     ///
     /// # SAFETY
@@ -358,7 +373,10 @@ impl Token {
     ///
     /// # Performance analysis
     ///
-    /// See `write_bool` - same story, but `mov dword ptr [rdi + N], esi`.
+    /// Writing the whole `u32` via a pointer avoids a read-modify-write of the underlying `u128`.
+    /// LLVM stopped folding the safe `self.0 &= !mask; self.0 |= val << shift` pattern
+    /// into a single store as of rustc 1.95.0 - see <https://github.com/rust-lang/rust/issues/155422>.
+    /// This implementation produces `mov dword ptr [rdi + N], esi` on both affected and unaffected Rust versions.
     #[expect(clippy::inline_always)]
     #[inline(always)] // So `shift` is statically known
     unsafe fn write_u32(&mut self, shift: usize, value: u32) {
@@ -374,7 +392,7 @@ impl Token {
 
 #[cfg(test)]
 mod test {
-    use super::{Kind, Span, Token};
+    use super::{Kind, PendingToken, Span, Token};
 
     // Test size of `Token`
     const _: () = assert!(size_of::<Token>() == 16);
@@ -392,147 +410,52 @@ mod test {
     }
 
     #[test]
-    fn new_on_new_line_token_values() {
-        let token = Token::new_on_new_line();
-        assert_eq!(token.start(), 0);
-        assert_eq!(token.end(), 0);
-        assert_eq!(token.kind(), Kind::Eof);
+    fn new_token() {
+        let token = Token::new(Kind::Ident, 3, 7, PendingToken::NONE);
+        assert_eq!(token.kind(), Kind::Ident);
+        assert_eq!(token.span(), Span::new(3, 7));
+        assert!(!token.is_on_new_line());
+        assert!(!token.escaped());
+        assert!(!token.has_separator());
+
+        // Trivia state is not copied into `Token`
+        let token = Token::new(Kind::Eof, 0, 0, PendingToken::START_OF_FILE);
         assert!(token.is_on_new_line());
         assert!(!token.escaped());
         assert!(!token.has_separator());
-    }
 
-    #[test]
-    fn token_creation_and_retrieval() {
-        let kind = Kind::Ident;
-        let start = 100u32;
-        let end = start + 5u32;
-        let is_on_new_line = true;
-        let escaped = false;
-        let has_separator = false;
-
-        let mut token = Token::default();
-        token.set_kind(kind);
-        token.set_start(start);
-        token.set_end(end);
-        token.set_is_on_new_line(is_on_new_line);
-        token.set_escaped(escaped);
-        if has_separator {
-            // Assuming set_has_separator is not always called if false
-            token.set_has_separator(true);
-        }
-
-        assert_eq!(token.kind(), kind);
-        assert_eq!(token.start(), start);
-        assert_eq!(token.end(), end);
-        assert_eq!(token.is_on_new_line(), is_on_new_line);
-        assert_eq!(token.escaped(), escaped);
-        assert_eq!(token.has_separator(), has_separator);
-    }
-
-    #[test]
-    fn token_setters() {
-        let mut token = Token::default();
-        token.set_kind(Kind::Ident);
-        token.set_span(Span::new(10, 15));
-
-        assert_eq!(token.start(), 10);
-        assert_eq!(token.end(), 15);
-        assert!(!token.escaped());
+        let mut pending = PendingToken::NONE;
+        pending.set_escaped();
+        pending.set_has_separator();
+        pending.set_has_pending_comments(true);
+        let mut token = Token::new(Kind::Str, 30, 33, pending);
         assert!(!token.is_on_new_line());
-
-        // Test set_end
-        let mut token_for_set_end = Token::default();
-        token_for_set_end.set_kind(Kind::Ident);
-        token_for_set_end.set_start(10);
-        token_for_set_end.set_end(15);
-
-        assert_eq!(token_for_set_end.end(), 15);
-        token_for_set_end.set_end(30);
-        assert_eq!(token_for_set_end.start(), 10);
-        assert_eq!(token_for_set_end.end(), 30);
-
-        // Test that other flags are not affected by set_start
-        let mut token_with_flags = Token::default();
-        token_with_flags.set_kind(Kind::Str);
-        token_with_flags.set_start(30);
-        token_with_flags.set_end(33);
-        token_with_flags.set_is_on_new_line(true);
-        token_with_flags.set_escaped(true);
-        token_with_flags.set_has_separator(true);
-
-        token_with_flags.set_start(40);
-        assert_eq!(token_with_flags.start(), 40);
-        assert!(token_with_flags.is_on_new_line());
-        assert!(token_with_flags.escaped());
-        assert!(token_with_flags.has_separator());
-
-        // Test that other flags are not affected by set_escaped
-        let mut token_with_flags2 = Token::default();
-        token_with_flags2.set_kind(Kind::Str);
-        token_with_flags2.set_start(50);
-        token_with_flags2.set_end(52);
-        token_with_flags2.set_is_on_new_line(true);
-        // escaped is false by default
-        token_with_flags2.set_has_separator(true);
-
-        token_with_flags2.set_escaped(true);
-        assert_eq!(token_with_flags2.start(), 50);
-        assert!(token_with_flags2.is_on_new_line());
-        assert!(token_with_flags2.escaped());
-        assert!(token_with_flags2.has_separator());
-        token_with_flags2.set_escaped(false);
-        assert!(!token_with_flags2.escaped());
-        assert!(token_with_flags2.is_on_new_line()); // Check again
-        assert!(token_with_flags2.has_separator()); // Check again
-
-        // Test set_is_on_new_line does not affect other flags
-        let mut token_flags_test_newline = Token::default();
-        token_flags_test_newline.set_kind(Kind::Str);
-        token_flags_test_newline.set_start(60);
-        token_flags_test_newline.set_end(62);
-        // is_on_new_line is false by default
-        token_flags_test_newline.set_escaped(true);
-        token_flags_test_newline.set_has_separator(true);
-
-        token_flags_test_newline.set_is_on_new_line(true);
-        assert!(token_flags_test_newline.is_on_new_line());
-        assert_eq!(token_flags_test_newline.start(), 60);
-        assert!(token_flags_test_newline.escaped());
-        assert!(token_flags_test_newline.has_separator());
-        token_flags_test_newline.set_is_on_new_line(false);
-        assert!(!token_flags_test_newline.is_on_new_line());
-        assert!(token_flags_test_newline.escaped());
-        assert!(token_flags_test_newline.has_separator());
-    }
-
-    #[test]
-    fn is_on_new_line() {
-        let mut token = Token::default();
-        assert!(!token.is_on_new_line());
-        token.set_is_on_new_line(true);
-        assert!(token.is_on_new_line());
-        token.set_is_on_new_line(false);
-        assert!(!token.is_on_new_line());
-    }
-
-    #[test]
-    fn escaped() {
-        let mut token = Token::default();
-        assert!(!token.escaped());
-        token.set_escaped(true);
         assert!(token.escaped());
-        token.set_escaped(false);
-        assert!(!token.escaped());
+        assert!(token.has_separator());
+
+        // Setters do not affect other fields
+        token.set_span(Span::new(10, 15));
+        token.set_kind(Kind::Ident);
+        assert_eq!(token.span(), Span::new(10, 15));
+        assert_eq!(token.kind(), Kind::Ident);
+        assert!(!token.is_on_new_line());
+        assert!(token.escaped());
+        assert!(token.has_separator());
     }
 
     #[test]
-    fn has_separator() {
-        let mut token = Token::default();
-        assert!(!token.has_separator());
-        token.set_has_separator(true);
-        assert!(token.has_separator());
-        token.set_has_separator(false);
-        assert!(!token.has_separator());
+    fn pending_token_trivia_state() {
+        let mut pending = PendingToken::NONE;
+        pending.set_saw_newline();
+        assert!(pending.saw_newline());
+        assert!(pending.saw_newline_for_comment());
+        pending.clear_saw_newline_for_comment();
+        assert!(pending.saw_newline());
+        assert!(!pending.saw_newline_for_comment());
+        pending.set_has_pending_comments(true);
+        assert!(pending.has_pending_comments());
+        pending.set_has_pending_comments(false);
+        assert!(!pending.has_pending_comments());
+        assert!(!pending.is_on_new_line());
     }
 }

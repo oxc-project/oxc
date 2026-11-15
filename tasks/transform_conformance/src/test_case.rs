@@ -326,6 +326,7 @@ impl TestCase {
                         .with_options(ParseOptions {
                             // Related: async to generator, regression
                             allow_return_outside_function: true,
+                            enable_ident_hashes: false,
                             ..Default::default()
                         })
                         .parse();

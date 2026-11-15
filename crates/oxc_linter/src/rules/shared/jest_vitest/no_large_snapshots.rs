@@ -193,7 +193,7 @@ impl NoLargeSnapshotsConfig {
                 }
             }
         } else {
-            for possible_jest_node in iter_possible_jest_call_node(ctx.semantic()) {
+            for possible_jest_node in iter_possible_jest_call_node(ctx) {
                 self.run(&possible_jest_node, ctx);
             }
         }
@@ -301,7 +301,7 @@ impl NoLargeSnapshotsConfig {
     fn get_line_count(span: Span, ctx: &LintContext) -> u32 {
         let start = span.start as usize;
         let end = span.end as usize;
-        ctx.source_text()[start..=end].lines().count() as u32 - 1
+        ctx.source_text()[start..end].lines().count() as u32 - 1
     }
 }
 

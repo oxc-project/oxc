@@ -729,11 +729,7 @@ impl PreferConst {
             }
         }
 
-        if is_invalid_destructuring {
-            return false;
-        }
-
-        true
+        !is_invalid_destructuring
     }
 }
 

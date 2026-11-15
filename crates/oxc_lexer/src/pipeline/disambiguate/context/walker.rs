@@ -3,7 +3,7 @@
 
 use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
 
-use crate::pipeline::disambiguate::common::Tokens;
+use crate::pipeline::disambiguate::common::TokensView;
 
 use super::{
     After, Site,
@@ -296,7 +296,7 @@ impl Walk {
     }
 
     #[cpu_version(Generic)]
-    pub(super) fn advance(&mut self, tokens: &Tokens, limit: usize) {
+    pub(super) fn advance(&mut self, tokens: &TokensView, limit: usize) {
         let cpu = BASELINE;
 
         let mut pos = self.walked_to;
@@ -335,7 +335,7 @@ impl Walk {
 
     /// What the token at pos leaves behind: it is stepped unless it is the tail of the last one.
     #[cpu_version(Generic)]
-    pub(super) fn after_token(&mut self, tokens: &Tokens, pos: usize) -> After {
+    pub(super) fn after_token(&mut self, tokens: &TokensView, pos: usize) -> After {
         if pos >= self.walked_to {
             let end = self.step(tokens, pos);
             self.walked_to = end.max(self.walked_to);

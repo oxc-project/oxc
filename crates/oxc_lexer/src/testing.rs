@@ -6,49 +6,29 @@
 
 use oxc_simd::DynCpu;
 
-use crate::{Arena, LexOptions, LexResult, SCRATCH, lex_utf8};
+use crate::{LexOptions, Lexer, PAD, Tokens};
 
-/// Same as [`lex_utf8`], but lexes with CPU feature set `cpu`,
+/// Same as [`Lexer::lex`], but lexes with CPU feature set `cpu`,
 /// instead of the best one this CPU supports.
 ///
-/// # Panics
-/// Panics if `src` does not extend at least [`PAD`] zeroed bytes past `len`.
+/// Unlike [`Lexer::lex`], `src` does not need padding after it.
+/// It is copied into a buffer with [`PAD`] zeroed bytes after it.
 ///
-/// [`PAD`]: crate::PAD
-pub fn lex_utf8_with_cpu(
-    src: &[u8],
-    len: u32,
-    options: LexOptions,
-    cpu: DynCpu,
-) -> (LexResult, Arena) {
-    let _switch = SwitchCpu::new(cpu);
-    lex_utf8(src, len, options)
+/// `src` can be a `&str`, or bytes which may not be valid UTF-8
+/// (for testing [`LexOptions::validate_utf8`]).
+#[inline]
+pub fn lex_with_cpu(src: impl AsRef<[u8]>, options: LexOptions, cpu: DynCpu) -> Tokens {
+    lex_with_cpu_impl(src.as_ref(), options, cpu)
 }
 
-/// Guard which switches the thread's [`Lexer`] to a different CPU feature set,
-/// and switches it back when dropped, even if lexing panics.
-///
-/// [`Lexer`]: crate::Lexer
-struct SwitchCpu {
-    /// The CPU feature set to switch back to.
-    previous: DynCpu,
-}
+/// Implementation of [`lex_with_cpu`], taking a slice so it's not generic.
+fn lex_with_cpu_impl(src: &[u8], options: LexOptions, cpu: DynCpu) -> Tokens {
+    let len = src.len();
+    let mut buf = Vec::with_capacity(len + PAD);
+    buf.extend_from_slice(src);
+    buf.resize(len + PAD, 0);
 
-impl SwitchCpu {
-    /// Switch the thread's [`Lexer`] to CPU feature set `cpu`.
-    ///
-    /// [`Lexer`]: crate::Lexer
-    fn new(cpu: DynCpu) -> Self {
-        let previous = SCRATCH.with(|cell| cell.borrow_mut().replace_cpu(cpu));
-        Self { previous }
-    }
-}
-
-impl Drop for SwitchCpu {
-    /// Switch the thread's [`Lexer`] back to the CPU feature set it had before.
-    ///
-    /// [`Lexer`]: crate::Lexer
-    fn drop(&mut self) {
-        SCRATCH.with(|cell| cell.borrow_mut().replace_cpu(self.previous));
-    }
+    let mut tokens = Tokens::new();
+    Lexer::new_with_cpu(cpu).lex(&buf, len, options, &mut tokens);
+    tokens
 }

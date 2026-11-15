@@ -200,7 +200,9 @@ impl Builder<'_> {
             !(parent_id == NodeId::DOCUMENT
                 || t.element(id).is_some_and(is_pre_like)
                 || parent.script_like
-                || !parent.display.edges_sensitive())
+                || !(parent.display.edges_sensitive()
+                    // Unless whitespace is ignored (comments are blocks then)
+                    || (self.display_of(id).sides_sensitive() && self.holds_only_glued_comments(parent_id))))
         };
         // The line break HTML drops after `<pre>` is not content
         if leading
@@ -211,6 +213,18 @@ impl Builder<'_> {
             return t.is_interpolation(id);
         }
         sensitive
+    }
+
+    /// An element of comments only and no whitespace, which matches `:empty` until a line break goes in
+    /// (DIVERGENCES.md#comment-only-element-edges); a `template`'s content is no child of it, so it always does.
+    fn holds_only_glued_comments(&self, id: NodeId) -> bool {
+        let t = &self.tree;
+        t.element(id).is_some_and(|el| el.key != "template")
+            && t.children(id).all(|child| {
+                matches!(t.kind(child), NodeKind::Comment(_) | NodeKind::ConditionalComment(_))
+                    && !t[child].has_leading_spaces
+                    && !t[child].has_trailing_spaces
+            })
     }
 
     /// The node a whitespace run meets at `id`'s start (`start`) or end, looking into blocks:

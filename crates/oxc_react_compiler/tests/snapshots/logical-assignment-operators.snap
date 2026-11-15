@@ -1,0 +1,31 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/logical-assignment-operators.js
+---
+import { c as _c } from "react/compiler-runtime";
+import { Stringify } from "shared-runtime";
+function Component(t0) {
+	const $ = _c(4);
+	const { value } = t0;
+	let nullish = value;
+	nullish ?? (nullish = "fallback");
+	let and = value;
+	and && (and = "replaced");
+	let or = value;
+	or || (or = "default");
+	let t1;
+	if ($[0] !== and || $[1] !== nullish || $[2] !== or) {
+		t1 = <Stringify nullish={nullish} and={and} or={or} />;
+		$[0] = and;
+		$[1] = nullish;
+		$[2] = or;
+		$[3] = t1;
+	} else {
+		t1 = $[3];
+	}
+	return t1;
+}
+export const FIXTURE_ENTRYPOINT = {
+	fn: Component,
+	params: [{ value: null }]
+};

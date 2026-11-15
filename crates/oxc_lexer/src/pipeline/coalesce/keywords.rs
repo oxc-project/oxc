@@ -1,36 +1,38 @@
-//! Keyword recognition for `coalesce`.
-//!
-//! `coalesce` collects the positions of words which may be keywords (candidates) in `kwpos`,
-//! and every [`KWB`] words of the bitmaps calls [`kw_flush`] to check them with [`kw_match`].
-//! A candidate which is a keyword has its kind changed from `Ident` to the keyword's [`TokenKind`].
-
 use std::ptr;
 
 use oxc_simd::{Cpu, cpu_multiversion};
 
 use crate::token::TokenKind;
 
-use crate::pipeline::keywords::kw_match;
+use crate::pipeline::{
+    bitmap::Bitmap,
+    keywords::{kw_match, kw_match_at},
+    kinds::Kinds,
+    source::Source,
+};
 
 pub const KWB: usize = 64;
+
+/// Positions a batch can push: 64 a block, plus the 8 slots push_positions always fills.
+pub const BATCH_SLOTS: usize = KWB * 64 + 8;
 
 /// Dispatch to the key-monomorphized verify without duplicating `coalesce`
 /// itself: one predictable branch per flush, not per candidate.
 #[cpu_multiversion]
 #[inline(always)]
 pub(super) unsafe fn kw_flush(
-    ts: bool,
-    src: *const u8,
-    word: *const u64,
-    kind: *mut u8,
-    kwpos: *const u32,
+    is_ts: bool,
+    src: Source,
+    word: Bitmap,
+    kinds: Kinds,
+    kw_candidates: *const u32,
     k: usize,
     cpu: impl Cpu,
 ) {
-    if ts {
-        kw_verify_batch::<true>(src, word, kind, kwpos, k, cpu);
+    if is_ts {
+        kw_verify_batch::<true>(src, word, kinds, kw_candidates, k, cpu);
     } else {
-        kw_verify_batch::<false>(src, word, kind, kwpos, k, cpu);
+        kw_verify_batch::<false>(src, word, kinds, kw_candidates, k, cpu);
     }
 }
 
@@ -44,9 +46,9 @@ pub(super) unsafe fn kw_flush(
 #[cpu_multiversion]
 #[inline(never)]
 unsafe fn kw_verify_batch<const IS_TS: bool>(
-    src: *const u8,
-    word: *const u64,
-    kind: *mut u8,
+    src: Source,
+    word: Bitmap,
+    kinds: Kinds,
     pos: *const u32,
     k: usize,
     cpu: impl Cpu,
@@ -57,7 +59,8 @@ unsafe fn kw_verify_batch<const IS_TS: bool>(
         // Candidates are code-level identifier starts (carve cleared every
         // literal interior and JSX start from the masks), so the incumbent
         // kind is IDENT: select over it instead of a read-modify-write.
-        *kind.add(p) = kw_match::<IS_TS>(src.add(p), len, cpu) as u8;
+        let window = &*src.as_ptr().add(p).cast::<[u8; 16]>();
+        kinds.as_ptr().add(p).write(kw_match::<IS_TS>(window, len, cpu) as u8);
     }
 }
 
@@ -66,31 +69,21 @@ unsafe fn kw_verify_batch<const IS_TS: bool>(
 /// For `glue_number`, which makes a token start of a word directly after a number (`3in`).
 /// That happens after `coalesce` has collected the candidates for the window, so the word is not in a batch.
 ///
-/// Returns the keyword's [`TokenKind`] as a `u8`, or `Ident` if it's not a keyword.
-///
-/// # SAFETY
-///
-/// * `word` must be the word bitmap for `src`, and valid for reading 8 bytes from byte `pos / 8`.
-/// * The byte at `pos` must be a word char.
-/// * `src` must be valid for reading 16 bytes from `pos`.
+/// Returns the keyword's kind, or Ident if it is not a keyword.
 #[cpu_multiversion]
 #[inline]
-pub(super) unsafe fn kw_match_word(
-    ts: bool,
-    src: *const u8,
-    word: *const u64,
+pub(super) fn kw_match_word(
+    is_ts: bool,
+    src: Source,
+    word: Bitmap,
     pos: usize,
     cpu: impl Cpu,
 ) -> TokenKind {
-    let len = word_len(word, pos, cpu);
-    if ts {
-        kw_match::<true>(src.add(pos), len, cpu)
-    } else {
-        kw_match::<false>(src.add(pos), len, cpu)
-    }
+    let len = word.next0(pos, src.len(), cpu) - pos;
+    kw_match_at(is_ts, src.padded(), pos, len, cpu)
 }
 
-/// Get the length of the word starting at `pos` from the word bitmap, capped at 16 (`kw_match`'s limit).
+/// The length of the word starting at pos from the word bitmap, capped at 16.
 ///
 /// Keyword candidates can be longer than 10 bytes, because `coalesce`'s length filter only sees one word
 /// of the bitmap, so a word which crosses into the next one escapes it. A word of 16 bytes or more
@@ -103,8 +96,9 @@ pub(super) unsafe fn kw_match_word(
 /// `word` must be valid for reading 8 bytes from byte `pos / 8`.
 #[cpu_multiversion]
 #[inline(always)]
-unsafe fn word_len(word: *const u64, pos: usize, _cpu: impl Cpu) -> usize {
-    let x = ptr::read_unaligned((word as *const u8).add(pos >> 3) as *const u64) >> (pos & 7);
+unsafe fn word_len(word: Bitmap, pos: usize, _cpu: impl Cpu) -> usize {
+    let x =
+        ptr::read_unaligned((word.as_ptr() as *const u8).add(pos >> 3) as *const u64) >> (pos & 7);
     (!(x as u16)).trailing_zeros() as usize
 }
 
@@ -112,7 +106,7 @@ unsafe fn word_len(word: *const u64, pos: usize, _cpu: impl Cpu) -> usize {
 mod tests {
     use oxc_simd::test_cpus;
 
-    use crate::token::tk;
+    use crate::{PAD, token::tk};
 
     use super::*;
 
@@ -149,9 +143,9 @@ mod tests {
             unsafe {
                 kw_flush(
                     is_ts,
-                    src.as_ptr(),
-                    word_bitmap.as_ptr(),
-                    kinds.as_mut_ptr(),
+                    Source::new(&src, src.len() - PAD),
+                    Bitmap::new(&mut word_bitmap),
+                    Kinds::new(&mut kinds),
                     positions.as_ptr(),
                     positions.len(),
                     cpu,

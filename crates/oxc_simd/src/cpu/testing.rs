@@ -41,8 +41,8 @@ impl DynCpu {
 
         run(detected);
 
-        // `BASELINE` is the generic feature set,
-        // except where a SIMD feature set is enabled at compile time, and then it's `detected`
+        // `BASELINE` is `Generic`, except where a SIMD feature set is enabled at compile time,
+        // when it's the same as `detected`. No need to run `f` twice in that case.
         let baseline = DynCpu::from(BASELINE);
         if baseline != detected {
             run(baseline);

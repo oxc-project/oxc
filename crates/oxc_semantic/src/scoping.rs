@@ -20,6 +20,10 @@ use crate::multi_index_vec::multi_index_vec;
 pub type Bindings<'a> = ArenaIdentHashMap<'a, SymbolId>;
 pub type UnresolvedReferences<'a> = ArenaIdentHashMap<'a, ArenaVec<'a, ReferenceId>>;
 
+/// One declaration of a symbol that is declared more than once.
+///
+/// A `var` redeclaring a catch parameter also links that parameter to the separate
+/// enclosing var binding; see [`Scoping::catch_var_binding`].
 #[derive(Clone, Debug)]
 pub struct Redeclaration {
     pub span: Span,
@@ -288,6 +292,8 @@ pub struct ScopingInner<'cell> {
     /// Once a symbol is redeclared, there are at least two entries here. The first
     /// entry is the original symbol information, and the rest are redeclarations.
     /// i.e. `symbol_redeclarations[symbol_id].len() >= 2` always.
+    ///
+    /// This also encodes catch/var links: see [`Scoping::catch_var_binding`].
     symbol_redeclarations: FxHashMap<SymbolId, ArenaVec<'cell, Redeclaration>>,
     /* Scope Tree Fields */
     /// Symbol bindings in a scope.
@@ -414,6 +420,57 @@ impl Scoping {
             },
             |v| v.as_slice(),
         )
+    }
+
+    /// Get the enclosing var binding declared by a `var` that redeclares this catch parameter.
+    ///
+    /// In `catch (e) { var e = 1 }`, the `var` declares a binding in the enclosing var scope,
+    /// but its initializer assigns to the catch parameter, so the declarator's identifier
+    /// carries the catch symbol. See <https://tc39.es/ecma262/#sec-variablestatements-in-catch-blocks>.
+    ///
+    /// The link is derived rather than stored: the catch parameter has a `var` redeclaration,
+    /// and the enclosing binding has the same name in the nearest var scope. Both symbols
+    /// print through one identifier, so they must be renamed together.
+    #[inline]
+    pub fn catch_var_binding(&self, symbol_id: SymbolId) -> Option<SymbolId> {
+        if !self.symbol_flags(symbol_id).is_catch_variable() {
+            return None;
+        }
+        self.catch_var_binding_of(symbol_id, self.symbol_redeclarations(symbol_id))
+    }
+
+    /// Iterate `(catch parameter, enclosing var binding)` pairs in unspecified order.
+    /// See [`Scoping::catch_var_binding`].
+    pub fn catch_var_bindings(&self) -> impl Iterator<Item = (SymbolId, SymbolId)> + '_ {
+        self.cell.borrow_dependent().symbol_redeclarations.iter().filter_map(
+            |(&symbol_id, declarations)| {
+                if !self.symbol_flags(symbol_id).is_catch_variable() {
+                    return None;
+                }
+                Some((symbol_id, self.catch_var_binding_of(symbol_id, declarations)?))
+            },
+        )
+    }
+
+    /// [`Scoping::catch_var_binding`], with the symbol's redeclarations already looked up.
+    fn catch_var_binding_of(
+        &self,
+        symbol_id: SymbolId,
+        declarations: &[Redeclaration],
+    ) -> Option<SymbolId> {
+        // Only a `var` can redeclare a catch parameter: a lexical or function declaration with the
+        // same name in the catch block is a syntax error. The parameter's own declaration is
+        // function-scoped too, so exclude it by its catch flag.
+        if !declarations.iter().any(|declaration| {
+            declaration.flags.contains(SymbolFlags::FunctionScopedVariable)
+                && !declaration.flags.is_catch_variable()
+        }) {
+            return None;
+        }
+        let var_scope_id = self
+            .scope_ancestors(self.symbol_scope_id(symbol_id))
+            .find(|&scope_id| self.scope_flags(scope_id).is_var())?;
+        self.get_binding(var_scope_id, self.symbol_ident(symbol_id))
     }
 
     #[inline]

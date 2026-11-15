@@ -1,4 +1,6 @@
-use crate::{test, test_same};
+use oxc_span::SourceType;
+
+use crate::{default_options, test, test_same, test_same_options_source_type};
 
 #[test]
 fn test_drop_unreachable_switch_cases_with_sequence_expressions() {
@@ -67,4 +69,53 @@ fn test_drop_unreachable_switch_cases_tdz_in_case() {
         "switch (1) { case 2: let x = 1; case 1: console.log(1); }",
     );
     test_same("switch (1) { case 2: function x() {} case 1: console.log(x); }");
+}
+
+#[test]
+fn test_merge_identical_switch_cases() {
+    test(
+        "switch (x) { case 1: return a; case 2: return a; default: b(); }",
+        "switch (x) { case 1: case 2: return a; default: b(); }",
+    );
+    test(
+        "switch (x) { case 1: f(); break; case 2: f(); break; case 3: g(); }",
+        "switch (x) { case 1: case 2: f(); break; case 3: g(); }",
+    );
+    test(
+        "switch (x) { case 1: return a; case 2: return a; case 3: return a; default: b(); }",
+        "switch (x) { case 1: case 2: case 3: return a; default: b(); }",
+    );
+    test(
+        "switch (x) { case 1: f(); break; case 2: case 3: f(); break; case 4: g(); }",
+        "switch (x) { case 1: case 2: case 3: f(); break; case 4: g(); }",
+    );
+    test(
+        "switch (x) { default: return a; case 1: return a; case 2: b(); }",
+        "switch (x) { default: case 1: return a; case 2: b(); }",
+    );
+    test(
+        "switch (x) { case 1: g(); case 2: f(); break; case 3: f(); }",
+        "switch (x) { case 1: g(); case 2: case 3: f(); }",
+    );
+    test("switch (x) { case 1: return a; default: return a; }", "return x, a;");
+
+    test_same("switch (x) { case 1: f(); case 2: f(); }");
+    test_same("switch (x) { case 1: f(); break; case 2: f(); case 3: g(); }");
+    test(
+        "switch (x) { case 1: f(); break; case 2: g(); break; case 3: f(); break; }",
+        "switch (x) { case 1: f(); break; case 2: g(); break; case 3: f(); }",
+    );
+    test_same("x: { switch (a) { case 1: f(); break x; case 2: f(); } g(); }");
+    test_same("for (;;) { switch (a) { case 1: f(); continue; case 2: f(); } g(); }");
+    test_same("switch (x) { case 1: return tag`a`; case 2: return tag`a`; }");
+    test_same("switch (x) { case 1: return () => tag`a`; case 2: return () => tag`a`; }");
+    test(
+        "switch (x) { case 1: var a = 0; break; case 2: var a = 0; break; } if (a) foo();",
+        "switch (x) { case 1: var a = 0; break; case 2: var a = 0; } a && foo();",
+    );
+    test_same_options_source_type(
+        "function g(x) { switch (x) { case 1: function f() {} return f; case 2: function f() {} return f; } }",
+        SourceType::cjs(),
+        &default_options(),
+    );
 }
