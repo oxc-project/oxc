@@ -416,6 +416,9 @@ fn test() {
         (r#"<area href="/" role="link" />"#, Some(serde_json::json!([{ "area": ["link"] }])), None),
         (r#"<button role="link button" />"#, None, None),
         (r#"<button role="link  button">Docs</button>"#, None, None),
+        (r#"<button role="foo link button" />"#, None, None),
+        (r#"<button role="widget link button" />"#, None, None),
+        (r#"<button role="LINK button" />"#, None, None),
     ];
 
     let fail = vec![
@@ -522,6 +525,10 @@ fn test() {
         (r#"<area href="/" role="link" />"#, r#"<area href="/"  />"#),
         (r#"<a href={url} role="link" />"#, "<a href={url}  />"),
         (r#"<area href="" role="link" />"#, r#"<area href=""  />"#),
+        (r#"<button role="button link" />"#, r#"<button role="button link" />"#),
+        (r#"<button role="button foo" />"#, r#"<button role="button foo" />"#),
+        (r#"<button role="foo button" />"#, r#"<button role="foo button" />"#),
+        (r#"<button role="  button  " />"#, r#"<button  />"#),
     ];
 
     Tester::new(NoRedundantRoles::NAME, NoRedundantRoles::PLUGIN, pass, fail)
