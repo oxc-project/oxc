@@ -168,11 +168,21 @@ impl Rule for PreferImportingVitestGlobals {
         }
 
         let globals_imports = missing_globals.iter().join(", ");
+        let diagnostic =
+            prefer_importing_vitest_globals_diagnostic(globals_spans.as_ref(), &globals_imports);
 
-        ctx.diagnostic_with_fix(
-            prefer_importing_vitest_globals_diagnostic(globals_spans.as_ref(), &globals_imports),
-            |fixer| Self::build_fix(ctx, &globals_imports, fixer),
-        );
+        let fixable_imports = missing_globals
+            .iter()
+            .filter(|name| scoping.get_binding(root_scope, (**name).into()).is_none())
+            .join(", ");
+
+        if fixable_imports.is_empty() {
+            ctx.diagnostic(diagnostic);
+        } else {
+            ctx.diagnostic_with_fix(diagnostic, |fixer| {
+                Self::build_fix(ctx, &fixable_imports, fixer)
+            });
+        }
     }
 }
 
@@ -379,6 +389,10 @@ fn test() {
             describe('suite', () => {});",
         "const { it } = require('vite-plus/test');
             describe('suite', () => {});",
+        "import type { describe } from 'vitest'; describe('suite', () => {});",
+        "import { type describe } from 'vitest'; describe('suite', () => {});",
+        "import type { describe } from 'vitest'; it('test', () => {}); describe('suite', () => {});",
+        "import type { test } from 'node:test'; test('x', () => {});",
     ];
 
     let fix = vec![
@@ -463,6 +477,22 @@ fn test() {
             describe('suite', () => {});",
             "const { it, describe } = require('vite-plus/test');
             describe('suite', () => {});",
+        ),
+        (
+            "import type { describe } from 'vitest'; describe('suite', () => {});",
+            "import type { describe } from 'vitest'; describe('suite', () => {});",
+        ),
+        (
+            "import { type describe } from 'vitest'; describe('suite', () => {});",
+            "import { type describe } from 'vitest'; describe('suite', () => {});",
+        ),
+        (
+            "import type { describe } from 'vitest'; it('test', () => {}); describe('suite', () => {});",
+            "import { it } from 'vitest';\nimport type { describe } from 'vitest'; it('test', () => {}); describe('suite', () => {});",
+        ),
+        (
+            "import type { test } from 'node:test'; test('x', () => {});",
+            "import type { test } from 'node:test'; test('x', () => {});",
         ),
     ];
 
