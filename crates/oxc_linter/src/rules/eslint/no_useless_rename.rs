@@ -278,6 +278,14 @@ fn fix_object_assignment_target_property<'c, 'a: 'c>(
             if with_default.binding.get_identifier_name().is_some() {
                 // For assignment targets, we need to get the span from the binding itself
                 let ident_span = with_default.binding.span();
+                // `({foo: (foo) = a} = obj)`: a shorthand property can't have parentheses,
+                // so don't fix it, as ESLint does.
+                if ctx
+                    .source_range(Span::new(ident_span.end, with_default.init.span().start))
+                    .contains(')')
+                {
+                    return fixer.noop();
+                }
                 let default_start = ident_span.end;
                 let default_end = with_default.span.end;
                 (ident_span, Some(Span::new(default_start, default_end)))
@@ -538,6 +546,8 @@ fn test() {
     let fix = vec![
         ("let {foo: foo} = obj;", "let {foo} = obj;"),
         ("({foo: (foo)} = obj);", "({foo} = obj);"),
+        // A shorthand property can't have parentheses, so ESLint doesn't fix this.
+        ("({foo: (foo) = a} = obj);", "({foo: (foo) = a} = obj);"),
         (r"let {\u0061: a} = obj;", "let {a} = obj;"),
         (r"let {a: \u0061} = obj;", r"let {\u0061} = obj;"),
         (r"let {\u0061: \u0061} = obj;", r"let {\u0061} = obj;"),
