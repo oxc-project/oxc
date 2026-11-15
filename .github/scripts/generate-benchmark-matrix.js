@@ -34,6 +34,26 @@ const GLOBAL_FILES = [
 ];
 
 /**
+ * Check if a changed file can affect benchmarks.
+ *
+ * Same as `paths` of the `push` trigger in `benchmark.yml`. The `pull_request` trigger has no `paths` filter
+ * (see comment there), so PRs check this instead.
+ * @param {string} file - Changed file path
+ * @returns {boolean} True if the file can affect benchmarks
+ */
+function isRelevantFile(file) {
+  return (
+    file === "Cargo.lock"
+    || file === "rust-toolchain.toml"
+    || file === ".github/workflows/benchmark.yml"
+    || (file.endsWith(".rs")
+      && (file.startsWith("crates/")
+        || file.startsWith("tasks/benchmark/")
+        || file.startsWith("tasks/common/")))
+  );
+}
+
+/**
  * Check if any global files have changed that affect all benchmarks
  * @param {string[]} changedFiles - Array of changed file paths
  * @returns {boolean} True if global changes detected
@@ -148,6 +168,13 @@ async function determineAffectedComponents() {
   // Manual trigger - run all benchmarks
   if (changedFiles === null) {
     return buildMatrixEntries(ALL_COMPONENTS);
+  }
+
+  // Like the `paths` filter of the `push` trigger, this only decides whether to run at all.
+  // Choosing components below uses all changed files.
+  if (!changedFiles.some(isRelevantFile)) {
+    console.error("No changed files can affect benchmarks - skipping all benchmarks");
+    return [];
   }
 
   // Check for global changes

@@ -1,6 +1,6 @@
 use std::{
     fmt::{self, Display},
-    mem, slice,
+    slice,
 };
 
 use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
@@ -299,19 +299,6 @@ impl TokenKind {
         self as u8
     }
 
-    /// # SAFETY
-    ///
-    /// `byte` must be a declared discriminant, i.e. `TokenKind::from_u8(byte).is_some()`.
-    #[cpu_multiversion]
-    #[inline]
-    #[must_use]
-    pub(crate) const unsafe fn from_u8_unchecked(byte: u8, cpu: impl Cpu) -> Self {
-        debug_assert!(Self::from_u8(byte, cpu).is_some(), "not a declared TokenKind discriminant");
-        // SAFETY: the caller guarantees `byte` is a declared discriminant, and
-        // `TokenKind` is `#[repr(u8)]`, so it shares `u8`'s layout.
-        unsafe { mem::transmute::<u8, Self>(byte) }
-    }
-
     #[inline]
     #[must_use]
     pub const fn is_trivia(self) -> bool {
@@ -390,23 +377,6 @@ impl Display for TokenKind {
     }
 }
 
-/// Reinterpret raw kind bytes written by the pipeline as [`TokenKind`]s.
-///
-/// # SAFETY
-///
-/// Every byte in `bytes` must be a declared [`TokenKind`] discriminant. The
-/// pipeline only ever writes kinds that came from `opmap`'s tables or
-/// from the named constants in `pipeline`, so this holds for any range the
-/// lexer has written; it does *not* hold for uninitialised arena memory.
-#[cpu_version(Generic)]
-#[inline]
-pub const unsafe fn kinds_from_bytes(bytes: &[u8]) -> &[TokenKind] {
-    // SAFETY: `TokenKind` is `#[repr(u8)]` so it has the same size and
-    // alignment as `u8`, and the caller guarantees every byte is a declared
-    // discriminant.
-    unsafe { slice::from_raw_parts(bytes.as_ptr().cast::<TokenKind>(), bytes.len()) }
-}
-
 #[cpu_version(Generic)]
 #[inline]
 pub fn debug_assert_kind_bytes(bytes: &[u8]) {
@@ -416,6 +386,13 @@ pub fn debug_assert_kind_bytes(bytes: &[u8]) {
         bytes.iter().all(|&b| TokenKind::from_u8(b, cpu).is_some()),
         "lexer wrote a byte that is not a declared TokenKind discriminant"
     );
+}
+
+/// The kinds as their discriminant bytes.
+#[inline]
+pub fn kind_bytes(kinds: &[TokenKind]) -> &[u8] {
+    // SAFETY: TokenKind is repr(u8), so each kind is one initialized byte.
+    unsafe { slice::from_raw_parts(kinds.as_ptr().cast::<u8>(), kinds.len()) }
 }
 
 pub const SPAN_SENTINELS: usize = 8;
@@ -510,9 +487,9 @@ impl StringSpan {
 
 #[cfg(test)]
 mod tests {
-    use oxc_simd::{BASELINE, Cpu, DynCpu, test_cpus};
+    use oxc_simd::{Cpu, DynCpu, test_cpus};
 
-    use crate::{LexOptions, Lexer, PAD};
+    use crate::{LexOptions, Lexer, PAD, Tokens};
 
     use super::{KW_KIND_BASE, TRIVIA_MAX, TRIVIA_MIN, TokenKind};
 
@@ -575,10 +552,6 @@ mod tests {
         assert!(!TokenKind::String.is_numeric());
     }
 
-    /// Backs the safety invariant of [`kinds_from_bytes`] -
-    /// the lexer never emits a byte outside the declared discriminants.
-    ///
-    /// [`kinds_from_bytes`]: super::kinds_from_bytes
     #[test_cpus]
     fn every_emitted_kind_is_declared(cpu: DynCpu) {
         const SOURCES: [&str; 6] = [
@@ -595,11 +568,11 @@ mod tests {
             bytes.extend_from_slice(&[0u8; PAD]);
             for (jsx, ts) in [(false, false), (true, false), (false, true), (true, true)] {
                 let opts = LexOptions { jsx, ts, ..Default::default() };
-                let mut lexer = Lexer::new_with_cpu(cpu);
-                lexer.lex(&bytes, n, opts);
-                for kind in lexer.kinds() {
+                let mut tokens = Tokens::new();
+                Lexer::new_with_cpu(cpu).lex(&bytes, n, opts, &mut tokens);
+                for kind in tokens.kinds() {
                     assert_eq!(
-                        TokenKind::from_u8(*kind as u8, BASELINE),
+                        TokenKind::from_u8(*kind as u8, cpu),
                         Some(*kind),
                         "undeclared kind {} from {src:?}",
                         *kind as u8

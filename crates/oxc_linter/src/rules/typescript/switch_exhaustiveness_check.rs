@@ -139,7 +139,8 @@ declare_oxc_lint!(
     conditional_suggestion,
     config = SwitchExhaustivenessCheckConfig,
     version = "1.12.0",
-    short_description = "This rule requires switch statements to be exhaustive when switching on union types.",
+    short_description =
+        "This rule requires switch statements to be exhaustive when switching on union types.",
 );
 
 impl Rule for SwitchExhaustivenessCheck {

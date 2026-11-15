@@ -1,12 +1,16 @@
 use std::{
     borrow::{Borrow, Cow},
-    fmt, hash,
-    ops::Deref,
+    fmt::{self, Debug, Display},
+    hash::{Hash, Hasher},
+    ops::{Deref, Index},
 };
 
 use compact_str::CompactString;
+
 #[cfg(feature = "serialize")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+use oxc_span::Span;
 
 /// Maximum length for inline string, which can be created with [`CompactStr::new_const`].
 pub const MAX_INLINE_LEN: usize = 16;
@@ -109,6 +113,7 @@ impl From<CompactStr> for Cow<'_, str> {
         value.0.into()
     }
 }
+
 impl From<Cow<'_, str>> for CompactStr {
     fn from(value: Cow<'_, str>) -> Self {
         match value {
@@ -135,6 +140,14 @@ impl AsRef<str> for CompactStr {
 impl Borrow<str> for CompactStr {
     fn borrow(&self) -> &str {
         self.as_str()
+    }
+}
+
+impl Index<Span> for CompactStr {
+    type Output = str;
+
+    fn index(&self, index: Span) -> &Self::Output {
+        &self.as_str()[index.start as usize..index.end as usize]
     }
 }
 
@@ -168,21 +181,21 @@ impl PartialEq<str> for CompactStr {
     }
 }
 
-impl hash::Hash for CompactStr {
-    fn hash<H: hash::Hasher>(&self, hasher: &mut H) {
+impl Hash for CompactStr {
+    fn hash<H: Hasher>(&self, hasher: &mut H) {
         self.as_str().hash(hasher);
     }
 }
 
-impl fmt::Debug for CompactStr {
+impl Debug for CompactStr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Debug::fmt(self.as_str(), f)
+        Debug::fmt(self.as_str(), f)
     }
 }
 
-impl fmt::Display for CompactStr {
+impl Display for CompactStr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Display::fmt(self.as_str(), f)
+        Display::fmt(self.as_str(), f)
     }
 }
 
@@ -207,7 +220,7 @@ impl schemars::JsonSchema for CompactStr {
         false
     }
 
-    fn schema_name() -> std::string::String {
+    fn schema_name() -> String {
         "String".to_string()
     }
 

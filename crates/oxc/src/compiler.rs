@@ -327,9 +327,8 @@ pub trait CompilerInterface {
         if self.enable_sourcemap() {
             options.source_map_path = Some(source_path.to_path_buf());
         }
-        let (scoping, class_private_mappings) = mangler_return
-            .map(|m| (Some(m.scoping), Some(m.class_private_mappings)))
-            .unwrap_or_default();
+        let (scoping, class_private_mappings) =
+            mangler_return.map_or_default(|m| (Some(m.scoping), Some(m.class_private_mappings)));
         Codegen::new()
             .with_options(options)
             .with_scoping(scoping)

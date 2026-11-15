@@ -15,7 +15,7 @@ mod names;
 use oxc_allocator::{Allocator, ArenaVec, StringBuilder};
 use oxc_htmlish_parser::{
     Span,
-    ast::{Element, Namespace, NodeId, NodeKind, Root},
+    ast::{Block, Element, Namespace, NodeId, NodeKind, Root},
 };
 
 use crate::rules::DialectRules;
@@ -50,10 +50,8 @@ pub struct Facts {
     /// The node is pre-like without an end tag, or ends in one through its last children without end tags:
     /// what follows it up to the end tag that closes them is `pre` content.
     pub ends_in_pre: bool,
-    /// A CDATA section, or a text that merged one: its sections are never re-wrapped.
-    pub has_cdata: bool,
-    /// The previous sibling is `<!-- prettier-ignore -->`.
-    pub prettier_ignore: bool,
+    /// The previous sibling is a suppression comment (`<!-- prettier-ignore -->`, `<!-- oxfmt-ignore -->`): the node prints as written.
+    pub suppressed: bool,
     /// An SVG / MathML element, or one under it (`DialectRules::lowercase_known_names` only).
     pub foreign: bool,
     /// The tag name prints lowercase, written otherwise in the start or end tag (`Tree::printed_name`).
@@ -187,6 +185,30 @@ impl<'a> Tree<'a> {
         self.rules.has_blocks && matches!(self.kind(id), NodeKind::Block(_))
     }
 
+    /// `next` is a block that continues `prev` (`@if` … `@else`), printed after its `}`.
+    pub fn continues_block(&self, prev: NodeId, next: NodeId) -> bool {
+        let (NodeKind::Block(prev), NodeKind::Block(next)) = (self.kind(prev), self.kind(next))
+        else {
+            return false;
+        };
+        let next = self.block_name(next);
+        match self.block_name(prev) {
+            "if" | "else if" => matches!(next, "else if" | "else"),
+            "for" => next == "empty",
+            "defer" | "placeholder" | "loading" | "error" => {
+                matches!(next, "placeholder" | "loading" | "error")
+            }
+            "boundary" => next == "error",
+            _ => false,
+        }
+    }
+
+    /// The block's name, whitespace collapsed unless it spans lines (`else\n if` is no `else if`, DIVERGENCES.md#angular-block-name-with-line-break).
+    pub fn block_name(&self, block: &Block<'_>) -> &'a str {
+        let name = block.name.slice(self.source);
+        if name.contains('\n') { name } else { self.collapsed(block.name) }
+    }
+
     /// A `display: none` element in a parent that renders: the whitespace on both its sides is one run
     /// (DIVERGENCES.md#script-display-none).
     #[inline]
@@ -200,14 +222,13 @@ impl<'a> Tree<'a> {
         matches!(self.kind(id), NodeKind::Interpolation(_))
     }
 
-    /// A text, a CDATA section or `{{ }}`: what renders as text, no markup.
+    /// A text or `{{ }}`: what renders as text, no markup.
     pub fn is_text_content(&self, id: NodeId) -> bool {
         self.is_text(id) || self.is_interpolation(id)
     }
 
-    /// A text or a CDATA section, which print as one text next to each other.
     pub fn is_text(&self, id: NodeId) -> bool {
-        matches!(self.kind(id), NodeKind::Text(_) | NodeKind::Cdata)
+        matches!(self.kind(id), NodeKind::Text(_))
     }
 
     pub fn element(&self, id: NodeId) -> Option<&'a Element<'a>> {

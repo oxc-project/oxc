@@ -38,6 +38,22 @@ fn vec128_pairwise_add_u8(cpu: Neon) {
 }
 
 #[test_cpus]
+fn vec128_sum_u8(cpu: Neon) {
+    let bytes: [u8; 16] = pattern(37, 11);
+    let sum = bytes.iter().fold(0u8, |sum, &b| sum.wrapping_add(b));
+    assert_eq!(Vec128::read_unaligned(&bytes, cpu).sum_u8(), sum);
+}
+
+#[test_cpus]
+fn vec128_nibble_mask(cpu: Neon) {
+    let bytes: [u8; 16] = pattern(37, 11).map(|b: u8| if b & 4 != 0 { 0xFF } else { 0 });
+    let expected =
+        bytes.iter().enumerate().fold(0u64, |m, (i, &b)| m | (u64::from(b & 0xF) << (4 * i)));
+    assert_eq!(Vec128::read_unaligned(&bytes, cpu).nibble_mask(), expected);
+    assert_eq!(Vec128::zero(cpu).nibble_mask(), 0);
+}
+
+#[test_cpus]
 fn vec128_test_u8(cpu: Neon) {
     let (a, b): ([u8; 16], [u8; 16]) = (pattern(37, 11), pattern(101, 200));
     let (va, vb) = (Vec128::read_unaligned(&a, cpu), Vec128::read_unaligned(&b, cpu));

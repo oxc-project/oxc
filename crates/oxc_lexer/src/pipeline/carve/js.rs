@@ -1,11 +1,11 @@
+use std::mem;
+
 use oxc_simd::{Cpu, cpu_multiversion};
 
-use crate::token::tk;
-
 use crate::pipeline::{
-    bitmap::{bm_clear_range, bm_set},
+    bitmap::Bitmaps,
     find::find,
-    lanes::Lanes,
+    lex::{Lex, LexState},
 };
 
 use super::{
@@ -13,117 +13,66 @@ use super::{
         html_close_comment_at, html_open_comment_at, lex_html_close_comment, lex_html_open_comment,
     },
     common::{
-        OPENER_BYTES, OPENER8_BYTES, find_line_terminator, lex_slash, lex_string,
-        lex_template_segment, skip_unicode_brace_escape,
+        OPENER_BYTES, OPENER_MODULE_BYTES, OPENER8_BYTES, OPENER8_MODULE_BYTES,
+        is_unicode_escape_brace, lex_hashbang, lex_slash, lex_string, skip_unicode_brace_escape,
     },
 };
 
 #[cpu_multiversion]
-pub(super) unsafe fn carve_js(
-    srcs: &[u8],
-    n: usize,
-    st: *mut u64,
-    kind: *mut u8,
-    opch: *mut u64,
-    word: *const u64,
-    ts: bool,
-    lanes: &mut Lanes,
-    cpu: impl Cpu,
-) {
-    let src = srcs.as_ptr();
-    let mut depth: Vec<u32> = Vec::with_capacity(64);
-    let mut i = 0usize;
-    if n >= 2 && *src == b'#' && *src.add(1) == b'!' {
-        let end = find_line_terminator(src, n, 2, cpu);
-        *kind = tk!(Hashbang);
-        bm_clear_range(st, 1, end - 1, cpu);
-        if end < n {
-            bm_set(st, end, cpu);
-        }
-        i = end;
-    }
+pub(super) fn carve_js(lex: Lex, state: &mut LexState, cpu: impl Cpu) {
+    let Lex { src, bitmaps, kinds, options } = lex;
+    let Bitmaps { token_start, op_char, .. } = *bitmaps;
+    let LexState { lanes, disambiguate, substitutions, .. } = state;
+    let module = options.source_type_module;
+    // Reuse the previous lex's allocation, which matters for small inputs
+    let mut subs = mem::take(substitutions);
+    subs.clear();
+    let mut i = lex_hashbang(src, token_start, kinds, cpu);
     loop {
-        let nsub = depth.len();
-        let s = if nsub != 0 {
-            find(src, n, i, OPENER8_BYTES, cpu)
-        } else {
-            find(src, n, i, OPENER_BYTES, cpu)
+        // HTML close comments only exist in scripts, so modules needn't stop at closing brackets
+        let s = match (subs.is_empty(), module) {
+            (true, false) => find(src, i, OPENER_BYTES, cpu),
+            (true, true) => find(src, i, OPENER_MODULE_BYTES, cpu),
+            (false, false) => find(src, i, OPENER8_BYTES, cpu),
+            (false, true) => find(src, i, OPENER8_MODULE_BYTES, cpu),
         };
-        if s >= n {
+        if s >= src.len() {
             break;
         }
-        let c = *src.add(s);
+        let c = src[s];
         match c {
             b'"' | b'\'' => {
-                i = lex_string(src, srcs, n, st, kind, s, c, lanes, cpu);
+                i = lex_string(src, token_start, kinds, s, c, lanes, cpu);
             }
             b'`' => {
-                let (end, opened_sub) = lex_template_segment(
-                    src,
-                    srcs,
-                    n,
-                    st,
-                    kind,
-                    s,
-                    tk!(TemplateHead),
-                    tk!(TemplateNoSub),
-                    lanes,
-                    cpu,
-                );
-                if opened_sub {
-                    depth.push(0);
-                }
-                i = end;
+                i = subs.lex_template(src, token_start, kinds, s, lanes, cpu);
             }
             b'{' => {
-                if s >= 2 && *src.add(s - 1) == b'u' && *src.add(s - 2) == b'\\' {
-                    i = skip_unicode_brace_escape(src, n, s, cpu);
+                if is_unicode_escape_brace(src, s, cpu) {
+                    i = skip_unicode_brace_escape(src, s, cpu);
                 } else {
-                    let top = depth.len() - 1;
-                    depth[top] += 1;
+                    subs.open_brace();
                     i = s + 1;
                 }
             }
             b'}' => {
-                let top = depth.len() - 1;
-                if depth[top] > 0 {
-                    depth[top] -= 1;
-                    i = s + 1;
-                } else {
-                    depth.pop();
-                    let (end, opened_sub) = lex_template_segment(
-                        src,
-                        srcs,
-                        n,
-                        st,
-                        kind,
-                        s,
-                        tk!(TemplateMiddle),
-                        tk!(TemplateTail),
-                        lanes,
-                        cpu,
-                    );
-                    if opened_sub {
-                        depth.push(0);
-                    }
-                    i = end;
-                }
+                i = subs.close_brace(src, token_start, kinds, s, lanes, cpu);
             }
             b'/' => {
-                i = lex_slash(src, srcs, n, st, kind, opch, word, ts, s, lanes, cpu);
+                i = lex_slash(lex, s, lanes, disambiguate, cpu);
             }
             b'<' => {
                 // Annex B B.1.1: `<!--` begins a line comment.
-                i = if html_open_comment_at(srcs, n, s, lanes.module, cpu) {
-                    lex_html_open_comment(src, srcs, n, st, kind, opch, s, lanes)
+                i = if html_open_comment_at(src, s, module, cpu) {
+                    lex_html_open_comment(src, token_start, kinds, op_char, s, module, lanes)
                 } else {
                     s + 1
                 };
             }
             b'>' => {
                 // Annex B B.1.3: `-->` begins a line comment, but only at line start.
-                i = if html_close_comment_at(srcs, s, lanes.module, cpu) {
-                    lex_html_close_comment(src, srcs, n, st, kind, opch, s, lanes)
+                i = if html_close_comment_at(src, s, module, cpu) {
+                    lex_html_close_comment(src, token_start, kinds, op_char, s, lanes)
                 } else {
                     s + 1
                 };
@@ -133,4 +82,5 @@ pub(super) unsafe fn carve_js(
             }
         }
     }
+    *substitutions = subs;
 }

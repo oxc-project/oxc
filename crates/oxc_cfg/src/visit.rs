@@ -46,9 +46,9 @@ where
                 let (new_state, keep_walking_this_path) = visitor(&target, state.clone());
                 visited.insert(target);
                 if keep_walking_this_path {
-                    q.push((target, new_state.clone()));
+                    q.push((target, new_state));
                 } else {
-                    final_states.push(new_state.clone());
+                    final_states.push(new_state);
                 }
                 edges += 1;
             }

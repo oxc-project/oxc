@@ -153,6 +153,9 @@ fn get_redundant_implicit_role(
         // dependent. eslint-plugin-jsx-a11y omits these elements from its
         // implicit-role lookup for the same reason. See #22743.
         "header" | "footer" | "main" | "address" => None,
+        "a" | "area" => (explicit_role.eq_ignore_ascii_case("link")
+            && has_jsx_prop_ignore_case(jsx_el, "href").is_some())
+        .then_some("link"),
         "body" => explicit_role.eq_ignore_ascii_case("document").then_some("document"),
         "img" => get_img_implicit_role(jsx_el)
             .filter(|implicit_role| explicit_role.eq_ignore_ascii_case(implicit_role)),
@@ -294,6 +297,8 @@ fn test() {
             "settings": { "jsx-a11y": {
                 "components": {
                     "Button": "button",
+                    "Link": "a",
+                    "Area": "area",
                 }
             } }
         })
@@ -362,6 +367,9 @@ fn test() {
         (r#"<main role="main" />"#, None, None),
         (r#"<main role="main"><p>Content</p></main>"#, None, None),
         (r#"<address role="group" />"#, None, None),
+        (r#"<a role="link" />"#, None, None),
+        (r#"<a role="link" aria-disabled="true" />"#, None, None),
+        (r#"<area role="link" />"#, None, None),
         // <input>: combobox is implicit only when a `list` attribute is
         // set; otherwise the implicit role is `textbox` (HTML-AAM §3.5.76).
         (r#"<input role="combobox" />"#, None, None),
@@ -372,6 +380,13 @@ fn test() {
         (r#"<input type="checkbox" role="textbox" />"#, None, None),
         // unknown / non-listed input types should not be flagged.
         (r#"<input type="password" role="textbox" />"#, None, None),
+        (r#"<area role="link" aria-disabled="true" />"#, None, None),
+        (r#"<a {...props} role="link" />"#, None, None),
+        (r#"<a hrefLang="en" role="link" />"#, None, None),
+        (r#"<Link role="link" />"#, None, Some(settings())),
+        (r#"<Area role="link" />"#, None, Some(settings())),
+        (r#"<a href="/" role="link" />"#, Some(serde_json::json!([{ "a": ["link"] }])), None),
+        (r#"<area href="/" role="link" />"#, Some(serde_json::json!([{ "area": ["link"] }])), None),
     ];
 
     let fail = vec![
@@ -429,6 +444,8 @@ fn test() {
         (r#"<ul role="list" />"#, Some(serde_json::json!([{ "li": ["listitem"] }])), None),
         // A user-provided option overrides the default exception for that element.
         (r#"<nav role="navigation" />"#, Some(serde_json::json!([{ "nav": [] }])), None),
+        (r#"<a href="/" role="link" />"#, None, None),
+        (r#"<area href="/" role="link" />"#, None, None),
         // Attribute-narrowed implicit roles for <input>:
         (r#"<input list="opts" role="combobox" />"#, None, None),
         (r#"<input type="search" list="opts" role="combobox" />"#, None, None),
@@ -445,6 +462,10 @@ fn test() {
         (r#"<input type="image" role="button" />"#, None, None),
         (r#"<input type="reset" role="button" />"#, None, None),
         (r#"<input type="submit" role="button" />"#, None, None),
+        (r#"<a href={url} role="link" />"#, None, None),
+        (r#"<area href="" role="link" />"#, None, None),
+        (r#"<Link href="/" role="link" />"#, None, Some(settings())),
+        (r#"<Area href="/" role="link" />"#, None, Some(settings())),
     ];
 
     let fix = vec![
@@ -466,6 +487,10 @@ fn test() {
         (r#"<input type="checkbox" role="checkbox" />"#, r#"<input type="checkbox"  />"#),
         (r#"<input list="opts" role="combobox" />"#, r#"<input list="opts"  />"#),
         (r#"<input type="submit" role="button" />"#, r#"<input type="submit"  />"#),
+        (r#"<a href="/" role="link" />"#, r#"<a href="/"  />"#),
+        (r#"<area href="/" role="link" />"#, r#"<area href="/"  />"#),
+        (r#"<a href={url} role="link" />"#, "<a href={url}  />"),
+        (r#"<area href="" role="link" />"#, r#"<area href=""  />"#),
     ];
 
     Tester::new(NoRedundantRoles::NAME, NoRedundantRoles::PLUGIN, pass, fail)

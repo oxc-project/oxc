@@ -11,7 +11,9 @@ working directory: fixtures
     "typescript",
     "oxc"
   ],
-  "categories": {},
+  "categories": {
+    "correctness": "warn"
+  },
   "rules": {},
   "settings": {
     "jsx-a11y": {

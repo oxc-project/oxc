@@ -54,7 +54,8 @@ declare_oxc_lint!(
     unicorn,
     nursery,
     version = "next",
-    short_description = "Disallow calling Promise executor resolvers multiple times on the same execution path.",
+    short_description =
+        "Disallow calling Promise executor resolvers multiple times on the same execution path.",
 );
 
 impl Rule for NoMultiplePromiseResolverCalls {

@@ -376,12 +376,11 @@ Correctness and reliability are taken extremely seriously in Oxc. We spend signi
 - **Snapshot Testing**: Linter diagnostic snapshots for regression prevention
 - **Ecosystem CI**: Testing against real-world codebases
 - **Idempotency Testing**: Ensuring transformations are stable
-- **Code Coverage**: Comprehensive coverage tracking
 - **End-to-End Testing**: Testing against top 3000 npm packages
 
 ### Build and Development Tools
 
-- **Rust**: MSRV 1.86.0+ with clippy and rustfmt integration
+- **Rust**: MSRV 1.98.0+ with clippy and rustfmt integration
 - **Just**: Command runner for development tasks (`just --list` for available commands)
 - **Performance Monitoring**: Continuous benchmarking and performance regression detection
 - **Cross-platform**: Support for Linux, macOS, and Windows

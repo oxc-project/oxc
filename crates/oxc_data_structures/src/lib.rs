@@ -9,6 +9,9 @@ pub mod box_macros;
 #[cfg(feature = "branch_hints")]
 pub mod branch_hints;
 
+#[cfg(feature = "buffered_vec")]
+pub mod buffered_vec;
+
 #[cfg(feature = "code_buffer")]
 pub mod code_buffer;
 

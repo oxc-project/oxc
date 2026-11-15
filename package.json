@@ -16,7 +16,7 @@
     "emnapi": "catalog:",
     "oxfmt": "^0.78.0",
     "oxlint": "^1.66.0",
-    "oxlint-tsgolint": "7.0.2005"
+    "oxlint-tsgolint": "7.0.2007"
   },
   "packageManager": "pnpm@12.7.0"
 }

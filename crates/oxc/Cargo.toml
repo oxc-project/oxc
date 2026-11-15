@@ -74,6 +74,7 @@ serialize = [
   "oxc_ast_visit/serialize",
   "oxc_semantic?/serialize",
   "oxc_span/serialize",
+  "oxc_str/serialize",
   "oxc_syntax/serialize",
 ]
 

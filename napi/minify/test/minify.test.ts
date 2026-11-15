@@ -28,11 +28,8 @@ describe("simple", () => {
   });
 
   it.each([
-    // spellchecker:disable-next-line
     [true, undefined, "export let caf\\u00E9=`na\\u00EFve \\u2615`;"],
-    // spellchecker:disable-next-line
     [true, true, "export let caf\\u00E9=`na\\u00EFve \\u2615`;"],
-    // spellchecker:disable-next-line
     [true, false, 'export let caf\\u00E9 = "na\\u00EFve \\u2615";\n'],
     [false, true, "export let café=`naïve ☕`;"],
     [false, false, 'export let café = "naïve ☕";\n'],

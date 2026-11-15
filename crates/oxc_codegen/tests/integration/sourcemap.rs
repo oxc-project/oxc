@@ -1,11 +1,9 @@
-use std::{env, path::PathBuf};
+use std::path::PathBuf;
 
-use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{Expression, Statement};
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_index::IndexVec;
-use oxc_mangler::{MangleOptions, Mangler};
 use oxc_parser::Parser;
 use oxc_span::{SourceType, Span};
 use oxc_str::CompactStr;
@@ -495,6 +493,7 @@ longFunctionName(0);
     });
 }
 
+#[cfg(all(not(target_endian = "big"), target_pointer_width = "64"))]
 fn codegen(code: &str) -> (String, String) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, code, SourceType::mjs()).parse();
@@ -546,7 +545,10 @@ fn private_identifier_is_named_only_when_mangled() {
     assert_eq!(mangled_private_names(source_text, &[("ab", "a")]), vec!["#ab".to_string()]);
 }
 
+#[cfg(all(not(target_endian = "big"), target_pointer_width = "64"))]
 fn codegen_mangled(code: &str) -> (String, String, Vec<String>) {
+    use oxc_mangler::{MangleOptions, Mangler};
+
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, code, SourceType::mjs()).parse();
     assert!(ret.diagnostics.is_empty());
@@ -567,8 +569,11 @@ fn codegen_mangled(code: &str) -> (String, String, Vec<String>) {
     (ret.code, map.to_data_url(), names)
 }
 
+#[cfg(all(not(target_endian = "big"), target_pointer_width = "64"))]
 fn execute_with_node(code: &str, sourcemap_url: &str) -> String {
-    let cwd = env::current_dir().unwrap().join("input.js");
+    use cow_utils::CowUtils;
+
+    let cwd = std::env::current_dir().unwrap().join("input.js");
     let cwd = cwd.to_str().unwrap();
 
     let code = format!("{code}\n//# sourceMappingURL={sourcemap_url}\n");

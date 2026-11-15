@@ -87,7 +87,8 @@ declare_oxc_lint!(
     recommended,
     config = NoStringRefs,
     version = "0.0.15",
-    short_description = "This rule prevents using the deprecated behavior of string literals in ref attributes.",
+    short_description =
+        "This rule prevents using the deprecated behavior of string literals in ref attributes.",
 );
 
 fn contains_string_literal(

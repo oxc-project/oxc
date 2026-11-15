@@ -6,7 +6,7 @@ mod react;
 pub mod vitest;
 
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Serializer, ser::Error};
 
 use self::{
     jest::JestPluginSettings, jsdoc::JSDocPluginSettings, jsx_a11y::JSXA11yPluginSettings,
@@ -117,6 +117,21 @@ impl<'de> Deserialize<'de> for OxlintSettings {
 }
 
 impl OxlintSettings {
+    pub(super) fn serialize_with_custom<S: Serializer>(
+        &self,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error> {
+        let Some(json) = &self.json else {
+            return self.serialize(serializer);
+        };
+        let builtin = serde_json::to_value(self).map_err(S::Error::custom)?;
+        let builtin = builtin.as_object().ok_or_else(|| {
+            S::Error::custom("Expected built-in settings to serialize as an object")
+        })?;
+        // Keep normalized built-in values while retaining custom keys at every object level.
+        deep_merge(builtin, json).serialize(serializer)
+    }
+
     // Note: We don't merge settings in overrides at present.
     // So this is dead code, but keeping it for now, as we may want to enable merging settings in the future.
     #[expect(dead_code)]
@@ -184,6 +199,7 @@ mod test {
     use oxc_str::CompactStr;
 
     use super::OxlintSettings;
+    use crate::config::Oxlintrc;
     use crate::config::settings::react::ComponentAttrs;
 
     fn as_attrs<S: Into<CompactStr>, I: IntoIterator<Item = S>>(
@@ -284,6 +300,28 @@ mod test {
         .unwrap();
 
         assert!(settings.jsx_a11y.attributes.is_empty());
+    }
+
+    #[test]
+    fn test_serialize_custom_settings() {
+        let raw = serde_json::json!({
+            "custom": { "nested": [null, true, 42, "value", { "key": "value" }] },
+            "globalSetting": false,
+            "react": { "custom": { "enabled": true } },
+            "jest": { "version": "20.1.23", "custom": ["value"] }
+        });
+        let settings: OxlintSettings = serde_json::from_value(raw.clone()).unwrap();
+        let mut expected = serde_json::to_value(&settings).unwrap();
+        expected["custom"] = raw["custom"].clone();
+        expected["globalSetting"] = raw["globalSetting"].clone();
+        expected["react"]["custom"] = raw["react"]["custom"].clone();
+        expected["jest"]["custom"] = raw["jest"]["custom"].clone();
+
+        let config = Oxlintrc { settings, ..Oxlintrc::default() };
+        let printed = serde_json::to_value(&config).unwrap();
+        assert_eq!(printed["settings"], expected);
+        assert_eq!(printed["settings"]["jest"]["version"], 20);
+        assert_eq!(serde_json::to_value(&config.settings.json).unwrap(), raw);
     }
 
     #[test]

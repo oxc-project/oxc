@@ -3,6 +3,96 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
+   ╭─[no_accumulating_spread.tsx:1:7]
+ 1 │ (arr?.reduce)((acc, x) => [...acc, x], []);
+   ·       ───┬──               ───┬──
+   ·          │                    ╰── From this spread
+   ·          ╰── For this reduce
+   ╰────
+  help: It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.
+  note: Using spreads within accumulators leads to `O(n^2)` time complexity.
+
+  ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
+   ╭─[no_accumulating_spread.tsx:1:7]
+ 1 │ (arr?.reduceRight)((acc, x) => ({ ...acc, [x]: x }), {})
+   ·       ─────┬─────                 ───┬──
+   ·            │                         ╰── From this spread
+   ·            ╰── For this reduce
+   ╰────
+  help: It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.
+  note: Using spreads within accumulators leads to `O(n^2)` time complexity.
+
+  ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
+   ╭─[no_accumulating_spread.tsx:1:8]
+ 1 │ (arr?.['reduce'])((acc, x) => [...acc, x])
+   ·        ────┬───                ───┬──
+   ·            │                      ╰── From this spread
+   ·            ╰── For this reduce
+   ╰────
+  help: Consider using `Object.assign()` or `Array.prototype.push()` to mutate the accumulator instead.
+  note: Using spreads within accumulators leads to `O(n^2)` time complexity.
+
+  ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
+   ╭─[no_accumulating_spread.tsx:1:8]
+ 1 │ (arr?.[`reduceRight`])((acc, x) => ({ ...acc, [x]: x }), {})
+   ·        ──────┬──────                  ───┬──
+   ·              │                           ╰── From this spread
+   ·              ╰── For this reduce
+   ╰────
+  help: It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.
+  note: Using spreads within accumulators leads to `O(n^2)` time complexity.
+
+  ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
+   ╭─[no_accumulating_spread.tsx:1:8]
+ 1 │ ((arr?.reduce)!)((acc, x) => [...acc, x], [])
+   ·        ───┬──                 ───┬──
+   ·           │                      ╰── From this spread
+   ·           ╰── For this reduce
+   ╰────
+  help: It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.
+  note: Using spreads within accumulators leads to `O(n^2)` time complexity.
+
+  ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
+   ╭─[no_accumulating_spread.tsx:1:7]
+ 1 │ (arr?.reduce as any)((acc, x) => [...acc, x], [])
+   ·       ───┬──                      ───┬──
+   ·          │                           ╰── From this spread
+   ·          ╰── For this reduce
+   ╰────
+  help: It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.
+  note: Using spreads within accumulators leads to `O(n^2)` time complexity.
+
+  ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
+   ╭─[no_accumulating_spread.tsx:1:6]
+ 1 │ arr?.reduce((acc, x) => [...acc, x], [])
+   ·      ───┬──              ───┬──
+   ·         │                   ╰── From this spread
+   ·         ╰── For this reduce
+   ╰────
+  help: It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.
+  note: Using spreads within accumulators leads to `O(n^2)` time complexity.
+
+  ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
+   ╭─[no_accumulating_spread.tsx:1:6]
+ 1 │ (arr.reduce)((acc, x) => [...acc, x], [])
+   ·      ───┬──               ───┬──
+   ·         │                    ╰── From this spread
+   ·         ╰── For this reduce
+   ╰────
+  help: It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.
+  note: Using spreads within accumulators leads to `O(n^2)` time complexity.
+
+  ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
+   ╭─[no_accumulating_spread.tsx:1:6]
+ 1 │ (arr['reduceRight'])((acc, x) => [...acc, x], [])
+   ·      ──────┬──────                ───┬──
+   ·            │                         ╰── From this spread
+   ·            ╰── For this reduce
+   ╰────
+  help: It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.
+  note: Using spreads within accumulators leads to `O(n^2)` time complexity.
+
+  ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
    ╭─[no_accumulating_spread.tsx:1:18]
  1 │ Object.keys(obj).reduce((acc, key) => ({ ...acc, [key]: obj[key] }), {})
    ·                  ───┬──                  ───┬──

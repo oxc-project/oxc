@@ -47,7 +47,8 @@ declare_oxc_lint!(
     correctness,
     recommended,
     version = "0.2.0",
-    short_description = "Enforces the presence of `rel=\"preconnect\"` when using Google Fonts via `<link>` tags.",
+    short_description =
+        "Enforces the presence of `rel=\"preconnect\"` when using Google Fonts via `<link>` tags.",
 );
 
 impl Rule for GoogleFontPreconnect {

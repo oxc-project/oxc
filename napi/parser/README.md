@@ -22,9 +22,6 @@ The only differences between Oxc's AST and ESTree / TS-ESTree are:
 
 - Support for Stage 3 [decorators](https://github.com/tc39/proposal-decorators).
 - Support for the Stage 3 ECMA feature [`import source`](https://github.com/tc39/proposal-source-phase-imports).
-- In TS-ESTree AST, `import.source(...)` is represented as an `ImportExpression`
-  with `'source'` in the `phase` field (as in ESTree spec), where TS-ESLint represents it
-  as a `CallExpression` with `MetaProperty` as its `callee`.
 - Addition of a non-standard `hashbang` field to `Program`.
 - Non-standard `ParenthesizedExpression` and `TSParenthesizedType` nodes when
   `preserveParens` is enabled (the default). Set `preserveParens: false` to omit them.
