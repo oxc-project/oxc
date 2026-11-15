@@ -338,7 +338,6 @@ fn test() {
     ];
 
     let fix = vec![
-        // The module name is copied as written, so quotes and escapes stay valid.
         (
             r"jest.mock('\uD800', () => ({}))",
             r"jest.mock<typeof import('\uD800')>('\uD800', () => ({}))",
