@@ -33,7 +33,6 @@ use crate::config::external_plugins::ExternalPluginEntry;
 pub struct ConfigFileMetadata {
     schema: Option<String>,
     ignore_patterns: Vec<String>,
-    extends: Vec<PathBuf>,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -69,7 +68,7 @@ impl From<Oxlintrc> for LintConfig {
             options,
             path,
             ignore_patterns,
-            extends,
+            extends: _,
             extends_configs: _,
         } = config;
         Self {
@@ -80,7 +79,7 @@ impl From<Oxlintrc> for LintConfig {
             globals,
             path: Some(path),
             options,
-            metadata: Arc::new(ConfigFileMetadata { schema, ignore_patterns, extends }),
+            metadata: Arc::new(ConfigFileMetadata { schema, ignore_patterns }),
         }
     }
 }
