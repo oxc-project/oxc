@@ -526,10 +526,7 @@ mod tests {
                 "foo.push(1, /* comment */\u{feff}); foo.push(2);",
                 "foo.push(1, /* comment */\u{feff} 2);",
             ),
-            (
-                "foo.unshift(1); foo.unshift(2, // comment \n);",
-                "foo.unshift(2, // comment \n 1);",
-            ),
+            ("foo.unshift(1); foo.unshift(2, // comment \n);", "foo.unshift(2, // comment \n 1);"),
             (
                 "foo.push(/* argument */ 1, /* first */ // second \n /* third */); foo.push(2);",
                 "foo.push(/* argument */ 1, /* first */ // second \n /* third */ 2);",
