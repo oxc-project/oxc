@@ -423,8 +423,7 @@ const MUTATING_METHODS: [&str; 13] = [
     "unshift",
 ];
 
-/// Whether `target` is a variable that is reassigned, or has a mutating method
-/// called on it, inside `body`.
+/// Whether `target` is a variable that has a mutating method called on it inside `body`.
 fn is_mutated_within<'a>(
     target: &Expression<'a>,
     body: &Statement<'a>,
@@ -463,10 +462,6 @@ impl<'a> Visit<'a> for MutationVisitor<'a, '_> {
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
         let reference = self.ctx.scoping().get_reference(ident.reference_id());
         if reference.symbol_id() != Some(self.symbol_id) {
-            return;
-        }
-        if reference.is_write() {
-            self.mutated = true;
             return;
         }
         let member = self.ctx.nodes().parent_node(reference.node_id());
@@ -674,7 +669,6 @@ fn test() {
         r"for (const foo of [...iterable, extraElement]);",
         r"const items = [1, 2, 3]; for (const item of [...items]) { items.splice(items.indexOf(item), 1); }",
         r"const set = new Set([1]); for (const item of [...set]) set.add(item + 1);",
-        r"let list = []; for (const item of [...list]) list = list.concat(item);",
         r"for (const foo of {...iterable});",
         r"for (const foo in [...iterable]);",
         r"function * fn() {yield [...iterable];}",
@@ -801,6 +795,10 @@ fn test() {
         r"const object = Object.fromEntries([...iterable])",
         r"for (const foo of [...iterable]);",
         r"const items = [1, 2]; for (const item of [...items]) console.log(items.indexOf(item));",
+        r"let list = [1, 2, 3]; for (const item of [...list]) list = list.concat(item);",
+        r"let items = [1, 2, 3]; for (const item of [...items]) items = [];",
+        r"const items = [1, 2]; for (const item of [...items]) { const items = []; items.pop(); }",
+        r"const items = [1, 2]; for (const item of [...items]) console.log(item); items.pop();",
         r"async () => {for await (const foo of [...iterable]);}",
         r"const map = new Map([...iterable,])",
         r"for (const foo of [...iterable]);",
