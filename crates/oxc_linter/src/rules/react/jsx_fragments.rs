@@ -205,6 +205,15 @@ fn test() {
             "import React from 'react'; function render(React) { return <React.Fragment><Foo /></React.Fragment>; }",
             None,
         ),
+        ("const React = require('./components'); <React.Fragment><Foo /></React.Fragment>;", None),
+        (
+            "function render(require) { const React = require('react'); return <React.Fragment><Foo /></React.Fragment>; }",
+            None,
+        ),
+        (
+            "let Fragment = require('react').Fragment; Fragment = Component; <Fragment><Foo /></Fragment>;",
+            None,
+        ),
         // Configuration can be done via a string directly, or an object with the `mode` field.
         ("<><Foo /></>", Some(json!(["syntax"]))),
         ("<><Foo /></>", Some(json!([{"mode": "syntax"}]))),
@@ -235,6 +244,26 @@ fn test() {
         (
             "import React from 'react'; <React.Fragment><Foo /></React.Fragment>;",
             "import React from 'react'; <><Foo /></>;",
+            None,
+        ),
+        (
+            "const React = require('react'); <React.Fragment><Foo /></React.Fragment>;",
+            "const React = require('react'); <><Foo /></>;",
+            None,
+        ),
+        (
+            "const { Fragment } = require('react'); <Fragment><Foo /></Fragment>;",
+            "const { Fragment } = require('react'); <><Foo /></>;",
+            None,
+        ),
+        (
+            "const { Fragment: Group } = require('react'); <Group><Foo /></Group>;",
+            "const { Fragment: Group } = require('react'); <><Foo /></>;",
+            None,
+        ),
+        (
+            "const Fragment = require('react').Fragment; <Fragment><Foo /></Fragment>;",
+            "const Fragment = require('react').Fragment; <><Foo /></>;",
             None,
         ),
         ("<><Foo /></>", "<React.Fragment><Foo /></React.Fragment>", Some(json!(["element"]))),

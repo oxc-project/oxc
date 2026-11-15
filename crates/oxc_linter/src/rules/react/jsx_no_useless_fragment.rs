@@ -556,6 +556,14 @@ fn test_fragment_bindings() {
     ];
     let fix = vec![
         (
+            "const React = require('react'); <div><React.Fragment><p>hi</p></React.Fragment></div>;",
+            "const React = require('react'); <div><p>hi</p></div>;",
+        ),
+        (
+            "const { Fragment } = require('react'); <div><Fragment><p>hi</p></Fragment></div>;",
+            "const { Fragment } = require('react'); <div><p>hi</p></div>;",
+        ),
+        (
             "import { Fragment as Group } from 'react'; <div><Group><p>hi</p></Group></div>;",
             "import { Fragment as Group } from 'react'; <div><p>hi</p></div>;",
         ),
