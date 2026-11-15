@@ -54,10 +54,11 @@ pub fn report_missing_padding_before_jest_block<'a>(
         return;
     };
 
-    let comments_range = ctx.comments_range(prev_statement_span.end..node.span().start);
+    let statement_start = statement_node.span().start;
+    let comments_range = ctx.comments_range(prev_statement_span.end..statement_start);
     let mut span_between_start = prev_statement_span.end;
-    let mut span_between_end = node.span().start;
-    let mut next_attached_start = node.span().start;
+    let mut span_between_end = statement_start;
+    let mut next_attached_start = statement_start;
     for comment in comments_range.rev() {
         let comment_span = comment.span;
         let space_after = ctx.source_range(Span::new(comment_span.end, next_attached_start));

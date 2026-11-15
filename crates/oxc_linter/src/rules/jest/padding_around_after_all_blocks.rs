@@ -54,6 +54,18 @@ fn test() {
     ];
 
     let fix = vec![
+        (
+            "const thing = 123; await afterAll(() => {});",
+            "const thing = 123;\n\nawait afterAll(() => {});",
+        ),
+        (
+            "const thing = 123;\nawait afterAll(() => {});",
+            "const thing = 123;\n\nawait afterAll(() => {});",
+        ),
+        (
+            "const thing = 123; await /* hook */ afterAll(() => {});",
+            "const thing = 123;\n\nawait /* hook */ afterAll(() => {});",
+        ),
         ("const thing = 123;\nafterAll(() => {});", "const thing = 123;\n\nafterAll(() => {});"),
         (
             "const thing = 123;\n/* one */\n/* two */\nafterAll(() => {});",
