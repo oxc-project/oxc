@@ -12,6 +12,7 @@ use oxc_ast::{
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_syntax::line_terminator::is_line_terminator;
 
 use crate::{
     context::LintContext,
@@ -645,7 +646,7 @@ fn is_only_comments(text: &str) -> bool {
             };
             rest = after[end + 2..].trim_start();
         } else if let Some(after) = rest.strip_prefix("//") {
-            rest = after.find('\n').map_or("", |i| &after[i..]).trim_start();
+            rest = after.find(is_line_terminator).map_or("", |i| &after[i..]).trim_start();
         } else {
             return false;
         }
@@ -1245,6 +1246,31 @@ import { /* }{ */ y } from '}{';",
         (
             "import { a } from 'foo';\nimport { b, /* note */ } from 'foo';\n\nimport { c } from 'foo';",
             "import { a,b/* note */,c } from 'foo';\n\n",
+            None,
+        ),
+        (
+            "import { a } from 'foo';\nimport { b, // note\n c } from 'foo';",
+            "import { a,b,// note\n c\n } from 'foo';\n",
+            None,
+        ),
+        (
+            "import { a } from 'foo';\nimport { b, // note\r c } from 'foo';",
+            "import { a,b,// note\r c\n } from 'foo';\n",
+            None,
+        ),
+        (
+            "import { a } from 'foo';\nimport { b, // note\r\n c } from 'foo';",
+            "import { a,b,// note\r\n c\n } from 'foo';\n",
+            None,
+        ),
+        (
+            "import { a } from 'foo';\nimport { b, // note\u{2028} c } from 'foo';",
+            "import { a,b,// note\u{2028} c\n } from 'foo';\n",
+            None,
+        ),
+        (
+            "import { a } from 'foo';\nimport { b, // note\u{2029} c } from 'foo';",
+            "import { a,b,// note\u{2029} c\n } from 'foo';\n",
             None,
         ),
     ];
