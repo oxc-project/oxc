@@ -7,7 +7,7 @@ use schemars::JsonSchema;
 use serde::Serialize;
 use serde_json::Value;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::pad_fix_with_token_boundary};
 
 fn no_instanceof_builtins_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use `instanceof` with built-in constructors")
@@ -193,11 +193,12 @@ impl Rule for NoInstanceofBuiltins {
         // Array.isArray() or Error.isError()
         if ctor_name == "Array" || (ctor_name == "Error" && self.0.use_error_is_error) {
             let replacement = format!("{ctor_name}.isArray({left_text})");
-            let replacement = if ctor_name == "Error" {
+            let mut replacement = if ctor_name == "Error" {
                 format!("Error.isError({left_text})")
             } else {
                 replacement
             };
+            pad_fix_with_token_boundary(ctx.source_text(), bin.span, &mut replacement);
             ctx.diagnostic_with_suggestion(no_instanceof_builtins_diagnostic(bin.span), |fixer| {
                 fixer.replace(bin.span, replacement)
             });
@@ -206,7 +207,8 @@ impl Rule for NoInstanceofBuiltins {
 
         // typeof x === 'function'
         if ctor_name == "Function" {
-            let replacement = format!("typeof ({left_text}) === 'function'");
+            let mut replacement = format!("typeof ({left_text}) === 'function'");
+            pad_fix_with_token_boundary(ctx.source_text(), bin.span, &mut replacement);
             ctx.diagnostic_with_suggestion(no_instanceof_builtins_diagnostic(bin.span), |fixer| {
                 fixer.replace(bin.span, replacement)
             });
@@ -223,7 +225,8 @@ impl Rule for NoInstanceofBuiltins {
             _ => None,
         };
         if let Some(typeof_type) = typeof_type {
-            let replacement = format!("typeof ({left_text}) === '{typeof_type}'");
+            let mut replacement = format!("typeof ({left_text}) === '{typeof_type}'");
+            pad_fix_with_token_boundary(ctx.source_text(), bin.span, &mut replacement);
             ctx.diagnostic_with_suggestion(no_instanceof_builtins_diagnostic(bin.span), |fixer| {
                 fixer.replace(bin.span, replacement)
             });
@@ -422,6 +425,16 @@ fn test() {
             "err instanceof Error",
             "Error.isError(err)",
             Some(serde_json::json!([{"useErrorIsError": true, "strategy": "strict"}])),
+        ),
+        (
+            "function foo(){return[]instanceof Array}",
+            "function foo(){return Array.isArray([])}",
+            None,
+        ),
+        (
+            "function foo(){return(foo)instanceof String}",
+            "function foo(){return typeof ((foo)) === 'string'}",
+            None,
         ),
     ];
 

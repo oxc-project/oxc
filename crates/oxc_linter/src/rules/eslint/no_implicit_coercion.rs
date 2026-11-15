@@ -14,6 +14,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
+    utils::pad_fix_with_token_boundary,
 };
 
 fn boolean_coercion_diagnostic(span: Span) -> OxcDiagnostic {
@@ -50,7 +51,9 @@ fn report_coercion(ctx: &LintContext, span: Span, kind: CoercionKind, operand: &
         CoercionKind::String => (string_coercion_diagnostic(span), "String"),
     };
     ctx.diagnostic_with_fix(diagnostic, |fixer| {
-        fixer.replace(span, format!("{wrapper}({operand})"))
+        let mut replacement = format!("{wrapper}({operand})");
+        pad_fix_with_token_boundary(fixer.source_text(), span, &mut replacement);
+        fixer.replace(span, replacement)
     });
 }
 
@@ -643,6 +646,9 @@ fn test() {
             "String(foo)",
             Some(serde_json::json!([{ "disallowTemplateShorthand": true }])),
         ),
+        ("function f(x) { return!!x }", "function f(x) { return Boolean(x) }", None),
+        ("function f(x) { return+x }", "function f(x) { return Number(x) }", None),
+        ("function f(x) { return''+x }", "function f(x) { return String(x) }", None),
     ];
     Tester::new(NoImplicitCoercion::NAME, NoImplicitCoercion::PLUGIN, pass, fail)
         .expect_fix(fix)

@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::pad_fix_with_token_boundary};
 
 fn prefer_number_coercion_diagnostic(span: Span, replacement: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Prefer `{replacement}`."))
@@ -95,7 +95,11 @@ impl Rule for PreferNumberCoercion {
 
         ctx.diagnostic_with_suggestion(
             prefer_number_coercion_diagnostic(call_expr.span, &replacement_text),
-            |fixer| fixer.replace(call_expr.span, replacement_text),
+            |fixer| {
+                let mut replacement = replacement_text;
+                pad_fix_with_token_boundary(fixer.source_text(), call_expr.span, &mut replacement);
+                fixer.replace(call_expr.span, replacement)
+            },
         );
     }
 }
@@ -187,6 +191,10 @@ fn test() {
         ("parseInt(value, 10.0);", "Math.trunc(Number(value));"),
         ("(parseInt)(value, 10);", "Math.trunc(Number(value));"),
         ("Number.parseInt((value), 10);", "Math.trunc(Number((value)));"),
+        (
+            "function f(value){return(parseInt)(value, 10)}",
+            "function f(value){return Math.trunc(Number(value))}",
+        ),
     ];
 
     Tester::new(PreferNumberCoercion::NAME, PreferNumberCoercion::PLUGIN, pass, fail)
