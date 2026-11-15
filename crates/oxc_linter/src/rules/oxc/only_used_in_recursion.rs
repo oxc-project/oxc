@@ -760,42 +760,6 @@ function writeChunks(a,callac){writeChunks(m,callac)}writeChunks(i,{})",
             }
             "#,
         ),
-        (
-            "function test(arg0, // first\n  arg1) {\n  return test(\"\", // first\n    arg1);\n}",
-            "function test(arg0, // first\n) {\n  return test(\"\", // first\n);\n}",
-        ),
-        (
-            "function test(arg0 // first\n  , arg1) {\n  return test(\"\", arg1);\n}",
-            "function test(arg0 // first\n) {\n  return test(\"\");\n}",
-        ),
-        (
-            "function Test({a, // first\n  b}) {\n  a++;\n  return <Test a={a} b={b}/>;\n}",
-            "function Test({a, // first\n}) {\n  a++;\n  return <Test a={a} />;\n}",
-        ),
-        (
-            "function test(arg0, // first \n  arg1) {\n  return test(\"\", // first,\n    arg1);\n}\ntest(\"\", // first\t\n  0);",
-            "function test(arg0, // first \n) {\n  return test(\"\", // first,\n);\n}\ntest(\"\", // first\t\n);",
-        ),
-        (
-            "function test(arg0, // first,\t\r\n  arg1) {\r\n  return test(\"\", arg1);\r\n}",
-            "function test(arg0, // first,\t\r\n) {\r\n  return test(\"\");\r\n}",
-        ),
-        (
-            "function test(arg0, // first \r  arg1) {\r  return test(\"\", arg1);\r}",
-            "function test(arg0, // first \r) {\r  return test(\"\");\r}",
-        ),
-        (
-            "function test(arg0, // first,\u{2028}  arg1) { return test(\"\", arg1); }",
-            "function test(arg0, // first,\u{2028}) { return test(\"\"); }",
-        ),
-        (
-            "function test(arg0, // first\u{a0}\u{2029}  arg1) { return test(\"\", arg1); }",
-            "function test(arg0, // first\u{a0}\u{2029}) { return test(\"\"); }",
-        ),
-        (
-            "function Test({a, // first, \n  b}) {\n  a++;\n  return <Test a={a} b={b}/>;\n}",
-            "function Test({a, // first, \n}) {\n  a++;\n  return <Test a={a} />;\n}",
-        ),
         // Expecting no fix: function is exported
         (
             r"export function test(a) {
@@ -896,6 +860,42 @@ function writeChunks(a,callac){writeChunks(m,callac)}writeChunks(i,{})",
             }
             recurse(0);
             ",
+        ),
+        (
+            "function test(arg0, // first\n  arg1) {\n  return test(\"\", // first\n    arg1);\n}",
+            "function test(arg0, // first\n) {\n  return test(\"\", // first\n);\n}",
+        ),
+        (
+            "function test(arg0 // first\n  , arg1) {\n  return test(\"\", arg1);\n}",
+            "function test(arg0 // first\n) {\n  return test(\"\");\n}",
+        ),
+        (
+            "function Test({a, // first\n  b}) {\n  a++;\n  return <Test a={a} b={b}/>;\n}",
+            "function Test({a, // first\n}) {\n  a++;\n  return <Test a={a} />;\n}",
+        ),
+        (
+            "function test(arg0, // first \n  arg1) {\n  return test(\"\", // first,\n    arg1);\n}\ntest(\"\", // first\t\n  0);",
+            "function test(arg0, // first \n) {\n  return test(\"\", // first,\n);\n}\ntest(\"\", // first\t\n);",
+        ),
+        (
+            "function test(arg0, // first,\t\r\n  arg1) {\r\n  return test(\"\", arg1);\r\n}",
+            "function test(arg0, // first,\t\r\n) {\r\n  return test(\"\");\r\n}",
+        ),
+        (
+            "function test(arg0, // first \r  arg1) {\r  return test(\"\", arg1);\r}",
+            "function test(arg0, // first \r) {\r  return test(\"\");\r}",
+        ),
+        (
+            "function test(arg0, // first,\u{2028}  arg1) { return test(\"\", arg1); }",
+            "function test(arg0, // first,\u{2028}) { return test(\"\"); }",
+        ),
+        (
+            "function test(arg0, // first\u{a0}\u{2029}  arg1) { return test(\"\", arg1); }",
+            "function test(arg0, // first\u{a0}\u{2029}) { return test(\"\"); }",
+        ),
+        (
+            "function Test({a, // first, \n  b}) {\n  a++;\n  return <Test a={a} b={b}/>;\n}",
+            "function Test({a, // first, \n}) {\n  a++;\n  return <Test a={a} />;\n}",
         ),
     ];
 
