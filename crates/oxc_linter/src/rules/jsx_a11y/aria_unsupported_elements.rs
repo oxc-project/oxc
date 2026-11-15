@@ -433,7 +433,6 @@ fn test() {
         (r#"<style aria-hidden aria-role="none" {...props} />"#, None),
         (r#"<title aria-hidden aria-role="none" {...props} />"#, None),
         (r#"<track aria-hidden aria-role="none" {...props} />"#, None),
-        // Regression: expression values may have side effects.
         (r"<meta aria-hidden={track()} />", None),
     ];
 
@@ -445,11 +444,9 @@ fn test() {
             None,
             FixKind::SafeFix,
         ),
-        // Safe to delete: boolean shorthand, string literal, side-effect-free expression.
         (r"<meta aria-hidden />", r"<meta  />", None, FixKind::SafeFix),
         (r#"<meta aria-hidden="true" />"#, r"<meta  />", None, FixKind::SafeFix),
         (r"<meta aria-hidden={true} />", r"<meta  />", None, FixKind::SafeFix),
-        // Unsafe to auto-fix: expression may have side effects, but suggestion works.
         (
             r"<meta aria-hidden={track()} />",
             r"<meta aria-hidden={track()} />",
