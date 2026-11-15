@@ -9,7 +9,10 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::identifier::is_identifier_part;
+use oxc_syntax::{
+    identifier::{is_identifier_part, is_white_space},
+    line_terminator::is_line_terminator,
+};
 
 use crate::{
     AstNode,
@@ -466,7 +469,7 @@ fn needs_semicolon(block: &BlockStatement, ctx: &LintContext) -> bool {
     };
 
     let between = ctx.source_range(Span::new(last.span().end, next_start));
-    !between.contains(['\n', '\r', '\u{2028}', '\u{2029}'])
+    !between.contains(is_line_terminator)
         || matches!(next_char, '(' | '[' | '/' | '`' | '+' | '-')
         || last_text.ends_with("++")
         || last_text.ends_with("--")
@@ -497,7 +500,7 @@ fn next_token(mut pos: u32, ctx: &LintContext) -> Option<(u32, char)> {
     loop {
         let rest = &ctx.source_text()[pos as usize..];
         let (offset, c) =
-            rest.char_indices().find(|&(_, c)| !c.is_whitespace() && c != '\u{feff}')?;
+            rest.char_indices().find(|&(_, c)| !is_white_space(c) && !is_line_terminator(c))?;
         #[expect(clippy::cast_possible_truncation)]
         let start = pos + offset as u32;
         match ctx.semantic().get_comment_at(start) {
