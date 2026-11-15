@@ -377,17 +377,9 @@ impl ExtensionsConfig {
                     .collect::<Vec<_>>()
             });
 
-        // Pre-allocate HashMap with estimated capacity for better performance
-        let capacity = if let Some(obj) = value.as_object() {
-            // Estimate: most fields are extension configs, reserve space
-            obj.len()
-        } else {
-            0
-        };
-
-        let mut extensions = FxHashMap::with_capacity_and_hasher(capacity, FxBuildHasher);
-
         let extension_rules = value.get("pattern").unwrap_or(value);
+        let capacity = extension_rules.as_object().map_or(0, serde_json::Map::len);
+        let mut extensions = FxHashMap::with_capacity_and_hasher(capacity, FxBuildHasher);
 
         // Process known extensions from the configuration
         if let Some(obj) = extension_rules.as_object() {
