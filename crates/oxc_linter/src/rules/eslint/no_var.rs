@@ -164,8 +164,6 @@ fn can_fix_binding<'a>(
     let scoping = ctx.scoping();
     let symbol_id = ident.symbol_id();
 
-    // `let` is not a valid name for a lexical binding, and redeclaring a lexical
-    // binding is a syntax error.
     if ident.name == "let" || !scoping.symbol_redeclarations(symbol_id).is_empty() {
         return false;
     }
@@ -189,8 +187,6 @@ fn can_fix_binding<'a>(
         let reference_node = ctx.nodes().get_node(reference.node_id());
         let span = reference_node.span();
 
-        // A lexical binding cannot be accessed outside of its block or before
-        // its declaration.
         if !scope_span.contains_inclusive(span)
             || span.start < decl.span.start
             || loop_right.is_some_and(|right| right.contains_inclusive(span))
@@ -449,13 +445,11 @@ fn test() {
         ("for (var a of list) {} a;", "for (var a of list) {} a;"),
         // `let` in a `case` clause is reported by `no-case-declarations`.
         ("switch (a) { case 0: var b = 1 }", "switch (a) { case 0: var b = 1 }"),
-        // Each iteration would get its own binding.
         ("for (var a of b) { arr.push(() => a); }", "for (var a of b) { arr.push(() => a); }"),
         (
             "for (let a of b) { var c; console.log(c); c = 'hello'; }",
             "for (let a of b) { var c; console.log(c); c = 'hello'; }",
         ),
-        // Read in the temporal dead zone.
         ("var a = a", "var a = a"),
         ("var {a = a} = {}", "var {a = a} = {}"),
         ("var {a = b, b} = {}", "var {a = b, b} = {}"),
@@ -463,7 +457,6 @@ fn test() {
         ("var a = b, b = 1", "var a = b, b = 1"),
         ("var a = b; var b = 1", "const a = b; var b = 1"),
         ("function foo() { a } var a = 1; foo()", "function foo() { a } var a = 1; foo()"),
-        // A lexical declaration is not allowed in statement position.
         ("if (foo) var bar = 1;", "if (foo) var bar = 1;"),
         ("function foo() { var let; }", "function foo() { var let; }"),
         ("function foo() { var { let } = {}; }", "function foo() { var { let } = {}; }"),
@@ -495,7 +488,6 @@ fn test() {
             "var bar = function () { foo(); }; var foo = function() {};",
             "const bar = function () { foo(); }; var foo = function() {};",
         ),
-        // Read before the declaration.
         (
             "export function a() { console.log(o); var o; return o; }",
             "export function a() { console.log(o); var o; return o; }",
@@ -524,7 +516,6 @@ fn test() {
             "var a = 1; function test() { console.log(a); var a = 2; }",
             "const a = 1; function test() { console.log(a); var a = 2; }",
         ),
-        // Shadowed by a `catch` parameter.
         (
             "function f() { try {} catch (e) { var e = 1; } }",
             "function f() { try {} catch (e) { var e = 1; } }",
@@ -561,7 +552,6 @@ fn test() {
             "function f() { try {} catch (e) { class C { static { var e = 1; } } } }",
             "function f() { try {} catch (e) { class C { static { const e = 1; } } } }",
         ),
-        // Read by a hoisted function that is called before the declaration.
         (
             "function wrap() { foo(); var a = 1; function foo() { console.log(a); } }",
             "function wrap() { foo(); var a = 1; function foo() { console.log(a); } }",
