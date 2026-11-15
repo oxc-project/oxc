@@ -278,8 +278,7 @@ fn fix_object_assignment_target_property<'c, 'a: 'c>(
             if with_default.binding.get_identifier_name().is_some() {
                 // For assignment targets, we need to get the span from the binding itself
                 let ident_span = with_default.binding.span();
-                // `({foo: (foo) = a} = obj)`: a shorthand property can't have parentheses,
-                // so don't fix it, as ESLint does.
+                // `({foo: (foo) = a} = obj)`: a shorthand property can't have parentheses.
                 if ctx
                     .find_next_token_within(ident_span.end, with_default.init.span().start, ")")
                     .is_some()
