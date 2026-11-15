@@ -473,7 +473,6 @@ mod tests {
             "foo.push(); foo.push(1);",
             // Trailing comma in first call.
             "foo.push(1,); foo.push(2);",
-            // Trailing comma followed by a comment.
             "foo.push(1, /* comment */); foo.push(2);",
             "foo.push(1, // comment\n); foo.push(2);",
             // Multi-line, both with semicolons.
