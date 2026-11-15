@@ -169,12 +169,12 @@ fn report_parameter(
         );
 
         // Delete the parameter, including the comma before it
-        fix.push(delete_with_preceding_separator(ctx.source_text(), parameter.span));
+        fix.push(delete_with_preceding_separator(ctx, parameter.span));
 
         for reference in ctx.semantic().symbol_references(parameter.symbol_id()) {
             let node = ctx.nodes().get_node(reference.node_id());
             // Delete the argument reference, including the comma before it
-            fix.push(delete_with_preceding_separator(ctx.source_text(), node.span()));
+            fix.push(delete_with_preceding_separator(ctx, node.span()));
         }
 
         // Search for references to the function and remove the argument.
@@ -191,7 +191,7 @@ fn report_parameter(
             }
 
             fix.push(delete_with_preceding_separator(
-                ctx.source_text(),
+                ctx,
                 call_expr.arguments[parameter_index].span(),
             ));
         }
@@ -229,7 +229,7 @@ fn report_jsx_property(
     ctx.diagnostic_with_dangerous_fix(diagnostic(), |fixer| {
         let reference_count = ctx.semantic().symbol_references(property_symbol_id).count();
         let mut fix = fixer.new_fix_with_capacity(reference_count + 1);
-        fix.push(delete_with_surrounding_separators(ctx.source_text(), property.span));
+        fix.push(delete_with_surrounding_separators(ctx, property.span));
 
         // Search for references to the property and remove the JSX attribute.
         for reference in ctx.semantic().symbol_references(property_symbol_id) {
@@ -424,14 +424,38 @@ fn skip_to_next_char(s: &str, start: u32, direction: Direction) -> Option<u32> {
     }
 }
 
-fn delete_with_preceding_separator(source: &str, span: Span) -> Fix {
-    let start = skip_to_next_char(source, span.start, Direction::Backward).unwrap_or(span.start);
-    Fix::delete(Span::new(start, span.end))
+/// The start of the whitespace and commas before `span`. In `a, // comment\n b`, the line
+/// break that ends the comment is kept, or the `)` or `}` after `b` would become part of
+/// the comment once `b` is deleted.
+#[expect(clippy::cast_possible_truncation)]
+fn preceding_separator_start(ctx: &LintContext, span: Span) -> u32 {
+    let source = ctx.source_text();
+    let mut start =
+        skip_to_next_char(source, span.start, Direction::Backward).unwrap_or(span.start);
+    if start > 0
+        && ctx
+            .semantic()
+            .get_comment_at(start - 1)
+            .is_some_and(|comment| comment.is_line() && comment.span.end == start)
+    {
+        let rest = &source[start as usize..];
+        start += if rest.starts_with("\r\n") {
+            2
+        } else {
+            rest.chars().next().map_or(0, char::len_utf8)
+        } as u32;
+    }
+    start
 }
 
-fn delete_with_surrounding_separators(source: &str, span: Span) -> Fix {
-    let start = skip_to_next_char(source, span.start, Direction::Backward).unwrap_or(span.start);
-    let end = skip_to_next_char(source, span.end, Direction::Forward).unwrap_or(span.end);
+fn delete_with_preceding_separator(ctx: &LintContext, span: Span) -> Fix {
+    Fix::delete(Span::new(preceding_separator_start(ctx, span), span.end))
+}
+
+fn delete_with_surrounding_separators(ctx: &LintContext, span: Span) -> Fix {
+    let start = preceding_separator_start(ctx, span);
+    let end =
+        skip_to_next_char(ctx.source_text(), span.end, Direction::Forward).unwrap_or(span.end);
     Fix::delete(Span::new(start, end))
 }
 
@@ -736,6 +760,19 @@ function writeChunks(a,callac){writeChunks(m,callac)}writeChunks(i,{})",
                 return test("");
             }
             "#,
+        ),
+        // The line break after a line comment is kept, or `)` would end up in the comment.
+        (
+            "function test(arg0, // first\n  arg1) {\n  return test(\"\", // first\n    arg1);\n}",
+            "function test(arg0, // first\n) {\n  return test(\"\", // first\n);\n}",
+        ),
+        (
+            "function test(arg0 // first\n  , arg1) {\n  return test(\"\", arg1);\n}",
+            "function test(arg0 // first\n) {\n  return test(\"\");\n}",
+        ),
+        (
+            "function Test({a, // first\n  b}) {\n  a++;\n  return <Test a={a} b={b}/>;\n}",
+            "function Test({a, // first\n}) {\n  a++;\n  return <Test a={a} />;\n}",
         ),
         // Expecting no fix: function is exported
         (
