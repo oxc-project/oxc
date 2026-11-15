@@ -629,7 +629,7 @@ fn last_token_end(ctx: &LintContext, open: u32, close: u32) -> u32 {
     loop {
         let text = ctx.source_range(Span::new(open + 1, end)).trim_end();
         let text_end = open + 1 + u32::try_from(text.len()).unwrap();
-        match ctx.semantic().comments_range(open + 1..text_end).last() {
+        match ctx.semantic().comments_range(open + 1..text_end).next_back() {
             Some(comment) if comment.span.end >= text_end => end = comment.span.start,
             _ => return text_end,
         }
@@ -676,7 +676,7 @@ fn merge_into_braces<'a>(
         let after_line_comment = ctx
             .semantic()
             .comments_range(open + 1..content_end)
-            .last()
+            .next_back()
             .is_some_and(|comment| comment.is_line() && comment.span.end >= content_end);
         let separator = if after_line_comment
             && !specifiers_text.is_empty()
