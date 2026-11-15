@@ -105,8 +105,6 @@ impl Rule for PreferResponseStaticJson {
                         .next()
                         .filter(|c| c.is_whitespace())
                         .map_or(0, |c| c.len_utf8() as u32);
-                    // Replace `new` rather than inserting `(` before it, so that a `;`
-                    // inserted at the same offset always comes first.
                     fix.push(fixer.replace(
                         Span::new(new_expr.span.start, new_keyword_end + whitespace_len),
                         "( ",
