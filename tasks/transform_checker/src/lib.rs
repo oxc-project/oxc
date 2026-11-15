@@ -375,9 +375,9 @@ impl PostTransformChecker<'_, '_> {
             let symbol_name = names.rebuilt;
             let mismatch_title = |field| format!("Symbol {field} mismatch for {symbol_name:?}");
 
+            // NB: Skip checking anonymous name flags - transformer does not maintain them
             let flags = self.get_pair(symbol_ids, |scoping, symbol_id| {
-                scoping.symbol_flags(symbol_id)
-                    - (SymbolFlags::AnonymousFunctionName | SymbolFlags::AnonymousClassName)
+                scoping.symbol_flags(symbol_id) - SymbolFlags::AnonymousName
             });
             if flags.is_mismatch() {
                 self.errors.push_mismatch(&mismatch_title("flags"), symbol_ids, flags);
