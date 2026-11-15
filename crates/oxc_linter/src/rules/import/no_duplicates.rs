@@ -570,8 +570,6 @@ fn build_specifiers_text<'a>(
             if trimmed.is_empty() {
                 continue;
             }
-            // A comment after a trailing comma, e.g. `{ a, /* b */ }`, is not a specifier, so
-            // no comma goes before it.
             if is_only_comments(trimmed) {
                 if existing.insert(trimmed) {
                     specifier_text.push_str(trimmed);
@@ -672,7 +670,6 @@ fn merge_into_braces<'a>(
     } else if trailing_whitespace_len > 0 {
         let trailing = &content[content.len() - trailing_whitespace_len..];
         let content_end = close - u32::try_from(trailing_whitespace_len).unwrap();
-        // In `{ a, // b\n}`, start on a new line, or the specifiers end up in the comment.
         let after_line_comment = ctx
             .semantic()
             .comments_range(open + 1..content_end)
@@ -1211,7 +1208,6 @@ import { /* }{ */ y } from '}{';",
 ",
             None,
         ),
-        // A comment after the trailing comma of the first import.
         (
             "import {\n  a, // comment\n} from 'foo';\nimport { b } from 'foo';",
             "import {\n  a, // comment\nb\n} from 'foo';\n",
@@ -1237,7 +1233,6 @@ import { /* }{ */ y } from '}{';",
             "import { a, /* first */ // comment\nb \t\n} from 'foo';\n",
             None,
         ),
-        // A comment after the trailing comma of a later import.
         (
             "import { a } from 'foo';\nimport { b, // note\n} from 'foo';\nimport { c } from 'foo';",
             "import { a,b// note\n,c } from 'foo';\n",
