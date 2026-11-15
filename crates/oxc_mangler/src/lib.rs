@@ -332,7 +332,8 @@ impl<'t> Mangler<'t> {
 
     /// # Panics
     ///
-    /// Panics if a class and its enclosing classes have more than `u32::MAX` elements.
+    /// Panics if a class's elements plus its enclosing classes' private members number more than
+    /// `u32::MAX`.
     pub fn build_with_semantic(
         self,
         semantic: &mut Semantic<'_>,
