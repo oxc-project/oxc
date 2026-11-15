@@ -153,6 +153,10 @@ impl Rule for ConsistentTypeDefinitions {
                 ExportDefaultDeclarationKind::TSInterfaceDeclaration(decl)
                     if self.0 == ConsistentTypeDefinitionsConfig::Type =>
                 {
+                    if is_within_ambient_declaration(ctx, node.id()) {
+                        return;
+                    }
+
                     let name_span_start = &decl.id.span.start;
                     let mut name_span_end = &decl.id.span.end;
 
@@ -176,17 +180,12 @@ impl Rule for ConsistentTypeDefinitions {
                         Span::sized(decl.span.start, 9),
                     );
 
-                    let fix = |fixer: RuleFixer<'_, 'a>| {
+                    ctx.diagnostic_with_fix(diagnostic, |fixer: RuleFixer<'_, 'a>| {
                         fixer.replace(
                             exp.span,
                             format!("type {name} = {body}{extends}\nexport default {name}"),
                         )
-                    };
-                    if is_within_declare_global_block(ctx, node.id()) {
-                        ctx.diagnostic_with_dangerous_fix(diagnostic, fix);
-                    } else {
-                        ctx.diagnostic_with_fix(diagnostic, fix);
-                    }
+                    });
                 }
                 _ => {}
             },
@@ -194,6 +193,10 @@ impl Rule for ConsistentTypeDefinitions {
             AstKind::TSInterfaceDeclaration(decl)
                 if self.0 == ConsistentTypeDefinitionsConfig::Type =>
             {
+                if is_within_ambient_declaration(ctx, node.id()) {
+                    return;
+                }
+
                 let start = if decl.declare {
                     let base_start = decl.span.start + 7;
 
@@ -226,17 +229,12 @@ impl Rule for ConsistentTypeDefinitions {
                     Span::sized(start, 9),
                 );
 
-                let fix = |fixer: RuleFixer<'_, 'a>| {
+                ctx.diagnostic_with_fix(diagnostic, |fixer: RuleFixer<'_, 'a>| {
                     fixer.replace(
                         Span::new(start, decl.span.end),
                         format!("type {name} = {body}{extends}"),
                     )
-                };
-                if is_within_declare_global_block(ctx, node.id()) {
-                    ctx.diagnostic_with_dangerous_fix(diagnostic, fix);
-                } else {
-                    ctx.diagnostic_with_fix(diagnostic, fix);
-                }
+                });
             }
             _ => {}
         }
@@ -247,10 +245,13 @@ impl Rule for ConsistentTypeDefinitions {
     }
 }
 
-fn is_within_declare_global_block(ctx: &LintContext, node_id: NodeId) -> bool {
-    ctx.nodes()
-        .ancestors(node_id)
-        .any(|node| matches!(node.kind(), AstKind::TSGlobalDeclaration(_)))
+fn is_within_ambient_declaration(ctx: &LintContext, node_id: NodeId) -> bool {
+    ctx.nodes().ancestors(node_id).any(|node| match node.kind() {
+        AstKind::TSGlobalDeclaration(_) => true,
+        AstKind::TSExternalModuleDeclaration(decl) => decl.declare,
+        AstKind::TSNamespaceDeclaration(decl) => decl.declare,
+        _ => false,
+    })
 }
 
 #[test]
@@ -290,6 +291,37 @@ fn test() {
                   ",
             Some(serde_json::json!(["type"])),
         ),
+        // Issue: <https://github.com/oxc-project/oxc/issues/29625>
+        (
+            "
+            declare module './lib.ts' {
+              interface Options {
+                b: number;
+              }
+            }
+                  ",
+            Some(serde_json::json!(["type"])),
+        ),
+        (
+            "
+            declare global {
+              interface Window {
+                myLib: unknown;
+              }
+            }
+                  ",
+            Some(serde_json::json!(["type"])),
+        ),
+        (
+            "
+            declare namespace N {
+              interface Foo {
+                bar: string;
+              }
+            }
+                  ",
+            Some(serde_json::json!(["type"])),
+        ),
     ];
 
     let fail = vec![
@@ -323,36 +355,6 @@ fn test() {
             namespace JSX {
               interface Array<T> {
                 foo(x: (x: number) => T): T[];
-              }
-            }
-                  ",
-            Some(serde_json::json!(["type"])),
-        ),
-        (
-            "
-            global {
-              interface Array<T> {
-                foo(x: (x: number) => T): T[];
-              }
-            }
-                  ",
-            Some(serde_json::json!(["type"])),
-        ),
-        (
-            "
-            declare global {
-              interface Array<T> {
-                foo(x: (x: number) => T): T[];
-              }
-            }
-                  ",
-            Some(serde_json::json!(["type"])),
-        ),
-        (
-            "
-            declare global {
-              namespace Foo {
-                interface Bar {}
               }
             }
                   ",
@@ -466,19 +468,6 @@ fn test() {
             Some(serde_json::json!(["type"])),
         ),
         (
-            "global {
-                interface Array<T> {
-                  foo(x: (x: number) => T): T[];
-                }
-              }",
-            "global {
-                type Array<T> = {
-                  foo(x: (x: number) => T): T[];
-                }
-              }",
-            Some(serde_json::json!(["type"])),
-        ),
-        (
             "
 export default interface Test {
     baz(): string;
@@ -562,43 +551,7 @@ export declare type Test = {
         ),
     ];
 
-    let fix_dangerous = vec![
-        (
-            "declare global {
-                interface ProcessEnv {
-                    LOG_LEVEL: 'debug' | 'info';
-                }
-            }",
-            "declare global {
-                type ProcessEnv = {
-                    LOG_LEVEL: 'debug' | 'info';
-                }
-            }",
-            Some(serde_json::json!(["type"])),
-            crate::fixer::FixKind::DangerousFix,
-        ),
-        (
-            "declare global {
-                namespace NodeJS {
-                    interface ProcessEnv {
-                        LOG_LEVEL: 'debug' | 'info';
-                    }
-                }
-            }",
-            "declare global {
-                namespace NodeJS {
-                    type ProcessEnv = {
-                        LOG_LEVEL: 'debug' | 'info';
-                    }
-                }
-            }",
-            Some(serde_json::json!(["type"])),
-            crate::fixer::FixKind::DangerousFix,
-        ),
-    ];
-
     Tester::new(ConsistentTypeDefinitions::NAME, ConsistentTypeDefinitions::PLUGIN, pass, fail)
         .expect_fix(fix)
-        .expect_fix(fix_dangerous)
         .test_and_snapshot();
 }

@@ -105,41 +105,6 @@ source: crates/oxc_linter/src/tester.rs
                       }`.
 
   ⚠ typescript(consistent-type-definitions): Use `type` instead of `interface`.
-   ╭─[consistent_type_definitions.tsx:3:15]
- 2 │             global {
- 3 │               interface Array<T> {
-   ·               ─────────
- 4 │                 foo(x: (x: number) => T): T[];
-   ╰────
-  help: Replace `interface Array<T> {
-                        foo(x: (x: number) => T): T[];
-                      }` with `type Array<T> = {
-                        foo(x: (x: number) => T): T[];
-                      }`.
-
-  ⚠ typescript(consistent-type-definitions): Use `type` instead of `interface`.
-   ╭─[consistent_type_definitions.tsx:3:15]
- 2 │             declare global {
- 3 │               interface Array<T> {
-   ·               ─────────
- 4 │                 foo(x: (x: number) => T): T[];
-   ╰────
-  help: Replace `interface Array<T> {
-                        foo(x: (x: number) => T): T[];
-                      }` with `type Array<T> = {
-                        foo(x: (x: number) => T): T[];
-                      }`.
-
-  ⚠ typescript(consistent-type-definitions): Use `type` instead of `interface`.
-   ╭─[consistent_type_definitions.tsx:4:17]
- 3 │               namespace Foo {
- 4 │                 interface Bar {}
-   ·                 ─────────
- 5 │               }
-   ╰────
-  help: Replace `interface Bar {}` with `type Bar = {}`.
-
-  ⚠ typescript(consistent-type-definitions): Use `type` instead of `interface`.
    ╭─[consistent_type_definitions.tsx:2:28]
  1 │ 
  2 │             export default interface Test {
