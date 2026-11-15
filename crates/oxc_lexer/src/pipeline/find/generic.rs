@@ -1,32 +1,26 @@
 use oxc_simd::cpu_version;
 
-use crate::pipeline::chunk::eqm;
+use crate::pipeline::{chunk::eqm, source::Source};
 
 /// First byte at or after i that is one of needles, or src.len().
 #[cpu_version(Generic)]
 #[inline(always)]
-pub fn find_generic<const K: usize>(src: &[u8], mut i: usize, needles: [u8; K]) -> usize {
+pub fn find_generic<const K: usize>(src: Source, mut i: usize, needles: [u8; K]) -> usize {
     let n = src.len();
-    if i > n {
-        return n;
-    }
-    while i + 8 <= n {
-        // SAFETY: the guard keeps i <= n, so i + 8 cannot wrap, and the 8 bytes at i are in src.
-        let x = u64::from_le_bytes(unsafe { src.as_ptr().add(i).cast::<[u8; 8]>().read() });
+    while i < n {
+        let x = u64::from_le_bytes(*src.window(i));
         let mut m = 0u64;
         for c in needles {
             m |= eqm(x, c);
         }
         if m != 0 {
-            return i + (m.trailing_zeros() >> 3) as usize;
+            let hit = i + (m.trailing_zeros() >> 3) as usize;
+            // A hit at or past n is in the padding, so the loop ends instead.
+            if hit < n {
+                return hit;
+            }
         }
         i += 8;
-    }
-    while i < n {
-        if needles.contains(&src[i]) {
-            return i;
-        }
-        i += 1;
     }
     n
 }
