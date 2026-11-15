@@ -1151,7 +1151,6 @@ fn test() {
         ("result = ((array.slice(-1)))[0]", "result = array.at(-1)", None),
         ("([a = array.slice(-1)[0]] = [])", "([a = array.at(-1)] = [])", None),
         ("({a: b = array.slice(-1)[0]} = {})", "({a: b = array.at(-1)} = {})", None),
-        // Parentheses inside the call are replaced along with it, as for `[0]` above.
         ("(( array.slice(-1) )).pop();", "array.at(-1);", None),
         ("(( array.slice(-1).pop ))();", "array.at(-1);", None),
         ("(( array.slice(-9, -8).shift ))()", "array.at(-9)", None),
