@@ -322,8 +322,7 @@ fn test() {
 
 #[test]
 fn test_suggestion_kind() {
-    use crate::fixer::FixKind;
-    use crate::tester::Tester;
+    use crate::{fixer::FixKind, tester::Tester};
 
     // Regression for #29463: the rewrite must be exposed as a suggestion,
     // not a safe fix, because it changes RegExp.prototype.source and
