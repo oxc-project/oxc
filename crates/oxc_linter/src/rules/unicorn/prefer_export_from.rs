@@ -1596,7 +1596,6 @@ fn test() {
             export * from 'foo';",
             "export * as foo from 'foo';\n\n            export * from 'foo';",
         ),
-        // `foo` and `bar` come from two imports: no fix, which would drop `bar` from the exports
         (
             "import * as foo from 'foo';
           import * as bar from 'foo';
@@ -1944,8 +1943,6 @@ fn test() {
             "import {a} from \"\\uD800\";\nexport {a};\nexport {b} from \"\\uD800\";",
             "export {b, a} from \"\\uD800\";",
         ),
-        // the export list also holds a name from another import: no fix, which would
-        // drop `b` from the exports
         (
             "import { a } from './x';\nimport { b } from './y';\nexport { a, b };",
             "import { a } from './x';\nimport { b } from './y';\nexport { a, b };",
