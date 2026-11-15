@@ -405,7 +405,7 @@ impl<'a> SemanticBuilder<'a> {
         self.errors.borrow_mut().push(error);
     }
 
-    /// Flag `ident`'s symbol if it names `init` by NamedEvaluation.
+    /// Flag `ident`'s symbol if it names `init` by NamedEvaluation. Call after binding `ident`.
     fn record_binding_name(&mut self, ident: &BindingIdentifier<'a>, init: &Expression<'a>) {
         if let Some(flag) = anonymous_name_flag(init)
             && let Some(symbol_id) = ident.symbol_id.get()
@@ -414,7 +414,8 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
-    /// Flag the symbol `ident` resolves to if it names `init` by NamedEvaluation.
+    /// Queue `ident`'s reference if it names `init` by NamedEvaluation, so the symbol it resolves
+    /// to is flagged once references are resolved.
     fn record_reference_name(&mut self, ident: &IdentifierReference<'a>, init: &Expression<'a>) {
         if let Some(flag) = anonymous_name_flag(init)
             && let Some(reference_id) = ident.reference_id.get()
