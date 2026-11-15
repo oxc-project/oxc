@@ -220,7 +220,23 @@ fn can_fix_binding<'a>(
         // All loop iterations share one `var`, but each iteration gets its own `let`,
         // so a closure would see a different binding.
         if in_loop
-            && enclosing_function_scope(scoping, reference_node.scope_id()) != var_function_scope
+            && (enclosing_function_scope(scoping, reference_node.scope_id()) != var_function_scope
+                || ctx
+                    .nodes()
+                    .ancestors(reference.node_id())
+                    .take_while(|ancestor| !ancestor.span().contains_inclusive(node.span()))
+                    .any(|ancestor| {
+                        let value = match ancestor.kind() {
+                            AstKind::PropertyDefinition(property) if !property.r#static => {
+                                &property.value
+                            }
+                            AstKind::AccessorProperty(property) if !property.r#static => {
+                                &property.value
+                            }
+                            _ => return false,
+                        };
+                        value.as_ref().is_some_and(|value| value.span().contains_inclusive(span))
+                    }))
         {
             return false;
         }
@@ -587,6 +603,26 @@ fn test() {
         ("for (var {a = a} of [{}]) {}", "for (var {a = a} of [{}]) {}"),
         ("for (var a of [a]) {}", "for (var a of [a]) {}"),
         ("for (var a in { [a]: 1 }) {}", "for (var a in { [a]: 1 }) {}"),
+        (
+            "for (var i of [1, 2]) { classes.push(class { x = i; }); }",
+            "for (var i of [1, 2]) { classes.push(class { x = i; }); }",
+        ),
+        (
+            "for (var i = 0; i < 2; i++) { classes.push(class { x = i; }); }",
+            "for (var i = 0; i < 2; i++) { classes.push(class { x = i; }); }",
+        ),
+        (
+            "for (var i of [1, 2]) { classes.push(class { accessor x = i; }); }",
+            "for (var i of [1, 2]) { classes.push(class { accessor x = i; }); }",
+        ),
+        (
+            "for (var i of [1, 2]) { classes.push(class { static x = i; }); }",
+            "for (let i of [1, 2]) { classes.push(class { static x = i; }); }",
+        ),
+        (
+            "for (var i of [1, 2]) { classes.push(class { [i] = 0; }); }",
+            "for (let i of [1, 2]) { classes.push(class { [i] = 0; }); }",
+        ),
     ];
 
     Tester::new(NoVar::NAME, NoVar::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
