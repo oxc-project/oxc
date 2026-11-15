@@ -194,8 +194,6 @@ fn test() {
         ),
         ("vi.mock('foo', () => {})", None),
         (r#"vi.mock("node:fs/promises")"#, None),
-        (r#"vi.mock("./it's.js", () => ({ x: 1 }))"#, None),
-        (r"vi.mock('./dir\\file.js', () => ({ x: 2 }))", None),
         (r#"vi.mock("./foo.js", () => ({ Foo: vi.fn() }))"#, None),
         (
             "
@@ -204,6 +202,8 @@ fn test() {
                   ",
             None,
         ),
+        (r#"vi.mock("./it's.js", () => ({ x: 1 }))"#, None),
+        (r"vi.mock('./dir\\file.js', () => ({ x: 2 }))", None),
     ];
 
     let fix = vec![

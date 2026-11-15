@@ -92,20 +92,6 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ vitest(prefer-import-in-mock): Mocked modules must be dynamic imported.
    ╭─[prefer_import_in_mock.tsx:1:9]
- 1 │ vi.mock("./it's.js", () => ({ x: 1 }))
-   ·         ─────────────────────────────
-   ╰────
-  help: Dynamic import improves the type information and IntelliSense. Substitute `"./it's.js"` with `import("./it's.js")`
-
-  ⚠ vitest(prefer-import-in-mock): Mocked modules must be dynamic imported.
-   ╭─[prefer_import_in_mock.tsx:1:9]
- 1 │ vi.mock('./dir\\file.js', () => ({ x: 2 }))
-   ·         ──────────────────────────────────
-   ╰────
-  help: Dynamic import improves the type information and IntelliSense. Substitute `'./dir\\file.js'` with `import('./dir\\file.js')`
-
-  ⚠ vitest(prefer-import-in-mock): Mocked modules must be dynamic imported.
-   ╭─[prefer_import_in_mock.tsx:1:9]
  1 │ vi.mock("./foo.js", () => ({ Foo: vi.fn() }))
    ·         ────────────────────────────────────
    ╰────
@@ -119,3 +105,17 @@ source: crates/oxc_linter/src/tester.rs
  4 │                   
    ╰────
   help: Dynamic import improves the type information and IntelliSense. Substitute `'./foo.js'` with `import('./foo.js')`
+
+  ⚠ vitest(prefer-import-in-mock): Mocked modules must be dynamic imported.
+   ╭─[prefer_import_in_mock.tsx:1:9]
+ 1 │ vi.mock("./it's.js", () => ({ x: 1 }))
+   ·         ─────────────────────────────
+   ╰────
+  help: Dynamic import improves the type information and IntelliSense. Substitute `"./it's.js"` with `import("./it's.js")`
+
+  ⚠ vitest(prefer-import-in-mock): Mocked modules must be dynamic imported.
+   ╭─[prefer_import_in_mock.tsx:1:9]
+ 1 │ vi.mock('./dir\\file.js', () => ({ x: 2 }))
+   ·         ──────────────────────────────────
+   ╰────
+  help: Dynamic import improves the type information and IntelliSense. Substitute `'./dir\\file.js'` with `import('./dir\\file.js')`
