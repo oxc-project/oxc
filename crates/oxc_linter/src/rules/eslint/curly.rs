@@ -452,8 +452,6 @@ fn apply_rule_fix<'a>(
 
 /// Whether removing the braces around `block` would need a semicolon after its
 /// statement, e.g. `if (foo) { bar() } baz()` or `if (foo) { bar }\n(1).toString()`.
-/// Like ESLint, don't fix these: without the semicolon the code doesn't parse or
-/// means something else, and with it the code can't be followed by `else`.
 /// Ported from `needsSemicolon` in ESLint's `curly`.
 fn needs_semicolon(block: &BlockStatement, ctx: &LintContext) -> bool {
     let Some(last) = block.body.last() else {
