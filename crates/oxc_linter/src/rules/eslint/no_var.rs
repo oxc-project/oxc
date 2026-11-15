@@ -421,7 +421,6 @@ fn test() {
             "var x = 1; function f() { var x = 2; return x; }",
             "const x = 1; function f() { const x = 2; return x; }",
         ),
-        // Cases below are from ESLint's tests, where ESLint always writes `let`.
         ("for (var a of b) { console.log(a); }", "for (let a of b) { console.log(a); }"),
         ("for (var a in b) { console.log(a); }", "for (let a in b) { console.log(a); }"),
         (
@@ -443,7 +442,6 @@ fn test() {
         ("for (var i = 0; i < 10; ++i) {} i;", "for (var i = 0; i < 10; ++i) {} i;"),
         ("for (var a in obj) {} a;", "for (var a in obj) {} a;"),
         ("for (var a of list) {} a;", "for (var a of list) {} a;"),
-        // `let` in a `case` clause is reported by `no-case-declarations`.
         ("switch (a) { case 0: var b = 1 }", "switch (a) { case 0: var b = 1 }"),
         ("for (var a of b) { arr.push(() => a); }", "for (var a of b) { arr.push(() => a); }"),
         (
