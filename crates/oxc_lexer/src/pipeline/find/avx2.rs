@@ -11,16 +11,22 @@ use super::BRACKET_BYTES;
 #[inline]
 pub fn find_avx2<const K: usize>(src: Source, mut i: usize, needles: [u8; K], cpu: Avx2) -> usize {
     let n = src.len();
-    while i < n {
-        let m = any_of(Vec256::read_unaligned(src.window(i), cpu), needles).movemask();
-        if m != 0 {
-            let hit = i + m.trailing_zeros() as usize;
-            // A hit at or past n is in the padding, so the loop ends instead.
-            if hit < n {
-                return hit;
+    if let Some(last) = n.checked_sub(32) {
+        while i <= last {
+            let m = any_of(Vec256::read_unaligned(src.window(i), cpu), needles).movemask();
+            if m != 0 {
+                return i + m.trailing_zeros() as usize;
             }
+            i += 32;
         }
-        i += 32;
+    }
+    if i < n {
+        // The last window reaches into the padding, so its bits past n are dropped.
+        let m = any_of(Vec256::read_unaligned(src.window(i), cpu), needles).movemask();
+        let m = m & (u32::MAX >> (32 - (n - i)));
+        if m != 0 {
+            return i + m.trailing_zeros() as usize;
+        }
     }
     n
 }

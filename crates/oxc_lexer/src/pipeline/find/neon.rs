@@ -11,16 +11,22 @@ use super::BRACKET_BYTES;
 #[inline]
 pub fn find_neon<const K: usize>(src: Source, mut i: usize, needles: [u8; K], cpu: Neon) -> usize {
     let n = src.len();
-    while i < n {
-        let m = any_of(Vec128::read_unaligned(src.window(i), cpu), needles).nibble_mask();
-        if m != 0 {
-            let hit = i + (m.trailing_zeros() / 4) as usize;
-            // A hit at or past n is in the padding, so the loop ends instead.
-            if hit < n {
-                return hit;
+    if let Some(last) = n.checked_sub(16) {
+        while i <= last {
+            let m = any_of(Vec128::read_unaligned(src.window(i), cpu), needles).nibble_mask();
+            if m != 0 {
+                return i + (m.trailing_zeros() / 4) as usize;
             }
+            i += 16;
         }
-        i += 16;
+    }
+    if i < n {
+        // The last window reaches into the padding, so its nibbles past n are dropped.
+        let m = any_of(Vec128::read_unaligned(src.window(i), cpu), needles).nibble_mask();
+        let m = m & (u64::MAX >> (4 * (16 - (n - i))));
+        if m != 0 {
+            return i + (m.trailing_zeros() / 4) as usize;
+        }
     }
     n
 }
