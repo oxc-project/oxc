@@ -103,6 +103,7 @@ bitflags! {
         const Value = Self::Variable.bits() | Self::Class.bits() | Self::Function.bits() | Self::Enum.bits() | Self::EnumMember.bits() | Self::ValueModule.bits();
         const Type = Self::Class.bits() | Self::Interface.bits() | Self::Enum.bits() | Self::EnumMember.bits() | Self::TypeParameter.bits()  |  Self::TypeAlias.bits();
         const Namespace = Self::ValueModule.bits() | Self::NamespaceModule.bits() | Self::Enum.bits();
+        const AnonymousName = Self::AnonymousFunctionName.bits() | Self::AnonymousClassName.bits();
 
 
         /// Variables can be redeclared, but can not redeclare a block-scoped declaration with the

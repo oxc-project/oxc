@@ -28,6 +28,8 @@ pub struct Redeclaration {
     ///
     /// See [`Scoping::symbol_declaration_scope_id`].
     pub scope_id: ScopeId,
+    /// This declaration's flags, excluding [`SymbolFlags::AnonymousName`], which is recorded
+    /// only on the symbol.
     pub flags: SymbolFlags,
 }
 
@@ -539,7 +541,7 @@ impl Scoping {
             span: self.symbol_span(symbol_id),
             declaration: self.symbol_declaration(symbol_id),
             scope_id: self.symbol_declaration_scope_id(symbol_id),
-            flags: self.symbol_flags(symbol_id),
+            flags: self.symbol_flags(symbol_id) - SymbolFlags::AnonymousName,
         });
 
         self.cell.with_dependent_mut(|allocator, cell| {
@@ -587,10 +589,11 @@ impl Scoping {
         });
 
         if let Some((replacement, flags)) = replacement {
+            let anonymous_name = self.symbol_flags(symbol_id) & SymbolFlags::AnonymousName;
             *self.symbol_table.symbol_spans_mut(symbol_id) = replacement.span;
             *self.symbol_table.symbol_declarations_mut(symbol_id) = replacement.declaration;
             *self.symbol_table.symbol_declaration_scope_ids_mut(symbol_id) = replacement.scope_id;
-            *self.symbol_table.symbol_flags_mut(symbol_id) = flags;
+            *self.symbol_table.symbol_flags_mut(symbol_id) = flags | anonymous_name;
         }
     }
 

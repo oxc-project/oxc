@@ -915,3 +915,23 @@ fn test_anonymous_function_names() {
         SemanticTester::js(source).has_some_symbol(name).equal_flags(flags).test();
     }
 }
+
+#[test]
+fn test_anonymous_name_not_in_redeclaration_flags() {
+    let tester = SemanticTester::js("var f = () => {}; var f;");
+    let mut scoping = tester.build().into_scoping();
+    let symbol_id =
+        scoping.symbol_ids().find(|&symbol_id| scoping.symbol_name(symbol_id) == "f").unwrap();
+    let variable = SymbolFlags::FunctionScopedVariable;
+    assert_eq!(scoping.symbol_flags(symbol_id), variable | SymbolFlags::AnonymousFunctionName);
+
+    let redeclarations = scoping.symbol_redeclarations(symbol_id);
+    assert_eq!(
+        redeclarations.iter().map(|redeclaration| redeclaration.flags).collect::<Vec<_>>(),
+        [variable, variable]
+    );
+
+    let span = redeclarations[1].span;
+    scoping.remove_symbol_declaration(symbol_id, span);
+    assert_eq!(scoping.symbol_flags(symbol_id), variable | SymbolFlags::AnonymousFunctionName);
+}
