@@ -1,7 +1,10 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ImportDeclarationSpecifier},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
@@ -32,8 +35,18 @@ fn consistent_vitest_vi_diagnostic(span: Span, fn_value: &VitestFnName) -> OxcDi
 ///
 /// This is the only shape that can be safely renamed by the import/call fixes
 /// without leaving other references unbound.
-fn is_safe_to_rename_binding(symbol_id: SymbolId, ctx: &LintContext<'_>) -> bool {
+fn is_safe_to_rename_binding(
+    symbol_id: SymbolId,
+    target_name: &str,
+    target_symbol_id: Option<SymbolId>,
+    ctx: &LintContext<'_>,
+) -> bool {
     ctx.semantic().symbol_references(symbol_id).all(|reference| {
+        if ctx.scoping().find_binding(reference.scope_id(), target_name.into()) != target_symbol_id
+        {
+            return false;
+        }
+
         let reference_node = ctx.semantic().nodes().get_node(reference.node_id());
 
         let AstKind::IdentifierReference(ident) = reference_node.kind() else {
@@ -170,7 +183,28 @@ impl Rule for ConsistentVitestVi {
                 };
 
                 let symbol_id = vitest_import.symbol_id();
-                if is_safe_to_rename_binding(symbol_id, ctx) {
+                let target_name = self.function.as_str();
+                let target_import = import
+                    .specifiers
+                    .as_ref()
+                    .and_then(|specs| specs.iter().find(|spec| spec.name() == target_name));
+                let target_symbol_id = target_import.and_then(|specifier| {
+                    let ImportDeclarationSpecifier::ImportSpecifier(specifier) = specifier else {
+                        return None;
+                    };
+                    (import.import_kind.is_value()
+                        && specifier.import_kind.is_value()
+                        && specifier.imported.name() == target_name)
+                        .then(|| specifier.local.symbol_id())
+                });
+                let conflicts_with_binding = target_import.is_none()
+                    && ctx
+                        .scoping()
+                        .get_binding(ctx.scoping().symbol_scope_id(symbol_id), target_name.into())
+                        .is_some();
+                if !conflicts_with_binding
+                    && is_safe_to_rename_binding(symbol_id, target_name, target_symbol_id, ctx)
+                {
                     ctx.diagnostic_with_fix(
                         consistent_vitest_vi_diagnostic(vitest_import.span(), &self.function),
                         |fixer| {
@@ -261,6 +295,13 @@ impl Rule for ConsistentVitestVi {
 
                     if let Expression::Identifier(ident) = member_expression.object()
                         && ctx.scoping().get_reference(ident.reference_id()).symbol_id().is_none()
+                        && ctx
+                            .scoping()
+                            .find_binding(
+                                ctx.scoping().get_reference(ident.reference_id()).scope_id(),
+                                self.function.as_str().into(),
+                            )
+                            .is_none()
                     {
                         ctx.diagnostic_with_fix(diagnostic, |fixer| {
                             fixer.replace(member_expression.object().span(), self.function.as_str())
@@ -400,6 +441,11 @@ fn test() {
         r#"import { vi } from "vitest"; vi.fn(); vi.mock("./dep");"#,
         None,
     ));
+    fix.push((
+        r#"import { vi, vitest } from "vitest"; vitest.fn();"#,
+        r#"import { vi } from "vitest"; vi.fn();"#,
+        None,
+    ));
     let no_fix = [
         (r#"import { vitest } from "vitest"; const mocker = vitest;"#, None),
         (r#"import { vitest } from "vitest"; const fn = vitest.fn;"#, None),
@@ -417,6 +463,16 @@ fn test() {
             None,
         ),
         (r#"vitest.fn().mockReturnValue(1);"#, None),
+        (r#"import { vitest } from "vitest"; const vi = {}; vitest.fn();"#, None),
+        (r#"import { vitest } from "vitest"; const vi = {};"#, None),
+        (r#"import { vitest } from "vitest"; function run(vi) { vitest.fn(); }"#, None),
+        (r#"import { vi, vitest } from "vitest"; function run(vi) { vitest.fn(); }"#, None),
+        (r#"import { expect as vi, vitest } from "vitest"; vitest.fn();"#, None),
+        (
+            r#"import { vi } from "vitest"; function run(vitest) { vi.fn(); }"#,
+            Some(serde_json::json!([{ "fn": "vitest" }])),
+        ),
+        (r#"function run(vi) { vitest.fn(); }"#, None),
         (
             r#"// oxlint-disable-next-line vitest/consistent-vitest-vi
 import { vitest } from "vitest";
