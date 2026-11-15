@@ -812,7 +812,6 @@ fn test() {
         ("[...[1,2,3], ...x]", "[...[1,2,3], ...x]"),
         ("[...[...[1,2,3]]]", "[...[1,2,3]]"),
         ("const array = [...[a, , b,]]", "const array = [a, , b,]"),
-        // holes are not allowed in arguments, so they become `undefined`
         ("foo(...[,])", "foo(undefined)"),
         ("new Foo(...[,])", "new Foo(undefined)"),
         ("foo(...[,,])", "foo(undefined,undefined)"),
