@@ -10,7 +10,7 @@ use oxc_syntax::identifier::{
 use crate::{config::LexerConfig as Config, diagnostics};
 
 use super::{
-    FinishTokenMode, Kind, Lexer, SourcePosition, Token, cold_branch, keyword,
+    FinishTokenMode, Kind, Lexer, PendingToken, SourcePosition, Token, cold_branch, keyword,
     search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
 };
 
@@ -23,7 +23,7 @@ static NOT_ASCII_ID_CONTINUE_TABLE: SafeByteMatchTable =
     safe_byte_match_table!(|b| !(b.is_ascii_alphanumeric() || b == b'_' || b == b'$'));
 
 #[inline]
-fn is_identifier_start_ascii_byte(byte: u8) -> bool {
+pub(super) fn is_identifier_start_ascii_byte(byte: u8) -> bool {
     ASCII_ID_START_TABLE.matches(byte)
 }
 
@@ -96,10 +96,13 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// # SAFETY
     /// * `start_pos` must be the position of a byte which is not at the end of the source.
     /// * That byte must be ASCII.
-    /// * No trivia must have been seen since the previous token, other than one space.
+    /// * If `ON_NEW_LINE` is `false`, no trivia must have been seen since the previous token,
+    ///   other than one space.
+    /// * If `ON_NEW_LINE` is `true`, line breaks and regular whitespace must be the only trivia
+    ///   seen since the previous token, and `pending` must not have been altered.
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    pub(super) unsafe fn identifier_token<const CHECK_KEYWORD: bool>(
+    pub(super) unsafe fn identifier_token<const CHECK_KEYWORD: bool, const ON_NEW_LINE: bool>(
         &mut self,
         start_pos: SourcePosition<'a>,
     ) -> Token {
@@ -119,7 +122,7 @@ impl<'a, C: Config> Lexer<'a, C> {
         // Unicode characters and escapes are uncommon. Handle both in one cold call.
         if !next_byte.is_ascii() || next_byte == b'\\' {
             cold_path();
-            return self.identifier_token_uncommon(start_pos, next_byte == b'\\');
+            return self.identifier_token_uncommon(start_pos, next_byte == b'\\', ON_NEW_LINE);
         }
 
         let end = self.source.position();
@@ -130,7 +133,11 @@ impl<'a, C: Config> Lexer<'a, C> {
         } else {
             Kind::Ident
         };
-        self.finish_fresh_token(kind, start_pos, end)
+        if ON_NEW_LINE {
+            self.finish_fresh_token_on_new_line(kind, start_pos, end)
+        } else {
+            self.finish_fresh_token(kind, start_pos, end)
+        }
     }
 
     /// Finish an identifier which contains a Unicode character or an escape.
@@ -141,7 +148,13 @@ impl<'a, C: Config> Lexer<'a, C> {
         &mut self,
         start_pos: SourcePosition<'a>,
         is_escape: bool,
+        is_on_new_line: bool,
     ) -> Token {
+        if is_on_new_line {
+            // No trivia was seen before the line break, so this is all that needs to be recorded
+            debug_assert_eq!(self.pending, PendingToken::NONE);
+            self.pending = PendingToken::AFTER_LINE_BREAK;
+        }
         // `identifier_backslash` records the unescaped identifier against `token_start`
         self.token_start = self.source.offset_of(start_pos);
         let (kind, end) = if is_escape {
