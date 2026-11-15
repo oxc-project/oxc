@@ -26,9 +26,9 @@ pub(super) fn find<const K: usize>(
     cpu: impl Cpu,
 ) -> usize {
     match DynCpu::from(cpu) {
-        DynCpu::Avx2(cpu) => find_avx2(src.bytes(), i, needles, cpu),
-        DynCpu::Neon(cpu) => find_neon(src.bytes(), i, needles, cpu),
-        DynCpu::Generic(_) => find_generic(src.bytes(), i, needles),
+        DynCpu::Avx2(cpu) => find_avx2(src, i, needles, cpu),
+        DynCpu::Neon(cpu) => find_neon(src, i, needles, cpu),
+        DynCpu::Generic(_) => find_generic(src, i, needles),
     }
 }
 

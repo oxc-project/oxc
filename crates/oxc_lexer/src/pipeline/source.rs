@@ -43,6 +43,13 @@ impl<'a> Source<'a> {
         Self { padded: &self.padded[..end + PAD] }
     }
 
+    /// The W bytes at i: a guard of i <= len proves it, as the padding holds the rest of the width.
+    #[inline(always)]
+    pub(super) fn window<const W: usize>(self, i: usize) -> &'a [u8; W] {
+        const { assert!(W <= PAD) };
+        self.padded[i..].first_chunk().unwrap()
+    }
+
     /// Byte length (2 or 3) of the multi-byte WhiteSpace or LineTerminator at i, or 0.
     #[cpu_multiversion]
     #[inline(always)]
