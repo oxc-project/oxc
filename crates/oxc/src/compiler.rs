@@ -5,8 +5,8 @@ use oxc_ast::ast::Program;
 use oxc_codegen::{Codegen, CodegenOptions, CodegenReturn};
 use oxc_diagnostics::Diagnostics;
 use oxc_isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions};
-use oxc_mangler::{MangleOptions, Mangler, ManglerReturn};
-use oxc_minifier::{CompressOptions, Compressor};
+use oxc_mangler::{MangleOptions, ManglerReturn};
+use oxc_minifier::{CompressOptions, Compressor, Minifier};
 use oxc_parser::{ParseOptions, Parser, ParserReturn};
 use oxc_semantic::{Scoping, SemanticBuilder, SemanticBuilderReturn, Stats};
 use oxc_span::SourceType;
@@ -232,8 +232,9 @@ pub trait CompilerInterface {
 
         /* Mangler */
 
-        let mangler =
-            self.mangle_options().map(|options| self.mangle(&mut program, options, stats));
+        let mangler = self
+            .mangle_options()
+            .map(|options| self.mangle(&allocator, &mut program, options, stats));
 
         /* Codegen */
 
@@ -306,14 +307,16 @@ pub trait CompilerInterface {
     }
 
     /// `stats` from a prior semantic build size the mangler's internal semantic
-    /// rebuild, avoiding a full-AST counting pass.
-    fn mangle(
+    /// rebuild, avoiding a full-AST counting pass. Also removes the `var` declarations
+    /// that [`MangleOptions::merge_vars`] made redundant.
+    fn mangle<'a>(
         &self,
-        program: &mut Program<'_>,
+        allocator: &'a Allocator,
+        program: &mut Program<'a>,
         options: MangleOptions,
         stats: Stats,
     ) -> ManglerReturn {
-        Mangler::new().with_options(options).with_stats(stats).build(program)
+        Minifier::mangle(allocator, program, options, Some(stats))
     }
 
     fn codegen<'a>(

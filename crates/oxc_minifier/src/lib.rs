@@ -66,8 +66,8 @@ mod traverse_context;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 use oxc_index::IndexVec;
-use oxc_mangler::Mangler;
-use oxc_semantic::{Scoping, SemanticBuilder};
+use oxc_mangler::{Mangler, ManglerReturn};
+use oxc_semantic::{Scoping, SemanticBuilder, Stats};
 use oxc_str::CompactStr;
 use oxc_syntax::class::ClassId;
 use rustc_hash::FxHashMap;
@@ -140,6 +140,32 @@ impl<'a> Minifier {
         self.build(CompressionMode::TreeShakeOnly, allocator, program)
     }
 
+    /// Mangle `program`, then remove the `var` declarations that became redundant because
+    /// [`MangleOptions::merge_vars`] gave them the name of another variable of the same function.
+    ///
+    /// `stats` from a prior semantic build of `program` size the mangler's semantic.
+    pub fn mangle(
+        allocator: &'a Allocator,
+        program: &mut Program<'a>,
+        options: MangleOptions,
+        stats: Option<Stats>,
+    ) -> ManglerReturn {
+        let mut builder = SemanticBuilder::new().with_build_nodes(true).with_class_table(true);
+        if let Some(stats) = stats {
+            builder = builder.with_stats(stats);
+        }
+        let mut semantic = builder.build(program).semantic;
+        let (class_private_mappings, merged_vars) = Mangler::default()
+            .with_options(options)
+            .build_with_semantic_and_merged_vars(&mut semantic, program);
+        let redundant_vars = RedundantVars::collect(allocator, &semantic, &merged_vars);
+        let mut scoping = semantic.into_scoping();
+        if let Some(redundant_vars) = redundant_vars {
+            redundant_vars.remove(allocator, program, &mut scoping);
+        }
+        ManglerReturn { scoping, class_private_mappings }
+    }
+
     fn build(
         self,
         mode: CompressionMode,
@@ -177,24 +203,8 @@ impl<'a> Minifier {
             (Some(stats), iterations)
         });
         let (scoping, class_private_mappings) = mangle
-            .map(|options| {
-                let mut builder =
-                    SemanticBuilder::new().with_build_nodes(true).with_class_table(true);
-                if let Some(stats) = stats {
-                    builder = builder.with_stats(stats);
-                }
-                let mut semantic = builder.build(program).semantic;
-                let (class_private_mappings, merged_vars) = Mangler::default()
-                    .with_options(options)
-                    .build_with_semantic_and_merged_vars(&mut semantic, program);
-                let redundant_vars = RedundantVars::collect(allocator, &semantic, &merged_vars);
-                let mut scoping = semantic.into_scoping();
-                if let Some(redundant_vars) = redundant_vars {
-                    redundant_vars.remove(allocator, program, &mut scoping);
-                }
-                (scoping, class_private_mappings)
-            })
-            .map_or((None, None), |(scoping, mappings)| (Some(scoping), Some(mappings)));
+            .map(|options| Self::mangle(allocator, program, options, stats))
+            .map_or((None, None), |ret| (Some(ret.scoping), Some(ret.class_private_mappings)));
         MinifierReturn { scoping, class_private_mappings, property_mangle_cache, iterations }
     }
 }
