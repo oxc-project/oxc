@@ -135,7 +135,7 @@ fn should_filter_case(expr: &CallExpression) -> bool {
         return true;
     };
     !matches!(mem_expr.object(), Expression::Identifier(_))
-        || mem_expr.static_property_name() != Some("skip")
+        || mem_expr.static_property_name().is_none_or(|name| name != "skip")
 }
 
 fn is_string_type(arg: &Argument) -> bool {
