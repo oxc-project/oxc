@@ -198,7 +198,7 @@ impl NoUnstableNestedComponents {
 
         let is_component_in_prop = is_component_declared_in_prop(node, ctx);
         if is_component_in_prop {
-            if func.body.as_ref().is_some_and(|body| function_body_returns_jsx(body)) {
+            if func.body.as_ref().is_some_and(|body| function_body_returns_jsx(body, ctx)) {
                 return Some(ComponentCandidate { span: func.span, is_component_in_prop });
             }
             return None;
@@ -228,7 +228,7 @@ impl NoUnstableNestedComponents {
 
         let is_component_in_prop = is_component_declared_in_prop(node, ctx);
         if is_component_in_prop {
-            if !arrow_body_returns_jsx(&arrow.body) {
+            if !arrow_body_returns_jsx(&arrow.body, ctx) {
                 return None;
             }
             return Some(ComponentCandidate { span: arrow.span, is_component_in_prop });
@@ -280,45 +280,65 @@ fn class_candidate<'a>(
 /// Like eslint-plugin-react, a function passed as a prop is a component only when it returns
 /// JSX. A callback that puts JSX into an object or array it returns (`(row) => ({ icon: <Icon /> })`)
 /// is a plain function.
-fn function_body_returns_jsx(body: &FunctionBody<'_>) -> bool {
-    let mut finder = ReturnsJsx { found: false };
+fn function_body_returns_jsx<'a>(body: &FunctionBody<'a>, ctx: &LintContext<'a>) -> bool {
+    let mut finder = ReturnsJsx { found: false, ctx };
     finder.visit_function_body(body);
     finder.found
 }
 
-fn arrow_body_returns_jsx(body: &ArrowFunctionBody<'_>) -> bool {
+fn arrow_body_returns_jsx<'a>(body: &ArrowFunctionBody<'a>, ctx: &LintContext<'a>) -> bool {
     match body {
-        ArrowFunctionBody::FunctionBody(body) => function_body_returns_jsx(body),
+        ArrowFunctionBody::FunctionBody(body) => function_body_returns_jsx(body, ctx),
         expression @ match_expression!(ArrowFunctionBody) => {
-            is_jsx_value(expression.to_expression())
+            is_jsx_value(expression.to_expression(), ctx)
         }
     }
 }
 
 /// Whether the value itself is JSX, directly or in a branch of a conditional or logical expression.
-fn is_jsx_value(expr: &Expression<'_>) -> bool {
+fn is_jsx_value(expr: &Expression<'_>, ctx: &LintContext<'_>) -> bool {
     match expr.without_parentheses() {
         Expression::JSXElement(_) | Expression::JSXFragment(_) => true,
         Expression::CallExpression(call) => is_create_element_call(call),
         Expression::ConditionalExpression(cond) => {
-            is_jsx_value(&cond.consequent) || is_jsx_value(&cond.alternate)
+            is_jsx_value(&cond.consequent, ctx) || is_jsx_value(&cond.alternate, ctx)
         }
         Expression::LogicalExpression(logical) => {
-            is_jsx_value(&logical.left) || is_jsx_value(&logical.right)
+            is_jsx_value(&logical.left, ctx) || is_jsx_value(&logical.right, ctx)
         }
-        Expression::SequenceExpression(seq) => seq.expressions.last().is_some_and(is_jsx_value),
+        Expression::SequenceExpression(seq) => {
+            seq.expressions.last().is_some_and(|expr| is_jsx_value(expr, ctx))
+        }
+        Expression::Identifier(ident) => {
+            let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id()
+            else {
+                return false;
+            };
+            let AstKind::VariableDeclarator(declarator) =
+                ctx.semantic().symbol_declaration(symbol_id).kind()
+            else {
+                return false;
+            };
+            declarator.init.as_ref().is_some_and(|init| {
+                matches!(
+                    init.without_parentheses(),
+                    Expression::JSXElement(_) | Expression::JSXFragment(_)
+                )
+            })
+        }
         _ => false,
     }
 }
 
 /// Finds a `return` of JSX in a function body, without entering nested functions.
-struct ReturnsJsx {
+struct ReturnsJsx<'a, 'ctx> {
     found: bool,
+    ctx: &'ctx LintContext<'a>,
 }
 
-impl<'a> VisitJs<'a> for ReturnsJsx {
+impl<'a> VisitJs<'a> for ReturnsJsx<'a, '_> {
     fn visit_return_statement(&mut self, stmt: &ReturnStatement<'a>) {
-        if stmt.argument.as_ref().is_some_and(is_jsx_value) {
+        if stmt.argument.as_ref().is_some_and(|expr| is_jsx_value(expr, self.ctx)) {
             self.found = true;
         }
     }
@@ -1296,6 +1316,22 @@ fn test() {
                   ",
             Some(serde_json::json!([{ "propNamePattern": "render*" }])),
         ),
+        (
+            "function Parent() { return <Thing footer={() => { const element = { icon: <div /> }; return element; }} />; }",
+            None,
+        ),
+        (
+            "function Parent() { return <Thing footer={function () { const element = { icon: <div /> }; return element; }} />; }",
+            None,
+        ),
+        (
+            "function Parent() { return <Thing footer={() => { const element = <div />; { const element = { icon: <div /> }; return element; } }} />; }",
+            None,
+        ),
+        (
+            "function Parent() { return <Thing footer={(element) => { const unused = <div />; return element; }} />; }",
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -1999,6 +2035,22 @@ fn test() {
                       );
                     }
                   ",
+            None,
+        ),
+        (
+            "function Parent() { return <Thing footer={() => { const element = <div />; return element; }} />; }",
+            None,
+        ),
+        (
+            "function Parent() { return <Thing footer={function () { const element = <div />; return element; }} />; }",
+            None,
+        ),
+        (
+            "function Parent() { return <Thing footer={() => { const element = <>text</>; return element; }} />; }",
+            None,
+        ),
+        (
+            "function Parent() { return <Thing footer={function () { const element = <>text</>; return element; }} />; }",
             None,
         ),
     ];
