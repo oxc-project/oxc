@@ -1394,7 +1394,7 @@ pub static STRUCTS: phf::Map<&'static str, StructDetails> = ::phf::Map {
         (
             "ExportAllDeclaration",
             StructDetails {
-                field_order: Some(&[1, 0, 3, 4, 5, 2]),
+                field_order: Some(&[1, 0, 4, 5, 2, 6, 3]),
                 is_node: true,
                 is_transparent: false,
             },
@@ -1470,7 +1470,7 @@ pub static STRUCTS: phf::Map<&'static str, StructDetails> = ::phf::Map {
         (
             "ExportFromDeclaration",
             StructDetails {
-                field_order: Some(&[1, 0, 3, 4, 2, 5]),
+                field_order: Some(&[1, 0, 4, 5, 2, 3, 6]),
                 is_node: true,
                 is_transparent: false,
             },

@@ -2998,6 +2998,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for ExportFromDeclaration<'_> {
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
             specifiers: CloneIn::clone_in_impl(&self.specifiers, with_semantic_ids, allocator),
             source: CloneIn::clone_in_impl(&self.source, with_semantic_ids, allocator),
+            phase: CloneIn::clone_in_impl(&self.phase, with_semantic_ids, allocator),
             export_kind: CloneIn::clone_in_impl(&self.export_kind, with_semantic_ids, allocator),
             with_clause: CloneIn::clone_in_impl(&self.with_clause, with_semantic_ids, allocator),
         }
@@ -3033,6 +3034,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for ExportAllDeclaration<'_> {
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
             exported: CloneIn::clone_in_impl(&self.exported, with_semantic_ids, allocator),
             source: CloneIn::clone_in_impl(&self.source, with_semantic_ids, allocator),
+            phase: CloneIn::clone_in_impl(&self.phase, with_semantic_ids, allocator),
             with_clause: CloneIn::clone_in_impl(&self.with_clause, with_semantic_ids, allocator),
             export_kind: CloneIn::clone_in_impl(&self.export_kind, with_semantic_ids, allocator),
         }

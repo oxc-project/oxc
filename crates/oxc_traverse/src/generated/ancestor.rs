@@ -11422,6 +11422,8 @@ pub(crate) const OFFSET_EXPORT_FROM_DECLARATION_SPECIFIERS: usize =
     offset_of!(ExportFromDeclaration, specifiers);
 pub(crate) const OFFSET_EXPORT_FROM_DECLARATION_SOURCE: usize =
     offset_of!(ExportFromDeclaration, source);
+pub(crate) const OFFSET_EXPORT_FROM_DECLARATION_PHASE: usize =
+    offset_of!(ExportFromDeclaration, phase);
 pub(crate) const OFFSET_EXPORT_FROM_DECLARATION_EXPORT_KIND: usize =
     offset_of!(ExportFromDeclaration, export_kind);
 pub(crate) const OFFSET_EXPORT_FROM_DECLARATION_WITH_CLAUSE: usize =
@@ -11453,6 +11455,14 @@ impl<'a, 't> ExportFromDeclarationWithoutSpecifiers<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_EXPORT_FROM_DECLARATION_SOURCE)
                 as *const StringLiteral<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn phase(self) -> &'t Option<ImportPhase> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_FROM_DECLARATION_PHASE)
+                as *const Option<ImportPhase>)
         }
     }
 
@@ -11506,6 +11516,14 @@ impl<'a, 't> ExportFromDeclarationWithoutSource<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_EXPORT_FROM_DECLARATION_SPECIFIERS)
                 as *const ArenaVec<'a, ExportSpecifier<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn phase(self) -> &'t Option<ImportPhase> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_FROM_DECLARATION_PHASE)
+                as *const Option<ImportPhase>)
         }
     }
 
@@ -11571,6 +11589,14 @@ impl<'a, 't> ExportFromDeclarationWithoutWithClause<'a, 't> {
     }
 
     #[inline]
+    pub fn phase(self) -> &'t Option<ImportPhase> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_FROM_DECLARATION_PHASE)
+                as *const Option<ImportPhase>)
+        }
+    }
+
+    #[inline]
     pub fn export_kind(self) -> &'t ImportOrExportKind {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_EXPORT_FROM_DECLARATION_EXPORT_KIND)
@@ -11631,6 +11657,8 @@ pub(crate) const OFFSET_EXPORT_ALL_DECLARATION_EXPORTED: usize =
     offset_of!(ExportAllDeclaration, exported);
 pub(crate) const OFFSET_EXPORT_ALL_DECLARATION_SOURCE: usize =
     offset_of!(ExportAllDeclaration, source);
+pub(crate) const OFFSET_EXPORT_ALL_DECLARATION_PHASE: usize =
+    offset_of!(ExportAllDeclaration, phase);
 pub(crate) const OFFSET_EXPORT_ALL_DECLARATION_WITH_CLAUSE: usize =
     offset_of!(ExportAllDeclaration, with_clause);
 pub(crate) const OFFSET_EXPORT_ALL_DECLARATION_EXPORT_KIND: usize =
@@ -11662,6 +11690,14 @@ impl<'a, 't> ExportAllDeclarationWithoutExported<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_EXPORT_ALL_DECLARATION_SOURCE)
                 as *const StringLiteral<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn phase(self) -> &'t Option<ImportPhase> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_ALL_DECLARATION_PHASE)
+                as *const Option<ImportPhase>)
         }
     }
 
@@ -11715,6 +11751,14 @@ impl<'a, 't> ExportAllDeclarationWithoutSource<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_EXPORT_ALL_DECLARATION_EXPORTED)
                 as *const Option<ModuleExportName<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn phase(self) -> &'t Option<ImportPhase> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_ALL_DECLARATION_PHASE)
+                as *const Option<ImportPhase>)
         }
     }
 
@@ -11776,6 +11820,14 @@ impl<'a, 't> ExportAllDeclarationWithoutWithClause<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_EXPORT_ALL_DECLARATION_SOURCE)
                 as *const StringLiteral<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn phase(self) -> &'t Option<ImportPhase> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_ALL_DECLARATION_PHASE)
+                as *const Option<ImportPhase>)
         }
     }
 

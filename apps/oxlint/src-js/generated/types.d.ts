@@ -885,6 +885,7 @@ export interface ExportNamedDeclaration extends Span {
   declaration: Declaration | null;
   specifiers: Array<ExportSpecifier>;
   source: StringLiteral | null;
+  phase: ImportPhase | null;
   exportKind?: ImportOrExportKind;
   attributes: Array<ImportAttribute>;
   parent: Node;
@@ -901,6 +902,7 @@ export interface ExportAllDeclaration extends Span {
   type: "ExportAllDeclaration";
   exported: ModuleExportName | null;
   source: StringLiteral;
+  phase: ImportPhase | null;
   attributes: Array<ImportAttribute>;
   exportKind?: ImportOrExportKind;
   parent: Node;
