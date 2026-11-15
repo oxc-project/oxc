@@ -98,10 +98,19 @@ impl Rule for PreferResponseStaticJson {
                 let callee_start = new_expr.callee.span().start;
 
                 if ctx.has_comments_between(Span::new(new_keyword_end, callee_start)) {
+                    // Delete the whitespace character after `new`, if any. It can be more
+                    // than one byte (e.g. U+00A0), and a comment can follow `new` directly.
+                    #[expect(clippy::cast_possible_truncation)]
+                    let whitespace_len = ctx.source_text()[new_keyword_end as usize..]
+                        .chars()
+                        .next()
+                        .filter(|c| c.is_whitespace())
+                        .map_or(0, |c| c.len_utf8() as u32);
                     fix.push(fixer.insert_text_before_range(new_expr.span, "( "));
-                    fix.push(
-                        fixer.delete_range(Span::new(new_expr.span.start, new_keyword_end + 1)),
-                    );
+                    fix.push(fixer.delete_range(Span::new(
+                        new_expr.span.start,
+                        new_keyword_end + whitespace_len,
+                    )));
                     fix.push(fixer.insert_text_after_range(new_expr.span, ")"));
                 } else {
                     let new_keyword_span =
@@ -188,6 +197,9 @@ fn test() {
             (( new (( Response ))(JSON.stringify(data)) ))",
         "foo
             (( new (( Response ))(JSON.stringify(data)) ))",
+        "function foo() { return new\u{a0}// comment\n Response(JSON.stringify(data)) }",
+        "function foo() { return new\u{3000}// comment\n Response(JSON.stringify(data)) }",
+        "new/* comment */Response(JSON.stringify(data))",
     ];
 
     let fix = vec![
@@ -232,6 +244,15 @@ fn test() {
             "foo
             (( (( Response.json ))(data) ))",
         ),
+        (
+            "function foo() { return new\u{a0}// comment\n Response(JSON.stringify(data)) }",
+            "function foo() { return ( // comment\n Response.json(data)) }",
+        ),
+        (
+            "function foo() { return new\u{3000}// comment\n Response(JSON.stringify(data)) }",
+            "function foo() { return ( // comment\n Response.json(data)) }",
+        ),
+        ("new/* comment */Response(JSON.stringify(data))", "( /* comment */Response.json(data))"),
     ];
 
     Tester::new(PreferResponseStaticJson::NAME, PreferResponseStaticJson::PLUGIN, pass, fail)
