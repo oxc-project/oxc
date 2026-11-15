@@ -208,16 +208,7 @@ fn test() {
 
     let fix = vec![
         (r#"vi.mock("\uD800")"#, r#"vi.mock(import("\uD800"))"#),
-        (r#"vi.doMock("a\uDC00b", () => ({}))"#, r#"vi.doMock(import("a\uDC00b"), () => ({}))"#),
         ("vi.mock('foo', () => {})", "vi.mock(import('foo'), () => {})"),
-        (
-            r#"vi.mock("./it's.js", () => ({ x: 1 }))"#,
-            r#"vi.mock(import("./it's.js"), () => ({ x: 1 }))"#,
-        ),
-        (
-            r"vi.mock('./dir\\file.js', () => ({ x: 2 }))",
-            r"vi.mock(import('./dir\\file.js'), () => ({ x: 2 }))",
-        ),
         (r#"vi.mock("node:fs/promises")"#, r#"vi.mock(import("node:fs/promises"))"#),
         (
             r#"vi.mock("./foo.js", () => ({ Foo: vi.fn() }))"#,
@@ -248,6 +239,15 @@ fn test() {
                     import { vi as renamedVi } from 'vitest';
                     renamedVi.doMock(import('./foo.js'), () => ({ Foo: vi.fn() }))
                   ",
+        ),
+        (r#"vi.doMock("a\uDC00b", () => ({}))"#, r#"vi.doMock(import("a\uDC00b"), () => ({}))"#),
+        (
+            r#"vi.mock("./it's.js", () => ({ x: 1 }))"#,
+            r#"vi.mock(import("./it's.js"), () => ({ x: 1 }))"#,
+        ),
+        (
+            r"vi.mock('./dir\\file.js', () => ({ x: 2 }))",
+            r"vi.mock(import('./dir\\file.js'), () => ({ x: 2 }))",
         ),
     ];
 
