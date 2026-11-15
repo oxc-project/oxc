@@ -681,12 +681,11 @@ impl PreferExportFrom {
         // The fix rewrites each of these export lists as a whole, so it would drop
         // names in a list that don't come from this import
         // (`import {a} from './x'; import {b} from './y'; export {a, b};`).
-        let drops_other_exports = parent_nodes.iter().any(|node| {
-            let AstKind::ExportNamedDeclaration(decl) = node.kind() else {
+        let drops_other_exports = parent_nodes.chunk_by(|a, b| a.id() == b.id()).any(|nodes| {
+            let AstKind::ExportNamedDeclaration(decl) = nodes[0].kind() else {
                 return false;
             };
-            let covered = violations.iter().filter(|v| v.export_node_id == node.id()).count();
-            decl.specifiers.len() > covered
+            decl.specifiers.len() > nodes.len()
         });
 
         let replace_export_spans: Vec<Span> = parent_nodes
