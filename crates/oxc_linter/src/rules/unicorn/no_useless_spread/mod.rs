@@ -10,7 +10,6 @@ use oxc_ast::{
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, SPAN, Span};
 
 mod const_eval;
@@ -442,7 +441,7 @@ fn is_mutated_within<'a>(
 
 struct MutationVisitor<'a, 'c> {
     ctx: &'c LintContext<'a>,
-    symbol_id: SymbolId,
+    symbol_id: oxc_semantic::SymbolId,
     mutated: bool,
 }
 
