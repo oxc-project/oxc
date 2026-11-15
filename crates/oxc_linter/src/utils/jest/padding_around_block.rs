@@ -21,30 +21,32 @@ pub fn report_missing_padding_before_jest_block<'a>(
     // Otherwise code between the previous statement and the call (e.g. `slow && `)
     // would be deleted by the whitespace-only fix.
     let parent_node = ctx.nodes().parent_node(node.id());
-    let is_statement_leading_call = match parent_node.kind() {
-        AstKind::ExpressionStatement(_) => true,
+    let statement_node = match parent_node.kind() {
+        AstKind::ExpressionStatement(_) => parent_node,
         AstKind::AwaitExpression(_) => {
             let grandparent_node = ctx.nodes().parent_node(parent_node.id());
-            matches!(grandparent_node.kind(), AstKind::ExpressionStatement(_))
+            if !matches!(grandparent_node.kind(), AstKind::ExpressionStatement(_)) {
+                return;
+            }
+            grandparent_node
         }
-        _ => false,
+        _ => return,
     };
-    if !is_statement_leading_call {
-        return;
-    }
 
     let scope_node = ctx.nodes().get_node(ctx.scoping().get_node_id(node.scope_id()));
     let prev_statement_span = match scope_node.kind() {
-        AstKind::Program(program) => get_statement_span_before_node(node, program.body.as_slice()),
+        AstKind::Program(program) => {
+            get_statement_span_before_node(statement_node, program.body.as_slice())
+        }
         AstKind::ArrowFunctionExpression(arrow_func_expr) => {
             let Some(body) = arrow_func_expr.get_function_body() else { return };
-            get_statement_span_before_node(node, body.statements.as_slice())
+            get_statement_span_before_node(statement_node, body.statements.as_slice())
         }
         AstKind::Function(function) => {
             let Some(body) = &function.body else {
                 return;
             };
-            get_statement_span_before_node(node, body.statements.as_slice())
+            get_statement_span_before_node(statement_node, body.statements.as_slice())
         }
         _ => None,
     };
@@ -90,9 +92,6 @@ pub fn report_missing_padding_before_jest_block<'a>(
 
 fn get_statement_span_before_node(node: &AstNode, statements: &[Statement]) -> Option<Span> {
     statements
-        .iter()
-        .filter_map(|statement| {
-            if statement.span().end <= node.span().start { Some(statement.span()) } else { None }
-        })
-        .next_back()
+        .windows(2)
+        .find_map(|pair| (pair[1].span() == node.span()).then(|| pair[0].span()))
 }

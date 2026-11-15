@@ -51,6 +51,10 @@ fn test() {
         "describe('foo', () => {\nafterAll(() => {});\n\nafterAll(() => {});\n});",
         "const cleanUp = false; cleanUp && afterAll(() => {});",
         "const cleanUp = false;\nif (cleanUp)\n  afterAll(() => {});",
+        "const cleanUp = false; if (cleanUp) afterAll(() => {});",
+        "const cleanUp = false; if (cleanUp)\n  afterAll(() => {});",
+        "const cleanUp = false; while (cleanUp) afterAll(() => {});",
+        "const cleanUp = false; for (; cleanUp;) afterAll(() => {});",
     ];
 
     let fail = vec![
