@@ -330,6 +330,11 @@ impl<'t> Mangler<'t> {
         ManglerReturn { scoping: semantic.into_scoping(), class_private_mappings }
     }
 
+    /// Mangles the program using an existing semantic analysis of it.
+    ///
+    /// `semantic` must be built from `program` by [`SemanticBuilder`] and not modified since,
+    /// because `keep_names` relies on symbol flags that only [`SemanticBuilder`] records.
+    ///
     /// # Panics
     ///
     /// Panics if a class's elements plus its enclosing classes' private members number more than
