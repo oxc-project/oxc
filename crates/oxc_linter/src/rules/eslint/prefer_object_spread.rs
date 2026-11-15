@@ -120,7 +120,7 @@ impl Rule for PreferObjectSpread {
         }
 
         let arguments_len = call_expr.arguments.len();
-        let mut has_non_literal_source = false;
+        let mut needs_suggestion = false;
 
         for (idx, arg) in call_expr.arguments.iter().enumerate() {
             let Some(Expression::ObjectExpression(obj_expr)) =
@@ -134,7 +134,7 @@ impl Rule for PreferObjectSpread {
                     return;
                 }
 
-                has_non_literal_source = true;
+                needs_suggestion = true;
                 continue;
             };
 
@@ -146,13 +146,15 @@ impl Rule for PreferObjectSpread {
                 if idx > 0 && has_proto_property(obj_expr) {
                     return;
                 }
+
+                needs_suggestion |= !is_plain_data_object(obj_expr);
             }
         }
 
         let diagnostic = prefer_object_spread_diagnostic(call_expr.span(), arguments_len == 1);
         let fix = |fixer: RuleFixer<'_, 'a>| fix_object_assign(call_expr, node, ctx, fixer);
 
-        if has_non_literal_source {
+        if needs_suggestion {
             ctx.diagnostic_with_suggestion(diagnostic, fix);
         } else {
             ctx.diagnostic_with_fix(diagnostic, fix);
@@ -259,6 +261,16 @@ fn has_proto_property(obj_expr: &ObjectExpression) -> bool {
         };
 
         p.key.is_specific_static_name("__proto__")
+    })
+}
+
+fn is_plain_data_object(obj_expr: &ObjectExpression) -> bool {
+    obj_expr.properties.iter().all(|p| {
+        matches!(p, ObjectPropertyKind::ObjectProperty(p)
+            if !p.computed
+                && !p.method
+                && p.kind == PropertyKind::Init
+                && !p.key.is_specific_static_name("__proto__"))
     })
 }
 
@@ -1046,6 +1058,54 @@ fn test() {
             FixKind::All,
         ),
         ("Object.assign<{}, A>({}, foo);", "({ ...foo});", None, FixKind::All),
+        ("Object.assign({}, foo)", "Object.assign({}, foo)", None, FixKind::Fix),
+        ("Object.assign({}, a, b())", "Object.assign({}, a, b())", None, FixKind::Fix),
+        ("Object.assign({}, a, b())", "({ ...a, ...b()})", None, FixKind::Suggestion),
+        ("Object.assign({}, { ...src })", "({ ...src})", None, FixKind::Suggestion),
+        (
+            "Object.assign({}, { ...src })",
+            "Object.assign({}, { ...src })",
+            None,
+            FixKind::Fix,
+        ),
+        ("Object.assign({}, { [key]: p })", "({ [key]: p})", None, FixKind::Suggestion),
+        (
+            "Object.assign({}, { [key]: p })",
+            "Object.assign({}, { [key]: p })",
+            None,
+            FixKind::Fix,
+        ),
+        (
+            "Object.assign({ __proto__: proto }, { x: 42 })",
+            "({__proto__: proto, x: 42})",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "Object.assign({ __proto__: proto }, { x: 42 })",
+            "Object.assign({ __proto__: proto }, { x: 42 })",
+            None,
+            FixKind::Fix,
+        ),
+        (
+            "Object.assign({}, { m() { return super.x } })",
+            "({ m() { return super.x }})",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "Object.assign({}, { m() { return super.x } })",
+            "Object.assign({}, { m() { return super.x } })",
+            None,
+            FixKind::Fix,
+        ),
+        ("Object.assign({ a: 1 }, { b })", "({a: 1, b})", None, FixKind::Fix),
+        (
+            "Object.assign({ get a() {}, set b(val) {} })",
+            "({get a() {}, set b(val) {}})",
+            None,
+            FixKind::Fix,
+        ),
     ];
     Tester::new(PreferObjectSpread::NAME, PreferObjectSpread::PLUGIN, pass, fail)
         .expect_fix(fix)
