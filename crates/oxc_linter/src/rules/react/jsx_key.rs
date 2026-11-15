@@ -308,8 +308,6 @@ fn is_in_array_or_iter<'a, 'b>(
                         return None;
                     }
 
-                    // `R.map` / `Result.map` read one value. `Array.from` and
-                    // `[1, 2].map` / `arr.map` / `ITEMS.map` stay array iterators.
                     if ident != "from" && is_single_value_namespace_map(member_expr.object()) {
                         return None;
                     }
@@ -353,8 +351,6 @@ fn is_pascal_or_namespace_name(name: &str) -> bool {
     if !first.is_ascii_uppercase() {
         return false;
     }
-    // `R` is a namespace alias. A later lowercase letter is PascalCase (`Result`).
-    // `ITEMS` has neither, so it is still treated as an array.
     match chars.next() {
         None => true,
         Some(second) => second.is_ascii_lowercase() || chars.any(|c| c.is_ascii_lowercase()),
