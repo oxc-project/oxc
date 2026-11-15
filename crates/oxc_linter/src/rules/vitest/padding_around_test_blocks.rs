@@ -91,26 +91,6 @@ describe('other bar', function() {
 
     let fix = vec![
         (
-            "const thing = 123; test('foo', () => {}), foo();",
-            "const thing = 123;\n\ntest('foo', () => {}), foo();",
-        ),
-        (
-            "const thing = 123; test('foo', () => {}) && foo();",
-            "const thing = 123;\n\ntest('foo', () => {}) && foo();",
-        ),
-        (
-            "const thing = 123; await test('foo', () => {});",
-            "const thing = 123;\n\nawait test('foo', () => {});",
-        ),
-        (
-            "const thing = 123;\nawait test('foo', () => {});",
-            "const thing = 123;\n\nawait test('foo', () => {});",
-        ),
-        (
-            "const thing = 123; await /* hook */ test('foo', () => {});",
-            "const thing = 123;\n\nawait /* hook */ test('foo', () => {});",
-        ),
-        (
             "test('foo', () => {});test('bar', () => {});",
             "test('foo', () => {});\n\ntest('bar', () => {});",
         ),
@@ -196,6 +176,26 @@ describe('other bar', function() {
     });
 });
             ",
+        ),
+        (
+            "const thing = 123; test('foo', () => {}), foo();",
+            "const thing = 123;\n\ntest('foo', () => {}), foo();",
+        ),
+        (
+            "const thing = 123; test('foo', () => {}) && foo();",
+            "const thing = 123;\n\ntest('foo', () => {}) && foo();",
+        ),
+        (
+            "const thing = 123; await test('foo', () => {});",
+            "const thing = 123;\n\nawait test('foo', () => {});",
+        ),
+        (
+            "const thing = 123;\nawait test('foo', () => {});",
+            "const thing = 123;\n\nawait test('foo', () => {});",
+        ),
+        (
+            "const thing = 123; await /* hook */ test('foo', () => {});",
+            "const thing = 123;\n\nawait /* hook */ test('foo', () => {});",
         ),
     ];
     Tester::new(PaddingAroundTestBlocks::NAME, PaddingAroundTestBlocks::PLUGIN, pass, fail)

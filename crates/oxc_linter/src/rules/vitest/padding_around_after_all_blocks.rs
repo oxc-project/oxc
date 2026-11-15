@@ -70,26 +70,6 @@ fn test() {
     ];
 
     let fix = vec![
-        (
-            "const thing = 123; afterAll(() => {}), foo();",
-            "const thing = 123;\n\nafterAll(() => {}), foo();",
-        ),
-        (
-            "const thing = 123; afterAll(() => {}) && foo();",
-            "const thing = 123;\n\nafterAll(() => {}) && foo();",
-        ),
-        (
-            "const thing = 123; await afterAll(() => {});",
-            "const thing = 123;\n\nawait afterAll(() => {});",
-        ),
-        (
-            "const thing = 123;\nawait afterAll(() => {});",
-            "const thing = 123;\n\nawait afterAll(() => {});",
-        ),
-        (
-            "const thing = 123; await /* hook */ afterAll(() => {});",
-            "const thing = 123;\n\nawait /* hook */ afterAll(() => {});",
-        ),
         ("const thing = 123;\nafterAll(() => {});", "const thing = 123;\n\nafterAll(() => {});"),
         (
             "const thing = 123;\n// This is a comment\nafterAll(() => {});",
@@ -111,6 +91,26 @@ fn test() {
         (
             "describe('foo', () => {\nafterAll(() => {});\nafterAll(() => {});\n});",
             "describe('foo', () => {\nafterAll(() => {});\n\nafterAll(() => {});\n});",
+        ),
+        (
+            "const thing = 123; afterAll(() => {}), foo();",
+            "const thing = 123;\n\nafterAll(() => {}), foo();",
+        ),
+        (
+            "const thing = 123; afterAll(() => {}) && foo();",
+            "const thing = 123;\n\nafterAll(() => {}) && foo();",
+        ),
+        (
+            "const thing = 123; await afterAll(() => {});",
+            "const thing = 123;\n\nawait afterAll(() => {});",
+        ),
+        (
+            "const thing = 123;\nawait afterAll(() => {});",
+            "const thing = 123;\n\nawait afterAll(() => {});",
+        ),
+        (
+            "const thing = 123; await /* hook */ afterAll(() => {});",
+            "const thing = 123;\n\nawait /* hook */ afterAll(() => {});",
         ),
     ];
 
