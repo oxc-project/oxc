@@ -35,15 +35,16 @@ use oxc_allocator::{Address, ArenaBox, ArenaVec, GetAddress, GetAllocator, Repla
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{BoundNames, ToJsString, WithoutGlobalReferenceInformation};
-use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
+use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{GetSpan, SPAN};
+use oxc_str::static_ident;
 use oxc_traverse::{Ancestor, MaybeBoundIdentifier, Traverse};
 
 use crate::{
     common::helper_loader::{Helper, helper_call, helper_call_expr, helper_load},
     context::TraverseCtx,
     state::TransformState,
-    utils::ast_builder::arrow_function_body_as_function_body_mut,
+    utils::ast_builder::{arrow_function_body_as_function_body_mut, create_property_access},
 };
 
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
@@ -514,6 +515,19 @@ impl<'a> ObjectRestSpread<'a> {
                 Self::make_object_spread(&mut call_expr, &mut props, ctx);
                 let arg = spread_prop.argument.take_in(ctx);
                 call_expr.as_mut().unwrap().arguments.push(Argument::from(arg));
+            } else if let ObjectPropertyKind::ObjectProperty(mut obj_prop) = prop {
+                if Self::is_non_computed_proto(&obj_prop) && call_expr.is_some() {
+                    if !props.is_empty() {
+                        Self::make_object_spread(&mut call_expr, &mut props, ctx);
+                    }
+                    let proto_value = obj_prop.value.take_in(ctx);
+                    let current = call_expr.take().unwrap();
+                    let current_expr = Expression::CallExpression(current);
+                    let wrapped = Self::wrap_with_prototype_setter(current_expr, proto_value, ctx);
+                    call_expr.replace(wrapped);
+                } else {
+                    props.push(ObjectPropertyKind::ObjectProperty(obj_prop));
+                }
             } else {
                 props.push(prop);
             }
@@ -526,6 +540,125 @@ impl<'a> ObjectRestSpread<'a> {
         let mut final_call = call_expr.unwrap();
         final_call.span = span;
         *expr = Expression::CallExpression(final_call);
+    }
+
+    fn is_non_computed_proto(prop: &ObjectProperty<'a>) -> bool {
+        if prop.computed || prop.method || prop.kind != PropertyKind::Init {
+            return false;
+        }
+        match &prop.key {
+            PropertyKey::StaticIdentifier(ident) => ident.name == "__proto__",
+            PropertyKey::StringLiteral(lit) => lit.value == "__proto__",
+            _ => false,
+        }
+    }
+
+    fn wrap_with_prototype_setter(
+        obj: Expression<'a>,
+        proto: Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> ArenaBox<'a, CallExpression<'a>> {
+        let scope_id = ctx
+            .create_child_scope(ctx.current_scope_id(), ScopeFlags::Arrow | ScopeFlags::Function);
+        let obj_binding = ctx.generate_uid("object", scope_id, SymbolFlags::FunctionScopedVariable);
+        let proto_binding =
+            ctx.generate_uid("proto", scope_id, SymbolFlags::FunctionScopedVariable);
+
+        // `typeof proto === "object" || typeof proto === "function"`
+        let proto_read = proto_binding.create_read_expression(ctx);
+        let typeof_proto =
+            Expression::new_unary_expression(SPAN, UnaryOperator::Typeof, proto_read, ctx);
+        let typeof_is_object = Expression::new_binary_expression(
+            SPAN,
+            typeof_proto,
+            BinaryOperator::StrictEquality,
+            Expression::new_string_literal(SPAN, "object", None, ctx),
+            ctx,
+        );
+        let proto_read = proto_binding.create_read_expression(ctx);
+        let typeof_proto =
+            Expression::new_unary_expression(SPAN, UnaryOperator::Typeof, proto_read, ctx);
+        let typeof_is_function = Expression::new_binary_expression(
+            SPAN,
+            typeof_proto,
+            BinaryOperator::StrictEquality,
+            Expression::new_string_literal(SPAN, "function", None, ctx),
+            ctx,
+        );
+        let condition = Expression::new_logical_expression(
+            SPAN,
+            typeof_is_object,
+            LogicalOperator::Or,
+            typeof_is_function,
+            ctx,
+        );
+
+        // `Object.setPrototypeOf(object, proto)`
+        let object_read = obj_binding.create_read_expression(ctx);
+        let proto_read = proto_binding.create_read_expression(ctx);
+        let object_ident =
+            ctx.create_unbound_ident_expr(SPAN, static_ident!("Object"), ReferenceFlags::Read);
+        let callee = create_property_access(SPAN, object_ident, "setPrototypeOf", ctx);
+        let set_call = Expression::new_call_expression(
+            SPAN,
+            callee,
+            None,
+            ArenaVec::from_array_in([Argument::from(object_read), Argument::from(proto_read)], ctx),
+            false,
+            ctx,
+        );
+        let if_stmt = Statement::new_if_statement(
+            SPAN,
+            condition,
+            Statement::new_expression_statement(SPAN, set_call, ctx),
+            None,
+            ctx,
+        );
+
+        // `return object;`
+        let object_read = obj_binding.create_read_expression(ctx);
+        let return_stmt = Statement::new_return_statement(SPAN, Some(object_read), ctx);
+
+        let body = FunctionBody::boxed(
+            SPAN,
+            [],
+            ArenaVec::from_array_in([if_stmt, return_stmt], ctx),
+            ctx,
+        );
+
+        let params = FormalParameters::boxed(
+            SPAN,
+            FormalParameterKind::ArrowFormalParameters,
+            ArenaVec::from_array_in(
+                [
+                    FormalParameter::new_plain(SPAN, obj_binding.create_binding_pattern(ctx), ctx),
+                    FormalParameter::new_plain(
+                        SPAN,
+                        proto_binding.create_binding_pattern(ctx),
+                        ctx,
+                    ),
+                ],
+                ctx,
+            ),
+            None,
+            ctx,
+        );
+
+        let arrow = Expression::new_arrow_function_expression_with_scope_id_and_pure_and_pife(
+            SPAN,
+            false,
+            None,
+            params,
+            None,
+            ArrowFunctionBody::FunctionBody(body),
+            scope_id,
+            false,
+            false,
+            ctx,
+        );
+
+        let arguments = ArenaVec::from_array_in([Argument::from(obj), Argument::from(proto)], ctx);
+        CallExpression::boxed(SPAN, arrow, None, arguments, false, ctx)
     }
 
     fn make_object_spread(
