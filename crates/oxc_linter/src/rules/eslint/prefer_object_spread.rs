@@ -258,7 +258,7 @@ fn has_proto_property(obj_expr: &ObjectExpression) -> bool {
             return false;
         };
 
-        !p.shorthand && p.key.is_specific_static_name("__proto__")
+        p.key.is_specific_static_name("__proto__")
     })
 }
 
@@ -459,6 +459,9 @@ fn test() {
         "Object.assign({}, { __proto__: p })",
         "Object.assign({ foo: 'bar' }, { __proto__: p })",
         "Object.assign({}, { ['__proto__']: p })",
+        "Object.assign({}, { __proto__ })",
+        "Object.assign({}, { __proto__() {} })",
+        "Object.assign({}, { '__proto__': p })",
     ];
 
     let fail = vec![
