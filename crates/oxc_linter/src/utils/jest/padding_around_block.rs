@@ -23,14 +23,14 @@ pub fn report_missing_padding_before_jest_block<'a>(
     let statement = loop {
         match statement_node.kind() {
             AstKind::ExpressionStatement(statement) => break statement,
-            AstKind::AwaitExpression(_) => {}
+            AstKind::AwaitExpression(_) | AstKind::ParenthesizedExpression(_) => {}
             _ if statement_node.span().start == node.span().start => {}
             _ => return,
         }
         statement_node = ctx.nodes().parent_node(statement_node.id());
     };
     let leading_expression = match &statement.expression {
-        Expression::AwaitExpression(await_expr) => &await_expr.argument,
+        Expression::AwaitExpression(await_expr) => await_expr.argument.without_parentheses(),
         expression => expression,
     };
     if leading_expression.span().start != node.span().start {

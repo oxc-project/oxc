@@ -50,6 +50,8 @@ fn test() {
         "const slow = false; if (slow)\n  test('slow', () => {});",
         "const slow = false; while (slow) test('slow', () => {});",
         "const slow = false; for (; slow;) test('slow', () => {});",
+        "const thing = 123; (test('foo', () => {}));",
+        "const thing = 123; await test('foo', () => {}) && foo();",
     ];
 
     let fail = vec![
@@ -217,6 +219,14 @@ describe('other bar', function() {
     });
 });
             ",
+        ),
+        (
+            "const thing = 123; await (test('foo', () => {}));",
+            "const thing = 123;\n\nawait (test('foo', () => {}));",
+        ),
+        (
+            "const thing = 123; await (test('foo', () => {}) && foo());",
+            "const thing = 123;\n\nawait (test('foo', () => {}) && foo());",
         ),
     ];
     Tester::new(PaddingAroundTestBlocks::NAME, PaddingAroundTestBlocks::PLUGIN, pass, fail)
