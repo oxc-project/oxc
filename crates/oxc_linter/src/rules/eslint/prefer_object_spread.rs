@@ -644,7 +644,6 @@ fn test() {
         // observable semantics (getter evaluation order, own `__proto__` handling, etc.).
         ("Object.assign({}, foo)", "({ ...foo})", None, FixKind::Suggestion),
         ("Object.assign({}, src)", "({ ...src})", None, FixKind::Suggestion),
-        // Literal-only rewrites remain safe automatic fixes.
         ("Object.assign({}, foo)", "({ ...foo})", None, FixKind::All),
         ("Object.assign  ({}, foo)", "({ ...foo})", None, FixKind::All),
         ("Object.assign({}, { foo: 'bar' })", "({ foo: 'bar'})", None, FixKind::Fix),
