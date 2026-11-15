@@ -627,9 +627,6 @@ impl OnlyExportComponents {
         span: Span,
         is_default_export: bool,
     ) -> ExportType {
-        // `export { name }` must see the same initializer as `export const name = …`.
-        // Default-export identifiers stay name-based, except for object expressions, which
-        // compound-component checks already inspect.
         let init = ctx.and_then(|ctx| {
             let scoping = ctx.scoping();
             let symbol_id = scoping.get_binding(scoping.root_scope_id(), local_name.into())?;
@@ -1168,7 +1165,6 @@ export function Button(props: PropsWithChildren): ReactNode {
         ),
         ("const App = React.unknown(() => <div />);", None),
         // https://github.com/oxc-project/oxc/issues/28338
-        // A factory or hook exported with `export { … }` is the same module as `export const`.
         (
             "export const createThing = () => {\n  const Inner = (): unknown => null;\n  return { Inner };\n};",
             None,
