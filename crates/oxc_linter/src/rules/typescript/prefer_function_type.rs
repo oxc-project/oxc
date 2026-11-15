@@ -692,7 +692,6 @@ type X = {} & (() => void);
             "export type AnyFn = (...args: any[]) => any;",
         ),
         ("type K = { new(): T };", "type K = new() => T;"),
-        // `export default type` is not valid, so typescript-eslint doesn't fix these.
         (
             "export default interface Foo { /** comment */ (): string; }",
             "export default interface Foo { /** comment */ (): string; }",
