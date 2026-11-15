@@ -35,12 +35,6 @@ Using `toBeCalled()` or `toHaveBeenCalled()` only verifies the function
 was invoked, but doesn't validate the arguments, potentially missing
 bugs where functions are called with incorrect parameters.
 
-This rewrite is provided as a suggestion rather than a safe fix because
-`toBeCalledWith()` and `toHaveBeenCalledWith()` with no arguments require
-a call with exactly zero arguments, which is a stricter assertion than the
-original matchers. The replacement changes which calls pass the assertion,
-so the author must decide what arguments to assert.
-
 ### Examples
 
 Examples of **incorrect** code for this rule:
