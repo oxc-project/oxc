@@ -767,7 +767,7 @@ struct Context<'a> {
     instruction_signature_cache: FxHashMap<u32, Rc<InstructionSignature<'a>>>,
     catch_handlers: FxHashMap<BlockId, Place>,
     is_function_expression: bool,
-    hoisted_context_declarations: FxHashMap<DeclarationId, Option<Place>>,
+    hoisted_context_declarations: FxHashMap<DeclarationId, (InstructionKind, Option<Place>)>,
     non_mutating_spreads: FxHashSet<IdentifierId>,
     /// Cache of ValueIds keyed by effect key, ensuring stable allocation-site identity
     /// across fixpoint iterations. Mirrors TS `effectInstructionValueCache`.
@@ -1025,17 +1025,20 @@ fn merge_value_kinds(a: ValueKind, b: ValueKind) -> ValueKind {
 fn find_hoisted_context_declarations(
     func: &HirFunction,
     env: &Environment,
-) -> FxHashMap<DeclarationId, Option<Place>> {
-    let mut hoisted: FxHashMap<DeclarationId, Option<Place>> = FxHashMap::default();
+) -> FxHashMap<DeclarationId, (InstructionKind, Option<Place>)> {
+    let mut hoisted: FxHashMap<DeclarationId, (InstructionKind, Option<Place>)> =
+        FxHashMap::default();
 
     fn visit(
-        hoisted: &mut FxHashMap<DeclarationId, Option<Place>>,
+        hoisted: &mut FxHashMap<DeclarationId, (InstructionKind, Option<Place>)>,
         place: &Place,
         env: &Environment,
     ) {
         let decl_id = env.identifiers[place.identifier].declaration_id;
-        if hoisted.contains_key(&decl_id) && hoisted.get(&decl_id).unwrap().is_none() {
-            hoisted.insert(decl_id, Some(*place));
+        if let Some((_, access)) = hoisted.get_mut(&decl_id)
+            && access.is_none()
+        {
+            *access = Some(*place);
         }
     }
 
@@ -1050,7 +1053,7 @@ fn find_hoisted_context_declarations(
                         || kind == InstructionKind::HoistedLet
                     {
                         let decl_id = env.identifiers[lvalue.place.identifier].declaration_id;
-                        hoisted.insert(decl_id, None);
+                        hoisted.insert(decl_id, (kind, None));
                     }
                 }
                 _ => {
@@ -2042,30 +2045,36 @@ fn apply_effect_ref<'a>(
                 if mutation_kind == MutationResult::MutateFrozen
                     && context.hoisted_context_declarations.contains_key(&decl_id)
                 {
-                    let variable = match &ident.name {
-                        Some(IdentifierName::Named(n)) => Some(format!("`{}`", n)),
-                        _ => None,
-                    };
-                    let hoisted_access =
-                        context.hoisted_context_declarations.get(&decl_id).cloned().flatten();
-                    let access_span = hoisted_access
-                        .as_ref()
-                        .filter(|access| access.span != value.span)
-                        .and_then(|access| access.span);
-                    let diagnostic = diagnostics::variable_accessed_before_declaration(
-                        variable.as_deref(),
-                        access_span,
-                        None,
-                    );
-                    let error = env.intern_aliasing_diagnostic(value.identifier, diagnostic);
-                    apply_effect(
-                        context,
-                        state,
-                        AliasingEffect::MutateFrozen { place: *value, error },
-                        initialized,
-                        effects,
-                        env,
-                    )?;
+                    let (hoisted_kind, hoisted_access) =
+                        context.hoisted_context_declarations.get(&decl_id).copied().unwrap();
+                    if hoisted_kind == InstructionKind::HoistedFunction {
+                        // Function declarations are initialized on scope entry, so a
+                        // reference within a deferred callback is not a TDZ violation.
+                        effects.push(effect.clone_in(context.alloc));
+                    } else {
+                        let variable = match &ident.name {
+                            Some(IdentifierName::Named(n)) => Some(format!("`{}`", n)),
+                            _ => None,
+                        };
+                        let access_span = hoisted_access
+                            .as_ref()
+                            .filter(|access| access.span != value.span)
+                            .and_then(|access| access.span);
+                        let diagnostic = diagnostics::variable_accessed_before_declaration(
+                            variable.as_deref(),
+                            access_span,
+                            None,
+                        );
+                        let error = env.intern_aliasing_diagnostic(value.identifier, diagnostic);
+                        apply_effect(
+                            context,
+                            state,
+                            AliasingEffect::MutateFrozen { place: *value, error },
+                            initialized,
+                            effects,
+                            env,
+                        )?;
+                    }
                 } else {
                     let reason_str = get_write_error_reason(&abstract_value);
                     let variable = match &ident.name {

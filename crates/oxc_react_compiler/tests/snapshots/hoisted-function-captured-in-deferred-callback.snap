@@ -1,0 +1,24 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/hoisted-function-captured-in-deferred-callback.tsx
+---
+import { c as _c } from "react/compiler-runtime";
+import { useGuard } from "./guard.mjs";
+export function View() {
+	const $ = _c(2);
+	const guard = useGuard(() => save());
+	async function save() {
+		await Promise.resolve();
+		guard.markSaved();
+		return true;
+	}
+	let t0;
+	if ($[0] !== save) {
+		t0 = <button onClick={save}>Save</button>;
+		$[0] = save;
+		$[1] = t0;
+	} else {
+		t0 = $[1];
+	}
+	return t0;
+}
