@@ -49,6 +49,10 @@ fn tests() {
         ("test.concurrent('unimplemented');", None),
         ("test.each([1, 2])('case %i', () => {});", None),
         ("test.runIf(true)('runs on this platform', () => {});", None),
+        ("test.concurrent.skip('skipped concurrent test', () => {});", None),
+        ("test.concurrent['skip']('skipped concurrent test', function () {});", None),
+        ("test.only.skip('skipped focused test', () => {});", None),
+        ("test.fails.skip('skipped failing test', () => {});", None),
         (
             "
                 supportsDone && params.length < test.length

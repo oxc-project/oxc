@@ -140,7 +140,8 @@ fn should_filter_case(expr: &CallExpression) -> bool {
     // Only `.skip` members can be safely rewritten. All other modifiers
     // (`.only`, `.fails`, `.concurrent`, dynamic computed members, etc.) are
     // intentionally skipped.
-    mem_expr.static_property_name().is_none_or(|name| name != "skip")
+    !matches!(mem_expr.object(), Expression::Identifier(_))
+        || mem_expr.static_property_name() != Some("skip")
 }
 
 fn is_string_type(arg: &Argument) -> bool {
