@@ -74,8 +74,6 @@ fn test() {
         ),
     ];
 
-    // Regression coverage: plain `--fix` must not rewrite the matcher, while
-    // `--fix-suggestions` may.
     fix.extend([
         ("expect(fn).toBeCalled();", "expect(fn).toBeCalled();", None, FixKind::Fix),
         ("expect(fn).toBeCalled();", "expect(fn).toBeCalledWith();", None, FixKind::Suggestion),
