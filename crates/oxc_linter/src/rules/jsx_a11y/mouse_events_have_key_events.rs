@@ -157,7 +157,6 @@ fn test() {
 
     let pass = vec![
         ("<div onMouseOver={() => void 0} onFocus={() => void 0} />;", None),
-        ("<div onMouseOver={() => void 0} onfocus={() => void 0} />;", None),
         ("<div onMouseOver={() => void 0} onFocus={() => void 0} {...props} />;", None),
         ("<div onMouseOver={handleMouseOver} onFocus={handleFocus} />;", None),
         ("<div onMouseOver={handleMouseOver} onFocus={handleFocus} {...props} />;", None),
@@ -222,6 +221,7 @@ fn test() {
             configured.clone(),
         ),
         ("<Custom onMouseOver={handler} onFocus={null} />", None),
+        ("<div onMouseOver={() => void 0} onfocus={() => void 0} />;", None),
     ];
 
     let fail = vec![
@@ -229,7 +229,6 @@ fn test() {
         ("<div onMouseOut={() => void 0} />", None),
         ("<div onMouseOver={() => void 0} onFocus={undefined} />;", None),
         ("<div onMouseOut={() => void 0} onBlur={undefined} />", None),
-        ("<div onmouseover={() => void 0} />;", None),
         ("<div onMouseOver={() => void 0} {...props} />", None),
         ("<div onMouseOut={() => void 0} {...props} />", None),
         (
@@ -270,6 +269,7 @@ fn test() {
         ("<div onMouseOut={undefined} onMouseLeave={handler} />", configured.clone()),
         ("<div onMouseOver={null} onMouseEnter={handler} onFocus={null} />", configured.clone()),
         ("<div onMouseOut={undefined} onMouseLeave={handler} onBlur={null} />", configured),
+        ("<div onmouseover={() => void 0} />;", None),
     ];
 
     Tester::new(MouseEventsHaveKeyEvents::NAME, MouseEventsHaveKeyEvents::PLUGIN, pass, fail)

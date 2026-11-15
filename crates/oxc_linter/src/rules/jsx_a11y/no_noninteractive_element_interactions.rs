@@ -638,7 +638,6 @@ fn test() {
     let mut fail: Vec<TestCase> = vec![
         (r"<main onClick={() => void 0} />", None, None).into(),
         (r"<li onClick={() => void 0} />", None, None).into(),
-        (r"<li onclick={() => void 0} />", None, None).into(),
         (r"<img onClick={() => void 0} />", None, None).into(),
         (r"<iframe onClick={() => void 0} />", None, None).into(),
         (r"<label onClick={() => void 0} />", None, None).into(),
@@ -687,6 +686,7 @@ fn test() {
             None,
         )
             .into(),
+        (r"<li onclick={() => void 0} />", None, None).into(),
     ];
 
     for tag in [

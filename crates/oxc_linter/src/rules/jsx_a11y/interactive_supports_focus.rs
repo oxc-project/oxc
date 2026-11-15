@@ -291,7 +291,6 @@ fn test() {
     let fail = vec![
         (r"<Div onClick={() => void 0} role='button' />", None, Some(settings())),
         (r#"<div role="button" onClick={() => void 0} />"#, None, None),
-        (r#"<div role="button" onclick={() => void 0} />"#, None, None),
         (r#"<div role="checkbox" onClick={() => void 0} />"#, None, None),
         (r#"<div role="link" onClick={() => void 0} />"#, None, None),
         (r#"<div role="searchbox" onClick={() => void 0} />"#, None, None),
@@ -307,6 +306,7 @@ fn test() {
         (r#"<div role="slider" onClick={() => void 0} />"#, None, None),
         (r#"<div role="tab" onClick={() => void 0} />"#, None, None),
         (r#"<div role="treeitem" onClick={() => void 0} />"#, None, None),
+        (r#"<div role="button" onclick={() => void 0} />"#, None, None),
     ];
 
     let fix_tabbable = vec![(

@@ -96,7 +96,6 @@ fn test() {
 
     let pass = vec![
         (r"<div onClick={() => void 0} onKeyDown={foo}/>;", None, None),
-        (r"<div onClick={() => void 0} onkeydown={foo} />;", None, None),
         (r"<div onClick={() => void 0} onKeyUp={foo} />;", None, None),
         (r"<div onClick={() => void 0} onKeyPress={foo}/>;", None, None),
         (r"<div onClick={() => void 0} onKeyDown={foo} onKeyUp={bar} />;", None, None),
@@ -119,12 +118,12 @@ fn test() {
         (r"<TestComponent onClick={doFoo} />", None, None),
         (r"<Button onClick={doFoo} />", None, None),
         (r"<Footer onClick={doFoo} />", None, None),
+        (r"<div onClick={() => void 0} onkeydown={foo} />;", None, None),
     ];
 
     let fail = vec![
         (r"<div onClick={() => void 0} />;", None, None),
         (r"<div onClick={() => void 0} role={undefined} />;", None, None),
-        (r"<div onclick={() => void 0} />;", None, None),
         (r"<div onClick={() => void 0} {...props} />;", None, None),
         (r"<section onClick={() => void 0} />;", None, None),
         (r"<main onClick={() => void 0} />;", None, None),
@@ -145,6 +144,7 @@ fn test() {
                 } }
             })),
         ),
+        (r"<div onclick={() => void 0} />;", None, None),
     ];
 
     Tester::new(ClickEventsHaveKeyEvents::NAME, ClickEventsHaveKeyEvents::PLUGIN, pass, fail)

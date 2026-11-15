@@ -468,7 +468,6 @@ fn test() {
 
     let fail = vec![
         (r"<div onClick={() => {}} aria-hidden={false} />;", None),
-        (r"<div onclick={() => {}} />;", None),
         (r#"<a tabIndex="0" onClick={() => {}} />"#, None),
         (
             r"<div onClick={() => {}} role={ROLE} />",
@@ -570,6 +569,7 @@ fn test() {
         // (r"<div onMouseMove={() => {}} />;", None),
         // (r"<div onMouseOut={() => {}} />;", None),
         // (r"<div onMouseOver={() => {}} />;", None),
+        (r"<div onclick={() => {}} />;", None),
     ];
 
     Tester::new(NoStaticElementInteractions::NAME, NoStaticElementInteractions::PLUGIN, pass, fail)
