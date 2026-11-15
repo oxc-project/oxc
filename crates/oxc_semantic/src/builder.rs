@@ -19,7 +19,7 @@ use oxc_cfg::{
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_ecmascript::IsSimpleParameterList;
 use oxc_span::{SourceType, Span};
-use oxc_str::Ident;
+use oxc_str::{Ident, IdentHashMap};
 use oxc_syntax::{
     node::{NodeFlags, NodeId},
     reference::{Reference, ReferenceFlags, ReferenceId},
@@ -41,6 +41,10 @@ use crate::{
 };
 #[cfg(feature = "jsdoc")]
 use oxc_jsdoc::JSDocBuilder;
+
+/// Scope depth up to which [`SemanticBuilder::resolve_all_references`] walks up scope chains.
+/// Real-world code rarely nests more than 20 scopes deep.
+const MAX_WALK_UP_DEPTH: u32 = 64;
 
 #[cfg(feature = "cfg")]
 macro_rules! control_flow {
@@ -80,6 +84,10 @@ pub struct SemanticBuilder<'a> {
 
     // states
     pub(crate) current_scope_id: ScopeId,
+    /// Depth of `current_scope_id`, counting the program scope as 0.
+    scope_depth: u32,
+    /// Deepest `scope_depth` reached, which picks how references are resolved.
+    max_scope_depth: u32,
     pub(crate) module_instance_state_cache: FxHashMap<Address, ModuleInstanceState>,
     current_reference_flags: ReferenceFlags,
     /// Duplicate-binding exclusions for the parameter list currently being visited.
@@ -155,6 +163,8 @@ impl<'a> SemanticBuilder<'a> {
             formal_parameter_excludes: SymbolFlags::FunctionScopedVariableExcludes,
             ambient_depth: 0,
             current_scope_id,
+            scope_depth: 0,
+            max_scope_depth: 0,
             module_instance_state_cache: FxHashMap::default(),
             node_store: AstNodeStore::default(),
             hoisting_variables: FxHashMap::default(),
@@ -672,11 +682,45 @@ impl<'a> SemanticBuilder<'a> {
     ///
     /// Walk-up is faster because it only does hashmap lookups (no drain+insert),
     /// and reference creation is a simple Vec push instead of a hashmap insert.
+    ///
+    /// Walk-up costs O(references * depth), though, which is quadratic for deeply nested code.
+    /// When scopes nest deeper than [`MAX_WALK_UP_DEPTH`],
+    /// [`resolve_references_in_linear_time`](Self::resolve_references_in_linear_time) resolves
+    /// them instead.
     fn resolve_all_references(&mut self) {
         let root_scope_id = self.scoping.root_scope_id();
         let refs = self.unresolved_references.take();
+        if self.max_scope_depth > MAX_WALK_UP_DEPTH {
+            self.resolve_references_in_linear_time(&refs);
+            return;
+        }
         for unresolved in refs {
             if !self.resolve_reference(unresolved, root_scope_id) {
+                self.scoping
+                    .add_root_unresolved_reference(unresolved.name, unresolved.reference_id);
+            }
+        }
+    }
+
+    /// Resolve `references` in linear time, in reference order so each symbol's resolved
+    /// references stay in source order.
+    ///
+    /// Each lookup walks up from the nearest scope that binds the reference's name, which
+    /// [`find_binding_scopes`](Self::find_binding_scopes) finds. The scopes below it bind nothing
+    /// of that name, so this resolves exactly as a walk from the reference's own scope would.
+    #[cold]
+    #[inline(never)]
+    fn resolve_references_in_linear_time(&mut self, references: &[UnresolvedReference<'a>]) {
+        let root_scope_id = self.scoping.root_scope_id();
+        let binding_scopes = self.find_binding_scopes(references);
+        for (&unresolved, binding_scope) in references.iter().zip(binding_scopes) {
+            let resolved = binding_scope.is_some_and(|lookup_scope_id| {
+                self.resolve_reference(
+                    UnresolvedReference { lookup_scope_id, ..unresolved },
+                    root_scope_id,
+                )
+            });
+            if !resolved {
                 self.scoping
                     .add_root_unresolved_reference(unresolved.name, unresolved.reference_id);
             }
@@ -765,6 +809,124 @@ impl<'a> SemanticBuilder<'a> {
             current_scope_id = self.scoping.scope_parent_id(scope_id);
         }
         false
+    }
+
+    /// Find, for each reference, the nearest scope on its scope chain that binds its name, in
+    /// O(scopes + bindings + references).
+    ///
+    /// The scope tree is walked depth first. For every name, the bindings declared in the scopes
+    /// on the current path form a stack, linked through `BindingEntry::outer`, so the top of a
+    /// name's stack is the nearest scope that binds it.
+    ///
+    /// A value reference to `arguments` gets [`None`] when the nearest binding lies outside its
+    /// ordinary function, as its lookup ends at the function's implicit arguments object.
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "scopes, bindings and references are counted in u32, as their ids are"
+    )]
+    fn find_binding_scopes(&self, references: &[UnresolvedReference<'a>]) -> Vec<Option<ScopeId>> {
+        const NONE: u32 = u32::MAX;
+
+        struct BindingEntry<'s> {
+            name: Ident<'s>,
+            scope_id: ScopeId,
+            depth: u32,
+            /// The entry of the same name in an enclosing scope.
+            outer: u32,
+        }
+
+        struct Frame {
+            next_child: u32,
+            entries_start: u32,
+            /// Depth of the nearest enclosing ordinary function scope.
+            function_depth: u32,
+        }
+
+        let scoping = &self.scoping;
+        let mut binding_scopes = vec![None; references.len()];
+
+        // The scope tree and each scope's references, as linked lists.
+        let scope_count = scoping.scopes_len();
+        let mut first_child = vec![NONE; scope_count];
+        let mut next_sibling = vec![NONE; scope_count];
+        for scope_id in (0..scope_count).rev().map(ScopeId::from_usize) {
+            if let Some(parent_id) = scoping.scope_parent_id(scope_id) {
+                next_sibling[scope_id.index()] = first_child[parent_id.index()];
+                first_child[parent_id.index()] = scope_id.index() as u32;
+            }
+        }
+        let mut first_reference = vec![NONE; scope_count];
+        let mut next_reference = vec![NONE; references.len()];
+        for (index, unresolved) in references.iter().enumerate() {
+            let scope = unresolved.lookup_scope_id.index();
+            next_reference[index] = first_reference[scope];
+            first_reference[scope] = index as u32;
+        }
+
+        let mut innermost: IdentHashMap<'_, u32> = IdentHashMap::default();
+        let mut entries: Vec<BindingEntry<'_>> = Vec::new();
+        let mut frames: Vec<Frame> = Vec::new();
+        let mut scope_id = scoping.root_scope_id();
+        loop {
+            let depth = frames.len() as u32;
+            let flags = scoping.scope_flags(scope_id);
+            let function_depth = if flags.is_function() && !flags.is_arrow() {
+                depth
+            } else {
+                frames.last().map_or(NONE, |frame| frame.function_depth)
+            };
+            let entries_start = entries.len() as u32;
+            for name in scoping.get_bindings(scope_id).keys() {
+                let outer = innermost.insert(*name, entries.len() as u32).unwrap_or(NONE);
+                entries.push(BindingEntry { name: *name, scope_id, depth, outer });
+            }
+
+            let mut index = first_reference[scope_id.index()];
+            while index != NONE {
+                let unresolved = &references[index as usize];
+                if let Some(&entry_index) = innermost.get(&unresolved.name) {
+                    let entry = &entries[entry_index as usize];
+                    let outside_arguments_scope = function_depth != NONE
+                        && entry.depth < function_depth
+                        && unresolved.name == "arguments"
+                        && scoping
+                            .get_reference(unresolved.reference_id)
+                            .flags()
+                            .intersects(ReferenceFlags::Value | ReferenceFlags::ValueAsType);
+                    if !outside_arguments_scope {
+                        binding_scopes[index as usize] = Some(entry.scope_id);
+                    }
+                }
+                index = next_reference[index as usize];
+            }
+
+            frames.push(Frame {
+                next_child: first_child[scope_id.index()],
+                entries_start,
+                function_depth,
+            });
+
+            // Enter the next scope, after leaving every scope that has no children left.
+            loop {
+                let Some(frame) = frames.last_mut() else {
+                    return binding_scopes;
+                };
+                if frame.next_child != NONE {
+                    scope_id = ScopeId::from_usize(frame.next_child as usize);
+                    frame.next_child = next_sibling[scope_id.index()];
+                    break;
+                }
+                let entries_start = frame.entries_start as usize;
+                frames.pop();
+                for entry in entries.drain(entries_start..).rev() {
+                    if entry.outer == NONE {
+                        innermost.remove(&entry.name);
+                    } else {
+                        innermost.insert(entry.name, entry.outer);
+                    }
+                }
+            }
+        }
     }
 
     /// Try to resolve a reference to a symbol. Returns `true` if resolved.
@@ -925,6 +1087,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.current_scope_id =
             self.scoping.add_scope(Some(parent_scope_id), self.node_store.current_node_id, flags);
         scope_id.set(Some(self.current_scope_id));
+        self.scope_depth += 1;
+        self.max_scope_depth = self.max_scope_depth.max(self.scope_depth);
     }
 
     // NB: Not called for `Program`
@@ -941,6 +1105,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             }
             self.current_scope_id = parent_id;
         }
+        self.scope_depth -= 1;
     }
 
     // NB: Not called for `Program`.

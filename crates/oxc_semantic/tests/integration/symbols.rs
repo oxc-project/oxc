@@ -815,3 +815,28 @@ fn test_implicit_arguments_unresolved_references() {
         assert!(scoping.get_reference(reference_id).symbol_id().is_none());
     }
 }
+
+/// Scopes nested deeper than the walk-up limit resolve references in linear time, with the same
+/// results as shallow code.
+#[test]
+fn test_deeply_nested_references() {
+    for depth in [3, 200] {
+        let source = format!(
+            "let x; let arguments; type T = number; {} let v: T = x; (function () {{ arguments; }})(); {}",
+            "{ let T = 0; x;".repeat(depth),
+            "}".repeat(depth),
+        );
+        let tester = SemanticTester::new(&source, SourceType::ts()).with_script(true);
+        let semantic = tester.build();
+        let scoping = semantic.scoping();
+        let symbol =
+            |name: &str| scoping.get_binding(scoping.root_scope_id(), name.into()).unwrap();
+
+        assert_eq!(scoping.get_resolved_reference_ids(symbol("x")).len(), depth + 1, "{depth}");
+        // The type annotation skips every block's value `T` and resolves to the type alias.
+        assert_eq!(scoping.get_resolved_reference_ids(symbol("T")).len(), 1, "{depth}");
+        // `arguments` in the function is its implicit arguments object.
+        assert!(scoping.get_resolved_reference_ids(symbol("arguments")).is_empty(), "{depth}");
+        assert_eq!(scoping.root_unresolved_references().get("arguments").unwrap().len(), 1);
+    }
+}
