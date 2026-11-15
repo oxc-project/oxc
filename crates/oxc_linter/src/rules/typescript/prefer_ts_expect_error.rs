@@ -128,7 +128,7 @@ fn test_multi_line_comment(line: &str) -> bool {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::{fixer::FixKind, tester::Tester};
 
     let pass = vec![
         "// @ts-nocheck",
@@ -231,6 +231,13 @@ console.log('hello');
             None,
         ),
     ];
+
+    let mut fix = fix
+        .into_iter()
+        .map(|(source, expected, config)| (source, expected, config, FixKind::Suggestion))
+        .collect::<Vec<_>>();
+    let ts_ignore = "// @ts-ignore\nconst n: number = 1;\n";
+    fix.push((ts_ignore, ts_ignore, None, FixKind::SafeFix));
 
     Tester::new(PreferTsExpectError::NAME, PreferTsExpectError::PLUGIN, pass, fail)
         .expect_fix(fix)

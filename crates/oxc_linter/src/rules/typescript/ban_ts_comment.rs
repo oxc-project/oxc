@@ -345,7 +345,7 @@ pub fn find_ts_comment_directive(
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::{fixer::FixKind, tester::Tester};
     // A total of 51 test cases passed successfully.
     let pass = vec![
         // ts-expect-error
@@ -1049,6 +1049,13 @@ if (false) {
         ("// @ts-ignore: TS1234", r"// @ts-expect-error: TS1234"),
         ("// @ts-ignore    : TS1234 because xyz", r"// @ts-expect-error    : TS1234 because xyz"),
     ];
+
+    let mut fix = fix
+        .into_iter()
+        .map(|(source, expected)| (source, expected, None, FixKind::Suggestion))
+        .collect::<Vec<_>>();
+    let ts_ignore = "// @ts-ignore\nconst n: number = 1;\n";
+    fix.push((ts_ignore, ts_ignore, None, FixKind::SafeFix));
 
     Tester::new(BanTsComment::NAME, BanTsComment::PLUGIN, pass, fail)
         .expect_fix(fix)

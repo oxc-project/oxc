@@ -1329,24 +1329,6 @@ mod test {
     }
 
     #[test]
-    fn test_fix_skip_ts_expect_error_suggestion() {
-        let tester = Tester::new().with_cwd("fixtures/cli/fix_argument".into());
-        let ts_ignore = "// @ts-ignore\nconst n: number = 1;\n";
-        tester.test_fix_with_args(
-            "skip_ts_expect_error_suggestion.ts",
-            ts_ignore,
-            ts_ignore,
-            &["-A", "all", "-D", "typescript/prefer-ts-expect-error"],
-        );
-        tester.test_fix_with_args(
-            "skip_ban_ts_comment_suggestion.ts",
-            ts_ignore,
-            ts_ignore,
-            &["-A", "all", "-D", "typescript/ban-ts-comment"],
-        );
-    }
-
-    #[test]
     fn test_fix_unused_disable_directives_inline() {
         Tester::new().with_cwd("fixtures/cli/fix_argument".into()).test_fix_with_args(
             "unused_disable_directives_inline.vue",
