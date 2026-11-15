@@ -800,8 +800,8 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     }
 
     pub fn parse_expression(mut self) -> Result<Expression<'a>, Diagnostics> {
-        // initialize cur_token and prev_token by moving onto the first token
-        self.bump_any();
+        // Initialize by moving onto the first token
+        self.token = self.lexer.first_token_without_hashbang();
         let expr = self.parse_expr();
         if !self.at(Kind::Eof) {
             self.set_unexpected();
