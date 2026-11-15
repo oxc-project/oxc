@@ -30,6 +30,7 @@ This rule triggers a warning if empty test cases are used without 'test.todo'.
 Examples of **incorrect** code for this rule:
 ```javascript
 test('i need to write this test'); // invalid
+test('i need to write this test', () => {}); // invalid
 test.skip('i need to write this test', () => {}); // invalid
 ```
 
@@ -76,16 +77,6 @@ pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
     }
 }
 
-/// Only the following rewrites preserve runtime behavior:
-///
-/// - `test('title')` / `it('title')` -> `test.todo('title')`
-///   Vitest/Jest already treat a one-argument test call as a todo.
-/// - `test.skip('title')` / `test.skip('title', () => {})` -> `test.todo('title')`
-///   Skipped tests run no hooks, so removing the empty body is safe.
-///
-/// Bare `test('title', () => {})` and non-`skip` modifiers (`.only`,
-/// `.fails`, `.concurrent`, `.each`, `.runIf`, etc.) can change which tests
-/// run or whether hooks execute, so they must not be auto-fixed.
 fn is_safe_fix_target(call_expr: &CallExpression) -> bool {
     if let Some(name) =
         call_expr.callee.as_member_expression().and_then(MemberExpression::static_property_name)
