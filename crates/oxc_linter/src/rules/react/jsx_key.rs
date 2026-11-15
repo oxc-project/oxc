@@ -103,7 +103,7 @@ declare_oxc_lint!(
     /// [1, 2, 3].map(x => <App key={x} />);
     /// [1, 2, 3]?.map(x => <ListItem key={x} />)
     ///
-    /// // PascalCase and single-letter namespaces are single-value maps, not arrays.
+    /// import { R, Result } from "@praha/byethrow";
     /// R.map(name => <Page />);
     /// Result.map(name => <Page />);
     /// ```
@@ -308,7 +308,7 @@ fn is_in_array_or_iter<'a, 'b>(
                         return None;
                     }
 
-                    if ident != "from" && is_single_value_namespace_map(member_expr.object()) {
+                    if ident == "map" && is_byethrow_result(member_expr.object(), ctx) {
                         return None;
                     }
 
@@ -336,25 +336,26 @@ fn is_in_array_or_iter<'a, 'b>(
     None
 }
 
-/// `map` / `flatMap` on a PascalCase object or a single-letter namespace (`Result.map`, `R.map`)
-/// maps one value, not an array. All-caps bindings (`ITEMS.map`) stay iterators.
-fn is_single_value_namespace_map(object: &Expression<'_>) -> bool {
+fn is_byethrow_result(object: &Expression<'_>, ctx: &LintContext<'_>) -> bool {
     let Expression::Identifier(ident) = object.get_inner_expression() else {
         return false;
     };
-    is_pascal_or_namespace_name(ident.name.as_str())
-}
-
-fn is_pascal_or_namespace_name(name: &str) -> bool {
-    let mut chars = name.chars();
-    let Some(first) = chars.next() else { return false };
-    if !first.is_ascii_uppercase() {
+    let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id() else {
+        return false;
+    };
+    let declaration = ctx.semantic().symbol_declaration(symbol_id);
+    let AstKind::ImportSpecifier(specifier) = declaration.kind() else {
+        return false;
+    };
+    if specifier.import_kind.is_type()
+        || !matches!(specifier.imported.name().as_str(), "R" | "Result")
+    {
         return false;
     }
-    match chars.next() {
-        None => true,
-        Some(second) => second.is_ascii_lowercase() || chars.any(|c| c.is_ascii_lowercase()),
-    }
+    let AstKind::ImportDeclaration(import) = ctx.nodes().parent_kind(declaration.id()) else {
+        return false;
+    };
+    !import.import_kind.is_type() && import.source.value == "@praha/byethrow"
 }
 
 fn check_jsx_element<'a>(node: &AstNode<'a>, jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
@@ -662,13 +663,18 @@ fn test() {
             None,
         ),
         // https://github.com/oxc-project/oxc/issues/28391
-        ("R.map(name => <Page />);", None, None),
-        ("Result.map(name => <Page />);", None, None),
-        ("(Result).map(name => <Page />);", None, None),
-        ("R?.map(name => <Page />);", None, None),
-        ("Result.flatMap(name => <Page />);", None, None),
-        ("R.map(name => { return <Page />; });", None, None),
-        ("arr.map(x => R.map(name => <Page />));", None, None),
+        ("import { R } from '@praha/byethrow'; R.map(name => <Page />);", None, None),
+        ("import { Result } from '@praha/byethrow'; Result.map(name => <Page />);", None, None),
+        ("import { Result } from '@praha/byethrow'; (Result).map(name => <Page />);", None, None),
+        ("import { R } from '@praha/byethrow'; R?.map(name => <Page />);", None, None),
+        ("import { R } from '@praha/byethrow'; R.map(name => { return <Page />; });", None, None),
+        ("import { R } from '@praha/byethrow'; arr.map(x => R.map(name => <Page />));", None, None),
+        ("import { Result as result } from '@praha/byethrow'; result.map(name => <Page />);", None, None),
+        (
+            "import { R as result } from '@praha/byethrow'; result['map'](name => <></>);",
+            Some(serde_json::json!([{ "checkFragmentShorthand": true }])),
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -691,7 +697,7 @@ fn test() {
         ("[1, 2].map(x => <App />);", None, None),
         ("arr.map(x => <App />);", None, None),
         ("ITEMS.map(x => <App />);", None, None),
-        ("R.map(name => arr.map(x => <App />));", None, None),
+        ("import { R } from '@praha/byethrow'; R.map(name => arr.map(x => <App />));", None, None),
         ("[1, 2 ,3].map(x => x && <App x={x} />);", None, None),
         (r#"[1, 2 ,3].map(x => x ? <App x={x} key="1" /> : <OtherApp x={x} />);"#, None, None),
         (r#"[1, 2 ,3].map(x => x ? <App x={x} /> : <OtherApp x={x} key="2" />);"#, None, None),
@@ -900,6 +906,28 @@ fn test() {
         ),
         ("[((<App />))];", None, None),
         ("[condition ? [<App />] : null];", None, None),
+        ("const Items = [1, 2]; Items.map(x => <App />);", None, None),
+        ("const R = [1, 2]; R.flatMap(x => <App />);", None, None),
+        (
+            "function render(Result) { return Result.map(x => <></>); }",
+            Some(serde_json::json!([{ "checkFragmentShorthand": true }])),
+            None,
+        ),
+        ("import * as R from 'ramda'; R.map(x => <App />, [1, 2]);", None, None),
+        (
+            "import { R } from '@praha/byethrow'; function render(R) { return R.map(x => <App />); }",
+            None,
+            None,
+        ),
+        ("import { Result } from './data'; Result.map(x => <App />);", None, None),
+        ("import R from '@praha/byethrow'; R.map(x => <App />);", None, None),
+        ("import * as R from '@praha/byethrow'; R.map(x => <App />);", None, None),
+        ("import { pipe as R } from '@praha/byethrow'; R.map(x => <App />);", None, None),
+        ("import type { R } from '@praha/byethrow'; R.map(x => <App />);", None, None),
+        ("import { type R } from '@praha/byethrow'; R.map(x => <App />);", None, None),
+        ("import { R } from '@praha/byethrow'; Array.from(items, x => <App />);", None, None),
+        ("import { R } from '@praha/byethrow'; R.flatMap(x => <App />);", None, None),
+        ("Result.map(x => <App />);", None, None),
     ];
 
     Tester::new(JsxKey::NAME, JsxKey::PLUGIN, pass, fail).test_and_snapshot();
