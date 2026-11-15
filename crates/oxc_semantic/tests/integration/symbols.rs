@@ -863,6 +863,27 @@ fn test_symbol_declaration_scope_id() {
 }
 
 #[test]
+fn test_infer_declaration_scope_id() {
+    let tester = SemanticTester::ts(
+        "type A<T> = T extends [infer U, (x: infer V) => void] ? U | V : never;",
+    );
+    let semantic = tester.build();
+    let scoping = semantic.scoping();
+    let symbol = |name: &str| {
+        scoping.symbol_ids().find(|&symbol_id| scoping.symbol_name(symbol_id) == name).unwrap()
+    };
+
+    let u = symbol("U");
+    assert_eq!(scoping.symbol_declaration_scope_id(u), scoping.symbol_scope_id(u));
+
+    let v = symbol("V");
+    let declaration_scope_id = scoping.symbol_declaration_scope_id(v);
+    assert_ne!(declaration_scope_id, scoping.symbol_scope_id(v));
+    assert_eq!(scoping.scope_parent_id(declaration_scope_id), Some(scoping.symbol_scope_id(v)));
+    assert_eq!(scoping.symbol_scope_id(u), scoping.symbol_scope_id(v));
+}
+
+#[test]
 fn test_anonymous_function_names() {
     let let_flags = SymbolFlags::BlockScopedVariable;
     let function_name = SymbolFlags::AnonymousFunctionName;

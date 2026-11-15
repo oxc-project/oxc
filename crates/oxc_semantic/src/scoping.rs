@@ -459,9 +459,10 @@ impl Scoping {
     ///
     /// This is usually the same as [`Scoping::symbol_scope_id`]. They differ when the binding
     /// belongs to an outer scope: a `var` or an Annex B function declaration inside a block (this
-    /// returns the block scope, [`Scoping::symbol_scope_id`] the scope it was hoisted to), or
-    /// `infer T` (this returns the scope containing the `infer`, [`Scoping::symbol_scope_id`] the
-    /// conditional type's scope).
+    /// returns the block scope, [`Scoping::symbol_scope_id`] the scope it was hoisted to), or an
+    /// `infer T` nested in another scope inside a conditional type's `extends` clause, such as a
+    /// function type (this returns that scope, [`Scoping::symbol_scope_id`] the conditional type's
+    /// scope).
     ///
     /// Moving a binding with [`Scoping::set_symbol_scope_id`] or
     /// [`Scoping::move_binding_by_symbol_id`] does not change this scope.
