@@ -288,7 +288,6 @@ fn test() {
             r"foo
                 ;new Set(array).size",
         ),
-        // A space is needed after a keyword directly before `[`.
         (
             r"function isUnique(array) {
                 return[...new Set(array)].length === array.length
