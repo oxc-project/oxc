@@ -5,7 +5,7 @@ use std::{
 
 use memchr::memchr_iter;
 
-use oxc_allocator::{Allocator, ArenaVec};
+use oxc_allocator::{Allocator, ArenaVec, GetAllocator, TakeIn};
 use oxc_ast::ast::{Comment, CommentContent, CommentKind, CommentPosition};
 use oxc_span::Span;
 
@@ -70,12 +70,18 @@ impl<'a> Comments<'a> {
         self.vec.extend(self.inline.iter().cloned());
     }
 
-    pub(crate) fn into_vec(mut self) -> ArenaVec<'a, Comment> {
+    /// Take the comments in their final arena storage, leaving `self` empty.
+    ///
+    /// This takes `&mut self` so that the inline storage is not copied, as it would be
+    /// to move `self` or to consume its array.
+    pub(crate) fn take_vec(&mut self, allocator: &impl GetAllocator<'a>) -> ArenaVec<'a, Comment> {
         if self.vec.is_empty() {
             self.vec.reserve_exact(self.len);
-            self.vec.extend(self.inline.into_iter().take(self.len));
+            self.vec.extend(self.inline[..self.len].iter().cloned());
         }
-        self.vec
+        self.len = 0;
+        self.starts_end = 0;
+        self.vec.take_in(allocator)
     }
 }
 
