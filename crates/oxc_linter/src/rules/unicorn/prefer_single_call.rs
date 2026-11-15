@@ -228,12 +228,13 @@ impl Rule for PreferSingleCall {
 fn has_trailing_comma(call: &CallExpression, ctx: &LintContext) -> bool {
     let start = call.span.start;
     let mut end = call.span.end - 1;
+    let mut comments = ctx.comments_range(start..end).rev();
     loop {
         let text = ctx
             .source_range(Span::new(start, end))
             .trim_end_matches(|c| is_white_space(c) || is_line_terminator(c));
         let text_end = start + u32::try_from(text.len()).unwrap();
-        match ctx.comments_range(start..text_end).last() {
+        match comments.next() {
             Some(comment) if comment.span.end >= text_end => end = comment.span.start,
             _ => return text.ends_with(','),
         }
@@ -529,6 +530,14 @@ mod tests {
             (
                 "foo.unshift(1); foo.unshift(2, // comment \n);",
                 "foo.unshift(2, // comment \n 1);",
+            ),
+            (
+                "foo.push(/* argument */ 1, /* first */ // second \n /* third */); foo.push(2);",
+                "foo.push(/* argument */ 1, /* first */ // second \n /* third */ 2);",
+            ),
+            (
+                "foo.push(/* argument */ 1 /* first */ /* second */); foo.push(2);",
+                "foo.push(/* argument */ 1 /* first */ /* second */, 2);",
             ),
             ("foo.push(1);\nfoo.push(2);", "foo.push(1, 2);"),
             // ASI: semicolon from second statement is preserved.
