@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::identifier::is_identifier_part;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, ast_util::could_be_asi_hazard, context::LintContext, rule::Rule};
 
 fn zero_fraction(span: Span, lit: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Don't use a zero fraction in the number.")
@@ -83,11 +83,9 @@ impl Rule for NoZeroFractions {
 
                 if is_member_expression && is_decimal_integer {
                     fixed = format!("({fixed})");
-                    // TODO: checks the type and value of tokenBefore:
-                    // If tokenBefore is a Punctuator (e.g., a symbol like ;, ], or )), it determines whether a semicolon is necessary based on the context (e.g., the type of the last block node).
-                    // If the token type is in tokenTypesNeedsSemicolon, it returns true (semicolon needed).
-                    // Special cases like Template strings, ObjectExpression blocks, and certain Identifier cases are handled explicitly.
-                    // https://github.com/sindresorhus/eslint-plugin-unicorn/blob/77f32e5a6b2df542cf50dfbd371054f2cd8ce2d6/rules/no-zero-fractions.js#L56
+                    if could_be_asi_hazard(node, ctx) {
+                        fixed.insert(0, ';');
+                    }
                 }
 
                 // Insert a leading space when the fixed number would directly abut a preceding
@@ -230,6 +228,8 @@ fn test() {
         (r"const foo = 1.2300E-10", r"const foo = 1.23E-10"),
         (r"const foo = 1.E10", r"const foo = 1E10"),
         (r"const foo = -.0E+10", r"const foo = -0E+10"),
+        ("console.log()\n1..toString()", "console.log()\n;(1).toString()"),
+        ("console.log()\n.0.toString()", "console.log()\n;(0).toString()"),
     ];
 
     Tester::new(NoZeroFractions::NAME, NoZeroFractions::PLUGIN, pass, fail)

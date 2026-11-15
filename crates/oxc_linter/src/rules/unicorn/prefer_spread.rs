@@ -701,6 +701,7 @@ str.split("")"#,
             "foo(/* a */) /* b */ /* c */\nArray.from(set).map(() => {})",
             "foo(/* a */) /* b */ /* c */\n;[...set].map(() => {})",
         ),
+        ("foo\u{2029}Array.from(set).map(() => {})", "foo\u{2029};[...set].map(() => {})"),
     ];
 
     Tester::new(PreferSpread::NAME, PreferSpread::PLUGIN, pass, fail)

@@ -154,11 +154,6 @@ fn fix_conditional_expression<'a>(
                     && first_significant.is_some_and(needs_separator_after_keyword)
             };
 
-            let needs_asi_semi = !needs_restricted_parens
-                && !needs_space_before
-                && matches!(first_significant, Some('(' | '[' | '`' | '+' | '-' | '/'))
-                && could_be_asi_hazard(node, ctx);
-
             let needs_exposed_expr_parens = is_expression_statement_start(node, ctx)
                 && matches!(
                     unary.argument.without_parentheses(),
@@ -166,6 +161,12 @@ fn fix_conditional_expression<'a>(
                         | Expression::FunctionExpression(_)
                         | Expression::ClassExpression(_)
                 );
+
+            let needs_asi_semi = !needs_restricted_parens
+                && !needs_space_before
+                && (needs_exposed_expr_parens
+                    || matches!(first_significant, Some('(' | '[' | '`' | '+' | '-' | '/')))
+                && could_be_asi_hazard(node, ctx);
 
             (needs_space_before, needs_asi_semi, needs_restricted_parens, needs_exposed_expr_parens)
         } else {

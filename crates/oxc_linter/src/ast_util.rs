@@ -12,7 +12,8 @@ use oxc_semantic::{AstNode, AstNodes, IsGlobalReference, NodeId, ReferenceId, Se
 use oxc_span::{GetSpan, Span};
 use oxc_str::{JSStr, static_ident};
 use oxc_syntax::{
-    identifier::is_irregular_whitespace,
+    identifier::is_white_space,
+    line_terminator::is_line_terminator,
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
 };
 
@@ -998,35 +999,14 @@ pub fn is_node_within_call_argument<'a>(
 /// character before it could cause the replacement to be parsed as a continuation
 /// of the previous expression.
 pub fn could_be_asi_hazard(node: &AstNode, ctx: &LintContext) -> bool {
-    let node_span = node.span();
-
     // Find the enclosing ExpressionStatement, bailing early for nodes that can't
     // be at statement start position
-    let mut expr_stmt_span = None;
     for ancestor in ctx.nodes().ancestors(node.id()) {
         match ancestor.kind() {
             AstKind::ExpressionStatement(expr_stmt) => {
-                // An unbraced statement body cannot continue a preceding expression:
-                // the token before it is the `)` or keyword that closes the statement
-                // head, so a semicolon is never needed. Inserting one anyway would
-                // silently empty the body, turning `if (x) [a] !== b` into
-                // `if (x) ;[a] !== b`.
-                if matches!(
-                    ctx.nodes().parent_kind(ancestor.id()),
-                    AstKind::IfStatement(_)
-                        | AstKind::WhileStatement(_)
-                        | AstKind::DoWhileStatement(_)
-                        | AstKind::ForStatement(_)
-                        | AstKind::ForInStatement(_)
-                        | AstKind::ForOfStatement(_)
-                        | AstKind::WithStatement(_)
-                        | AstKind::LabeledStatement(_)
-                ) {
-                    return false;
-                }
-
-                expr_stmt_span = Some(expr_stmt.span);
-                break;
+                // Node must be at the start of the statement for ASI hazard to apply
+                return node.span().start == expr_stmt.span.start
+                    && could_be_asi_hazard_for_statement(ancestor, ctx);
             }
             // Expression types that can have our node at their start position
             AstKind::CallExpression(_)
@@ -1050,24 +1030,37 @@ pub fn could_be_asi_hazard(node: &AstNode, ctx: &LintContext) -> bool {
             _ => return false,
         }
     }
+    false
+}
 
-    let Some(expr_stmt_span) = expr_stmt_span else {
-        return false;
-    };
-
-    // Node must be at the start of the statement for ASI hazard to apply
-    if node_span.start != expr_stmt_span.start {
+/// Like [`could_be_asi_hazard`], for code that replaces the whole `statement`, e.g. an
+/// `if` statement fixed into an expression statement.
+pub fn could_be_asi_hazard_for_statement(statement: &AstNode, ctx: &LintContext) -> bool {
+    // An unbraced statement body cannot continue a preceding expression:
+    // the token before it is the `)` or keyword that closes the statement
+    // head, so a semicolon is never needed. Inserting one anyway would
+    // silently empty the body, turning `if (x) [a] !== b` into
+    // `if (x) ;[a] !== b`.
+    if matches!(
+        ctx.nodes().parent_kind(statement.id()),
+        AstKind::IfStatement(_)
+            | AstKind::WhileStatement(_)
+            | AstKind::DoWhileStatement(_)
+            | AstKind::ForStatement(_)
+            | AstKind::ForInStatement(_)
+            | AstKind::ForOfStatement(_)
+            | AstKind::WithStatement(_)
+            | AstKind::LabeledStatement(_)
+    ) {
         return false;
     }
 
-    if expr_stmt_span.start == 0 {
+    let start = statement.span().start;
+    if start == 0 {
         return false;
     }
 
-    let source_text = ctx.source_text();
-    let last_char = find_last_meaningful_char(source_text, expr_stmt_span.start, ctx);
-
-    let Some(last_char) = last_char else {
+    let Some(last_char) = find_last_meaningful_char(ctx.source_text(), start, ctx) else {
         return false;
     };
 
@@ -1084,8 +1077,7 @@ fn find_last_meaningful_char(source_text: &str, end_pos: u32, ctx: &LintContext)
     let mut idx = comments.partition_point(|c| c.span.start < end_pos);
     let mut text = &source_text[..end_pos as usize];
     loop {
-        text =
-            text.trim_end_matches(|c: char| c.is_ascii_whitespace() || is_irregular_whitespace(c));
+        text = text.trim_end_matches(|c| is_white_space(c) || is_line_terminator(c));
         #[expect(clippy::cast_possible_truncation)]
         let text_end = text.len() as u32;
         match idx.checked_sub(1).map(|i| &comments[i]) {

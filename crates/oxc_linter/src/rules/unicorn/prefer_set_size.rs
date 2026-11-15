@@ -11,7 +11,9 @@ use oxc_syntax::identifier::is_identifier_part;
 use crate::{
     AstNode,
     ast_util::variable_declaration_kind,
-    ast_util::{get_declaration_of_variable, is_method_call, outermost_paren_parent},
+    ast_util::{
+        could_be_asi_hazard, get_declaration_of_variable, is_method_call, outermost_paren_parent,
+    },
     context::LintContext,
     fixer::Fix,
     rule::Rule,
@@ -107,8 +109,15 @@ impl Rule for PreferSetSize {
                 .next_back()
                 .is_some_and(is_identifier_part)
                 && replacement.chars().next().is_some_and(|c| is_identifier_part(c) || c == '\\');
-            let replacement =
-                if needs_space { format!(" {replacement}") } else { replacement.to_string() };
+            let replacement = if needs_space {
+                format!(" {replacement}")
+            } else if replacement.starts_with(['[', '(', '/', '+', '-', '`'])
+                && could_be_asi_hazard(conversion_node, ctx)
+            {
+                format!(";{replacement}")
+            } else {
+                replacement.to_string()
+            };
 
             let mut fix = fixer
                 .new_fix_with_capacity(2)
@@ -303,6 +312,10 @@ fn test() {
             function size() { return set.size }",
         ),
         (r"typeof[...new Set(array)].length", r"typeof new Set(array).size"),
+        (
+            "const set = new Set();\nuse()\nArray.from((set)).length;",
+            "const set = new Set();\nuse()\n;(set).size;",
+        ),
     ];
 
     Tester::new(PreferSetSize::NAME, PreferSetSize::PLUGIN, pass, fail)
