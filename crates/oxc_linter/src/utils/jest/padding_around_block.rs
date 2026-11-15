@@ -19,10 +19,6 @@ pub fn report_missing_padding_before_jest_block<'a>(
     ctx: &LintContext<'a>,
     name: &str,
 ) {
-    // Only match calls that are the leading expression of an `ExpressionStatement`
-    // (possibly through an `AwaitExpression`), matching eslint-plugin-jest's behavior.
-    // Otherwise code between the previous statement and the call (e.g. `slow && `)
-    // would be deleted by the whitespace-only fix.
     let mut statement_node = ctx.nodes().parent_node(node.id());
     let statement = loop {
         match statement_node.kind() {
