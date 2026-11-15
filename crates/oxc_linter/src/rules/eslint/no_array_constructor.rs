@@ -265,6 +265,11 @@ fn test() {
         ("foo\nArray()", "foo\n;[]"),
         ("foo\nArray(1, 2)", "foo\n;[1, 2]"),
         ("foo\nnew Array()", "foo\n;[]"),
+        // An earlier comment must not hide the call before the comments.
+        (
+            "// leading\nfoo() // trailing\n// above\nnew Array(1, 2)",
+            "// leading\nfoo() // trailing\n// above\n;[1, 2]",
+        ),
         ("foo;\nArray()", "foo;\n[]"),
         ("Array()", "[]"),
         ("if (x) Array()", "if (x) []"),

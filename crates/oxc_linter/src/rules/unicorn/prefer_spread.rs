@@ -634,6 +634,15 @@ str.split("")"#,
             "foo() // comment\nArray.from(set).map(() => {})",
             "foo() // comment\n;[...set].map(() => {})",
         ),
+        // An earlier comment must not hide the call before the comments.
+        (
+            "// leading\nfoo() // trailing\n// above\nArray.from(set).map(() => {})",
+            "// leading\nfoo() // trailing\n// above\n;[...set].map(() => {})",
+        ),
+        (
+            "foo(/* a */) /* b */ /* c */\nArray.from(set).map(() => {})",
+            "foo(/* a */) /* b */ /* c */\n;[...set].map(() => {})",
+        ),
         // `array.slice()`
         ("array.slice()", "[...array]"),
         ("array.slice(1).slice()", "[...array.slice(1)]"),
