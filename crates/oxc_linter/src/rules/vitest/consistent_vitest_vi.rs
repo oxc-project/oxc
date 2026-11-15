@@ -226,7 +226,7 @@ impl Rule for ConsistentVitestVi {
                                     fixer.replace(reference_node.span(), self.function.as_str()),
                                 );
                             }
-                            fix
+                            fix.with_message("Rename the Vitest import and its calls")
                         },
                     );
                 } else {
