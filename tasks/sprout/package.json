@@ -7,11 +7,11 @@
     "test-harness": "node --test test/*.test.ts"
   },
   "devDependencies": {
-    "@babel/core": "^8.0.0",
-    "@babel/parser": "^8.0.0",
-    "@babel/plugin-transform-modules-commonjs": "^8.0.0",
-    "@babel/preset-react": "^8.0.0",
-    "@babel/preset-typescript": "^8.0.0",
+    "@babel/core": "^7.26.0",
+    "@babel/parser": "^7.26.0",
+    "@babel/plugin-transform-modules-commonjs": "^7.26.0",
+    "@babel/preset-react": "^7.26.0",
+    "@babel/preset-typescript": "^7.26.0",
     "@sinonjs/fake-timers": "^15.4.0",
     "@testing-library/react": "^16.3.0",
     "@types/babel__core": "^7.20.5",
