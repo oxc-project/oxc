@@ -387,8 +387,6 @@ impl ExtensionsConfig {
 
         let mut extensions = FxHashMap::with_capacity_and_hasher(capacity, FxBuildHasher);
 
-        // Like eslint-plugin-import, per-extension rules come from `pattern` when it is
-        // given; `ignorePackages`, `checkTypeImports` and `pathGroupOverrides` stay next to it.
         let extension_rules = value.get("pattern").unwrap_or(value);
 
         // Process known extensions from the configuration
@@ -1343,7 +1341,6 @@ fn test() {
         //     r##"import internalZ from "#internal/z.js";"##,
         //     Some(json!(["always"])),
         // ),
-        // Options next to `pattern` still apply
         (
             r"import notes from './notes.md?raw';",
             Some(json!([
