@@ -23,8 +23,9 @@ use crate::pipeline::{
     },
     disambiguate::{
         FORWARD_SCAN_CAP,
-        common::{Closers, Open, TokensView, bits},
+        common::{Closers, Open, TokensView},
     },
+    kinds::Kinds,
 };
 
 /// Bytes the forward angle match reacts to. Everything else is skipped without touching a bitmap.
@@ -73,7 +74,7 @@ pub fn lt_run_split(tokens: &TokensView, lt: usize, cpu: impl Cpu) -> bool {
         return false;
     }
     // Already fused by coalesce: a shift.
-    if !bits::get(token_start, lt + 1, cpu) {
+    if !token_start.get(lt + 1, cpu) {
         return false;
     }
     let Some(gt) = list_closer(tokens, lt + 1, cpu) else {
@@ -182,7 +183,7 @@ fn resolve_lists(tokens: &TokensView, start: usize, cpu: impl Cpu) -> Option<usi
     let (mut parens, mut brackets, mut braces) = (0i32, 0i32, 0i32);
     let mut i = start + 1;
     while i < n {
-        if bits::get(token_start, i, cpu) {
+        if token_start.get(i, cpu) {
             match past_raw(tokens, n, i, cpu) {
                 Some(j) if j != i => {
                     i = j;
@@ -193,8 +194,8 @@ fn resolve_lists(tokens: &TokensView, start: usize, cpu: impl Cpu) -> Option<usi
             }
         }
         let c = src[i];
-        if GT_SCAN_DELIM[c as usize] && bits::get(token_start, i, cpu) {
-            let op = bits::get(op_char, i, cpu);
+        if GT_SCAN_DELIM[c as usize] && token_start.get(i, cpu) {
+            let op = op_char.get(i, cpu);
             match c {
                 b'<' => {
                     if op && src[i + 1] != b'=' {
@@ -302,7 +303,7 @@ fn resolve_groups(tokens: &TokensView, start: usize, cpu: impl Cpu) -> Option<us
     open.push(start as u32);
     let mut i = start + 1;
     while i < n {
-        if bits::get(token_start, i, cpu) {
+        if token_start.get(i, cpu) {
             match past_raw(tokens, n, i, cpu) {
                 Some(j) if j != i => {
                     i = j;
@@ -343,12 +344,12 @@ fn resolve_groups(tokens: &TokensView, start: usize, cpu: impl Cpu) -> Option<us
 #[inline]
 pub(super) fn skip_raw_literal(
     src: &[u8],
-    kinds: &[u8],
+    kinds: Kinds,
     n: usize,
     i: usize,
     cpu: impl Cpu,
 ) -> usize {
-    if kinds[i] < OP_KIND_BASE {
+    if kinds.get(i) < OP_KIND_BASE {
         return i;
     }
     let c = src[i];

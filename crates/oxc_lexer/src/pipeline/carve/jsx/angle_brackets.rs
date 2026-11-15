@@ -1,6 +1,6 @@
 use oxc_simd::{Cpu, cpu_multiversion};
 
-use crate::{error::DiagCode, token::tk};
+use crate::{error::DiagCode, token::TokenKind};
 
 use crate::pipeline::{
     bitmap::{Bitmap, Bitmaps},
@@ -30,7 +30,7 @@ enum AngleVerdict {
 
 #[cpu_multiversion]
 #[inline]
-pub(super) unsafe fn jsx_over_type_params(
+pub(super) fn jsx_over_type_params(
     lex: Lex,
     lt: usize,
     name_pos: usize,
@@ -58,15 +58,10 @@ pub(super) unsafe fn jsx_over_type_params(
 #[cpu_multiversion]
 #[cold]
 #[inline(never)]
-pub(super) unsafe fn lex_type_arguments(
-    lex: Lex,
-    s: usize,
-    lanes: &mut Lanes,
-    cpu: impl Cpu,
-) -> usize {
+pub(super) fn lex_type_arguments(lex: Lex, s: usize, lanes: &mut Lanes, cpu: impl Cpu) -> usize {
     let Lex { src, bitmaps, kinds, .. } = lex;
     let Bitmaps { token_start, op_char, .. } = *bitmaps;
-    jsx_punct(kinds, op_char, s, tk!(Lt), cpu);
+    jsx_punct(kinds, op_char, s, TokenKind::Lt, cpu);
     let mut depth = 1i32;
     let mut subs = Substitutions::default();
     let mut p = s + 1;
@@ -83,14 +78,14 @@ pub(super) unsafe fn lex_type_arguments(
         p = match src[q] {
             b'<' => {
                 depth += 1;
-                jsx_punct(kinds, op_char, q, tk!(Lt), cpu);
+                jsx_punct(kinds, op_char, q, TokenKind::Lt, cpu);
                 q + 1
             }
             b'>' => {
                 // The > of an arrow in a function type closes nothing.
                 if !(q > 0 && src[q - 1] == b'=') {
                     depth -= 1;
-                    jsx_punct(kinds, op_char, q, tk!(Gt), cpu);
+                    jsx_punct(kinds, op_char, q, TokenKind::Gt, cpu);
                 }
                 q + 1
             }
@@ -123,7 +118,7 @@ pub(super) unsafe fn lex_type_arguments(
 /// be re-scanned for a leading 0x80.
 #[cpu_multiversion]
 #[inline]
-unsafe fn ts_angle_verdict(src: Source, t: usize, word: Bitmap, cpu: impl Cpu) -> AngleVerdict {
+fn ts_angle_verdict(src: Source, t: usize, word: Bitmap, cpu: impl Cpu) -> AngleVerdict {
     let mut p = t;
     // optional `const` type-parameter modifier: `<const T,>`. Like any modifier it must stay
     // on the line of its parameter; a comment between them is fine.

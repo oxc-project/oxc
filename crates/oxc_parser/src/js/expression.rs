@@ -963,14 +963,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     lhs = self.parse_static_member_expression(lhs_start, lhs, false);
                 }
                 Kind::QuestionDot if allow_optional_chain => {
-                    // Fast check to avoid checkpoint/rewind in common cases
-                    let next_kind = self.lexer.peek_token().kind();
-                    if next_kind == Kind::LBrack
-                        || next_kind.is_identifier_or_keyword()
-                        || next_kind.is_template_start_of_tagged_template()
-                    {
-                        // This is likely a valid optional chain, proceed with normal parsing
-                        self.bump_any(); // consume ?.
+                    // Consume `?.` when a member or a template follows it, which is nearly always.
+                    let is_member = self.eat_if_next(|next| {
+                        let next_kind = next.kind();
+                        next_kind == Kind::LBrack
+                            || next_kind.is_identifier_or_keyword()
+                            || next_kind.is_template_start_of_tagged_template()
+                    });
+                    if is_member {
                         *in_optional_chain = true;
                         if self.cur_kind().is_identifier_or_keyword() {
                             // ?.something

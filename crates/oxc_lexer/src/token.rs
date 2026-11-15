@@ -1,6 +1,6 @@
 use std::{
     fmt::{self, Display},
-    mem,
+    slice,
 };
 
 use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
@@ -299,19 +299,6 @@ impl TokenKind {
         self as u8
     }
 
-    /// # SAFETY
-    ///
-    /// `byte` must be a declared discriminant, i.e. `TokenKind::from_u8(byte).is_some()`.
-    #[cpu_multiversion]
-    #[inline]
-    #[must_use]
-    pub(crate) const unsafe fn from_u8_unchecked(byte: u8, cpu: impl Cpu) -> Self {
-        debug_assert!(Self::from_u8(byte, cpu).is_some(), "not a declared TokenKind discriminant");
-        // SAFETY: the caller guarantees `byte` is a declared discriminant, and
-        // `TokenKind` is `#[repr(u8)]`, so it shares `u8`'s layout.
-        unsafe { mem::transmute::<u8, Self>(byte) }
-    }
-
     #[inline]
     #[must_use]
     pub const fn is_trivia(self) -> bool {
@@ -399,6 +386,13 @@ pub fn debug_assert_kind_bytes(bytes: &[u8]) {
         bytes.iter().all(|&b| TokenKind::from_u8(b, cpu).is_some()),
         "lexer wrote a byte that is not a declared TokenKind discriminant"
     );
+}
+
+/// The kinds as their discriminant bytes.
+#[inline]
+pub fn kind_bytes(kinds: &[TokenKind]) -> &[u8] {
+    // SAFETY: TokenKind is repr(u8), so each kind is one initialized byte.
+    unsafe { slice::from_raw_parts(kinds.as_ptr().cast::<u8>(), kinds.len()) }
 }
 
 pub const SPAN_SENTINELS: usize = 8;

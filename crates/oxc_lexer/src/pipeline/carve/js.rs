@@ -19,7 +19,7 @@ use super::{
 };
 
 #[cpu_multiversion]
-pub(super) unsafe fn carve_js(lex: Lex, state: &mut LexState, cpu: impl Cpu) {
+pub(super) fn carve_js(lex: Lex, state: &mut LexState, cpu: impl Cpu) {
     let Lex { src, bitmaps, kinds, options } = lex;
     let Bitmaps { token_start, op_char, .. } = *bitmaps;
     let LexState { lanes, disambiguate, substitutions, .. } = state;

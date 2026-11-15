@@ -1,4 +1,6 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, sync::Arc};
+
+use rustc_hash::FxHashSet;
 
 mod categories;
 mod config_builder;
@@ -18,18 +20,26 @@ pub use env::OxlintEnv;
 pub use globals::{GlobalValue, OxlintGlobals};
 pub use ignore_matcher::LintIgnoreMatcher;
 pub use overrides::OxlintOverrides;
-pub use oxlintrc::Oxlintrc;
+pub use oxlintrc::{OxlintOptions, Oxlintrc};
 pub use plugins::LintPlugins;
-pub use rules::{ESLintRule, OxlintRules, normalize_rule_name};
+pub use rules::{ESLintRule, OxlintRules, RuleConfig, normalize_rule_name};
 pub use settings::{OxlintSettings, ReactVersion, jsdoc::JSDocPluginSettings};
 
 pub use oxc_config::GlobSet;
 
-use crate::config::oxlintrc::OxlintOptions;
+use crate::config::external_plugins::ExternalPluginEntry;
+
+#[derive(Debug, Default)]
+pub struct ConfigFileMetadata {
+    schema: Option<String>,
+    ignore_patterns: Vec<String>,
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct LintConfig {
     pub(crate) plugins: LintPlugins,
+    /// External JS plugin declarations.
+    pub(crate) external_plugins: Option<Arc<FxHashSet<ExternalPluginEntry>>>,
     pub(crate) settings: OxlintSettings,
     /// Environments enable and disable collections of global variables.
     pub(crate) env: OxlintEnv,
@@ -39,17 +49,37 @@ pub struct LintConfig {
     pub(crate) path: Option<PathBuf>,
     /// Options for the linter.
     pub(crate) options: OxlintOptions,
+    /// File-level metadata shared across per-file override results.
+    pub(crate) metadata: Arc<ConfigFileMetadata>,
 }
 
 impl From<Oxlintrc> for LintConfig {
     fn from(config: Oxlintrc) -> Self {
+        let Oxlintrc {
+            schema,
+            plugins,
+            external_plugins,
+            categories: _,
+            rules: _,
+            settings,
+            env,
+            globals,
+            overrides: _,
+            options,
+            path,
+            ignore_patterns,
+            extends: _,
+            extends_configs: _,
+        } = config;
         Self {
-            plugins: config.plugins.unwrap_or_default(),
-            settings: config.settings,
-            env: config.env,
-            globals: config.globals,
-            path: Some(config.path),
-            options: config.options,
+            plugins: plugins.unwrap_or_default(),
+            external_plugins: external_plugins.map(Arc::new),
+            settings,
+            env,
+            globals,
+            path: Some(path),
+            options,
+            metadata: Arc::new(ConfigFileMetadata { schema, ignore_patterns }),
         }
     }
 }

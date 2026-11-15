@@ -137,8 +137,12 @@ impl Rule for PreferImportingVitestGlobals {
                 continue;
             };
 
-            if import_decl.source.value.as_str().is_some_and(is_vitest_import_source)
-                && import_decl.import_kind.is_value()
+            if !import_decl.source.value.as_str().is_some_and(is_vitest_import_source) {
+                continue;
+            }
+
+            if import_decl.import_kind.is_value()
+                && !scoping.symbol_flags(symbol_id).is_type_import()
             {
                 continue;
             }
@@ -357,6 +361,9 @@ fn test() {
         "import { describe, expect, it } from 'vitest'; describe('suite', () => { it('test', () => { let test = 5; expect(test).toBe(5); }); });",
         "import { describe, expect, it } from 'vitest'; describe('suite', () => { it('test', () => { const test = () => true; expect(test()).toBe(true); }); });",
         "import { describe, expect, it } from 'vitest'; describe('suite', () => { it('test', () => { function fn(test) { return test; } expect(fn(5)).toBe(5); }); });",
+        "import { describe } from 'jest'; describe('suite', () => {});",
+        "import { test } from 'node:test'; test('x', () => {});",
+        "import { test, expect } from '@playwright/test'; test('x', async () => {});",
     ];
 
     let fail = vec![
@@ -365,12 +372,6 @@ fn test() {
             describe('suite', () => {});",
         "import { it } from 'vite-plus/test';
             describe('suite', () => {});",
-        "import { describe } from 'jest';
-            describe('suite', () => {});",
-        "import { test } from 'node:test'; test('x', () => {});",
-        "import { expect, test } from '@playwright/test'; test('x', async () => {});",
-        "import { describe } from 'jest'; it('test', () => {}); describe('suite', () => {});",
-        "import type { describe } from 'vitest'; describe('suite', () => {});",
         "import vitest from 'vitest';
             describe('suite', () => {});",
         "import * as abc from 'vitest';
@@ -388,6 +389,10 @@ fn test() {
             describe('suite', () => {});",
         "const { it } = require('vite-plus/test');
             describe('suite', () => {});",
+        "import type { describe } from 'vitest'; describe('suite', () => {});",
+        "import { type describe } from 'vitest'; describe('suite', () => {});",
+        "import type { describe } from 'vitest'; it('test', () => {}); describe('suite', () => {});",
+        "import type { test } from 'node:test'; test('x', () => {});",
     ];
 
     let fix = vec![
@@ -411,24 +416,6 @@ fn test() {
             describe('suite', () => {});",
             "import { it, describe } from 'vite-plus/test';
             describe('suite', () => {});",
-        ),
-        (
-            "import { describe } from 'jest';
-            describe('suite', () => {});",
-            "import { describe } from 'jest';
-            describe('suite', () => {});",
-        ),
-        (
-            "import { test } from 'node:test'; test('x', () => {});",
-            "import { test } from 'node:test'; test('x', () => {});",
-        ),
-        (
-            "import type { describe } from 'vitest'; describe('suite', () => {});",
-            "import type { describe } from 'vitest'; describe('suite', () => {});",
-        ),
-        (
-            "import { describe } from 'jest'; it('test', () => {}); describe('suite', () => {});",
-            "import { it } from 'vitest';\nimport { describe } from 'jest'; it('test', () => {}); describe('suite', () => {});",
         ),
         (
             "import vitest from 'vitest';
@@ -490,6 +477,22 @@ fn test() {
             describe('suite', () => {});",
             "const { it, describe } = require('vite-plus/test');
             describe('suite', () => {});",
+        ),
+        (
+            "import type { describe } from 'vitest'; describe('suite', () => {});",
+            "import type { describe } from 'vitest'; describe('suite', () => {});",
+        ),
+        (
+            "import { type describe } from 'vitest'; describe('suite', () => {});",
+            "import { type describe } from 'vitest'; describe('suite', () => {});",
+        ),
+        (
+            "import type { describe } from 'vitest'; it('test', () => {}); describe('suite', () => {});",
+            "import { it } from 'vitest';\nimport type { describe } from 'vitest'; it('test', () => {}); describe('suite', () => {});",
+        ),
+        (
+            "import type { test } from 'node:test'; test('x', () => {});",
+            "import type { test } from 'node:test'; test('x', () => {});",
         ),
     ];
 

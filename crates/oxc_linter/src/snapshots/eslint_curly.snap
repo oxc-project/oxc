@@ -188,7 +188,6 @@ source: crates/oxc_linter/src/tester.rs
  1 │ if (a) { if (b) console.log(1); else console.log(2) } else console.log(3)
    ·        ──────────────────────────────────────────────
    ╰────
-  help: Replace `{ if (b) console.log(1); else console.log(2) }` with ` if (b) console.log(1); else console.log(2) `.
 
   ⚠ eslint(curly): Unexpected { after 'else'.
     ╭─[curly.tsx:6:11]
@@ -583,7 +582,6 @@ source: crates/oxc_linter/src/tester.rs
  1 │ if (foo) {bar()} baz()
    ·          ───────
    ╰────
-  help: Replace `{bar()}` with `bar()`.
 
   ⚠ eslint(curly): Unexpected { after 'do'.
    ╭─[curly.tsx:1:4]
@@ -598,7 +596,6 @@ source: crates/oxc_linter/src/tester.rs
    ·          ───────
  2 │             ++baz;
    ╰────
-  help: Replace `{ bar }` with ` bar `.
 
   ⚠ eslint(curly): Unexpected { after 'if' condition.
    ╭─[curly.tsx:1:10]
@@ -614,7 +611,6 @@ source: crates/oxc_linter/src/tester.rs
    ·          ─────────
  2 │             baz;
    ╰────
-  help: Replace `{ bar++ }` with ` bar++ `.
 
   ⚠ eslint(curly): Unexpected { after 'if' condition.
    ╭─[curly.tsx:1:10]
@@ -622,7 +618,6 @@ source: crates/oxc_linter/src/tester.rs
    ·          ───────
  2 │             [1, 2, 3].map(foo);
    ╰────
-  help: Replace `{ bar }` with ` bar `.
 
   ⚠ eslint(curly): Unexpected { after 'if' condition.
    ╭─[curly.tsx:1:10]
@@ -630,7 +625,6 @@ source: crates/oxc_linter/src/tester.rs
    ·          ───────
  2 │             (1).toString();
    ╰────
-  help: Replace `{ bar }` with ` bar `.
 
   ⚠ eslint(curly): Unexpected { after 'if' condition.
    ╭─[curly.tsx:1:10]
@@ -638,7 +632,6 @@ source: crates/oxc_linter/src/tester.rs
    ·          ───────
  2 │             /regex/.test('foo');
    ╰────
-  help: Replace `{ bar }` with ` bar `.
 
   ⚠ eslint(curly): Unexpected { after 'if' condition.
    ╭─[curly.tsx:1:10]
@@ -660,21 +653,32 @@ source: crates/oxc_linter/src/tester.rs
  1 │ if (foo) { var foo = () => {} } else {}
    ·          ──────────────────────
    ╰────
-  help: Replace `{ var foo = () => {} }` with ` var foo = () => {} `.
 
   ⚠ eslint(curly): Unexpected { after 'if' condition.
    ╭─[curly.tsx:1:10]
  1 │ if (foo) { var foo = function() {} } else {}
    ·          ───────────────────────────
    ╰────
-  help: Replace `{ var foo = function() {} }` with ` var foo = function() {} `.
 
   ⚠ eslint(curly): Unexpected { after 'if' condition.
    ╭─[curly.tsx:1:10]
  1 │ if (foo) { var foo = function*() {} } else {}
    ·          ────────────────────────────
    ╰────
-  help: Replace `{ var foo = function*() {} }` with ` var foo = function*() {} `.
+
+  ⚠ eslint(curly): Unexpected { after 'else'.
+   ╭─[curly.tsx:1:21]
+ 1 │ if (foo) bar(); else{baz();}
+   ·                     ────────
+   ╰────
+  help: Replace `{baz();}` with ` baz();`.
+
+  ⚠ eslint(curly): Unexpected { after 'else'.
+   ╭─[curly.tsx:1:21]
+ 1 │ if (foo) bar(); else{if (baz) qux();}
+   ·                     ─────────────────
+   ╰────
+  help: Replace `{if (baz) qux();}` with ` if (baz) qux();`.
 
   ⚠ eslint(curly): Expected { after 'if' condition.
    ╭─[curly.tsx:2:4]

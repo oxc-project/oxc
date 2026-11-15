@@ -4,27 +4,27 @@ use crate::pipeline::chunk::mm64;
 
 use super::BRACKET_BYTES;
 
-/// First byte at or after i that is one of needles, or n.
+/// First byte at or after i that is one of needles, or src.len().
 ///
 /// 16 bytes at a time, as a nibble mask is the cheapest way to find the first hit on Neon.
 #[cpu_version(Neon)]
 #[inline]
-pub unsafe fn find_neon<const K: usize>(
-    src: *const u8,
-    n: usize,
-    mut i: usize,
-    needles: [u8; K],
-    cpu: Neon,
-) -> usize {
+pub fn find_neon<const K: usize>(src: &[u8], mut i: usize, needles: [u8; K], cpu: Neon) -> usize {
+    let n = src.len();
+    if i > n {
+        return n;
+    }
     while i + 16 <= n {
-        let m = any_of(Vec128::load_unaligned(src.add(i), cpu), needles).nibble_mask();
+        // SAFETY: the guard keeps i <= n, so i + 16 cannot wrap, and the 16 bytes at i are in src.
+        let v = unsafe { Vec128::load_unaligned(src.as_ptr().add(i), cpu) };
+        let m = any_of(v, needles).nibble_mask();
         if m != 0 {
             return i + (m.trailing_zeros() / 4) as usize;
         }
         i += 16;
     }
     while i < n {
-        if needles.contains(&*src.add(i)) {
+        if needles.contains(&src[i]) {
             return i;
         }
         i += 1;

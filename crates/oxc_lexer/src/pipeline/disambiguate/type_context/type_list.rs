@@ -15,7 +15,7 @@ use crate::token::{OP_KIND_BASE, is_trivia_byte, matches_tk, tk};
 
 use crate::pipeline::{
     bytes::{is_digit, is_id_start, line_break_in},
-    disambiguate::common::{TokensView, bits, word_len},
+    disambiguate::common::{TokensView, word_len},
     keywords::kw_match_at,
 };
 
@@ -81,11 +81,11 @@ fn type_list_legal(tokens: &TokensView, lo: usize, hi: usize, cpu: impl Cpu) -> 
     // Start of the previous significant token: a type reference takes no arguments across a
     // line break, so a `<` after one is checked against it.
     let mut prev = usize::MAX;
-    let mut w = bits::next1(token_start, lo, hi, cpu);
+    let mut w = token_start.next1(lo, hi, cpu);
     while w < hi {
         let mut k = tokens.base_kind(w, cpu);
         if w == skip || is_trivia_byte(k, cpu) {
-            w = bits::next1(token_start, w + 1, hi, cpu);
+            w = token_start.next1(w + 1, hi, cpu);
             continue;
         }
         // A line break after a member's type starts the next member unless the token continues it.
@@ -106,7 +106,7 @@ fn type_list_legal(tokens: &TokensView, lo: usize, hi: usize, cpu: impl Cpu) -> 
         if j != w {
             let c0 = src[w];
             if c0 == b'/' {
-                w = bits::next1(token_start, j, hi, cpu);
+                w = token_start.next1(j, hi, cpu);
                 continue;
             }
             k = if c0 == b'`' { tk!(TemplateNoSub) } else { tk!(String) };
@@ -118,7 +118,7 @@ fn type_list_legal(tokens: &TokensView, lo: usize, hi: usize, cpu: impl Cpu) -> 
             prev = w;
             prev_kw = 0;
             no_dot = false;
-            w = bits::next1(token_start, j, hi, cpu);
+            w = token_start.next1(j, hi, cpu);
             continue;
         }
         let c = src[w];
@@ -195,7 +195,7 @@ fn type_list_legal(tokens: &TokensView, lo: usize, hi: usize, cpu: impl Cpu) -> 
                     start = false;
                     paren_ok = false;
                     prev = w;
-                    w = bits::next1(token_start, end, hi, cpu);
+                    w = token_start.next1(end, hi, cpu);
                     continue;
                 }
             }
@@ -232,8 +232,7 @@ fn type_list_legal(tokens: &TokensView, lo: usize, hi: usize, cpu: impl Cpu) -> 
                 }
                 b'<' => {
                     let nx = src[w + 1];
-                    if was_this || nx == b'=' || (nx == b'<' && !bits::get(token_start, w + 1, cpu))
-                    {
+                    if was_this || nx == b'=' || (nx == b'<' && !token_start.get(w + 1, cpu)) {
                         return false;
                     }
                     // No function type follows an operator that takes an operand.
@@ -250,7 +249,7 @@ fn type_list_legal(tokens: &TokensView, lo: usize, hi: usize, cpu: impl Cpu) -> 
                 }
                 b'>' => {
                     let nx = src[w + 1];
-                    if (nx == b'=' || nx == b'>') && !bits::get(token_start, w + 1, cpu) {
+                    if (nx == b'=' || nx == b'>') && !token_start.get(w + 1, cpu) {
                         return false;
                     }
                     if angle_depth > 0 {
@@ -263,7 +262,7 @@ fn type_list_legal(tokens: &TokensView, lo: usize, hi: usize, cpu: impl Cpu) -> 
                 b'=' => {
                     // `=>` of a function type, or a type-parameter default (the walk also reads
                     // member type-parameter lists here).
-                    if src[w + 1] == b'>' && bits::get(token_start, w + 1, cpu) {
+                    if src[w + 1] == b'>' && token_start.get(w + 1, cpu) {
                         skip = w + 1;
                     }
                     start = true;
@@ -353,7 +352,7 @@ fn type_list_legal(tokens: &TokensView, lo: usize, hi: usize, cpu: impl Cpu) -> 
         }
         paren_ok = ok_paren;
         prev = w;
-        w = bits::next1(token_start, w + 1, hi, cpu);
+        w = token_start.next1(w + 1, hi, cpu);
     }
     true
 }

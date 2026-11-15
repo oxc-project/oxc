@@ -20,15 +20,15 @@ use crate::pipeline::source::Source;
 
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn scan_block_comment(
+pub(super) fn scan_block_comment(
     src: Source,
     i: usize,
     cpu: impl Cpu,
 ) -> (usize, bool, Option<u32>) {
     match DynCpu::from(cpu) {
-        DynCpu::Avx2(cpu) => scan_block_comment_avx2(src.as_ptr(), src.len(), i, cpu),
-        DynCpu::Neon(cpu) => scan_block_comment_neon(src.as_ptr(), src.len(), i, cpu),
-        DynCpu::Generic(_) => scan_block_comment_generic(src.as_ptr(), src.len(), i),
+        DynCpu::Avx2(cpu) => scan_block_comment_avx2(src, i, cpu),
+        DynCpu::Neon(cpu) => scan_block_comment_neon(src, i, cpu),
+        DynCpu::Generic(_) => scan_block_comment_generic(src, i),
     }
 }
 
@@ -36,14 +36,10 @@ pub(super) unsafe fn scan_block_comment(
 /// tracking the first `@license` / `@preserve` position for comment metadata.
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn scan_line_comment(
-    src: Source,
-    i: usize,
-    cpu: impl Cpu,
-) -> (usize, Option<u32>) {
+pub(super) fn scan_line_comment(src: Source, i: usize, cpu: impl Cpu) -> (usize, Option<u32>) {
     match DynCpu::from(cpu) {
-        DynCpu::Avx2(cpu) => scan_line_comment_avx2(src.as_ptr(), src.len(), i, cpu),
-        DynCpu::Neon(cpu) => scan_line_comment_neon(src.as_ptr(), src.len(), i, cpu),
-        DynCpu::Generic(_) => scan_line_comment_generic(src.as_ptr(), src.len(), i),
+        DynCpu::Avx2(cpu) => scan_line_comment_avx2(src, i, cpu),
+        DynCpu::Neon(cpu) => scan_line_comment_neon(src, i, cpu),
+        DynCpu::Generic(_) => scan_line_comment_generic(src, i),
     }
 }

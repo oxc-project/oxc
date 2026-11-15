@@ -55,6 +55,11 @@ impl<'a> Source<'a> {
     pub(super) fn u32_at(self, i: usize) -> u32 {
         u32::from_le_bytes(self.padded[i..i + 4].try_into().unwrap())
     }
+
+    /// The 8 bytes at i as a little-endian u64.
+    pub(super) fn u64_at(self, i: usize) -> u64 {
+        u64::from_le_bytes(self.padded[i..i + 8].try_into().unwrap())
+    }
 }
 
 impl Index<usize> for Source<'_> {

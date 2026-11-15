@@ -143,6 +143,30 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.advance(self.cur_kind());
     }
 
+    /// Advance if `accept` holds for the token after the current one.
+    ///
+    /// Use this instead of [`Lexer::peek_token`] where the answer is nearly always yes, such as
+    /// a modifier keyword, which is nearly always followed by the member it modifies. The token
+    /// after is then lexed once and kept. Peeking lexes it, discards it, and leaves it to be
+    /// lexed again.
+    ///
+    /// [`Lexer::peek_token`]: crate::lexer::Lexer::peek_token
+    #[inline]
+    pub(crate) fn eat_if_next(&mut self, accept: impl FnOnce(Token) -> bool) -> bool {
+        let checkpoint = self.lexer.checkpoint();
+        let next = self.lexer.next_token();
+        if !accept(next) {
+            self.lexer.rewind(checkpoint);
+            return false;
+        }
+        if self.token.escaped() && self.token.kind().is_any_keyword() {
+            self.report_escaped_keyword(self.token.span());
+        }
+        self.prev_token_end = self.token.end();
+        self.token = next;
+        true
+    }
+
     /// [Automatic Semicolon Insertion](https://tc39.es/ecma262/#sec-automatic-semicolon-insertion)
     /// # Errors
     pub(crate) fn asi(&mut self) {

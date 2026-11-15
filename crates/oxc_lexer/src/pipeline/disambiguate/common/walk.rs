@@ -19,12 +19,14 @@ use oxc_simd::{Cpu, cpu_multiversion};
 use crate::token::{OP_KIND_BASE, is_trivia_byte};
 
 use crate::pipeline::{
+    bitmap::Bitmap,
     bytes::{is_word, unicode_ws_len_at},
     disambiguate::BRACKET_STEP_CAP,
     find::bracket_bits,
+    kinds::Kinds,
 };
 
-use super::{TokensView, bits};
+use super::TokensView;
 
 /// The source's bracket bytes (`(){}[]`) as a bitmap, built per lex a 64-byte word at a time
 /// as the matches reach it: crossing a group costs a step per bracket, not per token, and a file
@@ -111,13 +113,13 @@ pub(super) fn match_delim_back(
     let mut depth: i32 = 1;
     let mut steps: u32 = 0;
     let mut w = from >> 6;
-    let mut bits = b.word(src, n, w, cpu) & token_start[w] & ((1u64 << (from & 63)) - 1);
+    let mut bits = b.word(src, n, w, cpu) & token_start.block(w, cpu) & ((1u64 << (from & 63)) - 1);
     loop {
         while bits != 0 {
             let i = 63 - bits.leading_zeros() as usize;
             bits &= !(1u64 << i);
             let pos = (w << 6) | i;
-            if kinds[pos] >= OP_KIND_BASE {
+            if kinds.get(pos) >= OP_KIND_BASE {
                 let c = src[pos];
                 if c == close {
                     depth += 1;
@@ -137,7 +139,7 @@ pub(super) fn match_delim_back(
             return None;
         }
         w -= 1;
-        bits = b.word(src, n, w, cpu) & token_start[w];
+        bits = b.word(src, n, w, cpu) & token_start.block(w, cpu);
     }
 }
 
@@ -152,7 +154,7 @@ fn delim_memo_opener(tokens: &TokensView, from: usize, cpu: impl Cpu) -> Option<
         let last = from >> 6;
         let mut w = first;
         while w <= last {
-            let mut bits = b.word(src, n, w, cpu) & token_start[w];
+            let mut bits = b.word(src, n, w, cpu) & token_start.block(w, cpu);
             if w == first {
                 bits &= !((1u64 << (m.built_to & 63)) - 1);
             }
@@ -162,7 +164,7 @@ fn delim_memo_opener(tokens: &TokensView, from: usize, cpu: impl Cpu) -> Option<
             while bits != 0 {
                 let p = (w << 6) | bits.trailing_zeros() as usize;
                 bits &= bits - 1;
-                if kinds[p] >= OP_KIND_BASE {
+                if kinds.get(p) >= OP_KIND_BASE {
                     let c = src[p];
                     match c {
                         b'(' | b'[' | b'{' => m.open[delim_slot(c, cpu)].push(p as u32),
@@ -218,13 +220,13 @@ pub(super) fn ident_is(src: &[u8], pos: usize, kw: &[u8], cpu: impl Cpu) -> bool
 /// Previous significant token start before `pos` (skipping trivia), or `None` at start of input.
 #[cpu_multiversion]
 #[inline]
-pub fn prev_sig(token_start: &[u64], kinds: &[u8], pos: usize, cpu: impl Cpu) -> Option<usize> {
-    let mut q = bits::prev1(token_start, pos, cpu);
+pub fn prev_sig(token_start: Bitmap, kinds: Kinds, pos: usize, cpu: impl Cpu) -> Option<usize> {
+    let mut q = token_start.prev1(pos, cpu);
     while let Some(p) = q {
-        if !is_trivia_byte(kinds[p], cpu) {
+        if !is_trivia_byte(kinds.get(p), cpu) {
             break;
         }
-        q = bits::prev1(token_start, p, cpu);
+        q = token_start.prev1(p, cpu);
     }
     q
 }

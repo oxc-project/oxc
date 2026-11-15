@@ -1,5 +1,3 @@
-use std::slice;
-
 use oxc_simd::{Cpu, cpu_multiversion};
 
 use crate::pipeline::{
@@ -17,13 +15,7 @@ const REGEX_BYTES: [u8; 7] = [b'\\', b']', b'\n', b'\r', b'/', b'[', 0xE2];
 
 #[cpu_multiversion]
 #[inline]
-pub unsafe fn scan_quoted(
-    src: Source,
-    mut i: usize,
-    q: u8,
-    saw_nl: &mut bool,
-    cpu: impl Cpu,
-) -> usize {
+pub fn scan_quoted(src: Source, mut i: usize, q: u8, saw_nl: &mut bool, cpu: impl Cpu) -> usize {
     loop {
         // LF/CR are watched too: raw line terminators in strings are diagnosed.
         let p = find(src, i, [q, b'\\', b'\n', b'\r'], cpu);
@@ -50,7 +42,7 @@ pub unsafe fn scan_quoted(
 
 #[cpu_multiversion]
 #[inline]
-pub unsafe fn scan_regex(src: Source, mut i: usize, cpu: impl Cpu) -> (usize, Option<usize>) {
+pub fn scan_regex(src: Source, mut i: usize, cpu: impl Cpu) -> (usize, Option<usize>) {
     let mut incl = false;
     let mut nl_at = None;
     loop {
@@ -137,7 +129,7 @@ impl TemplateEnd {
 
 #[cpu_multiversion]
 #[inline]
-pub unsafe fn scan_tmpl_text(src: Source, mut i: usize, cpu: impl Cpu) -> (usize, TemplateEnd) {
+pub fn scan_tmpl_text(src: Source, mut i: usize, cpu: impl Cpu) -> (usize, TemplateEnd) {
     loop {
         let p = find(src, i, [b'`', b'\\', b'$'], cpu);
         if p >= src.len() {
@@ -151,7 +143,7 @@ pub unsafe fn scan_tmpl_text(src: Source, mut i: usize, cpu: impl Cpu) -> (usize
         if c == b'`' {
             return (p + 1, TemplateEnd::Backtick);
         }
-        if src[p + 1] == b'{' {
+        if p + 1 < src.len() && src[p + 1] == b'{' {
             return (p + 2, TemplateEnd::Substitution);
         }
         i = p + 1;
@@ -277,17 +269,17 @@ fn scan_fraction_exponent(src: Source, mut i: usize, cpu: impl Cpu) -> (usize, b
 
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn is_license_at(src: *const u8, q: usize, _cpu: impl Cpu) -> bool {
-    let c1 = *src.add(q + 1);
-    (c1 == b'l' && slice::from_raw_parts(src.add(q + 2), 6) == b"icense")
-        || (c1 == b'p' && slice::from_raw_parts(src.add(q + 2), 7) == b"reserve")
+pub(super) fn is_license_at(src: Source, q: usize, _cpu: impl Cpu) -> bool {
+    let c1 = src[q + 1];
+    (c1 == b'l' && src[q + 2..q + 8] == *b"icense")
+        || (c1 == b'p' && src[q + 2..q + 9] == *b"reserve")
 }
 
 /// First `@license` or `@preserve` among the `@`s in `am`, where bit `i` is for byte `base + i`.
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn first_license_at(
-    src: *const u8,
+pub(super) fn first_license_at(
+    src: Source,
     base: usize,
     mut am: u32,
     cpu: impl Cpu,
