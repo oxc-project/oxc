@@ -33,6 +33,7 @@ use crate::{
     checker,
     class::ClassTableBuilder,
     diagnostics::redeclaration,
+    hoisting::Hoisting,
     label::UnusedLabels,
     node::{Ancestry, AstNodeStore, AstNodeStoreKind},
     scoping::{Bindings, Scoping},
@@ -86,12 +87,8 @@ pub struct SemanticBuilder<'a> {
     pub(crate) formal_parameter_excludes: SymbolFlags,
     /// Nesting depth of TypeScript ambient contexts.
     ambient_depth: u32,
-    /// Symbols that have been hoisted out of a scope (e.g. `var` declarations hoisted to
-    /// the enclosing function scope, or Annex B function declarations hoisted to the var scope).
-    /// Keyed by the `(original scope, name)` the symbol was declared in, so that future
-    /// declarations in that scope can still detect redeclarations via `check_redeclaration`.
-    /// A single flat map avoids allocating a per-scope inner map for every hoisting scope.
-    pub(crate) hoisting_variables: FxHashMap<(ScopeId, Ident<'a>), SymbolId>,
+    /// Declarations hoisted out of blocks into their var scope.
+    pub(crate) hoisting: Hoisting<'a>,
 
     // builders
     /// Node-id counter, current-node cursor/flags, and the node storage (full
@@ -157,7 +154,7 @@ impl<'a> SemanticBuilder<'a> {
             current_scope_id,
             module_instance_state_cache: FxHashMap::default(),
             node_store: AstNodeStore::default(),
-            hoisting_variables: FxHashMap::default(),
+            hoisting: Hoisting::default(),
             scoping,
             unresolved_references: UnresolvedReferences::new(),
             unused_labels: UnusedLabels::default(),
@@ -618,7 +615,7 @@ impl<'a> SemanticBuilder<'a> {
         // `{ var x; interface x {} let x; }`
         // Only the value meaning conflicts. A type sharing the symbol belongs to the outer scope:
         // `type x = 0; { var x; interface x {} }`
-        let hoisted_id = self.hoisting_variables.get(&(scope_id, name)).copied();
+        let hoisted_id = self.hoisting.hoisted_symbol_id(scope_id, name);
         if let Some(symbol_id) = hoisted_id
             && self.scoping.symbol_flags(symbol_id).intersects(excludes & SymbolFlags::Value)
         {
@@ -928,11 +925,13 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     }
 
     // NB: Not called for `Program`
+    #[inline]
     fn leave_scope(&mut self) {
         // `get_parent_id` always returns `Some` because this method is not called for `Program`.
         // So we could `.unwrap()` here. But that seems to produce a small perf impact, probably because
         // `leave_scope` then doesn't get inlined because of its larger size due to the panic code.
         let parent_id = self.scoping.scope_parent_id(self.current_scope_id);
+        self.hoisting.leave_scope(&self.scoping, self.current_scope_id);
 
         debug_assert!(parent_id.is_some());
         if let Some(parent_id) = parent_id {

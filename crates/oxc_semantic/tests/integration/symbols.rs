@@ -254,6 +254,54 @@ fn test_lexical_redeclaration_of_hoisted_var_next_to_block_type_binding() {
 }
 
 #[test]
+fn test_hoisting_through_deeply_nested_blocks() {
+    use std::fmt::Write;
+
+    const DEPTH: usize = 200;
+    let mut source = String::from("try {} catch (e) {");
+    for i in 0..DEPTH {
+        write!(source, " {{ let l{i}; var v{i};").unwrap();
+    }
+    // `l0` is bound in the outermost block, `e` is a catch parameter, and `f` is hoisted out of
+    // this block by Annex B.
+    source.push_str(" var l0; var e; function f() {} let f;");
+    for i in (0..DEPTH).rev() {
+        // `v{i}` was hoisted through this block.
+        write!(source, " }} let v{i};").unwrap();
+    }
+    source.push_str(" }");
+
+    let tester = SemanticTester::new(&source, SourceType::cjs());
+    let ret = tester.build_with_errors();
+    let messages =
+        ret.diagnostics.iter().map(|error| error.message.to_string()).collect::<Vec<_>>();
+    let expected = ["l0", "f"]
+        .into_iter()
+        .map(String::from)
+        .chain((0..DEPTH).rev().map(|i| format!("v{i}")))
+        .map(|name| format!("Identifier `{name}` has already been declared"))
+        .collect::<Vec<_>>();
+    assert_eq!(messages, expected);
+
+    let scoping = ret.semantic.scoping();
+    let root_scope_id = scoping.root_scope_id();
+    for i in 0..DEPTH {
+        let var = scoping.get_binding(root_scope_id, format!("v{i}").as_str().into()).unwrap();
+        assert_eq!(scoping.symbol_scope_id(var), root_scope_id);
+    }
+    for name in ["e", "f"] {
+        assert!(scoping.get_binding(root_scope_id, name.into()).is_some());
+    }
+    assert_eq!(scoping.catch_var_bindings().count(), 1);
+    // Each `l{i}` stays in its block: the root, the catch clause, its body, and `i + 1` blocks.
+    for i in 1..DEPTH {
+        let symbol_id =
+            scoping.symbol_ids().find(|&id| scoping.symbol_name(id) == format!("l{i}")).unwrap();
+        assert_eq!(scoping.scope_ancestors(scoping.symbol_scope_id(symbol_id)).count(), i + 4);
+    }
+}
+
+#[test]
 fn test_block_type_binding_ignores_outer_type_merged_with_hoisted_var() {
     for source in [
         "function f() { type X = number; { interface X { a: number } var X = 0; interface X { b: number } const value: X = { a: 1, b: 2 }; } }",

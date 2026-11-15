@@ -1,13 +1,11 @@
 //! Declare symbol for `BindingIdentifier`s
 
-use smallvec::SmallVec;
-
 use oxc_allocator::{GetAddress, UnstableAddress};
 use oxc_ast::{AstKind, ast::*};
 use oxc_ecmascript::BoundNames;
 use oxc_span::GetSpan;
 use oxc_str::Ident;
-use oxc_syntax::{node::NodeId, scope::ScopeFlags, scope::ScopeId, symbol::SymbolFlags};
+use oxc_syntax::{node::NodeId, scope::ScopeFlags, symbol::SymbolFlags};
 
 use crate::{SemanticBuilder, checker::is_function_decl_part_of_if_statement};
 
@@ -49,21 +47,9 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
             });
         } else {
             // ------------------ var hosting ------------------
-            let mut target_scope_id = builder.current_scope_id;
-            // Stack-allocated: nesting depth from a `var`/`let`/`const` to the
-            // enclosing function (or program) scope is small in practice — 8
-            // covers almost all real-world cases without heap allocation.
-            let mut var_scope_ids: SmallVec<[ScopeId; 8]> = SmallVec::new();
-
-            // Collect all scopes where variable hoisting can occur
-            for scope_id in builder.scoping.scope_ancestors(target_scope_id) {
-                let flags = builder.scoping.scope_flags(scope_id);
-                if flags.is_var() {
-                    target_scope_id = scope_id;
-                    break;
-                }
-                var_scope_ids.push(scope_id);
-            }
+            let current_scope_id = builder.current_scope_id;
+            let target_scope_id = builder.hoisting.var_scope_id(&builder.scoping, current_scope_id);
+            let is_hoisted = target_scope_id != current_scope_id;
 
             self.id.bound_names(&mut |ident| {
                 let span = ident.span;
@@ -71,9 +57,22 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                 let mut declared_symbol_id = None;
                 let mut catch_symbol_id = None;
 
-                for &scope_id in &var_scope_ids {
+                // Visit the blocks between the current scope and the target scope which bind
+                // `name`, innermost first. The others cannot conflict.
+                let mut next = if is_hoisted {
+                    builder.hoisting.innermost_block_binding(name.as_str())
+                } else {
+                    None
+                };
+                while let Some(index) = next {
+                    let (scope_id, outer) = builder.hoisting.block_binding(index);
+                    if scope_id < target_scope_id {
+                        // Outside the target scope.
+                        break;
+                    }
+                    next = outer;
                     // Only local bindings matter here, to find catch parameters. An earlier
-                    // `var` cached in `hoisting_variables` is found through the target scope
+                    // `var` hoisted through this scope is found through the target scope
                     // instead, so its diagnostics are not repeated for every scope.
                     // Type-only bindings (type aliases, interfaces) live in a separate
                     // declaration space, so a hoisted `var` must not merge into them.
@@ -129,10 +128,10 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                     ident.symbol_id.set(Some(symbol_id));
                 }
 
-                // Finally, add the variable to all hoisted scopes
-                // to support redeclaration checks when declaring variables with the same name later.
-                for &scope_id in &var_scope_ids {
-                    builder.hoisting_variables.insert((scope_id, name), symbol_id);
+                // Finally, record the hoisting, to support redeclaration checks when declaring
+                // variables with the same name later in the blocks it passed through.
+                if is_hoisted {
+                    builder.hoisting.hoist_var(current_scope_id, target_scope_id, name, symbol_id);
                 }
             });
         }
@@ -214,20 +213,19 @@ impl<'a> Binder<'a> for Function<'a> {
             // no Annex B in strict mode / modules
             {
                 let block_scope_id = builder.current_scope_id;
-                let var_scope_id = builder
-                    .scoping
-                    .scope_ancestors(block_scope_id)
-                    .skip(1)
-                    .find(|&id| builder.scoping.scope_flags(id).is_var());
-                if let Some(var_scope_id) = var_scope_id
-                    && !builder.scoping.scope_has_binding(var_scope_id, ident.name)
-                {
+                let var_scope_id = builder.hoisting.var_scope_id(&builder.scoping, block_scope_id);
+                if !builder.scoping.scope_has_binding(var_scope_id, ident.name) {
                     builder.scoping.move_binding_by_symbol_id(
                         block_scope_id,
                         var_scope_id,
                         symbol_id,
                     );
-                    builder.hoisting_variables.insert((block_scope_id, ident.name), symbol_id);
+                    builder.hoisting.hoist_annex_b_function(
+                        block_scope_id,
+                        var_scope_id,
+                        ident.name,
+                        symbol_id,
+                    );
                 }
             }
 
