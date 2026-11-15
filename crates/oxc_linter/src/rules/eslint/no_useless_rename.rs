@@ -546,7 +546,6 @@ fn test() {
     let fix = vec![
         ("let {foo: foo} = obj;", "let {foo} = obj;"),
         ("({foo: (foo)} = obj);", "({foo} = obj);"),
-        // A shorthand property can't have parentheses, so ESLint doesn't fix this.
         ("({foo: (foo) = a} = obj);", "({foo: (foo) = a} = obj);"),
         ("({foo: foo /* ) */ = 1} = obj);", "({foo /* ) */ = 1} = obj);"),
         ("({foo: foo = /* ) */ 1} = obj);", "({foo = /* ) */ 1} = obj);"),
