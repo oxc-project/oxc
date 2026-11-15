@@ -13,7 +13,7 @@ Original    | minified    | minified    | gzip        | gzip        | Iterations
 
 555.77 kB   | 262,720 B   | 270.13 kB   | 87,627 B    | 90.80 kB    |           2 | d3.js
 
-1.01 MB     | 435,866 B   | 458.89 kB   | 121,774 B   | 126.71 kB   |           2 | bundle.min.js
+1.01 MB     | 435,862 B   | 458.89 kB   | 121,774 B   | 126.71 kB   |           2 | bundle.min.js
 
 1.25 MB     | 634,070 B   | 646.76 kB   | 158,272 B   | 163.73 kB   |           2 | three.js
 
@@ -23,5 +23,5 @@ Original    | minified    | minified    | gzip        | gzip        | Iterations
 
 6.69 MB     | 2,119,887 B | 2.31 MB     | 453,295 B   | 488.28 kB   |           4 | antd.js
 
-10.95 MB    | 3,309,379 B | 3.49 MB     | 849,083 B   | 915.50 kB   |           4 | typescript.js
+10.95 MB    | 3,309,276 B | 3.49 MB     | 849,047 B   | 915.50 kB   |           4 | typescript.js
 

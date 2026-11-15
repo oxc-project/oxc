@@ -38,6 +38,21 @@ source: crates/oxc_linter/src/tester.rs
   help: Merge with the previous call.
 
   ⚠ unicorn(prefer-single-call): Do not call `Array#push()` multiple times.
+   ╭─[prefer_single_call.tsx:1:33]
+ 1 │ foo.push(1, /* comment */); foo.push(2);
+   ·                                 ────
+   ╰────
+  help: Merge with the previous call.
+
+  ⚠ unicorn(prefer-single-call): Do not call `Array#push()` multiple times.
+   ╭─[prefer_single_call.tsx:2:8]
+ 1 │ foo.push(1, // comment
+ 2 │ ); foo.push(2);
+   ·        ────
+   ╰────
+  help: Merge with the previous call.
+
+  ⚠ unicorn(prefer-single-call): Do not call `Array#push()` multiple times.
    ╭─[prefer_single_call.tsx:2:5]
  1 │ foo.push(1);
  2 │ foo.push(2);

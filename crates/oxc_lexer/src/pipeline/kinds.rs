@@ -23,6 +23,12 @@ impl<'a> Kinds<'a> {
         Self(&self.0[..len])
     }
 
+    /// The number of kinds.
+    #[inline(always)]
+    pub(super) fn len(self) -> usize {
+        self.0.len()
+    }
+
     #[inline(always)]
     pub(super) fn get(self, i: usize) -> u8 {
         self.0[i].get()
@@ -33,10 +39,11 @@ impl<'a> Kinds<'a> {
         self.0[i].set(kind as u8);
     }
 
-    /// set without the bounds check, so i must be below the kinds' length.
+    /// Set the kind at i if cond, without a branch.
     #[inline(always)]
-    pub(super) unsafe fn set_unchecked(self, i: usize, kind: TokenKind) {
-        // SAFETY: the caller keeps i below the kinds' length.
-        unsafe { self.0.get_unchecked(i) }.set(kind as u8);
+    pub(super) fn set_if(self, i: usize, cond: bool, kind: TokenKind) {
+        let cell = &self.0[i];
+        let mask = 0u8.wrapping_sub(u8::from(cond));
+        cell.set((cell.get() & !mask) | (kind as u8 & mask));
     }
 }

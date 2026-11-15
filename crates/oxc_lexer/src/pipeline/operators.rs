@@ -160,6 +160,8 @@ static OP3_TABLE: OpTable<OP3_HASH_TABLE_SIZE> = OpTable::new(&OP_TABLES_DATA.op
 struct OpTable<const TABLE_SIZE: usize> {
     /// Lookup table data.
     data: &'static OpTableData<TABLE_SIZE>,
+    /// Each slot's kind byte as a TokenKind, converted when the table is built.
+    kinds: [TokenKind; TABLE_SIZE],
     /// Length of operators in this table (2 or 3).
     len: u32,
     /// Hash multiplier.
@@ -172,10 +174,18 @@ impl<const TABLE_SIZE: usize> OpTable<TABLE_SIZE> {
     ///
     /// Called at compile time only.
     const fn new(data: &'static OpTableData<TABLE_SIZE>, len: u32, mul: u32) -> Self {
-        Self { data, len, mul }
+        let mut kinds = [TokenKind::Eof; TABLE_SIZE];
+        let mut slot = 0;
+        while slot < TABLE_SIZE {
+            let kind = TokenKind::from_u8((data.values[slot] >> 24) as u8, BASELINE);
+            kinds[slot] = kind.expect("an operator kind byte is not a TokenKind");
+            slot += 1;
+        }
+        Self { data, kinds, len, mul }
     }
 
     /// Hash `key` and get the packed value for an operator from this hash table.
+    /// Also returns the slot's kind as a TokenKind, which is Eof for an empty slot.
     ///
     /// `key` must contain:
     /// - Bytes 0-1: First 2 bytes of source
@@ -194,9 +204,9 @@ impl<const TABLE_SIZE: usize> OpTable<TABLE_SIZE> {
     /// - `(pack & 0xFF_FFFF) == key` for 3-byte operators.
     #[cpu_multiversion]
     #[inline(always)]
-    fn pack(&self, key: u32, cpu: impl Cpu) -> u32 {
+    fn pack(&self, key: u32, cpu: impl Cpu) -> (u32, TokenKind) {
         let slot = self.data.slot(key, self.mul, cpu);
-        self.data.values[slot]
+        (self.data.values[slot], self.kinds[slot])
     }
 
     /// Check if `bytes` starts with an operator from this hash table.
@@ -208,23 +218,16 @@ impl<const TABLE_SIZE: usize> OpTable<TABLE_SIZE> {
     fn lookup(&self, bytes: [u8; 4], cpu: impl Cpu) -> Option<TokenKind> {
         let mask = if self.len == 2 { 0xFFFF } else { 0xFF_FFFF };
         let key = u32::from_le_bytes(bytes) & mask;
-        let pack = self.pack(key, cpu);
+        let slot = self.data.slot(key, self.mul, cpu);
+        let pack = self.data.values[slot];
 
         // If unmasked bytes of `bytes` are all zero, then `key` is 0.
         // If the slot corresponding to `key: 0` was empty, `pack` would be 0,
         // and `(pack & mask) == key` check would pass.
         // We ensure that the tables are arranged so that slot is always occupied -
         // `test_perfect_hash` test covers this.
-        // This means that `pack >> 24` cannot be 0 here - that branch always returns
-        // an operator `TokenKind`.
-        if (pack & mask) == key {
-            // SAFETY: The top byte of all `pack` values for non-empty slots is derived
-            // from a valid `TokenKind`. See above for why the slot can't be empty here.
-            let kind = unsafe { TokenKind::from_u8_unchecked((pack >> 24) as u8, cpu) };
-            Some(kind)
-        } else {
-            None
-        }
+        // So when the keys match, kinds[slot] is always an operator kind.
+        if (pack & mask) == key { Some(self.kinds[slot]) } else { None }
     }
 }
 
@@ -277,6 +280,7 @@ impl<const TABLE_SIZE: usize> OpTableData<TABLE_SIZE> {
 }
 
 /// Hash `key` and get the packed value for a 2-byte operator from the hash table.
+/// Also returns the slot's kind as a TokenKind, which is Eof for an empty slot.
 ///
 /// `key` must contain:
 /// - Bytes 0-1: 2 bytes of source
@@ -293,11 +297,12 @@ impl<const TABLE_SIZE: usize> OpTableData<TABLE_SIZE> {
 /// `(pack & 0xFFFF) == key` to confirm a match.
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) fn opmap_pack2(key: u32, cpu: impl Cpu) -> u32 {
+pub(super) fn opmap_pack2(key: u32, cpu: impl Cpu) -> (u32, TokenKind) {
     OP2_TABLE.pack(key, cpu)
 }
 
 /// Hash `key` and get the packed value for a 3-byte operator from the hash table.
+/// Also returns the slot's kind as a TokenKind, which is Eof for an empty slot.
 ///
 /// `key` must contain:
 /// - Bytes 0-2: 3 bytes of source
@@ -313,7 +318,7 @@ pub(super) fn opmap_pack2(key: u32, cpu: impl Cpu) -> u32 {
 /// `(pack & 0xFF_FFFF) == key` to confirm a match.
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) fn opmap_pack3(key: u32, cpu: impl Cpu) -> u32 {
+pub(super) fn opmap_pack3(key: u32, cpu: impl Cpu) -> (u32, TokenKind) {
     OP3_TABLE.pack(key, cpu)
 }
 

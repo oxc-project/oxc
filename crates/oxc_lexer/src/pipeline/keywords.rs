@@ -1,11 +1,8 @@
-// Raw kernels: the unsafe fn boundary is the reviewed surface, not each operation inside.
-#![allow(unsafe_op_in_unsafe_fn, clippy::missing_safety_doc, clippy::undocumented_unsafe_blocks)]
-
-use std::{cmp::min, hint, ptr};
+use std::hint;
 
 use constcat::concat_slices;
 
-use oxc_data_structures::{assert_unchecked, branch_hints::unlikely, str::const_str_eq};
+use oxc_data_structures::str::const_str_eq;
 use oxc_simd::{Avx2, BASELINE, Cpu, DynCpu, Neon, Vec128, cpu_multiversion, cpu_version};
 
 use crate::token::{KW_KIND_BASE, TokenKind};
@@ -401,62 +398,34 @@ pub(super) fn kw_match_at(
     len: usize,
     cpu: impl Cpu,
 ) -> TokenKind {
-    let word = &src[pos..pos + 16];
-
-    // An empty word is not a keyword. Callers never pass 0, but `kw_match` requires `len`
-    // of at least 1 for soundness, so we have to check.
-    if unlikely(len == 0) {
-        return TokenKind::Ident;
-    }
-
-    // A word of 16 bytes or more is not a keyword, and with length 16, it doesn't match one either.
-    // Branchless select here rather than an early exit branch because identifiers longer than
-    // 16 bytes are not uncommon.
-    let len = min(len, 16);
-
-    // SAFETY: `word` is 16 bytes, and `len` is between 1 and 16
-    unsafe {
-        if is_ts {
-            kw_match::<true>(word.as_ptr(), len, cpu)
-        } else {
-            kw_match::<false>(word.as_ptr(), len, cpu)
-        }
-    }
+    let word = src[pos..pos + 16].try_into().unwrap();
+    if is_ts { kw_match::<true>(word, len, cpu) } else { kw_match::<false>(word, len, cpu) }
 }
 
-/// Check if the word of `len` bytes at `ptr` is a keyword.
+/// Check if the first len bytes of word are a keyword.
 ///
 /// Returns the keyword's [`TokenKind`], or `Ident` if it's not a keyword.
 /// If `IS_TS` is `false`, TS-only keywords are not treated as keywords (`Ident`).
 ///
-/// The first `len` bytes at `ptr` must be word chars, otherwise the result may be wrong.
+/// The first len bytes of word must be word chars, otherwise the result may be wrong.
 /// Word chars are never 0, which the comparison relies on to check the lengths are equal.
-///
-/// # SAFETY
-///
-/// * `ptr` must be valid for reading 16 bytes.
-/// * `len` must be between 1 and 16 (inclusive).
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn kw_match<const IS_TS: bool>(
-    ptr: *const u8,
-    len: usize,
-    cpu: impl Cpu,
-) -> TokenKind {
+pub(super) fn kw_match<const IS_TS: bool>(word: &[u8; 16], len: usize, cpu: impl Cpu) -> TokenKind {
+    // No keyword is 16 bytes long, so the cap changes no match and keeps every slot in range.
+    let len = len.min(16);
     let (slot, is_match) = if IS_TS {
         match DynCpu::from(cpu) {
-            DynCpu::Avx2(cpu) => ts_match_avx2(ptr, len, cpu),
-            DynCpu::Neon(cpu) => ts_match_neon(ptr, len, cpu),
-            DynCpu::Generic(_) => ts_match_generic(ptr, len),
+            DynCpu::Avx2(cpu) => ts_match_avx2(word, len, cpu),
+            DynCpu::Neon(cpu) => ts_match_neon(word, len, cpu),
+            DynCpu::Generic(_) => ts_match_generic(word, len),
         }
     } else {
-        let slot = keyword_hash_js(ptr::read_unaligned(ptr as *const u16), len, cpu);
-        // SAFETY: The JS hash is at most 63 + 16, as the caller guarantees len is at most 16.
-        unsafe { assert_unchecked!(slot < JS_SLOT_COUNT) };
+        let slot = keyword_hash_js(u16::from_le_bytes([word[0], word[1]]), len, cpu);
         let is_match = match DynCpu::from(cpu) {
-            DynCpu::Avx2(cpu) => js_match_avx2(ptr, slot, cpu),
-            DynCpu::Neon(cpu) => js_match_neon(ptr, slot, cpu),
-            DynCpu::Generic(_) => js_match_generic(ptr, slot),
+            DynCpu::Avx2(cpu) => js_match_avx2(word, slot, cpu),
+            DynCpu::Neon(cpu) => js_match_neon(word, slot, cpu),
+            DynCpu::Generic(_) => js_match_generic(word, slot),
         };
         (slot, is_match)
     };
@@ -470,64 +439,67 @@ pub(super) unsafe fn kw_match<const IS_TS: bool>(
 // The JS slot grows with the length, so matching the keyword's own bytes also matches the length.
 #[cpu_version(Avx2)]
 #[inline(always)]
-unsafe fn js_match_avx2(ptr: *const u8, slot: usize, cpu: Avx2) -> bool {
-    let word = Vec128::load_unaligned(ptr, cpu);
+fn js_match_avx2(word: &[u8; 16], slot: usize, cpu: Avx2) -> bool {
+    let word = Vec128::read_unaligned(word, cpu);
     let text = Vec128::read_unaligned(KW_TEXT_JS.0[slot..].first_chunk::<2>().unwrap(), cpu);
     (!word.eq_u8(text).movemask() & KW_BITS_JS.0[slot]) == 0
 }
 
 #[cpu_version(Neon)]
 #[inline(always)]
-unsafe fn js_match_neon(ptr: *const u8, slot: usize, cpu: Neon) -> bool {
-    let word = Vec128::load_unaligned(ptr, cpu);
+fn js_match_neon(word: &[u8; 16], slot: usize, cpu: Neon) -> bool {
+    let word = Vec128::read_unaligned(word, cpu);
     let text = Vec128::read_unaligned(KW_TEXT_JS.0[slot..].first_chunk::<2>().unwrap(), cpu);
     ((word ^ text) & Vec128::read_unaligned(&KW_MASKS_JS.0[slot], cpu)).is_zero()
 }
 
 #[cpu_version(Generic)]
 #[inline(always)]
-unsafe fn js_match_generic(ptr: *const u8, slot: usize) -> bool {
-    use ptr::read_unaligned;
-
-    let ptr = ptr as *const u64;
+fn js_match_generic(word: &[u8; 16], slot: usize) -> bool {
+    let [lo, hi] = halves(word);
     let text = KW_TEXT_JS.0[slot..].first_chunk::<2>().unwrap();
     let mask = &KW_MASKS_JS.0[slot];
-    let first_8 = (read_unaligned(ptr) ^ text[0]) & mask[0];
-    let second_8 = (read_unaligned(ptr.add(1)) ^ text[1]) & mask[1];
+    let first_8 = (lo ^ text[0]) & mask[0];
+    let second_8 = (hi ^ text[1]) & mask[1];
     (first_8 | second_8) == 0
 }
 
 // The masked word's first 8 bytes are the hash key, and all 16 are compared with the keyword.
 #[cpu_version(Avx2)]
 #[inline(always)]
-unsafe fn ts_match_avx2(ptr: *const u8, len: usize, cpu: Avx2) -> (usize, bool) {
-    let word = Vec128::load_unaligned(ptr, cpu) & Vec128::read_unaligned(len_mask(len, cpu), cpu);
+fn ts_match_avx2(word: &[u8; 16], len: usize, cpu: Avx2) -> (usize, bool) {
+    let word = Vec128::read_unaligned(word, cpu) & Vec128::read_unaligned(len_mask(len, cpu), cpu);
     let slot = keyword_hash_ts(word.get_u64::<0>(), cpu);
     (slot, word.all_eq_u8(Vec128::read_unaligned(&KW_TEXT_TS.0[slot], cpu)))
 }
 
 #[cpu_version(Neon)]
 #[inline(always)]
-unsafe fn ts_match_neon(ptr: *const u8, len: usize, cpu: Neon) -> (usize, bool) {
-    let word = Vec128::load_unaligned(ptr, cpu) & Vec128::read_unaligned(len_mask(len, cpu), cpu);
+fn ts_match_neon(word: &[u8; 16], len: usize, cpu: Neon) -> (usize, bool) {
+    let word = Vec128::read_unaligned(word, cpu) & Vec128::read_unaligned(len_mask(len, cpu), cpu);
     let slot = keyword_hash_ts(word.get_u64::<0>(), cpu);
     (slot, word.all_eq_u8(Vec128::read_unaligned(&KW_TEXT_TS.0[slot], cpu)))
 }
 
 #[cpu_version(Generic)]
 #[inline(always)]
-unsafe fn ts_match_generic(ptr: *const u8, len: usize) -> (usize, bool) {
-    use ptr::read_unaligned;
-
+fn ts_match_generic(word: &[u8; 16], len: usize) -> (usize, bool) {
     let cpu = BASELINE;
 
-    let ptr = ptr as *const u64;
-    let mask_ptr = len_mask(len, cpu).as_ptr() as *const u64;
-    let masked_first_8 = read_unaligned(ptr) & read_unaligned(mask_ptr);
-    let masked_second_8 = read_unaligned(ptr.add(1)) & read_unaligned(mask_ptr.add(1));
+    let ([lo, hi], [mask_lo, mask_hi]) = (halves(word), halves(len_mask(len, cpu)));
+    let masked_first_8 = lo & mask_lo;
+    let masked_second_8 = hi & mask_hi;
     let slot = keyword_hash_ts(masked_first_8, cpu);
     let text = &KW_TEXT_TS.0[slot];
     (slot, ((masked_first_8 ^ text[0]) | (masked_second_8 ^ text[1])) == 0)
+}
+
+/// The 16 bytes as two little-endian u64s.
+#[cpu_version(Generic)]
+#[inline(always)]
+fn halves(bytes: &[u8; 16]) -> [u64; 2] {
+    let (lo, hi) = bytes.split_at(8);
+    [u64::from_le_bytes(lo.try_into().unwrap()), u64::from_le_bytes(hi.try_into().unwrap())]
 }
 
 /// Get 16 bytes which are a mask with the first `len` bytes set to `0xFF`, and the rest 0.
@@ -580,13 +552,11 @@ mod tests {
         buf[..word.len()].copy_from_slice(word);
         buf[word.len()..word.len() + after.len()].copy_from_slice(after);
 
-        // SAFETY: `buf` is 48 bytes. `word.len()` is between 1-16 bytes.
-        unsafe {
-            if is_ts {
-                kw_match::<true>(buf.as_ptr(), word.len(), cpu)
-            } else {
-                kw_match::<false>(buf.as_ptr(), word.len(), cpu)
-            }
+        let window = buf.first_chunk::<16>().unwrap();
+        if is_ts {
+            kw_match::<true>(window, word.len(), cpu)
+        } else {
+            kw_match::<false>(window, word.len(), cpu)
         }
     }
 

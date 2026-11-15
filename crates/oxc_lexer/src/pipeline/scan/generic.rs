@@ -1,25 +1,22 @@
 use oxc_simd::{BASELINE, cpu_version};
 
-use crate::pipeline::{
-    bytes::is_ls_ps_tail,
-    chunk::{eqm, load64},
-};
+use crate::pipeline::{bytes::is_ls_ps_tail, chunk::eqm, source::Source};
 
 use super::common::is_license_at;
 
 #[cpu_version(Generic)]
-pub unsafe fn scan_block_comment_generic(
-    src: *const u8,
-    n: usize,
-    mut i: usize,
-) -> (usize, bool, Option<u32>) {
+pub fn scan_block_comment_generic(src: Source, mut i: usize) -> (usize, bool, Option<u32>) {
     let cpu = BASELINE;
 
+    let n = src.len();
+    if i > n {
+        return (n, false, None);
+    }
     let mut saw_nl = false;
     let mut license_at = None;
     while i + 8 <= n {
-        let x = load64(src, i);
-        let y = load64(src, i + 1);
+        let x = src.u64_at(i);
+        let y = src.u64_at(i + 1);
         let term = eqm(x, b'*') & eqm(y, b'/');
         let nl = eqm(x, b'\n') | eqm(x, b'\r');
         let at = eqm(x, b'@');
@@ -43,8 +40,8 @@ pub unsafe fn scan_block_comment_generic(
     }
     // The last byte can still be a newline. Reading the byte after it reads the PAD
     while i < n {
-        let c = *src.add(i);
-        if c == b'*' && *src.add(i + 1) == b'/' {
+        let c = src[i];
+        if c == b'*' && src[i + 1] == b'/' {
             return (i + 1, saw_nl, license_at);
         }
         if c == b'\n' || c == b'\r' {
@@ -64,22 +61,22 @@ pub unsafe fn scan_block_comment_generic(
 /// cleared from the mask and the scan continues; the LS/PS confirm can read
 /// the pad, which never matches 0x80.
 #[cpu_version(Generic)]
-pub unsafe fn scan_line_comment_generic(
-    src: *const u8,
-    n: usize,
-    mut i: usize,
-) -> (usize, Option<u32>) {
+pub fn scan_line_comment_generic(src: Source, mut i: usize) -> (usize, Option<u32>) {
     let cpu = BASELINE;
 
+    let n = src.len();
+    if i > n {
+        return (n, None);
+    }
     let mut license_at = None;
     while i + 8 <= n {
-        let x = load64(src, i);
+        let x = src.u64_at(i);
         let mut term = eqm(x, b'\n') | eqm(x, b'\r') | eqm(x, 0xE2);
         let at = eqm(x, b'@');
         while term != 0 {
             let t = (term.trailing_zeros() >> 3) as usize;
-            let c = *src.add(i + t);
-            if c == 0xE2 && !is_ls_ps_tail(*src.add(i + t + 1), *src.add(i + t + 2), cpu) {
+            let c = src[i + t];
+            if c == 0xE2 && !is_ls_ps_tail(src[i + t + 1], src[i + t + 2], cpu) {
                 term &= term - 1;
                 continue;
             }
@@ -97,11 +94,11 @@ pub unsafe fn scan_line_comment_generic(
         i += 8;
     }
     while i < n {
-        let c = *src.add(i);
+        let c = src[i];
         if c == b'\n' || c == b'\r' {
             return (i, license_at);
         }
-        if c == 0xE2 && is_ls_ps_tail(*src.add(i + 1), *src.add(i + 2), cpu) {
+        if c == 0xE2 && is_ls_ps_tail(src[i + 1], src[i + 2], cpu) {
             return (i, license_at);
         }
         if c == b'@' && license_at.is_none() && is_license_at(src, i, cpu) {
@@ -114,7 +111,7 @@ pub unsafe fn scan_line_comment_generic(
 
 #[cpu_version(Generic)]
 #[inline(always)]
-unsafe fn first_license_at8(src: *const u8, base: usize, mut am: u64) -> Option<u32> {
+fn first_license_at8(src: Source, base: usize, mut am: u64) -> Option<u32> {
     let cpu = BASELINE;
 
     while am != 0 {

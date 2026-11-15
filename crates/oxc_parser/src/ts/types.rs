@@ -986,6 +986,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if !matches!(self.cur_kind(), Kind::LAngle | Kind::ShiftLeft) {
             return None;
         }
+        // Most `<` in expressions are relational operators (`i < items.length`) and most `<<` are
+        // shifts (`1 << 2`). The grammar rules those out within a few tokens, so decide from the
+        // tokens alone rather than building a type and a diagnostic only to discard both.
+        if !self.can_start_type_arguments_in_expression() {
+            return None;
+        }
         let checkpoint = self.checkpoint();
         let start = self.cur_start();
         if !self.re_lex_ts_l_angle() {
@@ -1013,6 +1019,126 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.error(diagnostics::ts_empty_type_argument_list(span));
         }
         Some(TSTypeParameterInstantiation::boxed(span, params, self))
+    }
+
+    /// Whether the tokens after the current `<` or `<<` can begin a `TypeArguments` production.
+    ///
+    /// ```text
+    /// TypeArguments    : `<` TypeArgumentList `>`
+    /// TypeArgumentList : Type (`,` Type)*
+    /// ```
+    ///
+    /// Returns `false` only when [`Self::parse_type_arguments_in_expression`] is certain to fail,
+    /// so that it need not speculate. Every shape not recognized here is left to that parse.
+    /// Only lexer state changes, and it is restored.
+    fn can_start_type_arguments_in_expression(&mut self) -> bool {
+        let checkpoint = self.lexer.checkpoint();
+        let first = self.lexer.next_token().kind();
+        let can_start = if self.at(Kind::ShiftLeft) {
+            self.can_start_type_parameters_after(first)
+        } else {
+            self.can_start_type_argument_after(first)
+        };
+        self.lexer.rewind(checkpoint);
+        can_start
+    }
+
+    /// Whether a type argument can begin with `first`, the token after `<`.
+    ///
+    /// A `Type` which begins with a name, a literal or `this` is complete after that primary type
+    /// unless the next token continues it, and a complete type argument is followed by `,` or `>`:
+    ///
+    /// ```text
+    /// TypeReference     : TypeName [no LineTerminator here] TypeArguments?
+    /// TypeName          : IdentifierReference | TypeName `.` IdentifierName
+    /// ArrayType         : PrimaryType [no LineTerminator here] `[` `]`
+    /// IndexedAccessType : PrimaryType [no LineTerminator here] `[` Type `]`
+    /// IntersectionType  : Type `&` Type
+    /// UnionType         : Type `|` Type
+    /// ConditionalType   : Type `extends` Type `?` Type `:` Type
+    /// TypePredicate     : `this` `is` Type
+    /// ```
+    ///
+    /// plus the JSDoc postfix `!` and `?`, which the type parser accepts in order to report them.
+    /// Any other token ends the list early: `a < b;`, `a < b.c)`, `a < 0 &&`, `a < this.b`.
+    ///
+    /// The lexer is positioned after `first`. The checks mirror `parse_non_array_type`,
+    /// `parse_postfix_type_rest` and their callers, and must be kept in step with them.
+    fn can_start_type_argument_after(&mut self, first: Kind) -> bool {
+        let is_name = matches!(
+            first,
+            Kind::Ident
+                | Kind::Any
+                | Kind::Unknown
+                | Kind::String
+                | Kind::Number
+                | Kind::BigInt
+                | Kind::Symbol
+                | Kind::Boolean
+                | Kind::Undefined
+                | Kind::Never
+                | Kind::Object
+                | Kind::Null
+        );
+        if !is_name
+            && !matches!(first, Kind::This | Kind::Str | Kind::True | Kind::False)
+            && !first.is_number()
+        {
+            return true;
+        }
+        let mut next = self.lexer.next_token().kind();
+        while is_name && next == Kind::Dot {
+            if !self.lexer.next_token().kind().is_identifier_name() {
+                return false;
+            }
+            next = self.lexer.next_token().kind();
+        }
+        match next {
+            Kind::RAngle
+            | Kind::Comma
+            | Kind::LAngle
+            | Kind::ShiftLeft
+            | Kind::LtEq
+            | Kind::ShiftLeftEq
+            | Kind::LBrack
+            | Kind::Bang
+            | Kind::Amp
+            | Kind::Pipe
+            | Kind::Extends
+            | Kind::Is => true,
+            // JSDoc `T?` ends the primary type, so what follows it cannot start another type.
+            // This tells it apart from a conditional expression: `a < b ? c : d`.
+            Kind::Question => {
+                matches!(self.lexer.next_token().kind(), Kind::RAngle | Kind::Comma | Kind::Extends)
+            }
+            _ => false,
+        }
+    }
+
+    /// Whether a type parameter list can begin with `first`, the token after `<<`.
+    ///
+    /// The first type argument starts with the second `<`, so it must be a generic function
+    /// type, whose type parameter list opens with a `TypeParameter`:
+    ///
+    /// ```text
+    /// TypeParameter : Modifiers? BindingIdentifier (`extends` Type)? (`=` Type)?
+    /// ```
+    ///
+    /// which rules out `1 << 2` at the first token, and `a << b;` at the second.
+    ///
+    /// The lexer is positioned after `first`. The checks mirror `parse_ts_type_parameter` and
+    /// its callers, and must be kept in step with them.
+    fn can_start_type_parameters_after(&mut self, first: Kind) -> bool {
+        match first {
+            Kind::Ident => matches!(
+                self.lexer.next_token().kind(),
+                Kind::Extends | Kind::Eq | Kind::Comma | Kind::RAngle
+            ),
+            // An empty list is only a recoverable error: `f<<>() => void>()`.
+            Kind::RAngle => true,
+            // Keywords may be modifiers (`const T`) or contextual names (`of`).
+            kind => kind.is_identifier_name(),
+        }
     }
 
     fn can_follow_type_arguments_in_expr(&mut self) -> bool {

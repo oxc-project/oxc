@@ -68,11 +68,11 @@ describe("simple", () => {
   });
 
   it("supports drop_labels option", () => {
-    const code = "PURE: { foo(); bar(); } OTHER: { baz(); }";
+    const code = "PURE: { foo(); bar(); } OTHER: for (;;) for (;;) break OTHER;";
     const ret = minifySync("test.js", code, {
       compress: { dropLabels: ["PURE"] },
     });
-    expect(ret.code).toBe("OTHER:baz();");
+    expect(ret.code).toBe("OTHER:for(;;)for(;;)break OTHER;");
     expect(ret.errors.length).toBe(0);
   });
 });

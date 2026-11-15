@@ -1,14 +1,11 @@
 // Raw kernels: the unsafe fn boundary is the reviewed surface, not each operation inside.
 #![allow(unsafe_op_in_unsafe_fn, clippy::missing_safety_doc, clippy::undocumented_unsafe_blocks)]
 
-use std::mem::MaybeUninit;
+use std::slice;
 
 use oxc_simd::{Cpu, cpu_multiversion, prefetch};
 
-use crate::{
-    error::DiagCode,
-    token::{TokenKind, tk},
-};
+use crate::{error::DiagCode, token::TokenKind};
 
 use crate::pipeline::{
     bitmap::{Bitmap, Bitmaps},
@@ -48,8 +45,8 @@ pub fn coalesce(
     let events = events[..BATCH_SLOTS].as_mut_ptr();
     let is_ts = options.ts;
     state.disambiguate.restart(cpu);
-    // Events are collected branchlessly and handled per batch. Unset masks are never read
-    let mut rare_masks = [const { MaybeUninit::<u64>::uninit() }; KWB];
+    // Events are collected branchlessly and handled per batch.
+    let mut rare_masks = [0u64; KWB];
     let mut event_count = 0usize;
     let mut prev_empty = false;
     let mut op_prev: u64 = 0;
@@ -106,7 +103,7 @@ pub fn coalesce(
             let base = (w << 6) as u32;
             prefetch(src.as_ptr().wrapping_add(base as usize), cpu);
             prefetch(kinds.as_ptr().wrapping_add(base as usize) as *const u8, cpu);
-            rare_masks[w & (KWB - 1)].write(rare);
+            rare_masks[w & (KWB - 1)] = rare;
             // SAFETY: a batch pushes at most 64 positions a block, plus up to 8 slots past them.
             unsafe {
                 candidate_count =
@@ -116,11 +113,11 @@ pub fn coalesce(
         }
         prev_empty = empty;
         if w & (KWB - 1) == KWB - 1 {
-            // SAFETY: the batch's positions lie in the source, whose blocks the handles hold.
+            // SAFETY: push_positions wrote the batch's positions, all inside the source's blocks.
             unsafe {
                 if event_count != 0 {
-                    cursor =
-                        coalesce_events(lex, state, events, event_count, &rare_masks, cursor, cpu);
+                    let batch = slice::from_raw_parts(events, event_count);
+                    cursor = coalesce_events(lex, state, batch, &rare_masks, cursor, cpu);
                     event_count = 0;
                 }
                 kw_flush(is_ts, src, word, kinds, kw_candidates, candidate_count, cpu);
@@ -131,7 +128,8 @@ pub fn coalesce(
     // SAFETY: as for the batches flushed in the loop.
     unsafe {
         if event_count != 0 {
-            coalesce_events(lex, state, events, event_count, &rare_masks, cursor, cpu);
+            let batch = slice::from_raw_parts(events, event_count);
+            coalesce_events(lex, state, batch, &rare_masks, cursor, cpu);
         }
         kw_flush(is_ts, src, word, kinds, kw_candidates, candidate_count, cpu);
     }
@@ -212,12 +210,11 @@ unsafe fn push_positions<const N: usize>(
 /// Handle a batch's events in order. Rereading op_char is safe: events only clear it below cursor.
 #[cpu_multiversion]
 #[inline(never)]
-unsafe fn coalesce_events(
+fn coalesce_events(
     lex: Lex,
     state: &mut LexState,
-    events: *const u32,
-    count: usize,
-    rare_masks: &[MaybeUninit<u64>; KWB],
+    events: &[u32],
+    rare_masks: &[u64; KWB],
     mut cursor: usize,
     cpu: impl Cpu,
 ) -> usize {
@@ -226,19 +223,19 @@ unsafe fn coalesce_events(
     let LexState { lanes, disambiguate, .. } = state;
     let is_ts = options.ts;
     let block_count = src.block_count();
-    for i in 0..count {
-        let p = *events.add(i) as usize;
+    for &p in events {
+        let p = p as usize;
         if p < cursor {
             continue;
         }
         let (w, bit) = (p >> 6, p & 63);
-        let rare = rare_masks[w & (KWB - 1)].assume_init();
+        let rare = rare_masks[w & (KWB - 1)];
         let has_next = w + 1 < block_count;
         if (rare >> bit) & 1 != 0 {
             cursor = glue_number(lex, p, lanes, disambiguate, cpu);
         } else {
-            let op = *op_char.as_ptr().add(w);
-            let op_next = if has_next { *op_char.as_ptr().add(w + 1) } else { 0 };
+            let op = op_char.block(w, cpu);
+            let op_next = if has_next { op_char.block(w + 1, cpu) } else { 0 };
             let y2 = (op >> bit) | ((op_next << (63 - bit)) << 1);
             let run = (!y2).trailing_zeros() as usize;
             let q = src.u32_at(p);
@@ -280,56 +277,43 @@ unsafe fn coalesce_events(
 /// Fuse the operator pair at p into one token if it spells one; returns the cursor.
 #[cpu_multiversion]
 #[inline(always)]
-unsafe fn fuse_pair(kinds: Kinds, token_start: Bitmap, p: usize, q: u32, cpu: impl Cpu) -> usize {
-    let key = q & 0xFFFF;
-    let pack = opmap_pack2(key, cpu);
+fn fuse_pair(kinds: Kinds, token_start: Bitmap, p: usize, q: u32, cpu: impl Cpu) -> usize {
+    let (pack, kind) = opmap_pack2(q & 0xFFFF, cpu);
     let mut ok = pack as u16 == q as u16;
-    let kk = (pack >> 24) as u8;
-    ok &= !((kk == tk!(OptionalChain)) && is_digit((q >> 16) as u8, cpu));
-    let hm: u8 = 0u8.wrapping_sub(ok as u8);
-    let k = kinds.as_ptr().add(p);
-    *k = (*k & !hm) | (kk & hm);
-    let clr = (ok as u64) << ((p + 1) & 63);
-    *token_start.as_ptr().add((p + 1) >> 6) &= !clr;
+    ok &= !((kind == TokenKind::OptionalChain) && is_digit((q >> 16) as u8, cpu));
+    kinds.set_if(p, ok, kind);
+    token_start.clear_if(p + 1, ok, cpu);
     p + 1 + ok as usize
 }
 
 /// Fuse the 3-char operator run at p into one token, or a pair at p or p + 1; returns the cursor.
 #[cpu_multiversion]
 #[inline(always)]
-unsafe fn fuse_triple(kinds: Kinds, token_start: Bitmap, p: usize, q: u32, cpu: impl Cpu) -> usize {
+fn fuse_triple(kinds: Kinds, token_start: Bitmap, p: usize, q: u32, cpu: impl Cpu) -> usize {
     let b2 = (q >> 16) as u8;
     let key3 = q & 0xFF_FFFF;
-    let p3 = opmap_pack3(key3, cpu);
+    let (p3, k3) = opmap_pack3(key3, cpu);
     let ok3 = ((p3 ^ q) & 0xFF_FFFF) == 0;
     let key2a = q & 0xFFFF;
-    let pa = opmap_pack2(key2a, cpu);
-    let ka = (pa >> 24) as u8;
+    let (pa, ka) = opmap_pack2(key2a, cpu);
     let mut ok2a = pa as u16 == q as u16;
-    ok2a &= !((ka == tk!(OptionalChain)) && is_digit(b2, cpu));
+    ok2a &= !((ka == TokenKind::OptionalChain) && is_digit(b2, cpu));
     let key2b = key3 >> 8;
-    let pb = opmap_pack2(key2b, cpu);
-    let kb = (pb >> 24) as u8;
+    let (pb, kb) = opmap_pack2(key2b, cpu);
     let mut ok2b = pb as u16 == key2b as u16;
-    ok2b &= !((kb == tk!(OptionalChain)) && is_digit((q >> 24) as u8, cpu));
+    ok2b &= !((kb == TokenKind::OptionalChain) && is_digit((q >> 24) as u8, cpu));
     let c1 = ok3 | ok2a; // the token at p is 2 or more bytes
     let sel2b = !c1 & ok2b; // a 2-byte token starts at p + 1
     let c2 = ok3 | sel2b; // p + 2 is not a token start
-    let m0: u8 = 0u8.wrapping_sub(c1 as u8);
-    let k0v: u8 = if ok3 { (p3 >> 24) as u8 } else { ka };
-    let k = kinds.as_ptr().add(p);
-    *k = (*k & !m0) | (k0v & m0);
-    let m1: u8 = 0u8.wrapping_sub(sel2b as u8);
-    *k.add(1) = (*k.add(1) & !m1) | (kb & m1);
-    let clr1 = (c1 as u64) << ((p + 1) & 63);
-    *token_start.as_ptr().add((p + 1) >> 6) &= !clr1;
-    let clr2 = (c2 as u64) << ((p + 2) & 63);
-    *token_start.as_ptr().add((p + 2) >> 6) &= !clr2;
+    kinds.set_if(p, c1, if ok3 { k3 } else { ka });
+    kinds.set_if(p + 1, sel2b, kb);
+    token_start.clear_if(p + 1, c1, cpu);
+    token_start.clear_if(p + 2, c2, cpu);
     p + 2 + c2 as usize
 }
 
 #[cpu_multiversion]
-unsafe fn glue_number(
+fn glue_number(
     lex: Lex,
     mut p: usize,
     lanes: &mut Lanes,

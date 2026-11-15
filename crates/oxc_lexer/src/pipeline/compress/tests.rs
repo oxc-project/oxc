@@ -1,4 +1,4 @@
-use std::iter;
+use std::{iter, mem::MaybeUninit};
 
 use oxc_span::Span;
 
@@ -52,19 +52,11 @@ fn compress_blocks_matches_scalar_reference(cpu: DynCpu) {
             let byte = (xorshift(&mut ks) & 0xff) as u8;
             *b = TokenKind::from_u8(byte, BASELINE).map_or(tk!(Ident), |kind| kind as u8);
         }
-        let mut starts = vec![0u32; n + 64];
-        let mut kinds = vec![0u8; n + 64];
-        let m = unsafe {
-            compress_blocks(
-                Bitmap::new(st),
-                Kinds::new(&mut kind),
-                0,
-                nb,
-                starts.as_mut_ptr(),
-                kinds.as_mut_ptr(),
-                cpu,
-            )
-        };
+        let mut starts = vec![u32::MAX; n + 64];
+        let mut kinds = vec![0xFF; n + 64];
+        // SAFETY: every byte of kind is a declared kind.
+        let kind_handle = unsafe { Kinds::new(&mut kind) };
+        let m = compress_blocks(Bitmap::new(st), kind_handle, 0, nb, &mut starts, &mut kinds, cpu);
         let mut rs: Vec<u32> = Vec::new();
         let mut rk: Vec<u8> = Vec::new();
         for (b, &w0) in st.iter().enumerate() {
@@ -79,6 +71,8 @@ fn compress_blocks_matches_scalar_reference(cpu: DynCpu) {
         assert_eq!(m, rs.len(), "token count mismatch (nb={nb})");
         assert_eq!(&starts[..m], &rs[..], "starts mismatch");
         assert_eq!(&kinds[..m], &rk[..], "kinds mismatch");
+        assert!(starts[n..].iter().all(|&s| s == u32::MAX), "starts written past the blocks");
+        assert!(kinds[n..].iter().all(|&k| k == 0xFF), "kinds written past the blocks");
     }
 }
 
@@ -102,18 +96,13 @@ fn build_spans_matches_scalar_reference(cpu: DynCpu) {
                 pos[j] = pos[j - 1] + 1 + (xorshift(&mut s) % 8) as u32;
             }
 
-            let mut spans = vec![Span::default(); m + 16];
-            let mut sig_kinds = vec![0u8; m + 16];
-            let w = unsafe {
-                build_spans(
-                    kinds.as_ptr(),
-                    pos.as_ptr(),
-                    m,
-                    spans.as_mut_ptr(),
-                    sig_kinds.as_mut_ptr(),
-                    cpu,
-                )
-            };
+            let marker = Span::new(u32::MAX, u32::MAX);
+            let mut spans = vec![MaybeUninit::new(marker); m + 16];
+            let mut sig_kinds = vec![MaybeUninit::new(0xFFu8); m + 16];
+            let w = build_spans(&kinds, &pos, &mut spans, &mut sig_kinds, cpu);
+            assert!(init(&spans[m..]).iter().all(|&s| s == marker), "spans past m (m={m})");
+            assert!(init(&sig_kinds[m..]).iter().all(|&k| k == 0xFF), "kinds past m (m={m})");
+            let (spans, sig_kinds) = (init(&spans[..w]), init(&sig_kinds[..w]));
 
             let kept: Vec<usize> = (0..m)
                 .filter(|&j| {
@@ -125,10 +114,16 @@ fn build_spans_matches_scalar_reference(cpu: DynCpu) {
                 kept.iter().map(|&j| Span::new(pos[j], pos[j + 1])).collect();
             let expected_kinds: Vec<u8> = kept.iter().map(|&j| kinds[j]).collect();
             assert_eq!(w, kept.len(), "kept count (m={m}, trivia_per_8={trivia_per_8})");
-            assert_eq!(&spans[..w], &expected_spans[..], "spans (m={m})");
-            assert_eq!(&sig_kinds[..w], &expected_kinds[..], "kinds (m={m})");
+            assert_eq!(spans, expected_spans, "spans (m={m})");
+            assert_eq!(sig_kinds, expected_kinds, "kinds (m={m})");
         }
     }
+}
+
+/// The values of slots that the test filled before the kernel wrote any.
+fn init<T: Copy>(slots: &[MaybeUninit<T>]) -> Vec<T> {
+    // SAFETY: the test makes every slot initialized.
+    slots.iter().map(|slot| unsafe { slot.assume_init() }).collect()
 }
 
 fn xorshift(s: &mut u64) -> u64 {

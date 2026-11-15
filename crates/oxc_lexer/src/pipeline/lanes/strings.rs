@@ -1,8 +1,3 @@
-// Raw kernels: the unsafe fn boundary is the reviewed surface, not each operation inside.
-#![allow(unsafe_op_in_unsafe_fn, clippy::missing_safety_doc, clippy::undocumented_unsafe_blocks)]
-
-use std::ptr;
-
 use oxc_simd::{Avx2, BASELINE, Cpu, DynCpu, Neon, Vec128, Vec256, cpu_multiversion, cpu_version};
 use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
@@ -73,62 +68,34 @@ impl Lanes {
             return (StringSpan::new(ss, ss & StringSpan::END_MASK, false, cpu), false);
         }
         let body_len = (be - bs) as usize;
-        // Every read below stays in src: the body, and the 32 bytes the short path loads.
-        assert!(be as usize <= src.len() && bs as usize + 32 <= src.len());
-        self.cooked.reserve(body_len.max(32) + 8);
-        let base = self.cooked.as_mut_ptr();
 
         let needs_decode = if body_len < 32 {
-            // SAFETY: the assert and reserve above are the short path's contract.
-            return unsafe {
-                self.cook_short_dispatch::<EMIT, CRLF>(src, bs, be, base, ss, body_len, cpu)
-            };
+            let window = src[bs as usize..].first_chunk::<32>().unwrap();
+            if !short_needs_decode::<CRLF>(window, body_len, cpu) {
+                // Copying the whole window is one 32-byte move, and the cut keeps the body.
+                self.cooked.extend_from_slice(window);
+                self.cooked.truncate(ss as usize + body_len);
+                let we = ss + (be - bs);
+                return (StringSpan::new(ss, we & StringSpan::END_MASK, false, cpu), false);
+            }
+            true
         } else if CRLF {
             span_has_bs_or_cr(src, bs as usize, be as usize, cpu)
         } else {
             span_has_bs(src, bs as usize, be as usize, cpu)
         };
-        let (wi, lone, nes) = if needs_decode {
-            // SAFETY: src holds the body, and cooked has room for it, as decoding never lengthens.
-            unsafe {
-                cook_decode::<EMIT, CRLF>(src.as_ptr(), bs, be, base, ss, &mut self.diags, cpu)
-            }
+        let body = &src[bs as usize..be as usize];
+        let (lone, nes) = if !needs_decode {
+            self.cooked.extend_from_slice(body);
+            (false, false)
+        } else if CRLF && memchr::memchr(b'\\', body).is_none() {
+            normalize_crs(body, &mut self.cooked);
+            (false, false)
         } else {
-            // SAFETY: src holds the body, and cooked has room for it.
-            unsafe {
-                ptr::copy_nonoverlapping(
-                    src.as_ptr().add(bs as usize),
-                    base.add(ss as usize),
-                    body_len,
-                );
-            }
-            (ss + (be - bs), false, false)
+            cook_decode::<EMIT, CRLF>(src, bs, be, &mut self.cooked, &mut self.diags, cpu)
         };
-        // SAFETY: cooking wrote every byte up to wi.
-        unsafe { self.cooked.set_len(wi as usize) };
-        (StringSpan::new(ss, wi & StringSpan::END_MASK, lone, cpu), nes)
-    }
-
-    /// cook's short path: src holds 32 bytes from bs, and base is cooked's, 32 free past ss.
-    #[cpu_multiversion]
-    #[inline(always)]
-    unsafe fn cook_short_dispatch<const EMIT: bool, const CRLF: bool>(
-        &mut self,
-        src: &[u8],
-        bs: u32,
-        be: u32,
-        base: *mut u8,
-        ss: u32,
-        body_len: usize,
-        cpu: impl Cpu,
-    ) -> (StringSpan, bool) {
-        // SAFETY: the caller gives src 32 bytes from bs, and cooked 32 free bytes past ss.
-        let (wi, lone, nes) = unsafe {
-            cook_short::<EMIT, CRLF>(src, bs, be, base, ss, body_len, &mut self.diags, cpu)
-        };
-        // SAFETY: cooking wrote every byte up to wi.
-        unsafe { self.cooked.set_len(wi as usize) };
-        (StringSpan::new(ss, wi & StringSpan::END_MASK, lone, cpu), nes)
+        let we = self.cooked.len() as u32;
+        (StringSpan::new(ss, we & StringSpan::END_MASK, lone, cpu), nes)
     }
 
     #[cpu_multiversion]
@@ -324,124 +291,54 @@ impl Lanes {
     }
 }
 
-/// Cook a body under 32 bytes long; src must hold 32 bytes from bs, and base room for 32 from ss.
+/// Whether the first len bytes of window have a backslash, or a raw CR when CR is set.
 #[cpu_multiversion]
 #[inline(always)]
-unsafe fn cook_short<const EMIT: bool, const CRLF: bool>(
-    src: &[u8],
-    bs: u32,
-    be: u32,
-    base: *mut u8,
-    ss: u32,
-    body_len: usize,
-    diags: &mut Vec<Diagnostic>,
-    cpu: impl Cpu,
-) -> (u32, bool, bool) {
+fn short_needs_decode<const CR: bool>(window: &[u8; 32], len: usize, cpu: impl Cpu) -> bool {
     match DynCpu::from(cpu) {
-        DynCpu::Avx2(cpu) => {
-            cook_short_avx2::<EMIT, CRLF>(src, bs, be, base, ss, body_len, diags, cpu)
-        }
-        DynCpu::Neon(cpu) => {
-            cook_short_neon::<EMIT, CRLF>(src, bs, be, base, ss, body_len, diags, cpu)
-        }
-        DynCpu::Generic(_) => {
-            cook_short_generic::<EMIT, CRLF>(src, bs, be, base, ss, body_len, diags)
-        }
+        DynCpu::Avx2(cpu) => short_needs_decode_avx2::<CR>(window, len, cpu),
+        DynCpu::Neon(cpu) => short_needs_decode_neon::<CR>(window, len, cpu),
+        DynCpu::Generic(_) => short_needs_decode_generic::<CR>(window, len),
     }
 }
 
-/// [`cook_short`] for Neon.
+/// short_needs_decode for Neon.
 #[cpu_version(Neon)]
 #[inline]
-unsafe fn cook_short_neon<const EMIT: bool, const CRLF: bool>(
-    src: &[u8],
-    bs: u32,
-    be: u32,
-    base: *mut u8,
-    ss: u32,
-    body_len: usize,
-    diags: &mut Vec<Diagnostic>,
-    cpu: Neon,
-) -> (u32, bool, bool) {
-    let p = unsafe { src.as_ptr().add(bs as usize) };
-    let (v0, v1) =
-        unsafe { (Vec128::load_unaligned(p, cpu), Vec128::load_unaligned(p.add(16), cpu)) };
+fn short_needs_decode_neon<const CR: bool>(window: &[u8; 32], len: usize, cpu: Neon) -> bool {
+    let v0 = Vec128::read_unaligned(window.first_chunk::<16>().unwrap(), cpu);
+    let v1 = Vec128::read_unaligned(window.last_chunk::<16>().unwrap(), cpu);
     let (mut hit0, mut hit1) = (v0.eq_u8(b'\\'), v1.eq_u8(b'\\'));
-    if CRLF {
+    if CR {
         // Templates also decode when a raw CR needs LF-normalizing.
         hit0 |= v0.eq_u8(b'\r');
         hit1 |= v1.eq_u8(b'\r');
     }
-    if mm32(hit0, hit1) & ((1u32 << body_len) - 1) == 0 {
-        unsafe {
-            v0.store_unaligned(base.add(ss as usize));
-            v1.store_unaligned(base.add(ss as usize + 16));
-        }
-        (ss + (be - bs), false, false)
-    } else {
-        unsafe { cook_decode::<EMIT, CRLF>(src.as_ptr(), bs, be, base, ss, diags, cpu) }
-    }
+    mm32(hit0, hit1) & ((1u32 << len) - 1) != 0
 }
 
-/// [`cook_short`] for AVX2.
+/// short_needs_decode for AVX2.
 #[cpu_version(Avx2)]
 #[inline]
-unsafe fn cook_short_avx2<const EMIT: bool, const CRLF: bool>(
-    src: &[u8],
-    bs: u32,
-    be: u32,
-    base: *mut u8,
-    ss: u32,
-    body_len: usize,
-    diags: &mut Vec<Diagnostic>,
-    cpu: Avx2,
-) -> (u32, bool, bool) {
-    let v = unsafe { Vec256::load_unaligned(src.as_ptr().add(bs as usize), cpu) };
+fn short_needs_decode_avx2<const CR: bool>(window: &[u8; 32], len: usize, cpu: Avx2) -> bool {
+    let v = Vec256::read_unaligned(window, cpu);
     let mut hit = v.eq_u8(b'\\');
-    if CRLF {
+    if CR {
         // Templates also decode when a raw CR needs LF-normalizing.
         hit |= v.eq_u8(b'\r');
     }
-    let bs_mask = hit.movemask() & ((1u32 << body_len) - 1);
-    if bs_mask == 0 {
-        unsafe { v.store_unaligned(base.add(ss as usize)) };
-        (ss + (be - bs), false, false)
-    } else {
-        unsafe { cook_decode::<EMIT, CRLF>(src.as_ptr(), bs, be, base, ss, diags, cpu) }
-    }
+    hit.movemask() & ((1u32 << len) - 1) != 0
 }
 
-/// [`cook_short`] for all other CPUs.
+/// short_needs_decode for all other CPUs.
 #[cpu_version(Generic)]
 #[inline]
-unsafe fn cook_short_generic<const EMIT: bool, const CRLF: bool>(
-    src: &[u8],
-    bs: u32,
-    be: u32,
-    base: *mut u8,
-    ss: u32,
-    body_len: usize,
-    diags: &mut Vec<Diagnostic>,
-) -> (u32, bool, bool) {
-    let cpu = BASELINE;
-
-    let body = &src[bs as usize..be as usize];
-    let plain = if CRLF {
-        memchr::memchr2(b'\\', b'\r', body).is_none()
+fn short_needs_decode_generic<const CR: bool>(window: &[u8; 32], len: usize) -> bool {
+    let body = &window[..len];
+    if CR {
+        memchr::memchr2(b'\\', b'\r', body).is_some()
     } else {
-        memchr::memchr(b'\\', body).is_none()
-    };
-    if plain {
-        unsafe {
-            ptr::copy_nonoverlapping(
-                src.as_ptr().add(bs as usize),
-                base.add(ss as usize),
-                body_len,
-            );
-        }
-        (ss + (be - bs), false, false)
-    } else {
-        unsafe { cook_decode::<EMIT, CRLF>(src.as_ptr(), bs, be, base, ss, diags, cpu) }
+        memchr::memchr(b'\\', body).is_some()
     }
 }
 
@@ -546,35 +443,35 @@ fn span_has_bs_or_cr_generic(src: &[u8], bs: usize, be: usize) -> bool {
 
 #[cpu_multiversion]
 #[inline]
-unsafe fn push_cp(out: *mut u8, mut wi: u32, cp: u32, lone: &mut bool, _cpu: impl Cpu) -> u32 {
+fn push_cp(out: &mut [u8], mut wi: u32, cp: u32, lone: &mut bool, _cpu: impl Cpu) -> u32 {
     if cp <= 0x7F {
-        *out.add(wi as usize) = cp as u8;
+        out[wi as usize] = cp as u8;
         wi += 1;
     } else if cp <= 0x7FF {
-        *out.add(wi as usize) = 0xC0 | ((cp >> 6) as u8);
-        *out.add((wi + 1) as usize) = 0x80 | ((cp & 0x3F) as u8);
+        out[wi as usize] = 0xC0 | ((cp >> 6) as u8);
+        out[(wi + 1) as usize] = 0x80 | ((cp & 0x3F) as u8);
         wi += 2;
     } else if (0xD800..=0xDFFF).contains(&cp) {
         *lone = true;
-        *out.add(wi as usize) = 0xE0 | ((cp >> 12) as u8);
-        *out.add((wi + 1) as usize) = 0x80 | (((cp >> 6) & 0x3F) as u8);
-        *out.add((wi + 2) as usize) = 0x80 | ((cp & 0x3F) as u8);
+        out[wi as usize] = 0xE0 | ((cp >> 12) as u8);
+        out[(wi + 1) as usize] = 0x80 | (((cp >> 6) & 0x3F) as u8);
+        out[(wi + 2) as usize] = 0x80 | ((cp & 0x3F) as u8);
         wi += 3;
     } else if cp <= 0xFFFF {
-        *out.add(wi as usize) = 0xE0 | ((cp >> 12) as u8);
-        *out.add((wi + 1) as usize) = 0x80 | (((cp >> 6) & 0x3F) as u8);
-        *out.add((wi + 2) as usize) = 0x80 | ((cp & 0x3F) as u8);
+        out[wi as usize] = 0xE0 | ((cp >> 12) as u8);
+        out[(wi + 1) as usize] = 0x80 | (((cp >> 6) & 0x3F) as u8);
+        out[(wi + 2) as usize] = 0x80 | ((cp & 0x3F) as u8);
         wi += 3;
     } else if cp <= 0x10FFFF {
-        *out.add(wi as usize) = 0xF0 | ((cp >> 18) as u8);
-        *out.add((wi + 1) as usize) = 0x80 | (((cp >> 12) & 0x3F) as u8);
-        *out.add((wi + 2) as usize) = 0x80 | (((cp >> 6) & 0x3F) as u8);
-        *out.add((wi + 3) as usize) = 0x80 | ((cp & 0x3F) as u8);
+        out[wi as usize] = 0xF0 | ((cp >> 18) as u8);
+        out[(wi + 1) as usize] = 0x80 | (((cp >> 12) & 0x3F) as u8);
+        out[(wi + 2) as usize] = 0x80 | (((cp >> 6) & 0x3F) as u8);
+        out[(wi + 3) as usize] = 0x80 | ((cp & 0x3F) as u8);
         wi += 4;
     } else {
-        *out.add(wi as usize) = 0xEF;
-        *out.add((wi + 1) as usize) = 0xBF;
-        *out.add((wi + 2) as usize) = 0xBD;
+        out[wi as usize] = 0xEF;
+        out[(wi + 1) as usize] = 0xBF;
+        out[(wi + 2) as usize] = 0xBD;
         wi += 3;
     }
     wi
@@ -582,9 +479,9 @@ unsafe fn push_cp(out: *mut u8, mut wi: u32, cp: u32, lone: &mut bool, _cpu: imp
 
 #[cpu_multiversion]
 #[inline]
-unsafe fn emit_oct(
-    src: *const u8,
-    out: *mut u8,
+fn emit_oct(
+    src: &[u8],
+    out: &mut [u8],
     mut wi: u32,
     mut i: u32,
     be: u32,
@@ -593,7 +490,7 @@ unsafe fn emit_oct(
 ) -> (u32, u32) {
     let mut cnt = 1;
     while cnt < 3 && i < be {
-        let dd = *src.add(i as usize);
+        let dd = src[i as usize];
         if !(b'0'..=b'7').contains(&dd) {
             break;
         }
@@ -606,11 +503,11 @@ unsafe fn emit_oct(
         cnt += 1;
     }
     if val < 0x80 {
-        *out.add(wi as usize) = val as u8;
+        out[wi as usize] = val as u8;
         wi += 1;
     } else {
-        *out.add(wi as usize) = 0xC0 | ((val >> 6) as u8);
-        *out.add((wi + 1) as usize) = 0x80 | ((val & 0x3F) as u8);
+        out[wi as usize] = 0xC0 | ((val >> 6) as u8);
+        out[(wi + 1) as usize] = 0x80 | ((val & 0x3F) as u8);
         wi += 2;
     }
     (wi, i)
@@ -633,17 +530,36 @@ fn push_escape_diag(diags: &mut Vec<Diagnostic>, off: u32, end: u32) {
     });
 }
 
+/// Cook a template body with no backslash, where each raw CR or CRLF cooks to an LF.
+#[cpu_version(Generic)]
+#[inline(never)]
+fn normalize_crs(body: &[u8], out: &mut Vec<u8>) {
+    let mut rest = body;
+    while let Some(cr) = memchr::memchr(b'\r', rest) {
+        out.extend_from_slice(&rest[..cr]);
+        out.push(b'\n');
+        let crlf = rest.get(cr + 1) == Some(&b'\n');
+        rest = &rest[cr + 1 + usize::from(crlf)..];
+    }
+    out.extend_from_slice(rest);
+}
+
 #[cpu_multiversion]
-unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
-    src: *const u8,
+#[inline(never)]
+fn cook_decode<const EMIT: bool, const CRLF: bool>(
+    src: &[u8],
     bs: u32,
     be: u32,
-    out: *mut u8,
-    ss: u32,
+    cooked: &mut Vec<u8>,
     diags: &mut Vec<Diagnostic>,
     cpu: impl Cpu,
-) -> (u32, bool, bool) {
-    let mut wi = ss;
+) -> (bool, bool) {
+    let src = &src[..be as usize];
+    let ss = cooked.len();
+    // Decoding never lengthens, so the body's length in zeroed bytes is enough room.
+    cooked.resize(ss + (be - bs) as usize, 0);
+    let out = &mut cooked[ss..];
+    let mut wi = 0;
     let mut i = bs;
     let mut lone = false;
     // NotEscapeSequence per the template grammar (bad \u or \x, octal, \8,
@@ -651,60 +567,60 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
     // for oxc_parser's cooked = None.
     let mut nes = false;
     while i < be {
-        let b = *src.add(i as usize);
+        let b = src[i as usize];
         if b != b'\\' {
             // template TV: raw CRLF / CR normalize to LF
             if CRLF && b == b'\r' {
-                *out.add(wi as usize) = b'\n';
+                out[wi as usize] = b'\n';
                 wi += 1;
                 i += 1;
-                if i < be && *src.add(i as usize) == b'\n' {
+                if i < be && src[i as usize] == b'\n' {
                     i += 1;
                 }
                 continue;
             }
-            *out.add(wi as usize) = b;
+            out[wi as usize] = b;
             wi += 1;
             i += 1;
             continue;
         }
         if i + 1 >= be {
-            *out.add(wi as usize) = b;
+            out[wi as usize] = b;
             wi += 1;
             i += 1;
             continue;
         }
-        let nb = *src.add((i + 1) as usize);
+        let nb = src[(i + 1) as usize];
         i += 2;
         match nb {
             b'b' => {
-                *out.add(wi as usize) = 0x08;
+                out[wi as usize] = 0x08;
                 wi += 1;
             }
             b'f' => {
-                *out.add(wi as usize) = 0x0C;
+                out[wi as usize] = 0x0C;
                 wi += 1;
             }
             b'n' => {
-                *out.add(wi as usize) = b'\n';
+                out[wi as usize] = b'\n';
                 wi += 1;
             }
             b'r' => {
-                *out.add(wi as usize) = b'\r';
+                out[wi as usize] = b'\r';
                 wi += 1;
             }
             b't' => {
-                *out.add(wi as usize) = b'\t';
+                out[wi as usize] = b'\t';
                 wi += 1;
             }
             b'v' => {
-                *out.add(wi as usize) = 0x0B;
+                out[wi as usize] = 0x0B;
                 wi += 1;
             }
             b'0' => {
-                let nd = i < be && (*src.add(i as usize)).is_ascii_digit();
+                let nd = i < be && src[i as usize].is_ascii_digit();
                 if !nd {
-                    *out.add(wi as usize) = 0;
+                    out[wi as usize] = 0;
                     wi += 1;
                 } else {
                     nes = true; // octal after backslash-0: NotEscapeSequence in templates
@@ -714,33 +630,33 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                 }
             }
             b'\\' | b'\'' | b'"' | b'`' => {
-                *out.add(wi as usize) = nb;
+                out[wi as usize] = nb;
                 wi += 1;
             }
             b'\n' => {}
             b'\r' => {
-                if i < be && *src.add(i as usize) == b'\n' {
+                if i < be && src[i as usize] == b'\n' {
                     i += 1;
                 }
             }
             b'x' => {
                 // The parser's span runs to just past the leading valid hex.
                 if i + 2 <= be {
-                    let a = hex_digit(*src.add(i as usize), cpu);
-                    let c = hex_digit(*src.add((i + 1) as usize), cpu);
+                    let a = hex_digit(src[i as usize], cpu);
+                    let c = hex_digit(src[(i + 1) as usize], cpu);
                     if let (Some(a), Some(c)) = (a, c) {
                         let v = (u32::from(a) << 4) | u32::from(c);
                         if v < 0x80 {
-                            *out.add(wi as usize) = v as u8;
+                            out[wi as usize] = v as u8;
                             wi += 1;
                         } else {
-                            *out.add(wi as usize) = 0xC0 | ((v >> 6) as u8);
-                            *out.add((wi + 1) as usize) = 0x80 | ((v & 0x3F) as u8);
+                            out[wi as usize] = 0xC0 | ((v >> 6) as u8);
+                            out[(wi + 1) as usize] = 0x80 | ((v & 0x3F) as u8);
                             wi += 2;
                         }
                         i += 2;
                     } else {
-                        *out.add(wi as usize) = b'x';
+                        out[wi as usize] = b'x';
                         wi += 1;
                         nes = true;
                         if EMIT {
@@ -748,18 +664,18 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                         }
                     }
                 } else {
-                    *out.add(wi as usize) = b'x';
+                    out[wi as usize] = b'x';
                     wi += 1;
                     nes = true;
                     if EMIT {
-                        let k = i < be && hex_digit(*src.add(i as usize), cpu).is_some();
+                        let k = i < be && hex_digit(src[i as usize], cpu).is_some();
                         push_escape_diag(diags, i - 2, i + u32::from(k));
                     }
                 }
             }
             b'u' => {
                 let esc = i - 2; // backslash offset, for code-7 spans
-                if i < be && *src.add(i as usize) == b'{' {
+                if i < be && src[i as usize] == b'{' {
                     let mut k = i + 1;
                     let mut cp: u32 = 0;
                     let mut any = false;
@@ -768,8 +684,8 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                     // a post-loop range check would miss inputs like
                     // `\u{100000041}`.
                     let mut over_end: u32 = 0;
-                    while k < be && *src.add(k as usize) != b'}' {
-                        if let Some(h) = hex_digit(*src.add(k as usize), cpu) {
+                    while k < be && src[k as usize] != b'}' {
+                        if let Some(h) = hex_digit(src[k as usize], cpu) {
                             cp = (cp << 4) | (h as u32);
                             any = true;
                             k += 1;
@@ -780,7 +696,7 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                             break;
                         }
                     }
-                    if k < be && *src.add(k as usize) == b'}' && any {
+                    if k < be && src[k as usize] == b'}' && any {
                         wi = push_cp(out, wi, cp, &mut lone, cpu);
                         i = k + 1;
                         if over_end != 0 {
@@ -792,7 +708,7 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                             push_escape_diag(diags, esc, over_end);
                         }
                     } else {
-                        *out.add(wi as usize) = b'u';
+                        out[wi as usize] = b'u';
                         wi += 1;
                         i = k;
                         nes = true;
@@ -801,10 +717,10 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                         }
                     }
                 } else if i + 4 <= be {
-                    let a = hex_digit(*src.add(i as usize), cpu);
-                    let b2 = hex_digit(*src.add((i + 1) as usize), cpu);
-                    let c = hex_digit(*src.add((i + 2) as usize), cpu);
-                    let d = hex_digit(*src.add((i + 3) as usize), cpu);
+                    let a = hex_digit(src[i as usize], cpu);
+                    let b2 = hex_digit(src[(i + 1) as usize], cpu);
+                    let c = hex_digit(src[(i + 2) as usize], cpu);
+                    let d = hex_digit(src[(i + 3) as usize], cpu);
                     if let (Some(a), Some(b2), Some(c), Some(d)) = (a, b2, c, d) {
                         let cp = ((a as u32) << 12)
                             | ((b2 as u32) << 8)
@@ -817,13 +733,13 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                         let mut cp = cp;
                         if (0xD800..=0xDBFF).contains(&cp)
                             && i + 6 <= be
-                            && *src.add(i as usize) == b'\\'
-                            && *src.add((i + 1) as usize) == b'u'
+                            && src[i as usize] == b'\\'
+                            && src[(i + 1) as usize] == b'u'
                         {
-                            let l0 = hex_digit(*src.add((i + 2) as usize), cpu);
-                            let l1 = hex_digit(*src.add((i + 3) as usize), cpu);
-                            let l2 = hex_digit(*src.add((i + 4) as usize), cpu);
-                            let l3 = hex_digit(*src.add((i + 5) as usize), cpu);
+                            let l0 = hex_digit(src[(i + 2) as usize], cpu);
+                            let l1 = hex_digit(src[(i + 3) as usize], cpu);
+                            let l2 = hex_digit(src[(i + 4) as usize], cpu);
+                            let l3 = hex_digit(src[(i + 5) as usize], cpu);
                             if let (Some(l0), Some(l1), Some(l2), Some(l3)) = (l0, l1, l2, l3) {
                                 let lo = ((l0 as u32) << 12)
                                     | ((l1 as u32) << 8)
@@ -837,7 +753,7 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                         }
                         wi = push_cp(out, wi, cp, &mut lone, cpu);
                     } else {
-                        *out.add(wi as usize) = b'u';
+                        out[wi as usize] = b'u';
                         wi += 1;
                         nes = true;
                         if EMIT {
@@ -849,12 +765,12 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                         }
                     }
                 } else {
-                    *out.add(wi as usize) = b'u';
+                    out[wi as usize] = b'u';
                     wi += 1;
                     nes = true;
                     if EMIT {
                         let mut k = i;
-                        while k < be && hex_digit(*src.add(k as usize), cpu).is_some() {
+                        while k < be && hex_digit(src[k as usize], cpu).is_some() {
                             k += 1;
                         }
                         push_escape_diag(diags, esc, k);
@@ -871,7 +787,7 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                 // NonOctalDecimalEscape: cooks to the digit, valid in sloppy
                 // strings, NotEscapeSequence in templates.
                 nes = true;
-                *out.add(wi as usize) = nb;
+                out[wi as usize] = nb;
                 wi += 1;
             }
             _ => {
@@ -880,17 +796,18 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                 // through (the lead here, continuations via the plain copy).
                 if nb == 0xE2
                     && i + 2 <= be
-                    && is_ls_ps_tail(*src.add(i as usize), *src.add((i + 1) as usize), cpu)
+                    && is_ls_ps_tail(src[i as usize], src[(i + 1) as usize], cpu)
                 {
                     i += 2;
                 } else {
-                    *out.add(wi as usize) = nb;
+                    out[wi as usize] = nb;
                     wi += 1;
                 }
             }
         }
     }
-    (wi, lone, nes)
+    cooked.truncate(ss + wi as usize);
+    (lone, nes)
 }
 
 #[cfg(test)]
@@ -934,20 +851,10 @@ mod tests {
     fn cook(body: &[u8], cpu: impl Cpu) -> (Vec<u8>, bool) {
         let mut padded = body.to_vec();
         padded.extend_from_slice(&[0u8; 32]);
-        let mut out = vec![0u8; body.len() + 32];
+        let mut out = Vec::new();
         let mut diags = Vec::new();
-        let (wi, lone, _) = unsafe {
-            cook_decode::<true, false>(
-                padded.as_ptr(),
-                0,
-                body.len() as u32,
-                out.as_mut_ptr(),
-                0,
-                &mut diags,
-                cpu,
-            )
-        };
-        out.truncate(wi as usize);
+        let (lone, _) =
+            cook_decode::<true, false>(&padded, 0, body.len() as u32, &mut out, &mut diags, cpu);
         (out, lone)
     }
 
@@ -967,33 +874,12 @@ mod tests {
         ] {
             let mut padded = body.to_vec();
             padded.extend_from_slice(&[0u8; 32]);
-            let mut out_t = vec![0u8; body.len() + 32];
-            let mut out_f = vec![0u8; body.len() + 32];
+            let (mut out_t, mut out_f) = (Vec::new(), Vec::new());
             let mut diags = Vec::new();
-            let (wt, _, _) = unsafe {
-                cook_decode::<true, false>(
-                    padded.as_ptr(),
-                    0,
-                    body.len() as u32,
-                    out_t.as_mut_ptr(),
-                    0,
-                    &mut diags,
-                    cpu,
-                )
-            };
-            let (wf, _, _) = unsafe {
-                cook_decode::<false, false>(
-                    padded.as_ptr(),
-                    0,
-                    body.len() as u32,
-                    out_f.as_mut_ptr(),
-                    0,
-                    &mut Vec::new(),
-                    cpu,
-                )
-            };
-            assert_eq!(wt, wf);
-            assert_eq!(out_t[..wt as usize], out_f[..wf as usize]);
+            let n = body.len() as u32;
+            cook_decode::<true, false>(&padded, 0, n, &mut out_t, &mut diags, cpu);
+            cook_decode::<false, false>(&padded, 0, n, &mut out_f, &mut Vec::new(), cpu);
+            assert_eq!(out_t, out_f);
             assert!(
                 !diags.is_empty(),
                 "expected a diagnostic for {:?}",
@@ -1099,34 +985,13 @@ mod tests {
     /// `\r` survives; the string monomorph (CRLF=false) never normalizes.
     #[test_cpus]
     fn cook_decode_template_cr_normalization(cpu: impl Cpu) {
-        /// Cook template `body` with [`cook_decode`] and CPU feature set `cpu`,
-        /// and return the cooked bytes.
-        #[cpu_multiversion]
-        fn cook_tpl(body: &[u8], cpu: impl Cpu) -> Vec<u8> {
-            let mut padded = body.to_vec();
-            padded.extend_from_slice(&[0u8; 32]);
-            let mut out = vec![0u8; body.len() + 32];
-            let (wi, _, _) = unsafe {
-                cook_decode::<false, true>(
-                    padded.as_ptr(),
-                    0,
-                    body.len() as u32,
-                    out.as_mut_ptr(),
-                    0,
-                    &mut Vec::new(),
-                    cpu,
-                )
-            };
-            out.truncate(wi as usize);
-            out
-        }
-        assert_eq!(cook_tpl(b"a\r\nb", cpu), b"a\nb");
-        assert_eq!(cook_tpl(b"a\rb", cpu), b"a\nb");
-        assert_eq!(cook_tpl(b"a\r\r\nb", cpu), b"a\n\nb");
+        assert_eq!(push_tpl(b"a\r\nb", cpu), b"a\nb");
+        assert_eq!(push_tpl(b"a\rb", cpu), b"a\nb");
+        assert_eq!(push_tpl(b"a\r\r\nb", cpu), b"a\n\nb");
         // Escape-produced CR is content, not a line ending.
-        assert_eq!(cook_tpl(br"a\rb", cpu), b"a\rb");
+        assert_eq!(push_tpl(br"a\rb", cpu), b"a\rb");
         // `\<CR><LF>` line continuation still cooks to nothing.
-        assert_eq!(cook_tpl(b"a\\\r\nb", cpu), b"ab");
+        assert_eq!(push_tpl(b"a\\\r\nb", cpu), b"ab");
         // The string monomorph is untouched by design.
         assert_eq!(cook(b"a\r\nb", cpu).0, b"a\r\nb");
     }

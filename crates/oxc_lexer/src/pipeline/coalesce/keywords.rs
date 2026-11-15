@@ -4,7 +4,12 @@ use oxc_simd::{Cpu, cpu_multiversion};
 
 use crate::token::TokenKind;
 
-use crate::pipeline::{bitmap::Bitmap, keywords::kw_match, kinds::Kinds, source::Source};
+use crate::pipeline::{
+    bitmap::Bitmap,
+    keywords::{kw_match, kw_match_at},
+    kinds::Kinds,
+    source::Source,
+};
 
 pub const KWB: usize = 64;
 
@@ -54,7 +59,8 @@ unsafe fn kw_verify_batch<const IS_TS: bool>(
         // Candidates are code-level identifier starts (carve cleared every
         // literal interior and JSX start from the masks), so the incumbent
         // kind is IDENT: select over it instead of a read-modify-write.
-        kinds.as_ptr().add(p).write(kw_match::<IS_TS>(src.as_ptr().add(p), len, cpu) as u8);
+        let window = &*src.as_ptr().add(p).cast::<[u8; 16]>();
+        kinds.as_ptr().add(p).write(kw_match::<IS_TS>(window, len, cpu) as u8);
     }
 }
 
@@ -63,31 +69,21 @@ unsafe fn kw_verify_batch<const IS_TS: bool>(
 /// For `glue_number`, which makes a token start of a word directly after a number (`3in`).
 /// That happens after `coalesce` has collected the candidates for the window, so the word is not in a batch.
 ///
-/// Returns the keyword's [`TokenKind`] as a `u8`, or `Ident` if it's not a keyword.
-///
-/// # SAFETY
-///
-/// * `word` must be the word bitmap for `src`, and valid for reading 8 bytes from byte `pos / 8`.
-/// * The byte at `pos` must be a word char.
-/// * `src` must be valid for reading 16 bytes from `pos`.
+/// Returns the keyword's kind, or Ident if it is not a keyword.
 #[cpu_multiversion]
 #[inline]
-pub(super) unsafe fn kw_match_word(
+pub(super) fn kw_match_word(
     is_ts: bool,
     src: Source,
     word: Bitmap,
     pos: usize,
     cpu: impl Cpu,
 ) -> TokenKind {
-    let len = word_len(word, pos, cpu);
-    if is_ts {
-        kw_match::<true>(src.as_ptr().add(pos), len, cpu)
-    } else {
-        kw_match::<false>(src.as_ptr().add(pos), len, cpu)
-    }
+    let len = word.next0(pos, src.len(), cpu) - pos;
+    kw_match_at(is_ts, src.padded(), pos, len, cpu)
 }
 
-/// Get the length of the word starting at `pos` from the word bitmap, capped at 16 (`kw_match`'s limit).
+/// The length of the word starting at pos from the word bitmap, capped at 16.
 ///
 /// Keyword candidates can be longer than 10 bytes, because `coalesce`'s length filter only sees one word
 /// of the bitmap, so a word which crosses into the next one escapes it. A word of 16 bytes or more

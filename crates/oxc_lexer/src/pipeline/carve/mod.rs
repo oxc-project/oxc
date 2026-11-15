@@ -15,7 +15,7 @@ use jsx::carve_jsx;
 #[cpu_multiversion]
 #[inline(never)]
 pub fn carve(lex: Lex, state: &mut LexState, cpu: impl Cpu) {
-    // The token markers write unchecked, so cut the handles to the source's blocks and a spare.
+    // Cut the handles to the source's blocks and a spare, so a marker past them panics.
     let blocks = lex.src.block_count() + 1;
     let bitmaps = lex.bitmaps.first(blocks);
     let lex = Lex { bitmaps: &bitmaps, kinds: lex.kinds.first(blocks * 64), ..lex };

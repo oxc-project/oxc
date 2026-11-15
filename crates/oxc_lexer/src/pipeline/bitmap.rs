@@ -1,6 +1,6 @@
 use std::cell::Cell;
 
-use oxc_simd::{Avx2, Cpu, DynCpu, Vec256, cpu_multiversion, cpu_version};
+use oxc_simd::{Cpu, cpu_multiversion};
 
 /// One bit per source byte, a u64 per 64-byte block, shared by the stages that refine it.
 #[derive(Clone, Copy)]
@@ -20,6 +20,12 @@ impl<'a> Bitmap<'a> {
     #[inline(always)]
     pub(super) fn first(self, count: usize) -> Self {
         Self(&self.0[..count])
+    }
+
+    /// The number of blocks.
+    #[inline(always)]
+    pub(super) fn len(self) -> usize {
+        self.0.len()
     }
 
     #[cpu_multiversion]
@@ -104,15 +110,6 @@ impl<'a> Bitmap<'a> {
         block.set(block.get() | (1u64 << (i & 63)));
     }
 
-    /// set without the bounds check, so i must be below the bitmap's length in bits.
-    #[cpu_multiversion]
-    #[inline(always)]
-    pub(super) unsafe fn set_unchecked(self, i: usize, _cpu: impl Cpu) {
-        // SAFETY: the caller keeps i below the bitmap's length in bits.
-        let block = unsafe { self.0.get_unchecked(i >> 6) };
-        block.set(block.get() | (1u64 << (i & 63)));
-    }
-
     #[cpu_multiversion]
     #[inline(always)]
     pub(super) fn clear(self, i: usize, _cpu: impl Cpu) {
@@ -120,13 +117,12 @@ impl<'a> Bitmap<'a> {
         block.set(block.get() & !(1u64 << (i & 63)));
     }
 
-    /// clear without the bounds check, so i must be below the bitmap's length in bits.
+    /// Clear bit i if cond, without a branch.
     #[cpu_multiversion]
     #[inline(always)]
-    pub(super) unsafe fn clear_unchecked(self, i: usize, _cpu: impl Cpu) {
-        // SAFETY: the caller keeps i below the bitmap's length in bits.
-        let block = unsafe { self.0.get_unchecked(i >> 6) };
-        block.set(block.get() & !(1u64 << (i & 63)));
+    pub(super) fn clear_if(self, i: usize, cond: bool, _cpu: impl Cpu) {
+        let block = &self.0[i >> 6];
+        block.set(block.get() & !(u64::from(cond) << (i & 63)));
     }
 
     /// Clears bits a..=b, or nothing if a > b.
@@ -139,26 +135,13 @@ impl<'a> Bitmap<'a> {
         clear_bits(&self.0[a >> 6..=b >> 6], a, b);
     }
 
-    /// clear_range without the bounds check, so b must be below the bitmap's length in bits.
     #[cpu_multiversion]
     #[inline(always)]
-    pub(super) unsafe fn clear_range_unchecked(self, a: usize, b: usize, _cpu: impl Cpu) {
-        if a > b {
-            return;
-        }
-        // SAFETY: the caller keeps b, and so a, below the bitmap's length in bits.
-        clear_bits(unsafe { self.0.get_unchecked(a >> 6..=b >> 6) }, a, b);
-    }
-
-    #[cpu_multiversion]
-    #[inline(always)]
-    pub(super) fn any(self, block_count: usize, cpu: impl Cpu) -> bool {
-        let blocks = &self.0[..block_count];
-        match DynCpu::from(cpu) {
-            // SAFETY: blocks holds block_count blocks.
-            DynCpu::Avx2(cpu) => unsafe { any_avx2(blocks.as_ptr().cast(), block_count, cpu) },
-            _ => blocks.iter().any(|block| block.get() != 0),
-        }
+    pub(super) fn any(self, block_count: usize, _cpu: impl Cpu) -> bool {
+        // One test per 16 blocks keeps the scan cheap when no block has a misc byte.
+        let (runs, rest) = self.0[..block_count].as_chunks::<16>();
+        runs.iter().any(|run| run.iter().fold(0, |acc, block| acc | block.get()) != 0)
+            || rest.iter().any(|block| block.get() != 0)
     }
 }
 
@@ -209,43 +192,4 @@ impl Bitmaps<'_> {
             misc: self.misc.first(count),
         }
     }
-
-    #[inline(always)]
-    pub(super) fn clear_block(&self, block_idx: usize) {
-        let all = [
-            self.token_start,
-            self.word,
-            self.keyword_initial,
-            self.op_char,
-            self.digit,
-            self.dot,
-            self.misc,
-        ];
-        for bitmap in all {
-            bitmap.0[block_idx].set(0);
-        }
-    }
-}
-
-#[cpu_version(Avx2)]
-#[inline]
-unsafe fn any_avx2(bm: *const u64, block_count: usize, cpu: Avx2) -> bool {
-    let mut w = 0usize;
-    // SAFETY: the caller's pointer holds block_count blocks, and every read stays below that.
-    unsafe {
-        while w + 4 <= block_count {
-            let v = Vec256::load_unaligned(bm.add(w).cast::<u8>(), cpu);
-            if !v.is_zero() {
-                return true;
-            }
-            w += 4;
-        }
-        while w < block_count {
-            if *bm.add(w) != 0 {
-                return true;
-            }
-            w += 1;
-        }
-    }
-    false
 }

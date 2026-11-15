@@ -1,7 +1,4 @@
-// Raw kernels: the unsafe fn boundary is the reviewed surface, not each operation inside.
-#![allow(unsafe_op_in_unsafe_fn, clippy::missing_safety_doc, clippy::undocumented_unsafe_blocks)]
-
-use std::slice;
+use std::{mem::MaybeUninit, slice};
 
 use oxc_simd::{Cpu, DynCpu, cpu_multiversion, cpu_version};
 use oxc_span::Span;
@@ -11,7 +8,7 @@ use crate::{
     token::{SPAN_SENTINELS, TokenKind, debug_assert_kind_bytes, tk},
 };
 
-use crate::pipeline::{bitmap::Bitmap, kinds::Kinds, lanes::Lanes, lex::Lex, source::Source};
+use crate::pipeline::{bitmap::Bitmap, kinds::Kinds, lanes::Lanes, lex::Lex};
 
 mod avx2;
 mod common;
@@ -47,64 +44,49 @@ pub fn compress(
     out_kinds.reserve(capacity);
     out_spans.clear();
     out_spans.reserve(capacity);
-    let blocks = src.block_count();
-    let (token_start, kinds) = (bitmaps.token_start.first(blocks), kinds.first(blocks * 64));
-    let (stage_pos, stage_kind) = (stage_pos.as_mut_ptr(), stage_kind.as_mut_ptr());
-    let (out, spans) = (out_kinds.as_mut_ptr().cast::<u8>(), out_spans.as_mut_ptr());
-    // SAFETY: rounds fit STAGE_CAP, outputs fit the capacity, and every kind byte is a TokenKind.
-    unsafe {
-        let w = compress_raw(src, token_start, kinds, stage_pos, stage_kind, out, spans, cpu);
-        let len = w + SPAN_SENTINELS;
-        debug_assert_kind_bytes(slice::from_raw_parts(out, len));
-        out_kinds.set_len(len);
-        out_spans.set_len(len);
-        w
-    }
-}
-
-/// The loop of compress: handles over src's blocks, a STAGE_CAP stage, n + PAD + 8 outputs.
-#[cpu_multiversion]
-#[inline(always)]
-unsafe fn compress_raw(
-    src: Source,
-    token_start: Bitmap,
-    kinds: Kinds,
-    stage_pos: *mut u32,
-    stage_kind: *mut u8,
-    out_kinds: *mut u8,
-    out_spans: *mut Span,
-    cpu: impl Cpu,
-) -> usize {
+    let spans = out_spans.spare_capacity_mut();
+    let sig_kinds = kind_slots(out_kinds.spare_capacity_mut());
     let mut c = 0usize;
     let mut w = 0usize;
     let mut b = 0usize;
     let block_count = src.block_count();
     while b < block_count {
         let b1 = (b + STAGE_BLOCKS).min(block_count);
-        c += compress_blocks(token_start, kinds, b, b1, stage_pos.add(c), stage_kind.add(c), cpu);
+        let (pos, kind) = (&mut stage_pos[c..], &mut stage_kind[c..]);
+        c += compress_blocks(bitmaps.token_start, kinds, b, b1, pos, kind, cpu);
         b = b1;
         if c > 1 {
-            w += build_spans(stage_kind, stage_pos, c - 1, out_spans.add(w), out_kinds.add(w), cpu);
-            *stage_pos = *stage_pos.add(c - 1);
-            *stage_kind = *stage_kind.add(c - 1);
+            let (kind, pos) = (&stage_kind[..c - 1], &stage_pos[..c]);
+            w += build_spans(kind, pos, &mut spans[w..], &mut sig_kinds[w..], cpu);
+            stage_pos[0] = stage_pos[c - 1];
+            stage_kind[0] = stage_kind[c - 1];
             c = 1;
         }
     }
     if c == 1 {
-        *stage_pos.add(1) = src.len() as u32;
-        w += build_spans(stage_kind, stage_pos, 1, out_spans.add(w), out_kinds.add(w), cpu);
+        stage_pos[1] = src.len() as u32;
+        let (kind, pos) = (&stage_kind[..1], &stage_pos[..2]);
+        w += build_spans(kind, pos, &mut spans[w..], &mut sig_kinds[w..], cpu);
     }
-    write_sentinels(src.len() as u32, out_spans.add(w), out_kinds.add(w), cpu);
+    let len = w + SPAN_SENTINELS;
+    let eof = Span::new(src.len() as u32, src.len() as u32);
+    for (span, kind) in spans[w..len].iter_mut().zip(&mut sig_kinds[w..len]) {
+        span.write(eof);
+        kind.write(tk!(Eof));
+    }
+    // SAFETY: build_spans filled each slot below w with a Kinds byte, and the loop the sentinels.
+    unsafe {
+        debug_assert_kind_bytes(slice::from_raw_parts(out_kinds.as_ptr().cast::<u8>(), len));
+        out_kinds.set_len(len);
+        out_spans.set_len(len);
+    }
     w
 }
 
-#[cpu_multiversion]
-unsafe fn write_sentinels(n: u32, spans: *mut Span, sig_kinds: *mut u8, _cpu: impl Cpu) {
-    let eof = u64::from(n) | (u64::from(n) << 32);
-    for s in 0..SPAN_SENTINELS {
-        *spans.cast::<u64>().add(s) = eof;
-        *sig_kinds.add(s) = tk!(Eof);
-    }
+/// The kind slots as bytes, for the kernels to fill from the staged kinds.
+fn kind_slots(slots: &mut [MaybeUninit<TokenKind>]) -> &mut [MaybeUninit<u8>] {
+    // SAFETY: TokenKind is repr(u8), and a MaybeUninit byte may hold any value.
+    unsafe { slice::from_raw_parts_mut(slots.as_mut_ptr().cast(), slots.len()) }
 }
 
 /// Initialize the global `PairLuts` instance.
@@ -117,61 +99,45 @@ pub(super) fn init_pair_luts(cpu: DynCpu) {
     }
 }
 
+/// Stage the token starts and kinds of blocks b0..b1, at most 64 a block; returns the count.
 #[cpu_multiversion]
 #[inline(always)]
-unsafe fn compress_blocks(
+fn compress_blocks(
     token_start: Bitmap,
     kinds: Kinds,
     b0: usize,
     b1: usize,
-    starts: *mut u32,
-    stage_kinds: *mut u8,
+    starts: &mut [u32],
+    stage_kinds: &mut [u8],
     cpu: impl Cpu,
 ) -> usize {
     match DynCpu::from(cpu) {
-        DynCpu::Avx2(cpu) => compress_blocks_avx2(
-            token_start.as_ptr(),
-            kinds.as_ptr(),
-            b0,
-            b1,
-            starts,
-            stage_kinds,
-            cpu,
-        ),
-        DynCpu::Neon(cpu) => compress_blocks_neon(
-            token_start.as_ptr(),
-            kinds.as_ptr(),
-            b0,
-            b1,
-            starts,
-            stage_kinds,
-            cpu,
-        ),
-        DynCpu::Generic(_) => compress_blocks_generic(
-            token_start.as_ptr(),
-            kinds.as_ptr(),
-            b0,
-            b1,
-            starts,
-            stage_kinds,
-        ),
+        DynCpu::Avx2(cpu) => {
+            compress_blocks_avx2(token_start, kinds, b0, b1, starts, stage_kinds, cpu)
+        }
+        DynCpu::Neon(cpu) => {
+            compress_blocks_neon(token_start, kinds, b0, b1, starts, stage_kinds, cpu)
+        }
+        DynCpu::Generic(_) => {
+            compress_blocks_generic(token_start, kinds, b0, b1, starts, stage_kinds)
+        }
     }
 }
 
+/// Write the kept staged tokens to every slot below the returned count, which compress relies on.
 #[cpu_multiversion]
 #[inline(always)]
-unsafe fn build_spans(
-    stage_kind: *const u8,
-    stage_pos: *const u32,
-    m: usize,
-    spans: *mut Span,
-    sig_kinds: *mut u8,
+fn build_spans(
+    stage_kind: &[u8],
+    stage_pos: &[u32],
+    spans: &mut [MaybeUninit<Span>],
+    sig_kinds: &mut [MaybeUninit<u8>],
     cpu: impl Cpu,
 ) -> usize {
     match DynCpu::from(cpu) {
-        DynCpu::Avx2(cpu) => build_spans_avx2(stage_kind, stage_pos, m, spans, sig_kinds, cpu),
-        DynCpu::Neon(cpu) => build_spans_neon(stage_kind, stage_pos, m, spans, sig_kinds, cpu),
-        DynCpu::Generic(_) => build_spans_generic(stage_kind, stage_pos, m, spans, sig_kinds),
+        DynCpu::Avx2(cpu) => build_spans_avx2(stage_kind, stage_pos, spans, sig_kinds, cpu),
+        DynCpu::Neon(cpu) => build_spans_neon(stage_kind, stage_pos, spans, sig_kinds, cpu),
+        DynCpu::Generic(_) => build_spans_generic(stage_kind, stage_pos, spans, sig_kinds),
     }
 }
 

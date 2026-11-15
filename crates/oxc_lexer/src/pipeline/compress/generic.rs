@@ -1,62 +1,56 @@
+use std::mem::MaybeUninit;
+
 use oxc_simd::{BASELINE, cpu_version};
 use oxc_span::Span;
 
 use crate::token::{is_trivia_byte, matches_tk, tk};
 
-use crate::pipeline::{chunk::eqm, lanes::Lanes};
+use crate::pipeline::{bitmap::Bitmap, chunk::eqm, kinds::Kinds, lanes::Lanes};
 
 use super::common::{emit_value, invalid_diags};
 
 #[cpu_version(Generic)]
-pub(super) unsafe fn compress_blocks_generic(
-    st: *const u64,
-    kind: *const u8,
+pub(super) fn compress_blocks_generic(
+    token_start: Bitmap,
+    kinds: Kinds,
     b0: usize,
     b1: usize,
-    starts: *mut u32,
-    kinds: *mut u8,
+    starts: &mut [u32],
+    stage_kinds: &mut [u8],
 ) -> usize {
+    let cpu = BASELINE;
+
     let mut m = 0usize;
     for b in b0..b1 {
-        let mut w = *st.add(b);
-        if w == 0 {
-            continue;
-        }
-        let base = (b * 64) as u32;
+        let mut w = token_start.block(b, cpu);
+        let base = b * 64;
         while w != 0 {
-            let bit = w.trailing_zeros();
+            let pos = base + w.trailing_zeros() as usize;
             w &= w - 1;
-            *starts.add(m) = base + bit;
-            *kinds.add(m) = *kind.add((base + bit) as usize);
+            starts[m] = pos as u32;
+            stage_kinds[m] = kinds.get(pos);
             m += 1;
         }
     }
     m
 }
 
-/// Contents of this function is in common with AVX2 implementation.
+/// Write the kept staged tokens to every slot below the returned count; also the SIMD tails.
 #[cpu_version(Generic)]
-pub(super) unsafe fn build_spans_generic(
-    stage_kind: *const u8,
-    stage_pos: *const u32,
-    m: usize,
-    spans: *mut Span,
-    sig_kinds: *mut u8,
+pub(super) fn build_spans_generic(
+    stage_kind: &[u8],
+    stage_pos: &[u32],
+    spans: &mut [MaybeUninit<Span>],
+    sig_kinds: &mut [MaybeUninit<u8>],
 ) -> usize {
     let cpu = BASELINE;
 
-    let sp = spans.cast::<u64>();
     let mut w = 0usize;
-    let mut j = 0usize;
-
-    while j < m {
-        let k = *stage_kind.add(j);
-        *sp.add(w) = stage_pos.add(j).cast::<u64>().read_unaligned();
-        *sig_kinds.add(w) = k;
+    for (j, &k) in stage_kind.iter().enumerate() {
+        spans[w].write(Span::new(stage_pos[j], stage_pos[j + 1]));
+        sig_kinds[w].write(k);
         w += usize::from(!is_trivia_byte(k, cpu) || k == tk!(Hashbang));
-        j += 1;
     }
-
     w
 }
 
