@@ -99,8 +99,6 @@ impl Rule for PreferResponseStaticJson {
                 let add_parens = ctx.has_comments_between(Span::new(new_keyword_end, callee_start));
 
                 if add_parens {
-                    // Delete the whitespace character after `new`, if any. It can be more
-                    // than one byte (e.g. U+00A0), and a comment can follow `new` directly.
                     #[expect(clippy::cast_possible_truncation)]
                     let whitespace_len = ctx.source_text()[new_keyword_end as usize..]
                         .chars()
