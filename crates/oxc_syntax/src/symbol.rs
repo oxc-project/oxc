@@ -86,13 +86,15 @@ bitflags! {
         /// [NamedEvaluation](https://tc39.es/ecma262/#sec-runtime-semantics-namedevaluation),
         /// e.g. `f` in `var f = () => {}`, `f = function () {}` or `[f = () => {}] = []`.
         ///
-        /// Recorded by the semantic builder. The transformer does not maintain it.
+        /// Recorded by the semantic builder. The transformer does not maintain it, so after
+        /// transforming it may be missing or set on the wrong symbols.
         const AnonymousFunctionName    = 1 << 19;
         /// A binding that gives an anonymous class its `name` by
         /// [NamedEvaluation](https://tc39.es/ecma262/#sec-runtime-semantics-namedevaluation),
         /// e.g. `C` in `let C = class {}`.
         ///
-        /// Recorded by the semantic builder. The transformer does not maintain it.
+        /// Recorded by the semantic builder. The transformer does not maintain it, so after
+        /// transforming it may be missing or set on the wrong symbols.
         const AnonymousClassName       = 1 << 20;
 
         const Enum = Self::ConstEnum.bits() | Self::RegularEnum.bits();
