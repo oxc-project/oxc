@@ -4,10 +4,13 @@ use fast_glob::glob_match;
 use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
-        Argument, ArrowFunctionExpression, CallExpression, Class, Function, JSXExpression,
-        JSXExpressionContainer, MemberExpression,
+        Argument, ArrowFunctionBody, ArrowFunctionExpression, CallExpression, Class, Expression,
+        Function, FunctionBody, JSXExpression, JSXExpressionContainer, MemberExpression,
+        ReturnStatement,
     },
+    match_expression,
 };
+use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -195,7 +198,7 @@ impl NoUnstableNestedComponents {
 
         let is_component_in_prop = is_component_declared_in_prop(node, ctx);
         if is_component_in_prop {
-            if function_contains_jsx(func) {
+            if func.body.as_ref().is_some_and(|body| function_body_returns_jsx(body)) {
                 return Some(ComponentCandidate { span: func.span, is_component_in_prop });
             }
             return None;
@@ -225,6 +228,9 @@ impl NoUnstableNestedComponents {
 
         let is_component_in_prop = is_component_declared_in_prop(node, ctx);
         if is_component_in_prop {
+            if !arrow_body_returns_jsx(&arrow.body) {
+                return None;
+            }
             return Some(ComponentCandidate { span: arrow.span, is_component_in_prop });
         }
 
@@ -269,6 +275,56 @@ fn class_candidate<'a>(
     } else {
         None
     }
+}
+
+/// Like eslint-plugin-react, a function passed as a prop is a component only when it returns
+/// JSX. A callback that puts JSX into an object or array it returns (`(row) => ({ icon: <Icon /> })`)
+/// is a plain function.
+fn function_body_returns_jsx(body: &FunctionBody<'_>) -> bool {
+    let mut finder = ReturnsJsx { found: false };
+    finder.visit_function_body(body);
+    finder.found
+}
+
+fn arrow_body_returns_jsx(body: &ArrowFunctionBody<'_>) -> bool {
+    match body {
+        ArrowFunctionBody::FunctionBody(body) => function_body_returns_jsx(body),
+        expression @ match_expression!(ArrowFunctionBody) => {
+            is_jsx_value(expression.to_expression())
+        }
+    }
+}
+
+/// Whether the value itself is JSX, directly or in a branch of a conditional or logical expression.
+fn is_jsx_value(expr: &Expression<'_>) -> bool {
+    match expr.without_parentheses() {
+        Expression::JSXElement(_) | Expression::JSXFragment(_) => true,
+        Expression::CallExpression(call) => is_create_element_call(call),
+        Expression::ConditionalExpression(cond) => {
+            is_jsx_value(&cond.consequent) || is_jsx_value(&cond.alternate)
+        }
+        Expression::LogicalExpression(logical) => {
+            is_jsx_value(&logical.left) || is_jsx_value(&logical.right)
+        }
+        Expression::SequenceExpression(seq) => seq.expressions.last().is_some_and(is_jsx_value),
+        _ => false,
+    }
+}
+
+/// Finds a `return` of JSX in a function body, without entering nested functions.
+struct ReturnsJsx {
+    found: bool,
+}
+
+impl<'a> VisitJs<'a> for ReturnsJsx {
+    fn visit_return_statement(&mut self, stmt: &ReturnStatement<'a>) {
+        if stmt.argument.as_ref().is_some_and(is_jsx_value) {
+            self.found = true;
+        }
+    }
+
+    fn visit_function(&mut self, _func: &Function<'a>, _flags: oxc_syntax::scope::ScopeFlags) {}
+    fn visit_arrow_function_expression(&mut self, _arrow: &ArrowFunctionExpression<'a>) {}
 }
 
 fn hoc_call_candidate<'a>(
@@ -597,6 +653,22 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        (
+            r"
+            declare const Column: (props: any) => any;
+            export const Table = () => (
+              <Column
+                metadata={(row) => ({ icon: <span>{row.id}</span> })}
+                compare={(row) => {
+                  if (!row.id) return null
+                  return { children: <span>{row.id}</span> }
+                }}
+                actions={(row) => [{ icon: <span>{row.id}</span> }]}
+              />
+            );
+        ",
+            None,
+        ),
         (
             "function Component() { return <Thing {...{ 0: () => <div /> }} />; }",
             Some(serde_json::json!([{ "propNamePattern": "*" }])),
@@ -1227,6 +1299,21 @@ fn test() {
     ];
 
     let fail = vec![
+        (
+            r"
+            function ParentComponent() {
+              return (
+                <Column
+                  cell={(row) => {
+                    if (!row.id) return null
+                    return <span>{row.id}</span>
+                  }}
+                />
+              );
+            }
+        ",
+            None,
+        ),
         (
             "function Component() { return <Thing {...{ 0: () => <div /> }} />; }",
             Some(serde_json::json!([{ "propNamePattern": "render*" }])),
