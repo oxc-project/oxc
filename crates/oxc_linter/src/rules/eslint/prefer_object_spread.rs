@@ -120,7 +120,10 @@ impl Rule for PreferObjectSpread {
         }
 
         let arguments_len = call_expr.arguments.len();
-        let mut needs_suggestion = false;
+        let mut needs_suggestion = !matches!(
+            call_expr.arguments[0].as_expression(),
+            Some(Expression::ObjectExpression(_))
+        );
 
         for (idx, arg) in call_expr.arguments.iter().enumerate() {
             let Some(Expression::ObjectExpression(obj_expr)) =
@@ -1095,6 +1098,19 @@ fn test() {
             None,
             FixKind::Fix,
         ),
+        (
+            "Object.assign(({ __proto__: proto }))",
+            "Object.assign(({ __proto__: proto }))",
+            None,
+            FixKind::Fix,
+        ),
+        (
+            "Object.assign(({ __proto__: proto }))",
+            "({...({ __proto__: proto })})",
+            None,
+            FixKind::Suggestion,
+        ),
+        ("Object.assign(({ get x() {} }))", "Object.assign(({ get x() {} }))", None, FixKind::Fix),
     ];
     Tester::new(PreferObjectSpread::NAME, PreferObjectSpread::PLUGIN, pass, fail)
         .expect_fix(fix)
