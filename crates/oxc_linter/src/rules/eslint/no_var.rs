@@ -241,7 +241,12 @@ fn can_fix_binding<'a>(
             return false;
         }
 
-        !is_in_function_called_before(reference_node.scope_id(), var_scope, decl.span.start, ctx)
+        !is_in_function_referenced_before(
+            reference_node.scope_id(),
+            var_scope,
+            decl.span.start,
+            ctx,
+        )
     })
 }
 
@@ -272,8 +277,8 @@ fn enclosing_function_scope(scoping: &Scoping, scope_id: ScopeId) -> ScopeId {
 }
 
 /// Whether a reference in `reference_scope` is inside a function declaration that
-/// is called before `declaration_start`, e.g. `foo(); var a = 1; function foo() { a; }`.
-fn is_in_function_called_before(
+/// is referenced before `declaration_start` and could be invoked before initialization.
+fn is_in_function_referenced_before(
     reference_scope: ScopeId,
     var_scope: ScopeId,
     declaration_start: u32,
@@ -290,24 +295,10 @@ fn is_in_function_called_before(
         let Some(id) = func.id.as_ref().filter(|_| func.is_declaration()) else {
             continue;
         };
-        let called_before = ctx.symbol_references(id.symbol_id()).any(|reference| {
-            let reference_node = ctx.nodes().get_node(reference.node_id());
-            reference_node.span().start < declaration_start && is_callee(reference_node, ctx)
-        });
-        if called_before {
+        if ctx.symbol_references(id.symbol_id()).any(|reference| {
+            ctx.nodes().get_node(reference.node_id()).span().start < declaration_start
+        }) {
             return true;
-        }
-    }
-    false
-}
-
-fn is_callee(node: &AstNode, ctx: &LintContext) -> bool {
-    let mut span = node.span();
-    for ancestor in ctx.nodes().ancestors(node.id()) {
-        match ancestor.kind() {
-            AstKind::ParenthesizedExpression(paren) => span = paren.span,
-            AstKind::CallExpression(call) => return call.callee.span() == span,
-            _ => return false,
         }
     }
     false
@@ -602,6 +593,26 @@ fn test() {
         ("var [[a] = [a]] = [];", "var [[a] = [a]] = [];"),
         ("for (var {a = a} of [{}]) {}", "for (var {a = a} of [{}]) {}"),
         ("for (var a of [a]) {}", "for (var a of [a]) {}"),
+        (
+            "function wrap() { new foo(); var a = 1; function foo() { console.log(a); } }",
+            "function wrap() { new foo(); var a = 1; function foo() { console.log(a); } }",
+        ),
+        (
+            "function wrap() { foo.call(null); var a = 1; function foo() { console.log(a); } }",
+            "function wrap() { foo.call(null); var a = 1; function foo() { console.log(a); } }",
+        ),
+        (
+            "function wrap() { foo.apply(null, []); var a = 1; function foo() { console.log(a); } }",
+            "function wrap() { foo.apply(null, []); var a = 1; function foo() { console.log(a); } }",
+        ),
+        (
+            "function wrap() { foo``; var a = 1; function foo() { console.log(a); } }",
+            "function wrap() { foo``; var a = 1; function foo() { console.log(a); } }",
+        ),
+        (
+            "function wrap() { consume(foo); var a = 1; function foo() { console.log(a); } }",
+            "function wrap() { consume(foo); var a = 1; function foo() { console.log(a); } }",
+        ),
         ("for (var a in { [a]: 1 }) {}", "for (var a in { [a]: 1 }) {}"),
         (
             "for (var i of [1, 2]) { classes.push(class { x = i; }); }",
