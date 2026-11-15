@@ -290,7 +290,6 @@ impl Rule for PreferFunctionType {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::TSInterfaceDeclaration(decl) => {
-                // Checked by the `ExportDefaultDeclaration` arm below.
                 if matches!(
                     ctx.nodes().parent_kind(node.id()),
                     AstKind::ExportDefaultDeclaration(_)
