@@ -71,25 +71,6 @@ fn is_safe_to_rename_binding(symbol_id: SymbolId, ctx: &LintContext<'_>) -> bool
     })
 }
 
-/// Determine whether the object of a `vitest.<method>(...)`-style member call
-/// belongs to a binding that has non-call references. When it does, rewriting
-/// the call alone would leave other references unbound, so the fix must not be
-/// applied automatically.
-fn can_fix_call_member_object<'a>(
-    member_expression: &oxc_ast::ast::MemberExpression<'a>,
-    ctx: &LintContext<'a>,
-) -> bool {
-    let Expression::Identifier(ident) = member_expression.object() else {
-        return false;
-    };
-
-    ident
-        .reference_id
-        .get()
-        .and_then(|reference_id| ctx.semantic().scoping().get_reference(reference_id).symbol_id())
-        .is_none_or(|symbol_id| is_safe_to_rename_binding(symbol_id, ctx))
-}
-
 #[derive(Debug, Default, Clone, Deserialize)]
 pub struct ConsistentVitestVi(Box<ConsistentVitestConfig>);
 
@@ -193,6 +174,7 @@ impl Rule for ConsistentVitestVi {
                     ctx.diagnostic_with_fix(
                         consistent_vitest_vi_diagnostic(vitest_import.span(), &self.function),
                         |fixer| {
+                            let fixer = fixer.for_multifix();
                             let mut specifiers_without_opposite_accessor: Vec<&str> =
                                 import.specifiers.as_ref().map_or_default(|specs| {
                                     specs
@@ -202,7 +184,7 @@ impl Rule for ConsistentVitestVi {
                                         .collect()
                                 });
 
-                            if specifiers_without_opposite_accessor.is_empty() {
+                            let mut fix = if specifiers_without_opposite_accessor.is_empty() {
                                 fixer.replace(vitest_import.local().span, self.function.as_str())
                             } else {
                                 let target_already_bound =
@@ -237,7 +219,14 @@ impl Rule for ConsistentVitestVi {
                                 );
 
                                 fixer.replace(specifiers_span, import_text)
+                            };
+                            for reference in ctx.semantic().symbol_references(symbol_id) {
+                                let reference_node = ctx.nodes().get_node(reference.node_id());
+                                fix.push(
+                                    fixer.replace(reference_node.span(), self.function.as_str()),
+                                );
                             }
+                            fix
                         },
                     );
                 } else {
@@ -270,7 +259,9 @@ impl Rule for ConsistentVitestVi {
                         &self.function,
                     );
 
-                    if can_fix_call_member_object(member_expression, ctx) {
+                    if let Expression::Identifier(ident) = member_expression.object()
+                        && ctx.scoping().get_reference(ident.reference_id()).symbol_id().is_none()
+                    {
                         ctx.diagnostic_with_fix(diagnostic, |fixer| {
                             fixer.replace(member_expression.object().span(), self.function.as_str())
                         });
@@ -405,6 +396,11 @@ fn test() {
             Some(serde_json::json!([{ "fn": "vitest" }])),
         ),
     ];
+    fix.push((
+        r#"import { vitest } from "vitest"; vitest.fn(); vitest.mock("./dep");"#,
+        r#"import { vi } from "vitest"; vi.fn(); vi.mock("./dep");"#,
+        None,
+    ));
     let no_fix = [
         (r#"import { vitest } from "vitest"; const mocker = vitest;"#, None),
         (r#"import { vitest } from "vitest"; const fn = vitest.fn;"#, None),
@@ -422,6 +418,12 @@ fn test() {
             None,
         ),
         (r#"vitest.fn().mockReturnValue(1);"#, None),
+        (
+            r#"// oxlint-disable-next-line vitest/consistent-vitest-vi
+import { vitest } from "vitest";
+vitest.fn();"#,
+            None,
+        ),
     ];
     fix.extend(no_fix.into_iter().map(|(source, config)| (source, source, config)));
     Tester::new(ConsistentVitestVi::NAME, ConsistentVitestVi::PLUGIN, pass, fail)
