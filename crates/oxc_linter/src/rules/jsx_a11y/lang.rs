@@ -73,8 +73,6 @@ impl Rule for Lang {
             return;
         }
 
-        // A missing `lang` is reported by `html-has-lang`; this rule only checks
-        // the value of one that is present, like eslint-plugin-jsx-a11y.
         if let Some(lang_prop) = has_jsx_prop_ignore_case(jsx_el, "lang")
             && !is_valid_lang_prop(lang_prop)
             && let JSXAttributeItem::Attribute(attr) = lang_prop
