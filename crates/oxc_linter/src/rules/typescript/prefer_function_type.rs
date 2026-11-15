@@ -412,7 +412,6 @@ fn test() {
     let fail = vec![
         "interface Foo { (): string; }",
         "export default interface Foo { /** comment */ (): string; }",
-        "export default interface Foo<T> { (): T }",
         r"
         interface Foo {
           // comment
@@ -491,6 +490,7 @@ fn test() {
         "type X = {} | { (): void; }",
         "type X = {} & { (): void; };",
         "type K = { new(): T };",
+        "export default interface Foo<T> { (): T }",
     ];
 
     let fix = vec![
