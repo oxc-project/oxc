@@ -1,0 +1,391 @@
+---
+source: crates/oxc_minifier/tests/mangler/merge_vars.rs
+---
+export function f(n) { for (var i = 0; i < n; i++) log(i); for (var j = 0; j < n; j++) log(j); }
+[mangle]
+export function f(e) {
+	for (var t = 0; t < e; t++) log(t);
+	for (t = 0; t < e; t++) log(t);
+}
+
+export function f(n) { for (var i = 0; i < n; i++) log(i); for (var j = 0; j < n; j++) log(j); }
+[compress]
+export function f(e) {
+	for (var t = 0; t < e; t++) log(t);
+	for (t = 0; t < e; t++) log(t);
+}
+
+export function f(n) { for (var i = 0; i < n; i++) log(i); for (var j = 0, k = g(); j < n; j++) log(j, k); }
+[mangle]
+export function f(e) {
+	for (var t = 0; t < e; t++) log(t);
+	for (var t = 0, n = g(); t < e; t++) log(t, n);
+}
+
+export function f(n) { for (var i = 0; i < n; i++) log(i); for (var j = 0, k = g(); j < n; j++) log(j, k); }
+[compress]
+export function f(e) {
+	for (var t = 0; t < e; t++) log(t);
+	for (var t = 0, n = g(); t < e; t++) log(t, n);
+}
+
+export function f(a, b) { log(a, b); var x = g(), y = g(); log(x, y); }
+[mangle]
+export function f(e, t) {
+	log(e, t);
+	e = g(), t = g();
+	log(e, t);
+}
+
+export function f(a, b) { log(a, b); var x = g(), y = g(); log(x, y); }
+[compress]
+export function f(e, t) {
+	log(e, t);
+	e = g(), t = g();
+	log(e, t);
+}
+
+export function f(a) { log(a); var b; log(b); }
+[mangle]
+export function f(e) {
+	log(e);
+	var t;
+	log(t);
+}
+
+export function f(a) { log(a); var b; log(b); }
+[compress]
+export function f(e) {
+	log(e);
+	var t;
+	log(t);
+}
+
+export function f(a) { log(a); var b, c = g(); b = g(); log(b, c); }
+[mangle]
+export function f(e) {
+	log(e);
+	var t, e = g();
+	t = g();
+	log(t, e);
+}
+
+export function f(a) { log(a); var b, c = g(); b = g(); log(b, c); }
+[compress]
+export function f(e) {
+	log(e);
+	var t, e = g();
+	t = g(), log(t, e);
+}
+
+export function f(a) { log(a); var b; b = g(); log(b); }
+[mangle]
+export function f(e) {
+	log(e);
+	e = g();
+	log(e);
+}
+
+export function f(a) { log(a); var b; b = g(); log(b); }
+[compress]
+export function f(e) {
+	log(e);
+	e = g();
+	log(e);
+}
+
+export function f(o) { for (var k in o) log(k); for (var v of o) log(v); }
+[mangle]
+export function f(e) {
+	for (var t in e) log(t);
+	for (t of e) log(t);
+}
+
+export function f(o) { for (var k in o) log(k); for (var v of o) log(v); }
+[compress]
+export function f(e) {
+	for (var t in e) log(t);
+	for (t of e) log(t);
+}
+
+export function f(a) { log(a); if (a) var b = g(); else var c; log(b, c); }
+[mangle]
+export function f(e) {
+	log(e);
+	if (e) var t = g();
+	else var n;
+	log(t, n);
+}
+
+export function f(a) { log(a); if (a) var b = g(); else var c; log(b, c); }
+[compress]
+export function f(e) {
+	if (log(e), e) var t = g();
+	else var n;
+	log(t, n);
+}
+
+export function f(a) { log(a); if (a) var b; else log(a); b = g(); log(b); }
+[mangle]
+export function f(e) {
+	log(e);
+	if (e);
+	else log(e);
+	e = g();
+	log(e);
+}
+
+export function f(a) { log(a); if (a) var b; else log(a); b = g(); log(b); }
+[compress]
+export function f(e) {
+	if (log(e), e);
+	else log(e);
+	e = g(), log(e);
+}
+
+export function f(a) { log(a); while (a) var b; b = g(); log(b); }
+[mangle]
+export function f(e) {
+	log(e);
+	while (e);
+	e = g();
+	log(e);
+}
+
+export function f(a) { log(a); while (a) var b; b = g(); log(b); }
+[compress]
+export function f(e) {
+	for (log(e); e;);
+	e = g(), log(e);
+}
+
+export function f(a) { log(a); l: var b; b = g(); log(b); }
+[mangle]
+export function f(e) {
+	log(e);
+	l:;
+	e = g();
+	log(e);
+}
+
+export function f(a) { log(a); l: var b; b = g(); log(b); }
+[compress]
+export function f(e) {
+	log(e);
+	e = g();
+	log(e);
+}
+
+export function f(a) { log(a); switch (a) { case 1: var b = g(); log(b); } }
+[mangle]
+export function f(e) {
+	log(e);
+	switch (e) {
+		case 1:
+			e = g();
+			log(e);
+	}
+}
+
+export function f(a) { log(a); switch (a) { case 1: var b = g(); log(b); } }
+[compress]
+export function f(e) {
+	if (log(e), e === 1) {
+		e = g();
+		log(e);
+	}
+}
+
+export function f(a) { log(a); var [b] = g(); log(b); }
+[mangle]
+export function f(e) {
+	log(e);
+	var [e] = g();
+	log(e);
+}
+
+export function f(a) { log(a); var [b] = g(); log(b); }
+[compress]
+export function f(e) {
+	log(e);
+	var [e] = g();
+	log(e);
+}
+
+export class A { static { var a = g(); log(a); var b = g(); log(b); } }
+[mangle]
+export class A {
+	static {
+		var e = g();
+		log(e);
+		e = g();
+		log(e);
+	}
+}
+
+export class A { static { var a = g(); log(a); var b = g(); log(b); } }
+[compress]
+export class A {
+	static {
+		var e = g();
+		log(e);
+		e = g();
+		log(e);
+	}
+}
+
+var a = g(); log(a); var b = g(); log(b);
+[mangle]
+var e = g();
+log(e);
+e = g();
+log(e);
+
+var a = g(); log(a); var b = g(); log(b);
+[compress]
+var e = g();
+log(e);
+e = g();
+log(e);
+
+var a = g(); log(a); var b = g(); log(b); export var c = 3;
+[mangle]
+var e = g();
+log(e);
+e = g();
+log(e);
+export var c = 3;
+
+var a = g(); log(a); var b = g(); log(b); export var c = 3;
+[compress]
+var e = g();
+log(e);
+e = g();
+log(e);
+export var c = 3;
+
+export const f = g(function (a) { log(a); var b = g(); log(b); });
+[mangle]
+export const f = g(function(e) {
+	log(e);
+	e = g();
+	log(e);
+});
+
+export const f = g(function (a) { log(a); var b = g(); log(b); });
+[compress]
+export const f = g(function(e) {
+	log(e);
+	e = g();
+	log(e);
+});
+
+export const f = () => { var a = g(); log(a); var b = g(); log(b); };
+[mangle]
+export const f = () => {
+	var e = g();
+	log(e);
+	e = g();
+	log(e);
+};
+
+export const f = () => { var a = g(); log(a); var b = g(); log(b); };
+[compress]
+export const f = () => {
+	var e = g();
+	log(e);
+	e = g();
+	log(e);
+};
+
+export class A { m() { var a = g(); log(a); var b = g(); log(b); } }
+[mangle]
+export class A {
+	m() {
+		var e = g();
+		log(e);
+		e = g();
+		log(e);
+	}
+}
+
+export class A { m() { var a = g(); log(a); var b = g(); log(b); } }
+[compress]
+export class A {
+	m() {
+		var e = g();
+		log(e);
+		e = g();
+		log(e);
+	}
+}
+
+export const o = { m() { var a = g(); log(a); var b = g(); log(b); } };
+[mangle]
+export const o = { m() {
+	var e = g();
+	log(e);
+	e = g();
+	log(e);
+} };
+
+export const o = { m() { var a = g(); log(a); var b = g(); log(b); } };
+[compress]
+export const o = { m() {
+	var e = g();
+	log(e);
+	e = g();
+	log(e);
+} };
+
+export class A { p = () => { var a = g(); log(a); var b = g(); log(b); }; }
+[mangle]
+export class A {
+	p = () => {
+		var e = g();
+		log(e);
+		e = g();
+		log(e);
+	};
+}
+
+export class A { p = () => { var a = g(); log(a); var b = g(); log(b); }; }
+[compress]
+export class A {
+	p = () => {
+		var e = g();
+		log(e);
+		e = g();
+		log(e);
+	};
+}
+
+export function f(a) { log(a); { var b = g(); log(b); } try { var c = g(); log(c); } finally { log(a); } }
+[mangle]
+export function f(e) {
+	log(e);
+	{
+		var t = g();
+		log(t);
+	}
+	try {
+		t = g();
+		log(t);
+	} finally {
+		log(e);
+	}
+}
+
+export function f(a) { log(a); { var b = g(); log(b); } try { var c = g(); log(c); } finally { log(a); } }
+[compress]
+export function f(e) {
+	log(e);
+	var t = g();
+	log(t);
+	try {
+		t = g();
+		log(t);
+	} finally {
+		log(e);
+	}
+}

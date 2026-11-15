@@ -150,11 +150,14 @@ pub fn run() -> Result<(), io::Error> {
 
 fn minify_twice(file: &TestFile, options: Options) -> (String, u8) {
     let source_type = SourceType::cjs().with_script(true);
-    let (code1, iterations) = minify(&file.source_text, source_type, options, true);
+    let (code, iterations) = minify(&file.source_text, source_type, options, true, true);
+    // Merging variables gives compression new opportunities, so the fixed-point check runs
+    // without it.
+    let (code1, _) = minify(&file.source_text, source_type, options, true, false);
     // Property mangling runs once. Compression may expose new matching keys on the second pass.
-    let (code2, _) = minify(&code1, source_type, options, false);
+    let (code2, _) = minify(&code1, source_type, options, false, false);
     assert_eq_minified_code(&code1, &code2, &file.file_name);
-    (code2, iterations)
+    (code, iterations)
 }
 
 fn minify(
@@ -162,6 +165,7 @@ fn minify(
     source_type: SourceType,
     options: Options,
     mangle_properties: bool,
+    merge_vars: bool,
 ) -> (String, u8) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
@@ -174,7 +178,8 @@ fn minify(
     )
     .build(scoping, &mut program);
     let ret = Minifier::new(MinifierOptions {
-        mangle: (!options.compress_only).then(MangleOptions::default),
+        mangle: (!options.compress_only)
+            .then(|| MangleOptions { merge_vars, ..MangleOptions::default() }),
         mangle_properties: (mangle_properties && !options.compress_only)
             .then(property_mangle_options),
         compress: Some(CompressOptions::default()),

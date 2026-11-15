@@ -55,6 +55,7 @@ mod minifier_traverse;
 mod options;
 mod peephole;
 mod property_mangler;
+mod redundant_vars;
 mod state;
 mod symbol_liveness;
 mod symbol_metadata;
@@ -71,7 +72,7 @@ use oxc_str::CompactStr;
 use oxc_syntax::class::ClassId;
 use rustc_hash::FxHashMap;
 
-use crate::state::CompressionMode;
+use crate::{redundant_vars::RedundantVars, state::CompressionMode};
 
 pub use oxc_mangler::{MangleOptions, MangleOptionsKeepNames};
 pub use property_mangler::{
@@ -183,10 +184,15 @@ impl<'a> Minifier {
                     builder = builder.with_stats(stats);
                 }
                 let mut semantic = builder.build(program).semantic;
-                let class_private_mappings = Mangler::default()
+                let (class_private_mappings, merged_vars) = Mangler::default()
                     .with_options(options)
-                    .build_with_semantic(&mut semantic, program);
-                (semantic.into_scoping(), class_private_mappings)
+                    .build_with_semantic_and_merged_vars(&mut semantic, program);
+                let redundant_vars = RedundantVars::collect(allocator, &semantic, &merged_vars);
+                let mut scoping = semantic.into_scoping();
+                if let Some(redundant_vars) = redundant_vars {
+                    redundant_vars.remove(allocator, program, &mut scoping);
+                }
+                (scoping, class_private_mappings)
             })
             .map_or((None, None), |(scoping, mappings)| (Some(scoping), Some(mappings)));
         MinifierReturn { scoping, class_private_mappings, property_mangle_cache, iterations }

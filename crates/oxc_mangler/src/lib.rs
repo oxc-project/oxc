@@ -20,10 +20,13 @@ use oxc_str::{ArenaIdentHashSet, CompactStr, Ident};
 
 pub(crate) mod base54;
 mod keep_names;
+mod merge_vars;
 
 pub use keep_names::MangleOptionsKeepNames;
+pub use merge_vars::MergedVars;
+use merge_vars::Merges;
 
-#[derive(Default, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct MangleOptions {
     /// Pass true to mangle names declared in the top level scope.
     ///
@@ -54,6 +57,28 @@ pub struct MangleOptions {
     ///
     /// Uses base54 if false.
     pub debug: bool,
+
+    /// Let `var`s and parameters of the same function share a name when their lifetimes never
+    /// overlap, like UglifyJS's `merge_vars`. For example, two loops counting with `i` and `j`
+    /// can both use the same name.
+    ///
+    /// The output may then contain redundant (but legal) `var` declarations of the shared name.
+    /// `oxc_minifier` removes them.
+    ///
+    /// Default: `true`.
+    pub merge_vars: bool,
+}
+
+impl Default for MangleOptions {
+    fn default() -> Self {
+        Self {
+            top_level: None,
+            keep_names: MangleOptionsKeepNames::default(),
+            reserved: FxHashSet::default(),
+            debug: false,
+            merge_vars: true,
+        }
+    }
 }
 
 impl MangleOptions {
@@ -338,13 +363,28 @@ impl<'t> Mangler<'t> {
         semantic: &mut Semantic<'_>,
         program: &Program<'_>,
     ) -> IndexVec<ClassId, FxHashMap<String, CompactStr>> {
+        self.build_with_semantic_and_merged_vars(semantic, program).0
+    }
+
+    /// Like [`Mangler::build_with_semantic`], and also returns the variables that share a name
+    /// with another variable of the same function because of [`MangleOptions::merge_vars`], so
+    /// their redundant `var` declarations can be removed.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the child_ids does not exist in scope_tree.
+    pub fn build_with_semantic_and_merged_vars(
+        self,
+        semantic: &mut Semantic<'_>,
+        program: &Program<'_>,
+    ) -> (IndexVec<ClassId, FxHashMap<String, CompactStr>>, MergedVars) {
         let class_private_mappings = Self::collect_private_members_from_semantic(semantic);
-        if self.options.debug {
-            self.build_with_semantic_impl(semantic, program, debug_name);
+        let merged_vars = if self.options.debug {
+            self.build_with_semantic_impl(semantic, program, debug_name)
         } else {
-            self.build_with_semantic_impl(semantic, program, base54);
-        }
-        class_private_mappings
+            self.build_with_semantic_impl(semantic, program, base54)
+        };
+        (class_private_mappings, merged_vars)
     }
 
     /// Mangle the program: rewrite local bindings to the shortest legal names.
@@ -377,7 +417,8 @@ impl<'t> Mangler<'t> {
     /// }
     /// ```
     /// - **assign slots**: `C`,`log` untouched (root binding / global); `n`→slot 1; `i`→slot 2;
-    ///   `j`→slot 3 (each its own slot — same-scope bindings never share today).
+    ///   `j`→slot 2 as well: `i` is dead once the first loop ends, before `j` is first written,
+    ///   so [merging](MangleOptions::merge_vars) lets them share a slot.
     /// - **tally**: count references per slot, hottest first.
     /// - **generate names**: `e, t, n, r, …` (base54), skipping any that collide with a keyword,
     ///   a global like `log`, an export, a kept name, or an eval-visible name.
@@ -386,7 +427,7 @@ impl<'t> Mangler<'t> {
     /// ```js
     /// function C(e) {
     ///   for (var t = 0; t < e; t++) log(t);
-    ///   for (var n = 0; n < e; n++) log(n);
+    ///   for (var t = 0; t < e; t++) log(t);
     /// }
     /// ```
     fn build_with_semantic_impl<const CAPACITY: usize, G: Fn(u32) -> InlineString<CAPACITY, u8>>(
@@ -394,15 +435,21 @@ impl<'t> Mangler<'t> {
         semantic: &mut Semantic<'_>,
         program: &Program<'_>,
         generate_name: G,
-    ) {
+    ) -> MergedVars {
         let (scoping, ast_nodes) = semantic.scoping_mut_and_nodes();
         let allocator = self.temp_allocator.as_ref();
 
         // ── Phase 1: collect constraints — names we must not reuse or shadow. ──
         let constraints =
             Constraints::collect(allocator, scoping, ast_nodes, program, &self.options);
+        // Variables of one function whose lifetimes never overlap share a slot.
+        let merges = if self.options.merge_vars {
+            merge_vars::compute(allocator, scoping, ast_nodes, program, &constraints)
+        } else {
+            Merges::none()
+        };
         // ── Phase 2: assign slots — give bindings that can share a name the same slot. ──
-        let slots = SlotAssignment::compute(allocator, scoping, ast_nodes, &constraints);
+        let slots = SlotAssignment::compute(allocator, scoping, ast_nodes, &constraints, &merges);
         // ── Phase 3: rank slots by reference frequency (hottest first). ──
         let ranking = SlotRanking::tally(allocator, scoping, &slots);
         // ── Phase 4: generate that many short, collision-free names. ──
@@ -410,6 +457,7 @@ impl<'t> Mangler<'t> {
             NameTable::generate(allocator, scoping, &constraints, &ranking, &slots, generate_name);
         // ── Phase 5: give each slot its name and rewrite every reference. ──
         names.apply(allocator, scoping, &ranking);
+        merges.into_merged_vars()
     }
 
     /// Collects and generates mangled names for private members using semantic information
@@ -594,11 +642,14 @@ impl<'a> SlotAssignment<'a> {
     /// when none are free. `slot_liveness[slot]` records the scopes a slot passes through live so
     /// descendant scopes can tell what's free. Invariant on the result: two symbols sharing a slot
     /// never have overlapping live ranges, so giving them one name is always safe.
+    ///
+    /// Symbols that [`Merges`] groups together take the slot of their group's representative.
     fn compute(
         allocator: &'a Allocator,
         scoping: &'a Scoping,
         ast_nodes: &AstNodes,
         constraints: &Constraints,
+        merges: &Merges<'_>,
     ) -> Self {
         // Names of bindings in direct-`eval` scopes — collected here, reserved in Phase 4.
         // TODO: eval reservation is conservative — ideally we'd reserve names per-slot.
@@ -614,6 +665,8 @@ impl<'a> SlotAssignment<'a> {
         let mut slot_liveness =
             ArenaVec::<BitSet>::with_capacity_in(scoping.symbols_len(), &allocator);
         let mut tmp_bindings = ArenaVec::with_capacity_in(100, &allocator);
+        // Merged symbols that are not their group's representative, assigned after it.
+        let mut merged_members = ArenaVec::new_in(&allocator);
         let mut reusable_slots = ArenaVec::new_in(&allocator);
         // Pre-computed BitSet for ancestor membership tests - reused across iterations
         let mut ancestor_set = BitSet::new_in(scoping.scopes_len(), allocator);
@@ -635,16 +688,23 @@ impl<'a> SlotAssignment<'a> {
 
             // Sort `bindings` in declaration order.
             tmp_bindings.clear();
-            tmp_bindings.extend(
-                bindings
-                    .values()
-                    .copied()
-                    .filter(|&binding| constraints.is_mangle_candidate(binding, scoping)),
-            );
+            tmp_bindings.extend(bindings.values().copied().filter(|&binding| {
+                constraints.is_mangle_candidate(binding, scoping)
+                    && merges.representative(binding) == binding
+            }));
             if tmp_bindings.is_empty() {
                 continue;
             }
             tmp_bindings.sort_unstable();
+            merged_members.clear();
+            if !merges.is_empty() {
+                merged_members.extend(
+                    bindings
+                        .values()
+                        .copied()
+                        .filter(|&binding| merges.representative(binding) != binding),
+                );
+            }
 
             let mut slot = slot_liveness.len();
 
@@ -684,50 +744,30 @@ impl<'a> SlotAssignment<'a> {
                 ancestor_set.set_bit(ancestor_id.index());
             }
 
-            let scope_id_index = scope_id.index();
             for (&symbol_id, &assigned_slot) in tmp_bindings.iter().zip(&reusable_slots) {
                 debug_assert!(constraints.is_mangle_candidate(symbol_id, scoping));
                 slots[symbol_id.index()] = assigned_slot;
-
-                // `var` is hoisted, so include the scope where it is declared
-                // (for cases like `function foo() { { var x; let y; } }`).
-                let declared_scope_id =
-                    ast_nodes.get_node(scoping.symbol_declaration(symbol_id)).scope_id();
-                let redeclared_scope_ids = scoping
-                    .symbol_redeclarations(symbol_id)
-                    .iter()
-                    .map(|r| ast_nodes.get_node(r.declaration).scope_id());
-                let referenced_scope_ids =
-                    scoping.get_resolved_references(symbol_id).map(Reference::scope_id);
-
-                // The scopes this symbol is alive in: for each use, walk up to (but not including)
-                // `scope_id`, marking the descendant scopes it passes through.
-                let slot_liveness_bitset = &mut slot_liveness[assigned_slot as usize];
-                for used_scope_id in
-                    referenced_scope_ids.chain(redeclared_scope_ids).chain([declared_scope_id])
-                {
-                    for ancestor_id in scoping.scope_ancestors(used_scope_id) {
-                        let ancestor_index = ancestor_id.index();
-                        // Stop when we reach scope_id or any of its ancestors
-                        if ancestor_index == scope_id_index || ancestor_set.has_bit(ancestor_index)
-                        {
-                            break;
-                        }
-                        if slot_liveness_bitset.has_bit(ancestor_index) {
-                            debug_assert!(
-                                scoping.scope_ancestors(ancestor_id).skip(1).all(|a| {
-                                    let idx = a.index();
-                                    slot_liveness_bitset.has_bit(idx)
-                                        || idx == scope_id_index
-                                        || ancestor_set.has_bit(idx)
-                                }),
-                                "Invariant violated: ancestor chain should be fully marked live"
-                            );
-                            break;
-                        }
-                        slot_liveness_bitset.set_bit(ancestor_index);
-                    }
-                }
+                mark_slot_liveness(
+                    scoping,
+                    ast_nodes,
+                    symbol_id,
+                    scope_id,
+                    &ancestor_set,
+                    &mut slot_liveness[assigned_slot as usize],
+                );
+            }
+            for &symbol_id in &merged_members {
+                let assigned_slot = slots[merges.representative(symbol_id).index()];
+                debug_assert!(assigned_slot != SLOT_UNASSIGNED);
+                slots[symbol_id.index()] = assigned_slot;
+                mark_slot_liveness(
+                    scoping,
+                    ast_nodes,
+                    symbol_id,
+                    scope_id,
+                    &ancestor_set,
+                    &mut slot_liveness[assigned_slot as usize],
+                );
             }
 
             // Repair an orphaned named-fn-expr name: a same-named body declaration
@@ -752,6 +792,53 @@ impl<'a> SlotAssignment<'a> {
 
         let total_slots = slot_liveness.len();
         Self { slots, total_slots, eval_reserved_names }
+    }
+}
+
+/// Mark the scopes below `scope_id` that `symbol_id`, bound in `scope_id`, is alive in as live
+/// for its slot: for each use, walk up to (but not including) `scope_id`, marking the descendant
+/// scopes it passes through.
+#[inline]
+fn mark_slot_liveness(
+    scoping: &Scoping,
+    ast_nodes: &AstNodes,
+    symbol_id: SymbolId,
+    scope_id: oxc_syntax::scope::ScopeId,
+    ancestor_set: &BitSet<'_>,
+    slot_liveness_bitset: &mut BitSet<'_>,
+) {
+    let scope_id_index = scope_id.index();
+    // `var` is hoisted, so include the scope where it is declared
+    // (for cases like `function foo() { { var x; let y; } }`).
+    let declared_scope_id = ast_nodes.get_node(scoping.symbol_declaration(symbol_id)).scope_id();
+    let redeclared_scope_ids = scoping
+        .symbol_redeclarations(symbol_id)
+        .iter()
+        .map(|r| ast_nodes.get_node(r.declaration).scope_id());
+    let referenced_scope_ids = scoping.get_resolved_references(symbol_id).map(Reference::scope_id);
+
+    for used_scope_id in referenced_scope_ids.chain(redeclared_scope_ids).chain([declared_scope_id])
+    {
+        for ancestor_id in scoping.scope_ancestors(used_scope_id) {
+            let ancestor_index = ancestor_id.index();
+            // Stop when we reach scope_id or any of its ancestors
+            if ancestor_index == scope_id_index || ancestor_set.has_bit(ancestor_index) {
+                break;
+            }
+            if slot_liveness_bitset.has_bit(ancestor_index) {
+                debug_assert!(
+                    scoping.scope_ancestors(ancestor_id).skip(1).all(|a| {
+                        let idx = a.index();
+                        slot_liveness_bitset.has_bit(idx)
+                            || idx == scope_id_index
+                            || ancestor_set.has_bit(idx)
+                    }),
+                    "Invariant violated: ancestor chain should be fully marked live"
+                );
+                break;
+            }
+            slot_liveness_bitset.set_bit(ancestor_index);
+        }
     }
 }
 

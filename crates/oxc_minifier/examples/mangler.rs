@@ -16,6 +16,7 @@
 //! - `--keep-names`: Preserve function and class names
 //! - `--reserve-exports`: Reserve `exports` / `module` binding names (cjs-module-lexer)
 //! - `--debug`: Enable debug output
+//! - `--no-merge-vars`: Don't let variables with non-overlapping lifetimes share a name
 //! - `--twice`: Test idempotency by running twice
 
 use std::path::Path;
@@ -38,6 +39,7 @@ fn main() -> std::io::Result<()> {
     let keep_names = args.contains("--keep-names");
     let reserve_exports = args.contains("--reserve-exports");
     let debug = args.contains("--debug");
+    let merge_vars = !args.contains("--no-merge-vars");
     let twice = args.contains("--twice");
     let name = args.free_from_str().unwrap_or_else(|_| "test.js".to_string());
 
@@ -54,6 +56,7 @@ fn main() -> std::io::Result<()> {
             FxHashSet::default()
         },
         debug,
+        merge_vars,
     };
     let printed = mangler(&source_text, source_type, options.clone());
     println!("{printed}");

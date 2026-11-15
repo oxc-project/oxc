@@ -19,10 +19,13 @@ This crate provides variable name mangling capabilities for JavaScript minificat
 ### Mangling Strategy
 
 1. **Symbol Analysis**: Identify all variables and their scopes
-2. **Frequency Analysis**: Count usage to optimize for common variables
-3. **Name Generation**: Generate short names using base54 encoding
-4. **Conflict Resolution**: Ensure no naming conflicts across scopes
-5. **Integration**: Update symbol table with new names
+2. **Lifetime Merging**: Let `var`s and parameters of one function share a name when their control-flow live ranges never overlap (like UglifyJS's `merge_vars`; disable with `MangleOptions::merge_vars`)
+3. **Frequency Analysis**: Count usage to optimize for common variables
+4. **Name Generation**: Generate short names using base54 encoding
+5. **Conflict Resolution**: Ensure no naming conflicts across scopes
+6. **Integration**: Update symbol table with new names
+
+Merging can leave redundant `var` declarations such as `var a = 1; ...; var a = 2;`. They are legal, and the minifier removes them after mangling.
 
 ### Base54 Encoding
 

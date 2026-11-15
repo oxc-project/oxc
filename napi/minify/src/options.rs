@@ -235,6 +235,12 @@ pub struct MangleOptions {
 
     /// Debug mangled names.
     pub debug: Option<bool>,
+
+    /// Let `var`s and parameters of the same function share a name when their
+    /// lifetimes never overlap, like UglifyJS's `merge_vars`.
+    ///
+    /// @default true
+    pub merge_vars: Option<bool>,
 }
 
 impl From<&MangleOptions> for oxc_minifier::MangleOptions {
@@ -252,6 +258,7 @@ impl From<&MangleOptions> for oxc_minifier::MangleOptions {
                 names.iter().map(|name| CompactStr::from(name.as_str())).collect()
             }),
             debug: o.debug.unwrap_or(default.debug),
+            merge_vars: o.merge_vars.unwrap_or(default.merge_vars),
         }
     }
 }

@@ -14,6 +14,8 @@
 //! ## Options
 //!
 //! - `--mangle`: Enable variable name mangling
+//! - `--no-merge-vars`: With `--mangle`, don't let variables with non-overlapping lifetimes share
+//!   a name
 //! - `--nospace`: Remove extra whitespace
 //! - `--twice`: Test idempotency by running twice
 //! - `--sourcemap`: Generate source maps
@@ -39,6 +41,7 @@ fn main() -> std::io::Result<()> {
     let mut args = Arguments::from_env();
 
     let mangle = args.contains("--mangle");
+    let merge_vars = !args.contains("--no-merge-vars");
     let nospace = args.contains("--nospace");
     let twice = args.contains("--twice");
     let sourcemap = args.contains("--sourcemap");
@@ -59,6 +62,7 @@ fn main() -> std::io::Result<()> {
         source_type,
         source_map_path,
         mangle,
+        merge_vars,
         nospace,
         max_iterations,
     );
@@ -73,7 +77,8 @@ fn main() -> std::io::Result<()> {
 
     if twice {
         allocator.reset();
-        let printed2 = minify(&allocator, &printed, source_type, None, mangle, nospace, None).code;
+        let printed2 =
+            minify(&allocator, &printed, source_type, None, mangle, merge_vars, nospace, None).code;
         println!("{printed2}");
         println!("same = {}", printed == printed2);
     }
@@ -87,6 +92,7 @@ fn minify<'a>(
     source_type: SourceType,
     source_map_path: Option<PathBuf>,
     mangle: bool,
+    merge_vars: bool,
     nospace: bool,
     max_iterations: Option<u8>,
 ) -> CodegenReturn<'a> {
@@ -94,7 +100,7 @@ fn minify<'a>(
     assert!(ret.diagnostics.is_empty());
     let mut program = ret.program;
     let options = MinifierOptions {
-        mangle: mangle.then(MangleOptions::default),
+        mangle: mangle.then(|| MangleOptions { merge_vars, ..MangleOptions::default() }),
         mangle_properties: None,
         compress: Some(CompressOptions { max_iterations, ..CompressOptions::smallest() }),
     };

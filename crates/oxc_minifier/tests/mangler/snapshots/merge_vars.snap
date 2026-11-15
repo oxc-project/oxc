@@ -1,0 +1,436 @@
+---
+source: crates/oxc_minifier/tests/mangler/merge_vars.rs
+---
+function f(n) { for (var i = 0; i < n; i++) log(i); for (var j = 0; j < n; j++) log(j); }
+function f(e) {
+	for (var t = 0; t < e; t++) log(t);
+	for (var t = 0; t < e; t++) log(t);
+}
+
+function f(a, b) { var x = a + 1; log(x); var y = b * 2; log(y); var z = y + 3; return z; }
+function f(e, t) {
+	var e = e + 1;
+	log(e);
+	var e = t * 2;
+	log(e);
+	var t = e + 3;
+	return t;
+}
+
+function f(a, b) { log(a); log(b); }
+function f(e, t) {
+	log(e);
+	log(t);
+}
+
+function f(a) { var u = 1; while (a--) { log(u); var w = 2; u = w; } var v = 3; log(v); }
+function f(e) {
+	var t = 1;
+	while (e--) {
+		log(t);
+		var n = 2;
+		t = n;
+	}
+	var n = 3;
+	log(n);
+}
+
+function f(a) { do { var x = g(); log(x); } while (a--); var y = 1; log(y); }
+function f(e) {
+	do {
+		var t = g();
+		log(t);
+	} while (e--);
+	var t = 1;
+	log(t);
+}
+
+function f(o) { for (var k in o) log(k); for (var v of o) log(v); var x = 1; log(x); }
+function f(e) {
+	for (var t in e) log(t);
+	for (var t of e) log(t);
+	var e = 1;
+	log(e);
+}
+
+function f(o) { var k; for (k in o) log(k); var x = 1; log(x); }
+function f(e) {
+	var e;
+	for (e in e) log(e);
+	var e = 1;
+	log(e);
+}
+
+function f(a) { var r; try { r = g(a); var s = 1; log(s); } catch (e) { log(r); } var q = h(); return q; }
+function f(e) {
+	var t;
+	try {
+		t = g(e);
+		var e = 1;
+		log(e);
+	} catch (e) {
+		log(t);
+	}
+	var e = h();
+	return e;
+}
+
+function f(a) { var x = 1; try { g(); } finally { log(x); } var y = 2; log(y); }
+function f(e) {
+	var e = 1;
+	try {
+		g();
+	} finally {
+		log(e);
+	}
+	var e = 2;
+	log(e);
+}
+
+function f(n) { var a = 1; for (;;) { try { if (n) break; } finally { log(a); } } var b = 2; log(b); }
+function f(e) {
+	var t = 1;
+	for (;;) {
+		try {
+			if (e) break;
+		} finally {
+			log(t);
+		}
+	}
+	var e = 2;
+	log(e);
+}
+
+function f() { var a = 1; try { return a; } finally { var b = 2; log(b); } }
+function f() {
+	var e = 1;
+	try {
+		return e;
+	} finally {
+		var e = 2;
+		log(e);
+	}
+}
+
+function f(d) { var a = d + 1; switch (d) { case 1: log(a); case 2: var b = 3; log(b); break; default: log(a); } var c = 2; log(c); }
+function f(e) {
+	var t = e + 1;
+	switch (e) {
+		case 1: log(t);
+		case 2:
+			var e = 3;
+			log(e);
+			break;
+		default: log(t);
+	}
+	var e = 2;
+	log(e);
+}
+
+function f(d) { var a = 1; switch (d) { case g(a): var b = 2; log(b); } }
+function f(e) {
+	var t = 1;
+	switch (e) {
+		case g(t):
+			var e = 2;
+			log(e);
+	}
+}
+
+function f(n) { var x = 0; outer: for (var i = 0; i < n; i++) { for (var j = 0; j < n; j++) { if (j) continue outer; x += j; } } log(x); var k = 1; log(k); }
+function f(e) {
+	var t = 0;
+	outer: for (var n = 0; n < e; n++) {
+		for (var r = 0; r < e; r++) {
+			if (r) continue outer;
+			t += r;
+		}
+	}
+	log(t);
+	var r = 1;
+	log(r);
+}
+
+function f(n) { var x = 1; block: { if (n) break block; log(x); } var y = 2; log(y); }
+function f(e) {
+	var t = 1;
+	block: {
+		if (e) break block;
+		log(t);
+	}
+	var e = 2;
+	log(e);
+}
+
+function f(o) { var a = o.x; var b = o?.y(a); log(b); var c = 1; log(c); }
+function f(e) {
+	var t = e.x;
+	var e = e?.y(t);
+	log(e);
+	var t = 1;
+	log(t);
+}
+
+function f(o) { var a = 1; o?.[(a = 2)]; log(a); var b = 1; log(b); }
+function f(e) {
+	var t = 1;
+	e?.[t = 2];
+	log(t);
+	var e = 1;
+	log(e);
+}
+
+function f(o) { var a = 1; o && (a = 2); log(a); var b = 1; log(b); }
+function f(e) {
+	var t = 1;
+	e && (t = 2);
+	log(t);
+	var e = 1;
+	log(e);
+}
+
+function f(o) { var a = 1; a ||= o; log(a); var b = 1; log(b); }
+function f(e) {
+	var t = 1;
+	t ||= e;
+	log(t);
+	var e = 1;
+	log(e);
+}
+
+function f(o) { var a = 1; var b = o ? (a = 2) : 3; log(a, b); var c = 1; log(c); }
+function f(e) {
+	var t = 1;
+	var e = e ? t = 2 : 3;
+	log(t, e);
+	var t = 1;
+	log(t);
+}
+
+function f(o) { var a = 1; var { x = a } = o; log(x); var b = 1; log(b); }
+function f(e) {
+	var t = 1;
+	var { x: e = t } = e;
+	log(e);
+	var t = 1;
+	log(t);
+}
+
+function f(o) { var a = 1, x; [x = a] = o; log(x); var b = 1; log(b); }
+function f(e) {
+	var t = 1, e;
+	[e = t] = e;
+	log(e);
+	var t = 1;
+	log(t);
+}
+
+function f(o) { var a = 1, b; ({ x: b = a } = o); log(b); var c = 1; log(c); }
+function f(e) {
+	var t = 1, e;
+	({x: e = t} = e);
+	log(e);
+	var t = 1;
+	log(t);
+}
+
+function f() { var a = 1; log(a); var b; log(b); }
+function f() {
+	var e = 1;
+	log(e);
+	var t;
+	log(t);
+}
+
+function f(a) { log(a); var b; if (a) b = 1; log(b); }
+function f(e) {
+	log(e);
+	var t;
+	if (e) t = 1;
+	log(t);
+}
+
+function f() { var a = 1; log(2); var b = 3; log(b); a = 4; }
+function f() {
+	var e = 1;
+	log(2);
+	var e = 3;
+	log(e);
+	e = 4;
+}
+
+function f(a) { var x = 1; log(x); var y = 2; return () => y; }
+function f(e) {
+	var e = 1;
+	log(e);
+	var t = 2;
+	return () => t;
+}
+
+function f(a) { var x = 1; log(x); var y = 2; return function () { return y; }; }
+function f(e) {
+	var e = 1;
+	log(e);
+	var t = 2;
+	return function() {
+		return t;
+	};
+}
+
+function f() { var x = 1; log(x); var y = 2; class A { static z = y; } }
+function f() {
+	var e = 1;
+	log(e);
+	var t = 2;
+	class n {
+		static z = t;
+	}
+}
+
+function f(a) { var x = 1; log(x); var y = 2; eval('y'); }
+function f(a) {
+	var x = 1;
+	log(x);
+	var y = 2;
+	eval("y");
+}
+
+function f(a) { log(a); { var x = 1; log(x); } }
+function f(e) {
+	log(e);
+	{
+		var e = 1;
+		log(e);
+	}
+}
+
+(a) => { log(a); var x = 1; return x; }
+(e) => {
+	log(e);
+	var e = 1;
+	return e;
+};
+
+class A { static { var x = 1; log(x); var y = 2; log(y); } }
+class A {
+	static {
+		var e = 1;
+		log(e);
+		var e = 2;
+		log(e);
+	}
+}
+
+function f(a = 1) { log(a); var x = 1; log(x); var y = 2; log(y); }
+function f(e = 1) {
+	log(e);
+	var t = 1;
+	log(t);
+	var t = 2;
+	log(t);
+}
+
+function f({ a }) { log(a); var x = 1; log(x); }
+function f({ a: e }) {
+	log(e);
+	var t = 1;
+	log(t);
+}
+
+function f(a) { log(a); var a = 1; log(a); var b = 2; log(b); }
+function f(e) {
+	log(e);
+	var e = 1;
+	log(e);
+	var e = 2;
+	log(e);
+}
+
+function f(a, b) { log(a); var c = 1; log(arguments[0], c); }
+function f(e, t) {
+	log(e);
+	var n = 1;
+	log(arguments[0], n);
+}
+
+function f(a, b) { 'use strict'; log(a); var c = 1; log(arguments[0], c); }
+function f(e, t) {
+	"use strict";
+	log(e);
+	var t = 1;
+	log(arguments[0], t);
+}
+
+function f(a, b) { log(a); var c = 1; log(c); return () => arguments; }
+function f(e, t) {
+	log(e);
+	var n = 1;
+	log(n);
+	return () => arguments;
+}
+
+function f() { var g = 1; log(g); { function g() {} } var h = 2; log(h); }
+function f() {
+	var e = 1;
+	log(e);
+	{
+		function e() {}
+	}
+	var t = 2;
+	log(t);
+}
+
+function f(o) { var x = 1; log(x); with (o) { var y = 2; log(y); } }
+function f(e) {
+	var t = 1;
+	log(t);
+	with(e) {
+		var n = 2;
+		log(n);
+	}
+}
+
+function f() { var a = 1; log(a); try { g(); } catch (e) { var e = 2; log(e); } }
+function f() {
+	var t = 1;
+	log(t);
+	try {
+		g();
+	} catch (e) {
+		var e = 2;
+		log(e);
+	}
+}
+
+var a = 1; log(a); var b = 2; log(b);
+var a = 1;
+log(a);
+var b = 2;
+log(b);
+
+var a = 1; log(a); var b = 2; log(b);
+var e = 1;
+log(e);
+var e = 2;
+log(e);
+
+var a = 1; log(a); var b = 2; log(b); export { b };
+var e = 1;
+log(e);
+var t = 2;
+log(t);
+export { t as b };
+
+var a = 1; log(a); var b = 2; log(b); export { a };
+var e = 1;
+log(e);
+var t = 2;
+log(t);
+export { e as a };
+
+merge_vars: false
+function f(n) { for (var i = 0; i < n; i++) log(i); for (var j = 0; j < n; j++) log(j); }
+function f(e) {
+	for (var t = 0; t < e; t++) log(t);
+	for (var n = 0; n < e; n++) log(n);
+}

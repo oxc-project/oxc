@@ -6,6 +6,7 @@ use oxc_mangler::{MangleOptions, MangleOptionsKeepNames, Mangler};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
+mod merge_vars;
 mod property_mangler;
 
 fn mangle_with_source_type(
@@ -168,7 +169,8 @@ fn mangler() {
 
     let mut snapshot = String::new();
     cases.into_iter().fold(&mut snapshot, |w, case| {
-        let options = MangleOptions::default();
+        // These cases are about sharing names across scopes.
+        let options = MangleOptions { merge_vars: false, ..MangleOptions::default() };
         write!(w, "{case}\n{}\n", mangle(case, &options)).unwrap();
         w
     });

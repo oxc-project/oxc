@@ -177,6 +177,13 @@ export interface MangleOptions {
   reserved?: Array<string>
   /** Debug mangled names. */
   debug?: boolean
+  /**
+   * Let `var`s and parameters of the same function share a name when their
+   * lifetimes never overlap, like UglifyJS's `merge_vars`.
+   *
+   * @default true
+   */
+  mergeVars?: boolean
 }
 
 export interface MangleOptionsKeepNames {
