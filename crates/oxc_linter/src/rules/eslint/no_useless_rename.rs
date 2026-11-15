@@ -281,8 +281,8 @@ fn fix_object_assignment_target_property<'c, 'a: 'c>(
                 // `({foo: (foo) = a} = obj)`: a shorthand property can't have parentheses,
                 // so don't fix it, as ESLint does.
                 if ctx
-                    .source_range(Span::new(ident_span.end, with_default.init.span().start))
-                    .contains(')')
+                    .find_next_token_within(ident_span.end, with_default.init.span().start, ")")
+                    .is_some()
                 {
                     return fixer.noop();
                 }
@@ -548,6 +548,11 @@ fn test() {
         ("({foo: (foo)} = obj);", "({foo} = obj);"),
         // A shorthand property can't have parentheses, so ESLint doesn't fix this.
         ("({foo: (foo) = a} = obj);", "({foo: (foo) = a} = obj);"),
+        ("({foo: foo /* ) */ = 1} = obj);", "({foo /* ) */ = 1} = obj);"),
+        ("({foo: foo = /* ) */ 1} = obj);", "({foo = /* ) */ 1} = obj);"),
+        ("({foo: foo // )\n = 1} = obj);", "({foo // )\n = 1} = obj);"),
+        ("({foo: ((foo)) = (a)} = obj);", "({foo: ((foo)) = (a)} = obj);"),
+        ("({foo: foo = (a)} = obj);", "({foo = (a)} = obj);"),
         (r"let {\u0061: a} = obj;", "let {a} = obj;"),
         (r"let {a: \u0061} = obj;", r"let {\u0061} = obj;"),
         (r"let {\u0061: \u0061} = obj;", r"let {\u0061} = obj;"),
