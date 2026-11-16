@@ -264,11 +264,6 @@ fn test() {
         (r#"parseInt("10", 1);"#, None, None),
         (r#"parseInt("10", 37);"#, None, None),
         (r#"parseInt("10", 10.5);"#, None, None),
-        (r#"parseInt("10", -10);"#, None, None),
-        (r#"parseInt("10", +37);"#, None, None),
-        (r#"parseInt("10", 10n);"#, None, None),
-        (r#"parseInt("10", (undefined));"#, None, None),
-        (r#"parseInt("10", 1, ...rest);"#, None, None),
         ("Number.parseInt();", None, None),
         (r#"Number.parseInt("10");"#, None, None),
         (r#"Number.parseInt("10", 1);"#, None, None),
@@ -286,6 +281,11 @@ fn test() {
         (r#"parseInt("10", 1);"#, Some(serde_json::json!(["as-needed"])), None),
         ("Number.parseInt();", Some(serde_json::json!(["always"])), None),
         ("Number.parseInt();", Some(serde_json::json!(["as-needed"])), None),
+        (r#"parseInt("10", -10);"#, None, None),
+        (r#"parseInt("10", +37);"#, None, None),
+        (r#"parseInt("10", 10n);"#, None, None),
+        (r#"parseInt("10", (undefined));"#, None, None),
+        (r#"parseInt("10", 1, ...rest);"#, None, None),
     ];
 
     let fix = vec![
