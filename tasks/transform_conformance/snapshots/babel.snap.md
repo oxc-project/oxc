@@ -1,6 +1,6 @@
 commit: 16a2d671
 
-Passed: 753/1182
+Passed: 754/1182
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -371,7 +371,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-static-block (21/25)
+# babel-plugin-transform-class-static-block (22/25)
 * integration/in-class-heritage/input.js
 x Output mismatch
 
@@ -379,9 +379,6 @@ x Output mismatch
 x Output mismatch
 
 * integration-loose/super-static-block/input.js
-x Output mismatch
-
-* regression/issue-18558/input.js
 x Output mismatch
 
 
