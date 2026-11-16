@@ -9475,6 +9475,9 @@
         "unicorn/prefer-blob-reading-methods": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/prefer-boolean-return": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/prefer-class-fields": {
           "$ref": "#/definitions/RuleNoConfig"
         },

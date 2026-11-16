@@ -1,0 +1,462 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:33]
+ 1 │ if (test) { return true; } else if (foo) { return false; } else { return true; }
+   ·                                 ────────────────────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if(test){ return true; } else{ return false; } }
+   ·                      ──────────────────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if (test) return true; else return false; }
+   ·                      ─────────────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if(value > 0){ return true; } else{ return false; } }
+   ·                      ───────────────────────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if(items.length){ return false; } else{ return true; } }
+   ·                      ──────────────────────────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:29]
+ 1 │ function unicorn(Boolean) { if(test){ return true; } else{ return false; } }
+   ·                             ──────────────────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if(test){ return true; } else{ return false; /* comment */ } }
+   ·                      ────────────────────────────────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if(test){ return true; /* comment */ } else{ return false; } }
+   ·                      ────────────────────────────────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if (test) { return true; } return false; }
+   ·                      ──────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if (test) { return false; } return true; }
+   ·                      ───────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if (value > 0) { return true; } return false; }
+   ·                      ───────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if (Boolean(value)) { return true; } return false; }
+   ·                      ────────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if (a === b && c === d) { return true; } return false; }
+   ·                      ────────────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if (a && b) { return true; } return false; }
+   ·                      ────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if (Array.isArray(value)) { return true; } return false; }
+   ·                      ──────────────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:27]
+ 1 │ function unicorn(Array) { if (Array.isArray(value)) { return true; } return false; }
+   ·                           ──────────────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if (value > 0) { return false; } return true; }
+   ·                      ────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if (test) return true; return false; }
+   ·                      ──────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if (items.length) { return true; } return false; }
+   ·                      ──────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if (items.length) { return false; } return true; }
+   ·                      ───────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if (object?.property) { return true; } return false; }
+   ·                      ──────────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if (a, b) { return true; } return false; }
+   ·                      ──────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if ((a, b)) { return true; } return false; }
+   ·                      ────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if ((test)) { return true; } return false; }
+   ·                      ────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if (value as boolean) { return true; } return false; }
+   ·                      ──────────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:36]
+ 1 │ function unicorn(value: boolean) { if (value) { return true; } return false; }
+   ·                                    ───────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if (value satisfies boolean) { return true; } return false; }
+   ·                      ─────────────────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if (value!) { return true; } return false; }
+   ·                      ────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if ( value) { return true; } return false; }
+   ·                      ────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if (value satisfies boolean) { return false; } return true; }
+   ·                      ──────────────────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:2:2]
+ 1 │     function unicorn() {
+ 2 │ ╭─▶     if (test) {
+ 3 │ │           return true;
+ 4 │ ╰─▶     }
+ 5 │     
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if (test) { return true; } return false; // comment
+   ·                      ──────────────────────────
+ 2 │ }
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if (/* comment */ test) { return true; } return false; }
+   ·                      ────────────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:29]
+ 1 │ function unicorn(Boolean) { if (test) { return true; } return false; }
+   ·                             ──────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:29]
+ 1 │ function unicorn(Boolean) { if (test) { return false; } return true; }
+   ·                             ───────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:29]
+ 1 │ function unicorn(Boolean) { if (value > 0) { return true; } return false; }
+   ·                             ───────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:47]
+ 1 │ function unicorn() { if (a) { return false; } if (b) { return true; } return false; }
+   ·                                               ───────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:2:2]
+ 1 │     function unicorn() {
+ 2 │ ╭─▶     if (test({
+ 3 │ │           multiline: true,
+ 4 │ │       })) {
+ 5 │ │           return true;
+ 6 │ ╰─▶     }
+ 7 │     
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if (!test) { return true; } return false; }
+   ·                      ───────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if (delete object.key) { return true; } return false; }
+   ·                      ───────────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if (typeof value) { return true; } return false; }
+   ·                      ──────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if (a === b || false) { return true; } return false; }
+   ·                      ──────────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if ((value > 0)) { return false; } return true; }
+   ·                      ──────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:45]
+ 1 │ type Boolean = string; function unicorn() { if (test) { return true; } return false; }
+   ·                                             ──────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if (value /* keep */ > 0) { return true; } else { return false; } }
+   ·                      ─────────────────────────────────────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if (value /* keep */ > 0) { return false; } return true; }
+   ·                      ───────────────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if (test(/* keep */ value)) { return true; } return false; }
+   ·                      ────────────────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if (((/* keep */ value))) { return true; } return false; }
+   ·                      ──────────────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if (((value /* keep */))) { return false; } else { return true; } }
+   ·                      ─────────────────────────────────────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ ╭─▶ function unicorn() { if (value // keep
+ 2 │ ╰─▶  > 0) { return true; } return false; }
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if (value as /* keep */ boolean) { return true; } return false; }
+   ·                      ─────────────────────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:18]
+ 1 │ function run() { if (value satisfies /* keep */ boolean) { return false; } return true; }
+   ·                  ─────────────────────────────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if (value > 0 /* keep */) { return true; } return false; }
+   ·                      ──────────────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if (value /* copied */ > 0) { return /* keep */ true; } return false; }
+   ·                      ───────────────────────────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if (value /* copied */ > 0) { return true; } /* keep */ return false; }
+   ·                      ────────────────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:22]
+ 1 │ function unicorn() { if (value /* copied */ > 0) { return true; } return false; // keep
+   ·                      ────────────────────────────────────────────
+ 2 │ }
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:1:29]
+ 1 │ function unicorn(Boolean) { if (test(/* keep */ value)) { return true; } return false; }
+   ·                             ────────────────────────────────────────────
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:2:2]
+ 1 │     function f() {
+ 2 │ ╭─▶     if (a) {
+ 3 │ │           return true as const;
+ 4 │ ╰─▶     }
+ 5 │     
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:2:2]
+ 1 │     function f() {
+ 2 │ ╭─▶     if (a) {
+ 3 │ │           return true as boolean;
+ 4 │ ╰─▶     }
+ 5 │     
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:2:2]
+ 1 │     function f() {
+ 2 │ ╭─▶     if (a) {
+ 3 │ │           return true satisfies boolean;
+ 4 │ ╰─▶     }
+ 5 │     
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:2:2]
+ 1 │     function f() {
+ 2 │ ╭─▶     if (a) {
+ 3 │ │           return false as const;
+ 4 │ ╰─▶     }
+ 5 │     
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
+
+  ⚠ unicorn(prefer-boolean-return): Return the boolean expression directly.
+   ╭─[prefer_boolean_return.tsx:2:2]
+ 1 │     function f() {
+ 2 │ ╭─▶     if (a) {
+ 3 │ │           return false!;
+ 4 │ ╰─▶     }
+ 5 │     
+   ╰────
+  help: Return the boolean expression directly instead of using an `if` statement.
