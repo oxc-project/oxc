@@ -569,6 +569,7 @@ impl<'a> ObjectRestSpread<'a> {
             if Self::has_nested_object_rest(&param.pattern) {
                 Self::replace_rest_element(
                     VariableDeclarationKind::Var,
+                    VariableDeclarationKind::Let,
                     &mut param.pattern,
                     &mut body.statements,
                     scope_id,
@@ -587,6 +588,7 @@ impl<'a> ObjectRestSpread<'a> {
                 let body = arrow_function_body_as_function_body_mut(&mut arrow.body, ctx);
                 Self::replace_rest_element(
                     VariableDeclarationKind::Var,
+                    VariableDeclarationKind::Let,
                     &mut param.pattern,
                     &mut body.statements,
                     scope_id,
@@ -609,6 +611,7 @@ impl<'a> ObjectRestSpread<'a> {
             });
             Self::replace_rest_element(
                 VariableDeclarationKind::Var,
+                VariableDeclarationKind::Let,
                 &mut param.pattern,
                 &mut clause.body.body,
                 scope_id,
@@ -634,8 +637,17 @@ impl<'a> ObjectRestSpread<'a> {
                 let old_scope_id =
                     if decl.kind.is_var() { ctx.current_hoist_scope_id() } else { scope_id };
 
+                // The names of `for (var { a, ...b } of c)` belong to the enclosing
+                // function, so they stay `var` in the loop body and in its scope.
+                let is_var = decl.kind.is_var();
+                let binding_kind = if is_var {
+                    VariableDeclarationKind::Var
+                } else {
+                    VariableDeclarationKind::Let
+                };
                 Self::replace_rest_element(
                     decl.kind,
+                    binding_kind,
                     &mut declarator.id,
                     &mut block.body,
                     old_scope_id,
@@ -643,12 +655,14 @@ impl<'a> ObjectRestSpread<'a> {
                 );
 
                 // Move the bindings from the for init scope to scope of the loop body.
-                for symbol_id in bound_symbol_ids {
-                    ctx.scoping_mut().move_binding_by_symbol_id(
-                        old_scope_id,
-                        new_scope_id,
-                        symbol_id,
-                    );
+                if !is_var {
+                    for symbol_id in bound_symbol_ids {
+                        ctx.scoping_mut().move_binding_by_symbol_id(
+                            old_scope_id,
+                            new_scope_id,
+                            symbol_id,
+                        );
+                    }
                 }
             }
         }
@@ -727,8 +741,11 @@ impl<'a> ObjectRestSpread<'a> {
 
     /// Move the binding to the body if it contains an object rest.
     /// The object pattern will be transform by `transform_object_pattern` afterwards.
+    /// `kind` gives the symbol flags of the reference that replaces the pattern, and
+    /// `binding_kind` declares the moved pattern.
     fn replace_rest_element(
         kind: VariableDeclarationKind,
+        binding_kind: VariableDeclarationKind,
         pattern: &mut BindingPattern<'a>,
         body: &mut ArenaVec<'a, Statement<'a>>,
         scope_id: ScopeId,
@@ -738,12 +755,18 @@ impl<'a> ObjectRestSpread<'a> {
             // Replace the object pattern, no need to walk the object properties.
             BindingPattern::ObjectPattern(_) => {
                 Self::replace_object_pattern_and_insert_into_block_body(
-                    kind, pattern, body, scope_id, ctx,
+                    kind,
+                    binding_kind,
+                    pattern,
+                    body,
+                    scope_id,
+                    ctx,
                 );
             }
             BindingPattern::AssignmentPattern(pat) => {
                 Self::replace_object_pattern_and_insert_into_block_body(
                     kind,
+                    binding_kind,
                     &mut pat.left,
                     body,
                     scope_id,
@@ -753,30 +776,40 @@ impl<'a> ObjectRestSpread<'a> {
             // Or replace all occurrences of object pattern inside array pattern.
             BindingPattern::ArrayPattern(pat) => {
                 for element in pat.elements.iter_mut().flatten() {
-                    Self::replace_rest_element(kind, element, body, scope_id, ctx);
+                    Self::replace_rest_element(kind, binding_kind, element, body, scope_id, ctx);
                 }
                 if let Some(element) = &mut pat.rest {
-                    Self::replace_rest_element(kind, &mut element.argument, body, scope_id, ctx);
+                    Self::replace_rest_element(
+                        kind,
+                        binding_kind,
+                        &mut element.argument,
+                        body,
+                        scope_id,
+                        ctx,
+                    );
                 }
             }
             BindingPattern::BindingIdentifier(_) => {}
         }
     }
 
-    // Add `let {...x} = _ref` to body.
+    // Add `let {...x} = _ref` (or `var`, see `binding_kind`) to body.
     fn replace_object_pattern_and_insert_into_block_body(
         kind: VariableDeclarationKind,
+        binding_kind: VariableDeclarationKind,
         pat: &mut BindingPattern<'a>,
         body: &mut ArenaVec<'a, Statement<'a>>,
         scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let decl = Self::create_temporary_reference_for_binding(kind, pat, scope_id, ctx);
+        let decl =
+            Self::create_temporary_reference_for_binding(kind, binding_kind, pat, scope_id, ctx);
         body.insert(0, Statement::VariableDeclaration(decl));
     }
 
     fn create_temporary_reference_for_binding(
         kind: VariableDeclarationKind,
+        binding_kind: VariableDeclarationKind,
         pat: &mut BindingPattern<'a>,
         scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
@@ -788,18 +821,21 @@ impl<'a> ObjectRestSpread<'a> {
             flags |= SymbolFlags::CatchVariable;
         }
         let bound_identifier = ctx.generate_uid("ref", scope_id, flags);
-        let kind = VariableDeclarationKind::Let;
         let id = mem::replace(pat, bound_identifier.create_binding_pattern(ctx));
-        id.bound_names(&mut |ident| {
-            *ctx.scoping_mut().symbol_flags_mut(ident.symbol_id()) =
-                SymbolFlags::BlockScopedVariable;
-        });
+        // A `var` binding keeps its flags, which may also hold those of a redeclaration
+        // such as a function of the same name. Other bindings become block-scoped.
+        if binding_kind != VariableDeclarationKind::Var {
+            let binding_flags = kind_to_symbol_flags(binding_kind);
+            id.bound_names(&mut |ident| {
+                *ctx.scoping_mut().symbol_flags_mut(ident.symbol_id()) = binding_flags;
+            });
+        }
         let init = bound_identifier.create_read_expression(ctx);
         let declarations = ArenaVec::from_value_in(
             VariableDeclarator::new(SPAN, id, None, Some(init), false, ctx),
             ctx,
         );
-        VariableDeclaration::boxed(SPAN, kind, declarations, false, ctx)
+        VariableDeclaration::boxed(SPAN, binding_kind, declarations, false, ctx)
     }
 }
 
