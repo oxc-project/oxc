@@ -143,7 +143,7 @@ impl Walk {
 
         self.jumps.reverse();
         let (Anchor::Stmt(at) | Anchor::Expr(at)) = anchor;
-        self.reset(tokens.module, cpu);
+        self.reset(tokens.is_module, cpu);
         self.walked_to = at;
         self.prev_end = at;
         // An operand anchor is certain only inside the construct it opens.

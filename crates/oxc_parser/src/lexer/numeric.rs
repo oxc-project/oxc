@@ -4,6 +4,25 @@ use crate::{config::LexerConfig as Config, diagnostics};
 
 use super::{Kind, Lexer, Span, cold_branch};
 
+/// Whether a byte which follows decimal digits means those digits are a whole numeric literal.
+///
+/// That is the case if the byte cannot continue the literal, and is valid straight after it,
+/// which is any ASCII byte other than a letter, a digit, `_`, `$` or `.`.
+/// See `read_zero`, `decimal_literal_after_first_digit` and `check_after_numeric_literal`.
+#[inline]
+pub(super) fn ends_decimal_integer(byte: u8) -> bool {
+    static TABLE: [bool; 256] = {
+        let mut table = [false; 256];
+        let mut byte = 0u8;
+        while byte < 128 {
+            table[byte as usize] = !is_identifier_part_ascii(byte as char) && byte != b'.';
+            byte += 1;
+        }
+        table
+    };
+    TABLE[byte as usize]
+}
+
 impl<C: Config> Lexer<'_, C> {
     /// 12.9.3 Numeric Literals with `0` prefix
     pub(super) fn read_zero(&mut self) -> Kind {
@@ -69,7 +88,7 @@ impl<C: Config> Lexer<'_, C> {
                     // This seems to be a waste. It also requires us to put this
                     // call here instead of after we ensure the next character
                     // is a number character
-                    self.token.set_has_separator(true);
+                    self.pending.set_has_separator();
                     if self.peek_byte().is_some_and(|b| kind.matches_number_byte(b)) {
                         self.consume_char();
                     } else {
@@ -167,7 +186,7 @@ impl<C: Config> Lexer<'_, C> {
                     // This seems to be a waste. It also requires us to put this
                     // call here instead of after we ensure the next character
                     // is an ASCII digit
-                    self.token.set_has_separator(true);
+                    self.pending.set_has_separator();
                     if self.peek_byte().is_some_and(|b| b.is_ascii_digit()) {
                         self.consume_char();
                     } else {

@@ -10,7 +10,7 @@ use oxc_syntax::identifier::{
 use crate::{config::LexerConfig as Config, diagnostics};
 
 use super::{
-    Kind, Lexer, SourcePosition, cold_branch, keyword,
+    FinishTokenMode, Kind, Lexer, PendingToken, SourcePosition, Token, cold_branch, keyword,
     search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
 };
 
@@ -23,12 +23,12 @@ static NOT_ASCII_ID_CONTINUE_TABLE: SafeByteMatchTable =
     safe_byte_match_table!(|b| !(b.is_ascii_alphanumeric() || b == b'_' || b == b'$'));
 
 #[inline]
-fn is_identifier_start_ascii_byte(byte: u8) -> bool {
+pub(super) fn is_identifier_start_ascii_byte(byte: u8) -> bool {
     ASCII_ID_START_TABLE.matches(byte)
 }
 
 impl<'a, C: Config> Lexer<'a, C> {
-    /// Consume an identifier starting with an ASCII byte and return its kind.
+    /// Consume an identifier starting with an ASCII byte and return its kind and end position.
     /// `CHECK_KEYWORD` may be false only for starting bytes that cannot begin a keyword.
     ///
     /// Leave the first byte unconsumed. ASCII scanning stays inline; Unicode characters
@@ -37,11 +37,15 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// # SAFETY
     /// * `self.source` must not be exhausted (at least 1 char remaining).
     /// * Next char must be ASCII.
+    /// * `start_pos` must be the current position of `self.source`.
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    pub(super) unsafe fn identifier_name_handler<const CHECK_KEYWORD: bool>(&mut self) -> Kind {
+    pub(super) unsafe fn identifier_name_handler<const CHECK_KEYWORD: bool>(
+        &mut self,
+        start_pos: SourcePosition<'a>,
+    ) -> (Kind, SourcePosition<'a>) {
+        debug_assert_eq!(start_pos, self.source.position());
         // Advance past 1st byte.
-        let start_pos = self.source.position();
         // SAFETY: Caller guarantees not at EOF, and next byte is ASCII.
         let after_first = unsafe { start_pos.add(1) };
 
@@ -54,38 +58,111 @@ impl<'a, C: Config> Lexer<'a, C> {
                 if CHECK_KEYWORD {
                     // SAFETY: The source is at EOF, after the saved identifier start.
                     let id = unsafe { self.source.str_from_pos_to_current_unchecked(start_pos) };
-                    return keyword::match_keyword(id.as_bytes());
+                    return (keyword::match_keyword(id.as_bytes()), self.source.position());
                 }
-                return Kind::Ident;
+                return (Kind::Ident, self.source.position());
             },
         };
 
-        // Keep decoding and keyword lookup in one cold call so KWD can tail-call it.
-        // IDT calls the decoders directly to avoid an extra call frame.
+        // Keep decoding and keyword lookup in one cold call so IDT and KWD can both tail-call it.
+        // For IDT the keyword lookup always gives `Kind::Ident`, but skipping it would make the
+        // returned `Kind` a constant, which stops the call being a tail call.
         if !next_byte.is_ascii() {
             cold_path();
-            if CHECK_KEYWORD {
-                return self.identifier_name_uncommon::<false>(start_pos);
-            }
-            self.identifier_tail_unicode(start_pos);
-            return Kind::Ident;
+            return self.identifier_name_uncommon::<false>(start_pos);
         }
         if next_byte == b'\\' {
             cold_path();
-            if CHECK_KEYWORD {
-                return self.identifier_name_uncommon::<true>(start_pos);
-            }
-            self.identifier_backslash(start_pos, false);
-            return Kind::Ident;
+            return self.identifier_name_uncommon::<true>(start_pos);
         }
 
-        if CHECK_KEYWORD {
+        let kind = if CHECK_KEYWORD {
             // SAFETY: The scanner only moves forwards from the saved identifier start.
             let id = unsafe { self.source.str_from_pos_to_current_unchecked(start_pos) };
             keyword::match_keyword(id.as_bytes())
         } else {
             Kind::Ident
+        };
+        (kind, self.source.position())
+    }
+
+    /// Token handler for an identifier starting with an ASCII byte.
+    /// `CHECK_KEYWORD` may be false only for starting bytes that cannot begin a keyword.
+    ///
+    /// Does the same as `identifier_name_handler`, then finishes the token.
+    /// An identifier has no flags unless it contains an escape, so the common case skips
+    /// the work which `finish_next_inner` does for flags and trivia.
+    ///
+    /// # SAFETY
+    /// * `start_pos` must be the position of a byte which is not at the end of the source.
+    /// * That byte must be ASCII.
+    /// * If `ON_NEW_LINE` is `false`, no trivia must have been seen since the previous token,
+    ///   other than one space.
+    /// * If `ON_NEW_LINE` is `true`, line breaks and regular whitespace must be the only trivia
+    ///   seen since the previous token, and `pending` must not have been altered.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub(super) unsafe fn identifier_token<const CHECK_KEYWORD: bool, const ON_NEW_LINE: bool>(
+        &mut self,
+        start_pos: SourcePosition<'a>,
+    ) -> Token {
+        // Advance past 1st byte.
+        // SAFETY: Caller guarantees not at EOF, and next byte is ASCII.
+        let after_first = unsafe { start_pos.add(1) };
+
+        // Consume bytes which are part of identifier
+        let next_byte = byte_search! {
+            lexer: self,
+            table: NOT_ASCII_ID_CONTINUE_TABLE,
+            start: after_first,
+            // A byte which ends an identifier, so that EOF takes the common path below
+            handle_eof: b' ',
+        };
+
+        // Unicode characters and escapes are uncommon. Handle both in one cold call.
+        if !next_byte.is_ascii() || next_byte == b'\\' {
+            cold_path();
+            return self.identifier_token_uncommon(start_pos, next_byte == b'\\', ON_NEW_LINE);
         }
+
+        let end = self.source.position();
+        let kind = if CHECK_KEYWORD {
+            // SAFETY: The scanner only moves forwards from the saved identifier start.
+            let id = unsafe { self.source.str_from_pos_to_current_unchecked(start_pos) };
+            keyword::match_keyword(id.as_bytes())
+        } else {
+            Kind::Ident
+        };
+        if ON_NEW_LINE {
+            self.finish_fresh_token_on_new_line(kind, start_pos, end)
+        } else {
+            self.finish_fresh_token(kind, start_pos, end)
+        }
+    }
+
+    /// Finish an identifier which contains a Unicode character or an escape.
+    /// Position of source must be on that character or escape.
+    #[cold]
+    #[inline(never)]
+    fn identifier_token_uncommon(
+        &mut self,
+        start_pos: SourcePosition<'a>,
+        is_escape: bool,
+        is_on_new_line: bool,
+    ) -> Token {
+        if is_on_new_line {
+            // No trivia was seen before the line break, so this is all that needs to be recorded
+            debug_assert_eq!(self.pending, PendingToken::NONE);
+            self.pending = PendingToken::AFTER_LINE_BREAK;
+        }
+        // `identifier_backslash` records the unescaped identifier against `token_start`
+        self.token_start = self.source.offset_of(start_pos);
+        let (kind, end) = if is_escape {
+            self.identifier_name_uncommon::<true>(start_pos)
+        } else {
+            self.identifier_name_uncommon::<false>(start_pos)
+        };
+        self.finish_next_inner(kind, end, FinishTokenMode::Push)
     }
 
     #[cold]
@@ -93,13 +170,13 @@ impl<'a, C: Config> Lexer<'a, C> {
     fn identifier_name_uncommon<const IS_ESCAPE: bool>(
         &mut self,
         start_pos: SourcePosition<'a>,
-    ) -> Kind {
+    ) -> (Kind, SourcePosition<'a>) {
         let id = if IS_ESCAPE {
             self.identifier_backslash(start_pos, false)
         } else {
             self.identifier_tail_unicode(start_pos)
         };
-        keyword::match_keyword(id.as_bytes())
+        (keyword::match_keyword(id.as_bytes()), self.source.position())
     }
 
     /// Handle rest of identifier after first byte of a multi-byte Unicode char found.

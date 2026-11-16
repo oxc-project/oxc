@@ -4,8 +4,9 @@
 #     and Pull requests write access.
 #   - CAPTAIN_ID: the oxc-captain GitHub App's client ID, as a repository secret.
 #   - CAPTAIN_KEY: the oxc-captain GitHub App's private key.
-#   - CLOUDFLARE_API_KEY: a Workers AI API token with Workers AI Read and Edit.
+#   - CLOUDFLARE_API_KEY: an inference token with access to the selected models.
 #   - CLOUDFLARE_ACCOUNT_ID: the Cloudflare account ID.
+#   - GLM-5.3 uses Workers Paid billing or prepaid AI Gateway credits.
 
 name: Issue Triage
 
@@ -54,7 +55,7 @@ jobs:
           # Issue events can restore main's caches but cannot save into that scope.
           save-cache: false
           cache-key: warm
-          tools: just,cargo-shear@1.13.1,cargo-insta,typos-cli,ast-grep
+          tools: just,cargo-shear@1.13.1,cargo-insta,ast-grep
           components: clippy rustfmt
 
       - name: Create oxc-captain token
@@ -83,17 +84,17 @@ jobs:
         run: .github/scripts/setup-triagebot-labels.sh
 
       - name: Triage the issue
-        # Cloudflare Workers AI support is newer than v0.4.0. Pin the upstream
-        # commit rather than following its moving main branch.
-        uses: withastro/triagebot-action@51d30da13c0bd571a3822fc56882de40fead0086 # main, 2026-08-28
+        # The Oxc fork accepts new catalog models without a bundled registry update.
+        uses: oxc-project/triagebot-action@864fce5a3780b277d32f476421838e034b7635c7
         with:
           read-token: ${{ github.token }}
           write-token: ${{ steps.app-token.outputs.token }}
           cloudflare-api-key: ${{ secrets.CLOUDFLARE_API_KEY }}
           cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          triage-model: cloudflare-workers-ai/@cf/moonshotai/kimi-k2.7-code
-          verification-model: cloudflare-workers-ai/@cf/moonshotai/kimi-k2.6
+          triage-model: cloudflare-ai/@cf/zai-org/glm-5.3
+          verification-model: cloudflare-ai/@cf/zai-org/glm-5.3
           triage-skill: .agents/skills/triage
           pr-skill: .agents/skills/pr-writer
-          auto-pr-on-fix: true
+          # Leave assigned issues with their assignees; only auto-open PRs for unassigned issues.
+          auto-pr-on-fix: ${{ !github.event.issue.assignees[0] }}
           bot-logins: oxc-captain[bot]

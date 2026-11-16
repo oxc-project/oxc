@@ -169,7 +169,7 @@ fn is_fixable(
         return Err("".into());
     };
 
-    if string_argument.is_empty() {
+    if string_argument.is_empty() || string_argument.starts_with(['+', '-']) {
         return Err("".into());
     }
 
@@ -353,4 +353,46 @@ fn test() {
     Tester::new(PreferNumericLiterals::NAME, PreferNumericLiterals::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn signed_arguments_have_no_fix() {
+    use crate::tester::Tester;
+
+    let fail = vec![
+        r"parseInt('+11', 2);",
+        r"parseInt('-11', 2);",
+        r"parseInt(`+11`, 2);",
+        r"parseInt(`-11`, 2);",
+        r"parseInt('+17', 8);",
+        r"parseInt('-17', 8);",
+        r"parseInt(`+17`, 8);",
+        r"parseInt(`-17`, 8);",
+        r"parseInt('+ff', 16);",
+        r"parseInt('-ff', 16);",
+        r"parseInt(`+ff`, 16);",
+        r"parseInt(`-ff`, 16);",
+        r"Number.parseInt('+11', 2);",
+        r"Number.parseInt('-11', 2);",
+        r"Number.parseInt(`+11`, 2);",
+        r"Number.parseInt(`-11`, 2);",
+        r"Number.parseInt('+17', 8);",
+        r"Number.parseInt('-17', 8);",
+        r"Number.parseInt(`+17`, 8);",
+        r"Number.parseInt(`-17`, 8);",
+        r"Number.parseInt('+ff', 16);",
+        r"Number.parseInt('-ff', 16);",
+        r"Number.parseInt(`+ff`, 16);",
+        r"Number.parseInt(`-ff`, 16);",
+        r#"parseInt("-0", 2);"#,
+        r#"parseInt("+0", 2);"#,
+        r#"parseInt(" -ff", 16);"#,
+        r#"parseInt("+ff ", 16);"#,
+        r#"parseInt("\t-ff", 16);"#,
+        r#"parseInt("\x2dff", 16);"#,
+    ];
+    let fix = fail.iter().map(|source| (*source, *source, None)).collect();
+    Tester::new(PreferNumericLiterals::NAME, PreferNumericLiterals::PLUGIN, vec![], fail)
+        .expect_fix(fix)
+        .test();
 }

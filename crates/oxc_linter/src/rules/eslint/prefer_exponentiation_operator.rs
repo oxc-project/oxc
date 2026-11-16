@@ -9,8 +9,12 @@ use oxc_span::{GetSpan, Span};
 use oxc_syntax::precedence::{GetPrecedence, Precedence};
 
 use crate::{
-    AstNode, ast_util::is_method_call, context::LintContext, globals::GLOBAL_OBJECT_NAMES,
-    rule::Rule, utils::get_precedence,
+    AstNode,
+    ast_util::{could_be_asi_hazard, is_method_call},
+    context::LintContext,
+    globals::GLOBAL_OBJECT_NAMES,
+    rule::Rule,
+    utils::get_precedence,
 };
 
 #[derive(Debug, Default, Clone)]
@@ -112,11 +116,16 @@ impl Rule for PreferExponentiationOperator {
                 let replacement = format!("{base_text} ** {exponent_text}");
 
                 // Check if we need to wrap the entire expression in parentheses based on parent context
-                let replacement = if needs_parens_for_parent(node, ctx) {
+                let mut replacement = if needs_parens_for_parent(node, ctx) {
                     format!("({replacement})")
                 } else {
                     replacement
                 };
+                if replacement.starts_with(['[', '(', '/', '+', '-', '`'])
+                    && could_be_asi_hazard(node, ctx)
+                {
+                    replacement.insert(0, ';');
+                }
 
                 fixer.replace(call_expr.span, replacement)
             } else {
@@ -294,6 +303,17 @@ fn test() {
         ("(Math.pow(a, b)).toFixed(2)", "(a ** b).toFixed(2)"),
         ("Math.pow(a, b)<T>()", "(a ** b)<T>()"),
         ("Math.pow(a, b)<T>", "(a ** b)<T>"),
+        ("foo\nMath.pow(a + b, c)", "foo\n;(a + b) ** c"),
+        ("foo\nMath.pow(+a, b)", "foo\n;(+a) ** b"),
+        ("foo\nMath.pow(-a, b)", "foo\n;(-a) ** b"),
+        ("foo\nMath.pow((a).b, c)", "foo\n;(a).b ** c"),
+        ("foo\nMath.pow([a, b].find(fn), c)", "foo\n;[a, b].find(fn) ** c"),
+        ("foo\nMath.pow(/regex/, 2)", "foo\n;/regex/ ** 2"),
+        ("foo\nMath.pow(`template literal`, 2)", "foo\n;`template literal` ** 2"),
+        ("foo\n100 + Math.pow((a).b, c)", "foo\n100 + (a).b ** c"),
+        ("foo\nMath.pow(a.b, c)", "foo\na.b ** c"),
+        ("Math.pow((a).b, c)", "(a).b ** c"),
+        ("foo;\nMath.pow((a).b, c)", "foo;\n(a).b ** c"),
     ];
 
     Tester::new(

@@ -18,6 +18,8 @@ fn test_number() {
     test("x = 1e2", "x = 100;\n");
     test("x = 1e3", "x = 1e3;\n");
     test("x = 1e4", "x = 1e4;\n");
+    test("x = 1e6", "x = 1e6;\n");
+    test("x = 1e12", "x = 1e12;\n");
     test("x = 1e100", "x = 1e100;\n");
     test_minify("x = 1e-100", "x=1e-100;");
     test_minify("x = 1e-5", "x=1e-5;");
@@ -30,6 +32,9 @@ fn test_number() {
     test_minify("x = 1e2", "x=100;");
     test_minify("x = 1e3", "x=1e3;");
     test_minify("x = 1e4", "x=1e4;");
+    test_minify("x = 1e6", "x=1e6;");
+    test_minify("x = -1e6", "x=-1e6;");
+    test_minify("x = 1e12", "x=1e12;");
     test_minify("x = 1e100", "x=1e100;");
 
     // Check "12eN"
@@ -60,10 +65,10 @@ fn test_number() {
     test_minify("x = 12e100", "x=12e100;");
 
     // Check cases for "A.BeX" => "ABeY" simplification
-    test("x = 123456789", "x = 123456789;\n");
-    test("x = 1123456789", "x = 1123456789;\n");
-    test("x = 10123456789", "x = 10123456789;\n");
-    test("x = 100123456789", "x = 100123456789;\n");
+    test("x = 123456789", "x = 0x75bcd15;\n");
+    test("x = 1123456789", "x = 0x42f69715;\n");
+    test("x = 10123456789", "x = 0x25b67b115;\n");
+    test("x = 100123456789", "x = 0x174fd2b515;\n");
     test("x = 1000123456789", "x = 0xe8dc00dd15;\n");
     test("x = 10000123456789", "x = 0x91855ce6d15;\n");
     test("x = 100000123456789", "x = 0x5af317d60d15;\n");
@@ -78,18 +83,18 @@ fn test_number() {
     // crashing in the WebAssembly build due to a bug in the Go runtime.
 
     // int32
-    test_minify("x = 0x7fff_ffff", "x=2147483647;");
-    test_minify("x = 0x8000_0000", "x=2147483648;");
-    test_minify("x = 0x8000_0001", "x=2147483649;");
-    test_minify("x = -0x7fff_ffff", "x=-2147483647;");
-    test_minify("x = -0x8000_0000", "x=-2147483648;");
-    test_minify("x = -0x8000_0001", "x=-2147483649;");
+    test_minify("x = 0x7fff_ffff", "x=0x7fffffff;");
+    test_minify("x = 0x8000_0000", "x=0x80000000;");
+    test_minify("x = 0x8000_0001", "x=0x80000001;");
+    test_minify("x = -0x7fff_ffff", "x=-0x7fffffff;");
+    test_minify("x = -0x8000_0000", "x=-0x80000000;");
+    test_minify("x = -0x8000_0001", "x=-0x80000001;");
 
     // uint32
-    test_minify("x = 0xffff_ffff", "x=4294967295;");
+    test_minify("x = 0xffff_ffff", "x=0xffffffff;");
     test_minify("x = 0x1_0000_0000", "x=4294967296;");
     test_minify("x = 0x1_0000_0001", "x=4294967297;");
-    test_minify("x = -0xffff_ffff", "x=-4294967295;");
+    test_minify("x = -0xffff_ffff", "x=-0xffffffff;");
     test_minify("x = -0x1_0000_0000", "x=-4294967296;");
     test_minify("x = -0x1_0000_0001", "x=-4294967297;");
 
@@ -110,14 +115,14 @@ fn test_number() {
     test_minify("x = -0x1_0000_0000_0000_1000", "x=-0x10000000000001000;");
 
     // Check the hex vs. decimal decision boundary when minifying
-    test("x = 999999999999", "x = 999999999999;\n");
+    test("x = 999999999999", "x = 0xe8d4a50fff;\n");
     test("x = 1000000000001", "x = 0xe8d4a51001;\n");
     test("x = 0x0FFF_FFFF_FFFF_FF80", "x = 0xfffffffffffff80;\n");
     test("x = 0x1000_0000_0000_0000", "x = 0x1000000000000000;\n");
     test("x = 0xFFFF_FFFF_FFFF_F000", "x = 0xfffffffffffff000;\n");
     test("x = 0xFFFF_FFFF_FFFF_F800", "x = 0xfffffffffffff800;\n");
     test("x = 0xFFFF_FFFF_FFFF_FFFF", "x = 0x10000000000000000;\n");
-    test_minify("x = 999999999999", "x=999999999999;");
+    test_minify("x = 999999999999", "x=0xe8d4a50fff;");
     test_minify("x = 1000000000001", "x=0xe8d4a51001;");
     test_minify("x = 0x0FFF_FFFF_FFFF_FF80", "x=0xfffffffffffff80;");
     test_minify("x = 0x1000_0000_0000_0000", "x=0x1000000000000000;");
@@ -134,6 +139,7 @@ fn test_number() {
     test_minify("x = 10 .y", "x=10 .y;");
     test_minify("x = 100 .y", "x=100 .y;");
     test_minify("x = 1000 .y", "x=1e3.y;");
+    test_minify("x = 1000000 .y", "x=1e6.y;");
     test_minify("x = 12345 .y", "x=12345 .y;");
     test_minify("x = 0xFFFF_0000_FFFF_0000 .y", "x=0xffff0000ffff0000.y;");
 }

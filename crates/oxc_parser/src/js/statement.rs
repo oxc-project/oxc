@@ -423,8 +423,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 // `for (let`
                 let decl_start = self.cur_start();
                 // disallow `for (let in ...`
-                if self.lexer.peek_token().kind().is_after_let() {
-                    self.bump_any(); // bump `let`
+                if self.eat_if_next(|next| next.kind().is_after_let()) {
                     return self.parse_variable_declaration_for_statement(
                         for_start,
                         decl_start,

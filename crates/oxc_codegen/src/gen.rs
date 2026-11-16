@@ -1430,9 +1430,10 @@ impl Gen for BindingIdentifier<'_> {
 
 impl Gen for LabelIdentifier<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
+        let name = p.get_label_name(self);
         p.print_space_before_identifier();
-        p.add_source_mapping_for_name(self.span, &self.name);
-        p.print_name(self.name.as_str());
+        p.add_source_mapping_for_name(self.span, name);
+        p.print_name(name);
     }
 }
 

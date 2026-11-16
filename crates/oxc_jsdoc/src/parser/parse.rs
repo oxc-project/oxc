@@ -229,6 +229,7 @@ fn is_indented_code_block(line_seen_star: bool, spaces_after_star: u32) -> bool 
 }
 
 /// Whether `text`, placed at a line start, opens a block tag.
+///
 /// A `/` in the tag name (e.g. an npm scope `@scope/pkg`) means prose,
 /// as comment-parser's `reTag` (`/^@[^\s/]+(?=\s|$)/`) used by eslint-plugin-jsdoc.
 ///

@@ -141,35 +141,6 @@ The `html` in any doctype prints lowercase (`<!DOCTYPE html PUBLIC …>`), as in
 Prettier's output is not a fixpoint: it lowercases the `HTML` and the `<!DOCTYPE` in different passes.
 `<!DOCTYPE HTML>` prints `<!doctype html>` in one.
 
-## cdata-as-written
-
-- Why: uniform-rule (a section's content prints as written, as a comment's does: in HTML content it is a bogus comment to browsers; prettier/prettier#20256, prettier/prettier#16147)
-- Pin: `tests/fixtures/html/cdata-as-written.html`
-
-```html
-<!-- input (printWidth: 20) -->
-<p>text <![CDATA[aaaa bbbb cccc dddd eeee]]> more</p>
-
-<!-- ours -->
-<p>
-  text
-  <![CDATA[aaaa bbbb cccc dddd eeee]]>
-  more
-</p>
-
-<!-- prettier -->
-<p>
-  text <![CDATA[aaaa
-  bbbb cccc dddd
-  eeee]]> more
-</p>
-```
-
-A CDATA section is one unbreakable word, together with any text touching it; the text around it wraps as usual.
-Prettier merges it into the surrounding text and re-wraps its words, changing what it holds:
-in HTML the section is comment data, and in SVG / MathML its text, where a re-wrap only moves collapsible whitespace.
-Prettier `main` keeps it as written (prettier/prettier#20256), unreleased at the pin.
-
 ## class-ascii-whitespace
 
 - Why: semantics (class names are separated by ASCII whitespace only)
@@ -443,26 +414,6 @@ Between blocks, where it usually sits, the output is the same.
 A NUL prints as written, as in every oxc formatter (CSS, Markdown, YAML and JS strings keep it too).
 HTML makes it a parse error that browsers ignore in text (or replace with U+FFFD elsewhere), so the output reads as the input does.
 
-## pre-after-borrowed-closing-end
-
-- Why: semantics (Prettier prints the borrowed `>` twice; the second is text; prettier/prettier#16184)
-- Pin: `tests/fixtures/html/strict/pre-after-borrowed-closing-end.html`
-
-```html
-<!-- input (htmlWhitespaceSensitivity: strict) -->
-<b>a</b><pre><b>x</b></pre>
-
-<!-- ours -->
-<b>a</b><pre><b>x</b></pre>
-
-<!-- prettier -->
-<b>a</b>><pre><b>x</b></pre>
-```
-
-A `pre` holding an element (printed as written) that borrows its previous sibling's `>` prints it once.
-Prettier prints it again, adding a `>` to the rendered text.
-Prettier `main` prints it once (prettier/prettier#20215), unreleased at the pin.
-
 ## ignored-closing-end-once
 
 - Why: semantics (Prettier prints the borrowed `>` twice; the second is text)
@@ -708,34 +659,6 @@ A Vue single-file component and Angular keep every name as written, as Prettier 
 A Vue file read as HTML (a root `<html>` or `<!doctype html>`) prints them as a `.html` file does, as Prettier does:
 Vue's SFC compiler compiles none of it (`@vue/compiler-sfc` 3.5.45: `At least one <template> or <script> is required`), its reader is an HTML parser.
 
-## known-attribute-names
-
-- Why: uniform-rule (same construct, same output: a global attribute on `div`, which Prettier lowercases; prettier/prettier#19709, prettier/prettier#19707)
-- Pin: `tests/fixtures/html/known-attribute-names.html`
-
-```html
-<!-- input -->
-<SPAN CLASS="a">x</SPAN>
-<P HEADINGOFFSET="1">x</P>
-<INPUT ISMAP>
-
-<!-- ours -->
-<span class="a">x</span>
-<p headingoffset="1">x</p>
-<input ISMAP />
-
-<!-- prettier -->
-<span CLASS="a">x</span>
-<p HEADINGOFFSET="1">x</p>
-<input ismap />
-```
-
-Where known names print lowercase (DIVERGENCES.md#tag-name-case), a global attribute does on every known element,
-and the known attributes are the HTML standard's current ones (`src/tree/names.rs`).
-Prettier lowercases a global attribute only on an element its table lists attributes of its own for, as `div` (`align`), but not `span`;
-that table predates the attributes HTML added since (`headingoffset`, `rel` on `form`) and still lists some it dropped (`ismap` on `input`).
-Fixed in Prettier `main` by prettier/prettier#19709 and prettier/prettier#19707, which we follow.
-
 ## prefixed-script-style
 
 - Why: uniform-rule (same construct, same output: `<html:p>` and every other prefixed name, which Prettier lays out as an unknown element)
@@ -899,13 +822,18 @@ Where the render layer ignores the gap (next to a block), and at text edges, the
 
 - Why: uniform-rule (same construct, same output: an inline element holding text; prettier/prettier#20134, prettier/prettier#9913, prettier/prettier#14315)
 - Pin: `tests/fixtures/vue/interpolation-element-as-text.vue`
+- Conformance:
+  - `externals/prettier/vue/interpolation/ng-non-bindable.vue` (`<template><span>{{ }}</span></template>`)
 
 ```vue
 <!-- input -->
 <template>
-  <div class="text">
-    Sorry, we couldn’t find an account for <b>{{ phoneInput }}</b>, let's create one:
-  </div>
+  <p>
+    By continuing you agree to the <a href="https://www.comfy.org/privacy" target="_blank" class="cursor-pointer">{{ privacyLink }} </a>.
+  </p>
+  <p>
+    By continuing you agree to the <a href="https://www.comfy.org/privacy" target="_blank" class="cursor-pointer">privacyLinkAAAAA </a>.
+  </p>
   <template #replacement>
     <span v-else><code>{{ replacement.id }}</code></span>
   </template>
@@ -914,10 +842,24 @@ Where the render layer ignores the gap (next to a block), and at text edges, the
 
 <!-- ours -->
 <template>
-  <div class="text">
-    Sorry, we couldn’t find an account for <b>{{ phoneInput }}</b>, let's create
-    one:
-  </div>
+  <p>
+    By continuing you agree to the
+    <a
+      href="https://www.comfy.org/privacy"
+      target="_blank"
+      class="cursor-pointer"
+      >{{ privacyLink }} </a
+    >.
+  </p>
+  <p>
+    By continuing you agree to the
+    <a
+      href="https://www.comfy.org/privacy"
+      target="_blank"
+      class="cursor-pointer"
+      >privacyLinkAAAAA </a
+    >.
+  </p>
   <template #replacement>
     <span v-else><code>{{ replacement.id }}</code></span>
   </template>
@@ -926,10 +868,23 @@ Where the render layer ignores the gap (next to a block), and at text edges, the
 
 <!-- prettier -->
 <template>
-  <div class="text">
-    Sorry, we couldn’t find an account for <b>{{ phoneInput }}</b
-    >, let's create one:
-  </div>
+  <p>
+    By continuing you agree to the
+    <a
+      href="https://www.comfy.org/privacy"
+      target="_blank"
+      class="cursor-pointer"
+      >{{ privacyLink }} </a>.
+  </p>
+  <p>
+    By continuing you agree to the
+    <a
+      href="https://www.comfy.org/privacy"
+      target="_blank"
+      class="cursor-pointer"
+      >privacyLinkAAAAA </a
+    >.
+  </p>
   <template #replacement>
     <span v-else
       ><code>{{ replacement.id }}</code></span
@@ -941,18 +896,18 @@ Where the render layer ignores the gap (next to a block), and at text edges, the
 </template>
 ```
 
-An inline element holding only `{{ }}` lays out with what is around it as one holding text (`<b>phoneInput</b>`), its `>` included:
+An inline element holding only `{{ }}` lays out with what is around it as one holding text (`<a>privacyLinkAAAAA </a>`), its `>` included:
 where the line fits, its closing `>` stays with the text right after it, and the line breaks in the text.
 An element holding text and `{{ }}` only, whatever its display, puts no element holding it on lines of its own,
 as one holding text does (`<div><p>a</p></div>`), not as nested markup does.
-Counted as markup, it would break an inline parent where only a borrowed `>` can (`<span v-else` then `><code>` on the next line), as Prettier `main` still does,
+Counted as markup, it would break an inline parent where only a borrowed `>` can (`<span v-else` then `><code>` on the next line), as Prettier does,
 and a block parent onto lines of its own (`<p>{{ a }}</p>` on its own line), as Prettier does, and not for `<p>a</p>`.
 Inside it, `{{ }}` hugs the tags and breaks within, as Prettier does: a word cannot.
 Prettier does both for `{{ }}`, not for text.
-Prettier `main` keeps the `>` with what follows an element holding only `{{ }}` after a space (prettier/prettier#20134), and not one holding text:
-we break it where an element holding text does, as at the pin (`>{{ a }}</a` then `>.` once the tag broke, `</b` then `><i>` before an element).
+Since prettier/prettier#20134 Prettier keeps the `>` with what follows an element holding only `{{ }}` (`</a>.`, `</b><i`), and not one holding text (`</a` then `>.`):
+we break it where an element holding text does.
 
-What text does that `{{ }}` cannot is kept as at the pin:
+What text does that `{{ }}` cannot is kept:
 glued to words on both sides without attributes (`(<b>x</b>)`), an element holding text is one word with them,
 while `{{ }}` is formatted, so it stays an element that breaks at the `>` (or inside the `{{ }}`).
 

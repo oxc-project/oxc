@@ -224,7 +224,7 @@ fn escape_script_end<'a>(
     let source = body.as_bytes();
     let spells_script = memchr::memchr(b'\\', source).is_some()
         || memchr::memchr2_iter(b's', b'S', source).any(|i| {
-            source.get(i + 1..i + 6).is_some_and(|rest| rest.eq_ignore_ascii_case(b"cript")) // spellchecker:disable-line
+            source.get(i + 1..i + 6).is_some_and(|rest| rest.eq_ignore_ascii_case(b"cript"))
         });
     if !spells_script {
         return ir;

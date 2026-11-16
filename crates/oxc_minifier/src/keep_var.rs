@@ -4,7 +4,11 @@ use oxc_ast_visit::VisitJs;
 use oxc_ecmascript::BoundNames;
 use oxc_span::{SPAN, Span};
 use oxc_str::Ident;
-use oxc_syntax::symbol::SymbolId;
+use oxc_syntax::{
+    node::NodeId,
+    scope::ScopeId,
+    symbol::{SymbolFlags, SymbolId},
+};
 
 pub struct KeepVar<'a> {
     vars: Vec<(Ident<'a>, Span, Option<SymbolId>)>,
@@ -55,15 +59,32 @@ impl<'a> KeepVar<'a> {
         Self { vars: std::vec![] }
     }
 
+    /// Declare the collected `var`s in the current scope.
     pub fn get_variable_declaration(
         self,
-        builder: &impl GetAstBuilder<'a>,
+        ctx: &mut crate::TraverseCtx<'a>,
+    ) -> Option<ArenaBox<'a, VariableDeclaration<'a>>> {
+        let scope_id = ctx.current_scope_id();
+        self.get_variable_declaration_in(scope_id, ctx)
+    }
+
+    /// Declare the collected `var`s in `scope_id`, where the declaration will be placed.
+    fn get_variable_declaration_in(
+        mut self,
+        scope_id: ScopeId,
+        ctx: &mut crate::TraverseCtx<'a>,
     ) -> Option<ArenaBox<'a, VariableDeclaration<'a>>> {
         if self.vars.is_empty() {
             return None;
         }
 
-        let builder = builder.builder();
+        for (name, span, symbol_id) in &mut self.vars {
+            if let Some(symbol_id) = symbol_id {
+                *symbol_id = Self::declared_symbol(*name, *span, *symbol_id, scope_id, ctx);
+            }
+        }
+
+        let builder = ctx.builder();
 
         let kind = VariableDeclarationKind::Var;
         let decls = ArenaVec::from_iter_in(
@@ -84,10 +105,56 @@ impl<'a> KeepVar<'a> {
         Some(VariableDeclaration::boxed(SPAN, kind, decls, false, builder))
     }
 
+    /// The symbol for a regenerated `var` identifier placed in `scope_id`: the binding semantic
+    /// analysis would give it there, so the output minifies to a fixed point. A `var` that
+    /// redeclared a catch parameter now redeclares whichever catch parameter it resolves to,
+    /// or else only declares the enclosing var binding. An unreferenced catch parameter can
+    /// be removed later, so it is not linked.
+    fn declared_symbol(
+        name: Ident<'a>,
+        span: Span,
+        symbol_id: SymbolId,
+        scope_id: ScopeId,
+        ctx: &mut crate::TraverseCtx<'a>,
+    ) -> SymbolId {
+        let scoping = ctx.scoping();
+        let Some(var_binding) = scoping.catch_var_binding(symbol_id) else { return symbol_id };
+        match scoping.find_binding(scope_id, name) {
+            Some(catch)
+                if scoping.symbol_flags(catch).is_catch_variable()
+                    && !scoping.symbol_is_unused(catch) =>
+            {
+                // The regenerated `var` redeclares the surviving catch parameter, which links
+                // that catch to `var_binding` (see `Scoping::catch_var_binding`).
+                if scoping.catch_var_binding(catch).is_none() {
+                    ctx.scoping_mut().add_symbol_redeclaration(
+                        catch,
+                        SymbolFlags::FunctionScopedVariable,
+                        NodeId::DUMMY,
+                        span,
+                    );
+                }
+                debug_assert_eq!(ctx.scoping().catch_var_binding(catch), Some(var_binding));
+                catch
+            }
+            _ => var_binding,
+        }
+    }
+
     pub fn get_variable_declaration_statement(
         self,
-        builder: &impl GetAstBuilder<'a>,
+        ctx: &mut crate::TraverseCtx<'a>,
     ) -> Option<Statement<'a>> {
-        self.get_variable_declaration(builder).map(Statement::VariableDeclaration)
+        self.get_variable_declaration(ctx).map(Statement::VariableDeclaration)
+    }
+
+    /// Like [`Self::get_variable_declaration_statement`], for a declaration placed in
+    /// `scope_id` instead of the current scope (e.g. inside a catch body).
+    pub fn get_variable_declaration_statement_in(
+        self,
+        scope_id: ScopeId,
+        ctx: &mut crate::TraverseCtx<'a>,
+    ) -> Option<Statement<'a>> {
+        self.get_variable_declaration_in(scope_id, ctx).map(Statement::VariableDeclaration)
     }
 }

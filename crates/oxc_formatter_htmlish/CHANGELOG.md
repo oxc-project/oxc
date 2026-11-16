@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.79.0] - 2026-11-16
+
+### 🐛 Bug Fixes
+
+- d41ed14 formatter: Keep the `;` of a lone statement in a Vue event handler (#29354) (leaysgur)
+- 16b84d3 formatter/htmlish: Print CDATA sections as nodes of their own (#29348) (leaysgur)
+- 79064df formatter_htmlish/angular: Keep block params, ignore whole block (#29258) (leaysgur)
+- 4d50307 formatter_htmlish: Keep attrs holding character reference (#29257) (leaysgur)
+- bed54ab formatter_htmlish: Keep whitespace as written only between two CJ characters (#29171) (leaysgur)
+- a3660bb formatter_htmlish: Keep empty comment only element as-is (#29159) (leaysgur)
+- 49b832a formatter_htmlish/vue: Preserve `v-for` alias holding `in|of` (#29156) (leaysgur)
+
+### 📚 Documentation
+
+- 9660ce4 oxfmt: Update htmlish and oxfmt divergences (#29334) (leaysgur)
+
 ## [0.78.0] - 2026-11-09
 
 ### ⚡ Performance

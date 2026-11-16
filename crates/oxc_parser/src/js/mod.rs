@@ -5,6 +5,7 @@ mod grammar;
 mod arrow;
 mod binding;
 mod class;
+mod cover;
 mod declaration;
 mod expression;
 mod function;
@@ -12,6 +13,8 @@ mod module;
 mod object;
 mod operator;
 mod statement;
+
+pub use cover::CoverElement;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum Tristate {

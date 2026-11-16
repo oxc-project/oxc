@@ -430,6 +430,14 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
+    fn reference_label(&mut self, label: &LabelIdentifier<'a>) {
+        let label_id = self.unused_labels.reference(label.name);
+        label.label_id.set(label_id);
+        if label_id.is_none() {
+            self.scoping.set_has_unresolved_labels();
+        }
+    }
+
     fn create_ast_node(&mut self, kind: AstKind<'a>) {
         #[cfg(not(feature = "jsdoc"))]
         let flags = NodeFlags::empty();
@@ -586,7 +594,18 @@ impl<'a> SemanticBuilder<'a> {
         excludes: SymbolFlags,
     ) -> Option<SymbolId> {
         let binding_id = self.scoping.get_binding(scope_id, name);
+        self.check_redeclaration_with_binding(scope_id, binding_id, span, name, excludes)
+    }
 
+    /// Check a local binding that has already been looked up, including conflicts with hoisted vars.
+    pub(crate) fn check_redeclaration_with_binding(
+        &self,
+        scope_id: ScopeId,
+        binding_id: Option<SymbolId>,
+        span: Span,
+        name: Ident<'a>,
+        excludes: SymbolFlags,
+    ) -> Option<SymbolId> {
         if let Some(symbol_id) = binding_id {
             let flags = self.scoping.symbol_flags(symbol_id);
 
@@ -1035,7 +1054,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let kind = AstKind::BreakStatement(self.alloc(stmt));
         self.enter_node(kind);
         if let Some(label) = &stmt.label {
-            self.unused_labels.reference(label.name);
+            self.reference_label(label);
         }
 
         /* cfg */
@@ -1141,7 +1160,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let kind = AstKind::ContinueStatement(self.alloc(stmt));
         self.enter_node(kind);
         if let Some(label) = &stmt.label {
-            self.unused_labels.reference(label.name);
+            self.reference_label(label);
         }
 
         /* cfg */
@@ -1702,7 +1721,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let kind = AstKind::LabeledStatement(self.alloc(stmt));
         self.enter_node(kind);
         control_flow!(self, |cfg| cfg.enter_statement(self.node_store.current_node_id));
-        self.unused_labels.add(stmt.label.name, self.node_store.current_node_id);
+        #[expect(clippy::cast_possible_truncation)]
+        let depth = self.unused_labels.stack.len() as u32;
+        let label_id = self.scoping.create_label(stmt.label.name, depth);
+        stmt.label.label_id.set(Some(label_id));
+        self.unused_labels.add(stmt.label.name, self.node_store.current_node_id, label_id);
 
         /* cfg */
         #[cfg(feature = "cfg")]
@@ -2216,6 +2239,18 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_scope();
         self.leave_node(kind);
         self.leave_ambient_context(func.declare);
+    }
+
+    fn visit_function_body(&mut self, body: &FunctionBody<'a>) {
+        let jump_boundary = self.unused_labels.enter_jump_boundary();
+        oxc_ast_visit::walk::walk_function_body(self, body);
+        self.unused_labels.leave_jump_boundary(jump_boundary);
+    }
+
+    fn visit_static_block(&mut self, block: &StaticBlock<'a>) {
+        let jump_boundary = self.unused_labels.enter_jump_boundary();
+        oxc_ast_visit::walk::walk_static_block(self, block);
+        self.unused_labels.leave_jump_boundary(jump_boundary);
     }
 
     fn visit_arrow_function_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {

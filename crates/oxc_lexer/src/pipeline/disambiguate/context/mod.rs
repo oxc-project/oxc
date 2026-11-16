@@ -112,7 +112,7 @@ impl Walks {
         let w = &mut self.full;
         let inside_last = pos < w.walked_to && pos >= w.last_start;
         if w.walked_to > pos && !inside_last {
-            w.reset(tokens.module, cpu);
+            w.reset(tokens.is_module, cpu);
         }
         w.advance(tokens, pos);
         w

@@ -20,6 +20,7 @@ use oxc_str::{ArenaIdentHashSet, CompactStr, Ident};
 
 pub(crate) mod base54;
 mod keep_names;
+mod labels;
 
 pub use keep_names::MangleOptionsKeepNames;
 
@@ -315,9 +316,9 @@ impl<'t> Mangler<'t> {
         self
     }
 
-    /// Mangles the program, returning scoping information with the mangled symbol names.
+    /// Mangles the program, returning scoping information with the mangled symbol and label names.
     ///
-    /// Semantic analysis renumbers the node IDs in `program`, but does not rewrite its symbol names.
+    /// Semantic analysis renumbers the node and label IDs in `program`, but does not rewrite its names.
     /// Pass the returned scoping and class private mappings to `oxc_codegen` to generate the mangled code.
     #[must_use]
     pub fn build(self, program: &Program<'_>) -> ManglerReturn {
@@ -347,9 +348,10 @@ impl<'t> Mangler<'t> {
         class_private_mappings
     }
 
-    /// Mangle the program: rewrite local bindings to the shortest legal names.
+    /// Mangle the program: rewrite local bindings and labels to the shortest legal names.
     ///
-    /// Runs as a five-stage pipeline; each stage is one method and feeds the next:
+    /// Labels have their own namespace, so a final phase names them by nesting depth.
+    /// Local bindings run as a five-stage pipeline; each stage is one method and feeds the next:
     ///
     /// ```text
     ///  collect constraints → assign slots → tally frequencies → generate names → apply names
@@ -407,9 +409,11 @@ impl<'t> Mangler<'t> {
         let ranking = SlotRanking::tally(allocator, scoping, &slots);
         // ── Phase 4: generate that many short, collision-free names. ──
         let names =
-            NameTable::generate(allocator, scoping, &constraints, &ranking, &slots, generate_name);
+            NameTable::generate(allocator, scoping, &constraints, &ranking, &slots, &generate_name);
         // ── Phase 5: give each slot its name and rewrite every reference. ──
         names.apply(allocator, scoping, &ranking);
+        // ── Phase 6: name labels by nesting depth. ──
+        labels::mangle_labels(allocator, scoping, generate_name);
     }
 
     /// Collects and generates mangled names for private members using semantic information
@@ -537,10 +541,14 @@ impl<'a> Constraints<'a> {
         };
         let (keep_name_names, keep_name_symbols) =
             collect_keep_name_symbols(options.keep_names, allocator, scoping, ast_nodes);
-        let reserved = ArenaIdentHashSet::from_iter_in(
+        let mut reserved = ArenaIdentHashSet::from_iter_in(
             options.reserved.iter().map(|name| Ident::from(name.as_str())),
             allocator,
         );
+        // A `var` that redeclares a catch parameter prints one name for two bindings (see
+        // `Scoping::catch_var_binding`), and a block function in that catch can assign the same
+        // name (Annex B.3.3). Keep every binding with that name, as for `options.reserved`.
+        reserved.extend(scoping.catch_var_bindings().map(|(catch, _)| scoping.symbol_ident(catch)));
         Self {
             top_level,
             reserved,
@@ -699,9 +707,8 @@ impl<'a> SlotAssignment<'a> {
                 // The scopes this symbol is alive in: for each use, walk up to (but not including)
                 // `scope_id`, marking the descendant scopes it passes through.
                 let slot_liveness_bitset = &mut slot_liveness[assigned_slot as usize];
-                for used_scope_id in referenced_scope_ids
-                    .chain(redeclared_scope_ids)
-                    .chain([scope_id, declared_scope_id])
+                for used_scope_id in
+                    referenced_scope_ids.chain(redeclared_scope_ids).chain([declared_scope_id])
                 {
                     for ancestor_id in scoping.scope_ancestors(used_scope_id) {
                         let ancestor_index = ancestor_id.index();

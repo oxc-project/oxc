@@ -87,16 +87,13 @@ impl CompilerSettings {
             experimental_decorators: options
                 .get("experimentaldecorators")
                 .filter(|&v| v == "*")
-                .map(|_| vec![true, false])
-                .unwrap_or_default(),
+                .map_or_default(|_| vec![true, false]),
             module_detection: Self::split_value_options(options.get("moduledetection")),
         }
     }
 
     fn split_value_options(value: Option<&String>) -> Vec<String> {
-        value
-            .map(|value| value.split(',').map(|s| s.trim().to_lowercase()).collect())
-            .unwrap_or_default()
+        value.map_or_default(|value| value.split(',').map(|s| s.trim().to_lowercase()).collect())
     }
 
     fn value_to_boolean(value: Option<&String>, default: bool) -> bool {
@@ -111,18 +108,16 @@ impl CompilerSettings {
     /// Returns `[default]` when the directive is absent or yields no valid values
     /// — the latter guards against malformed directives silently skipping the test run.
     fn split_boolean_options(value: Option<&String>, default: bool) -> Vec<bool> {
-        let parsed: Vec<bool> = value
-            .map(|value| {
-                value
-                    .split(',')
-                    .filter_map(|s| match s.trim().to_lowercase().as_str() {
-                        "true" => Some(true),
-                        "false" => Some(false),
-                        _ => None,
-                    })
-                    .collect()
-            })
-            .unwrap_or_default();
+        let parsed: Vec<bool> = value.map_or_default(|value| {
+            value
+                .split(',')
+                .filter_map(|s| match s.trim().to_lowercase().as_str() {
+                    "true" => Some(true),
+                    "false" => Some(false),
+                    _ => None,
+                })
+                .collect()
+        });
         if parsed.is_empty() { vec![default] } else { parsed }
     }
 }
@@ -311,10 +306,8 @@ impl TestCaseContent {
         filename: &str,
         package_json_types: &'a FxHashMap<String, Option<String>>,
     ) -> Option<&'a str> {
-        let mut dir = Path::new(filename)
-            .parent()
-            .map(|p| p.to_string_lossy().into_owned())
-            .unwrap_or_default();
+        let mut dir =
+            Path::new(filename).parent().map_or_default(|p| p.to_string_lossy().into_owned());
         loop {
             if let Some(type_value) = package_json_types.get(&dir) {
                 return type_value.as_deref();
@@ -337,8 +330,7 @@ impl TestCaseContent {
             .map(|unit| {
                 let dir = Path::new(&unit.name)
                     .parent()
-                    .map(|p| p.to_string_lossy().into_owned())
-                    .unwrap_or_default();
+                    .map_or_default(|p| p.to_string_lossy().into_owned());
                 let type_value: Option<String> =
                     serde_json::from_str::<serde_json::Value>(&unit.content)
                         .ok()

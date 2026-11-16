@@ -345,6 +345,13 @@ impl<C: CpuSimd> Vec128<C> {
         // is valid for aligned writes of 16 bytes
         unsafe { self.store(dst.as_mut_ptr()) };
     }
+
+    /// Write a Vec128 to 16 bytes, with no alignment requirement.
+    #[inline(always)]
+    pub fn write_unaligned(self, dst: &mut [u8; 16]) {
+        // SAFETY: dst is valid for writing 16 bytes.
+        unsafe { self.store_unaligned(dst.as_mut_ptr()) };
+    }
 }
 
 /// Bitwise ops.

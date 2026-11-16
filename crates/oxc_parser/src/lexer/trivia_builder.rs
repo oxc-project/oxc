@@ -1,33 +1,118 @@
-use std::num::NonZeroU32;
+use std::{
+    num::NonZeroU32,
+    ops::{Deref, DerefMut},
+};
 
 use memchr::memchr_iter;
 
-use oxc_allocator::{Allocator, ArenaVec};
+use oxc_allocator::{Allocator, ArenaVec, GetAllocator, TakeIn};
 use oxc_ast::ast::{Comment, CommentContent, CommentKind, CommentPosition};
 use oxc_span::Span;
 
-use super::{Kind, Token};
+use super::{Kind, PendingToken, Token};
+
+/// Buffer short comment lists before allocating their final arena storage.
+#[derive(Debug)]
+pub struct Comments<'a> {
+    inline: [Comment; 16],
+    len: usize,
+    vec: ArenaVec<'a, Comment>,
+    /// Source offset which every comment starts before.
+    /// 1 more than the start of the last comment, or 0 if there are no comments.
+    starts_end: u32,
+}
+
+impl<'a> Comments<'a> {
+    fn new_in(allocator: &'a Allocator) -> Self {
+        Self {
+            inline: std::array::from_fn(|_| Comment::new(0, 0, CommentKind::Line)),
+            len: 0,
+            vec: ArenaVec::new_in(&allocator),
+            starts_end: 0,
+        }
+    }
+
+    #[inline]
+    fn len(&self) -> usize {
+        self.len
+    }
+
+    /// Returns `true` if a comment which starts at `start` was added before.
+    ///
+    /// Comments are added in source order, so that is any comment which does not start
+    /// after the last one.
+    #[inline]
+    fn is_seen(&self, start: u32) -> bool {
+        start < self.starts_end
+    }
+
+    /// Add a comment. It must start after the last one.
+    #[inline]
+    fn push(&mut self, comment: Comment) {
+        debug_assert!(!self.is_seen(comment.span.start));
+        self.starts_end = comment.span.start + 1;
+        if self.len < self.inline.len() {
+            self.inline[self.len] = comment;
+        } else {
+            if self.len == self.inline.len() {
+                self.move_inline_to_vec();
+            }
+            self.vec.push(comment);
+        }
+        self.len += 1;
+    }
+
+    /// Move the comments to arena storage, once there are too many to store inline.
+    #[cold]
+    #[inline(never)]
+    fn move_inline_to_vec(&mut self) {
+        self.vec.reserve(self.inline.len() * 2);
+        self.vec.extend(self.inline.iter().cloned());
+    }
+
+    /// Take the comments in their final arena storage, leaving `self` empty.
+    ///
+    /// This takes `&mut self` so that the inline storage is not copied, as it would be
+    /// to move `self` or to consume its array.
+    pub(crate) fn take_vec(&mut self, allocator: &impl GetAllocator<'a>) -> ArenaVec<'a, Comment> {
+        if self.vec.is_empty() {
+            self.vec.reserve_exact(self.len);
+            self.vec.extend(self.inline[..self.len].iter().cloned());
+        }
+        self.len = 0;
+        self.starts_end = 0;
+        self.vec.take_in(allocator)
+    }
+}
+
+impl Deref for Comments<'_> {
+    type Target = [Comment];
+
+    #[inline]
+    fn deref(&self) -> &[Comment] {
+        if self.vec.is_empty() { &self.inline[..self.len] } else { &self.vec }
+    }
+}
+
+impl DerefMut for Comments<'_> {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut [Comment] {
+        if self.vec.is_empty() { &mut self.inline[..self.len] } else { &mut self.vec }
+    }
+}
 
 #[derive(Debug)]
 pub struct TriviaBuilder<'a> {
     // This is a set of unique comments. Duplicated
     // comments could be generated in case of rewind; they are
     // filtered out at insertion time.
-    pub(crate) comments: ArenaVec<'a, Comment>,
+    pub(crate) comments: Comments<'a>,
 
     pub(crate) irregular_whitespaces: Vec<Span>,
 
     // states
     /// index of processed comments
     processed: usize,
-
-    /// Saw a newline before this position (since last token).
-    /// Used to determine if comments are trailing comments of the previous token.
-    saw_newline: bool,
-
-    /// Saw a newline before this position (since last comment or token).
-    /// Used to set `preceded_by_newline` on comments.
-    saw_newline_for_comment: bool,
 
     /// Previous token, used to attach trailing comments to its end.
     previous_token: Token,
@@ -51,11 +136,9 @@ impl<'a> TriviaBuilder<'a> {
         let mut previous_token = Token::default();
         previous_token.set_kind(Kind::Undetermined);
         Self {
-            comments: ArenaVec::new_in(&allocator),
+            comments: Comments::new_in(allocator),
             irregular_whitespaces: vec![],
             processed: 0,
-            saw_newline: true,
-            saw_newline_for_comment: true,
             previous_token,
             annotation_comments: AnnotationComments::default(),
         }
@@ -101,71 +184,227 @@ impl<'a> TriviaBuilder<'a> {
         self.irregular_whitespaces.push(Span::new(start, end));
     }
 
-    pub fn add_line_comment(&mut self, start: u32, end: u32, kind: CommentKind, source_text: &str) {
-        self.add_comment(Comment::new(start, end, kind), source_text);
-    }
-
-    pub fn add_block_comment(
+    /// Add a line comment. `end` is the line break which ends it, or the end of the source.
+    pub(super) fn add_line_comment(
         &mut self,
         start: u32,
         end: u32,
         kind: CommentKind,
         source_text: &str,
+        pending: &mut PendingToken,
     ) {
-        self.add_comment(Comment::new(start, end, kind), source_text);
+        let mut comment = Comment::new(start, end, kind);
+        if self.is_seen_comment(start) {
+            self.replay_comment(&comment);
+            return;
+        }
+
+        let content_span = comment.content_span();
+        let bytes = &source_text.as_bytes()[content_span.start as usize..content_span.end as usize];
+        comment.content = comment_content(bytes, false, content_span, source_text, || {
+            contains_license_or_preserve_comment(bytes)
+        });
+
+        // This newly added comment may be preceded by a newline.
+        // Use `saw_newline_for_comment` which tracks newlines since the last comment or token,
+        // not just since the last token.
+        comment.set_preceded_by_newline(pending.saw_newline_for_comment());
+        // A line comment is always followed by a newline. This is never set in `handle_newline`.
+        comment.set_followed_by_newline(true);
+        let becomes_trailing = self.should_be_treated_as_trailing_comment(*pending)
+            && !Self::should_stay_leading(&comment);
+        pending.set_saw_newline();
+
+        self.push_comment(comment);
+        if becomes_trailing {
+            self.attach_pending_comments(
+                CommentPosition::Trailing,
+                self.previous_token.end(),
+                self.comments.len(),
+                pending,
+            );
+        } else {
+            pending.set_has_pending_comments(true);
+        }
+    }
+
+    /// Add a block comment.
+    ///
+    /// `has_legal_tag` is whether the comment contains `@license` or `@preserve`.
+    /// The lexer finds that out while it searches for the end of the comment.
+    pub(super) fn add_block_comment(
+        &mut self,
+        start: u32,
+        end: u32,
+        kind: CommentKind,
+        has_legal_tag: bool,
+        source_text: &str,
+        pending: &mut PendingToken,
+    ) {
+        self.add_block_comment_with(start, end, kind, |_| has_legal_tag, source_text, pending);
+    }
+
+    /// Add a block comment which the lexer has not searched for `@license` or `@preserve`.
+    ///
+    /// It is searched here, if what the comment is depends on that.
+    pub(super) fn add_unsearched_block_comment(
+        &mut self,
+        start: u32,
+        end: u32,
+        kind: CommentKind,
+        source_text: &str,
+        pending: &mut PendingToken,
+    ) {
+        self.add_block_comment_with(
+            start,
+            end,
+            kind,
+            contains_license_or_preserve_comment,
+            source_text,
+            pending,
+        );
+    }
+
+    /// Add a block comment.
+    ///
+    /// `has_legal_tag` is called with the content of the comment, if what the comment is depends
+    /// on whether it contains `@license` or `@preserve`.
+    #[inline]
+    fn add_block_comment_with(
+        &mut self,
+        start: u32,
+        end: u32,
+        kind: CommentKind,
+        has_legal_tag: impl FnOnce(&[u8]) -> bool,
+        source_text: &str,
+        pending: &mut PendingToken,
+    ) {
+        let mut comment = Comment::new(start, end, kind);
+        if self.is_seen_comment(start) {
+            self.replay_comment(&comment);
+            return;
+        }
+
+        let content_span = comment.content_span();
+        let bytes = &source_text.as_bytes()[content_span.start as usize..content_span.end as usize];
+        comment.content =
+            comment_content(bytes, true, content_span, source_text, || has_legal_tag(bytes));
+
+        // This newly added comment may be preceded by a newline.
+        // Use `saw_newline_for_comment` which tracks newlines since the last comment or token,
+        // not just since the last token.
+        comment.set_preceded_by_newline(pending.saw_newline_for_comment());
+        // Block comments don't end with a newline, so reset saw_newline_for_comment.
+        // If there's a newline after the block comment, `handle_newline` will set it back to true.
+        pending.clear_saw_newline_for_comment();
+
+        self.push_comment(comment);
+        pending.set_has_pending_comments(true);
+    }
+
+    /// Returns `true` if a comment which starts at `start` was added before.
+    ///
+    /// The comments array is an ordered vec, only add the comment if its not added before,
+    /// to avoid situations where the parser needs to rewind and tries to reinsert the comment.
+    #[inline]
+    pub(super) fn is_seen_comment(&self, start: u32) -> bool {
+        self.comments.is_seen(start)
+    }
+
+    /// Handle a comment which was added before. The parser rewound, and is lexing it again.
+    #[cold]
+    #[inline(never)]
+    fn replay_comment(&mut self, comment: &Comment) {
+        // A comment is only seen once a comment has been added
+        let last_comment = self.comments.last().unwrap();
+        debug_assert!(comment.span.start <= last_comment.span.start);
+        // Reuse the classification from before lookahead/rewind, including annotations
+        // that have already been applied. Usually this is the most recent comment.
+        let index = if comment.span.start == last_comment.span.start {
+            Some(self.comments.len() - 1)
+        } else {
+            self.comments
+                .binary_search_by_key(&comment.span.start, |existing| existing.span.start)
+                .ok()
+        };
+        if let Some(index) = index
+            && self.comments[index].span == comment.span
+        {
+            self.set_annotation_flags(self.comments[index].content, index);
+        }
+    }
+
+    /// Add a comment which was not added before, once it is complete.
+    #[inline]
+    fn push_comment(&mut self, comment: Comment) {
+        // Set annotation flags here (not when working out the content) so the index is correct
+        // even when a duplicate from parser lookahead/rewind was skipped.
+        self.set_annotation_flags(comment.content, self.comments.len());
+        self.comments.push(comment);
     }
 
     // For block comments only. This function is not called after line comments because the lexer skips
     // newline after line comments.
-    pub fn handle_newline(&mut self) {
+    #[inline]
+    pub(super) fn handle_newline(&mut self, pending: &mut PendingToken) {
+        if pending.has_pending_comments() {
+            self.handle_newline_with_comments(pending);
+        }
+        pending.set_saw_newline();
+    }
+
+    #[cold]
+    fn handle_newline_with_comments(&mut self, pending: &mut PendingToken) {
         // The last unprocessed comment is on a newline.
         let len = self.comments.len();
-        if self.processed < len {
-            let becomes_trailing = {
-                let comment = &mut self.comments[len - 1];
-                comment.set_followed_by_newline(true);
-                !self.saw_newline && !Self::should_stay_leading(comment)
-            };
-            if becomes_trailing {
-                self.attach_pending_comments(
-                    CommentPosition::Trailing,
-                    self.previous_token.end(),
-                    len,
-                );
-            }
+        let becomes_trailing = {
+            let comment = &mut self.comments[len - 1];
+            comment.set_followed_by_newline(true);
+            !pending.saw_newline() && !Self::should_stay_leading(comment)
+        };
+        if becomes_trailing {
+            self.attach_pending_comments(
+                CommentPosition::Trailing,
+                self.previous_token.end(),
+                len,
+                pending,
+            );
         }
-        self.saw_newline = true;
-        self.saw_newline_for_comment = true;
     }
 
     #[inline]
-    pub fn handle_token(&mut self, token: Token) {
-        self.saw_newline = false;
-        self.saw_newline_for_comment = false;
+    pub(super) fn handle_token(&mut self, token: Token, pending: PendingToken) {
+        debug_assert_eq!(pending.has_pending_comments(), self.processed < self.comments.len());
         // Cold path: attach any unprocessed comments between the previous token and this one.
         // For files with no comments (or once all comments are consumed), this branch is skipped.
-        let len = self.comments.len();
-        if self.processed < len {
-            self.attach_pending_comments_to_token(token, len);
+        if pending.has_pending_comments() {
+            self.attach_pending_comments_to_token(token);
         }
         self.previous_token = token;
     }
 
+    /// Same as `handle_token`, for a token which no comments are waiting to be attached to.
+    #[inline]
+    pub(super) fn set_previous_token(&mut self, token: Token) {
+        debug_assert_eq!(self.processed, self.comments.len());
+        self.previous_token = token;
+    }
+
     #[cold]
-    fn attach_pending_comments_to_token(&mut self, token: Token, len: usize) {
-        let previous_kind = self.previous_token.kind();
-        let can_attach_to_previous = previous_kind != Kind::Undetermined
-            && (token.kind() == Kind::Eof
-                || (Self::can_end_expression(previous_kind)
-                    && Self::continues_previous_expression(token.kind())));
-        let previous_token_end = self.previous_token.end();
+    fn attach_pending_comments_to_token(&mut self, token: Token) {
+        let len = self.comments.len();
+        let previous_token = self.previous_token;
+        // Most comments are on their own line, and those always lead the following token.
+        // So only work out whether the previous token can take comments if one could go to it.
+        let mut can_attach_to_previous = None;
         for comment in &mut self.comments[self.processed..len] {
-            if can_attach_to_previous
-                && !comment.preceded_by_newline()
+            if !comment.preceded_by_newline()
                 && !Self::should_stay_leading(comment)
+                && *can_attach_to_previous
+                    .get_or_insert_with(|| Self::can_attach_to_previous(previous_token, token))
             {
                 comment.position = CommentPosition::Trailing;
-                comment.attached_to = previous_token_end;
+                comment.attached_to = previous_token.end();
             } else {
                 comment.position = CommentPosition::Leading;
                 comment.attached_to = token.start();
@@ -174,13 +413,31 @@ impl<'a> TriviaBuilder<'a> {
         self.processed = len;
     }
 
+    /// Whether comments between `previous_token` and `token` which are on the same line as
+    /// `previous_token` trail it, rather than leading `token`.
     #[cold]
-    fn attach_pending_comments(&mut self, position: CommentPosition, attached_to: u32, len: usize) {
+    fn can_attach_to_previous(previous_token: Token, token: Token) -> bool {
+        let previous_kind = previous_token.kind();
+        previous_kind != Kind::Undetermined
+            && (token.kind() == Kind::Eof
+                || (Self::can_end_expression(previous_kind)
+                    && Self::continues_previous_expression(token.kind())))
+    }
+
+    #[cold]
+    fn attach_pending_comments(
+        &mut self,
+        position: CommentPosition,
+        attached_to: u32,
+        len: usize,
+        pending: &mut PendingToken,
+    ) {
         for comment in &mut self.comments[self.processed..len] {
             comment.position = position;
             comment.attached_to = attached_to;
         }
         self.processed = len;
+        pending.set_has_pending_comments(false);
     }
 
     /// Whether a token can form the completed left-hand side of an infix or suffix boundary.
@@ -244,8 +501,8 @@ impl<'a> TriviaBuilder<'a> {
     /// Treating a comment after `:` as trailing drops it (it anchors to the
     /// previous token rather than the following operand), which breaks codegen
     /// idempotency once a transform emits `? consequent : // comment\nalternate`.
-    fn should_be_treated_as_trailing_comment(&self) -> bool {
-        !self.saw_newline
+    fn should_be_treated_as_trailing_comment(&self, pending: PendingToken) -> bool {
+        !pending.saw_newline()
             && !matches!(self.previous_token.kind(), Kind::Eq | Kind::LParen | Kind::Colon)
     }
 
@@ -286,215 +543,183 @@ impl<'a> TriviaBuilder<'a> {
         }
         self.annotation_comments.ends[range] = Some(end);
     }
-
-    fn add_comment(&mut self, mut comment: Comment, source_text: &str) {
-        // The comments array is an ordered vec, only add the comment if its not added before,
-        // to avoid situations where the parser needs to rewind and tries to reinsert the comment.
-        if let Some(last_comment) = self.comments.last()
-            && comment.span.start <= last_comment.span.start
-        {
-            // Reuse the classification from before lookahead/rewind, including annotations
-            // that have already been applied. Usually this is the most recent comment.
-            let index = if comment.span.start == last_comment.span.start {
-                Some(self.comments.len() - 1)
-            } else {
-                self.comments
-                    .binary_search_by_key(&comment.span.start, |existing| existing.span.start)
-                    .ok()
-            };
-            if let Some(index) = index
-                && self.comments[index].span == comment.span
-            {
-                self.set_annotation_flags(self.comments[index].content, index);
-            }
-            return;
-        }
-
-        Self::parse_annotation(&mut comment, source_text);
-
-        // This newly added comment may be preceded by a newline.
-        // Use `saw_newline_for_comment` which tracks newlines since the last comment or token,
-        // not just since the last token.
-        comment.set_preceded_by_newline(self.saw_newline_for_comment);
-        let becomes_trailing = if comment.is_line() {
-            // A line comment is always followed by a newline. This is never set in `handle_newline`.
-            comment.set_followed_by_newline(true);
-            let becomes_trailing = self.should_be_treated_as_trailing_comment()
-                && !Self::should_stay_leading(&comment);
-            self.saw_newline = true;
-            self.saw_newline_for_comment = true;
-            becomes_trailing
-        } else {
-            // Block comments don't end with a newline, so reset saw_newline_for_comment.
-            // If there's a newline after the block comment, `handle_newline` will set it back to true.
-            self.saw_newline_for_comment = false;
-            false
-        };
-
-        // Set annotation flags here (not in `parse_annotation`) so the index is correct
-        // even when the dedup check above skips a duplicate from parser lookahead/rewind.
-        self.set_annotation_flags(comment.content, self.comments.len());
-        self.comments.push(comment);
-        if becomes_trailing {
-            self.attach_pending_comments(
-                CommentPosition::Trailing,
-                self.previous_token.end(),
-                self.comments.len(),
-            );
-        }
-    }
-
-    /// Parse Notation
-    fn parse_annotation(comment: &mut Comment, source_text: &str) {
-        let s = comment.content_span().source_text(source_text);
-        let bytes = s.as_bytes();
-
-        // Early exit for empty comments
-        if bytes.is_empty() {
-            return;
-        }
-
-        // Check first byte for quick routing
-        match bytes[0] {
-            b'!' => {
-                comment.content = CommentContent::Legal;
-                return;
-            }
-            b'*' if comment.is_block() => {
-                // Ignore webpack comment `/*****/`
-                if !bytes.iter().all(|&c| c == b'*') {
-                    if contains_license_or_preserve_comment(s) {
-                        comment.content = CommentContent::JsdocLegal;
-                    } else {
-                        comment.content = CommentContent::Jsdoc;
-                    }
-                }
-                return;
-            }
-            _ => {}
-        }
-
-        // Skip leading whitespace without allocation
-        let mut start = 0;
-        while start < bytes.len() && bytes[start].is_ascii_whitespace() {
-            start += 1;
-        }
-
-        if start >= bytes.len() {
-            return;
-        }
-
-        let rest = &bytes[start..];
-        if (rest.starts_with(b"@__KEY__") || rest.starts_with(b"#__KEY__") || !rest[0].is_ascii())
-            && is_property_key_annotation(s)
-        {
-            comment.content = CommentContent::PropertyKey;
-            return;
-        }
-
-        // Fast path: check first non-whitespace byte
-        match bytes[start] {
-            b'@' => {
-                start += 1;
-                if start >= bytes.len() {
-                    return;
-                }
-
-                // Check for @vite, @license, @preserve
-                if bytes[start..].starts_with(b"vite") {
-                    comment.content = CommentContent::Vite;
-                    return;
-                }
-                if bytes[start..].starts_with(b"license") || bytes[start..].starts_with(b"preserve")
-                {
-                    comment.content = CommentContent::Legal;
-                    return;
-                }
-
-                // Continue to check for __PURE__ or __NO_SIDE_EFFECTS__ after @
-            }
-            b'#' => {
-                start += 1;
-                // Continue to check for __PURE__ or __NO_SIDE_EFFECTS__ after #
-            }
-            b'w' => {
-                // Check for webpack comments
-                if bytes[start..].starts_with(b"webpack")
-                    && start + 7 < bytes.len()
-                    && bytes[start + 7].is_ascii_uppercase()
-                {
-                    comment.content = CommentContent::Webpack;
-                    return;
-                }
-                // Fall through to check for coverage ignore patterns
-            }
-            b't' => {
-                // Check for turbopack comments
-                if bytes[start..].starts_with(b"turbopack")
-                    && start + 9 < bytes.len()
-                    && bytes[start + 9].is_ascii_uppercase()
-                {
-                    comment.content = CommentContent::Turbopack;
-                    return;
-                }
-                // Fall through to check for coverage ignore patterns
-            }
-            b'v' | b'c' | b'n' | b'i' => {
-                // Check coverage ignore patterns: "v8 ignore", "c8 ignore", "node:coverage", "istanbul ignore"
-                let rest = &bytes[start..];
-                if rest.starts_with(b"v8 ignore")
-                    || rest.starts_with(b"c8 ignore")
-                    || rest.starts_with(b"node:coverage")
-                    || rest.starts_with(b"istanbul ignore")
-                {
-                    comment.content = if is_coverage_ignore_file(rest) {
-                        CommentContent::CoverageIgnoreFile
-                    } else {
-                        CommentContent::CoverageIgnore
-                    };
-                    return;
-                }
-                // Fall through to check license/preserve
-            }
-            _ => {
-                // Check for license/preserve comments in remaining cases
-                if contains_license_or_preserve_comment(s) {
-                    comment.content = CommentContent::Legal;
-                }
-                return;
-            }
-        }
-
-        // Check for __PURE__ or __NO_SIDE_EFFECTS__ after @ or #
-        if start < bytes.len() && bytes[start..].starts_with(b"__") {
-            let rest = &bytes[start + 2..];
-            if rest.starts_with(b"PURE__") {
-                comment.content = CommentContent::PureNotApplied;
-                return;
-            } else if rest.starts_with(b"NO_SIDE_EFFECTS__") {
-                comment.content = CommentContent::NoSideEffectsNotApplied;
-                return;
-            }
-        }
-
-        // Fallback: check for @license or @preserve anywhere in the comment
-        // This handles cases like /* @foo @preserve */ where the first @ doesn't match known patterns
-        if contains_license_or_preserve_comment(s) {
-            comment.content = CommentContent::Legal;
-        }
-    }
 }
+
+/// Work out what a comment is from its content.
+///
+/// * `bytes` is the content of the comment, which `content_span` is the span of.
+/// * `has_legal_tag` returns whether the comment contains `@license` or `@preserve`.
+///   It is only called if what the comment is depends on that.
+#[inline]
+fn comment_content(
+    bytes: &[u8],
+    is_block: bool,
+    content_span: Span,
+    source_text: &str,
+    has_legal_tag: impl FnOnce() -> bool,
+) -> CommentContent {
+    // Check first byte for quick routing
+    match bytes.first() {
+        // Empty comment
+        None => return CommentContent::None,
+        Some(b'!') => return CommentContent::Legal,
+        Some(b'*') if is_block => {
+            // Ignore webpack comment `/*****/`
+            return if bytes.iter().all(|&c| c == b'*') {
+                CommentContent::None
+            } else if has_legal_tag() {
+                CommentContent::JsdocLegal
+            } else {
+                CommentContent::Jsdoc
+            };
+        }
+        Some(_) => {}
+    }
+
+    // Skip leading whitespace without allocation
+    let mut start = 0;
+    while start < bytes.len() && bytes[start].is_ascii_whitespace() {
+        start += 1;
+    }
+
+    let Some(&first_byte) = bytes.get(start) else {
+        return CommentContent::None;
+    };
+
+    // Most comments are prose. Only a few bytes can start an annotation.
+    if ANNOTATION_START_TABLE[first_byte as usize]
+        && let Some(content) = annotation_content(bytes, start, content_span, source_text)
+    {
+        return content;
+    }
+
+    // Check for `@license` or `@preserve` anywhere in the comment.
+    // This handles cases like `/* @foo @preserve */` where the first `@` doesn't match known patterns.
+    if has_legal_tag() { CommentContent::Legal } else { CommentContent::None }
+}
+
+/// Work out what a comment is, where `bytes[start]` is its first byte which is not whitespace,
+/// and that byte can start an annotation.
+///
+/// `bytes` is the content of the comment, which `content_span` is the span of.
+///
+/// Returns `None` if the comment is not an annotation. It may still be a legal comment.
+#[inline(never)]
+fn annotation_content(
+    bytes: &[u8],
+    mut start: usize,
+    content_span: Span,
+    source_text: &str,
+) -> Option<CommentContent> {
+    let rest = &bytes[start..];
+    if (rest.starts_with(b"@__KEY__") || rest.starts_with(b"#__KEY__") || !rest[0].is_ascii())
+        && is_property_key_annotation(content_span.source_text(source_text))
+    {
+        return Some(CommentContent::PropertyKey);
+    }
+
+    // Fast path: check first non-whitespace byte
+    match bytes[start] {
+        b'@' => {
+            start += 1;
+            if start >= bytes.len() {
+                return Some(CommentContent::None);
+            }
+
+            // Check for @vite, @license, @preserve
+            if bytes[start..].starts_with(b"vite") {
+                return Some(CommentContent::Vite);
+            }
+            if bytes[start..].starts_with(b"license") || bytes[start..].starts_with(b"preserve") {
+                return Some(CommentContent::Legal);
+            }
+
+            // Continue to check for __PURE__ or __NO_SIDE_EFFECTS__ after @
+        }
+        b'#' => {
+            start += 1;
+            // Continue to check for __PURE__ or __NO_SIDE_EFFECTS__ after #
+        }
+        b'w' => {
+            // Check for webpack comments
+            if bytes[start..].starts_with(b"webpack")
+                && start + 7 < bytes.len()
+                && bytes[start + 7].is_ascii_uppercase()
+            {
+                return Some(CommentContent::Webpack);
+            }
+            // Fall through to check for coverage ignore patterns
+        }
+        b't' => {
+            // Check for turbopack comments
+            if bytes[start..].starts_with(b"turbopack")
+                && start + 9 < bytes.len()
+                && bytes[start + 9].is_ascii_uppercase()
+            {
+                return Some(CommentContent::Turbopack);
+            }
+            // Fall through to check for coverage ignore patterns
+        }
+        b'v' | b'c' | b'n' | b'i' => {
+            // Check coverage ignore patterns: "v8 ignore", "c8 ignore", "node:coverage", "istanbul ignore"
+            let rest = &bytes[start..];
+            if rest.starts_with(b"v8 ignore")
+                || rest.starts_with(b"c8 ignore")
+                || rest.starts_with(b"node:coverage")
+                || rest.starts_with(b"istanbul ignore")
+            {
+                return Some(if is_coverage_ignore_file(rest) {
+                    CommentContent::CoverageIgnoreFile
+                } else {
+                    CommentContent::CoverageIgnore
+                });
+            }
+            // Fall through to check license/preserve
+        }
+        // Not an annotation
+        _ => return None,
+    }
+
+    // Check for __PURE__ or __NO_SIDE_EFFECTS__ after @ or #
+    if start < bytes.len() && bytes[start..].starts_with(b"__") {
+        let rest = &bytes[start + 2..];
+        if rest.starts_with(b"PURE__") {
+            return Some(CommentContent::PureNotApplied);
+        } else if rest.starts_with(b"NO_SIDE_EFFECTS__") {
+            return Some(CommentContent::NoSideEffectsNotApplied);
+        }
+    }
+
+    // Not an annotation
+    None
+}
+
+/// Bytes which can be the first byte of a comment, after whitespace, where the comment is
+/// something other than prose: an annotation, or a directive for a tool.
+/// All bytes of Unicode characters are included, as Unicode whitespace may precede an annotation.
+static ANNOTATION_START_TABLE: [bool; 256] = {
+    let mut table = [false; 256];
+    let mut i = 0;
+    while i < 256 {
+        #[expect(clippy::cast_possible_truncation)]
+        let byte = i as u8;
+        table[i] = matches!(byte, b'@' | b'#' | b'w' | b't' | b'v' | b'c' | b'n' | b'i')
+            || !byte.is_ascii();
+        i += 1;
+    }
+    table
+};
 
 #[inline]
 fn is_property_key_annotation(source: &str) -> bool {
     matches!(source.trim().strip_prefix(['@', '#']), Some("__KEY__"))
 }
 
+/// Returns `true` if `hay` contains `@license` or `@preserve`.
 #[inline(always)]
-fn contains_license_or_preserve_comment(s: &str) -> bool {
+pub(super) fn contains_license_or_preserve_comment(hay: &[u8]) -> bool {
     const LICENSE_LEN: usize = b"@license".len();
     const PRESERVE_LEN: usize = b"@preserve".len();
-    let hay = s.as_bytes();
 
     if hay.len() < LICENSE_LEN {
         return false;
@@ -508,7 +733,6 @@ fn contains_license_or_preserve_comment(s: &str) -> bool {
         // SAFETY: `search_len` only includes candidate starts with at least `LICENSE_LEN` bytes
         // remaining, so `i + 1` and the full `@license` range are in bounds.
         match unsafe { hay.get_unchecked(i + 1) } {
-            // spellchecker:off
             b'l'
                 // SAFETY: The candidate bound proves the full `@license` range is in bounds.
                 if unsafe { hay.get_unchecked(i + 2..i + LICENSE_LEN) } == b"icense" =>
@@ -521,7 +745,6 @@ fn contains_license_or_preserve_comment(s: &str) -> bool {
             {
                 return true;
             }
-            // spellchecker:on
             _ => {}
         }
     }
@@ -554,7 +777,7 @@ mod test {
 
     use crate::Parser;
 
-    use super::TriviaBuilder;
+    use super::{PendingToken, TriviaBuilder};
 
     #[test]
     fn annotation_flags_restored_when_replaying_comments() {
@@ -566,18 +789,21 @@ mod test {
                     let source_end = u32::try_from(source.len()).unwrap();
                     let allocator = Allocator::default();
                     let mut builder = TriviaBuilder::new_in(&allocator);
-                    builder.add_block_comment(
+                    let mut pending = PendingToken::START_OF_FILE;
+                    builder.add_unsearched_block_comment(
                         0,
                         annotation_end,
                         CommentKind::SingleLineBlock,
                         &source,
+                        &mut pending,
                     );
                     if !suffix.is_empty() {
-                        builder.add_block_comment(
+                        builder.add_unsearched_block_comment(
                             annotation_end,
                             source_end,
                             CommentKind::SingleLineBlock,
                             &source,
+                            &mut pending,
                         );
                     }
 
@@ -596,11 +822,12 @@ mod test {
 
                     // Replaying the annotation must restore its range without changing
                     // whether it was already applied, even when a later comment exists.
-                    builder.add_block_comment(
+                    builder.add_unsearched_block_comment(
                         0,
                         annotation_end,
                         CommentKind::SingleLineBlock,
                         &source,
+                        &mut pending,
                     );
                     assert_eq!(builder.previous_token_pure_comments(), pure);
                     assert_eq!(builder.previous_token_no_side_effects_comments(), no_side_effects);
@@ -1246,9 +1473,7 @@ function bar() {}";
             ("/* foo @license*/", CommentContent::Legal),
             ("/* foo @licensed*/", CommentContent::Legal),
             ("/* foo @License*/", CommentContent::None),
-            // spellchecker:disable-next-line
             ("/* foo @licens*/", CommentContent::None),
-            // spellchecker:disable-next-line
             ("/* foo @preserv*/", CommentContent::None),
             ("/* @foo @preserve */", CommentContent::Legal),
             ("/* @foo @license */", CommentContent::Legal),

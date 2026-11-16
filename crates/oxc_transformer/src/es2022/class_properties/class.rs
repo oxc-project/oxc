@@ -14,12 +14,12 @@ use oxc_traverse::{Ancestor, BoundIdentifier};
 use crate::{
     common::helper_loader::{Helper, helper_call_expr},
     context::TraverseCtx,
-    utils::ast_builder::create_assignment,
+    utils::ast_builder::{create_assignment, create_new_weakset, create_variable_declaration},
 };
 
 use super::{
     ClassBindings, ClassDetails, ClassProperties, IdentIndexMap, PrivateProp,
-    utils::{create_variable_declaration, exprs_into_stmts},
+    utils::exprs_into_stmts,
 };
 
 // TODO(improve-on-babel): If outer scope is sloppy mode, all code which is moved to outside
@@ -893,13 +893,5 @@ fn create_new_weakmap<'a>(
     let symbol_id = *symbol_id
         .get_or_insert_with(|| ctx.scoping().find_binding(ctx.current_scope_id(), weak_map));
     let ident = ctx.create_ident_expr(SPAN, weak_map, symbol_id, ReferenceFlags::Read);
-    Expression::new_new_expression_with_pure(SPAN, ident, None, [], true, ctx)
-}
-
-/// Create `new WeakSet()` expression.
-fn create_new_weakset<'a>(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-    let weak_set = static_ident!("WeakSet");
-    let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), weak_set);
-    let ident = ctx.create_ident_expr(SPAN, weak_set, symbol_id, ReferenceFlags::Read);
     Expression::new_new_expression_with_pure(SPAN, ident, None, [], true, ctx)
 }

@@ -3,7 +3,7 @@
 pub struct CloneInType {
     /// `true` if should be replaced with default value when cloning
     pub is_default: bool,
-    /// `true` if type is a semantic ID (`NodeId`, `ScopeId`, `SymbolId`, `ReferenceId`).
+    /// `true` if type is a semantic ID (`NodeId`, `ScopeId`, `SymbolId`, `ReferenceId`, `LabelId`).
     /// Fields of these types are cloned using `SemanticId` trait.
     pub is_semantic_id: bool,
 }
