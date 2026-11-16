@@ -58,6 +58,18 @@ impl Planes<'_> {
     }
 }
 
+/// Clear the bits at and past n in the last block, which a kernel fills from the padding.
+#[inline(always)]
+fn mask_tail(planes: [&mut [u64]; 7], n: usize) {
+    let rem = n & 63;
+    if rem != 0 {
+        let keep = (1u64 << rem) - 1;
+        for plane in planes {
+            plane[n >> 6] &= keep;
+        }
+    }
+}
+
 #[cpu_multiversion]
 #[inline(always)]
 pub(super) fn classify(src: Source, ts: bool, mut planes: Planes, cpu: impl Cpu) {
