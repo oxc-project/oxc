@@ -264,6 +264,14 @@ impl<'a, C: Config> Lexer<'a, C> {
     }
 
     /// Read first token in file.
+    /// Start lexing at byte `offset` of the source text.
+    ///
+    /// # Panics
+    /// If `offset` is past the end of the source text or not on a UTF-8 character boundary.
+    pub(crate) fn set_offset(&mut self, offset: u32) {
+        self.source.set_offset(offset);
+    }
+
     pub fn first_token(&mut self) -> Token {
         // HashbangComment ::
         //     `#!` SingleLineCommentChars?
