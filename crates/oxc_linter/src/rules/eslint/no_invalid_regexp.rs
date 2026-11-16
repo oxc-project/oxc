@@ -1,5 +1,8 @@
 use oxc_allocator::Allocator;
-use oxc_ast::{AstKind, ast::Argument};
+use oxc_ast::{
+    AstKind,
+    ast::{Argument, Expression},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::{ConstructorParser, Options};
@@ -88,10 +91,10 @@ impl Rule for NoInvalidRegexp {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let (pattern_arg, flags_arg) = match node.kind() {
-            AstKind::NewExpression(expr) if expr.callee.is_specific_id("RegExp") => {
+            AstKind::NewExpression(expr) if is_global_regexp(&expr.callee, ctx) => {
                 parse_arguments_to_check(expr.arguments.first(), expr.arguments.get(1))
             }
-            AstKind::CallExpression(expr) if expr.callee.is_specific_id("RegExp") => {
+            AstKind::CallExpression(expr) if is_global_regexp(&expr.callee, ctx) => {
                 parse_arguments_to_check(expr.arguments.first(), expr.arguments.get(1))
             }
             // Other kinds, skip
@@ -202,11 +205,23 @@ fn parse_arguments_to_check<'a>(
     }
 }
 
+/// `RegExp` that refers to the built-in, not to a local binding of that name.
+fn is_global_regexp(callee: &Expression, ctx: &LintContext) -> bool {
+    matches!(
+        callee,
+        Expression::Identifier(ident)
+            if ident.name == "RegExp" && ctx.is_reference_to_global_variable(ident)
+    )
+}
+
 #[test]
 fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        ("function foo(RegExp) { RegExp('['); }", None),
+        ("function foo(RegExp) { new RegExp('['); }", None),
+        ("let RegExp; RegExp('.', 'z');", None),
         ("RegExp('')", None),
         ("RegExp()", None),
         ("RegExp('.', 'g')", None),
