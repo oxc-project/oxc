@@ -93,7 +93,7 @@ impl Generator for AstBuilderGenerator {
             ///@@line_break
             use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator, IntoIn};
             use oxc_str::{Ident, JSStr, Str};
-            use oxc_syntax::{scope::ScopeId, symbol::SymbolId, reference::ReferenceId};
+            use oxc_syntax::{label::LabelId, scope::ScopeId, symbol::SymbolId, reference::ReferenceId};
 
             ///@@line_break
             use crate::{ast::*, builder::{AstBuild, GetAstBuilder}};

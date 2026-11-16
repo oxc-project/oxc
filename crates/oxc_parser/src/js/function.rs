@@ -33,10 +33,23 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let opening_span = self.cur_token().span();
         self.expect(Kind::LCurly);
 
+        if self.at(Kind::RCurly) {
+            // `{}`: there are no directives or statements to parse.
+            self.advance(Kind::RCurly);
+            let (directives, statements) = (ArenaVec::new_in(self), ArenaVec::new_in(self));
+            return FunctionBody::boxed(self.end_span(start), directives, statements, self);
+        }
+
+        // Statements are never part of the binding pattern an enclosing cover list
+        // may become.
+        let cover_depth = std::mem::replace(&mut self.state.cover_depth, 0);
+
         // Add Return context, remove TopLevel context
         let (directives, statements) = self.context(Context::Return, Context::TopLevel, |p| {
             p.parse_directives_and_statements(/* in_ts_namespace_body */ false)
         });
+
+        self.state.cover_depth = cover_depth;
 
         self.expect_closing(Kind::RCurly, opening_span);
         FunctionBody::boxed(self.end_span(start), directives, statements, self)
@@ -67,28 +80,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         (this_param, formal_parameters)
     }
 
-    /// Parse an ambiguous JS arrow head, retaining whether its final comma prevents it
-    /// from also being a parenthesized expression.
-    pub(super) fn parse_cover_arrow_parameters(&mut self) -> (FormalParameters<'a>, bool) {
-        debug_assert!(!self.is_ts);
-        let start = self.cur_start();
-        let opening_span = self.cur_token().span();
-        self.expect(Kind::LParen);
-        let (list, rest) =
-            self.parse_formal_parameters_list(FunctionKind::Expression, opening_span);
-        let has_trailing_comma =
-            list.last().is_some_and(|param| param.span.end < self.prev_token_end);
-        self.expect(Kind::RParen);
-        let params = FormalParameters::new(
-            self.end_span(start),
-            FormalParameterKind::ArrowFormalParameters,
-            list,
-            rest,
-            self,
-        );
-        (params, has_trailing_comma)
-    }
-
     #[expect(clippy::inline_always)]
     #[inline(always)]
     fn parse_formal_parameters_list(
@@ -96,11 +87,43 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         func_kind: FunctionKind,
         opening_span: Span,
     ) -> (ArenaVec<'a, FormalParameter<'a>>, Option<ArenaBox<'a, FormalParameterRest<'a>>>) {
-        let mut rest: Option<ArenaBox<'a, FormalParameterRest<'a>>> = None;
-        let mut first = true;
+        self.parse_formal_parameters_list_after::<false>(
+            func_kind,
+            opening_span,
+            true,
+            None,
+            |_| None,
+        )
+    }
+
+    /// Parse a parameter list whose leading parameters were already parsed as something else.
+    ///
+    /// When `PARSED` is `true`, `parsed` yields those parameters in order until it returns `None`.
+    /// `at_parameter_start` is `false` if the cursor is after a parameter (or after `rest`)
+    /// instead of at the start of one, so that `,` or `)` comes next.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub(super) fn parse_formal_parameters_list_after<const PARSED: bool>(
+        &mut self,
+        func_kind: FunctionKind,
+        opening_span: Span,
+        at_parameter_start: bool,
+        rest: Option<ArenaBox<'a, FormalParameterRest<'a>>>,
+        mut parsed: impl FnMut(&mut Self) -> Option<FormalParameter<'a>>,
+    ) -> (ArenaVec<'a, FormalParameter<'a>>, Option<ArenaBox<'a, FormalParameterRest<'a>>>) {
+        let mut rest = rest;
+        let mut first = at_parameter_start;
         let mut has_optional = false;
+        let mut has_parsed = PARSED;
 
         let list = self.collect_list(|p| {
+            if PARSED && has_parsed {
+                if let Some(param) = parsed(p) {
+                    has_optional |= param.optional;
+                    return Some(param);
+                }
+                has_parsed = false;
+            }
             loop {
                 let kind = p.cur_kind();
                 if kind == Kind::RParen
@@ -146,44 +169,84 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
 
                 let start = p.cur_start();
-                let decorators = p.parse_decorators();
-
-                if p.at(Kind::Dot3) {
-                    let rest_element = p.parse_rest_element_for_formal_parameter();
-                    let type_annotation = if p.is_ts { p.parse_ts_type_annotation() } else { None };
-
-                    let are_decorators_allowed =
-                        matches!(func_kind, FunctionKind::ClassMethod | FunctionKind::Constructor)
-                            && p.is_ts;
-                    if !are_decorators_allowed {
-                        for decorator in &decorators {
-                            p.error(diagnostics::decorators_are_not_valid_here(decorator.span));
-                        }
-                    }
-
-                    rest = Some(FormalParameterRest::boxed(
-                        p.end_span(start),
-                        decorators,
-                        rest_element,
-                        type_annotation,
-                        p,
-                    ));
+                // A parameter that starts with an identifier or a pattern has no decorators
+                // or modifiers, which are all keywords or `@`.
+                let param = if matches!(p.cur_kind(), Kind::Ident | Kind::LCurly | Kind::LBrack) {
+                    p.parse_formal_parameter_without_modifiers(start)
                 } else {
-                    let param =
-                        p.parse_formal_parameter_with_decorators(func_kind, start, decorators);
-                    if param.optional {
-                        has_optional = true;
-                    } else if has_optional && param.initializer.is_none() {
-                        p.error(diagnostics::required_parameter_after_optional_parameter(
-                            param.span,
+                    let decorators = p.parse_decorators();
+
+                    if p.at(Kind::Dot3) {
+                        let rest_element = p.parse_rest_element_for_formal_parameter();
+                        let type_annotation =
+                            if p.is_ts { p.parse_ts_type_annotation() } else { None };
+
+                        let are_decorators_allowed = matches!(
+                            func_kind,
+                            FunctionKind::ClassMethod | FunctionKind::Constructor
+                        ) && p.is_ts;
+                        if !are_decorators_allowed {
+                            for decorator in &decorators {
+                                p.error(diagnostics::decorators_are_not_valid_here(decorator.span));
+                            }
+                        }
+
+                        rest = Some(FormalParameterRest::boxed(
+                            p.end_span(start),
+                            decorators,
+                            rest_element,
+                            type_annotation,
+                            p,
                         ));
+                        continue;
                     }
-                    return Some(param);
+                    p.parse_formal_parameter_with_decorators(func_kind, start, decorators)
+                };
+                if param.optional {
+                    has_optional = true;
+                } else if has_optional && param.initializer.is_none() {
+                    p.error(diagnostics::required_parameter_after_optional_parameter(param.span));
                 }
+                return Some(param);
             }
         });
 
         (list, rest)
+    }
+
+    /// Parse a parameter that has no decorators or modifiers: `a`, `a: T = b`, `{ a }?: T`.
+    fn parse_formal_parameter_without_modifiers(&mut self, start: u32) -> FormalParameter<'a> {
+        let pattern = self.parse_binding_pattern();
+        if matches!(self.cur_kind(), Kind::Comma | Kind::RParen) {
+            return FormalParameter::new_plain(self.end_span(start), pattern, self);
+        }
+
+        let optional = self.is_ts && self.eat(Kind::Question);
+        let type_annotation = self.parse_ts_type_annotation();
+        let init = if self.eat(Kind::Eq) {
+            let init =
+                self.context_add(Context::In, ParserImpl::parse_assignment_expression_or_higher);
+            if optional {
+                self.error(diagnostics::a_parameter_cannot_have_question_mark_and_initializer(
+                    pattern.span(),
+                ));
+            }
+            Some(ArenaBox::new_in(init, self))
+        } else {
+            None
+        };
+        FormalParameter::new(
+            self.end_span(start),
+            [],
+            pattern,
+            type_annotation,
+            init,
+            optional,
+            None,
+            false,
+            false,
+            self,
+        )
     }
 
     fn parse_formal_parameter_with_decorators(

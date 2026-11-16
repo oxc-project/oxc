@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.159.0] - 2026-11-16
+
+### 🚀 Features
+
+- bfe9a81 data_structures: Add buffered vector batch reservations (#29365) (Boshen)
+- 2a5d710 data_structures: Add `unreachable_unchecked!` macro (#29131) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 34172e0 data_structures: Fix `assert_unchecked!` macro (#29130) (overlookmotel)
+
 ## [0.156.0] - 2026-10-27
 
 ### ⚡ Performance

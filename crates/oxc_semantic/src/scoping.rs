@@ -9,6 +9,7 @@ use oxc_span::Span;
 use oxc_str::{ArenaIdentHashMap, Ident, JSStr};
 use oxc_syntax::constant_value::ConstantValue;
 use oxc_syntax::{
+    label::LabelId,
     node::NodeId,
     reference::{Reference, ReferenceId},
     scope::{ScopeFlags, ScopeId},
@@ -134,6 +135,9 @@ impl Default for Scoping {
                 symbol_redeclarations: FxHashMap::default(),
                 bindings: IndexVec::new(),
                 root_unresolved_references: UnresolvedReferences::new_in(allocator),
+                label_names: ArenaVec::new_in(&allocator),
+                label_depths: ArenaVec::new_in(&allocator),
+                has_unresolved_labels: false,
             }),
         }
     }
@@ -302,6 +306,11 @@ pub struct ScopingInner<'cell> {
     pub(crate) bindings: IndexVec<ScopeId, Bindings<'cell>>,
 
     pub(crate) root_unresolved_references: UnresolvedReferences<'cell>,
+
+    /* Label Table Fields */
+    label_names: ArenaVec<'cell, Ident<'cell>>,
+    label_depths: ArenaVec<'cell, u32>,
+    has_unresolved_labels: bool,
 }
 
 // Symbol Table Methods
@@ -1183,6 +1192,66 @@ impl Scoping {
     }
 }
 
+// Label Table Methods
+impl Scoping {
+    /// Returns the number of labels in this table.
+    #[inline]
+    pub fn labels_len(&self) -> usize {
+        self.cell.borrow_dependent().label_names.len()
+    }
+
+    /// Iterate over all label IDs in creation order.
+    pub fn label_ids(&self) -> impl ExactSizeIterator<Item = LabelId> + '_ {
+        (0..self.labels_len()).map(LabelId::from_usize)
+    }
+
+    /// Get the name of a label.
+    #[inline]
+    pub fn label_name(&self, label_id: LabelId) -> &str {
+        self.cell.borrow_dependent().label_names[label_id.index()].as_str()
+    }
+
+    /// Get the number of labels enclosing a label.
+    ///
+    /// Labels are nested across function boundaries, so this also counts enclosing labels
+    /// outside the function containing `label_id`.
+    #[inline]
+    pub fn label_depth(&self, label_id: LabelId) -> u32 {
+        self.cell.borrow_dependent().label_depths[label_id.index()]
+    }
+
+    /// Create a new label enclosed by `depth` other labels.
+    pub fn create_label(&mut self, name: Ident<'_>, depth: u32) -> LabelId {
+        self.cell.with_dependent_mut(|allocator, cell| {
+            let label_id = LabelId::from_usize(cell.label_names.len());
+            cell.label_names.push(name.clone_in(allocator));
+            cell.label_depths.push(depth);
+            label_id
+        })
+    }
+
+    /// Rename a label.
+    #[inline]
+    pub fn set_label_name(&mut self, label_id: LabelId, name: Ident<'_>) {
+        self.cell.with_dependent_mut(|allocator, cell| {
+            cell.label_names[label_id.index()] = name.clone_in(allocator);
+        });
+    }
+
+    /// Whether a `break` or `continue` label does not resolve to an enclosing label.
+    ///
+    /// This only happens in invalid code. Codegen prints such labels unchanged.
+    #[inline]
+    pub fn has_unresolved_labels(&self) -> bool {
+        self.cell.borrow_dependent().has_unresolved_labels
+    }
+
+    /// Record that a `break` or `continue` label does not resolve to an enclosing label.
+    pub fn set_has_unresolved_labels(&mut self) {
+        self.cell.with_dependent_mut(|_, cell| cell.has_unresolved_labels = true);
+    }
+}
+
 impl Scoping {
     /// Clone all semantic data. Used in `Rolldown`.
     #[must_use]
@@ -1216,6 +1285,9 @@ impl Scoping {
                     root_unresolved_references: cell
                         .root_unresolved_references
                         .clone_in_with_semantic_ids(allocator),
+                    label_names: cell.label_names.clone_in_with_semantic_ids(allocator),
+                    label_depths: cell.label_depths.clone_in_with_semantic_ids(allocator),
+                    has_unresolved_labels: cell.has_unresolved_labels,
                 })
             },
         }
