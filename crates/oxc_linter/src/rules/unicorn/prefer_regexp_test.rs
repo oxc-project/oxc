@@ -161,10 +161,37 @@ impl Rule for PreferRegexpTest {
 
             fix.push(fixer.replace(span, "test"));
             fix.push(fixer.replace_with(&call_expr.arguments[0], member_expr.object()));
-            fix.push(fixer.replace_with(member_expr.object(), &call_expr.arguments[0]));
+            let argument = &call_expr.arguments[0];
+            if argument.as_expression().is_some_and(needs_parens_as_object) {
+                let text = format!("({})", ctx.source_range(argument.span()));
+                fix.push(fixer.replace(member_expr.object().span(), text));
+            } else {
+                fix.push(fixer.replace_with(member_expr.object(), argument));
+            }
 
             fix.with_message("Replace with `RegExp.test()`")
         });
+    }
+}
+
+/// Whether `expr` needs parentheses as the object of `.test()`, e.g. `(a || b).test(s)`.
+/// Ported from `shouldAddParenthesesToMemberExpressionObject` in eslint-plugin-unicorn.
+fn needs_parens_as_object(expr: &Expression) -> bool {
+    match expr {
+        Expression::Identifier(_)
+        | Expression::StaticMemberExpression(_)
+        | Expression::ComputedMemberExpression(_)
+        | Expression::PrivateFieldExpression(_)
+        | Expression::CallExpression(_)
+        | Expression::ChainExpression(_)
+        | Expression::TemplateLiteral(_)
+        | Expression::ThisExpression(_)
+        | Expression::ArrayExpression(_)
+        | Expression::FunctionExpression(_)
+        | Expression::ParenthesizedExpression(_)
+        | Expression::RegExpLiteral(_) => false,
+        Expression::NewExpression(new_expr) => new_expr.span.end == new_expr.callee.span().end,
+        _ => true,
     }
 }
 
@@ -386,6 +413,15 @@ fn test() {
         ("const value = (s.match(/x/) || a) ? 1 : 2;", "const value = (/x/.test(s) || a) ? 1 : 2;"),
         ("const value = Boolean(a && s.match(/x/));", "const value = Boolean(a && /x/.test(s));"),
         ("const value = !(a || /x/.exec(s));", "const value = !(a || /x/.test(s));"),
+        ("if (foo.match(bar || baz)) {}", "if ((bar || baz).test(foo)) {}"),
+        (
+            "async function a() { if (foo.match(await bar())) {} }",
+            "async function a() { if ((await bar()).test(foo)) {} }",
+        ),
+        ("if (foo.match(cond ? /a/g : /a/)) {}", "if ((cond ? /a/g : /a/).test(foo)) {}"),
+        ("if ((foo).match(bar || baz)) {}", "if ((bar || baz).test((foo))) {}"),
+        ("if (foo.match(new SomeRegExp)) {}", "if ((new SomeRegExp).test(foo)) {}"),
+        ("if (foo.match(new SomeRegExp())) {}", "if (new SomeRegExp().test(foo)) {}"),
     ];
 
     Tester::new(PreferRegexpTest::NAME, PreferRegexpTest::PLUGIN, pass, fail)
