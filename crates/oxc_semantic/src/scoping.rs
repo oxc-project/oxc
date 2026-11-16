@@ -704,6 +704,35 @@ impl Scoping {
         self.get_resolved_reference_ids(symbol_id).is_empty()
     }
 
+    /// Allocate completed reference lists exactly once, retaining resolution order.
+    /// Counting first avoids abandoned buffers from interleaved growth. Keep the usual
+    /// power-of-two capacity so later transformations retain their allocation headroom.
+    pub(crate) fn build_resolved_reference_lists(
+        &mut self,
+        reference_ids: impl Iterator<Item = ReferenceId> + Clone,
+    ) {
+        let mut counts = vec![0u32; self.symbols_len()];
+        for reference_id in reference_ids.clone() {
+            if let Some(symbol_id) = self.references[reference_id].symbol_id() {
+                counts[symbol_id.index()] += 1;
+            }
+        }
+        let references = &self.references;
+        self.cell.with_dependent_mut(|_allocator, cell| {
+            for (list, count) in cell.resolved_references.iter_mut().zip(counts) {
+                if count != 0 {
+                    let capacity = count.checked_next_power_of_two().unwrap_or(count) as usize;
+                    list.reserve_exact(capacity);
+                }
+            }
+            for reference_id in reference_ids {
+                if let Some(symbol_id) = references[reference_id].symbol_id() {
+                    cell.resolved_references[symbol_id.index()].push(reference_id);
+                }
+            }
+        });
+    }
+
     /// Add a reference to a symbol.
     pub fn add_resolved_reference(&mut self, symbol_id: SymbolId, reference_id: ReferenceId) {
         self.cell.with_dependent_mut(|_allocator, cell| {

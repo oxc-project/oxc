@@ -45,6 +45,28 @@ fn assert_root_and_single_local_reference_counts(
     }
 }
 
+#[test]
+fn resolved_reference_order_in_node_storage_modes() {
+    let source = "function f(a, b = a, c = () => a) { a; arguments; missing; }";
+    let allocator = oxc_allocator::Allocator::new();
+    let parsed = oxc_parser::Parser::new(&allocator, source, SourceType::mjs()).parse();
+    assert!(parsed.diagnostics.is_empty());
+
+    for build_nodes in [false, true] {
+        let result = oxc_semantic::SemanticBuilder::new_compiler()
+            .with_build_nodes(build_nodes)
+            .build(&parsed.program);
+        assert!(result.diagnostics.is_empty());
+        let scoping = result.semantic.scoping();
+        let a = scoping.symbol_ids().find(|&id| scoping.symbol_name(id) == "a").unwrap();
+        let references: Vec<_> =
+            scoping.get_resolved_reference_ids(a).iter().map(|id| id.index()).collect();
+        assert_eq!(references, [0, 1, 2]);
+        assert_eq!(scoping.root_unresolved_references()["arguments"].len(), 1);
+        assert_eq!(scoping.root_unresolved_references()["missing"].len(), 1);
+    }
+}
+
 /// `delete a?.b` and `delete (a.b)` are property writes, same as `delete a.b`.
 /// https://github.com/oxc-project/oxc/issues/27419
 #[test]

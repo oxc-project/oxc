@@ -100,6 +100,8 @@ pub struct SemanticBuilder<'a> {
     pub(crate) scoping: Scoping,
 
     pub(crate) unresolved_references: UnresolvedReferences<'a>,
+    /// References removed during parameter resolution, kept in resolution order.
+    early_resolved_references: Vec<ReferenceId>,
 
     unused_labels: UnusedLabels<'a>,
     #[cfg(feature = "jsdoc")]
@@ -160,6 +162,7 @@ impl<'a> SemanticBuilder<'a> {
             hoisting_variables: FxHashMap::default(),
             scoping,
             unresolved_references: UnresolvedReferences::new(),
+            early_resolved_references: Vec::new(),
             unused_labels: UnusedLabels::default(),
             #[cfg(feature = "jsdoc")]
             jsdoc: JSDocBuilder::default(),
@@ -683,12 +686,23 @@ impl<'a> SemanticBuilder<'a> {
     fn resolve_all_references(&mut self) {
         let root_scope_id = self.scoping.root_scope_id();
         let refs = self.unresolved_references.take();
-        for unresolved in refs {
+        for &unresolved in &refs {
             if !self.resolve_reference(unresolved, root_scope_id) {
                 self.scoping
                     .add_root_unresolved_reference(unresolved.name, unresolved.reference_id);
             }
         }
+        if matches!(self.node_store.kind, AstNodeStoreKind::Full(_)) {
+            return;
+        }
+        // Reuse the unresolved-reference buffer instead of collecting another per-reference
+        // list. Early parameter references precede the remaining references, as before.
+        let references = self
+            .early_resolved_references
+            .iter()
+            .copied()
+            .chain(refs.iter().map(|reference| reference.reference_id));
+        self.scoping.build_resolved_reference_lists(references);
     }
 
     /// Resolve a reference by walking up the scope chain through `last_scope_id`.
@@ -821,7 +835,9 @@ impl<'a> SemanticBuilder<'a> {
             *flags = ReferenceFlags::Type;
         }
         reference.set_symbol_id(symbol_id);
-        self.scoping.add_resolved_reference(symbol_id, reference_id);
+        if matches!(self.node_store.kind, AstNodeStoreKind::Full(_)) {
+            self.scoping.add_resolved_reference(symbol_id, reference_id);
+        }
         true
     }
 
@@ -864,6 +880,9 @@ impl<'a> SemanticBuilder<'a> {
                 return true;
             }
             if self.resolve_reference(*unresolved, current_scope_id) {
+                if matches!(self.node_store.kind, AstNodeStoreKind::Ancestry(_)) {
+                    self.early_resolved_references.push(unresolved.reference_id);
+                }
                 return false;
             }
             // Skip this function body during final resolution. An enclosing parameter resolution
