@@ -1,7 +1,6 @@
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_data_structures::inline_string::InlineString;
 use oxc_semantic::{LabelId, Scoping};
-use oxc_str::Ident;
 use oxc_syntax::keyword::is_reserved_keyword;
 
 /// Rename every label in `scoping` by its nesting depth.
@@ -20,19 +19,20 @@ pub fn mangle_labels<const CAPACITY: usize>(
     if scoping.has_unresolved_labels() {
         return;
     }
-
-    let mut names: ArenaVec<Ident<'_>> = ArenaVec::new_in(&allocator);
-    let mut next_candidate = 0;
+    let Some(max_depth) = scoping.label_ids().map(|label_id| scoping.label_depth(label_id)).max()
+    else {
+        return;
+    };
+    let names = ArenaVec::from_iter_in(
+        (0..)
+            .map(generate_name)
+            .filter(|name| !is_reserved_keyword(name.as_str()))
+            .take(max_depth as usize + 1),
+        &allocator,
+    );
     for label_id in (0..scoping.labels_len()).map(LabelId::from_usize) {
-        let depth = scoping.label_depth(label_id) as usize;
-        while names.len() <= depth {
-            let name = generate_name(next_candidate);
-            next_candidate += 1;
-            if !is_reserved_keyword(name.as_str()) {
-                names.push(Ident::from(allocator.alloc_str(name.as_str())));
-            }
-        }
-        scoping.set_label_name(label_id, names[depth]);
+        let name = &names[scoping.label_depth(label_id) as usize];
+        scoping.set_label_name(label_id, name.as_str().into());
     }
 }
 
