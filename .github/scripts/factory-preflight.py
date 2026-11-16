@@ -33,7 +33,7 @@ for product, path in checks.items():
     results[product] = {
         "http_status": status,
         "success": payload.get("success", False),
-        "error_codes": [error.get("code") for error in payload.get("errors", [])],
+        "error_codes": [error.get("code") for error in (payload.get("errors") or [])],
     }
     print(product + ": " + json.dumps(results[product]))
 
