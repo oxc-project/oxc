@@ -91,7 +91,7 @@ pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
     let Argument::AwaitExpression(await_expr) = argument else {
         return;
     };
-    ctx.diagnostic_with_fix(expect_resolves(await_expr.span), |fixer| {
+    ctx.diagnostic_with_suggestion(expect_resolves(await_expr.span), |fixer| {
         let local = jest_expect_fn_call.local.as_ref();
         // Get the source text of the awaited expression (without the `await` keyword)
         let argument = fixer.source_range(await_expr.argument.span());

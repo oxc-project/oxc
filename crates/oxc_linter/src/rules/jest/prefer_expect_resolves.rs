@@ -11,7 +11,14 @@ use crate::{
 #[derive(Debug, Default, Clone)]
 pub struct PreferExpectResolves;
 
-declare_oxc_lint!(PreferExpectResolves, jest, style, fix, docs = DOCUMENTATION, version = "0.2.14",);
+declare_oxc_lint!(
+    PreferExpectResolves,
+    jest,
+    style,
+    suggestion,
+    docs = DOCUMENTATION,
+    version = "0.2.14",
+);
 
 impl Rule for PreferExpectResolves {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -26,7 +33,7 @@ impl Rule for PreferExpectResolves {
 
 #[test]
 fn tests() {
-    use crate::tester::Tester;
+    use crate::{fixer::FixKind, tester::Tester};
 
     let pass = vec![
         ("expect.hasAssertions()", None),
@@ -145,6 +152,16 @@ fn tests() {
             None,
         ),
     ];
+
+    let fix = fix
+        .into_iter()
+        .flat_map(|(source, expected, config): (_, _, Option<serde_json::Value>)| {
+            [
+                (source, source, config.clone(), FixKind::SafeFix),
+                (source, expected, config, FixKind::Suggestion),
+            ]
+        })
+        .collect::<Vec<_>>();
 
     Tester::new(PreferExpectResolves::NAME, PreferExpectResolves::PLUGIN, pass, fail)
         .with_jest_plugin(true)

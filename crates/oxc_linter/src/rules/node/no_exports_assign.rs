@@ -56,7 +56,7 @@ declare_oxc_lint!(
     node,
     suspicious,
     recommended,
-    fix,
+    suggestion,
     version = "0.9.3",
     short_description = "Disallows assignment to `exports`.",
 );
@@ -89,7 +89,7 @@ impl Rule for NoExportsAssign {
             return;
         }
 
-        ctx.diagnostic_with_fix(no_exports_assign(assign_expr.left.span()), |fixer| {
+        ctx.diagnostic_with_suggestion(no_exports_assign(assign_expr.left.span()), |fixer| {
             fixer.replace(assign_expr.left.span(), "module.exports")
         });
     }
@@ -97,7 +97,7 @@ impl Rule for NoExportsAssign {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::{fixer::FixKind, tester::Tester};
 
     let pass = vec![
         "module.exports.foo = 1",
@@ -110,7 +110,22 @@ fn test() {
 
     let fail = vec!["exports = {}"];
 
-    let fix = vec![("exports = {}", "module.exports = {}")];
+    let fix = vec![
+        ("exports = {}", "module.exports = {}"),
+        (
+            "exports.a = 1; exports.b = 2; exports = {};",
+            "exports.a = 1; exports.b = 2; module.exports = {};",
+        ),
+    ];
+    let fix = fix
+        .into_iter()
+        .flat_map(|(source, expected)| {
+            [
+                (source, source, None, FixKind::SafeFix),
+                (source, expected, None, FixKind::Suggestion),
+            ]
+        })
+        .collect::<Vec<_>>();
 
     Tester::new(NoExportsAssign::NAME, NoExportsAssign::PLUGIN, pass, fail)
         .expect_fix(fix)

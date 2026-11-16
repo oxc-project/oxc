@@ -5,10 +5,11 @@ use rustc_hash::FxHashSet;
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, ArrowFunctionBody, ArrowFunctionExpression, CallExpression, Class, Expression,
-        Function, FunctionBody, JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild,
-        JSXElement, JSXElementName, JSXExpression, JSXFragment, JSXMemberExpression,
-        JSXMemberExpressionObject, JSXOpeningElement, Statement, StaticMemberExpression,
+        Argument, ArrowFunctionBody, ArrowFunctionExpression, BindingPattern, CallExpression,
+        Class, Expression, Function, FunctionBody, IdentifierReference, JSXAttributeItem,
+        JSXAttributeName, JSXAttributeValue, JSXChild, JSXElement, JSXElementName, JSXExpression,
+        JSXFragment, JSXMemberExpression, JSXMemberExpressionObject, JSXOpeningElement, Statement,
+        StaticMemberExpression,
     },
     match_expression,
 };
@@ -24,7 +25,10 @@ use oxc_syntax::operator::UnaryOperator;
 use oxc_syntax::scope::ScopeFlags;
 
 use crate::{LintContext, OxlintSettings};
-use crate::{globals::HTML_TAG, utils::is_import_from_module};
+use crate::{
+    globals::HTML_TAG,
+    utils::{is_import_from_module, is_import_symbol},
+};
 
 pub fn is_create_element_call(call_expr: &CallExpression) -> bool {
     match &call_expr.callee {
@@ -830,13 +834,40 @@ pub fn is_react_function_call(call: &CallExpression, expected_call: &str) -> boo
 }
 
 /// Checks if a JSX opening element is a React Fragment.
-/// Recognizes both `<Fragment>` and `<React.Fragment>` forms.
-pub fn is_jsx_fragment(elem: &JSXOpeningElement) -> bool {
+/// Recognizes React imports, CommonJS bindings, and unbound `<Fragment>` / `<React.Fragment>` forms.
+/// A local binding with the same name must not be mistaken for React's fragment.
+pub fn is_jsx_fragment(elem: &JSXOpeningElement, ctx: &LintContext) -> bool {
     match &elem.name {
-        JSXElementName::IdentifierReference(ident) => ident.name == "Fragment",
+        JSXElementName::IdentifierReference(ident) => {
+            if ctx.is_reference_to_global_variable(ident) {
+                ident.name == "Fragment"
+            } else {
+                is_import_symbol(ident, "react", "Fragment", ctx)
+                    || is_react_require_binding(ident, Some("Fragment"), ctx)
+            }
+        }
         JSXElementName::MemberExpression(mem_expr) => {
             if let JSXMemberExpressionObject::IdentifierReference(ident) = &mem_expr.object {
-                ident.name == "React" && mem_expr.property.name == "Fragment"
+                mem_expr.property.name == "Fragment"
+                    && if ctx.is_reference_to_global_variable(ident) {
+                        ident.name == "React"
+                    } else {
+                        (is_import_from_module(ident, "react", ctx)
+                            && ctx
+                                .scoping()
+                                .get_reference(ident.reference_id())
+                                .symbol_id()
+                                .is_some_and(|symbol_id| {
+                                    matches!(
+                                        ctx.nodes()
+                                            .get_node(ctx.scoping().symbol_declaration(symbol_id))
+                                            .kind(),
+                                        AstKind::ImportDefaultSpecifier(_)
+                                            | AstKind::ImportNamespaceSpecifier(_)
+                                    ) || is_import_symbol(ident, "react", "default", ctx)
+                                }))
+                            || is_react_require_binding(ident, None, ctx)
+                    }
             } else {
                 false
             }
@@ -845,6 +876,50 @@ pub fn is_jsx_fragment(elem: &JSXOpeningElement) -> bool {
         | JSXElementName::Identifier(_)
         | JSXElementName::ThisExpression(_) => false,
     }
+}
+
+fn is_react_require_binding(
+    ident: &IdentifierReference,
+    imported_name: Option<&str>,
+    ctx: &LintContext,
+) -> bool {
+    let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id() else {
+        return false;
+    };
+    let AstKind::VariableDeclarator(decl) =
+        ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id)).kind()
+    else {
+        return false;
+    };
+    let Some(init) = &decl.init else { return false };
+    let source = match (&decl.id, imported_name) {
+        (BindingPattern::BindingIdentifier(_), Some(name)) => {
+            let Some(member) = init.as_member_expression() else { return false };
+            if !member.static_property_name().is_some_and(|property| property == name) {
+                return false;
+            }
+            member.object()
+        }
+        (BindingPattern::BindingIdentifier(_), None)
+        | (BindingPattern::ObjectPattern(_), Some(_)) => init,
+        _ => return false,
+    };
+    let Expression::CallExpression(call) = source.get_inner_expression() else { return false };
+    if !call.is_require_call()
+        || !matches!(&call.callee, Expression::Identifier(require) if ctx.is_reference_to_global_variable(require))
+        || !matches!(call.arguments.first(), Some(Argument::StringLiteral(source)) if source.value == "react")
+        || ctx.scoping().symbol_is_mutated(symbol_id)
+    {
+        return false;
+    }
+    if let (BindingPattern::ObjectPattern(pattern), Some(name)) = (&decl.id, imported_name) {
+        return pattern.properties.iter().any(|property| {
+            !property.computed
+                && property.key.is_specific_static_name(name)
+                && matches!(&property.value, BindingPattern::BindingIdentifier(binding) if binding.symbol_id() == symbol_id)
+        });
+    }
+    true
 }
 
 // check current node is this.state.xx

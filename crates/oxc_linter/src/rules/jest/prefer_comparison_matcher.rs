@@ -15,7 +15,7 @@ declare_oxc_lint!(
     PreferComparisonMatcher,
     jest,
     style,
-    fix,
+    suggestion,
     docs = DOCUMENTATION,
     version = "0.2.15",
 );
@@ -33,7 +33,7 @@ impl Rule for PreferComparisonMatcher {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::{fixer::FixKind, tester::Tester};
 
     fn generate_test_cases(
         operator: &str,
@@ -287,6 +287,16 @@ fn test() {
     for (case, fixer) in &fix_less_equal_cases {
         fix.push((case.as_str(), fixer.as_str(), None));
     }
+
+    let fix = fix
+        .into_iter()
+        .flat_map(|(source, expected, config): (_, _, Option<serde_json::Value>)| {
+            [
+                (source, source, config.clone(), FixKind::SafeFix),
+                (source, expected, config, FixKind::Suggestion),
+            ]
+        })
+        .collect::<Vec<_>>();
 
     Tester::new(PreferComparisonMatcher::NAME, PreferComparisonMatcher::PLUGIN, pass, fail)
         .with_jest_plugin(true)
