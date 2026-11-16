@@ -1,6 +1,6 @@
 commit: 16a2d671
 
-Passed: 748/1182
+Passed: 753/1182
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1073,10 +1073,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-exponentiation-operator (2/12)
-* exponentiation-operator/memoise-computed-key-in-default-args/input.js
-x Output mismatch
-
+# babel-plugin-transform-exponentiation-operator (7/12)
 * exponentiation-operator/memoise-object/input.js
 x Output mismatch
 
@@ -1090,18 +1087,6 @@ x Output mismatch
 x Output mismatch
 
 * regression/4403/input.js
-x Output mismatch
-
-* transparent-expr-wrappers/parenthesized/input.js
-x Output mismatch
-
-* transparent-expr-wrappers/ts-assertions/input.ts
-x Output mismatch
-
-* transparent-expr-wrappers/ts-default-args/input.ts
-x Output mismatch
-
-* transparent-expr-wrappers/ts-non-null/input.ts
 x Output mismatch
 
 
