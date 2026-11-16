@@ -61,7 +61,18 @@ export interface OxcCodegenOptions {
 }
 
 export interface OxcCompressOptions {
-
+  /** Remove debugger statements (default: true). */
+  dropDebugger?: boolean
+  /** Remove console calls, including evaluation of their arguments (default: false). */
+  dropConsole?: boolean
+  /** Join consecutive variable declarations (default: true). */
+  joinVars?: boolean
+  /** Combine simple statements using the comma operator (default: true). */
+  sequences?: boolean
+  /** Remove unused bindings. Use `keep_assign` to retain assigned bindings (default: true). */
+  unused?: boolean | 'keep_assign'
+  /** Preserve function and class names during compression (default: false). */
+  keepNames?: boolean
 }
 
 export interface OxcControlFlowOptions {
