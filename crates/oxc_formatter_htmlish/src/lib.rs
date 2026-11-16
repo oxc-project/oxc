@@ -15,6 +15,6 @@ pub use crate::{
         HtmlishEmbeddedIn, ParsedHtmlish, format, format_to_ir, format_with_session,
         parse_for_format,
     },
-    options::{HtmlishFormatOptions, HtmlishVariant, WhitespaceSensitivity},
+    options::{HtmlishFormatOptions, HtmlishVariant, SortAttributesOptions, WhitespaceSensitivity},
     print::{CssInHtmlStyleAttribute, JsInHtmlEventHandler, JsInVueTemplate},
 };

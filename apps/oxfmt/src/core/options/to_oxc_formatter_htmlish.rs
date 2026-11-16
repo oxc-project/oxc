@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use oxc_formatter_core::{CoreFormatOptions, FormatOptions};
 use oxc_formatter_htmlish::{HtmlishFormatOptions, WhitespaceSensitivity};
 
@@ -13,9 +15,11 @@ use super::super::oxfmtrc::{FormatConfig, HtmlWhitespaceSensitivityConfig};
 pub fn to_oxc_formatter_htmlish(
     config: &FormatConfig,
     core_options: CoreFormatOptions,
+    sort_attributes: Option<Arc<oxc_formatter_htmlish::SortAttributesOptions>>,
 ) -> HtmlishFormatOptions {
     let mut options = HtmlishFormatOptions::default();
     options.apply_core(core_options);
+    options.sort_attributes = sort_attributes;
 
     // [Prettier] htmlWhitespaceSensitivity: "css" | "strict" | "ignore"
     if let Some(sensitivity) = config.html_whitespace_sensitivity {

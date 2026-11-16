@@ -151,6 +151,7 @@ impl ResolvedDispatchConfig {
                     &self.config,
                     self.validated.core,
                     self.validated.sort_imports.clone(),
+                    self.validated.jsx_attributes.clone(),
                 )
             })
             .clone()
@@ -160,7 +161,14 @@ impl ResolvedDispatchConfig {
     /// a fragment has no import, and they are the costly part to clone.
     pub fn js_fragment_options(&self) -> JsFormatOptions {
         self.js_fragment
-            .get_or_init(|| to_oxc_formatter(&self.config, self.validated.core, None))
+            .get_or_init(|| {
+                to_oxc_formatter(
+                    &self.config,
+                    self.validated.core,
+                    None,
+                    self.validated.jsx_attributes.clone(),
+                )
+            })
             .clone()
     }
 
@@ -200,9 +208,13 @@ impl ResolvedDispatchConfig {
     }
 
     pub fn htmlish_options(&self, variant: HtmlishVariant) -> HtmlishFormatOptions {
-        let options = self
-            .htmlish
-            .get_or_init(|| to_oxc_formatter_htmlish(&self.config, self.validated.core));
+        let options = self.htmlish.get_or_init(|| {
+            to_oxc_formatter_htmlish(
+                &self.config,
+                self.validated.core,
+                self.validated.html_attributes.clone(),
+            )
+        });
         HtmlishFormatOptions { variant, ..options.clone() }
     }
 
@@ -491,7 +503,12 @@ mod tests {
     fn dispatch_config() -> Arc<ResolvedDispatchConfig> {
         Arc::new(ResolvedDispatchConfig::new(
             Arc::new(FormatConfig::default()),
-            Arc::new(ValidatedOptions { core: CoreFormatOptions::default(), sort_imports: None }),
+            Arc::new(ValidatedOptions {
+                core: CoreFormatOptions::default(),
+                sort_imports: None,
+                jsx_attributes: None,
+                html_attributes: None,
+            }),
         ))
     }
 

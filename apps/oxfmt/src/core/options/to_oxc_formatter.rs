@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 #[cfg(feature = "napi")]
 use oxc_formatter::SortTailwindcssOptions;
 use oxc_formatter::{
@@ -23,6 +25,7 @@ pub fn to_oxc_formatter(
     config: &FormatConfig,
     core_options: CoreFormatOptions,
     sort_imports: Option<SortImportsOptions>,
+    sort_attributes: Option<Arc<oxc_formatter::SortAttributesOptions>>,
 ) -> JsFormatOptions {
     let mut format_options = JsFormatOptions::default();
     format_options.apply_core(core_options);
@@ -117,6 +120,7 @@ pub fn to_oxc_formatter(
     // Below are our own extensions
 
     format_options.sort_imports = sort_imports;
+    format_options.sort_attributes = sort_attributes;
     format_options.jsdoc = to_jsdoc(config);
     // napi only, like the CSS mapper: collection itself normalizes whitespace,
     // so enabling it without the JS-side sorter would apply half the feature
@@ -326,7 +330,12 @@ mod tests {
     /// Production shape: the gate validates/derives, then the infallible mapper builds.
     fn build(config: &FormatConfig) -> Result<JsFormatOptions, String> {
         let validated = validate(config)?;
-        Ok(to_oxc_formatter(config, validated.core, validated.sort_imports))
+        Ok(to_oxc_formatter(
+            config,
+            validated.core,
+            validated.sort_imports,
+            validated.jsx_attributes,
+        ))
     }
 
     /// The config enums mirror `oxc_formatter`'s (which deliberately carries no

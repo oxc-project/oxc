@@ -1,0 +1,35 @@
+[
+  {
+    "sortAttributes": true
+  },
+  {
+    "sortAttributes": {
+      "order": "desc"
+    }
+  },
+  {
+    "sortAttributes": {
+      "groups": [
+        "^id$",
+        "^class(?:Name)?$",
+        "$DEFAULT",
+        "^data-",
+        "^aria-"
+      ],
+      "order": "asc"
+    }
+  },
+  {
+    "sortAttributes": {
+      "groups": [
+        "^data-",
+        "^id$"
+      ]
+    }
+  },
+  {
+    "sortAttributes": true,
+    "singleAttributePerLine": true,
+    "bracketSameLine": true
+  }
+]

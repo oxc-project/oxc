@@ -27,6 +27,7 @@ mod to_oxc_formatter_toml;
 mod to_oxc_formatter_yaml;
 #[cfg(feature = "napi")]
 mod to_prettier;
+mod to_sort_attributes;
 mod validate;
 
 pub use to_oxc_formatter::to_oxc_formatter;

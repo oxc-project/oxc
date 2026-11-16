@@ -1,6 +1,8 @@
 //! Vue: the JS of `{{ }}` and directive values, formatted by the session's dispatcher as fragments
 //! in the file's script language. A part the dispatcher does not format prints as written.
 
+use std::borrow::Cow;
+
 use oxc_formatter_core::{
     builders::{
         exact_line_breaks, expand_parent, soft_line_indent_or_space, soft_space_or_block_indent,
@@ -21,6 +23,25 @@ use super::{
     tag::closing_end_borrowed,
 };
 use crate::tree::Tree;
+
+/// Vue's component prop key: camelize `/-\w/g`, where `\w` is ASCII.
+/// See [Vue's `camelize`](https://github.com/vuejs/core/blob/v3.5.45/packages/shared/src/general.ts).
+pub(super) fn prop_name(name: &str) -> Cow<'_, str> {
+    let Some(first_dash) = name.find('-') else { return Cow::Borrowed(name) };
+    let mut result = String::with_capacity(name.len());
+    result.push_str(&name[..first_dash]);
+    let mut chars = name[first_dash..].chars().peekable();
+    while let Some(ch) = chars.next() {
+        if ch == '-'
+            && chars.peek().is_some_and(|next| next.is_ascii_alphanumeric() || *next == '_')
+        {
+            result.push(chars.next().unwrap().to_ascii_uppercase());
+        } else {
+            result.push(ch);
+        }
+    }
+    Cow::Owned(result)
+}
 
 /// Parent→child context for a JS fragment of a Vue template,
 /// dispatched in the file's script language (`Tree::vue_script_language`).

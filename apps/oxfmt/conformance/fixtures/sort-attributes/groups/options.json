@@ -1,0 +1,26 @@
+[
+  {
+    "sortAttributes": {
+      "groups": [
+        "^data-",
+        "^data-a",
+        "$DEFAULT"
+      ]
+    }
+  },
+  {
+    "sortAttributes": {
+      "groups": [
+        "$DEFAULT",
+        "^data-"
+      ]
+    }
+  },
+  {
+    "sortAttributes": {
+      "groups": [
+        "$CODE_GUIDE"
+      ]
+    }
+  }
+]

@@ -265,6 +265,17 @@ pub struct FormatConfig {
     #[serde(alias = "experimentalSortImports")]
     pub sort_imports: Option<SortImportsUserConfig>,
 
+    /// Sort HTML, Vue and JSX/TSX attributes into configurable groups.
+    ///
+    /// Pass `true` or an object to enable alphabetical sorting, `false` to disable.
+    /// Spreads, Vue directives and dynamic attribute names separate sortable runs. Tags with ignored
+    /// attributes or JSX comments keep their attribute order.
+    ///
+    /// - Languages: HTML, Vue, JSX, TSX
+    /// - Default: Disabled
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sort_attributes: Option<SortAttributesUserConfig>,
+
     /// Sort `package.json` keys.
     ///
     /// The order is NOT compatible with [prettier-plugin-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson),
@@ -634,6 +645,40 @@ pub struct SortImportsConfig {
 pub enum SortOrderConfig {
     Asc,
     Desc,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(untagged)]
+pub enum SortAttributesUserConfig {
+    Bool(bool),
+    Object(SortAttributesConfig),
+}
+
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct SortAttributesConfig {
+    /// Rust regular expressions matched in order against attribute names.
+    /// The first matching group wins. Unmatched attributes go in `$DEFAULT`,
+    /// or after all groups when `$DEFAULT` is omitted.
+    ///
+    /// `$CODE_GUIDE` expands to the attribute order from
+    /// [Code Guide](https://codeguide.co/#html-attribute-order): class, id, name,
+    /// data-*, src, for, type, href, value, title, alt, role, aria-*.
+    ///
+    /// HTML names are lowercased before matching and sorting. Vue and JSX names keep their case.
+    ///
+    /// - Default: `[]` (one group for all attributes)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub groups: Option<Vec<String>>,
+    /// Alphabetical order within each group. Group order is never reversed.
+    /// Equal names retain their original order. JSX spreads and expressions that may
+    /// have side effects, including identifier reads, stay in place. Vue directives preserve
+    /// their positions to keep expression evaluation order, generated property precedence
+    /// and lifecycle hook order unchanged.
+    ///
+    /// - Default: `"asc"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub order: Option<SortOrderConfig>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
