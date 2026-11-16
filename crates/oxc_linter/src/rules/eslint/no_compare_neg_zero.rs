@@ -219,7 +219,6 @@ fn test() {
         ("-0 < x", None),
         ("x <= -0", None),
         ("-0 <= x", None),
-        // Numeric negative zero must still be reported when the other operand is BigInt.
         ("-0n === -0", None),
         ("-0 === -0n", None),
         ("-0 === -0", None),
