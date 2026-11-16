@@ -48,11 +48,12 @@ const _: () = {
     assert!(offset_of!(BindingIdentifier, symbol_id) == 12);
     assert!(offset_of!(BindingIdentifier, name) == 16);
 
-    // Padding: 4 bytes
+    // Padding: 0 bytes
     assert!(size_of::<LabelIdentifier>() == 32);
     assert!(align_of::<LabelIdentifier>() == 8);
     assert!(offset_of!(LabelIdentifier, span) == 0);
     assert!(offset_of!(LabelIdentifier, node_id) == 8);
+    assert!(offset_of!(LabelIdentifier, label_id) == 12);
     assert!(offset_of!(LabelIdentifier, name) == 16);
 
     // Padding: 4 bytes
@@ -1894,11 +1895,12 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(BindingIdentifier, name) == 16);
 
     // Padding: 0 bytes
-    assert!(size_of::<LabelIdentifier>() == 24);
+    assert!(size_of::<LabelIdentifier>() == 28);
     assert!(align_of::<LabelIdentifier>() == 4);
     assert!(offset_of!(LabelIdentifier, span) == 0);
     assert!(offset_of!(LabelIdentifier, node_id) == 8);
-    assert!(offset_of!(LabelIdentifier, name) == 12);
+    assert!(offset_of!(LabelIdentifier, label_id) == 12);
+    assert!(offset_of!(LabelIdentifier, name) == 16);
 
     // Padding: 0 bytes
     assert!(size_of::<ThisExpression>() == 12);
@@ -2343,14 +2345,14 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(ForOfStatement, r#await) == 40);
 
     // Padding: 0 bytes
-    assert!(size_of::<ContinueStatement>() == 36);
+    assert!(size_of::<ContinueStatement>() == 40);
     assert!(align_of::<ContinueStatement>() == 4);
     assert!(offset_of!(ContinueStatement, span) == 0);
     assert!(offset_of!(ContinueStatement, node_id) == 8);
     assert!(offset_of!(ContinueStatement, label) == 12);
 
     // Padding: 0 bytes
-    assert!(size_of::<BreakStatement>() == 36);
+    assert!(size_of::<BreakStatement>() == 40);
     assert!(align_of::<BreakStatement>() == 4);
     assert!(offset_of!(BreakStatement, span) == 0);
     assert!(offset_of!(BreakStatement, node_id) == 8);
@@ -2390,12 +2392,12 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(SwitchCase, consequent) == 20);
 
     // Padding: 0 bytes
-    assert!(size_of::<LabeledStatement>() == 44);
+    assert!(size_of::<LabeledStatement>() == 48);
     assert!(align_of::<LabeledStatement>() == 4);
     assert!(offset_of!(LabeledStatement, span) == 0);
     assert!(offset_of!(LabeledStatement, node_id) == 8);
     assert!(offset_of!(LabeledStatement, label) == 12);
-    assert!(offset_of!(LabeledStatement, body) == 36);
+    assert!(offset_of!(LabeledStatement, body) == 40);
 
     // Padding: 0 bytes
     assert!(size_of::<ThrowStatement>() == 20);
