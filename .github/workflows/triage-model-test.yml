@@ -9,7 +9,17 @@ permissions: {}
 
 jobs:
   model:
-    name: Kimi K3.1 Pro
+    name: ${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: GLM-5.3
+            model: cloudflare-ai/@cf/zai-org/glm-5.3
+          - name: DeepSeek V4.1 Flash
+            model: cloudflare-ai/@cf/deepseek-ai/deepseek-v4.1-flash-1017
+          - name: Inkling 2 Small
+            model: cloudflare-ai/@cf/thinkingmachines/inkling-2-small
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -39,7 +49,9 @@ jobs:
       - name: Generate a fix, compile it, and verify the tool result
         id: smoke
         env:
-          MODEL: cloudflare-ai/moonshotai/kimi-k3.1-pro
+          MODEL: ${{ matrix.model }}
+          MODEL_CONFIG: >-
+            {"@cf/zai-org/glm-5.3":{"api":"openai-completions","contextWindow":1048576,"maxTokens":16384,"reasoning":true,"thinkingLevelMap":{"off":null,"minimal":"low","low":"low","medium":"high","high":"high","xhigh":"max"},"compat":{"supportsReasoningEffort":true,"maxTokensField":"max_tokens","requiresReasoningContentOnAssistantMessages":true}},"@cf/deepseek-ai/deepseek-v4.1-flash-1017":{"api":"openai-completions","contextWindow":1048576,"maxTokens":16384,"reasoning":true,"thinkingLevelMap":{"off":"none","minimal":"low","low":"low","medium":"high","high":"high","xhigh":"max"},"compat":{"supportsReasoningEffort":true,"maxTokensField":"max_tokens","requiresReasoningContentOnAssistantMessages":true}},"@cf/thinkingmachines/inkling-2-small":{"api":"openai-completions","contextWindow":1048576,"maxTokens":16384,"reasoning":true,"thinkingLevelMap":{"off":"none","xhigh":"max"},"compat":{"supportsReasoningEffort":true,"maxTokensField":"max_tokens","requiresReasoningContentOnAssistantMessages":true}}}
           CLOUDFLARE_API_KEY: ${{ secrets.CLOUDFLARE_API_KEY }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: pnpm test:model
@@ -47,7 +59,7 @@ jobs:
       - name: Summarize result
         if: always()
         env:
-          MODEL: cloudflare-ai/moonshotai/kimi-k3.1-pro
+          MODEL: ${{ matrix.model }}
           RESULT: ${{ steps.smoke.outcome }}
         run: |
           printf '| Model | Coding and tool-use smoke test |\n| --- | --- |\n| %s | %s |\n' "$MODEL" "$RESULT" >> "$GITHUB_STEP_SUMMARY"
