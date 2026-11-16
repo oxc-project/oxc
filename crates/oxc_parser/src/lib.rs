@@ -786,7 +786,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             self.lexer.finalize_tokens()
         };
 
-        program.comments = self.lexer.trivia_builder.comments.into_vec();
+        program.comments = self.lexer.trivia_builder.comments.take_vec(&self.ast);
 
         ParserReturn {
             program,
