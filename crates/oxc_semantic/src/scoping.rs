@@ -729,6 +729,13 @@ impl Scoping {
         });
     }
 
+    /// Remove all references from a symbol's resolved-reference list.
+    pub fn clear_resolved_references(&mut self, symbol_id: SymbolId) {
+        self.cell.with_dependent_mut(|_allocator, cell| {
+            cell.resolved_references[symbol_id.index()].clear();
+        });
+    }
+
     /// Remove every `ReferenceId` whose bit is set in `excluded` from each
     /// symbol's resolved-references list. O(total_references) in the worst
     /// case; short-circuits when `excluded` has no bits set.

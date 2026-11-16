@@ -1,6 +1,6 @@
 commit: 16a2d671
 
-Passed: 748/1184
+Passed: 754/1184
 
 # All Passed:
 * babel-plugin-transform-export-namespace-from
@@ -1181,7 +1181,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (113/161)
+# babel-plugin-transform-typescript (119/161)
 * class/accessor-allowDeclareFields-false/input.ts
 
   x TS(18010): An accessibility modifier cannot be used with a private
@@ -1245,19 +1245,9 @@ If you have already enabled that plugin (or '@babel/preset-typescript'), make su
  - @babel/plugin-transform-private-methods
  - @babel/plugin-proposal-decorators
 
-* declarations/const-enum/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["E"]
-rebuilt        : ScopeId(0): []
-
 * declarations/erased/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["C", "E", "N", "f", "x"]
-rebuilt        : ScopeId(0): []
-
-* declarations/export-declare-enum/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A"]
+after transform: ScopeId(0): ["N"]
 rebuilt        : ScopeId(0): []
 
 * declarations/nested-namespace/input.mjs
@@ -1337,26 +1327,9 @@ Symbol redeclarations mismatch for "N":
 after transform: SymbolId(0): [Span { start: 13, end: 14 }, Span { start: 83, end: 84 }]
 rebuilt        : SymbolId(0): []
 
-* exports/declare-shadowed/input.ts
-Symbol flags mismatch for "Signal":
-after transform: SymbolId(0): SymbolFlags(Class | Function | Ambient)
-rebuilt        : SymbolId(0): SymbolFlags(Function)
-Symbol span mismatch for "Signal":
-after transform: SymbolId(0): Span { start: 14, end: 20 }
-rebuilt        : SymbolId(0): Span { start: 54, end: 60 }
-Symbol redeclarations mismatch for "Signal":
-after transform: SymbolId(0): [Span { start: 14, end: 20 }, Span { start: 54, end: 60 }]
-rebuilt        : SymbolId(0): []
-Symbol flags mismatch for "Signal2":
-after transform: SymbolId(3): SymbolFlags(Class | Function | Ambient)
-rebuilt        : SymbolId(2): SymbolFlags(Function)
-Symbol redeclarations mismatch for "Signal2":
-after transform: SymbolId(3): [Span { start: 147, end: 154 }, Span { start: 225, end: 232 }]
-rebuilt        : SymbolId(2): []
-
 * exports/declared-types/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["BB", "BB2", "C", "C2", "E", "N", "f", "foo", "x"]
+after transform: ScopeId(0): ["BB", "BB2", "C2", "N", "foo"]
 rebuilt        : ScopeId(0): ["BB", "BB2", "C2", "foo"]
 Symbol redeclarations mismatch for "BB":
 after transform: SymbolId(10): [Span { start: 445, end: 447 }, Span { start: 461, end: 463 }]
@@ -1368,22 +1341,6 @@ Please consider using `export default <value>;`, or add @babel/plugin-transform-
 
 * exports/interface/input.ts
 x Output mismatch
-
-* function/overloads/input.ts
-Symbol span mismatch for "f":
-after transform: SymbolId(0): Span { start: 9, end: 10 }
-rebuilt        : SymbolId(0): Span { start: 29, end: 30 }
-Symbol redeclarations mismatch for "f":
-after transform: SymbolId(0): [Span { start: 9, end: 10 }, Span { start: 29, end: 30 }]
-rebuilt        : SymbolId(0): []
-
-* function/overloads-exports/input.mjs
-Symbol span mismatch for "f":
-after transform: SymbolId(0): Span { start: 9, end: 10 }
-rebuilt        : SymbolId(0): Span { start: 29, end: 30 }
-Symbol redeclarations mismatch for "f":
-after transform: SymbolId(0): [Span { start: 9, end: 10 }, Span { start: 29, end: 30 }]
-rebuilt        : SymbolId(0): []
 
 * imports/import=-module/input.ts
 x Expected transform error, but transformation succeeded: `import lib = require(...);` is only supported when compiling modules to CommonJS.
@@ -1420,9 +1377,6 @@ rebuilt        : ScopeId(1): ["_a", "c"]
 Bindings mismatch:
 after transform: ScopeId(6): ["_WithTypes", "a", "b", "c", "d"]
 rebuilt        : ScopeId(3): ["_WithTypes", "d"]
-Bindings mismatch:
-after transform: ScopeId(12): ["D", "_d"]
-rebuilt        : ScopeId(4): ["_d"]
 
 * namespace/enum-after-namespace/input.ts
 Symbol redeclarations mismatch for "N":
@@ -1470,11 +1424,6 @@ rebuilt        : ScopeId(1): ["G", "_A"]
 
 * optimize-const-enums/custom-values-exported/input.ts
 x Output mismatch
-
-* optimize-const-enums/declare/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A"]
-rebuilt        : ScopeId(0): []
 
 * optimize-const-enums/export-const-enum/input.ts
 x Output mismatch
