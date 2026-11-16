@@ -1925,8 +1925,11 @@ impl<'a> ClassProperties<'a> {
 
     /// Transform private field in expression.
     ///
-    /// * Static
-    ///   `#prop in object` -> `_checkInRHS(object) === Class`
+    /// * Static prop
+    ///   `#prop in object` -> `_checkInRHS(object) === Class && !!_prop`
+    ///
+    /// * Static method
+    ///   `#method in object` -> `_checkInRHS(object) === Class`
     ///
     /// * Instance prop
     ///   `#prop in object` -> `_prop.has(_checkInRHS(object))`
@@ -1956,20 +1959,50 @@ impl<'a> ClassProperties<'a> {
     ) -> Expression<'a> {
         let PrivateInExpression { left, right, span, .. } = private_field.unbox();
 
-        let ResolvedPrivateProp { class_bindings, prop_binding, is_method, is_static, .. } =
-            self.classes_stack.find_private_prop(&left);
+        let ResolvedPrivateProp {
+            class_bindings,
+            prop_binding,
+            is_method,
+            is_static,
+            is_accessor,
+            ..
+        } = self.classes_stack.find_private_prop(&left);
 
         if is_static {
             let class_binding = class_bindings.get_or_init_static_binding(ctx);
             let class_ident = class_binding.create_read_expression(ctx);
+            let initialized = if is_method || is_accessor || self.private_fields_as_properties {
+                None
+            } else {
+                let storage = prop_binding.create_read_expression(ctx);
+                let uninitialized =
+                    Expression::new_unary_expression(SPAN, UnaryOperator::LogicalNot, storage, ctx);
+                Some(Expression::new_unary_expression(
+                    SPAN,
+                    UnaryOperator::LogicalNot,
+                    uninitialized,
+                    ctx,
+                ))
+            };
             let left = self.create_check_in_rhs(right, ctx);
-            return Expression::new_binary_expression(
+            let brand_check = Expression::new_binary_expression(
                 span,
                 left,
                 BinaryOperator::StrictEquality,
                 class_ident,
                 ctx,
             );
+            return if let Some(initialized) = initialized {
+                Expression::new_logical_expression(
+                    span,
+                    brand_check,
+                    LogicalOperator::And,
+                    initialized,
+                    ctx,
+                )
+            } else {
+                brand_check
+            };
         }
 
         let callee = if is_method {

@@ -1,6 +1,6 @@
 commit: d7a0cccb
 
-Passed: 736/1169
+Passed: 741/1169
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -737,7 +737,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-private-property-in-object (19/60)
+# babel-plugin-transform-private-property-in-object (24/60)
 * assumption-noUninitializedPrivateFieldAccess/static-field/input.js
 x Output mismatch
 
@@ -801,12 +801,6 @@ x Output mismatch
 * assumption-privateFieldsAsSymbols/static-method/input.js
 x Output mismatch
 
-* private/native-classes/input.js
-x Output mismatch
-
-* private/static-field/input.js
-x Output mismatch
-
 * private/static-shadow/input.js
 x Output mismatch
 
@@ -844,15 +838,6 @@ x Output mismatch
 x Output mismatch
 
 * to-native-fields/class-expression-in-default-param/input.js
-x Output mismatch
-
-* to-native-fields/class-expression-static/input.js
-x Output mismatch
-
-* to-native-fields/half-constructed-static/input.js
-x Output mismatch
-
-* to-native-fields/static-field/input.js
 x Output mismatch
 
 * to-native-fields/static-shadow/input.js

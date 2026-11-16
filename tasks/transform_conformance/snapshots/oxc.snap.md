@@ -1,10 +1,11 @@
 commit: d7a0cccb
 
-Passed: 326/453
+Passed: 327/454
 
 # All Passed:
 * babel-plugin-transform-class-static-block
 * babel-plugin-transform-private-methods
+* babel-plugin-transform-private-property-in-object
 * babel-plugin-transform-logical-assignment-operators
 * babel-plugin-transform-nullish-coalescing-operator
 * babel-plugin-transform-optional-chaining
