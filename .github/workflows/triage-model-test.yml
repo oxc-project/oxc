@@ -1,8 +1,6 @@
 name: Triage Model Test
 
 on:
-  push:
-    branches: [feat/triage-action-models]
   workflow_dispatch:
 
 permissions: {}
