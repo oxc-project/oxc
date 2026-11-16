@@ -1181,12 +1181,18 @@ mod test {
             "/*#__PURE__*/ callee()",
             "/*#__PURE__*/ callee<T>()",
             "/*#__PURE__*/ callee!.method()",
+            "/*#__PURE__*/ callee`template`",
+            "/*#__PURE__*/ callee<T>`template`",
         ] {
             let allocator = Allocator::default();
             let expr =
                 Parser::new(&allocator, source, SourceType::ts()).parse_expression().unwrap();
-            let Expression::CallExpression(call) = expr else { panic!("{source}") };
-            assert!(call.pure, "{source}");
+            let is_pure = match &expr {
+                Expression::CallExpression(call) => call.pure,
+                Expression::TaggedTemplateExpression(tagged) => tagged.pure,
+                _ => panic!("expected call or tagged template expression: {source}"),
+            };
+            assert!(is_pure, "{source}");
         }
 
         // Check both the assignment-expression entry and a binary RHS continuation.
@@ -1202,6 +1208,22 @@ mod test {
             let Expression::CallExpression(right) = &binary.right else { panic!("{source}") };
             assert_eq!(left.pure, annotated_left, "{source}");
             assert_eq!(right.pure, !annotated_left, "{source}");
+        }
+    }
+
+    #[test]
+    fn tagged_template_pure_annotation() {
+        for source in ["/*#__PURE__*/ foo`template`;", "/* @__PURE__ */ foo`a${b}`;"] {
+            let allocator = Allocator::default();
+            let ret = Parser::new(&allocator, source, SourceType::mjs()).parse();
+            assert!(ret.diagnostics.is_empty(), "{source}");
+            let Some(Statement::ExpressionStatement(stmt)) = &ret.program.body.first() else {
+                panic!("{source}");
+            };
+            let Expression::TaggedTemplateExpression(tagged) = &stmt.expression else {
+                panic!("{source}");
+            };
+            assert!(tagged.pure, "{source}");
         }
     }
 

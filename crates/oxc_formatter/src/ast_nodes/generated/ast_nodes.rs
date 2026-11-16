@@ -2096,6 +2096,11 @@ impl<'parent, 'a> AstNode<'parent, 'a, TaggedTemplateExpression<'a>> {
         }
     }
 
+    #[inline]
+    pub fn pure(&self) -> bool {
+        self.inner.pure
+    }
+
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }

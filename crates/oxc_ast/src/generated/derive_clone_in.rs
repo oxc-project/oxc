@@ -575,6 +575,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for TaggedTemplateExpression<'_> {
                 allocator,
             ),
             quasi: CloneIn::clone_in_impl(&self.quasi, with_semantic_ids, allocator),
+            pure: CloneIn::clone_in_impl(&self.pure, with_semantic_ids, allocator),
         }
     }
 }

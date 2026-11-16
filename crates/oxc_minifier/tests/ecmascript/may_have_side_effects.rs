@@ -1450,9 +1450,17 @@ fn test_call_like_expressions() {
     test("/* #__PURE__ */ new Foo(...`${bar()}`)", true);
     test("/* #__PURE__ */ new class { constructor() { foo() } }()", false);
 
+    test("foo``", true);
+    test("foo`1`", true);
+    test("foo`${bar()}`", true);
+    test("/* #__PURE__ */ foo``", false);
+    test("/* #__PURE__ */ foo`1`", false);
+    test("/* #__PURE__ */ foo`1${bar()}`", true);
+
     let ctx = Ctx { annotation: false, ..Default::default() };
     test_with_ctx("/* #__PURE__ */ foo()", &ctx, true);
     test_with_ctx("/* #__PURE__ */ new Foo()", &ctx, true);
+    test_with_ctx("/* #__PURE__ */ foo``", &ctx, true);
 }
 
 #[test]

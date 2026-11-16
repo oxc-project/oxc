@@ -787,7 +787,7 @@ impl<'a> MayHaveSideEffects<'a> for NewExpression<'a> {
 
 impl<'a> MayHaveSideEffects<'a> for TaggedTemplateExpression<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
-        if ctx.manual_pure_functions(&self.tag) {
+        if (self.pure && ctx.annotations()) || ctx.manual_pure_functions(&self.tag) {
             self.quasi.may_have_side_effects(ctx)
         } else {
             true

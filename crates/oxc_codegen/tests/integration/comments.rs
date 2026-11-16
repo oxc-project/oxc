@@ -225,6 +225,12 @@ fn test_comment_before_template_literal_interpolation() {
 }
 
 #[test]
+fn test_pure_annotation_on_tagged_template() {
+    test("const x = /*#__PURE__*/ tag`template`;", "const x = /*#__PURE__*/ tag`template`;\n");
+    test_idempotency("const x = /*#__PURE__*/ tag`template`;");
+}
+
+#[test]
 fn test_comment_at_top_of_file() {
     use oxc_allocator::Allocator;
     use oxc_ast::CommentPosition;

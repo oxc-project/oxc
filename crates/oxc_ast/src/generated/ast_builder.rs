@@ -907,6 +907,35 @@ impl<'a> Expression<'a> {
         ))
     }
 
+    /// Build an [`Expression::TaggedTemplateExpression`] with `pure`.
+    ///
+    /// This node contains a [`TaggedTemplateExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `tag`
+    /// * `type_arguments`
+    /// * `quasi`
+    /// * `pure`: `true` if the tagged template expression is marked with a `/* @__PURE__ */` comment
+    #[inline]
+    pub fn new_tagged_template_expression_with_pure(
+        span: Span,
+        tag: Expression<'a>,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        quasi: TemplateLiteral<'a>,
+        pure: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::TaggedTemplateExpression(TaggedTemplateExpression::boxed_with_pure(
+            span,
+            tag,
+            type_arguments,
+            quasi,
+            pure,
+            builder.builder(),
+        ))
+    }
+
     /// Build an [`Expression::ThisExpression`].
     ///
     /// This node contains a [`ThisExpression`] that will be stored in the memory arena.
@@ -2409,6 +2438,35 @@ impl<'a> ArrayExpressionElement<'a> {
         ))
     }
 
+    /// Build an [`ArrayExpressionElement::TaggedTemplateExpression`] with `pure`.
+    ///
+    /// This node contains a [`TaggedTemplateExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `tag`
+    /// * `type_arguments`
+    /// * `quasi`
+    /// * `pure`: `true` if the tagged template expression is marked with a `/* @__PURE__ */` comment
+    #[inline]
+    pub fn new_tagged_template_expression_with_pure(
+        span: Span,
+        tag: Expression<'a>,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        quasi: TemplateLiteral<'a>,
+        pure: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::TaggedTemplateExpression(TaggedTemplateExpression::boxed_with_pure(
+            span,
+            tag,
+            type_arguments,
+            quasi,
+            pure,
+            builder.builder(),
+        ))
+    }
+
     /// Build an [`ArrayExpressionElement::ThisExpression`].
     ///
     /// This node contains a [`ThisExpression`] that will be stored in the memory arena.
@@ -3818,6 +3876,35 @@ impl<'a> PropertyKey<'a> {
         ))
     }
 
+    /// Build a [`PropertyKey::TaggedTemplateExpression`] with `pure`.
+    ///
+    /// This node contains a [`TaggedTemplateExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `tag`
+    /// * `type_arguments`
+    /// * `quasi`
+    /// * `pure`: `true` if the tagged template expression is marked with a `/* @__PURE__ */` comment
+    #[inline]
+    pub fn new_tagged_template_expression_with_pure(
+        span: Span,
+        tag: Expression<'a>,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        quasi: TemplateLiteral<'a>,
+        pure: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::TaggedTemplateExpression(TaggedTemplateExpression::boxed_with_pure(
+            span,
+            tag,
+            type_arguments,
+            quasi,
+            pure,
+            builder.builder(),
+        ))
+    }
+
     /// Build a [`PropertyKey::ThisExpression`].
     ///
     /// This node contains a [`ThisExpression`] that will be stored in the memory arena.
@@ -4266,6 +4353,7 @@ impl<'a> TaggedTemplateExpression<'a> {
             tag,
             type_arguments,
             quasi,
+            pure: Default::default(),
         }
     }
 
@@ -4289,6 +4377,64 @@ impl<'a> TaggedTemplateExpression<'a> {
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(Self::new(span, tag, type_arguments, quasi, builder), &builder.allocator())
+    }
+
+    /// Build a [`TaggedTemplateExpression`] with `pure`.
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`TaggedTemplateExpression::boxed_with_pure`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `tag`
+    /// * `type_arguments`
+    /// * `quasi`
+    /// * `pure`: `true` if the tagged template expression is marked with a `/* @__PURE__ */` comment
+    #[inline]
+    pub fn new_with_pure(
+        span: Span,
+        tag: Expression<'a>,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        quasi: TemplateLiteral<'a>,
+        pure: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        let builder = builder.builder();
+        TaggedTemplateExpression {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            tag,
+            type_arguments,
+            quasi,
+            pure,
+        }
+    }
+
+    /// Build a [`TaggedTemplateExpression`] with `pure`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`TaggedTemplateExpression::new_with_pure`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `tag`
+    /// * `type_arguments`
+    /// * `quasi`
+    /// * `pure`: `true` if the tagged template expression is marked with a `/* @__PURE__ */` comment
+    #[inline]
+    pub fn boxed_with_pure(
+        span: Span,
+        tag: Expression<'a>,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        quasi: TemplateLiteral<'a>,
+        pure: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> ArenaBox<'a, Self> {
+        let builder = builder.builder();
+        ArenaBox::new_in(
+            Self::new_with_pure(span, tag, type_arguments, quasi, pure, builder),
+            &builder.allocator(),
+        )
     }
 }
 
@@ -5699,6 +5845,35 @@ impl<'a> Argument<'a> {
             tag,
             type_arguments,
             quasi,
+            builder.builder(),
+        ))
+    }
+
+    /// Build an [`Argument::TaggedTemplateExpression`] with `pure`.
+    ///
+    /// This node contains a [`TaggedTemplateExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `tag`
+    /// * `type_arguments`
+    /// * `quasi`
+    /// * `pure`: `true` if the tagged template expression is marked with a `/* @__PURE__ */` comment
+    #[inline]
+    pub fn new_tagged_template_expression_with_pure(
+        span: Span,
+        tag: Expression<'a>,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        quasi: TemplateLiteral<'a>,
+        pure: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::TaggedTemplateExpression(TaggedTemplateExpression::boxed_with_pure(
+            span,
+            tag,
+            type_arguments,
+            quasi,
+            pure,
             builder.builder(),
         ))
     }
@@ -11013,6 +11188,35 @@ impl<'a> ForStatementInit<'a> {
         ))
     }
 
+    /// Build a [`ForStatementInit::TaggedTemplateExpression`] with `pure`.
+    ///
+    /// This node contains a [`TaggedTemplateExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `tag`
+    /// * `type_arguments`
+    /// * `quasi`
+    /// * `pure`: `true` if the tagged template expression is marked with a `/* @__PURE__ */` comment
+    #[inline]
+    pub fn new_tagged_template_expression_with_pure(
+        span: Span,
+        tag: Expression<'a>,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        quasi: TemplateLiteral<'a>,
+        pure: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::TaggedTemplateExpression(TaggedTemplateExpression::boxed_with_pure(
+            span,
+            tag,
+            type_arguments,
+            quasi,
+            pure,
+            builder.builder(),
+        ))
+    }
+
     /// Build a [`ForStatementInit::ThisExpression`].
     ///
     /// This node contains a [`ThisExpression`] that will be stored in the memory arena.
@@ -14045,6 +14249,35 @@ impl<'a> ArrowFunctionBody<'a> {
             tag,
             type_arguments,
             quasi,
+            builder.builder(),
+        ))
+    }
+
+    /// Build an [`ArrowFunctionBody::TaggedTemplateExpression`] with `pure`.
+    ///
+    /// This node contains a [`TaggedTemplateExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `tag`
+    /// * `type_arguments`
+    /// * `quasi`
+    /// * `pure`: `true` if the tagged template expression is marked with a `/* @__PURE__ */` comment
+    #[inline]
+    pub fn new_tagged_template_expression_with_pure(
+        span: Span,
+        tag: Expression<'a>,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        quasi: TemplateLiteral<'a>,
+        pure: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::TaggedTemplateExpression(TaggedTemplateExpression::boxed_with_pure(
+            span,
+            tag,
+            type_arguments,
+            quasi,
+            pure,
             builder.builder(),
         ))
     }
@@ -17468,6 +17701,35 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         ))
     }
 
+    /// Build an [`ExportDefaultDeclarationKind::TaggedTemplateExpression`] with `pure`.
+    ///
+    /// This node contains a [`TaggedTemplateExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `tag`
+    /// * `type_arguments`
+    /// * `quasi`
+    /// * `pure`: `true` if the tagged template expression is marked with a `/* @__PURE__ */` comment
+    #[inline]
+    pub fn new_tagged_template_expression_with_pure(
+        span: Span,
+        tag: Expression<'a>,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        quasi: TemplateLiteral<'a>,
+        pure: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::TaggedTemplateExpression(TaggedTemplateExpression::boxed_with_pure(
+            span,
+            tag,
+            type_arguments,
+            quasi,
+            pure,
+            builder.builder(),
+        ))
+    }
+
     /// Build an [`ExportDefaultDeclarationKind::ThisExpression`].
     ///
     /// This node contains a [`ThisExpression`] that will be stored in the memory arena.
@@ -19546,6 +19808,35 @@ impl<'a> JSXExpression<'a> {
             tag,
             type_arguments,
             quasi,
+            builder.builder(),
+        ))
+    }
+
+    /// Build a [`JSXExpression::TaggedTemplateExpression`] with `pure`.
+    ///
+    /// This node contains a [`TaggedTemplateExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `tag`
+    /// * `type_arguments`
+    /// * `quasi`
+    /// * `pure`: `true` if the tagged template expression is marked with a `/* @__PURE__ */` comment
+    #[inline]
+    pub fn new_tagged_template_expression_with_pure(
+        span: Span,
+        tag: Expression<'a>,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        quasi: TemplateLiteral<'a>,
+        pure: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::TaggedTemplateExpression(TaggedTemplateExpression::boxed_with_pure(
+            span,
+            tag,
+            type_arguments,
+            quasi,
+            pure,
             builder.builder(),
         ))
     }

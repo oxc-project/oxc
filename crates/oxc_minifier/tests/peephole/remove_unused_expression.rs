@@ -528,6 +528,12 @@ fn test_fold_call_expression() {
     test("true && /* @__PURE__ */ noEffect()", "");
     test("false || /* @__PURE__ */ noEffect()", "");
 
+    test("foo``", "foo``");
+    test("foo`a`", "foo`a`");
+    test("/* @__PURE__ */ foo``", "");
+    test("/* @__PURE__ */ foo`a`", "");
+    test("/* @__PURE__ */ foo`a${b}`", "b;");
+
     test("var foo = () => 1; foo(), foo()", "var foo = () => 1");
     test_same("var foo = () => { bar() }; foo(), foo()");
     test_same("const a = (x) => x, b = () => a(1);");

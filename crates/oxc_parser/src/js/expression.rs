@@ -1877,6 +1877,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 new_expr.pure = true;
                 true
             }
+            Expression::TaggedTemplateExpression(tagged_template_expr) => {
+                tagged_template_expr.pure = true;
+                true
+            }
             expr @ match_member_expression!(Expression) => {
                 Self::set_pure_on_call_or_new_expr(expr.to_member_expression_mut().object_mut())
             }
