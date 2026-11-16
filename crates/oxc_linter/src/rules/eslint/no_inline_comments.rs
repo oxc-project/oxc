@@ -155,10 +155,6 @@ fn is_directive_comment(comment: &Comment, text: &str) -> bool {
         return true;
     }
 
-    // Block comments only: /* eslint ... */ (ESLint config directive with space),
-    // and /* global ... */, /* globals ... */, /* exported ... */.
-    // This matches ESLint's ESLINT_DIRECTIVE_PATTERN,
-    // `^(?:eslint[- ]|(?:globals?|exported) )`.
     if comment.is_block()
         && (trimmed.starts_with("eslint ")
             || trimmed.starts_with("eslint\t")
