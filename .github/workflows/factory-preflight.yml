@@ -1,0 +1,27 @@
+name: Factory preflight
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feat/oxc-factory]
+    paths:
+      - .github/workflows/factory-preflight.yml
+      - .github/scripts/factory-preflight.py
+
+permissions: {}
+
+jobs:
+  credentials:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check Cloudflare product access
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_KEY }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: python3 .github/scripts/factory-preflight.py

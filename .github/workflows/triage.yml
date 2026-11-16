@@ -27,7 +27,9 @@ concurrency:
 
 jobs:
   triage:
+    # Cut over only after the Factory Worker and signed webhook are verified.
     if: >-
+      vars.FACTORY_ENABLED != 'true' &&
       !github.event.issue.pull_request &&
       (github.event.action != 'created' ||
        (github.event.comment.user.login != 'github-actions[bot]' &&

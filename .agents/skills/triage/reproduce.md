@@ -18,7 +18,7 @@ Return a skipped result when:
 - `unsupported-version`: it is demonstrated only on an old Oxc version and
   cannot be shown on the checked-out revision.
 - `host-specific` or `unsupported-runtime`: reproduction fundamentally
-  requires a host or runtime absent from the Ubuntu runner.
+  requires a host or runtime absent from the Linux sandbox.
 - `maintainer-override`: a commenter whose `authorAssociation` is `MEMBER`,
   `COLLABORATOR`, or `OWNER` explicitly says not to auto-triage the issue.
 

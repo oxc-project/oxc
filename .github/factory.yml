@@ -1,0 +1,24 @@
+# Served by oxc-project/factory. Activate its webhook only after deployment.
+version: 1
+personas:
+  triage: false
+  reviewer: false
+  author: false
+triage:
+  enabled: true
+  autoPrOnFix: true
+  skill: .agents/skills/triage
+  prWriterSkill: .agents/skills/pr-writer
+  model: cloudflare-ai-gateway/claude-opus-5-5
+  thinkingLevel: high
+  verificationModel: cloudflare-ai-gateway/workers-ai/@cf/moonshotai/kimi-k2.6
+  installCommand:
+    - pnpm install --frozen-lockfile
+    - rustup show active-toolchain
+    - rustup component add clippy rustfmt
+  # Build the affected subsystem only after the report passes screening.
+  buildCommand: []
+advisories:
+  enabled: false
+prSafety:
+  enabled: false

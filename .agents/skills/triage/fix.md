@@ -1,12 +1,13 @@
 # Fix
 
-Before attempting a fix, read `issue.assignees` from the JSON event payload at
-`GITHUB_EVENT_PATH`. If the issue has any assignees, leave the fix to them:
-do not edit source code or add a fix regression. Append to
-`<triageDir>/report.md` that investigation is complete and implementation was
-left to the assignees, then return `fixed: false` with `commitMessage: null`.
-If assignment information cannot be read, report that and return the same
-result without attempting a fix.
+Before attempting a fix, read the assignees supplied in the initial issue
+context (`issueAssignees` or `issueDetails.assignees`). For the legacy Action,
+read `issue.assignees` from the JSON payload at `GITHUB_EVENT_PATH` instead.
+If the issue has assignees, leave implementation to them: do not edit source
+or add a fix regression. Append that investigation is complete and
+implementation was left to the assignees to `<triageDir>/report.md`, then
+return `fixed: false` with `commitMessage: null`. If assignment information
+is unavailable, report that and return the same result.
 
 Implement a fix only when verification found `bug` and diagnosis has specific,
 medium- or high-confidence evidence. Otherwise append why no safe fix was
@@ -47,7 +48,7 @@ Run `just fmt` after modifications and check for unrelated formatting changes.
 Do not claim success when a required check failed or could not run. Remove
 instrumentation and move scratch projects, reports, and logs into `<triageDir>`
 or delete them. Every non-ignored entry left in
-`git status --short --untracked-files=all` is committed by the action, so it
+`git status --short --untracked-files=all` is committed by the orchestrator, so it
 must list only the fix's source, regression, generated, and necessary
 documentation changes. Do not commit or push.
 
