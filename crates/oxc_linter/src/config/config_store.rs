@@ -98,7 +98,7 @@ impl LintConfig {
             options: options.clone(),
             path: path.clone().unwrap_or_default(),
             ignore_patterns: ignore_patterns.clone(),
-            extends: extends.clone(),
+            extends: Vec::new(),
             extends_configs: Vec::new(),
         }
     }
