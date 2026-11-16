@@ -136,8 +136,8 @@ impl Default for Scoping {
                 bindings: IndexVec::new(),
                 root_unresolved_references: UnresolvedReferences::new_in(allocator),
                 label_names: ArenaVec::new_in(&allocator),
-                label_parent_ids: ArenaVec::new_in(&allocator),
-                unresolved_label_names: ArenaVec::new_in(&allocator),
+                label_depths: ArenaVec::new_in(&allocator),
+                has_unresolved_labels: false,
             }),
         }
     }
@@ -309,8 +309,8 @@ pub struct ScopingInner<'cell> {
 
     /* Label Table Fields */
     label_names: ArenaVec<'cell, Ident<'cell>>,
-    label_parent_ids: ArenaVec<'cell, Option<LabelId>>,
-    unresolved_label_names: ArenaVec<'cell, Ident<'cell>>,
+    label_depths: ArenaVec<'cell, u32>,
+    has_unresolved_labels: bool,
 }
 
 // Symbol Table Methods
@@ -1201,8 +1201,6 @@ impl Scoping {
     }
 
     /// Iterate over all label IDs in creation order.
-    ///
-    /// Semantic analysis creates labels in source order, so a label's parent always precedes it.
     pub fn label_ids(&self) -> impl ExactSizeIterator<Item = LabelId> + '_ {
         (0..self.labels_len()).map(LabelId::from_usize)
     }
@@ -1213,27 +1211,21 @@ impl Scoping {
         self.cell.borrow_dependent().label_names[label_id.index()].as_str()
     }
 
-    /// Get the nearest enclosing label of a label.
+    /// Get the number of labels enclosing a label.
     ///
-    /// Labels are nested across function boundaries, so this is the nearest enclosing label
-    /// statement even if it is outside the function containing `label_id`.
+    /// Labels are nested across function boundaries, so this also counts enclosing labels
+    /// outside the function containing `label_id`.
     #[inline]
-    pub fn label_parent_id(&self, label_id: LabelId) -> Option<LabelId> {
-        self.cell.borrow_dependent().label_parent_ids[label_id.index()]
+    pub fn label_depth(&self, label_id: LabelId) -> u32 {
+        self.cell.borrow_dependent().label_depths[label_id.index()]
     }
 
-    /// Create a new label.
-    ///
-    /// `parent_id` is the nearest enclosing label, and must have been created before this label.
-    pub fn create_label(&mut self, name: Ident<'_>, parent_id: Option<LabelId>) -> LabelId {
+    /// Create a new label enclosed by `depth` other labels.
+    pub fn create_label(&mut self, name: Ident<'_>, depth: u32) -> LabelId {
         self.cell.with_dependent_mut(|allocator, cell| {
             let label_id = LabelId::from_usize(cell.label_names.len());
-            debug_assert!(
-                parent_id.is_none_or(|parent_id| parent_id < label_id),
-                "parent label must be created before its child"
-            );
             cell.label_names.push(name.clone_in(allocator));
-            cell.label_parent_ids.push(parent_id);
+            cell.label_depths.push(depth);
             label_id
         })
     }
@@ -1246,20 +1238,17 @@ impl Scoping {
         });
     }
 
-    /// Iterate over the names of `break` and `continue` labels that do not resolve to an
-    /// enclosing label.
+    /// Whether a `break` or `continue` label does not resolve to an enclosing label.
     ///
-    /// Codegen prints these names unchanged, so renamed labels must not use them.
-    pub fn unresolved_label_names(&self) -> impl Iterator<Item = &str> + '_ {
-        self.cell.borrow_dependent().unresolved_label_names.iter().map(Ident::as_str)
+    /// This only happens in invalid code. Codegen prints such labels unchanged.
+    #[inline]
+    pub fn has_unresolved_labels(&self) -> bool {
+        self.cell.borrow_dependent().has_unresolved_labels
     }
 
-    /// Record the name of a `break` or `continue` label that does not resolve to an enclosing
-    /// label.
-    pub fn add_unresolved_label_name(&mut self, name: Ident<'_>) {
-        self.cell.with_dependent_mut(|allocator, cell| {
-            cell.unresolved_label_names.push(name.clone_in(allocator));
-        });
+    /// Record that a `break` or `continue` label does not resolve to an enclosing label.
+    pub fn set_has_unresolved_labels(&mut self) {
+        self.cell.with_dependent_mut(|_, cell| cell.has_unresolved_labels = true);
     }
 }
 
@@ -1297,10 +1286,8 @@ impl Scoping {
                         .root_unresolved_references
                         .clone_in_with_semantic_ids(allocator),
                     label_names: cell.label_names.clone_in_with_semantic_ids(allocator),
-                    label_parent_ids: cell.label_parent_ids.clone_in_with_semantic_ids(allocator),
-                    unresolved_label_names: cell
-                        .unresolved_label_names
-                        .clone_in_with_semantic_ids(allocator),
+                    label_depths: cell.label_depths.clone_in_with_semantic_ids(allocator),
+                    has_unresolved_labels: cell.has_unresolved_labels,
                 })
             },
         }

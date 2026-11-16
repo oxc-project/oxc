@@ -23,10 +23,6 @@ impl<'a> UnusedLabels<'a> {
         self.stack.push(LabeledScope { name, used: false, node_id, label_id });
     }
 
-    pub fn current_label_id(&self) -> Option<LabelId> {
-        self.stack.last().map(|scope| scope.label_id)
-    }
-
     /// Start a function or static block, returning the previous boundary for [`Self::leave_jump_boundary`].
     pub fn enter_jump_boundary(&mut self) -> usize {
         std::mem::replace(&mut self.jump_boundary, self.stack.len())

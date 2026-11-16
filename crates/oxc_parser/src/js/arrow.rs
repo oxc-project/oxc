@@ -557,7 +557,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return None;
         }
 
-        let checkpoint = self.checkpoint_with_error_recovery();
+        let checkpoint = self.checkpoint();
 
         let head = self.parse_parenthesized_arrow_function_head();
         // Rejected heads are rewound, so do not construct an error for the missing arrow.
@@ -619,7 +619,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if self.state.not_parenthesized_arrow.contains(&pos) {
             return None;
         }
-        let checkpoint = self.checkpoint_with_error_recovery();
+        let checkpoint = self.checkpoint();
         let errors_len = self.errors.len();
         let (params, has_trailing_comma) = self.parse_cover_arrow_parameters();
         if !self.at(Kind::Arrow) {

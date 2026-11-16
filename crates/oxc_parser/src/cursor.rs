@@ -7,16 +7,16 @@ use oxc_str::JSStr;
 
 use crate::{
     ParserConfig as Config, ParserImpl, diagnostics,
-    error_handler::FatalError,
     lexer::{Kind, LexerCheckpoint, Token, cold_branch},
 };
 
+#[derive(Clone, Copy)]
 pub struct ParserCheckpoint<'a> {
     lexer: LexerCheckpoint<'a>,
     cur_token: Token,
     prev_token_end: u32,
     errors_pos: usize,
-    fatal_error: Option<FatalError<'a>>,
+    has_fatal_error: bool,
 }
 
 impl<'a, C: Config> ParserImpl<'a, C> {
@@ -335,35 +335,32 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
-    pub(crate) fn checkpoint(&mut self) -> ParserCheckpoint<'a> {
+    pub(crate) fn checkpoint(&self) -> ParserCheckpoint<'a> {
         ParserCheckpoint {
             lexer: self.lexer.checkpoint(),
             cur_token: self.token,
             prev_token_end: self.prev_token_end,
             errors_pos: self.errors.len(),
-            fatal_error: self.fatal_error.take(),
-        }
-    }
-
-    pub(crate) fn checkpoint_with_error_recovery(&mut self) -> ParserCheckpoint<'a> {
-        ParserCheckpoint {
-            lexer: self.lexer.checkpoint_with_error_recovery(),
-            cur_token: self.token,
-            prev_token_end: self.prev_token_end,
-            errors_pos: self.errors.len(),
-            fatal_error: self.fatal_error.take(),
+            has_fatal_error: self.fatal_error.is_some(),
         }
     }
 
     pub(crate) fn rewind(&mut self, checkpoint: ParserCheckpoint<'a>) {
-        let ParserCheckpoint { lexer, cur_token, prev_token_end, errors_pos, fatal_error } =
+        let ParserCheckpoint { lexer, cur_token, prev_token_end, errors_pos, has_fatal_error } =
             checkpoint;
 
+        // A fatal error set after the checkpoint is discarded. If it is a lexer error that
+        // `set_unexpected` took from the lexer, give it back.
+        if !has_fatal_error
+            && let Some(fatal_error) = self.fatal_error.take()
+            && self.lexer.errors.len() < lexer.errors_len()
+        {
+            self.lexer.errors.push(fatal_error.error);
+        }
         self.lexer.rewind(lexer);
         self.token = cur_token;
         self.prev_token_end = prev_token_end;
         self.errors.truncate(errors_pos);
-        self.fatal_error = fatal_error;
     }
 
     pub(crate) fn lookahead<U>(&mut self, predicate: impl Fn(&mut ParserImpl<'a, C>) -> U) -> U {

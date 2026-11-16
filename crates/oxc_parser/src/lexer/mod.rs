@@ -50,19 +50,18 @@ use source::{Source, SourcePosition};
 use token::PendingToken;
 use trivia_builder::{AnnotationComments, TriviaBuilder};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct LexerCheckpoint<'a> {
     source_position: SourcePosition<'a>,
-    errors_snapshot: ErrorSnapshot<'a>,
+    errors_len: usize,
     tokens_len: usize,
     annotation_comments: AnnotationComments,
 }
 
-#[derive(Debug)]
-enum ErrorSnapshot<'a> {
-    Empty,
-    Count(usize),
-    Full(Vec<ParserDiagnostic<'a>>),
+impl LexerCheckpoint<'_> {
+    pub(crate) fn errors_len(&self) -> usize {
+        self.errors_len
+    }
 }
 
 /// Action to take when finishing a token.
@@ -206,35 +205,9 @@ impl<'a, C: Config> Lexer<'a, C> {
         // `pending` is always `PendingToken::NONE` here, so it does not need to be saved. See `pending` field docs.
         debug_assert_eq!(self.pending, PendingToken::NONE);
 
-        let errors_snapshot = if self.errors.is_empty() {
-            ErrorSnapshot::Empty
-        } else {
-            ErrorSnapshot::Count(self.errors.len())
-        };
-
         LexerCheckpoint {
             source_position: self.source.position(),
-            errors_snapshot,
-            tokens_len: self.tokens.len(),
-            annotation_comments: self.trivia_builder.annotation_comments,
-        }
-    }
-
-    /// Create a checkpoint that can handle error popping.
-    /// This is more expensive as it clones the errors vector.
-    pub(crate) fn checkpoint_with_error_recovery(&self) -> LexerCheckpoint<'a> {
-        // `pending` is always `PendingToken::NONE` here, so it does not need to be saved. See `pending` field docs.
-        debug_assert_eq!(self.pending, PendingToken::NONE);
-
-        let errors_snapshot = if self.errors.is_empty() {
-            ErrorSnapshot::Empty
-        } else {
-            ErrorSnapshot::Full(self.errors.clone())
-        };
-
-        LexerCheckpoint {
-            source_position: self.source.position(),
-            errors_snapshot,
+            errors_len: self.errors.len(),
             tokens_len: self.tokens.len(),
             annotation_comments: self.trivia_builder.annotation_comments,
         }
@@ -245,11 +218,7 @@ impl<'a, C: Config> Lexer<'a, C> {
         // `pending` is always `PendingToken::NONE` here, so it does not need to be restored. See `pending` field docs.
         debug_assert_eq!(self.pending, PendingToken::NONE);
 
-        match checkpoint.errors_snapshot {
-            ErrorSnapshot::Empty => self.errors.clear(),
-            ErrorSnapshot::Count(len) => self.errors.truncate(len),
-            ErrorSnapshot::Full(errors) => self.errors = errors,
-        }
+        self.errors.truncate(checkpoint.errors_len);
 
         self.tokens.truncate(checkpoint.tokens_len);
         self.source.set_position(checkpoint.source_position);
