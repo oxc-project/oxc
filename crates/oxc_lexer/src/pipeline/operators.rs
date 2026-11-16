@@ -153,11 +153,13 @@ struct OpTablesData {
     op3: OpTableData<OP3_HASH_TABLE_SIZE>,
 }
 
-static OP2_TABLE: OpTable<OP2_HASH_TABLE_SIZE> = OpTable::new(&OP_TABLES_DATA.op2, 2, OP2_MUL);
-static OP3_TABLE: OpTable<OP3_HASH_TABLE_SIZE> = OpTable::new(&OP_TABLES_DATA.op3, 3, OP3_MUL);
+pub(super) static OP2_TABLE: OpTable<OP2_HASH_TABLE_SIZE> =
+    OpTable::new(&OP_TABLES_DATA.op2, 2, OP2_MUL);
+pub(super) static OP3_TABLE: OpTable<OP3_HASH_TABLE_SIZE> =
+    OpTable::new(&OP_TABLES_DATA.op3, 3, OP3_MUL);
 
 /// Operator hash table.
-struct OpTable<const TABLE_SIZE: usize> {
+pub(super) struct OpTable<const TABLE_SIZE: usize> {
     /// Lookup table data.
     data: &'static OpTableData<TABLE_SIZE>,
     /// Each slot's kind byte as a TokenKind, converted when the table is built.
@@ -204,7 +206,7 @@ impl<const TABLE_SIZE: usize> OpTable<TABLE_SIZE> {
     /// - `(pack & 0xFF_FFFF) == key` for 3-byte operators.
     #[cpu_multiversion]
     #[inline(always)]
-    fn pack(&self, key: u32, cpu: impl Cpu) -> (u32, TokenKind) {
+    pub(super) fn pack(&self, key: u32, cpu: impl Cpu) -> (u32, TokenKind) {
         let slot = self.data.slot(key, self.mul, cpu);
         (self.data.values[slot], self.kinds[slot])
     }
@@ -277,49 +279,6 @@ impl<const TABLE_SIZE: usize> OpTableData<TABLE_SIZE> {
     const fn slot(&self, key: u32, mul: u32, _cpu: impl Cpu) -> usize {
         (key.wrapping_mul(mul) >> (32 - Self::BITS)) as usize
     }
-}
-
-/// Hash `key` and get the packed value for a 2-byte operator from the hash table.
-/// Also returns the slot's kind as a TokenKind, which is Eof for an empty slot.
-///
-/// `key` must contain:
-/// - Bytes 0-1: 2 bytes of source
-/// - Bytes 2-3: 0
-///
-/// Returned value contains:
-/// - Bytes 0-1: 2 bytes of operator
-/// - Byte  2  : 0
-/// - Byte  3  : [`TokenKind`] of the operator as a `u8`
-///
-/// If no match, returns 0 (i.e. operator bytes `\0\0`, `TokenKind` byte 0).
-///
-/// Hashmap collisions are possible, so caller must additionally check that
-/// `(pack & 0xFFFF) == key` to confirm a match.
-#[cpu_multiversion]
-#[inline(always)]
-pub(super) fn opmap_pack2(key: u32, cpu: impl Cpu) -> (u32, TokenKind) {
-    OP2_TABLE.pack(key, cpu)
-}
-
-/// Hash `key` and get the packed value for a 3-byte operator from the hash table.
-/// Also returns the slot's kind as a TokenKind, which is Eof for an empty slot.
-///
-/// `key` must contain:
-/// - Bytes 0-2: 3 bytes of source
-/// - Byte  3  : 0
-///
-/// Returned value contains:
-/// - Bytes 0-2: 3 bytes of operator
-/// - Byte  3  : [`TokenKind`] of the operator as a `u8`
-///
-/// If no match, returns 0 (i.e. operator bytes `\0\0\0`, `TokenKind` byte 0).
-///
-/// Hashmap collisions are possible, so caller must additionally check that
-/// `(pack & 0xFF_FFFF) == key` to confirm a match.
-#[cpu_multiversion]
-#[inline(always)]
-pub(super) fn opmap_pack3(key: u32, cpu: impl Cpu) -> (u32, TokenKind) {
-    OP3_TABLE.pack(key, cpu)
 }
 
 /// Check if up to 4 bytes of source contains a 2-byte, 3-byte, or 4-byte operator.

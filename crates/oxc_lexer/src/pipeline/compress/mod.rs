@@ -1,6 +1,6 @@
 use std::{mem::MaybeUninit, slice};
 
-use oxc_simd::{Cpu, DynCpu, cpu_multiversion, cpu_version};
+use oxc_simd::{Cpu, DynCpu, cpu_multiversion};
 use oxc_span::Span;
 
 use crate::{
@@ -87,16 +87,6 @@ pub fn compress(
 fn kind_slots(slots: &mut [MaybeUninit<TokenKind>]) -> &mut [MaybeUninit<u8>] {
     // SAFETY: TokenKind is repr(u8), and a MaybeUninit byte may hold any value.
     unsafe { slice::from_raw_parts_mut(slots.as_mut_ptr().cast(), slots.len()) }
-}
-
-/// Initialize the global `PairLuts` instance.
-///
-/// `PairLuts` is only used by the SIMD implementations, so this function is a no-op on other CPUs.
-#[cpu_version(Generic)]
-pub(super) fn init_pair_luts(cpu: DynCpu) {
-    if matches!(cpu, DynCpu::Avx2(_) | DynCpu::Neon(_)) {
-        pair_luts::init_pair_luts();
-    }
 }
 
 /// Stage the token starts and kinds of blocks b0..b1, at most 64 a block; returns the count.

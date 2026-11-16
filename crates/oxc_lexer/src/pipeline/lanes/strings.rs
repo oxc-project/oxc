@@ -234,32 +234,20 @@ impl Lanes {
                     k += 1; // `}` consumed only on the well-formed path
                     if (0xD800..=0xDFFF).contains(&value) {
                         // lone surrogate via braces: invalid in identifiers
-                        self.push_diag(
-                            start as u32,
-                            (k - start) as u32,
-                            DiagCode::InvalidIdentifierEscape,
-                        );
+                        self.push_bad_ident_escape(start, k);
                     } else {
                         self.check_escaped_ident_char(value, at_start, k);
                     }
                 } else {
                     // overflow / no digits / missing `}`: end = parser stop
-                    self.push_diag(
-                        start as u32,
-                        (k - start) as u32,
-                        DiagCode::InvalidIdentifierEscape,
-                    );
+                    self.push_bad_ident_escape(start, k);
                 }
                 i = k;
                 continue;
             }
             let (h1, e1) = hex4(src, k, be);
             let Some(high) = h1 else {
-                self.push_diag(
-                    start as u32,
-                    (e1 - start) as u32,
-                    DiagCode::InvalidIdentifierEscape,
-                );
+                self.push_bad_ident_escape(start, e1);
                 i = e1;
                 continue;
             };
@@ -281,20 +269,22 @@ impl Lanes {
                 {
                     // A well-formed pair is still invalid in identifiers:
                     // one diag over both escapes.
-                    self.push_diag(
-                        start as u32,
-                        (low_end - start) as u32,
-                        DiagCode::InvalidIdentifierEscape,
-                    );
+                    self.push_bad_ident_escape(start, low_end);
                     i = low_end;
                     continue;
                 }
                 // Not a valid low: fall through - the parser rewinds and
                 // reports the first escape alone.
             }
-            self.push_diag(start as u32, (k - start) as u32, DiagCode::InvalidIdentifierEscape);
+            self.push_bad_ident_escape(start, k);
             i = k;
         }
+    }
+
+    /// An invalid escape in an identifier, spanning from after its backslash to end.
+    #[cpu_version(Generic)]
+    fn push_bad_ident_escape(&mut self, start: usize, end: usize) {
+        self.push_diag(start as u32, (end - start) as u32, DiagCode::InvalidIdentifierEscape);
     }
 }
 

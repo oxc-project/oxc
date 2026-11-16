@@ -8,13 +8,10 @@ use crate::pipeline::{bitmap::Bitmap, kinds::Kinds};
 
 use crate::token::{TRIVIA_MAX, TRIVIA_MIN, TokenKind, tk};
 
-use super::{build_spans, compress_blocks, init_pair_luts};
+use super::{build_spans, compress_blocks};
 
 #[test_cpus]
 fn compress_blocks_matches_scalar_reference(cpu: DynCpu) {
-    // Required before calling `compress_blocks`
-    init_pair_luts(cpu);
-
     let mut cases: Vec<Vec<u64>> = Vec::new();
     let all_pairs: Vec<u64> = (0..65536u64)
         .collect::<Vec<_>>()
