@@ -29,7 +29,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: oxc-project/triagebot-action
-          ref: 91a0897f426df1f303d3b8a087a2e88a0e6647bd
+          ref: d574ff99303b4db33a4ccc0c204aa63ce50154de
           persist-credentials: false
 
       - name: Set up Node.js
@@ -52,7 +52,7 @@ jobs:
           MODEL: ${{ matrix.model }}
           MODEL_EVAL: full
           MODEL_CONFIG: >-
-            {"@cf/zai-org/glm-5.3":{"api":"openai-completions","contextWindow":1048576,"maxTokens":16384,"reasoning":true,"thinkingLevelMap":{"off":null,"minimal":"low","low":"low","medium":"high","high":"high","xhigh":"max"},"compat":{"supportsReasoningEffort":true,"maxTokensField":"max_tokens","requiresReasoningContentOnAssistantMessages":true}},"@cf/deepseek-ai/deepseek-v4.1-flash-1017":{"api":"openai-completions","contextWindow":1048576,"maxTokens":16384,"reasoning":true,"thinkingLevelMap":{"off":"none","minimal":"low","low":"low","medium":"high","high":"high","xhigh":"max"},"compat":{"supportsReasoningEffort":true,"maxTokensField":"max_tokens","requiresReasoningContentOnAssistantMessages":true}},"@cf/thinkingmachines/inkling-2-small":{"api":"openai-completions","contextWindow":1048576,"maxTokens":16384,"reasoning":true,"thinkingLevelMap":{"off":"none","xhigh":"max"},"compat":{"supportsReasoningEffort":true,"maxTokensField":"max_tokens","requiresReasoningContentOnAssistantMessages":true}}}
+            {"@cf/deepseek-ai/deepseek-v4.1-flash-1017":{"api":"openai-completions","contextWindow":1048576,"maxTokens":16384,"reasoning":true,"thinkingLevelMap":{"off":"none","minimal":"low","low":"low","medium":"high","high":"high","xhigh":"max"},"compat":{"supportsReasoningEffort":true,"maxTokensField":"max_tokens","requiresReasoningContentOnAssistantMessages":true}},"@cf/thinkingmachines/inkling-2-small":{"api":"openai-completions","contextWindow":1048576,"maxTokens":16384,"reasoning":true,"thinkingLevelMap":{"off":"none","xhigh":"max"},"compat":{"supportsReasoningEffort":true,"maxTokensField":"max_tokens","requiresReasoningContentOnAssistantMessages":true}}}
           CLOUDFLARE_API_KEY: ${{ secrets.CLOUDFLARE_API_KEY }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: pnpm test:model

@@ -6,7 +6,7 @@
 #   - CAPTAIN_KEY: the oxc-captain GitHub App's private key.
 #   - CLOUDFLARE_API_KEY: an inference token with access to the selected models.
 #   - CLOUDFLARE_ACCOUNT_ID: the Cloudflare account ID.
-#   - Kimi K3.1 Pro requires funded inference billing on that account.
+#   - GLM-5.3 uses Workers Paid billing or prepaid AI Gateway credits.
 
 name: Issue Triage
 
@@ -85,14 +85,14 @@ jobs:
 
       - name: Triage the issue
         # The Oxc fork accepts new catalog models without a bundled registry update.
-        uses: oxc-project/triagebot-action@fee3b2cd2a38418a5c9560d08eb8fc34cec7f6b5
+        uses: oxc-project/triagebot-action@d574ff99303b4db33a4ccc0c204aa63ce50154de
         with:
           read-token: ${{ github.token }}
           write-token: ${{ steps.app-token.outputs.token }}
           cloudflare-api-key: ${{ secrets.CLOUDFLARE_API_KEY }}
           cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          triage-model: cloudflare-ai/moonshotai/kimi-k3.1-pro
-          verification-model: cloudflare-ai/moonshotai/kimi-k3.1-pro
+          triage-model: cloudflare-ai/@cf/zai-org/glm-5.3
+          verification-model: cloudflare-ai/@cf/zai-org/glm-5.3
           triage-skill: .agents/skills/triage
           pr-skill: .agents/skills/pr-writer
           # Leave assigned issues with their assignees; only auto-open PRs for unassigned issues.
