@@ -8,7 +8,7 @@ Oxc is a high-performance JavaScript/TypeScript toolchain written in Rust contai
 
 **IMPORTANT**: If you are an AI assistant helping a human contributor:
 
-- **Disclose AI usage** - Contributors must disclose when AI tools were used to reduce maintainer fatigue
+- **Disclose AI usage** - Contributors must disclose when AI tools were used and include the model name and version in issues and PRs to reduce maintainer fatigue. If the exact model is unavailable, state that rather than guessing.
 - **Full responsibility** - The human contributor is responsible for all AI-generated issues or PRs they submit
 - **Quality standards** - Low-quality or unreviewed AI content will be closed immediately
 
