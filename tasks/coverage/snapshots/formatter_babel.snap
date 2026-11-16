@@ -2,7 +2,7 @@ commit: 16a2d671
 
 formatter_babel Summary:
 AST Parsed     : 2358/2358 (100.00%)
-Positive Passed: 2352/2358 (99.75%)
+Positive Passed: 2350/2358 (99.66%)
 Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/class-method/input.js
 
 Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/class-private-method/input.js
@@ -15,3 +15,7 @@ Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basi
 
 Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/sequence-expression/input.js
 
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-body-invalid-params/input.ts
+Expected `:` but found `Identifier`
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-body-invalid-params-error-recovery-false/input.ts
+Expected `:` but found `Identifier`
