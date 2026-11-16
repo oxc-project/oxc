@@ -156,7 +156,7 @@ function attributeCount(specificity: number): number {
   return (specificity >> ATTRIBUTE_COUNT_SHIFT) & ATTRIBUTE_COUNT_MAX;
 }
 
-// Matches a node whose ancestors are ancestors.slice(depth), without creating that slice
+// Checks a node whose ancestors are ancestors.slice(depth), without creating that slice
 type Matcher = (node: ESTreeNode, depth: number) => boolean;
 
 // Parsed selector.
@@ -370,17 +370,16 @@ export function wrapVisitFnWithSelectorMatch(visitFn: VisitFn, matcher: Matcher)
 const EMPTY_ANCESTRY: EsqueryNode[] = [];
 
 const TYPE_NAMES_BY_LOWERCASE = new Map(
-  [...NODE_TYPE_IDS_MAP.keys()].map((name) => [name.toLowerCase(), name]),
+  Array.from(NODE_TYPE_IDS_MAP.keys(), (name) => [name.toLowerCase(), name]),
 );
 
-// Compile an esquery selector into a matcher which reads ancestors in place instead of slicing them
 function compileMatcher(selector: EsquerySelector): Matcher {
   switch (selector.type) {
     case "wildcard":
       return () => true;
 
     case "identifier": {
-      // esquery compares types case-insensitively, and only nodes of known types are walked
+      // esquery matches types case-insensitively, and nodes of unknown types are never walked
       const typeName = TYPE_NAMES_BY_LOWERCASE.get(selector.value.toLowerCase());
       return typeName === undefined ? () => false : (node) => node.type === typeName;
     }
@@ -401,17 +400,11 @@ function compileMatcher(selector: EsquerySelector): Matcher {
     }
 
     case "not": {
-      const matchers = selector.selectors.map(compileMatcher);
-      return (node, depth) => {
-        for (let i = 0; i < matchers.length; i++) {
-          if (matchers[i](node, depth)) return false;
-        }
-        return true;
-      };
+      const matches = compileMatcher({ ...selector, type: "matches" });
+      return (node, depth) => !matches(node, depth);
     }
 
     case "compound": {
-      // Check the node's own type and attributes before anything that walks other nodes
       const matchers = selector.selectors
         .toSorted((a, b) => Number(isExpensive(a)) - Number(isExpensive(b)))
         .map(compileMatcher);
@@ -424,15 +417,13 @@ function compileMatcher(selector: EsquerySelector): Matcher {
     }
 
     case "child": {
-      const left = compileMatcher(selector.left),
-        right = compileMatcher(selector.right);
+      const [left, right] = [selector.left, selector.right].map(compileMatcher);
       return (node, depth) =>
         depth < ancestors.length && right(node, depth) && left(ancestors[depth], depth + 1);
     }
 
     case "descendant": {
-      const left = compileMatcher(selector.left),
-        right = compileMatcher(selector.right);
+      const [left, right] = [selector.left, selector.right].map(compileMatcher);
       return (node, depth) => {
         if (!right(node, depth)) return false;
         for (let i = depth; i < ancestors.length; i++) {
@@ -450,14 +441,13 @@ function compileMatcher(selector: EsquerySelector): Matcher {
 
     case "attribute":
     case "has":
-      // These only look at the node and its descendants, so ancestry is irrelevant
+      // esquery ignores ancestry for these, so an empty array avoids slicing
       return (node) => {
         typeAssertIs<EsqueryNode>(node);
         return esqueryMatches(node, selector, EMPTY_ANCESTRY, ESQUERY_OPTIONS);
       };
 
     default:
-      // Sibling and nth-child selectors are rare, so fall back to esquery with a real ancestry array
       return (node, depth) => {
         const ancestry = depth === 0 ? ancestors : ancestors.slice(depth);
         typeAssertIs<EsqueryNode>(node);
@@ -487,7 +477,7 @@ function isExpensive(selector: EsquerySelector): boolean {
   }
 }
 
-// Same as esquery's inPath
+// Copied from esquery's inPath
 function isInPath(node: ESTreeNode, ancestor: unknown, path: string[], fromIndex: number): boolean {
   let current = ancestor;
   for (let i = fromIndex; i < path.length; i++) {
