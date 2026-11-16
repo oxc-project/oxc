@@ -2,7 +2,7 @@ use oxc_allocator::Allocator;
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_benchmark::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
 use oxc_estree_tokens::{ESTreeTokenOptionsJS, to_estree_tokens_json};
-use oxc_parser::{ParseOptions, Parser, ParserReturn, config::RuntimeParserConfig};
+use oxc_parser::{ParseOptions, ParserReturn, Source, config::RuntimeParserConfig};
 use oxc_tasks_common::TestFiles;
 
 fn bench_parser(criterion: &mut Criterion) {
@@ -19,14 +19,19 @@ fn bench_parser(criterion: &mut Criterion) {
             // so we do the same here.
             let mut allocator = Allocator::default();
 
-            b.iter(|| {
-                Parser::new(&allocator, source_text, source_type)
-                    .with_options(ParseOptions {
+            b.iter_with_setup_wrapper(|runner| {
+                allocator.reset();
+
+                // Do not include copying source text into arena in benchmark.
+                // In real-world usage, user would load source direct from a file.
+                let source = Source::from_str(source_text, source_type, &allocator);
+
+                runner.run(|| {
+                    source.parse_with_options(ParseOptions {
                         parse_regular_expression: true,
                         ..ParseOptions::default()
                     })
-                    .parse();
-                allocator.reset();
+                });
             });
         });
     }
@@ -47,13 +52,12 @@ fn bench_estree(criterion: &mut Criterion) {
             b.iter_with_setup_wrapper(|runner| {
                 allocator.reset();
 
-                let mut program = Parser::new(&allocator, source_text, source_type)
-                    .with_options(ParseOptions {
+                let mut program = Source::from_str(source_text, source_type, &allocator)
+                    .parse_with_options(ParseOptions {
                         parse_regular_expression: true,
                         enable_ident_hashes: false,
                         ..ParseOptions::default()
                     })
-                    .parse()
                     .program;
 
                 runner.run(|| {
@@ -89,14 +93,14 @@ fn bench_estree_tokens(criterion: &mut Criterion) {
                 // but this is just a benchmark, and it's better if we don't entwine this benchmark with `bench_estree`.
                 let config = RuntimeParserConfig::new(true);
 
-                let ret = Parser::new(&allocator, source_text, source_type)
-                    .with_options(ParseOptions {
+                let ret = Source::from_str(source_text, source_type, &allocator).parse_with_config(
+                    ParseOptions {
                         parse_regular_expression: true,
                         enable_ident_hashes: false,
                         ..ParseOptions::default()
-                    })
-                    .with_config(config)
-                    .parse();
+                    },
+                    config,
+                );
                 let ParserReturn { program, tokens, .. } = ret;
 
                 // Creating span converter is not performed in measured section, as we only want to measure tokens.

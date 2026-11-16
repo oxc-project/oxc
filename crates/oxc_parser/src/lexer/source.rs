@@ -5,7 +5,7 @@ use oxc_data_structures::{
     brands::{Brand, BrandOrigin},
 };
 
-use crate::MAX_LEN;
+use crate::{MAX_LEN, source::ValidSource};
 
 use super::search::SEARCH_BATCH_SIZE;
 
@@ -49,7 +49,7 @@ use super::search::SEARCH_BATCH_SIZE;
 /// Invariants (1), (2) and (3) must be upheld at all times.
 /// Invariant (4) can be temporarily broken, as long as caller ensures it's satisfied again.
 ///
-/// Invariants (1) and (2) are enforced by initializing `start` and `end` from a valid `&str`,
+/// Invariants (1) and (2) are enforced by initializing `start` and `end` from a `ValidSource`,
 /// and they are never modified after initialization.
 ///
 /// Safe methods of `LexerSource` enforce invariant (3) i.e. they do not allow reading past EOF.
@@ -101,21 +101,25 @@ pub(super) struct LexerSource<'a> {
 }
 
 impl<'a> LexerSource<'a> {
-    /// Create [`LexerSource`] from `&str`.
+    /// Create [`LexerSource`] from a [`ValidSource`].
     ///
     /// `brand_origin` is the origin of this `LexerSource`'s brand `'a` (see [`LexerSource`] docs).
-    pub(super) fn new(mut source_text: &'a str, brand_origin: BrandOrigin<'a>) -> Self {
+    pub(super) fn new(source: &ValidSource<'a>, brand_origin: BrandOrigin<'a>) -> Self {
+        // `ValidSource` guarantees the source text is followed by `Source::PADDING` NUL bytes,
+        // and that this pointer has provenance over the padding too
+        let mut start = source.as_ptr();
+        // SAFETY: Adding length of the source text to the starting pointer gives a pointer
+        // at the end of the source text, which is the start of the padding
+        let mut end = unsafe { start.add(source.len()) };
+
         // If source text exceeds size limit, substitute a short source text which will fail to parse.
         // `Parser::parse` will convert error to `diagnostics::overlong_source()`.
-        if source_text.len() > MAX_LEN {
-            source_text = "\0";
+        if source.len() > MAX_LEN {
+            static DUMMY_SOURCE: &str = "\0";
+            start = DUMMY_SOURCE.as_ptr();
+            // SAFETY: `DUMMY_SOURCE` is 1 byte long
+            end = unsafe { start.add(1) };
         }
-
-        let start = source_text.as_ptr();
-        // SAFETY: Adding `source_text.len()` to the starting pointer gives a pointer
-        // at the end of `source_text`. `end` will never be dereferenced, only checked
-        // for direct pointer equality with `ptr` to check if at end of file.
-        let end = unsafe { start.add(source_text.len()) };
 
         // `saturating_sub` not `wrapping_sub` so that value doesn't wrap around if source
         // is very short, and has very low memory address (e.g. 16). If that's the case,

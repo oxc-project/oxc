@@ -2496,6 +2496,7 @@ dependencies = [
  "pico-args",
  "rustc-hash",
  "seq-macro",
+ "simdutf8",
 ]
 
 [[package]]

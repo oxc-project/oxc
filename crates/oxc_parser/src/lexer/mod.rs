@@ -20,7 +20,11 @@ use oxc_str::JSStr;
 use crate::{
     config::LexerConfig as Config,
     diagnostics::{self, ParserDiagnostic},
+    source::ValidSource,
 };
+
+#[cfg(any(test, feature = "benchmarking"))]
+use crate::source::Source;
 
 mod byte_handlers;
 mod comment;
@@ -148,17 +152,14 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// Create new `Lexer`.
     ///
     /// `brand_origin` is for the `Lexer`'s `LexerSource` (see `LexerSource` docs).
-    pub(super) fn new(
-        allocator: &'a Allocator,
-        source_text: &'a str,
-        source_type: SourceType,
-        config: C,
-        brand_origin: BrandOrigin<'a>,
-    ) -> Self {
-        let source = LexerSource::new(source_text, brand_origin);
+    pub(super) fn new(source: &ValidSource<'a>, config: C, brand_origin: BrandOrigin<'a>) -> Self {
+        let allocator = source.allocator();
+        let source_type = source.source_type();
+        let source_len = source.len();
+        let source = LexerSource::new(source, brand_origin);
 
         // If collecting tokens, allocate enough space so that the `Vec<Token>` will not have to grow during parsing.
-        // `source_text.len() + 1` is almost always a large overestimate of number of tokens, but it's impossible to
+        // `source.len() + 1` is almost always a large overestimate of number of tokens, but it's impossible to
         // have more than N + 1 tokens in a file which is N bytes long, so it'll never be an underestimate.
         //
         // + 1 is to account for the final `Eof` token. Without adding 1, the capacity could be too small for
@@ -169,7 +170,7 @@ impl<'a, C: Config> Lexer<'a, C> {
         //
         // However, we should choose a better heuristic based on real-world observation, and bring this usage down.
         let tokens = if config.tokens() {
-            ArenaVec::with_capacity_in(source_text.len() + 1, &allocator)
+            ArenaVec::with_capacity_in(source_len + 1, &allocator)
         } else {
             ArenaVec::new_in(&allocator)
         };
@@ -201,18 +202,24 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// For tests and benchmarks only.
     /// The parser creates its `Lexer` with `ParserImpl::scope`, and `Lexer::new`.
     ///
+    /// # Panics
+    ///
+    /// Panics if `source` is not valid UTF-8.
+    ///
     /// [`brands`]: oxc_data_structures::brands
     #[cfg(any(test, feature = "benchmarking"))]
     pub fn scope<R>(
-        allocator: &'a Allocator,
-        source_text: &'a str,
-        source_type: SourceType,
+        source: Source<'a>,
         config: C,
         f: impl for<'brand> FnOnce(Lexer<'brand, C>) -> R,
     ) -> R {
+        let Ok(source) = ValidSource::new(source) else {
+            panic!("Source is invalid");
+        };
+
         BrandOrigin::scope_within(|brand_origin, _: BrandScope<'_, 'a>| {
-            // `allocator` and `source_text` are shortened from `'a` to `'brand` here
-            let lexer = Lexer::new(allocator, source_text, source_type, config, brand_origin);
+            // `source` is shortened from `'a` to `'brand` here
+            let lexer = Lexer::new(&source, config, brand_origin);
             f(lexer)
         })
     }

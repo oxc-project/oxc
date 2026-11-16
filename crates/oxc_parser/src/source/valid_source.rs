@@ -1,0 +1,95 @@
+//! [`ValidSource`] - a [`Source`] which has been validated, and so can be parsed.
+
+use std::{ptr::NonNull, slice, str};
+
+use oxc_allocator::Allocator;
+use oxc_span::SourceType;
+
+use crate::diagnostics::{self, ParserDiagnostic};
+
+use super::Source;
+
+/// A [`Source`] which has been validated, and so can be parsed.
+///
+/// Its source text is:
+///
+/// - Valid UTF-8.
+/// - Followed by [`Source::PADDING`] zero bytes.
+///
+/// The only way to create a `ValidSource` is [`ValidSource::new`], which performs the validation.
+/// `ParserImpl::new` takes a `ValidSource`, so a `ParserImpl` cannot be created for a source
+/// which has not been validated.
+//
+// # Invariants
+//
+// 1. `ptr` points to a region of memory `len + Source::PADDING` bytes long.
+// 2. `ptr` is valid for reading all of that region, for the whole of `'a`.
+// 3. Nothing writes to any part of the region during `'a`.
+// 4. The first `len` bytes of the region are valid UTF-8.
+// 5. The `Source::PADDING` bytes after them are zero.
+pub struct ValidSource<'a> {
+    /// Pointer to start of source text.
+    ptr: NonNull<u8>,
+    /// Length of source text in bytes, not including padding.
+    len: usize,
+    /// Source type to parse source as.
+    source_type: SourceType,
+    /// Allocator which source text is stored in.
+    allocator: &'a Allocator,
+}
+
+impl<'a> ValidSource<'a> {
+    /// Validate a [`Source`], and convert it to a [`ValidSource`].
+    ///
+    /// # Errors
+    ///
+    /// Returns the [`ParserDiagnostic`] to report, if source is not valid UTF-8.
+    #[inline]
+    pub fn new(mut source: Source<'a>) -> Result<Self, ParserDiagnostic<'a>> {
+        if !source.is_valid_utf8 && source.validate_utf8().is_err() {
+            return Err(diagnostics::file_appears_to_be_binary());
+        }
+
+        // `Source`'s invariants cover all of `ValidSource`'s, except for the UTF-8 check above.
+        // `source` is consumed, so nothing can write to the region after this.
+        let Source { ptr, len, source_type, allocator, .. } = source;
+        Ok(Self { ptr, len, source_type, allocator })
+    }
+
+    /// Get source text.
+    #[inline]
+    pub fn source_text(&self) -> &'a str {
+        // SAFETY: `ptr` points to `len` bytes, which are valid for reads for `'a`,
+        // and nothing writes to them during `'a`
+        let bytes = unsafe { slice::from_raw_parts(self.ptr.as_ptr(), self.len) };
+        // SAFETY: Those bytes are valid UTF-8
+        unsafe { str::from_utf8_unchecked(bytes) }
+    }
+
+    /// Get pointer to start of source text.
+    ///
+    /// The pointer is valid for reading the source text and the [`Source::PADDING`] bytes
+    /// which follow it, for the whole of `'a`.
+    #[inline]
+    pub fn as_ptr(&self) -> *const u8 {
+        self.ptr.as_ptr().cast_const()
+    }
+
+    /// Get length of source text in bytes, not including padding.
+    #[inline]
+    pub fn len(&self) -> usize {
+        self.len
+    }
+
+    /// Get [`SourceType`] which source will be parsed as.
+    #[inline]
+    pub fn source_type(&self) -> SourceType {
+        self.source_type
+    }
+
+    /// Get [`Allocator`] which source text is stored in.
+    #[inline]
+    pub fn allocator(&self) -> &'a Allocator {
+        self.allocator
+    }
+}
