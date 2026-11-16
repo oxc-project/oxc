@@ -160,8 +160,8 @@ function attributeCount(specificity: number): number {
 interface Selector {
   // Array of IDs of types this selector matches, or `null` if selector matches all types.
   typeIds: NodeTypeId[] | null;
-  // `esquery` selector object for this selector.
-  esquerySelector: EsquerySelector;
+  // Function which checks if a node matches this selector.
+  matcher: Matcher;
   // `true` if selector applies matching beyond just filtering on node type.
   // * `FunctionExpression > Identifier` is complex.
   // * `:matches(FunctionExpression, FunctionDeclaration)` is not complex.
@@ -193,7 +193,7 @@ export function parseSelector(key: string): Selector {
 
   selector = {
     typeIds: null,
-    esquerySelector,
+    matcher: compileMatcher(esquerySelector),
     isComplex: false,
     specificity: 0,
   };
@@ -347,30 +347,154 @@ function analyzeSelector(
 }
 
 /**
- * Wrap a visit function so it's only called if the provided `EsquerySelector` matches the AST node.
+ * Wrap a visit function so it's only called if the provided selector matcher matches the AST node.
  *
  * IMPORTANT: Selector matching will only be correct if `ancestors` from `generated/walk.js`
  * contains the ancestors of the AST node passed to the returned visit function.
  * Therefore, the returned visit function can only be called during AST traversal.
  *
  * @param visitFn - Visit function to wrap
- * @param esquerySelector - `EsquerySelector` object
+ * @param matcher - Selector matcher from `parseSelector`
  * @returns Wrapped visit function
  */
-export function wrapVisitFnWithSelectorMatch(
-  visitFn: VisitFn,
-  esquerySelector: EsquerySelector,
-): VisitFn {
+export function wrapVisitFnWithSelectorMatch(visitFn: VisitFn, matcher: Matcher): VisitFn {
   return (node: Node) => {
-    if (
-      esqueryMatches(
-        node as unknown as EsqueryNode,
-        esquerySelector,
-        ancestors as unknown as EsqueryNode[],
-        ESQUERY_OPTIONS,
-      )
-    ) {
-      visitFn(node);
-    }
+    typeAssertIs<ESTreeNode>(node);
+    if (matcher(node, 0)) visitFn(node);
   };
+}
+
+// Matches a node whose ancestors are ancestors.slice(depth), without creating that slice
+type Matcher = (node: ESTreeNode, depth: number) => boolean;
+
+const EMPTY_ANCESTRY: EsqueryNode[] = [];
+
+const TYPE_NAMES_BY_LOWERCASE = new Map(
+  [...NODE_TYPE_IDS_MAP.keys()].map((name) => [name.toLowerCase(), name]),
+);
+
+function compileMatcher(selector: EsquerySelector): Matcher {
+  switch (selector.type) {
+    case "wildcard":
+      return () => true;
+
+    case "identifier": {
+      // esquery compares types case-insensitively
+      const value = selector.value.toLowerCase();
+      const typeName = TYPE_NAMES_BY_LOWERCASE.get(value);
+      return typeName === undefined
+        ? (node) => node.type.toLowerCase() === value
+        : (node) => node.type === typeName;
+    }
+
+    case "field": {
+      const path = selector.name.split(".");
+      return (node, depth) => isInPath(node, ancestors[depth + path.length - 1], path, 0);
+    }
+
+    case "matches": {
+      const matchers = selector.selectors.map(compileMatcher);
+      return (node, depth) => {
+        for (let i = 0; i < matchers.length; i++) {
+          if (matchers[i](node, depth)) return true;
+        }
+        return false;
+      };
+    }
+
+    case "not": {
+      const matchers = selector.selectors.map(compileMatcher);
+      return (node, depth) => {
+        for (let i = 0; i < matchers.length; i++) {
+          if (matchers[i](node, depth)) return false;
+        }
+        return true;
+      };
+    }
+
+    case "compound": {
+      // Check the node's own type and attributes before anything that walks other nodes
+      const matchers = [
+        ...selector.selectors.filter((child) => !isExpensive(child)),
+        ...selector.selectors.filter(isExpensive),
+      ].map(compileMatcher);
+      return (node, depth) => {
+        for (let i = 0; i < matchers.length; i++) {
+          if (!matchers[i](node, depth)) return false;
+        }
+        return true;
+      };
+    }
+
+    case "child": {
+      const left = compileMatcher(selector.left),
+        right = compileMatcher(selector.right);
+      return (node, depth) =>
+        depth < ancestors.length && right(node, depth) && left(ancestors[depth], depth + 1);
+    }
+
+    case "descendant": {
+      const left = compileMatcher(selector.left),
+        right = compileMatcher(selector.right);
+      return (node, depth) => {
+        if (!right(node, depth)) return false;
+        for (let i = depth; i < ancestors.length; i++) {
+          if (left(ancestors[i], i + 1)) return true;
+        }
+        return false;
+      };
+    }
+
+    case "class":
+      return (node) =>
+        matchesSelectorClass(selector.name, node as unknown as EsqueryNode, EMPTY_ANCESTRY);
+
+    case "attribute":
+    case "has":
+      // These only look at the node and its descendants, so ancestry is irrelevant
+      return (node) =>
+        esqueryMatches(node as unknown as EsqueryNode, selector, EMPTY_ANCESTRY, ESQUERY_OPTIONS);
+
+    default:
+      // Sibling and nth-child selectors are rare, so fall back to esquery with a real ancestry array
+      return (node, depth) =>
+        esqueryMatches(
+          node as unknown as EsqueryNode,
+          selector,
+          (depth === 0 ? ancestors : ancestors.slice(depth)) as unknown as EsqueryNode[],
+          ESQUERY_OPTIONS,
+        );
+  }
+}
+
+function isExpensive(selector: EsquerySelector): boolean {
+  switch (selector.type) {
+    case "child":
+    case "descendant":
+    case "sibling":
+    case "adjacent":
+    case "nth-child":
+    case "nth-last-child":
+    case "field":
+    case "has":
+      return true;
+    case "matches":
+    case "not":
+    case "compound":
+      return selector.selectors.some(isExpensive);
+    default:
+      return false;
+  }
+}
+
+// Same as esquery's inPath
+function isInPath(node: ESTreeNode, ancestor: unknown, path: string[], fromIndex: number): boolean {
+  let current = ancestor;
+  for (let i = fromIndex; i < path.length; i++) {
+    if (current == null) return false;
+    const field: unknown = Object(current)[path[i]];
+    if (Array.isArray(field)) return field.some((child) => isInPath(node, child, path, i + 1));
+    current = field;
+  }
+  return node === current;
 }
