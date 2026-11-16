@@ -95,15 +95,36 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.
    ╭─[radix.tsx:1:16]
- 1 │ parseInt("10", ...bar);
-   ·                ──────
+ 1 │ parseInt("10", -10);
+   ·                ───
    ╰────
   help: The radix parameter should be an integer between 2 and 36, or a variable that is not `undefined`.
 
   ⚠ eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.
-   ╭─[radix.tsx:1:15]
- 1 │ parseInt(foo, ...bar);
-   ·               ──────
+   ╭─[radix.tsx:1:16]
+ 1 │ parseInt("10", +37);
+   ·                ───
+   ╰────
+  help: The radix parameter should be an integer between 2 and 36, or a variable that is not `undefined`.
+
+  ⚠ eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.
+   ╭─[radix.tsx:1:16]
+ 1 │ parseInt("10", 10n);
+   ·                ───
+   ╰────
+  help: The radix parameter should be an integer between 2 and 36, or a variable that is not `undefined`.
+
+  ⚠ eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.
+   ╭─[radix.tsx:1:16]
+ 1 │ parseInt("10", (undefined));
+   ·                ───────────
+   ╰────
+  help: The radix parameter should be an integer between 2 and 36, or a variable that is not `undefined`.
+
+  ⚠ eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.
+   ╭─[radix.tsx:1:16]
+ 1 │ parseInt("10", 1, ...rest);
+   ·                ─
    ╰────
   help: The radix parameter should be an integer between 2 and 36, or a variable that is not `undefined`.
 
