@@ -3,20 +3,6 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ eslint(no-inline-comments): Unexpected comment inline with code
-   ╭─[no_inline_comments.tsx:1:8]
- 1 │ foo(); /* globalfoo */
-   ·        ───────────────
-   ╰────
-  help: Move the comment to a separate line
-
-  ⚠ eslint(no-inline-comments): Unexpected comment inline with code
-   ╭─[no_inline_comments.tsx:1:8]
- 1 │ foo(); /* exportedfoo */
-   ·        ─────────────────
-   ╰────
-  help: Move the comment to a separate line
-
-  ⚠ eslint(no-inline-comments): Unexpected comment inline with code
    ╭─[no_inline_comments.tsx:1:12]
  1 │ var a = 1; /*A block comment inline after code*/
    ·            ─────────────────────────────────────
@@ -337,5 +323,19 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╭─▶                                 */ /*
  6 │ ╰─▶                                    lines */
  7 │                                 }
+   ╰────
+  help: Move the comment to a separate line
+
+  ⚠ eslint(no-inline-comments): Unexpected comment inline with code
+   ╭─[no_inline_comments.tsx:1:8]
+ 1 │ foo(); /* globalfoo */
+   ·        ───────────────
+   ╰────
+  help: Move the comment to a separate line
+
+  ⚠ eslint(no-inline-comments): Unexpected comment inline with code
+   ╭─[no_inline_comments.tsx:1:8]
+ 1 │ foo(); /* exportedfoo */
+   ·        ─────────────────
    ╰────
   help: Move the comment to a separate line

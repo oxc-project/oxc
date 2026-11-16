@@ -223,9 +223,6 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("foo(); /* global foo */", None),
-        ("foo(); /* globals foo */", None),
-        ("var foo; /* exported foo */", None),
         (
             "// A valid comment before code
 			var a = 1;",
@@ -319,11 +316,12 @@ fn test() {
             "var foo = 2; // Note: This comment is legal.",
             Some(serde_json::json!([{ "ignorePattern": "Note:" }])),
         ),
+        ("foo(); /* global foo */", None),
+        ("foo(); /* globals foo */", None),
+        ("var foo; /* exported foo */", None),
     ];
 
     let fail = vec![
-        ("foo(); /* globalfoo */", None),
-        ("foo(); /* exportedfoo */", None),
         ("var a = 1; /*A block comment inline after code*/", None),
         ("/*A block comment inline before code*/ var a = 2;", None),
         // Line comments with global/globals/exported are NOT directive (only block comments are)
@@ -498,7 +496,9 @@ fn test() {
 			                       lines */
 			                }
 			                </div>
-			            )", None)
+			            )", None),
+        ("foo(); /* globalfoo */", None),
+        ("foo(); /* exportedfoo */", None),
     ];
 
     Tester::new(NoInlineComments::NAME, NoInlineComments::PLUGIN, pass, fail).test_and_snapshot();
