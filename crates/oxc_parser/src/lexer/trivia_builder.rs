@@ -195,7 +195,9 @@ impl<'a> TriviaBuilder<'a> {
 
         let content_span = comment.content_span();
         let bytes = &source_text.as_bytes()[content_span.start as usize..content_span.end as usize];
-        comment.content = comment_content(bytes, false, content_span, source_text);
+        comment.content = comment_content(bytes, false, content_span, source_text, || {
+            contains_license_or_preserve_comment(bytes)
+        });
 
         // This newly added comment may be preceded by a newline.
         // Use `saw_newline_for_comment` which tracks newlines since the last comment or token,
@@ -221,11 +223,53 @@ impl<'a> TriviaBuilder<'a> {
     }
 
     /// Add a block comment.
+    ///
+    /// `has_legal_tag` is whether the comment contains `@license` or `@preserve`.
+    /// The lexer finds that out while it searches for the end of the comment.
     pub(super) fn add_block_comment(
         &mut self,
         start: u32,
         end: u32,
         kind: CommentKind,
+        has_legal_tag: bool,
+        source_text: &str,
+        pending: &mut PendingToken,
+    ) {
+        self.add_block_comment_with(start, end, kind, |_| has_legal_tag, source_text, pending);
+    }
+
+    /// Add a block comment which the lexer has not searched for `@license` or `@preserve`.
+    ///
+    /// It is searched here, if what the comment is depends on that.
+    pub(super) fn add_unsearched_block_comment(
+        &mut self,
+        start: u32,
+        end: u32,
+        kind: CommentKind,
+        source_text: &str,
+        pending: &mut PendingToken,
+    ) {
+        self.add_block_comment_with(
+            start,
+            end,
+            kind,
+            contains_license_or_preserve_comment,
+            source_text,
+            pending,
+        );
+    }
+
+    /// Add a block comment.
+    ///
+    /// `has_legal_tag` is called with the content of the comment, if what the comment is depends
+    /// on whether it contains `@license` or `@preserve`.
+    #[inline]
+    fn add_block_comment_with(
+        &mut self,
+        start: u32,
+        end: u32,
+        kind: CommentKind,
+        has_legal_tag: impl FnOnce(&[u8]) -> bool,
         source_text: &str,
         pending: &mut PendingToken,
     ) {
@@ -237,7 +281,8 @@ impl<'a> TriviaBuilder<'a> {
 
         let content_span = comment.content_span();
         let bytes = &source_text.as_bytes()[content_span.start as usize..content_span.end as usize];
-        comment.content = comment_content(bytes, true, content_span, source_text);
+        comment.content =
+            comment_content(bytes, true, content_span, source_text, || has_legal_tag(bytes));
 
         // This newly added comment may be preceded by a newline.
         // Use `saw_newline_for_comment` which tracks newlines since the last comment or token,
@@ -256,7 +301,7 @@ impl<'a> TriviaBuilder<'a> {
     /// The comments array is an ordered vec, only add the comment if its not added before,
     /// to avoid situations where the parser needs to rewind and tries to reinsert the comment.
     #[inline]
-    fn is_seen_comment(&self, start: u32) -> bool {
+    pub(super) fn is_seen_comment(&self, start: u32) -> bool {
         self.comments.is_seen(start)
     }
 
@@ -496,13 +541,16 @@ impl<'a> TriviaBuilder<'a> {
 
 /// Work out what a comment is from its content.
 ///
-/// `bytes` is the content of the comment, which `content_span` is the span of.
+/// * `bytes` is the content of the comment, which `content_span` is the span of.
+/// * `has_legal_tag` returns whether the comment contains `@license` or `@preserve`.
+///   It is only called if what the comment is depends on that.
 #[inline]
 fn comment_content(
     bytes: &[u8],
     is_block: bool,
     content_span: Span,
     source_text: &str,
+    has_legal_tag: impl FnOnce() -> bool,
 ) -> CommentContent {
     // Check first byte for quick routing
     match bytes.first() {
@@ -513,7 +561,7 @@ fn comment_content(
             // Ignore webpack comment `/*****/`
             return if bytes.iter().all(|&c| c == b'*') {
                 CommentContent::None
-            } else if contains_license_or_preserve_comment(bytes) {
+            } else if has_legal_tag() {
                 CommentContent::JsdocLegal
             } else {
                 CommentContent::Jsdoc
@@ -541,11 +589,7 @@ fn comment_content(
 
     // Check for `@license` or `@preserve` anywhere in the comment.
     // This handles cases like `/* @foo @preserve */` where the first `@` doesn't match known patterns.
-    if contains_license_or_preserve_comment(bytes) {
-        CommentContent::Legal
-    } else {
-        CommentContent::None
-    }
+    if has_legal_tag() { CommentContent::Legal } else { CommentContent::None }
 }
 
 /// Work out what a comment is, where `bytes[start]` is its first byte which is not whitespace,
@@ -667,7 +711,7 @@ fn is_property_key_annotation(source: &str) -> bool {
 
 /// Returns `true` if `hay` contains `@license` or `@preserve`.
 #[inline(always)]
-fn contains_license_or_preserve_comment(hay: &[u8]) -> bool {
+pub(super) fn contains_license_or_preserve_comment(hay: &[u8]) -> bool {
     const LICENSE_LEN: usize = b"@license".len();
     const PRESERVE_LEN: usize = b"@preserve".len();
 
@@ -740,7 +784,7 @@ mod test {
                     let allocator = Allocator::default();
                     let mut builder = TriviaBuilder::new_in(&allocator);
                     let mut pending = PendingToken::START_OF_FILE;
-                    builder.add_block_comment(
+                    builder.add_unsearched_block_comment(
                         0,
                         annotation_end,
                         CommentKind::SingleLineBlock,
@@ -748,7 +792,7 @@ mod test {
                         &mut pending,
                     );
                     if !suffix.is_empty() {
-                        builder.add_block_comment(
+                        builder.add_unsearched_block_comment(
                             annotation_end,
                             source_end,
                             CommentKind::SingleLineBlock,
@@ -772,7 +816,7 @@ mod test {
 
                     // Replaying the annotation must restore its range without changing
                     // whether it was already applied, even when a later comment exists.
-                    builder.add_block_comment(
+                    builder.add_unsearched_block_comment(
                         0,
                         annotation_end,
                         CommentKind::SingleLineBlock,
