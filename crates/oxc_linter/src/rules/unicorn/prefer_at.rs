@@ -381,12 +381,7 @@ impl PreferAt {
                     if is_arguments_object(&slice_static.object) {
                         return fixer.noop();
                     }
-                    create_at_fix(
-                        &fixer,
-                        slice_static.object.span(),
-                        Span::new(slice_static.object.span().start, call_expr.span.end),
-                        -1,
-                    )
+                    create_slice_at_fix(&fixer, slice_static.object.span(), call_expr.span, -1)
                 },
             );
         }
@@ -413,10 +408,10 @@ impl PreferAt {
                     if is_arguments_object(&slice_static.object) {
                         return fixer.noop();
                     }
-                    create_at_fix(
+                    create_slice_at_fix(
                         &fixer,
                         slice_static.object.span(),
-                        Span::new(slice_static.object.span().start, call_expr.span.end),
+                        call_expr.span,
                         first_negative,
                     )
                 },
@@ -433,10 +428,10 @@ impl PreferAt {
                         if is_arguments_object(&slice_static.object) {
                             return fixer.noop();
                         }
-                        create_at_fix(
+                        create_slice_at_fix(
                             &fixer,
                             slice_static.object.span(),
-                            Span::new(slice_static.object.span().start, call_expr.span.end),
+                            call_expr.span,
                             first_negative,
                         )
                     },
@@ -737,6 +732,19 @@ fn create_at_fix(
     index: i64,
 ) -> RuleFix {
     create_at_fix_with_arg(fixer, object_span, full_span, &index.to_string())
+}
+
+fn create_slice_at_fix(
+    fixer: &RuleFixer<'_, '_>,
+    object_span: Span,
+    full_span: Span,
+    index: i64,
+) -> RuleFix {
+    if full_span.start < object_span.start {
+        fixer.replace(full_span, format!("({}.at({index}))", fixer.source_range(object_span)))
+    } else {
+        create_at_fix(fixer, object_span, full_span, index)
+    }
 }
 
 fn create_at_fix_with_arg(
@@ -1156,6 +1164,33 @@ fn test() {
         ("result = ((array.slice(-1)))[0]", "result = array.at(-1)", None),
         ("([a = array.slice(-1)[0]] = [])", "([a = array.at(-1)] = [])", None),
         ("({a: b = array.slice(-1)[0]} = {})", "({a: b = array.at(-1)} = {})", None),
+        ("(( array.slice(-1) )).pop();", "(array.at(-1));", None),
+        ("(( array.slice(-1).pop ))();", "(array.at(-1));", None),
+        ("(( array.slice(-9, -8).shift ))()", "(array.at(-9))", None),
+        ("(( (( array.slice( ((-9)), ((unknown)), ).shift ))() ));", "(( (array.at(-9)) ));", None),
+        ("((array.slice(-9, -8)).pop)()", "(array.at(-9))", None),
+        (
+            "function f(array){return(array.slice(-1)).pop()}",
+            "function f(array){return(array.at(-1))}",
+            None,
+        ),
+        (
+            "function f(array){throw(array.slice(-9, -8).pop)()}",
+            "function f(array){throw(array.at(-9))}",
+            None,
+        ),
+        (
+            "function* f(array){yield(array.slice(-1).shift)()}",
+            "function* f(array){yield(array.at(-1))}",
+            None,
+        ),
+        (
+            "async function f(array){await(array.slice(-9, -8)).shift()}",
+            "async function f(array){await(array.at(-9))}",
+            None,
+        ),
+        ("({slice(){return []}}.slice(-1)).pop()", "({slice(){return []}}.at(-1))", None),
+        ("(function(){}.slice(-1)).pop()", "(function(){}.at(-1))", None),
     ];
 
     Tester::new(PreferAt::NAME, PreferAt::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();

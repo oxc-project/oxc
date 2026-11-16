@@ -5,7 +5,7 @@ use oxc_str::{JSStr, JSStrBuilder};
 use crate::{config::LexerConfig as Config, diagnostics};
 
 use super::{
-    Kind, Lexer, Span, Token, cold_branch,
+    FinishTokenMode, Kind, Lexer, SourcePosition, Span, Token, cold_branch,
     search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
 };
 
@@ -51,48 +51,90 @@ fn find_string_chunk_end<const DELIMITER: u8>(
 /// `$table` must only match `$delimiter`, '\', '\r' or '\n'.
 macro_rules! handle_string_literal {
     ($lexer:ident, $delimiter:literal, $table:ident) => {{
+        let pos = $lexer.source.position();
+        match handle_plain_string_literal!($lexer, pos, $delimiter, $table) {
+            Ok(_) => Kind::Str,
+            // An escape, or an unterminated string, which is invalid JS. Either way, a cold path.
+            // Building the diagnostic out-of-line keeps the `OxcDiagnostic` return buffer out of
+            // this handler's stack frame.
+            Err(next_byte) => cold_branch(|| {
+                handle_string_literal_rest!($lexer, pos, $delimiter, $table, next_byte)
+            }),
+        }
+    }};
+}
+
+/// Macro to read a string literal up to its closing quote, or to the first thing in it which is not
+/// plain text. The opening quote is at `$pos`.
+///
+/// Evaluates to `Ok(end)` if the string contains no escapes. `end` is the position after the closing
+/// quote, and position of `lexer.source` has been set to it.
+///
+/// Otherwise evaluates to `Err(byte)`, and `handle_string_literal_rest!` handles the rest of the string:
+/// * `byte` is `\`, `\r` or `\n`: position of `lexer.source` is on that byte.
+/// * `byte` is 0: the source ended. Position of `lexer.source` is the end of the source.
+///
+/// # SAFETY
+/// `$delimiter` must be an ASCII byte.
+/// `$pos` must be the position of a `$delimiter` byte.
+/// `$table` must be a `SafeByteMatchTable`.
+/// `$table` must only match `$delimiter`, '\', '\r' or '\n'.
+macro_rules! handle_plain_string_literal {
+    ($lexer:ident, $pos:ident, $delimiter:literal, $table:ident) => {{
         debug_assert!($delimiter.is_ascii());
 
         // Skip opening quote.
-        // SAFETY: Caller guarantees next byte is ASCII, so safe to advance past it.
-        let after_opening_quote = $lexer.source.position().add(1);
+        // SAFETY: Caller guarantees byte at `$pos` is ASCII, so safe to advance past it.
+        let after_opening_quote = $pos.add(1);
 
         // Consume bytes which are part of string
         let next_byte = byte_search! {
             lexer: $lexer,
             table: $table,
             start: after_opening_quote,
-            handle_eof: {
-                // Unterminated string is invalid JS, so a cold path. Building the diagnostic
-                // out-of-line keeps the `OxcDiagnostic` return buffer out of this handler's
-                // stack frame (matching the sibling `\\` and line-break arms below).
-                return cold_branch(|| {
-                    $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
-                    Kind::Undetermined
-                });
-            },
+            // `$table` does not match 0, so the search only produces it at EOF
+            handle_eof: 0,
         };
 
-        // Found a matching byte.
-        // Either end of string found, or a line break, or `\` escape.
-        match next_byte {
-            $delimiter => {
-                // SAFETY: Macro user guarantees delimiter is ASCII, so consuming it cannot move
-                // `lexer.source` off a UTF-8 character boundary.
-                $lexer.source.next_byte_unchecked();
-                Kind::Str
-            }
-            b'\\' => cold_branch(|| {
+        if next_byte == $delimiter {
+            // SAFETY: Macro user guarantees delimiter is ASCII, so consuming it cannot move
+            // `lexer.source` off a UTF-8 character boundary.
+            let end = $lexer.source.position().add(1);
+            $lexer.source.set_position(end);
+            Ok(end)
+        } else {
+            Err(next_byte)
+        }
+    }};
+}
+
+/// Macro to handle the rest of a string literal whose opening quote is at `$pos`,
+/// after `handle_plain_string_literal!` evaluated to `Err($next_byte)` for it.
+///
+/// Evaluates to the `Kind` of the token. May also return it from the enclosing function.
+///
+/// # SAFETY
+/// As for `handle_plain_string_literal!`.
+/// Position of `lexer.source` must be where `handle_plain_string_literal!` left it.
+macro_rules! handle_string_literal_rest {
+    ($lexer:ident, $pos:ident, $delimiter:literal, $table:ident, $next_byte:ident) => {{
+        match $next_byte {
+            b'\\' => {
+                // SAFETY: Macro user guarantees byte at `$pos` is ASCII, so safe to advance past it.
+                let after_opening_quote = $pos.add(1);
                 handle_string_literal_escape!($lexer, $delimiter, $table, after_opening_quote)
-            }),
+            }
+            0 => {
+                // End of source
+                $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
+                Kind::Undetermined
+            }
             _ => {
-                // Line break. This is impossible in valid JS, so cold path.
-                cold_branch(|| {
-                    debug_assert!(matches!(next_byte, b'\r' | b'\n'));
-                    $lexer.consume_char();
-                    $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
-                    Kind::Undetermined
-                })
+                // Line break
+                debug_assert!(matches!($next_byte, b'\r' | b'\n'));
+                $lexer.consume_char();
+                $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
+                Kind::Undetermined
             }
         }
     }};
@@ -298,6 +340,102 @@ impl<'a, C: Config> Lexer<'a, C> {
         // SAFETY: Caller guarantees next char is `'`, which is ASCII.
         // b'\'' is an ASCII byte. `SINGLE_QUOTE_STRING_END_TABLE` is a `SafeByteMatchTable`.
         unsafe { handle_string_literal!(self, b'\'', SINGLE_QUOTE_STRING_END_TABLE) }
+    }
+
+    /// Read string literal delimited with `"`, up to its closing quote, or to the first thing in it
+    /// which is not plain text.
+    ///
+    /// Returns `Ok(end)` if the string contains no escapes. `end` is the position after the closing
+    /// quote, which position of source has been set to.
+    ///
+    /// Otherwise returns `Err(next_byte)`. `string_token_rest_double_quote` reads the rest.
+    ///
+    /// # SAFETY
+    /// `pos` must be the position of a `"`.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub(super) unsafe fn read_plain_string_literal_double_quote(
+        &mut self,
+        pos: SourcePosition<'a>,
+    ) -> Result<SourcePosition<'a>, u8> {
+        // SAFETY: Caller guarantees byte at `pos` is `"`, which is ASCII.
+        // `DOUBLE_QUOTE_STRING_END_TABLE` is a `SafeByteMatchTable`.
+        unsafe { handle_plain_string_literal!(self, pos, b'"', DOUBLE_QUOTE_STRING_END_TABLE) }
+    }
+
+    /// Read string literal delimited with `'`, up to its closing quote, or to the first thing in it
+    /// which is not plain text.
+    ///
+    /// Returns `Ok(end)` if the string contains no escapes. `end` is the position after the closing
+    /// quote, which position of source has been set to.
+    ///
+    /// Otherwise returns `Err(next_byte)`. `string_token_rest_single_quote` reads the rest.
+    ///
+    /// # SAFETY
+    /// `pos` must be the position of a `'`.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub(super) unsafe fn read_plain_string_literal_single_quote(
+        &mut self,
+        pos: SourcePosition<'a>,
+    ) -> Result<SourcePosition<'a>, u8> {
+        // SAFETY: Caller guarantees byte at `pos` is `'`, which is ASCII.
+        // `SINGLE_QUOTE_STRING_END_TABLE` is a `SafeByteMatchTable`.
+        unsafe { handle_plain_string_literal!(self, pos, b'\'', SINGLE_QUOTE_STRING_END_TABLE) }
+    }
+
+    /// Read the rest of the string literal whose opening `"` is at `pos`, and finish the token,
+    /// after `read_plain_string_literal_double_quote` returned `Err(next_byte)` for it.
+    ///
+    /// The string contains an escape, or is unterminated. Neither is common.
+    /// `pending` must reflect the trivia seen since the previous token.
+    ///
+    /// # SAFETY
+    /// * `pos` must be the position of a `"`.
+    /// * Position of source must be where `read_plain_string_literal_double_quote` left it.
+    #[cold]
+    #[inline(never)]
+    pub(super) unsafe fn string_token_rest_double_quote(
+        &mut self,
+        pos: SourcePosition<'a>,
+        next_byte: u8,
+    ) -> Token {
+        // Escaped strings and diagnostics are recorded against `token_start`
+        self.token_start = self.source.offset_of(pos);
+        // SAFETY: Caller guarantees byte at `pos` is `"`, which is ASCII, and that position
+        // of source is as `handle_plain_string_literal!` left it.
+        // `DOUBLE_QUOTE_STRING_END_TABLE` is a `SafeByteMatchTable`.
+        let kind = cold_branch(|| unsafe {
+            handle_string_literal_rest!(self, pos, b'"', DOUBLE_QUOTE_STRING_END_TABLE, next_byte)
+        });
+        self.finish_next_inner(kind, self.source.position(), FinishTokenMode::Push)
+    }
+
+    /// Read the rest of the string literal whose opening `'` is at `pos`, and finish the token,
+    /// after `read_plain_string_literal_single_quote` returned `Err(next_byte)` for it.
+    ///
+    /// The string contains an escape, or is unterminated. Neither is common.
+    /// `pending` must reflect the trivia seen since the previous token.
+    ///
+    /// # SAFETY
+    /// * `pos` must be the position of a `'`.
+    /// * Position of source must be where `read_plain_string_literal_single_quote` left it.
+    #[cold]
+    #[inline(never)]
+    pub(super) unsafe fn string_token_rest_single_quote(
+        &mut self,
+        pos: SourcePosition<'a>,
+        next_byte: u8,
+    ) -> Token {
+        // Escaped strings and diagnostics are recorded against `token_start`
+        self.token_start = self.source.offset_of(pos);
+        // SAFETY: Caller guarantees byte at `pos` is `'`, which is ASCII, and that position
+        // of source is as `handle_plain_string_literal!` left it.
+        // `SINGLE_QUOTE_STRING_END_TABLE` is a `SafeByteMatchTable`.
+        let kind = cold_branch(|| unsafe {
+            handle_string_literal_rest!(self, pos, b'\'', SINGLE_QUOTE_STRING_END_TABLE, next_byte)
+        });
+        self.finish_next_inner(kind, self.source.position(), FinishTokenMode::Push)
     }
 
     fn save_js_string(&mut self, value: JSStr<'a>) {

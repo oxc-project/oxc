@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.159.0] - 2026-11-16
+
+### 🚀 Features
+
+- eb1833e mangler: Mangle labels (#29614) (camc314)
+
+### 🐛 Bug Fixes
+
+- 1dc0ee9 semantic: Preserve catch and var binding identities (#28739) (Dunqing)
+
+### ⚡ Performance
+
+- 846adbb mangler: Skip a liveness walk that never marks a scope (#29391) (Dunqing)
+
 ## [0.158.0] - 2026-11-09
 
 ### ⚡ Performance

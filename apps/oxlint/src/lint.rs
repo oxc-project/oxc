@@ -72,7 +72,7 @@ impl CliRunner {
     }
 
     /// # Panics
-    pub fn run(self, stdout: &mut dyn Write) -> CliRunResult {
+    pub fn run(self, stdout: &mut dyn Write, stderr: &mut dyn Write) -> CliRunResult {
         let format_str = self.options.output_options.format;
         let debug_files = self.options.output_options.debug.contains(DebugOption::Files);
         let debug_timings = self.options.output_options.debug.contains(DebugOption::Timings);
@@ -94,7 +94,7 @@ impl CliRunner {
         } = self.options;
 
         if basic_options.init {
-            return crate::mode::run_init(&self.cwd, stdout);
+            return crate::mode::run_init(&self.cwd, stdout, stderr);
         }
 
         let external_linter = self.external_linter.as_ref();
@@ -565,7 +565,7 @@ impl CliRunner {
                 return CliRunResult::TsGoLintError;
             }
         };
-        write_and_flush_stdout(stdout, &rendered);
+        write_and_flush(stdout, &rendered);
 
         let suppress_all_succeeded = suppression_options.suppress_all && result.is_ok();
 
@@ -722,12 +722,16 @@ impl CliRunner {
 }
 
 pub fn print_and_flush_stdout(stdout: &mut dyn Write, message: &str) {
-    write_and_flush_stdout(stdout, message.as_bytes());
+    write_and_flush(stdout, message.as_bytes());
 }
 
-fn write_and_flush_stdout(stdout: &mut dyn Write, bytes: &[u8]) {
-    stdout.write_all(bytes).or_else(check_for_writer_error).unwrap();
-    stdout.flush().or_else(check_for_writer_error).unwrap();
+pub fn print_and_flush_stderr(stderr: &mut dyn Write, message: &str) {
+    write_and_flush(stderr, message.as_bytes());
+}
+
+fn write_and_flush(out: &mut dyn Write, bytes: &[u8]) {
+    out.write_all(bytes).or_else(check_for_writer_error).unwrap();
+    out.flush().or_else(check_for_writer_error).unwrap();
 }
 
 fn check_for_writer_error(error: std::io::Error) -> Result<(), std::io::Error> {
@@ -1278,18 +1282,19 @@ mod test {
     }
 
     #[test]
-    fn test_fix() {
+    fn test_fix_no_new_wrappers() {
         let tester = Tester::new().with_cwd("fixtures/cli/fix_argument".into());
-        tester.test_fix(
-            "fix.js",
-            "var x = new String('Hello world');\n",
-            "var x = 'Hello world';\n",
-        );
-        tester.test_fix(
-            "fix.vue",
-            "<script>var x = new String('Hello world');</script>\n<script>var y = new String('Hello world');</script>\n",
-            "<script>var x = 'Hello world';</script>\n<script>var y = 'Hello world';</script>\n",
-        );
+        for (file, before, after) in [
+            ("fix.js", "var x = new String('Hello world');\n", "var x = 'Hello world';\n"),
+            (
+                "fix.vue",
+                "<script>var x = new String('Hello world');</script>\n<script>var y = new String('Hello world');</script>\n",
+                "<script>var x = 'Hello world';</script>\n<script>var y = 'Hello world';</script>\n",
+            ),
+        ] {
+            tester.test_fix(file, before, before);
+            tester.test_fix_with_args(file, before, after, &["--fix-suggestions"]);
+        }
     }
 
     #[test]
@@ -1588,8 +1593,9 @@ mod test {
         assert!(!fs::exists(&config_path).unwrap());
 
         let tester = Tester::new().with_cwd(temp_dir.path().to_path_buf());
-        let (output, result) = tester.test_output(&["--init"]);
+        let (output, stderr, result) = tester.test_output_with_stderr(&["--init"]);
         assert_eq!(output, "Configuration file created\n");
+        assert_eq!(stderr, "");
         assert!(matches!(result, CliRunResult::ConfigFileInitSucceeded));
         assert_eq!(result.report(), std::process::ExitCode::SUCCESS);
 
@@ -1604,8 +1610,9 @@ mod test {
     }
 
     fn assert_init_config_already_exists(tester: &Tester) {
-        let (output, result) = tester.test_output(&["--init"]);
-        assert_eq!(output, "Oxlint config file already exists.\nRemove it and re-run.\n");
+        let (stdout, stderr, result) = tester.test_output_with_stderr(&["--init"]);
+        assert_eq!(stdout, "");
+        assert_eq!(stderr, "Oxlint config file already exists.\nRemove it and re-run.\n");
         assert!(matches!(result, CliRunResult::ConfigFileInitFailed));
         assert_eq!(result.report(), std::process::ExitCode::FAILURE);
     }
@@ -1709,9 +1716,11 @@ mod test {
         let child_dir = temp_dir.path().join("child");
         fs::create_dir(&child_dir).unwrap();
 
-        let (output, result) = Tester::new().with_cwd(child_dir.clone()).test_output(&["--init"]);
+        let (output, stderr, result) =
+            Tester::new().with_cwd(child_dir.clone()).test_output_with_stderr(&["--init"]);
 
         assert_eq!(output, "Configuration file created\n");
+        assert_eq!(stderr, "");
         assert!(matches!(result, CliRunResult::ConfigFileInitSucceeded));
         assert!(child_dir.join(DEFAULT_OXLINTRC_NAME).is_file());
         assert_eq!(fs::read_to_string(parent_config_path).unwrap(), content);
@@ -1722,9 +1731,11 @@ mod test {
         let temp_dir = tempfile::tempdir().unwrap();
         let cwd = temp_dir.path().join("missing");
 
-        let (output, result) = Tester::new().with_cwd(cwd.clone()).test_output(&["--init"]);
+        let (stdout, stderr, result) =
+            Tester::new().with_cwd(cwd.clone()).test_output_with_stderr(&["--init"]);
 
-        assert_eq!(output, "Failed to create configuration file\n");
+        assert_eq!(stdout, "");
+        assert_eq!(stderr, "Failed to create configuration file\n");
         assert!(matches!(result, CliRunResult::ConfigFileInitFailed));
         assert_eq!(result.report(), std::process::ExitCode::FAILURE);
         assert!(!cwd.exists());
@@ -2070,6 +2081,10 @@ mod test {
             assert!(rule_obj.contains_key("fix"), "Rule should contain 'fix' field");
             assert!(rule_obj.contains_key("default"), "Rule should contain 'default' field");
             assert!(rule_obj.contains_key("docs_url"), "Rule should contain 'docs_url' field");
+            assert!(
+                rule_obj.contains_key("recommended"),
+                "Rule should contain 'recommended' field"
+            );
         }
 
         // Verify that the rules list is sorted by scope and value.

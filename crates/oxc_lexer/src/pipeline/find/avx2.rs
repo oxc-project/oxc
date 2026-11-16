@@ -1,5 +1,7 @@
 use oxc_simd::{Avx2, Vec256, cpu_version};
 
+use crate::pipeline::source::Source;
+
 use super::BRACKET_BYTES;
 
 /// First byte at or after i that is one of needles, or src.len().
@@ -7,25 +9,24 @@ use super::BRACKET_BYTES;
 /// Needle order matters for speed. See comment on [`any_of`] below.
 #[cpu_version(Avx2)]
 #[inline]
-pub fn find_avx2<const K: usize>(src: &[u8], mut i: usize, needles: [u8; K], cpu: Avx2) -> usize {
+pub fn find_avx2<const K: usize>(src: Source, mut i: usize, needles: [u8; K], cpu: Avx2) -> usize {
     let n = src.len();
-    if i > n {
-        return n;
+    if let Some(last) = n.checked_sub(32) {
+        while i <= last {
+            let m = any_of(Vec256::read_unaligned(src.window(i), cpu), needles).movemask();
+            if m != 0 {
+                return i + m.trailing_zeros() as usize;
+            }
+            i += 32;
+        }
     }
-    while i + 32 <= n {
-        // SAFETY: the guard keeps i <= n, so i + 32 cannot wrap, and the 32 bytes at i are in src.
-        let v = unsafe { Vec256::load_unaligned(src.as_ptr().add(i), cpu) };
-        let m = any_of(v, needles).movemask();
+    if i < n {
+        // The last window reaches into the padding, so its bits past n are dropped.
+        let m = any_of(Vec256::read_unaligned(src.window(i), cpu), needles).movemask();
+        let m = m & (u32::MAX >> (32 - (n - i)));
         if m != 0 {
             return i + m.trailing_zeros() as usize;
         }
-        i += 32;
-    }
-    while i < n {
-        if needles.contains(&src[i]) {
-            return i;
-        }
-        i += 1;
     }
     n
 }

@@ -26,8 +26,7 @@ pub(super) fn lex_line_comment(
     cpu: impl Cpu,
 ) -> usize {
     let (end, license_at) = scan_line_comment(src, s + 2, cpu);
-    // SAFETY: scan_line_comment ends at most at src.len().
-    unsafe { mark_token(token_start, kinds, s, end, TokenKind::LineComment, cpu) };
+    mark_token(token_start, kinds, s, end, TokenKind::LineComment, cpu);
     if end < src.len() {
         token_start.set(end, cpu);
     }
@@ -60,8 +59,7 @@ pub(super) fn lex_block_comment(
     if e >= src.len() {
         lanes.push_diag(s as u32, (src.len() - s) as u32, DiagCode::UnterminatedBlockComment);
     }
-    // SAFETY: end is at most src.len().
-    unsafe { mark_token(token_start, kinds, s, end, TokenKind::BlockComment, cpu) };
+    mark_token(token_start, kinds, s, end, TokenKind::BlockComment, cpu);
 
     let body = comment_body(src.bytes(), s as u32, end as u32, true, cpu);
     let m = if e < src.len() {
@@ -157,27 +155,10 @@ pub(super) fn lex_html_open_comment(
     module: bool,
     lanes: &mut Lanes,
 ) -> usize {
-    let cpu = BASELINE;
-
     if module {
         lanes.push_diag(s as u32, 4, DiagCode::HtmlCommentInModule);
     }
-    let end = find_line_terminator(src, s + 4, cpu);
-    kinds.set(s, TokenKind::LineComment);
-    if end > s + 1 {
-        token_start.clear_range(s + 1, end - 1, cpu);
-    }
-    if end < src.len() {
-        token_start.set(end, cpu);
-    }
-    // Clear the comment from op_char, or coalesce would read it as operators.
-    op_char.clear_range(s, end - 1, cpu);
-    // `comment_body` skips a 2-byte delimiter; pass s + 2 so the 4-byte
-    // `<!--` is skipped. The record keeps (s, end).
-    let body = comment_body(src.bytes(), (s + 2) as u32, end as u32, false, cpu);
-    let m = comment_content_exact(body, false, cpu);
-    push_comment_record(src, s as u32, end as u32, CommentKind::HtmlOpen, true, m, lanes, cpu);
-    end
+    lex_html_comment(src, token_start, kinds, op_char, s, 4, CommentKind::HtmlOpen, lanes)
 }
 
 /// Annex B B.1.3: does the `>` at `s` end a `-->` that opens a comment? Only in a script, and
@@ -209,25 +190,34 @@ pub(super) fn lex_html_close_comment(
     s: usize,
     lanes: &mut Lanes,
 ) -> usize {
+    lex_html_comment(src, token_start, kinds, op_char, s - 2, 3, CommentKind::HtmlClose, lanes)
+}
+
+/// Lex the HTML comment at start, which runs to the end of the line after its delimiter.
+#[cpu_version(Generic)]
+fn lex_html_comment(
+    src: Source,
+    token_start: Bitmap,
+    kinds: Kinds,
+    op_char: Bitmap,
+    start: usize,
+    delimiter_len: usize,
+    kind: CommentKind,
+    lanes: &mut Lanes,
+) -> usize {
     let cpu = BASELINE;
 
-    let start = s - 2;
-    let end = find_line_terminator(src, s + 1, cpu);
-    kinds.set(start, TokenKind::LineComment);
+    let body_start = start + delimiter_len;
+    let end = find_line_terminator(src, body_start, cpu);
     token_start.set(start, cpu);
-    if end > start + 1 {
-        token_start.clear_range(start + 1, end - 1, cpu);
-    }
+    mark_token(token_start, kinds, start, end, TokenKind::LineComment, cpu);
     if end < src.len() {
         token_start.set(end, cpu);
     }
-    // Clear the comment from op_char, as for the html open comment.
+    // Clear the comment from op_char, or coalesce would read it as operators.
     op_char.clear_range(start, end - 1, cpu);
-    // `-->` is a 3-byte delimiter; pass start + 1 so the 2-byte-delimiter
-    // body resolves to [s + 1, end).
-    let body = comment_body(src.bytes(), (start + 1) as u32, end as u32, false, cpu);
-    let m = comment_content_exact(body, false, cpu);
-    push_comment_record(src, start as u32, end as u32, CommentKind::HtmlClose, true, m, lanes, cpu);
+    let m = comment_content_exact(&src[body_start..end], false, cpu);
+    push_comment_record(src, start as u32, end as u32, kind, true, m, lanes, cpu);
     end
 }
 

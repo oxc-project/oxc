@@ -22,7 +22,10 @@ fn use_have_been_called_with(span: Span) -> OxcDiagnostic {
 
 pub const DOCUMENTATION: &str = r"### What it does
 
-Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`
+Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`.
+
+With `--fix-suggestions`, this rule will rewrite `toBeCalled()` and
+`toHaveBeenCalled()` to their `...With()` counterparts.
 
 ### Why is this bad?
 
@@ -72,13 +75,14 @@ pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
         && let Some(matcher_name) = matcher_property.name()
     {
         if matcher_name == "toBeCalled" {
-            ctx.diagnostic_with_fix(use_to_be_called_with(matcher_property.span), |fixer| {
+            ctx.diagnostic_with_suggestion(use_to_be_called_with(matcher_property.span), |fixer| {
                 fixer.replace(matcher_property.span, "toBeCalledWith")
             });
         } else if matcher_name == "toHaveBeenCalled" {
-            ctx.diagnostic_with_fix(use_have_been_called_with(matcher_property.span), |fixer| {
-                fixer.replace(matcher_property.span, "toHaveBeenCalledWith")
-            });
+            ctx.diagnostic_with_suggestion(
+                use_have_been_called_with(matcher_property.span),
+                |fixer| fixer.replace(matcher_property.span, "toHaveBeenCalledWith"),
+            );
         }
     }
 }

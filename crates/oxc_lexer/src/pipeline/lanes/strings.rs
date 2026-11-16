@@ -9,6 +9,8 @@ use crate::{
 use crate::pipeline::{
     bytes::{hex_digit, is_ls_ps_tail},
     chunk::mm32,
+    find::find,
+    source::Source,
 };
 
 use super::Lanes;
@@ -79,10 +81,15 @@ impl Lanes {
                 return (StringSpan::new(ss, we & StringSpan::END_MASK, false, cpu), false);
             }
             true
-        } else if CRLF {
-            span_has_bs_or_cr(src, bs as usize, be as usize, cpu)
         } else {
-            span_has_bs(src, bs as usize, be as usize, cpu)
+            // The finder stops at the end of the body, so a hit is inside it.
+            let body = Source::new(src, be as usize);
+            let hit = if CRLF {
+                find(body, bs as usize, [b'\\', b'\r'], cpu)
+            } else {
+                find(body, bs as usize, [b'\\'], cpu)
+            };
+            hit < be as usize
         };
         let body = &src[bs as usize..be as usize];
         let (lone, nes) = if !needs_decode {
@@ -227,32 +234,20 @@ impl Lanes {
                     k += 1; // `}` consumed only on the well-formed path
                     if (0xD800..=0xDFFF).contains(&value) {
                         // lone surrogate via braces: invalid in identifiers
-                        self.push_diag(
-                            start as u32,
-                            (k - start) as u32,
-                            DiagCode::InvalidIdentifierEscape,
-                        );
+                        self.push_bad_ident_escape(start, k);
                     } else {
                         self.check_escaped_ident_char(value, at_start, k);
                     }
                 } else {
                     // overflow / no digits / missing `}`: end = parser stop
-                    self.push_diag(
-                        start as u32,
-                        (k - start) as u32,
-                        DiagCode::InvalidIdentifierEscape,
-                    );
+                    self.push_bad_ident_escape(start, k);
                 }
                 i = k;
                 continue;
             }
             let (h1, e1) = hex4(src, k, be);
             let Some(high) = h1 else {
-                self.push_diag(
-                    start as u32,
-                    (e1 - start) as u32,
-                    DiagCode::InvalidIdentifierEscape,
-                );
+                self.push_bad_ident_escape(start, e1);
                 i = e1;
                 continue;
             };
@@ -274,20 +269,22 @@ impl Lanes {
                 {
                     // A well-formed pair is still invalid in identifiers:
                     // one diag over both escapes.
-                    self.push_diag(
-                        start as u32,
-                        (low_end - start) as u32,
-                        DiagCode::InvalidIdentifierEscape,
-                    );
+                    self.push_bad_ident_escape(start, low_end);
                     i = low_end;
                     continue;
                 }
                 // Not a valid low: fall through - the parser rewinds and
                 // reports the first escape alone.
             }
-            self.push_diag(start as u32, (k - start) as u32, DiagCode::InvalidIdentifierEscape);
+            self.push_bad_ident_escape(start, k);
             i = k;
         }
+    }
+
+    /// An invalid escape in an identifier, spanning from after its backslash to end.
+    #[cpu_version(Generic)]
+    fn push_bad_ident_escape(&mut self, start: usize, end: usize) {
+        self.push_diag(start as u32, (end - start) as u32, DiagCode::InvalidIdentifierEscape);
     }
 }
 
@@ -343,107 +340,8 @@ fn short_needs_decode_generic<const CR: bool>(window: &[u8; 32], len: usize) -> 
 }
 
 #[cpu_multiversion]
-#[inline(always)]
-fn span_has_bs(src: &[u8], bs: usize, be: usize, cpu: impl Cpu) -> bool {
-    match DynCpu::from(cpu) {
-        DynCpu::Avx2(cpu) => span_has_bs_avx2(src, bs, be, cpu),
-        DynCpu::Neon(cpu) => span_has_neon::<false>(src, bs, be, cpu),
-        DynCpu::Generic(_) => span_has_bs_generic(src, bs, be),
-    }
-}
-
-/// [`span_has_bs`] for AVX2.
-#[cpu_version(Avx2)]
 #[inline]
-fn span_has_bs_avx2(src: &[u8], bs: usize, be: usize, cpu: Avx2) -> bool {
-    let src = &src[..be];
-    let mut i = bs;
-    while i + 32 <= be {
-        let v = Vec256::read_unaligned(src[i..].first_chunk::<32>().unwrap(), cpu);
-        let m = v.eq_u8(b'\\').movemask();
-        if m != 0 {
-            return true;
-        }
-        i += 32;
-    }
-    while i < be {
-        if src[i] == b'\\' {
-            return true;
-        }
-        i += 1;
-    }
-    false
-}
-
-/// [`span_has_bs`] for all other CPUs.
-#[cpu_version(Generic)]
-#[inline]
-fn span_has_bs_generic(src: &[u8], bs: usize, be: usize) -> bool {
-    memchr::memchr(b'\\', &src[bs..be]).is_some()
-}
-
-/// Template variant of [`span_has_bs`]: a raw CR also forces the decode path.
-#[cpu_multiversion]
-#[inline(always)]
-fn span_has_bs_or_cr(src: &[u8], bs: usize, be: usize, cpu: impl Cpu) -> bool {
-    match DynCpu::from(cpu) {
-        DynCpu::Avx2(cpu) => span_has_bs_or_cr_avx2(src, bs, be, cpu),
-        DynCpu::Neon(cpu) => span_has_neon::<true>(src, bs, be, cpu),
-        DynCpu::Generic(_) => span_has_bs_or_cr_generic(src, bs, be),
-    }
-}
-
-/// [`span_has_bs`] for Neon, or [`span_has_bs_or_cr`] if CR. Reads up to 15 bytes into the padding.
-#[cpu_version(Neon)]
-#[inline]
-fn span_has_neon<const CR: bool>(src: &[u8], bs: usize, be: usize, cpu: Neon) -> bool {
-    let hits = |i: usize| {
-        let v = Vec128::read_unaligned(src[i..].first_chunk::<16>().unwrap(), cpu);
-        (if CR { v.eq_u8(b'\\') | v.eq_u8(b'\r') } else { v.eq_u8(b'\\') }).nibble_mask()
-    };
-    let mut i = bs;
-    while i + 16 <= be {
-        if hits(i) != 0 {
-            return true;
-        }
-        i += 16;
-    }
-    i < be && hits(i) & ((1u64 << (4 * (be - i))) - 1) != 0
-}
-
-/// [`span_has_bs_or_cr`] for AVX2.
-#[cpu_version(Avx2)]
-#[inline]
-fn span_has_bs_or_cr_avx2(src: &[u8], bs: usize, be: usize, cpu: Avx2) -> bool {
-    let src = &src[..be];
-    let mut i = bs;
-    while i + 32 <= be {
-        let v = Vec256::read_unaligned(src[i..].first_chunk::<32>().unwrap(), cpu);
-        let m = (v.eq_u8(b'\\') | v.eq_u8(b'\r')).movemask();
-        if m != 0 {
-            return true;
-        }
-        i += 32;
-    }
-    while i < be {
-        if src[i] == b'\\' || src[i] == b'\r' {
-            return true;
-        }
-        i += 1;
-    }
-    false
-}
-
-/// [`span_has_bs_or_cr`] for all other CPUs.
-#[cpu_version(Generic)]
-#[inline]
-fn span_has_bs_or_cr_generic(src: &[u8], bs: usize, be: usize) -> bool {
-    memchr::memchr2(b'\\', b'\r', &src[bs..be]).is_some()
-}
-
-#[cpu_multiversion]
-#[inline]
-fn push_cp(out: &mut [u8], mut wi: u32, cp: u32, lone: &mut bool, _cpu: impl Cpu) -> u32 {
+fn push_cp(out: &mut [u8], mut wi: u32, cp: u32, surrogate: &mut bool, _cpu: impl Cpu) -> u32 {
     if cp <= 0x7F {
         out[wi as usize] = cp as u8;
         wi += 1;
@@ -452,11 +350,8 @@ fn push_cp(out: &mut [u8], mut wi: u32, cp: u32, lone: &mut bool, _cpu: impl Cpu
         out[(wi + 1) as usize] = 0x80 | ((cp & 0x3F) as u8);
         wi += 2;
     } else if (0xD800..=0xDFFF).contains(&cp) {
-        *lone = true;
-        out[wi as usize] = 0xE0 | ((cp >> 12) as u8);
-        out[(wi + 1) as usize] = 0x80 | (((cp >> 6) & 0x3F) as u8);
-        out[(wi + 2) as usize] = 0x80 | ((cp & 0x3F) as u8);
-        wi += 3;
+        *surrogate = true;
+        wi = push_surrogate(out, wi, cp);
     } else if cp <= 0xFFFF {
         out[wi as usize] = 0xE0 | ((cp >> 12) as u8);
         out[(wi + 1) as usize] = 0x80 | (((cp >> 6) & 0x3F) as u8);
@@ -475,6 +370,32 @@ fn push_cp(out: &mut [u8], mut wi: u32, cp: u32, lone: &mut bool, _cpu: impl Cpu
         wi += 3;
     }
     wi
+}
+
+// A trail surrogate written right after a lead combines with it into one char.
+#[cpu_version(Generic)]
+#[cold]
+#[inline(never)]
+fn push_surrogate(out: &mut [u8], wi: u32, cp: u32) -> u32 {
+    let w = wi as usize;
+    if cp >= 0xDC00 && w >= 3 && out[w - 3] == 0xED && out[w - 2] & 0xF0 == 0xA0 {
+        let lead = 0xD000 | (u32::from(out[w - 2] & 0x3F) << 6) | u32::from(out[w - 1] & 0x3F);
+        if let Some(ch) = char::from_u32(0x10000 + ((lead - 0xD800) << 10) + (cp - 0xDC00)) {
+            ch.encode_utf8(&mut out[w - 3..]);
+            return wi + 1;
+        }
+    }
+    out[w] = 0xE0 | ((cp >> 12) as u8);
+    out[w + 1] = 0x80 | (((cp >> 6) & 0x3F) as u8);
+    out[w + 2] = 0x80 | ((cp & 0x3F) as u8);
+    wi + 3
+}
+
+#[cpu_version(Generic)]
+#[cold]
+#[inline(never)]
+fn has_lone_surrogate(cooked: &[u8]) -> bool {
+    cooked.windows(2).any(|w| w[0] == 0xED && w[1] >= 0xA0)
 }
 
 #[cpu_multiversion]
@@ -561,7 +482,7 @@ fn cook_decode<const EMIT: bool, const CRLF: bool>(
     let out = &mut cooked[ss..];
     let mut wi = 0;
     let mut i = bs;
-    let mut lone = false;
+    let mut surrogate = false;
     // NotEscapeSequence per the template grammar (bad \u or \x, octal, \8,
     // \9): push_template marks the span cooked-invalid from it, the stand-in
     // for oxc_parser's cooked = None.
@@ -697,7 +618,7 @@ fn cook_decode<const EMIT: bool, const CRLF: bool>(
                         }
                     }
                     if k < be && src[k as usize] == b'}' && any {
-                        wi = push_cp(out, wi, cp, &mut lone, cpu);
+                        wi = push_cp(out, wi, cp, &mut surrogate, cpu);
                         i = k + 1;
                         if over_end != 0 {
                             nes = true;
@@ -727,31 +648,7 @@ fn cook_decode<const EMIT: bool, const CRLF: bool>(
                             | ((c as u32) << 4)
                             | (d as u32);
                         i += 4;
-                        // Adjacent 4-digit escapes forming a surrogate pair combine
-                        // into one code point (`\uD834\uDF06` is U+1D306), matching
-                        // oxc_parser's SurrogatePair rule; braced escapes never pair.
-                        let mut cp = cp;
-                        if (0xD800..=0xDBFF).contains(&cp)
-                            && i + 6 <= be
-                            && src[i as usize] == b'\\'
-                            && src[(i + 1) as usize] == b'u'
-                        {
-                            let l0 = hex_digit(src[(i + 2) as usize], cpu);
-                            let l1 = hex_digit(src[(i + 3) as usize], cpu);
-                            let l2 = hex_digit(src[(i + 4) as usize], cpu);
-                            let l3 = hex_digit(src[(i + 5) as usize], cpu);
-                            if let (Some(l0), Some(l1), Some(l2), Some(l3)) = (l0, l1, l2, l3) {
-                                let lo = ((l0 as u32) << 12)
-                                    | ((l1 as u32) << 8)
-                                    | ((l2 as u32) << 4)
-                                    | (l3 as u32);
-                                if (0xDC00..=0xDFFF).contains(&lo) {
-                                    cp = 0x10000 + ((cp - 0xD800) << 10) + (lo - 0xDC00);
-                                    i += 6;
-                                }
-                            }
-                        }
-                        wi = push_cp(out, wi, cp, &mut lone, cpu);
+                        wi = push_cp(out, wi, cp, &mut surrogate, cpu);
                     } else {
                         out[wi as usize] = b'u';
                         wi += 1;
@@ -807,7 +704,7 @@ fn cook_decode<const EMIT: bool, const CRLF: bool>(
         }
     }
     cooked.truncate(ss + wi as usize);
-    (lone, nes)
+    (surrogate && has_lone_surrogate(&cooked[ss..]), nes)
 }
 
 #[cfg(test)]
@@ -943,13 +840,22 @@ mod tests {
         assert_eq!(out, [0xED, 0xA0, 0xBD]);
     }
 
-    /// Adjacent 4-digit escapes forming a surrogate pair combine into one
-    /// code point (oxc_parser's SurrogatePair rule); the braced form does not.
+    /// A lead surrogate directly followed by a trail combines into one code point.
     #[test_cpus]
     fn cook_decode_surrogate_pairs(cpu: impl Cpu) {
-        let (out, lone) = cook(br"\uD834\uDF06", cpu);
-        assert!(!lone, "a combined pair is not a lone surrogate");
-        assert_eq!(out, "\u{1D306}".as_bytes());
+        let pair = "\u{1D306}".as_bytes().to_vec();
+        for body in [
+            br"\uD834\uDF06".as_slice(),
+            br"\u{D834}\u{DF06}",
+            br"\uD834\u{DF06}",
+            br"\u{D834}\uDF06",
+            b"\\uD834\\\n\\uDF06",
+            b"\\uD834\\\r\n\\uDF06",
+            b"\\uD834\\\n\\\n\\\n\\u{DF06}",
+            "\\uD834\\\u{2028}\\uDF06".as_bytes(),
+        ] {
+            assert_eq!(cook(body, cpu), (pair.clone(), false), "{}", String::from_utf8_lossy(body));
+        }
 
         // A high escape followed by a non-low stays lone; the next escape
         // decodes independently.
@@ -957,10 +863,23 @@ mod tests {
         assert!(lone);
         assert_eq!(out, [0xED, 0xA0, 0xB4, b'A']);
 
-        // Braced escapes never pair (parser parity).
-        let (out, lone) = cook(br"\u{D834}\u{DF06}", cpu);
-        assert!(lone, "braced surrogates stay lone");
-        assert_eq!(out, [0xED, 0xA0, 0xB4, 0xED, 0xBC, 0x86]);
+        let (out, lone) = cook(br"\uD834a\u{DF06}", cpu);
+        assert!(lone);
+        assert_eq!(out, [0xED, 0xA0, 0xB4, b'a', 0xED, 0xBC, 0x86]);
+
+        // Only the second lead pairs, and a trail never pairs with a lead after it.
+        let (out, lone) = cook(br"\u{D834}\uD834\uDF06\uDF06\uD834", cpu);
+        assert!(lone);
+        assert_eq!(
+            out,
+            [0xED, 0xA0, 0xB4, 0xF0, 0x9D, 0x8C, 0x86, 0xED, 0xBC, 0x86, 0xED, 0xA0, 0xB4]
+        );
+    }
+
+    #[test_cpus]
+    fn push_template_combines_surrogate_pairs(cpu: impl Cpu) {
+        assert_eq!(push_tpl(br"\u{D834}\u{DF06}", cpu), "\u{1D306}".as_bytes());
+        assert_eq!(push_tpl(b"\\uD834\\\r\n\\uDF06", cpu), "\u{1D306}".as_bytes());
     }
 
     /// `\` + LS/PS is a LineContinuation: cooks to nothing (like `\<LF>`).

@@ -101,7 +101,7 @@ pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
         return;
     }
 
-    ctx.diagnostic_with_fix(use_to_contain(matcher.span), |fixer| {
+    ctx.diagnostic_with_suggestion(use_to_contain(matcher.span), |fixer| {
         let Some(mem_expr) = includes_call_expr.callee.as_member_expression() else {
             return fixer.noop();
         };

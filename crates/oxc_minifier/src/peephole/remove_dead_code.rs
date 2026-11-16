@@ -1,9 +1,12 @@
+use std::mem;
+
 use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
-use oxc_ast_visit::VisitJs;
+use oxc_ast_visit::{VisitJs, VisitJsMut, walk_js_mut};
 use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, side_effects::MayHaveSideEffects};
 use oxc_span::GetSpan;
+use oxc_str::Ident;
 
 use crate::{TraverseCtx, keep_var::KeepVar, symbol_metadata::FunctionSummary};
 
@@ -323,6 +326,30 @@ impl<'a> PeepholeOptimizations {
         let var_decl = var.get_variable_declaration_statement(ctx);
         let new_stmt = var_decl.unwrap_or_else(|| Statement::new_empty_statement(s.span, ctx));
         ctx.replace_statement(stmt, new_stmt);
+    }
+
+    /// Remove labels after rewriting jumps that do not need them.
+    ///
+    /// ```js
+    /// a: for (;;) break a; // for (;;) break;
+    /// a: foo();            // foo();
+    /// ```
+    ///
+    /// Labeled function declarations are kept to preserve their sloppy-mode hoisting.
+    pub fn remove_unused_label(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        let Statement::LabeledStatement(labeled) = stmt else { return };
+        let label = labeled.label.name;
+        let rewriter = LabelJumpRewriter::rewrite(&mut labeled.body, label);
+        if rewriter.referenced || matches!(labeled.body, Statement::FunctionDeclaration(_)) {
+            if rewriter.rewritten {
+                ctx.notice_change();
+            }
+            return;
+        }
+        ctx.replace_statement_with(stmt, |stmt, _ctx| {
+            let Statement::LabeledStatement(labeled) = stmt else { unreachable!() };
+            labeled.unbox().body
+        });
     }
 
     pub fn try_fold_expression_stmt(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -773,6 +800,92 @@ impl<'a> PeepholeOptimizations {
         let Expression::ArrayExpression(e) = &e.argument else { return };
         if e.elements.is_empty() {
             args.drain(..);
+        }
+    }
+}
+
+/// Rewrites `break label` and `continue label` when the unlabeled jump has the same target.
+struct LabelJumpRewriter<'a> {
+    label: Ident<'a>,
+    break_is_redundant: bool,
+    continue_is_redundant: bool,
+    rewritten: bool,
+    referenced: bool,
+}
+
+impl<'a> LabelJumpRewriter<'a> {
+    fn rewrite(body: &mut Statement<'a>, label: Ident<'a>) -> Self {
+        let mut rewriter = Self {
+            label,
+            break_is_redundant: false,
+            continue_is_redundant: false,
+            rewritten: false,
+            referenced: false,
+        };
+        let mut target = body;
+        while let Statement::LabeledStatement(labeled) = target {
+            target = &mut labeled.body;
+        }
+        match target {
+            Statement::SwitchStatement(switch) => {
+                rewriter.break_is_redundant = true;
+                for case in &mut switch.cases {
+                    rewriter.visit_statements(&mut case.consequent);
+                }
+            }
+            Statement::DoWhileStatement(stmt) => rewriter.visit_loop_body(&mut stmt.body),
+            Statement::ForInStatement(stmt) => rewriter.visit_loop_body(&mut stmt.body),
+            Statement::ForOfStatement(stmt) => rewriter.visit_loop_body(&mut stmt.body),
+            Statement::ForStatement(stmt) => rewriter.visit_loop_body(&mut stmt.body),
+            Statement::WhileStatement(stmt) => rewriter.visit_loop_body(&mut stmt.body),
+            _ => rewriter.visit_statement(target),
+        }
+        rewriter
+    }
+
+    fn visit_loop_body(&mut self, body: &mut Statement<'a>) {
+        self.break_is_redundant = true;
+        self.continue_is_redundant = true;
+        self.visit_statement(body);
+    }
+
+    fn visit_jump(&mut self, label: &mut Option<LabelIdentifier<'a>>, is_redundant: bool) {
+        if label.as_ref().is_some_and(|label| label.name == self.label) {
+            if is_redundant {
+                *label = None;
+                self.rewritten = true;
+            } else {
+                self.referenced = true;
+            }
+        }
+    }
+}
+
+impl<'a> VisitJsMut<'a> for LabelJumpRewriter<'a> {
+    fn visit_expression(&mut self, _it: &mut Expression<'a>) {}
+
+    fn visit_statement(&mut self, it: &mut Statement<'a>) {
+        match it {
+            Statement::BreakStatement(stmt) => {
+                self.visit_jump(&mut stmt.label, self.break_is_redundant);
+            }
+            Statement::ContinueStatement(stmt) => {
+                self.visit_jump(&mut stmt.label, self.continue_is_redundant);
+            }
+            Statement::SwitchStatement(_) => {
+                let break_is_redundant = mem::replace(&mut self.break_is_redundant, false);
+                walk_js_mut::walk_statement(self, it);
+                self.break_is_redundant = break_is_redundant;
+            }
+            _ if it.is_iteration_statement() => {
+                let break_is_redundant = mem::replace(&mut self.break_is_redundant, false);
+                let continue_is_redundant = mem::replace(&mut self.continue_is_redundant, false);
+                walk_js_mut::walk_statement(self, it);
+                self.break_is_redundant = break_is_redundant;
+                self.continue_is_redundant = continue_is_redundant;
+            }
+            _ if it.is_declaration() => {}
+            _ => walk_js_mut::walk_statement(self, it),
         }
     }
 }

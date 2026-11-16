@@ -852,15 +852,13 @@ export interface OxlintOverride {
    * Files matching these patterns are not globally ignored; this override
    * simply does not apply to them.
    *
-   * ## Example
-   * `[ "*.generated.ts", "fixtures/**" ]`
+   * Example: `[ "*.generated.ts", "fixtures/**" ]`
    */
   excludeFiles?: GlobSet;
   /**
    * A list of glob patterns to override.
    *
-   * ## Example
-   * `[ "*.test.ts", "*.spec.ts" ]`
+   * Example: `[ "*.test.ts", "*.spec.ts" ]`
    */
   files: GlobSet;
   /**

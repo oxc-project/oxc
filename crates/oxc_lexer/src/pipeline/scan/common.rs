@@ -1,4 +1,4 @@
-use oxc_simd::{Cpu, cpu_multiversion};
+use oxc_simd::{Cpu, cpu_multiversion, cpu_version};
 
 use crate::pipeline::{
     bytes::{hex_digit, is_digit, is_ls_ps_tail, is_word},
@@ -292,4 +292,11 @@ pub(super) fn first_license_at(
         }
     }
     None
+}
+
+/// Bits for the first k bytes of a 32-byte window.
+#[cpu_version(Generic)]
+#[inline(always)]
+pub(super) fn window_bits(k: usize) -> u32 {
+    if k >= 32 { u32::MAX } else { (1u32 << k) - 1 }
 }

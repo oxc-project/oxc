@@ -69,12 +69,6 @@ impl PairLuts {
     }
 }
 
-/// Initialize the global [`PairLuts`] instance.
-#[cpu_version(Generic)]
-pub(super) fn init_pair_luts() {
-    PAIR_LUTS.get_or_init(PairLuts::new);
-}
-
 /// Get the PairLuts, initializing them on first use.
 #[cpu_version(Generic)]
 #[inline]

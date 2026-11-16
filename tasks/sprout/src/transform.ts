@@ -1,13 +1,13 @@
 import { createRequire } from "node:module";
-import { transformSync } from "@babel/core";
+import { transformSync, type PresetItem } from "@babel/core";
 
 const require = createRequire(import.meta.url);
-const presets = [
+const presets: PresetItem[] = [
   [
     require.resolve("@babel/preset-typescript"),
-    { allExtensions: true, isTSX: true, onlyRemoveTypeImports: true },
+    { ignoreExtensions: true, onlyRemoveTypeImports: true },
   ],
-  [require.resolve("@babel/preset-react"), { throwIfNamespace: false }],
+  [require.resolve("@babel/preset-react"), { runtime: "classic", throwIfNamespace: false }],
 ];
 const plugins = [
   require.resolve("babel-plugin-fbt"),

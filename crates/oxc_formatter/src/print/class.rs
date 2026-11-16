@@ -374,14 +374,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
                     let has_trailing_line_comments = comments.iter().any(Comment::is_line);
 
                     let content = format_with(|f| {
-                        if let Some(type_arguments) = type_arguments {
-                            write!(f, [extends]);
-                            if implements.is_empty() {
-                                type_arguments.write(f);
-                            } else {
-                                type_arguments.fmt(f);
-                            }
-                        } else if implements.is_empty() {
+                        if type_arguments.is_none() && implements.is_empty() {
                             FormatNodeWithoutTrailingComments(&extends).fmt(f);
                             // Line comments are handled separately to ensure proper placement
                             if !has_trailing_line_comments {
@@ -407,6 +400,15 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
                         );
                     } else {
                         content.fmt(f);
+                    }
+
+                    // Outside the parentheses: `extends (B<T>)` would make `B<T>` the superclass
+                    if let Some(type_arguments) = type_arguments {
+                        if implements.is_empty() {
+                            type_arguments.write(f);
+                        } else {
+                            type_arguments.fmt(f);
+                        }
                     }
                 });
 

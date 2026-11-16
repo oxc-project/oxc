@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression, IdentifierReference},
+    ast::{Argument, CallExpression, Expression, IdentifierReference, UnaryOperator},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -137,6 +137,10 @@ impl Radix {
     }
 
     fn check_arguments(call_expr: &CallExpression, ctx: &LintContext) {
+        // A spread in the first two arguments hides which value is the radix.
+        if call_expr.arguments.iter().take(2).any(Argument::is_spread) {
+            return;
+        }
         match call_expr.arguments.len() {
             0 => ctx.diagnostic(missing_parameters(call_expr.span)),
             1 => {
@@ -151,7 +155,7 @@ impl Radix {
             }
             _ => {
                 let radix_arg = &call_expr.arguments[1];
-                if !is_valid_radix(radix_arg) {
+                if !is_valid_radix(radix_arg, ctx) {
                     ctx.diagnostic(invalid_radix(radix_arg.span()));
                 }
             }
@@ -159,20 +163,40 @@ impl Radix {
     }
 }
 
-fn is_valid_radix(node: &Argument) -> bool {
+/// Like ESLint, only a literal that is not an integer from 2 to 36 (a signed
+/// number included) and the global `undefined` are invalid. Any other
+/// expression (`foo.radix`, `base || 10`, `+radix`) may hold a valid radix.
+fn is_valid_radix(node: &Argument, ctx: &LintContext) -> bool {
     let Some(expr) = node.as_expression() else {
-        return false;
+        return true;
     };
+    let is_radix = |value: f64| value.fract() == 0.0 && (2.0..=36.0).contains(&value);
 
-    if let Expression::NumericLiteral(lit) = expr {
-        return lit.value.fract() == 0.0 && lit.value >= 2.0 && lit.value <= 36.0;
+    match expr.without_parentheses() {
+        Expression::NumericLiteral(lit) => is_radix(lit.value),
+        Expression::UnaryExpression(unary)
+            if matches!(
+                unary.operator,
+                UnaryOperator::UnaryNegation | UnaryOperator::UnaryPlus
+            ) =>
+        {
+            let Expression::NumericLiteral(lit) = unary.argument.without_parentheses() else {
+                return true;
+            };
+            let value =
+                if unary.operator == UnaryOperator::UnaryNegation { -lit.value } else { lit.value };
+            is_radix(value)
+        }
+        Expression::StringLiteral(_)
+        | Expression::BooleanLiteral(_)
+        | Expression::NullLiteral(_)
+        | Expression::BigIntLiteral(_)
+        | Expression::RegExpLiteral(_) => false,
+        Expression::Identifier(ident) => {
+            !(ident.name == "undefined" && ctx.is_reference_to_global_variable(ident))
+        }
+        _ => true,
     }
-
-    if let Expression::Identifier(_) = expr {
-        return !expr.is_undefined();
-    }
-
-    false
 }
 
 #[test]
@@ -204,6 +228,26 @@ fn test() {
         (r#"parseInt("10", 8);"#, Some(serde_json::json!(["as-needed"])), None),
         (r#"parseInt("10", foo);"#, Some(serde_json::json!(["always"])), None),
         (r#"parseInt("10", foo);"#, Some(serde_json::json!(["as-needed"])), None),
+        (r#"parseInt("10", +10);"#, None, None),
+        (r#"parseInt("10", +0x10);"#, None, None),
+        (r#"parseInt("10", +1.6e1);"#, None, None),
+        (r#"parseInt("10", +"10");"#, None, None),
+        (r#"parseInt("10", ~1);"#, None, None),
+        (r#"parseInt("10", +radix);"#, None, None),
+        (r#"parseInt("10", -radix);"#, None, None),
+        (r#"function foo(undefined) { parseInt("10", undefined); }"#, None, None),
+        (r#"Number.parseInt("10", +10);"#, None, None),
+        (r#"Number.parseInt("10", -radix);"#, None, None),
+        ("parseInt(s, obj.radix);", None, None),
+        ("parseInt(s, base || 10);", None, None),
+        ("parseInt(s, getRadix());", None, None),
+        ("parseInt(s, cond ? 16 : 10);", None, None),
+        ("parseInt(...args);", None, None),
+        ("parseInt(...args, 1);", None, None),
+        (r#"parseInt("10", ...args);"#, None, None),
+        ("parseInt(foo, ...bar);", None, None),
+        ("Number.parseInt(...args);", None, None),
+        (r#"Number.parseInt("10", ...args);"#, None, None),
     ];
 
     let fail = vec![
@@ -220,8 +264,6 @@ fn test() {
         (r#"parseInt("10", 1);"#, None, None),
         (r#"parseInt("10", 37);"#, None, None),
         (r#"parseInt("10", 10.5);"#, None, None),
-        (r#"parseInt("10", ...bar);"#, None, None),
-        ("parseInt(foo, ...bar);", None, None),
         ("Number.parseInt();", None, None),
         (r#"Number.parseInt("10");"#, None, None),
         (r#"Number.parseInt("10", 1);"#, None, None),
@@ -239,6 +281,11 @@ fn test() {
         (r#"parseInt("10", 1);"#, Some(serde_json::json!(["as-needed"])), None),
         ("Number.parseInt();", Some(serde_json::json!(["always"])), None),
         ("Number.parseInt();", Some(serde_json::json!(["as-needed"])), None),
+        (r#"parseInt("10", -10);"#, None, None),
+        (r#"parseInt("10", +37);"#, None, None),
+        (r#"parseInt("10", 10n);"#, None, None),
+        (r#"parseInt("10", (undefined));"#, None, None),
+        (r#"parseInt("10", 1, ...rest);"#, None, None),
     ];
 
     let fix = vec![

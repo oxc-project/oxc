@@ -141,7 +141,7 @@ impl Config {
             options,
             metadata,
         } = self.base.config.as_ref();
-        let ConfigFileMetadata { schema, ignore_patterns, extends } = metadata.as_ref();
+        let ConfigFileMetadata { schema, ignore_patterns } = metadata.as_ref();
         let mut overrides = OxlintOverrides::default();
         overrides.extend(self.overrides.iter().map(|override_config| OxlintOverride {
             files: override_config.files.clone(),
@@ -173,7 +173,7 @@ impl Config {
             options: options.clone(),
             path: path.clone().unwrap_or_default(),
             ignore_patterns: ignore_patterns.clone(),
-            extends: extends.clone(),
+            extends: Vec::new(),
             extends_configs: Vec::new(),
         };
         serde_json::to_string_pretty(&oxlintrc).unwrap()
@@ -1702,7 +1702,6 @@ mod test {
 
         for oxlintrc in configs {
             for schema in [None, Some("root-schema".to_string())] {
-                let expected_extends = oxlintrc.extends.clone();
                 let mut store = ExternalPluginStore::default();
                 let config = ConfigStoreBuilder::from_oxlintrc(
                     false,
@@ -1721,7 +1720,7 @@ mod test {
                     Some(schema.as_deref().unwrap_or("inherited-schema"))
                 );
                 assert_eq!(printed.ignore_patterns, ["dist"]);
-                assert_eq!(printed.extends, expected_extends);
+                assert_eq!(printed.extends, Vec::<PathBuf>::new());
                 assert_eq!(
                     serde_json::to_value(printed.categories).unwrap(),
                     json!({ "correctness": "warn", "pedantic": "deny", "restriction": "allow" })

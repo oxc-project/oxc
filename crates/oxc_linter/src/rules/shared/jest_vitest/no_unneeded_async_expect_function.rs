@@ -99,9 +99,10 @@ pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
         _ => return,
     };
 
-    ctx.diagnostic_with_fix(no_unneeded_async_expect_function_diagnostic(func_span), |fixer| {
-        fixer.replace(func_span, fixer.source_range(inner_call_span).to_string())
-    });
+    ctx.diagnostic_with_suggestion(
+        no_unneeded_async_expect_function_diagnostic(func_span),
+        |fixer| fixer.replace(func_span, fixer.source_range(inner_call_span).to_string()),
+    );
 }
 
 /// Gets the span of the awaited call expression from an async arrow function.
