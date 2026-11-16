@@ -279,11 +279,9 @@ fn generate_fix<'a>(
         }
         if is_yield {
             let parent = ctx.nodes().parent_node(node.id());
-            let grand_parent = ctx.nodes().parent_node(parent.id());
-            if !matches!(
-                grand_parent.kind(),
-                AstKind::ExpressionStatement(_) | AstKind::ParenthesizedExpression(_)
-            ) {
+            if !outermost_paren_parent(parent, ctx).is_some_and(|grand_parent| {
+                matches!(grand_parent.kind(), AstKind::ExpressionStatement(_))
+            }) {
                 return fixer.noop();
             }
         }
@@ -1312,6 +1310,26 @@ fn test() {
         (
             r"promise.then(() => {}, async () => { return Promise.reject(bar); })",
             r"promise.then(() => {}, async () => { throw bar; })",
+            None,
+        ),
+        (
+            r"async function* foo() { (yield Promise.reject(bar)); }",
+            r"async function* foo() { throw bar; }",
+            None,
+        ),
+        (
+            r"async function* foo() { const x = (yield Promise.reject(bar)); }",
+            r"async function* foo() { const x = (yield Promise.reject(bar)); }",
+            None,
+        ),
+        (
+            r"async function* foo() { foo((yield Promise.reject(bar))); }",
+            r"async function* foo() { foo((yield Promise.reject(bar))); }",
+            None,
+        ),
+        (
+            r"async function* foo() { void (yield Promise.reject(bar)); }",
+            r"async function* foo() { void (yield Promise.reject(bar)); }",
             None,
         ),
     ];
