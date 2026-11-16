@@ -23,5 +23,6 @@ jobs:
       - name: Check Cloudflare product access
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_KEY }}
+          FACTORY_AI_GATEWAY_ID: ${{ vars.FACTORY_AI_GATEWAY_ID || 'default' }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: python3 .github/scripts/factory-preflight.py

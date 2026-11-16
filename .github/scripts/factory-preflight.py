@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check existing CI credentials without revealing account data or secrets."""
+"""Check CI access and Opus inference without revealing account data or secrets."""
 import json
 import os
 import urllib.error
@@ -37,9 +37,38 @@ for product, path in checks.items():
     }
     print(product + ": " + json.dumps(results[product]))
 
+# Match Factory's native Anthropic routing and authentication, rather than
+# assuming the account-level Unified Billing probe covers named gateways.
+gateway = os.environ.get("FACTORY_AI_GATEWAY_ID") or "default"
+probe = urllib.request.Request(
+    f"https://gateway.ai.cloudflare.com/v1/{account}/{gateway}/anthropic/v1/messages",
+    method="POST",
+    headers={
+        "cf-aig-authorization": "Bearer " + token,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+        "cf-aig-collect-log-payload": "false",
+    },
+    data=json.dumps({
+        "model": "claude-opus-5-5",
+        "max_tokens": 32,
+        "messages": [{"role": "user", "content": "Reply with OK."}],
+    }).encode(),
+)
+try:
+    with urllib.request.urlopen(probe, timeout=60) as response:
+        payload = json.load(response)
+        opus_status = response.status
+        opus_generated = any(block.get("text") for block in payload.get("content", []))
+except urllib.error.HTTPError as error:
+    opus_status = error.code
+    opus_generated = False
+print(f"Gateway native Opus 5.5: HTTP {opus_status}, generated={opus_generated}")
+
 with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
-    summary.write("Factory credential preflight (read-only; no resources changed)\n\n")
+    summary.write("Factory preflight (no resource configuration changes)\n\n")
     summary.write("| Product | HTTP status |\n| --- | --- |\n")
     for product, result in results.items():
         summary.write(f"| {product} | {result['http_status']} |\n")
     summary.write("\nRead access does not establish deployment permissions.\n")
+    summary.write(f"\nNative Gateway Opus 5.5: HTTP {opus_status}; generated={opus_generated}.\n")
