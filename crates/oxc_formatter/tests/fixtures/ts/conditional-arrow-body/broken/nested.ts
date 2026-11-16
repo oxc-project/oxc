@@ -14,4 +14,9 @@ function* f() {
   ) : c => d;
   a ? b ? c : yield (() => async((d)) // oxfmt-ignore
   ) : e => f;
+  a ? yield ((b, c) /* tail */) : c => d;
+  a ? yield (/** @type {T} */ (() => async((b))) /* tail */) : c => d;
+  a ? yield ((
+  /* lead */
+  () => async((b))) /* tail */) : c => d;
 }
