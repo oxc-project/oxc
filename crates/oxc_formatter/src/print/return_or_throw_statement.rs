@@ -3,12 +3,13 @@ use oxc_span::GetSpan;
 
 use crate::{
     Format,
-    ast_nodes::AstNode,
+    ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
         prelude::*,
         trivia::{DanglingIndentMode, FormatDanglingComments},
     },
+    parentheses::NeedsParentheses,
     print::semicolon::{OptionalSemicolon, assignment_chain_leaf_end},
     utils::{
         expression::LeftSide,
@@ -36,7 +37,21 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, YieldExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, ["yield", self.delegate().then_some("*")]);
         if let Some(argument) = &self.argument() {
-            write!(f, [space(), FormatAdjacentArgument(argument)]);
+            write!(f, space());
+            if f.context().source_type().is_typescript()
+                && f.options().arrow_parentheses.is_as_needed()
+                && matches!(self.parent(), AstNodes::ConditionalExpression(_))
+                && self.needs_parentheses(f)
+                && !f.comments().has_trailing_suppression_comment(argument.span().end)
+            {
+                format_content_without_comments_after(
+                    &FormatAdjacentArgument(argument),
+                    argument.span().end,
+                    f,
+                );
+            } else {
+                write!(f, FormatAdjacentArgument(argument));
+            }
         }
     }
 }

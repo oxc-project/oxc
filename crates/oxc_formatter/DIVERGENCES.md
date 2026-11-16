@@ -1234,11 +1234,12 @@ and `this` stays attached as a member chain head like a short identifier (`this.
 ## conditional-arrow-return-type
 
 - Why: semantics
-- Pin: `tests/fixtures/ts/conditional-arrow-body/input.ts`
+- Pin: `tests/fixtures/ts/conditional-arrow-body/broken/nested.ts`
 
 With `arrowParens: "avoid"`, concise arrows and `yield` expressions in conditional
-consequents stay parenthesized. This ends the expression before the conditional colon
-can be read as a return-type annotation after inner parentheses are removed.
+consequents stay parenthesized, including through conditional alternate chains.
+This ends the expression before the conditional colon can be read as a return-type
+annotation after inner parentheses are removed.
 
 ```ts
 // input

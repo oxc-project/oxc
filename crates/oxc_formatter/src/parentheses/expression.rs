@@ -821,7 +821,7 @@ impl NeedsParentheses<'_> for AstNode<'_, '_, ArrowFunctionExpression<'_>> {
             // End the arrow body before the conditional colon can become a return-type annotation.
             f.context().source_type().is_typescript()
                 && f.options().arrow_parentheses.is_as_needed()
-                && e.consequent.span() == self.span()
+                && ends_conditional_consequent(self.span(), parent)
                 && !matches!(self.body, ArrowFunctionBody::FunctionBody(_))
         } else {
             update_or_lower_expression_needs_parens(self.span(), parent)
@@ -840,7 +840,7 @@ impl NeedsParentheses<'_> for AstNode<'_, '_, YieldExpression<'_>> {
             || (f.context().source_type().is_typescript()
                 && f.options().arrow_parentheses.is_as_needed()
                 && self.argument.is_some()
-                && matches!(parent, AstNodes::ConditionalExpression(e) if e.consequent.span() == self.span()))
+                && ends_conditional_consequent(self.span(), parent))
             || await_or_yield_needs_parens(self.span(), parent)
     }
 }
@@ -1244,6 +1244,20 @@ fn prints_own_parens(node: &AstNodes<'_, '_>, f: &JsFormatter<'_, '_>) -> bool {
         // The arrow prints them around a sequence body
         || (matches!(node, AstNodes::SequenceExpression(_))
             && matches!(node.parent(), AstNodes::ArrowFunctionExpression(_)))
+}
+
+fn ends_conditional_consequent(mut span: Span, mut parent: &AstNodes<'_, '_>) -> bool {
+    while let AstNodes::ConditionalExpression(conditional) = parent {
+        if conditional.consequent.span() == span {
+            return true;
+        }
+        if conditional.alternate.span() != span {
+            return false;
+        }
+        span = conditional.span();
+        parent = conditional.parent();
+    }
+    false
 }
 
 fn await_or_yield_needs_parens(span: Span, node: &AstNodes<'_, '_>) -> bool {
