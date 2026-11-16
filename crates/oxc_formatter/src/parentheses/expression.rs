@@ -815,7 +815,14 @@ impl NeedsParentheses<'_> for AstNode<'_, '_, ArrowFunctionExpression<'_>> {
             return true;
         }
         if let AstNodes::ConditionalExpression(e) = parent {
-            e.test.span() == self.span()
+            if e.test.span() == self.span() {
+                return true;
+            }
+            // End the arrow body before the conditional colon can become a return-type annotation.
+            f.context().source_type().is_typescript()
+                && f.options().arrow_parentheses.is_as_needed()
+                && e.consequent.span() == self.span()
+                && !matches!(self.body, ArrowFunctionBody::FunctionBody(_))
         } else {
             update_or_lower_expression_needs_parens(self.span(), parent)
         }

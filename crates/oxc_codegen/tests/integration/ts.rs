@@ -599,3 +599,21 @@ fn ts_cast_assignment_target_is_parenthesized() {
     test_idempotency("(foo as Bar) = baz");
     test_idempotency("(foo satisfies Bar) = baz");
 }
+
+#[test]
+fn conditional_arrow_body_return_type_ambiguity() {
+    for (source, expected) in [
+        ("a ? (b?) => ({ c: (d) }) : e => f;", "a?((b?)=>({c:d})):e=>f;"),
+        ("a ? () => (b, (c)) : d => e;", "a?(()=>(b,c)):d=>e;"),
+        ("a ? () => async((b)) : c => d;", "a?(()=>async(b)):c=>d;"),
+        ("a ? result = () => (b, (c)) : d => e;", "a?(result=()=>(b,c)):d=>e;"),
+        ("a ? b ? c : () => async((d)) : e => f;", "a?(b?c:()=>async(d)):e=>f;"),
+        ("a ? () => async((b)) : (c => d)();", "a?(()=>async(b)):(c=>d)();"),
+        ("a ? () => async((b)) : (c => d, e);", "a?(()=>async(b)):(c=>d,e);"),
+        ("a ? () => b : c;", "a?(()=>b):c;"),
+        ("a ? () => {} : c => d;", "a?()=>{}:c=>d;"),
+    ] {
+        test_options_with_source_type(source, expected, SourceType::ts(), CodegenOptions::minify());
+        test_idempotency_options(source, &CodegenOptions::minify());
+    }
+}

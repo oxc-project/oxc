@@ -1230,3 +1230,23 @@ A longer path (`a.b.c`) still breaks into a list of properties.
 Prettier keeps it only for an identifier object (prettier/prettier#1036, which has no case for `this` or `super`).
 Elsewhere it groups them with an identifier: all three count as a single word for a simple call argument,
 and `this` stays attached as a member chain head like a short identifier (`this.foo()` + break + `.bar()`, prettier/prettier#782).
+
+## conditional-arrow-return-type
+
+- Why: semantics
+- Pin: `tests/fixtures/ts/conditional-arrow-body/input.ts`
+
+With `arrowParens: "avoid"`, a concise arrow in a conditional consequent stays
+parenthesized. This ends the arrow body before the conditional colon
+can be read as a return-type annotation after inner parentheses are removed.
+
+```ts
+// input
+a ? () => async((b)) : c => d;
+// ours
+a ? (() => async(b)) : c => d;
+// prettier
+a ? () => async(b) : c => d;
+```
+
+TypeScript rejects Prettier's output with a missing-colon syntax error.

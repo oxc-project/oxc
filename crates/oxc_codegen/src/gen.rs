@@ -46,6 +46,7 @@ pub trait GenExpr: GetSpan {
 impl Gen for Program<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.is_jsx = self.source_type.is_jsx();
+        p.is_typescript = self.source_type.is_typescript();
 
         // Allow for inserting comments to the top of the file.
         p.print_comments_at(0);
@@ -2090,7 +2091,26 @@ impl GenExpr for ConditionalExpression<'_> {
             // Annotation-gated (see the helper's doc): `if/else` bodies get
             // merged into consequents on mutated ASTs.
             p.print_annotation_comments_before_expression(&self.consequent);
-            self.consequent.print_expr(p, Precedence::Yield, Context::empty());
+            let wrap_consequent = if p.is_typescript && p.options.minify {
+                let mut consequent = self.consequent.without_parentheses();
+                loop {
+                    consequent = match consequent {
+                        Expression::AssignmentExpression(e) => e.right.without_parentheses(),
+                        Expression::ConditionalExpression(e) => e.alternate.without_parentheses(),
+                        Expression::ArrowFunctionExpression(arrow) => {
+                            break !arrow.pife
+                                && !matches!(arrow.body, ArrowFunctionBody::FunctionBody(_));
+                        }
+                        _ => break false,
+                    };
+                }
+            } else {
+                false
+            };
+            // End the arrow body before the conditional colon can become a return-type annotation.
+            p.wrap(wrap_consequent, |p| {
+                self.consequent.print_expr(p, Precedence::Yield, Context::empty());
+            });
             p.print_soft_space();
             p.print_colon();
             p.print_soft_space();
