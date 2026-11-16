@@ -36,6 +36,11 @@ Rust CLI. Node.js bindings, JavaScript plugins, and embedded formatter support
 may require a package build; follow the affected package's instructions
 rather than assuming a Rust-only reproduction covers them.
 
+Factory starts from a fresh checkout; ignored conformance suites may be absent.
+When required, use the repository's `.github/scripts/clone-parallel.mjs`
+selectors to fetch only the needed pinned suites. Do not substitute a passing
+empty suite for the required check.
+
 Use development builds unless the issue depends on release behavior or
 performance. Keep source files, configuration, third-party dependencies, and
 captured output under `<triageDir>`; Cargo's normal `target/` output is ignored.

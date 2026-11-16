@@ -18,9 +18,9 @@ environment values. Never investigate private code.
 Unless one is provided, `triageDir` is `triage/gh-<issue number>`, using
 `issueNumber` or `issueDetails.number`; never create a directory literally
 named `triageDir`. Factory supplies an absolute path outside the checkout;
-use that exact path when supplied. Keep every reproduction project, reference checkout,
-script, log, and `report.md` under it. Git ignores `triage/`; the orchestrator commits every other new or changed
-file in the worktree. Export `INSTA_REQUIRE_FULL_MATCH=1` for verification.
+use that exact path when supplied. Keep reproduction projects, reference
+checkouts, scripts, logs, and `report.md` under it. Git ignores `triage/`; the
+orchestrator commits every other new or changed file in the worktree. Export `INSTA_REQUIRE_FULL_MATCH=1` for verification.
 Every stage must read the existing `report.md`, if any, and write its result
 there so the next stage has durable evidence. Stop after two attempts at the
 same infrastructure failure and report what is known.
