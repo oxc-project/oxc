@@ -381,7 +381,21 @@ impl NoFallthrough {
     fn has_blanks_between(ctx: &LintContext, range: Range<u32>) -> bool {
         let in_between = &ctx.source_text()[range.start as usize..range.end as usize];
         // check for at least 2 new lines, we allow the first new line for formatting.
-        in_between.bytes().filter(|it| *it == b'\n').nth(1).is_some()
+        let mut chars = in_between.chars().peekable();
+        let mut line_breaks = 0;
+        while let Some(ch) = chars.next() {
+            if !matches!(ch, '\n' | '\r' | '\u{2028}' | '\u{2029}') {
+                continue;
+            }
+            if ch == '\r' && chars.peek() == Some(&'\n') {
+                chars.next();
+            }
+            line_breaks += 1;
+            if line_breaks == 2 {
+                return true;
+            }
+        }
+        false
     }
 
     fn maybe_allow_fallthrough_trivia(
@@ -749,4 +763,23 @@ fn test() {
     ];
 
     Tester::new(NoFallthrough::NAME, NoFallthrough::PLUGIN, pass, fail).test_and_snapshot();
+}
+
+#[test]
+fn empty_case_line_terminators() {
+    use crate::tester::Tester;
+
+    let mut pass = Vec::new();
+    let mut fail: Vec<(String, Option<serde_json::Value>)> = Vec::new();
+    for separator in ["\n", "\r", "\r\n", "\u{2028}", "\u{2029}"] {
+        pass.push((format!("switch (x) {{ case 1:{separator}case 2: break; }}"), None));
+        fail.push((format!("switch (x) {{ case 1:{separator}{separator}case 2: break; }}"), None));
+        pass.push((
+            format!("switch (x) {{ case 1:{separator}{separator}case 2: break; }}"),
+            Some(serde_json::json!([{ "allowEmptyCase": true }])),
+        ));
+    }
+    let pass = pass.iter().map(|(code, config)| (code.as_str(), config.clone())).collect();
+    let fail = fail.iter().map(|(code, config)| (code.as_str(), config.clone())).collect();
+    Tester::new(NoFallthrough::NAME, NoFallthrough::PLUGIN, pass, fail).test();
 }
