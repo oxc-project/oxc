@@ -525,7 +525,6 @@ fn test() {
     ];
 
     let fail = vec![
-        // The inner class declares its own `#x`, so the outer `#x` is unused.
         "class C { #x; m() { return class { #x; n(o) { return o.#x; } }; } }",
         r"class Foo {
                 #unusedMember = 5;

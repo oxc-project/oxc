@@ -107,9 +107,6 @@ impl<'a> ClassTableBuilder<'a> {
             || parent_kind.is_member_expression_kind())
             && let Some(current_class_id) = self.current_class_id
         {
-            // A private name refers to the closest enclosing class that declares it,
-            // e.g. `#x` used inside a class expression nested in the class that has `#x`.
-            // An undeclared name stays on the current class, where it is reported.
             let class_id = self
                 .classes
                 .ancestors(current_class_id)
