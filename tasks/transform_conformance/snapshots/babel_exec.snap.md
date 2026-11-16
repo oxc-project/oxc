@@ -2,7 +2,7 @@ commit: 16a2d671
 
 node: v26.12.1
 
-Passed: 337 of 424 (79.48%)
+Passed: 338 of 424 (79.72%)
 
 Failures:
 
@@ -477,10 +477,6 @@ TypeError: "#privateStaticFieldValue" is write-only
     at _writeOnlyError (./npm/runtime/src/helpers/writeOnlyError.js:2:9)
     at Cl.getPrivateStaticFieldValue (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsSymbols-get-only-setter-exec.test.js:7:17)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsSymbols-get-only-setter-exec.test.js:14:12
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-transparent-expr-wrappers-ts-exec-exec.test.js
-AssertionError: expected [ undefined, 1 ] to deeply equal [ C{}, 1 ]
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-transparent-expr-wrappers-ts-exec-exec.test.js:25:17
 
 ./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-assumption-privateFieldsAsProperties-method-exec.test.js
 ReferenceError: _Foo_brand is not defined

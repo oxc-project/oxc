@@ -248,7 +248,8 @@ impl<'a> ClassProperties<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let Expression::CallExpression(call_expr) = expr else { unreachable!() };
-        if matches!(&call_expr.callee, Expression::PrivateFieldExpression(_)) {
+        if matches!(call_expr.callee.get_inner_expression(), Expression::PrivateFieldExpression(_))
+        {
             self.transform_call_expression_impl(call_expr, ctx);
         }
     }
@@ -260,13 +261,15 @@ impl<'a> ClassProperties<'a> {
     ) {
         // Unfortunately no way to make compiler see that this branch is provably unreachable.
         // This function is much too large to inline.
-        let Expression::PrivateFieldExpression(field_expr) = &mut call_expr.callee else {
+        let Expression::PrivateFieldExpression(field_expr) =
+            call_expr.callee.get_inner_expression_mut()
+        else {
             unreachable!()
         };
 
         if self.private_fields_as_properties {
             // `object.#prop(arg)` -> `_classPrivateFieldLooseBase(object, _prop)[_prop](arg)`
-            call_expr.callee.replace_with(|callee| {
+            call_expr.callee.get_inner_expression_mut().replace_with(|callee| {
                 let Expression::PrivateFieldExpression(field_expr) = callee else { unreachable!() };
 
                 let prop_binding =
@@ -384,7 +387,7 @@ impl<'a> ClassProperties<'a> {
             )
             .is_some()
             {
-                if is_method {
+                if is_method && !is_accessor {
                     // (`_prop`, object)
                     (prop_ident, object)
                 } else if is_accessor {
