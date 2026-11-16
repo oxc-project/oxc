@@ -56,6 +56,12 @@ fn test() {
 			    ",
             None,
         ), // { "parserOptions": { "sourceType": "module" } }
+        (
+            "const method = 'fn'; vi[method]().mock.calls.at(0);",
+            Some(serde_json::json!([{ "mock": null }])),
+        ),
+        ("vi[getMethod()]().mock.calls.at(0);", Some(serde_json::json!([{ "mock": null }]))),
+        ("vi().mock().calls.at(0);", Some(serde_json::json!([{ "mock": null }]))),
     ];
 
     let fail = vec![

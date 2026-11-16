@@ -59,6 +59,12 @@ fn test() {
             ",
             None,
         ),
+        (
+            "const method = 'fn'; jest[method]().mock.calls.at(0);",
+            Some(serde_json::json!([{ "mock": null }])),
+        ),
+        ("jest[getMethod()]().mock.calls.at(0);", Some(serde_json::json!([{ "mock": null }]))),
+        ("jest().mock().calls.at(0);", Some(serde_json::json!([{ "mock": null }]))),
     ];
 
     let fail = vec![

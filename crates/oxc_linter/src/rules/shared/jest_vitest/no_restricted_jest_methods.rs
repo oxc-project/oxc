@@ -5,7 +5,7 @@ use crate::{
         parse_general_jest_fn_call,
     },
 };
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::AstNode;
 use oxc_span::Span;
@@ -98,6 +98,13 @@ impl NoRestrictedTestMethodsConfig {
         let Some(member) = jest_fn_call.members.first() else {
             return;
         };
+
+        let Some(member_expr) = member.parent.and_then(Expression::as_member_expression) else {
+            return;
+        };
+        if !matches!(member_expr.object(), Expression::Identifier(_)) {
+            return;
+        }
 
         let Some(property_name) = member.name() else {
             return;
