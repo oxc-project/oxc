@@ -156,6 +156,9 @@ function attributeCount(specificity: number): number {
   return (specificity >> ATTRIBUTE_COUNT_SHIFT) & ATTRIBUTE_COUNT_MAX;
 }
 
+// Matches a node whose ancestors are ancestors.slice(depth), without creating that slice
+type Matcher = (node: ESTreeNode, depth: number) => boolean;
+
 // Parsed selector.
 interface Selector {
   // Array of IDs of types this selector matches, or `null` if selector matches all types.
@@ -364,27 +367,22 @@ export function wrapVisitFnWithSelectorMatch(visitFn: VisitFn, matcher: Matcher)
   };
 }
 
-// Matches a node whose ancestors are ancestors.slice(depth), without creating that slice
-type Matcher = (node: ESTreeNode, depth: number) => boolean;
-
 const EMPTY_ANCESTRY: EsqueryNode[] = [];
 
 const TYPE_NAMES_BY_LOWERCASE = new Map(
   [...NODE_TYPE_IDS_MAP.keys()].map((name) => [name.toLowerCase(), name]),
 );
 
+// Compile an esquery selector into a matcher which reads ancestors in place instead of slicing them
 function compileMatcher(selector: EsquerySelector): Matcher {
   switch (selector.type) {
     case "wildcard":
       return () => true;
 
     case "identifier": {
-      // esquery compares types case-insensitively
-      const value = selector.value.toLowerCase();
-      const typeName = TYPE_NAMES_BY_LOWERCASE.get(value);
-      return typeName === undefined
-        ? (node) => node.type.toLowerCase() === value
-        : (node) => node.type === typeName;
+      // esquery compares types case-insensitively, and only nodes of known types are walked
+      const typeName = TYPE_NAMES_BY_LOWERCASE.get(selector.value.toLowerCase());
+      return typeName === undefined ? () => false : (node) => node.type === typeName;
     }
 
     case "field": {
@@ -414,10 +412,9 @@ function compileMatcher(selector: EsquerySelector): Matcher {
 
     case "compound": {
       // Check the node's own type and attributes before anything that walks other nodes
-      const matchers = [
-        ...selector.selectors.filter((child) => !isExpensive(child)),
-        ...selector.selectors.filter(isExpensive),
-      ].map(compileMatcher);
+      const matchers = selector.selectors
+        .toSorted((a, b) => Number(isExpensive(a)) - Number(isExpensive(b)))
+        .map(compileMatcher);
       return (node, depth) => {
         for (let i = 0; i < matchers.length; i++) {
           if (!matchers[i](node, depth)) return false;
@@ -446,24 +443,27 @@ function compileMatcher(selector: EsquerySelector): Matcher {
     }
 
     case "class":
-      return (node) =>
-        matchesSelectorClass(selector.name, node as unknown as EsqueryNode, EMPTY_ANCESTRY);
+      return (node) => {
+        typeAssertIs<EsqueryNode>(node);
+        return matchesSelectorClass(selector.name, node, EMPTY_ANCESTRY);
+      };
 
     case "attribute":
     case "has":
       // These only look at the node and its descendants, so ancestry is irrelevant
-      return (node) =>
-        esqueryMatches(node as unknown as EsqueryNode, selector, EMPTY_ANCESTRY, ESQUERY_OPTIONS);
+      return (node) => {
+        typeAssertIs<EsqueryNode>(node);
+        return esqueryMatches(node, selector, EMPTY_ANCESTRY, ESQUERY_OPTIONS);
+      };
 
     default:
       // Sibling and nth-child selectors are rare, so fall back to esquery with a real ancestry array
-      return (node, depth) =>
-        esqueryMatches(
-          node as unknown as EsqueryNode,
-          selector,
-          (depth === 0 ? ancestors : ancestors.slice(depth)) as unknown as EsqueryNode[],
-          ESQUERY_OPTIONS,
-        );
+      return (node, depth) => {
+        const ancestry = depth === 0 ? ancestors : ancestors.slice(depth);
+        typeAssertIs<EsqueryNode>(node);
+        typeAssertIs<EsqueryNode[]>(ancestry);
+        return esqueryMatches(node, selector, ancestry, ESQUERY_OPTIONS);
+      };
   }
 }
 
@@ -492,8 +492,14 @@ function isInPath(node: ESTreeNode, ancestor: unknown, path: string[], fromIndex
   let current = ancestor;
   for (let i = fromIndex; i < path.length; i++) {
     if (current == null) return false;
-    const field: unknown = Object(current)[path[i]];
-    if (Array.isArray(field)) return field.some((child) => isInPath(node, child, path, i + 1));
+    typeAssertIs<Record<string, unknown>>(current);
+    const field = current[path[i]];
+    if (Array.isArray(field)) {
+      for (let j = 0; j < field.length; j++) {
+        if (isInPath(node, field[j], path, i + 1)) return true;
+      }
+      return false;
+    }
     current = field;
   }
   return node === current;
