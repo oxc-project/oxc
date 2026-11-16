@@ -1,6 +1,6 @@
 semantic_misc Summary:
-AST Parsed     : 140/140 (100.00%)
-Positive Passed: 137/140 (97.86%)
+AST Parsed     : 141/141 (100.00%)
+Positive Passed: 138/141 (97.87%)
 semantic Error: tasks/coverage/misc/pass/import-equals-modifiers.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["A", "Ambient", "Exported", "ExportedExternal", "ExportedType"]

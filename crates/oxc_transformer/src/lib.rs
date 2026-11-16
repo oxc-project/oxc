@@ -163,7 +163,7 @@ impl<'a> Transformer<'a> {
             x0_typescript: program
                 .source_type
                 .is_typescript()
-                .then(|| TypeScript::new(&self.typescript, &self.state)),
+                .then(|| TypeScript::new(&self.typescript, &self.state, allocator)),
             x1_jsx: Jsx::new(
                 self.jsx,
                 self.env.es2018.object_rest_spread,

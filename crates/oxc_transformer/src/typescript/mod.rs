@@ -1,4 +1,4 @@
-use oxc_allocator::ArenaVec;
+use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_traverse::Traverse;
 
@@ -54,9 +54,13 @@ pub struct TypeScript<'a> {
 }
 
 impl<'a> TypeScript<'a> {
-    pub fn new(options: &TypeScriptOptions, state: &TransformState<'a>) -> Self {
+    pub fn new(
+        options: &TypeScriptOptions,
+        state: &TransformState<'a>,
+        allocator: &'a Allocator,
+    ) -> Self {
         Self {
-            annotations: TypeScriptAnnotations::new(options),
+            annotations: TypeScriptAnnotations::new(options, allocator),
             r#enum: TypeScriptEnum::new(options.optimize_const_enums, options.optimize_enums),
             namespace: TypeScriptNamespace::new(options),
             module: TypeScriptModule::new(options.only_remove_type_imports, state.module),

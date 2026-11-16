@@ -1,14 +1,14 @@
-use oxc_allocator::{ArenaVec, ReplaceWith, TakeIn};
+use oxc_allocator::{Allocator, ArenaVec, BitSet, GetAllocator, ReplaceWith, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::BoundNames;
-use oxc_semantic::{Reference, SymbolFlags};
+use oxc_semantic::{Reference, Scoping, SymbolFlags};
 use oxc_span::{GetSpan, SPAN, Span};
 use oxc_str::Str;
 use oxc_syntax::{
     operator::AssignmentOperator,
-    reference::ReferenceFlags,
+    reference::{ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolId,
 };
@@ -22,7 +22,8 @@ pub struct TypeScriptAnnotations<'a> {
 
     /// Assignments to be added to the constructor body
     assignments: Vec<Assignment<'a>>,
-    erased_bindings: Vec<BindingIdentifier<'a>>,
+    erased_bindings: ArenaVec<'a, BindingIdentifier<'a>>,
+    erased_references: ArenaVec<'a, ReferenceId>,
     has_super_call: bool,
 
     has_jsx_element: bool,
@@ -31,8 +32,8 @@ pub struct TypeScriptAnnotations<'a> {
     jsx_fragment_import_name: String,
 }
 
-impl TypeScriptAnnotations<'_> {
-    pub fn new(options: &TypeScriptOptions) -> Self {
+impl<'a> TypeScriptAnnotations<'a> {
+    pub fn new(options: &TypeScriptOptions, allocator: &'a Allocator) -> Self {
         let jsx_element_import_name = if options.jsx_pragma.contains('.') {
             options.jsx_pragma.split('.').next().map(String::from).unwrap()
         } else {
@@ -49,7 +50,8 @@ impl TypeScriptAnnotations<'_> {
             only_remove_type_imports: options.only_remove_type_imports,
             has_super_call: false,
             assignments: vec![],
-            erased_bindings: vec![],
+            erased_bindings: ArenaVec::new_in(&allocator),
+            erased_references: ArenaVec::new_in(&allocator),
             has_jsx_element: false,
             has_jsx_fragment: false,
             jsx_element_import_name,
@@ -60,6 +62,7 @@ impl TypeScriptAnnotations<'_> {
 
 impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.remove_erased_references(ctx);
         let mut no_modules_remaining = true;
         let mut some_modules_deleted = false;
 
@@ -68,7 +71,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
                 Statement::ExportDeclaration(decl) => {
                     let keep = !decl.declaration.is_typescript_syntax();
                     if !keep {
-                        Self::remove_declaration_references(&decl.declaration, ctx);
+                        self.record_declaration_references(&decl.declaration, ctx);
                     }
                     keep
                 }
@@ -81,7 +84,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
                         true
                     } else {
                         decl.specifiers
-                            .retain(|specifier| Self::can_retain_export_specifier(specifier, ctx));
+                            .retain(|specifier| self.can_retain_export_specifier(specifier, ctx));
                         // Keep the export declaration if there are still specifiers after removing type exports
                         !decl.specifiers.is_empty()
                     }
@@ -93,7 +96,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
                         true
                     } else {
                         decl.specifiers
-                            .retain(|specifier| Self::can_retain_export_specifier(specifier, ctx));
+                            .retain(|specifier| self.can_retain_export_specifier(specifier, ctx));
                         !decl.specifiers.is_empty()
                     }
                 }
@@ -105,7 +108,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
                             ExportDefaultDeclarationKind::Identifier(ident) if Self::is_refers_to_type(ident, ctx)
                         );
                     if !keep && let ExportDefaultDeclarationKind::Identifier(ident) = &decl.declaration {
-                        ctx.delete_reference_for_identifier(ident);
+                        self.erased_references.push(ident.reference_id());
                     }
                     keep
                 }
@@ -173,6 +176,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
             need_retain
         });
 
+        self.remove_erased_references(ctx);
         self.remove_erased_bindings(ctx);
 
         // Determine if we still have import/export statements, otherwise we
@@ -401,17 +405,25 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
         stmts: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        let first_erased_binding = self.erased_bindings.len();
         // Remove TS-only statements early to avoid traversing their children
         stmts.retain(|stmt| match stmt {
             match_declaration!(Statement) => {
                 self.should_keep_declaration(stmt.to_declaration(), ctx)
             }
             Statement::ExportDeclaration(decl) if decl.declaration.is_typescript_syntax() => {
-                self.record_erased_bindings(&decl.declaration, ctx);
+                self.record_erased_bindings(&decl.declaration);
                 true
             }
             _ => true,
         });
+        let erased_bindings = &mut self.erased_bindings[first_erased_binding..];
+        erased_bindings.sort_unstable_by_key(|ident| (ident.symbol_id(), ident.span));
+        for declarations in erased_bindings.chunk_by(|a, b| a.symbol_id() == b.symbol_id()) {
+            ctx.scoping_mut().remove_symbol_declarations(declarations[0].symbol_id(), |span| {
+                declarations.binary_search_by_key(&span, |ident| ident.span).is_ok()
+            });
+        }
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -587,27 +599,14 @@ impl<'a> TypeScriptAnnotations<'a> {
             }
         };
         if !keep {
-            self.record_erased_bindings(decl, ctx);
-            Self::remove_declaration_references(decl, ctx);
+            self.record_erased_bindings(decl);
+            self.record_declaration_references(decl, ctx);
         }
         keep
     }
 
-    fn record_erased_bindings(&mut self, decl: &Declaration<'a>, ctx: &mut TraverseCtx<'a>) {
-        let mut record = |ident: &BindingIdentifier<'a>| {
-            let symbol_id = ident.symbol_id();
-            let flags = ctx.scoping().symbol_flags(symbol_id);
-            let declaration_flags = ctx
-                .scoping()
-                .symbol_redeclarations(symbol_id)
-                .iter()
-                .fold(SymbolFlags::None, |flags, decl| flags | decl.flags);
-            ctx.scoping_mut().remove_symbol_declaration(symbol_id, ident.span);
-            let remaining_flags = ctx.scoping().symbol_flags(symbol_id);
-            *ctx.scoping_mut().symbol_flags_mut(symbol_id) =
-                flags - (declaration_flags - remaining_flags);
-            self.erased_bindings.push(ident.clone());
-        };
+    fn record_erased_bindings(&mut self, decl: &Declaration<'a>) {
+        let mut record = |ident: &BindingIdentifier<'a>| self.erased_bindings.push(ident.clone());
         match decl {
             Declaration::VariableDeclaration(decl) if decl.declare => decl.bound_names(&mut record),
             Declaration::FunctionDeclaration(decl) if decl.declare || decl.body.is_none() => {
@@ -620,26 +619,47 @@ impl<'a> TypeScriptAnnotations<'a> {
     }
 
     fn remove_erased_bindings(&mut self, ctx: &mut TraverseCtx<'a>) {
-        for ident in self.erased_bindings.drain(..) {
+        let mut erased_bindings = self.erased_bindings.take_in(ctx);
+        erased_bindings.sort_unstable_by_key(|ident| (ident.symbol_id(), ident.span));
+        for declarations in erased_bindings.chunk_by(|a, b| a.symbol_id() == b.symbol_id()) {
+            let ident = &declarations[0];
             let symbol_id = ident.symbol_id();
-            if ctx.scoping().symbol_span(symbol_id) != ident.span {
+            if declarations
+                .binary_search_by_key(&ctx.scoping().symbol_span(symbol_id), |ident| ident.span)
+                .is_err()
+            {
                 continue;
             }
 
             let scope_id = ctx.scoping().symbol_scope_id(symbol_id);
             ctx.scoping_mut().remove_binding(scope_id, ident.name);
-            let reference_ids = ctx.scoping().get_resolved_reference_ids(symbol_id).to_vec();
-            ctx.scoping_mut().clear_resolved_references(symbol_id);
-            for reference_id in reference_ids {
+            let reference_count = ctx.scoping().get_resolved_reference_ids(symbol_id).len();
+            for index in 0..reference_count {
+                let reference_id = ctx.scoping().get_resolved_reference_ids(symbol_id)[index];
                 let reference = ctx.scoping_mut().get_reference_mut(reference_id);
+                if !reference.flags().is_value() {
+                    continue;
+                }
                 *reference =
                     Reference::new(reference.node_id(), reference.scope_id(), reference.flags());
                 let scope_id = reference.scope_id();
-                let binding = ctx.scoping().scope_ancestors(scope_id).find_map(|scope_id| {
-                    ctx.scoping()
-                        .get_binding(scope_id, ident.name)
-                        .filter(|&symbol_id| ctx.scoping().symbol_flags(symbol_id).is_value())
-                });
+                let mut binding = None;
+                for scope_id in ctx.scoping().scope_ancestors(scope_id) {
+                    if let Some(symbol_id) = ctx.scoping().get_binding(scope_id, ident.name) {
+                        let flags = ctx.scoping().symbol_flags(symbol_id);
+                        if flags.can_be_referenced_by_value()
+                            && !(ident.name == "arguments"
+                                && flags.contains(SymbolFlags::FunctionExpression))
+                        {
+                            binding = Some(symbol_id);
+                            break;
+                        }
+                    }
+                    let flags = ctx.scoping().scope_flags(scope_id);
+                    if ident.name == "arguments" && flags.is_function() && !flags.is_arrow() {
+                        break;
+                    }
+                }
                 if let Some(symbol_id) = binding {
                     ctx.scoping_mut().get_reference_mut(reference_id).set_symbol_id(symbol_id);
                     ctx.scoping_mut().add_resolved_reference(symbol_id, reference_id);
@@ -647,19 +667,37 @@ impl<'a> TypeScriptAnnotations<'a> {
                     ctx.scoping_mut().add_root_unresolved_reference(ident.name, reference_id);
                 }
             }
+            ctx.scoping_mut().clear_resolved_references(symbol_id);
         }
     }
 
-    fn remove_declaration_references(decl: &Declaration<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn record_declaration_references(&mut self, decl: &Declaration<'a>, ctx: &TraverseCtx<'a>) {
         match decl {
             Declaration::VariableDeclaration(_)
             | Declaration::FunctionDeclaration(_)
             | Declaration::ClassDeclaration(_)
             | Declaration::TSEnumDeclaration(_) => {
-                DeclarationReferenceRemover { ctx }.visit_declaration(decl);
+                DeclarationReferenceCollector {
+                    scoping: ctx.scoping(),
+                    references: &mut self.erased_references,
+                }
+                .visit_declaration(decl);
             }
             _ => {}
         }
+    }
+
+    fn remove_erased_references(&mut self, ctx: &mut TraverseCtx<'a>) {
+        if self.erased_references.is_empty() {
+            return;
+        }
+        let mut excluded = BitSet::new_in(ctx.scoping().references_len(), ctx.ast.allocator());
+        for reference_id in &self.erased_references {
+            excluded.set_bit(reference_id.index());
+        }
+        ctx.scoping_mut().retain_resolved_references_excluding(&excluded);
+        ctx.scoping_mut().retain_unresolved_references_excluding(&excluded);
+        self.erased_references.clear();
     }
 
     fn remove_import_declaration_bindings(decl: &ImportDeclaration<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -736,13 +774,14 @@ impl<'a> TypeScriptAnnotations<'a> {
     }
 
     fn can_retain_export_specifier(
+        &mut self,
         specifier: &ExportSpecifier<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> bool {
         let keep = !specifier.export_kind.is_type()
             && !matches!(&specifier.local, ModuleExportName::IdentifierReference(ident) if Self::is_refers_to_type(ident, ctx));
         if !keep && let ModuleExportName::IdentifierReference(ident) = &specifier.local {
-            ctx.delete_reference_for_identifier(ident);
+            self.erased_references.push(ident.reference_id());
         }
         keep
     }
@@ -759,14 +798,19 @@ impl<'a> TypeScriptAnnotations<'a> {
     }
 }
 
-struct DeclarationReferenceRemover<'ctx, 'a> {
-    ctx: &'ctx mut TraverseCtx<'a>,
+struct DeclarationReferenceCollector<'ctx, 'a> {
+    scoping: &'ctx Scoping,
+    references: &'ctx mut ArenaVec<'a, ReferenceId>,
 }
 
-impl<'a> Visit<'a> for DeclarationReferenceRemover<'_, 'a> {
+impl<'a> Visit<'a> for DeclarationReferenceCollector<'_, 'a> {
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
-        self.ctx.delete_reference_for_identifier(ident);
+        if self.scoping.get_reference(ident.reference_id()).flags().is_value() {
+            self.references.push(ident.reference_id());
+        }
     }
+
+    fn visit_ts_type(&mut self, _: &TSType<'a>) {}
 }
 
 struct Assignment<'a> {

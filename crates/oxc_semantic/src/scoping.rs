@@ -633,6 +633,39 @@ impl Scoping {
         }
     }
 
+    /// Remove matching declarations and promote the first survivor, preserving flags already
+    /// changed by transforms. Returns whether a declaration survives.
+    pub fn remove_symbol_declarations(
+        &mut self,
+        symbol_id: SymbolId,
+        mut remove: impl FnMut(Span) -> bool,
+    ) -> bool {
+        let replacement = self.cell.with_dependent_mut(|_allocator, cell| {
+            let redeclarations = cell.symbol_redeclarations.get_mut(&symbol_id)?;
+            let original_flags = redeclarations
+                .iter()
+                .fold(SymbolFlags::None, |flags, declaration| flags | declaration.flags);
+            redeclarations.retain(|declaration| !remove(declaration.span));
+            let first = redeclarations.first().cloned();
+            let remaining_flags = redeclarations
+                .iter()
+                .fold(SymbolFlags::None, |flags, declaration| flags | declaration.flags);
+            if redeclarations.len() < 2 {
+                cell.symbol_redeclarations.remove(&symbol_id);
+            }
+            Some((first, original_flags - remaining_flags))
+        });
+
+        let Some((replacement, removed_flags)) = replacement else {
+            return !remove(self.symbol_span(symbol_id));
+        };
+        let Some(replacement) = replacement else { return false };
+        *self.symbol_table.symbol_spans_mut(symbol_id) = replacement.span;
+        *self.symbol_table.symbol_declarations_mut(symbol_id) = replacement.declaration;
+        *self.symbol_table.symbol_flags_mut(symbol_id) -= removed_flags;
+        true
+    }
+
     #[inline]
     /// Create and store a reference entry.
     pub fn create_reference(&mut self, reference: Reference) -> ReferenceId {
@@ -752,6 +785,19 @@ impl Scoping {
             for reference_ids in &mut cell.resolved_references {
                 reference_ids.retain(|id| !excluded.contains(id.index()));
             }
+        });
+    }
+
+    /// Remove excluded references from unresolved-reference lists, dropping empty name entries.
+    pub fn retain_unresolved_references_excluding(&mut self, excluded: &BitSet<'_>) {
+        if excluded.is_empty() {
+            return;
+        }
+        self.cell.with_dependent_mut(|_allocator, cell| {
+            cell.root_unresolved_references.retain(|_name, reference_ids| {
+                reference_ids.retain(|id| !excluded.contains(id.index()));
+                !reference_ids.is_empty()
+            });
         });
     }
 
