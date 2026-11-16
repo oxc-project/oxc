@@ -10,7 +10,7 @@ use oxc_syntax::identifier::{
 use crate::{config::LexerConfig as Config, diagnostics};
 
 use super::{
-    Kind, Lexer, SourcePosition, cold_branch, keyword,
+    FinishTokenMode, Kind, Lexer, SourcePosition, Token, cold_branch, keyword,
     search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
 };
 
@@ -84,6 +84,72 @@ impl<'a, C: Config> Lexer<'a, C> {
             Kind::Ident
         };
         (kind, self.source.position())
+    }
+
+    /// Token handler for an identifier starting with an ASCII byte.
+    /// `CHECK_KEYWORD` may be false only for starting bytes that cannot begin a keyword.
+    ///
+    /// Does the same as `identifier_name_handler`, then finishes the token.
+    /// An identifier has no flags unless it contains an escape, so the common case skips
+    /// the work which `finish_next_inner` does for flags and trivia.
+    ///
+    /// # SAFETY
+    /// * `start_pos` must be the position of a byte which is not at the end of the source.
+    /// * That byte must be ASCII.
+    /// * No trivia must have been seen since the previous token, other than one space.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub(super) unsafe fn identifier_token<const CHECK_KEYWORD: bool>(
+        &mut self,
+        start_pos: SourcePosition<'a>,
+    ) -> Token {
+        // Advance past 1st byte.
+        // SAFETY: Caller guarantees not at EOF, and next byte is ASCII.
+        let after_first = unsafe { start_pos.add(1) };
+
+        // Consume bytes which are part of identifier
+        let next_byte = byte_search! {
+            lexer: self,
+            table: NOT_ASCII_ID_CONTINUE_TABLE,
+            start: after_first,
+            // A byte which ends an identifier, so that EOF takes the common path below
+            handle_eof: b' ',
+        };
+
+        // Unicode characters and escapes are uncommon. Handle both in one cold call.
+        if !next_byte.is_ascii() || next_byte == b'\\' {
+            cold_path();
+            return self.identifier_token_uncommon(start_pos, next_byte == b'\\');
+        }
+
+        let end = self.source.position();
+        let kind = if CHECK_KEYWORD {
+            // SAFETY: The scanner only moves forwards from the saved identifier start.
+            let id = unsafe { self.source.str_from_pos_to_current_unchecked(start_pos) };
+            keyword::match_keyword(id.as_bytes())
+        } else {
+            Kind::Ident
+        };
+        self.finish_fresh_token(kind, start_pos, end)
+    }
+
+    /// Finish an identifier which contains a Unicode character or an escape.
+    /// Position of source must be on that character or escape.
+    #[cold]
+    #[inline(never)]
+    fn identifier_token_uncommon(
+        &mut self,
+        start_pos: SourcePosition<'a>,
+        is_escape: bool,
+    ) -> Token {
+        // `identifier_backslash` records the unescaped identifier against `token_start`
+        self.token_start = self.source.offset_of(start_pos);
+        let (kind, end) = if is_escape {
+            self.identifier_name_uncommon::<true>(start_pos)
+        } else {
+            self.identifier_name_uncommon::<false>(start_pos)
+        };
+        self.finish_next_inner(kind, end, FinishTokenMode::Push)
     }
 
     #[cold]
