@@ -251,19 +251,6 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("let Number; if (x === Number.NaN) {}", None),
-        ("function f(NaN) { return x === NaN; }", None),
-        ("function f(Number) { return x === Number.NaN; }", None),
-        ("let Number; if (x === Number?.NaN) {}", None),
-        ("function f(Number) { return x === Number?.NaN; }", None),
-        (
-            "function f(NaN) { switch (NaN) { case NaN: break; } }",
-            Some(serde_json::json!([{ "enforceForSwitchCase": true }])),
-        ),
-        (
-            "function f(NaN) { return [1].indexOf(NaN); }",
-            Some(serde_json::json!([{ "enforceForIndexOf": true }])),
-        ),
         ("var x = NaN;", None),
         ("isNaN(NaN) === true;", None),
         ("isNaN(123) !== true;", None),
@@ -456,6 +443,19 @@ fn test() {
         ("foo.indexOf((Number.NaN, 1))", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
         (
             "foo.lastIndexOf((Number.NaN, 1))",
+            Some(serde_json::json!([{ "enforceForIndexOf": true }])),
+        ),
+        ("let Number; if (x === Number.NaN) {}", None),
+        ("function f(NaN) { return x === NaN; }", None),
+        ("function f(Number) { return x === Number.NaN; }", None),
+        ("let Number; if (x === Number?.NaN) {}", None),
+        ("function f(Number) { return x === Number?.NaN; }", None),
+        (
+            "function f(NaN) { switch (NaN) { case NaN: break; } }",
+            Some(serde_json::json!([{ "enforceForSwitchCase": true }])),
+        ),
+        (
+            "function f(NaN) { return [1].indexOf(NaN); }",
             Some(serde_json::json!([{ "enforceForIndexOf": true }])),
         ),
     ];
