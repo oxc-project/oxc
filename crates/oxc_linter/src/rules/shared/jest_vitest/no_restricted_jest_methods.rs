@@ -1,20 +1,21 @@
-use crate::{
-    context::LintContext,
-    utils::{
-        JestFnKind, JestGeneralFnKind, PossibleJestNode, object_with_nullable_string_schema,
-        parse_general_jest_fn_call,
-    },
-};
+use rustc_hash::FxHashMap;
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::AstNode;
 use oxc_span::Span;
 use oxc_str::CompactStr;
-use rustc_hash::FxHashMap;
-use schemars::JsonSchema;
-use serde::Deserialize;
 
-use crate::rule::DefaultRuleConfig;
+use crate::{
+    context::LintContext,
+    rule::DefaultRuleConfig,
+    utils::{
+        JestFnKind, JestGeneralFnKind, PossibleJestNode, object_with_nullable_string_schema,
+        parse_general_jest_fn_call,
+    },
+};
 
 fn restricted_jest_method(method_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Use of `{method_name}` is not allowed")).with_label(span)
