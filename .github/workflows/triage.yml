@@ -33,7 +33,7 @@ jobs:
       (github.event.action != 'created' ||
        (github.event.comment.user.login != 'github-actions[bot]' &&
         github.event.comment.user.login != 'oxc-captain[bot]'))
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # GitHub App installation tokens expire after one hour.
     timeout-minutes: 55
     permissions:
@@ -50,13 +50,8 @@ jobs:
         uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
 
       - name: Set up Rust
-        uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
-        with:
-          # Issue events can restore main's caches but cannot save into that scope.
-          save-cache: false
-          cache-key: warm
-          tools: just,cargo-shear@1.13.1,cargo-insta,ast-grep
-          components: clippy rustfmt
+        # Only the trusted triage-cache workflow saves this dependency cache.
+        uses: $/.github/actions/setup-triage-rust
 
       - name: Create oxc-captain token
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0

@@ -1,0 +1,58 @@
+name: Triage Rust Cache
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - Cargo.lock
+      - "**/Cargo.toml"
+      - .cargo/**
+      - rust-toolchain.toml
+      - .github/actions/setup-triage-rust/action.yml
+      - .github/workflows/triage-cache.yml
+      - .github/workflows/triage.yml
+  pull_request:
+    paths:
+      - .github/actions/setup-triage-rust/action.yml
+      - .github/workflows/triage-cache.yml
+      - .github/workflows/triage.yml
+  # Recover from cache eviction and changes to the hosted runner's Rust toolchains.
+  schedule:
+    - cron: "37 3 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: triage-rust-cache-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  warm:
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      INSTA_REQUIRE_FULL_MATCH: 1
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+
+      - uses: $/.github/actions/setup-triage-rust
+        id: rust
+        with:
+          save-cache: true
+
+      # Match the common reproduction and test commands, keeping their feature sets separate.
+      - name: Warm oxlint dependencies
+        if: steps.rust.outputs.cache-hit != 'true'
+        run: cargo build --locked -p oxlint
+
+      - name: Warm linter test dependencies
+        if: steps.rust.outputs.cache-hit != 'true'
+        run: cargo test --locked --no-run -p oxc_linter
