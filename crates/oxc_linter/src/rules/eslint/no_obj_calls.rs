@@ -78,7 +78,7 @@ fn global_this_member<'a>(
     expr: &'a MemberExpression<'_>,
     ctx: &LintContext<'_>,
 ) -> Option<&'a str> {
-    let Expression::Identifier(ident) = expr.object() else { return None };
+    let Expression::Identifier(ident) = expr.object().get_inner_expression() else { return None };
     if ident.name == GLOBAL_THIS && ctx.is_reference_to_global_variable(ident) {
         expr.static_property_name().and_then(JSStr::as_str)
     } else {
@@ -323,6 +323,31 @@ fn shadowed_global_this() {
         fail.push(format!("globalThis.{name}();"));
         fail.push(format!("new globalThis.{name}();"));
         fail.push(format!("const alias = globalThis.{name}; alias();"));
+    }
+    Tester::new(NoObjCalls::NAME, NoObjCalls::PLUGIN, pass, fail).test();
+}
+
+#[test]
+fn wrapped_global_this() {
+    use crate::tester::Tester;
+
+    let mut pass = Vec::new();
+    let mut fail = Vec::new();
+    for object in [
+        "(globalThis)",
+        "(globalThis as any)",
+        "(globalThis satisfies any)",
+        "globalThis!",
+        "(globalThis<string>)",
+    ] {
+        for call in [
+            format!("{object}.Math();"),
+            format!("new {object}.Math();"),
+            format!("const alias = {object}.Math; alias();"),
+        ] {
+            pass.push(format!("function f(globalThis: any) {{ {call} }}"));
+            fail.push(call);
+        }
     }
     Tester::new(NoObjCalls::NAME, NoObjCalls::PLUGIN, pass, fail).test();
 }
