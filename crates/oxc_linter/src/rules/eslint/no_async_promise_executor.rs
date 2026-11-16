@@ -91,7 +91,6 @@ impl Rule for NoAsyncPromiseExecutor {
         let AstKind::NewExpression(new_expression) = node.kind() else {
             return;
         };
-        // A local binding named `Promise` is not the built-in constructor.
         let Expression::Identifier(callee) = &new_expression.callee else {
             return;
         };
