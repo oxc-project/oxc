@@ -86,9 +86,55 @@ impl<'a, C: Config> Lexer<'a, C> {
             return self.finish_fresh_token_on_new_line(kind, pos, end);
         }
 
-        // Comments, strings, and everything else.
-        // No trivia was seen before the line break, so this is all that needs to be recorded.
+        // Strings, comments, and everything else.
+        // SAFETY: `pos` is the current position of source. `byte` is the byte at `pos`,
+        // or a space if `pos` is the end of source.
+        unsafe { self.next_token_after_line_break(pos, byte) }
+    }
+
+    /// Read the next token, where the first trivia seen since the previous token is line breaks
+    /// and regular whitespace, and they are followed by `byte` at `pos`, which does not start
+    /// an identifier or a single-byte token.
+    ///
+    /// This is not inlined into `line_break_token`, so the tokens which that finishes do not pay
+    /// for the stack frame which this requires.
+    ///
+    /// # SAFETY
+    /// * `pos` must be the current position of source.
+    /// * `byte` must be the byte at `pos`, or a space if `pos` is the end of source.
+    #[inline(never)]
+    unsafe fn next_token_after_line_break(&mut self, pos: SourcePosition<'a>, byte: u8) -> Token {
+        debug_assert_eq!(pos, self.source.position());
+        debug_assert_eq!(self.pending, PendingToken::NONE);
+
+        // A string which starts a line is usually an element of an array, or a directive
+        let plain_string = match byte {
+            // SAFETY: `byte` is the byte at `pos`, and it is `"`
+            b'"' => Some(unsafe { self.read_plain_string_literal_double_quote(pos) }),
+            // SAFETY: `byte` is the byte at `pos`, and it is `'`
+            b'\'' => Some(unsafe { self.read_plain_string_literal_single_quote(pos) }),
+            _ => None,
+        };
+        if let Some(Ok(end)) = plain_string {
+            return self.finish_fresh_token_on_new_line(Kind::Str, pos, end);
+        }
+
+        // No trivia was seen before the line break, so this is all that needs to be recorded
         self.pending = PendingToken::AFTER_LINE_BREAK;
+
+        if let Some(Err(next_byte)) = plain_string {
+            // SAFETY: `byte` is the byte at `pos`, and it is the quote which the method called
+            // is for. Position of source has not been altered since the plain string was read.
+            return unsafe {
+                if byte == b'"' {
+                    self.string_token_rest_double_quote(pos, next_byte)
+                } else {
+                    self.string_token_rest_single_quote(pos, next_byte)
+                }
+            };
+        }
+
+        // Comments, and everything else
         self.next_token_after_trivia()
     }
 }
