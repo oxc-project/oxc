@@ -219,9 +219,6 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("function foo(RegExp) { RegExp('['); }", None),
-        ("function foo(RegExp) { new RegExp('['); }", None),
-        ("let RegExp; RegExp('.', 'z');", None),
         ("RegExp('')", None),
         ("RegExp()", None),
         ("RegExp('.', 'g')", None),
@@ -322,6 +319,9 @@ fn test() {
             "new RegExp('.', 'agz')",
             Some(serde_json::json!([{ "allowConstructorFlags": ["a", "z"] }])),
         ),
+        ("function foo(RegExp) { RegExp('['); }", None),
+        ("function foo(RegExp) { new RegExp('['); }", None),
+        ("let RegExp; RegExp('.', 'z');", None),
     ];
 
     let fail = vec![
