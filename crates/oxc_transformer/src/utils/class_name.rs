@@ -7,7 +7,7 @@ use oxc_traverse::Ancestor;
 /// Infer an anonymous class's name from its immediate non-parenthesized ancestor.
 ///
 /// Property names captured during class or object evaluation are handled by the caller.
-pub(super) fn contextual_class_name<'a>(ancestor: &Ancestor<'a, '_>) -> Option<Str<'a>> {
+pub fn contextual_class_name<'a>(ancestor: &Ancestor<'a, '_>) -> Option<Str<'a>> {
     match ancestor {
         Ancestor::VariableDeclaratorInit(decl) => decl.id().get_identifier_name().map(Str::from),
         Ancestor::AssignmentPatternRight(pattern) => {
