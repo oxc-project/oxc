@@ -21,6 +21,7 @@ use oxc_cfg::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_syntax::line_terminator::is_line_terminator;
 
 use crate::{
     AstNode,
@@ -384,7 +385,7 @@ impl NoFallthrough {
         let mut chars = in_between.chars().peekable();
         let mut line_breaks = 0;
         while let Some(ch) = chars.next() {
-            if !matches!(ch, '\n' | '\r' | '\u{2028}' | '\u{2029}') {
+            if !is_line_terminator(ch) {
                 continue;
             }
             if ch == '\r' && chars.peek() == Some(&'\n') {
