@@ -8,6 +8,7 @@ use super::{
         DIGIT_MASK, DOT_MASK, KWINIT_MASK, MERGED_LUTS, OPCH_MASK, VT_FF_MASK, WORD_LUTS,
         WORD_MASK, WS_MASK,
     },
+    mask_tail,
     punct::{PUNCT_HASH_HI, PUNCT_HASH_KINDS, PUNCT_HASH_LO},
 };
 
@@ -92,18 +93,7 @@ pub(super) fn classify_neon(ts: bool, src: &[[u8; 64]], n: usize, out: Planes, c
         st[b] = !((wsm & sprev) | (wordm & wprev));
     }
     // Zero PAD bytes classify as a token start, which would mint spurious tokens past n.
-    let rem = n & 63;
-    if rem != 0 {
-        let last = nb_ceil - 1;
-        let m = (1u64 << rem) - 1;
-        word[last] &= m;
-        st[last] &= m;
-        kwinit[last] &= m;
-        opch[last] &= m;
-        digit[last] &= m;
-        dot[last] &= m;
-        misc[last] &= m;
-    }
+    mask_tail([st, word, kwinit, opch, digit, dot, misc], n);
 }
 
 #[cpu_version(Neon)]
