@@ -1,9 +1,8 @@
-commit: d7a0cccb
+commit: 16a2d671
 
-Passed: 741/1169
+Passed: 748/1184
 
 # All Passed:
-* babel-plugin-transform-logical-assignment-operators
 * babel-plugin-transform-export-namespace-from
 * babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-react-display-name
@@ -158,7 +157,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-explicit-resource-management (25/28)
+# babel-plugin-transform-explicit-resource-management (26/29)
 * integration/commonjs-transform/input.js
 x Output mismatch
 
@@ -371,7 +370,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-static-block (21/24)
+# babel-plugin-transform-class-static-block (21/25)
 * integration/in-class-heritage/input.js
 x Output mismatch
 
@@ -379,6 +378,9 @@ x Output mismatch
 x Output mismatch
 
 * integration-loose/super-static-block/input.js
+x Output mismatch
+
+* regression/issue-18558/input.js
 x Output mismatch
 
 
@@ -847,6 +849,20 @@ x Output mismatch
 x Output mismatch
 
 
+# babel-plugin-transform-logical-assignment-operators (9/10)
+* transparent-expr-wrappers/flow-typecast/input.js
+
+  x Expected `,` or `)` but found `:`
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/transparent-expr-wrappers/flow-typecast/input.js:1:5]
+ 1 | (a.b: any) ||= 1;
+   : |   |
+   : |   `-- `,` or `)` expected
+   : `-- Opened here
+ 2 | (obj[++key]: any) ||= 1;
+   `----
+
+
+
 # babel-plugin-transform-nullish-coalescing-operator (9/24)
 * assumption-noDocumentAll/transform/input.js
 x Output mismatch
@@ -1070,7 +1086,10 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-exponentiation-operator (2/7)
+# babel-plugin-transform-exponentiation-operator (2/13)
+* exponentiation-operator/memoise-computed-key-in-default-args/input.js
+x Output mismatch
+
 * exponentiation-operator/memoise-object/input.js
 x Output mismatch
 
@@ -1084,6 +1103,30 @@ x Output mismatch
 x Output mismatch
 
 * regression/4403/input.js
+x Output mismatch
+
+* transparent-expr-wrappers/flow-typecast/input.js
+
+  x Expected `,` or `)` but found `:`
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-exponentiation-operator/test/fixtures/transparent-expr-wrappers/flow-typecast/input.js:1:5]
+ 1 | (a.b: any) **= 2;
+   : |   |
+   : |   `-- `,` or `)` expected
+   : `-- Opened here
+ 2 | (obj[++key]: any) **= 2;
+   `----
+
+
+* transparent-expr-wrappers/parenthesized/input.js
+x Output mismatch
+
+* transparent-expr-wrappers/ts-assertions/input.ts
+x Output mismatch
+
+* transparent-expr-wrappers/ts-default-args/input.ts
+x Output mismatch
+
+* transparent-expr-wrappers/ts-non-null/input.ts
 x Output mismatch
 
 
@@ -1138,7 +1181,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (110/158)
+# babel-plugin-transform-typescript (113/161)
 * class/accessor-allowDeclareFields-false/input.ts
 
   x TS(18010): An accessibility modifier cannot be used with a private
