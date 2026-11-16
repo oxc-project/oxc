@@ -1185,7 +1185,7 @@ impl Scoping {
                             | SymbolFlags::Interface
                             | SymbolFlags::TypeParameter
                             | SymbolFlags::EnumMember,
-                    )
+                    ) && (!flags.is_namespace_module() || flags.is_value())
                 });
             }
         });

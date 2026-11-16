@@ -180,9 +180,6 @@ after transform: SymbolId(2): [Span { start: 289, end: 290 }, Span { start: 304,
 rebuilt        : SymbolId(2): []
 
 * remove-unused-import-equals/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["D", "a", "b", "bar", "c"]
-rebuilt        : ScopeId(0): ["a", "b", "bar", "c"]
 Unresolved reference IDs mismatch for "foo":
 after transform: [ReferenceId(0), ReferenceId(6)]
 rebuilt        : [ReferenceId(0)]

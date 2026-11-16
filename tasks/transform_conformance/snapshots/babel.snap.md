@@ -1,6 +1,6 @@
 commit: 16a2d671
 
-Passed: 748/1184
+Passed: 751/1184
 
 # All Passed:
 * babel-plugin-transform-export-namespace-from
@@ -1181,7 +1181,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (113/161)
+# babel-plugin-transform-typescript (116/161)
 * class/accessor-allowDeclareFields-false/input.ts
 
   x TS(18010): An accessibility modifier cannot be used with a private
@@ -1252,17 +1252,12 @@ rebuilt        : ScopeId(0): []
 
 * declarations/erased/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["C", "E", "N", "f", "x"]
+after transform: ScopeId(0): ["C", "E", "f", "x"]
 rebuilt        : ScopeId(0): []
 
 * declarations/export-declare-enum/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["A"]
-rebuilt        : ScopeId(0): []
-
-* declarations/nested-namespace/input.mjs
-Bindings mismatch:
-after transform: ScopeId(0): ["P"]
 rebuilt        : ScopeId(0): []
 
 * enum/enum-after-const-fail/input.ts
@@ -1356,7 +1351,7 @@ rebuilt        : SymbolId(2): []
 
 * exports/declared-types/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["BB", "BB2", "C", "C2", "E", "N", "f", "foo", "x"]
+after transform: ScopeId(0): ["BB", "BB2", "C", "C2", "E", "f", "foo", "x"]
 rebuilt        : ScopeId(0): ["BB", "BB2", "C2", "foo"]
 Symbol redeclarations mismatch for "BB":
 after transform: SymbolId(10): [Span { start: 445, end: 447 }, Span { start: 461, end: 463 }]
@@ -1410,16 +1405,10 @@ rebuilt        : SymbolId(0): []
 
 * namespace/declare/input.ts
 Bindings mismatch:
-after transform: ScopeId(1): ["B", "C", "_N", "e", "f", "v"]
+after transform: ScopeId(1): ["C", "_N", "e", "f", "v"]
 rebuilt        : ScopeId(1): ["_N"]
 
 * namespace/empty-removed/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["_a", "b", "c", "d"]
-rebuilt        : ScopeId(1): ["_a", "c"]
-Bindings mismatch:
-after transform: ScopeId(6): ["_WithTypes", "a", "b", "c", "d"]
-rebuilt        : ScopeId(3): ["_WithTypes", "d"]
 Bindings mismatch:
 after transform: ScopeId(12): ["D", "_d"]
 rebuilt        : ScopeId(4): ["_d"]
@@ -1428,11 +1417,6 @@ rebuilt        : ScopeId(4): ["_d"]
 Symbol redeclarations mismatch for "N":
 after transform: SymbolId(0): [Span { start: 17, end: 18 }, Span { start: 57, end: 58 }]
 rebuilt        : SymbolId(0): []
-
-* namespace/export-type-only/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Platform"]
-rebuilt        : ScopeId(0): []
 
 * namespace/mutable-fail/input.ts
 
@@ -1462,11 +1446,6 @@ rebuilt        : ScopeId(0): []
 Symbol redeclarations mismatch for "N":
 after transform: SymbolId(1): [Span { start: 37, end: 38 }, Span { start: 83, end: 84 }]
 rebuilt        : SymbolId(2): []
-
-* namespace/nested-namespace/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["B", "G", "_A"]
-rebuilt        : ScopeId(1): ["G", "_A"]
 
 * optimize-const-enums/custom-values-exported/input.ts
 x Output mismatch

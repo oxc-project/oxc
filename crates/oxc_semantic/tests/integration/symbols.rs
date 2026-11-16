@@ -4,6 +4,36 @@ use oxc_span::SourceType;
 use crate::util::SemanticTester;
 
 #[test]
+fn test_delete_typescript_namespace_bindings() {
+    let tester = SemanticTester::ts(
+        "namespace TypeOnly { export type T = number; }
+        namespace TypeOnly { export interface I {} }
+        namespace MergedFunction { export type T = number; }
+        function MergedFunction() {}
+        class MergedClass {}
+        namespace MergedClass { export type T = number; }
+        enum MergedEnum { A }
+        namespace MergedEnum { export type T = number; }
+        namespace Instantiated { export const value = 1; }
+        namespace Instantiated { export type T = number; }
+        MergedFunction(); MergedClass; MergedEnum; Instantiated;",
+    );
+    let mut scoping = tester.build().into_scoping();
+    let root_scope_id = scoping.root_scope_id();
+    let surviving_symbols = ["MergedFunction", "MergedClass", "MergedEnum", "Instantiated"]
+        .map(|name| (name, scoping.get_binding(root_scope_id, name.into()).unwrap()));
+    assert!(scoping.get_binding(root_scope_id, "TypeOnly".into()).is_some());
+
+    scoping.delete_typescript_bindings();
+
+    assert!(scoping.get_binding(root_scope_id, "TypeOnly".into()).is_none());
+    for (name, symbol_id) in surviving_symbols {
+        assert_eq!(scoping.get_binding(root_scope_id, name.into()), Some(symbol_id));
+        assert_eq!(scoping.get_resolved_references(symbol_id).count(), 1, "{name}");
+    }
+}
+
+#[test]
 fn test_catch_var_bindings_survive_clone() {
     let tester =
         SemanticTester::js("let other; try {} catch (e) { var e; } try {} catch (e) { var e; }");
