@@ -17,10 +17,10 @@ fn label_ids<'a>(semantic: &'a Semantic<'_>) -> Vec<(&'a str, Option<LabelId>)> 
         .collect()
 }
 
-fn labels(scoping: &Scoping) -> Vec<(&str, Option<LabelId>)> {
+fn labels(scoping: &Scoping) -> Vec<(&str, u32)> {
     scoping
         .label_ids()
-        .map(|label_id| (scoping.label_name(label_id), scoping.label_parent_id(label_id)))
+        .map(|label_id| (scoping.label_name(label_id), scoping.label_depth(label_id)))
         .collect()
 }
 
@@ -55,14 +55,7 @@ fn test_label_ids() {
 
     assert_eq!(
         labels(semantic.scoping()),
-        [
-            ("a", None),
-            ("b", Some(label0)),
-            ("d", Some(label1)),
-            ("c", Some(label2)),
-            ("a", Some(label3)),
-            ("b", None),
-        ]
+        [("a", 0), ("b", 1), ("d", 2), ("c", 3), ("a", 4), ("b", 0)]
     );
     assert_eq!(
         label_ids(&semantic),
@@ -92,7 +85,7 @@ fn test_unresolved_label_id() {
     assert_eq!(label_ids(&semantic), [("a", None)]);
     let cloned = semantic.scoping().clone_in_with_semantic_ids_with_another_arena();
     for scoping in [semantic.scoping(), &cloned] {
-        assert_eq!(scoping.unresolved_label_names().collect::<Vec<_>>(), ["a"]);
+        assert!(scoping.has_unresolved_labels());
     }
 }
 
@@ -106,17 +99,13 @@ fn test_label_id_does_not_cross_jump_boundary() {
         let tester = SemanticTester::js(source).expect_errors(true);
         let semantic = tester.build_with_errors().semantic;
 
-        assert_eq!(labels(semantic.scoping()), [("a", None)], "{source}");
+        assert_eq!(labels(semantic.scoping()), [("a", 0)], "{source}");
         assert_eq!(
             label_ids(&semantic),
             [("a", Some(LabelId::from_usize(0))), ("a", None)],
             "{source}"
         );
-        assert_eq!(
-            semantic.scoping().unresolved_label_names().collect::<Vec<_>>(),
-            ["a"],
-            "{source}"
-        );
+        assert!(semantic.scoping().has_unresolved_labels(), "{source}");
     }
 }
 

@@ -475,7 +475,7 @@ fn labels() {
     assert_eq!(mangle_script("foo: function f() {}", &options), "e: function f() {}\n");
     test(
         "x: { if (a) break e; if (b) break x; foo(); }",
-        "t: { if (a) break e; if (b) break t; foo(); }",
+        "x: { if (a) break e; if (b) break x; foo(); }",
         &options,
     );
 

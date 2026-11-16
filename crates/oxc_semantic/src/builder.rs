@@ -434,7 +434,7 @@ impl<'a> SemanticBuilder<'a> {
         let label_id = self.unused_labels.reference(label.name);
         label.label_id.set(label_id);
         if label_id.is_none() {
-            self.scoping.add_unresolved_label_name(label.name);
+            self.scoping.set_has_unresolved_labels();
         }
     }
 
@@ -1721,8 +1721,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let kind = AstKind::LabeledStatement(self.alloc(stmt));
         self.enter_node(kind);
         control_flow!(self, |cfg| cfg.enter_statement(self.node_store.current_node_id));
-        let parent_label_id = self.unused_labels.current_label_id();
-        let label_id = self.scoping.create_label(stmt.label.name, parent_label_id);
+        #[expect(clippy::cast_possible_truncation)]
+        let depth = self.unused_labels.stack.len() as u32;
+        let label_id = self.scoping.create_label(stmt.label.name, depth);
         stmt.label.label_id.set(Some(label_id));
         self.unused_labels.add(stmt.label.name, self.node_store.current_node_id, label_id);
 

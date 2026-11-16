@@ -1,46 +1,35 @@
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_data_structures::inline_string::InlineString;
 use oxc_semantic::{LabelId, Scoping};
-use oxc_str::{ArenaIdentHashSet, Ident};
+use oxc_str::Ident;
 use oxc_syntax::keyword::is_reserved_keyword;
 
 /// Rename every label in `scoping` by its nesting depth.
 ///
-/// Labels have their own namespace, so the names only need to avoid reserved keywords and the
-/// names of unresolved `break` and `continue` labels, which codegen prints unchanged.
+/// Labels have their own namespace, so the names only need to avoid reserved keywords.
 /// Labels in the same nesting chain have distinct depths and therefore distinct names,
 /// while sibling labels reuse names.
+///
+/// Codegen prints unresolved `break` and `continue` labels unchanged, and a renamed label could
+/// capture one of them, so labels are kept when any exist. That only happens in invalid code.
 pub fn mangle_labels<const CAPACITY: usize>(
     allocator: &Allocator,
     scoping: &mut Scoping,
     generate_name: impl Fn(u32) -> InlineString<CAPACITY, u8>,
 ) {
-    let labels_len = scoping.labels_len();
-    if labels_len == 0 {
+    if scoping.has_unresolved_labels() {
         return;
     }
 
-    let unresolved_names = ArenaIdentHashSet::from_iter_in(
-        scoping.unresolved_label_names().map(|name| Ident::from(allocator.alloc_str(name))),
-        allocator,
-    );
-    let mut depths = ArenaVec::with_capacity_in(labels_len, &allocator);
     let mut names: ArenaVec<Ident<'_>> = ArenaVec::new_in(&allocator);
     let mut next_candidate = 0;
-    for label_id in (0..labels_len).map(LabelId::from_usize) {
-        let depth =
-            scoping.label_parent_id(label_id).map_or(0, |parent_id| depths[parent_id.index()] + 1);
-        depths.push(depth);
-
+    for label_id in (0..scoping.labels_len()).map(LabelId::from_usize) {
+        let depth = scoping.label_depth(label_id) as usize;
         while names.len() <= depth {
             let name = generate_name(next_candidate);
             next_candidate += 1;
-            if is_reserved_keyword(name.as_str()) {
-                continue;
-            }
-            let name = Ident::from(allocator.alloc_str(name.as_str()));
-            if !unresolved_names.contains(&name) {
-                names.push(name);
+            if !is_reserved_keyword(name.as_str()) {
+                names.push(Ident::from(allocator.alloc_str(name.as_str())));
             }
         }
         scoping.set_label_name(label_id, names[depth]);
@@ -61,13 +50,8 @@ mod test {
     #[test]
     fn nested_label_names() {
         let mut scoping = Scoping::default();
-        let mut parent_id = None;
-        let mut label_ids = Vec::with_capacity(4000);
-        for _ in 0..4000 {
-            let label_id = scoping.create_label("label".into(), parent_id);
-            parent_id = Some(label_id);
-            label_ids.push(label_id);
-        }
+        let label_ids =
+            (0..4000).map(|depth| scoping.create_label("label".into(), depth)).collect::<Vec<_>>();
 
         mangle_labels(&Allocator::default(), &mut scoping, base54);
 
@@ -81,10 +65,10 @@ mod test {
     #[test]
     fn sibling_label_names() {
         let mut scoping = Scoping::default();
-        let outer = scoping.create_label("outer".into(), None);
-        let first = scoping.create_label("first".into(), Some(outer));
-        let second = scoping.create_label("second".into(), Some(outer));
-        let next = scoping.create_label("next".into(), None);
+        let outer = scoping.create_label("outer".into(), 0);
+        let first = scoping.create_label("first".into(), 1);
+        let second = scoping.create_label("second".into(), 1);
+        let next = scoping.create_label("next".into(), 0);
 
         mangle_labels(&Allocator::default(), &mut scoping, base54);
 
@@ -95,14 +79,14 @@ mod test {
     }
 
     #[test]
-    fn unresolved_label_names() {
+    fn unresolved_labels_keep_names() {
         let mut scoping = Scoping::default();
-        let outer = scoping.create_label("outer".into(), None);
-        let inner = scoping.create_label("inner".into(), Some(outer));
-        scoping.add_unresolved_label_name("e".into());
+        let outer = scoping.create_label("outer".into(), 0);
+        let inner = scoping.create_label("inner".into(), 1);
+        scoping.set_has_unresolved_labels();
 
         mangle_labels(&Allocator::default(), &mut scoping, base54);
 
-        assert_eq!([outer, inner].map(|label_id| scoping.label_name(label_id)), ["t", "n"]);
+        assert_eq!([outer, inner].map(|label_id| scoping.label_name(label_id)), ["outer", "inner"]);
     }
 }
