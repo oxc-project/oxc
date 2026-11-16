@@ -91,7 +91,7 @@ impl Rule for NoAsyncPromiseExecutor {
         let AstKind::NewExpression(new_expression) = node.kind() else {
             return;
         };
-        let Expression::Identifier(callee) = &new_expression.callee else {
+        let Expression::Identifier(callee) = new_expression.callee.get_inner_expression() else {
             return;
         };
         if callee.name != "Promise" || !ctx.is_reference_to_global_variable(callee) {
@@ -124,6 +124,8 @@ fn test() {
         "let Promise; new Promise(async (resolve, reject) => {})",
         "function f() { new Promise(async (resolve, reject) => {}); var Promise; }",
         "function f(Promise) { new Promise(async (resolve, reject) => {}); }",
+        "function f(Promise) { new (Promise)(async () => {}); }",
+        "function f(Promise) { new (Promise as any)(async () => {}); }",
     ];
 
     let fail = vec![
@@ -131,6 +133,8 @@ fn test() {
         "new Promise(async (resolve, reject) => {})",
         "new Promise(((((async () => {})))))",
         "function f() { new Promise(async (resolve, reject) => {}); } let Foo;",
+        "new (Promise)(async () => {});",
+        "new (Promise as any)(async () => {});",
     ];
 
     Tester::new(NoAsyncPromiseExecutor::NAME, NoAsyncPromiseExecutor::PLUGIN, pass, fail)
