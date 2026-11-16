@@ -44,6 +44,9 @@ pub struct OxcRunOptions {
 #[derive(Default, Clone)]
 pub struct OxcParserOptions {
     pub extension: String,
+    /// Overrides the module kind inferred from the extension.
+    #[napi(ts_type = "'script' | 'module' | 'commonjs' | 'unambiguous' | undefined")]
+    pub source_type: Option<String>,
     pub allow_return_outside_function: bool,
     pub preserve_parens: bool,
     pub allow_v8_intrinsics: bool,

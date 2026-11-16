@@ -4,6 +4,7 @@ import { join as pathJoin } from "node:path";
 import "./patch-wasi-browser.js";
 
 const packageDir = pathJoin(import.meta.dirname, "..");
+fs.copyFileSync(pathJoin(packageDir, "playground.wasi.d.cts"), pathJoin(packageDir, "index.d.ts"));
 const path = pathJoin(packageDir, "playground.wasi-browser.js");
 
 let data = fs.readFileSync(path, "utf-8");
