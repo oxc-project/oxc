@@ -51,7 +51,12 @@ jobs:
 
       - name: Set up Rust
         # Only the trusted triage-cache workflow saves this dependency cache.
-        uses: $/.github/actions/setup-triage-rust
+        uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
+        with:
+          save-cache: false
+          cache-key: warm
+          tools: just,cargo-shear@1.13.1,cargo-insta,ast-grep
+          components: clippy rustfmt
 
       - name: Create oxc-captain token
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0

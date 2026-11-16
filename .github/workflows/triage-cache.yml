@@ -8,12 +8,10 @@ on:
       - "**/Cargo.toml"
       - .cargo/**
       - rust-toolchain.toml
-      - .github/actions/setup-triage-rust/action.yml
       - .github/workflows/triage-cache.yml
       - .github/workflows/triage.yml
   pull_request:
     paths:
-      - .github/actions/setup-triage-rust/action.yml
       - .github/workflows/triage-cache.yml
       - .github/workflows/triage.yml
   # Recover from cache eviction and changes to the hosted runner's Rust toolchains.
@@ -43,16 +41,16 @@ jobs:
 
       - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
 
-      - uses: $/.github/actions/setup-triage-rust
-        id: rust
+      - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
         with:
-          save-cache: true
+          save-cache: ${{ github.ref == 'refs/heads/main' }}
+          cache-key: warm
+          tools: just,cargo-shear@1.13.1,cargo-insta,ast-grep
+          components: clippy rustfmt
 
       # Match the common reproduction and test commands, keeping their feature sets separate.
       - name: Warm oxlint dependencies
-        if: steps.rust.outputs.cache-hit != 'true'
         run: cargo build --locked -p oxlint
 
       - name: Warm linter test dependencies
-        if: steps.rust.outputs.cache-hit != 'true'
         run: cargo test --locked --no-run -p oxc_linter
