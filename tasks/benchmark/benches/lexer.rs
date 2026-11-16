@@ -11,7 +11,7 @@ use oxc_parser::{
     config::{LexerConfig, NoTokensLexerConfig},
     lexer::{Kind, Lexer},
 };
-use oxc_span::SourceType;
+use oxc_span::{SourceCode, SourceType};
 use oxc_tasks_common::{TestFile, TestFiles};
 
 fn bench_lexer(criterion: &mut Criterion) {
@@ -19,7 +19,8 @@ fn bench_lexer(criterion: &mut Criterion) {
 
     for file in cleaned_test_files() {
         let id = BenchmarkId::from_parameter(&file.file_name);
-        let source_text = file.source_text.as_str();
+        // `cleaned_test_files` adds padding to the source text
+        let source = SourceCode::from_padded_str(&file.source_text).unwrap();
         let source_type = file.source_type;
         group.bench_function(id, |b| {
             // Do not include initializing allocator in benchmark.
@@ -27,7 +28,7 @@ fn bench_lexer(criterion: &mut Criterion) {
             // so we do the same here.
             let mut allocator = Allocator::default();
             b.iter(|| {
-                lex_whole_file(&allocator, source_text, source_type, NoTokensLexerConfig);
+                lex_whole_file(&allocator, source, source_type, NoTokensLexerConfig);
                 allocator.reset();
             });
         });
@@ -35,7 +36,8 @@ fn bench_lexer(criterion: &mut Criterion) {
     group.finish();
 }
 
-/// Get the test files, with source text cleaned.
+/// Get the test files, with source text cleaned, and followed by padding
+/// (see [`SourceCode::from_padded_str`]).
 ///
 /// The lexer lacks awareness of JS grammar, so it gets confused by a few things
 /// without the parser driving it. So simplify the input for it, by replacing these syntaxes
@@ -72,11 +74,11 @@ fn cleaned_test_files() -> Vec<TestFile> {
 #[inline(always)]
 fn lex_whole_file<'a, C: LexerConfig>(
     allocator: &'a Allocator,
-    source_text: &'a str,
+    source: SourceCode<'a>,
     source_type: SourceType,
     config: C,
 ) -> Lexer<'a, C> {
-    let mut lexer = Lexer::new_for_benchmarks(allocator, source_text, source_type, config);
+    let mut lexer = Lexer::new_for_benchmarks(allocator, source, source_type, config);
     if lexer.first_token().kind() != Kind::Eof {
         // Use `next_token_for_benchmarks` instead of `next_token`, to work around problem
         // where `next_token` wasn't inlined here.
@@ -86,7 +88,7 @@ fn lex_whole_file<'a, C: LexerConfig>(
     lexer
 }
 
-/// Clean source text.
+/// Clean source text. Returned `String` is the cleaned source text followed by padding.
 ///
 /// Purpose is to allow lexer to complete without any errors.
 /// Usually sources Oxc is asked to parse will not produce lexer errors, and generating diagnostics is
@@ -118,7 +120,8 @@ fn clean<'a>(source_text: &'a str, source_type: SourceType, allocator: &'a Alloc
     // Make replacements
     replacements.sort_unstable_by_key(|replacement| replacement.span);
 
-    let mut clean_source_text = String::with_capacity(cleaner.clean_source_text_len);
+    let mut clean_source_text =
+        String::with_capacity(cleaner.clean_source_text_len + SourceCode::PADDING);
     let mut last_index = 0;
     for Replacement { span, text } in replacements {
         clean_source_text.push_str(&source_text[last_index..span.start as usize]);
@@ -126,9 +129,11 @@ fn clean<'a>(source_text: &'a str, source_type: SourceType, allocator: &'a Alloc
         last_index = span.end as usize;
     }
     clean_source_text.push_str(&source_text[last_index..]);
+    SourceCode::pad_string(&mut clean_source_text);
 
     // Check lexer can lex it without any errors
-    let lexer = lex_whole_file(allocator, &clean_source_text, source_type, NoTokensLexerConfig);
+    let source = SourceCode::from_padded_str(&clean_source_text).unwrap();
+    let lexer = lex_whole_file(allocator, source, source_type, NoTokensLexerConfig);
     assert!(lexer.errors().is_empty());
 
     clean_source_text

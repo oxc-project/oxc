@@ -5,9 +5,9 @@ checker.ts:
   sys deallocs: 18
   sys alloc bytes: 2796 # 2.80 kB
   sys peak growth: 1460 # 1.46 kB
-  arena allocs: 257807
+  arena allocs: 257808
   arena reallocs: 115
-  arena size: 12048024 # 12.05 MB
+  arena size: 14969320 # 14.97 MB
 
 App.tsx:
   file size: 415342 # 415.34 kB
@@ -16,9 +16,9 @@ App.tsx:
   sys deallocs: 14
   sys alloc bytes: 4444 # 4.44 kB
   sys peak growth: 1916 # 1.92 kB
-  arena allocs: 43559
+  arena allocs: 43560
   arena reallocs: 32
-  arena size: 2098712 # 2.10 MB
+  arena size: 2514120 # 2.51 MB
 
 RadixUIAdoptionSection.jsx:
   file size: 2520 # 2.52 kB
@@ -27,9 +27,9 @@ RadixUIAdoptionSection.jsx:
   sys deallocs: 1
   sys alloc bytes: 108 # 108 B
   sys peak growth: 108 # 108 B
-  arena allocs: 365
+  arena allocs: 366
   arena reallocs: 0
-  arena size: 18384 # 18.38 kB
+  arena size: 20968 # 20.97 kB
 
 pdf.mjs:
   file size: 567296 # 567.30 kB
@@ -38,9 +38,9 @@ pdf.mjs:
   sys deallocs: 59
   sys alloc bytes: 21644 # 21.64 kB
   sys peak growth: 10000 # 10 kB
-  arena allocs: 88741
+  arena allocs: 88742
   arena reallocs: 60
-  arena size: 4133528 # 4.13 MB
+  arena size: 4700888 # 4.70 MB
 
 antd.js:
   file size: 6686316 # 6.69 MB
@@ -49,9 +49,9 @@ antd.js:
   sys deallocs: 181
   sys alloc bytes: 91552 # 91.55 kB
   sys peak growth: 37616 # 37.62 kB
-  arena allocs: 516551
+  arena allocs: 516552
   arena reallocs: 398
-  arena size: 27341336 # 27.34 MB
+  arena size: 34027720 # 34.03 MB
 
 binder.ts:
   file size: 193077 # 193.08 kB
@@ -60,9 +60,9 @@ binder.ts:
   sys deallocs: 0
   sys alloc bytes: 0 # 0 B
   sys peak growth: 0 # 0 B
-  arena allocs: 16371
+  arena allocs: 16372
   arena reallocs: 29
-  arena size: 855312 # 855.31 kB
+  arena size: 1048456 # 1.05 MB
 
 kitchen-sink.tsx:
   file size: 732898 # 732.90 kB
@@ -71,6 +71,6 @@ kitchen-sink.tsx:
   sys deallocs: 181
   sys alloc bytes: 35313 # 35.31 kB
   sys peak growth: 3940 # 3.94 kB
-  arena allocs: 134222
+  arena allocs: 134223
   arena reallocs: 53
-  arena size: 5919824 # 5.92 MB
+  arena size: 6652792 # 6.65 MB

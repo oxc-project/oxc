@@ -357,7 +357,7 @@ impl<'a, C: Config> Lexer<'a, C> {
 #[cfg(test)]
 mod test {
     use oxc_allocator::Allocator;
-    use oxc_span::SourceType;
+    use oxc_span::{SourceCode, SourceType};
     use oxc_str::JSStr;
 
     use crate::config::NoTokensLexerConfig;
@@ -395,13 +395,9 @@ mod test {
         fn run_test(source_text: String, expected_escaped: String, is_only_part: bool) {
             let allocator = Allocator::default();
             let unique = UniquePromise::new_for_tests_and_benchmarks();
-            let mut lexer = Lexer::new(
-                &allocator,
-                &source_text,
-                SourceType::default(),
-                NoTokensLexerConfig,
-                unique,
-            );
+            let source = SourceCode::from_str_in(&source_text, &allocator);
+            let mut lexer =
+                Lexer::new(&allocator, source, SourceType::default(), NoTokensLexerConfig, unique);
             let token = lexer.next_token();
             assert_eq!(
                 token.kind(),

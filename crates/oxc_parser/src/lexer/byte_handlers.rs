@@ -72,7 +72,7 @@ macro_rules! byte_handlers {
     () => {
         [
         //  0    1    2    3    4    5    6    7    8    9    A    B    C    D    E    F    //
-            ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, SPS, LIN, ISP, ISP, LIN, ERR, ERR, // 0
+            NUL, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, SPS, LIN, ISP, ISP, LIN, ERR, ERR, // 0
             ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, // 1
             SPS, EXL, QOD, HAS, IDT, PRC, AMP, QOS, UER, UER, ATR, PLS, UER, MIN, PRD, SLH, // 2
             ZER, DIG, DIG, DIG, DIG, DIG, DIG, DIG, DIG, DIG, UER, UER, LSS, EQL, UER, QST, // 3
@@ -161,7 +161,26 @@ macro_rules! ascii_byte_handler {
     };
 }
 
-// `\0` `\1` etc
+// `\0`
+//
+// Source text is followed by NUL padding, so the byte read at end of file is NUL.
+// This is the only byte handler which can be called when lexer is at end of file.
+// A NUL byte anywhere else is part of the source text, and is an invalid character.
+#[expect(non_snake_case)]
+fn NUL<'a, C: Config>(
+    lexer: &mut Lexer<'a, C>,
+    pos: SourcePosition<'a>,
+) -> (Kind, SourcePosition<'a>) {
+    // No-op store, so the compiler uses `pos` from register instead of reloading it
+    lexer.source.set_position(pos);
+    if lexer.source.is_eof() {
+        return (Kind::Eof, pos);
+    }
+    // Not at end of file, and next byte is NUL, which is ASCII, as `ERR` requires
+    ERR(lexer, pos)
+}
+
+// `\1` etc
 ascii_byte_handler!(ERR(lexer) {
     let c = lexer.consume_char();
     lexer.error(diagnostics::invalid_character(c, lexer.unterminated_range()));
@@ -196,11 +215,9 @@ fn LIN<'a, C: Config>(
     let byte = lexer.line_break_handler();
 
     // Read the next token here to avoid restarting the caller's token loop.
+    // If at EOF, `byte` is 0, and `NUL` byte handler returns `Kind::Eof`.
     let pos = lexer.source.position();
     lexer.token_start = lexer.source.offset_of(pos);
-    let Some(byte) = byte else {
-        return (Kind::Eof, pos);
-    };
     // JSX attribute values scan quotes differently. Leave them for the caller's token loop.
     if matches!(byte, b'"' | b'\'') {
         return (Kind::Skip, pos);
@@ -212,7 +229,7 @@ fn LIN<'a, C: Config>(
         return (kind, end);
     }
     let byte_handlers = lexer.config.byte_handlers();
-    // SAFETY: `byte` is the current source byte at `pos`.
+    // SAFETY: `byte` is the current source byte at `pos`, or 0 if `pos` is at EOF.
     unsafe { byte_handlers[byte as usize](lexer, pos) }
 }
 

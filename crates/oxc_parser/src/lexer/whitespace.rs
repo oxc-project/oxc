@@ -21,14 +21,16 @@ impl<C: Config> Lexer<'_, C> {
         byte_search! {
             lexer: self,
             table: NOT_REGULAR_WHITESPACE_TABLE,
-            handle_eof: 0,
         };
 
         Kind::Skip
     }
 
-    /// Skip regular whitespace after a line break, returning the next byte or `None` at EOF.
-    pub(super) fn line_break_handler(&mut self) -> Option<u8> {
+    /// Skip regular whitespace after a line break, returning the next byte.
+    ///
+    /// At EOF, returns 0 - the first byte of the padding which follows the source text.
+    /// The byte handler for NUL checks for EOF.
+    pub(super) fn line_break_handler(&mut self) -> u8 {
         self.pending.set_is_on_new_line();
         self.trivia_builder.handle_newline(&mut self.pending);
 
@@ -36,12 +38,9 @@ impl<C: Config> Lexer<'_, C> {
         // Consume it, along with any further line breaks.
         // Irregular line breaks and whitespace are not consumed.
         // They're uncommon, so leave them for the next call to `handle_byte` to take care of.
-        let byte = byte_search! {
+        byte_search! {
             lexer: self,
             table: NOT_REGULAR_WHITESPACE_OR_LINE_BREAK_TABLE,
-            handle_eof: return None,
-        };
-
-        Some(byte)
+        }
     }
 }

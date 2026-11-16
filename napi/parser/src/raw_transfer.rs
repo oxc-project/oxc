@@ -14,14 +14,16 @@ use napi_derive::napi;
 use oxc::{
     allocator::{Allocator, ArenaVec, FromIn},
     ast_visit::utf8_to_utf16::Utf8ToUtf16,
+    parser::Parser,
     semantic::SemanticBuilder,
+    span::SourceCode,
 };
 #[cfg(feature = "tokens")]
 use oxc_estree_tokens::{ESTreeTokenOptions, update_tokens};
 use oxc_napi::get_source_type;
 
 use crate::{
-    AstType, ParserOptions, get_ast_type, parse_impl,
+    AstType, ParserOptions, get_ast_type, parse_with_parser,
     raw_transfer_constants::{ACTIVE_SIZE, BLOCK_ALIGN, BLOCK_SIZE, CURSOR_MIN_ALIGN},
     raw_transfer_types::{EcmaScriptModule, Error, RawTransferData, RawTransferMetadata},
 };
@@ -251,20 +253,50 @@ unsafe fn parse_raw_impl(
 
     let (data_offset, tokens_offset, tokens_len) = {
         // Get source text from buffer.
+        //
+        // Parser requires source text to be followed by padding (see `SourceCode`).
+        // If there's room in the buffer after the source text, write the padding there,
+        // so parser can read the source text in place. Strings in the AST which are slices of source text
+        // then point into the source text in the buffer, which JS side relies on to deserialize them cheaply.
+        // JS side reserves 3 bytes per UTF-16 code unit for source text, so there is room unless source text
+        // is very short, or almost all of it is 3-byte UTF-8 characters.
+        //
+        // If there isn't room, copy source text into the arena with the padding.
+        let padded_end = source_end + SourceCode::PADDING;
+        let has_room_for_padding = padded_end <= ACTIVE_SIZE;
+        let source_region_end = if has_room_for_padding {
+            // SAFETY: `padded_end <= ACTIVE_SIZE`, and `ACTIVE_SIZE` is less than length of `buffer`,
+            // so the padding is within the buffer. `Allocator`'s cursor is before start of source text,
+            // so nothing else is stored after it in the active region of the buffer.
+            // Writing via `buffer_ptr`, not `buffer`, so that pointers which `allocator` holds remain valid.
+            unsafe { buffer_ptr.add(source_end).write_bytes(0, SourceCode::PADDING) };
+            padded_end
+        } else {
+            source_end
+        };
+
         // Use zero-cost unchecked conversion to `&str` in release builds, full UTF-8 validation in debug builds.
-        let source_text = if cfg!(debug_assertions) {
-            let source_bytes = &buffer[source_start..source_end];
+        let source_region = if cfg!(debug_assertions) {
+            let source_bytes = &buffer[source_start..source_region_end];
             str::from_utf8(source_bytes).expect("Source text is not valid UTF-8")
         } else {
-            // SAFETY: Caller guarantees source occupies this region of the buffer and is valid UTF-8
+            // SAFETY: Caller guarantees source occupies this region of the buffer and is valid UTF-8.
+            // Padding (if included) is NUL bytes, which is valid UTF-8.
             unsafe {
-                let source_bytes = buffer.get_unchecked(source_start..source_end);
+                let source_bytes = buffer.get_unchecked(source_start..source_region_end);
                 str::from_utf8_unchecked(source_bytes)
             }
         };
 
+        let source = if has_room_for_padding {
+            SourceCode::from_padded_str(source_region).unwrap()
+        } else {
+            SourceCode::from_str_in(source_region, allocator)
+        };
+        let source_text = source.as_str();
+
         // Parse
-        let ret = parse_impl(allocator, source_type, source_text, &options);
+        let ret = parse_with_parser(Parser::from_source(allocator, source, source_type), &options);
         let mut program = ret.program;
         let mut module_record = ret.module_record;
 

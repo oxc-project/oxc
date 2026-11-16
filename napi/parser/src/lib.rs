@@ -82,7 +82,11 @@ fn parse_impl<'a>(
     source_text: &'a str,
     options: &ParserOptions,
 ) -> ParserReturn<'a> {
-    let parser = Parser::new(allocator, source_text, source_type).with_options(ParseOptions {
+    parse_with_parser(Parser::new(allocator, source_text, source_type), options)
+}
+
+fn parse_with_parser<'a>(parser: Parser<'a>, options: &ParserOptions) -> ParserReturn<'a> {
+    let parser = parser.with_options(ParseOptions {
         preserve_parens: options.preserve_parens.unwrap_or(true),
         // Ident hashes are only consumed by semantic analysis, which this crate runs solely when
         // semantic errors are requested. Skip hashing otherwise to speed up parse-and-serialize.

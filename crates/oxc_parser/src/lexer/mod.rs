@@ -11,7 +11,7 @@ use rustc_hash::FxHashMap;
 
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::RegExpFlags;
-use oxc_span::{SourceType, Span};
+use oxc_span::{SourceCode, SourceType, Span};
 use oxc_str::JSStr;
 
 use crate::{
@@ -46,6 +46,7 @@ pub use kind::Kind;
 pub use number::{parse_big_int, parse_float, parse_int};
 pub use token::Token;
 
+pub(crate) use source::overlong_substitute;
 use source::{Source, SourcePosition};
 use token::PendingToken;
 use trivia_builder::{AnnotationComments, TriviaBuilder};
@@ -133,12 +134,15 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// on a single thread at one time.
     pub(super) fn new(
         allocator: &'a Allocator,
-        source_text: &'a str,
+        source: SourceCode<'a>,
         source_type: SourceType,
         config: C,
         unique: UniquePromise,
     ) -> Self {
-        let source = Source::new(source_text, unique);
+        let source = Source::new(source, unique);
+        // The text which the lexer reads. This is a short substitute for the original source text
+        // if that was too long to parse.
+        let source_text = source.whole();
 
         // If collecting tokens, allocate enough space so that the `Vec<Token>` will not have to grow during parsing.
         // `source_text.len() + 1` is almost always a large overestimate of number of tokens, but it's impossible to
@@ -180,12 +184,12 @@ impl<'a, C: Config> Lexer<'a, C> {
     #[cfg(feature = "benchmarking")]
     pub fn new_for_benchmarks(
         allocator: &'a Allocator,
-        source_text: &'a str,
+        source: SourceCode<'a>,
         source_type: SourceType,
         config: C,
     ) -> Self {
         let unique = UniquePromise::new_for_tests_and_benchmarks();
-        Self::new(allocator, source_text, source_type, config, unique)
+        Self::new(allocator, source, source_type, config, unique)
     }
 
     /// Get errors.
@@ -508,73 +512,41 @@ impl<'a, C: Config> Lexer<'a, C> {
     fn read_next_token(&mut self) -> (Kind, SourcePosition<'a>) {
         self.trivia_builder.clear_annotation_comments();
 
-        let end_pos = self.source.end();
         let mut pos = self.source.position();
         loop {
             // Single spaces between tokens are common, so consume a space before processing the next token.
-            // Can only do this if there are at least 2 bytes left in source.
-            // If there aren't 2 bytes left, delegate to `read_next_token_at_end` (cold branch).
-            // SAFETY: `source.end()` is always equal to or after `source.position()`
-            let remaining_bytes = unsafe { end_pos.offset_from(pos) };
-            if remaining_bytes >= 2 {
-                // SAFETY: There are at least 2 bytes remaining in source.
-                let mut byte = unsafe { pos.read() };
+            // SAFETY: `pos` is at or before end of source, and source is followed by NUL padding.
+            let mut byte = unsafe { pos.read() };
 
-                // Only update the cursor and read again when consuming a space.
-                if byte == b' ' {
-                    // SAFETY: At least 2 bytes remain, so advancing past one ASCII space
-                    // leaves at least one byte to read.
-                    pos = unsafe { pos.add(1) };
-                    self.source.set_position(pos);
-                    // SAFETY: At least one byte remains after the space.
-                    byte = unsafe { pos.read() };
-                }
-
-                // Set token start
-                let offset = self.source.offset_of(pos);
-                self.token_start = offset;
-
-                if let Some(kind) = byte_handlers::single_byte_token(byte) {
-                    // SAFETY: Single-byte tokens are ASCII, and at least 1 byte remains after `pos`
-                    let end = unsafe { pos.add(1) };
-                    self.source.set_position(end);
-                    return (kind, end);
-                }
-
-                let byte_handlers = self.config.byte_handlers();
-                let kind;
-                // SAFETY: `byte` is byte value at current position in source
-                (kind, pos) = unsafe { byte_handlers[byte as usize](self, pos) };
-                if kind != Kind::Skip {
-                    return (kind, pos);
-                }
-            } else {
-                // Only 0 or 1 bytes left in source.
-                // Delegate to `#[cold]` function as this is a very rare case.
-                let kind = self.read_next_token_at_end();
-                return (kind, self.source.position());
+            // Only update the cursor and read again when consuming a space.
+            if byte == b' ' {
+                // SAFETY: A space is not padding, so `pos` was before end of source.
+                pos = unsafe { pos.add(1) };
+                self.source.set_position(pos);
+                // SAFETY: `pos` is at or before end of source, and source is followed by NUL padding.
+                byte = unsafe { pos.read() };
             }
-        }
-    }
 
-    /// Cold path for reading next token where only 0 or 1 bytes are left in source.
-    #[inline(never)]
-    #[cold]
-    fn read_next_token_at_end(&mut self) -> Kind {
-        let offset = self.offset();
-        self.token_start = offset;
+            // Set token start
+            let offset = self.source.offset_of(pos);
+            self.token_start = offset;
 
-        if let Some(byte) = self.peek_byte() {
-            // SAFETY: `byte` is byte value at current position in source
-            let kind = unsafe { self.handle_byte(byte) };
+            if let Some(kind) = byte_handlers::single_byte_token(byte) {
+                // SAFETY: Single-byte tokens are ASCII and not NUL, so at least 1 byte remains after `pos`
+                let end = unsafe { pos.add(1) };
+                self.source.set_position(end);
+                return (kind, end);
+            }
+
+            let byte_handlers = self.config.byte_handlers();
+            let kind;
+            // SAFETY: `byte` is byte value at current position in source.
+            // The handler for NUL tests for EOF.
+            (kind, pos) = unsafe { byte_handlers[byte as usize](self, pos) };
             if kind != Kind::Skip {
-                return kind;
+                return (kind, pos);
             }
-            // Last byte was whitespace/line break (`Kind::Skip`), so now at EOF
-            self.token_start = offset + 1;
         }
-
-        Kind::Eof
     }
 
     #[inline]

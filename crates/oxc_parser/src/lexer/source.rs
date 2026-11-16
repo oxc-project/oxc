@@ -1,10 +1,28 @@
 use std::{cmp::Ordering, marker::PhantomData, slice, str};
 
 use oxc_data_structures::assert_unchecked;
+use oxc_span::SourceCode;
 
 use crate::{MAX_LEN, UniquePromise};
 
 use super::search::SEARCH_BATCH_SIZE;
+
+// `byte_search!` reads a batch of `SEARCH_BATCH_SIZE` bytes starting from any position up to
+// and including the end of source text, so the padding must be at least that long
+const _: () = assert!(SourceCode::PADDING >= SEARCH_BATCH_SIZE);
+
+/// Source text which is substituted for source text longer than `MAX_LEN`: a single NUL byte.
+/// It fails to parse, and `Parser::parse` converts the error to `diagnostics::overlong_source()`.
+const OVERLONG_SUBSTITUTE: &str = match str::from_utf8(&[0; 1 + SourceCode::PADDING]) {
+    Ok(padded) => padded,
+    Err(_) => unreachable!(),
+};
+
+/// Get source code which is substituted for source text longer than `MAX_LEN`.
+#[cold]
+pub fn overlong_substitute() -> SourceCode<'static> {
+    SourceCode::from_padded_str(OVERLONG_SUBSTITUTE).unwrap()
+}
 
 /// `Source` holds the source text for the lexer, and provides APIs to read it.
 ///
@@ -38,6 +56,14 @@ use super::search::SEARCH_BATCH_SIZE;
 ///    of source text (positioned on EOF).
 /// 4. `ptr` must always point to a UTF-8 character boundary, or EOF.
 ///    i.e. pointing to *1st* byte of a UTF-8 character.
+/// 5. The region of memory from `end` to `end + SourceCode::PADDING` must be part of the same
+///    allocation as the source text, and contain only NUL bytes.
+///
+/// Invariant (5) means it is always valid to read up to `SourceCode::PADDING` bytes from any
+/// position in the source text, including from `end`. A read at `end` yields a NUL byte.
+/// As NUL can also appear in source text, a NUL byte only indicates EOF if `ptr == end`.
+/// This allows hot paths to read without checking bounds first, and to only test for EOF
+/// once a NUL byte has been found.
 ///
 /// These invariants are the same as `std::str::Chars`, except `Source` allows temporarily
 /// breaking invariant (4) to step through source text byte-by-byte.
@@ -45,7 +71,7 @@ use super::search::SEARCH_BATCH_SIZE;
 /// Invariants (1), (2) and (3) must be upheld at all times.
 /// Invariant (4) can be temporarily broken, as long as caller ensures it's satisfied again.
 ///
-/// Invariants (1) and (2) are enforced by initializing `start` and `end` from a valid `&str`,
+/// Invariants (1), (2) and (5) are enforced by initializing `start` and `end` from a `SourceCode`,
 /// and they are never modified after initialization.
 ///
 /// Safe methods of `Source` enforce invariant (3) i.e. they do not allow reading past EOF.
@@ -67,40 +93,31 @@ pub(super) struct Source<'a> {
     end: *const u8,
     /// Pointer to current position in source string
     ptr: *const u8,
-    /// Memory address past which not enough bytes remaining in source to process a batch of
-    /// `SEARCH_BATCH_SIZE` bytes in one go.
-    /// Must be `usize`, not a pointer, as if source is very short, a pointer could be out of bounds.
-    end_for_batch_search_addr: usize,
     /// Marker for immutable borrow of source string
     _marker: PhantomData<&'a str>,
 }
 
 impl<'a> Source<'a> {
-    /// Create `Source` from `&str`.
+    /// Create `Source` from `SourceCode`.
     ///
     /// Requiring a `UniquePromise` to be provided guarantees only 1 `Source` can exist
     /// on a single thread at one time.
     #[expect(unused_variables, clippy::needless_pass_by_value)]
-    pub(super) fn new(mut source_text: &'a str, unique: UniquePromise) -> Self {
+    pub(super) fn new(mut source: SourceCode<'a>, unique: UniquePromise) -> Self {
         // If source text exceeds size limit, substitute a short source text which will fail to parse.
         // `Parser::parse` will convert error to `diagnostics::overlong_source()`.
-        if source_text.len() > MAX_LEN {
-            source_text = "\0";
+        if source.len() > MAX_LEN {
+            source = overlong_substitute();
         }
 
-        let start = source_text.as_ptr();
-        // SAFETY: Adding `source_text.len()` to the starting pointer gives a pointer
-        // at the end of `source_text`. `end` will never be dereferenced, only checked
-        // for direct pointer equality with `ptr` to check if at end of file.
-        let end = unsafe { start.add(source_text.len()) };
+        // Derive pointers from the padded string, so they have provenance over the padding too.
+        // `SourceCode` guarantees the source text is followed by `SourceCode::PADDING` NUL bytes.
+        let start = source.as_padded_str().as_ptr();
+        // SAFETY: Adding length of the source text to the starting pointer gives a pointer
+        // at the end of the source text, which is the start of the padding
+        let end = unsafe { start.add(source.len()) };
 
-        // `saturating_sub` not `wrapping_sub` so that value doesn't wrap around if source
-        // is very short, and has very low memory address (e.g. 16). If that's the case,
-        // `end_for_batch_search_addr` will be 0, so a test whether any non-null pointer is past end
-        // will always test positive, and disable batch search.
-        let end_for_batch_search_addr = (end as usize).saturating_sub(SEARCH_BATCH_SIZE);
-
-        Self { start, end, ptr: start, end_for_batch_search_addr, _marker: PhantomData }
+        Self { start, end, ptr: start, _marker: PhantomData }
     }
 
     /// Get entire source text as `&str`.
@@ -392,10 +409,10 @@ impl<'a> Source<'a> {
     #[expect(clippy::unnecessary_wraps)]
     #[cold] // Unicode is rare
     unsafe fn next_unicode_char(&mut self) -> Option<char> {
-        // Create a `Chars` iterator, get next char from it, and then update `self.ptr`
-        // to match `Chars` iterator's updated pointer afterwards.
-        // `Chars` iterator upholds same invariants as `Source`, so its pointer is guaranteed
-        // to be valid as `self.ptr`.
+        // Create a `Chars` iterator, get next char from it, and then advance `self.ptr`
+        // by the number of bytes which `Chars` iterator consumed.
+        // `Chars` iterator upholds same invariants as `Source`, so the position it reaches
+        // is guaranteed to be valid for `self.ptr`.
         let remaining = self.remaining();
         // Inform compiler that next char in `Source` is non-ASCII, so it can remove some branches from
         // `chars.next().unwrap()`. Compiler will not be aware of these invariants if this function is not inlined.
@@ -406,8 +423,34 @@ impl<'a> Source<'a> {
         }
         let mut chars = remaining.chars();
         let c = chars.next().unwrap();
-        self.ptr = chars.as_str().as_ptr();
+        // SAFETY: `chars` has consumed 1 char from start of `remaining`
+        unsafe { self.advance_to_start_of(chars.as_str(), remaining) };
         Some(c)
+    }
+
+    /// Advance position to the start of `rest`, which is the end of `remaining`.
+    ///
+    /// The new position is calculated by advancing `self.ptr`, rather than by taking a pointer
+    /// from `rest`. A `&str` which is a slice of the source text does not include the padding
+    /// which follows the source text, so a pointer derived from it must not be used to read
+    /// the padding. `self.ptr` is derived from the whole `SourceCode`, so it can be.
+    ///
+    /// # SAFETY
+    /// * `remaining` must be the string returned by `self.remaining()`,
+    ///   and `self.ptr` must not have changed since.
+    /// * `rest` must be `remaining` with zero or more whole `char`s removed from its start.
+    #[inline]
+    unsafe fn advance_to_start_of(&mut self, rest: &str, remaining: &str) {
+        debug_assert!(remaining.as_ptr() == self.ptr);
+        debug_assert!(rest.len() <= remaining.len());
+        debug_assert!(
+            rest.as_bytes().as_ptr_range().end == remaining.as_bytes().as_ptr_range().end
+        );
+        let consumed_len = remaining.len() - rest.len();
+        // SAFETY: `rest` is a suffix of `remaining`, which starts at `self.ptr`,
+        // so `self.ptr + consumed_len` is within source text, or at its end.
+        // `rest` is a `&str`, so it starts on a UTF-8 character boundary.
+        self.ptr = unsafe { self.ptr.add(consumed_len) };
     }
 
     /// Get next 2 chars of source, and advance position to after them.
@@ -437,10 +480,10 @@ impl<'a> Source<'a> {
     /// `Source` must not be empty.
     #[cold] // Unicode is rare
     unsafe fn next_2_unicode_chars(&mut self) -> Option<[char; 2]> {
-        // Create a `Chars` iterator, get next 2 chars from it, and then update `self.ptr`
-        // to match `Chars` iterator's updated pointer afterwards.
-        // `Chars` iterator upholds same invariants as `Source`, so its pointer is guaranteed
-        // to be valid as `self.ptr`.
+        // Create a `Chars` iterator, get next 2 chars from it, and then advance `self.ptr`
+        // by the number of bytes which `Chars` iterator consumed.
+        // `Chars` iterator upholds same invariants as `Source`, so the position it reaches
+        // is guaranteed to be valid for `self.ptr`.
         let remaining = self.remaining();
         // Inform compiler that `Source` is not empty, to remove check from `chars.next().unwrap()`.
         // Compiler will not be aware of this invariant if this function is not inlined.
@@ -449,7 +492,8 @@ impl<'a> Source<'a> {
         let mut chars = remaining.chars();
         let c1 = chars.next().unwrap();
         let c2 = chars.next()?;
-        self.ptr = chars.as_str().as_ptr();
+        // SAFETY: `chars` has consumed 2 chars from start of `remaining`
+        unsafe { self.advance_to_start_of(chars.as_str(), remaining) };
         Some([c1, c2])
     }
 
@@ -574,26 +618,19 @@ impl<'a> Source<'a> {
     /// Peek next byte of source without consuming it.
     #[inline]
     pub(super) fn peek_byte(&self) -> Option<u8> {
-        #[expect(clippy::if_not_else)] // Hot path first
-        if !self.is_eof() {
-            // SAFETY: Safe to read from `ptr` as we just checked it's not out of bounds
-            Some(unsafe { self.peek_byte_unchecked() })
-        } else {
-            None
-        }
+        // SAFETY: Source is followed by `SourceCode::PADDING` NUL bytes, so reading at `end` is valid
+        let byte = unsafe { self.position().read() };
+        // Only a NUL can be the padding, so EOF is only tested for on a NUL
+        if byte == 0 && self.is_eof() { None } else { Some(byte) }
     }
 
     /// Peek next two bytes of source without consuming them.
     #[inline]
     pub(super) fn peek_2_bytes(&self) -> Option<[u8; 2]> {
-        if self.remaining_bytes() >= 2 {
-            // SAFETY: The check above ensures that there are at least 2 bytes to
-            // read from current position without reading past end
-            let bytes = unsafe { self.position().read2() };
-            Some(bytes)
-        } else {
-            None
-        }
+        // SAFETY: Source is followed by `SourceCode::PADDING` NUL bytes, so 2 bytes are always readable
+        let bytes = unsafe { self.position().read2() };
+        // If fewer than 2 bytes remain, the 2nd byte is padding, which is NUL
+        if bytes[1] == 0 && self.remaining_bytes() < 2 { None } else { Some(bytes) }
     }
 
     /// Peek next byte of source without consuming it, without EOF bounds-check.
@@ -712,20 +749,13 @@ impl<'a> SourcePosition<'a> {
         !self.is_end_of(source)
     }
 
-    /// Check if this [`SourcePosition`] is valid for reading `Lexer::search::SEARCH_BATCH_SIZE` bytes
-    /// from `source`.
-    /// i.e. is position at least `Lexer::search::SEARCH_BATCH_SIZE` bytes from the end of `source`?
-    ///
-    /// Returns `true` if safe to read `Lexer::search::SEARCH_BATCH_SIZE` from this position.
-    #[inline]
-    pub(super) fn can_read_batch_from(&self, source: &Source<'a>) -> bool {
-        self.ptr as usize <= source.end_for_batch_search_addr
-    }
-
     /// Read byte from this `SourcePosition`.
     ///
+    /// If `SourcePosition` is at end of source text, this reads the first byte of the padding
+    /// which follows the source text, which is NUL.
+    ///
     /// # SAFETY
-    /// Caller must ensure `SourcePosition` is not at end of source text.
+    /// Caller must ensure `SourcePosition` is within source text, or at end of source text.
     ///
     /// # Implementation details
     ///
@@ -744,9 +774,10 @@ impl<'a> SourcePosition<'a> {
         debug_assert!(!self.ptr.is_null());
 
         // SAFETY:
-        // Caller guarantees `self` is not at end of source text.
-        // `Source` is created from a valid `&str`, so points to allocated, initialized memory.
-        // `Source` conceptually holds the source text `&str`, which guarantees no mutable references
+        // Caller guarantees `self` is not after end of source text.
+        // `Source` is created from a `SourceCode`, so source text and the padding which follows it
+        // are allocated, initialized memory.
+        // `Source` conceptually holds the padded source `&str`, which guarantees no mutable references
         // to the same memory can exist, as that would violate Rust's aliasing rules.
         // Pointer is "dereferenceable" by definition as a `u8` is 1 byte and cannot span multiple objects.
         // Alignment is not relevant as `u8` is aligned on 1 (i.e. no alignment requirements).
@@ -755,17 +786,20 @@ impl<'a> SourcePosition<'a> {
 
     /// Read 2 bytes from this `SourcePosition`.
     ///
+    /// If `SourcePosition` is less than 2 bytes before end of source text, the bytes after end
+    /// of source text are read from the padding which follows the source text, and are NUL.
+    ///
     /// # SAFETY
-    /// Caller must ensure `SourcePosition` is no later than 2 bytes before end of source text.
-    /// i.e. if source length is 10, `self` must be on position 8 max.
+    /// Caller must ensure `SourcePosition` is within source text, or at end of source text.
     #[inline]
     pub(super) unsafe fn read2(self) -> [u8; 2] {
         debug_assert!(!self.ptr.is_null());
 
         // SAFETY:
-        // Caller guarantees `self` is not at no later than 2 bytes before end of source text.
-        // `Source` is created from a valid `&str`, so points to allocated, initialized memory.
-        // `Source` conceptually holds the source text `&str`, which guarantees no mutable references
+        // Caller guarantees `self` is not after end of source text.
+        // `Source` is created from a `SourceCode`, so source text and the padding which follows it
+        // are allocated, initialized memory, and the padding is at least 2 bytes long.
+        // `Source` conceptually holds the padded source `&str`, which guarantees no mutable references
         // to the same memory can exist, as that would violate Rust's aliasing rules.
         // Alignment is not relevant as `u8` is aligned on 1 (i.e. no alignment requirements).
         unsafe {
@@ -776,10 +810,16 @@ impl<'a> SourcePosition<'a> {
 
     /// Get slice of bytes starting from this [`SourcePosition`], with length `len`.
     ///
+    /// The slice can extend past end of source text into the padding which follows it.
+    /// Bytes in the padding are NUL.
+    ///
     /// # SAFETY
-    /// Caller must ensure `SourcePosition` is no later than `len` bytes before end of source text.
+    /// Caller must ensure `SourcePosition` is within source text, or at end of source text,
+    /// and that it is no later than `len` bytes before end of the padding
+    /// (which is `SourceCode::PADDING` bytes after end of source text).
     pub(super) unsafe fn slice(self, len: usize) -> &'a [u8] {
-        // SAFETY: Caller guarantees there are at least `len` bytes after this position
+        // SAFETY: Caller guarantees there are at least `len` bytes after this position,
+        // within source text and padding
         unsafe { slice::from_raw_parts(self.ptr, len) }
     }
 }

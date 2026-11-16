@@ -15,6 +15,10 @@
 //! let parser_return = Parser::new(&allocator, &source_text, source_type).parse();
 //! ```
 //!
+//! [`Parser::new`] copies the source text into the arena, because the lexer requires source text
+//! to be followed by padding. If you own the buffer which holds the source text, add the padding
+//! to it and parse it in place with [`Parser::from_source`]. See [`SourceCode`].
+//!
 //! # Abstract Syntax Tree (AST)
 //! Oxc's AST is located in a separate [`oxc_ast`] crate. You can find type definitions for AST
 //! nodes [here][`oxc_ast::ast`].
@@ -24,6 +28,8 @@
 //! The following optimization techniques are used:
 //! * AST is allocated in a memory arena ([oxc_allocator](https://docs.rs/oxc_allocator)) for fast AST drop
 //! * [`oxc_span::Span`] offsets uses `u32` instead of `usize`
+//! * Source text is followed by padding ([`SourceCode`]), so the lexer can read ahead
+//!   without checking for the end of the source text first
 //! * Scope binding, symbol resolution and complicated syntax errors are not done in the parser,
 //! they are delegated to the [semantic analyzer](https://docs.rs/oxc_semantic)
 //!
@@ -95,7 +101,7 @@ use oxc_ast::{
     builder::{AstBuilder, GetAstBuilder},
 };
 use oxc_diagnostics::Diagnostics;
-use oxc_span::{SourceType, Span};
+use oxc_span::{SourceCode, SourceType, Span};
 use oxc_syntax::module_record::ModuleRecord;
 
 pub use crate::lexer::{Kind, Token};
@@ -288,22 +294,80 @@ impl Default for ParseOptions {
 /// See [`Parser::parse`] for entry function.
 pub struct Parser<'a, C: ParserConfig = NoTokensParserConfig> {
     allocator: &'a Allocator,
-    source_text: &'a str,
+    source: ParserSource<'a>,
     source_type: SourceType,
     options: ParseOptions,
     config: C,
 }
 
+/// Source passed to [`Parser`].
+#[derive(Clone, Copy)]
+enum ParserSource<'a> {
+    /// Source text without padding. It is copied into the arena, with padding, when parsing starts.
+    Text(&'a str),
+    /// Source text which is already followed by padding. It is used in place.
+    Padded(SourceCode<'a>),
+}
+
 impl<'a> Parser<'a> {
     /// Create a new [`Parser`]
+    ///
+    /// The lexer requires source text to be followed by padding (see [`SourceCode`]),
+    /// so this copies `source_text` into `allocator` when parsing starts.
+    /// [`Program::source_text`] and all strings in the AST then refer to that copy.
+    /// To avoid the copy, use [`Parser::from_source`].
     ///
     /// # Parameters
     /// - `allocator`: [Memory arena](oxc_allocator::Allocator) for allocating AST nodes
     /// - `source_text`: Source code to parse
     /// - `source_type`: Source type (e.g. JavaScript, TypeScript, JSX, ESM Module, Script)
+    ///
+    /// [`Program::source_text`]: oxc_ast::ast::Program::source_text
     pub fn new(allocator: &'a Allocator, source_text: &'a str, source_type: SourceType) -> Self {
         let options = ParseOptions::default();
-        Self { allocator, source_text, source_type, options, config: NoTokensParserConfig }
+        let source = ParserSource::Text(source_text);
+        Self { allocator, source, source_type, options, config: NoTokensParserConfig }
+    }
+
+    /// Create a new [`Parser`] from a [`SourceCode`].
+    ///
+    /// Unlike [`Parser::new`], this does not copy the source text.
+    /// [`Program::source_text`] and strings in the AST which are slices of the source text
+    /// borrow from `source`.
+    ///
+    /// # Parameters
+    /// - `allocator`: [Memory arena](oxc_allocator::Allocator) for allocating AST nodes
+    /// - `source`: Source code to parse
+    /// - `source_type`: Source type (e.g. JavaScript, TypeScript, JSX, ESM Module, Script)
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use oxc_allocator::Allocator;
+    /// use oxc_parser::Parser;
+    /// use oxc_span::{SourceCode, SourceType};
+    ///
+    /// // Source text in a buffer which has room for the padding
+    /// let mut buffer = String::from("let x = 1;");
+    /// SourceCode::pad_string(&mut buffer);
+    /// let source = SourceCode::from_padded_str(&buffer).unwrap();
+    ///
+    /// let allocator = Allocator::new();
+    /// let ret = Parser::from_source(&allocator, source, SourceType::mjs()).parse();
+    /// assert!(ret.diagnostics.is_empty());
+    /// // No copy was made
+    /// assert_eq!(ret.program.source_text.as_ptr(), buffer.as_ptr());
+    /// ```
+    ///
+    /// [`Program::source_text`]: oxc_ast::ast::Program::source_text
+    pub fn from_source(
+        allocator: &'a Allocator,
+        source: SourceCode<'a>,
+        source_type: SourceType,
+    ) -> Self {
+        let options = ParseOptions::default();
+        let source = ParserSource::Padded(source);
+        Self { allocator, source, source_type, options, config: NoTokensParserConfig }
     }
 }
 
@@ -322,7 +386,7 @@ impl<'a, C: ParserConfig> Parser<'a, C> {
     pub fn with_config<Config: ParserConfig>(self, config: Config) -> Parser<'a, Config> {
         Parser {
             allocator: self.allocator,
-            source_text: self.source_text,
+            source: self.source,
             source_type: self.source_type,
             options: self.options,
             config,
@@ -386,21 +450,21 @@ mod parser_parse {
             if config.is::<NoTokensParserConfig>() {
                 parse_with_no_tokens_config(
                     self.allocator,
-                    self.source_text,
+                    self.source,
                     self.source_type,
                     self.options,
                 )
             } else if config.is::<TokensParserConfig>() {
                 parse_with_tokens_config(
                     self.allocator,
-                    self.source_text,
+                    self.source,
                     self.source_type,
                     self.options,
                 )
             } else if let Some(&config) = config.downcast_ref::<RuntimeParserConfig>() {
                 parse_with_runtime_config(
                     self.allocator,
-                    self.source_text,
+                    self.source,
                     self.source_type,
                     self.options,
                     config,
@@ -410,7 +474,7 @@ mod parser_parse {
                 // Users using custom configs would need to perform the monomorphization themselves.
                 ParserImpl::<C>::new(
                     self.allocator,
-                    self.source_text,
+                    self.source,
                     self.source_type,
                     self.options,
                     self.config,
@@ -450,21 +514,21 @@ mod parser_parse {
             if config.is::<NoTokensParserConfig>() {
                 parse_expression_with_no_tokens_config(
                     self.allocator,
-                    self.source_text,
+                    self.source,
                     self.source_type,
                     self.options,
                 )
             } else if config.is::<TokensParserConfig>() {
                 parse_expression_with_tokens_config(
                     self.allocator,
-                    self.source_text,
+                    self.source,
                     self.source_type,
                     self.options,
                 )
             } else if let Some(&config) = config.downcast_ref::<RuntimeParserConfig>() {
                 parse_expression_with_runtime_config(
                     self.allocator,
-                    self.source_text,
+                    self.source,
                     self.source_type,
                     self.options,
                     config,
@@ -472,7 +536,7 @@ mod parser_parse {
             } else {
                 ParserImpl::<C>::new(
                     self.allocator,
-                    self.source_text,
+                    self.source,
                     self.source_type,
                     self.options,
                     self.config,
@@ -513,13 +577,13 @@ mod parser_parse {
     #[inline(never)]
     fn parse_with_no_tokens_config<'a>(
         allocator: &'a Allocator,
-        source_text: &'a str,
+        source: ParserSource<'a>,
         source_type: SourceType,
         options: ParseOptions,
     ) -> ParserReturn<'a> {
         ParserImpl::<NoTokensParserConfig>::new(
             allocator,
-            source_text,
+            source,
             source_type,
             options,
             NoTokensParserConfig,
@@ -531,13 +595,13 @@ mod parser_parse {
     #[inline(never)]
     fn parse_with_tokens_config<'a>(
         allocator: &'a Allocator,
-        source_text: &'a str,
+        source: ParserSource<'a>,
         source_type: SourceType,
         options: ParseOptions,
     ) -> ParserReturn<'a> {
         ParserImpl::<TokensParserConfig>::new(
             allocator,
-            source_text,
+            source,
             source_type,
             options,
             TokensParserConfig,
@@ -549,14 +613,14 @@ mod parser_parse {
     #[inline(never)]
     fn parse_with_runtime_config<'a>(
         allocator: &'a Allocator,
-        source_text: &'a str,
+        source: ParserSource<'a>,
         source_type: SourceType,
         options: ParseOptions,
         config: RuntimeParserConfig,
     ) -> ParserReturn<'a> {
         ParserImpl::<RuntimeParserConfig>::new(
             allocator,
-            source_text,
+            source,
             source_type,
             options,
             config,
@@ -568,13 +632,13 @@ mod parser_parse {
     #[inline(never)]
     fn parse_expression_with_no_tokens_config<'a>(
         allocator: &'a Allocator,
-        source_text: &'a str,
+        source: ParserSource<'a>,
         source_type: SourceType,
         options: ParseOptions,
     ) -> Result<Expression<'a>, Diagnostics> {
         ParserImpl::<NoTokensParserConfig>::new(
             allocator,
-            source_text,
+            source,
             source_type,
             options,
             NoTokensParserConfig,
@@ -586,13 +650,13 @@ mod parser_parse {
     #[inline(never)]
     fn parse_expression_with_tokens_config<'a>(
         allocator: &'a Allocator,
-        source_text: &'a str,
+        source: ParserSource<'a>,
         source_type: SourceType,
         options: ParseOptions,
     ) -> Result<Expression<'a>, Diagnostics> {
         ParserImpl::<TokensParserConfig>::new(
             allocator,
-            source_text,
+            source,
             source_type,
             options,
             TokensParserConfig,
@@ -604,14 +668,14 @@ mod parser_parse {
     #[inline(never)]
     fn parse_expression_with_runtime_config<'a>(
         allocator: &'a Allocator,
-        source_text: &'a str,
+        source: ParserSource<'a>,
         source_type: SourceType,
         options: ParseOptions,
         config: RuntimeParserConfig,
     ) -> Result<Expression<'a>, Diagnostics> {
         ParserImpl::<RuntimeParserConfig>::new(
             allocator,
-            source_text,
+            source,
             source_type,
             options,
             config,
@@ -633,7 +697,8 @@ struct ParserImpl<'a, C: ParserConfig> {
     /// SourceType: JavaScript or TypeScript, Script or Module, jsx support?
     source_type: SourceType,
 
-    /// Source Code
+    /// Source text.
+    /// This is the text which `Program::source_text` is set to, and which strings in AST borrow from.
     source_text: &'a str,
 
     /// All syntax errors from parser and lexer
@@ -682,15 +747,35 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     #[expect(clippy::needless_pass_by_value)]
     pub fn new(
         allocator: &'a Allocator,
-        source_text: &'a str,
+        source: ParserSource<'a>,
         source_type: SourceType,
         options: ParseOptions,
         config: C,
         unique: UniquePromise,
     ) -> Self {
+        // `source` is what the lexer reads. `source_text` is what `Program::source_text` is set to.
+        // They are the same text, except where source is too long to parse.
+        let (source, source_text) = match source {
+            // Source text is too long to parse. Don't copy it. Lexer gets a short substitute source
+            // which fails to parse, and `parse` converts the error to `overlong_source`.
+            ParserSource::Text(source_text) if source_text.len() > MAX_LEN => {
+                (lexer::overlong_substitute(), source_text)
+            }
+            // Copy source text into arena, followed by padding.
+            // AST refers to the copy, so that all strings in AST which are slices of source text
+            // are slices of `Program::source_text`.
+            ParserSource::Text(source_text) => {
+                let source = SourceCode::from_str_in(source_text, allocator);
+                (source, source.as_str())
+            }
+            // Source is already padded. Use it in place.
+            // If it's too long to parse, `Lexer` substitutes a short source.
+            ParserSource::Padded(source) => (source, source.as_str()),
+        };
+
         Self {
             options,
-            lexer: Lexer::new(allocator, source_text, source_type, config.lexer_config(), unique),
+            lexer: Lexer::new(allocator, source, source_type, config.lexer_config(), unique),
             source_type,
             source_text,
             errors: vec![],
@@ -1489,17 +1574,20 @@ mod test {
             slice, str,
         };
 
-        /// A string that has a length of `MAX_LEN + 1`, and is entirely zeros.
+        /// A string that has a length of `MAX_LEN + 1 + SourceCode::PADDING`, and is entirely zeros.
         ///
         /// We need to create a `&str` with `MAX_LEN + 1` length, but don't want to write 4 GiB of data,
         /// as it's too slow. This type uses `alloc_zeroed` which on most platforms will just create zeroed pages
         /// without actually writing any data, and so is much faster.
+        ///
+        /// As it's all zeros, the last `SourceCode::PADDING` bytes are also valid padding
+        /// for the `MAX_LEN + 1` bytes before them.
         struct ZeroedString {
             ptr: NonNull<u8>,
         }
 
         impl ZeroedString {
-            const LEN: usize = MAX_LEN + 1;
+            const LEN: usize = MAX_LEN + 1 + SourceCode::PADDING;
             const PAGE_SIZE: usize = 4096;
             const LAYOUT: Layout = match Layout::from_size_align(Self::LEN, Self::PAGE_SIZE) {
                 Ok(layout) => layout,
@@ -1531,22 +1619,34 @@ mod test {
             }
         }
 
-        // Create long source text (MAX_LEN + 1 bytes)
+        // Create long source text (MAX_LEN + 1 bytes), followed by padding
         let zeroed_string = ZeroedString::new();
-        let source_text = zeroed_string.as_str();
+        let padded = zeroed_string.as_str();
+        let source_text = &padded[..=MAX_LEN];
+        let source = SourceCode::from_padded_str(padded).unwrap();
+        assert_eq!(source.len(), MAX_LEN + 1);
 
-        // Attempt to parse the source text
+        // Attempt to parse the source text, both as a `&str` and as a `SourceCode`
         let allocator = Allocator::default();
-        let ret = Parser::new(&allocator, source_text, SourceType::default()).parse();
+        let parsers = [
+            Parser::new(&allocator, source_text, SourceType::default()),
+            Parser::from_source(&allocator, source, SourceType::default()),
+        ];
+        for parser in parsers {
+            let ret = parser.parse();
 
-        // Parsing should fail
-        assert!(ret.program.is_empty());
-        assert!(ret.fatal_error);
-        assert_eq!(ret.diagnostics.len(), 1);
-        assert_eq!(
-            ret.diagnostics.first().unwrap().to_string(),
-            "Source length exceeds 4 GiB limit"
-        );
+            // Parsing should fail
+            assert!(ret.program.is_empty());
+            assert!(ret.fatal_error);
+            assert_eq!(ret.diagnostics.len(), 1);
+            assert_eq!(
+                ret.diagnostics.first().unwrap().to_string(),
+                "Source length exceeds 4 GiB limit"
+            );
+        }
+
+        // Source text was not copied into the arena
+        assert!(allocator.used_bytes() < 1024 * 1024);
     }
 
     // Source with length MAX_LEN parses OK.
@@ -1557,16 +1657,22 @@ mod test {
     #[cfg(not(miri))]
     #[test]
     fn legal_length_source() {
-        // Build a string MAX_LEN bytes long which doesn't take too long to parse
+        // Build a string MAX_LEN bytes long which doesn't take too long to parse.
+        // Allocate space for the padding up front, so that adding it does not reallocate the string.
         let head = "const x = 1;\n/*";
         let foot = "*/\nconst y = 2;\n";
-        let mut source = "x".repeat(MAX_LEN);
+        let mut source = "x".repeat(MAX_LEN + SourceCode::PADDING);
+        source.truncate(MAX_LEN);
         source.replace_range(..head.len(), head);
         source.replace_range(MAX_LEN - foot.len().., foot);
         assert_eq!(source.len(), MAX_LEN);
 
+        // Parse the source in place. `Parser::new` would copy all 4 GiB of it into the arena.
+        SourceCode::pad_string(&mut source);
+        let source = SourceCode::from_padded_str(&source).unwrap();
+
         let allocator = Allocator::default();
-        let ret = Parser::new(&allocator, &source, SourceType::default()).parse();
+        let ret = Parser::from_source(&allocator, source, SourceType::default()).parse();
         assert!(!ret.fatal_error);
         assert!(ret.diagnostics.is_empty());
         assert_eq!(ret.program.body.len(), 2);
