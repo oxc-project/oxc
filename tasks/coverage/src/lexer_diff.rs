@@ -21,7 +21,7 @@ use oxc::{
     ast::{Comment, CommentContent, CommentPosition},
     diagnostics::{LabeledSpan, OxcDiagnostic},
     parser::{ParseOptions, Parser, Token, config::TokensParserConfig},
-    span::{SourceType, Span},
+    span::{SourceCode, SourceType, Span},
 };
 use oxc_lexer::{
     LexOptions, TokenKind, Tokens, diagnostics::to_oxc_diagnostic, testing::lex_with_cpu,
@@ -41,7 +41,7 @@ pub fn run_lexer_test262(files: &[Test262File]) -> Vec<CoverageResult> {
             if file.meta.flags.contains(&TestFlag::Module) {
                 source_type = source_type.with_module(true);
             }
-            let result = lex_diff(&file.code, source_type);
+            let result = lex_diff(file.code.as_source_code(), source_type);
             CoverageResult { path: file.path.clone(), should_fail: false, result }
         })
         .collect()
@@ -51,7 +51,7 @@ pub fn run_lexer_babel(files: &[BabelFile]) -> Vec<CoverageResult> {
     files
         .par_iter()
         .map(|file| {
-            let result = lex_diff(&file.code, file.source_type);
+            let result = lex_diff(file.code.as_source_code(), file.source_type);
             CoverageResult { path: file.path.clone(), should_fail: false, result }
         })
         .collect()
@@ -82,7 +82,7 @@ pub fn run_lexer_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
         .filter(|file| !SKIP.iter().any(|skip| file.path.ends_with(skip)))
         .map(|file| {
             let source_type = SourceType::from_path(&file.path).unwrap_or_default();
-            let result = lex_diff(&file.code, source_type);
+            let result = lex_diff(file.code.as_source_code(), source_type);
             CoverageResult { path: file.path.clone(), should_fail: false, result }
         })
         .collect()
@@ -97,16 +97,17 @@ pub fn run_lexer_misc(files: &[MiscFile]) -> Vec<CoverageResult> {
         .par_iter()
         .filter(|file| !SKIP.iter().any(|skip| file.path.ends_with(skip)))
         .map(|file| {
-            let result = lex_diff(&file.code, file.source_type);
+            let result = lex_diff(file.code.as_source_code(), file.source_type);
             CoverageResult { path: file.path.clone(), should_fail: false, result }
         })
         .collect()
 }
 
-fn lex_diff(code: &str, source_type: SourceType) -> TestResult {
+fn lex_diff(source: SourceCode<'_>, source_type: SourceType) -> TestResult {
+    let code = source.as_str();
     // If parser panics, there is nothing to compare against, so skip fixture
     let Ok((old_spans, mut old_comments, mut old_ws, old_error, old_last_error_start)) =
-        catch_unwind(AssertUnwindSafe(|| parser_stream(code, source_type)))
+        catch_unwind(AssertUnwindSafe(|| parser_stream(source, source_type)))
     else {
         return TestResult::Passed;
     };
@@ -293,9 +294,9 @@ type ParserStream =
 /// Get token stream and comments from `oxc_parser`,
 /// plus the first error and the start of the last error (if any).
 /// Token stream is `None` if parser hit a fatal error.
-fn parser_stream(code: &str, source_type: SourceType) -> ParserStream {
+fn parser_stream(source: SourceCode<'_>, source_type: SourceType) -> ParserStream {
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, code, source_type)
+    let ret = Parser::from_source(&allocator, source, source_type)
         .with_options(ParseOptions { enable_ident_hashes: false, ..ParseOptions::default() })
         .with_config(TokensParserConfig)
         .parse();

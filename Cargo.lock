@@ -2698,6 +2698,7 @@ dependencies = [
  "oxc_ast_macros",
  "oxc_estree",
  "serde",
+ "simdutf8",
 ]
 
 [[package]]

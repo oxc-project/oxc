@@ -1,9 +1,9 @@
-use std::{fs, path::Path};
+use std::path::Path;
 
 use oxc_allocator::Allocator;
 use oxc_parser::Parser;
 use oxc_semantic::{ScopeId, Semantic, SemanticBuilder};
-use oxc_span::SourceType;
+use oxc_span::{SourceCode, SourceCodeBuf, SourceType};
 
 mod conformance;
 use conformance::SemanticConformance;
@@ -126,12 +126,12 @@ fn run_scope_snapshot_test(ctx: &TestContext<'_>) -> String {
 
 fn analyze(
     path: &Path,
-    source_text: &str,
+    source: SourceCode<'_>,
     conformance_suite: &SemanticConformance,
 ) -> (String, String) {
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(path).unwrap();
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let ret = Parser::from_source(&allocator, source, source_type).parse();
     // The conformance checks read `Semantic::nodes()`, so use the linter preset.
     let semantic =
         SemanticBuilder::new_compiler().with_build_nodes(true).build(&ret.program).semantic;
@@ -146,10 +146,10 @@ fn analyze(
 #[test]
 fn main() {
     insta::glob!("fixtures/**/*.{js,jsx,ts,tsx}", |path| {
-        let source_text = fs::read_to_string(path).unwrap();
+        let source = SourceCodeBuf::read(path).unwrap();
         let conformance_suite = conformance::conformance_suite();
         let (scope_snapshot, conformance_snapshot) =
-            analyze(path, &source_text, &conformance_suite);
+            analyze(path, source.as_source_code(), &conformance_suite);
 
         let name = path.file_stem().unwrap().to_str().unwrap();
 

@@ -8,7 +8,7 @@ fn bench_semantic(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("semantic");
     for file in TestFiles::minimal().files() {
         let id = BenchmarkId::from_parameter(&file.file_name);
-        let source_text = &file.source_text;
+        let source = file.source_text.as_source_code();
         let source_type = file.source_type;
 
         // Create `Allocator` outside of `bench_function`, so same allocator is used for
@@ -21,7 +21,7 @@ fn bench_semantic(criterion: &mut Criterion) {
                 allocator.reset();
 
                 // Create fresh AST for each iteration, as `SemanticBuilder` alters the AST
-                let program = Parser::new(&allocator, source_text, source_type).parse().program;
+                let program = Parser::from_source(&allocator, source, source_type).parse().program;
                 let program = black_box(program);
 
                 // Collect stats outside the measured section to time semantic analysis alone.

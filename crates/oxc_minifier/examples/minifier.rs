@@ -29,7 +29,7 @@ use oxc_mangler::MangleOptions;
 use oxc_minifier::{CompressOptions, Minifier, MinifierOptions};
 use oxc_parser::Parser;
 use oxc_sourcemap::SourcemapVisualizer;
-use oxc_span::SourceType;
+use oxc_span::{SourceCode, SourceCodeBuf, SourceType};
 
 // Instruction:
 // create a `test.js`,
@@ -48,14 +48,16 @@ fn main() -> std::io::Result<()> {
     let name = args.free_from_str().unwrap_or_else(|_| "test.js".to_string());
 
     let path = Path::new(&name);
-    let source_text = std::fs::read_to_string(path)?;
+    // Read the file straight into a buffer which ends with the padding the parser reads,
+    // so the parser reads the source text in place
+    let source = SourceCodeBuf::read(path)?;
     let source_type = SourceType::from_path(path).unwrap();
     let source_map_path = sourcemap.then(|| path.to_path_buf());
 
     let mut allocator = Allocator::default();
     let ret = minify(
         &allocator,
-        &source_text,
+        source.as_source_code(),
         source_type,
         source_map_path,
         mangle,
@@ -73,9 +75,13 @@ fn main() -> std::io::Result<()> {
 
     if twice {
         allocator.reset();
-        let printed2 = minify(&allocator, &printed, source_type, None, mangle, nospace, None).code;
+        // Add the padding the parser reads to the printed code, so it is parsed in place too
+        let printed = SourceCodeBuf::from_string(printed);
+        let printed2 =
+            minify(&allocator, printed.as_source_code(), source_type, None, mangle, nospace, None)
+                .code;
         println!("{printed2}");
-        println!("same = {}", printed == printed2);
+        println!("same = {}", printed.as_str() == printed2);
     }
 
     Ok(())
@@ -83,14 +89,14 @@ fn main() -> std::io::Result<()> {
 
 fn minify<'a>(
     allocator: &'a Allocator,
-    source_text: &'a str,
+    source: SourceCode<'a>,
     source_type: SourceType,
     source_map_path: Option<PathBuf>,
     mangle: bool,
     nospace: bool,
     max_iterations: Option<u8>,
 ) -> CodegenReturn<'a> {
-    let ret = Parser::new(allocator, source_text, source_type).parse();
+    let ret = Parser::from_source(allocator, source, source_type).parse();
     assert!(ret.diagnostics.is_empty());
     let mut program = ret.program;
     let options = MinifierOptions {

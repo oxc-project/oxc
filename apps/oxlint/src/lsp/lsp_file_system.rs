@@ -6,7 +6,9 @@ use std::{
 use rustc_hash::FxHashMap;
 
 use oxc_allocator::Allocator;
-use oxc_linter::{RuntimeFileSystem, read_to_arena_str};
+use oxc_linter::RuntimeFileSystem;
+use oxc_span::SourceCode;
+
 #[derive(Default)]
 pub struct LspFileSystem {
     map: FxHashMap<PathBuf, Arc<str>>,
@@ -19,14 +21,14 @@ impl LspFileSystem {
 }
 
 impl RuntimeFileSystem for LspFileSystem {
-    fn read_to_arena_str<'a>(
+    fn read_source_code<'a>(
         &self,
         path: &Path,
         allocator: &'a Allocator,
-    ) -> Result<&'a str, std::io::Error> {
+    ) -> Result<SourceCode<'a>, std::io::Error> {
         match self.map.get(path) {
-            Some(s) => Ok(allocator.alloc_str(s)),
-            None => read_to_arena_str(path, allocator),
+            Some(s) => Ok(SourceCode::from_str_in(s, allocator)),
+            None => SourceCode::read_in(path, allocator),
         }
     }
 

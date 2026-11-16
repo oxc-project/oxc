@@ -1,7 +1,6 @@
 //! Tool runner functions for coverage testing
 
 use std::{
-    borrow::Cow,
     fs,
     path::{Path, PathBuf},
     sync::Arc,
@@ -13,7 +12,7 @@ use oxc::{
     diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource, OxcDiagnostic},
     minifier::CompressOptions,
     parser::{ParseOptions, Parser, ParserReturn, config::RuntimeParserConfig},
-    span::{ModuleKind, SourceType, Span},
+    span::{ModuleKind, SourceCode, SourceCodeBuf, SourceType, Span},
     transformer::{JsxOptions, JsxRuntime, TransformOptions},
 };
 use oxc_estree_tokens::{ESTreeTokenOptions, to_estree_tokens_pretty_json};
@@ -34,21 +33,33 @@ use crate::{
 // Parser
 // ================================
 
+/// Prefix `source` with a `'use strict'` directive.
+fn use_strict(source: SourceCode<'_>) -> SourceCodeBuf {
+    const DIRECTIVE: &str = "'use strict';\n";
+    // Reserve space for the padding too, so adding it does not reallocate
+    let mut strict = String::with_capacity(DIRECTIVE.len() + source.len() + SourceCode::PADDING);
+    strict.push_str(DIRECTIVE);
+    strict.push_str(source.as_str());
+    SourceCodeBuf::from_string(strict)
+}
+
 fn run_parser(
     path: &Path,
-    code: &str,
+    source: SourceCode<'_>,
     source_type: SourceType,
     always_strict: bool,
     allow_return_outside_function: bool,
 ) -> TestResult {
-    let source_text: Cow<str> = if always_strict {
-        Cow::Owned(format!("'use strict';\n{code}"))
+    let strict_source;
+    let source = if always_strict {
+        strict_source = use_strict(source);
+        strict_source.as_source_code()
     } else {
-        Cow::Borrowed(code)
+        source
     };
 
     let mut driver = Driver { allow_return_outside_function, ..Driver::default() };
-    driver.run(&source_text, source_type);
+    driver.run(source, source_type);
 
     let errors = driver.errors();
     if errors.is_empty() {
@@ -57,7 +68,7 @@ fn run_parser(
         let handler = GraphicalReportHandler::new().with_theme(GraphicalTheme::unicode_nocolor());
         let mut output = String::new();
         // Create Arc once and share across all errors to avoid cloning source for each error
-        let source_arc: Arc<String> = Arc::new(source_text.into_owned());
+        let source_arc: Arc<String> = Arc::new(source.as_str().to_string());
         // Extract path string before loop to avoid repeated conversions
         let path_str = path.to_string_lossy();
         for error in &errors {
@@ -88,20 +99,26 @@ pub fn run_parser_test262(files: &[Test262File]) -> Vec<CoverageResult> {
             let source_type = SourceType::cjs().with_script(true);
 
             let result = if flags.contains(&TestFlag::OnlyStrict) {
-                let r = run_parser(&f.path, &f.code, source_type, true, false);
+                let r = run_parser(&f.path, f.code.as_source_code(), source_type, true, false);
                 evaluate_result(r, should_fail)
             } else if flags.contains(&TestFlag::Module) {
-                let r = run_parser(&f.path, &f.code, source_type.with_module(true), false, false);
+                let r = run_parser(
+                    &f.path,
+                    f.code.as_source_code(),
+                    source_type.with_module(true),
+                    false,
+                    false,
+                );
                 evaluate_result(r, should_fail)
             } else if flags.contains(&TestFlag::NoStrict) || flags.contains(&TestFlag::Raw) {
-                let r = run_parser(&f.path, &f.code, source_type, false, false);
+                let r = run_parser(&f.path, f.code.as_source_code(), source_type, false, false);
                 evaluate_result(r, should_fail)
             } else {
                 // Run both non-strict and strict
-                let r = run_parser(&f.path, &f.code, source_type, false, false);
+                let r = run_parser(&f.path, f.code.as_source_code(), source_type, false, false);
                 let r = evaluate_result(r, should_fail);
                 if matches!(r, TestResult::Passed | TestResult::CorrectError(..)) {
-                    let r2 = run_parser(&f.path, &f.code, source_type, true, false);
+                    let r2 = run_parser(&f.path, f.code.as_source_code(), source_type, true, false);
                     evaluate_result(r2, should_fail)
                 } else {
                     r
@@ -119,7 +136,7 @@ pub fn run_parser_babel(files: &[BabelFile]) -> Vec<CoverageResult> {
         .map(|f| {
             let result = run_parser(
                 &f.path,
-                &f.code,
+                f.code.as_source_code(),
                 f.source_type,
                 false,
                 f.options.allow_return_outside_function,
@@ -178,19 +195,21 @@ fn is_error_suppressed_by_ts_ignore(
 /// Run parser for TypeScript with ts-ignore error suppression
 fn run_parser_typescript_unit(
     path: &Path,
-    code: &str,
+    source: SourceCode<'_>,
     source_type: SourceType,
     always_strict: bool,
     ts_ignore_spans: &[Span],
 ) -> TestResult {
-    let source_text: Cow<str> = if always_strict {
-        Cow::Owned(format!("'use strict';\n{code}"))
+    let strict_source;
+    let source = if always_strict {
+        strict_source = use_strict(source);
+        strict_source.as_source_code()
     } else {
-        Cow::Borrowed(code)
+        source
     };
 
     let mut driver = Driver { allow_return_outside_function: false, ..Driver::default() };
-    driver.run(&source_text, source_type);
+    driver.run(source, source_type);
 
     let errors = driver.errors();
     if errors.is_empty() {
@@ -200,7 +219,7 @@ fn run_parser_typescript_unit(
     // Filter out errors that are suppressed by ts-ignore
     let has_unsuppressed_errors = errors
         .iter()
-        .any(|error| !is_error_suppressed_by_ts_ignore(error, &source_text, ts_ignore_spans));
+        .any(|error| !is_error_suppressed_by_ts_ignore(error, source.as_str(), ts_ignore_spans));
 
     if !has_unsuppressed_errors {
         return TestResult::Passed;
@@ -210,7 +229,7 @@ fn run_parser_typescript_unit(
     let handler = GraphicalReportHandler::new().with_theme(GraphicalTheme::unicode_nocolor());
     let mut output = String::new();
     // Create Arc once and share across all errors to avoid cloning source for each error
-    let source_arc: Arc<String> = Arc::new(source_text.into_owned());
+    let source_arc: Arc<String> = Arc::new(source.as_str().to_string());
     // Extract path string before loop to avoid repeated conversions
     let path_str = path.to_string_lossy();
     for error in &errors {
@@ -233,7 +252,7 @@ pub fn run_parser_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
                 for unit in &f.units {
                     let result = run_parser_typescript_unit(
                         &f.path,
-                        &unit.content,
+                        unit.content.as_source_code(),
                         unit.source_type,
                         always_strict,
                         &unit.ts_ignore_spans,
@@ -254,7 +273,7 @@ pub fn run_parser_misc(files: &[MiscFile]) -> Vec<CoverageResult> {
     files
         .par_iter()
         .map(|f| {
-            let result = run_parser(&f.path, &f.code, f.source_type, false, false);
+            let result = run_parser(&f.path, f.code.as_source_code(), f.source_type, false, false);
             let result = evaluate_result(result, f.should_fail);
             CoverageResult { path: f.path.clone(), should_fail: f.should_fail, result }
         })
@@ -278,7 +297,7 @@ fn get_default_transformer_options() -> TransformOptions {
 }
 
 fn run_semantic(
-    code: &str,
+    source: SourceCode<'_>,
     source_type: SourceType,
     path: &Path,
     options: Option<TransformOptions>,
@@ -290,7 +309,7 @@ fn run_semantic(
         ..Driver::default()
     };
 
-    driver.run(code, source_type);
+    driver.run(source, source_type);
     let errors = driver.errors();
     if errors.is_empty() {
         TestResult::Passed
@@ -312,7 +331,7 @@ pub fn run_semantic_test262(files: &[Test262File]) -> Vec<CoverageResult> {
         .map(|f| {
             let is_module = f.meta.flags.contains(&TestFlag::Module);
             let source_type = SourceType::script().with_module(is_module);
-            let result = run_semantic(&f.code, source_type, &f.path, None);
+            let result = run_semantic(f.code.as_source_code(), source_type, &f.path, None);
             CoverageResult { path: f.path.clone(), should_fail: false, result }
         })
         .collect()
@@ -323,7 +342,7 @@ pub fn run_semantic_babel(files: &[BabelFile]) -> Vec<CoverageResult> {
         .par_iter()
         .filter(|f| !f.should_fail)
         .map(|f| {
-            let result = run_semantic(&f.code, f.source_type, &f.path, None);
+            let result = run_semantic(f.code.as_source_code(), f.source_type, &f.path, None);
             CoverageResult { path: f.path.clone(), should_fail: false, result }
         })
         .collect()
@@ -343,7 +362,12 @@ pub fn run_semantic_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> 
                     source_type = source_type.with_module(true);
                     options.jsx.runtime = JsxRuntime::Classic;
                 }
-                let result = run_semantic(&unit.content, source_type, &f.path, Some(options));
+                let result = run_semantic(
+                    unit.content.as_source_code(),
+                    source_type,
+                    &f.path,
+                    Some(options),
+                );
                 if result != TestResult::Passed {
                     final_result = result;
                     break;
@@ -359,7 +383,7 @@ pub fn run_semantic_misc(files: &[MiscFile]) -> Vec<CoverageResult> {
         .par_iter()
         .filter(|f| !f.should_fail)
         .map(|f| {
-            let result = run_semantic(&f.code, f.source_type, &f.path, None);
+            let result = run_semantic(f.code.as_source_code(), f.source_type, &f.path, None);
             CoverageResult { path: f.path.clone(), should_fail: false, result }
         })
         .collect()
@@ -369,17 +393,17 @@ pub fn run_semantic_misc(files: &[MiscFile]) -> Vec<CoverageResult> {
 // Codegen
 // ================================
 
-fn run_codegen(code: &str, source_type: SourceType) -> TestResult {
+fn run_codegen(source: SourceCode<'_>, source_type: SourceType) -> TestResult {
     // Normal idempotency
     let result =
-        Driver { codegen: true, ..Driver::default() }.idempotency("Normal", code, source_type);
+        Driver { codegen: true, ..Driver::default() }.idempotency("Normal", source, source_type);
     if result != TestResult::Passed {
         return result;
     }
     // Minified idempotency
     Driver { codegen: true, remove_whitespace: true, ..Driver::default() }.idempotency(
         "Minify",
-        code,
+        source,
         source_type,
     )
 }
@@ -395,7 +419,7 @@ pub fn run_codegen_test262(files: &[Test262File]) -> Vec<CoverageResult> {
         .map(|f| {
             let is_module = f.meta.flags.contains(&TestFlag::Module);
             let source_type = SourceType::script().with_module(is_module);
-            let result = run_codegen(&f.code, source_type);
+            let result = run_codegen(f.code.as_source_code(), source_type);
             CoverageResult { path: f.path.clone(), should_fail: false, result }
         })
         .collect()
@@ -406,7 +430,7 @@ pub fn run_codegen_babel(files: &[BabelFile]) -> Vec<CoverageResult> {
         .par_iter()
         .filter(|f| !f.should_fail)
         .map(|f| {
-            let result = run_codegen(&f.code, f.source_type);
+            let result = run_codegen(f.code.as_source_code(), f.source_type);
             CoverageResult { path: f.path.clone(), should_fail: false, result }
         })
         .collect()
@@ -419,7 +443,7 @@ pub fn run_codegen_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
         .map(|f| {
             let mut final_result = TestResult::Passed;
             for unit in &f.units {
-                let result = run_codegen(&unit.content, unit.source_type);
+                let result = run_codegen(unit.content.as_source_code(), unit.source_type);
                 if result != TestResult::Passed {
                     final_result = result;
                     break;
@@ -435,7 +459,7 @@ pub fn run_codegen_misc(files: &[MiscFile]) -> Vec<CoverageResult> {
         .par_iter()
         .filter(|f| !f.should_fail)
         .map(|f| {
-            let result = run_codegen(&f.code, f.source_type);
+            let result = run_codegen(f.code.as_source_code(), f.source_type);
             CoverageResult { path: f.path.clone(), should_fail: false, result }
         })
         .collect()
@@ -476,23 +500,30 @@ fn get_formatter_options_list() -> [JsFormatOptions; 3] {
     ]
 }
 
-fn run_formatter(code: &str, source_type: SourceType) -> TestResult {
+fn run_formatter(source: SourceCode<'_>, source_type: SourceType) -> TestResult {
     for options in get_formatter_options_list() {
         let allocator = Allocator::default();
-        let text1 = match oxc_formatter::format(&allocator, code, source_type, options.clone()) {
+        let text1 = match oxc_formatter::format(&allocator, source, source_type, options.clone()) {
             Ok(formatted) => formatted.print().unwrap().into_code(),
             Err(_) => return TestResult::Passed, // Skip if parse error
         };
+        // Add padding to the output, so it can be parsed in place too
+        let text1 = SourceCodeBuf::from_string(text1);
 
         // Re-format the output: a parse error on the second pass is a real formatter bug.
         let allocator2 = Allocator::default();
-        let text2 = match oxc_formatter::format(&allocator2, &text1, source_type, options) {
+        let text2 = match oxc_formatter::format(
+            &allocator2,
+            text1.as_source_code(),
+            source_type,
+            options,
+        ) {
             Ok(formatted) => formatted.print().unwrap().into_code(),
             Err(err) => return TestResult::ParseError(err.to_string(), false),
         };
 
-        if text1 != text2 {
-            return TestResult::Mismatch("Mismatch", text1, text2);
+        if text1.as_str() != text2 {
+            return TestResult::Mismatch("Mismatch", text1.into_string(), text2);
         }
     }
 
@@ -510,7 +541,7 @@ pub fn run_formatter_test262(files: &[Test262File]) -> Vec<CoverageResult> {
         .map(|f| {
             let is_module = f.meta.flags.contains(&TestFlag::Module);
             let source_type = SourceType::script().with_module(is_module);
-            let result = run_formatter(&f.code, source_type);
+            let result = run_formatter(f.code.as_source_code(), source_type);
             CoverageResult { path: f.path.clone(), should_fail: false, result }
         })
         .collect()
@@ -521,7 +552,7 @@ pub fn run_formatter_babel(files: &[BabelFile]) -> Vec<CoverageResult> {
         .par_iter()
         .filter(|f| !f.should_fail)
         .map(|f| {
-            let result = run_formatter(&f.code, f.source_type);
+            let result = run_formatter(f.code.as_source_code(), f.source_type);
             CoverageResult { path: f.path.clone(), should_fail: false, result }
         })
         .collect()
@@ -534,7 +565,7 @@ pub fn run_formatter_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult>
         .map(|f| {
             let mut final_result = TestResult::Passed;
             for unit in &f.units {
-                let result = run_formatter(&unit.content, unit.source_type);
+                let result = run_formatter(unit.content.as_source_code(), unit.source_type);
                 if result != TestResult::Passed {
                     final_result = result;
                     break;
@@ -550,7 +581,7 @@ pub fn run_formatter_misc(files: &[MiscFile]) -> Vec<CoverageResult> {
         .par_iter()
         .filter(|f| !f.should_fail)
         .map(|f| {
-            let result = run_formatter(&f.code, f.source_type);
+            let result = run_formatter(f.code.as_source_code(), f.source_type);
             CoverageResult { path: f.path.clone(), should_fail: false, result }
         })
         .collect()
@@ -561,7 +592,7 @@ pub fn run_formatter_misc(files: &[MiscFile]) -> Vec<CoverageResult> {
 // ================================
 
 fn run_transformer(
-    code: &str,
+    source: SourceCode<'_>,
     source_type: SourceType,
     path: &Path,
     options: Option<TransformOptions>,
@@ -573,8 +604,9 @@ fn run_transformer(
         ..Driver::default()
     };
 
-    driver.run(code, source_type);
-    let transformed1 = std::mem::take(&mut driver.printed);
+    driver.run(source, source_type);
+    // Add padding to the transformed code, so it can be parsed in place too
+    let transformed1 = SourceCodeBuf::from_string(std::mem::take(&mut driver.printed));
 
     // Second pass with only JavaScript syntax
     let second_pass_source_type = match source_type.module_kind() {
@@ -583,12 +615,16 @@ fn run_transformer(
         ModuleKind::Unambiguous => SourceType::unambiguous(),
         ModuleKind::CommonJS => SourceType::cjs(),
     };
-    driver.run(&transformed1, second_pass_source_type);
+    driver.run(transformed1.as_source_code(), second_pass_source_type);
 
-    if transformed1 == driver.printed {
+    if transformed1.as_str() == driver.printed {
         TestResult::Passed
     } else {
-        TestResult::Mismatch("Mismatch", transformed1, std::mem::take(&mut driver.printed))
+        TestResult::Mismatch(
+            "Mismatch",
+            transformed1.into_string(),
+            std::mem::take(&mut driver.printed),
+        )
     }
 }
 
@@ -603,7 +639,7 @@ pub fn run_transformer_test262(files: &[Test262File]) -> Vec<CoverageResult> {
         .map(|f| {
             let is_module = f.meta.flags.contains(&TestFlag::Module);
             let source_type = SourceType::script().with_module(is_module);
-            let result = run_transformer(&f.code, source_type, &f.path, None);
+            let result = run_transformer(f.code.as_source_code(), source_type, &f.path, None);
             CoverageResult { path: f.path.clone(), should_fail: false, result }
         })
         .collect()
@@ -614,7 +650,7 @@ pub fn run_transformer_babel(files: &[BabelFile]) -> Vec<CoverageResult> {
         .par_iter()
         .filter(|f| !f.should_fail)
         .map(|f| {
-            let result = run_transformer(&f.code, f.source_type, &f.path, None);
+            let result = run_transformer(f.code.as_source_code(), f.source_type, &f.path, None);
             CoverageResult { path: f.path.clone(), should_fail: false, result }
         })
         .collect()
@@ -633,7 +669,12 @@ pub fn run_transformer_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResul
                     source_type = source_type.with_module(true);
                     options.jsx.runtime = JsxRuntime::Classic;
                 }
-                let result = run_transformer(&unit.content, source_type, &f.path, Some(options));
+                let result = run_transformer(
+                    unit.content.as_source_code(),
+                    source_type,
+                    &f.path,
+                    Some(options),
+                );
                 if result != TestResult::Passed {
                     final_result = result;
                     break;
@@ -649,7 +690,7 @@ pub fn run_transformer_misc(files: &[MiscFile]) -> Vec<CoverageResult> {
         .par_iter()
         .filter(|f| !f.should_fail)
         .map(|f| {
-            let result = run_transformer(&f.code, f.source_type, &f.path, None);
+            let result = run_transformer(f.code.as_source_code(), f.source_type, &f.path, None);
             CoverageResult { path: f.path.clone(), should_fail: false, result }
         })
         .collect()
@@ -659,9 +700,9 @@ pub fn run_transformer_misc(files: &[MiscFile]) -> Vec<CoverageResult> {
 // Minifier
 // ================================
 
-fn run_minifier(code: &str, source_type: SourceType) -> TestResult {
+fn run_minifier(source: SourceCode<'_>, source_type: SourceType) -> TestResult {
     Driver { compress: Some(CompressOptions::smallest()), codegen: true, ..Driver::default() }
-        .idempotency("Compress", code, source_type)
+        .idempotency("Compress", source, source_type)
 }
 
 pub fn run_minifier_test262(files: &[Test262File]) -> Vec<CoverageResult> {
@@ -676,7 +717,7 @@ pub fn run_minifier_test262(files: &[Test262File]) -> Vec<CoverageResult> {
         .map(|f| {
             let is_module = f.meta.flags.contains(&TestFlag::Module);
             let source_type = SourceType::script().with_module(is_module);
-            let result = run_minifier(&f.code, source_type);
+            let result = run_minifier(f.code.as_source_code(), source_type);
             CoverageResult { path: f.path.clone(), should_fail: false, result }
         })
         .collect()
@@ -687,7 +728,7 @@ pub fn run_minifier_babel(files: &[BabelFile]) -> Vec<CoverageResult> {
         .par_iter()
         .filter(|f| !f.should_fail && !f.source_type.is_typescript())
         .map(|f| {
-            let result = run_minifier(&f.code, f.source_type);
+            let result = run_minifier(f.code.as_source_code(), f.source_type);
             CoverageResult { path: f.path.clone(), should_fail: false, result }
         })
         .collect()
@@ -764,10 +805,10 @@ fn run_estree_test262_impl(
         .map(|(test_file, expected_json)| {
             let is_module = test_file.meta.flags.contains(&TestFlag::Module);
             let source_type = SourceType::script().with_module(is_module);
-            let source_text = test_file.code.as_str();
+            let source = test_file.code.as_source_code();
 
             let allocator = Allocator::new();
-            let ret = Parser::new(&allocator, source_text, source_type)
+            let ret = Parser::from_source(&allocator, source, source_type)
                 .with_options(ParseOptions {
                     enable_ident_hashes: false,
                     ..ParseOptions::default()
@@ -842,10 +883,10 @@ fn run_estree_acorn_jsx_impl(
         .par_iter()
         .map(|test_file| {
             let source_type = SourceType::default().with_module(true).with_jsx(true);
-            let source_text = test_file.code.as_str();
+            let source = test_file.code.as_source_code();
 
             let allocator = Allocator::new();
-            let ret = Parser::new(&allocator, source_text, source_type)
+            let ret = Parser::from_source(&allocator, source, source_type)
                 .with_options(ParseOptions {
                     enable_ident_hashes: false,
                     ..ParseOptions::default()
@@ -984,7 +1025,7 @@ fn run_estree_typescript_impl(
 
             for (unit, &expected_json) in test_file.units.iter().zip(snapshot_units.iter()) {
                 let source_type = unit.source_type;
-                let source_text = unit.content.as_str();
+                let source = unit.content.as_source_code();
                 let parse_options = ParseOptions {
                     preserve_parens: false,
                     enable_ident_hashes: false,
@@ -992,7 +1033,7 @@ fn run_estree_typescript_impl(
                 };
 
                 let allocator = Allocator::new();
-                let ret = Parser::new(&allocator, source_text, source_type)
+                let ret = Parser::from_source(&allocator, source, source_type)
                     .with_options(parse_options)
                     .with_config(parser_config)
                     .parse();

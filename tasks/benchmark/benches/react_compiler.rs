@@ -10,7 +10,7 @@ fn bench_react_compiler(criterion: &mut Criterion) {
 
     for file in TestFiles::minimal().files() {
         let id = BenchmarkId::from_parameter(&file.file_name);
-        let source_text = &file.source_text;
+        let source = file.source_text.as_source_code();
         let source_type = file.source_type;
 
         let options = PluginOptions::default();
@@ -27,7 +27,7 @@ fn bench_react_compiler(criterion: &mut Criterion) {
                 // Create a fresh AST for each iteration. The compiler builds
                 // semantic data and allocates the compiled program in the same arena.
                 let ParserReturn { mut program, .. } =
-                    Parser::new(&allocator, source_text, source_type).parse();
+                    Parser::from_source(&allocator, source, source_type).parse();
 
                 runner.run(|| {
                     let result = {

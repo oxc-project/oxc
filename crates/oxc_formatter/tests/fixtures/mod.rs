@@ -6,7 +6,7 @@ use oxc_formatter::{
     Semicolons, TrailingCommas,
 };
 use oxc_formatter_tests::{FixtureFormatter, OptionValue, build_fixture_snapshot};
-use oxc_span::SourceType;
+use oxc_span::{SourceCode, SourceType};
 
 struct JsHarness;
 
@@ -77,6 +77,7 @@ impl FixtureFormatter for JsHarness {
     ) -> Result<String, Box<dyn std::error::Error>> {
         let source_type = SourceType::from_path(path).unwrap();
         let allocator = Allocator::default();
+        let source = SourceCode::from_str_in(source, &allocator);
         Ok(oxc_formatter::format(&allocator, source, source_type, options.clone())?
             .print()?
             .into_code())
@@ -85,6 +86,7 @@ impl FixtureFormatter for JsHarness {
     fn fingerprint(source: &str, path: &Path, options: &Self::Options) -> Fingerprint {
         let source_type = SourceType::from_path(path).unwrap();
         let allocator = Allocator::default();
+        let source = SourceCode::from_str_in(source, &allocator);
         let ret = oxc_formatter::parse_for_format(&allocator, source, source_type);
         // The `jsdoc` option owns JSDoc blocks: it rewrites them and drops empty ones,
         // so only the other comments are under the lossless contract there.
@@ -121,7 +123,7 @@ fn bom_is_preserved() {
     let allocator = Allocator::default();
     let formatted = oxc_formatter::format(
         &allocator,
-        "\u{feff}let a = 1",
+        SourceCode::from_str_in("\u{feff}let a = 1", &allocator),
         SourceType::mjs(),
         JsFormatOptions::default(),
     )

@@ -5,7 +5,7 @@ use tracing::{debug, instrument};
 
 use oxc_allocator::Allocator;
 use oxc_formatter_core::{FormatSession, InputKind};
-use oxc_span::SourceType;
+use oxc_span::{SourceCode, SourceType};
 
 use crate::{
     core::{
@@ -79,8 +79,10 @@ pub fn run(
         InputKind::VirtualDocument,
         services,
     );
+    // The text is handed over from JS, so it is copied into the arena to add the padding the parser reads
+    let source = SourceCode::from_str_in(source_text, &allocator);
     let formatted = match tokio::task::block_in_place(|| {
-        oxc_formatter::format_with_session(&session, source_text, source_type, format_options)
+        oxc_formatter::format_with_session(&session, source, source_type, format_options)
     }) {
         Ok(formatted) => formatted,
         Err(err) => {

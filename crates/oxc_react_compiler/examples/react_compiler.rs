@@ -18,7 +18,7 @@ use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
-use oxc_span::SourceType;
+use oxc_span::{SourceCodeBuf, SourceType};
 
 use oxc_react_compiler::{CompileResult, PluginOptions, compile};
 
@@ -29,15 +29,18 @@ fn main() {
         std::process::exit(1);
     });
     let path = Path::new(&name);
-    let source_text =
-        std::fs::read_to_string(path).unwrap_or_else(|err| panic!("{name} not found.\n{err}"));
+    // Read the file straight into a buffer which ends with the padding the parser reads,
+    // so the parser reads the source text in place
+    let source = SourceCodeBuf::read(path).unwrap_or_else(|err| panic!("{name} not found.\n{err}"));
+    let source_text = source.as_str();
     let source_type = SourceType::from_path(path).unwrap_or_else(|_| SourceType::tsx());
 
     println!("Original ({name}):\n");
     println!("{source_text}");
 
     let allocator = Allocator::default();
-    let mut program = Parser::new(&allocator, &source_text, source_type).parse().program;
+    let mut program =
+        Parser::from_source(&allocator, source.as_source_code(), source_type).parse().program;
 
     let result = {
         let semantic = SemanticBuilder::new().with_build_nodes(true).build(&program).semantic;

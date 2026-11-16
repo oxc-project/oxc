@@ -16,7 +16,7 @@ use oxc::{
     parser::{ParseOptions, ParserReturn},
     regular_expression::{ConstructorParser, LiteralParser, Options},
     semantic::SemanticBuilderReturn,
-    span::{ContentEq, SourceType, Span},
+    span::{ContentEq, SourceCode, SourceCodeBuf, SourceType, Span},
     syntax::node::NodeId,
     transformer::{TransformOptions, TransformerReturn},
 };
@@ -133,24 +133,26 @@ impl Driver {
     pub fn idempotency(
         mut self,
         case: &'static str,
-        source_text: &str,
+        source: SourceCode<'_>,
         source_type: SourceType,
     ) -> TestResult {
-        self.run(source_text, source_type);
-        let printed1 = std::mem::take(&mut self.printed);
+        self.run(source, source_type);
+        // Add padding to the printed code, so it can be parsed in place too
+        let printed1 = SourceCodeBuf::from_string(std::mem::take(&mut self.printed));
         // Use the resolved source type from the first parse for the second parse
         let source_type = self.source_type.unwrap_or(source_type);
-        self.run(&printed1, source_type);
-        if printed1 == self.printed {
+        self.run(printed1.as_source_code(), source_type);
+        if printed1.as_str() == self.printed {
             TestResult::Passed
         } else {
-            TestResult::Mismatch(case, printed1, std::mem::take(&mut self.printed))
+            TestResult::Mismatch(case, printed1.into_string(), std::mem::take(&mut self.printed))
         }
     }
 
-    pub fn run(&mut self, source_text: &str, source_type: SourceType) {
+    /// Run the pipeline on `source`, which the parser reads in place.
+    pub fn run(&mut self, source: SourceCode<'_>, source_type: SourceType) {
         let path = self.path.clone();
-        self.compile(source_text, source_type, &path);
+        self.compile_source(source, source_type, &path);
     }
 
     fn check_comments(&mut self, comments: &[Comment]) -> bool {

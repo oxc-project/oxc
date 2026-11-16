@@ -1,5 +1,5 @@
 use oxc_formatter_core::{FormatSession, LineEnding, LineWidth};
-use oxc_span::SourceType;
+use oxc_span::{SourceCode, SourceType};
 
 use crate::options::TrailingCommas;
 use crate::{JsFormatOptions, format_with_session};
@@ -13,13 +13,15 @@ use crate::{JsFormatOptions, format_with_session};
 ///
 /// # Panics
 /// Panics if the formatted IR is invalid or unbalanced, indicating a formatter bug.
-fn parse_and_build<'a>(
-    session: &FormatSession<'a>,
-    source_text: &'a str,
+fn parse_and_build(
+    session: &FormatSession<'_>,
+    source_text: &str,
     source_type: SourceType,
     options: JsFormatOptions,
 ) -> Option<String> {
-    let formatted = format_with_session(session, source_text, source_type, options).ok()?;
+    // The snippet is a slice of a comment, so it is copied into the arena to pad it
+    let source = SourceCode::from_str_in(source_text, session.allocator());
+    let formatted = format_with_session(session, source, source_type, options).ok()?;
     let mut code = formatted.print().unwrap().into_code();
     code.truncate(code.trim_end().len());
     Some(code)

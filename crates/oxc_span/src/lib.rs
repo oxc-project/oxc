@@ -14,7 +14,7 @@ mod span;
 pub use cmp::ContentEq;
 pub use edit_distance::{best_match, min_edit_distance};
 pub use labeled_span::LabeledSpan;
-pub use source_code::SourceCode;
+pub use source_code::{SourceCode, SourceCodeBuf};
 pub use source_type::{
     FileExtension, Language, LanguageVariant, ModuleKind, SourceType, UnknownExtension,
     VALID_EXTENSIONS,

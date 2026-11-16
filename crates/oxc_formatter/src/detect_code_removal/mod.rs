@@ -4,7 +4,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::{AstKind, ast};
 use oxc_parser::ParserReturn;
 use oxc_semantic::{AstNode, Semantic, SemanticBuilder};
-use oxc_span::SourceType;
+use oxc_span::{SourceCode, SourceType};
 
 use crate::parse_for_format;
 
@@ -23,7 +23,9 @@ pub fn detect_code_removal(
 fn collect(code: &str, source_type: SourceType) -> StatsCollector {
     // Parse the way the formatter does (so the before/after comparison matches the formatter's view).
     let allocator = Allocator::default();
-    let ParserReturn { program, diagnostics, .. } = parse_for_format(&allocator, code, source_type);
+    let source = SourceCode::from_str_in(code, &allocator);
+    let ParserReturn { program, diagnostics, .. } =
+        parse_for_format(&allocator, source, source_type);
 
     let mut collector = StatsCollector::default();
 

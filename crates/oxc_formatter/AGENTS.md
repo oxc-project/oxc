@@ -16,10 +16,10 @@ It turns a parsed AST into an IR ("Document") of `FormatElement`s, then prints t
 
 ### Public API
 
-Call-sites use text-in entry points;
+Call-sites use source-in entry points, which take an `oxc_span::SourceCode` (the source text followed by the padding the parser reads, so it is parsed in place and never copied here);
 The AST-wrapping IR primitives (`AstNode`, `Format`, …) are `pub(crate)` and not part of the contract.
 
-- `format`: Format a whole file (text-in)
+- `format`: Format a whole file (source-in)
 - `format_program`: Special-purpose AST-in entry point
 - `format_with_session`: session-aware entry whose `FormatSession` carries the host-supplied `SessionServices`
   - the dispatcher (IR channel), the string embedder (JSDoc fences), and the Tailwind sorter (plain `format` / `format_program` wrap a service-less `PhysicalFile` session)

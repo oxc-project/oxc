@@ -17,7 +17,7 @@
 //! - CFG blocks (`test.cfg.txt`)
 //! - CFG graph in DOT format (`test.dot`)
 
-use std::{env, path::Path, sync::Arc};
+use std::{cell::LazyCell, env, path::Path, sync::Arc};
 
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
@@ -32,7 +32,7 @@ use oxc_cfg::{
 };
 use oxc_parser::Parser;
 use oxc_semantic::{SemanticBuilder, dot::DebugDot};
-use oxc_span::SourceType;
+use oxc_span::{SourceCodeBuf, SourceType};
 
 // Instruction:
 // 1. create a `test.js`,
@@ -55,10 +55,14 @@ fn main() -> std::io::Result<()> {
     let cfg_file_path = Path::new(&cfg_file_name);
     let dot_file_path = Path::new(&dot_file_name);
 
-    let source_text = Arc::new(std::fs::read_to_string(test_file_path)?);
+    // Read the file straight into a buffer which ends with the padding the parser reads,
+    // so the parser reads the source text in place
+    let source = SourceCodeBuf::read(test_file_path)?;
+    // Diagnostics own the source text they point into. It is copied for them only if there is one to report.
+    let source_text = LazyCell::new(|| Arc::new(source.as_str().to_string()));
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(test_file_path).unwrap();
-    let parser_ret = Parser::new(&allocator, &source_text, source_type).parse();
+    let parser_ret = Parser::from_source(&allocator, source.as_source_code(), source_type).parse();
 
     if !parser_ret.diagnostics.is_empty() {
         let error_message: String = parser_ret

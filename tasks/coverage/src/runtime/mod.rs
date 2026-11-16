@@ -348,13 +348,13 @@ fn run_test_code(
 /// * `transform` runs the full transformer pipeline (down-levelling syntax).
 /// * `minify` runs the compressor and property mangler, then prints minified output.
 fn get_code(file: &Test262File, transform: bool, minify: bool) -> String {
-    let source_text = file.code.as_str();
+    let source = file.code.as_source_code();
     let flags = &file.meta.flags;
     let is_module = flags.contains(&TestFlag::Module);
     let is_only_strict = flags.contains(&TestFlag::OnlyStrict);
     let source_type = SourceType::cjs().with_script(!is_module).with_module(is_module);
     let allocator = Allocator::default();
-    let mut program = Parser::new(&allocator, source_text, source_type).parse().program;
+    let mut program = Parser::from_source(&allocator, source, source_type).parse().program;
 
     if transform {
         let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();

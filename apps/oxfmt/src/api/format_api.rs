@@ -3,6 +3,7 @@ use std::{env, path::Path};
 use serde_json::Value;
 
 use oxc_napi::OxcError;
+use oxc_span::SourceCodeBuf;
 
 use crate::core::{
     ExternalServices, FormatResult, JsFormatEmbeddedDocCb, JsFormatFileCb, JsSortTailwindClassesCb,
@@ -75,12 +76,15 @@ pub fn run(
     let formatter =
         SourceFormatter::new(num_of_threads).with_external_services(Some(external_services));
 
+    // Add the padding the JS/TS parser reads to the string we were handed, so the text is not copied
+    let source = SourceCodeBuf::from_string(source_text);
+
     // Use `block_in_place()` to avoid nested async runtime access
-    match tokio::task::block_in_place(|| formatter.format(&source_text, plan)) {
+    match tokio::task::block_in_place(|| formatter.format_source(source.as_source_code(), plan)) {
         FormatResult::Success { code, .. } => ApiFormatResult { code, errors: vec![] },
         FormatResult::Error(diagnostics) => {
-            let errors = OxcError::from_diagnostics(filename, &source_text, diagnostics);
-            ApiFormatResult { code: source_text, errors }
+            let errors = OxcError::from_diagnostics(filename, source.as_str(), diagnostics);
+            ApiFormatResult { code: source.into_string(), errors }
         }
     }
 }

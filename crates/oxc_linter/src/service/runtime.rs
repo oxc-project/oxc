@@ -23,7 +23,7 @@ use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic}
 use oxc_parser::{ParseOptions, Parser, Token, config::RuntimeParserConfig};
 use oxc_resolver::Resolver;
 use oxc_semantic::{Semantic, SemanticBuilder};
-use oxc_span::{SourceType, VALID_EXTENSIONS};
+use oxc_span::{SourceCode, SourceType, VALID_EXTENSIONS};
 use oxc_str::CompactStr;
 
 use crate::{
@@ -33,7 +33,6 @@ use crate::{
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
     module_record::ModuleRecord,
     suppression::DiffManager,
-    utils::read_to_arena_str,
 };
 
 use super::LintServiceOptions;
@@ -311,15 +310,20 @@ impl<'alloc_pool> ModuleToLint<'alloc_pool> {
 /// The `Runtime` uses OsFileSystem as a default
 /// The Tester and `oxc_language_server` would like to provide the content from memory
 pub trait RuntimeFileSystem {
-    /// reads the content of a file path
+    /// Reads the content of a file path into `allocator`, as a [`SourceCode`].
+    ///
+    /// A [`SourceCode`] is the source text followed by padding, which is what the parser reads.
+    /// Implementations should produce it without copying the source text an extra time:
+    /// [`SourceCode::read_in`] reads a file straight into the arena,
+    /// and [`SourceCode::from_str_in`] copies text which is held in memory.
     ///
     /// # Errors
     /// When no valid path is provided or the content is not valid UTF-8 Stream
-    fn read_to_arena_str<'a>(
+    fn read_source_code<'a>(
         &self,
         path: &Path,
         allocator: &'a Allocator,
-    ) -> Result<&'a str, std::io::Error>;
+    ) -> Result<SourceCode<'a>, std::io::Error>;
 
     /// write a file to the file system
     ///
@@ -331,12 +335,12 @@ pub trait RuntimeFileSystem {
 pub struct OsFileSystem;
 
 impl RuntimeFileSystem for OsFileSystem {
-    fn read_to_arena_str<'a>(
+    fn read_source_code<'a>(
         &self,
         path: &Path,
         allocator: &'a Allocator,
-    ) -> Result<&'a str, std::io::Error> {
-        read_to_arena_str(path, allocator)
+    ) -> Result<SourceCode<'a>, std::io::Error> {
+        SourceCode::read_in(path, allocator)
     }
 
     fn write_file(&self, path: &Path, content: &str) -> Result<(), std::io::Error> {
@@ -465,7 +469,7 @@ impl Runtime {
         path: &Path,
         ext: &str,
         allocator: &'a Allocator,
-    ) -> Option<Result<(SourceType, &'a str), Error>> {
+    ) -> Option<Result<(SourceType, SourceCode<'a>), Error>> {
         let source_type = SourceType::from_path(path);
         let not_supported_yet =
             source_type.as_ref().is_err_and(|_| !LINT_PARTIAL_LOADER_EXTENSIONS.contains(&ext));
@@ -479,7 +483,7 @@ impl Runtime {
             source_type = source_type.with_jsx(true);
         }
 
-        let file_result = file_system.read_to_arena_str(path, allocator).map_err(|e| {
+        let file_result = file_system.read_source_code(path, allocator).map_err(|e| {
             OxcDiagnostic::error(format!(
                 "Failed to open file {} with error \"{e}\"",
                 path.display()
@@ -487,7 +491,7 @@ impl Runtime {
             .into()
         });
         Some(match file_result {
-            Ok(source_text) => Ok((source_type, source_text)),
+            Ok(source) => Ok((source_type, source)),
             Err(e) => Err(e),
         })
     }
@@ -1216,7 +1220,7 @@ impl Runtime {
                     return Err(());
                 };
 
-                let (source_type, source_text) = match stt {
+                let (source_type, source) = match stt {
                     Ok(v) => v,
                     Err(e) => {
                         if let Some(tx_error) = tx_error {
@@ -1232,12 +1236,12 @@ impl Runtime {
                     ext,
                     check_syntax_errors,
                     source_type,
-                    source_text,
+                    source,
                     allocator,
                     Some(&mut section_contents),
                 );
 
-                Ok(ModuleContentDependent { source_text, section_contents })
+                Ok(ModuleContentDependent { source_text: source.as_str(), section_contents })
             });
             let module_content = module_content.ok()?;
 
@@ -1247,7 +1251,7 @@ impl Runtime {
 
             let stt = Self::get_source_type_and_text(file_system, Path::new(path), ext, allocator)?;
 
-            let (source_type, source_text) = match stt {
+            let (source_type, source) = match stt {
                 Ok(v) => v,
                 Err(e) => {
                     if let Some(tx_error) = tx_error {
@@ -1262,7 +1266,7 @@ impl Runtime {
                 ext,
                 check_syntax_errors,
                 source_type,
-                source_text,
+                source,
                 allocator,
                 None,
             );
@@ -1278,21 +1282,32 @@ impl Runtime {
         ext: &str,
         check_syntax_errors: bool,
         source_type: SourceType,
-        source_text: &'a str,
+        source: SourceCode<'a>,
         allocator: &'a Allocator,
         mut out_sections: Option<&mut SectionContents<'a>>,
     ) -> SmallVec<[Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1]> {
-        let section_sources = PartialLoader::parse(ext, source_text)
-            .unwrap_or_else(|| vec![JavaScriptSource::partial(source_text, source_type, 0)]);
+        let source_text = source.as_str();
+        // A file which is not split into sections is parsed in place: its padding was read in with it.
+        // A section is a slice of the file, with the rest of the file after it instead of padding,
+        // so it is copied into the arena to pad it.
+        let (section_sources, is_whole_file) = match PartialLoader::parse(ext, source_text) {
+            Some(section_sources) => (section_sources, false),
+            None => (vec![JavaScriptSource::partial(source_text, source_type, 0)], true),
+        };
 
         let mut section_module_records = SmallVec::<
             [Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1],
         >::with_capacity(section_sources.len());
         for section_source in section_sources {
+            let section = if is_whole_file {
+                source
+            } else {
+                SourceCode::from_str_in(section_source.source_text, allocator)
+            };
             match self.process_source_section(
                 path,
                 allocator,
-                section_source.source_text,
+                section,
                 section_source.source_type,
                 check_syntax_errors,
             ) {
@@ -1336,13 +1351,13 @@ impl Runtime {
         &self,
         path: &Path,
         allocator: &'a Allocator,
-        source_text: &'a str,
+        source: SourceCode<'a>,
         source_type: SourceType,
         check_syntax_errors: bool,
     ) -> Result<(ResolvedModuleRecord, Semantic<'a>, ArenaBox<'a, [Token]>), Vec<OxcDiagnostic>>
     {
         let collect_tokens = self.linter.has_external_linter();
-        let ret = Parser::new(allocator, source_text, source_type)
+        let ret = Parser::from_source(allocator, source, source_type)
             .with_options(ParseOptions {
                 parse_regular_expression: true,
                 allow_return_outside_function: true,

@@ -17,7 +17,7 @@ use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions, CommentOptions};
 use oxc_isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions};
 use oxc_parser::Parser;
-use oxc_span::SourceType;
+use oxc_span::{SourceCodeBuf, SourceType};
 
 // Instruction:
 // create a `test.js`,
@@ -28,15 +28,18 @@ use oxc_span::SourceType;
 fn main() -> std::io::Result<()> {
     let name = env::args().nth(1).unwrap_or_else(|| "test.ts".to_string());
     let path = Path::new(&name);
-    let source_text = std::fs::read_to_string(path)?;
+    // Read the file straight into a buffer which ends with the padding the parser reads,
+    // so the parser reads the source text in place
+    let source = SourceCodeBuf::read(path)?;
+    let source_text = source.as_str();
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(path).unwrap();
 
-    let ret = Parser::new(&allocator, &source_text, source_type).parse();
+    let ret = Parser::from_source(&allocator, source.as_source_code(), source_type).parse();
 
     if !ret.diagnostics.is_empty() {
         for error in ret.diagnostics {
-            println!("{}", error.render_with_source_code(source_text.clone()));
+            println!("{}", error.render_with_source_code(source_text.to_string()));
         }
         return Ok(());
     }
@@ -61,7 +64,7 @@ fn main() -> std::io::Result<()> {
     if !id_ret.diagnostics.is_empty() {
         println!("Transformed dts failed:\n");
         for error in id_ret.diagnostics {
-            println!("{}", error.render_with_source_code(source_text.clone()));
+            println!("{}", error.render_with_source_code(source_text.to_string()));
         }
     }
 

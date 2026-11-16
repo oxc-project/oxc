@@ -5,7 +5,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_parser::{ParseOptions, Parser};
-use oxc_span::{GetSpan, SourceType};
+use oxc_span::{GetSpan, SourceCode, SourceType};
 
 use crate::options::JsonVariant;
 
@@ -48,7 +48,9 @@ pub fn parse_json<'a>(
     // `preserve_parens: false` keeps the wrapping `ParenthesizedExpression` out of the AST.
     // The trailing `\n` before `)` prevents a closing paren
     // from being swallowed by a trailing line comment in `source`.
-    let wrapped_source: &'a str = allocator.alloc_concat_strs_array(["(", source, "\n)"]);
+    // The wrapper and the padding the parser needs are added in the same copy.
+    let wrapped = SourceCode::from_strs_array_in(["(", source, "\n)"], allocator);
+    let wrapped_source: &'a str = wrapped.as_str();
 
     // NOTE: We use `oxc_parser` which parses according to JavaScript rules, not JSON.
     // So the JS lexer rules apply uniformly regardless of `variant`.
@@ -59,8 +61,9 @@ pub fn parse_json<'a>(
         enable_ident_hashes: false, // the JSON formatter does not use `Ident` hashes
         ..ParseOptions::default()
     };
-    let ret =
-        Parser::new(allocator, wrapped_source, SourceType::default()).with_options(options).parse();
+    let ret = Parser::from_source(allocator, wrapped, SourceType::default())
+        .with_options(options)
+        .parse();
 
     // If the wrapped parse fails,
     // we retry without the wrap and accept the result only when it contains no code.
@@ -145,12 +148,14 @@ fn try_parse_comments_only<'a>(
     source: &str,
     options: ParseOptions,
 ) -> Option<ParsedExpression<'a>> {
-    // `Parser::new` ties `source_text` to the arena lifetime;
-    // Copy `source` into the arena so the resulting comment spans index into a string that outlives `ret`.
-    let bare_source: &'a str = allocator.alloc_str(source);
+    // The parser ties its source to the arena lifetime;
+    // Copy `source` into the arena (with the padding the parser needs)
+    // so the resulting comment spans index into a string that outlives `ret`.
+    let bare = SourceCode::from_str_in(source, allocator);
+    let bare_source: &'a str = bare.as_str();
 
     let ret =
-        Parser::new(allocator, bare_source, SourceType::default()).with_options(options).parse();
+        Parser::from_source(allocator, bare, SourceType::default()).with_options(options).parse();
     let mut program = ret.program;
     if !ret.diagnostics.is_empty()
         || ret.fatal_error

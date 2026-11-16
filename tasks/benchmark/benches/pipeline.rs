@@ -85,7 +85,7 @@ fn bench_pipeline(criterion: &mut Criterion) {
 
     for file in TestFiles::minimal().files() {
         let id = BenchmarkId::from_parameter(&file.file_name);
-        let source_text = &file.source_text;
+        let source = file.source_text.as_source_code();
         let source_type = file.source_type;
         let source_path = Path::new(&file.file_name);
 
@@ -115,7 +115,7 @@ fn bench_pipeline(criterion: &mut Criterion) {
 
         group.bench_function(id, |b| {
             b.iter(|| {
-                compiler.compile(source_text, source_type, source_path);
+                compiler.compile_source(source, source_type, source_path);
             });
         });
     }

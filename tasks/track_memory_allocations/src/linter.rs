@@ -21,7 +21,9 @@ pub fn run(files: &TestFiles) -> io::Result<()> {
 
     for file in files.files() {
         let allocator = Allocator::default();
-        let parsed = Parser::new(&allocator, &file.source_text, file.source_type).parse();
+        let parsed =
+            Parser::from_source(&allocator, file.source_text.as_source_code(), file.source_type)
+                .parse();
         assert!(parsed.diagnostics.is_empty());
         let path = Path::new(&file.file_name);
         let semantic = SemanticBuilder::new_linter().build(&parsed.program).semantic;

@@ -10,7 +10,7 @@ use oxc::{
     codegen::{Codegen, CodegenOptions, CommentOptions, IndentChar},
     diagnostics::{Diagnostics, NamedSource, OxcDiagnostic},
     parser::{ParseOptions, Parser},
-    span::{SourceType, VALID_EXTENSIONS},
+    span::{SourceCodeBuf, SourceType, VALID_EXTENSIONS},
     transformer::{BabelOptions, HelperLoaderMode, TransformOptions},
 };
 use oxc_tasks_common::{normalize_path, print_diff_in_terminal, project_root};
@@ -205,10 +205,11 @@ impl TestCase {
         // Parser errors are already tested by parser conformance tests.
         // Transform conformance should only test transformation logic.
         if options.throws.is_some()
-            && let Ok(source) = fs::read_to_string(&self.path)
+            && let Ok(source) = SourceCodeBuf::read(&self.path)
         {
             let allocator = Allocator::default();
-            let ret = Parser::new(&allocator, &source, self.source_type).parse();
+            let ret =
+                Parser::from_source(&allocator, source.as_source_code(), self.source_type).parse();
             if !ret.diagnostics.is_empty() {
                 return true;
             }
@@ -235,7 +236,8 @@ impl TestCase {
             }
         };
 
-        let source_text = fs::read_to_string(path).unwrap();
+        // Read the file straight into a buffer which ends with the padding the parser reads
+        let source = SourceCodeBuf::read(path).unwrap();
         let project_root = project_root();
         let mut options = transform_options.clone();
         options.helper_loader.mode = mode;
@@ -252,12 +254,12 @@ impl TestCase {
             !self.options.plugins.async_to_generator,
             options,
         )
-        .execute(&source_text, self.source_type, cwd_path.as_path());
+        .execute(source.as_source_code(), self.source_type, cwd_path.as_path());
         let errors = driver.errors();
         if !errors.is_empty() {
             let source = NamedSource::new(
                 path.strip_prefix(project_root).unwrap().to_string_lossy(),
-                source_text,
+                source.into_string(),
             );
             return Err(errors
                 .into_iter()
@@ -289,7 +291,7 @@ impl TestCase {
         let output_path = self.get_output_path();
 
         let allocator = Allocator::default();
-        let input = fs::read_to_string(&self.path).unwrap();
+        let input = SourceCodeBuf::read(&self.path).unwrap();
 
         if filtered {
             println!("input_path: {}", self.path.display());
@@ -318,18 +320,19 @@ impl TestCase {
                 && actual_errors.as_ref().is_some_and(|errors| errors.contains(&output))
         } else {
             // Get output.js by using our code gen so code comparison can match.
-            output = output_path.and_then(|path| fs::read_to_string(path).ok()).map_or_else(
+            output = output_path.and_then(|path| SourceCodeBuf::read(path).ok()).map_or_else(
                 String::default,
                 |output| {
                     // Get expected code by parsing the source text, so we can get the same code generated result.
-                    let mut ret = Parser::new(&allocator, &output, self.source_type)
-                        .with_options(ParseOptions {
-                            // Related: async to generator, regression
-                            allow_return_outside_function: true,
-                            enable_ident_hashes: false,
-                            ..Default::default()
-                        })
-                        .parse();
+                    let mut ret =
+                        Parser::from_source(&allocator, output.as_source_code(), self.source_type)
+                            .with_options(ParseOptions {
+                                // Related: async to generator, regression
+                                allow_return_outside_function: true,
+                                enable_ident_hashes: false,
+                                ..Default::default()
+                            })
+                            .parse();
 
                     // Clear comments to avoid pure annotation comments that cause mismatch.
                     ret.program.comments.clear();
@@ -365,7 +368,7 @@ impl TestCase {
             println!("Options:");
             println!("{transform_options:#?}\n");
             println!("Input:\n");
-            println!("{input}\n");
+            println!("{}\n", input.as_str());
             if babel_options.throws.is_some() {
                 println!("Expected Errors:\n");
                 println!("{output}\n");
@@ -404,7 +407,7 @@ impl TestCase {
                     !self.options.plugins.async_to_generator,
                     options,
                 )
-                .execute(&input, self.source_type, &self.path)
+                .execute(input.as_source_code(), self.source_type, &self.path)
                 .errors();
                 self.errors.extend(mismatch_errors);
             }

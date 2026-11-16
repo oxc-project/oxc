@@ -15,11 +15,12 @@ use oxc_language_server::{
     ToolRestartChanges, offset_to_position, uri_utils::uri_to_file_path,
     utils::normalize_user_config_path_to_watch_pattern,
 };
+use oxc_span::{SourceCode, SourceCodeBuf};
 
 use crate::core::{
     ConfigScopes, ExternalServices, FormatResult, JsConfigLoaderCb, Language, ResolveOutcome,
     SourceFormatter, build_global_ignore_matchers, config_discovery, is_ignored,
-    resolve_ignore_paths, utils,
+    resolve_ignore_paths,
 };
 use crate::lsp::create_fake_file_path;
 use crate::lsp::options::FormatOptions as LSPFormatOptions;
@@ -222,15 +223,17 @@ impl Tool for ServerFormatter {
                 return Err("Invalid file URI".to_string());
             };
 
-            let source_text = if let Some(c) = document.text.as_deref() {
-                c
+            // A file read from disk is read straight into a buffer which ends with the padding
+            // the JS/TS parser reads. Text the client sent is shared, so it has no room for padding.
+            let (source_text, source) = if let Some(c) = document.text.as_deref() {
+                (c, None)
             } else {
-                file_content = utils::read_to_string(&path)
-                    .map_err(|e| format!("Failed to read file: {e}"))?;
-                &file_content
+                file_content =
+                    SourceCodeBuf::read(&path).map_err(|e| format!("Failed to read file: {e}"))?;
+                (file_content.as_str(), Some(file_content.as_source_code()))
             };
 
-            let Some(result) = self.format_file(&path, source_text)? else {
+            let Some(result) = self.format_file(&path, source_text, source)? else {
                 return Ok(vec![]); // No formatting for this file (unsupported or ignored)
             };
 
@@ -368,6 +371,8 @@ impl ServerFormatter {
     /// Resolve config and format a file at the given path.
     /// Returns `None` if the file is unsupported or ignored.
     ///
+    /// `source` is `source_text` with its padding, when it was read from disk.
+    ///
     /// `language` is given for an in-memory document (from its `languageId`),
     /// which then decides the formatter, see [`crate::core::ConfigResolver::classify`].
     fn resolve_and_format(
@@ -375,6 +380,7 @@ impl ServerFormatter {
         scopes: &ConfigScopes,
         path: &Path,
         source_text: &str,
+        source: Option<SourceCode<'_>>,
         language: Option<Language>,
     ) -> Result<Option<FormatResult>, String> {
         let resolver = match scopes.resolve(path) {
@@ -411,16 +417,24 @@ impl ServerFormatter {
         };
         debug!("plan = {plan:?}");
 
-        Ok(Some(tokio::task::block_in_place(|| self.source_formatter.format(source_text, plan))))
+        Ok(Some(tokio::task::block_in_place(|| match source {
+            Some(source) => self.source_formatter.format_source(source, plan),
+            None => self.source_formatter.format(source_text, plan),
+        })))
     }
 
-    fn format_file(&self, path: &Path, source_text: &str) -> Result<Option<FormatResult>, String> {
+    fn format_file(
+        &self,
+        path: &Path,
+        source_text: &str,
+        source: Option<SourceCode<'_>>,
+    ) -> Result<Option<FormatResult>, String> {
         let state = self.snapshot();
         if is_ignored(&state.ignore_matchers, path, false, true) {
             debug!("File is ignored by .prettierignore: {}", path.display());
             return Ok(None);
         }
-        self.resolve_and_format(&state.scopes, path, source_text, None)
+        self.resolve_and_format(&state.scopes, path, source_text, source, None)
     }
 
     fn format_in_memory(
@@ -434,7 +448,7 @@ impl ServerFormatter {
             return Ok(None);
         };
         let path = create_fake_file_path(language, &self.root_path, uri);
-        self.resolve_and_format(&self.snapshot().scopes, &path, source_text, Some(language))
+        self.resolve_and_format(&self.snapshot().scopes, &path, source_text, None, Some(language))
     }
 }
 

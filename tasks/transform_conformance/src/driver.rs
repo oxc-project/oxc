@@ -6,7 +6,7 @@ use oxc::{
     codegen::{CodegenOptions, CodegenReturn, CommentOptions, IndentChar},
     diagnostics::{Diagnostics, OxcDiagnostic},
     parser::ParseOptions,
-    span::SourceType,
+    span::{SourceCode, SourceType},
     transformer::{TransformOptions, TransformerReturn},
 };
 use oxc_tasks_transform_checker::check_semantic_after_transform;
@@ -98,13 +98,14 @@ impl Driver {
         mem::take(&mut self.printed)
     }
 
+    /// Run the pipeline on `source`, which the parser reads in place.
     pub fn execute(
         mut self,
-        source_text: &str,
+        source: SourceCode<'_>,
         source_type: SourceType,
         source_path: &Path,
     ) -> Self {
-        self.compile(source_text, source_type, source_path);
+        self.compile_source(source, source_type, source_path);
         self
     }
 }

@@ -217,9 +217,13 @@ fn generate_for_file(f: &TypeScriptFile, header: &str, kind: BaselineKind) -> St
         // declaration positions) nor semantic analysis — skip both.
         let results = match kind {
             BaselineKind::Symbols => {
-                let ret = Parser::new(&allocator, &unit.content, unit.source_type)
-                    .with_config(TokensParserConfig)
-                    .parse();
+                let ret = Parser::from_source(
+                    &allocator,
+                    unit.content.as_source_code(),
+                    unit.source_type,
+                )
+                .with_config(TokensParserConfig)
+                .parse();
                 if ret.fatal_error {
                     Vec::new()
                 } else {
@@ -243,12 +247,16 @@ fn generate_for_file(f: &TypeScriptFile, header: &str, kind: BaselineKind) -> St
                 }
             }
             BaselineKind::Types => {
-                let ret = Parser::new(&allocator, &unit.content, unit.source_type)
-                    .with_options(ParseOptions {
-                        enable_ident_hashes: false,
-                        ..ParseOptions::default()
-                    })
-                    .parse();
+                let ret = Parser::from_source(
+                    &allocator,
+                    unit.content.as_source_code(),
+                    unit.source_type,
+                )
+                .with_options(ParseOptions {
+                    enable_ident_hashes: false,
+                    ..ParseOptions::default()
+                })
+                .parse();
                 if ret.fatal_error {
                     Vec::new()
                 } else {

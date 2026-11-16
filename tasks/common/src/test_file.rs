@@ -1,6 +1,6 @@
 use std::fmt;
 
-use oxc_span::SourceType;
+use oxc_span::{SourceCodeBuf, SourceType};
 
 use crate::{project_root, request::agent};
 
@@ -104,7 +104,11 @@ impl TestFiles {
 pub struct TestFile {
     pub url: String,
     pub file_name: String,
-    pub source_text: String,
+    /// Source text, read from disk straight into a buffer which ends with the padding the parser reads.
+    ///
+    /// Dereferences to `&str`. Pass `source_text.as_source_code()` to `Parser::from_source`
+    /// to parse it in place, as a tool which reads its own files does.
+    pub source_text: SourceCodeBuf,
     pub source_type: SourceType,
 }
 
@@ -119,7 +123,7 @@ impl TestFile {
 
     /// # Errors
     /// # Panics
-    pub fn get_source_text(lib: &str) -> Result<(String, String), String> {
+    pub fn get_source_text(lib: &str) -> Result<(String, SourceCodeBuf), String> {
         if !lib.starts_with("https://") {
             return Err(format!("Not an https url: {lib:?}"));
         }
@@ -128,7 +132,7 @@ impl TestFile {
 
         let file = project_root().join("target").join(filename);
 
-        if let Ok(code) = std::fs::read_to_string(&file) {
+        if let Ok(code) = SourceCodeBuf::read(&file) {
             Ok((filename.to_string(), code))
         } else {
             println!("[{filename}] - Downloading [{lib}] to [{}]", file.display());
@@ -140,7 +144,7 @@ impl TestFile {
                     let mut writer = std::fs::File::create(&file).map_err(err_to_string)?;
                     std::io::copy(&mut reader, &mut writer).map_err(err_to_string)?;
 
-                    std::fs::read_to_string(&file)
+                    SourceCodeBuf::read(&file)
                         .map_err(err_to_string)
                         .map(|code| (filename.to_string(), code))
                 }

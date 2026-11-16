@@ -11,7 +11,7 @@ use oxc_parser::{
     config::{LexerConfig, NoTokensLexerConfig},
     lexer::{Kind, Lexer},
 };
-use oxc_span::{SourceCode, SourceType};
+use oxc_span::{SourceCode, SourceCodeBuf, SourceType};
 use oxc_tasks_common::{TestFile, TestFiles};
 
 fn bench_lexer(criterion: &mut Criterion) {
@@ -19,8 +19,7 @@ fn bench_lexer(criterion: &mut Criterion) {
 
     for file in cleaned_test_files() {
         let id = BenchmarkId::from_parameter(&file.file_name);
-        // `cleaned_test_files` adds padding to the source text
-        let source = SourceCode::from_padded_str(&file.source_text).unwrap();
+        let source = file.source_text.as_source_code();
         let source_type = file.source_type;
         group.bench_function(id, |b| {
             // Do not include initializing allocator in benchmark.
@@ -36,8 +35,7 @@ fn bench_lexer(criterion: &mut Criterion) {
     group.finish();
 }
 
-/// Get the test files, with source text cleaned, and followed by padding
-/// (see [`SourceCode::from_padded_str`]).
+/// Get the test files, with source text cleaned.
 ///
 /// The lexer lacks awareness of JS grammar, so it gets confused by a few things
 /// without the parser driving it. So simplify the input for it, by replacing these syntaxes
@@ -54,7 +52,7 @@ fn cleaned_test_files() -> Vec<TestFile> {
         .iter()
         .map(|file| {
             let source_type = file.source_type;
-            let source_text = clean(&file.source_text, source_type, &allocator);
+            let source_text = clean(file.source_text.as_source_code(), source_type, &allocator);
 
             allocator.reset();
 
@@ -88,7 +86,7 @@ fn lex_whole_file<'a, C: LexerConfig>(
     lexer
 }
 
-/// Clean source text. Returned `String` is the cleaned source text followed by padding.
+/// Clean source text.
 ///
 /// Purpose is to allow lexer to complete without any errors.
 /// Usually sources Oxc is asked to parse will not produce lexer errors, and generating diagnostics is
@@ -104,9 +102,15 @@ fn lex_whole_file<'a, C: LexerConfig>(
 /// * `TSTemplateLiteralType` (TypeScript type-level template literal, lexically identical
 ///   to `TemplateLiteral` so the lexer cannot tell them apart without parser context)
 /// * `JSXText`
-fn clean<'a>(source_text: &'a str, source_type: SourceType, allocator: &'a Allocator) -> String {
+fn clean<'a>(
+    source: SourceCode<'a>,
+    source_type: SourceType,
+    allocator: &'a Allocator,
+) -> SourceCodeBuf {
+    let source_text = source.as_str();
+
     // Parse
-    let parser_ret = Parser::new(allocator, source_text, source_type)
+    let parser_ret = Parser::from_source(allocator, source, source_type)
         .with_options(ParseOptions { enable_ident_hashes: false, ..ParseOptions::default() })
         .parse();
     assert!(parser_ret.diagnostics.is_empty());
@@ -129,14 +133,15 @@ fn clean<'a>(source_text: &'a str, source_type: SourceType, allocator: &'a Alloc
         last_index = span.end as usize;
     }
     clean_source_text.push_str(&source_text[last_index..]);
-    SourceCode::pad_string(&mut clean_source_text);
+    // `clean_source_text` has capacity for the padding, so this does not reallocate
+    let clean_source = SourceCodeBuf::from_string(clean_source_text);
 
     // Check lexer can lex it without any errors
-    let source = SourceCode::from_padded_str(&clean_source_text).unwrap();
-    let lexer = lex_whole_file(allocator, source, source_type, NoTokensLexerConfig);
+    let lexer =
+        lex_whole_file(allocator, clean_source.as_source_code(), source_type, NoTokensLexerConfig);
     assert!(lexer.errors().is_empty());
 
-    clean_source_text
+    clean_source
 }
 
 struct SourceCleaner<'a> {

@@ -18,7 +18,7 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
-use oxc_span::{SourceType, Span};
+use oxc_span::{SourceCodeBuf, SourceType, Span};
 
 // Instruction:
 // create a `test.js`,
@@ -29,14 +29,17 @@ use oxc_span::{SourceType, Span};
 fn main() -> std::io::Result<()> {
     let name = env::args().nth(1).unwrap_or_else(|| "test.js".to_string());
     let path = Path::new(&name);
-    let source_text = std::fs::read_to_string(path)?;
+    // Read the file straight into a buffer which ends with the padding the parser reads,
+    // so the parser reads the source text in place
+    let source = SourceCodeBuf::read(path)?;
+    let source_text = source.as_str();
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(path).unwrap();
-    let ret = Parser::new(&allocator, &source_text, source_type).parse();
+    let ret = Parser::from_source(&allocator, source.as_source_code(), source_type).parse();
 
     // Handle parser errors
     if !ret.diagnostics.is_empty() {
-        print_errors(&source_text, ret.diagnostics.into());
+        print_errors(source_text, ret.diagnostics.into());
         return Ok(());
     }
 
@@ -65,7 +68,7 @@ fn main() -> std::io::Result<()> {
     if errors.is_empty() {
         println!("Success!");
     } else {
-        print_errors(&source_text, errors);
+        print_errors(source_text, errors);
     }
 
     Ok(())

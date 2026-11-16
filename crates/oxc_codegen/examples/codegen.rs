@@ -26,7 +26,7 @@ use oxc_ast::ast::Program;
 use oxc_codegen::{Codegen, CodegenOptions, CodegenReturn};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_sourcemap::SourcemapVisualizer;
-use oxc_span::SourceType;
+use oxc_span::{SourceCode, SourceCodeBuf, SourceType};
 
 // Instruction:
 // create a `test.js`,
@@ -45,13 +45,15 @@ fn main() -> std::io::Result<()> {
     let path = Path::new(&name);
     let sourcemap = sourcemap.then_some(path);
 
-    let source_text = std::fs::read_to_string(path)?;
+    // Read the file straight into a buffer which ends with the padding the parser reads,
+    // so the parser reads the source text in place
+    let source = SourceCodeBuf::read(path)?;
     let source_type = SourceType::from_path(path).unwrap();
     let mut allocator = Allocator::default();
 
     // First round: parse and generate
     let printed = {
-        let program = parse(&allocator, &source_text, source_type);
+        let program = parse(&allocator, source.as_source_code(), source_type);
         codegen(&program, minify, sourcemap)
     };
     println!("First time:");
@@ -62,13 +64,15 @@ fn main() -> std::io::Result<()> {
         // Reset the allocator as we don't need the first AST any more
         allocator.reset();
 
-        let program = parse(&allocator, &printed, source_type);
+        // Add the padding the parser reads to the printed code, so it is parsed in place too
+        let printed = SourceCodeBuf::from_string(printed);
+        let program = parse(&allocator, printed.as_source_code(), source_type);
         println!("Second time:");
-        let printed2 = codegen(&program, minify, None);
-        println!("{printed2}");
+        let printed2 = SourceCodeBuf::from_string(codegen(&program, minify, None));
+        println!("{}", printed2.as_str());
         // Check syntax error
-        parse(&allocator, &printed2, source_type);
-        println!("same = {}", printed == printed2);
+        parse(&allocator, printed2.as_source_code(), source_type);
+        println!("same = {}", printed.as_str() == printed2.as_str());
     }
 
     Ok(())
@@ -77,10 +81,10 @@ fn main() -> std::io::Result<()> {
 /// Parse JavaScript/TypeScript source code into an AST
 fn parse<'a>(
     allocator: &'a Allocator,
-    source_text: &'a str,
+    source: SourceCode<'a>,
     source_type: SourceType,
 ) -> Program<'a> {
-    let ret = Parser::new(allocator, source_text, source_type)
+    let ret = Parser::from_source(allocator, source, source_type)
         .with_options(ParseOptions {
             allow_return_outside_function: true,
             enable_ident_hashes: false,
@@ -88,7 +92,7 @@ fn parse<'a>(
         })
         .parse();
     for error in ret.diagnostics {
-        println!("{}", error.render_with_source_code(source_text.to_string()));
+        println!("{}", error.render_with_source_code(source.as_str().to_string()));
     }
     ret.program
 }

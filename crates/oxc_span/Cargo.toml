@@ -26,6 +26,7 @@ oxc_estree = { workspace = true }
 
 schemars = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
+simdutf8 = { workspace = true }
 
 [features]
 default = []

@@ -17,7 +17,7 @@ fn bench_linter(criterion: &mut Criterion) {
 
     for file in TestFiles::minimal().files() {
         let id = BenchmarkId::from_parameter(&file.file_name);
-        let source_text = &file.source_text;
+        let source = file.source_text.as_source_code();
         let source_type = file.source_type;
 
         // Create `Allocator` outside of `bench_function`, so same allocator is used for
@@ -29,7 +29,7 @@ fn bench_linter(criterion: &mut Criterion) {
                 // Reset allocator at start of each iteration
                 allocator.reset();
 
-                let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
+                let parser_ret = Parser::from_source(&allocator, source, source_type).parse();
                 let path = Path::new("");
                 let semantic_ret = SemanticBuilder::new_linter().build(&parser_ret.program);
                 let semantic = semantic_ret.semantic;

@@ -19,7 +19,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use oxc::{span::SourceType, transformer::BabelOptions};
+use oxc::{
+    span::{SourceCodeBuf, SourceType},
+    transformer::BabelOptions,
+};
 use oxc_tasks_common::{Snapshot, normalize_path, project_root};
 use similar::TextDiff;
 
@@ -44,13 +47,15 @@ pub enum TestResult {
 
 pub struct Test262File {
     pub path: PathBuf,
-    pub code: String,
+    /// Source text, read from disk straight into a buffer which ends with the padding the parser reads
+    pub code: SourceCodeBuf,
     pub meta: Test262Meta,
 }
 
 pub struct BabelFile {
     pub path: PathBuf,
-    pub code: String,
+    /// Source text, read from disk straight into a buffer which ends with the padding the parser reads
+    pub code: SourceCodeBuf,
     pub source_type: SourceType,
     pub options: BabelOptions,
     pub should_fail: bool,
@@ -58,7 +63,8 @@ pub struct BabelFile {
 
 pub struct TypeScriptFile {
     pub path: PathBuf,
-    pub code: String,
+    /// Source text, read from disk straight into a buffer which ends with the padding the parser reads
+    pub code: SourceCodeBuf,
     pub units: Vec<TestUnitData>,
     pub settings: CompilerSettings,
     pub should_fail: bool,
@@ -68,14 +74,16 @@ pub struct TypeScriptFile {
 
 pub struct MiscFile {
     pub path: PathBuf,
-    pub code: String,
+    /// Source text, read from disk straight into a buffer which ends with the padding the parser reads
+    pub code: SourceCodeBuf,
     pub source_type: SourceType,
     pub should_fail: bool,
 }
 
 pub struct AcornJsxFile {
     pub path: PathBuf,
-    pub code: String,
+    /// Source text, read from disk straight into a buffer which ends with the padding the parser reads
+    pub code: SourceCodeBuf,
     pub should_fail: bool,
 }
 

@@ -10,11 +10,11 @@ use oxc_transformer::{TransformOptions, Transformer};
 
 fn bench_codegen(criterion: &mut Criterion) {
     for file in TestFiles::minimal().files() {
-        let source_text = &file.source_text;
+        let source = file.source_text.as_source_code();
         let source_type = file.source_type;
         let allocator = Allocator::default();
 
-        let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
+        let parser_ret = Parser::from_source(&allocator, source, source_type).parse();
         assert!(parser_ret.diagnostics.is_empty());
         let mut program = parser_ret.program;
 

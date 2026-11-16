@@ -13,7 +13,10 @@
 
 use std::{env, io, path::Path};
 
-use oxc::{Compiler, span::SourceType};
+use oxc::{
+    Compiler,
+    span::{SourceCodeBuf, SourceType},
+};
 
 // Instruction:
 // 1. create a `test.js`
@@ -25,17 +28,18 @@ use oxc::{Compiler, span::SourceType};
 fn main() -> io::Result<()> {
     let name = env::args().nth(1).unwrap_or_else(|| "test.js".to_string());
     let path = Path::new(&name);
-    let source_text = std::fs::read_to_string(path)?;
+    // Read the file straight into a buffer which ends with the padding the parser reads
+    let source = SourceCodeBuf::read(path)?;
     let source_type = SourceType::from_path(path).unwrap();
 
     // Execute the full compilation pipeline
-    match Compiler::default().execute(&source_text, source_type, path) {
+    match Compiler::default().execute_source(source.as_source_code(), source_type, path) {
         Ok(printed) => {
             println!("{printed}");
         }
         Err(errors) => {
             for error in errors {
-                println!("{}", error.render_with_source_code(source_text.clone()));
+                println!("{}", error.render_with_source_code(source.as_str().to_string()));
             }
         }
     }

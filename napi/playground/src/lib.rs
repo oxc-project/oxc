@@ -25,7 +25,7 @@ use oxc::{
         ReferenceId, ScopeFlags, ScopeId, Scoping, SemanticBuilder, SymbolFlags, SymbolId,
         dot::{DebugDot, DebugDotContext},
     },
-    span::{SourceType, Span},
+    span::{SourceCode, SourceType, Span},
     syntax::reference::ReferenceFlags,
     transformer::{TransformOptions, Transformer},
 };
@@ -641,13 +641,16 @@ impl Oxc {
         let allocator = Allocator::default();
         if run_options.formatter {
             let format_options = Self::convert_formatter_options(formatter_options);
+            // The text is handed over from JS, so copy it into the arena to add the padding
+            // the parser reads. Both `format()` calls below parse this one copy.
+            let source = SourceCode::from_str_in(source_text, &allocator);
 
             // `format()` is called twice: once to dump the IR, once for the printed code.
             // `print()` consumes the `Formatted`, so the IR pass needs its own.
             // Playground already re-parses for the formatter, so the extra parse is acceptable here.
             self.formatter_ir_text = match oxc_formatter::format(
                 &allocator,
-                source_text,
+                source,
                 source_type,
                 format_options.clone(),
             ) {
@@ -655,7 +658,7 @@ impl Oxc {
                 Err(err) => err.to_string(),
             };
             self.formatter_formatted_text =
-                match oxc_formatter::format(&allocator, source_text, source_type, format_options) {
+                match oxc_formatter::format(&allocator, source, source_type, format_options) {
                     Ok(formatted) => match formatted.print() {
                         Ok(printer) => printer.into_code(),
                         Err(err) => err.to_string(),

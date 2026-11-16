@@ -13,12 +13,12 @@
 //! cargo run -p oxc_formatter --example formatter -- --diff [filename]
 //! ```
 
-use std::{fs, path::Path};
+use std::path::Path;
 
 use oxc_allocator::Allocator;
 use oxc_formatter::{BracketSameLine, JsFormatOptions, JsdocOptions, Semicolons};
 use oxc_formatter_core::LineWidth;
-use oxc_span::SourceType;
+use oxc_span::{SourceCodeBuf, SourceType};
 use oxc_tasks_common::print_diff_in_terminal;
 use pico_args::Arguments;
 
@@ -33,9 +33,10 @@ fn main() -> Result<(), String> {
     let print_width = args.opt_value_from_str::<&'static str, u16>("--print-width").unwrap_or(None);
     let name = args.free_from_str().unwrap_or_else(|_| "test.js".to_string());
 
-    // Read source file
+    // Read source file, straight into a buffer which ends with the padding the parser needs
     let path = Path::new(&name);
-    let source_text = fs::read_to_string(path).map_err(|_| format!("Missing '{name}'"))?;
+    let source = SourceCodeBuf::read(path).map_err(|_| format!("Missing '{name}'"))?;
+    let source_text = source.as_str();
     let source_type = SourceType::from_path(path).unwrap();
 
     // Format the parsed code
@@ -56,17 +57,18 @@ fn main() -> Result<(), String> {
     let allocator = Allocator::new();
 
     // Parse + format the source code
-    let formatted = match oxc_formatter::format(&allocator, &source_text, source_type, options) {
-        Ok(formatted) => formatted,
-        Err(error) => {
-            println!("{}", error.render_with_source_code(source_text.clone()));
-            return Err("Parsed with Errors.".to_string());
-        }
-    };
+    let formatted =
+        match oxc_formatter::format(&allocator, source.as_source_code(), source_type, options) {
+            Ok(formatted) => formatted,
+            Err(error) => {
+                println!("{}", error.render_with_source_code(source_text.to_string()));
+                return Err("Parsed with Errors.".to_string());
+            }
+        };
 
     if show_ir {
         println!("--- IR ---");
-        println!("{}", formatted.document().display(&source_text));
+        println!("{}", formatted.document().display(source_text));
         println!("--- End IR ---\n");
     }
 
@@ -77,7 +79,7 @@ fn main() -> Result<(), String> {
         if source_text == formatted_code {
             print!("{formatted_code}");
         } else {
-            print_diff_in_terminal(&source_text, &formatted_code);
+            print_diff_in_terminal(source_text, &formatted_code);
         }
     } else {
         print!("{formatted_code}");

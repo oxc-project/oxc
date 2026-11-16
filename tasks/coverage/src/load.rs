@@ -9,7 +9,10 @@ use cow_utils::CowUtils;
 
 use encoding_rs::UTF_16LE;
 use encoding_rs_io::DecodeReaderBytesBuilder;
-use oxc::{span::SourceType, transformer::BabelOptions};
+use oxc::{
+    span::{SourceCodeBuf, SourceType},
+    transformer::BabelOptions,
+};
 use rayon::prelude::*;
 use walkdir::WalkDir;
 
@@ -69,7 +72,7 @@ fn walk_and_read(
     root: &Path,
     filter: Option<&str>,
     skip_path: impl Fn(&Path) -> bool + Sync,
-) -> Vec<(PathBuf, String)> {
+) -> Vec<(PathBuf, SourceCodeBuf)> {
     let base = workspace_root();
     let full_root = base.join(root);
 
@@ -86,7 +89,9 @@ fn walk_and_read(
     paths
         .into_par_iter()
         .filter_map(|path| {
-            let code = fs::read_to_string(&path).ok().or_else(|| {
+            // Read the file straight into a buffer which ends with the padding the parser reads,
+            // so every tool can parse it in place
+            let code = SourceCodeBuf::read(&path).ok().or_else(|| {
                 let file = fs::File::open(&path).ok()?;
                 let mut content = String::new();
                 DecodeReaderBytesBuilder::new()
@@ -94,13 +99,16 @@ fn walk_and_read(
                     .build(file)
                     .read_to_string(&mut content)
                     .ok()?;
-                Some(content)
+                Some(SourceCodeBuf::from_string(content))
             })?;
             // Remove BOM without reallocating
-            let mut code = code;
-            if code.starts_with('\u{feff}') {
+            let code = if code.starts_with('\u{feff}') {
+                let mut code = code.into_string();
                 code.drain(..'\u{feff}'.len_utf8());
-            }
+                SourceCodeBuf::from_string(code)
+            } else {
+                code
+            };
             let rel_path = path.strip_prefix(&base).unwrap().to_owned();
             Some((rel_path, code))
         })
@@ -266,7 +274,7 @@ fn load_misc(filter: Option<&str>) -> Vec<MiscFile> {
         let code = String::from("a") + &"+ a".repeat(1000);
         files.push(MiscFile {
             path: PathBuf::from("huge_binary_expression.js"),
-            code,
+            code: SourceCodeBuf::from_string(code),
             source_type: SourceType::cjs(),
             should_fail: false,
         });
@@ -274,7 +282,7 @@ fn load_misc(filter: Option<&str>) -> Vec<MiscFile> {
         let code = "if (true) {".repeat(1000) + &"}".repeat(1000);
         files.push(MiscFile {
             path: PathBuf::from("huge_nested_statements.js"),
-            code,
+            code: SourceCodeBuf::from_string(code),
             source_type: SourceType::cjs(),
             should_fail: false,
         });

@@ -18,10 +18,10 @@ use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{EmbeddedIr, FormatSession, Formatted, InputKind};
 use oxc_parser::{ParseOptions, Parser, ParserReturn};
-use oxc_span::SourceType;
+use oxc_span::{SourceCode, SourceType};
 
 // Internal only AST-wrapping IR primitives.
-// External call-sites use the text-in `format`, `format_with_session`, `format_to_ir`,
+// External call-sites use the source-in `format`, `format_with_session`, the text-in `format_to_ir`,
 // or the special-purpose AST-in `format_program`.
 pub(crate) use crate::ast_nodes::{AstNode, AstNodes};
 pub use crate::embed_context::{
@@ -45,14 +45,19 @@ pub(crate) use oxc_formatter_core::Format;
 
 use self::formatter::prelude::tag::Label;
 
-/// Format an entire JS/TS program from source text, text-in entry point.
+/// Format an entire JS/TS program from its source, source-in entry point.
+///
+/// `source` is a [`SourceCode`]: the source text followed by padding, which the parser reads in place.
+/// The formatter does not copy it. Create one with:
+/// - [`SourceCode::read_in`] or [`oxc_span::SourceCodeBuf::read`] for a file, read once into its padded buffer
+/// - [`SourceCode::from_str_in`] for text held in memory, which copies it into the arena
 ///
 /// # Errors
 /// Returns the first parse error as an [`OxcDiagnostic`].
 /// For now, any parse diagnostic is an error, even when the parser could recover.
 pub fn format<'a>(
     allocator: &'a Allocator,
-    source_text: &'a str,
+    source: SourceCode<'a>,
     source_type: SourceType,
     options: JsFormatOptions,
 ) -> Result<Formatted<'a, JsFormatContext<'a>>, OxcDiagnostic> {
@@ -61,7 +66,7 @@ pub fn format<'a>(
     // Hosts that install services (oxfmt) use [`format_with_session`].
     format_with_session(
         &FormatSession::new(allocator, InputKind::PhysicalFile),
-        source_text,
+        source,
         source_type,
         options,
     )
@@ -75,11 +80,11 @@ pub fn format<'a>(
 /// Same as [`format()`].
 pub fn format_with_session<'a>(
     session: &FormatSession<'a>,
-    source_text: &'a str,
+    source: SourceCode<'a>,
     source_type: SourceType,
     options: JsFormatOptions,
 ) -> Result<Formatted<'a, JsFormatContext<'a>>, OxcDiagnostic> {
-    let program = parse(session.allocator(), source_text, source_type)?;
+    let program = parse(session.allocator(), source, source_type)?;
     Ok(format_program_with_session(session, program, options))
 }
 
@@ -120,8 +125,9 @@ pub fn format_to_ir<'a>(
         return Ok(EmbeddedIr { ir });
     }
 
+    // The wrapper and the padding the parser needs are added in the same copy
     let (prefix, suffix) = print::root_wrapper(root);
-    let wrapped = allocator.alloc_concat_strs_array([prefix, source_text, suffix]);
+    let wrapped = SourceCode::from_strs_array_in([prefix, source_text, suffix], allocator);
     let program = parse(allocator, wrapped, source_type)?;
     let ends_in_line_comment = print::check_root(
         program,
@@ -151,7 +157,7 @@ pub fn format_to_ir<'a>(
 
 /// Format an already-parsed program, special-purpose AST-in entry point.
 ///
-/// Most callers want [`format()`] (text-in).
+/// Most callers want [`format()`] (source-in).
 /// This skips parsing and is meant for cases that already hold a `Program`.
 /// e.g. perf/allocation measurement that isolates formatting from parsing, or error-tolerant harnesses.
 ///
@@ -187,16 +193,16 @@ fn format_program_with_session<'a>(
     )
 }
 
-/// Parse `source_text` the way the formatter requires, for AST-in callers of [`format_program`].
+/// Parse `source` the way the formatter requires, for AST-in callers of [`format_program`].
 ///
 /// Applies the formatter's parse options and JSX enabling, exactly as [`format()`] does internally,
-/// so a program fed to [`format_program`] matches the text-in path.
+/// so a program fed to [`format_program`] matches the source-in path.
 /// Use this when you need to control parse-error handling
 /// or isolate parsing from formatting (perf/allocation measurement, error-tolerant harnesses).
 /// Inspect the returned `ParserReturn` (`errors` / `fatal_error`) and pass `&ret.program` to [`format_program`].
 pub fn parse_for_format<'a>(
     allocator: &'a Allocator,
-    source_text: &'a str,
+    source: SourceCode<'a>,
     source_type: SourceType,
 ) -> ParserReturn<'a> {
     // Always enable JSX for JavaScript source types (no syntax conflict)
@@ -212,10 +218,10 @@ pub fn parse_for_format<'a>(
         // analysis on this AST, and semantic requires hashed `Ident`s.
         enable_ident_hashes: cfg!(feature = "detect_code_removal"),
     };
-    Parser::new(allocator, source_text, source_type).with_options(options).parse()
+    Parser::from_source(allocator, source, source_type).with_options(options).parse()
 }
 
-/// Parse `source_text` and promote the `Program` to the arena lifetime.
+/// Parse `source` and promote the `Program` to the arena lifetime.
 ///
 /// NOTE: Reject ANY parse diagnostic, not only `fatal_error`: we format valid code only, by design.
 /// A recovered AST may be an unfaithful "fix" of the source
@@ -224,10 +230,10 @@ pub fn parse_for_format<'a>(
 /// Prettier instead formats invalid inputs through parser recovery, which also hides the error from the user;
 fn parse<'a>(
     allocator: &'a Allocator,
-    source_text: &'a str,
+    source: SourceCode<'a>,
     source_type: SourceType,
 ) -> Result<&'a Program<'a>, OxcDiagnostic> {
-    let ret = parse_for_format(allocator, source_text, source_type);
+    let ret = parse_for_format(allocator, source, source_type);
     if let Some(err) = ret.diagnostics.into_iter().next() {
         return Err(err);
     }

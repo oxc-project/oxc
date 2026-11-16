@@ -24,7 +24,7 @@ use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_mangler::{MangleOptions, MangleOptionsKeepNames, Mangler};
 use oxc_parser::Parser;
-use oxc_span::SourceType;
+use oxc_span::{SourceCode, SourceCodeBuf, SourceType};
 use pico_args::Arguments;
 use rustc_hash::FxHashSet;
 
@@ -42,7 +42,9 @@ fn main() -> std::io::Result<()> {
     let name = args.free_from_str().unwrap_or_else(|_| "test.js".to_string());
 
     let path = Path::new(&name);
-    let source_text = std::fs::read_to_string(path)?;
+    // Read the file straight into a buffer which ends with the padding the parser reads,
+    // so the parser reads the source text in place
+    let source = SourceCodeBuf::read(path)?;
     let source_type = SourceType::from_path(path).unwrap();
 
     let options = MangleOptions {
@@ -55,21 +57,23 @@ fn main() -> std::io::Result<()> {
         },
         debug,
     };
-    let printed = mangler(&source_text, source_type, options.clone());
+    let printed = mangler(source.as_source_code(), source_type, options.clone());
     println!("{printed}");
 
     if twice {
-        let printed2 = mangler(&printed, source_type, options);
+        // Add the padding the parser reads to the printed code, so it is parsed in place too
+        let printed = SourceCodeBuf::from_string(printed);
+        let printed2 = mangler(printed.as_source_code(), source_type, options);
         println!("{printed2}");
-        println!("same = {}", printed == printed2);
+        println!("same = {}", printed.as_str() == printed2);
     }
 
     Ok(())
 }
 
-fn mangler(source_text: &str, source_type: SourceType, options: MangleOptions) -> String {
+fn mangler(source: SourceCode<'_>, source_type: SourceType, options: MangleOptions) -> String {
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let ret = Parser::from_source(&allocator, source, source_type).parse();
     assert!(ret.diagnostics.is_empty());
     let mangler_return = Mangler::new().with_options(options).build(&ret.program);
     Codegen::new()

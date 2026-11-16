@@ -327,9 +327,10 @@ pub fn run() -> Result<(), io::Error> {
     // in the number of allocations, because we ensure that the arena allocator has already requested all
     // of the space it will need from the system allocator to parse the largest file in the set.
     for file in files.files() {
-        let mut parsed = Parser::new(&allocator, &file.source_text, file.source_type)
-            .with_options(parse_options)
-            .parse();
+        let mut parsed =
+            Parser::from_source(&allocator, file.source_text.as_source_code(), file.source_type)
+                .with_options(parse_options)
+                .parse();
         assert!(parsed.diagnostics.is_empty());
 
         // Transform TypeScript to ESNext before minifying (minifier only works on esnext)
@@ -349,7 +350,8 @@ pub fn run() -> Result<(), io::Error> {
         // Formatter runs on a freshly-parsed AST (not after transformer/minifier),
         // so re-parse with the formatter's parse options before formatting
         allocator.reset();
-        let parsed = parse_for_format(&allocator, &file.source_text, file.source_type);
+        let parsed =
+            parse_for_format(&allocator, file.source_text.as_source_code(), file.source_type);
         assert!(parsed.diagnostics.is_empty());
         let _ = format_program(&allocator, &parsed.program, JsFormatOptions::default())
             .print()
@@ -364,9 +366,13 @@ pub fn run() -> Result<(), io::Error> {
         HEAP.reset();
 
         let (mut parsed, parser_stats) = record_stats_in(&allocator, || {
-            let parsed = Parser::new(&allocator, &file.source_text, file.source_type)
-                .with_options(parse_options)
-                .parse();
+            let parsed = Parser::from_source(
+                &allocator,
+                file.source_text.as_source_code(),
+                file.source_type,
+            )
+            .with_options(parse_options)
+            .parse();
             assert!(parsed.diagnostics.is_empty());
             parsed
         });
@@ -412,7 +418,8 @@ pub fn run() -> Result<(), io::Error> {
         allocator.reset();
         HEAP.reset();
 
-        let parsed = parse_for_format(&allocator, &file.source_text, file.source_type);
+        let parsed =
+            parse_for_format(&allocator, file.source_text.as_source_code(), file.source_type);
         assert!(parsed.diagnostics.is_empty());
 
         let (_, formatter_stats) = record_stats_in(&allocator, || {

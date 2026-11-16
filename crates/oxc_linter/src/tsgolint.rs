@@ -549,13 +549,14 @@ impl TsGoLintState {
         // Read all sources into overrides
         for path in paths {
             let path_ref = Path::new(path.as_ref());
-            let Ok(source_text) = file_system.read_to_arena_str(path_ref, &allocator) else {
+            let Ok(source) = file_system.read_source_code(path_ref, &allocator) else {
                 return Err(format!(
                     "Failed to read source text for file: {}",
                     path.to_string_lossy()
                 ));
             };
-            source_overrides.insert(path.to_string_lossy().to_string(), source_text.to_string());
+            source_overrides
+                .insert(path.to_string_lossy().to_string(), source.as_str().to_string());
         }
 
         let json_input =

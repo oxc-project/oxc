@@ -8,7 +8,7 @@ use std::{
 };
 
 use cow_utils::CowUtils;
-use oxc_span::SourceType;
+use oxc_span::{SourceCode, SourceType};
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 use serde_json::{Value, json};
@@ -24,7 +24,6 @@ use crate::{
     options::LintOptions,
     rules::RULES,
     service::RuntimeFileSystem,
-    utils::read_to_arena_str,
 };
 
 #[derive(Eq, PartialEq)]
@@ -309,15 +308,15 @@ impl TesterFileSystem {
 }
 
 impl RuntimeFileSystem for TesterFileSystem {
-    fn read_to_arena_str<'a>(
+    fn read_source_code<'a>(
         &self,
         path: &Path,
         allocator: &'a Allocator,
-    ) -> Result<&'a str, std::io::Error> {
+    ) -> Result<SourceCode<'a>, std::io::Error> {
         if path == self.path_to_lint {
-            return Ok(allocator.alloc_str(&self.source_text));
+            return Ok(SourceCode::from_str_in(&self.source_text, allocator));
         }
-        read_to_arena_str(path, allocator)
+        SourceCode::read_in(path, allocator)
     }
 
     fn write_file(&self, _path: &Path, _content: &str) -> Result<(), std::io::Error> {

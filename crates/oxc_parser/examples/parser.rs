@@ -16,12 +16,12 @@
 //! - `--estree`: Display the ESTree representation
 //! - `--comments`: Display extracted comments
 
-use std::{fs, path::Path};
+use std::path::Path;
 
 use oxc_allocator::Allocator;
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_parser::{ParseOptions, Parser};
-use oxc_span::SourceType;
+use oxc_span::{SourceCodeBuf, SourceType};
 use pico_args::Arguments;
 
 // Instruction:
@@ -41,12 +41,15 @@ fn main() -> Result<(), String> {
 
     // Read source file
     let path = Path::new(&name);
-    let source_text = fs::read_to_string(path).map_err(|_| format!("Missing '{name}'"))?;
+    // Read the file straight into a buffer which ends with the padding the parser reads,
+    // so the parser reads the source text in place
+    let source = SourceCodeBuf::read(path).map_err(|_| format!("Missing '{name}'"))?;
+    let source_text = source.as_str();
     let source_type = SourceType::from_path(path).unwrap();
 
     // Parse the source code
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, &source_text, source_type)
+    let ret = Parser::from_source(&allocator, source.as_source_code(), source_type)
         .with_options(ParseOptions {
             parse_regular_expression: true,
             enable_ident_hashes: false,
@@ -59,7 +62,7 @@ fn main() -> Result<(), String> {
     if show_comments {
         println!("Comments:");
         for comment in &program.comments {
-            let s = comment.content_span().source_text(&source_text);
+            let s = comment.content_span().source_text(source_text);
             println!("{s}");
         }
     }
@@ -72,7 +75,7 @@ fn main() -> Result<(), String> {
 
     // Display ESTree representation if requested
     if show_estree {
-        Utf8ToUtf16::new(&source_text).convert_program(&mut program);
+        Utf8ToUtf16::new(source_text).convert_program(&mut program);
         if source_type.is_javascript() {
             println!("ESTree AST:");
         } else {
@@ -86,7 +89,7 @@ fn main() -> Result<(), String> {
         println!("Parsed Successfully.");
     } else {
         for error in ret.diagnostics {
-            println!("{}", error.render_with_source_code(source_text.clone()));
+            println!("{}", error.render_with_source_code(source_text.to_string()));
         }
         println!("Parsed with Errors.");
     }

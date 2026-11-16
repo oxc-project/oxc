@@ -16,7 +16,7 @@
 //! - `--symbols`: Display symbol table and reference information
 //! - `--symbol-references`: Display detailed reference information for each symbol
 
-use std::{env, path::Path, sync::Arc};
+use std::{cell::LazyCell, env, path::Path, sync::Arc};
 
 use itertools::Itertools;
 
@@ -24,7 +24,7 @@ use oxc_allocator::Allocator;
 use oxc_diagnostics::{GraphicalReportHandler, OxcDiagnostic};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
-use oxc_span::{GetSpan, SourceType};
+use oxc_span::{GetSpan, SourceCodeBuf, SourceType};
 
 // Instruction:
 // create a `test.js`,
@@ -37,13 +37,17 @@ fn main() -> std::io::Result<()> {
     let show_symbols = env::args().skip(1).any(|arg| arg == "--symbols");
     let show_symbol_references = env::args().skip(1).any(|arg| arg == "--symbol-references");
     let path = Path::new(&name);
-    let source_text = Arc::new(std::fs::read_to_string(path)?);
+    // Read the file straight into a buffer which ends with the padding the parser reads,
+    // so the parser reads the source text in place
+    let source = SourceCodeBuf::read(path)?;
+    // Diagnostics own the source text they point into. It is copied for them only if there is one to report.
+    let source_text = LazyCell::new(|| Arc::new(source.as_str().to_string()));
     let source_type = SourceType::from_path(path).unwrap();
     // Memory arena where Semantic and Parser allocate objects
     let allocator = Allocator::default();
 
     // Parse the source text into an AST
-    let parser_ret = Parser::new(&allocator, &source_text, source_type).parse();
+    let parser_ret = Parser::from_source(&allocator, source.as_source_code(), source_type).parse();
     if !parser_ret.diagnostics.is_empty() {
         let error_message: String = parser_ret
             .diagnostics

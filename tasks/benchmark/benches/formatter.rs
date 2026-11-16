@@ -10,7 +10,7 @@ fn bench_formatter(criterion: &mut Criterion) {
 
     for file in TestFiles::formatter().files() {
         let id = BenchmarkId::from_parameter(&file.file_name);
-        let source_text = &file.source_text;
+        let source = file.source_text.as_source_code();
         let source_type = file.source_type;
         let mut allocator = Allocator::default();
         group.bench_function(id, |b| {
@@ -18,7 +18,7 @@ fn bench_formatter(criterion: &mut Criterion) {
                 allocator.reset();
                 // Parse in setup so the benchmark isolates formatting from parsing.
                 // `parse_for_format` + `format_program` is the AST-in path for exactly this.
-                let program = parse_for_format(&allocator, source_text, source_type).program;
+                let program = parse_for_format(&allocator, source, source_type).program;
                 let format_options = JsFormatOptions {
                     sort_imports: Some(SortImportsOptions::default()),
                     jsdoc: Some(JsdocOptions::default()),

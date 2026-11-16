@@ -8,7 +8,7 @@ use oxc::{
     codegen::{Codegen, CodegenOptions, CommentOptions},
     isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions},
     parser::Parser,
-    span::SourceType,
+    span::{SourceCode, SourceType},
 };
 use rayon::prelude::*;
 use walkdir::WalkDir;
@@ -115,7 +115,7 @@ fn run_isolated_declarations(path: &Path, content: &TestCaseContent) -> Baseline
     for unit in &content.tests {
         let mut baseline = Baseline {
             name: unit.name.clone(),
-            original: unit.content.clone(),
+            original: unit.content.to_string(),
             ..Baseline::default()
         };
         baseline.print_oxc();
@@ -124,10 +124,10 @@ fn run_isolated_declarations(path: &Path, content: &TestCaseContent) -> Baseline
 
     // Add transpiled files
     for unit in &content.tests {
-        let (source_text, errors) = transpile(path, &unit.content);
+        let (source_text, errors) = transpile(path, unit.content.as_source_code());
         let baseline = Baseline {
             name: change_extension(&unit.name),
-            original: unit.content.clone(),
+            original: unit.content.to_string(),
             original_diagnostic: Vec::default(),
             oxc_printed: source_text,
             oxc_diagnostics: errors,
@@ -147,10 +147,10 @@ fn change_extension(name: &str) -> String {
         .to_string()
 }
 
-fn transpile(path: &Path, source_text: &str) -> (String, oxc::diagnostics::Diagnostics) {
+fn transpile(path: &Path, source: SourceCode<'_>) -> (String, oxc::diagnostics::Diagnostics) {
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(path).unwrap_or_default();
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let ret = Parser::from_source(&allocator, source, source_type).parse();
     let ret =
         IsolatedDeclarations::new(&allocator, IsolatedDeclarationsOptions { strip_internal: true })
             .build(&ret.program);

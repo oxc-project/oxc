@@ -17,7 +17,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::{Class, Function, TSImportType};
 use oxc_ast_visit::{Visit, walk};
 use oxc_parser::{ParseOptions, Parser};
-use oxc_span::SourceType;
+use oxc_span::{SourceCodeBuf, SourceType};
 use oxc_syntax::scope::ScopeFlags;
 
 // Instruction:
@@ -29,16 +29,19 @@ use oxc_syntax::scope::ScopeFlags;
 fn main() -> std::io::Result<()> {
     let name = env::args().nth(1).unwrap_or_else(|| "test.js".to_string());
     let path = Path::new(&name);
-    let source_text = std::fs::read_to_string(path)?;
+    // Read the file straight into a buffer which ends with the padding the parser reads,
+    // so the parser reads the source text in place
+    let source = SourceCodeBuf::read(path)?;
+    let source_text = source.as_str();
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(path).unwrap();
-    let ret = Parser::new(&allocator, &source_text, source_type)
+    let ret = Parser::from_source(&allocator, source.as_source_code(), source_type)
         .with_options(ParseOptions { enable_ident_hashes: false, ..ParseOptions::default() })
         .parse();
 
     // Report any parsing errors
     for error in ret.diagnostics {
-        println!("{}", error.render_with_source_code(source_text.clone()));
+        println!("{}", error.render_with_source_code(source_text.to_string()));
     }
 
     let program = ret.program;

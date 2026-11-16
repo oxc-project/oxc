@@ -1,12 +1,12 @@
 #![expect(clippy::print_stdout)]
 
-use std::{fs, path::Path};
+use std::path::Path;
 
 use oxc_allocator::Allocator;
 use oxc_formatter::{
     JsFormatOptions, SortImportsOptions, SortOrder, default_groups, default_internal_patterns,
 };
-use oxc_span::SourceType;
+use oxc_span::{SourceCodeBuf, SourceType};
 use pico_args::Arguments;
 
 /// Format a JavaScript or TypeScript file
@@ -35,9 +35,9 @@ fn main() -> Result<(), String> {
         newline_boundary_overrides: vec![],
     };
 
-    // Read source file
+    // Read source file, straight into a buffer which ends with the padding the parser needs
     let path = Path::new(&name);
-    let source_text = fs::read_to_string(path).map_err(|_| format!("Missing '{name}'"))?;
+    let source = SourceCodeBuf::read(path).map_err(|_| format!("Missing '{name}'"))?;
     let source_type = SourceType::from_path(path).unwrap();
     let allocator = Allocator::new();
 
@@ -45,13 +45,14 @@ fn main() -> Result<(), String> {
     let options =
         JsFormatOptions { sort_imports: Some(sort_imports_options.clone()), ..Default::default() };
 
-    let formatted = match oxc_formatter::format(&allocator, &source_text, source_type, options) {
-        Ok(formatted) => formatted,
-        Err(error) => {
-            println!("{}", error.render_with_source_code(source_text.clone()));
-            return Err("Parsed with Errors.".to_string());
-        }
-    };
+    let formatted =
+        match oxc_formatter::format(&allocator, source.as_source_code(), source_type, options) {
+            Ok(formatted) => formatted,
+            Err(error) => {
+                println!("{}", error.render_with_source_code(source.into_string()));
+                return Err("Parsed with Errors.".to_string());
+            }
+        };
     if show_ir {
         // Do not rely on `Display` of `Document` here, as it shows Prettier IR
         println!("[");

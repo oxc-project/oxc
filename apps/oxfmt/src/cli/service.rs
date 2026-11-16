@@ -10,9 +10,10 @@ use rayon::prelude::*;
 use tracing::debug_span;
 
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService};
+use oxc_span::SourceCodeBuf;
 
 use super::command::OutputMode;
-use crate::core::{FormatPlan, FormatResult, SourceFormatter, utils};
+use crate::core::{FormatPlan, FormatResult, SourceFormatter};
 
 pub enum SuccessResult {
     /// Path with elapsed time, only measured in check mode
@@ -45,8 +46,10 @@ impl FormatService {
             let start_time = matches!(self.format_mode, OutputMode::Check).then(Instant::now);
 
             let path = Arc::clone(&plan.path);
-            let Ok(source_text) = debug_span!("oxfmt::read", path = %path.display())
-                .in_scope(|| utils::read_to_string(&path))
+            // Read the file straight into a buffer which ends with the padding the JS/TS parser reads,
+            // so the source text is never copied
+            let Ok(source) = debug_span!("oxfmt::read", path = %path.display())
+                .in_scope(|| SourceCodeBuf::read(&path))
             else {
                 // This happens if binary file is attempted to be formatted
                 // e.g. `.ts` for MPEG-TS video file
@@ -66,19 +69,20 @@ impl FormatService {
                 return;
             };
 
-            let (code, is_changed) = match self.formatter.format(&source_text, plan) {
-                FormatResult::Success { code, is_changed } => (code, is_changed),
-                FormatResult::Error(diagnostics) => {
-                    let errors = DiagnosticService::wrap_diagnostics(
-                        self.cwd.clone(),
-                        &path,
-                        &source_text,
-                        diagnostics,
-                    );
-                    let _ = tx_error.send(errors);
-                    return;
-                }
-            };
+            let (code, is_changed) =
+                match self.formatter.format_source(source.as_source_code(), plan) {
+                    FormatResult::Success { code, is_changed } => (code, is_changed),
+                    FormatResult::Error(diagnostics) => {
+                        let errors = DiagnosticService::wrap_diagnostics(
+                            self.cwd.clone(),
+                            &path,
+                            source.as_str(),
+                            diagnostics,
+                        );
+                        let _ = tx_error.send(errors);
+                        return;
+                    }
+                };
 
             // Write back if needed
             if matches!(self.format_mode, OutputMode::Write) && is_changed {

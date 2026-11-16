@@ -13,7 +13,7 @@ fn bench_transformer(criterion: &mut Criterion) {
 
     for file in TestFiles::minimal().files() {
         let id = BenchmarkId::from_parameter(&file.file_name);
-        let source_text = &file.source_text;
+        let source = file.source_text.as_source_code();
         let source_type = file.source_type;
 
         // Create `Allocator` outside of `bench_function`, so same allocator is used for
@@ -32,7 +32,7 @@ fn bench_transformer(criterion: &mut Criterion) {
 
                 // Create fresh AST + semantic data for each iteration
                 let ParserReturn { mut program, .. } =
-                    Parser::new(&allocator, source_text, source_type).parse();
+                    Parser::from_source(&allocator, source, source_type).parse();
                 let scoping = SemanticBuilder::new()
                     // Estimate transformer will triple scopes, symbols, references
                     .with_excess_capacity(2.0)
@@ -62,11 +62,11 @@ fn bench_isolated_declarations(criterion: &mut Criterion) {
         TestFile::new("https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/vue-id.ts");
 
     let id = BenchmarkId::from_parameter(&file.file_name);
-    let source_text = &file.source_text;
+    let source = file.source_text.as_source_code();
     let source_type = file.source_type;
 
     let ast_allocator = Allocator::new();
-    let program = Parser::new(&ast_allocator, source_text, source_type).parse().program;
+    let program = Parser::from_source(&ast_allocator, source, source_type).parse().program;
 
     // Create `Allocator` outside of `bench_function`, so same allocator is used for
     // both the warmup and measurement phases

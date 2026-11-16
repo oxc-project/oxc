@@ -10,7 +10,7 @@ fn bench_parser(criterion: &mut Criterion) {
 
     for file in TestFiles::minimal().files() {
         let id = BenchmarkId::from_parameter(&file.file_name);
-        let source_text = &file.source_text;
+        let source = file.source_text.as_source_code();
         let source_type = file.source_type;
 
         group.bench_function(id, |b| {
@@ -20,7 +20,7 @@ fn bench_parser(criterion: &mut Criterion) {
             let mut allocator = Allocator::default();
 
             b.iter(|| {
-                Parser::new(&allocator, source_text, source_type)
+                Parser::from_source(&allocator, source, source_type)
                     .with_options(ParseOptions {
                         parse_regular_expression: true,
                         ..ParseOptions::default()
@@ -39,7 +39,7 @@ fn bench_estree(criterion: &mut Criterion) {
 
     for file in TestFiles::complicated().files().iter().take(1) {
         let id = BenchmarkId::from_parameter(&file.file_name);
-        let source_text = &file.source_text;
+        let source = file.source_text.as_source_code();
         let source_type = file.source_type;
         let mut allocator = Allocator::default();
 
@@ -47,7 +47,7 @@ fn bench_estree(criterion: &mut Criterion) {
             b.iter_with_setup_wrapper(|runner| {
                 allocator.reset();
 
-                let mut program = Parser::new(&allocator, source_text, source_type)
+                let mut program = Parser::from_source(&allocator, source, source_type)
                     .with_options(ParseOptions {
                         parse_regular_expression: true,
                         enable_ident_hashes: false,
@@ -75,7 +75,7 @@ fn bench_estree_tokens(criterion: &mut Criterion) {
 
     for file in TestFiles::complicated().files().iter().take(1) {
         let id = BenchmarkId::from_parameter(&file.file_name);
-        let source_text = &file.source_text;
+        let source = file.source_text.as_source_code();
         let source_type = file.source_type;
         let mut allocator = Allocator::default();
 
@@ -89,7 +89,7 @@ fn bench_estree_tokens(criterion: &mut Criterion) {
                 // but this is just a benchmark, and it's better if we don't entwine this benchmark with `bench_estree`.
                 let config = RuntimeParserConfig::new(true);
 
-                let ret = Parser::new(&allocator, source_text, source_type)
+                let ret = Parser::from_source(&allocator, source, source_type)
                     .with_options(ParseOptions {
                         parse_regular_expression: true,
                         enable_ident_hashes: false,

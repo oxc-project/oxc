@@ -59,10 +59,15 @@ fn parse_baseline_positions(texts: &[String]) -> Vec<Pos> {
     set.into_iter().collect()
 }
 
-fn oxc_positions(unit_name: &str, content: &str, source_type: oxc::span::SourceType) -> Vec<Pos> {
+fn oxc_positions(
+    unit_name: &str,
+    source: oxc::span::SourceCode<'_>,
+    source_type: oxc::span::SourceType,
+) -> Vec<Pos> {
+    let content = source.as_str();
     let allocator = Allocator::default();
     // No `'use strict'` injection — it would shift every line and break position matching.
-    let ret = Parser::new(&allocator, content, source_type)
+    let ret = Parser::from_source(&allocator, source, source_type)
         .with_options(ParseOptions { enable_ident_hashes: false, ..ParseOptions::default() })
         .parse();
     let line_starts = scanner::compute_line_starts(content);
@@ -119,7 +124,7 @@ pub fn run_errors_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
             let result = match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
                 f.units
                     .iter()
-                    .flat_map(|u| oxc_positions(&u.name, &u.content, u.source_type))
+                    .flat_map(|u| oxc_positions(&u.name, u.content.as_source_code(), u.source_type))
                     .collect::<Vec<Pos>>()
             })) {
                 Err(_) => TestResult::ParseError("Panicked while parsing".to_string(), true),

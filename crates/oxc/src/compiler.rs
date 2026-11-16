@@ -9,7 +9,7 @@ use oxc_mangler::{MangleOptions, Mangler, ManglerReturn};
 use oxc_minifier::{CompressOptions, Compressor};
 use oxc_parser::{ParseOptions, Parser, ParserReturn};
 use oxc_semantic::{Scoping, SemanticBuilder, SemanticBuilderReturn, Stats};
-use oxc_span::SourceType;
+use oxc_span::{SourceCode, SourceCodeBuf, SourceType};
 use oxc_transformer::{TransformOptions, Transformer, TransformerReturn};
 use oxc_transformer_plugins::{
     InjectGlobalVariables, InjectGlobalVariablesConfig, ReplaceGlobalDefines,
@@ -33,6 +33,12 @@ impl CompilerInterface for Compiler {
 }
 
 impl Compiler {
+    /// Compile source text held in memory.
+    ///
+    /// The text is copied once, to add the padding the parser reads.
+    /// A caller which owns the buffer the text is in should use [`Compiler::execute_source`],
+    /// which does not copy.
+    ///
     /// # Errors
     ///
     /// * The accumulated [Diagnostics].
@@ -43,6 +49,27 @@ impl Compiler {
         source_path: &Path,
     ) -> Result<String, Diagnostics> {
         self.compile(source_text, source_type, source_path);
+        self.take_result()
+    }
+
+    /// Compile a [`SourceCode`]: source text followed by padding, which the parser reads in place.
+    ///
+    /// [`SourceCodeBuf::read`] reads a file from disk straight into such a buffer.
+    ///
+    /// # Errors
+    ///
+    /// * The accumulated [Diagnostics].
+    pub fn execute_source(
+        &mut self,
+        source: SourceCode<'_>,
+        source_type: SourceType,
+        source_path: &Path,
+    ) -> Result<String, Diagnostics> {
+        self.compile_source(source, source_type, source_path);
+        self.take_result()
+    }
+
+    fn take_result(&mut self) -> Result<String, Diagnostics> {
         if self.errors.is_empty() {
             Ok(mem::take(&mut self.printed))
         } else {
@@ -124,12 +151,30 @@ pub trait CompilerInterface {
 
     fn after_codegen(&mut self, _ret: CodegenReturn<'_>) {}
 
+    /// Compile source text held in memory.
+    ///
+    /// The text is copied once, to add the padding the parser reads.
+    /// A caller which owns the buffer the text is in should use
+    /// [`CompilerInterface::compile_source`], which does not copy.
     fn compile(&mut self, source_text: &str, source_type: SourceType, source_path: &Path) {
+        let source = SourceCodeBuf::from(source_text);
+        self.compile_source(source.as_source_code(), source_type, source_path);
+    }
+
+    /// Compile a [`SourceCode`]: source text followed by padding, which the parser reads in place.
+    ///
+    /// [`SourceCodeBuf::read`] reads a file from disk straight into such a buffer.
+    fn compile_source(
+        &mut self,
+        source: SourceCode<'_>,
+        source_type: SourceType,
+        source_path: &Path,
+    ) {
         let allocator = Allocator::default();
 
         /* Parse */
 
-        let mut parser_return = self.parse(&allocator, source_text, source_type);
+        let mut parser_return = self.parse(&allocator, source, source_type);
         if self.after_parse(&mut parser_return).is_break() {
             return;
         }
@@ -246,10 +291,12 @@ pub trait CompilerInterface {
     fn parse<'a>(
         &self,
         allocator: &'a Allocator,
-        source_text: &'a str,
+        source: SourceCode<'a>,
         source_type: SourceType,
     ) -> ParserReturn<'a> {
-        Parser::new(allocator, source_text, source_type).with_options(self.parse_options()).parse()
+        Parser::from_source(allocator, source, source_type)
+            .with_options(self.parse_options())
+            .parse()
     }
 
     fn semantic<'a>(&self, program: &'a Program<'a>) -> SemanticBuilderReturn<'a> {

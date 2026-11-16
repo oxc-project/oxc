@@ -11,7 +11,7 @@ use oxc::{
     codegen::Codegen,
     diagnostics::{Diagnostics, NamedSource},
     parser::{ParseOptions, Parser},
-    span::{SourceType, Span},
+    span::{SourceCodeBuf, SourceType, Span},
 };
 
 use super::baseline_root;
@@ -125,7 +125,8 @@ impl CompilerSettings {
 #[derive(Debug, Clone)]
 pub struct TestUnitData {
     pub name: String,
-    pub content: String,
+    /// The unit's text, in a buffer which ends with the padding the parser reads
+    pub content: SourceCodeBuf,
     pub source_type: SourceType,
     /// Spans of `@ts-ignore` or `@ts-expect-error` comments.
     /// Errors on the line immediately following these should be suppressed.
@@ -157,7 +158,9 @@ impl TestCaseContent {
                     if let Some(file_name) = current_file_name.take() {
                         test_unit_data.push(TestUnitData {
                             name: file_name,
-                            content: std::mem::take(&mut current_file_content),
+                            content: SourceCodeBuf::from_string(std::mem::take(
+                                &mut current_file_content,
+                            )),
                             source_type: SourceType::default(),
                             ts_ignore_spans: vec![],
                         });
@@ -183,7 +186,7 @@ impl TestCaseContent {
 
         test_unit_data.push(TestUnitData {
             name: file_name,
-            content: std::mem::take(&mut current_file_content),
+            content: SourceCodeBuf::from_string(std::mem::take(&mut current_file_content)),
             source_type: SourceType::default(),
             ts_ignore_spans: vec![],
         });

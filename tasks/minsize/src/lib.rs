@@ -20,7 +20,7 @@ use oxc_minifier::{
 };
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
-use oxc_span::SourceType;
+use oxc_span::{SourceCode, SourceCodeBuf, SourceType};
 use oxc_tasks_common::{TestFile, TestFiles, project_root};
 use oxc_transformer_plugins::{ReplaceGlobalDefines, ReplaceGlobalDefinesConfig};
 
@@ -150,21 +150,23 @@ pub fn run() -> Result<(), io::Error> {
 
 fn minify_twice(file: &TestFile, options: Options) -> (String, u8) {
     let source_type = SourceType::cjs().with_script(true);
-    let (code1, iterations) = minify(&file.source_text, source_type, options, true);
+    let (code1, iterations) = minify(file.source_text.as_source_code(), source_type, options, true);
+    // Add padding to the minified code, so the second pass parses it in place too
+    let code1 = SourceCodeBuf::from_string(code1);
     // Property mangling runs once. Compression may expose new matching keys on the second pass.
-    let (code2, _) = minify(&code1, source_type, options, false);
+    let (code2, _) = minify(code1.as_source_code(), source_type, options, false);
     assert_eq_minified_code(&code1, &code2, &file.file_name);
     (code2, iterations)
 }
 
 fn minify(
-    source_text: &str,
+    source: SourceCode<'_>,
     source_type: SourceType,
     options: Options,
     mangle_properties: bool,
 ) -> (String, u8) {
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let ret = Parser::from_source(&allocator, source, source_type).parse();
     assert!(ret.diagnostics.is_empty());
     let mut program = ret.program;
     let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();

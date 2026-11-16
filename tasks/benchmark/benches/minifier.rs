@@ -7,7 +7,7 @@ use oxc_mangler::{MangleOptions, MangleOptionsKeepNames, Mangler};
 use oxc_minifier::{CompressOptions, Compressor, ManglePropertiesOptions, PropertyMangler};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
-use oxc_span::SourceType;
+use oxc_span::{SourceCode, SourceType};
 use oxc_tasks_common::TestFiles;
 use oxc_transformer::{TransformOptions, Transformer};
 
@@ -16,7 +16,7 @@ fn bench_minifier(criterion: &mut Criterion) {
 
     for file in TestFiles::minimal().files().iter().skip(1) {
         let id = BenchmarkId::from_parameter(&file.file_name);
-        let source_text = &file.source_text;
+        let source = file.source_text.as_source_code();
         let source_type = file.source_type;
 
         // Create `Allocator` outside of `bench_function`, so same allocator is used for
@@ -29,7 +29,8 @@ fn bench_minifier(criterion: &mut Criterion) {
                 allocator.reset();
 
                 // Create fresh AST + semantic data for each iteration
-                let mut program = Parser::new(&allocator, source_text, source_type).parse().program;
+                let mut program =
+                    Parser::from_source(&allocator, source, source_type).parse().program;
                 let scoping = SemanticBuilder::new()
                     .with_enum_eval(true)
                     .build(&program)
@@ -61,11 +62,11 @@ fn bench_minifier(criterion: &mut Criterion) {
 /// transformed program; the caller builds semantic data from it and mangles.
 fn transform_to_js<'a>(
     allocator: &'a Allocator,
-    source_text: &'a str,
+    source: SourceCode<'a>,
     source_type: SourceType,
     path: &Path,
 ) -> Program<'a> {
-    let mut program = Parser::new(allocator, source_text, source_type).parse().program;
+    let mut program = Parser::from_source(allocator, source, source_type).parse().program;
     let scoping =
         SemanticBuilder::new().with_enum_eval(true).build(&program).semantic.into_scoping();
     let transform_options = TransformOptions::from_target("esnext").unwrap();
@@ -80,7 +81,7 @@ fn bench_mangler(criterion: &mut Criterion) {
     for file in TestFiles::minimal().files() {
         let id = BenchmarkId::from_parameter(&file.file_name);
         let source_type = SourceType::from_path(&file.file_name).unwrap();
-        let source_text = file.source_text.as_str();
+        let source = file.source_text.as_source_code();
         let path = Path::new(&file.file_name);
         let mut allocator = Allocator::default();
         let mut temp_allocator = Allocator::default();
@@ -88,7 +89,7 @@ fn bench_mangler(criterion: &mut Criterion) {
             b.iter_with_setup_wrapper(|runner| {
                 allocator.reset();
                 temp_allocator.reset();
-                let program = transform_to_js(&allocator, source_text, source_type, path);
+                let program = transform_to_js(&allocator, source, source_type, path);
                 let mut semantic =
                     SemanticBuilder::new().with_build_nodes(true).build(&program).semantic;
                 runner.run(|| {
@@ -102,7 +103,7 @@ fn bench_mangler(criterion: &mut Criterion) {
     for file in TestFiles::minimal().files() {
         let id = BenchmarkId::from_parameter(format!("{}_keep_names", file.file_name));
         let source_type = SourceType::from_path(&file.file_name).unwrap();
-        let source_text = file.source_text.as_str();
+        let source = file.source_text.as_source_code();
         let path = Path::new(&file.file_name);
         let mut allocator = Allocator::default();
         let mut temp_allocator = Allocator::default();
@@ -110,7 +111,7 @@ fn bench_mangler(criterion: &mut Criterion) {
             b.iter_with_setup_wrapper(|runner| {
                 allocator.reset();
                 temp_allocator.reset();
-                let program = transform_to_js(&allocator, source_text, source_type, path);
+                let program = transform_to_js(&allocator, source, source_type, path);
                 let mut semantic =
                     SemanticBuilder::new().with_build_nodes(true).build(&program).semantic;
                 runner.run(|| {
@@ -136,13 +137,13 @@ fn bench_property_mangler(criterion: &mut Criterion) {
     for file in TestFiles::minimal().files() {
         let id = BenchmarkId::from_parameter(&file.file_name);
         let source_type = SourceType::from_path(&file.file_name).unwrap();
-        let source_text = file.source_text.as_str();
+        let source = file.source_text.as_source_code();
         let path = Path::new(&file.file_name);
         let mut allocator = Allocator::default();
         group.bench_function(id, |b| {
             b.iter_with_setup_wrapper(|runner| {
                 allocator.reset();
-                let mut program = transform_to_js(&allocator, source_text, source_type, path);
+                let mut program = transform_to_js(&allocator, source, source_type, path);
                 runner.run(|| {
                     let mut mangler = PropertyMangler::new_in(options.clone(), &allocator);
                     mangler.collect(&program);

@@ -28,7 +28,7 @@ use oxc_codegen::{Codegen, CodegenOptions, CodegenReturn};
 use oxc_data_structures::code_buffer::IndentChar;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
-use oxc_span::SourceType;
+use oxc_span::{SourceCodeBuf, SourceType};
 use oxc_transformer::{BabelOptions, EnvOptions, HelperLoaderMode, TransformOptions, Transformer};
 use pico_args::Arguments;
 
@@ -47,17 +47,19 @@ fn main() {
     let name = args.free_from_str().unwrap_or_else(|_| "test.js".to_string());
 
     let path = Path::new(&name);
-    let source_text =
-        std::fs::read_to_string(path).unwrap_or_else(|err| panic!("{name} not found.\n{err}"));
+    // Read the file straight into a buffer which ends with the padding the parser reads,
+    // so the parser reads the source text in place
+    let source = SourceCodeBuf::read(path).unwrap_or_else(|err| panic!("{name} not found.\n{err}"));
+    let source_text = source.as_str();
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(path).unwrap();
 
-    let ret = Parser::new(&allocator, &source_text, source_type).parse();
+    let ret = Parser::from_source(&allocator, source.as_source_code(), source_type).parse();
 
     if !ret.diagnostics.is_empty() {
         println!("Parser Errors:");
         for error in ret.diagnostics {
-            println!("{}", error.render_with_source_code(source_text.clone()));
+            println!("{}", error.render_with_source_code(source_text.to_string()));
         }
     }
 
@@ -75,7 +77,7 @@ fn main() {
     if !ret.diagnostics.is_empty() {
         println!("Semantic Errors:");
         for error in ret.diagnostics {
-            println!("{}", error.render_with_source_code(source_text.clone()));
+            println!("{}", error.render_with_source_code(source_text.to_string()));
         }
     }
 
@@ -104,7 +106,7 @@ fn main() {
     if !ret.diagnostics.is_empty() {
         println!("Transformer Errors:");
         for error in ret.diagnostics {
-            println!("{}", error.render_with_source_code(source_text.clone()));
+            println!("{}", error.render_with_source_code(source_text.to_string()));
         }
     }
 

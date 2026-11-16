@@ -7,6 +7,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{FormatContext, FormatSession, Formatted, InputKind, Printed};
 use oxc_formatter_json::{JsonFormatOptions, JsonVariant};
 use oxc_formatter_yaml::YamlFormatOptions;
+use oxc_span::SourceCode;
 
 #[cfg(feature = "napi")]
 use super::options::{
@@ -60,9 +61,33 @@ impl SourceFormatter {
         }
     }
 
-    /// Format a file following its plan.
-    #[instrument(level = "debug", name = "oxfmt::format", skip_all, fields(path = %plan.path.display(), strategy = %plan.strategy.trace_label()))]
+    /// Format a file following its plan, from text held in memory.
+    ///
+    /// JS/TS text is copied into the arena, to add the padding the parser reads.
+    /// A caller which owns the buffer the text is in should use [`Self::format_source`], which does not copy.
+    ///
+    /// Only the language server formats text it does not own (the client's copy of a document).
+    #[cfg(feature = "napi")]
     pub fn format(&self, source_text: &str, plan: FormatPlan) -> FormatResult {
+        self.format_impl(source_text, None, plan)
+    }
+
+    /// Format a file following its plan, from a [`SourceCode`]: the source text followed by padding.
+    ///
+    /// The JS/TS parser reads `source` in place, so the text is not copied.
+    /// [`oxc_span::SourceCodeBuf::read`] reads a file from disk straight into such a buffer.
+    pub fn format_source(&self, source: SourceCode<'_>, plan: FormatPlan) -> FormatResult {
+        self.format_impl(source.as_str(), Some(source), plan)
+    }
+
+    /// `source` is `source_text` with its padding, when the caller has it.
+    #[instrument(level = "debug", name = "oxfmt::format", skip_all, fields(path = %plan.path.display(), strategy = %plan.strategy.trace_label()))]
+    fn format_impl(
+        &self,
+        source_text: &str,
+        source: Option<SourceCode<'_>>,
+        plan: FormatPlan,
+    ) -> FormatResult {
         // > Editors must not insert newlines in empty files when saving those files,
         // > even if insert_final_newline = true.
         // https://spec.editorconfig.org/#supported-pairs
@@ -84,8 +109,10 @@ impl SourceFormatter {
                     ResolvedDispatchConfig::for_root(Arc::clone(&config), validated, &path);
                 let session = self.root_session(&allocator, &dispatch_config);
                 let options = dispatch_config.js_options();
+                let source =
+                    source.unwrap_or_else(|| SourceCode::from_str_in(source_text, &allocator));
                 let result =
-                    oxc_formatter::format_with_session(&session, source_text, source_type, options)
+                    oxc_formatter::format_with_session(&session, source, source_type, options)
                         .and_then(|formatted| print(formatted, &path));
                 #[cfg(feature = "detect_code_removal")]
                 if let Ok(code) = &result

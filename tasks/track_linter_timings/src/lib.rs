@@ -33,7 +33,9 @@ pub fn run() -> Result<(), io::Error> {
 
     for file in TestFiles::complicated().files() {
         let allocator = Allocator::default();
-        let parser_ret = Parser::new(&allocator, &file.source_text, file.source_type).parse();
+        let parser_ret =
+            Parser::from_source(&allocator, file.source_text.as_source_code(), file.source_type)
+                .parse();
         assert!(parser_ret.diagnostics.is_empty());
 
         let path = Path::new(&file.file_name);

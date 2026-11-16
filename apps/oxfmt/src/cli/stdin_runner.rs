@@ -5,6 +5,7 @@ use std::{
 };
 
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
+use oxc_span::SourceCodeBuf;
 
 use super::{CliRunResult, FormatCommand, Mode};
 use crate::core::{
@@ -55,6 +56,9 @@ impl StdinRunner {
             utils::print_and_flush(stderr, &format!("Failed to read from stdin: {err}\n"));
             return CliRunResult::InvalidOptionConfig;
         }
+        // Add the padding the JS/TS parser reads to the buffer which was read into, so the text is not copied
+        let source = SourceCodeBuf::from_string(source_text);
+        let source_text = source.as_str();
 
         let config_scopes = match ConfigScopes::load(
             &cwd,
@@ -93,7 +97,7 @@ impl StdinRunner {
             }
         };
         if is_ignored(&global_matchers, &filepath, false, true) {
-            utils::print_and_flush(stdout, &source_text);
+            utils::print_and_flush(stdout, source_text);
             return CliRunResult::FormatSucceeded;
         }
 
@@ -109,7 +113,7 @@ impl StdinRunner {
         };
         // Then config's `ignorePatterns`
         if config_resolver.is_path_ignored(&filepath, false) {
-            utils::print_and_flush(stdout, &source_text);
+            utils::print_and_flush(stdout, source_text);
             return CliRunResult::FormatSucceeded;
         }
 
@@ -120,7 +124,7 @@ impl StdinRunner {
         let plan = match config_resolver.resolve(&filepath, strategy) {
             Ok(ResolveOutcome::Format(plan)) => plan,
             Ok(ResolveOutcome::MissingPlugin(_)) => {
-                utils::print_and_flush(stdout, &source_text);
+                utils::print_and_flush(stdout, source_text);
                 return CliRunResult::FormatSucceeded;
             }
             Err(err) => {
@@ -133,7 +137,9 @@ impl StdinRunner {
             .with_external_services(Some(self.external_services));
 
         // Use `block_in_place()` to avoid nested async runtime access
-        match tokio::task::block_in_place(|| source_formatter.format(&source_text, plan)) {
+        match tokio::task::block_in_place(|| {
+            source_formatter.format_source(source.as_source_code(), plan)
+        }) {
             FormatResult::Success { code, .. } => {
                 utils::print_and_flush(stdout, &code);
                 CliRunResult::FormatSucceeded
@@ -142,7 +148,7 @@ impl StdinRunner {
                 let handler = GraphicalReportHandler::new();
                 let mut output = String::new();
                 for error in
-                    DiagnosticService::wrap_diagnostics(&cwd, &filepath, &source_text, diagnostics)
+                    DiagnosticService::wrap_diagnostics(&cwd, &filepath, source_text, diagnostics)
                 {
                     // Writing to `String` never fails
                     let _ = handler.render_report(&mut output, error.as_ref());

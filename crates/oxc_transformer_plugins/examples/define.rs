@@ -21,7 +21,7 @@ use oxc_codegen::{Codegen, CodegenOptions, CodegenReturn};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_semantic::SemanticBuilder;
 use oxc_sourcemap::SourcemapVisualizer;
-use oxc_span::SourceType;
+use oxc_span::{SourceCode, SourceCodeBuf, SourceType};
 use oxc_transformer_plugins::{ReplaceGlobalDefines, ReplaceGlobalDefinesConfig};
 
 fn main() -> std::io::Result<()> {
@@ -35,11 +35,13 @@ fn main() -> std::io::Result<()> {
     let path = Path::new(&name);
     let sourcemap = sourcemap.then_some(path);
 
-    let source_text = std::fs::read_to_string(path)?;
+    // Read the file straight into a buffer which ends with the padding the parser reads,
+    // so the parser reads the source text in place
+    let source = SourceCodeBuf::read(path)?;
     let source_type = SourceType::from_path(path).unwrap();
     let allocator = Allocator::default();
 
-    let mut program = parse(&allocator, &source_text, source_type);
+    let mut program = parse(&allocator, source.as_source_code(), source_type);
     let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
     let config = ReplaceGlobalDefinesConfig::new(&defines).unwrap();
     let _ = ReplaceGlobalDefines::new(&allocator, config).build(scoping, &mut program);
@@ -53,17 +55,17 @@ fn main() -> std::io::Result<()> {
 /// Parse JavaScript/TypeScript source code into an AST
 fn parse<'a>(
     allocator: &'a Allocator,
-    source_text: &'a str,
+    source: SourceCode<'a>,
     source_type: SourceType,
 ) -> Program<'a> {
-    let ret = Parser::new(allocator, source_text, source_type)
+    let ret = Parser::from_source(allocator, source, source_type)
         .with_options(ParseOptions {
             allow_return_outside_function: true,
             ..ParseOptions::default()
         })
         .parse();
     for error in ret.diagnostics {
-        println!("{}", error.render_with_source_code(source_text.to_string()));
+        println!("{}", error.render_with_source_code(source.as_str().to_string()));
     }
     ret.program
 }
