@@ -1732,7 +1732,8 @@ impl<'a> PeepholeOptimizations {
             }
             Expression::CallExpression(call_expr) => {
                 let keep_indirect = call_expr.callee.is_specific_id(search_for)
-                    && Self::passes_this_when_called(replacement);
+                    && (Self::passes_this_when_called(replacement)
+                        || (!call_expr.optional && replacement.is_specific_id("eval")));
                 if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
                     &mut call_expr.callee,
                     search_for,
