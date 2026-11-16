@@ -1,0 +1,85 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c inline-config-enabled.json --no-inline-config
+working directory: fixtures/cli/no_inline_config
+----------
+
+  ! eslint(no-console): Unexpected console statement.
+   ,-[test.js:2:1]
+ 1 | /* oxlint-disable no-console */
+ 2 | console.log("oxlint block");
+   : ^^^^^^^^^^^
+ 3 | /* oxlint-enable no-console */
+   `----
+  help: Delete this console statement.
+
+  ! eslint(no-console): Unexpected console statement.
+   ,-[test.js:5:1]
+ 4 | 
+ 5 | console.log("oxlint line"); // oxlint-disable-line no-console
+   : ^^^^^^^^^^^
+ 6 | 
+   `----
+  help: Delete this console statement.
+
+  ! eslint(no-console): Unexpected console statement.
+   ,-[test.js:8:1]
+ 7 | // oxlint-disable-next-line no-console
+ 8 | console.log("oxlint next line");
+   : ^^^^^^^^^^^
+ 9 | 
+   `----
+  help: Delete this console statement.
+
+  x eslint(no-debugger): `debugger` statement is not allowed
+    ,-[test.js:11:1]
+ 10 | /* eslint-disable no-debugger */
+ 11 | debugger;
+    : ^^^^^^^^^
+ 12 | /* eslint-enable no-debugger */
+    `----
+  help: Remove the debugger statement
+
+  x eslint(no-debugger): `debugger` statement is not allowed
+    ,-[test.js:14:1]
+ 13 | 
+ 14 | debugger; // eslint-disable-line no-debugger
+    : ^^^^^^^^^
+ 15 | 
+    `----
+  help: Remove the debugger statement
+
+  x eslint(no-debugger): `debugger` statement is not allowed
+    ,-[test.js:17:1]
+ 16 | // eslint-disable-next-line no-debugger
+ 17 | debugger;
+    : ^^^^^^^^^
+ 18 | 
+    `----
+  help: Remove the debugger statement
+
+  ! eslint(no-console): Unexpected console statement.
+   ,-[test.vue:7:1]
+ 6 | /* oxlint-disable no-console */
+ 7 | console.log("oxlint vue block");
+   : ^^^^^^^^^^^
+ 8 | /* oxlint-enable no-console */
+   `----
+  help: Delete this console statement.
+
+  x eslint(no-debugger): `debugger` statement is not allowed
+    ,-[test.vue:11:1]
+ 10 | // eslint-disable-next-line no-debugger
+ 11 | debugger;
+    : ^^^^^^^^^
+ 12 | </script>
+    `----
+  help: Remove the debugger statement
+
+Found 4 warnings and 4 errors.
+Finished in <variable>ms on 2 files with 2 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

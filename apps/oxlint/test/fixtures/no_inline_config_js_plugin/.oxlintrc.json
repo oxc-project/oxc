@@ -1,0 +1,6 @@
+{
+  "jsPlugins": ["./plugin.ts"],
+  "categories": { "correctness": "off" },
+  "options": { "noInlineConfig": true },
+  "rules": { "test-plugin/no-var": "error" }
+}

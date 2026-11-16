@@ -1,0 +1,204 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --type-aware --no-inline-config --report-unused-disable-directives test.ts
+working directory: fixtures/cli/tsgolint_disable_directives
+----------
+
+  ! eslint(no-unused-expressions): Expected expression to be used
+   ,-[test.ts:6:1]
+ 5 | // oxlint-disable-next-line typescript/no-floating-promises
+ 6 | myPromise
+   : ^^^^^^^^^
+ 7 | 
+   `----
+  help: Consider using this expression or removing it
+
+  ! typescript(no-floating-promises): Promises must be awaited, add void operator to ignore.
+   ,-[test.ts:6:1]
+ 5 | // oxlint-disable-next-line typescript/no-floating-promises
+ 6 | myPromise
+   : ^^^^|^^^^^
+   :     `-- This unhandled promise-like value has type `Promise<unknown>`.
+ 7 | 
+   `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
+
+  ! eslint(no-unused-expressions): Expected expression to be used
+    ,-[test.ts:10:1]
+  9 | // eslint-disable-next-line @typescript-eslint/no-floating-promises
+ 10 | myPromise
+    : ^^^^^^^^^
+ 11 | 
+    `----
+  help: Consider using this expression or removing it
+
+  ! typescript(no-floating-promises): Promises must be awaited, add void operator to ignore.
+    ,-[test.ts:10:1]
+  9 | // eslint-disable-next-line @typescript-eslint/no-floating-promises
+ 10 | myPromise
+    : ^^^^|^^^^^
+    :     `-- This unhandled promise-like value has type `Promise<unknown>`.
+ 11 | 
+    `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
+
+  ! eslint(no-unused-expressions): Expected expression to be used
+    ,-[test.ts:14:1]
+ 13 | /* oxlint-disable typescript/no-floating-promises */
+ 14 | myPromise
+    : ^^^^^^^^^
+ 15 | myPromise
+    `----
+  help: Consider using this expression or removing it
+
+  ! typescript(no-floating-promises): Promises must be awaited, add void operator to ignore.
+    ,-[test.ts:14:1]
+ 13 | /* oxlint-disable typescript/no-floating-promises */
+ 14 | myPromise
+    : ^^^^|^^^^^
+    :     `-- This unhandled promise-like value has type `Promise<unknown>`.
+ 15 | myPromise
+    `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
+
+  ! eslint(no-unused-expressions): Expected expression to be used
+    ,-[test.ts:15:1]
+ 14 | myPromise
+ 15 | myPromise
+    : ^^^^^^^^^
+ 16 | /* oxlint-enable typescript/no-floating-promises */
+    `----
+  help: Consider using this expression or removing it
+
+  ! typescript(no-floating-promises): Promises must be awaited, add void operator to ignore.
+    ,-[test.ts:15:1]
+ 14 | myPromise
+ 15 | myPromise
+    : ^^^^|^^^^^
+    :     `-- This unhandled promise-like value has type `Promise<unknown>`.
+ 16 | /* oxlint-enable typescript/no-floating-promises */
+    `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
+
+  ! eslint(no-unused-expressions): Expected expression to be used
+    ,-[test.ts:19:1]
+ 18 | // This should still report an error (no disable directive)
+ 19 | myPromise
+    : ^^^^^^^^^
+ 20 | 
+    `----
+  help: Consider using this expression or removing it
+
+  ! typescript(no-floating-promises): Promises must be awaited, add void operator to ignore.
+    ,-[test.ts:19:1]
+ 18 | // This should still report an error (no disable directive)
+ 19 | myPromise
+    : ^^^^|^^^^^
+    :     `-- This unhandled promise-like value has type `Promise<unknown>`.
+ 20 | 
+    `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
+
+  ! eslint(no-unused-expressions): Expected expression to be used
+    ,-[test.ts:23:1]
+ 22 | // oxlint-disable-next-line no-floating-promises
+ 23 | myPromise
+    : ^^^^^^^^^
+ 24 | 
+    `----
+  help: Consider using this expression or removing it
+
+  ! typescript(no-floating-promises): Promises must be awaited, add void operator to ignore.
+    ,-[test.ts:23:1]
+ 22 | // oxlint-disable-next-line no-floating-promises
+ 23 | myPromise
+    : ^^^^|^^^^^
+    :     `-- This unhandled promise-like value has type `Promise<unknown>`.
+ 24 | 
+    `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
+
+  ! eslint(no-unused-expressions): Expected expression to be used
+    ,-[test.ts:26:1]
+ 25 | // eslint-disable-next-line typescript-eslint/no-floating-promises
+ 26 | myPromise
+    : ^^^^^^^^^
+ 27 | 
+    `----
+  help: Consider using this expression or removing it
+
+  ! typescript(no-floating-promises): Promises must be awaited, add void operator to ignore.
+    ,-[test.ts:26:1]
+ 25 | // eslint-disable-next-line typescript-eslint/no-floating-promises
+ 26 | myPromise
+    : ^^^^|^^^^^
+    :     `-- This unhandled promise-like value has type `Promise<unknown>`.
+ 27 | 
+    `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
+
+  ! eslint(no-unused-expressions): Expected expression to be used
+    ,-[test.ts:29:1]
+ 28 | // Test disable-line variant
+ 29 | myPromise // oxlint-disable-line typescript/no-floating-promises
+    : ^^^^^^^^^
+ 30 | 
+    `----
+  help: Consider using this expression or removing it
+
+  ! typescript(no-floating-promises): Promises must be awaited, add void operator to ignore.
+    ,-[test.ts:29:1]
+ 28 | // Test disable-line variant
+ 29 | myPromise // oxlint-disable-line typescript/no-floating-promises
+    : ^^^^|^^^^^
+    :     `-- This unhandled promise-like value has type `Promise<unknown>`.
+ 30 | 
+    `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
+
+  ! typescript(no-floating-promises): Promises must be awaited, add void operator to ignore.
+    ,-[test.ts:33:1]
+ 32 | /* eslint-disable @typescript-eslint/no-floating-promises */
+ 33 | Promise.resolve(1)
+    : ^^^^^^^^^|^^^^^^^^^
+    :          `-- This unhandled promise-like value has type `Promise<number>`.
+ 34 | Promise.resolve(2)
+    `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
+
+  ! typescript(no-floating-promises): Promises must be awaited, add void operator to ignore.
+    ,-[test.ts:34:1]
+ 33 | Promise.resolve(1)
+ 34 | Promise.resolve(2)
+    : ^^^^^^^^^|^^^^^^^^^
+    :          `-- This unhandled promise-like value has type `Promise<number>`.
+ 35 | Promise.resolve(3)
+    `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
+
+  ! typescript(no-floating-promises): Promises must be awaited, add void operator to ignore.
+    ,-[test.ts:35:1]
+ 34 | Promise.resolve(2)
+ 35 | Promise.resolve(3)
+    : ^^^^^^^^^|^^^^^^^^^
+    :          `-- This unhandled promise-like value has type `Promise<number>`.
+ 36 | /* eslint-enable @typescript-eslint/no-floating-promises */
+    `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
+
+  ! typescript(no-floating-promises): Promises must be awaited, add void operator to ignore.
+    ,-[test.ts:39:1]
+ 38 | // Should report error
+ 39 | Promise.resolve(4)
+    : ^^^^^^^^^|^^^^^^^^^
+    :          `-- This unhandled promise-like value has type `Promise<number>`.
+    `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
+
+Found 20 warnings and 0 errors.
+Finished in <variable>ms on 1 file with 111 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------
