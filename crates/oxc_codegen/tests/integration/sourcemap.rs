@@ -616,3 +616,30 @@ fn minified_template_dollar_escapes() {
         );
     }
 }
+
+#[test]
+fn renamed_label_records_original_name() {
+    use oxc_semantic::{LabelId, SemanticBuilder};
+
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, "outer: { break outer; }", SourceType::mjs()).parse();
+    assert!(ret.diagnostics.is_empty(), "parse errors: {:?}", ret.diagnostics);
+    let program = ret.program;
+    let mut scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+    scoping.set_label_name(LabelId::from_usize(0), "e".into());
+
+    let ret = Codegen::new()
+        .with_options(CodegenOptions { minify: true, ..default_options() })
+        .with_scoping(Some(scoping))
+        .build(&program);
+    assert_eq!(ret.code, "e:{break e}");
+    let map = ret.map.expect("sourcemap should be generated");
+    let names = map
+        .get_tokens()
+        .filter_map(|token| {
+            let name = map.get_name(token.get_name_id()?)?;
+            Some((token.get_dst_col(), token.get_src_col(), name))
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(names, [(0, 0, "outer"), (9, 15, "outer")]);
+}
