@@ -40,13 +40,11 @@ mod typescript;
 mod unicode;
 mod whitespace;
 
-#[cfg_attr(not(feature = "benchmarking"), expect(clippy::redundant_pub_crate))]
-pub(crate) use byte_handlers::{ByteHandler, ByteHandlers, byte_handler_tables};
 pub use kind::Kind;
 pub use number::{parse_big_int, parse_float, parse_int};
 pub use token::Token;
 
-use source::{Source, SourcePosition};
+use source::{AsciiPosition, Source, SourcePosition};
 use token::PendingToken;
 use trivia_builder::{AnnotationComments, TriviaBuilder};
 
@@ -508,138 +506,93 @@ impl<'a, C: Config> Lexer<'a, C> {
     fn read_next_token(&mut self) -> (Kind, SourcePosition<'a>) {
         self.trivia_builder.clear_annotation_comments();
 
-        let end_pos = self.source.end();
         let mut pos = self.source.position();
         loop {
-            // Single spaces between tokens are common, so consume a space before processing the next token.
-            // Can only do this if there are at least 2 bytes left in source.
-            // If there aren't 2 bytes left, delegate to `read_next_token_at_end` (cold branch).
-            // SAFETY: `source.end()` is always equal to or after `source.position()`
-            let remaining_bytes = unsafe { end_pos.offset_from(pos) };
-            if remaining_bytes >= 2 {
-                // SAFETY: There are at least 2 bytes remaining in source.
-                let mut byte = unsafe { pos.read() };
+            // Byte handlers return the position which they leave the source at
+            debug_assert_eq!(pos, self.source.position());
 
-                // Only update the cursor and read again when consuming a space.
-                if byte == b' ' {
-                    // SAFETY: At least 2 bytes remain, so advancing past one ASCII space
-                    // leaves at least one byte to read.
-                    pos = unsafe { pos.add(1) };
-                    self.source.set_position(pos);
-                    // SAFETY: At least one byte remains after the space.
-                    byte = unsafe { pos.read() };
-                }
-
+            // Single spaces between tokens are common, so `byte_start` skips a space
+            // before the byte which the next token starts with
+            let kind;
+            if let Some((start, byte)) = self.source.byte_start(pos) {
                 // Set token start
-                let offset = self.source.offset_of(pos);
-                self.token_start = offset;
+                self.token_start = self.source.offset_of(start.position());
 
                 if let Some(kind) = byte_handlers::single_byte_token(byte) {
-                    // SAFETY: Single-byte tokens are ASCII, and at least 1 byte remains after `pos`
-                    let end = unsafe { pos.add(1) };
+                    let end = start.after();
                     self.source.set_position(end);
                     return (kind, end);
                 }
 
-                let byte_handlers = self.config.byte_handlers();
-                let kind;
-                // SAFETY: `byte` is byte value at current position in source
-                (kind, pos) = unsafe { byte_handlers[byte as usize](self, pos) };
-                if kind != Kind::Skip {
-                    return (kind, pos);
-                }
+                (kind, pos) = Self::byte_handler(byte)(self, start);
             } else {
-                // Only 0 or 1 bytes left in source.
-                // Delegate to `#[cold]` function as this is a very rare case.
-                let kind = self.read_next_token_at_end();
-                return (kind, self.source.position());
+                // Only 0 or 1 bytes left in source, or a Unicode character.
+                // Delegate to `#[cold]` function as these are rare cases.
+                kind = self.read_next_token_uncommon();
+                pos = self.source.position();
+            }
+
+            if kind != Kind::Skip {
+                return (kind, pos);
             }
         }
     }
 
-    /// Cold path for reading next token where only 0 or 1 bytes are left in source.
+    /// Cold path for reading next token from the current position of source, where either
+    /// only 0 or 1 bytes are left in source, or the next byte is not ASCII.
+    ///
+    /// Also called where a single space is followed by a byte which is not ASCII.
+    /// The space is then skipped as whitespace.
     #[inline(never)]
     #[cold]
-    fn read_next_token_at_end(&mut self) -> Kind {
-        let offset = self.offset();
-        self.token_start = offset;
+    fn read_next_token_uncommon(&mut self) -> Kind {
+        self.token_start = self.offset();
 
-        if let Some(byte) = self.peek_byte() {
-            // SAFETY: `byte` is byte value at current position in source
-            let kind = unsafe { self.handle_byte(byte) };
-            if kind != Kind::Skip {
-                return kind;
-            }
-            // Last byte was whitespace/line break (`Kind::Skip`), so now at EOF
-            self.token_start = offset + 1;
+        if let Some((start, byte)) = self.source.ascii_position(self.source.position()) {
+            self.handle_ascii_byte(start, byte)
+        } else if self.source.is_eof() {
+            Kind::Eof
+        } else {
+            self.unicode_char_handler()
         }
-
-        Kind::Eof
     }
 
     #[inline]
     fn read_next_jsx_attribute_value(&mut self) -> Kind {
         self.trivia_builder.clear_annotation_comments();
 
-        let end_pos = self.source.end();
         loop {
-            let mut pos = self.source.position();
-            // SAFETY: `source.end()` is always equal to or after `source.position()`
-            let remaining_bytes = unsafe { end_pos.offset_from(pos) };
-            if remaining_bytes >= 2 {
-                // SAFETY: There are at least 2 bytes remaining in source.
-                let mut byte = unsafe { pos.read() };
-
-                // Only update the cursor and read again when consuming a space.
-                if byte == b' ' {
-                    // SAFETY: At least 2 bytes remain, so advancing past one ASCII space
-                    // leaves at least one byte to read.
-                    pos = unsafe { pos.add(1) };
-                    self.source.set_position(pos);
-                    // SAFETY: At least one byte remains after the space.
-                    byte = unsafe { pos.read() };
-                }
-
-                let offset = self.source.offset_of(pos);
-                self.token_start = offset;
+            let pos = self.source.position();
+            let kind = if let Some((start, byte)) = self.source.byte_start(pos) {
+                self.token_start = self.source.offset_of(start.position());
 
                 if matches!(byte, b'"' | b'\'') {
-                    // SAFETY: `byte` is the current ASCII quote delimiter.
-                    return unsafe { self.read_jsx_string_literal(byte) };
+                    return self.read_jsx_string_literal(start, byte);
                 }
 
-                // SAFETY: `byte` is byte value at current position in source.
-                let kind = unsafe { self.handle_byte(byte) };
-                if kind != Kind::Skip {
-                    return kind;
-                }
+                self.handle_ascii_byte(start, byte)
             } else {
-                return self.read_next_jsx_attribute_value_at_end();
+                self.read_next_jsx_attribute_value_uncommon()
+            };
+
+            if kind != Kind::Skip {
+                return kind;
             }
         }
     }
 
+    /// Cold path for `read_next_jsx_attribute_value`. As for `read_next_token_uncommon`.
     #[inline(never)]
     #[cold]
-    fn read_next_jsx_attribute_value_at_end(&mut self) -> Kind {
-        let offset = self.offset();
-        self.token_start = offset;
-
-        if let Some(byte) = self.peek_byte() {
-            if matches!(byte, b'"' | b'\'') {
-                // SAFETY: `byte` is the current ASCII quote delimiter.
-                return unsafe { self.read_jsx_string_literal(byte) };
-            }
-
-            // SAFETY: `byte` is byte value at current position in source.
-            let kind = unsafe { self.handle_byte(byte) };
-            if kind != Kind::Skip {
-                return kind;
-            }
-            self.token_start = offset + 1;
+    fn read_next_jsx_attribute_value_uncommon(&mut self) -> Kind {
+        if let Some((start, byte)) = self.source.ascii_position(self.source.position())
+            && matches!(byte, b'"' | b'\'')
+        {
+            self.token_start = self.offset();
+            return self.read_jsx_string_literal(start, byte);
         }
 
-        Kind::Eof
+        self.read_next_token_uncommon()
     }
 }
 

@@ -10,7 +10,7 @@ use oxc_syntax::identifier::{
 use crate::{config::LexerConfig as Config, diagnostics};
 
 use super::{
-    Kind, Lexer, SourcePosition, cold_branch, keyword,
+    AsciiPosition, Kind, Lexer, SourcePosition, cold_branch, keyword,
     search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
 };
 
@@ -31,23 +31,17 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// Consume an identifier starting with an ASCII byte and return its kind and end position.
     /// `CHECK_KEYWORD` may be false only for starting bytes that cannot begin a keyword.
     ///
-    /// Leave the first byte unconsumed. ASCII scanning stays inline; Unicode characters
-    /// and escapes use the decoding routines below.
-    ///
-    /// # SAFETY
-    /// * `self.source` must not be exhausted (at least 1 char remaining).
-    /// * Next char must be ASCII.
-    /// * `start_pos` must be the current position of `self.source`.
+    /// `start` is the position of the first byte of the identifier. ASCII scanning stays inline;
+    /// Unicode characters and escapes use the decoding routines below.
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    pub(super) unsafe fn identifier_name_handler<const CHECK_KEYWORD: bool>(
+    pub(super) fn identifier_name_handler<const CHECK_KEYWORD: bool>(
         &mut self,
-        start_pos: SourcePosition<'a>,
+        start: AsciiPosition<'a>,
     ) -> (Kind, SourcePosition<'a>) {
-        debug_assert_eq!(start_pos, self.source.position());
-        // Advance past 1st byte.
-        // SAFETY: Caller guarantees not at EOF, and next byte is ASCII.
-        let after_first = unsafe { start_pos.add(1) };
+        let start_pos = start.position();
+        // Advance past 1st byte
+        let after_first = start.after();
 
         // Consume bytes which are part of identifier
         let next_byte = byte_search! {

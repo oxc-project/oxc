@@ -5,7 +5,7 @@ use oxc_str::{JSStr, JSStrBuilder};
 use crate::{config::LexerConfig as Config, diagnostics};
 
 use super::{
-    Kind, Lexer, Span, Token, cold_branch,
+    AsciiPosition, Kind, Lexer, Span, Token, cold_branch,
     search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
 };
 
@@ -42,20 +42,16 @@ fn find_string_chunk_end<const DELIMITER: u8>(
         .map(|index| PREFIX_LEN + index)
 }
 
-/// Macro to handle a string literal.
+/// Macro to handle a string literal whose opening quote is at `$start`, an `AsciiPosition`.
 ///
-/// # SAFETY
-/// `$delimiter` must be an ASCII byte.
-/// Next char in `lexer.source` must be ASCII.
-/// `$table` must be a `SafeByteMatchTable`.
-/// `$table` must only match `$delimiter`, '\', '\r' or '\n'.
+/// `$delimiter` must be the quote, and `$table` must be a `SafeByteMatchTable` which only matches
+/// `$delimiter`, '\', '\r' or '\n'.
 macro_rules! handle_string_literal {
-    ($lexer:ident, $delimiter:literal, $table:ident) => {{
-        debug_assert!($delimiter.is_ascii());
+    ($lexer:ident, $start:ident, $delimiter:literal, $table:ident) => {{
+        const { assert!($delimiter.is_ascii()) };
 
-        // Skip opening quote.
-        // SAFETY: Caller guarantees next byte is ASCII, so safe to advance past it.
-        let after_opening_quote = $lexer.source.position().add(1);
+        // Skip opening quote
+        let after_opening_quote = $start.after();
 
         // Consume bytes which are part of string
         let next_byte = byte_search! {
@@ -77,13 +73,19 @@ macro_rules! handle_string_literal {
         // Either end of string found, or a line break, or `\` escape.
         match next_byte {
             $delimiter => {
-                // SAFETY: Macro user guarantees delimiter is ASCII, so consuming it cannot move
+                // SAFETY: The search stopped on `$delimiter`, so `lexer.source` is not at the end
+                // of the source. `$delimiter` is ASCII, so consuming it cannot move
                 // `lexer.source` off a UTF-8 character boundary.
-                $lexer.source.next_byte_unchecked();
+                unsafe { $lexer.source.next_byte_unchecked() };
                 Kind::Str
             }
             b'\\' => cold_branch(|| {
-                handle_string_literal_escape!($lexer, $delimiter, $table, after_opening_quote)
+                // SAFETY: `$table` only matches ASCII bytes, and `$delimiter` is one of them.
+                // `handle_string_literal_escape!` only moves `lexer.source` past bytes which
+                // `$table` matched, so it stays on a UTF-8 character boundary.
+                unsafe {
+                    handle_string_literal_escape!($lexer, $delimiter, $table, after_opening_quote)
+                }
             }),
             _ => {
                 // Line break. This is impossible in valid JS, so cold path.
@@ -282,22 +284,14 @@ impl<'a, C: Config> Lexer<'a, C> {
         true
     }
 
-    /// Read string literal delimited with `"`.
-    /// # SAFETY
-    /// Next character must be `"`.
-    pub(super) unsafe fn read_string_literal_double_quote(&mut self) -> Kind {
-        // SAFETY: Caller guarantees next char is `"`, which is ASCII.
-        // b'"' is an ASCII byte. `DOUBLE_QUOTE_STRING_END_TABLE` is a `SafeByteMatchTable`.
-        unsafe { handle_string_literal!(self, b'"', DOUBLE_QUOTE_STRING_END_TABLE) }
+    /// Read string literal delimited with `"`. `start` is the position of the opening quote.
+    pub(super) fn read_string_literal_double_quote(&mut self, start: AsciiPosition<'a>) -> Kind {
+        handle_string_literal!(self, start, b'"', DOUBLE_QUOTE_STRING_END_TABLE)
     }
 
-    /// Read string literal delimited with `'`.
-    /// # SAFETY
-    /// Next character must be `'`.
-    pub(super) unsafe fn read_string_literal_single_quote(&mut self) -> Kind {
-        // SAFETY: Caller guarantees next char is `'`, which is ASCII.
-        // b'\'' is an ASCII byte. `SINGLE_QUOTE_STRING_END_TABLE` is a `SafeByteMatchTable`.
-        unsafe { handle_string_literal!(self, b'\'', SINGLE_QUOTE_STRING_END_TABLE) }
+    /// Read string literal delimited with `'`. `start` is the position of the opening quote.
+    pub(super) fn read_string_literal_single_quote(&mut self, start: AsciiPosition<'a>) -> Kind {
+        handle_string_literal!(self, start, b'\'', SINGLE_QUOTE_STRING_END_TABLE)
     }
 
     fn save_js_string(&mut self, value: JSStr<'a>) {

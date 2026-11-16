@@ -18,7 +18,7 @@ use super::search::SEARCH_BATCH_SIZE;
 ///
 /// * Safe API for consuming source char-by-char (`Source::next_char`, `Source::peek_char`).
 /// * Safe API for peeking next source byte (`Source::peek_byte`).
-/// * Unsafe API for consuming source byte-by-byte (`Source::next_byte`).
+/// * Unsafe API for consuming source byte-by-byte (`Source::next_byte_unchecked`).
 /// * Mostly-safe API for rewinding to a previous position in source
 ///   (`Source::position`, `Source::set_position`).
 ///
@@ -55,9 +55,9 @@ use super::search::SEARCH_BATCH_SIZE;
 /// Invariant (4) is the most difficult to satisfy.
 /// `Source::next_char` relies on source text being valid UTF-8 to provide a safe API which
 /// upholds this invariant.
-/// `Source::next_byte` requires very careful use as it may violate invariant (4).
-/// That is fine temporarily, but caller *must* ensure the safety conditions of `Source::next_byte`
-/// are satisfied, to restore this invariant before passing control back to other code.
+/// `Source::next_byte_unchecked` requires very careful use as it may violate invariant (4).
+/// That is fine temporarily, but caller *must* ensure its safety conditions are satisfied,
+/// to restore this invariant before passing control back to other code.
 /// It will often be preferable to instead use `Source::peek_byte`, followed by `Source::next_char`,
 /// which are safe methods, and compiler will often reduce to equally efficient code.
 pub(super) struct Source<'a> {
@@ -453,49 +453,6 @@ impl<'a> Source<'a> {
         Some([c1, c2])
     }
 
-    /// Get next byte of source, and advance position to after it.
-    ///
-    /// # SAFETY
-    /// This function may leave `Source` positioned in middle of a UTF-8 character sequence,
-    /// which would violate one of `Source`'s invariants.
-    ///
-    /// This is OK temporarily, but caller *must* ensure the invariant is restored again.
-    ///
-    /// Caller must ensure one of:
-    ///
-    /// 1. No byte is returned (end of file).
-    /// 2. The byte returned is ASCII.
-    /// 3. Further calls to `Source::next_byte` or `Source::next_byte_unchecked` are made
-    ///    to consume the rest of the multi-byte UTF-8 character, before calling any other methods
-    ///    of `Source` (even safe methods) which rely on `Source` being positioned on a UTF-8
-    ///    character boundary, or before passing control back to other safe code which may call them.
-    ///
-    /// In particular, safe methods `Source::next_char`, `Source::peek_char`, and `Source::remaining`
-    /// are *not* safe to call until one of above conditions is satisfied.
-    ///
-    /// It will often be preferable to instead use `Source::peek_byte`, followed by `Source::next_char`,
-    /// which are safe methods, and compiler will often reduce to equally efficient code, if calling
-    /// code tests the byte returned. e.g.:
-    ///
-    /// ```rust,ignore
-    /// // Consume a space
-    /// let byte = source.peek_byte();
-    /// if byte == Some(b' ') {
-    ///   source.next_char().unwrap();
-    /// }
-    /// ```
-    #[expect(dead_code)]
-    #[inline]
-    unsafe fn next_byte(&mut self) -> Option<u8> {
-        #[expect(clippy::if_not_else)] // Hot path first
-        if !self.is_eof() {
-            // SAFETY: Safe to read from `ptr` as we just checked it's not out of bounds
-            Some(unsafe { self.next_byte_unchecked() })
-        } else {
-            None
-        }
-    }
-
     /// Get next bytes of source, and advance position to after it, without EOF bounds-check.
     ///
     /// # SAFETY
@@ -509,7 +466,7 @@ impl<'a> Source<'a> {
     /// Caller must ensure one of:
     ///
     /// 1. The byte returned is ASCII.
-    /// 2. Further calls to `Source::next_byte` or `Source::next_byte_unchecked` are made
+    /// 2. Further calls to `Source::next_byte_unchecked` are made
     ///    to consume the rest of the multi-byte UTF-8 character, before calling any other methods
     ///    of `Source` (even safe methods) which rely on `Source` being positioned on a UTF-8
     ///    character boundary, or before passing control back to other safe code which may call them.
@@ -610,6 +567,99 @@ impl<'a> Source<'a> {
         // `Source::new` takes an immutable ref `&str`, guaranteeing that the memory `self.ptr`
         // addresses cannot be aliased by a `&mut` ref as long as `Source` exists.
         unsafe { self.position().read() }
+    }
+
+    /// Get `pos` as an [`AsciiPosition`], along with the byte at it, if that byte is ASCII.
+    ///
+    /// Returns `None` if `pos` is the end of the source, or the byte at `pos` is not ASCII.
+    #[inline]
+    pub(super) fn ascii_position(
+        &self,
+        pos: SourcePosition<'a>,
+    ) -> Option<(AsciiPosition<'a>, u8)> {
+        if pos.is_end_of(self) {
+            return None;
+        }
+        // SAFETY: `pos` is not the end of the source
+        let byte = unsafe { pos.read() };
+        // `pos` is not the end of the source, and the byte at it is ASCII
+        if byte.is_ascii() { Some((AsciiPosition(pos), byte)) } else { None }
+    }
+
+    /// Get the position of the next byte which is not a single space, starting from `pos`,
+    /// along with that byte, if it is ASCII.
+    ///
+    /// i.e. This skips a single space at `pos`, if there is one.
+    ///
+    /// Returns `None` if fewer than 2 bytes remain from `pos`, or if the byte is not ASCII.
+    // `#[inline(always)]` as this is the first thing which lexing any token does
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub(super) fn byte_start(
+        &self,
+        mut pos: SourcePosition<'a>,
+    ) -> Option<(AsciiPosition<'a>, u8)> {
+        // SAFETY: All `SourcePosition`s are within the source, so not after its end
+        let remaining_bytes = unsafe { self.end().offset_from(pos) };
+        if remaining_bytes < 2 {
+            return None;
+        }
+        // SAFETY: At least 2 bytes remain from `pos`
+        let mut byte = unsafe { pos.read() };
+        if byte == b' ' {
+            // SAFETY: A space is ASCII, so `pos + 1` is on a UTF-8 char boundary.
+            // At least 1 byte remains after the space.
+            unsafe {
+                pos = pos.add(1);
+                byte = pos.read();
+            }
+        }
+        // `pos` is not the end of the source, and the byte at it is ASCII
+        if byte.is_ascii() { Some((AsciiPosition(pos), byte)) } else { None }
+    }
+
+    /// Move current position to an ASCII byte.
+    ///
+    /// Same as `set_position`, but also lets the compiler know that the source is not at its end,
+    /// and that the next byte is ASCII. `next_char` then compiles to a single instruction.
+    #[inline]
+    pub(super) fn set_position_to_ascii(&mut self, start: AsciiPosition<'a>) {
+        self.set_position(start.position());
+        // SAFETY: An `AsciiPosition` is never the end of the source, and the byte at it is ASCII
+        unsafe {
+            assert_unchecked!(!self.is_eof());
+            assert_unchecked!(self.peek_byte_unchecked() < 128);
+        }
+    }
+}
+
+/// Position of an ASCII byte in the source.
+///
+/// # Invariants
+/// * It is not the end of the source.
+/// * The byte at it is ASCII.
+///
+/// So the position 1 byte after it is within the source (or is its end), and is on a UTF-8
+/// character boundary. Code which is given an `AsciiPosition` can therefore move past that byte
+/// without `unsafe`.
+///
+/// Only methods of [`Source`] create `AsciiPosition`s, and they check that both hold.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(super) struct AsciiPosition<'a>(SourcePosition<'a>);
+
+impl<'a> AsciiPosition<'a> {
+    /// Get the position of the ASCII byte.
+    #[inline]
+    pub(super) fn position(self) -> SourcePosition<'a> {
+        self.0
+    }
+
+    /// Get the position after the ASCII byte.
+    #[inline]
+    pub(super) fn after(self) -> SourcePosition<'a> {
+        // SAFETY: Position is not the end of the source, and the byte at it is ASCII,
+        // so 1 byte later is within the source (or its end), and on a UTF-8 char boundary
+        unsafe { self.0.add(1) }
     }
 }
 

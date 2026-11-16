@@ -7,7 +7,7 @@ use oxc_syntax::identifier::is_identifier_part;
 use crate::{config::LexerConfig as Config, diagnostics};
 
 use super::{
-    Kind, Lexer, Token, cold_branch,
+    AsciiPosition, Kind, Lexer, Token, cold_branch,
     search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
 };
 
@@ -27,23 +27,24 @@ static JSX_CHILD_END_TABLE: SafeByteMatchTable =
 ///   `JSXStringCharacter` but not '
 /// `JSXStringCharacter` ::
 ///   `SourceCharacter` but not one of `HTMLCharacterReference`
-impl<C: Config> Lexer<'_, C> {
-    /// Read JSX string literal.
-    /// # SAFETY
-    /// * `delimiter` must be an ASCII character.
-    /// * Next char in `lexer.source` must be ASCII.
-    pub(super) unsafe fn read_jsx_string_literal(&mut self, delimiter: u8) -> Kind {
-        debug_assert!(delimiter.is_ascii());
+impl<'a, C: Config> Lexer<'a, C> {
+    /// Read JSX string literal. `start` is the position of the opening quote, which is `delimiter`.
+    pub(super) fn read_jsx_string_literal(
+        &mut self,
+        start: AsciiPosition<'a>,
+        delimiter: u8,
+    ) -> Kind {
+        // The position after the closing quote is only on a UTF-8 char boundary if it is ASCII
+        assert!(delimiter.is_ascii());
 
         // Skip opening quote
-        // SAFETY: Caller guarantees next byte is ASCII, so `.add(1)` is a UTF-8 char boundary
-        let after_opening_quote = unsafe { self.source.position().add(1) };
+        let after_opening_quote = start.after();
         let remaining = self.source.str_from_pos_to_end(after_opening_quote);
 
         let len = memchr(delimiter, remaining.as_bytes());
         if let Some(len) = len {
             // SAFETY: `after_opening_quote` + `len` is position of delimiter.
-            // Caller guarantees delimiter is ASCII, so 1 byte after it is a UTF-8 char boundary.
+            // The delimiter is ASCII, so 1 byte after it is a UTF-8 char boundary.
             let after_closing_quote = unsafe { after_opening_quote.add(len + 1) };
             self.source.set_position(after_closing_quote);
             Kind::Str

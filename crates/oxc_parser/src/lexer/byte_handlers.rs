@@ -1,35 +1,42 @@
 use oxc_ast::CommentKind;
-use oxc_data_structures::assert_unchecked;
 
-use crate::{
-    config::{LexerConfig as Config, NoTokensLexerConfig, RuntimeLexerConfig, TokensLexerConfig},
-    diagnostics,
-};
+use crate::{config::LexerConfig as Config, diagnostics};
 
-use super::{Kind, Lexer, SourcePosition};
+use super::{AsciiPosition, Kind, Lexer, SourcePosition};
 
-impl<C: Config> Lexer<'_, C> {
-    /// Handle next byte of source.
+impl<'a, C: Config> Lexer<'a, C> {
+    /// Handle the ASCII byte `byte`, which is the byte at `start`.
     ///
-    /// # SAFETY
-    ///
-    /// * Lexer must not be at end of file.
-    /// * `byte` must be next byte of source code, corresponding to current position of `lexer.source`.
-    /// * Only byte handlers for ASCII characters may use the `ascii_byte_handler!()` macro.
-    // `#[inline(always)]` to ensure is inlined into `read_next_token`
+    /// Position of source is set to `start`, then moved past whatever the byte begins.
+    /// Returns `Kind::Skip` if that is whitespace or a comment.
+    // `#[inline(always)]` to ensure is inlined into `read_next_jsx_attribute_value`
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    pub(super) unsafe fn handle_byte(&mut self, byte: u8) -> Kind {
+    pub(super) fn handle_ascii_byte(&mut self, start: AsciiPosition<'a>, byte: u8) -> Kind {
         if let Some(kind) = single_byte_token(byte) {
-            // SAFETY: Caller guarantees `byte` is the current source byte, and single-byte tokens are ASCII.
-            let next = unsafe { self.source.position().add(1) };
-            self.source.set_position(next);
+            self.source.set_position(start.after());
             return kind;
         }
-        let byte_handlers = self.config.byte_handlers();
-        // SAFETY: Caller guarantees to uphold safety invariants.
-        unsafe { byte_handlers[byte as usize](self, self.source.position()).0 }
+        Self::byte_handler(byte)(self, start).0
     }
+
+    /// Get the byte handler for an ASCII byte.
+    ///
+    /// The table has 1 handler for each ASCII byte. `byte` is taken modulo 128, which costs
+    /// nothing where the compiler can see `byte` is ASCII, which callers have always checked.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub(super) fn byte_handler(byte: u8) -> ByteHandler<C> {
+        let byte_handlers: &ByteHandlers<C> = &Self::BYTE_HANDLERS;
+        byte_handlers[(byte & 0x7F) as usize]
+    }
+
+    /// Byte handler for each ASCII byte.
+    ///
+    /// The handlers are generic over the lexer's config, so there is one table for each config.
+    /// A reference to an associated constant is to static memory, so getting a handler
+    /// from the table is a single load.
+    const BYTE_HANDLERS: ByteHandlers<C> = ascii_handlers!();
 }
 
 /// `Kind` of a token which is always exactly the single byte `byte`, if there is one.
@@ -59,16 +66,22 @@ static SINGLE_BYTE_TOKENS: [Kind; 256] = {
     table
 };
 
-/// Byte handlers take and return the current position of `lexer.source`, so it stays in a register
-/// between tokens instead of being stored and reloaded.
-pub type ByteHandler<C> =
-    for<'a> unsafe fn(&mut Lexer<'a, C>, SourcePosition<'a>) -> (Kind, SourcePosition<'a>);
-pub type ByteHandlers<C> = [ByteHandler<C>; 256];
+/// Byte handlers take the position of an ASCII byte. They set position of `lexer.source` to it,
+/// then move past whatever the byte begins.
+///
+/// They return the `Kind` of the token, or `Kind::Skip` for whitespace and comments,
+/// along with the position of `lexer.source`, so it stays in a register between tokens
+/// instead of being stored and reloaded.
+///
+/// Characters which are not ASCII have no byte handler. `Lexer::unicode_char_handler` lexes them.
+pub(super) type ByteHandler<C> =
+    for<'a> fn(&mut Lexer<'a, C>, AsciiPosition<'a>) -> (Kind, SourcePosition<'a>);
+pub(super) type ByteHandlers<C> = [ByteHandler<C>; 128];
 
-/// Macro to create a lookup table mapping any incoming byte to a handler function defined below.
+/// Macro to create a lookup table mapping each ASCII byte to a handler function defined below.
 /// <https://github.com/ratel-rust/ratel-core/blob/e55a1310ba69a3f5ce2a9a6eef643feced02ac08/ratel/src/lexer/mod.rs>
 #[rustfmt::skip]
-macro_rules! byte_handlers {
+macro_rules! ascii_handlers {
     () => {
         [
         //  0    1    2    3    4    5    6    7    8    9    A    B    C    D    E    F    //
@@ -80,44 +93,19 @@ macro_rules! byte_handlers {
             IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, UER, ESC, UER, CRT, IDT, // 5
             TPL, KWD, KWD, KWD, KWD, KWD, KWD, KWD, IDT, KWD, IDT, KWD, KWD, KWD, KWD, KWD, // 6
             KWD, IDT, KWD, KWD, KWD, KWD, KWD, KWD, IDT, KWD, IDT, UER, PIP, UER, UER, ERR, // 7
-            UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, // 8
-            UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, // 9
-            UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, // A
-            UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, // B
-            UER, UER, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, // C
-            UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, // D
-            UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, // E
-            UNI, UNI, UNI, UNI, UNI, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, // F
         ]
     };
 }
+use ascii_handlers;
 
-pub mod byte_handler_tables {
-    use super::*;
-
-    pub static NO_TOKENS: ByteHandlers<NoTokensLexerConfig> = byte_handlers!();
-    pub static WITH_TOKENS: ByteHandlers<TokensLexerConfig> = byte_handlers!();
-    pub static RUNTIME_TOKENS: ByteHandlers<RuntimeLexerConfig> = byte_handlers!();
-}
-
-/// Macro for defining byte handler for an ASCII character.
+/// Macro for defining a byte handler.
 ///
-/// Asserts that lexer is not at end of file, and that next char is ASCII.
-/// Where the handler is for an ASCII character, these assertions are self-evidently true.
-///
-/// These assertions produce no runtime code, but hint to the compiler that it can assume that
-/// next char is ASCII, and it uses that information to optimize the rest of the handler.
-/// e.g. `lexer.consume_char()` becomes just a single assembly instruction.
-/// Without the assertions, the compiler is unable to deduce the next char is ASCII, due to
-/// the indirection of the byte handlers jump table.
-///
-/// These assertions are unchecked (i.e. won't panic) and will cause UB if they're incorrect.
-///
-/// # SAFETY
-/// Only use this macro to define byte handlers for ASCII characters.
+/// Moves `lexer.source` to the ASCII byte which the handler is given the position of.
+/// The compiler then knows that the source is not at its end, and that the next char is ASCII,
+/// so e.g. `lexer.consume_char()` becomes just a single assembly instruction.
 ///
 /// ```rust,ignore
-/// ascii_byte_handler!(SPS(lexer) {
+/// byte_handler!(SPS(lexer) {
 ///     lexer.consume_char();
 ///     Kind::WhiteSpace
 /// });
@@ -127,13 +115,11 @@ pub mod byte_handler_tables {
 ///
 /// ```rust,ignore
 /// #[expect(non_snake_case)]
-/// fn SPS<'a, C: Config>(lexer: &mut Lexer<'a, C>, pos: SourcePosition<'a>) -> (Kind, SourcePosition<'a>) {
-///     lexer.source.set_position(pos);
-///     // SAFETY: This macro is only used for ASCII characters
-///     unsafe {
-///         assert_unchecked!(!lexer.source.is_eof());
-///         assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
-///     }
+/// fn SPS<'a, C: Config>(
+///     lexer: &mut Lexer<'a, C>,
+///     start: AsciiPosition<'a>,
+/// ) -> (Kind, SourcePosition<'a>) {
+///     lexer.source.set_position_to_ascii(start);
 ///     let kind = {
 ///         lexer.consume_char();
 ///         Kind::WhiteSpace
@@ -141,20 +127,14 @@ pub mod byte_handler_tables {
 ///     (kind, lexer.source.position())
 /// }
 /// ```
-macro_rules! ascii_byte_handler {
+macro_rules! byte_handler {
     ($id:ident($lex:ident) $body:expr) => {
         #[expect(non_snake_case)]
         fn $id<'a, C: Config>(
             $lex: &mut Lexer<'a, C>,
-            pos: SourcePosition<'a>,
+            start: AsciiPosition<'a>,
         ) -> (Kind, SourcePosition<'a>) {
-            // No-op store, so the compiler uses `pos` from register instead of reloading it
-            $lex.source.set_position(pos);
-            // SAFETY: This macro is only used for ASCII characters
-            unsafe {
-                assert_unchecked!(!$lex.source.is_eof());
-                assert_unchecked!($lex.source.peek_byte_unchecked() < 128);
-            }
+            $lex.source.set_position_to_ascii(start);
             let kind = $body;
             (kind, $lex.source.position())
         }
@@ -162,19 +142,19 @@ macro_rules! ascii_byte_handler {
 }
 
 // `\0` `\1` etc
-ascii_byte_handler!(ERR(lexer) {
+byte_handler!(ERR(lexer) {
     let c = lexer.consume_char();
     lexer.error(diagnostics::invalid_character(c, lexer.unterminated_range()));
     Kind::Undetermined
 });
 
 // <SPACE> <TAB> Normal Whitespace
-ascii_byte_handler!(SPS(lexer) {
+byte_handler!(SPS(lexer) {
     lexer.whitespace_handler()
 });
 
 // <VT> <FF> Irregular Whitespace
-ascii_byte_handler!(ISP(lexer) {
+byte_handler!(ISP(lexer) {
     lexer.consume_char();
     lexer.trivia_builder.add_irregular_whitespace(lexer.token_start, lexer.offset());
     Kind::Skip
@@ -184,40 +164,33 @@ ascii_byte_handler!(ISP(lexer) {
 #[expect(non_snake_case)]
 fn LIN<'a, C: Config>(
     lexer: &mut Lexer<'a, C>,
-    pos: SourcePosition<'a>,
+    start: AsciiPosition<'a>,
 ) -> (Kind, SourcePosition<'a>) {
-    lexer.source.set_position(pos);
-    // SAFETY: The byte-handler table calls this for an in-bounds ASCII line break.
-    unsafe {
-        assert_unchecked!(!lexer.source.is_eof());
-        assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
-    }
-    lexer.consume_char();
-    let byte = lexer.line_break_handler();
+    lexer.source.set_position(start.after());
+    lexer.line_break_handler();
 
     // Read the next token here to avoid restarting the caller's token loop.
     let pos = lexer.source.position();
     lexer.token_start = lexer.source.offset_of(pos);
-    let Some(byte) = byte else {
-        return (Kind::Eof, pos);
+    let Some((start, byte)) = lexer.source.ascii_position(pos) else {
+        // End of the source, or a Unicode character, which the caller's token loop handles
+        let kind = if pos.is_end_of(&lexer.source) { Kind::Eof } else { Kind::Skip };
+        return (kind, pos);
     };
     // JSX attribute values scan quotes differently. Leave them for the caller's token loop.
     if matches!(byte, b'"' | b'\'') {
         return (Kind::Skip, pos);
     }
     if let Some(kind) = single_byte_token(byte) {
-        // SAFETY: Single-byte tokens are ASCII and `pos` is in bounds.
-        let end = unsafe { pos.add(1) };
+        let end = start.after();
         lexer.source.set_position(end);
         return (kind, end);
     }
-    let byte_handlers = lexer.config.byte_handlers();
-    // SAFETY: `byte` is the current source byte at `pos`.
-    unsafe { byte_handlers[byte as usize](lexer, pos) }
+    Lexer::byte_handler(byte)(lexer, start)
 }
 
 // !
-ascii_byte_handler!(EXL(lexer) {
+byte_handler!(EXL(lexer) {
     lexer.consume_char();
     // Try to peek at next byte for common case first
     match lexer.peek_byte() {
@@ -236,19 +209,27 @@ ascii_byte_handler!(EXL(lexer) {
 });
 
 // "
-ascii_byte_handler!(QOD(lexer) {
-    // SAFETY: This function is only called for `"`
-    unsafe { lexer.read_string_literal_double_quote() }
-});
+#[expect(non_snake_case)]
+fn QOD<'a, C: Config>(
+    lexer: &mut Lexer<'a, C>,
+    start: AsciiPosition<'a>,
+) -> (Kind, SourcePosition<'a>) {
+    let kind = lexer.read_string_literal_double_quote(start);
+    (kind, lexer.source.position())
+}
 
 // '
-ascii_byte_handler!(QOS(lexer) {
-    // SAFETY: This function is only called for `'`
-    unsafe { lexer.read_string_literal_single_quote() }
-});
+#[expect(non_snake_case)]
+fn QOS<'a, C: Config>(
+    lexer: &mut Lexer<'a, C>,
+    start: AsciiPosition<'a>,
+) -> (Kind, SourcePosition<'a>) {
+    let kind = lexer.read_string_literal_single_quote(start);
+    (kind, lexer.source.position())
+}
 
 // #
-ascii_byte_handler!(HAS(lexer) {
+byte_handler!(HAS(lexer) {
     lexer.consume_char();
     lexer.private_identifier()
 });
@@ -257,24 +238,22 @@ ascii_byte_handler!(HAS(lexer) {
 #[expect(non_snake_case)]
 fn IDT<'a, C: Config>(
     lexer: &mut Lexer<'a, C>,
-    pos: SourcePosition<'a>,
+    start: AsciiPosition<'a>,
 ) -> (Kind, SourcePosition<'a>) {
-    // SAFETY: This handler is only selected for ASCII identifier-start bytes.
-    unsafe { lexer.identifier_name_handler::<false>(pos) }
+    lexer.identifier_name_handler::<false>(start)
 }
 
 // Share one indirect-call target for all first letters which can begin a keyword.
 #[expect(non_snake_case)]
 fn KWD<'a, C: Config>(
     lexer: &mut Lexer<'a, C>,
-    pos: SourcePosition<'a>,
+    start: AsciiPosition<'a>,
 ) -> (Kind, SourcePosition<'a>) {
-    // SAFETY: This handler is only selected for ASCII identifier-start bytes.
-    unsafe { lexer.identifier_name_handler::<true>(pos) }
+    lexer.identifier_name_handler::<true>(start)
 }
 
 // %
-ascii_byte_handler!(PRC(lexer) {
+byte_handler!(PRC(lexer) {
     lexer.consume_char();
     if lexer.next_ascii_byte_eq(b'=') {
         Kind::PercentEq
@@ -284,7 +263,7 @@ ascii_byte_handler!(PRC(lexer) {
 });
 
 // &
-ascii_byte_handler!(AMP(lexer) {
+byte_handler!(AMP(lexer) {
     lexer.consume_char();
     if lexer.next_ascii_byte_eq(b'&') {
         if lexer.next_ascii_byte_eq(b'=') {
@@ -300,7 +279,7 @@ ascii_byte_handler!(AMP(lexer) {
 });
 
 // *
-ascii_byte_handler!(ATR(lexer) {
+byte_handler!(ATR(lexer) {
     lexer.consume_char();
     if lexer.next_ascii_byte_eq(b'*') {
         if lexer.next_ascii_byte_eq(b'=') {
@@ -316,7 +295,7 @@ ascii_byte_handler!(ATR(lexer) {
 });
 
 // +
-ascii_byte_handler!(PLS(lexer) {
+byte_handler!(PLS(lexer) {
     lexer.consume_char();
     if lexer.next_ascii_byte_eq(b'+') {
         Kind::Plus2
@@ -328,19 +307,19 @@ ascii_byte_handler!(PLS(lexer) {
 });
 
 // -
-ascii_byte_handler!(MIN(lexer) {
+byte_handler!(MIN(lexer) {
     lexer.consume_char();
     lexer.read_minus().unwrap_or_else(|| lexer.skip_single_line_comment(CommentKind::HtmlClose))
 });
 
 // .
-ascii_byte_handler!(PRD(lexer) {
+byte_handler!(PRD(lexer) {
     lexer.consume_char();
     lexer.read_dot()
 });
 
 // /
-ascii_byte_handler!(SLH(lexer) {
+byte_handler!(SLH(lexer) {
     lexer.consume_char();
     match lexer.peek_byte() {
         Some(b'/') => {
@@ -363,25 +342,25 @@ ascii_byte_handler!(SLH(lexer) {
 });
 
 // 0
-ascii_byte_handler!(ZER(lexer) {
+byte_handler!(ZER(lexer) {
     lexer.consume_char();
     lexer.read_zero()
 });
 
 // 1 to 9
-ascii_byte_handler!(DIG(lexer) {
+byte_handler!(DIG(lexer) {
     lexer.consume_char();
     lexer.decimal_literal_after_first_digit()
 });
 
 // <
-ascii_byte_handler!(LSS(lexer) {
+byte_handler!(LSS(lexer) {
     lexer.consume_char();
     lexer.read_left_angle().unwrap_or_else(|| lexer.skip_single_line_comment(CommentKind::HtmlOpen))
 });
 
 // =
-ascii_byte_handler!(EQL(lexer) {
+byte_handler!(EQL(lexer) {
     lexer.consume_char();
     if lexer.next_ascii_byte_eq(b'=') {
         if lexer.next_ascii_byte_eq(b'=') {
@@ -397,7 +376,7 @@ ascii_byte_handler!(EQL(lexer) {
 });
 
 // ?
-ascii_byte_handler!(QST(lexer) {
+byte_handler!(QST(lexer) {
     lexer.consume_char();
 
     match lexer.peek_byte() {
@@ -425,12 +404,12 @@ ascii_byte_handler!(QST(lexer) {
 });
 
 // \
-ascii_byte_handler!(ESC(lexer) {
+byte_handler!(ESC(lexer) {
     lexer.identifier_backslash_handler()
 });
 
 // ^
-ascii_byte_handler!(CRT(lexer) {
+byte_handler!(CRT(lexer) {
     lexer.consume_char();
     if lexer.next_ascii_byte_eq(b'=') {
         Kind::CaretEq
@@ -440,13 +419,13 @@ ascii_byte_handler!(CRT(lexer) {
 });
 
 // `
-ascii_byte_handler!(TPL(lexer) {
+byte_handler!(TPL(lexer) {
     lexer.consume_char();
     lexer.read_template_literal(Kind::TemplateHead, Kind::NoSubstitutionTemplate)
 });
 
 // |
-ascii_byte_handler!(PIP(lexer) {
+byte_handler!(PIP(lexer) {
     lexer.consume_char();
 
     match lexer.peek_byte() {
@@ -466,31 +445,11 @@ ascii_byte_handler!(PIP(lexer) {
     }
 });
 
-// Non-ASCII characters.
-//
-// Note: Must not use `ascii_byte_handler!` macro, as this handler is for non-ASCII chars.
-#[expect(non_snake_case)]
-fn UNI<'a, C: Config>(
-    lexer: &mut Lexer<'a, C>,
-    _pos: SourcePosition<'a>,
-) -> (Kind, SourcePosition<'a>) {
-    let kind = lexer.unicode_char_handler();
-    (kind, lexer.source.position())
-}
-
-// Single-byte tokens dispatched via `SINGLE_BYTE_TOKENS`, and invalid UTF-8 start bytes.
-//
-// UTF-8 continuation bytes (0x80 - 0xBF) (i.e. middle of a multi-byte UTF-8 sequence)
-// + and byte values which are not legal in UTF-8 strings (0xC0, 0xC1, 0xF5 - 0xFF).
-// `handle_byte()` should only be called with 1st byte of a valid UTF-8 character,
-// so something has gone wrong if we get here.
-// https://datatracker.ietf.org/doc/html/rfc3629
-//
-// Note: Must not use `ascii_byte_handler!` macro, as this handler also covers non-ASCII bytes.
+// Single-byte tokens, which `SINGLE_BYTE_TOKENS` contains, so they never reach a handler.
 #[expect(non_snake_case)]
 fn UER<'a, C: Config>(
     _lexer: &mut Lexer<'a, C>,
-    _pos: SourcePosition<'a>,
+    _start: AsciiPosition<'a>,
 ) -> (Kind, SourcePosition<'a>) {
     unreachable!();
 }

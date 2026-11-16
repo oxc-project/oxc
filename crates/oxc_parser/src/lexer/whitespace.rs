@@ -27,21 +27,19 @@ impl<C: Config> Lexer<'_, C> {
         Kind::Skip
     }
 
-    /// Skip regular whitespace after a line break, returning the next byte or `None` at EOF.
-    pub(super) fn line_break_handler(&mut self) -> Option<u8> {
+    /// Skip regular whitespace and further line breaks after a line break.
+    pub(super) fn line_break_handler(&mut self) {
         self.pending.set_is_on_new_line();
         self.trivia_builder.handle_newline(&mut self.pending);
 
         // Indentation is common after a line break.
         // Consume it, along with any further line breaks.
         // Irregular line breaks and whitespace are not consumed.
-        // They're uncommon, so leave them for the next call to `handle_byte` to take care of.
-        let byte = byte_search! {
+        // They're uncommon, so leave them for the next byte handler to take care of.
+        byte_search! {
             lexer: self,
             table: NOT_REGULAR_WHITESPACE_OR_LINE_BREAK_TABLE,
-            handle_eof: return None,
+            handle_eof: 0,
         };
-
-        Some(byte)
     }
 }

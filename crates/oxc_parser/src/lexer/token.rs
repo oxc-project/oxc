@@ -25,8 +25,6 @@ const HAS_SEPARATOR_SHIFT: usize = 88;
 const START_MASK: u128 = 0xFFFF_FFFF; // 32 bits
 const END_MASK: u128 = 0xFFFF_FFFF; // 32 bits
 const KIND_MASK: u128 = 0xFF; // 8 bits
-#[expect(dead_code)]
-const BOOL_MASK: u128 = 0xFF; // 8 bits
 
 const _: () = {
     const fn is_valid_shift<T>(shift: usize) -> bool {
