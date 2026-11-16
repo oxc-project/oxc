@@ -81,9 +81,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Advance lexer's cursor to end of file.
     #[cold]
     pub(crate) fn set_fatal_error(&mut self, error: ParserDiagnostic<'a>) {
-        // A fatal error can occur before consuming the token where a node starts.
-        // Keep spans built while unwinding valid; the resulting AST is discarded.
-        self.prev_token_end = self.token.end();
         if self.fatal_error.is_none() {
             self.lexer.advance_to_end();
             self.fatal_error = Some(FatalError { error, errors_len: self.errors.len() });
