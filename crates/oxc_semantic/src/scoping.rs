@@ -9,6 +9,7 @@ use oxc_span::Span;
 use oxc_str::{ArenaIdentHashMap, Ident, JSStr};
 use oxc_syntax::constant_value::ConstantValue;
 use oxc_syntax::{
+    label::LabelId,
     node::NodeId,
     reference::{Reference, ReferenceId},
     scope::{ScopeFlags, ScopeId},
@@ -134,6 +135,9 @@ impl Default for Scoping {
                 symbol_redeclarations: FxHashMap::default(),
                 bindings: IndexVec::new(),
                 root_unresolved_references: UnresolvedReferences::new_in(allocator),
+                label_names: ArenaVec::new_in(&allocator),
+                label_parent_ids: ArenaVec::new_in(&allocator),
+                unresolved_label_names: ArenaVec::new_in(&allocator),
             }),
         }
     }
@@ -302,6 +306,11 @@ pub struct ScopingInner<'cell> {
     pub(crate) bindings: IndexVec<ScopeId, Bindings<'cell>>,
 
     pub(crate) root_unresolved_references: UnresolvedReferences<'cell>,
+
+    /* Label Table Fields */
+    label_names: ArenaVec<'cell, Ident<'cell>>,
+    label_parent_ids: ArenaVec<'cell, Option<LabelId>>,
+    unresolved_label_names: ArenaVec<'cell, Ident<'cell>>,
 }
 
 // Symbol Table Methods
@@ -1183,6 +1192,77 @@ impl Scoping {
     }
 }
 
+// Label Table Methods
+impl Scoping {
+    /// Returns the number of labels in this table.
+    #[inline]
+    pub fn labels_len(&self) -> usize {
+        self.cell.borrow_dependent().label_names.len()
+    }
+
+    /// Iterate over all label IDs in creation order.
+    ///
+    /// Semantic analysis creates labels in source order, so a label's parent always precedes it.
+    pub fn label_ids(&self) -> impl ExactSizeIterator<Item = LabelId> + '_ {
+        (0..self.labels_len()).map(LabelId::from_usize)
+    }
+
+    /// Get the name of a label.
+    #[inline]
+    pub fn label_name(&self, label_id: LabelId) -> &str {
+        self.cell.borrow_dependent().label_names[label_id.index()].as_str()
+    }
+
+    /// Get the nearest enclosing label of a label.
+    ///
+    /// Labels are nested across function boundaries, so this is the nearest enclosing label
+    /// statement even if it is outside the function containing `label_id`.
+    #[inline]
+    pub fn label_parent_id(&self, label_id: LabelId) -> Option<LabelId> {
+        self.cell.borrow_dependent().label_parent_ids[label_id.index()]
+    }
+
+    /// Create a new label.
+    ///
+    /// `parent_id` is the nearest enclosing label, and must have been created before this label.
+    pub fn create_label(&mut self, name: Ident<'_>, parent_id: Option<LabelId>) -> LabelId {
+        self.cell.with_dependent_mut(|allocator, cell| {
+            let label_id = LabelId::from_usize(cell.label_names.len());
+            debug_assert!(
+                parent_id.is_none_or(|parent_id| parent_id < label_id),
+                "parent label must be created before its child"
+            );
+            cell.label_names.push(name.clone_in(allocator));
+            cell.label_parent_ids.push(parent_id);
+            label_id
+        })
+    }
+
+    /// Rename a label.
+    #[inline]
+    pub fn set_label_name(&mut self, label_id: LabelId, name: Ident<'_>) {
+        self.cell.with_dependent_mut(|allocator, cell| {
+            cell.label_names[label_id.index()] = name.clone_in(allocator);
+        });
+    }
+
+    /// Iterate over the names of `break` and `continue` labels that do not resolve to an
+    /// enclosing label.
+    ///
+    /// Codegen prints these names unchanged, so renamed labels must not use them.
+    pub fn unresolved_label_names(&self) -> impl Iterator<Item = &str> + '_ {
+        self.cell.borrow_dependent().unresolved_label_names.iter().map(Ident::as_str)
+    }
+
+    /// Record the name of a `break` or `continue` label that does not resolve to an enclosing
+    /// label.
+    pub fn add_unresolved_label_name(&mut self, name: Ident<'_>) {
+        self.cell.with_dependent_mut(|allocator, cell| {
+            cell.unresolved_label_names.push(name.clone_in(allocator));
+        });
+    }
+}
+
 impl Scoping {
     /// Clone all semantic data. Used in `Rolldown`.
     #[must_use]
@@ -1215,6 +1295,11 @@ impl Scoping {
                         .collect(),
                     root_unresolved_references: cell
                         .root_unresolved_references
+                        .clone_in_with_semantic_ids(allocator),
+                    label_names: cell.label_names.clone_in_with_semantic_ids(allocator),
+                    label_parent_ids: cell.label_parent_ids.clone_in_with_semantic_ids(allocator),
+                    unresolved_label_names: cell
+                        .unresolved_label_names
                         .clone_in_with_semantic_ids(allocator),
                 })
             },
