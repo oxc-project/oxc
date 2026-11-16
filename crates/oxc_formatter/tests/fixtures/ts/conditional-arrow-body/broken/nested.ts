@@ -4,4 +4,14 @@ function* f() {
   a ? yield (() => async((b)) /* tail */) : c => d;
   a ? yield (() => async((b)) // tail
   ) : c => d;
+  a ? yield (b
+  /* own line */) : c;
+  a ? b ? c : yield (() => async((d))
+  /* own line */) : e => f;
+  a ? yield (() => async((b)) // prettier-ignore
+  ) : c => d;
+  a ? yield (() => async((b)) /* prettier-ignore */
+  ) : c => d;
+  a ? b ? c : yield (() => async((d)) // oxfmt-ignore
+  ) : e => f;
 }

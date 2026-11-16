@@ -1236,10 +1236,11 @@ and `this` stays attached as a member chain head like a short identifier (`this.
 - Why: semantics
 - Pin: `tests/fixtures/ts/conditional-arrow-body/broken/nested.ts`
 
-With `arrowParens: "avoid"`, concise arrows and `yield` expressions in conditional
-consequents stay parenthesized, including through conditional alternate chains.
+With `arrowParens: "avoid"`, conditional consequents ending in concise arrows or populated
+`yield` expressions stay parenthesized, including nested conditionals.
 This ends the expression before the conditional colon can be read as a return-type
 annotation after inner parentheses are removed.
+Commented yield argument parentheses remain in place so trailing ignore directives keep their target.
 
 ```ts
 // input

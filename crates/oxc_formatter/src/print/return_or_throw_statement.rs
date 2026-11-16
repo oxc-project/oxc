@@ -3,7 +3,7 @@ use oxc_span::GetSpan;
 
 use crate::{
     Format,
-    ast_nodes::{AstNode, AstNodes},
+    ast_nodes::AstNode,
     format_args,
     formatter::{
         prelude::*,
@@ -38,16 +38,29 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, YieldExpression<'a>> {
         write!(f, ["yield", self.delegate().then_some("*")]);
         if let Some(argument) = &self.argument() {
             write!(f, space());
+            // Retain commented argument parentheses so ignore directives keep their target.
             if f.context().source_type().is_typescript()
                 && f.options().arrow_parentheses.is_as_needed()
-                && matches!(self.parent(), AstNodes::ConditionalExpression(_))
-                && self.needs_parentheses(f)
-                && !f.comments().has_trailing_suppression_comment(argument.span().end)
+                && argument.span().end < self.span().end
+                && !argument.needs_parentheses(f)
+                && let Some(comments) =
+                    f.comments().comments_before_closing_paren(argument.span().end)
             {
-                format_content_without_comments_after(
-                    &FormatAdjacentArgument(argument),
-                    argument.span().end,
+                let keep_line_break = comments.iter().any(|comment| {
+                    comment.is_block()
+                        && comment.followed_by_newline()
+                        && f.comments().is_suppression_comment(comment)
+                });
+                write!(
                     f,
+                    [group(&format_args!(
+                        token("("),
+                        soft_block_indent(&format_args!(
+                            FormatAdjacentArgument(argument),
+                            keep_line_break.then_some(expand_parent())
+                        )),
+                        token(")")
+                    ))]
                 );
             } else {
                 write!(f, FormatAdjacentArgument(argument));

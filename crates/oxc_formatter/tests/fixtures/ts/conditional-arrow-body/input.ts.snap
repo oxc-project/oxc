@@ -35,7 +35,7 @@ a ? ((b?) => ({ c: d })) : e => f;
 a ? (() => (b, c)) : d => e;
 a ? (() => async(b)) : c => d;
 a ? (result = () => (b, c)) : d => e;
-a ? (b ? c : (() => async(d))) : e => f;
+a ? (b ? c : () => async(d)) : e => f;
 a ? (() => async(/* argument */ b)) : /* alternate */ c => d;
 a ? (() => async(b)) : (c => d)();
 a ? (() => async(b)) : (c => d, e);
@@ -53,7 +53,7 @@ function* f() {
   a ? (yield b ? c : () => async(d)) : e => f;
   a ? (yield (b = () => async(c))) : d => e;
   a ? (yield (b = 1)) : c => d;
-  a ? (b ? c : (yield () => async(d))) : e => f;
+  a ? (b ? c : yield () => async(d)) : e => f;
 }
 
 -----------------------------------------
@@ -63,7 +63,7 @@ a ? ((b?) => ({ c: d })) : e => f;
 a ? (() => (b, c)) : d => e;
 a ? (() => async(b)) : c => d;
 a ? (result = () => (b, c)) : d => e;
-a ? (b ? c : (() => async(d))) : e => f;
+a ? (b ? c : () => async(d)) : e => f;
 a ? (() => async(/* argument */ b)) : /* alternate */ c => d;
 a ? (() => async(b)) : (c => d)();
 a ? (() => async(b)) : (c => d, e);
@@ -81,7 +81,7 @@ function* f() {
   a ? (yield b ? c : () => async(d)) : e => f;
   a ? (yield (b = () => async(c))) : d => e;
   a ? (yield (b = 1)) : c => d;
-  a ? (b ? c : (yield () => async(d))) : e => f;
+  a ? (b ? c : yield () => async(d)) : e => f;
 }
 
 -----------------------------------------
