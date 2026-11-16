@@ -7,7 +7,11 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    AstNode, ast_util::outermost_paren_parent, context::LintContext, fixer::RuleFixer, rule::Rule,
+    AstNode,
+    ast_util::{could_be_asi_hazard, outermost_paren_parent},
+    context::LintContext,
+    fixer::RuleFixer,
+    rule::Rule,
 };
 
 fn prefer_template_diagnostic(span: Span) -> OxcDiagnostic {
@@ -74,7 +78,10 @@ impl Rule for PreferTemplate {
                     return fixer.noop();
                 }
 
-                let result = build_template_for_binary(source_text, &fixer, expr, None, None);
+                let mut result = build_template_for_binary(source_text, &fixer, expr, None, None);
+                if could_be_asi_hazard(node, ctx) {
+                    result.insert(0, ';');
+                }
                 fixer.replace(expr.span, result)
             });
         }
@@ -703,6 +710,12 @@ fn test() {
         (r#"(a + "x" as string) + c"#, "(`${a  }x` as string) + c", None),
         (r#"(a + "x" satisfies string) + c"#, "(`${a  }x` satisfies string) + c", None),
         (r#"(a + "x")! + c"#, "(`${a  }x`)! + c", None),
+        ("foo\n'bar' + baz", "foo\n;`bar${  baz}`", None),
+        ("foo()\n'bar' + baz", "foo()\n;`bar${  baz}`", None),
+        ("foo[0]\n'bar' + baz", "foo[0]\n;`bar${  baz}`", None),
+        ("`template`\n'bar' + baz", "`template`\n;`bar${  baz}`", None),
+        ("'qux'\n'bar' + baz", "'qux'\n;`bar${  baz}`", None),
+        ("foo;\n'bar' + baz", "foo;\n`bar${  baz}`", None),
     ];
 
     Tester::new(PreferTemplate::NAME, PreferTemplate::PLUGIN, pass, fail)
