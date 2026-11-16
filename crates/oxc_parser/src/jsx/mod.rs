@@ -217,7 +217,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             )
         };
 
-        let mut span = Span::new(start, 0);
+        let mut span = Span::empty(start);
         let mut property = None;
 
         while self.eat(Kind::Dot) && self.fatal_error.is_none() {
