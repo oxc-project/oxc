@@ -230,7 +230,7 @@ pub struct ParserReturn<'a> {
 //
 // SAFETY: `ParserReturn` meets `Unbranded`'s contract.
 // - It doesn't name `BrandOrigin` or `Brand`, or any type which does. In this crate,
-//   those types are `Source` and `SourcePosition`, and the types which contain them
+//   those types are `LexerSource` and `SourcePosition`, and the types which contain them
 //   (`Lexer`, `LexerCheckpoint`, `ParserCheckpoint`, `ParserState`, `ParserImpl`).
 // - It doesn't contain a `dyn Trait + 'a`.
 // - Its lifetime is the lifetime of the arena. Nothing uses it as a brand.
@@ -567,7 +567,7 @@ struct ParserImpl<'a, C: ParserConfig> {
 impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     /// Create a new [`ParserImpl`].
     ///
-    /// `brand_origin` is for the `Source` in the `ParserImpl`'s [`Lexer`] (see [`brands`]).
+    /// `brand_origin` is for the `LexerSource` in the `ParserImpl`'s [`Lexer`] (see [`brands`]).
     ///
     /// [`brands`]: oxc_data_structures::brands
     #[inline]

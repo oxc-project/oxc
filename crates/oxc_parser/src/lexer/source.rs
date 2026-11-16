@@ -9,7 +9,7 @@ use crate::MAX_LEN;
 
 use super::search::SEARCH_BATCH_SIZE;
 
-/// `Source` holds the source text for the lexer, and provides APIs to read it.
+/// `LexerSource` holds the source text for the lexer, and provides APIs to read it.
 ///
 /// It provides a cursor which allows consuming source text either as `char`s, or as bytes.
 /// It replaces `std::str::Chars` iterator which performed the same function previously,
@@ -17,21 +17,22 @@ use super::search::SEARCH_BATCH_SIZE;
 ///
 /// Consuming source text byte-by-byte is often more performant than char-by-char.
 ///
-/// `Source` provides:
+/// `LexerSource` provides:
 ///
-/// * Safe API for consuming source char-by-char (`Source::next_char`, `Source::peek_char`).
-/// * Safe API for peeking next source byte (`Source::peek_byte`).
-/// * Unsafe API for consuming source byte-by-byte (`Source::next_byte`).
+/// * Safe API for consuming source char-by-char
+///   (`LexerSource::next_char`, `LexerSource::peek_char`).
+/// * Safe API for peeking next source byte (`LexerSource::peek_byte`).
+/// * Unsafe API for consuming source byte-by-byte (`LexerSource::next_byte`).
 /// * Mostly-safe API for rewinding to a previous position in source
-///   (`Source::position`, `Source::set_position`).
+///   (`LexerSource::position`, `LexerSource::set_position`).
 ///
-/// # Composition of `Source`
+/// # Composition of `LexerSource`
 ///
 /// * `start` is pointer to start of source text.
 /// * `end` is pointer to end of source text.
 /// * `ptr` is cursor for current position in source text.
 ///
-/// # Invariants of `Source`
+/// # Invariants of `LexerSource`
 ///
 /// 1. `start` <= `end`
 /// 2. The region of memory bounded between `start` and `end` must be initialized,
@@ -42,7 +43,7 @@ use super::search::SEARCH_BATCH_SIZE;
 /// 4. `ptr` must always point to a UTF-8 character boundary, or EOF.
 ///    i.e. pointing to *1st* byte of a UTF-8 character.
 ///
-/// These invariants are the same as `std::str::Chars`, except `Source` allows temporarily
+/// These invariants are the same as `std::str::Chars`, except `LexerSource` allows temporarily
 /// breaking invariant (4) to step through source text byte-by-byte.
 ///
 /// Invariants (1), (2) and (3) must be upheld at all times.
@@ -51,36 +52,39 @@ use super::search::SEARCH_BATCH_SIZE;
 /// Invariants (1) and (2) are enforced by initializing `start` and `end` from a valid `&str`,
 /// and they are never modified after initialization.
 ///
-/// Safe methods of `Source` enforce invariant (3) i.e. they do not allow reading past EOF.
-/// Unsafe methods e.g. `Source::next_byte_unchecked` and `Source::peek_byte_unchecked`
+/// Safe methods of `LexerSource` enforce invariant (3) i.e. they do not allow reading past EOF.
+/// Unsafe methods e.g. `LexerSource::next_byte_unchecked` and `LexerSource::peek_byte_unchecked`
 /// require caller to uphold this invariant.
 ///
 /// Invariant (4) is the most difficult to satisfy.
-/// `Source::next_char` relies on source text being valid UTF-8 to provide a safe API which
+/// `LexerSource::next_char` relies on source text being valid UTF-8 to provide a safe API which
 /// upholds this invariant.
-/// `Source::next_byte` requires very careful use as it may violate invariant (4).
-/// That is fine temporarily, but caller *must* ensure the safety conditions of `Source::next_byte`
-/// are satisfied, to restore this invariant before passing control back to other code.
-/// It will often be preferable to instead use `Source::peek_byte`, followed by `Source::next_char`,
-/// which are safe methods, and compiler will often reduce to equally efficient code.
+/// `LexerSource::next_byte` requires very careful use as it may violate invariant (4).
+/// That is fine temporarily, but caller *must* ensure the safety conditions of
+/// `LexerSource::next_byte` are satisfied, to restore this invariant before passing control
+/// back to other code.
+/// It will often be preferable to instead use `LexerSource::peek_byte`, followed by
+/// `LexerSource::next_char`, which are safe methods, and compiler will often reduce to
+/// equally efficient code.
 ///
 /// # Brand
 ///
-/// `'a` is the lifetime of the source text. It's also this `Source`'s brand (see [`brands`]).
+/// `'a` is the lifetime of the source text. It's also this `LexerSource`'s brand (see [`brands`]).
 ///
-/// - No other `Source` has the same `'a`.
-/// - Every `SourcePosition` which this `Source` creates carries its brand, so has the same `'a`.
+/// - No other `LexerSource` has the same `'a`.
+/// - Every `SourcePosition` which this `LexerSource` creates carries its brand,
+///   so has the same `'a`.
 ///
-/// So a `SourcePosition<'a>` can only have been created by this `Source<'a>`,
+/// So a `SourcePosition<'a>` can only have been created by this `LexerSource<'a>`,
 /// or derived from one which it created (`SourcePosition::add`, `SourcePosition::sub`).
-/// That's why methods which take a `SourcePosition<'a>` (e.g. `Source::set_position`)
-/// can rely on it being within this `Source`'s source text, without checking.
+/// That's why methods which take a `SourcePosition<'a>` (e.g. `LexerSource::set_position`)
+/// can rely on it being within this `LexerSource`'s source text, without checking.
 ///
-/// `Source::new` takes the [`BrandOrigin<'a>`] by value.
-/// There's only one `BrandOrigin` for each `'a`, so there's only one `Source` for each `'a`.
+/// `LexerSource::new` takes the [`BrandOrigin<'a>`] by value.
+/// There's only one `BrandOrigin` for each `'a`, so there's only one `LexerSource` for each `'a`.
 ///
 /// [`brands`]: oxc_data_structures::brands
-pub(super) struct Source<'a> {
+pub(super) struct LexerSource<'a> {
     /// Pointer to start of source string. Never altered after initialization.
     start: *const u8,
     /// Pointer to end of source string. Never altered after initialization.
@@ -91,15 +95,15 @@ pub(super) struct Source<'a> {
     /// `SEARCH_BATCH_SIZE` bytes in one go.
     /// Must be `usize`, not a pointer, as if source is very short, a pointer could be out of bounds.
     end_for_batch_search_addr: usize,
-    /// Origin of this `Source`'s brand `'a` (see above).
+    /// Origin of this `LexerSource`'s brand `'a` (see above).
     /// Also acts as the marker for the immutable borrow of source string.
     brand_origin: BrandOrigin<'a>,
 }
 
-impl<'a> Source<'a> {
-    /// Create `Source` from `&str`.
+impl<'a> LexerSource<'a> {
+    /// Create [`LexerSource`] from `&str`.
     ///
-    /// `brand_origin` is the origin of this `Source`'s brand `'a` (see [`Source`] docs).
+    /// `brand_origin` is the origin of this `LexerSource`'s brand `'a` (see [`LexerSource`] docs).
     pub(super) fn new(mut source_text: &'a str, brand_origin: BrandOrigin<'a>) -> Self {
         // If source text exceeds size limit, substitute a short source text which will fail to parse.
         // `Parser::parse` will convert error to `diagnostics::overlong_source()`.
@@ -126,7 +130,8 @@ impl<'a> Source<'a> {
     #[inline]
     pub(super) fn whole(&self) -> &'a str {
         // SAFETY:
-        // `start` and `end` are created from a `&str` in `Source::new`, so `start` cannot be after `end`.
+        // `start` and `end` are created from a `&str` in `LexerSource::new`,
+        // so `start` cannot be after `end`.
         // `start` and `end` are by definition on UTF-8 char boundaries.
         unsafe { self.str_between_positions_unchecked(self.start(), self.end()) }
     }
@@ -135,7 +140,8 @@ impl<'a> Source<'a> {
     #[inline]
     pub(super) fn remaining(&self) -> &'a str {
         // SAFETY:
-        // Invariant of `Source` is that `ptr` is always <= `end`, and is on a UTF-8 char boundary.
+        // Invariant of `LexerSource` is that `ptr` is always <= `end`,
+        // and is on a UTF-8 char boundary.
         // `end` is pointer to end of original `&str`, so by definition on a UTF-8 char boundary.
         unsafe { self.str_between_positions_unchecked(self.position(), self.end()) }
     }
@@ -143,7 +149,7 @@ impl<'a> Source<'a> {
     /// Get number of bytes of source text remaining.
     #[inline]
     fn remaining_bytes(&self) -> usize {
-        // SAFETY: Invariant of `Source` is that `ptr` is always <= `end`
+        // SAFETY: Invariant of `LexerSource` is that `ptr` is always <= `end`
         unsafe { self.end().offset_from(self.position()) }
     }
 
@@ -170,31 +176,34 @@ impl<'a> Source<'a> {
 
     /// Get current position.
     ///
-    /// The `SourcePosition` returned is guaranteed to be within bounds of `&str` that `Source`
-    /// was created from, and on a UTF-8 character boundary, so can be used by caller
-    /// to later move current position of this `Source` using `Source::set_position`.
+    /// The `SourcePosition` returned is guaranteed to be within bounds of `&str` that `LexerSource`
+    /// was created from, and on a UTF-8 character boundary, so can be used by caller to later
+    /// move current position of this `LexerSource` using `LexerSource::set_position`.
     ///
-    /// `SourcePosition` lives as long as the source text `&str` that `Source` was created from.
+    /// `SourcePosition` lives as long as the source text `&str` that `LexerSource`
+    /// was created from.
     #[inline]
     pub(super) fn position(&self) -> SourcePosition<'a> {
-        // SAFETY: Creating a `SourcePosition` from current position of `Source` is always valid,
-        // if caller has upheld safety conditions of other unsafe methods of this type.
+        // SAFETY: Creating a `SourcePosition` from current position of `LexerSource`
+        // is always valid, if caller has upheld safety conditions of other unsafe methods
+        // of this type.
         unsafe { SourcePosition::new(self.ptr, self.brand_origin.brand()) }
     }
 
     /// Move current position.
     #[inline]
     pub(super) fn set_position(&mut self, pos: SourcePosition<'a>) {
-        // A `SourcePosition` upholds the invariants of the `Source` which created it.
-        // `pos` has the same brand `'a` as this `Source`, so this `Source` created it.
+        // A `SourcePosition` upholds the invariants of the `LexerSource` which created it.
+        // `pos` has the same brand `'a` as this `LexerSource`, so this `LexerSource` created it.
         // That's what allows this function to be safe.
 
         // SAFETY: `SourcePosition::read`'s contract is upheld by:
         // * The preceding checks that `pos.ptr` >= `self.start` and < `self.end`.
-        // * `Source`'s invariants guarantee that `self.start` - `self.end` contains allocated memory.
-        // * `Source::new` takes an immutable ref `&str`, guaranteeing that the memory `pos.ptr`
-        //   addresses cannot be aliased by a `&mut` ref as long as `Source` exists.
-        // * `SourcePosition` can only live as long as the `&str` underlying `Source`.
+        // * `LexerSource`'s invariants guarantee that `self.start` - `self.end`
+        //   contains allocated memory.
+        // * `LexerSource::new` takes an immutable ref `&str`, guaranteeing that the memory
+        //   `pos.ptr` addresses cannot be aliased by a `&mut` ref as long as `LexerSource` exists.
+        // * `SourcePosition` can only live as long as the `&str` underlying `LexerSource`.
         debug_assert!(
             pos.ptr >= self.start
                 && pos.ptr <= self.end
@@ -204,13 +213,13 @@ impl<'a> Source<'a> {
         self.ptr = pos.ptr;
     }
 
-    /// Advance `Source`'s cursor to end.
+    /// Advance `LexerSource`'s cursor to end.
     #[inline]
     pub(super) fn advance_to_end(&mut self) {
         self.ptr = self.end;
     }
 
-    /// Advance `Source`'s cursor by one byte if it is equal to the given ASCII value.
+    /// Advance `LexerSource`'s cursor by one byte if it is equal to the given ASCII value.
     ///
     /// # SAFETY
     ///
@@ -226,7 +235,7 @@ impl<'a> Source<'a> {
         matched
     }
 
-    /// Get string slice from a `SourcePosition` up to the current position of `Source`.
+    /// Get string slice from a `SourcePosition` up to the current position of `LexerSource`.
     #[inline]
     pub(super) fn str_from_pos_to_current(&self, pos: SourcePosition<'a>) -> &'a str {
         assert!(pos <= self.position());
@@ -234,42 +243,44 @@ impl<'a> Source<'a> {
         unsafe { self.str_from_pos_to_current_unchecked(pos) }
     }
 
-    /// Get string slice from a `SourcePosition` up to current position of `Source`, without checks.
+    /// Get string slice from a `SourcePosition` up to current position of `LexerSource`,
+    /// without checks.
     ///
     /// # SAFETY
-    /// `pos` must not be after current position of `Source`.
+    /// `pos` must not be after current position of `LexerSource`.
     /// This is always the case if both:
-    /// 1. `Source::set_position` has not been called since `pos` was created.
+    /// 1. `LexerSource::set_position` has not been called since `pos` was created.
     /// 2. `pos` has not been advanced with `SourcePosition::add`.
     #[inline]
     pub(super) unsafe fn str_from_pos_to_current_unchecked(
         &self,
         pos: SourcePosition<'a>,
     ) -> &'a str {
-        // SAFETY: Caller guarantees `pos` is not after current position of `Source`
+        // SAFETY: Caller guarantees `pos` is not after current position of `LexerSource`
         unsafe { self.str_between_positions_unchecked(pos, self.position()) }
     }
 
-    /// Get string slice from current position of `Source` up to a `SourcePosition`, without checks.
+    /// Get string slice from current position of `LexerSource` up to a `SourcePosition`,
+    /// without checks.
     ///
     /// # SAFETY
-    /// `pos` must not be before current position of `Source`.
+    /// `pos` must not be before current position of `LexerSource`.
     /// This is always the case if both:
-    /// 1. `Source::set_position` has not been called since `pos` was created.
+    /// 1. `LexerSource::set_position` has not been called since `pos` was created.
     /// 2. `pos` has not been moved backwards with `SourcePosition::sub`.
     #[inline]
     pub(super) unsafe fn str_from_current_to_pos_unchecked(
         &self,
         pos: SourcePosition<'a>,
     ) -> &'a str {
-        // SAFETY: Caller guarantees `pos` is not before current position of `Source`
+        // SAFETY: Caller guarantees `pos` is not before current position of `LexerSource`
         unsafe { self.str_between_positions_unchecked(self.position(), pos) }
     }
 
-    /// Get string slice from a `SourcePosition` up to the end of `Source`.
+    /// Get string slice from a `SourcePosition` up to the end of `LexerSource`.
     #[inline]
     pub(super) fn str_from_pos_to_end(&self, pos: SourcePosition<'a>) -> &'a str {
-        // SAFETY: Invariants of `SourcePosition` is that it cannot be after end of `Source`,
+        // SAFETY: Invariants of `SourcePosition` is that it cannot be after end of `LexerSource`,
         // and always on a UTF-8 character boundary
         unsafe { self.str_between_positions_unchecked(pos, self.end()) }
     }
@@ -286,7 +297,7 @@ impl<'a> Source<'a> {
     ) -> &'a str {
         // Check `start` is not after `end`
         debug_assert!(start.ptr <= end.ptr);
-        // Check `start` and `end` are within bounds of `Source`
+        // Check `start` and `end` are within bounds of `LexerSource`
         debug_assert!(start.ptr >= self.start);
         debug_assert!(end.ptr <= self.end);
         // Check `start` and `end` are on UTF-8 character boundaries.
@@ -297,10 +308,11 @@ impl<'a> Source<'a> {
         }
 
         // SAFETY: Caller guarantees `start` is not after `end`.
-        // `start` and `end` have the same brand `'a` as this `Source`, so this `Source`
-        // created both. So `start.ptr` and `end.ptr` are both within this `Source`'s allocation,
+        // `start` and `end` have the same brand `'a` as this `LexerSource`,
+        // so this `LexerSource` created both.
+        // So `start.ptr` and `end.ptr` are both within this `LexerSource`'s allocation,
         // and derived from the same pointer.
-        // Invariants of `Source` and `SourcePosition` types guarantee that both are positioned
+        // Invariants of `LexerSource` and `SourcePosition` types guarantee that both are positioned
         // on UTF-8 character boundaries. So slicing source text between these 2 points will always
         // yield a valid UTF-8 string.
         unsafe {
@@ -325,16 +337,18 @@ impl<'a> Source<'a> {
     /// Get offset of `pos` as `u32`.
     #[inline]
     pub(super) fn offset_of(&self, pos: SourcePosition<'a>) -> u32 {
-        // SAFETY: `pos` has the same brand `'a` as this `Source`, so this `Source` created it.
-        // So it's within this `Source`'s source text, which starts at `start`.
+        // SAFETY: `pos` has the same brand `'a` as this `LexerSource`,
+        // so this `LexerSource` created it.
+        // So it's within this `LexerSource`'s source text, which starts at `start`.
         unsafe { pos.offset_from_u32(self.start()) }
     }
 
     /// Get offset of `pos` as `usize`.
     #[inline]
     pub(super) fn offset_of_usize(&self, pos: SourcePosition<'a>) -> usize {
-        // SAFETY: `pos` has the same brand `'a` as this `Source`, so this `Source` created it.
-        // So it's within this `Source`'s source text, which starts at `start`.
+        // SAFETY: `pos` has the same brand `'a` as this `LexerSource`,
+        // so this `LexerSource` created it.
+        // So it's within this `LexerSource`'s source text, which starts at `start`.
         unsafe { pos.offset_from(self.start()) }
     }
 
@@ -348,11 +362,11 @@ impl<'a> Source<'a> {
     #[inline]
     pub(super) fn back(&mut self, n: usize) {
         // This assertion is essential to ensure safety of `new_pos.read()` call below.
-        // Without this check, calling `back(0)` on an empty `Source` would cause reading
-        // out of bounds.
+        // Without this check, calling `back(0)` on an empty `LexerSource` would cause
+        // reading out of bounds.
         // Compiler should remove this assertion when inlining this function,
         // as long as it can deduce from calling code that `n` is non-zero.
-        assert!(n > 0, "Cannot call `Source::back` with 0");
+        assert!(n > 0, "Cannot call `LexerSource::back` with 0");
 
         // Ensure not attempting to go back to before start of source
         let offset = self.offset_usize();
@@ -365,13 +379,14 @@ impl<'a> Source<'a> {
         // Enforce invariant that `ptr` must be positioned on a UTF-8 character boundary.
         // SAFETY: `new_ptr` is in bounds of original `&str`, and `n > 0` assertion ensures
         // not at the end, so valid to read a byte.
-        // `Source`'s invariants guarantee that `self.start` - `self.end` contains allocated memory.
-        // `Source::new` takes an immutable ref `&str`, guaranteeing that the memory `new_ptr`
-        // addresses cannot be aliased by a `&mut` ref as long as `Source` exists.
+        // `LexerSource`'s invariants guarantee that `self.start` - `self.end` contains
+        // allocated memory.
+        // `LexerSource::new` takes an immutable ref `&str`, guaranteeing that the memory
+        // `new_ptr` addresses cannot be aliased by a `&mut` ref as long as `LexerSource` exists.
         let byte = unsafe { new_pos.read() };
         assert!(!is_utf8_cont_byte(byte), "Offset is not on a UTF-8 character boundary");
 
-        // Move current position. The checks above satisfy `Source`'s invariants.
+        // Move current position. The checks above satisfy `LexerSource`'s invariants.
         self.ptr = new_pos.ptr;
     }
 
@@ -391,7 +406,7 @@ impl<'a> Source<'a> {
             // Check invariant that `ptr` is on a UTF-8 character boundary.
             debug_assert!(!is_utf8_cont_byte(byte));
 
-            // SAFETY: `Source` is not empty, and we just checked next byte is not ASCII
+            // SAFETY: `LexerSource` is not empty, and we just checked next byte is not ASCII
             unsafe { self.next_unicode_char() }
         }
     }
@@ -399,18 +414,19 @@ impl<'a> Source<'a> {
     /// Get next char of source, and advance position to after it, when next char is a unicode character.
     ///
     /// # SAFETY
-    /// * `Source` must not be empty.
+    /// * `LexerSource` must not be empty.
     /// * Next character in source must not be ASCII.
     #[expect(clippy::unnecessary_wraps)]
     #[cold] // Unicode is rare
     unsafe fn next_unicode_char(&mut self) -> Option<char> {
         // Create a `Chars` iterator, get next char from it, and then update `self.ptr`
         // to match `Chars` iterator's updated pointer afterwards.
-        // `Chars` iterator upholds same invariants as `Source`, so its pointer is guaranteed
-        // to be valid as `self.ptr`.
+        // `Chars` iterator upholds same invariants as `LexerSource`,
+        // so its pointer is guaranteed to be valid as `self.ptr`.
         let remaining = self.remaining();
-        // Inform compiler that next char in `Source` is non-ASCII, so it can remove some branches from
-        // `chars.next().unwrap()`. Compiler will not be aware of these invariants if this function is not inlined.
+        // Inform compiler that next char in `LexerSource` is non-ASCII,
+        // so it can remove some branches from `chars.next().unwrap()`.
+        // Compiler will not be aware of these invariants if this function is not inlined.
         // SAFETY: Caller guarantees these invariants.
         unsafe {
             assert_unchecked!(!remaining.is_empty());
@@ -438,7 +454,7 @@ impl<'a> Source<'a> {
             // Check invariant that `ptr` is on a UTF-8 character boundary.
             debug_assert!(!is_utf8_cont_byte(byte1));
 
-            // SAFETY: `Source` is not empty
+            // SAFETY: `LexerSource` is not empty
             unsafe { self.next_2_unicode_chars() }
         }
     }
@@ -446,17 +462,18 @@ impl<'a> Source<'a> {
     /// Get next 2 chars of source, and advance position to after them, when one of next 2 chars is non-ASCII.
     ///
     /// # SAFETY
-    /// `Source` must not be empty.
+    /// `LexerSource` must not be empty.
     #[cold] // Unicode is rare
     unsafe fn next_2_unicode_chars(&mut self) -> Option<[char; 2]> {
         // Create a `Chars` iterator, get next 2 chars from it, and then update `self.ptr`
         // to match `Chars` iterator's updated pointer afterwards.
-        // `Chars` iterator upholds same invariants as `Source`, so its pointer is guaranteed
-        // to be valid as `self.ptr`.
+        // `Chars` iterator upholds same invariants as `LexerSource`,
+        // so its pointer is guaranteed to be valid as `self.ptr`.
         let remaining = self.remaining();
-        // Inform compiler that `Source` is not empty, to remove check from `chars.next().unwrap()`.
+        // Inform compiler that `LexerSource` is not empty,
+        // to remove check from `chars.next().unwrap()`.
         // Compiler will not be aware of this invariant if this function is not inlined.
-        // SAFETY: Caller guarantees `Source` is not empty.
+        // SAFETY: Caller guarantees `LexerSource` is not empty.
         unsafe { assert_unchecked!(!remaining.is_empty()) };
         let mut chars = remaining.chars();
         let c1 = chars.next().unwrap();
@@ -468,8 +485,8 @@ impl<'a> Source<'a> {
     /// Get next byte of source, and advance position to after it.
     ///
     /// # SAFETY
-    /// This function may leave `Source` positioned in middle of a UTF-8 character sequence,
-    /// which would violate one of `Source`'s invariants.
+    /// This function may leave `LexerSource` positioned in middle of a UTF-8 character sequence,
+    /// which would violate one of `LexerSource`'s invariants.
     ///
     /// This is OK temporarily, but caller *must* ensure the invariant is restored again.
     ///
@@ -477,17 +494,19 @@ impl<'a> Source<'a> {
     ///
     /// 1. No byte is returned (end of file).
     /// 2. The byte returned is ASCII.
-    /// 3. Further calls to `Source::next_byte` or `Source::next_byte_unchecked` are made
+    /// 3. Further calls to `LexerSource::next_byte` or `LexerSource::next_byte_unchecked` are made
     ///    to consume the rest of the multi-byte UTF-8 character, before calling any other methods
-    ///    of `Source` (even safe methods) which rely on `Source` being positioned on a UTF-8
-    ///    character boundary, or before passing control back to other safe code which may call them.
+    ///    of `LexerSource` (even safe methods) which rely on `LexerSource` being positioned
+    ///    on a UTF-8 character boundary, or before passing control back to other safe code
+    ///    which may call them.
     ///
-    /// In particular, safe methods `Source::next_char`, `Source::peek_char`, and `Source::remaining`
-    /// are *not* safe to call until one of above conditions is satisfied.
+    /// In particular, safe methods `LexerSource::next_char`, `LexerSource::peek_char`,
+    /// and `LexerSource::remaining` are *not* safe to call until one of above conditions
+    /// is satisfied.
     ///
-    /// It will often be preferable to instead use `Source::peek_byte`, followed by `Source::next_char`,
-    /// which are safe methods, and compiler will often reduce to equally efficient code, if calling
-    /// code tests the byte returned. e.g.:
+    /// It will often be preferable to instead use `LexerSource::peek_byte`,
+    /// followed by `LexerSource::next_char`, which are safe methods, and compiler will often
+    /// reduce to equally efficient code, if calling code tests the byte returned. e.g.:
     ///
     /// ```rust,ignore
     /// // Consume a space
@@ -511,23 +530,25 @@ impl<'a> Source<'a> {
     /// Get next bytes of source, and advance position to after it, without EOF bounds-check.
     ///
     /// # SAFETY
-    /// Caller must ensure `Source` is not at end of file.
+    /// Caller must ensure `LexerSource` is not at end of file.
     ///
-    /// This function may leave `Source` positioned in middle of a UTF-8 character sequence,
-    /// which would violate one of `Source`'s invariants.
+    /// This function may leave `LexerSource` positioned in middle of a UTF-8 character sequence,
+    /// which would violate one of `LexerSource`'s invariants.
     ///
     /// This is OK temporarily, but caller *must* ensure the invariant is restored again.
     ///
     /// Caller must ensure one of:
     ///
     /// 1. The byte returned is ASCII.
-    /// 2. Further calls to `Source::next_byte` or `Source::next_byte_unchecked` are made
+    /// 2. Further calls to `LexerSource::next_byte` or `LexerSource::next_byte_unchecked` are made
     ///    to consume the rest of the multi-byte UTF-8 character, before calling any other methods
-    ///    of `Source` (even safe methods) which rely on `Source` being positioned on a UTF-8
-    ///    character boundary, or before passing control back to other safe code which may call them.
+    ///    of `LexerSource` (even safe methods) which rely on `LexerSource` being positioned
+    ///    on a UTF-8 character boundary, or before passing control back to other safe code
+    ///    which may call them.
     ///
-    /// In particular, safe methods `Source::next_char`, `Source::peek_char`, and `Source::remaining`
-    /// are *not* safe to call until one of above conditions is satisfied.
+    /// In particular, safe methods `LexerSource::next_char`, `LexerSource::peek_char`,
+    /// and `LexerSource::remaining` are *not* safe to call until one of above conditions
+    /// is satisfied.
     #[inline]
     pub(super) unsafe fn next_byte_unchecked(&mut self) -> u8 {
         // SAFETY: Caller guarantees not at end of file i.e. `ptr != end`.
@@ -553,7 +574,7 @@ impl<'a> Source<'a> {
             // Check invariant that `ptr` is on a UTF-8 character boundary.
             debug_assert!(!is_utf8_cont_byte(byte));
 
-            // SAFETY: `Source` is not empty, and we just checked next byte is not ASCII
+            // SAFETY: `LexerSource` is not empty, and we just checked next byte is not ASCII
             unsafe { self.peek_unicode_char() }
         }
     }
@@ -561,15 +582,16 @@ impl<'a> Source<'a> {
     /// Peek next char of source, without consuming it, when next char is a unicode character.
     ///
     /// # SAFETY
-    /// * `Source` must not be empty.
+    /// * `LexerSource` must not be empty.
     /// * Next character in source must not be ASCII.
     #[expect(clippy::unnecessary_wraps)]
     #[cold] // Unicode is rare
     unsafe fn peek_unicode_char(&self) -> Option<char> {
         // Create a `Chars` iterator, and get next char from it.
         let remaining = self.remaining();
-        // Inform compiler that next char in `Source` is non-ASCII, so it can remove some branches from
-        // `chars.next().unwrap()`. Compiler will not be aware of these invariants if this function is not inlined.
+        // Inform compiler that next char in `LexerSource` is non-ASCII,
+        // so it can remove some branches from `chars.next().unwrap()`.
+        // Compiler will not be aware of these invariants if this function is not inlined.
         // SAFETY: Caller guarantees these invariants.
         unsafe {
             assert_unchecked!(!remaining.is_empty());
@@ -611,45 +633,46 @@ impl<'a> Source<'a> {
     /// Peek next byte of source without consuming it, without EOF bounds-check.
     ///
     /// # SAFETY
-    /// Caller must ensure `Source` is not at end of file.
+    /// Caller must ensure `LexerSource` is not at end of file.
     #[inline]
     pub(super) unsafe fn peek_byte_unchecked(&self) -> u8 {
         debug_assert!(self.ptr >= self.start && self.ptr < self.end);
 
         // SAFETY: Caller guarantees `ptr` is before `end` (i.e. not at end of file).
         // Methods of this type provide no way to allow `ptr` to be before `start`.
-        // `Source`'s invariants guarantee that `self.start` - `self.end` contains allocated memory.
-        // `Source::new` takes an immutable ref `&str`, guaranteeing that the memory `self.ptr`
-        // addresses cannot be aliased by a `&mut` ref as long as `Source` exists.
+        // `LexerSource`'s invariants guarantee that `self.start` - `self.end` contains
+        // allocated memory.
+        // `LexerSource::new` takes an immutable ref `&str`, guaranteeing that the memory `self.ptr`
+        // addresses cannot be aliased by a `&mut` ref as long as `LexerSource` exists.
         unsafe { self.position().read() }
     }
 }
 
-/// Wrapper around a pointer to a position in `Source`.
+/// Wrapper around a pointer to a position in `LexerSource`.
 ///
-/// `'a` is the brand of the `Source` which created it (see [`Source`] docs).
-/// So a `SourcePosition<'a>` can only be used with that `Source<'a>`,
+/// `'a` is the brand of the `LexerSource` which created it (see [`LexerSource`] docs).
+/// So a `SourcePosition<'a>` can only be used with that `LexerSource<'a>`,
 /// and with other `SourcePosition<'a>`s which it created.
 ///
 /// # SAFETY
 /// `SourcePosition` must always be on a UTF-8 character boundary,
-/// and within bounds of the `Source` that created it.
+/// and within bounds of the `LexerSource` that created it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SourcePosition<'a> {
     ptr: *const u8,
-    /// Brand of the `Source<'a>` which created this position.
+    /// Brand of the `LexerSource<'a>` which created this position.
     brand: Brand<'a>,
 }
 
 impl<'a> SourcePosition<'a> {
     /// Create a new `SourcePosition` from a pointer.
     ///
-    /// `brand` is the brand of the `Source` which the position belongs to.
+    /// `brand` is the brand of the `LexerSource` which the position belongs to.
     ///
     /// # SAFETY
-    /// * Pointer must obey all the same invariants as `Source::ptr`.
-    /// * It must be created from the `Source` which `brand` is the brand of.
-    /// * It must be in bounds of the source text `&str` that `Source` is created from,
+    /// * Pointer must obey all the same invariants as `LexerSource::ptr`.
+    /// * It must be created from the `LexerSource` which `brand` is the brand of.
+    /// * It must be in bounds of the source text `&str` that `LexerSource` is created from,
     ///   or 1 byte after the end of the source text (i.e. positioned at EOF).
     /// * It must be positioned on a UTF-8 character boundary (or EOF).
     #[inline]
@@ -661,10 +684,10 @@ impl<'a> SourcePosition<'a> {
     /// The provenance of the pointer `SourcePosition` contains is maintained.
     ///
     /// # SAFETY
-    /// Caller must ensure that advancing `SourcePosition` by `n` bytes does not make it past the end
-    /// of `Source` this `SourcePosition` was created from.
-    /// NB: It is legal to use `add` to create a `SourcePosition` which is *on* the end of `Source`,
-    /// just not past it.
+    /// Caller must ensure that advancing `SourcePosition` by `n` bytes does not make it
+    /// past the end of `LexerSource` this `SourcePosition` was created from.
+    /// NB: It is legal to use `add` to create a `SourcePosition`
+    /// which is *on* the end of `LexerSource`, just not past it.
     #[inline]
     pub(super) unsafe fn add(self, n: usize) -> Self {
         // SAFETY: Caller guarantees that `add` will not go out of bounds
@@ -675,8 +698,8 @@ impl<'a> SourcePosition<'a> {
     /// The provenance of the pointer `SourcePosition` contains is maintained.
     ///
     /// # SAFETY
-    /// Caller must ensure that reversing `SourcePosition` by `n` bytes does not make it before the start
-    /// of `Source` this `SourcePosition` was created from.
+    /// Caller must ensure that reversing `SourcePosition` by `n` bytes does not make it
+    /// before the start of `LexerSource` this `SourcePosition` was created from.
     #[inline]
     pub(super) unsafe fn sub(self, n: usize) -> Self {
         // SAFETY: Caller guarantees that `sub` will not go out of bounds
@@ -690,7 +713,7 @@ impl<'a> SourcePosition<'a> {
     #[inline]
     pub(super) unsafe fn offset_from(self, origin: Self) -> usize {
         // SAFETY: Caller guarantees `self` is not before `origin`.
-        // Both have the same brand `'a`, so the same `Source` created both,
+        // Both have the same brand `'a`, so the same `LexerSource` created both,
         // and they're within the same allocation.
         unsafe { self.ptr.offset_from_unsigned(origin.ptr) }
     }
@@ -703,7 +726,7 @@ impl<'a> SourcePosition<'a> {
     pub(super) unsafe fn offset_from_u32(self, origin: Self) -> u32 {
         // SAFETY: Caller guarantees `self` is not before `origin`.
         let offset = unsafe { self.offset_from(origin) };
-        // Cannot overflow `u32` because of `MAX_LEN` check in `Source::new`
+        // Cannot overflow `u32` because of `MAX_LEN` check in `LexerSource::new`
         #[expect(clippy::cast_possible_truncation)]
         let offset = offset as u32;
         offset
@@ -715,21 +738,21 @@ impl<'a> SourcePosition<'a> {
     /// negative if `self` is before `other`, or 0 if they're the same.
     #[inline]
     fn offset_from_signed(self, other: Self) -> isize {
-        // SAFETY: Both have the same brand `'a`, so the same `Source` created both,
+        // SAFETY: Both have the same brand `'a`, so the same `LexerSource` created both,
         // and they're within the same allocation
         unsafe { self.ptr.offset_from(other.ptr) }
     }
 
     /// Returns `true` if this [`SourcePosition`] is at end of `source`.
     #[inline]
-    pub(super) fn is_end_of(self, source: &Source<'a>) -> bool {
+    pub(super) fn is_end_of(self, source: &LexerSource<'a>) -> bool {
         // TODO: Use `source.end().offset_from(self) == 0` instead?
         self.ptr == source.end
     }
 
     /// Returns `true` if this [`SourcePosition`] is not at end of `source`.
     #[inline]
-    pub(super) fn is_not_end_of(self, source: &Source<'a>) -> bool {
+    pub(super) fn is_not_end_of(self, source: &LexerSource<'a>) -> bool {
         !self.is_end_of(source)
     }
 
@@ -739,7 +762,7 @@ impl<'a> SourcePosition<'a> {
     ///
     /// Returns `true` if safe to read `Lexer::search::SEARCH_BATCH_SIZE` from this position.
     #[inline]
-    pub(super) fn can_read_batch_from(&self, source: &Source<'a>) -> bool {
+    pub(super) fn can_read_batch_from(&self, source: &LexerSource<'a>) -> bool {
         self.ptr as usize <= source.end_for_batch_search_addr
     }
 
@@ -766,9 +789,9 @@ impl<'a> SourcePosition<'a> {
 
         // SAFETY:
         // Caller guarantees `self` is not at end of source text.
-        // `Source` is created from a valid `&str`, so points to allocated, initialized memory.
-        // `Source` conceptually holds the source text `&str`, which guarantees no mutable references
-        // to the same memory can exist, as that would violate Rust's aliasing rules.
+        // `LexerSource` is created from a valid `&str`, so points to allocated, initialized memory.
+        // `LexerSource` conceptually holds the source text `&str`, which guarantees no mutable
+        // references to the same memory can exist, as that would violate Rust's aliasing rules.
         // Pointer is "dereferenceable" by definition as a `u8` is 1 byte and cannot span multiple objects.
         // Alignment is not relevant as `u8` is aligned on 1 (i.e. no alignment requirements).
         unsafe { *self.ptr.as_ref_unchecked() }
@@ -785,9 +808,9 @@ impl<'a> SourcePosition<'a> {
 
         // SAFETY:
         // Caller guarantees `self` is not at no later than 2 bytes before end of source text.
-        // `Source` is created from a valid `&str`, so points to allocated, initialized memory.
-        // `Source` conceptually holds the source text `&str`, which guarantees no mutable references
-        // to the same memory can exist, as that would violate Rust's aliasing rules.
+        // `LexerSource` is created from a valid `&str`, so points to allocated, initialized memory.
+        // `LexerSource` conceptually holds the source text `&str`, which guarantees no mutable
+        // references to the same memory can exist, as that would violate Rust's aliasing rules.
         // Alignment is not relevant as `u8` is aligned on 1 (i.e. no alignment requirements).
         unsafe {
             let p = self.ptr.cast::<[u8; 2]>();
