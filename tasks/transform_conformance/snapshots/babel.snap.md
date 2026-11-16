@@ -1,8 +1,9 @@
 commit: 16a2d671
 
-Passed: 748/1184
+Passed: 748/1182
 
 # All Passed:
+* babel-plugin-transform-logical-assignment-operators
 * babel-plugin-transform-export-namespace-from
 * babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-react-display-name
@@ -849,20 +850,6 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-logical-assignment-operators (9/10)
-* transparent-expr-wrappers/flow-typecast/input.js
-
-  x Expected `,` or `)` but found `:`
-   ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/transparent-expr-wrappers/flow-typecast/input.js:1:5]
- 1 | (a.b: any) ||= 1;
-   : |   |
-   : |   `-- `,` or `)` expected
-   : `-- Opened here
- 2 | (obj[++key]: any) ||= 1;
-   `----
-
-
-
 # babel-plugin-transform-nullish-coalescing-operator (9/24)
 * assumption-noDocumentAll/transform/input.js
 x Output mismatch
@@ -1086,7 +1073,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-exponentiation-operator (2/13)
+# babel-plugin-transform-exponentiation-operator (2/12)
 * exponentiation-operator/memoise-computed-key-in-default-args/input.js
 x Output mismatch
 
@@ -1104,18 +1091,6 @@ x Output mismatch
 
 * regression/4403/input.js
 x Output mismatch
-
-* transparent-expr-wrappers/flow-typecast/input.js
-
-  x Expected `,` or `)` but found `:`
-   ,-[tasks/coverage/babel/packages/babel-plugin-transform-exponentiation-operator/test/fixtures/transparent-expr-wrappers/flow-typecast/input.js:1:5]
- 1 | (a.b: any) **= 2;
-   : |   |
-   : |   `-- `,` or `)` expected
-   : `-- Opened here
- 2 | (obj[++key]: any) **= 2;
-   `----
-
 
 * transparent-expr-wrappers/parenthesized/input.js
 x Output mismatch

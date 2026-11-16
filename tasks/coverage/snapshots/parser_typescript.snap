@@ -1,9 +1,9 @@
 commit: 5e32f324
 
 parser_typescript Summary:
-AST Parsed     : 9907/9920 (99.87%)
-Positive Passed: 9895/9920 (99.75%)
-Negative Passed: 1721/2827 (60.88%)
+AST Parsed     : 9909/9922 (99.87%)
+Positive Passed: 9897/9922 (99.75%)
+Negative Passed: 1721/2824 (60.94%)
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration4.ts
@@ -186,11 +186,7 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/constructorsWithSpecializedSignatures.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/contentMapperOutputExtensionsImportHelpersFiltered.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/contentMapperOutputExtensionsRequiresRewrite.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/contentMapperOutputExtensionsResolutionDependentRewrite.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/contextualReturnTypeOfIIFE2.ts
 
@@ -609,8 +605,6 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsdocIllegalTags.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsdocInTypeScript.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsdocNestedPropertyTagInvalidType.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsdocParameterParsingInfiniteLoop.ts
 
