@@ -244,14 +244,6 @@ fn test() {
         ("Promise.reject(new TypeError)", None),
         ("Promise.reject(new Error('foo'))", None),
         ("function foo(undefined) { Promise.reject(undefined); }", None),
-        ("function f() { Promise.reject('x'); var Promise; }", None),
-        ("function f(Promise) { return Promise.reject('x'); }", None),
-        ("{ class Promise { static reject(x) { return x; } } Promise.reject('x'); }", None),
-        (
-            "function g(Promise) { return new Promise((resolve, reject) => { reject('x'); }); }",
-            None,
-        ),
-        ("function f(Promise) { return Promise?.reject('x'); }", None),
         (
             "declare const error: Error | undefined; new Promise((_, reject) => { if (error) reject(error); });",
             None,
@@ -286,6 +278,14 @@ fn test() {
         ("new Promise(function (...rest) { foo(5, (rest[1])); });", None),
         // This is fundamentally false, but we can not recognize the value of `i`.
         ("new Promise(function (resolve, ...rest) { rest[i](5); });", None),
+        ("function f() { Promise.reject('x'); var Promise; }", None),
+        ("function f(Promise) { return Promise.reject('x'); }", None),
+        ("{ class Promise { static reject(x) { return x; } } Promise.reject('x'); }", None),
+        (
+            "function g(Promise) { return new Promise((resolve, reject) => { reject('x'); }); }",
+            None,
+        ),
+        ("function f(Promise) { return Promise?.reject('x'); }", None),
     ];
 
     let fail = vec![
