@@ -29,6 +29,7 @@ use oxc_span::{ContentEq, GetSpan, GetSpanMut, SourceType, Span};
 use oxc_str::{Ident, JSStr, Str};
 use oxc_syntax::{
     GetNodeId,
+    label::LabelId,
     node::NodeId,
     operator::{
         AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
@@ -269,6 +270,12 @@ pub struct LabelIdentifier<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
     pub name: Ident<'a>,
+    /// Unique identifier for the label this identifier declares or targets.
+    ///
+    /// This gets initialized during semantic analysis. A `break` or `continue` label that does
+    /// not resolve to an enclosing label is [`None`]. If you choose to skip semantic analysis,
+    /// this will always be [`None`].
+    pub label_id: Cell<Option<LabelId>>,
 }
 
 /// `this` in `return this.prop;`

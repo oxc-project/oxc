@@ -443,6 +443,11 @@ impl<'a> ModuleRecordBuilder<'a> {
     pub fn set_module_syntax(&mut self) {
         self.module_record.has_module_syntax = true;
     }
+
+    /// Forget module syntax that only a discarded parse has seen.
+    pub fn unset_module_syntax(&mut self) {
+        self.module_record.has_module_syntax = false;
+    }
 }
 
 fn iter_binding_identifiers_of_declaration<'a, F>(decl: &Declaration<'a>, f: &mut F)

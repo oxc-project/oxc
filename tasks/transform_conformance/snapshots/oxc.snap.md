@@ -1,10 +1,11 @@
-commit: d7a0cccb
+commit: 16a2d671
 
-Passed: 322/451
+Passed: 327/454
 
 # All Passed:
 * babel-plugin-transform-class-static-block
 * babel-plugin-transform-private-methods
+* babel-plugin-transform-private-property-in-object
 * babel-plugin-transform-logical-assignment-operators
 * babel-plugin-transform-nullish-coalescing-operator
 * babel-plugin-transform-optional-chaining
@@ -48,12 +49,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (44/64)
-* allow-declare-fields-false/input.ts
-Unresolved references mismatch:
-after transform: ["dce"]
-rebuilt        : []
-
+# babel-plugin-transform-typescript (48/66)
 * computed-constant-value/input.ts
 x Output mismatch
 
@@ -182,11 +178,6 @@ rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable)
 Symbol redeclarations mismatch for "B":
 after transform: SymbolId(2): [Span { start: 289, end: 290 }, Span { start: 304, end: 305 }]
 rebuilt        : SymbolId(2): []
-
-* remove-class-properties-without-initializer/input.ts
-Unresolved references mismatch:
-after transform: ["dce"]
-rebuilt        : []
 
 * remove-unused-import-equals/input.ts
 Bindings mismatch:

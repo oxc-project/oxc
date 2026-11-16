@@ -1,8 +1,8 @@
-commit: e4fbf577
+commit: 2e58f87d
 
 parser_test262 Summary:
-AST Parsed     : 47628/47628 (100.00%)
-Positive Passed: 47628/47628 (100.00%)
+AST Parsed     : 47633/47633 (100.00%)
+Positive Passed: 47633/47633 (100.00%)
 Negative Passed: 4669/4669 (100.00%)
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
@@ -2873,37 +2873,33 @@ Negative Passed: 4669/4669 (100.00%)
     ·   ──
     ╰────
 
-  × Expected `in` but found `throw`
-    ╭─[test262/test/language/comments/hashbang/escaped-bang-041.js:20:1]
- 19 │ 
- 20 │ throw "Test262: This statement should not be evaluated.";
-    · ──┬──
-    ·   ╰── `in` expected
-    ╰────
+  × Invalid Unicode escape sequence
+   ╭─[test262/test/language/comments/hashbang/escaped-bang-041.js:1:3]
+ 1 │ #\041
+   ·   ─
+ 2 │ 
+   ╰────
 
-  × Expected `in` but found `throw`
-    ╭─[test262/test/language/comments/hashbang/escaped-bang-u0021.js:20:1]
- 19 │ 
- 20 │ throw "Test262: This statement should not be evaluated.";
-    · ──┬──
-    ·   ╰── `in` expected
-    ╰────
+  × Invalid Character `!`
+   ╭─[test262/test/language/comments/hashbang/escaped-bang-u0021.js:1:8]
+ 1 │ #\u0021
+   ·        ▲
+ 2 │ 
+   ╰────
 
-  × Expected `in` but found `throw`
-    ╭─[test262/test/language/comments/hashbang/escaped-bang-u21.js:20:1]
- 19 │ 
- 20 │ throw "Test262: This statement should not be evaluated.";
-    · ──┬──
-    ·   ╰── `in` expected
-    ╰────
+  × Invalid Character `!`
+   ╭─[test262/test/language/comments/hashbang/escaped-bang-u21.js:1:8]
+ 1 │ #\u{21}
+   ·        ▲
+ 2 │ 
+   ╰────
 
-  × Expected `in` but found `throw`
-    ╭─[test262/test/language/comments/hashbang/escaped-bang-x21.js:20:1]
- 19 │ 
- 20 │ throw "Test262: This statement should not be evaluated.";
-    · ──┬──
-    ·   ╰── `in` expected
-    ╰────
+  × Invalid Unicode escape sequence
+   ╭─[test262/test/language/comments/hashbang/escaped-bang-x21.js:1:3]
+ 1 │ #\x21
+   ·   ─
+ 2 │ 
+   ╰────
 
   × Invalid Unicode escape sequence
    ╭─[test262/test/language/comments/hashbang/escaped-hash-043.js:1:2]
@@ -3239,32 +3235,29 @@ Negative Passed: 4669/4669 (100.00%)
  54 │   
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/arrow-function/dstr/ary-ptrn-rest-not-final-ary.js:53:18]
+  × A rest element must be last in a destructuring pattern
+    ╭─[test262/test/language/expressions/arrow-function/dstr/ary-ptrn-rest-not-final-ary.js:53:7]
  52 │ var f;
  53 │ f = ([...[x], y]) => {
-    ·                  ▲
+    ·       ──────
  54 │   
     ╰────
-  help: Try inserting a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/arrow-function/dstr/ary-ptrn-rest-not-final-id.js:53:16]
+  × A rest element must be last in a destructuring pattern
+    ╭─[test262/test/language/expressions/arrow-function/dstr/ary-ptrn-rest-not-final-id.js:53:7]
  52 │ var f;
  53 │ f = ([...x, y]) => {
-    ·                ▲
+    ·       ────
  54 │   
     ╰────
-  help: Try inserting a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/arrow-function/dstr/ary-ptrn-rest-not-final-obj.js:53:20]
+  × A rest element must be last in a destructuring pattern
+    ╭─[test262/test/language/expressions/arrow-function/dstr/ary-ptrn-rest-not-final-obj.js:53:7]
  52 │ var f;
  53 │ f = ([...{ x }, y]) => {
-    ·                    ▲
+    ·       ────────
  54 │   
     ╰────
-  help: Try inserting a semicolon here
 
   × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-init-ary.js:53:10]
@@ -3290,7 +3283,7 @@ Negative Passed: 4669/4669 (100.00%)
  54 │   
     ╰────
 
-  × Spread must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[test262/test/language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-not-final-ary.js:53:7]
  52 │ var f;
  53 │ f = ([...[x], y] = [1, 2, 3]) => {
@@ -3298,7 +3291,7 @@ Negative Passed: 4669/4669 (100.00%)
  54 │   
     ╰────
 
-  × Spread must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[test262/test/language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-not-final-id.js:53:7]
  52 │ var f;
  53 │ f = ([...x, y] = [1, 2, 3]) => {
@@ -3306,7 +3299,7 @@ Negative Passed: 4669/4669 (100.00%)
  54 │   
     ╰────
 
-  × Spread must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[test262/test/language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-not-final-obj.js:53:7]
  52 │ var f;
  53 │ f = ([...{ x }, y] = [1, 2, 3]) => {
@@ -3735,11 +3728,11 @@ Negative Passed: 4669/4669 (100.00%)
  18 │   }
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/expressions/arrow-function/static-init-await-reference.js:17:16]
+  × Cannot use `await` as an identifier in an async context
+    ╭─[test262/test/language/expressions/arrow-function/static-init-await-reference.js:17:11]
  16 │   static {
  17 │     ((x = await) => 0);
-    ·                ─
+    ·           ─────
  18 │   }
     ╰────
 
@@ -19613,12 +19606,19 @@ Negative Passed: 4669/4669 (100.00%)
     ╰────
   note: This identifier is reserved in strict mode code
 
-  × Expected `:` but found `}`
-    ╭─[test262/test/language/expressions/object/identifier-shorthand-static-init-await-invalid.js:24:14]
+  × Cannot use `await` as an identifier in an async context
+    ╭─[test262/test/language/expressions/object/identifier-shorthand-static-init-await-invalid.js:24:8]
  23 │   static {
  24 │     ({ await });
-    ·              ┬
-    ·              ╰── `:` expected
+    ·        ─────
+ 25 │   }
+    ╰────
+
+  × Cannot use await in class static initialization block
+    ╭─[test262/test/language/expressions/object/identifier-shorthand-static-init-await-invalid.js:24:8]
+ 23 │   static {
+ 24 │     ({ await });
+    ·        ─────
  25 │   }
     ╰────
 
@@ -20053,11 +20053,11 @@ Negative Passed: 4669/4669 (100.00%)
  23 │ })
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/expressions/object/method-definition/early-errors-object-method-await-in-formals-default.js:17:23]
+  × Cannot use `await` as an identifier in an async context
+    ╭─[test262/test/language/expressions/object/method-definition/early-errors-object-method-await-in-formals-default.js:17:18]
  16 │ ({
  17 │   async foo (x = await) {  }
-    ·                       ─
+    ·                  ─────
  18 │ })
     ╰────
 

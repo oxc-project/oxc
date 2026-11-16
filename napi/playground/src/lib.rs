@@ -330,8 +330,12 @@ impl Oxc {
             return None;
         }
         let compress = if options.run.compress {
-            options.compress.map(|_| {
-                let mut compress_options = CompressOptions::smallest();
+            options.compress.as_ref().and_then(|compress| {
+                let mut compress_options = CompressOptions::try_from(compress)
+                    .map_err(|error| {
+                        self.diagnostics.push(OxcDiagnostic::error(error));
+                    })
+                    .ok()?;
                 if let Some(transform_options) = &options.transformer
                     && let Some(target) = &transform_options.target
                     && let Ok(targets) =
@@ -341,7 +345,7 @@ impl Oxc {
                 {
                     compress_options.target = targets;
                 }
-                compress_options
+                Some(compress_options)
             })
         } else {
             None

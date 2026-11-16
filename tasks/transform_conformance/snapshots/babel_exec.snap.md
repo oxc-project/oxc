@@ -1,8 +1,8 @@
-commit: d7a0cccb
+commit: 16a2d671
 
 node: v26.12.1
 
-Passed: 329 of 419 (78.52%)
+Passed: 337 of 424 (79.48%)
 
 Failures:
 
@@ -478,26 +478,14 @@ TypeError: "#privateStaticFieldValue" is write-only
     at Cl.getPrivateStaticFieldValue (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsSymbols-get-only-setter-exec.test.js:7:17)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsSymbols-get-only-setter-exec.test.js:14:12
 
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-transparent-expr-wrappers-ts-exec-exec.test.js
+AssertionError: expected [ undefined, 1 ] to deeply equal [ C{}, 1 ]
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-transparent-expr-wrappers-ts-exec-exec.test.js:25:17
+
 ./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-assumption-privateFieldsAsProperties-method-exec.test.js
 ReferenceError: _Foo_brand is not defined
     at new Foo (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-assumption-privateFieldsAsProperties-method-exec.test.js:8:40)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-assumption-privateFieldsAsProperties-method-exec.test.js:19:13
-
-./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-half-constructed-static-exec.test.js
-AssertionError: expected true to be false // Object.is equality
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-half-constructed-static-exec.test.js:29:15
-
-./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-static-field-initialization-exec.test.js
-AssertionError: expected [ true, true, true, true, true, …(3) ] to deeply equal [ false, true, true, false, …(4) ]
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-static-field-initialization-exec.test.js:23:17
-
-./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-static-field-redeclared-in-loop-exec.test.js
-AssertionError: expected [ true, true, true, true ] to deeply equal [ false, true, true, true ]
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-static-field-redeclared-in-loop-exec.test.js:15:18
-
-./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-to-native-fields-half-constructed-static-exec.test.js
-AssertionError: expected true to be false // Object.is equality
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-to-native-fields-half-constructed-static-exec.test.js:29:15
 
 ./fixtures/babel/babel-preset-env-test-fixtures-plugins-integration-issue-15170-exec.test.js
 AssertionError: expected [Function] to not throw an error but 'ReferenceError: x is not defined' was thrown

@@ -783,7 +783,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             fatal_error: None,
             token: Token::default(),
             prev_token_end: 0,
-            state: ParserState::new(),
+            state: ParserState::new(allocator),
             ctx: Self::default_context(source_type, options),
             ast: ParserAstBuilder::new(allocator),
             module_record_builder: ModuleRecordBuilder::new(allocator, source_type),
@@ -871,7 +871,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             self.lexer.finalize_tokens()
         };
 
-        program.comments = self.lexer.trivia_builder.comments.into_vec();
+        program.comments = self.lexer.trivia_builder.comments.take_vec(&self.ast);
 
         ParserReturn {
             program,
@@ -885,8 +885,8 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     }
 
     pub fn parse_expression(mut self) -> Result<Expression<'a>, Diagnostics> {
-        // initialize cur_token and prev_token by moving onto the first token
-        self.bump_any();
+        // Initialize by moving onto the first token
+        self.token = self.lexer.first_token_without_hashbang();
         let expr = self.parse_expr();
         if !self.at(Kind::Eof) {
             self.set_unexpected();

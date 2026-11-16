@@ -115,8 +115,10 @@ impl PendingToken {
     const HAS_PENDING_COMMENTS: u32 = 1 << 26;
 
     pub(super) const NONE: Self = Self(0);
-    pub(super) const START_OF_FILE: Self =
+    /// State when line breaks, and no comments, have been seen since the previous token.
+    pub(super) const AFTER_LINE_BREAK: Self =
         Self(Self::IS_ON_NEW_LINE | Self::SAW_NEWLINE | Self::SAW_NEWLINE_FOR_COMMENT);
+    pub(super) const START_OF_FILE: Self = Self::AFTER_LINE_BREAK;
 
     #[inline]
     pub(super) fn is_on_new_line(self) -> bool {

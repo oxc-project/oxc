@@ -59,6 +59,12 @@ fn test() {
             ",
             None,
         ),
+        (
+            "const method = 'fn'; jest[method]().mock.calls.at(0);",
+            Some(serde_json::json!([{ "mock": null }])),
+        ),
+        ("jest[getMethod()]().mock.calls.at(0);", Some(serde_json::json!([{ "mock": null }]))),
+        ("jest().mock().calls.at(0);", Some(serde_json::json!([{ "mock": null }]))),
     ];
 
     let fail = vec![
@@ -73,6 +79,11 @@ fn test() {
             ",
             Some(serde_json::json!([{ "advanceTimersByTime": null }])),
         ),
+        (
+            "jest.spyOn({m:()=>0}, 'm').mockImplementation(() => 1);",
+            Some(serde_json::json!([{ "spyOn": null }])),
+        ),
+        ("jest.fn().mockReturnValue(1);", Some(serde_json::json!([{ "fn": null }]))),
     ];
 
     Tester::new(NoRestrictedJestMethods::NAME, NoRestrictedJestMethods::PLUGIN, pass, fail)

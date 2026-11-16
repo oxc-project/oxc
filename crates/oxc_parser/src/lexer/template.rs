@@ -398,7 +398,7 @@ mod test {
             let source = SourceCode::from_str_in(&source_text, &allocator);
             let mut lexer =
                 Lexer::new(&allocator, source, SourceType::default(), NoTokensLexerConfig, unique);
-            let token = lexer.next_token();
+            let token = lexer.first_token();
             assert_eq!(
                 token.kind(),
                 if is_only_part { Kind::NoSubstitutionTemplate } else { Kind::TemplateHead }

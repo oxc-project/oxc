@@ -6,7 +6,7 @@ use crate::{
     diagnostics,
 };
 
-use super::{Kind, Lexer, SourcePosition};
+use super::{FinishTokenMode, Kind, Lexer, SourcePosition, Token, numeric::ends_decimal_integer};
 
 impl<C: Config> Lexer<'_, C> {
     /// Handle next byte of source.
@@ -98,6 +98,311 @@ pub mod byte_handler_tables {
     pub static NO_TOKENS: ByteHandlers<NoTokensLexerConfig> = byte_handlers!();
     pub static WITH_TOKENS: ByteHandlers<TokensLexerConfig> = byte_handlers!();
     pub static RUNTIME_TOKENS: ByteHandlers<RuntimeLexerConfig> = byte_handlers!();
+}
+
+/// Token handlers take the position of the first byte of a token, and return the completed token.
+///
+/// # SAFETY
+/// All token handlers have the same requirements. `Lexer::next_token_impl` upholds them.
+/// * `pos` must be at or before the end of the source, and the byte at `pos` must select the handler
+///   in `Lexer::TOKEN_HANDLERS`. At the end of the source that byte is the first byte of the padding
+///   which follows the source text, which is NUL.
+/// * No whitespace or comments must have been seen since the previous token, other than
+///   a single space.
+///
+/// `TOKEN_HANDLER_MIN_BYTES` bytes can always be read from `pos`. Only the handler for NUL is called
+/// with `pos` at the end of the source, so for every other handler the byte after `pos` is either
+/// source text or the first byte of the padding.
+type TokenHandler<C> = for<'a> unsafe fn(&mut Lexer<'a, C>, SourcePosition<'a>) -> Token;
+
+/// Token handlers, each named after the byte handler for the same byte.
+/// See [`TokenHandler`] for what callers must guarantee.
+mod token_handlers {
+    use super::{Config, Kind, Lexer, SourcePosition, Token, ends_decimal_integer};
+
+    impl<C: Config> Lexer<'_, C> {
+        /// Lookup table mapping any byte to the token handler for tokens which start with that byte.
+        ///
+        /// Token handlers are generic over the lexer's config, and a `static` cannot be generic,
+        /// so the table is an associated constant. `&Self::TOKEN_HANDLERS` is a reference to
+        /// static memory, so getting a handler from the table is a single load, as with a `static`.
+        ///
+        /// Defined in this module so that the names in `byte_handlers!` refer to the token handlers.
+        pub(in crate::lexer) const TOKEN_HANDLERS: [super::TokenHandler<C>; 256] = byte_handlers!();
+    }
+
+    /// Define token handlers which call the byte handler of the same name, then finish the token.
+    ///
+    /// * `fresh` is for byte handlers which only ever produce a token, without flags.
+    ///   They must not return `Kind::Skip`, nor alter `lexer.pending`.
+    /// * `zero` is for the byte handler for `0`. A lone `0` is the most common number which
+    ///   starts with it, and is finished without calling the byte handler.
+    /// * `string` is for the byte handlers for quotes. A string which contains no escapes has
+    ///   no flags, and is finished without calling the byte handler. Other strings are uncommon,
+    ///   and are finished from where the first escape in them is found.
+    /// * `general` is for all other byte handlers.
+    macro_rules! token_handlers {
+        (fresh: $($name:ident),+ $(,)?) => {
+            $(
+                #[expect(non_snake_case)]
+                pub unsafe fn $name<'a, C: Config>(
+                    lexer: &mut Lexer<'a, C>,
+                    pos: SourcePosition<'a>,
+                ) -> Token {
+                    let (kind, end) = super::$name(lexer, pos);
+                    lexer.finish_fresh_token(kind, pos, end)
+                }
+            )+
+        };
+        (zero: $($name:ident),+ $(,)?) => {
+            $(
+                #[expect(non_snake_case)]
+                pub unsafe fn $name<'a, C: Config>(
+                    lexer: &mut Lexer<'a, C>,
+                    pos: SourcePosition<'a>,
+                ) -> Token {
+                    // SAFETY: `TOKEN_HANDLER_MIN_BYTES` bytes can be read from `pos`.
+                    // A digit is ASCII, so `pos + 1` is on a UTF-8 char boundary.
+                    let (after_digit, next_byte) = unsafe {
+                        let after_digit = pos.add(1);
+                        (after_digit, after_digit.read())
+                    };
+                    if ends_decimal_integer(next_byte) {
+                        lexer.source.set_position(after_digit);
+                        return lexer.finish_fresh_token(Kind::Decimal, pos, after_digit);
+                    }
+                    // Decimal points, other radixes, legacy octal.
+                    // SAFETY: Caller guarantees `pos` is the position of a byte which this handler,
+                    // and so the byte handler of the same name, is for.
+                    unsafe { lexer.token_from_byte_handler(pos, super::$name) }
+                }
+            )+
+        };
+        (string: $($name:ident => $read_plain_string:ident, $string_token_rest:ident);+ $(;)?) => {
+            $(
+                #[expect(non_snake_case)]
+                pub unsafe fn $name<'a, C: Config>(
+                    lexer: &mut Lexer<'a, C>,
+                    pos: SourcePosition<'a>,
+                ) -> Token {
+                    // SAFETY: Caller guarantees `pos` is the position of the quote
+                    // which this handler, and so `$read_plain_string`, is for
+                    match unsafe { lexer.$read_plain_string(pos) } {
+                        Ok(end) => lexer.finish_fresh_token(Kind::Str, pos, end),
+                        // SAFETY: As above, and position of source has not been altered since
+                        Err(next_byte) => unsafe { lexer.$string_token_rest(pos, next_byte) },
+                    }
+                }
+            )+
+        };
+        (general: $($name:ident),+ $(,)?) => {
+            $(
+                #[expect(non_snake_case)]
+                pub unsafe fn $name<'a, C: Config>(
+                    lexer: &mut Lexer<'a, C>,
+                    pos: SourcePosition<'a>,
+                ) -> Token {
+                    // SAFETY: Caller guarantees `pos` is the position of a byte which this handler,
+                    // and so the byte handler of the same name, is for
+                    unsafe { lexer.general_token_handler(pos, super::$name) }
+                }
+            )+
+        };
+    }
+
+    token_handlers!(fresh: AMP, ATR, CRT, EXL, PIP, PLS, PRC, QST);
+
+    token_handlers!(zero: ZER);
+
+    token_handlers!(
+        string:
+        QOD => read_plain_string_literal_double_quote, string_token_rest_double_quote;
+        QOS => read_plain_string_literal_single_quote, string_token_rest_single_quote;
+    );
+
+    token_handlers!(
+        general: ERR, ESC, HAS, ISP, NUL, SLH, SPS, TPL, UER, UNI,
+    );
+
+    // `A..=Z`, `h`, `j`, `q`, `x`, `z`, `_`, `$`: no keyword starts with these bytes.
+    #[expect(non_snake_case)]
+    pub unsafe fn IDT<'a, C: Config>(lexer: &mut Lexer<'a, C>, pos: SourcePosition<'a>) -> Token {
+        // SAFETY: Caller guarantees `pos` is the position of an ASCII identifier-start byte,
+        // and that no trivia has been seen, other than one space
+        unsafe { lexer.identifier_token::<false, false>(pos) }
+    }
+
+    // All first letters which can begin a keyword.
+    #[expect(non_snake_case)]
+    pub unsafe fn KWD<'a, C: Config>(lexer: &mut Lexer<'a, C>, pos: SourcePosition<'a>) -> Token {
+        // SAFETY: Caller guarantees `pos` is the position of an ASCII identifier-start byte,
+        // and that no trivia has been seen, other than one space
+        unsafe { lexer.identifier_token::<true, false>(pos) }
+    }
+
+    // `\r` `\n`
+    #[expect(non_snake_case)]
+    pub unsafe fn LIN<'a, C: Config>(lexer: &mut Lexer<'a, C>, pos: SourcePosition<'a>) -> Token {
+        // SAFETY: Caller guarantees `pos` is the position of a line break byte,
+        // and that no trivia has been seen, other than one space
+        unsafe { lexer.line_break_token(pos) }
+    }
+
+    // `.`
+    //
+    // Almost always a property access, where what follows is an identifier.
+    #[expect(non_snake_case)]
+    pub unsafe fn PRD<'a, C: Config>(lexer: &mut Lexer<'a, C>, pos: SourcePosition<'a>) -> Token {
+        // SAFETY: `TOKEN_HANDLER_MIN_BYTES` bytes can be read from `pos`.
+        // `.` is ASCII, so `pos + 1` is on a UTF-8 char boundary.
+        let (after_dot, next_byte) = unsafe {
+            let after_dot = pos.add(1);
+            (after_dot, after_dot.read())
+        };
+        // `.` or a digit means `...` or a number. `/` also takes this branch, which is harmless.
+        if next_byte.wrapping_sub(b'.') <= b'9' - b'.' {
+            // SAFETY: Caller guarantees `pos` is the position of `.`, which `PRD` is for
+            return unsafe { lexer.token_from_byte_handler(pos, super::PRD) };
+        }
+        lexer.source.set_position(after_dot);
+        lexer.finish_fresh_token(Kind::Dot, pos, after_dot)
+    }
+
+    // `1` to `9`
+    //
+    // Most numbers are integers of a few digits, particularly in minified code.
+    // They have no flags, and are finished without calling the byte handler.
+    #[expect(non_snake_case)]
+    pub unsafe fn DIG<'a, C: Config>(lexer: &mut Lexer<'a, C>, pos: SourcePosition<'a>) -> Token {
+        // SAFETY: `TOKEN_HANDLER_MIN_BYTES` bytes can be read from `pos`.
+        // A digit is ASCII, so `pos + 1` is on a UTF-8 char boundary.
+        let (mut end, mut byte) = unsafe {
+            let after_digit = pos.add(1);
+            (after_digit, after_digit.read())
+        };
+        while byte.is_ascii_digit() {
+            // SAFETY: `byte` is the byte at `end`, and it is a digit, so `end` is before the end
+            // of the source. `end + 1` is at or before the end of the source, where the byte read
+            // is the NUL padding, and it is on a UTF-8 char boundary.
+            (end, byte) = unsafe {
+                let after_digit = end.add(1);
+                (after_digit, after_digit.read())
+            };
+        }
+        if ends_decimal_integer(byte) {
+            lexer.source.set_position(end);
+            return lexer.finish_fresh_token(Kind::Decimal, pos, end);
+        }
+        // Decimal points, exponents, separators, BigInts
+        // SAFETY: Caller guarantees `pos` is the position of a digit, which `DIG` is for
+        unsafe { lexer.token_from_byte_handler(pos, super::DIG) }
+    }
+
+    // `<`
+    //
+    // Usually a comparison, or the start of type arguments or a JSX element.
+    #[expect(non_snake_case)]
+    pub unsafe fn LSS<'a, C: Config>(lexer: &mut Lexer<'a, C>, pos: SourcePosition<'a>) -> Token {
+        // SAFETY: `TOKEN_HANDLER_MIN_BYTES` bytes can be read from `pos`.
+        // `<` is ASCII, so `pos + 1` is on a UTF-8 char boundary.
+        let (after_angle, next_byte) = unsafe {
+            let after_angle = pos.add(1);
+            (after_angle, after_angle.read())
+        };
+        // `<<`, `<=`, or an HTML comment `<!--`
+        if matches!(next_byte, b'<' | b'=' | b'!') {
+            // SAFETY: Caller guarantees `pos` is the position of `<`, which `LSS` is for
+            return unsafe { lexer.token_from_byte_handler(pos, super::LSS) };
+        }
+        lexer.source.set_position(after_angle);
+        lexer.finish_fresh_token(Kind::LAngle, pos, after_angle)
+    }
+
+    // `-`
+    //
+    // Usually a subtraction or a negative number.
+    #[expect(non_snake_case)]
+    pub unsafe fn MIN<'a, C: Config>(lexer: &mut Lexer<'a, C>, pos: SourcePosition<'a>) -> Token {
+        // SAFETY: `TOKEN_HANDLER_MIN_BYTES` bytes can be read from `pos`.
+        // `-` is ASCII, so `pos + 1` is on a UTF-8 char boundary.
+        let (after_minus, next_byte) = unsafe {
+            let after_minus = pos.add(1);
+            (after_minus, after_minus.read())
+        };
+        // `--`, `-=`, or an HTML comment `-->`
+        if matches!(next_byte, b'-' | b'=') {
+            // SAFETY: Caller guarantees `pos` is the position of `-`, which `MIN` is for
+            return unsafe { lexer.token_from_byte_handler(pos, super::MIN) };
+        }
+        lexer.source.set_position(after_minus);
+        lexer.finish_fresh_token(Kind::Minus, pos, after_minus)
+    }
+
+    // `=`
+    //
+    // Almost always an assignment, where what follows is a space or the start of an expression.
+    #[expect(non_snake_case)]
+    pub unsafe fn EQL<'a, C: Config>(lexer: &mut Lexer<'a, C>, pos: SourcePosition<'a>) -> Token {
+        // SAFETY: `TOKEN_HANDLER_MIN_BYTES` bytes can be read from `pos`.
+        // `=` is ASCII, so `pos + 1` is on a UTF-8 char boundary.
+        let (after_eq, next_byte) = unsafe {
+            let after_eq = pos.add(1);
+            (after_eq, after_eq.read())
+        };
+        if matches!(next_byte, b'=' | b'>') {
+            let (kind, end) = super::EQL(lexer, pos);
+            return lexer.finish_fresh_token(kind, pos, end);
+        }
+        lexer.source.set_position(after_eq);
+        lexer.finish_fresh_token(Kind::Eq, pos, after_eq)
+    }
+}
+
+impl<'a, C: Config> Lexer<'a, C> {
+    /// Call a byte handler for the first byte of a token, and finish the token it produces.
+    /// If it skips trivia instead, continue until a token is found.
+    ///
+    /// `pending` must reflect the trivia seen since the previous token.
+    ///
+    /// # SAFETY
+    /// * `pos` must be at or before the end of the source.
+    /// * `byte_handler` must be the byte handler for the byte at `pos`.
+    ///   At the end of the source, that is the handler for NUL.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    unsafe fn general_token_handler(
+        &mut self,
+        pos: SourcePosition<'a>,
+        byte_handler: ByteHandler<C>,
+    ) -> Token {
+        // The caller may have skipped a space without updating position of source
+        self.source.set_position(pos);
+        self.token_start = self.source.offset_of(pos);
+        // SAFETY: Caller guarantees `byte_handler` is for the byte at `pos`
+        let (kind, end) = unsafe { byte_handler(self, pos) };
+        if kind == Kind::Skip {
+            return self.next_token_after_trivia();
+        }
+        self.finish_next_inner(kind, end, FinishTokenMode::Push)
+    }
+
+    /// Same as `general_token_handler`, but not inlined.
+    ///
+    /// For token handlers which finish most tokens themselves. They tail call this for the rest,
+    /// so the tokens they do finish do not pay for the stack frame which calling a byte handler
+    /// requires.
+    ///
+    /// # SAFETY
+    /// Same as `general_token_handler`.
+    #[inline(never)]
+    unsafe fn token_from_byte_handler(
+        &mut self,
+        pos: SourcePosition<'a>,
+        byte_handler: ByteHandler<C>,
+    ) -> Token {
+        // SAFETY: Caller guarantees what `general_token_handler` requires
+        unsafe { self.general_token_handler(pos, byte_handler) }
+    }
 }
 
 /// Macro for defining byte handler for an ASCII character.

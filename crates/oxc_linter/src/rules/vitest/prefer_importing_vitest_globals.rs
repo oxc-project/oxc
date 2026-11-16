@@ -248,11 +248,15 @@ impl PreferImportingVitestGlobals {
             .or_else(|| Self::find_vitest_require_source(ctx))
             .unwrap_or("vitest");
 
-        // 4. Fallback: add a new import at the top.
-        fixer.insert_text_before_range(
-            Span::empty(0),
-            format!("import {{ {globals_imports} }} from '{import_source}';\n"),
-        )
+        let text = format!("import {{ {globals_imports} }} from '{import_source}';");
+        let program = ctx.nodes().program();
+        if let Some(directive) = program.directives.last() {
+            return fixer.insert_text_after_range(directive.span, format!("\n{text}"));
+        }
+        if let Some(hashbang) = &program.hashbang {
+            return fixer.insert_text_after_range(hashbang.span, format!("\n{text}"));
+        }
+        fixer.insert_text_before_range(Span::empty(0), format!("{text}\n"))
     }
 
     /// Try to append missing names to an existing `const { ... } = require(...)` from a Vitest source.
@@ -396,6 +400,26 @@ fn test() {
     ];
 
     let fix = vec![
+        (
+            "#!/usr/bin/env node\n\ndescribe('suite', () => {});",
+            "#!/usr/bin/env node\nimport { describe } from 'vitest';\n\ndescribe('suite', () => {});",
+        ),
+        (
+            "#!/usr/bin/env node\r\ndescribe('suite', () => {});",
+            "#!/usr/bin/env node\nimport { describe } from 'vitest';\r\ndescribe('suite', () => {});",
+        ),
+        (
+            "'use strict';\n'use client';\ndescribe('suite', () => {});",
+            "'use strict';\n'use client';\nimport { describe } from 'vitest';\ndescribe('suite', () => {});",
+        ),
+        (
+            "#!/usr/bin/env node\n'use strict'\ndescribe('suite', () => {});",
+            "#!/usr/bin/env node\n'use strict'\nimport { describe } from 'vitest';\ndescribe('suite', () => {});",
+        ),
+        (
+            "#!/usr/bin/env node\nimport * as vitest from 'vite-plus/test';\ndescribe('suite', () => {});",
+            "#!/usr/bin/env node\nimport { describe } from 'vite-plus/test';\nimport * as vitest from 'vite-plus/test';\ndescribe('suite', () => {});",
+        ),
         // the `}` inside the comment is not the end of the specifier list
         (
             "import { it } from /* } */ 'vitest';\ndescribe('suite', () => {});",

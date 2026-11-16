@@ -1,20 +1,20 @@
-commit: d7a0cccb
+commit: 16a2d671
 
 parser_babel Summary:
-AST Parsed     : 2328/2329 (99.96%)
-Positive Passed: 2307/2329 (99.06%)
-Negative Passed: 1872/1888 (99.15%)
+AST Parsed     : 2357/2358 (99.96%)
+Positive Passed: 2336/2358 (99.07%)
+Negative Passed: 1931/1947 (99.18%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-type-assertion-and-assign/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/invalid-declare-name-eval-arguments/input.ts
 
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-ambiguity/input.ts
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-unambiguous/input.ts
 
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-like/input.ts
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-unambiguous-async-rest/input.ts
 
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-param/input.ts
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-unambiguous-optional/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/decorators/type-arguments-invalid/input.ts
 
@@ -644,13 +644,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  4 │ ({ a: async() } = {});
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/annex-b/enabled/invalid-call-expression-arrow-param/input.js:1:6]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/annex-b/enabled/invalid-call-expression-arrow-param/input.js:1:2]
  1 │ (a()) => 1;
-   ·      ▲
+   ·  ───
  2 │ (a.b()) => 1;
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
   × Expected `;` but found `Identifier`
    ╭─[babel/packages/babel-parser/test/fixtures/core/categorized/for-missing-semicolons/input.js:3:3]
@@ -709,6 +709,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·  ────────────
    ╰────
 
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/core/categorized/invalid-elided-call-argument/input.js:1:5]
+ 1 │ f(a,,b);
+   ·     ─
+   ╰────
+
   × Invalid function declaration
    ╭─[babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-inside-loop/input.js:1:11]
  1 │ while (1) function foo(){}
@@ -729,6 +735,42 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                     ────────────────
    ╰────
   help: In non-strict mode code, functions can only be declared at top level, inside a block, or as the body of an if statement
+
+  × Label `l` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/core/categorized/invalid-label-redeclaration-nested/input.js:1:4]
+ 1 │ l: l: l: ;
+   ·    ┬  ┬
+   ·    │  ╰── It can not be redeclared here
+   ·    ╰── `l` has already been declared here
+ 2 │ a: b: a: b: ;
+   ╰────
+
+  × Label `l` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/core/categorized/invalid-label-redeclaration-nested/input.js:1:1]
+ 1 │ l: l: l: ;
+   · ┬  ┬
+   · │  ╰── It can not be redeclared here
+   · ╰── `l` has already been declared here
+ 2 │ a: b: a: b: ;
+   ╰────
+
+  × Label `b` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/core/categorized/invalid-label-redeclaration-nested/input.js:2:4]
+ 1 │ l: l: l: ;
+ 2 │ a: b: a: b: ;
+   ·    ┬     ┬
+   ·    │     ╰── It can not be redeclared here
+   ·    ╰── `b` has already been declared here
+   ╰────
+
+  × Label `a` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/core/categorized/invalid-label-redeclaration-nested/input.js:2:1]
+ 1 │ l: l: l: ;
+ 2 │ a: b: a: b: ;
+   · ┬     ┬
+   · │     ╰── It can not be redeclared here
+   · ╰── `a` has already been declared here
+   ╰────
 
   × Cannot assign to this expression
    ╭─[babel/packages/babel-parser/test/fixtures/core/categorized/invalid-left-hand-side-in-postfix-operation/input.js:1:1]
@@ -833,20 +875,20 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·  ──
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/core/create-parenthesized-expressions/invalid-parenthesized-lhs-in-param-pattern/input.js:1:10]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/core/create-parenthesized-expressions/invalid-parenthesized-lhs-in-param-pattern/input.js:1:3]
  1 │ ((a) = 1) => {};
-   ·          ▲
+   ·   ─
  2 │ ([((a))] = 1) => {};
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/core/create-parenthesized-expressions/invalid-pattern-in-rest-binding/input.js:1:11]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/core/create-parenthesized-expressions/invalid-pattern-in-rest-binding/input.js:1:6]
  1 │ ([...(a)]) => {}
-   ·           ▲
+   ·      ───
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
   × Delete of an unqualified identifier in strict mode.
    ╭─[babel/packages/babel-parser/test/fixtures/core/create-parenthesized-expressions/invalid-strict-delete-parenthesized-identifier/input.js:2:9]
@@ -869,12 +911,48 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·  ─────
    ╰────
 
+  × Invalid Unicode escape sequence
+   ╭─[babel/packages/babel-parser/test/fixtures/core/escape-identifier/invalid-code-point/input.js:1:3]
+ 1 │ a\u{110000}b;
+   ·   ────────
+   ╰────
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/core/escape-identifier/invalid-code-point/input.js:1:11]
+ 1 │ a\u{110000}b;
+   ·           ─
+   ╰────
+
+  × Invalid Unicode escape sequence
+   ╭─[babel/packages/babel-parser/test/fixtures/core/escape-identifier/invalid-code-point-private-name/input.js:1:13]
+ 1 │ class C { #\u{110000}; }
+   ·             ────────
+   ╰────
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/core/escape-identifier/invalid-code-point-private-name/input.js:1:24]
+ 1 │ class C { #\u{110000}; }
+   ·                        ─
+   ╰────
+
   × Expected `:` but found `}`
    ╭─[babel/packages/babel-parser/test/fixtures/core/escape-keyword/invalid/input.js:3:1]
  2 │   br\u{65}ak
  3 │ };
    · ┬
    · ╰── `:` expected
+   ╰────
+
+  × Invalid escape sequence
+   ╭─[babel/packages/babel-parser/test/fixtures/core/escape-string/invalid-code-point/input.js:1:6]
+ 1 │ x = "\u{110000}";
+   ·      ─────────
+   ╰────
+
+  × Invalid escape sequence
+   ╭─[babel/packages/babel-parser/test/fixtures/core/escape-string/invalid-code-point-huge/input.js:1:6]
+ 1 │ x = "\u{FFFFFFFFFFFFFFFFF}";
+   ·      ─────────
    ╰────
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
@@ -982,6 +1060,20 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  21 │ }
     ╰────
   help: for octal literals use the '0o' prefix instead
+
+  × Invalid escape sequence
+   ╭─[babel/packages/babel-parser/test/fixtures/core/escape-string/invalid-unterminated-code-point-escape/input.js:1:2]
+ 1 │ "\u{";
+   ·  ───
+ 2 │ "\u{61";
+   ╰────
+
+  × Invalid escape sequence
+   ╭─[babel/packages/babel-parser/test/fixtures/core/escape-string/invalid-unterminated-code-point-escape/input.js:2:2]
+ 1 │ "\u{";
+ 2 │ "\u{61";
+   ·  ─────
+   ╰────
 
   × Invalid escape sequence
    ╭─[babel/packages/babel-parser/test/fixtures/core/escape-string/non-octal-eight-and-nine/input.js:4:3]
@@ -2799,59 +2891,108 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Remove the trailing comma here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/inner-parens/input.js:1:18]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/inner-parens/input.js:1:12]
  1 │ var foo = ((foo)) => {};
-   ·                  ▲
+   ·            ─────
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/inner-parens-2/input.js:1:9]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/inner-parens-2/input.js:1:5]
  1 │ (a, (b)) => 42
-   ·         ▲
+   ·     ───
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/inner-parens-array-pattern/input.js:1:8]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/inner-parens-array-pattern/input.js:1:3]
  1 │ ([(a)]) => {}
-   ·        ▲
+   ·   ───
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/inner-parens-array-pattern-2/input.js:1:22]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/inner-parens-array-pattern-2/input.js:1:6]
  1 │ ([ [(a)] = [] ] = []) => {}
-   ·                      ▲
+   ·      ─
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/inner-parens-array-pattern-3/input.js:1:19]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/inner-parens-array-pattern-3/input.js:1:4]
  1 │ ([(a) = [] ] = []) => {}
-   ·                   ▲
+   ·    ─
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/inner-parens-object-pattern/input.js:1:20]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/inner-parens-object-pattern/input.js:1:7]
  1 │ ({ a: (foo) } = {}) => {}
-   ·                    ▲
+   ·       ─────
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/inner-parens-object-pattern-member/input.js:1:24]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/inner-parens-object-pattern-member/input.js:1:7]
  1 │ ({ a: (foo.qux) } = {}) => {}
-   ·                        ▲
+   ·       ─────────
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-arrow-before-in/input.js:1:9]
  1 │ () => {} in x
    ·         ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-binary-argument-after-arrow-in-array/input.js:1:19]
+ 1 │ a + [() => {}] + b => c
+   ·                   ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-binary-argument-after-arrow-in-template/input.js:1:22]
+ 1 │ a + `${() => {}}` + b => c
+   ·                      ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-binary-argument-after-parenthesized-arrow/input.js:1:19]
+ 1 │ a + (() => {}) + b => c
+   ·                   ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-binary-argument-async-after-parenthesized-arrow/input.js:1:23]
+ 1 │ a + (() => {}) + async b => c
+   ·                       ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-binary-argument-async-parens-after-parenthesized-arrow/input.js:1:27]
+ 1 │ a + (() => {}) + async (b) => c
+   ·                           ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-binary-argument-parens-after-parenthesized-arrow/input.js:1:21]
+ 1 │ a + (() => {}) + (b) => c
+   ·                     ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-exponent-argument-after-parenthesized-arrow/input.js:1:21]
+ 1 │ a ** (() => {}) ** b => c
+   ·                     ▲
    ╰────
   help: Try inserting a semicolon here
 
@@ -2868,6 +3009,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │ /=/;
    ·   ───
    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-logical-argument-after-arrow-in-call/input.js:1:22]
+ 1 │ a || f(() => {}) || b => c
+   ·                      ▲
+   ╰────
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-no-asi-before-regexp-starting-with-equals/input.js:1:9]
@@ -2921,13 +3069,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │ /=/;
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-parenthesized-assignment-param/input.js:1:12]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-parenthesized-assignment-param/input.js:1:2]
  1 │ (((a) = 1)) => {};
-   ·            ▲
+   ·  ─────────
  2 │ ((([a]) = 1)) => {};
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
   × Cannot assign to this expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-parenthesized-before-regexp-starting-with-equals/input.js:1:2]
@@ -2936,42 +3084,42 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │ /=/;
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-parenthesized-member-param-with-default/input.js:1:12]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-parenthesized-member-param-with-default/input.js:1:3]
  1 │ ((a.b) = 1) => {};
-   ·            ▲
+   ·   ───
  2 │ ({ a: (b.c) = 1 }) => {};
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-parenthesized-param-error-order/input.js:1:6]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-parenthesized-param-error-order/input.js:1:2]
  1 │ ((a)) => { with (x) {} };
-   ·      ▲
+   ·  ───
  2 │ ([(a)] = 1) => { with (x) {} };
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-parenthesized-param-error-order-errorRecovery-false/input.js:1:19]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-parenthesized-param-error-order-errorRecovery-false/input.js:1:3]
  1 │ ([(a)] = 1, (b.c)) => { with (x) {} };
-   ·                   ▲
+   ·   ───
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-parenthesized-param-with-parenthesized-lhs-in-initializer/input.js:1:16]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-parenthesized-param-with-parenthesized-lhs-in-initializer/input.js:1:3]
  1 │ ((a) = (b) = 1) => {};
-   ·                ▲
+   ·   ─
  2 │ ([(a)] = [(b)] = 1) => {};
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
-  × Unexpected token
+  × A rest parameter must be last in a parameter list
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-rest-in-params/input.js:3:5]
  2 │     first,
  3 │     ...second,
-   ·     ───
+   ·     ─────────
  4 │     third
    ╰────
 
@@ -3595,6 +3743,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/identifiers/invalid-escape-seq-true/input.js:1:1]
  1 │ \u0074rue
    · ─────────
+   ╰────
+
+  × Invalid Unicode escape sequence
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/identifiers/invalid-unterminated-code-point-escape/input.js:1:3]
+ 1 │ a\u{
+   ·   ──
    ╰────
 
   × Identifier expected. 'if' is a reserved word that cannot be used here.
@@ -4551,6 +4705,65 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
 
+  × Cannot assign to this expression
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/object/invalid-property-initializer-in-operand/input.js:6:8]
+ 5 │ [delete {a = 1}].x = 0;
+ 6 │ for (++{a = 1} in arr);
+   ·        ───────
+   ╰────
+
+  × Invalid assignment in object literal
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/object/invalid-property-initializer-in-operand/input.js:6:9]
+ 5 │ [delete {a = 1}].x = 0;
+ 6 │ for (++{a = 1} in arr);
+   ·         ─────
+   ╰────
+  help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
+
+  × Invalid assignment in object literal
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/object/invalid-property-initializer-in-operand/input.js:1:6]
+ 1 │ 1 < {a = 1};
+   ·      ─────
+ 2 │ typeof {a = 1};
+   ╰────
+  help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
+
+  × Invalid assignment in object literal
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/object/invalid-property-initializer-in-operand/input.js:2:9]
+ 1 │ 1 < {a = 1};
+ 2 │ typeof {a = 1};
+   ·         ─────
+ 3 │ 1 + {a = 1};
+   ╰────
+  help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
+
+  × Invalid assignment in object literal
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/object/invalid-property-initializer-in-operand/input.js:3:6]
+ 2 │ typeof {a = 1};
+ 3 │ 1 + {a = 1};
+   ·      ─────
+ 4 │ class C extends {a = 1} {}
+   ╰────
+  help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
+
+  × Invalid assignment in object literal
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/object/invalid-property-initializer-in-operand/input.js:5:10]
+ 4 │ class C extends {a = 1} {}
+ 5 │ [delete {a = 1}].x = 0;
+   ·          ─────
+ 6 │ for (++{a = 1} in arr);
+   ╰────
+  help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
+
+  × Invalid assignment in object literal
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/object/invalid-property-initializer-in-operand/input.js:4:18]
+ 3 │ 1 + {a = 1};
+ 4 │ class C extends {a = 1} {}
+   ·                  ─────
+ 5 │ [delete {a = 1}].x = 0;
+   ╰────
+  help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
+
   × Invalid assignment in object literal
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/object/invalid-property-initializer-in-rhs/input.js:1:8]
  1 │ obj = {x = 0}
@@ -5011,19 +5224,19 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    · ──
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/251/input.js:1:5]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/251/input.js:1:2]
  1 │ (10) => 00
-   ·     ▲
+   ·  ──
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/252/input.js:1:9]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/252/input.js:1:2]
  1 │ (10, 20) => 00
-   ·         ▲
+   ·  ──
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
   × Expected `]` but found `,`
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/255/input.js:1:10]
@@ -5146,12 +5359,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·  ────
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/284/input.js:1:8]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/284/input.js:1:4]
  1 │ ([ 5 ]) => {}
-   ·        ▲
+   ·    ─
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
   × Expected `:` but found `}`
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/285/input.js:1:6]
@@ -5161,9 +5374,9 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
 
   × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/286/input.js:1:2]
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/286/input.js:1:7]
  1 │ (...[ 5 ]) => {}
-   ·  ───
+   ·       ─
    ╰────
 
   × Cannot assign to 'eval' in strict mode
@@ -5191,10 +5404,9 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·       ───
    ╰────
 
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/294/input.js:1:5]
+  × Expected `=>` but found `EOF`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/294/input.js:1:10]
  1 │ (b, ...a)
-   ·     ───
    ╰────
 
   × Expected `}` but found `EOF`
@@ -5218,12 +5430,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   note: This is strict mode code
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/298/input.js:1:21]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/298/input.js:1:4]
  1 │ ({ get test() { } }) => 42
-   ·                     ▲
+   ·    ──────────────
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
   × Missing initializer in destructuring declaration
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/324/input.js:1:5]
@@ -5445,12 +5657,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    · ────
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/37/input.js:1:8]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/37/input.js:1:3]
  1 │ ([a.a]) => 42
-   ·        ▲
+   ·   ───
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
   × Identifier expected. 'enum' is a reserved word that cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/370/input.js:1:7]
@@ -5559,12 +5771,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·             ╰── Opened here
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/395/input.js:1:8]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/395/input.js:1:3]
  1 │ ([a.a]) => 42
-   ·        ▲
+   ·   ───
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
   × Expected `from` but found `EOF`
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/84/input.js:1:9]
@@ -5789,14 +6001,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/yield/parameter-name-arrow-inside-generator-2/input.js:2:13]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/yield/parameter-name-arrow-inside-generator-2/input.js:2:4]
  1 │ function* fn() {
  2 │   (yield fn) => {};
-   ·             ▲
+   ·    ────────
  3 │ }
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
   × Cannot use `yield` as an identifier in a generator context
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/yield/parameter-name-arrow-inside-generator-3/input.js:2:10]
@@ -5841,33 +6053,33 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   note: This identifier is reserved in strict mode code
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/yield/parenthesized-lhs-before-yield-in-arrow-params/input.js:1:39]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/yield/parenthesized-lhs-before-yield-in-arrow-params/input.js:1:19]
  1 │ function* g() { ([(a)] = 1, b = yield) => {} }
-   ·                                       ▲
+   ·                   ───
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/yield/parenthesized-lhs-before-yield-in-arrow-params-errorRecovery-false/input.js:1:39]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/yield/parenthesized-lhs-before-yield-in-arrow-params-errorRecovery-false/input.js:1:19]
  1 │ function* g() { ([(a)] = 1, b = yield) => {} }
-   ·                                       ▲
+   ·                   ───
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/yield/parenthesized-lhs-before-yield-in-same-arrow-param/input.js:1:32]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/yield/parenthesized-lhs-before-yield-in-same-arrow-param/input.js:1:19]
  1 │ function* g() { ([(a)] = yield) => {} }
-   ·                                ▲
+   ·                   ───
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/yield/parenthesized-lhs-before-yield-in-same-arrow-param-errorRecovery-false/input.js:1:32]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/yield/parenthesized-lhs-before-yield-in-same-arrow-param-errorRecovery-false/input.js:1:19]
  1 │ function* g() { ([(a)] = yield) => {} }
-   ·                                ▲
+   ·                   ───
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
   × yield expression not allowed in formal parameter
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/yield/yield-inside-nested-initializer-of-parameters/input.js:1:26]
@@ -6160,40 +6372,40 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try inserting a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-arrow/parenthesized-array-pattern-nested/input.js:1:28]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-arrow/parenthesized-array-pattern-nested/input.js:1:12]
  1 │ async ([ [(a)] = [] ] = []) => {};
-   ·                            ▲
+   ·            ─
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-arrow/parenthesized-array-pattern-nested-2/input.js:1:24]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-arrow/parenthesized-array-pattern-nested-2/input.js:1:10]
  1 │ async ([(a) = []] = []) => {}
-   ·                        ▲
+   ·          ─
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-arrow/parenthesized-binding-identifier/input.js:1:24]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-arrow/parenthesized-binding-identifier/input.js:1:18]
  1 │ var foo = async ((foo)) => {};
-   ·                        ▲
+   ·                  ─────
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-arrow/parenthesized-binding-member-expression/input.js:1:26]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-arrow/parenthesized-binding-member-expression/input.js:1:10]
  1 │ async ([(a.b) = []] = []) => {}
-   ·                          ▲
+   ·          ───
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-arrow/parenthesized-binding-pattern/input.js:1:26]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-arrow/parenthesized-binding-pattern/input.js:1:19]
  1 │ var foo = async ([(foo)]) => {};
-   ·                          ▲
+   ·                   ─────
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-arrow/parenthesized-lhs-before-await-binding/input.js:1:25]
@@ -6223,19 +6435,19 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try inserting a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-arrow/parenthesized-rest-array/input.js:1:29]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-arrow/parenthesized-rest-array/input.js:1:22]
  1 │ var foo = async ([...(foo)]) => {};
-   ·                             ▲
+   ·                      ─────
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-arrow/parenthesized-rest-object/input.js:1:29]
+  × Invalid rest element target in destructuring pattern
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-arrow/parenthesized-rest-object/input.js:1:22]
  1 │ var foo = async ({...(foo)}) => {};
-   ·                             ▲
+   ·                      ─────
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier, like `...rest`.
 
   × Identifier `__proto__` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-call/parenthesized-argument-object-double-proto/input.js:1:9]
@@ -6252,12 +6464,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
 
-  × Expected `,` or `)` but found `?`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-call/with-optional-operator/input.js:1:8]
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-call/with-optional-operator/input.js:1:9]
  1 │ async(x?)
-   ·      ┬ ┬
-   ·      │ ╰── `,` or `)` expected
-   ·      ╰── Opened here
+   ·         ─
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -6492,6 +6702,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try inserting a semicolon here
 
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/invalid-elided-arrow-param/input.js:1:7]
+ 1 │ async(,) => 1;
+   ·       ─
+   ╰────
+
   × Expected `;` but found `Identifier`
    ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/invalid-escape-async-class-method/input.js:1:22]
  1 │ class X { \u0061sync x() { await x } }
@@ -6695,33 +6911,33 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Remove the trailing comma here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/parenthesized-lhs-before-await-in-arrow-params/input.js:1:46]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/parenthesized-lhs-before-await-in-arrow-params/input.js:1:24]
  1 │ async function f() { ([(a)] = 1, b = await 1) => {} }
-   ·                                              ▲
+   ·                        ───
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/parenthesized-lhs-before-await-in-arrow-params-errorRecovery-false/input.js:1:46]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/parenthesized-lhs-before-await-in-arrow-params-errorRecovery-false/input.js:1:24]
  1 │ async function f() { ([(a)] = 1, b = await 1) => {} }
-   ·                                              ▲
+   ·                        ───
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/parenthesized-lhs-before-await-in-same-arrow-param/input.js:1:39]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/parenthesized-lhs-before-await-in-same-arrow-param/input.js:1:24]
  1 │ async function f() { ([(a)] = await 1) => {} }
-   ·                                       ▲
+   ·                        ───
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/parenthesized-lhs-before-await-in-same-arrow-param-errorRecovery-false/input.js:1:39]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/parenthesized-lhs-before-await-in-same-arrow-param-errorRecovery-false/input.js:1:24]
  1 │ async function f() { ([(a)] = await 1) => {} }
-   ·                                       ▲
+   ·                        ───
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/es2017/trailing-function-commas/5/input.js:1:5]
@@ -7091,6 +7307,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
 
   × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import/invalid-elided-argument/input.js:1:8]
+ 1 │ import(,);
+   ·        ─
+   ╰────
+
+  × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import/invalid-lone-import/input.js:1:8]
  1 │ (import)
    ·        ─
@@ -7399,24 +7621,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Remove the separator or place it between two digits
 
-  × Invalid characters after number
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-102/input.js:1:6]
- 1 │ (1_1__)
-   ·      ─
-   ╰────
-
   × Numeric separators must appear between digits
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-103/input.js:1:3]
  1 │ (1__1)
    ·   ─
    ╰────
   help: Remove the separator or place it between two digits
-
-  × Invalid characters after number
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-103/input.js:1:4]
- 1 │ (1__1)
-   ·    ─
-   ╰────
 
   × Numeric separators must appear between digits
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-104/input.js:1:5]
@@ -7451,22 +7661,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·        ▲
    ╰────
 
-  × Invalid characters after number
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-108/input.js:1:8]
- 1 │ (1_1.1e_1)
-   ·        ─
-   ╰────
-
   × Invalid Character `_`
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-109/input.js:1:8]
  1 │ (1_1.1E_1)
    ·        ▲
-   ╰────
-
-  × Invalid characters after number
-   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-109/input.js:1:8]
- 1 │ (1_1.1E_1)
-   ·        ─
    ╰────
 
   × Numeric separators must appear between digits
@@ -9703,12 +9901,19 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  4 │ 
    ╰────
 
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-static-block/await-binding-in-async-arrow-function-in-static-block/input.js:5:38]
+  × Cannot use `await` as an identifier in an async context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-static-block/await-binding-in-async-arrow-function-in-static-block/input.js:5:33]
  4 │ 
  5 │ C = class { static { async (x = await) => {} } };
-   ·                                      ─
+   ·                                 ─────
  6 │ 
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-static-block/await-binding-in-async-arrow-function-in-static-block/input.js:7:32]
+ 6 │ 
+ 7 │ C = class { static { async ({ [await]: x }) => {} } };
+   ·                                ─────
    ╰────
 
   × Unexpected token
@@ -11086,39 +11291,40 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   note: This is strict mode code
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-arrow-function/non-arrow-param-followed-by-arrow/input.js:1:6]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-arrow-function/non-arrow-param-followed-by-arrow/input.js:1:2]
  1 │ ((a)) => 0
-   ·      ▲
+   ·  ───
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-arrow-function/non-arrow-param-followed-by-rest/input.js:1:6]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-arrow-function/non-arrow-param-followed-by-rest/input.js:1:2]
  1 │ ((a),...b) => 0;
-   ·      ───
+   ·  ───
    ╰────
+  help: Expected an identifier or a destructuring pattern.
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-arrow-function/object-binding-pattern-invalid-member-expr/input.js:1:11]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-arrow-function/object-binding-pattern-invalid-member-expr/input.js:1:5]
  1 │ ({a:b[0]})=>0
-   ·           ▲
+   ·     ────
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-arrow-function/object-binding-pattern-invalid-method-in-pattern/input.js:1:14]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-arrow-function/object-binding-pattern-invalid-method-in-pattern/input.js:1:3]
  1 │ ({get a(){}}) => 0;
-   ·              ▲
+   ·   ─────────
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-arrow-function/object-binding-pattern-invalid-nested-param/input.js:1:51]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-arrow-function/object-binding-pattern-invalid-nested-param/input.js:1:25]
  1 │ ([[[[[[[[[[[[[[[[[[[[{a:b[0]}]]]]]]]]]]]]]]]]]]]])=>0;
-   ·                                                   ▲
+   ·                         ────
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
   × Expected `,` or `)` but found `=>`
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-arrow-function/object-binding-pattern-invalid-pattern-without-parenthesis/input.js:1:4]
@@ -11128,10 +11334,11 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    · ╰── Opened here
    ╰────
 
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-arrow-function/param-with-rest-without-arrow/input.js:1:5]
+  × Expected `=>` but found `+`
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-arrow-function/param-with-rest-without-arrow/input.js:1:11]
  1 │ (b, ...a) + 1
-   ·     ───
+   ·           ┬
+   ·           ╰── `=>` expected
    ╰────
 
   × Expected `=>` but found `+`
@@ -12701,19 +12908,19 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    · ──
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0098/input.js:1:5]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0098/input.js:1:2]
  1 │ (10) => 00
-   ·     ▲
+   ·  ──
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0099/input.js:1:9]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0099/input.js:1:2]
  1 │ (10, 20) => 00
-   ·         ▲
+   ·  ──
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0100/input.js:1:16]
@@ -14141,14 +14348,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                           ─
    ╰────
 
-  × Expected `,` or `)` but found `:`
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/arrow-function/invalid-parenthesized-lhs-in-annotated-param/input.ts:1:14]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/arrow-function/invalid-parenthesized-lhs-in-annotated-param/input.ts:1:5]
  1 │ ([[(a)] = []]: T) => {};
-   · ┬            ┬
-   · │            ╰── `,` or `)` expected
-   · ╰── Opened here
+   ·     ─
  2 │ ({ a: [(b)] = [] }: T) => {};
    ╰────
+  help: Expected an identifier or a destructuring pattern.
 
   × Keywords cannot contain escape characters
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/assert-predicate/invalid-escaped-asserts-keyword/input.ts:1:50]
@@ -14181,33 +14387,33 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ async(x?)
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/cast/arrow-async-parameter-as/input.ts:1:15]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/cast/arrow-async-parameter-as/input.ts:1:8]
  1 │ async (a as T) => {};
-   ·               ▲
+   ·        ──────
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/cast/arrow-async-parameter-assertion/input.ts:1:14]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/cast/arrow-async-parameter-assertion/input.ts:1:8]
  1 │ async (<T> a) => {};
-   ·              ▲
+   ·        ─────
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/cast/arrow-parameter-as/input.ts:1:9]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/cast/arrow-parameter-as/input.ts:1:2]
  1 │ (a as T) => {};
-   ·         ▲
+   ·  ──────
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/cast/arrow-parameter-assertion/input.ts:1:8]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/cast/arrow-parameter-assertion/input.ts:1:2]
  1 │ (<T> a) => {};
-   ·        ▲
+   ·  ─────
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
   × Decimals with leading zeros are not allowed in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/cast/as-negative-legacy-octal/input.ts:1:7]
@@ -14251,13 +14457,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·      ─
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/cast/invalid-parenthesized-type-cast-assignment-param/input.ts:1:15]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/cast/invalid-parenthesized-type-cast-assignment-param/input.ts:1:3]
  1 │ ((a as T) = 1) => {};
-   ·               ▲
+   ·   ──────
  2 │ (((a as T) = 1)) => {};
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/cast/invalid-type-assertion-async-arrow/input.ts:1:13]
@@ -14280,21 +14486,21 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try inserting a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/cast/invalid-type-cast-param-error-order/input.ts:1:9]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/cast/invalid-type-cast-param-error-order/input.ts:1:2]
  1 │ (a as T) => { with (x) {} };
-   ·         ▲
+   ·  ──────
  2 │ ([(a as T)] = 1, (b.c)) => {};
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/cast/null-assertion-invalid-arrow-param/input.ts:1:5]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/cast/null-assertion-invalid-arrow-param/input.ts:1:2]
  1 │ (a!) => b;
-   ·     ▲
+   ·  ──
  2 │ (a! = b) => c;
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
   × Expected `,` or `)` but found `:`
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/cast/parameter-typecast/input.ts:1:7]
@@ -14305,14 +14511,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │ func<T>(a: T);
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/cast/parenthesized-type-cast-in-param-create-parenthesized-expressions/input.ts:3:19]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/cast/parenthesized-type-cast-in-param-create-parenthesized-expressions/input.ts:3:3]
  2 │ (x = [((a)!)] = 1) => {};
  3 │ ([((a) as T)] = 1) => {};
-   ·                   ▲
+   ·   ──────────
  4 │ ([((a as T))] = 1) => {};
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
   × TS(1244): Abstract methods can only appear within an abstract class.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/abstract-method-in-non-abstract-class-1/input.ts:2:12]
@@ -15358,6 +15564,298 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  4 │ }
    ╰────
 
+  × Expected `:` but found `;`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-ambiguous-not-followed-by-colon/input.ts:3:23]
+ 2 │ // type that is not followed by `:`, like in TypeScript.
+ 3 │ a ? ({ b }: T): c => d;
+   ·   ┬                   ┬
+   ·   │                   ╰── `:` expected
+   ·   ╰── Conditional starts here
+   ╰────
+
+  × Identifier `b` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-argument-clash/input.ts:2:6]
+ 1 │ // Followed by `:`: keep the arrow function and its error
+ 2 │ a ? (b, b): c => d : e;
+   ·      ┬  ┬
+   ·      │  ╰── It can not be redeclared here
+   ·      ╰── `b` has already been declared here
+ 3 │ // Not followed by `:`: the error is discarded when parsing again
+   ╰────
+
+  × Expected `:` but found `;`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-argument-clash-async-error-recovery-false/input.ts:1:33]
+ 1 │ a ? b ? async(x, x) : c => d : e;
+   ·   ┬                             ┬
+   ·   │                             ╰── `:` expected
+   ·   ╰── Conditional starts here
+   ╰────
+
+  × Expected `:` but found `;`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-argument-clash-block-body-error-recovery-false/input.ts:1:34]
+ 1 │ a ? b ? async(x, x) : c => {} : e;
+   ·   ┬                              ┬
+   ·   │                              ╰── `:` expected
+   ·   ╰── Conditional starts here
+   ╰────
+
+  × Expected `:` but found `;`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-argument-clash-error-recovery-false/input.ts:1:28]
+ 1 │ a ? b ? (x, x) : c => d : e;
+   ·   ┬                        ┬
+   ·   │                        ╰── `:` expected
+   ·   ╰── Conditional starts here
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-await-binding-error-recovery-false/input.ts:1:15]
+ 1 │ a ? b ? async(await) : c => d : e;
+   ·               ─────
+   ╰────
+
+  × Expected `:` but found `;`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-await-binding-error-recovery-false/input.ts:1:34]
+ 1 │ a ? b ? async(await) : c => d : e;
+   ·   ┬                              ┬
+   ·   │                              ╰── `:` expected
+   ·   ╰── Conditional starts here
+   ╰────
+
+  × Expected `:` but found `}`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-await-in-params-error-recovery-false/input.ts:1:57]
+ 1 │ async function f() { a ? b ? (x = await y) : c => d : e }
+   ·                        ┬                                ┬
+   ·                        │                                ╰── `:` expected
+   ·                        ╰── Conditional starts here
+   ╰────
+
+  × Expected `,` or `)` but found `Identifier`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-deeply-nested-error/input.ts:3:128]
+ 2 │ // exponential time.
+ 3 │ a ? (a ? (a ? (a ? (a ? (a ? (a ? (a ? (a ? (a ? (a ? (a ? (a ? (a ? (a ? (a ? (a ? (a ? (a ? (a ? (a ? (a ? (a ? (a ? (a ? (x x) : y) : y) : y) : y) : y) : y) : y) : y) : y) : y) : y) : y) : y) : y) : y) : y) : y) : y) : y) : y) : y) : y) : y) : y) : y;
+   ·                                                                                                                             ┬  ┬
+   ·                                                                                                                             │  ╰── `,` or `)` expected
+   ·                                                                                                                             ╰── Opened here
+   ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-error-recovery/input.ts:13:21]
+ 12 │ a ? b ? async((x) = 1) : c => d : e;
+ 13 │ a ? (b): c => { let x; let x; } : e;
+    ·                     ┬      ┬
+    ·                     │      ╰── It can not be redeclared here
+    ·                     ╰── `x` has already been declared here
+    ╰────
+
+  × Expected `:` but found `;`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-generic-argument-clash-async-error-recovery-false/input.ts:1:35]
+ 1 │ a ? b ? async<T>(x, x): U => d : e;
+   ·   ┬                               ┬
+   ·   │                               ╰── `:` expected
+   ·   ╰── Conditional starts here
+   ╰────
+
+  × Identifier `x` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-generic-argument-clash-error-recovery-false/input.ts:1:9]
+ 1 │ a ? <T>(x, x): U => d : e;
+   ·         ┬  ┬
+   ·         │  ╰── It can not be redeclared here
+   ·         ╰── `x` has already been declared here
+   ╰────
+
+  × Expected `:` but found `;`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-generic-argument-clash-nested/input.ts:1:30]
+ 1 │ a ? b ? <T>(x, x): U => d : e;
+   ·   ┬                          ┬
+   ·   │                          ╰── `:` expected
+   ·   ╰── Conditional starts here
+   ╰────
+
+  × Expected `:` but found `;`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-generic-argument-clash-nested-error-recovery-false/input.ts:1:30]
+ 1 │ a ? b ? <T>(x, x): U => d : e;
+   ·   ┬                          ┬
+   ·   │                          ╰── `:` expected
+   ·   ╰── Conditional starts here
+   ╰────
+
+  × Expected `:` but found `;`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-generic-followed-by-colon/input.ts:2:28]
+ 1 │ // Followed by `:`: this is an arrow function with a return type
+ 2 │ a ? b ? <T>(c) : d => e : f;
+   ·   ┬                        ┬
+   ·   │                        ╰── `:` expected
+   ·   ╰── Conditional starts here
+   ╰────
+
+  × Identifier `x` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-generic-jsx-argument-clash-error-recovery-false/input.tsx:1:10]
+ 1 │ a ? <T,>(x, x): U => d : e;
+   ·          ┬  ┬
+   ·          │  ╰── It can not be redeclared here
+   ·          ╰── `x` has already been declared here
+   ╰────
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-generic-jsx-invalid-params-error-recovery-false/input.tsx:1:16]
+ 1 │ a ? b => <T,>([(x)]): U => d : e;
+   ·                ─
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-generic-jsx-strict-binding-error-recovery-false/input.tsx:1:14]
+ 1 │ a ? b ? <T,>(eval): U => d : c : e;
+   ·              ────
+   ╰────
+  note: Modules are always strict mode code
+
+  × Expected `:` but found `;`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-generic-jsx-unambiguous/input.tsx:2:27]
+ 1 │ // JSX makes `<T,>` unambiguous, so this can't be a call with type arguments
+ 2 │ a ? async <T,>(b) : c => d;
+   ·   ┬                       ┬
+   ·   │                       ╰── `:` expected
+   ·   ╰── Conditional starts here
+   ╰────
+
+  × Identifier `x` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-generic-kept-errors/input.ts:2:9]
+ 1 │ // Followed by `:`: keep the arrow function and its error
+ 2 │ a ? <T>(x, x): U => d : e;
+   ·         ┬  ┬
+   ·         │  ╰── It can not be redeclared here
+   ·         ╰── `x` has already been declared here
+ 3 │ a ? <T>(x): U => { let y; let y; } : e;
+   ╰────
+
+  × Identifier `y` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-generic-kept-errors/input.ts:3:24]
+ 2 │ a ? <T>(x, x): U => d : e;
+ 3 │ a ? <T>(x): U => { let y; let y; } : e;
+   ·                        ┬      ┬
+   ·                        │      ╰── It can not be redeclared here
+   ·                        ╰── `y` has already been declared here
+ 4 │ // Not followed by `:`: the error is discarded when parsing again
+   ╰────
+
+  × Expected `:` but found `;`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-generic-kept-errors-nested/input.ts:1:43]
+ 1 │ a ? b ? <T>(x): U => { let y; let y; } : e;
+   ·   ┬                                       ┬
+   ·   │                                       ╰── `:` expected
+   ·   ╰── Conditional starts here
+   ╰────
+
+  × Expected `:` but found `;`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-generic-strict-binding-error-recovery-false/input.ts:1:30]
+ 1 │ a ? b ? <T>(eval): U => d : e;
+   ·   ┬                          ┬
+   ·   │                          ╰── `:` expected
+   ·   ╰── Conditional starts here
+   ╰────
+
+  × Expected `:` but found `;`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-generic-use-strict-non-simple-error-recovery-false/input.ts:1:52]
+ 1 │ a ? b ? async<T>(x = 1): U => { "use strict"; } : e;
+   ·   ┬                                                ┬
+   ·   │                                                ╰── `:` expected
+   ·   ╰── Conditional starts here
+   ╰────
+
+  × Identifier `x` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-kept-errors/input.ts:2:6]
+ 1 │ // Followed by `:`: keep the arrow function and its error
+ 2 │ a ? (x) : c => { let x; } : e;
+   ·      ┬               ┬
+   ·      │               ╰── It can not be redeclared here
+   ·      ╰── `x` has already been declared here
+ 3 │ a ? async(x) : c => { let x; } : e;
+   ╰────
+
+  × Identifier `x` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-kept-errors/input.ts:3:11]
+ 2 │ a ? (x) : c => { let x; } : e;
+ 3 │ a ? async(x) : c => { let x; } : e;
+   ·           ┬               ┬
+   ·           │               ╰── It can not be redeclared here
+   ·           ╰── `x` has already been declared here
+ 4 │ a ? (x = 1) : c => { "use strict"; } : e;
+   ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-kept-errors/input.ts:4:22]
+ 3 │ a ? async(x) : c => { let x; } : e;
+ 4 │ a ? (x = 1) : c => { "use strict"; } : e;
+   ·                      ─────────────
+ 5 │ // Not followed by `:`: the error is discarded when parsing again
+   ╰────
+  help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-strict-binding/input.ts:3:6]
+ 2 │ // Followed by `:`: keep the arrow function and its error
+ 3 │ a ? (eval): b => c : d;
+   ·      ────
+   ╰────
+  note: Modules are always strict mode code
+
+  × Expected `:` but found `;`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-strict-binding-error-recovery-false/input.ts:1:33]
+ 1 │ a ? b ? async(eval) : c => d : e;
+   ·   ┬                             ┬
+   ·   │                             ╰── `:` expected
+   ·   ╰── Conditional starts here
+   ╰────
+
+  × Expected `:` but found `;`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-unambiguous-not-followed-by-colon/input.ts:3:19]
+ 2 │ // if it is not followed by `:`, like in TypeScript.
+ 3 │ a ? (b: B): c => d;
+   ·   ┬               ┬
+   ·   │               ╰── `:` expected
+   ·   ╰── Conditional starts here
+   ╰────
+
+  × TS(2730): An arrow function cannot have a `this` parameter.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-unambiguous-this/input.ts:3:6]
+ 2 │ // type even if it is not followed by `:`, like in TypeScript.
+ 3 │ a ? (this: T) => (c) : d => e;
+   ·      ───────
+   ╰────
+  help: Arrow function does not bind `this` and inherits `this` from the outer scope
+
+  × Expected `:` but found `;`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-use-strict-non-simple-error-recovery-false/input.ts:1:45]
+ 1 │ a ? b ? (x = 1) : c => { "use strict"; } : e;
+   ·   ┬                                         ┬
+   ·   │                                         ╰── `:` expected
+   ·   ╰── Conditional starts here
+   ╰────
+
+  × Expected `:` but found `;`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-var-redeclaration-async-error-recovery-false/input.ts:1:39]
+ 1 │ a ? b ? async(x) : c => { let x; } : e;
+   ·   ┬                                   ┬
+   ·   │                                   ╰── `:` expected
+   ·   ╰── Conditional starts here
+   ╰────
+
+  × Expected `:` but found `;`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-var-redeclaration-error-recovery-false/input.ts:1:34]
+ 1 │ a ? b ? (x) : c => { let x; } : e;
+   ·   ┬                              ┬
+   ·   │                              ╰── `:` expected
+   ·   ╰── Conditional starts here
+   ╰────
+
+  × Expected `:` but found `}`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-yield-in-params-error-recovery-false/input.ts:1:50]
+ 1 │ function* g() { a ? b ? (x = yield) : c => d : e }
+   ·                   ┬                              ┬
+   ·                   │                              ╰── `:` expected
+   ·                   ╰── Conditional starts here
+   ╰────
+
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/const/invalid-initializer-ambient-context/input.ts:2:35]
  1 │ declare namespace N {
@@ -15787,6 +16285,22 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                ───────
    ╰────
   help: Remove the duplicate modifier.
+
+  × A string literal cannot be used as an exported binding without `from`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/export/export-type-string-without-from/input.ts:1:15]
+ 1 │ export type { "a" };
+   ·               ───
+ 2 │ export type { "b" as c };
+   ╰────
+  help: Did you mean `export { "a" as "a" } from 'some-module'`?
+
+  × A string literal cannot be used as an exported binding without `from`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/export/export-type-string-without-from/input.ts:2:15]
+ 1 │ export type { "a" };
+ 2 │ export type { "b" as c };
+   ·               ───
+   ╰────
+  help: Did you mean `export { "b" as c } from 'some-module'`?
 
   × Expected `from` but found `{`
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/export/invalid-export-type-star-as-and-named/input.ts:1:21]
@@ -16937,12 +17451,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·        ▲
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/tsx/parenthesized-lhs-in-arrow-param-after-generic-arrow/input.ts:1:30]
+  × Invalid arrow function parameter
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/tsx/parenthesized-lhs-in-arrow-param-after-generic-arrow/input.ts:1:21]
  1 │ (x = <T,>(y) => y, [(b)] = 1) => {};
-   ·                              ▲
+   ·                     ───
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-alias/declare-new-line/input.ts:1:8]
@@ -17067,6 +17581,35 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │ export { type if };
    ╰────
 
+  × TS(2207): The 'type' modifier cannot be used on a named export when 'export type' is used on its export statement.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/export-invalid-type-only-string-in-type-export/input.ts:1:15]
+ 1 │ export type { type "a" } from "m";
+   ·               ────
+   ╰────
+  help: Remove this 'type' modifier
+
+  × An export name cannot include a unicode lone surrogate
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/export-invalid-type-only-string-lone-surrogate/input.ts:1:15]
+ 1 │ export { type "\uD83D" as a } from "m";
+   ·               ────────
+   ╰────
+
+  × A string literal cannot be used as an exported binding without `from`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/export-invalid-type-only-string-without-from/input.ts:1:15]
+ 1 │ export { type "a" };
+   ·               ───
+ 2 │ export { type "b" as c };
+   ╰────
+  help: Did you mean `export { "a" as "a" } from 'some-module'`?
+
+  × A string literal cannot be used as an exported binding without `from`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/export-invalid-type-only-string-without-from/input.ts:2:15]
+ 1 │ export { type "a" };
+ 2 │ export { type "b" as c };
+   ·               ───
+   ╰────
+  help: Did you mean `export { "b" as c } from 'some-module'`?
+
   × Keywords cannot contain escape characters
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/expport-invalid-escaped-type-only/input.ts:1:10]
  1 │ export { typ\u0065 as } from "x";
@@ -17083,6 +17626,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/import-invalid-named-type-as-keyword/input.ts:1:18]
  1 │ import { type as if } from "mod";
    ·                  ──
+   ╰────
+
+  × Identifier expected.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/import-invalid-type-as-string/input.ts:1:18]
+ 1 │ import { type as "a" } from "m";
+   ·                  ───
    ╰────
 
   × TS(2206): The 'type' modifier cannot be used on a named import when 'import type' is used on its import statement.
@@ -17108,6 +17657,31 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/import-invalid-type-only-as-string/input.ts:1:22]
  1 │ import { type foo as "bar" } from "mod";
    ·                      ─────
+   ╰────
+
+  × Identifier expected.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/import-invalid-type-only-string/input.ts:1:15]
+ 1 │ import { type "a" } from "m";
+   ·               ───
+   ╰────
+
+  × Identifier expected.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/import-invalid-type-only-string-as-string/input.ts:1:22]
+ 1 │ import { type "a" as "b" } from "m";
+   ·                      ───
+   ╰────
+
+  × TS(2206): The 'type' modifier cannot be used on a named import when 'import type' is used on its import statement.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/import-invalid-type-only-string-in-type-import/input.ts:1:15]
+ 1 │ import type { type "a" as b } from "m";
+   ·               ────
+   ╰────
+  help: Remove this 'type' modifier
+
+  × An export name cannot include a unicode lone surrogate
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/import-invalid-type-only-string-lone-surrogate/input.ts:1:15]
+ 1 │ import { type "\uD83D" as a } from "m";
+   ·               ────────
    ╰────
 
   × TS(1277): 'const' modifier can only appear on a type parameter of a function, method or class
