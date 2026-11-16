@@ -4,6 +4,7 @@ use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_mangler::{MangleOptions, MangleOptionsKeepNames, Mangler};
 use oxc_parser::Parser;
+use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 
 mod property_mangler;
@@ -436,4 +437,73 @@ fn annex_b_block_scoped_function() {
     insta::with_settings!({ prepend_module_to_snapshot => false, omit_expression => true }, {
         insta::assert_snapshot!("annex_b_block_scoped_function", snapshot);
     });
+}
+
+fn assert_valid_labels(source_text: &str, source_type: SourceType) {
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    assert!(ret.diagnostics.is_empty(), "Parser errors: {:?}", ret.diagnostics);
+    let ret = SemanticBuilder::new().with_check_syntax_error(true).build(&ret.program);
+    assert!(ret.diagnostics.is_empty(), "Semantic errors: {:?}\n{source_text}", ret.diagnostics);
+}
+
+#[test]
+fn labels() {
+    let options = MangleOptions::default();
+
+    test(
+        "outer: for (;;) { inner: for (;;) { if (a) break outer; continue inner; } }",
+        "e: for (;;) { t: for (;;) { if (a) break e; continue t; } }",
+        &options,
+    );
+    test("a: { break a; } b: { break b; }", "e: { break e; } e: { break e; }", &options);
+    test(
+        "outer: { (() => { inner: for (;;) break inner; })(); break outer; }",
+        "e: { (() => { t: for (;;) break t; })(); break e; }",
+        &options,
+    );
+    test(
+        "function _(x) { foo: for (;;) { x(); break foo; } }",
+        "function _(e) { e: for (;;) { e(); break e; } }",
+        &options,
+    );
+    test(
+        "function _() { foo: { eval(''); break foo; } }",
+        "function _() { e: { eval(''); break e; } }",
+        &options,
+    );
+    assert_eq!(mangle_script("foo: function f() {}", &options), "e: function f() {}\n");
+    test(
+        "x: { if (a) break e; if (b) break x; foo(); }",
+        "t: { if (a) break e; if (b) break t; foo(); }",
+        &options,
+    );
+
+    let reserved_options =
+        MangleOptions { reserved: std::iter::once("e".into()).collect(), ..options };
+    test("foo: { break foo; }", "e: { break e; }", &reserved_options);
+
+    let debug_options = MangleOptions { debug: true, ..options.clone() };
+    test("a: { b: { break a; } }", "slot_0: { slot_1: { break slot_0; } }", &debug_options);
+
+    let depth = 100;
+    let mut source_text = String::new();
+    for i in 0..depth {
+        write!(source_text, "label{i}: {{").unwrap();
+    }
+    source_text.push_str("break label0;");
+    source_text.push_str(&"}".repeat(depth));
+    let mangled = mangle(&source_text, &options);
+    assert!(!mangled.contains("label"), "{mangled}");
+    assert_valid_labels(&mangled, SourceType::mjs());
+
+    let cases = [
+        "outer: for (;;) { inner: for (;;) { if (a) break outer; continue inner; } }",
+        "function _() { var e; a: { b: { break a; } } }",
+    ];
+    for case in cases {
+        let pass1 = mangle(case, &options);
+        let pass2 = mangle(&pass1, &options);
+        assert_eq!(pass1, pass2);
+    }
 }

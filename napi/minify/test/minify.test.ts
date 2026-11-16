@@ -71,6 +71,7 @@ describe("simple", () => {
     const code = "PURE: { foo(); bar(); } OTHER: for (;;) for (;;) break OTHER;";
     const ret = minifySync("test.js", code, {
       compress: { dropLabels: ["PURE"] },
+      mangle: false,
     });
     expect(ret.code).toBe("OTHER:for(;;)for(;;)break OTHER;");
     expect(ret.errors.length).toBe(0);
