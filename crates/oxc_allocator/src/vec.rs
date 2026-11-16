@@ -79,6 +79,16 @@ impl<T> BufferedVecBacking for Vec<'_, T> {
     }
 
     #[inline]
+    fn pop(&mut self) -> Option<T> {
+        self.0.pop()
+    }
+
+    #[inline]
+    fn truncate(&mut self, len: usize) {
+        self.0.truncate(len);
+    }
+
+    #[inline]
     fn push(&mut self, value: T) {
         self.0.push(value);
     }

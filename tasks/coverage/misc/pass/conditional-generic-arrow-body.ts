@@ -6,3 +6,7 @@ a ? async <T,>(b): R => () => (c) : d => e;
 a ? async <T, U>(b): R => () => (c) : d => e;
 a ? async <T,>(): R => () => (c) : d => e;
 a ? async <T,>(...b): R => () => (c) : d => e;
+
+a ? async<T,>(b = import('x')) : c;
+a ? async<T,>(b): R => () => (c) : d => import('x');
+a ? async<T,>(b): R => () => (c) : d => import.meta;

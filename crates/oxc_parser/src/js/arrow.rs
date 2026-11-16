@@ -746,18 +746,24 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         let checkpoint = self.checkpoint();
+        let module_checkpoint = self.module_record_builder.expression_checkpoint();
+        let deferred_script_errors_len = self.deferred_script_errors.len();
 
         let head = self.parse_parenthesized_arrow_function_head();
         // Rejected heads are rewound, so do not construct an error for the missing arrow.
         if !self.at(Kind::Arrow) {
             self.state.not_parenthesized_arrow.insert(pos);
             self.rewind(checkpoint);
+            self.module_record_builder.rewind_expression(module_checkpoint);
+            self.deferred_script_errors.truncate(deferred_script_errors_len);
             return None;
         }
         self.expect_arrow();
         if self.has_fatal_error() {
             self.state.not_parenthesized_arrow.insert(pos);
             self.rewind(checkpoint);
+            self.module_record_builder.rewind_expression(module_checkpoint);
+            self.deferred_script_errors.truncate(deferred_script_errors_len);
             return None;
         }
 
@@ -791,6 +797,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if !self.at(Kind::Colon) {
                 self.state.not_parenthesized_arrow.insert(pos);
                 self.rewind(checkpoint);
+                self.module_record_builder.rewind_expression(module_checkpoint);
+                self.deferred_script_errors.truncate(deferred_script_errors_len);
                 return None;
             }
         }
