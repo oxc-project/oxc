@@ -1236,8 +1236,8 @@ and `this` stays attached as a member chain head like a short identifier (`this.
 - Why: semantics
 - Pin: `tests/fixtures/ts/conditional-arrow-body/input.ts`
 
-With `arrowParens: "avoid"`, a concise arrow in a conditional consequent stays
-parenthesized. This ends the arrow body before the conditional colon
+With `arrowParens: "avoid"`, concise arrows and `yield` expressions in conditional
+consequents stay parenthesized. This ends the expression before the conditional colon
 can be read as a return-type annotation after inner parentheses are removed.
 
 ```ts

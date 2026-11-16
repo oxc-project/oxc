@@ -612,6 +612,27 @@ fn conditional_arrow_body_return_type_ambiguity() {
         ("a ? () => async((b)) : (c => d, e);", "a?(()=>async(b)):(c=>d,e);"),
         ("a ? () => b : c;", "a?(()=>b):c;"),
         ("a ? () => {} : c => d;", "a?()=>{}:c=>d;"),
+        (
+            "function* f() { a ? yield () => async((b)) : c => d; }",
+            "function*f(){a?(yield()=>async(b)):c=>d}",
+        ),
+        (
+            "function* f() { a ? yield* () => async((b)) : c => d; }",
+            "function*f(){a?(yield*()=>async(b)):c=>d}",
+        ),
+        (
+            "function* f() { a ? yield yield () => async((b)) : c => d; }",
+            "function*f(){a?(yield yield()=>async(b)):c=>d}",
+        ),
+        (
+            "function* f() { a ? yield (b ? c : () => async((d))) : e => f; }",
+            "function*f(){a?(yield b?c:()=>async(d)):e=>f}",
+        ),
+        (
+            "function* f() { a ? yield ((b) = () => async((c))) : d => e; }",
+            "function*f(){a?(yield b=()=>async(c)):d=>e}",
+        ),
+        ("function* f() { a ? yield ((b) = 1) : c => d; }", "function*f(){a?(yield b=1):c=>d}"),
     ] {
         test_options_with_source_type(source, expected, SourceType::ts(), CodegenOptions::minify());
         test_idempotency_options(source, &CodegenOptions::minify());

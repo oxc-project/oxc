@@ -13,3 +13,12 @@ a ? () => async((b)) : (c => d)!;
 a ? () => async((b)) : (c => d) || e;
 a ? () => b : c;
 a ? () => {} : c => d;
+function* f() {
+  a ? yield () => async((b)) : c => d;
+  a ? yield* () => async((b)) : c => d;
+  a ? yield yield () => async((b)) : c => d;
+  a ? yield (b ? c : () => async((d))) : e => f;
+  a ? yield ((b) = () => async((c))) : d => e;
+  a ? yield ((b) = 1) : c => d;
+  a ? b ? c : yield () => async((d)) : e => f;
+}

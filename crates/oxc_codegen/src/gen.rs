@@ -2097,6 +2097,7 @@ impl GenExpr for ConditionalExpression<'_> {
                     consequent = match consequent {
                         Expression::AssignmentExpression(e) => e.right.without_parentheses(),
                         Expression::ConditionalExpression(e) => e.alternate.without_parentheses(),
+                        Expression::YieldExpression(e) => break e.argument.is_some(),
                         Expression::ArrowFunctionExpression(arrow) => {
                             break !arrow.pife
                                 && !matches!(arrow.body, ArrowFunctionBody::FunctionBody(_));
@@ -2107,7 +2108,7 @@ impl GenExpr for ConditionalExpression<'_> {
             } else {
                 false
             };
-            // End the arrow body before the conditional colon can become a return-type annotation.
+            // Keep the conditional colon from becoming an arrow return-type annotation.
             p.wrap(wrap_consequent, |p| {
                 self.consequent.print_expr(p, Precedence::Yield, Context::empty());
             });

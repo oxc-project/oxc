@@ -837,6 +837,10 @@ impl NeedsParentheses<'_> for AstNode<'_, '_, YieldExpression<'_>> {
 
         let parent = self.parent();
         matches!(parent, AstNodes::AwaitExpression(_) | AstNodes::TSTypeAssertion(_))
+            || (f.context().source_type().is_typescript()
+                && f.options().arrow_parentheses.is_as_needed()
+                && self.argument.is_some()
+                && matches!(parent, AstNodes::ConditionalExpression(e) if e.consequent.span() == self.span()))
             || await_or_yield_needs_parens(self.span(), parent)
     }
 }
