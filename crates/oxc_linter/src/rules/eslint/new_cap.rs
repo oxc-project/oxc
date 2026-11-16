@@ -588,7 +588,7 @@ where
 /// read from the global object (`globalThis.Date`, `window.Date`, ...).
 fn is_global_date_utc(callee: &Expression, ctx: &LintContext) -> bool {
     callee.get_member_expr().is_some_and(|member| {
-        member.static_property_name().is_some_and(|name| name == "UTC")
+        extract_name_from_expression(callee).is_some_and(|(name, _)| name == "UTC")
             && is_global_built_in(member.object(), "Date", ctx)
     })
 }
@@ -596,7 +596,7 @@ fn is_global_date_utc(callee: &Expression, ctx: &LintContext) -> bool {
 fn is_global_built_in(expr: &Expression, name: &str, ctx: &LintContext) -> bool {
     let expr = expr.without_parentheses();
     if let Some(member) = expr.get_member_expr() {
-        return member.static_property_name().is_some_and(|prop| prop == name)
+        return extract_name_from_expression(expr).is_some_and(|(prop, _)| prop == name)
             && matches!(
                 member.object().without_parentheses(),
                 Expression::Identifier(object)
@@ -748,6 +748,12 @@ fn test() {
             "const Date = { UTC() {} }; Date.UTC(2000, 0);",
             Some(serde_json::json!([{ "capIsNewExceptions": ["UTC"] }])),
         ),
+        ("Date[('UTC')](2000, 0);", None),
+        ("Date[(`UTC`)](2000, 0);", None),
+        ("Date?.[('UTC')](2000, 0);", None),
+        ("globalThis[('Date')].UTC(2000, 0);", None),
+        ("globalThis[(`Date`)].UTC(2000, 0);", None),
+        ("globalThis?.[('Date')]?.[('UTC')](2000, 0);", None),
     ];
 
     let fail = vec![
@@ -833,6 +839,8 @@ fn test() {
         ("import { Date } from 'foo'; Date?.UTC(2000, 0);", None),
         ("function foo(globalThis) { return globalThis.Date.UTC(2000, 0); }", None),
         ("globalThis.foo.UTC(2000, 0);", None),
+        ("function foo(Date) { Date[('UTC')](2000, 0); }", None),
+        ("function foo(globalThis) { globalThis[('Date')].UTC(2000, 0); }", None),
     ];
 
     Tester::new(NewCap::NAME, NewCap::PLUGIN, pass, fail).test_and_snapshot();
