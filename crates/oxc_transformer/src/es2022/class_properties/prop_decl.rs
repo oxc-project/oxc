@@ -10,13 +10,10 @@ use oxc_syntax::reference::ReferenceFlags;
 use crate::{
     common::helper_loader::{Helper, helper_call_expr},
     context::TraverseCtx,
-    utils::ast_builder::create_assignment,
+    utils::ast_builder::{create_assignment, create_variable_declaration},
 };
 
-use super::{
-    ClassProperties,
-    utils::{create_underscore_ident_name, create_variable_declaration},
-};
+use super::{ClassProperties, utils::create_underscore_ident_name};
 
 // Instance properties
 impl<'a> ClassProperties<'a> {
