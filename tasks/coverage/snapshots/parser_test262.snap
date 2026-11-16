@@ -2873,37 +2873,33 @@ Negative Passed: 4669/4669 (100.00%)
     ·   ──
     ╰────
 
-  × Expected `in` but found `throw`
-    ╭─[test262/test/language/comments/hashbang/escaped-bang-041.js:20:1]
- 19 │ 
- 20 │ throw "Test262: This statement should not be evaluated.";
-    · ──┬──
-    ·   ╰── `in` expected
-    ╰────
+  × Invalid Unicode escape sequence
+   ╭─[test262/test/language/comments/hashbang/escaped-bang-041.js:1:3]
+ 1 │ #\041
+   ·   ─
+ 2 │ 
+   ╰────
 
-  × Expected `in` but found `throw`
-    ╭─[test262/test/language/comments/hashbang/escaped-bang-u0021.js:20:1]
- 19 │ 
- 20 │ throw "Test262: This statement should not be evaluated.";
-    · ──┬──
-    ·   ╰── `in` expected
-    ╰────
+  × Invalid Character `!`
+   ╭─[test262/test/language/comments/hashbang/escaped-bang-u0021.js:1:8]
+ 1 │ #\u0021
+   ·        ▲
+ 2 │ 
+   ╰────
 
-  × Expected `in` but found `throw`
-    ╭─[test262/test/language/comments/hashbang/escaped-bang-u21.js:20:1]
- 19 │ 
- 20 │ throw "Test262: This statement should not be evaluated.";
-    · ──┬──
-    ·   ╰── `in` expected
-    ╰────
+  × Invalid Character `!`
+   ╭─[test262/test/language/comments/hashbang/escaped-bang-u21.js:1:8]
+ 1 │ #\u{21}
+   ·        ▲
+ 2 │ 
+   ╰────
 
-  × Expected `in` but found `throw`
-    ╭─[test262/test/language/comments/hashbang/escaped-bang-x21.js:20:1]
- 19 │ 
- 20 │ throw "Test262: This statement should not be evaluated.";
-    · ──┬──
-    ·   ╰── `in` expected
-    ╰────
+  × Invalid Unicode escape sequence
+   ╭─[test262/test/language/comments/hashbang/escaped-bang-x21.js:1:3]
+ 1 │ #\x21
+   ·   ─
+ 2 │ 
+   ╰────
 
   × Invalid Unicode escape sequence
    ╭─[test262/test/language/comments/hashbang/escaped-hash-043.js:1:2]
