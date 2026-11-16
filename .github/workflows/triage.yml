@@ -4,8 +4,9 @@
 #     and Pull requests write access.
 #   - CAPTAIN_ID: the oxc-captain GitHub App's client ID, as a repository secret.
 #   - CAPTAIN_KEY: the oxc-captain GitHub App's private key.
-#   - CLOUDFLARE_API_KEY: a Workers AI API token with Workers AI Read and Edit.
+#   - CLOUDFLARE_API_KEY: an inference token with access to the selected models.
 #   - CLOUDFLARE_ACCOUNT_ID: the Cloudflare account ID.
+#   - GLM-5.3 uses Workers Paid billing or prepaid AI Gateway credits.
 
 name: Issue Triage
 
@@ -83,16 +84,15 @@ jobs:
         run: .github/scripts/setup-triagebot-labels.sh
 
       - name: Triage the issue
-        # Cloudflare Workers AI support is newer than v0.4.0. Pin the upstream
-        # commit rather than following its moving main branch.
-        uses: withastro/triagebot-action@51d30da13c0bd571a3822fc56882de40fead0086 # main, 2026-08-28
+        # The Oxc fork accepts new catalog models without a bundled registry update.
+        uses: oxc-project/triagebot-action@d574ff99303b4db33a4ccc0c204aa63ce50154de
         with:
           read-token: ${{ github.token }}
           write-token: ${{ steps.app-token.outputs.token }}
           cloudflare-api-key: ${{ secrets.CLOUDFLARE_API_KEY }}
           cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          triage-model: cloudflare-workers-ai/@cf/moonshotai/kimi-k2.7-code
-          verification-model: cloudflare-workers-ai/@cf/moonshotai/kimi-k2.6
+          triage-model: cloudflare-ai/@cf/zai-org/glm-5.3
+          verification-model: cloudflare-ai/@cf/zai-org/glm-5.3
           triage-skill: .agents/skills/triage
           pr-skill: .agents/skills/pr-writer
           # Leave assigned issues with their assignees; only auto-open PRs for unassigned issues.
