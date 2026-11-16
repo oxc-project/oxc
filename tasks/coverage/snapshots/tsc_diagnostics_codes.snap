@@ -1,4 +1,4 @@
-commit: f7973164
+commit: 5e32f324
 
 ---
 NOTE: If you are seeing this file with Git diffs, please follow the instructions below to review the changes.
@@ -993,3 +993,5 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 18115
 18117
 18120
+18133
+18139

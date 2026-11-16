@@ -1,8 +1,8 @@
-commit: f7973164
+commit: 5e32f324
 
 semantic_typescript Summary:
-AST Parsed     : 5750/5750 (100.00%)
-Positive Passed: 4164/5750 (72.42%)
+AST Parsed     : 5754/5754 (100.00%)
+Positive Passed: 4165/5754 (72.38%)
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/acceptableAlias1.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["N", "X", "_M"]
@@ -1077,6 +1077,11 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["reproduce"]
+
+semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/circularDeclaredPropertyAccess.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["BaseTypeArguments"]
+rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/circularGetAccessor.ts
 Bindings mismatch:
@@ -2414,6 +2419,26 @@ semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/cons
 Bindings mismatch:
 after transform: ScopeId(0): ["X", "Y", "anotherVar"]
 rebuilt        : ScopeId(0): ["anotherVar"]
+
+semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/contentMapperFilteredDynamicImport.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["dynamic", "literal", "literalTemplate", "parenthesized", "path", "require", "template", "tsRequire"]
+rebuilt        : ScopeId(0): ["dynamic", "literal", "literalTemplate", "parenthesized", "template", "tsRequire"]
+Reference symbol mismatch for "path":
+after transform: SymbolId(0) "path"
+rebuilt        : <None>
+Reference symbol mismatch for "path":
+after transform: SymbolId(0) "path"
+rebuilt        : <None>
+Reference symbol mismatch for "require":
+after transform: SymbolId(6) "require"
+rebuilt        : <None>
+Reference symbol mismatch for "path":
+after transform: SymbolId(0) "path"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["path", "require"]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/contentMapperOutputExtensionsTypeOnlyUnsafeRewrite.ts
 Bindings mismatch:
@@ -8480,6 +8505,17 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["g"]
+
+semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/indexedAccessUnionKeyIdentity.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["f", "g", "h", "set"]
+rebuilt        : ScopeId(0): ["f", "g", "h"]
+Reference symbol mismatch for "set":
+after transform: SymbolId(7) "set"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["set"]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/indexedAnyPredicateInForLoop.ts
 Bindings mismatch:
