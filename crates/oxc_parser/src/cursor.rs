@@ -167,6 +167,40 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         true
     }
 
+    /// Advance if `accept` holds for the token after the current one, and return a checkpoint
+    /// of the state before advancing.
+    ///
+    /// Use this to start a speculative parse which the token after the current one usually rules
+    /// out. Ruling it out costs no more than reading that token, and otherwise the token is
+    /// read once and kept.
+    ///
+    /// `accept` is called with the lexer positioned after the token it is given.
+    #[inline]
+    pub(crate) fn checkpoint_if_next(
+        &mut self,
+        accept: impl FnOnce(&Self, Token) -> bool,
+    ) -> Option<ParserCheckpoint<'a>> {
+        let lexer = self.lexer.checkpoint();
+        let next = self.lexer.next_token();
+        if !accept(self, next) {
+            self.lexer.rewind(lexer);
+            return None;
+        }
+        let checkpoint = ParserCheckpoint {
+            lexer,
+            cur_token: self.token,
+            prev_token_end: self.prev_token_end,
+            errors_pos: self.errors.len(),
+            fatal_error: self.fatal_error.take(),
+        };
+        if self.token.escaped() && self.token.kind().is_any_keyword() {
+            self.report_escaped_keyword(self.token.span());
+        }
+        self.prev_token_end = self.token.end();
+        self.token = next;
+        Some(checkpoint)
+    }
+
     /// [Automatic Semicolon Insertion](https://tc39.es/ecma262/#sec-automatic-semicolon-insertion)
     /// # Errors
     pub(crate) fn asi(&mut self) {
@@ -316,22 +350,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             true
         } else {
             kind == Kind::LAngle
-        }
-    }
-
-    pub(crate) fn re_lex_ts_r_angle(&mut self) -> bool {
-        if self.fatal_error.is_some() {
-            return false;
-        }
-        let kind = self.cur_kind();
-        if kind == Kind::ShiftRight {
-            self.token = self.lexer.re_lex_as_typescript_r_angle(2);
-            true
-        } else if kind == Kind::ShiftRight3 {
-            self.token = self.lexer.re_lex_as_typescript_r_angle(3);
-            true
-        } else {
-            kind == Kind::RAngle
         }
     }
 

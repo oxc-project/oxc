@@ -80,6 +80,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.lexer.rewind(checkpoint);
                 result
             }
+            // In a JSX file nearly every `<` here opens an element, which the source after it
+            // shows without lexing the tag name and the token after it, only to lex them again.
+            Kind::LAngle
+                if self.source_type.is_jsx() && !self.lexer.can_start_type_parameters_in_jsx() =>
+            {
+                Tristate::False
+            }
             Kind::LAngle => {
                 self.lookahead(|p| p.is_parenthesized_arrow_function_expression_worker(false))
             }
