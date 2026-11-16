@@ -7,7 +7,11 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    AstNode, ast_util::outermost_paren_parent, context::LintContext, fixer::RuleFixer, rule::Rule,
+    AstNode,
+    ast_util::{could_be_asi_hazard, outermost_paren_parent},
+    context::LintContext,
+    fixer::RuleFixer,
+    rule::Rule,
 };
 
 fn forward_ref_uses_ref_diagnostic(span: Span) -> OxcDiagnostic {
@@ -119,24 +123,25 @@ fn check_forward_ref_inner<'a>(
     };
 
     let add_ref_parameter_fix = |fixer: RuleFixer<'_, 'a>| {
-        let fixed = ctx.source_range(params.span);
-        // remove the trailing `)` and `,` if they exist
-        let fixed = fixed.strip_suffix(')').unwrap_or(fixed).trim_end();
-        let mut fixed = fixed.strip_suffix(',').unwrap_or(fixed).to_string();
-
-        if !fixed.starts_with('(') {
-            fixed.insert(0, '(');
-        }
-        fixed.push_str(", ref)");
-
-        fixer.replace(params.span, fixed).with_message("add `ref` parameter")
+        let param = &params.items[0];
+        let fix = if ctx.source_range(params.span).starts_with('(') {
+            fixer.insert_text_after(param, ", ref")
+        } else {
+            fixer.replace(param.span, format!("({}, ref)", ctx.source_range(param.span)))
+        };
+        fix.with_message("add `ref` parameter")
     };
 
     if can_remove_forward_ref {
         ctx.diagnostics_with_multiple_fixes(
             forward_ref_uses_ref_diagnostic(span),
             (FixKind::Suggestion, |fixer: RuleFixer<'_, 'a>| {
-                fixer.replace_with(call_expr, exp).with_message("remove `forwardRef` wrapper")
+                let text = ctx.source_range(exp.span());
+                let semi =
+                    if text.starts_with('(') && could_be_asi_hazard(node, ctx) { ";" } else { "" };
+                fixer
+                    .replace(call_expr.span, format!("{semi}{text}"))
+                    .with_message("remove `forwardRef` wrapper")
             }),
             (FixKind::Suggestion, add_ref_parameter_fix),
         );
@@ -267,9 +272,15 @@ fn test() {
             .into(),
         // Anonymous functions in statement context - one fix (add ref only)
         ("forwardRef(function (a) {})", "forwardRef(function (a, ref) {})").into(),
-        ("forwardRef(function(a,) {})", "forwardRef(function(a, ref) {})").into(),
-        ("forwardRef(function(a, ) {})", "forwardRef(function(a, ref) {})").into(),
+        ("forwardRef(function(a,) {})", "forwardRef(function(a, ref,) {})").into(),
+        ("forwardRef(function(a, ) {})", "forwardRef(function(a, ref, ) {})").into(),
         ("React.forwardRef(function(a) {})", "React.forwardRef(function(a, ref) {})").into(),
+        ("forwardRef(function(a,/* c */) {})", "forwardRef(function(a, ref,/* c */) {})").into(),
+        ("forwardRef(function(a // c\n) {})", "forwardRef(function(a, ref // c\n) {})").into(),
+        ("forwardRef(function(a, // c\n) {})", "forwardRef(function(a, ref, // c\n) {})").into(),
+        ("foo\nforwardRef((a) => {})", ("foo\n;(a) => {}", "foo\nforwardRef((a, ref) => {})"))
+            .into(),
+        ("foo\nforwardRef(a => {})", ("foo\na => {}", "foo\nforwardRef((a, ref) => {})")).into(),
     ];
 
     Tester::new(ForwardRefUsesRef::NAME, ForwardRefUsesRef::PLUGIN, pass, fail)
