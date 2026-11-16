@@ -40,7 +40,7 @@ use oxc_linter::{
     ConfigStore, ConfigStoreBuilder, ContextSubHost, ContextSubHostOptions, ExternalPluginStore,
     LintOptions, Linter, ModuleRecord, Oxlintrc,
 };
-use oxc_napi::{Comment, OxcError, convert_utf8_to_utf16};
+use oxc_napi::{Comment, OxcError, convert_utf8_to_utf16, get_source_type};
 use oxc_transformer_plugins::{
     InjectGlobalVariables, InjectGlobalVariablesConfig, InjectImport, ReplaceGlobalDefines,
     ReplaceGlobalDefinesConfig,
@@ -123,9 +123,8 @@ impl Oxc {
 
         // Setup path and source type
         let filename = format!("test.{}", parser_options.extension);
+        let source_type = get_source_type(&filename, None, parser_options.source_type.as_deref());
         let path = PathBuf::from(filename);
-        let source_type =
-            SourceType::from_path(&path).map_err(|e| napi::Error::from_reason(e.to_string()))?;
 
         // Phase 1: Parse source
         let (mut program, mut module_record) =
@@ -331,8 +330,12 @@ impl Oxc {
             return None;
         }
         let compress = if options.run.compress {
-            options.compress.map(|_| {
-                let mut compress_options = CompressOptions::smallest();
+            options.compress.as_ref().and_then(|compress| {
+                let mut compress_options = CompressOptions::try_from(compress)
+                    .map_err(|error| {
+                        self.diagnostics.push(OxcDiagnostic::error(error));
+                    })
+                    .ok()?;
                 if let Some(transform_options) = &options.transformer
                     && let Some(target) = &transform_options.target
                     && let Ok(targets) =
@@ -342,7 +345,7 @@ impl Oxc {
                 {
                     compress_options.target = targets;
                 }
-                compress_options
+                Some(compress_options)
             })
         } else {
             None

@@ -27,7 +27,7 @@ export function wrap(result) {
   };
 }
 
-// Used by `napi/playground/scripts/patch.js`.
+// Used by `napi/playground/src-js/wasm.js`.
 //
 // Set `value` field of `Literal`s which are `BigInt`s or `RegExp`s.
 //

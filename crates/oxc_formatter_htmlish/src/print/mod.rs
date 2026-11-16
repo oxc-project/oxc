@@ -138,7 +138,13 @@ fn write_node<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'_, 'a>)
         }
         // Comments and CDATA sections are printed as written,
         // a `</ div>` too (DIVERGENCES.md#end-tag-with-space-is-comment), and an omitted element's end tag (`</body>`).
-        NodeKind::Comment(_) | NodeKind::Cdata | NodeKind::EndTag(_) => write!(
+        // TODO: Angular's `@let` and ICU expressions, as written until Angular is formatted natively.
+        NodeKind::Comment(_)
+        | NodeKind::Cdata
+        | NodeKind::EndTag(_)
+        | NodeKind::LetDeclaration(_)
+        | NodeKind::Icu(_)
+        | NodeKind::IcuCase(_) => write!(
             f,
             [
                 opening_tag_prefix(t, id),
