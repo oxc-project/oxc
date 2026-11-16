@@ -212,7 +212,6 @@ impl Rule for NoUnexpectedMultiline {
                     })
                     .collect::<String>();
 
-                // The identifier name should look like it was an attempt to use a regex.
                 if is_regex_flag(ident_name.as_str())
 					// if it was a regex attempt, the second slash should be before the identifier
                     && second_slash + span.start + 1 == parent_binary_expr.right.span().start
@@ -408,8 +407,6 @@ fn line_terminators() {
     let mut fail = Vec::new();
     let mut fix = Vec::new();
     for separator in ["\n", "\r", "\r\n", "\u{2028}", "\u{2029}"] {
-        // A line break after the first slash does not separate the numerator
-        // from that slash and must not be diagnosed.
         pass.push(format!("const a = foo /{separator}bar/g"));
         pass.push(format!("const a = foo / bar{separator}/g"));
         for (prefix, suffix) in [
