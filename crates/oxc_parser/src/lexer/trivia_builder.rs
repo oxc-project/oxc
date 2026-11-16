@@ -216,6 +216,13 @@ impl<'a> TriviaBuilder<'a> {
         self.previous_token = token;
     }
 
+    /// Same as `handle_token`, for a token which no comments are waiting to be attached to.
+    #[inline]
+    pub(super) fn set_previous_token(&mut self, token: Token) {
+        debug_assert_eq!(self.processed, self.comments.len());
+        self.previous_token = token;
+    }
+
     #[cold]
     fn attach_pending_comments_to_token(&mut self, token: Token) {
         let len = self.comments.len();
