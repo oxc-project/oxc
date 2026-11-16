@@ -63,6 +63,17 @@ try:
 except urllib.error.HTTPError as error:
     opus_status = error.code
     opus_generated = False
+    # Classify known configuration errors without printing a response that
+    # could contain account identifiers or authentication details.
+    detail = error.read().decode("utf-8", errors="replace").lower()
+    for category, markers in {
+        "gateway missing": ["gateway does not exist", "gateway not found", "could not find gateway"],
+        "authentication": ["authentication", "authorization", "unauthorized", "forbidden", "not authorized"],
+        "billing": ["credits", "balance", "billing"],
+        "provider key": ["provider key", "api key"],
+    }.items():
+        if any(marker in detail for marker in markers):
+            print("Gateway native Opus error category: " + category)
 print(f"Gateway native Opus 5.5: HTTP {opus_status}, generated={opus_generated}")
 
 with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
