@@ -6,7 +6,7 @@
 #   - CAPTAIN_KEY: the oxc-captain GitHub App's private key.
 #   - CLOUDFLARE_API_KEY: an inference token with access to the selected models.
 #   - CLOUDFLARE_ACCOUNT_ID: the Cloudflare account ID.
-#   - Claude Opus 5.5 requires funded inference billing on that account.
+#   - Kimi K3.1 Pro requires funded inference billing on that account.
 
 name: Issue Triage
 
@@ -85,24 +85,14 @@ jobs:
 
       - name: Triage the issue
         # The Oxc fork accepts new catalog models without a bundled registry update.
-        uses: oxc-project/triagebot-action@8848d5e7988334ca9e6bafe25cf954dda176277d
+        uses: oxc-project/triagebot-action@fee3b2cd2a38418a5c9560d08eb8fc34cec7f6b5
         with:
           read-token: ${{ github.token }}
           write-token: ${{ steps.app-token.outputs.token }}
           cloudflare-api-key: ${{ secrets.CLOUDFLARE_API_KEY }}
           cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          triage-model: cloudflare-ai/anthropic/claude-opus-5.5
-          verification-model: cloudflare-workers-ai/@cf/moonshotai/kimi-k2.6
-          cloudflare-models: |
-            {
-              "anthropic/claude-opus-5.5": {
-                "api": "anthropic-messages",
-                "contextWindow": 1000000,
-                "maxTokens": 16384,
-                "reasoning": true,
-                "compat": { "forceAdaptiveThinking": true, "supportsTemperature": false }
-              }
-            }
+          triage-model: cloudflare-ai/moonshotai/kimi-k3.1-pro
+          verification-model: cloudflare-ai/moonshotai/kimi-k3.1-pro
           triage-skill: .agents/skills/triage
           pr-skill: .agents/skills/pr-writer
           # Leave assigned issues with their assignees; only auto-open PRs for unassigned issues.
