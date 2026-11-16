@@ -1,0 +1,79 @@
+name: Triage Model Test
+
+on:
+  push:
+    branches: [feat/triage-action-models]
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  model:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Claude Opus 5.5
+            model: cloudflare-ai/anthropic/claude-opus-5.5
+          - name: GPT-6.1 Sol
+            model: cloudflare-ai/openai/gpt-6.1-sol
+          - name: Kimi K2.7 Code (current model)
+            model: cloudflare-workers-ai/@cf/moonshotai/kimi-k2.7-code
+    steps:
+      - name: Check out the pinned action fork
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: oxc-project/triagebot-action
+          ref: 8848d5e7988334ca9e6bafe25cf954dda176277d
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+        with:
+          version: 11.5.0
+
+      - name: Install the action's locked dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate a fix, compile it, and verify the tool result
+        id: smoke
+        env:
+          MODEL: ${{ matrix.model }}
+          CLOUDFLARE_API_KEY: ${{ secrets.CLOUDFLARE_API_KEY }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          MODEL_CONFIG: |
+            {
+              "anthropic/claude-opus-5.5": {
+                "api": "anthropic-messages",
+                "contextWindow": 1000000,
+                "maxTokens": 16384,
+                "reasoning": true,
+                "compat": { "forceAdaptiveThinking": true, "supportsTemperature": false }
+              },
+              "openai/gpt-6.1-sol": {
+                "api": "openai-responses",
+                "contextWindow": 200000,
+                "maxTokens": 16384,
+                "reasoning": true
+              }
+            }
+        run: pnpm test:model
+
+      - name: Summarize result
+        if: always()
+        env:
+          MODEL: ${{ matrix.model }}
+          RESULT: ${{ steps.smoke.outcome }}
+        run: |
+          printf '| Model | Coding and tool-use smoke test |\n| --- | --- |\n| %s | %s |\n' "$MODEL" "$RESULT" >> "$GITHUB_STEP_SUMMARY"
