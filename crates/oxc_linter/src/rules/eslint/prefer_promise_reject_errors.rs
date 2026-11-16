@@ -101,7 +101,6 @@ impl Rule for PreferPromiseRejectErrors {
                 if !is_method_call(call_expr, Some(&["Promise"]), Some(&["reject"]), None, None) {
                     return;
                 }
-                // A local binding named `Promise` is not the built-in.
                 if !call_expr.callee.get_member_expr().is_some_and(|member| {
                     is_global_promise(member.object().get_inner_expression(), ctx)
                 }) {
