@@ -133,13 +133,18 @@ impl Rule for NoPlusplus {
 ///   - An operand of a sequence expression that is child of another sequence expression, etc.,
 ///     up to the sequence expression that is the update node: for (;; foo(), (bar(), (baz(), i++))) {}
 fn is_for_loop_afterthought(node: &AstNode, ctx: &LintContext) -> bool {
+    let mut span = node.kind().span();
     let mut cur = ctx.nodes().parent_node(node.id());
 
     while let AstKind::SequenceExpression(_) | AstKind::ParenthesizedExpression(_) = cur.kind() {
+        span = cur.kind().span();
         cur = ctx.nodes().parent_node(cur.id());
     }
 
-    matches!(cur.kind(), AstKind::ForStatement(stmt) if stmt.update.is_some())
+    let AstKind::ForStatement(stmt) = cur.kind() else {
+        return false;
+    };
+    stmt.update.as_ref().is_some_and(|update| update.span() == span)
 }
 
 #[test]
@@ -204,6 +209,8 @@ fn test() {
             "for (;; foo + (i++, bar));",
             Some(serde_json::json!([{ "allowForLoopAfterthoughts": true }])),
         ),
+        ("for (i++;; j++);", Some(serde_json::json!([{ "allowForLoopAfterthoughts": true }]))),
+        ("for (;i--; j++);", Some(serde_json::json!([{ "allowForLoopAfterthoughts": true }]))),
     ];
 
     let fix = vec![
