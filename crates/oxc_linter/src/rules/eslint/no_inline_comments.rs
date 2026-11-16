@@ -155,13 +155,18 @@ fn is_directive_comment(comment: &Comment, text: &str) -> bool {
         return true;
     }
 
-    // Block comments only: /* eslint ... */ (ESLint config directive with space)
-    // This matches ESLint's ESLINT_DIRECTIVE_PATTERN which accepts "eslint " or "eslint-"
+    // Block comments only: /* eslint ... */ (ESLint config directive with space),
+    // and /* global ... */, /* globals ... */, /* exported ... */.
+    // This matches ESLint's ESLINT_DIRECTIVE_PATTERN,
+    // `^(?:eslint[- ]|(?:globals?|exported) )`.
     if comment.is_block()
         && (trimmed.starts_with("eslint ")
             || trimmed.starts_with("eslint\t")
             || trimmed.starts_with("oxlint ")
-            || trimmed.starts_with("oxlint\t"))
+            || trimmed.starts_with("oxlint\t")
+            || trimmed.starts_with("global ")
+            || trimmed.starts_with("globals ")
+            || trimmed.starts_with("exported "))
     {
         return true;
     }
@@ -222,6 +227,9 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        ("foo(); /* global foo */", None),
+        ("foo(); /* globals foo */", None),
+        ("var foo; /* exported foo */", None),
         (
             "// A valid comment before code
 			var a = 1;",
@@ -318,6 +326,8 @@ fn test() {
     ];
 
     let fail = vec![
+        ("foo(); /* globalfoo */", None),
+        ("foo(); /* exportedfoo */", None),
         ("var a = 1; /*A block comment inline after code*/", None),
         ("/*A block comment inline before code*/ var a = 2;", None),
         // Line comments with global/globals/exported are NOT directive (only block comments are)
