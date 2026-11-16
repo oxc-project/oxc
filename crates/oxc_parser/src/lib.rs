@@ -788,6 +788,9 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
 
         program.comments = self.lexer.trivia_builder.comments.into_vec();
 
+        #[cfg(debug_assertions)]
+        oxc_ast_visit::assert_valid_spans(&program);
+
         ParserReturn {
             program,
             module_record,
@@ -820,6 +823,8 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         if !errors.is_empty() {
             return Err(errors);
         }
+        #[cfg(debug_assertions)]
+        oxc_ast_visit::assert_valid_expression_spans(&expr);
         Ok(expr)
     }
 

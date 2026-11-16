@@ -230,16 +230,6 @@ impl<'a> Visit<'a> for CheckASTNodes<'a> {
         assert!(self.node_ids.insert(id), "Duplicate parser node ID: {kind:?}");
     }
 
-    // TODO: This is too slow
-    // fn visit_span(&mut self, span: &Span) {
-    // let Span { start, end, .. } = span;
-    // if *end >= *start {
-    // self.driver.errors.push(
-    // OxcDiagnostic::error(format!("Span end {end} >= start {start}",)).with_label(*span),
-    // );
-    // }
-    // }
-
     /// Idempotency test for printing regular expressions.
     fn visit_reg_exp_literal(&mut self, literal: &RegExpLiteral<'a>) {
         walk::walk_reg_exp_literal(self, literal);

@@ -104,13 +104,11 @@ impl Span {
     /// Create a new [`Span`] from a start and end position.
     ///
     /// # Invariants
-    /// The `start` position must be less than or equal to `end`. Note that this
-    /// invariant is only checked in debug builds to avoid a performance
-    /// penalty.
+    /// The `start` position must be less than or equal to `end`.
+    /// This invariant is not checked at construction.
     ///
     #[inline]
     pub const fn new(start: u32, end: u32) -> Self {
-        debug_assert!(start <= end);
         Self { start, end, _align: PointerAlign::new() }
     }
 
@@ -683,13 +681,6 @@ pub struct I32Dummy(i32);
 #[cfg(test)]
 mod test {
     use super::Span;
-
-    #[cfg(debug_assertions)]
-    #[test]
-    #[should_panic(expected = "assertion failed: start <= end")]
-    fn test_new_reversed() {
-        Span::new(5, 3);
-    }
 
     #[test]
     fn test_size() {

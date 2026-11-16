@@ -29,11 +29,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Create a [`Span`] from provided `start` to end of previous token.
     #[inline]
     pub(crate) fn end_span(&self, start: u32) -> Span {
-        let end = self.prev_token_end;
-        debug_assert!(start <= end || self.fatal_error.is_some());
-        // A fatal error can stop parsing before consuming any part of this node.
-        // Represent that unfinished node with an empty span.
-        Span::new(start, end.max(start))
+        Span::new(start, self.prev_token_end)
     }
 
     /// Get current token

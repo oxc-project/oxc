@@ -9,5 +9,8 @@ mod generated {
 
 pub use generated::{visit::*, visit_js::*, visit_js_mut::*, visit_mut::*};
 
+mod validate_spans;
+pub use validate_spans::{assert_valid_expression_spans, assert_valid_spans};
+
 #[cfg(feature = "serialize")]
 pub mod utf8_to_utf16;

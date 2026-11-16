@@ -529,12 +529,7 @@ mod test {
     const REMOVE_MIDDLE: Fix = Fix::delete(Span::new(5, 10));
     const REMOVE_END: Fix = Fix::delete(Span::new(14, 18));
     const REVERSE_RANGE: Fix = Fix {
-        span: {
-            // Deliberately invalidate the span to test rejection of reversed ranges.
-            let mut span = Span::new(0, 0);
-            span.start = 3;
-            span
-        },
+        span: Span::new(3, 0),
         content: Cow::Borrowed(" "),
         message: None,
         kind: FixKind::None,
@@ -802,10 +797,7 @@ mod test {
     #[should_panic(expected = "Negative range is invalid: Span { start: 5, end: 2 }")]
     fn negative_ranges_in_composite_fix() {
         let source_text = "foo bar baz";
-        // Deliberately invalidate the span to test the composite fix's own validation.
-        let mut span = Span::new(5, 5);
-        span.end = 2;
-        let fixes = vec![Fix::new("quux", Span::new(0, 3)), Fix::new("qux", span)];
+        let fixes = vec![Fix::new("quux", Span::new(0, 3)), Fix::new("qux", Span::new(5, 2))];
         let composite_fix = CompositeFix::Multiple(fixes);
         assert_fixed_corrected(source_text, source_text, composite_fix);
     }
