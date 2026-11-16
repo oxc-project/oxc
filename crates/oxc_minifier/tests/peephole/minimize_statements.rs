@@ -481,7 +481,7 @@ fn test_inline_function_declaration_preserves_annex_b_aliases() {
         "function main() { function f() { return 1; } { function f() { return 2; } } r.f = f; } main();",
         "function main(x) { function f() { return 1; } if (x) { function f() { return 2; } } r.f = f; } main(1);",
         "function main(x) { function f() { return 1; } for (;;) { if (x === 1) { function f() { return 2; } } break; } r.f = f; } main(1);",
-        "function main(x) { function f() { return 1; } l: for (; x;) { try { function f() { return 2; } } catch {} break l; } r.f = f; } main(1);",
+        "function main(x) { function f() { return 1; } l: for (; x;) { try { function f() { return 2; } } catch {} for (; x;) break l; } r.f = f; } main(1);",
         // A direct eval outside the block can read the hoisted var binding.
         "function main() { { function f() { return 1; } r.f = f; } return eval('typeof f'); } main();",
     ];
