@@ -454,6 +454,12 @@ parser_diagnostics! {
             .with_label(span)
     };
 
+    invalid_arrow_function_parameter(span: Span) => {
+        OxcDiagnostic::error("Invalid arrow function parameter")
+            .with_help("Expected an identifier or a destructuring pattern.")
+            .with_label(span)
+    };
+
     a_rest_parameter_cannot_be_optional(span: Span) => {
         ts_error("1047", "A rest parameter cannot be optional")
             .with_label(span)

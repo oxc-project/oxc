@@ -698,7 +698,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             fatal_error: None,
             token: Token::default(),
             prev_token_end: 0,
-            state: ParserState::new(),
+            state: ParserState::new(allocator),
             ctx: Self::default_context(source_type, options),
             ast: ParserAstBuilder::new(allocator),
             module_record_builder: ModuleRecordBuilder::new(allocator, source_type),
