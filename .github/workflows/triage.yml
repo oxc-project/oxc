@@ -85,7 +85,7 @@ jobs:
 
       - name: Triage the issue
         # The Oxc fork accepts new catalog models without a bundled registry update.
-        uses: oxc-project/triagebot-action@d574ff99303b4db33a4ccc0c204aa63ce50154de
+        uses: oxc-project/triagebot-action@864fce5a3780b277d32f476421838e034b7635c7
         with:
           read-token: ${{ github.token }}
           write-token: ${{ steps.app-token.outputs.token }}
