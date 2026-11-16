@@ -73,6 +73,11 @@ fn test() {
             ",
             Some(serde_json::json!([{ "advanceTimersByTime": null }])),
         ),
+        (
+            "jest.spyOn({m:()=>0}, 'm').mockImplementation(() => 1);",
+            Some(serde_json::json!([{ "spyOn": null }])),
+        ),
+        ("jest.fn().mockReturnValue(1);", Some(serde_json::json!([{ "fn": null }]))),
     ];
 
     Tester::new(NoRestrictedJestMethods::NAME, NoRestrictedJestMethods::PLUGIN, pass, fail)

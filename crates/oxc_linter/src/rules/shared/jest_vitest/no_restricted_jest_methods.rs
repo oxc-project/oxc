@@ -1,15 +1,15 @@
 use crate::{
     context::LintContext,
     utils::{
-        JestFnKind, JestGeneralFnKind, PossibleJestNode, is_type_of_jest_fn_call,
-        object_with_nullable_string_schema,
+        JestFnKind, JestGeneralFnKind, PossibleJestNode, object_with_nullable_string_schema,
+        parse_general_jest_fn_call,
     },
 };
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::AstNode;
 use oxc_span::Span;
-use oxc_str::{CompactStr, JSStr};
+use oxc_str::CompactStr;
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -82,27 +82,28 @@ impl NoRestrictedTestMethodsConfig {
         else {
             return;
         };
-        if !is_type_of_jest_fn_call(
-            call_expr,
-            &possible_jest_node,
-            ctx,
-            &[
-                JestFnKind::General(JestGeneralFnKind::Jest),
-                JestFnKind::General(JestGeneralFnKind::Vitest),
-            ],
+
+        let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, &possible_jest_node, ctx)
+        else {
+            return;
+        };
+
+        if !matches!(
+            jest_fn_call.kind,
+            JestFnKind::General(JestGeneralFnKind::Jest | JestGeneralFnKind::Vitest)
         ) {
             return;
         }
 
-        let Some(mem_expr) = call_expr.callee.as_member_expression() else {
+        let Some(member) = jest_fn_call.members.first() else {
             return;
         };
-        let Some(property_name) = mem_expr.static_property_name().and_then(JSStr::as_str) else {
+
+        let Some(property_name) = member.name() else {
             return;
         };
-        let Some((span, _)) = mem_expr.static_property_info() else {
-            return;
-        };
+        let property_name = property_name.as_ref();
+        let span = member.span;
 
         if self.contains(property_name) {
             self.get_message(property_name).map_or_else(
