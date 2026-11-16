@@ -71,6 +71,7 @@ pub mod config;
 mod context;
 mod cursor;
 mod error_handler;
+mod list;
 mod modifiers;
 mod module_record;
 mod state;
@@ -785,7 +786,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             self.lexer.finalize_tokens()
         };
 
-        program.comments = self.lexer.trivia_builder.comments;
+        program.comments = self.lexer.trivia_builder.comments.into_vec();
 
         ParserReturn {
             program,
@@ -1076,6 +1077,90 @@ mod test {
     }
 
     #[test]
+    fn asserted_exponentiation_preserve_parens() {
+        for preserve_parens in [true, false] {
+            for source in [
+                "(-value) as number ** 2",
+                "(-value as number) ** 2",
+                "(-value) as any satisfies number ** 2",
+                "(<number>value) satisfies number ** 2",
+                "async () => (await value) as number ** 2",
+            ] {
+                let allocator = Allocator::default();
+                let result = Parser::new(&allocator, source, SourceType::ts())
+                    .with_options(ParseOptions { preserve_parens, ..ParseOptions::default() })
+                    .parse_expression();
+                assert!(result.is_ok(), "{source}, preserve_parens={preserve_parens}");
+            }
+
+            for (source, operand) in [
+                ("-value as any satisfies number ** 2", "-value"),
+                ("<number>value as number ** 2", "<number>value"),
+                ("async () => await value as number ** 2", "await value"),
+            ] {
+                let allocator = Allocator::default();
+                let diagnostics = Parser::new(&allocator, source, SourceType::ts())
+                    .with_options(ParseOptions { preserve_parens, ..ParseOptions::default() })
+                    .parse_expression()
+                    .unwrap_err();
+                assert_eq!(diagnostics.len(), 1, "{source}, preserve_parens={preserve_parens}");
+                let label = &diagnostics[0].labels[0];
+                let start = label.offset() as usize;
+                let end = start + label.len() as usize;
+                assert_eq!(&source[start..end], operand);
+            }
+        }
+    }
+
+    /// An unparenthesized instantiation gives its type arguments to the call, `new`, tag or superclass.
+    /// A parenthesized one stays whole as in TypeScript, also when the parentheses are not preserved.
+    #[test]
+    fn parenthesized_instantiation_expression() {
+        for preserve_parens in [true, false] {
+            // (source, keeps instantiation, outer has type arguments)
+            for (source, expected) in [
+                ("a<b>()", (false, true)),
+                ("(a<b>)()", (true, false)),
+                ("new a<b>()", (false, true)),
+                ("new a<b>", (false, true)),
+                ("new (a<b>)()", (true, false)),
+                ("new (a<b>)", (true, false)),
+                ("a<b>``", (false, true)),
+                ("(a<b>)``", (true, false)),
+                ("class extends B<T> {}", (false, true)),
+                ("class extends (B<T>) {}", (true, false)),
+                ("class extends (B<T>)<U> {}", (true, true)),
+            ] {
+                let allocator = Allocator::default();
+                let expr = Parser::new(&allocator, source, SourceType::ts())
+                    .with_options(ParseOptions { preserve_parens, ..ParseOptions::default() })
+                    .parse_expression()
+                    .unwrap_or_else(|_| panic!("{source}, preserve_parens={preserve_parens}"));
+                let (target, type_arguments) = match &expr {
+                    Expression::CallExpression(call) => (&call.callee, &call.type_arguments),
+                    Expression::NewExpression(new) => (&new.callee, &new.type_arguments),
+                    Expression::TaggedTemplateExpression(tagged) => {
+                        (&tagged.tag, &tagged.type_arguments)
+                    }
+                    Expression::ClassExpression(class) => {
+                        let heritage = class.heritage.as_ref().unwrap();
+                        (&heritage.expression, &heritage.type_arguments)
+                    }
+                    _ => unreachable!("{source}"),
+                };
+                let actual = (
+                    matches!(
+                        target.without_parentheses(),
+                        Expression::TSInstantiationExpression(_)
+                    ),
+                    type_arguments.is_some(),
+                );
+                assert_eq!(actual, expected, "{source}, preserve_parens={preserve_parens}");
+            }
+        }
+    }
+
+    #[test]
     fn simple_arrow_no_side_effects_annotations() {
         for source in [
             "/*#__NO_SIDE_EFFECTS__*/ value => value",
@@ -1254,11 +1339,16 @@ mod test {
             ("import x from 'foo'; 'use strict';", 2),
             ("export {x} from 'foo'; 'use strict';", 2),
             (";'use strict';", 2),
+            ("('use strict'); 'use strict';", 2),
         ];
-        for (source, body_length) in sources {
-            let ret = Parser::new(&allocator, source, source_type).parse();
-            assert!(ret.program.directives.is_empty(), "{source}");
-            assert_eq!(ret.program.body.len(), body_length, "{source}");
+        for preserve_parens in [true, false] {
+            for (source, body_length) in sources {
+                let ret = Parser::new(&allocator, source, source_type)
+                    .with_options(ParseOptions { preserve_parens, ..ParseOptions::default() })
+                    .parse();
+                assert!(ret.program.directives.is_empty(), "{source}");
+                assert_eq!(ret.program.body.len(), body_length, "{source}");
+            }
         }
     }
 

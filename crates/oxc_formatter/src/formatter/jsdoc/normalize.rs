@@ -3,6 +3,8 @@ use std::fmt::Write as _;
 
 use cow_utils::CowUtils;
 
+use oxc_syntax::line_terminator::{LineTerminatorSplitter, is_line_terminator};
+
 use crate::options::QuoteStyle;
 
 /// Normalize JSDoc tag aliases to their canonical form.
@@ -95,52 +97,31 @@ pub fn append_trailing_dot(s: &str) -> Cow<'_, str> {
     Cow::Borrowed(s)
 }
 
-/// Strip JSDoc `*` continuation prefixes from multi-line type content.
+/// Strip JSDoc `*` continuation prefixes from multi-line type or name content,
+/// joining the lines with `separator`.
 ///
 /// When a type expression spans multiple lines inside a JSDoc block, the raw
 /// content extracted by the parser includes `\n   *   ` prefixes from the
-/// continuation lines. This function joins lines by replacing each
-/// `\n<whitespace>*<optional space>` with a single space.
-fn strip_jsdoc_continuation_prefixes(s: &str) -> String {
+/// continuation lines.
+/// Each `<line terminator><whitespace>*<optional space>` is replaced with `separator`:
+/// - `' '` collapses the type to one line for normalization
+/// - `'\n'` keeps its lines for the TS formatter,
+///   as upstream's `comment-parser` strips `*` prefixes but keeps the newlines for `formatType()`
+///
+/// NOTE: This compensates for `oxc_jsdoc`'s `JSDocTagTypePart::parsed()` and `JSDocTagTypeNamePart::raw()`
+/// returning the raw source text, `*` prefixes and line terminators included;
+/// the upgrade path is to strip them there.
+pub fn strip_jsdoc_star_prefixes(s: &str, separator: char) -> String {
     let mut result = String::with_capacity(s.len());
-    for (i, line) in s.lines().enumerate() {
+    for (i, line) in LineTerminatorSplitter::new(s).enumerate() {
         if i == 0 {
             result.push_str(line);
             continue;
         }
-        result.push(' ');
+        result.push(separator);
         let trimmed = line.trim_start();
         if let Some(rest) = trimmed.strip_prefix('*') {
             // Strip the `*` and optional single space after it
-            let rest = rest.strip_prefix(' ').unwrap_or(rest);
-            result.push_str(rest);
-        } else {
-            result.push_str(trimmed);
-        }
-    }
-    result
-}
-
-/// Strip JSDoc `*` continuation prefixes but **preserve newlines**.
-///
-/// Similar to `strip_jsdoc_continuation_prefixes()` but keeps `\n` instead
-/// of collapsing to spaces. This preserves multi-line type structure so the
-/// TS formatter receives multi-line input and maintains the line breaks.
-/// Matches upstream behavior where `comment-parser` strips `*` prefixes
-/// but the type retains its newline structure for `formatType()`.
-pub fn strip_jsdoc_stars_preserve_newlines(s: &str) -> String {
-    if !s.contains('\n') {
-        return s.to_string();
-    }
-    let mut result = String::with_capacity(s.len());
-    for (i, line) in s.lines().enumerate() {
-        if i == 0 {
-            result.push_str(line);
-            continue;
-        }
-        result.push('\n');
-        let trimmed = line.trim_start();
-        if let Some(rest) = trimmed.strip_prefix('*') {
             let rest = rest.strip_prefix(' ').unwrap_or(rest);
             result.push_str(rest);
         } else {
@@ -183,8 +164,8 @@ fn normalize_type_impl(
     // may include `\n * ` or `\n *` prefixes from continuation lines.
     // These `*` chars must be removed before normalization, otherwise
     // the `*` → `any` replacement will corrupt the type.
-    if type_str.contains('\n') {
-        let stripped = strip_jsdoc_continuation_prefixes(type_str);
+    if type_str.contains(is_line_terminator) {
+        let stripped = strip_jsdoc_star_prefixes(type_str, ' ');
         return Cow::Owned(
             normalize_type_impl(&stripped, convert_quotes, quote_style).into_owned(),
         );

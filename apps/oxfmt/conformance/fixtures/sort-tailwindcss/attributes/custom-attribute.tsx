@@ -1,0 +1,1 @@
+const A = <div myClassProp="p-4 flex">Hello</div>;

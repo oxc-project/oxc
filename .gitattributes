@@ -1,6 +1,8 @@
 crates/oxc_formatter/tests/fixtures/** text=auto eol=lf
 crates/oxc_formatter/tests/fixtures/js/crlf/** text=auto eol=crlf
 crates/oxc_formatter/tests/jsdoc/fixtures/** text=auto eol=lf
+crates/oxc_formatter_css/tests/fixtures/** text=auto eol=lf
+crates/oxc_formatter_css/tests/fixtures/format/scss/crlf.scss -text
 crates/oxc_formatter_json/tests/fixtures/** text=auto eol=lf
 crates/oxc_formatter_json/tests/fixtures/jsonc/crlf/** text=auto eol=crlf
 crates/oxc_formatter_graphql/tests/fixtures/** text=auto eol=lf
@@ -12,6 +14,8 @@ crates/oxc_formatter_htmlish/tests/fixtures/html/nul-byte/** text eol=lf diff
 crates/oxc_formatter_yaml/tests/fixtures/** text=auto eol=lf
 crates/oxc_formatter_yaml/tests/fixtures/yaml/crlf/** text=auto eol=crlf
 crates/oxc_formatter_markdown/tests/fixtures/** text=auto eol=lf
+crates/oxc_formatter_toml/tests/fixtures/** text=auto eol=lf
+crates/oxc_formatter_toml/tests/fixtures/toml/crlf/** text=auto eol=crlf
 apps/oxfmt/test/**/fixtures/** text=auto eol=lf
 apps/oxlint/test/fixtures/** text=auto eol=lf
 

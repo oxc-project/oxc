@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.77.0] - 2026-11-06
+
+### 🐛 Bug Fixes
+
+- 94fbef5 formatter_css: Treat comments in `style` attr as fill items (#28832) (leaysgur)
+- e4a80f7 formatter_css: Normalize selectors inside `:deep`, `:slotted` and `:local` (#28805) (leaysgur)
+
 ## [0.76.0] - 2026-11-02
 
 ### 💥 BREAKING CHANGES

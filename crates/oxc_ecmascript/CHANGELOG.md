@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.158.0] - 2026-11-09
+
+### 🐛 Bug Fixes
+
+- 7243594 minifier: Preserve throwing ArrayBuffer and URI calls (#29012) (camc314)
+- 595f3c2 minifier: Preserve left-hand side effects in instanceof checks (#29011) (camc314)
+- 9e3b3d1 ecmascript: Reject signs after nondecimal prefixes (#29034) (camc314)
+- 43c5273 ecmascript: Round nondecimal strings to numbers once (#29026) (camc314)
+- 0b48483 minifier: Preserve UTF-16 boundaries in empty-search replaceAll folding (#28807) (huuya)
+
+### 📚 Documentation
+
+- a74b7cd ecmascript: Clarify test locations (#29072) (camc314)
+
 ## [0.157.0] - 2026-11-02
 
 ### 🐛 Bug Fixes

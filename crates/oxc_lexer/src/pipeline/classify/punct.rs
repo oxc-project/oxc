@@ -23,10 +23,9 @@
 //! `test_punct_hash` checks the tables against `PUNCT_CHARS`.
 //! Nothing generates them, so a change to `PUNCT_CHARS` needs new values found for them.
 
-use crate::{
-    simd::{VecData128, VecData256},
-    token::TokenKind,
-};
+use oxc_simd::{VecData128, VecData256};
+
+use crate::token::TokenKind;
 
 /// Single-byte punctuator and its [`TokenKind`].
 ///
@@ -82,6 +81,7 @@ pub(super) const PUNCT_HASH_LO: VecData128 =
 pub(super) const PUNCT_HASH_HI: VecData128 =
     VecData128::from_bytes([24, 26, 2, 16, 31, 25, 19, 30, 0, 0, 0, 0, 0, 0, 0, 0]);
 
+// Every entry must be a declared TokenKind, which Kinds::new relies on.
 pub(super) const PUNCT_HASH_KINDS: VecData256 = VecData256::from_bytes([
     68, 38, 58, 76, 255, 72, 42, 52, 34, 33, 255, 255, 70, 48, 37, 55, // Low half
     40, 255, 43, 50, 64, 61, 255, 255, 35, 36, 80, 89, 255, 82, 32, 41, // High half
@@ -89,7 +89,7 @@ pub(super) const PUNCT_HASH_KINDS: VecData256 = VecData256::from_bytes([
 
 #[cfg(test)]
 mod tests {
-    use crate::cpu::BASELINE;
+    use oxc_simd::BASELINE;
 
     use crate::pipeline::bytes::{is_word, is_ws};
 

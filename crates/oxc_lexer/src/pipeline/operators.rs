@@ -28,10 +28,9 @@
 //! that they produce no collisions. If a change to the operator list breaks that,
 //! the test's failure message gives a replacement.
 
-use crate::{
-    cpu::{BASELINE, Cpu, cpu_multiversion},
-    token::TokenKind,
-};
+use oxc_simd::{BASELINE, Cpu, cpu_multiversion};
+
+use crate::token::TokenKind;
 
 use crate::pipeline::bytes::is_digit;
 
@@ -161,6 +160,8 @@ static OP3_TABLE: OpTable<OP3_HASH_TABLE_SIZE> = OpTable::new(&OP_TABLES_DATA.op
 struct OpTable<const TABLE_SIZE: usize> {
     /// Lookup table data.
     data: &'static OpTableData<TABLE_SIZE>,
+    /// Each slot's kind byte as a TokenKind, converted when the table is built.
+    kinds: [TokenKind; TABLE_SIZE],
     /// Length of operators in this table (2 or 3).
     len: u32,
     /// Hash multiplier.
@@ -173,10 +174,18 @@ impl<const TABLE_SIZE: usize> OpTable<TABLE_SIZE> {
     ///
     /// Called at compile time only.
     const fn new(data: &'static OpTableData<TABLE_SIZE>, len: u32, mul: u32) -> Self {
-        Self { data, len, mul }
+        let mut kinds = [TokenKind::Eof; TABLE_SIZE];
+        let mut slot = 0;
+        while slot < TABLE_SIZE {
+            let kind = TokenKind::from_u8((data.values[slot] >> 24) as u8, BASELINE);
+            kinds[slot] = kind.expect("an operator kind byte is not a TokenKind");
+            slot += 1;
+        }
+        Self { data, kinds, len, mul }
     }
 
     /// Hash `key` and get the packed value for an operator from this hash table.
+    /// Also returns the slot's kind as a TokenKind, which is Eof for an empty slot.
     ///
     /// `key` must contain:
     /// - Bytes 0-1: First 2 bytes of source
@@ -195,9 +204,9 @@ impl<const TABLE_SIZE: usize> OpTable<TABLE_SIZE> {
     /// - `(pack & 0xFF_FFFF) == key` for 3-byte operators.
     #[cpu_multiversion]
     #[inline(always)]
-    fn pack(&self, key: u32, cpu: impl Cpu) -> u32 {
+    fn pack(&self, key: u32, cpu: impl Cpu) -> (u32, TokenKind) {
         let slot = self.data.slot(key, self.mul, cpu);
-        self.data.values[slot]
+        (self.data.values[slot], self.kinds[slot])
     }
 
     /// Check if `bytes` starts with an operator from this hash table.
@@ -209,23 +218,16 @@ impl<const TABLE_SIZE: usize> OpTable<TABLE_SIZE> {
     fn lookup(&self, bytes: [u8; 4], cpu: impl Cpu) -> Option<TokenKind> {
         let mask = if self.len == 2 { 0xFFFF } else { 0xFF_FFFF };
         let key = u32::from_le_bytes(bytes) & mask;
-        let pack = self.pack(key, cpu);
+        let slot = self.data.slot(key, self.mul, cpu);
+        let pack = self.data.values[slot];
 
         // If unmasked bytes of `bytes` are all zero, then `key` is 0.
         // If the slot corresponding to `key: 0` was empty, `pack` would be 0,
         // and `(pack & mask) == key` check would pass.
         // We ensure that the tables are arranged so that slot is always occupied -
         // `test_perfect_hash` test covers this.
-        // This means that `pack >> 24` cannot be 0 here - that branch always returns
-        // an operator `TokenKind`.
-        if (pack & mask) == key {
-            // SAFETY: The top byte of all `pack` values for non-empty slots is derived
-            // from a valid `TokenKind`. See above for why the slot can't be empty here.
-            let kind = unsafe { TokenKind::from_u8_unchecked((pack >> 24) as u8, cpu) };
-            Some(kind)
-        } else {
-            None
-        }
+        // So when the keys match, kinds[slot] is always an operator kind.
+        if (pack & mask) == key { Some(self.kinds[slot]) } else { None }
     }
 }
 
@@ -278,6 +280,7 @@ impl<const TABLE_SIZE: usize> OpTableData<TABLE_SIZE> {
 }
 
 /// Hash `key` and get the packed value for a 2-byte operator from the hash table.
+/// Also returns the slot's kind as a TokenKind, which is Eof for an empty slot.
 ///
 /// `key` must contain:
 /// - Bytes 0-1: 2 bytes of source
@@ -294,11 +297,12 @@ impl<const TABLE_SIZE: usize> OpTableData<TABLE_SIZE> {
 /// `(pack & 0xFFFF) == key` to confirm a match.
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) fn opmap_pack2(key: u32, cpu: impl Cpu) -> u32 {
+pub(super) fn opmap_pack2(key: u32, cpu: impl Cpu) -> (u32, TokenKind) {
     OP2_TABLE.pack(key, cpu)
 }
 
 /// Hash `key` and get the packed value for a 3-byte operator from the hash table.
+/// Also returns the slot's kind as a TokenKind, which is Eof for an empty slot.
 ///
 /// `key` must contain:
 /// - Bytes 0-2: 3 bytes of source
@@ -314,7 +318,7 @@ pub(super) fn opmap_pack2(key: u32, cpu: impl Cpu) -> u32 {
 /// `(pack & 0xFF_FFFF) == key` to confirm a match.
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) fn opmap_pack3(key: u32, cpu: impl Cpu) -> u32 {
+pub(super) fn opmap_pack3(key: u32, cpu: impl Cpu) -> (u32, TokenKind) {
     OP3_TABLE.pack(key, cpu)
 }
 
@@ -376,12 +380,14 @@ const fn first_4_bytes(txt: &[u8]) -> [u8; 4] {
 
 #[cfg(test)]
 mod tests {
+    use oxc_simd::test_cpus;
+
     use crate::token::{OP_KIND_BASE, OP_KIND_MAX};
 
     use super::*;
 
-    #[test]
-    fn test_is_op_char() {
+    #[test_cpus]
+    fn test_is_op_char(cpu: impl Cpu) {
         const OPCHARS: &[u8] = b"=!<>+-*&|^%?.";
 
         let mut in_set = [false; 256];
@@ -390,10 +396,7 @@ mod tests {
         }
 
         for c in 0..256usize {
-            assert!(
-                is_op_char(c as u8, BASELINE) == in_set[c],
-                "OPCH_LO/HI wrong at byte {c:#04x}"
-            );
+            assert!(is_op_char(c as u8, cpu) == in_set[c], "OPCH_LO/HI wrong at byte {c:#04x}");
         }
     }
 
@@ -433,14 +436,14 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_optable_lookup_correct_kinds() {
+    #[test_cpus]
+    fn test_optable_lookup_correct_kinds(cpu: impl Cpu) {
         for op_def in &OPMAP_OPS {
             let bytes = op_def.bytes();
             let lookup_kind = if op_def.len() == 2 {
-                OP2_TABLE.lookup(bytes, BASELINE)
+                OP2_TABLE.lookup(bytes, cpu)
             } else {
-                OP3_TABLE.lookup(bytes, BASELINE)
+                OP3_TABLE.lookup(bytes, cpu)
             };
             assert!(
                 lookup_kind == Some(op_def.kind),
@@ -450,8 +453,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_optable_lookup_returns_zero_on_no_match() {
+    #[test_cpus]
+    fn test_optable_lookup_returns_zero_on_no_match(cpu: impl Cpu) {
         let cases = [
             // Not operators
             "..", "=/", "<<<", "&&&", "?..",
@@ -466,26 +469,29 @@ mod tests {
         for txt in cases {
             let bytes = first_4_bytes(txt.as_bytes());
             let kind = if txt.len() == 2 {
-                OP2_TABLE.lookup(bytes, BASELINE)
+                OP2_TABLE.lookup(bytes, cpu)
             } else {
-                OP3_TABLE.lookup(bytes, BASELINE)
+                OP3_TABLE.lookup(bytes, cpu)
             };
             assert!(kind.is_none(), "`lookup` should return `None` for {txt:?}");
         }
     }
 
-    #[test]
-    fn test_perfect_hash() {
-        check_table(&OP2_TABLE);
-        check_table(&OP3_TABLE);
+    #[test_cpus]
+    fn test_perfect_hash(cpu: impl Cpu) {
+        check_table(&OP2_TABLE, cpu);
+        check_table(&OP3_TABLE, cpu);
     }
 
-    fn check_table<const TABLE_SIZE: usize>(table: &OpTable<TABLE_SIZE>) {
+    /// Check `table` has no collisions with CPU feature set `cpu`.
+    /// If it has, panic with a multiplier which has none, if there is one.
+    #[cpu_multiversion]
+    fn check_table<const TABLE_SIZE: usize>(table: &OpTable<TABLE_SIZE>, cpu: impl Cpu) {
         let len = table.len;
         let operator_count = OPMAP_OPS.iter().filter(|op_def| op_def.len() == len).count();
 
         // If table has no collisions, all good
-        if is_collision_free(table.data, table.mul, operator_count) {
+        if is_collision_free(table.data, table.mul, operator_count, cpu) {
             return;
         }
 
@@ -493,7 +499,7 @@ mod tests {
         let mut mul = (1u32 << 24) | 1;
         while mul < (1u32 << 28) {
             let table_data = OpTableData::<TABLE_SIZE>::new(len, mul);
-            if is_collision_free(&table_data, mul, operator_count) {
+            if is_collision_free(&table_data, mul, operator_count, cpu) {
                 panic!(
                     "Current value for `OP{len}_MUL` produces collisions. Set it to 0x{:04X}_{:04X}.",
                     mul >> 16,
@@ -508,13 +514,17 @@ mod tests {
         );
     }
 
+    /// Whether `table_data`, built with multiplier `mul`, has `operator_count` filled slots,
+    /// and `\0\0` and `\0\0\0` hash to a filled slot, with CPU feature set `cpu`.
+    #[cpu_multiversion]
     fn is_collision_free<const TABLE_SIZE: usize>(
         table_data: &OpTableData<TABLE_SIZE>,
         mul: u32,
         operator_count: usize,
+        cpu: impl Cpu,
     ) -> bool {
         // Ensure `\0\0` and `\0\0\0` hash to a filled slot. `OpTable::lookup` requires this.
-        let slot_for_zero = table_data.slot(0, mul, BASELINE);
+        let slot_for_zero = table_data.slot(0, mul, cpu);
         if table_data.values[slot_for_zero] == 0 {
             return false;
         }

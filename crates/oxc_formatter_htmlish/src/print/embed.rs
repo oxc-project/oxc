@@ -151,13 +151,17 @@ pub fn write_quoted<'a>(
 }
 
 /// An attribute's (unescaped) `value` formatted in `language`, for `"` quotes: every `"` as `&quot;`;
-/// `None` when the dispatcher leaves it as written.
+/// `None` when the dispatcher leaves it as written,
+/// or it holds a character reference (apps/oxfmt/DIVERGENCES.md#character-reference-in-code-as-written).
 pub fn dispatch_attribute_value<'a>(
     language: &str,
     parent_context: &dyn Any,
     value: &str,
     f: &HtmlishFormatter<'_, 'a>,
 ) -> Option<ArenaVec<'a, FormatElement<'a>>> {
+    if holds_character_reference(value) {
+        return None;
+    }
     let ir = dispatch_fragment_ir(f, language, value, Some(parent_context))?;
     let indent_width = f.options().indent_width();
     Some(map_text_in_ir(ir, f.allocator(), &mut |text, out| {
@@ -167,6 +171,16 @@ pub fn dispatch_attribute_value<'a>(
         out.push(FormatElement::text(quoted_piece(text, f), indent_width));
         true
     }))
+}
+
+/// `value` holds a character reference (`&amp;`, `&#38;`), which HTML decodes before the code is read:
+/// formatted as code, `&amp;` would print `& amp;`.
+/// A legacy name without its `;` (`a&&copy`) is missed: only HTML's table of names tells one apart.
+fn holds_character_reference(value: &str) -> bool {
+    value.split('&').skip(1).any(|rest| {
+        let name = rest.bytes().take_while(u8::is_ascii_alphanumeric).count();
+        rest.starts_with('#') || (name > 0 && rest.as_bytes().get(name) == Some(&b';'))
+    })
 }
 
 /// Writes the body of `<script>` / `<style>` element `id` formatted in its language;
@@ -189,21 +203,33 @@ pub fn write_embedded_content<'a>(
         value
     };
     let Some(ir) = dispatch_fragment_ir(f, language, value, None) else { return false };
-    let ir = if t.tag(id) == "script" { escape_script_end(ir, f) } else { ir };
+    let ir = if t.tag(id) == "script" { escape_script_end(ir, value, f) } else { ir };
     f.write_elements(ir);
     true
 }
 
-/// The first `</script` ends a `<script>` body, so the source body holds none:
+/// The first `</script` ends a `<script>` body, so the source `body` holds none:
 /// one in the formatted body is the formatting's own (a template literal's re-cooked part, e.g. html-in-js),
 /// printed as `<\/script`, where `\/` means `/` (in a JS string or template, and in JSON).
+/// Its letters (in any case) are in the source body then, or an escape the template cooks spells them (`\x73`):
+/// a body with neither needs no walk over the IR.
 ///
 /// A nested HTML part prints its end tags as one text (`tag.rs`), so none is split across texts.
 /// A JSX closing tag is (`</ script>` prints `</script>`), left as is: rare, and JSX has no escape for it.
 fn escape_script_end<'a>(
     ir: ArenaVec<'a, FormatElement<'a>>,
+    body: &str,
     f: &HtmlishFormatter<'_, 'a>,
 ) -> ArenaVec<'a, FormatElement<'a>> {
+    let source = body.as_bytes();
+    let spells_script = memchr::memchr(b'\\', source).is_some()
+        || memchr::memchr2_iter(b's', b'S', source).any(|i| {
+            source.get(i + 1..i + 6).is_some_and(|rest| rest.eq_ignore_ascii_case(b"cript"))
+        });
+    if !spells_script {
+        return ir;
+    }
+
     let allocator = f.allocator();
     let indent_width = f.options().indent_width();
     map_text_in_ir(ir, allocator, &mut |text, out| {

@@ -89,7 +89,8 @@ declare_oxc_lint!(
     conditional_fix_dangerous,
     config = ConsistentTypeDefinitionsConfig,
     version = "0.2.17",
-    short_description = "Enforce type definitions to consistently use either `interface` or `type`.",
+    short_description =
+        "Enforce type definitions to consistently use either `interface` or `type`.",
 );
 
 impl Rule for ConsistentTypeDefinitions {

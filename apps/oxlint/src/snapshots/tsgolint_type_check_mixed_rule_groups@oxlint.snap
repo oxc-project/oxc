@@ -1,0 +1,82 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --type-aware --type-check -c mixed-rules.json project/index.ts project/other.ts
+working directory: fixtures/cli/tsgolint_type_check_programs
+----------
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[project/index.ts:3:33]
+ 2 | 
+ 3 | export const project: Value = { count: "project" };
+   :                                 ^^^^^
+ 4 | Promise.resolve(1);
+   `----
+
+  x typescript(no-floating-promises): Promises must be awaited, add void operator to ignore.
+   ,-[project/index.ts:4:1]
+ 3 | export const project: Value = { count: "project" };
+ 4 | Promise.resolve(1);
+   : ^^^^^^^^^|^^^^^^^^^
+   :          `-- This unhandled promise-like value has type `Promise<number>`.
+ 5 | debugger;
+   `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
+
+  x eslint(no-debugger): `debugger` statement is not allowed
+   ,-[project/index.ts:5:1]
+ 4 | Promise.resolve(1);
+ 5 | debugger;
+   : ^^^^^^^^^
+ 6 | export const nullableProject: number = null;
+   `----
+  help: Remove the debugger statement
+
+  x typescript(TS2322): Type 'number' is not assignable to type 'string'.
+   ,-[project/other.ts:1:14]
+ 1 | export const other: string = 123;
+   :              ^^^^^
+ 2 | Promise.resolve(2);
+   `----
+
+  x eslint(no-debugger): `debugger` statement is not allowed
+   ,-[project/other.ts:3:1]
+ 2 | Promise.resolve(2);
+ 3 | debugger;
+   : ^^^^^^^^^
+ 4 | export const nullableOther: number = null;
+   `----
+  help: Remove the debugger statement
+
+Found 0 warnings and 5 errors.
+Finished in <variable>ms on 2 files with 2 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
+
+########## 
+arguments: --type-check-only -c mixed-rules.json project/index.ts project/other.ts
+working directory: fixtures/cli/tsgolint_type_check_programs
+----------
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[project/index.ts:3:33]
+ 2 | 
+ 3 | export const project: Value = { count: "project" };
+   :                                 ^^^^^
+ 4 | Promise.resolve(1);
+   `----
+
+  x typescript(TS2322): Type 'number' is not assignable to type 'string'.
+   ,-[project/other.ts:1:14]
+ 1 | export const other: string = 123;
+   :              ^^^^^
+ 2 | Promise.resolve(2);
+   `----
+
+Found 0 warnings and 2 errors.
+Finished in <variable>ms on 2 files using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

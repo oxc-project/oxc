@@ -1,0 +1,257 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --type-aware --type-check inferred/index.ts
+working directory: fixtures/cli/tsgolint_type_check_programs
+----------
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[inferred/index.ts:3:34]
+ 2 | 
+ 3 | export const inferred: Value = { count: "inferred" };
+   :                                  ^^^^^
+ 4 | Promise.resolve(1);
+   `----
+
+  x typescript(no-floating-promises): Promises must be awaited, add void operator to ignore.
+   ,-[inferred/index.ts:4:1]
+ 3 | export const inferred: Value = { count: "inferred" };
+ 4 | Promise.resolve(1);
+   : ^^^^^^^^^|^^^^^^^^^
+   :          `-- This unhandled promise-like value has type `Promise<number>`.
+ 5 | debugger;
+   `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
+
+  x eslint(no-debugger): `debugger` statement is not allowed
+   ,-[inferred/index.ts:5:1]
+ 4 | Promise.resolve(1);
+ 5 | debugger;
+   : ^^^^^^^^^
+ 6 | export type InferredElement = HTMLElement;
+   `----
+  help: Remove the debugger statement
+
+Found 0 warnings and 3 errors.
+Finished in <variable>ms on 1 file with 2 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
+
+########## 
+arguments: --type-aware --type-check -A all inferred/index.ts
+working directory: fixtures/cli/tsgolint_type_check_programs
+----------
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[inferred/index.ts:3:34]
+ 2 | 
+ 3 | export const inferred: Value = { count: "inferred" };
+   :                                  ^^^^^
+ 4 | Promise.resolve(1);
+   `----
+
+Found 0 warnings and 1 error.
+Finished in <variable>ms on 1 file with 0 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
+
+########## 
+arguments: --type-aware --type-check -A all -D no-debugger inferred/index.ts
+working directory: fixtures/cli/tsgolint_type_check_programs
+----------
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[inferred/index.ts:3:34]
+ 2 | 
+ 3 | export const inferred: Value = { count: "inferred" };
+   :                                  ^^^^^
+ 4 | Promise.resolve(1);
+   `----
+
+  x eslint(no-debugger): `debugger` statement is not allowed
+   ,-[inferred/index.ts:5:1]
+ 4 | Promise.resolve(1);
+ 5 | debugger;
+   : ^^^^^^^^^
+ 6 | export type InferredElement = HTMLElement;
+   `----
+  help: Remove the debugger statement
+
+Found 0 warnings and 2 errors.
+Finished in <variable>ms on 1 file with 1 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
+
+########## 
+arguments: --type-aware --type-check project/index.ts
+working directory: fixtures/cli/tsgolint_type_check_programs
+----------
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[project/index.ts:3:33]
+ 2 | 
+ 3 | export const project: Value = { count: "project" };
+   :                                 ^^^^^
+ 4 | Promise.resolve(1);
+   `----
+
+  x typescript(no-floating-promises): Promises must be awaited, add void operator to ignore.
+   ,-[project/index.ts:4:1]
+ 3 | export const project: Value = { count: "project" };
+ 4 | Promise.resolve(1);
+   : ^^^^^^^^^|^^^^^^^^^
+   :          `-- This unhandled promise-like value has type `Promise<number>`.
+ 5 | debugger;
+   `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
+
+  x eslint(no-debugger): `debugger` statement is not allowed
+   ,-[project/index.ts:5:1]
+ 4 | Promise.resolve(1);
+ 5 | debugger;
+   : ^^^^^^^^^
+ 6 | export const nullableProject: number = null;
+   `----
+  help: Remove the debugger statement
+
+Found 0 warnings and 3 errors.
+Finished in <variable>ms on 1 file with 2 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
+
+########## 
+arguments: --type-aware --type-check -A all project/index.ts
+working directory: fixtures/cli/tsgolint_type_check_programs
+----------
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[project/index.ts:3:33]
+ 2 | 
+ 3 | export const project: Value = { count: "project" };
+   :                                 ^^^^^
+ 4 | Promise.resolve(1);
+   `----
+
+Found 0 warnings and 1 error.
+Finished in <variable>ms on 1 file with 0 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
+
+########## 
+arguments: --type-aware --type-check -A all -D no-debugger project/index.ts
+working directory: fixtures/cli/tsgolint_type_check_programs
+----------
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[project/index.ts:3:33]
+ 2 | 
+ 3 | export const project: Value = { count: "project" };
+   :                                 ^^^^^
+ 4 | Promise.resolve(1);
+   `----
+
+  x eslint(no-debugger): `debugger` statement is not allowed
+   ,-[project/index.ts:5:1]
+ 4 | Promise.resolve(1);
+ 5 | debugger;
+   : ^^^^^^^^^
+ 6 | export const nullableProject: number = null;
+   `----
+  help: Remove the debugger statement
+
+Found 0 warnings and 2 errors.
+Finished in <variable>ms on 1 file with 1 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
+
+########## 
+arguments: --type-aware --type-check references/app/index.ts
+working directory: fixtures/cli/tsgolint_type_check_programs
+----------
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[references/app/index.ts:3:29]
+ 2 | 
+ 3 | export const app: Value = { count: "app" };
+   :                             ^^^^^
+ 4 | Promise.resolve(1);
+   `----
+
+  x typescript(no-floating-promises): Promises must be awaited, add void operator to ignore.
+   ,-[references/app/index.ts:4:1]
+ 3 | export const app: Value = { count: "app" };
+ 4 | Promise.resolve(1);
+   : ^^^^^^^^^|^^^^^^^^^
+   :          `-- This unhandled promise-like value has type `Promise<number>`.
+ 5 | debugger;
+   `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
+
+  x eslint(no-debugger): `debugger` statement is not allowed
+   ,-[references/app/index.ts:5:1]
+ 4 | Promise.resolve(1);
+ 5 | debugger;
+   : ^^^^^^^^^
+ 6 | export const nullableApp: number = null;
+   `----
+  help: Remove the debugger statement
+
+Found 0 warnings and 3 errors.
+Finished in <variable>ms on 1 file with 2 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
+
+########## 
+arguments: --type-aware --type-check -A all references/app/index.ts
+working directory: fixtures/cli/tsgolint_type_check_programs
+----------
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[references/app/index.ts:3:29]
+ 2 | 
+ 3 | export const app: Value = { count: "app" };
+   :                             ^^^^^
+ 4 | Promise.resolve(1);
+   `----
+
+Found 0 warnings and 1 error.
+Finished in <variable>ms on 1 file with 0 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
+
+########## 
+arguments: --type-aware --type-check -A all -D no-debugger references/app/index.ts
+working directory: fixtures/cli/tsgolint_type_check_programs
+----------
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[references/app/index.ts:3:29]
+ 2 | 
+ 3 | export const app: Value = { count: "app" };
+   :                             ^^^^^
+ 4 | Promise.resolve(1);
+   `----
+
+  x eslint(no-debugger): `debugger` statement is not allowed
+   ,-[references/app/index.ts:5:1]
+ 4 | Promise.resolve(1);
+ 5 | debugger;
+   : ^^^^^^^^^
+ 6 | export const nullableApp: number = null;
+   `----
+  help: Remove the debugger statement
+
+Found 0 warnings and 2 errors.
+Finished in <variable>ms on 1 file with 1 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

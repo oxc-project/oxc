@@ -85,3 +85,109 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ───
    ╰────
   help: Use '\${' to escape '${' in template literals.
+
+  ⚠ unicorn(consistent-template-literal-escape): Invalid escape sequence in template literal.
+   ╭─[consistent_template_literal_escape.tsx:2:1]
+ 1 │ `
+ 2 │ $\{x}`
+   · ───
+   ╰────
+  help: Use '\${' to escape '${' in template literals.
+
+  ⚠ unicorn(consistent-template-literal-escape): Invalid escape sequence in template literal.
+   ╭─[consistent_template_literal_escape.tsx:2:3]
+ 1 │ `
+ 2 │ é$\{x}`
+   ·  ───
+   ╰────
+  help: Use '\${' to escape '${' in template literals.
+
+  ⚠ unicorn(consistent-template-literal-escape): Invalid escape sequence in template literal.
+   ╭─[consistent_template_literal_escape.tsx:2:5]
+ 1 │ `
+ 2 │ 🦀$\{x}`
+   ·   ───
+   ╰────
+  help: Use '\${' to escape '${' in template literals.
+
+  ⚠ unicorn(consistent-template-literal-escape): Invalid escape sequence in template literal.
+   ╭─[consistent_template_literal_escape.tsx:2:3]
+ 1 │ `
+ 2 │ é\$\{x}`
+   ·  ────
+   ╰────
+  help: Use '\${' to escape '${' in template literals.
+
+  ⚠ unicorn(consistent-template-literal-escape): Invalid escape sequence in template literal.
+   ╭─[consistent_template_literal_escape.tsx:2:5]
+ 1 │ `
+ 2 │ é\\$\{x}`
+   ·    ───
+   ╰────
+  help: Use '\${' to escape '${' in template literals.
+
+  ⚠ unicorn(consistent-template-literal-escape): Invalid escape sequence in template literal.
+   ╭─[consistent_template_literal_escape.tsx:2:3]
+ 1 │ `
+ 2 │ é$\{x}
+   ·  ───
+ 3 │ 🦀$\{y}`
+   ╰────
+  help: Use '\${' to escape '${' in template literals.
+
+  ⚠ unicorn(consistent-template-literal-escape): Invalid escape sequence in template literal.
+   ╭─[consistent_template_literal_escape.tsx:3:5]
+ 2 │ é$\{x}
+ 3 │ 🦀$\{y}`
+   ·   ───
+   ╰────
+  help: Use '\${' to escape '${' in template literals.
+
+  ⚠ unicorn(consistent-template-literal-escape): Invalid escape sequence in template literal.
+   ╭─[consistent_template_literal_escape.tsx:2:3]
+ 1 │ `
+ 2 │ é$\{x}${first}
+   ·  ───
+ 3 │ 🦀$\{y}${second}
+   ╰────
+  help: Use '\${' to escape '${' in template literals.
+
+  ⚠ unicorn(consistent-template-literal-escape): Invalid escape sequence in template literal.
+   ╭─[consistent_template_literal_escape.tsx:3:5]
+ 2 │ é$\{x}${first}
+ 3 │ 🦀$\{y}${second}
+   ·   ───
+ 4 │ é$\{z}`
+   ╰────
+  help: Use '\${' to escape '${' in template literals.
+
+  ⚠ unicorn(consistent-template-literal-escape): Invalid escape sequence in template literal.
+   ╭─[consistent_template_literal_escape.tsx:4:3]
+ 3 │ 🦀$\{y}${second}
+ 4 │ é$\{z}`
+   ·  ───
+   ╰────
+  help: Use '\${' to escape '${' in template literals.
+
+  ⚠ unicorn(consistent-template-literal-escape): Invalid escape sequence in template literal.
+   ╭─[consistent_template_literal_escape.tsx:2:3]
+ 1 │ `\
+ 2 │ é$\{x}`
+   ·  ───
+   ╰────
+  help: Use '\${' to escape '${' in template literals.
+
+  ⚠ unicorn(consistent-template-literal-escape): Invalid escape sequence in template literal.
+   ╭─[consistent_template_literal_escape.tsx:2:3]
+ 1 │ `
+ 2 │ é$\{x}`
+   ·  ───
+   ╰────
+  help: Use '\${' to escape '${' in template literals.
+
+  ⚠ unicorn(consistent-template-literal-escape): Invalid escape sequence in template literal.
+   ╭─[consistent_template_literal_escape.tsx:2:3]
+ 1 │ `é$\{x}`
+   ·    ───
+   ╰────
+  help: Use '\${' to escape '${' in template literals.

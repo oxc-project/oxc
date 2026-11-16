@@ -18,6 +18,8 @@ use oxc_traverse::{BoundIdentifier, Traverse};
 
 use crate::{context::TraverseCtx, state::TransformState};
 
+use super::namespace::TypeScriptNamespace;
+
 pub struct TypeScriptEnum {
     optimize_const_enums: bool,
     optimize_enums: bool,
@@ -30,30 +32,6 @@ impl TypeScriptEnum {
 }
 
 impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptEnum {
-    fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        match stmt {
-            Statement::TSEnumDeclaration(decl) => {
-                // Defer removable enums — they'll be handled in exit_statements
-                // after enter_expression has inlined member accesses and deleted references.
-                if self.may_remove_enum(decl, ctx) {
-                    return;
-                }
-                if let Some(new_stmt) = Self::transform_ts_enum(decl, None, ctx) {
-                    *stmt = new_stmt;
-                }
-            }
-            Statement::ExportDeclaration(export_decl) => {
-                let span = export_decl.span;
-                if let Declaration::TSEnumDeclaration(decl) = &mut export_decl.declaration
-                    && let Some(new_stmt) = Self::transform_ts_enum(decl, Some(span), ctx)
-                {
-                    *stmt = new_stmt;
-                }
-            }
-            _ => {}
-        }
-    }
-
     fn exit_statements(
         &mut self,
         stmts: &mut ArenaVec<'a, Statement<'a>>,
@@ -74,7 +52,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptEnum {
                 continue;
             }
             // Not removable after all (still has value references) — transform now.
-            if let Some(new_stmt) = Self::transform_ts_enum(decl, None, ctx) {
+            if let Some(new_stmt) = Self::transform_ts_enum(decl, None, None, ctx) {
                 *stmt = new_stmt;
             }
         }
@@ -142,6 +120,36 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptEnum {
 }
 
 impl<'a> TypeScriptEnum {
+    pub fn transform_statement(
+        &self,
+        stmt: &mut Statement<'a>,
+        namespace: &TypeScriptNamespace<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        match stmt {
+            Statement::TSEnumDeclaration(decl) => {
+                let namespace_binding =
+                    namespace.exported_enum_namespaces.get(&decl.id.symbol_id());
+                if namespace_binding.is_none() && self.may_remove_enum(decl, ctx) {
+                    return;
+                }
+                if let Some(new_stmt) = Self::transform_ts_enum(decl, None, namespace_binding, ctx)
+                {
+                    *stmt = new_stmt;
+                }
+            }
+            Statement::ExportDeclaration(export_decl) => {
+                let span = export_decl.span;
+                if let Declaration::TSEnumDeclaration(decl) = &mut export_decl.declaration
+                    && let Some(new_stmt) = Self::transform_ts_enum(decl, Some(span), None, ctx)
+                {
+                    *stmt = new_stmt;
+                }
+            }
+            _ => {}
+        }
+    }
+
     /// ```TypeScript
     /// enum Foo {
     ///   X = 1,
@@ -158,6 +166,7 @@ impl<'a> TypeScriptEnum {
     fn transform_ts_enum(
         decl: &mut TSEnumDeclaration<'a>,
         export_span: Option<Span>,
+        namespace_binding: Option<&BoundIdentifier<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Statement<'a>> {
         if decl.declare {
@@ -236,7 +245,17 @@ impl<'a> TypeScriptEnum {
         let is_already_declared =
             redeclarations.first().map_or_else(|| false, |rd| rd.span != decl.id.span);
 
-        let arguments = if (is_export || is_not_top_scope) && !is_already_declared {
+        let arguments = if let Some(namespace_binding) = namespace_binding {
+            let left = Expression::new_static_member_expression(
+                SPAN,
+                namespace_binding.create_read_expression(ctx),
+                IdentifierName::new(SPAN, enum_name, ctx),
+                false,
+                ctx,
+            );
+            let right = Expression::new_object_expression(SPAN, [], ctx);
+            [Argument::new_logical_expression(span, left, LogicalOperator::Or, right, ctx)]
+        } else if (is_export || is_not_top_scope) && !is_already_declared {
             // }({});
             let object_arg = Argument::new_object_expression(SPAN, [], ctx);
             [object_arg]

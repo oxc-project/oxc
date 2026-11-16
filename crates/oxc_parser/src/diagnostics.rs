@@ -209,6 +209,12 @@ parser_diagnostics! {
         OxcDiagnostic::error("Invalid Unicode escape sequence").with_label(span)
     };
 
+    invalid_numeric_separator(span: Span) => {
+        OxcDiagnostic::error("Numeric separators must appear between digits")
+            .with_label(span)
+            .with_help("Remove the separator or place it between two digits")
+    };
+
     invalid_character(c: char, span: Span) => {
         OxcDiagnostic::error(format!("Invalid Character `{c}`")).with_label(span)
     };

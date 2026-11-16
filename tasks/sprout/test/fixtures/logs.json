@@ -1,0 +1,5 @@
+{
+  "original": "function Component() {console.log(\"hello\");return 42;}\nexport const FIXTURE_ENTRYPOINT = {fn: Component, params: []};",
+  "compiled": "function Component() {console.log(\"hello\");return 42;}\nexport const FIXTURE_ENTRYPOINT = {fn: Component, params: []};",
+  "expected": "success"
+}

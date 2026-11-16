@@ -290,6 +290,13 @@ impl Rule for PreferFunctionType {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::TSInterfaceDeclaration(decl) => {
+                if matches!(
+                    ctx.nodes().parent_kind(node.id()),
+                    AstKind::ExportDefaultDeclaration(_)
+                ) {
+                    return;
+                }
+
                 let body = &decl.body.body;
 
                 if !has_one_super_type(decl) && body.len() == 1 {
@@ -483,6 +490,7 @@ fn test() {
         "type X = {} | { (): void; }",
         "type X = {} & { (): void; };",
         "type K = { new(): T };",
+        "export default interface Foo<T> { (): T }",
     ];
 
     let fix = vec![
@@ -684,6 +692,11 @@ type X = {} & (() => void);
             "export type AnyFn = (...args: any[]) => any;",
         ),
         ("type K = { new(): T };", "type K = new() => T;"),
+        (
+            "export default interface Foo { /** comment */ (): string; }",
+            "export default interface Foo { /** comment */ (): string; }",
+        ),
+        ("export default interface Foo<T> { (): T }", "export default interface Foo<T> { (): T }"),
     ];
 
     Tester::new(PreferFunctionType::NAME, PreferFunctionType::PLUGIN, pass, fail)

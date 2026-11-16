@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.158.0] - 2026-11-09
+
+### 🐛 Bug Fixes
+
+- 3729ce1 transformer/typescript: Merge exported enums across namespace blocks (#28999) (camc314)
+- 99e67d3 transformer: Preserve static private brands with shadowed class names (#28894) (Dunqing)
+- 28a44b7 transformer/class-properties: Preserve private accessor assignment receivers (#28790) (Dunqing)
+- ea76490 transformer/class-properties: Preserve private method values in assignments (#28788) (Dunqing)
+- 8432de6 transformer/class-properties: Apply a compound assignment to a static private field once (#28606) (YT)
+- e3b1bb4 transformer/class-properties: Keep the value of a private accessor assignment (#28716) (YT)
+
 ## [0.155.0] - 2026-10-19
 
 ### 💥 BREAKING CHANGES

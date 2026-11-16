@@ -4,6 +4,30 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.78.0] - 2026-11-09
+
+### ⚡ Performance
+
+- dde9c5c formatter_htmlish: Skip `</script` escape if possible (#29078) (leaysgur)
+
+### 📚 Documentation
+
+- eb2eb2d formatter_htmlish: Cover block elements in `DIVERGENCES.md#interpolation-element-as-text` (#28901) (leaysgur)
+
+## [0.77.0] - 2026-11-06
+
+### 💥 BREAKING CHANGES
+
+- 00d1a67 oxfmt: [**BREAKING**] Format `parser:vue` files by `oxc_formatter_htmlish` (#28848) (leaysgur)
+
+### 🚀 Features
+
+- 9a81e58 formatter_htmlish: Format Vue templates (#28847) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 4d4104d formatter_htmlish: Preserve `doctype` case in embedded (#28797) (leaysgur)
+
 ## [0.76.0] - 2026-11-02
 
 ### 💥 BREAKING CHANGES

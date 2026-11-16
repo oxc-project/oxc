@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.158.0] - 2026-11-09
+
+### ⚡ Performance
+
+- bee25de regular_expression: Check only the latest group per name in duplicate prescan (#29083) (Yuji Sugiura)
+
 ## [0.157.0] - 2026-11-02
 
 ### 🐛 Bug Fixes

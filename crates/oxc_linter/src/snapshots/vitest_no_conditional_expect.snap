@@ -529,3 +529,39 @@ source: crates/oxc_linter/src/tester.rs
  4 │             })
    ╰────
   help: Avoid calling `expect` conditionally
+
+  ⚠ vitest(no-conditional-expect): Unexpected conditional expect
+   ╭─[no_conditional_expect.tsx:5:28]
+ 4 │         customTest.only('foo', () => {
+ 5 │             if (condition) expect(1).toBe(1);
+   ·                            ──────
+ 6 │             promise.catch(() => expect(1).toBe(1));
+   ╰────
+  help: Avoid calling `expect` conditionally
+
+  ⚠ vitest(no-conditional-expect): Unexpected conditional expect
+   ╭─[no_conditional_expect.tsx:6:33]
+ 5 │             if (condition) expect(1).toBe(1);
+ 6 │             promise.catch(() => expect(1).toBe(1));
+   ·                                 ──────
+ 7 │         });
+   ╰────
+  help: Avoid calling `expect` conditionally
+
+  ⚠ vitest(no-conditional-expect): Unexpected conditional expect
+   ╭─[no_conditional_expect.tsx:3:26]
+ 2 │         function callback() {
+ 3 │             condition && expect(1).toBe(1);
+   ·                          ──────
+ 4 │         }
+   ╰────
+  help: Avoid calling `expect` conditionally
+
+  ⚠ vitest(no-conditional-expect): Unexpected conditional expect
+   ╭─[no_conditional_expect.tsx:4:28]
+ 3 │         function helper() {
+ 4 │             if (condition) expect(1).toBe(1);
+   ·                            ──────
+ 5 │         }
+   ╰────
+  help: Avoid calling `expect` conditionally

@@ -321,7 +321,7 @@ comment's indent or the `*` line prefix. At top level the re-embedded line lands
 subtracts the comment indent and the `*` prefix — the same base every JS/TS snippet in the
 same position uses. Final lines never exceed `printWidth - 4 + prefix`. At top level this is
 3 chars narrower than upstream (content 93 vs 96 at printWidth=100); pinned by
-`apps/oxfmt/test/api/jsdoc.test.ts` ("effective width" case).
+`apps/oxfmt/conformance/fixtures/jsdoc/native-fence-width.ts`.
 
 ## 12. Wrapping moves list-marker-like words to line starts, breaking idempotency
 
@@ -407,3 +407,26 @@ Unlike comment-parser, the tag name ends at `{`:
 upstream reads `@param{import('./a').B} x` as prose and joins it into the description,
 so TypeScript loses the tag; oxfmt keeps it a tag.
 Pinned by `descriptions/047-at-word-never-wraps-to-line-start`.
+
+## 15. A multi-line `[name=default]` drops the name and the description
+
+**Severity**: High, the parameter name and its description are lost
+
+```js
+// Input
+/**
+ * @param {string[]} [list=[
+ *   "a",
+ *   "b",
+ * ]] The list.
+ */
+
+// Upstream
+/** @param {string[]} */
+```
+
+**Root cause**: comment-parser reads a tag name within its line,
+so `[list=[` is `spec:name:unpaired-brackets` and the tag keeps no name and no description.
+
+**oxfmt behavior**: the `*` prefixes are stripped and the lines are kept as written.
+Pinned by `main/031-multiline-default-value`.

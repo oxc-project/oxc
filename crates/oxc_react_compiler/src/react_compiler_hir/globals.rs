@@ -197,7 +197,7 @@ pub fn install_type_config<'a>(
             let properties: Vec<(Ident<'a>, Type<'a>)> = obj_config
                 .properties
                 .as_ref()
-                .map(|props| {
+                .map_or_default(|props| {
                     props
                         .iter()
                         .map(|(key, value)| {
@@ -223,8 +223,7 @@ pub fn install_type_config<'a>(
                             (shapes.alloc_ident(key), ty)
                         })
                         .collect()
-                })
-                .unwrap_or_default();
+                });
             add_object(shapes, None, properties)
         }
     }

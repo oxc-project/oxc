@@ -5,9 +5,10 @@ use oxc_span::{SPAN, Span};
 use oxc_syntax::{
     operator::{AssignmentOperator, LogicalOperator},
     scope::{ScopeFlags, ScopeId},
-    symbol::SymbolFlags,
+    symbol::{SymbolFlags, SymbolId},
 };
 use oxc_traverse::{BoundIdentifier, Traverse};
+use rustc_hash::FxHashMap;
 
 use crate::{context::TraverseCtx, state::TransformState};
 
@@ -16,18 +17,22 @@ use super::{
     diagnostics::{ambient_module_nested, namespace_exporting_non_const, namespace_not_supported},
 };
 
-pub struct TypeScriptNamespace {
+pub struct TypeScriptNamespace<'a> {
+    pub(super) exported_enum_namespaces: FxHashMap<SymbolId, BoundIdentifier<'a>>,
     // Options
     allow_namespaces: bool,
 }
 
-impl TypeScriptNamespace {
+impl TypeScriptNamespace<'_> {
     pub fn new(options: &TypeScriptOptions) -> Self {
-        Self { allow_namespaces: options.allow_namespaces }
+        Self {
+            allow_namespaces: options.allow_namespaces,
+            exported_enum_namespaces: FxHashMap::default(),
+        }
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace {
+impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace<'a> {
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         // namespace declaration is only allowed at the top level
@@ -108,16 +113,15 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace {
     }
 }
 
-impl<'a> TypeScriptNamespace {
+impl<'a> TypeScriptNamespace<'a> {
     fn handle_external(decl: &TSExternalModuleDeclaration<'a>, ctx: &mut TraverseCtx<'a>) {
         if !decl.declare {
             ctx.state.error(ambient_module_nested(decl.span));
         }
     }
 
-    #[expect(clippy::self_only_used_in_recursion)]
     fn handle_nested(
-        &self,
+        &mut self,
         decl: ArenaBox<'a, TSNamespaceDeclaration<'a>>,
         is_export: bool,
         parent_stmts: &mut ArenaVec<'a, Statement<'a>>,
@@ -227,6 +231,8 @@ impl<'a> TypeScriptNamespace {
                         }
                         Declaration::TSEnumDeclaration(ref enum_decl) => {
                             let binding = BoundIdentifier::from_binding_ident(&enum_decl.id);
+                            self.exported_enum_namespaces
+                                .insert(binding.symbol_id, uid_binding.clone());
                             new_stmts.push(Statement::from(decl));
                             Self::add_declaration(&uid_binding, &binding, &mut new_stmts, ctx);
                         }

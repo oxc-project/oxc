@@ -80,3 +80,15 @@ tasks/transform_conformance/tests/babel-plugin-transform-optional-chaining/test/
 Use `crates/oxc_transformer/tests/integrations/` for transformer API behavior, target selection, helper loading, or cross-cutting Rust harness coverage.
 
 Do not add ordinary transform output regressions there when a `tasks/transform_conformance` fixture can cover the behavior.
+
+## Pull request descriptions
+
+Follow the shared [PR guidance](../../.agents/pr-guidance.md), including a runnable example and playground link. Capture the before and after outputs with the transformer example. Save the input outside the repository and run the example while the bug still reproduces:
+
+```sh
+cargo run -p oxc_transformer --example transformer -- /tmp/repro.ts --target es2015
+```
+
+Use its `Transformed:` block as the before output, apply the change, run the same command again, and use the new block as the after output. If you no longer have the original checkout, run it in a detached worktree of the parent commit (`git worktree add --detach /tmp/oxc-parent <parent-commit>`); that checkout builds in its own `target/` directory.
+
+State the target and any other transform options used. For runtime bugs, add a conformance fixture with an `exec.js` assertion and run it with `--exec`. State the fixture's `options.json` when the result depends on it.

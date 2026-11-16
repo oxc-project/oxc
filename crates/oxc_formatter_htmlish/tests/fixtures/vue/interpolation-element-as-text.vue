@@ -24,4 +24,6 @@
   <div>
     Sorry, we couldn't find an account for <b>phoneInputAAAAA</b><i>let's create one:</i>
   </div>
+  <div><p>{{ a }}</p></div>
+  <div><p>a</p></div>
 </template>

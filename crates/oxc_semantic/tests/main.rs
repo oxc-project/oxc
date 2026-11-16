@@ -57,6 +57,9 @@ fn get_scope_snapshot(semantic: &Semantic, scopes: impl Iterator<Item = ScopeId>
                 format!("\"flags\": \"{:?}\",", semantic.scoping().symbol_flags(symbol_id))
                     .as_str(),
             );
+            if let Some(var_binding) = semantic.scoping().catch_var_binding(symbol_id) {
+                result.push_str(format!("\"var_binding\": {},", var_binding.index()).as_str());
+            }
             result.push_str(format!("\"id\": {},", symbol_id.index()).as_str());
             result.push_str(format!("\"name\": {name:?},").as_str());
             result.push_str(
@@ -114,7 +117,10 @@ fn run_scope_snapshot_test(ctx: &TestContext<'_>) -> String {
     let scopes = get_scope_snapshot(&ctx.semantic, scopes);
 
     // pretty-print the results
-    let value: serde_json::Value = serde_json::from_str(scopes.as_str()).unwrap();
+    let mut value: serde_json::Value = serde_json::from_str(scopes.as_str()).unwrap();
+    // Dependency feature unification can enable `serde_json/preserve_order`.
+    // Keep snapshots identical whether JSON objects preserve insertion order or sort keys.
+    value.sort_all_objects();
     serde_json::to_string_pretty(&value).unwrap()
 }
 

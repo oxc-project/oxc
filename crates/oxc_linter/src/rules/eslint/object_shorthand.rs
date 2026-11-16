@@ -157,7 +157,8 @@ declare_oxc_lint!(
     fix,
     config = ObjectShorthandTupleConfig,
     version = "1.59.0",
-    short_description = "Require or disallow method and property shorthand syntax for object literals.",
+    short_description =
+        "Require or disallow method and property shorthand syntax for object literals.",
 );
 
 impl Rule for ObjectShorthand {

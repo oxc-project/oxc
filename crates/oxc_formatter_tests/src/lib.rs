@@ -11,4 +11,6 @@ mod codegen;
 mod harness;
 
 pub use codegen::{GenerateConfig, generate_tests};
-pub use harness::{FixtureFormatter, FixtureSnapshot, OptionValue, build_fixture_snapshot};
+pub use harness::{
+    FixtureFormatter, FixtureSnapshot, InputVariant, OptionValue, build_fixture_snapshot,
+};

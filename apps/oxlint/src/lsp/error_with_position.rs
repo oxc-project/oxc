@@ -259,7 +259,6 @@ pub fn create_unused_directives_report(
     let unused_disable = directives.collect_unused_disable_comments();
     for unused_comment in unused_disable {
         let span = unused_comment.span;
-        let fix_span = unused_comment.fix_span;
         match unused_comment.r#type {
             RuleCommentType::All => {
                 reports.push(build_unused_disable_diagnostic_report(
@@ -267,7 +266,7 @@ pub fn create_unused_directives_report(
                     span,
                     severity,
                     source_text,
-                    Some(Fix::delete(fix_span).with_message(fix_message)),
+                    Some(unused_comment.create_fix(source_text).with_message(fix_message)),
                 ));
             }
             RuleCommentType::Single(rules) => {

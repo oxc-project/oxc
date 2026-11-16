@@ -28,6 +28,8 @@ source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
   <div>
     Sorry, we couldn't find an account for <b>phoneInputAAAAA</b><i>let's create one:</i>
   </div>
+  <div><p>{{ a }}</p></div>
+  <div><p>a</p></div>
 </template>
 
 ==================== Output ====================
@@ -79,6 +81,8 @@ source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
     Sorry, we couldn't find an account for <b>phoneInputAAAAA</b
     ><i>let's create one:</i>
   </div>
+  <div><p>{{ a }}</p></div>
+  <div><p>a</p></div>
 </template>
 
 -------------------
@@ -115,6 +119,8 @@ source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
   </p>
   <div>Sorry, we couldn't find an account for <b>{{ phoneInput }}</b><i>let's create one:</i></div>
   <div>Sorry, we couldn't find an account for <b>phoneInputAAAAA</b><i>let's create one:</i></div>
+  <div><p>{{ a }}</p></div>
+  <div><p>a</p></div>
 </template>
 
 ===================== End =====================

@@ -6,6 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, Span};
+use oxc_syntax::identifier::is_identifier_part;
 
 use crate::{
     AstNode,
@@ -52,7 +53,8 @@ declare_oxc_lint!(
     recommended,
     fix,
     version = "0.0.19",
-    short_description = "Prefer `Set#size` over `Set#length` when the `Set` is converted to an array.",
+    short_description =
+        "Prefer `Set#size` over `Set#length` when the `Set` is converted to an array.",
 );
 
 impl Rule for PreferSetSize {
@@ -99,11 +101,19 @@ impl Rule for PreferSetSize {
 
         ctx.diagnostic_with_fix(prefer_set_size_diagnostic(span), |fixer| {
             let replacement = maybe_set.span().source_text(ctx.source_text());
+            // `return[...set].length` has to become `return set.size`, not `returnset.size`.
+            let needs_space = ctx.source_text()[..conversion_span.start as usize]
+                .chars()
+                .next_back()
+                .is_some_and(is_identifier_part)
+                && replacement.chars().next().is_some_and(|c| is_identifier_part(c) || c == '\\');
+            let replacement =
+                if needs_space { format!(" {replacement}") } else { replacement.to_string() };
 
             let mut fix = fixer
                 .new_fix_with_capacity(2)
                 .with_message("Replace array conversion with direct `Set.size` access");
-            fix.push(Fix::new(replacement.to_string(), conversion_span));
+            fix.push(Fix::new(replacement, conversion_span));
             fix.push(Fix::new("size", span));
             fix
         });
@@ -278,6 +288,21 @@ fn test() {
             r"foo
                 ;new Set(array).size",
         ),
+        (
+            r"function isUnique(array) {
+                return[...new Set(array)].length === array.length
+            }",
+            r"function isUnique(array) {
+                return new Set(array).size === array.length
+            }",
+        ),
+        (
+            r"const set = new Set([]);
+            function size() { return[...set].length }",
+            r"const set = new Set([]);
+            function size() { return set.size }",
+        ),
+        (r"typeof[...new Set(array)].length", r"typeof new Set(array).size"),
     ];
 
     Tester::new(PreferSetSize::NAME, PreferSetSize::PLUGIN, pass, fail)

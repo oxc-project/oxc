@@ -1,0 +1,5 @@
+{
+  "original": "function Component() {throw new Error(\"expected\");}\nexport const FIXTURE_ENTRYPOINT = {fn: Component, params: []};",
+  "compiled": "function Component() {throw new Error(\"expected\");}\nexport const FIXTURE_ENTRYPOINT = {fn: Component, params: []};",
+  "expected": "success"
+}

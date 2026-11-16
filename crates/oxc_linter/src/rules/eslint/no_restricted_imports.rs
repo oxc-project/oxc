@@ -628,9 +628,9 @@ fn add_configuration_path_from_string(paths: &mut Vec<RestrictedPath>, module_na
 fn add_configuration_patterns_from_object(
     patterns: &mut Vec<RestrictedPattern>,
     patterns_value: &serde_json::Value,
-) {
+) -> Result<(), serde_json::Error> {
     let Some(paths_array) = patterns_value.as_array() else {
-        return;
+        return Ok(());
     };
 
     for path_value in paths_array {
@@ -639,36 +639,35 @@ fn add_configuration_patterns_from_object(
                 add_configuration_patterns_from_string(patterns, module_name);
             }
             Value::Object(_) => {
-                if let Ok(pattern) = serde_json::from_value::<RestrictedPattern>(path_value.clone())
-                {
-                    if pattern.group.is_some() && pattern.regex.is_some() {
-                        // ToDo: not allowed
-                    }
-
-                    // allowImportNames cannot be used in combination with importNames, importNamePattern or allowImportNamePattern.
-                    if pattern.allow_import_names.is_some()
-                        && (pattern.import_names.is_some()
-                            || pattern.import_name_pattern.is_some()
-                            || pattern.allow_import_name_pattern.is_some())
-                    {
-                        // ToDo: not allowed
-                    }
-
-                    // allowImportNamePattern cannot be used in combination with importNames, importNamePattern or allowImportNames.
-                    if pattern.allow_import_name_pattern.is_some()
-                        && (pattern.import_names.is_some()
-                            || pattern.import_name_pattern.is_some()
-                            || pattern.allow_import_names.is_some())
-                    {
-                        // ToDo: not allowed
-                    }
-
-                    patterns.push(pattern);
+                let pattern = serde_json::from_value::<RestrictedPattern>(path_value.clone())?;
+                if pattern.group.is_some() && pattern.regex.is_some() {
+                    // ToDo: not allowed
                 }
+
+                // allowImportNames cannot be used in combination with importNames, importNamePattern or allowImportNamePattern.
+                if pattern.allow_import_names.is_some()
+                    && (pattern.import_names.is_some()
+                        || pattern.import_name_pattern.is_some()
+                        || pattern.allow_import_name_pattern.is_some())
+                {
+                    // ToDo: not allowed
+                }
+
+                // allowImportNamePattern cannot be used in combination with importNames, importNamePattern or allowImportNames.
+                if pattern.allow_import_name_pattern.is_some()
+                    && (pattern.import_names.is_some()
+                        || pattern.import_name_pattern.is_some()
+                        || pattern.allow_import_names.is_some())
+                {
+                    // ToDo: not allowed
+                }
+
+                patterns.push(pattern);
             }
             _ => (),
         }
     }
+    Ok(())
 }
 
 fn add_configuration_patterns_from_string(paths: &mut Vec<RestrictedPattern>, module_name: &str) {
@@ -1007,7 +1006,7 @@ impl Rule for NoRestrictedImports {
                                 add_configuration_patterns_from_object(
                                     &mut patterns,
                                     patterns_value,
-                                );
+                                )?;
                             } else if let Ok(path) = serde_json::from_value::<RestrictedPath>(
                                 serde_json::Value::Object(obj.clone()),
                             ) {
@@ -1026,7 +1025,7 @@ impl Rule for NoRestrictedImports {
                     add_configuration_path_from_object(&mut paths, paths_value);
                 }
                 if let Some(patterns_value) = obj.get("patterns") {
-                    add_configuration_patterns_from_object(&mut patterns, patterns_value);
+                    add_configuration_patterns_from_object(&mut patterns, patterns_value)?;
                 } else if let Ok(path) =
                     serde_json::from_value::<RestrictedPath>(serde_json::Value::Object(obj.clone()))
                 {
@@ -1057,8 +1056,10 @@ impl Rule for NoRestrictedImports {
 
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.module_record();
+        let import_statement_spans: FxHashSet<Span> =
+            module_record.import_entries.iter().map(|entry| entry.statement_span).collect();
 
-        self.report_side_effects(ctx, module_record);
+        self.report_side_effects(ctx, module_record, &import_statement_spans);
 
         let mut reported_general_import_paths = FxHashSet::default();
         let mut reported_general_import_patterns = FxHashSet::default();
@@ -1085,6 +1086,12 @@ impl Rule for NoRestrictedImports {
         }
 
         for entry in &module_record.indirect_export_entries {
+            // `import { a } from 'foo'; export { a };` is recorded as an indirect export that
+            // keeps the span of the import statement. The import entry was already checked above.
+            if import_statement_spans.contains(&entry.statement_span) {
+                continue;
+            }
+
             self.report_export_name_allowed(
                 ctx,
                 entry,
@@ -1105,13 +1112,16 @@ impl Rule for NoRestrictedImports {
 }
 
 impl NoRestrictedImports {
-    fn report_side_effects(&self, ctx: &LintContext<'_>, module_record: &ModuleRecord) {
+    fn report_side_effects(
+        &self,
+        ctx: &LintContext<'_>,
+        module_record: &ModuleRecord,
+        import_statement_spans: &FxHashSet<Span>,
+    ) {
         if module_record.requested_modules.is_empty() {
             return;
         }
 
-        let import_statement_spans: FxHashSet<Span> =
-            module_record.import_entries.iter().map(|entry| entry.statement_span).collect();
         let mut side_effect_import_map: FxHashMap<&CompactStr, Vec<RequestedModule>> =
             FxHashMap::default();
 
@@ -3669,6 +3679,79 @@ fn test() {
         ),
     ]);
 
+    let restricted_z_name = serde_json::json!([{
+        "paths": [{ "name": "zod", "importNames": ["z"], "message": "Use 'util/zod' instead." }]
+    }]);
+    pass.push((
+        "import type { z } from 'zod'; export { z };",
+        Some(serde_json::json!([{
+            "paths": [{ "name": "zod", "importNames": ["z"], "allowTypeImports": true }]
+        }])),
+    ));
+    fail.extend([
+        ("import { z } from 'zod'; export { z };", Some(restricted_z_name.clone())),
+        ("import { z } from 'zod'; export { z as zz };", Some(restricted_z_name.clone())),
+        ("import { z } from 'zod'; export { z, z as zz };", Some(restricted_z_name.clone())),
+        ("import { z } from 'zod'; export { z };", Some(serde_json::json!(["zod"]))),
+        (
+            "import { z } from 'zod'; export { z };",
+            Some(serde_json::json!([{ "patterns": [{ "group": ["zod"] }] }])),
+        ),
+        (
+            "import z from 'zod'; export { z };",
+            Some(serde_json::json!([{ "paths": [{ "name": "zod", "importNames": ["default"] }] }])),
+        ),
+        ("import { z } from 'zod'; export { z } from 'zod';", Some(restricted_z_name)),
+    ]);
+
     Tester::new(NoRestrictedImports::NAME, NoRestrictedImports::PLUGIN, pass, fail)
         .test_and_snapshot();
+}
+
+#[test]
+fn test_invalid_regex_configuration() {
+    for field in ["regex", "importNamePattern", "allowImportNamePattern"] {
+        for regex in ["^(?!snappyjs/)[^./][^/]*/.+$", "["] {
+            let pattern = serde_json::json!({field: regex});
+            for config in [
+                serde_json::json!([{"patterns": [pattern]}]),
+                serde_json::json!({"patterns": [pattern]}),
+            ] {
+                let error = NoRestrictedImports::from_configuration(config).unwrap_err();
+                assert!(error.to_string().contains("regex parse error"), "{error}");
+            }
+        }
+    }
+}
+
+#[test]
+fn test_supported_regex_configuration() {
+    for field in ["regex", "importNamePattern", "allowImportNamePattern"] {
+        for (expression, source, matches) in [
+            ("^[^./][^/]*/.+$", "pkg/sub/mod", true),
+            ("^[^./][^/]*/.+$", "./local", false),
+            ("^FOO$", "foo", false),
+            ("^FOO$", "FOO", true),
+            ("(?i)^FOO$", "foo", true),
+        ] {
+            for case_sensitive in [false, true] {
+                let pattern = serde_json::json!({
+                    field: expression,
+                    "caseSensitive": case_sensitive,
+                });
+                let rule = NoRestrictedImports::from_configuration(
+                    serde_json::json!([{"patterns": [pattern]}]),
+                )
+                .unwrap();
+                let pattern = &rule.patterns[0];
+                let regex = match field {
+                    "regex" => pattern.regex.as_ref(),
+                    "importNamePattern" => pattern.import_name_pattern.as_ref(),
+                    _ => pattern.allow_import_name_pattern.as_ref(),
+                }
+                .unwrap();
+                assert_eq!(regex.is_match(source), matches);
+            }
+        }
+    }
 }

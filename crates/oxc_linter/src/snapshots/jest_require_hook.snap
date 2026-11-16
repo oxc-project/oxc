@@ -155,3 +155,11 @@ source: crates/oxc_linter/src/tester.rs
  15 │                 });
     ╰────
   help: This should be done within a hook
+
+  ⚠ jest(require-hook): Require setup and teardown code to be within a hook.
+   ╭─[require_hook.tsx:2:36]
+ 1 │ import { describe as suite } from '@jest/globals';
+ 2 │             suite('suite', () => { setup(); });
+   ·                                    ───────
+   ╰────
+  help: This should be done within a hook

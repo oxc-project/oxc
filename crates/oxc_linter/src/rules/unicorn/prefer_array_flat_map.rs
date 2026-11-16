@@ -54,7 +54,8 @@ declare_oxc_lint!(
     recommended,
     fix_suggestion,
     version = "0.0.14",
-    short_description = "Prefer a single `.flatMap()` over `.map().flat()` or `.filter().flatMap()`.",
+    short_description =
+        "Prefer a single `.flatMap()` over `.map().flat()` or `.filter().flatMap()`.",
 );
 
 // skip React.Children because we are only looking at `StaticMemberExpression.property` and not its object

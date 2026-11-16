@@ -7,7 +7,7 @@ mod expression;
 mod params;
 mod program;
 
-pub use expression::object_prints_double_brace;
+pub use expression::{FormatName, object_prints_double_brace};
 
 use std::ops::Range;
 

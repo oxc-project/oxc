@@ -4,6 +4,62 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.93.0] - 2026-11-09
+
+### 🚀 Features
+
+- 6195265 linter/promise/prefer-catch: Implement suggestion (#28919) (Mikhail Baev)
+
+### 🐛 Bug Fixes
+
+- 9c62d2a linter/eslint/no-unreachable-loop: Ignore enclosing finalizers for continues (#29004) (camc314)
+- 6303df1 jsdoc: Preserve param tags after unmatched description delimiters (#28923) (Vishal Punjabi)
+- fe66fa7 linter/eslint/no-lone-blocks: Report redundant blocks in function bodies (#29043) (camc314)
+- e1694bd linter/unicorn/no-useless-undefined: Preserve shadowed bindings (#29046) (camc314)
+- 791b5f5 linter/unicorn/prefer-regexp-test: Restrict automatic argument swaps (#29045) (camc314)
+- e7654f6 linter/react/display-name: Ignore unrelated memo and forwardRef calls (#29005) (camc314)
+- 2487360 linter/unicorn/no-useless-undefined: Report guarded indexed access (#29014) (camc314)
+- a791a5b cfg: Resolve continues through stacked loop labels (#29016) (camc314)
+- 287ba19 linter/eslint/id-length: Ignore TypeScript qualified references (#29037) (camc314)
+- b71234f cfg: Skip labeled contexts for unlabeled jumps (#29001) (camc314)
+- bb21a3c linter/import/no-anonymous-default-export: Report parenthesized exports (#29002) (camc314)
+- f38f738 linter/eslint/prefer-destructuring: Skip fixes that remove comments (#29003) (camc314)
+- bf11006 linter/react/exhaustive-deps: Suggest dependency removals (#28925) (camc314)
+- 6bbb92a linter: Remove unused `oxlint-disable` directives with `--fix` (#27698) (Ryan Tsao)
+- 3b35cb6 linter/disable-directives: Preserve separators and disable spans (#28921) (camc314)
+- 1253445 linter/eslint/no-restricted-imports: Report re-exported imports once (#28920) (Ramy Akin Saidi)
+
+### ⚡ Performance
+
+- da620e6 linter: Start tsgolint before the regular lint pass (#28824) (Max Schwenk)
+
+## [1.92.0] - 2026-11-06
+
+### 🚀 Features
+
+- 4a52ba2 oxlint: Discover tsrs for type-aware linting (#28751) (camc314)
+- b7d2c75 linter/eslint/no-redeclare: Add `ignoreDeclarationMerge` option (#28816) (Cam McHenry)
+
+### 🐛 Bug Fixes
+
+- 2091564 linter/jsdoc/require-param: Ignore enclosing function JSDoc (#28866) (camc314)
+- c6ec50b linter/react/only-export-components: Classify JSX values as non-components (#28761) (camc314)
+- 3c051ab linter/vitest/prefer-called-exactly-once-with: Preserve neighboring code in autofix (#28864) (camc314)
+- 674b962 linter/eslint/no-misleading-character-class: Use lazy regex for combining marks (#28822) (Sysix)
+- 838d339 linter/vitest/prefer-called-exactly-once-with: Avoid panic on non-ASCII text (#28850) (YT)
+- 8d24c26 linter/jsx-a11y/aria-role: Allow role={undefined} (#28804) (Abhay Godavarthy)
+- a7143bf linter/eslint/no-restricted-imports: Respect allowTypeImports correctly for empty patterns (#28842) (Cam McHenry)
+- 0cc6515 linter/unicorn/prefer-type-error: Report throws in unbraced if branches (#28819) (camc314)
+- ae43c80 linter/unicorn/prefer-single-call: Remove duplicate fix status (#28763) (Mikhail Baev)
+- a8a621a linter/eslint/no-fallthrough: Ignore unreachable exits from infinite loops (#28755) (camc314)
+- 7a17a80 linter/eslint/prefer-spread: Report calls on non-member expressions (#28753) (camc314)
+- 0ae350d linter/unicorn/no-zero-fractions: Preserve exponent case (#28752) (camc314)
+- b5b3f3f linter/eslint/no-misleading-character-class: Detect more combining characters (#28733) (Sysix)
+
+### ⚡ Performance
+
+- 74d50c1 linter: Overlap import graph batches instead of polling on a pool worker (#28323) (Dunqing)
+
 ## [1.91.0] - 2026-11-02
 
 ### 🚀 Features

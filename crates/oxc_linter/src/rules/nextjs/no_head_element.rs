@@ -69,7 +69,8 @@ declare_oxc_lint!(
     correctness,
     recommended,
     version = "0.2.1",
-    short_description = "Prevents the usage of the native `<head>` element inside a Next.js application.",
+    short_description =
+        "Prevents the usage of the native `<head>` element inside a Next.js application.",
 );
 
 impl Rule for NoHeadElement {
@@ -89,11 +90,7 @@ impl Rule for NoHeadElement {
         let Some(full_file_path) = ctx.file_path().to_str() else {
             return false;
         };
-        if is_in_app_dir(full_file_path) {
-            return false;
-        }
-
-        true
+        !is_in_app_dir(full_file_path)
     }
 }
 

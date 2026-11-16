@@ -1,16 +1,23 @@
-//! [`JsRoot::Expression`](crate::JsRoot::Expression): an expression in its host's delimiters (Vue `{{ a }}`, `:a="b"`).
+//! [`JsRoot::Expression`]: an expression in its host's delimiters (Vue `{{ a }}`, `:a="b"`).
 
 use std::ops::Range;
 
+use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::GetSpan;
-use oxc_syntax::{identifier::is_white_space, line_terminator::is_line_terminator};
+use oxc_syntax::{
+    identifier::{is_identifier_name, is_white_space},
+    keyword::is_reserved_keyword,
+    line_terminator::is_line_terminator,
+};
 
 use crate::{
-    ExpressionLayout, ExpressionRoot,
+    ExpressionLayout, ExpressionRoot, JsRoot,
     ast_nodes::{AstNode, AstNodes},
-    formatter::{JsFormatter, TailwindContextEntry, comments::gap_segments, prelude::*},
+    formatter::{
+        JsFormatContext, JsFormatter, TailwindContextEntry, comments::gap_segments, prelude::*,
+    },
     utils::expression::ExpressionLeftSide,
     write,
 };
@@ -101,6 +108,41 @@ fn skip_trivia(program: &Program<'_>, source: &Range<usize>, position: usize) ->
         .unwrap_or(source.end)
 }
 
+/// [`super::FormatRoot`] for an expression of one name (`a`), which prints as written whatever the layout, so needs no parse.
+/// No string, comment or sequence, so none of what the parse path checks or sets applies.
+///
+/// Only a name: about half of a Vue template's values, printed by no rule of another node.
+/// Other shapes are few, or print by such a rule, which this would have to keep in step:
+/// - A member (`a.b`): whether one breaks is for `print/member_expression.rs` to decide
+/// - A string: its quotes and escapes are normalized, and its classes may be sorted
+/// - A number (`0`) or `!a`: a percent each
+pub struct FormatName<'a> {
+    pub name: &'a str,
+    layout: ExpressionLayout,
+}
+
+impl<'a> FormatName<'a> {
+    /// `code`, trimmed, when `root` is an expression and the code a name, as the parser reads one.
+    ///
+    /// - A reserved word is a name only as a value (`true`, `false`, `null`, `this`)
+    /// - Any other reserved word (`if`, and contextual ones like `let`) is left to the parse, which decides
+    pub fn new(allocator: &'a Allocator, code: &str, root: JsRoot) -> Option<Self> {
+        let JsRoot::Expression(root) = root else { return None };
+        // Non-ASCII whitespace (NBSP, U+2028) stays, fails `is_identifier_name` and goes to the parse
+        let code = code.trim_ascii();
+        let is_name = is_identifier_name(code)
+            && (!is_reserved_keyword(code) || matches!(code, "true" | "false" | "null" | "this"));
+        is_name.then(|| Self { name: allocator.alloc_str(code), layout: root.layout })
+    }
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatName<'a> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        // A name never hugs, and has no comment
+        write_in_layout(&text_without_whitespace(self.name), self.layout, false, false, f);
+    }
+}
+
 /// Writes `expression`, the root of `program`, in the layout `root` names.
 pub(super) fn write_expression<'a>(
     program: &AstNode<'_, 'a, Program<'a>>,
@@ -121,25 +163,34 @@ pub(super) fn write_expression<'a>(
     if let Some(context) = tailwind {
         f.context_mut().push_tailwind_context(context);
     }
-    match root.layout {
-        ExpressionLayout::Bare => write!(f, expression),
-        _ if ends_in_line_comment => write!(f, soft_block_indent(&expression)),
-        ExpressionLayout::Group => write!(f, group(&expression)),
-        ExpressionLayout::Hug { literals } => {
-            let hugs = match expression.as_ref() {
-                Expression::ObjectExpression(_) | Expression::ArrayExpression(_) => true,
-                Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => literals,
-                _ => false,
-            };
-            if hugs {
-                write!(f, group(&expression));
-            } else {
-                write!(f, soft_block_indent(&expression));
-            }
+    let hugs = match expression.as_ref() {
+        Expression::ObjectExpression(_) | Expression::ArrayExpression(_) => true,
+        Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => {
+            matches!(root.layout, ExpressionLayout::Hug { literals: true })
         }
-    }
+        _ => false,
+    };
+    write_in_layout(&expression, root.layout, hugs, ends_in_line_comment, f);
     if tailwind.is_some() {
         f.context_mut().pop_tailwind_context();
+    }
+}
+
+/// Writes `expression` in `layout`.
+/// `hugs`: it hugs under `ExpressionLayout::Hug`; `ends_in_line_comment`: on its own lines unless `Bare`.
+fn write_in_layout<'a>(
+    expression: &impl Format<'a, JsFormatContext<'a>>,
+    layout: ExpressionLayout,
+    hugs: bool,
+    ends_in_line_comment: bool,
+    f: &mut JsFormatter<'_, 'a>,
+) {
+    match layout {
+        ExpressionLayout::Bare => write!(f, expression),
+        _ if ends_in_line_comment => write!(f, soft_block_indent(expression)),
+        ExpressionLayout::Group => write!(f, group(expression)),
+        ExpressionLayout::Hug { .. } if hugs => write!(f, group(expression)),
+        ExpressionLayout::Hug { .. } => write!(f, soft_block_indent(expression)),
     }
 }
 

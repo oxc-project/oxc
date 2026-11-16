@@ -64,21 +64,22 @@ Rules:
   - The owning layer decides the behavior: a language crate for single-language behavior, `apps/oxfmt` for embedding
     - A behavior core decides for every language (see "Text width") is a rule in this document;
       each language crate where it shows has its own entry and pin fixture, citing that section
-  - The pin fixture is minimal and lives in the owning layer, distilled from whatever exposed the divergence; a file of an external suite (`conformance/fixtures/externals/`) is never the pin fixture, it stays a regression net
+  - The pin fixture is minimal and lives in the owning layer, distilled from whatever exposed the divergence; a file of an external suite (`conformance/externals/`) is never the pin fixture, it stays a regression net
   - The entry's `Pin:` names the fixture, which needs no link back; the why and the deviating lines live in the entry
 - `DIVERGENCES.md#<slug>` is the one form for referring to an entry (docs, source, fixtures); never a quoted or bare slug, never an upstream issue alone
 - Entry format, with OUR behavior as the spec
   - H2 slug: the stable anchor
   - `Why:` required; the reason keyword, its parenthetical, then upstream issues as bare references: `uniform-rule (same construct, same output: X; prettier/prettier#NNNN)`
   - `Pin:` required; the fixture path
-  - `Conformance:` optional; the files failing `apps/oxfmt`'s conformance on the entry, one per sub-item (a note may follow it), as paths under `apps/oxfmt/conformance/fixtures/`; a path ending in `*` covers every path it starts with (e.g. a group of snippets)
+  - `Conformance:` optional; the files failing `apps/oxfmt`'s conformance on the entry, one per sub-item (a note may follow it), as `externals/` paths under `apps/oxfmt/conformance/`; a path ending in `*` covers every path it starts with (e.g. a group of snippets)
   - `Drop when:` optional; only for a condition more specific than the pin-bump default
   - Body: an input/ours/prettier code example
   - No status, dates, or authors: listed = accepted, condition met = delete (git holds history)
 - Lifecycle
   - A new conformance failure is acceptable only under this policy; it stays counted as a failure
   - A failing file no entry lists is unclassified
-  - At a pin bump (`apps/oxfmt/package.json`, then `download-fixtures`), re-run conformance: an entry no longer observed is deleted, the rest are re-checked against their reason
+  - At a pin bump (`apps/oxfmt/package.json`, then `download-externals`), re-run conformance: an entry no longer observed is deleted, the rest are re-checked against their reason
+    - Only `Conformance:` paths are compared (stale-checked), an entry with only a pin is re-checked against Prettier by hand
 - A documented divergence is never "fixed" by following Prettier
 - `DIVERGENCES.md` holds entries only, opening with one back-reference to this section; `AGENTS.md` keeps policy translations and mechanism prose
 
@@ -154,7 +155,9 @@ node apps/oxfmt/node_modules/prettier/bin/prettier.cjs --parser <parser> --print
 
 NOTE: Prettier's default `printWidth` is `80`, but Oxfmt is `100`.
 
-Fixture tests and `conformance:prettier` re-format every output and record idempotency violations in their snapshots/reports.
+Fixture tests, `conformance:fixture` and `conformance:prettier` re-format every output and record idempotency violations in their snapshots/reports.
+Fixture tests and `conformance:fixture` also format the input's CRLF / CR / BOM variants and record any that formats differently;
+a crate excludes a variant its language or entry point does not read as the same text (`FixtureFormatter::input_variants`, e.g. TOML has no lone CR line break).
 Fixture tests also assert the lossless contract through `FixtureFormatter::fingerprint` (`oxc_formatter_tests`): a loss fails the test instead of being pinned.
 
 ### Fixture tests
@@ -163,6 +166,8 @@ Snapshot tests driven by fixture files under `tests/fixtures/`; they cover what 
 A language crate's fixtures cover only its own side (e.g. `format_to_ir` on a fragment): they run without a dispatcher, so an embedded body stays verbatim.
 `build.rs` generates a test per fixture file: add a case by dropping a file in, no registration needed.
 Options are resolved from the nearest `options.json` up the directory tree.
+`apps/oxfmt`'s own (embedding / dispatch / oxfmt-only options) fixtures live in `conformance/fixtures/`, recorded by `conformance:fixture` as `<fixture>.snap.md` next to each:
+the same `options.json` lookup, but its option sets run as written (no `printWidth` rows added) and there is no fingerprint, see `apps/oxfmt`'s `AGENTS.md`.
 
 ```sh
 cargo test -p <crate>
@@ -175,17 +180,17 @@ Every expected output must be verified against the oracle; in a pin fixture, eve
 ### Prettier conformance (`apps/oxfmt`)
 
 Every formatter is checked through Oxfmt, so embedded parts are formatted as users get them; failures are tracked, not passes.
-`conformance:prettier` runs Prettier's own suite and reports per language in `conformance/snapshots/prettier.snap.md`; `conformance:live` runs the rest, see `apps/oxfmt`'s `AGENTS.md`.
+`conformance:prettier` runs Prettier's own suite and reports per language in `conformance/snapshots/prettier.snap.md`; `conformance:live` runs real-world projects and the plugins' suites on the spot, see `apps/oxfmt`'s `AGENTS.md`.
 Requires a dev build first.
 
 ```sh
 pnpm --dir apps/oxfmt build-dev
-# Prettier's suite only, `download-fixtures` with no name fetches every source `conformance:live` needs too
-pnpm --dir apps/oxfmt download-fixtures prettier
+# Prettier's suite only, `download-externals` with no name fetches every source `conformance:live` needs too
+pnpm --dir apps/oxfmt download-externals prettier
 pnpm --dir apps/oxfmt conformance:prettier
 # Debug Prettier's suite for a path
 pnpm --dir apps/oxfmt conformance:prettier --filter <path>
 ```
 
-The suite is downloaded to `apps/oxfmt/conformance/fixtures/externals/prettier/`, at the pin.
+The suite is downloaded to `apps/oxfmt/conformance/externals/prettier/`, at the pin.
 It is gitignored, so use `rg --no-ignore` (or `-u`) when searching it.

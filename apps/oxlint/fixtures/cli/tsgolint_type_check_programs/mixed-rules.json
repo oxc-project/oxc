@@ -1,0 +1,15 @@
+{
+  "extends": [
+    "./.oxlintrc.json"
+  ],
+  "overrides": [
+    {
+      "files": [
+        "project/other.ts"
+      ],
+      "rules": {
+        "typescript/no-floating-promises": "off"
+      }
+    }
+  ]
+}

@@ -92,6 +92,16 @@ impl Tester {
     }
 
     pub fn test_and_snapshot_multiple(&self, multiple_args: &[&[&str]]) {
+        let current_cwd = std::env::current_dir().unwrap();
+        let relative_dir = self.cwd.strip_prefix(&current_cwd).unwrap_or(&self.cwd);
+        let full_args_list =
+            multiple_args.iter().map(|args| args.join(" ")).collect::<Vec<String>>().join(" ");
+        let snapshot_file_name = format!("{}_{}", relative_dir.to_str().unwrap(), full_args_list);
+
+        self.test_and_snapshot_named(&snapshot_file_name, multiple_args);
+    }
+
+    pub fn test_and_snapshot_named(&self, name: &str, multiple_args: &[&[&str]]) {
         let mut output: Vec<u8> = Vec::new();
         let current_cwd = std::env::current_dir().unwrap();
         let relative_dir = self.cwd.strip_prefix(&current_cwd).unwrap_or(&self.cwd);
@@ -150,14 +160,8 @@ impl Tester {
         let cwd_string = cwd_string.cow_replace('\\', "/").to_string(); // for windows
         let output_string = output_string.cow_replace(&cwd_string, "<cwd>");
 
-        let full_args_list =
-            multiple_args.iter().map(|args| args.join(" ")).collect::<Vec<String>>().join(" ");
-
-        let snapshot_file_name = format!("{}_{}", relative_dir.to_str().unwrap(), full_args_list);
-
         // windows can not handle filenames with *
-        // allow replace instead of cow_replace. It only test
-        let snapshot_file_name = snapshot_file_name.cow_replace('*', "_").to_string();
+        let snapshot_file_name = name.cow_replace('*', "_").to_string();
         settings.bind(|| {
             insta::assert_snapshot!(snapshot_file_name, output_string);
         });

@@ -78,14 +78,21 @@ NOTE: Rust written formatters never fall back to Prettier, since they exist to r
 
 Known divergences live in DIVERGENCES.md (embedding / dispatch layer only); single-language ones live in the owning crate's.
 
-- The pin is a minimal repro in `conformance/fixtures/edge-cases/`
-- `conformance/run_prettier.ts` compares Prettier's own test suite with its committed jest snapshots, so Prettier never runs
-  - Its `PARSERS` table maps a Prettier parser to the filename oxfmt routes to that language, parsers not listed are not run
-  - Each input runs under its spec's own options only, and is also checked for idempotency and its CRLF / CR / BOM variants
-- `conformance/run_live.ts` compares with Prettier run on the spot
-  - A category's `projects` (real-world repositories) are compared on Prettier's output of each file, the code a Prettier user hands over,
-    so the divergences that keep what was written do not fire in bulk; its `fixtures` stay as written, raw shapes are their job
-- Both runners name a file as its report prints it (its path under `conformance/fixtures/`, `<dir>/snippet: <title>` for a snippet), as `DIVERGENCES.md` lists it in `Pin:` / `Conformance:` lines (`conformance/shared.ts`), and fail on a listed path that passes (stale)
+- `conformance/fixtures/` (committed): oxfmt's own fixtures, the spec of its output, never compared with Prettier
+  - Every oxfmt-layer formatting result goes here: divergence pins (minimal repros), embedding and dispatch, oxfmt-only options (`insertFinalNewline`, ...);
+    single-language results go to the owning crate's `tests/fixtures/`
+  - A topic dir (`js-in-vue/`) holds its default case, a subdir named after its options (`semi-false/`) the rest, with its own `options.json`
+  - `conformance/run_fixture.ts` records each as `<fixture>.snap.md` next to it, under every option set of its nearest `options.json` (an array of oxfmt options, `[{}]` when none)
+  - Each is also checked for idempotency and its CRLF / CR / BOM variants; with `endOfLine` set, the output shows its line endings (`<CRLF>` etc.)
+  - Unlike the crate harness, no `printWidth` row is added, and a format error is recorded, not asserted
+- `conformance/externals/` (gitignored, `download-externals`): the regression net against Prettier, failures tracked and classified
+  - `conformance/run_prettier.ts` compares Prettier's own test suite with its committed jest snapshots, so Prettier never runs
+    - Its `PARSERS` table maps a Prettier parser to the filename oxfmt routes to that language, parsers not listed are not run
+    - Each input runs under its spec's own options only, and is also checked for idempotency and its CRLF / CR / BOM variants
+  - `conformance/run_live.ts` compares with Prettier run on the spot
+    - A category's `projects` (real-world repositories) are compared on Prettier's output of each file, the code a Prettier user hands over,
+      so the divergences that keep what was written do not fire in bulk; its `suites` (the plugins' test suites) stay as written, raw shapes are their job
+  - Both name a file as its report prints it (its path under `conformance/`, `<dir>/snippet: <title>` for a snippet), as `DIVERGENCES.md` lists it in `Conformance:` lines (`conformance/shared.ts`), and fail on a listed path that passes (stale)
   - Both reports list the entries under each failing file, `❓unclassified` when none does (those files first); `run_live.ts` also warns on an unclassified one
 - All current entries are embedding-layer decisions that outlive the Prettier delegation;
   if an entry about the Prettier-fallback boundary itself is ever added, group it under a separate heading in DIVERGENCES.md so the removal scope stays obvious when the fallback goes away
@@ -108,7 +115,7 @@ The pure Rust build runs fallback-less, so non-native embeds (angular-in-js, cus
 The roots install `SessionServices`, all via `embed/services.rs::for_root` (one definition per build; the napi one takes the `ExternalServices` transport, and adds the Prettier fallback / string embedder / Tailwind sorter to the registry dispatcher): the JS/TS, CSS, Markdown and HTML file roots (`core/format.rs`, `PhysicalFile` sessions, both builds) and the Svelte/Astro `<script>` and Astro frontmatter root (`api/text_to_doc_api.rs`, `VirtualDocument` session, napi only).
 
 Which languages may dispatch AT ALL from a given host is the host crate's own gate (e.g. `oxc_formatter_css` dispatches only `yaml`/`toml` front matter, `oxc_formatter_markdown` every fenced code block's language); the shared `route_embedded()` table then decides who serves the language.
-Adding a dispatch call to a host crate is therefore a routing decision (check `route_embedded()` and the xxx-in-yyy categories of `conformance:live` when doing so. A root needing a bespoke service set would assemble the `SessionServices` struct literally), none does today.
+Adding a dispatch call to a host crate is therefore a routing decision (check `route_embedded()` and the xxx-in-yyy fixtures of `conformance/fixtures/` when doing so. A root needing a bespoke service set would assemble the `SessionServices` struct literally), none does today.
 `embeddedLanguageFormatting: off` installs no dispatcher, every builder consults the same off-gate, `ResolvedDispatchConfig::is_embedded_formatting_enabled`.
 Tracing span namespaces: `oxfmt::embed::` = pure Rust work, `oxfmt::external::` = napi-crossing calls.
 
@@ -161,8 +168,8 @@ pnpm build-dev && pnpm t
 # Update snapshots
 pnpm t -u
 
-# Run conformance tests (`conformance:prettier` and `conformance:live`)
-pnpm build-dev && pnpm download-fixtures && pnpm conformance
+# Run conformance tests (`conformance:fixture`, `conformance:prettier` and `conformance:live`)
+pnpm build-dev && pnpm download-externals && pnpm conformance
 # Print the diffs of Prettier's test suite matching a path substring, without writing the report
 pnpm conformance:prettier --filter <substring>
 ```
@@ -193,12 +200,12 @@ node ./node_modules/prettier/bin/prettier.cjs --config=fmt.json <file>
 
 ## Test organization (`test/` directory)
 
-### `test/api/`: Formatting result tests
+### `test/api/`: Node.js API tests
 
-Focuses on verifying formatting output. Use the Node.js API. No fixtures, test inputs are inline in each test file.
+Focuses on what a fixture cannot show: the API surface, error behavior (code kept as-is, label offsets), file-name routing, and comparisons between outputs. No fixtures, test inputs are inline in each test file.
+Formatting results go to `conformance/fixtures/` instead, or the owning crate's `tests/fixtures/` for single-language behavior (see "Divergence vs Prettier").
 
 - Multiple `*.test.ts` files coexist in a flat directory (no subdirectories)
-- Snapshots are colocated in `__snapshots__/` by Vitest
 
 ### `test/cli/`: CLI fixture-driven tests
 

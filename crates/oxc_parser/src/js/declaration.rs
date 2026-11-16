@@ -8,19 +8,19 @@ use crate::{ParserConfig as Config, ParserImpl, StatementContext, diagnostics, l
 impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_let(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
         let start = self.cur_start();
-
-        let next = self.lexer.peek_token();
-        let peeked = next.kind();
+        let is_single_statement = stmt_ctx.is_single_statement();
 
         // `let [` cannot start an expression statement, even in a single-statement
         // position. Otherwise, a declaration needs a binding after `let`.
-        if peeked == Kind::LBrack
-            || (!stmt_ctx.is_single_statement()
-                && (peeked == Kind::LCurly
-                    || peeked.is_binding_identifier()
-                    || (!next.is_on_new_line() && peeked.is_after_let())))
-        {
-            self.bump_any(); // bump `let`
+        let is_declaration = self.eat_if_next(|next| {
+            let kind = next.kind();
+            kind == Kind::LBrack
+                || (!is_single_statement
+                    && (kind == Kind::LCurly
+                        || kind.is_binding_identifier()
+                        || (!next.is_on_new_line() && kind.is_after_let())))
+        });
+        if is_declaration {
             return self.parse_variable_statement(start, VariableDeclarationKind::Let, stmt_ctx);
         }
 
@@ -28,17 +28,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     pub(crate) fn is_using_statement(&mut self) -> bool {
-        // `await using` requires `using` immediately after `await` on the same line. Cheaply peek
-        // for it first, so the common `await <expr>` statement avoids the heavier `lookahead`
-        // (checkpoint + rewind) and only `await using` pays for the declaration check.
-        let next = self.lexer.peek_token();
-        next.kind() == Kind::Using
-            && !next.is_on_new_line()
-            && self.lookahead(|p| {
-                p.bump_any(); // bump `await`
-                // Also recognize object patterns so invalid declarations can recover.
-                p.is_using_declaration()
-            })
+        // Inspect both declaration tokens under one lexer checkpoint.
+        let checkpoint = self.lexer.checkpoint();
+        let next = self.lexer.next_token();
+        let is_using = next.kind() == Kind::Using && !next.is_on_new_line() && {
+            let binding = self.lexer.next_token();
+            // Also recognize object patterns so invalid declarations can recover.
+            (binding.kind().is_binding_identifier() || binding.kind() == Kind::LCurly)
+                && !binding.is_on_new_line()
+        };
+        self.lexer.rewind(checkpoint);
+        is_using
     }
 
     pub(crate) fn parse_using_statement(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
@@ -68,19 +68,33 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         decl_parent: VariableDeclarationParent,
         declare: bool,
     ) -> ArenaBox<'a, VariableDeclaration<'a>> {
-        let mut declarations = ArenaVec::new_in(self);
-        loop {
-            let declaration = self.parse_variable_declarator(decl_parent, kind);
-            declarations.push(declaration);
-            if !self.eat(Kind::Comma) {
-                break;
-            }
-        }
+        let declarations = self.parse_variable_declarators(decl_parent, kind);
 
         if matches!(decl_parent, VariableDeclarationParent::Statement) {
             self.asi();
         }
         VariableDeclaration::boxed(self.end_span(start), kind, declarations, declare, self)
+    }
+
+    fn parse_variable_declarators(
+        &mut self,
+        decl_parent: VariableDeclarationParent,
+        kind: VariableDeclarationKind,
+    ) -> ArenaVec<'a, VariableDeclarator<'a>> {
+        let mut first = true;
+        self.collect_list(|p| {
+            if !first && !p.eat(Kind::Comma) {
+                return None;
+            }
+            first = false;
+            let declaration = p.parse_variable_declarator(decl_parent, kind);
+            if kind.is_using() && !declaration.id.is_binding_identifier() {
+                p.error(diagnostics::invalid_identifier_in_using_declaration(
+                    declaration.id.span(),
+                ));
+            }
+            Some(declaration)
+        })
     }
 
     fn parse_variable_declarator(
@@ -200,26 +214,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         // BindingList[?In, ?Yield, ?Await, ~Pattern]
-        let mut declarations = ArenaVec::new_in(self);
-        loop {
-            let decl_parent = if matches!(statement_ctx, StatementContext::For) {
-                VariableDeclarationParent::For
-            } else {
-                VariableDeclarationParent::Statement
-            };
-            let declaration = self.parse_variable_declarator(decl_parent, kind);
-
-            if !matches!(declaration.id, BindingPattern::BindingIdentifier(_)) {
-                self.error(diagnostics::invalid_identifier_in_using_declaration(
-                    declaration.id.span(),
-                ));
-            }
-
-            declarations.push(declaration);
-            if !self.eat(Kind::Comma) {
-                break;
-            }
-        }
+        let decl_parent = if matches!(statement_ctx, StatementContext::For) {
+            VariableDeclarationParent::For
+        } else {
+            VariableDeclarationParent::Statement
+        };
+        let declarations = self.parse_variable_declarators(decl_parent, kind);
 
         VariableDeclaration::boxed(self.end_span(start), kind, declarations, false, self)
     }

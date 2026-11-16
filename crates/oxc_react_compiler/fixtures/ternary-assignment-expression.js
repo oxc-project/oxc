@@ -4,8 +4,16 @@ function ternary(props) {
   return x + y;
 }
 
+const sproutInputs = [
+  [{"a":1}],
+  [{"a":11}],
+];
+
 export const FIXTURE_ENTRYPOINT = {
-  fn: ternary,
-  params: ['TodoAdd'],
-  isComponent: 'TodoAdd',
+  fn: args => {
+    "use no memo";
+    return ternary(...args);
+  },
+  params: [sproutInputs[0]],
+  sequentialRenders: [sproutInputs[0], sproutInputs[0], sproutInputs[1], sproutInputs[1], sproutInputs[0]],
 };

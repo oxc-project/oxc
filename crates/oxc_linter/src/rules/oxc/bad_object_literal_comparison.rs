@@ -55,6 +55,7 @@ declare_oxc_lint!(
     BadObjectLiteralComparison,
     oxc,
     correctness,
+    recommended,
     version = "0.1.1",
     short_description = "Checks for comparisons between object and array literals.",
 );

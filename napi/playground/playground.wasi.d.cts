@@ -61,7 +61,18 @@ export interface OxcCodegenOptions {
 }
 
 export interface OxcCompressOptions {
-
+  /** Remove debugger statements (default: true). */
+  dropDebugger?: boolean
+  /** Remove console calls, including evaluation of their arguments (default: false). */
+  dropConsole?: boolean
+  /** Join consecutive variable declarations (default: true). */
+  joinVars?: boolean
+  /** Combine simple statements using the comma operator (default: true). */
+  sequences?: boolean
+  /** Remove unused bindings. Use `keep_assign` to retain assigned bindings (default: true). */
+  unused?: boolean | 'keep_assign'
+  /** Preserve function and class names during compression (default: false). */
+  keepNames?: boolean
 }
 
 export interface OxcControlFlowOptions {
@@ -172,6 +183,8 @@ export interface OxcOptions {
 
 export interface OxcParserOptions {
   extension: string
+  /** Overrides the module kind inferred from the extension. */
+  sourceType?: 'script' | 'module' | 'commonjs' | 'unambiguous' | undefined
   allowReturnOutsideFunction: boolean
   preserveParens: boolean
   allowV8Intrinsics: boolean
@@ -219,6 +232,8 @@ export interface OxcSortImportsOptions {
 
 export interface OxcTransformerOptions {
   target?: string
+  /** Overrides the runtime helper import prefix, passed to `TransformOptions.helper_loader.module_name`. */
+  helperModuleName?: string
   useDefineForClassFields: boolean
   experimentalDecorators: boolean
   emitDecoratorMetadata: boolean

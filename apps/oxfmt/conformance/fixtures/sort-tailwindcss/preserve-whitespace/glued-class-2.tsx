@@ -1,0 +1,1 @@
+const A = <div className={`mb-4 flex items-center rounded-full bg-${color}/10`}>Hello</div>;

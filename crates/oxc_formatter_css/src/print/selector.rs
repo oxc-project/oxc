@@ -152,7 +152,7 @@ pub(super) fn write_selector_list<'a>(
 ///
 /// NOTE: That extra indent on combinator-less compounds is arguably a Prettier bug, not a design:
 /// upstream keeps removing it one threshold at a time (prettier/prettier#16572 for a lone pseudo, #17541 for 2 nodes),
-/// and this `> 2` is what remains as of 3.9.6.
+/// and this `> 2` is what remains.
 /// The principled condition would be "has a combinator" (indent only wrapped continuation lines),
 /// keeping pseudo args at +2 and `)` at +0.
 pub(super) fn write_complex_selector<'a>(
@@ -264,8 +264,9 @@ fn write_simple_selector<'a>(selector: &SimpleSelector<'a>, f: &mut CssFormatter
                 write_interpolable_ident(suffix, f);
             }
         }
-        SimpleSelector::SassPlaceholder(placeholder) => {
-            let span = to_span(placeholder.span());
+        // Sass `%placeholder` and Less `50%` (outside `@keyframes`): print as written, like Prettier
+        SimpleSelector::LessPercentage(_) | SimpleSelector::SassPlaceholder(_) => {
+            let span = to_span(selector.span());
             write!(f, text(source.text_for(&span)));
         }
     }
@@ -402,9 +403,8 @@ fn write_attribute_selector<'a>(attribute: &AttributeSelector<'a>, f: &mut CssFo
                 let span = to_span(istr.span());
                 value::write_requoted_verbatim(source.text_for(&span), f);
             }
-            // `[class^=~'...']`:
-            // postcss sees a plain string after the `~`,
-            // so it re-quotes per `singleQuote` like the value-position handler.
+            // `[class^=~'...']`: hugs and re-quotes like `value::write_less_escaped_str`
+            // (a comment in a selector takes the raw path, so none reaches here)
             AttributeSelectorValue::LessEscapedStr(escaped) => {
                 write!(f, "~");
                 value::write_attribute_str(&escaped.str, f);
@@ -541,8 +541,7 @@ fn write_nth<'a>(nth: &Nth<'a>, f: &mut CssFormatter<'_, 'a>) {
 /// exactly one space around each `+` between terms,
 /// digit-led segments lowercased, all other whitespace kept as-is (a glued `-` stays glued).
 ///
-/// NOTE: We keep a leading sign stays glued, since the An+B grammar forbids whitespace after it.
-/// But Prettier formats as `+ 3n`, output is a semantics-breaking artifact.
+/// A leading sign stays glued, since the An+B grammar forbids whitespace after it.
 fn normalize_an_plus_b(raw: &str) -> Cow<'_, str> {
     let bytes = raw.as_bytes();
     if !bytes.iter().any(|&b| b == b'+' || b.is_ascii_uppercase()) {

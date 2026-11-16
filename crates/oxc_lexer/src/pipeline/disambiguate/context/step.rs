@@ -1,12 +1,11 @@
 //! Stepping one token: the line-break rules (ASI, restricted productions, the end of a
 //! type), literals, and the dispatch to words, punctuation, types and JSX.
 
-use crate::{
-    cpu::{BASELINE, cpu_version},
-    token::{OP_KIND_BASE, is_trivia_byte, matches_tk, tk},
-};
+use oxc_simd::{BASELINE, cpu_version};
 
-use crate::pipeline::disambiguate::common::Tokens;
+use crate::token::{OP_KIND_BASE, is_trivia_byte, matches_tk, tk};
+
+use crate::pipeline::disambiguate::common::TokensView;
 
 use super::{
     frame::{Declarator, FrameKind, Member, RegionRule, StmtReg},
@@ -16,7 +15,7 @@ use super::{
 /// Can `tok` (the token starting at `pos`) continue an expression that a value token ended on the
 /// previous line? Used for ASI.
 #[cpu_version(Generic)]
-fn continues_expression(tokens: &Tokens, pos: usize) -> bool {
+fn continues_expression(tokens: &TokensView, pos: usize) -> bool {
     let cpu = BASELINE;
 
     let k = tokens.base_kind(pos, cpu);
@@ -37,7 +36,7 @@ fn continues_expression(tokens: &Tokens, pos: usize) -> bool {
 
 impl Walk {
     #[cpu_version(Generic)]
-    pub(super) fn step(&mut self, tokens: &Tokens, pos: usize) -> usize {
+    pub(super) fn step(&mut self, tokens: &TokensView, pos: usize) -> usize {
         let cpu = BASELINE;
 
         self.last_start = pos;
@@ -139,7 +138,7 @@ impl Walk {
 
     #[cpu_version(Generic)]
     #[inline(always)]
-    fn asi(&mut self, tokens: &Tokens, pos: usize) {
+    fn asi(&mut self, tokens: &TokensView, pos: usize) {
         let cpu = BASELINE;
 
         // Concise arrow bodies end with the statement.
@@ -184,7 +183,7 @@ impl Walk {
     /// Can the token at pos go on after a type that ended the previous line?
     #[cpu_version(Generic)]
     #[inline(always)]
-    fn continues_after_type_break(&self, tokens: &Tokens, pos: usize) -> bool {
+    fn continues_after_type_break(&self, tokens: &TokensView, pos: usize) -> bool {
         let cpu = BASELINE;
 
         if tokens.base_kind(pos, cpu) < OP_KIND_BASE {
@@ -232,7 +231,7 @@ impl Walk {
     }
 
     #[cpu_version(Generic)]
-    fn literal(&mut self, tokens: &Tokens, k: u8, end: usize) {
+    fn literal(&mut self, tokens: &TokensView, k: u8, end: usize) {
         let cpu = BASELINE;
 
         if self.in_type() {

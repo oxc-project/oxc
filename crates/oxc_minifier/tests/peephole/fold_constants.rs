@@ -1332,6 +1332,20 @@ fn test_fold_instance_of_additional() {
 }
 
 #[test]
+fn test_instance_of_preserves_left_side_effects() {
+    for constructor in ["Object", "Number", "Boolean", "String", "Array"] {
+        for left in ["foo() > 0", "!foo()", "[foo()]", "class { static value = foo() }"] {
+            fold_same(&format!("({left}) instanceof {constructor}"));
+            test_same(&format!("({left}) instanceof {constructor};"));
+        }
+    }
+    test(
+        "function main() { var log = []; return [(log.push(1) > 0) instanceof Object, log]; } console.log(JSON.stringify(main()));",
+        "function main() { var log = []; return [log.push(1) > 0 instanceof Object, log]; } console.log(JSON.stringify(main()));",
+    );
+}
+
+#[test]
 fn test_fold_left_child_op() {
     fold("x & Infinity & 2", "x & 0");
     fold("x - Infinity - 2", "x - 1e400 - 2"); // FIXME: want "x-1e400"
