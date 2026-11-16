@@ -853,6 +853,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Expression<'a> {
         let ArrowFunctionHead { type_parameters, params, return_type, r#async, start } =
             arrow_function_head;
+        let allow_return_type_in_arrow_function = allow_return_type_in_arrow_function
+            || (type_parameters.is_none()
+                && params.items.first().is_none_or(|param| {
+                    matches!(param.pattern, BindingPattern::BindingIdentifier(_))
+                        && (param.type_annotation.is_some() || param.optional)
+                }));
         let body = self.parse_arrow_function_body(r#async, allow_return_type_in_arrow_function);
         Expression::new_arrow_function_expression(
             self.end_span(start),
