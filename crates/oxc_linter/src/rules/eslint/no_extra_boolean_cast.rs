@@ -369,10 +369,6 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("let Boolean = x => x; if (Boolean(bar)) {}", None),
-        ("function foo(Boolean) { return !!Boolean(bar); }", None),
-        ("function foo(Boolean) { if (Boolean(!!bar)) {} }", None),
-        ("function foo(Boolean) { if (new Boolean(!!bar)) {} }", None),
         ("if (Boolean?.(foo).value) {}", None),
         ("if (Boolean?.(foo)()) {}", None),
         ("Boolean(bar, !!baz);", None),
@@ -529,6 +525,10 @@ fn test() {
             "if ((1, Boolean(2), 3)) {}",
             Some(serde_json::json!([{ "enforceForInnerExpressions": true }])),
         ),
+        ("let Boolean = x => x; if (Boolean(bar)) {}", None),
+        ("function foo(Boolean) { return !!Boolean(bar); }", None),
+        ("function foo(Boolean) { if (Boolean(!!bar)) {} }", None),
+        ("function foo(Boolean) { if (new Boolean(!!bar)) {} }", None),
     ];
 
     let fail = vec![
