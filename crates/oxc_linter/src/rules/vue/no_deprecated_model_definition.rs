@@ -7,12 +7,13 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use oxc_str::JSStr;
 
 use crate::{
     AstNode,
     context::LintContext,
+    fixer::RuleFixer,
     rule::{DefaultRuleConfig, Rule},
     utils::is_vue_component_options_object,
 };
@@ -86,7 +87,7 @@ declare_oxc_lint!(
     vue,
     correctness,
     recommended,
-    pending,
+    conditional_suggestion,
     config = NoDeprecatedModelDefinition,
     version = "1.63.0",
     short_description = "Disallow deprecated `model` definition (in Vue.js 3.0.0+).",
@@ -130,41 +131,62 @@ impl Rule for NoDeprecatedModelDefinition {
         let event_name = find_string_property_value(model_value, "event");
 
         let is_vue3_compat = matches!(
-            (prop_name.as_deref(), event_name.as_deref()),
+            (prop_name.map(|(_, value)| value), event_name.map(|(_, value)| value)),
             (Some("modelValue"), Some("update:modelValue"))
                 | (Some("model-value"), Some("update:model-value"))
         );
 
         if !is_vue3_compat {
-            ctx.diagnostic(vue3_compat_diagnostic(prop.span));
+            let diagnostic = vue3_compat_diagnostic(prop.span);
+            let (Some((prop_span, _)), Some((event_span, _))) = (prop_name, event_name) else {
+                ctx.diagnostic(diagnostic);
+                return;
+            };
+
+            let fixer = RuleFixer::new(FixKind::Suggestion, ctx).for_multifix();
+            let prop_span = Span::new(prop_span.start + 1, prop_span.end - 1);
+            let event_span = Span::new(event_span.start + 1, event_span.end - 1);
+
+            ctx.diagnostic_with_suggestions(
+                diagnostic,
+                [
+                    fixer
+                        .replace(prop_span, "modelValue")
+                        .extend(fixer.replace(event_span, "update:modelValue"))
+                        .with_message("Change to `modelValue`/`update:modelValue`."),
+                    fixer
+                        .replace(prop_span, "model-value")
+                        .extend(fixer.replace(event_span, "update:model-value"))
+                        .with_message("Change to `model-value`/`update:model-value`."),
+                ],
+            );
         }
     }
 }
 
-fn find_string_property_value(obj: &ObjectExpression<'_>, key: &str) -> Option<String> {
+fn find_string_property_value<'a>(
+    obj: &'a ObjectExpression<'_>,
+    key: &str,
+) -> Option<(Span, &'a str)> {
     for property_kind in &obj.properties {
         let ObjectPropertyKind::ObjectProperty(p) = property_kind else { continue };
         if !p.key.is_specific_static_name(key) {
             continue;
         }
-        return string_literal_value(p.value.get_inner_expression());
+        let value = p.value.get_inner_expression();
+        let text = match value {
+            Expression::StringLiteral(lit) => lit.value.as_str(),
+            Expression::TemplateLiteral(tpl) => tpl.single_quasi().and_then(JSStr::as_str),
+            _ => None,
+        }?;
+        return Some((value.span(), text));
     }
     None
 }
 
-fn string_literal_value(expr: &Expression<'_>) -> Option<String> {
-    match expr {
-        Expression::StringLiteral(lit) => lit.value.as_str().map(str::to_owned),
-        Expression::TemplateLiteral(tpl) => {
-            tpl.single_quasi().and_then(JSStr::as_str).map(str::to_owned)
-        }
-        _ => None,
-    }
-}
-
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::tester::{ExpectFixTestCase, Tester};
     use std::path::PathBuf;
 
     let pass = vec![
@@ -372,8 +394,338 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ),
+        (
+            "<script>export default { model: { prop: name, event: 'change' } }</script>",
+            Some(serde_json::json!([{ "allowVue3Compat": true }])),
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "<script>export default { model: { prop: 'checked', event: `update:${name}` } }</script>",
+            Some(serde_json::json!([{ "allowVue3Compat": true }])),
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "<script>export default { model: { prop: 'checked', event: 1 } }</script>",
+            Some(serde_json::json!([{ "allowVue3Compat": true }])),
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+    ];
+
+    let fix: Vec<ExpectFixTestCase> = vec![
+        (
+            "
+                <script>
+                export default defineComponent({
+                  model: {
+                    prop: 'foo',
+                    event: 'update'
+                  }
+                })
+                </script>
+            ",
+            (
+                r"
+                <script>
+                export default defineComponent({
+                  model: {
+                    prop: 'modelValue',
+                    event: 'update:modelValue'
+                  }
+                })
+                </script>
+            ",
+                r"
+                <script>
+                export default defineComponent({
+                  model: {
+                    prop: 'model-value',
+                    event: 'update:model-value'
+                  }
+                })
+                </script>
+            ",
+            ),
+            Some(serde_json::json!([{ "allowVue3Compat": true }])),
+        )
+            .into(),
+        (
+            r#"
+                <script>
+                export default {
+                  model: {
+                    prop: "fooBar",
+                    event: "update:fooBar"
+                  }
+                }
+                </script>
+            "#,
+            (
+                r#"
+                <script>
+                export default {
+                  model: {
+                    prop: "modelValue",
+                    event: "update:modelValue"
+                  }
+                }
+                </script>
+            "#,
+                r#"
+                <script>
+                export default {
+                  model: {
+                    prop: "model-value",
+                    event: "update:model-value"
+                  }
+                }
+                </script>
+            "#,
+            ),
+            Some(serde_json::json!([{ "allowVue3Compat": true }])),
+        )
+            .into(),
+        (
+            "
+                <script>
+                export default defineComponent({
+                  model: {
+                    prop: 'foo-bar',
+                    event: 'update:foo-bar'
+                  }
+                })
+                </script>
+            ",
+            (
+                r"
+                <script>
+                export default defineComponent({
+                  model: {
+                    prop: 'modelValue',
+                    event: 'update:modelValue'
+                  }
+                })
+                </script>
+            ",
+                r"
+                <script>
+                export default defineComponent({
+                  model: {
+                    prop: 'model-value',
+                    event: 'update:model-value'
+                  }
+                })
+                </script>
+            ",
+            ),
+            Some(serde_json::json!([{ "allowVue3Compat": true }])),
+        )
+            .into(),
+        (
+            "
+                <script>
+                export default defineComponent({
+                  model: {
+                    prop: `foo-bar`,
+                    event: `update:foo-bar`
+                  }
+                })
+                </script>
+            ",
+            (
+                r"
+                <script>
+                export default defineComponent({
+                  model: {
+                    prop: `modelValue`,
+                    event: `update:modelValue`
+                  }
+                })
+                </script>
+            ",
+                r"
+                <script>
+                export default defineComponent({
+                  model: {
+                    prop: `model-value`,
+                    event: `update:model-value`
+                  }
+                })
+                </script>
+            ",
+            ),
+            Some(serde_json::json!([{ "allowVue3Compat": true }])),
+        )
+            .into(),
+        (
+            r#"<script>export default { model: { prop: (/* prop */ "old"), event: (`change`) } }</script>"#,
+            (
+                r#"<script>export default { model: { prop: (/* prop */ "modelValue"), event: (`update:modelValue`) } }</script>"#,
+                r#"<script>export default { model: { prop: (/* prop */ "model-value"), event: (`update:model-value`) } }</script>"#,
+            ),
+            Some(serde_json::json!([{ "allowVue3Compat": true }])),
+        )
+            .into(),
+        (
+            "
+                <script>
+                export default {
+                  model: {
+                    prop: 'foo',
+                  }
+                }
+                </script>
+            ",
+            "
+                <script>
+                export default {
+                  model: {
+                    prop: 'foo',
+                  }
+                }
+                </script>
+            ",
+            None,
+        )
+            .into(),
+        (
+            "
+                <script>
+                export default Vue.extend({
+                  model: {
+                    event: 'update'
+                  }
+                })
+                </script>
+            ",
+            "
+                <script>
+                export default Vue.extend({
+                  model: {
+                    event: 'update'
+                  }
+                })
+                </script>
+            ",
+            None,
+        )
+            .into(),
+        (
+            "
+                <script>
+                export default defineComponent({
+                  model: {
+                    prop: 'foo',
+                    event: 'update'
+                  }
+                })
+                </script>
+            ",
+            "
+                <script>
+                export default defineComponent({
+                  model: {
+                    prop: 'foo',
+                    event: 'update'
+                  }
+                })
+                </script>
+            ",
+            None,
+        )
+            .into(),
+        (
+            "
+                <script>
+                export default {
+                  model: {
+                    prop: 'foo',
+                  }
+                }
+                </script>
+            ",
+            "
+                <script>
+                export default {
+                  model: {
+                    prop: 'foo',
+                  }
+                }
+                </script>
+            ",
+            Some(serde_json::json!([{ "allowVue3Compat": true }])),
+        )
+            .into(),
+        (
+            "
+                <script>
+                export default Vue.extend({
+                  model: {
+                    event: 'update'
+                  }
+                })
+                </script>
+            ",
+            "
+                <script>
+                export default Vue.extend({
+                  model: {
+                    event: 'update'
+                  }
+                })
+                </script>
+            ",
+            Some(serde_json::json!([{ "allowVue3Compat": true }])),
+        )
+            .into(),
+        (
+            "
+                <script>
+                new Vue({
+                  model: {
+                    prop: 'checked',
+                    event: 'change'
+                  }
+                })
+                </script>
+            ",
+            "
+                <script>
+                new Vue({
+                  model: {
+                    prop: 'checked',
+                    event: 'change'
+                  }
+                })
+                </script>
+            ",
+            None,
+        )
+            .into(),
+        (
+            "<script>export default { model: { prop: name, event: 'change' } }</script>",
+            "<script>export default { model: { prop: name, event: 'change' } }</script>",
+            Some(serde_json::json!([{ "allowVue3Compat": true }])),
+        )
+            .into(),
+        (
+            "<script>export default { model: { prop: 'checked', event: `update:${name}` } }</script>",
+            "<script>export default { model: { prop: 'checked', event: `update:${name}` } }</script>",
+            Some(serde_json::json!([{ "allowVue3Compat": true }])),
+        )
+            .into(),
+        (
+            "<script>export default { model: { prop: 'checked', event: 1 } }</script>",
+            "<script>export default { model: { prop: 'checked', event: 1 } }</script>",
+            Some(serde_json::json!([{ "allowVue3Compat": true }])),
+        )
+            .into(),
     ];
 
     Tester::new(NoDeprecatedModelDefinition::NAME, NoDeprecatedModelDefinition::PLUGIN, pass, fail)
+        .change_rule_path_extension("vue")
+        .expect_fix(fix)
         .test_and_snapshot();
 }
