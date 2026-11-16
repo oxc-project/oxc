@@ -162,7 +162,7 @@ mod token_handlers {
     token_handlers!(fresh: AMP, ATR, CRT, EXL, PIP, PLS, PRC, QST);
 
     token_handlers!(
-        general: DIG, ERR, ESC, HAS, ISP, LIN, QOD, QOS, SLH, SPS, TPL, UER, UNI, ZER,
+        general: DIG, ERR, ESC, HAS, ISP, QOD, QOS, SLH, SPS, TPL, UER, UNI, ZER,
     );
 
     // `A..=Z`, `h`, `j`, `q`, `x`, `z`, `_`, `$`: no keyword starts with these bytes.
@@ -170,7 +170,7 @@ mod token_handlers {
     pub unsafe fn IDT<'a, C: Config>(lexer: &mut Lexer<'a, C>, pos: SourcePosition<'a>) -> Token {
         // SAFETY: Caller guarantees `pos` is the position of an ASCII identifier-start byte,
         // and that no trivia has been seen, other than one space
-        unsafe { lexer.identifier_token::<false>(pos) }
+        unsafe { lexer.identifier_token::<false, false>(pos) }
     }
 
     // All first letters which can begin a keyword.
@@ -178,7 +178,15 @@ mod token_handlers {
     pub unsafe fn KWD<'a, C: Config>(lexer: &mut Lexer<'a, C>, pos: SourcePosition<'a>) -> Token {
         // SAFETY: Caller guarantees `pos` is the position of an ASCII identifier-start byte,
         // and that no trivia has been seen, other than one space
-        unsafe { lexer.identifier_token::<true>(pos) }
+        unsafe { lexer.identifier_token::<true, false>(pos) }
+    }
+
+    // `\r` `\n`
+    #[expect(non_snake_case)]
+    pub unsafe fn LIN<'a, C: Config>(lexer: &mut Lexer<'a, C>, pos: SourcePosition<'a>) -> Token {
+        // SAFETY: Caller guarantees `pos` is the position of a line break byte,
+        // and that no trivia has been seen, other than one space
+        unsafe { lexer.line_break_token(pos) }
     }
 
     // `.`

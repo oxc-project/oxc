@@ -340,17 +340,40 @@ impl<'a, C: Config> Lexer<'a, C> {
         start: SourcePosition<'a>,
         end: SourcePosition<'a>,
     ) -> Token {
+        self.finish_token_without_comments(kind, start, end, PendingToken::NONE)
+    }
+
+    /// Same as `finish_fresh_token`, for a token which only line breaks and regular whitespace
+    /// were seen before. The token is on a new line.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn finish_fresh_token_on_new_line(
+        &mut self,
+        kind: Kind,
+        start: SourcePosition<'a>,
+        end: SourcePosition<'a>,
+    ) -> Token {
+        self.finish_token_without_comments(kind, start, end, PendingToken::AFTER_LINE_BREAK)
+    }
+
+    /// Finish a token which has no flags, and which no comments were seen before.
+    /// `trivia` is what else was seen before it. `pending` must not have been altered.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn finish_token_without_comments(
+        &mut self,
+        kind: Kind,
+        start: SourcePosition<'a>,
+        end: SourcePosition<'a>,
+        trivia: PendingToken,
+    ) -> Token {
         debug_assert_eq!(end, self.source.position());
         debug_assert_ne!(kind, Kind::Skip);
         #[cfg(debug_assertions)]
         self.assert_byte_handler_produces_token(kind, start, end);
 
-        let token = Token::new(
-            kind,
-            self.source.offset_of(start),
-            self.source.offset_of(end),
-            PendingToken::NONE,
-        );
+        let token =
+            Token::new(kind, self.source.offset_of(start), self.source.offset_of(end), trivia);
         self.record_token_without_comments(token)
     }
 
