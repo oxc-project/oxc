@@ -1,7 +1,7 @@
 use itertools::Itertools;
 use oxc_ast::{
     AstKind,
-    ast::{BindingPattern, Expression},
+    ast::{BindingPattern, Expression, ImportDeclarationSpecifier, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -13,7 +13,6 @@ use rustc_hash::FxHashSet;
 use crate::{
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
-    module_record::ImportImportName,
     rule::Rule,
     utils::is_vitest_import_source,
 };
@@ -199,43 +198,29 @@ impl PreferImportingVitestGlobals {
             .iter()
             .find(|e| is_vitest_import_source(e.module_request.name()) && !e.is_type);
 
+        let specifiers = vitest_esm_import.and_then(|entry| {
+            ctx.nodes().program().body.iter().find_map(|statement| match statement {
+                Statement::ImportDeclaration(decl) if decl.span == entry.statement_span => {
+                    decl.specifiers.as_ref().map(|specifiers| specifiers.as_slice())
+                }
+                _ => None,
+            })
+        });
+
         // 1. Existing `import { ... }` from a Vitest source — append to named specifiers.
-        if let Some(entry) = vitest_esm_import
-            && vitest_esm_import
-                .is_some_and(|import| matches!(import.import_name, ImportImportName::Name(_)))
-        {
-            let source = ctx.source_range(entry.statement_span);
-            if let Some(close_brace_pos) = ctx
-                .find_prev_token_within(entry.statement_span.start, entry.statement_span.end, "}")
-                .map(|offset| offset as usize)
-            {
-                let before_brace = &source[..close_brace_pos];
-                let trimmed = before_brace.trim_end();
-                let needs_comma = !trimmed.ends_with(',');
-
-                #[expect(clippy::cast_possible_truncation)]
-                let replace_start = entry.statement_span.start + trimmed.len() as u32;
-                #[expect(clippy::cast_possible_truncation)]
-                let replace_end = entry.statement_span.start + close_brace_pos as u32;
-
-                let text = if needs_comma {
-                    format!(", {globals_imports} }}")
-                } else {
-                    format!(" {globals_imports} }}")
-                };
-
-                return fixer.replace(Span::new(replace_start, replace_end + 1), text);
-            }
+        if let Some(specifier) = specifiers.and_then(|specifiers| {
+            specifiers.iter().rfind(|specifier| {
+                matches!(specifier, ImportDeclarationSpecifier::ImportSpecifier(_))
+            })
+        }) {
+            return fixer.insert_text_after(specifier, format!(", {globals_imports}"));
         }
 
         // 2. Existing `import defaultName` from a Vitest source — append named specifiers.
-        if let Some(entry) = vitest_esm_import
-            && vitest_esm_import.is_some_and(|import| import.import_name.is_default())
+        if let Some([specifier @ ImportDeclarationSpecifier::ImportDefaultSpecifier(_)]) =
+            specifiers
         {
-            return fixer.replace(
-                Span::new(entry.local_name.span.end, entry.local_name.span.end),
-                format!(", {{ {globals_imports} }}"),
-            );
+            return fixer.insert_text_after(specifier, format!(", {{ {globals_imports} }}"));
         }
 
         // 3. Existing `const { ... } = require(...)` from a Vitest source — append to destructuring.
@@ -517,6 +502,34 @@ fn test() {
         (
             "import type { test } from 'node:test'; test('x', () => {});",
             "import type { test } from 'node:test'; test('x', () => {});",
+        ),
+        (
+            "import { it // comment\n} from 'vitest';\ndescribe('suite', () => {});",
+            "import { it, describe // comment\n} from 'vitest';\ndescribe('suite', () => {});",
+        ),
+        (
+            "import {\n  it, // comment\n} from 'vitest';\ndescribe('suite', () => {});",
+            "import {\n  it, describe, // comment\n} from 'vitest';\ndescribe('suite', () => {});",
+        ),
+        (
+            "import { it, /* comment */ } from 'vitest';\ndescribe('suite', () => {});",
+            "import { it, describe, /* comment */ } from 'vitest';\ndescribe('suite', () => {});",
+        ),
+        (
+            "import { it, } from 'vitest';\ndescribe('suite', () => {});",
+            "import { it, describe, } from 'vitest';\ndescribe('suite', () => {});",
+        ),
+        (
+            "import vitest, { it } from 'vitest';\ndescribe('suite', () => {});",
+            "import vitest, { it, describe } from 'vitest';\ndescribe('suite', () => {});",
+        ),
+        (
+            "import vitest, * as abc from 'vitest';\ndescribe('suite', () => {});",
+            "import { describe } from 'vitest';\nimport vitest, * as abc from 'vitest';\ndescribe('suite', () => {});",
+        ),
+        (
+            "import { it } from 'vitest' with { type: 'js' };\ndescribe('suite', () => {});",
+            "import { it, describe } from 'vitest' with { type: 'js' };\ndescribe('suite', () => {});",
         ),
     ];
 
