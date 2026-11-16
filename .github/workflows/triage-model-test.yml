@@ -21,7 +21,7 @@ jobs:
           - name: Inkling 2 Small
             model: cloudflare-ai/@cf/thinkingmachines/inkling-2-small
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     permissions:
       contents: read
     steps:
@@ -29,7 +29,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: oxc-project/triagebot-action
-          ref: fee3b2cd2a38418a5c9560d08eb8fc34cec7f6b5
+          ref: 91a0897f426df1f303d3b8a087a2e88a0e6647bd
           persist-credentials: false
 
       - name: Set up Node.js
@@ -46,10 +46,11 @@ jobs:
       - name: Install the action's locked dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Generate a fix, compile it, and verify the tool result
+      - name: Generate and verify four Rust fixes with tool-result round trips
         id: smoke
         env:
           MODEL: ${{ matrix.model }}
+          MODEL_EVAL: full
           MODEL_CONFIG: >-
             {"@cf/zai-org/glm-5.3":{"api":"openai-completions","contextWindow":1048576,"maxTokens":16384,"reasoning":true,"thinkingLevelMap":{"off":null,"minimal":"low","low":"low","medium":"high","high":"high","xhigh":"max"},"compat":{"supportsReasoningEffort":true,"maxTokensField":"max_tokens","requiresReasoningContentOnAssistantMessages":true}},"@cf/deepseek-ai/deepseek-v4.1-flash-1017":{"api":"openai-completions","contextWindow":1048576,"maxTokens":16384,"reasoning":true,"thinkingLevelMap":{"off":"none","minimal":"low","low":"low","medium":"high","high":"high","xhigh":"max"},"compat":{"supportsReasoningEffort":true,"maxTokensField":"max_tokens","requiresReasoningContentOnAssistantMessages":true}},"@cf/thinkingmachines/inkling-2-small":{"api":"openai-completions","contextWindow":1048576,"maxTokens":16384,"reasoning":true,"thinkingLevelMap":{"off":"none","xhigh":"max"},"compat":{"supportsReasoningEffort":true,"maxTokensField":"max_tokens","requiresReasoningContentOnAssistantMessages":true}}}
           CLOUDFLARE_API_KEY: ${{ secrets.CLOUDFLARE_API_KEY }}
@@ -62,4 +63,4 @@ jobs:
           MODEL: ${{ matrix.model }}
           RESULT: ${{ steps.smoke.outcome }}
         run: |
-          printf '| Model | Coding and tool-use smoke test |\n| --- | --- |\n| %s | %s |\n' "$MODEL" "$RESULT" >> "$GITHUB_STEP_SUMMARY"
+          printf '| Model | Four-task Rust coding and tool-use evaluation |\n| --- | --- |\n| %s | %s |\n' "$MODEL" "$RESULT" >> "$GITHUB_STEP_SUMMARY"
