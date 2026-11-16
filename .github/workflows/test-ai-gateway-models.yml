@@ -1,0 +1,62 @@
+name: AI Gateway Model Test
+
+on:
+  push:
+    branches: [ci/test-ai-gateway-models-20261116]
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  test:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: GPT-6.1 Sol
+            model: openai/gpt-6.1-sol
+            artifact: gpt-6.1-sol
+          - name: Claude Opus 5.5
+            model: anthropic/claude-opus-5.5
+            artifact: claude-opus-5.5
+    env:
+      MODEL: ${{ matrix.model }}
+    steps:
+      - name: Check out the test script
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Generate a fix through a streamed tool call
+        env:
+          CLOUDFLARE_API_KEY: ${{ secrets.CLOUDFLARE_API_KEY }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: python3 .github/scripts/test-ai-gateway-models.py generate
+
+      - name: Compile and test the generated fix
+        if: always()
+        run: python3 .github/scripts/test-ai-gateway-models.py validate
+
+      - name: Return validation results to the model
+        if: always()
+        env:
+          CLOUDFLARE_API_KEY: ${{ secrets.CLOUDFLARE_API_KEY }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: python3 .github/scripts/test-ai-gateway-models.py verify
+
+      - name: Summarize results
+        if: always()
+        run: python3 .github/scripts/test-ai-gateway-models.py summary
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: gateway-${{ matrix.artifact }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/gateway-model-test/artifacts
+          retention-days: 7
