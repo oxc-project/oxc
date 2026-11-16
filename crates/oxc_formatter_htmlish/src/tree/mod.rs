@@ -15,7 +15,7 @@ mod names;
 use oxc_allocator::{Allocator, ArenaVec, StringBuilder};
 use oxc_htmlish_parser::{
     Span,
-    ast::{Block, Element, Namespace, NodeId, NodeKind, Root},
+    ast::{Block, BlockKind, Element, Namespace, NodeId, NodeKind, Root},
 };
 
 use crate::rules::DialectRules;
@@ -191,20 +191,26 @@ impl<'a> Tree<'a> {
         else {
             return false;
         };
-        let next = self.block_name(next);
-        match self.block_name(prev) {
-            "if" | "else if" => matches!(next, "else if" | "else"),
-            "for" => next == "empty",
-            "defer" | "placeholder" | "loading" | "error" => {
-                matches!(next, "placeholder" | "loading" | "error")
+        match prev.kind {
+            BlockKind::If | BlockKind::ElseIf => {
+                matches!(next.kind, BlockKind::ElseIf | BlockKind::Else)
             }
-            "boundary" => next == "error",
+            BlockKind::For => next.kind == BlockKind::Empty,
+            BlockKind::Defer | BlockKind::Placeholder | BlockKind::Loading | BlockKind::Error => {
+                matches!(next.kind, BlockKind::Placeholder | BlockKind::Loading | BlockKind::Error)
+            }
+            BlockKind::Boundary => next.kind == BlockKind::Error,
             _ => false,
         }
     }
 
-    /// The block's name, whitespace collapsed unless it spans lines (`else\n if` is no `else if`, DIVERGENCES.md#angular-block-name-with-line-break).
+    /// The block's name as Angular reads it ([`BlockKind::name`]);
+    /// one it reports as written, whitespace collapsed unless it spans lines
+    /// (`else\n if` is no `else if`, DIVERGENCES.md#angular-block-name-with-line-break).
     pub fn block_name(&self, block: &Block<'_>) -> &'a str {
+        if let Some(name) = block.kind.name() {
+            return name;
+        }
         let name = block.name.slice(self.source);
         if name.contains('\n') { name } else { self.collapsed(block.name) }
     }

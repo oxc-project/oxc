@@ -4,7 +4,7 @@ use oxc_formatter_core::{
     builders::{hard_line_break, indent, text},
     write,
 };
-use oxc_htmlish_parser::ast::{Block, NodeId};
+use oxc_htmlish_parser::ast::{Block, BlockKind, NodeId};
 
 use super::{
     HtmlishFormatter,
@@ -40,7 +40,7 @@ pub fn write_block<'a>(
 ) {
     let item = &t[id];
     let name = t.block_name(block);
-    let default_never = name == "default never";
+    let default_never = block.kind == BlockKind::DefaultNever;
     write!(f, ["@", text(name)]);
     if !block.parameters.is_empty() {
         // `@default never(state)`: Prettier glues the parameters to `never`
@@ -50,7 +50,7 @@ pub fn write_block<'a>(
                 write!(f, "; ");
             }
             // As written: no expression is formatted yet (Prettier keeps so the ones it does not format, `@defer`'s)
-            write!(f, text(parameter.slice(t.source())));
+            write!(f, text(parameter.span.slice(t.source())));
         }
         write!(f, ")");
     }

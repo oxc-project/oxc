@@ -86,7 +86,7 @@ pub fn write_attributes<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatte
                 }
                 let name = attribute.name.slice(t.source());
                 if is_ignored(name) {
-                    write!(f, text(attribute.span.slice(t.source())));
+                    write!(f, text(attribute.span().slice(t.source())));
                 } else {
                     write_attribute(t, id, attribute, f);
                 }
