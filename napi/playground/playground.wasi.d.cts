@@ -172,6 +172,8 @@ export interface OxcOptions {
 
 export interface OxcParserOptions {
   extension: string
+  /** Overrides the module kind inferred from the extension. */
+  sourceType?: 'script' | 'module' | 'commonjs' | 'unambiguous' | undefined
   allowReturnOutsideFunction: boolean
   preserveParens: boolean
   allowV8Intrinsics: boolean
