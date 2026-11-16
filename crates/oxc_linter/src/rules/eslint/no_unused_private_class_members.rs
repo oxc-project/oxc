@@ -285,6 +285,17 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        "class C {
+            #usedInInnerClass;
+
+            method(a) {
+                return class {
+                    foo = a.#usedInInnerClass;
+                }
+            }
+        }",
+        "class C { #x; m() { return class { #y; n(o) { return o.#x + this.#y; } }; } }",
+        "class C { #m() {} run(o) { return class { go() { o.#m(); } }; } }",
         r"
             class Foo { #privateMember = {}; a() { return { ...this.#privateMember }; } }
         ",
@@ -514,6 +525,8 @@ fn test() {
     ];
 
     let fail = vec![
+        // The inner class declares its own `#x`, so the outer `#x` is unused.
+        "class C { #x; m() { return class { #x; n(o) { return o.#x; } }; } }",
         r"class Foo {
                 #unusedMember = 5;
             }",

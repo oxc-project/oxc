@@ -105,8 +105,16 @@ impl<'a> ClassTableBuilder<'a> {
         }
         if (matches!(parent_kind, AstKind::PrivateInExpression(_))
             || parent_kind.is_member_expression_kind())
-            && let Some(class_id) = self.current_class_id
+            && let Some(current_class_id) = self.current_class_id
         {
+            // A private name refers to the closest enclosing class that declares it,
+            // e.g. `#x` used inside a class expression nested in the class that has `#x`.
+            // An undeclared name stays on the current class, where it is reported.
+            let class_id = self
+                .classes
+                .ancestors(current_class_id)
+                .find(|&class_id| self.classes.has_private_definition(class_id, ident.name))
+                .unwrap_or(current_class_id);
             let element_ids =
                 self.classes.get_element_ids(class_id, ident.name, /* is_private */ true);
 
