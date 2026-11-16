@@ -662,17 +662,6 @@ fn test() {
         ("var x = Boolean(42)", None),
         ("var x = Date(42)", None),
         ("var x = Date.UTC(2000, 0)", None),
-        ("globalThis.Date.UTC(2000, 0);", None),
-        ("globalThis['Date'].UTC(2000, 0);", None),
-        ("globalThis?.Date.UTC(2000, 0);", None),
-        ("globalThis.Date?.UTC(2000, 0);", None),
-        ("window.Date.UTC(2000, 0);", None),
-        ("self.Date.UTC(2000, 0);", None),
-        ("global.Date.UTC(2000, 0);", None),
-        (
-            "const Date = { UTC() {} }; Date.UTC(2000, 0);",
-            Some(serde_json::json!([{ "capIsNewExceptions": ["UTC"] }])),
-        ),
         ("var x = Error('error')", None),
         ("var x = Function('return 0')", None),
         ("var x = Number(42)", None),
@@ -748,6 +737,17 @@ fn test() {
                 "capIsNewExceptions": ["services.registry.CreateDocumentForCurrentSession"]
             }])),
         ),
+        ("globalThis.Date.UTC(2000, 0);", None),
+        ("globalThis['Date'].UTC(2000, 0);", None),
+        ("globalThis?.Date.UTC(2000, 0);", None),
+        ("globalThis.Date?.UTC(2000, 0);", None),
+        ("window.Date.UTC(2000, 0);", None),
+        ("self.Date.UTC(2000, 0);", None),
+        ("global.Date.UTC(2000, 0);", None),
+        (
+            "const Date = { UTC() {} }; Date.UTC(2000, 0);",
+            Some(serde_json::json!([{ "capIsNewExceptions": ["UTC"] }])),
+        ),
     ];
 
     let fail = vec![
@@ -788,11 +788,6 @@ fn test() {
         ("var b = a['Foo']();", None),
         ("var b = a.Date.UTC();", None),
         ("var b = UTC();", None),
-        ("const Date = { UTC() {} }; Date.UTC(2000, 0);", None),
-        ("function foo(Date) { return Date.UTC(2000, 0); }", None),
-        ("import { Date } from 'foo'; Date?.UTC(2000, 0);", None),
-        ("function foo(globalThis) { return globalThis.Date.UTC(2000, 0); }", None),
-        ("globalThis.foo.UTC(2000, 0);", None),
         ("var a = B.C();", None),
         (
             "var a = B
@@ -833,6 +828,11 @@ fn test() {
             }])),
         ),
         (r#"(services.registry?.["\u0043reateDocumentForCurrentSession"])();"#, None),
+        ("const Date = { UTC() {} }; Date.UTC(2000, 0);", None),
+        ("function foo(Date) { return Date.UTC(2000, 0); }", None),
+        ("import { Date } from 'foo'; Date?.UTC(2000, 0);", None),
+        ("function foo(globalThis) { return globalThis.Date.UTC(2000, 0); }", None),
+        ("globalThis.foo.UTC(2000, 0);", None),
     ];
 
     Tester::new(NewCap::NAME, NewCap::PLUGIN, pass, fail).test_and_snapshot();
