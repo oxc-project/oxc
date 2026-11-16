@@ -91,7 +91,11 @@ impl Rule for NoAsyncPromiseExecutor {
         let AstKind::NewExpression(new_expression) = node.kind() else {
             return;
         };
-        if !new_expression.callee.is_specific_id("Promise") {
+        // A local binding named `Promise` is not the built-in constructor.
+        let Expression::Identifier(callee) = &new_expression.callee else {
+            return;
+        };
+        if callee.name != "Promise" || !ctx.is_reference_to_global_variable(callee) {
             return;
         }
         let Some(expression) = new_expression.arguments.first().and_then(Argument::as_expression)
@@ -118,12 +122,16 @@ fn test() {
         "new Promise((resolve, reject) => {})",
         "new Promise((resolve, reject) => {}, async function unrelated() {})",
         "new Foo(async (resolve, reject) => {})",
+        "let Promise; new Promise(async (resolve, reject) => {})",
+        "function f() { new Promise(async (resolve, reject) => {}); var Promise; }",
+        "function f(Promise) { new Promise(async (resolve, reject) => {}); }",
     ];
 
     let fail = vec![
         "new Promise(async function foo(resolve, reject) {})",
         "new Promise(async (resolve, reject) => {})",
         "new Promise(((((async () => {})))))",
+        "function f() { new Promise(async (resolve, reject) => {}); } let Foo;",
     ];
 
     Tester::new(NoAsyncPromiseExecutor::NAME, NoAsyncPromiseExecutor::PLUGIN, pass, fail)
