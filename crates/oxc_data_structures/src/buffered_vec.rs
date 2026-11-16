@@ -17,6 +17,12 @@ pub trait BufferedVecBacking: IntoIterator {
     /// Reserve capacity without deliberately overallocating.
     fn reserve_exact(&mut self, additional: usize);
 
+    /// Remove the last element.
+    fn pop(&mut self) -> Option<Self::Item>;
+
+    /// Shorten the vector, retaining its first `len` elements.
+    fn truncate(&mut self, len: usize);
+
     /// Append an element.
     fn push(&mut self, value: Self::Item);
 
@@ -90,6 +96,39 @@ impl<V: BufferedVecBacking, const N: usize> BufferedVec<V, N> {
         self.len += 1;
     }
 
+    /// Whether the vector contains no elements.
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.len == 0
+    }
+
+    /// Number of stored elements.
+    #[inline]
+    pub fn len(&self) -> usize {
+        self.len
+    }
+
+    /// Shorten the vector, retaining its first `len` elements.
+    #[inline]
+    pub fn truncate(&mut self, len: usize) {
+        if len >= self.len {
+            return;
+        }
+        if self.len > N {
+            self.vec.truncate(len);
+            if len <= N {
+                for slot in self.buffer[..len].iter_mut().rev() {
+                    *slot = self.vec.pop();
+                }
+            }
+        } else {
+            for slot in &mut self.buffer[len..self.len] {
+                *slot = None;
+            }
+        }
+        self.len = len;
+    }
+
     /// Move all elements into the backing vector, reserving only the final length
     /// if the list still fits in the inline buffer.
     #[inline]
@@ -135,6 +174,16 @@ impl<T> BufferedVecBacking for Vec<T> {
     }
 
     #[inline]
+    fn pop(&mut self) -> Option<T> {
+        self.pop()
+    }
+
+    #[inline]
+    fn truncate(&mut self, len: usize) {
+        self.truncate(len);
+    }
+
+    #[inline]
     fn push(&mut self, value: T) {
         self.push(value);
     }
@@ -142,5 +191,41 @@ impl<T> BufferedVecBacking for Vec<T> {
     #[inline]
     fn extend(&mut self, iter: impl IntoIterator<Item = T>) {
         Extend::extend(self, iter);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::BufferedVec;
+
+    #[test]
+    fn truncate_and_append_across_inline_boundary() {
+        fn check<const N: usize>() {
+            for initial_len in 0..12 {
+                for retained_len in 0..14 {
+                    for append_len in 0..12 {
+                        let mut actual = BufferedVec::<Vec<usize>, N>::new(Vec::new());
+                        let mut expected = Vec::new();
+                        for value in 0..initial_len {
+                            actual.push(value);
+                            expected.push(value);
+                        }
+                        actual.truncate(retained_len);
+                        expected.truncate(retained_len);
+                        assert_eq!(actual.len(), expected.len());
+                        assert_eq!(actual.is_empty(), expected.is_empty());
+                        actual.reserve(append_len);
+                        for value in 100..100 + append_len {
+                            actual.push(value);
+                            expected.push(value);
+                        }
+                        assert_eq!(actual.into_vec(), expected);
+                    }
+                }
+            }
+        }
+        check::<0>();
+        check::<1>();
+        check::<4>();
     }
 }

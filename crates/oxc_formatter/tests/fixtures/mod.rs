@@ -2,8 +2,8 @@ use std::{path::Path, str::FromStr};
 
 use oxc_allocator::Allocator;
 use oxc_formatter::{
-    BracketSpacing, JsFormatOptions, JsdocOptions, OperatorPosition, QuoteProperties, QuoteStyle,
-    Semicolons, TrailingCommas,
+    ArrowParentheses, BracketSpacing, JsFormatOptions, JsdocOptions, OperatorPosition,
+    QuoteProperties, QuoteStyle, Semicolons, TrailingCommas,
 };
 use oxc_formatter_tests::{FixtureFormatter, OptionValue, build_fixture_snapshot};
 use oxc_span::SourceType;
@@ -25,6 +25,15 @@ impl FixtureFormatter for JsHarness {
             "semi" => {
                 if let Some(b) = value.as_bool() {
                     options.semicolons = if b { Semicolons::Always } else { Semicolons::AsNeeded };
+                }
+            }
+            "arrowParens" => {
+                if let Some(s) = value.as_str() {
+                    options.arrow_parentheses = match s {
+                        "avoid" => ArrowParentheses::AsNeeded,
+                        "always" => ArrowParentheses::Always,
+                        _ => options.arrow_parentheses,
+                    };
                 }
             }
             "bracketSpacing" => {

@@ -11,6 +11,7 @@ use crate::{
         prelude::*,
         trivia::{FormatLeadingComments, FormatTrailingComments},
     },
+    print::semicolon::write_comments_before_closing_paren,
     utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
     write,
 };
@@ -376,6 +377,30 @@ impl<'a> FormatConditionalLike<'a, '_> {
     fn format_consequent_and_alternate<'f>(&self, f: &mut JsFormatter<'f, 'a>) {
         write!(f, [soft_line_break_or_space(), "?", space()]);
 
+        // End the arrow body before the conditional colon can become a return-type annotation.
+        let needs_semantic_parens = f.context().source_type().is_typescript()
+            && f.options().arrow_parentheses.is_as_needed()
+            && match self.conditional {
+                ConditionalLike::ConditionalExpression(conditional) => {
+                    let mut tail = &conditional.consequent;
+                    loop {
+                        match tail {
+                            Expression::ConditionalExpression(conditional) => {
+                                tail = &conditional.alternate;
+                            }
+                            Expression::ArrowFunctionExpression(arrow) => {
+                                break !matches!(arrow.body, ArrowFunctionBody::FunctionBody(_));
+                            }
+                            Expression::YieldExpression(yield_expr) => {
+                                break yield_expr.argument.is_some();
+                            }
+                            _ => break false,
+                        }
+                    }
+                }
+                ConditionalLike::TSConditionalType(_) => false,
+            };
+
         let format_consequent = format_with(|f| {
             let format_consequent_with_trailing_comments = format_with(|f| {
                 let (start, end) = match self.conditional {
@@ -388,6 +413,9 @@ impl<'a> FormatConditionalLike<'a, '_> {
                         (conditional.true_type.span().end, conditional.false_type.span().start)
                     }
                 };
+                if needs_semantic_parens {
+                    write_comments_before_closing_paren(f, start);
+                }
                 format_trailing_comments(start, end, b':', f);
             });
 
@@ -408,7 +436,17 @@ impl<'a> FormatConditionalLike<'a, '_> {
                 }
             };
 
-            if is_nested_consequent {
+            if needs_semantic_parens {
+                write!(
+                    f,
+                    [
+                        token("("),
+                        format_consequent_with_proper_indentation,
+                        line_suffix_boundary(),
+                        token(")")
+                    ]
+                );
+            } else if is_nested_consequent {
                 // Add parentheses around the consequent if it is a conditional expression and fits on the same line
                 // so that it's easier to identify the parts that belong to a conditional expression.
                 // `a ? b ? c: d : e` -> `a ? (b ? c: d) : e`

@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 139/139 (100.00%)
-Positive Passed: 139/139 (100.00%)
-Negative Passed: 275/275 (100.00%)
+AST Parsed     : 140/140 (100.00%)
+Positive Passed: 140/140 (100.00%)
+Negative Passed: 279/279 (100.00%)
 
   × TS(1029): 'declare' modifier must precede 'abstract' modifier.
    ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
@@ -448,6 +448,38 @@ Negative Passed: 275/275 (100.00%)
    · ─────
    ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × Expected `:` but found `;`
+   ╭─[misc/fail/conditional-generic-arrow-body-comma.tsx:1:31]
+ 1 │ a ? <T,>(b: B) => (c) : d => e;
+   ·   ┬                           ┬
+   ·   │                           ╰── `:` expected
+   ·   ╰── Conditional starts here
+   ╰────
+
+  × Expected `:` but found `;`
+   ╭─[misc/fail/conditional-generic-arrow-body-const.tsx:1:40]
+ 1 │ a ? async <const T,>(b) => (c) : d => e;
+   ·   ┬                                    ┬
+   ·   │                                    ╰── `:` expected
+   ·   ╰── Conditional starts here
+   ╰────
+
+  × Expected `:` but found `;`
+   ╭─[misc/fail/conditional-generic-arrow-body-constraint.tsx:1:43]
+ 1 │ a ? async <T extends U>(b) => (c) : d => e;
+   ·   ┬                                       ┬
+   ·   │                                       ╰── `:` expected
+   ·   ╰── Conditional starts here
+   ╰────
+
+  × Expected `:` but found `;`
+   ╭─[misc/fail/conditional-generic-arrow-body-default.tsx:1:31]
+ 1 │ a ? <T = U>(b) => (c) : d => e;
+   ·   ┬                           ┬
+   ·   │                           ╰── `:` expected
+   ·   ╰── Conditional starts here
+   ╰────
 
   × TS(1093): Type annotation cannot appear on a constructor declaration.
    ╭─[misc/fail/constructor-overload-return-type.ts:2:18]

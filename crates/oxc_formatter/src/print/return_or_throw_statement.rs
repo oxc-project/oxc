@@ -3,16 +3,18 @@ use oxc_span::GetSpan;
 
 use crate::{
     Format,
-    ast_nodes::AstNode,
+    ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
         prelude::*,
         trivia::{DanglingIndentMode, FormatDanglingComments},
     },
+    parentheses::NeedsParentheses,
     print::semicolon::{OptionalSemicolon, assignment_chain_leaf_end},
     utils::{
         expression::LeftSide,
         format_node_without_trailing_comments::format_content_without_comments_after,
+        typecast::is_cast_target,
     },
     write,
 };
@@ -158,6 +160,31 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatAdjacentArgument<'a, '_> {
             );
         } else if matches!(argument.as_ref(), Expression::SequenceExpression(_)) {
             write!(f, [group(&format_args!(token("("), soft_block_indent(&argument), token(")")))]);
+        } else if f.context().source_type().is_typescript()
+            && f.options().arrow_parentheses.is_as_needed()
+            && matches!(argument.parent(), AstNodes::YieldExpression(yield_expr)
+                if argument.span().end < yield_expr.span().end)
+            && !argument.needs_parentheses(f)
+            && !is_cast_target(argument.span(), f)
+            && let Some(comments) = f.comments().comments_before_closing_paren(argument.span().end)
+        {
+            // Retain commented argument parentheses so ignore directives keep their target.
+            let keep_line_break = comments.iter().any(|comment| {
+                comment.is_block()
+                    && comment.followed_by_newline()
+                    && f.comments().is_suppression_comment(comment)
+            });
+            write!(
+                f,
+                [group(&format_args!(
+                    token("("),
+                    soft_block_indent(&format_args!(
+                        argument,
+                        keep_line_break.then_some(expand_parent())
+                    )),
+                    token(")")
+                ))]
+            );
         } else {
             write!(f, argument);
         }

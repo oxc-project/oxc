@@ -3,18 +3,12 @@ commit: 16a2d671
 parser_babel Summary:
 AST Parsed     : 2357/2358 (99.96%)
 Positive Passed: 2336/2358 (99.07%)
-Negative Passed: 1931/1947 (99.18%)
+Negative Passed: 1934/1947 (99.33%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-type-assertion-and-assign/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/invalid-declare-name-eval-arguments/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-unambiguous/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-unambiguous-async-rest/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-unambiguous-optional/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/decorators/type-arguments-invalid/input.ts
 
@@ -15808,11 +15802,38 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
 
   × Expected `:` but found `;`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-unambiguous/input.ts:3:27]
+ 2 │ // type even if it is not followed by `:`, like in TypeScript.
+ 3 │ a ? (b: B) => (c) : d => e;
+   ·   ┬                       ┬
+   ·   │                       ╰── `:` expected
+   ·   ╰── Conditional starts here
+   ╰────
+
+  × Expected `:` but found `;`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-unambiguous-async-rest/input.ts:3:33]
+ 2 │ // return type even if it is not followed by `:`, like in TypeScript.
+ 3 │ a ? async (...b) => (c) : d => e;
+   ·   ┬                             ┬
+   ·   │                             ╰── `:` expected
+   ·   ╰── Conditional starts here
+   ╰────
+
+  × Expected `:` but found `;`
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-unambiguous-not-followed-by-colon/input.ts:3:19]
  2 │ // if it is not followed by `:`, like in TypeScript.
  3 │ a ? (b: B): c => d;
    ·   ┬               ┬
    ·   │               ╰── `:` expected
+   ·   ╰── Conditional starts here
+   ╰────
+
+  × Expected `:` but found `;`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-unambiguous-optional/input.ts:3:25]
+ 2 │ // type even if it is not followed by `:`, like in TypeScript.
+ 3 │ a ? (b?) => (c) : d => e;
+   ·   ┬                     ┬
+   ·   │                     ╰── `:` expected
    ·   ╰── Conditional starts here
    ╰────
 
@@ -15823,6 +15844,15 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·      ───────
    ╰────
   help: Arrow function does not bind `this` and inherits `this` from the outer scope
+
+  × Expected `:` but found `;`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-unambiguous-this/input.ts:3:30]
+ 2 │ // type even if it is not followed by `:`, like in TypeScript.
+ 3 │ a ? (this: T) => (c) : d => e;
+   ·   ┬                          ┬
+   ·   │                          ╰── `:` expected
+   ·   ╰── Conditional starts here
+   ╰────
 
   × Expected `:` but found `;`
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-use-strict-non-simple-error-recovery-false/input.ts:1:45]

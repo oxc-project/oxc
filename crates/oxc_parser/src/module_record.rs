@@ -22,6 +22,13 @@ pub struct ModuleRecordBuilder<'a> {
     skipped_default_exports: ArenaVec<'a, Span>,
 }
 
+#[derive(Clone, Copy)]
+pub struct ModuleRecordExpressionCheckpoint {
+    dynamic_imports_len: usize,
+    import_metas_len: usize,
+    has_module_syntax: bool,
+}
+
 impl<'a> ModuleRecordBuilder<'a> {
     pub fn new(allocator: &'a Allocator, source_type: SourceType) -> Self {
         Self {
@@ -68,6 +75,20 @@ impl<'a> ModuleRecordBuilder<'a> {
     /// Returns true if the file contains module syntax (import/export declarations or import.meta).
     pub fn has_module_syntax(&self) -> bool {
         self.module_record.has_module_syntax
+    }
+
+    pub fn expression_checkpoint(&self) -> ModuleRecordExpressionCheckpoint {
+        ModuleRecordExpressionCheckpoint {
+            dynamic_imports_len: self.dynamic_imports.len(),
+            import_metas_len: self.import_metas.len(),
+            has_module_syntax: self.module_record.has_module_syntax,
+        }
+    }
+
+    pub fn rewind_expression(&mut self, checkpoint: ModuleRecordExpressionCheckpoint) {
+        self.dynamic_imports.truncate(checkpoint.dynamic_imports_len);
+        self.import_metas.truncate(checkpoint.import_metas_len);
+        self.module_record.has_module_syntax = checkpoint.has_module_syntax;
     }
 
     fn errors(

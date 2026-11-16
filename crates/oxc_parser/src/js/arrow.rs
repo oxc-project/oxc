@@ -609,12 +609,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         });
         match kind {
             Tristate::False => None,
-            Tristate::True => Some(self.parse_parenthesized_arrow_function_expression(
-                allow_return_type_in_arrow_function,
-            )),
-            Tristate::Maybe => self.parse_possible_parenthesized_arrow_function_expression(
-                allow_return_type_in_arrow_function,
-            ),
+            Tristate::True if allow_return_type_in_arrow_function || self.source_type.is_jsx() => {
+                Some(self.parse_parenthesized_arrow_function_expression(
+                    allow_return_type_in_arrow_function,
+                ))
+            }
+            Tristate::True | Tristate::Maybe => self
+                .parse_possible_parenthesized_arrow_function_expression(
+                    allow_return_type_in_arrow_function,
+                ),
         }
     }
 
@@ -743,18 +746,24 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         let checkpoint = self.checkpoint();
+        let module_checkpoint = self.module_record_builder.expression_checkpoint();
+        let deferred_script_errors_len = self.deferred_script_errors.len();
 
         let head = self.parse_parenthesized_arrow_function_head();
         // Rejected heads are rewound, so do not construct an error for the missing arrow.
         if !self.at(Kind::Arrow) {
             self.state.not_parenthesized_arrow.insert(pos);
             self.rewind(checkpoint);
+            self.module_record_builder.rewind_expression(module_checkpoint);
+            self.deferred_script_errors.truncate(deferred_script_errors_len);
             return None;
         }
         self.expect_arrow();
         if self.has_fatal_error() {
             self.state.not_parenthesized_arrow.insert(pos);
             self.rewind(checkpoint);
+            self.module_record_builder.rewind_expression(module_checkpoint);
+            self.deferred_script_errors.truncate(deferred_script_errors_len);
             return None;
         }
 
@@ -788,6 +797,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if !self.at(Kind::Colon) {
                 self.state.not_parenthesized_arrow.insert(pos);
                 self.rewind(checkpoint);
+                self.module_record_builder.rewind_expression(module_checkpoint);
+                self.deferred_script_errors.truncate(deferred_script_errors_len);
                 return None;
             }
         }
@@ -853,6 +864,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Expression<'a> {
         let ArrowFunctionHead { type_parameters, params, return_type, r#async, start } =
             arrow_function_head;
+        let allow_return_type_in_arrow_function = allow_return_type_in_arrow_function
+            || if type_parameters.is_some() {
+                self.source_type.is_jsx()
+            } else {
+                params.items.first().is_none_or(|param| {
+                    matches!(param.pattern, BindingPattern::BindingIdentifier(_))
+                        && (param.type_annotation.is_some() || param.optional)
+                })
+            };
         let body = self.parse_arrow_function_body(r#async, allow_return_type_in_arrow_function);
         Expression::new_arrow_function_expression(
             self.end_span(start),
