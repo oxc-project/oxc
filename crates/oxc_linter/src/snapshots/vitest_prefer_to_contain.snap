@@ -257,3 +257,17 @@ source: crates/oxc_linter/src/tester.rs
  4 │                 
    ╰────
   help: Replace `pleaseExpect([{a:1}].includes({a:1})).not.toStrictEqual(false)` with `pleaseExpect([{ a: 1 }]).toContain({ a: 1 })`.
+
+  ⚠ vitest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:29]
+ 1 │ expect([NaN].includes(NaN)).toBe(true);
+   ·                             ────
+   ╰────
+  help: Replace `expect([NaN].includes(NaN)).toBe(true)` with `expect([NaN]).toContain(NaN)`.
+
+  ⚠ vitest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:114]
+ 1 │ class Tags { includes(tag: string) { return tag === 'a'; } } const tags = new Tags(); expect(tags.includes('a')).toBe(true);
+   ·                                                                                                                  ────
+   ╰────
+  help: Replace `expect(tags.includes('a')).toBe(true)` with `expect(tags).toContain('a')`.
