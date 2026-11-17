@@ -9,7 +9,8 @@ use tower_lsp_server::gen_lsp_types::{
 use oxc_diagnostics::{OxcCode, Severity};
 use oxc_language_server::offset_to_position as lsp_offset_to_position;
 use oxc_linter::{
-    AllowWarnDeny, DisableDirectives, Fix, FixKind, Message, PossibleFixes, RuleCommentType,
+    AllowWarnDeny, DisableDirectives, Fix, FixKind, KnownRuleIds, Message, PossibleFixes,
+    RuleCommentType,
 };
 
 use crate::lsp::{
@@ -241,10 +242,15 @@ pub fn generate_inverted_diagnostics(
 }
 
 /// Generate diagnostics for unused disable directives, with fixes to remove them.
+///
+/// Rule IDs in `oxlint-*` directives that do not match any rule known to oxlint
+/// are reported as errors (`Definition for rule '...' was not found`) instead of
+/// as unused directives.
 pub fn create_unused_directives_report(
     directives: &DisableDirectives,
     severity: AllowWarnDeny,
     source_text: &str,
+    known_rule_ids: &KnownRuleIds,
 ) -> Vec<DiagnosticReport> {
     let mut reports = Vec::new();
     let fix_message = "remove unused disable directive";
@@ -256,7 +262,7 @@ pub fn create_unused_directives_report(
     };
 
     // Report unused disable comments
-    let unused_disable = directives.collect_unused_disable_comments();
+    let unused_disable = directives.collect_unused_disable_comments(Some(known_rule_ids));
     for unused_comment in unused_disable {
         let span = unused_comment.span;
         match unused_comment.r#type {
@@ -281,6 +287,18 @@ pub fn create_unused_directives_report(
                 }
             }
         }
+    }
+
+    // Report rule IDs in `oxlint-*` directives that do not match any known rule,
+    // mirroring ESLint's `Definition for rule '...' was not found`.
+    for (rule_id, name_span) in directives.collect_unknown_rule_ids(known_rule_ids) {
+        reports.push(build_unused_disable_diagnostic_report(
+            format!("Definition for rule '{rule_id}' was not found"),
+            name_span,
+            DiagnosticSeverity::Error,
+            source_text,
+            None,
+        ));
     }
 
     // Report unused enable comments

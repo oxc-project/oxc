@@ -1,0 +1,5 @@
+{
+  "categories": { "correctness": "off" },
+  "rules": { "no-console": "warn" },
+  "options": { "reportUnusedDisableDirectives": "warn" }
+}

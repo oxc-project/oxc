@@ -48,11 +48,19 @@ working directory: fixtures/cli/report_unused_directives
  18 | const unusedVariable2 = 100;
     `----
 
-  ! Unused oxlint-disable directive (no problems were reported).
-    ,-[test-multiple-scripts.vue:30:1]
+  ! Unused oxlint-disable directive (no problems were reported from no-debugger).
+    ,-[test-multiple-scripts.vue:30:29]
  29 | 
  30 | // oxlint-disable-next-line no-debugger, no-for-loop
-    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    :                             ^^^^^^^^^^^
+ 31 | console.log("complete line");
+    `----
+
+  x Definition for rule 'no-for-loop' was not found
+    ,-[test-multiple-scripts.vue:30:42]
+ 29 | 
+ 30 | // oxlint-disable-next-line no-debugger, no-for-loop
+    :                                          ^^^^^^^^^^^
  31 | console.log("complete line");
     `----
 
@@ -106,11 +114,19 @@ working directory: fixtures/cli/report_unused_directives
  29 | console.log('no');
     `----
 
-  ! Unused oxlint-disable directive (no problems were reported).
-    ,-[test.astro:31:1]
+  ! Unused oxlint-disable directive (no problems were reported from no-debugger).
+    ,-[test.astro:31:29]
  30 | 
  31 | // oxlint-disable-next-line no-debugger, no-for-loop
-    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    :                             ^^^^^^^^^^^
+ 32 | console.log("complete line");
+    `----
+
+  x Definition for rule 'no-for-loop' was not found
+    ,-[test.astro:31:42]
+ 30 | 
+ 31 | // oxlint-disable-next-line no-debugger, no-for-loop
+    :                                          ^^^^^^^^^^^
  32 | console.log("complete line");
     `----
 
@@ -164,11 +180,19 @@ working directory: fixtures/cli/report_unused_directives
  24 | console.log('no');
     `----
 
-  ! Unused oxlint-disable directive (no problems were reported).
-    ,-[test.js:26:1]
+  ! Unused oxlint-disable directive (no problems were reported from no-debugger).
+    ,-[test.js:26:29]
  25 | 
  26 | // oxlint-disable-next-line no-debugger, no-for-loop
-    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    :                             ^^^^^^^^^^^
+ 27 | console.log("complete line");
+    `----
+
+  x Definition for rule 'no-for-loop' was not found
+    ,-[test.js:26:42]
+ 25 | 
+ 26 | // oxlint-disable-next-line no-debugger, no-for-loop
+    :                                          ^^^^^^^^^^^
  27 | console.log("complete line");
     `----
 
@@ -229,11 +253,19 @@ working directory: fixtures/cli/report_unused_directives
  25 | console.log('no');
     `----
 
-  ! Unused oxlint-disable directive (no problems were reported).
-    ,-[test.svelte:27:1]
+  ! Unused oxlint-disable directive (no problems were reported from no-debugger).
+    ,-[test.svelte:27:29]
  26 | 
  27 | // oxlint-disable-next-line no-debugger, no-for-loop
-    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    :                             ^^^^^^^^^^^
+ 28 | console.log("complete line");
+    `----
+
+  x Definition for rule 'no-for-loop' was not found
+    ,-[test.svelte:27:42]
+ 26 | 
+ 27 | // oxlint-disable-next-line no-debugger, no-for-loop
+    :                                          ^^^^^^^^^^^
  28 | console.log("complete line");
     `----
 
@@ -295,11 +327,19 @@ working directory: fixtures/cli/report_unused_directives
  29 | console.log('no');
     `----
 
-  ! Unused oxlint-disable directive (no problems were reported).
-    ,-[test.vue:31:1]
+  ! Unused oxlint-disable directive (no problems were reported from no-debugger).
+    ,-[test.vue:31:29]
  30 | 
  31 | // oxlint-disable-next-line no-debugger, no-for-loop
-    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    :                             ^^^^^^^^^^^
+ 32 | console.log("complete line");
+    `----
+
+  x Definition for rule 'no-for-loop' was not found
+    ,-[test.vue:31:42]
+ 30 | 
+ 31 | // oxlint-disable-next-line no-debugger, no-for-loop
+    :                                          ^^^^^^^^^^^
  32 | console.log("complete line");
     `----
 
@@ -320,8 +360,8 @@ working directory: fixtures/cli/report_unused_directives
  37 | </script>
     `----
 
-Found 38 warnings and 0 errors.
+Found 38 warnings and 5 errors.
 Finished in <variable>ms on 5 files with 97 rules using 1 threads.
 ----------
-CLI result: LintSucceeded
+CLI result: LintFoundErrors
 ----------

@@ -89,6 +89,11 @@ impl LintService {
         self.runtime.set_disable_directives_map(map);
     }
 
+    /// The [`Linter`] used by this service.
+    pub fn linter(&self) -> &Linter {
+        &self.runtime.linter
+    }
+
     pub fn run_source(
         &self,
         file_system: &(dyn RuntimeFileSystem + Sync + Send),

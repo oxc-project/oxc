@@ -1,0 +1,48 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c .oxlintrc.json
+working directory: fixtures/cli/report_unused_directives_unknown_rule
+----------
+
+  ! Unused eslint-disable directive (no problems were reported).
+   ,-[eslint-prefix.js:1:1]
+ 1 | // eslint-disable-next-line no-consoel
+   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 2 | void 0;
+   `----
+
+  ! Unused oxlint-disable directive (no problems were reported).
+   ,-[known-off-unused.js:1:1]
+ 1 | // oxlint-disable-next-line no-debugger
+   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 2 | void 0;
+   `----
+
+  x Definition for rule 'no-consoel' was not found
+   ,-[mixed.js:1:41]
+ 1 | // oxlint-disable-next-line no-console, no-consoel
+   :                                         ^^^^^^^^^^
+ 2 | console.log('suppressed');
+   `----
+
+  x Definition for rule 'no-consoel' was not found
+   ,-[unknown-rule.js:1:29]
+ 1 | // oxlint-disable-next-line no-consoel
+   :                             ^^^^^^^^^^
+ 2 | void 0;
+   `----
+
+  ! Unused oxlint-disable directive (no problems were reported).
+   ,-[valid-unused.js:1:1]
+ 1 | // oxlint-disable-next-line no-console
+   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 2 | void 0;
+   `----
+
+Found 3 warnings and 2 errors.
+Finished in <variable>ms on 6 files with 1 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
