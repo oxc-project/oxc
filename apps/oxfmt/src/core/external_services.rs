@@ -235,8 +235,7 @@ impl ExternalServices {
 // - Other blocking (e.g. `mpsc` recv) keeps the worker's core,
 //   and tasks it waits on (e.g. `jsTextToDoc()` from Prettier workers) never run with a single worker
 //
-// `rayon` threads (Mode::Cli formatting) are separate from the `tokio` runtime,
-// so they can call these directly.
+// `rayon` threads (Mode::Cli formatting) are separate from the `tokio` runtime, so they can call these directly.
 
 /// Wrap JS `initExternalServices` callback as a normal Rust function.
 fn wrap_init_external_services(
