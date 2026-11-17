@@ -563,6 +563,15 @@ fn collect_temporaries_sidemap(
                     {
                         continue;
                     }
+                    // Unlike the TS implementation, do not alias a ref-typed property result to
+                    // its receiver. The result of `props.inputRef` or `refs.setReference` is
+                    // inferred as a ref when it flows into a JSX `ref` attribute, and aliasing
+                    // would mark the whole receiver as that ref, so every other property read
+                    // from it (`props.value`, `refs.setFloating`) would be reported as a ref
+                    // value access. The result keeps its own ref type instead.
+                    if is_ref_type(instr.lvalue.identifier, identifiers, types) {
+                        continue;
+                    }
                     let temp = env.temporaries.get(&object.identifier).cloned().unwrap_or(*object);
                     env.define(instr.lvalue.identifier, temp);
                 }
