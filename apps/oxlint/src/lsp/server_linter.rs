@@ -22,7 +22,7 @@ use oxc_linter::{
 };
 
 use oxc_language_server::{
-    Capabilities, ClientMessage, CodeActionParams, ConcurrentHashMap, DiagnosticMode,
+    BuildContext, Capabilities, ClientMessage, CodeActionParams, ConcurrentHashMap, DiagnosticMode,
     DiagnosticResult, TextDocument, Tool, ToolBuildResult, ToolBuilder, ToolRestartChanges,
     uri_utils::uri_to_file_path, utils::normalize_user_config_path_to_watch_pattern,
 };
@@ -33,7 +33,7 @@ use crate::lsp::utils::{
 use crate::{
     config_loader::{
         ConfigLoader, RunOverrides, build_nested_configs, config_file_names,
-        discover_configs_in_tree, materialize_default_plugins,
+        discover_configs_in_tree, is_excluded, materialize_default_plugins,
     },
     lsp::{
         code_actions::{
@@ -84,6 +84,29 @@ impl ServerLinterBuilder {
         &self,
         root_uri: &Uri,
         options: serde_json::Value,
+    ) -> (ServerLinter, Vec<ClientMessage>) {
+        self.build_excluding(root_uri, options, &[], None)
+    }
+
+    /// Same as [`Self::build`], skipping everything below `excluded_roots` and honouring the
+    /// ignore files between `parent_root` and the root.
+    ///
+    /// `excluded_roots` holds the workspace folders nested below the root. They are linted by their
+    /// own worker with their own config, so this linter must not pick up their nested configs or
+    /// their ignore files.
+    ///
+    /// `parent_root` is the outermost workspace folder around the root, if any. The linter of a
+    /// nested folder still honours the `.gitignore` / `.eslintignore` files between that folder
+    /// and its own root, so a file they ignore is ignored by the nested linter too.
+    ///
+    /// # Panics
+    /// Panics if the root URI cannot be converted to a file path.
+    pub fn build_excluding(
+        &self,
+        root_uri: &Uri,
+        options: serde_json::Value,
+        excluded_roots: &[PathBuf],
+        parent_root: Option<&Path>,
     ) -> (ServerLinter, Vec<ClientMessage>) {
         let options = match serde_json::from_value::<LSPLintOptions>(options) {
             Ok(opts) => opts,
@@ -146,6 +169,7 @@ impl ServerLinterBuilder {
                 &mut extended_paths,
                 Some(root_uri.as_ref()),
                 RunOverrides::for_language_server(options.type_aware),
+                excluded_roots,
             )
         } else {
             (FxHashMap::default(), Vec::new())
@@ -153,6 +177,7 @@ impl ServerLinterBuilder {
 
         client_messages.extend(config_client_message);
 
+        let base_config_path = oxlintrc.path.clone();
         let base_patterns = oxlintrc.ignore_patterns.clone();
         // Without a config file there are no patterns and the root is never consulted,
         // so the `root_path` fallback is an arbitrary placeholder.
@@ -268,12 +293,23 @@ impl ServerLinterBuilder {
             }
         };
 
+        // The linter of a nested folder is not served by one rooted at the outer folder, so the
+        // `.gitignore` / `.eslintignore` files between the two are collected here: a file is
+        // ignored when one of them ignores it. The `ignorePatterns` of the config of the outer
+        // folder do not apply, as when the nested folder is opened on its own.
+        let mut gitignore_glob = parent_root.map_or_else(Vec::new, |parent_root| {
+            Self::create_ancestor_ignore_glob(&root_path, parent_root)
+        });
+        gitignore_glob.extend(Self::create_ignore_glob(&root_path, excluded_roots));
+
         (
             ServerLinter::new(
                 options.run,
                 root_path.to_path_buf(),
+                excluded_roots.to_vec(),
+                base_config_path,
                 LintIgnoreMatcher::new(&base_patterns, &base_ignore_root, nested_ignore_patterns),
-                Self::create_ignore_glob(&root_path),
+                gitignore_glob,
                 extended_paths,
                 runner,
                 fix_kind,
@@ -329,6 +365,21 @@ impl ToolBuilder for ServerLinterBuilder {
         ToolBuildResult { tool: Box::new(tool), client_messages }
     }
 
+    fn build_with_context(
+        &self,
+        root_uri: &Uri,
+        options: serde_json::Value,
+        context: BuildContext<'_>,
+    ) -> ToolBuildResult {
+        let (tool, client_messages) = self.build_excluding(
+            root_uri,
+            options,
+            &context.excluded_root_paths(root_uri),
+            context.parent_root_path(root_uri).as_deref(),
+        );
+        ToolBuildResult { tool: Box::new(tool), client_messages }
+    }
+
     #[expect(unused)]
     fn shutdown(&self, root_uri: &Uri) {
         // We don't currently destroy workspaces.
@@ -358,8 +409,9 @@ impl ServerLinterBuilder {
         extended_paths: &mut FxHashSet<PathBuf>,
         workspace_uri: Option<&str>,
         overrides: RunOverrides,
+        excluded_roots: &[PathBuf],
     ) -> (FxHashMap<PathBuf, Config>, Vec<ClientMessage>) {
-        let config_paths = discover_configs_in_tree(root_path, base_config_path);
+        let config_paths = discover_configs_in_tree(root_path, base_config_path, excluded_roots);
 
         #[cfg_attr(not(feature = "napi"), allow(unused_mut))]
         let mut loader = ConfigLoader::new(
@@ -387,15 +439,34 @@ impl ServerLinterBuilder {
         )
     }
 
+    /// The `.gitignore` and `.eslintignore` files of the directories between `parent_root`
+    /// (inclusive) and `root_path` (exclusive).
+    fn create_ancestor_ignore_glob(root_path: &Path, parent_root: &Path) -> Vec<Gitignore> {
+        root_path
+            .ancestors()
+            .skip(1)
+            .take_while(|directory| directory.starts_with(parent_root))
+            .flat_map(|directory| IGNORE_FILE_NAMES.map(|name| directory.join(name)))
+            .filter(|ignore_file_path| ignore_file_path.is_file())
+            .filter_map(|ignore_file_path| Self::ignore_file_glob(&ignore_file_path))
+            .collect()
+    }
+
     #[expect(clippy::filetype_is_file)]
-    fn create_ignore_glob(root_path: &Path) -> Vec<Gitignore> {
+    fn create_ignore_glob(root_path: &Path, excluded_roots: &[PathBuf]) -> Vec<Gitignore> {
+        let excluded_roots = excluded_roots.to_vec();
         let walk = ignore::WalkBuilder::new(root_path)
             .ignore(true)
             .hidden(false)
             .git_global(false)
-            .filter_entry(|entry| {
-                !(entry.file_name() == ".git"
-                    && entry.file_type().is_some_and(|file_type| file_type.is_dir()))
+            .filter_entry(move |entry| {
+                if entry.file_name() == ".git"
+                    && entry.file_type().is_some_and(|file_type| file_type.is_dir())
+                {
+                    return false;
+                }
+                // the ignore files of a nested workspace folder belong to its own linter
+                !is_excluded(entry, &excluded_roots)
             })
             .build()
             .flatten();
@@ -409,26 +480,36 @@ impl ServerLinterBuilder {
             if !ignore_file_path
                 .file_name()
                 .and_then(std::ffi::OsStr::to_str)
-                .is_some_and(|v| [".eslintignore", ".gitignore"].contains(&v))
+                .is_some_and(|v| IGNORE_FILE_NAMES.contains(&v))
             {
                 continue;
             }
-            if let Some(ignore_file_dir) = ignore_file_path.parent() {
-                let mut builder = ignore::gitignore::GitignoreBuilder::new(ignore_file_dir);
-                builder.add(ignore_file_path);
-                if let Ok(gitignore) = builder.build() {
-                    gitignore_globs.push(gitignore);
-                }
+            if let Some(gitignore) = Self::ignore_file_glob(ignore_file_path) {
+                gitignore_globs.push(gitignore);
             }
         }
 
         gitignore_globs
     }
+
+    /// Compile an ignore file, its patterns are relative to its directory.
+    fn ignore_file_glob(ignore_file_path: &Path) -> Option<Gitignore> {
+        let mut builder = ignore::gitignore::GitignoreBuilder::new(ignore_file_path.parent()?);
+        builder.add(ignore_file_path);
+        builder.build().ok()
+    }
 }
+
+/// The names of the ignore files whose patterns exclude files from linting.
+const IGNORE_FILE_NAMES: [&str; 2] = [".eslintignore", ".gitignore"];
 
 pub struct ServerLinter {
     run: Run,
     cwd: PathBuf,
+    /// The workspace folders nested below `cwd`: they are served by their own linter.
+    excluded_roots: Vec<PathBuf>,
+    /// The config file the root config was loaded from, empty without one.
+    base_config_path: PathBuf,
     ignore_matcher: LintIgnoreMatcher,
     gitignore_glob: Vec<Gitignore>,
     extended_paths: FxHashSet<PathBuf>,
@@ -536,10 +617,20 @@ impl Tool for ServerLinter {
     fn handle_watched_file_change(
         &self,
         builder: &dyn ToolBuilder,
-        _changed_uri: &Uri,
+        changed_uri: &Uri,
         root_uri: &Uri,
         options: serde_json::Value,
     ) -> ToolRestartChanges {
+        // Every worker receives the event. A config below a nested workspace folder is read by
+        // the worker of that folder, not by this one, unless something here extends it.
+        if self.is_unread_config(changed_uri) {
+            return ToolRestartChanges {
+                tool: None,
+                watch_patterns: None,
+                client_messages: Vec::new(),
+            };
+        }
+
         // TODO: Check if the changed file is actually a config file (including extended paths)
         builder.shutdown(root_uri);
         let ToolBuildResult { tool, client_messages } = builder.build(root_uri, options);
@@ -734,6 +825,8 @@ impl ServerLinter {
     pub fn new(
         run: Run,
         cwd: PathBuf,
+        excluded_roots: Vec<PathBuf>,
+        base_config_path: PathBuf,
         ignore_matcher: LintIgnoreMatcher,
         gitignore_glob: Vec<Gitignore>,
         extended_paths: FxHashSet<PathBuf>,
@@ -744,6 +837,8 @@ impl ServerLinter {
         Self {
             run,
             cwd,
+            excluded_roots,
+            base_config_path,
             ignore_matcher,
             gitignore_glob,
             extended_paths,
@@ -902,13 +997,32 @@ impl ServerLinter {
             || old_options.type_aware != new_options.type_aware
     }
 
+    /// Whether `uri` is a config file below a nested workspace folder which this linter does not
+    /// read: it is neither its root config (`configPath` can point into a nested folder) nor
+    /// extended by a config this linter loaded.
+    fn is_unread_config(&self, uri: &Uri) -> bool {
+        let Some(path) = uri_to_file_path(uri) else {
+            return false;
+        };
+        self.excluded_roots.iter().any(|root| path.starts_with(root))
+            && path
+                .file_name()
+                .and_then(std::ffi::OsStr::to_str)
+                .is_some_and(|name| config_file_names().contains(&name))
+            && path.as_ref() != self.base_config_path
+            && !self.extended_paths.contains(path.as_ref())
+    }
+
     /// Check if the linter is responsible for the given URI.
     /// e.g. root URI: file:///path/to/root
     ///      responsible for: file:///path/to/root/file.js
     ///      not responsible for: file:///path/to/other/file.js
+    ///      not responsible for: file:///path/to/root/nested/file.js, when `nested` is a workspace
+    ///      folder of its own, its own linter is
     fn is_responsible_for_uri(&self, uri: &Uri) -> bool {
         if let Some(path) = uri_to_file_path(uri) {
-            return path.starts_with(&self.cwd);
+            return path.starts_with(&self.cwd)
+                && !self.excluded_roots.iter().any(|root| path.starts_with(root));
         }
         false
     }
@@ -1137,12 +1251,15 @@ mod test_watchers {
 mod test {
     use std::{fs, path::PathBuf};
 
-    use oxc_language_server::{CodeActionParams, LanguageId, TextDocument, Tool};
+    use oxc_language_server::{
+        BuildContext, CodeActionParams, LanguageId, TextDocument, Tool, ToolBuildResult,
+        ToolBuilder, uri_utils::file_path_to_uri,
+    };
     use oxc_linter::ExternalPluginStore;
     use rustc_hash::FxHashSet;
     use serde_json::json;
     use tower_lsp_server::gen_lsp_types::{
-        CodeActionContext, CodeActionKind, CodeActionTriggerKind, Position, Range,
+        CodeActionContext, CodeActionKind, CodeActionTriggerKind, Position, Range, Uri,
     };
 
     use crate::config_loader::RunOverrides;
@@ -1150,7 +1267,7 @@ mod test {
         code_actions::{
             CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
         },
-        server_linter::ServerLinterBuilder,
+        server_linter::{ServerLinter, ServerLinterBuilder},
         tester::{Tester, get_file_path},
     };
 
@@ -1177,6 +1294,7 @@ mod test {
             &mut extended_paths,
             None,
             RunOverrides::for_language_server(None),
+            &[],
         );
         let mut configs_dirs = configs.keys().collect::<Vec<&PathBuf>>();
         // sorting the key because for consistent tests results
@@ -1214,6 +1332,7 @@ mod test {
             &mut extended_paths,
             None,
             RunOverrides::for_language_server(None),
+            &[],
         );
 
         assert_eq!(configs.len(), 1);
@@ -1250,6 +1369,7 @@ mod test {
                     &mut extended_paths,
                     None,
                     overrides,
+                    &[],
                 )
                 .1
         };
@@ -1275,10 +1395,202 @@ mod test {
         fs::create_dir_all(&git_dir).unwrap();
         fs::write(git_dir.join(".gitignore"), "refs/\n").unwrap();
 
-        let ignore_globs = ServerLinterBuilder::create_ignore_glob(root_dir.path());
+        let ignore_globs = ServerLinterBuilder::create_ignore_glob(root_dir.path(), &[]);
 
         assert_eq!(ignore_globs.len(), 1);
         assert!(ignore_globs[0].path().starts_with(&app_dir));
+    }
+
+    #[test]
+    fn test_create_ignore_glob_skips_nested_workspace_folders() {
+        let root_dir = tempfile::tempdir().unwrap();
+        let nested_dir = root_dir.path().join("packages").join("a");
+        let sibling_dir = root_dir.path().join("packages").join("b");
+        for dir in [root_dir.path(), &nested_dir, &sibling_dir] {
+            fs::create_dir_all(dir).unwrap();
+            fs::write(dir.join(".gitignore"), "dist/\n").unwrap();
+        }
+
+        let ignore_globs = ServerLinterBuilder::create_ignore_glob(
+            root_dir.path(),
+            std::slice::from_ref(&nested_dir),
+        );
+
+        let mut dirs =
+            ignore_globs.iter().map(|glob| glob.path().to_path_buf()).collect::<Vec<_>>();
+        dirs.sort();
+        assert_eq!(dirs, [root_dir.path().to_path_buf(), sibling_dir]);
+    }
+
+    /// A file is ignored when the ignore files of the outer workspace folder ignore it, even
+    /// though the linter of the nested folder never walks the outer one.
+    #[test]
+    fn test_a_nested_workspace_folder_honours_the_ignore_files_of_the_outer_folder() {
+        let root_dir = tempfile::tempdir().unwrap();
+        let nested_dir = root_dir.path().join("packages").join("a");
+        fs::create_dir_all(&nested_dir).unwrap();
+        fs::write(root_dir.path().join(".gitignore"), "ignored.ts\n").unwrap();
+        for file in ["ignored.ts", "test.ts"] {
+            fs::write(nested_dir.join(file), "debugger;\n").unwrap();
+        }
+
+        let nested_uri = file_path_to_uri(&nested_dir).unwrap();
+        let lint = |linter: &ServerLinter, file: &str| {
+            let uri = file_path_to_uri(nested_dir.join(file)).unwrap();
+            let reports = linter
+                .run_diagnostic(TextDocument::new(&uri, LanguageId::default(), None))
+                .unwrap();
+            reports.iter().map(|(_, diagnostics)| diagnostics.len()).sum::<usize>()
+        };
+        let builder = ServerLinterBuilder::default();
+
+        let (linter, _) =
+            builder.build_excluding(&nested_uri, json!({}), &[], Some(root_dir.path()));
+        assert_eq!(lint(&linter, "ignored.ts"), 0);
+        assert_eq!(lint(&linter, "test.ts"), 1);
+
+        // the ignore file belongs to the outer folder only
+        let (linter, _) = builder.build(&nested_uri, json!({}));
+        assert_eq!(lint(&linter, "ignored.ts"), 1);
+    }
+
+    #[test]
+    fn test_the_outer_linter_is_not_responsible_for_nested_workspace_folders() {
+        let root_dir = tempfile::tempdir().unwrap();
+        let nested_dir = root_dir.path().join("packages").join("a");
+        fs::create_dir_all(&nested_dir).unwrap();
+
+        let (linter, _) = ServerLinterBuilder::default().build_excluding(
+            &file_path_to_uri(root_dir.path()).unwrap(),
+            json!({}),
+            std::slice::from_ref(&nested_dir),
+            None,
+        );
+
+        assert!(
+            linter.is_responsible_for_uri(&file_path_to_uri(root_dir.path().join("a.ts")).unwrap())
+        );
+        assert!(
+            !linter.is_responsible_for_uri(&file_path_to_uri(nested_dir.join("a.ts")).unwrap())
+        );
+    }
+
+    /// Every worker receives a watched file event. The linter of the outer folder does not read the
+    /// config of a nested workspace folder, unless one of its own configs extends it.
+    #[test]
+    fn test_a_config_of_a_nested_workspace_folder_does_not_rebuild_the_outer_linter() {
+        let root_dir = tempfile::tempdir().unwrap();
+        let nested_dir = root_dir.path().join("packages").join("a");
+        let extended_dir = root_dir.path().join("packages").join("b");
+        for dir in [&nested_dir, &extended_dir] {
+            fs::create_dir_all(dir).unwrap();
+            fs::write(dir.join(".oxlintrc.json"), "{}").unwrap();
+        }
+        fs::write(
+            root_dir.path().join(".oxlintrc.json"),
+            r#"{ "extends": ["./packages/b/.oxlintrc.json"] }"#,
+        )
+        .unwrap();
+
+        let root_uri = file_path_to_uri(root_dir.path()).unwrap();
+        let builder = ServerLinterBuilder::default();
+        let (linter, _) = builder.build_excluding(
+            &root_uri,
+            json!({}),
+            &[nested_dir.clone(), extended_dir.clone()],
+            None,
+        );
+        let rebuilds = |dir: &std::path::Path| {
+            let changed = file_path_to_uri(dir.join(".oxlintrc.json")).unwrap();
+            linter
+                .handle_watched_file_change(&builder, &changed, &root_uri, json!({}))
+                .tool
+                .is_some()
+        };
+
+        assert!(!rebuilds(&nested_dir));
+        assert!(rebuilds(&extended_dir));
+        assert!(rebuilds(root_dir.path()));
+    }
+
+    /// The linter which replaces the outer one still skips the nested workspace folders, when it is
+    /// rebuilt by the builder of its worker.
+    #[test]
+    fn test_a_rebuilt_outer_linter_still_skips_nested_workspace_folders() {
+        /// The builder a worker hands to its tool: it builds with the context of the worker.
+        struct WorkerBuilder {
+            builder: ServerLinterBuilder,
+            excluded_roots: Vec<Uri>,
+        }
+
+        impl ToolBuilder for WorkerBuilder {
+            fn build(&self, root_uri: &Uri, options: serde_json::Value) -> ToolBuildResult {
+                let mut context = BuildContext::default();
+                context.excluded_roots = &self.excluded_roots;
+                self.builder.build_with_context(root_uri, options, context)
+            }
+        }
+
+        let root_dir = tempfile::tempdir().unwrap();
+        let nested_dir = root_dir.path().join("packages").join("a");
+        fs::create_dir_all(&nested_dir).unwrap();
+        fs::write(root_dir.path().join(".oxlintrc.json"), "{}").unwrap();
+        fs::write(nested_dir.join(".oxlintrc.json"), "{}").unwrap();
+
+        let root_uri = file_path_to_uri(root_dir.path()).unwrap();
+        let nested_config = file_path_to_uri(nested_dir.join(".oxlintrc.json")).unwrap();
+        let worker_builder = WorkerBuilder {
+            builder: ServerLinterBuilder::default(),
+            excluded_roots: vec![file_path_to_uri(&nested_dir).unwrap()],
+        };
+        let (linter, _) = worker_builder.builder.build_excluding(
+            &root_uri,
+            json!({}),
+            std::slice::from_ref(&nested_dir),
+            None,
+        );
+
+        let root_config = file_path_to_uri(root_dir.path().join(".oxlintrc.json")).unwrap();
+        let rebuilt = linter
+            .handle_watched_file_change(&worker_builder, &root_config, &root_uri, json!({}))
+            .tool
+            .expect("the root config is read by the linter");
+
+        let restart = rebuilt.handle_watched_file_change(
+            &worker_builder,
+            &nested_config,
+            &root_uri,
+            json!({}),
+        );
+        assert!(restart.tool.is_none());
+    }
+
+    /// `configPath` can point to the config of a nested workspace folder: the outer linter reads it
+    /// as its root config.
+    #[test]
+    fn test_the_root_config_of_the_outer_linter_rebuilds_it_inside_a_nested_workspace_folder() {
+        let root_dir = tempfile::tempdir().unwrap();
+        let nested_dir = root_dir.path().join("packages").join("a");
+        fs::create_dir_all(&nested_dir).unwrap();
+        let config = nested_dir.join(".oxlintrc.json");
+        fs::write(&config, "{}").unwrap();
+
+        let root_uri = file_path_to_uri(root_dir.path()).unwrap();
+        let builder = ServerLinterBuilder::default();
+        let (linter, _) = builder.build_excluding(
+            &root_uri,
+            json!({ "configPath": config }),
+            std::slice::from_ref(&nested_dir),
+            None,
+        );
+        let changed = file_path_to_uri(&config).unwrap();
+
+        assert!(
+            linter
+                .handle_watched_file_change(&builder, &changed, &root_uri, json!({}))
+                .tool
+                .is_some()
+        );
     }
 
     #[test]
