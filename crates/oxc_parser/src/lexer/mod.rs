@@ -20,11 +20,8 @@ use oxc_str::JSStr;
 use crate::{
     config::LexerConfig as Config,
     diagnostics::{self, ParserDiagnostic},
-    source::ValidSource,
+    source::{Source, ValidSource},
 };
-
-#[cfg(any(test, feature = "benchmarking"))]
-use crate::source::Source;
 
 mod byte_handlers;
 mod comment;
@@ -85,7 +82,11 @@ impl LexerCheckpoint<'_> {
 /// Number of bytes which are always available to read from the position passed to a token handler.
 /// i.e. a token handler can read the byte after the first byte of the token, without checking
 /// whether it is at the end of the source.
+///
+/// A token handler is called with a position which is at or before the end of the source,
+/// and the source is followed by `Source::PADDING` NUL bytes, so this many bytes can be read.
 const TOKEN_HANDLER_MIN_BYTES: usize = 2;
+const _: () = assert!(TOKEN_HANDLER_MIN_BYTES <= Source::PADDING);
 
 /// Action to take when finishing a token.
 /// Passed to [`Lexer::finish_next_inner`].
@@ -325,38 +326,32 @@ impl<'a, C: Config> Lexer<'a, C> {
         self.trivia_builder.clear_annotation_comments();
 
         let mut pos = self.source.position();
-        // SAFETY: `source.end()` is always equal to or after `source.position()`
-        let remaining_bytes = unsafe { self.source.end().offset_from(pos) };
-        if remaining_bytes > TOKEN_HANDLER_MIN_BYTES {
-            // SAFETY: There are more than `TOKEN_HANDLER_MIN_BYTES` bytes remaining in source
-            let mut byte = unsafe { pos.read() };
-            if byte == b' ' {
-                // SAFETY: A space is ASCII, and `TOKEN_HANDLER_MIN_BYTES` bytes remain after it
-                pos = unsafe { pos.add(1) };
-                // SAFETY: `TOKEN_HANDLER_MIN_BYTES` bytes remain after the space
-                byte = unsafe { pos.read() };
-            }
-
-            if let Some(kind) = byte_handlers::single_byte_token(byte) {
-                // SAFETY: Single-byte tokens are ASCII, and at least 1 byte remains after `pos`
-                let end = unsafe { pos.add(1) };
-                self.source.set_position(end);
-                return self.finish_fresh_token(kind, pos, end);
-            }
-
-            let token_handlers = &Self::TOKEN_HANDLERS;
-            // SAFETY: `byte` is the byte at `pos`. `TOKEN_HANDLER_MIN_BYTES` bytes remain from
-            // `pos`. No trivia has been seen since the previous token, other than one space.
-            return unsafe { token_handlers[byte as usize](self, pos) };
+        // SAFETY: `pos` is at or before end of source, and source is followed by NUL padding
+        let mut byte = unsafe { pos.read() };
+        if byte == b' ' {
+            // SAFETY: A space is not padding, so `pos` was before end of source. A space is ASCII.
+            pos = unsafe { pos.add(1) };
+            // SAFETY: `pos` is at or before end of source, and source is followed by NUL padding
+            byte = unsafe { pos.read() };
         }
 
-        self.next_token_after_trivia()
+        if let Some(kind) = byte_handlers::single_byte_token(byte) {
+            // SAFETY: Single-byte tokens are ASCII and not NUL, so at least 1 byte remains after `pos`
+            let end = unsafe { pos.add(1) };
+            self.source.set_position(end);
+            return self.finish_fresh_token(kind, pos, end);
+        }
+
+        let token_handlers = &Self::TOKEN_HANDLERS;
+        // SAFETY: `byte` is the byte at `pos`, which is at or before end of source.
+        // At end of source, `byte` is the NUL padding, and the token handler for NUL tests for EOF.
+        // No trivia has been seen since the previous token, other than one space.
+        unsafe { token_handlers[byte as usize](self, pos) }
     }
 
     /// Read next token, starting from the current position of source.
     ///
     /// Token handlers continue here once they have skipped whitespace or a comment.
-    /// `next_token_impl` calls this if it is at the end of the source.
     #[inline(never)]
     fn next_token_after_trivia(&mut self) -> Token {
         let (kind, end) = self.read_next_token_after_trivia();
@@ -695,73 +690,41 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// Same as `read_next_token`, but keeps any annotation comments found before the token so far.
     #[inline]
     fn read_next_token_after_trivia(&mut self) -> (Kind, SourcePosition<'a>) {
-        let end_pos = self.source.end();
         let mut pos = self.source.position();
         loop {
             // Single spaces between tokens are common, so consume a space before processing the next token.
-            // Can only do this if there are at least 2 bytes left in source.
-            // If there aren't 2 bytes left, delegate to `read_next_token_at_end` (cold branch).
-            // SAFETY: `source.end()` is always equal to or after `source.position()`
-            let remaining_bytes = unsafe { end_pos.offset_from(pos) };
-            if remaining_bytes >= 2 {
-                // SAFETY: There are at least 2 bytes remaining in source.
-                let mut byte = unsafe { pos.read() };
+            // SAFETY: `pos` is at or before end of source, and source is followed by NUL padding.
+            let mut byte = unsafe { pos.read() };
 
-                // Only update the cursor and read again when consuming a space.
-                if byte == b' ' {
-                    // SAFETY: At least 2 bytes remain, so advancing past one ASCII space
-                    // leaves at least one byte to read.
-                    pos = unsafe { pos.add(1) };
-                    self.source.set_position(pos);
-                    // SAFETY: At least one byte remains after the space.
-                    byte = unsafe { pos.read() };
-                }
-
-                // Set token start
-                let offset = self.source.offset_of(pos);
-                self.token_start = offset;
-
-                if let Some(kind) = byte_handlers::single_byte_token(byte) {
-                    // SAFETY: Single-byte tokens are ASCII, and at least 1 byte remains after `pos`
-                    let end = unsafe { pos.add(1) };
-                    self.source.set_position(end);
-                    return (kind, end);
-                }
-
-                let byte_handlers = self.config.byte_handlers();
-                let kind;
-                // SAFETY: `byte` is byte value at current position in source
-                (kind, pos) = unsafe { byte_handlers[byte as usize](self, pos) };
-                if kind != Kind::Skip {
-                    return (kind, pos);
-                }
-            } else {
-                // Only 0 or 1 bytes left in source.
-                // Delegate to `#[cold]` function as this is a very rare case.
-                let kind = self.read_next_token_at_end();
-                return (kind, self.source.position());
+            // Only update the cursor and read again when consuming a space.
+            if byte == b' ' {
+                // SAFETY: A space is not padding, so `pos` was before end of source.
+                pos = unsafe { pos.add(1) };
+                self.source.set_position(pos);
+                // SAFETY: `pos` is at or before end of source, and source is followed by NUL padding.
+                byte = unsafe { pos.read() };
             }
-        }
-    }
 
-    /// Cold path for reading next token where only 0 or 1 bytes are left in source.
-    #[inline(never)]
-    #[cold]
-    fn read_next_token_at_end(&mut self) -> Kind {
-        let offset = self.offset();
-        self.token_start = offset;
+            // Set token start
+            let offset = self.source.offset_of(pos);
+            self.token_start = offset;
 
-        if let Some(byte) = self.peek_byte() {
-            // SAFETY: `byte` is byte value at current position in source
-            let kind = unsafe { self.handle_byte(byte) };
+            if let Some(kind) = byte_handlers::single_byte_token(byte) {
+                // SAFETY: Single-byte tokens are ASCII and not NUL, so at least 1 byte remains after `pos`
+                let end = unsafe { pos.add(1) };
+                self.source.set_position(end);
+                return (kind, end);
+            }
+
+            let byte_handlers = self.config.byte_handlers();
+            let kind;
+            // SAFETY: `byte` is byte value at current position in source.
+            // The handler for NUL tests for EOF.
+            (kind, pos) = unsafe { byte_handlers[byte as usize](self, pos) };
             if kind != Kind::Skip {
-                return kind;
+                return (kind, pos);
             }
-            // Last byte was whitespace/line break (`Kind::Skip`), so now at EOF
-            self.token_start = offset + 1;
         }
-
-        Kind::Eof
     }
 
     #[inline]

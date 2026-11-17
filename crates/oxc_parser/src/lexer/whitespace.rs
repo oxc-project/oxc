@@ -22,14 +22,16 @@ impl<'a, C: Config> Lexer<'a, C> {
         byte_search! {
             lexer: self,
             table: NOT_REGULAR_WHITESPACE_TABLE,
-            handle_eof: 0,
         };
 
         Kind::Skip
     }
 
-    /// Skip regular whitespace after a line break, returning the next byte or `None` at EOF.
-    pub(super) fn line_break_handler(&mut self) -> Option<u8> {
+    /// Skip regular whitespace after a line break, returning the next byte.
+    ///
+    /// At EOF, returns 0 - the first byte of the padding which follows the source text.
+    /// The byte handler for NUL checks for EOF.
+    pub(super) fn line_break_handler(&mut self) -> u8 {
         self.pending.set_is_on_new_line();
         self.trivia_builder.handle_newline(&mut self.pending);
 
@@ -37,13 +39,10 @@ impl<'a, C: Config> Lexer<'a, C> {
         // Consume it, along with any further line breaks.
         // Irregular line breaks and whitespace are not consumed.
         // They're uncommon, so leave them for the next call to `handle_byte` to take care of.
-        let byte = byte_search! {
+        byte_search! {
             lexer: self,
             table: NOT_REGULAR_WHITESPACE_OR_LINE_BREAK_TABLE,
-            handle_eof: return None,
-        };
-
-        Some(byte)
+        }
     }
 
     /// Read the next token, where the first trivia seen since the previous token is the line break
@@ -62,13 +61,14 @@ impl<'a, C: Config> Lexer<'a, C> {
         // SAFETY: Caller guarantees `pos` is the position of an ASCII byte
         let after_line_break = unsafe { pos.add(1) };
 
-        // Consume indentation, along with any further line breaks
+        // Consume indentation, along with any further line breaks.
+        // Table matches NUL, so at EOF `byte` is 0 - the first byte of the padding which follows
+        // the source text. It takes the general path below, where the byte handler for NUL
+        // checks for EOF.
         let byte = byte_search! {
             lexer: self,
             table: NOT_REGULAR_WHITESPACE_OR_LINE_BREAK_TABLE,
             start: after_line_break,
-            // A byte which does not start a token, so that EOF takes the general path below
-            handle_eof: b' ',
         };
         let pos = self.source.position();
 
@@ -87,8 +87,7 @@ impl<'a, C: Config> Lexer<'a, C> {
         }
 
         // Strings, comments, and everything else.
-        // SAFETY: `pos` is the current position of source. `byte` is the byte at `pos`,
-        // or a space if `pos` is the end of source.
+        // SAFETY: `pos` is the current position of source. `byte` is the byte at `pos`.
         unsafe { self.next_token_after_line_break(pos, byte) }
     }
 
@@ -101,7 +100,8 @@ impl<'a, C: Config> Lexer<'a, C> {
     ///
     /// # SAFETY
     /// * `pos` must be the current position of source.
-    /// * `byte` must be the byte at `pos`, or a space if `pos` is the end of source.
+    /// * `byte` must be the byte at `pos`. At the end of the source, that is the first byte
+    ///   of the padding which follows the source text, which is NUL.
     #[inline(never)]
     unsafe fn next_token_after_line_break(&mut self, pos: SourcePosition<'a>, byte: u8) -> Token {
         debug_assert_eq!(pos, self.source.position());

@@ -30,3 +30,7 @@ tasks/coverage/misc/pass/tagged-template-invalid-escape-cr.js -text whitespace=c
 tasks/coverage/misc/pass/tagged-template-invalid-escape-crlf.js -text whitespace=cr-at-eol
 tasks/coverage/misc/pass/regexp-constructor-line-endings.js -text whitespace=cr-at-eol
 tasks/coverage/misc/pass/comment-chunk-boundaries.js -text whitespace=cr-at-eol
+
+# NUL bytes would make git read these parser fixtures as binary.
+tasks/coverage/misc/pass/nul-byte.js -text diff
+tasks/coverage/misc/pass/nul-byte.jsx -text diff

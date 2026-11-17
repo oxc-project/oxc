@@ -51,19 +51,29 @@ pub const SEARCH_BATCH_SIZE: usize = 16;
 ///     byte_search! {
 ///       lexer: self,
 ///       table: NOT_ASCII,
-///       handle_match: |matched_byte, start| {},
-///       handle_eof: |start| {},
+///       handle_eof: {},
 ///     };
 ///   }
 /// }
 /// ```
 #[repr(C, align(64))]
-pub struct SafeByteMatchTable([bool; 256]);
+pub struct SafeByteMatchTable {
+    /// The pattern, plus NUL.
+    ///
+    /// `byte_search!` searches with this table, so that a search always stops at the NUL padding
+    /// which follows the source text, and so never reads past the padding.
+    ///
+    /// Must be the first field. `byte_search!`'s loop indexes into this table once per byte,
+    /// and a table at offset 0 can be indexed without adding a displacement to the address.
+    search: [bool; 256],
+    /// The pattern.
+    table: [bool; 256],
+}
 
 impl SafeByteMatchTable {
     // Create new `SafeByteMatchTable`.
     pub const fn new(bytes: [bool; 256]) -> Self {
-        let mut table = Self([false; 256]);
+        let mut table = Self { search: [false; 256], table: [false; 256] };
 
         // Check if contains either:
         // 1. `true` for all byte values 192..248
@@ -74,7 +84,8 @@ impl SafeByteMatchTable {
         let mut i = 0;
         loop {
             let matches = bytes[i];
-            table.0[i] = matches;
+            table.table[i] = matches;
+            table.search[i] = matches || i == 0;
 
             if matches {
                 if i >= 128 && i < 192 {
@@ -107,7 +118,14 @@ impl SafeByteMatchTable {
     /// Test a value against this `SafeByteMatchTable`.
     #[inline]
     pub const fn matches(&self, b: u8) -> bool {
-        self.0[b as usize]
+        self.table[b as usize]
+    }
+
+    /// Test a value against this `SafeByteMatchTable`, also matching NUL.
+    /// `byte_search!` uses this to find the end of the source text (see `search` field).
+    #[inline]
+    pub const fn matches_or_nul(&self, b: u8) -> bool {
+        self.search[b as usize]
     }
 }
 
@@ -145,7 +163,21 @@ pub(crate) use safe_byte_match_table;
 /// Macro to search for first byte matching a `SafeByteMatchTable`.
 ///
 /// Search processes source in batches of `SEARCH_BATCH_SIZE` bytes for speed.
-/// When not enough bytes remaining in source for a batch, search source byte by byte.
+///
+/// Source text is followed by at least `SEARCH_BATCH_SIZE` NUL bytes of padding
+/// (see `Source`), so a batch can be read from any position in the source without checking
+/// how many bytes remain. The search also stops on NUL bytes, so it always stops at the padding.
+/// End of source is only tested for when a NUL byte is found.
+///
+/// How the end of source is reported depends on whether the table matches NUL
+/// (this is checked at compile time):
+///
+/// * Table does not match NUL: `handle_eof` is required, and is evaluated if end of source
+///   is reached. NUL bytes within the source text are skipped, like any other non-matching byte.
+/// * Table matches NUL: `handle_eof` and `continue_if` cannot be provided. If end of source is
+///   reached, the search stops there, and the macro evaluates to `0` - the first byte of the padding.
+///   The caller cannot distinguish that from a NUL byte in the source text without checking
+///   `lexer.source.is_eof()`, but usually has no need to, as either one ends what was being consumed.
 ///
 /// This is a macro rather than a function because searching is a bit faster when all the code
 /// is in a single function, and some parts (e.g. `continue_if`) can be statically removed by
@@ -245,6 +277,23 @@ pub(crate) use safe_byte_match_table;
 /// }
 /// ```
 ///
+/// or, if the table matches NUL, omit `handle_eof`:
+///
+/// ```rust,ignore
+/// static NOT_SPACE_TABLE: SafeByteMatchTable = safe_byte_match_table!(|b| b != b' ');
+///
+/// impl<'a> Lexer<'a> {
+///   fn eat_spaces(&mut self) -> u8 {
+///     // `lexer.source` is positioned on first byte which isn't a space, or at EOF.
+///     // Evaluates to that byte, or `0` if at EOF.
+///     byte_search! {
+///       lexer: self,
+///       table: NOT_SPACE_TABLE,
+///     }
+///   }
+/// }
+/// ```
+///
 /// # SAFETY
 ///
 /// This macro consumes bytes from `lexer.source` according to the provided `SafeByteMatchTable`.
@@ -256,6 +305,40 @@ pub(crate) use safe_byte_match_table;
 /// `lexer.source` positioned on a UTF-8 character boundary when entering `handle_match`, which
 /// makes the internal calls to `LexerSource`'s unsafe methods sound.
 macro_rules! byte_search {
+    // Table which matches NUL.
+    // `start` is calculated from current position of `lexer.source`.
+    (
+        lexer: $lexer:ident,
+        table: $table:ident $(,)?
+    ) => {{
+        let start = $lexer.source.position();
+        byte_search! {
+            lexer: $lexer,
+            table: $table,
+            start: start,
+        }
+    }};
+
+    // Table which matches NUL, with provided `start` position
+    (
+        lexer: $lexer:ident,
+        table: $table:ident,
+        start: $start:ident $(,)?
+    ) => {{
+        const {
+            assert!($table.matches(0), "`handle_eof` is required when table does not match NUL");
+        }
+        byte_search! {
+            @search
+            lexer: $lexer,
+            table: $table,
+            start: $start,
+            continue_if: (byte, pos) false,
+            // Never evaluated, because table matches NUL
+            handle_eof: unreachable!(),
+        }
+    }};
+
     // Simple version.
     // `start` is calculated from current position of `lexer.source`.
     (
@@ -307,8 +390,37 @@ macro_rules! byte_search {
         }
     };
 
-    // Actual implementation - with both `start` and `continue_if`
+    // With both `start` and `continue_if`
     (
+        lexer: $lexer:ident,
+        table: $table:ident,
+        start: $start:ident,
+        continue_if: ($byte:ident, $pos:ident) $should_continue:expr,
+        handle_eof: $eof_handler:expr,
+    ) => {{
+        // If table matched NUL, `handle_eof` would never be evaluated, and `continue_if` would be
+        // evaluated at end of source, where continuing the search would read out of bounds
+        const {
+            assert!(
+                !$table.matches(0),
+                "`handle_eof` and `continue_if` cannot be used with a table which matches NUL"
+            );
+        }
+        byte_search! {
+            @search
+            lexer: $lexer,
+            table: $table,
+            start: $start,
+            continue_if: ($byte, $pos) $should_continue,
+            handle_eof: $eof_handler,
+        }
+    }};
+
+    // Actual implementation.
+    // The arms above check at compile time that either table matches NUL, or `handle_eof`
+    // is provided - not both.
+    (
+        @search
         lexer: $lexer:ident,
         table: $table:ident,
         start: $start:ident,
@@ -328,53 +440,42 @@ macro_rules! byte_search {
         // Silence warnings if macro called in unsafe code
         #[allow(unused_unsafe, clippy::unnecessary_safety_comment, clippy::allow_attributes)]
         'outer: loop {
-            let $byte = if $pos.can_read_batch_from(&$lexer.source) {
-                // Search a batch of `SEARCH_BATCH_SIZE` bytes.
-                //
-                // `'inner: loop {}` is not a real loop - it always exits on first turn.
-                // Only using `loop {}` so that can use `break 'inner` to get out of it.
-                // This allows complex logic of `$should_continue` and `$match_handler` to be
-                // outside the `for` loop, keeping it as minimal as possible, to encourage
-                // compiler to unroll it.
-                //
-                // SAFETY:
-                // `$pos.can_read_batch_from(&$lexer.source)` check above ensures there are
-                // at least `SEARCH_BATCH_SIZE` bytes remaining in `lexer.source`.
-                // So `$pos.add()` in this loop cannot go out of bounds.
-                let batch = unsafe { $pos.slice(crate::lexer::search::SEARCH_BATCH_SIZE) };
-                'inner: loop {
-                    for (i, &byte) in batch.iter().enumerate() {
-                        if $table.matches(byte) {
-                            // SAFETY: Cannot go out of bounds (see above).
-                            // Also see above about UTF-8 character boundaries invariant.
-                            $pos = unsafe { $pos.add(i) };
-                            break 'inner byte;
-                        }
-                    }
-                    // No match in batch - search next batch.
-                    // SAFETY: Cannot go out of bounds (see above).
-                    // Also see above about UTF-8 character boundaries invariant.
-                    $pos = unsafe { $pos.add(crate::lexer::search::SEARCH_BATCH_SIZE) };
-                    continue 'outer;
-                }
-            } else {
-                // Not enough bytes remaining for a batch. Process byte-by-byte.
-                // Same as above, `'inner: loop {}` is not a real loop here - always exits on first turn.
-                'inner: loop {
-                    // SAFETY: `$pos` is before or equal to end of source
-                    let remaining = unsafe {
-                        let remaining_len = $lexer.source.end().offset_from($pos);
-                        $pos.slice(remaining_len)
-                    };
-                    for (i, &byte) in remaining.iter().enumerate() {
-                        if $table.matches(byte) {
-                            // SAFETY: `i` is less than number of bytes remaining after `$pos`,
-                            // so `$pos + i` cannot be out of bounds
-                            $pos = unsafe { $pos.add(i) };
-                            break 'inner byte;
-                        }
-                    }
+            // Search a batch of `SEARCH_BATCH_SIZE` bytes.
+            //
+            // SAFETY: `$pos` is at or before end of source (see below), and source is followed by
+            // at least `SEARCH_BATCH_SIZE` NUL bytes of padding, so can read a whole batch
+            // from `$pos` without going out of bounds.
+            let batch = unsafe { $pos.slice(crate::lexer::search::SEARCH_BATCH_SIZE) };
 
+            // `'inner: loop {}` is not a real loop - it always exits on first turn.
+            // Only using `loop {}` so that can use `break 'inner` to get out of it.
+            // This allows complex logic of `$should_continue` and `$eof_handler` to be
+            // outside the `for` loop, keeping it as minimal as possible, to encourage
+            // compiler to unroll it.
+            let $byte = 'inner: loop {
+                for (i, &byte) in batch.iter().enumerate() {
+                    // `matches_or_nul` matches NUL, even if the table itself doesn't
+                    if $table.matches_or_nul(byte) {
+                        // SAFETY: No byte in batch before this one is NUL, so those bytes are
+                        // not padding, so `$pos + i` is at or before end of source.
+                        // Also see above about UTF-8 character boundaries invariant.
+                        $pos = unsafe { $pos.add(i) };
+                        break 'inner byte;
+                    }
+                }
+                // No match in batch - search next batch.
+                // SAFETY: No byte in batch is NUL, so none of batch is padding,
+                // so `$pos + SEARCH_BATCH_SIZE` is at or before end of source.
+                // Also see above about UTF-8 character boundaries invariant.
+                $pos = unsafe { $pos.add(crate::lexer::search::SEARCH_BATCH_SIZE) };
+                continue 'outer;
+            };
+
+            // If the table matches NUL, there's nothing to do for EOF. Search has stopped on
+            // 1st byte of padding, and caller handles NUL like any other matching byte.
+            // Condition is evaluated at compile time, so this block is removed for those tables.
+            if const { !$table.matches(0) } && $byte == 0 {
+                if $pos.is_end_of(&$lexer.source) {
                     // EOF.
                     // Advance `lexer.source`'s position to end of file.
                     $lexer.source.advance_to_end();
@@ -391,7 +492,12 @@ macro_rules! byte_search {
                         break 'outer eof_ret;
                     }
                 }
-            };
+                // NUL byte in the source text, which the table does not match - continue searching.
+                // SAFETY: `$pos` is not at end of source, so safe to advance 1 byte.
+                // NUL is ASCII, so after it is a UTF-8 character boundary.
+                $pos = unsafe { $pos.add(1) };
+                continue;
+            }
 
             // Found match. Check if should continue.
             if $should_continue {
