@@ -84,7 +84,7 @@ impl<'a> TransformState<'a> {
             .file_stem() // omit file extension
             .map_or_else(|| String::from("unknown"), |name| name.to_string_lossy().to_string());
 
-        let decorator_mode = options.decorator.mode();
+        let decorator_mode = options.decorator.mode(options.env.standard_decorators);
         let class_transform = ClassTransform::new(&options.env, decorator_mode);
 
         Self {

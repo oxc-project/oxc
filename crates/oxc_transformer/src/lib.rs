@@ -135,7 +135,7 @@ impl<'a> Transformer<'a> {
         program: &mut Program<'a>,
     ) -> TransformerReturn {
         let allocator = self.allocator;
-        let decorator_mode = self.decorator.mode();
+        let decorator_mode = self.decorator.mode(self.env.standard_decorators);
 
         let ast_builder = AstBuilder::new(allocator);
 

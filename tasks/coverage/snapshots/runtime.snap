@@ -2,7 +2,7 @@ commit: 2e58f87d
 
 runtime Summary:
 AST Parsed     : 18403/18403 (100.00%)
-Positive Passed: 17429/18403 (94.71%)
+Positive Passed: 17451/18403 (94.83%)
 codegen Error: tasks/coverage/test262/test/language/eval-code/direct/var-env-func-init-global-update-configurable.js
 Test262Error: f descriptor should be enumerable; f descriptor should be writable
 
@@ -356,30 +356,6 @@ Test262Error: reject reason Expected SameValue(«TypeError: The iterator does no
 
 transform Error: tasks/coverage/test262/test/language/expressions/class/async-gen-method-static/yield-star-sync-throw.js
 throw-arg-1
-
-transform Error: tasks/coverage/test262/test/language/expressions/class/decorator/syntax/class-valid/decorator-member-expr-private-identifier.js
-SyntaxError: Invalid or unexpected token
-
-transform Error: tasks/coverage/test262/test/language/expressions/class/decorator/syntax/valid/decorator-call-expr-identifier-reference-yield.js
-SyntaxError: Invalid or unexpected token
-
-transform Error: tasks/coverage/test262/test/language/expressions/class/decorator/syntax/valid/decorator-call-expr-identifier-reference.js
-SyntaxError: Invalid or unexpected token
-
-transform Error: tasks/coverage/test262/test/language/expressions/class/decorator/syntax/valid/decorator-member-expr-decorator-member-expr.js
-SyntaxError: Invalid or unexpected token
-
-transform Error: tasks/coverage/test262/test/language/expressions/class/decorator/syntax/valid/decorator-member-expr-identifier-reference-yield.js
-SyntaxError: Invalid or unexpected token
-
-transform Error: tasks/coverage/test262/test/language/expressions/class/decorator/syntax/valid/decorator-member-expr-identifier-reference.js
-SyntaxError: Invalid or unexpected token
-
-transform Error: tasks/coverage/test262/test/language/expressions/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference-yield.js
-SyntaxError: Invalid or unexpected token
-
-transform Error: tasks/coverage/test262/test/language/expressions/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference.js
-SyntaxError: Invalid or unexpected token
 
 minify Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-class.js
 Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
@@ -1035,9 +1011,6 @@ Test262Error: Expected SameValue(«"_"», «"#field"») to be true
 transform Error: tasks/coverage/test262/test/language/expressions/class/elements/static-field-init-with-this.js
 Test262Error: Expected SameValue(«"undefinedtest"», «"test262test"») to be true
 
-transform Error: tasks/coverage/test262/test/language/expressions/class/elements/syntax/valid/grammar-field-accessor.js
-SyntaxError: Unexpected identifier '$'
-
 transform Error: tasks/coverage/test262/test/language/expressions/class/heritage-async-arrow-function.js
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
@@ -1565,42 +1538,6 @@ Test262Error: reject reason Expected SameValue(«TypeError: The iterator does no
 
 transform Error: tasks/coverage/test262/test/language/statements/class/async-gen-method-static/yield-star-sync-throw.js
 throw-arg-1
-
-transform Error: tasks/coverage/test262/test/language/statements/class/decorator/syntax/class-valid/decorator-member-expr-private-identifier.js
-SyntaxError: Invalid or unexpected token
-
-transform Error: tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/class-element-decorator-call-expr-identifier-reference.js
-SyntaxError: Invalid or unexpected token
-
-transform Error: tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/class-element-decorator-member-expr-decorator-member-expr.js
-SyntaxError: Invalid or unexpected token
-
-transform Error: tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/class-element-decorator-member-expr-identifier-reference.js
-SyntaxError: Invalid or unexpected token
-
-transform Error: tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/class-element-decorator-parenthesized-expr-identifier-reference.js
-SyntaxError: Invalid or unexpected token
-
-transform Error: tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/decorator-call-expr-identifier-reference-yield.js
-SyntaxError: Invalid or unexpected token
-
-transform Error: tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/decorator-call-expr-identifier-reference.js
-SyntaxError: Invalid or unexpected token
-
-transform Error: tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/decorator-member-expr-decorator-member-expr.js
-SyntaxError: Invalid or unexpected token
-
-transform Error: tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/decorator-member-expr-identifier-reference-yield.js
-SyntaxError: Invalid or unexpected token
-
-transform Error: tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/decorator-member-expr-identifier-reference.js
-SyntaxError: Invalid or unexpected token
-
-transform Error: tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference-yield.js
-SyntaxError: Invalid or unexpected token
-
-transform Error: tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference.js
-SyntaxError: Invalid or unexpected token
 
 minify Error: tasks/coverage/test262/test/language/statements/class/definition/invalid-extends.js
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
@@ -2285,9 +2222,6 @@ Test262Error: Expected SameValue(«"_"», «"#field"») to be true
 
 transform Error: tasks/coverage/test262/test/language/statements/class/elements/static-field-init-with-this.js
 Test262Error: Expected SameValue(«"undefinedtest"», «"test262test"») to be true
-
-transform Error: tasks/coverage/test262/test/language/statements/class/elements/syntax/valid/grammar-field-accessor.js
-SyntaxError: Unexpected identifier '$'
 
 codegen Error: tasks/coverage/test262/test/language/statements/class/static-init-arguments-label.js
 SyntaxError: 'arguments' is not allowed in class field initializer or static initialization block
