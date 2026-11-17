@@ -16,6 +16,26 @@ versioned_files = [
   "npm/runtime/package.json",
   "packages/codegen/package.json",
 ]
+# Changes of the whole release, which package changelogs link to.
+changelog = "crates/CHANGELOG.md"
+
+# The napi packages are thin bindings: their changes are made in the crates they wrap.
+[releases.changelog_includes]
+"napi/parser" = [
+  "crates/oxc_parser",
+  "crates/oxc_ast",
+  "crates/oxc_estree",
+  "crates/oxc_estree_tokens",
+  "crates/oxc_regular_expression",
+]
+"napi/transform" = [
+  "crates/oxc_transformer",
+  "crates/oxc_transformer_plugins",
+  "crates/oxc_isolated_declarations",
+]
+"napi/transform-react" = ["crates/oxc_react_compiler", "crates/oxc_transformer"]
+"napi/transform-relay" = ["crates/oxc_relay"]
+"napi/minify" = ["crates/oxc_minifier", "crates/oxc_mangler", "crates/oxc_codegen"]
 
 [[releases]]
 name = "oxlint"
