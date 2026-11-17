@@ -336,20 +336,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
     fn enter_try_statement(&mut self, node: &mut TryStatement<'a>, ctx: &mut TraverseCtx<'a>) {
         self.transform_try_block(&mut node.block, ctx);
         if let Some(handler) = &mut node.handler {
-            let original_scope_id = handler.body.scope_id();
+            // Catch parameters are bound in the catch clause scope, which is unchanged.
             self.transform_try_block(&mut handler.body, ctx);
-            let new_scope_id = handler.body.scope_id();
-            if new_scope_id != original_scope_id
-                && let Some(param) = &handler.param
-            {
-                param.pattern.bound_names(&mut |ident| {
-                    ctx.scoping_mut().move_binding_by_symbol_id(
-                        original_scope_id,
-                        new_scope_id,
-                        ident.symbol_id(),
-                    );
-                });
-            }
         }
         if let Some(finalizer) = &mut node.finalizer {
             self.transform_try_block(finalizer, ctx);
@@ -1035,7 +1023,7 @@ impl<'a> ExplicitResourceManagement<'a> {
         // binding called `_`. `using_ctx` is a UID with prefix `_usingCtx`.
         let ident = ctx.generate_binding(
             static_ident!("_"),
-            block_scope_id,
+            catch_scope_id,
             SymbolFlags::CatchVariable | SymbolFlags::FunctionScopedVariable,
         );
 
