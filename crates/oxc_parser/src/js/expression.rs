@@ -1798,6 +1798,27 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                             None => None,
                         }
                     }
+                    // `<div />`, `<T,>(x) => {}`
+                    Kind::LAngle if self.source_type.is_jsx() => {
+                        let (expression, is_arrow) = self
+                            .parse_jsx_expression_or_generic_arrow_function(
+                                allow_return_type_in_arrow_function,
+                            );
+                        if !is_arrow {
+                            // A JSX element is a complete `UpdateExpression`.
+                            break 'parse_lhs if kind_to_precedence(self.cur_kind()).is_none() {
+                                expression
+                            } else {
+                                self.parse_binary_expression_rest(
+                                    start,
+                                    expression,
+                                    /* lhs_parenthesized */ false,
+                                    Precedence::Comma,
+                                )
+                            };
+                        }
+                        Some(expression)
+                    }
                     Kind::LAngle => self.try_parse_generic_arrow_function_expression(
                         allow_return_type_in_arrow_function,
                     ),
