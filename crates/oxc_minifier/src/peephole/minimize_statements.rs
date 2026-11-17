@@ -210,7 +210,8 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// For variable declarations:
-    /// * merge with the previous variable declarator if their kinds are the same
+    /// * merge retained declarators into an immediately preceding declaration of the same
+    ///   kind when `join_vars` is enabled or at least one declarator is removed
     /// * remove the variable declarator if it is unused
     /// * keep the initializer if it has side effects
     fn handle_variable_declaration(
