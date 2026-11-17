@@ -16,8 +16,9 @@ use tracing::debug;
 use crate::{
     CodeActionParams, TextDocument, ToolRestartChanges,
     capabilities::DiagnosticMode,
-    file_system::LSPFileSystem,
-    tool::{ClientMessage, DiagnosticResult, Tool, ToolBuilder},
+    file_system::{LSPFileSystem, ResolvedPath},
+    tool::{ClientMessage, ContextBuilder, DiagnosticResult, Tool, ToolBuilder},
+    utils::{NestedContext, owns},
 };
 
 pub struct WorkerToolChangeResult {
@@ -43,6 +44,8 @@ pub struct WorkspaceWorker {
     // Initialized options from the client
     // If None, the worker has not been initialized yet
     pub(crate) options: Mutex<Option<serde_json::Value>>,
+    // The nested workspace folders around the root, handed to the tool on every build.
+    context: RwLock<Arc<NestedContext>>,
 
     // Whether the client is in diagnostic pull mode / push mode, or not supporting diagnostics at all
     diagnostic_mode: DiagnosticMode,
@@ -64,6 +67,7 @@ impl WorkspaceWorker {
             tool: RwLock::new(None),
             builder,
             options: Mutex::new(None),
+            context: RwLock::new(Arc::default()),
             diagnostic_mode,
             published_diagnostics: Mutex::new(FxHashSet::default()),
         }
@@ -74,15 +78,37 @@ impl WorkspaceWorker {
         &self.root_uri
     }
 
+    /// Set the nested workspace folders around the root, see [`NestedContext`].
+    /// Call it before [`start_worker`](Self::start_worker), so the first build already knows them.
+    ///
+    /// Returns whether the context differs from the previous one, i.e. whether a started tool has
+    /// to be rebuilt with [`rebuild_tool`](Self::rebuild_tool).
+    pub(crate) async fn set_context(&self, context: NestedContext) -> bool {
+        let mut current = self.context.write().await;
+        let changed = **current != context;
+        *current = Arc::new(context);
+        changed
+    }
+
     /// Start all programs (linter, formatter) for the worker.
     /// This should be called after the client has sent the workspace configuration.
     ///
     /// Returns messages to be sent to the client.
     pub async fn start_worker(&self, options: serde_json::Value) -> Vec<ClientMessage> {
-        let result = self.builder.build(&self.root_uri, options.clone());
-        *self.tool.write().await = Some(result.tool);
-
+        // The context is read inside the critical section, like in `rebuild_tool`:
+        // a context which changes while the tool is built is applied by the rebuild which follows.
+        let mut tool_guard = self.tool.write().await;
+        let context = Arc::clone(&*self.context.read().await);
+        let result = self.builder.build_with_context(
+            &self.root_uri,
+            options.clone(),
+            context.as_build_context(),
+        );
+        *tool_guard = Some(result.tool);
+        // Stored under the lock of the tool, like in `handle_tool_changes`: a rebuild which waits
+        // for the lock builds from them.
         *self.options.lock().await = Some(options);
+        drop(tool_guard);
 
         result.client_messages
     }
@@ -100,6 +126,55 @@ impl WorkspaceWorker {
         } else {
             Some(registration_watcher_id(&self.root_uri, patterns))
         }
+    }
+
+    /// Rebuild the started tool with its current options and its current context.
+    ///
+    /// Needed when only the context changed, e.g. a workspace folder was added below the root: the
+    /// tool has to skip what is now served by another worker, or take back what it served.
+    /// The open documents are not linted again, the caller revalidates them.
+    ///
+    /// Returns the messages for the client and, when the watcher patterns of the rebuilt tool
+    /// differ, the registrations which have to replace the current ones (nothing to unregister
+    /// when none were registered).
+    pub(crate) async fn rebuild_tool(
+        &self,
+    ) -> (Vec<ClientMessage>, Vec<Unregistration>, Vec<Registration>) {
+        // The tool is locked first, then the options and the context, the same way
+        // `handle_tool_changes` does it, so the tool is never built from a context which was
+        // replaced while this rebuild waited for the lock.
+        let (client_messages, patterns_before, patterns_after) = {
+            let mut tool_guard = self.tool.write().await;
+            let Some(tool) = tool_guard.as_ref() else {
+                return (vec![], vec![], vec![]);
+            };
+            let options = self.options.lock().await.clone().unwrap_or_default();
+            let context = Arc::clone(&*self.context.read().await);
+
+            let patterns_before = tool.get_watcher_patterns(options.clone());
+
+            self.builder.shutdown(&self.root_uri);
+            let result = self.builder.build_with_context(
+                &self.root_uri,
+                options.clone(),
+                context.as_build_context(),
+            );
+
+            let patterns_after = result.tool.get_watcher_patterns(options);
+            *tool_guard = Some(result.tool);
+
+            (result.client_messages, patterns_before, patterns_after)
+        };
+
+        if patterns_before == patterns_after {
+            return (client_messages, vec![], vec![]);
+        }
+
+        // Nothing is registered under the id when the tool had no patterns before.
+        let (unregistrations, registrations) =
+            replace_watchers(&self.root_uri, !patterns_before.is_empty(), patterns_after);
+
+        (client_messages, unregistrations, registrations)
     }
 
     /// Check if the worker needs to be initialized with options
@@ -254,9 +329,14 @@ impl WorkspaceWorker {
             options_guard.clone().unwrap_or_default()
         };
 
-        self.handle_tool_changes(file_system, needs_diagnostic_refresh, move |tool, builder| {
-            tool.handle_watched_file_change(builder, &file_event.uri, &self.root_uri, options)
-        })
+        self.handle_tool_changes(
+            file_system,
+            needs_diagnostic_refresh,
+            None,
+            move |tool, builder| {
+                tool.handle_watched_file_change(builder, &file_event.uri, &self.root_uri, options)
+            },
+        )
         .await
     }
 
@@ -283,31 +363,32 @@ impl WorkspaceWorker {
         "
         );
 
-        let result = self
-            .handle_tool_changes(file_system, needs_diagnostic_refresh, |tool, builder| {
+        self.handle_tool_changes(
+            file_system,
+            needs_diagnostic_refresh,
+            Some(changed_options_json.clone()),
+            |tool, builder| {
                 tool.handle_configuration_change(
                     builder,
                     &self.root_uri,
                     &old_options,
-                    changed_options_json.clone(),
+                    changed_options_json,
                 )
-            })
-            .await;
-
-        {
-            let mut options_guard = self.options.lock().await;
-            *options_guard = Some(changed_options_json);
-        }
-
-        result
+            },
+        )
+        .await
     }
 
     /// Common implementation for handling tool changes that may result in
-    /// diagnostics updates, watcher registrations/unregistrations, and tool replacement
+    /// diagnostics updates, watcher registrations/unregistrations, and tool replacement.
+    ///
+    /// `new_options` are stored under the lock of the tool, so a rebuild which waits for the lock
+    /// builds from them.
     async fn handle_tool_changes<F>(
         &self,
         file_system: Option<&LSPFileSystem>,
         needs_diagnostic_refresh: &mut bool,
+        new_options: Option<serde_json::Value>,
         change_handler: F,
     ) -> WorkerToolChangeResult
     where
@@ -318,6 +399,14 @@ impl WorkspaceWorker {
         let mut diagnostics: Option<Vec<(Uri, Vec<Diagnostic>)>> = None;
 
         let mut tools = self.tool.write().await;
+        if let Some(new_options) = new_options {
+            *self.options.lock().await = Some(new_options);
+        }
+        // The context is read inside the critical section, like in `rebuild_tool`.
+        // The tool builder handed to the tool builds with it, so a rebuild keeps the exclusions.
+        let context = Arc::clone(&*self.context.read().await);
+        let builder =
+            ContextBuilder { inner: self.builder.as_ref(), context: context.as_build_context() };
         let Some(tool) = tools.as_mut() else {
             // No tool to update, return early
             return WorkerToolChangeResult {
@@ -327,13 +416,12 @@ impl WorkspaceWorker {
                 client_messages: Vec::new(), // TODO: Should we return a message to the client if the tool is not initialized?
             };
         };
-        let change = change_handler(tool, self.builder.as_ref());
+        let change = change_handler(tool, &builder);
 
         if let Some(patterns) = change.watch_patterns {
-            unregistrations.push(unregistration_watcher_id(&self.root_uri));
-            if !patterns.is_empty() {
-                registrations.push(registration_watcher_id(&self.root_uri, patterns));
-            }
+            let (removed, added) = replace_watchers(&self.root_uri, true, patterns);
+            unregistrations.extend(removed);
+            registrations.extend(added);
         }
         if let Some(replaced_tool) = change.tool {
             *tool = replaced_tool;
@@ -348,7 +436,19 @@ impl WorkspaceWorker {
                 };
             };
 
+            // A file belongs to the worker of the innermost workspace folder: the documents of
+            // another folder, or of a folder nested in this one, are validated by their own worker.
+            // A document which is not a file, like an untitled one, has no folder.
+            let root_path = ResolvedPath::try_from(&self.root_uri).ok();
+            let excluded_paths = context
+                .excluded_roots
+                .iter()
+                .filter_map(|root| ResolvedPath::try_from(root).ok())
+                .collect::<Vec<_>>();
             for uri in file_system.keys() {
+                if !owns(root_path.as_ref(), &excluded_paths, &uri) {
+                    continue;
+                }
                 let document = file_system.get_document(&uri);
                 let Ok(mut reports) = tool.run_diagnostic(document) else {
                     // If diagnostics could not be run, skip this URI, but continue with others
@@ -388,6 +488,23 @@ impl WorkspaceWorker {
         };
         tool.execute_command(command, arguments)
     }
+}
+
+/// The unregistration, when `unregister`, and the registration which replace the watchers of a
+/// worker by `patterns`. Nothing is registered for no pattern.
+fn replace_watchers(
+    root_uri: &Uri,
+    unregister: bool,
+    patterns: Vec<String>,
+) -> (Vec<Unregistration>, Vec<Registration>) {
+    let unregistrations =
+        if unregister { vec![unregistration_watcher_id(root_uri)] } else { vec![] };
+    let registrations = if patterns.is_empty() {
+        vec![]
+    } else {
+        vec![registration_watcher_id(root_uri, patterns)]
+    };
+    (unregistrations, registrations)
 }
 
 /// Create an unregistration for a file system watcher
