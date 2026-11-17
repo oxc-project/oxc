@@ -30,6 +30,7 @@ all = [
   "assert_unchecked",
   "box_macros",
   "branch_hints",
+  "brands",
   "buffered_vec",
   "code_buffer",
   "fieldless_enum",
@@ -45,6 +46,7 @@ all = [
 assert_unchecked = []
 box_macros = []
 branch_hints = []
+brands = []
 buffered_vec = []
 code_buffer = ["assert_unchecked"]
 fieldless_enum = []
