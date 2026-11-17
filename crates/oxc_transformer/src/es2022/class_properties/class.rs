@@ -105,7 +105,7 @@ impl<'a> ClassProperties<'a> {
 
         let lowering = ctx.state.class_lowering_of(class_scope_id);
         let mut entry =
-            self.on_body_entry(body, class_name_binding.as_ref(), class_scope_id, lowering, ctx);
+            self.on_body_entry(body, &mut class_name_binding, class_scope_id, lowering, ctx);
         let per_evaluation_state = entry.per_evaluation_state;
         if matches!(lowering.mode(), ClassLoweringMode::Native | ClassLoweringMode::Preserve) {
             // Register private names only when they can shadow a lowered name in an enclosing
@@ -299,6 +299,7 @@ impl<'a> ClassProperties<'a> {
         );
 
         entry.configure_bindings(&mut class_bindings, &private_props, ctx);
+        entry.rewrite_expression_name(body, &class_bindings, is_declaration, ctx);
 
         // Add entry to `classes_stack`
         self.classes_stack.push(ClassDetails {

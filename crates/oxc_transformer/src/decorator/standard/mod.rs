@@ -43,10 +43,13 @@ use oxc_traverse::BoundIdentifier;
 use crate::decorator::DecoratorMode;
 
 mod accessor;
+mod class_name;
 mod element;
 mod name;
 mod read_only;
 mod sequence;
+
+pub use class_name::ClassNameRewriter;
 
 /// Element kind encoded by the decorator runtime helper protocol.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -89,6 +92,9 @@ pub struct StandardDecoratorState<'a> {
     accessor_names: FxHashMap<Address, JSStr<'a>>,
     /// Names of anonymous class expressions in instance field initializers, for named evaluation.
     named_classes: FxHashMap<Address, Expression<'a>>,
+    /// Decorated class declarations to convert to `let _Foo = class Foo {}`, keyed by class address.
+    /// Values are `(inner binding, outer binding)`.
+    declaration_rewrites: FxHashMap<Address, (BoundIdentifier<'a>, BoundIdentifier<'a>)>,
     /// Scratch state reset before emitting each decorated class.
     exit: DecoratorExitState<'a>,
 }
@@ -199,6 +205,6 @@ impl<'a> StandardDecoratorState<'a> {
     /// Per-class element tables live in [`ClassDecoratorState`] and die with their class. The
     /// remaining class-keyed maps must be drained by that class's exit.
     pub(crate) fn has_leftover_class_entries(&self) -> bool {
-        !self.named_classes.is_empty()
+        !self.named_classes.is_empty() || !self.declaration_rewrites.is_empty()
     }
 }

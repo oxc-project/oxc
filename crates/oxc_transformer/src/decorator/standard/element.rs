@@ -15,14 +15,16 @@ use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolFlags,
 };
-use oxc_traverse::{Ancestor, BoundIdentifier};
+use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 
 use crate::{
     common::{
         computed_key::{create_computed_key_temp_var, key_needs_temp_var},
+        duplicate::duplicate_expression,
         helper_loader::{Helper, helper_call_expr},
     },
     context::TraverseCtx,
+    es2020::OptionalChaining,
     state::TransformState,
     utils::ast_builder::create_assignment,
 };
@@ -295,6 +297,67 @@ impl<'a> StandardDecoratorState<'a> {
         )
     }
 
+    /// Preserve the receiver before private fields and `super` accesses are lowered.
+    /// Each decorator is stored as `[receiver, function]` in evaluation order.
+    pub(crate) fn capture_decorator_receiver(
+        &self,
+        decorator: &mut Decorator<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if !self.enabled {
+            return;
+        }
+        let expression = decorator.expression.get_inner_expression_mut();
+        if matches!(expression, Expression::ChainExpression(_)) {
+            // Capture only after the optional checks have succeeded. Pulling a member's
+            // object out of a chain would turn `null?.child.dec` into an early throw.
+            OptionalChaining::new().enter_expression(expression, ctx);
+            Self::capture_optional_decorator_receiver(expression, ctx);
+        } else {
+            Self::capture_decorator_receiver_pair(expression, ctx);
+        }
+    }
+
+    fn capture_optional_decorator_receiver(
+        expression: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        match expression {
+            Expression::ConditionalExpression(conditional) => {
+                Self::capture_optional_decorator_receiver(&mut conditional.consequent, ctx);
+                Self::capture_optional_decorator_receiver(&mut conditional.alternate, ctx);
+            }
+            Expression::SequenceExpression(sequence) => {
+                Self::capture_optional_decorator_receiver(
+                    sequence.expressions.last_mut().unwrap(),
+                    ctx,
+                );
+            }
+            expression => Self::capture_decorator_receiver_pair(expression, ctx),
+        }
+    }
+
+    fn capture_decorator_receiver_pair(expression: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let receiver = if let Some(member) = expression.as_member_expression_mut() {
+            let object = member.object_mut();
+            if matches!(object.get_inner_expression(), Expression::Super(_)) {
+                Expression::new_this_expression(SPAN, ctx)
+            } else {
+                let (receiver, reference) = duplicate_expression(object.take_in(ctx), true, ctx);
+                *object = reference;
+                receiver
+            }
+        } else {
+            Expression::new_void_0(SPAN, ctx)
+        };
+        let function = expression.take_in(ctx);
+        *expression = Expression::new_array_expression(
+            SPAN,
+            [ArrayExpressionElement::from(receiver), ArrayExpressionElement::from(function)],
+            ctx,
+        );
+    }
+
     /// Decorator context names use the property key after a single ToPropertyKey conversion.
     ///
     /// Entry phase: convert keys of decorated elements, and computed keys of fields, with
@@ -492,7 +555,11 @@ impl<'a> StandardDecoratorState<'a> {
             let name = class.id.as_ref().map_or("Class", |id| id.name.as_str());
             let binding = ctx.generate_uid_in_current_hoist_scope(&format!("{name}_decorators"));
             ctx.state.var_declarations.insert_var(&binding, &ctx.ast);
-            let array = Self::decorator_array(&mut class.decorators, ctx);
+            let elements = ArenaVec::from_iter_in(
+                class.decorators.drain(..).map(|d| ArrayExpressionElement::from(d.expression)),
+                ctx,
+            );
+            let array = Expression::new_array_expression(SPAN, elements, ctx);
             insert_before.push(create_assignment(&binding, array, SPAN, ctx));
             self.exit.class_decorators = Some(binding);
         }
@@ -543,30 +610,13 @@ impl<'a> StandardDecoratorState<'a> {
         };
         let binding = ctx.generate_uid_in_current_hoist_scope(&format!("{hint}_dec"));
         ctx.state.var_declarations.insert_var(&binding, &ctx.ast);
-        let array = Self::decorator_array(decorators, ctx);
+        let elements = ArenaVec::from_iter_in(
+            decorators.drain(..).map(|d| ArrayExpressionElement::from(d.expression)),
+            ctx,
+        );
+        let array = Expression::new_array_expression(SPAN, elements, ctx);
         insert_before.push(create_assignment(&binding, array, SPAN, ctx));
         binding
-    }
-
-    /// Decorators as `[receiver, function]` pairs, which the runtime expects.
-    fn decorator_array(
-        decorators: &mut ArenaVec<'a, Decorator<'a>>,
-        ctx: &TraverseCtx<'a>,
-    ) -> Expression<'a> {
-        let mut elements = ArenaVec::with_capacity_in(decorators.len(), ctx);
-        for decorator in decorators.drain(..) {
-            let receiver = Expression::new_void_0(SPAN, ctx);
-            let pair = Expression::new_array_expression(
-                SPAN,
-                [
-                    ArrayExpressionElement::from(receiver),
-                    ArrayExpressionElement::from(decorator.expression),
-                ],
-                ctx,
-            );
-            elements.push(ArrayExpressionElement::from(pair));
-        }
-        Expression::new_array_expression(SPAN, elements, ctx)
     }
 
     /// Give a public method a temporary symbol key so later same-name methods cannot overwrite
