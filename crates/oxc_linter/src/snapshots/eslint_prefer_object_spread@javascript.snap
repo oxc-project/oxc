@@ -1,0 +1,17 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.js:1:1]
+ 1 │ Object.assign({}, { foo: 'bar' })
+   · ─────────────────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.js:1:1]
+ 1 │ Object.assign({ retries: 3, timeout: 1000 }, { timeout: 5000 })
+   · ───────────────────────────────────────────────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
