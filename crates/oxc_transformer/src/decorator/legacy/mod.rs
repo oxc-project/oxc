@@ -821,10 +821,6 @@ impl<'a> LegacyDecorator<'a> {
                 SymbolFlags::BlockScopedVariable;
             BoundIdentifier::new(ident.name, old_class_symbol_id)
         });
-        let class_alias_binding = class_binding.as_ref().and_then(|id| {
-            ClassReferenceChanger::new(id.clone(), ctx).get_class_alias_if_needed(&mut class.body)
-        });
-
         let ClassDecorations {
             class_binding: class_binding_tmp,
             mut decoration_stmts,
@@ -832,6 +828,15 @@ impl<'a> LegacyDecorator<'a> {
             class_has_private_in_expression_in_decorator,
             should_transform: _,
         } = current_class_decorations;
+
+        if class_has_private_in_expression_in_decorator {
+            let decorations = mem::take(&mut decoration_stmts);
+            Self::insert_decorations_into_class_static_block(class, decorations, ctx);
+        }
+
+        let class_alias_binding = class_binding.as_ref().and_then(|id| {
+            ClassReferenceChanger::new(id.clone(), ctx).get_class_alias_if_needed(&mut class.body)
+        });
 
         let class_binding = class_binding.unwrap_or_else(|| {
             // `class_binding_tmp` maybe already generated a default class binding for unnamed classes, so use it.
@@ -873,7 +878,8 @@ impl<'a> LegacyDecorator<'a> {
                         ctx,
                     );
                     let body = [class_alias_with_this_assignment];
-                    let scope_id = ctx.create_child_scope_of_current(ScopeFlags::ClassStaticBlock);
+                    let scope_id =
+                        ctx.create_child_scope(class.scope_id(), ScopeFlags::ClassStaticBlock);
                     let element =
                         ClassElement::new_static_block_with_scope_id(SPAN, body, scope_id, ctx);
                     Some(element)
@@ -883,35 +889,31 @@ impl<'a> LegacyDecorator<'a> {
             })
         };
 
-        if class_has_private_in_expression_in_decorator {
-            let decorations = mem::take(&mut decoration_stmts);
-            Self::insert_decorations_into_class_static_block(class, decorations, ctx);
-        } else {
-            let address = match ctx.parent() {
-                parent @ (Ancestor::ExportDefaultDeclarationDeclaration(_)
-                | Ancestor::ExportDeclarationDeclaration(_)) => parent.address(),
-                // `Class` is always stored in a `Box`, so has a stable memory location
-                _ => class.unstable_address(),
-            };
+        let address = match ctx.parent() {
+            parent @ (Ancestor::ExportDefaultDeclarationDeclaration(_)
+            | Ancestor::ExportDeclarationDeclaration(_)) => parent.address(),
+            // `Class` is always stored in a `Box`, so has a stable memory location
+            _ => class.unstable_address(),
+        };
 
-            decoration_stmts.push(constructor_decoration);
-            self.decorations.entry(address).or_default().append(&mut decoration_stmts);
-            self.class_decorated_data = Some(ClassDecoratedData {
-                binding: class_binding,
-                // If the class alias has reassigned to `this` in the static block, then
-                // don't assign `class` to the class alias again.
-                //
-                // * class_alias_with_this_assignment is `None`:
-                //   `Class = _Class = class Class {}`
-                // * class_alias_with_this_assignment is `Some`:
-                //   `Class = class Class { static { _Class = this; } }`
-                alias_binding: if class_alias_with_this_assignment.is_none() {
-                    class_alias_binding
-                } else {
-                    None
-                },
-            });
-        }
+        // Class and constructor decorators run outside the class, after member decorators.
+        decoration_stmts.push(constructor_decoration);
+        self.decorations.entry(address).or_default().append(&mut decoration_stmts);
+        self.class_decorated_data = Some(ClassDecoratedData {
+            binding: class_binding,
+            // If the class alias has reassigned to `this` in the static block, then
+            // don't assign `class` to the class alias again.
+            //
+            // * class_alias_with_this_assignment is `None`:
+            //   `Class = _Class = class Class {}`
+            // * class_alias_with_this_assignment is `Some`:
+            //   `Class = class Class { static { _Class = this; } }`
+            alias_binding: if class_alias_with_this_assignment.is_none() {
+                class_alias_binding
+            } else {
+                None
+            },
+        });
 
         if let Some(class_alias_with_this_assignment) = class_alias_with_this_assignment {
             class.body.body.insert(0, class_alias_with_this_assignment);
@@ -1418,6 +1420,7 @@ impl<'a> VisitMut<'a> for ClassReferenceChanger<'a, '_> {
     #[inline]
     fn visit_identifier_reference(&mut self, ident: &mut IdentifierReference<'a>) {
         if self.is_class_reference(ident) {
+            self.ctx.scoping_mut().delete_reference(ident.reference_id());
             *ident = self.get_alias_ident_reference();
         }
     }

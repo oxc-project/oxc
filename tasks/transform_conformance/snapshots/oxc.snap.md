@@ -1,6 +1,6 @@
 commit: 16a2d671
 
-Passed: 333/460
+Passed: 336/460
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -216,7 +216,7 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (23/109)
+# legacy-decorators (26/109)
 * oxc/accessor/input.ts
 x Output mismatch
 
@@ -470,47 +470,6 @@ Unresolved references mismatch:
 after transform: ["Boolean", "Function", "Number", "String", "babelHelpers"]
 rebuilt        : ["Boolean", "Function", "Number", "String", "babelHelpers", "methodDecorator", "paramDecorator"]
 
-* oxc/metadata/private-in-expression-in-decorator/input.ts
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-Bindings mismatch:
-after transform: ScopeId(1): ["Cls"]
-rebuilt        : ScopeId(1): []
-Bindings mismatch:
-after transform: ScopeId(3): ["Cls2"]
-rebuilt        : ScopeId(4): []
-Symbol reference IDs mismatch for "dec":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(4)]
-rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(10)]
-Symbol scope ID mismatch for "Cls":
-after transform: SymbolId(4): ScopeId(1)
-rebuilt        : SymbolId(1): ScopeId(0)
-Symbol reference IDs mismatch for "Cls":
-after transform: SymbolId(4): []
-rebuilt        : SymbolId(1): [ReferenceId(2), ReferenceId(7)]
-Symbol scope ID mismatch for "Cls2":
-after transform: SymbolId(5): ScopeId(3)
-rebuilt        : SymbolId(2): ScopeId(0)
-Symbol reference IDs mismatch for "Cls2":
-after transform: SymbolId(5): []
-rebuilt        : SymbolId(2): [ReferenceId(11), ReferenceId(17)]
-Reference symbol mismatch for "Cls":
-after transform: SymbolId(1) "Cls"
-rebuilt        : SymbolId(1) "Cls"
-Reference symbol mismatch for "Cls":
-after transform: SymbolId(1) "Cls"
-rebuilt        : SymbolId(1) "Cls"
-Reference symbol mismatch for "Cls2":
-after transform: SymbolId(2) "Cls2"
-rebuilt        : SymbolId(2) "Cls2"
-Reference symbol mismatch for "Cls2":
-after transform: SymbolId(2) "Cls2"
-rebuilt        : SymbolId(2) "Cls2"
-Unresolved reference IDs mismatch for "babelHelpers":
-after transform: [ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(20), ReferenceId(22), ReferenceId(24)]
-rebuilt        : [ReferenceId(0), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(9), ReferenceId(12), ReferenceId(14), ReferenceId(16)]
-
 * oxc/metadata/readonly-array/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["Source", "dec"]
@@ -567,22 +526,6 @@ rebuilt        : ReferenceId(5): ReferenceFlags(Read)
 Reference flags mismatch for "UnboundTypeReference":
 after transform: ReferenceId(3): ReferenceFlags(Read | Type)
 rebuilt        : ReferenceId(7): ReferenceFlags(Read)
-
-* oxc/static-field/input.ts
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(ClassStaticBlock)
-rebuilt        : ScopeId(4): ScopeFlags(StrictMode | ClassStaticBlock)
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(0))
-rebuilt        : ScopeId(4): Some(ScopeId(3))
-Symbol reference IDs mismatch for "Foo":
-after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6), ReferenceId(8)]
-rebuilt        : SymbolId(3): [ReferenceId(4), ReferenceId(8)]
-
-* oxc/static-field-with-class-properties/input.ts
-Symbol reference IDs mismatch for "Foo":
-after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6), ReferenceId(8), ReferenceId(10)]
-rebuilt        : SymbolId(3): [ReferenceId(4), ReferenceId(6), ReferenceId(10)]
 
 * oxc/with-class-private-properties-unnamed-default-export/input.ts
 Symbol flags mismatch for "_default":
