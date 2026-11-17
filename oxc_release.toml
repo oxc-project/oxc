@@ -34,7 +34,7 @@ changelog = "crates/CHANGELOG.md"
   "crates/oxc_isolated_declarations",
 ]
 "napi/transform-react" = ["crates/oxc_react_compiler", "crates/oxc_transformer"]
-"napi/transform-relay" = ["crates/oxc_relay", "crates/oxc_transformer"]
+"napi/transform-relay" = ["crates/oxc_relay"]
 "napi/minify" = ["crates/oxc_minifier", "crates/oxc_mangler", "crates/oxc_codegen"]
 
 [[releases]]
