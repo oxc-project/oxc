@@ -76,7 +76,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
 
             // A first element that cannot be a `BindingElement` makes the list
-            // a parenthesized expression: `(a.b)`, `(a + b)`, `(!a)`, `(function () {})`.
+            // a parenthesized expression: `(a.b)`, `(a + b)`, `(!a)`, `(function () {})`,
+            // `(<div />)`.
             let first_parsed = if identifier.is_some() {
                 Self::continues_identifier_expression(self.cur_kind())
             } else {
@@ -194,13 +195,24 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// Whether an element that starts with `kind` cannot be a `BindingElement`.
+    ///
+    /// `<` starts a JSX element, a type assertion, or an arrow function with type parameters.
+    /// Most JSX elements which start an expression are directly inside parentheses.
     #[inline]
     fn cannot_start_binding_element(kind: Kind) -> bool {
         kind.is_literal()
             || kind.is_unary_operator()
             || kind.is_update_operator()
             || kind.is_template_start_of_tagged_template()
-            || matches!(kind, Kind::Function | Kind::Class | Kind::New | Kind::LParen | Kind::Slash)
+            || matches!(
+                kind,
+                Kind::Function
+                    | Kind::Class
+                    | Kind::New
+                    | Kind::LParen
+                    | Kind::Slash
+                    | Kind::LAngle
+            )
     }
 
     /// Parse the first element of a list that cannot be arrow function parameters, and
