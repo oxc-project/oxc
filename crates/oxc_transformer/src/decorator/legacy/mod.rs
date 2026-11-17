@@ -180,10 +180,16 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a> {
         // transform the newly created private backing fields.
         Self::lower_accessor_properties(class, ctx);
 
-        self.class_decorations_stack.push(
-            ClassDecorations::default()
-                .with_should_transform(!(class.is_expression() || class.declare)),
-        );
+        let should_transform = !(class.is_expression() || class.declare);
+        // Class-properties must see the same binding that decorators will use after the class.
+        if should_transform && class.id.is_none() && Self::check_class_has_decorated(class) {
+            let outer_scope_id = ctx.scoping().scope_parent_id(class.scope_id()).unwrap();
+            let binding = ctx.generate_uid("default", outer_scope_id, SymbolFlags::Class);
+            class.id = Some(binding.create_binding_identifier(ctx));
+        }
+
+        self.class_decorations_stack
+            .push(ClassDecorations::default().with_should_transform(should_transform));
 
         if self.emit_decorator_metadata {
             self.metadata.enter_class(class, ctx);

@@ -20177,9 +20177,6 @@ semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/e
 Bindings mismatch:
 after transform: ScopeId(0): ["_decorate", "_default", "dec"]
 rebuilt        : ScopeId(0): ["_decorate", "_default"]
-Symbol flags mismatch for "_default":
-after transform: SymbolId(3): SymbolFlags(Class)
-rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -20231,29 +20228,14 @@ rebuilt        : ["dec"]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/es6/decorators/class/decoratorOnClass8.es6.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["_Class", "_decorate", "_default", "_defineProperty", "dec"]
+after transform: ScopeId(0): ["_decorate", "_default", "_defineProperty", "dec"]
 rebuilt        : ScopeId(0): ["_decorate", "_default", "_defineProperty"]
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(1): ["_Class"]
-Symbol flags mismatch for "_default":
-after transform: SymbolId(4): SymbolFlags(Class)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
-Symbol scope ID mismatch for "_Class":
-after transform: SymbolId(3): ScopeId(0)
-rebuilt        : SymbolId(3): ScopeId(1)
-Symbol reference IDs mismatch for "_Class":
-after transform: SymbolId(3): [ReferenceId(6)]
-rebuilt        : SymbolId(3): []
-Reference symbol mismatch for "_Class":
-after transform: SymbolId(3) "_Class"
-rebuilt        : <None>
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
-rebuilt        : ["_Class", "dec"]
+rebuilt        : ["dec"]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/es6/decorators/class/method/decoratorOnClassMethod1.es6.ts
 Bindings mismatch:
