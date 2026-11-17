@@ -5,6 +5,7 @@ use std::path::Path;
 
 use oxc::{
     allocator::Allocator,
+    ast_visit::assert_valid_spans,
     codegen::{Codegen, CodegenOptions, CommentOptions},
     isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions},
     parser::Parser,
@@ -154,6 +155,7 @@ fn transpile(path: &Path, source_text: &str) -> (String, oxc::diagnostics::Diagn
     let ret =
         IsolatedDeclarations::new(&allocator, IsolatedDeclarationsOptions { strip_internal: true })
             .build(&ret.program);
+    assert_valid_spans(&ret.program);
     let printed = Codegen::new()
         .with_options(CodegenOptions {
             comments: CommentOptions { jsdoc: true, ..CommentOptions::disabled() },
