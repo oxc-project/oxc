@@ -7,7 +7,7 @@ use oxc_data_structures::buffered_vec::BufferedVec;
 #[cfg(feature = "regular_expression")]
 use oxc_regular_expression::ast::Pattern;
 use oxc_span::{GetSpan, Span};
-use oxc_str::{Ident, Str};
+use oxc_str::{Ident, JSStr, Str};
 use oxc_syntax::{
     number::{BigintBase, NumberBase},
     precedence::Precedence,
@@ -587,11 +587,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     #[inline]
     pub(crate) fn parse_known_literal_string(&mut self) -> StringLiteral<'a> {
         debug_assert!(self.at(Kind::Str));
-        let span = self.cur_token().span();
-        let raw = Str::from(self.cur_src());
-        let value = self.cur_js_string();
+        let token = self.cur_token();
+        let span = token.span();
+        let raw = self.cur_src();
+        // Most strings have no escapes. Their value is the source text between the quotes.
+        let value = if token.escaped() {
+            self.cur_js_string()
+        } else {
+            JSStr::from(&raw[1..raw.len() - 1])
+        };
         self.bump_any();
-        StringLiteral::new(span, value, Some(raw), self)
+        StringLiteral::new(span, value, Some(Str::from(raw)), self)
     }
 
     /// Section [Array Expression](https://tc39.es/ecma262/#prod-ArrayLiteral)
