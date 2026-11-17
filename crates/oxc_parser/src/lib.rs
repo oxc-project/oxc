@@ -94,6 +94,7 @@ use oxc_ast::{
     ast::{Expression, Program, Statement},
     builder::{AstBuilder, GetAstBuilder},
 };
+use oxc_data_structures::brands::{BrandOrigin, BrandScope, Unbranded};
 use oxc_diagnostics::Diagnostics;
 use oxc_span::{SourceType, Span};
 use oxc_syntax::module_record::ModuleRecord;
@@ -216,6 +217,22 @@ pub struct ParserReturn<'a> {
     pub is_flow_language: bool,
 }
 
+// `ParserReturn` is the output of `ParserImpl::parse`.
+// It's created inside a closure, with the closure's `'brand` lifetime.
+// `BrandScope::extend_lifetime` changes that lifetime to the lifetime of the allocator
+// and source text.
+// That's only allowed for types which implement `Unbranded`.
+//
+// SAFETY: `ParserReturn` meets `Unbranded`'s contract.
+// - It doesn't name `BrandOrigin` or `Brand`, or any type which does. In this crate,
+//   those types are `Source` and `SourcePosition`, and the types which contain them
+//   (`Lexer`, `LexerCheckpoint`, `ParserCheckpoint`, `ParserState`, `ParserImpl`).
+// - It doesn't contain a `dyn Trait + 'a`.
+// - Its lifetime is the lifetime of the arena. Nothing uses it as a brand.
+unsafe impl Unbranded for ParserReturn<'_> {
+    type WithLifetime<'a> = ParserReturn<'a>;
+}
+
 /// Parse options
 ///
 /// You may provide options to the [`Parser`] using [`Parser::with_options`].
@@ -333,37 +350,6 @@ impl<'a, C: ParserConfig> Parser<'a, C> {
 mod parser_parse {
     use super::*;
 
-    /// `UniquePromise` is a way to use the type system to enforce the invariant that only
-    /// a single `ParserImpl`, `Lexer` and `lexer::Source` can exist at any time on a thread.
-    /// This constraint is required to guarantee the soundness of some methods of these types
-    /// e.g. `Source::set_position`.
-    ///
-    /// `ParserImpl::new`, `Lexer::new` and `lexer::Source::new` all require a `UniquePromise`
-    /// to be provided to them. `UniquePromise::new` is not visible outside this module, so only
-    /// `Parser::parse` can create one, and it only calls `ParserImpl::new` once.
-    /// This enforces the invariant throughout the entire parser.
-    ///
-    /// `UniquePromise` is a zero-sized type and has no runtime cost. It's purely for the type-checker.
-    ///
-    /// `UniquePromise::new_for_tests_and_benchmarks` is a backdoor for tests/benchmarks, so they can
-    /// create a `ParserImpl` or `Lexer`, and manipulate it directly, for testing/benchmarking purposes.
-    pub struct UniquePromise(());
-
-    impl UniquePromise {
-        #[inline]
-        fn new() -> Self {
-            Self(())
-        }
-
-        /// Backdoor for tests/benchmarks to create a `UniquePromise` (see above).
-        /// This function must NOT be exposed outside of tests and benchmarks,
-        /// as it allows circumventing safety invariants of the parser.
-        #[cfg(any(test, feature = "benchmarking"))]
-        pub fn new_for_tests_and_benchmarks() -> Self {
-            Self(())
-        }
-    }
-
     impl<'a, C: ParserConfig> Parser<'a, C> {
         /// Main entry point
         ///
@@ -414,7 +400,6 @@ mod parser_parse {
                     self.source_type,
                     self.options,
                     self.config,
-                    UniquePromise::new(),
                 )
             }
         }
@@ -475,7 +460,6 @@ mod parser_parse {
                     self.source_type,
                     self.options,
                     self.config,
-                    UniquePromise::new(),
                 )
             }
         }
@@ -515,14 +499,7 @@ mod parser_parse {
         source_type: SourceType,
         options: ParseOptions,
     ) -> ParserReturn<'a> {
-        ParserImpl::parse(
-            allocator,
-            source_text,
-            source_type,
-            options,
-            NoTokensParserConfig,
-            UniquePromise::new(),
-        )
+        ParserImpl::parse(allocator, source_text, source_type, options, NoTokensParserConfig)
     }
 
     #[inline(never)]
@@ -532,14 +509,7 @@ mod parser_parse {
         source_type: SourceType,
         options: ParseOptions,
     ) -> ParserReturn<'a> {
-        ParserImpl::parse(
-            allocator,
-            source_text,
-            source_type,
-            options,
-            TokensParserConfig,
-            UniquePromise::new(),
-        )
+        ParserImpl::parse(allocator, source_text, source_type, options, TokensParserConfig)
     }
 
     #[inline(never)]
@@ -550,14 +520,7 @@ mod parser_parse {
         options: ParseOptions,
         config: RuntimeParserConfig,
     ) -> ParserReturn<'a> {
-        ParserImpl::parse(
-            allocator,
-            source_text,
-            source_type,
-            options,
-            config,
-            UniquePromise::new(),
-        )
+        ParserImpl::parse(allocator, source_text, source_type, options, config)
     }
 
     #[inline(never)]
@@ -573,7 +536,6 @@ mod parser_parse {
             source_type,
             options,
             NoTokensParserConfig,
-            UniquePromise::new(),
         )
     }
 
@@ -590,7 +552,6 @@ mod parser_parse {
             source_type,
             options,
             TokensParserConfig,
-            UniquePromise::new(),
         )
     }
 
@@ -602,18 +563,9 @@ mod parser_parse {
         options: ParseOptions,
         config: RuntimeParserConfig,
     ) -> Result<Expression<'a>, Diagnostics> {
-        ParserImpl::parse_expression(
-            allocator,
-            source_text,
-            source_type,
-            options,
-            config,
-            UniquePromise::new(),
-        )
+        ParserImpl::parse_expression(allocator, source_text, source_type, options, config)
     }
 }
-
-use parser_parse::UniquePromise;
 
 /// Implementation of parser.
 /// `Parser` is just a public wrapper, the guts of the implementation is in this type.
@@ -667,10 +619,11 @@ struct ParserImpl<'a, C: ParserConfig> {
 }
 
 impl<'a, C: ParserConfig> ParserImpl<'a, C> {
-    /// Create a new `ParserImpl`.
+    /// Create a new [`ParserImpl`].
     ///
-    /// Requiring a `UniquePromise` to be provided guarantees only 1 `ParserImpl` can exist
-    /// on a single thread at one time.
+    /// `brand_origin` is for the `Source` in the `ParserImpl`'s [`Lexer`] (see [`brands`]).
+    ///
+    /// [`brands`]: oxc_data_structures::brands
     #[inline]
     #[expect(clippy::needless_pass_by_value)]
     fn new(
@@ -679,11 +632,17 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         source_type: SourceType,
         options: ParseOptions,
         config: C,
-        unique: UniquePromise,
+        brand_origin: BrandOrigin<'a>,
     ) -> Self {
         Self {
             options,
-            lexer: Lexer::new(allocator, source_text, source_type, config.lexer_config(), unique),
+            lexer: Lexer::new(
+                allocator,
+                source_text,
+                source_type,
+                config.lexer_config(),
+                brand_origin,
+            ),
             source_type,
             source_text,
             errors: vec![],
@@ -709,10 +668,22 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         source_type: SourceType,
         options: ParseOptions,
         config: C,
-        unique: UniquePromise,
     ) -> ParserReturn<'a> {
-        let parser = Self::new(allocator, source_text, source_type, options, config, unique);
-        parser.parse_impl()
+        // The `ParserImpl` is created inside the closure, with the closure's lifetime `'brand`.
+        // The closure must accept any `'brand`, so code in it can't treat `'brand` as the same
+        // as any other lifetime. That makes `'brand` a brand (see `oxc_data_structures::brands`).
+        //
+        // The `ParserImpl` is created and consumed in this one closure. Passing it by value
+        // into a 2nd closure would copy the whole `ParserImpl`, which is large.
+        BrandOrigin::scope_within(|brand_origin, brand_scope: BrandScope<'_, 'a>| {
+            // `allocator` and `source_text` are shortened from `'a` to `'brand` here
+            let parser =
+                ParserImpl::new(allocator, source_text, source_type, options, config, brand_origin);
+            let ret = parser.parse_impl();
+
+            // Change lifetime of the output from `'brand` back to `'a`
+            brand_scope.extend_lifetime::<ParserReturn>(ret)
+        })
     }
 
     #[inline]
@@ -810,10 +781,29 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         source_type: SourceType,
         options: ParseOptions,
         config: C,
-        unique: UniquePromise,
     ) -> Result<Expression<'a>, Diagnostics> {
-        let parser = Self::new(allocator, source_text, source_type, options, config, unique);
-        parser.parse_expression_impl()
+        /// Wrapper around `Result<Expression<'a>, Diagnostics>`.
+        /// `Result<T, E>` is only [`Unbranded`] if `T` and `E` are. `Expression` and `Diagnostics`
+        /// are from other crates, so this crate can't implement `Unbranded` for them.
+        struct ExpressionParserReturn<'a>(Result<Expression<'a>, Diagnostics>);
+
+        // SAFETY: `ExpressionParserReturn` meets `Unbranded`'s contract.
+        // `Expression` and `Diagnostics` don't name `BrandOrigin` or `Brand`,
+        // or any type which does, and they don't contain a `dyn Trait + 'a`.
+        // `Expression`'s lifetime is the lifetime of the arena. Nothing uses it as a brand.
+        unsafe impl Unbranded for ExpressionParserReturn<'_> {
+            type WithLifetime<'a> = ExpressionParserReturn<'a>;
+        }
+
+        // See comments in `parse`
+        BrandOrigin::scope_within(|brand_origin, brand_scope: BrandScope<'_, 'a>| {
+            let parser =
+                ParserImpl::new(allocator, source_text, source_type, options, config, brand_origin);
+            let ret = parser.parse_expression_impl();
+
+            // Change lifetime of the output from `'brand` back to `'a`
+            brand_scope.extend_lifetime::<ExpressionParserReturn>(ExpressionParserReturn(ret)).0
+        })
     }
 
     fn parse_expression_impl(mut self) -> Result<Expression<'a>, Diagnostics> {
