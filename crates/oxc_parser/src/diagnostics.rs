@@ -4,7 +4,10 @@ use oxc_ast::ast::REGEXP_FLAGS_LIST;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
-use crate::modifiers::{Modifier, ModifierKind, ModifierKinds};
+use crate::{
+    MAX_LEN_ERROR,
+    modifiers::{Modifier, ModifierKind, ModifierKinds},
+};
 
 trait DiagnosticExt {
     fn with_allowed_modifier_help(self, allowed: Option<ModifierKinds>) -> Self;
@@ -88,7 +91,7 @@ macro_rules! parser_diagnostics {
 
 parser_diagnostics! {
     overlong_source() => {
-        OxcDiagnostic::error("Source length exceeds 4 GiB limit")
+        OxcDiagnostic::error(MAX_LEN_ERROR)
     };
 
     file_appears_to_be_binary() => {

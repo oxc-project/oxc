@@ -130,12 +130,18 @@ use crate::{
 //    so they can be stored as `u32`s without any possibility of overflow.
 // 3. No real `Span` can have `start` or `end` of `u32::MAX`, so such a `Span` can be used as a sentinel.
 //    `oxc_transformer`'s styled-components plugin relies on this.
-pub(crate) const MAX_LEN: usize = if size_of::<usize>() >= 8 {
+const MAX_LEN: usize = if size_of::<usize>() >= 8 {
     // 64-bit systems
     u32::MAX as usize - 256
 } else {
     // 32-bit or 16-bit systems
     isize::MAX as usize
+};
+
+const MAX_LEN_ERROR: &str = if size_of::<usize>() >= 8 {
+    "Source length exceeds 4 GiB limit"
+} else {
+    "Source length exceeds 2 GiB limit"
 };
 
 /// Return value of [`Parser::parse`] consisting of AST, errors and comments
@@ -755,6 +761,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             self.set_unexpected();
         }
         if let Some(FatalError { error, .. }) = self.fatal_error.take() {
+            let error = self.overlong_error().unwrap_or(error);
             return Err(error.into_diagnostic().into());
         }
         self.check_unfinished_errors();
@@ -1483,21 +1490,26 @@ mod test {
         let zeroed_string = ZeroedString::new();
         let source_text = zeroed_string.as_str();
 
-        // Attempt to parse the source text
         let allocator = Allocator::default();
+
+        // Attempt to parse the source text as a program - parsing should fail
         let ret = Parser::new(&allocator, source_text, SourceType::default()).parse();
 
-        // Parsing should fail
         assert!(ret.program.is_empty());
         assert!(ret.fatal_error);
         assert_eq!(ret.diagnostics.len(), 1);
-        assert_eq!(
-            ret.diagnostics.first().unwrap().to_string(),
-            "Source length exceeds 4 GiB limit"
-        );
+        assert_eq!(ret.diagnostics.first().unwrap().to_string(), MAX_LEN_ERROR);
+
+        // Attempt to parse the source text as an expression - parsing should fail
+        let ret = Parser::new(&allocator, source_text, SourceType::default()).parse_expression();
+
+        assert!(ret.is_err());
+        let diagnostics = ret.err().unwrap();
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(diagnostics.first().unwrap().to_string(), MAX_LEN_ERROR);
     }
 
-    // Source with length MAX_LEN parses OK.
+    // Source with length `MAX_LEN` parses OK.
     // This test takes over 1 minute on an M1 Macbook Pro unless compiled in release mode.
     // `not(debug_assertions)` is a proxy for detecting release mode.
     // Also skip running under Miri since it takes so long.
@@ -1506,18 +1518,26 @@ mod test {
     #[test]
     fn legal_length_source() {
         // Build a string MAX_LEN bytes long which doesn't take too long to parse
-        let head = "const x = 1;\n/*";
-        let foot = "*/\nconst y = 2;\n";
+        let head = "x(/*";
+        let foot = "*/)";
         let mut source = "x".repeat(MAX_LEN);
         source.replace_range(..head.len(), head);
         source.replace_range(MAX_LEN - foot.len().., foot);
         assert_eq!(source.len(), MAX_LEN);
 
         let allocator = Allocator::default();
+
+        // Parse as a program
         let ret = Parser::new(&allocator, &source, SourceType::default()).parse();
         assert!(!ret.fatal_error);
         assert!(ret.diagnostics.is_empty());
-        assert_eq!(ret.program.body.len(), 2);
+        assert_eq!(ret.program.body.len(), 1);
+
+        // Parse as an expression
+        let ret = Parser::new(&allocator, &source, SourceType::default()).parse_expression();
+        assert!(ret.is_ok());
+        let expr = ret.ok().unwrap();
+        assert!(matches!(expr, Expression::CallExpression(_)));
     }
 
     // Where the lexer cannot lex any further it emits `Undetermined`, and no `Eof` follows.
