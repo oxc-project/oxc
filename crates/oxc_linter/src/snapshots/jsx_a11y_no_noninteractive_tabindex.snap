@@ -45,6 +45,13 @@ source: crates/oxc_linter/src/tester.rs
   help: The `tabIndex` attribute should be removed.
 
   ⚠ jsx-a11y(no-noninteractive-tabindex): `tabIndex` should only be declared on interactive elements.
+   ╭─[no_noninteractive_tabindex.tsx:1:23]
+ 1 │ <div role="separator" tabIndex="0" />
+   ·                       ────────────
+   ╰────
+  help: The `tabIndex` attribute should be removed.
+
+  ⚠ jsx-a11y(no-noninteractive-tabindex): `tabIndex` should only be declared on interactive elements.
    ╭─[no_noninteractive_tabindex.tsx:1:22]
  1 │ <div role="tabpanel" tabIndex="0" />
    ·                      ────────────
