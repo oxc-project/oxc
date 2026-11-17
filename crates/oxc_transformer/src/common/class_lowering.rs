@@ -4,8 +4,9 @@
 //! that decision depends on - decorators and auto-accessors - is removed or rewritten early in the
 //! transform, so the decision is recorded once per class while the class is still untouched.
 //!
-//! The first query for a class always happens on entering the class, before any transform mutates
-//! it. Later queries read the recorded value.
+//! The first query for a class always happens before any transform mutates it: on entering the
+//! class, while capturing the name of a class expression in an initializer, or while scanning a
+//! loop body. Later queries read the recorded value.
 
 use oxc_ast::ast::Class;
 use oxc_syntax::scope::ScopeId;
@@ -39,16 +40,24 @@ pub struct ClassLowering {
 }
 
 impl ClassLowering {
-    fn compute(class_transform: ClassTransform, class: &Class<'_>) -> Self {
+    fn compute(
+        class_transform: ClassTransform,
+        decorator_mode: DecoratorMode,
+        class: &Class<'_>,
+    ) -> Self {
         let lowered_for_decorators = class_lowered_for_decorators(class);
         let has_auto_accessor = class_body_has_auto_accessors(&class.body);
-        // Classes with decorators or auto-accessors are preserved for a downstream transform.
-        let mode = if lowered_for_decorators || has_auto_accessor {
+        // Decorated classes are always preserved for a downstream decorator transform.
+        let mode = if lowered_for_decorators
+            || (decorator_mode == DecoratorMode::Preserve && has_auto_accessor)
+        {
             ClassLoweringMode::Preserve
         } else {
             match class_transform {
                 ClassTransform::ClassProperties { .. } => ClassLoweringMode::LowerAll,
-                ClassTransform::None | ClassTransform::StaticBlocks => ClassLoweringMode::Native,
+                ClassTransform::None
+                | ClassTransform::StaticBlocks
+                | ClassTransform::StandardDecorators { .. } => ClassLoweringMode::Native,
             }
         };
         Self { mode, lowered_for_decorators, has_auto_accessor }
@@ -65,6 +74,11 @@ impl ClassLowering {
 
     pub fn has_auto_accessor(self) -> bool {
         self.has_auto_accessor
+    }
+
+    /// Whether standard decorator lowering has anything to do for this class.
+    pub fn handles_standard_decorators(self) -> bool {
+        self.mode != ClassLoweringMode::Preserve && self.has_auto_accessor
     }
 
     /// Whether this decision depends on syntax which is removed or rewritten later.
@@ -105,12 +119,12 @@ impl ClassLoweringCache {
         if let Some(recorded) = self.recorded(scope_id) {
             debug_assert_eq!(
                 recorded,
-                ClassLowering::compute(self.class_transform, class),
+                ClassLowering::compute(self.class_transform, self.decorator_mode, class),
                 "class lowering was queried after the class was rewritten"
             );
             return recorded;
         }
-        let lowering = ClassLowering::compute(self.class_transform, class);
+        let lowering = ClassLowering::compute(self.class_transform, self.decorator_mode, class);
         // Only decorators and auto-accessors are removed later. Every other class answers the same
         // after its body is rewritten, so it is not recorded.
         if lowering.depends_on_rewritten_syntax() {
@@ -155,7 +169,9 @@ impl ClassLoweringCache {
     fn unrecorded(&self) -> ClassLowering {
         let mode = match self.class_transform {
             ClassTransform::ClassProperties { .. } => ClassLoweringMode::LowerAll,
-            ClassTransform::None | ClassTransform::StaticBlocks => ClassLoweringMode::Native,
+            ClassTransform::None
+            | ClassTransform::StaticBlocks
+            | ClassTransform::StandardDecorators { .. } => ClassLoweringMode::Native,
         };
         ClassLowering { mode, lowered_for_decorators: false, has_auto_accessor: false }
     }

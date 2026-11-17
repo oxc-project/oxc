@@ -544,6 +544,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         self.decorator.exit_method_definition(def, ctx);
     }
 
+    fn enter_object_property(&mut self, prop: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x2_es2022.enter_object_property(prop, ctx);
+    }
+
     fn enter_new_expression(&mut self, expr: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_new_expression(expr, ctx);

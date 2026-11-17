@@ -199,6 +199,8 @@ pub enum Helper {
     TaggedTemplateLiteral,
     /// Runtime helper `setFunctionName`.
     SetFunctionName,
+    /// Runtime helper `setClassName` (standard decorators).
+    SetClassName,
 }
 
 impl Helper {
@@ -235,6 +237,7 @@ impl Helper {
             Self::UsingCtx => "usingCtx",
             Self::TaggedTemplateLiteral => "taggedTemplateLiteral",
             Self::SetFunctionName => "setFunctionName",
+            Self::SetClassName => "setClassName",
         }
     }
 

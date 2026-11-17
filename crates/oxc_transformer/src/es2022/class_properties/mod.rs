@@ -208,7 +208,9 @@ use oxc_syntax::symbol::SymbolId;
 use oxc_traverse::Traverse;
 
 use crate::{
-    common::class_lowering::ClassLoweringMode, context::TraverseCtx, decorator::DecoratorMode,
+    common::class_lowering::ClassLoweringMode,
+    context::TraverseCtx,
+    decorator::{DecoratorMode, standard::StandardDecoratorState},
     state::TransformState,
 };
 
@@ -217,6 +219,7 @@ mod class_bindings;
 mod class_details;
 mod computed_key;
 mod constructor;
+mod decorators;
 mod instance_prop_init;
 mod private_field;
 mod private_method;
@@ -289,6 +292,9 @@ pub struct ClassProperties<'a> {
     insert_after_exprs: Vec<Expression<'a>>,
     /// Statements to insert after class declaration
     insert_after_stmts: Vec<Statement<'a>>,
+
+    /// Standard decorator options, metadata, and exit-phase scratch state.
+    decorator_state: StandardDecoratorState<'a>,
 }
 
 impl ClassProperties<'_> {
@@ -298,9 +304,11 @@ impl ClassProperties<'_> {
         transform_static_blocks: bool,
         remove_class_fields_without_initializer: bool,
         decorator_mode: DecoratorMode,
+        only_decorated_classes: bool,
     ) -> Self {
-        // A class which is never entered still answers queries about private names.
-        let dummy_mode = if decorator_mode == DecoratorMode::Preserve {
+        // A class which is never entered still answers queries about private names. It is lowered
+        // only when this transform owns every class.
+        let dummy_mode = if only_decorated_classes || decorator_mode == DecoratorMode::Preserve {
             ClassLoweringMode::Native
         } else {
             ClassLoweringMode::LowerAll
@@ -317,20 +325,36 @@ impl ClassProperties<'_> {
             insert_before: vec![],
             insert_after_exprs: vec![],
             insert_after_stmts: vec![],
+            decorator_state: StandardDecoratorState::new(decorator_mode),
         }
     }
 }
 
 impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
+    fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.decorator_state.wrap_decorated_loop_body(stmt, ctx);
+    }
+
+    fn enter_object_property(
+        &mut self,
+        property: &mut ObjectProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.decorator_state.capture_object_property_class_name(property, ctx);
+    }
+
     #[expect(clippy::inline_always)]
     #[inline(always)] // Because this is a no-op in release mode
     fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
         debug_assert_eq!(self.private_field_count, 0);
+        debug_assert!(
+            !self.decorator_state.has_leftover_class_entries(),
+            "per-class decorator data outlived its class"
+        );
     }
 
     fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
-        // Record the lowering decision before any transform rewrites the class.
-        ctx.state.class_lowering(class);
+        self.transform_native_auto_accessors_on_entry(class, ctx);
     }
 
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -358,6 +382,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
     // `#[inline]` for fast exit for expressions which are not any of the transformed types
     #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.decorator_state.enabled() && matches!(expr, Expression::ClassExpression(_)) {
+            self.decorator_state.wrap_native_accessor_expression(expr, ctx);
+        }
         // All of transforms below only act on `PrivateFieldExpression`s or `PrivateInExpression`s.
         // If we're not inside a class which has private fields, `#prop` can't be present here,
         // so skip the slow path - fast path for common case.
