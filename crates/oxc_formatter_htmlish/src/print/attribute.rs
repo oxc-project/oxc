@@ -155,7 +155,7 @@ fn write_attribute<'a>(
     let raw = unescaped(value, f);
     // A Vue attribute whose value is JS prints as written where it does not format (as Prettier does)
     if t.rules().template_expressions == TemplateExpressions::Vue
-        && let Some(kind) = vue::value_kind(t, element, attribute, f)
+        && let Some(kind) = vue::value_kind(t, element, attribute)
     {
         if !vue::write_attribute_value(t, kind, raw, f) {
             write_quoted_value(raw, f);
@@ -171,10 +171,16 @@ fn write_attribute<'a>(
             write!(f, "\"\"");
             Some(true)
         }
+        AttributeKind::Angular(kind @ AngularAttribute::Property(expression, _)) => {
+            let tailwind = t
+                .tailwind()
+                .is_some_and(|tailwind| tailwind.binds(kind.target(attribute.name).slice(source)));
+            Some(angular::write_binding(expression.as_deref(), raw, tailwind, f))
+        }
         // A two-way binding's value reads as a property binding's
-        AttributeKind::Angular(
-            AngularAttribute::Property(expression, _) | AngularAttribute::TwoWay(expression, _),
-        ) => Some(angular::write_binding(expression.as_deref(), raw, f)),
+        AttributeKind::Angular(AngularAttribute::TwoWay(expression, _)) => {
+            Some(angular::write_binding(expression.as_deref(), raw, false, f))
+        }
         AttributeKind::Angular(AngularAttribute::Event(action, _)) => {
             Some(angular::write_action(action.as_deref(), f))
         }
@@ -195,10 +201,8 @@ fn write_attribute<'a>(
     }
     let class = is("class");
     // A placeholder would hide in the sorted class list, out of the parent's reach
-    let tailwind =
-        f.options().sort_tailwindcss.as_ref().is_some_and(|attributes| {
-            class || attributes.iter().any(|attribute| attribute == name)
-        }) && !embedded_in.is_some_and(|e| e.has_placeholder(value));
+    let tailwind = t.tailwind().is_some_and(|tailwind| class || tailwind.holds(name))
+        && !embedded_in.is_some_and(|e| e.has_placeholder(value));
     if tailwind && write_tailwind_classes(raw, class && embedded_in.is_none(), f) {
         return;
     }

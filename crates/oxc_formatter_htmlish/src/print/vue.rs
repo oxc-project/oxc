@@ -61,12 +61,7 @@ pub enum Value {
 }
 
 /// `None` for an attribute whose value is no JS.
-pub fn value_kind(
-    t: &Tree<'_>,
-    element: NodeId,
-    attribute: &Attribute<'_>,
-    f: &HtmlishFormatter<'_, '_>,
-) -> Option<Value> {
+pub fn value_kind(t: &Tree<'_>, element: NodeId, attribute: &Attribute<'_>) -> Option<Value> {
     let source = t.source();
     let name = attribute.name.slice(source);
     let AttributeKind::Vue(directive) = &attribute.kind else {
@@ -74,25 +69,16 @@ pub fn value_kind(
         return (name == "generic" && t.is_sfc_block(element) && t.tag(element) == "script")
             .then_some(Value::Fragment(JsInVueTemplate::ScriptGeneric));
     };
-    // Tailwind classes, as prettier-plugin-tailwindcss reads its `tailwindAttributes` in Vue, by the attribute's whole name:
-    // bound `class` and listed `a` / `:a` / `v-bind:a` (`:a`, `v-bind:a`) without modifiers, a listed directive as written
-    let tailwind = f.options().sort_tailwindcss.as_deref();
-    let listed = tailwind.unwrap_or_default();
+    // Tailwind classes (`Tree::tailwind`): a bound one without modifiers, a listed directive as written
+    let tailwind = t.tailwind();
     let bound_classes = || {
-        tailwind.is_some()
-            && directive.modifiers.is_empty()
-            && directive.argument.filter(|argument| !argument.dynamic).is_some_and(|argument| {
-                let argument = argument.span.slice(source);
-                argument == "class"
-                    || listed.iter().any(|listed| {
-                        [
-                            Some(listed.as_str()),
-                            listed.strip_prefix(':'),
-                            listed.strip_prefix("v-bind:"),
-                        ]
-                        .contains(&Some(argument))
-                    })
-            })
+        tailwind.is_some_and(|tailwind| {
+            directive.modifiers.is_empty()
+                && directive
+                    .argument
+                    .filter(|argument| !argument.dynamic)
+                    .is_some_and(|argument| tailwind.holds(argument.span.slice(source)))
+        })
     };
     let has_argument = directive.argument.is_some();
     Some(match directive.name.slice(source) {
@@ -106,7 +92,7 @@ pub fn value_kind(
             Value::Fragment(JsInVueTemplate::Binding { tailwind_classes: bound_classes() })
         }
         directive_name => Value::Fragment(JsInVueTemplate::Expression {
-            tailwind_classes: listed.iter().any(|listed| listed == name),
+            tailwind_classes: tailwind.is_some_and(|tailwind| tailwind.directive(name)),
             in_parens: matches!(directive_name, "if" | "else-if"),
         }),
     })

@@ -34,7 +34,8 @@ pub enum JsInAngularTemplate {
     /// A binding's value (`[a]`, `[(a)]`, `bind-a`, a lone expression of `*a`) without a pipe or a comment:
     /// an expression in a `"`-quoted attribute value, whose strings print in `'`;
     /// an object, an array, a string or a template literal hugs the quotes.
-    Binding,
+    /// `tailwind_classes`: its strings are Tailwind classes (`TailwindAttributes::binds`).
+    Binding { tailwind_classes: bool },
     /// A `{{ }}` in another attribute's value (`title="Hi {{ name }}"`), or a piece of its code: an expression it lays out.
     ValueInterpolation,
     /// A piece of code in a block's parameters or `@let`'s value, which this module lays out:
@@ -42,7 +43,8 @@ pub enum JsInAngularTemplate {
     BlockPiece,
     /// A piece of code in an attribute's value, which this module lays out:
     /// of a binding with a pipe or a comment (its code, or a pipe's argument), a statement of `(a)`, an expression of `*a` among others.
-    AttributePiece,
+    /// `tailwind_classes`: as [`Binding`](Self::Binding)'s.
+    AttributePiece { tailwind_classes: bool },
 }
 
 impl JsInAngularTemplate {
@@ -80,17 +82,21 @@ pub fn format_interpolation<'a>(
 }
 
 /// Writes a binding's (unescaped) `value` formatted, quoted; `false` to print it as written.
+/// `tailwind_classes`: its strings are Tailwind classes.
 pub fn write_binding<'a>(
     expression: Option<&AngularExpression<'_>>,
     value: &'a str,
+    tailwind_classes: bool,
     f: &mut HtmlishFormatter<'_, 'a>,
 ) -> bool {
     let Some(expression) = expression else { return false };
     // The whole value, its quote entities read back by the caller, which an object or an array hugs
     if expression.pipes.is_empty() && expression.comment.is_none() {
-        return embed::write_attribute_value("ts", &JsInAngularTemplate::Binding, value, f);
+        let part = JsInAngularTemplate::Binding { tailwind_classes };
+        return embed::write_attribute_value("ts", &part, value, f);
     }
-    let Some(parts) = Parts::dispatch(expression, JsInAngularTemplate::AttributePiece, f) else {
+    let part = JsInAngularTemplate::AttributePiece { tailwind_classes };
+    let Some(parts) = Parts::dispatch(expression, part, f) else {
         return false;
     };
     embed::write_quoted(&soft_block_indent(&parts.format()), f);
@@ -107,7 +113,8 @@ pub fn write_action(action: Option<&AngularAction<'_>>, f: &mut HtmlishFormatter
         .statements
         .iter()
         .map(|statement| {
-            dispatch_piece(JsInAngularTemplate::AttributePiece, statement.span.slice(source), f)
+            let part = JsInAngularTemplate::AttributePiece { tailwind_classes: false };
+            dispatch_piece(part, statement.span.slice(source), f)
         })
         .collect::<Option<Vec<_>>>()
     else {
@@ -192,7 +199,7 @@ pub fn write_template_bindings<'a>(
     match bindings {
         [] => return false,
         [TemplateBinding::Expression { key: None, angular, alias: None, .. }] => {
-            return write_binding(angular.as_deref(), value, f);
+            return write_binding(angular.as_deref(), value, false, f);
         }
         _ => {}
     }
@@ -203,8 +210,11 @@ pub fn write_template_bindings<'a>(
             // The directive's own key without an expression, which is none
             TemplateBinding::Expression { key: None, expression: None, .. } => None,
             TemplateBinding::Expression { expression: Some(_), angular, .. } => {
-                let parts =
-                    Parts::dispatch(angular.as_deref()?, JsInAngularTemplate::AttributePiece, f)?;
+                let parts = Parts::dispatch(
+                    angular.as_deref()?,
+                    JsInAngularTemplate::AttributePiece { tailwind_classes: false },
+                    f,
+                )?;
                 Some(Some(parts))
             }
             _ => Some(None),

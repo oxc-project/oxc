@@ -11,6 +11,7 @@
 mod build;
 mod display;
 mod names;
+mod tailwind;
 
 use oxc_allocator::{Allocator, ArenaVec, StringBuilder};
 use oxc_htmlish_parser::{
@@ -20,6 +21,8 @@ use oxc_htmlish_parser::{
         NodeKind, Root,
     },
 };
+
+pub use tailwind::TailwindAttributes;
 
 use crate::rules::DialectRules;
 
@@ -122,6 +125,8 @@ pub struct Tree<'a> {
     merged_texts: ArenaVec<'a, (NodeId, &'a str)>,
     /// See [`Self::vue_script_language`].
     vue_script_language: &'static str,
+    /// See [`Self::tailwind`].
+    tailwind: Option<TailwindAttributes<'a>>,
 }
 
 impl std::ops::Index<NodeId> for Tree<'_> {
@@ -135,6 +140,11 @@ impl std::ops::Index<NodeId> for Tree<'_> {
 impl<'a> Tree<'a> {
     pub fn source(&self) -> &'a str {
         self.source
+    }
+
+    /// The attributes whose Tailwind classes sort; `None` when none do.
+    pub fn tailwind(&self) -> Option<&TailwindAttributes<'a>> {
+        self.tailwind.as_ref()
     }
 
     pub fn kind(&self, id: NodeId) -> &'a NodeKind<'a> {

@@ -455,10 +455,14 @@ fn js_root_of(request: &DispatchRequest<'_>) -> (JsRoot, JsEmbeddedIn) {
             JsInAngularTemplate::Interpolation | JsInAngularTemplate::ValueInterpolation => {
                 ExpressionRoot { ends_at_double_brace: true, ..expression(ExpressionLayout::Bare) }
             }
-            JsInAngularTemplate::Binding => expression(ExpressionLayout::Hug { literals: true }),
-            JsInAngularTemplate::AttributePiece | JsInAngularTemplate::BlockPiece => {
-                expression(ExpressionLayout::Bare)
+            JsInAngularTemplate::Binding { tailwind_classes } => ExpressionRoot {
+                tailwind_classes,
+                ..expression(ExpressionLayout::Hug { literals: true })
+            },
+            JsInAngularTemplate::AttributePiece { tailwind_classes } => {
+                ExpressionRoot { tailwind_classes, ..expression(ExpressionLayout::Bare) }
             }
+            JsInAngularTemplate::BlockPiece => expression(ExpressionLayout::Bare),
         };
         let embedded_in = JsEmbeddedIn {
             // Every one but an interpolation's and a block's is a `"`-quoted attribute value
