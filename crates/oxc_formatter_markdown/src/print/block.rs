@@ -341,6 +341,10 @@ fn write_footnote_definition<'a>(
 ) {
     write!(f, [token("[^"), text(f.context().slice(def.label)), token("]:")]);
     let children = &def.children;
+    // An empty definition is just its label line (Prettier prints `[^1]:` as-is)
+    if children.is_empty() {
+        return;
+    }
     let parent = Parent::Container { top_level: false };
     let first = format_with(|f| write_block(&children[0], children, 0, parent, f)).memoized();
     let on_label_line = matches!(children.as_slice(), [Block::Paragraph(_)])
