@@ -1,4 +1,3 @@
-
 function dec(name) {
   return () => {};
 }
@@ -20,5 +19,3 @@ babelHelpers.decorate([dec("instance-accessor")], A.prototype, "g", null);
 babelHelpers.decorate([dec("static-prop")], A, "s", void 0);
 babelHelpers.decorate([dec("static-method")], A, "sm", null);
 babelHelpers.decorate([dec("static-accessor")], A, "sg", null);
-
-

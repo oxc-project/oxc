@@ -163,9 +163,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a> {
     }
 
     #[inline]
-    fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn enter_statements(
+        &mut self,
+        stmts: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         if self.emit_decorator_metadata {
-            self.metadata.enter_statement(stmt, ctx);
+            self.metadata.enter_statements(stmts, ctx);
         }
     }
 

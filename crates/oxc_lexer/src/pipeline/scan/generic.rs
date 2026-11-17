@@ -9,9 +9,6 @@ pub fn scan_block_comment_generic(src: Source, mut i: usize) -> (usize, bool, Op
     let cpu = BASELINE;
 
     let n = src.len();
-    if i > n {
-        return (n, false, None);
-    }
     let mut saw_nl = false;
     let mut license_at = None;
     while i + 8 <= n {
@@ -65,9 +62,6 @@ pub fn scan_line_comment_generic(src: Source, mut i: usize) -> (usize, Option<u3
     let cpu = BASELINE;
 
     let n = src.len();
-    if i > n {
-        return (n, None);
-    }
     let mut license_at = None;
     while i + 8 <= n {
         let x = src.u64_at(i);

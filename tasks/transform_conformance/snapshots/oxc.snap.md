@@ -1,10 +1,11 @@
-commit: d7a0cccb
+commit: 16a2d671
 
-Passed: 327/454
+Passed: 333/460
 
 # All Passed:
 * babel-plugin-transform-class-static-block
 * babel-plugin-transform-private-methods
+* babel-plugin-transform-private-property-in-object
 * babel-plugin-transform-logical-assignment-operators
 * babel-plugin-transform-nullish-coalescing-operator
 * babel-plugin-transform-optional-chaining
@@ -215,7 +216,7 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (21/107)
+# legacy-decorators (23/109)
 * oxc/accessor/input.ts
 x Output mismatch
 

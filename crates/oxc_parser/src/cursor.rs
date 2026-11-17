@@ -16,6 +16,7 @@ pub struct ParserCheckpoint<'a> {
     cur_token: Token,
     prev_token_end: u32,
     errors_pos: usize,
+    cover_parenthesized_len: usize,
     has_fatal_error: bool,
 }
 
@@ -341,13 +342,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             cur_token: self.token,
             prev_token_end: self.prev_token_end,
             errors_pos: self.errors.len(),
+            cover_parenthesized_len: self.state.cover_parenthesized.len(),
             has_fatal_error: self.fatal_error.is_some(),
         }
     }
 
     pub(crate) fn rewind(&mut self, checkpoint: ParserCheckpoint<'a>) {
-        let ParserCheckpoint { lexer, cur_token, prev_token_end, errors_pos, has_fatal_error } =
-            checkpoint;
+        let ParserCheckpoint {
+            lexer,
+            cur_token,
+            prev_token_end,
+            errors_pos,
+            cover_parenthesized_len,
+            has_fatal_error,
+        } = checkpoint;
 
         // A fatal error set after the checkpoint is discarded. If it is a lexer error that
         // `set_unexpected` took from the lexer, give it back.
@@ -361,6 +369,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.token = cur_token;
         self.prev_token_end = prev_token_end;
         self.errors.truncate(errors_pos);
+        self.state.cover_parenthesized.truncate(cover_parenthesized_len);
     }
 
     pub(crate) fn lookahead<U>(&mut self, predicate: impl Fn(&mut ParserImpl<'a, C>) -> U) -> U {

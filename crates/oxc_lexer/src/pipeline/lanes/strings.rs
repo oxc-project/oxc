@@ -9,6 +9,8 @@ use crate::{
 use crate::pipeline::{
     bytes::{hex_digit, is_ls_ps_tail},
     chunk::mm32,
+    find::find,
+    source::Source,
 };
 
 use super::Lanes;
@@ -79,10 +81,15 @@ impl Lanes {
                 return (StringSpan::new(ss, we & StringSpan::END_MASK, false, cpu), false);
             }
             true
-        } else if CRLF {
-            span_has_bs_or_cr(src, bs as usize, be as usize, cpu)
         } else {
-            span_has_bs(src, bs as usize, be as usize, cpu)
+            // The finder stops at the end of the body, so a hit is inside it.
+            let body = Source::new(src, be as usize);
+            let hit = if CRLF {
+                find(body, bs as usize, [b'\\', b'\r'], cpu)
+            } else {
+                find(body, bs as usize, [b'\\'], cpu)
+            };
+            hit < be as usize
         };
         let body = &src[bs as usize..be as usize];
         let (lone, nes) = if !needs_decode {
@@ -227,32 +234,20 @@ impl Lanes {
                     k += 1; // `}` consumed only on the well-formed path
                     if (0xD800..=0xDFFF).contains(&value) {
                         // lone surrogate via braces: invalid in identifiers
-                        self.push_diag(
-                            start as u32,
-                            (k - start) as u32,
-                            DiagCode::InvalidIdentifierEscape,
-                        );
+                        self.push_bad_ident_escape(start, k);
                     } else {
                         self.check_escaped_ident_char(value, at_start, k);
                     }
                 } else {
                     // overflow / no digits / missing `}`: end = parser stop
-                    self.push_diag(
-                        start as u32,
-                        (k - start) as u32,
-                        DiagCode::InvalidIdentifierEscape,
-                    );
+                    self.push_bad_ident_escape(start, k);
                 }
                 i = k;
                 continue;
             }
             let (h1, e1) = hex4(src, k, be);
             let Some(high) = h1 else {
-                self.push_diag(
-                    start as u32,
-                    (e1 - start) as u32,
-                    DiagCode::InvalidIdentifierEscape,
-                );
+                self.push_bad_ident_escape(start, e1);
                 i = e1;
                 continue;
             };
@@ -274,20 +269,22 @@ impl Lanes {
                 {
                     // A well-formed pair is still invalid in identifiers:
                     // one diag over both escapes.
-                    self.push_diag(
-                        start as u32,
-                        (low_end - start) as u32,
-                        DiagCode::InvalidIdentifierEscape,
-                    );
+                    self.push_bad_ident_escape(start, low_end);
                     i = low_end;
                     continue;
                 }
                 // Not a valid low: fall through - the parser rewinds and
                 // reports the first escape alone.
             }
-            self.push_diag(start as u32, (k - start) as u32, DiagCode::InvalidIdentifierEscape);
+            self.push_bad_ident_escape(start, k);
             i = k;
         }
+    }
+
+    /// An invalid escape in an identifier, spanning from after its backslash to end.
+    #[cpu_version(Generic)]
+    fn push_bad_ident_escape(&mut self, start: usize, end: usize) {
+        self.push_diag(start as u32, (end - start) as u32, DiagCode::InvalidIdentifierEscape);
     }
 }
 
@@ -340,105 +337,6 @@ fn short_needs_decode_generic<const CR: bool>(window: &[u8; 32], len: usize) -> 
     } else {
         memchr::memchr(b'\\', body).is_some()
     }
-}
-
-#[cpu_multiversion]
-#[inline(always)]
-fn span_has_bs(src: &[u8], bs: usize, be: usize, cpu: impl Cpu) -> bool {
-    match DynCpu::from(cpu) {
-        DynCpu::Avx2(cpu) => span_has_bs_avx2(src, bs, be, cpu),
-        DynCpu::Neon(cpu) => span_has_neon::<false>(src, bs, be, cpu),
-        DynCpu::Generic(_) => span_has_bs_generic(src, bs, be),
-    }
-}
-
-/// [`span_has_bs`] for AVX2.
-#[cpu_version(Avx2)]
-#[inline]
-fn span_has_bs_avx2(src: &[u8], bs: usize, be: usize, cpu: Avx2) -> bool {
-    let src = &src[..be];
-    let mut i = bs;
-    while i + 32 <= be {
-        let v = Vec256::read_unaligned(src[i..].first_chunk::<32>().unwrap(), cpu);
-        let m = v.eq_u8(b'\\').movemask();
-        if m != 0 {
-            return true;
-        }
-        i += 32;
-    }
-    while i < be {
-        if src[i] == b'\\' {
-            return true;
-        }
-        i += 1;
-    }
-    false
-}
-
-/// [`span_has_bs`] for all other CPUs.
-#[cpu_version(Generic)]
-#[inline]
-fn span_has_bs_generic(src: &[u8], bs: usize, be: usize) -> bool {
-    memchr::memchr(b'\\', &src[bs..be]).is_some()
-}
-
-/// Template variant of [`span_has_bs`]: a raw CR also forces the decode path.
-#[cpu_multiversion]
-#[inline(always)]
-fn span_has_bs_or_cr(src: &[u8], bs: usize, be: usize, cpu: impl Cpu) -> bool {
-    match DynCpu::from(cpu) {
-        DynCpu::Avx2(cpu) => span_has_bs_or_cr_avx2(src, bs, be, cpu),
-        DynCpu::Neon(cpu) => span_has_neon::<true>(src, bs, be, cpu),
-        DynCpu::Generic(_) => span_has_bs_or_cr_generic(src, bs, be),
-    }
-}
-
-/// [`span_has_bs`] for Neon, or [`span_has_bs_or_cr`] if CR. Reads up to 15 bytes into the padding.
-#[cpu_version(Neon)]
-#[inline]
-fn span_has_neon<const CR: bool>(src: &[u8], bs: usize, be: usize, cpu: Neon) -> bool {
-    let hits = |i: usize| {
-        let v = Vec128::read_unaligned(src[i..].first_chunk::<16>().unwrap(), cpu);
-        (if CR { v.eq_u8(b'\\') | v.eq_u8(b'\r') } else { v.eq_u8(b'\\') }).nibble_mask()
-    };
-    let mut i = bs;
-    while i + 16 <= be {
-        if hits(i) != 0 {
-            return true;
-        }
-        i += 16;
-    }
-    i < be && hits(i) & ((1u64 << (4 * (be - i))) - 1) != 0
-}
-
-/// [`span_has_bs_or_cr`] for AVX2.
-#[cpu_version(Avx2)]
-#[inline]
-fn span_has_bs_or_cr_avx2(src: &[u8], bs: usize, be: usize, cpu: Avx2) -> bool {
-    let src = &src[..be];
-    let mut i = bs;
-    while i + 32 <= be {
-        let v = Vec256::read_unaligned(src[i..].first_chunk::<32>().unwrap(), cpu);
-        let m = (v.eq_u8(b'\\') | v.eq_u8(b'\r')).movemask();
-        if m != 0 {
-            return true;
-        }
-        i += 32;
-    }
-    while i < be {
-        if src[i] == b'\\' || src[i] == b'\r' {
-            return true;
-        }
-        i += 1;
-    }
-    false
-}
-
-/// [`span_has_bs_or_cr`] for all other CPUs.
-#[cpu_version(Generic)]
-#[inline]
-fn span_has_bs_or_cr_generic(src: &[u8], bs: usize, be: usize) -> bool {
-    memchr::memchr2(b'\\', b'\r', &src[bs..be]).is_some()
 }
 
 #[cpu_multiversion]

@@ -1,9 +1,9 @@
-commit: f7973164
+commit: 5e32f324
 
 parser_typescript Summary:
-AST Parsed     : 9901/9914 (99.87%)
-Positive Passed: 9889/9914 (99.75%)
-Negative Passed: 1720/2823 (60.93%)
+AST Parsed     : 9909/9922 (99.87%)
+Positive Passed: 9897/9922 (99.75%)
+Negative Passed: 1721/2824 (60.94%)
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration4.ts
@@ -8418,15 +8418,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  9 │     }
    ╰────
 
-  × Expected `,` or `)` but found `=>`
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/fatarrowfunctionsErrors.ts:2:8]
+  × Invalid arrow function parameter
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/fatarrowfunctionsErrors.ts:2:6]
  1 │ foo((...Far:any[])=>{return 0;})
  2 │ foo((1)=>{return 0;}); 
-   ·    ┬   ─┬
-   ·    │    ╰── `,` or `)` expected
-   ·    ╰── Opened here
+   ·      ─
  3 │ foo((x?)=>{return x;})
    ╰────
+  help: Expected an identifier or a destructuring pattern.
 
   × TS(1015): A parameter cannot have a question mark and an initializer.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/fatarrowfunctionsOptionalArgs.ts:60:10]
@@ -8487,18 +8486,18 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  5 │ 
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors2.ts:1:22]
+  × Invalid arrow function parameter
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors2.ts:1:15]
  1 │ var tt1 = (a, (b, c)) => a+b+c;
-   ·                      ▲
+   ·               ──────
  2 │ var tt2 = ((a), b, c) => a+b+c;
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
   × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors3.ts:1:2]
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors3.ts:1:5]
  1 │ (...) => 105;
-   ·  ───
+   ·     ─
    ╰────
 
   × TS(1015): A parameter cannot have a question mark and an initializer.
@@ -11253,6 +11252,16 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ·         ┬          ┬
    ·         │          ╰── `,` or `}` expected
    ·         ╰── Opened here
+   ╰────
+
+  × Expected `,` or `}` but found `?`
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/objectShorthandGrammar.ts:3:25]
+ 2 │ const valid = { value, other: value };
+ 3 │ const optional = { value? };
+   ·                  ┬      ┬
+   ·                  │      ╰── `,` or `}` expected
+   ·                  ╰── Opened here
+ 4 │ const definite = { value! };
    ╰────
 
   × Expected `,` or `}` but found `?`
@@ -16106,11 +16115,11 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Try inserting a semicolon here
 
-  × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/async/es2017/asyncArrowFunction/asyncArrowFunction7_es2017.ts:3:29]
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/async/es2017/asyncArrowFunction/asyncArrowFunction7_es2017.ts:3:24]
  2 │   // 'await' here is an identifier, and not an await expression.
  3 │   var foo = async (a = await): Promise<void> => {
-   ·                             ─
+   ·                        ─────
  4 │   }
    ╰────
 
@@ -16196,11 +16205,11 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Try inserting a semicolon here
 
-  × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/async/es5/asyncArrowFunction/asyncArrowFunction7_es5.ts:3:29]
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/async/es5/asyncArrowFunction/asyncArrowFunction7_es5.ts:3:24]
  2 │   // 'await' here is an identifier, and not an await expression.
  3 │   var foo = async (a = await): Promise<void> => {
-   ·                             ─
+   ·                        ─────
  4 │   }
    ╰────
 
@@ -16334,11 +16343,11 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Try inserting a semicolon here
 
-  × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/async/es6/asyncArrowFunction/asyncArrowFunction7_es6.ts:3:29]
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/async/es6/asyncArrowFunction/asyncArrowFunction7_es6.ts:3:24]
  2 │   // 'await' here is an identifier, and not an await expression.
  3 │   var foo = async (a = await): Promise<void> => {
-   ·                             ─
+   ·                        ─────
  4 │   }
    ╰────
 
@@ -29071,12 +29080,12 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  2 │ 
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser512325.ts:1:21]
+  × Invalid arrow function parameter
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser512325.ts:1:14]
  1 │ var tt = (a, (b, c)) => a+b+c;
-   ·                     ▲
+   ·              ──────
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser519458.ts:1:21]

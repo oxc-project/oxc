@@ -1,6 +1,6 @@
-commit: d7a0cccb
+commit: 16a2d671
 
-Passed: 736/1169
+Passed: 754/1182
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -158,7 +158,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-explicit-resource-management (25/28)
+# babel-plugin-transform-explicit-resource-management (26/29)
 * integration/commonjs-transform/input.js
 x Output mismatch
 
@@ -371,7 +371,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-static-block (21/24)
+# babel-plugin-transform-class-static-block (22/25)
 * integration/in-class-heritage/input.js
 x Output mismatch
 
@@ -737,7 +737,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-private-property-in-object (19/60)
+# babel-plugin-transform-private-property-in-object (24/60)
 * assumption-noUninitializedPrivateFieldAccess/static-field/input.js
 x Output mismatch
 
@@ -801,12 +801,6 @@ x Output mismatch
 * assumption-privateFieldsAsSymbols/static-method/input.js
 x Output mismatch
 
-* private/native-classes/input.js
-x Output mismatch
-
-* private/static-field/input.js
-x Output mismatch
-
 * private/static-shadow/input.js
 x Output mismatch
 
@@ -844,15 +838,6 @@ x Output mismatch
 x Output mismatch
 
 * to-native-fields/class-expression-in-default-param/input.js
-x Output mismatch
-
-* to-native-fields/class-expression-static/input.js
-x Output mismatch
-
-* to-native-fields/half-constructed-static/input.js
-x Output mismatch
-
-* to-native-fields/static-field/input.js
 x Output mismatch
 
 * to-native-fields/static-shadow/input.js
@@ -1085,7 +1070,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-exponentiation-operator (2/7)
+# babel-plugin-transform-exponentiation-operator (7/12)
 * exponentiation-operator/memoise-object/input.js
 x Output mismatch
 
@@ -1153,7 +1138,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (110/158)
+# babel-plugin-transform-typescript (113/161)
 * class/accessor-allowDeclareFields-false/input.ts
 
   x TS(18010): An accessibility modifier cannot be used with a private

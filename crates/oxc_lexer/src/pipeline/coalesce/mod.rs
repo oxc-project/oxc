@@ -14,7 +14,7 @@ use crate::pipeline::{
     kinds::Kinds,
     lanes::Lanes,
     lex::{Lex, LexState},
-    operators::{is_op_char, opmap_longest, opmap_pack2, opmap_pack3},
+    operators::{OP2_TABLE, OP3_TABLE, is_op_char, opmap_longest},
     scan::scan_number,
 };
 
@@ -278,7 +278,7 @@ fn coalesce_events(
 #[cpu_multiversion]
 #[inline(always)]
 fn fuse_pair(kinds: Kinds, token_start: Bitmap, p: usize, q: u32, cpu: impl Cpu) -> usize {
-    let (pack, kind) = opmap_pack2(q & 0xFFFF, cpu);
+    let (pack, kind) = OP2_TABLE.pack(q & 0xFFFF, cpu);
     let mut ok = pack as u16 == q as u16;
     ok &= !((kind == TokenKind::OptionalChain) && is_digit((q >> 16) as u8, cpu));
     kinds.set_if(p, ok, kind);
@@ -292,14 +292,14 @@ fn fuse_pair(kinds: Kinds, token_start: Bitmap, p: usize, q: u32, cpu: impl Cpu)
 fn fuse_triple(kinds: Kinds, token_start: Bitmap, p: usize, q: u32, cpu: impl Cpu) -> usize {
     let b2 = (q >> 16) as u8;
     let key3 = q & 0xFF_FFFF;
-    let (p3, k3) = opmap_pack3(key3, cpu);
+    let (p3, k3) = OP3_TABLE.pack(key3, cpu);
     let ok3 = ((p3 ^ q) & 0xFF_FFFF) == 0;
     let key2a = q & 0xFFFF;
-    let (pa, ka) = opmap_pack2(key2a, cpu);
+    let (pa, ka) = OP2_TABLE.pack(key2a, cpu);
     let mut ok2a = pa as u16 == q as u16;
     ok2a &= !((ka == TokenKind::OptionalChain) && is_digit(b2, cpu));
     let key2b = key3 >> 8;
-    let (pb, kb) = opmap_pack2(key2b, cpu);
+    let (pb, kb) = OP2_TABLE.pack(key2b, cpu);
     let mut ok2b = pb as u16 == key2b as u16;
     ok2b &= !((kb == TokenKind::OptionalChain) && is_digit((q >> 24) as u8, cpu));
     let c1 = ok3 | ok2a; // the token at p is 2 or more bytes

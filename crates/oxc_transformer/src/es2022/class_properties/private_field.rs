@@ -248,7 +248,8 @@ impl<'a> ClassProperties<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let Expression::CallExpression(call_expr) = expr else { unreachable!() };
-        if matches!(&call_expr.callee, Expression::PrivateFieldExpression(_)) {
+        if matches!(call_expr.callee.get_inner_expression(), Expression::PrivateFieldExpression(_))
+        {
             self.transform_call_expression_impl(call_expr, ctx);
         }
     }
@@ -260,13 +261,15 @@ impl<'a> ClassProperties<'a> {
     ) {
         // Unfortunately no way to make compiler see that this branch is provably unreachable.
         // This function is much too large to inline.
-        let Expression::PrivateFieldExpression(field_expr) = &mut call_expr.callee else {
+        let Expression::PrivateFieldExpression(field_expr) =
+            call_expr.callee.get_inner_expression_mut()
+        else {
             unreachable!()
         };
 
         if self.private_fields_as_properties {
             // `object.#prop(arg)` -> `_classPrivateFieldLooseBase(object, _prop)[_prop](arg)`
-            call_expr.callee.replace_with(|callee| {
+            call_expr.callee.get_inner_expression_mut().replace_with(|callee| {
                 let Expression::PrivateFieldExpression(field_expr) = callee else { unreachable!() };
 
                 let prop_binding =
@@ -384,7 +387,7 @@ impl<'a> ClassProperties<'a> {
             )
             .is_some()
             {
-                if is_method {
+                if is_method && !is_accessor {
                     // (`_prop`, object)
                     (prop_ident, object)
                 } else if is_accessor {
@@ -1925,8 +1928,11 @@ impl<'a> ClassProperties<'a> {
 
     /// Transform private field in expression.
     ///
-    /// * Static
-    ///   `#prop in object` -> `_checkInRHS(object) === Class`
+    /// * Static prop
+    ///   `#prop in object` -> `_checkInRHS(object) === Class && !!_prop`
+    ///
+    /// * Static method
+    ///   `#method in object` -> `_checkInRHS(object) === Class`
     ///
     /// * Instance prop
     ///   `#prop in object` -> `_prop.has(_checkInRHS(object))`
@@ -1956,20 +1962,50 @@ impl<'a> ClassProperties<'a> {
     ) -> Expression<'a> {
         let PrivateInExpression { left, right, span, .. } = private_field.unbox();
 
-        let ResolvedPrivateProp { class_bindings, prop_binding, is_method, is_static, .. } =
-            self.classes_stack.find_private_prop(&left);
+        let ResolvedPrivateProp {
+            class_bindings,
+            prop_binding,
+            is_method,
+            is_static,
+            is_accessor,
+            ..
+        } = self.classes_stack.find_private_prop(&left);
 
         if is_static {
             let class_binding = class_bindings.get_or_init_static_binding(ctx);
             let class_ident = class_binding.create_read_expression(ctx);
+            let initialized = if is_method || is_accessor || self.private_fields_as_properties {
+                None
+            } else {
+                let storage = prop_binding.create_read_expression(ctx);
+                let uninitialized =
+                    Expression::new_unary_expression(SPAN, UnaryOperator::LogicalNot, storage, ctx);
+                Some(Expression::new_unary_expression(
+                    SPAN,
+                    UnaryOperator::LogicalNot,
+                    uninitialized,
+                    ctx,
+                ))
+            };
             let left = self.create_check_in_rhs(right, ctx);
-            return Expression::new_binary_expression(
+            let brand_check = Expression::new_binary_expression(
                 span,
                 left,
                 BinaryOperator::StrictEquality,
                 class_ident,
                 ctx,
             );
+            return if let Some(initialized) = initialized {
+                Expression::new_logical_expression(
+                    span,
+                    brand_check,
+                    LogicalOperator::And,
+                    initialized,
+                    ctx,
+                )
+            } else {
+                brand_check
+            };
         }
 
         let callee = if is_method {

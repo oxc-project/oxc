@@ -8,7 +8,7 @@ use crate::pipeline::{
     operators::is_op_char,
 };
 
-use super::{Planes, punct::PUNCT_CHARS};
+use super::{Planes, mask_tail, punct::PUNCT_CHARS};
 
 const FL_WORD: u32 = 0;
 const FL_WS: u32 = 1;
@@ -88,8 +88,7 @@ pub(super) fn classify_generic(ts: bool, src: &[[u8; 64]], n: usize, out: Planes
     } = out;
     let mut cw: u64 = 0;
     let mut cs: u64 = 0;
-    let nbf = n / 64;
-    for b in 0..nbf {
+    for b in 0..nb_ceil {
         let (mut mw, mut ms, mut mdg, mut mdt, mut mop, mut mkw, mut mmi) =
             (0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64);
         let mut g = 0usize;
@@ -128,43 +127,8 @@ pub(super) fn classify_generic(ts: bool, src: &[[u8; 64]], n: usize, out: Planes
         dot[b] = mdt;
         misc[b] = mmi;
     }
-    let i = nbf * 64;
-    if i < n {
-        let b = nbf;
-        let tail = n - i;
-        let (mut w, mut stw, mut kwi, mut opw, mut dgw, mut dtw, mut msw) =
-            (0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64);
-        let mut prev_word = cw & 1;
-        let mut prev_ws = cs & 1;
-        for kk in 0..tail {
-            let v = t16[src[b][kk] as usize];
-            let f = (v >> 8) as u64;
-            w |= ((f >> FL_WORD) & 1) << kk;
-            kwi |= ((f >> FL_KWINIT) & 1) << kk;
-            opw |= ((f >> FL_OPCH) & 1) << kk;
-            dgw |= ((f >> FL_DIGIT) & 1) << kk;
-            dtw |= ((f >> FL_DOT) & 1) << kk;
-            msw |= ((f >> FL_MISC) & 1) << kk;
-            let isw = (f >> FL_WORD) & 1;
-            let isws = (f >> FL_WS) & 1;
-            let start = (isws != 0 && prev_ws == 0)
-                || (isw != 0 && prev_word == 0)
-                || (isws == 0 && isw == 0);
-            if start {
-                stw |= 1u64 << kk;
-            }
-            kind[b][kk] = (v & 0xff) as u8;
-            prev_word = isw;
-            prev_ws = isws;
-        }
-        word[b] = w;
-        st[b] = stw;
-        kwinit[b] = kwi;
-        opch[b] = opw;
-        digit[b] = dgw;
-        dot[b] = dtw;
-        misc[b] = msw;
-    }
+    // The last block is classified whole, padding included, like the vector kernels do.
+    mask_tail([st, word, kwinit, opch, digit, dot, misc], n);
 }
 
 #[cpu_version(Generic)]

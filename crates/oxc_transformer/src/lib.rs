@@ -597,6 +597,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_statements(stmts, ctx);
         }
+        self.decorator.enter_statements(stmts, ctx);
     }
 
     fn exit_arrow_function_expression(
@@ -638,7 +639,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
     }
 
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.decorator.enter_statement(stmt, ctx);
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_statement(stmt, ctx);
         }

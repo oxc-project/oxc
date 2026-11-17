@@ -75,6 +75,8 @@ pub static NOT_SUPPORTED_TEST_PATHS: phf::Set<&'static str> = phf::phf_set![
     // TSC: Exporting JSDoc type annotations from `.js` file
     // OXC: Does not support JSDoc types
     "importingExportingTypes.ts",
+    // TS1005 is reported only inside JSDoc type annotations, which Oxc does not parse.
+    "jsdocNestedPropertyTagInvalidType.ts",
     // TSC: Reports TS5052(complains compilerOptions are invalid), also implies TS2564 but NOT reported
     // OXC: We do not care about compiler options and report TS2564 correctly
     "esDecorators-emitDecoratorMetadata.ts",
@@ -645,6 +647,8 @@ pub static NOT_SUPPORTED_ERROR_CODES: phf::Set<&'static str> = phf::phf_set![
     "18057", // String literal import and export names are not supported when the '--module' flag is set to 'es2015' or 'es2020'.
     "18062", // Regular expression pattern modifiers are only available when targeting 'es2025' or later.
     "18063", // Duplicate named capturing groups are only available when targeting 'es2025' or later.
+    "18133", // Non-literal import paths cannot be rewritten when a content mapper uses both 'include' and an 'outputExtensions' mapping. Set 'disableDynamicImportExtensionRewriting' to disable rewriting of non-literal import paths.
+    "18139", // This relative import path is unsafe to rewrite because it appears not to match the content mapper's 'include', but does after resolution with 'rootDirs' and 'moduleSuffixes'.
 ];
 
 /// Error messages that can be suppressed by `@ts-ignore` or `@ts-expect-error` comments.

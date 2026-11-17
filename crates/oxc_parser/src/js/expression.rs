@@ -232,6 +232,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::Await if ctx.has_await() => {
                 self.error(diagnostics::identifier_async("await", span));
             }
+            Kind::Await => self.state.mentions_await = true,
             // It is a Syntax Error if this production has a [Yield] parameter.
             Kind::Yield if ctx.has_yield() => {
                 let next_token = self.lexer.peek_token();
@@ -1654,6 +1655,24 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if !self.eat(Kind::Question) {
             return lhs;
         }
+        self.parse_conditional_expression_after_question(
+            lhs_start,
+            lhs,
+            question_span,
+            allow_return_type_in_arrow_function,
+        )
+    }
+
+    /// Parse the rest of a `ConditionalExpression` whose `?` has been consumed.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub(super) fn parse_conditional_expression_after_question(
+        &mut self,
+        lhs_start: u32,
+        lhs: Expression<'a>,
+        question_span: Span,
+        allow_return_type_in_arrow_function: bool,
+    ) -> Expression<'a> {
         let consequent = self.context_add(Context::In, |p| {
             p.parse_assignment_expression_or_higher_impl(
                 /* allow_return_type_in_arrow_function */ false,
@@ -1741,34 +1760,47 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 return self.parse_yield_expression();
             }
             'parse_lhs: {
-                // `() => {}`, `(x) => {}`, `async x => {}`
+                // `() => {}`, `(x) => {}`, `async x => {}`, `<T>(x) => {}`
                 let arrow_expr = match kind {
-                    Kind::LParen if !self.is_ts && !self.ctx.has_decorator() => {
+                    Kind::LParen => {
                         let pure_comments =
                             self.lexer.trivia_builder.previous_token_pure_comments();
-                        match self.try_parse_arrow_function_expression::<true>(
+                        let (expression, is_arrow) = self
+                            .parse_parenthesized_expression_or_arrow_function(
+                                allow_return_type_in_arrow_function,
+                                no_side_effects_comments,
+                            );
+                        if !is_arrow {
+                            break 'parse_lhs self.parse_cover_expression_rest(
+                                start,
+                                expression,
+                                pure_comments,
+                                /* lhs_parenthesized */ true,
+                            );
+                        }
+                        Some(expression)
+                    }
+                    Kind::Async => {
+                        let pure_comments =
+                            self.lexer.trivia_builder.previous_token_pure_comments();
+                        match self.try_parse_async_arrow_function_or_call(
                             allow_return_type_in_arrow_function,
                         ) {
-                            // Reused heads cannot produce an arrow expression.
-                            Some(expression)
-                                if !matches!(
-                                    expression,
-                                    Expression::ArrowFunctionExpression(_)
-                                ) =>
-                            {
-                                break 'parse_lhs self.parse_reused_parenthesized_expression_rest(
+                            Some((expression, /* is_arrow */ false)) => {
+                                break 'parse_lhs self.parse_cover_expression_rest(
                                     start,
                                     expression,
                                     pure_comments,
+                                    /* lhs_parenthesized */ false,
                                 );
                             }
-                            arrow => arrow,
+                            Some((expression, _)) => Some(expression),
+                            None => None,
                         }
                     }
-                    Kind::LParen | Kind::LAngle | Kind::Async => self
-                        .try_parse_arrow_function_expression::<false>(
-                            allow_return_type_in_arrow_function,
-                        ),
+                    Kind::LAngle => self.try_parse_generic_arrow_function_expression(
+                        allow_return_type_in_arrow_function,
+                    ),
                     _ => None,
                 };
                 if let Some(mut arrow_expr) = arrow_expr {
@@ -1828,19 +1860,50 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         expr
     }
 
+    /// Parse what follows the primary expression that a cover grammar produced:
+    /// a parenthesized expression, or the call `async(…)`.
     #[inline(never)]
-    fn parse_reused_parenthesized_expression_rest(
+    fn parse_cover_expression_rest(
+        &mut self,
+        start: u32,
+        primary: Expression<'a>,
+        pure_comments: Option<(u32, NonZeroU32)>,
+        lhs_parenthesized: bool,
+    ) -> Expression<'a> {
+        let lhs = self.parse_primary_expression_rest(start, primary, pure_comments);
+        if kind_to_precedence(self.cur_kind()).is_none() {
+            lhs
+        } else {
+            self.parse_binary_expression_rest(start, lhs, lhs_parenthesized, Precedence::Comma)
+        }
+    }
+
+    /// Parse the rest of an `AssignmentExpression` that starts with `primary`, which must not
+    /// be parenthesized and cannot be the parameter of an arrow function.
+    pub(super) fn parse_assignment_expression_rest(
         &mut self,
         start: u32,
         primary: Expression<'a>,
         pure_comments: Option<(u32, NonZeroU32)>,
     ) -> Expression<'a> {
         let lhs = self.parse_primary_expression_rest(start, primary, pure_comments);
-        if kind_to_precedence(self.cur_kind()).is_none() {
+        let lhs = if kind_to_precedence(self.cur_kind()).is_none() {
             lhs
         } else {
-            self.parse_binary_expression_rest(start, lhs, true, Precedence::Comma)
+            self.parse_binary_expression_rest(start, lhs, false, Precedence::Comma)
+        };
+        let kind = self.cur_kind();
+        if kind.is_assignment_operator() {
+            return self.parse_assignment_expression_recursive(
+                start, lhs, None, /* allow_return_type_in_arrow_function */ true,
+            );
         }
+        if kind == Kind::Question {
+            return self.parse_conditional_expression_rest(
+                start, lhs, /* allow_return_type_in_arrow_function */ true,
+            );
+        }
+        lhs
     }
 
     #[cold]
@@ -2010,10 +2073,24 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // Always parse as await expression
         if self.ctx.has_await() {
             let start = self.cur_start();
+            let await_token = self.cur_token();
             self.bump_any(); // consume `await`
+            // In a list that may be the parameters of an arrow function, `(await) => {}`,
+            // `await` without an operand is the name of a parameter. Report it as such, as
+            // parsing the list as parameters would, and carry on with the identifier.
+            if matches!(
+                self.cur_kind(),
+                Kind::RParen | Kind::RBrack | Kind::RCurly | Kind::Comma | Kind::Colon | Kind::Eq
+            ) && self.state.cover_depth > 0
+            {
+                return self.parse_await_as_identifier(await_token);
+            }
             let argument = self.parse_unary_expression_or_higher(self.cur_start());
             return Expression::new_await_expression(self.end_span(start), argument, self);
         }
+
+        // An async arrow function that this may be a parameter of reserves `await`.
+        self.state.mentions_await = true;
 
         // Case 2: Not in await context, but unambiguously an await expression
         // Parse as await expression and report error for better diagnostics
@@ -2050,6 +2127,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // This applies to scripts where `await` might be identifier or keyword
         // The statement-level checkpoint system handles reparsing if ESM detected
         self.parse_update_expression(lhs_start)
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn parse_await_as_identifier(&mut self, await_token: crate::lexer::Token) -> Expression<'a> {
+        let span = await_token.span();
+        self.error(diagnostics::identifier_async("await", span));
+        let name = if await_token.escaped() {
+            self.lexer.get_string(await_token)
+        } else {
+            self.token_source(&await_token)
+        };
+        Expression::new_identifier(span, self.ident(name), self)
     }
 
     fn parse_decorated_expression(&mut self) -> Expression<'a> {

@@ -402,7 +402,7 @@ mod test {
                 NoTokensLexerConfig,
                 unique,
             );
-            let token = lexer.next_token();
+            let token = lexer.first_token();
             assert_eq!(
                 token.kind(),
                 if is_only_part { Kind::NoSubstitutionTemplate } else { Kind::TemplateHead }

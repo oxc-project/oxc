@@ -64,6 +64,11 @@ impl LexerCheckpoint<'_> {
     }
 }
 
+/// Number of bytes which are always available to read from the position passed to a token handler.
+/// i.e. a token handler can read the byte after the first byte of the token, without checking
+/// whether it is at the end of the source.
+const TOKEN_HANDLER_MIN_BYTES: usize = 2;
+
 /// Action to take when finishing a token.
 /// Passed to [`Lexer::finish_next_inner`].
 #[derive(Clone, Copy, Eq, PartialEq)]
@@ -88,12 +93,15 @@ pub struct Lexer<'a, C: Config> {
     /// The `Token` itself is only constructed by `Token::new` once its kind and end are known.
     ///
     /// Between lexer calls, `pending` is always `PendingToken::NONE`. Every method which produces
-    /// a token ends in `finish_next_inner`, which resets it, or `finish_re_lex`, which never alters it.
+    /// a token ends in one of:
+    /// * `finish_next_inner`, which resets it.
+    /// * `finish_re_lex`, which never alters it.
+    /// * `finish_fresh_token`, which is only for tokens which nothing has altered it for.
     ///
     /// The one exception is before the first token is lexed, when it is `PendingToken::START_OF_FILE`.
-    /// `checkpoint` and `rewind` can never see that state, because the parser lexes the first token
-    /// before it does anything else, and they are the only things which depend on `pending` being
-    /// `PendingToken::NONE`. Both assert it.
+    /// `next_token`, `checkpoint` and `rewind` depend on `pending` being `PendingToken::NONE`,
+    /// and assert it in debug builds. They can never see that state, because the parser lexes
+    /// the first token with `first_token` before it does anything else.
     pending: PendingToken,
 
     pub(crate) errors: Vec<ParserDiagnostic<'a>>,
@@ -242,16 +250,181 @@ impl<'a, C: Config> Lexer<'a, C> {
             // Hashbangs are not included in tokens
             self.finish_next_inner(kind, self.source.position(), FinishTokenMode::Discard)
         } else {
-            let (kind, end) = self.read_next_token();
-            self.finish_next_inner(kind, end, FinishTokenMode::Push)
+            self.first_token_without_hashbang()
         }
     }
 
-    /// Read next token in file.
-    /// Use `first_token` for first token, and this method for all further tokens.
-    pub fn next_token(&mut self) -> Token {
+    /// Read first token, without treating `#!` as the start of a hashbang comment.
+    /// For source which is not a whole file e.g. a lone expression.
+    pub fn first_token_without_hashbang(&mut self) -> Token {
         let (kind, end) = self.read_next_token();
         self.finish_next_inner(kind, end, FinishTokenMode::Push)
+    }
+
+    /// Read next token in file.
+    ///
+    /// Use `first_token` or `first_token_without_hashbang` for first token, and this method for
+    /// all further tokens. This method relies on `pending` being `PendingToken::NONE`, which it is
+    /// after any token has been read, but not at the start of the file. Reading the first token
+    /// with this method gives that token, and a later one, the wrong `is_on_new_line` flag.
+    /// That is only checked in debug builds.
+    pub fn next_token(&mut self) -> Token {
+        self.next_token_impl()
+    }
+
+    /// Read next token in file.
+    ///
+    /// This is inlined into every place the parser advances, so it only contains what most tokens
+    /// need: skip one space, then either complete a single-byte token, or call a token handler.
+    // `#[inline(always)]` so `next_token` and `next_token_for_benchmarks` contain the same code
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn next_token_impl(&mut self) -> Token {
+        // No trivia has been seen since the previous token. See `pending` field docs.
+        debug_assert_eq!(self.pending, PendingToken::NONE);
+
+        self.trivia_builder.clear_annotation_comments();
+
+        let mut pos = self.source.position();
+        // SAFETY: `source.end()` is always equal to or after `source.position()`
+        let remaining_bytes = unsafe { self.source.end().offset_from(pos) };
+        if remaining_bytes > TOKEN_HANDLER_MIN_BYTES {
+            // SAFETY: There are more than `TOKEN_HANDLER_MIN_BYTES` bytes remaining in source
+            let mut byte = unsafe { pos.read() };
+            if byte == b' ' {
+                // SAFETY: A space is ASCII, and `TOKEN_HANDLER_MIN_BYTES` bytes remain after it
+                pos = unsafe { pos.add(1) };
+                // SAFETY: `TOKEN_HANDLER_MIN_BYTES` bytes remain after the space
+                byte = unsafe { pos.read() };
+            }
+
+            if let Some(kind) = byte_handlers::single_byte_token(byte) {
+                // SAFETY: Single-byte tokens are ASCII, and at least 1 byte remains after `pos`
+                let end = unsafe { pos.add(1) };
+                self.source.set_position(end);
+                return self.finish_fresh_token(kind, pos, end);
+            }
+
+            let token_handlers = &Self::TOKEN_HANDLERS;
+            // SAFETY: `byte` is the byte at `pos`. `TOKEN_HANDLER_MIN_BYTES` bytes remain from
+            // `pos`. No trivia has been seen since the previous token, other than one space.
+            return unsafe { token_handlers[byte as usize](self, pos) };
+        }
+
+        self.next_token_after_trivia()
+    }
+
+    /// Read next token, starting from the current position of source.
+    ///
+    /// Token handlers continue here once they have skipped whitespace or a comment.
+    /// `next_token_impl` calls this if it is at the end of the source.
+    #[inline(never)]
+    fn next_token_after_trivia(&mut self) -> Token {
+        let (kind, end) = self.read_next_token_after_trivia();
+        self.finish_next_inner(kind, end, FinishTokenMode::Push)
+    }
+
+    /// Finish a token which starts at `start` and ends at `end`, where all of these are true:
+    ///
+    /// * No trivia was seen between the previous token and it, other than one space.
+    /// * It has no flags (`escaped` or `has_separator`).
+    /// * Position of source has been set to `end`.
+    ///
+    /// Such a token is not on a new line, and has no comments to attach, so `pending` is neither
+    /// read nor reset. `token_start` is not read either, so does not need to have been set.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn finish_fresh_token(
+        &mut self,
+        kind: Kind,
+        start: SourcePosition<'a>,
+        end: SourcePosition<'a>,
+    ) -> Token {
+        self.finish_token_without_comments(kind, start, end, PendingToken::NONE)
+    }
+
+    /// Same as `finish_fresh_token`, for a token which only line breaks and regular whitespace
+    /// were seen before. The token is on a new line.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn finish_fresh_token_on_new_line(
+        &mut self,
+        kind: Kind,
+        start: SourcePosition<'a>,
+        end: SourcePosition<'a>,
+    ) -> Token {
+        self.finish_token_without_comments(kind, start, end, PendingToken::AFTER_LINE_BREAK)
+    }
+
+    /// Finish a token which has no flags, and which no comments were seen before.
+    /// `trivia` is what else was seen before it. `pending` must not have been altered.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn finish_token_without_comments(
+        &mut self,
+        kind: Kind,
+        start: SourcePosition<'a>,
+        end: SourcePosition<'a>,
+        trivia: PendingToken,
+    ) -> Token {
+        debug_assert_eq!(end, self.source.position());
+        debug_assert_ne!(kind, Kind::Skip);
+        #[cfg(debug_assertions)]
+        self.assert_byte_handler_produces_token(kind, start, end);
+
+        let token =
+            Token::new(kind, self.source.offset_of(start), self.source.offset_of(end), trivia);
+        self.record_token_without_comments(token)
+    }
+
+    /// Check that the byte handler for the first byte of a token produces that same token,
+    /// with no flags.
+    ///
+    /// Code which finishes a token with `finish_fresh_token` decides for itself where the token
+    /// ends, what `Kind` it is, and that it has no flags. Byte handlers lex the same token where
+    /// it follows a comment or other trivia, so the two must agree. This checks that they do,
+    /// in debug builds, which all tests and conformance runs are.
+    #[cfg(debug_assertions)]
+    fn assert_byte_handler_produces_token(
+        &mut self,
+        kind: Kind,
+        start: SourcePosition<'a>,
+        end: SourcePosition<'a>,
+    ) {
+        let token_start = self.token_start;
+        let error_count = self.errors.len();
+
+        self.source.set_position(start);
+        self.token_start = self.source.offset_of(start);
+        // SAFETY: A token starts at `start`, so it is not the end of the source
+        let byte = unsafe { start.read() };
+        // SAFETY: `byte` is the byte at `start`, which is the current position of source
+        let byte_handler_kind = unsafe { self.handle_byte(byte) };
+
+        assert_eq!(
+            (byte_handler_kind, self.source.position()),
+            (kind, end),
+            "Byte handler lexes a different token"
+        );
+        assert_eq!(self.pending, PendingToken::NONE, "Byte handler gives the token flags");
+        assert_eq!(self.errors.len(), error_count, "Byte handler reports an error for the token");
+
+        self.token_start = token_start;
+    }
+
+    /// Record a finished token, where no comments were seen since the previous token,
+    /// and `pending` has not been altered since then.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn record_token_without_comments(&mut self, token: Token) -> Token {
+        debug_assert_eq!(self.pending, PendingToken::NONE);
+        if self.config.tokens() {
+            // We allocated sufficient capacity in the `Vec` for all tokens at the start.
+            // `push_fast` is optimized for the "doesn't need to grow" case.
+            self.tokens.push_fast(token);
+        }
+        self.trivia_builder.set_previous_token(token);
+        token
     }
 
     /// Read the next token after `=` in a JSX attribute.
@@ -261,13 +434,12 @@ impl<'a, C: Config> Lexer<'a, C> {
     }
 
     // This is a workaround for a problem where `next_token` is not inlined in lexer benchmark.
-    // Must be kept in sync with `next_token` above, and contain exactly the same code.
+    // It contains exactly the same code as `next_token` above, as both only call `next_token_impl`.
     #[cfg(feature = "benchmarking")]
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn next_token_for_benchmarks(&mut self) -> Token {
-        let (kind, end) = self.read_next_token();
-        self.finish_next_inner(kind, end, FinishTokenMode::Push)
+        self.next_token_impl()
     }
 
     #[inline]
@@ -473,10 +645,15 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// Read each char and set the current token
     /// Whitespace and line terminators are skipped
     /// Returns the `Kind` of the token, and the position of its end, which is current position of source.
-    #[inline] // Make sure is inlined into `next_token`
+    #[inline] // Make sure is inlined into `first_token`
     fn read_next_token(&mut self) -> (Kind, SourcePosition<'a>) {
         self.trivia_builder.clear_annotation_comments();
+        self.read_next_token_after_trivia()
+    }
 
+    /// Same as `read_next_token`, but keeps any annotation comments found before the token so far.
+    #[inline]
+    fn read_next_token_after_trivia(&mut self) -> (Kind, SourcePosition<'a>) {
         let end_pos = self.source.end();
         let mut pos = self.source.position();
         loop {

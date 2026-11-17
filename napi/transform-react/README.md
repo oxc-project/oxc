@@ -120,6 +120,12 @@ omitted.
 | `sources`                | `string[]`                            | All except `node_modules` | Only run React Compiler when the filename contains one of the provided strings. Providing this option replaces the default filter.                                                           |
 | `environment`            | `ReactCompilerEnvironmentOptions`     | Compiler defaults         | Override compiler feature flags and validation settings.                                                                                                                                     |
 
+Like upstream, `eslintSuppressionRules` only applies when
+`environment.validateHooksUsage` or
+`environment.validateExhaustiveMemoizationDependencies` is disabled. Both are
+enabled by default, and the compiler then validates those rules itself, so
+suppression comments for them do not opt a function out.
+
 Despite its upstream-compatible name, `eslintSuppressionRules` recognizes both
 ESLint and Oxlint comments: `eslint-disable`, `eslint-disable-next-line`,
 `eslint-enable`, `oxlint-disable`, `oxlint-disable-next-line`, and

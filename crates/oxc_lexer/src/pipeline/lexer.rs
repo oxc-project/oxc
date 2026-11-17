@@ -15,7 +15,7 @@ use crate::pipeline::{
     carve::carve,
     classify::{Planes, classify},
     coalesce::{BATCH_SLOTS, coalesce},
-    compress::{STAGE_CAP, compress, init_pair_luts, lanes_post},
+    compress::{STAGE_CAP, compress, lanes_post},
     kinds::Kinds,
     lex::{Lex, LexState},
     misc::{misc_post, misc_pre, retain_code_whitespace},
@@ -65,8 +65,6 @@ impl Lexer {
     #[cpu_version(Generic)]
     #[inline]
     pub(crate) fn new_with_cpu(cpu: DynCpu) -> Lexer {
-        init_pair_luts(cpu);
-
         Lexer {
             token_start: Vec::new(),
             word: Vec::new(),

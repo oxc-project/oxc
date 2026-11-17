@@ -313,3 +313,31 @@ source: crates/oxc_linter/src/tester.rs
    ·               ─
    ╰────
   help: Valid modifiers are: i, m, s
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unterminated character class
+   ╭─[no_invalid_regexp.tsx:1:11]
+ 1 │ (RegExp)('[');
+   ·           ─
+   ╰────
+  help: Add the missing closing delimiter
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unterminated character class
+   ╭─[no_invalid_regexp.tsx:1:15]
+ 1 │ new (RegExp)('[');
+   ·               ─
+   ╰────
+  help: Add the missing closing delimiter
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unterminated character class
+   ╭─[no_invalid_regexp.tsx:1:18]
+ 1 │ (RegExp as any)('[');
+   ·                  ─
+   ╰────
+  help: Add the missing closing delimiter
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unterminated character class
+   ╭─[no_invalid_regexp.tsx:1:16]
+ 1 │ new (RegExp!)('[');
+   ·                ─
+   ╰────
+  help: Add the missing closing delimiter
