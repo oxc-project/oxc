@@ -19,3 +19,15 @@ export class C {
     foo();
   }
 }
+
+export class D {
+  #_;
+  #_2() {}
+  static #_3() {}
+  accessor #_4;
+  _5;
+
+  static {
+    foo();
+  }
+}

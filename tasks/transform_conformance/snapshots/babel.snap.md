@@ -1,6 +1,6 @@
 commit: 16a2d671
 
-Passed: 754/1190
+Passed: 760/1190
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1480,7 +1480,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-react-jsx (122/149)
+# babel-plugin-transform-react-jsx (128/149)
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
 x Output mismatch
 
@@ -1511,39 +1511,6 @@ x Expected transform error, but transformation succeeded: pragma and pragmaFrag 
 * react/should-disallow-spread-children/input.js
 x Expected transform error, but transformation succeeded: Spread children are not supported in React.
 
-* react/should-disallow-valueless-key/input.js
-
-  ! Please provide an explicit key value. Using "key" as a shorthand for
-  | "key={true}" is not allowed.
-   ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx/test/fixtures/react/should-disallow-valueless-key/input.js:2:15]
- 1 | 
- 2 | var x = [<div key></div>];
-   :               ^^^
-   `----
-
-
-* react/should-disallow-xml-namespacing/input.js
-
-  ! Namespace tags are not supported by default. React's JSX doesn't support
-  | namespace tags. You can set `throwIfNamespace: false` to bypass this
-  | warning.
-   ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx/test/fixtures/react/should-disallow-xml-namespacing/input.js:1:2]
- 1 | <Namespace:Component />;
-   :  ^^^^^^^^^^^^^^^^^^^
-   `----
-
-
-* react/should-throw-error-namespaces-if-not-flag/input.js
-
-  ! Namespace tags are not supported by default. React's JSX doesn't support
-  | namespace tags. You can set `throwIfNamespace: false` to bypass this
-  | warning.
-   ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx/test/fixtures/react/should-throw-error-namespaces-if-not-flag/input.js:1:2]
- 1 | <f:image />;
-   :  ^^^^^^^
-   `----
-
-
 * react/should-warn-when-importSource-is-set/input.js
 x Expected transform error, but transformation succeeded: importSource cannot be set when runtime is classic.
 
@@ -1555,39 +1522,6 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
 
 * react-automatic/should-disallow-spread-children/input.js
 x Expected transform error, but transformation succeeded: Spread children are not supported in React.
-
-* react-automatic/should-disallow-valueless-key/input.js
-
-  ! Please provide an explicit key value. Using "key" as a shorthand for
-  | "key={true}" is not allowed.
-   ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx/test/fixtures/react-automatic/should-disallow-valueless-key/input.js:2:15]
- 1 | 
- 2 | var x = [<div key></div>];
-   :               ^^^
-   `----
-
-
-* react-automatic/should-disallow-xml-namespacing/input.js
-
-  ! Namespace tags are not supported by default. React's JSX doesn't support
-  | namespace tags. You can set `throwIfNamespace: false` to bypass this
-  | warning.
-   ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx/test/fixtures/react-automatic/should-disallow-xml-namespacing/input.js:1:2]
- 1 | <Namespace:Component />;
-   :  ^^^^^^^^^^^^^^^^^^^
-   `----
-
-
-* react-automatic/should-throw-error-namespaces-if-not-flag/input.js
-
-  ! Namespace tags are not supported by default. React's JSX doesn't support
-  | namespace tags. You can set `throwIfNamespace: false` to bypass this
-  | warning.
-   ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx/test/fixtures/react-automatic/should-throw-error-namespaces-if-not-flag/input.js:1:2]
- 1 | <f:image />;
-   :  ^^^^^^^
-   `----
-
 
 * react-automatic/should-warn-when-pragma-or-pragmaFrag-is-set/input.js
 x Expected transform error, but transformation succeeded: pragma and pragmaFrag cannot be set when runtime is automatic.

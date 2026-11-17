@@ -306,7 +306,7 @@ describe("inject plugin", () => {
 });
 
 describe("standard decorators", () => {
-  it("preserves decorators and auto-accessors while stripping types", () => {
+  it("preserves decorators and auto-accessors while stripping types when disabled", () => {
     const ret = transformSync(
       "test.ts",
       `
@@ -317,7 +317,7 @@ describe("standard decorators", () => {
         }
         class Plain { accessor value: number = 1; }
       `,
-      { target: "esnext" },
+      { target: "esnext", decorator: { lower: false } },
     );
     expect(ret.errors).toEqual([]);
     expect(ret.helpersUsed).toEqual({});
@@ -331,11 +331,11 @@ describe("standard decorators", () => {
     expect(ret.code).not.toContain(": T");
   });
 
-  it("keeps unrelated target transforms enabled while decorators are preserved", () => {
+  it("keeps unrelated target transforms enabled when standard lowering is disabled", () => {
     const ret = transformSync(
       "test.js",
       "function run() { using resource = acquire(); @decorate class Example { @decorate method() {} } return Example; }",
-      { target: "es2022" },
+      { target: "es2022", decorator: { lower: false } },
     );
     expect(ret.errors).toEqual([]);
     expect(ret.code).toContain("@decorate");
@@ -351,7 +351,7 @@ describe("standard decorators", () => {
         const ret = transformSync(
           "test.ts",
           "class Example { @decorate static value: number = 1; @decorate item: number = 2; }",
-          { target, assumptions: { setPublicClassFields } },
+          { target, decorator: { lower: false }, assumptions: { setPublicClassFields } },
         );
         expect(ret.errors).toEqual([]);
         expect(ret.code).toContain("@decorate static value = 1;");
@@ -360,6 +360,25 @@ describe("standard decorators", () => {
       }
     },
   );
+
+  it("selects legacy decorators regardless of the standard option", () => {
+    const code = "@decorate class Example { @decorate method() {} }";
+    const legacy = transformSync("test.js", code, {
+      target: "esnext",
+      decorator: { legacy: true },
+    });
+    const disabledStandard = transformSync("test.js", code, {
+      target: "esnext",
+      decorator: { legacy: true, lower: false },
+    });
+    expect(legacy.errors).toEqual([]);
+    expect(disabledStandard.errors).toEqual([]);
+    expect(legacy.code).not.toContain("@decorate");
+    expect(legacy.code).not.toContain("decorateElement");
+    expect(legacy.code).toContain("_decorate(");
+    expect(disabledStandard.code).toEqual(legacy.code);
+    expect(disabledStandard.helpersUsed).toEqual(legacy.helpersUsed);
+  });
 });
 
 describe("legacy decorator", () => {

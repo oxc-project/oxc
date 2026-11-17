@@ -2,7 +2,7 @@ commit: 16a2d671
 
 node: v26.12.1
 
-Passed: 69 of 365 (18.90%)
+Passed: 70 of 366 (19.13%)
 
 Failures:
 
@@ -280,11 +280,11 @@ SyntaxError: Invalid or unexpected token
     at async VitestModuleRunner.cachedRequest (./node_modules/vite/dist/node/module-runner.js:1195:73)
 
 ./fixtures/oxc/babel-plugin-proposal-decorators-test-fixtures-esbuild-class-decorators-basic-expression-instance-auto-accessor-initializer-exec.test.js
-./tasks/transform_conformance/fixtures/oxc/babel-plugin-proposal-decorators-test-fixtures-esbuild-class-decorators-basic-expression-instance-auto-accessor-initializer-exec.test.js:62
-    accessor Foo = @dec("Foo") class {};
-             ^^^
+./tasks/transform_conformance/fixtures/oxc/babel-plugin-proposal-decorators-test-fixtures-esbuild-class-decorators-basic-expression-instance-auto-accessor-initializer-exec.test.js:70
+      (0,__vite_ssr_import_1__.default)(this, _Foo_accessor_storage, @dec("Foo") class {});
+                                                                     ^
 
-SyntaxError: Unexpected identifier 'Foo'
+SyntaxError: Invalid or unexpected token
     at new Script (node:vm:118:7)
     at createScript (node:vm:270:10)
     at Object.runInThisContext (node:vm:318:10)
@@ -332,11 +332,11 @@ SyntaxError: Invalid or unexpected token
     at async VitestModuleRunner.cachedRequest (./node_modules/vite/dist/node/module-runner.js:1195:73)
 
 ./fixtures/oxc/babel-plugin-proposal-decorators-test-fixtures-esbuild-class-decorators-basic-expression-static-auto-accessor-initializer-exec.test.js
-./tasks/transform_conformance/fixtures/oxc/babel-plugin-proposal-decorators-test-fixtures-esbuild-class-decorators-basic-expression-static-auto-accessor-initializer-exec.test.js:62
-    static accessor Foo = @dec("Foo") class {};
-                    ^^^
+./tasks/transform_conformance/fixtures/oxc/babel-plugin-proposal-decorators-test-fixtures-esbuild-class-decorators-basic-expression-static-auto-accessor-initializer-exec.test.js:73
+  var _Foo_accessor_storage = { _: @dec("Foo") class {} };
+                                   ^
 
-SyntaxError: Unexpected identifier 'Foo'
+SyntaxError: Invalid or unexpected token
     at new Script (node:vm:118:7)
     at createScript (node:vm:270:10)
     at Object.runInThisContext (node:vm:318:10)
@@ -1880,10 +1880,10 @@ SyntaxError: Invalid or unexpected token
 
 ./fixtures/oxc/babel-plugin-proposal-decorators-test-fixtures-esbuild-native-class-decorators-basic-expression-instance-auto-accessor-initializer-exec.test.js
 ./tasks/transform_conformance/fixtures/oxc/babel-plugin-proposal-decorators-test-fixtures-esbuild-native-class-decorators-basic-expression-instance-auto-accessor-initializer-exec.test.js:62
-    accessor Foo = @dec("Foo") class {};
-             ^^^
+    #_Foo_accessor_storage = @dec("Foo") class {};
+                             ^
 
-SyntaxError: Unexpected identifier 'Foo'
+SyntaxError: Invalid or unexpected token
     at new Script (node:vm:118:7)
     at createScript (node:vm:270:10)
     at Object.runInThisContext (node:vm:318:10)
@@ -1932,10 +1932,10 @@ SyntaxError: Invalid or unexpected token
 
 ./fixtures/oxc/babel-plugin-proposal-decorators-test-fixtures-esbuild-native-class-decorators-basic-expression-static-auto-accessor-initializer-exec.test.js
 ./tasks/transform_conformance/fixtures/oxc/babel-plugin-proposal-decorators-test-fixtures-esbuild-native-class-decorators-basic-expression-static-auto-accessor-initializer-exec.test.js:62
-    static accessor Foo = @dec("Foo") class {};
-                    ^^^
+    static #_Foo_accessor_storage = @dec("Foo") class {};
+                                    ^
 
-SyntaxError: Unexpected identifier 'Foo'
+SyntaxError: Invalid or unexpected token
     at new Script (node:vm:118:7)
     at createScript (node:vm:270:10)
     at Object.runInThisContext (node:vm:318:10)

@@ -110,6 +110,11 @@ impl<'a> TransformState<'a> {
         self.class_lowering_decisions.record(class);
     }
 
+    /// The lowering of a class before its entry hook has run.
+    pub fn class_lowering_before_entry(&self, class: &Class<'a>) -> ClassLowering {
+        self.class_lowering_decisions.for_untransformed_class(class)
+    }
+
     /// The lowering of a class which has already been entered.
     pub fn class_lowering_of(&self, scope_id: ScopeId) -> ClassLowering {
         self.class_lowering_decisions.get(scope_id)

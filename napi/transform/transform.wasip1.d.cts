@@ -148,6 +148,17 @@ export interface DecoratorOptions {
    */
   legacy?: boolean
   /**
+   * Lower standard auto-accessors. Decorated classes are preserved.
+   *
+   * When omitted or `false`, this syntax is preserved for a later transform at any target
+   * while TypeScript types are still stripped. Set to `true` to lower it.
+   * Other target-selected transforms still run on unrelated syntax.
+   * `legacy: true` takes precedence over this option.
+   *
+   * @default undefined
+   */
+  lower?: boolean
+  /**
    * Enables emitting decorator metadata.
    *
    * This option the same as [emitDecoratorMetadata](https://www.typescriptlang.org/tsconfig/#emitDecoratorMetadata)
