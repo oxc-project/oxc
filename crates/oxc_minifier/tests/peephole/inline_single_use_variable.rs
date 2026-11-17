@@ -369,6 +369,26 @@ fn test_inline_into_call_arguments() {
 }
 
 #[test]
+fn test_inline_eval_alias_stays_indirect() {
+    for kind in ["const", "let", "var"] {
+        test(
+            &format!("function f(a) {{ {kind} e = eval; return e('typeof a'); }}"),
+            "function f(a) { return (0, eval)('typeof a'); }",
+        );
+    }
+    test_same("function f(a) { return (0, eval)('typeof a'); }");
+    test_same("const e = eval; function f(a) { return e('typeof a'); }");
+    test(
+        "function f(a) { const e = eval; return e?.('typeof a'); }",
+        "function f(a) { return eval?.('typeof a'); }",
+    );
+    test_script(
+        "function f(a, eval) { const e = eval; return e('typeof a'); }",
+        "function f(a, eval) { return (0, eval)('typeof a'); }",
+    );
+}
+
+#[test]
 fn test_inline_into_callee_keeps_this() {
     test("function f(o) { var c = o.m; return c(1) }", "function f(o) { return (0, o.m)(1) }");
     test("function f(o) { var c = o?.m; return c(1) }", "function f(o) { return (0, o?.m)(1) }");
