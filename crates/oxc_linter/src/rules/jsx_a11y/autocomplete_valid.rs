@@ -79,6 +79,7 @@ declare_oxc_lint!(
 );
 
 static VALID_AUTOCOMPLETE_VALUES: phf::Set<&'static str> = phf::phf_set![
+    "additional-name",
     "address-level1",
     "address-level2",
     "address-level3",
@@ -104,10 +105,15 @@ static VALID_AUTOCOMPLETE_VALUES: phf::Set<&'static str> = phf::phf_set![
     "country-name",
     "current-password",
     "email",
+    "family-name",
+    "given-name",
+    "honorific-prefix",
+    "honorific-suffix",
     "impp",
     "language",
     "name",
     "new-password",
+    "nickname",
     "off",
     "on",
     "one-time-code",
@@ -210,6 +216,12 @@ fn test() {
     let pass = vec![
         ("<input type='text' />;", None, None),
         ("<input type='text' autocomplete='name' />;", None, None),
+        ("<input type='text' autocomplete='family-name' />;", None, None),
+        ("<input type='text' autocomplete='given-name' />;", None, None),
+        ("<input type='text' autocomplete='additional-name' />;", None, None),
+        ("<input type='text' autocomplete='nickname' />;", None, None),
+        ("<input type='text' autocomplete='honorific-prefix' />;", None, None),
+        ("<input type='text' autocomplete='honorific-suffix' />;", None, None),
         // ("<input type='text' autocomplete='' />;", None, None),
         ("<input type='text' autocomplete='off' />;", None, None),
         ("<input type='text' autocomplete='on' />;", None, None),
