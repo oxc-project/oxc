@@ -83,8 +83,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         // `<T`: an element name, or the name of a type parameter.
         if kind.is_binding_identifier() {
-            let name_start = self.cur_start();
-            let contains_dash = self.bump_jsx_identifier();
+            let (name_span, name, contains_dash) = self.bump_jsx_identifier();
             // Only these tokens can follow the name of a type parameter and not that of an element.
             if matches!(self.cur_kind(), Kind::Comma | Kind::Eq | Kind::Extends) && !contains_dash {
                 let arrow = self.is_generic_arrow_function_expression_after_jsx_name();
@@ -95,8 +94,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 );
             }
             // It is an element name. No node has been created for it until now.
-            let identifier = self.jsx_identifier_from(name_start);
-            let name = self.parse_jsx_element_name_rest(name_start, identifier, contains_dash);
+            let identifier = JSXIdentifier::new(name_span, name, self);
+            let name = self.parse_jsx_element_name_rest(name_span.start, identifier, contains_dash);
             let element = self.parse_jsx_element_rest(start, name, false);
             self.check_adjacent_jsx_elements();
             return (Expression::JSXElement(element), false);
@@ -606,7 +605,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         JSXIdentifier<'a>, // JSX identifier
         bool,              // `true` if contains `-`, or if parsing failed (see below)
     ) {
-        let start = self.cur_start();
         let kind = self.cur_kind();
         if kind != Kind::Ident && !kind.is_any_keyword() {
             // Return `contains_dash = true`, so that `parse_jsx_element_name` does not read the first byte
@@ -614,30 +612,23 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // but on this path its `fatal_error` call is a no-op, because a fatal error has already been recorded.
             return (self.unexpected(), true);
         }
-        let contains_dash = self.bump_jsx_identifier();
-        (self.jsx_identifier_from(start), contains_dash)
+        let (span, name, contains_dash) = self.bump_jsx_identifier();
+        (JSXIdentifier::new(span, name, self), contains_dash)
     }
 
     /// Consume the `JSXIdentifier` at the cursor, which is at an identifier or keyword.
     ///
-    /// Returns `true` if it contains `-`.
+    /// Returns its span and its name, and `true` if it contains `-`. No node is created.
     #[expect(clippy::inline_always)]
     #[inline(always)] // A piece of `parse_jsx_identifier`, not a call from it.
-    fn bump_jsx_identifier(&mut self) -> bool {
+    fn bump_jsx_identifier(&mut self) -> (Span, &'a str, bool) {
         debug_assert!(self.at(Kind::Ident) || self.cur_kind().is_any_keyword());
         // Currently at a valid normal Ident or Keyword, keep on lexing for `-` in `<component-name />`
         let contains_dash = self.continue_lex_jsx_identifier();
+        let span = self.cur_token().span();
+        let name = self.cur_src();
         self.bump_any();
-        contains_dash
-    }
-
-    /// Create the `JSXIdentifier` which starts at `start` and ends before the cursor.
-    #[expect(clippy::inline_always)]
-    #[inline(always)] // A piece of `parse_jsx_identifier`, not a call from it.
-    fn jsx_identifier_from(&self, start: u32) -> JSXIdentifier<'a> {
-        let span = self.end_span(start);
-        let name = span.source_text(self.source_text);
-        JSXIdentifier::new(span, name, self)
+        (span, name, contains_dash)
     }
 
     fn parse_jsx_text(&mut self) -> ArenaBox<'a, JSXText<'a>> {
