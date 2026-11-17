@@ -15,7 +15,10 @@ mod names;
 use oxc_allocator::{Allocator, ArenaVec, StringBuilder};
 use oxc_htmlish_parser::{
     Span,
-    ast::{Block, BlockKind, Element, Namespace, NodeId, NodeKind, Root},
+    ast::{
+        AngularAttribute, AttributeKind, Block, BlockKind, Element, Namespace, NodeId, NodeKind,
+        Root,
+    },
 };
 
 use crate::rules::DialectRules;
@@ -222,6 +225,24 @@ impl<'a> Tree<'a> {
         self[id].display == Display::None
             && self.element(id).is_some()
             && self[self.parent(id)].display != Display::None
+    }
+
+    /// An Angular element whose content prints as written:
+    /// - marked for translation (`i18n`) as its message ID hashes the content's source, whitespace included
+    ///   - (DIVERGENCES.md#angular-i18n-content-as-written)
+    /// - or `ngNonBindable`, which reads its blocks, `@let` and `{{ }}` as text
+    ///   - (DIVERGENCES.md#angular-non-bindable-as-written)
+    pub fn keeps_angular_content(&self, id: NodeId) -> bool {
+        self.rules.keeps_angular_content
+            && self.element(id).is_some_and(|el| {
+                el.attributes.iter().any(|attribute| match &attribute.kind {
+                    AttributeKind::Angular(i18n @ AngularAttribute::I18n) => {
+                        i18n.target(attribute.name).is_empty()
+                    }
+                    AttributeKind::Plain => attribute.name.slice(self.source) == "ngNonBindable",
+                    _ => false,
+                })
+            })
     }
 
     pub fn is_interpolation(&self, id: NodeId) -> bool {

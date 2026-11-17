@@ -9,13 +9,13 @@ use oxc_allocator::{Allocator, StringBuilder};
 use oxc_formatter_core::{
     FormatElement, arena_cow_str,
     builders::{
-        hard_line_break, if_group_breaks, if_group_fits_on_line, indent, soft_block_indent,
-        soft_line_break, soft_line_break_or_space, space, text,
+        expand_parent, hard_line_break, if_group_breaks, if_group_fits_on_line, indent,
+        soft_block_indent, soft_line_break, soft_line_break_or_space, space, text,
     },
     spec::is_suppression_marker,
     write,
 };
-use oxc_htmlish_parser::ast::{Attribute, NodeId, NodeKind, Quote};
+use oxc_htmlish_parser::ast::{Attribute, AttributeKind, NodeId, NodeKind, Quote};
 
 use super::{
     HtmlishFormatter,
@@ -76,9 +76,16 @@ pub fn write_attributes<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatte
             } else {
                 write!(f, soft_line_break_or_space());
             }
-            for (i, attribute) in el.attributes.iter().enumerate() {
-                if i > 0 {
-                    if per_line {
+            let mut prev_end = None;
+            for attribute in &el.attributes {
+                if let Some(prev_end) = prev_end {
+                    // A `//` comment stays on the line of the attribute it follows
+                    // (DIVERGENCES.md#angular-start-tag-line-comment-placement)
+                    if is_line_comment(t, attribute)
+                        && t.line_breaks(prev_end, attribute.name.start) == 0
+                    {
+                        write!(f, space());
+                    } else if per_line {
                         write!(f, hard_line_break());
                     } else {
                         write!(f, soft_line_break_or_space());
@@ -90,14 +97,21 @@ pub fn write_attributes<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatte
                 } else {
                     write_attribute(t, id, attribute, f);
                 }
+                if is_line_comment(t, attribute) {
+                    write!(f, expand_parent());
+                }
+                prev_end = Some(attribute.span().end);
             }
         }))
     );
 
-    let hug_end = opening_end_borrowed(t, id)
+    // Nothing follows a `//` comment on its line, the tag's end neither (DIVERGENCES.md#angular-start-tag-line-comment-end)
+    let hug_end = (opening_end_borrowed(t, id)
         || (item.self_closing && t[t.parent(id)].borrows.last_child_closing_end)
-        || force_not_to_break;
-    if hug_end || bracket_same_line {
+        || force_not_to_break
+        || bracket_same_line)
+        && !el.attributes.last().is_some_and(|last| is_line_comment(t, last));
+    if hug_end {
         if slash {
             write!(f, space());
         }
@@ -106,6 +120,12 @@ pub fn write_attributes<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatte
     } else {
         write!(f, soft_line_break());
     }
+}
+
+/// An Angular start-tag comment `//`, which runs to the line's end.
+fn is_line_comment(t: &Tree<'_>, attribute: &Attribute<'_>) -> bool {
+    matches!(attribute.kind, AttributeKind::Comment)
+        && attribute.name.slice(t.source()).starts_with("//")
 }
 
 fn write_attribute<'a>(

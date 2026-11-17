@@ -10,6 +10,8 @@ pub struct DialectRules {
     pub keeps_element_gap_kind: bool,
     /// Angular: control flow blocks can occur (checked before looking at a node's kind).
     pub has_blocks: bool,
+    /// Angular: the content of an element with `i18n` or `ngNonBindable` prints as written (`Tree::keeps_angular_content`).
+    pub keeps_angular_content: bool,
     /// Vue: the root's elements but `html` are single-file component blocks (`<template>`, `<script>`, `<i18n>`),
     /// and `{{ }}` and directive values are JS.
     pub vue_sfc: bool,
@@ -33,6 +35,7 @@ impl DialectRules {
                 || (variant == HtmlishVariant::Vue && !sfc),
             keeps_element_gap_kind: variant == HtmlishVariant::Vue,
             has_blocks: variant == HtmlishVariant::Angular,
+            keeps_angular_content: variant == HtmlishVariant::Angular,
             vue_sfc: variant == HtmlishVariant::Vue,
             lowercase_doctype: standalone
                 && (matches!(variant, HtmlishVariant::Html | HtmlishVariant::Angular)

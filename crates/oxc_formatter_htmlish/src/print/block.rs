@@ -1,7 +1,7 @@
 //! Angular control flow blocks: transparent, their markers print no box (`@if (a) {` … `}`).
 
 use oxc_formatter_core::{
-    builders::{hard_line_break, indent, text},
+    builders::{hard_line_break, indent, space, text},
     write,
 };
 use oxc_htmlish_parser::ast::{Block, BlockKind, NodeId};
@@ -76,6 +76,11 @@ pub fn write_block<'a>(
         );
         if !glued_after {
             write!(f, hard_line_break());
+        }
+    } else if item.leading_sensitive && !item.has_leading_spaces && !item.has_trailing_spaces {
+        // The run passes the empty block: `a@if (x) { }b` renders the space with the block only
+        if item.has_dangling_spaces {
+            write!(f, space());
         }
     } else if item.next.is_some_and(|next| t.continues_block(id, next)) {
         // `@if (a) {⏎} @else {`, as Prettier prints a closing `}` before the next block

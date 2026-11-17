@@ -970,6 +970,8 @@ An Angular control flow block makes no box: its markers (`@if (x) {`, `}`) rende
 so the whitespace on both sides of a marker is one run between the content around it.
 Where that run is significant and empty, the markers stay glued to their neighbors;
 otherwise a block is laid out on its own lines, as Prettier does.
+An empty block's body is in the run too: whitespace there renders only when the block does,
+so it is kept (`a@if (x) { }b`) unless the run has whitespace outside the block, and none is added (`a@if (x) {}@else {}b`).
 Prettier always breaks around a block, which turns `abc` into `a b c` (and adds spaces inside the `span`).
 
 ## angular-block-name-with-line-break
@@ -1035,3 +1037,104 @@ A `prettier-ignore` before a block covers the blocks that continue it (`@else if
 Angular's compiler reads them as one block with branches, as an `if` statement with its `else` is in JS.
 Prettier ignores the first block only, so the comment loses the rest of its target.
 A comment between two of them ends the chain there, and what follows is formatted.
+
+## angular-start-tag-line-comment-end
+
+- Why: semantics (Angular reads a `//` start-tag comment up to the line break, the tag's `>` in it)
+- Pin: `tests/fixtures/angular/start-tag-comment/start-tag-comment.component.html`
+
+```html
+<!-- input, bracketSameLine: true -->
+<div a // c
+></div>
+
+<!-- ours -->
+<div
+  a // c
+></div>
+
+<!-- prettier -->
+<div
+  a
+  // c></div>
+```
+
+A line break always follows a `//` comment in a start tag, `bracketSameLine` or not.
+Prettier puts the `>` on the comment's line, where it is part of the comment: the tag is no longer closed, a parse error.
+
+## angular-start-tag-line-comment-placement
+
+- Why: invariant
+- Pin: `tests/fixtures/angular/angular-start-tag-line-comment-placement.component.html`
+
+```html
+<!-- input -->
+<div a="1" // c
+  b="2"></div>
+
+<!-- ours -->
+<div
+  a="1" // c
+  b="2"
+></div>
+
+<!-- prettier -->
+<div
+  a="1"
+  // c
+  b="2"
+></div>
+```
+
+A `//` start-tag comment on the line of the attribute before it stays on that line; one on a line of its own stays so.
+Prettier puts every start-tag comment on a line of its own, so a same-line one crosses a line boundary.
+One right after the tag name (`<div // c`) moves to its own line, as after any opening delimiter.
+
+## angular-i18n-content-as-written
+
+- Why: semantics (Angular's message ID hashes the content of an `i18n` element as written; angular/angular#13114, prettier/prettier#8338, oxc-project/oxc#29059)
+- Pin: `tests/fixtures/angular/angular-i18n-content-as-written.component.html`
+
+```html
+<!-- input -->
+<p i18n>  Hello   <b>world</b>
+  {count, plural, =0 {none} other {many}}  </p>
+
+<!-- ours -->
+<p i18n>  Hello   <b>world</b>
+  {count, plural, =0 {none} other {many}}  </p>
+
+<!-- prettier -->
+<p i18n>Hello <b>world</b> {count, plural, =0 {none} other {many}}</p>
+```
+
+The content of an element with `i18n` prints as written, a custom ID (`i18n="@@id"`) or not; its start tag is formatted.
+The message's ID is a hash of its text, whitespace included (`@angular/compiler` 22.2.3's `parseTemplate`):
+`<p i18n>Hello <b>world</b></p>` and `<p i18n>⏎  Hello <b>world</b>⏎</p>` are two messages,
+so reformatting the content silently drops its existing translations.
+
+## angular-non-bindable-as-written
+
+- Why: semantics (Angular reads every attribute under `ngNonBindable` as text, the DOM value as written)
+- Pin: `tests/fixtures/angular/angular-non-bindable-as-written.component.html`
+
+```html
+<!-- input -->
+<div ngNonBindable><span [x]="a+b" title="{{a+b}}">@if(foo){bar}</span></div>
+
+<!-- ours -->
+<div ngNonBindable><span [x]="a+b" title="{{a+b}}">@if(foo){bar}</span></div>
+
+<!-- prettier -->
+<div ngNonBindable>
+  <span [x]="a + b" title="{{ a + b }}">@if(foo){bar}</span>
+</div>
+```
+
+The content of an element with `ngNonBindable` prints as written; its start tag is formatted.
+Angular binds nothing under it (`@angular/compiler` 22.2.3's `parseTemplate`):
+an attribute is a DOM attribute with its value as written (`[x]` is `a+b`, `a + b` after Prettier),
+and its blocks, `@let` and `{{ }}` are text.
+Prettier formats those values as bindings, which changes the DOM.
+Its text it only collapses, which renders the same:
+formatting it here would need the whitespace model to read a block's markers as words of the text around them, where they are transparent now.
