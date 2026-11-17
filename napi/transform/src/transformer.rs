@@ -413,7 +413,7 @@ pub struct DecoratorOptions {
     /// @default false
     pub legacy: Option<bool>,
 
-    /// Lower standard auto-accessors. Decorated classes are preserved.
+    /// Lower standard decorators and auto-accessors.
     ///
     /// When omitted or `false`, this syntax is preserved for a later transform at any target
     /// while TypeScript types are still stripped. Set to `true` to lower it.

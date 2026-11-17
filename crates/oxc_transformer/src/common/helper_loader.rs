@@ -201,6 +201,16 @@ pub enum Helper {
     SetFunctionName,
     /// Runtime helper `setClassName` (standard decorators).
     SetClassName,
+    /// Runtime helper `decoratorKey` (standard decorators).
+    DecoratorKey,
+    /// Runtime helper `decoratorStart` (standard decorators).
+    DecoratorStart,
+    /// Runtime helper `decorateElement` (standard decorators).
+    DecorateElement,
+    /// Runtime helper `runInitializers` (standard decorators).
+    RunInitializers,
+    /// Runtime helper `decoratorMetadata` (standard decorators).
+    DecoratorMetadata,
 }
 
 impl Helper {
@@ -238,6 +248,11 @@ impl Helper {
             Self::TaggedTemplateLiteral => "taggedTemplateLiteral",
             Self::SetFunctionName => "setFunctionName",
             Self::SetClassName => "setClassName",
+            Self::DecoratorKey => "decoratorKey",
+            Self::DecoratorStart => "decoratorStart",
+            Self::DecorateElement => "decorateElement",
+            Self::RunInitializers => "runInitializers",
+            Self::DecoratorMetadata => "decoratorMetadata",
         }
     }
 

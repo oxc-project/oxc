@@ -25,6 +25,8 @@ use super::class_transform::ClassTransform;
 pub enum ClassLoweringMode {
     /// Class fields stay native; auto-accessors and static blocks may still be lowered.
     Native,
+    /// Class-properties lowers this decorated class even though the target supports class fields.
+    LowerForDecorators,
     /// Class-properties lowers this class because the target requires class field lowering.
     LowerAll,
     /// The class keeps its decorators and auto-accessors for a downstream transform.
@@ -47,17 +49,21 @@ impl ClassLowering {
     ) -> Self {
         let lowered_for_decorators = class_lowered_for_decorators(class);
         let has_auto_accessor = class_body_has_auto_accessors(&class.body);
-        // Decorated classes are always preserved for a downstream decorator transform.
-        let mode = if lowered_for_decorators
-            || (decorator_mode == DecoratorMode::Preserve && has_auto_accessor)
+        let mode = if decorator_mode == DecoratorMode::Preserve
+            && (lowered_for_decorators || has_auto_accessor)
         {
             ClassLoweringMode::Preserve
         } else {
             match class_transform {
                 ClassTransform::ClassProperties { .. } => ClassLoweringMode::LowerAll,
-                ClassTransform::None
-                | ClassTransform::StaticBlocks
-                | ClassTransform::StandardDecorators { .. } => ClassLoweringMode::Native,
+                ClassTransform::StandardDecorators { .. } => {
+                    if lowered_for_decorators {
+                        ClassLoweringMode::LowerForDecorators
+                    } else {
+                        ClassLoweringMode::Native
+                    }
+                }
+                ClassTransform::None | ClassTransform::StaticBlocks => ClassLoweringMode::Native,
             }
         };
         Self { mode, lowered_for_decorators, has_auto_accessor }
@@ -78,11 +84,6 @@ impl ClassLowering {
 
     /// Whether standard decorator lowering has anything to do for this class.
     pub fn handles_standard_decorators(self) -> bool {
-        self.mode != ClassLoweringMode::Preserve && self.has_auto_accessor
-    }
-
-    /// Whether this decision depends on syntax which is removed or rewritten later.
-    fn depends_on_rewritten_syntax(self) -> bool {
         self.lowered_for_decorators || self.has_auto_accessor
     }
 }
@@ -127,7 +128,7 @@ impl ClassLoweringCache {
         let lowering = ClassLowering::compute(self.class_transform, self.decorator_mode, class);
         // Only decorators and auto-accessors are removed later. Every other class answers the same
         // after its body is rewritten, so it is not recorded.
-        if lowering.depends_on_rewritten_syntax() {
+        if lowering.handles_standard_decorators() {
             self.record(scope_id, lowering);
         }
         lowering

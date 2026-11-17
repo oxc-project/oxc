@@ -1,6 +1,6 @@
 commit: 16a2d671
 
-Passed: 760/1190
+Passed: 767/1190
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1581,28 +1581,7 @@ transform-react-jsx-development: unknown field `sourceSelf`, expected one of `ru
 transform-react-jsx-development: unknown field `sourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
 
 
-# babel-plugin-proposal-decorators (0/8)
-* 2023-11-misc/setting-private-method/input.js
-x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
-
-* 2023-11-misc/setting-private-method-in-body/input.js
-x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
-
-* 2023-11-misc/setting-private-method-via-array-pattern/input.js
-x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
-
-* 2023-11-misc/setting-private-method-via-for-of/input.js
-x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
-
-* 2023-11-misc/setting-private-method-via-object-pattern/input.js
-x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
-
-* 2023-11-misc/setting-private-method-via-rest/input.js
-x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
-
-* 2023-11-misc/setting-private-method-via-update/input.js
-x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
-
+# babel-plugin-proposal-decorators (7/8)
 * legacy-regression/7030/input.js
 x Output mismatch
 
