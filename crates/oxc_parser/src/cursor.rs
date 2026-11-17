@@ -64,6 +64,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // * `end >= start`.
             // * `start` and `end` are both on UTF-8 char boundaries.
             // * `self.source_text` is same text that `Token`s are generated from.
+            // * `self.source_text` is no longer than `MAX_LEN` (checked in `ValidSource::new`),
+            //   so offsets in `Token`s have not wrapped around.
             //
             // TODO: I (@overlookmotel) don't think we should really be doing this.
             // We don't have static guarantees of these properties.
