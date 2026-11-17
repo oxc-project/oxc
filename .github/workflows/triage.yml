@@ -11,6 +11,21 @@
 name: Issue Triage
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - Cargo.lock
+      - "**/Cargo.toml"
+      - .cargo/**
+      - rust-toolchain.toml
+      - .github/workflows/triage.yml
+  pull_request:
+    paths:
+      - .github/workflows/triage.yml
+  # Recover from cache eviction and changes to the hosted runner's Rust toolchains.
+  schedule:
+    - cron: "37 3 * * *"
+  workflow_dispatch:
   issues:
     types: [opened, reopened, closed]
   issue_comment:
@@ -21,14 +36,45 @@ permissions: {}
 env:
   INSTA_REQUIRE_FULL_MATCH: 1
 
-concurrency:
-  # Bot comments can enqueue another event before the issue's label is updated.
-  group: triage-${{ github.event.issue.number }}
-  cancel-in-progress: false
-
 jobs:
+  warm-cache:
+    if: >-
+      github.event_name == 'pull_request' ||
+      (github.ref == 'refs/heads/main' &&
+       (github.event_name == 'push' || github.event_name == 'schedule' ||
+        github.event_name == 'workflow_dispatch'))
+    # Keep the cache producer and consumer on the same Ubuntu release.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    concurrency:
+      group: triage-rust-cache-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+
+      - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
+        with:
+          save-cache: ${{ github.ref == 'refs/heads/main' }}
+          cache-key: warm
+          tools: just,cargo-shear@1.13.1,cargo-insta,ast-grep
+          components: clippy rustfmt
+
+      # Match the common reproduction and test commands, keeping their feature sets separate.
+      - name: Warm oxlint dependencies
+        run: cargo build --locked -p oxlint
+
+      - name: Warm linter test dependencies
+        run: cargo test --locked --no-run -p oxc_linter
+
   triage:
     if: >-
+      (github.event_name == 'issues' || github.event_name == 'issue_comment') &&
       !github.event.issue.pull_request &&
       (github.event.action != 'created' ||
        (github.event.comment.user.login != 'github-actions[bot]' &&
@@ -39,6 +85,10 @@ jobs:
     permissions:
       contents: read
       issues: read
+    concurrency:
+      # Bot comments can enqueue another event before the issue's label is updated.
+      group: triage-${{ github.event.issue.number }}
+      cancel-in-progress: false
     steps:
       - name: Check out the repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -50,7 +100,7 @@ jobs:
         uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
 
       - name: Set up Rust
-        # Only the trusted triage-cache workflow saves this dependency cache.
+        # Only the trusted warm-cache job saves this dependency cache.
         uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
         with:
           save-cache: false
