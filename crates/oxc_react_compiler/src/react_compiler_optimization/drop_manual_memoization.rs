@@ -28,11 +28,13 @@ use crate::react_compiler_hir::ArrayElement;
 use crate::react_compiler_hir::DependencyPathEntry;
 use crate::react_compiler_hir::Effect;
 use crate::react_compiler_hir::EvaluationOrder;
+use crate::react_compiler_hir::FunctionId;
 use crate::react_compiler_hir::HirFunction;
 use crate::react_compiler_hir::IdentifierId;
 use crate::react_compiler_hir::IdentifierName;
 use crate::react_compiler_hir::Instruction;
 use crate::react_compiler_hir::InstructionId;
+use crate::react_compiler_hir::InstructionKind;
 use crate::react_compiler_hir::InstructionValue;
 use crate::react_compiler_hir::ManualMemoDependency;
 use crate::react_compiler_hir::ManualMemoDependencyRoot;
@@ -64,8 +66,10 @@ struct ManualMemoCallee {
 }
 
 struct IdentifierSidemap<'a> {
-    /// Maps identifier id -> InstructionId of FunctionExpression instructions
-    functions: FxHashSet<IdentifierId>,
+    /// Maps identifier id -> FunctionId of FunctionExpression instructions
+    functions: FxHashMap<IdentifierId, FunctionId>,
+    /// Memo callbacks whose captured locals must stay scoped to the callback.
+    preserved_callbacks: FxHashSet<FunctionId>,
     /// Maps identifier id -> ManualMemoCallee for useMemo/useCallback callees
     manual_memos: FxHashMap<IdentifierId, ManualMemoCallee>,
     /// Set of identifier ids that loaded 'React' global
@@ -96,17 +100,19 @@ struct ExtractedMemoArgs<'a> {
 
 /// Drop manual memoization (useMemo/useCallback calls), replacing them
 /// with direct invocations/references.
+/// Returns callbacks whose function boundaries must be preserved when inlining IIFEs.
 pub fn drop_manual_memoization<'a>(
     func: &mut HirFunction<'a>,
     env: &mut Environment<'a>,
-) -> Result<(), OxcDiagnostic> {
+) -> Result<FxHashSet<FunctionId>, OxcDiagnostic> {
     let is_validation_enabled = env.validate_preserve_existing_memoization_guarantees
         || env.validate_no_set_state_in_render
         || env.enable_preserve_existing_memoization_guarantees;
 
     let optionals = find_optional_places(func)?;
     let mut sidemap = IdentifierSidemap {
-        functions: FxHashSet::default(),
+        functions: FxHashMap::default(),
+        preserved_callbacks: FxHashSet::default(),
         manual_memos: FxHashMap::default(),
         react: FxHashSet::default(),
         maybe_deps: FxHashMap::default(),
@@ -193,7 +199,7 @@ pub fn drop_manual_memoization<'a>(
         }
     }
 
-    Ok(())
+    Ok(sidemap.preserved_callbacks)
 }
 
 // =============================================================================
@@ -221,6 +227,23 @@ fn process_manual_memo_call<'a>(
 
     let ExtractedMemoArgs { fn_place, deps_list, deps_span } = memo_details;
 
+    // Unlike the TS implementation, preserve the scope of captured mutable locals in
+    // useMemo callbacks. Inlining makes them look render-scoped, incorrectly rejecting
+    // mutations by returned closures. Keep the direct call and memoization markers so
+    // validations still see that the callback executes during render.
+    if manual_memo.kind == ManualMemoKind::UseMemo
+        && let Some(&function_id) = sidemap.functions.get(&fn_place.identifier)
+        && env.functions[function_id].instructions.iter().any(|instr| match &instr.value {
+            InstructionValue::DeclareContext { .. } => true,
+            InstructionValue::StoreContext { lvalue, .. } => {
+                lvalue.kind != InstructionKind::Reassign
+            }
+            _ => false,
+        })
+    {
+        sidemap.preserved_callbacks.insert(function_id);
+    }
+
     let span = func.instructions[instr_id.index()].value.span().cloned();
     let callee_span = func.instructions[manual_memo.load_instr_id.index()].value.span().copied();
 
@@ -231,7 +254,7 @@ fn process_manual_memo_call<'a>(
 
     if is_validation_enabled {
         // Bail out when we encounter manual memoization without inline function expressions
-        if !sidemap.functions.contains(&fn_place.identifier) {
+        if !sidemap.functions.contains_key(&fn_place.identifier) {
             let diag = diagnostics::expected_inline_memo_function(fn_place.span);
             env.record_diagnostic(diag);
             return;
@@ -276,8 +299,8 @@ fn collect_temporaries<'a>(
     let lvalue_id = instr.lvalue.identifier;
 
     match &instr.value {
-        InstructionValue::FunctionExpression { .. } => {
-            sidemap.functions.insert(lvalue_id);
+        InstructionValue::FunctionExpression { lowered_func, .. } => {
+            sidemap.functions.insert(lvalue_id, lowered_func.func);
         }
         InstructionValue::LoadGlobal { binding, .. } => {
             let hook_name = get_hook_detection_name(binding);
