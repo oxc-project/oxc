@@ -251,9 +251,19 @@ impl CatchErrorName {
     fn get_fixed_name(&self, ctx: &LintContext, symbol_id: SymbolId) -> CompactStr {
         let scoping = ctx.scoping();
         let scope_id = scoping.symbol_scope_id(symbol_id);
+        // A catch parameter is bound in the catch clause scope, but must not clash with a lexical
+        // declaration in the catch body either (`catch (error) { let error }` is a SyntaxError).
+        // Lookups from the body scope also cover the catch clause scope and its ancestors.
+        let binding_scope_id = if scoping.scope_flags(scope_id).is_catch_clause()
+            && let AstKind::CatchClause(clause) = ctx.nodes().kind(scoping.get_node_id(scope_id))
+        {
+            clause.body.scope_id()
+        } else {
+            scope_id
+        };
         let mut name = self.name.clone().into_compact_string();
 
-        while scoping.find_binding(scope_id, name.as_str().into()).is_some()
+        while scoping.find_binding(binding_scope_id, name.as_str().into()).is_some()
             || scoping.get_resolved_references(symbol_id).any(|reference| {
                 scoping.find_binding(reference.scope_id(), name.as_str().into()).is_some()
             })

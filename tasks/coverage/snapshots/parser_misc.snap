@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 141/141 (100.00%)
-Positive Passed: 141/141 (100.00%)
-Negative Passed: 275/275 (100.00%)
+AST Parsed     : 144/144 (100.00%)
+Positive Passed: 144/144 (100.00%)
+Negative Passed: 282/282 (100.00%)
 
   × TS(1029): 'declare' modifier must precede 'abstract' modifier.
    ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
@@ -347,6 +347,63 @@ Negative Passed: 275/275 (100.00%)
  11 │ }
     ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × Identifier `e` has already been declared
+   ╭─[misc/fail/catch-parameter-class-redeclaration.js:1:15]
+ 1 │ try {} catch (e) { class e {} }
+   ·               ┬          ┬
+   ·               │          ╰── It can not be redeclared here
+   ·               ╰── `e` has already been declared here
+   ╰────
+
+  × Identifier `e` has already been declared
+   ╭─[misc/fail/catch-parameter-destructured-const-redeclaration.js:1:16]
+ 1 │ try {} catch ([e]) { const e = 1; }
+   ·                ┬           ┬
+   ·                │           ╰── It can not be redeclared here
+   ·                ╰── `e` has already been declared here
+   ╰────
+
+  × Identifier `e` has already been declared
+   ╭─[misc/fail/catch-parameter-destructured-var-redeclaration.js:1:17]
+ 1 │ try {} catch ({ e }) { var e; }
+   ·                 ┬          ┬
+   ·                 │          ╰── It can not be redeclared here
+   ·                 ╰── `e` has already been declared here
+   ╰────
+
+  × Identifier `e` has already been declared
+   ╭─[misc/fail/catch-parameter-function-redeclaration-with-outer-var.cjs:2:15]
+ 1 │ var e;
+ 2 │ try {} catch (e) { function e() {} }
+   ·               ┬             ┬
+   ·               │             ╰── It can not be redeclared here
+   ·               ╰── `e` has already been declared here
+   ╰────
+
+  × Identifier `e` has already been declared
+   ╭─[misc/fail/catch-parameter-function-redeclaration.cjs:1:15]
+ 1 │ try {} catch (e) { function e() {} }
+   ·               ┬             ┬
+   ·               │             ╰── It can not be redeclared here
+   ·               ╰── `e` has already been declared here
+   ╰────
+
+  × Identifier `e` has already been declared
+   ╭─[misc/fail/catch-parameter-function-redeclaration.js:1:15]
+ 1 │ try {} catch (e) { function e() {} }
+   ·               ┬             ┬
+   ·               │             ╰── It can not be redeclared here
+   ·               ╰── `e` has already been declared here
+   ╰────
+
+  × Identifier `e` has already been declared
+   ╭─[misc/fail/catch-parameter-let-redeclaration.js:1:15]
+ 1 │ try {} catch (e) { let e; }
+   ·               ┬        ┬
+   ·               │        ╰── It can not be redeclared here
+   ·               ╰── `e` has already been declared here
+   ╰────
 
   × Expected `;` but found `,`
    ╭─[misc/fail/class-field-comma-expression.js:1:16]

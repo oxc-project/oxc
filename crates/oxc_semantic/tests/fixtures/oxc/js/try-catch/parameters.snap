@@ -21,28 +21,6 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/parameters.js
             "node": "BlockStatement",
             "symbols": [
               {
-                "flags": "SymbolFlags(BlockScopedVariable | CatchVariable)",
-                "id": 2,
-                "name": "a",
-                "node": "CatchParameter",
-                "references": [
-                  {
-                    "flags": "ReferenceFlags(Read)",
-                    "id": 1,
-                    "name": "a",
-                    "node_id": 22,
-                    "scope_id": 2
-                  }
-                ]
-              },
-              {
-                "flags": "SymbolFlags(BlockScopedVariable | CatchVariable)",
-                "id": 3,
-                "name": "b",
-                "node": "CatchParameter",
-                "references": []
-              },
-              {
                 "flags": "SymbolFlags(BlockScopedVariable)",
                 "id": 4,
                 "name": "A",
@@ -55,7 +33,30 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/parameters.js
         "flags": "ScopeFlags(CatchClause)",
         "id": 2,
         "node": "CatchClause",
-        "symbols": []
+        "symbols": [
+          {
+            "flags": "SymbolFlags(BlockScopedVariable | CatchVariable)",
+            "id": 2,
+            "name": "a",
+            "node": "CatchParameter",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 1,
+                "name": "a",
+                "node_id": 22,
+                "scope_id": 2
+              }
+            ]
+          },
+          {
+            "flags": "SymbolFlags(BlockScopedVariable | CatchVariable)",
+            "id": 3,
+            "name": "b",
+            "node": "CatchParameter",
+            "references": []
+          }
+        ]
       }
     ],
     "flags": "ScopeFlags(Top)",
