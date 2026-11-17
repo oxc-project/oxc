@@ -3,10 +3,9 @@ use std::{mem, ops::ControlFlow, path::Path};
 use oxc::{
     CompilerInterface,
     ast::ast::Program,
-    ast_visit::assert_valid_spans,
     codegen::{CodegenOptions, CodegenReturn, CommentOptions, IndentChar},
     diagnostics::{Diagnostics, OxcDiagnostic},
-    parser::{ParseOptions, ParserReturn},
+    parser::ParseOptions,
     span::SourceType,
     transformer::{TransformOptions, TransformerReturn},
 };
@@ -57,17 +56,11 @@ impl CompilerInterface for Driver {
         self.printed = ret.code;
     }
 
-    fn after_parse(&mut self, ret: &mut ParserReturn) -> ControlFlow<()> {
-        assert_valid_spans(&ret.program);
-        ControlFlow::Continue(())
-    }
-
     fn after_transform(
         &mut self,
         program: &mut Program<'_>,
         transformer_return: &mut TransformerReturn,
     ) -> ControlFlow<()> {
-        assert_valid_spans(program);
         if self.check_semantic
             && let Some(errors) =
                 check_semantic_after_transform(&transformer_return.scoping, program)

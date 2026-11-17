@@ -21,6 +21,7 @@ workspace = true
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
+oxc_ast_visit = { workspace = true, optional = true }
 oxc_data_structures = { workspace = true, features = [
   "assert_unchecked",
   "branch_hints",
@@ -57,3 +58,5 @@ regular_expression = ["dep:oxc_regular_expression"]
 mutate_tokens = []
 # Expose Lexer for benchmarks
 benchmarking = []
+# Only for conformance tests
+conformance = ["oxc_ast_visit/conformance"]

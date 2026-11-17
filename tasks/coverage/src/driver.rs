@@ -9,13 +9,13 @@ use oxc::{
         AstKind, Comment,
         ast::{Program, RegExpLiteral, TemplateLiteral},
     },
-    ast_visit::{Visit, assert_valid_spans, walk},
+    ast_visit::{Visit, walk},
     codegen::{CodegenOptions, CodegenReturn},
     diagnostics::{Diagnostics, OxcDiagnostic},
-    minifier::{CompressOptions, Compressor},
+    minifier::CompressOptions,
     parser::{ParseOptions, ParserReturn},
     regular_expression::{ConstructorParser, LiteralParser, Options},
-    semantic::{Scoping, SemanticBuilderReturn},
+    semantic::SemanticBuilderReturn,
     span::{ContentEq, SourceType, Span},
     syntax::node::NodeId,
     transformer::{TransformOptions, TransformerReturn},
@@ -80,7 +80,6 @@ impl CompilerInterface for Driver {
 
     fn after_parse(&mut self, parser_return: &mut ParserReturn) -> ControlFlow<()> {
         let ParserReturn { program, fatal_error, diagnostics, .. } = parser_return;
-        assert_valid_spans(program);
         self.fatal_error = *fatal_error;
         self.source_type = Some(program.source_type);
         self.check_ast_nodes(program, diagnostics.is_empty() && !*fatal_error);
@@ -111,7 +110,6 @@ impl CompilerInterface for Driver {
         program: &mut Program<'_>,
         transformer_return: &mut TransformerReturn,
     ) -> ControlFlow<()> {
-        assert_valid_spans(program);
         if self.check_semantic
             && let Some(errors) =
                 check_semantic_after_transform(&transformer_return.scoping, program)
@@ -120,17 +118,6 @@ impl CompilerInterface for Driver {
             return ControlFlow::Break(());
         }
         ControlFlow::Continue(())
-    }
-
-    fn compress<'a>(
-        &self,
-        allocator: &'a Allocator,
-        program: &mut Program<'a>,
-        scoping: Scoping,
-        options: CompressOptions,
-    ) {
-        Compressor::new(allocator).build_with_scoping(program, scoping, options);
-        assert_valid_spans(program);
     }
 
     fn after_codegen(&mut self, ret: CodegenReturn<'_>) {

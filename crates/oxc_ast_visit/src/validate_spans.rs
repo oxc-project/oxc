@@ -1,6 +1,6 @@
 //! Validate spans after an AST is complete, rather than during node construction.
 //!
-//! Enabled by the `conformance` feature and called explicitly by conformance runners.
+//! Enabled by the `conformance` feature and called after stages that produce or modify an AST.
 
 use oxc_ast::ast::Program;
 use oxc_span::Span;

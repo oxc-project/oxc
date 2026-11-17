@@ -287,6 +287,8 @@ impl<'t> Utf8ToUtf16Converter<'t> {
     #[inline] // Because it just delegates
     pub fn convert_program(&mut self, program: &mut Program<'_>) {
         self.visit_program(program);
+        #[cfg(feature = "conformance")]
+        crate::assert_valid_spans(program);
     }
 
     /// Convert [`Span`] from UTF-8 offsets to UTF-16 offsets.

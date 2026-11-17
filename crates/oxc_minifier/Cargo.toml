@@ -47,3 +47,7 @@ oxc_sourcemap = { workspace = true }
 insta = { workspace = true }
 javascript-globals = { workspace = true }
 pico-args = { workspace = true }
+
+[features]
+# Only for conformance tests
+conformance = ["oxc_ast_visit/conformance"]

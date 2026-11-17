@@ -189,6 +189,8 @@ impl<'a> Transformer<'a> {
 
         let mut reusable_ctx = ReusableTraverseCtx::new(self.state, scoping, allocator);
         traverse_mut_with_ctx(&mut transformer, program, &mut reusable_ctx);
+        #[cfg(feature = "conformance")]
+        oxc_ast_visit::assert_valid_spans(program);
         let (mut state, scoping) = reusable_ctx.into_state_and_scoping();
         let helpers_used = std::mem::take(&mut state.helper_loader.used_helpers);
         let diagnostics = state.take_errors().into();

@@ -9,7 +9,7 @@ use std::{
 
 use oxc::{
     allocator::Allocator,
-    ast_visit::{assert_valid_spans, utf8_to_utf16::Utf8ToUtf16},
+    ast_visit::utf8_to_utf16::Utf8ToUtf16,
     diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource, OxcDiagnostic},
     minifier::CompressOptions,
     parser::{ParseOptions, Parser, ParserReturn, config::RuntimeParserConfig},
@@ -711,7 +711,6 @@ pub fn run_estree_test262(files: &[Test262File]) -> Vec<CoverageResult> {
             let mut program = parser_ret.program;
             let source_text = program.source_text;
             Utf8ToUtf16::new(source_text).convert_program_with_ascending_order_checks(&mut program);
-            assert_valid_spans(&program);
             program.to_pretty_estree_json(false, false)
         },
     )
@@ -808,7 +807,6 @@ pub fn run_estree_acorn_jsx(files: &[AcornJsxFile]) -> Vec<CoverageResult> {
             let mut program = parser_ret.program;
             let source_text = program.source_text;
             Utf8ToUtf16::new(source_text).convert_program_with_ascending_order_checks(&mut program);
-            assert_valid_spans(&program);
             program.to_pretty_estree_json(false, false)
         },
     )
@@ -923,7 +921,6 @@ pub fn run_estree_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
         let mut program = ret.program;
         let source_text = program.source_text;
         Utf8ToUtf16::new(source_text).convert_program_with_ascending_order_checks(&mut program);
-        assert_valid_spans(&program);
         program.to_pretty_estree_json(true, false)
     })
 }

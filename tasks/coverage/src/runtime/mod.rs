@@ -21,7 +21,6 @@ use std::{
 
 use oxc::{
     allocator::Allocator,
-    ast_visit::assert_valid_spans,
     codegen::{Codegen, CodegenOptions},
     minifier::{ManglePropertiesOptions, Minifier, MinifierOptions},
     parser::Parser,
@@ -356,7 +355,6 @@ fn get_code(file: &Test262File, transform: bool, minify: bool) -> String {
     let source_type = SourceType::cjs().with_script(!is_module).with_module(is_module);
     let allocator = Allocator::default();
     let mut program = Parser::new(&allocator, source_text, source_type).parse().program;
-    assert_valid_spans(&program);
 
     if transform {
         let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
@@ -366,18 +364,16 @@ fn get_code(file: &Test262File, transform: bool, minify: bool) -> String {
         options.typescript.only_remove_type_imports = true;
         Transformer::new(&allocator, &file.path, &options)
             .build_with_scoping(scoping, &mut program);
-        assert_valid_spans(&program);
     }
 
     let scoping = if minify {
-        let ret = Minifier::new(MinifierOptions {
+        Minifier::new(MinifierOptions {
             mangle: None,
             mangle_properties: property_mangle_options(file),
             ..MinifierOptions::default()
         })
-        .minify(&allocator, &mut program);
-        assert_valid_spans(&program);
-        ret.scoping
+        .minify(&allocator, &mut program)
+        .scoping
     } else {
         None
     };

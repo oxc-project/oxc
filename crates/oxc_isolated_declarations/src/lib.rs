@@ -114,6 +114,8 @@ impl<'a> IsolatedDeclarations<'a> {
             stmts,
             &self,
         );
+        #[cfg(feature = "conformance")]
+        oxc_ast_visit::assert_valid_spans(&program);
         IsolatedDeclarationsReturn { program, diagnostics: self.take_errors() }
     }
 
