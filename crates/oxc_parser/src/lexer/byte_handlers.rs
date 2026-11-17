@@ -72,7 +72,7 @@ macro_rules! byte_handlers {
     () => {
         [
         //  0    1    2    3    4    5    6    7    8    9    A    B    C    D    E    F    //
-            ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, SPS, LIN, ISP, ISP, LIN, ERR, ERR, // 0
+            NUL, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, SPS, LIN, ISP, ISP, LIN, ERR, ERR, // 0
             ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, // 1
             SPS, EXL, QOD, HAS, IDT, PRC, AMP, QOS, UER, UER, ATR, PLS, UER, MIN, PRD, SLH, // 2
             ZER, DIG, DIG, DIG, DIG, DIG, DIG, DIG, DIG, DIG, UER, UER, LSS, EQL, UER, QST, // 3
@@ -104,10 +104,15 @@ pub mod byte_handler_tables {
 ///
 /// # SAFETY
 /// All token handlers have the same requirements. `Lexer::next_token_impl` upholds them.
-/// * `pos` must be the position of a byte which selects the handler in `Lexer::TOKEN_HANDLERS`.
-/// * At least `TOKEN_HANDLER_MIN_BYTES` bytes of source must remain from `pos`.
+/// * `pos` must be at or before the end of the source, and the byte at `pos` must select the handler
+///   in `Lexer::TOKEN_HANDLERS`. At the end of the source that byte is the first byte of the padding
+///   which follows the source text, which is NUL.
 /// * No whitespace or comments must have been seen since the previous token, other than
 ///   a single space.
+///
+/// `TOKEN_HANDLER_MIN_BYTES` bytes can always be read from `pos`. Only the handler for NUL is called
+/// with `pos` at the end of the source, so for every other handler the byte after `pos` is either
+/// source text or the first byte of the padding.
 type TokenHandler<C> = for<'a> unsafe fn(&mut Lexer<'a, C>, SourcePosition<'a>) -> Token;
 
 /// Token handlers, each named after the byte handler for the same byte.
@@ -156,8 +161,8 @@ mod token_handlers {
                     lexer: &mut Lexer<'a, C>,
                     pos: SourcePosition<'a>,
                 ) -> Token {
-                    // SAFETY: Caller guarantees `TOKEN_HANDLER_MIN_BYTES` bytes can be read
-                    // from `pos`. A digit is ASCII, so `pos + 1` is on a UTF-8 char boundary.
+                    // SAFETY: `TOKEN_HANDLER_MIN_BYTES` bytes can be read from `pos`.
+                    // A digit is ASCII, so `pos + 1` is on a UTF-8 char boundary.
                     let (after_digit, next_byte) = unsafe {
                         let after_digit = pos.add(1);
                         (after_digit, after_digit.read())
@@ -216,7 +221,7 @@ mod token_handlers {
     );
 
     token_handlers!(
-        general: ERR, ESC, HAS, ISP, SLH, SPS, TPL, UER, UNI,
+        general: ERR, ESC, HAS, ISP, NUL, SLH, SPS, TPL, UER, UNI,
     );
 
     // `A..=Z`, `h`, `j`, `q`, `x`, `z`, `_`, `$`: no keyword starts with these bytes.
@@ -248,7 +253,7 @@ mod token_handlers {
     // Almost always a property access, where what follows is an identifier.
     #[expect(non_snake_case)]
     pub unsafe fn PRD<'a, C: Config>(lexer: &mut Lexer<'a, C>, pos: SourcePosition<'a>) -> Token {
-        // SAFETY: Caller guarantees `TOKEN_HANDLER_MIN_BYTES` bytes can be read from `pos`.
+        // SAFETY: `TOKEN_HANDLER_MIN_BYTES` bytes can be read from `pos`.
         // `.` is ASCII, so `pos + 1` is on a UTF-8 char boundary.
         let (after_dot, next_byte) = unsafe {
             let after_dot = pos.add(1);
@@ -269,23 +274,20 @@ mod token_handlers {
     // They have no flags, and are finished without calling the byte handler.
     #[expect(non_snake_case)]
     pub unsafe fn DIG<'a, C: Config>(lexer: &mut Lexer<'a, C>, pos: SourcePosition<'a>) -> Token {
-        // SAFETY: Caller guarantees `TOKEN_HANDLER_MIN_BYTES` bytes can be read from `pos`.
+        // SAFETY: `TOKEN_HANDLER_MIN_BYTES` bytes can be read from `pos`.
         // A digit is ASCII, so `pos + 1` is on a UTF-8 char boundary.
         let (mut end, mut byte) = unsafe {
             let after_digit = pos.add(1);
             (after_digit, after_digit.read())
         };
         while byte.is_ascii_digit() {
-            // SAFETY: `byte` is the byte at `end`, and it is ASCII, so `end + 1` is in bounds
-            // and on a UTF-8 char boundary
-            end = unsafe { end.add(1) };
-            if !end.is_not_end_of(&lexer.source) {
-                // A number at the very end of the source. Any byte which does not end a number.
-                byte = b'.';
-                break;
-            }
-            // SAFETY: `end` is not the end of the source
-            byte = unsafe { end.read() };
+            // SAFETY: `byte` is the byte at `end`, and it is a digit, so `end` is before the end
+            // of the source. `end + 1` is at or before the end of the source, where the byte read
+            // is the NUL padding, and it is on a UTF-8 char boundary.
+            (end, byte) = unsafe {
+                let after_digit = end.add(1);
+                (after_digit, after_digit.read())
+            };
         }
         if ends_decimal_integer(byte) {
             lexer.source.set_position(end);
@@ -301,7 +303,7 @@ mod token_handlers {
     // Usually a comparison, or the start of type arguments or a JSX element.
     #[expect(non_snake_case)]
     pub unsafe fn LSS<'a, C: Config>(lexer: &mut Lexer<'a, C>, pos: SourcePosition<'a>) -> Token {
-        // SAFETY: Caller guarantees `TOKEN_HANDLER_MIN_BYTES` bytes can be read from `pos`.
+        // SAFETY: `TOKEN_HANDLER_MIN_BYTES` bytes can be read from `pos`.
         // `<` is ASCII, so `pos + 1` is on a UTF-8 char boundary.
         let (after_angle, next_byte) = unsafe {
             let after_angle = pos.add(1);
@@ -321,7 +323,7 @@ mod token_handlers {
     // Usually a subtraction or a negative number.
     #[expect(non_snake_case)]
     pub unsafe fn MIN<'a, C: Config>(lexer: &mut Lexer<'a, C>, pos: SourcePosition<'a>) -> Token {
-        // SAFETY: Caller guarantees `TOKEN_HANDLER_MIN_BYTES` bytes can be read from `pos`.
+        // SAFETY: `TOKEN_HANDLER_MIN_BYTES` bytes can be read from `pos`.
         // `-` is ASCII, so `pos + 1` is on a UTF-8 char boundary.
         let (after_minus, next_byte) = unsafe {
             let after_minus = pos.add(1);
@@ -341,7 +343,7 @@ mod token_handlers {
     // Almost always an assignment, where what follows is a space or the start of an expression.
     #[expect(non_snake_case)]
     pub unsafe fn EQL<'a, C: Config>(lexer: &mut Lexer<'a, C>, pos: SourcePosition<'a>) -> Token {
-        // SAFETY: Caller guarantees `TOKEN_HANDLER_MIN_BYTES` bytes can be read from `pos`.
+        // SAFETY: `TOKEN_HANDLER_MIN_BYTES` bytes can be read from `pos`.
         // `=` is ASCII, so `pos + 1` is on a UTF-8 char boundary.
         let (after_eq, next_byte) = unsafe {
             let after_eq = pos.add(1);
@@ -363,8 +365,9 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// `pending` must reflect the trivia seen since the previous token.
     ///
     /// # SAFETY
-    /// * `pos` must not be the end of the source.
+    /// * `pos` must be at or before the end of the source.
     /// * `byte_handler` must be the byte handler for the byte at `pos`.
+    ///   At the end of the source, that is the handler for NUL.
     #[expect(clippy::inline_always)]
     #[inline(always)]
     unsafe fn general_token_handler(
@@ -463,7 +466,26 @@ macro_rules! ascii_byte_handler {
     };
 }
 
-// `\0` `\1` etc
+// `\0`
+//
+// Source text is followed by NUL padding, so the byte read at end of file is NUL.
+// This is the only byte handler which can be called when lexer is at end of file.
+// A NUL byte anywhere else is part of the source text, and is an invalid character.
+#[expect(non_snake_case)]
+fn NUL<'a, C: Config>(
+    lexer: &mut Lexer<'a, C>,
+    pos: SourcePosition<'a>,
+) -> (Kind, SourcePosition<'a>) {
+    // No-op store, so the compiler uses `pos` from register instead of reloading it
+    lexer.source.set_position(pos);
+    if lexer.source.is_eof() {
+        return (Kind::Eof, pos);
+    }
+    // Not at end of file, and next byte is NUL, which is ASCII, as `ERR` requires
+    ERR(lexer, pos)
+}
+
+// `\1` etc
 ascii_byte_handler!(ERR(lexer) {
     let c = lexer.consume_char();
     lexer.error(diagnostics::invalid_character(c, lexer.unterminated_range()));
@@ -498,11 +520,9 @@ fn LIN<'a, C: Config>(
     let byte = lexer.line_break_handler();
 
     // Read the next token here to avoid restarting the caller's token loop.
+    // If at EOF, `byte` is 0, and `NUL` byte handler returns `Kind::Eof`.
     let pos = lexer.source.position();
     lexer.token_start = lexer.source.offset_of(pos);
-    let Some(byte) = byte else {
-        return (Kind::Eof, pos);
-    };
     // JSX attribute values scan quotes differently. Leave them for the caller's token loop.
     if matches!(byte, b'"' | b'\'') {
         return (Kind::Skip, pos);
@@ -514,7 +534,7 @@ fn LIN<'a, C: Config>(
         return (kind, end);
     }
     let byte_handlers = lexer.config.byte_handlers();
-    // SAFETY: `byte` is the current source byte at `pos`.
+    // SAFETY: `byte` is the current source byte at `pos`, or 0 if `pos` is at EOF.
     unsafe { byte_handlers[byte as usize](lexer, pos) }
 }
 

@@ -125,13 +125,12 @@ impl<C: Config> Lexer<'_, C> {
         self.token_start = start;
         self.consume_char();
 
-        // Consume bytes which are part of identifier tail
+        // Consume bytes which are part of identifier tail.
+        // Table matches NUL, so at EOF `next_byte` is 0, which ends the identifier
+        // the same as any other ASCII byte which is not part of an identifier.
         let next_byte = byte_search! {
             lexer: self,
             table: NOT_ASCII_JSX_ID_CONTINUE_TABLE,
-            handle_eof: {
-                return self.finish_next_retokenized(Kind::Ident);
-            },
         };
 
         // Found a matching byte.

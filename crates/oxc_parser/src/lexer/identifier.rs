@@ -49,19 +49,13 @@ impl<'a, C: Config> Lexer<'a, C> {
         // SAFETY: Caller guarantees not at EOF, and next byte is ASCII.
         let after_first = unsafe { start_pos.add(1) };
 
-        // Consume bytes which are part of identifier
+        // Consume bytes which are part of identifier.
+        // Table matches NUL, so at EOF `next_byte` is 0, which ends the identifier
+        // the same as any other ASCII byte which is not part of an identifier.
         let next_byte = byte_search! {
             lexer: self,
             table: NOT_ASCII_ID_CONTINUE_TABLE,
             start: after_first,
-            handle_eof: {
-                if CHECK_KEYWORD {
-                    // SAFETY: The source is at EOF, after the saved identifier start.
-                    let id = unsafe { self.source.str_from_pos_to_current_unchecked(start_pos) };
-                    return (keyword::match_keyword(id.as_bytes()), self.source.position());
-                }
-                return (Kind::Ident, self.source.position());
-            },
         };
 
         // Keep decoding and keyword lookup in one cold call so IDT and KWD can both tail-call it.
@@ -110,13 +104,13 @@ impl<'a, C: Config> Lexer<'a, C> {
         // SAFETY: Caller guarantees not at EOF, and next byte is ASCII.
         let after_first = unsafe { start_pos.add(1) };
 
-        // Consume bytes which are part of identifier
+        // Consume bytes which are part of identifier.
+        // Table matches NUL, so at EOF `next_byte` is 0, which ends the identifier
+        // the same as any other ASCII byte which is not part of an identifier.
         let next_byte = byte_search! {
             lexer: self,
             table: NOT_ASCII_ID_CONTINUE_TABLE,
             start: after_first,
-            // A byte which ends an identifier, so that EOF takes the common path below
-            handle_eof: b' ',
         };
 
         // Unicode characters and escapes are uncommon. Handle both in one cold call.
@@ -328,14 +322,13 @@ impl<'a, C: Config> Lexer<'a, C> {
         // SAFETY: Not at EOF, so can advance 1 byte without going out of bounds
         let after_first = unsafe { start_pos.add(1) };
 
-        // Consume bytes which are part of identifier
+        // Consume bytes which are part of identifier.
+        // Table matches NUL, so at EOF `next_byte` is 0, which ends the identifier
+        // the same as any other ASCII byte which is not part of an identifier.
         let next_byte = byte_search! {
             lexer: self,
             table: NOT_ASCII_ID_CONTINUE_TABLE,
             start: after_first,
-            handle_eof: {
-                return Kind::PrivateIdentifier;
-            },
         };
 
         // Found a matching byte.

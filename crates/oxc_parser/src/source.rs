@@ -244,29 +244,6 @@ impl<'a> Source<'a> {
         Ok(unsafe { str::from_utf8_unchecked(self.as_bytes()) })
     }
 
-    /// Consume this [`Source`], and get source as a `&str` which lives as long as the arena.
-    ///
-    /// Like [`Source::as_str`], this validates the source,
-    /// if it's not already known to be valid UTF-8.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`Utf8Error`] if source is not valid UTF-8.
-    #[inline]
-    fn into_str(mut self) -> Result<&'a str, Utf8Error> {
-        if !self.is_valid_utf8 {
-            self.validate_utf8()?;
-        }
-
-        // SAFETY: `ptr` points to `len` initialized bytes, which are valid for reads for `'a`.
-        // This `Source` is consumed, so nothing can write to them after this.
-        let bytes = unsafe { slice::from_raw_parts(self.ptr.as_ptr(), self.len) };
-
-        // SAFETY: Source bytes are valid UTF-8.
-        // Either that was already known, or `validate_utf8` just checked it.
-        Ok(unsafe { str::from_utf8_unchecked(bytes) })
-    }
-
     /// Check that source bytes are valid UTF-8, and record that they are.
     ///
     /// # Errors
@@ -424,6 +401,7 @@ impl<'a> Source<'a> {
 ///
 /// - No longer than `MAX_LEN`.
 /// - Valid UTF-8.
+/// - Followed by [`Source::PADDING`] zero bytes.
 ///
 /// The only way to create a `ValidSource` is [`ValidSource::new`], which performs the validation.
 /// `ParserImpl::new` takes a `ValidSource`, so a `ParserImpl` cannot be created for a source
@@ -432,9 +410,20 @@ impl<'a> Source<'a> {
 /// The length limit is required for soundness. If source text was longer than `MAX_LEN`,
 /// offsets in `Token`s could wrap around, and `ParserImpl::token_source` relies on them
 /// being accurate.
+//
+// # Invariants
+//
+// 1. `ptr` points to a region of memory `len + Source::PADDING` bytes long.
+// 2. `ptr` is valid for reading all of that region, for the whole of `'a`.
+// 3. Nothing writes to any part of the region during `'a`.
+// 4. The first `len` bytes of the region are valid UTF-8.
+// 5. The `Source::PADDING` bytes after them are zero.
+// 6. `len <= MAX_LEN`.
 pub struct ValidSource<'a> {
-    /// Source text.
-    source_text: &'a str,
+    /// Pointer to start of source text.
+    ptr: NonNull<u8>,
+    /// Length of source text in bytes, not including padding.
+    len: usize,
     /// Source type to parse source as.
     source_type: SourceType,
     /// Allocator which source text is stored in.
@@ -449,25 +438,45 @@ impl<'a> ValidSource<'a> {
     /// Returns the [`ParserDiagnostic`] to report, if source is longer than `MAX_LEN`,
     /// or is not valid UTF-8.
     #[inline]
-    pub fn new(source: Source<'a>) -> Result<Self, ParserDiagnostic<'a>> {
+    pub fn new(mut source: Source<'a>) -> Result<Self, ParserDiagnostic<'a>> {
         // Check length first, to avoid checking a very long source is valid UTF-8 for no reason
         if source.len > MAX_LEN {
             return Err(diagnostics::overlong_source());
         }
 
-        let source_type = source.source_type;
-        let allocator = source.allocator;
-        let Ok(source_text) = source.into_str() else {
+        if !source.is_valid_utf8 && source.validate_utf8().is_err() {
             return Err(diagnostics::file_appears_to_be_binary());
-        };
+        }
 
-        Ok(Self { source_text, source_type, allocator })
+        // `Source`'s invariants cover all of `ValidSource`'s, except for the 2 checked above.
+        // `source` is consumed, so nothing can write to the region after this.
+        let Source { ptr, len, source_type, allocator, .. } = source;
+        Ok(Self { ptr, len, source_type, allocator })
     }
 
     /// Get source text.
     #[inline]
     pub fn source_text(&self) -> &'a str {
-        self.source_text
+        // SAFETY: `ptr` points to `len` bytes, which are valid for reads for `'a`,
+        // and nothing writes to them during `'a`
+        let bytes = unsafe { slice::from_raw_parts(self.ptr.as_ptr(), self.len) };
+        // SAFETY: Those bytes are valid UTF-8
+        unsafe { str::from_utf8_unchecked(bytes) }
+    }
+
+    /// Get pointer to start of source text.
+    ///
+    /// The pointer is valid for reading the source text and the [`Source::PADDING`] bytes
+    /// which follow it, for the whole of `'a`.
+    #[inline]
+    pub fn as_ptr(&self) -> *const u8 {
+        self.ptr.as_ptr().cast_const()
+    }
+
+    /// Get length of source text in bytes, not including padding.
+    #[inline]
+    pub fn len(&self) -> usize {
+        self.len
     }
 
     /// Get [`SourceType`] which source will be parsed as.

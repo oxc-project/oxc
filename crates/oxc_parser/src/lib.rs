@@ -658,13 +658,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
 
         Self {
             options,
-            lexer: Lexer::new(
-                allocator,
-                source_text,
-                source_type,
-                config.lexer_config(),
-                brand_origin,
-            ),
+            lexer: Lexer::new(&source, config.lexer_config(), brand_origin),
             source_type,
             source_text,
             errors: vec![],
