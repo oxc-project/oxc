@@ -90,12 +90,12 @@ impl Rule for NoNewWrappers {
         match name {
             "String" | "Number" | "Boolean" => {
                 ctx.diagnostic_with_suggestion(no_new_wrappers_diagnostic(name, span), |fixer| {
-                    remove_new_operator(fixer, expr, name)
+                    remove_new_operator(fixer, expr, name, ctx.nodes().parent_kind(node.id()))
                 });
             }
             "Symbol" => {
                 ctx.diagnostic_with_suggestion(not_a_constructor_diagnostic(name, span), |fixer| {
-                    remove_new_operator(fixer, expr, name)
+                    remove_new_operator(fixer, expr, name, ctx.nodes().parent_kind(node.id()))
                 });
             }
             _ => {}
@@ -107,6 +107,7 @@ fn remove_new_operator<'a>(
     fixer: RuleFixer<'_, 'a>,
     expr: &NewExpression<'a>,
     name: &'a str,
+    parent_kind: AstKind<'a>,
 ) -> RuleFix {
     debug_assert!(expr.callee.is_identifier_reference());
     let remove_new_fix = fixer.delete_range(Span::new(expr.span.start, expr.callee.span().start));
@@ -118,7 +119,13 @@ fn remove_new_operator<'a>(
     match (name, arg.get_inner_expression()) {
         ("Boolean", Expression::BooleanLiteral(lit)) => fixer.replace_with(expr, lit.as_ref()),
         ("String", Expression::StringLiteral(lit)) => fixer.replace_with(expr, lit.as_ref()),
-        ("Number", Expression::NumericLiteral(lit)) => fixer.replace_with(expr, lit.as_ref()),
+        ("Number", Expression::NumericLiteral(lit)) => {
+            if matches!(parent_kind, AstKind::StaticMemberExpression(_)) {
+                fixer.replace(expr.span, format!("({})", fixer.source_range(lit.span)))
+            } else {
+                fixer.replace_with(expr, lit.as_ref())
+            }
+        }
         _ => remove_new_fix,
     }
 }
@@ -189,4 +196,23 @@ fn test() {
     Tester::new(NoNewWrappers::NAME, NoNewWrappers::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn numeric_member_receiver() {
+    use crate::{fixer::FixKind, tester::Tester};
+
+    let pass = vec!["(1).toString()", "1..toString()", "1?.toString()"];
+    let fail = vec!["new Number(1).toString()"];
+    let fix = vec![
+        ("new Number(1).toString()", "(1).toString()", None, FixKind::Suggestion),
+        ("new Number(1).toFixed(2)", "(1).toFixed(2)", None, FixKind::Suggestion),
+        ("new Number(1)?.toString()", "(1)?.toString()", None, FixKind::Suggestion),
+        ("new Number(0x10).toString()", "(0x10).toString()", None, FixKind::Suggestion),
+        ("(new Number(1)).toString()", "(1).toString()", None, FixKind::Suggestion),
+        ("new Number(1)['toString']()", "1['toString']()", None, FixKind::Suggestion),
+        ("const x = new Number(1);", "const x = 1;", None, FixKind::Suggestion),
+        ("new Number(1).toString()", "new Number(1).toString()", None, FixKind::Fix),
+    ];
+    Tester::new(NoNewWrappers::NAME, NoNewWrappers::PLUGIN, pass, fail).expect_fix(fix).test();
 }
