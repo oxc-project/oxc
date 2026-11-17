@@ -42,12 +42,12 @@ class Entity {
   static set sName(value) {
     Entity.#_sName_accessor_storage = value;
   }
-  #_computed_computed_accessor_storage = 0;
+  #_0_accessor_storage = 0;
   get ["computed"]() {
-    return this.#_computed_computed_accessor_storage;
+    return this.#_0_accessor_storage;
   }
   set ["computed"](value) {
-    this.#_computed_computed_accessor_storage = value;
+    this.#_0_accessor_storage = value;
   }
 }
 babelHelpers.decorate([
