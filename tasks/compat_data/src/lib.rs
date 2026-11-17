@@ -10,13 +10,13 @@ use oxc_transformer::EngineTargets;
 #[derive(Debug, Deserialize)]
 struct Item {
     name: String,
-    es: String,
+    es: Option<String>,
     targets: EngineTargets,
 }
 
 impl Item {
     fn es_name(&self) -> Ident {
-        quote::format_ident!("{}{}", self.es, self.name)
+        quote::format_ident!("{}{}", self.es.as_deref().unwrap_or_default(), self.name)
     }
 }
 
@@ -30,7 +30,8 @@ pub fn generate() {
 
     let features = items.iter().map(|item| {
         let key = item.es_name();
-        let es_version = u16::from_str(item.es.trim_start_matches("ES")).unwrap();
+        let es_version =
+            item.es.as_ref().map(|es| u16::from_str(es.trim_start_matches("ES")).unwrap());
         let targets = item
             .targets
             .iter()
@@ -41,7 +42,7 @@ pub fn generate() {
                     (#engine, Version(#a, #b, #c))
                 }
             })
-            .chain([quote! { (Es, Version(#es_version, 0, 0)) }]);
+            .chain(es_version.map(|version| quote! { (Es, Version(#version, 0, 0)) }));
         quote! {
             (#key, EngineTargets::new(FxHashMap::from_iter([#(#targets),*])))
         }
