@@ -642,10 +642,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn parse_jsx_text(&mut self) -> ArenaBox<'a, JSXText<'a>> {
         let span = self.cur_token().span();
+        // `JSXText` has no escapes, so its value is its source text.
         let raw = Str::from(self.cur_src());
-        let value = Str::from(self.cur_string());
         self.bump_any();
-        JSXText::boxed(span, value, Some(raw), self)
+        JSXText::boxed(span, raw, Some(raw), self)
     }
 
     fn jsx_element_name_eq(lhs: &JSXElementName<'a>, rhs: &JSXElementName<'a>) -> bool {
