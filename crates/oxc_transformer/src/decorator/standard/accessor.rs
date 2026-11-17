@@ -1,4 +1,4 @@
-//! Lowering of `accessor` properties.
+//! Lowering of decorated `accessor` properties.
 
 use oxc_allocator::{ArenaVec, GetAddress, TakeIn, UnstableAddress};
 use oxc_ast::ast::*;
@@ -18,7 +18,7 @@ use crate::{
     utils::ast_builder::wrap_expression_in_arrow_function_iife,
 };
 
-use super::StandardDecoratorState;
+use super::{ClassDecoratorTables, StandardDecoratorState};
 
 impl<'a> StandardDecoratorState<'a> {
     /// Keep computed accessor keys local to each evaluation of a parameter initializer.
@@ -103,13 +103,16 @@ impl<'a> StandardDecoratorState<'a> {
 
     /// Entry phase: lower `accessor` properties to private storage + getter/setter pair.
     ///
-    /// `accessor x = 1` -> `#_x_accessor_storage = 1; get x() { return this.#_x_accessor_storage; } set x(value) { ... }`
+    /// `@dec accessor x = 1` -> `#_x_accessor_storage = 1; @dec get x() { return this.#_x_accessor_storage; } set x(value) { ... }`
+    ///
+    /// Decorators move to the getter, which is recorded so it's decorated with `accessor` kind.
     pub(crate) fn lower_auto_accessors(
         &mut self,
         body: &mut ClassBody<'a>,
         class_scope_id: ScopeId,
         static_binding: Option<&BoundIdentifier<'a>>,
         native_fields: bool,
+        mut tables: Option<&mut ClassDecoratorTables<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         super::super::accessor::lower_auto_accessors(
@@ -118,7 +121,13 @@ impl<'a> StandardDecoratorState<'a> {
             static_binding,
             native_fields,
             true,
-            |storage, _getter, key, name, ctx| {
+            |storage, getter, key, name, ctx| {
+                if let Some(tables) = &mut tables {
+                    tables.accessor_getters.insert(getter.address());
+                    if !getter.decorators.is_empty() {
+                        tables.accessor_storage.insert(storage.address());
+                    }
+                }
                 if let Some(name) = name {
                     self.accessor_names.insert(storage.address(), name);
                 }
@@ -129,8 +138,6 @@ impl<'a> StandardDecoratorState<'a> {
                 if let Expression::ClassExpression(class) = init.without_parentheses()
                     && class.id.is_none()
                     && !self.named_classes.contains_key(&class.address())
-                    && ctx.state.class_lowering_before_entry(class).mode()
-                        != ClassLoweringMode::Preserve
                 {
                     let name = Self::decorator_key_expr(key, ctx);
                     self.named_classes.insert(class.address(), name);

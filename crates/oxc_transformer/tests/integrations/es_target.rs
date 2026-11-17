@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use oxc_span::SourceType;
-use oxc_transformer::{DecoratorOptions, ESTarget, TransformOptions};
+use oxc_transformer::{BabelOptions, DecoratorOptions, ESTarget, TransformOptions};
 
 use crate::{codegen, test, test_with_source_type};
 
@@ -124,6 +124,37 @@ fn standard_decorators_opt_out_keeps_plain_class_field_lowering() {
     assert!(output.contains("#value = 3;"));
     assert!(output.contains("obj.#value = 4;"));
     assert!(output.contains("return obj.#value;"));
+}
+
+#[test]
+fn babel_options_standard_decorators() {
+    let source = "@decorate class Example { @decorate method() {} }";
+    let from = |json: &str| {
+        TransformOptions::try_from(&serde_json::from_str::<BabelOptions>(json).unwrap())
+    };
+
+    // `preset-env` does not include the decorators proposal, so its targets alone preserve it.
+    let options = from(r#"{ "presets": [["env", { "targets": { "chrome": "80" } }]] }"#).unwrap();
+    let output = test(source, &options).unwrap();
+    assert!(output.contains("@decorate"));
+    assert!(!output.contains("decorateElement"));
+
+    // Listing the plugin lowers them.
+    for version in ["", r#", { "version": "2023-11" }"#] {
+        let options =
+            from(&format!(r#"{{ "plugins": [["proposal-decorators"{version}]] }}"#)).unwrap();
+        let output = test(source, &options).unwrap();
+        assert!(!output.contains("@decorate"));
+        assert!(output.contains("decorateElement"));
+    }
+
+    // Other proposal versions have different semantics and are rejected.
+    let errors =
+        from(r#"{ "plugins": [["proposal-decorators", { "version": "2022-03" }]] }"#).unwrap_err();
+    assert_eq!(
+        errors,
+        vec![r#"proposal-decorators: version "2022-03" is not supported, only "2023-11" is"#]
+    );
 }
 
 #[test]

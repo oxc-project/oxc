@@ -47,7 +47,7 @@ impl ES2022<'_> {
                 )),
             ),
             ClassTransform::StandardDecorators { transform_static_blocks } => (
-                transform_static_blocks.then(ClassStaticBlock::new),
+                transform_static_blocks.then(|| ClassStaticBlock::new(true)),
                 Some(ClassProperties::new(
                     ClassPropertiesOptions::default(),
                     transform_static_blocks,
@@ -55,7 +55,7 @@ impl ES2022<'_> {
                     DecoratorMode::Standard,
                 )),
             ),
-            ClassTransform::StaticBlocks => (Some(ClassStaticBlock::new()), None),
+            ClassTransform::StaticBlocks => (Some(ClassStaticBlock::new(false)), None),
             ClassTransform::None => (None, None),
         };
         Self { top_level_await, class_static_block, class_properties }
@@ -108,7 +108,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
             class_properties.exit_expression(expr, ctx);
         }
         if let Some(class_static_block) = &mut self.class_static_block {
-            class_static_block.exit_expression(expr, ctx);
+            if matches!(expr, Expression::ClassExpression(_)) {
+                class_static_block.exit_expression(expr, ctx);
+            } else {
+                class_static_block.exit_skipped_class_expression();
+            }
         }
     }
 
