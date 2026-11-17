@@ -79,13 +79,7 @@ serialize = [
 ]
 
 # Only for conformance tests
-conformance = [
-  "oxc_ast_visit/conformance",
-  "oxc_parser/conformance",
-  "oxc_transformer?/conformance",
-  "oxc_minifier?/conformance",
-  "oxc_isolated_declarations?/conformance",
-]
+conformance = ["oxc_ast_visit/conformance"]
 
 [package.metadata.docs.rs]
 all-features = true

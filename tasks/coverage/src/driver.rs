@@ -195,6 +195,10 @@ impl<'a> CheckASTNodes<'a> {
 
     fn check(&mut self, program: &Program<'a>) {
         self.visit_program(program);
+        // Comments are not included in the AST walk.
+        for comment in &program.comments {
+            self.visit_span(&comment.span);
+        }
     }
 }
 
@@ -228,6 +232,10 @@ impl<'a> Visit<'a> for CheckASTNodes<'a> {
             "Only Program may have parser node ID zero: {kind:?}"
         );
         assert!(self.node_ids.insert(id), "Duplicate parser node ID: {kind:?}");
+    }
+
+    fn visit_span(&mut self, span: &Span) {
+        assert!(span.start <= span.end, "Invalid span: {span:?}");
     }
 
     /// Idempotency test for printing regular expressions.

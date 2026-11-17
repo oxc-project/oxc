@@ -189,8 +189,6 @@ impl<'a> Minifier {
                 (semantic.into_scoping(), class_private_mappings)
             })
             .map_or((None, None), |(scoping, mappings)| (Some(scoping), Some(mappings)));
-        #[cfg(feature = "conformance")]
-        oxc_ast_visit::assert_valid_spans(program);
         MinifierReturn { scoping, class_private_mappings, property_mangle_cache, iterations }
     }
 }

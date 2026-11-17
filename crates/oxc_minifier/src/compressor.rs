@@ -142,8 +142,6 @@ impl<'a> Compressor<'a> {
             ctx.get_mut(),
             initial_references_len,
         );
-        #[cfg(feature = "conformance")]
-        oxc_ast_visit::assert_valid_spans(program);
         iteration
     }
 }
