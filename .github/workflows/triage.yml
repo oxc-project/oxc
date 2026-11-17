@@ -43,8 +43,7 @@ jobs:
       (github.ref == 'refs/heads/main' &&
        (github.event_name == 'push' || github.event_name == 'schedule' ||
         github.event_name == 'workflow_dispatch'))
-    # Keep the cache producer and consumer on the same Ubuntu release.
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: read
@@ -79,7 +78,7 @@ jobs:
       (github.event.action != 'created' ||
        (github.event.comment.user.login != 'github-actions[bot]' &&
         github.event.comment.user.login != 'oxc-captain[bot]'))
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     # GitHub App installation tokens expire after one hour.
     timeout-minutes: 55
     permissions:
