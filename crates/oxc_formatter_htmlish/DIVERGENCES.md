@@ -1113,10 +1113,10 @@ The message's ID is a hash of its text, whitespace included (`@angular/compiler`
 `<p i18n>Hello <b>world</b></p>` and `<p i18n>⏎  Hello <b>world</b>⏎</p>` are two messages,
 so reformatting the content silently drops its existing translations.
 
-## angular-non-bindable-as-written
+## angular-non-bindable-attributes-as-written
 
-- Why: semantics (Angular reads every attribute under `ngNonBindable` as text, the DOM value as written)
-- Pin: `tests/fixtures/angular/angular-non-bindable-as-written.component.html`
+- Why: semantics (Angular reads every attribute under `ngNonBindable` as a plain one, the DOM value as written)
+- Pin: `tests/fixtures/angular/angular-non-bindable-attributes-as-written.component.html`
 
 ```html
 <!-- input -->
@@ -1126,15 +1126,10 @@ so reformatting the content silently drops its existing translations.
 <div ngNonBindable><span [x]="a+b" title="{{a+b}}">@if(foo){bar}</span></div>
 
 <!-- prettier -->
-<div ngNonBindable>
-  <span [x]="a + b" title="{{ a + b }}">@if(foo){bar}</span>
-</div>
+<div ngNonBindable><span [x]="a + b" title="{{ a + b }}">@if(foo){bar}</span></div>
 ```
 
-The content of an element with `ngNonBindable` prints as written; its start tag is formatted.
-Angular binds nothing under it (`@angular/compiler` 22.2.3's `parseTemplate`):
-an attribute is a DOM attribute with its value as written (`[x]` is `a+b`, `a + b` after Prettier),
-and its blocks, `@let` and `{{ }}` are text.
-Prettier formats those values as bindings, which changes the DOM.
-Its text it only collapses, which renders the same:
-formatting it here would need the whitespace model to read a block's markers as words of the text around them, where they are transparent now.
+Under an element with `ngNonBindable`, Angular binds nothing (`@angular/compiler` 22.2.5's `NonBindableVisitor`):
+its blocks, `@let` and `{{ }}` are text (as for Prettier, prettier/prettier#20066), and an attribute is a DOM attribute,
+which Prettier formats as a binding (`[x]` is `a+b`, `a + b` after Prettier). The element's own attributes are bound, and format.
+

@@ -76,7 +76,7 @@ pub fn write_text<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'_, 
 
 /// Writes `value`'s lines, trimmed and dedented ([`trim_preserving_indentation`], [`dedent`]),
 /// joined by line breaks: every blank line is kept, and prints without indentation.
-pub fn write_dedented_lines<'a>(value: &'a str, f: &mut HtmlishFormatter<'_, 'a>) {
+fn write_dedented_lines<'a>(value: &'a str, f: &mut HtmlishFormatter<'_, 'a>) {
     let mut breaks = 0;
     for line in dedent(trim_preserving_indentation(value)) {
         if line.is_empty() {

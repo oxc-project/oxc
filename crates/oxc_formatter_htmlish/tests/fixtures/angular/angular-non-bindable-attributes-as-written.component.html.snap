@@ -14,12 +14,10 @@ source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
 ------------------
 { printWidth: 80 }
 ------------------
-<div ngNonBindable>   @if   (   foo   ){   bar   }   </div>
-<span
-  ngNonBindable
->@if(foo){bar} @let   foo   =    bar+baz; {{foo   +bar}}</span>
+<div ngNonBindable>@if ( foo ){ bar }</div>
+<span ngNonBindable>@if(foo){bar} @let foo = bar+baz; {{foo +bar}}</span>
 <div ngNonBindable>
-  <p>   {{ a }}   </p>
+  <p>{{ a }}</p>
 </div>
 <div ngnonbindable>text</div>
 <div ngNonBindable><span [x]="a+b" title="{{a+b}}">@if(foo){bar}</span></div>
@@ -27,10 +25,10 @@ source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
 -------------------
 { printWidth: 100 }
 -------------------
-<div ngNonBindable>   @if   (   foo   ){   bar   }   </div>
-<span ngNonBindable>@if(foo){bar} @let   foo   =    bar+baz; {{foo   +bar}}</span>
+<div ngNonBindable>@if ( foo ){ bar }</div>
+<span ngNonBindable>@if(foo){bar} @let foo = bar+baz; {{foo +bar}}</span>
 <div ngNonBindable>
-  <p>   {{ a }}   </p>
+  <p>{{ a }}</p>
 </div>
 <div ngnonbindable>text</div>
 <div ngNonBindable><span [x]="a+b" title="{{a+b}}">@if(foo){bar}</span></div>

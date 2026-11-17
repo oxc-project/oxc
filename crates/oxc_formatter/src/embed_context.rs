@@ -147,4 +147,8 @@ pub struct JsEmbeddedIn {
     /// and a top-level sequence (`a, b`), which there reads as more than one value, is left as written
     /// (but in parens, the source's or the host's: [`ExpressionRoot::in_parens`]).
     pub inlines_code: bool,
+    /// The host reads the code with a parser of its own, for a subset of JS (Angular's expressions):
+    /// code holding syntax outside it, which the host reads otherwise or not at all, is left as written (`delete(x)` calls `delete`),
+    /// and no trailing comma prints in a call's arguments or an arrow's params, which it rejects (`f(a,)`).
+    pub template_expressions_only: bool,
 }

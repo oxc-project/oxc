@@ -187,7 +187,7 @@ fn should_preserve_content(t: &Tree<'_>, id: NodeId) -> bool {
                 // `<!--[if lt IE 9]><html><![endif]-->`: an unclosed element inside
                 || item.last_child.is_some_and(|last| t.is_unclosed(last))
         }
-        // `<pre>` with markup inside, a Vue block that is no markup, Angular's `i18n` / `ngNonBindable`
+        // `<pre>` with markup inside, a Vue block that is no markup, Angular's `i18n`
         _ => {
             (item.pre_like && t.children(id).any(|child| !t.is_text_content(child)))
                 || t.is_non_html_sfc_block(id)

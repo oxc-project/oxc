@@ -15,10 +15,12 @@ use oxc_formatter_core::{
     spec::is_suppression_marker,
     write,
 };
-use oxc_htmlish_parser::ast::{Attribute, AttributeKind, NodeId, NodeKind, Quote};
+use oxc_htmlish_parser::ast::{
+    AngularAttribute, Attribute, AttributeKind, NodeId, NodeKind, Quote, StartTagComment,
+};
 
 use super::{
-    HtmlishFormatter,
+    HtmlishFormatter, angular,
     embed::{
         CssInHtmlStyleAttribute, JsInHtmlEventHandler, is_event_handler, write_attribute_value,
         write_quoted,
@@ -84,7 +86,7 @@ pub fn write_attributes<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatte
                 if let Some(prev_end) = prev_end {
                     // A `//` comment stays on the line of the attribute it follows
                     // (DIVERGENCES.md#angular-start-tag-line-comment-placement)
-                    if is_line_comment(t, attribute)
+                    if is_line_comment(attribute)
                         && t.line_breaks(prev_end, attribute.name.start) == 0
                     {
                         write!(f, space());
@@ -100,7 +102,7 @@ pub fn write_attributes<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatte
                 } else {
                     write_attribute(t, id, attribute, f);
                 }
-                if is_line_comment(t, attribute) {
+                if is_line_comment(attribute) {
                     write!(f, expand_parent());
                 }
                 prev_end = Some(attribute.span().end);
@@ -113,7 +115,7 @@ pub fn write_attributes<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatte
         || (item.self_closing && t[t.parent(id)].borrows.last_child_closing_end)
         || force_not_to_break
         || bracket_same_line)
-        && !el.attributes.last().is_some_and(|last| is_line_comment(t, last));
+        && !el.attributes.last().is_some_and(|last| is_line_comment(last));
     if hug_end {
         if slash {
             write!(f, space());
@@ -126,15 +128,14 @@ pub fn write_attributes<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatte
 }
 
 /// An Angular start-tag comment `//`, which runs to the line's end.
-fn is_line_comment(t: &Tree<'_>, attribute: &Attribute<'_>) -> bool {
-    matches!(attribute.kind, AttributeKind::Comment)
-        && attribute.name.slice(t.source()).starts_with("//")
+fn is_line_comment(attribute: &Attribute<'_>) -> bool {
+    matches!(attribute.kind, AttributeKind::Comment(StartTagComment::Line))
 }
 
 fn write_attribute<'a>(
     t: &'a Tree<'a>,
     element: NodeId,
-    attribute: &Attribute<'a>,
+    attribute: &'a Attribute<'a>,
     f: &mut HtmlishFormatter<'_, 'a>,
 ) {
     let source = t.source();
@@ -157,6 +158,37 @@ fn write_attribute<'a>(
         && let Some(kind) = vue::value_kind(t, element, attribute, f)
     {
         if !vue::write_attribute_value(t, kind, raw, f) {
+            write_quoted_value(raw, f);
+        }
+        return;
+    }
+    // An Angular binding's or action's value prints as written where it does not format (as Prettier does)
+    let formatted = match &attribute.kind {
+        // No code, which a binding reads alike however much whitespace (an action reports it)
+        AttributeKind::Angular(AngularAttribute::Property(..) | AngularAttribute::TwoWay(..))
+            if raw.trim_ascii().is_empty() =>
+        {
+            write!(f, "\"\"");
+            Some(true)
+        }
+        // A two-way binding's value reads as a property binding's
+        AttributeKind::Angular(
+            AngularAttribute::Property(expression, _) | AngularAttribute::TwoWay(expression, _),
+        ) => Some(angular::write_binding(expression.as_deref(), raw, f)),
+        AttributeKind::Angular(AngularAttribute::Event(action, _)) => {
+            Some(angular::write_action(action.as_deref(), f))
+        }
+        AttributeKind::Angular(AngularAttribute::Template(bindings)) => Some(
+            angular::write_template_bindings(bindings.as_deref().map(|b| b.as_slice()), raw, f),
+        ),
+        AttributeKind::Angular(AngularAttribute::Interpolation(interpolations)) => Some(
+            !t.keeps_angular_value(element, attribute)
+                && angular::write_value_interpolations(attribute, interpolations, f),
+        ),
+        _ => None,
+    };
+    if let Some(formatted) = formatted {
+        if !formatted {
             write_quoted_value(raw, f);
         }
         return;

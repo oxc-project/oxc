@@ -35,21 +35,23 @@ pub fn between_block(t: &Tree<'_>, prev: NodeId, next: NodeId) -> Between {
 pub fn write_block<'a>(
     t: &'a Tree<'a>,
     id: NodeId,
-    block: &Block<'a>,
+    block: &'a Block<'a>,
     f: &mut HtmlishFormatter<'_, 'a>,
 ) {
     let item = &t[id];
     let name = t.block_name(block);
     let default_never = block.kind == BlockKind::DefaultNever;
     write!(f, ["@", text(name)]);
-    if !block.parameters.is_empty() {
+    if let Some(parameters) = super::angular::format_block_parameters(block, f) {
+        write!(f, [space(), parameters]);
+    } else if !block.parameters.is_empty() {
         // `@default never(state)`: Prettier glues the parameters to `never`
         write!(f, if default_never { "(" } else { " (" });
         for (i, parameter) in block.parameters.iter().enumerate() {
             if i > 0 {
                 write!(f, "; ");
             }
-            // As written: no expression is formatted yet (Prettier keeps so the ones it does not format, `@defer`'s)
+            // As written: a block whose parameters are no expressions (`@defer`'s), or one that does not format
             write!(f, text(parameter.span.slice(t.source())));
         }
         write!(f, ")");
