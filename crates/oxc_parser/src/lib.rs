@@ -729,13 +729,6 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
 
         parser.check_unfinished_errors();
 
-        if let Some(overlong_error) = parser.overlong_error() {
-            has_fatal_error = true;
-            parser.lexer.errors.clear();
-            parser.errors.clear();
-            parser.error(overlong_error);
-        }
-
         let mut is_flow_language = false;
         let mut errors = Diagnostics::new();
         // only check for `@flow` if the file failed to parse.
@@ -852,7 +845,6 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             parser.set_unexpected();
         }
         if let Some(FatalError { error, .. }) = parser.fatal_error.take() {
-            let error = parser.overlong_error().unwrap_or(error);
             return Err(error.into_diagnostic().into());
         }
         parser.check_unfinished_errors();
@@ -936,7 +928,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         }
     }
 
-    /// Create the [`ParserReturn`] for a source which is not valid UTF-8.
+    /// Create the [`ParserReturn`] for a source which failed validation (see [`ValidSource`]).
     ///
     /// It has an empty `Program`, and 1 diagnostic.
     #[cold]
@@ -960,16 +952,6 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             fatal_error: true,
             is_flow_language: false,
         }
-    }
-
-    /// Check if source length exceeds MAX_LEN, if the file cannot be parsed.
-    /// Original parsing error is not real - `Lexer::new` substituted "\0" as the source text.
-    #[cold]
-    fn overlong_error(&self) -> Option<ParserDiagnostic<'a>> {
-        if self.source_text.len() > MAX_LEN {
-            return Some(diagnostics::overlong_source());
-        }
-        None
     }
 
     #[inline]

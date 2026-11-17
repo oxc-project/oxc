@@ -536,7 +536,7 @@ impl<'a> TriviaBuilder<'a> {
             _ => return,
         };
 
-        // Comment count cannot exceed `u32::MAX` because of `MAX_LEN` check in `LexerSource::new`,
+        // Comment count cannot exceed `u32::MAX` because of `MAX_LEN` check in `ValidSource::new`,
         // so `index + 1` cannot overflow, and is never zero
         #[expect(clippy::cast_possible_truncation)]
         let index = index as u32;

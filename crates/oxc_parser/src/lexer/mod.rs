@@ -204,7 +204,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     ///
     /// # Panics
     ///
-    /// Panics if `source` is not valid UTF-8.
+    /// Panics if `source` is too long, or is not valid UTF-8.
     ///
     /// [`brands`]: oxc_data_structures::brands
     #[cfg(any(test, feature = "benchmarking"))]

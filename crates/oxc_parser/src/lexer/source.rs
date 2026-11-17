@@ -5,7 +5,7 @@ use oxc_data_structures::{
     brands::{Brand, BrandOrigin},
 };
 
-use crate::{MAX_LEN, source::ValidSource};
+use crate::source::ValidSource;
 
 use super::search::SEARCH_BATCH_SIZE;
 
@@ -107,19 +107,10 @@ impl<'a> LexerSource<'a> {
     pub(super) fn new(source: &ValidSource<'a>, brand_origin: BrandOrigin<'a>) -> Self {
         // `ValidSource` guarantees the source text is followed by `Source::PADDING` NUL bytes,
         // and that this pointer has provenance over the padding too
-        let mut start = source.as_ptr();
+        let start = source.as_ptr();
         // SAFETY: Adding length of the source text to the starting pointer gives a pointer
         // at the end of the source text, which is the start of the padding
-        let mut end = unsafe { start.add(source.len()) };
-
-        // If source text exceeds size limit, substitute a short source text which will fail to parse.
-        // `Parser::parse` will convert error to `diagnostics::overlong_source()`.
-        if source.len() > MAX_LEN {
-            static DUMMY_SOURCE: &str = "\0";
-            start = DUMMY_SOURCE.as_ptr();
-            // SAFETY: `DUMMY_SOURCE` is 1 byte long
-            end = unsafe { start.add(1) };
-        }
+        let end = unsafe { start.add(source.len()) };
 
         // `saturating_sub` not `wrapping_sub` so that value doesn't wrap around if source
         // is very short, and has very low memory address (e.g. 16). If that's the case,
@@ -730,7 +721,7 @@ impl<'a> SourcePosition<'a> {
     pub(super) unsafe fn offset_from_u32(self, origin: Self) -> u32 {
         // SAFETY: Caller guarantees `self` is not before `origin`.
         let offset = unsafe { self.offset_from(origin) };
-        // Cannot overflow `u32` because of `MAX_LEN` check in `LexerSource::new`
+        // Cannot overflow `u32` because of `MAX_LEN` check in `ValidSource::new`
         #[expect(clippy::cast_possible_truncation)]
         let offset = offset as u32;
         offset
