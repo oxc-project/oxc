@@ -11,11 +11,13 @@ use rustc_hash::FxHashMap;
 
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::RegExpFlags;
+use oxc_data_structures::brands::BrandOrigin;
+#[cfg(any(test, feature = "benchmarking"))]
+use oxc_data_structures::brands::BrandScope;
 use oxc_span::{SourceType, Span};
 use oxc_str::JSStr;
 
 use crate::{
-    UniquePromise,
     config::LexerConfig as Config,
     diagnostics::{self, ParserDiagnostic},
 };
@@ -136,16 +138,15 @@ pub struct Lexer<'a, C: Config> {
 impl<'a, C: Config> Lexer<'a, C> {
     /// Create new `Lexer`.
     ///
-    /// Requiring a `UniquePromise` to be provided guarantees only 1 `Lexer` can exist
-    /// on a single thread at one time.
+    /// `brand_origin` is for the `Lexer`'s `Source` (see `Source` docs).
     pub(super) fn new(
         allocator: &'a Allocator,
         source_text: &'a str,
         source_type: SourceType,
         config: C,
-        unique: UniquePromise,
+        brand_origin: BrandOrigin<'a>,
     ) -> Self {
-        let source = Source::new(source_text, unique);
+        let source = Source::new(source_text, brand_origin);
 
         // If collecting tokens, allocate enough space so that the `Vec<Token>` will not have to grow during parsing.
         // `source_text.len() + 1` is almost always a large overestimate of number of tokens, but it's impossible to
@@ -182,17 +183,30 @@ impl<'a, C: Config> Lexer<'a, C> {
         }
     }
 
-    /// Backdoor to create a `Lexer` without holding a `UniquePromise`, for benchmarks.
-    /// This function must NOT be exposed in public API as it breaks safety invariants.
-    #[cfg(feature = "benchmarking")]
-    pub fn new_for_benchmarks(
+    /// Create a [`Lexer`], and call `f` with it. Returns what `f` returns.
+    ///
+    /// The `Lexer` is passed to `f`, not returned, because that's what makes `'brand`
+    /// unique to it. `f` must accept a `Lexer` with any lifetime `'brand`, so code in `f`
+    /// can't treat `'brand` as the same as any other lifetime. That makes `'brand` a brand
+    /// (see [`brands`]).
+    ///
+    /// For tests and benchmarks only.
+    /// The parser creates its `Lexer` with `ParserImpl::scope`, and `Lexer::new`.
+    ///
+    /// [`brands`]: oxc_data_structures::brands
+    #[cfg(any(test, feature = "benchmarking"))]
+    pub fn scope<R>(
         allocator: &'a Allocator,
         source_text: &'a str,
         source_type: SourceType,
         config: C,
-    ) -> Self {
-        let unique = UniquePromise::new_for_tests_and_benchmarks();
-        Self::new(allocator, source_text, source_type, config, unique)
+        f: impl for<'brand> FnOnce(Lexer<'brand, C>) -> R,
+    ) -> R {
+        BrandOrigin::scope_within(|brand_origin, _: BrandScope<'_, 'a>| {
+            // `allocator` and `source_text` are shortened from `'a` to `'brand` here
+            let lexer = Lexer::new(allocator, source_text, source_type, config, brand_origin);
+            f(lexer)
+        })
     }
 
     /// Get errors.

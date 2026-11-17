@@ -1,6 +1,5 @@
 use std::{
     borrow::Cow,
-    cell::Cell,
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -9,12 +8,10 @@ use rustc_hash::FxHashMap;
 
 use napi::Either;
 use napi_derive::napi;
-use serde::Serialize;
 
 use oxc::{
     allocator::Allocator,
     ast::ast::Program,
-    ast_visit::Visit,
     codegen::{Codegen, CodegenOptions, CommentOptions, LegalComment},
     diagnostics::OxcDiagnostic,
     isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions},
@@ -22,11 +19,10 @@ use oxc::{
     minifier::{CompressOptions, Minifier, MinifierOptions, MinifierReturn},
     parser::{ParseOptions, Parser, ParserReturn},
     semantic::{
-        ReferenceId, ScopeFlags, ScopeId, Scoping, SemanticBuilder, SymbolFlags, SymbolId,
+        Scoping, SemanticBuilder,
         dot::{DebugDot, DebugDotContext},
     },
-    span::{SourceType, Span},
-    syntax::reference::ReferenceFlags,
+    span::SourceType,
     transformer::{TransformOptions, Transformer},
 };
 use oxc_formatter::{
@@ -47,6 +43,7 @@ use oxc_transformer_plugins::{
 };
 
 mod options;
+mod scoping;
 pub use options::*;
 
 #[derive(Default)]
@@ -57,8 +54,8 @@ pub struct Oxc {
     pub ast_json: String,
     pub ir: String,
     pub control_flow_graph: String,
-    pub symbols_json: String,
-    pub scope_text: String,
+    /// Versioned original-source semantic snapshot; spans are UTF-8 bytes.
+    pub scoping_json: String,
     pub codegen_text: String,
     pub codegen_sourcemap_text: Option<String>,
     pub formatted_text: String,
@@ -94,8 +91,7 @@ impl Oxc {
         // Initialize state
         self.source_text.clone_from(&source_text);
         self.diagnostics = vec![];
-        self.scope_text = String::new();
-        self.symbols_json = String::new();
+        self.scoping_json = String::new();
 
         // Extract options
         let OxcOptions {
@@ -147,17 +143,10 @@ impl Oxc {
 
         self.run_formatter(run_options, &source_text, source_type, &formatter_options);
 
-        let mut scoping = semantic.into_scoping();
-
-        // Extract scope and symbol information if needed
-        if !source_type.is_typescript_definition() {
-            if run_options.scope {
-                self.scope_text = Self::get_scope_text(&program, &scoping);
-            }
-            if run_options.symbol {
-                self.symbols_json = Self::get_symbols_text(&scoping)?;
-            }
+        if run_options.scope || run_options.symbol {
+            self.scoping_json = scoping::serialize(&semantic)?;
         }
+        let mut scoping = semantic.into_scoping();
 
         // Phase 5: Handle isolated declarations (early return path)
         if run_options.isolated_declarations {
@@ -703,66 +692,6 @@ impl Oxc {
         self.codegen_sourcemap_text = codegen_result.map.map(|map| map.to_json_string());
     }
 
-    fn get_scope_text(program: &Program<'_>, scoping: &Scoping) -> String {
-        struct ScopesTextWriter<'s> {
-            scoping: &'s Scoping,
-            scope_text: String,
-            indent: usize,
-            space: String,
-        }
-
-        impl<'s> ScopesTextWriter<'s> {
-            fn new(scoping: &'s Scoping) -> Self {
-                Self { scoping, scope_text: String::new(), indent: 0, space: String::new() }
-            }
-
-            fn write_line<S: AsRef<str>>(&mut self, line: S) {
-                self.scope_text.push_str(&self.space[0..self.indent]);
-                self.scope_text.push_str(line.as_ref());
-                self.scope_text.push('\n');
-            }
-
-            fn indent_in(&mut self) {
-                self.indent += 2;
-                if self.space.len() < self.indent {
-                    self.space.push_str("  ");
-                }
-            }
-
-            fn indent_out(&mut self) {
-                self.indent -= 2;
-            }
-        }
-
-        impl Visit<'_> for ScopesTextWriter<'_> {
-            fn enter_scope(&mut self, _: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
-                let scope_id = scope_id.get().unwrap();
-                let flags = self.scoping.scope_flags(scope_id);
-                self.write_line(format!("Scope {} ({flags:?}) {{", scope_id.index()));
-                self.indent_in();
-
-                let bindings = self.scoping.get_bindings(scope_id);
-                if !bindings.is_empty() {
-                    self.write_line("Bindings: {");
-                    for (name, &symbol_id) in bindings {
-                        let symbol_flags = self.scoping.symbol_flags(symbol_id);
-                        self.write_line(format!("  {name} ({symbol_id:?} {symbol_flags:?})"));
-                    }
-                    self.write_line("}");
-                }
-            }
-
-            fn leave_scope(&mut self) {
-                self.indent_out();
-                self.write_line("}");
-            }
-        }
-
-        let mut writer = ScopesTextWriter::new(scoping);
-        writer.visit_program(program);
-        writer.scope_text
-    }
-
     fn build_inject_config(
         inject_opts: &OxcInjectOptions,
     ) -> napi::Result<InjectGlobalVariablesConfig> {
@@ -804,47 +733,5 @@ impl Oxc {
                 error_messages.join(", ")
             ))
         })
-    }
-
-    fn get_symbols_text(scoping: &Scoping) -> napi::Result<String> {
-        #[derive(Serialize)]
-        struct Data {
-            symbol_id: SymbolId,
-            span: Span,
-            name: String,
-            flags: SymbolFlags,
-            scope_id: ScopeId,
-            references: Vec<ReferenceData>,
-        }
-        #[derive(Serialize)]
-        struct ReferenceData {
-            reference_id: ReferenceId,
-            symbol_id: Option<SymbolId>,
-            flags: ReferenceFlags,
-        }
-        let data = scoping
-            .symbol_ids()
-            .map(|symbol_id| Data {
-                symbol_id,
-                span: scoping.symbol_span(symbol_id),
-                name: scoping.symbol_name(symbol_id).into(),
-                flags: scoping.symbol_flags(symbol_id),
-                scope_id: scoping.symbol_scope_id(symbol_id),
-                references: scoping
-                    .get_resolved_reference_ids(symbol_id)
-                    .iter()
-                    .map(|&reference_id| {
-                        let reference = scoping.get_reference(reference_id);
-                        ReferenceData {
-                            reference_id,
-                            symbol_id: reference.symbol_id(),
-                            flags: reference.flags(),
-                        }
-                    })
-                    .collect::<Vec<_>>(),
-            })
-            .collect::<Vec<_>>();
-
-        serde_json::to_string_pretty(&data).map_err(|e| napi::Error::from_reason(e.to_string()))
     }
 }

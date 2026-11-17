@@ -20,10 +20,17 @@ a dialect adds a field there, not a `Dialect` check at the use site.
 ### Embedded languages
 
 Content in another language goes to the session's dispatcher (`src/print/embed.rs`), and prints as written where it is not formatted:
-`<script>` / `<style>` bodies, `style` / `on*` values, and in Vue (`src/print/vue.rs`) `{{ }}`, directive values and the blocks that are no markup.
-Vue's JS is a part in the file's script language, named by `JsInVueTemplate`, which the host translates into JS's `JsRoot` and `JsEmbeddedIn`.
+`<script>` / `<style>` bodies, `style` / `on*` values, in Vue (`src/print/vue.rs`) `{{ }}`, directive values and the blocks that are no markup,
+and in Angular (`src/print/angular.rs`) `{{ }}`, `[x]`, `[(x)]`, `(x)`, `*x`, `{{ }}` in another attribute's value, block parameters and `@let`.
+Vue's JS is a part in the file's script language, named by `JsInVueTemplate`;
+Angular's is TS, named by `JsInAngularTemplate`, read as the parser splits it (`AngularExpression`):
+each piece of code is dispatched on its own (the code, each pipe's argument, each statement of `(x)`, each expression of `*x` or a block's parameters),
+Angular's own syntax around them (pipes, comment, `;`, microsyntax, block parameters) prints in `src/print/angular.rs`,
+and the host tells JS what Angular reads of the code (`JsEmbeddedIn::template_expressions_only`).
+The host translates either into JS's `JsRoot` and `JsEmbeddedIn`.
 An attribute's value is laid out by its language, in the layout its marker names (JS's `JsRoot`, CSS's `CssEmbeddedIn`):
-this crate only quotes it (`write_quoted`: the `"`, `&quot;` for a `"` in it, a group), and knows nothing of the language's syntax.
+this crate only quotes it (`write_quoted`: the `"`, `&quot;` for a `"` in it, a group), and knows nothing of the language's syntax,
+but Angular's own (laid out around the pieces of JS in `src/print/angular.rs`).
 
 #### What Vue reads
 

@@ -1,12 +1,11 @@
 //! Vue: the JS of `{{ }}` and directive values, formatted by the session's dispatcher as fragments
 //! in the file's script language. A part the dispatcher does not format prints as written.
 
+use oxc_allocator::ArenaVec;
 use oxc_formatter_core::{
-    builders::{
-        exact_line_breaks, expand_parent, soft_line_indent_or_space, soft_space_or_block_indent,
-        space, text,
-    },
-    dispatch_fragment_ir, format_args, write,
+    FormatElement,
+    builders::{space, text},
+    dispatch_fragment_ir, format_args,
 };
 use oxc_htmlish_parser::{
     Span,
@@ -18,7 +17,6 @@ use super::{
     attribute::unescaped,
     embed::{self, dispatch_attribute_value, write_quoted},
     format_ir,
-    tag::closing_end_borrowed,
 };
 use crate::tree::Tree;
 
@@ -63,12 +61,7 @@ pub enum Value {
 }
 
 /// `None` for an attribute whose value is no JS.
-pub fn value_kind(
-    t: &Tree<'_>,
-    element: NodeId,
-    attribute: &Attribute<'_>,
-    f: &HtmlishFormatter<'_, '_>,
-) -> Option<Value> {
+pub fn value_kind(t: &Tree<'_>, element: NodeId, attribute: &Attribute<'_>) -> Option<Value> {
     let source = t.source();
     let name = attribute.name.slice(source);
     let AttributeKind::Vue(directive) = &attribute.kind else {
@@ -76,25 +69,16 @@ pub fn value_kind(
         return (name == "generic" && t.is_sfc_block(element) && t.tag(element) == "script")
             .then_some(Value::Fragment(JsInVueTemplate::ScriptGeneric));
     };
-    // Tailwind classes, as prettier-plugin-tailwindcss reads its `tailwindAttributes` in Vue, by the attribute's whole name:
-    // bound `class` and listed `a` / `:a` / `v-bind:a` (`:a`, `v-bind:a`) without modifiers, a listed directive as written
-    let tailwind = f.options().sort_tailwindcss.as_deref();
-    let listed = tailwind.unwrap_or_default();
+    // Tailwind classes (`Tree::tailwind`): a bound one without modifiers, a listed directive as written
+    let tailwind = t.tailwind();
     let bound_classes = || {
-        tailwind.is_some()
-            && directive.modifiers.is_empty()
-            && directive.argument.filter(|argument| !argument.dynamic).is_some_and(|argument| {
-                let argument = argument.span.slice(source);
-                argument == "class"
-                    || listed.iter().any(|listed| {
-                        [
-                            Some(listed.as_str()),
-                            listed.strip_prefix(':'),
-                            listed.strip_prefix("v-bind:"),
-                        ]
-                        .contains(&Some(argument))
-                    })
-            })
+        tailwind.is_some_and(|tailwind| {
+            directive.modifiers.is_empty()
+                && directive
+                    .argument
+                    .filter(|argument| !argument.dynamic)
+                    .is_some_and(|argument| tailwind.holds(argument.span.slice(source)))
+        })
     };
     let has_argument = directive.argument.is_some();
     Some(match directive.name.slice(source) {
@@ -108,7 +92,7 @@ pub fn value_kind(
             Value::Fragment(JsInVueTemplate::Binding { tailwind_classes: bound_classes() })
         }
         directive_name => Value::Fragment(JsInVueTemplate::Expression {
-            tailwind_classes: listed.iter().any(|listed| listed == name),
+            tailwind_classes: tailwind.is_some_and(|tailwind| tailwind.directive(name)),
             in_parens: matches!(directive_name, "if" | "else-if"),
         }),
     })
@@ -152,51 +136,15 @@ pub fn write_attribute_value<'a>(
     }
 }
 
-/// Writes `{{ }}`'s expression between its markers: formatted, or as written (as Prettier does).
-pub fn write_interpolation<'a>(
+/// `{{ }}`'s expression formatted; `None` to print it as written.
+pub fn dispatch_interpolation<'a>(
     t: &Tree<'_>,
-    id: NodeId,
-    expression: &'a str,
-    f: &mut HtmlishFormatter<'_, 'a>,
-) {
-    // The next sibling prints the `}}` right after this
-    let borrowed = closing_end_borrowed(t, id);
+    expression: &str,
+    f: &HtmlishFormatter<'_, 'a>,
+) -> Option<ArenaVec<'a, FormatElement<'a>>> {
     // The code Vue compiles, trimmed
     let code = expression.trim_ascii();
-    if let Some(ir) = dispatch_fragment_ir(
-        f,
-        t.vue_script_language(),
-        code,
-        Some(&JsInVueTemplate::Interpolation),
-    ) {
-        if borrowed {
-            write!(f, [soft_line_indent_or_space(&format_ir(ir)), space()]);
-        } else {
-            write!(f, soft_space_or_block_indent(&format_ir(ir)));
-        }
-        return;
-    }
-    // Whitespace only prints nothing (`{{}}`), as an Angular one does
-    if code.is_empty() {
-        return;
-    }
-    // A trailing line break prints at the indentation: the next line's `}}` lines up with the `{{`
-    let Some(lf) =
-        expression.rfind('\n').filter(|&lf| expression[lf + 1..].trim_ascii().is_empty())
-    else {
-        write!(f, text(expression));
-        return;
-    };
-    let content = expression[..lf].trim_end_matches('\n');
-    write!(f, text(content));
-    // Its own line break before a borrowed `}}` is the one between the siblings
-    let breaks = lf - content.len() + usize::from(!borrowed);
-    if breaks > 0 {
-        write!(f, exact_line_breaks(breaks));
-    }
-    if borrowed {
-        write!(f, expand_parent());
-    }
+    dispatch_fragment_ir(f, t.vue_script_language(), code, Some(&JsInVueTemplate::Interpolation))
 }
 
 /// Whether `v-for`'s parts format: not when formatting would make Vue read them otherwise, which prints as written.

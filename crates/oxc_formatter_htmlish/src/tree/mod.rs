@@ -11,12 +11,18 @@
 mod build;
 mod display;
 mod names;
+mod tailwind;
 
 use oxc_allocator::{Allocator, ArenaVec, StringBuilder};
 use oxc_htmlish_parser::{
     Span,
-    ast::{Block, BlockKind, Element, Namespace, NodeId, NodeKind, Root},
+    ast::{
+        AngularAttribute, Attribute, AttributeKind, Block, BlockKind, Element, Namespace, NodeId,
+        NodeKind, Root,
+    },
 };
+
+pub use tailwind::TailwindAttributes;
 
 use crate::rules::DialectRules;
 
@@ -119,6 +125,8 @@ pub struct Tree<'a> {
     merged_texts: ArenaVec<'a, (NodeId, &'a str)>,
     /// See [`Self::vue_script_language`].
     vue_script_language: &'static str,
+    /// See [`Self::tailwind`].
+    tailwind: Option<TailwindAttributes<'a>>,
 }
 
 impl std::ops::Index<NodeId> for Tree<'_> {
@@ -132,6 +140,11 @@ impl std::ops::Index<NodeId> for Tree<'_> {
 impl<'a> Tree<'a> {
     pub fn source(&self) -> &'a str {
         self.source
+    }
+
+    /// The attributes whose Tailwind classes sort; `None` when none do.
+    pub fn tailwind(&self) -> Option<&TailwindAttributes<'a>> {
+        self.tailwind.as_ref()
     }
 
     pub fn kind(&self, id: NodeId) -> &'a NodeKind<'a> {
@@ -222,6 +235,30 @@ impl<'a> Tree<'a> {
         self[id].display == Display::None
             && self.element(id).is_some()
             && self[self.parent(id)].display != Display::None
+    }
+
+    /// An Angular element whose content prints as written: marked for translation (`i18n`),
+    /// as its message ID hashes the content's source, whitespace included (DIVERGENCES.md#angular-i18n-content-as-written).
+    pub fn keeps_angular_content(&self, id: NodeId) -> bool {
+        self.marked_for_translation(id, "")
+    }
+
+    /// An attribute of an Angular element whose value prints as written:
+    /// marked for translation by an `i18n-x` (`i18n-title` for `title`), its message ID hashing the value as written
+    /// (DIVERGENCES.md#angular-i18n-content-as-written).
+    pub fn keeps_angular_value(&self, id: NodeId, attribute: &Attribute<'_>) -> bool {
+        self.marked_for_translation(id, attribute.name.slice(self.source))
+    }
+
+    /// Whether an Angular element has an `i18n` marker for `target`: `""` its content's, a name an attribute's (`i18n-x`).
+    fn marked_for_translation(&self, id: NodeId, target: &str) -> bool {
+        self.rules.keeps_angular_content
+            && self.element(id).is_some_and(|el| {
+                el.attributes.iter().any(|marker| {
+                    matches!(&marker.kind, AttributeKind::Angular(i18n @ AngularAttribute::I18n)
+                        if i18n.target(marker.name).slice(self.source) == target)
+                })
+            })
     }
 
     pub fn is_interpolation(&self, id: NodeId) -> bool {

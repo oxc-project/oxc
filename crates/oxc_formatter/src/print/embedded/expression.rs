@@ -13,7 +13,7 @@ use oxc_syntax::{
 };
 
 use crate::{
-    ExpressionLayout, ExpressionRoot, JsRoot,
+    ExpressionLayout, ExpressionRoot, JsEmbeddedIn, JsRoot,
     ast_nodes::{AstNode, AstNodes},
     formatter::{
         JsFormatContext, JsFormatter, TailwindContextEntry, comments::gap_segments, prelude::*,
@@ -22,14 +22,14 @@ use crate::{
     write,
 };
 
-use super::shape_error;
+use super::{shape_error, template_expressions};
 
 /// The code is the one expression of `program`, parsed in `(` and `)`.
 pub(super) fn check(
     program: &Program<'_>,
     source: Range<usize>,
     root: ExpressionRoot,
-    inlines_code: bool,
+    embedded_in: JsEmbeddedIn,
 ) -> Result<(), OxcDiagnostic> {
     // An expression that ends inside the source closes the wrapper's paren (`a) + (b`)
     let [Statement::ExpressionStatement(statement)] = program.body.as_slice() else {
@@ -42,10 +42,17 @@ pub(super) fn check(
     {
         return Err(shape_error());
     }
+    if embedded_in.template_expressions_only
+        && !template_expressions::is_template_expression(&statement.expression)
+    {
+        return Err(OxcDiagnostic::error(
+            "The code holds syntax the host reads otherwise or not at all; it is preserved as-is",
+        ));
+    }
     // Inlined as written, a top-level `a, b` reads as more than one value (Vue's `toDisplayString(a, b)` shows `a`):
     // the parens it prints in would change it, so it is left as written.
     // In the source's parens or the host's, it reads as one value, as printed
-    if inlines_code
+    if embedded_in.inlines_code
         && !root.in_parens
         && matches!(statement.expression, Expression::SequenceExpression(_))
         && skip_trivia(program, &source, source.start) == span.start as usize

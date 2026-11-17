@@ -195,6 +195,10 @@ impl<'a> CheckASTNodes<'a> {
 
     fn check(&mut self, program: &Program<'a>) {
         self.visit_program(program);
+        // Comments are not included in the AST walk.
+        for comment in &program.comments {
+            self.visit_span(&comment.span);
+        }
     }
 }
 
@@ -230,15 +234,9 @@ impl<'a> Visit<'a> for CheckASTNodes<'a> {
         assert!(self.node_ids.insert(id), "Duplicate parser node ID: {kind:?}");
     }
 
-    // TODO: This is too slow
-    // fn visit_span(&mut self, span: &Span) {
-    // let Span { start, end, .. } = span;
-    // if *end >= *start {
-    // self.driver.errors.push(
-    // OxcDiagnostic::error(format!("Span end {end} >= start {start}",)).with_label(*span),
-    // );
-    // }
-    // }
+    fn visit_span(&mut self, span: &Span) {
+        assert!(span.start <= span.end, "Invalid span: {span:?}");
+    }
 
     /// Idempotency test for printing regular expressions.
     fn visit_reg_exp_literal(&mut self, literal: &RegExpLiteral<'a>) {

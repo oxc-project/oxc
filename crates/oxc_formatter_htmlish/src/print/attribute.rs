@@ -9,16 +9,18 @@ use oxc_allocator::{Allocator, StringBuilder};
 use oxc_formatter_core::{
     FormatElement, arena_cow_str,
     builders::{
-        hard_line_break, if_group_breaks, if_group_fits_on_line, indent, soft_block_indent,
-        soft_line_break, soft_line_break_or_space, space, text,
+        expand_parent, hard_line_break, if_group_breaks, if_group_fits_on_line, indent,
+        soft_block_indent, soft_line_break, soft_line_break_or_space, space, text,
     },
     spec::is_suppression_marker,
     write,
 };
-use oxc_htmlish_parser::ast::{Attribute, NodeId, NodeKind, Quote};
+use oxc_htmlish_parser::ast::{
+    AngularAttribute, Attribute, AttributeKind, NodeId, NodeKind, Quote, StartTagComment,
+};
 
 use super::{
-    HtmlishFormatter,
+    HtmlishFormatter, angular,
     embed::{
         CssInHtmlStyleAttribute, JsInHtmlEventHandler, is_event_handler, write_attribute_value,
         write_quoted,
@@ -27,7 +29,10 @@ use super::{
     tag::opening_end_borrowed,
     vue,
 };
-use crate::tree::{Tree, collapse_whitespace};
+use crate::{
+    rules::TemplateExpressions,
+    tree::{Tree, collapse_whitespace},
+};
 
 /// `<!-- prettier-ignore-attribute -->` right before the element: the attribute names it lists (all when none),
 /// which print as written.
@@ -76,9 +81,16 @@ pub fn write_attributes<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatte
             } else {
                 write!(f, soft_line_break_or_space());
             }
-            for (i, attribute) in el.attributes.iter().enumerate() {
-                if i > 0 {
-                    if per_line {
+            let mut prev_end = None;
+            for attribute in &el.attributes {
+                if let Some(prev_end) = prev_end {
+                    // A `//` comment stays on the line of the attribute it follows
+                    // (DIVERGENCES.md#angular-start-tag-line-comment-placement)
+                    if is_line_comment(attribute)
+                        && t.line_breaks(prev_end, attribute.name.start) == 0
+                    {
+                        write!(f, space());
+                    } else if per_line {
                         write!(f, hard_line_break());
                     } else {
                         write!(f, soft_line_break_or_space());
@@ -90,14 +102,21 @@ pub fn write_attributes<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatte
                 } else {
                     write_attribute(t, id, attribute, f);
                 }
+                if is_line_comment(attribute) {
+                    write!(f, expand_parent());
+                }
+                prev_end = Some(attribute.span().end);
             }
         }))
     );
 
-    let hug_end = opening_end_borrowed(t, id)
+    // Nothing follows a `//` comment on its line, the tag's end neither (DIVERGENCES.md#angular-start-tag-line-comment-end)
+    let hug_end = (opening_end_borrowed(t, id)
         || (item.self_closing && t[t.parent(id)].borrows.last_child_closing_end)
-        || force_not_to_break;
-    if hug_end || bracket_same_line {
+        || force_not_to_break
+        || bracket_same_line)
+        && !el.attributes.last().is_some_and(|last| is_line_comment(last));
+    if hug_end {
         if slash {
             write!(f, space());
         }
@@ -108,10 +127,15 @@ pub fn write_attributes<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatte
     }
 }
 
+/// An Angular start-tag comment `//`, which runs to the line's end.
+fn is_line_comment(attribute: &Attribute<'_>) -> bool {
+    matches!(attribute.kind, AttributeKind::Comment(StartTagComment::Line))
+}
+
 fn write_attribute<'a>(
     t: &'a Tree<'a>,
     element: NodeId,
-    attribute: &Attribute<'a>,
+    attribute: &'a Attribute<'a>,
     f: &mut HtmlishFormatter<'_, 'a>,
 ) {
     let source = t.source();
@@ -130,20 +154,55 @@ fn write_attribute<'a>(
     }
     let raw = unescaped(value, f);
     // A Vue attribute whose value is JS prints as written where it does not format (as Prettier does)
-    if t.rules().vue_sfc
-        && let Some(kind) = vue::value_kind(t, element, attribute, f)
+    if t.rules().template_expressions == TemplateExpressions::Vue
+        && let Some(kind) = vue::value_kind(t, element, attribute)
     {
         if !vue::write_attribute_value(t, kind, raw, f) {
             write_quoted_value(raw, f);
         }
         return;
     }
+    // An Angular binding's or action's value prints as written where it does not format (as Prettier does)
+    let formatted = match &attribute.kind {
+        // No code, which a binding reads alike however much whitespace (an action reports it)
+        AttributeKind::Angular(AngularAttribute::Property(..) | AngularAttribute::TwoWay(..))
+            if raw.trim_ascii().is_empty() =>
+        {
+            write!(f, "\"\"");
+            Some(true)
+        }
+        AttributeKind::Angular(kind @ AngularAttribute::Property(expression, _)) => {
+            let tailwind = t
+                .tailwind()
+                .is_some_and(|tailwind| tailwind.binds(kind.target(attribute.name).slice(source)));
+            Some(angular::write_binding(expression.as_deref(), raw, tailwind, f))
+        }
+        // A two-way binding's value reads as a property binding's
+        AttributeKind::Angular(AngularAttribute::TwoWay(expression, _)) => {
+            Some(angular::write_binding(expression.as_deref(), raw, false, f))
+        }
+        AttributeKind::Angular(AngularAttribute::Event(action, _)) => {
+            Some(angular::write_action(action.as_deref(), f))
+        }
+        AttributeKind::Angular(AngularAttribute::Template(bindings)) => Some(
+            angular::write_template_bindings(bindings.as_deref().map(|b| b.as_slice()), raw, f),
+        ),
+        AttributeKind::Angular(AngularAttribute::Interpolation(interpolations)) => Some(
+            !t.keeps_angular_value(element, attribute)
+                && angular::write_value_interpolations(attribute, interpolations, f),
+        ),
+        _ => None,
+    };
+    if let Some(formatted) = formatted {
+        if !formatted {
+            write_quoted_value(raw, f);
+        }
+        return;
+    }
     let class = is("class");
     // A placeholder would hide in the sorted class list, out of the parent's reach
-    let tailwind =
-        f.options().sort_tailwindcss.as_ref().is_some_and(|attributes| {
-            class || attributes.iter().any(|attribute| attribute == name)
-        }) && !embedded_in.is_some_and(|e| e.has_placeholder(value));
+    let tailwind = t.tailwind().is_some_and(|tailwind| class || tailwind.holds(name))
+        && !embedded_in.is_some_and(|e| e.has_placeholder(value));
     if tailwind && write_tailwind_classes(raw, class && embedded_in.is_none(), f) {
         return;
     }

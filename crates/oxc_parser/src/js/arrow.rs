@@ -76,7 +76,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
 
             // A first element that cannot be a `BindingElement` makes the list
-            // a parenthesized expression: `(a.b)`, `(a + b)`, `(!a)`, `(function () {})`.
+            // a parenthesized expression: `(a.b)`, `(a + b)`, `(!a)`, `(function () {})`,
+            // `(<div />)`.
             let first_parsed = if identifier.is_some() {
                 Self::continues_identifier_expression(self.cur_kind())
             } else {
@@ -194,13 +195,24 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// Whether an element that starts with `kind` cannot be a `BindingElement`.
+    ///
+    /// `<` starts a JSX element, a type assertion, or an arrow function with type parameters.
+    /// Most JSX elements which start an expression are directly inside parentheses.
     #[inline]
     fn cannot_start_binding_element(kind: Kind) -> bool {
         kind.is_literal()
             || kind.is_unary_operator()
             || kind.is_update_operator()
             || kind.is_template_start_of_tagged_template()
-            || matches!(kind, Kind::Function | Kind::Class | Kind::New | Kind::LParen | Kind::Slash)
+            || matches!(
+                kind,
+                Kind::Function
+                    | Kind::Class
+                    | Kind::New
+                    | Kind::LParen
+                    | Kind::Slash
+                    | Kind::LAngle
+            )
     }
 
     /// Parse the first element of a list that cannot be arrow function parameters, and
@@ -607,6 +619,22 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             p.bump(Kind::Async);
             p.is_generic_arrow_function_expression()
         });
+        // Most `<` do not start type parameters. Decide that here, without a call.
+        if kind == Tristate::False {
+            return None;
+        }
+        self.parse_generic_arrow_function_expression(kind, allow_return_type_in_arrow_function)
+    }
+
+    /// Parse an arrow function with type parameters, given whether the tokens at the cursor
+    /// start one.
+    ///
+    /// The cursor is at `<`, or at an `async` that is followed by `<` on the same line.
+    pub(crate) fn parse_generic_arrow_function_expression(
+        &mut self,
+        kind: Tristate,
+        allow_return_type_in_arrow_function: bool,
+    ) -> Option<Expression<'a>> {
         match kind {
             Tristate::False => None,
             Tristate::True => Some(self.parse_parenthesized_arrow_function_expression(
@@ -635,23 +663,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // <const Ident extends Ident>
             //  ^^^^^ Optional
             self.bump(Kind::Const);
-            self.bump_any();
-            let third = self.cur_kind();
-            return match third {
-                Kind::Extends => {
-                    self.bump_any();
-                    let fourth = self.cur_kind();
-                    if matches!(fourth, Kind::Eq | Kind::RAngle | Kind::Slash) {
-                        Tristate::False
-                    } else if fourth.is_binding_identifier() {
-                        Tristate::Maybe
-                    } else {
-                        Tristate::True
-                    }
-                }
-                Kind::Eq | Kind::Comma => Tristate::True,
-                _ => Tristate::False,
-            };
+            self.bump_any(); // the name
+            return self.is_generic_arrow_function_expression_after_jsx_name();
         }
 
         // `<T>` may start an arrow function, which is then tried first. The exception is
@@ -682,6 +695,44 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
             }
             _ => Tristate::Maybe,
+        }
+    }
+
+    /// Whether `<` and a name start the type parameters of an arrow function in a JSX file,
+    /// where they can also start a JSX element. The cursor is at the token after the name,
+    /// and moves past an `extends`.
+    ///
+    /// ```text
+    /// TypeParameter     : `const`? BindingIdentifier (`extends` Type)? (`=` Type)?
+    /// JSXOpeningElement : `<` JSXElementName TypeArguments? JSXAttributes? `/`? `>`
+    /// JSXElementName    : JSXIdentifier ((`:` | `.`) JSXIdentifier)*
+    /// JSXAttributes     : (JSXAttributeName (`=` JSXAttributeValue)? | `{` `...` Expression `}`)*
+    /// ```
+    ///
+    /// The name of a type parameter is followed by `,`, `=`, `extends` or `>`. The name of
+    /// a JSX element is followed by `.`, `:`, `<`, `{`, `/`, `>` or an attribute name, which may
+    /// be `extends`. So `,` and `=` are type parameters, `extends` is decided by the token
+    /// after it, and everything else is a JSX element. That includes `<T>`, which is why
+    /// the type parameters of an arrow function are written `<T,>` in a JSX file.
+    #[expect(clippy::inline_always)]
+    #[inline(always)] // Keep `is_generic_arrow_function_expression` in one piece.
+    pub(crate) fn is_generic_arrow_function_expression_after_jsx_name(&mut self) -> Tristate {
+        match self.cur_kind() {
+            Kind::Extends => {
+                self.bump_any();
+                let next = self.cur_kind();
+                if matches!(next, Kind::Eq | Kind::RAngle | Kind::Slash) {
+                    // An attribute: `<T extends={U}>`, `<T extends>`, `<T extends />`.
+                    Tristate::False
+                } else if next.is_binding_identifier() {
+                    // `<T extends U>(a) => a`, or an element with attributes `extends` and `U`.
+                    Tristate::Maybe
+                } else {
+                    Tristate::True
+                }
+            }
+            Kind::Eq | Kind::Comma => Tristate::True,
+            _ => Tristate::False,
         }
     }
 

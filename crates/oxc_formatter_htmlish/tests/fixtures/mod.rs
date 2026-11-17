@@ -35,6 +35,11 @@ impl FixtureFormatter for HtmlishHarness {
                     };
                 }
             }
+            "bracketSameLine" => {
+                if let Some(b) = value.as_bool() {
+                    options.bracket_same_line = b;
+                }
+            }
             "vueIndentScriptAndStyle" => {
                 if let Some(b) = value.as_bool() {
                     options.vue_indent_script_and_style = b;

@@ -9,7 +9,7 @@ use std::{borrow::Cow, fmt::Write as _};
 
 use cow_utils::CowUtils;
 
-use oxc_htmlish_parser::ast::{Namespace, NodeId, NodeKind, Root};
+use oxc_htmlish_parser::ast::{Interpolation, Namespace, NodeId, NodeKind, Root};
 
 /// `fold_names`: a `.html` file or a Vue file read as HTML, where known names print lowercase (DIVERGENCES.md#tag-name-case).
 pub fn fingerprint(source: &str, root: &Root<'_>, fold_names: bool) -> String {
@@ -111,8 +111,9 @@ fn walk(
                 }
             }
             // The expression's tokens may be re-flowed until it is formatted.
-            NodeKind::Interpolation(interpolation) => {
-                write!(out, "{{{{{}}}}}", words(interpolation.expression.slice(source))).unwrap();
+            NodeKind::Interpolation(_) => {
+                let expression = Interpolation::expression(root[id].span).slice(source);
+                write!(out, "{{{{{}}}}}", words(expression)).unwrap();
             }
             NodeKind::Block(block) => {
                 write!(out, "[@{}", words(block.name.slice(source))).unwrap();

@@ -40,6 +40,12 @@ fn test() {
         "const thing = 123;\n\nafterAll(() => {});",
         "describe('foo', () => {\nafterAll(() => {});\n});",
         "const thing = 123;\n\n/* one */\n/* two */\nafterAll(() => {});",
+        "const cleanUp = false; cleanUp && afterAll(() => {});",
+        "const cleanUp = false;\nif (cleanUp)\n  afterAll(() => {});",
+        "const cleanUp = false; if (cleanUp) afterAll(() => {});",
+        "const cleanUp = false; if (cleanUp)\n  afterAll(() => {});",
+        "const cleanUp = false; while (cleanUp) afterAll(() => {});",
+        "const cleanUp = false; for (; cleanUp;) afterAll(() => {});",
     ];
 
     let fail = vec![
@@ -52,6 +58,26 @@ fn test() {
         (
             "const thing = 123;\n/* one */\n/* two */\nafterAll(() => {});",
             "const thing = 123;\n\n/* one */\n/* two */\nafterAll(() => {});",
+        ),
+        (
+            "const thing = 123; afterAll(() => {}), foo();",
+            "const thing = 123;\n\nafterAll(() => {}), foo();",
+        ),
+        (
+            "const thing = 123; afterAll(() => {}) && foo();",
+            "const thing = 123;\n\nafterAll(() => {}) && foo();",
+        ),
+        (
+            "const thing = 123; await afterAll(() => {});",
+            "const thing = 123;\n\nawait afterAll(() => {});",
+        ),
+        (
+            "const thing = 123;\nawait afterAll(() => {});",
+            "const thing = 123;\n\nawait afterAll(() => {});",
+        ),
+        (
+            "const thing = 123; await /* hook */ afterAll(() => {});",
+            "const thing = 123;\n\nawait /* hook */ afterAll(() => {});",
         ),
     ];
 

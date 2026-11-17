@@ -7,7 +7,7 @@ use oxc_data_structures::buffered_vec::BufferedVec;
 #[cfg(feature = "regular_expression")]
 use oxc_regular_expression::ast::Pattern;
 use oxc_span::{GetSpan, Span};
-use oxc_str::{Ident, Str};
+use oxc_str::{Ident, JSStr, Str};
 use oxc_syntax::{
     number::{BigintBase, NumberBase},
     precedence::Precedence,
@@ -587,11 +587,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     #[inline]
     pub(crate) fn parse_known_literal_string(&mut self) -> StringLiteral<'a> {
         debug_assert!(self.at(Kind::Str));
-        let span = self.cur_token().span();
-        let raw = Str::from(self.cur_src());
-        let value = self.cur_js_string();
+        let token = self.cur_token();
+        let span = token.span();
+        let raw = self.cur_src();
+        // Most strings have no escapes. Their value is the source text between the quotes.
+        let value = if token.escaped() {
+            self.cur_js_string()
+        } else {
+            JSStr::from(&raw[1..raw.len() - 1])
+        };
         self.bump_any();
-        StringLiteral::new(span, value, Some(raw), self)
+        StringLiteral::new(span, value, Some(Str::from(raw)), self)
     }
 
     /// Section [Array Expression](https://tc39.es/ecma262/#prod-ArrayLiteral)
@@ -1797,6 +1803,27 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                             Some((expression, _)) => Some(expression),
                             None => None,
                         }
+                    }
+                    // `<div />`, `<T,>(x) => {}`
+                    Kind::LAngle if self.source_type.is_jsx() => {
+                        let (expression, is_arrow) = self
+                            .parse_jsx_expression_or_generic_arrow_function(
+                                allow_return_type_in_arrow_function,
+                            );
+                        if !is_arrow {
+                            // A JSX element is a complete `UpdateExpression`.
+                            break 'parse_lhs if kind_to_precedence(self.cur_kind()).is_none() {
+                                expression
+                            } else {
+                                self.parse_binary_expression_rest(
+                                    start,
+                                    expression,
+                                    /* lhs_parenthesized */ false,
+                                    Precedence::Comma,
+                                )
+                            };
+                        }
+                        Some(expression)
                     }
                     Kind::LAngle => self.try_parse_generic_arrow_function_expression(
                         allow_return_type_in_arrow_function,

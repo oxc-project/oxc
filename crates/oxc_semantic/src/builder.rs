@@ -6,7 +6,6 @@ use std::{
 };
 
 use rustc_hash::FxHashMap;
-use smallvec::SmallVec;
 
 use oxc_allocator::{Address, ArenaVec};
 use oxc_ast::{AstKind, ast::*};
@@ -30,12 +29,12 @@ use oxc_syntax::{
 use crate::{
     Semantic,
     binder::{Binder, ModuleInstanceState},
-    checker,
+    checker::{self, is_function_decl_part_of_if_statement},
     class::ClassTableBuilder,
     diagnostics::redeclaration,
     label::UnusedLabels,
     node::{Ancestry, AstNodeStore, AstNodeStoreKind},
-    scoping::{Bindings, Scoping},
+    scoping::Scoping,
     stats::Stats,
     unresolved_stack::{UnresolvedReference, UnresolvedReferences},
 };
@@ -92,6 +91,11 @@ pub struct SemanticBuilder<'a> {
     /// declarations in that scope can still detect redeclarations via `check_redeclaration`.
     /// A single flat map avoids allocating a per-scope inner map for every hoisting scope.
     pub(crate) hoisting_variables: FxHashMap<(ScopeId, Ident<'a>), SymbolId>,
+    /// Scope of the innermost catch clause body being visited, if any. It stays set while
+    /// visiting blocks and functions nested in that body; only declarations whose scope equals
+    /// it (i.e. directly in the catch body) are checked against the catch parameters, which are
+    /// bound in the parent catch clause scope. See `check_catch_parameter_redeclaration`.
+    catch_body_scope_id: Option<ScopeId>,
 
     // builders
     /// Node-id counter, current-node cursor/flags, and the node storage (full
@@ -158,6 +162,7 @@ impl<'a> SemanticBuilder<'a> {
             module_instance_state_cache: FxHashMap::default(),
             node_store: AstNodeStore::default(),
             hoisting_variables: FxHashMap::default(),
+            catch_body_scope_id: None,
             scoping,
             unresolved_references: UnresolvedReferences::new(),
             unused_labels: UnusedLabels::default(),
@@ -552,9 +557,19 @@ impl<'a> SemanticBuilder<'a> {
         includes: SymbolFlags,
         excludes: SymbolFlags,
     ) -> SymbolId {
+        let is_catch_body = self.catch_body_scope_id == Some(scope_id);
+        let errors_before = if is_catch_body { self.errors.borrow().len() } else { 0 };
+        let redeclared_symbol_id = self.check_redeclaration(scope_id, span, name, excludes);
+        // Report one error per declaration: skip the catch parameter check when this declaration
+        // already clashed with something else, e.g. a `var` hoisted through the catch body
+        // (`catch (e) { var e; let e }`).
+        if is_catch_body && self.errors.borrow().len() == errors_before {
+            self.check_catch_parameter_redeclaration(scope_id, span, name, includes);
+        }
+
         // A `var` hoisted through this scope is bound in an outer scope. Interfaces and type aliases
         // live in a separate declaration space, so they get their own symbol in this scope.
-        if let Some(symbol_id) = self.check_redeclaration(scope_id, span, name, excludes)
+        if let Some(symbol_id) = redeclared_symbol_id
             && (includes.intersects(SymbolFlags::Value)
                 || self.scoping.scope_has_binding(scope_id, name))
         {
@@ -571,6 +586,42 @@ impl<'a> SemanticBuilder<'a> {
             scope_id,
             self.node_store.current_node_id,
         )
+    }
+
+    /// It is a Syntax Error if any element of the BoundNames of CatchParameter also occurs in the
+    /// LexicallyDeclaredNames of Block. Annex B.3.4 relaxes this only for `var` declarations,
+    /// which are never declared on the catch body scope.
+    /// <https://tc39.es/ecma262/#sec-try-statement-static-semantics-early-errors>
+    ///
+    /// Catch parameters are bound in the catch clause scope, the parent of the catch body scope.
+    fn check_catch_parameter_redeclaration(
+        &self,
+        catch_body_scope_id: ScopeId,
+        span: Span,
+        name: Ident<'a>,
+        includes: SymbolFlags,
+    ) {
+        // Type-only declarations (`interface e {}`) do not conflict with the catch parameter.
+        if !includes.intersects(SymbolFlags::Value) {
+            return;
+        }
+        // Annex B.3.3: `if (x) function e() {}` behaves as if the function were in its own block,
+        // so it is not one of the LexicallyDeclaredNames of the catch block. The function is the
+        // current node while it is bound. Annex B is JavaScript-only, as in `Function::bind`.
+        if !self.source_type.is_typescript()
+            && let AstKind::Function(func) = self.ancestry().current_kind()
+            && func.is_declaration()
+            && is_function_decl_part_of_if_statement(func, self)
+        {
+            return;
+        }
+        let Some(catch_scope_id) = self.scoping.scope_parent_id(catch_body_scope_id) else {
+            return;
+        };
+        if let Some(symbol_id) = self.scoping.get_binding(catch_scope_id, name) {
+            let symbol_span = self.scoping.symbol_span(symbol_id);
+            self.error(redeclaration(&name, symbol_span, span));
+        }
     }
 
     /// Declare a new symbol on the current scope.
@@ -1124,33 +1175,16 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let parent_scope_id = self.current_scope_id;
         self.enter_scope(ScopeFlags::empty(), &it.scope_id);
 
-        // Move all bindings from catch clause param scope to catch clause body scope
-        // to make it easier to resolve references and check redeclare errors
+        // A lexical declaration directly in a catch body must not reuse a catch parameter name.
+        // See `check_catch_parameter_redeclaration`.
+        let parent_catch_body_scope_id = self.catch_body_scope_id;
         if self.scoping.scope_flags(parent_scope_id).is_catch_clause() {
-            let parent_bindings = self.scoping.cell.with_dependent_mut(|allocator, cell| {
-                if cell.bindings[parent_scope_id].is_empty() {
-                    None
-                } else {
-                    let mut parent_bindings = Bindings::new_in(allocator);
-                    mem::swap(&mut cell.bindings[parent_scope_id], &mut parent_bindings);
-                    // Collect into a `SmallVec` so the common `catch (e)` (a single binding)
-                    // resolves inline without a heap allocation. The ids must be collected
-                    // here to escape the `with_dependent_mut` borrow before calling
-                    // `set_symbol_scope_id` below.
-                    let parent_symbol_ids =
-                        parent_bindings.values().copied().collect::<SmallVec<[SymbolId; 4]>>();
-                    cell.bindings[self.current_scope_id] = parent_bindings;
-                    Some(parent_symbol_ids)
-                }
-            });
-            if let Some(parent_bindings) = parent_bindings {
-                for symbol_id in parent_bindings {
-                    self.scoping.set_symbol_scope_id(symbol_id, self.current_scope_id);
-                }
-            }
+            self.catch_body_scope_id = Some(self.current_scope_id);
         }
 
         self.visit_statements(&it.body);
+
+        self.catch_body_scope_id = parent_catch_body_scope_id;
 
         self.leave_scope();
         self.leave_node(kind);

@@ -1,8 +1,11 @@
-use std::{cmp::Ordering, marker::PhantomData, slice, str};
+use std::{cmp::Ordering, slice, str};
 
-use oxc_data_structures::assert_unchecked;
+use oxc_data_structures::{
+    assert_unchecked,
+    brands::{Brand, BrandOrigin},
+};
 
-use crate::{MAX_LEN, UniquePromise};
+use crate::MAX_LEN;
 
 use super::search::SEARCH_BATCH_SIZE;
 
@@ -60,6 +63,23 @@ use super::search::SEARCH_BATCH_SIZE;
 /// are satisfied, to restore this invariant before passing control back to other code.
 /// It will often be preferable to instead use `Source::peek_byte`, followed by `Source::next_char`,
 /// which are safe methods, and compiler will often reduce to equally efficient code.
+///
+/// # Brand
+///
+/// `'a` is the lifetime of the source text. It's also this `Source`'s brand (see [`brands`]).
+///
+/// - No other `Source` has the same `'a`.
+/// - Every `SourcePosition` which this `Source` creates carries its brand, so has the same `'a`.
+///
+/// So a `SourcePosition<'a>` can only have been created by this `Source<'a>`,
+/// or derived from one which it created (`SourcePosition::add`, `SourcePosition::sub`).
+/// That's why methods which take a `SourcePosition<'a>` (e.g. `Source::set_position`)
+/// can rely on it being within this `Source`'s source text, without checking.
+///
+/// `Source::new` takes the [`BrandOrigin<'a>`] by value.
+/// There's only one `BrandOrigin` for each `'a`, so there's only one `Source` for each `'a`.
+///
+/// [`brands`]: oxc_data_structures::brands
 pub(super) struct Source<'a> {
     /// Pointer to start of source string. Never altered after initialization.
     start: *const u8,
@@ -71,17 +91,16 @@ pub(super) struct Source<'a> {
     /// `SEARCH_BATCH_SIZE` bytes in one go.
     /// Must be `usize`, not a pointer, as if source is very short, a pointer could be out of bounds.
     end_for_batch_search_addr: usize,
-    /// Marker for immutable borrow of source string
-    _marker: PhantomData<&'a str>,
+    /// Origin of this `Source`'s brand `'a` (see above).
+    /// Also acts as the marker for the immutable borrow of source string.
+    brand_origin: BrandOrigin<'a>,
 }
 
 impl<'a> Source<'a> {
     /// Create `Source` from `&str`.
     ///
-    /// Requiring a `UniquePromise` to be provided guarantees only 1 `Source` can exist
-    /// on a single thread at one time.
-    #[expect(unused_variables, clippy::needless_pass_by_value)]
-    pub(super) fn new(mut source_text: &'a str, unique: UniquePromise) -> Self {
+    /// `brand_origin` is the origin of this `Source`'s brand `'a` (see [`Source`] docs).
+    pub(super) fn new(mut source_text: &'a str, brand_origin: BrandOrigin<'a>) -> Self {
         // If source text exceeds size limit, substitute a short source text which will fail to parse.
         // `Parser::parse` will convert error to `diagnostics::overlong_source()`.
         if source_text.len() > MAX_LEN {
@@ -100,7 +119,7 @@ impl<'a> Source<'a> {
         // will always test positive, and disable batch search.
         let end_for_batch_search_addr = (end as usize).saturating_sub(SEARCH_BATCH_SIZE);
 
-        Self { start, end, ptr: start, end_for_batch_search_addr, _marker: PhantomData }
+        Self { start, end, ptr: start, end_for_batch_search_addr, brand_origin }
     }
 
     /// Get entire source text as `&str`.
@@ -132,14 +151,14 @@ impl<'a> Source<'a> {
     #[inline]
     fn start(&self) -> SourcePosition<'a> {
         // SAFETY: `start` is the start of source, so in bounds and on a UTF-8 char boundary
-        unsafe { SourcePosition::new(self.start) }
+        unsafe { SourcePosition::new(self.start, self.brand_origin.brand()) }
     }
 
     /// Get [`SourcePosition`] for end of source.
     #[inline]
     pub(super) fn end(&self) -> SourcePosition<'a> {
         // SAFETY: `end` is the end of source, so in bounds and on a UTF-8 char boundary
-        unsafe { SourcePosition::new(self.end) }
+        unsafe { SourcePosition::new(self.end, self.brand_origin.brand()) }
     }
 
     /// Return whether at end of source.
@@ -160,20 +179,15 @@ impl<'a> Source<'a> {
     pub(super) fn position(&self) -> SourcePosition<'a> {
         // SAFETY: Creating a `SourcePosition` from current position of `Source` is always valid,
         // if caller has upheld safety conditions of other unsafe methods of this type.
-        unsafe { SourcePosition::new(self.ptr) }
+        unsafe { SourcePosition::new(self.ptr, self.brand_origin.brand()) }
     }
 
     /// Move current position.
     #[inline]
     pub(super) fn set_position(&mut self, pos: SourcePosition<'a>) {
-        // `SourcePosition` always upholds the invariants of `Source`, as long as it's created
-        // from this `Source`. `SourcePosition`s can only be created from a `Source`.
-        // `Source::new` takes a `UniquePromise`, which guarantees that it's the only `Source`
-        // in existence on this thread. `Source` is not `Sync` or `Send`, so no possibility another
-        // `Source` originated on another thread can "jump" onto this one.
-        // This is sufficient to guarantee that any `SourcePosition` that parser/lexer holds must be
-        // from this `Source`.
-        // This guarantee is what allows this function to be safe.
+        // A `SourcePosition` upholds the invariants of the `Source` which created it.
+        // `pos` has the same brand `'a` as this `Source`, so this `Source` created it.
+        // That's what allows this function to be safe.
 
         // SAFETY: `SourcePosition::read`'s contract is upheld by:
         // * The preceding checks that `pos.ptr` >= `self.start` and < `self.end`.
@@ -283,13 +297,9 @@ impl<'a> Source<'a> {
         }
 
         // SAFETY: Caller guarantees `start` is not after `end`.
-        // `SourcePosition`s can only be created from a `Source`.
-        // `Source::new` takes a `UniquePromise`, which guarantees that it's the only `Source`
-        // in existence on this thread. `Source` is not `Sync` or `Send`, so no possibility another
-        // `Source` originated on another thread can "jump" onto this one.
-        // This is sufficient to guarantee that any `SourcePosition` that parser/lexer holds must be
-        // from this `Source`, therefore `start.ptr` and `end.ptr` must both be within the same
-        // allocation, and derived from the same original pointer.
+        // `start` and `end` have the same brand `'a` as this `Source`, so this `Source`
+        // created both. So `start.ptr` and `end.ptr` are both within this `Source`'s allocation,
+        // and derived from the same pointer.
         // Invariants of `Source` and `SourcePosition` types guarantee that both are positioned
         // on UTF-8 character boundaries. So slicing source text between these 2 points will always
         // yield a valid UTF-8 string.
@@ -315,14 +325,16 @@ impl<'a> Source<'a> {
     /// Get offset of `pos` as `u32`.
     #[inline]
     pub(super) fn offset_of(&self, pos: SourcePosition<'a>) -> u32 {
-        // SAFETY: All `SourcePosition`s are always in bounds of the source text, which starts at `start`
+        // SAFETY: `pos` has the same brand `'a` as this `Source`, so this `Source` created it.
+        // So it's within this `Source`'s source text, which starts at `start`.
         unsafe { pos.offset_from_u32(self.start()) }
     }
 
     /// Get offset of `pos` as `usize`.
     #[inline]
     pub(super) fn offset_of_usize(&self, pos: SourcePosition<'a>) -> usize {
-        // SAFETY: All `SourcePosition`s are always in bounds of the source text, which starts at `start`
+        // SAFETY: `pos` has the same brand `'a` as this `Source`, so this `Source` created it.
+        // So it's within this `Source`'s source text, which starts at `start`.
         unsafe { pos.offset_from(self.start()) }
     }
 
@@ -615,27 +627,34 @@ impl<'a> Source<'a> {
 
 /// Wrapper around a pointer to a position in `Source`.
 ///
+/// `'a` is the brand of the `Source` which created it (see [`Source`] docs).
+/// So a `SourcePosition<'a>` can only be used with that `Source<'a>`,
+/// and with other `SourcePosition<'a>`s which it created.
+///
 /// # SAFETY
 /// `SourcePosition` must always be on a UTF-8 character boundary,
 /// and within bounds of the `Source` that created it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SourcePosition<'a> {
     ptr: *const u8,
-    _marker: PhantomData<&'a u8>,
+    /// Brand of the `Source<'a>` which created this position.
+    brand: Brand<'a>,
 }
 
 impl<'a> SourcePosition<'a> {
     /// Create a new `SourcePosition` from a pointer.
     ///
+    /// `brand` is the brand of the `Source` which the position belongs to.
+    ///
     /// # SAFETY
     /// * Pointer must obey all the same invariants as `Source::ptr`.
-    /// * It must be created from a `Source`.
-    /// * It must be in bounds of the source text `&str` the `Source` is created from,
+    /// * It must be created from the `Source` which `brand` is the brand of.
+    /// * It must be in bounds of the source text `&str` that `Source` is created from,
     ///   or 1 byte after the end of the source text (i.e. positioned at EOF).
     /// * It must be positioned on a UTF-8 character boundary (or EOF).
     #[inline]
-    pub(super) unsafe fn new(ptr: *const u8) -> Self {
-        Self { ptr, _marker: PhantomData }
+    pub(super) unsafe fn new(ptr: *const u8, brand: Brand<'a>) -> Self {
+        Self { ptr, brand }
     }
 
     /// Create new `SourcePosition` which is `n` bytes after this one.
@@ -649,7 +668,7 @@ impl<'a> SourcePosition<'a> {
     #[inline]
     pub(super) unsafe fn add(self, n: usize) -> Self {
         // SAFETY: Caller guarantees that `add` will not go out of bounds
-        unsafe { Self::new(self.ptr.add(n)) }
+        unsafe { Self::new(self.ptr.add(n), self.brand) }
     }
 
     /// Create new `SourcePosition` which is `n` bytes before this one.
@@ -661,7 +680,7 @@ impl<'a> SourcePosition<'a> {
     #[inline]
     pub(super) unsafe fn sub(self, n: usize) -> Self {
         // SAFETY: Caller guarantees that `sub` will not go out of bounds
-        unsafe { Self::new(self.ptr.sub(n)) }
+        unsafe { Self::new(self.ptr.sub(n), self.brand) }
     }
 
     /// Get the distance between this [`SourcePosition`] and another [`SourcePosition`] as `usize`.
@@ -671,7 +690,8 @@ impl<'a> SourcePosition<'a> {
     #[inline]
     pub(super) unsafe fn offset_from(self, origin: Self) -> usize {
         // SAFETY: Caller guarantees `self` is not before `origin`.
-        // All `SourcePosition<'a>`s are within bounds of same source text.
+        // Both have the same brand `'a`, so the same `Source` created both,
+        // and they're within the same allocation.
         unsafe { self.ptr.offset_from_unsigned(origin.ptr) }
     }
 
@@ -695,7 +715,8 @@ impl<'a> SourcePosition<'a> {
     /// negative if `self` is before `other`, or 0 if they're the same.
     #[inline]
     fn offset_from_signed(self, other: Self) -> isize {
-        // SAFETY: All `SourcePosition<'a>`s are within bounds of same source text
+        // SAFETY: Both have the same brand `'a`, so the same `Source` created both,
+        // and they're within the same allocation
         unsafe { self.ptr.offset_from(other.ptr) }
     }
 
@@ -785,7 +806,7 @@ impl<'a> SourcePosition<'a> {
 }
 
 // Implement `Ord` and `PartialOrd` using `(*const u8)::offset_from` to utilize the invariant
-// that `SourcePosition`s are always within the same allocation.
+// that `SourcePosition`s with the same `'a` are always within the same allocation.
 impl Ord for SourcePosition<'_> {
     #[inline]
     fn cmp(&self, other: &Self) -> Ordering {

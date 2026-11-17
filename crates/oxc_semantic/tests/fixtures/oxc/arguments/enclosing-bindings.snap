@@ -82,29 +82,29 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/arguments/enclosing-bindings.
                 "flags": "ScopeFlags(0x0)",
                 "id": 9,
                 "node": "BlockStatement",
-                "symbols": [
-                  {
-                    "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
-                    "id": 3,
-                    "name": "arguments",
-                    "node": "CatchParameter",
-                    "references": [
-                      {
-                        "flags": "ReferenceFlags(Read)",
-                        "id": 3,
-                        "name": "arguments",
-                        "node_id": 42,
-                        "scope_id": 9
-                      }
-                    ]
-                  }
-                ]
+                "symbols": []
               }
             ],
             "flags": "ScopeFlags(CatchClause)",
             "id": 8,
             "node": "CatchClause",
-            "symbols": []
+            "symbols": [
+              {
+                "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
+                "id": 3,
+                "name": "arguments",
+                "node": "CatchParameter",
+                "references": [
+                  {
+                    "flags": "ReferenceFlags(Read)",
+                    "id": 3,
+                    "name": "arguments",
+                    "node_id": 42,
+                    "scope_id": 9
+                  }
+                ]
+              }
+            ]
           }
         ],
         "flags": "ScopeFlags(Function)",

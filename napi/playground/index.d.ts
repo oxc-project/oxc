@@ -41,8 +41,8 @@ export declare class Oxc {
   astJson: string
   ir: string
   controlFlowGraph: string
-  symbolsJson: string
-  scopeText: string
+  /** Versioned original-source semantic snapshot; spans are UTF-8 bytes. */
+  scopingJson: string
   codegenText: string
   codegenSourcemapText?: string
   formattedText: string

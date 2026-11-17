@@ -101,6 +101,10 @@ pub enum ProgramLayout {
 }
 
 /// How an expression prints.
+///
+/// Each field but `layout` is one fact of the host, independent of the others:
+/// where it ends the code, what it puts around it, how it reads it.
+/// Any combination is one a host can have; a host's use only names its own.
 #[derive(Clone, Copy, Debug)]
 pub struct ExpressionRoot {
     pub layout: ExpressionLayout,
@@ -143,4 +147,8 @@ pub struct JsEmbeddedIn {
     /// and a top-level sequence (`a, b`), which there reads as more than one value, is left as written
     /// (but in parens, the source's or the host's: [`ExpressionRoot::in_parens`]).
     pub inlines_code: bool,
+    /// The host reads the code with a parser of its own, for a subset of JS (Angular's expressions):
+    /// code holding syntax outside it, which the host reads otherwise or not at all, is left as written (`delete(x)` calls `delete`),
+    /// and no trailing comma prints in a call's arguments or an arrow's params, which it rejects (`f(a,)`).
+    pub template_expressions_only: bool,
 }

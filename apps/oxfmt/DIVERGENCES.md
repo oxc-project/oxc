@@ -1038,7 +1038,7 @@ Prettier prints the `;` when a comment follows: its last-declaration check count
 </button>
 ```
 
-An attribute value formatted as code (`style`, `on*`, a Vue directive) prints as written when it holds a character reference, `&name;` or `&#…`:
+An attribute value formatted as code (`style`, `on*`, a Vue directive, an Angular `[x]`) prints as written when it holds a character reference, `&name;` or `&#…`:
 its reader decodes the reference first (`x = a & b`), and the child would format its text as code.
 `&quot;` and `&apos;` are read back before, so they still format.
 Prettier formats the text, which makes `amp` a name and its `;` the end of a statement.
