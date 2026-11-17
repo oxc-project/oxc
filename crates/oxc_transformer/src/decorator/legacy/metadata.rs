@@ -94,6 +94,8 @@ use crate::{
 /// Type of an enum inferred from its members
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum EnumType {
+    /// No members; contributes no type information when declarations are merged
+    Empty,
     /// All members are string literals or template literals with string-only expressions
     String,
     /// All members are numeric, bigint, unary numeric, or auto-incremented
@@ -287,11 +289,14 @@ impl<'a> LegacyDecoratorMetadata<'a> {
             ctx.scoping().get_resolved_references(symbol_id).any(Reference::is_type);
         if has_type_reference {
             let enum_type = Self::infer_enum_type(&decl.body.members);
-            // A merged enum's declarations share a symbol; mixed member types make it `Object`.
+            // A merged enum's declarations share a symbol. Empty declarations are neutral;
+            // mixed member types make it `Object`.
             self.enum_types
                 .entry(symbol_id)
                 .and_modify(|existing| {
-                    if *existing != enum_type {
+                    if *existing == EnumType::Empty {
+                        *existing = enum_type;
+                    } else if enum_type != EnumType::Empty && *existing != enum_type {
                         *existing = EnumType::Object;
                     }
                 })
@@ -301,7 +306,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
 
     /// Infer the type of an enum based on its members
     fn infer_enum_type(members: &[TSEnumMember<'a>]) -> EnumType {
-        let mut enum_type = EnumType::Object;
+        let mut enum_type = EnumType::Empty;
 
         for member in members {
             if let Some(init) = &member.initializer {
@@ -518,7 +523,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
             return match enum_type {
                 EnumType::String => Self::global_string(ctx),
                 EnumType::Number => Self::global_number(ctx),
-                EnumType::Object => Self::global_object(ctx),
+                EnumType::Empty | EnumType::Object => Self::global_object(ctx),
             };
         }
 
