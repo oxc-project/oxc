@@ -408,7 +408,7 @@ mod parser_parse {
             } else {
                 // User-defined `ParserConfig`. Generic codegen here, monomorphized per consuming crate.
                 // Users using custom configs would need to perform the monomorphization themselves.
-                ParserImpl::<C>::new(
+                ParserImpl::parse(
                     self.allocator,
                     self.source_text,
                     self.source_type,
@@ -416,7 +416,6 @@ mod parser_parse {
                     self.config,
                     UniquePromise::new(),
                 )
-                .parse()
             }
         }
 
@@ -470,7 +469,7 @@ mod parser_parse {
                     config,
                 )
             } else {
-                ParserImpl::<C>::new(
+                ParserImpl::parse_expression(
                     self.allocator,
                     self.source_text,
                     self.source_type,
@@ -478,7 +477,6 @@ mod parser_parse {
                     self.config,
                     UniquePromise::new(),
                 )
-                .parse_expression()
             }
         }
     }
@@ -517,7 +515,7 @@ mod parser_parse {
         source_type: SourceType,
         options: ParseOptions,
     ) -> ParserReturn<'a> {
-        ParserImpl::<NoTokensParserConfig>::new(
+        ParserImpl::parse(
             allocator,
             source_text,
             source_type,
@@ -525,7 +523,6 @@ mod parser_parse {
             NoTokensParserConfig,
             UniquePromise::new(),
         )
-        .parse()
     }
 
     #[inline(never)]
@@ -535,7 +532,7 @@ mod parser_parse {
         source_type: SourceType,
         options: ParseOptions,
     ) -> ParserReturn<'a> {
-        ParserImpl::<TokensParserConfig>::new(
+        ParserImpl::parse(
             allocator,
             source_text,
             source_type,
@@ -543,7 +540,6 @@ mod parser_parse {
             TokensParserConfig,
             UniquePromise::new(),
         )
-        .parse()
     }
 
     #[inline(never)]
@@ -554,7 +550,7 @@ mod parser_parse {
         options: ParseOptions,
         config: RuntimeParserConfig,
     ) -> ParserReturn<'a> {
-        ParserImpl::<RuntimeParserConfig>::new(
+        ParserImpl::parse(
             allocator,
             source_text,
             source_type,
@@ -562,7 +558,6 @@ mod parser_parse {
             config,
             UniquePromise::new(),
         )
-        .parse()
     }
 
     #[inline(never)]
@@ -572,7 +567,7 @@ mod parser_parse {
         source_type: SourceType,
         options: ParseOptions,
     ) -> Result<Expression<'a>, Diagnostics> {
-        ParserImpl::<NoTokensParserConfig>::new(
+        ParserImpl::parse_expression(
             allocator,
             source_text,
             source_type,
@@ -580,7 +575,6 @@ mod parser_parse {
             NoTokensParserConfig,
             UniquePromise::new(),
         )
-        .parse_expression()
     }
 
     #[inline(never)]
@@ -590,7 +584,7 @@ mod parser_parse {
         source_type: SourceType,
         options: ParseOptions,
     ) -> Result<Expression<'a>, Diagnostics> {
-        ParserImpl::<TokensParserConfig>::new(
+        ParserImpl::parse_expression(
             allocator,
             source_text,
             source_type,
@@ -598,7 +592,6 @@ mod parser_parse {
             TokensParserConfig,
             UniquePromise::new(),
         )
-        .parse_expression()
     }
 
     #[inline(never)]
@@ -609,7 +602,7 @@ mod parser_parse {
         options: ParseOptions,
         config: RuntimeParserConfig,
     ) -> Result<Expression<'a>, Diagnostics> {
-        ParserImpl::<RuntimeParserConfig>::new(
+        ParserImpl::parse_expression(
             allocator,
             source_text,
             source_type,
@@ -617,9 +610,9 @@ mod parser_parse {
             config,
             UniquePromise::new(),
         )
-        .parse_expression()
     }
 }
+
 use parser_parse::UniquePromise;
 
 /// Implementation of parser.
@@ -710,8 +703,20 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     ///
     /// Returns an empty `Program` on unrecoverable error,
     /// Recoverable errors are stored inside `errors`.
+    fn parse(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+        options: ParseOptions,
+        config: C,
+        unique: UniquePromise,
+    ) -> ParserReturn<'a> {
+        let parser = Self::new(allocator, source_text, source_type, options, config, unique);
+        parser.parse_impl()
+    }
+
     #[inline]
-    fn parse(mut self) -> ParserReturn<'a> {
+    fn parse_impl(mut self) -> ParserReturn<'a> {
         let mut program = self.parse_program();
         let mut has_fatal_error = false;
 
@@ -799,7 +804,19 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         }
     }
 
-    fn parse_expression(mut self) -> Result<Expression<'a>, Diagnostics> {
+    fn parse_expression(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+        options: ParseOptions,
+        config: C,
+        unique: UniquePromise,
+    ) -> Result<Expression<'a>, Diagnostics> {
+        let parser = Self::new(allocator, source_text, source_type, options, config, unique);
+        parser.parse_expression_impl()
+    }
+
+    fn parse_expression_impl(mut self) -> Result<Expression<'a>, Diagnostics> {
         // Initialize by moving onto the first token
         self.token = self.lexer.first_token_without_hashbang();
         let expr = self.parse_expr();
