@@ -216,7 +216,7 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (20/106)
+# legacy-decorators (22/108)
 * oxc/accessor/input.ts
 x Output mismatch
 
