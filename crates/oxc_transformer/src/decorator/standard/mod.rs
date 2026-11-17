@@ -149,6 +149,8 @@ pub struct ClassDecoratorState<'a> {
     pub(crate) instance_method_extras: bool,
     /// Class contains a decorated static method / getter / setter.
     pub(crate) static_method_extras: bool,
+    /// Original constructor used by `super` in moved class elements.
+    original_class: Option<BoundIdentifier<'a>>,
     /// Element tables of this class.
     pub(crate) tables: ClassDecoratorTables<'a>,
 }
@@ -198,6 +200,10 @@ impl<'a> StandardDecoratorState<'a> {
         self.exit.class_name = name;
         self.exit.super_class = None;
         self.exit.public_descriptors.clear();
+    }
+
+    pub(crate) fn has_class_decorators(&self) -> bool {
+        self.exit.class_decorators.is_some()
     }
 
     /// Whether a class exit left unconsumed entries in the class-keyed maps.
