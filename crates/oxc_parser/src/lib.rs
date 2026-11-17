@@ -1452,7 +1452,7 @@ mod test {
     fn html_comment_in_regex_after_paren() {
         // https://github.com/oxc-project/oxc/issues/28158
         // `<!--` inside a regular expression is not an HTML-like comment, in any goal.
-        // Arrow function lookahead at `(` must not lex past the `/` that starts the regex.
+        // A `/` after `(` starts a regex: it must never be lexed as division followed by `<!--`.
         let allocator = Allocator::default();
         let module_sources = [
             "export {}; const a = (/<!-- x -->/);",
