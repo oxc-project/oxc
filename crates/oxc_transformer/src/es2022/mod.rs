@@ -30,12 +30,17 @@ impl ES2022<'_> {
         let (class_static_block, class_properties) = match class_transform {
             ClassTransform::None => (None, None),
             ClassTransform::StaticBlocks => (Some(ClassStaticBlock::new()), None),
-            ClassTransform::ClassProperties { options, transform_static_blocks } => (
+            ClassTransform::ClassProperties {
+                options,
+                transform_static_blocks,
+                decorator_mode,
+            } => (
                 None,
                 Some(ClassProperties::new(
                     options,
                     transform_static_blocks,
                     remove_class_fields_without_initializer,
+                    decorator_mode,
                 )),
             ),
         };
@@ -82,6 +87,12 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
             class_properties.exit_expression(expr, ctx);
         } else if let Some(class_static_block) = &mut self.class_static_block {
             class_static_block.exit_expression(expr, ctx);
+        }
+    }
+
+    fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Some(class_properties) = &mut self.class_properties {
+            class_properties.enter_class(class, ctx);
         }
     }
 

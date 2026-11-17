@@ -7,18 +7,18 @@ use oxc_traverse::Traverse;
 use crate::{context::TraverseCtx, state::TransformState};
 
 use legacy::LegacyDecorator;
-pub use options::DecoratorOptions;
+pub use options::{DecoratorMode, DecoratorOptions};
 
 pub struct Decorator<'a> {
-    options: DecoratorOptions,
+    mode: DecoratorMode,
 
     // Plugins
     legacy_decorator: LegacyDecorator<'a>,
 }
 
 impl Decorator<'_> {
-    pub fn new(options: DecoratorOptions) -> Self {
-        Self { legacy_decorator: LegacyDecorator::new(options), options }
+    pub fn new(options: DecoratorOptions, mode: DecoratorMode) -> Self {
+        Self { legacy_decorator: LegacyDecorator::new(options), mode }
     }
 }
 
@@ -29,35 +29,35 @@ impl<'a> Traverse<'a, TransformState<'a>> for Decorator<'a> {
         node: &mut Program<'a>,
         ctx: &mut oxc_traverse::TraverseCtx<'a, TransformState<'a>>,
     ) {
-        if self.options.legacy {
+        if self.mode.is_legacy() {
             self.legacy_decorator.exit_program(node, ctx);
         }
     }
 
     #[inline]
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.options.legacy {
+        if self.mode.is_legacy() {
             self.legacy_decorator.enter_statement(stmt, ctx);
         }
     }
 
     #[inline]
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.options.legacy {
+        if self.mode.is_legacy() {
             self.legacy_decorator.exit_statement(stmt, ctx);
         }
     }
 
     #[inline]
     fn enter_class(&mut self, node: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.options.legacy {
+        if self.mode.is_legacy() {
             self.legacy_decorator.enter_class(node, ctx);
         }
     }
 
     #[inline]
     fn exit_class(&mut self, node: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.options.legacy {
+        if self.mode.is_legacy() {
             self.legacy_decorator.exit_class(node, ctx);
         }
     }
@@ -68,7 +68,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for Decorator<'a> {
         node: &mut MethodDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if self.options.legacy {
+        if self.mode.is_legacy() {
             self.legacy_decorator.enter_method_definition(node, ctx);
         }
     }
@@ -79,7 +79,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for Decorator<'a> {
         node: &mut MethodDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if self.options.legacy {
+        if self.mode.is_legacy() {
             self.legacy_decorator.exit_method_definition(node, ctx);
         }
     }
@@ -90,7 +90,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for Decorator<'a> {
         node: &mut AccessorProperty<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if self.options.legacy {
+        if self.mode.is_legacy() {
             self.legacy_decorator.enter_accessor_property(node, ctx);
         }
     }
@@ -101,7 +101,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for Decorator<'a> {
         node: &mut AccessorProperty<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if self.options.legacy {
+        if self.mode.is_legacy() {
             self.legacy_decorator.exit_accessor_property(node, ctx);
         }
     }
@@ -112,7 +112,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for Decorator<'a> {
         node: &mut PropertyDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if self.options.legacy {
+        if self.mode.is_legacy() {
             self.legacy_decorator.enter_property_definition(node, ctx);
         }
     }
@@ -123,7 +123,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for Decorator<'a> {
         node: &mut PropertyDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if self.options.legacy {
+        if self.mode.is_legacy() {
             self.legacy_decorator.exit_property_definition(node, ctx);
         }
     }
@@ -134,7 +134,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for Decorator<'a> {
         node: &mut oxc_ast::ast::Decorator<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if self.options.legacy {
+        if self.mode.is_legacy() {
             self.legacy_decorator.enter_decorator(node, ctx);
         }
     }
@@ -143,7 +143,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for Decorator<'a> {
 impl<'a> Decorator<'a> {
     #[inline]
     pub fn exit_class_at_end(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.options.legacy {
+        if self.mode.is_legacy() {
             self.legacy_decorator.exit_class_at_end(class, ctx);
         }
     }

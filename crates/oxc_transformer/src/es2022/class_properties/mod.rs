@@ -199,6 +199,7 @@
 
 use indexmap::IndexMap;
 use rustc_hash::FxHashMap;
+
 use serde::Deserialize;
 
 use oxc_ast::ast::*;
@@ -206,7 +207,10 @@ use oxc_str::{Ident, IdentBuildHasher};
 use oxc_syntax::symbol::SymbolId;
 use oxc_traverse::Traverse;
 
-use crate::{context::TraverseCtx, state::TransformState};
+use crate::{
+    common::class_lowering::ClassLoweringMode, context::TraverseCtx, decorator::DecoratorMode,
+    state::TransformState,
+};
 
 mod class;
 mod class_bindings;
@@ -221,7 +225,9 @@ mod static_block_and_prop_init;
 mod super_converter;
 mod utils;
 use class_bindings::ClassBindings;
-use class_details::{ClassDetails, ClassesStack, PrivateProp, ResolvedPrivateProp};
+use class_details::{
+    ClassDetails, ClassesStack, PrivateProp, PrivateProps, ResolvedPrivateName, ResolvedPrivateProp,
+};
 
 type IdentIndexMap<'a, V> = IndexMap<Ident<'a>, V, IdentBuildHasher>;
 
@@ -291,13 +297,20 @@ impl ClassProperties<'_> {
         options: ClassPropertiesOptions,
         transform_static_blocks: bool,
         remove_class_fields_without_initializer: bool,
+        decorator_mode: DecoratorMode,
     ) -> Self {
+        // A class which is never entered still answers queries about private names.
+        let dummy_mode = if decorator_mode == DecoratorMode::Preserve {
+            ClassLoweringMode::Native
+        } else {
+            ClassLoweringMode::LowerAll
+        };
         Self {
             set_public_class_fields: options.loose,
             private_fields_as_properties: options.loose,
             transform_static_blocks,
             remove_class_fields_without_initializer,
-            classes_stack: ClassesStack::new(),
+            classes_stack: ClassesStack::new(dummy_mode),
             private_field_count: 0,
             // `Vec`s and `FxHashMap`s which are reused for every class being transformed
             clashing_constructor_symbols: FxHashMap::default(),
@@ -313,6 +326,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
     #[inline(always)] // Because this is a no-op in release mode
     fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
         debug_assert_eq!(self.private_field_count, 0);
+    }
+
+    fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        // Record the lowering decision before any transform rewrites the class.
+        ctx.state.class_lowering(class);
     }
 
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -355,6 +373,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
         target: &mut AssignmentTarget<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        if let AssignmentTarget::PrivateFieldExpression(field) = target
+            && !self.private_field_needs_lowering(&field.field)
+        {
+            return;
+        }
         self.transform_assignment_target(target, ctx);
     }
 
@@ -392,6 +415,39 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
 }
 
 impl<'a> ClassProperties<'a> {
+    /// Whether the private name is owned by a class which lowers its private properties.
+    fn private_field_needs_lowering(&mut self, ident: &PrivateIdentifier<'a>) -> bool {
+        matches!(
+            self.classes_stack.resolve_private_name(ident),
+            ResolvedPrivateName::Lowered { .. }
+        )
+    }
+
+    /// Private identifier directly referenced by an expression which this transform rewrites.
+    fn direct_private_ident<'e>(expr: &'e Expression<'a>) -> Option<&'e PrivateIdentifier<'a>> {
+        match expr {
+            Expression::PrivateFieldExpression(field) => Some(&field.field),
+            Expression::PrivateInExpression(expr) => Some(&expr.left),
+            Expression::CallExpression(call) => match &call.callee {
+                Expression::PrivateFieldExpression(field) => Some(&field.field),
+                _ => None,
+            },
+            Expression::AssignmentExpression(assign) => match &assign.left {
+                AssignmentTarget::PrivateFieldExpression(field) => Some(&field.field),
+                _ => None,
+            },
+            Expression::UpdateExpression(update) => match &update.argument {
+                SimpleAssignmentTarget::PrivateFieldExpression(field) => Some(&field.field),
+                _ => None,
+            },
+            Expression::TaggedTemplateExpression(tagged) => match &tagged.tag {
+                Expression::PrivateFieldExpression(field) => Some(&field.field),
+                _ => None,
+            },
+            _ => None,
+        }
+    }
+
     // Keep the rare private-field transform body out of the hot expression visitor.
     // Rust 1.97 otherwise inlines these large branches into the generated walker.
     #[inline(never)]
@@ -400,6 +456,12 @@ impl<'a> ClassProperties<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        // A lowered class can still access a preserved enclosing class's private names.
+        if let Some(ident) = Self::direct_private_ident(expr)
+            && !self.private_field_needs_lowering(ident)
+        {
+            return;
+        }
         match expr {
             // `object.#prop`
             Expression::PrivateFieldExpression(_) => {

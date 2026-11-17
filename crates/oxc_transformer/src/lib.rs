@@ -135,6 +135,7 @@ impl<'a> Transformer<'a> {
         program: &mut Program<'a>,
     ) -> TransformerReturn {
         let allocator = self.allocator;
+        let decorator_mode = self.decorator.mode();
 
         let ast_builder = AstBuilder::new(allocator);
 
@@ -158,7 +159,7 @@ impl<'a> Transformer<'a> {
 
         let mut transformer = TransformerImpl {
             common: Common::new(&self.env),
-            decorator: Decorator::new(self.decorator),
+            decorator: Decorator::new(self.decorator, decorator_mode),
             plugins: Plugins::new(self.plugins),
             x0_typescript: program
                 .source_type
@@ -341,6 +342,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_class(class, ctx);
         }
+        self.x2_es2022.enter_class(class, ctx);
     }
 
     fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
