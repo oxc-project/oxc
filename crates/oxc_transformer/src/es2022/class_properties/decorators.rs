@@ -14,8 +14,8 @@ use crate::{
     },
     context::TraverseCtx,
     decorator::standard::{
-        ClassDecoratorBindings, ClassDecoratorState, ClassDecoratorTables, DecoratorElementKind,
-        PrivateDecoratorAccess, StandardDecoratorState,
+        ClassDecoratorBindings, ClassDecoratorState, ClassDecoratorTables, ClassNameRewriter,
+        DecoratorElementKind, PrivateDecoratorAccess, StandardDecoratorState,
     },
 };
 
@@ -104,6 +104,22 @@ impl<'a> DecoratorBodyEntry<'a> {
             bindings.decorator_static_brand = Some(brand);
         }
     }
+
+    pub fn rewrite_expression_name(
+        &self,
+        body: &mut ClassBody<'a>,
+        bindings: &ClassBindings<'a>,
+        is_declaration: bool,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.is_decorated()
+            && !is_declaration
+            && let (Some(name), Some(temp)) = (&bindings.name, &bindings.temp)
+        {
+            ClassNameRewriter::new(name.symbol_id, name.name, Some(temp.clone()), None, ctx)
+                .rewrite(body);
+        }
+    }
 }
 
 /// Instance field initializers move on entry; decorators and keys are collected on exit.
@@ -117,11 +133,13 @@ impl<'a> ClassProperties<'a> {
     pub(super) fn on_body_entry(
         &mut self,
         body: &mut ClassBody<'a>,
-        class_name_binding: Option<&BoundIdentifier<'a>>,
+        class_name_binding: &mut Option<BoundIdentifier<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> DecoratorBodyEntry<'a> {
         let Ancestor::ClassBody(class) = ctx.parent() else { unreachable!() };
         let class_scope_id = class.scope_id().get().unwrap();
+        let class_address = class.address();
+        let is_declaration = *class.r#type() == ClassType::ClassDeclaration;
         let lowering = ctx.state.class_lowering_of(class_scope_id);
         let standard = self.decorator_state.enabled();
         let is_decorated = standard && lowering.lowered_for_decorators();
@@ -157,11 +175,11 @@ impl<'a> ClassProperties<'a> {
             }))
         .then(|| {
             if is_decorated {
-                let name = class_name_binding.map_or("Class", |binding| binding.name.as_str());
+                let name = class_name_binding.as_ref().map_or("Class", |binding| binding.name.as_str());
                 ctx.generate_uid(name, ctx.current_block_scope_id(), SymbolFlags::BlockScopedVariable)
             } else {
                 ClassBindings::create_temp_binding(
-                    class_name_binding,
+                    class_name_binding.as_ref(),
                     ctx.current_hoist_scope_id(),
                     ctx,
                 )
@@ -188,6 +206,28 @@ impl<'a> ClassProperties<'a> {
             None
         };
 
+        // A class decorator can replace the outer binding while the class keeps its inner name.
+        if is_decorated
+            && is_declaration
+            && let Some(name_binding) = class_name_binding
+        {
+            let outer_scope_id = ctx.scoping().scope_parent_id(class_scope_id).unwrap();
+            let inner = ClassNameRewriter::new(
+                name_binding.symbol_id,
+                name_binding.name,
+                None,
+                Some(outer_scope_id),
+                ctx,
+            )
+            .rewrite(body);
+            if let Some(inner) = inner {
+                self.decorator_state.record_declaration_rewrite(
+                    class_address,
+                    (inner.clone(), name_binding.clone()),
+                );
+                *name_binding = inner;
+            }
+        }
         DecoratorBodyEntry { state, static_accessor_binding, has_auto_accessor }
     }
 

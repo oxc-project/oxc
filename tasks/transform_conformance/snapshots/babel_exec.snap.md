@@ -2,7 +2,7 @@ commit: 16a2d671
 
 node: v26.12.1
 
-Passed: 493 of 592 (83.28%)
+Passed: 496 of 592 (83.78%)
 
 Failures:
 
@@ -32,8 +32,10 @@ Error: Transform error
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes--to-es2015-replacement-static-method-private-instance-element-super-assumption-ignoreFunctionLength-exec.test.js:13:7
 
 ./fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes--to-es2015-replacement-static-method-private-instance-element-super-exec.test.js
-AssertionError: expected [Function Foo] to be [Function Bar] // Object.is equality
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes--to-es2015-replacement-static-method-private-instance-element-super-exec.test.js:98:22
+TypeError: Private element is not present on this object
+    at _assertClassBrand (./npm/runtime/src/helpers/esm/assertClassBrand.js:3:9)
+    at Foo.method (./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes--to-es2015-replacement-static-method-private-instance-element-super-exec.test.js:35:5)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes--to-es2015-replacement-static-method-private-instance-element-super-exec.test.js:81:15
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes--to-es2015-replacement-static-method-private-instance-element-super-exec.test.js:37:7
 
 ./fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes--to-es2015-replacement-static-private-instance-element-access-exec.test.js
@@ -73,8 +75,10 @@ Error: Transform error
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-method-private-instance-element-super-assumption-ignoreFunctionLength-exec.test.js:13:7
 
 ./fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-method-private-instance-element-super-exec.test.js
-AssertionError: expected [Function Foo] to be [Function Bar] // Object.is equality
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-method-private-instance-element-super-exec.test.js:98:22
+TypeError: Private element is not present on this object
+    at _assertClassBrand (./npm/runtime/src/helpers/esm/assertClassBrand.js:3:9)
+    at Foo.method (./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-method-private-instance-element-super-exec.test.js:35:5)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-method-private-instance-element-super-exec.test.js:81:15
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-method-private-instance-element-super-exec.test.js:37:7
 
 ./fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-private-instance-element-access-exec.test.js
@@ -102,23 +106,8 @@ AssertionError: expected [Function] to throw an error
 
 ./fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-misc--to-es2015-outer-class-binding-mutated-exec.test.js
 AssertionError: expected function to throw an error, but it didn't
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-misc--to-es2015-outer-class-binding-mutated-exec.test.js:49:18
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-misc--to-es2015-outer-class-binding-mutated-exec.test.js:50:18
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-misc--to-es2015-outer-class-binding-mutated-exec.test.js:25:7
-
-./fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-misc--to-es2015-this-exec.test.js
-AssertionError: expected [ undefined, undefined, …(5) ] to deeply equal [ { dec: [Function dec] }, …(6) ]
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-misc--to-es2015-this-exec.test.js:37:15
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-misc--to-es2015-this-exec.test.js:21:7
-
-./fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-misc-outer-class-binding-mutated-exec.test.js
-AssertionError: expected [ null, null, null ] to deeply equal [ null, [Function K], [Function K] ]
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-misc-outer-class-binding-mutated-exec.test.js:54:33
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-misc-outer-class-binding-mutated-exec.test.js:25:7
-
-./fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-misc-this-exec.test.js
-AssertionError: expected [ undefined, undefined, …(7) ] to deeply equal [ { dec: [Function dec] }, …(8) ]
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-misc-this-exec.test.js:47:15
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-misc-this-exec.test.js:21:7
 
 ./fixtures/babel/babel-plugin-transform-arrow-functions-test-fixtures-arrow-functions-implicit-var-arguments-exec.test.js
 AssertionError: expected undefined to strictly equal 1

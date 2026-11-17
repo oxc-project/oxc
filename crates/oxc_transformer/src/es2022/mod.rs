@@ -82,6 +82,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
         }
     }
 
+    #[inline]
+    fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Some(class_properties) = &mut self.class_properties {
+            class_properties.exit_statement(stmt, ctx);
+        }
+    }
+
     #[inline] // Because this is a no-op in release mode
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(class_properties) = &mut self.class_properties {
@@ -121,6 +128,12 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
     fn enter_object_property(&mut self, prop: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(class_properties) = &mut self.class_properties {
             class_properties.enter_object_property(prop, ctx);
+        }
+    }
+
+    fn enter_decorator(&mut self, decorator: &mut Decorator<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Some(class_properties) = &mut self.class_properties {
+            class_properties.enter_decorator(decorator, ctx);
         }
     }
 

@@ -105,7 +105,7 @@ impl<'a> ClassProperties<'a> {
             !is_declaration && Self::should_emit_private_method_helpers_in_class_sequence(ctx);
 
         let lowering = ctx.state.class_lowering_of(class_scope_id);
-        let mut entry = self.on_body_entry(body, class_name_binding.as_ref(), ctx);
+        let mut entry = self.on_body_entry(body, &mut class_name_binding, ctx);
         let has_auto_accessor = entry.has_auto_accessor;
         if matches!(lowering.mode(), ClassLoweringMode::Native | ClassLoweringMode::Preserve) {
             // Register private names only when they can shadow a lowered name in an enclosing
@@ -301,6 +301,7 @@ impl<'a> ClassProperties<'a> {
         );
 
         entry.configure_bindings(&mut class_bindings, &private_props, ctx);
+        entry.rewrite_expression_name(body, &class_bindings, is_declaration, ctx);
 
         // Add entry to `classes_stack`
         self.classes_stack.push(ClassDetails {

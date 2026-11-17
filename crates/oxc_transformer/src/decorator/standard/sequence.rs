@@ -1,16 +1,19 @@
 //! Emission of decorator calls and class initialization.
 
-use oxc_allocator::ArenaVec;
+use oxc_allocator::{Address, ArenaVec, GetAddress, TakeIn};
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
 use oxc_str::Str;
-use oxc_syntax::number::NumberBase;
+use oxc_syntax::{number::NumberBase, symbol::SymbolFlags};
 use oxc_traverse::BoundIdentifier;
 
 use crate::{
     common::helper_loader::{Helper, helper_call_expr},
     context::TraverseCtx,
-    utils::ast_builder::{create_assignment, create_new_weakset},
+    utils::ast_builder::{
+        create_assignment, create_export_default_class_reference,
+        create_export_named_class_reference, create_new_weakset,
+    },
 };
 
 use super::{
@@ -19,6 +22,76 @@ use super::{
 };
 
 impl<'a> StandardDecoratorState<'a> {
+    pub(crate) fn has_declaration_rewrites(&self) -> bool {
+        !self.declaration_rewrites.is_empty()
+    }
+
+    pub(crate) fn record_declaration_rewrite(
+        &mut self,
+        class: Address,
+        bindings: (BoundIdentifier<'a>, BoundIdentifier<'a>),
+    ) {
+        self.declaration_rewrites.insert(class, bindings);
+    }
+
+    /// Exit phase: convert a decorated class declaration whose name is referenced inside the class body.
+    ///
+    /// `class Foo {}` -> `let _Foo = class Foo {}; /* decorators */ let Foo = _Foo;`
+    pub(crate) fn rewrite_decorated_class_statement(
+        &mut self,
+        stmt: &mut Statement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        enum Export {
+            None,
+            Named,
+            Default,
+        }
+        let (class, export) = match stmt {
+            Statement::ClassDeclaration(class) => (class, Export::None),
+            Statement::ExportDeclaration(export) => match &mut export.declaration {
+                Declaration::ClassDeclaration(class) => (class, Export::Named),
+                _ => return,
+            },
+            Statement::ExportDefaultDeclaration(export) => match &mut export.declaration {
+                ExportDefaultDeclarationKind::ClassDeclaration(class) => (class, Export::Default),
+                _ => return,
+            },
+            _ => return,
+        };
+        let Some((inner, outer)) = self.declaration_rewrites.remove(&class.address()) else {
+            return;
+        };
+
+        // Class name becomes a binding in class scope. Outer binding becomes `let Foo`.
+        let class_scope_id = class.scope_id();
+        let id = class.id.as_mut().unwrap();
+        let class_name =
+            ctx.generate_spanned_binding(id.name, id.span, class_scope_id, SymbolFlags::Class);
+        id.symbol_id.set(Some(class_name.symbol_id));
+        *ctx.scoping_mut().symbol_flags_mut(outer.symbol_id) = SymbolFlags::BlockScopedVariable;
+
+        class.r#type = ClassType::ClassExpression;
+        let class_expr = Expression::ClassExpression(class.take_in_box(ctx));
+        let new_stmt = Self::create_let(&inner, class_expr, ctx);
+        let outer_stmt = Self::create_let(&outer, inner.create_read_expression(ctx), ctx);
+
+        ctx.state.statement_injector.move_insertions(stmt, &new_stmt);
+        ctx.state.statement_injector.insert_after(&new_stmt, outer_stmt);
+        match export {
+            Export::None => {}
+            Export::Named => {
+                let export = create_export_named_class_reference(&outer, ctx);
+                ctx.state.statement_injector.insert_after(&new_stmt, export);
+            }
+            Export::Default => {
+                let export = create_export_default_class_reference(&outer, ctx);
+                ctx.state.statement_injector.insert_after(&new_stmt, export);
+            }
+        }
+        *stmt = new_stmt;
+    }
+
     pub(crate) fn create_let(
         binding: &BoundIdentifier<'a>,
         init: Expression<'a>,
