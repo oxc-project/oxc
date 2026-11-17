@@ -88,7 +88,7 @@ impl<'a> PeepholeOptimizations {
                 is_control_flow_dead = true;
             }
         }
-        if let Some(stmt) = keep_var.get_variable_declaration_statement(&ctx.ast) {
+        if let Some(stmt) = keep_var.get_variable_declaration_statement(ctx) {
             match Self::remove_unused_variable_declaration(stmt, ctx) {
                 // Multiple identity-dropped `var x;`s coalesce into a single
                 // `var x, y;`. The individual drops looked byte-identical, but
@@ -292,6 +292,9 @@ impl<'a> PeepholeOptimizations {
             false,
         );
 
+        // `function a() {} b.a = a;` => `b.a = function a() {};`
+        Self::inline_single_use_function_declaration(&mut expr_stmt.expression, result, ctx);
+
         // In a derived constructor, `this` after an unconditional `super()` is safe to drop.
         // Walk backwards through preceding sibling statements looking for `super()`.
         // Only consider top-level expression statements — `super()` inside `if`/loops
@@ -433,6 +436,155 @@ impl<'a> PeepholeOptimizations {
                     }
                 }
             }
+            _ => false,
+        }
+    }
+
+    /// Move a single-use function declaration from earlier in this statement list
+    /// into the assignment that uses it.
+    /// `function a() {} b.a = a;` => `b.a = function a() {};`
+    /// `function a() {} function b() {} x.a = a, x.b = b;` => `x.a = function a() {}, x.b = function b() {};`
+    fn inline_single_use_function_declaration(
+        expr: &mut Expression<'a>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if ctx.is_tree_shake_only()
+            || Self::is_script_root_scope(ctx)
+            || ctx.current_scope_flags().contains_direct_eval()
+        {
+            return;
+        }
+
+        if let Expression::SequenceExpression(sequence) = expr {
+            for expr in &mut sequence.expressions {
+                Self::inline_function_declaration_into_assignment(expr, result, ctx);
+            }
+        } else {
+            Self::inline_function_declaration_into_assignment(expr, result, ctx);
+        }
+    }
+
+    fn inline_function_declaration_into_assignment(
+        expr: &mut Expression<'a>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Expression::AssignmentExpression(assignment) = expr else { return };
+        // `a = b = f`
+        if matches!(assignment.right, Expression::AssignmentExpression(_)) {
+            Self::inline_function_declaration_into_assignment(&mut assignment.right, result, ctx);
+            return;
+        }
+        if assignment.operator != AssignmentOperator::Assign {
+            return;
+        }
+        let Expression::Identifier(reference) = &assignment.right else { return };
+        let reference_id = reference.reference_id();
+        let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() else {
+            return;
+        };
+        // check if symbol: is referenced once, is implicitly observable, as function is dead, has redeclarations
+        if ctx.scoping().get_resolved_reference_ids(symbol_id) != [reference_id]
+            || ctx.state.symbols.is_implicitly_observable(symbol_id)
+            || ctx.state.symbols.function_is_dead(symbol_id)
+            || !ctx.scoping().symbol_redeclarations(symbol_id).is_empty()
+        {
+            return;
+        }
+        // A hoisted sloppy block declaration is bound in the enclosing var scope, so a
+        // direct eval there can read it even when this block has no eval. `DirectEval`
+        // propagates upward and the binding scope encloses this list, so its flag
+        // covers every eval that can see the binding.
+        let binding_scope_flags =
+            ctx.scoping().scope_flags(ctx.scoping().symbol_scope_id(symbol_id));
+        if binding_scope_flags.contains_direct_eval() {
+            return;
+        }
+        // Creating a function has no side effects, and this assignment holds the only
+        // reference, so no statement in between can observe the move. Searching the
+        // whole list keeps the result independent of which statements a pass has
+        // already merged or removed, since those steps do not request another pass.
+        let Some(index) = result.iter().rposition(|stmt| {
+            matches!(stmt, Statement::FunctionDeclaration(function)
+                if function.id.as_ref().is_some_and(|id| id.symbol_id() == symbol_id))
+        }) else {
+            return;
+        };
+        let Statement::FunctionDeclaration(function) = &result[index] else { unreachable!() };
+
+        // A sloppy block declaration can also initialize an enclosing var binding.
+        // Converting it to an expression loses that Annex B write. Check this even
+        // when `unused: false` disables function-liveness registration.
+        if !function.r#async
+            && !function.generator
+            && !binding_scope_flags.is_var()
+            && !binding_scope_flags.is_strict_mode()
+        {
+            return;
+        }
+        // The reverse Annex B write: a sloppy block function of the same name that
+        // semantic left block-scoped still assigns itself to this var binding when
+        // it is evaluated, with no resolved reference. Within this var scope, only
+        // the statements already in `result` run before this assignment.
+        if !binding_scope_flags.is_strict_mode()
+            && let Some(id) = &function.id
+            && result.iter().any(|stmt| Self::nests_annex_b_function(stmt, id.name, false))
+        {
+            return;
+        }
+
+        let Some(scope_id) = function.scope_id.get() else { return };
+        if let Some(liveness) = ctx.state.symbols.liveness_mut() {
+            liveness.unregister_function_declaration(scope_id, symbol_id);
+        }
+
+        let Statement::FunctionDeclaration(mut function) = result.remove(index) else {
+            unreachable!();
+        };
+        function.r#type = FunctionType::FunctionExpression;
+        // After the sole reference is removed, the retained name's original outer
+        // symbol has no live uses. Compression can keep that metadata; mangling
+        // rebuilds the function-expression binding from the transformed AST.
+        ctx.replace_expression(&mut assignment.right, Expression::FunctionExpression(function));
+    }
+
+    /// Whether `stmt` nests a plain function declaration named `name` below a
+    /// block, `if`, `switch`, loop, `try` or `with`, without crossing into an
+    /// expression or function body (a different var scope). In sloppy mode,
+    /// evaluating such a declaration also writes the enclosing var binding
+    /// (Annex B.3.2.1, B.3.4).
+    fn nests_annex_b_function(stmt: &Statement<'a>, name: Ident<'a>, nested: bool) -> bool {
+        let any = |stmts: &[Statement<'a>]| {
+            stmts.iter().any(|stmt| Self::nests_annex_b_function(stmt, name, true))
+        };
+        match stmt {
+            Statement::FunctionDeclaration(function) => {
+                nested
+                    && !function.r#async
+                    && !function.generator
+                    && function.id.as_ref().is_some_and(|id| id.name == name)
+            }
+            Statement::LabeledStatement(s) => Self::nests_annex_b_function(&s.body, name, nested),
+            Statement::BlockStatement(s) => any(&s.body),
+            Statement::IfStatement(s) => {
+                Self::nests_annex_b_function(&s.consequent, name, true)
+                    || s.alternate
+                        .as_ref()
+                        .is_some_and(|s| Self::nests_annex_b_function(s, name, true))
+            }
+            Statement::SwitchStatement(s) => s.cases.iter().any(|case| any(&case.consequent)),
+            Statement::TryStatement(s) => {
+                any(&s.block.body)
+                    || s.handler.as_ref().is_some_and(|handler| any(&handler.body.body))
+                    || s.finalizer.as_ref().is_some_and(|finalizer| any(&finalizer.body))
+            }
+            Statement::WithStatement(s) => Self::nests_annex_b_function(&s.body, name, true),
+            Statement::ForStatement(s) => Self::nests_annex_b_function(&s.body, name, true),
+            Statement::ForInStatement(s) => Self::nests_annex_b_function(&s.body, name, true),
+            Statement::ForOfStatement(s) => Self::nests_annex_b_function(&s.body, name, true),
+            Statement::WhileStatement(s) => Self::nests_annex_b_function(&s.body, name, true),
+            Statement::DoWhileStatement(s) => Self::nests_annex_b_function(&s.body, name, true),
             _ => false,
         }
     }
@@ -1225,9 +1377,9 @@ impl<'a> PeepholeOptimizations {
                 return true;
             };
             // Don't inline `var e` inside `catch (e) { ... }`. Removing the var declarator
-            // would lose the function-scoped hoisting that `var` provides. The catch parameter
-            // and the var share one symbol (with CatchVariable flag) due to the redeclaration
-            // semantics in https://tc39.es/ecma262/#sec-variablestatements-in-catch-blocks
+            // would lose the function-scoped hoisting that `var` provides. The declarator
+            // carries the catch parameter's symbol because its initializer assigns there;
+            // `Scoping::catch_var_binding` identifies the separate enclosing binding.
             if ctx.scoping().symbol_flags(prev_decl_id.symbol_id()).is_catch_variable() {
                 return true;
             }
@@ -1580,7 +1732,8 @@ impl<'a> PeepholeOptimizations {
             }
             Expression::CallExpression(call_expr) => {
                 let keep_indirect = call_expr.callee.is_specific_id(search_for)
-                    && Self::passes_this_when_called(replacement);
+                    && (Self::passes_this_when_called(replacement)
+                        || (!call_expr.optional && replacement.is_specific_id("eval")));
                 if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
                     &mut call_expr.callee,
                     search_for,

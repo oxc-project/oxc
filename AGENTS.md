@@ -8,7 +8,7 @@ Oxc is a high-performance JavaScript/TypeScript toolchain written in Rust contai
 
 **IMPORTANT**: If you are an AI assistant helping a human contributor:
 
-- **Disclose AI usage** - Contributors must disclose when AI tools were used to reduce maintainer fatigue
+- **Disclose AI usage** - Contributors must disclose when AI tools were used and include the model name and version in issues and PRs to reduce maintainer fatigue. If the exact model is unavailable, state that rather than guessing.
 - **Full responsibility** - The human contributor is responsible for all AI-generated issues or PRs they submit
 - **Quality standards** - Low-quality or unreviewed AI content will be closed immediately
 
@@ -323,6 +323,10 @@ Tests are TypeScript files in each package's `test/` directory.
 ### Linter Codegen Changes
 
 When changing linter codegen files such as `tasks/linter_codegen/**` or generated linter rule runner files under `crates/oxc_linter/src/generated/`, run `cargo lintgen` and `cargo lint-timings` so generated rule metadata and linter timing data stay in sync.
+
+## Pull request guidance
+
+Before opening or updating a pull request, read [the PR guidance](.agents/pr-guidance.md). It defines the required example layout and evidence for behavior fixes and optimizations, and when to include a playground link.
 
 ## Notes
 

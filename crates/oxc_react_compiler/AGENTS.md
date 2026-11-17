@@ -4,19 +4,21 @@ These rules also apply to the React Compiler lint rules in `crates/oxc_linter` a
 
 ## Overview
 
-Rust port of upstream [`babel-plugin-react-compiler`](https://github.com/react/react/tree/main/compiler/packages/babel-plugin-react-compiler).
-The passes under `src/react_compiler_*` mirror the upstream TypeScript passes.
+Port of the upstream React Compiler on [`main`](https://github.com/react/react/tree/main/compiler): the Rust port in [`compiler/crates`](https://github.com/react/react/tree/main/compiler/crates) and the TypeScript [`babel-plugin-react-compiler`](https://github.com/react/react/tree/main/compiler/packages/babel-plugin-react-compiler) it is ported from.
+The modules under `src/react_compiler_*` mirror the upstream `react_compiler_*` crates and TypeScript passes.
 
 - `compile` is used by the transformer and `napi/transform-react`
 - `lint` is used by the Oxlint React Compiler rules through `crates/oxc_linter/src/utils/react_compiler.rs`
 
 ## Upstream alignment
 
-- Treat the upstream TypeScript as the spec; keep pass structure, names, error messages, and error categories aligned
+- Treat upstream `main` as the spec: the Rust port in `compiler/crates` first, then the TypeScript it mirrors; keep pass structure, names, error messages, and error categories aligned
+  - Do not pin behavior to a published npm release such as `babel-plugin-react-compiler@1.0.0`; when a release and `main` differ, follow `main`
+  - Compare against an up-to-date checkout of `main`, and cite the upstream file and commit when porting a change
 - Diverge only when upstream emits incorrect output, crashes or hangs, reports a lint false positive, or for an Oxlint-only extension
   - Start the code comment with "Unlike the TS implementation," and explain why
   - Add a fixture that covers the divergence
-- Compare changes with upstream `babel-plugin-react-compiler`, and lint behavior with `eslint-plugin-react-hooks`, using the same environment options
+- Compare changes with upstream `main`, and lint behavior with `eslint-plugin-react-hooks` built from `main`, using the same environment options
   - Classify each difference as an intentional fix, an Oxlint-only extension, or behavior already on `main`
 
 ## Tests
@@ -44,6 +46,7 @@ Add fixtures only; do not add Rust unit tests or inline linter `Tester` cases.
 ## Lint mode and Oxlint
 
 - `crates/oxc_linter/src/utils/react_compiler.rs` mirrors the `COMPILER_OPTIONS` of `eslint-plugin-react-hooks`; document every Oxlint-specific option inline
+  - Lint-specific behavior comes from those options, not from overrides of compiler logic; for example, ESLint suppressions are ignored because the options enable both `validateHooksUsage` and `validateExhaustiveMemoizationDependencies`
 - The file gate ports `mayContainReactCode` from `eslint-plugin-react-hooks`
 - Enable `lint_skip_reactive_scope_passes` only when both `react/todo` and `react/invariant` are off
   - Never skip a pass that records Todo or Invariant diagnostics while either rule is enabled

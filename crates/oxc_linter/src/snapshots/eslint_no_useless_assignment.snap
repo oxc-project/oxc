@@ -3,6 +3,13 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:56]
+ 1 │ function f() { try {} catch (e) { var e = 1; use(e); } e = 2; e = 3; use(e); }
+   ·                                                        ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
    ╭─[no_useless_assignment.tsx:3:25]
  2 │                         console.log(v);
  3 │                         v = 'unused'

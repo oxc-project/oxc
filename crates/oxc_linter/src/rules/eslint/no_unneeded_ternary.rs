@@ -105,7 +105,9 @@ impl Rule for NoUnneededTernary {
                 let replacement;
                 let test_expr_source = ctx.source_range(expr.test.span());
                 match &expr.test {
-                    Expression::BinaryExpression(binary) => {
+                    Expression::BinaryExpression(binary)
+                        if !binary.operator.is_numeric_or_string_binary_operator() =>
+                    {
                         if left.value {
                             replacement = test_expr_source.to_string();
                         } else {
@@ -380,4 +382,56 @@ fn test() {
     Tester::new(NoUnneededTernary::NAME, NoUnneededTernary::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn preserve_boolean_results() {
+    use crate::tester::Tester;
+
+    let mut fail = Vec::new();
+    let mut fix = Vec::new();
+    for test in [
+        "a + b",
+        "a - b",
+        "a * b",
+        "a / b",
+        "a % b",
+        "a ** b",
+        "a | b",
+        "a & b",
+        "a ^ b",
+        "a << b",
+        "a >> b",
+        "a >>> b",
+        "1n + 2n",
+        "'a' + 'b'",
+        "0 / 0",
+        "next() + next()",
+    ] {
+        for (consequent, alternate, prefix) in [("true", "false", "!!"), ("false", "true", "!")] {
+            let source = format!("const result = {test} ? {consequent} : {alternate};");
+            fail.push(source.clone());
+            fix.push((source, format!("const result = {prefix}({test});")));
+        }
+    }
+    for test in [
+        "a == b",
+        "a != b",
+        "a === b",
+        "a !== b",
+        "a < b",
+        "a <= b",
+        "a > b",
+        "a >= b",
+        "a in b",
+        "a instanceof B",
+    ] {
+        let source = format!("const result = {test} ? true : false;");
+        fail.push(source.clone());
+        fix.push((source, format!("const result = {test};")));
+    }
+    let fix = fix.iter().map(|(source, expected)| (source.as_str(), expected.as_str())).collect();
+    Tester::new(NoUnneededTernary::NAME, NoUnneededTernary::PLUGIN, Vec::<String>::new(), fail)
+        .expect_fix(fix)
+        .test();
 }

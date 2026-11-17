@@ -37,7 +37,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{BoundNames, ToJsString, WithoutGlobalReferenceInformation};
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{GetSpan, SPAN};
-use oxc_traverse::{Ancestor, MaybeBoundIdentifier, Traverse};
+use oxc_traverse::{Ancestor, BoundIdentifier, MaybeBoundIdentifier, Traverse};
 
 use crate::{
     common::helper_loader::{Helper, helper_call, helper_call_expr, helper_load},
@@ -202,7 +202,7 @@ impl<'a> ObjectRestSpread<'a> {
         // If not an top `({ ...y })`, walk the pattern and create references for all the objects with a rest.
         if !matches!(&assign_expr.left, AssignmentTarget::ObjectAssignmentTarget(t) if t.rest.is_some())
         {
-            self.walk_and_replace_nested_object_target(expr, ctx);
+            Self::walk_and_replace_nested_object_target(expr, ctx);
             return;
         }
 
@@ -221,8 +221,6 @@ impl<'a> ObjectRestSpread<'a> {
 
         let data = Self::walk_assignment_target(&mut assign_expr.left, &mut new_decls, state, ctx);
 
-        Self::insert_var_declaration_before_containing_statement(new_decls, ctx);
-
         // Make an sequence expression.
         let mut expressions = ArenaVec::new_in(ctx);
         let op = AssignmentOperator::Assign;
@@ -237,6 +235,22 @@ impl<'a> ObjectRestSpread<'a> {
                 ctx,
             ));
         }
+
+        // Computed keys run after the RHS, and only when this assignment is evaluated.
+        for decl in &mut new_decls {
+            if let Some(init) = decl.init.take() {
+                let BindingPattern::BindingIdentifier(ident) = &decl.id else { unreachable!() };
+                let binding = BoundIdentifier::from_binding_ident(ident);
+                expressions.push(Expression::new_assignment_expression(
+                    SPAN,
+                    op,
+                    binding.create_write_target(ctx),
+                    init,
+                    ctx,
+                ));
+            }
+        }
+        Self::insert_var_declaration_before_containing_statement(new_decls, ctx);
 
         // Insert `{} = _foo`
         expressions.push(Expression::new_assignment_expression(
@@ -261,11 +275,7 @@ impl<'a> ObjectRestSpread<'a> {
 
         // Insert final read `_foo` only if the expression result is consumed.
         // e.g. remove for `({ a2, ...b2 } = c2)`, keep for `(x, ({ a2, ...b2 } = c2))`.
-        let is_expression_statement = ctx
-            .ancestors()
-            .find(|a| !matches!(a, Ancestor::ParenthesizedExpressionExpression(_)))
-            .is_some_and(|a| matches!(a, Ancestor::ExpressionStatementExpression(_)));
-        if !is_expression_statement {
+        if !Self::is_expression_statement(ctx) {
             expressions.push(reference_builder.create_read_expression(ctx));
         }
 
@@ -372,23 +382,44 @@ impl<'a> ObjectRestSpread<'a> {
         }
     }
 
-    #[expect(clippy::unused_self)]
-    fn walk_and_replace_nested_object_target(
-        &self,
-        expr: &mut Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
+    fn walk_and_replace_nested_object_target(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::AssignmentExpression(assign_expr) = expr else {
             return;
         };
         let mut decls = vec![];
         let mut exprs = vec![];
         Self::recursive_walk_assignment_target(&mut assign_expr.left, &mut decls, &mut exprs, ctx);
+        // The extracted object-rest assignments must not replace the original assignment's value.
+        let result = (!Self::is_expression_statement(ctx)).then(|| {
+            let result = ctx.generate_uid_in_current_hoist_scope("ref");
+            let id = result.create_binding_pattern(ctx);
+            decls.push(VariableDeclarator::new(SPAN, id, None, None, false, ctx));
+            result
+        });
         Self::insert_var_declaration_before_containing_statement(decls, ctx);
         expr.replace_with(|expr| {
-            let expressions = ArenaVec::from_iter_in(iter::chain([expr], exprs), ctx);
+            let expr = if let Some(result) = &result {
+                Expression::new_assignment_expression(
+                    SPAN,
+                    AssignmentOperator::Assign,
+                    result.create_write_target(ctx),
+                    expr,
+                    ctx,
+                )
+            } else {
+                expr
+            };
+            let result = result.map(|result| result.create_read_expression(ctx));
+            let expressions =
+                ArenaVec::from_iter_in(iter::once(expr).chain(exprs).chain(result), ctx);
             Expression::new_sequence_expression(SPAN, expressions, ctx)
         });
+    }
+
+    fn is_expression_statement(ctx: &TraverseCtx<'a>) -> bool {
+        ctx.ancestors()
+            .find(|a| !matches!(a, Ancestor::ParenthesizedExpressionExpression(_)))
+            .is_some_and(|a| matches!(a, Ancestor::ExpressionStatementExpression(_)))
     }
 
     // Insert `var _foo` before the statement that contains the transformed assignment.
@@ -439,6 +470,9 @@ impl<'a> ObjectRestSpread<'a> {
             AssignmentTarget::ArrayAssignmentTarget(t) => {
                 for e in t.elements.iter_mut().flatten() {
                     Self::recursive_walk_assignment_target_maybe_default(e, decls, exprs, ctx);
+                }
+                if let Some(rest) = &mut t.rest {
+                    Self::recursive_walk_assignment_target(&mut rest.target, decls, exprs, ctx);
                 }
             }
             AssignmentTarget::ObjectAssignmentTarget(t) => {

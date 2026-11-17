@@ -14,7 +14,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
 use oxc_span::{GetSpan, Span};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, ast_util::could_be_asi_hazard, context::LintContext, rule::Rule};
 
 #[derive(Debug, Default, Clone)]
 pub struct RequireAwait;
@@ -91,7 +91,7 @@ declare_oxc_lint!(
 impl Rule for RequireAwait {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::ArrowFunctionExpression(func) => Self::check_arrow_expression(func, ctx),
+            AstKind::ArrowFunctionExpression(func) => Self::check_arrow_expression(func, node, ctx),
             AstKind::FunctionBody(body) => Self::check_function_body(body, node, ctx),
             _ => {}
         }
@@ -99,7 +99,7 @@ impl Rule for RequireAwait {
 }
 
 impl RequireAwait {
-    fn check_arrow_expression(func: &ArrowFunctionExpression, ctx: &LintContext) {
+    fn check_arrow_expression(func: &ArrowFunctionExpression, node: &AstNode, ctx: &LintContext) {
         if !func.r#async {
             return;
         }
@@ -108,8 +108,13 @@ impl RequireAwait {
         finder.visit_expression(expression);
         if !finder.found {
             let need_delete_span = get_delete_span(ctx, func.span.start, func.span.end);
+            let needs_semicolon = arrow_needs_semicolon(node, func, ctx);
             ctx.diagnostic_with_dangerous_fix(require_await_diagnostic(func.span), |fixer| {
-                fixer.delete_range(need_delete_span)
+                if needs_semicolon {
+                    fixer.replace(need_delete_span, ";")
+                } else {
+                    fixer.delete_range(need_delete_span)
+                }
             });
         }
     }
@@ -176,9 +181,16 @@ impl RequireAwait {
                 finder.visit_function_body(body);
                 if !finder.found {
                     let need_delete_span = get_delete_span(ctx, func.span.start, func.span.end);
+                    let needs_semicolon = arrow_needs_semicolon(parent, func, ctx);
                     ctx.diagnostic_with_dangerous_fix(
                         require_await_diagnostic(func.span),
-                        |fixer| fixer.delete_range(need_delete_span),
+                        |fixer| {
+                            if needs_semicolon {
+                                fixer.replace(need_delete_span, ";")
+                            } else {
+                                fixer.delete_range(need_delete_span)
+                            }
+                        },
                     );
                 }
             }
@@ -214,6 +226,17 @@ fn get_delete_span(ctx: &LintContext, start: u32, end: u32) -> Span {
         offset += u32::try_from(c.len_utf8()).expect("Failed to char len (usize) to u32");
     }
     async_key_span.expand_right(offset)
+}
+
+/// Whether removing `async` would leave `(` at the start of a statement that continues the
+/// previous line, so `async` has to be replaced with `;` instead.
+fn arrow_needs_semicolon(
+    node: &AstNode,
+    arrow: &ArrowFunctionExpression,
+    ctx: &LintContext,
+) -> bool {
+    ctx.source_text()[arrow.params.span.start as usize..].starts_with('(')
+        && could_be_asi_hazard(node, ctx)
 }
 
 struct AwaitFinder {
@@ -356,6 +379,11 @@ fn test() {
             "/* async */ async function foo() { doSomething() }",
             "/* async */ function foo() { doSomething() }",
         ),
+        ("foo\nasync () => { return 0; }", "foo\n;() => { return 0; }"),
+        ("foo\nasync () => 0", "foo\n;() => 0"),
+        ("foo\nasync x => 0", "foo\nx => 0"),
+        ("foo;\nasync () => { return 0; }", "foo;\n() => { return 0; }"),
+        ("foo\nasync /* c */ () => 0", "foo\n;/* c */ () => 0"),
     ];
 
     Tester::new(RequireAwait::NAME, RequireAwait::PLUGIN, pass, fail)

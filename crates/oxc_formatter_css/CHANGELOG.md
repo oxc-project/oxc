@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.79.0] - 2026-11-16
+
+### 🚀 Features
+
+- 292f216 oxfmt: Bump prettier to 3.10.1 (#29333) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- f9f2385 formatter_css: Print `@supports selector()` like rule selector (#29343) (leaysgur)
+
 ## [0.77.0] - 2026-11-06
 
 ### 🐛 Bug Fixes

@@ -1358,3 +1358,21 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ╰── Effect Event escapes its component or custom Hook.
  8 │               });
    ╰────
+
+  ⚠ react-hooks(rules-of-hooks): `onClick` is a function created with React Hook "useEffectEvent", and can only be called from Effects and Effect Events in the same component.
+   ╭─[rules_of_hooks.tsx:7:17]
+ 6 │               effectHooks.useMyEffect(() => {
+ 7 │                 onClick();
+   ·                 ───┬───
+   ·                    ╰── Effect Event escapes its component or custom Hook.
+ 8 │               });
+   ╰────
+
+  ⚠ react-hooks(rules-of-hooks): `onClick` is a function created with React Hook "useEffectEvent", and can only be called from Effects and Effect Events in the same component.
+    ╭─[rules_of_hooks.tsx:10:17]
+  9 │               Hooks.Effects.useMyEffect(() => {
+ 10 │                 onClick();
+    ·                 ───┬───
+    ·                    ╰── Effect Event escapes its component or custom Hook.
+ 11 │               });
+    ╰────

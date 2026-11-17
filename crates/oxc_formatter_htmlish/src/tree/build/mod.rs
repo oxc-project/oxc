@@ -5,7 +5,7 @@ use oxc_htmlish_parser::{
     ast::{Element, Namespace, Node, NodeId, NodeKind, Root, Whitespace},
 };
 
-use super::{Borrows, Facts, Tree, display::display_comment};
+use super::{Borrows, Facts, TailwindAttributes, Tree, display::display_comment};
 use crate::{HtmlishVariant, options::WhitespaceSensitivity, rules::DialectRules};
 
 mod merge;
@@ -19,6 +19,7 @@ impl<'a> Tree<'a> {
         sensitivity: WhitespaceSensitivity,
         variant: HtmlishVariant,
         standalone: bool,
+        tailwind: Option<&[String]>,
     ) -> Self {
         let facts = ArenaVec::from_iter_in(
             root.nodes.iter().map(|node| Facts { span: node.span, ..Facts::default() }),
@@ -33,6 +34,8 @@ impl<'a> Tree<'a> {
                 facts,
                 merged_texts: ArenaVec::new_in(&allocator),
                 vue_script_language: "js",
+                tailwind: tailwind
+                    .map(|listed| TailwindAttributes::new(allocator, listed, variant)),
             },
             sensitivity,
         };

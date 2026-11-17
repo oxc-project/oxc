@@ -5,14 +5,10 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::{ContextHost, LintContext},
-    fixer::RuleFixer,
     rule::Rule,
     utils::{ParsedExpectFnCall, PossibleJestNode, parse_expect_jest_fn_call},
 };
-use oxc_ast::{
-    AstKind,
-    ast::{Argument, CallExpression},
-};
+use oxc_ast::{AstKind, ast::CallExpression};
 
 fn prefer_called_times_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use `toBeCalledTimes(1)` or `toHaveBeenCalledTimes(1)` instead of `toBeCalledOnce()` or `toHaveBeenCalledOnce()`")
@@ -99,38 +95,25 @@ impl PreferCalledTimes {
             return;
         }
 
-        let expect_argument = parsed_expect_call.expect_arguments.and_then(|args| args.first());
+        let Some(member_expr) = call_expr.callee.as_member_expression() else {
+            return;
+        };
+        if member_expr.static_property_info().is_none_or(|(span, _)| span != matcher.span) {
+            return;
+        }
 
         ctx.diagnostic_with_fix(prefer_called_times_diagnostic(call_expr.span), |fixer| {
-            let param_text = Self::build_expect_argument(expect_argument, fixer);
-
-            let modifier_text =
-                parsed_expect_call.modifiers().fold(String::new(), |mut acc, modifier| {
-                    use std::fmt::Write;
-                    write!(&mut acc, ".{}", fixer.source_range(modifier.span)).unwrap();
-                    acc
-                });
-
             let method_text = if matcher.is_name_equal("toBeCalledOnce") {
                 "toBeCalledTimes"
             } else {
                 "toHaveBeenCalledTimes"
             };
 
-            let code = format!("expect({param_text}){modifier_text}.{method_text}(1)");
-
-            fixer.replace(call_expr.span, code)
+            fixer.replace(
+                Span::new(member_expr.object().span().end, call_expr.span.end),
+                format!(".{method_text}(1)"),
+            )
         });
-    }
-
-    fn build_expect_argument<'a>(
-        expect_argument: Option<&Argument<'_>>,
-        fixer: RuleFixer<'_, 'a>,
-    ) -> &'a str {
-        if let Some(arg) = expect_argument {
-            return fixer.source_range(arg.span());
-        }
-        ""
     }
 }
 
@@ -172,6 +155,31 @@ fn test() {
         (
             "expect(fn).resolves.toHaveBeenCalledOnce();",
             "expect(fn).resolves.toHaveBeenCalledTimes(1);",
+        ),
+        (
+            "import { expect as check } from 'vitest'; check(spy).toHaveBeenCalledOnce();",
+            "import { expect as check } from 'vitest'; check(spy).toHaveBeenCalledTimes(1);",
+        ),
+        (
+            "expect(spy, 'spy should run once').toHaveBeenCalledOnce();",
+            "expect(spy, 'spy should run once').toHaveBeenCalledTimes(1);",
+        ),
+        (
+            "import { expect as check } from 'vitest'; check(spy, 'message').resolves.not.toBeCalledOnce();",
+            "import { expect as check } from 'vitest'; check(spy, 'message').resolves.not.toBeCalledTimes(1);",
+        ),
+        ("expect(spy)['toHaveBeenCalledOnce']();", "expect(spy).toHaveBeenCalledTimes(1);"),
+        (
+            "expect(spy, 'message')[`resolves`]['not'][`toBeCalledOnce`]();",
+            "expect(spy, 'message')[`resolves`]['not'].toBeCalledTimes(1);",
+        ),
+        (
+            "expect(Promise.resolve(spy)).resolves.toHaveBeenCalledOnce().then(done).catch(fail);",
+            "expect(Promise.resolve(spy)).resolves.toHaveBeenCalledTimes(1).then(done).catch(fail);",
+        ),
+        (
+            "expect(spy).resolves.toBeCalledOnce().then.call(Promise.resolve(), done);",
+            "expect(spy).resolves.toBeCalledTimes(1).then.call(Promise.resolve(), done);",
         ),
     ];
 

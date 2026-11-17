@@ -193,7 +193,7 @@
 
 ## typescript
 
-642/699 (91.85%)
+646/699 (92.42%)
 
 ### Failed
 
@@ -208,12 +208,6 @@
 - externals/prettier/typescript/as/comments/18160.ts (💥, 73.24%)
   - ❓unclassified
 - externals/prettier/typescript/cast/18406.ts (💥, 84.21%)
-  - ❓unclassified
-- externals/prettier/typescript/chain-expression/call-expression.ts (💥, 98.72%)
-  - ❓unclassified
-- externals/prettier/typescript/chain-expression/new-expression.ts (💥, 93.75%)
-  - ❓unclassified
-- externals/prettier/typescript/chain-expression/tagged-template-literals.ts (💥, 93.51%)
   - ❓unclassified
 - externals/prettier/typescript/class-comment/class-implements.ts (💥, 85.71%)
   - ❓unclassified
@@ -312,11 +306,6 @@
 - externals/prettier/typescript/prettier-ignore/issue-14238.ts
 - externals/prettier/typescript/prettier-ignore/mapped-types.ts
 - externals/prettier/typescript/property-signature/consistent-with-flow/comments.ts
-
-### Error
-
-- externals/prettier/typescript/instantiation-expression/super-class.ts: Expected `{` but found `<`
-  - ❓unclassified
 
 ## tsx
 

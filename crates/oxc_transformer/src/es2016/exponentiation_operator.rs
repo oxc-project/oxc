@@ -38,10 +38,11 @@ use oxc_semantic::ReferenceFlags;
 use oxc_span::{SPAN, Span};
 use oxc_str::static_ident;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator};
-use oxc_traverse::{BoundIdentifier, Traverse};
+use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 
 use crate::{
     common::var_declarations::VarDeclarationsStore, context::TraverseCtx, state::TransformState,
+    utils::ast_builder::wrap_expression_in_arrow_function_iife,
 };
 
 pub struct ExponentiationOperator<'a> {
@@ -77,6 +78,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExponentiationOperator<'a> {
                     return;
                 }
 
+                if Self::needs_parameter_scope(assign_expr, ctx) {
+                    *expr = wrap_expression_in_arrow_function_iife(expr.take_in(ctx), ctx);
+                    return;
+                }
+
                 match &assign_expr.left {
                     AssignmentTarget::AssignmentTargetIdentifier(_) => {
                         self.convert_identifier_assignment(expr, ctx);
@@ -102,6 +108,57 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExponentiationOperator<'a> {
 }
 
 impl<'a> ExponentiationOperator<'a> {
+    fn needs_parameter_scope(assignment: &AssignmentExpression<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        let in_parameters = ctx.ancestors().find_map(|ancestor| match ancestor {
+            Ancestor::FormalParametersItems(_) | Ancestor::FormalParametersRest(_) => Some(true),
+            Ancestor::FunctionBody(_)
+            | Ancestor::ArrowFunctionExpressionBody(_)
+            | Ancestor::BlockStatementBody(_)
+            | Ancestor::StaticBlockBody(_)
+            | Ancestor::ProgramBody(_) => Some(false),
+            _ => None,
+        }) == Some(true);
+        if !in_parameters {
+            return false;
+        }
+
+        // Sloppy direct eval can introduce bindings used by later parameters and the body.
+        // A wrapper would hide those bindings in its own function scope.
+        if ctx.scoping().scope_flags(ctx.current_scope_id()).contains_direct_eval() {
+            return false;
+        }
+
+        let can_duplicate_object = |object: &Expression<'a>| match object {
+            Expression::Super(_) => true,
+            Expression::Identifier(ident) => {
+                ctx.scoping().get_reference(ident.reference_id()).symbol_id().is_some()
+            }
+            _ => false,
+        };
+        match &assignment.left {
+            AssignmentTarget::AssignmentTargetIdentifier(ident) => {
+                ctx.scoping().get_reference(ident.reference_id()).symbol_id().is_none()
+            }
+            AssignmentTarget::StaticMemberExpression(member) => {
+                !can_duplicate_object(&member.object)
+            }
+            AssignmentTarget::PrivateFieldExpression(member) => {
+                !can_duplicate_object(&member.object)
+            }
+            AssignmentTarget::ComputedMemberExpression(member) => {
+                !matches!(
+                    member.expression,
+                    Expression::BooleanLiteral(_)
+                        | Expression::NullLiteral(_)
+                        | Expression::NumericLiteral(_)
+                        | Expression::BigIntLiteral(_)
+                        | Expression::StringLiteral(_)
+                ) || !can_duplicate_object(&member.object)
+            }
+            _ => false,
+        }
+    }
+
     /// Convert `BinaryExpression`.
     ///
     /// `left ** right` -> `Math.pow(left, right)`

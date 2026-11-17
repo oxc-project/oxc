@@ -4,6 +4,7 @@ use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_mangler::{MangleOptions, MangleOptionsKeepNames, Mangler};
 use oxc_parser::Parser;
+use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 
 mod property_mangler;
@@ -135,6 +136,7 @@ fn mangler() {
         "function _() { var x; try { throw 0 } catch (e) { e } }", // e can shadow x
         "function _() { var x; try { throw 0 } catch (e) { var e } }", // e can shadow x (not implemented)
         "function _() { var x; try { throw 0 } catch { var e } }",     // e should not shadow x
+        "function _() { var y; try { throw 0 } catch (y) { var y = 2; () => { let w; y } } }", // w should not shadow the catch y
         "function _() { var x; var y; }", // x and y should have different names
         "function _() { var x; let y; }", // x and y should have different names
         "function _() { { var x; var y; } }", // x and y should have different names
@@ -162,6 +164,7 @@ fn mangler() {
         "function _() { var foo = () => { var x } }",
         "function _() { class Foo { foo() { var x } } }",
         "function _() { var Foo = class { foo() { var x } } }",
+        "function _() { var foo; try {} catch (foo) { var foo = function() {} } }",
     ];
 
     let mut snapshot = String::new();
@@ -419,6 +422,9 @@ fn annex_b_block_scoped_function() {
         "function _() { function foo() { var x; use(x); } function bar() { if (true) { function baz() {} use(baz); } } }",
         // typeof must not be replaced with a constant (reviewer request)
         "console.log(typeof foo); if (true) { function foo() { return 1; } }",
+        // Block function in a catch whose parameter a `var` redeclares: it assigns the
+        // enclosing binding, so it must keep the same name
+        "function _() { try { throw 1 } catch (e) { var e = 2; { function e() {} } use(e); } use(e); }",
     ];
 
     let mut snapshot = String::new();
@@ -431,4 +437,73 @@ fn annex_b_block_scoped_function() {
     insta::with_settings!({ prepend_module_to_snapshot => false, omit_expression => true }, {
         insta::assert_snapshot!("annex_b_block_scoped_function", snapshot);
     });
+}
+
+fn assert_valid_labels(source_text: &str, source_type: SourceType) {
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    assert!(ret.diagnostics.is_empty(), "Parser errors: {:?}", ret.diagnostics);
+    let ret = SemanticBuilder::new().with_check_syntax_error(true).build(&ret.program);
+    assert!(ret.diagnostics.is_empty(), "Semantic errors: {:?}\n{source_text}", ret.diagnostics);
+}
+
+#[test]
+fn labels() {
+    let options = MangleOptions::default();
+
+    test(
+        "outer: for (;;) { inner: for (;;) { if (a) break outer; continue inner; } }",
+        "e: for (;;) { t: for (;;) { if (a) break e; continue t; } }",
+        &options,
+    );
+    test("a: { break a; } b: { break b; }", "e: { break e; } e: { break e; }", &options);
+    test(
+        "outer: { (() => { inner: for (;;) break inner; })(); break outer; }",
+        "e: { (() => { t: for (;;) break t; })(); break e; }",
+        &options,
+    );
+    test(
+        "function _(x) { foo: for (;;) { x(); break foo; } }",
+        "function _(e) { e: for (;;) { e(); break e; } }",
+        &options,
+    );
+    test(
+        "function _() { foo: { eval(''); break foo; } }",
+        "function _() { e: { eval(''); break e; } }",
+        &options,
+    );
+    assert_eq!(mangle_script("foo: function f() {}", &options), "e: function f() {}\n");
+    test(
+        "x: { if (a) break e; if (b) break x; foo(); }",
+        "x: { if (a) break e; if (b) break x; foo(); }",
+        &options,
+    );
+
+    let reserved_options =
+        MangleOptions { reserved: std::iter::once("e".into()).collect(), ..options };
+    test("foo: { break foo; }", "e: { break e; }", &reserved_options);
+
+    let debug_options = MangleOptions { debug: true, ..options.clone() };
+    test("a: { b: { break a; } }", "slot_0: { slot_1: { break slot_0; } }", &debug_options);
+
+    let depth = 100;
+    let mut source_text = String::new();
+    for i in 0..depth {
+        write!(source_text, "label{i}: {{").unwrap();
+    }
+    source_text.push_str("break label0;");
+    source_text.push_str(&"}".repeat(depth));
+    let mangled = mangle(&source_text, &options);
+    assert!(!mangled.contains("label"), "{mangled}");
+    assert_valid_labels(&mangled, SourceType::mjs());
+
+    let cases = [
+        "outer: for (;;) { inner: for (;;) { if (a) break outer; continue inner; } }",
+        "function _() { var e; a: { b: { break a; } } }",
+    ];
+    for case in cases {
+        let pass1 = mangle(case, &options);
+        let pass2 = mangle(&pass1, &options);
+        assert_eq!(pass1, pass2);
+    }
 }

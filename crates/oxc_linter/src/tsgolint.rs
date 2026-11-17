@@ -313,7 +313,7 @@ impl TsGoLintRun {
                                                         rule.is_tsgolint_rule()
                                                             && rule.name() == tsgolint_diagnostic.rule
                                                     })
-                                                    .map(|(_, status)| *status)
+                                                    .map(|(_, config)| config.severity)
                                             })
                                             .or_else(|| {
                                                 debug_assert!(false, "resolved_config should have a matching rule for every diagnostic we received {tsgolint_diagnostic:?}");
@@ -587,11 +587,11 @@ impl TsGoLintState {
                                 };
 
                                 let severity =
-                                    resolved_config.rules.iter().find_map(|(rule, status)| {
+                                    resolved_config.rules.iter().find_map(|(rule, config)| {
                                         if rule.is_tsgolint_rule()
                                             && rule.name() == tsgolint_diagnostic.rule
                                         {
-                                            Some(*status)
+                                            Some(config.severity)
                                         } else {
                                             None
                                         }
@@ -720,8 +720,8 @@ impl TsGoLintState {
                 let rules: BTreeSet<Rule> = resolved_config
                     .rules
                     .iter()
-                    .filter_map(|(rule, status)| {
-                        if status.is_warn_deny() && rule.is_tsgolint_rule() {
+                    .filter_map(|(rule, config)| {
+                        if config.severity.is_warn_deny() && rule.is_tsgolint_rule() {
                             let rule_name = rule.name().to_string();
                             let options = match rule.to_configuration() {
                                 Some(Ok(config)) => Some(config),

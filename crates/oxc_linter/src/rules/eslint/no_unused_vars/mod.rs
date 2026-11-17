@@ -26,6 +26,7 @@ use crate::{
     context::{ContextHost, LintContext},
     rule::Rule,
     rules::eslint::no_unused_vars::options::VarsOption,
+    utils::declarator_initializes,
 };
 
 #[derive(JsonSchema, Debug)]
@@ -320,6 +321,11 @@ impl NoUnusedVars {
                 };
 
                 Self::report_with_fix_mode(self.fix.variables, ctx, report, |fixer| {
+                    // In `catch (e) { var e = 1 }`, the declarator initializes the catch
+                    // parameter. Removing or renaming it would change that binding's value.
+                    if !declarator_initializes(decl, symbol.id()) {
+                        return fixer.noop();
+                    }
                     // NOTE: suggestions produced by this fixer are all flagged
                     // as dangerous
                     self.rename_or_remove_var_declaration(fixer, symbol, decl, declaration.id())
@@ -466,6 +472,15 @@ fn remove_unused_catch_parameter<'a>(
     ctx: &LintContext<'a>,
     catch: &CatchParameter<'a>,
 ) -> crate::fixer::RuleFix {
+    // A redeclaring `var` initializer assigns to this binding even without references.
+    // Removing the parameter would redirect the assignment to the enclosing var binding.
+    if catch
+        .pattern
+        .get_binding_identifier()
+        .is_some_and(|id| ctx.scoping().catch_var_binding(id.symbol_id()).is_some())
+    {
+        return fixer.noop();
+    }
     let Span { start, end, .. } = catch.span();
     let AstKind::CatchClause(catch_clause) = ctx.nodes().parent_node(catch.node_id()).kind() else {
         return fixer.noop();

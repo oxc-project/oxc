@@ -70,7 +70,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     recommended,
-    fix,
+    suggestion,
     config = NoUnsafeNegation,
     version = "0.0.3",
     short_description = "Disallow negating the left side of relational operators.",
@@ -114,7 +114,7 @@ impl Rule for NoUnsafeNegation {
                 fixer.replace(expr.span, modified_code)
             };
 
-            ctx.diagnostic_with_fix(diagnostic, fix_producer);
+            ctx.diagnostic_with_suggestion(diagnostic, fix_producer);
         }
     }
 }
@@ -201,4 +201,30 @@ fn test() {
     Tester::new(NoUnsafeNegation::NAME, NoUnsafeNegation::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn test_suggestion_only() {
+    use crate::{fixer::FixKind, tester::Tester};
+
+    let cases = [
+        (
+            r#"const key = "a"; const obj = {}; console.log(!key in obj);"#,
+            r#"const key = "a"; const obj = {}; console.log(!(key in obj));"#,
+            None,
+        ),
+        ("!a instanceof b", "!(a instanceof b)", None),
+        ("!a < b", "!(a < b)", Some(serde_json::json!([{ "enforceForOrderingRelations": true }]))),
+    ];
+
+    let fix = cases.into_iter().flat_map(|(source, expected, config)| {
+        [
+            (source, source, config.clone(), FixKind::SafeFix),
+            (source, expected, config, FixKind::Suggestion),
+        ]
+    });
+
+    Tester::new::<&str>(NoUnsafeNegation::NAME, NoUnsafeNegation::PLUGIN, vec![], vec![])
+        .expect_fix(fix.collect::<Vec<_>>())
+        .test();
 }

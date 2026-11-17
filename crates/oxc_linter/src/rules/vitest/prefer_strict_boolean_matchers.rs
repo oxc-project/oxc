@@ -25,12 +25,14 @@ pub struct PreferStrictBooleanMatchers;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce using `toBe(true)` and `toBe(false)` over matchers that coerce types to boolean.
+    /// This rule warns when `toBeTruthy()` or `toBeFalsy()` is used with `expect` or `expectTypeOf`.
+    /// With `--fix-suggestions`, it will be replaced with `toBe(true)` or `toBe(false)`.
     ///
     /// ### Why is this bad?
     ///
     /// Truthy/falsy matchers coerce values to boolean and can hide type mistakes.
     /// Strict boolean assertions make intent explicit and avoid accidental coercion.
+    /// The replacement is a suggestion because it changes which values pass the assertion.
     ///
     /// ### Examples
     ///
@@ -52,7 +54,7 @@ declare_oxc_lint!(
     PreferStrictBooleanMatchers,
     vitest,
     style,
-    fix,
+    suggestion,
     version = "1.57.0",
     short_description =
         "Enforce using `toBe(true)` and `toBe(false)` over matchers that coerce types to boolean.",
@@ -97,10 +99,13 @@ impl Rule for PreferStrictBooleanMatchers {
         };
 
         let span = Span::new(matcher.span.start, call_expr.span.end);
-        ctx.diagnostic_with_fix(prefer_strict_boolean_matchers_diagnostic(span, value), |fixer| {
-            let call_name = if is_cmp_mem_expr { "\"toBe\"]" } else { "toBe" };
-            fixer.replace(span, format!("{call_name}({value})"))
-        });
+        ctx.diagnostic_with_suggestion(
+            prefer_strict_boolean_matchers_diagnostic(span, value),
+            |fixer| {
+                let call_name = if is_cmp_mem_expr { "\"toBe\"]" } else { "toBe" };
+                fixer.replace(span, format!("{call_name}({value})"))
+            },
+        );
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
@@ -110,7 +115,7 @@ impl Rule for PreferStrictBooleanMatchers {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::{fixer::FixKind, tester::Tester};
 
     let pass = vec![
         "[].push(true)",
@@ -156,18 +161,68 @@ fn test() {
     ];
 
     let fix = vec![
-        ("expect(false).toBeTruthy();", "expect(false).toBe(true);"),
-        ("expect(false).toBeFalsy();", "expect(false).toBe(false);"),
-        ("expectTypeOf(false).toBeTruthy();", "expectTypeOf(false).toBe(true);"),
-        ("expectTypeOf(false).toBeFalsy();", "expectTypeOf(false).toBe(false);"),
-        ("expect(wasSuccessful).toBeTruthy();", "expect(wasSuccessful).toBe(true);"),
-        ("expect(wasSuccessful).toBeFalsy();", "expect(wasSuccessful).toBe(false);"),
-        (r#"expect("a string").not.toBeTruthy();"#, r#"expect("a string").not.toBe(true);"#),
-        (r#"expect("a string").not.toBeFalsy();"#, r#"expect("a string").not.toBe(false);"#),
-        (r#"expect(value)["toBeTruthy"]();"#, r#"expect(value)["toBe"](true);"#),
-        (r#"expect(value)["toBeFalsy"]();"#, r#"expect(value)["toBe"](false);"#),
-        (r#"expect(value).not["toBeTruthy"]();"#, r#"expect(value).not["toBe"](true);"#),
-        (r#"expect(value).not["toBeFalsy"]();"#, r#"expect(value).not["toBe"](false);"#),
+        ("expect(false).toBeTruthy();", "expect(false).toBe(true);", None, FixKind::Suggestion),
+        ("expect(false).toBeFalsy();", "expect(false).toBe(false);", None, FixKind::Suggestion),
+        (
+            "expectTypeOf(false).toBeTruthy();",
+            "expectTypeOf(false).toBe(true);",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "expectTypeOf(false).toBeFalsy();",
+            "expectTypeOf(false).toBe(false);",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "expect(wasSuccessful).toBeTruthy();",
+            "expect(wasSuccessful).toBe(true);",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "expect(wasSuccessful).toBeFalsy();",
+            "expect(wasSuccessful).toBe(false);",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            r#"expect("a string").not.toBeTruthy();"#,
+            r#"expect("a string").not.toBe(true);"#,
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            r#"expect("a string").not.toBeFalsy();"#,
+            r#"expect("a string").not.toBe(false);"#,
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            r#"expect(value)["toBeTruthy"]();"#,
+            r#"expect(value)["toBe"](true);"#,
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            r#"expect(value)["toBeFalsy"]();"#,
+            r#"expect(value)["toBe"](false);"#,
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            r#"expect(value).not["toBeTruthy"]();"#,
+            r#"expect(value).not["toBe"](true);"#,
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            r#"expect(value).not["toBeFalsy"]();"#,
+            r#"expect(value).not["toBe"](false);"#,
+            None,
+            FixKind::Suggestion,
+        ),
     ];
 
     Tester::new(PreferStrictBooleanMatchers::NAME, PreferStrictBooleanMatchers::PLUGIN, pass, fail)

@@ -1,5 +1,13 @@
 # Fix
 
+Before attempting a fix, read `issue.assignees` from the JSON event payload at
+`GITHUB_EVENT_PATH`. If the issue has any assignees, leave the fix to them:
+do not edit source code or add a fix regression. Append to
+`<triageDir>/report.md` that investigation is complete and implementation was
+left to the assignees, then return `fixed: false` with `commitMessage: null`.
+If assignment information cannot be read, report that and return the same
+result without attempting a fix.
+
 Implement a fix only when verification found `bug` and diagnosis has specific,
 medium- or high-confidence evidence. Otherwise append why no safe fix was
 attempted and return `fixed: false` with `commitMessage: null`.

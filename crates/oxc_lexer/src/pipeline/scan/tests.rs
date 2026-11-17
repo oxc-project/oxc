@@ -2,7 +2,7 @@ use std::iter;
 
 use oxc_simd::{DynCpu, test_cpus};
 
-use crate::PAD;
+use crate::{PAD, pipeline::source::Source};
 
 use super::{
     generic::{scan_block_comment_generic, scan_line_comment_generic},
@@ -31,19 +31,18 @@ fn comment_scans_match_generic(cpu: DynCpu) {
         }
         src.resize(n + PAD, 0);
         let i = (xorshift(&mut s) % n as u64) as usize;
+        let src = Source::new(&src, n);
 
-        unsafe {
-            assert_eq!(
-                scan_block_comment(src.as_ptr(), n, i, cpu),
-                scan_block_comment_generic(src.as_ptr(), n, i),
-                "block comment, case {case}"
-            );
-            assert_eq!(
-                scan_line_comment(src.as_ptr(), n, i, cpu),
-                scan_line_comment_generic(src.as_ptr(), n, i),
-                "line comment, case {case}"
-            );
-        }
+        assert_eq!(
+            scan_block_comment(src, i, cpu),
+            scan_block_comment_generic(src, i),
+            "block comment, case {case}"
+        );
+        assert_eq!(
+            scan_line_comment(src, i, cpu),
+            scan_line_comment_generic(src, i),
+            "line comment, case {case}"
+        );
     }
 }
 

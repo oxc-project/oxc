@@ -42,7 +42,7 @@
 //! The minifier consists of:
 //! - **Compressor**: Orchestrates the optimization pipeline
 //! - **Peephole Optimizations**: Individual transformation passes
-//! - **Mangler**: Variable renaming for size reduction
+//! - **Mangler**: Variable and label renaming for size reduction
 //!
 //! See the [crate documentation](https://github.com/oxc-project/oxc/tree/main/crates/oxc_minifier) for more details.
 
