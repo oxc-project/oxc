@@ -1,5 +1,13 @@
 use crate::HtmlishVariant;
 
+/// Which language `{{ }}` and code in attribute values are in (Vue's prints by `print/vue.rs`).
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum TemplateExpressions {
+    None,
+    Vue,
+    Angular,
+}
+
 /// What the variant changes in the shared rules, resolved once per document.
 #[derive(Clone, Copy)]
 pub struct DialectRules {
@@ -12,9 +20,10 @@ pub struct DialectRules {
     pub has_blocks: bool,
     /// Angular: the content of an element with `i18n` or `ngNonBindable` prints as written (`Tree::keeps_angular_content`).
     pub keeps_angular_content: bool,
-    /// Vue: the root's elements but `html` are single-file component blocks (`<template>`, `<script>`, `<i18n>`),
-    /// and `{{ }}` and directive values are JS.
+    /// Vue: the root's elements but `html` are single-file component blocks (`<template>`, `<script>`, `<i18n>`).
     pub vue_sfc: bool,
+    /// The language of `{{ }}` and the attribute values that are code.
+    pub template_expressions: TemplateExpressions,
     /// `<!DOCTYPE html>` prints `<!doctype html>` in a standalone HTML document, whose reader is an HTML parser
     /// (a Vue file read as HTML too), and an Angular template (a `.html` file to Prettier);
     /// as written where embedded, in XHTML and a Vue single-file component
@@ -37,6 +46,11 @@ impl DialectRules {
             has_blocks: variant == HtmlishVariant::Angular,
             keeps_angular_content: variant == HtmlishVariant::Angular,
             vue_sfc: variant == HtmlishVariant::Vue,
+            template_expressions: match variant {
+                HtmlishVariant::Html | HtmlishVariant::Xhtml => TemplateExpressions::None,
+                HtmlishVariant::Vue => TemplateExpressions::Vue,
+                HtmlishVariant::Angular => TemplateExpressions::Angular,
+            },
             lowercase_doctype: standalone
                 && (matches!(variant, HtmlishVariant::Html | HtmlishVariant::Angular)
                     || (variant == HtmlishVariant::Vue && !sfc)),

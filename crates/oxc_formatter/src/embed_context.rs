@@ -101,6 +101,10 @@ pub enum ProgramLayout {
 }
 
 /// How an expression prints.
+///
+/// Each field but `layout` is one fact of the host, independent of the others:
+/// where it ends the code, what it puts around it, how it reads it.
+/// Any combination is one a host can have; a host's use only names its own.
 #[derive(Clone, Copy, Debug)]
 pub struct ExpressionRoot {
     pub layout: ExpressionLayout,

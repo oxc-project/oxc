@@ -27,7 +27,10 @@ use super::{
     tag::opening_end_borrowed,
     vue,
 };
-use crate::tree::{Tree, collapse_whitespace};
+use crate::{
+    rules::TemplateExpressions,
+    tree::{Tree, collapse_whitespace},
+};
 
 /// `<!-- prettier-ignore-attribute -->` right before the element: the attribute names it lists (all when none),
 /// which print as written.
@@ -150,7 +153,7 @@ fn write_attribute<'a>(
     }
     let raw = unescaped(value, f);
     // A Vue attribute whose value is JS prints as written where it does not format (as Prettier does)
-    if t.rules().vue_sfc
+    if t.rules().template_expressions == TemplateExpressions::Vue
         && let Some(kind) = vue::value_kind(t, element, attribute, f)
     {
         if !vue::write_attribute_value(t, kind, raw, f) {

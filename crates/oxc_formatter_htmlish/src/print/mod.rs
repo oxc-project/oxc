@@ -9,7 +9,7 @@ use oxc_formatter_core::{
 };
 use oxc_htmlish_parser::ast::{NodeId, NodeKind};
 
-use crate::{context::HtmlishFormatContext, tree::Tree};
+use crate::{context::HtmlishFormatContext, rules::TemplateExpressions, tree::Tree};
 
 mod attribute;
 mod block;
@@ -107,9 +107,10 @@ fn write_node<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'_, 'a>)
         NodeKind::Interpolation(interpolation) => {
             let expression = interpolation.expression.slice(t.source());
             write_opening_tag_start(t, id, f);
-            if t.rules().vue_sfc {
+            if t.rules().template_expressions == TemplateExpressions::Vue {
                 vue::write_interpolation(t, id, expression, f);
             } else if !expression.trim_ascii().is_empty() {
+                // TODO(angular): as written until Angular's expressions are formatted
                 write!(
                     f,
                     soft_space_or_block_indent(&format_with(|f| write_dedented_lines(
