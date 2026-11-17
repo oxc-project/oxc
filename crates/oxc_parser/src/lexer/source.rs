@@ -801,7 +801,8 @@ impl<'a> SourcePosition<'a> {
         // Caller guarantees `self` is not after end of source text.
         // `LexerSource` is created from a `ValidSource`, so source text and the padding
         // which follows it are allocated, initialized memory.
-        // `ValidSource` guarantees that nothing writes to that memory during `'a`.
+        // `ValidSource` guarantees that nothing writes to that memory while a `SourcePosition`
+        // created from it exists.
         // Pointer is "dereferenceable" by definition as a `u8` is 1 byte and cannot span multiple objects.
         // Alignment is not relevant as `u8` is aligned on 1 (i.e. no alignment requirements).
         unsafe { *self.ptr.as_ref_unchecked() }
@@ -823,7 +824,8 @@ impl<'a> SourcePosition<'a> {
         // `LexerSource` is created from a `ValidSource`, so source text and the padding
         // which follows it are allocated, initialized memory, and the padding is at least
         // 2 bytes long.
-        // `ValidSource` guarantees that nothing writes to that memory during `'a`.
+        // `ValidSource` guarantees that nothing writes to that memory while a `SourcePosition`
+        // created from it exists.
         // Alignment is not relevant as `u8` is aligned on 1 (i.e. no alignment requirements).
         unsafe {
             let p = self.ptr.cast::<[u8; 2]>();

@@ -2,6 +2,7 @@
 
 use std::{
     alloc::Layout,
+    cmp::min,
     ptr::NonNull,
     slice,
     str::{self, Utf8Error},
@@ -46,6 +47,14 @@ mod tests;
 ///
 /// `Source` does not check that the source bytes are valid UTF-8.
 ///
+/// # Parsing
+///
+/// - [`parse`] parses the whole source. There are variants of it which take
+///   [`ParseOptions`] and a [`ParserConfig`].
+/// - [`parse_expression`] parses the whole source as a single expression.
+/// - [`parse_section`] parses a section of the source, for files which contain JS/TS code
+///   embedded in something else (e.g. `.vue`, `.svelte`, `.astro`).
+///
 /// # Example
 ///
 /// ```
@@ -65,6 +74,11 @@ mod tests;
 /// [`read_from_file`]: Self::read_from_file
 /// [`read_from_file_with_source_type`]: Self::read_from_file_with_source_type
 /// [`read_from_reader`]: Self::read_from_reader
+/// [`parse`]: Self::parse
+/// [`parse_expression`]: Self::parse_expression
+/// [`parse_section`]: Self::parse_section
+/// [`ParseOptions`]: crate::ParseOptions
+/// [`ParserConfig`]: crate::config::ParserConfig
 //
 // # Invariants
 //
@@ -72,8 +86,12 @@ mod tests;
 // 2. `ptr` is valid for reading and writing all of that region, for the whole of `'a`.
 // 3. The first `len` bytes of the region are initialized.
 // 4. The `PADDING` bytes after them are zero.
-// 5. No reference to any part of the region exists, except ones which borrow this `Source`.
-// 6. If `is_valid_utf8` is `true`, the first `len` bytes are valid UTF-8.
+// 5. No reference to any byte of the region at offset `sections_end` or later exists,
+//    except ones which borrow this `Source`.
+// 6. Bytes of the region before offset `sections_end` may be referenced for the whole of `'a`
+//    (by ASTs of sections which have been parsed). Nothing writes to them.
+// 7. `sections_end <= len`.
+// 8. If `is_valid_utf8` is `true`, the first `len` bytes are valid UTF-8.
 //
 // `Source` is not `Clone` or `Copy`. A 2nd copy would be a way to break invariant (5).
 pub struct Source<'a> {
@@ -81,6 +99,9 @@ pub struct Source<'a> {
     ptr: NonNull<u8>,
     /// Length of source in bytes, not including padding.
     len: usize,
+    /// Offset of end of the last section parsed with `Source::parse_section`.
+    /// 0 if no section has been parsed.
+    sections_end: usize,
     /// `true` if source bytes are known to be valid UTF-8.
     is_valid_utf8: bool,
     /// Source type to parse source as.
@@ -271,7 +292,7 @@ impl<'a> Source<'a> {
         // and that no reference to the last `PADDING` bytes of them exists
         unsafe { ptr.add(len).write_bytes(0, Self::PADDING) };
 
-        Self { ptr, len, is_valid_utf8, source_type, allocator }
+        Self { ptr, len, sections_end: 0, is_valid_utf8, source_type, allocator }
     }
 
     /// Convert this [`Source`] into its raw parts.
@@ -385,9 +406,15 @@ impl<'a> Source<'a> {
     /// If source is not already known to be valid UTF-8, this validates it,
     /// which is a pass over the whole source.
     ///
+    /// Use this to get the whole source text after parsing sections of it with
+    /// [`Source::parse_section`]. When the whole source is parsed with [`Source::parse`],
+    /// [`Program::source_text`] is the source text.
+    ///
     /// # Errors
     ///
     /// Returns [`Utf8Error`] if source is not valid UTF-8.
+    ///
+    /// [`Program::source_text`]: oxc_ast::ast::Program::source_text
     #[inline]
     pub fn into_str(mut self) -> Result<&'a str, Utf8Error> {
         if !self.is_valid_utf8 {
@@ -401,6 +428,118 @@ impl<'a> Source<'a> {
         // SAFETY: Source bytes are valid UTF-8.
         // Either that was already known, or `validate_utf8` just checked it.
         Ok(unsafe { str::from_utf8_unchecked(bytes) })
+    }
+
+    /// Run `parse` on a section of this [`Source`].
+    ///
+    /// The section is the bytes of the source from offset `start` up to (not including) `end`.
+    /// `parse` receives the section as a [`Source`] of its own, with [`SourceType`] `source_type`.
+    /// The section is not copied.
+    ///
+    /// A [`Source`] must be followed by [`Source::PADDING`] zero bytes, but what follows the section
+    /// is the rest of the source. So the bytes following the section are saved, overwritten
+    /// with zeros while `parse` runs, and written back once it returns (or panics).
+    ///
+    /// # Panics
+    ///
+    /// Panics if any of:
+    ///
+    /// - `start > end`.
+    /// - `end > self.len()`.
+    /// - `start` is before the end of a section which was passed to this method previously.
+    ///
+    /// # SAFETY
+    ///
+    /// Once `parse` returns, neither the [`Source`] passed to it, nor anything created from it
+    /// which can read its padding (a `Lexer`, and its `SourcePosition`s), may exist.
+    /// References to the section's source text may. They are valid for `'a`.
+    pub(crate) unsafe fn with_section<R>(
+        &mut self,
+        source_type: SourceType,
+        start: usize,
+        end: usize,
+        parse: impl FnOnce(Source<'a>) -> R,
+    ) -> R {
+        /// Guard which writes back the bytes which followed a section, when it's dropped.
+        struct Restore {
+            /// Pointer to the first byte after the section.
+            ptr: NonNull<u8>,
+            /// The bytes to write back. Only the first `len` of them are used.
+            bytes: [u8; Source::PADDING],
+            /// Number of bytes to write back.
+            len: usize,
+        }
+
+        impl Drop for Restore {
+            fn drop(&mut self) {
+                // SAFETY: Same as for the write of zeros in `with_section`.
+                // `with_section`'s caller guarantees nothing which reads the padding exists now.
+                unsafe {
+                    self.ptr.copy_from_nonoverlapping(NonNull::from(&self.bytes).cast(), self.len);
+                }
+            }
+        }
+
+        assert!(start <= end && end <= self.len, "Section is out of bounds");
+        assert!(start >= self.sections_end, "Section overlaps a section which is already parsed");
+
+        // Section's source bytes are only known to be valid UTF-8 if the whole source is,
+        // and section starts and ends on character boundaries.
+        // If not, `is_valid_utf8` is `false` for the section, so the parser checks it.
+        let is_valid_utf8 = self.is_valid_utf8 && {
+            // SAFETY: `is_valid_utf8` is `true`, so source bytes are valid UTF-8
+            let source_text = unsafe { str::from_utf8_unchecked(self.as_bytes()) };
+            source_text.is_char_boundary(start) && source_text.is_char_boundary(end)
+        };
+
+        // `parse` can hand out references to the section's source bytes which live for `'a`,
+        // so they must not be written to from now on. Record that, to uphold invariant (6).
+        // Do it before calling `parse`, so it's recorded even if `parse` panics.
+        self.sections_end = end;
+
+        // The `PADDING` bytes after the section are the tail of the source which follows it,
+        // and then, if the tail is shorter than `PADDING`, the start of the source's own padding,
+        // which is already zero. Save the tail, and overwrite it with zeros.
+        let tail_len = min(self.len - end, Self::PADDING);
+        // SAFETY: `end <= self.len`, so `tail_ptr` is in bounds of the region, or 1 past its end
+        let tail_ptr = unsafe { self.ptr.add(end) };
+        let mut restore = Restore { ptr: tail_ptr, bytes: [0; Self::PADDING], len: tail_len };
+        // SAFETY:
+        // - The `tail_len` bytes starting at `tail_ptr` are within the first `self.len` bytes
+        //   of the region, so are initialized, and valid for reads and writes.
+        // - `tail_len <= PADDING`, so `restore.bytes` has space for them.
+        // - They are at offset `end` or later, and `sections_end == end`, so no reference
+        //   to them exists, except ones which borrow `self`. `self` is mutably borrowed here.
+        unsafe {
+            NonNull::from(&mut restore.bytes).cast().copy_from_nonoverlapping(tail_ptr, tail_len);
+            tail_ptr.write_bytes(0, tail_len);
+        }
+
+        // The section fulfils all the invariants of a `Source`:
+        // - Its region is `end - start + PADDING` bytes, starting at offset `start`.
+        //   `end <= self.len`, so that's within this `Source`'s region,
+        //   and so is valid for reads and writes for `'a`.
+        // - Its first `end - start` bytes are initialized.
+        // - The `PADDING` bytes after them were just set to zero, or are within this `Source`'s
+        //   own padding. Nothing writes to them until `restore` is dropped. Caller guarantees
+        //   the section `Source` does not exist then.
+        // - `start` was at or after the previous value of `sections_end`,
+        //   so no reference to any byte of the section's region exists.
+        // - `is_valid_utf8` is only `true` if the section's source bytes are valid UTF-8.
+        // SAFETY: `start <= self.len`, so `start` is in bounds of the region, or 1 past its end
+        let ptr = unsafe { self.ptr.add(start) };
+        let section = Self {
+            ptr,
+            len: end - start,
+            sections_end: 0,
+            is_valid_utf8,
+            source_type,
+            allocator: self.allocator,
+        };
+
+        parse(section)
+
+        // `restore` is dropped here, which writes the tail back
     }
 
     /// Check that source bytes are valid UTF-8, and record that they are.

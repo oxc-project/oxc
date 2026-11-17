@@ -32,10 +32,15 @@ use super::Source;
 //
 // 1. `ptr` points to a region of memory `len + Source::PADDING` bytes long.
 // 2. `ptr` is valid for reading all of that region, for the whole of `'a`.
-// 3. Nothing writes to any part of the region during `'a`.
-// 4. The first `len` bytes of the region are valid UTF-8.
-// 5. The `Source::PADDING` bytes after them are zero.
+// 3. The first `len` bytes of the region are valid UTF-8.
+// 4. Nothing writes to those `len` bytes during `'a`.
+// 5. The `Source::PADDING` bytes after them are zero. Nothing writes to them while
+//    this `ValidSource`, or anything created from it which can read the padding
+//    (a `Lexer`, and its `SourcePosition`s), exists.
 // 6. `len <= MAX_LEN`.
+//
+// (5) is weaker than (4) because the padding of a section of a `Source` is only borrowed
+// from the rest of the source for the duration of the parse. See `Source::with_section`.
 pub struct ValidSource<'a> {
     /// Pointer to start of source text.
     ptr: NonNull<u8>,
@@ -66,7 +71,10 @@ impl<'a> ValidSource<'a> {
         }
 
         // `Source`'s invariants cover all of `ValidSource`'s, except for the 2 checked above.
-        // `source` is consumed, so nothing can write to the region after this.
+        // `source` is consumed, so nothing can write to the source text after this.
+        // If `source` is a section of another `Source`, its padding is written to again
+        // after the parse, but not before this `ValidSource` and anything created from it
+        // which can read the padding are gone. `Source::with_section`'s caller guarantees that.
         let Source { ptr, len, source_type, allocator, .. } = source;
         Ok(Self { ptr, len, source_type, allocator })
     }
@@ -83,8 +91,9 @@ impl<'a> ValidSource<'a> {
 
     /// Get pointer to start of source text.
     ///
-    /// The pointer is valid for reading the source text and the [`Source::PADDING`] bytes
-    /// which follow it, for the whole of `'a`.
+    /// The pointer is valid for reading the source text for the whole of `'a`.
+    /// It's valid for reading the [`Source::PADDING`] bytes which follow the source text
+    /// only until the parse this `ValidSource` was created for ends.
     #[inline]
     pub fn as_ptr(&self) -> *const u8 {
         self.ptr.as_ptr().cast_const()

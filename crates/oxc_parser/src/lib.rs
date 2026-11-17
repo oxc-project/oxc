@@ -493,6 +493,110 @@ impl<'a> Source<'a> {
         }
     }
 
+    /// Parse a section of this [`Source`], with default [`ParseOptions`].
+    ///
+    /// This is for files which contain JS/TS code embedded in something else
+    /// (e.g. `.vue`, `.svelte`, `.astro`). The section is parsed in place, without copying it.
+    ///
+    /// The section is the bytes of the source from offset `start` up to (not including) `end`.
+    /// It's parsed as `source_type`. The [`SourceType`] of the [`Source`] itself is not used.
+    ///
+    /// [`Span`]s in the returned AST are relative to the start of the section,
+    /// and [`Program::source_text`] is the text of the section only.
+    /// Use [`Source::into_str`] to get the text of the whole source, after parsing its sections.
+    ///
+    /// Sections must be parsed in the order they appear in the source, and must not overlap.
+    /// The ASTs of sections which have been parsed borrow their source text.
+    ///
+    /// Returns an empty `Program` on unrecoverable error.
+    /// Recoverable errors are stored inside [`ParserReturn::diagnostics`].
+    /// It's an unrecoverable error if the section is not valid UTF-8, which includes `start`
+    /// or `end` not being on a UTF-8 character boundary. The rest of the source does not need
+    /// to be valid UTF-8.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use oxc_allocator::Allocator;
+    /// use oxc_parser::Source;
+    /// use oxc_span::SourceType;
+    ///
+    /// let allocator = Allocator::default();
+    /// let html = "<script>let x = 1;</script><script>let y = 2;</script>";
+    /// let mut source = Source::from_str(html, SourceType::mjs(), &allocator);
+    ///
+    /// let ret1 = source.parse_section(SourceType::mjs(), 8, 18);
+    /// assert_eq!(ret1.program.source_text, "let x = 1;");
+    ///
+    /// let ret2 = source.parse_section(SourceType::ts(), 35, 45);
+    /// assert_eq!(ret2.program.source_text, "let y = 2;");
+    ///
+    /// assert_eq!(source.into_str().unwrap(), html);
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if any of:
+    ///
+    /// - `start > end`.
+    /// - `end > self.len()`.
+    /// - `start` is before the end of a section which was parsed previously.
+    ///
+    /// [`Span`]: oxc_span::Span
+    pub fn parse_section(
+        &mut self,
+        source_type: SourceType,
+        start: usize,
+        end: usize,
+    ) -> ParserReturn<'a> {
+        self.parse_section_with_options(source_type, start, end, ParseOptions::default())
+    }
+
+    /// Parse a section of this [`Source`], with the provided [`ParseOptions`].
+    ///
+    /// See [`Source::parse_section`] for details.
+    ///
+    /// # Panics
+    ///
+    /// Panics in the same circumstances as [`Source::parse_section`].
+    pub fn parse_section_with_options(
+        &mut self,
+        source_type: SourceType,
+        start: usize,
+        end: usize,
+        options: ParseOptions,
+    ) -> ParserReturn<'a> {
+        self.parse_section_with_config(source_type, start, end, options, NoTokensParserConfig)
+    }
+
+    /// Parse a section of this [`Source`], with the provided [`ParseOptions`]
+    /// and [`ParserConfig`].
+    ///
+    /// See [`Source::parse_section`] and [`ParserConfig`] for details.
+    ///
+    /// # Panics
+    ///
+    /// Panics in the same circumstances as [`Source::parse_section`].
+    #[inline]
+    pub fn parse_section_with_config<C: ParserConfig>(
+        &mut self,
+        source_type: SourceType,
+        start: usize,
+        end: usize,
+        options: ParseOptions,
+        config: C,
+    ) -> ParserReturn<'a> {
+        // SAFETY: `parse_with_config` consumes the section `Source`. The parser and lexer
+        // it creates are dropped before it returns, and `SourcePosition`s cannot outlive them,
+        // because they're branded. `ParserReturn` contains only references to the section's
+        // source text, and offsets into it.
+        unsafe {
+            self.with_section(source_type, start, end, |section| {
+                section.parse_with_config(options, config)
+            })
+        }
+    }
+
     /// Parse this [`Source`] as a single [`Expression`], with default [`ParseOptions`].
     ///
     /// Every node receives a unique, nonzero node ID. IDs follow construction
@@ -1523,6 +1627,169 @@ mod test {
         let diagnostics = parse(b"'\xFF'").err().unwrap();
         assert_eq!(diagnostics.len(), 1);
         assert_eq!(diagnostics[0].to_string(), "File appears to be binary.");
+    }
+
+    /// Get the `start` and `end` offsets of the 1st occurrence of `section` in `source_text`.
+    fn section_offsets(source_text: &str, section: &str) -> (usize, usize) {
+        let start = source_text.find(section).unwrap();
+        (start, start + section.len())
+    }
+
+    /// `Source::parse_section` parses only the section, and leaves the source unaltered.
+    #[test]
+    fn source_parse_section() {
+        let allocator = Allocator::default();
+
+        // The lexer must not read on into what follows a section.
+        // If it did, 1st section would end with identifier `foobar` and a comment,
+        // and 2nd with an unterminated string.
+        let source_text =
+            "<script>let x = foo</script>bar // <script lang='ts'>let y: T = 'qux</script>'";
+        let mut source = Source::from_str(source_text, SourceType::mjs(), &allocator);
+
+        let (start, end) = section_offsets(source_text, "let x = foo");
+        let ret1 = source.parse_section(SourceType::mjs(), start, end);
+        assert!(!ret1.fatal_error);
+        assert!(ret1.diagnostics.is_empty());
+        assert_eq!(ret1.program.source_text, "let x = foo");
+        assert_eq!(ret1.program.body.len(), 1);
+        assert_eq!(ret1.program.span.end, 11);
+        assert!(ret1.program.comments.is_empty());
+        assert!(ret1.program.source_type.is_javascript());
+        assert_eq!(source.as_bytes(), source_text.as_bytes());
+
+        let (start, end) = section_offsets(source_text, "let y: T = 'qux");
+        let options = ParseOptions { preserve_parens: false, ..ParseOptions::default() };
+        let ret2 = source.parse_section_with_options(SourceType::ts(), start, end, options);
+        assert!(ret2.fatal_error);
+        assert_eq!(ret2.diagnostics.len(), 1);
+        assert_eq!(ret2.diagnostics[0].to_string(), "Unterminated string");
+        assert_eq!(ret2.program.source_text, "let y: T = 'qux");
+        assert!(ret2.program.source_type.is_typescript());
+        assert_eq!(source.as_bytes(), source_text.as_bytes());
+
+        // Source text of the sections is within the `Source`, not a copy
+        let source_text_in_arena = source.into_str().unwrap();
+        assert_eq!(source_text_in_arena, source_text);
+        let range = source_text_in_arena.as_bytes().as_ptr_range();
+        assert!(range.contains(&ret1.program.source_text.as_ptr()));
+        assert!(range.contains(&ret2.program.source_text.as_ptr()));
+        assert_eq!(ret1.program.source_text, "let x = foo");
+    }
+
+    /// `Source::parse_section` handles sections at the start and end of the source,
+    /// empty sections, and a section which is the whole source.
+    #[test]
+    fn source_parse_section_bounds() {
+        let allocator = Allocator::default();
+        let source_text = "a;b;c";
+        let len = source_text.len();
+
+        for (start, end, expected) in
+            [(0, 2, "a;"), (2, 2, ""), (2, 4, "b;"), (4, len, "c"), (len, len, "")]
+        {
+            let mut source = Source::from_str(source_text, SourceType::mjs(), &allocator);
+            let ret = source.parse_section(SourceType::mjs(), start, end);
+            assert!(ret.diagnostics.is_empty());
+            assert_eq!(ret.program.source_text, expected);
+            assert_eq!(ret.program.body.len(), usize::from(!expected.is_empty()));
+            assert_eq!(source.as_bytes(), source_text.as_bytes());
+        }
+
+        // All sections of 1 source, in order. 2 sections can share a boundary.
+        let mut source = Source::from_str(source_text, SourceType::mjs(), &allocator);
+        for (start, end, expected) in [(0, 2, "a;"), (2, 4, "b;"), (4, 4, ""), (4, len, "c")] {
+            let ret = source.parse_section(SourceType::mjs(), start, end);
+            assert!(ret.diagnostics.is_empty());
+            assert_eq!(ret.program.source_text, expected);
+        }
+        assert_eq!(source.into_str(), Ok(source_text));
+
+        // Whole source, followed by parsing the `Source` itself
+        let mut source = Source::from_str(source_text, SourceType::mjs(), &allocator);
+        let ret = source.parse_section(SourceType::mjs(), 0, len);
+        assert_eq!(ret.program.body.len(), 3);
+        let ret = source.parse();
+        assert_eq!(ret.program.body.len(), 3);
+        assert_eq!(ret.program.source_text, source_text);
+
+        // Section longer than the padding, followed by more than the padding
+        let section = format!("x = [{}];", "1,".repeat(Source::PADDING * 2));
+        let source_text = format!("{}{section}{}", "(".repeat(100), ")".repeat(100));
+        let mut source = Source::from_str(&source_text, SourceType::mjs(), &allocator);
+        let ret = source.parse_section(SourceType::mjs(), 100, 100 + section.len());
+        assert!(ret.diagnostics.is_empty());
+        assert_eq!(ret.program.source_text, section);
+        assert_eq!(source.into_str(), Ok(source_text.as_str()));
+    }
+
+    /// `Source::parse_section` only requires the section itself to be valid UTF-8.
+    #[test]
+    fn source_parse_section_utf8() {
+        let allocator = Allocator::default();
+
+        // Source which is known to be valid UTF-8. Section on character boundaries.
+        let source_text = "日本語;'日本語';日本語";
+        let (start, end) = section_offsets(source_text, "'日本語';");
+        let mut source = Source::from_str(source_text, SourceType::mjs(), &allocator);
+        let ret = source.parse_section(SourceType::mjs(), start, end);
+        assert!(ret.diagnostics.is_empty());
+        assert_eq!(ret.program.source_text, "'日本語';");
+
+        // Same source, but section starts or ends in the middle of a character
+        for (start, end) in [(start - 2, end), (start, end + 1), (start + 2, end)] {
+            let mut source = Source::from_str(source_text, SourceType::mjs(), &allocator);
+            let ret = source.parse_section(SourceType::mjs(), start, end);
+            assert!(ret.fatal_error);
+            assert_eq!(ret.program.source_text, "");
+            assert_eq!(ret.diagnostics.len(), 1);
+            assert_eq!(ret.diagnostics[0].to_string(), "File appears to be binary.");
+            assert_eq!(source.as_bytes(), source_text.as_bytes());
+        }
+
+        // Source which is not valid UTF-8, but the section is
+        let source_bytes = b"\xFF;'abc';\xFF";
+        let mut source = Source::from_bytes(source_bytes, SourceType::mjs(), &allocator);
+        let ret = source.parse_section(SourceType::mjs(), 2, 8);
+        assert!(ret.diagnostics.is_empty());
+        assert_eq!(ret.program.source_text, "'abc';");
+        assert_eq!(source.as_bytes(), source_bytes);
+        assert!(source.into_str().is_err());
+
+        // Source which is not valid UTF-8, and nor is the section
+        let mut source = Source::from_bytes(source_bytes, SourceType::mjs(), &allocator);
+        let ret = source.parse_section(SourceType::mjs(), 2, source_bytes.len());
+        assert!(ret.fatal_error);
+        assert_eq!(ret.diagnostics.len(), 1);
+        assert_eq!(ret.diagnostics[0].to_string(), "File appears to be binary.");
+    }
+
+    /// `Source::parse_section` panics if section ends before it starts.
+    #[test]
+    #[should_panic(expected = "Section is out of bounds")]
+    fn source_parse_section_start_after_end() {
+        let allocator = Allocator::default();
+        let mut source = Source::from_str("a;b;c", SourceType::mjs(), &allocator);
+        source.parse_section(SourceType::mjs(), 3, 2);
+    }
+
+    /// `Source::parse_section` panics if section ends after end of the source.
+    #[test]
+    #[should_panic(expected = "Section is out of bounds")]
+    fn source_parse_section_end_out_of_bounds() {
+        let allocator = Allocator::default();
+        let mut source = Source::from_str("a;b;c", SourceType::mjs(), &allocator);
+        source.parse_section(SourceType::mjs(), 2, 6);
+    }
+
+    /// `Source::parse_section` panics if section starts before the end of the previous section.
+    #[test]
+    #[should_panic(expected = "Section overlaps a section which is already parsed")]
+    fn source_parse_section_overlap() {
+        let allocator = Allocator::default();
+        let mut source = Source::from_str("a;b;c", SourceType::mjs(), &allocator);
+        source.parse_section(SourceType::mjs(), 2, 4);
+        source.parse_section(SourceType::mjs(), 3, 5);
     }
 
     #[test]
