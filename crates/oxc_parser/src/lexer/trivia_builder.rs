@@ -5,29 +5,32 @@ use std::{
 
 use memchr::memchr_iter;
 
-use oxc_allocator::{Allocator, ArenaVec, GetAllocator, TakeIn};
+use oxc_allocator::{ArenaVec, GetAllocator};
 use oxc_ast::ast::{Comment, CommentContent, CommentKind, CommentPosition};
 use oxc_span::Span;
 
 use super::{Kind, PendingToken, Token};
 
-/// Buffer short comment lists before allocating their final arena storage.
+/// Buffer comments before allocating their final arena storage.
+///
+/// Lists too long to store inline grow on the heap. Growing them in the arena would leave
+/// every outgrown buffer allocated there.
 #[derive(Debug)]
-pub struct Comments<'a> {
+pub struct Comments {
     inline: [Comment; 16],
     len: usize,
-    vec: ArenaVec<'a, Comment>,
+    vec: Vec<Comment>,
     /// Source offset which every comment starts before.
     /// 1 more than the start of the last comment, or 0 if there are no comments.
     starts_end: u32,
 }
 
-impl<'a> Comments<'a> {
-    fn new_in(allocator: &'a Allocator) -> Self {
+impl Comments {
+    fn new() -> Self {
         Self {
             inline: std::array::from_fn(|_| Comment::new(0, 0, CommentKind::Line)),
             len: 0,
-            vec: ArenaVec::new_in(&allocator),
+            vec: Vec::new(),
             starts_end: 0,
         }
     }
@@ -62,7 +65,7 @@ impl<'a> Comments<'a> {
         self.len += 1;
     }
 
-    /// Move the comments to arena storage, once there are too many to store inline.
+    /// Move the comments to heap storage, once there are too many to store inline.
     #[cold]
     #[inline(never)]
     fn move_inline_to_vec(&mut self) {
@@ -70,22 +73,23 @@ impl<'a> Comments<'a> {
         self.vec.extend(self.inline.iter().cloned());
     }
 
-    /// Take the comments in their final arena storage, leaving `self` empty.
+    /// Copy the comments to arena storage of exactly their length, leaving `self` empty.
     ///
     /// This takes `&mut self` so that the inline storage is not copied, as it would be
     /// to move `self` or to consume its array.
-    pub(crate) fn take_vec(&mut self, allocator: &impl GetAllocator<'a>) -> ArenaVec<'a, Comment> {
-        if self.vec.is_empty() {
-            self.vec.reserve_exact(self.len);
-            self.vec.extend(self.inline[..self.len].iter().cloned());
-        }
+    pub(crate) fn take_vec<'a>(
+        &mut self,
+        allocator: &impl GetAllocator<'a>,
+    ) -> ArenaVec<'a, Comment> {
+        let comments = ArenaVec::from_iter_in(self.iter().cloned(), allocator);
         self.len = 0;
         self.starts_end = 0;
-        self.vec.take_in(allocator)
+        self.vec = Vec::new();
+        comments
     }
 }
 
-impl Deref for Comments<'_> {
+impl Deref for Comments {
     type Target = [Comment];
 
     #[inline]
@@ -94,7 +98,7 @@ impl Deref for Comments<'_> {
     }
 }
 
-impl DerefMut for Comments<'_> {
+impl DerefMut for Comments {
     #[inline]
     fn deref_mut(&mut self) -> &mut [Comment] {
         if self.vec.is_empty() { &mut self.inline[..self.len] } else { &mut self.vec }
@@ -102,11 +106,11 @@ impl DerefMut for Comments<'_> {
 }
 
 #[derive(Debug)]
-pub struct TriviaBuilder<'a> {
+pub struct TriviaBuilder {
     // This is a set of unique comments. Duplicated
     // comments could be generated in case of rewind; they are
     // filtered out at insertion time.
-    pub(crate) comments: Comments<'a>,
+    pub(crate) comments: Comments,
 
     pub(crate) irregular_whitespaces: Vec<Span>,
 
@@ -131,12 +135,12 @@ pub(super) struct AnnotationComments {
     ends: [Option<NonZeroU32>; 2],
 }
 
-impl<'a> TriviaBuilder<'a> {
-    pub fn new_in(allocator: &'a Allocator) -> Self {
+impl TriviaBuilder {
+    pub fn new() -> Self {
         let mut previous_token = Token::default();
         previous_token.set_kind(Kind::Undetermined);
         Self {
-            comments: Comments::new_in(allocator),
+            comments: Comments::new(),
             irregular_whitespaces: vec![],
             processed: 0,
             previous_token,
@@ -787,8 +791,7 @@ mod test {
                     let source = format!("{annotation}{suffix}");
                     let annotation_end = u32::try_from(annotation.len()).unwrap();
                     let source_end = u32::try_from(source.len()).unwrap();
-                    let allocator = Allocator::default();
-                    let mut builder = TriviaBuilder::new_in(&allocator);
+                    let mut builder = TriviaBuilder::new();
                     let mut pending = PendingToken::START_OF_FILE;
                     builder.add_unsearched_block_comment(
                         0,

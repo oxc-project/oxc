@@ -115,7 +115,7 @@ pub struct Lexer<'a, C: Config> {
     /// If resolved to Script → discard these errors.
     pub(crate) deferred_module_errors: Vec<ParserDiagnostic<'a>>,
 
-    pub(crate) trivia_builder: TriviaBuilder<'a>,
+    pub(crate) trivia_builder: TriviaBuilder,
 
     /// Decoded identifiers and string literals, indexed by [Token::start] when
     /// [Token::escaped] is true.
@@ -174,7 +174,7 @@ impl<'a, C: Config> Lexer<'a, C> {
             pending: PendingToken::START_OF_FILE,
             errors: vec![],
             deferred_module_errors: vec![],
-            trivia_builder: TriviaBuilder::new_in(allocator),
+            trivia_builder: TriviaBuilder::new(),
             escaped_strings: FxHashMap::default(),
             escaped_templates: FxHashMap::default(),
             multi_line_comment_end_finder: None,
