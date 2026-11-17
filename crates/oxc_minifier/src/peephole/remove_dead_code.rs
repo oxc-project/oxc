@@ -714,6 +714,13 @@ impl<'a> PeepholeOptimizations {
         ctx: &TraverseCtx<'a>,
     ) -> bool {
         match ctx.parent() {
+            Ancestor::CallExpressionCallee(call)
+                if !call.optional()
+                    && access_value.is_specific_id("eval")
+                    && access_value.evaluate_value(ctx).is_none() =>
+            {
+                true
+            }
             Ancestor::CallExpressionCallee(_) | Ancestor::TaggedTemplateExpressionTag(_) => {
                 match access_value {
                     Expression::Identifier(id) => id.name == "eval" && ctx.is_global_reference(id),

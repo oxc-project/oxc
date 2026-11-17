@@ -15,6 +15,7 @@ mod operator;
 mod statement;
 
 pub use cover::CoverElement;
+pub use operator::kind_to_precedence;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum Tristate {
