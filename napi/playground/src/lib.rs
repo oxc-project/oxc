@@ -47,6 +47,7 @@ use oxc_transformer_plugins::{
 };
 
 mod options;
+mod scoping;
 pub use options::*;
 
 #[derive(Default)]
@@ -59,6 +60,8 @@ pub struct Oxc {
     pub control_flow_graph: String,
     pub symbols_json: String,
     pub scope_text: String,
+    /// Versioned original-source semantic snapshot; spans are UTF-8 bytes.
+    pub scoping_json: String,
     pub codegen_text: String,
     pub codegen_sourcemap_text: Option<String>,
     pub formatted_text: String,
@@ -96,6 +99,7 @@ impl Oxc {
         self.diagnostics = vec![];
         self.scope_text = String::new();
         self.symbols_json = String::new();
+        self.scoping_json = String::new();
 
         // Extract options
         let OxcOptions {
@@ -147,6 +151,9 @@ impl Oxc {
 
         self.run_formatter(run_options, &source_text, source_type, &formatter_options);
 
+        if run_options.scope || run_options.symbol {
+            self.scoping_json = scoping::serialize(&semantic)?;
+        }
         let mut scoping = semantic.into_scoping();
 
         // Extract scope and symbol information if needed
