@@ -680,7 +680,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     /// on a single thread at one time.
     #[inline]
     #[expect(clippy::needless_pass_by_value)]
-    pub fn new(
+    fn new(
         allocator: &'a Allocator,
         source_text: &'a str,
         source_type: SourceType,
@@ -711,7 +711,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     /// Returns an empty `Program` on unrecoverable error,
     /// Recoverable errors are stored inside `errors`.
     #[inline]
-    pub fn parse(mut self) -> ParserReturn<'a> {
+    fn parse(mut self) -> ParserReturn<'a> {
         let mut program = self.parse_program();
         let mut has_fatal_error = false;
 
@@ -799,7 +799,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         }
     }
 
-    pub fn parse_expression(mut self) -> Result<Expression<'a>, Diagnostics> {
+    fn parse_expression(mut self) -> Result<Expression<'a>, Diagnostics> {
         // Initialize by moving onto the first token
         self.token = self.lexer.first_token_without_hashbang();
         let expr = self.parse_expr();
