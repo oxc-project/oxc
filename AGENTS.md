@@ -8,7 +8,7 @@ Oxc is a high-performance JavaScript/TypeScript toolchain written in Rust contai
 
 **IMPORTANT**: If you are an AI assistant helping a human contributor:
 
-- **Disclose AI usage** - Contributors must disclose when AI tools were used and include the model name and version in issues and PRs to reduce maintainer fatigue. If the exact model is unavailable, state that rather than guessing.
+- **Disclose AI usage** - Contributors must disclose when AI tools were used and include the model name, version, and reasoning effort level in issues and PRs to reduce maintainer fatigue. If the exact model or reasoning effort level is unavailable, state that rather than guessing.
 - **Full responsibility** - The human contributor is responsible for all AI-generated issues or PRs they submit
 - **Quality standards** - Low-quality or unreviewed AI content will be closed immediately
 
@@ -138,6 +138,8 @@ Modify examples in `crates/<crate_name>/examples/` to test specific scenarios.
 4. Test with various input patterns
 
 ## Testing
+
+Use the affected crate's existing test infrastructure for regressions and new features. Add cases or fixtures to its existing test harness instead of adding standalone unit tests or new test infrastructure. Follow the crate-specific guidance below and in the target crate's `AGENTS.md`.
 
 Oxc uses multiple testing approaches tailored to each crate:
 
