@@ -24,9 +24,8 @@ use pico_args::Arguments;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 use oxc_codegen::{Codegen, CodegenOptions, CodegenReturn};
-use oxc_parser::{ParseOptions, Parser};
+use oxc_parser::{ParseOptions, Source, SourceFileError};
 use oxc_sourcemap::SourcemapVisualizer;
-use oxc_span::SourceType;
 
 // Instruction:
 // create a `test.js`,
@@ -34,7 +33,7 @@ use oxc_span::SourceType;
 // or `cargo watch -x "run -p oxc_codegen --example codegen"`
 
 /// Demonstrate code generation with optional minification and idempotency testing
-fn main() -> std::io::Result<()> {
+fn main() -> Result<(), SourceFileError> {
     let mut args = Arguments::from_env();
 
     let twice = args.contains("--twice");
@@ -45,13 +44,13 @@ fn main() -> std::io::Result<()> {
     let path = Path::new(&name);
     let sourcemap = sourcemap.then_some(path);
 
-    let source_text = std::fs::read_to_string(path)?;
-    let source_type = SourceType::from_path(path).unwrap();
     let mut allocator = Allocator::default();
+    let source = Source::from_file(path, &allocator)?;
+    let source_type = source.source_type();
 
     // First round: parse and generate
     let printed = {
-        let program = parse(&allocator, &source_text, source_type);
+        let program = parse(source);
         codegen(&program, minify, sourcemap)
     };
     println!("First time:");
@@ -62,12 +61,12 @@ fn main() -> std::io::Result<()> {
         // Reset the allocator as we don't need the first AST any more
         allocator.reset();
 
-        let program = parse(&allocator, &printed, source_type);
+        let program = parse(Source::from_str(&printed, source_type, &allocator));
         println!("Second time:");
         let printed2 = codegen(&program, minify, None);
         println!("{printed2}");
         // Check syntax error
-        parse(&allocator, &printed2, source_type);
+        parse(Source::from_str(&printed2, source_type, &allocator));
         println!("same = {}", printed == printed2);
     }
 
@@ -75,22 +74,17 @@ fn main() -> std::io::Result<()> {
 }
 
 /// Parse JavaScript/TypeScript source code into an AST
-fn parse<'a>(
-    allocator: &'a Allocator,
-    source_text: &'a str,
-    source_type: SourceType,
-) -> Program<'a> {
-    let ret = Parser::new(allocator, source_text, source_type)
-        .with_options(ParseOptions {
-            allow_return_outside_function: true,
-            enable_ident_hashes: false,
-            ..ParseOptions::default()
-        })
-        .parse();
+fn parse(source: Source<'_>) -> Program<'_> {
+    let ret = source.parse_with_options(ParseOptions {
+        allow_return_outside_function: true,
+        enable_ident_hashes: false,
+        ..ParseOptions::default()
+    });
+    let program = ret.program;
     for error in ret.diagnostics {
-        println!("{}", error.render_with_source_code(source_text));
+        println!("{}", error.render_with_source_code(program.source_text));
     }
-    ret.program
+    program
 }
 
 /// Generate JavaScript code from an AST
