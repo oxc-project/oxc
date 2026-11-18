@@ -862,6 +862,18 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────────
    ╰────
 
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import foo from 'foo';
+   · ──────────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'foo/bar' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import foo from 'foo/bar';
+   · ──────────────────────────
+   ╰────
+
   ⚠ eslint(no-restricted-imports): 'import1' import is restricted from being used.
    ╭─[no_restricted_imports.tsx:1:1]
  1 │ import foo from 'import1';
