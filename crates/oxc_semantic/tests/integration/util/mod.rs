@@ -1,11 +1,9 @@
-use std::sync::Arc;
-
 use itertools::Itertools;
 
 use oxc_allocator::Allocator;
 #[cfg(feature = "cfg")]
 use oxc_cfg::DisplayDot;
-use oxc_diagnostics::{Error, NamedSource, OxcDiagnostic};
+use oxc_diagnostics::{Diagnostic, NamedSource, OxcDiagnostic};
 #[cfg(feature = "cfg")]
 use oxc_semantic::dot::DebugDot;
 use oxc_semantic::{Semantic, SemanticBuilder, SemanticBuilderReturn};
@@ -299,7 +297,10 @@ impl<'a> SemanticTester<'a> {
         SymbolTester::new_unique(self, self.build(), name)
     }
 
-    fn wrap_diagnostics(&self, diagnostics: Vec<OxcDiagnostic>) -> Vec<Error> {
+    fn wrap_diagnostics(
+        &self,
+        diagnostics: Vec<OxcDiagnostic>,
+    ) -> Vec<Box<dyn Diagnostic + Send + Sync + '_>> {
         let name = "test".to_owned()
             + match (self.source_type.is_javascript(), self.source_type.is_jsx()) {
                 (true, true) => ".jsx",
@@ -308,10 +309,11 @@ impl<'a> SemanticTester<'a> {
                 (false, false) => ".ts",
             };
 
-        let source = Arc::new(NamedSource::new(name, self.source_text.to_owned()));
         diagnostics
             .into_iter()
-            .map(|diagnostic| diagnostic.with_source_code(Arc::clone(&source)))
+            .map(|diagnostic| {
+                diagnostic.with_source_code(NamedSource::new(&name, self.source_text))
+            })
             .collect()
     }
 }

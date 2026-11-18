@@ -3,7 +3,7 @@
 //! Since these cases are a contract-as-code, they _must be well documented_. When adding a new
 //! test, please describe what behavior it guarantees in as plain language as possible.
 
-use std::{borrow::Cow, sync::Arc};
+use std::borrow::Cow;
 
 use oxc_diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource, OxcDiagnostic};
 use oxc_semantic::{AstNode, Semantic, SymbolId};
@@ -64,15 +64,13 @@ impl SemanticConformance {
     }
 
     pub fn run_on_source(&self, ctx: &TestContext<'_>) -> String {
-        let named_source = Arc::new(NamedSource::new(
-            ctx.path.to_string_lossy(),
-            ctx.semantic.source_text().to_string(),
-        ));
+        let name = ctx.path.to_string_lossy();
+        let source_text = ctx.semantic.source_text();
 
         let results = self
             .run(&ctx.semantic)
             .into_iter()
-            .map(|diagnostic| diagnostic.with_source_code(Arc::clone(&named_source)))
+            .map(|diagnostic| diagnostic.with_source_code(NamedSource::new(&name, source_text)))
             .collect::<Vec<_>>();
 
         if results.is_empty() {

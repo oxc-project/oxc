@@ -740,10 +740,8 @@ impl Tester {
             .with_links(false)
             .with_theme(GraphicalTheme::unicode_nocolor());
         for diagnostic in result {
-            let diagnostic = diagnostic.error.with_source_code(NamedSource::new(
-                diagnostic_path.clone(),
-                source_text.to_string(),
-            ));
+            let named_source = NamedSource::new(diagnostic_path.clone(), source_text);
+            let diagnostic = diagnostic.error.with_source_code(named_source);
             handler.render_report(&mut self.snapshot, diagnostic.as_ref()).unwrap();
         }
         TestResult::Failed

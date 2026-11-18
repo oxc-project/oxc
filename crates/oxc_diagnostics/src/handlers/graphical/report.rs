@@ -317,8 +317,6 @@ impl GraphicalReportHandler {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
-
     use oxc_span::Span;
 
     use super::*;
@@ -326,19 +324,16 @@ mod tests {
 
     #[test]
     fn batch_render_matches_individual_reports() {
-        let source =
-            Arc::new(NamedSource::new("input.ts", "first();\nsecond();\nthird();\nfourth();\n"));
-        let other_source = Arc::new(NamedSource::new("other.ts", "alpha();\nbeta();\n"));
+        let source = NamedSource::new("input.ts", "first();\nsecond();\nthird();\nfourth();\n");
+        let other_source = NamedSource::new("other.ts", "alpha();\nbeta();\n");
         let diagnostics: Vec<Error> = vec![
             OxcDiagnostic::warn("later")
                 .with_label(Span::new(29, 35))
-                .with_source_code(Arc::clone(&source)),
+                .with_source_code(source.clone()),
             OxcDiagnostic::error("multi-label")
                 .with_labels([Span::new(0, 5), Span::new(19, 24)])
-                .with_source_code(Arc::clone(&source)),
-            OxcDiagnostic::warn("earlier")
-                .with_label(Span::new(9, 15))
-                .with_source_code(Arc::clone(&source)),
+                .with_source_code(source.clone()),
+            OxcDiagnostic::warn("earlier").with_label(Span::new(9, 15)).with_source_code(source),
             OxcDiagnostic::error("without source").into(),
             OxcDiagnostic::warn("different source")
                 .with_label(Span::new(9, 13))
