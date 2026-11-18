@@ -11,9 +11,13 @@
 //! cargo run -p oxc --example compiler --features="full" [filename]
 //! ```
 
-use std::{env, io, path::Path};
+use std::{env, path::Path};
 
-use oxc::{Compiler, span::SourceType};
+use oxc::{
+    Compiler,
+    allocator::Allocator,
+    parser::{Source, SourceFileError},
+};
 
 // Instruction:
 // 1. create a `test.js`
@@ -22,20 +26,21 @@ use oxc::{Compiler, span::SourceType};
 //   * `just watch 'run -p oxc --example compiler --features="full"'`
 
 /// Run the complete Oxc compilation pipeline on a JavaScript/TypeScript file
-fn main() -> io::Result<()> {
+fn main() -> Result<(), SourceFileError> {
     let name = env::args().nth(1).unwrap_or_else(|| "test.js".to_string());
     let path = Path::new(&name);
-    let source_text = std::fs::read_to_string(path)?;
-    let source_type = SourceType::from_path(path).unwrap();
+
+    let allocator = Allocator::default();
+    let source = Source::read_from_file(path, &allocator)?;
 
     // Execute the full compilation pipeline
-    match Compiler::default().execute(&source_text, source_type, path) {
+    match Compiler::default().execute_source(source, path) {
         Ok(printed) => {
             println!("{printed}");
         }
-        Err(errors) => {
+        Err((errors, source_text)) => {
             for error in errors {
-                println!("{}", error.render_with_source_code(source_text.as_str()));
+                println!("{}", error.render_with_source_code(source_text));
             }
         }
     }

@@ -44,7 +44,7 @@ use std::path::Path;
 
 use oxc::{
     allocator::Allocator,
-    parser::{Parser, ParserReturn},
+    parser::{ParserReturn, Source},
     span::SourceType,
     semantic::{SemanticBuilder, SemanticBuilderReturn}
 };
@@ -77,8 +77,11 @@ let mut errors = Vec::new();
 
 // Step 1: Parsing
 // Parse the TSX file into an AST. The root AST node is a `Program` struct.
-let ParserReturn { program, diagnostics: parser_errors, fatal_error, .. } =
-    Parser::new(&allocator, source_text, source_type).parse();
+//
+// If the source code is coming from a file, better to use `Source::read_from_file`,
+// as it avoids copying the source text string into the arena. See `oxc_parser` crate.
+let source = Source::from_str(source_text, source_type, &allocator);
+let ParserReturn { program, diagnostics: parser_errors, fatal_error, .. } = source.parse();
 errors.extend(parser_errors);
 
 // Parsing failed completely. `program` is empty and `errors` isn't. If the

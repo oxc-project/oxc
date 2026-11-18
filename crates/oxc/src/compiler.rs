@@ -7,7 +7,7 @@ use oxc_diagnostics::Diagnostics;
 use oxc_isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions};
 use oxc_mangler::{MangleOptions, Mangler, ManglerReturn};
 use oxc_minifier::{CompressOptions, Compressor};
-use oxc_parser::{ParseOptions, Parser, ParserReturn};
+use oxc_parser::{ParseOptions, ParserReturn, Source};
 use oxc_semantic::{Scoping, SemanticBuilder, SemanticBuilderReturn, Stats};
 use oxc_span::SourceType;
 use oxc_transformer::{TransformOptions, Transformer, TransformerReturn};
@@ -42,11 +42,31 @@ impl Compiler {
         source_type: SourceType,
         source_path: &Path,
     ) -> Result<String, Diagnostics> {
-        self.compile(source_text, source_type, source_path);
+        let allocator = Allocator::default();
+        let source = Source::from_str(source_text, source_type, &allocator);
+        self.execute_source(source, source_path).map_err(|(errors, _)| errors)
+    }
+
+    /// Compile a [`Source`], and return the printed code.
+    ///
+    /// Same as [`Compiler::execute`], but takes a [`Source`] instead of source text,
+    /// so the source text does not need to be copied.
+    /// AST and all other data are allocated in the [`Source`]'s allocator.
+    ///
+    /// # Errors
+    ///
+    /// * The accumulated [Diagnostics], and the source text, for rendering them.
+    ///   The source text lives in the [`Source`]'s allocator.
+    pub fn execute_source<'a>(
+        &mut self,
+        source: Source<'a>,
+        source_path: &Path,
+    ) -> Result<String, (Diagnostics, &'a str)> {
+        let source_text = self.compile_source(source, source_path);
         if self.errors.is_empty() {
             Ok(mem::take(&mut self.printed))
         } else {
-            Err(mem::take(&mut self.errors))
+            Err((mem::take(&mut self.errors), source_text))
         }
     }
 }
@@ -126,12 +146,28 @@ pub trait CompilerInterface {
 
     fn compile(&mut self, source_text: &str, source_type: SourceType, source_path: &Path) {
         let allocator = Allocator::default();
+        let source = Source::from_str(source_text, source_type, &allocator);
+        self.compile_source(source, source_path);
+    }
+
+    /// Compile a [`Source`].
+    ///
+    /// Same as [`CompilerInterface::compile`], but takes a [`Source`] instead of source text,
+    /// so the source text does not need to be copied.
+    /// AST and all other data are allocated in the [`Source`]'s allocator.
+    ///
+    /// Returns the source text, for rendering diagnostics. It lives in the [`Source`]'s allocator.
+    /// It's an empty string if the source could not be parsed at all
+    /// (it's not valid UTF-8, or is too long).
+    fn compile_source<'a>(&mut self, source: Source<'a>, source_path: &Path) -> &'a str {
+        let allocator = source.allocator();
 
         /* Parse */
 
-        let mut parser_return = self.parse(&allocator, source_text, source_type);
+        let mut parser_return = self.parse(source);
+        let source_text = parser_return.program.source_text;
         if self.after_parse(&mut parser_return).is_break() {
-            return;
+            return source_text;
         }
         if !parser_return.diagnostics.is_empty() {
             self.handle_errors(parser_return.diagnostics);
@@ -141,7 +177,7 @@ pub trait CompilerInterface {
 
         /* Isolated Declarations */
         if let Some(options) = self.isolated_declaration_options() {
-            self.isolated_declaration(options, &allocator, &program, source_path);
+            self.isolated_declaration(options, allocator, &program, source_path);
         }
 
         /* Semantic */
@@ -149,10 +185,10 @@ pub trait CompilerInterface {
         let mut semantic_return = self.semantic(&program);
         if !semantic_return.diagnostics.is_empty() {
             self.handle_errors(semantic_return.diagnostics);
-            return;
+            return source_text;
         }
         if self.after_semantic(&mut semantic_return).is_break() {
-            return;
+            return source_text;
         }
 
         let stats = semantic_return.semantic.stats();
@@ -162,7 +198,7 @@ pub trait CompilerInterface {
 
         if let Some(options) = self.transform_options() {
             let mut transformer_return =
-                self.transform(options, &allocator, &mut program, source_path, scoping);
+                self.transform(options, allocator, &mut program, source_path, scoping);
 
             // Errors are fatal (e.g. a React Compiler error); warnings are reported
             // but codegen still runs.
@@ -170,11 +206,11 @@ pub trait CompilerInterface {
             let has_errors = diagnostics.has_errors();
             self.handle_errors(diagnostics);
             if has_errors {
-                return;
+                return source_text;
             }
 
             if self.after_transform(&mut program, &mut transformer_return).is_break() {
-                return;
+                return source_text;
             }
 
             scoping = transformer_return.scoping;
@@ -197,13 +233,13 @@ pub trait CompilerInterface {
         }
 
         if let Some(options) = inject_options {
-            let ret = InjectGlobalVariables::new(&allocator, options).build(scoping, &mut program);
+            let ret = InjectGlobalVariables::new(allocator, options).build(scoping, &mut program);
             scoping = ret.scoping;
             scoping_dirty |= ret.changed;
         }
 
         if let Some(options) = define_options {
-            let ret = ReplaceGlobalDefines::new(&allocator, options).build(scoping, &mut program);
+            let ret = ReplaceGlobalDefines::new(allocator, options).build(scoping, &mut program);
             scoping = ret.scoping;
             scoping_dirty |= ret.changed;
         }
@@ -217,13 +253,13 @@ pub trait CompilerInterface {
             if scoping_dirty {
                 scoping = rebuild_scoping(&program, stats, transform);
             }
-            self.compress(&allocator, &mut program, scoping, options);
+            self.compress(allocator, &mut program, scoping, options);
         } else if has_define {
             // Run DCE if minification is disabled.
             if scoping_dirty {
                 scoping = rebuild_scoping(&program, stats, transform);
             }
-            Compressor::new(&allocator).dead_code_elimination_with_scoping(
+            Compressor::new(allocator).dead_code_elimination_with_scoping(
                 &mut program,
                 scoping,
                 CompressOptions::dce(),
@@ -241,15 +277,12 @@ pub trait CompilerInterface {
             let ret = self.codegen(&program, source_path, mangler, options);
             self.after_codegen(ret);
         }
+
+        source_text
     }
 
-    fn parse<'a>(
-        &self,
-        allocator: &'a Allocator,
-        source_text: &'a str,
-        source_type: SourceType,
-    ) -> ParserReturn<'a> {
-        Parser::new(allocator, source_text, source_type).with_options(self.parse_options()).parse()
+    fn parse<'a>(&self, source: Source<'a>) -> ParserReturn<'a> {
+        source.parse_with_options(self.parse_options())
     }
 
     fn semantic<'a>(&self, program: &'a Program<'a>) -> SemanticBuilderReturn<'a> {

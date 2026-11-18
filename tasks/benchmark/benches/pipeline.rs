@@ -2,9 +2,11 @@ use std::path::Path;
 
 use oxc::{
     CompilerInterface,
+    allocator::Allocator,
     codegen::CodegenOptions,
     mangler::MangleOptions,
     minifier::CompressOptions,
+    parser::Source,
     transformer::TransformOptions,
     transformer_plugins::{InjectGlobalVariablesConfig, InjectImport, ReplaceGlobalDefinesConfig},
 };
@@ -113,9 +115,19 @@ fn bench_pipeline(criterion: &mut Criterion) {
             codegen: CodegenOptions::default(),
         };
 
+        // Do not include initializing allocator in benchmark.
+        // User code would likely reuse the same allocator over and over
+        // to compile multiple files, so we do the same here.
+        let mut allocator = Allocator::default();
+
         group.bench_function(id, |b| {
-            b.iter(|| {
-                compiler.compile(source_text, source_type, source_path);
+            b.iter_with_setup_wrapper(|runner| {
+                allocator.reset();
+
+                // Do not include copying source text into arena in benchmark
+                let source = Source::from_str(source_text, source_type, &allocator);
+
+                runner.run(|| compiler.compile_source(source, source_path));
             });
         });
     }
