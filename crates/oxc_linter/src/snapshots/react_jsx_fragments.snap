@@ -29,3 +29,39 @@ source: crates/oxc_linter/src/tester.rs
    · ──
    ╰────
   help: Use `<React.Fragment></React.Fragment>` instead of `<></>`.
+
+  ⚠ react(jsx-fragments): Shorthand form for React fragments is preferred.
+   ╭─[jsx_fragments.tsx:2:33]
+ 1 │ const { Fragment: Frag } = require("react");
+ 2 │                const A = () => <Frag><Foo /></Frag>;
+   ·                                 ────
+ 3 │                export default A;
+   ╰────
+  help: Use `<></>` instead of `<React.Fragment></React.Fragment>`.
+
+  ⚠ react(jsx-fragments): Shorthand form for React fragments is preferred.
+   ╭─[jsx_fragments.tsx:2:33]
+ 1 │ import { Fragment as Frag } from "react";
+ 2 │                const A = () => <Frag><Foo /></Frag>;
+   ·                                 ────
+ 3 │                export default A;
+   ╰────
+  help: Use `<></>` instead of `<React.Fragment></React.Fragment>`.
+
+  ⚠ react(jsx-fragments): Shorthand form for React fragments is preferred.
+   ╭─[jsx_fragments.tsx:2:33]
+ 1 │ const Frag = React.Fragment;
+ 2 │                const A = () => <Frag><Foo /></Frag>;
+   ·                                 ────
+ 3 │                export default A;
+   ╰────
+  help: Use `<></>` instead of `<React.Fragment></React.Fragment>`.
+
+  ⚠ react(jsx-fragments): Shorthand form for React fragments is preferred.
+   ╭─[jsx_fragments.tsx:2:33]
+ 1 │ const { Fragment } = React;
+ 2 │                const A = () => <Fragment><Foo /></Fragment>;
+   ·                                 ────────
+ 3 │                export default A;
+   ╰────
+  help: Use `<></>` instead of `<React.Fragment></React.Fragment>`.

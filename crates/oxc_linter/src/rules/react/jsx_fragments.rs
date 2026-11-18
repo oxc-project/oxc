@@ -10,7 +10,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::is_jsx_fragment,
+    utils::is_react_fragment_element,
 };
 
 fn jsx_fragments_diagnostic(span: Span, mode: FragmentMode) -> OxcDiagnostic {
@@ -118,7 +118,7 @@ impl Rule for JsxFragments {
                 let Some(closing_element) = &jsx_elem.closing_element else {
                     return;
                 };
-                if !is_jsx_fragment(&jsx_elem.opening_element)
+                if !is_react_fragment_element(&jsx_elem.opening_element, ctx)
                     || !jsx_elem.opening_element.attributes.is_empty()
                 {
                     return;
@@ -206,6 +206,30 @@ fn test() {
         ("<React.Fragment><Foo /></React.Fragment>", None),
         ("<><Foo /></>", Some(json!(["element"]))),
         ("<><Foo /></>", Some(json!([{"mode": "element"}]))),
+        (
+            r#"const { Fragment: Frag } = require("react");
+               const A = () => <Frag><Foo /></Frag>;
+               export default A;"#,
+            None,
+        ),
+        (
+            r#"import { Fragment as Frag } from "react";
+               const A = () => <Frag><Foo /></Frag>;
+               export default A;"#,
+            None,
+        ),
+        (
+            r"const Frag = React.Fragment;
+               const A = () => <Frag><Foo /></Frag>;
+               export default A;",
+            None,
+        ),
+        (
+            r"const { Fragment } = React;
+               const A = () => <Fragment><Foo /></Fragment>;
+               export default A;",
+            None,
+        ),
     ];
 
     let fix = vec![

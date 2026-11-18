@@ -2,7 +2,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::is_react_function_call,
+    utils::is_react_function_call_resolved,
 };
 use oxc_ast::{AstKind, ast::BindingPattern};
 use oxc_diagnostics::OxcDiagnostic;
@@ -94,7 +94,7 @@ impl Rule for HookUseState {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call) = node.kind() else { return };
 
-        let is_use_state = is_react_function_call(call, "useState");
+        let is_use_state = is_react_function_call_resolved(call, "useState", ctx);
         if !is_use_state {
             return;
         }
@@ -244,6 +244,15 @@ fn test() {
             }",
             Some(serde_json::json!([{"allowDestructuredState": true }])),
         ),
+        (
+            r#"
+            import { useState as useStateAlternativeName } from "react";
+            export default function useColor() {
+                const [color, setColor] = useStateAlternativeName();
+                return [color, setColor];
+            }"#,
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -299,6 +308,15 @@ fn test() {
                 const [res, {}] = React.useState('');
                 return [res, {}];
             }",
+            None,
+        ),
+        (
+            r#"
+            import { useState as useStateAlternativeName } from "react";
+            export function useColor() {
+                const result = useStateAlternativeName();
+                return result;
+            }"#,
             None,
         ),
     ];
