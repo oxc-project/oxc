@@ -242,6 +242,16 @@ fn test() {
         ),
         (
             "
+              import { describe, it } from '@rstest/core';
+              describe('foo', () => {
+                it('works', () => {});
+                it('works', () => {});
+              });
+            ",
+            None,
+        ),
+        (
+            "
               it('works', () => {});
               it('works', () => {});
             ",

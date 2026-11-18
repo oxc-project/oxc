@@ -307,6 +307,16 @@ fn test() {
             "#,
             None,
         ),
+        (
+            r#"
+            import { it } from "@rstest/core";
+
+            it("should fail", () => {
+                foo();
+            });
+            "#,
+            None,
+        ),
     ];
 
     Tester::new(ExpectExpect::NAME, ExpectExpect::PLUGIN, pass, fail)
