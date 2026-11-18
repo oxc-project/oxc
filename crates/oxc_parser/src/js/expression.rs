@@ -22,7 +22,7 @@ use super::{
 };
 use crate::{
     Context, ParserConfig as Config, ParserImpl, diagnostics,
-    lexer::{Kind, parse_big_int, parse_float, parse_int},
+    lexer::{Kind, cold_branch, parse_big_int, parse_float, parse_int},
     modifiers::Modifiers,
 };
 
@@ -123,7 +123,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let kind = self.cur_kind();
         if !kind.is_identifier_reference(false, false) {
             if self.cur_token().escaped() && matches!(kind, Kind::In | Kind::Instanceof) {
-                return self.fatal_error(diagnostics::escaped_keyword(self.cur_token().span()));
+                return cold_branch(|| {
+                    self.fatal_error(diagnostics::escaped_keyword(self.cur_token().span()))
+                });
             }
             return self.unexpected();
         }
@@ -230,19 +232,21 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         match kind {
             // It is a Syntax Error if this production has an [Await] parameter.
             Kind::Await if ctx.has_await() => {
-                self.error(diagnostics::identifier_async("await", span));
+                cold_branch(|| self.error(diagnostics::identifier_async("await", span)));
             }
             Kind::Await => self.state.mentions_await = true,
             // It is a Syntax Error if this production has a [Yield] parameter.
             Kind::Yield if ctx.has_yield() => {
-                let next_token = self.lexer.peek_token();
-                let looks_like_yield_expression =
-                    !next_token.is_on_new_line() && next_token.kind().is_after_await_or_yield();
-                self.error(diagnostics::identifier_generator(
-                    "yield",
-                    span,
-                    looks_like_yield_expression,
-                ));
+                cold_branch(|| {
+                    let next_token = self.lexer.peek_token();
+                    let looks_like_yield_expression =
+                        !next_token.is_on_new_line() && next_token.kind().is_after_await_or_yield();
+                    self.error(diagnostics::identifier_generator(
+                        "yield",
+                        span,
+                        looks_like_yield_expression,
+                    ));
+                });
             }
             _ => {}
         }
@@ -378,17 +382,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         });
 
         if let Some(comma_start) = comma_start {
-            let error = diagnostics::unexpected_trailing_comma(
-                "Parenthesized expressions",
-                self.end_span(comma_start),
-            );
-            return self.fatal_error(error);
+            return cold_branch(|| {
+                let error = diagnostics::unexpected_trailing_comma(
+                    "Parenthesized expressions",
+                    self.end_span(comma_start),
+                );
+                self.fatal_error(error)
+            });
         }
 
         let Some(mut expression) = expression else {
-            self.expect(Kind::RParen);
-            let error = diagnostics::empty_parenthesized_expression(self.end_span(start));
-            return self.fatal_error(error);
+            return cold_branch(|| {
+                self.expect(Kind::RParen);
+                self.fatal_error(diagnostics::empty_parenthesized_expression(self.end_span(start)))
+            });
         };
         self.expect(Kind::RParen);
 
@@ -474,7 +481,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             _ => unreachable!(),
         };
         let value = value.unwrap_or_else(|err| {
-            self.set_fatal_error(diagnostics::invalid_number(err, span));
+            cold_branch(|| self.set_fatal_error(diagnostics::invalid_number(err, span)));
             0.0 // Dummy value
         });
         let base = match kind {
@@ -545,7 +552,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let pattern = RegExpPattern { text: Str::from(pattern_text), pattern };
 
         if flags.contains(RegExpFlags::U | RegExpFlags::V) {
-            self.error(diagnostics::reg_exp_flag_u_and_v(span));
+            cold_branch(|| self.error(diagnostics::reg_exp_flag_u_and_v(span)));
         }
 
         RegExpLiteral::boxed(span, RegExp { pattern, flags }, Some(Str::from(raw)), self)
@@ -718,7 +725,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // It is a Syntax Error if any source text is matched by this production.
         // <https://tc39.es/ecma262/#sec-left-hand-side-expressions-static-semantics-early-errors>
         if in_optional_chain {
-            self.error(diagnostics::optional_chain_tagged_template(quasi.span));
+            cold_branch(|| self.error(diagnostics::optional_chain_tagged_template(quasi.span)));
         }
         Expression::new_tagged_template_expression(span, lhs, type_arguments, quasi, self)
     }
@@ -766,7 +773,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         span.end -= end_offset;
 
         if !tagged && cooked.is_none() {
-            self.error(diagnostics::template_literal(span));
+            cold_branch(|| self.error(diagnostics::template_literal(span)));
         }
 
         let tail = matches!(cur_kind, Kind::TemplateTail | Kind::NoSubstitutionTemplate);
@@ -884,7 +891,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return lhs;
         }
         if self.ctx.has_decorator() {
-            self.error(diagnostics::decorator_optional(lhs.span()));
+            cold_branch(|| self.error(diagnostics::decorator_optional(lhs.span())));
         }
         // Add `ChainExpression` to `a?.c?.b<c>`;
         if let Expression::TSInstantiationExpression(mut expr) = lhs {
@@ -959,11 +966,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         lhs_start: u32,
     ) {
         if is_unparenthesized_instantiation(lhs, lhs_start) {
-            self.error(
-                diagnostics::ts_instantiation_expression_cannot_be_followed_by_property_access(
-                    self.end_span(lhs_start),
-                ),
-            );
+            cold_branch(|| {
+                self.error(
+                    diagnostics::ts_instantiation_expression_cannot_be_followed_by_property_access(
+                        self.end_span(lhs_start),
+                    ),
+                );
+            });
         }
     }
 
@@ -1092,7 +1101,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let span = self.end_span(lhs_start);
             // `super.#field` is not allowed.
             if lhs.is_super() {
-                self.error(diagnostics::super_private(span));
+                cold_branch(|| self.error(diagnostics::super_private(span)));
             }
             MemberExpression::new_private_field_expression(span, lhs, private_ident, optional, self)
         } else {
@@ -1272,8 +1281,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
             if let Some(span) = question_dot_span {
                 // We parsed `?.` but then failed to parse anything, so report a missing identifier here.
-                let error = diagnostics::identifier_expected_after_question_dot(span);
-                return self.fatal_error(error);
+                return cold_branch(|| {
+                    self.fatal_error(diagnostics::identifier_expected_after_question_dot(span))
+                });
             }
 
             break;
@@ -1557,15 +1567,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.bump_any();
                 let type_annotation = self.parse_ts_type();
                 let span = self.end_span(lhs_start);
+                if !self.is_ts {
+                    cold_branch(|| {
+                        let error = if kind == Kind::As {
+                            diagnostics::as_in_ts(span)
+                        } else {
+                            diagnostics::satisfies_in_ts(span)
+                        };
+                        self.error(error);
+                    });
+                }
                 lhs = if kind == Kind::As {
-                    if !self.is_ts {
-                        self.error(diagnostics::as_in_ts(span));
-                    }
                     Expression::new_ts_as_expression(span, lhs, type_annotation, self)
                 } else {
-                    if !self.is_ts {
-                        self.error(diagnostics::satisfies_in_ts(span));
-                    }
                     Expression::new_ts_satisfies_expression(span, lhs, type_annotation, self)
                 };
                 // Assertions must be erasable without changing how the surrounding operators bind.
@@ -1599,7 +1613,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     if is_unparenthesized_logical(&lhs, lhs_start)
                         || is_unparenthesized_logical(&rhs, rhs_start)
                     {
-                        self.error(diagnostics::mixed_coalesce(span));
+                        cold_branch(|| self.error(diagnostics::mixed_coalesce(span)));
                     }
                 }
                 Expression::new_logical_expression(span, lhs, op, rhs, self)
@@ -1618,23 +1632,25 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                             _ => break,
                         };
                     }
-                    let diagnostic = match operand {
-                        Expression::AwaitExpression(_) => Some(
-                            diagnostics::unary_exponentiation_left_operand("await", operand.span()),
-                        ),
-                        Expression::UnaryExpression(unary) => {
-                            Some(diagnostics::unary_exponentiation_left_operand(
+                    match operand {
+                        Expression::AwaitExpression(await_expr) => cold_branch(|| {
+                            self.error(diagnostics::unary_exponentiation_left_operand(
+                                "await",
+                                await_expr.span,
+                            ));
+                        }),
+                        Expression::UnaryExpression(unary) => cold_branch(|| {
+                            self.error(diagnostics::unary_exponentiation_left_operand(
                                 unary.operator.as_str(),
-                                operand.span(),
-                            ))
-                        }
-                        Expression::TSTypeAssertion(_) => Some(
-                            diagnostics::type_assertion_exponentiation_left_operand(operand.span()),
-                        ),
-                        _ => None,
-                    };
-                    if let Some(diagnostic) = diagnostic {
-                        self.error(diagnostic);
+                                unary.span,
+                            ));
+                        }),
+                        Expression::TSTypeAssertion(assertion) => cold_branch(|| {
+                            self.error(diagnostics::type_assertion_exponentiation_left_operand(
+                                assertion.span,
+                            ));
+                        }),
+                        _ => {}
                     }
                 }
                 Expression::new_binary_expression(span, lhs, op, rhs, self)
@@ -2019,14 +2035,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if let Some(span) = left_parenthesized_span {
             //  `({}) = x;`, `([]) = x;`
             if matches!(lhs, Expression::ObjectExpression(_) | Expression::ArrayExpression(_)) {
-                self.error(diagnostics::invalid_assignment(span));
+                cold_branch(|| self.error(diagnostics::invalid_assignment(span)));
             }
         }
         // A destructuring pattern target is only valid with `=`, not a compound operator.
         if operator != AssignmentOperator::Assign
             && matches!(lhs, Expression::ObjectExpression(_) | Expression::ArrayExpression(_))
         {
-            self.error(diagnostics::assignment_is_not_simple(lhs.span()));
+            cold_branch(|| self.error(diagnostics::assignment_is_not_simple(lhs.span())));
         }
         let left = AssignmentTarget::cover(lhs, self);
         self.bump_any();

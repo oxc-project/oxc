@@ -92,10 +92,7 @@ impl<C: Config> Lexer<'_, C> {
                     if self.peek_byte().is_some_and(|b| kind.matches_number_byte(b)) {
                         self.consume_char();
                     } else {
-                        self.error(diagnostics::invalid_numeric_separator(Span::new(
-                            self.offset() - 1,
-                            self.offset(),
-                        )));
+                        self.report_invalid_numeric_separator();
                         self.advance_to_end();
                         return Kind::Eof;
                     }
@@ -190,10 +187,7 @@ impl<C: Config> Lexer<'_, C> {
                     if self.peek_byte().is_some_and(|b| b.is_ascii_digit()) {
                         self.consume_char();
                     } else {
-                        self.error(diagnostics::invalid_numeric_separator(Span::new(
-                            self.offset() - 1,
-                            self.offset(),
-                        )));
+                        self.report_invalid_numeric_separator();
                         return;
                     }
                 }
@@ -203,6 +197,13 @@ impl<C: Config> Lexer<'_, C> {
                 _ => break,
             }
         }
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn report_invalid_numeric_separator(&mut self) {
+        let end = self.offset();
+        self.error(diagnostics::invalid_numeric_separator(Span::new(end - 1, end)));
     }
 
     pub(super) fn decimal_literal_after_decimal_point(&mut self) -> Kind {
@@ -258,7 +259,7 @@ impl<C: Config> Lexer<'_, C> {
         }
 
         // Invalid next char (identifier/digit immediately after a number). This is invalid JS,
-        // so a cold path: building the diagnostic out-of-line keeps the `OxcDiagnostic` return
+        // so a cold path: building the diagnostic out-of-line keeps the `ParserDiagnostic` return
         // buffer out of this function's stack frame, so the common (valid) return is near-leaf.
         cold_branch(|| {
             let offset = self.offset();

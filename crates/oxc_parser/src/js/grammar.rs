@@ -3,10 +3,10 @@
 
 use oxc_allocator::{ArenaBox, ArenaVec, Dummy, GetAllocator};
 use oxc_ast::ast::*;
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
 
 use super::cover::{Cover, CoverCheck, CoverElement};
-use crate::{ParserConfig as Config, ParserImpl, diagnostics};
+use crate::{ParserConfig as Config, ParserImpl, diagnostics, lexer::cold_branch};
 
 pub trait CoverGrammar<'a, T, C: Config>: Sized {
     fn cover(value: T, p: &mut ParserImpl<'a, C>) -> Self;
@@ -42,7 +42,7 @@ impl<'a, C: Config> CoverGrammar<'a, Expression<'a>, C> for SimpleAssignmentTarg
                 let span = expr.span;
                 match expr.unbox().expression {
                     Expression::ObjectExpression(_) | Expression::ArrayExpression(_) => {
-                        p.fatal_error(diagnostics::invalid_assignment(span))
+                        p.invalid_assignment_target(span)
                     }
                     expr => SimpleAssignmentTarget::cover(expr, p),
                 }
@@ -54,7 +54,7 @@ impl<'a, C: Config> CoverGrammar<'a, Expression<'a>, C> for SimpleAssignmentTarg
                 | Expression::PrivateFieldExpression(_) => {
                     SimpleAssignmentTarget::TSAsExpression(expr)
                 }
-                _ => p.fatal_error(diagnostics::invalid_assignment(expr.span())),
+                _ => p.invalid_assignment_target(expr.span()),
             },
             Expression::TSSatisfiesExpression(expr) => {
                 match expr.expression.get_inner_expression() {
@@ -64,7 +64,7 @@ impl<'a, C: Config> CoverGrammar<'a, Expression<'a>, C> for SimpleAssignmentTarg
                     | Expression::PrivateFieldExpression(_) => {
                         SimpleAssignmentTarget::TSSatisfiesExpression(expr)
                     }
-                    _ => p.fatal_error(diagnostics::invalid_assignment(expr.span())),
+                    _ => p.invalid_assignment_target(expr.span()),
                 }
             }
             Expression::TSNonNullExpression(expr) => match expr.expression.get_inner_expression() {
@@ -74,7 +74,7 @@ impl<'a, C: Config> CoverGrammar<'a, Expression<'a>, C> for SimpleAssignmentTarg
                 | Expression::PrivateFieldExpression(_) => {
                     SimpleAssignmentTarget::TSNonNullExpression(expr)
                 }
-                _ => p.fatal_error(diagnostics::invalid_assignment(expr.span())),
+                _ => p.invalid_assignment_target(expr.span()),
             },
             Expression::TSTypeAssertion(expr) => match expr.expression.get_inner_expression() {
                 Expression::Identifier(_)
@@ -83,12 +83,12 @@ impl<'a, C: Config> CoverGrammar<'a, Expression<'a>, C> for SimpleAssignmentTarg
                 | Expression::PrivateFieldExpression(_) => {
                     SimpleAssignmentTarget::TSTypeAssertion(expr)
                 }
-                _ => p.fatal_error(diagnostics::invalid_assignment(expr.span())),
+                _ => p.invalid_assignment_target(expr.span()),
             },
             Expression::TSInstantiationExpression(expr) => {
-                p.fatal_error(diagnostics::invalid_lhs_assignment(expr.span()))
+                cold_branch(|| p.fatal_error(diagnostics::invalid_lhs_assignment(expr.span())))
             }
-            expr => p.fatal_error(diagnostics::invalid_assignment(expr.span())),
+            expr => p.invalid_assignment_target(expr.span()),
         }
     }
 }
@@ -129,16 +129,17 @@ impl<'a, C: Config> CoverGrammar<'a, ArrayExpression<'a>, C> for ArrayAssignment
                                 | Expression::ComputedMemberExpression(_)
                                 | Expression::PrivateFieldExpression(_)
                         ) {
-                            p.error(diagnostics::invalid_rest_assignment_target(argument.span()));
+                            p.report_invalid_rest_assignment_target(argument.span());
                         }
                         let target = AssignmentTarget::cover(argument, p);
                         rest = Some(AssignmentTargetRest::boxed(span, target, p));
                         if let Some(span) = p.state.trailing_commas.remove(&expr.span.start) {
-                            p.error(diagnostics::rest_element_trailing_comma(span));
+                            p.report_rest_element_trailing_comma(span);
                         }
                     } else {
-                        let error = diagnostics::spread_last_element(elem.span);
-                        return p.fatal_error(error);
+                        return cold_branch(|| {
+                            p.fatal_error(diagnostics::spread_last_element(elem.span))
+                        });
                     }
                 }
                 ArrayExpressionElement::Elision(_) => elements.push(None),
@@ -154,9 +155,11 @@ impl<'a, C: Config> CoverGrammar<'a, Expression<'a>, C> for AssignmentTargetMayb
         match expr {
             Expression::AssignmentExpression(assignment_expr) => {
                 if assignment_expr.operator != AssignmentOperator::Assign {
-                    p.error(diagnostics::invalid_assignment_target_default_value_operator(
-                        assignment_expr.span,
-                    ));
+                    cold_branch(|| {
+                        p.error(diagnostics::invalid_assignment_target_default_value_operator(
+                            assignment_expr.span,
+                        ));
+                    });
                 }
                 let target = AssignmentTargetWithDefault::cover(assignment_expr.unbox(), p);
                 AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(p.alloc(target))
@@ -209,15 +212,17 @@ impl<'a, C: Config> CoverGrammar<'a, ObjectExpression<'a>, C> for ObjectAssignme
                                 | Expression::ComputedMemberExpression(_)
                                 | Expression::PrivateFieldExpression(_)
                         ) {
-                            p.error(diagnostics::invalid_rest_assignment_target(argument.span()));
+                            p.report_invalid_rest_assignment_target(argument.span());
                         }
                         if let Some(span) = p.state.trailing_commas.remove(&expr.span.start) {
-                            p.error(diagnostics::rest_element_trailing_comma(span));
+                            p.report_rest_element_trailing_comma(span);
                         }
                         let target = AssignmentTarget::cover(argument, p);
                         rest = Some(AssignmentTargetRest::boxed(span, target, p));
                     } else {
-                        return p.fatal_error(diagnostics::spread_last_element(spread.span));
+                        return cold_branch(|| {
+                            p.fatal_error(diagnostics::spread_last_element(spread.span))
+                        });
                     }
                 }
             }
@@ -260,6 +265,18 @@ impl<'a, C: Config> CoverGrammar<'a, ObjectProperty<'a>, C> for AssignmentTarget
 }
 
 impl<'a, C: Config> ParserImpl<'a, C> {
+    #[cold]
+    #[inline(never)]
+    fn invalid_assignment_target(&mut self, span: Span) -> SimpleAssignmentTarget<'a> {
+        self.fatal_error(diagnostics::invalid_assignment(span))
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn report_invalid_rest_assignment_target(&mut self, span: Span) {
+        self.error(diagnostics::invalid_rest_assignment_target(span));
+    }
+
     // `ObjectLiteral`, `ArrayLiteral` and `IdentifierReference` cover the matching binding
     // patterns. A conversion must only be given an expression that passed its check.
 
@@ -459,7 +476,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             Expression::YieldExpression(expression) => {
                 let span = expression.span;
-                self.error(diagnostics::identifier_generator("yield", span, false));
+                cold_branch(|| self.error(diagnostics::identifier_generator("yield", span, false)));
                 BindingPattern::new_binding_identifier(span, self.ident("yield"), self)
             }
             Expression::ObjectExpression(object) => {
@@ -542,13 +559,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let SpreadElement { span, argument, .. } = spread.unbox();
         let argument = self.cover_expression_to_binding_element(argument);
         if let BindingPattern::AssignmentPattern(pattern) = &argument {
-            self.error(diagnostics::a_rest_element_cannot_have_an_initializer(pattern.span));
+            cold_branch(|| {
+                self.error(diagnostics::a_rest_element_cannot_have_an_initializer(pattern.span));
+            });
         }
         if !self.state.trailing_commas.is_empty()
             && let Some(comma_span) = self.state.trailing_commas.remove(&literal_start)
             && !self.ctx.has_ambient()
         {
-            self.error(diagnostics::rest_element_trailing_comma(comma_span));
+            self.report_rest_element_trailing_comma(comma_span);
         }
         BindingRestElement::boxed(span, argument, self)
     }

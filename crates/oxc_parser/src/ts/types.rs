@@ -7,7 +7,7 @@ use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
     Context, ParserConfig as Config, ParserImpl, diagnostics,
-    lexer::Kind,
+    lexer::{Kind, cold_branch},
     modifiers::{ModifierKind, ModifierKinds, Modifiers},
 };
 
@@ -71,7 +71,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if is_constructor_type {
             if let Some(this_param) = &this_param {
                 // type Foo = new (this: number) => any;
-                self.error(diagnostics::ts_constructor_this_parameter(this_param.span));
+                self.report_constructor_this_parameter(this_param.span);
             }
             TSType::new_ts_constructor_type(
                 span,
@@ -219,7 +219,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.expect(Kind::RAngle);
         let span = self.end_span(start);
         if params.is_empty() {
-            self.error(diagnostics::ts_empty_type_parameter_list(span));
+            cold_branch(|| self.error(diagnostics::ts_empty_type_parameter_list(span)));
         }
         (Some(TSTypeParameterDeclaration::boxed(span, params, self)), trailing_comma.is_some())
     }
@@ -345,7 +345,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             && !matches!(ty, TSType::TSArrayType(_))
             && !matches!(ty, TSType::TSTupleType(_))
         {
-            self.error(diagnostics::readonly_in_array_or_tuple_type(operator_span));
+            cold_branch(|| self.error(diagnostics::readonly_in_array_or_tuple_type(operator_span)));
         }
         TSType::new_ts_type_operator_type(self.end_span(start), operator, ty, self)
     }
@@ -940,10 +940,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.expect(Kind::RAngle);
             let span = self.end_span(start);
             if params.is_empty() {
-                self.error(diagnostics::ts_empty_type_argument_list(span));
+                self.report_empty_type_argument_list(span);
             }
             if !self.is_ts {
-                self.error(diagnostics::type_arguments_in_ts(span));
+                cold_branch(|| self.error(diagnostics::type_arguments_in_ts(span)));
             }
             return Some(TSTypeParameterInstantiation::boxed(span, params, self));
         }
@@ -1018,7 +1018,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.expect(Kind::RAngle);
             let span = self.end_span(start);
             if params.is_empty() {
-                self.error(diagnostics::ts_empty_type_argument_list(span));
+                self.report_empty_type_argument_list(span);
             }
             return Some(TSTypeParameterInstantiation::boxed(span, params, self));
         }
@@ -1106,9 +1106,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         let span = self.end_span(start);
         if params.is_empty() {
-            self.error(diagnostics::ts_empty_type_argument_list(span));
+            self.report_empty_type_argument_list(span);
         }
         Some(TSTypeParameterInstantiation::boxed(span, params, self))
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn report_empty_type_argument_list(&mut self, span: Span) {
+        self.error(diagnostics::ts_empty_type_argument_list(span));
     }
 
     /// Whether the tokens after the current `<` or `<<` can begin a `TypeArguments` production.
@@ -1268,10 +1274,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     _ => false,
                 } && let Some(seen_optional_span) = seen_optional_span
                 {
-                    me.error(diagnostics::required_element_cannot_follow_optional_element(
-                        tuple.span(),
-                        seen_optional_span,
-                    ));
+                    cold_branch(|| {
+                        me.error(diagnostics::required_element_cannot_follow_optional_element(
+                            tuple.span(),
+                            seen_optional_span,
+                        ));
+                    });
                 }
 
                 if match &tuple {
@@ -1334,17 +1342,23 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self,
             );
             if rest_after_tuple_member_name {
-                self.error(diagnostics::rest_after_tuple_member_name(self.end_span(type_start)));
+                cold_branch(|| {
+                    self.error(diagnostics::rest_after_tuple_member_name(
+                        self.end_span(type_start),
+                    ));
+                });
             }
             if optional_after_tuple_member_name {
-                self.error(diagnostics::optional_after_tuple_member_name(
-                    self.end_span(type_start),
-                ));
+                cold_branch(|| {
+                    self.error(diagnostics::optional_after_tuple_member_name(
+                        self.end_span(type_start),
+                    ));
+                });
             }
             if is_rest_type {
                 let span = self.end_span(start);
                 if optional {
-                    self.error(diagnostics::optional_and_rest_tuple_member(span));
+                    cold_branch(|| self.error(diagnostics::optional_and_rest_tuple_member(span)));
                 }
                 TSTupleElement::new_ts_rest_type(span, named_tuple_member, self)
             } else {
@@ -1698,7 +1712,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             && let Some(this_param) = &this_param
         {
             // interface Foo { new(this: number): Foo }
-            self.error(diagnostics::ts_constructor_this_parameter(this_param.span));
+            self.report_constructor_this_parameter(this_param.span);
         }
         let return_type = self.parse_ts_return_type_annotation();
         self.parse_type_member_semicolon();
@@ -1721,6 +1735,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 )
             }
         }
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn report_constructor_this_parameter(&mut self, span: Span) {
+        self.error(diagnostics::ts_constructor_this_parameter(span));
     }
 
     pub(crate) fn parse_getter_setter_signature_member(
@@ -1848,13 +1868,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let parameter = self.parse_ts_index_signature_name();
             while !self.at(Kind::RBrack) && !self.has_fatal_error() {
                 if !self.at(Kind::Comma) {
-                    self.set_fatal_error(diagnostics::expect_closing_or_separator(
-                        Kind::RBrack.to_str(),
-                        Kind::Comma.to_str(),
-                        self.cur_kind().to_str(),
-                        self.cur_token().span(),
-                        opening_span,
-                    ));
+                    self.report_unexpected_list_token(Kind::RBrack, Kind::Comma, opening_span);
                     break;
                 }
                 self.advance(Kind::Comma);
@@ -1868,32 +1882,41 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             parameter
         };
         if let Some(comma_start) = comma_start {
-            self.error(diagnostics::unexpected_trailing_comma(
-                "Index signature declarations",
-                self.end_span(comma_start),
-            ));
+            cold_branch(|| {
+                self.error(diagnostics::unexpected_trailing_comma(
+                    "Index signature declarations",
+                    self.end_span(comma_start),
+                ));
+            });
         }
         self.expect(Kind::RBrack);
         if parameter_count == 1 {
             match &parameter.type_annotation.type_annotation {
                 TSType::TSLiteralType(ty) => {
-                    self.error(diagnostics::index_signature_parameter_literal_type(ty.span));
+                    cold_branch(|| {
+                        self.error(diagnostics::index_signature_parameter_literal_type(ty.span));
+                    });
                 }
                 TSType::TSStringKeyword(_)
                 | TSType::TSNumberKeyword(_)
                 | TSType::TSSymbolKeyword(_)
                 | TSType::TSAnyKeyword(_) => {}
                 ty if ty.is_keyword() => {
-                    self.error(diagnostics::index_signature_parameter_type(parameter.span));
+                    cold_branch(|| {
+                        self.error(diagnostics::index_signature_parameter_type(parameter.span));
+                    });
                 }
                 _ => {}
             }
         } else {
-            self.error(diagnostics::index_signature_one_parameter(self.end_span(start)));
+            cold_branch(|| {
+                self.error(diagnostics::index_signature_one_parameter(self.end_span(start)));
+            });
         }
         let Some(type_annotation) = self.parse_ts_type_annotation() else {
-            return self
-                .fatal_error(diagnostics::index_signature_type_annotation(self.end_span(start)));
+            return cold_branch(|| {
+                self.fatal_error(diagnostics::index_signature_type_annotation(self.end_span(start)))
+            });
         };
         self.parse_type_member_semicolon();
         TSIndexSignature::boxed(
@@ -1921,7 +1944,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.check_identifier(self.cur_kind(), self.ctx);
         let name = self.parse_identifier_name().name;
         if self.at(Kind::Question) {
-            self.error(diagnostics::index_signature_question_mark(self.cur_token().span()));
+            cold_branch(|| {
+                self.error(diagnostics::index_signature_question_mark(self.cur_token().span()));
+            });
             self.bump_any();
         }
         let type_annotation = self.parse_ts_type_annotation();

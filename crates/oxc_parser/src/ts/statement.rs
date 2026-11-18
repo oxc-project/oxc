@@ -1,12 +1,12 @@
 use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_data_structures::buffered_vec::BufferedVec;
-use oxc_span::{FileExtension, GetSpan, SPAN};
+use oxc_span::{FileExtension, GetSpan, SPAN, Span};
 
 use crate::{
     Context, ParserConfig as Config, ParserImpl, StatementContext, diagnostics,
     js::{FunctionKind, VariableDeclarationParent},
-    lexer::Kind,
+    lexer::{Kind, cold_branch},
     modifiers::{ModifierKind, ModifierKinds, Modifiers},
 };
 
@@ -82,31 +82,33 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     TSEnumMemberName::ComputedTemplateString(template)
                 }
                 Expression::NumericLiteral(literal) => {
-                    let error = diagnostics::enum_member_cannot_have_numeric_name(literal.span());
-                    self.fatal_error(error)
+                    self.report_numeric_enum_member_name(literal.span())
                 }
-                expr => {
-                    let error =
-                        diagnostics::computed_property_names_not_allowed_in_enums(expr.span());
-                    self.fatal_error(error)
-                }
+                expr => self.report_computed_enum_member_name(expr.span()),
             },
             Kind::NoSubstitutionTemplate | Kind::TemplateHead => {
-                let error = diagnostics::computed_property_names_not_allowed_in_enums(
-                    self.cur_token().span(),
-                );
-                self.fatal_error(error)
+                self.report_computed_enum_member_name(self.cur_token().span())
             }
             kind if kind.is_number() => {
-                let error =
-                    diagnostics::enum_member_cannot_have_numeric_name(self.cur_token().span());
-                self.fatal_error(error)
+                self.report_numeric_enum_member_name(self.cur_token().span())
             }
             _ => {
                 let ident_name = self.parse_identifier_name();
                 TSEnumMemberName::Identifier(self.alloc(ident_name))
             }
         }
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn report_numeric_enum_member_name(&mut self, span: Span) -> TSEnumMemberName<'a> {
+        self.fatal_error(diagnostics::enum_member_cannot_have_numeric_name(span))
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn report_computed_enum_member_name(&mut self, span: Span) -> TSEnumMemberName<'a> {
+        self.fatal_error(diagnostics::computed_property_names_not_allowed_in_enums(span))
     }
 
     /* ------------------- Annotation ----------------- */
@@ -141,7 +143,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if let Some(type_params) = &params {
             for param in &type_params.params {
                 if param.r#const {
-                    self.error(diagnostics::const_type_parameter(param.span));
+                    self.report_const_type_parameter(param.span);
                 }
             }
         }
@@ -218,8 +220,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 | "object"
                 | "undefined"
         ) {
-            self.error(diagnostics::reserved_type_name(id.span, id.name.as_str(), syntax_name));
+            cold_branch(|| {
+                self.error(diagnostics::reserved_type_name(id.span, id.name.as_str(), syntax_name));
+            });
         }
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn report_const_type_parameter(&mut self, span: Span) {
+        self.error(diagnostics::const_type_parameter(span));
     }
 
     pub(crate) fn parse_ts_interface_declaration(
@@ -233,7 +243,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if let Some(type_parameters) = &type_parameters {
             for param in &type_parameters.params {
                 if param.r#const {
-                    self.error(diagnostics::const_type_parameter(param.span));
+                    self.report_const_type_parameter(param.span);
                 }
             }
         }
@@ -251,7 +261,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             },
         );
         if let Some((implements_kw_span, _)) = implements {
-            self.error(diagnostics::interface_implements(implements_kw_span));
+            cold_branch(|| self.error(diagnostics::interface_implements(implements_kw_span)));
         }
         Declaration::new_ts_interface_declaration(
             self.end_span(start),
@@ -270,7 +280,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let mut extends = BufferedVec::<_, 1>::new(ArenaVec::new_in(self));
         if self.at(Kind::LCurly) {
-            self.error(diagnostics::empty_extends_clause(extends_span));
+            cold_branch(|| self.error(diagnostics::empty_extends_clause(extends_span)));
             return extends.into_vec();
         }
         loop {
@@ -289,7 +299,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     Kind::Comma | Kind::LCurly | Kind::Extends | Kind::Implements | Kind::Eof
                 ) {
                     if has_this {
-                        self.error(diagnostics::interface_extend(self.end_span(start)));
+                        cold_branch(|| {
+                            self.error(diagnostics::interface_extend(self.end_span(start)));
+                        });
                     }
                     (type_name, type_argument)
                 } else {
@@ -312,7 +324,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let comma_span = self.cur_token().span();
             self.bump_any();
             if self.at(Kind::LCurly) {
-                self.error(diagnostics::trailing_comma_not_allowed(comma_span));
+                cold_branch(|| self.error(diagnostics::trailing_comma_not_allowed(comma_span)));
                 break;
             }
         }
@@ -331,6 +343,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if self.at(Kind::Dot) { self.parse_ts_qualified_type_name(start, left) } else { left }
     }
 
+    #[cold]
+    #[inline(never)]
     fn parse_invalid_ts_interface_heritage_type_name(&mut self) -> TSTypeName<'a> {
         let expression = self.parse_assignment_expression_or_higher();
         let expression_span = expression.span();
@@ -613,7 +627,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             && reserved_ctx.has_ambient()
             && !reserved_ctx.has_top_level()
         {
-            self.error(diagnostics::declare_in_ambient_context(modifier.span()));
+            cold_branch(|| self.error(diagnostics::declare_in_ambient_context(modifier.span())));
         }
         self.ctx = self
             .ctx
@@ -625,7 +639,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // `Declaration`, not a `Statement`, so it cannot stand alone as the body of
         // `if`/`for`/`while`/`with`/a label — it must be wrapped in a block.
         if stmt_ctx.is_single_statement() {
-            self.error(diagnostics::declaration_single_statement(decl.span()));
+            cold_branch(|| self.error(diagnostics::declaration_single_statement(decl.span())));
         }
         Statement::from(decl)
     }
@@ -637,10 +651,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> Declaration<'a> {
         let kind = self.cur_kind();
-        if kind != Kind::Class {
-            for decorator in &decorators {
-                self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
-            }
+        if kind != Kind::Class && !decorators.is_empty() {
+            cold_branch(|| {
+                for decorator in &decorators {
+                    self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
+                }
+            });
         }
         match kind {
             Kind::Var | Kind::Let | Kind::Const => {
@@ -661,21 +677,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 Declaration::VariableDeclaration(decl)
             }
             Kind::Using if self.is_using_declaration() => {
-                self.expect(Kind::Using);
-                let identifier = self.parse_identifier_kind(self.cur_kind()).1.as_str();
-                self.fatal_error(diagnostics::using_declaration_cannot_be_exported(
-                    identifier,
-                    self.end_span(start),
-                ))
+                self.parse_invalid_exported_using_declaration(start, false)
             }
             Kind::Await if self.is_using_statement() => {
-                self.expect(Kind::Await);
-                self.expect(Kind::Using);
-                let identifier = self.parse_identifier_kind(self.cur_kind()).1.as_str();
-                self.fatal_error(diagnostics::using_declaration_cannot_be_exported(
-                    identifier,
-                    self.end_span(start),
-                ))
+                self.parse_invalid_exported_using_declaration(start, true)
             }
             Kind::Class => {
                 let decl = self.parse_class_declaration(start, modifiers, decorators);
@@ -764,6 +769,24 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         )
     }
 
+    #[cold]
+    #[inline(never)]
+    fn parse_invalid_exported_using_declaration(
+        &mut self,
+        start: u32,
+        has_await: bool,
+    ) -> Declaration<'a> {
+        if has_await {
+            self.expect(Kind::Await);
+        }
+        self.expect(Kind::Using);
+        let identifier = self.parse_identifier_kind(self.cur_kind()).1.as_str();
+        self.fatal_error(diagnostics::using_declaration_cannot_be_exported(
+            identifier,
+            self.end_span(start),
+        ))
+    }
+
     pub(crate) fn parse_ts_type_assertion(&mut self) -> Expression<'a> {
         let start = self.cur_start();
         self.expect(Kind::LAngle);
@@ -774,7 +797,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let span = self.end_span(start);
 
         if matches!(self.source_type.extension(), Some(FileExtension::Mts | FileExtension::Cts)) {
-            self.error(diagnostics::jsx_type_assertion_in_mts_cts(span));
+            cold_branch(|| self.error(diagnostics::jsx_type_assertion_in_mts_cts(span)));
         }
 
         Expression::new_ts_type_assertion(span, type_annotation, expression, self)

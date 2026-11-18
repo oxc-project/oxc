@@ -49,7 +49,7 @@ impl<C: Config> Lexer<'_, C> {
             Kind::Str
         } else {
             self.source.advance_to_end();
-            self.error(diagnostics::unterminated_string(self.unterminated_range()));
+            self.report_unterminated_string();
             Kind::Eof
         }
     }

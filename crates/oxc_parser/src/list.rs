@@ -9,7 +9,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{
     ParserConfig as Config, ParserImpl,
     diagnostics::{self, ParserDiagnostic},
-    lexer::Kind,
+    lexer::{Kind, cold_branch},
 };
 
 impl<'a, C: Config> ParserImpl<'a, C> {
@@ -179,7 +179,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     #[cold]
     #[inline(never)]
-    fn report_unexpected_list_token(&mut self, close: Kind, separator: Kind, opening_span: Span) {
+    pub(crate) fn report_unexpected_list_token(
+        &mut self,
+        close: Kind,
+        separator: Kind,
+        opening_span: Span,
+    ) {
         let error = diagnostics::expect_closing_or_separator(
             close.to_str(),
             separator.to_str(),
@@ -188,6 +193,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             opening_span,
         );
         self.set_fatal_error(error);
+    }
+
+    #[cold]
+    #[inline(never)]
+    pub(crate) fn report_rest_element_trailing_comma(&mut self, span: Span) {
+        self.error(diagnostics::rest_element_trailing_comma(span));
     }
 
     pub(crate) fn parse_delimited_list_with_rest<E, A, R, D>(
@@ -224,7 +235,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     let kind = p.cur_kind();
                     if kind == close {
                         if rest.is_some() && !p.ctx.has_ambient() {
-                            p.error(diagnostics::rest_element_trailing_comma(comma_span));
+                            p.report_rest_element_trailing_comma(comma_span);
                         }
                         return None;
                     }
@@ -234,7 +245,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
 
                 if let Some(r) = &rest {
-                    p.set_fatal_error(rest_last_diagnostic(r.span()));
+                    cold_branch(|| p.set_fatal_error(rest_last_diagnostic(r.span())));
                     return None;
                 }
 

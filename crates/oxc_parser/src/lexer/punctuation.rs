@@ -34,7 +34,7 @@ impl<C: Config> Lexer<'_, C> {
                 Some(Kind::LtEq)
             }
             // `<!--` HTML comment (Annex B.1.1). Rare legacy syntax, so handle out of line:
-            // it builds/pushes a diagnostic, whose `OxcDiagnostic` buffer would otherwise inflate
+            // it builds/pushes a diagnostic, whose `ParserDiagnostic` buffer would otherwise inflate
             // the `<` byte-handler's stack frame on the common `<`/`<<`/`<=` path.
             Some(b'!') if self.remaining().starts_with("!--") => cold_branch(|| {
                 if self.source_type.is_module() {
@@ -80,6 +80,8 @@ impl<C: Config> Lexer<'_, C> {
     }
 
     /// Defer HTML comment error for unambiguous mode (emitted if file resolves to module)
+    #[cold]
+    #[inline(never)]
     fn defer_html_comment_error(&mut self, len: u32) {
         if self.source_type.is_unambiguous() {
             let span = Span::sized(self.token_start, len);

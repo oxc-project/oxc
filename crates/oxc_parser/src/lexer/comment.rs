@@ -339,7 +339,7 @@ impl<'a, C: Config> Lexer<'a, C> {
                 }
             },
             handle_eof: {
-                self.error(diagnostics::unterminated_multi_line_comment(self.unterminated_range()));
+                self.report_unterminated_multi_line_comment();
                 return Err(Kind::Eof);
             },
         };
@@ -364,8 +364,14 @@ impl<'a, C: Config> Lexer<'a, C> {
             self.pending.set_is_on_new_line();
         }
         self.source.advance_to_end();
-        self.error(diagnostics::unterminated_multi_line_comment(self.unterminated_range()));
+        self.report_unterminated_multi_line_comment();
         Kind::Eof
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn report_unterminated_multi_line_comment(&mut self) {
+        self.error(diagnostics::unterminated_multi_line_comment(self.unterminated_range()));
     }
 
     /// Section 12.5 Hashbang Comments.

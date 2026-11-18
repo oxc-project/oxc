@@ -2,7 +2,10 @@ use oxc_allocator::ArenaBox;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
-use crate::{Context, ParserConfig as Config, ParserImpl, diagnostics, lexer::Kind};
+use crate::{
+    Context, ParserConfig as Config, ParserImpl, diagnostics,
+    lexer::{Kind, cold_branch},
+};
 
 impl<'a, C: Config> ParserImpl<'a, C> {
     /// `BindingElement`
@@ -55,8 +58,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if let Some(rest) = &rest
             && !matches!(&rest.argument, BindingPattern::BindingIdentifier(_))
         {
-            let error = diagnostics::invalid_binding_rest_element(rest.argument.span());
-            return self.fatal_error(error);
+            return cold_branch(|| {
+                self.fatal_error(diagnostics::invalid_binding_rest_element(rest.argument.span()))
+            });
         }
 
         self.expect(Kind::RCurly);
@@ -97,16 +101,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let pattern = self.parse_binding_pattern();
         // Rest element does not allow `?`, checked in checker/typescript.rs
         if self.at(Kind::Question) && self.is_ts {
-            let span = self.cur_token().span();
-            self.bump_any();
-            self.error(diagnostics::a_rest_parameter_cannot_be_optional(span));
+            self.skip_optional_rest_marker();
         }
         // In binding patterns, type annotation syntax is invalid (looks like property name)
         // Example: const { ...a: b } = {}; // Error: rest element cannot have property name
         if self.is_ts && self.at(Kind::Colon) {
             let type_annotation = self.parse_ts_type_annotation();
             if let Some(ty) = type_annotation {
-                self.error(diagnostics::rest_element_property_name(ty.span));
+                cold_branch(|| self.error(diagnostics::rest_element_property_name(ty.span)));
             }
         }
 
@@ -115,7 +117,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         //                    ^^^^ A rest element cannot have an initializer
         let argument = self.context_add(Context::In, |p| p.parse_initializer(init_start, pattern));
         if let BindingPattern::AssignmentPattern(pat) = &argument {
-            self.error(diagnostics::a_rest_element_cannot_have_an_initializer(pat.span));
+            cold_branch(|| {
+                self.error(diagnostics::a_rest_element_cannot_have_an_initializer(pat.span));
+            });
         }
 
         BindingRestElement::boxed(self.end_span(start), argument, self)
@@ -132,9 +136,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let pattern = self.parse_binding_pattern();
         // Rest element does not allow `?`, checked in checker/typescript.rs
         if self.at(Kind::Question) && self.is_ts {
-            let span = self.cur_token().span();
-            self.bump_any();
-            self.error(diagnostics::a_rest_parameter_cannot_be_optional(span));
+            self.skip_optional_rest_marker();
         }
         // For formal parameters, type annotation is NOT consumed here
         // It will be parsed by the caller (parse_formal_parameters_list) and attached to FormalParameterRest
@@ -144,10 +146,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         //                 ^^^^^^ A rest parameter cannot have an initializer
         let argument = self.context_add(Context::In, |p| p.parse_initializer(init_start, pattern));
         if let BindingPattern::AssignmentPattern(pat) = &argument {
-            self.error(diagnostics::a_rest_parameter_cannot_have_an_initializer(pat.span));
+            cold_branch(|| {
+                self.error(diagnostics::a_rest_parameter_cannot_have_an_initializer(pat.span));
+            });
         }
 
         BindingRestElement::new(self.end_span(start), argument, self)
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn skip_optional_rest_marker(&mut self) {
+        let span = self.cur_token().span();
+        self.bump_any();
+        self.error(diagnostics::a_rest_parameter_cannot_be_optional(span));
     }
 
     /// `BindingProperty`[Yield, Await] :

@@ -8,7 +8,7 @@ use oxc_str::Str;
 use super::{VariableDeclarationParent, grammar::CoverGrammar};
 use crate::{
     Context, ParserConfig as Config, ParserImpl, StatementContext, diagnostics,
-    lexer::Kind,
+    lexer::{Kind, cold_branch},
     modifiers::{ModifierKind, Modifiers},
 };
 
@@ -117,7 +117,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     && !stmt.is_declaration()
                     && !stmt.is_module_declaration()
                 {
-                    p.error(diagnostics::statement_in_ambient_context(stmt.span()));
+                    cold_branch(|| p.error(diagnostics::statement_in_ambient_context(stmt.span())));
                     reported_ambient_statement = true;
                 }
                 statement_index += 1;
@@ -308,10 +308,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         );
 
         if stmt_ctx.is_single_statement() && decl.kind.is_lexical() {
-            self.error(diagnostics::lexical_declaration_single_statement(decl.span));
+            self.report_lexical_declaration_single_statement(decl.span);
         }
 
         Statement::VariableDeclaration(decl)
+    }
+
+    #[cold]
+    #[inline(never)]
+    pub(super) fn report_lexical_declaration_single_statement(&mut self, span: Span) {
+        self.error(diagnostics::lexical_declaration_single_statement(span));
     }
 
     /// Section 14.4 Empty Statement
@@ -727,15 +733,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Some(expr)
         };
         if !self.ctx.has_return() {
-            let span = Span::sized(start, 6);
-            // Class static blocks enable `NewTarget` but disable `Return`.
-            // Other contexts that allow `new.target` cannot directly contain
-            // a return statement without entering a function body first.
-            if self.ctx.has_new_target() {
-                self.error(diagnostics::return_statement_in_class_static_block(span));
-            } else {
-                self.error(diagnostics::return_statement_only_in_function_body(span));
-            }
+            cold_branch(|| {
+                let span = Span::sized(start, 6);
+                // Class static blocks enable `NewTarget` but disable `Return`.
+                // Other contexts that allow `new.target` cannot directly contain
+                // a return statement without entering a function body first.
+                let error = if self.ctx.has_new_target() {
+                    diagnostics::return_statement_in_class_static_block(span)
+                } else {
+                    diagnostics::return_statement_only_in_function_body(span)
+                };
+                self.error(error);
+            });
         }
         Statement::new_return_statement(self.end_span(start), argument, self)
     }

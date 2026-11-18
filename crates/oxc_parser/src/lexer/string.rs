@@ -155,15 +155,14 @@ macro_rules! handle_string_literal_escape {
         let mut is_valid_escape_sequence = true;
         let first = $lexer.decode_string_escape_sequence(false, &mut is_valid_escape_sequence);
         if !is_valid_escape_sequence {
-            let range = Span::new(escape_start_offset, $lexer.offset());
-            $lexer.error(diagnostics::invalid_escape_sequence(range));
+            $lexer.report_invalid_escape_sequence(escape_start_offset);
         }
 
         let chunk_start = $lexer.source.position();
         let remaining = $lexer.source.remaining().as_bytes();
         let Some(end) = find_string_chunk_end::<$delimiter>(remaining, &$table) else {
             $lexer.source.advance_to_end();
-            $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
+            $lexer.report_unterminated_string();
             return Kind::Undetermined;
         };
         let b = remaining[end];
@@ -235,8 +234,7 @@ macro_rules! handle_string_literal_escape {
             let mut is_valid_escape_sequence = true;
             $lexer.read_string_escape_sequence(&mut str, false, &mut is_valid_escape_sequence);
             if !is_valid_escape_sequence {
-                let range = Span::new(escape_start_offset, $lexer.offset());
-                $lexer.error(diagnostics::invalid_escape_sequence(range));
+                $lexer.report_invalid_escape_sequence(escape_start_offset);
             }
 
             // Consume bytes until reach end of string, line break, or another escape
@@ -244,7 +242,7 @@ macro_rules! handle_string_literal_escape {
             let remaining = $lexer.source.remaining().as_bytes();
             let Some(end) = find_string_chunk_end::<$delimiter>(remaining, &$table) else {
                 $lexer.source.advance_to_end();
-                $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
+                $lexer.report_unterminated_string();
                 return Kind::Undetermined;
             };
             let b = remaining[end];
@@ -287,6 +285,12 @@ macro_rules! handle_string_literal_escape {
 
 /// 12.9.4 String Literals
 impl<'a, C: Config> Lexer<'a, C> {
+    #[cold]
+    #[inline(never)]
+    fn report_invalid_escape_sequence(&mut self, start: u32) {
+        self.error(diagnostics::invalid_escape_sequence(Span::new(start, self.offset())));
+    }
+
     /// Decode a single common escape without growing an arena string.
     #[inline]
     fn read_single_character_escape<const DELIMITER: u8>(&mut self) -> bool {

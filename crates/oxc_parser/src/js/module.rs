@@ -1,12 +1,12 @@
 use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator};
 use oxc_ast::ast::*;
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashMap;
 
 use super::FunctionKind;
 use crate::{
     ParserConfig as Config, ParserImpl, StatementContext, diagnostics,
-    lexer::Kind,
+    lexer::{Kind, cold_branch},
     modifiers::{Modifier, ModifierKind, Modifiers},
 };
 
@@ -36,8 +36,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Expression<'a> {
         self.expect(Kind::LParen);
         if self.eat(Kind::RParen) {
-            let error = diagnostics::import_requires_a_specifier(self.end_span(start));
-            return self.fatal_error(error);
+            return cold_branch(|| {
+                self.fatal_error(diagnostics::import_requires_a_specifier(self.end_span(start)))
+            });
         }
         let has_in = self.ctx.has_in();
         self.ctx = self.ctx.and_in(true);
@@ -50,8 +51,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // Allow trailing comma
         self.bump(Kind::Comma);
         if !self.eat(Kind::RParen) {
-            let error = diagnostics::import_arguments(self.end_span(start));
-            return self.fatal_error(error);
+            return cold_branch(|| {
+                self.fatal_error(diagnostics::import_arguments(self.end_span(start)))
+            });
         }
         self.ctx = self.ctx.and_in(has_in);
         let expr =
@@ -63,8 +65,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// An argument of `ImportCall`. Spread elements are not allowed.
     fn parse_import_argument(&mut self) -> Expression<'a> {
         if self.at(Kind::Dot3) {
-            let error = diagnostics::dynamic_import_argument_spread(self.cur_token().span());
-            return self.fatal_error(error);
+            return cold_branch(|| {
+                self.fatal_error(diagnostics::dynamic_import_argument_spread(
+                    self.cur_token().span(),
+                ))
+            });
         }
         self.parse_assignment_expression_or_higher()
     }
@@ -108,7 +113,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 // `import type { ...`
                 // `import type * ...`
                 if token_after_import.escaped() {
-                    self.error(diagnostics::escaped_keyword(token_after_import.span()));
+                    self.report_escaped_keyword(token_after_import.span());
                 }
                 import_kind = ImportOrExportKind::Type;
                 has_default_specifier = false;
@@ -119,14 +124,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 if token.kind() == Kind::From && self.at(Kind::Str) {
                     // `import type from 'source'`
                     if token.escaped() {
-                        self.error(diagnostics::escaped_keyword(token.span()));
+                        self.report_escaped_keyword(token.span());
                     }
                     has_default_specifier = true;
                     import_kind = ImportOrExportKind::Value;
                     should_parse_specifiers = false;
                 } else {
                     if token_after_import.escaped() {
-                        self.error(diagnostics::escaped_keyword(token_after_import.span()));
+                        self.report_escaped_keyword(token_after_import.span());
                     }
                     identifier_after_import = Some(identifier_after_type);
                     import_kind = ImportOrExportKind::Type;
@@ -153,9 +158,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 has_default_specifier = false;
             } else if self.at(Kind::LCurly) {
                 // `import defer { ... } from 'source'`
-                self.error(diagnostics::named_import_not_allowed_in_defer(
-                    token_after_import.span(),
-                ));
+                cold_branch(|| {
+                    self.error(diagnostics::named_import_not_allowed_in_defer(
+                        token_after_import.span(),
+                    ));
+                });
                 phase = Some(ImportPhase::Defer);
                 has_default_specifier = false;
             } else if self.cur_kind().is_binding_identifier()
@@ -163,9 +170,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 && self.cur_kind() != Kind::As
             {
                 // `import defer x from 'source'`
-                self.error(diagnostics::default_import_not_allowed_in_defer(
-                    token_after_import.span(),
-                ));
+                cold_branch(|| {
+                    self.error(diagnostics::default_import_not_allowed_in_defer(
+                        token_after_import.span(),
+                    ));
+                });
                 // Parse the identifier as the default specifier to continue recovery
                 identifier_after_import = Some(self.parse_known_binding_identifier());
                 phase = Some(ImportPhase::Defer);
@@ -186,7 +195,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     } else if self.at(Kind::Str) {
                         // `import source from 'source'`
                         if token.escaped() {
-                            self.error(diagnostics::escaped_keyword(token.span()));
+                            self.report_escaped_keyword(token.span());
                         }
                         has_default_specifier = true;
                         should_parse_specifiers = false;
@@ -198,18 +207,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     phase = Some(ImportPhase::Source);
                     has_default_specifier = true;
                 }
-            } else if self.at(Kind::Star) {
+            } else if matches!(self.cur_kind(), Kind::Star | Kind::LCurly) {
                 // `import source * as ns from 'source'`
-                self.error(diagnostics::only_default_import_allowed_in_source_phase(
-                    token_after_import.span(),
-                ));
-                phase = Some(ImportPhase::Source);
-                has_default_specifier = false;
-            } else if self.at(Kind::LCurly) {
                 // `import source { ... } from 'source'`
-                self.error(diagnostics::only_default_import_allowed_in_source_phase(
-                    token_after_import.span(),
-                ));
+                cold_branch(|| {
+                    self.error(diagnostics::only_default_import_allowed_in_source_phase(
+                        token_after_import.span(),
+                    ));
+                });
                 phase = Some(ImportPhase::Source);
                 has_default_specifier = false;
             }
@@ -218,7 +223,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         // The first identifier is a keyword only after resolving the import phase.
         if phase.is_some() && token_after_import.escaped() {
-            self.error(diagnostics::escaped_keyword(token_after_import.span()));
+            self.report_escaped_keyword(token_after_import.span());
         }
 
         let specifiers = if self.at(Kind::Str) {
@@ -292,9 +297,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     // import defaultExport, * as name from "module-name";
                     Kind::Star => {
                         if self.is_ts && import_kind == ImportOrExportKind::Type {
-                            self.error(diagnostics::type_only_import_default_and_named(
-                                default_span,
-                            ));
+                            self.report_type_only_import_default_and_named(default_span);
                         }
                         let namespace = self.parse_import_namespace_specifier();
                         ArenaVec::from_array_in([specifier, namespace], self)
@@ -302,9 +305,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     // import defaultExport, { export1 [ , [...] ] } from "module-name";
                     Kind::LCurly => {
                         if self.is_ts && import_kind == ImportOrExportKind::Type {
-                            self.error(diagnostics::type_only_import_default_and_named(
-                                default_span,
-                            ));
+                            self.report_type_only_import_default_and_named(default_span);
                         }
                         self.parse_import_specifiers(Some(specifier), import_kind)
                     }
@@ -326,6 +327,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         self.expect(Kind::From);
         specifiers
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn report_type_only_import_default_and_named(&mut self, span: Span) {
+        self.error(diagnostics::type_only_import_default_and_named(span));
     }
 
     // import * as name from "module-name"
@@ -389,8 +396,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let key = e.key.as_js_str();
                 let span = e.key.span();
                 if let Some(old_span) = keys.insert(key, span) {
-                    let name = key.as_str().unwrap_or_else(|| span.source_text(self.source_text));
-                    self.error(diagnostics::duplicate_import_attribute_key(name, old_span, span));
+                    cold_branch(|| {
+                        let name =
+                            key.as_str().unwrap_or_else(|| span.source_text(self.source_text));
+                        self.error(diagnostics::duplicate_import_attribute_key(
+                            name, old_span, span,
+                        ));
+                    });
                 }
             }
         }
@@ -406,9 +418,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         };
         self.expect(Kind::Colon);
         if !self.at(Kind::Str) {
-            return self.fatal_error(diagnostics::import_attribute_value_must_be_string_literal(
-                self.cur_token().span(),
-            ));
+            return cold_branch(|| {
+                self.fatal_error(diagnostics::import_attribute_value_must_be_string_literal(
+                    self.cur_token().span(),
+                ))
+            });
         }
         let value = self.parse_known_literal_string();
         ImportAttribute::new(self.end_span(start), key, value, self)
@@ -450,12 +464,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if self.is_ts {
             return;
         }
-        let statement = if self.at(Kind::Import) { "import statement" } else { "export statement" };
-        let span = self.cur_token().span();
-        if self.source_type.is_script() || self.source_type.is_commonjs() {
-            self.error(diagnostics::module_code(statement, span));
-        } else if stmt_ctx != StatementContext::Program {
-            self.error(diagnostics::top_level(statement, span));
+        let is_script = self.source_type.is_script() || self.source_type.is_commonjs();
+        if is_script || stmt_ctx != StatementContext::Program {
+            cold_branch(|| {
+                let statement =
+                    if self.at(Kind::Import) { "import statement" } else { "export statement" };
+                let span = self.cur_token().span();
+                let error = if is_script {
+                    diagnostics::module_code(statement, span)
+                } else {
+                    diagnostics::top_level(statement, span)
+                };
+                self.error(error);
+            });
         }
     }
 
@@ -496,16 +517,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     }
                     ModuleDeclaration::ExportDeclaration(export_decl)
                 } else {
-                    return self.fatal_error(diagnostics::unexpected_export(stmt.span()));
+                    return cold_branch(|| {
+                        self.fatal_error(diagnostics::unexpected_export(stmt.span()))
+                    });
                 }
             }
             Kind::At => {
                 let class_start = self.cur_start();
                 let after_export_decorators = self.parse_decorators();
-                if !decorators.is_empty() {
-                    for decorator in &after_export_decorators {
-                        self.error(diagnostics::decorators_in_export_and_class(decorator.span));
-                    }
+                if !decorators.is_empty() && !after_export_decorators.is_empty() {
+                    self.report_decorators_before_and_after_export(&after_export_decorators);
                 }
                 decorators.extend(after_export_decorators);
                 let modifiers = self.parse_modifiers(false, false);
@@ -556,10 +577,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             _ => {
                 if self.at(Kind::Export) {
-                    self.error(diagnostics::modifier_already_seen(Modifier::new(
-                        self.cur_token().start(),
-                        ModifierKind::Export,
-                    )));
+                    cold_branch(|| {
+                        self.error(diagnostics::modifier_already_seen(Modifier::new(
+                            self.cur_token().start(),
+                            ModifierKind::Export,
+                        )));
+                    });
                     self.bump_any();
                 }
                 ModuleDeclaration::ExportDeclaration(
@@ -610,10 +633,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             for specifier in &mut specifiers {
                 match &specifier.local {
                     // It is a Syntax Error if ReferencedBindings of NamedExports contains any StringLiterals.
-                    ModuleExportName::StringLiteral(literal) => {
-                        let local = self.allocator().alloc_str(&specifier.local.to_string());
-                        let exported = self.allocator().alloc_str(&specifier.exported.to_string());
-                        self.error(diagnostics::export_named_string(local, exported, literal.span));
+                    ModuleExportName::StringLiteral(_) => {
+                        self.report_invalid_local_export(specifier);
                     }
                     // For each IdentifierName n in ReferencedBindings of NamedExports:
                     // It is a Syntax Error if StringValue of n is a ReservedWord or the StringValue of n
@@ -623,12 +644,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         if match_result.is_reserved_keyword()
                             || match_result.is_future_reserved_keyword()
                         {
-                            let local = self.allocator().alloc_str(&specifier.local.to_string());
-                            let exported =
-                                self.allocator().alloc_str(&specifier.exported.to_string());
-                            self.error(diagnostics::export_reserved_word(
-                                local, exported, ident.span,
-                            ));
+                            self.report_invalid_local_export(specifier);
                         }
 
                         // `local` becomes a reference for `export { local }`.
@@ -665,6 +681,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             ModuleDeclaration::ExportNamedDeclaration(export_named_decl)
         }
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn report_invalid_local_export(&mut self, specifier: &ExportSpecifier<'a>) {
+        let span = specifier.local.span();
+        let local = self.allocator().alloc_str(&specifier.local.to_string());
+        let exported = self.allocator().alloc_str(&specifier.exported.to_string());
+        let error = if matches!(specifier.local, ModuleExportName::StringLiteral(_)) {
+            diagnostics::export_named_string(local, exported, span)
+        } else {
+            diagnostics::export_reserved_word(local, exported, span)
+        };
+        self.error(error);
     }
 
     // export Declaration
@@ -722,10 +752,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if self.at(Kind::At) {
             let after_export_decorators = self.parse_decorators();
             // @decorator export default @decorator ...
-            if !decorators.is_empty() {
-                for decorator in &after_export_decorators {
-                    self.error(diagnostics::decorators_in_export_and_class(decorator.span));
-                }
+            if !decorators.is_empty() && !after_export_decorators.is_empty() {
+                self.report_decorators_before_and_after_export(&after_export_decorators);
             }
             decorators.extend(after_export_decorators);
         }
@@ -759,8 +787,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 // export default async function f() {}
                 if kind == Kind::Async && next.kind() == Kind::Function {
                     self.bump_any();
-                    for decorator in &decorators {
-                        self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
+                    if !decorators.is_empty() {
+                        self.report_invalid_export_decorators(&decorators);
                     }
                     let mut func = self.parse_function_impl(
                         function_start,
@@ -776,8 +804,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 // export default interface I {}
                 if self.is_ts && kind == Kind::Interface {
                     self.bump_any();
-                    for decorator in &decorators {
-                        self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
+                    if !decorators.is_empty() {
+                        self.report_invalid_export_decorators(&decorators);
                     }
                     if let Declaration::TSInterfaceDeclaration(decl) =
                         self.parse_ts_interface_declaration(modifier_start, &Modifiers::empty())
@@ -799,8 +827,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             ));
         }
 
-        for decorator in &decorators {
-            self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
+        if !decorators.is_empty() {
+            self.report_invalid_export_decorators(&decorators);
         }
 
         // export default function f() {}
@@ -821,6 +849,22 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let decl = ExportDefaultDeclarationKind::from(self.parse_assignment_expression_or_higher());
         self.asi();
         decl
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn report_decorators_before_and_after_export(&mut self, decorators: &[Decorator<'a>]) {
+        for decorator in decorators {
+            self.error(diagnostics::decorators_in_export_and_class(decorator.span));
+        }
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn report_invalid_export_decorators(&mut self, decorators: &[Decorator<'a>]) {
+        for decorator in decorators {
+            self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
+        }
     }
 
     // export ExportFromClause FromClause ;
@@ -943,25 +987,29 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         if kind == ImportOrExportKind::Type && type_or_name_token.escaped() {
-            self.error(diagnostics::escaped_keyword(type_or_name_token.span()));
+            self.report_escaped_keyword(type_or_name_token.span());
         }
 
         match specifier_type {
             ImportOrExport::Import => {
                 // `import type { type } from 'mod';`
                 if parent_kind == ImportOrExportKind::Type && kind == ImportOrExportKind::Type {
-                    self.error(diagnostics::type_modifier_on_named_type_import(
-                        type_or_name_token.span(),
-                    ));
+                    cold_branch(|| {
+                        self.error(diagnostics::type_modifier_on_named_type_import(
+                            type_or_name_token.span(),
+                        ));
+                    });
                 }
 
                 if !name.is_identifier() {
-                    self.error(diagnostics::identifier_expected(name.span()));
+                    cold_branch(|| self.error(diagnostics::identifier_expected(name.span())));
                 } else if check_identifier_token.kind().is_reserved_keyword() {
-                    self.error(diagnostics::identifier_reserved_word(
-                        check_identifier_token.span(),
-                        check_identifier_token.kind().to_str(),
-                    ));
+                    cold_branch(|| {
+                        self.error(diagnostics::identifier_reserved_word(
+                            check_identifier_token.span(),
+                            check_identifier_token.kind().to_str(),
+                        ));
+                    });
                 }
 
                 let local_name = name.name().as_str();
@@ -978,9 +1026,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             ImportOrExport::Export => {
                 // `export type { type } from 'mod';`
                 if parent_kind == ImportOrExportKind::Type && kind == ImportOrExportKind::Type {
-                    self.error(diagnostics::type_modifier_on_named_type_export(
-                        type_or_name_token.span(),
-                    ));
+                    cold_branch(|| {
+                        self.error(diagnostics::type_modifier_on_named_type_export(
+                            type_or_name_token.span(),
+                        ));
+                    });
                 }
 
                 let local = match property_name {
@@ -1009,8 +1059,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 // It is a Syntax Error if IsStringWellFormedUnicode(the SV of StringLiteral) is false.
                 // The error is fatal so that no AST ever carries an ill-formed export name.
                 if !literal.is_string_well_formed_unicode() {
-                    let error = diagnostics::export_lone_surrogate(literal.span);
-                    return self.fatal_error(error);
+                    return cold_branch(|| {
+                        self.fatal_error(diagnostics::export_lone_surrogate(literal.span))
+                    });
                 }
                 ModuleExportName::StringLiteral(literal)
             }

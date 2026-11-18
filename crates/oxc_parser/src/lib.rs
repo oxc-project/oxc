@@ -108,7 +108,7 @@ use crate::{
     context::{Context, StatementContext},
     diagnostics::ParserDiagnostic,
     error_handler::FatalError,
-    lexer::Lexer,
+    lexer::{Lexer, cold_branch},
     module_record::ModuleRecordBuilder,
     state::ParserState,
 };
@@ -954,8 +954,12 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     fn check_unfinished_errors(&mut self) {
         // PropertyDefinition : cover_initialized_name
         // It is a Syntax Error if any source text is matched by this production.
-        for cover in self.state.cover_initialized_name.values() {
-            self.errors.push(diagnostics::cover_initialized_name(cover.span));
+        if !self.state.cover_initialized_name.is_empty() {
+            cold_branch(|| {
+                for cover in self.state.cover_initialized_name.values() {
+                    self.errors.push(diagnostics::cover_initialized_name(cover.span));
+                }
+            });
         }
     }
 

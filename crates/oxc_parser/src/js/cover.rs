@@ -523,9 +523,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let initializer =
                 self.context_add(Context::In, Self::parse_assignment_expression_or_higher);
             if optional {
-                self.error(diagnostics::a_parameter_cannot_have_question_mark_and_initializer(
-                    pattern.span(),
-                ));
+                self.report_optional_parameter_initializer(pattern.span());
             }
             Some(ArenaBox::new_in(initializer, self))
         } else {
@@ -608,7 +606,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if let Some(comma) = cover.trailing_comma
                 && !self.ctx.has_ambient()
             {
-                self.error(diagnostics::rest_element_trailing_comma(Span::sized(comma, 1)));
+                self.report_rest_element_trailing_comma(Span::sized(comma, 1));
             }
         }
 

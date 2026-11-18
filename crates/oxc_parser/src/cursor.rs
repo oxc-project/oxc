@@ -96,7 +96,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// in `IdentifierName` hence such escapes cannot be used to write an Identifier
     /// whose code point sequence is the same as a `ReservedWord`.
     #[cold]
-    fn report_escaped_keyword(&mut self, span: Span) {
+    #[inline(never)]
+    pub(crate) fn report_escaped_keyword(&mut self, span: Span) {
         self.error(diagnostics::escaped_keyword(span));
     }
 
@@ -180,9 +181,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if self.eat(Kind::Semicolon) || self.can_insert_semicolon() {
             /* no op */
         } else {
-            // ASI failure is a syntax error (cold). Build the diagnostic out of line so the
-            // ~232-byte `OxcDiagnostic` buffer does not inflate `asi`'s stack frame on the
-            // common (valid) path.
+            // Keep the deferred diagnostic's temporary storage out of the successful path.
             cold_branch(|| {
                 let span = Span::empty(self.prev_token_end);
                 let error = diagnostics::auto_semicolon_insertion(span);
