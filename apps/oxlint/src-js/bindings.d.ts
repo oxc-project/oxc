@@ -115,6 +115,8 @@ export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, se
  * * Start of source text is at `source_start` bytes from the start of the buffer.
  * * Source text's UTF-8 byte length is `source_len`.
  * * This section of bytes in the buffer comprises a valid UTF-8 string.
+ * * The `SOURCE_PADDING` bytes after the source text are within the active region of the buffer
+ *   (before offset `ACTIVE_SIZE`), and unused. This function overwrites them with zeros.
  *
  * If source text is originally a JS string on JS side, and converted to a buffer with
  * `Buffer.from(str)` or `new TextEncoder().encode(str)`, this guarantees it's valid UTF-8.

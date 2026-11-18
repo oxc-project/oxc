@@ -26,6 +26,10 @@ pub const BUFFER_SIZE: usize = 2147483576;
 /// (`BUFFER_SIZE` minus `RawTransferMetadata`).
 pub const ACTIVE_SIZE: usize = 2147483560;
 
+/// Number of bytes which must be free after the source text in the buffer.
+/// Must equal `oxc_parser::Source::PADDING`.
+pub const SOURCE_PADDING: usize = 64;
+
 /// Size of `RawTransferMetadata` in bytes.
 pub const RAW_METADATA_SIZE: usize = 16;
 

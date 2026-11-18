@@ -4,6 +4,7 @@ import {
   BLOCK_ALIGN,
   BUFFER_SIZE,
   ACTIVE_SIZE,
+  SOURCE_PADDING,
   IS_TS_FLAG_POS,
 } from "../generated/constants.js";
 import {
@@ -213,9 +214,11 @@ export function prepareRaw(sourceText) {
   // We can't predict how many bytes will be needed exactly in advance of encoding, so we reserve
   // the maximum theoretically possible number of bytes required.
   // `TextEncoder` cannot write into a `Uint8Array` larger than 1 GiB, so size is capped at 1 GiB.
+  // Leave `SOURCE_PADDING` bytes free after the source text. Rust side writes zero padding there,
+  // which the lexer relies on.
   const maxSourceByteLen = sourceText.length * 3;
   if (maxSourceByteLen > ONE_GIB) throw new Error("Source text is too long");
-  const sourceStartPos = ACTIVE_SIZE - maxSourceByteLen;
+  const sourceStartPos = ACTIVE_SIZE - maxSourceByteLen - SOURCE_PADDING;
 
   const sourceBuffer = new Uint8Array(
     buffer.buffer,

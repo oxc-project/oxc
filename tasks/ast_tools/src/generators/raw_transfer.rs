@@ -55,6 +55,11 @@ const ARENA_CURSOR_MIN_ALIGN: u32 = 1;
 /// Code in `oxc_allocator` crate checks that this is correct.
 const CHUNK_FOOTER_SIZE: u32 = 48;
 
+/// Number of bytes which must be free after the source text in the buffer.
+/// Must equal `oxc_parser::Source::PADDING`.
+/// Code in `napi/parser` and `apps/oxlint` checks that this is correct.
+const SOURCE_PADDING: u32 = 64;
+
 /// Minimum alignment requirement for end of `Allocator`'s chunk
 const ALLOCATOR_CHUNK_END_ALIGN: u32 = 16;
 
@@ -1575,6 +1580,12 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
         export const ACTIVE_SIZE = {active_size};
 
         /**
+         * Number of bytes which must be free after the source text in the buffer.
+         * Must equal `oxc_parser::Source::PADDING`.
+         */
+        export const SOURCE_PADDING = {SOURCE_PADDING};
+
+        /**
          * Byte offset of the data pointer within the buffer, divided by 4 (for `Int32Array` indexing).
          */
         export const DATA_POINTER_POS_32 = {data_pointer_pos_32};
@@ -1657,6 +1668,7 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
     let block_align = number_lit(BLOCK_ALIGN);
     let buffer_size = number_lit(buffer_size);
     let active_size = number_lit(active_size);
+    let source_padding = number_lit(SOURCE_PADDING);
     let raw_metadata_size = number_lit(raw_metadata_size);
     let raw_metadata_align = number_lit(raw_metadata_align);
     let chunk_footer_size = number_lit(CHUNK_FOOTER_SIZE);
@@ -1692,6 +1704,11 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
         /// Size of the active data region in bytes - the region where source text and AST live
         /// (`BUFFER_SIZE` minus `RawTransferMetadata`).
         pub const ACTIVE_SIZE: usize = #active_size;
+
+        ///@@line_break
+        /// Number of bytes which must be free after the source text in the buffer.
+        /// Must equal `oxc_parser::Source::PADDING`.
+        pub const SOURCE_PADDING: usize = #source_padding;
 
         ///@@line_break
         /// Size of `RawTransferMetadata` in bytes.

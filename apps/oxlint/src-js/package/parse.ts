@@ -11,6 +11,7 @@ import {
   BUFFER_SIZE,
   DATA_POINTER_POS_32,
   ACTIVE_SIZE,
+  SOURCE_PADDING,
 } from "../generated/constants.ts";
 
 import type { BufferWithArrays } from "../plugins/types.ts";
@@ -61,9 +62,11 @@ export function parse(path: string, sourceText: string, options?: ParseOptions) 
   // We can't predict how many bytes will be needed exactly in advance of encoding, so we reserve
   // the maximum theoretically possible number of bytes required.
   // `TextEncoder` cannot write into a `Uint8Array` larger than 1 GiB, so size is capped at 1 GiB.
+  // Leave `SOURCE_PADDING` bytes free after the source text. Rust side writes zero padding there,
+  // which the lexer relies on.
   const maxSourceByteLen = sourceText.length * 3;
   if (maxSourceByteLen > ONE_GIB) throw new Error("Source text is too long");
-  const sourceStartPos = ACTIVE_SIZE - maxSourceByteLen;
+  const sourceStartPos = ACTIVE_SIZE - maxSourceByteLen - SOURCE_PADDING;
 
   const sourceBuffer = new Uint8Array(
     buffer.buffer,

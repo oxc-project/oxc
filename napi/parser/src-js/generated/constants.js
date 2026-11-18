@@ -27,6 +27,12 @@ export const BUFFER_SIZE = 2147483576;
 export const ACTIVE_SIZE = 2147483560;
 
 /**
+ * Number of bytes which must be free after the source text in the buffer.
+ * Must equal `oxc_parser::Source::PADDING`.
+ */
+export const SOURCE_PADDING = 64;
+
+/**
  * Byte offset of the data pointer within the buffer, divided by 4 (for `Int32Array` indexing).
  */
 export const DATA_POINTER_POS_32 = 536870890;

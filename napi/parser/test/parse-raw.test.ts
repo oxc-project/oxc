@@ -240,6 +240,8 @@ describe.concurrent("edge cases", () => {
     // Hashbangs
     "#!/usr/bin/env node\nlet x;",
     "#!/usr/bin/env node\nlet x;\n// foo",
+    // Only 3-byte UTF-8 characters, which puts source text as close to end of buffer as it can get
+    "日本語",
   ])("%s", (sourceText) => {
     // oxlint-disable-next-line jest/expect-expect
     it("JS", () => runCaseInWorker(TEST_TYPE_INLINE_FIXTURE, { filename: "dummy.js", sourceText }));

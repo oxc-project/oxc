@@ -24,7 +24,9 @@ use oxc_estree_tokens::{ESTreeTokenOptions, update_tokens};
 
 use crate::{
     AstType, ParserOptions, get_ast_type, parse_impl,
-    raw_transfer_constants::{ACTIVE_SIZE, BLOCK_ALIGN, BLOCK_SIZE, CURSOR_MIN_ALIGN},
+    raw_transfer_constants::{
+        ACTIVE_SIZE, BLOCK_ALIGN, BLOCK_SIZE, CURSOR_MIN_ALIGN, SOURCE_PADDING,
+    },
     raw_transfer_types::{EcmaScriptModule, Error, RawTransferData, RawTransferMetadata},
 };
 
@@ -126,6 +128,8 @@ impl Task for ParseRawTask {
 /// * Source text is written into buffer starting at offset `source_start`.
 /// * Source text's UTF-8 byte length is `source_len`.
 /// * The bytes comprising the source text form a valid UTF-8 string.
+/// * The `SOURCE_PADDING` bytes after the source text are within the active region of the buffer
+///   (before offset `ACTIVE_SIZE`), and unused. This function overwrites them with zeros.
 /// * Contents of buffer must not be mutated by caller until the `AsyncTask` returned by this
 ///   function resolves.
 ///
@@ -163,6 +167,8 @@ pub fn parse_raw(
 /// * Source text is written into buffer starting at offset `source_start`.
 /// * Source text's UTF-8 byte length is `source_len`.
 /// * The bytes comprising the source text form a valid UTF-8 string.
+/// * The `SOURCE_PADDING` bytes after the source text are within the active region of the buffer
+///   (before offset `ACTIVE_SIZE`), and unused. This function overwrites them with zeros.
 ///
 /// If source text is originally a JS string on JS side, and converted to a buffer with
 /// `Buffer.from(str)` or `new TextEncoder().encode(str)`, this guarantees it's valid UTF-8.
@@ -195,6 +201,8 @@ pub unsafe fn parse_raw_sync(
 /// * Source text is written into buffer starting at offset `source_start`.
 /// * Source text's UTF-8 byte length is `source_len`.
 /// * The bytes comprising the source text form a valid UTF-8 string.
+/// * The `SOURCE_PADDING` bytes after the source text are within the active region of the buffer
+///   (before offset `ACTIVE_SIZE`), and unused. This function overwrites them with zeros.
 ///
 /// If source text is originally a JS string on JS side, and converted to a buffer with
 /// `Buffer.from(str)` or `new TextEncoder().encode(str)`, this guarantees it's valid UTF-8.
@@ -233,12 +241,17 @@ unsafe fn parse_raw_impl(
     let allocator = ManuallyDrop::new(allocator);
     let allocator = &*allocator;
 
-    // Check source text is in bounds of active data region of buffer.
-    // Caller guarantees it is, but as this is critical to avoid reading/writing out of bounds,
+    // Padding which JS side leaves after source text must be the size which `Source` requires
+    const _: () = assert!(SOURCE_PADDING == Source::PADDING);
+
+    // Check source text, and the `SOURCE_PADDING` bytes after it,
+    // are in bounds of active data region of buffer.
+    // Metadata is written at `ACTIVE_SIZE` onwards, so the padding must not reach it.
+    // Caller guarantees this, but as this is critical to avoid reading/writing out of bounds,
     // we add this defensive runtime check.
     let source_start = source_start as usize;
     let source_end = source_start + (source_len as usize);
-    assert!(source_end <= ACTIVE_SIZE);
+    assert!(source_end + SOURCE_PADDING <= ACTIVE_SIZE);
 
     // Set cursor to before start of source text. AST will be written into the buffer before the source text.
     // Round down the pointer, so it's aligned on `CURSOR_MIN_ALIGN`.
@@ -259,24 +272,44 @@ unsafe fn parse_raw_impl(
     let is_ts = get_ast_type(source_type, options) == AstType::TypeScript;
 
     let (data_offset, tokens_offset, tokens_len) = {
-        // Get source text from buffer.
-        // Use zero-cost unchecked conversion to `&str` in release builds, full UTF-8 validation in debug builds.
-        let source_text = if cfg!(debug_assertions) {
-            let source_bytes = &buffer[source_start..source_end];
-            str::from_utf8(source_bytes).expect("Source text is not valid UTF-8")
-        } else {
-            // SAFETY: Caller guarantees source occupies this region of the buffer and is valid UTF-8
-            unsafe {
-                let source_bytes = buffer.get_unchecked(source_start..source_end);
-                str::from_utf8_unchecked(source_bytes)
-            }
+        // Create `Source` from source text in buffer, without copying it.
+        // `Source::from_raw_parts` writes `SOURCE_PADDING` zero bytes after the source text.
+        // SAFETY: The assert above ensures `source_start < ACTIVE_SIZE`,
+        // and `ACTIVE_SIZE < BLOCK_SIZE`, which is the length of `buffer`.
+        // So `source_ptr` is in bounds of `buffer`.
+        let source_ptr = unsafe { buffer_ptr.add(source_start) };
+        // SAFETY:
+        // - `source_ptr` points to the `source_len + SOURCE_PADDING` bytes starting at offset
+        //   `source_start` in `buffer` (the region), and `SOURCE_PADDING == Source::PADDING`.
+        //   The assert above ensures the region ends at or before `ACTIVE_SIZE`, which is before
+        //   the `ChunkFooter`. `buffer` is the chunk of `allocator`'s arena, so the region is
+        //   within the arena.
+        // - `source_ptr` is derived from `buffer_ptr`, which is derived from `buffer`,
+        //   a `&mut [u8]` covering the whole buffer. So it's valid for reads and writes
+        //   of the region for the whole of this function.
+        //   `allocator` borrows a local, so `'a` ends before this function returns.
+        // - `buffer` is a `&mut [u8]`, so all its bytes are initialized.
+        // - The only reference to the region is `buffer`. It's not used again after `buffer_ptr`
+        //   was derived from it.
+        // - `buffer` is a `&mut [u8]`, so nothing outside this function accesses the buffer
+        //   while this function runs. Within this function:
+        //   - `allocator`'s cursor was set to at or before `source_start`, and it bumps downwards,
+        //     so it never allocates in the region.
+        //   - Metadata is written at `ACTIVE_SIZE` onwards, which is after the region.
+        //   - After this, the source text is only read via `program.source_text`,
+        //     which comes from `source`.
+        // - Caller guarantees the source text is valid UTF-8.
+        let source = unsafe {
+            Source::from_raw_parts(source_ptr, source_len as usize, true, source_type, allocator)
         };
+        debug_assert!(str::from_utf8(source.as_bytes()).is_ok(), "Source text is not valid UTF-8");
 
         // Parse
-        let source = Source::from_str(source_text, source_type, allocator);
         let ret = parse_impl(source, options);
         let mut program = ret.program;
         let mut module_record = ret.module_record;
+        // Same bytes in the buffer which `source` was created from
+        let source_text = program.source_text;
 
         // Convert errors.
         // Run `SemanticBuilder` if requested.
