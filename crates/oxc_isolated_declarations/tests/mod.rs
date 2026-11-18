@@ -5,13 +5,13 @@ use std::{fmt::Write, fs, path::Path};
 use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions};
-use oxc_parser::Parser;
+use oxc_parser::Source;
 use oxc_span::SourceType;
 
 fn transform(path: &Path, source_text: &str) -> String {
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(path).unwrap();
-    let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
+    let parser_ret = Source::from_str(source_text, source_type, &allocator).parse();
     assert!(
         parser_ret.diagnostics.is_empty(),
         "Parser errors for {}: {:?}",
