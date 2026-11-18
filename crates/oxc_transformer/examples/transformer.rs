@@ -26,9 +26,8 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 use oxc_codegen::{Codegen, CodegenOptions, CodegenReturn};
 use oxc_data_structures::code_buffer::IndentChar;
-use oxc_parser::Parser;
+use oxc_parser::{Source, SourceFileError};
 use oxc_semantic::SemanticBuilder;
-use oxc_span::SourceType;
 use oxc_transformer::{BabelOptions, EnvOptions, HelperLoaderMode, TransformOptions, Transformer};
 use pico_args::Arguments;
 
@@ -37,34 +36,33 @@ use pico_args::Arguments;
 // run `just example transformer` or `just watch-example transformer`
 
 /// Demonstrate code transformation with various options
-fn main() {
+fn main() -> Result<(), SourceFileError> {
     let mut args = Arguments::from_env();
     let babel_options_path: Option<String> =
         args.opt_value_from_str("--babel-options").unwrap_or(None);
     let targets: Option<String> = args.opt_value_from_str("--targets").unwrap_or(None);
     let target: Option<String> = args.opt_value_from_str("--target").unwrap_or(None);
     let inline_sourcemap = args.contains("--inline-sourcemap");
+
     let name = args.free_from_str().unwrap_or_else(|_| "test.js".to_string());
-
     let path = Path::new(&name);
-    let source_text =
-        std::fs::read_to_string(path).unwrap_or_else(|err| panic!("{name} not found.\n{err}"));
-    let allocator = Allocator::default();
-    let source_type = SourceType::from_path(path).unwrap();
 
-    let ret = Parser::new(&allocator, &source_text, source_type).parse();
+    let allocator = Allocator::default();
+    let source = Source::read_from_file(path, &allocator)?;
+
+    let ret = source.parse();
+    let mut program = ret.program;
+    let source_text = program.source_text;
 
     if !ret.diagnostics.is_empty() {
         println!("Parser Errors:");
         for error in ret.diagnostics {
-            println!("{}", error.render_with_source_code(source_text.as_str()));
+            println!("{}", error.render_with_source_code(source_text));
         }
     }
 
     println!("Original:\n");
     println!("{source_text}\n");
-
-    let mut program = ret.program;
 
     let ret = SemanticBuilder::new()
         // Estimate transformer will triple scopes, symbols, references
@@ -75,7 +73,7 @@ fn main() {
     if !ret.diagnostics.is_empty() {
         println!("Semantic Errors:");
         for error in ret.diagnostics {
-            println!("{}", error.render_with_source_code(source_text.as_str()));
+            println!("{}", error.render_with_source_code(source_text));
         }
     }
 
@@ -104,13 +102,15 @@ fn main() {
     if !ret.diagnostics.is_empty() {
         println!("Transformer Errors:");
         for error in ret.diagnostics {
-            println!("{}", error.render_with_source_code(source_text.as_str()));
+            println!("{}", error.render_with_source_code(source_text));
         }
     }
 
     let printed = codegen(&program, path, inline_sourcemap);
     println!("Transformed:\n");
     println!("{printed}");
+
+    Ok(())
 }
 
 fn codegen(program: &Program<'_>, path: &Path, inline_sourcemap: bool) -> String {

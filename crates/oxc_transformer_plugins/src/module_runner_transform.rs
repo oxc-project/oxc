@@ -933,7 +933,7 @@ mod test {
     use oxc_allocator::Allocator;
     use oxc_codegen::{Codegen, CodegenOptions, CommentOptions};
     use oxc_diagnostics::Diagnostics;
-    use oxc_parser::Parser;
+    use oxc_parser::Source;
     use oxc_semantic::SemanticBuilder;
     use oxc_span::SourceType;
     use oxc_tasks_common::print_diff_in_terminal;
@@ -950,7 +950,7 @@ mod test {
     fn transform(source_text: &str, is_jsx: bool) -> Result<TransformReturn, Diagnostics> {
         let source_type = SourceType::default().with_jsx(is_jsx);
         let allocator = Allocator::default();
-        let ret = Parser::new(&allocator, source_text, source_type).parse();
+        let ret = Source::from_str(source_text, source_type, &allocator).parse();
         let mut program = ret.program;
         let mut scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
         if is_jsx {
@@ -991,7 +991,7 @@ mod test {
     fn format_expected_code(source_text: &str) -> String {
         let source_type = SourceType::default();
         let allocator = Allocator::default();
-        let ret = Parser::new(&allocator, source_text, source_type).parse();
+        let ret = Source::from_str(source_text, source_type, &allocator).parse();
         assert!(ret.diagnostics.is_empty());
 
         Codegen::new()

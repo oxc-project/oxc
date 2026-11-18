@@ -1,6 +1,6 @@
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
-use oxc_parser::Parser;
+use oxc_parser::Source;
 use oxc_span::SourceType;
 
 use crate::test;
@@ -34,7 +34,7 @@ fn helper_call_idempotency() {
 
         let allocator = Allocator::default();
         let source_type = SourceType::default();
-        let ret = Parser::new(&allocator, &first, source_type).parse();
+        let ret = Source::from_str(&first, source_type, &allocator).parse();
         assert!(ret.diagnostics.is_empty(), "Parse errors on second pass for: {source}");
         let second = Codegen::new().with_options(codegen_options()).build(&ret.program).code;
 

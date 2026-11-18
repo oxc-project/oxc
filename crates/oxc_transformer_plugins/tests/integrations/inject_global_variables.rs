@@ -4,7 +4,7 @@
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
-use oxc_parser::Parser;
+use oxc_parser::Source;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 
@@ -15,7 +15,7 @@ use super::codegen;
 fn test(source_text: &str, expected: &str, config: InjectGlobalVariablesConfig) {
     let source_type = SourceType::default();
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let ret = Source::from_str(source_text, source_type, &allocator).parse();
     assert!(ret.diagnostics.is_empty());
     let mut program = ret.program;
     let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
@@ -526,7 +526,7 @@ fn reused_transformer() {
         ("Buffer();", "import Buffer from 'buffer'; Buffer();"),
         ("42;", "42;"),
     ] {
-        let ret = Parser::new(&allocator, source_text, source_type).parse();
+        let ret = Source::from_str(source_text, source_type, &allocator).parse();
         let mut program = ret.program;
         let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
         let ret = transformer.build(scoping, &mut program);
