@@ -225,7 +225,7 @@ pub fn compile_fn<'a, const EMIT: bool>(
         }
 
         if env.config.validate_no_jsx_in_try_statements && env.output_mode == OutputMode::Lint {
-            let errors = validate_no_jsx_in_try_statement(&hir);
+            let errors = validate_no_jsx_in_try_statement(&hir, &env.functions);
             log_errors_as_events(&errors, context);
         }
 
