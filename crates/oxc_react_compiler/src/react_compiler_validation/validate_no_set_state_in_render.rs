@@ -124,7 +124,10 @@ fn validate_impl(
                     if (is_set_state_id(callee.identifier, identifiers, types)
                         || unconditional_set_state_functions.contains(&callee.identifier)) =>
                 {
-                    if active_manual_memo_id.is_some() {
+                    // Unlike the TS implementation, preserved useMemo callbacks retain
+                    // their function boundary. Their direct state updates still execute
+                    // inside memoization, including updates in conditional blocks.
+                    if active_manual_memo_id.is_some() || func.is_memo_callback {
                         errors.push(diagnostics::set_state_in_use_memo(callee.span));
                     } else if unconditional_blocks.contains(&block.id) {
                         if enable_use_keyed_state {
