@@ -57,6 +57,11 @@ pub struct LexerCheckpoint<'a> {
     source_position: SourcePosition<'a>,
     errors_len: usize,
     tokens_len: usize,
+    /// Number of comments recorded so far.
+    /// Rewind discards comments recorded since the checkpoint, like errors and tokens.
+    comments_len: usize,
+    /// Number of irregular whitespaces recorded so far, rewound like the comments.
+    irregular_whitespaces_len: usize,
     annotation_comments: AnnotationComments,
 }
 
@@ -227,6 +232,8 @@ impl<'a, C: Config> Lexer<'a, C> {
             source_position: self.source.position(),
             errors_len: self.errors.len(),
             tokens_len: self.tokens.len(),
+            comments_len: self.trivia_builder.comments.len(),
+            irregular_whitespaces_len: self.trivia_builder.irregular_whitespaces.len(),
             annotation_comments: self.trivia_builder.annotation_comments,
         }
     }
@@ -240,6 +247,11 @@ impl<'a, C: Config> Lexer<'a, C> {
 
         self.tokens.truncate(checkpoint.tokens_len);
         self.source.set_position(checkpoint.source_position);
+        // Discard trivia recorded while the parser was speculating, like the errors and tokens.
+        // The final parse re-records it when it lexes the same text again, so text which is a
+        // comment in one interpretation but not the other (e.g. `// c` inside JSX text, which
+        // speculation lexes as code) is not recorded at all.
+        self.trivia_builder.truncate(checkpoint.comments_len, checkpoint.irregular_whitespaces_len);
         self.trivia_builder.annotation_comments = checkpoint.annotation_comments;
     }
 

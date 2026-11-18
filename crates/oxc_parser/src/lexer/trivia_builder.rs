@@ -49,15 +49,32 @@ impl<'a> Comments<'a> {
     fn push(&mut self, comment: Comment) {
         debug_assert!(!self.is_seen(comment.span.start));
         self.starts_end = comment.span.start + 1;
-        if self.len < self.inline.len() {
+        if self.vec.is_empty() && self.len < self.inline.len() {
             self.inline[self.len] = comment;
         } else {
-            if self.len == self.inline.len() {
+            if self.vec.is_empty() {
                 self.move_inline_to_vec();
             }
             self.vec.push(comment);
         }
         self.len += 1;
+    }
+
+    /// Discard comments which were added after the first `len`.
+    ///
+    /// Called when the parser rewinds, so that comments recorded while the parser was
+    /// speculating are discarded, and re-recorded if the same text is lexed as code again.
+    #[cold]
+    #[inline(never)]
+    fn truncate(&mut self, len: usize) {
+        if self.len <= len {
+            return;
+        }
+        self.len = len;
+        if !self.vec.is_empty() {
+            self.vec.truncate(len);
+        }
+        self.starts_end = if len == 0 { 0 } else { self[len - 1].span.start + 1 };
     }
 
     /// Move the comments to arena storage, once there are too many to store inline.
@@ -152,6 +169,18 @@ impl<'a> TriviaBuilder<'a> {
 
     pub(super) fn clear_annotation_comments(&mut self) {
         self.annotation_comments.ends = [None; 2];
+    }
+
+    /// Rewind to the given number of comments and irregular whitespaces, discarding
+    /// any which were recorded since.
+    ///
+    /// Called when the parser rewinds. The final parse re-records them when it lexes the
+    /// same text again, so text which the speculative parse read as trivia but the final
+    /// parse does not (e.g. `// c` inside JSX text) is not recorded at all.
+    pub(super) fn truncate(&mut self, comments_len: usize, irregular_whitespaces_len: usize) {
+        self.comments.truncate(comments_len);
+        self.irregular_whitespaces.truncate(irregular_whitespaces_len);
+        self.processed = self.processed.min(comments_len);
     }
 
     pub fn mark_pure_comments_applied(&mut self, (start, end): (u32, NonZeroU32)) {
