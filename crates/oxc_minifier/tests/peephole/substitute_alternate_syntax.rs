@@ -945,8 +945,24 @@ fn optional_catch_binding_after_removed_var() {
         "export function f() { try { x() } catch (e) { try { y() } catch (e) { var e } } }",
         "export function f() { try { x() } catch { try { y() } catch {} } }",
     );
+    // The initializer writes the catch parameter, which is never read.
+    test_smallest(
+        "export function f() { try { x() } catch (e) { var e = 1 } }",
+        "export function f() { try { x() } catch {} }",
+    );
+    // A dead nested catch's `var`, kept by `KeepVar` in the body of an outer catch whose
+    // parameter is still read.
+    test_smallest(
+        "export function f() { try { x() } catch (e) { if (0) { try { y() } catch (e) { var e } } return e } }",
+        "export function f() { try { x() } catch (e) { return e } }",
+    );
     // The `var` is kept, so the catch parameter stays.
     test_same_smallest("export function f() { try { x() } catch (e) { if (0) var e } return e }");
+    test_same_smallest("export function f() { try { x() } catch (e) { var e = 1; return e } }");
+    test_smallest(
+        "export function f() { try { x() } catch (e) { if (0) { var e } return e } }",
+        "export function f() { try { x() } catch (e) { if (0) var e; return e } }",
+    );
 }
 
 #[test]

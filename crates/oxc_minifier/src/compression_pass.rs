@@ -151,13 +151,24 @@ pub fn debug_assert_no_under_prune(
 /// `drop_*` / `replace_*` helper (the leak direction: stale redeclarations
 /// silently keep optimizations conservative).
 ///
-/// Allocation-free like the other debug guards: it counts the live
-/// declarations that match a recorded one instead of collecting them.
+/// Allocation-free like the other debug guards: instead of collecting the live
+/// declarations, it compares both the number and a fingerprint (a wrapping sum
+/// of per-declaration hashes) of the live declarations that match a recorded
+/// one, so a declaration matched twice cannot hide one that is missing.
 #[cfg(debug_assertions)]
 pub fn debug_assert_no_stale_redeclarations(program: &Program<'_>, scoping: &Scoping) {
+    use std::hash::{Hash, Hasher};
+
+    fn fingerprint(symbol_id: SymbolId, span: Span) -> u64 {
+        let mut hasher = rustc_hash::FxHasher::default();
+        (symbol_id, span).hash(&mut hasher);
+        hasher.finish()
+    }
+
     struct LiveRedeclarations<'s> {
         scoping: &'s Scoping,
         found: usize,
+        fingerprint: u64,
     }
     impl<'a> Visit<'a> for LiveRedeclarations<'_> {
         fn visit_binding_identifier(&mut self, it: &BindingIdentifier<'a>) {
@@ -166,24 +177,75 @@ pub fn debug_assert_no_stale_redeclarations(program: &Program<'_>, scoping: &Sco
                 let redeclarations = self.scoping.symbol_redeclarations(symbol_id);
                 if redeclarations.iter().any(|redeclaration| redeclaration.span == it.span) {
                     self.found += 1;
+                    self.fingerprint =
+                        self.fingerprint.wrapping_add(fingerprint(symbol_id, it.span));
                 }
             }
         }
     }
-    let recorded: usize =
-        scoping.symbol_ids().map(|symbol_id| scoping.symbol_redeclarations(symbol_id).len()).sum();
+    let (recorded, expected_fingerprint) = scoping
+        .symbol_ids()
+        .flat_map(|symbol_id| {
+            scoping
+                .symbol_redeclarations(symbol_id)
+                .iter()
+                .map(move |redeclaration| fingerprint(symbol_id, redeclaration.span))
+        })
+        .fold((0usize, 0u64), |(count, sum), hash| (count + 1, sum.wrapping_add(hash)));
     if recorded == 0 {
         return;
     }
-    let mut live = LiveRedeclarations { scoping, found: 0 };
+    let mut live = LiveRedeclarations { scoping, found: 0, fingerprint: 0 };
     live.visit_program(program);
     assert!(
-        live.found == recorded,
+        live.found == recorded && live.fingerprint == expected_fingerprint,
         "stale redeclarations: {recorded} declarations recorded in \
-         `Scoping::symbol_redeclarations`, {} still in the program — a drop site bypassed the \
+         `Scoping::symbol_redeclarations`, {} matching ones in the program (fingerprints \
+         {expected_fingerprint:#x} recorded, {:#x} live) — a drop site bypassed the \
          `drop_*` / `replace_*` helpers",
         live.found,
+        live.fingerprint,
     );
+}
+
+/// Debug-only guard for the walk gate in [`prune_removed_declarations`]: a
+/// declaration dropped this pass must not still be in the program unless
+/// `KeepVar` re-emitted it. A violation means a site moved or cloned a binding
+/// out of a subtree it then dropped; release builds, which skip the walk when
+/// nothing was re-emitted, would then remove a live declaration from
+/// `Scoping::symbol_redeclarations` (the unsafe direction).
+///
+/// This is a separate walk rather than part of the pruning walk, so debug builds
+/// take the same pruning path as release builds.
+///
+/// Allocation-free like the other debug guards: it asserts inline during the walk.
+#[cfg(debug_assertions)]
+fn debug_assert_no_revived_declarations(
+    program: &Program<'_>,
+    scoping: &Scoping,
+    removed: &FxHashSet<(SymbolId, Span)>,
+    reemitted: &FxHashSet<(SymbolId, Span)>,
+) {
+    struct RevivedDeclarationCheck<'s> {
+        scoping: &'s Scoping,
+        removed: &'s FxHashSet<(SymbolId, Span)>,
+        reemitted: &'s FxHashSet<(SymbolId, Span)>,
+    }
+    impl<'a> Visit<'a> for RevivedDeclarationCheck<'_> {
+        fn visit_binding_identifier(&mut self, it: &BindingIdentifier<'a>) {
+            let Some(symbol_id) = it.symbol_id.get() else { return };
+            for symbol_id in redeclared_symbols(symbol_id, self.scoping) {
+                let declaration = (symbol_id, it.span);
+                assert!(
+                    !self.removed.contains(&declaration) || self.reemitted.contains(&declaration),
+                    "revived declaration: {declaration:?} was dropped and is still in the \
+                     program, but `KeepVar` did not re-emit it — see \
+                     `PassChanges::reemitted_declarations`",
+                );
+            }
+        }
+    }
+    RevivedDeclarationCheck { scoping, removed, reemitted }.visit_program(program);
 }
 
 /// Debug-only guard for the gated direct-eval refresh: every live direct
@@ -252,14 +314,26 @@ fn debug_assert_no_stale_direct_eval(program: &Program<'_>, scoping: &Scoping) {
 /// Unlike a `ReferenceId`, a dropped binding can reappear: `KeepVar` re-emits
 /// dropped `var`s with their symbol and span, and records them in
 /// [`PassChanges::reemitted_declarations`]. Only when a removed declaration was
-/// re-emitted is the program walked to skip those still present. Debug builds
-/// always walk, and assert that nothing else revived a dropped declaration.
+/// re-emitted is the program walked to keep those still present. This relies on
+/// `KeepVar` being the only site that re-emits a dropped binding, which debug
+/// builds check with a separate walk (`debug_assert_no_revived_declarations`);
+/// the pruning itself takes the same path in debug and release builds.
+///
+/// Removals are applied in hash-set order. The order does not matter unless
+/// every declaration of a symbol is removed: `remove_symbol_declaration` stops
+/// tracking a symbol once one declaration is left, so the last one is never
+/// removed and the symbol's span and flags describe whichever removed
+/// declaration that was. Nothing declares such a symbol anymore, so this is
+/// harmless.
 fn prune_removed_declarations(program: &Program<'_>, ctx: &mut TraverseCtx<'_>) {
     let PassChanges { removed_declarations: removed, reemitted_declarations: reemitted, .. } =
         &mut ctx.state.pass_changes;
-    if cfg!(debug_assertions) || removed.iter().any(|declaration| reemitted.contains(declaration)) {
-        let scoping = ctx.scoping.scoping();
-        LiveDeclarations { scoping, removed, reemitted }.visit_program(program);
+    let scoping = ctx.scoping.scoping();
+    #[cfg(debug_assertions)]
+    debug_assert_no_revived_declarations(program, scoping, removed, reemitted);
+    // `is_disjoint` iterates the smaller set.
+    if !removed.is_disjoint(reemitted) {
+        LiveDeclarations { scoping, removed }.visit_program(program);
     }
     let scoping = ctx.scoping.scoping_mut();
     for (symbol_id, span) in removed.drain() {
@@ -418,21 +492,13 @@ impl<'a> VisitJs<'a> for LiveDirectEvalCollector<'_> {
 struct LiveDeclarations<'b> {
     scoping: &'b Scoping,
     removed: &'b mut FxHashSet<(SymbolId, Span)>,
-    reemitted: &'b FxHashSet<(SymbolId, Span)>,
 }
 
 impl<'a> Visit<'a> for LiveDeclarations<'_> {
     fn visit_binding_identifier(&mut self, it: &BindingIdentifier<'a>) {
         let Some(symbol_id) = it.symbol_id.get() else { return };
         for symbol_id in redeclared_symbols(symbol_id, self.scoping) {
-            let declaration = (symbol_id, it.span);
-            if self.removed.remove(&declaration) {
-                debug_assert!(
-                    self.reemitted.contains(&declaration),
-                    "declaration {declaration:?} was dropped and is still in the program, but \
-                     `KeepVar` did not re-emit it",
-                );
-            }
+            self.removed.remove(&(symbol_id, it.span));
         }
     }
 }
