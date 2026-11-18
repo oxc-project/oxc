@@ -690,3 +690,12 @@ source: crates/oxc_linter/src/tester.rs
    ·        ────────────────────
    ╰────
   help: Require explicit return types on functions and class methods.
+
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:5:17]
+ 4 │               return {
+ 5 │                 run: async () => {
+   ·                 ───────────
+ 6 │                   return 1;
+   ╰────
+  help: Require explicit return types on functions and class methods.
