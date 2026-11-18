@@ -956,6 +956,20 @@ fn optional_catch_binding_after_removed_var() {
         "export function f() { try { x() } catch (e) { if (0) { try { y() } catch (e) { var e } } return e } }",
         "export function f() { try { x() } catch (e) { return e } }",
     );
+    // An unreachable initializer-free `var` skips the drop walk, but `KeepVar`
+    // can still change its symbol when the catch parameter is unused.
+    test_same_smallest("export function f() { try { x() } catch (e) { return; var e } return e }");
+    test_smallest(
+        "export function f() { try { x() } catch (e) { return; var e; var e } return e }",
+        "export function f() { try { x() } catch (e) { return; var e, e } return e }",
+    );
+    test_same_smallest(
+        "export function f() { var e = 1; try { x() } catch (e) { return; var e } return e }",
+    );
+    // A referenced catch parameter must keep its redeclaration link.
+    test_same_smallest(
+        "export function f() { try { x() } catch (e) { return e; var e } return e }",
+    );
     // The `var` is kept, so the catch parameter stays.
     test_same_smallest("export function f() { try { x() } catch (e) { if (0) var e } return e }");
     test_same_smallest("export function f() { try { x() } catch (e) { var e = 1; return e } }");
