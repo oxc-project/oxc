@@ -341,7 +341,9 @@ impl<'a> SemanticBuilder<'a> {
             (stats_with_excess, Some(stats))
         };
         self.node_store.reserve(stats.nodes as usize);
-        self.scoping.reserve(
+        // `self.scoping` is still empty at this point. Replace it with one which has capacity for
+        // everything we're about to add, including an arena of appropriate size.
+        self.scoping = Scoping::with_capacity(
             stats.symbols as usize,
             stats.references as usize,
             stats.scopes as usize,

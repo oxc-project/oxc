@@ -149,3 +149,5 @@ jobs:
           bot-logins: oxc-captain[bot]
           # Pick area labels from the existing `A-*` labels.
           label-package-prefix: "A-"
+          # Reuse the issue state label on bot PRs instead of a separate `fix verified` label.
+          pr-label-fix-verified: "triage: fix verified"
