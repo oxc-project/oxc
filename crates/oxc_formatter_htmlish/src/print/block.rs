@@ -1,10 +1,10 @@
 //! Angular control flow blocks: transparent, their markers print no box (`@if (a) {` … `}`).
 
 use oxc_formatter_core::{
-    builders::{hard_line_break, indent, text},
+    builders::{hard_line_break, indent, space, text},
     write,
 };
-use oxc_htmlish_parser::ast::{Block, NodeId};
+use oxc_htmlish_parser::ast::{Block, BlockKind, NodeId};
 
 use super::{
     HtmlishFormatter,
@@ -35,22 +35,24 @@ pub fn between_block(t: &Tree<'_>, prev: NodeId, next: NodeId) -> Between {
 pub fn write_block<'a>(
     t: &'a Tree<'a>,
     id: NodeId,
-    block: &Block<'a>,
+    block: &'a Block<'a>,
     f: &mut HtmlishFormatter<'_, 'a>,
 ) {
     let item = &t[id];
     let name = t.block_name(block);
-    let default_never = name == "default never";
+    let default_never = block.kind == BlockKind::DefaultNever;
     write!(f, ["@", text(name)]);
-    if !block.parameters.is_empty() {
+    if let Some(parameters) = super::angular::format_block_parameters(block, f) {
+        write!(f, [space(), parameters]);
+    } else if !block.parameters.is_empty() {
         // `@default never(state)`: Prettier glues the parameters to `never`
         write!(f, if default_never { "(" } else { " (" });
         for (i, parameter) in block.parameters.iter().enumerate() {
             if i > 0 {
                 write!(f, "; ");
             }
-            // As written: no expression is formatted yet (Prettier keeps so the ones it does not format, `@defer`'s)
-            write!(f, text(parameter.slice(t.source())));
+            // As written: a block whose parameters are no expressions (`@defer`'s), or one that does not format
+            write!(f, text(parameter.span.slice(t.source())));
         }
         write!(f, ")");
     }
@@ -76,6 +78,11 @@ pub fn write_block<'a>(
         );
         if !glued_after {
             write!(f, hard_line_break());
+        }
+    } else if item.leading_sensitive && !item.has_leading_spaces && !item.has_trailing_spaces {
+        // The run passes the empty block: `a@if (x) { }b` renders the space with the block only
+        if item.has_dangling_spaces {
+            write!(f, space());
         }
     } else if item.next.is_some_and(|next| t.continues_block(id, next)) {
         // `@if (a) {⏎} @else {`, as Prettier prints a closing `}` before the next block

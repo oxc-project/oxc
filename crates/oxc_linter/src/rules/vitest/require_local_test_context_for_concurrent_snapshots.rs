@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::MemberExpression};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
@@ -8,7 +8,10 @@ use oxc_str::JSStr;
 use crate::{
     context::{ContextHost, LintContext},
     rule::Rule,
-    utils::{JestFnKind, JestGeneralFnKind, PossibleJestNode, is_type_of_jest_fn_call},
+    utils::{
+        JestFnKind, JestGeneralFnKind, PossibleJestNode, is_type_of_jest_fn_call,
+        parse_general_jest_fn_call,
+    },
 };
 
 #[inline]
@@ -24,17 +27,17 @@ fn is_snapshot_method(property_name: &str) -> bool {
 }
 
 #[inline]
-fn is_test_or_describe_node(member_expr: &MemberExpression) -> bool {
-    if let Some(id) = member_expr.object().get_identifier_reference()
-        && matches!(
-            JestFnKind::from(id.name.as_str()),
-            JestFnKind::General(JestGeneralFnKind::Describe | JestGeneralFnKind::Test)
-        )
-        && let Some(property_name) = member_expr.static_property_name()
-    {
-        return property_name == "concurrent";
-    }
-    false
+fn is_concurrent_test_or_describe<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+    let AstKind::CallExpression(call_expr) = node.kind() else { return false };
+    let Some(jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx) else {
+        return false;
+    };
+    let Some(call) = parse_general_jest_fn_call(call_expr, &jest_node, ctx) else {
+        return false;
+    };
+
+    matches!(call.kind, JestFnKind::General(JestGeneralFnKind::Describe | JestGeneralFnKind::Test))
+        && call.members.iter().any(|member| member.is_name_equal("concurrent"))
 }
 
 fn require_local_test_context_for_concurrent_snapshots_diagnostic(span: Span) -> OxcDiagnostic {
@@ -127,12 +130,10 @@ impl RequireLocalTestContextForConcurrentSnapshots {
                 return;
             }
 
-            let test_or_describe_node_found = ctx.nodes().ancestors(node.id()).any(|node| {
-                node.kind()
-                    .as_call_expression()
-                    .and_then(|call_expr| call_expr.callee.as_member_expression())
-                    .is_some_and(|member_expr| is_test_or_describe_node(member_expr))
-            });
+            let test_or_describe_node_found = ctx
+                .nodes()
+                .ancestors(node.id())
+                .any(|node| is_concurrent_test_or_describe(node, ctx));
 
             if test_or_describe_node_found {
                 ctx.diagnostic(require_local_test_context_for_concurrent_snapshots_diagnostic(
@@ -159,6 +160,29 @@ fn test() {
         r#"describe("something", () => { it("something", (context) => { context.expect(1).toMatchInlineSnapshot() }) })"#,
         r#"describe("something", () => { it("something", (context) => { expect(1).toMatchInlineSnapshot() }) })"#,
         r#"it.concurrent("something", (context) => { context.expect(1).toMatchSnapshot() })"#,
+        r"import { test } from 'vitest';
+            const customTest = test.extend({});
+            customTest.concurrent('foo', ({ expect }) => {
+                expect(true).toMatchSnapshot();
+            });",
+        r"import { test as baseTest } from 'vitest';
+            const customTest = baseTest.extend({});
+            customTest.concurrent('foo', context => {
+                context.expect(true).toMatchSnapshot();
+            });",
+        r"import { test } from 'vitest';
+            const customTest = test.extend({});
+            customTest('foo', () => { expect(true).toMatchSnapshot(); });",
+        r"import { test as baseTest } from 'other';
+            const customTest = baseTest.extend({});
+            customTest.concurrent('foo', () => { expect(true).toMatchSnapshot(); });",
+        r"function test() {}
+            test.concurrent('foo', () => { expect(true).toMatchSnapshot(); });",
+        r"import { test } from 'vitest';
+            const customTest = test.extend({});
+            function helper(customTest) {
+                customTest.concurrent('foo', () => { expect(true).toMatchSnapshot(); });
+            }",
     ];
 
     let fail = vec![
@@ -180,6 +204,32 @@ fn test() {
         r#"it.concurrent("should fail", () => { expect(true).toMatchFileSnapshot("./test/basic.output.html") })"#,
         r#"it.concurrent("should fail", () => { expect(foo()).toThrowErrorMatchingSnapshot() })"#,
         r#"it.concurrent("should fail", () => { expect(foo()).toThrowErrorMatchingInlineSnapshot("bar") })"#,
+        r"import { test as customTest } from 'vitest';
+            customTest.concurrent('foo', () => { expect(true).toMatchSnapshot(); });",
+        r"import { test } from 'vitest';
+            const customTest = test.extend({});
+            customTest.concurrent('foo', () => { expect(true).toMatchSnapshot(); });",
+        r"import { test as baseTest } from 'vitest';
+            const extendedTest = baseTest.extend({});
+            const customTest = extendedTest.extend({});
+            customTest.concurrent.only('foo', () => {
+                expect(true).toMatchInlineSnapshot();
+            });",
+        r"import { test } from 'vitest';
+            const customTest = test.extend({});
+            customTest.concurrent.each([1])('foo', () => {
+                expect(true).toMatchSnapshot();
+            });",
+        r"import { describe as customDescribe, test } from 'vitest';
+            const customTest = test.extend({});
+            customDescribe.concurrent('suite', () => {
+                customTest('foo', () => { expect(true).toMatchSnapshot(); });
+            });",
+        r"import { test } from 'vitest';
+            const customTest = test.extend({});
+            customTest.only.concurrent('foo', () => {
+                expect(true).toMatchSnapshot();
+            });",
     ];
 
     Tester::new(

@@ -382,9 +382,7 @@ fn resolve_to_jest_fn<'a>(
     Some(ResolvedJestFn { local: ident.name.as_str(), original })
 }
 
-pub(super) fn resolve_first_ident<'a>(
-    expr: &'a Expression<'a>,
-) -> Option<&'a IdentifierReference<'a>> {
+fn resolve_first_ident<'a>(expr: &'a Expression<'a>) -> Option<&'a IdentifierReference<'a>> {
     match expr {
         Expression::Identifier(ident) => Some(ident),
         match_member_expression!(Expression) => {

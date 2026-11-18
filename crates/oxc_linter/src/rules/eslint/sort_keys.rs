@@ -1540,7 +1540,6 @@ fn test() {
   c: 1
 }",
         ),
-        // spellchecker:off
         (
             "const values = {
     b: {
@@ -1601,7 +1600,6 @@ fn test() {
     },
 };"#,
         ),
-        // spellchecker:on
         (
             "const values = {
   c: 3,

@@ -46,16 +46,6 @@ fn react_compiler_plugin_options(env_options: &ReactCompilerEnvOptions) -> Plugi
         output_mode: Some(CompilerOutputMode::Lint),
         // Oxlint does not parse Flow files.
         flow_suppressions: false,
-        // The upstream defaults plus the oxlint spellings of the same rules,
-        // so `oxlint-disable`/`eslint-disable` comments for either plugin
-        // prefix make the compiler skip the function and report it under
-        // `react/rule-suppression`.
-        eslint_suppression_rules: Some(vec![
-            "react-hooks/exhaustive-deps".to_string(),
-            "react-hooks/rules-of-hooks".to_string(),
-            "react/exhaustive-deps".to_string(),
-            "react/rules-of-hooks".to_string(),
-        ]),
         environment: EnvironmentConfig {
             validate_ref_access_during_render: true,
             validate_no_set_state_in_render: true,

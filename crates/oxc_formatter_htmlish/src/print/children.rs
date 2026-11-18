@@ -52,6 +52,9 @@ fn between(t: &Tree<'_>, prev: NodeId, next: NodeId) -> Between {
         } else if p.trailing_sensitive {
             Between::Line
         } else {
+            // Where whitespace is insignificant, a CDATA section glues to the texts around it
+            // (`a <![CDATA[x]]> b` -> `a<![CDATA[x]]>b`), where an inline element breaks apart, as Prettier prints it.
+            // Laying it out as an element would take it out of `text_like`, which every mode relies on.
             Between::Soft
         };
     }

@@ -143,7 +143,7 @@ function Component(props) {
 function _ComponentCallback() {
 	return "ok";
 }
-export const TODO_FIXTURE_ENTRYPOINT = {
+export const FIXTURE_ENTRYPOINT = {
 	fn: Component,
 	params: [{
 		named: "<named>",

@@ -29,3 +29,4 @@ crates/oxc_linter/src/generated/assert_layouts.rs linguist-generated=true
 tasks/coverage/misc/pass/tagged-template-invalid-escape-cr.js -text whitespace=cr-at-eol
 tasks/coverage/misc/pass/tagged-template-invalid-escape-crlf.js -text whitespace=cr-at-eol
 tasks/coverage/misc/pass/regexp-constructor-line-endings.js -text whitespace=cr-at-eol
+tasks/coverage/misc/pass/comment-chunk-boundaries.js -text whitespace=cr-at-eol

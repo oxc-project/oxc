@@ -58,8 +58,8 @@ fn lex(
     let n = buf.len();
     buf.resize(n + PAD, 0);
     let mut lx = Lexer::new_with_cpu(cpu);
-    lx.lanes.disambiguate.walks.full_walk_only = full_walk_only;
-    lx.lanes.disambiguate.walks.no_run_rules = no_run_rules;
+    lx.state.disambiguate.walks.full_walk_only = full_walk_only;
+    lx.state.disambiguate.walks.no_run_rules = no_run_rules;
     let mut tokens = Tokens::new();
     lx.lex(&buf, n, file_type.options(), &mut tokens);
     tokens

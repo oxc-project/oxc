@@ -1,17 +1,24 @@
 //! Content written in another language, formatted by the session's dispatcher:
-//! `<script>` and `<style>` bodies, `style` and event handler attribute values.
+//! `<script>` and `<style>` bodies, `style` and event handler attribute values, and `{{ }}`.
 //! A part the dispatcher does not format prints as written.
 
 use std::any::Any;
 
 use oxc_allocator::{ArenaVec, StringBuilder};
 use oxc_formatter_core::{
-    Format, FormatElement, FormatOptions, builders::group, dispatch_fragment_ir, map_text_in_ir,
-    write,
+    Format, FormatElement, FormatOptions,
+    builders::{
+        exact_line_breaks, expand_parent, group, soft_line_indent_or_space,
+        soft_space_or_block_indent, space, text,
+    },
+    dispatch_fragment_ir, map_text_in_ir, write,
 };
 use oxc_htmlish_parser::ast::NodeId;
 
-use super::{HtmlishFormatter, attribute::quoted_piece, format_ir, text::dedent_string};
+use super::{
+    HtmlishFormatter, attribute::quoted_piece, format_ir, tag::closing_end_borrowed,
+    text::dedent_string,
+};
 use crate::{context::HtmlishFormatContext, tree::Tree};
 
 /// Parent→child context for CSS dispatched from a `style` attribute's value (css-in-html),
@@ -224,7 +231,7 @@ fn escape_script_end<'a>(
     let source = body.as_bytes();
     let spells_script = memchr::memchr(b'\\', source).is_some()
         || memchr::memchr2_iter(b's', b'S', source).any(|i| {
-            source.get(i + 1..i + 6).is_some_and(|rest| rest.eq_ignore_ascii_case(b"cript")) // spellchecker:disable-line
+            source.get(i + 1..i + 6).is_some_and(|rest| rest.eq_ignore_ascii_case(b"cript"))
         });
     if !spells_script {
         return ir;
@@ -292,4 +299,52 @@ fn script_type_language(kind: &str) -> Option<&str> {
         }
         _ => return None,
     })
+}
+
+/// Writes `{{ }}`'s expression between its markers: `formatted` by its language, or as written (as Prettier does).
+pub fn write_interpolation<'a>(
+    t: &Tree<'_>,
+    id: NodeId,
+    expression: &'a str,
+    formatted: Option<&dyn Format<'a, HtmlishFormatContext<'a>>>,
+    f: &mut HtmlishFormatter<'_, 'a>,
+) {
+    // The next sibling prints the `}}` right after this
+    let borrowed = closing_end_borrowed(t, id);
+    if let Some(formatted) = formatted {
+        if borrowed {
+            write!(f, [soft_line_indent_or_space(&formatted), space()]);
+        } else {
+            write!(f, soft_space_or_block_indent(&formatted));
+        }
+        return;
+    }
+    // Whitespace only prints nothing (`{{}}`)
+    if expression.trim_ascii().is_empty() {
+        return;
+    }
+    // A trailing line break prints at the indentation: the next line's `}}` lines up with the `{{`
+    let Some(lf) =
+        expression.rfind('\n').filter(|&lf| expression[lf + 1..].trim_ascii().is_empty())
+    else {
+        // One trailing space before a borrowed `}}` prints as a separator's, which the line break before it drops.
+        // More stay text, the printer's space being one: as written, at the line's end when a line break follows
+        match expression.strip_suffix(' ') {
+            Some(content) if borrowed && !content.ends_with(' ') => {
+                write!(f, [text(content), space()]);
+            }
+            _ => write!(f, text(expression)),
+        }
+        return;
+    };
+    let content = expression[..lf].trim_end_matches('\n');
+    write!(f, text(content));
+    // Its own line break before a borrowed `}}` is the one between the siblings
+    let breaks = lf - content.len() + usize::from(!borrowed);
+    if breaks > 0 {
+        write!(f, exact_line_breaks(breaks));
+    }
+    if borrowed {
+        write!(f, expand_parent());
+    }
 }

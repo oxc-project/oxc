@@ -169,8 +169,10 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
         match parent {
             // An embedded expression's root, which the host's delimiters indent (apps/oxfmt/DIVERGENCES.md#js-in-vue-bitwise-or)
             parent if f.context().is_embedded_root(parent) => true,
+            // The parent already indents a broken expression
             AstNodes::ReturnStatement(_)
             | AstNodes::ThrowStatement(_)
+            | AstNodes::YieldExpression(_)
             | AstNodes::ForStatement(_)
             | AstNodes::TemplateLiteral(_)
             | AstNodes::ArrowFunctionExpression(_) => true,
@@ -274,7 +276,6 @@ impl<'a> Format<'a, JsFormatContext<'a>> for BinaryLikeExpression<'a, '_> {
         let parts = split_into_left_and_right_sides(*self, false, f);
         // Every operator of the flattened chain inlines its right side (`a ?? [..] ?? [..]`),
         // so the chain never breaks at an operator and an indent would only shift the last literal.
-        // See DIVERGENCES.md#inline-logical-chain-indent
         let inline_chain = inline_logical_expression
             && parts.iter().all(|part| match part {
                 BinaryLeftOrRightSide::Left { .. } => true,
@@ -675,7 +676,14 @@ pub fn should_flatten(parent_operator: BinaryLikeOperator, operator: BinaryLikeO
         return false;
     }
 
-    match (parent_operator.precedence(), operator.precedence()) {
+    match (parent_precedence, precedence) {
+        // `(a < b) > c`: TypeScript reads `a < b > (c)` as a call of `a<b>`
+        (Precedence::Compare, Precedence::Compare)
+            if parent_operator == BinaryOperator::GreaterThan.into()
+                && operator == BinaryOperator::LessThan.into() =>
+        {
+            false
+        }
         // `**` is right associative
         (Precedence::Exponentiation, _) |
         // `a == b == c` => `(a == b) == c`

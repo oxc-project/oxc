@@ -24,6 +24,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // The lexer should have reported a more meaningful diagnostic
         // when it is a undetermined kind.
         if matches!(self.cur_kind(), Kind::Eof | Kind::Undetermined)
+            && self.fatal_error.is_none()
             && let Some(error) = self.lexer.errors.pop()
         {
             self.set_fatal_error(error);

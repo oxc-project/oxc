@@ -66,24 +66,28 @@ fn cleaned_test_files() -> Vec<TestFile> {
         .collect()
 }
 
+/// Lex the whole of `source_text`. Returns the number of errors.
+//
 // `#[inline(always)]` to ensure this is inlined into benchmark.
 // It's also used in `SourceCleaner` below.
 #[expect(clippy::inline_always)]
 #[inline(always)]
-fn lex_whole_file<'a, C: LexerConfig>(
-    allocator: &'a Allocator,
-    source_text: &'a str,
+fn lex_whole_file<C: LexerConfig>(
+    allocator: &Allocator,
+    source_text: &str,
     source_type: SourceType,
     config: C,
-) -> Lexer<'a, C> {
-    let mut lexer = Lexer::new_for_benchmarks(allocator, source_text, source_type, config);
-    if lexer.first_token().kind() != Kind::Eof {
-        // Use `next_token_for_benchmarks` instead of `next_token`, to work around problem
-        // where `next_token` wasn't inlined here.
-        // `next_token_for_benchmarks` is identical to `next_token`, but is marked `#[inline(always)]`.
-        while lexer.next_token_for_benchmarks().kind() != Kind::Eof {}
-    }
-    lexer
+) -> usize {
+    Lexer::scope(allocator, source_text, source_type, config, |mut lexer| {
+        if lexer.first_token().kind() != Kind::Eof {
+            // Use `next_token_for_benchmarks` instead of `next_token`, to work around problem
+            // where `next_token` wasn't inlined here.
+            // `next_token_for_benchmarks` is identical to `next_token`,
+            // but is marked `#[inline(always)]`.
+            while lexer.next_token_for_benchmarks().kind() != Kind::Eof {}
+        }
+        lexer.errors().len()
+    })
 }
 
 /// Clean source text.
@@ -128,8 +132,9 @@ fn clean<'a>(source_text: &'a str, source_type: SourceType, allocator: &'a Alloc
     clean_source_text.push_str(&source_text[last_index..]);
 
     // Check lexer can lex it without any errors
-    let lexer = lex_whole_file(allocator, &clean_source_text, source_type, NoTokensLexerConfig);
-    assert!(lexer.errors().is_empty());
+    let error_count =
+        lex_whole_file(allocator, &clean_source_text, source_type, NoTokensLexerConfig);
+    assert_eq!(error_count, 0);
 
     clean_source_text
 }

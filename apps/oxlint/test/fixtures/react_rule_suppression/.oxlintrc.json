@@ -1,0 +1,9 @@
+{
+  "categories": { "correctness": "off" },
+  "plugins": ["react"],
+  "rules": {
+    "react/purity": "error",
+    "react/set-state-in-effect": "error",
+    "react/rule-suppression": "error"
+  }
+}

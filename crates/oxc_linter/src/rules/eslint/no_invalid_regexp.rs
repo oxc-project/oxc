@@ -1,5 +1,8 @@
 use oxc_allocator::Allocator;
-use oxc_ast::{AstKind, ast::Argument};
+use oxc_ast::{
+    AstKind,
+    ast::{Argument, Expression},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::{ConstructorParser, Options};
@@ -88,10 +91,10 @@ impl Rule for NoInvalidRegexp {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let (pattern_arg, flags_arg) = match node.kind() {
-            AstKind::NewExpression(expr) if expr.callee.is_specific_id("RegExp") => {
+            AstKind::NewExpression(expr) if is_global_regexp(&expr.callee, ctx) => {
                 parse_arguments_to_check(expr.arguments.first(), expr.arguments.get(1))
             }
-            AstKind::CallExpression(expr) if expr.callee.is_specific_id("RegExp") => {
+            AstKind::CallExpression(expr) if is_global_regexp(&expr.callee, ctx) => {
                 parse_arguments_to_check(expr.arguments.first(), expr.arguments.get(1))
             }
             // Other kinds, skip
@@ -202,6 +205,15 @@ fn parse_arguments_to_check<'a>(
     }
 }
 
+/// `RegExp` that refers to the built-in, not to a local binding of that name.
+fn is_global_regexp(callee: &Expression, ctx: &LintContext) -> bool {
+    matches!(
+        callee.get_inner_expression(),
+        Expression::Identifier(ident)
+            if ident.name == "RegExp" && ctx.is_reference_to_global_variable(ident)
+    )
+}
+
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -307,6 +319,11 @@ fn test() {
             "new RegExp('.', 'agz')",
             Some(serde_json::json!([{ "allowConstructorFlags": ["a", "z"] }])),
         ),
+        ("function foo(RegExp) { RegExp('['); }", None),
+        ("function foo(RegExp) { new RegExp('['); }", None),
+        ("let RegExp; RegExp('.', 'z');", None),
+        ("function f(RegExp) { (RegExp)('['); new (RegExp)('['); }", None),
+        ("function f(RegExp: any) { (RegExp as any)('['); new (RegExp!)('['); }", None),
     ];
 
     let fail = vec![
@@ -371,6 +388,10 @@ fn test() {
         ("new RegExp('(?-:foo)')", None),
         ("new RegExp('(?g:foo)')", None),
         ("new RegExp('(?-u:foo)')", None),
+        ("(RegExp)('[');", None),
+        ("new (RegExp)('[');", None),
+        ("(RegExp as any)('[');", None),
+        ("new (RegExp!)('[');", None),
     ];
 
     Tester::new(NoInvalidRegexp::NAME, NoInvalidRegexp::PLUGIN, pass, fail).test_and_snapshot();

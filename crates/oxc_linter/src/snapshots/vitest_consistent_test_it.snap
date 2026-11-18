@@ -108,3 +108,12 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ──
    ╰────
   help: Prefer using "test" instead of "it" within describe
+
+  ⚠ vitest(consistent-test-it): Enforce `test` and `it` usage conventions
+    ╭─[consistent_test_it.tsx:10:19]
+  9 │ 
+ 10 │                   testExtended('works', ({ result }) => {
+    ·                   ────────────
+ 11 │                     expect(result).toBe(42);
+    ╰────
+  help: Prefer using "it" instead of "test" within describe

@@ -1,8 +1,8 @@
-commit: f7973164
+commit: 5e32f324
 
 estree_typescript_tokens Summary:
-AST Parsed     : 9821/9824 (99.97%)
-Positive Passed: 9821/9824 (99.97%)
+AST Parsed     : 9828/9831 (99.97%)
+Positive Passed: 9828/9831 (99.97%)
 Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/indexSignatureMissingType.ts
 An index signature must have a type annotation.
 Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsdocThisTagWithThisParameter.ts

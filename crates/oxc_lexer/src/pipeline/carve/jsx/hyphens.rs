@@ -1,10 +1,10 @@
 use oxc_simd::{Avx2, BASELINE, Cpu, DynCpu, Vec256, cpu_multiversion, cpu_version};
 
-use crate::pipeline::bitmap::{bm_clear, bm_get};
+use crate::pipeline::{bitmap::Bitmaps, source::Source};
 
 /// JSXIdentifier admits `-`, so `data-x` and `aria-label` are one name token
 /// where JS would read three. Fuse every hyphen in `[a, b)` into the run
-/// before it: drop its token start and its `opch` bit (so `coalesce` cannot
+/// before it: drop its token start and its op_char bit (so coalesce cannot
 /// read it as an operator), plus the token start of the run that follows.
 ///
 /// The caller only ever passes name/attribute regions: strings and `{}`
@@ -12,39 +12,23 @@ use crate::pipeline::bitmap::{bm_clear, bm_get};
 /// reached here is never a minus.
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn jsx_glue_hyphens(
-    src: *const u8,
-    n: usize,
-    st: *mut u64,
-    opch: *mut u64,
-    word: *const u64,
-    a: usize,
-    b: usize,
-    cpu: impl Cpu,
-) {
+pub(super) fn jsx_glue_hyphens(src: Source, bitmaps: &Bitmaps, a: usize, b: usize, cpu: impl Cpu) {
     match DynCpu::from(cpu) {
-        DynCpu::Avx2(cpu) => jsx_glue_hyphens_avx2(src, n, st, opch, word, a, b, cpu),
-        _ => jsx_glue_hyphens_generic(src, n, st, opch, word, a, b),
+        DynCpu::Avx2(cpu) => jsx_glue_hyphens_avx2(src, bitmaps, a, b, cpu),
+        _ => jsx_glue_hyphens_generic(src, bitmaps, a, b),
     }
 }
 
 /// [`jsx_glue_hyphens`] for AVX2.
 #[cpu_version(Avx2)]
 #[inline(always)]
-unsafe fn jsx_glue_hyphens_avx2(
-    src: *const u8,
-    n: usize,
-    st: *mut u64,
-    opch: *mut u64,
-    word: *const u64,
-    a: usize,
-    b: usize,
-    cpu: Avx2,
-) {
+fn jsx_glue_hyphens_avx2(src: Source, bitmaps: &Bitmaps, a: usize, b: usize, cpu: Avx2) {
+    let n = src.len();
     let mut i = a;
     let mut last = usize::MAX;
     while i < b {
-        let mut m = Vec256::load_unaligned(src.add(i), cpu).eq_u8(b'-').movemask();
+        let chunk = src.padded()[i..].first_chunk::<32>().unwrap();
+        let mut m = Vec256::read_unaligned(chunk, cpu).eq_u8(b'-').movemask();
         let rem = b - i;
         if rem < 32 {
             m &= (1u32 << rem) - 1;
@@ -52,7 +36,7 @@ unsafe fn jsx_glue_hyphens_avx2(
         while m != 0 {
             let h = i + m.trailing_zeros() as usize;
             m &= m - 1;
-            glue_hyphen_at(n, st, opch, word, h, &mut last, cpu);
+            glue_hyphen_at(n, bitmaps, h, &mut last, cpu);
         }
         i += 32;
     }
@@ -61,22 +45,15 @@ unsafe fn jsx_glue_hyphens_avx2(
 /// [`jsx_glue_hyphens`] for all other CPUs.
 #[cpu_version(Generic)]
 #[inline(always)]
-unsafe fn jsx_glue_hyphens_generic(
-    src: *const u8,
-    n: usize,
-    st: *mut u64,
-    opch: *mut u64,
-    word: *const u64,
-    a: usize,
-    b: usize,
-) {
+fn jsx_glue_hyphens_generic(src: Source, bitmaps: &Bitmaps, a: usize, b: usize) {
     let cpu = BASELINE;
 
+    let n = src.len();
     let mut last = usize::MAX;
     let mut h = a;
     while h < b {
-        if *src.add(h) == b'-' {
-            glue_hyphen_at(n, st, opch, word, h, &mut last, cpu);
+        if src[h] == b'-' {
+            glue_hyphen_at(n, bitmaps, h, &mut last, cpu);
         }
         h += 1;
     }
@@ -84,22 +61,15 @@ unsafe fn jsx_glue_hyphens_generic(
 
 #[cpu_multiversion]
 #[inline(always)]
-unsafe fn glue_hyphen_at(
-    n: usize,
-    st: *mut u64,
-    opch: *mut u64,
-    word: *const u64,
-    h: usize,
-    last: &mut usize,
-    cpu: impl Cpu,
-) {
-    if h == 0 || !(bm_get(word, h - 1, cpu) || *last == h - 1) {
+fn glue_hyphen_at(n: usize, bitmaps: &Bitmaps, h: usize, last: &mut usize, cpu: impl Cpu) {
+    let Bitmaps { token_start, word, op_char, .. } = *bitmaps;
+    if h == 0 || !(word.get(h - 1, cpu) || *last == h - 1) {
         return;
     }
-    bm_clear(st, h, cpu);
-    bm_clear(opch, h, cpu);
-    if h + 1 < n && bm_get(word, h + 1, cpu) {
-        bm_clear(st, h + 1, cpu);
+    token_start.clear(h, cpu);
+    op_char.clear(h, cpu);
+    if h + 1 < n && word.get(h + 1, cpu) {
+        token_start.clear(h + 1, cpu);
     }
     *last = h;
 }

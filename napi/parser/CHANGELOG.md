@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.159.0] - 2026-11-16
+
+### 🚀 Features
+
+- fa492d6 minifier: Merge adjacent switch cases with identical bodies (#29316) (camc314)
+
+### 🐛 Bug Fixes
+
+- 5aa6c17 napi/parser: Release native parse result eagerly (#29569) (Boshen)
+- ab73590 parser: Preserve re-exported default import names in raw transfer (#29234) (camc314)
+
+### 📚 Documentation
+
+- 3e947d7 napi/parser: Correct TS-ESTree differences (#29268) (fisker Cheung)
+
 ## [0.158.0] - 2026-11-09
 
 ### 📚 Documentation

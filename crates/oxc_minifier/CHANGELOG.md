@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.159.0] - 2026-11-16
+
+### 🚀 Features
+
+- 63b8158 minifier: Inline single use function declaration to assignment (#28917) (Aadharsh  Pannirselvam)
+- eb1833e mangler: Mangle labels (#29614) (camc314)
+- ccca379 minifier: Remove unused labels (#29607) (camc314)
+- fa492d6 minifier: Merge adjacent switch cases with identical bodies (#29316) (camc314)
+- 8cc6101 minifier: Inline member reads into callees as indirect calls (#29305) (camc314)
+- e3d7d91 minifier: Inline member reads into `new` expressions (#29304) (camc314)
+- 57211d0 minifier: Inline member reads into call arguments (#29303) (camc314)
+
+### 🐛 Bug Fixes
+
+- 1dc0ee9 semantic: Preserve catch and var binding identities (#28739) (Dunqing)
+
+### 📚 Documentation
+
+- 9e5a2bb agents: Require runnable playground reproductions in PRs (#29450) (Dunqing)
+- c4d1024 minifier: Require examples in fix and optimization PRs (#29439) (Dunqing)
+
 ## [0.158.0] - 2026-11-09
 
 ### 🐛 Bug Fixes

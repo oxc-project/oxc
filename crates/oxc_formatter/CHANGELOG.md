@@ -4,6 +4,31 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.79.0] - 2026-11-16
+
+### 🚀 Features
+
+- 292f216 oxfmt: Bump prettier to 3.10.1 (#29333) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 552732b formatter: Fix parenthesized `TSInstantiationExpression` issue (#29389) (leaysgur)
+- d41ed14 formatter: Keep the `;` of a lone statement in a Vue event handler (#29354) (leaysgur)
+- 58d7356 formatter: Break a conditional type alias with a generic constructor type after `=` (#29411) (leaysgur)
+- 59b8eaa formatter: Print binaryish or `yield` args like `return` (#29407) (leaysgur)
+- d6632f3 formatter: Keep a comment after `TSPropertySignature`'s `:` (#29393) (leaysgur)
+- cf50f9b formatter: Keep a blank line between dangling comments (#29392) (leaysgur)
+- e648de6 formatter: Print sequence in `yield` and unary like in `return` (#29353) (leaysgur)
+- 547684d formatter: Keep parens around `<` on the left of `>` (#29351) (leaysgur)
+- f31a8d1 formatter: Align union hug and conditional branch (#29261) (leaysgur)
+- 3205e84 formatter: Break after `=` for hugged type alias (#29256) (leaysgur)
+- 49b832a formatter_htmlish/vue: Preserve `v-for` alias holding `in|of` (#29156) (leaysgur)
+
+### 📚 Documentation
+
+- 63b9b38 formatter: Re-check divergences whose pins changed in Prettier 3.10 (#29412) (leaysgur)
+- 0467739 formatter: Classify js/ts conformance failures for prettier 3.10 (#29336) (leaysgur)
+
 ## [0.78.0] - 2026-11-09
 
 ### 🐛 Bug Fixes
