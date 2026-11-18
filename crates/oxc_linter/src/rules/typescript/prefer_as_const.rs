@@ -18,6 +18,12 @@ fn prefer_as_const_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
+fn prefer_as_const_assertion_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Expected a `const` instead of a literal type assertion.")
+        .with_help("You should use `as const` instead of a type assertion.")
+        .with_label(span)
+}
+
 #[derive(Debug, Default, Clone)]
 pub struct PreferAsConst;
 
@@ -108,6 +114,13 @@ impl Rule for PreferAsConst {
                     ctx,
                 );
             }
+            AstKind::TSTypeAssertion(type_assertion) => {
+                check_and_report_as_expression(
+                    &type_assertion.type_annotation,
+                    &type_assertion.expression,
+                    ctx,
+                );
+            }
             _ => {}
         }
     }
@@ -144,7 +157,9 @@ fn check_and_report_as_expression(
     let Some(span) = literal_type_span_if_matches(ts_type, initial_value_expression) else {
         return;
     };
-    ctx.diagnostic_with_fix(prefer_as_const_diagnostic(span), |fixer| fixer.replace(span, "const"));
+    ctx.diagnostic_with_fix(prefer_as_const_assertion_diagnostic(span), |fixer| {
+        fixer.replace(span, "const")
+    });
 }
 
 fn check_and_report_type_annotation(
@@ -182,8 +197,8 @@ fn test() {
         "let foo = { bar: 1 as const };",
         "let foo = { bar: 'baz' };",
         "let foo = { bar: 2 };",
-        // "let foo = <bar>'bar';",
-        // "let foo = <string>'bar';",
+        "let foo = <bar>'bar';",
+        "let foo = <string>'bar';",
         "let foo = 'bar' as string;",
         "let foo = `bar` as `bar`;",
         "let foo = `bar` as `foo`;",
@@ -221,6 +236,11 @@ fn test() {
         //             bar = <baz>'baz';
         //           }
         //         ",
+        "
+                  class foo {
+                    bar = <baz>'baz';
+                  }
+                ",
         "
                   class foo {
                     bar: string = 'baz';
@@ -326,8 +346,8 @@ fn test() {
         ("const example: 'hello' = 'hello';", "const example = 'hello' as const;"),
         (r#"let foo: 'bar' = "bar";"#, r#"let foo = "bar" as const;"#),
         ("const foo: 2 = 2;", "const foo = 2 as const;"),
-        // ("let foo = <'bar'>'bar';", "let foo = <const>'bar';"),
-        // ("let foo = <4>4;", "let foo = <const>4;"),
+        ("let foo = <'bar'>'bar';", "let foo = <const>'bar';"),
+        ("let foo = <4>4;", "let foo = <const>4;"),
         ("let foo = 'bar' as 'bar';", "let foo = 'bar' as const;"),
         ("let foo = 5 as 5;", "let foo = 5 as const;"),
         (
@@ -354,18 +374,18 @@ fn test() {
             }
                   ",
         ),
-        // (
-        //     "
-        //     class foo {
-        //       foo = <'bar'>'bar';
-        //     }
-        //           ",
-        //     "
-        //     class foo {
-        //       foo = <const>'bar';
-        //     }
-        //           ",
-        // ),
+        (
+            "
+            class foo {
+              foo = <'bar'>'bar';
+            }
+                  ",
+            "
+            class foo {
+              foo = <const>'bar';
+            }
+                  ",
+        ),
         (
             "
             class foo {
@@ -392,7 +412,9 @@ fn test() {
         ),
     ];
 
+    // Angle-bracket type assertions are only valid in `.ts`, not `.tsx`.
     Tester::new(PreferAsConst::NAME, PreferAsConst::PLUGIN, pass, fail)
+        .change_rule_path_extension("ts")
         .expect_fix(fix)
         .test_and_snapshot();
 }

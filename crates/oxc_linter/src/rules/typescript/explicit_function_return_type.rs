@@ -489,15 +489,15 @@ fn is_setter(node: &AstNode) -> bool {
 
 fn check_typed_function_expression<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     let Some(parent) = outermost_paren_parent(node, ctx) else { return false };
-    is_typed_parent(parent, Some(node), ctx)
+    is_typed_parent(parent, Some(node))
         || is_property_of_object_with_type(parent, ctx)
         || is_constructor_argument(parent)
 }
 
-fn is_typed_parent(parent: &AstNode, callee: Option<&AstNode>, ctx: &LintContext) -> bool {
+fn is_typed_parent(parent: &AstNode, callee: Option<&AstNode>) -> bool {
     is_type_assertion(parent)
         || is_variable_declarator_with_type_annotation(parent)
-        || is_default_function_parameter_with_type_annotation(parent, ctx)
+        || is_default_function_parameter_with_type_annotation(parent)
         || is_property_definition_with_type_annotation(parent)
         || is_function_argument(parent, callee)
         || is_typed_jsx(parent)
@@ -535,11 +535,20 @@ fn is_function_argument(parent: &AstNode, callee: Option<&AstNode>) -> bool {
 fn is_type_assertion(node: &AstNode) -> bool {
     matches!(node.kind(), AstKind::TSAsExpression(_) | AstKind::TSTypeAssertion(_))
 }
-fn is_default_function_parameter_with_type_annotation(node: &AstNode, ctx: &LintContext) -> bool {
-    let AstKind::AssignmentPattern(_assign) = node.kind() else { return false };
-    match ctx.nodes().parent_kind(node.id()) {
-        AstKind::FormalParameter(f) => f.type_annotation.is_some(),
-        AstKind::FormalParameterRest(f) => f.type_annotation.is_some(),
+/**
+ * Checks if a node is a default function parameter with a type annotation.
+ * ```text
+ * function f(gotcha: CallBack = () => {})
+ * ```
+ *
+ * Oxc stores parameter default values on the `FormalParameter` itself
+ * (`initializer`), with the annotation beside it (`type_annotation`), rather
+ * than wrapping them in an `AssignmentPattern` like ESTree does.
+ */
+fn is_default_function_parameter_with_type_annotation(node: &AstNode) -> bool {
+    match node.kind() {
+        AstKind::FormalParameter(param) => param.type_annotation.is_some(),
+        AstKind::FormalParameterRest(param) => param.type_annotation.is_some(),
         _ => false,
     }
 }
@@ -570,12 +579,23 @@ fn is_typed_jsx(node: &AstNode) -> bool {
 fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     let Some(parent) = outermost_paren_parent(node, ctx) else { return false };
 
-    if let AstKind::ObjectProperty(prop) = parent.kind()
-        && let Expression::ArrowFunctionExpression(func) = &prop.value
-        && func.get_function_body().is_some_and(|body| !body.statements.is_empty())
-        && func.return_type.is_some()
-    {
-        return true;
+    // The walk below only applies when the function is directly returned, when
+    // it is the concise body of an enclosing arrow function, or when it is a
+    // concise-bodied arrow function used as an object property value (mirroring
+    // upstream's `ancestorHasReturnType` precondition: unwrap `Property ->
+    // value`, then require a return statement or a bodyless arrow).
+    if let AstKind::ObjectProperty(_) = parent.kind() {
+        let AstKind::ArrowFunctionExpression(func) = node.kind() else { return false };
+        if func.get_expression().is_none() {
+            return false;
+        }
+    } else {
+        match parent.kind() {
+            AstKind::ReturnStatement(_) => {}
+            AstKind::ArrowFunctionExpression(parent_func)
+                if parent_func.get_expression().is_some() => {}
+            _ => return false,
+        }
     }
 
     for ancestor in ctx.nodes().ancestors(node.id()) {
@@ -666,8 +686,7 @@ fn is_property_of_object_with_type(node: &AstNode, ctx: &LintContext) -> bool {
     let Some(obj_expr_parent) = outermost_paren_parent(parent, ctx) else {
         return false;
     };
-    is_typed_parent(obj_expr_parent, None, ctx)
-        || is_property_of_object_with_type(obj_expr_parent, ctx)
+    is_typed_parent(obj_expr_parent, None) || is_property_of_object_with_type(obj_expr_parent, ctx)
 }
 
 #[test]
@@ -1497,6 +1516,21 @@ fn test() {
     ];
 
     let fail = vec![
+        (
+            "
+            type R = { run: () => Promise<number> };
+            export function f(): R {
+              return {
+                run: async () => {
+                  return 1;
+                },
+              };
+            }
+            ",
+            None,
+            None,
+            None,
+        ),
         (
             "
             function test(a: number, b: number) {

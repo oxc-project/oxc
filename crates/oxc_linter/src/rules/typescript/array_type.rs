@@ -190,6 +190,30 @@ fn array(readonly_prefix: &str, type_name: &str, generic_name: &str, span: Span)
     .with_label(span)
 }
 
+fn array_readonly(
+    readonly_prefix: &str,
+    type_name: &str,
+    generic_name: &str,
+    span: Span,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "Array type using '{type_name}<{generic_name}>' is forbidden. Use '{readonly_prefix}{generic_name}' instead."
+    ))
+    .with_label(span)
+}
+
+fn array_readonly_simple(
+    readonly_prefix: &str,
+    type_name: &str,
+    generic_name: &str,
+    span: Span,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "Array type using '{type_name}<{generic_name}>' is forbidden for simple types. Use '{readonly_prefix}{generic_name}' instead."
+    ))
+    .with_label(span)
+}
+
 fn array_simple(
     readonly_prefix: &str,
     type_name: &str,
@@ -220,9 +244,7 @@ impl Rule for ArrayType {
                 );
             }
             AstKind::TSTypeReference(ts_type_reference)
-                if ts_type_reference.type_name.get_identifier_reference().is_some_and(
-                    |type_name| matches!(type_name.name.as_str(), "Array" | "ReadonlyArray"),
-                ) =>
+                if is_array_like_type_reference(ts_type_reference) =>
             {
                 let readonly_config = self.readonly_config();
                 if should_skip_type_reference(node, self.default_config(), &readonly_config, ctx) {
@@ -257,6 +279,29 @@ impl ArrayType {
             self.default.clone()
         }
     }
+}
+
+/// Returns `true` for the type references the rule rewrites: `Array<T>`,
+/// `ReadonlyArray<T>`, and `Readonly<T[]>`.
+///
+/// `Readonly<T>` is only treated as an array type when its type argument is an
+/// array type, mirroring the upstream rule.
+fn is_array_like_type_reference(ts_type_reference: &TSTypeReference<'_>) -> bool {
+    let Some(type_name) = ts_type_reference.type_name.get_identifier_reference() else {
+        return false;
+    };
+    match type_name.name.as_str() {
+        "Array" | "ReadonlyArray" => true,
+        "Readonly" => is_readonly_with_generic_array_type(ts_type_reference),
+        _ => false,
+    }
+}
+
+/// Returns `true` for `Readonly<T[]>`.
+fn is_readonly_with_generic_array_type(ts_type_reference: &TSTypeReference<'_>) -> bool {
+    ts_type_reference.type_arguments.as_ref().is_some_and(|args| {
+        args.params.first().is_some_and(|param| matches!(param, TSType::TSArrayType(_)))
+    })
 }
 
 fn check_array_type<'a>(
@@ -342,8 +387,7 @@ fn check_and_report_error_reference(
     ctx: &LintContext,
 ) {
     if let TSTypeName::IdentifierReference(ident_ref_type_name) = &ts_type_reference.type_name
-        && (ident_ref_type_name.name.as_str() == "ReadonlyArray"
-            || ident_ref_type_name.name.as_str() == "Array")
+        && matches!(ident_ref_type_name.name.as_str(), "Array" | "ReadonlyArray" | "Readonly")
     {
         check_and_report_error_array(node, default_config, readonly_config, ts_type_reference, ctx);
     }
@@ -421,13 +465,17 @@ fn check_and_report_error_array(
         return;
     };
 
-    let is_readonly_array_type = ident_ref_type_name.name == "ReadonlyArray";
+    let is_readonly_with_generic_array_type =
+        is_readonly_with_generic_array_type(ts_type_reference);
+    let is_readonly_array_type =
+        ident_ref_type_name.name == "ReadonlyArray" || is_readonly_with_generic_array_type;
     let config = if is_readonly_array_type { readonly_config } else { default_config };
     if matches!(config, ArrayOption::Generic) {
         return;
     }
     let readonly_prefix: &'static str = if is_readonly_array_type { "readonly " } else { "" };
-    let class_name = if is_readonly_array_type { "ReadonlyArray" } else { "Array" };
+    let class_name =
+        if is_readonly_array_type { ident_ref_type_name.name.as_str() } else { "Array" };
     let type_params = &ts_type_reference.type_arguments;
 
     if type_params.is_none() || type_params.as_ref().unwrap().params.is_empty() {
@@ -466,14 +514,24 @@ fn check_and_report_error_array(
     let message_type = get_message_type(first_type_param, ctx.source_text());
     let diagnostic = match config {
         ArrayOption::Array => {
-            array(readonly_prefix, class_name, message_type, ts_type_reference.span)
+            if is_readonly_with_generic_array_type {
+                array_readonly(readonly_prefix, class_name, message_type, ts_type_reference.span)
+            } else {
+                array(readonly_prefix, class_name, message_type, ts_type_reference.span)
+            }
         }
-        _ => array_simple(
-            readonly_prefix,
-            &ident_ref_type_name.name,
-            message_type,
-            ts_type_reference.span,
-        ),
+        _ => {
+            if is_readonly_with_generic_array_type {
+                array_readonly_simple(
+                    readonly_prefix,
+                    class_name,
+                    message_type,
+                    ts_type_reference.span,
+                )
+            } else {
+                array_simple(readonly_prefix, class_name, message_type, ts_type_reference.span)
+            }
+        }
     };
     ctx.diagnostic_with_fix(diagnostic, |fixer| {
         let mut start = String::from(if parent_parens { "(" } else { "" });
@@ -481,7 +539,11 @@ fn check_and_report_error_array(
         start.push_str(if type_parens { "(" } else { "" });
 
         let mut end = String::from(if type_parens { ")" } else { "" });
-        end.push_str("[]");
+        // `Readonly<T[]>` already carries the array suffix on its type argument,
+        // so it is replaced with `readonly T[]` without appending `[]`.
+        if !is_readonly_with_generic_array_type {
+            end.push_str("[]");
+        }
         end.push_str(if parent_parens { ")" } else { "" });
 
         let type_text = fixer.source_range(element_type_span);
@@ -996,6 +1058,13 @@ const instance = new MyClass<number>(42);",
             "const arr = [] as const satisfies readonly string[];",
             Some(serde_json::json!([{"default":"array-simple","readonly":"array"}])),
         ),
+        // https://github.com/oxc-project/oxc/issues/29822 - `Readonly<T[]>`
+        (
+            "let a: Readonly<string[]> = [];",
+            Some(serde_json::json!([{"default":"array","readonly":"generic"}])),
+        ),
+        ("let a: Readonly = [];", None),
+        ("const x: Readonly<string> = 'a';", None),
     ];
 
     let fail = vec![
@@ -1545,6 +1614,18 @@ export const test8 = testFn<Array<string>, number[]>([]);",
             "const arr = [] as const satisfies string[];",
             Some(serde_json::json!([{"default":"generic"}])),
         ),
+        // https://github.com/oxc-project/oxc/issues/29822 - `Readonly<T[]>`
+        ("let a: Readonly<string[]> = [];", None),
+        ("let a: Readonly<string[]> = [];", Some(serde_json::json!([{"default":"generic"}]))),
+        (
+            "const x: Readonly<string[]> = ['a', 'b'];",
+            Some(serde_json::json!([{"default":"array"}])),
+        ),
+        (
+            "declare function foo<E extends Readonly<string[]>>(extra: E): E;",
+            Some(serde_json::json!([{"default":"array-simple"}])),
+        ),
+        ("let a: Readonly<string[]>[] = [];", None),
     ];
 
     let fix: Vec<(&str, &str, Option<serde_json::Value>)> = vec![
@@ -2309,6 +2390,18 @@ export const test9 = testFn<readonly number[]>([]);",
             "const arr = [] as const satisfies Array<string>;",
             Some(serde_json::json!([{"default":"generic"}])),
         ),
+        // https://github.com/oxc-project/oxc/issues/29822 - `Readonly<T[]>`
+        (
+            "const x: Readonly<string[]> = ['a', 'b'];",
+            "const x: readonly string[] = ['a', 'b'];",
+            Some(serde_json::json!([{"default":"array"}])),
+        ),
+        (
+            "declare function foo<E extends Readonly<string[]>>(extra: E): E;",
+            "declare function foo<E extends readonly string[]>(extra: E): E;",
+            Some(serde_json::json!([{"default":"array-simple"}])),
+        ),
+        ("let a: Readonly<string[]>[] = [];", "let a: (readonly string[])[] = [];", None),
     ];
 
     Tester::new(ArrayType::NAME, ArrayType::PLUGIN, pass, fail)
