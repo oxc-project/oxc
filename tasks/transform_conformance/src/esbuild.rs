@@ -5,7 +5,7 @@ use cow_utils::CowUtils;
 use oxc::{
     allocator::Allocator,
     ast::ast::{BindingPattern, Expression, ObjectPropertyKind, PropertyKey, Statement},
-    parser::Parser,
+    parser::Source,
     span::{GetSpan, SourceType},
 };
 
@@ -65,7 +65,7 @@ struct Case<'s> {
 impl<'s> Suite<'s> {
     fn parse(source: &'s str) -> Self {
         let allocator = Allocator::default();
-        let parsed = Parser::new(&allocator, source, SourceType::ts()).parse();
+        let parsed = Source::from_str(source, SourceType::ts(), &allocator).parse();
         assert!(parsed.diagnostics.is_empty(), "{:?}", parsed.diagnostics);
         let declaration = parsed.program.body.iter().find_map(|statement| {
             if let Statement::VariableDeclaration(declaration) = statement
@@ -170,7 +170,7 @@ mod tests {
             let code = suite.code(case);
             assert!(code.contains(case.callback));
             assert!(code.contains("await run();\nexpect(failures).toBe(0);"));
-            let parsed = Parser::new(&allocator, &code, SourceType::ts()).parse();
+            let parsed = Source::from_str(&code, SourceType::ts(), &allocator).parse();
             assert!(parsed.diagnostics.is_empty(), "{}: {:?}", case.slug, parsed.diagnostics);
         }
     }

@@ -18,7 +18,7 @@ use oxc::{
     allocator::Allocator,
     ast::AstKind,
     ast_visit::Visit,
-    parser::{ParseOptions, Parser, config::TokensParserConfig},
+    parser::{ParseOptions, Source, config::TokensParserConfig},
     semantic::{Semantic, SemanticBuilder},
     span::{GetSpan, Span},
     syntax::{node::NodeId, symbol::SymbolId},
@@ -217,9 +217,8 @@ fn generate_for_file(f: &TypeScriptFile, header: &str, kind: BaselineKind) -> St
         // declaration positions) nor semantic analysis — skip both.
         let results = match kind {
             BaselineKind::Symbols => {
-                let ret = Parser::new(&allocator, &unit.content, unit.source_type)
-                    .with_config(TokensParserConfig)
-                    .parse();
+                let source = Source::from_str(&unit.content, unit.source_type, &allocator);
+                let ret = source.parse_with_config(ParseOptions::default(), TokensParserConfig);
                 if ret.fatal_error {
                     Vec::new()
                 } else {
@@ -243,12 +242,11 @@ fn generate_for_file(f: &TypeScriptFile, header: &str, kind: BaselineKind) -> St
                 }
             }
             BaselineKind::Types => {
-                let ret = Parser::new(&allocator, &unit.content, unit.source_type)
-                    .with_options(ParseOptions {
-                        enable_ident_hashes: false,
-                        ..ParseOptions::default()
-                    })
-                    .parse();
+                let source = Source::from_str(&unit.content, unit.source_type, &allocator);
+                let ret = source.parse_with_options(ParseOptions {
+                    enable_ident_hashes: false,
+                    ..ParseOptions::default()
+                });
                 if ret.fatal_error {
                     Vec::new()
                 } else {

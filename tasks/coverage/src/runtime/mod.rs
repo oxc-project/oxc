@@ -23,7 +23,7 @@ use oxc::{
     allocator::Allocator,
     codegen::{Codegen, CodegenOptions},
     minifier::{ManglePropertiesOptions, Minifier, MinifierOptions},
-    parser::Parser,
+    parser::Source,
     semantic::SemanticBuilder,
     span::SourceType,
     transformer::{HelperLoaderMode, TransformOptions, Transformer},
@@ -401,7 +401,7 @@ fn get_code_with_strict(file: &Test262File, transform: bool, minify: bool, stric
     let is_only_strict = flags.contains(&TestFlag::OnlyStrict);
     let source_type = SourceType::cjs().with_script(!is_module).with_module(is_module);
     let allocator = Allocator::default();
-    let mut program = Parser::new(&allocator, source_text, source_type).parse().program;
+    let mut program = Source::from_str(source_text, source_type, &allocator).parse().program;
 
     if transform {
         let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();

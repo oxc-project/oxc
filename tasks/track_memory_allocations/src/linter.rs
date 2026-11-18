@@ -5,7 +5,7 @@ use oxc_linter::{
     ConfigStore, ConfigStoreBuilder, ContextSubHost, ContextSubHostOptions, ExternalPluginStore,
     LintOptions, ModuleRecord, rules::ContextHost,
 };
-use oxc_parser::Parser;
+use oxc_parser::Source;
 use oxc_semantic::SemanticBuilder;
 use oxc_tasks_common::{TestFiles, project_root};
 use rustc_hash::FxHashMap;
@@ -21,7 +21,7 @@ pub fn run(files: &TestFiles) -> io::Result<()> {
 
     for file in files.files() {
         let allocator = Allocator::default();
-        let parsed = Parser::new(&allocator, &file.source_text, file.source_type).parse();
+        let parsed = Source::from_str(&file.source_text, file.source_type, &allocator).parse();
         assert!(parsed.diagnostics.is_empty());
         let path = Path::new(&file.file_name);
         let semantic = SemanticBuilder::new_linter().build(&parsed.program).semantic;

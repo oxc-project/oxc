@@ -8,7 +8,7 @@ use oxc_linter::{
     ConfigStore, ConfigStoreBuilder, ContextSubHost, ContextSubHostOptions, ExternalPluginStore,
     FixKind, LintOptions, Linter, ModuleRecord,
 };
-use oxc_parser::Parser;
+use oxc_parser::Source;
 use oxc_semantic::SemanticBuilder;
 use oxc_tasks_common::TestFiles;
 
@@ -29,7 +29,7 @@ fn bench_linter(criterion: &mut Criterion) {
                 // Reset allocator at start of each iteration
                 allocator.reset();
 
-                let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
+                let parser_ret = Source::from_str(source_text, source_type, &allocator).parse();
                 let path = Path::new("");
                 let semantic_ret = SemanticBuilder::new_linter().build(&parser_ret.program);
                 let semantic = semantic_ret.semantic;

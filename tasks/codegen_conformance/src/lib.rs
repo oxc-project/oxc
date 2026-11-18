@@ -24,7 +24,7 @@ use oxc_ast::ast::{
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_codegen::{Codegen, CodegenOptions, CommentOptions};
 use oxc_napi::get_source_type;
-use oxc_parser::{ParseOptions, Parser};
+use oxc_parser::{ParseOptions, Source};
 use oxc_sourcemap::napi::SourceMap;
 use oxc_syntax::scope::ScopeFlags;
 
@@ -99,16 +99,15 @@ fn codegen_impl(
     let source_type = get_source_type(filename, lang, source_type_option);
 
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, source_type)
-        .with_options(ParseOptions {
-            // Whatever the JS side was given.
-            // Parse the same way, or the two printers would be given different ASTs,
-            // and the comparison would be measuring the parse, not the print.
-            preserve_parens,
-            enable_ident_hashes: false,
-            ..ParseOptions::default()
-        })
-        .parse();
+    let source = Source::from_str(source_text, source_type, &allocator);
+    let ret = source.parse_with_options(ParseOptions {
+        // Whatever the JS side was given.
+        // Parse the same way, or the two printers would be given different ASTs,
+        // and the comparison would be measuring the parse, not the print.
+        preserve_parens,
+        enable_ident_hashes: false,
+        ..ParseOptions::default()
+    });
 
     // Only print fixtures which parse cleanly. Oxc's parser recovers from errors, but a recovered
     // AST is not something the JS side can be expected to reproduce.

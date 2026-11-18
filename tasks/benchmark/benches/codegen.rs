@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use oxc_allocator::Allocator;
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use oxc_codegen::{Codegen, CodegenOptions};
-use oxc_parser::Parser;
+use oxc_parser::Source;
 use oxc_semantic::SemanticBuilder;
 use oxc_tasks_common::TestFiles;
 use oxc_transformer::{TransformOptions, Transformer};
@@ -14,7 +14,7 @@ fn bench_codegen(criterion: &mut Criterion) {
         let source_type = file.source_type;
         let allocator = Allocator::default();
 
-        let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
+        let parser_ret = Source::from_str(source_text, source_type, &allocator).parse();
         assert!(parser_ret.diagnostics.is_empty());
         let mut program = parser_ret.program;
 

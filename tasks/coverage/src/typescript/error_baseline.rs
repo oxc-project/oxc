@@ -18,7 +18,7 @@
 use lazy_regex::{Lazy, Regex, lazy_regex};
 use oxc::{
     allocator::Allocator,
-    parser::{ParseOptions, Parser},
+    parser::{ParseOptions, Source},
 };
 use rayon::prelude::*;
 use rustc_hash::FxHashSet;
@@ -62,9 +62,9 @@ fn parse_baseline_positions(texts: &[String]) -> Vec<Pos> {
 fn oxc_positions(unit_name: &str, content: &str, source_type: oxc::span::SourceType) -> Vec<Pos> {
     let allocator = Allocator::default();
     // No `'use strict'` injection — it would shift every line and break position matching.
-    let ret = Parser::new(&allocator, content, source_type)
-        .with_options(ParseOptions { enable_ident_hashes: false, ..ParseOptions::default() })
-        .parse();
+    let source = Source::from_str(content, source_type, &allocator);
+    let options = ParseOptions { enable_ident_hashes: false, ..ParseOptions::default() };
+    let ret = source.parse_with_options(options);
     let line_starts = scanner::compute_line_starts(content);
     ret.diagnostics
         .iter()

@@ -1,6 +1,6 @@
 use oxc_allocator::Allocator;
 use oxc_benchmark::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
-use oxc_parser::Parser;
+use oxc_parser::Source;
 use oxc_semantic::{SemanticBuilder, Stats};
 use oxc_tasks_common::TestFiles;
 
@@ -21,7 +21,8 @@ fn bench_semantic(criterion: &mut Criterion) {
                 allocator.reset();
 
                 // Create fresh AST for each iteration, as `SemanticBuilder` alters the AST
-                let program = Parser::new(&allocator, source_text, source_type).parse().program;
+                let source = Source::from_str(source_text, source_type, &allocator);
+                let program = source.parse().program;
                 let program = black_box(program);
 
                 // Collect stats outside the measured section to time semantic analysis alone.

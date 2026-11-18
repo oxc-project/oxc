@@ -13,7 +13,7 @@ use oxc_linter::{
     ConfigStore, ConfigStoreBuilder, ContextSubHost, ContextSubHostOptions, ExternalPluginStore,
     LintOptions, Linter, ModuleRecord, RuleTimingRecord, RuleTimingStore,
 };
-use oxc_parser::Parser;
+use oxc_parser::Source;
 use oxc_semantic::SemanticBuilder;
 use oxc_tasks_common::{TestFiles, project_root};
 
@@ -33,7 +33,7 @@ pub fn run() -> Result<(), io::Error> {
 
     for file in TestFiles::complicated().files() {
         let allocator = Allocator::default();
-        let parser_ret = Parser::new(&allocator, &file.source_text, file.source_type).parse();
+        let parser_ret = Source::from_str(&file.source_text, file.source_type, &allocator).parse();
         assert!(parser_ret.diagnostics.is_empty());
 
         let path = Path::new(&file.file_name);

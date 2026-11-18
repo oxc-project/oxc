@@ -7,7 +7,7 @@ use oxc::{
     allocator::Allocator,
     codegen::{Codegen, CodegenOptions, CommentOptions},
     isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions},
-    parser::Parser,
+    parser::Source,
     span::SourceType,
 };
 use rayon::prelude::*;
@@ -150,7 +150,7 @@ fn change_extension(name: &str) -> String {
 fn transpile(path: &Path, source_text: &str) -> (String, oxc::diagnostics::Diagnostics) {
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(path).unwrap_or_default();
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let ret = Source::from_str(source_text, source_type, &allocator).parse();
     let ret =
         IsolatedDeclarations::new(&allocator, IsolatedDeclarationsOptions { strip_internal: true })
             .build(&ret.program);

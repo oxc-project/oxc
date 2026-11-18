@@ -14,7 +14,7 @@ use oxc_minifier::{
     CompressOptions, CompressOptionsKeepNames, Minifier, MinifierOptions, PropertyReadSideEffects,
     TreeShakeOptions,
 };
-use oxc_parser::Parser;
+use oxc_parser::Source;
 use oxc_span::SourceType;
 
 use crate::{logln, utils::write_it};
@@ -278,9 +278,9 @@ macro_rules! generate_variants {
 pub(crate) use generate_variants;
 
 /// Parse file.
-pub fn parse_js<'a>(source_text: &'a str, allocator: &'a Allocator) -> Program<'a> {
+pub fn parse_js<'a>(source_text: &str, allocator: &'a Allocator) -> Program<'a> {
     let source_type = SourceType::mjs();
-    let parser_ret = Parser::new(allocator, source_text, source_type).parse();
+    let parser_ret = Source::from_str(source_text, source_type, allocator).parse();
     assert!(parser_ret.diagnostics.is_empty(), "Parse errors: {:#?}", parser_ret.diagnostics);
     parser_ret.program
 }

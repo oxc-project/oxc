@@ -7,7 +7,7 @@ use saphyr::{LoadableYamlNode, SafelyIndex, Yaml};
 use oxc_allocator::Allocator;
 use oxc_formatter::{JsFormatOptions, format_program, parse_for_format};
 use oxc_minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions};
-use oxc_parser::{ParseOptions, Parser};
+use oxc_parser::{ParseOptions, Source};
 use oxc_semantic::SemanticBuilder;
 use oxc_tasks_common::{TestFile, TestFiles, project_root};
 use oxc_transformer::{TransformOptions, Transformer};
@@ -327,9 +327,8 @@ pub fn run() -> Result<(), io::Error> {
     // in the number of allocations, because we ensure that the arena allocator has already requested all
     // of the space it will need from the system allocator to parse the largest file in the set.
     for file in files.files() {
-        let mut parsed = Parser::new(&allocator, &file.source_text, file.source_type)
-            .with_options(parse_options)
-            .parse();
+        let source = Source::from_str(&file.source_text, file.source_type, &allocator);
+        let mut parsed = source.parse_with_options(parse_options);
         assert!(parsed.diagnostics.is_empty());
 
         // Transform TypeScript to ESNext before minifying (minifier only works on esnext)
@@ -364,9 +363,8 @@ pub fn run() -> Result<(), io::Error> {
         HEAP.reset();
 
         let (mut parsed, parser_stats) = record_stats_in(&allocator, || {
-            let parsed = Parser::new(&allocator, &file.source_text, file.source_type)
-                .with_options(parse_options)
-                .parse();
+            let source = Source::from_str(&file.source_text, file.source_type, &allocator);
+            let parsed = source.parse_with_options(parse_options);
             assert!(parsed.diagnostics.is_empty());
             parsed
         });
