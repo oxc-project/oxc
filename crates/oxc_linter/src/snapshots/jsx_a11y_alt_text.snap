@@ -46,6 +46,27 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ jsx-a11y(alt-text): Invalid `alt` value.
    ╭─[alt_text.tsx:1:1]
+ 1 │ <img alt={false} />;
+   · ───────────────────
+   ╰────
+  help: Must have meaningful value for `alt` prop. Use alt="" for presentational images.
+
+  ⚠ jsx-a11y(alt-text): Invalid `alt` value.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <img alt={false || false} />
+   · ────────────────────────────
+   ╰────
+  help: Must have meaningful value for `alt` prop. Use alt="" for presentational images.
+
+  ⚠ jsx-a11y(alt-text): Invalid `alt` value.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <img alt={0 || 0} />
+   · ────────────────────
+   ╰────
+  help: Must have meaningful value for `alt` prop. Use alt="" for presentational images.
+
+  ⚠ jsx-a11y(alt-text): Invalid `alt` value.
+   ╭─[alt_text.tsx:1:1]
  1 │ <img alt={undefined} role="presentation" />;
    · ───────────────────────────────────────────
    ╰────

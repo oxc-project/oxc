@@ -117,14 +117,14 @@ enum AriaPropType {
 // Whether the attribute value is allowed to be None such as <button aria-expanded>
 fn allow_none_value(aria_prop_type: &AriaPropType) -> bool {
     match aria_prop_type {
-        AriaPropType::Boolean
-        | AriaPropType::OptionalBoolean
-        | AriaPropType::Tristate
-        | AriaPropType::String => true,
+        AriaPropType::Boolean | AriaPropType::OptionalBoolean | AriaPropType::Tristate => true,
         AriaPropType::Token(tokens) | AriaPropType::TokenList(tokens) => {
             // allow None value if "true" is allowed for its tokens
             tokens.iter().any(|token| token == "true")
         }
+        // A bare attribute is `true` at runtime, which is not a valid value for
+        // the remaining types. eslint-plugin-jsx-a11y reports e.g.
+        // `<div aria-label />` for the same reason.
         _ => false,
     }
 }
@@ -423,7 +423,6 @@ fn test() {
         "<div aria-hidden={<div />} />",
         r#"<div aria-label="Close" />"#,
         r#"<div aria-label="" />"#,
-        "<div aria-label />",
         "<div aria-label={`Close`} />",
         "<div aria-label={`Hello ${foo}`} />",
         "<div aria-label={`foo-${id}`} />",
@@ -575,6 +574,8 @@ fn test() {
         "<div aria-label={true} />",
         "<div aria-label={false} />",
         "<div aria-label={1234} />",
+        // A bare attribute is `true` at runtime, which is not a string.
+        "<div aria-label />",
         "<div aria-label={!true} />",
         r#"<div aria-checked="yes" />"#,
         r#"<div aria-checked="no" />"#,

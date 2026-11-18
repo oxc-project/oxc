@@ -1,11 +1,16 @@
 use oxc_ast::{
     AstKind,
-    ast::{JSXAttributeItem, JSXAttributeValue, JSXElement, JSXOpeningElement},
+    ast::{
+        Expression, JSXAttributeItem, JSXAttributeValue, JSXElement, JSXOpeningElement,
+        UnaryOperator,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::CompactStr;
+use oxc_syntax::operator::LogicalOperator;
 use schemars::JsonSchema;
 
 use crate::{
@@ -248,12 +253,89 @@ fn is_valid_alt_prop(item: &JSXAttributeItem<'_>) -> bool {
         None => false,
         Some(JSXAttributeValue::ExpressionContainer(container)) => {
             if let Some(expr) = container.expression.as_expression() {
-                !expr.is_null_or_undefined()
+                !matches!(evaluate_alt_value(expr), AltValue::Falsy | AltValue::Nullish)
             } else {
                 true
             }
         }
         _ => true,
+    }
+}
+
+/// Statically extracted value of a JSX expression.
+///
+/// Mirrors how eslint-plugin-jsx-a11y's `alt-text` rule uses jsx-ast-utils'
+/// `getPropValue` to evaluate prop values: an alt value is valid iff the
+/// statically extracted value is truthy or the empty string (`alt=""`).
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum AltValue {
+    /// The value cannot be determined statically.
+    Unknown,
+    /// `null` or `undefined`.
+    Nullish,
+    /// A statically known falsy value that is not the empty string.
+    Falsy,
+    /// The empty string, which is a valid alt value.
+    EmptyString,
+    /// A statically known truthy value.
+    Truthy,
+}
+
+fn evaluate_alt_value(expr: &Expression<'_>) -> AltValue {
+    if expr.is_null_or_undefined() {
+        return AltValue::Nullish;
+    }
+    match expr {
+        Expression::StringLiteral(lit) => {
+            if lit.value.is_empty() {
+                AltValue::EmptyString
+            } else {
+                AltValue::Truthy
+            }
+        }
+        Expression::TemplateLiteral(template) => match template.single_quasi() {
+            Some(quasi) if quasi.is_empty() => AltValue::EmptyString,
+            Some(_) => AltValue::Truthy,
+            // Template literals with expressions cannot be evaluated statically.
+            None => AltValue::Unknown,
+        },
+        Expression::UnaryExpression(unary) => match unary.operator {
+            UnaryOperator::Void => AltValue::Nullish,
+            UnaryOperator::LogicalNot => match evaluate_alt_value(&unary.argument) {
+                AltValue::Truthy => AltValue::Falsy,
+                AltValue::Falsy | AltValue::Nullish | AltValue::EmptyString => AltValue::Truthy,
+                AltValue::Unknown => AltValue::Unknown,
+            },
+            _ => AltValue::Unknown,
+        },
+        Expression::LogicalExpression(logical) => {
+            let left = evaluate_alt_value(&logical.left);
+            match logical.operator {
+                LogicalOperator::Or => match left {
+                    AltValue::Truthy => AltValue::Truthy,
+                    AltValue::Unknown => AltValue::Unknown,
+                    AltValue::Falsy | AltValue::Nullish | AltValue::EmptyString => {
+                        evaluate_alt_value(&logical.right)
+                    }
+                },
+                LogicalOperator::And => match left {
+                    AltValue::Falsy | AltValue::Nullish => left,
+                    AltValue::EmptyString => AltValue::EmptyString,
+                    AltValue::Truthy => evaluate_alt_value(&logical.right),
+                    AltValue::Unknown => AltValue::Unknown,
+                },
+                LogicalOperator::Coalesce => match left {
+                    AltValue::Nullish => evaluate_alt_value(&logical.right),
+                    AltValue::Unknown => AltValue::Unknown,
+                    AltValue::Falsy | AltValue::EmptyString | AltValue::Truthy => left,
+                },
+            }
+        }
+        _ => match expr.to_boolean(&WithoutGlobalReferenceInformation) {
+            Some(true) => AltValue::Truthy,
+            Some(false) => AltValue::Falsy,
+            None => AltValue::Unknown,
+        },
     }
 }
 
@@ -395,6 +477,7 @@ fn test() {
         (r"<IMG />", None, None),
         (r"<UX.Layout>test</UX.Layout>", None, None),
         (r#"<img alt={alt || "Alt text" } />"#, None, None),
+        (r#"<img alt={undefined || ""} />"#, None, None),
         (r"<img alt={photo.caption} />;", None, None),
         (r"<img alt={bar()} />;", None, None),
         (r#"<img alt={foo.bar || ""} />"#, None, None),
@@ -487,9 +570,11 @@ fn test() {
         (r#"<img src="xyz" />"#, None, None),
         (r"<img role />", None, None),
         (r"<img {...this.props} />", None, None),
-        // TODO: Could support if get_prop_value could evaluate
-        // some logical expressions
-        // (r#"<img alt={false || false} />"#, None, None),
+        // Statically falsy alt values are invalid, mirroring jsx-ast-utils'
+        // `getPropValue` evaluation in eslint-plugin-jsx-a11y.
+        (r"<img alt={false} />;", None, None),
+        (r"<img alt={false || false} />", None, None),
+        (r"<img alt={0 || 0} />", None, None),
         (r#"<img alt={undefined} role="presentation" />;"#, None, None),
         (r#"<img alt role="presentation" />;"#, None, None),
         (r#"<img role="presentation" />;"#, None, None),

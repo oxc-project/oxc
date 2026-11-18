@@ -84,6 +84,14 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-label'.
    ╭─[aria_proptypes.tsx:1:6]
+ 1 │ <div aria-label />
+   ·      ──────────
+   ╰────
+  help: The valid value for 'aria-label' is: a string value.
+        You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
+
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-label'.
+   ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-label={!true} />
    ·      ──────────────────
    ╰────
