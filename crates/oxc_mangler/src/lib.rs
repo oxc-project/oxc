@@ -106,15 +106,18 @@ pub struct ManglerReturn {
 ///
 /// ```rust,ignore
 /// use oxc_codegen::Codegen;
-/// use oxc_parser::Parser;
+/// use oxc_parser::Source;
 /// use oxc_allocator::Allocator;
 /// use oxc_span::SourceType;
 /// use oxc_mangler::{MangleOptions, Mangler, ManglerReturn};
 ///
+/// let source_text = "const result = 1 + 2;";
+///
 /// let allocator = Allocator::default();
-/// let source = "const result = 1 + 2;";
-/// let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
+/// let source = Source::from_str(source_text, SourceType::mjs(), &allocator);
+/// let parsed = source.parse();
 /// assert!(parsed.diagnostics.is_empty());
+/// let program = parsed.program;
 ///
 /// let ManglerReturn { scoping, class_private_mappings } = Mangler::new()
 ///     .with_options(MangleOptions {
@@ -122,12 +125,12 @@ pub struct ManglerReturn {
 ///         debug: true,
 ///         ..MangleOptions::default()
 ///     })
-///     .build(&parsed.program);
+///     .build(&program);
 ///
 /// let js = Codegen::new()
 ///     .with_scoping(Some(scoping))
 ///     .with_private_member_mappings(Some(class_private_mappings))
-///     .build(&parsed.program);
+///     .build(&program);
 /// // this will be `const a = 1 + 2;` if debug = false
 /// assert_eq!(js.code, "const slot_0 = 1 + 2;\n");
 /// ```
@@ -261,16 +264,18 @@ impl<'t> Mangler<'t> {
     /// ```rust
     /// use oxc_allocator::Allocator;
     /// use oxc_mangler::Mangler;
-    /// use oxc_parser::Parser;
+    /// use oxc_parser::Source;
     /// use oxc_span::SourceType;
+    ///
+    /// let source_text = "function myFunction(param) { return param + 1; }";
     ///
     /// let allocator = Allocator::default();
     /// let mut temp_allocator = Allocator::default();
-    /// let source = "function myFunction(param) { return param + 1; }";
     ///
-    /// let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
-    /// let mangled_symbols = Mangler::new_with_temp_allocator(&temp_allocator)
-    ///     .build(&parsed.program);
+    /// let source = Source::from_str(source_text, SourceType::mjs(), &allocator);
+    /// let program = source.parse().program;
+    /// let mangler = Mangler::new_with_temp_allocator(&temp_allocator);
+    /// let mangled_symbols = mangler.build(&program);
     ///
     /// // Reset the allocator to free temporary memory
     /// temp_allocator.reset();
@@ -281,16 +286,17 @@ impl<'t> Mangler<'t> {
     /// ```rust
     /// # use oxc_allocator::Allocator;
     /// # use oxc_mangler::Mangler;
-    /// # use oxc_parser::Parser;
+    /// # use oxc_parser::Source;
     /// # use oxc_span::SourceType;
     /// let allocator = Allocator::default();
     /// let mut temp_allocator = Allocator::default();
+    ///
     /// let files = ["function foo() {}", "function bar() {}"];
     ///
-    /// for source in files {
-    ///     let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
-    ///     let mangled_symbols = Mangler::new_with_temp_allocator(&temp_allocator)
-    ///         .build(&parsed.program);
+    /// for source_text in files {
+    ///     let parsed = Source::from_str(source_text, SourceType::mjs(), &allocator).parse();
+    ///     let mangler = Mangler::new_with_temp_allocator(&temp_allocator);
+    ///     let mangled_symbols = mangler.build(&parsed.program);
     ///     temp_allocator.reset(); // Free memory between files
     /// }
     /// ```
