@@ -1,24 +1,28 @@
 //! Completion of Normalize and peephole compression passes.
 //!
-//! AST mutations accumulate removed semantic references and dropped direct
-//! `eval` calls on [`crate::state::PassChanges`]. Both Normalize and each
-//! peephole pass cross the same completion boundary: prune those references,
+//! AST mutations accumulate removed semantic references, dropped direct
+//! `eval` calls and dropped declarations of redeclared symbols on
+//! [`crate::state::PassChanges`]. Both Normalize and each peephole pass cross
+//! the same completion boundary: prune those references and declarations,
 //! refresh direct-eval scope flags, then derive function reachability from the
 //! settled semantic state.
 
-#[cfg(debug_assertions)]
-use oxc_ast_visit::Visit;
-use oxc_ast_visit::{VisitJs, walk_js::walk_call_expression};
+use oxc_ast_visit::{Visit, VisitJs, walk_js::walk_call_expression};
 use rustc_hash::FxHashSet;
 
 use oxc_allocator::{BitSet, GetAllocator};
 use oxc_ast::ast::*;
-use oxc_semantic::Scoping;
+use oxc_semantic::{Scoping, SymbolId};
+use oxc_span::Span;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 use crate::{
-    ReusableTraverseCtx, TraverseCtx, minifier_traverse::traverse_mut_with_ctx,
-    peephole::PeepholeOptimizations, symbol_liveness, traverse_context::as_direct_eval_call,
+    ReusableTraverseCtx, TraverseCtx,
+    minifier_traverse::traverse_mut_with_ctx,
+    peephole::PeepholeOptimizations,
+    state::PassChanges,
+    symbol_liveness,
+    traverse_context::{as_direct_eval_call, redeclared_symbols},
 };
 
 /// The fixed-point decision produced by one completed peephole pass.
@@ -140,6 +144,48 @@ pub fn debug_assert_no_under_prune(
     }
 }
 
+/// Debug-only converse of the check in [`prune_removed_declarations`], run once
+/// by the `Compressor` driver after the fixed-point loop: every declaration in
+/// `Scoping::symbol_redeclarations` must still be in the live program. A
+/// violation means a site discarded a declaration without routing it through a
+/// `drop_*` / `replace_*` helper (the leak direction: stale redeclarations
+/// silently keep optimizations conservative).
+///
+/// Allocation-free like the other debug guards: it counts the live
+/// declarations that match a recorded one instead of collecting them.
+#[cfg(debug_assertions)]
+pub fn debug_assert_no_stale_redeclarations(program: &Program<'_>, scoping: &Scoping) {
+    struct LiveRedeclarations<'s> {
+        scoping: &'s Scoping,
+        found: usize,
+    }
+    impl<'a> Visit<'a> for LiveRedeclarations<'_> {
+        fn visit_binding_identifier(&mut self, it: &BindingIdentifier<'a>) {
+            let Some(symbol_id) = it.symbol_id.get() else { return };
+            for symbol_id in redeclared_symbols(symbol_id, self.scoping) {
+                let redeclarations = self.scoping.symbol_redeclarations(symbol_id);
+                if redeclarations.iter().any(|redeclaration| redeclaration.span == it.span) {
+                    self.found += 1;
+                }
+            }
+        }
+    }
+    let recorded: usize =
+        scoping.symbol_ids().map(|symbol_id| scoping.symbol_redeclarations(symbol_id).len()).sum();
+    if recorded == 0 {
+        return;
+    }
+    let mut live = LiveRedeclarations { scoping, found: 0 };
+    live.visit_program(program);
+    assert!(
+        live.found == recorded,
+        "stale redeclarations: {recorded} declarations recorded in \
+         `Scoping::symbol_redeclarations`, {} still in the program — a drop site bypassed the \
+         `drop_*` / `replace_*` helpers",
+        live.found,
+    );
+}
+
 /// Debug-only guard for the gated direct-eval refresh: every live direct
 /// `eval(...)` call must already have `ScopeFlags::DirectEval` on its
 /// reference's recorded scope and every ancestor (the exact postcondition of
@@ -199,9 +245,32 @@ fn debug_assert_no_stale_direct_eval(program: &Program<'_>, scoping: &Scoping) {
     DirectEvalFlagCheck { scoping }.visit_program(program);
 }
 
+/// Remove [`PassChanges::removed_declarations`] from
+/// `Scoping::symbol_redeclarations`, so e.g. `catch (a) { var a }` can drop `a`
+/// once the `var` is gone (#27548).
+///
+/// Unlike a `ReferenceId`, a dropped binding can reappear: `KeepVar` re-emits
+/// dropped `var`s with their symbol and span, and records them in
+/// [`PassChanges::reemitted_declarations`]. Only when a removed declaration was
+/// re-emitted is the program walked to skip those still present. Debug builds
+/// always walk, and assert that nothing else revived a dropped declaration.
+fn prune_removed_declarations(program: &Program<'_>, ctx: &mut TraverseCtx<'_>) {
+    let PassChanges { removed_declarations: removed, reemitted_declarations: reemitted, .. } =
+        &mut ctx.state.pass_changes;
+    if cfg!(debug_assertions) || removed.iter().any(|declaration| reemitted.contains(declaration)) {
+        let scoping = ctx.scoping.scoping();
+        LiveDeclarations { scoping, removed, reemitted }.visit_program(program);
+    }
+    let scoping = ctx.scoping.scoping_mut();
+    for (symbol_id, span) in removed.drain() {
+        scoping.remove_symbol_declaration(symbol_id, span);
+    }
+}
+
 /// Consume the [`crate::state::PassChanges`] accumulator: batch-prune removed
 /// resolved references from scoping, refresh direct-eval flags if an
-/// `eval(...)` call was dropped, and re-initialize the accumulator.
+/// `eval(...)` call was dropped, remove dropped redeclarations, and
+/// re-initialize the accumulator.
 ///
 /// Pass completion calls this after Normalize (so the fixed-point loop starts
 /// against already-pruned scoping and Normalize's drops cost no extra
@@ -240,7 +309,12 @@ fn flush_pass_changes(program: &Program<'_>, ctx: &mut TraverseCtx<'_>) -> bool 
     #[cfg(debug_assertions)]
     debug_assert_no_stale_direct_eval(program, ctx.scoping());
 
-    // (3) Reset the accumulator for the next pass. `references_len` only grows
+    // (3) Declarations — drop the redeclarations of removed declarations.
+    if !ctx.state.pass_changes.removed_declarations.is_empty() {
+        prune_removed_declarations(program, ctx);
+    }
+
+    // (4) Reset the accumulator for the next pass. `references_len` only grows
     //     (helpers mint, never delete, references), so the bitset is
     //     re-allocated only when refs were minted this pass; otherwise a
     //     memset reuses the warm allocation (a bump arena never reclaims the
@@ -254,6 +328,7 @@ fn flush_pass_changes(program: &Program<'_>, ctx: &mut TraverseCtx<'_>) -> bool 
         ctx.state.pass_changes.removed_references = BitSet::new_in(refs_len, ctx.allocator());
     }
     ctx.state.pass_changes.direct_eval_dropped = false;
+    ctx.state.pass_changes.reemitted_declarations.clear();
     liveness_inputs_changed
 }
 
@@ -334,5 +409,30 @@ impl<'a> VisitJs<'a> for LiveDirectEvalCollector<'_> {
         }
         // Recurse — `eval` may be nested in another call's arguments, e.g. `foo(eval('x'))`.
         walk_call_expression(self, it);
+    }
+}
+
+/// Walks the live program to keep declarations that are still present out of
+/// [`PassChanges::removed_declarations`]. Used by
+/// [`prune_removed_declarations`].
+struct LiveDeclarations<'b> {
+    scoping: &'b Scoping,
+    removed: &'b mut FxHashSet<(SymbolId, Span)>,
+    reemitted: &'b FxHashSet<(SymbolId, Span)>,
+}
+
+impl<'a> Visit<'a> for LiveDeclarations<'_> {
+    fn visit_binding_identifier(&mut self, it: &BindingIdentifier<'a>) {
+        let Some(symbol_id) = it.symbol_id.get() else { return };
+        for symbol_id in redeclared_symbols(symbol_id, self.scoping) {
+            let declaration = (symbol_id, it.span);
+            if self.removed.remove(&declaration) {
+                debug_assert!(
+                    self.reemitted.contains(&declaration),
+                    "declaration {declaration:?} was dropped and is still in the program, but \
+                     `KeepVar` did not re-emit it",
+                );
+            }
+        }
     }
 }
