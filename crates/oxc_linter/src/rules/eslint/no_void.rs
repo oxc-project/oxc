@@ -52,7 +52,7 @@ declare_oxc_lint!(
     NoVoid,
     eslint,
     restriction,
-    suggestion,
+    conditional_suggestion,
     config = NoVoid,
     version = "0.2.5",
     short_description = "Disallows the use of the `void` operator.",
