@@ -4,6 +4,7 @@ use oxc_allocator::Allocator;
 #[cfg(feature = "cfg")]
 use oxc_cfg::DisplayDot;
 use oxc_diagnostics::{Diagnostic, NamedSource, OxcDiagnostic};
+use oxc_parser::Source;
 #[cfg(feature = "cfg")]
 use oxc_semantic::dot::DebugDot;
 use oxc_semantic::{Semantic, SemanticBuilder, SemanticBuilderReturn};
@@ -40,21 +41,21 @@ impl<'a> SemanticTester<'a> {
     /// Create a new tester for a TypeScript test case.
     ///
     /// Use [`SemanticTester::js`] for JavaScript test cases.
-    pub fn ts(source_text: &'static str) -> Self {
+    pub fn ts(source_text: &'a str) -> Self {
         Self::new(source_text, SourceType::ts())
     }
 
     /// Create a new tester for a TypeScript test case with JSX.
     ///
     /// Use [`SemanticTester::ts`] for TypeScript test cases without JSX.
-    pub fn tsx(source_text: &'static str) -> Self {
+    pub fn tsx(source_text: &'a str) -> Self {
         Self::ts(source_text).with_jsx(true)
     }
 
     /// Create a new tester for a JavaScript test case.
     ///
     /// Use [`SemanticTester::ts`] for TypeScript test cases.
-    pub fn js(source_text: &'static str) -> Self {
+    pub fn js(source_text: &'a str) -> Self {
         Self::new(source_text, SourceType::mjs())
     }
 
@@ -161,8 +162,7 @@ impl<'a> SemanticTester<'a> {
     ///
     #[expect(unstable_name_collisions)]
     pub fn build_with_errors(&self) -> SemanticBuilderReturn<'_> {
-        let parse =
-            oxc_parser::Parser::new(&self.allocator, self.source_text, self.source_type).parse();
+        let parse = Source::from_str(self.source_text, self.source_type, &self.allocator).parse();
 
         assert!(
             parse.diagnostics.is_empty(),
@@ -264,7 +264,7 @@ impl<'a> SemanticTester<'a> {
     /// - If [`SemanticBuilder`] finishes without producing any errors.
     /// - If [`SemanticBuilder`] finishes with errors, but none of them match `message`
     ///
-    /// [`parsing`]: oxc_parser::Parser::parse
+    /// [`parsing`]: Source::parse
     pub fn has_error(&self, message: &str) {
         let SemanticBuilderReturn { diagnostics, .. } = self.build_with_errors();
         assert!(
