@@ -274,11 +274,11 @@ fn test_comment_at_top_of_file() {
     use oxc_allocator::Allocator;
     use oxc_ast::CommentPosition;
     use oxc_codegen::Codegen;
-    use oxc_parser::Parser;
+    use oxc_parser::Source;
     use oxc_span::SourceType;
     let source_type = SourceType::mjs();
     let allocator = Allocator::default();
-    let mut ret = Parser::new(&allocator, "export{} /** comment */", source_type).parse();
+    let mut ret = Source::from_str("export{} /** comment */", source_type, &allocator).parse();
     // Move comment to top of the file.
     ret.program.comments[0].attached_to = 0;
     ret.program.comments[0].position = CommentPosition::Leading;
@@ -290,7 +290,7 @@ fn test_comment_at_top_of_file() {
 fn test_html_closing_annotation_after_code() {
     use oxc_allocator::Allocator;
     use oxc_codegen::{Codegen, CodegenOptions};
-    use oxc_parser::Parser;
+    use oxc_parser::Source;
     use oxc_span::SourceType;
 
     let allocator = Allocator::default();
@@ -302,13 +302,13 @@ fn test_html_closing_annotation_after_code() {
         ("--> @__NO_SIDE_EFFECTS__\nfunction f() {}", "-->", "-->"),
         ("{\n--> @__NO_SIDE_EFFECTS__\nfunction f() {}\n}", "-->", "//"),
     ] {
-        let ret = Parser::new(&allocator, source, source_type).parse();
+        let ret = Source::from_str(source, source_type, &allocator).parse();
         assert!(ret.diagnostics.is_empty(), "Invalid source: {source}");
 
         for minify in [false, true] {
             let options = CodegenOptions { minify, ..CodegenOptions::default() };
             let code = Codegen::new().with_options(options.clone()).build(&ret.program).code;
-            let reparsed = Parser::new(&allocator, &code, source_type).parse();
+            let reparsed = Source::from_str(&code, source_type, &allocator).parse();
             assert!(reparsed.diagnostics.is_empty(), "Invalid output: {code}");
             let expected_comment = if minify { minified_delimiter } else { pretty_delimiter };
             assert!(code.contains(&format!("{expected_comment} @__NO_SIDE_EFFECTS__\n")));
@@ -480,7 +480,7 @@ export type TSTypeLiteral = {
 pub mod coverage {
     use oxc_allocator::Allocator;
     use oxc_codegen::{Codegen, CodegenOptions, CommentOptions};
-    use oxc_parser::Parser;
+    use oxc_parser::Source;
     use oxc_span::SourceType;
 
     use crate::snapshot;
@@ -494,7 +494,7 @@ pub mod coverage {
         options: CodegenOptions,
     ) -> String {
         let allocator = Allocator::default();
-        let ret = Parser::new(&allocator, source_text, SourceType::ts()).parse();
+        let ret = Source::from_str(source_text, SourceType::ts(), &allocator).parse();
         assert!(ret.diagnostics.is_empty());
         let mut program = ret.program;
         program.body.remove(0);

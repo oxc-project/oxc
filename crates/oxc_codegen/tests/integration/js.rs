@@ -1413,13 +1413,14 @@ fn surrogate_lead_byte_characters() {
 
 #[test]
 fn module_export_name_with_lone_surrogate() {
-    use oxc_parser::Parser;
+    use oxc_parser::Source;
     use oxc_span::SourceType;
     use oxc_str::JSStrBuilder;
 
     // The parser rejects such a name, but a built AST can contain one.
     let allocator = Allocator::new();
-    let mut parsed = Parser::new(&allocator, "export { x as 'a' };", SourceType::mjs()).parse();
+    let source = Source::from_str("export { x as 'a' };", SourceType::mjs(), &allocator);
+    let mut parsed = source.parse();
     let Statement::ExportNamedDeclaration(decl) = &mut parsed.program.body[0] else {
         panic!("expected export declaration");
     };
@@ -1438,7 +1439,7 @@ fn module_export_name_with_lone_surrogate() {
 
 #[test]
 fn js_str_round_trip() {
-    use oxc_parser::Parser;
+    use oxc_parser::Source;
     use oxc_span::SourceType;
     use oxc_str::JSStrBuilder;
 
@@ -1458,7 +1459,7 @@ fn js_str_round_trip() {
     ];
     for &units in cases {
         for (minify, ascii_only) in [(false, false), (false, true), (true, false), (true, true)] {
-            let mut parsed = Parser::new(&allocator, "consume('');", source_type).parse();
+            let mut parsed = Source::from_str("consume('');", source_type, &allocator).parse();
             assert!(parsed.diagnostics.is_empty());
             let Statement::ExpressionStatement(statement) = &mut parsed.program.body[0] else {
                 panic!("expected expression statement");
@@ -1478,7 +1479,7 @@ fn js_str_round_trip() {
                 .with_options(CodegenOptions { minify, ascii_only, ..CodegenOptions::default() })
                 .build(&parsed.program)
                 .code;
-            let reparsed = Parser::new(&allocator, &output, source_type).parse();
+            let reparsed = Source::from_str(&output, source_type, &allocator).parse();
             assert!(reparsed.diagnostics.is_empty(), "{output}");
             assert!(!ascii_only || output.is_ascii(), "{output}");
             let Statement::ExpressionStatement(statement) = &reparsed.program.body[0] else {
@@ -1506,7 +1507,7 @@ fn jsx_sequence_expression() {
 
 #[test]
 fn jsx_attribute_with_lone_surrogate_value() {
-    use oxc_parser::Parser;
+    use oxc_parser::Source;
     use oxc_span::SourceType;
     use oxc_str::{JSStr, JSStrBuilder};
     use oxc_syntax::xml_entities::decode_entities;
@@ -1515,12 +1516,12 @@ fn jsx_attribute_with_lone_surrogate_value() {
     // including literal entity text next to a lone surrogate.
     let allocator = Allocator::new();
     let source_type = SourceType::jsx();
-    let mut parsed = Parser::new(
-        &allocator,
+    let source = Source::from_str(
         "<div a=\"x\" b=\"y\" c=\"z\" d=\"w\" e=\"x\" f=\"y\" />;",
         source_type,
-    )
-    .parse();
+        &allocator,
+    );
+    let mut parsed = source.parse();
     assert!(parsed.diagnostics.is_empty());
     let Statement::ExpressionStatement(statement) = &mut parsed.program.body[0] else {
         panic!("expected expression statement");
@@ -1552,7 +1553,7 @@ fn jsx_attribute_with_lone_surrogate_value() {
     for minify in [false, true] {
         let options = CodegenOptions { minify, ..CodegenOptions::default() };
         let output = Codegen::new().with_options(options.clone()).build(&parsed.program).code;
-        let reparsed = Parser::new(&allocator, &output, source_type).parse();
+        let reparsed = Source::from_str(&output, source_type, &allocator).parse();
         assert!(reparsed.diagnostics.is_empty(), "{output}");
         let Statement::ExpressionStatement(statement) = &reparsed.program.body[0] else {
             panic!("expected expression statement: {output}");

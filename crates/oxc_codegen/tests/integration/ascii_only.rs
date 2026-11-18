@@ -2,7 +2,7 @@
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
-use oxc_parser::Parser;
+use oxc_parser::Source;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 
@@ -99,7 +99,7 @@ fn renamed_destructuring_assignment() {
     for (name, escaped) in [("a", "a"), ("é", r"\u00E9")] {
         for minify in [false, true] {
             let allocator = Allocator::default();
-            let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
+            let parsed = Source::from_str(source, SourceType::mjs(), &allocator).parse();
             assert!(parsed.diagnostics.is_empty());
             let semantic = SemanticBuilder::new().build(&parsed.program);
             assert!(semantic.diagnostics.is_empty());
@@ -209,7 +209,7 @@ mod sourcemap {
     #[track_caller]
     fn test(source: &str, minify: bool, mappings: &[(Position, Position)]) {
         let allocator = Allocator::default();
-        let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
+        let parsed = Source::from_str(source, SourceType::mjs(), &allocator).parse();
         assert!(parsed.diagnostics.is_empty());
         let map = Codegen::new()
             .with_options(CodegenOptions { minify, ..ascii() })
