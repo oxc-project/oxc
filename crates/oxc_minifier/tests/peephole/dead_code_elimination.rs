@@ -5,7 +5,7 @@ use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_compat::EngineTargets;
 use oxc_minifier::{CompressOptions, Compressor, TreeShakeOptions};
-use oxc_parser::Parser;
+use oxc_parser::Source;
 use oxc_span::SourceType;
 
 #[track_caller]
@@ -20,7 +20,7 @@ fn run_with_iterations(
     options: Option<CompressOptions>,
 ) -> (String, u8) {
     let allocator = Allocator::default();
-    let mut ret = Parser::new(&allocator, source_text, source_type).parse();
+    let mut ret = Source::from_str(source_text, source_type, &allocator).parse();
     assert!(ret.diagnostics.is_empty(), "Parser errors: {:?}", ret.diagnostics);
     let program = &mut ret.program;
     let iterations = options

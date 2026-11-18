@@ -30,12 +30,12 @@ See [`tasks/minsize`](../../tasks/minsize) for compression benchmarks.
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_minifier::{Minifier, MinifierOptions};
-use oxc_parser::Parser;
+use oxc_parser::Source;
 use oxc_span::SourceType;
 
 let allocator = Allocator::default();
-let parsed = Parser::new(&allocator, "const x = 1 + 1; console.log(x);", SourceType::mjs())
-    .parse();
+let source = Source::from_str("const x = 1 + 1; console.log(x);", SourceType::mjs(), &allocator);
+let parsed = source.parse();
 assert!(parsed.diagnostics.is_empty());
 let mut program = parsed.program;
 

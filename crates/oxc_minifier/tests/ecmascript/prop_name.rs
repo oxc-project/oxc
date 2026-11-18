@@ -2,7 +2,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::ObjectExpression;
 use oxc_ast_visit::VisitJs;
 use oxc_ecmascript::PropName;
-use oxc_parser::Parser;
+use oxc_parser::Source;
 use oxc_span::SourceType;
 
 #[test]
@@ -31,7 +31,7 @@ fn test_prop_name() {
                 [e]() {},
             }
         ";
-    let ret = Parser::new(&allocator, source, source_type).parse();
+    let ret = Source::from_str(source, source_type, &allocator).parse();
     assert!(!ret.program.is_empty());
     assert!(ret.diagnostics.is_empty());
 

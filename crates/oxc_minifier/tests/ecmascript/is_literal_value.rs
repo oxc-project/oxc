@@ -7,7 +7,7 @@ use rustc_hash::FxHashSet;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{IdentifierReference, Statement};
 use oxc_ecmascript::{GlobalContext, constant_evaluation::IsLiteralValue};
-use oxc_parser::Parser;
+use oxc_parser::Source;
 use oxc_span::SourceType;
 
 struct Ctx {
@@ -67,7 +67,7 @@ fn test_with_ctx_and_functions_option(
     expected: bool,
 ) {
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
+    let ret = Source::from_str(source_text, SourceType::mjs(), &allocator).parse();
     assert!(!ret.fatal_error, "{source_text}");
     assert!(ret.diagnostics.is_empty(), "{source_text}");
 

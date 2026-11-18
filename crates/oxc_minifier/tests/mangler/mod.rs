@@ -3,7 +3,7 @@ use std::fmt::Write;
 use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_mangler::{MangleOptions, MangleOptionsKeepNames, Mangler};
-use oxc_parser::Parser;
+use oxc_parser::Source;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 
@@ -15,7 +15,7 @@ fn mangle_with_source_type(
     source_type: SourceType,
 ) -> String {
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let ret = Source::from_str(source_text, source_type, &allocator).parse();
     assert!(ret.diagnostics.is_empty(), "Parser errors: {:?}", ret.diagnostics);
     let program = ret.program;
     let mangler_return = Mangler::new().with_options(options.clone()).build(&program);
@@ -39,7 +39,7 @@ fn test(source_text: &str, expected: &str, options: &MangleOptions) {
     let expected = {
         let allocator = Allocator::default();
         let source_type = SourceType::mjs().with_unambiguous(true);
-        let ret = Parser::new(&allocator, expected, source_type).parse();
+        let ret = Source::from_str(expected, source_type, &allocator).parse();
         assert!(ret.diagnostics.is_empty(), "Parser errors: {:?}", ret.diagnostics);
         Codegen::new().build(&ret.program).code
     };
@@ -477,7 +477,7 @@ fn catch_parameter_scope() {
 
 fn assert_valid_labels(source_text: &str, source_type: SourceType) {
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let ret = Source::from_str(source_text, source_type, &allocator).parse();
     assert!(ret.diagnostics.is_empty(), "Parser errors: {:?}", ret.diagnostics);
     let ret = SemanticBuilder::new().with_check_syntax_error(true).build(&ret.program);
     assert!(ret.diagnostics.is_empty(), "Semantic errors: {:?}\n{source_text}", ret.diagnostics);

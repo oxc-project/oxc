@@ -4,12 +4,12 @@ use oxc_ast::{
     builder::AstBuilder,
 };
 use oxc_ecmascript::{WithoutGlobalReferenceInformation, constant_evaluation::IsInt32OrUint32};
-use oxc_parser::Parser;
+use oxc_parser::Source;
 use oxc_span::{SPAN, SourceType};
 
 fn test(source_text: &str, expected: bool) {
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
+    let ret = Source::from_str(source_text, SourceType::mjs(), &allocator).parse();
     assert!(!ret.fatal_error, "{source_text}");
     assert!(ret.diagnostics.is_empty(), "{source_text}");
 

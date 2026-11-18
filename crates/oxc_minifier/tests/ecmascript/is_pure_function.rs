@@ -1,13 +1,13 @@
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{ChainElement, Expression, Statement};
 use oxc_ecmascript::side_effects::is_pure_function;
-use oxc_parser::Parser;
+use oxc_parser::Source;
 use oxc_span::SourceType;
 
 #[track_caller]
 fn test(source: &str, pure_functions: &[&str], expected: bool) {
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source, SourceType::mjs()).parse();
+    let ret = Source::from_str(source, SourceType::mjs(), &allocator).parse();
     assert!(!ret.fatal_error, "{source}");
     assert!(ret.diagnostics.is_empty(), "{source}");
 

@@ -23,8 +23,7 @@ use std::path::Path;
 use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_mangler::{MangleOptions, MangleOptionsKeepNames, Mangler};
-use oxc_parser::Parser;
-use oxc_span::SourceType;
+use oxc_parser::{Source, SourceFileError};
 use pico_args::Arguments;
 use rustc_hash::FxHashSet;
 
@@ -32,18 +31,20 @@ use rustc_hash::FxHashSet;
 // create a `test.js`,
 // run `cargo run -p oxc_minifier --example mangler`
 
-fn main() -> std::io::Result<()> {
+fn main() -> Result<(), SourceFileError> {
     let mut args = Arguments::from_env();
 
     let keep_names = args.contains("--keep-names");
     let reserve_exports = args.contains("--reserve-exports");
     let debug = args.contains("--debug");
     let twice = args.contains("--twice");
-    let name = args.free_from_str().unwrap_or_else(|_| "test.js".to_string());
 
+    let name = args.free_from_str().unwrap_or_else(|_| "test.js".to_string());
     let path = Path::new(&name);
-    let source_text = std::fs::read_to_string(path)?;
-    let source_type = SourceType::from_path(path).unwrap();
+
+    let mut allocator = Allocator::default();
+    let source = Source::from_file(path, &allocator)?;
+    let source_type = source.source_type();
 
     let options = MangleOptions {
         top_level: None,
@@ -55,11 +56,13 @@ fn main() -> std::io::Result<()> {
         },
         debug,
     };
-    let printed = mangler(&source_text, source_type, options.clone());
+    let printed = mangler(source, options.clone());
     println!("{printed}");
 
     if twice {
-        let printed2 = mangler(&printed, source_type, options);
+        allocator.reset();
+        let source = Source::from_str(&printed, source_type, &allocator);
+        let printed2 = mangler(source, options);
         println!("{printed2}");
         println!("same = {}", printed == printed2);
     }
@@ -67,9 +70,8 @@ fn main() -> std::io::Result<()> {
     Ok(())
 }
 
-fn mangler(source_text: &str, source_type: SourceType, options: MangleOptions) -> String {
-    let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
+fn mangler(source: Source<'_>, options: MangleOptions) -> String {
+    let ret = source.parse();
     assert!(ret.diagnostics.is_empty());
     let mangler_return = Mangler::new().with_options(options).build(&ret.program);
     Codegen::new()
