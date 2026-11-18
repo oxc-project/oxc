@@ -6,7 +6,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     Context, ParserConfig as Config, ParserImpl, StatementContext, diagnostics,
-    lexer::{Kind, cold_branch},
+    lexer::Kind,
     modifiers::{ModifierKind, ModifierKinds, Modifiers},
 };
 
@@ -26,12 +26,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Statement<'a> {
         let decl = self.parse_class_declaration(start, modifiers, decorators);
         if stmt_ctx.is_single_statement() {
-            cold_branch(|| {
-                self.error(diagnostics::class_declaration(Span::new(
-                    decl.span.start,
-                    decl.body.span.start,
-                )));
-            });
+            self.error(diagnostics::class_declaration(Span::new(
+                decl.span.start,
+                decl.body.span.start,
+            )));
         }
         Statement::ClassDeclaration(decl)
     }
@@ -100,13 +98,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             ClassHeritage::new(expression, type_arguments, self)
         });
         for (expression, type_arguments) in extends {
-            cold_branch(|| {
-                let expression_span = expression.span();
-                let span = type_arguments.map_or(expression_span, |type_arguments| {
-                    expression_span.merge(type_arguments.span)
-                });
-                self.error(diagnostics::classes_can_only_extend_single_class(span));
+            let expression_span = expression.span();
+            let span = type_arguments.map_or(expression_span, |type_arguments| {
+                expression_span.merge(type_arguments.span)
             });
+            self.error(diagnostics::classes_can_only_extend_single_class(span));
         }
         let body = self.parse_class_body();
 
@@ -147,18 +143,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 Kind::Extends => {
                     let duplicate_extends = extends.is_some();
                     if duplicate_extends {
-                        cold_branch(|| {
-                            self.error(diagnostics::extends_clause_already_seen(
-                                self.cur_token().span(),
-                            ));
-                        });
+                        self.error(diagnostics::extends_clause_already_seen(
+                            self.cur_token().span(),
+                        ));
                     } else if let Some((implements_span, _)) = implements {
-                        cold_branch(|| {
-                            self.error(diagnostics::extends_clause_must_precede_implements(
-                                self.cur_token().span(),
-                                implements_span,
-                            ));
-                        });
+                        self.error(diagnostics::extends_clause_must_precede_implements(
+                            self.cur_token().span(),
+                            implements_span,
+                        ));
                     }
                     let parsed_extends = parse_extends_clause(self);
                     if !duplicate_extends {
@@ -167,18 +159,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
                 Kind::Implements => {
                     if let Some((implements_span, _)) = implements {
-                        cold_branch(|| {
-                            self.error(diagnostics::implements_clause_already_seen(
-                                self.cur_token().span(),
-                                implements_span,
-                            ));
-                        });
+                        self.error(diagnostics::implements_clause_already_seen(
+                            self.cur_token().span(),
+                            implements_span,
+                        ));
                     }
                     let implements_kw_span = self.cur_token().span();
                     if !self.is_ts {
-                        cold_branch(|| {
-                            self.error(diagnostics::implements_clause_in_ts(implements_kw_span));
-                        });
+                        self.error(diagnostics::implements_clause_in_ts(implements_kw_span));
                     }
                     if let Some((_, implements)) = implements.as_mut() {
                         implements.extend(self.parse_ts_implements_clause());
@@ -246,11 +234,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             && def.value.body.is_none()
             && !def.decorators.is_empty()
         {
-            cold_branch(|| {
-                for decorator in &def.decorators {
-                    self.error(diagnostics::decorator_on_overload(decorator.span));
-                }
-            });
+            for decorator in &def.decorators {
+                self.error(diagnostics::decorator_on_overload(decorator.span));
+            }
         }
         elem
     }
@@ -292,8 +278,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         // static { block }
         if self.at(Kind::Static) && self.lexer.peek_token().kind() == Kind::LCurly {
-            if !decorators.is_empty() {
-                self.report_invalid_decorators(&decorators);
+            for decorator in decorators {
+                self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
             }
             self.verify_modifiers(
                 &modifiers,
@@ -343,8 +329,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         if self.is_index_signature() {
-            if !decorators.is_empty() {
-                self.report_invalid_decorators(&decorators);
+            for decorator in decorators {
+                self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
             }
 
             // No modifiers except `static` and `readonly` are valid here
@@ -409,9 +395,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     );
                 }
                 if private_ident.name == "constructor" {
-                    cold_branch(|| {
-                        self.error(diagnostics::private_name_constructor(private_ident.span));
-                    });
+                    self.error(diagnostics::private_name_constructor(private_ident.span));
                 }
                 (PropertyKey::PrivateIdentifier(self.alloc(private_ident)), false)
             }
@@ -474,24 +458,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         {
             let definite_span = Span::sized(definite_token_start, 1);
             if value.is_some() {
-                cold_branch(|| {
-                    self.error(diagnostics::variable_declarator_definite(definite_span));
-                });
+                self.error(diagnostics::variable_declarator_definite(definite_span));
             } else if type_annotation.is_none() {
-                cold_branch(|| {
-                    self.error(diagnostics::variable_declarator_definite_type_assertion(
-                        definite_span,
-                    ));
-                });
+                self.error(diagnostics::variable_declarator_definite_type_assertion(definite_span));
             } else if self.ctx.has_ambient()
                 || modifiers.contains(ModifierKind::Static)
                 || r#type.is_abstract()
             {
-                cold_branch(|| {
-                    self.error(diagnostics::definite_assignment_assertion_not_permitted(
-                        definite_span,
-                    ));
-                });
+                self.error(diagnostics::definite_assignment_assertion_not_permitted(definite_span));
             }
         }
         ClassElement::new_accessor_property(
@@ -641,7 +615,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let span = cur_token.span();
             self.bump_any();
             if !self.is_ts {
-                cold_branch(|| self.error(diagnostics::optional_class_member_in_ts(span)));
+                self.error(diagnostics::optional_class_member_in_ts(span));
             }
             span
         });
@@ -697,17 +671,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let definite = is_definite.then_some(self.prev_token_end - 1);
 
         if is_definite && let Some(optional_span) = optional_span {
-            cold_branch(|| {
-                self.error(diagnostics::optional_definite_property(optional_span.expand_right(1)));
-            });
+            self.error(diagnostics::optional_definite_property(optional_span.expand_right(1)));
         }
 
         if modifiers.contains(ModifierKind::Accessor) {
             if let Some(optional_span) = optional_span {
-                cold_branch(|| self.error(diagnostics::optional_accessor_property(optional_span)));
+                self.error(diagnostics::optional_accessor_property(optional_span));
             }
             if name.is_specific_string_literal("constructor") && !computed {
-                cold_branch(|| self.error(diagnostics::constructor_accessor(name.span())));
+                self.error(diagnostics::constructor_accessor(name.span()));
             }
             return self.parse_class_accessor_property(
                 start, name, computed, definite, modifiers, decorators,
@@ -785,11 +757,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if cur_token.kind() == Kind::Semicolon {
             self.bump_any();
         } else if !self.can_insert_semicolon() {
-            return cold_branch(|| {
-                let error =
-                    diagnostics::expect_token(";", cur_token.kind().to_str(), cur_token.span());
-                self.fatal_error(error)
-            });
+            let error = diagnostics::expect_token(";", cur_token.kind().to_str(), cur_token.span());
+            return self.fatal_error(error);
         }
 
         // `async` is valid on methods, but not fields.
@@ -809,52 +778,36 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let r#static = modifiers.contains(ModifierKind::Static);
         if !computed && let Some((name, span)) = name.prop_name() {
             if name == "constructor" {
-                cold_branch(|| self.error(diagnostics::field_constructor(span)));
+                self.error(diagnostics::field_constructor(span));
             }
             if r#static && name == "prototype" && !self.ctx.has_ambient() {
-                cold_branch(|| self.error(diagnostics::static_prototype(span)));
+                self.error(diagnostics::static_prototype(span));
             }
         }
         if r#abstract && name.is_private_identifier() {
-            cold_branch(|| {
-                let modifier = modifiers.get(ModifierKind::Abstract).unwrap();
-                self.error(diagnostics::abstract_with_private_identifier(modifier.span()));
-            });
+            let modifier = modifiers.get(ModifierKind::Abstract).unwrap();
+            self.error(diagnostics::abstract_with_private_identifier(modifier.span()));
         }
         if r#abstract && initializer.is_some() {
-            cold_branch(|| {
-                let (name, span) = self.abstract_member_name(&name);
-                self.error(diagnostics::abstract_property_cannot_have_initializer(name, span));
-            });
+            let (name, span) = self.abstract_member_name(&name);
+            self.error(diagnostics::abstract_property_cannot_have_initializer(name, span));
         }
         if self.ctx.has_ambient()
             && let Some(initializer) = &initializer
             && !(modifiers.contains(ModifierKind::Readonly) && type_annotation.is_none())
         {
-            cold_branch(|| {
-                self.error(diagnostics::initializers_not_allowed_in_ambient_contexts(
-                    initializer.span(),
-                ));
-            });
+            self.error(diagnostics::initializers_not_allowed_in_ambient_contexts(
+                initializer.span(),
+            ));
         }
         if let Some(definite_token_start) = definite {
             let definite_span = Span::sized(definite_token_start, 1);
             if initializer.is_some() {
-                cold_branch(|| {
-                    self.error(diagnostics::variable_declarator_definite(definite_span));
-                });
+                self.error(diagnostics::variable_declarator_definite(definite_span));
             } else if type_annotation.is_none() {
-                cold_branch(|| {
-                    self.error(diagnostics::variable_declarator_definite_type_assertion(
-                        definite_span,
-                    ));
-                });
+                self.error(diagnostics::variable_declarator_definite_type_assertion(definite_span));
             } else if self.ctx.has_ambient() || r#static || r#abstract {
-                cold_branch(|| {
-                    self.error(diagnostics::definite_assignment_assertion_not_permitted(
-                        definite_span,
-                    ));
-                });
+                self.error(diagnostics::definite_assignment_assertion_not_permitted(definite_span));
             }
         }
         ClassElement::new_property_definition(
@@ -923,9 +876,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn check_method_definition(&mut self, method: &MethodDefinition<'a>) {
         if method.r#type.is_abstract() && method.key.is_private_identifier() {
-            cold_branch(|| {
-                self.error(diagnostics::abstract_with_private_identifier(method.key.span()));
-            });
+            self.error(diagnostics::abstract_with_private_identifier(method.key.span()));
         }
 
         if !method.computed
@@ -933,29 +884,25 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         {
             if method.r#static {
                 if name == "prototype" && !self.ctx.has_ambient() {
-                    cold_branch(|| self.error(diagnostics::static_prototype(span)));
+                    self.error(diagnostics::static_prototype(span));
                 }
             } else if name == "constructor" {
                 let is_accessor =
                     matches!(method.kind, MethodDefinitionKind::Get | MethodDefinitionKind::Set);
                 if is_accessor {
-                    cold_branch(|| self.error(diagnostics::constructor_getter_setter(span)));
+                    self.error(diagnostics::constructor_getter_setter(span));
                 }
                 if method.value.r#async {
-                    cold_branch(|| self.error(diagnostics::constructor_async(span)));
+                    self.error(diagnostics::constructor_async(span));
                 }
                 if method.value.generator {
-                    cold_branch(|| self.error(diagnostics::constructor_generator(span)));
+                    self.error(diagnostics::constructor_generator(span));
                 }
                 if method.r#type.is_abstract() {
-                    cold_branch(|| self.error(diagnostics::illegal_abstract_modifier(span)));
+                    self.error(diagnostics::illegal_abstract_modifier(span));
                 }
                 if !is_accessor && let Some(type_parameters) = &method.value.type_parameters {
-                    cold_branch(|| {
-                        self.error(diagnostics::ts_constructor_type_parameter(
-                            type_parameters.span,
-                        ));
-                    });
+                    self.error(diagnostics::ts_constructor_type_parameter(type_parameters.span));
                 }
             }
         }
@@ -963,9 +910,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if self.ctx.has_ambient()
             && let Some(body) = &method.value.body
         {
-            cold_branch(|| {
-                self.error(diagnostics::implementation_in_ambient(Span::empty(body.span.start)));
-            });
+            self.error(diagnostics::implementation_in_ambient(Span::empty(body.span.start)));
         }
     }
 
@@ -978,10 +923,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             _ => {}
         }
         if method.r#type.is_abstract() && method.value.body.is_some() {
-            cold_branch(|| {
-                let (name, span) = self.abstract_member_name(&method.key);
-                self.error(diagnostics::abstract_accessor_cannot_have_implementation(name, span));
-            });
+            let (name, span) = self.abstract_member_name(&method.key);
+            self.error(diagnostics::abstract_accessor_cannot_have_implementation(name, span));
         }
     }
 
@@ -989,10 +932,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.check_method_definition(method);
 
         if method.r#type.is_abstract() && method.value.body.is_some() {
-            cold_branch(|| {
-                let (name, span) = self.abstract_member_name(&method.key);
-                self.error(diagnostics::abstract_method_cannot_have_implementation(name, span));
-            });
+            let (name, span) = self.abstract_member_name(&method.key);
+            self.error(diagnostics::abstract_method_cannot_have_implementation(name, span));
         }
     }
 
@@ -1001,14 +942,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         if let Some(this_param) = &method.value.this_param {
             // class Foo { constructor(this: number) {} }
-            self.report_constructor_this_parameter(this_param.span);
+            self.error(diagnostics::ts_constructor_this_parameter(this_param.span));
         }
         if let Some(return_type) = &method.value.return_type {
-            cold_branch(|| {
-                self.error(diagnostics::constructor_return_type(
-                    return_type.type_annotation.span(),
-                ));
-            });
+            self.error(diagnostics::constructor_return_type(return_type.type_annotation.span()));
         }
     }
 }

@@ -9,7 +9,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{
     ParserConfig as Config, ParserImpl,
     diagnostics::{self, ParserDiagnostic},
-    lexer::{Kind, cold_branch},
+    lexer::Kind,
 };
 
 impl<'a, C: Config> ParserImpl<'a, C> {
@@ -162,7 +162,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return ControlFlow::Break(None);
         }
         if kind != separator {
-            self.report_unexpected_list_token(close, separator, opening_span);
+            self.set_fatal_error(diagnostics::expect_closing_or_separator(
+                close.to_str(),
+                separator.to_str(),
+                kind.to_str(),
+                self.cur_token().span(),
+                opening_span,
+            ));
             return ControlFlow::Break(None);
         }
         self.advance(separator);
@@ -175,30 +181,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return ControlFlow::Break(None);
         }
         ControlFlow::Continue(())
-    }
-
-    #[cold]
-    #[inline(never)]
-    pub(crate) fn report_unexpected_list_token(
-        &mut self,
-        close: Kind,
-        separator: Kind,
-        opening_span: Span,
-    ) {
-        let error = diagnostics::expect_closing_or_separator(
-            close.to_str(),
-            separator.to_str(),
-            self.cur_kind().to_str(),
-            self.cur_token().span(),
-            opening_span,
-        );
-        self.set_fatal_error(error);
-    }
-
-    #[cold]
-    #[inline(never)]
-    pub(crate) fn report_rest_element_trailing_comma(&mut self, span: Span) {
-        self.error(diagnostics::rest_element_trailing_comma(span));
     }
 
     pub(crate) fn parse_delimited_list_with_rest<E, A, R, D>(
@@ -228,14 +210,21 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 } else {
                     let comma_span = p.cur_token().span();
                     if kind != Kind::Comma {
-                        p.report_unexpected_list_token(close, Kind::Comma, opening_span);
+                        let error = diagnostics::expect_closing_or_separator(
+                            close.to_str(),
+                            Kind::Comma.to_str(),
+                            kind.to_str(),
+                            comma_span,
+                            opening_span,
+                        );
+                        p.set_fatal_error(error);
                         return None;
                     }
                     p.bump_any();
                     let kind = p.cur_kind();
                     if kind == close {
                         if rest.is_some() && !p.ctx.has_ambient() {
-                            p.report_rest_element_trailing_comma(comma_span);
+                            p.error(diagnostics::rest_element_trailing_comma(comma_span));
                         }
                         return None;
                     }
@@ -245,7 +234,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
 
                 if let Some(r) = &rest {
-                    cold_branch(|| p.set_fatal_error(rest_last_diagnostic(r.span())));
+                    p.set_fatal_error(rest_last_diagnostic(r.span()));
                     return None;
                 }
 

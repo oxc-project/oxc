@@ -588,12 +588,6 @@ impl<'a, C: Config> Lexer<'a, C> {
         Span::new(self.token_start, self.offset())
     }
 
-    #[cold]
-    #[inline(never)]
-    fn report_unterminated_string(&mut self) {
-        self.error(diagnostics::unterminated_string(self.unterminated_range()));
-    }
-
     /// Consume the current char if not at EOF
     #[inline]
     fn next_char(&mut self) -> Option<char> {
@@ -655,7 +649,6 @@ impl<'a, C: Config> Lexer<'a, C> {
 
     /// Return `IllegalCharacter` Error or `UnexpectedEnd` if EOF
     #[cold]
-    #[inline(never)]
     fn unexpected_err(&mut self) {
         let offset = self.current_offset();
         match self.peek_char() {
@@ -813,15 +806,17 @@ impl<'a, C: Config> Lexer<'a, C> {
 
 /// Call a closure while hinting to compiler that this branch is rarely taken.
 ///
-/// The closure runs out of line so its temporary values, such as a `ParserDiagnostic`,
-/// can stay out of the caller's stack frame. Use [`cold_path`] for branch layout hints.
+/// Unlike [`cold_path`], which only guides branch layout, this `#[cold]` trampoline also moves
+/// the closure's code and stack usage out of the caller's frame (unless compiler chooses to
+/// inline it). Use `cold_path` for pure branch hints. Use `cold_branch` where keeping large
+/// stack objects (e.g. an `OxcDiagnostic` return buffer) out of the hot function's stack frame
+/// is the aim.
 ///
 /// "Cold trampoline function", suggested in:
 /// <https://users.rust-lang.org/t/is-cold-the-only-reliable-way-to-hint-to-branch-predictor/106509/2>
 ///
 /// [`cold_path`]: oxc_data_structures::branch_hints::cold_path
 #[cold]
-#[inline(never)]
 pub fn cold_branch<F: FnOnce() -> T, T>(f: F) -> T {
     f()
 }

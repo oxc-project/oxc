@@ -3,7 +3,7 @@ use oxc_ast::ast::*;
 
 use crate::{
     Context, ParserConfig as Config, ParserImpl, diagnostics,
-    lexer::{Kind, cold_branch},
+    lexer::Kind,
     modifiers::{ModifierKind, ModifierKinds, Modifiers},
     state::CoverInitializedName,
 };
@@ -209,12 +209,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             Kind::PrivateIdentifier => {
                 let private_ident = self.parse_private_identifier();
-                cold_branch(|| {
-                    self.error(diagnostics::private_identifier_in_property_name(
-                        private_ident.name.as_str(),
-                        private_ident.span,
-                    ));
-                });
+                self.error(diagnostics::private_identifier_in_property_name(
+                    private_ident.name.as_str(),
+                    private_ident.span,
+                ));
                 PropertyKey::PrivateIdentifier(self.alloc(private_ident))
             }
             _ => {

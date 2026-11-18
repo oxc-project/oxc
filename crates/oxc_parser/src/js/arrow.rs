@@ -17,10 +17,7 @@ use super::{
     operator::kind_to_precedence,
 };
 use crate::{
-    Context, ParserConfig as Config, ParserImpl,
-    cursor::ParserCheckpoint,
-    diagnostics,
-    lexer::{Kind, cold_branch},
+    Context, ParserConfig as Config, ParserImpl, cursor::ParserCheckpoint, diagnostics, lexer::Kind,
 };
 
 struct ArrowFunctionHead<'a> {
@@ -297,7 +294,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let ident = self.parse_plain_binding_identifier();
                 if self.at(Kind::Arrow) {
                     if is_escaped {
-                        self.report_escaped_keyword(async_span);
+                        self.error(diagnostics::escaped_keyword(async_span));
                     }
                     let arrow = self.parse_simple_arrow_function_expression(
                         start,
@@ -390,7 +387,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         match list {
             CoverList::Parameters(params) => {
                 if is_escaped {
-                    self.report_escaped_keyword(async_span);
+                    self.error(diagnostics::escaped_keyword(async_span));
                 }
                 let arrow = self.parse_cover_parameters_arrow_function(
                     cover,
@@ -409,7 +406,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.try_parse_cover_arrow_function(cover, allow_return_type_in_arrow_function)
         {
             if is_escaped {
-                self.report_escaped_keyword(async_span);
+                self.error(diagnostics::escaped_keyword(async_span));
             }
             return Some((arrow, true));
         }
@@ -601,7 +598,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         };
         // It is a Syntax Error if ArrowParameters Contains AwaitExpression is true.
         if ident.name == "await" {
-            cold_branch(|| self.error(diagnostics::identifier_async("await", ident.span)));
+            self.error(diagnostics::identifier_async("await", ident.span));
         }
         self.parse_simple_arrow_function_expression(
             start,
@@ -755,11 +752,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             && type_params.params[0].constraint.is_none()
             && !has_trailing_comma
         {
-            cold_branch(|| {
-                self.error(diagnostics::jsx_type_parameter_in_mts_cts(
-                    type_params.params[0].name.span,
-                ));
-            });
+            self.error(diagnostics::jsx_type_parameter_in_mts_cts(type_params.params[0].name.span));
         }
 
         let (this_param, params) = self.parse_formal_parameters(
@@ -769,9 +762,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         if let Some(this_param) = this_param {
             // const x = (this: number) => {};
-            cold_branch(|| {
-                self.error(diagnostics::ts_arrow_function_this_parameter(this_param.span));
-            });
+            self.error(diagnostics::ts_arrow_function_this_parameter(this_param.span));
         }
 
         let return_type = if self.is_ts { self.parse_ts_return_type_annotation() } else { None };
@@ -857,9 +848,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn expect_arrow(&mut self) {
         if self.at(Kind::Arrow) && self.cur_token().is_on_new_line() {
-            cold_branch(|| {
-                self.error(diagnostics::lineterminator_before_arrow(self.cur_token().span()));
-            });
+            self.error(diagnostics::lineterminator_before_arrow(self.cur_token().span()));
         }
         self.expect(Kind::Arrow);
     }

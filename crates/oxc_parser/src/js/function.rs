@@ -5,7 +5,7 @@ use oxc_span::{GetSpan, Span};
 use super::FunctionKind;
 use crate::{
     Context, ParserConfig as Config, ParserImpl, StatementContext, diagnostics,
-    lexer::{Kind, cold_branch},
+    lexer::Kind,
     modifiers::{ModifierKind, ModifierKinds, Modifiers},
 };
 
@@ -138,27 +138,33 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 } else {
                     let comma_span = p.cur_token().span();
                     if kind != Kind::Comma {
-                        p.report_unexpected_list_token(Kind::RParen, Kind::Comma, opening_span);
+                        let error = diagnostics::expect_closing_or_separator(
+                            Kind::RParen.to_str(),
+                            Kind::Comma.to_str(),
+                            kind.to_str(),
+                            comma_span,
+                            opening_span,
+                        );
+                        p.set_fatal_error(error);
                         return None;
                     }
                     p.bump_any();
                     let kind = p.cur_kind();
                     if kind == Kind::RParen {
                         if rest.is_some() && !p.ctx.has_ambient() {
-                            p.report_rest_element_trailing_comma(comma_span);
+                            p.error(diagnostics::rest_element_trailing_comma(comma_span));
                         }
                         return None;
                     }
                 }
 
                 if let Some(r) = &rest {
-                    cold_branch(|| {
-                        let span = r.type_annotation.as_ref().map_or_else(
+                    p.set_fatal_error(diagnostics::rest_parameter_last(
+                        r.type_annotation.as_ref().map_or_else(
                             || r.rest.span,
                             |type_annotation| r.rest.span.merge(type_annotation.span()),
-                        );
-                        p.set_fatal_error(diagnostics::rest_parameter_last(span));
-                    });
+                        ),
+                    ));
                     return None;
                 }
 
@@ -179,8 +185,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                             func_kind,
                             FunctionKind::ClassMethod | FunctionKind::Constructor
                         ) && p.is_ts;
-                        if !are_decorators_allowed && !decorators.is_empty() {
-                            p.report_invalid_decorators(&decorators);
+                        if !are_decorators_allowed {
+                            for decorator in &decorators {
+                                p.error(diagnostics::decorators_are_not_valid_here(decorator.span));
+                            }
                         }
 
                         rest = Some(FormalParameterRest::boxed(
@@ -197,11 +205,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 if param.optional {
                     has_optional = true;
                 } else if has_optional && param.initializer.is_none() {
-                    cold_branch(|| {
-                        p.error(diagnostics::required_parameter_after_optional_parameter(
-                            param.span,
-                        ));
-                    });
+                    p.error(diagnostics::required_parameter_after_optional_parameter(param.span));
                 }
                 return Some(param);
             }
@@ -223,7 +227,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let init =
                 self.context_add(Context::In, ParserImpl::parse_assignment_expression_or_higher);
             if optional {
-                self.report_optional_parameter_initializer(pattern.span());
+                self.error(diagnostics::a_parameter_cannot_have_question_mark_and_initializer(
+                    pattern.span(),
+                ));
             }
             Some(ArenaBox::new_in(init, self))
         } else {
@@ -286,7 +292,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let init =
                 self.context_add(Context::In, ParserImpl::parse_assignment_expression_or_higher);
             if optional {
-                self.report_optional_parameter_initializer(pattern.span());
+                self.error(diagnostics::a_parameter_cannot_have_question_mark_and_initializer(
+                    pattern.span(),
+                ));
             }
             Some(ArenaBox::new_in(init, self))
         } else {
@@ -299,26 +307,25 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if is_parameter_property {
             if let Some(ident) = pattern.get_binding_identifier() {
                 if func_kind == FunctionKind::Constructor && ident.name == "constructor" {
-                    cold_branch(|| {
-                        self.error(diagnostics::constructor_cannot_be_parameter_property_name(
-                            ident.span,
-                        ));
-                    });
+                    self.error(diagnostics::constructor_cannot_be_parameter_property_name(
+                        ident.span,
+                    ));
                 }
             } else {
-                cold_branch(|| {
-                    self.error(diagnostics::parameter_property_cannot_be_binding_pattern(
-                        self.end_span(start),
-                    ));
-                });
+                self.error(diagnostics::parameter_property_cannot_be_binding_pattern(Span::new(
+                    start,
+                    self.prev_token_end,
+                )));
             }
         }
 
         let are_decorators_allowed =
             matches!(func_kind, FunctionKind::ClassMethod | FunctionKind::Constructor)
                 && self.is_ts;
-        if !are_decorators_allowed && !decorators.is_empty() {
-            self.report_invalid_decorators(&decorators);
+        if !are_decorators_allowed {
+            for decorator in &decorators {
+                self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
+            }
         }
         FormalParameter::new(
             self.end_span(start),
@@ -332,12 +339,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             modifiers.contains_override(),
             self,
         )
-    }
-
-    #[cold]
-    #[inline(never)]
-    pub(super) fn report_optional_parameter_initializer(&mut self, span: Span) {
-        self.error(diagnostics::a_parameter_cannot_have_question_mark_and_initializer(span));
     }
 
     pub(crate) fn parse_function(
@@ -374,9 +375,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             .and_yield(ctx.has_yield())
             .and_new_target(ctx.has_new_target());
         if (!self.is_ts || matches!(func_kind, FunctionKind::ObjectMethod)) && body.is_none() {
-            return cold_branch(|| {
-                self.fatal_error(diagnostics::expect_function_body(self.end_span(start)))
-            });
+            return self.fatal_error(diagnostics::expect_function_body(self.end_span(start)));
         }
         let function_type = match func_kind {
             FunctionKind::Declaration | FunctionKind::DefaultExport => {
@@ -419,22 +418,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             )
             && let Some(body) = &body
         {
-            cold_branch(|| {
-                self.error(diagnostics::implementation_in_ambient(Span::empty(body.span.start)));
-            });
+            self.error(diagnostics::implementation_in_ambient(Span::empty(body.span.start)));
         }
 
         if let Some(generator) = generator {
             if ctx.has_ambient() {
-                cold_branch(|| {
-                    self.error(diagnostics::generator_in_ambient_context(self.end_span(generator)));
-                });
+                self.error(diagnostics::generator_in_ambient_context(self.end_span(generator)));
             } else if body.is_none() {
-                cold_branch(|| {
-                    self.error(diagnostics::overload_signature_generator(
-                        self.end_span(start.min(generator)),
-                    ));
-                });
+                self.error(diagnostics::overload_signature_generator(
+                    self.end_span(start.min(generator)),
+                ));
             }
         }
         self.verify_modifiers(
@@ -471,19 +464,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let decl = self.parse_function_impl(start, r#async, func_kind);
         if stmt_ctx.is_single_statement() {
             if decl.r#async {
-                cold_branch(|| {
-                    self.error(diagnostics::async_function_declaration(Span::new(
-                        decl.span.start,
-                        decl.params.span.end,
-                    )));
-                });
+                self.error(diagnostics::async_function_declaration(Span::new(
+                    decl.span.start,
+                    decl.params.span.end,
+                )));
             } else if decl.generator {
-                cold_branch(|| {
-                    self.error(diagnostics::generator_function_declaration(Span::new(
-                        decl.span.start,
-                        decl.params.span.end,
-                    )));
-                });
+                self.error(diagnostics::generator_function_declaration(Span::new(
+                    decl.span.start,
+                    decl.params.span.end,
+                )));
             }
         }
         Statement::FunctionDeclaration(decl)

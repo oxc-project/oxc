@@ -3,10 +3,10 @@ use std::cmp::max;
 use oxc_data_structures::branch_hints::cold_path;
 use oxc_str::{JSStr, JSStrBuilder};
 
-use crate::config::LexerConfig as Config;
+use crate::{config::LexerConfig as Config, diagnostics};
 
 use super::{
-    Kind, Lexer, SourcePosition, Token,
+    Kind, Lexer, SourcePosition, Token, cold_branch,
     search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
 };
 
@@ -75,7 +75,7 @@ impl<'a, C: Config> Lexer<'a, C> {
                 }
             },
             handle_eof: {
-                self.report_unterminated_string();
+                self.error(diagnostics::unterminated_string(self.unterminated_range()));
                 return Kind::Undetermined;
             },
         };
@@ -102,11 +102,13 @@ impl<'a, C: Config> Lexer<'a, C> {
         // SAFETY: Caller guarantees byte at `pos` is `\r`, so `pos + 1` is a UTF-8 char boundary.
         pos = unsafe { pos.add(1) };
 
-        // A carriage return at EOF leaves the template unterminated.
+        // If at EOF, exit. This illegal in valid JS, so cold branch.
         if pos.is_end_of(&self.source) {
-            self.source.advance_to_end();
-            self.report_unterminated_string();
-            return Kind::Undetermined;
+            return cold_branch(|| {
+                self.source.advance_to_end();
+                self.error(diagnostics::unterminated_string(self.unterminated_range()));
+                Kind::Undetermined
+            });
         }
 
         // Start next chunk after `\r`
@@ -323,7 +325,7 @@ impl<'a, C: Config> Lexer<'a, C> {
                 }
             },
             handle_eof: {
-                self.report_unterminated_string();
+                self.error(diagnostics::unterminated_string(self.unterminated_range()));
                 return Kind::Undetermined;
             },
         };

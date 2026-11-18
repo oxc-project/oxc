@@ -1,7 +1,7 @@
 use crate::{config::LexerConfig as Config, diagnostics};
 
 use super::{
-    Kind, Lexer, RegExpFlags, Token, cold_branch,
+    Kind, Lexer, RegExpFlags, Token,
     search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
 };
 
@@ -40,21 +40,17 @@ impl<C: Config> Lexer<'_, C> {
         {
             self.consume_char();
             let Ok(flag) = RegExpFlags::try_from(b) else {
-                cold_branch(|| {
-                    self.error(diagnostics::reg_exp_flag(
-                        b as char,
-                        self.current_offset().expand_left(1),
-                    ));
-                });
+                self.error(diagnostics::reg_exp_flag(
+                    b as char,
+                    self.current_offset().expand_left(1),
+                ));
                 continue;
             };
             if flags.contains(flag) {
-                cold_branch(|| {
-                    self.error(diagnostics::reg_exp_flag_twice(
-                        b as char,
-                        self.current_offset().expand_left(1),
-                    ));
-                });
+                self.error(diagnostics::reg_exp_flag_twice(
+                    b as char,
+                    self.current_offset().expand_left(1),
+                ));
                 continue;
             }
             flags |= flag;
@@ -99,7 +95,7 @@ impl<C: Config> Lexer<'_, C> {
                             if matches!(c, '\r' | '\n' | '\u{2028}' | '\u{2029}') {
                                 // SAFETY: This is just after the escaped character.
                                 self.source.set_position(unsafe { pos.add(1) });
-                                self.report_unterminated_regex();
+                                self.error(diagnostics::unterminated_reg_exp(self.unterminated_range()));
                                 self.advance_to_end();
                                 return;
                             }
@@ -117,7 +113,7 @@ impl<C: Config> Lexer<'_, C> {
                         if let Some(len) = line_break_len {
                             // SAFETY: `len` is the length of this line terminator.
                             self.source.set_position(unsafe { pos.add(len) });
-                            self.report_unterminated_regex();
+                            self.error(diagnostics::unterminated_reg_exp(self.unterminated_range()));
                             self.advance_to_end();
                             return;
                         }
@@ -129,15 +125,9 @@ impl<C: Config> Lexer<'_, C> {
                 }
             },
             handle_eof: {
-                self.report_unterminated_regex();
+                self.error(diagnostics::unterminated_reg_exp(self.unterminated_range()));
                 return;
             },
         };
-    }
-
-    #[cold]
-    #[inline(never)]
-    fn report_unterminated_regex(&mut self) {
-        self.error(diagnostics::unterminated_reg_exp(self.unterminated_range()));
     }
 }

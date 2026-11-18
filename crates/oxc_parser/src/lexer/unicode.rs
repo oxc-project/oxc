@@ -315,7 +315,7 @@ impl<'a, C: Config> Lexer<'a, C> {
         is_valid_escape_sequence: &mut bool,
     ) -> Option<JSChar> {
         let Some(c) = self.next_char() else {
-            self.report_unterminated_string();
+            self.error(diagnostics::unterminated_string(self.unterminated_range()));
             return None;
         };
         let value = match c {

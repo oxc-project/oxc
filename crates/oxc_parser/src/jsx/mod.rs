@@ -6,11 +6,8 @@ use oxc_span::{GetSpan, Span};
 use oxc_str::Str;
 
 use crate::{
-    ParserConfig as Config, ParserImpl,
-    cursor::ParserCheckpoint,
-    diagnostics,
-    js::Tristate,
-    lexer::{Kind, cold_branch},
+    ParserConfig as Config, ParserImpl, cursor::ParserCheckpoint, diagnostics, js::Tristate,
+    lexer::Kind,
 };
 
 /// Represents either a closing JSX element or fragment.
@@ -54,9 +51,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     #[inline]
     fn check_adjacent_jsx_elements(&mut self) {
         if self.at(Kind::LAngle) && self.fatal_error.is_none() {
-            cold_branch(|| {
-                self.set_fatal_error(diagnostics::adjacent_jsx_elements(self.cur_token().span()));
-            });
+            self.set_fatal_error(diagnostics::adjacent_jsx_elements(self.cur_token().span()));
         }
     }
 
@@ -154,12 +149,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             JSXClosing::Fragment(f) => f,
             JSXClosing::Element(e) => {
                 // Got a closing element when expecting a closing fragment
-                cold_branch(|| {
-                    self.error(diagnostics::jsx_fragment_no_match(
-                        opening_fragment.span,
-                        e.name.span(),
-                    ));
-                });
+                self.error(diagnostics::jsx_fragment_no_match(
+                    opening_fragment.span,
+                    e.name.span(),
+                ));
                 JSXClosingFragment::new(e.span, self)
             }
         };
@@ -197,27 +190,21 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let closing_element = match closing {
                 JSXClosing::Element(e) => {
                     if !Self::jsx_element_name_eq(&opening_element.name, &e.name) {
-                        cold_branch(|| {
-                            let opening_span = opening_element.name.span();
-                            self.error(diagnostics::jsx_element_no_match(
-                                opening_span,
-                                e.name.span(),
-                                opening_span.source_text(self.source_text),
-                            ));
-                        });
+                        self.error(diagnostics::jsx_element_no_match(
+                            opening_element.name.span(),
+                            e.name.span(),
+                            opening_element.name.span().source_text(self.source_text),
+                        ));
                     }
                     e
                 }
                 JSXClosing::Fragment(f) => {
                     // Got a closing fragment when expecting a closing element
-                    return cold_branch(|| {
-                        let opening_span = opening_element.name.span();
-                        self.fatal_error(diagnostics::jsx_element_no_match(
-                            opening_span,
-                            f.span,
-                            opening_span.source_text(self.source_text),
-                        ))
-                    });
+                    return self.fatal_error(diagnostics::jsx_element_no_match(
+                        opening_element.name.span(),
+                        f.span,
+                        opening_element.name.span().source_text(self.source_text),
+                    ));
                 }
             };
             (children, Some(closing_element))
@@ -359,9 +346,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let (ident, contains_dash) = self.parse_jsx_identifier();
             // `<foo.bar- />` is a syntax error.
             if contains_dash {
-                return cold_branch(|| {
-                    self.fatal_error(diagnostics::identifier_expected_jsx_no_hyphen(ident.span))
-                });
+                let error = diagnostics::identifier_expected_jsx_no_hyphen(ident.span);
+                return self.fatal_error(error);
             }
             property = Some(ident);
             span = self.end_span(span.start);
@@ -488,9 +474,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // Empty expression is not allowed in JSX attribute value
             // e.g. `<C attr={} />`
             if !in_jsx_child {
-                cold_branch(|| {
-                    self.error(diagnostics::jsx_attribute_value_empty_expression(span));
-                });
+                self.error(diagnostics::jsx_attribute_value_empty_expression(span));
             }
 
             // Handle comment between curly braces (ex. `{/* comment */}`)
@@ -502,11 +486,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // JSX expressions may not use an unparenthesized comma operator.
             if matches!(&expr, JSXExpression::SequenceExpression(sequence) if sequence.span.start == expr_start)
             {
-                cold_branch(|| {
-                    self.error(diagnostics::jsx_expressions_may_not_use_the_comma_operator(
-                        expr.span(),
-                    ));
-                });
+                self.error(diagnostics::jsx_expressions_may_not_use_the_comma_operator(
+                    expr.span(),
+                ));
             }
             if in_jsx_child {
                 self.expect_jsx_child(Kind::RCurly);

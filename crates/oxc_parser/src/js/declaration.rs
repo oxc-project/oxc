@@ -3,10 +3,7 @@ use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 
 use super::VariableDeclarationParent;
-use crate::{
-    ParserConfig as Config, ParserImpl, StatementContext, diagnostics,
-    lexer::{Kind, cold_branch},
-};
+use crate::{ParserConfig as Config, ParserImpl, StatementContext, diagnostics, lexer::Kind};
 
 impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_let(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
@@ -50,7 +47,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         decl.span = self.end_span(decl.span.start);
         debug_assert!(decl.kind.is_lexical());
         if stmt_ctx.is_single_statement() {
-            self.report_lexical_declaration_single_statement(decl.span);
+            self.error(diagnostics::lexical_declaration_single_statement(decl.span));
         }
         Statement::VariableDeclaration(decl)
     }
@@ -92,11 +89,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             first = false;
             let declaration = p.parse_variable_declarator(decl_parent, kind);
             if kind.is_using() && !declaration.id.is_binding_identifier() {
-                cold_branch(|| {
-                    p.error(diagnostics::invalid_identifier_in_using_declaration(
-                        declaration.id.span(),
-                    ));
-                });
+                p.error(diagnostics::invalid_identifier_in_using_declaration(
+                    declaration.id.span(),
+                ));
             }
             Some(declaration)
         })
@@ -125,11 +120,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 None
             };
             if self.at(Kind::Question) {
-                cold_branch(|| {
-                    self.error(diagnostics::unexpected_optional_declaration(
-                        self.cur_token().span(),
-                    ));
-                });
+                self.error(diagnostics::unexpected_optional_declaration(self.cur_token().span()));
                 self.bump_any();
             }
             let type_annotation = self.parse_ts_type_annotation();
@@ -151,9 +142,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             && !kind.is_using()
             && !(kind.is_const() && decl.type_annotation.is_none())
         {
-            cold_branch(|| {
-                self.error(diagnostics::initializers_not_allowed_in_ambient_contexts(init.span()));
-            });
+            self.error(diagnostics::initializers_not_allowed_in_ambient_contexts(init.span()));
         }
         if decl_parent == VariableDeclarationParent::Statement {
             self.check_missing_initializer(&decl, kind);
@@ -161,15 +150,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if let Some(definite_start) = definite_start {
             let span = Span::sized(definite_start, 1);
             if decl.init.is_some() {
-                cold_branch(|| self.error(diagnostics::variable_declarator_definite(span)));
+                self.error(diagnostics::variable_declarator_definite(span));
             } else if decl.type_annotation.is_none() {
-                cold_branch(|| {
-                    self.error(diagnostics::variable_declarator_definite_type_assertion(span));
-                });
+                self.error(diagnostics::variable_declarator_definite_type_assertion(span));
             } else if self.ctx.has_ambient() {
-                cold_branch(|| {
-                    self.error(diagnostics::definite_assignment_assertion_not_permitted(span));
-                });
+                self.error(diagnostics::definite_assignment_assertion_not_permitted(span));
             }
         }
         decl
@@ -182,18 +167,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) {
         if decl.init.is_none() && !self.ctx.has_ambient() {
             if !matches!(decl.id, BindingPattern::BindingIdentifier(_)) {
-                cold_branch(|| {
-                    self.error(diagnostics::invalid_destructuring_declaration(decl.id.span()));
-                });
+                self.error(diagnostics::invalid_destructuring_declaration(decl.id.span()));
             } else if kind == VariableDeclarationKind::Const {
                 // It is a Syntax Error if Initializer is not present and IsConstantDeclaration of the LexicalDeclaration containing this LexicalBinding is true.
-                cold_branch(|| {
-                    self.error(diagnostics::missing_initializer_in_const(decl.id.span()));
-                });
+                self.error(diagnostics::missing_initializer_in_const(decl.id.span()));
             } else if kind.is_using() {
-                cold_branch(|| {
-                    self.error(diagnostics::using_declarations_must_be_initialized(decl.id.span()));
-                });
+                self.error(diagnostics::using_declarations_must_be_initialized(decl.id.span()));
             }
         }
     }
