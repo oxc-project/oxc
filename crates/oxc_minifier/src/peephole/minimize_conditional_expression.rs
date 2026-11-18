@@ -603,10 +603,14 @@ impl<'a> PeepholeOptimizations {
             return None;
         };
 
-        // NOTE: if the right hand side is an anonymous function, applying this compression will
-        // set the `name` property of that function.
-        // Since codes relying on the fact that function's name is undefined should be rare,
-        // we do this compression even if `keep_names` is enabled.
+        // Merging these assignments moves the function or class expression inside a conditional,
+        // where assignment name inference no longer applies. Preserve the original assignments
+        // when `keep_names` is enabled.
+        if ctx.is_expression_whose_name_needs_to_be_kept(&consequent.right)
+            || ctx.is_expression_whose_name_needs_to_be_kept(&alternate.right)
+        {
+            return None;
+        }
 
         if consequent.operator != alternate.operator || consequent.left.content_ne(&alternate.left)
         {
