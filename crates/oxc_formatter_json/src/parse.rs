@@ -4,7 +4,7 @@ use oxc_ast::{
     ast::{Expression, Statement},
 };
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
-use oxc_parser::{ParseOptions, Parser};
+use oxc_parser::{ParseOptions, Source};
 use oxc_span::{GetSpan, SourceType};
 
 use crate::options::JsonVariant;
@@ -59,8 +59,8 @@ pub fn parse_json<'a>(
         enable_ident_hashes: false, // the JSON formatter does not use `Ident` hashes
         ..ParseOptions::default()
     };
-    let ret =
-        Parser::new(allocator, wrapped_source, SourceType::default()).with_options(options).parse();
+    let wrapped = Source::from_str(wrapped_source, SourceType::default(), allocator);
+    let ret = wrapped.parse_with_options(options);
 
     // If the wrapped parse fails,
     // we retry without the wrap and accept the result only when it contains no code.
@@ -140,16 +140,13 @@ fn remap_error_to_user_source(mut err: OxcDiagnostic, source_len: u32) -> OxcDia
 /// (comments / whitespace only; a directive or hashbang counts as code)
 fn try_parse_comments_only<'a>(
     allocator: &'a Allocator,
-    source: &str,
+    source_text: &str,
     options: ParseOptions,
 ) -> Option<ParsedExpression<'a>> {
-    // `Parser::new` ties `source_text` to the arena lifetime;
-    // Copy `source` into the arena so the resulting comment spans index into a string that outlives `ret`.
-    let bare_source: &'a str = allocator.alloc_str(source);
+    let source = Source::from_str(source_text, SourceType::default(), allocator);
+    let ret = source.parse_with_options(options);
+    let mut program = ret.program;
 
-    let ret =
-        Parser::new(allocator, bare_source, SourceType::default()).with_options(options).parse();
-    let program = ret.program;
     if !ret.diagnostics.is_empty()
         || ret.fatal_error
         || !program.is_empty()
@@ -163,7 +160,7 @@ fn try_parse_comments_only<'a>(
     Some(ParsedExpression {
         expression: None,
         comments,
-        wrapped_source: bare_source,
+        wrapped_source: program.source_text,
         source_offset: 0,
     })
 }

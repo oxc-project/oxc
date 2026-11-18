@@ -17,7 +17,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{EmbeddedIr, FormatSession, Formatted, InputKind};
-use oxc_parser::{ParseOptions, Parser, ParserReturn};
+use oxc_parser::{ParseOptions, ParserReturn, Source};
 use oxc_span::SourceType;
 
 // Internal only AST-wrapping IR primitives.
@@ -52,7 +52,7 @@ use self::formatter::prelude::tag::Label;
 /// For now, any parse diagnostic is an error, even when the parser could recover.
 pub fn format<'a>(
     allocator: &'a Allocator,
-    source_text: &'a str,
+    source_text: &str,
     source_type: SourceType,
     options: JsFormatOptions,
 ) -> Result<Formatted<'a, JsFormatContext<'a>>, OxcDiagnostic> {
@@ -75,7 +75,7 @@ pub fn format<'a>(
 /// Same as [`format()`].
 pub fn format_with_session<'a>(
     session: &FormatSession<'a>,
-    source_text: &'a str,
+    source_text: &str,
     source_type: SourceType,
     options: JsFormatOptions,
 ) -> Result<Formatted<'a, JsFormatContext<'a>>, OxcDiagnostic> {
@@ -207,7 +207,7 @@ fn format_program_with_session<'a>(
 /// Inspect the returned `ParserReturn` (`errors` / `fatal_error`) and pass `&ret.program` to [`format_program`].
 pub fn parse_for_format<'a>(
     allocator: &'a Allocator,
-    source_text: &'a str,
+    source_text: &str,
     source_type: SourceType,
 ) -> ParserReturn<'a> {
     // Always enable JSX for JavaScript source types (no syntax conflict)
@@ -223,7 +223,7 @@ pub fn parse_for_format<'a>(
         // analysis on this AST, and semantic requires hashed `Ident`s.
         enable_ident_hashes: cfg!(feature = "detect_code_removal"),
     };
-    Parser::new(allocator, source_text, source_type).with_options(options).parse()
+    Source::from_str(source_text, source_type, allocator).parse_with_options(options)
 }
 
 /// Parse `source_text` and promote the `Program` to the arena lifetime.
@@ -235,7 +235,7 @@ pub fn parse_for_format<'a>(
 /// Prettier instead formats invalid inputs through parser recovery, which also hides the error from the user;
 fn parse<'a>(
     allocator: &'a Allocator,
-    source_text: &'a str,
+    source_text: &str,
     source_type: SourceType,
 ) -> Result<&'a Program<'a>, OxcDiagnostic> {
     let ret = parse_for_format(allocator, source_text, source_type);
