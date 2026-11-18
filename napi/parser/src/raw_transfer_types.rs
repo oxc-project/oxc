@@ -77,7 +77,7 @@ impl<'a> Error<'a> {
         filename: &str,
         allocator: &'a Allocator,
     ) -> ArenaVec<'a, Self> {
-        let named_source = Arc::new(NamedSource::new(filename, source_text.to_string()));
+        let named_source = Arc::new(NamedSource::new(filename, source_text));
 
         ArenaVec::from_iter_in(
             diagnostics
@@ -89,7 +89,7 @@ impl<'a> Error<'a> {
 
     fn from_diagnostic_in(
         diagnostic: OxcDiagnostic,
-        named_source: &Arc<NamedSource<String>>,
+        named_source: &Arc<NamedSource<&str>>,
         allocator: &'a Allocator,
     ) -> Self {
         let labels = ArenaVec::from_iter_in(

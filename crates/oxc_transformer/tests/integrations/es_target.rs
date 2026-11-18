@@ -42,7 +42,7 @@ fn es_target() {
                 Ok(code) => code,
                 Err(errors) => errors
                     .into_iter()
-                    .map(|error| error.render_with_source_code(case.to_string()))
+                    .map(|error| error.render_with_source_code(case))
                     .collect::<Vec<_>>()
                     .join("\n"),
             };
