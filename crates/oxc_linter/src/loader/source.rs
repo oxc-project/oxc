@@ -4,12 +4,12 @@ use crate::frameworks::FrameworkOptions;
 
 #[derive(Debug, Clone, Copy)]
 #[non_exhaustive]
-pub struct JavaScriptSource<'a> {
-    pub source_text: &'a str,
+pub struct JavaScriptSource {
     pub source_type: SourceType,
-    /// The javascript source could be embedded in some file,
-    /// use `start` to record start offset of js block in the original file.
+    /// Offset of start of the JS/TS code within the file.
     pub start: u32,
+    /// Offset of end of the JS/TS code within the file.
+    pub end: u32,
     #[expect(dead_code)]
     is_partial: bool,
 
@@ -17,42 +17,38 @@ pub struct JavaScriptSource<'a> {
     pub framework_options: FrameworkOptions,
 }
 
-impl<'a> JavaScriptSource<'a> {
-    pub fn new(source_text: &'a str, source_type: SourceType) -> Self {
+impl JavaScriptSource {
+    /// Create a [`JavaScriptSource`] for a whole file, which is `end` bytes long.
+    pub fn new(source_type: SourceType, end: u32) -> Self {
         Self {
-            source_text,
             source_type,
             start: 0,
+            end,
             is_partial: false,
             framework_options: FrameworkOptions::Default,
         }
     }
 
-    pub fn partial(source_text: &'a str, source_type: SourceType, start: u32) -> Self {
-        Self::partial_with_framework_options(
-            source_text,
-            source_type,
-            FrameworkOptions::Default,
-            start,
-        )
+    /// Create a [`JavaScriptSource`] for JS/TS code embedded in a file,
+    /// from offset `start` up to (not including) offset `end`.
+    pub fn partial(source_type: SourceType, start: u32, end: u32) -> Self {
+        Self::partial_with_framework_options(source_type, FrameworkOptions::Default, start, end)
     }
 
+    /// Create a [`JavaScriptSource`] for JS/TS code embedded in a file,
+    /// from offset `start` up to (not including) offset `end`, with `framework_options`.
     pub fn partial_with_framework_options(
-        source_text: &'a str,
         source_type: SourceType,
         framework_options: FrameworkOptions,
         start: u32,
+        end: u32,
     ) -> Self {
-        Self { source_text, source_type, start, is_partial: true, framework_options }
+        Self { source_type, start, end, is_partial: true, framework_options }
     }
 
-    pub fn as_str(&self) -> &'a str {
-        &self.source_text[(self.start as usize)..]
-    }
-}
-
-impl AsRef<str> for JavaScriptSource<'_> {
-    fn as_ref(&self) -> &str {
-        self.as_str()
+    /// Get the text of the JS/TS code, given the text of the file which contains it.
+    #[cfg(test)]
+    pub fn source_text<'s>(&self, file_source_text: &'s str) -> &'s str {
+        &file_source_text[self.start as usize..self.end as usize]
     }
 }

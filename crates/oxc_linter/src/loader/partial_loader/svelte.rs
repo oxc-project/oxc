@@ -18,7 +18,8 @@ impl<'a> SveltePartialLoader<'a> {
         Self { source_text }
     }
 
-    pub fn parse(self) -> Vec<JavaScriptSource<'a>> {
+    /// Find the JS/TS code in the file.
+    pub fn parse(self) -> Vec<JavaScriptSource> {
         self.parse_scripts()
     }
 
@@ -26,7 +27,7 @@ impl<'a> SveltePartialLoader<'a> {
     ///  * one `<script>` block
     ///  * one `<script context="module">` or `<script module>` block
     ///    <https://github.com/sveltejs/svelte.dev/blob/ba7ad256f786aa5bc67eac3a58608f3f50b59e91/apps/svelte.dev/content/tutorial/02-advanced-svelte/08-script-module/02-module-exports/index.md>
-    fn parse_scripts(&self) -> Vec<JavaScriptSource<'a>> {
+    fn parse_scripts(&self) -> Vec<JavaScriptSource> {
         let mut pointer = 0;
         let Some(result1) = self.parse_script(&mut pointer) else {
             return vec![];
@@ -37,7 +38,8 @@ impl<'a> SveltePartialLoader<'a> {
         vec![result1, result2]
     }
 
-    fn parse_script(&self, pointer: &mut usize) -> Option<JavaScriptSource<'a>> {
+    /// Find the next `<script>` block, starting at offset `pointer`, and advance `pointer` past it.
+    fn parse_script(&self, pointer: &mut usize) -> Option<JavaScriptSource> {
         let script_start_finder = Finder::new(SCRIPT_START);
         let script_end_finder = Finder::new(SCRIPT_END);
         let comment_start_finder = FinderRev::new(COMMENT_START);
@@ -83,11 +85,9 @@ impl<'a> SveltePartialLoader<'a> {
             let js_end = *pointer + offset;
             *pointer += offset + SCRIPT_END.len();
 
-            let source_text = &self.source_text[js_start..js_end];
-
             // NOTE: loader checked that source_text.len() is less than u32::MAX
             #[expect(clippy::cast_possible_truncation)]
-            return Some(JavaScriptSource::partial(source_text, source_type, js_start as u32));
+            return Some(JavaScriptSource::partial(source_type, js_start as u32, js_end as u32));
         }
     }
 
@@ -108,7 +108,8 @@ impl<'a> SveltePartialLoader<'a> {
 mod test {
     use super::{JavaScriptSource, SveltePartialLoader};
 
-    fn parse_svelte(source_text: &str) -> JavaScriptSource<'_> {
+    /// Parse `source_text` as a `.svelte` file, and get the first JS/TS section.
+    fn parse_svelte(source_text: &str) -> JavaScriptSource {
         let sources = SveltePartialLoader::new(source_text).parse();
         *sources.first().unwrap()
     }
@@ -123,7 +124,7 @@ mod test {
         "#;
 
         let result = parse_svelte(source_text);
-        assert_eq!(result.source_text.trim(), r#"console.log("hi");"#);
+        assert_eq!(result.source_text(source_text).trim(), r#"console.log("hi");"#);
         assert!(result.source_type.is_module());
     }
 
@@ -136,7 +137,7 @@ mod test {
         ";
 
         let result = parse_svelte(source_text);
-        assert_eq!(result.source_text, "b");
+        assert_eq!(result.source_text(source_text), "b");
         assert_eq!(result.start, 79);
     }
 
@@ -150,7 +151,7 @@ mod test {
         "#;
 
         let result = parse_svelte(source_text);
-        assert_eq!(result.source_text.trim(), r#"console.log("hi");"#);
+        assert_eq!(result.source_text(source_text).trim(), r#"console.log("hi");"#);
         assert!(result.source_type.is_typescript());
         assert!(result.source_type.is_module());
     }
@@ -170,10 +171,10 @@ mod test {
         let sources = SveltePartialLoader::new(source_text).parse();
         assert_eq!(sources.len(), 2);
         assert_eq!(
-            sources[0].source_text.trim(),
+            sources[0].source_text(source_text).trim(),
             "export async function load() { /* some loading logic */ }"
         );
-        assert_eq!(sources[1].source_text.trim(), r#"console.log("hi");"#);
+        assert_eq!(sources[1].source_text(source_text).trim(), r#"console.log("hi");"#);
         assert!(sources[0].source_type.is_module());
         assert!(sources[1].source_type.is_module());
     }
@@ -191,8 +192,8 @@ mod test {
 
         let sources = SveltePartialLoader::new(source_text).parse();
         assert_eq!(sources.len(), 2);
-        assert_eq!(sources[0].source_text.trim(), "debugger;");
-        assert_eq!(sources[1].source_text.trim(), r#"console.log("hi");"#);
+        assert_eq!(sources[0].source_text(source_text).trim(), "debugger;");
+        assert_eq!(sources[1].source_text(source_text).trim(), r#"console.log("hi");"#);
         assert!(sources[0].source_type.is_module());
         assert!(sources[1].source_type.is_module());
     }
@@ -208,7 +209,7 @@ mod test {
         let result = parse_svelte(source_text);
         assert!(result.source_type.is_typescript());
         assert!(result.source_type.is_module());
-        assert_eq!(result.source_text.trim(), "debugger;");
+        assert_eq!(result.source_text(source_text).trim(), "debugger;");
     }
 
     #[test]
@@ -222,7 +223,7 @@ mod test {
         let result = parse_svelte(source_text);
         assert!(result.source_type.is_typescript());
         assert!(result.source_type.is_module());
-        assert_eq!(result.source_text.trim(), "debugger;");
+        assert_eq!(result.source_text(source_text).trim(), "debugger;");
     }
 
     #[test]
@@ -236,7 +237,7 @@ mod test {
         let result = parse_svelte(source_text);
         assert!(!result.source_type.is_typescript());
         assert!(result.source_type.is_module());
-        assert_eq!(result.source_text.trim(), "debugger;");
+        assert_eq!(result.source_text(source_text).trim(), "debugger;");
     }
 
     #[test]
@@ -251,7 +252,7 @@ mod test {
         "#;
 
         let result = parse_svelte(source_text);
-        assert_eq!(result.source_text.trim(), r#"console.log("hi");"#);
+        assert_eq!(result.source_text(source_text).trim(), r#"console.log("hi");"#);
         assert!(result.source_type.is_module());
     }
 
@@ -265,7 +266,7 @@ mod test {
         "#;
 
         let result = parse_svelte(source_text);
-        assert_eq!(result.source_text.trim(), "debugger;");
+        assert_eq!(result.source_text(source_text).trim(), "debugger;");
         assert!(result.source_type.is_typescript());
         assert!(result.source_type.is_module());
     }
@@ -275,7 +276,7 @@ mod test {
         let source_text = "<script\tlang=\"ts\">\n  debugger;\n</script>\n";
 
         let result = parse_svelte(source_text);
-        assert_eq!(result.source_text.trim(), "debugger;");
+        assert_eq!(result.source_text(source_text).trim(), "debugger;");
         assert!(result.source_type.is_typescript());
         assert!(result.source_type.is_module());
     }
@@ -295,7 +296,7 @@ mod test {
         let result = parse_svelte(source_text);
         assert!(!result.source_type.is_typescript());
         assert!(result.source_type.is_module());
-        assert!(result.source_text.contains("let scoops = 1;"));
+        assert!(result.source_text(source_text).contains("let scoops = 1;"));
     }
 
     #[test]
@@ -311,7 +312,7 @@ mod test {
         let result = parse_svelte(source_text);
         assert!(!result.source_type.is_typescript());
         assert!(result.source_type.is_module());
-        assert!(result.source_text.contains("let scoops = 1;"));
+        assert!(result.source_text(source_text).contains("let scoops = 1;"));
     }
 
     #[test]
@@ -320,7 +321,7 @@ mod test {
         source_text.push_str("<script>debugger;</script>");
 
         let result = parse_svelte(&source_text);
-        assert_eq!(result.source_text.trim(), "debugger;");
+        assert_eq!(result.source_text(&source_text).trim(), "debugger;");
         assert!(result.source_type.is_module());
     }
 
@@ -335,8 +336,8 @@ let browser = true;
 
         let sources = SveltePartialLoader::new(source_text).parse();
         assert_eq!(sources.len(), 2);
-        assert_eq!(sources[0].source_text.trim(), "let browser = true;");
-        assert_eq!(sources[1].source_text, "");
+        assert_eq!(sources[0].source_text(source_text).trim(), "let browser = true;");
+        assert_eq!(sources[1].source_text(source_text), "");
     }
 
     #[test]
@@ -347,6 +348,6 @@ let browser = true;
 
         let sources = SveltePartialLoader::new(source_text).parse();
         assert_eq!(sources.len(), 1);
-        assert_eq!(sources[0].source_text, "");
+        assert_eq!(sources[0].source_text(source_text), "");
     }
 }

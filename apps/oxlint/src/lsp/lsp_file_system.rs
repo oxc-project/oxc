@@ -1,4 +1,5 @@
 use std::{
+    io,
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -6,7 +7,9 @@ use std::{
 use rustc_hash::FxHashMap;
 
 use oxc_allocator::Allocator;
-use oxc_linter::{RuntimeFileSystem, read_to_arena_str};
+use oxc_linter::RuntimeFileSystem;
+use oxc_parser::Source;
+use oxc_span::SourceType;
 #[derive(Default)]
 pub struct LspFileSystem {
     map: FxHashMap<PathBuf, Arc<str>>,
@@ -19,14 +22,19 @@ impl LspFileSystem {
 }
 
 impl RuntimeFileSystem for LspFileSystem {
-    fn read_to_arena_str<'a>(
+    /// Read the file at `path` into `allocator`, as a [`Source`].
+    ///
+    /// Files added with [`LspFileSystem::add_file`] are copied from memory.
+    /// Other files are read from disk.
+    fn read_source<'a>(
         &self,
         path: &Path,
+        source_type: SourceType,
         allocator: &'a Allocator,
-    ) -> Result<&'a str, std::io::Error> {
+    ) -> io::Result<Source<'a>> {
         match self.map.get(path) {
-            Some(s) => Ok(allocator.alloc_str(s)),
-            None => read_to_arena_str(path, allocator),
+            Some(s) => Ok(Source::from_str(s, source_type, allocator)),
+            None => Source::read_from_file_with_source_type(path, source_type, allocator),
         }
     }
 

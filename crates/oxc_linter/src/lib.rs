@@ -108,7 +108,7 @@ pub use crate::{
     suppression::{OxlintSuppressionFileAction, SuppressionManager},
     timing::{RuleTimingRecord, RuleTimingSource, RuleTimingStore},
     tsgolint::{TsGoLintRun, TsGoLintState},
-    utils::{read_to_arena_str, read_to_string},
+    utils::read_to_string,
 };
 use crate::{
     config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings},

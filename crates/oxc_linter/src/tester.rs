@@ -2,6 +2,7 @@ use std::{
     env,
     ffi::OsStr,
     fmt::Write,
+    io,
     path::{Path, PathBuf},
     sync::Arc,
     sync::mpsc,
@@ -15,6 +16,7 @@ use serde_json::{Value, json};
 
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource};
+use oxc_parser::Source;
 
 use crate::{
     AllowWarnDeny, ConfigStore, ConfigStoreBuilder, LintPlugins, LintService, LintServiceOptions,
@@ -24,7 +26,6 @@ use crate::{
     options::LintOptions,
     rules::RULES,
     service::RuntimeFileSystem,
-    utils::read_to_arena_str,
 };
 
 #[derive(Eq, PartialEq)]
@@ -309,15 +310,19 @@ impl TesterFileSystem {
 }
 
 impl RuntimeFileSystem for TesterFileSystem {
-    fn read_to_arena_str<'a>(
+    /// Read the file at `path` into `allocator`, as a [`Source`].
+    ///
+    /// The file being tested is copied from memory. Other files are read from disk.
+    fn read_source<'a>(
         &self,
         path: &Path,
+        source_type: SourceType,
         allocator: &'a Allocator,
-    ) -> Result<&'a str, std::io::Error> {
+    ) -> io::Result<Source<'a>> {
         if path == self.path_to_lint {
-            return Ok(allocator.alloc_str(&self.source_text));
+            return Ok(Source::from_str(&self.source_text, source_type, allocator));
         }
-        read_to_arena_str(path, allocator)
+        Source::read_from_file_with_source_type(path, source_type, allocator)
     }
 
     fn write_file(&self, _path: &Path, _content: &str) -> Result<(), std::io::Error> {

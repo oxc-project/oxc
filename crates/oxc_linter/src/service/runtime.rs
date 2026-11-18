@@ -1,8 +1,10 @@
 use std::{
     borrow::Cow,
     ffi::OsStr,
+    fmt::Display,
     fs,
     hash::BuildHasherDefault,
+    io,
     mem::take,
     path::{Path, PathBuf},
     sync::{Arc, Mutex, mpsc},
@@ -20,7 +22,7 @@ use smallvec::SmallVec;
 
 use oxc_allocator::{Allocator, AllocatorGuard, AllocatorPool, ArenaBox};
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
-use oxc_parser::{ParseOptions, Parser, Token, config::RuntimeParserConfig};
+use oxc_parser::{ParseOptions, Source, Token, config::RuntimeParserConfig};
 use oxc_resolver::Resolver;
 use oxc_semantic::{Semantic, SemanticBuilder};
 use oxc_span::{SourceType, VALID_EXTENSIONS};
@@ -33,7 +35,6 @@ use crate::{
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
     module_record::ModuleRecord,
     suppression::DiffManager,
-    utils::read_to_arena_str,
 };
 
 use super::LintServiceOptions;
@@ -272,7 +273,7 @@ unsafe impl Send for ModuleContent<'_> {}
 /// source text and semantic for each source section. They are in the same order as `ProcessedModule.section_module_records`
 type SectionContents<'a> = SmallVec<[SectionContent<'a>; 1]>;
 struct SectionContent<'a> {
-    source: JavaScriptSource<'a>,
+    source: JavaScriptSource,
     /// None if section parsing failed. The corresponding item with the same index in
     /// `ProcessedModule.section_module_records` would be `Err(Vec<OxcDiagnostic>)`.
     semantic: Option<Semantic<'a>>,
@@ -311,15 +312,18 @@ impl<'alloc_pool> ModuleToLint<'alloc_pool> {
 /// The `Runtime` uses OsFileSystem as a default
 /// The Tester and `oxc_language_server` would like to provide the content from memory
 pub trait RuntimeFileSystem {
-    /// reads the content of a file path
+    /// Read the file at `path` into `allocator`, as a [`Source`] with the given [`SourceType`].
+    ///
+    /// The file's contents do not need to be valid UTF-8.
     ///
     /// # Errors
-    /// When no valid path is provided or the content is not valid UTF-8 Stream
-    fn read_to_arena_str<'a>(
+    /// Returns [`io::Error`] if the file cannot be read.
+    fn read_source<'a>(
         &self,
         path: &Path,
+        source_type: SourceType,
         allocator: &'a Allocator,
-    ) -> Result<&'a str, std::io::Error>;
+    ) -> io::Result<Source<'a>>;
 
     /// write a file to the file system
     ///
@@ -331,12 +335,14 @@ pub trait RuntimeFileSystem {
 pub struct OsFileSystem;
 
 impl RuntimeFileSystem for OsFileSystem {
-    fn read_to_arena_str<'a>(
+    /// Read the file at `path` from disk into `allocator`, as a [`Source`].
+    fn read_source<'a>(
         &self,
         path: &Path,
+        source_type: SourceType,
         allocator: &'a Allocator,
-    ) -> Result<&'a str, std::io::Error> {
-        read_to_arena_str(path, allocator)
+    ) -> io::Result<Source<'a>> {
+        Source::read_from_file_with_source_type(path, source_type, allocator)
     }
 
     fn write_file(&self, path: &Path, content: &str) -> Result<(), std::io::Error> {
@@ -460,12 +466,26 @@ impl Runtime {
         })
     }
 
-    fn get_source_type_and_text<'a>(
+    /// Read the file at `path` into `allocator`, and find the sections of JS/TS code in it.
+    ///
+    /// Returns `None` if the file's extension is not supported.
+    /// Returns `Some(Err(..))` if the file cannot be read, is 4 GiB or larger,
+    /// or is not valid UTF-8.
+    fn read_source_and_sections<'a>(
         file_system: &(dyn RuntimeFileSystem + Sync + Send),
         path: &Path,
         ext: &str,
         allocator: &'a Allocator,
-    ) -> Option<Result<(SourceType, &'a str), Error>> {
+    ) -> Option<Result<(Source<'a>, Vec<JavaScriptSource>), Error>> {
+        /// Create the diagnostic for a file which cannot be opened, with `reason` for the failure.
+        fn open_file_error(path: &Path, reason: impl Display) -> Error {
+            OxcDiagnostic::error(format!(
+                "Failed to open file {} with error \"{reason}\"",
+                path.display()
+            ))
+            .into()
+        }
+
         let source_type = SourceType::from_path(path);
         let not_supported_yet =
             source_type.as_ref().is_err_and(|_| !LINT_PARTIAL_LOADER_EXTENSIONS.contains(&ext));
@@ -479,17 +499,30 @@ impl Runtime {
             source_type = source_type.with_jsx(true);
         }
 
-        let file_result = file_system.read_to_arena_str(path, allocator).map_err(|e| {
-            OxcDiagnostic::error(format!(
-                "Failed to open file {} with error \"{e}\"",
-                path.display()
-            ))
-            .into()
-        });
-        Some(match file_result {
-            Ok(source_text) => Ok((source_type, source_text)),
-            Err(e) => Err(e),
-        })
+        let mut source = match file_system.read_source(path, source_type, allocator) {
+            Ok(source) => source,
+            Err(e) => return Some(Err(open_file_error(path, e))),
+        };
+
+        // Offsets of sections and of diagnostics within a file are `u32`s,
+        // so the file must be no longer than `u32::MAX` bytes
+        let Ok(len) = u32::try_from(source.len()) else {
+            return Some(Err(open_file_error(path, "File is 4 GiB or larger")));
+        };
+
+        // Check the file is valid UTF-8. This is the only UTF-8 check.
+        // It's done here, before parsing, so that the text of the whole file is available
+        // whatever happens when parsing its sections.
+        // `Source` records that the check passed, so the parser does not repeat it.
+        let source_text = match source.as_str() {
+            Ok(source_text) => source_text,
+            Err(e) => return Some(Err(open_file_error(path, e))),
+        };
+
+        let sections = PartialLoader::parse(ext, source_text)
+            .unwrap_or_else(|| vec![JavaScriptSource::new(source_type, len)]);
+
+        Some(Ok((source, sections)))
     }
 
     /// Prepare entry modules for linting.
@@ -1210,13 +1243,13 @@ impl Runtime {
             let module_content = ModuleContent::try_new(allocator_guard, |allocator_guard| {
                 let allocator = &**allocator_guard;
 
-                let Some(stt) =
-                    Self::get_source_type_and_text(file_system, Path::new(path), ext, allocator)
+                let Some(source_and_sections) =
+                    Self::read_source_and_sections(file_system, Path::new(path), ext, allocator)
                 else {
                     return Err(());
                 };
 
-                let (source_type, source_text) = match stt {
+                let (mut source, section_sources) = match source_and_sections {
                     Ok(v) => v,
                     Err(e) => {
                         if let Some(tx_error) = tx_error {
@@ -1229,13 +1262,14 @@ impl Runtime {
                 let mut section_contents = SmallVec::new();
                 records = self.process_source(
                     Path::new(path),
-                    ext,
                     check_syntax_errors,
-                    source_type,
-                    source_text,
-                    allocator,
+                    &mut source,
+                    section_sources,
                     Some(&mut section_contents),
                 );
+
+                // Cannot fail, because `read_source_and_sections` checked source is valid UTF-8
+                let source_text = source.into_str().unwrap();
 
                 Ok(ModuleContentDependent { source_text, section_contents })
             });
@@ -1245,9 +1279,10 @@ impl Runtime {
         } else {
             let allocator = &*allocator_guard;
 
-            let stt = Self::get_source_type_and_text(file_system, Path::new(path), ext, allocator)?;
+            let source_and_sections =
+                Self::read_source_and_sections(file_system, Path::new(path), ext, allocator)?;
 
-            let (source_type, source_text) = match stt {
+            let (mut source, section_sources) = match source_and_sections {
                 Ok(v) => v,
                 Err(e) => {
                     if let Some(tx_error) = tx_error {
@@ -1259,11 +1294,9 @@ impl Runtime {
 
             let records = self.process_source(
                 Path::new(path),
-                ext,
                 check_syntax_errors,
-                source_type,
-                source_text,
-                allocator,
+                &mut source,
+                section_sources,
                 None,
             );
 
@@ -1271,31 +1304,22 @@ impl Runtime {
         }
     }
 
-    #[expect(clippy::too_many_arguments)]
+    /// Parse `section_sources` (sections of `source`), and build a module record for each.
+    ///
+    /// If `out_sections` is `Some`, the sections' semantics and tokens are pushed to it.
     fn process_source<'a>(
         &self,
         path: &Path,
-        ext: &str,
         check_syntax_errors: bool,
-        source_type: SourceType,
-        source_text: &'a str,
-        allocator: &'a Allocator,
+        source: &mut Source<'a>,
+        section_sources: Vec<JavaScriptSource>,
         mut out_sections: Option<&mut SectionContents<'a>>,
     ) -> SmallVec<[Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1]> {
-        let section_sources = PartialLoader::parse(ext, source_text)
-            .unwrap_or_else(|| vec![JavaScriptSource::partial(source_text, source_type, 0)]);
-
         let mut section_module_records = SmallVec::<
             [Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1],
         >::with_capacity(section_sources.len());
         for section_source in section_sources {
-            match self.process_source_section(
-                path,
-                allocator,
-                section_source.source_text,
-                section_source.source_type,
-                check_syntax_errors,
-            ) {
+            match self.process_source_section(path, source, section_source, check_syntax_errors) {
                 Ok((record, semantic, parser_tokens)) => {
                     section_module_records.push(Ok(record));
                     if let Some(sections) = &mut out_sections {
@@ -1331,25 +1355,32 @@ impl Runtime {
         section_module_records
     }
 
+    /// Parse `section_source` (a section of `source`) in place, and build its semantic
+    /// and module record.
+    ///
+    /// Returns diagnostics if parsing or semantic analysis fails.
+    /// Their spans are relative to the start of the section.
     #[expect(clippy::type_complexity)]
     fn process_source_section<'a>(
         &self,
         path: &Path,
-        allocator: &'a Allocator,
-        source_text: &'a str,
-        source_type: SourceType,
+        source: &mut Source<'a>,
+        section_source: JavaScriptSource,
         check_syntax_errors: bool,
     ) -> Result<(ResolvedModuleRecord, Semantic<'a>, ArenaBox<'a, [Token]>), Vec<OxcDiagnostic>>
     {
         let collect_tokens = self.linter.has_external_linter();
-        let ret = Parser::new(allocator, source_text, source_type)
-            .with_options(ParseOptions {
+        let ret = source.parse_section_with_config(
+            section_source.source_type,
+            section_source.start as usize,
+            section_source.end as usize,
+            ParseOptions {
                 parse_regular_expression: true,
                 allow_return_outside_function: true,
                 ..ParseOptions::default()
-            })
-            .with_config(RuntimeParserConfig::new(collect_tokens))
-            .parse();
+            },
+            RuntimeParserConfig::new(collect_tokens),
+        );
 
         if !ret.diagnostics.is_empty() {
             return Err(if ret.is_flow_language { vec![] } else { ret.diagnostics.into() });
@@ -1357,7 +1388,7 @@ impl Runtime {
 
         let semantic_ret = SemanticBuilder::new_linter()
             .with_check_syntax_error(check_syntax_errors)
-            .build(allocator.alloc(ret.program));
+            .build(source.allocator().alloc(ret.program));
 
         if !semantic_ret.diagnostics.is_empty() {
             return Err(semantic_ret.diagnostics.into());

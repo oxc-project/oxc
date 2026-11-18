@@ -18,7 +18,8 @@ impl<'a> VuePartialLoader<'a> {
         Self { source_text }
     }
 
-    pub fn parse(self) -> Vec<JavaScriptSource<'a>> {
+    /// Find the JS/TS code in the file.
+    pub fn parse(self) -> Vec<JavaScriptSource> {
         self.parse_scripts()
     }
 
@@ -26,7 +27,7 @@ impl<'a> VuePartialLoader<'a> {
     ///  * one `<script>` block (excluding `<script setup>`).
     ///  * one `<script setup>` block (excluding normal `<script>`).
     ///    <https://vuejs.org/api/sfc-spec.html#script>
-    fn parse_scripts(&self) -> Vec<JavaScriptSource<'a>> {
+    fn parse_scripts(&self) -> Vec<JavaScriptSource> {
         let mut pointer = 0;
         let Some(result1) = self.parse_script(&mut pointer) else {
             return vec![];
@@ -37,7 +38,8 @@ impl<'a> VuePartialLoader<'a> {
         vec![result1, result2]
     }
 
-    fn parse_script(&self, pointer: &mut usize) -> Option<JavaScriptSource<'a>> {
+    /// Find the next `<script>` block, starting at offset `pointer`, and advance `pointer` past it.
+    fn parse_script(&self, pointer: &mut usize) -> Option<JavaScriptSource> {
         let script_start_finder = Finder::new(SCRIPT_START);
         let comment_start_finder = FinderRev::new(COMMENT_START);
         let comment_end_finder: Finder<'_> = Finder::new(COMMENT_END);
@@ -83,14 +85,13 @@ impl<'a> VuePartialLoader<'a> {
         let js_end = *pointer + offset;
         *pointer += offset + SCRIPT_END.len();
 
-        let source_text = &self.source_text[js_start..js_end];
         // NOTE: loader checked that source_text.len() is less than u32::MAX
         #[expect(clippy::cast_possible_truncation)]
         Some(JavaScriptSource::partial_with_framework_options(
-            source_text,
             source_type,
             if is_setup { FrameworkOptions::VueSetup } else { FrameworkOptions::Default },
             js_start as u32,
+            js_end as u32,
         ))
     }
 
@@ -136,7 +137,8 @@ impl<'a> VuePartialLoader<'a> {
 mod test {
     use super::{JavaScriptSource, VuePartialLoader};
 
-    fn parse_vue(source_text: &str) -> JavaScriptSource<'_> {
+    /// Parse `source_text` as a `.vue` file, and get the first JS/TS section.
+    fn parse_vue(source_text: &str) -> JavaScriptSource {
         let sources = VuePartialLoader::new(source_text).parse();
         *sources.first().unwrap()
     }
@@ -151,7 +153,7 @@ mod test {
         "#;
 
         let result = parse_vue(source_text);
-        assert_eq!(result.source_text, r#" console.log("hi") "#);
+        assert_eq!(result.source_text(source_text), r#" console.log("hi") "#);
     }
 
     #[test]
@@ -165,7 +167,7 @@ mod test {
         let result = parse_vue(source_text);
         assert!(result.source_type.is_typescript());
         assert!(!result.source_type.is_jsx());
-        assert_eq!(result.source_text.trim(), "1/1");
+        assert_eq!(result.source_text(source_text).trim(), "1/1");
     }
 
     #[test]
@@ -179,7 +181,7 @@ mod test {
         let result = parse_vue(source_text);
         assert!(result.source_type.is_typescript());
         assert!(!result.source_type.is_jsx());
-        assert_eq!(result.source_text.trim(), "1/1");
+        assert_eq!(result.source_text(source_text).trim(), "1/1");
     }
 
     #[test]
@@ -193,7 +195,7 @@ mod test {
 
         let result = parse_vue(source_text);
         assert!(!result.source_type.is_typescript());
-        assert_eq!(result.source_text.trim(), r"a.replace(/&#39;/g, '\''))");
+        assert_eq!(result.source_text(source_text).trim(), r"a.replace(/&#39;/g, '\''))");
     }
 
     #[test]
@@ -205,7 +207,7 @@ mod test {
         ";
 
         let result = parse_vue(source_text);
-        assert_eq!(result.source_text.trim(), r"`a${b( `c \`${d}\``)}`");
+        assert_eq!(result.source_text(source_text).trim(), r"`a${b( `c \`${d}\``)}`");
     }
 
     #[test]
@@ -217,7 +219,7 @@ mod test {
         ";
 
         let result = parse_vue(source_text);
-        assert_eq!(result.source_text.trim(), r"`${/{/}`");
+        assert_eq!(result.source_text(source_text).trim(), r"`${/{/}`");
     }
 
     #[test]
@@ -249,8 +251,8 @@ mod test {
         ";
         let sources = VuePartialLoader::new(source_text).parse();
         assert_eq!(sources.len(), 2);
-        assert_eq!(sources[0].source_text, "a");
-        assert_eq!(sources[1].source_text, "b");
+        assert_eq!(sources[0].source_text(source_text), "a");
+        assert_eq!(sources[1].source_text(source_text), "b");
     }
 
     #[test]
@@ -269,7 +271,7 @@ mod test {
 
         let result = parse_vue(source_text);
         assert_eq!(
-            result.source_text.trim(),
+            result.source_text(source_text).trim(),
             "let 日历 = '2000年';
         const t = useTranslate({
             'zh-CN': {
@@ -289,7 +291,7 @@ mod test {
         ";
         let sources = VuePartialLoader::new(source_text).parse();
         assert_eq!(sources.len(), 1);
-        assert_eq!(sources[0].source_text, "a");
+        assert_eq!(sources[0].source_text(source_text), "a");
     }
 
     #[test]
@@ -299,7 +301,7 @@ mod test {
         ";
 
         let result = parse_vue(source_text);
-        assert_eq!(result.source_text, "a");
+        assert_eq!(result.source_text(source_text), "a");
     }
 
     #[test]
@@ -310,8 +312,8 @@ mod test {
         <script>b</script>
         ";
 
-        let result: JavaScriptSource<'_> = parse_vue(source_text);
-        assert_eq!(result.source_text, "b");
+        let result: JavaScriptSource = parse_vue(source_text);
+        assert_eq!(result.source_text(source_text), "b");
         assert_eq!(result.start, 79);
     }
 

@@ -549,7 +549,12 @@ impl TsGoLintState {
         // Read all sources into overrides
         for path in paths {
             let path_ref = Path::new(path.as_ref());
-            let Ok(source_text) = file_system.read_to_arena_str(path_ref, &allocator) else {
+            // Source type is irrelevant, because the `Source` is only used to get the file's text
+            let source_text = file_system
+                .read_source(path_ref, SourceType::default(), &allocator)
+                .ok()
+                .and_then(|source| source.into_str().ok());
+            let Some(source_text) = source_text else {
                 return Err(format!(
                     "Failed to read source text for file: {}",
                     path.to_string_lossy()

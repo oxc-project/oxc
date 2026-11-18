@@ -29,7 +29,7 @@ pub struct PartialLoader;
 impl PartialLoader {
     /// Extract js section of special files.
     /// Returns `None` if the special file does not have a js section.
-    pub fn parse<'a>(ext: &str, source_text: &'a str) -> Option<Vec<JavaScriptSource<'a>>> {
+    pub fn parse(ext: &str, source_text: &str) -> Option<Vec<JavaScriptSource>> {
         match ext {
             "vue" => Some(VuePartialLoader::new(source_text).parse()),
             "astro" => Some(AstroPartialLoader::new(source_text).parse()),

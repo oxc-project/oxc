@@ -1,6 +1,6 @@
 use memchr::memmem::{Finder, FinderRev};
 
-use oxc_span::{SourceType, Span};
+use oxc_span::SourceType;
 
 use crate::loader::JavaScriptSource;
 
@@ -20,7 +20,8 @@ impl<'a> AstroPartialLoader<'a> {
         Self { source_text }
     }
 
-    pub fn parse(self) -> Vec<JavaScriptSource<'a>> {
+    /// Find the JS/TS code in the file.
+    pub fn parse(self) -> Vec<JavaScriptSource> {
         let mut results = vec![];
         let mut start = 0;
         if let Some((frontmatter, frontmatter_end)) = self.parse_frontmatter() {
@@ -33,7 +34,7 @@ impl<'a> AstroPartialLoader<'a> {
 
     /// Parse `---` frontmatter block
     #[expect(clippy::cast_possible_truncation)]
-    fn parse_frontmatter(&self) -> Option<(JavaScriptSource<'a>, usize)> {
+    fn parse_frontmatter(&self) -> Option<(JavaScriptSource, usize)> {
         let split_finder = Finder::new(ASTRO_SPLIT);
         let mut offsets = split_finder
             .find_iter(self.source_text.as_bytes())
@@ -54,8 +55,7 @@ impl<'a> AstroPartialLoader<'a> {
 
         // move start to the end of the ASTRO_SPLIT
         let start = start + ASTRO_SPLIT.len() as u32;
-        let js_code = Span::new(start, end).source_text(self.source_text);
-        let frontmatter = JavaScriptSource::partial(js_code, SourceType::ts(), start);
+        let frontmatter = JavaScriptSource::partial(SourceType::ts(), start, end);
 
         Some((frontmatter, end as usize + ASTRO_SPLIT.len()))
     }
@@ -76,7 +76,7 @@ impl<'a> AstroPartialLoader<'a> {
 
     /// In .astro files, you can add client-side JavaScript by adding one (or more) `<script>` tags.
     /// <https://docs.astro.build/en/guides/client-side-scripts/#using-script-in-astro>
-    fn parse_scripts(&self, start: usize) -> Vec<JavaScriptSource<'a>> {
+    fn parse_scripts(&self, start: usize) -> Vec<JavaScriptSource> {
         let script_start_finder = Finder::new(SCRIPT_START);
         let script_end_finder = Finder::new(SCRIPT_END);
         let comment_start_finder = FinderRev::new(COMMENT_START);
@@ -131,9 +131,9 @@ impl<'a> AstroPartialLoader<'a> {
             // NOTE: loader checked that source_text.len() is less than u32::MAX
             #[expect(clippy::cast_possible_truncation)]
             results.push(JavaScriptSource::partial(
-                &self.source_text[js_start..js_end],
                 SourceType::ts(),
                 js_start as u32,
+                js_end as u32,
             ));
         }
         results
@@ -163,7 +163,8 @@ impl<'a> AstroPartialLoader<'a> {
 mod test {
     use super::{AstroPartialLoader, JavaScriptSource};
 
-    fn parse_astro(source_text: &str) -> Vec<JavaScriptSource<'_>> {
+    /// Parse `source_text` as an `.astro` file, and get its JS/TS sections.
+    fn parse_astro(source_text: &str) -> Vec<JavaScriptSource> {
         AstroPartialLoader::new(source_text).parse()
     }
 
@@ -179,7 +180,7 @@ mod test {
 
         let sources = parse_astro(source_text);
         assert_eq!(sources.len(), 1);
-        assert_eq!(sources[0].source_text.trim(), r#"console.log("Hi");"#);
+        assert_eq!(sources[0].source_text(source_text).trim(), r#"console.log("Hi");"#);
         assert_eq!(sources[0].start, 51);
     }
 
@@ -200,11 +201,11 @@ mod test {
         let sources = parse_astro(source_text);
         assert_eq!(sources.len(), 2);
         assert_eq!(
-            sources[0].source_text.trim(),
+            sources[0].source_text(source_text).trim(),
             "const { message = 'Welcome, world!' } = Astro.props;"
         );
         assert_eq!(sources[0].start, 12);
-        assert_eq!(sources[1].source_text.trim(), r#"console.log("Hi");"#);
+        assert_eq!(sources[1].source_text(source_text).trim(), r#"console.log("Hi");"#);
         assert_eq!(sources[1].start, 141);
     }
 
@@ -222,9 +223,9 @@ mod test {
 
         let sources = parse_astro(source_text);
         assert_eq!(sources.len(), 2);
-        assert_eq!(sources[0].source_text, "");
+        assert_eq!(sources[0].source_text(source_text), "");
         assert_eq!(sources[0].start, 102);
-        assert_eq!(sources[1].source_text.trim(), r#"console.log("Hi");"#);
+        assert_eq!(sources[1].source_text(source_text).trim(), r#"console.log("Hi");"#);
         assert_eq!(sources[1].start, 129);
     }
 
@@ -238,7 +239,7 @@ mod test {
 
         let sources = parse_astro(source_text);
         assert_eq!(sources.len(), 1);
-        assert_eq!(sources[0].source_text, "b");
+        assert_eq!(sources[0].source_text(source_text), "b");
         assert_eq!(sources[0].start, 79);
     }
 
@@ -256,9 +257,9 @@ mod test {
 
         let sources = parse_astro(source_text);
         assert_eq!(sources.len(), 2);
-        assert_eq!(sources[0].source_text, "");
+        assert_eq!(sources[0].source_text(source_text), "");
         assert_eq!(sources[0].start, 104);
-        assert_eq!(sources[1].source_text.trim(), r#"console.log("Hi");"#);
+        assert_eq!(sources[1].source_text(source_text).trim(), r#"console.log("Hi");"#);
         assert_eq!(sources[1].start, 122);
     }
 
@@ -276,8 +277,8 @@ mod test {
 
         let sources = parse_astro(source_text);
         assert_eq!(sources.len(), 2);
-        assert_eq!(sources[0].source_text, "");
-        assert_eq!(sources[1].source_text.trim(), r#"console.log("Hi");"#);
+        assert_eq!(sources[0].source_text(source_text), "");
+        assert_eq!(sources[1].source_text(source_text).trim(), r#"console.log("Hi");"#);
     }
 
     #[test]
@@ -302,7 +303,7 @@ mod test {
 
         let sources = parse_astro(source_text);
         assert_eq!(sources.len(), 1);
-        assert_eq!(sources[0].source_text.trim(), r#"console.log("Hi");"#);
+        assert_eq!(sources[0].source_text(source_text).trim(), r#"console.log("Hi");"#);
     }
 
     #[test]
@@ -319,8 +320,14 @@ mod test {
 
         let sources = parse_astro(source_text);
         assert_eq!(sources.len(), 2);
-        assert_eq!(sources[0].source_text.trim(), r#"console.log("text/javascript");"#);
-        assert_eq!(sources[1].source_text.trim(), r#"console.log("application/ecmascript");"#);
+        assert_eq!(
+            sources[0].source_text(source_text).trim(),
+            r#"console.log("text/javascript");"#
+        );
+        assert_eq!(
+            sources[1].source_text(source_text).trim(),
+            r#"console.log("application/ecmascript");"#
+        );
     }
 
     #[test]
@@ -340,9 +347,9 @@ mod test {
 
         let sources = parse_astro(source_text);
         assert_eq!(sources.len(), 2);
-        assert_eq!(sources[0].source_text.trim(), "const title = \"hello\";");
+        assert_eq!(sources[0].source_text(source_text).trim(), "const title = \"hello\";");
         assert_eq!(
-            sources[1].source_text.trim(),
+            sources[1].source_text(source_text).trim(),
             "const marker = \"---\";\n            console.log(marker);"
         );
     }
