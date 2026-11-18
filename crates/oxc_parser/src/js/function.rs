@@ -180,7 +180,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                             FunctionKind::ClassMethod | FunctionKind::Constructor
                         ) && p.is_ts;
                         if !are_decorators_allowed && !decorators.is_empty() {
-                            p.report_invalid_parameter_decorators(&decorators);
+                            p.report_invalid_decorators(&decorators);
                         }
 
                         rest = Some(FormalParameterRest::boxed(
@@ -318,7 +318,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             matches!(func_kind, FunctionKind::ClassMethod | FunctionKind::Constructor)
                 && self.is_ts;
         if !are_decorators_allowed && !decorators.is_empty() {
-            self.report_invalid_parameter_decorators(&decorators);
+            self.report_invalid_decorators(&decorators);
         }
         FormalParameter::new(
             self.end_span(start),
@@ -332,14 +332,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             modifiers.contains_override(),
             self,
         )
-    }
-
-    #[cold]
-    #[inline(never)]
-    fn report_invalid_parameter_decorators(&mut self, decorators: &[Decorator<'a>]) {
-        for decorator in decorators {
-            self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
-        }
     }
 
     #[cold]

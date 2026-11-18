@@ -1737,12 +1737,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
-    #[cold]
-    #[inline(never)]
-    fn report_constructor_this_parameter(&mut self, span: Span) {
-        self.error(diagnostics::ts_constructor_this_parameter(span));
-    }
-
     pub(crate) fn parse_getter_setter_signature_member(
         &mut self,
         start: u32,

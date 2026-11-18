@@ -54,9 +54,7 @@ macro_rules! handle_string_literal {
         let pos = $lexer.source.position();
         match handle_plain_string_literal!($lexer, pos, $delimiter, $table) {
             Ok(_) => Kind::Str,
-            // An escape, or an unterminated string, which is invalid JS. Either way, a cold path.
-            // Building the diagnostic out-of-line keeps the `OxcDiagnostic` return buffer out of
-            // this handler's stack frame.
+            // Handle escapes and report unterminated literals out of line.
             Err(next_byte) => cold_branch(|| {
                 handle_string_literal_rest!($lexer, pos, $delimiter, $table, next_byte)
             }),
@@ -111,7 +109,7 @@ macro_rules! handle_plain_string_literal {
 /// Macro to handle the rest of a string literal whose opening quote is at `$pos`,
 /// after `handle_plain_string_literal!` evaluated to `Err($next_byte)` for it.
 ///
-/// Evaluates to the `Kind` of the token. May also return it from the enclosing function.
+/// Evaluates to the `Kind` of the token.
 ///
 /// # SAFETY
 /// As for `handle_plain_string_literal!`.
@@ -126,25 +124,19 @@ macro_rules! handle_string_literal_rest {
             }
             0 => {
                 // End of source
-                $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
+                $lexer.report_unterminated_string();
                 Kind::Undetermined
             }
-            _ => {
-                // Line break
-                debug_assert!(matches!($next_byte, b'\r' | b'\n'));
-                $lexer.consume_char();
-                $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
-                Kind::Undetermined
-            }
+            _ => $lexer.unterminated_string_at_line_break($next_byte),
         }
     }};
 }
 
 macro_rules! handle_string_literal_escape {
-    ($lexer:ident, $delimiter:literal, $table:ident, $after_opening_quote:ident) => {{
+    ($lexer:ident, $delimiter:literal, $table:ident, $after_opening_quote:ident) => {'escaped: {
         let so_far = $lexer.source.str_from_pos_to_current($after_opening_quote);
         if so_far.is_empty() && $lexer.read_single_character_escape::<$delimiter>() {
-            return Kind::Str;
+            break 'escaped Kind::Str;
         }
 
         // Decode the first escape before allocating. Each escape produces at most one
@@ -163,19 +155,14 @@ macro_rules! handle_string_literal_escape {
         let Some(end) = find_string_chunk_end::<$delimiter>(remaining, &$table) else {
             $lexer.source.advance_to_end();
             $lexer.report_unterminated_string();
-            return Kind::Undetermined;
+            break 'escaped Kind::Undetermined;
         };
         let b = remaining[end];
         // SAFETY: The match is an in-bounds ASCII byte, hence a UTF-8 character boundary.
         $lexer.source.set_position(chunk_start.add(end));
         let chunk = $lexer.source.str_from_pos_to_current(chunk_start);
         if b != $delimiter && b != b'\\' {
-            return cold_branch(|| {
-                debug_assert!(matches!(b, b'\r' | b'\n'));
-                $lexer.consume_char();
-                $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
-                Kind::Undetermined
-            });
+            break 'escaped $lexer.unterminated_string_at_line_break(b);
         }
 
         if b == $delimiter && is_valid_escape_sequence {
@@ -197,7 +184,7 @@ macro_rules! handle_string_literal_escape {
                 // SAFETY: The closing quote is ASCII, so consuming it preserves a UTF-8 boundary.
                 $lexer.source.next_byte_unchecked();
                 $lexer.save_js_string(value.into());
-                return Kind::Str;
+                break 'escaped Kind::Str;
             }
         }
 
@@ -223,7 +210,7 @@ macro_rules! handle_string_literal_escape {
             // SAFETY: The closing quote is ASCII, so consuming it preserves a UTF-8 boundary.
             $lexer.source.next_byte_unchecked();
             $lexer.save_js_string(str.into_js_str());
-            return Kind::Str;
+            break 'escaped Kind::Str;
         }
         loop {
             // Consume `\`
@@ -243,7 +230,7 @@ macro_rules! handle_string_literal_escape {
             let Some(end) = find_string_chunk_end::<$delimiter>(remaining, &$table) else {
                 $lexer.source.advance_to_end();
                 $lexer.report_unterminated_string();
-                return Kind::Undetermined;
+                break 'escaped Kind::Undetermined;
             };
             let b = remaining[end];
             // SAFETY: The match is an in-bounds ASCII byte, hence a UTF-8 character boundary.
@@ -266,13 +253,7 @@ macro_rules! handle_string_literal_escape {
                     str.push_str(chunk);
                 }
                 _ => {
-                    // Line break. This is impossible in valid JS, so cold path.
-                    return cold_branch(|| {
-                        debug_assert!(matches!(b, b'\r' | b'\n'));
-                        $lexer.consume_char();
-                        $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
-                        Kind::Undetermined
-                    });
+                    break 'escaped $lexer.unterminated_string_at_line_break(b);
                 }
             }
         }
@@ -285,6 +266,15 @@ macro_rules! handle_string_literal_escape {
 
 /// 12.9.4 String Literals
 impl<'a, C: Config> Lexer<'a, C> {
+    #[cold]
+    #[inline(never)]
+    fn unterminated_string_at_line_break(&mut self, byte: u8) -> Kind {
+        debug_assert!(matches!(byte, b'\r' | b'\n'));
+        self.consume_char();
+        self.report_unterminated_string();
+        Kind::Undetermined
+    }
+
     #[cold]
     #[inline(never)]
     fn report_invalid_escape_sequence(&mut self, start: u32) {
@@ -409,9 +399,9 @@ impl<'a, C: Config> Lexer<'a, C> {
         // SAFETY: Caller guarantees byte at `pos` is `"`, which is ASCII, and that position
         // of source is as `handle_plain_string_literal!` left it.
         // `DOUBLE_QUOTE_STRING_END_TABLE` is a `SafeByteMatchTable`.
-        let kind = cold_branch(|| unsafe {
+        let kind = unsafe {
             handle_string_literal_rest!(self, pos, b'"', DOUBLE_QUOTE_STRING_END_TABLE, next_byte)
-        });
+        };
         self.finish_next_inner(kind, self.source.position(), FinishTokenMode::Push)
     }
 
@@ -436,9 +426,9 @@ impl<'a, C: Config> Lexer<'a, C> {
         // SAFETY: Caller guarantees byte at `pos` is `'`, which is ASCII, and that position
         // of source is as `handle_plain_string_literal!` left it.
         // `SINGLE_QUOTE_STRING_END_TABLE` is a `SafeByteMatchTable`.
-        let kind = cold_branch(|| unsafe {
+        let kind = unsafe {
             handle_string_literal_rest!(self, pos, b'\'', SINGLE_QUOTE_STRING_END_TABLE, next_byte)
-        });
+        };
         self.finish_next_inner(kind, self.source.position(), FinishTokenMode::Push)
     }
 

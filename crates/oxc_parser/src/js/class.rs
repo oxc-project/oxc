@@ -293,7 +293,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // static { block }
         if self.at(Kind::Static) && self.lexer.peek_token().kind() == Kind::LCurly {
             if !decorators.is_empty() {
-                self.report_invalid_class_element_decorators(decorators);
+                self.report_invalid_decorators(&decorators);
             }
             self.verify_modifiers(
                 &modifiers,
@@ -344,7 +344,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         if self.is_index_signature() {
             if !decorators.is_empty() {
-                self.report_invalid_class_element_decorators(decorators);
+                self.report_invalid_decorators(&decorators);
             }
 
             // No modifiers except `static` and `readonly` are valid here
@@ -374,14 +374,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         self.unexpected()
-    }
-
-    #[cold]
-    #[inline(never)]
-    fn report_invalid_class_element_decorators(&mut self, decorators: ArenaVec<'a, Decorator<'a>>) {
-        for decorator in decorators {
-            self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
-        }
     }
 
     fn parse_class_element_name(&mut self, modifiers: &Modifiers) -> (PropertyKey<'a>, bool) {
@@ -1009,9 +1001,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         if let Some(this_param) = &method.value.this_param {
             // class Foo { constructor(this: number) {} }
-            cold_branch(|| {
-                self.error(diagnostics::ts_constructor_this_parameter(this_param.span));
-            });
+            self.report_constructor_this_parameter(this_param.span);
         }
         if let Some(return_type) = &method.value.return_type {
             cold_branch(|| {

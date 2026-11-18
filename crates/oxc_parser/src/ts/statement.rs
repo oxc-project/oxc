@@ -652,11 +652,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Declaration<'a> {
         let kind = self.cur_kind();
         if kind != Kind::Class && !decorators.is_empty() {
-            cold_branch(|| {
-                for decorator in &decorators {
-                    self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
-                }
-            });
+            self.report_invalid_decorators(&decorators);
         }
         match kind {
             Kind::Var | Kind::Let | Kind::Const => {

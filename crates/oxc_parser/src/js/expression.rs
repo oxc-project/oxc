@@ -1633,18 +1633,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         };
                     }
                     match operand {
-                        Expression::AwaitExpression(await_expr) => cold_branch(|| {
-                            self.error(diagnostics::unary_exponentiation_left_operand(
-                                "await",
-                                await_expr.span,
-                            ));
-                        }),
-                        Expression::UnaryExpression(unary) => cold_branch(|| {
-                            self.error(diagnostics::unary_exponentiation_left_operand(
+                        Expression::AwaitExpression(await_expr) => {
+                            self.report_unary_exponentiation_left_operand("await", await_expr.span);
+                        }
+                        Expression::UnaryExpression(unary) => {
+                            self.report_unary_exponentiation_left_operand(
                                 unary.operator.as_str(),
                                 unary.span,
-                            ));
-                        }),
+                            );
+                        }
                         Expression::TSTypeAssertion(assertion) => cold_branch(|| {
                             self.error(diagnostics::type_assertion_exponentiation_left_operand(
                                 assertion.span,
@@ -1659,6 +1656,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         lhs
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn report_unary_exponentiation_left_operand(&mut self, operator: &'static str, span: Span) {
+        self.error(diagnostics::unary_exponentiation_left_operand(operator, span));
     }
 
     /// Section 13.14 Conditional Expression

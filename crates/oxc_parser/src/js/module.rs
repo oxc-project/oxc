@@ -788,7 +788,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 if kind == Kind::Async && next.kind() == Kind::Function {
                     self.bump_any();
                     if !decorators.is_empty() {
-                        self.report_invalid_export_decorators(&decorators);
+                        self.report_invalid_decorators(&decorators);
                     }
                     let mut func = self.parse_function_impl(
                         function_start,
@@ -805,7 +805,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 if self.is_ts && kind == Kind::Interface {
                     self.bump_any();
                     if !decorators.is_empty() {
-                        self.report_invalid_export_decorators(&decorators);
+                        self.report_invalid_decorators(&decorators);
                     }
                     if let Declaration::TSInterfaceDeclaration(decl) =
                         self.parse_ts_interface_declaration(modifier_start, &Modifiers::empty())
@@ -828,7 +828,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         if !decorators.is_empty() {
-            self.report_invalid_export_decorators(&decorators);
+            self.report_invalid_decorators(&decorators);
         }
 
         // export default function f() {}
@@ -856,14 +856,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn report_decorators_before_and_after_export(&mut self, decorators: &[Decorator<'a>]) {
         for decorator in decorators {
             self.error(diagnostics::decorators_in_export_and_class(decorator.span));
-        }
-    }
-
-    #[cold]
-    #[inline(never)]
-    fn report_invalid_export_decorators(&mut self, decorators: &[Decorator<'a>]) {
-        for decorator in decorators {
-            self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
         }
     }
 

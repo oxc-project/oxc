@@ -1,6 +1,7 @@
 //! Code related to error handling.
 
 use oxc_allocator::{Dummy, GetAllocator};
+use oxc_ast::ast::Decorator;
 use oxc_span::Span;
 
 use crate::{
@@ -58,6 +59,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     #[cold]
     pub(crate) fn error(&mut self, error: ParserDiagnostic<'a>) {
         self.errors.push(error);
+    }
+
+    #[cold]
+    #[inline(never)]
+    pub(crate) fn report_invalid_decorators(&mut self, decorators: &[Decorator<'a>]) {
+        for decorator in decorators {
+            self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
+        }
+    }
+
+    #[cold]
+    #[inline(never)]
+    pub(crate) fn report_constructor_this_parameter(&mut self, span: Span) {
+        self.error(diagnostics::ts_constructor_this_parameter(span));
     }
 
     /// Defer an error that is only valid if the file is a Script (not a Module).
