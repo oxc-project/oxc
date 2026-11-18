@@ -1,0 +1,7 @@
+{
+  "plugins": [
+    "transform-typescript",
+    ["transform-react-jsx", { "runtime": "classic", "refresh": {} }]
+  ],
+  "sourceType": "module"
+}

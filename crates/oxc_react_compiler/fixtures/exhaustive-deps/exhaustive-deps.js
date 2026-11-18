@@ -63,3 +63,17 @@ function Component({x, y, z}) {
   const g = useHook7(x);
   return <Stringify results={[a, b, c, d, e, f, g]} />;
 }
+
+import {useState} from 'react';
+const sproutInputs = [
+  [{x:{y:{z:{a:{b:1}}}},y:2,z:{b:"z"}}],
+  [{x:{y:{z:{a:{b:3}}}},y:4,z:{b:"z"}}],
+];
+export const FIXTURE_ENTRYPOINT = {
+  fn: args => {
+    "use no memo";
+    return Component(...args);
+  },
+  params: [sproutInputs[0]],
+  sequentialRenders: sproutInputs,
+};

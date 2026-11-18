@@ -2,7 +2,7 @@ use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_traverse::Traverse;
 
-use crate::{context::TraverseCtx, state::TransformState};
+use crate::{common::class_transform::ClassTransform, context::TraverseCtx, state::TransformState};
 
 mod class_properties;
 mod class_static_block;
@@ -14,7 +14,7 @@ use class_static_block::ClassStaticBlock;
 pub use options::ES2022Options;
 
 pub struct ES2022<'a> {
-    options: ES2022Options,
+    top_level_await: bool,
 
     // Plugins
     class_static_block: Option<ClassStaticBlock<'a>>,
@@ -22,23 +22,24 @@ pub struct ES2022<'a> {
 }
 
 impl ES2022<'_> {
-    pub fn new(options: ES2022Options, remove_class_fields_without_initializer: bool) -> Self {
-        // Class properties transform performs the static block transform differently.
-        // So only enable static block transform if class properties transform is disabled.
-        let (class_static_block, class_properties) =
-            if let Some(properties_options) = options.class_properties {
-                let class_properties = ClassProperties::new(
-                    properties_options,
-                    options.class_static_block,
+    pub fn new(
+        top_level_await: bool,
+        class_transform: ClassTransform,
+        remove_class_fields_without_initializer: bool,
+    ) -> Self {
+        let (class_static_block, class_properties) = match class_transform {
+            ClassTransform::None => (None, None),
+            ClassTransform::StaticBlocks => (Some(ClassStaticBlock::new()), None),
+            ClassTransform::ClassProperties { options, transform_static_blocks } => (
+                None,
+                Some(ClassProperties::new(
+                    options,
+                    transform_static_blocks,
                     remove_class_fields_without_initializer,
-                );
-                (None, Some(class_properties))
-            } else {
-                let class_static_block =
-                    if options.class_static_block { Some(ClassStaticBlock::new()) } else { None };
-                (class_static_block, None)
-            };
-        Self { options, class_static_block, class_properties }
+                )),
+            ),
+        };
+        Self { top_level_await, class_static_block, class_properties }
     }
 }
 
@@ -154,7 +155,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
         node: &mut AwaitExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if self.options.top_level_await && Self::is_top_level(ctx) {
+        if self.top_level_await && Self::is_top_level(ctx) {
             let warning = OxcDiagnostic::warn(
                 "Top-level await is not available in the configured target environment.",
             )

@@ -1,0 +1,32 @@
+[package]
+name = "oxc_sprout"
+version = "0.0.0"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish = false
+description = "Runtime conformance checks for React Compiler fixtures"
+
+# These imports live in the shared fixture module outside this crate's source tree.
+[package.metadata.cargo-shear]
+ignored = ["convert_case", "oxc_span"]
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "oxc_sprout"
+test = false
+doctest = false
+
+[dependencies]
+oxc_allocator = { workspace = true }
+oxc_codegen = { workspace = true }
+oxc_parser = { workspace = true }
+oxc_react_compiler = { workspace = true }
+oxc_semantic = { workspace = true }
+oxc_span = { workspace = true }
+convert_case = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }

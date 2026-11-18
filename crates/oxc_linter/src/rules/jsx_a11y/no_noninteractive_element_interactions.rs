@@ -230,10 +230,12 @@ fn has_active_handler(
     handler: &str,
     ignored_handlers: &[CompactStr],
 ) -> bool {
-    if ignored_handlers.iter().any(|ignored| ignored.as_str() == handler) {
-        return false;
-    }
-    let Some(prop) = has_jsx_prop(jsx_el, handler) else {
+    let Some(prop) = jsx_el.attributes.iter().find(|prop| {
+        prop.as_attribute().is_some_and(|attr| {
+            attr.is_identifier_ignore_case(handler)
+                && !ignored_handlers.iter().any(|ignored| attr.is_identifier(ignored.as_str()))
+        })
+    }) else {
         return false;
     };
 
@@ -471,6 +473,24 @@ fn test() {
         )
             .into(),
         (r#"<img onLoad={() => void 0} alt="" />"#, Some(strict_config()), None).into(),
+        (
+            r"<main onClick={() => void 0} />",
+            Some(serde_json::json!([{ "handlers": ["onclick"], "main": ["onClick"] }])),
+            None,
+        )
+            .into(),
+        (
+            r"<main onclick={() => void 0} onClick={null} />",
+            Some(serde_json::json!([{ "main": ["onclick"] }])),
+            None,
+        )
+            .into(),
+        (
+            r"<main onClick={null} onclick={() => void 0} />",
+            Some(serde_json::json!([{ "main": ["onclick"] }])),
+            None,
+        )
+            .into(),
     ];
 
     for input_type in [
@@ -648,6 +668,25 @@ fn test() {
         )
             .into(),
         (r"<dialog onKeyDown={() => void 0} />", Some(strict_config()), None).into(),
+        (
+            r"<main onclick={() => void 0} />",
+            Some(serde_json::json!([{ "main": ["onClick"] }])),
+            None,
+        )
+            .into(),
+        (
+            r"<main onClick={null} onclick={() => void 0} />",
+            Some(serde_json::json!([{ "main": ["onClick"] }])),
+            None,
+        )
+            .into(),
+        (
+            r"<main onclick={() => void 0} onClick={null} />",
+            Some(serde_json::json!([{ "main": ["onClick"] }])),
+            None,
+        )
+            .into(),
+        (r"<li onclick={() => void 0} />", None, None).into(),
     ];
 
     for tag in [

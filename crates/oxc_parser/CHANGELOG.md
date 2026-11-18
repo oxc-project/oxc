@@ -4,6 +4,67 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.159.0] - 2026-11-16
+
+### 🐛 Bug Fixes
+
+- 7e41638 parser: Keep whole parenthesized `TSInstantiationExpression` with `preserve_parens: false` (#29359) (leaysgur)
+- ab73590 parser: Preserve re-exported default import names in raw transfer (#29234) (camc314)
+- 177fdd7 parser: Classify re-exported namespaces as indirect exports (#29196) (Boshen)
+- 053cc40 parser: Preserve type-only flags on re-exported imports (#29195) (Boshen)
+- 59aed23 parser: Highlight invalid numeric separators (#29117) (camc314)
+- 8f5e82c parser: Reject exponentiation operands hidden by assertions (#29115) (camc314)
+- 42e790c parser: Require `declare` before `abstract` modifiers (#29111) (camc314)
+
+### ⚡ Performance
+
+- dd9af34 parser: Make parser and lexer checkpoints `Copy` (#29662) (Boshen)
+- 4ebe523 parser: Keep the tokens read while classifying `()` and `(x)` arrows (#29560) (Boshen)
+- 7a6b0a4 parser: Lex the token after `let` and `?.` once (#29559) (Boshen)
+- bd9fa9b parser: Lex the token after a modifier keyword once (#29558) (Boshen)
+- 2c6ee72 parser: Skip arrow speculation for array and object literals (#29557) (Boshen)
+- 85c0269 parser: Rule out type arguments from tokens before speculating (#29556) (Boshen)
+- b6edb78 parser: Avoid token loop restart after newlines (#29423) (Boshen)
+- f09af45 lexer: Keep source position in registers across byte handlers (#29401) (Boshen)
+- ae1a375 lexer: Complete single-byte tokens without a byte handler (#29400) (Boshen)
+- 11daf98 lexer: Build tokens once from pending state (#29399) (Boshen)
+- 8a6e0c1 lexer: Borrow contiguous escaped string values (#29372) (Boshen)
+- 27baf0c lexer: Buffer more comments before arena allocation (#29371) (Boshen)
+- baa84fc lexer: Size escaped strings before allocating (#29369) (Boshen)
+- 4313dee parser: Buffer module record entries (#29368) (Boshen)
+- 2df1f19 parser: Reduce regex, template, and comment allocations (#29361) (Boshen)
+- f26d9d9 parser: Reduce arena allocations and reallocations (#29358) (Boshen)
+- 0d2e41a parser: Reduce identifier dispatch overhead (#29347) (Boshen)
+- 1aaf3b0 parser: Reuse pure re-export storage (#29216) (Boshen)
+- 9add80d parser: Buffer decorator and heritage lists (#29215) (Boshen)
+- cb5cf55 parser: Collect prefixed import lists once (#29214) (Boshen)
+- ec6b166 parser: Omit discarded recovered parentheses (#29213) (Boshen)
+- 01e2b66 parser: Avoid discarded TypeScript instantiations (#29210) (Boshen)
+- 727610a parser: Collect short named import lists (#29209) (Boshen)
+- d1eaed0 parser: Collect short template literal lists (#29208) (Boshen)
+- 0301b92 parser: Reserve module record batches (#29207) (Boshen)
+- 9734804 parser: Collect short switch consequent lists (#29206) (Boshen)
+- 6674b7a parser: Collect short JSX child lists (#29205) (Boshen)
+- cc03246 parser: Collect short binding pattern lists (#29204) (Boshen)
+- e36dd2d parser: Avoid discarded cover parameter allocations (#29203) (Boshen)
+- 2d5864c parser: Collect short sequence expression lists (#29202) (Boshen)
+- 6495e66 parser: Avoid discarded block allocations (#29199) (Boshen)
+- 2601c45 parser: Collect short formal parameter lists (#29198) (Boshen)
+- 10fddc3 parser: Collect short TypeScript type lists (#29197) (Boshen)
+- 4140fb0 parser: Keep class heritage on the stack (#29190) (Boshen)
+- e028d74 parser: Collect short statement lists before allocating (#29189) (Boshen)
+- 69c7892 parser: Collect short declaration lists before allocating (#29188) (Boshen)
+- aed0190 parser: Skip unused identifier hashes (#29168) (Boshen)
+- 2c0a6c1 parser: Avoid allocating discarded directive statements (#29186) (Boshen)
+- 48532bb parser: Buffer remaining parser lists (#29185) (Boshen)
+- e59d413 parser: Reuse export entry storage (#29172) (Boshen)
+- f815f54 parser: Reduce arena list reallocations (#29169) (Boshen)
+
+### 📚 Documentation
+
+- 43e0829 parser: Fix grammar context formatting (#29373) (camc314)
+- 768cc29 parser: Clarify syntax support and AST preservation (#29121) (camc314)
+
 ## [0.158.0] - 2026-11-09
 
 ### 🐛 Bug Fixes

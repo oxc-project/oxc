@@ -99,7 +99,7 @@ impl Rule for NoExtraBooleanCast {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::CallExpression(expr) if expr.callee.is_specific_id("Boolean") => {
+            AstKind::CallExpression(expr) if is_global_boolean(&expr.callee, ctx) => {
                 let node = if expr.optional {
                     let parent = ctx.nodes().parent_node(node.id());
                     if !matches!(parent.kind(), AstKind::ChainExpression(_)) {
@@ -196,7 +196,7 @@ fn is_flagged_ctx(node: &AstNode, ctx: &LintContext, enforce_for_logical_operand
 // Check if a node is in a context where its value would be coerced to a boolean at runtime
 fn is_bool_context(node: &AstNode, parent: Option<&AstNode>, ctx: &LintContext) -> bool {
     parent.is_some_and(|parent| {
-        (is_bool_fn_or_constructor_call(parent) && is_first_arg(node, parent))
+        (is_bool_fn_or_constructor_call(parent, ctx) && is_first_arg(node, parent))
             || is_inside_test_condition(node, ctx)
             || is_unary_negation(parent)
     })
@@ -226,12 +226,21 @@ fn is_inner_bool_context(
     }
 }
 
-fn is_bool_fn_or_constructor_call(node: &AstNode) -> bool {
+fn is_bool_fn_or_constructor_call(node: &AstNode, ctx: &LintContext) -> bool {
     match node.kind() {
         AstKind::CallExpression(CallExpression { callee, .. })
-        | AstKind::NewExpression(NewExpression { callee, .. }) => callee.is_specific_id("Boolean"),
+        | AstKind::NewExpression(NewExpression { callee, .. }) => is_global_boolean(callee, ctx),
         _ => false,
     }
+}
+
+/// `Boolean` that refers to the built-in, not to a local binding of that name.
+fn is_global_boolean(callee: &Expression, ctx: &LintContext) -> bool {
+    matches!(
+        callee.get_inner_expression(),
+        Expression::Identifier(ident)
+            if ident.name == "Boolean" && ctx.is_reference_to_global_variable(ident)
+    )
 }
 
 fn is_first_arg(node: &AstNode, parent: &AstNode) -> bool {
@@ -516,6 +525,10 @@ fn test() {
             "if ((1, Boolean(2), 3)) {}",
             Some(serde_json::json!([{ "enforceForInnerExpressions": true }])),
         ),
+        ("let Boolean = x => x; if (Boolean(bar)) {}", None),
+        ("function foo(Boolean) { return !!Boolean(bar); }", None),
+        ("function foo(Boolean) { if (Boolean(!!bar)) {} }", None),
+        ("function foo(Boolean) { if (new Boolean(!!bar)) {} }", None),
     ];
 
     let fail = vec![

@@ -103,10 +103,15 @@ pub async fn run_cli(
         Mode::Cli(_) => {
             init_rayon(command.runtime_options.threads);
 
-            let result = WalkRunner::new(command)
-                .with_external_services(Some(external_services.clone()))
-                .with_js_config_loader(Arc::clone(&js_config_loader))
-                .run();
+            // `run()` blocks until all files are formatted, so release this Tokio worker's core.
+            // Prettier workers spawn `jsTextToDoc()` onto this runtime,
+            // with a single worker (e.g. 1 vCPU) it would never run.
+            let result = tokio::task::block_in_place(|| {
+                WalkRunner::new(command)
+                    .with_external_services(Some(external_services.clone()))
+                    .with_js_config_loader(Arc::clone(&js_config_loader))
+                    .run()
+            });
 
             ("cli".to_string(), Some(result.exit_code()))
         }

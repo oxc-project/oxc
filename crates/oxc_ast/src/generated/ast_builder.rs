@@ -17,7 +17,7 @@ use std::cell::Cell;
 
 use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator, IntoIn};
 use oxc_str::{Ident, JSStr, Str};
-use oxc_syntax::{reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
+use oxc_syntax::{label::LabelId, reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
 
 use crate::{
     ast::*,
@@ -1499,7 +1499,34 @@ impl<'a> LabelIdentifier<'a> {
     #[inline]
     pub fn new(span: Span, name: impl Into<Ident<'a>>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        LabelIdentifier { node_id: Cell::new(builder.node_id()), span, name: name.into() }
+        LabelIdentifier {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            name: name.into(),
+            label_id: Default::default(),
+        }
+    }
+
+    /// Build a [`LabelIdentifier`] with `label_id`.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`
+    /// * `label_id`: Unique identifier for the label this identifier declares or targets.
+    #[inline]
+    pub fn new_with_label_id(
+        span: Span,
+        name: impl Into<Ident<'a>>,
+        label_id: LabelId,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        let builder = builder.builder();
+        LabelIdentifier {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            name: name.into(),
+            label_id: Cell::new(Some(label_id)),
+        }
     }
 }
 

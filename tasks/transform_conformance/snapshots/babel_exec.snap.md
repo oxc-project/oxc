@@ -1,8 +1,8 @@
-commit: d7a0cccb
+commit: 16a2d671
 
 node: v26.12.1
 
-Passed: 326 of 419 (77.80%)
+Passed: 338 of 424 (79.72%)
 
 Failures:
 
@@ -155,29 +155,11 @@ At file: /fixtures/babel/babel-plugin-transform-explicit-resource-management-tes
 
 ./fixtures/babel/babel-plugin-transform-object-rest-spread-test-fixtures-object-rest-for-x-assignment-shadowed-block-scoped-bindings-exec.test.js
 ReferenceError: Cannot access 'a' before initialization
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-object-rest-spread-test-fixtures-object-rest-for-x-assignment-shadowed-block-scoped-bindings-exec.test.js:8:20
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-object-rest-spread-test-fixtures-object-rest-for-x-assignment-shadowed-block-scoped-bindings-exec.test.js:9:21
 
 ./fixtures/babel/babel-plugin-transform-object-rest-spread-test-fixtures-object-rest-for-x-declaration-shadowed-block-scoped-bindings-exec.test.js
 ReferenceError: Cannot access 'a' before initialization
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-object-rest-spread-test-fixtures-object-rest-for-x-declaration-shadowed-block-scoped-bindings-exec.test.js:8:13
-
-./fixtures/babel/babel-plugin-transform-optional-chaining-test-fixtures-assumption-noDocumentAll-parenthesized-expression-member-call-exec.test.js
-TypeError: Cannot read properties of undefined (reading 'x')
-    at m (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-optional-chaining-test-fixtures-assumption-noDocumentAll-parenthesized-expression-member-call-exec.test.js:10:18)
-    at Foo.test (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-optional-chaining-test-fixtures-assumption-noDocumentAll-parenthesized-expression-member-call-exec.test.js:25:65)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-optional-chaining-test-fixtures-assumption-noDocumentAll-parenthesized-expression-member-call-exec.test.js:68:12
-
-./fixtures/babel/babel-plugin-transform-optional-chaining-test-fixtures-general-parenthesized-expression-member-call-exec.test.js
-TypeError: Cannot read properties of undefined (reading 'x')
-    at m (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-optional-chaining-test-fixtures-general-parenthesized-expression-member-call-exec.test.js:10:18)
-    at Foo.test (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-optional-chaining-test-fixtures-general-parenthesized-expression-member-call-exec.test.js:25:65)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-optional-chaining-test-fixtures-general-parenthesized-expression-member-call-exec.test.js:68:12
-
-./fixtures/babel/babel-plugin-transform-optional-chaining-test-fixtures-general-parenthesized-expression-member-call-loose-exec.test.js
-TypeError: Cannot read properties of undefined (reading 'x')
-    at m (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-optional-chaining-test-fixtures-general-parenthesized-expression-member-call-loose-exec.test.js:10:18)
-    at Foo.test (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-optional-chaining-test-fixtures-general-parenthesized-expression-member-call-loose-exec.test.js:25:65)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-optional-chaining-test-fixtures-general-parenthesized-expression-member-call-loose-exec.test.js:68:12
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-loose-basic-exec.test.js
 ReferenceError: _Cl_brand is not defined
@@ -500,22 +482,6 @@ TypeError: "#privateStaticFieldValue" is write-only
 ReferenceError: _Foo_brand is not defined
     at new Foo (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-assumption-privateFieldsAsProperties-method-exec.test.js:8:40)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-assumption-privateFieldsAsProperties-method-exec.test.js:19:13
-
-./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-half-constructed-static-exec.test.js
-AssertionError: expected true to be false // Object.is equality
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-half-constructed-static-exec.test.js:29:15
-
-./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-static-field-initialization-exec.test.js
-AssertionError: expected [ true, true, true, true, true, …(3) ] to deeply equal [ false, true, true, false, …(4) ]
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-static-field-initialization-exec.test.js:23:17
-
-./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-static-field-redeclared-in-loop-exec.test.js
-AssertionError: expected [ true, true, true, true ] to deeply equal [ false, true, true, true ]
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-static-field-redeclared-in-loop-exec.test.js:15:18
-
-./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-to-native-fields-half-constructed-static-exec.test.js
-AssertionError: expected true to be false // Object.is equality
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-to-native-fields-half-constructed-static-exec.test.js:29:15
 
 ./fixtures/babel/babel-preset-env-test-fixtures-plugins-integration-issue-15170-exec.test.js
 AssertionError: expected [Function] to not throw an error but 'ReferenceError: x is not defined' was thrown

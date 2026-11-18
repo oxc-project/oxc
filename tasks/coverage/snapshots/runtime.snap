@@ -1,20 +1,8 @@
-commit: e4fbf577
+commit: 2e58f87d
 
 runtime Summary:
-AST Parsed     : 18378/18378 (100.00%)
-Positive Passed: 17415/18378 (94.76%)
-minify Error: tasks/coverage/test262/test/language/computed-property-names/class/static/generator-prototype.js
-Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-minify Error: tasks/coverage/test262/test/language/computed-property-names/class/static/getter-prototype.js
-Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-minify Error: tasks/coverage/test262/test/language/computed-property-names/class/static/method-prototype.js
-Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-minify Error: tasks/coverage/test262/test/language/computed-property-names/class/static/setter-prototype.js
-Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
+AST Parsed     : 18379/18379 (100.00%)
+Positive Passed: 17427/18379 (94.82%)
 codegen Error: tasks/coverage/test262/test/language/eval-code/direct/var-env-func-init-global-update-configurable.js
 Test262Error: f descriptor should be enumerable; f descriptor should be writable
 
@@ -1551,13 +1539,7 @@ Test262Error: reject reason Expected SameValue(«TypeError: The iterator does no
 transform Error: tasks/coverage/test262/test/language/statements/class/async-gen-method-static/yield-star-sync-throw.js
 throw-arg-1
 
-minify Error: tasks/coverage/test262/test/language/statements/class/definition/getters-non-configurable-err.js
-Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
 minify Error: tasks/coverage/test262/test/language/statements/class/definition/invalid-extends.js
-Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-minify Error: tasks/coverage/test262/test/language/statements/class/definition/setters-non-configurable-err.js
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
 minify Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-class.js
@@ -1947,12 +1929,6 @@ Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
 minify Error: tasks/coverage/test262/test/language/statements/class/dstr/private-meth-dflt-obj-ptrn-id-init-fn-name-gen.js
 Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
 
-transform Error: tasks/coverage/test262/test/language/statements/class/dstr/private-meth-dflt-obj-ptrn-prop-id-init.js
-timeout: global
-
-transform Error: tasks/coverage/test262/test/language/statements/class/dstr/private-meth-obj-ptrn-id-init-fn-name-arrow.js
-timeout: global
-
 minify Error: tasks/coverage/test262/test/language/statements/class/dstr/private-meth-obj-ptrn-id-init-fn-name-class.js
 Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
 
@@ -2135,9 +2111,6 @@ Test262Error: Expected a Test262Error to be thrown but no exception was thrown a
 minify Error: tasks/coverage/test262/test/language/statements/class/elements/fields-computed-name-static-computed-var-propname-prototype.js
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
-minify Error: tasks/coverage/test262/test/language/statements/class/elements/fields-computed-name-static-propname-prototype.js
-Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
 transform Error: tasks/coverage/test262/test/language/statements/class/elements/nested-derived-cls-direct-eval-err-contains-supercall-1.js
 Test262Error: Expected a SyntaxError but got a ReferenceError
 
@@ -2252,12 +2225,6 @@ Test262Error: Expected SameValue(«"undefinedtest"», «"test262test"») to be t
 
 codegen Error: tasks/coverage/test262/test/language/statements/class/static-init-arguments-label.js
 SyntaxError: 'arguments' is not allowed in class field initializer or static initialization block
-
-minify Error: tasks/coverage/test262/test/language/statements/class/static-method-gen-non-configurable-err.js
-Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-minify Error: tasks/coverage/test262/test/language/statements/class/static-method-non-configurable-err.js
-Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
 minify Error: tasks/coverage/test262/test/language/statements/class/subclass/builtin-objects/Proxy/no-prototype-throws.js
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all

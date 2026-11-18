@@ -4,7 +4,10 @@ use oxc_ast::ast::REGEXP_FLAGS_LIST;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
-use crate::modifiers::{Modifier, ModifierKind, ModifierKinds};
+use crate::{
+    MAX_LEN_ERROR,
+    modifiers::{Modifier, ModifierKind, ModifierKinds},
+};
 
 trait DiagnosticExt {
     fn with_allowed_modifier_help(self, allowed: Option<ModifierKinds>) -> Self;
@@ -88,7 +91,7 @@ macro_rules! parser_diagnostics {
 
 parser_diagnostics! {
     overlong_source() => {
-        OxcDiagnostic::error("Source length exceeds 4 GiB limit")
+        OxcDiagnostic::error(MAX_LEN_ERROR)
     };
 
     file_appears_to_be_binary() => {
@@ -207,6 +210,12 @@ parser_diagnostics! {
 
     unicode_escape_sequence(span: Span) => {
         OxcDiagnostic::error("Invalid Unicode escape sequence").with_label(span)
+    };
+
+    invalid_numeric_separator(span: Span) => {
+        OxcDiagnostic::error("Numeric separators must appear between digits")
+            .with_label(span)
+            .with_help("Remove the separator or place it between two digits")
     };
 
     invalid_character(c: char, span: Span) => {
@@ -445,6 +454,12 @@ parser_diagnostics! {
     invalid_binding_rest_element(span: Span) => {
         OxcDiagnostic::error("Invalid rest element target in destructuring pattern")
             .with_help("Expected an identifier, like `...rest`.")
+            .with_label(span)
+    };
+
+    invalid_arrow_function_parameter(span: Span) => {
+        OxcDiagnostic::error("Invalid arrow function parameter")
+            .with_help("Expected an identifier or a destructuring pattern.")
             .with_label(span)
     };
 

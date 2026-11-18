@@ -57,7 +57,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for OptionalCatchBinding {
 
         let binding = ctx.generate_uid(
             "unused",
-            clause.body.scope_id(),
+            clause.scope_id(),
             SymbolFlags::CatchVariable | SymbolFlags::FunctionScopedVariable,
         );
         let binding_pattern = binding.create_binding_pattern(ctx);

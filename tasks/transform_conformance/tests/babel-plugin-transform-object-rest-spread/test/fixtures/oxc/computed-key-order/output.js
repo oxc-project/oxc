@@ -1,0 +1,10 @@
+let value, rest;
+var _source, _key;
+_source = source(), _key = key(), {[_key]: value} = _source, rest = babelHelpers.objectWithoutProperties(_source, [_key].map(babelHelpers.toPropertyKey));
+var _ref;
+var _ref2, _key2;
+[..._ref] = iterable(), _ref2 = _ref, _key2 = key(), {[_key2]: value} = _ref2, rest = babelHelpers.objectWithoutProperties(_ref2, [_key2].map(babelHelpers.toPropertyKey)), _ref2;
+var _source2, _key3;
+condition && (_source2 = source(), _key3 = key(), {[_key3]: value} = _source2, rest = babelHelpers.objectWithoutProperties(_source2, [_key3].map(babelHelpers.toPropertyKey)), _source2);
+var _source3, _key4;
+const result = (_source3 = source(), _key4 = key(), {[_key4]: value} = _source3, rest = babelHelpers.objectWithoutProperties(_source3, [_key4].map(babelHelpers.toPropertyKey)), _source3);

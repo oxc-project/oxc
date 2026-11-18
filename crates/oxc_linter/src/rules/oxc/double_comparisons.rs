@@ -43,6 +43,7 @@ declare_oxc_lint!(
     DoubleComparisons,
     oxc,
     correctness,
+    recommended,
     suggestion,
     version = "0.0.22",
     short_description = "This rule checks for double comparisons in logical expressions.",

@@ -16,7 +16,7 @@
 /// ```
 ///
 /// The first argument is the method's CPU type value (e.g. `cpu`, or `self.cpu()`).
-/// The macro matches on [`to_dyn`] of it, and runs the arm for that CPU type:
+/// The macro matches on [`DynCpu::from`] of it, and runs the arm for that CPU type:
 ///
 /// - `Avx2` arm runs if the CPU type is [`Avx2`]. It's only compiled on x86_64.
 /// - `Neon` arm runs if the CPU type is [`Neon`]. It's only compiled on aarch64.
@@ -30,18 +30,18 @@
 /// When no code works for every CPU type, use [`unused!`] for the `_` arm:
 /// `_ => unused!(n, cpu)`.
 ///
-/// It expands to a `match` on [`to_dyn`] with an arm for each CPU type, each behind a `#[cfg]`,
-/// followed by the `_` arm. So every arm must have the method's return type,
-/// even on platforms where it can't run.
+/// It expands to a `match` on [`DynCpu::from`] with an arm for each CPU type,
+/// each behind a `#[cfg]`, followed by the `_` arm.
+/// So every arm must have the method's return type, even on platforms where it can't run.
 ///
 /// The `Avx2` arm only runs if the CPU type is `Avx2`, and a value of that type exists,
 /// which proves that the CPU supports AVX2. So the arm can use AVX2 instructions.
 /// Likewise for the `Neon` arm. `C` is still generic in the arm, but a vector wraps
 /// the platform's SIMD type whatever `C` is, so the arm can pass `inner` to intrinsics.
 ///
+/// [`DynCpu::from`]: crate::cpu::DynCpu::from
 /// [`Avx2`]: crate::cpu::Avx2
 /// [`Neon`]: crate::cpu::Neon
-/// [`to_dyn`]: crate::cpu::to_dyn
 macro_rules! cpu_select {
     (
         $cpu:expr,
@@ -51,14 +51,14 @@ macro_rules! cpu_select {
             _ => $other:expr $(,)?
         }
     ) => {
-        match $crate::cpu::to_dyn($cpu) {
+        match $crate::DynCpu::from($cpu) {
             $(
                 #[cfg(target_arch = "x86_64")]
-                $crate::cpu::DynCpu::Avx2(_) => $avx2
+                $crate::DynCpu::Avx2(_) => $avx2
             )?
             $(
                 #[cfg(target_arch = "aarch64")]
-                $crate::cpu::DynCpu::Neon(_) => $neon
+                $crate::DynCpu::Neon(_) => $neon
             )?
             _ => $other,
         }

@@ -19,14 +19,13 @@ fn use_prefer_each(span: Span, fn_name: &str) -> OxcDiagnostic {
 fn is_in_test(ctx: &LintContext<'_>, id: NodeId) -> bool {
     ctx.nodes().ancestors(id).any(|node| {
         let AstKind::CallExpression(ancestor_call_expr) = node.kind() else { return false };
-        let Some(ancestor_member_expr) = ancestor_call_expr.callee.as_member_expression() else {
-            return false;
-        };
-        let Some(id) = ancestor_member_expr.object().get_identifier_reference() else {
+        let Some(jest_node) = PossibleJestNode::from_call_expression(node, ancestor_call_expr, ctx)
+        else {
             return false;
         };
 
-        matches!(JestFnKind::from(id.name.as_str()), JestFnKind::General(JestGeneralFnKind::Test))
+        parse_jest_fn_call(ancestor_call_expr, &jest_node, ctx)
+            .is_some_and(|call| call.kind() == JestFnKind::General(JestGeneralFnKind::Test))
     })
 }
 
@@ -107,9 +106,10 @@ impl PreferEachConfig {
             return;
         }
 
-        let Some(jest_fn_call) =
-            parse_jest_fn_call(call_expr, &PossibleJestNode { node, original: None }, ctx)
-        else {
+        let Some(jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx) else {
+            return;
+        };
+        let Some(jest_fn_call) = parse_jest_fn_call(call_expr, &jest_node, ctx) else {
             return;
         };
 

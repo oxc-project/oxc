@@ -227,7 +227,18 @@ impl CatchErrorName {
                         let node = ctx.nodes().get_node(reference.node_id()).kind();
                         let Some(id) = node.as_identifier_reference() else { continue };
 
-                        declaration_fix.push(fixer.replace(id.span, fixed_name.clone()));
+                        // Expand shorthand properties (`{ e }`, `({ e } = o)`) so the key is kept.
+                        let is_shorthand = match ctx.nodes().parent_kind(reference.node_id()) {
+                            AstKind::ObjectProperty(prop) => prop.shorthand,
+                            AstKind::AssignmentTargetPropertyIdentifier(_) => true,
+                            _ => false,
+                        };
+                        if is_shorthand {
+                            declaration_fix
+                                .push(fixer.replace(id.span, format!("{}: {fixed_name}", id.name)));
+                        } else {
+                            declaration_fix.push(fixer.replace(id.span, fixed_name.clone()));
+                        }
                     }
 
                     declaration_fix
@@ -240,9 +251,19 @@ impl CatchErrorName {
     fn get_fixed_name(&self, ctx: &LintContext, symbol_id: SymbolId) -> CompactStr {
         let scoping = ctx.scoping();
         let scope_id = scoping.symbol_scope_id(symbol_id);
+        // A catch parameter is bound in the catch clause scope, but must not clash with a lexical
+        // declaration in the catch body either (`catch (error) { let error }` is a SyntaxError).
+        // Lookups from the body scope also cover the catch clause scope and its ancestors.
+        let binding_scope_id = if scoping.scope_flags(scope_id).is_catch_clause()
+            && let AstKind::CatchClause(clause) = ctx.nodes().kind(scoping.get_node_id(scope_id))
+        {
+            clause.body.scope_id()
+        } else {
+            scope_id
+        };
         let mut name = self.name.clone().into_compact_string();
 
-        while scoping.find_binding(scope_id, name.as_str().into()).is_some()
+        while scoping.find_binding(binding_scope_id, name.as_str().into()).is_some()
             || scoping.get_resolved_references(symbol_id).any(|reference| {
                 scoping.find_binding(reference.scope_id(), name.as_str().into()).is_some()
             })
@@ -761,6 +782,35 @@ fn test() {
         (
             "promise.then(undefined, function (_err) {})",
             "promise.then(undefined, function (error) {})",
+            None,
+        ),
+        // Shorthand properties keep their key.
+        ("try {} catch (e) { r = { e }; }", "try {} catch (error) { r = { e: error }; }", None),
+        ("try {} catch (e) { ({ e } = o); }", "try {} catch (error) { ({ e: error } = o); }", None),
+        (
+            "try {} catch (e) { ({ e = 1 } = o); }",
+            "try {} catch (error) { ({ e: error = 1 } = o); }",
+            None,
+        ),
+        ("p.catch((e) => f({ e }))", "p.catch((error) => f({ e: error }))", None),
+        (
+            "try {} catch (error) { x = { error }; }",
+            "try {} catch (exception) { x = { error: exception }; }",
+            Some(serde_json::json!([{"name": "exception"}])),
+        ),
+        (
+            "try {} catch (e) { let error; f({ e }); }",
+            "try {} catch (error_) { let error; f({ e: error_ }); }",
+            None,
+        ),
+        (
+            "try {} catch (e) { ({ a: { e } } = o); }",
+            "try {} catch (error) { ({ a: { e: error } } = o); }",
+            None,
+        ),
+        (
+            "try {} catch (e) { f({ e, x: e }); }",
+            "try {} catch (error) { f({ e: error, x: error }); }",
             None,
         ),
     ];

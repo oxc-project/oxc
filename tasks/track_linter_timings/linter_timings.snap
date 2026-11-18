@@ -442,7 +442,7 @@ react/preserve-manual-memoization                       |      4
 react/purity                                            |      4
 react/react-in-jsx-scope                                |    459
 react/refs                                              |      4
-react/require-render-return                             |   2604
+react/require-render-return                             |  16812
 react/rule-suppression                                  |      4
 react/rules-of-hooks                                    |  62606
 react/self-closing-comp                                 |    452

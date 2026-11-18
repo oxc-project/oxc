@@ -319,9 +319,20 @@ pub fn get_symbol_id_of_variable(
 }
 
 pub fn extract_regex_flags<'a>(args: &'a ArenaVec<'a, Argument<'a>>) -> Option<RegExpFlags> {
-    if args.len() <= 1 {
+    if args.is_empty() {
         return Some(RegExpFlags::empty());
     }
+
+    if args.len() == 1 {
+        return match args[0].as_expression()?.get_inner_expression() {
+            Expression::RegExpLiteral(regexp_literal) => Some(regexp_literal.regex.flags),
+            expr if expr.is_literal() || matches!(expr, Expression::TemplateLiteral(_)) => {
+                Some(RegExpFlags::empty())
+            }
+            _ => None,
+        };
+    }
+
     let flag_arg = match &args[1] {
         Argument::StringLiteral(flag_arg) => flag_arg.value,
         Argument::TemplateLiteral(template) => template.single_quasi()?,
@@ -451,11 +462,7 @@ pub fn is_new_expression<'a>(
         return false;
     };
 
-    if !names.contains(&ident.name.as_str()) {
-        return false;
-    }
-
-    true
+    names.contains(&ident.name.as_str())
 }
 
 /// Returns the method span and UTF-8 name for rules matching known method names.
@@ -1071,91 +1078,24 @@ pub fn could_be_asi_hazard(node: &AstNode, ctx: &LintContext) -> bool {
         || last_char == '$'
 }
 
-#[inline]
-#[expect(clippy::cast_possible_wrap)]
-fn is_utf8_char_boundary(b: u8) -> bool {
-    (b as i8) >= -0x40
-}
-
 /// Find the last meaningful (non-whitespace, non-comment) character before `end_pos`.
 fn find_last_meaningful_char(source_text: &str, end_pos: u32, ctx: &LintContext) -> Option<char> {
-    let bytes = source_text.as_bytes();
     let comments = ctx.semantic().comments();
-
-    let mut comment_idx = comments.partition_point(|c| c.span.start < end_pos);
-    let mut current_comment_end: u32 = 0;
-    let mut i = end_pos;
-
-    // Handle case where end_pos is inside a comment
-    if comment_idx > 0 {
-        let prev_comment = &comments[comment_idx - 1];
-        if end_pos <= prev_comment.span.end {
-            i = prev_comment.span.start;
-            comment_idx -= 1;
-            if comment_idx > 0 {
-                current_comment_end = comments[comment_idx - 1].span.end;
+    let mut idx = comments.partition_point(|c| c.span.start < end_pos);
+    let mut text = &source_text[..end_pos as usize];
+    loop {
+        text =
+            text.trim_end_matches(|c: char| c.is_ascii_whitespace() || is_irregular_whitespace(c));
+        #[expect(clippy::cast_possible_truncation)]
+        let text_end = text.len() as u32;
+        match idx.checked_sub(1).map(|i| &comments[i]) {
+            Some(comment) if comment.span.end >= text_end => {
+                text = &source_text[..comment.span.start as usize];
+                idx -= 1;
             }
+            _ => return text.chars().next_back(),
         }
     }
-
-    while i > 0 {
-        if i <= current_comment_end && comment_idx > 0 {
-            comment_idx -= 1;
-            current_comment_end = comments[comment_idx].span.start;
-            i = current_comment_end;
-            continue;
-        }
-
-        i -= 1;
-
-        let byte = bytes[i as usize];
-
-        if byte.is_ascii_whitespace() {
-            continue;
-        }
-
-        // Check if we're entering a comment from the end
-        if comment_idx > 0 {
-            let comment = &comments[comment_idx - 1];
-            if i >= comment.span.start && i < comment.span.end {
-                i = comment.span.start;
-                comment_idx -= 1;
-                if comment_idx > 0 {
-                    current_comment_end = comments[comment_idx - 1].span.end;
-                }
-                continue;
-            }
-        }
-
-        if byte.is_ascii() {
-            return Some(byte as char);
-        }
-
-        // Multi-byte UTF-8: find the start byte (max 4 bytes per char)
-        let i_usize = i as usize;
-        let char_start = if is_utf8_char_boundary(bytes[i_usize.saturating_sub(1)]) {
-            i_usize - 1
-        } else if is_utf8_char_boundary(bytes[i_usize.saturating_sub(2)]) {
-            i_usize - 2
-        } else {
-            i_usize - 3
-        };
-
-        let c = source_text[char_start..].chars().next().unwrap();
-
-        // Skip irregular whitespace (NBSP, ZWNBSP, etc.)
-        if is_irregular_whitespace(c) {
-            #[expect(clippy::cast_possible_truncation)]
-            {
-                i = char_start as u32;
-            }
-            continue;
-        }
-
-        return Some(c);
-    }
-
-    None
 }
 
 #[test]

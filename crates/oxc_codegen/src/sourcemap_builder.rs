@@ -112,7 +112,7 @@ impl<'a> SourcemapBuilder<'a> {
             file: None,
             names: self.names.into_iter().map(Cow::Borrowed).collect(),
             source_root: None,
-            sources: vec![Cow::Owned(self.source_name)],
+            sources: vec![Some(Cow::Owned(self.source_name))],
             source_contents: vec![Some(Cow::Borrowed(self.original_source))],
             tokens: self.tokens.into_boxed_slice(),
             token_chunks: None,

@@ -125,7 +125,7 @@ use crate::{
 use super::{ClassProperties, utils::exprs_into_stmts};
 
 /// Location to insert instance property initializers
-pub(super) enum InstanceInitsInsertLocation<'a> {
+enum InstanceInitsInsertLocation<'a> {
     /// Create new constructor, containing initializers
     NewConstructor,
     /// Insert initializers into existing constructor at this statement index
@@ -137,17 +137,134 @@ pub(super) enum InstanceInitsInsertLocation<'a> {
 }
 
 /// Scopes related to inserting and transforming instance property initializers
-pub(super) struct InstanceInitScopes {
+struct InstanceInitScopes {
     /// Scope that instance prop initializers will be inserted into
-    pub insert_in_scope_id: ScopeId,
+    insert_in_scope_id: ScopeId,
     /// Scope of class constructor, if initializers will be inserted into constructor,
     /// (either directly, or in `_super` function within constructor)
     /// and constructor's scope contains any bindings.
     /// This is used for renaming symbols if any shadow symbols referenced by instance prop initializers.
-    pub constructor_scope_id: Option<ScopeId>,
+    constructor_scope_id: Option<ScopeId>,
 }
 
 impl<'a> ClassProperties<'a> {
+    /// Insert ordered instance initializers into a class constructor, creating one if necessary.
+    ///
+    /// `constructor_index` identifies an existing constructor with a body, found during collection.
+    /// Chooses the insertion location, reparents initializer scopes, and renames clashing constructor
+    /// bindings before insertion. An empty initializer list leaves the constructor unchanged.
+    pub(super) fn insert_instance_initializers(
+        &mut self,
+        body: &mut ClassBody<'a>,
+        instance_inits: Vec<Expression<'a>>,
+        constructor_index: Option<usize>,
+        class_scope_id: ScopeId,
+        has_super_class: bool,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if instance_inits.is_empty() {
+            return;
+        }
+
+        // The collection pass already located the constructor, so no second class-body scan is needed.
+        let mut constructor = constructor_index.map(|index| {
+            let ClassElement::MethodDefinition(method) = &mut body.body[index] else {
+                unreachable!("Constructor index must refer to a method");
+            };
+            method.value.as_mut()
+        });
+
+        // Scope that instance property initializers will be inserted into.
+        // This is usually class constructor, but can also be a `_super` function which is created.
+        let instance_inits_scope_id;
+        // Scope of class constructor, if instance property initializers will be inserted into constructor.
+        // Used for checking for variable name clashes.
+        // e.g. `class C { prop = x(); constructor(x) {} }`
+        // - `x` in constructor needs to be renamed when `x()` is moved into constructor body.
+        // `None` if class has no existing constructor, as then there can't be any clashes.
+        let mut instance_inits_constructor_scope_id = None;
+
+        // Determine where to insert instance property initializers in constructor
+        let instance_inits_insert_location = if let Some(constructor) = constructor.as_deref_mut() {
+            if has_super_class {
+                let (insert_scopes, insert_location) =
+                    Self::replace_super_in_constructor(constructor, ctx);
+                instance_inits_scope_id = insert_scopes.insert_in_scope_id;
+                instance_inits_constructor_scope_id = insert_scopes.constructor_scope_id;
+                insert_location
+            } else {
+                let constructor_scope_id = constructor.scope_id();
+                instance_inits_scope_id = constructor_scope_id;
+                // Only record `constructor_scope_id` if constructor's scope has some bindings.
+                // If it doesn't, no need to check for shadowed symbols in instance prop initializers,
+                // because no bindings to clash with.
+                instance_inits_constructor_scope_id =
+                    if ctx.scoping().get_bindings(constructor_scope_id).is_empty() {
+                        None
+                    } else {
+                        Some(constructor_scope_id)
+                    };
+                InstanceInitsInsertLocation::ExistingConstructor(0)
+            }
+        } else {
+            // No existing constructor - create scope for one
+            let constructor_scope_id = ctx.scoping_mut().add_scope(
+                Some(class_scope_id),
+                NodeId::DUMMY,
+                ScopeFlags::Function | ScopeFlags::Constructor | ScopeFlags::StrictMode,
+            );
+            instance_inits_scope_id = constructor_scope_id;
+            InstanceInitsInsertLocation::NewConstructor
+        };
+
+        // Reparent property initializers scope to `instance_inits_scope_id`.
+        self.reparent_initializers_scope(
+            instance_inits.as_slice(),
+            instance_inits_scope_id,
+            instance_inits_constructor_scope_id,
+            ctx,
+        );
+
+        // Insert instance initializers into constructor.
+        // Create a constructor if there isn't one.
+        match instance_inits_insert_location {
+            InstanceInitsInsertLocation::NewConstructor => {
+                Self::insert_constructor(
+                    body,
+                    instance_inits,
+                    has_super_class,
+                    instance_inits_scope_id,
+                    ctx,
+                );
+            }
+            InstanceInitsInsertLocation::ExistingConstructor(stmt_index) => {
+                self.insert_inits_into_constructor_as_statements(
+                    constructor.as_mut().unwrap(),
+                    instance_inits,
+                    stmt_index,
+                    ctx,
+                );
+            }
+            InstanceInitsInsertLocation::SuperFnInsideConstructor(super_binding) => {
+                self.create_super_function_inside_constructor(
+                    constructor.as_mut().unwrap(),
+                    instance_inits,
+                    &super_binding,
+                    instance_inits_scope_id,
+                    ctx,
+                );
+            }
+            InstanceInitsInsertLocation::SuperFnOutsideClass(super_binding) => {
+                self.create_super_function_outside_constructor(
+                    instance_inits,
+                    &super_binding,
+                    instance_inits_scope_id,
+                    ctx,
+                );
+            }
+        }
+    }
+
     /// Replace `super()` call(s) in constructor, if required.
     ///
     /// Returns:
@@ -178,7 +295,7 @@ impl<'a> ClassProperties<'a> {
     /// `insert_in_scope_id` in returned `InstanceInitScopes`.
     ///
     /// This function does not create the `_super` function or insert it. That happens later.
-    pub(super) fn replace_super_in_constructor(
+    fn replace_super_in_constructor(
         constructor: &mut Function<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> (InstanceInitScopes, InstanceInitsInsertLocation<'a>) {
@@ -219,7 +336,7 @@ impl<'a> ClassProperties<'a> {
     // TODO: Handle private props in constructor params `class C { #x; constructor(x = this.#x) {} }`.
 
     /// Add a constructor to class containing property initializers.
-    pub(super) fn insert_constructor(
+    fn insert_constructor(
         body: &mut ClassBody<'a>,
         inits: Vec<Expression<'a>>,
         has_super_class: bool,
@@ -262,7 +379,7 @@ impl<'a> ClassProperties<'a> {
     }
 
     /// Insert instance property initializers into constructor body at `insertion_index`.
-    pub(super) fn insert_inits_into_constructor_as_statements(
+    fn insert_inits_into_constructor_as_statements(
         &mut self,
         constructor: &mut Function<'a>,
         inits: Vec<Expression<'a>>,
@@ -280,7 +397,7 @@ impl<'a> ClassProperties<'a> {
     /// Create `_super` function containing instance property initializers,
     /// and insert at top of constructor body.
     /// `var _super = (..._args) => (super(..._args), <inits>, this);`
-    pub(super) fn create_super_function_inside_constructor(
+    fn create_super_function_inside_constructor(
         &mut self,
         constructor: &mut Function<'a>,
         inits: Vec<Expression<'a>>,
@@ -359,7 +476,7 @@ impl<'a> ClassProperties<'a> {
     /// Create `_super` function containing instance property initializers,
     /// and insert it outside class.
     /// `let _super = function() { <inits>; return this; }`
-    pub(super) fn create_super_function_outside_constructor(
+    fn create_super_function_outside_constructor(
         &mut self,
         inits: Vec<Expression<'a>>,
         super_binding: &BoundIdentifier<'a>,

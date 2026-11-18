@@ -76,11 +76,11 @@ impl Cpu {
             Cpu::Neon => quote!(not(all(target_arch = "aarch64", target_feature = "neon"))),
             Cpu::Generic => quote! {
                 any(
-                    all(target_arch = "aarch64", target_feature = "neon"),
                     all(
                         target_arch = "x86_64",
                         target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt"
-                    )
+                    ),
+                    all(target_arch = "aarch64", target_feature = "neon")
                 )
             },
         }

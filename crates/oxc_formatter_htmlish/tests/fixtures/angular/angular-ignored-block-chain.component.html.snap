@@ -1,0 +1,28 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<!-- prettier-ignore -->
+@if (a) {   x } @else if (b) {   y } @else {   z }
+@if (c) {   x }
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<!-- prettier-ignore -->
+@if (a) {   x } @else if (b) {   y } @else {   z }
+@if (c) {
+  x
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<!-- prettier-ignore -->
+@if (a) {   x } @else if (b) {   y } @else {   z }
+@if (c) {
+  x
+}
+
+===================== End =====================

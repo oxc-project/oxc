@@ -141,7 +141,25 @@ pub fn check_semantic_after_transform(
 
     // Create mappings from after transform IDs to rebuilt IDs
     let scope_ids_map = IdMapping::new(scope_ids_after_transform, scope_ids_rebuilt);
-    let symbol_ids_map = IdMapping::new(symbol_ids_after_transform, symbol_ids_rebuilt);
+    let mut symbol_ids_map = IdMapping::new(symbol_ids_after_transform, symbol_ids_rebuilt);
+    // A catch-local `var` can create an enclosing binding with no identifier of its own
+    // in the AST. Match those bindings through the catch parameters that declare them.
+    let catch_var_pairs = symbol_ids_map
+        .pairs()
+        .filter_map(|ids| {
+            Some((
+                scoping_after_transform.catch_var_binding(ids.after_transform)?,
+                scoping_rebuilt.catch_var_binding(ids.rebuilt)?,
+            ))
+        })
+        .collect::<Vec<_>>();
+    for (outer_after_transform, outer_rebuilt) in catch_var_pairs {
+        if let Some(mapped) = symbol_ids_map.0.insert(outer_after_transform, outer_rebuilt)
+            && mapped != outer_rebuilt
+        {
+            errors.push("Catch var binding mapping mismatch");
+        }
+    }
     let reference_ids_map = IdMapping::new(reference_ids_after_transform, reference_ids_rebuilt);
 
     // Compare post-transform semantic data to semantic data from fresh semantic analysis
@@ -388,6 +406,19 @@ impl PostTransformChecker<'_, '_> {
             let scope_ids = self.get_pair(symbol_ids, Scoping::symbol_scope_id);
             if self.remap_scope_ids(scope_ids).is_mismatch() {
                 self.errors.push_mismatch(&mismatch_title("scope ID"), symbol_ids, scope_ids);
+            }
+
+            let catch_var_bindings = self.get_pair(symbol_ids, Scoping::catch_var_binding);
+            let remapped = Pair::new(
+                catch_var_bindings.after_transform.map(|id| self.symbol_ids_map.get(id)),
+                catch_var_bindings.rebuilt.map(Some),
+            );
+            if remapped.is_mismatch() {
+                self.errors.push_mismatch(
+                    &mismatch_title("catch var binding"),
+                    symbol_ids,
+                    catch_var_bindings,
+                );
             }
 
             // NB: Skip checking declarations match - transformer does not set `NodeId`s

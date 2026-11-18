@@ -13,7 +13,7 @@
 //!
 //! - [`test_cpus`]: A test which runs with each feature set the CPU supports.
 //!
-//! Code chooses between versions with a `match` on `to_dyn(cpu)`.
+//! Code chooses between versions with a `match` on `DynCpu::from(cpu)`.
 //!
 //! The macros are only for `oxc_simd`, and crates which use it.
 //! Their output refers to its items by path, e.g. `::oxc_simd::Avx2`.
@@ -207,17 +207,17 @@ mod version;
 ///     unsafe fn __generic(src: &[u8], n: usize, cpu: Generic) -> usize {
 ///         // `Generic` is uninhabited where a SIMD feature set is enabled. See above.
 ///         #[cfg(any(
-///             all(target_arch = "aarch64", target_feature = "neon"),
 ///             all(
 ///                 target_arch = "x86_64",
 ///                 target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt"
-///             )
+///             ),
+///             all(target_arch = "aarch64", target_feature = "neon")
 ///         ))]
 ///         unreachable!();
 ///         __impl(src, n, cpu)
 ///     }
 ///
-///     match to_dyn(cpu) {
+///     match DynCpu::from(cpu) {
 ///         // SAFETY: `Avx2` type guarantees the CPU supports the features `__avx2` uses
 ///         DynCpu::Avx2(cpu) => unsafe { __avx2(src, n, cpu) },
 ///         // SAFETY: `Neon` type guarantees the CPU supports the features `__neon` uses
@@ -238,7 +238,7 @@ pub fn cpu_multiversion(args: TokenStream, item: TokenStream) -> TokenStream {
 
 /// Marks a function as the version of some code for one CPU feature set.
 ///
-/// A `match` on `to_dyn(cpu)` picks between the versions.
+/// A `match` on `DynCpu::from(cpu)` picks between the versions.
 ///
 /// Applied to a function with one of:
 ///

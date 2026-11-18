@@ -1,4 +1,3 @@
-// oxlint-disable vitest/expect-expect -- Benchmarks measure performance instead of asserting behavior.
 // Benchmarks. Run with `pnpm run bench`.
 //
 // Each fixture is printed three ways:

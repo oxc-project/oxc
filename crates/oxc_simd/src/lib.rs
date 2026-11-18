@@ -31,6 +31,6 @@ mod cpu;
 mod prefetch;
 mod simd;
 
-pub use cpu::{Avx2, BASELINE, Cpu, DynCpu, Generic, Neon, to_dyn};
+pub use cpu::{Avx2, BASELINE, Cpu, DynCpu, Generic, Neon};
 pub use prefetch::prefetch;
 pub use simd::{Vec128, Vec256, VecData128, VecData256};
