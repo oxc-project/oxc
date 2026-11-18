@@ -3,8 +3,6 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use memchr::memchr_iter;
-
 use oxc_allocator::{Allocator, ArenaVec, GetAllocator, TakeIn};
 use oxc_ast::ast::{Comment, CommentContent, CommentKind, CommentPosition};
 use oxc_span::Span;
@@ -185,11 +183,15 @@ impl<'a> TriviaBuilder<'a> {
     }
 
     /// Add a line comment. `end` is the line break which ends it, or the end of the source.
+    ///
+    /// `has_legal_tag` is whether the comment contains `@license` or `@preserve`.
+    /// The lexer finds that out while it searches for the end of the comment.
     pub(super) fn add_line_comment(
         &mut self,
         start: u32,
         end: u32,
         kind: CommentKind,
+        has_legal_tag: bool,
         source_text: &str,
         pending: &mut PendingToken,
     ) {
@@ -201,9 +203,7 @@ impl<'a> TriviaBuilder<'a> {
 
         let content_span = comment.content_span();
         let bytes = &source_text.as_bytes()[content_span.start as usize..content_span.end as usize];
-        comment.content = comment_content(bytes, false, content_span, source_text, || {
-            contains_license_or_preserve_comment(bytes)
-        });
+        comment.content = comment_content(bytes, false, has_legal_tag, content_span, source_text);
 
         // This newly added comment may be preceded by a newline.
         // Use `saw_newline_for_comment` which tracks newlines since the last comment or token,
@@ -241,44 +241,6 @@ impl<'a> TriviaBuilder<'a> {
         source_text: &str,
         pending: &mut PendingToken,
     ) {
-        self.add_block_comment_with(start, end, kind, |_| has_legal_tag, source_text, pending);
-    }
-
-    /// Add a block comment which the lexer has not searched for `@license` or `@preserve`.
-    ///
-    /// It is searched here, if what the comment is depends on that.
-    pub(super) fn add_unsearched_block_comment(
-        &mut self,
-        start: u32,
-        end: u32,
-        kind: CommentKind,
-        source_text: &str,
-        pending: &mut PendingToken,
-    ) {
-        self.add_block_comment_with(
-            start,
-            end,
-            kind,
-            contains_license_or_preserve_comment,
-            source_text,
-            pending,
-        );
-    }
-
-    /// Add a block comment.
-    ///
-    /// `has_legal_tag` is called with the content of the comment, if what the comment is depends
-    /// on whether it contains `@license` or `@preserve`.
-    #[inline]
-    fn add_block_comment_with(
-        &mut self,
-        start: u32,
-        end: u32,
-        kind: CommentKind,
-        has_legal_tag: impl FnOnce(&[u8]) -> bool,
-        source_text: &str,
-        pending: &mut PendingToken,
-    ) {
         let mut comment = Comment::new(start, end, kind);
         if self.is_seen_comment(start) {
             self.replay_comment(&comment);
@@ -287,8 +249,7 @@ impl<'a> TriviaBuilder<'a> {
 
         let content_span = comment.content_span();
         let bytes = &source_text.as_bytes()[content_span.start as usize..content_span.end as usize];
-        comment.content =
-            comment_content(bytes, true, content_span, source_text, || has_legal_tag(bytes));
+        comment.content = comment_content(bytes, true, has_legal_tag, content_span, source_text);
 
         // This newly added comment may be preceded by a newline.
         // Use `saw_newline_for_comment` which tracks newlines since the last comment or token,
@@ -307,7 +268,7 @@ impl<'a> TriviaBuilder<'a> {
     /// The comments array is an ordered vec, only add the comment if its not added before,
     /// to avoid situations where the parser needs to rewind and tries to reinsert the comment.
     #[inline]
-    pub(super) fn is_seen_comment(&self, start: u32) -> bool {
+    fn is_seen_comment(&self, start: u32) -> bool {
         self.comments.is_seen(start)
     }
 
@@ -548,15 +509,14 @@ impl<'a> TriviaBuilder<'a> {
 /// Work out what a comment is from its content.
 ///
 /// * `bytes` is the content of the comment, which `content_span` is the span of.
-/// * `has_legal_tag` returns whether the comment contains `@license` or `@preserve`.
-///   It is only called if what the comment is depends on that.
+/// * `has_legal_tag` is whether the comment contains `@license` or `@preserve`.
 #[inline]
 fn comment_content(
     bytes: &[u8],
     is_block: bool,
+    has_legal_tag: bool,
     content_span: Span,
     source_text: &str,
-    has_legal_tag: impl FnOnce() -> bool,
 ) -> CommentContent {
     // Check first byte for quick routing
     match bytes.first() {
@@ -567,7 +527,7 @@ fn comment_content(
             // Ignore webpack comment `/*****/`
             return if bytes.iter().all(|&c| c == b'*') {
                 CommentContent::None
-            } else if has_legal_tag() {
+            } else if has_legal_tag {
                 CommentContent::JsdocLegal
             } else {
                 CommentContent::Jsdoc
@@ -595,7 +555,7 @@ fn comment_content(
 
     // Check for `@license` or `@preserve` anywhere in the comment.
     // This handles cases like `/* @foo @preserve */` where the first `@` doesn't match known patterns.
-    if has_legal_tag() { CommentContent::Legal } else { CommentContent::None }
+    if has_legal_tag { CommentContent::Legal } else { CommentContent::None }
 }
 
 /// Work out what a comment is, where `bytes[start]` is its first byte which is not whitespace,
@@ -715,43 +675,6 @@ fn is_property_key_annotation(source: &str) -> bool {
     matches!(source.trim().strip_prefix(['@', '#']), Some("__KEY__"))
 }
 
-/// Returns `true` if `hay` contains `@license` or `@preserve`.
-#[inline(always)]
-pub(super) fn contains_license_or_preserve_comment(hay: &[u8]) -> bool {
-    const LICENSE_LEN: usize = b"@license".len();
-    const PRESERVE_LEN: usize = b"@preserve".len();
-
-    if hay.len() < LICENSE_LEN {
-        return false;
-    }
-
-    let search_len = hay.len() - LICENSE_LEN + 1;
-
-    for i in memchr_iter(b'@', &hay[..search_len]) {
-        debug_assert!(i < search_len);
-        debug_assert!(hay.len() - i >= LICENSE_LEN);
-        // SAFETY: `search_len` only includes candidate starts with at least `LICENSE_LEN` bytes
-        // remaining, so `i + 1` and the full `@license` range are in bounds.
-        match unsafe { hay.get_unchecked(i + 1) } {
-            b'l'
-                // SAFETY: The candidate bound proves the full `@license` range is in bounds.
-                if unsafe { hay.get_unchecked(i + 2..i + LICENSE_LEN) } == b"icense" =>
-            {
-                return true;
-            }
-            b'p' if hay.len() - i >= PRESERVE_LEN
-                    // SAFETY: The preceding guard proves the full `@preserve` range is in bounds.
-                    && unsafe { hay.get_unchecked(i + 2..i + PRESERVE_LEN) } == b"reserve" =>
-            {
-                return true;
-            }
-            _ => {}
-        }
-    }
-
-    false
-}
-
 fn is_coverage_ignore_file(source: &[u8]) -> bool {
     fn starts_with_directive(source: &[u8], directive: &[u8]) -> bool {
         source
@@ -790,18 +713,20 @@ mod test {
                     let allocator = Allocator::default();
                     let mut builder = TriviaBuilder::new_in(&allocator);
                     let mut pending = PendingToken::START_OF_FILE;
-                    builder.add_unsearched_block_comment(
+                    builder.add_block_comment(
                         0,
                         annotation_end,
                         CommentKind::SingleLineBlock,
+                        false,
                         &source,
                         &mut pending,
                     );
                     if !suffix.is_empty() {
-                        builder.add_unsearched_block_comment(
+                        builder.add_block_comment(
                             annotation_end,
                             source_end,
                             CommentKind::SingleLineBlock,
+                            false,
                             &source,
                             &mut pending,
                         );
@@ -822,10 +747,11 @@ mod test {
 
                     // Replaying the annotation must restore its range without changing
                     // whether it was already applied, even when a later comment exists.
-                    builder.add_unsearched_block_comment(
+                    builder.add_block_comment(
                         0,
                         annotation_end,
                         CommentKind::SingleLineBlock,
+                        false,
                         &source,
                         &mut pending,
                     );

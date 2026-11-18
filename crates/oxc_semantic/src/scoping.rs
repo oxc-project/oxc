@@ -123,13 +123,69 @@ impl fmt::Debug for Scoping {
 
 impl Default for Scoping {
     fn default() -> Self {
+        Self::new_with_allocator(Allocator::default())
+    }
+}
+
+impl Scoping {
+    /// Create an empty [`Scoping`] with capacity for the given number of symbols, references and scopes.
+    ///
+    /// For a small file, the arena which holds symbol names, bindings, and resolved references is created
+    /// with a size estimated from those counts, instead of [`Allocator`]'s default chunk size (16 KiB).
+    /// This matters to consumers which keep the `Scoping`s of many files alive at the same time:
+    /// the default chunk size is far more than most files need.
+    ///
+    /// Larger files are unaffected. Their arena starts with the default chunk size and grows from there.
+    pub(crate) fn with_capacity(symbols: usize, references: usize, scopes: usize) -> Self {
+        // Estimate of bytes the arena needs, fitted to arena usage across the 46k modules of
+        // a large application build.
+        //
+        // * Per symbol: Name (`Ident` + the string itself), `Vec` of resolved references,
+        //   entry in a bindings hash map (including the smaller tables which are discarded as the map grows).
+        // * Per reference: `ReferenceId` in a `Vec` of resolved references (including the smaller
+        //   buffers which are discarded as the `Vec` grows).
+        // * Per scope: Minimum size of a bindings hash table.
+        const BYTES_PER_SYMBOL: usize = 160;
+        const BYTES_PER_REFERENCE: usize = 16;
+        const BYTES_PER_SCOPE: usize = 64;
+
+        // Lower bound on the estimate. `Allocator` rounds this up to a 1 KiB chunk.
+        //
+        // Consumers add symbols and bindings after `SemanticBuilder` has finished
+        // (e.g. a bundler creating a namespace symbol for every module). If the arena has no room
+        // for them, it adds another chunk, which is 16 KiB at minimum. Without this lower bound,
+        // a few symbols added to a file which has next to none of its own would do that.
+        const MIN_ARENA_CAPACITY: usize = 512;
+
+        // `Allocator`'s default chunk size. Only use the estimate if it's smaller than this,
+        // so that the arena's first chunk is never larger than it would be by default.
+        const DEFAULT_ARENA_CAPACITY: usize = 16 * 1024;
+
+        let arena_capacity = symbols
+            .saturating_mul(BYTES_PER_SYMBOL)
+            .saturating_add(references.saturating_mul(BYTES_PER_REFERENCE))
+            .saturating_add(scopes.saturating_mul(BYTES_PER_SCOPE))
+            .max(MIN_ARENA_CAPACITY);
+
+        let allocator = if arena_capacity < DEFAULT_ARENA_CAPACITY {
+            Allocator::with_capacity(arena_capacity)
+        } else {
+            Allocator::default()
+        };
+
+        let mut scoping = Self::new_with_allocator(allocator);
+        scoping.reserve(symbols, references, scopes);
+        scoping
+    }
+
+    fn new_with_allocator(allocator: Allocator) -> Self {
         Self {
             symbol_table: SymbolTable::new(),
             references: IndexVec::new(),
             no_side_effects: FxHashSet::default(),
             enum_data: EnumData::default(),
             scope_table: ScopeTable::new(),
-            cell: ScopingCell::new(Allocator::default(), |allocator| ScopingInner {
+            cell: ScopingCell::new(allocator, |allocator| ScopingInner {
                 symbol_names: ArenaVec::new_in(&allocator),
                 resolved_references: ArenaVec::new_in(&allocator),
                 symbol_redeclarations: FxHashMap::default(),
