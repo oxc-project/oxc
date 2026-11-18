@@ -125,9 +125,6 @@ pub struct Lexer<'a, C: Config> {
     /// `None` is saved when the string contains an invalid escape sequence.
     pub escaped_templates: FxHashMap<u32, Option<JSStr<'a>>>,
 
-    /// `memchr` Finder for end of multi-line comments. Created lazily when first used.
-    multi_line_comment_end_finder: Option<memchr::memmem::Finder<'static>>,
-
     /// Collected tokens in source order.
     tokens: ArenaVec<'a, Token>,
 
@@ -177,7 +174,6 @@ impl<'a, C: Config> Lexer<'a, C> {
             trivia_builder: TriviaBuilder::new_in(allocator),
             escaped_strings: FxHashMap::default(),
             escaped_templates: FxHashMap::default(),
-            multi_line_comment_end_finder: None,
             tokens,
             config,
         }

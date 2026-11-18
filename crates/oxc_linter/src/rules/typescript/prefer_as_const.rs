@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
@@ -12,7 +12,7 @@ use crate::{
     rule::Rule,
 };
 
-fn prefer_as_const_diagnostic(span: Span) -> OxcDiagnostic {
+fn literal_type_annotation_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expected a `const` assertion instead of a literal type annotation.")
         .with_help("You should use `as const` instead of type annotation.")
         .with_label(span)
@@ -35,7 +35,8 @@ declare_oxc_lint!(
     /// `as` with the literal type: explicitly telling the literal type to TypeScript
     ///
     /// `as const` is generally preferred, as it doesn't require re-typing the literal value.
-    /// This rule reports when an `as` with an explicit literal type can be replaced with an `as const`.
+    /// This rule reports when an explicit literal type can be replaced with a const assertion,
+    /// including angle-bracket assertions in `.ts` files.
     ///
     /// ### Examples
     ///
@@ -64,7 +65,7 @@ declare_oxc_lint!(
 
 impl Rule for PreferAsConst {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::TSLiteralType(_) = node.kind() else { return };
+        let AstKind::TSLiteralType(literal_type) = node.kind() else { return };
         let parent = ctx.nodes().parent_node(node.id());
         let owner = match parent.kind() {
             AstKind::TSTypeAnnotation(_) => ctx.nodes().parent_kind(parent.id()),
@@ -102,11 +103,22 @@ impl Rule for PreferAsConst {
                 );
             }
             AstKind::TSAsExpression(as_expression) => {
-                check_and_report_as_expression(
+                if let Some(span) = literal_type_span_if_matches(
                     &as_expression.type_annotation,
                     &as_expression.expression,
-                    ctx,
-                );
+                ) {
+                    report_assertion(span, ctx);
+                }
+            }
+            AstKind::TSTypeAssertion(type_assertion) => {
+                let expression = type_assertion.expression.without_parentheses();
+                let source_text = ctx.source_text();
+                if expression.is_literal()
+                    && expression.span().source_text(source_text)
+                        == literal_type.span.source_text(source_text)
+                {
+                    report_assertion(literal_type.span, ctx);
+                }
             }
             _ => {}
         }
@@ -136,15 +148,12 @@ fn literal_type_span_if_matches(
     }
 }
 
-fn check_and_report_as_expression(
-    ts_type: &TSType,
-    initial_value_expression: &Expression,
-    ctx: &LintContext,
-) {
-    let Some(span) = literal_type_span_if_matches(ts_type, initial_value_expression) else {
-        return;
-    };
-    ctx.diagnostic_with_fix(prefer_as_const_diagnostic(span), |fixer| fixer.replace(span, "const"));
+fn report_assertion(span: Span, ctx: &LintContext) {
+    ctx.diagnostic_with_fix(
+        OxcDiagnostic::warn("Expected a `const` instead of a literal type assertion.")
+            .with_label(span),
+        |fixer| fixer.replace(span, "const"),
+    );
 }
 
 fn check_and_report_type_annotation(
@@ -159,7 +168,7 @@ fn check_and_report_type_annotation(
     };
 
     if can_fix {
-        ctx.diagnostic_with_fix(prefer_as_const_diagnostic(span), |fixer| {
+        ctx.diagnostic_with_fix(literal_type_annotation_diagnostic(span), |fixer| {
             let fixer = fixer.for_multifix();
             let mut fix = fixer.new_fix_with_capacity(2);
             fix.push(fixer.delete(type_annotation));
@@ -167,7 +176,7 @@ fn check_and_report_type_annotation(
             fix.with_message("Use `as const` instead of a literal type annotation.")
         });
     } else {
-        ctx.diagnostic(prefer_as_const_diagnostic(span));
+        ctx.diagnostic(literal_type_annotation_diagnostic(span));
     }
 }
 
@@ -182,8 +191,8 @@ fn test() {
         "let foo = { bar: 1 as const };",
         "let foo = { bar: 'baz' };",
         "let foo = { bar: 2 };",
-        // "let foo = <bar>'bar';",
-        // "let foo = <string>'bar';",
+        "let foo = <bar>'bar';",
+        "let foo = <string>'bar';",
         "let foo = 'bar' as string;",
         "let foo = `bar` as `bar`;",
         "let foo = `bar` as `foo`;",
@@ -216,11 +225,11 @@ fn test() {
                     bar;
                   }
                 ",
-        // "
-        //           class foo {
-        //             bar = <baz>'baz';
-        //           }
-        //         ",
+        "
+                  class foo {
+                    bar = <baz>'baz';
+                  }
+                ",
         "
                   class foo {
                     bar: string = 'baz';
@@ -263,6 +272,12 @@ fn test() {
                     bar(): void {}
                   }
                 ",
+        "let foo = <'bar'>'baz';",
+        "let foo = <4>5;",
+        "let foo = <const>'bar';",
+        r#"let foo = <'bar'>"bar";"#,
+        "let foo = <4>4.0;",
+        "let foo = <-4>-4;",
     ];
 
     let fail = vec![
@@ -314,6 +329,10 @@ fn test() {
               foo = 5 as 5;
             }
                   ",
+        r#"export const x = <"baz">"baz";"#,
+        "let foo = <true>true;",
+        "let foo = <4n>4n;",
+        "let foo = <'bar'>('bar');",
     ];
 
     let fix = vec![
@@ -326,8 +345,8 @@ fn test() {
         ("const example: 'hello' = 'hello';", "const example = 'hello' as const;"),
         (r#"let foo: 'bar' = "bar";"#, r#"let foo = "bar" as const;"#),
         ("const foo: 2 = 2;", "const foo = 2 as const;"),
-        // ("let foo = <'bar'>'bar';", "let foo = <const>'bar';"),
-        // ("let foo = <4>4;", "let foo = <const>4;"),
+        ("let foo = <'bar'>'bar';", "let foo = <const>'bar';"),
+        ("let foo = <4>4;", "let foo = <const>4;"),
         ("let foo = 'bar' as 'bar';", "let foo = 'bar' as const;"),
         ("let foo = 5 as 5;", "let foo = 5 as const;"),
         (
@@ -354,18 +373,18 @@ fn test() {
             }
                   ",
         ),
-        // (
-        //     "
-        //     class foo {
-        //       foo = <'bar'>'bar';
-        //     }
-        //           ",
-        //     "
-        //     class foo {
-        //       foo = <const>'bar';
-        //     }
-        //           ",
-        // ),
+        (
+            "
+            class foo {
+              foo = <'bar'>'bar';
+            }
+                  ",
+            "
+            class foo {
+              foo = <const>'bar';
+            }
+                  ",
+        ),
         (
             "
             class foo {
@@ -390,9 +409,14 @@ fn test() {
             }
                   ",
         ),
+        (r#"export const x = <"baz">"baz";"#, r#"export const x = <const>"baz";"#),
+        ("let foo = <true>true;", "let foo = <const>true;"),
+        ("let foo = <4n>4n;", "let foo = <const>4n;"),
+        ("let foo = <'bar'>('bar');", "let foo = <const>('bar');"),
     ];
 
     Tester::new(PreferAsConst::NAME, PreferAsConst::PLUGIN, pass, fail)
+        .change_rule_path_extension("ts")
         .expect_fix(fix)
         .test_and_snapshot();
 }
