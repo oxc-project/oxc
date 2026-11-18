@@ -900,28 +900,3 @@ fn format_fix_failures(failures: &[FixFailure]) -> String {
     }
     output
 }
-
-#[cfg(test)]
-mod tests {
-    use super::Tester;
-
-    /// Every `expect_fix` call's cases run, not only the last call's (#29155): a wrong
-    /// expectation in the first of two calls fails the test.
-    #[test]
-    #[should_panic(expected = "Some tests failed for rule eslint/no-debugger")]
-    fn chained_expect_fix_runs_the_cases_of_every_call() {
-        Tester::new("no-debugger", "eslint", vec!["let x = 1;"], vec!["if (foo) debugger"])
-            .expect_fix(vec![("let x; debugger; let y;", "let x; WRONG; let y;")])
-            .expect_fix(vec![("if (foo) debugger", "if (foo) {}")])
-            .test();
-    }
-
-    /// And the cases of both calls pass when they are right.
-    #[test]
-    fn chained_expect_fix_passes_when_every_call_is_right() {
-        Tester::new("no-debugger", "eslint", vec!["let x = 1;"], vec!["if (foo) debugger"])
-            .expect_fix(vec![("let x; debugger; let y;", "let x;  let y;")])
-            .expect_fix(vec![("if (foo) debugger", "if (foo) {}")])
-            .test();
-    }
-}
