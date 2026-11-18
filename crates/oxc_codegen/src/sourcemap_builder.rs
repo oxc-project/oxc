@@ -890,14 +890,16 @@ mod test {
         let sm = builder.into_sourcemap();
         // The name `a` not change.
         assert_eq!(
-            sm.get_source_view_token(0_u32)
+            sm.get_source_view_tokens()
+                .next()
                 .as_ref()
                 .and_then(oxc_sourcemap::SourceViewToken::get_name),
             None
         );
         // The name `b` -> `c`, save `b` to token.
         assert_eq!(
-            sm.get_source_view_token(1_u32)
+            sm.get_source_view_tokens()
+                .nth(1)
                 .as_ref()
                 .and_then(oxc_sourcemap::SourceViewToken::get_name),
             Some("b")
@@ -941,7 +943,8 @@ mod test {
         builder.add_source_mapping_for_name(output, Span::new(0, 4), "foo");
         let sm = builder.into_sourcemap();
         assert_eq!(
-            sm.get_source_view_token(0_u32)
+            sm.get_source_view_tokens()
+                .next()
                 .as_ref()
                 .and_then(oxc_sourcemap::SourceViewToken::get_name),
             Some("#foo")
@@ -956,14 +959,16 @@ mod test {
         let sm = builder.into_sourcemap();
         // The name `#a` not change.
         assert_eq!(
-            sm.get_source_view_token(0_u32)
+            sm.get_source_view_tokens()
+                .next()
                 .as_ref()
                 .and_then(oxc_sourcemap::SourceViewToken::get_name),
             None
         );
         // The name `#b` -> `#c`, save `#b` to token, `#` included.
         assert_eq!(
-            sm.get_source_view_token(1_u32)
+            sm.get_source_view_tokens()
+                .nth(1)
                 .as_ref()
                 .and_then(oxc_sourcemap::SourceViewToken::get_name),
             Some("#b")
@@ -979,7 +984,8 @@ mod test {
         builder.add_source_mapping_for_private_name(output, Span::new(0, 4), "foo");
         let sm = builder.into_sourcemap();
         assert_eq!(
-            sm.get_source_view_token(0_u32)
+            sm.get_source_view_tokens()
+                .next()
                 .as_ref()
                 .and_then(oxc_sourcemap::SourceViewToken::get_name),
             Some("ffoo")

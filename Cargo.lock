@@ -2676,7 +2676,7 @@ dependencies = [
 [[package]]
 name = "oxc_sourcemap"
 version = "10.0.0"
-source = "git+https://github.com/oxc-project/oxc-sourcemap?branch=packed-sourcemap#05d65e652b2dc4cde32196ce3f1e134f8f68e1d3"
+source = "git+https://github.com/oxc-project/oxc-sourcemap?branch=remove-get-token#460ce1b30b17de077f4bd838a26b6fcd89fc3828"
 dependencies = [
  "base64-simd",
  "json-escape-simd",
