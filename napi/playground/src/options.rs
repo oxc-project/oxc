@@ -44,6 +44,9 @@ pub struct OxcRunOptions {
 #[derive(Default, Clone)]
 pub struct OxcParserOptions {
     pub extension: String,
+    /// Overrides the module kind inferred from the extension.
+    #[napi(ts_type = "'script' | 'module' | 'commonjs' | 'unambiguous' | undefined")]
+    pub source_type: Option<String>,
     pub allow_return_outside_function: bool,
     pub preserve_parens: bool,
     pub allow_v8_intrinsics: bool,
@@ -60,6 +63,8 @@ pub struct OxcLinterOptions {
 #[derive(Default, Clone)]
 pub struct OxcTransformerOptions {
     pub target: Option<String>,
+    /// Overrides the runtime helper import prefix, passed to `TransformOptions.helper_loader.module_name`.
+    pub helper_module_name: Option<String>,
     pub use_define_for_class_fields: bool,
     pub experimental_decorators: bool,
     pub emit_decorator_metadata: bool,
@@ -156,8 +161,55 @@ impl TryFrom<&OxcManglePropertiesOptions> for oxc::minifier::ManglePropertiesOpt
 }
 
 #[napi(object)]
-#[derive(Clone, Copy, Default)]
-pub struct OxcCompressOptions;
+#[derive(Clone, Default)]
+pub struct OxcCompressOptions {
+    /// Remove debugger statements (default: true).
+    pub drop_debugger: Option<bool>,
+    /// Remove console calls, including evaluation of their arguments (default: false).
+    pub drop_console: Option<bool>,
+    /// Join consecutive variable declarations (default: true).
+    pub join_vars: Option<bool>,
+    /// Combine simple statements using the comma operator (default: true).
+    pub sequences: Option<bool>,
+    /// Remove unused bindings. Use `keep_assign` to retain assigned bindings (default: true).
+    #[napi(ts_type = "boolean | 'keep_assign'")]
+    pub unused: Option<Either<bool, String>>,
+    /// Preserve function and class names during compression (default: false).
+    pub keep_names: Option<bool>,
+}
+
+impl TryFrom<&OxcCompressOptions> for oxc::minifier::CompressOptions {
+    type Error = String;
+
+    fn try_from(options: &OxcCompressOptions) -> Result<Self, Self::Error> {
+        use oxc::minifier::{CompressOptionsKeepNames, CompressOptionsUnused};
+
+        let defaults = Self::smallest();
+        Ok(Self {
+            drop_debugger: options.drop_debugger.unwrap_or(defaults.drop_debugger),
+            drop_console: options.drop_console.unwrap_or(defaults.drop_console),
+            join_vars: options.join_vars.unwrap_or(defaults.join_vars),
+            sequences: options.sequences.unwrap_or(defaults.sequences),
+            unused: match &options.unused {
+                Some(Either::A(true)) => CompressOptionsUnused::Remove,
+                Some(Either::A(false)) => CompressOptionsUnused::Keep,
+                Some(Either::B(value)) if value == "keep_assign" => {
+                    CompressOptionsUnused::KeepAssign
+                }
+                Some(Either::B(value)) => {
+                    return Err(format!("Invalid compress.unused option: `{value}`."));
+                }
+                None => defaults.unused,
+            },
+            keep_names: if options.keep_names.unwrap_or_default() {
+                CompressOptionsKeepNames::all_true()
+            } else {
+                defaults.keep_names
+            },
+            ..defaults
+        })
+    }
+}
 
 #[napi(object)]
 #[derive(Default, Clone)]

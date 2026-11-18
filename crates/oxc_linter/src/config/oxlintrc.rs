@@ -33,7 +33,7 @@ pub struct OxlintOptions {
     /// Note that this requires the `oxlint-tsgolint` package to be installed.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub type_aware: Option<bool>,
-    /// Enable experimental type checking (includes TypeScript compiler diagnostics).
+    /// Enable type checking (includes TypeScript compiler diagnostics).
     ///
     /// Equivalent to passing `--type-check` on the CLI.
     ///
@@ -262,6 +262,7 @@ pub struct Oxlintrc {
     /// Plugin-specific configuration for both built-in and custom plugins.
     /// This includes settings for built-in plugins such as `react` and `jsdoc`
     /// as well as configuring settings for JS custom plugins loaded via `jsPlugins`.
+    #[serde(serialize_with = "OxlintSettings::serialize_with_custom")]
     pub settings: OxlintSettings,
     /// Environments enable and disable collections of global variables.
     pub env: OxlintEnv,

@@ -101,6 +101,11 @@ impl Rule for PreferPromiseRejectErrors {
                 if !is_method_call(call_expr, Some(&["Promise"]), Some(&["reject"]), None, None) {
                     return;
                 }
+                if !call_expr.callee.get_member_expr().is_some_and(|member| {
+                    is_global_promise(member.object().get_inner_expression(), ctx)
+                }) {
+                    return;
+                }
 
                 check_reject_call(call_expr, ctx, self.allow_empty_reject);
             }
@@ -109,7 +114,10 @@ impl Rule for PreferPromiseRejectErrors {
                     return;
                 };
 
-                if ident.name != "Promise" || new_expr.arguments.is_empty() {
+                if ident.name != "Promise"
+                    || !ctx.is_reference_to_global_variable(ident)
+                    || new_expr.arguments.is_empty()
+                {
                     return;
                 }
 
@@ -205,6 +213,14 @@ fn check_reject_in_function(
     }
 }
 
+fn is_global_promise(expr: &Expression, ctx: &LintContext) -> bool {
+    matches!(
+        expr,
+        Expression::Identifier(ident)
+            if ident.name == "Promise" && ctx.is_reference_to_global_variable(ident)
+    )
+}
+
 fn is_undefined(arg: &Argument, ctx: &LintContext) -> bool {
     match arg.as_expression().map(Expression::get_inner_expression) {
         Some(Expression::Identifier(ident)) => {
@@ -262,6 +278,14 @@ fn test() {
         ("new Promise(function (...rest) { foo(5, (rest[1])); });", None),
         // This is fundamentally false, but we can not recognize the value of `i`.
         ("new Promise(function (resolve, ...rest) { rest[i](5); });", None),
+        ("function f() { Promise.reject('x'); var Promise; }", None),
+        ("function f(Promise) { return Promise.reject('x'); }", None),
+        ("{ class Promise { static reject(x) { return x; } } Promise.reject('x'); }", None),
+        (
+            "function g(Promise) { return new Promise((resolve, reject) => { reject('x'); }); }",
+            None,
+        ),
+        ("function f(Promise) { return Promise?.reject('x'); }", None),
     ];
 
     let fail = vec![

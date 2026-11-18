@@ -51,6 +51,12 @@ const categories: Category[] = [
     optionSets: [{ printWidth: 80 }, { printWidth: 100, htmlWhitespaceSensitivity: "ignore" }],
   },
   {
+    // Components with an inline template (`@Component({ template: `…` })`)
+    name: "angular-in-js",
+    projects: [{ dir: join(EXTERNALS_DIR, "ng-zorro-antd"), ext: ".component.ts" }],
+    optionSets: [{ printWidth: 80 }, { printWidth: 100, htmlWhitespaceSensitivity: "ignore" }],
+  },
+  {
     name: "svelte",
     suites: [
       {

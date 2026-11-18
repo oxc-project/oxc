@@ -62,9 +62,73 @@ fn test_remove_no_op_labelled_statement() {
     test("a: { break a; console.log('unreachable'); }", "");
     test("a: { break a; var x = 1; } x = 2;", "var x = 2;");
 
-    test("b: { var x = 1; } x = 2;", "b: var x = 1; x = 2;");
-    test("a: b: { var x = 1; } x = 2;", "a: b: var x = 1; x = 2;");
+    test("b: { var x = 1; } x = 2;", "var x = 1; x = 2;");
+    test("a: b: { var x = 1; } x = 2;", "var x = 1; x = 2;");
     test("foo:;", "");
+}
+
+#[test]
+fn test_remove_unused_labels() {
+    test("a: foo()", "foo()");
+    test("a: { foo(); bar() }", "foo(), bar()");
+    test("a: for (;;) foo()", "for (;;) foo()");
+    test("a: { if (false) break a; foo() }", "foo()");
+    test("a: { let x = foo(); bar(x, x) }", "{ let x = foo(); bar(x, x); }");
+
+    test("foo: while (true) { break foo; }", "for (;;) break;");
+    test("foo: for (x of y) { if (z) continue foo; bar() }", "for (x of y) z || bar();");
+    test("a: do { if (x) continue a; y(); } while (z)", "do x || y(); while (z);");
+    test("a: do { if (x) break a; y(); } while (z)", "do { if (x) break; y(); } while (z);");
+    test("foo: switch (x) { case 1: a(); break foo; }", "x === 1 && a();");
+    test("a: b: while (x) { if (y) break a; foo() }", "for (; x && !y;) foo();");
+    test("a: b: while (x) { if (y) continue b; foo() }", "for (; x;) y || foo();");
+    test(
+        "foo: while (x) { try { if (a) break foo; } finally { b() } bar: { if (c) continue foo; d() } switch (y) { case 1: continue foo; } }",
+        "for (; x;) { try { if (a) break; } finally { b(); } c || (d(), y); }",
+    );
+
+    test("foo: while (x) while (y) break foo;", "foo: for (; x;) for (; y;) break foo;");
+    test(
+        "foo: while (x) switch (y) { case 1: break foo; }",
+        "foo: for (; x;) switch (y) { case 1: break foo; }",
+    );
+    test(
+        "foo: while (x) { if (a) break foo; while (y) if (b) break foo; }",
+        "foo: for (; x && !a;) for (; y;) if (b) break foo;",
+    );
+    test("foo: { while (x) break foo; }", "foo: { for (; x;) break foo; }");
+
+    test("a: x = function () { a: for (;;) if (y) break a; }", "x = function() { for (; !y;); };");
+    test(
+        "a: x = function () { a: for (;;) for (;;) if (y) break a; }",
+        "x = function() { a: for (;;) for (;;) if (y) break a; };",
+    );
+    test(
+        "a: for (;;) { function g() { a: for (;;) for (;;) if (y) break a; } if (x) break a; h(g) }",
+        "for (;;) { function g() { a: for (;;) for (;;) if (y) break a; } if (x) break; h(g); }",
+    );
+    test(
+        "a: for (;;) { h(function () { a: for (;;) for (;;) if (y) break a; }); if (x) break a; }",
+        "for (; h(function() { a: for (;;) for (;;) if (y) break a; }), !x;);",
+    );
+    test(
+        "a: for (;;) { h(class { static { a: for (;;) for (;;) if (y) break a; } }); if (x) break a; }",
+        "for (; h(class { static { a: for (;;) for (;;) if (y) break a; } }), !x;);",
+    );
+
+    let script = SourceType::cjs().with_script(true);
+    test_same_options_source_type("a: function f() {}", script, &default_options());
+    test_same_options_source_type(
+        "{ let y = g(); a: function f() { h(y) } } f();",
+        script,
+        &default_options(),
+    );
+    test_options_source_type(
+        "a: b: function f() {}",
+        "b: function f() {}",
+        script,
+        &default_options(),
+    );
 }
 
 #[test]

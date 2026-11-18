@@ -1,7 +1,7 @@
-commit: d7a0cccb
+commit: 16a2d671
 
 lexer_babel Summary:
-AST Parsed     : 4217/4217 (100.00%)
-Positive Passed: 4216/4217 (99.98%)
+AST Parsed     : 4305/4305 (100.00%)
+Positive Passed: 4304/4305 (99.98%)
 IrregularWhitespaces: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/1.1-html-comments-close-let-declaration-line-separator/input.js
 

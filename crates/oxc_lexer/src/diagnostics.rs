@@ -73,10 +73,10 @@ fn at_numeric_literal_start(source: &str, off: u32) -> bool {
         }
 }
 
-/// The parser's first numeric error: a required digit was missing (empty
-/// span at the char), or identifier chars right after a number.
+/// The parser's first numeric error.
 enum NumErr {
     Unexpected(usize),
+    InvalidSeparator(usize),
     NumberEnd(usize, usize),
 }
 
@@ -163,7 +163,7 @@ impl NumericWalk<'_> {
                 if self.peek().as_ref().is_some_and(&is_digit) {
                     self.bump();
                 } else {
-                    return Err(NumErr::Unexpected(self.i));
+                    return Err(NumErr::InvalidSeparator(self.i - 1));
                 }
             } else if is_digit(&c) {
                 self.bump();
@@ -247,7 +247,7 @@ impl NumericWalk<'_> {
                 if self.peek().is_some_and(|c| c.is_ascii_digit()) {
                     self.bump();
                 } else {
-                    return Err(NumErr::Unexpected(self.i));
+                    return Err(NumErr::InvalidSeparator(self.i - 1));
                 }
             } else if c.is_ascii_digit() {
                 self.bump();
@@ -322,6 +322,11 @@ fn parser_numeric_first_error(source: &str, off: u32, sev: DiagSeverity) -> Opti
         Err(NumErr::NumberEnd(start, end)) => Some(
             diag(sev, "Invalid characters after number")
                 .with_label(Span::new(start as u32, end as u32)),
+        ),
+        Err(NumErr::InvalidSeparator(at)) => Some(
+            diag(sev, "Numeric separators must appear between digits")
+                .with_label(Span::new(at as u32, at as u32 + 1))
+                .with_help("Remove the separator or place it between two digits"),
         ),
     }
 }
@@ -488,11 +493,11 @@ mod tests {
         let g = to_oxc_diagnostic(&d(DiagCode::UnterminatedTemplate, 0, 4), src);
         assert_eq!(g.message.as_ref(), "Unterminated string");
 
-        // separator errors re-walk the literal: `1_000_` at EOF is the
-        // parser's unexpected-end, not "Invalid Number ..."
         let src = "1_000_";
         let g = to_oxc_diagnostic(&d(DiagCode::InvalidNumericSeparator, 0, 6), src);
-        assert_eq!(g.message.as_ref(), "Unexpected end of file");
+        assert_eq!(g.message.as_ref(), "Numeric separators must appear between digits");
+        assert_eq!(label(&g), (5, 1));
+        assert_eq!(g.help.as_deref(), Some("Remove the separator or place it between two digits"));
     }
 
     fn label(g: &OxcDiagnostic) -> (u32, u32) {
@@ -506,9 +511,30 @@ mod tests {
         type Case = (&'static str, DiagCode, u32, u32, &'static str, (u32, u32));
         let cases: &[Case] = &[
             ("x = 0b2;", DiagCode::InvalidNumericLiteral, 4, 2, "Invalid Character `2`", (6, 0)),
-            ("0b0_n;", DiagCode::InvalidNumericSeparator, 0, 5, "Invalid Character `n`", (4, 0)),
-            ("1__03;", DiagCode::InvalidNumericSeparator, 0, 5, "Invalid Character `_`", (2, 0)),
-            ("1_000_", DiagCode::InvalidNumericSeparator, 0, 6, "Unexpected end of file", (6, 0)),
+            (
+                "0b0_n;",
+                DiagCode::InvalidNumericSeparator,
+                0,
+                5,
+                "Numeric separators must appear between digits",
+                (3, 1),
+            ),
+            (
+                "1__03;",
+                DiagCode::InvalidNumericSeparator,
+                0,
+                5,
+                "Numeric separators must appear between digits",
+                (1, 1),
+            ),
+            (
+                "1_000_",
+                DiagCode::InvalidNumericSeparator,
+                0,
+                6,
+                "Numeric separators must appear between digits",
+                (5, 1),
+            ),
             (
                 "0_0;",
                 DiagCode::InvalidNumericSeparator,

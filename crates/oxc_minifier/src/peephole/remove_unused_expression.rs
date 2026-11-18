@@ -776,7 +776,7 @@ impl<'a> PeepholeOptimizations {
         else {
             unreachable!()
         };
-        if Self::is_script_root_scope(ctx) || ctx.current_scope_flags().contains_direct_eval() {
+        if Self::is_script_root_scope(ctx) {
             return false;
         }
         let reference_id = ident.reference_id();
@@ -796,6 +796,13 @@ impl<'a> PeepholeOptimizations {
             return false;
         };
         if symbol_value.references.has_reads() {
+            return false;
+        }
+        // Eval in the binding's scope can read writes from a nested block or function,
+        // even when that nested scope has no direct eval or resolved reads of its own.
+        // This also covers eval in the current scope: the flag propagates to enclosing scopes.
+        let scope_id = ctx.scoping().symbol_scope_id(symbol_id);
+        if ctx.scoping().scope_flags(scope_id).contains_direct_eval() {
             return false;
         }
         let span = assign_expr.span;
@@ -1129,6 +1136,14 @@ impl<'a> PeepholeOptimizations {
                     return ClassRemovability::Keep;
                 }
                 _ => {}
+            }
+            // `static ["prototype"]` throws a `TypeError` when the class is evaluated:
+            // the constructor's own `prototype` is non-writable and non-configurable.
+            if e.r#static()
+                && e.computed()
+                && e.property_key().is_some_and(|key| key.is_specific_static_name("prototype"))
+            {
+                return ClassRemovability::Keep;
             }
             if e.r#static() {
                 let value = match e {

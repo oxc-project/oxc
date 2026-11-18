@@ -6,6 +6,7 @@
 mod expression;
 mod params;
 mod program;
+mod template_expressions;
 
 pub use expression::{FormatName, object_prints_double_brace};
 
@@ -17,7 +18,7 @@ use oxc_formatter_core::Format;
 use oxc_syntax::{identifier::is_white_space, line_terminator::is_line_terminator};
 
 use crate::{
-    JsRoot, ProgramSemicolons,
+    JsEmbeddedIn, JsRoot, ProgramSemicolons,
     ast_nodes::{AstNode, AstNodeKind},
     formatter::{JsFormatter, prelude::*},
 };
@@ -37,14 +38,15 @@ pub fn root_wrapper(root: JsRoot) -> (&'static str, &'static str) {
 
 /// Checks that `program`, the code at `source` of its wrapped text ([`root_wrapper`]),
 /// is the one `root` names and prints without changing what the host reads of it
-/// (`inlines_code`: [`crate::JsEmbeddedIn::inlines_code`]).
+/// (`embedded_in`: what the host does with the code, [`crate::JsEmbeddedIn`]).
 /// Returns [`FormatRoot::ends_in_line_comment`].
 pub fn check_root(
     program: &Program<'_>,
     source: Range<usize>,
     root: JsRoot,
-    inlines_code: bool,
+    embedded_in: JsEmbeddedIn,
 ) -> Result<bool, OxcDiagnostic> {
+    let inlines_code = embedded_in.inlines_code;
     // A host that inlines the code needs a line comment it ends in closed, or it comments out what follows there.
     // Unclosed, the comment runs up to the code's end
     if inlines_code
@@ -99,7 +101,7 @@ pub fn check_root(
         // `type T<` … `> = any`, never empty: `type T<> = any` does not parse
         | (JsRoot::TypeParameters, [Statement::TSTypeAliasDeclaration(_)]) => {}
         (JsRoot::Expression(expression), _) => {
-            expression::check(program, source, expression, inlines_code)?;
+            expression::check(program, source, expression, embedded_in)?;
         }
         _ => return Err(shape_error()),
     }

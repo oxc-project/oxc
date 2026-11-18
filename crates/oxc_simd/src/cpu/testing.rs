@@ -7,7 +7,7 @@ use std::{
     sync::atomic::{AtomicBool, Ordering},
 };
 
-use super::{BASELINE, DynCpu, to_dyn};
+use super::{BASELINE, DynCpu};
 
 impl DynCpu {
     /// Call `f` with each CPU feature set that this CPU supports, best first.
@@ -41,9 +41,9 @@ impl DynCpu {
 
         run(detected);
 
-        // `BASELINE` is the generic feature set,
-        // except where a SIMD feature set is enabled at compile time, and then it's `detected`
-        let baseline = to_dyn(BASELINE);
+        // `BASELINE` is `Generic`, except where a SIMD feature set is enabled at compile time,
+        // when it's the same as `detected`. No need to run `f` twice in that case.
+        let baseline = DynCpu::from(BASELINE);
         if baseline != detected {
             run(baseline);
         }

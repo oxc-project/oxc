@@ -83,7 +83,8 @@ declare_oxc_lint!(
     restriction,
     config = NoParamReassignConfig,
     version = "1.20.0",
-    short_description = "Disallow reassigning function parameters or, optionally, their properties.",
+    short_description =
+        "Disallow reassigning function parameters or, optionally, their properties.",
 );
 
 impl Rule for NoParamReassign {

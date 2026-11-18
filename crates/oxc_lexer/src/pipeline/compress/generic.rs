@@ -1,111 +1,96 @@
+use std::mem::MaybeUninit;
+
 use oxc_simd::{BASELINE, cpu_version};
 use oxc_span::Span;
 
 use crate::token::{is_trivia_byte, matches_tk, tk};
 
-use crate::pipeline::{
-    chunk::{eqm, load64},
-    lanes::Lanes,
-};
+use crate::pipeline::{bitmap::Bitmap, chunk::eqm, kinds::Kinds, lanes::Lanes};
 
 use super::common::{emit_value, invalid_diags};
 
 #[cpu_version(Generic)]
-pub(super) unsafe fn compress_blocks_generic(
-    st: *const u64,
-    kind: *const u8,
+pub(super) fn compress_blocks_generic(
+    token_start: Bitmap,
+    kinds: Kinds,
     b0: usize,
     b1: usize,
-    starts: *mut u32,
-    kinds: *mut u8,
+    starts: &mut [u32],
+    stage_kinds: &mut [u8],
 ) -> usize {
+    let cpu = BASELINE;
+
     let mut m = 0usize;
     for b in b0..b1 {
-        let mut w = *st.add(b);
-        if w == 0 {
-            continue;
-        }
-        let base = (b * 64) as u32;
+        let mut w = token_start.block(b, cpu);
+        let base = b * 64;
         while w != 0 {
-            let bit = w.trailing_zeros();
+            let pos = base + w.trailing_zeros() as usize;
             w &= w - 1;
-            *starts.add(m) = base + bit;
-            *kinds.add(m) = *kind.add((base + bit) as usize);
+            starts[m] = pos as u32;
+            stage_kinds[m] = kinds.get(pos);
             m += 1;
         }
     }
     m
 }
 
-/// Contents of this function is in common with AVX2 implementation.
+/// Write the kept staged tokens to every slot below the returned count; also the SIMD tails.
 #[cpu_version(Generic)]
-pub(super) unsafe fn build_spans_generic(
-    stage_kind: *const u8,
-    stage_pos: *const u32,
-    m: usize,
-    spans: *mut Span,
-    sig_kinds: *mut u8,
+pub(super) fn build_spans_generic(
+    stage_kind: &[u8],
+    stage_pos: &[u32],
+    spans: &mut [MaybeUninit<Span>],
+    sig_kinds: &mut [MaybeUninit<u8>],
 ) -> usize {
     let cpu = BASELINE;
 
-    let sp = spans.cast::<u64>();
     let mut w = 0usize;
-    let mut j = 0usize;
-
-    while j < m {
-        let k = *stage_kind.add(j);
-        *sp.add(w) = stage_pos.add(j).cast::<u64>().read_unaligned();
-        *sig_kinds.add(w) = k;
+    for (j, &k) in stage_kind.iter().enumerate() {
+        spans[w].write(Span::new(stage_pos[j], stage_pos[j + 1]));
+        sig_kinds[w].write(k);
         w += usize::from(!is_trivia_byte(k, cpu) || k == tk!(Hashbang));
-        j += 1;
     }
-
     w
 }
 
 #[cpu_version(Generic)]
-pub(super) unsafe fn lanes_post_generic(
+pub(super) fn lanes_post_generic(
     src: &[u8],
-    out_kinds: *const u8,
-    out_spans: *const Span,
-    m: usize,
-    nn: u32,
+    kinds: &[u8],
+    spans: &[Span],
+    src_len: u32,
     lanes: &mut Lanes,
 ) {
     let cpu = BASELINE;
 
+    let m = kinds.len();
+    let spans = &spans[..m];
     let mut inv = 0u64;
     let mut i = 0usize;
     while i + 8 <= m {
-        let x = load64(out_kinds, i);
+        let x = u64::from_le_bytes(kinds[i..i + 8].try_into().unwrap());
         let mut hits = eqm(x, tk!(Number))
             | eqm(x, tk!(BigInt))
             | eqm(x, tk!(IdentEscaped))
             | eqm(x, tk!(PrivateIdentEscaped));
         inv |= eqm(x, tk!(Invalid));
         while hits != 0 {
-            emit_value(
-                src,
-                out_kinds,
-                out_spans,
-                i + (hits.trailing_zeros() >> 3) as usize,
-                lanes,
-                cpu,
-            );
+            emit_value(src, kinds, spans, i + (hits.trailing_zeros() >> 3) as usize, lanes, cpu);
             hits &= hits - 1;
         }
         i += 8;
     }
     let mut inv_dirty = inv != 0;
     while i < m {
-        let k = *out_kinds.add(i);
+        let k = kinds[i];
         if matches_tk!(k, Number | BigInt | IdentEscaped | PrivateIdentEscaped) {
-            emit_value(src, out_kinds, out_spans, i, lanes, cpu);
+            emit_value(src, kinds, spans, i, lanes, cpu);
         }
         inv_dirty |= k == tk!(Invalid);
         i += 1;
     }
     if inv_dirty {
-        invalid_diags(src, out_kinds, out_spans, m, nn, lanes);
+        invalid_diags(src, kinds, spans, src_len, lanes);
     }
 }

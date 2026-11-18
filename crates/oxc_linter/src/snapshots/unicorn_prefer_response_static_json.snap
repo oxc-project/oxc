@@ -70,3 +70,50 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ──────────────
    ╰────
   help: Replace `new Response(JSON.stringify(...))` with `Response.json(...)`
+
+  ⚠ unicorn(prefer-response-static-json): Prefer using `Response.json(…)` over `JSON.stringify()`.
+   ╭─[prefer_response_static_json.tsx:2:11]
+ 1 │ function foo() { return new // comment
+ 2 │  Response(JSON.stringify(data)) }
+   ·           ──────────────
+   ╰────
+  help: Replace `new Response(JSON.stringify(...))` with `Response.json(...)`
+
+  ⚠ unicorn(prefer-response-static-json): Prefer using `Response.json(…)` over `JSON.stringify()`.
+   ╭─[prefer_response_static_json.tsx:2:11]
+ 1 │ function foo() { return new　// comment
+ 2 │  Response(JSON.stringify(data)) }
+   ·           ──────────────
+   ╰────
+  help: Replace `new Response(JSON.stringify(...))` with `Response.json(...)`
+
+  ⚠ unicorn(prefer-response-static-json): Prefer using `Response.json(…)` over `JSON.stringify()`.
+   ╭─[prefer_response_static_json.tsx:2:11]
+ 1 │ function foo() { return new // comment
+ 2 │  Response(JSON.stringify(data)) }
+   ·           ──────────────
+   ╰────
+  help: Replace `new Response(JSON.stringify(...))` with `Response.json(...)`
+
+  ⚠ unicorn(prefer-response-static-json): Prefer using `Response.json(…)` over `JSON.stringify()`.
+   ╭─[prefer_response_static_json.tsx:1:26]
+ 1 │ new/* comment */Response(JSON.stringify(data))
+   ·                          ──────────────
+   ╰────
+  help: Replace `new Response(JSON.stringify(...))` with `Response.json(...)`
+
+  ⚠ unicorn(prefer-response-static-json): Prefer using `Response.json(…)` over `JSON.stringify()`.
+   ╭─[prefer_response_static_json.tsx:3:10]
+ 2 │ new // comment
+ 3 │ Response(JSON.stringify(data))
+   ·          ──────────────
+   ╰────
+  help: Replace `new Response(JSON.stringify(...))` with `Response.json(...)`
+
+  ⚠ unicorn(prefer-response-static-json): Prefer using `Response.json(…)` over `JSON.stringify()`.
+   ╭─[prefer_response_static_json.tsx:3:16]
+ 2 │ new // comment
+ 3 │ (( Response ))(JSON.stringify(data))
+   ·                ──────────────
+   ╰────
+  help: Replace `new Response(JSON.stringify(...))` with `Response.json(...)`

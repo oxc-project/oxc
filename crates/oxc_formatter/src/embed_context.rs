@@ -41,8 +41,7 @@ pub const HTML_PLACEHOLDER_SUFFIX: &str = "_IN_JS";
 /// One in a `<script>` stands in for an expression of any precedence (`f((${a + b}) / 2)`),
 /// so the parens around it in the source stay.
 pub fn is_html_placeholder(name: &str) -> bool {
-    name.strip_prefix(HTML_PLACEHOLDER_PREFIX)
-        .and_then(|id| id.strip_suffix(HTML_PLACEHOLDER_SUFFIX))
+    name.strip_circumfix(HTML_PLACEHOLDER_PREFIX, HTML_PLACEHOLDER_SUFFIX)
         .is_some_and(|id| !id.is_empty() && id.bytes().all(|b| b.is_ascii_digit() || b == b'_'))
 }
 
@@ -86,11 +85,9 @@ pub enum ProgramSemicolons {
     /// `;` tells statements from an expression: the host reads code holding one as statements,
     /// other code as an expression it calls or evaluates (Vue's `@click`).
     ///
-    /// A lone expression statement keeps its `;` only when it is a reference or a function, whatever `semi` says:
-    /// without it, the host calls it (Vue `foo;` runs nothing, `foo` calls it).
-    /// Another one reads the same without it, but for its value, which is no part of what the host reads
-    /// (Vue uses a handler's value only to report a promise it rejects).
-    /// Under `semi: false`, `;` still separates statements, but after the last, and ends a lone one that is no expression.
+    /// Under `semi: false`, `;` still ends each top-level statement but the last, and a lone one, an expression's too:
+    /// without it, the host reads the code otherwise
+    /// (Vue calls `foo`, where `foo;` runs nothing; vue-tsc types `a = 1`'s value, where `a = 1;` has none).
     MarksStatements,
 }
 
@@ -104,6 +101,10 @@ pub enum ProgramLayout {
 }
 
 /// How an expression prints.
+///
+/// Each field but `layout` is one fact of the host, independent of the others:
+/// where it ends the code, what it puts around it, how it reads it.
+/// Any combination is one a host can have; a host's use only names its own.
 #[derive(Clone, Copy, Debug)]
 pub struct ExpressionRoot {
     pub layout: ExpressionLayout,
@@ -146,4 +147,8 @@ pub struct JsEmbeddedIn {
     /// and a top-level sequence (`a, b`), which there reads as more than one value, is left as written
     /// (but in parens, the source's or the host's: [`ExpressionRoot::in_parens`]).
     pub inlines_code: bool,
+    /// The host reads the code with a parser of its own, for a subset of JS (Angular's expressions):
+    /// code holding syntax outside it, which the host reads otherwise or not at all, is left as written (`delete(x)` calls `delete`),
+    /// and no trailing comma prints in a call's arguments or an arrow's params, which it rejects (`f(a,)`).
+    pub template_expressions_only: bool,
 }

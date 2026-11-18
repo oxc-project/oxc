@@ -13,8 +13,8 @@ use crate::{
     },
     output::Output,
     schema::{
-        BoxDef, CellDef, Def, EnumDef, OptionDef, PointerDef, PrimitiveDef, Schema, StructDef,
-        TypeDef, TypeId, VecDef,
+        BoxDef, CellDef, Def, EnumDef, FieldDef, OptionDef, PointerDef, PrimitiveDef, Schema,
+        StructDef, TypeDef, TypeId, VecDef,
         extensions::layout::{GetLayout, GetOffset},
     },
     utils::{format_cow, upper_case_first, write_it},
@@ -276,11 +276,25 @@ impl<'s> WalkStatuses<'s> {
     }
 
     fn struct_is_walked(&mut self, struct_def: &StructDef) -> bool {
-        if !struct_def.generates_derive(self.estree_derive_id) || struct_def.estree.skip {
+        // Structs which have no class can't be passed to visitors, but can be walked through
+        // to reach their fields. These are structs which are:
+        // * Marked `#[estree(skip)]` (e.g. `ClassHeritage`).
+        // * Not ESTree at all, but visited by Rust's `Visit` (e.g. `FormalParameterRest`).
+        let is_intermediary = if struct_def.generates_derive(self.estree_derive_id) {
+            assert!(
+                !struct_def.estree.skip || struct_def.estree.no_type,
+                "Struct `{}` is `#[estree(skip)]` but is reachable from walked fields. \
+                It must also be `#[estree(no_type)]`, because it has no class to pass to visitors.",
+                struct_def.name()
+            );
+            struct_def.estree.skip
+        } else if struct_def.visit.has_visitor() {
+            true
+        } else {
             return false;
-        }
+        };
 
-        let mut has_type_field = !struct_def.estree.no_type;
+        let mut has_type_field = !is_intermediary && !struct_def.estree.no_type;
         if has_type_field {
             // Set status early to avoid infinite loop
             self.statuses[struct_def.id()] = WalkStatus::Walk;
@@ -288,12 +302,12 @@ impl<'s> WalkStatuses<'s> {
 
         let mut has_walked_field = false;
         for field in &struct_def.fields {
-            if field.name() == "type" {
+            if field.name() == "type" && !is_intermediary {
                 if !has_type_field {
                     has_type_field = true;
                     self.statuses[struct_def.id()] = WalkStatus::Walk;
                 }
-            } else if !should_skip_field(field, self.schema) {
+            } else if is_walked_field(field, self.schema) {
                 has_walked_field |= self.is_walked(field.type_def(self.schema));
             }
         }
@@ -309,7 +323,8 @@ impl<'s> WalkStatuses<'s> {
     }
 
     fn enum_is_walked(&mut self, enum_def: &EnumDef) -> bool {
-        if !enum_def.generates_derive(self.estree_derive_id) || enum_def.estree.skip {
+        // Enums which are not ESTree, but are visited by Rust's `Visit`, can be walked through
+        if !enum_def.generates_derive(self.estree_derive_id) && !enum_def.visit.has_visitor() {
             return false;
         }
 
@@ -604,7 +619,37 @@ fn generate_struct(
     i32_primitive_def: &PrimitiveDef,
     schema: &Schema,
 ) {
-    if !struct_def.generates_derive(estree_derive_id) || struct_def.estree.skip {
+    let is_estree = struct_def.generates_derive(estree_derive_id);
+    if !is_estree && !is_walked {
+        return;
+    }
+
+    // Walk fields in source order.
+    // Only walk fields which need to be walked themselves.
+    let mut walk_stmts = String::new();
+    for field in &struct_def.fields {
+        let field_type = field.type_def(schema);
+        if is_walked_field(field, schema) && walk_statuses[field_type.id()] == WalkStatus::Walk {
+            let inner_walk_fn_name = field_type.walk_name(schema);
+            let pos = pos_offset(field.offset_64());
+            write_it!(walk_stmts, "{inner_walk_fn_name}({pos}, ast, visitors);\n");
+        }
+    }
+
+    // Structs which are not in ESTree AST don't get a class.
+    // But they may need a walk function, to walk their fields
+    // (e.g. `ClassHeritage` which is `#[estree(skip)]`, or `FormalParameterRest` which is not ESTree).
+    // `WalkStatuses` ensures these are never visitable nodes.
+    if !is_estree || struct_def.estree.skip {
+        if is_walked {
+            let walk_fn_name = struct_def.walk_name(schema);
+            #[rustfmt::skip]
+            write_it!(state.walkers, "
+                function {walk_fn_name}(pos, ast, visitors) {{
+                    {walk_stmts}
+                }}
+            ");
+        }
         return;
     }
 
@@ -614,7 +659,6 @@ fn generate_struct(
     let mut getters = String::new();
     let mut to_json = String::new();
     let mut extra_props = String::new();
-    let mut walk_stmts = String::new();
 
     let mut has_type_field = false;
     for field in &struct_def.fields {
@@ -693,13 +737,6 @@ fn generate_struct(
         }
 
         write_it!(to_json, "{field_name}: this.{field_name},\n");
-
-        // Only walk fields which need to be walked themselves
-        if walk_statuses[field_type.id()] == WalkStatus::Walk {
-            let inner_walk_fn_name = field_type.walk_name(schema);
-            let pos = pos_offset(field.offset_64());
-            write_it!(walk_stmts, "{inner_walk_fn_name}({pos}, ast, visitors);\n");
-        }
     }
 
     let type_prop_init = if !has_type_field && !struct_def.estree.no_type {
@@ -827,7 +864,10 @@ fn generate_enum(
     estree_derive_id: DeriveId,
     schema: &Schema,
 ) {
-    if !enum_def.generates_derive(estree_derive_id) || enum_def.estree.skip {
+    // Enums which are not in ESTree AST (not ESTree, or marked `#[estree(skip)]`) don't get
+    // a construct function, but may need a walk function if they're contained in a walked field
+    let is_constructed = enum_def.generates_derive(estree_derive_id) && !enum_def.estree.skip;
+    if !is_constructed && !is_walked {
         return;
     }
 
@@ -863,27 +903,31 @@ fn generate_enum(
                 write_it!(walk_cases, "return;");
             }
         } else {
-            write_it!(
-                construct_cases,
-                "return '{}';",
-                get_fieldless_variant_value(enum_def, variant)
-            );
+            if is_constructed {
+                write_it!(
+                    construct_cases,
+                    "return '{}';",
+                    get_fieldless_variant_value(enum_def, variant)
+                );
+            }
             write_it!(walk_cases, "return;");
         }
     }
 
     // Generate construct function
-    let construct_fn_name = enum_def.constructor_name(schema);
+    if is_constructed {
+        let construct_fn_name = enum_def.constructor_name(schema);
 
-    #[rustfmt::skip]
-    write_it!(state.constructors, "
-        function {construct_fn_name}(pos, ast) {{
-            switch(ast.buffer[pos]) {{
-                {construct_cases}
-                default: throw new Error(`Unexpected discriminant ${{ast.buffer[pos]}} for {type_name}`);
+        #[rustfmt::skip]
+        write_it!(state.constructors, "
+            function {construct_fn_name}(pos, ast) {{
+                switch(ast.buffer[pos]) {{
+                    {construct_cases}
+                    default: throw new Error(`Unexpected discriminant ${{ast.buffer[pos]}} for {type_name}`);
+                }}
             }}
-        }}
-    ");
+        ");
+    }
 
     // Generate walk function
     if is_walked {
@@ -1009,7 +1053,8 @@ fn generate_option(
     schema: &Schema,
 ) {
     let inner_type = option_def.inner_type(schema);
-    if should_skip_innermost_type(inner_type, estree_derive_id, schema) {
+    let is_constructed = !should_skip_innermost_type(inner_type, estree_derive_id, schema);
+    if !is_constructed && !is_walked {
         return;
     }
 
@@ -1045,16 +1090,18 @@ fn generate_option(
     };
 
     // Generate construct function
-    let construct_fn_name = option_def.constructor_name(schema);
-    let inner_construct_fn_name = inner_type.constructor_name(schema);
+    if is_constructed {
+        let construct_fn_name = option_def.constructor_name(schema);
+        let inner_construct_fn_name = inner_type.constructor_name(schema);
 
-    #[rustfmt::skip]
-    write_it!(state.constructors, "
-        function {construct_fn_name}(pos, ast) {{
-            if ({none_condition}) return null;
-            return {inner_construct_fn_name}({payload_pos}, ast);
-        }}
-    ");
+        #[rustfmt::skip]
+        write_it!(state.constructors, "
+            function {construct_fn_name}(pos, ast) {{
+                if ({none_condition}) return null;
+                return {inner_construct_fn_name}({payload_pos}, ast);
+            }}
+        ");
+    }
 
     // Generate walk function
     if is_walked {
@@ -1079,20 +1126,23 @@ fn generate_box(
     schema: &Schema,
 ) {
     let inner_type = box_def.inner_type(schema);
-    if should_skip_innermost_type(inner_type, estree_derive_id, schema) {
+    let is_constructed = !should_skip_innermost_type(inner_type, estree_derive_id, schema);
+    if !is_constructed && !is_walked {
         return;
     }
 
     // Generate construct function
-    let construct_fn_name = box_def.constructor_name(schema);
-    let inner_construct_fn_name = inner_type.constructor_name(schema);
+    if is_constructed {
+        let construct_fn_name = box_def.constructor_name(schema);
+        let inner_construct_fn_name = inner_type.constructor_name(schema);
 
-    #[rustfmt::skip]
-    write_it!(state.constructors, "
-        function {construct_fn_name}(pos, ast) {{
-            return {inner_construct_fn_name}(ast.buffer.int32[pos >> 2], ast);
-        }}
-    ");
+        #[rustfmt::skip]
+        write_it!(state.constructors, "
+            function {construct_fn_name}(pos, ast) {{
+                return {inner_construct_fn_name}(ast.buffer.int32[pos >> 2], ast);
+            }}
+        ");
+    }
 
     // Generate walk function
     if is_walked {
@@ -1117,47 +1167,51 @@ fn generate_vec(
     schema: &Schema,
 ) {
     let inner_type = vec_def.inner_type(schema);
-    if should_skip_innermost_type(inner_type, estree_derive_id, schema) {
+    let is_constructed = !should_skip_innermost_type(inner_type, estree_derive_id, schema);
+    if !is_constructed && !is_walked {
         return;
     }
 
-    let construct_fn_name = vec_def.constructor_name(schema);
-    let (inner_construct_fn_name, inner_construct_fn) = match inner_type {
-        TypeDef::Struct(inner_struct) => {
-            let inner_struct_name = inner_struct.name();
-            let inner_construct_fn_name = format!("construct{inner_struct_name}");
-            #[rustfmt::skip]
-            let inner_construct_fn = format!("
-                function {inner_construct_fn_name}(pos, ast) {{
-                    return new {inner_struct_name}(pos, ast);
-                }}
-            ");
-            (inner_construct_fn_name, inner_construct_fn)
-        }
-        _ => (inner_type.constructor_name(schema), String::new()),
-    };
     let inner_type_size = inner_type.layout_64().size;
 
     let ptr_pos32 = pos32_offset(VEC_PTR_FIELD_OFFSET);
     let len_pos32 = pos32_offset(VEC_LEN_FIELD_OFFSET);
 
     // Generate construct function
-    #[rustfmt::skip]
-    write_it!(state.constructors, "
-        function {construct_fn_name}(pos, ast) {{
-            const {{ int32 }} = ast.buffer,
-                pos32 = pos >> 2;
-            return new NodeArray(
-                int32[{ptr_pos32}],
-                int32[{len_pos32}],
-                {inner_type_size},
-                {inner_construct_fn_name},
-                ast,
-            );
-        }}
+    if is_constructed {
+        let construct_fn_name = vec_def.constructor_name(schema);
+        let (inner_construct_fn_name, inner_construct_fn) = match inner_type {
+            TypeDef::Struct(inner_struct) => {
+                let inner_struct_name = inner_struct.name();
+                let inner_construct_fn_name = format!("construct{inner_struct_name}");
+                #[rustfmt::skip]
+                let inner_construct_fn = format!("
+                    function {inner_construct_fn_name}(pos, ast) {{
+                        return new {inner_struct_name}(pos, ast);
+                    }}
+                ");
+                (inner_construct_fn_name, inner_construct_fn)
+            }
+            _ => (inner_type.constructor_name(schema), String::new()),
+        };
 
-        {inner_construct_fn}
-    ");
+        #[rustfmt::skip]
+        write_it!(state.constructors, "
+            function {construct_fn_name}(pos, ast) {{
+                const {{ int32 }} = ast.buffer,
+                    pos32 = pos >> 2;
+                return new NodeArray(
+                    int32[{ptr_pos32}],
+                    int32[{len_pos32}],
+                    {inner_type_size},
+                    {inner_construct_fn_name},
+                    ast,
+                );
+            }}
+
+            {inner_construct_fn}
+        ");
+    }
 
     // Generate walk function
     if is_walked {
@@ -1177,6 +1231,29 @@ fn generate_vec(
                 }}
             }}
         ");
+    }
+}
+
+/// Get if a struct field should be walked.
+///
+/// A field which is skipped (`#[estree(skip)]`, `#[estree(prepend_to)]`, or `#[estree(append_to)]`)
+/// is not serialized as its own property, but its value is often serialized some other way,
+/// e.g. `Class::heritage` via `add_fields` on `Class`,
+/// `VariableDeclarator::type_annotation` via `#[estree(via = VariableDeclaratorId)]` on `id`,
+/// or `ArrayPattern::rest` appended to `elements`.
+/// So walk skipped fields too, if the innermost type has a visitor in Rust's `Visit` trait.
+/// That excludes fields which aren't part of the AST tree e.g. `Program::comments`.
+///
+/// Whether the field is actually walked also depends on whether its type contains any walked nodes.
+fn is_walked_field(field: &FieldDef, schema: &Schema) -> bool {
+    if !should_skip_field(field, schema) {
+        return true;
+    }
+
+    match field.type_def(schema).innermost_type(schema) {
+        TypeDef::Struct(struct_def) => struct_def.visit.has_visitor(),
+        TypeDef::Enum(enum_def) => enum_def.visit.has_visitor(),
+        _ => false,
     }
 }
 

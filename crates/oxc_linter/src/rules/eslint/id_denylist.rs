@@ -315,7 +315,6 @@ fn member_is_assignment_target(member_node: &AstNode, ctx: &LintContext) -> bool
 fn test() {
     use crate::tester::{TestCase, Tester};
 
-    // spellchecker:off
     let pass = vec![
         (r#"foo = "bar""#, Some(serde_json::json!(["bar"]))),
         (r#"bar = "bar""#, Some(serde_json::json!(["foo"]))),
@@ -591,7 +590,6 @@ fn test() {
             Some(serde_json::json!({ "globals": { "Map": "off" } })),
         )),
     ]);
-    // spellchecker:on
 
     Tester::new(IdDenylist::NAME, IdDenylist::PLUGIN, pass, fail).test_and_snapshot();
 }

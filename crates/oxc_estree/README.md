@@ -4,16 +4,14 @@ ESTree compatibility layer for serialization and interoperability.
 
 ## Overview
 
-This crate provides compatibility with the ESTree AST specification, primarily for serialization purposes. It enables oxc AST nodes to be serialized to and from JSON in ESTree format, facilitating interoperability with other JavaScript tools.
+This crate provides compatibility with the ESTree AST specification, primarily for serialization purposes. It enables oxc AST nodes to be serialized to JSON in ESTree format, facilitating interoperability with other JavaScript tools.
 
 ## Key Features
 
-- **ESTree compatibility**: Convert oxc AST to/from standard ESTree format
-- **Serialization support**: JSON serialization/deserialization via serde
+- **ESTree compatibility**: Serialize oxc AST nodes in ESTree or TS-ESTree format
+- **Serialization support**: Custom JSON serializers and the `ESTree` trait; AST deserialization is not provided
 - **Tool interoperability**: Enable integration with ESTree-based tools
 - **Optional feature**: Only enabled when `serialize` feature is active
-
-## Usage
 
 ## Architecture
 

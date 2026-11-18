@@ -20,7 +20,7 @@ use oxc_formatter_css::{CssEmbeddedIn, CssFormatOptions, CssVariant};
 use oxc_formatter_graphql::GraphqlFormatOptions;
 use oxc_formatter_htmlish::{
     CssInHtmlStyleAttribute, HtmlishEmbeddedIn, HtmlishFormatOptions, HtmlishVariant,
-    JsInHtmlEventHandler, JsInVueTemplate,
+    JsInAngularTemplate, JsInHtmlEventHandler, JsInVueTemplate,
 };
 use oxc_formatter_json::{JsonFormatOptions, JsonVariant};
 use oxc_formatter_markdown::{MarkdownFormatOptions, XxxInMarkdownCodeBlock};
@@ -445,11 +445,38 @@ fn js_root_of(request: &DispatchRequest<'_>) -> (JsRoot, JsEmbeddedIn) {
         };
         // Every one but an interpolation is a `"`-quoted attribute value
         let in_html_attribute = part != JsInVueTemplate::Interpolation;
-        return (root, JsEmbeddedIn { in_html_attribute, inlines_code: true });
+        return (
+            root,
+            JsEmbeddedIn { in_html_attribute, inlines_code: true, ..JsEmbeddedIn::default() },
+        );
+    }
+    if let Some(&part) = request.parent_context_as::<JsInAngularTemplate>() {
+        let root = match part {
+            JsInAngularTemplate::Interpolation | JsInAngularTemplate::ValueInterpolation => {
+                ExpressionRoot { ends_at_double_brace: true, ..expression(ExpressionLayout::Bare) }
+            }
+            JsInAngularTemplate::Binding { tailwind_classes } => ExpressionRoot {
+                tailwind_classes,
+                ..expression(ExpressionLayout::Hug { literals: true })
+            },
+            JsInAngularTemplate::AttributePiece { tailwind_classes } => {
+                ExpressionRoot { tailwind_classes, ..expression(ExpressionLayout::Bare) }
+            }
+            JsInAngularTemplate::BlockPiece => expression(ExpressionLayout::Bare),
+        };
+        let embedded_in = JsEmbeddedIn {
+            // Every one but an interpolation's and a block's is a `"`-quoted attribute value
+            in_html_attribute: part.in_html_attribute(),
+            // Angular compiles its own reading of the code: nothing is inlined
+            inlines_code: false,
+            // Its expression grammar, no trailing comma in calls and params included
+            template_expressions_only: true,
+        };
+        return (JsRoot::Expression(root), embedded_in);
     }
     if request.parent_context_as::<JsInHtmlEventHandler>().is_some() {
         let root = in_attribute(ProgramSemicolons::LoneExpressionOmitted);
-        return (root, JsEmbeddedIn { in_html_attribute: true, inlines_code: false });
+        return (root, JsEmbeddedIn { in_html_attribute: true, ..JsEmbeddedIn::default() });
     }
     let semicolons = if request.parent_context_as::<XxxInMarkdownCodeBlock>().is_some() {
         ProgramSemicolons::LoneJsxOmitted

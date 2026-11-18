@@ -74,8 +74,12 @@ fn is_global_obj(s: &str) -> bool {
     matches!(s, "Atomics" | "Intl" | "JSON" | "Math" | "Reflect")
 }
 
-fn global_this_member<'a>(expr: &'a MemberExpression<'_>) -> Option<&'a str> {
-    if expr.object().is_specific_id(GLOBAL_THIS) {
+fn global_this_member<'a>(
+    expr: &'a MemberExpression<'_>,
+    ctx: &LintContext<'_>,
+) -> Option<&'a str> {
+    let Expression::Identifier(ident) = expr.object().get_inner_expression() else { return None };
+    if ident.name == GLOBAL_THIS && ctx.is_reference_to_global_variable(ident) {
         expr.static_property_name().and_then(JSStr::as_str)
     } else {
         None
@@ -106,7 +110,7 @@ fn resolve_global_binding<'a, 'b: 'a>(
                 }
                 // handles "let a = globalThis.JSON; let b = a; a();"
                 Some(parent_expr) if parent_expr.is_member_expression() => {
-                    global_this_member(parent_expr.to_member_expression())
+                    global_this_member(parent_expr.to_member_expression(), ctx)
                 }
                 _ => None,
             }
@@ -138,7 +142,7 @@ fn check_callee<'a>(callee: &'a Expression, span: Span, ctx: &LintContext<'a>) {
 
         match_member_expression!(Expression) => {
             // handle new globalThis.Math(), globalThis.Math(), etc
-            if let Some(global_member) = global_this_member(callee.to_member_expression())
+            if let Some(global_member) = global_this_member(callee.to_member_expression(), ctx)
                 && is_global_obj(global_member)
             {
                 ctx.diagnostic(no_obj_calls_diagnostic(global_member, span));
@@ -292,5 +296,58 @@ fn test() {
 
     let pass = vec![("Math();", None, Some(serde_json::json!({ "globals": { "Math": "off" } })))];
     let fail = vec![("Math();", None, None)];
+    Tester::new(NoObjCalls::NAME, NoObjCalls::PLUGIN, pass, fail).test();
+}
+
+#[test]
+fn shadowed_global_this() {
+    use crate::tester::Tester;
+
+    let mut pass = vec![
+        "const globalThis = { Math() {} }; globalThis.Math();".to_string(),
+        "import globalThis from 'custom-globals'; globalThis.Math();".to_string(),
+        "try {} catch (globalThis) { globalThis.Math(); }".to_string(),
+    ];
+    let mut fail = Vec::new();
+    for name in ["Math", "JSON", "Reflect", "Atomics", "Intl"] {
+        pass.push(format!("function f(globalThis) {{ globalThis.{name}(); }}"));
+        pass.push(format!("function f(globalThis) {{ new globalThis.{name}(); }}"));
+        pass.push(format!("function f(globalThis) {{ globalThis['{name}'](); }}"));
+        pass.push(format!("function f(globalThis) {{ globalThis?.{name}(); }}"));
+        pass.push(format!(
+            "function f(globalThis) {{ const alias = globalThis.{name}; alias(); }}"
+        ));
+        pass.push(format!(
+            "function f(globalThis) {{ const alias = globalThis.{name}; new alias(); }}"
+        ));
+        fail.push(format!("globalThis.{name}();"));
+        fail.push(format!("new globalThis.{name}();"));
+        fail.push(format!("const alias = globalThis.{name}; alias();"));
+    }
+    Tester::new(NoObjCalls::NAME, NoObjCalls::PLUGIN, pass, fail).test();
+}
+
+#[test]
+fn wrapped_global_this() {
+    use crate::tester::Tester;
+
+    let mut pass = Vec::new();
+    let mut fail = Vec::new();
+    for object in [
+        "(globalThis)",
+        "(globalThis as any)",
+        "(globalThis satisfies any)",
+        "globalThis!",
+        "(globalThis<string>)",
+    ] {
+        for call in [
+            format!("{object}.Math();"),
+            format!("new {object}.Math();"),
+            format!("const alias = {object}.Math; alias();"),
+        ] {
+            pass.push(format!("function f(globalThis: any) {{ {call} }}"));
+            fail.push(call);
+        }
+    }
     Tester::new(NoObjCalls::NAME, NoObjCalls::PLUGIN, pass, fail).test();
 }

@@ -618,12 +618,10 @@ impl<'a> JsxImpl<'a> {
             opening_element.as_ref().map_or(0, |e| e.attributes.len()),
             ctx,
         );
-        let (element_name, attributes) = opening_element
-            .map(|e| {
-                let e = e.unbox();
-                (Some(e.name), Some(e.attributes))
-            })
-            .unwrap_or_default();
+        let (element_name, attributes) = opening_element.map_or_default(|e| {
+            let e = e.unbox();
+            (Some(e.name), Some(e.attributes))
+        });
 
         if let Some(attributes) = attributes {
             let attributes_len = attributes.len();

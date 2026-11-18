@@ -36,7 +36,8 @@ fn main() -> CliRunResult {
     // stdio is blocked by LineWriter, use a BufWriter to reduce syscalls.
     // See `https://github.com/rust-lang/rust/issues/60673`.
     let mut stdout = BufWriter::new(std::io::stdout());
+    let mut stderr = BufWriter::new(std::io::stderr());
 
     // Run without external linter (no JS plugins)
-    CliRunner::new(command, None).run(&mut stdout)
+    CliRunner::new(command, None).run(&mut stdout, &mut stderr)
 }

@@ -4,13 +4,14 @@
 <template>
   <div :class="['p-4 flex', { 'p-4 flex': a }, `p-4 flex ${b}`]" v-bind:class="a ? 'p-4 flex' : 'm-2 block'" :foo="'p-4 flex'" :bar="'p-4 flex'" v-baz="'p-4 flex'">{{ 'p-4 flex' }}</div>
   <p :class.prop="'p-4 flex'" .class="'p-4 flex'" />
+  <p qux="p-4 flex" :qux="'p-4 flex'" />
 </template>
 
 `````
 
 # Output
 
-## `{"sortTailwindcss":{"attributes":["bar","v-baz"]}}`
+## `{"sortTailwindcss":{"attributes":["bar","v-baz",":qux"]}}`
 
 `````vue
 <template>
@@ -24,6 +25,7 @@
     {{ "p-4 flex" }}
   </div>
   <p :class.prop="'p-4 flex'" .class="'p-4 flex'" />
+  <p qux="flex p-4" :qux="'flex p-4'" />
 </template>
 
 `````
