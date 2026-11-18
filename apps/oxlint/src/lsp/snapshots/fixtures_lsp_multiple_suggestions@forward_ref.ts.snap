@@ -44,14 +44,14 @@ TextEdit: TextEdit {
     range: Range {
         start: Position {
             line: 0,
-            character: 11,
+            character: 17,
         },
         end: Position {
             line: 0,
-            character: 18,
+            character: 17,
         },
     },
-    new_text: "(props, ref)",
+    new_text: ", ref",
 }
 
 
