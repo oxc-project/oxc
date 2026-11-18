@@ -99,7 +99,7 @@ impl<'a> Error<'a> {
         let message = Str::from_in(diagnostic.message.as_ref(), allocator);
         let help_message =
             diagnostic.help.as_ref().map(|help| Str::from_in(help.as_ref(), allocator));
-        let rendered = diagnostic.render_with_source_code(named_source.clone());
+        let rendered = diagnostic.render_with_source_code(named_source);
         let codeframe = Str::from_in(rendered.as_str(), allocator);
 
         #[expect(clippy::inconsistent_struct_constructor)] // `#[ast]` macro re-orders struct fields

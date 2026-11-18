@@ -448,10 +448,7 @@ impl Baseline {
 
     fn get_oxc_diagnostic(&self) -> String {
         let source = NamedSource::new(&self.name, self.original.as_str());
-        self.oxc_diagnostics
-            .iter()
-            .map(|d| d.clone().render_with_source_code(source.clone()))
-            .join("")
+        self.oxc_diagnostics.iter().map(|d| d.clone().render_with_source_code(&source)).join("")
     }
 }
 

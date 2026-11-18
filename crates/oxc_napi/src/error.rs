@@ -35,12 +35,12 @@ impl OxcError {
         diagnostics.into_iter().map(|e| Self::from_diagnostic(&source, e)).collect()
     }
 
-    pub fn from_diagnostic<S: SourceCode + Clone>(
+    pub fn from_diagnostic<S: SourceCode + ?Sized>(
         named_source: &S,
         diagnostic: OxcDiagnostic,
     ) -> Self {
         let mut error = Self::from(&diagnostic);
-        error.codeframe = Some(diagnostic.render_with_source_code(named_source.clone()));
+        error.codeframe = Some(diagnostic.render_with_source_code(named_source));
         error
     }
 }

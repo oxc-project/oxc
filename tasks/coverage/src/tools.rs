@@ -55,11 +55,11 @@ fn run_parser(
     } else {
         let handler = GraphicalReportHandler::new().with_theme(GraphicalTheme::unicode_nocolor());
         let mut output = String::new();
-        // Extract path string before loop to avoid repeated conversions
+        // Create `NamedSource` once, before the loop
         let path_str = path.to_string_lossy();
+        let named_source = NamedSource::new(path_str.as_ref(), source_text.as_ref());
         for error in &errors {
-            let named_source = NamedSource::new(path_str.clone(), source_text.as_ref());
-            let error = error.clone().with_source_code(named_source);
+            let error = error.clone().with_source_code(&named_source);
             handler.render_report(&mut output, error.as_ref()).unwrap();
         }
         TestResult::ParseError(output, driver.fatal_error)
@@ -205,11 +205,11 @@ fn run_parser_typescript_unit(
     // Format errors for output
     let handler = GraphicalReportHandler::new().with_theme(GraphicalTheme::unicode_nocolor());
     let mut output = String::new();
-    // Extract path string before loop to avoid repeated conversions
+    // Create `NamedSource` once, before the loop
     let path_str = path.to_string_lossy();
+    let named_source = NamedSource::new(path_str.as_ref(), source_text.as_ref());
     for error in &errors {
-        let named_source = NamedSource::new(path_str.clone(), source_text.as_ref());
-        let error = error.clone().with_source_code(named_source);
+        let error = error.clone().with_source_code(&named_source);
         handler.render_report(&mut output, error.as_ref()).unwrap();
     }
     TestResult::ParseError(output, driver.fatal_error)

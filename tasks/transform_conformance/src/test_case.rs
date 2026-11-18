@@ -261,7 +261,7 @@ impl TestCase {
             );
             return Err(errors
                 .into_iter()
-                .map(|err| err.render_with_source_code(source.clone()))
+                .map(|err| err.render_with_source_code(&source))
                 .collect::<Vec<_>>()
                 .join("\n"));
         }
