@@ -632,15 +632,17 @@ impl<'a> ObjectRestSpread<'a> {
 
     // Transform `try {} catch ({...x}) {}`.
     fn transform_catch_clause(clause: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
+        // The new `_ref` parameter is bound in the catch clause scope.
+        let scope_id = clause.scope_id();
         let Some(param) = &mut clause.param else { unreachable!() };
         if Self::has_nested_object_rest(&param.pattern) {
-            let scope_id = clause.body.scope_id();
             // Remove `SymbolFlags::CatchVariable`.
             param.pattern.bound_names(&mut |ident| {
                 ctx.scoping_mut()
                     .symbol_flags_mut(ident.symbol_id())
                     .remove(SymbolFlags::CatchVariable);
             });
+            let body_len = clause.body.body.len();
             Self::replace_rest_element(
                 VariableDeclarationKind::Var,
                 &mut param.pattern,
@@ -648,6 +650,20 @@ impl<'a> ObjectRestSpread<'a> {
                 scope_id,
                 ctx,
             );
+            // The patterns moved out of the parameter are now `let` declarations inserted at the
+            // start of the catch body, so their bindings belong to the body scope.
+            let body_scope_id = clause.body.scope_id();
+            let inserted = clause.body.body.len() - body_len;
+            for stmt in &clause.body.body[..inserted] {
+                let Statement::VariableDeclaration(decl) = stmt else { unreachable!() };
+                decl.bound_names(&mut |ident| {
+                    ctx.scoping_mut().move_binding_by_symbol_id(
+                        scope_id,
+                        body_scope_id,
+                        ident.symbol_id(),
+                    );
+                });
+            }
         }
     }
 

@@ -210,7 +210,8 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// For variable declarations:
-    /// * merge with the previous variable declarator if their kinds are the same
+    /// * merge retained declarators into an immediately preceding declaration of the same
+    ///   kind when `join_vars` is enabled or at least one declarator is removed
     /// * remove the variable declarator if it is unused
     /// * keep the initializer if it has side effects
     fn handle_variable_declaration(
@@ -231,23 +232,31 @@ impl<'a> PeepholeOptimizations {
             ctx,
         );
 
-        // If `join_vars` is off, but there are unused declarators ... just join them to make our code simpler.
-        if !ctx.options().join_vars
-            && var_decl
-                .declarations
-                .iter()
-                .all(|d| !Self::should_remove_unused_declarator(d, var_decl.kind, ctx))
+        let kind = var_decl.kind;
+        if var_decl
+            .declarations
+            .iter()
+            .all(|d| !Self::should_remove_unused_declarator(d, kind, ctx))
         {
-            result.push(Statement::VariableDeclaration(var_decl));
+            if ctx.options().join_vars
+                && let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last_mut()
+                && kind == prev_var_decl.kind
+            {
+                prev_var_decl.declarations.append(&mut var_decl.declarations);
+                ctx.notice_change();
+            } else {
+                result.push(Statement::VariableDeclaration(var_decl));
+            }
             return;
         }
 
+        // If `join_vars` is off, but there are unused declarators ... just join them to make our code simpler.
         if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last()
-            && var_decl.kind == prev_var_decl.kind
+            && kind == prev_var_decl.kind
         {
             ctx.notice_change();
         }
-        let VariableDeclaration { span, kind, declarations, declare, .. } = var_decl.unbox();
+        let VariableDeclaration { span, declarations, declare, .. } = var_decl.unbox();
         for mut decl in declarations {
             if Self::should_remove_unused_declarator(&decl, kind, ctx) {
                 // `init` is `mut` because `remove_unused_expression` rewrites

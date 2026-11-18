@@ -21,30 +21,30 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/var-bindings.js
                 "flags": "ScopeFlags(0x0)",
                 "id": 4,
                 "node": "BlockStatement",
-                "symbols": [
-                  {
-                    "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
-                    "id": 2,
-                    "name": "same",
-                    "node": "CatchParameter",
-                    "references": [
-                      {
-                        "flags": "ReferenceFlags(Read)",
-                        "id": 1,
-                        "name": "same",
-                        "node_id": 20,
-                        "scope_id": 4
-                      }
-                    ],
-                    "var_binding": 1
-                  }
-                ]
+                "symbols": []
               }
             ],
             "flags": "ScopeFlags(CatchClause)",
             "id": 3,
             "node": "CatchClause",
-            "symbols": []
+            "symbols": [
+              {
+                "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
+                "id": 2,
+                "name": "same",
+                "node": "CatchParameter",
+                "references": [
+                  {
+                    "flags": "ReferenceFlags(Read)",
+                    "id": 1,
+                    "name": "same",
+                    "node_id": 20,
+                    "scope_id": 4
+                  }
+                ],
+                "var_binding": 1
+              }
+            ]
           },
           {
             "children": [],
@@ -71,58 +71,58 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/var-bindings.js
                         "flags": "ScopeFlags(0x0)",
                         "id": 10,
                         "node": "BlockStatement",
-                        "symbols": [
-                          {
-                            "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
-                            "id": 4,
-                            "name": "nested",
-                            "node": "CatchParameter",
-                            "references": [
-                              {
-                                "flags": "ReferenceFlags(Read)",
-                                "id": 5,
-                                "name": "nested",
-                                "node_id": 44,
-                                "scope_id": 10
-                              }
-                            ],
-                            "var_binding": 5
-                          }
-                        ]
+                        "symbols": []
                       }
                     ],
                     "flags": "ScopeFlags(CatchClause)",
                     "id": 9,
                     "node": "CatchClause",
-                    "symbols": []
+                    "symbols": [
+                      {
+                        "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
+                        "id": 4,
+                        "name": "nested",
+                        "node": "CatchParameter",
+                        "references": [
+                          {
+                            "flags": "ReferenceFlags(Read)",
+                            "id": 5,
+                            "name": "nested",
+                            "node_id": 44,
+                            "scope_id": 10
+                          }
+                        ],
+                        "var_binding": 5
+                      }
+                    ]
                   }
                 ],
                 "flags": "ScopeFlags(0x0)",
                 "id": 7,
                 "node": "BlockStatement",
-                "symbols": [
-                  {
-                    "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
-                    "id": 3,
-                    "name": "nested",
-                    "node": "CatchParameter",
-                    "references": [
-                      {
-                        "flags": "ReferenceFlags(Read)",
-                        "id": 7,
-                        "name": "nested",
-                        "node_id": 48,
-                        "scope_id": 7
-                      }
-                    ]
-                  }
-                ]
+                "symbols": []
               }
             ],
             "flags": "ScopeFlags(CatchClause)",
             "id": 6,
             "node": "CatchClause",
-            "symbols": []
+            "symbols": [
+              {
+                "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
+                "id": 3,
+                "name": "nested",
+                "node": "CatchParameter",
+                "references": [
+                  {
+                    "flags": "ReferenceFlags(Read)",
+                    "id": 7,
+                    "name": "nested",
+                    "node_id": 48,
+                    "scope_id": 7
+                  }
+                ]
+              }
+            ]
           },
           {
             "children": [],
@@ -138,29 +138,29 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/var-bindings.js
                 "flags": "ScopeFlags(0x0)",
                 "id": 13,
                 "node": "BlockStatement",
-                "symbols": [
-                  {
-                    "flags": "SymbolFlags(BlockScopedVariable | CatchVariable)",
-                    "id": 6,
-                    "name": "message",
-                    "node": "CatchParameter",
-                    "references": [
-                      {
-                        "flags": "ReferenceFlags(Read)",
-                        "id": 11,
-                        "name": "message",
-                        "node_id": 65,
-                        "scope_id": 13
-                      }
-                    ]
-                  }
-                ]
+                "symbols": []
               }
             ],
             "flags": "ScopeFlags(CatchClause)",
             "id": 12,
             "node": "CatchClause",
-            "symbols": []
+            "symbols": [
+              {
+                "flags": "SymbolFlags(BlockScopedVariable | CatchVariable)",
+                "id": 6,
+                "name": "message",
+                "node": "CatchParameter",
+                "references": [
+                  {
+                    "flags": "ReferenceFlags(Read)",
+                    "id": 11,
+                    "name": "message",
+                    "node_id": 65,
+                    "scope_id": 13
+                  }
+                ]
+              }
+            ]
           },
           {
             "children": [],
@@ -176,22 +176,22 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/var-bindings.js
                 "flags": "ScopeFlags(DirectEval)",
                 "id": 16,
                 "node": "BlockStatement",
-                "symbols": [
-                  {
-                    "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
-                    "id": 7,
-                    "name": "dynamic",
-                    "node": "CatchParameter",
-                    "references": [],
-                    "var_binding": 8
-                  }
-                ]
+                "symbols": []
               }
             ],
             "flags": "ScopeFlags(CatchClause | DirectEval)",
             "id": 15,
             "node": "CatchClause",
-            "symbols": []
+            "symbols": [
+              {
+                "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
+                "id": 7,
+                "name": "dynamic",
+                "node": "CatchParameter",
+                "references": [],
+                "var_binding": 8
+              }
+            ]
           },
           {
             "children": [],
@@ -223,30 +223,30 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/var-bindings.js
                 "flags": "ScopeFlags(0x0)",
                 "id": 19,
                 "node": "BlockStatement",
-                "symbols": [
-                  {
-                    "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
-                    "id": 9,
-                    "name": "shadowed",
-                    "node": "CatchParameter",
-                    "references": [
-                      {
-                        "flags": "ReferenceFlags(Read)",
-                        "id": 16,
-                        "name": "shadowed",
-                        "node_id": 100,
-                        "scope_id": 21
-                      }
-                    ],
-                    "var_binding": 10
-                  }
-                ]
+                "symbols": []
               }
             ],
             "flags": "ScopeFlags(CatchClause)",
             "id": 18,
             "node": "CatchClause",
-            "symbols": []
+            "symbols": [
+              {
+                "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
+                "id": 9,
+                "name": "shadowed",
+                "node": "CatchParameter",
+                "references": [
+                  {
+                    "flags": "ReferenceFlags(Read)",
+                    "id": 16,
+                    "name": "shadowed",
+                    "node_id": 100,
+                    "scope_id": 21
+                  }
+                ],
+                "var_binding": 10
+              }
+            ]
           }
         ],
         "flags": "ScopeFlags(Function | DirectEval)",

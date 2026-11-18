@@ -1,0 +1,41 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/allow-jsx-ref-property-load-sibling-property.tsx
+---
+import { c as _c } from "react/compiler-runtime";
+// @validateRefAccessDuringRender @compilationMode:"infer"
+// Passing `props.inputRef` to a JSX `ref` must not make `props.value` a ref value.
+export function Example(props) {
+	const $ = _c(3);
+	let t0;
+	if ($[0] !== props.inputRef || $[1] !== props.value) {
+		t0 = <input ref={props.inputRef} value={props.value} readOnly={true} />;
+		$[0] = props.inputRef;
+		$[1] = props.value;
+		$[2] = t0;
+	} else {
+		t0 = $[2];
+	}
+	return t0;
+}
+export const FIXTURE_ENTRYPOINT = {
+	fn: Example,
+	params: [{
+		inputRef: null,
+		value: "a"
+	}],
+	sequentialRenders: [
+		{
+			inputRef: null,
+			value: "a"
+		},
+		{
+			inputRef: null,
+			value: "a"
+		},
+		{
+			inputRef: null,
+			value: "b"
+		}
+	]
+};

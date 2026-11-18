@@ -361,8 +361,8 @@ impl ExtensionsConfig {
                 (default, false)
             };
 
-        let ignore_packages =
-            value.get("ignorePackages").and_then(Value::as_bool).unwrap_or(default_ignore_packages);
+        let ignore_packages = default_ignore_packages
+            || value.get("ignorePackages").and_then(Value::as_bool).unwrap_or_default();
         let check_type_imports =
             value.get("checkTypeImports").and_then(Value::as_bool).unwrap_or_default();
 
@@ -377,18 +377,12 @@ impl ExtensionsConfig {
                     .collect::<Vec<_>>()
             });
 
-        // Pre-allocate HashMap with estimated capacity for better performance
-        let capacity = if let Some(obj) = value.as_object() {
-            // Estimate: most fields are extension configs, reserve space
-            obj.len()
-        } else {
-            0
-        };
-
+        let extension_rules = value.get("pattern").unwrap_or(value);
+        let capacity = extension_rules.as_object().map_or(0, serde_json::Map::len);
         let mut extensions = FxHashMap::with_capacity_and_hasher(capacity, FxBuildHasher);
 
         // Process known extensions from the configuration
-        if let Some(obj) = value.as_object() {
+        if let Some(obj) = extension_rules.as_object() {
             for (key, val) in obj {
                 // Skip non-extension config fields
                 if matches!(
@@ -522,9 +516,7 @@ impl Rule for Extensions {
             let default = ExtensionRule::from_str(first_arg);
 
             if let Some(val) = value.get(1) {
-                let root = val.get("pattern").unwrap_or(val);
-
-                let config = ExtensionsConfig::from_json_value(root, default);
+                let config = ExtensionsConfig::from_json_value(val, default);
 
                 Ok(Self(Box::new(config)))
             } else {
@@ -1341,6 +1333,31 @@ fn test() {
         //     r##"import internalZ from "#internal/z.js";"##,
         //     Some(json!(["always"])),
         // ),
+        (
+            r"import notes from './notes.md?raw';",
+            Some(json!([
+                "never",
+                {
+                    "pattern": { "js": "never" },
+                    "pathGroupOverrides": [{ "pattern": "**/*.md?raw", "action": "ignore" }]
+                }
+            ])),
+        ),
+        (
+            r"import lodash from 'lodash';",
+            Some(json!(["always", { "pattern": { "js": "always" }, "ignorePackages": true }])),
+        ),
+        (
+            r"import foo from '@scope/pkg/subpath';",
+            Some(json!([
+                "ignorePackages",
+                { "pattern": { "js": "always" }, "ignorePackages": false }
+            ])),
+        ),
+        (
+            r"import foo from '@scope/pkg/subpath';",
+            Some(json!(["ignorePackages", { "js": "always", "ignorePackages": false }])),
+        ),
     ];
 
     let fail = vec![

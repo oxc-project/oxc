@@ -907,7 +907,23 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         left_name
     }
 
+    /// Parse `TypeArguments` if the cursor is at their `<`.
+    #[inline] // Most callers are not at `<`. Decide that without a call.
     pub(crate) fn try_parse_type_arguments(
+        &mut self,
+    ) -> Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>> {
+        // The tokens which `re_lex_ts_l_angle` accepts.
+        if matches!(
+            self.cur_kind(),
+            Kind::LAngle | Kind::ShiftLeft | Kind::LtEq | Kind::ShiftLeftEq
+        ) {
+            self.try_parse_type_arguments_at_l_angle()
+        } else {
+            None
+        }
+    }
+
+    fn try_parse_type_arguments_at_l_angle(
         &mut self,
     ) -> Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>> {
         if self.re_lex_ts_l_angle() {

@@ -160,12 +160,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.lexer.rewind(checkpoint);
             return false;
         }
+        self.advance_to(next);
+        true
+    }
+
+    /// Move to `next`, the token after the current one, which the lexer has already read.
+    #[inline]
+    pub(crate) fn advance_to(&mut self, next: Token) {
         if self.token.escaped() && self.token.kind().is_any_keyword() {
             self.report_escaped_keyword(self.token.span());
         }
         self.prev_token_end = self.token.end();
         self.token = next;
-        true
     }
 
     /// [Automatic Semicolon Insertion](https://tc39.es/ecma262/#sec-automatic-semicolon-insertion)
@@ -281,6 +287,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Tell lexer to continue reading jsx identifier if the lexer character position is at `-` for `<component-name>`.
     ///
     /// Returns `true` if was continued.
+    #[inline]
     pub(crate) fn continue_lex_jsx_identifier(&mut self) -> bool {
         if let Some(token) = self.lexer.continue_lex_jsx_identifier(self.token.start()) {
             self.token = token;

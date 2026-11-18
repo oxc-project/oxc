@@ -362,7 +362,7 @@ mod test {
 
     use crate::config::NoTokensLexerConfig;
 
-    use super::super::{Kind, Lexer, UniquePromise};
+    use super::super::{Kind, Lexer};
 
     #[test]
     fn template_literal_linebreaks() {
@@ -394,21 +394,25 @@ mod test {
         #[expect(clippy::items_after_statements, clippy::needless_pass_by_value)]
         fn run_test(source_text: String, expected_escaped: String, is_only_part: bool) {
             let allocator = Allocator::default();
-            let unique = UniquePromise::new_for_tests_and_benchmarks();
-            let mut lexer = Lexer::new(
+            Lexer::scope(
                 &allocator,
                 &source_text,
                 SourceType::default(),
                 NoTokensLexerConfig,
-                unique,
+                |mut lexer| {
+                    let token = lexer.first_token();
+                    assert_eq!(
+                        token.kind(),
+                        if is_only_part {
+                            Kind::NoSubstitutionTemplate
+                        } else {
+                            Kind::TemplateHead
+                        }
+                    );
+                    let escaped = lexer.escaped_templates[&token.start()];
+                    assert_eq!(escaped.and_then(JSStr::as_str), Some(expected_escaped.as_str()));
+                },
             );
-            let token = lexer.first_token();
-            assert_eq!(
-                token.kind(),
-                if is_only_part { Kind::NoSubstitutionTemplate } else { Kind::TemplateHead }
-            );
-            let escaped = lexer.escaped_templates[&token.start()];
-            assert_eq!(escaped.and_then(JSStr::as_str), Some(expected_escaped.as_str()));
         }
 
         for (source_fragment, escaped_fragment) in escapes {

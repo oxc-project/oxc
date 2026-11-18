@@ -125,8 +125,8 @@ jobs:
           git config user.name "oxc-captain[bot]"
           git config user.email "${bot_user_id}+oxc-captain[bot]@users.noreply.github.com"
 
-      # The pinned action expects its state labels plus at least one "- P" and
-      # "pkg:" label, but does not create them itself.
+      # The pinned action expects its state labels plus at least one "- P" label,
+      # but does not create them itself.
       - name: Create missing triage labels
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
@@ -134,7 +134,7 @@ jobs:
 
       - name: Triage the issue
         # The Oxc fork accepts new catalog models without a bundled registry update.
-        uses: oxc-project/triagebot-action@864fce5a3780b277d32f476421838e034b7635c7
+        uses: oxc-project/triagebot-action@193fffc8fe10143c63a82f53c004858d7707ec10
         with:
           read-token: ${{ github.token }}
           write-token: ${{ steps.app-token.outputs.token }}
@@ -147,3 +147,7 @@ jobs:
           # Leave assigned issues with their assignees; only auto-open PRs for unassigned issues.
           auto-pr-on-fix: ${{ !github.event.issue.assignees[0] }}
           bot-logins: oxc-captain[bot]
+          # Pick area labels from the existing `A-*` labels.
+          label-package-prefix: "A-"
+          # Reuse the issue state label on bot PRs instead of a separate `fix verified` label.
+          pr-label-fix-verified: "triage: fix verified"
