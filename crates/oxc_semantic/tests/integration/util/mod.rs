@@ -301,19 +301,17 @@ impl<'a> SemanticTester<'a> {
         &self,
         diagnostics: Vec<OxcDiagnostic>,
     ) -> Vec<Box<dyn Diagnostic + Send + Sync + '_>> {
-        let name = "test".to_owned()
-            + match (self.source_type.is_javascript(), self.source_type.is_jsx()) {
-                (true, true) => ".jsx",
-                (true, false) => ".js",
-                (false, true) => ".tsx",
-                (false, false) => ".ts",
-            };
+        let name = match (self.source_type.is_javascript(), self.source_type.is_jsx()) {
+            (true, true) => "test.jsx",
+            (true, false) => "test.js",
+            (false, true) => "test.tsx",
+            (false, false) => "test.ts",
+        };
+        let named_source = NamedSource::new(name, self.source_text);
 
         diagnostics
             .into_iter()
-            .map(|diagnostic| {
-                diagnostic.with_source_code(NamedSource::new(&name, self.source_text))
-            })
+            .map(|diagnostic| diagnostic.with_source_code(named_source.clone()))
             .collect()
     }
 }
