@@ -477,6 +477,7 @@ pub fn placeholder_function<'a>(alloc: &'a Allocator) -> HirFunction<'a> {
         instructions: ArenaVec::new_in(&alloc),
         generator: false,
         is_async: false,
+        is_memo_callback: false,
         directives: ArenaVec::new_in(&alloc),
         aliasing_effects: None,
     }

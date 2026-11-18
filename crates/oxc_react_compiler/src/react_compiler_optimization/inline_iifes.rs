@@ -64,7 +64,6 @@ use crate::react_compiler_optimization::merge_consecutive_blocks::merge_consecut
 pub fn inline_immediately_invoked_function_expressions<'a>(
     func: &mut HirFunction<'a>,
     env: &mut Environment<'a>,
-    preserved_callbacks: &FxHashSet<FunctionId>,
 ) -> Result<(), OxcDiagnostic> {
     // Track all function expressions that are assigned to a temporary
     let mut functions: FxHashMap<IdentifierId, FunctionId> = FxHashMap::default();
@@ -120,7 +119,7 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
                     };
 
                     let inner_func = &env.functions[inner_func_id];
-                    if preserved_callbacks.contains(&inner_func_id) {
+                    if inner_func.is_memo_callback {
                         continue;
                     }
                     if !inner_func.params.is_empty() || inner_func.is_async || inner_func.generator

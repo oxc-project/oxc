@@ -204,6 +204,9 @@ pub struct HirFunction<'a> {
     pub instructions: ArenaVec<'a, Instruction<'a>>,
     pub generator: bool,
     pub is_async: bool,
+    /// A useMemo callback whose scope is preserved when inlining IIFEs.
+    /// Its body still executes during render, unlike a returned event handler.
+    pub is_memo_callback: bool,
     pub directives: ArenaVec<'a, FunctionDirective<'a>>,
     pub aliasing_effects: Option<ArenaVec<'a, AliasingEffect<'a>>>,
 }
@@ -1586,6 +1589,7 @@ impl<'a> CloneIn<'a> for HirFunction<'a> {
             instructions: self.instructions.clone_in_impl(sem, alloc),
             generator: self.generator,
             is_async: self.is_async,
+            is_memo_callback: self.is_memo_callback,
             directives: self.directives.clone_in_impl(sem, alloc),
             aliasing_effects: self.aliasing_effects.as_ref().map(|v| v.clone_in_impl(sem, alloc)),
         }

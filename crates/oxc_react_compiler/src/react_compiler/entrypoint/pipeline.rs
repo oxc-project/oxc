@@ -140,9 +140,9 @@ pub fn compile_fn<'a, const EMIT: bool>(
     let void_memo_errors = validate_use_memo(&hir, &mut env);
     log_errors_as_events(&void_memo_errors, context);
 
-    let preserved_callbacks = drop_manual_memoization(&mut hir, &mut env)?;
+    drop_manual_memoization(&mut hir, &mut env)?;
 
-    inline_immediately_invoked_function_expressions(&mut hir, &mut env, &preserved_callbacks)?;
+    inline_immediately_invoked_function_expressions(&mut hir, &mut env)?;
 
     merge_consecutive_blocks(&mut hir, &mut env.functions, env.allocator)?;
 

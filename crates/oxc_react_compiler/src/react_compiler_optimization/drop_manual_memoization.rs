@@ -68,8 +68,6 @@ struct ManualMemoCallee {
 struct IdentifierSidemap<'a> {
     /// Maps identifier id -> FunctionId of FunctionExpression instructions
     functions: FxHashMap<IdentifierId, FunctionId>,
-    /// Memo callbacks whose captured locals must stay scoped to the callback.
-    preserved_callbacks: FxHashSet<FunctionId>,
     /// Maps identifier id -> ManualMemoCallee for useMemo/useCallback callees
     manual_memos: FxHashMap<IdentifierId, ManualMemoCallee>,
     /// Set of identifier ids that loaded 'React' global
@@ -100,11 +98,10 @@ struct ExtractedMemoArgs<'a> {
 
 /// Drop manual memoization (useMemo/useCallback calls), replacing them
 /// with direct invocations/references.
-/// Returns callbacks whose function boundaries must be preserved when inlining IIFEs.
 pub fn drop_manual_memoization<'a>(
     func: &mut HirFunction<'a>,
     env: &mut Environment<'a>,
-) -> Result<FxHashSet<FunctionId>, OxcDiagnostic> {
+) -> Result<(), OxcDiagnostic> {
     let is_validation_enabled = env.validate_preserve_existing_memoization_guarantees
         || env.validate_no_set_state_in_render
         || env.enable_preserve_existing_memoization_guarantees;
@@ -112,7 +109,6 @@ pub fn drop_manual_memoization<'a>(
     let optionals = find_optional_places(func)?;
     let mut sidemap = IdentifierSidemap {
         functions: FxHashMap::default(),
-        preserved_callbacks: FxHashSet::default(),
         manual_memos: FxHashMap::default(),
         react: FxHashSet::default(),
         maybe_deps: FxHashMap::default(),
@@ -199,7 +195,7 @@ pub fn drop_manual_memoization<'a>(
         }
     }
 
-    Ok(sidemap.preserved_callbacks)
+    Ok(())
 }
 
 // =============================================================================
@@ -241,7 +237,7 @@ fn process_manual_memo_call<'a>(
             _ => false,
         })
     {
-        sidemap.preserved_callbacks.insert(function_id);
+        env.functions[function_id].is_memo_callback = true;
     }
 
     let span = func.instructions[instr_id.index()].value.span().cloned();
