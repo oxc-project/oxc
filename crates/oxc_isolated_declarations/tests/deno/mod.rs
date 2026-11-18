@@ -6,13 +6,13 @@ mod tests {
     use oxc_allocator::Allocator;
     use oxc_codegen::Codegen;
     use oxc_isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions};
-    use oxc_parser::Parser;
+    use oxc_parser::Source;
     use oxc_span::SourceType;
 
     fn transform_dts_test(source: &str, expected: &str) {
         let allocator = Allocator::default();
         let source_type = SourceType::from_path("test.ts").unwrap();
-        let ret = Parser::new(&allocator, source, source_type).parse();
+        let ret = Source::from_str(source, source_type, &allocator).parse();
         assert!(ret.diagnostics.is_empty());
         let ret = IsolatedDeclarations::new(
             &allocator,
@@ -20,7 +20,7 @@ mod tests {
         )
         .build(&ret.program);
         let actual = Codegen::new().build(&ret.program).code;
-        let expected_program = Parser::new(&allocator, expected, source_type).parse().program;
+        let expected_program = Source::from_str(expected, source_type, &allocator).parse().program;
         let expected = Codegen::new().build(&expected_program).code;
         assert_eq!(actual.trim(), expected.trim());
     }
