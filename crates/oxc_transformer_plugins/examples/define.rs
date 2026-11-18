@@ -18,13 +18,12 @@ use pico_args::Arguments;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 use oxc_codegen::{Codegen, CodegenOptions, CodegenReturn};
-use oxc_parser::{ParseOptions, Parser};
+use oxc_parser::{ParseOptions, Source, SourceFileError};
 use oxc_semantic::SemanticBuilder;
 use oxc_sourcemap::SourcemapVisualizer;
-use oxc_span::SourceType;
 use oxc_transformer_plugins::{ReplaceGlobalDefines, ReplaceGlobalDefinesConfig};
 
-fn main() -> std::io::Result<()> {
+fn main() -> Result<(), SourceFileError> {
     let mut args = Arguments::from_env();
 
     let defines = [("process.env.NODE_ENV", "development")];
@@ -35,11 +34,10 @@ fn main() -> std::io::Result<()> {
     let path = Path::new(&name);
     let sourcemap = sourcemap.then_some(path);
 
-    let source_text = std::fs::read_to_string(path)?;
-    let source_type = SourceType::from_path(path).unwrap();
     let allocator = Allocator::default();
+    let source = Source::from_file(path, &allocator)?;
 
-    let mut program = parse(&allocator, &source_text, source_type);
+    let mut program = parse(source);
     let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
     let config = ReplaceGlobalDefinesConfig::new(&defines).unwrap();
     let _ = ReplaceGlobalDefines::new(&allocator, config).build(scoping, &mut program);
@@ -51,19 +49,13 @@ fn main() -> std::io::Result<()> {
 }
 
 /// Parse JavaScript/TypeScript source code into an AST
-fn parse<'a>(
-    allocator: &'a Allocator,
-    source_text: &'a str,
-    source_type: SourceType,
-) -> Program<'a> {
-    let ret = Parser::new(allocator, source_text, source_type)
-        .with_options(ParseOptions {
-            allow_return_outside_function: true,
-            ..ParseOptions::default()
-        })
-        .parse();
+fn parse(source: Source<'_>) -> Program<'_> {
+    let ret = source.parse_with_options(ParseOptions {
+        allow_return_outside_function: true,
+        ..ParseOptions::default()
+    });
     for error in ret.diagnostics {
-        println!("{}", error.render_with_source_code(source_text));
+        println!("{}", error.render_with_source_code(ret.program.source_text));
     }
     ret.program
 }

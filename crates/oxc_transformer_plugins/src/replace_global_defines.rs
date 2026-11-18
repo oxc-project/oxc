@@ -33,7 +33,7 @@ use oxc_allocator::{Address, Allocator, ArenaBox, GetAddress, ReplaceWith, Unsta
 use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitJsMut, walk_js_mut};
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
-use oxc_parser::{ParseOptions, Parser};
+use oxc_parser::{ParseOptions, Source};
 use oxc_semantic::{ReferenceFlags, ScopeFlags, Scoping};
 use oxc_span::{SPAN, SourceType};
 use oxc_str::CompactStr;
@@ -287,10 +287,12 @@ impl ReplaceGlobalDefinesConfig {
     }
 
     fn check_value(allocator: &Allocator, source_text: &str) -> Result<(), Diagnostics> {
+        let source = Source::from_str(source_text, SourceType::default(), allocator);
         // This expression is only validated, then discarded.
-        Parser::new(allocator, source_text, SourceType::default())
-            .with_options(ParseOptions { enable_ident_hashes: false, ..ParseOptions::default() })
-            .parse_expression()?;
+        source.parse_expression_with_options(ParseOptions {
+            enable_ident_hashes: false,
+            ..ParseOptions::default()
+        })?;
         Ok(())
     }
 }
@@ -474,12 +476,9 @@ impl<'a> ReplaceGlobalDefines<'a> {
 
     // Construct a new expression because we don't have ast clone right now.
     fn parse_value(&mut self, source_text: &str) -> Expression<'a> {
-        // Allocate the string lazily because replacement happens rarely.
-        let source_text = self.allocator.alloc_str(source_text);
+        let source = Source::from_str(source_text, SourceType::default(), self.allocator);
         // Unwrapping here, it should already be checked by [ReplaceGlobalDefinesConfig::new].
-        let mut expr = Parser::new(self.allocator, source_text, SourceType::default())
-            .parse_expression()
-            .unwrap();
+        let mut expr = source.parse_expression().unwrap();
 
         let scoping = self.scoping.as_mut().unwrap();
         UpdateReplacedExpression { scoping }.visit_expression(&mut expr);
