@@ -228,14 +228,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     #[inline]
     pub(crate) fn expect_closing(&mut self, kind: Kind, opening_span: Span) {
         if !self.at(kind) {
-            let range = self.cur_token().span();
-            let error = diagnostics::expect_closing(
-                kind.to_str(),
-                self.cur_kind().to_str(),
-                range,
-                opening_span,
-            );
-            self.set_fatal_error(error);
+            cold_branch(|| {
+                let error = diagnostics::expect_closing(
+                    kind.to_str(),
+                    self.cur_kind().to_str(),
+                    self.cur_token().span(),
+                    opening_span,
+                );
+                self.set_fatal_error(error);
+            });
         }
         self.advance(kind);
     }
@@ -243,13 +244,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     #[inline]
     pub(crate) fn expect_conditional_alternative(&mut self, question_span: Span) {
         if !self.at(Kind::Colon) {
-            let range = self.cur_token().span();
-            let error = diagnostics::expect_conditional_alternative(
-                self.cur_kind().to_str(),
-                range,
-                question_span,
-            );
-            self.set_fatal_error(error);
+            cold_branch(|| {
+                let error = diagnostics::expect_conditional_alternative(
+                    self.cur_kind().to_str(),
+                    self.cur_token().span(),
+                    question_span,
+                );
+                self.set_fatal_error(error);
+            });
         }
         self.bump_any(); // bump `:`
     }

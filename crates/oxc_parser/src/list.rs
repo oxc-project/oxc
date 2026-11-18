@@ -162,13 +162,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return ControlFlow::Break(None);
         }
         if kind != separator {
-            self.set_fatal_error(diagnostics::expect_closing_or_separator(
-                close.to_str(),
-                separator.to_str(),
-                kind.to_str(),
-                self.cur_token().span(),
-                opening_span,
-            ));
+            self.report_unexpected_list_token(close, separator, opening_span);
             return ControlFlow::Break(None);
         }
         self.advance(separator);
@@ -181,6 +175,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return ControlFlow::Break(None);
         }
         ControlFlow::Continue(())
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn report_unexpected_list_token(&mut self, close: Kind, separator: Kind, opening_span: Span) {
+        let error = diagnostics::expect_closing_or_separator(
+            close.to_str(),
+            separator.to_str(),
+            self.cur_kind().to_str(),
+            self.cur_token().span(),
+            opening_span,
+        );
+        self.set_fatal_error(error);
     }
 
     pub(crate) fn parse_delimited_list_with_rest<E, A, R, D>(
@@ -210,14 +217,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 } else {
                     let comma_span = p.cur_token().span();
                     if kind != Kind::Comma {
-                        let error = diagnostics::expect_closing_or_separator(
-                            close.to_str(),
-                            Kind::Comma.to_str(),
-                            kind.to_str(),
-                            comma_span,
-                            opening_span,
-                        );
-                        p.set_fatal_error(error);
+                        p.report_unexpected_list_token(close, Kind::Comma, opening_span);
                         return None;
                     }
                     p.bump_any();
