@@ -1,4 +1,9 @@
-use crate::{test, test_same, test_target};
+use oxc_span::SourceType;
+
+use crate::{
+    CompressOptions, CompressOptionsUnused, default_options, test, test_options, test_same,
+    test_same_options_source_type, test_target,
+};
 
 #[track_caller]
 fn test_value(code: &str, expected: &str) {
@@ -245,6 +250,51 @@ fn test_fold_string_replace_all_size() {
     // An operand that cannot be sized folds as before.
     test("x = /abcdefghij/.toString()", "x = '/abcdefghij/'");
     test("x = (-1234567890).toString()", "x = '-1234567890'");
+    // One character longer than the call: kept.
+    test_same("x = 'aaaa'.replaceAll('a', 'aaaaaaaa')");
+    // Escapes count: the call prints 14 backslashes, so the literal is shorter.
+    test(
+        r"x = '\\\\\\\\\\\\\\'.replaceAll('\\', 'aaaaa')",
+        "x = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'",
+    );
+    // Where the parent folds or drops the value, the call folds as before.
+    test("x = 'aaaaaaa'.replaceAll('a', 'aaaaaaa') === 'b'", "x = !1");
+    test("x = !'aaaaaaa'.replaceAll('a', 'aaaaaaa')", "x = !1");
+    test("x = typeof 'aaaaaaa'.replaceAll('a', 'aaaaaaa')", "x = 'string'");
+    test("if ('aaaaaaa'.replaceAll('a', 'aaaaaaa')) x = 1; else x = 2", "x = 1");
+    test("'aaaaaaa'.replaceAll('a', 'aaaaaaa'); x = 1", "x = 1");
+    test(
+        "x = 'aaaaaaa'.replaceAll('a', 'aaaaaaa') + 'b'",
+        "x = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab'",
+    );
+    // A binding that stays prints its value: kept. With these tests' default options
+    // (unused bindings kept) that is any binding.
+    test(
+        "function f() { const u = 'aaaaaaa'.replaceAll('a', 'aaaaaaa') }",
+        "function f() { let u = 'aaaaaaa'.replaceAll('a', 'aaaaaaa') }",
+    );
+    // A binding the compressor drops once it is unused: folds, and the declaration goes.
+    let remove = CompressOptions { unused: CompressOptionsUnused::Remove, ..default_options() };
+    test_options(
+        "export function f() { const u = 'aaaaaaa'.replaceAll('a', 'aaaaaaa') }",
+        "export function f() {}",
+        &remove,
+    );
+
+    test("x = 'aaaaaaa'.replaceAll('a', 'aaaaaaa') == null", "x = !1");
+    test("x = void 'aaaaaaa'.replaceAll('a', 'aaaaaaa')", "x = void 0");
+    test("x = 'aaaaaaa'.replaceAll('a', 'aaaaaaa') ? 1 : 2", "x = 1");
+    test("x = 'aaaaaaa'.replaceAll('a', 'aaaaaaa') && y", "x = y");
+    test("x = ('aaaaaaa'.replaceAll('a', 'aaaaaaa'), y)", "x = y");
+    // As an argument or a returned value it is printed as it is: kept.
+    test_same("f('aaaaaaa'.replaceAll('a', 'aaaaaaa'))");
+    test_same("function f() { return 'aaaaaaa'.replaceAll('a', 'aaaaaaa') }");
+    // A script's top-level binding stays even when unused: kept.
+    test_same_options_source_type(
+        "var s = 'aaaaaaa'.replaceAll('a', 'aaaaaaa')",
+        SourceType::script(),
+        &remove,
+    );
 }
 
 #[test]

@@ -28,17 +28,14 @@ impl<'a> PeepholeOptimizations {
         // Use constant evaluation for known method calls
         if let Some(constant_value) = ce.evaluate_value(ctx) {
             // A string result can be longer than the call that produces it,
-            // e.g. `'aaaaaaa'.replaceAll('a', 'aaaaaaa')`, so keep the call then.
-            // A call that is the object of a member expression still folds, because
-            // the member access (`[0]`, `.charAt(0)`, ...) folds only on a literal.
+            // e.g. `'aaaaaaa'.replaceAll('a', 'aaaaaaa')`, so keep the call where the
+            // result would be printed as it is. Anywhere else (a comparison, `!`,
+            // `typeof`, a test, `+`, a member access, an unused value) the literal lets
+            // the parent fold further, so it folds as before.
             if let ConstantValue::String(result) = &constant_value
-                && !matches!(
-                    ctx.parent(),
-                    Ancestor::StaticMemberExpressionObject(_)
-                        | Ancestor::ComputedMemberExpressionObject(_)
-                )
-                && Self::method_call_size_lower_bound(ce, ctx)
-                    .is_some_and(|size| result.len() + 2 > size)
+                && Self::value_is_printed_as_is(ctx)
+                && Self::method_call_size(ce, ctx)
+                    .is_some_and(|size| Self::printed_string_len(*result) > size)
             {
                 return;
             }
@@ -76,28 +73,63 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    /// Approximate minified size of a method call such as `'abc'.replaceAll('b', 'x')`:
-    /// receiver, member, arguments, commas and parentheses. Like the result it is compared
-    /// with, it does not count escapes. `None` when an operand cannot be sized.
-    fn method_call_size_lower_bound(
-        ce: &CallExpression<'a>,
-        ctx: &TraverseCtx<'a>,
-    ) -> Option<usize> {
-        let operand_size = |expr: &Expression<'a>| {
-            Self::string_expression_size_lower_bound(expr, ctx).map(|(size, _)| size)
-        };
-        let (object, property_len) = match &ce.callee {
-            Expression::StaticMemberExpression(member) => {
-                (&member.object, member.property.name.len())
+    /// Whether the value of the expression being visited is printed as it is: assigned,
+    /// passed, returned, put in an array or object, or initializing a binding that stays.
+    fn value_is_printed_as_is(ctx: &TraverseCtx<'a>) -> bool {
+        match ctx.parent() {
+            Ancestor::AssignmentExpressionRight(_)
+            | Ancestor::CallExpressionArguments(_)
+            | Ancestor::NewExpressionArguments(_)
+            | Ancestor::ReturnStatementArgument(_)
+            | Ancestor::ArrayExpressionElements(_)
+            | Ancestor::ObjectPropertyValue(_) => true,
+            // A binding the compressor drops once it is unused: its value folds, so the
+            // declaration can go. Any other binding (read, at a script's top level, with
+            // `unused: Keep` or a direct `eval`, a `using`) keeps its value and prints it.
+            Ancestor::VariableDeclaratorInit(decl) => {
+                let is_using = matches!(
+                    ctx.ancestor(1),
+                    Ancestor::VariableDeclarationDeclarations(declaration)
+                        if declaration.kind().is_using()
+                );
+                let is_dropped = Self::can_remove_unused_declarators(ctx)
+                    && !is_using
+                    && decl
+                        .id()
+                        .get_binding_identifier()
+                        .and_then(|ident| ident.symbol_id.get())
+                        .is_some_and(|symbol_id| Self::symbol_is_unused_by_count(symbol_id, ctx));
+                !is_dropped
             }
-            // `'abc'['replaceAll']` prints as `'abc'.replaceAll`.
-            Expression::ComputedMemberExpression(member) => match &member.expression {
-                Expression::StringLiteral(key) => (&member.object, key.value.len()),
-                _ => return None,
-            },
-            _ => return None,
+            _ => false,
+        }
+    }
+
+    /// Length of `value` printed as a string literal: its quotes, and a backslash for each
+    /// character that is escaped (backslashes, line terminators, and the quote that is used,
+    /// the least common of `'`, `"` and `` ` ``). An estimate: it doesn't count the other
+    /// escapes (`\0`, `</script`, non-ASCII under `ascii_only`), and a value with a lone
+    /// surrogate counts its bytes and quotes only. Counting low only folds as before.
+    fn printed_string_len(value: JSStr<'_>) -> usize {
+        let Some(value) = value.as_str() else { return value.len() + 2 };
+        let count = |c: char| value.chars().filter(|&x| x == c).count();
+        let line_terminators =
+            value.chars().filter(|c| matches!(c, '\n' | '\r' | '\u{2028}' | '\u{2029}')).count();
+        let quotes = count('\'').min(count('"')).min(count('`') + value.matches("${").count());
+        value.len() + 2 + count('\\') + line_terminators + quotes
+    }
+
+    /// Approximate minified size of a method call such as `'abc'.replaceAll('b', 'x')`:
+    /// receiver, member, arguments, commas and parentheses, with string literals counted
+    /// as they are printed. `None` when an operand cannot be sized. A computed key such as
+    /// `['replaceAll']` is a static member by the time the call is visited.
+    fn method_call_size(ce: &CallExpression<'a>, ctx: &TraverseCtx<'a>) -> Option<usize> {
+        let operand_size = |expr: &Expression<'a>| match expr {
+            Expression::StringLiteral(lit) => Some(Self::printed_string_len(lit.value)),
+            _ => Self::string_expression_size_lower_bound(expr, ctx).map(|(size, _)| size),
         };
-        let mut size = operand_size(object)? + 1 + property_len;
+        let Expression::StaticMemberExpression(member) = &ce.callee else { return None };
+        let mut size = operand_size(&member.object)? + 1 + member.property.name.len();
         for arg in &ce.arguments {
             size += operand_size(arg.as_expression()?)?;
         }
