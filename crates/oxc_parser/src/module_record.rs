@@ -553,11 +553,11 @@ mod module_record_tests {
     use oxc_span::{SourceType, Span};
     use oxc_syntax::module_record::*;
 
-    use crate::Parser;
+    use crate::Source;
 
-    fn build<'a>(allocator: &'a Allocator, source_text: &'a str) -> ModuleRecord<'a> {
+    fn build<'a>(allocator: &'a Allocator, source_text: &str) -> ModuleRecord<'a> {
         let source_type = SourceType::ts();
-        let ret = Parser::new(allocator, source_text, source_type).parse();
+        let ret = Source::from_str(source_text, source_type, allocator).parse();
         assert!(ret.diagnostics.is_empty());
         ret.module_record
     }
@@ -829,7 +829,7 @@ mod module_record_tests {
             ("import d from 'mod'; export { d as default };", "default"),
         ] {
             let allocator = Allocator::default();
-            let ret = Parser::new(&allocator, source, SourceType::mjs()).parse();
+            let ret = Source::from_str(source, SourceType::mjs(), &allocator).parse();
             assert!(ret.diagnostics.is_empty());
             assert!(ret.module_record.local_export_entries.is_empty());
             assert_eq!(ret.module_record.indirect_export_entries.len(), 1);
@@ -946,7 +946,7 @@ mod module_record_tests {
             import { imported } from 'mod';
             import * as ns from 'namespace';
         ";
-        let ret = Parser::new(&allocator, source, SourceType::mjs()).parse();
+        let ret = Source::from_str(source, SourceType::mjs(), &allocator).parse();
         assert!(ret.diagnostics.is_empty());
         let module_record = ret.module_record;
         assert_eq!(

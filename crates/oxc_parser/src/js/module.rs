@@ -1083,7 +1083,7 @@ mod test {
     use oxc_ast::ast::{ImportDeclarationSpecifier, ImportOrExportKind, ImportPhase, Statement};
     use oxc_span::{GetSpan, SourceType, Span};
 
-    use crate::Parser;
+    use crate::Source;
     #[test]
     fn test_parse_import_declaration() {
         let src = "import foo from 'bar';";
@@ -1398,7 +1398,7 @@ mod test {
         let src = "import type from '../type.js'";
         let source_type = SourceType::default().with_typescript(false);
         let allocator = Allocator::default();
-        let ret = Parser::new(&allocator, src, source_type).parse();
+        let ret = Source::from_str(src, source_type, &allocator).parse();
         assert!(
             ret.diagnostics.is_empty(),
             "Failed to parse source: {src:?}, error: {:?}",
@@ -1416,13 +1416,13 @@ mod test {
     }
 
     fn parse_and_assert_statements(
-        src: &'static str,
+        src: &str,
         // takes a function which accepts the list of statements
         f: fn(Vec<&oxc_ast::ast::Statement<'_>>) -> (),
     ) {
         let source_type = SourceType::default().with_typescript(true);
         let allocator = Allocator::default();
-        let ret = Parser::new(&allocator, src, source_type).parse();
+        let ret = Source::from_str(src, source_type, &allocator).parse();
         assert!(
             ret.diagnostics.is_empty(),
             "Failed to parse source: {src:?}, error: {:?}",
@@ -1434,24 +1434,24 @@ mod test {
     /// Like [`parse_and_assert_statements`] but for a recoverable error: the parser
     /// reports a diagnostic yet still builds the AST, which `f` asserts on.
     fn parse_and_assert_statements_with_error(
-        src: &'static str,
+        src: &str,
         f: fn(Vec<&oxc_ast::ast::Statement<'_>>) -> (),
     ) {
         let source_type = SourceType::default().with_typescript(true);
         let allocator = Allocator::default();
-        let ret = Parser::new(&allocator, src, source_type).parse();
+        let ret = Source::from_str(src, source_type, &allocator).parse();
         assert!(!ret.diagnostics.is_empty(), "Expected a parse error for source: {src:?}");
         f(ret.program.body.iter().collect::<Vec<_>>());
     }
 
     fn parse_and_assert_import_declarations(
-        src: &'static str,
+        src: &str,
         // takes a function which accepts the list of statements
         f: fn(Vec<&ArenaBox<'_, oxc_ast::ast::ImportDeclaration<'_>>>) -> (),
     ) {
         let source_type = SourceType::default().with_typescript(true);
         let allocator = Allocator::default();
-        let ret = Parser::new(&allocator, src, source_type).parse();
+        let ret = Source::from_str(src, source_type, &allocator).parse();
         assert!(
             ret.diagnostics.is_empty(),
             "Failed to parse source: {src:?}, error: {:?}",

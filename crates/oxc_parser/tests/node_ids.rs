@@ -4,7 +4,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::{AstKind, AstType, ast::Program};
 use oxc_ast_visit::Visit;
 use oxc_parser::{
-    ParseOptions, Parser,
+    ParseOptions, Source,
     config::{NoTokensParserConfig, ParserConfig, RuntimeParserConfig, TokensParserConfig},
 };
 use oxc_span::{GetSpan, SourceType, Span};
@@ -35,14 +35,18 @@ fn collect(program: &Program<'_>) -> Vec<(AstType, Span, NodeId)> {
     ids.nodes
 }
 
-fn check<C: ParserConfig>(source: &str, source_type: SourceType, config: C, preserve_parens: bool) {
+fn check<C: ParserConfig>(
+    source_text: &str,
+    source_type: SourceType,
+    config: C,
+    preserve_parens: bool,
+) {
     let allocator = Allocator::default();
-    let parsed = Parser::new(&allocator, source, source_type)
-        .with_config(config)
-        .with_options(ParseOptions { preserve_parens, ..ParseOptions::default() })
-        .parse();
-    assert!(parsed.diagnostics.is_empty(), "{source}: {:?}", parsed.diagnostics);
-    assert!(!parsed.fatal_error, "{source}");
+    let source = Source::from_str(source_text, source_type, &allocator);
+    let options = ParseOptions { preserve_parens, ..ParseOptions::default() };
+    let parsed = source.parse_with_config(options, config);
+    assert!(parsed.diagnostics.is_empty(), "{source_text}: {:?}", parsed.diagnostics);
+    assert!(!parsed.fatal_error, "{source_text}");
     let nodes = collect(&parsed.program);
     assert_eq!(nodes[0].0, AstType::Program);
 }
@@ -64,12 +68,12 @@ fn assigns_ids_in_all_parser_configs() {
         ),
         ("const element: JSX.Element = <Component<string> prop={value} />;", SourceType::tsx()),
     ];
-    for (source, source_type) in cases {
+    for (source_text, source_type) in cases {
         for preserve_parens in [false, true] {
-            check(source, source_type, NoTokensParserConfig, preserve_parens);
-            check(source, source_type, TokensParserConfig, preserve_parens);
+            check(source_text, source_type, NoTokensParserConfig, preserve_parens);
+            check(source_text, source_type, TokensParserConfig, preserve_parens);
             for tokens in [false, true] {
-                check(source, source_type, RuntimeParserConfig::new(tokens), preserve_parens);
+                check(source_text, source_type, RuntimeParserConfig::new(tokens), preserve_parens);
             }
         }
     }
@@ -77,7 +81,7 @@ fn assigns_ids_in_all_parser_configs() {
 
 #[test]
 fn ids_survive_speculation_and_cover_grammar() {
-    for source in [
+    for source_text in [
         "const f = (a = call()) => a; const value = (a + b);",
         "const f = async (a = call()) => a; const value = async(a + b);",
         "const f = <T>(a: T): T => a; const value = (a as number);",
@@ -85,36 +89,36 @@ fn ids_survive_speculation_and_cover_grammar() {
         "const value = ((a ? (b): string => b : c));",
     ] {
         for preserve_parens in [false, true] {
-            check(source, SourceType::ts(), NoTokensParserConfig, preserve_parens);
+            check(source_text, SourceType::ts(), NoTokensParserConfig, preserve_parens);
         }
     }
 }
 
 #[test]
 fn ids_survive_unambiguous_await_reparsing() {
-    for source in [
+    for source_text in [
         "before(); await /x/u; between(); await /y/g; export {}; tail();",
         "before(); await /a/ /b/g; between(); await /x/u; export {}; tail();",
         "await\nawait /x/u; export {};",
         "const x = await /x/u; between(); const y = await /y/g; export {};",
         "#!/usr/bin/env node\n'use strict';\nawait /* regexp */ /x/u; export {};",
     ] {
-        check(source, SourceType::unambiguous(), NoTokensParserConfig, true);
-        check(source, SourceType::unambiguous(), TokensParserConfig, true);
+        check(source_text, SourceType::unambiguous(), NoTokensParserConfig, true);
+        check(source_text, SourceType::unambiguous(), TokensParserConfig, true);
     }
 }
 
 #[test]
 fn assigns_ids_to_recovered_nodes() {
-    for (source, source_type) in [
+    for (source_text, source_type) in [
         ("interface I { [key: boolean]: string; }", SourceType::ts()),
         ("interface I extends (value) {}", SourceType::ts()),
         ("const value = <><div /></div>;", SourceType::jsx()),
     ] {
         let allocator = Allocator::default();
-        let parsed = Parser::new(&allocator, source, source_type).parse();
-        assert!(!parsed.fatal_error, "{source}: {:?}", parsed.diagnostics);
-        assert!(!parsed.diagnostics.is_empty(), "{source}");
+        let parsed = Source::from_str(source_text, source_type, &allocator).parse();
+        assert!(!parsed.fatal_error, "{source_text}: {:?}", parsed.diagnostics);
+        assert!(!parsed.diagnostics.is_empty(), "{source_text}");
         assert!(collect(&parsed.program).len() > 1);
     }
 }
@@ -122,17 +126,18 @@ fn assigns_ids_to_recovered_nodes() {
 #[test]
 fn fatal_errors_return_only_the_root_node() {
     let allocator = Allocator::default();
-    let parsed = Parser::new(&allocator, "before(); const value = ;", SourceType::mjs()).parse();
+    let source = Source::from_str("before(); const value = ;", SourceType::mjs(), &allocator);
+    let parsed = source.parse();
     assert!(parsed.fatal_error);
     assert_eq!(collect(&parsed.program), [(AstType::Program, Span::default(), NodeId::ROOT)]);
 }
 
 #[test]
 fn expression_parser_assigns_nonzero_ids() {
-    for source in ["left + right", "(a + b)", "({ a: [b = c, ...rest] } = value)"] {
+    for source_text in ["left + right", "(a + b)", "({ a: [b = c, ...rest] } = value)"] {
         let allocator = Allocator::default();
-        let expression =
-            Parser::new(&allocator, source, SourceType::mjs()).parse_expression().unwrap();
+        let source = Source::from_str(source_text, SourceType::mjs(), &allocator);
+        let expression = source.parse_expression().unwrap();
         let mut ids = NodeIds::default();
         ids.visit_expression(&expression);
         assert_ne!(ids.nodes, []);
@@ -142,10 +147,10 @@ fn expression_parser_assigns_nonzero_ids() {
 #[test]
 fn each_parse_starts_a_new_id_sequence() {
     let allocator = Allocator::default();
-    let source = "'use strict'; function f(a) { return a + 1; }";
-    let parse = || Parser::new(&allocator, source, SourceType::mjs()).parse().program;
+    let source_text = "'use strict'; function f(a) { return a + 1; }";
+    let parse = || Source::from_str(source_text, SourceType::mjs(), &allocator).parse().program;
     let first = parse();
-    Parser::new(&allocator, "unrelated();", SourceType::mjs()).parse();
+    Source::from_str("unrelated();", SourceType::mjs(), &allocator).parse();
     let second = parse();
     assert_eq!(collect(&first), collect(&second));
 }
