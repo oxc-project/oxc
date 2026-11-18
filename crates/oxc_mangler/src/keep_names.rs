@@ -114,14 +114,18 @@ impl<'a, 'b: 'a, 't> NameSymbolCollector<'a, 'b, 't> {
     /// Whether the binding of `symbol_id` in `pattern` gets its value from an anonymous function or
     /// class, either from `init` (the initializer of the whole pattern) or from a default value
     /// inside the pattern.
+    #[expect(clippy::inline_always, reason = "per-symbol hot path in `collect`")]
+    #[inline(always)]
     fn is_name_set_binding_pattern(
         &self,
         pattern: &'a BindingPattern<'a>,
         init: Option<&Expression<'a>>,
         symbol_id: SymbolId,
     ) -> bool {
-        if Self::is_binding_id_of_specific_symbol(pattern, symbol_id) {
-            return init.is_some_and(|init| self.is_expression_whose_name_needs_to_be_kept(init));
+        if let BindingPattern::BindingIdentifier(id) = pattern {
+            return init.is_some_and(|init| {
+                id.symbol_id() == symbol_id && self.is_expression_whose_name_needs_to_be_kept(init)
+            });
         }
         Self::find_assign_binding_pattern_kind_of_specific_symbol(pattern, symbol_id).is_some_and(
             |assign_pattern| self.is_expression_whose_name_needs_to_be_kept(&assign_pattern.right),
@@ -202,12 +206,19 @@ impl<'a, 'b: 'a, 't> NameSymbolCollector<'a, 'b, 't> {
                     .elements
                     .iter()
                     .flatten()
-                    // [...[foo = function() {}]]
-                    .chain(array_pattern.rest.as_ref().map(|rest| &rest.argument))
                     .find_map(|binding| {
                         Self::find_assign_binding_pattern_kind_of_specific_symbol(
                             binding, symbol_id,
                         )
+                    })
+                    // [...[foo = function() {}]]
+                    .or_else(|| {
+                        array_pattern.rest.as_ref().and_then(|rest| {
+                            Self::find_assign_binding_pattern_kind_of_specific_symbol(
+                                &rest.argument,
+                                symbol_id,
+                            )
+                        })
                     })
             }
             BindingPattern::AssignmentPattern(assign_pattern) => {
