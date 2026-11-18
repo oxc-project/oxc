@@ -4,6 +4,49 @@ use std::{
     path::{Component, Path, PathBuf},
 };
 
+/// Make stdio (stdin, stdout, stderr) blocking.
+///
+/// JS runtimes set non-TTY stdio to non-blocking mode:
+///
+/// - Node.js provides `process.std*._handle.setBlocking(true)` to undo it,
+///   which the JS CLI entry point (`src-js/cli.ts`) calls before this runs.
+/// - bun does not provide such an API (`process.std*._handle` is `undefined`)
+///   and switches piped stdio to non-blocking once `process.stdout` is
+///   accessed. Writes larger than the pipe buffer then return `EAGAIN` after a
+///   partial write, which silently truncated `--stdin-filepath` output.
+///
+/// This is the runtime-agnostic equivalent of `setBlocking(true)`, so large
+/// stdio writes never hit `EAGAIN` regardless of the JS runtime.
+///
+/// <https://github.com/oxc-project/oxc/issues/29846>
+#[cfg(unix)]
+pub fn set_blocking_stdio() {
+    // Discard the return values: whether stdio was already blocking does not matter here.
+    let _ = set_fd_blocking(libc::STDIN_FILENO);
+    let _ = set_fd_blocking(libc::STDOUT_FILENO);
+    let _ = set_fd_blocking(libc::STDERR_FILENO);
+}
+
+#[cfg(not(unix))]
+pub fn set_blocking_stdio() {}
+
+/// Restore blocking mode on a file descriptor if it is non-blocking.
+///
+/// Returns `true` when the descriptor was non-blocking and was switched to blocking mode.
+#[cfg(unix)]
+fn set_fd_blocking(fd: std::os::fd::RawFd) -> bool {
+    // SAFETY: `F_GETFL`/`F_SETFL` have no preconditions beyond `fd` being open.
+    // `-1` means the descriptor is closed (`EBADF`), leave it alone.
+    unsafe {
+        let flags = libc::fcntl(fd, libc::F_GETFL);
+        if flags == -1 || flags & libc::O_NONBLOCK == 0 {
+            return false;
+        }
+        libc::fcntl(fd, libc::F_SETFL, flags & !libc::O_NONBLOCK);
+    }
+    true
+}
+
 /// Initialize global tracing subscriber for `oxfmt`.
 ///
 /// Safe to call multiple times from different NAPI entry points
@@ -110,4 +153,42 @@ pub fn normalize_relative_path(cwd: &Path, path: &Path) -> PathBuf {
     }
 
     result
+}
+
+#[cfg(all(test, unix))]
+mod tests {
+    use std::os::fd::AsRawFd;
+
+    use super::set_fd_blocking;
+
+    /// `set_fd_blocking()` must clear `O_NONBLOCK` and be idempotent.
+    ///
+    /// `set_blocking_stdio()` applies it to stdio, so large stdio writes never
+    /// return `EAGAIN` after a partial write.
+    /// <https://github.com/oxc-project/oxc/issues/29846>
+    #[test]
+    fn set_fd_blocking_clears_non_blocking_mode() {
+        let file = tempfile::tempfile().expect("create temp file");
+        let fd = file.as_raw_fd();
+
+        // SAFETY: `F_GETFL`/`F_SETFL` on an open file descriptor.
+        unsafe {
+            assert_eq!(libc::fcntl(fd, libc::F_SETFL, libc::O_NONBLOCK), 0);
+            assert_ne!(libc::fcntl(fd, libc::F_GETFL) & libc::O_NONBLOCK, 0);
+        }
+
+        assert!(set_fd_blocking(fd), "non-blocking fd must be switched to blocking mode");
+
+        // SAFETY: Same as above.
+        unsafe {
+            assert_eq!(libc::fcntl(fd, libc::F_GETFL) & libc::O_NONBLOCK, 0);
+        }
+
+        // Already blocking: no change reported, still blocking.
+        assert!(!set_fd_blocking(fd));
+
+        // Closed descriptors are left alone without panicking.
+        drop(file);
+        assert!(!set_fd_blocking(fd));
+    }
 }

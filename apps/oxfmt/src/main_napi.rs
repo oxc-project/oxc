@@ -49,6 +49,14 @@ pub async fn run_cli(
     )]
     sort_tailwindcss_classes_cb: JsSortTailwindClassesCb,
 ) -> (String, Option<u8>) {
+    // Make stdio blocking before any I/O.
+    // JS runtimes switch piped stdio to non-blocking mode; bun provides no API
+    // to undo it (`process.std*._handle` is `undefined`), which made large
+    // writes return `EAGAIN` and silently truncate `--stdin-filepath` output.
+    // Mirrors the `setBlocking(true)` calls in `src-js/cli.ts` for every runtime.
+    // <https://github.com/oxc-project/oxc/issues/29846>
+    utils::set_blocking_stdio();
+
     // Convert `String` args to `OsString` for compatibility with `bpaf`
     let args: Vec<OsString> = args.into_iter().map(OsString::from).collect();
 
