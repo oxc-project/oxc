@@ -13,7 +13,7 @@ use oxc_syntax::{
 use crate::traverse_context::redeclared_symbols;
 
 pub struct KeepVar<'a> {
-    vars: Vec<(Ident<'a>, Span, Option<SymbolId>)>,
+    vars: Vec<(Ident<'a>, Span, Option<SymbolId>, NodeId)>,
 }
 
 impl<'a> VisitJs<'a> for KeepVar<'a> {
@@ -49,9 +49,11 @@ impl<'a> VisitJs<'a> for KeepVar<'a> {
 
     fn visit_variable_declaration(&mut self, it: &VariableDeclaration<'a>) {
         if it.kind.is_var() {
-            it.bound_names(&mut |ident| {
-                self.vars.push((ident.name, ident.span, ident.symbol_id.get()));
-            });
+            for decl in &it.declarations {
+                decl.id.bound_names(&mut |ident| {
+                    self.vars.push((ident.name, ident.span, ident.symbol_id.get(), decl.node_id()));
+                });
+            }
         }
     }
 }
@@ -80,10 +82,10 @@ impl<'a> KeepVar<'a> {
             return None;
         }
 
-        for (name, span, symbol_id) in &mut self.vars {
+        for (name, span, symbol_id, node_id) in &mut self.vars {
             if let Some(symbol_id) = symbol_id {
                 let declared_symbol =
-                    Self::declared_symbol(*name, *span, *symbol_id, scope_id, ctx);
+                    Self::declared_symbol(*name, *span, *symbol_id, *node_id, scope_id, ctx);
                 if declared_symbol != *symbol_id {
                     // Identity drops skip the drop walk. Retire the old declaration if
                     // rebinding replaces it; callers can also discard a canonical regeneration.
@@ -93,7 +95,7 @@ impl<'a> KeepVar<'a> {
                     *symbol_id = declared_symbol;
                 }
                 // Tell the pass flush these declarations may still be live.
-                for symbol_id in redeclared_symbols(*symbol_id, ctx.scoping.scoping()) {
+                for symbol_id in redeclared_symbols(*symbol_id, ctx.scoping.scoping(), false) {
                     ctx.state.pass_changes.reemitted_declarations.insert((symbol_id, *span));
                 }
             }
@@ -103,7 +105,7 @@ impl<'a> KeepVar<'a> {
 
         let kind = VariableDeclarationKind::Var;
         let decls = ArenaVec::from_iter_in(
-            self.vars.into_iter().map(|(name, span, symbol_id)| {
+            self.vars.into_iter().map(|(name, span, symbol_id, node_id)| {
                 let id = symbol_id.map_or_else(
                     || BindingPattern::new_binding_identifier(span, name, builder),
                     |symbol_id| {
@@ -112,7 +114,10 @@ impl<'a> KeepVar<'a> {
                         )
                     },
                 );
-                VariableDeclarator::new(span, id, None, None, false, builder)
+                let decl = VariableDeclarator::new(span, id, None, None, false, builder);
+                // Preserve the declaration identity when generated bindings share a span.
+                decl.node_id.set(node_id);
+                decl
             }),
             builder,
         );
@@ -129,6 +134,7 @@ impl<'a> KeepVar<'a> {
         name: Ident<'a>,
         span: Span,
         symbol_id: SymbolId,
+        node_id: NodeId,
         scope_id: ScopeId,
         ctx: &mut crate::TraverseCtx<'a>,
     ) -> SymbolId {
@@ -145,7 +151,7 @@ impl<'a> KeepVar<'a> {
                     ctx.scoping_mut().add_symbol_redeclaration(
                         catch,
                         SymbolFlags::FunctionScopedVariable,
-                        NodeId::DUMMY,
+                        node_id,
                         span,
                     );
                 }

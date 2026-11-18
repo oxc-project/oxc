@@ -1,5 +1,8 @@
 use oxc_ast::ast::*;
-use oxc_ast_visit::{Visit, walk::walk_call_expression};
+use oxc_ast_visit::{
+    Visit,
+    walk::{walk_call_expression, walk_catch_parameter},
+};
 use oxc_semantic::Scoping;
 use oxc_syntax::symbol::SymbolId;
 
@@ -22,13 +25,15 @@ pub fn as_direct_eval_call<'a, 'b>(
 /// The redeclared symbols a binding identifier of `symbol_id` declares: the
 /// symbol itself and, for a `var` redeclaring a catch parameter, the enclosing
 /// var binding (see `Scoping::catch_var_binding`). Only these need to be kept in
-/// sync with `Scoping::symbol_redeclarations`.
+/// sync with `Scoping::symbol_redeclarations`. The catch parameter itself only
+/// declares its own symbol, so pass `is_catch_parameter` for that binding.
 pub fn redeclared_symbols(
     symbol_id: SymbolId,
     scoping: &Scoping,
+    is_catch_parameter: bool,
 ) -> impl Iterator<Item = SymbolId> + '_ {
     std::iter::once(symbol_id)
-        .chain(scoping.catch_var_binding(symbol_id))
+        .chain((!is_catch_parameter).then(|| scoping.catch_var_binding(symbol_id)).flatten())
         .filter(|&symbol_id| !scoping.symbol_redeclarations(symbol_id).is_empty())
 }
 
@@ -58,11 +63,12 @@ pub fn redeclared_symbols(
 pub struct DroppedSubtreeCollector<'a, 's> {
     pass_changes: &'s mut PassChanges<'a>,
     scoping: &'s Scoping,
+    catch_parameter: Option<SymbolId>,
 }
 
 impl<'a, 's> DroppedSubtreeCollector<'a, 's> {
     pub(crate) fn new(pass_changes: &'s mut PassChanges<'a>, scoping: &'s Scoping) -> Self {
-        Self { pass_changes, scoping }
+        Self { pass_changes, scoping, catch_parameter: None }
     }
 }
 
@@ -85,9 +91,21 @@ impl<'a> Visit<'a> for DroppedSubtreeCollector<'a, '_> {
 
     fn visit_binding_identifier(&mut self, it: &BindingIdentifier<'a>) {
         let Some(symbol_id) = it.symbol_id.get() else { return };
-        for symbol_id in redeclared_symbols(symbol_id, self.scoping) {
+        for symbol_id in
+            redeclared_symbols(symbol_id, self.scoping, self.catch_parameter == Some(symbol_id))
+        {
             self.pass_changes.removed_declarations.insert((symbol_id, it.span));
         }
+    }
+
+    fn visit_catch_parameter(&mut self, it: &CatchParameter<'a>) {
+        let previous = self.catch_parameter;
+        self.catch_parameter = match &it.pattern {
+            BindingPattern::BindingIdentifier(ident) => ident.symbol_id.get(),
+            _ => None,
+        };
+        walk_catch_parameter(self, it);
+        self.catch_parameter = previous;
     }
 
     fn visit_call_expression(&mut self, it: &CallExpression<'a>) {
