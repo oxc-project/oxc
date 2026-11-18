@@ -20,7 +20,7 @@ use oxc_ast::ast::{
     TaggedTemplateExpression, TemplateLiteral,
 };
 use oxc_ast_visit::VisitJs;
-use oxc_parser::{ParseOptions, Parser};
+use oxc_parser::{ParseOptions, Source};
 use oxc_span::{GetSpan, SourceType, Span};
 use oxc_str::JSStr;
 use oxc_tasks_common::project_root;
@@ -1521,12 +1521,11 @@ fn main() {
         Ok(Ok(body)) => {
             let allocator = Allocator::default();
             let source_type = SourceType::from_path(rule_test_path).unwrap();
-            let ret = Parser::new(&allocator, &body, source_type)
-                .with_options(ParseOptions {
-                    enable_ident_hashes: false,
-                    ..ParseOptions::default()
-                })
-                .parse();
+            let source = Source::from_str(&body, source_type, &allocator);
+            let ret = source.parse_with_options(ParseOptions {
+                enable_ident_hashes: false,
+                ..ParseOptions::default()
+            });
             if !ret.diagnostics.is_empty() {
                 let first_error = ret.diagnostics.first().map_or_else(
                     || "unknown parse error".to_string(),
@@ -1626,12 +1625,11 @@ fn main() {
         Ok(Ok(body)) => {
             let allocator = Allocator::default();
             let source_type = SourceType::from_path(rule_src_path).unwrap();
-            let ret = Parser::new(&allocator, &body, source_type)
-                .with_options(ParseOptions {
-                    enable_ident_hashes: false,
-                    ..ParseOptions::default()
-                })
-                .parse();
+            let source = Source::from_str(&body, source_type, &allocator);
+            let ret = source.parse_with_options(ParseOptions {
+                enable_ident_hashes: false,
+                ..ParseOptions::default()
+            });
             if !ret.diagnostics.is_empty() {
                 eprintln!(
                     "Warning: {} parse error(s) in rule source file (possibly due to Flow types). Attempting to extract rule config anyway.",
@@ -2215,7 +2213,7 @@ mod tests {
     fn test_string_raw_backslash_uses_unhashed_raw_string() {
         let source_text = "String.raw`new RegExp('([\\\\q])', 'v')`";
         let allocator = Allocator::default();
-        let ret = Parser::new(&allocator, source_text, SourceType::default()).parse();
+        let ret = Source::from_str(source_text, SourceType::default(), &allocator).parse();
         assert!(ret.diagnostics.is_empty(), "{:?}", ret.diagnostics);
 
         let Statement::ExpressionStatement(stmt) = ret.program.body.first().unwrap() else {

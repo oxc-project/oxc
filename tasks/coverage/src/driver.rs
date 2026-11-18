@@ -13,7 +13,7 @@ use oxc::{
     codegen::{CodegenOptions, CodegenReturn},
     diagnostics::{Diagnostics, OxcDiagnostic},
     minifier::CompressOptions,
-    parser::{ParseOptions, ParserReturn},
+    parser::{ParseOptions, ParserReturn, Source},
     regular_expression::{ConstructorParser, LiteralParser, Options},
     semantic::SemanticBuilderReturn,
     span::{ContentEq, SourceType, Span},
@@ -150,7 +150,9 @@ impl Driver {
 
     pub fn run(&mut self, source_text: &str, source_type: SourceType) {
         let path = self.path.clone();
-        self.compile(source_text, source_type, &path);
+        let allocator = Allocator::default();
+        let source = Source::from_str(source_text, source_type, &allocator);
+        self.compile_source(source, &path);
     }
 
     fn check_comments(&mut self, comments: &[Comment]) -> bool {

@@ -7,7 +7,7 @@ use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use oxc_parser::{
-    ParseOptions, Parser, Source,
+    ParseOptions, Source,
     config::{LexerConfig, NoTokensLexerConfig},
     lexer::{Kind, Lexer},
 };
@@ -105,11 +105,11 @@ fn lex_whole_file<C: LexerConfig>(source: Source<'_>, config: C) -> usize {
 /// * `TSTemplateLiteralType` (TypeScript type-level template literal, lexically identical
 ///   to `TemplateLiteral` so the lexer cannot tell them apart without parser context)
 /// * `JSXText`
-fn clean<'a>(source_text: &'a str, source_type: SourceType, allocator: &'a Allocator) -> String {
+fn clean(source_text: &str, source_type: SourceType, allocator: &Allocator) -> String {
     // Parse
-    let parser_ret = Parser::new(allocator, source_text, source_type)
-        .with_options(ParseOptions { enable_ident_hashes: false, ..ParseOptions::default() })
-        .parse();
+    let source = Source::from_str(source_text, source_type, allocator);
+    let options = ParseOptions { enable_ident_hashes: false, ..ParseOptions::default() };
+    let parser_ret = source.parse_with_options(options);
     assert!(parser_ret.diagnostics.is_empty());
     let program = parser_ret.program;
 

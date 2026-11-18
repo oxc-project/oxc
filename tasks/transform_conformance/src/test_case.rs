@@ -11,7 +11,7 @@ use oxc::{
     ast::ast::Statement,
     codegen::{Codegen, CodegenOptions, CommentOptions, IndentChar},
     diagnostics::{Diagnostics, NamedSource, OxcDiagnostic},
-    parser::{ParseOptions, Parser},
+    parser::{ParseOptions, Source},
     span::{SourceType, VALID_EXTENSIONS},
     transformer::{BabelOptions, HelperLoaderMode, TransformOptions},
 };
@@ -234,7 +234,7 @@ impl TestCase {
             && let Ok(source) = fs::read_to_string(&self.path)
         {
             let allocator = Allocator::default();
-            let ret = Parser::new(&allocator, &source, self.source_type).parse();
+            let ret = Source::from_str(&source, self.source_type, &allocator).parse();
             if !ret.diagnostics.is_empty() {
                 return true;
             }
@@ -348,14 +348,13 @@ impl TestCase {
                 String::default,
                 |output| {
                     // Get expected code by parsing the source text, so we can get the same code generated result.
-                    let mut ret = Parser::new(&allocator, &output, self.source_type)
-                        .with_options(ParseOptions {
-                            // Related: async to generator, regression
-                            allow_return_outside_function: true,
-                            enable_ident_hashes: false,
-                            ..Default::default()
-                        })
-                        .parse();
+                    let source = Source::from_str(&output, self.source_type, &allocator);
+                    let mut ret = source.parse_with_options(ParseOptions {
+                        // Related: async to generator, regression
+                        allow_return_outside_function: true,
+                        enable_ident_hashes: false,
+                        ..Default::default()
+                    });
 
                     // Clear comments to avoid pure annotation comments that cause mismatch.
                     ret.program.comments.clear();
@@ -487,12 +486,11 @@ impl TestCase {
 
     fn exec_template(code: &str) -> String {
         let allocator = Allocator::default();
-        let ret = Parser::new(&allocator, code, SourceType::mjs())
-            .with_options(ParseOptions {
-                allow_return_outside_function: true,
-                ..Default::default()
-            })
-            .parse();
+        let source = Source::from_str(code, SourceType::mjs(), &allocator);
+        let ret = source.parse_with_options(ParseOptions {
+            allow_return_outside_function: true,
+            ..Default::default()
+        });
         let has_exports = ret.program.body.iter().any(|statement| {
             matches!(
                 statement,
@@ -674,7 +672,7 @@ mod test {
         assert!(module.contains(code), "keep the original imports, exports, and statements");
 
         let allocator = Allocator::default();
-        let ret = Parser::new(&allocator, &module, SourceType::mjs()).parse();
+        let ret = Source::from_str(&module, SourceType::mjs(), &allocator).parse();
         assert!(ret.diagnostics.is_empty(), "{:?}", ret.diagnostics);
         assert_eq!(
             ret.program

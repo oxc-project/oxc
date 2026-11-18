@@ -5,7 +5,7 @@ use oxc_ast::ast::Program;
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use oxc_mangler::{MangleOptions, MangleOptionsKeepNames, Mangler};
 use oxc_minifier::{CompressOptions, Compressor, ManglePropertiesOptions, PropertyMangler};
-use oxc_parser::Parser;
+use oxc_parser::Source;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_tasks_common::TestFiles;
@@ -29,7 +29,8 @@ fn bench_minifier(criterion: &mut Criterion) {
                 allocator.reset();
 
                 // Create fresh AST + semantic data for each iteration
-                let mut program = Parser::new(&allocator, source_text, source_type).parse().program;
+                let source = Source::from_str(source_text, source_type, &allocator);
+                let mut program = source.parse().program;
                 let scoping = SemanticBuilder::new()
                     .with_enum_eval(true)
                     .build(&program)
@@ -61,11 +62,11 @@ fn bench_minifier(criterion: &mut Criterion) {
 /// transformed program; the caller builds semantic data from it and mangles.
 fn transform_to_js<'a>(
     allocator: &'a Allocator,
-    source_text: &'a str,
+    source_text: &str,
     source_type: SourceType,
     path: &Path,
 ) -> Program<'a> {
-    let mut program = Parser::new(allocator, source_text, source_type).parse().program;
+    let mut program = Source::from_str(source_text, source_type, allocator).parse().program;
     let scoping =
         SemanticBuilder::new().with_enum_eval(true).build(&program).semantic.into_scoping();
     let transform_options = TransformOptions::from_target("esnext").unwrap();
