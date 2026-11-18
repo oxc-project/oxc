@@ -27,7 +27,6 @@ triage: failed	d73a4a	Automated investigation failed unexpectedly
 triage: fix pending	0e8a16	A proposed fix is waiting for reporter verification
 triage: fix rejected	d93f0b	The reporter says the proposed fix does not work
 triage: fix verified	0e8a16	The proposed fix was verified
-fix verified	0e8a16	Pull request created from a verified automated fix
 - P0	b60205	Release-blocking or broadly catastrophic
 - P1	d93f0b	High-impact correctness or reliability problem
 - P2	fbca04	Confirmed issue with normal priority
