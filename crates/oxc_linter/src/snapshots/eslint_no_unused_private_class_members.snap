@@ -237,3 +237,471 @@ source: crates/oxc_linter/src/tester.rs
    ·           ──
    ╰────
   help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'unusedInOuterClass' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:15]
+ 2 │             class C {
+ 3 │               #unusedInOuterClass;
+   ·               ───────────────────
+ 4 │ 
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'unusedOnlyInSecondNestedClass' is defined but never used.
+    ╭─[no_unused_private_class_members.tsx:21:19]
+ 20 │                 return class {
+ 21 │                   #unusedOnlyInSecondNestedClass;
+    ·                   ──────────────────────────────
+ 22 │                 };
+    ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'usedOnlyInTheSecondInnerClass' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:15]
+ 2 │             class C {
+ 3 │               #usedOnlyInTheSecondInnerClass;
+   ·               ──────────────────────────────
+ 4 │ 
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'value' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:30]
+ 2 │             class C {
+ 3 │               private static value = 1;
+   ·                              ─────
+ 4 │               private value = 2;
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'value' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:23]
+ 2 │             class Outer {
+ 3 │               private value = 1;
+   ·                       ─────
+ 4 │               make() {
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'value' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:30]
+ 2 │             class Foo {
+ 3 │               private static value = 1;
+   ·                              ─────
+ 4 │               method(Other) {
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'accessorMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:32]
+ 2 │             class C {
+ 3 │               private accessor accessorMember = 42;
+   ·                                ──────────────
+ 4 │             }
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'staticMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:30]
+ 2 │             class C {
+ 3 │               private static staticMember = 42;
+   ·                              ────────────
+ 4 │             }
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'parameterProperty' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:27]
+ 2 │             class Test1 {
+ 3 │               constructor(private parameterProperty: number) {}
+   ·                           ─────────────────────────────────
+ 4 │             }
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'parameterProperty' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:27]
+ 2 │             class Test1 {
+ 3 │               constructor(private readonly parameterProperty: number) {}
+   ·                           ──────────────────────────────────────────
+ 4 │             }
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'parameterProperty' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:27]
+ 2 │             class Test1 {
+ 3 │               constructor(private readonly parameterProperty: number = 1) {}
+   ·                           ──────────────────────────────────────────────
+ 4 │             }
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'usedOutsideClass' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:23]
+ 2 │             class C {
+ 3 │               private usedOutsideClass;
+   ·                       ────────────────
+ 4 │             }
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'usedOutsideClass' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:23]
+ 2 │             class C {
+ 3 │               private usedOutsideClass;
+   ·                       ────────────────
+ 4 │             }
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'prop' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:23]
+ 2 │             class Foo {
+ 3 │               private prop: number;
+   ·                       ────
+ 4 │ 
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:15]
+ 2 │             class Foo {
+ 3 │               #privateMember = 5;
+   ·               ──────────────
+ 4 │             }
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:23]
+ 2 │             class Foo {
+ 3 │               private privateMember = 5;
+   ·                       ─────────────
+ 4 │             }
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:4:15]
+ 3 │             class Second {
+ 4 │               #privateMember = 5;
+   ·               ──────────────
+ 5 │             }
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:4:23]
+ 3 │             class Second {
+ 4 │               private privateMember = 5;
+   ·                       ─────────────
+ 5 │             }
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:15]
+ 2 │             class First {
+ 3 │               #privateMember = 5;
+   ·               ──────────────
+ 4 │             }
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:23]
+ 2 │             class First {
+ 3 │               private privateMember = 5;
+   ·                       ─────────────
+ 4 │             }
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:15]
+ 2 │             class First {
+ 3 │               #privateMember = 5;
+   ·               ──────────────
+ 4 │               #privateMember2 = 5;
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember2' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:4:15]
+ 3 │               #privateMember = 5;
+ 4 │               #privateMember2 = 5;
+   ·               ───────────────
+ 5 │             }
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:23]
+ 2 │             class First {
+ 3 │               private privateMember = 5;
+   ·                       ─────────────
+ 4 │               private privateMember2 = 5;
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember2' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:4:23]
+ 3 │               private privateMember = 5;
+ 4 │               private privateMember2 = 5;
+   ·                       ──────────────
+ 5 │             }
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:15]
+ 2 │             class Foo {
+ 3 │               #privateMember = 5;
+   ·               ──────────────
+ 4 │               method() {
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:23]
+ 2 │             class Foo {
+ 3 │               private privateMember = 5;
+   ·                       ─────────────
+ 4 │               method() {
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:15]
+ 2 │             class Foo {
+ 3 │               #privateMember = 5;
+   ·               ──────────────
+ 4 │               method() {
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:23]
+ 2 │             class Foo {
+ 3 │               private privateMember = 5;
+   ·                       ─────────────
+ 4 │               method() {
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:15]
+ 2 │             class C {
+ 3 │               #privateMember;
+   ·               ──────────────
+ 4 │ 
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:23]
+ 2 │             class C {
+ 3 │               private privateMember;
+   ·                       ─────────────
+ 4 │ 
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:15]
+ 2 │             class Foo {
+ 3 │               #privateMember() {}
+   ·               ──────────────
+ 4 │             }
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:23]
+ 2 │             class Foo {
+ 3 │               private privateMember() {}
+   ·                       ─────────────
+ 4 │             }
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:15]
+ 2 │             class Foo {
+ 3 │               #privateMember() {}
+   ·               ──────────────
+ 4 │               #privateMemberUsed() {
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:23]
+ 2 │             class Foo {
+ 3 │               private privateMember() {}
+   ·                       ─────────────
+ 4 │               private privateMemberUsed() {
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:19]
+ 2 │             class Foo {
+ 3 │               set #privateMember(value) {}
+   ·                   ──────────────
+ 4 │             }
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:27]
+ 2 │             class Foo {
+ 3 │               private set privateMember(value) {}
+   ·                           ─────────────
+ 4 │             }
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:15]
+ 2 │             class Foo {
+ 3 │               #privateMember;
+   ·               ──────────────
+ 4 │               method() {
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:23]
+ 2 │             class Foo {
+ 3 │               private privateMember;
+   ·                       ─────────────
+ 4 │               method() {
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:15]
+ 2 │             class Foo {
+ 3 │               #privateMember;
+   ·               ──────────────
+ 4 │               method() {
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:23]
+ 2 │             class Foo {
+ 3 │               private privateMember;
+   ·                       ─────────────
+ 4 │               method() {
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:15]
+ 2 │             class Foo {
+ 3 │               #privateMember;
+   ·               ──────────────
+ 4 │               method() {
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:23]
+ 2 │             class Foo {
+ 3 │               private privateMember;
+   ·                       ─────────────
+ 4 │               method() {
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:15]
+ 2 │             class Foo {
+ 3 │               #privateMember;
+   ·               ──────────────
+ 4 │               method() {
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:23]
+ 2 │             class Foo {
+ 3 │               private privateMember;
+   ·                       ─────────────
+ 4 │               method() {
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:15]
+ 2 │             class Foo {
+ 3 │               #privateMember;
+   ·               ──────────────
+ 4 │               method() {
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:23]
+ 2 │             class Foo {
+ 3 │               private privateMember;
+   ·                       ─────────────
+ 4 │               method() {
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:15]
+ 2 │             class Foo {
+ 3 │               #privateMember;
+   ·               ──────────────
+ 4 │               method() {
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:23]
+ 2 │             class Foo {
+ 3 │               private privateMember;
+   ·                       ─────────────
+ 4 │               method() {
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'privateMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:3:23]
+ 2 │             class Foo {
+ 3 │               private privateMember;
+   ·                       ─────────────
+ 4 │ 
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'foo' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:4:23]
+ 3 │             class Foo {
+ 4 │               private foo = 1;
+   ·                       ───
+ 5 │ 
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'foo' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:4:23]
+ 3 │             class Foo {
+ 4 │               private foo = 1;
+   ·                       ───
+ 5 │               private bar = 2;
+   ╰────
+  help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'bar' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:5:23]
+ 4 │               private foo = 1;
+ 5 │               private bar = 2;
+   ·                       ───
+ 6 │ 
+   ╰────
+  help: Remove the declaration or use it in the code.
