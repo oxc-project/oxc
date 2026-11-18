@@ -203,10 +203,10 @@ use oxc_data_structures::assert_unchecked;
 /// [`Allocator`] references to other tools.
 ///
 /// ```ignore
-/// use oxc::{allocator::Allocator, parser::Parser, span::SourceType};
+/// use oxc::{allocator::Allocator, parser::Source, span::SourceType};
 ///
 /// let allocator = Allocator::default();
-/// let parsed = Parser::new(&allocator, "let x = 1;", SourceType::default());
+/// let parsed = Source::from_str("let x = 1;", SourceType::default(), &allocator).parse();
 /// assert!(parsed.diagnostics.is_empty());
 /// ```
 ///
