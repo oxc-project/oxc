@@ -479,7 +479,8 @@ impl Tester {
     /// test functions, and only some of them are testing fixes.
     #[must_use]
     pub fn intentionally_allow_no_fix_tests(mut self) -> Self {
-        self.expect_fix = Some(vec![]);
+        // Keeps any fix cases already given.
+        self.expect_fix.get_or_insert_with(Vec::new);
         self
     }
 
