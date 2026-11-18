@@ -741,7 +741,7 @@ mod test {
     use oxc_span::{SourceType, Span};
     use oxc_syntax::node::NodeId;
 
-    use crate::Parser;
+    use crate::Source;
 
     use super::{PendingToken, TriviaBuilder};
 
@@ -810,7 +810,7 @@ mod test {
     fn get_comments(source_text: &str) -> Vec<Comment> {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
-        let ret = Parser::new(&allocator, source_text, source_type).parse();
+        let ret = Source::from_str(source_text, source_type, &allocator).parse();
         assert!(ret.diagnostics.is_empty());
         ret.program.comments.into_iter().collect::<Vec<_>>()
     }
@@ -818,7 +818,7 @@ mod test {
     fn get_comments_typescript(source_text: &str) -> Vec<Comment> {
         let allocator = Allocator::default();
         let source_type = SourceType::default().with_typescript(true);
-        let ret = Parser::new(&allocator, source_text, source_type).parse();
+        let ret = Source::from_str(source_text, source_type, &allocator).parse();
         assert!(ret.diagnostics.is_empty());
         ret.program.comments.into_iter().collect::<Vec<_>>()
     }
@@ -937,7 +937,7 @@ token /* Trailing 1 */
     fn html_comment_content() {
         let allocator = Allocator::default();
         let source = "<!--a\n-->\n<!--";
-        let ret = Parser::new(&allocator, source, SourceType::script()).parse();
+        let ret = Source::from_str(source, SourceType::script(), &allocator).parse();
         assert!(ret.diagnostics.is_empty());
         assert_eq!(ret.program.comments.len(), 3);
         let expected = [(Span::new(0, 5), "a"), (Span::new(6, 9), ""), (Span::new(10, 14), "")];
@@ -954,7 +954,7 @@ token /* Trailing 1 */
             let allocator = Allocator::default();
             let source_text = format!("foo();{line_terminator}--> comment\nbar();");
             let source_type = SourceType::default().with_script(true);
-            let ret = Parser::new(&allocator, &source_text, source_type).parse();
+            let ret = Source::from_str(&source_text, source_type, &allocator).parse();
             assert!(ret.diagnostics.is_empty());
 
             let comments = &ret.program.comments;

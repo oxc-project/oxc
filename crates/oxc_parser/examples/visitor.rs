@@ -1,4 +1,3 @@
-#![expect(clippy::print_stdout)]
 //! # AST Visitor Example
 //!
 //! This example demonstrates how to use the visitor pattern to traverse and analyze
@@ -11,13 +10,14 @@
 //! cargo run -p oxc_parser --example visitor [filename]
 //! ```
 
+#![expect(clippy::print_stdout)]
+
 use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{Class, Function, TSImportType};
 use oxc_ast_visit::{Visit, walk};
-use oxc_parser::{ParseOptions, Parser};
-use oxc_span::SourceType;
+use oxc_parser::{ParseOptions, Source, SourceFileError};
 use oxc_syntax::scope::ScopeFlags;
 
 // Instruction:
@@ -26,22 +26,23 @@ use oxc_syntax::scope::ScopeFlags;
 // or `cargo watch -x "run -p oxc_parser --example visitor"`
 
 /// Demonstrate AST traversal using the visitor pattern
-fn main() -> std::io::Result<()> {
+fn main() -> Result<(), SourceFileError> {
     let name = env::args().nth(1).unwrap_or_else(|| "test.js".to_string());
     let path = Path::new(&name);
-    let source_text = std::fs::read_to_string(path)?;
+
     let allocator = Allocator::default();
-    let source_type = SourceType::from_path(path).unwrap();
-    let ret = Parser::new(&allocator, &source_text, source_type)
-        .with_options(ParseOptions { enable_ident_hashes: false, ..ParseOptions::default() })
-        .parse();
+    let source = Source::from_file(path, &allocator)?;
+
+    let options = ParseOptions { enable_ident_hashes: false, ..ParseOptions::default() };
+    let parser_ret = source.parse_with_options(options);
+
+    let program = parser_ret.program;
+    let source_text = program.source_text;
 
     // Report any parsing errors
-    for error in ret.diagnostics {
-        println!("{}", error.render_with_source_code(source_text.as_str()));
+    for error in parser_ret.diagnostics {
+        println!("{}", error.render_with_source_code(source_text));
     }
-
-    let program = ret.program;
 
     // Use visitor to count different AST node types
     let mut ast_pass = CountASTNodes::default();

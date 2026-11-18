@@ -10,7 +10,7 @@
 //! ```
 
 use oxc_allocator::Allocator;
-use oxc_parser::{ParseOptions, Parser, ParserReturn};
+use oxc_parser::{ParseOptions, ParserReturn, Source};
 use oxc_span::SourceType;
 
 /// Parse a TypeScript JSX file and validate the results
@@ -35,17 +35,20 @@ export const Counter: React.FC = () => {
 
     // Memory arena where AST nodes get stored
     let allocator = Allocator::default();
+
     // Infers TypeScript + JSX + ESM modules
     let source_type = SourceType::from_path("Counter.tsx").unwrap();
+    let source = Source::from_str(source_text, source_type, &allocator);
+
+    let options = ParseOptions { enable_ident_hashes: false, ..ParseOptions::default() };
+    let parser_ret = source.parse_with_options(options);
 
     let ParserReturn {
         program,     // AST
         diagnostics, // Syntax errors
         fatal_error, // Parser encountered an error it couldn't recover from
         ..
-    } = Parser::new(&allocator, source_text, source_type)
-        .with_options(ParseOptions { enable_ident_hashes: false, ..ParseOptions::default() })
-        .parse();
+    } = parser_ret;
 
     if fatal_error {
         return Err("Parser encountered a fatal error".to_string());
