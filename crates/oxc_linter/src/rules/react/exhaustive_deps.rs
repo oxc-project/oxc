@@ -24,7 +24,7 @@ use oxc_ast_visit::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{ReferenceId, ScopeId, Semantic, SymbolId};
+use oxc_semantic::{NodeId, ReferenceId, ScopeId, Semantic, SymbolId};
 use oxc_span::{GetSpan, Span};
 use oxc_str::Str;
 use oxc_syntax::scope::ScopeFlags;
@@ -135,6 +135,17 @@ fn dependency_array_not_array_literal_diagnostic(hook_name: &str, span: Span) ->
     ))
     .with_label(span)
     .with_help("Use an array literal as the second argument.")
+    .with_error_code_scope(SCOPE)
+}
+
+fn stale_assignment_diagnostic(hook_name: &str, dep_name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "Assignments to the '{dep_name}' variable from inside React Hook {hook_name} \
+        will be lost after each render. To preserve the value over time, \
+        store it in a useRef Hook and keep the mutable value in the '.current' property. \
+        Otherwise, you can move this variable directly inside {hook_name}.",
+    ))
+    .with_label(span)
     .with_error_code_scope(SCOPE)
 }
 
@@ -470,8 +481,9 @@ impl Rule for ExhaustiveDeps {
             }
         });
 
-        let (found_dependencies, refs_inside_cleanups) = {
-            let mut found_dependencies = ExhaustiveDepsVisitor::new(ctx.semantic());
+        let (found_dependencies, refs_inside_cleanups, stale_writes) = {
+            let mut found_dependencies =
+                ExhaustiveDepsVisitor::new(ctx.semantic(), Some(node.id()));
 
             found_dependencies.visit_formal_parameters(callback_node.parameters());
 
@@ -479,7 +491,11 @@ impl Rule for ExhaustiveDeps {
                 function_body.visit(&mut found_dependencies);
             }
 
-            (found_dependencies.found_dependencies, found_dependencies.refs_inside_cleanups)
+            (
+                found_dependencies.found_dependencies,
+                found_dependencies.refs_inside_cleanups,
+                found_dependencies.stale_writes,
+            )
         };
 
         if is_effect {
@@ -511,10 +527,52 @@ impl Rule for ExhaustiveDeps {
             }
         }
 
+        // Assignments to variables declared in the component from inside the hook
+        // callback are lost after each render. Upstream `exhaustive-deps` reports
+        // these and suppresses every other diagnostic for the hook call, so
+        // return early after reporting. Matches `reportStaleAssignment` from
+        // https://github.com/facebook/react/blob/1b0132c05acabae5aebd32c2cadddfb16bda70bc/packages/eslint-plugin-react-hooks/src/ExhaustiveDeps.js
+        {
+            let mut stale_assignments: Vec<StaleWrite<'_>> = vec![];
+            for stale_write in stale_writes {
+                if !is_identifier_a_dependency(
+                    stale_write.name,
+                    stale_write.reference_id,
+                    stale_write.span,
+                    ctx,
+                    component_scope_id,
+                ) {
+                    continue;
+                }
+                match stale_assignments.iter_mut().find(|stale| stale.name == stale_write.name) {
+                    // Upstream reports the first write in dependency-gathering order:
+                    // shallower scopes first, then source position.
+                    Some(stale) => {
+                        if (stale_write.depth, stale_write.span) < (stale.depth, stale.span) {
+                            *stale = stale_write;
+                        }
+                    }
+                    None => stale_assignments.push(stale_write),
+                }
+            }
+
+            if !stale_assignments.is_empty() {
+                stale_assignments.sort_unstable_by_key(|stale| stale.write_expr_span.start);
+                for stale in stale_assignments {
+                    ctx.diagnostic(stale_assignment_diagnostic(
+                        hook_name,
+                        &stale.name,
+                        stale.write_expr_span,
+                    ));
+                }
+                return;
+            }
+        }
+
         let Some(dependencies_node) = dependencies_node else {
             if is_effect {
                 let contains_set_state_call = {
-                    let mut finder = ExhaustiveDepsVisitor::new(ctx.semantic());
+                    let mut finder = ExhaustiveDepsVisitor::new(ctx.semantic(), Some(node.id()));
                     if let Some(function_body) = callback_node.body() {
                         function_body.visit_root(&mut finder);
                     }
@@ -1234,7 +1292,7 @@ fn is_function_stable<'a, 'b>(
     visited: &mut FxHashSet<SymbolId>,
 ) -> bool {
     let deps = {
-        let mut collector = ExhaustiveDepsVisitor::new(ctx.semantic());
+        let mut collector = ExhaustiveDepsVisitor::new(ctx.semantic(), None);
         function_body.visit(&mut collector);
         collector.found_dependencies
     };
@@ -1273,27 +1331,120 @@ fn func_call_without_react_namespace<'a>(call_expr: &'a CallExpression<'a>) -> O
     None
 }
 
+/// A write to a variable from inside a React Hook callback, collected so the
+/// `reportStaleAssignment` diagnostic from upstream `exhaustive-deps` can be
+/// emitted: values assigned from inside the callback are lost after each render.
+///
+/// Matches upstream `eslint-plugin-react-hooks`, which reports the first write
+/// in dependency-gathering order: writes in the callback's own scope come
+/// before writes in nested (block/function) scopes, then by source position.
+#[derive(Debug)]
+struct StaleWrite<'a> {
+    /// Written variable name (the dependency key).
+    name: Str<'a>,
+    /// Reference to the written identifier.
+    reference_id: ReferenceId,
+    /// Span of the written identifier.
+    span: Span,
+    /// Span of the assigned expression, e.g. `props.a` in `x = props.a`.
+    write_expr_span: Span,
+    /// Number of scopes between the write and the hook callback.
+    depth: usize,
+}
+
 struct ExhaustiveDepsVisitor<'a, 'b> {
     semantic: &'b Semantic<'a>,
+    /// Node id of the reactive hook call, used as an ancestor-walk boundary.
+    hook_call_node_id: Option<NodeId>,
     stack: Vec<AstType>,
     skip_reporting_dependency: bool,
     set_state_call: bool,
     is_callee_of_call_expr: bool,
     found_dependencies: FxHashSet<Dependency<'a>>,
     refs_inside_cleanups: Vec<&'a StaticMemberExpression<'a>>,
+    stale_writes: Vec<StaleWrite<'a>>,
 }
 
 impl<'a, 'b> ExhaustiveDepsVisitor<'a, 'b> {
-    fn new(semantic: &'b Semantic<'a>) -> Self {
+    fn new(semantic: &'b Semantic<'a>, hook_call_node_id: Option<NodeId>) -> Self {
         Self {
             semantic,
+            hook_call_node_id,
             stack: vec![],
             skip_reporting_dependency: false,
             set_state_call: false,
             is_callee_of_call_expr: false,
             found_dependencies: FxHashSet::default(),
             refs_inside_cleanups: vec![],
+            stale_writes: vec![],
         }
+    }
+
+    /// Records assignments to variables inside the hook callback, mirroring
+    /// ESLint scope analysis where only `AssignmentExpression` (and `for-in`/`for-of`)
+    /// targets carry a `writeExpr`. Update expressions (`x++`) and member
+    /// expression targets (`obj.a = 1`) are not reported as stale assignments.
+    fn record_stale_write(&mut self, ident: &IdentifierReference<'a>, reference_id: ReferenceId) {
+        let nodes = self.semantic.nodes();
+
+        let mut write_expr_span = None;
+        for ancestor in nodes.ancestors(ident.node_id()) {
+            if Some(ancestor.id()) == self.hook_call_node_id {
+                break;
+            }
+            match ancestor.kind() {
+                // `x = props.a` / `({ x } = obj)` / `x += 1`
+                AstKind::AssignmentExpression(expr)
+                    if expr.left.span().contains_inclusive(ident.span) =>
+                {
+                    write_expr_span = Some(expr.right.span());
+                    break;
+                }
+                // `for (x of xs)` / `for (x in xs)`
+                AstKind::ForOfStatement(stmt)
+                    if stmt.left.span().contains_inclusive(ident.span) =>
+                {
+                    write_expr_span = Some(stmt.right.span());
+                    break;
+                }
+                AstKind::ForInStatement(stmt)
+                    if stmt.left.span().contains_inclusive(ident.span) =>
+                {
+                    write_expr_span = Some(stmt.right.span());
+                    break;
+                }
+                // `x++`, `obj.a = 1`, `obj[x] = 1` are not stale assignments.
+                AstKind::UpdateExpression(_) => return,
+                _ => {}
+            }
+        }
+
+        let Some(write_expr_span) = write_expr_span else { return };
+
+        let depth = self
+            .stack
+            .iter()
+            .filter(|ty| {
+                matches!(
+                    ty,
+                    AstType::Function
+                        | AstType::ArrowFunctionExpression
+                        | AstType::BlockStatement
+                        | AstType::StaticBlock
+                        | AstType::SwitchStatement
+                        | AstType::CatchClause
+                        | AstType::Class
+                )
+            })
+            .count();
+
+        self.stale_writes.push(StaleWrite {
+            name: ident.name.into(),
+            reference_id,
+            span: ident.span,
+            write_expr_span,
+            depth,
+        });
     }
 }
 
@@ -1424,6 +1575,9 @@ impl<'a> VisitJs<'a> for ExhaustiveDepsVisitor<'a, '_> {
         }
         let reference_id = ident.reference_id();
         let symbol_id = self.semantic.scoping().get_reference(reference_id).symbol_id();
+        if self.semantic.scoping().get_reference(reference_id).flags().is_write() {
+            self.record_stale_write(ident, reference_id);
+        }
         self.found_dependencies.insert(Dependency {
             name: ident.name.into(),
             reference_id,
@@ -3539,6 +3693,14 @@ const Component = ({ filter }) => {
               asyncValue = 100;
             });
           }, [value, value2, value3]);
+        }",
+        // The assignment to `x` from inside the hook callback is lost after each
+        // render, so it is reported as a stale assignment (and not as a missing
+        // dependency: upstream suppresses every other diagnostic for the hook).
+        r"function MyComponent(props) {
+          let x = 0;
+          useEffect(() => { x = props.a; }, [props.a]);
+          return x;
         }",
         r"function MyComponent() {
           const myRef = useRef();
