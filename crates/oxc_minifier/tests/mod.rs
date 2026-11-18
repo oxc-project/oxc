@@ -9,7 +9,7 @@ use oxc_ast::ast::BindingIdentifier;
 use oxc_ast_visit::VisitMut;
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_compat::EngineTargets;
-use oxc_parser::{ParseOptions, Parser};
+use oxc_parser::{ParseOptions, Source};
 use oxc_semantic::SemanticBuilder;
 use oxc_span::{SPAN, SourceType};
 
@@ -172,9 +172,11 @@ fn run_with_binding_spans(
     unspanned: bool,
 ) -> (String, u8) {
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, source_type)
-        .with_options(ParseOptions { allow_return_outside_function: true, ..Default::default() })
-        .parse();
+    let source = Source::from_str(source_text, source_type, &allocator);
+    let ret = source.parse_with_options(ParseOptions {
+        allow_return_outside_function: true,
+        ..Default::default()
+    });
     assert!(!ret.fatal_error, "{source_text}");
     assert!(ret.diagnostics.is_empty(), "{source_text}");
     let mut program = ret.program;
@@ -202,7 +204,7 @@ fn run_with_binding_spans(
 fn minified_template_dollar_escapes() {
     fn minify(source: &str) -> String {
         let allocator = Allocator::default();
-        let ret = Parser::new(&allocator, source, SourceType::mjs()).parse();
+        let ret = Source::from_str(source, SourceType::mjs(), &allocator).parse();
         assert!(ret.diagnostics.is_empty());
         let mut program = ret.program;
         let ret = oxc_minifier::Minifier::new(oxc_minifier::MinifierOptions::default())

@@ -6,7 +6,7 @@ use oxc_ecmascript::{
     side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext},
 };
 use oxc_minifier::PropertyReadSideEffects;
-use oxc_parser::Parser;
+use oxc_parser::Source;
 use oxc_span::SourceType;
 use rustc_hash::FxHashSet;
 
@@ -53,7 +53,7 @@ impl MayHaveSideEffectsContext<'_> for Ctx {
 #[track_caller]
 fn test(source_text: &str, expected: bool) {
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
+    let ret = Source::from_str(source_text, SourceType::mjs(), &allocator).parse();
     assert!(!ret.fatal_error, "{source_text}");
     assert!(ret.diagnostics.is_empty(), "{source_text}");
 
@@ -64,7 +64,7 @@ fn test(source_text: &str, expected: bool) {
 #[track_caller]
 fn test_in_function(source_text: &str, expected: bool) {
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
+    let ret = Source::from_str(source_text, SourceType::mjs(), &allocator).parse();
     assert!(!ret.fatal_error, "{source_text}");
     assert!(ret.diagnostics.is_empty(), "{source_text}");
 

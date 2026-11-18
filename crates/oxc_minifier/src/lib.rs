@@ -23,13 +23,13 @@
 //! ```rust
 //! use oxc_minifier::{Minifier, MinifierOptions};
 //! use oxc_allocator::Allocator;
-//! use oxc_parser::Parser;
+//! use oxc_parser::Source;
 //! use oxc_span::SourceType;
 //!
 //! let allocator = Allocator::default();
 //! let source_text = "const x = 1 + 1; console.log(x);";
 //! let source_type = SourceType::mjs();
-//! let ret = Parser::new(&allocator, source_text, source_type).parse();
+//! let ret = Source::from_str(source_text, source_type, &allocator).parse();
 //! let mut program = ret.program;
 //!
 //! let options = MinifierOptions::default();

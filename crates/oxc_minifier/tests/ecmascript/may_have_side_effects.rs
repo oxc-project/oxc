@@ -11,7 +11,7 @@ use oxc_ecmascript::{
         MayHaveSideEffects, MayHaveSideEffectsContext, PropertyReadSideEffects, is_pure_function,
     },
 };
-use oxc_parser::Parser;
+use oxc_parser::Source;
 use oxc_span::SourceType;
 
 struct Ctx {
@@ -84,7 +84,7 @@ fn test(source_text: &str, expected: bool) {
 fn test_ts(source_text: &str, expected: bool) {
     let ctx = Ctx::default();
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, SourceType::tsx()).parse();
+    let ret = Source::from_str(source_text, SourceType::tsx(), &allocator).parse();
     assert!(!ret.fatal_error, "{source_text}");
     assert!(ret.diagnostics.is_empty(), "{source_text}");
 
@@ -117,7 +117,7 @@ fn test_with_target(source_text: &str, target: &str, expected: bool) {
 #[track_caller]
 fn test_with_ctx(source_text: &str, ctx: &Ctx, expected: bool) {
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
+    let ret = Source::from_str(source_text, SourceType::mjs(), &allocator).parse();
     assert!(!ret.fatal_error, "{source_text}");
     assert!(ret.diagnostics.is_empty(), "{source_text}");
 
@@ -131,7 +131,7 @@ fn test_with_ctx(source_text: &str, ctx: &Ctx, expected: bool) {
 fn test_in_function(source_text: &str, expected: bool) {
     let ctx = Ctx::default();
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
+    let ret = Source::from_str(source_text, SourceType::mjs(), &allocator).parse();
     assert!(!ret.fatal_error, "{source_text}");
     assert!(ret.diagnostics.is_empty(), "{source_text}");
 
@@ -163,7 +163,7 @@ fn test_assign_target_with_global_variables(
         ..Default::default()
     };
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
+    let ret = Source::from_str(source_text, SourceType::mjs(), &allocator).parse();
     assert!(!ret.fatal_error, "{source_text}");
     assert!(ret.diagnostics.is_empty(), "{source_text}");
 
