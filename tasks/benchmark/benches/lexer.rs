@@ -5,11 +5,9 @@ use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
-use oxc_benchmark::{
-    BenchmarkId, Criterion, black_box, criterion_group, criterion_main, whitespace_cases,
-};
+use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use oxc_parser::{
-    Parser,
+    ParseOptions, Parser,
     config::{LexerConfig, NoTokensLexerConfig},
     lexer::{Kind, Lexer},
 };
@@ -34,35 +32,6 @@ fn bench_lexer(criterion: &mut Criterion) {
             });
         });
     }
-    group.finish();
-}
-
-fn bench_lexer_whitespace(criterion: &mut Criterion) {
-    let mut group = criterion.benchmark_group("lexer_whitespace");
-    let source_type = SourceType::mjs();
-
-    for (name, source_text) in whitespace_cases() {
-        group.bench_function(name, |b| {
-            let mut allocator = Allocator::default();
-            assert!(
-                lex_whole_file(&allocator, &source_text, source_type, NoTokensLexerConfig)
-                    .errors()
-                    .is_empty()
-            );
-            allocator.reset();
-
-            b.iter(|| {
-                black_box(lex_whole_file(
-                    &allocator,
-                    &source_text,
-                    source_type,
-                    NoTokensLexerConfig,
-                ));
-                allocator.reset();
-            });
-        });
-    }
-
     group.finish();
 }
 
@@ -97,24 +66,28 @@ fn cleaned_test_files() -> Vec<TestFile> {
         .collect()
 }
 
+/// Lex the whole of `source_text`. Returns the number of errors.
+//
 // `#[inline(always)]` to ensure this is inlined into benchmark.
 // It's also used in `SourceCleaner` below.
 #[expect(clippy::inline_always)]
 #[inline(always)]
-fn lex_whole_file<'a, C: LexerConfig>(
-    allocator: &'a Allocator,
-    source_text: &'a str,
+fn lex_whole_file<C: LexerConfig>(
+    allocator: &Allocator,
+    source_text: &str,
     source_type: SourceType,
     config: C,
-) -> Lexer<'a, C> {
-    let mut lexer = Lexer::new_for_benchmarks(allocator, source_text, source_type, config);
-    if lexer.first_token().kind() != Kind::Eof {
-        // Use `next_token_for_benchmarks` instead of `next_token`, to work around problem
-        // where `next_token` wasn't inlined here.
-        // `next_token_for_benchmarks` is identical to `next_token`, but is marked `#[inline(always)]`.
-        while lexer.next_token_for_benchmarks().kind() != Kind::Eof {}
-    }
-    lexer
+) -> usize {
+    Lexer::scope(allocator, source_text, source_type, config, |mut lexer| {
+        if lexer.first_token().kind() != Kind::Eof {
+            // Use `next_token_for_benchmarks` instead of `next_token`, to work around problem
+            // where `next_token` wasn't inlined here.
+            // `next_token_for_benchmarks` is identical to `next_token`,
+            // but is marked `#[inline(always)]`.
+            while lexer.next_token_for_benchmarks().kind() != Kind::Eof {}
+        }
+        lexer.errors().len()
+    })
 }
 
 /// Clean source text.
@@ -135,7 +108,9 @@ fn lex_whole_file<'a, C: LexerConfig>(
 /// * `JSXText`
 fn clean<'a>(source_text: &'a str, source_type: SourceType, allocator: &'a Allocator) -> String {
     // Parse
-    let parser_ret = Parser::new(allocator, source_text, source_type).parse();
+    let parser_ret = Parser::new(allocator, source_text, source_type)
+        .with_options(ParseOptions { enable_ident_hashes: false, ..ParseOptions::default() })
+        .parse();
     assert!(parser_ret.diagnostics.is_empty());
     let program = parser_ret.program;
 
@@ -157,8 +132,9 @@ fn clean<'a>(source_text: &'a str, source_type: SourceType, allocator: &'a Alloc
     clean_source_text.push_str(&source_text[last_index..]);
 
     // Check lexer can lex it without any errors
-    let lexer = lex_whole_file(allocator, &clean_source_text, source_type, NoTokensLexerConfig);
-    assert!(lexer.errors().is_empty());
+    let error_count =
+        lex_whole_file(allocator, &clean_source_text, source_type, NoTokensLexerConfig);
+    assert_eq!(error_count, 0);
 
     clean_source_text
 }
@@ -238,5 +214,5 @@ fn convert_to_string(text: &str) -> String {
     format!("{quote}{text}{quote}")
 }
 
-criterion_group!(lexer, bench_lexer, bench_lexer_whitespace);
+criterion_group!(lexer, bench_lexer);
 criterion_main!(lexer);

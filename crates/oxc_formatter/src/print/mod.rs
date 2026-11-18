@@ -42,7 +42,8 @@ pub use embedded::{FormatName, FormatRoot, check_root, object_prints_double_brac
 pub use semicolon::write_comments_before_closing_paren;
 pub use template::embed_hug;
 pub use union_type::{
-    alias_union_breaks_after_operator, is_line_ending_trailing_jsdoc_comment, type_alias_left_end,
+    alias_union_breaks_after_operator, alias_union_owns_break,
+    is_line_ending_trailing_jsdoc_comment, should_hug_type, type_alias_left_end,
     union_prints_itself,
 };
 
@@ -101,7 +102,6 @@ use self::{
     object_like::ObjectLike,
     object_pattern_like::ObjectPatternLike,
     program::FormatStatementsWithImports,
-    return_or_throw_statement::FormatAdjacentArgument,
     semicolon::{
         FormatContentWithSemicolon, OptionalSemicolon, semicolon_terminated_expression_content_end,
         write_trailing_comments_inside_parens,
@@ -1153,15 +1153,6 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, BindingRestElement<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'_, 'a, YieldExpression<'a>> {
-    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        write!(f, ["yield", self.delegate().then_some("*")]);
-        if let Some(argument) = &self.argument() {
-            write!(f, [space(), FormatAdjacentArgument(argument)]);
-        }
-    }
-}
-
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, V8IntrinsicExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, ["%", self.name(), self.arguments()]);
@@ -1390,7 +1381,15 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSTypeAnnotation<'a>> {
                 // Line comment after the `:` drops the type to column 0 (`let v: // c` + `Foo`, Prettier too);
                 // a break + indent as after `=` would keep it under the name.
                 // See AGENTS.md "Open debts".
-                write!(f, [":", space(), self.type_annotation()]);
+                let type_annotation = self.type_annotation();
+                if f.comments().has_comment_in_range(self.span.start, type_annotation.span().start)
+                {
+                    // A group of its own, or an enclosing break (a member list's) puts a block comment after `:`
+                    // on its own line: `a: /** c */ B` stays on one line when it fits
+                    write!(f, [":", space(), group(&type_annotation)]);
+                } else {
+                    write!(f, [":", space(), type_annotation]);
+                }
             }
         }
     }
@@ -1745,9 +1744,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSPropertySignature<'a>> {
         if self.optional() {
             write!(f, "?");
         }
-        if let Some(type_annotation) = &self.type_annotation() {
-            write!(f, type_annotation);
-        }
+        write!(f, self.type_annotation());
     }
 }
 

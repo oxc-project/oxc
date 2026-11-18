@@ -1,0 +1,16 @@
+{ a deep { } ...Frag } fragment Frag on Type { }
+query Q @d { }
+mutation M { x(y: 1) { } }
+# DIVERGENCES.md#empty-selection-set-comments
+query {
+  c {
+    # s1
+  }
+  d { # s2
+  }
+  e {
+    # s3
+
+    # s4
+  }
+}

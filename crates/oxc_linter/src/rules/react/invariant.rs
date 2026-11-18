@@ -26,7 +26,8 @@ declare_react_compiler_lint!(
     react,
     restriction,
     version = "1.79.0",
-    short_description = "Reports internal React Compiler invariant violations, which indicate a compiler bug.",
+    short_description =
+        "Reports internal React Compiler invariant violations, which indicate a compiler bug.",
 );
 
 impl Rule for Invariant {

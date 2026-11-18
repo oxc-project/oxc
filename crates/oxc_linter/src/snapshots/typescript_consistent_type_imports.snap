@@ -749,3 +749,10 @@ source: crates/oxc_linter/src/tester.rs
  6 │ 
    ╰────
   help: Mark all type-only imports with the type specifier
+
+  ⚠ typescript(consistent-type-imports): Imports B are only used as type.
+   ╭─[consistent_type_imports.tsx:1:36]
+ 1 │ import type { "}" as A } from 'm'; import { B, C } from 'm'; type T = A | B; C();
+   ·                                    ─────────────────────────
+   ╰────
+  help: Mark all type-only imports with the type specifier

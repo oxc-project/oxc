@@ -373,7 +373,7 @@ fn test() {
         "if (find(fn)) {}",
         // TODO: Get these passing.
         // r#"if (foo["find"](fn)) {}"#,
-        r#"if (foo["fi" + "nd"](fn) /* find */) {}"#, // spellchecker:disable-line
+        r#"if (foo["fi" + "nd"](fn) /* find */) {}"#,
         // TODO: Get these passing.
         // "if (foo[`find`](fn)) {}",
         "if (foo[find](fn)) {}",
@@ -387,7 +387,7 @@ fn test() {
         "if (findLast(fn)) {}",
         // TODO: Get these passing.
         // r#"if (foo["findLast"](fn)) {}"#,
-        r#"if (foo["fi" + "nd"](fn) /* findLast */) {}"#, // spellchecker:disable-line
+        r#"if (foo["fi" + "nd"](fn) /* findLast */) {}"#,
         // TODO: Get these passing.
         // "if (foo[`findLast`](fn)) {}",
         "if (foo[findLast](fn)) {}",

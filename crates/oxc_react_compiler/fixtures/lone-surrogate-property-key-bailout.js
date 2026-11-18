@@ -39,3 +39,17 @@ export function NestedFunction() {
 export function SupportedKeys() {
   return <div>{({"\uD800\uDC00": 7, "\uFFFDd800": 8})["\uD800\uDC00"]}</div>;
 }
+
+
+const sproutInputs = [
+  [{"\uD800":10,"\uDC00":11}],
+  [{"\uD800":12,"\uDC00":13}],
+];
+export const FIXTURE_ENTRYPOINT = {
+  fn: args => {
+    "use no memo";
+    return [Component(), TrailSurrogate(), Arrow(), ComputedKey(), DestructuredKey(args[0]), AssignedKey(args[0]), MethodKey(), NestedFunction(), SupportedKeys()];
+  },
+  params: [sproutInputs[0]],
+  sequentialRenders: [sproutInputs[0], sproutInputs[0], ...sproutInputs.slice(1), sproutInputs.at(-1), sproutInputs[0]],
+};

@@ -1,34 +1,32 @@
-use std::mem::{self, MaybeUninit};
-
 use oxc_simd::{Avx2, Vec256, cpu_version};
 
-/// Ordered for speed, pairing `(` with `)`, `[` with `{` and `]` with `}` (see [`any_of`]).
-const BRACKET_BYTES: [u8; 6] = [b'(', b')', b'[', b'{', b']', b'}'];
+use crate::pipeline::source::Source;
 
-/// First byte at or after i that is one of needles, or n.
+use super::BRACKET_BYTES;
+
+/// First byte at or after i that is one of needles, or src.len().
 ///
 /// Needle order matters for speed. See comment on [`any_of`] below.
 #[cpu_version(Avx2)]
 #[inline]
-pub unsafe fn find_avx2<const K: usize>(
-    src: *const u8,
-    n: usize,
-    mut i: usize,
-    needles: [u8; K],
-    cpu: Avx2,
-) -> usize {
-    while i + 32 <= n {
-        let m = any_of(Vec256::load_unaligned(src.add(i), cpu), needles).movemask();
+pub fn find_avx2<const K: usize>(src: Source, mut i: usize, needles: [u8; K], cpu: Avx2) -> usize {
+    let n = src.len();
+    if let Some(last) = n.checked_sub(32) {
+        while i <= last {
+            let m = any_of(Vec256::read_unaligned(src.window(i), cpu), needles).movemask();
+            if m != 0 {
+                return i + m.trailing_zeros() as usize;
+            }
+            i += 32;
+        }
+    }
+    if i < n {
+        // The last window reaches into the padding, so its bits past n are dropped.
+        let m = any_of(Vec256::read_unaligned(src.window(i), cpu), needles).movemask();
+        let m = m & (u32::MAX >> (32 - (n - i)));
         if m != 0 {
             return i + m.trailing_zeros() as usize;
         }
-        i += 32;
-    }
-    while i < n {
-        if needles.contains(&*src.add(i)) {
-            return i;
-        }
-        i += 1;
     }
     n
 }
@@ -65,7 +63,11 @@ pub fn bracket_bits_avx2(src: &[u8], base: usize, cpu: Avx2) -> u64 {
 #[cpu_version(Avx2)]
 #[inline(always)]
 fn any_of<const N: usize>(v: Vec256<Avx2>, needles: [u8; N]) -> Vec256<Avx2> {
-    let mut m = array_map(needles, |c| v.eq_u8(c), v.cpu());
+    // Not needles.map, which is std code built without AVX2 and may call the compares out of line.
+    let mut m = [Vec256::zero(v.cpu()); N];
+    for (slot, &c) in m.iter_mut().zip(&needles) {
+        *slot = v.eq_u8(c);
+    }
     let mut len = N;
     while len > 1 {
         let half = len / 2;
@@ -78,25 +80,4 @@ fn any_of<const N: usize>(v: Vec256<Avx2>, needles: [u8; N]) -> Vec256<Avx2> {
         len = half + len % 2;
     }
     m[0]
-}
-
-/// Equivalent of `<[T; N]>::map`, which is guaranteed to be inlined.
-///
-/// `map` is `std` code, which is compiled without AVX2.
-/// If LLVM doesn't inline it into the caller, it calls the intrinsics out of line.
-#[cpu_version(Avx2)]
-#[inline(always)]
-fn array_map<T, U, const N: usize>(array: [T; N], f: impl Fn(T) -> U, _cpu: Avx2) -> [U; N] {
-    // If `f` panics, the values already in `out` aren't dropped. Ensure that can't leak memory.
-    const { assert!(!mem::needs_drop::<U>()) };
-
-    let mut out = [const { MaybeUninit::<U>::uninit() }; N];
-
-    for (slot, value) in out.iter_mut().zip(array) {
-        slot.write(f(value));
-    }
-
-    // SAFETY: `out` and `array` are both `N` long, so the loop initialized every element of `out`.
-    // `MaybeUninit<U>` has the same layout as `U`.
-    unsafe { mem::transmute_copy::<[MaybeUninit<U>; N], [U; N]>(&out) }
 }

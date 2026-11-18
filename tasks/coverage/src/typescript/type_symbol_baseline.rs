@@ -18,7 +18,7 @@ use oxc::{
     allocator::Allocator,
     ast::AstKind,
     ast_visit::Visit,
-    parser::{Parser, config::TokensParserConfig},
+    parser::{ParseOptions, Parser, config::TokensParserConfig},
     semantic::{Semantic, SemanticBuilder},
     span::{GetSpan, Span},
     syntax::{node::NodeId, symbol::SymbolId},
@@ -243,7 +243,12 @@ fn generate_for_file(f: &TypeScriptFile, header: &str, kind: BaselineKind) -> St
                 }
             }
             BaselineKind::Types => {
-                let ret = Parser::new(&allocator, &unit.content, unit.source_type).parse();
+                let ret = Parser::new(&allocator, &unit.content, unit.source_type)
+                    .with_options(ParseOptions {
+                        enable_ident_hashes: false,
+                        ..ParseOptions::default()
+                    })
+                    .parse();
                 if ret.fatal_error {
                     Vec::new()
                 } else {

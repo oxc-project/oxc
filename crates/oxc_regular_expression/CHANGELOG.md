@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.159.0] - 2026-11-16
+
+### ⚡ Performance
+
+- 2df1f19 parser: Reduce regex, template, and comment allocations (#29361) (Boshen)
+
 ## [0.158.0] - 2026-11-09
 
 ### ⚡ Performance

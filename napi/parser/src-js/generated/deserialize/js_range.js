@@ -3365,7 +3365,6 @@ function deserializeTSEnumMemberName(pos) {
     case 0:
       return deserializeBoxIdentifierName(pos + 8);
     case 1:
-      return deserializeBoxStringLiteral(pos + 8);
     case 2:
       return deserializeBoxStringLiteral(pos + 8);
     case 3:
@@ -4850,11 +4849,9 @@ function deserializeCommentKind(pos) {
     case 0:
       return "Line";
     case 1:
-      return "Block";
     case 2:
       return "Block";
     case 3:
-      return "Line";
     case 4:
       return "Line";
     default:

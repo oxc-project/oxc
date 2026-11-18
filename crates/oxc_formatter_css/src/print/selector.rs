@@ -152,7 +152,7 @@ pub(super) fn write_selector_list<'a>(
 ///
 /// NOTE: That extra indent on combinator-less compounds is arguably a Prettier bug, not a design:
 /// upstream keeps removing it one threshold at a time (prettier/prettier#16572 for a lone pseudo, #17541 for 2 nodes),
-/// and this `> 2` is what remains as of 3.9.6.
+/// and this `> 2` is what remains.
 /// The principled condition would be "has a combinator" (indent only wrapped continuation lines),
 /// keeping pseudo args at +2 and `)` at +0.
 pub(super) fn write_complex_selector<'a>(
@@ -541,8 +541,7 @@ fn write_nth<'a>(nth: &Nth<'a>, f: &mut CssFormatter<'_, 'a>) {
 /// exactly one space around each `+` between terms,
 /// digit-led segments lowercased, all other whitespace kept as-is (a glued `-` stays glued).
 ///
-/// NOTE: We keep a leading sign stays glued, since the An+B grammar forbids whitespace after it.
-/// But Prettier formats as `+ 3n`, output is a semantics-breaking artifact.
+/// A leading sign stays glued, since the An+B grammar forbids whitespace after it.
 fn normalize_an_plus_b(raw: &str) -> Cow<'_, str> {
     let bytes = raw.as_bytes();
     if !bytes.iter().any(|&b| b == b'+' || b.is_ascii_uppercase()) {

@@ -1,8 +1,8 @@
-commit: d7a0cccb
+commit: 16a2d671
 
 semantic_babel Summary:
-AST Parsed     : 2329/2329 (100.00%)
-Positive Passed: 2233/2329 (95.88%)
+AST Parsed     : 2358/2358 (100.00%)
+Positive Passed: 2261/2358 (95.89%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/1.1-html-comments-open-export-default-from/input.js
 Cannot use export statement outside a module
 
@@ -153,6 +153,26 @@ Identifier `x` has already been declared
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/static/input.ts
 Function implementation is missing or not immediately following the declaration.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/conditional/issue-18264/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["_asyncToGenerator", "c", "f", "v"]
+rebuilt        : ScopeId(0): ["_asyncToGenerator", "v"]
+Reference symbol mismatch for "c":
+after transform: SymbolId(0) "c"
+rebuilt        : <None>
+Reference symbol mismatch for "f":
+after transform: SymbolId(1) "f"
+rebuilt        : <None>
+Reference symbol mismatch for "c":
+after transform: SymbolId(0) "c"
+rebuilt        : <None>
+Reference symbol mismatch for "f":
+after transform: SymbolId(1) "f"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["arguments", "undefined", "y"]
+rebuilt        : ["arguments", "c", "f", "undefined", "y"]
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/const/initializer-ambient-context/input.ts
 Bindings mismatch:

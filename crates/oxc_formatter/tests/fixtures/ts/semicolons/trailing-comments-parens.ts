@@ -39,7 +39,7 @@ function asiReturn() {
 // In an expression statement the parentheses are dropped, so the semicolon
 // directly follows the content: a comment inside them also moves behind it,
 // even from a nested assignment's dropped parentheses.
-// (Prettier 3.9 moves these only on its second pass; oxfmt prints that
+// (Prettier moves these only on its second pass; oxfmt prints that
 // fixpoint directly, see prettier#19893)
 parenthesized = (someValue /* moves */);
 parenthesizedChain = (inner = someValue /* moves */);

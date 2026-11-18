@@ -4,7 +4,7 @@ use oxc_formatter_core::{Format, GroupId};
 use oxc_span::{FileExtension, GetSpan};
 
 use crate::{
-    ast_nodes::{AstNode, AstNodes},
+    ast_nodes::{AstNode, AstNodeKind, AstNodes},
     format_args,
     formatter::{
         JsFormatContext, JsFormatter,
@@ -14,12 +14,12 @@ use crate::{
     options::{FormatTrailingCommas, TrailingSeparator},
     utils::{
         call_expression::is_test_call_expression,
-        typescript::{is_object_like_type, is_simple_type, should_hug_type},
+        typescript::{is_object_like_type, is_simple_type},
     },
     write,
 };
 
-use super::FormatWrite;
+use super::{FormatWrite, should_hug_type};
 
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSTypeParameter<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -186,7 +186,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSTypeParameterInstantiation<'a>> {
         let first_arg_can_be_hugged = params.len() == 1
             && params.first().is_some_and(|first_type| {
                 (matches!(first_type.as_ref(), TSType::TSNullKeyword(_))
-                    || should_hug_single_type(first_type.as_ref(), f))
+                    || should_hug_single_type(&first_type, f))
                     && !f.comments().has_comment_in_range(first_type.span().end, self.span.end)
             });
 
@@ -209,7 +209,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSTypeParameterInstantiation<'a>> {
 }
 
 /// Check if a single type should be "hugged" (kept inline)
-fn should_hug_single_type(ty: &TSType, f: &JsFormatter<'_, '_>) -> bool {
+fn should_hug_single_type(ty: &AstNode<'_, '_, TSType<'_>>, f: &JsFormatter<'_, '_>) -> bool {
     // Simple types and object-like types can be hugged
     if is_simple_type(ty) || is_object_like_type(ty) {
         return true;
@@ -217,7 +217,7 @@ fn should_hug_single_type(ty: &TSType, f: &JsFormatter<'_, '_>) -> bool {
 
     // Check for union types with mostly void types and one object type
     // (e.g., `SomeType<ObjectType | null | undefined>`)
-    matches!(ty, TSType::TSUnionType(union) if should_hug_type(union, f))
+    matches!(ty.as_kind(), AstNodeKind::TSUnionType(union) if should_hug_type(&union, f))
 }
 
 /// Check if this type parameter instantiation is in an arrow function variable context

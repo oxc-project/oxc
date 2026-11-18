@@ -10,7 +10,7 @@
 //! - [`lt_run_split`] checks for the shape of an arrow function after a `<<`,
 //!   as in `Array<<T>(x: T) => T>`.
 //!
-//! [`match_delim_back`]: crate::pipeline::disambiguate::common::Tokens::match_delim_back
+//! [`match_delim_back`]: crate::pipeline::disambiguate::TokensView::match_delim_back
 
 use oxc_simd::{Cpu, cpu_multiversion};
 
@@ -23,8 +23,9 @@ use crate::pipeline::{
     },
     disambiguate::{
         FORWARD_SCAN_CAP,
-        common::{Closers, Open, Tokens, bits},
+        common::{Closers, Open, TokensView},
     },
+    kinds::Kinds,
 };
 
 /// Bytes the forward angle match reacts to. Everything else is skipped without touching a bitmap.
@@ -60,8 +61,8 @@ static GT_SCAN_DELIM: [bool; 256] = {
 /// never split a real shift.
 #[cpu_multiversion]
 #[inline(never)]
-pub fn lt_run_split(tokens: &Tokens, lt: usize, cpu: impl Cpu) -> bool {
-    let Tokens { src, st, n, .. } = *tokens;
+pub fn lt_run_split(tokens: &TokensView, lt: usize, cpu: impl Cpu) -> bool {
+    let TokensView { src, token_start, n, .. } = *tokens;
     // A TypeParameter starts with an identifier (or the `const` modifier),
     // which is what makes `<<=` cost two bytes to reject.
     let head = skip_trivia_fwd(src, n, lt + 2, cpu);
@@ -73,7 +74,7 @@ pub fn lt_run_split(tokens: &Tokens, lt: usize, cpu: impl Cpu) -> bool {
         return false;
     }
     // Already fused by coalesce: a shift.
-    if !bits::get(st, lt + 1, cpu) {
+    if !token_start.get(lt + 1, cpu) {
         return false;
     }
     let Some(gt) = list_closer(tokens, lt + 1, cpu) else {
@@ -89,8 +90,8 @@ pub fn lt_run_split(tokens: &Tokens, lt: usize, cpu: impl Cpu) -> bool {
 }
 
 #[cpu_multiversion]
-pub(super) fn arrow_after_params(tokens: &Tokens, lp: usize, cpu: impl Cpu) -> bool {
-    let Tokens { src, n, .. } = *tokens;
+pub(super) fn arrow_after_params(tokens: &TokensView, lp: usize, cpu: impl Cpu) -> bool {
+    let TokensView { src, n, .. } = *tokens;
     let Some(rp) = group_closer(tokens, lp, cpu) else {
         return false;
     };
@@ -136,7 +137,7 @@ pub(super) fn skip_trivia_nl(src: &[u8], n: usize, mut i: usize, cpu: impl Cpu) 
 }
 
 #[cpu_multiversion]
-pub(super) fn list_closer(tokens: &Tokens, lt: usize, cpu: impl Cpu) -> Option<usize> {
+pub(super) fn list_closer(tokens: &TokensView, lt: usize, cpu: impl Cpu) -> Option<usize> {
     match tokens.closers.get(lt, cpu) {
         Some(r) => r.closer(cpu),
         None => resolve_lists(tokens, lt, cpu),
@@ -144,7 +145,7 @@ pub(super) fn list_closer(tokens: &Tokens, lt: usize, cpu: impl Cpu) -> Option<u
 }
 
 #[cpu_multiversion]
-fn group_closer(tokens: &Tokens, lp: usize, cpu: impl Cpu) -> Option<usize> {
+fn group_closer(tokens: &TokensView, lp: usize, cpu: impl Cpu) -> Option<usize> {
     match tokens.closers.get(lp, cpu) {
         Some(r) => r.closer(cpu),
         None => resolve_groups(tokens, lp, cpu),
@@ -153,9 +154,9 @@ fn group_closer(tokens: &Tokens, lp: usize, cpu: impl Cpu) -> Option<usize> {
 
 #[cpu_multiversion]
 #[inline]
-fn past_raw(tokens: &Tokens, lim: usize, i: usize, cpu: impl Cpu) -> Option<usize> {
-    let (src, kind) = (tokens.src, tokens.kind);
-    let j = skip_raw_literal(src, kind, lim, i, cpu);
+fn past_raw(tokens: &TokensView, lim: usize, i: usize, cpu: impl Cpu) -> Option<usize> {
+    let (src, kinds) = (tokens.src, tokens.kinds);
+    let j = skip_raw_literal(src, kinds, lim, i, cpu);
     if j != i {
         return (j < lim).then_some(j);
     }
@@ -173,8 +174,8 @@ fn past_raw(tokens: &Tokens, lim: usize, i: usize, cpu: impl Cpu) -> Option<usiz
 /// The > closing the < at start, if the brackets inside balance and no ; on its level ends it.
 #[cpu_multiversion]
 #[inline(never)]
-fn resolve_lists(tokens: &Tokens, start: usize, cpu: impl Cpu) -> Option<usize> {
-    let Tokens { src, st, opch, n, closers, .. } = *tokens;
+fn resolve_lists(tokens: &TokensView, start: usize, cpu: impl Cpu) -> Option<usize> {
+    let TokensView { src, token_start, op_char, n, closers, .. } = *tokens;
     let budget = start + FORWARD_SCAN_CAP;
     let mut stack = closers.lists.borrow_mut();
     stack.clear();
@@ -182,7 +183,7 @@ fn resolve_lists(tokens: &Tokens, start: usize, cpu: impl Cpu) -> Option<usize> 
     let (mut parens, mut brackets, mut braces) = (0i32, 0i32, 0i32);
     let mut i = start + 1;
     while i < n {
-        if bits::get(st, i, cpu) {
+        if token_start.get(i, cpu) {
             match past_raw(tokens, n, i, cpu) {
                 Some(j) if j != i => {
                     i = j;
@@ -193,8 +194,8 @@ fn resolve_lists(tokens: &Tokens, start: usize, cpu: impl Cpu) -> Option<usize> 
             }
         }
         let c = src[i];
-        if GT_SCAN_DELIM[c as usize] && bits::get(st, i, cpu) {
-            let op = bits::get(opch, i, cpu);
+        if GT_SCAN_DELIM[c as usize] && token_start.get(i, cpu) {
+            let op = op_char.get(i, cpu);
             match c {
                 b'<' => {
                     if op && src[i + 1] != b'=' {
@@ -294,15 +295,15 @@ fn kill(
 
 #[cpu_multiversion]
 #[inline(never)]
-fn resolve_groups(tokens: &Tokens, start: usize, cpu: impl Cpu) -> Option<usize> {
-    let Tokens { src, st, n, closers, .. } = *tokens;
+fn resolve_groups(tokens: &TokensView, start: usize, cpu: impl Cpu) -> Option<usize> {
+    let TokensView { src, token_start, n, closers, .. } = *tokens;
     let budget = start + FORWARD_SCAN_CAP;
     let mut open = closers.groups.borrow_mut();
     open.clear();
     open.push(start as u32);
     let mut i = start + 1;
     while i < n {
-        if bits::get(st, i, cpu) {
+        if token_start.get(i, cpu) {
             match past_raw(tokens, n, i, cpu) {
                 Some(j) if j != i => {
                     i = j;
@@ -343,12 +344,12 @@ fn resolve_groups(tokens: &Tokens, start: usize, cpu: impl Cpu) -> Option<usize>
 #[inline]
 pub(super) fn skip_raw_literal(
     src: &[u8],
-    kind: &[u8],
+    kinds: Kinds,
     n: usize,
     i: usize,
     cpu: impl Cpu,
 ) -> usize {
-    if kind[i] < OP_KIND_BASE {
+    if kinds.get(i) < OP_KIND_BASE {
         return i;
     }
     let c = src[i];

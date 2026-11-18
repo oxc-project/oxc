@@ -474,3 +474,11 @@ source: crates/oxc_linter/src/tester.rs
  13 │                         });
     ╰────
   help: Replace conditionals with separate test cases for each branch to keep tests deterministic and easy to understand.
+
+  ⚠ jest(no-conditional-in-test): Avoid having conditionals in tests.
+   ╭─[no_conditional_in_test.tsx:2:35]
+ 1 │ import { test as customTest } from '@jest/globals';
+ 2 │         customTest('foo', () => { if (condition) {} });
+   ·                                   ─────────────────
+   ╰────
+  help: Replace conditionals with separate test cases for each branch to keep tests deterministic and easy to understand.

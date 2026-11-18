@@ -1,0 +1,5 @@
+{
+  "original": "function Component(){Promise.resolve().then(()=>console.log(\"async\", 1));return null;}\nexport const FIXTURE_ENTRYPOINT={fn:Component,params:[]};",
+  "compiled": "function Component(){Promise.resolve().then(()=>console.log(\"async\", 1));return null;}\nexport const FIXTURE_ENTRYPOINT={fn:Component,params:[]};",
+  "expected": "success"
+}

@@ -824,6 +824,22 @@ fn test() {
                 expect(getValue()).toBe(2);
             });
         ",
+        r"import { expect, test as baseTest } from 'vitest';
+        const customTest = baseTest.extend({});
+        function helper(customTest) {
+            customTest('foo', () => {
+                if (condition) expect(1).toBe(1);
+            });
+        }",
+        r"import { test as baseTest } from 'other';
+        const customTest = baseTest.extend({});
+        customTest('foo', () => {
+            if (condition) expect(1).toBe(1);
+        });",
+        r"const test = (name, callback) => callback();
+        test('foo', () => {
+            if (condition) expect(1).toBe(1);
+        });",
     ];
 
     let fail_vitest = vec![
@@ -870,6 +886,24 @@ fn test() {
                 something ? noop() : expect(something).toHaveBeenCalled();
             })
         ",
+        r"import { expect, test as baseTest } from 'vitest';
+        const extendedTest = baseTest.extend({});
+        const customTest = extendedTest.extend({});
+        customTest.only('foo', () => {
+            if (condition) expect(1).toBe(1);
+            promise.catch(() => expect(1).toBe(1));
+        });",
+        r"import { expect, it as customTest } from 'vitest';
+        function callback() {
+            condition && expect(1).toBe(1);
+        }
+        customTest('foo', callback);",
+        r"import { expect, test as baseTest } from 'vitest';
+        const customTest = baseTest.extend({});
+        function helper() {
+            if (condition) expect(1).toBe(1);
+        }
+        customTest.each([true])('foo', () => { helper(); });",
     ];
 
     pass.extend(pass_vitest.into_iter().map(|x| (x, None)));

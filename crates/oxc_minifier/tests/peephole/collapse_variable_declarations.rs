@@ -164,9 +164,10 @@ mod collapse_for {
             "for(var a = 0, b = 0; c < b ; c++) foo()",
         );
 
+        test("var a = 0; a:for(; c < b ; c++) foo()", "for (var a = 0; c < b; c++) foo()");
+        test("var a = 0; a:b:for(; c < b ; c++) foo()", "for (var a = 0; c < b; c++) foo()");
         // We don't handle labels yet.
-        test_same("var a = 0; a:for(; c < b ; c++) foo()");
-        test_same("var a = 0; a:b:for(; c < b ; c++) foo()");
+        test_same("var a = 0; a:for(; c < b ; c++) for (;;) if (d) continue a");
 
         // Do not inline let or const
         test_same("let a = 0; for(; c < b ; c++) foo()");
@@ -203,9 +204,10 @@ mod collapse_for {
         test("a = 0; for(a in b) foo()", "for (a in a = 0, b) foo();");
         test_same("var a = 0; for(a in b) foo()");
 
+        test("var a; a:for(a in b) foo()", "for (var a in b) foo()");
+        test("var a; a:b:for(a in b) foo()", "for (var a in b) foo()");
         // We don't handle labels yet.
-        test_same("var a; a:for(a in b) foo()");
-        test_same("var a; a:b:for(a in b) foo()");
+        test_same("var a; a:for(a in b) for (;;) if (d) continue a");
 
         // Verify FOR inside IFs.
         test("if(x){var a; for(a in b) foo()}", "if(x) for(var a in b) foo()");
@@ -226,9 +228,10 @@ mod collapse_for {
         test_same("a = 0; for (a of b) foo()");
         test_same("var a = 0; for (a of b) foo()");
 
+        test("var a; a: for (a of b) foo()", "for (var a of b) foo()");
+        test("var a; a: b: for (a of b) foo()", "for (var a of b) foo()");
         // We don't handle labels yet.
-        test_same("var a; a: for (a of b) foo()");
-        test_same("var a; a: b: for (a of b) foo()");
+        test_same("var a; a: for (a of b) for (;;) if (d) continue a");
 
         // Verify FOR inside IFs.
         test("if (x) { var a; for (a of b) foo() }", "if (x) for (var a of b) foo()");

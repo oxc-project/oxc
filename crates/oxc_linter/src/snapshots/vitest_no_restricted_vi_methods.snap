@@ -27,3 +27,15 @@ source: crates/oxc_linter/src/tester.rs
  1 │ vi["fn"]()
    ·    ────
    ╰────
+
+  ⚠ vitest(no-restricted-vi-methods): Use of `spyOn` is not allowed
+   ╭─[no_restricted_vi_methods.tsx:1:4]
+ 1 │ vi.spyOn({m:()=>0}, 'm').mockImplementation(() => 1);
+   ·    ─────
+   ╰────
+
+  ⚠ vitest(no-restricted-vi-methods): Use of `fn` is not allowed
+   ╭─[no_restricted_vi_methods.tsx:1:4]
+ 1 │ vi.fn().mockReturnValue(1);
+   ·    ──
+   ╰────

@@ -142,7 +142,6 @@ fn is_neg_zero(expr: &Expression) -> bool {
     }
     match &unary.argument {
         Expression::NumericLiteral(number) => number.value == 0.0,
-        Expression::BigIntLiteral(bigint) => bigint.is_zero(),
         _ => false,
     }
 }
@@ -182,6 +181,29 @@ fn test() {
         ("x === -(-0)", None),
         ("x === -(0)", None),
         ("-0 + x", None),
+        // BigInt has only one zero value, so there is no negative zero to distinguish.
+        ("x === -0n", None),
+        ("-0n === x", None),
+        ("x !== -0n", None),
+        ("-0n !== x", None),
+        ("x == -0n", None),
+        ("-0n == x", None),
+        ("x != -0n", None),
+        ("-0n != x", None),
+        ("x < -0n", None),
+        ("-0n < x", None),
+        ("x <= -0n", None),
+        ("-0n <= x", None),
+        ("x > -0n", None),
+        ("-0n > x", None),
+        ("x >= -0n", None),
+        ("-0n >= x", None),
+        ("0n === -0n", None),
+        ("-0n === -0n", None),
+        ("-0n <= -0n", None),
+        ("x <= (-0n)", None),
+        ("x === -0x0n", None),
+        ("x === (-0n as bigint)", None),
     ];
 
     let fail = vec![
@@ -197,8 +219,8 @@ fn test() {
         ("-0 < x", None),
         ("x <= -0", None),
         ("-0 <= x", None),
-        // BigInt Literal
-        ("-0n <= x", None),
+        ("-0n === -0", None),
+        ("-0 === -0n", None),
         ("-0 === -0", None),
         ("(-0 as number) < (-0 satisfies number)", None),
     ];
@@ -216,15 +238,17 @@ fn test() {
         ("-0 < x", "0 < x", None),
         ("x <= -0", "x <= 0", None),
         ("-0 <= x", "0 <= x", None),
-        ("-0n <= x", "0n <= x", None),
         ("x > (-0)", "x > (0)", None),
         ("(-0) > x", "(0) > x", None),
-        ("x <= (-0n)", "x <= (0n)", None),
         ("x > (-0 as number)", "x > (0 as number)", None),
         ("(-0 satisfies number) > x", "(0 satisfies number) > x", None),
         ("-0 === -0", "Object.is(-0, -0)", None),
+        ("-0n === -0", "Object.is(-0n, -0)", None),
+        ("-0 === -0n", "Object.is(-0n, -0)", None),
+        ("0n === -0", "Object.is(0n, -0)", None),
+        ("-0n <= -0", "-0n <= 0", None),
+        ("-0 <= -0n", "0 <= -0n", None),
         ("-0 < -0", "0 < -0", None),
-        ("-0n <= -0n", "0n <= -0n", None),
         ("-1 > -0", "-1 > 0", None),
         ("(-0 as number) < (-0 satisfies number)", "(0 as number) < (-0 satisfies number)", None),
     ];

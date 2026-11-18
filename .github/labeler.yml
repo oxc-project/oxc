@@ -60,7 +60,7 @@ A-linter:
             "tasks/track_linter_timings/**",
           ]
 
-A-linter-plugins:
+L-js-plugins:
   - changed-files:
       - all-globs-to-any-file:
           ["apps/oxlint/src-js/**", "!apps/oxlint/src-js/package/config.generated.ts"]
@@ -70,6 +70,10 @@ A-minifier:
   - changed-files:
       - any-glob-to-any-file:
           ["crates/oxc_minifier/**", "crates/oxc_mangler/**", "tasks/minsize/**", "napi/minify/**"]
+
+A-napi:
+  - changed-files:
+      - any-glob-to-any-file: ["napi/**", "crates/oxc_napi/**"]
 
 A-parser:
   - changed-files:
@@ -101,3 +105,35 @@ A-react-compiler:
 A-isolated-declarations:
   - changed-files:
       - any-glob-to-any-file: ["crates/oxc_isolated_declarations/**"]
+
+F-lang-css:
+  - changed-files:
+      - any-glob-to-any-file: ["crates/oxc_formatter_css/**"]
+
+F-lang-gql:
+  - changed-files:
+      - any-glob-to-any-file: ["crates/oxc_formatter_graphql/**"]
+
+F-lang-htmlish:
+  - changed-files:
+      - any-glob-to-any-file: ["crates/oxc_formatter_htmlish/**"]
+
+F-lang-js:
+  - changed-files:
+      - any-glob-to-any-file: ["crates/oxc_formatter/**"]
+
+F-lang-json:
+  - changed-files:
+      - any-glob-to-any-file: ["crates/oxc_formatter_json/**"]
+
+F-lang-markdown:
+  - changed-files:
+      - any-glob-to-any-file: ["crates/oxc_formatter_markdown/**"]
+
+F-lang-toml:
+  - changed-files:
+      - any-glob-to-any-file: ["crates/oxc_formatter_toml/**"]
+
+F-lang-yaml:
+  - changed-files:
+      - any-glob-to-any-file: ["crates/oxc_formatter_yaml/**"]

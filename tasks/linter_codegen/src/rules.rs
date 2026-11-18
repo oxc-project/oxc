@@ -32,10 +32,8 @@ pub fn get_all_rules(contents: &str) -> Vec<RuleEntry<'_>> {
         let line = line.trim();
 
         // Detect plugin module start: `pub(crate) mod eslint {` or `pub(crate) mod typescript {`
-        if line.starts_with("pub(crate) mod ") && line.ends_with(" {") {
-            let module_name =
-                line.strip_prefix("pub(crate) mod ").and_then(|s| s.strip_suffix(" {"));
-            current_plugin = module_name;
+        if let Some(module_name) = line.strip_circumfix("pub(crate) mod ", " {") {
+            current_plugin = Some(module_name);
             continue;
         }
 
@@ -48,9 +46,7 @@ pub fn get_all_rules(contents: &str) -> Vec<RuleEntry<'_>> {
         // Inside a plugin module, detect rule module: `pub mod no_debugger;`
         if let Some(plugin) = current_plugin
             && plugin != "shared"
-            && line.starts_with("pub mod ")
-            && line.ends_with(';')
-            && let Some(rule_name) = line.strip_prefix("pub mod ").and_then(|s| s.strip_suffix(';'))
+            && let Some(rule_name) = line.strip_circumfix("pub mod ", ';')
         {
             rule_entries.push(RuleEntry {
                 plugin_module_name: plugin,

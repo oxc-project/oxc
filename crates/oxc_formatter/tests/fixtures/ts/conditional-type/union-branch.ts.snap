@@ -1,0 +1,157 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// A union in a conditional type's branch hugs the `?` / `:`: its first `|` prints right behind it
+type TrueBranch<T> = T extends string ? ExcalidrawArrowElement["startBinding"] | ExcalidrawElbowArrowElement["startBindingXXXXXXXXXXXXXXXXXXXXX"] : never;
+type FalseBranch<T> = T extends string ? never : ExcalidrawArrowElement["startBinding"] | ExcalidrawElbowArrowElement["startBindingXXXXXXXXXXXXXXXX"];
+type Fits<T> = T extends string ? A | B : never;
+type ObjectMember<T> = T extends string ? { aaaaaaaaaaaaaaaaaaaa: string; bbbbbbbbbbbbbbbbbb: number; cccccccccccccccccccccccccccccccccc: 1 } | undefined : never;
+type Hugged<T> = T extends string ? { aaaaaaaaaaaaaaaaaaaa: string; bbbbbbbbbbbbbbbbbb: number; cccccccccccccccccccccccccccccccccccccccccc: 1 } | null : never;
+type Nested<T> = T extends string ? T extends number ? ExcalidrawArrowElement["startBinding"] | ExcalidrawElbowArrowElement["startBindingXXXXXXXXXXXXXXX"] : never : never;
+function parameter<T>(a: T extends string ? ExcalidrawArrowElement["startBinding"] | ExcalidrawElbowArrowElement["startBindingXXXXXXXXXX"] : never) {}
+
+// With a comment behind the operator
+type BlockComment<T> = T extends string ? /* c */ ExcalidrawArrowElement["startBinding"] | ExcalidrawElbowArrowElement["startBindingXXXXXXXXXX"] : never;
+type BlockCommentHugged<T> = T extends string ? /* c */ { aaaaaaaaaaaaaaaaaaaa: string; bbbbbbbbbbbbbbbbbb: number; cccccccccccccccccccccccccccccccc: 1 } | null : never;
+type LineComment<T> = T extends string
+  ? // c
+    ExcalidrawArrowElement["startBinding"] | ExcalidrawElbowArrowElement["startBindingXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"]
+  : never;
+type OwnLineComment<T> = T extends string
+  ?
+    // c
+    ExcalidrawArrowElement["startBinding"] | ExcalidrawElbowArrowElement["startBindingXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"]
+  : never;
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// A union in a conditional type's branch hugs the `?` / `:`: its first `|` prints right behind it
+type TrueBranch<T> = T extends string
+  ? | ExcalidrawArrowElement["startBinding"]
+    | ExcalidrawElbowArrowElement["startBindingXXXXXXXXXXXXXXXXXXXXX"]
+  : never;
+type FalseBranch<T> = T extends string
+  ? never
+  : | ExcalidrawArrowElement["startBinding"]
+    | ExcalidrawElbowArrowElement["startBindingXXXXXXXXXXXXXXXX"];
+type Fits<T> = T extends string ? A | B : never;
+type ObjectMember<T> = T extends string
+  ? | {
+        aaaaaaaaaaaaaaaaaaaa: string;
+        bbbbbbbbbbbbbbbbbb: number;
+        cccccccccccccccccccccccccccccccccc: 1;
+      }
+    | undefined
+  : never;
+type Hugged<T> = T extends string
+  ? {
+      aaaaaaaaaaaaaaaaaaaa: string;
+      bbbbbbbbbbbbbbbbbb: number;
+      cccccccccccccccccccccccccccccccccccccccccc: 1;
+    } | null
+  : never;
+type Nested<T> = T extends string
+  ? T extends number
+    ? | ExcalidrawArrowElement["startBinding"]
+      | ExcalidrawElbowArrowElement["startBindingXXXXXXXXXXXXXXX"]
+    : never
+  : never;
+function parameter<T>(
+  a: T extends string
+    ? | ExcalidrawArrowElement["startBinding"]
+      | ExcalidrawElbowArrowElement["startBindingXXXXXXXXXX"]
+    : never,
+) {}
+
+// With a comment behind the operator
+type BlockComment<T> = T extends string
+  ? | /* c */ ExcalidrawArrowElement["startBinding"]
+    | ExcalidrawElbowArrowElement["startBindingXXXXXXXXXX"]
+  : never;
+type BlockCommentHugged<T> = T extends string
+  ? | /* c */ {
+        aaaaaaaaaaaaaaaaaaaa: string;
+        bbbbbbbbbbbbbbbbbb: number;
+        cccccccccccccccccccccccccccccccc: 1;
+      }
+    | null
+  : never;
+type LineComment<T> = T extends string
+  ? // c
+    | ExcalidrawArrowElement["startBinding"]
+    | ExcalidrawElbowArrowElement["startBindingXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"]
+  : never;
+type OwnLineComment<T> = T extends string
+  ? // c
+    | ExcalidrawArrowElement["startBinding"]
+    | ExcalidrawElbowArrowElement["startBindingXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"]
+  : never;
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// A union in a conditional type's branch hugs the `?` / `:`: its first `|` prints right behind it
+type TrueBranch<T> = T extends string
+  ? | ExcalidrawArrowElement["startBinding"]
+    | ExcalidrawElbowArrowElement["startBindingXXXXXXXXXXXXXXXXXXXXX"]
+  : never;
+type FalseBranch<T> = T extends string
+  ? never
+  : | ExcalidrawArrowElement["startBinding"]
+    | ExcalidrawElbowArrowElement["startBindingXXXXXXXXXXXXXXXX"];
+type Fits<T> = T extends string ? A | B : never;
+type ObjectMember<T> = T extends string
+  ? | {
+        aaaaaaaaaaaaaaaaaaaa: string;
+        bbbbbbbbbbbbbbbbbb: number;
+        cccccccccccccccccccccccccccccccccc: 1;
+      }
+    | undefined
+  : never;
+type Hugged<T> = T extends string
+  ? {
+      aaaaaaaaaaaaaaaaaaaa: string;
+      bbbbbbbbbbbbbbbbbb: number;
+      cccccccccccccccccccccccccccccccccccccccccc: 1;
+    } | null
+  : never;
+type Nested<T> = T extends string
+  ? T extends number
+    ? | ExcalidrawArrowElement["startBinding"]
+      | ExcalidrawElbowArrowElement["startBindingXXXXXXXXXXXXXXX"]
+    : never
+  : never;
+function parameter<T>(
+  a: T extends string
+    ? ExcalidrawArrowElement["startBinding"] | ExcalidrawElbowArrowElement["startBindingXXXXXXXXXX"]
+    : never,
+) {}
+
+// With a comment behind the operator
+type BlockComment<T> = T extends string
+  ? | /* c */ ExcalidrawArrowElement["startBinding"]
+    | ExcalidrawElbowArrowElement["startBindingXXXXXXXXXX"]
+  : never;
+type BlockCommentHugged<T> = T extends string
+  ? | /* c */ {
+        aaaaaaaaaaaaaaaaaaaa: string;
+        bbbbbbbbbbbbbbbbbb: number;
+        cccccccccccccccccccccccccccccccc: 1;
+      }
+    | null
+  : never;
+type LineComment<T> = T extends string
+  ? // c
+    | ExcalidrawArrowElement["startBinding"]
+    | ExcalidrawElbowArrowElement["startBindingXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"]
+  : never;
+type OwnLineComment<T> = T extends string
+  ? // c
+    | ExcalidrawArrowElement["startBinding"]
+    | ExcalidrawElbowArrowElement["startBindingXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"]
+  : never;
+
+===================== End =====================

@@ -90,6 +90,23 @@ impl RequireAwaitedExpectPoll {
             return;
         };
 
+        // Skip inner calls only when another call follows in the member chain.
+        // This reports each assertion once, with a span that includes the matcher.
+        let mut current_node = node;
+        while let Some(member) =
+            ctx.nodes().parent_kind(current_node.id()).as_member_expression_kind()
+        {
+            if member.object().address() != current_node.address() {
+                break;
+            }
+            current_node = ctx.nodes().parent_node(current_node.id());
+            if let AstKind::CallExpression(call) = ctx.nodes().parent_kind(current_node.id())
+                && call.callee.address() == current_node.address()
+            {
+                return;
+            }
+        }
+
         let Some(possible_jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx)
         else {
             return;
@@ -190,7 +207,12 @@ fn is_in_return_context<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
 fn is_returned_or_awaited<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     let parent = ctx.semantic().nodes().parent_node(node.id());
 
-    matches!(parent.kind(), AstKind::ReturnStatement(_) | AstKind::AwaitExpression(_))
+    matches!(
+        parent.kind(),
+        AstKind::ReturnStatement(_)
+            | AstKind::AwaitExpression(_)
+            | AstKind::ArrowFunctionExpression(_)
+    )
 }
 
 #[test]
@@ -247,6 +269,12 @@ fn test() {
                     test('should pass', () => {
                       return (sideEffect(), expect.poll(() => element).toBeInTheDocument());
                     });
+                  ",
+"
+                    test('should pass', async () => {
+                      const equal = (value) => expect.poll(() => value).toBeInTheDocument();
+                      await equal(element);
+                    });
                   "
     ];
 
@@ -285,7 +313,12 @@ fn test() {
                     test('should fail', () => {
                       return (expect.poll(() => element).toBeInTheDocument(), expect(true).toBe(true));
                     });
-                  "
+                  ",
+"
+                    test('should fail', () => {
+                      expect.poll(() => element).toBeInTheDocument().then;
+                    });
+                  ",
     ];
 
     Tester::new(RequireAwaitedExpectPoll::NAME, RequireAwaitedExpectPoll::PLUGIN, pass, fail)

@@ -20,27 +20,38 @@ a dialect adds a field there, not a `Dialect` check at the use site.
 ### Embedded languages
 
 Content in another language goes to the session's dispatcher (`src/print/embed.rs`), and prints as written where it is not formatted:
-`<script>` / `<style>` bodies, `style` / `on*` values, and in Vue (`src/print/vue.rs`) `{{ }}`, directive values and the blocks that are no markup.
-Vue's JS is a part in the file's script language, named by `JsInVueTemplate`, which the host translates into JS's `JsRoot` and `JsEmbeddedIn`.
+`<script>` / `<style>` bodies, `style` / `on*` values, in Vue (`src/print/vue.rs`) `{{ }}`, directive values and the blocks that are no markup,
+and in Angular (`src/print/angular.rs`) `{{ }}`, `[x]`, `[(x)]`, `(x)`, `*x`, `{{ }}` in another attribute's value, block parameters and `@let`.
+Vue's JS is a part in the file's script language, named by `JsInVueTemplate`;
+Angular's is TS, named by `JsInAngularTemplate`, read as the parser splits it (`AngularExpression`):
+each piece of code is dispatched on its own (the code, each pipe's argument, each statement of `(x)`, each expression of `*x` or a block's parameters),
+Angular's own syntax around them (pipes, comment, `;`, microsyntax, block parameters) prints in `src/print/angular.rs`,
+and the host tells JS what Angular reads of the code (`JsEmbeddedIn::template_expressions_only`).
+The host translates either into JS's `JsRoot` and `JsEmbeddedIn`.
 An attribute's value is laid out by its language, in the layout its marker names (JS's `JsRoot`, CSS's `CssEmbeddedIn`):
-this crate only quotes it (`write_quoted`: the `"`, `&quot;` for a `"` in it, a group), and knows nothing of the language's syntax.
+this crate only quotes it (`write_quoted`: the `"`, `&quot;` for a `"` in it, a group), and knows nothing of the language's syntax,
+but Angular's own (laid out around the pieces of JS in `src/print/angular.rs`).
 
 #### What Vue reads
 
 The output compiles as the input does, a template that does not compile included: to the same values and side effects.
-A handler's value is no part of it: Vue uses it only to report a promise it rejects, and a `;` the formatter adds or drops inside changes it (`$event => (…)` or `{…}`).
+A handler's value is part of it: Vue reports a promise it rejects, and vue-tsc types it; a `;` decides whether the handler returns it (`$event => (…)` or `{…}`).
 The oracle is `@vue/compiler-sfc`, which compiles every `.vue` file (`@vue/compiler-dom`'s Node build);
 the browser build, which reads some code otherwise (`isFnExpression` is a regex there), is none: it compiles in-DOM templates, no `.vue` file.
+vue-tsc (`@vue/language-core` 3.3.14) is one where it agrees with the compiler, and the compiler wins where it does not:
+vue-tsc returns the value of a lone expression statement whose last token is no `;` (`foo(() => { a(); })` too, which the compiler reads as statements),
+a `function` in parens included (which the compiler reads as the handler).
 
 Vue reads a value by its AST, but for its text in these places (`@vue/compiler-core` 3.5.45), the only ones formatting can change what it reads by:
 
-| Where       | What of the text                                                      | Kept by                                                                                                                    |
-| ----------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `{{ }}`     | the first `}}` ends it                                                | parens around an object (`oxc_formatter`'s AGENTS.md "js-in-xxx" names the known gap)                                      |
-| `v-on`      | but for a reference or a function, a `;` anywhere makes it statements | the handler's `;` (`ProgramSemicolons::MarksStatements`), parens around a leading `function` / `{` (`reads_as_statements`) |
-| `v-for`     | split at `in` / `of` and the last commas                              | the alias printed as the params Vue splits (`JsRoot::FunctionParams { parens_when_many }`)                                 |
-| `:style`    | a leading `[`                                                         | no rule: no formatting moves the first token                                                                               |
-| every value | put in the render function as written                                 | a line comment closed, a top-level sequence in no parens as written (`JsEmbeddedIn::inlines_code`)                         |
+| Where       | What of the text                                       | Kept by                                                                                                                                                                                  |
+| ----------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `{{ }}`     | the first `}}` ends it                                 | parens around an object (`oxc_formatter`'s AGENTS.md "js-in-xxx" names the known gap)                                                                                                    |
+| `v-on`      | but for a function, a `;` anywhere makes it statements | the handler's `;` (`ProgramSemicolons::MarksStatements`), parens around a leading `function` / `{` (`reads_as_statements`); `oxc_formatter`'s AGENTS.md "js-in-xxx" names the known gaps |
+| `v-for`     | split at `in` / `of` and the last commas               | the alias printed as the params Vue splits (`JsRoot::FunctionParams { parens_when_many }`), as written holding `in` / `of`                                                               |
+| `:style`    | a leading `[`                                          | no rule: no formatting moves the first token                                                                                                                                             |
+| every value | put in the render function as written                  | a line comment closed, a top-level sequence in no parens as written (`JsEmbeddedIn::inlines_code`)                                                                                       |
+| every value | character references, decoded before the code is read  | as written when it holds one (apps/oxfmt/DIVERGENCES.md#character-reference-in-code-as-written); a `{{ }}` is not checked                                                                |
 
 A Vue release reading more of the text adds a row here, and its rule.
 

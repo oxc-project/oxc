@@ -83,8 +83,7 @@ impl JsonSchema for OxlintOverrides {
 pub struct OxlintOverride {
     /// A list of glob patterns to override.
     ///
-    /// ## Example
-    /// `[ "*.test.ts", "*.spec.ts" ]`
+    /// Example: `[ "*.test.ts", "*.spec.ts" ]`
     pub files: GlobSet,
 
     /// A list of glob patterns to exclude from this override.
@@ -92,8 +91,7 @@ pub struct OxlintOverride {
     /// Files matching these patterns are not globally ignored; this override
     /// simply does not apply to them.
     ///
-    /// ## Example
-    /// `[ "*.generated.ts", "fixtures/**" ]`
+    /// Example: `[ "*.generated.ts", "fixtures/**" ]`
     #[serde(default, skip_serializing_if = "GlobSet::is_empty")]
     pub exclude_files: GlobSet,
 

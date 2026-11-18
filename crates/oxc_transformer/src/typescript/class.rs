@@ -339,7 +339,7 @@ impl<'a> TypeScript<'a> {
     /// Build `<id.name>;` — an uninitialized public class field declaration.
     ///
     /// Safe to read `id.name` directly here — `add_parameter_property_fields` is gated on
-    /// `!is_class_properties_plugin_enabled`, so no rename has happened.
+    /// TypeScript handling fields itself, so no rename has happened.
     /// `convert_constructor_params` uses the span trick because it also runs alongside
     /// class-properties.
     fn build_uninitialized_field(
@@ -374,6 +374,7 @@ impl<'a> TypeScript<'a> {
         class.body.body.retain(|element| {
             if let ClassElement::PropertyDefinition(prop) = element
                 && prop.value.is_none()
+                && (self.set_public_class_fields || prop.decorators.is_empty())
                 && !prop.key.is_private_identifier()
             {
                 if let Some(key) = prop.key.as_expression() {

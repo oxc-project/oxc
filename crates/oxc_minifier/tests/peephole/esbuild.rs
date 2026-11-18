@@ -138,10 +138,10 @@ fn js_parser_test() {
     test("class Foo { static { foo() } }", "class Foo { static { foo(); }}");
     test("x: break x", "");
     test("x: { break x; foo() }", "");
-    // test("y: while (foo()) x: { break x; foo() }", "for (; foo(); ) ;");
-    // test("y: while (foo()) x: { break y; foo() }", "y: for (; foo(); ) break y;");
-    // test("x: { y: { z: { foo(); break x; } } }", "x: { foo(); break x;}");
-    // test("x: { class X { static { new X } } }", "{ class X { static {  new X(); } }}");
+    test("y: while (foo()) x: { break x; foo() }", "for (; foo(); ) ;");
+    test("y: while (foo()) x: { break y; foo() }", "for (; foo(); ) break;");
+    test("x: { y: { z: { foo(); break x; } } }", "x: { foo(); break x;}");
+    test("x: { class X { static { new X } } }", "{ class X { static {  new X(); } }}");
     test("(() => {}) ? a : b", "a;");
     test("x = `a${1 + `b${2}c` + 3}d`", "x = 'a1b2c3d';");
     test("x = `${1}`", "x = '1';");
@@ -714,28 +714,28 @@ fn js_parser_test() {
     );
     test(
         "x: while (x) y: while (y) { if (a) break x; if (b) break y; }",
-        "x: for (; x; ) y: for (; y; ) { if (a) break x; if (b) break y;}",
+        "x: for (; x; ) for (; y; ) { if (a) break x; if (b) break;}",
     );
-    // test(
-    // "x: while (x) y: while (y) { if (a) continue x; if (b) continue y; }",
-    // "x: for (; x; ) y: for (; y; ) { if (a) continue x; if (b) continue y;}",
-    // );
-    // test(
-    // "x: while (x) y: while (y) { if (a) break x; if (b) break x; }",
-    // "x: for (; x; ) for (; y; ) if (a || b) break x;",
-    // );
-    // test(
-    // "x: while (x) y: while (y) { if (a) continue x; if (b) continue x; }",
-    // "x: for (; x; ) for (; y; ) if (a || b) continue x;",
-    // );
-    // test(
-    // "x: while (x) y: while (y) { if (a) break y; if (b) break y; }",
-    // "for (; x; ) y: for (; y; ) if (a || b) break y;",
-    // );
-    // test(
-    // "x: while (x) y: while (y) { if (a) continue y; if (b) continue y; }",
-    // "for (; x; ) y: for (; y; ) if (a || b) continue y;",
-    // );
+    test(
+        "x: while (x) y: while (y) { if (a) continue x; if (b) continue y; }",
+        "x: for (; x; ) for (; y; ) { if (a) continue x; b;}",
+    );
+    test(
+        "x: while (x) y: while (y) { if (a) break x; if (b) break x; }",
+        "x: for (; x; ) for (; y; ) if (a || b) break x;",
+    );
+    test(
+        "x: while (x) y: while (y) { if (a) continue x; if (b) continue x; }",
+        "x: for (; x; ) for (; y; ) if (a || b) continue x;",
+    );
+    test(
+        "x: while (x) y: while (y) { if (a) break y; if (b) break y; }",
+        "for (; x; ) for (; y && !(a || b); );",
+    );
+    test(
+        "x: while (x) y: while (y) { if (a) continue y; if (b) continue y; }",
+        "for (; x; ) for (; y; ) if (a || b) continue;",
+    );
     test("if (x ? y : 0) foo()", "x && y && foo();");
     test("if (x ? y : 1) foo()", "(!x || y) && foo();");
     test("if (x ? 0 : y) foo()", "!x && y && foo();");
@@ -2225,37 +2225,38 @@ fn test_inline_single_use_variable() {
         "function wrapper(arg0, arg1) { let x = arg0.foo; x[bar]()}",
         "function wrapper(arg0, arg1) { arg0.foo[bar]();}",
     );
+    // esbuild keeps these; oxc inlines with `(0, ...)` to keep the call unbound.
     test(
         "function wrapper(arg0, arg1) { let x = arg0.foo; x()}",
-        "function wrapper(arg0, arg1) { let x = arg0.foo; x();}",
+        "function wrapper(arg0, arg1) { (0, arg0.foo)();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0[foo]; x()}",
-        "function wrapper(arg0, arg1) { let x = arg0[foo]; x();}",
+        "function wrapper(arg0, arg1) { (0, arg0[foo])();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0?.foo; x()}",
-        "function wrapper(arg0, arg1) { let x = arg0?.foo; x();}",
+        "function wrapper(arg0, arg1) { (0, arg0?.foo)();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0?.[foo]; x()}",
-        "function wrapper(arg0, arg1) { let x = arg0?.[foo]; x();}",
+        "function wrapper(arg0, arg1) { (0, arg0?.[foo])();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0.foo; (0, x)()}",
-        "function wrapper(arg0, arg1) { let x = arg0.foo; x();}",
+        "function wrapper(arg0, arg1) { (0, arg0.foo)();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0[foo]; (0, x)()}",
-        "function wrapper(arg0, arg1) { let x = arg0[foo]; x();}",
+        "function wrapper(arg0, arg1) { (0, arg0[foo])();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0?.foo; (0, x)()}",
-        "function wrapper(arg0, arg1) { let x = arg0?.foo; x();}",
+        "function wrapper(arg0, arg1) { (0, arg0?.foo)();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0?.[foo]; (0, x)()}",
-        "function wrapper(arg0, arg1) { let x = arg0?.[foo]; x();}",
+        "function wrapper(arg0, arg1) { (0, arg0?.[foo])();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0(); arg1() + x}",
@@ -2284,14 +2285,11 @@ fn test_remove_dead_expr_other() {
     test("if (1) a(); else { throw b }", "a();");
     test("if (1) a(); else { return b }", "a();");
     test("b: { if (x) a(); else { break b } }", "b: if (x) a(); else break b;");
-    // test("b: { if (1) a(); else { break b } }", "a();");
+    test("b: { if (1) a(); else { break b } }", "a();");
     test("b: { if (0) a(); else { break b } }", "");
-    test(
-        "b: while (1) if (x) a(); else { continue b }",
-        "b: for (;;) if (x) a(); else continue b;",
-    );
-    // test("b: while (1) if (1) a(); else { continue b }", "for (;;) a();");
-    test("b: while (1) if (0) a(); else { continue b }", "b: for (;;) continue b;");
+    test("b: while (1) if (x) a(); else { continue b }", "for (;;) if (x) a(); else continue;");
+    test("b: while (1) if (1) a(); else { continue b }", "for (;;) a();");
+    test("b: while (1) if (0) a(); else { continue b }", "for (;;) continue;");
     test("if (1) a(); else { class b {} }", "a();");
     test("if (1) a(); else { debugger }", "a();");
     test("if (1) a(); else { switch (1) { case 1: b() } }", "a();");

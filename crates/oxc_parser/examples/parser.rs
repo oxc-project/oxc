@@ -47,7 +47,11 @@ fn main() -> Result<(), String> {
     // Parse the source code
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, &source_text, source_type)
-        .with_options(ParseOptions { parse_regular_expression: true, ..ParseOptions::default() })
+        .with_options(ParseOptions {
+            parse_regular_expression: true,
+            enable_ident_hashes: false,
+            ..ParseOptions::default()
+        })
         .parse();
     let mut program = ret.program;
 

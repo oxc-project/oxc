@@ -406,3 +406,11 @@ fn preserve_throwing_buffer_lengths_and_uri_arguments() {
         test(expression, "");
     }
 }
+
+#[test]
+fn builtin_purity_preserves_argument_evaluation() {
+    // Preserve the existing conservative ArrayBuffer flagging and the RegExp
+    // handler's ability to discard the invocation while keeping argument effects.
+    test_same("new ArrayBuffer(void foo())");
+    test("new RegExp('x', 'g', foo())", "foo()");
+}

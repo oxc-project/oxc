@@ -71,6 +71,7 @@ pub const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
     "proposal-decorators",
     "transform-classes",
     "transform-destructuring",
+    "transform-flow-strip-types",
     "transform-modules-commonjs",
     "transform-parameters",
     "transform-property-literals",

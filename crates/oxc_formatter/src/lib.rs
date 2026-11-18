@@ -103,7 +103,7 @@ pub fn format_to_ir<'a>(
     session: &FormatSession<'a>,
     source_text: &str,
     source_type: SourceType,
-    options: JsFormatOptions,
+    mut options: JsFormatOptions,
     root: JsRoot,
     embedded_in: JsEmbeddedIn,
 ) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
@@ -127,9 +127,14 @@ pub fn format_to_ir<'a>(
         program,
         prefix.len()..prefix.len() + source_text.len(),
         root,
-        embedded_in.inlines_code,
+        embedded_in,
     )?;
 
+    // A template language's host rejects a trailing comma in a call's arguments and an arrow's params (Angular's `f(a,)`, see `JsEmbeddedIn::template_expressions_only`):
+    // `es5` prints them but there
+    if embedded_in.template_expressions_only && options.trailing_commas == TrailingCommas::All {
+        options.trailing_commas = TrailingCommas::Es5;
+    }
     let mut js_context =
         JsFormatContext::new(program.source_text, program.source_type, &program.comments, options);
     js_context.set_in_html_attribute(embedded_in.in_html_attribute);

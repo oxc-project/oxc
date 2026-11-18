@@ -1,11 +1,9 @@
-use std::{env, path::PathBuf};
+use std::path::PathBuf;
 
-use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{Expression, Statement};
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_index::IndexVec;
-use oxc_mangler::{MangleOptions, Mangler};
 use oxc_parser::Parser;
 use oxc_span::{SourceType, Span};
 use oxc_str::CompactStr;
@@ -495,6 +493,7 @@ longFunctionName(0);
     });
 }
 
+#[cfg(all(not(target_endian = "big"), target_pointer_width = "64"))]
 fn codegen(code: &str) -> (String, String) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, code, SourceType::mjs()).parse();
@@ -546,7 +545,10 @@ fn private_identifier_is_named_only_when_mangled() {
     assert_eq!(mangled_private_names(source_text, &[("ab", "a")]), vec!["#ab".to_string()]);
 }
 
+#[cfg(all(not(target_endian = "big"), target_pointer_width = "64"))]
 fn codegen_mangled(code: &str) -> (String, String, Vec<String>) {
+    use oxc_mangler::{MangleOptions, Mangler};
+
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, code, SourceType::mjs()).parse();
     assert!(ret.diagnostics.is_empty());
@@ -567,8 +569,11 @@ fn codegen_mangled(code: &str) -> (String, String, Vec<String>) {
     (ret.code, map.to_data_url(), names)
 }
 
+#[cfg(all(not(target_endian = "big"), target_pointer_width = "64"))]
 fn execute_with_node(code: &str, sourcemap_url: &str) -> String {
-    let cwd = env::current_dir().unwrap().join("input.js");
+    use cow_utils::CowUtils;
+
+    let cwd = std::env::current_dir().unwrap().join("input.js");
     let cwd = cwd.to_str().unwrap();
 
     let code = format!("{code}\n//# sourceMappingURL={sourcemap_url}\n");
@@ -610,4 +615,31 @@ fn minified_template_dollar_escapes() {
             "missing mapping for {name}"
         );
     }
+}
+
+#[test]
+fn renamed_label_records_original_name() {
+    use oxc_semantic::{LabelId, SemanticBuilder};
+
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, "outer: { break outer; }", SourceType::mjs()).parse();
+    assert!(ret.diagnostics.is_empty(), "parse errors: {:?}", ret.diagnostics);
+    let program = ret.program;
+    let mut scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+    scoping.set_label_name(LabelId::from_usize(0), "e".into());
+
+    let ret = Codegen::new()
+        .with_options(CodegenOptions { minify: true, ..default_options() })
+        .with_scoping(Some(scoping))
+        .build(&program);
+    assert_eq!(ret.code, "e:{break e}");
+    let map = ret.map.expect("sourcemap should be generated");
+    let names = map
+        .get_tokens()
+        .filter_map(|token| {
+            let name = map.get_name(token.get_name_id()?)?;
+            Some((token.get_dst_col(), token.get_src_col(), name))
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(names, [(0, 0, "outer"), (9, 15, "outer")]);
 }

@@ -8,19 +8,19 @@ use crate::{ParserConfig as Config, ParserImpl, StatementContext, diagnostics, l
 impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_let(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
         let start = self.cur_start();
-
-        let next = self.lexer.peek_token();
-        let peeked = next.kind();
+        let is_single_statement = stmt_ctx.is_single_statement();
 
         // `let [` cannot start an expression statement, even in a single-statement
         // position. Otherwise, a declaration needs a binding after `let`.
-        if peeked == Kind::LBrack
-            || (!stmt_ctx.is_single_statement()
-                && (peeked == Kind::LCurly
-                    || peeked.is_binding_identifier()
-                    || (!next.is_on_new_line() && peeked.is_after_let())))
-        {
-            self.bump_any(); // bump `let`
+        let is_declaration = self.eat_if_next(|next| {
+            let kind = next.kind();
+            kind == Kind::LBrack
+                || (!is_single_statement
+                    && (kind == Kind::LCurly
+                        || kind.is_binding_identifier()
+                        || (!next.is_on_new_line() && kind.is_after_let())))
+        });
+        if is_declaration {
             return self.parse_variable_statement(start, VariableDeclarationKind::Let, stmt_ctx);
         }
 
@@ -68,16 +68,33 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         decl_parent: VariableDeclarationParent,
         declare: bool,
     ) -> ArenaBox<'a, VariableDeclaration<'a>> {
-        let first = self.parse_variable_declarator(decl_parent, kind);
-        let mut declarations = ArenaVec::from_value_in(first, self);
-        while self.eat(Kind::Comma) {
-            declarations.push(self.parse_variable_declarator(decl_parent, kind));
-        }
+        let declarations = self.parse_variable_declarators(decl_parent, kind);
 
         if matches!(decl_parent, VariableDeclarationParent::Statement) {
             self.asi();
         }
         VariableDeclaration::boxed(self.end_span(start), kind, declarations, declare, self)
+    }
+
+    fn parse_variable_declarators(
+        &mut self,
+        decl_parent: VariableDeclarationParent,
+        kind: VariableDeclarationKind,
+    ) -> ArenaVec<'a, VariableDeclarator<'a>> {
+        let mut first = true;
+        self.collect_list(|p| {
+            if !first && !p.eat(Kind::Comma) {
+                return None;
+            }
+            first = false;
+            let declaration = p.parse_variable_declarator(decl_parent, kind);
+            if kind.is_using() && !declaration.id.is_binding_identifier() {
+                p.error(diagnostics::invalid_identifier_in_using_declaration(
+                    declaration.id.span(),
+                ));
+            }
+            Some(declaration)
+        })
     }
 
     fn parse_variable_declarator(
@@ -197,26 +214,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         // BindingList[?In, ?Yield, ?Await, ~Pattern]
-        let mut declarations = ArenaVec::new_in(self);
-        loop {
-            let decl_parent = if matches!(statement_ctx, StatementContext::For) {
-                VariableDeclarationParent::For
-            } else {
-                VariableDeclarationParent::Statement
-            };
-            let declaration = self.parse_variable_declarator(decl_parent, kind);
-
-            if !matches!(declaration.id, BindingPattern::BindingIdentifier(_)) {
-                self.error(diagnostics::invalid_identifier_in_using_declaration(
-                    declaration.id.span(),
-                ));
-            }
-
-            declarations.push(declaration);
-            if !self.eat(Kind::Comma) {
-                break;
-            }
-        }
+        let decl_parent = if matches!(statement_ctx, StatementContext::For) {
+            VariableDeclarationParent::For
+        } else {
+            VariableDeclarationParent::Statement
+        };
+        let declarations = self.parse_variable_declarators(decl_parent, kind);
 
         VariableDeclaration::boxed(self.end_span(start), kind, declarations, false, self)
     }

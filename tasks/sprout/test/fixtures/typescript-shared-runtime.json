@@ -1,0 +1,5 @@
+{
+  "original": "import {addOne} from \"shared-runtime\";function Component() {const x: number=41;return <span>{addOne(x)}</span>;}\nexport const FIXTURE_ENTRYPOINT = {fn: Component, params: []};",
+  "compiled": "import {addOne} from \"shared-runtime\";function Component() {const x: number=41;return <span>{addOne(x)}</span>;}\nexport const FIXTURE_ENTRYPOINT = {fn: Component, params: []};",
+  "expected": "success"
+}

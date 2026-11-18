@@ -81,3 +81,23 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use `await` for async assertions or remove the return statement.
   note: Jest ignores returned values from tests.
+
+  ⚠ vitest(no-test-return-statement): Jest tests should not return a value
+   ╭─[no_test_return_statement.tsx:5:17]
+ 4 │             customTest.only('foo', () => {
+ 5 │                 return expect(1).toBe(1);
+   ·                 ──────
+ 6 │             });
+   ╰────
+  help: Use `await` for async assertions or remove the return statement.
+  note: Jest ignores returned values from tests.
+
+  ⚠ vitest(no-test-return-statement): Jest tests should not return a value
+   ╭─[no_test_return_statement.tsx:4:17]
+ 3 │             function callback() {
+ 4 │                 return expect(1).toBe(1);
+   ·                 ──────
+ 5 │             }
+   ╰────
+  help: Use `await` for async assertions or remove the return statement.
+  note: Jest ignores returned values from tests.

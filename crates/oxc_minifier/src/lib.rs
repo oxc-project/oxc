@@ -42,7 +42,7 @@
 //! The minifier consists of:
 //! - **Compressor**: Orchestrates the optimization pipeline
 //! - **Peephole Optimizations**: Individual transformation passes
-//! - **Mangler**: Variable renaming for size reduction
+//! - **Mangler**: Variable and label renaming for size reduction
 //!
 //! See the [crate documentation](https://github.com/oxc-project/oxc/tree/main/crates/oxc_minifier) for more details.
 
@@ -158,25 +158,23 @@ impl<'a> Minifier {
             mangler.into_cache()
         });
 
-        let (stats, iterations) = compress
-            .map(|options| {
-                let semantic = SemanticBuilder::new().build(program).semantic;
-                let stats = semantic.stats();
-                let scoping = semantic.into_scoping();
-                let compressor = Compressor::new(allocator);
-                let iterations = if matches!(mode, CompressionMode::TreeShakeOnly) {
-                    let options = CompressOptions {
-                        target: options.target,
-                        treeshake: options.treeshake,
-                        ..CompressOptions::dce()
-                    };
-                    compressor.dead_code_elimination_with_scoping(program, scoping, options)
-                } else {
-                    compressor.build_with_scoping(program, scoping, options)
+        let (stats, iterations) = compress.map_or_default(|options| {
+            let semantic = SemanticBuilder::new().build(program).semantic;
+            let stats = semantic.stats();
+            let scoping = semantic.into_scoping();
+            let compressor = Compressor::new(allocator);
+            let iterations = if matches!(mode, CompressionMode::TreeShakeOnly) {
+                let options = CompressOptions {
+                    target: options.target,
+                    treeshake: options.treeshake,
+                    ..CompressOptions::dce()
                 };
-                (Some(stats), iterations)
-            })
-            .unwrap_or_default();
+                compressor.dead_code_elimination_with_scoping(program, scoping, options)
+            } else {
+                compressor.build_with_scoping(program, scoping, options)
+            };
+            (Some(stats), iterations)
+        });
         let (scoping, class_private_mappings) = mangle
             .map(|options| {
                 let mut builder =
