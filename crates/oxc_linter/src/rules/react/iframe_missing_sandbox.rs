@@ -87,7 +87,7 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule:
     /// ```jsx
     /// <iframe sandbox="" />;
-    /// <iframe sandbox="allow-origin" />;
+    /// <iframe sandbox="allow-scripts" />;
     /// ```
     IframeMissingSandbox,
     react,
