@@ -408,17 +408,16 @@ impl<'a> Fixer<'a> {
         #[cfg(debug_assertions)]
         if fixed && let Some(source_type) = self.source_type {
             use oxc_allocator::Allocator;
-            use oxc_parser::{ParseOptions, Parser};
+            use oxc_parser::{ParseOptions, Source};
 
             let allocator = Allocator::default();
-            let parse_result = Parser::new(&allocator, &output, source_type)
-                .with_options(ParseOptions {
-                    parse_regular_expression: true,
-                    allow_return_outside_function: true,
-                    enable_ident_hashes: false,
-                    ..ParseOptions::default()
-                })
-                .parse();
+            let source = Source::from_str(&output, source_type, &allocator);
+            let parse_result = source.parse_with_options(ParseOptions {
+                parse_regular_expression: true,
+                allow_return_outside_function: true,
+                enable_ident_hashes: false,
+                ..ParseOptions::default()
+            });
             debug_assert!(
                 parse_result.diagnostics.is_empty() && !parse_result.fatal_error,
                 "Linter fixer produced invalid syntax.\n\nInput code: \n```\n{source_text}\n```\n\nFixed code: \n```\n{output}\n```\n\nParse errors: {:?}",

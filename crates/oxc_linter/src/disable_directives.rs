@@ -1494,7 +1494,7 @@ mod tests {
     use oxc_allocator::Allocator;
     use oxc_ast::Comment;
     use oxc_diagnostics::OxcDiagnostic;
-    use oxc_parser::Parser;
+    use oxc_parser::Source;
     use oxc_semantic::{Semantic, SemanticBuilder};
     use oxc_span::{SourceType, Span};
 
@@ -1505,9 +1505,9 @@ mod tests {
 
     use super::{DisableDirectives, DisableDirectivesBuilder};
 
-    fn process_source<'a>(allocator: &'a Allocator, source_text: &'a str) -> Semantic<'a> {
+    fn process_source<'a>(allocator: &'a Allocator, source_text: &str) -> Semantic<'a> {
         let source_type = SourceType::default();
-        let parser_ret = Parser::new(allocator, source_text, source_type).parse();
+        let parser_ret = Source::from_str(source_text, source_type, allocator).parse();
         assert!(parser_ret.diagnostics.is_empty());
         let semantic_ret = SemanticBuilder::new_linter().build(allocator.alloc(parser_ret.program));
         semantic_ret.semantic

@@ -332,7 +332,7 @@ mod test {
 
         use oxc_allocator::Allocator;
         use oxc_ast::AstKind;
-        use oxc_parser::Parser;
+        use oxc_parser::Source;
         use oxc_semantic::SemanticBuilder;
         use oxc_span::SourceType;
 
@@ -343,7 +343,7 @@ mod test {
 
         let allocator = Allocator::default();
         let source = r#"exports["bar\uD800"] = ``; exports["foo"] = ``;"#;
-        let parsed = Parser::new(&allocator, source, SourceType::default()).parse();
+        let parsed = Source::from_str(source, SourceType::default(), &allocator).parse();
         assert!(parsed.diagnostics.is_empty());
         let semantic =
             SemanticBuilder::new_linter().build(allocator.alloc(parsed.program)).semantic;

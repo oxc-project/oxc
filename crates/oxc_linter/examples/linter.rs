@@ -16,9 +16,9 @@ use std::{env, path::Path};
 use oxc_allocator::Allocator;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_parser::Parser;
+use oxc_parser::{Source, SourceFileError};
 use oxc_semantic::SemanticBuilder;
-use oxc_span::{SourceType, Span};
+use oxc_span::Span;
 
 // Instruction:
 // create a `test.js`,
@@ -26,22 +26,25 @@ use oxc_span::{SourceType, Span};
 // or `cargo watch -x "run -p oxc_linter --example linter"`
 
 /// Run a simple linter on a JavaScript file
-fn main() -> std::io::Result<()> {
+fn main() -> Result<(), SourceFileError> {
     let name = env::args().nth(1).unwrap_or_else(|| "test.js".to_string());
     let path = Path::new(&name);
-    let source_text = std::fs::read_to_string(path)?;
+
     let allocator = Allocator::default();
-    let source_type = SourceType::from_path(path).unwrap();
-    let ret = Parser::new(&allocator, &source_text, source_type).parse();
+    let source = Source::read_from_file(path, &allocator)?;
+
+    let ret = source.parse();
+    let program = ret.program;
+    let source_text = program.source_text;
 
     // Handle parser errors
     if !ret.diagnostics.is_empty() {
-        print_errors(&source_text, ret.diagnostics.into());
+        print_errors(source_text, ret.diagnostics.into());
         return Ok(());
     }
 
     // Build semantic model for AST analysis
-    let semantic_ret = SemanticBuilder::new_linter().build(&ret.program);
+    let semantic_ret = SemanticBuilder::new_linter().build(&program);
 
     let mut errors: Vec<OxcDiagnostic> = vec![];
 
@@ -65,7 +68,7 @@ fn main() -> std::io::Result<()> {
     if errors.is_empty() {
         println!("Success!");
     } else {
-        print_errors(&source_text, errors);
+        print_errors(source_text, errors);
     }
 
     Ok(())

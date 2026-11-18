@@ -503,7 +503,7 @@ mod test {
     use std::{rc::Rc, sync::Arc};
 
     use oxc_allocator::Allocator;
-    use oxc_parser::Parser;
+    use oxc_parser::Source;
     use oxc_semantic::SemanticBuilder;
     use oxc_span::SourceType;
 
@@ -519,7 +519,7 @@ mod test {
 
         let build_ctx = |path: &'static str| {
             let source_type = SourceType::default();
-            let parser_ret = Parser::new(&allocator, "", source_type).parse();
+            let parser_ret = Source::from_str("", source_type, &allocator).parse();
             let program = allocator.alloc(parser_ret.program);
             let semantic = SemanticBuilder::new_linter().build(program).semantic;
             Rc::new(ContextHost::new(

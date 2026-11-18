@@ -216,7 +216,7 @@ mod test {
 
     use oxc_allocator::Allocator;
     use oxc_ast::AstKind;
-    use oxc_parser::Parser;
+    use oxc_parser::Source;
     use oxc_semantic::SemanticBuilder;
     use oxc_span::SourceType;
 
@@ -259,7 +259,7 @@ mod test {
 
     fn is_first_call_or_new_regexp(source: &str) -> Option<bool> {
         let allocator = Allocator::default();
-        let parser_ret = Parser::new(&allocator, source, SourceType::default()).parse();
+        let parser_ret = Source::from_str(source, SourceType::default(), &allocator).parse();
         assert!(parser_ret.diagnostics.is_empty(), "Parse error in: {source}");
 
         let program = allocator.alloc(parser_ret.program);

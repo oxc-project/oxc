@@ -31,7 +31,7 @@ pub fn count_comment_lines(comment: &Comment, source_text: &str) -> usize {
 mod test {
     use super::*;
     use oxc_allocator::Allocator;
-    use oxc_parser::Parser;
+    use oxc_parser::Source;
     use oxc_semantic::SemanticBuilder;
     use oxc_span::SourceType;
 
@@ -90,7 +90,7 @@ mod test {
 
         for (source, source_type, expected_counts) in cases {
             let allocator = Allocator::default();
-            let ret = Parser::new(&allocator, source, source_type).parse();
+            let ret = Source::from_str(source, source_type, &allocator).parse();
             assert!(ret.diagnostics.is_empty());
             let semantic = SemanticBuilder::new_linter().build(&ret.program).semantic;
             let comments = semantic.comments();

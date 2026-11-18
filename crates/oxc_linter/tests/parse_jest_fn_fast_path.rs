@@ -14,14 +14,14 @@ use oxc_linter::{
     ConfigStore, ConfigStoreBuilder, ContextSubHost, ContextSubHostOptions, ExternalPluginStore,
     FixKind, LintOptions, Linter, ModuleRecord,
 };
-use oxc_parser::Parser;
+use oxc_parser::Source;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 
 fn lint_all_rules(source: &str, path: &str) -> Vec<String> {
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(path).unwrap();
-    let parser_ret = Parser::new(&allocator, source, source_type).parse();
+    let parser_ret = Source::from_str(source, source_type, &allocator).parse();
     let semantic = SemanticBuilder::new_linter().build(&parser_ret.program).semantic;
     let path = Path::new(path);
     let module_record = Arc::new(ModuleRecord::new(path, &parser_ret.module_record, &semantic));
