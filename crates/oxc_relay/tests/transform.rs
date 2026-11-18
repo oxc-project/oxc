@@ -2,7 +2,7 @@ use std::path::Path;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
-use oxc_parser::Parser;
+use oxc_parser::Source;
 use oxc_relay::{Relay, RelayLanguage, RelayOptions};
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -10,7 +10,7 @@ use oxc_span::SourceType;
 fn transform(source_path: &str, source_text: &str, options: RelayOptions) -> (String, bool) {
     let source_type = SourceType::from_path(Path::new(source_path)).unwrap();
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let ret = Source::from_str(source_text, source_type, &allocator).parse();
     assert!(ret.diagnostics.is_empty(), "parse errors for source {source_text}");
     let mut program = ret.program;
     let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
@@ -25,7 +25,7 @@ fn transform(source_path: &str, source_text: &str, options: RelayOptions) -> (St
 fn codegen(source_path: &str, source_text: &str) -> String {
     let source_type = SourceType::from_path(Path::new(source_path)).unwrap();
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let ret = Source::from_str(source_text, source_type, &allocator).parse();
     assert!(ret.diagnostics.is_empty(), "parse errors for expected {source_text}");
     Codegen::new()
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
