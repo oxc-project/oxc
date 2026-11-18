@@ -52,7 +52,7 @@ pub use self::{
 // When adding a new rule to this list, please ensure oxlint-migrate is also updated.
 // See https://github.com/oxc-project/oxlint-migrate/blob/659b461eaf5b2f8a7283822ae84a5e619c86fca3/src/constants.ts#L24
 // NOTE: Ensure this list is always alphabetized, otherwise the binary_search won't work.
-const TYPESCRIPT_COMPATIBLE_ESLINT_RULES: [&str; 18] = [
+const TYPESCRIPT_COMPATIBLE_ESLINT_RULES: [&str; 19] = [
     "class-methods-use-this",
     "default-param-last",
     "init-declarations",
@@ -68,6 +68,7 @@ const TYPESCRIPT_COMPATIBLE_ESLINT_RULES: [&str; 18] = [
     "no-restricted-imports",
     "no-shadow",
     "no-unused-expressions",
+    "no-unused-private-class-members",
     "no-unused-vars",
     "no-use-before-define",
     "no-useless-constructor",
