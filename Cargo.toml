@@ -308,8 +308,8 @@ ignored = [
 # Force the registry request to resolve to the workspace copy so there's a single instance.
 [patch.crates-io]
 oxc_allocator = { path = "crates/oxc_allocator" }
-# TODO: remove and bump `oxc_sourcemap` after https://github.com/oxc-project/oxc-sourcemap/pull/520 and oxc-project/oxc-sourcemap#521 are released.
-oxc_sourcemap = { git = "https://github.com/oxc-project/oxc-sourcemap", branch = "remove-get-token" }
+# TODO: remove and bump `oxc_sourcemap` after https://github.com/oxc-project/oxc-sourcemap/pull/520 is released.
+oxc_sourcemap = { git = "https://github.com/oxc-project/oxc-sourcemap", branch = "packed-sourcemap" }
 
 [profile.dev]
 # Disabling debug info speeds up local and CI builds,
