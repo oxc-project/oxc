@@ -200,3 +200,16 @@ nested-config/nested/test.js
 
 --------------------"
 `;
+
+exports[`LSP linting > unsaved content > should pass unsaved content of a partially-loaded file to JS plugins 1`] = `
+"--- FILE -----------
+config-js-plugin-vue/test.vue
+--- Diagnostics ---------
+  1 | <template>
+> 2 |   <div>template-bad</div>
+    |        ^^^^^^^^^^^^ Error: Unexpected template marker
+  3 | </template>
+  4 |
+  5 | <script setup>
+--------------------"
+`;

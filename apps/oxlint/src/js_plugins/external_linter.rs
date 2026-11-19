@@ -163,6 +163,7 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
               globals_json: String,
               collect_timings: bool,
               workspace_uri: Option<String>,
+              actual_source: Option<(String, u32)>,
               allocator: &Allocator| {
             let (tx, rx) = channel();
 
@@ -173,6 +174,8 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
             // but it does hold at present.
             // TODO: Close this soundness hole with type-level guarantees.
             let (buffer_id, buffer) = unsafe { get_buffer(allocator) };
+
+            let (actual_source_text, source_text_offset) = actual_source.unzip();
 
             // Send data to JS
             let status = cb.call_with_return_value(
@@ -186,6 +189,8 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
                     globals_json,
                     collect_timings,
                     workspace_uri,
+                    actual_source_text,
+                    source_text_offset.unwrap_or(0),
                 )),
                 ThreadsafeFunctionCallMode::NonBlocking,
                 move |result, _env| {
