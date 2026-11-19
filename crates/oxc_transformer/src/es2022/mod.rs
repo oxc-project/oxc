@@ -103,16 +103,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
         }
         // Both transforms are present only when class properties transform lowers decorated
         // classes, and static block transform handles the rest. Class properties transform runs
-        // first. If it replaced the class, static block transform skipped that class.
+        // first and may replace the class, so static block transform exits it regardless of what
+        // `expr` now is.
         if let Some(class_properties) = &mut self.class_properties {
             class_properties.exit_expression(expr, ctx);
         }
         if let Some(class_static_block) = &mut self.class_static_block {
-            if matches!(expr, Expression::ClassExpression(_)) {
-                class_static_block.exit_expression(expr, ctx);
-            } else {
-                class_static_block.exit_skipped_class_expression();
-            }
+            class_static_block.exit_class_expression(expr, ctx);
         }
     }
 
