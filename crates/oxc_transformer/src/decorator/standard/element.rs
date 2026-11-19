@@ -321,6 +321,12 @@ impl<'a> StandardDecoratorState<'a> {
             );
             return;
         }
+        // TypeScript erases `declare` fields together with their decorators.
+        if let Ancestor::PropertyDefinitionDecorators(prop) = ctx.parent()
+            && *prop.declare()
+        {
+            return;
+        }
         let expression = decorator.expression.get_inner_expression_mut();
         if matches!(expression, Expression::ChainExpression(_)) {
             // Capture only after the optional checks have succeeded. Pulling a member's
