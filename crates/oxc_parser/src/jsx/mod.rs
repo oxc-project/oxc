@@ -55,8 +55,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
-    /// Parse the JSX element or fragment, or the arrow function with type parameters, that
-    /// the `<` at the start of an `AssignmentExpression` begins in a JSX file.
+    /// Parse the JSX element or fragment, or the arrow function with type parameters,
+    /// that the `<` at the start of an `AssignmentExpression` begins in a TSX file.
+    ///
+    /// JSX files have no type parameters, so use [`Self::parse_jsx_expression`] instead.
     ///
     /// ```text
     /// JSXFragment       : `<` `>` JSXChildren? `<` `/` `>`
@@ -75,7 +77,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         allow_return_type_in_arrow_function: bool,
     ) -> (Expression<'a>, bool) {
-        debug_assert!(self.at(Kind::LAngle) && self.source_type.is_jsx());
+        debug_assert!(self.at(Kind::LAngle) && self.source_type.is_jsx() && self.is_ts);
         let checkpoint = self.checkpoint();
         let start = self.cur_start();
         self.bump_any(); // `<`
