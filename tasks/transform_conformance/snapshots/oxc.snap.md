@@ -1,6 +1,6 @@
 commit: 16a2d671
 
-Passed: 333/460
+Passed: 337/462
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -35,7 +35,7 @@ after transform: SymbolId(1) "C"
 rebuilt        : SymbolId(3) "C"
 
 
-# babel-plugin-transform-class-properties (36/40)
+# babel-plugin-transform-class-properties (37/41)
 * private-field-resolve-to-method/input.js
 x Output mismatch
 
@@ -49,7 +49,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (48/66)
+# babel-plugin-transform-typescript (51/67)
 * computed-constant-value/input.ts
 x Output mismatch
 
@@ -189,16 +189,6 @@ rebuilt        : [ReferenceId(0)]
 
 * ts-declaration-empty-output/input.d.ts
 x Output mismatch
-
-* use-define-for-class-fields/input.ts
-Unresolved references mismatch:
-after transform: ["dce"]
-rebuilt        : []
-
-* use-define-for-class-fields-without-class-properties/input.ts
-Unresolved reference IDs mismatch for "dce":
-after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4), ReferenceId(9), ReferenceId(12), ReferenceId(14), ReferenceId(17)]
-rebuilt        : [ReferenceId(5)]
 
 
 # babel-plugin-transform-react-jsx (56/59)

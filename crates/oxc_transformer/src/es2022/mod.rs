@@ -30,7 +30,7 @@ impl ES2022<'_> {
         let (class_static_block, class_properties) = match class_transform {
             ClassTransform::None => (None, None),
             ClassTransform::StaticBlocks => (Some(ClassStaticBlock::new()), None),
-            ClassTransform::ClassProperties { options, transform_static_blocks } => (
+            ClassTransform::ClassProperties { options, transform_static_blocks, .. } => (
                 None,
                 Some(ClassProperties::new(
                     options,

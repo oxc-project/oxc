@@ -366,7 +366,12 @@ impl<'a> TypeScript<'a> {
         )
     }
 
-    pub(super) fn transform_class_on_exit(&self, class: &mut Class<'a>, ctx: &TraverseCtx<'a>) {
+    pub(super) fn remove_uninitialized_class_fields(
+        &self,
+        class: &mut Class<'a>,
+        preserve_decorated_fields: bool,
+        ctx: &TraverseCtx<'a>,
+    ) {
         if !self.remove_class_fields_without_initializer {
             return;
         }
@@ -374,7 +379,8 @@ impl<'a> TypeScript<'a> {
         class.body.body.retain(|element| {
             if let ClassElement::PropertyDefinition(prop) = element
                 && prop.value.is_none()
-                && (self.set_public_class_fields || prop.decorators.is_empty())
+                && ((self.set_public_class_fields && !preserve_decorated_fields)
+                    || prop.decorators.is_empty())
                 && !prop.key.is_private_identifier()
             {
                 if let Some(key) = prop.key.as_expression() {

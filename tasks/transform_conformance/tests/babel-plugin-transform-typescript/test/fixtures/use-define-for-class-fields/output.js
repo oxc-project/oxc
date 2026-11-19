@@ -1,8 +1,11 @@
 class Cls {
-  constructor() {
-    this.y = 1;
-  }
+  y = 1;
+  @dce
+  z;
 }
 
-class StaticCls {}
-StaticCls.y = 1;
+class StaticCls {
+  static y = 1;
+  @dce
+  static z;
+}
