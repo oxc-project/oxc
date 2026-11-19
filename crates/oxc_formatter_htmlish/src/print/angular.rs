@@ -55,7 +55,7 @@ impl JsInAngularTemplate {
 }
 
 /// `;` and a line, between statements or a block's parameters.
-const SEPARATOR: FormatWith<fn(&mut HtmlishFormatter<'_, '_>)> =
+pub(super) const SEPARATOR: FormatWith<fn(&mut HtmlishFormatter<'_, '_>)> =
     format_with(|f| write!(f, [";", soft_line_break_or_space()]));
 
 /// A piece of code formatted as `part`; `None` when the dispatcher leaves it as written.
