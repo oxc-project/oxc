@@ -1,0 +1,164 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(class-reference-in-static-methods): Use `this` instead of `A` in static methods.
+   ╭─[class_reference_in_static_methods.tsx:1:31]
+ 1 │ class A {static foo() {return A.foo();}}
+   ·                               ─
+   ╰────
+  help: Replace `A` with `this`.
+
+  ⚠ unicorn(class-reference-in-static-methods): Use `this` instead of `A` in static methods.
+   ╭─[class_reference_in_static_methods.tsx:1:31]
+ 1 │ class A {static foo() {return A;}}
+   ·                               ─
+   ╰────
+  help: Replace `A` with `this`.
+
+  ⚠ unicorn(class-reference-in-static-methods): Use `super` instead of `B` in static methods.
+   ╭─[class_reference_in_static_methods.tsx:1:41]
+ 1 │ class A extends B {static foo() {return B.foo();}}
+   ·                                         ─
+   ╰────
+  help: Replace `B` with `super`.
+
+  ⚠ unicorn(class-reference-in-static-methods): Use `super` instead of `B` in static methods.
+   ╭─[class_reference_in_static_methods.tsx:1:41]
+ 1 │ class A extends B {static foo() {return B["foo"]();}}
+   ·                                         ─
+   ╰────
+  help: Replace `B` with `super`.
+
+  ⚠ unicorn(class-reference-in-static-methods): Use `super` instead of `B` in static methods.
+   ╭─[class_reference_in_static_methods.tsx:1:47]
+ 1 │ class A extends B {static foo() {return () => B.foo();}}
+   ·                                               ─
+   ╰────
+  help: Replace `B` with `super`.
+
+  ⚠ unicorn(class-reference-in-static-methods): Use `this` instead of `A` in static methods.
+   ╭─[class_reference_in_static_methods.tsx:3:28]
+ 2 │                 static foo() {
+ 3 │                     return A.foo();
+   ·                            ─
+ 4 │                 }
+   ╰────
+  help: Replace `A` with `this`.
+
+  ⚠ unicorn(class-reference-in-static-methods): Use `this` instead of `B` in static methods.
+   ╭─[class_reference_in_static_methods.tsx:3:28]
+ 2 │                 static foo() {
+ 3 │                     return B.foo();
+   ·                            ─
+ 4 │                 }
+   ╰────
+  help: Replace `B` with `this`.
+
+  ⚠ unicorn(class-reference-in-static-methods): Use `A` instead of `this` in static methods.
+   ╭─[class_reference_in_static_methods.tsx:1:31]
+ 1 │ class A {static foo() {return this.foo();}}
+   ·                               ────
+   ╰────
+  help: Replace `this` with `A`.
+
+  ⚠ unicorn(class-reference-in-static-methods): Use `A` instead of `this` in static methods.
+   ╭─[class_reference_in_static_methods.tsx:1:31]
+ 1 │ class A {static foo() {return this;}}
+   ·                               ────
+   ╰────
+  help: Replace `this` with `A`.
+
+  ⚠ unicorn(class-reference-in-static-methods): Use the class name instead of `this` in static methods.
+   ╭─[class_reference_in_static_methods.tsx:1:48]
+ 1 │ class A {static foo() {const A = other; return this.foo();}}
+   ·                                                ────
+   ╰────
+
+  ⚠ unicorn(class-reference-in-static-methods): Use the superclass name instead of `super` in static methods.
+   ╭─[class_reference_in_static_methods.tsx:1:58]
+ 1 │ class A extends B {static foo() {const B = other; return super.foo();}}
+   ·                                                          ─────
+   ╰────
+
+  ⚠ unicorn(class-reference-in-static-methods): Use `B` instead of `super` in static methods.
+   ╭─[class_reference_in_static_methods.tsx:1:41]
+ 1 │ class A extends B {static foo() {return super.foo();}}
+   ·                                         ─────
+   ╰────
+  help: Replace `super` with `B`.
+
+  ⚠ unicorn(class-reference-in-static-methods): Use `B` instead of `super` in static methods.
+   ╭─[class_reference_in_static_methods.tsx:1:47]
+ 1 │ class A extends B {static foo() {return () => super.foo();}}
+   ·                                               ─────
+   ╰────
+  help: Replace `super` with `B`.
+
+  ⚠ unicorn(class-reference-in-static-methods): Use `A` instead of `this` in static methods.
+   ╭─[class_reference_in_static_methods.tsx:1:39]
+ 1 │ const A = class {static foo() {return this.foo();}};
+   ·                                       ────
+   ╰────
+  help: Replace `this` with `A`.
+
+  ⚠ unicorn(class-reference-in-static-methods): Use the class name instead of `this` in static methods.
+   ╭─[class_reference_in_static_methods.tsx:1:44]
+ 1 │ export default class {static foo() {return this.foo();}}
+   ·                                            ────
+   ╰────
+
+  ⚠ unicorn(class-reference-in-static-methods): Use the superclass name instead of `super` in static methods.
+   ╭─[class_reference_in_static_methods.tsx:1:48]
+ 1 │ class A extends mixin(B) {static foo() {return super.foo();}}
+   ·                                                ─────
+   ╰────
+
+  ⚠ unicorn(class-reference-in-static-methods): Use `A` instead of `this` in static methods.
+   ╭─[class_reference_in_static_methods.tsx:1:41]
+ 1 │ class A extends B {static foo() {return this.foo() + B.foo();}}
+   ·                                         ────
+   ╰────
+  help: Replace `this` with `A`.
+
+  ⚠ unicorn(class-reference-in-static-methods): Use `super` instead of `B` in static methods.
+   ╭─[class_reference_in_static_methods.tsx:1:54]
+ 1 │ class A extends B {static foo() {return this.foo() + B.foo();}}
+   ·                                                      ─
+   ╰────
+  help: Replace `B` with `super`.
+
+  ⚠ unicorn(class-reference-in-static-methods): Use `this` instead of `A` in static methods.
+   ╭─[class_reference_in_static_methods.tsx:1:41]
+ 1 │ class A extends B {static foo() {return A.foo() + super.foo();}}
+   ·                                         ─
+   ╰────
+  help: Replace `A` with `this`.
+
+  ⚠ unicorn(class-reference-in-static-methods): Use `B` instead of `super` in static methods.
+   ╭─[class_reference_in_static_methods.tsx:1:51]
+ 1 │ class A extends B {static foo() {return A.foo() + super.foo();}}
+   ·                                                   ─────
+   ╰────
+  help: Replace `super` with `B`.
+
+  ⚠ unicorn(class-reference-in-static-methods): Use `this` instead of `A` in static methods.
+   ╭─[class_reference_in_static_methods.tsx:1:40]
+ 1 │ class A {static foo(): unknown {return A.foo();}}
+   ·                                        ─
+   ╰────
+  help: Replace `A` with `this`.
+
+  ⚠ unicorn(class-reference-in-static-methods): Use `this` instead of `A` in static methods.
+   ╭─[class_reference_in_static_methods.tsx:1:34]
+ 1 │ class A {static foo(): A {return A.foo();}}
+   ·                                  ─
+   ╰────
+  help: Replace `A` with `this`.
+
+  ⚠ unicorn(class-reference-in-static-methods): Use `super` instead of `B` in static methods.
+   ╭─[class_reference_in_static_methods.tsx:1:50]
+ 1 │ class A extends B {static foo(): unknown {return B.foo();}}
+   ·                                                  ─
+   ╰────
+  help: Replace `B` with `super`.
