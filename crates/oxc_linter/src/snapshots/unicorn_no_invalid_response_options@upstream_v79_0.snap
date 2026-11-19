@@ -1,0 +1,581 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:14]
+ 1 │ new Response("", {status: 204})
+   ·              ──
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:30]
+ 1 │ Response.json(data, {status: 204})
+   ·                              ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 205 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:14]
+ 1 │ new Response("", {status: 205})
+   ·              ──
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 205 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:30]
+ 1 │ Response.json(data, {status: 205})
+   ·                              ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 304 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:14]
+ 1 │ new Response("", {status: 304})
+   ·              ──
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 304 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:30]
+ 1 │ Response.json(data, {status: 304})
+   ·                              ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 304 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:30]
+ 1 │ Response.json(null, {status: 304})
+   ·                              ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:35]
+ 1 │ Response.json(undefined, {status: 204})
+   ·                                   ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:14]
+ 1 │ new Response("body", {status: 204})
+   ·              ──────
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:14]
+ 1 │ new Response(false, {status: 204})
+   ·              ─────
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:14]
+ 1 │ new Response(0, {status: 204})
+   ·              ─
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:14]
+ 1 │ new Response([], {status: 204})
+   ·              ──
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:14]
+ 1 │ new Response({}, {status: 204})
+   ·              ──
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:14]
+ 1 │ new Response(new Uint8Array(), {status: 204})
+   ·              ────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:14]
+ 1 │ new Response(new Blob([]), {status: 204})
+   ·              ────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:14]
+ 1 │ new Response(`body ${value}`, {status: 204})
+   ·              ───────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:14]
+ 1 │ new Response([sideEffect()], {status: 204})
+   ·              ──────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:14]
+ 1 │ new Response({value: object.value}, {status: 204})
+   ·              ─────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:31]
+ 1 │ const body = ""; new Response(body, {status: 204})
+   ·                               ────
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:14]
+ 1 │ new Response("", {status: "204"})
+   ·              ──
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:14]
+ 1 │ new Response("", {status: 204.9})
+   ·              ──
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:14]
+ 1 │ new Response("", {status: +204})
+   ·              ──
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:14]
+ 1 │ new Response("", {status: 65_740})
+   ·              ──
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 205 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:34]
+ 1 │ const status = 205; new Response("", {status})
+   ·                                  ──
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 304 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:42]
+ 1 │ const status = 304; Response.json(data, {status})
+   ·                                          ──────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): `Response.redirect()` status must be 301, 302, 303, 307, or 308.
+   ╭─[no_invalid_response_options.tsx:1:44]
+ 1 │ const status = 200; Response.redirect(url, status)
+   ·                                            ──────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): Response status must be in the range 200 to 599.
+   ╭─[no_invalid_response_options.tsx:1:34]
+ 1 │ new Response(undefined, {status: 0})
+   ·                                  ─
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): Response status must be in the range 200 to 599.
+   ╭─[no_invalid_response_options.tsx:1:34]
+ 1 │ new Response(undefined, {status: 101})
+   ·                                  ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): Response status must be in the range 200 to 599.
+   ╭─[no_invalid_response_options.tsx:1:34]
+ 1 │ new Response(undefined, {status: 103})
+   ·                                  ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): Response status must be in the range 200 to 599.
+   ╭─[no_invalid_response_options.tsx:1:34]
+ 1 │ new Response(undefined, {status: 199})
+   ·                                  ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): Response status must be in the range 200 to 599.
+   ╭─[no_invalid_response_options.tsx:1:34]
+ 1 │ new Response(undefined, {status: 600})
+   ·                                  ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): Response status must be in the range 200 to 599.
+   ╭─[no_invalid_response_options.tsx:1:34]
+ 1 │ new Response(undefined, {status: 65_536})
+   ·                                  ──────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): Response status must be in the range 200 to 599.
+   ╭─[no_invalid_response_options.tsx:1:34]
+ 1 │ new Response(undefined, {status: -1})
+   ·                                  ──
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): Response status must be in the range 200 to 599.
+   ╭─[no_invalid_response_options.tsx:1:34]
+ 1 │ new Response(undefined, {status: NaN})
+   ·                                  ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): Response status must be in the range 200 to 599.
+   ╭─[no_invalid_response_options.tsx:1:34]
+ 1 │ new Response(undefined, {status: Infinity})
+   ·                                  ────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): Response status must be in the range 200 to 599.
+   ╭─[no_invalid_response_options.tsx:1:34]
+ 1 │ new Response(undefined, {status: -Infinity})
+   ·                                  ─────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): Response status must be in the range 200 to 599.
+   ╭─[no_invalid_response_options.tsx:1:34]
+ 1 │ new Response(undefined, {status: null})
+   ·                                  ────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): Response status must be in the range 200 to 599.
+   ╭─[no_invalid_response_options.tsx:1:34]
+ 1 │ new Response(undefined, {status: false})
+   ·                                  ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): Response status must be in the range 200 to 599.
+   ╭─[no_invalid_response_options.tsx:1:34]
+ 1 │ new Response(undefined, {status: true})
+   ·                                  ────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): Response status must be in the range 200 to 599.
+   ╭─[no_invalid_response_options.tsx:1:34]
+ 1 │ new Response(undefined, {status: "invalid"})
+   ·                                  ─────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): Response status must be in the range 200 to 599.
+   ╭─[no_invalid_response_options.tsx:1:35]
+ 1 │ Response.json(undefined, {status: 0})
+   ·                                   ─
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): Response status must be in the range 200 to 599.
+   ╭─[no_invalid_response_options.tsx:1:35]
+ 1 │ Response.json(undefined, {status: 101})
+   ·                                   ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): Response status must be in the range 200 to 599.
+   ╭─[no_invalid_response_options.tsx:1:35]
+ 1 │ Response.json(undefined, {status: 103})
+   ·                                   ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): Response status must be in the range 200 to 599.
+   ╭─[no_invalid_response_options.tsx:1:35]
+ 1 │ Response.json(undefined, {status: 199})
+   ·                                   ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): Response status must be in the range 200 to 599.
+   ╭─[no_invalid_response_options.tsx:1:35]
+ 1 │ Response.json(undefined, {status: 600})
+   ·                                   ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): Response status must be in the range 200 to 599.
+   ╭─[no_invalid_response_options.tsx:1:35]
+ 1 │ Response.json(undefined, {status: 65_536})
+   ·                                   ──────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): Response status must be in the range 200 to 599.
+   ╭─[no_invalid_response_options.tsx:1:35]
+ 1 │ Response.json(undefined, {status: -1})
+   ·                                   ──
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): Response status must be in the range 200 to 599.
+   ╭─[no_invalid_response_options.tsx:1:35]
+ 1 │ Response.json(undefined, {status: NaN})
+   ·                                   ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): Response status must be in the range 200 to 599.
+   ╭─[no_invalid_response_options.tsx:1:35]
+ 1 │ Response.json(undefined, {status: Infinity})
+   ·                                   ────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): Response status must be in the range 200 to 599.
+   ╭─[no_invalid_response_options.tsx:1:35]
+ 1 │ Response.json(undefined, {status: -Infinity})
+   ·                                   ─────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): Response status must be in the range 200 to 599.
+   ╭─[no_invalid_response_options.tsx:1:35]
+ 1 │ Response.json(undefined, {status: null})
+   ·                                   ────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): Response status must be in the range 200 to 599.
+   ╭─[no_invalid_response_options.tsx:1:35]
+ 1 │ Response.json(undefined, {status: false})
+   ·                                   ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): Response status must be in the range 200 to 599.
+   ╭─[no_invalid_response_options.tsx:1:35]
+ 1 │ Response.json(undefined, {status: true})
+   ·                                   ────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): Response status must be in the range 200 to 599.
+   ╭─[no_invalid_response_options.tsx:1:35]
+ 1 │ Response.json(undefined, {status: "invalid"})
+   ·                                   ─────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): `Response.redirect()` status must be 301, 302, 303, 307, or 308.
+   ╭─[no_invalid_response_options.tsx:1:24]
+ 1 │ Response.redirect(url, 200)
+   ·                        ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): `Response.redirect()` status must be 301, 302, 303, 307, or 308.
+   ╭─[no_invalid_response_options.tsx:1:24]
+ 1 │ Response.redirect(url, 300)
+   ·                        ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): `Response.redirect()` status must be 301, 302, 303, 307, or 308.
+   ╭─[no_invalid_response_options.tsx:1:24]
+ 1 │ Response.redirect(url, 304)
+   ·                        ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): `Response.redirect()` status must be 301, 302, 303, 307, or 308.
+   ╭─[no_invalid_response_options.tsx:1:24]
+ 1 │ Response.redirect(url, 305)
+   ·                        ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): `Response.redirect()` status must be 301, 302, 303, 307, or 308.
+   ╭─[no_invalid_response_options.tsx:1:24]
+ 1 │ Response.redirect(url, 306)
+   ·                        ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): `Response.redirect()` status must be 301, 302, 303, 307, or 308.
+   ╭─[no_invalid_response_options.tsx:1:24]
+ 1 │ Response.redirect(url, 309)
+   ·                        ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): `Response.redirect()` status must be 301, 302, 303, 307, or 308.
+   ╭─[no_invalid_response_options.tsx:1:24]
+ 1 │ Response.redirect(url, 600)
+   ·                        ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): `Response.redirect()` status must be 301, 302, 303, 307, or 308.
+   ╭─[no_invalid_response_options.tsx:1:24]
+ 1 │ Response.redirect(url, null)
+   ·                        ────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): `Response.redirect()` status must be 301, 302, 303, 307, or 308.
+   ╭─[no_invalid_response_options.tsx:1:24]
+ 1 │ Response.redirect(url, false)
+   ·                        ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): `Response.redirect()` status must be 301, 302, 303, 307, or 308.
+   ╭─[no_invalid_response_options.tsx:1:24]
+ 1 │ Response.redirect(url, NaN)
+   ·                        ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): `Response.redirect()` status must be 301, 302, 303, 307, or 308.
+   ╭─[no_invalid_response_options.tsx:1:24]
+ 1 │ Response.redirect(url, "200")
+   ·                        ─────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:36]
+ 1 │ const key = "status"; new Response("", {[key]: 204})
+   ·                                    ──
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:14]
+ 1 │ new Response("", {[`status`]: 204})
+   ·              ──
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:14]
+ 1 │ new Response("", {status: 204, [0]: 200})
+   ·              ──
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:14]
+ 1 │ new Response("", {status: 200, status: 204})
+   ·              ──
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:14]
+ 1 │ new Response("", {get status() { return 200; }, status: 204})
+   ·              ──
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:14]
+ 1 │ new Response("", {...options, status: 204})
+   ·              ──
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:14]
+ 1 │ new Response("", {[key]: 200, status: 204})
+   ·              ──
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:14]
+ 1 │ new Response("", {"status": 204})
+   ·              ──
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:14]
+ 1 │ new Response("", {["status"]: 204})
+   ·              ──
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:14]
+ 1 │ new Response("", {status: 204, headers: {}})
+   ·              ──
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:14]
+ 1 │ new Response("", {status: 204}, ...extraArguments)
+   ·              ──
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:41]
+ 1 │ Response.json("", {status: 200, status: 204})
+   ·                                         ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:58]
+ 1 │ Response.json("", {get status() { return 200; }, status: 204})
+   ·                                                          ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:40]
+ 1 │ Response.json("", {...options, status: 204})
+   ·                                        ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:40]
+ 1 │ Response.json("", {[key]: 200, status: 204})
+   ·                                        ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:30]
+ 1 │ Response.json("", {"status": 204})
+   ·                              ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:32]
+ 1 │ Response.json("", {["status"]: 204})
+   ·                                ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:28]
+ 1 │ Response.json("", {status: 204, headers: {}})
+   ·                            ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:28]
+ 1 │ Response.json("", {status: 204}, ...extraArguments)
+   ·                            ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): `Response.redirect()` status must be 301, 302, 303, 307, or 308.
+   ╭─[no_invalid_response_options.tsx:1:24]
+ 1 │ Response.redirect(url, 200, ...extraArguments)
+   ·                        ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:18]
+ 1 │ new ((Response))((("")), (({status: 204})))
+   ·                  ──────
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 304 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:30]
+ 1 │ Response.json(data, {status: 304}).clone()
+   ·                              ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:22]
+ 1 │ consume(new Response("", {status: 204}))
+   ·                      ──
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:27]
+ 1 │ new Response(/* before */ "" /* after */, {status: 204})
+   ·                           ──
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:14]
+ 1 │ new Response({/* keep */}, {status: 204})
+   ·              ────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:14]
+ 1 │ new Response(`body ${object.value}`, {status: 204})
+   ·              ──────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.tsx:1:14]
+ 1 │ new Response(`body ${sideEffect()}`, {status: 204})
+   ·              ──────────────────────
+   ╰────

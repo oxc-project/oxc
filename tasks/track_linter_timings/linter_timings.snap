@@ -550,6 +550,7 @@ unicorn/no-instanceof-array                             |  20604
 unicorn/no-instanceof-builtins                          |  20604
 unicorn/no-invalid-fetch-options                        |  14125
 unicorn/no-invalid-remove-event-listener                |  62606
+unicorn/no-invalid-response-options                     |  64027
 unicorn/no-length-as-slice-end                          |  62606
 unicorn/no-lonely-if                                    |  13190
 unicorn/no-magic-array-flat-depth                       |  62606
