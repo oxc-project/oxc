@@ -15,7 +15,7 @@ use crate::{
     ast_util::leftmost_identifier_reference,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::is_import_symbol,
+    utils::{is_import_symbol, is_temporary_array},
 };
 
 fn no_array_sort_diagnostic(span: Span) -> OxcDiagnostic {
@@ -38,17 +38,37 @@ pub struct NoArraySort {
 
     /// When set to `true`, allows sorting a fresh array created by a spread, e.g. `[...iterable].sort()`.
     /// This avoids the double allocation of `toSorted()` when sorting an iterable such as a `Set`.
+    /// Defaults to `false`, or `true` when `allowOnTemporaries` is enabled.
     ///
     /// Example of **correct** code for this rule with `allowAfterSpread` set to `true`:
     /// ```js
     /// const sorted = [...mySet].sort();
     /// ```
     allow_after_spread: bool,
+
+    /// When set to `true`, allows sorting fresh arrays created by array literals, spreads,
+    /// `arr.map()`, `arr.filter()`, `new Array()`, `Array.from()`, `Object.keys()`, etc. without
+    /// making another copy. This avoids the double allocation of `toSorted()` when it is not
+    /// needed. Instance methods are recognized by name, assuming built-in array behavior.
+    ///
+    /// Implies `allowAfterSpread: true`; explicitly setting `allowAfterSpread` to `false` is
+    /// invalid.
+    ///
+    /// Examples of **correct** code with `allowOnTemporaries` set to `true`:
+    /// ```js
+    /// const sorted = array.map(transform).sort(compareFn);
+    /// const values = Object.values(object).sort();
+    /// ```
+    allow_on_temporaries: bool,
 }
 
 impl Default for NoArraySort {
     fn default() -> Self {
-        Self { allow_expression_statement: true, allow_after_spread: false }
+        Self {
+            allow_expression_statement: true,
+            allow_after_spread: false,
+            allow_on_temporaries: false,
+        }
     }
 }
 
@@ -85,7 +105,20 @@ declare_oxc_lint!(
 
 impl Rule for NoArraySort {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
+        let allow_after_spread = value
+            .get(0)
+            .and_then(|options| options.get("allowAfterSpread"))
+            .and_then(Value::as_bool);
+        let mut rule = DefaultRuleConfig::<Self>::from_value(value)?.into_inner();
+        if rule.allow_on_temporaries {
+            if allow_after_spread == Some(false) {
+                return Err(serde::de::Error::custom(
+                    "`allowAfterSpread` cannot be `false` when `allowOnTemporaries` is `true`.",
+                ));
+            }
+            rule.allow_after_spread = true;
+        }
+        Ok(rule)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -125,6 +158,10 @@ impl Rule for NoArraySort {
         if leftmost_identifier_reference(member_expr.object())
             .is_ok_and(|ident| is_import_symbol(ident, "effect", "Chunk", ctx))
         {
+            return;
+        }
+
+        if self.allow_on_temporaries && is_temporary_array(member_expr.object(), ctx) {
             return;
         }
 
@@ -198,6 +235,22 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        ("sorted = [...array].sort()", Some(serde_json::json!([{ "allowOnTemporaries": true }]))),
+        (
+            "[...items].sort(compareFn);",
+            Some(serde_json::json!([{
+                "allowOnTemporaries": true,
+                "allowExpressionStatement": false
+            }])),
+        ),
+        (
+            "const result = items.map(fn).sort();",
+            Some(serde_json::json!([{ "allowOnTemporaries": true }])),
+        ),
+        (
+            "const result = Object.values(object).sort();",
+            Some(serde_json::json!([{ "allowOnTemporaries": true }])),
+        ),
         ("sorted =[...array].toSorted()", None),
         ("sorted =array.toSorted()", None),
         ("sorted =[...array].sort", None),
@@ -240,6 +293,14 @@ fn test() {
     ];
 
     let fail = vec![
+        (
+            "const result = getArray().sort();",
+            Some(serde_json::json!([{ "allowOnTemporaries": true }])),
+        ),
+        (
+            "const result = items.map(fn).sort();",
+            Some(serde_json::json!([{ "allowOnTemporaries": false }])),
+        ),
         ("sorted = [...array].sort()", None),
         ("sorted = [...array]?.sort()", None),
         ("sorted = array.sort()", None),
@@ -257,6 +318,11 @@ fn test() {
     ];
 
     let fix = vec![
+        (
+            "const result = getArray().sort();",
+            "const result = getArray().toSorted();",
+            Some(serde_json::json!([{ "allowOnTemporaries": true }])),
+        ),
         ("sorted = [...array].sort()", "sorted = [...array].toSorted()", None),
         ("sorted = [...array]?.sort()", "sorted = [...array]?.toSorted()", None),
         (
@@ -270,4 +336,30 @@ fn test() {
     Tester::new(NoArraySort::NAME, NoArraySort::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn test_configuration() {
+    use serde_json::json;
+
+    for (options, expected) in [
+        (json!({}), (false, false)),
+        (json!({ "allowOnTemporaries": true }), (true, true)),
+        (json!({ "allowOnTemporaries": true, "allowAfterSpread": true }), (true, true)),
+        (json!({ "allowOnTemporaries": false, "allowAfterSpread": true }), (false, true)),
+        (json!({ "allowOnTemporaries": false, "allowAfterSpread": false }), (false, false)),
+    ] {
+        let rule = NoArraySort::from_configuration(json!([options])).unwrap();
+        assert_eq!((rule.allow_on_temporaries, rule.allow_after_spread), expected);
+    }
+
+    let error = NoArraySort::from_configuration(json!([{
+        "allowOnTemporaries": true,
+        "allowAfterSpread": false
+    }]))
+    .unwrap_err();
+    assert_eq!(
+        error.to_string(),
+        "`allowAfterSpread` cannot be `false` when `allowOnTemporaries` is `true`."
+    );
 }

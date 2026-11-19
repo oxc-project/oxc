@@ -6819,11 +6819,25 @@ export interface NoArrayReverse {
    * ```
    */
   allowExpressionStatement?: boolean;
+  /**
+   * When set to `true`, allows reversing fresh arrays created by array literals, spreads,
+   * `arr.map()`, `arr.filter()`, `new Array()`, `Array.from()`, `Object.keys()`, etc. without
+   * making another copy. This avoids the double allocation of `toReversed()` when it is not
+   * needed. Instance methods are recognized by name, assuming built-in array behavior.
+   *
+   * Examples of **correct** code with `allowOnTemporaries` set to `true`:
+   * ```js
+   * const reversed = array.map(transform).reverse();
+   * const values = Object.values(object).reverse();
+   * ```
+   */
+  allowOnTemporaries?: boolean;
 }
 export interface NoArraySort {
   /**
    * When set to `true`, allows sorting a fresh array created by a spread, e.g. `[...iterable].sort()`.
    * This avoids the double allocation of `toSorted()` when sorting an iterable such as a `Set`.
+   * Defaults to `false`, or `true` when `allowOnTemporaries` is enabled.
    *
    * Example of **correct** code for this rule with `allowAfterSpread` set to `true`:
    * ```js
@@ -6841,6 +6855,22 @@ export interface NoArraySort {
    * ```
    */
   allowExpressionStatement?: boolean;
+  /**
+   * When set to `true`, allows sorting fresh arrays created by array literals, spreads,
+   * `arr.map()`, `arr.filter()`, `new Array()`, `Array.from()`, `Object.keys()`, etc. without
+   * making another copy. This avoids the double allocation of `toSorted()` when it is not
+   * needed. Instance methods are recognized by name, assuming built-in array behavior.
+   *
+   * Implies `allowAfterSpread: true`; explicitly setting `allowAfterSpread` to `false` is
+   * invalid.
+   *
+   * Examples of **correct** code with `allowOnTemporaries` set to `true`:
+   * ```js
+   * const sorted = array.map(transform).sort(compareFn);
+   * const values = Object.values(object).sort();
+   * ```
+   */
+  allowOnTemporaries?: boolean;
 }
 export interface NoInstanceofBuiltinsConfig {
   /**
