@@ -404,8 +404,7 @@ impl<'a> PeepholeOptimizations {
             && right.operator == BinaryOperator::Addition
             && Self::is_mergeable_string_addition_prefix(&e.left)
             && Self::is_mergeable_string_addition_prefix(&right.left)
-            && !Self::string_expression_size_lower_bound(&e.right, ctx)
-                .is_some_and(|(_, has_non_inlineable_constant)| has_non_inlineable_constant)
+            && !Self::string_addition_has_non_inlineable_constant(&e.right, ctx)
         {
             let span = e.span;
             let operator = e.operator;
@@ -487,6 +486,23 @@ impl<'a> PeepholeOptimizations {
             Expression::BinaryExpression(binary) if binary.operator == BinaryOperator::Addition => {
                 Self::is_mergeable_string_addition_prefix(&binary.left)
             }
+            _ => false,
+        }
+    }
+
+    fn string_addition_has_non_inlineable_constant(
+        expr: &Expression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        // An unknown-sized operand must not hide a retained constant elsewhere
+        // in the addition chain from the rotation guard.
+        match expr {
+            Expression::BinaryExpression(binary) if binary.operator == BinaryOperator::Addition => {
+                Self::string_addition_has_non_inlineable_constant(&binary.left, ctx)
+                    || Self::string_addition_has_non_inlineable_constant(&binary.right, ctx)
+            }
+            Expression::Identifier(_) => Self::string_expression_size_lower_bound(expr, ctx)
+                .is_some_and(|(_, has_non_inlineable_constant)| has_non_inlineable_constant),
             _ => false,
         }
     }

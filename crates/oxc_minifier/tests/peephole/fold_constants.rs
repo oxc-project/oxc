@@ -1037,6 +1037,36 @@ fn test_nested_string_addition() {
 }
 
 #[test]
+fn test_nested_string_addition_keeps_retained_constants() {
+    // An unknown-sized operand must not hide the retained string from the
+    // rotation guard and let template merging duplicate its payload.
+    for suffix in ["foo()", "foo() + bar()", "(first(), foo())", "(flag ? foo() : bar())"] {
+        let source = format!(
+            "const p = 'PAYLOADpayload0123456789PAYLOADpayload0123456789'; \
+             export const a = atob(p); export const c = btoa(p); \
+             export const b = `x${{v}}` + ('y' + p + {suffix});"
+        );
+        test_smallest(&source, &source);
+    }
+
+    test_smallest(
+        r"const p = 'PAYLOADpayload0123456789PAYLOADpayload0123456789';
+        export const a = atob(p); export const c = btoa(p);
+        export const b = `x${v}\ud800$` + ('{y' + p + foo());",
+        r"const p = 'PAYLOADpayload0123456789PAYLOADpayload0123456789';
+        export const a = atob(p); export const c = btoa(p);
+        export const b = `x${v}\ud800$` + ('{y' + p + foo());",
+    );
+
+    // A single-use payload can still be folded after its binding is removed.
+    test_smallest(
+        "const p = 'PAYLOADpayload0123456789PAYLOADpayload0123456789'; \
+         export const b = `x${v}` + ('y' + p + foo());",
+        "export const b = `x${v}yPAYLOADpayload0123456789PAYLOADpayload0123456789` + foo();",
+    );
+}
+
+#[test]
 fn test_fold_arithmetic() {
     fold("1n+ +1n", "1n + +1n");
     fold("1n- -1n", "1n - -1n");
