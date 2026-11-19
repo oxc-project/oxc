@@ -429,7 +429,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let value = self.eat(Kind::Eq).then(|| {
             self.context(
                 Context::In | Context::NewTarget,
-                Context::Yield | Context::Await,
+                Context::Yield | Context::Await | Context::TopLevel,
                 Self::parse_assignment_expression_or_higher,
             )
         });
@@ -744,10 +744,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let type_annotation = if self.is_ts { self.parse_ts_type_annotation() } else { None };
         // Initializer[+In, ?Yield, ?Await]opt
         // `new.target` is allowed in a class field initializer.
+        // A class field initializer is not the top level of the program, so `await`
+        // there is not top-level await. Computed keys are different: they are
+        // evaluated in the enclosing context, where top-level `await` is valid.
         let initializer = self.eat(Kind::Eq).then(|| {
             self.context(
                 Context::In | Context::NewTarget,
-                Context::Yield | Context::Await,
+                Context::Yield | Context::Await | Context::TopLevel,
                 Self::parse_assignment_expression_or_higher,
             )
         });

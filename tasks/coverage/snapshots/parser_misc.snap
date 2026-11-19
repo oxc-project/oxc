@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 147/147 (100.00%)
 Positive Passed: 147/147 (100.00%)
-Negative Passed: 282/282 (100.00%)
+Negative Passed: 283/283 (100.00%)
 
   × TS(1029): 'declare' modifier must precede 'abstract' modifier.
    ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
@@ -4939,6 +4939,122 @@ Negative Passed: 282/282 (100.00%)
  5 │ }
    ╰────
 
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/oxc-29896.js:4:17]
+ 3 │ // initializers, is not top-level await: it is an error in every module kind.
+ 4 │ function fn(x = await 1) {}
+   ·                 ─────
+ 5 │ var fe = function (x = await 1) {};
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/oxc-29896.js:5:24]
+ 4 │ function fn(x = await 1) {}
+ 5 │ var fe = function (x = await 1) {};
+   ·                        ─────
+ 6 │ function* g(x = await 1) {};
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/oxc-29896.js:6:17]
+ 5 │ var fe = function (x = await 1) {};
+ 6 │ function* g(x = await 1) {};
+   ·                 ─────
+ 7 │ ({ m(x = await 1) {} });
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/oxc-29896.js:7:10]
+ 6 │ function* g(x = await 1) {};
+ 7 │ ({ m(x = await 1) {} });
+   ·          ─────
+ 8 │ class C { m(x = await 1) {} }
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/oxc-29896.js:8:17]
+ 7 │ ({ m(x = await 1) {} });
+ 8 │ class C { m(x = await 1) {} }
+   ·                 ─────
+ 9 │ class D { p = await 0 }
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[misc/fail/oxc-29896.js:9:15]
+  8 │ class C { m(x = await 1) {} }
+  9 │ class D { p = await 0 }
+    ·               ─────
+ 10 │ class D2 { static p = await 0 }
+    ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[misc/fail/oxc-29896.js:10:23]
+  9 │ class D { p = await 0 }
+ 10 │ class D2 { static p = await 0 }
+    ·                       ─────
+ 11 │ class D3 { accessor p = await 0 }
+    ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[misc/fail/oxc-29896.js:11:25]
+ 10 │ class D2 { static p = await 0 }
+ 11 │ class D3 { accessor p = await 0 }
+    ·                         ─────
+    ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × await expression not allowed in formal parameter
+   ╭─[misc/fail/oxc-29896.js:4:17]
+ 3 │ // initializers, is not top-level await: it is an error in every module kind.
+ 4 │ function fn(x = await 1) {}
+   ·                 ───┬───
+   ·                    ╰── await expression not allowed in formal parameter
+ 5 │ var fe = function (x = await 1) {};
+   ╰────
+
+  × await expression not allowed in formal parameter
+   ╭─[misc/fail/oxc-29896.js:5:24]
+ 4 │ function fn(x = await 1) {}
+ 5 │ var fe = function (x = await 1) {};
+   ·                        ───┬───
+   ·                           ╰── await expression not allowed in formal parameter
+ 6 │ function* g(x = await 1) {};
+   ╰────
+
+  × await expression not allowed in formal parameter
+   ╭─[misc/fail/oxc-29896.js:6:17]
+ 5 │ var fe = function (x = await 1) {};
+ 6 │ function* g(x = await 1) {};
+   ·                 ───┬───
+   ·                    ╰── await expression not allowed in formal parameter
+ 7 │ ({ m(x = await 1) {} });
+   ╰────
+
+  × await expression not allowed in formal parameter
+   ╭─[misc/fail/oxc-29896.js:7:10]
+ 6 │ function* g(x = await 1) {};
+ 7 │ ({ m(x = await 1) {} });
+   ·          ───┬───
+   ·             ╰── await expression not allowed in formal parameter
+ 8 │ class C { m(x = await 1) {} }
+   ╰────
+
+  × await expression not allowed in formal parameter
+   ╭─[misc/fail/oxc-29896.js:8:17]
+ 7 │ ({ m(x = await 1) {} });
+ 8 │ class C { m(x = await 1) {} }
+   ·                 ───┬───
+   ·                    ╰── await expression not allowed in formal parameter
+ 9 │ class D { p = await 0 }
+   ╰────
   × Expected `:` but found `[`
    ╭─[misc/fail/oxc-3320.tsx:1:8]
  1 │ m< $<{3[   $<{3[  $<{3[ m< m$<{3[ m< mm< $<{3[   $<{3[  $<{3[ m< m$<{3[ m< m$<{3[  $<{3[ m< m$<{3[
