@@ -243,6 +243,37 @@ fn mult_star_is_not_a_modifier(cpu: DynCpu) {
 }
 
 #[test_cpus]
+fn bodiless_member_signatures_end_the_member(cpu: DynCpu) {
+    regex("class A { m(): void; async n() { await /re/; } }", ScriptTS, cpu);
+    regex("class A { m(); *g() { yield /re/; } }", ScriptTS, cpu);
+    regex("class A { m(): void\n async n() { await /re/; } }", ScriptTS, cpu);
+}
+
+#[test_cpus]
+fn where_class_fields_end(cpu: DynCpu) {
+    regex("class A { x\n*g() { yield /re/; } }", ScriptJS, cpu);
+    regex("class A { x = () => {}\nasync m() { await /re/; } }", ScriptJS, cpu);
+    regex("class A { x?\n*g() { yield /re/; } }", ScriptTS, cpu);
+    regex("class A { x = c ? () => {} : async () => { await /re/; }; }", ScriptJS, cpu);
+}
+
+#[test_cpus]
+fn decorators_keep_member_modifiers(cpu: DynCpu) {
+    regex("class A { @dec async m() { await /re/; } }", ScriptJS, cpu);
+    regex("class A { @a.b() async m() { await /re/; } }", ScriptJS, cpu);
+    regex("class A { @dec *g() { yield /re/; } }", ScriptJS, cpu);
+    division("class A { @dec x; y = function () {} / 2; }", ScriptJS, cpu);
+}
+
+#[test_cpus]
+fn generic_async_arrows(cpu: DynCpu) {
+    regex("const f = async <T>(x: T) => { await /re/; };", ScriptTS, cpu);
+    regex("const f = async <T,>(x: T) => { await /re/; };", ScriptTSX, cpu);
+    regex("async function f() { x = async < b\nawait /re/; }", ScriptTS, cpu);
+    division("var x = async < b > /2/g;", ScriptTS, cpu);
+}
+
+#[test_cpus]
 fn bigint_and_escaped_method_names(cpu: DynCpu) {
     regex("var o = { *1n() { yield /re/ } };", ScriptJS, cpu);
     regex("var o = { *\\u0066oo() { yield /re/ } };", ScriptJS, cpu);

@@ -5,7 +5,10 @@ use oxc_simd::{BASELINE, cpu_version};
 
 use crate::token::{OP_KIND_BASE, matches_tk, tk};
 
-use crate::pipeline::disambiguate::{common::TokensView, type_context::keyword_type};
+use crate::pipeline::disambiguate::{
+    common::{Prev, TokensView},
+    type_context::{arrow_type_params_at, keyword_type},
+};
 
 use super::{
     frame::{Declarator, FrameKind, MOD_ASYNC, MOD_STATIC, Member, RegionRule, StmtReg},
@@ -109,7 +112,11 @@ impl Walk {
                 // a function / arrow head.
                 let nx = tokens.peek(end, cpu);
                 (matches_tk!(nx.kind, Ident | String | Number | PrivateIdent)
-                    || (nx.kind >= OP_KIND_BASE && matches!(nx.byte, b'(' | b'*' | b'[')))
+                    || (nx.kind >= OP_KIND_BASE && matches!(nx.byte, b'(' | b'*' | b'['))
+                    || (tokens.is_ts
+                        && nx.kind >= OP_KIND_BASE
+                        && nx.byte == b'<'
+                        && arrow_type_params_at(tokens, nx.pos, cpu)))
                     && !tokens.line_break_between(end, nx.pos, cpu)
             }
             tk!(KwType | KwInterface | KwNamespace | KwModule | KwDeclare) => {
@@ -314,6 +321,11 @@ impl Walk {
     fn member_word(&mut self, tokens: &TokensView, pos: usize, end: usize, kw: u8) -> usize {
         let cpu = BASELINE;
 
+        // A decorator name, dotted or not, comes before the key.
+        if self.after_dot || matches!(tokens.prev_token(pos, cpu), Prev::Op(_, b'@')) {
+            self.value_done();
+            return end;
+        }
         let is_class = self.top_kind() == FrameKind::ClassBody;
         // Modifiers apply when a key can follow on the same line.
         let nx = tokens.peek(end, cpu);

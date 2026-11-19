@@ -156,10 +156,10 @@ impl Walk {
 
         // Optional marker (`a?: T`, `a?,`, `a?)`) vs conditional.
         let nx = tokens.peek(pos + 1, cpu);
-        let member = self.top_kind() == FrameKind::ClassBody;
-        let optional = nx.kind >= OP_KIND_BASE
-            && (matches!(nx.byte, b':' | b',' | b')' | b']' | b'>')
-                || (member && matches!(nx.byte, b'(' | b'<')));
+        // No conditional can follow a class member key.
+        let key = self.top_kind() == FrameKind::ClassBody && self.top().member == Member::KeySeen;
+        let optional =
+            key || (nx.kind >= OP_KIND_BASE && matches!(nx.byte, b':' | b',' | b')' | b']' | b'>'));
         if optional && !self.operand_allowed() {
             // Keep the member / parameter state.
             self.clear_prev();
@@ -246,10 +246,6 @@ impl Walk {
         match self.top_kind() {
             FrameKind::Head => {
                 self.top_mut().open_questions = 0;
-                self.operand_done();
-            }
-            FrameKind::ClassBody => {
-                self.top_mut().next_member();
                 self.operand_done();
             }
             _ => {
@@ -356,7 +352,12 @@ impl Walk {
             FrameKind::ArrowBody => {
                 // The arrow function is complete: it cannot be continued.
                 self.pop_concise();
-                self.expect = Expect::Statement;
+                if self.top_kind() == FrameKind::ClassBody && self.top().open_questions == 0 {
+                    // A field holding it ends with it.
+                    self.end_statement();
+                } else {
+                    self.expect = Expect::Statement;
+                }
                 self.clear_prev();
             }
             _ => {

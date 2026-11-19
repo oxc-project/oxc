@@ -99,6 +99,16 @@ pub(super) fn arrow_after_params(tokens: &TokensView, lp: usize, cpu: impl Cpu) 
     ar < n && src[ar] == b'=' && src[ar + 1] == b'>'
 }
 
+/// Is the < at lt a list followed by a parameter list, as the type parameters of an arrow are?
+#[cpu_multiversion]
+pub fn arrow_type_params_at(tokens: &TokensView, lt: usize, cpu: impl Cpu) -> bool {
+    let TokensView { src, n, .. } = *tokens;
+    list_closer(tokens, lt, cpu).is_some_and(|gt| {
+        let lp = skip_trivia_fwd(src, n, gt + 1, cpu);
+        lp < n && src[lp] == b'('
+    })
+}
+
 #[cpu_multiversion]
 pub(super) fn skip_trivia_fwd(src: &[u8], n: usize, i: usize, cpu: impl Cpu) -> usize {
     skip_trivia_nl(src, n, i, cpu).0
