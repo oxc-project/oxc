@@ -1,12 +1,20 @@
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::StringToBigInt;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::number::{BigintBase, NumberBase};
+use oxc_str::JSStr;
+use oxc_syntax::{
+    identifier::is_white_space,
+    line_terminator::is_line_terminator,
+    number::NumberBase,
+    operator::{BinaryOperator, UnaryOperator},
+};
 
 use crate::{
     AstNode,
+    ast_util::could_be_asi_hazard,
     context::LintContext,
     rule::Rule,
     utils::{integer_literal_loses_precision, pad_fix_with_token_boundary},
@@ -94,22 +102,26 @@ impl Rule for PreferBigintLiterals {
             return;
         }
 
-        match argument_expression.get_inner_expression() {
-            Expression::StringLiteral(string_literal) => {
-                if let Some(mut replacement) =
-                    string_literal.value.as_str().and_then(bigint_literal_from_string)
-                {
-                    ctx.diagnostic_with_fix(
-                        prefer_bigint_literals_diagnostic(arg.span()),
-                        |fixer| {
-                            pad_fix_with_token_boundary(
-                                ctx.source_text(),
-                                call.span,
-                                &mut replacement,
-                            );
-                            fixer.replace(call.span, replacement)
-                        },
-                    );
+        let mut inner_expression = argument_expression.get_inner_expression();
+        let mut has_sign = false;
+        let mut negated = false;
+        while let Expression::UnaryExpression(unary) = inner_expression {
+            match unary.operator {
+                UnaryOperator::UnaryNegation => negated = !negated,
+                UnaryOperator::UnaryPlus => {}
+                _ => return,
+            }
+            has_sign = true;
+            inner_expression = unary.argument.get_inner_expression();
+        }
+
+        match inner_expression {
+            Expression::StringLiteral(string_literal) if !has_sign => {
+                report_string_argument(string_literal.value, node, arg.span(), ctx);
+            }
+            Expression::TemplateLiteral(template) if !has_sign => {
+                if let Some(value) = template.single_quasi() {
+                    report_string_argument(value, node, arg.span(), ctx);
                 }
             }
             Expression::NumericLiteral(numeric_literal) => {
@@ -136,6 +148,10 @@ impl Rule for PreferBigintLiterals {
                     ctx.diagnostic_with_fix(
                         prefer_bigint_literals_diagnostic(arg.span()),
                         |fixer| {
+                            if negated && numeric_literal.value != 0.0 {
+                                replacement.insert(0, '-');
+                                guard_unary_negation(node, ctx, &mut replacement);
+                            }
                             pad_fix_with_token_boundary(
                                 ctx.source_text(),
                                 call.span,
@@ -154,43 +170,66 @@ impl Rule for PreferBigintLiterals {
     }
 }
 
-fn matches_js_integer_literal(s: &str) -> Option<BigintBase> {
-    let s = s.trim();
-    let mut chars = s.chars();
-
-    match chars.next() {
-        Some('0') => match chars.next() {
-            Some('b' | 'B') => {
-                chars.all(|char| matches!(char, '0' | '1')).then_some(BigintBase::Binary)
-            }
-
-            Some('o' | 'O') => {
-                chars.all(|char| matches!(char, '0'..='7')).then_some(BigintBase::Octal)
-            }
-
-            Some('x' | 'X') => {
-                chars.all(|char| char.is_ascii_hexdigit()).then_some(BigintBase::Hex)
-            }
-            Some('0'..='9') => {
-                chars.all(|char| char.is_ascii_digit()).then_some(BigintBase::Decimal)
-            }
-            None => Some(BigintBase::Decimal),
-            _ => None,
-        },
-        Some('1'..='9') => chars.all(|char| char.is_ascii_digit()).then_some(BigintBase::Decimal),
-        _ => None,
+/// Add whitespace or parentheses if needed to prevent a negative value from changing how the code parses
+fn guard_unary_negation(node: &AstNode, ctx: &LintContext, replacement: &mut String) {
+    let span = node.span();
+    if unary_negation_needs_parens(node, ctx) {
+        *replacement = format!("({replacement})");
+    } else if span.start > 0 && ctx.source_text().as_bytes()[span.start as usize - 1] == b'-' {
+        // `x-BigInt("-1")` must not become `x--1n`.
+        replacement.insert(0, ' ');
+    }
+    if could_be_asi_hazard(node, ctx) {
+        replacement.insert(0, ';');
     }
 }
 
-fn bigint_literal_from_string(raw: &str) -> Option<String> {
-    let trimmed = raw.trim();
-
-    let base = matches_js_integer_literal(trimmed)?;
-
-    match base {
-        BigintBase::Binary | BigintBase::Octal | BigintBase::Hex => Some(format!("{trimmed}n")),
-        BigintBase::Decimal => Some(format!("{}n", trim_leading_zeros(trimmed))),
+fn unary_negation_needs_parens(node: &AstNode, ctx: &LintContext) -> bool {
+    let parent = ctx.nodes().parent_node(node.id());
+    let span = node.span();
+    match parent.kind() {
+        AstKind::BinaryExpression(binary) => {
+            binary.operator == BinaryOperator::Exponential && binary.left.span() == span
+        }
+        AstKind::StaticMemberExpression(_)
+        | AstKind::ComputedMemberExpression(_)
+        | AstKind::PrivateFieldExpression(_)
+        | AstKind::CallExpression(_)
+        | AstKind::TaggedTemplateExpression(_)
+        | AstKind::TSNonNullExpression(_)
+        | AstKind::TSInstantiationExpression(_) => parent.span().start == span.start,
+        AstKind::Class(class) => {
+            class.heritage.as_ref().is_some_and(|heritage| heritage.expression.span() == span)
+        }
+        _ => false,
     }
+}
+
+fn report_string_argument<'a>(
+    value: JSStr<'a>,
+    node: &AstNode<'a>,
+    arg_span: Span,
+    ctx: &LintContext<'a>,
+) {
+    let Some(mut replacement) = value.as_str().and_then(bigint_literal_from_string) else {
+        return;
+    };
+    ctx.diagnostic_with_fix(prefer_bigint_literals_diagnostic(arg_span), |fixer| {
+        if replacement.starts_with('-') {
+            guard_unary_negation(node, ctx, &mut replacement);
+        }
+        pad_fix_with_token_boundary(ctx.source_text(), node.span(), &mut replacement);
+        fixer.replace(node.span(), replacement)
+    });
+}
+
+fn bigint_literal_from_string(value: &str) -> Option<String> {
+    let bigint = value.string_to_big_int()?;
+    let trimmed = value.trim_matches(|c| is_white_space(c) || is_line_terminator(c));
+    let is_non_decimal = trimmed.len() > 2
+        && trimmed.starts_with('0')
+        && matches!(trimmed.as_bytes()[1], b'b' | b'B' | b'o' | b'O' | b'x' | b'X');
+    Some(if is_non_decimal { format!("{trimmed}n") } else { format!("{bigint}n") })
 }
 
 fn trim_leading_zeros(raw: &str) -> &str {
@@ -235,7 +274,7 @@ fn test() {
         r#"BigInt("1.0")"#,
         r#"BigInt("1.1")"#,
         r#"BigInt("1e3")"#,
-        r"BigInt(`1`)",
+        r"BigInt(`1${x}`)",
         r#"BigInt("1" + "2")"#,
         r"BigInt?.(1)",
         r"BigInt(1.1)",
@@ -247,8 +286,12 @@ fn test() {
         r"function BigInt() { return 2n; } BigInt(1n);",
         r#"BigInt("not-number")"#,
         r#"BigInt("1_2")"#,
-        r#"BigInt("1\\\n2")"#,
-        r#"String.raw`BigInt("\u{31}")`"#,
+        r#"BigInt("-0x10")"#,
+        r#"BigInt("-")"#,
+        "BigInt(\"\u{0085}1\")",
+        r"BigInt(!1)",
+        r"BigInt(-Infinity)",
+        r#"BigInt(-"1")"#,
     ];
 
     let fail = vec![
@@ -258,6 +301,10 @@ fn test() {
         r#"BigInt("0B11")"#,
         r#"BigInt("0O777")"#,
         r#"BigInt("0XFe")"#,
+        r#"BigInt("-9223372036854775808")"#,
+        r"BigInt(-1)",
+        r"BigInt(+1)",
+        r"BigInt(-9007199254740993)",
         r"BigInt(0)",
         r"BigInt(0B11_11)",
         r"BigInt(0O777_777)",
@@ -326,6 +373,36 @@ fn test() {
         (r#"BigInt("0B0011")"#, "0B0011n"),
         (r#"BigInt("0O123")"#, "0O123n"),
         (r#"BigInt(" 0001 ")"#, "1n"),
+        (r#"BigInt("\u{31}")"#, "1n"),
+        ("BigInt(\"1\\\n2\")", "12n"),
+        (r#"BigInt("")"#, "0n"),
+        (r#"BigInt("   ")"#, "0n"),
+        ("BigInt(\"\u{FEFF}1\")", "1n"),
+        (r"BigInt(`1`)", "1n"),
+        (r"BigInt(`\u{31}`)", "1n"),
+        (r"BigInt(`-1`).toString()", "(-1n).toString()"),
+        (r#"BigInt("-9223372036854775808")"#, "-9223372036854775808n"),
+        (r#"BigInt(" -00001 ")"#, "-1n"),
+        (r#"BigInt("+42")"#, "42n"),
+        (r#"BigInt("-0")"#, "0n"),
+        (r#"const x = BigInt("-1")"#, "const x = -1n"),
+        (r#"obj[BigInt("-1")]"#, "obj[-1n]"),
+        (r#"2n ** BigInt("-1")"#, "2n ** -1n"),
+        (r#"BigInt("-1") ** 2n"#, "(-1n) ** 2n"),
+        (r#"BigInt("-1").toString()"#, "(-1n).toString()"),
+        (r#"(BigInt("-1")).toString()"#, "(-1n).toString()"),
+        (r#"class A extends BigInt("-1") {}"#, "class A extends (-1n) {}"),
+        (r#"-BigInt("-1")"#, "- -1n"),
+        ("foo\nBigInt(\"-1\").toString()", "foo\n;(-1n).toString()"),
+        (r"BigInt(-1)", "-1n"),
+        (r"BigInt(+1)", "1n"),
+        (r"BigInt(-(+(-10)))", "10n"),
+        (r"BigInt(- - -3)", "-3n"),
+        (r"BigInt(-+-3)", "3n"),
+        (r"BigInt(+-+3)", "-3n"),
+        (r"BigInt(-0)", "0n"),
+        (r"BigInt(-9007199254740993)", r"BigInt(-9007199254740993)"),
+        (r"BigInt(-1).toString()", "(-1n).toString()"),
         (
             r"BigInt('9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999')",
             "9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999n",
