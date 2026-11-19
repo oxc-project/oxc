@@ -1,0 +1,165 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(no-impossible-length-comparison): This comparison is always false because `.length` is always a non-negative integer.
+   ╭─[no_impossible_length_comparison.tsx:1:1]
+ 1 │ array.length < 0
+   · ────────────────
+   ╰────
+
+  ⚠ unicorn(no-impossible-length-comparison): This comparison is always false because `.length` is always a non-negative integer.
+   ╭─[no_impossible_length_comparison.tsx:1:1]
+ 1 │ array.length <= -1
+   · ──────────────────
+   ╰────
+
+  ⚠ unicorn(no-impossible-length-comparison): This comparison is always true because `.length` is always a non-negative integer.
+   ╭─[no_impossible_length_comparison.tsx:1:1]
+ 1 │ array.length > -1
+   · ─────────────────
+   ╰────
+
+  ⚠ unicorn(no-impossible-length-comparison): This comparison is always true because `.length` is always a non-negative integer.
+   ╭─[no_impossible_length_comparison.tsx:1:1]
+ 1 │ array.length >= 0
+   · ─────────────────
+   ╰────
+
+  ⚠ unicorn(no-impossible-length-comparison): This comparison is always true because `.length` is always a non-negative integer.
+   ╭─[no_impossible_length_comparison.tsx:1:1]
+ 1 │ array.length >= -5
+   · ──────────────────
+   ╰────
+
+  ⚠ unicorn(no-impossible-length-comparison): This comparison is always false because `.length` is always a non-negative integer.
+   ╭─[no_impossible_length_comparison.tsx:1:1]
+ 1 │ array.length === -1
+   · ───────────────────
+   ╰────
+
+  ⚠ unicorn(no-impossible-length-comparison): This comparison is always false because `.length` is always a non-negative integer.
+   ╭─[no_impossible_length_comparison.tsx:1:1]
+ 1 │ array.length == -1
+   · ──────────────────
+   ╰────
+
+  ⚠ unicorn(no-impossible-length-comparison): This comparison is always true because `.length` is always a non-negative integer.
+   ╭─[no_impossible_length_comparison.tsx:1:1]
+ 1 │ array.length !== -1
+   · ───────────────────
+   ╰────
+
+  ⚠ unicorn(no-impossible-length-comparison): This comparison is always true because `.length` is always a non-negative integer.
+   ╭─[no_impossible_length_comparison.tsx:1:1]
+ 1 │ array.length != -1
+   · ──────────────────
+   ╰────
+
+  ⚠ unicorn(no-impossible-length-comparison): This comparison is always false because `.size` is always a non-negative integer.
+   ╭─[no_impossible_length_comparison.tsx:1:1]
+ 1 │ set.size < 0
+   · ────────────
+   ╰────
+
+  ⚠ unicorn(no-impossible-length-comparison): This comparison is always true because `.size` is always a non-negative integer.
+   ╭─[no_impossible_length_comparison.tsx:1:1]
+ 1 │ map.size >= 0
+   · ─────────────
+   ╰────
+
+  ⚠ unicorn(no-impossible-length-comparison): This comparison is always false because `.length` is always a non-negative integer.
+   ╭─[no_impossible_length_comparison.tsx:1:1]
+ 1 │ 0 > array.length
+   · ────────────────
+   ╰────
+
+  ⚠ unicorn(no-impossible-length-comparison): This comparison is always true because `.length` is always a non-negative integer.
+   ╭─[no_impossible_length_comparison.tsx:1:1]
+ 1 │ -1 < array.length
+   · ─────────────────
+   ╰────
+
+  ⚠ unicorn(no-impossible-length-comparison): This comparison is always true because `.length` is always a non-negative integer.
+   ╭─[no_impossible_length_comparison.tsx:1:1]
+ 1 │ 0 <= array.length
+   · ─────────────────
+   ╰────
+
+  ⚠ unicorn(no-impossible-length-comparison): This comparison is always false because `.length` is always a non-negative integer.
+   ╭─[no_impossible_length_comparison.tsx:1:1]
+ 1 │ -1 === array.length
+   · ───────────────────
+   ╰────
+
+  ⚠ unicorn(no-impossible-length-comparison): This comparison is always false because `.length` is always a non-negative integer.
+   ╭─[no_impossible_length_comparison.tsx:1:1]
+ 1 │ (array.length) < (0)
+   · ────────────────────
+   ╰────
+
+  ⚠ unicorn(no-impossible-length-comparison): This comparison is always false because `.length` is always a non-negative integer.
+   ╭─[no_impossible_length_comparison.tsx:1:1]
+ 1 │ array.length < -0
+   · ─────────────────
+   ╰────
+
+  ⚠ unicorn(no-impossible-length-comparison): This comparison is always false because `.length` is always a non-negative integer.
+   ╭─[no_impossible_length_comparison.tsx:1:1]
+ 1 │ foo.bar.length < 0
+   · ──────────────────
+   ╰────
+
+  ⚠ unicorn(no-impossible-length-comparison): This comparison is always false because `.length` is always a non-negative integer.
+   ╭─[no_impossible_length_comparison.tsx:1:1]
+ 1 │ (array as string[]).length < 0
+   · ──────────────────────────────
+   ╰────
+
+  ⚠ unicorn(no-impossible-length-comparison): This comparison is always true because `.length` is always a non-negative integer.
+   ╭─[no_impossible_length_comparison.tsx:1:1]
+ 1 │ array.length! >= 0
+   · ──────────────────
+   ╰────
+
+  ⚠ unicorn(no-impossible-length-comparison): This comparison is always false because `.length` is always a non-negative integer.
+   ╭─[no_impossible_length_comparison.tsx:1:5]
+ 1 │ if (string.length === -1) {}
+   ·     ────────────────────
+   ╰────
+
+  ⚠ unicorn(no-impossible-length-comparison): This comparison is always false because `.length` is always a non-negative integer.
+   ╭─[no_impossible_length_comparison.tsx:1:15]
+ 1 │ rect.width && other.length < 0
+   ·               ────────────────
+   ╰────
+
+  ⚠ unicorn(no-impossible-length-comparison): This comparison is always false because `.length` is always a non-negative integer.
+   ╭─[no_impossible_length_comparison.tsx:1:13]
+ 1 │ rect.foo && rect.length < 0
+   ·             ───────────────
+   ╰────
+
+  ⚠ unicorn(no-impossible-length-comparison): This comparison is always false because `.length` is always a non-negative integer.
+   ╭─[no_impossible_length_comparison.tsx:1:15]
+ 1 │ rect.width || rect.length < 0
+   ·               ───────────────
+   ╰────
+
+  ⚠ unicorn(no-impossible-length-comparison): This comparison is always true because `.length` is always a non-negative integer.
+   ╭─[no_impossible_length_comparison.tsx:1:20]
+ 1 │ rect.height > 0 && rect.length >= 0
+   ·                    ────────────────
+   ╰────
+
+  ⚠ unicorn(no-impossible-length-comparison): This comparison is always false because `.length` is always a non-negative integer.
+   ╭─[no_impossible_length_comparison.tsx:1:30]
+ 1 │ function foo(array) { return array.length < 0 }
+   ·                              ────────────────
+   ╰────
+
+  ⚠ unicorn(no-impossible-length-comparison): This comparison is always false because `.length` is always a non-negative integer.
+   ╭─[no_impossible_length_comparison.tsx:1:17]
+ 1 │ const foo = []; foo.length < 0
+   ·                 ──────────────
+   ╰────
