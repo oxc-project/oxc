@@ -3626,6 +3626,53 @@ describe("RuleTester", () => {
           ]
         `);
       });
+
+      it("tokens of AST recovered from non-fatal errors", () => {
+        const tokensRule: Rule = {
+          create(context) {
+            return {
+              Program(node) {
+                const tokens = context.sourceCode.ast.tokens;
+                context.report({
+                  message: tokens.map((token) => `${token.type}(${token.value})`).join(" "),
+                  node,
+                });
+              },
+            };
+          },
+        };
+
+        const tester = new RuleTester({
+          languageOptions: {
+            parserOptions: { lang: "ts", ignoreNonFatalErrors: true },
+          },
+        });
+        tester.run("tokens", tokensRule, {
+          valid: [],
+          invalid: [
+            {
+              code: 'interface A extends "foo" {}',
+              errors: [
+                {
+                  message:
+                    'Keyword(interface) Identifier(A) Keyword(extends) String("foo") Punctuator({) Punctuator(})',
+                },
+              ],
+            },
+            {
+              code: "class C implements A extends B {}",
+              errors: [
+                {
+                  message:
+                    "Keyword(class) Identifier(C) Keyword(implements) Identifier(A) Keyword(extends) Identifier(B) Punctuator({) Punctuator(})",
+                },
+              ],
+            },
+          ],
+        });
+
+        expect(runCases()).toEqual([null, null]);
+      });
     });
   });
 
