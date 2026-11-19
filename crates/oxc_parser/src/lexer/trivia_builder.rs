@@ -1,4 +1,5 @@
 use std::{
+    array,
     num::NonZeroU32,
     ops::{Deref, DerefMut},
 };
@@ -23,7 +24,7 @@ pub struct Comments<'a> {
 impl<'a> Comments<'a> {
     fn new_in(allocator: &'a Allocator) -> Self {
         Self {
-            inline: std::array::from_fn(|_| Comment::new(0, 0, CommentKind::Line)),
+            inline: array::from_fn(|_| Comment::new(0, 0, CommentKind::Line)),
             len: 0,
             vec: ArenaVec::new_in(&allocator),
             starts_end: 0,
