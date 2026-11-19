@@ -39,6 +39,32 @@ declare_oxc_lint!(
     /// text at runtime. This has many of the same security, readability, and
     /// performance problems as `eval()`. Pass a function instead.
     ///
+    /// ### Environment configuration
+    ///
+    /// This rule checks calls to globals enabled through `env` or `globals` in
+    /// your Oxlint configuration. The default `builtin` environment does not
+    /// include `setTimeout` or `setInterval`, so enabling the rule alone does not
+    /// report bare calls such as `setTimeout("doWork()", 100)`.
+    ///
+    /// For browser code, enable the `browser` environment in `.oxlintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "env": {
+    ///     "browser": true
+    ///   },
+    ///   "rules": {
+    ///     "eslint/no-implied-eval": "error"
+    ///   }
+    /// }
+    /// ```
+    ///
+    /// Other environments, such as `node`, also enable timer globals. You can
+    /// alternatively enable individual names through `globals`.
+    /// For member calls such as `window.setTimeout()`, the global object
+    /// (`window`) must be enabled. Locally declared or imported bindings that
+    /// shadow these globals are ignored. Type-aware linting is not required.
+    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
