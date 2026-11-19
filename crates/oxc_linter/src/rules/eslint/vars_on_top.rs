@@ -57,6 +57,9 @@ declare_oxc_lint!(
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
+    /// var a;
+    /// f();
+    ///
     /// function doSomething() {
     ///     var first;
     ///     var second;
@@ -69,9 +72,6 @@ declare_oxc_lint!(
     ///     var i;
     ///     for (i = 0; i < 10; i++) {}
     /// }
-    ///
-    /// var a;
-    /// f();
     ///
     /// class C {
     ///     static {

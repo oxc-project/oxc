@@ -35,12 +35,12 @@ declare_oxc_lint!(
     /// ```javascript
     /// el.removeEventListener('click', () => {});
     /// el.removeEventListener('click', function () {});
+    /// el.removeEventListener('click', handler.bind(this));
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// el.removeEventListener('click', handler);
-    /// el.removeEventListener('click', handler.bind(this));
     /// ```
     NoInvalidRemoveEventListener,
     unicorn,
