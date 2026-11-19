@@ -14,6 +14,6 @@ mod es_target;
 pub use babel_targets::BabelTargets;
 pub use browserslist_query::BrowserslistQuery;
 pub use engine::Engine;
-pub use engine_targets::{EngineTargets, Version};
+pub use engine_targets::{EngineTargets, FeatureSupportCache, Version};
 pub use es_features::{ESFeature, features};
 pub use es_target::ESVersion;
