@@ -57,6 +57,61 @@ impl<'a> StandardDecoratorState<'a> {
         *expression = wrap_expression_in_arrow_function_iife(expression.take_in(ctx), ctx);
     }
 
+    /// Give a lowered class evaluated in a parameter or field initializer its own scope.
+    ///
+    /// Decorator state (`_init`, decorator arrays, class temporaries) is declared in the nearest
+    /// statement list. A parameter initializer or a field initializer can run many times without
+    /// re-entering that statement list, so every evaluation would share one `_init`:
+    ///
+    /// ```js
+    /// function f(v, C = class { @tag(v) x = 0 }) { return C }
+    /// ```
+    ///
+    /// Wrap the class in `(() => { ...; return class {} })()`. An arrow function keeps `this`,
+    /// `super`, `new.target` and `arguments`, and neither initializer can contain `await` or
+    /// `yield`, so the wrapper is transparent.
+    pub(crate) fn wrap_class_in_initializer(
+        &mut self,
+        expression: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Expression::ClassExpression(class) = expression else { return };
+        let lowering = ctx.state.class_lowering_before_entry(class);
+        if !lowering.handles_standard_decorators()
+            || matches!(lowering.mode(), ClassLoweringMode::Native | ClassLoweringMode::Preserve)
+        {
+            return;
+        }
+        let in_initializer = ctx
+            .ancestors()
+            .take_while(|ancestor| {
+                !matches!(
+                    ancestor,
+                    Ancestor::FunctionBodyStatements(_)
+                        | Ancestor::ArrowFunctionExpressionBody(_)
+                        | Ancestor::StaticBlockBody(_)
+                        | Ancestor::ClassBody(_)
+                )
+            })
+            .any(|ancestor| {
+                matches!(
+                    ancestor,
+                    Ancestor::FormalParameterInitializer(_)
+                        | Ancestor::PropertyDefinitionValue(_)
+                        | Ancestor::AccessorPropertyValue(_)
+                )
+            });
+        if !in_initializer {
+            return;
+        }
+        if class.id.is_none()
+            && let Some(name) = self.infer_class_expression_name(class.unstable_address(), ctx)
+        {
+            self.named_classes.insert(class.unstable_address(), name);
+        }
+        *expression = wrap_expression_in_arrow_function_iife(expression.take_in(ctx), ctx);
+    }
+
     /// Give native static accessors a stable class-local receiver.
     ///
     /// An anonymous class needs an internal name for its generated getter and setter. Restore its

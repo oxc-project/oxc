@@ -375,6 +375,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.decorator_state.enabled() && matches!(expr, Expression::ClassExpression(_)) {
             self.decorator_state.wrap_native_accessor_expression(expr, ctx);
+            self.decorator_state.wrap_class_in_initializer(expr, ctx);
         }
         // All of transforms below only act on `PrivateFieldExpression`s or `PrivateInExpression`s.
         // If we're not inside a class which has private fields, `#prop` can't be present here,
