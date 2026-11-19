@@ -1,0 +1,36 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+assertion_line: 53
+input_file: crates/oxc_react_compiler/fixtures/new-date-in-use-memo-callback.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Cannot call impure function during render", labels: [LabeledSpan { label: Some("Cannot call impure function"), span: Span { start: 741, end: 751 }, primary: true }], help: Some("`Date` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component re-renders"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Purity") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/purity") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Cannot call impure function during render", labels: [LabeledSpan { label: Some("Cannot call impure function"), span: Span { start: 982, end: 992 }, primary: true }], help: Some("`Date` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component re-renders"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Purity") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/purity") } }
+
+// @validateNoImpureFunctionsInRender @outputMode:"lint" @compilationMode:"infer" @panicThreshold:"none"
+// Zero-argument `new Date()` inside a `useMemo` callback is still render-time code:
+// `drop_manual_memoization` rewrites `useMemo(fn, deps)` into a direct `fn()` call, so the
+// impure call must be reported even when the IIFE pass cannot inline the callback into the
+// hook body. The optional-chain dependency below defeats that inlining once an earlier
+// `useMemo` has been inlined (oxc-project/oxc#29893).
+// Both memos: the second callback is not inlined, yet its impure call is reported.
+export function useSeed(items, range) {
+	const count = useMemo(() => items.length, [items]);
+	const seed = useMemo(() => range?.start ?? new Date(), [range?.start]);
+	return {
+		count,
+		seed
+	};
+}
+// A single memo inlines the callback, so the impure call is reported through the body.
+export function useSeedSingleMemo(items, range) {
+	const seed = useMemo(() => range?.start ?? new Date(), [range?.start]);
+	return { seed };
+}
+// `useCallback` callbacks become plain references rather than render-time calls, so
+// zero-argument `new Date()` inside them stays exempt.
+export function useHandler() {
+	const handler = useCallback(() => new Date(), []);
+	return handler;
+}
