@@ -96,9 +96,6 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::VariableDeclaration(decl) => {
             js::check_variable_declaration(decl, ctx);
         }
-        AstKind::VariableDeclarator(decl) if !ctx.source_type.is_typescript() => {
-            js::check_variable_declarator_redeclaration(decl, ctx);
-        }
         AstKind::TSTypeAnnotation(annot) => ts::check_ts_type_annotation(annot, ctx),
         AstKind::TSTypePredicate(predicate) => ts::check_ts_type_predicate(predicate, ctx),
         AstKind::TSExternalModuleDeclaration(decl) => {

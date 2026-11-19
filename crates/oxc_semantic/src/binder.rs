@@ -68,61 +68,78 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
             self.id.bound_names(&mut |ident| {
                 let span = ident.span;
                 let name = ident.name;
-                let mut declared_symbol_id = None;
+                let mut declared_symbol = None;
                 let mut catch_symbol_id = None;
 
+                // Validate crossed StatementLists before changing any bindings.
+                // A cached hoisted var must not be diagnosed for every crossed scope.
                 for &scope_id in &var_scope_ids {
-                    // Only local bindings matter here, to find catch parameters. An earlier
-                    // `var` cached in `hoisting_variables` is found through the target scope
-                    // instead, so its diagnostics are not repeated for every scope.
-                    // Type-only bindings (type aliases, interfaces) live in a separate
-                    // declaration space, so a hoisted `var` must not merge into them.
-                    if let Some(symbol_id) = builder.scoping.get_binding(scope_id, name)
-                        && let Some(symbol_id) = builder.check_redeclaration_with_binding(
-                            scope_id,
-                            Some(symbol_id),
-                            span,
-                            name,
-                            excludes,
-                        )
-                        && builder.scoping.symbol_flags(symbol_id).can_be_referenced_by_value()
-                        && builder.scoping.symbol_flags(symbol_id).is_value()
-                    {
-                        // A simple catch parameter can be redeclared by `var`, but the `var`
-                        // also creates a separate binding in the enclosing var scope. Its
-                        // initializer assigns to the nearest catch binding. Destructured catch
-                        // parameters already reported an error above; keep the bindings separate
-                        // during recovery too. The innermost catch parameter wins; keep checking
-                        // the enclosing scopes for conflicts.
-                        if builder.scoping.symbol_flags(symbol_id).is_catch_variable() {
-                            catch_symbol_id.get_or_insert(symbol_id);
-                            continue;
-                        }
-                        builder.add_redeclare_variable(symbol_id, includes, span);
-                        declared_symbol_id = Some(symbol_id);
+                    let lexical_function =
+                        builder.lexical_function_bindings.contains(&(scope_id, name));
+                    let local_binding = builder.scoping.get_binding(scope_id, name);
+                    if local_binding.is_none() && !lexical_function {
+                        continue;
+                    }
 
-                        // Hoist current symbol to target scope when it is not already declared
-                        // in the target scope.
-                        if !builder.scoping.scope_has_binding(target_scope_id, name) {
-                            // remove current scope binding and add to target scope
-                            // avoid same symbols appear in multi-scopes
-                            builder.scoping.remove_binding(scope_id, name);
-                            builder.scoping.add_binding(target_scope_id, name, symbol_id);
-                            builder.scoping.set_symbol_scope_id(symbol_id, target_scope_id);
-                        }
-                        break;
+                    // A block-level Annex B function may have had its binding
+                    // moved out, but still contributes to LexicallyDeclaredNames.
+                    let scope_excludes =
+                        if lexical_function { excludes | SymbolFlags::Function } else { excludes };
+                    let Some(symbol_id) = builder.check_redeclaration_with_binding(
+                        scope_id,
+                        local_binding,
+                        span,
+                        name,
+                        scope_excludes,
+                    ) else {
+                        continue;
+                    };
+
+                    let flags = builder.scoping.symbol_flags(symbol_id);
+                    if !flags.can_be_referenced_by_value() || !flags.is_value() {
+                        continue;
+                    }
+
+                    // Simple catch parameters retain distinct bindings from
+                    // enclosing vars, and a var initializer refers to the catch
+                    // parameter. Keep the innermost while checking outer scopes.
+                    if flags.is_catch_variable() {
+                        catch_symbol_id.get_or_insert(symbol_id);
+                    } else if declared_symbol.is_none() {
+                        declared_symbol = Some((scope_id, symbol_id));
                     }
                 }
 
-                // If a variable is already declared in the hoisted scopes,
-                // we don't need to create another symbol with the same name
-                // to make sure they point to the same symbol.
-                let symbol_id = declared_symbol_id.unwrap_or_else(|| {
-                    builder.declare_symbol_on_scope(span, name, target_scope_id, includes, excludes)
-                });
+                // Module-top functions are lexical despite sharing the var scope.
+                // Validate that scope even when reusing a crossed-scope binding.
+                let target_excludes =
+                    if builder.lexical_function_bindings.contains(&(target_scope_id, name)) {
+                        excludes | SymbolFlags::Function
+                    } else {
+                        excludes
+                    };
+                let symbol_id = if let Some((scope_id, symbol_id)) = declared_symbol {
+                    let _ =
+                        builder.check_redeclaration(target_scope_id, span, name, target_excludes);
+                    builder.add_redeclare_variable(symbol_id, includes, span);
+
+                    // Move only after all early-error checks see the original graph.
+                    if !builder.scoping.scope_has_binding(target_scope_id, name) {
+                        builder.scoping.remove_binding(scope_id, name);
+                        builder.scoping.add_binding(target_scope_id, name, symbol_id);
+                        builder.scoping.set_symbol_scope_id(symbol_id, target_scope_id);
+                    }
+                    symbol_id
+                } else {
+                    builder.declare_symbol_on_scope(
+                        span,
+                        name,
+                        target_scope_id,
+                        includes,
+                        target_excludes,
+                    )
+                };
                 if let Some(catch_symbol_id) = catch_symbol_id {
-                    // This redeclaration links the catch to `symbol_id`; see
-                    // `Scoping::catch_var_binding`.
                     builder.add_redeclare_variable(catch_symbol_id, includes, span);
                     ident.symbol_id.set(Some(catch_symbol_id));
                 } else {
@@ -186,9 +203,11 @@ impl<'a> Binder<'a> for Function<'a> {
                 includes |= SymbolFlags::AsyncOrGeneratorFunction;
             }
 
+            let is_annex_b_if_function =
+                is_declaration && is_function_decl_part_of_if_statement(self, builder);
             let excludes = if builder.source_type.is_typescript() {
                 SymbolFlags::FunctionExcludes
-            } else if is_declaration && is_function_decl_part_of_if_statement(self, builder) {
+            } else if is_annex_b_if_function {
                 SymbolFlags::empty()
             } else {
                 // `var x; function x() {}` is valid in non-strict mode, but `TypeScript`
@@ -201,6 +220,21 @@ impl<'a> Binder<'a> for Function<'a> {
             ident.symbol_id.set(Some(symbol_id));
 
             let scope_flags = builder.current_scope_flags();
+
+            // A FunctionDeclaration contributes to LexicallyDeclaredNames in block scopes
+            // and at module top level. Annex B.3.3 treats a legacy function used directly as
+            // an `if` branch as if it were wrapped in a synthetic block, so it does not
+            // create this lexical collision in the surrounding StatementList.
+            let is_lexical_function_scope =
+                !scope_flags.is_var() || (builder.source_type.is_module() && scope_flags.is_top());
+            if builder.check_syntax_error()
+                && !builder.source_type.is_typescript()
+                && is_declaration
+                && is_lexical_function_scope
+                && !is_annex_b_if_function
+            {
+                builder.lexical_function_bindings.insert((builder.current_scope_id, ident.name));
+            }
 
             // Annex B.3.2.1: In sloppy mode, plain function declarations inside block
             // scopes also create an implicit var-like binding in the enclosing function

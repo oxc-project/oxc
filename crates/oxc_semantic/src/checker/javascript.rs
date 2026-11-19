@@ -3,7 +3,7 @@ use rustc_hash::{FxBuildHasher, FxHashMap};
 
 use oxc_allocator::GetAddress;
 use oxc_ast::{AstKind, ast::*};
-use oxc_ecmascript::{BoundNames, IsSimpleParameterList, PropName};
+use oxc_ecmascript::{IsSimpleParameterList, PropName};
 use oxc_span::{Span, best_match};
 use oxc_str::Ident;
 use oxc_syntax::{
@@ -575,41 +575,6 @@ pub fn check_function_declaration_in_labeled_statement<'a>(
             ctx.error(diagnostics::function_declaration_non_strict(decl.span));
         }
     }
-}
-
-// It is a Syntax Error if any element of the LexicallyDeclaredNames of
-// StatementList also occurs in the VarDeclaredNames of StatementList.
-pub fn check_variable_declarator_redeclaration(
-    decl: &VariableDeclarator,
-    ctx: &SemanticBuilder<'_>,
-) {
-    let AstKind::VariableDeclaration(declaration) = ctx.ancestry().parent_kind() else {
-        unreachable!();
-    };
-    if declaration.kind != VariableDeclarationKind::Var {
-        return;
-    }
-
-    let scope_flags = ctx.current_scope_flags();
-    // `function a() {}; var a;` and `function b() { function a() {}; var a; }` are valid
-    // in script mode, but in module mode at the top level, function declarations are
-    // lexically scoped, so `function a() {}; var a;` is a redeclaration error.
-    if scope_flags.intersects(ScopeFlags::Top | ScopeFlags::Function)
-        && !(ctx.source_type.is_module() && scope_flags.is_top())
-    {
-        return;
-    }
-
-    decl.id.bound_names(&mut |ident| {
-        let redeclarations = ctx.scoping.symbol_redeclarations(ident.symbol_id());
-        let Some(rd) = redeclarations.iter().nth_back(1) else { return };
-
-        // `{ function f() {}; var f; }` is invalid in both strict and non-strict mode.
-        // In module mode at the top level, `function f() {}; var f;` is also invalid.
-        if rd.flags.is_function() {
-            ctx.error(diagnostics::redeclaration(&ident.name, rd.span, decl.span));
-        }
-    });
 }
 
 /// Check for Annex B `if (foo) function a() {} else function b() {}`
