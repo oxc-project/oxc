@@ -7,13 +7,13 @@ use serde::{Deserialize, Serialize};
 use oxc_ast::{
     AstKind,
     ast::{
-        ImportDeclaration, ImportDeclarationSpecifier, ImportDefaultSpecifier,
-        ImportNamespaceSpecifier, ImportSpecifier, Statement,
+        ClassElement, ImportDeclaration, ImportDeclarationSpecifier, ImportDefaultSpecifier,
+        ImportNamespaceSpecifier, ImportSpecifier, MethodDefinitionKind, Statement, TSType,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{Reference, SymbolId};
+use oxc_semantic::{NodeId, Reference, SymbolId};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -360,13 +360,139 @@ fn format_word_list<'a>(words: &[&'a str]) -> Cow<'a, str> {
 
 // Returns `true` if the symbol is only used as a type reference, and `false` otherwise.
 // Specifically, return `false` if the symbol does not have any references.
+// A type reference that TypeScript serializes into `emitDecoratorMetadata` output is a runtime
+// use, so it does not count. The rule cannot read tsconfig, so this assumes the option is on.
 fn is_only_has_type_references(symbol_id: SymbolId, ctx: &LintContext) -> bool {
     let mut peekable_iter = ctx.semantic().symbol_references(symbol_id).peekable();
 
     if peekable_iter.peek().is_none() {
         return false;
     }
-    peekable_iter.all(Reference::is_type)
+    peekable_iter
+        .all(|reference| reference.is_type() && !is_decorator_metadata_reference(reference, ctx))
+}
+
+// Whether `reference` is the whole type annotation of a position TypeScript writes
+// `design:type` / `design:paramtypes` / `design:returntype` metadata for. `Foo[]`, `Promise<Foo>`
+// and `Foo | Bar` are serialized as `Array` / `Promise` / `Object`, so they do not count.
+fn is_decorator_metadata_reference(reference: &Reference, ctx: &LintContext) -> bool {
+    let nodes = ctx.nodes();
+    let mut id = reference.node_id();
+    while matches!(nodes.parent_kind(id), AstKind::TSQualifiedName(_)) {
+        id = nodes.parent_id(id);
+    }
+    let type_ref = nodes.parent_id(id);
+    if !matches!(nodes.kind(type_ref), AstKind::TSTypeReference(_)) {
+        return false;
+    }
+    let Some(serialized) = skip_serialized_wrappers(type_ref, ctx) else {
+        return false;
+    };
+    // `...rest: Foo[]` and `...rest: Array<Foo>` are serialized as their element type.
+    let rest_container = match nodes.parent_kind(serialized) {
+        AstKind::TSArrayType(_) => Some(nodes.parent_id(serialized)),
+        AstKind::TSTypeParameterInstantiation(args) if args.params.len() == 1 => {
+            Some(nodes.parent_id(nodes.parent_id(serialized)))
+                .filter(|id| matches!(nodes.kind(*id), AstKind::TSTypeReference(_)))
+        }
+        _ => None,
+    };
+    let annotated = rest_container.map_or(serialized, |id| skip_parentheses(id, ctx));
+    let annotation = nodes.parent_id(annotated);
+    if !matches!(nodes.kind(annotation), AstKind::TSTypeAnnotation(_)) {
+        return false;
+    }
+    match (nodes.parent_kind(annotation), rest_container.is_some()) {
+        (AstKind::PropertyDefinition(prop), false) => !prop.decorators.is_empty(),
+        (AstKind::AccessorProperty(accessor), false) => !accessor.decorators.is_empty(),
+        (AstKind::FormalParameter(_), false) | (AstKind::FormalParameterRest(_), true) => {
+            // TSTypeAnnotation -> FormalParameter(Rest) -> FormalParameters -> Function
+            is_metadata_method(nodes.parent_id(nodes.parent_id(nodes.parent_id(annotation))), ctx)
+        }
+        (AstKind::Function(_), false) => is_metadata_method(nodes.parent_id(annotation), ctx),
+        _ => false,
+    }
+}
+
+fn skip_parentheses(mut id: NodeId, ctx: &LintContext) -> NodeId {
+    let nodes = ctx.nodes();
+    while matches!(nodes.parent_kind(id), AstKind::TSParenthesizedType(_)) {
+        id = nodes.parent_id(id);
+    }
+    id
+}
+
+// Climbs out of parentheses and of unions whose other members are `null`, `undefined` or `never`.
+// tsc serializes those as the type itself when `strictNullChecks` is off; the rule cannot read
+// tsconfig, so it takes the safe side. Returns `None` for a union with any other member.
+fn skip_serialized_wrappers(mut id: NodeId, ctx: &LintContext) -> Option<NodeId> {
+    let nodes = ctx.nodes();
+    loop {
+        match nodes.parent_kind(id) {
+            AstKind::TSParenthesizedType(_) => {}
+            AstKind::TSUnionType(union) => {
+                let own = nodes.kind(id).span();
+                if union.types.iter().any(|ty| ty.span() != own && !is_nullish_type(ty)) {
+                    return None;
+                }
+            }
+            _ => return Some(id),
+        }
+        id = nodes.parent_id(id);
+    }
+}
+
+// `null`, `undefined` and `never` are dropped from a union by the metadata serializer.
+fn is_nullish_type(ty: &TSType) -> bool {
+    match ty {
+        TSType::TSNullKeyword(_) | TSType::TSUndefinedKeyword(_) | TSType::TSNeverKeyword(_) => {
+            true
+        }
+        TSType::TSParenthesizedType(paren) => is_nullish_type(&paren.type_annotation),
+        TSType::TSUnionType(union) => union.types.iter().all(is_nullish_type),
+        _ => false,
+    }
+}
+
+// Whether the method (or constructor) whose `Function` node is `function_id` gets metadata: it
+// has a decorator, one of its parameters does, or it is the constructor of a decorated class.
+fn is_metadata_method(function_id: NodeId, ctx: &LintContext) -> bool {
+    let nodes = ctx.nodes();
+    let (AstKind::Function(function), AstKind::MethodDefinition(method)) =
+        (nodes.kind(function_id), nodes.parent_kind(function_id))
+    else {
+        return false;
+    };
+    if function.body.is_none() {
+        return false;
+    }
+    if !method.decorators.is_empty()
+        || function.params.items.iter().any(|p| !p.decorators.is_empty())
+        || function.params.rest.as_ref().is_some_and(|rest| !rest.decorators.is_empty())
+    {
+        return true;
+    }
+    // MethodDefinition -> ClassBody -> Class
+    let Some(AstKind::Class(class)) = nodes.ancestor_kinds(nodes.parent_id(function_id)).nth(1)
+    else {
+        return false;
+    };
+    match method.kind {
+        MethodDefinitionKind::Constructor => !class.decorators.is_empty(),
+        // a decorator on one accessor of a get/set pair applies to the pair
+        MethodDefinitionKind::Get | MethodDefinitionKind::Set => {
+            let name = method.key.static_name();
+            name.is_some()
+                && class.body.body.iter().any(|element| {
+                    matches!(element, ClassElement::MethodDefinition(other)
+                        if other.kind.is_accessor()
+                            && other.r#static == method.r#static
+                            && !other.decorators.is_empty()
+                            && other.key.static_name() == name)
+                })
+        }
+        MethodDefinitionKind::Method => false,
+    }
 }
 
 struct FixOptions<'a, 'b> {
@@ -1405,189 +1531,380 @@ fn test() {
             ",
             None,
         ),
-        // TODO: To support decorator in this rule, need <https://github.com/oxc-project/oxc/pull/3645>
-        // experimentalDecorators: true + emitDecoratorMetadata: true
-        // (
-        //     "
-        //     import Foo from 'foo';
-        //     @deco
-        //     class A {
-        //       constructor(foo: Foo) {}
-        //     }
-        //   ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //     import Foo from 'foo';
-        //     class A {
-        //       @deco
-        //       foo: Foo;
-        //     }
-        //   ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //     import Foo from 'foo';
-        //     class A {
-        //       @deco
-        //       foo(foo: Foo) {}
-        //     }
-        //   ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //     import Foo from 'foo';
-        //     class A {
-        //       @deco
-        //       foo(): Foo {}
-        //     }
-        //   ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //     import Foo from 'foo';
-        //     class A {
-        //       foo(@deco foo: Foo) {}
-        //     }
-        //   ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //     import Foo from 'foo';
-        //     class A {
-        //       @deco
-        //       set foo(value: Foo) {}
-        //     }
-        //   ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //     import Foo from 'foo';
-        //     class A {
-        //       @deco
-        //       get foo() {}
+        // a decorated rest parameter, and rest parameters serialize their element type
+        (
+            "
+            import Foo from 'foo';
+            class A {
+              constructor(foo: Foo, @deco ...rest: any[]) {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import Foo from 'foo';
+            @deco
+            class A {
+              constructor(...args: Foo[]) {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import Foo from 'foo';
+            @deco
+            class A {
+              constructor(...args: Array<Foo>) {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import Foo from 'foo';
+            @deco
+            class A {
+              constructor(...args: (Foo | null)[]) {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import Foo from 'foo';
+            @deco
+            class A {
+              constructor(...args: Promise<Foo>) {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import Foo from 'foo';
+            class A {
+              @deco
+              foo(...args: Foo[]) {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import Foo from 'foo';
+            class A {
+              @deco
+              get foo(): Foo {}
+            
+              set foo(value) {}
+            }
+          ",
+            None,
+        ),
+        // experimentalDecorators + emitDecoratorMetadata: metadata is emitted for these positions
+        (
+            "
+            import Foo from 'foo';
+            @deco
+            class A {
+              constructor(foo: Foo) {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import Foo from 'foo';
+            class A {
+              @deco
+              foo: Foo;
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import Foo from 'foo';
+            class A {
+              @deco
+              foo(foo: Foo) {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import Foo from 'foo';
+            class A {
+              @deco
+              foo(): Foo {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import Foo from 'foo';
+            class A {
+              foo(@deco foo: Foo) {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import Foo from 'foo';
+            class A {
+              @deco
+              set foo(value: Foo) {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import Foo from 'foo';
+            class A {
+              @deco
+              get foo() {}
 
-        //       set foo(value: Foo) {}
-        //     }
-        //   ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //     import Foo from 'foo';
-        //     class A {
-        //       @deco
-        //       get foo() {}
+              set foo(value: Foo) {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import Foo from 'foo';
+            class A {
+              @deco
+              get foo() {}
 
-        //       set ['foo'](value: Foo) {}
-        //     }
-        //   ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //     import type { Foo } from 'foo';
-        //     const key = 'k';
-        //     class A {
-        //       @deco
-        //       get [key]() {}
+              set ['foo'](value: Foo) {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import type { Foo } from 'foo';
+            const key = 'k';
+            class A {
+              @deco
+              get [key]() {}
 
-        //       set [key](value: Foo) {}
-        //     }
-        //   ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //     import * as foo from 'foo';
-        //     @deco
-        //     class A {
-        //       constructor(foo: foo.Foo) {}
-        //     }
-        //   ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //     import type { ClassA } from './classA';
+              set [key](value: Foo) {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import * as foo from 'foo';
+            @deco
+            class A {
+              constructor(foo: foo.Foo) {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import type { ClassA } from './classA';
 
-        //     export class ClassB {
-        //       public constructor(node: ClassA) {}
-        //     }
-        //   ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //     import type Foo from 'foo';
-        //     @deco
-        //     class A {
-        //       constructor(foo: Foo) {}
-        //     }
-        //   ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //     import type { Foo } from 'foo';
-        //     @deco
-        //     class A {
-        //       constructor(foo: Foo) {}
-        //     }
-        //   ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //     import type { Type } from 'foo';
-        //     import { Foo, Bar } from 'foo';
-        //     @deco
-        //     class A {
-        //       constructor(foo: Foo) {}
-        //     }
-        //     type T = Bar;
-        //   ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //     import { V } from 'foo';
-        //     import type { Foo, Bar, T } from 'foo';
-        //     @deco
-        //     class A {
-        //       constructor(foo: Foo) {}
-        //       foo(@deco bar: Bar) {}
-        //     }
-        //   ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //     import type { Foo, T } from 'foo';
-        //     import { V } from 'foo';
-        //     @deco
-        //     class A {
-        //       constructor(foo: Foo) {}
-        //     }
-        //   ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //     import type * as Type from 'foo';
-        //     @deco
-        //     class A {
-        //       constructor(foo: Type.Foo) {}
-        //     }
-        //   ",
-        //     None,
-        // ),
+            export class ClassB {
+              public constructor(node: ClassA) {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import type Foo from 'foo';
+            @deco
+            class A {
+              constructor(foo: Foo) {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import type { Foo } from 'foo';
+            @deco
+            class A {
+              constructor(foo: Foo) {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import { V } from 'foo';
+            import type { Foo, Bar, T } from 'foo';
+            @deco
+            class A {
+              constructor(foo: Foo) {}
+              foo(@deco bar: Bar) {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import type { Foo, T } from 'foo';
+            import { V } from 'foo';
+            @deco
+            class A {
+              constructor(foo: Foo) {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import type * as Type from 'foo';
+            @deco
+            class A {
+              constructor(foo: Type.Foo) {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import Foo from 'foo';
+            @deco
+            class A {
+              constructor(foo: Foo) {}
+            }
+            let x: Foo;
+          ",
+            None,
+        ),
+        (
+            "
+            import Foo from 'foo';
+            class A {
+              constructor(@Inject() foo: Foo) {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import { Foo } from 'foo';
+            @deco
+            class A {
+              constructor(private readonly foo?: Foo) {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import { Foo } from 'foo';
+            class A {
+              @deco
+              foo(): Foo {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import { Foo } from 'foo';
+            class A {
+              @deco
+              static foo: Foo;
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import * as ns from 'foo';
+            class A {
+              @deco
+              foo: ns.Foo;
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import { Foo } from 'foo';
+            @deco
+            class A {
+              constructor(foo: Foo) {}
+            }
+            type T = Foo;
+            const fn = (f: Foo) => f;
+          ",
+            None,
+        ),
+        (
+            "
+            import { Foo } from 'foo';
+            class A {
+              @deco
+              foo?: Foo | null;
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import { Foo } from 'foo';
+            class A {
+              @deco
+              foo: (Foo | undefined);
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import { Foo } from 'foo';
+            class A {
+              @deco
+              foo: (Foo | null) | undefined | never;
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import { Foo } from 'foo';
+            @deco
+            class A {
+              constructor(foo: Foo | null) {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import { Foo } from 'foo';
+            class A {
+              @deco
+              foo(a: Foo | null): Foo | undefined {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import { Foo } from 'foo';
+            class A {
+              @deco
+              accessor foo: Foo;
+            }
+          ",
+            None,
+        ),
         (
             "import { Bar } from './bar';
 export type { Baz } from './baz';
@@ -1599,6 +1916,182 @@ export class Foo extends Bar {}
     ];
 
     let fail = vec![
+        (
+            "
+            import Foo from 'foo';
+            class A {
+              constructor(foo: Foo);
+              constructor(foo: any) {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import { Foo, Bar } from 'foo';
+            class A {
+              @deco
+              foo: Foo | Bar;
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import { Foo, Bar } from 'foo';
+            class A {
+              @deco
+              foo: Foo & Bar;
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import { Foo } from 'foo';
+            class A {
+              @deco
+              foo: Foo | void;
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import { Foo } from 'foo';
+            class A {
+              @deco
+              foo: Foo | null | Foo[];
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import Foo from 'foo';
+            @deco
+            class A {
+              constructor(foo: Foo);
+              constructor(foo: any) {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import Foo from 'foo';
+            class A {
+              @deco
+              get [key()]() {}
+              set [key()](value: Foo) {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import Foo from 'foo';
+            class A {
+              foo: Foo;
+              bar(foo: Foo): Foo {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import Foo from 'foo';
+            class A {
+              constructor(foo: Foo) {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import Foo from 'foo';
+            @deco
+            class A {
+              foo: Foo;
+              bar(foo: Foo): Foo {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import Foo from 'foo';
+            class A {
+              @deco
+              foo(): void {
+                let x: Foo;
+              }
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import Foo from 'foo';
+            class A {
+              @deco
+              foo(): void {}
+              bar(foo: Foo) {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import Foo from 'foo';
+            class A {
+              @deco
+              foo: Foo[];
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import Foo from 'foo';
+            class A {
+              @deco
+              foo: Promise<Foo>;
+            }
+          ",
+            None,
+        ),
+        // a rest element that is itself an array, and an undecorated rest
+        (
+            "
+            import Foo from 'foo';
+            @deco
+            class A {
+              constructor(...args: Foo[][]) {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import Foo from 'foo';
+            class A {
+              constructor(...args: Foo[]) {}
+            }
+          ",
+            None,
+        ),
+        (
+            "
+            import { Foo, Bar } from 'foo';
+            @deco
+            class A {
+              constructor(foo: Foo) {}
+            }
+            type T = Bar;
+          ",
+            None,
+        ),
         (
             "
               import Foo from 'foo';
@@ -1969,16 +2462,6 @@ export class Foo extends Bar {}
             ",
             Some(serde_json::json!([{ "prefer": "type-imports" }])),
         ),
-        // (
-        //     "
-        //       import Foo from 'foo';
-        //       @deco
-        //       class A {
-        //         constructor(foo: Foo) {}
-        //       }
-        //     ",
-        //     None,
-        // ),
         (
             "
               import { type A, B } from 'foo';
@@ -2142,99 +2625,6 @@ export class Foo extends Bar {}
                 serde_json::json!([{ "prefer": "type-imports", "fixStyle": "inline-type-imports" },]),
             ),
         ),
-        // (
-        //     "
-        //         import Foo from 'foo';
-        //         @deco
-        //         class A {
-        //           constructor(foo: Foo) {}
-        //         }
-        //     ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //         import Foo from 'foo';
-        //         class A {
-        //           @deco
-        //           foo: Foo;
-        //         }
-        //     ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //         import Foo from 'foo';
-        //         class A {
-        //           @deco
-        //           foo(foo: Foo) {}
-        //         }
-        //     ",
-        //     None,
-        // ),
-        (
-            "
-                import Foo from 'foo';
-                class A {
-                  @deco
-                  foo(): Foo {}
-                }
-            ",
-            None,
-        ),
-        (
-            "
-                import Foo from 'foo';
-                class A {
-                  foo(@deco foo: Foo) {}
-                }
-            ",
-            None,
-        ),
-        (
-            "
-                import Foo from 'foo';
-                class A {
-                  @deco
-                  set foo(value: Foo) {}
-                }
-            ",
-            None,
-        ),
-        (
-            "
-                import Foo from 'foo';
-                class A {
-                  @deco
-                  get foo() {}
-
-                  set foo(value: Foo) {}
-                }
-            ",
-            None,
-        ),
-        (
-            "
-                import Foo from 'foo';
-                class A {
-                  @deco
-                  get foo() {}
-
-                  set ['foo'](value: Foo) {}
-                }
-            ",
-            None,
-        ),
-        // (
-        //     "
-        //         import * as foo from 'foo';
-        //         @deco
-        //         class A {
-        //           constructor(foo: foo.Foo) {}
-        //         }
-        //     ",
-        //     None,
-        // ),
         (
             "
               import 'foo';
@@ -2938,23 +3328,6 @@ export class Foo extends Bar {}
         ),
         (
             "
-            import Foo from 'foo';
-            @deco
-            class A {
-              constructor(foo: Foo) {}
-            }
-                      ",
-            "
-            import type Foo from 'foo';
-            @deco
-            class A {
-              constructor(foo: Foo) {}
-            }
-                      ",
-            None,
-        ),
-        (
-            "
             import { type A, B } from 'foo';
             type T = A;
             const b = B;
@@ -3206,166 +3579,7 @@ export class Foo extends Bar {}
                 serde_json::json!([{ "prefer": "type-imports", "fixStyle": "inline-type-imports" },]),
             ),
         ),
-        (
-            "
-            import Foo from 'foo';
-            @deco
-            class A {
-                constructor(foo: Foo) {}
-            }
-            ",
-            "
-            import type Foo from 'foo';
-            @deco
-            class A {
-                constructor(foo: Foo) {}
-            }
-            ",
-            None,
-        ),
-        (
-            "
-            import Foo from 'foo';
-            class A {
-                @deco
-                foo: Foo;
-            }
-            ",
-            "
-            import type Foo from 'foo';
-            class A {
-                @deco
-                foo: Foo;
-            }
-            ",
-            None,
-        ),
-        (
-            "
-            import Foo from 'foo';
-            class A {
-                @deco
-                foo(foo: Foo) {}
-            }
-            ",
-            "
-            import type Foo from 'foo';
-            class A {
-                @deco
-                foo(foo: Foo) {}
-            }
-            ",
-            None,
-        ),
-        (
-            "
-            import Foo from 'foo';
-            class A {
-                @deco
-                foo(): Foo {}
-            }
-            ",
-            "
-            import type Foo from 'foo';
-            class A {
-                @deco
-                foo(): Foo {}
-            }
-            ",
-            None,
-        ),
-        (
-            "
-            import Foo from 'foo';
-            class A {
-                foo(@deco foo: Foo) {}
-            }
-            ",
-            "
-            import type Foo from 'foo';
-            class A {
-                foo(@deco foo: Foo) {}
-            }
-            ",
-            None,
-        ),
-        (
-            "
-            import Foo from 'foo';
-            class A {
-                @deco
-                set foo(value: Foo) {}
-            }
-            ",
-            "
-            import type Foo from 'foo';
-            class A {
-                @deco
-                set foo(value: Foo) {}
-            }
-            ",
-            None,
-        ),
-        (
-            "
-            import Foo from 'foo';
-            class A {
-                @deco
-                get foo() {}
-
-                set foo(value: Foo) {}
-            }
-            ",
-            "
-            import type Foo from 'foo';
-            class A {
-                @deco
-                get foo() {}
-
-                set foo(value: Foo) {}
-            }
-            ",
-            None,
-        ),
-        (
-            "
-            import Foo from 'foo';
-            class A {
-                @deco
-                get foo() {}
-
-                set ['foo'](value: Foo) {}
-            }
-            ",
-            "
-            import type Foo from 'foo';
-            class A {
-                @deco
-                get foo() {}
-
-                set ['foo'](value: Foo) {}
-            }
-            ",
-            None,
-        ),
         // TODO: need fix foo.Foo shallow
-        // (
-        //     "
-        //     import * as foo from 'foo';
-        //     @deco
-        //     class A {
-        //         constructor(foo: foo.Foo) {}
-        //     }
-        //     ",
-        //     "
-        //     import type * as foo from 'foo';
-        //     @deco
-        //     class A {
-        //         constructor(foo: foo.Foo) {}
-        //     }
-        //     ",
-        //     None,
-        // ),
         (
             "
             import 'foo';
