@@ -313,6 +313,8 @@ fn test() {
             "// leading\nfoo() // trailing\n// above\nnew Array(1, 2)",
             "// leading\nfoo() // trailing\n// above\n;[1, 2]",
         ),
+        ("foo\u{2028}Array(1, 2)", "foo\u{2028};[1, 2]"),
+        ("foo // comment\u{2029}Array(1, 2)", "foo // comment\u{2029};[1, 2]"),
     ];
 
     Tester::new(NoArrayConstructor::NAME, NoArrayConstructor::PLUGIN, pass, fail)

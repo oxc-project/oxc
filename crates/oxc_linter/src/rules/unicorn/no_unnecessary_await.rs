@@ -5,10 +5,10 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNodes;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{UnaryOperator, UpdateOperator};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, ast_util::could_be_asi_hazard, context::LintContext, rule::Rule};
 
 fn no_unnecessary_await_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected `await` on a non-Promise value")
@@ -61,7 +61,15 @@ impl Rule for NoUnnecessaryAwait {
             if is_fixable(expr, ctx.nodes()) {
                 ctx.diagnostic_with_fix(
                     no_unnecessary_await_diagnostic(Span::sized(expr.span.start, 5)),
-                    |fixer| fixer.replace_with(expr, &expr.argument),
+                    |fixer| {
+                        let mut replacement = fixer.source_range(expr.argument.span()).to_string();
+                        if replacement.starts_with(['[', '(', '/', '+', '-', '`'])
+                            && could_be_asi_hazard(node, ctx)
+                        {
+                            replacement.insert(0, ';');
+                        }
+                        fixer.replace(expr.span, replacement)
+                    },
                 );
             } else {
                 ctx.diagnostic(no_unnecessary_await_diagnostic(Span::sized(expr.span.start, 5)));
@@ -193,6 +201,9 @@ fn test() {
         ("-await --a", "-await --a"), // no autofix: `---a` would be a syntax error
         ("+await --a", "+--a"),       // safe: `+--a` parses as `+(--a)`
         ("-await ++a", "-++a"),       // safe: `-++a` parses as `-(++a)`
+        ("foo()\nawait []", "foo()\n;[]"),
+        ("foo()\nawait +1", "foo()\n;+1"),
+        ("foo();\nawait (a == b)", "foo();\n(a == b)"),
     ];
 
     Tester::new(NoUnnecessaryAwait::NAME, NoUnnecessaryAwait::PLUGIN, pass, fail)

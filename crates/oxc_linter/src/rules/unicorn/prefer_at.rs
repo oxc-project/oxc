@@ -17,7 +17,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
-    ast_util::variable_declaration_kind,
+    ast_util::{could_be_asi_hazard, variable_declaration_kind},
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
@@ -778,13 +778,18 @@ fn check_lodash_last<'a>(
                     }
 
                     let arg_text = fixer.source_range(arg.span());
-                    let new_code = if get_precedence(arg)
+                    let mut new_code = if get_precedence(arg)
                         .is_some_and(|precedence| precedence < Precedence::Member)
                     {
                         format!("({arg_text}).at(-1)")
                     } else {
                         format!("{arg_text}.at(-1)")
                     };
+                    if new_code.starts_with(['[', '(', '/', '+', '-', '`'])
+                        && could_be_asi_hazard(ctx.nodes().get_node(call_expr.node_id()), ctx)
+                    {
+                        new_code.insert(0, ';');
+                    }
                     fixer.replace(call_expr.span, new_code)
                 },
             );
@@ -1191,6 +1196,8 @@ fn test() {
         ),
         ("({slice(){return []}}.slice(-1)).pop()", "({slice(){return []}}.at(-1))", None),
         ("(function(){}.slice(-1)).pop()", "(function(){}.at(-1))", None),
+        ("before()\n_.last([1, /* keep */ 2]);", "before()\n;[1, /* keep */ 2].at(-1);", None),
+        ("before()\n_.last(new Array)", "before()\n;(new Array).at(-1)", None),
     ];
 
     Tester::new(PreferAt::NAME, PreferAt::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
