@@ -990,6 +990,72 @@ Prettier also drops them under an ancestor's parens after `export default` (`` e
 and for a sequence or assignment arrow body (`() => ({}.a, 1)`, `() => ({}.a = 1)`),
 but not at statement start or for other arrow bodies.
 
+## assignment-class-heritage
+
+- Why: uniform-rule (same construct, same output: a class anywhere else)
+- Pin: `tests/fixtures/ts/class/assignment-class-heritage.ts`
+- Conformance:
+  - `externals/prettier/js/class/assignment.js`
+  - `externals/webawesome/carousel/carousel.test.ts`
+
+```ts
+// input (printWidth: 80)
+DynamicErrorBoundary = class extends (
+  React.Component<DynamicErrorBoundaryProps, DynamicErrorBoundaryState>
+) {};
+const DynamicErrorBoundary2 = class extends (
+  React.Component<DynamicErrorBoundaryProps, DynamicErrorBoundaryState>
+) {};
+someNamespace.longRunningProvider = class extends someNamespace.languages.SignatureHelpProvider {};
+const longRunningProvider = class extends someNamespace.languages.SignatureHelpProvider {};
+someNamespace.longRunningProviderX = class extends someNamespace.languages.SignatureHelp<Hello> {};
+const longRunningProviderXX = class extends someNamespace.languages.SignatureHelp<Hello> {};
+
+// ours
+DynamicErrorBoundary = class extends (React.Component<
+  DynamicErrorBoundaryProps,
+  DynamicErrorBoundaryState
+>) {};
+const DynamicErrorBoundary2 = class extends (React.Component<
+  DynamicErrorBoundaryProps,
+  DynamicErrorBoundaryState
+>) {};
+someNamespace.longRunningProvider = class
+  extends someNamespace.languages.SignatureHelpProvider {};
+const longRunningProvider = class
+  extends someNamespace.languages.SignatureHelpProvider {};
+someNamespace.longRunningProviderX = class extends someNamespace.languages
+  .SignatureHelp<Hello> {};
+const longRunningProviderXX = class extends someNamespace.languages
+  .SignatureHelp<Hello> {};
+
+// prettier
+DynamicErrorBoundary = class extends (
+  (React.Component<DynamicErrorBoundaryProps, DynamicErrorBoundaryState>)
+) {};
+const DynamicErrorBoundary2 = class extends (React.Component<
+  DynamicErrorBoundaryProps,
+  DynamicErrorBoundaryState
+>) {};
+someNamespace.longRunningProvider = class extends (
+  someNamespace.languages.SignatureHelpProvider
+) {};
+const longRunningProvider = class
+  extends someNamespace.languages.SignatureHelpProvider {};
+someNamespace.longRunningProviderX = class extends (
+  someNamespace.languages.SignatureHelp
+)<Hello> {};
+const longRunningProviderXX = class extends someNamespace.languages
+  .SignatureHelp<Hello> {};
+```
+
+Prettier breaks the heritage of a class on the right of an assignment (`x = class ...`) its own way (prettier#9341):
+it wraps a breaking superclass in parens, around the superclass's own parens too, so that one gets two,
+and it never moves `extends` to the next line (prettier#18325 skips that one class).
+We print it as Prettier prints the same class anywhere else (each `const` line above, a declaration, an argument):
+`extends` moves to the next line for a member expression superclass, the others break inside themselves.
+A superclass that cannot break otherwise (an identifier, a member expression with type arguments that cannot break) overflows there, as it does anywhere else.
+
 ## text-display-width
 
 - Why: uniform-rule (text width is the display width; oxc#23863, prettier/prettier#19538)

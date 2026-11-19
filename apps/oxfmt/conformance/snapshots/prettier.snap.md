@@ -1,6 +1,6 @@
 ## javascript
 
-1185/1284 (92.29%)
+1184/1284 (92.21%)
 
 ### Failed
 
@@ -140,6 +140,8 @@
   - ❓unclassified
 - externals/prettier/js/array-exprssion/numbers-with-holes.js (💥, 92.86%)
   - crates/oxc_formatter/DIVERGENCES.md#array-hole-comments
+- externals/prettier/js/class/assignment.js (💥, 76.47%)
+  - crates/oxc_formatter/DIVERGENCES.md#assignment-class-heritage
 - externals/prettier/js/comments/array-and-object.js (💥💥, 62.50%)
   - crates/oxc_formatter/DIVERGENCES.md#eol-comment-after-assign-colon
 - externals/prettier/js/comments/assignment/variable-declarator.js (💥, 84.00%)
