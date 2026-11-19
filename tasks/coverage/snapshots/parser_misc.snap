@@ -1509,6 +1509,12 @@ Negative Passed: 283/283 (100.00%)
  1 │ export import
    ╰────
 
+  × Cannot use export statement outside a module
+   ╭─[misc/fail/oxc-11453.js:1:1]
+ 1 │ export import
+   · ──────
+   ╰────
+
   × Decorators may not appear after 'export' or 'export default' if they also appear before 'export'.
    ╭─[misc/fail/oxc-11472.js:1:14]
  1 │ @dec1 export @dec2 class C {}
