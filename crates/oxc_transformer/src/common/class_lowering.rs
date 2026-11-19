@@ -78,6 +78,11 @@ impl ClassLowering {
     }
 
     /// Whether standard decorator lowering has anything to do for this class.
+    ///
+    /// When lowering is enabled, such a class owns per-evaluation state (decorator state or
+    /// auto-accessor storage), so each evaluation needs its own block-scoped temporaries. This is
+    /// the single definition of that rule; loop scoping, initializer wrapping, and class
+    /// temporaries all use it.
     pub fn handles_standard_decorators(self) -> bool {
         self.has_decorators || self.has_auto_accessor
     }

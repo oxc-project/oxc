@@ -26,8 +26,14 @@ pub(super) struct ClassDetails<'a> {
     pub bindings: ClassBindings<'a>,
     /// Standard decorators state. `Some` if class is decorated.
     pub decorators: Option<ClassDecoratorState<'a>>,
-    /// Class contained auto-accessors before they were lowered.
-    pub has_auto_accessor: bool,
+    /// Whether standard decorator lowering gives this class per-evaluation state: it is decorated
+    /// or had auto-accessors (see [`ClassLowering::handles_standard_decorators`]).
+    ///
+    /// Such a class lowers its own static blocks, and its temporaries are block-scoped `let`s,
+    /// so repeated evaluations (e.g. in a loop body) keep separate state.
+    ///
+    /// [`ClassLowering::handles_standard_decorators`]: crate::common::class_lowering::ClassLowering::handles_standard_decorators
+    pub per_evaluation_state: bool,
 }
 
 impl<'a> ClassDetails<'a> {
@@ -42,21 +48,15 @@ impl<'a> ClassDetails<'a> {
             private_props: PrivateProps::Lowered(IdentIndexMap::default()),
             bindings: ClassBindings::dummy(false),
             decorators: None,
-            has_auto_accessor: false,
+            per_evaluation_state: false,
         }
-    }
-
-    /// Whether this class's temporaries are block-scoped `let`s, so repeated evaluations keep
-    /// separate state. Decorated classes and lowered auto-accessors need this.
-    pub fn block_scoped_temps(&self) -> bool {
-        self.decorators.is_some() || self.has_auto_accessor
     }
 
     /// Declare a temporary for this class.
     ///
-    /// See [`Self::block_scoped_temps`].
+    /// See [`Self::per_evaluation_state`].
     pub fn declare_temp(&self, binding: &BoundIdentifier<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.block_scoped_temps() {
+        if self.per_evaluation_state {
             ctx.state.var_declarations.insert_let(binding, None, &ctx.ast);
         } else {
             ctx.state.var_declarations.insert_var(binding, &ctx.ast);
@@ -70,7 +70,7 @@ impl<'a> ClassDetails<'a> {
         init: Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Statement<'a> {
-        if self.block_scoped_temps() {
+        if self.per_evaluation_state {
             StandardDecoratorState::create_let(binding, init, ctx)
         } else {
             create_variable_declaration(binding, init, ctx)

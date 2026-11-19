@@ -105,7 +105,7 @@ impl<'a> ClassProperties<'a> {
 
         let lowering = ctx.state.class_lowering_of(class_scope_id);
         let mut entry = self.on_body_entry(body, class_name_binding.as_ref(), ctx);
-        let has_auto_accessor = entry.has_auto_accessor;
+        let per_evaluation_state = entry.per_evaluation_state;
         if matches!(lowering.mode(), ClassLoweringMode::Native | ClassLoweringMode::Preserve) {
             // Register private names only when they can shadow a lowered name in an enclosing
             // class. Other unresolved names belong to untouched classes and are left as-is.
@@ -130,13 +130,13 @@ impl<'a> ClassProperties<'a> {
                 private_props: PrivateProps::Native(private_names),
                 bindings: ClassBindings::dummy(false),
                 decorators: None,
-                has_auto_accessor,
+                per_evaluation_state,
             });
             return;
         }
         let instance_method_extras =
             entry.state.as_ref().is_some_and(|state| state.instance_method_extras);
-        let transform_static_blocks = self.transform_static_blocks || entry.lowers_static_blocks();
+        let transform_static_blocks = self.transform_static_blocks || entry.per_evaluation_state;
 
         // Check if class has any properties, private methods, or static blocks
         let mut instance_prop_count = 0;
@@ -245,7 +245,7 @@ impl<'a> ClassProperties<'a> {
                 private_props: PrivateProps::Lowered(private_props),
                 bindings: ClassBindings::dummy(self.private_fields_as_properties),
                 decorators: None,
-                has_auto_accessor,
+                per_evaluation_state,
             });
             return;
         }
@@ -307,7 +307,7 @@ impl<'a> ClassProperties<'a> {
             private_props: PrivateProps::Lowered(private_props),
             bindings: class_bindings,
             decorators: entry.state,
-            has_auto_accessor,
+            per_evaluation_state,
         });
 
         // Exit if no instance properties (public or private)
@@ -873,9 +873,7 @@ impl<'a> ClassProperties<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> usize {
         let details = self.current_class();
-        let transform_static_blocks = self.transform_static_blocks
-            || details.decorators.is_some()
-            || details.has_auto_accessor;
+        let transform_static_blocks = self.transform_static_blocks || details.per_evaluation_state;
 
         let mut class_methods = vec![];
         class.body.body.retain_mut(|element| {
