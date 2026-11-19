@@ -420,6 +420,9 @@ impl<'a> ClassProperties<'a> {
         }
         // Pop off stack. We're done!
         let class_details = self.classes_stack.pop();
+        if self.classes_stack.is_outermost() {
+            self.decorator_state.clear_class_tree_entries();
+        }
         if let Some(private_props) = class_details.private_props.lowered() {
             // Note: `private_props` can be non-empty even if `is_transform_required == false`,
             // if class contains private accessors, which we don't transform yet
@@ -655,6 +658,9 @@ impl<'a> ClassProperties<'a> {
 
         // Pop off stack. We're done!
         let class_details = self.classes_stack.pop();
+        if self.classes_stack.is_outermost() {
+            self.decorator_state.clear_class_tree_entries();
+        }
         if let Some(private_props) = class_details.private_props.lowered() {
             // Note: `private_props` can be non-empty even if `is_transform_required == false`,
             // if class contains private accessors, which we don't transform yet

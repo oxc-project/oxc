@@ -84,17 +84,18 @@ impl<'a> StandardDecoratorState<'a> {
         }
         impl<'a> Visit<'a> for DecoratedClassFinder<'_, 'a> {
             fn visit_statement(&mut self, statement: &Statement<'a>) {
-                let loop_address = matches!(
-                    statement,
-                    Statement::ForStatement(_)
-                        | Statement::ForInStatement(_)
-                        | Statement::ForOfStatement(_)
-                        | Statement::WhileStatement(_)
-                        | Statement::DoWhileStatement(_)
-                )
-                .then(|| statement.address());
-                // Each cached loop is looked up at most once: a later search starts below the loop
-                // which cached it, and stops at the first cached loop.
+                // Only unbraced loop bodies are visited by `wrap_loop_body_if_decorated`, which
+                // consumes the cached result. Braced loops are not cached, so nothing is left over.
+                let loop_address = match statement {
+                    Statement::ForStatement(s) => Some(&s.body),
+                    Statement::ForInStatement(s) => Some(&s.body),
+                    Statement::ForOfStatement(s) => Some(&s.body),
+                    Statement::WhileStatement(s) => Some(&s.body),
+                    Statement::DoWhileStatement(s) => Some(&s.body),
+                    _ => None,
+                }
+                .filter(|body| !matches!(body, Statement::BlockStatement(_)))
+                .map(|_| statement.address());
                 if let Some(address) = loop_address
                     && let Some(found) = self.loop_classes.remove(&address)
                 {
@@ -122,6 +123,16 @@ impl<'a> StandardDecoratorState<'a> {
             // A class inside a function gets its state from that function's body on each call.
             fn visit_function(&mut self, _: &Function<'a>, _: ScopeFlags) {}
             fn visit_arrow_function_expression(&mut self, _: &ArrowFunctionExpression<'a>) {}
+        }
+        // A loop nested in an unbraced loop body was already searched with its parent.
+        if let Some(found) = self.loop_classes.remove(&ctx.parent().address()) {
+            if found {
+                let scope_id = ctx.insert_scope_below_statement(statement, ScopeFlags::empty());
+                let body = statement.take_in(ctx);
+                *statement =
+                    Statement::new_block_statement_with_scope_id(SPAN, [body], scope_id, ctx);
+            }
+            return;
         }
         let found = {
             let mut finder = DecoratedClassFinder {
