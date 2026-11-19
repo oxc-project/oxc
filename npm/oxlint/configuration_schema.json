@@ -1594,6 +1594,26 @@
       "maxItems": 2,
       "minItems": 2
     },
+    "ConsistentConditionalObjectSpreadConfig": {
+      "oneOf": [
+        {
+          "description": "Prefer `...(condition && object)`, without a boolean cast of `condition`.",
+          "type": "string",
+          "enum": [
+            "logical"
+          ],
+          "markdownDescription": "Prefer `...(condition && object)`, without a boolean cast of `condition`."
+        },
+        {
+          "description": "Prefer `...(condition ? object : {})`.",
+          "type": "string",
+          "enum": [
+            "ternary"
+          ],
+          "markdownDescription": "Prefer `...(condition ? object : {})`."
+        }
+      ]
+    },
     "ConsistentEachForJson": {
       "type": "object",
       "properties": {
@@ -8979,6 +8999,26 @@
         },
         "unicorn/consistent-assert": {
           "$ref": "#/definitions/RuleNoConfig"
+        },
+        "unicorn/consistent-conditional-object-spread": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ConsistentConditionalObjectSpreadConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "unicorn/consistent-date-clone": {
           "$ref": "#/definitions/RuleNoConfig"

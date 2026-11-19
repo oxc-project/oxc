@@ -1,0 +1,747 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(flag ? {/* keep */ value} : {})};
+   ·                     ──────────────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(!(/* keep */ flag) ? {} : data)};
+   ·                     ──────────────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer ternary conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(read(/* keep */) && data)};
+   ·                     ────────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the ternary style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(Boolean(read(/* keep */)) && data)};
+   ·                     ─────────────────────────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(Boolean(value as /* keep */ string) && data)};
+   ·                     ───────────────────────────────────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer ternary conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...((flag as /* keep */ boolean) && data)};
+   ·                     ────────────────────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the ternary style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(foo ? {bar: true} : {})}
+   ·                     ──────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(foo ? {} : {bar: true})}
+   ·                     ──────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(!foo ? {} : {bar: true})}
+   ·                     ───────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(foo ? bar : {})}
+   ·                     ──────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(foo ? {} : bar)}
+   ·                     ──────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(a || b ? {x: 1} : {})}
+   ·                     ────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(a && b ? {} : {x: 1})}
+   ·                     ────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(a ?? b ? {x: 1} : {})}
+   ·                     ────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:19]
+ 1 │ async () => ({...(await foo ? {a: 1} : {})})
+   ·                   ───────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...((a, b) ? {x: 1} : {})}
+   ·                     ────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...((a, b) ? {} : {x: 1})}
+   ·                     ────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(foo ? (() => x) : {})}
+   ·                     ────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(foo ? a || b : {})}
+   ·                     ─────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(foo ? a ?? b : {})}
+   ·                     ─────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(foo ? {} : a ?? b)}
+   ·                     ─────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(foo?.bar ? {a: 1} : {})}
+   ·                     ──────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...((( foo )) ? (( {a: 1} )) : (( {} )))}
+   ·                     ───────────────────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = ({...foo ? {a: 1} : {}})
+   ·                     ─────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(!!foo ? {} : {bar: true})}
+   ·                     ────────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(foo ? bar! : {})}
+   ·                     ───────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(foo as string ? {} : bar)}
+   ·                     ────────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(foo satisfies string ? {} : bar)}
+   ·                     ───────────────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(<string>foo ? {} : bar)}
+   ·                     ──────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(foo! ? {} : bar)}
+   ·                     ───────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(foo ? {bar: true} : undefined)}
+   ·                     ─────────────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(foo ? {bar: true} : null)}
+   ·                     ────────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(foo ? undefined : {bar: true})}
+   ·                     ─────────────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(!foo ? undefined : {bar: true})}
+   ·                     ──────────────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(foo ? null : {bar: true})}
+   ·                     ────────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(foo ? bar : undefined)}
+   ·                     ─────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(foo ? null : bar)}
+   ·                     ────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(foo == null ? undefined : bar)}
+   ·                     ─────────────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(foo != null ? bar : undefined)}
+   ·                     ─────────────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(foo ? {a: 1} : /* keep */ {})}
+   ·                     ────────────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(foo ? {a: 1} : /* keep */ undefined)}
+   ·                     ───────────────────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(foo ? {a: 1} : /* keep */ null)}
+   ·                     ──────────────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:32]
+ 1 │ const object = {...(/* keep */ foo ? {a: 1} : {})}
+   ·                                ─────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer ternary conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(foo && {bar: true})}
+   ·                     ──────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the ternary style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer ternary conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(!foo && {bar: true})}
+   ·                     ───────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the ternary style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer ternary conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(foo && bar)}
+   ·                     ──────────
+   ╰────
+  help: Rewrite this conditional spread to use the ternary style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer ternary conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...((a || b) && {x: 1})}
+   ·                     ──────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the ternary style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer ternary conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...((a, b) && {x: 1})}
+   ·                     ────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the ternary style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer ternary conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:19]
+ 1 │ async () => ({...(await foo && {a: 1})})
+   ·                   ───────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the ternary style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer ternary conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(foo && (() => x))}
+   ·                     ────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the ternary style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer ternary conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(foo && (a = b))}
+   ·                     ──────────────
+   ╰────
+  help: Rewrite this conditional spread to use the ternary style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer ternary conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(foo && (a, b))}
+   ·                     ─────────────
+   ╰────
+  help: Rewrite this conditional spread to use the ternary style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer ternary conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(foo && bar!)}
+   ·                     ───────────
+   ╰────
+  help: Rewrite this conditional spread to use the ternary style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer ternary conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(foo /* keep */ && {bar: true})}
+   ·                     ─────────────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the ternary style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(!!foo && {bar: true})}
+   ·                     ─────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:20]
+ 1 │ const object = {...!!foo && {bar: true}}
+   ·                    ─────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(Boolean(foo) && {bar: true})}
+   ·                     ────────────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(!!foo && bar)}
+   ·                     ─────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(!!foo.bar && {a: 1})}
+   ·                     ─────────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(!!foo() && {a: 1})}
+   ·                     ───────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(!!(foo) && {a: 1})}
+   ·                     ───────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:22]
+ 1 │ const object = {...((!!foo) && {a: 1})}
+   ·                      ─────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(!(!foo) && {a: 1})}
+   ·                     ───────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(!!!foo && {a: 1})}
+   ·                     ──────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(Boolean(!!foo) && {a: 1})}
+   ·                     ──────────────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(!!(a || b) && {x: 1})}
+   ·                     ──────────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(Boolean(a || b) && {x: 1})}
+   ·                     ───────────────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(!!(a ?? b) && {x: 1})}
+   ·                     ──────────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(Boolean(a ?? b) && {x: 1})}
+   ·                     ───────────────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(!!(a && b) && {x: 1})}
+   ·                     ──────────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(Boolean(a && b) && {x: 1})}
+   ·                     ───────────────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(Boolean((a, b)) && {x: 1})}
+   ·                     ───────────────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(Boolean(a = b) && {x: 1})}
+   ·                     ──────────────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(Boolean(a ? b : c) && {x: 1})}
+   ·                     ──────────────────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:22]
+ 1 │ const object = {...((!!(a || b)) && {x: 1})}
+   ·                      ──────────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:19]
+ 1 │ async () => ({...(!!await foo && {a: 1})})
+   ·                   ───────────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(!!foo && {a: 1}), ...(Boolean(bar) && {b: 2})}
+   ·                     ─────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:43]
+ 1 │ const object = {...(!!foo && {a: 1}), ...(Boolean(bar) && {b: 2})}
+   ·                                           ────────────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(!! /* keep */ foo && {a: 1})}
+   ·                     ─────────────────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(Boolean(foo /* keep */) && {a: 1})}
+   ·                     ───────────────────────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(!!(/* keep */ foo) && {a: 1})}
+   ·                     ──────────────────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(!!foo ? {a: 1} : {})}
+   ·                     ───────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(!!foo! && {a: 1})}
+   ·                     ──────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(Boolean(foo as string) && {a: 1})}
+   ·                     ──────────────────────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(Boolean(foo satisfies string) && {a: 1})}
+   ·                     ─────────────────────────────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(!!<string>foo && {a: 1})}
+   ·                     ─────────────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer ternary conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(!!foo && {a: 1})}
+   ·                     ───────────────
+   ╰────
+  help: Rewrite this conditional spread to use the ternary style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(!!foo?.bar && {a: 1})}
+   ·                     ──────────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(!!foo && bar && {a: 1})}
+   ·                     ─────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:28]
+ 1 │ const object = {...(foo && !!bar && {a: 1})}
+   ·                            ─────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:42]
+ 1 │ const object = {...(!!a && Boolean(b) && !!c && {x: 1})}
+   ·                                          ───
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:28]
+ 1 │ const object = {...(!!a && Boolean(b) && !!c && {x: 1})}
+   ·                            ──────────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(!!a && Boolean(b) && !!c && {x: 1})}
+   ·                     ───
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:26]
+ 1 │ const object = {...(a && !!(b || c) && {x: 1})}
+   ·                          ──────────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:26]
+ 1 │ const object = {...(a && Boolean(b ?? c) && {x: 1})}
+   ·                          ───────────────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:26]
+ 1 │ const object = {...(a && Boolean(b && c) && {x: 1})}
+   ·                          ───────────────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:28]
+ 1 │ const object = {...(!!a && !! /* keep */ b && {x: 1})}
+   ·                            ───────────────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(!!a && !! /* keep */ b && {x: 1})}
+   ·                     ───
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(!!foo /* keep */ && {a: 1})}
+   ·                     ─────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(!!foo && {})}
+   ·                     ─────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:1:34]
+ 1 │ const element = <div style={{...(!!foo && {color: 'red'})}} />
+   ·                                  ─────
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Unnecessary boolean cast. A falsy value spreads nothing.
+   ╭─[consistent_conditional_object_spread.tsx:2:14]
+ 1 │ function * generator() {
+ 2 │     return {...(Boolean(yield foo) && {a: 1})};
+   ·                 ──────────────────
+ 3 │ }
+   ╰────
+  help: Remove the unnecessary boolean cast.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(Boolean(foo) ? {} : {a: 1})}
+   ·                     ──────────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(foo++ ? foo++ : {})}
+   ·                     ──────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(foo || bar ? foo && bar : {})}
+   ·                     ────────────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.
+
+  ⚠ unicorn(consistent-conditional-object-spread): Prefer logical conditional object spreads.
+   ╭─[consistent_conditional_object_spread.tsx:1:21]
+ 1 │ const object = {...(foo === bar ? {} : foo)}
+   ·                     ──────────────────────
+   ╰────
+  help: Rewrite this conditional spread to use the logical style.

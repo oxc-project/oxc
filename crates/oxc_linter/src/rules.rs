@@ -563,6 +563,7 @@ pub(crate) mod react_perf {
 pub(crate) mod unicorn {
     pub mod catch_error_name;
     pub mod consistent_assert;
+    pub mod consistent_conditional_object_spread;
     pub mod consistent_date_clone;
     pub mod consistent_empty_array_spread;
     pub mod consistent_existence_index_check;
