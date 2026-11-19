@@ -17,7 +17,12 @@ import { registerPlugin, registeredPluginNames, registeredRules } from "../plugi
 import { lintFileImpl, resetStateAfterError } from "../plugins/lint.ts";
 import { getLineColumnFromOffset, getNodeByRangeIndex } from "../plugins/location.ts";
 import { allOptions, setOptions, DEFAULT_OPTIONS_ID } from "../plugins/options.ts";
-import { diagnostics, replacePlaceholders, PLACEHOLDER_REGEX } from "../plugins/report.ts";
+import {
+  diagnostics,
+  replacePlaceholders,
+  PLACEHOLDER_REGEX,
+  HAS_END_LOCATION,
+} from "../plugins/report.ts";
 import { parse } from "./parse.ts";
 
 import type { RequireAtLeastOne } from "type-fest";
@@ -368,9 +373,37 @@ interface ErrorSuggestion {
  * Test cases for a rule.
  */
 interface TestCases {
+  /** Assertion requirements for all invalid test cases in this run. */
+  assertionOptions?: AssertionOptions;
   valid: (ValidTestCase | string)[];
   invalid: InvalidTestCase[];
 }
+
+/**
+ * Optional requirements for invalid test assertions. All options default to `false`.
+ * These options belong to the third argument of `RuleTester#run`, not its constructor config.
+ */
+interface AssertionOptions {
+  /**
+   * Require message assertions. `true` accepts either `message` or `messageId`.
+   * `"message"` also accepts string and regular expression error entries.
+   * `"messageId"` requires error objects with `messageId` and a rule with `meta.messages`.
+   */
+  requireMessage?: boolean | "message" | "messageId";
+  /**
+   * Require all reported location properties in each error object.
+   * In ESLint compatibility mode, end locations may be omitted for diagnostics without an end location.
+   */
+  requireLocation?: boolean;
+  /**
+   * Require `data` when an expected `messageId` references a message with placeholders.
+   * `true` checks both errors and suggestions; `"error"` and `"suggestion"` check only that kind.
+   */
+  requireData?: boolean | "error" | "suggestion";
+}
+
+// Reuse the default options across runs. Assertion options are never mutated.
+const DEFAULT_ASSERTION_OPTIONS: Readonly<AssertionOptions> = {};
 
 /**
  * Diagnostic included in assertion errors.
@@ -388,6 +421,7 @@ interface Diagnostic {
   column: number;
   endLine: number;
   endColumn: number;
+  hasEndLocation?: boolean;
   fixes: FixReport[] | null;
   suggestions: SuggestionReport[] | null;
 }
@@ -531,7 +565,13 @@ export class RuleTester {
           for (const test of tests.invalid) {
             const it = getIt(test.only);
             it(getTestName(test), () => {
-              runInvalidTestCase(test, plugin, config, seenTestCases);
+              runInvalidTestCase(
+                test,
+                plugin,
+                config,
+                seenTestCases,
+                tests.assertionOptions ?? DEFAULT_ASSERTION_OPTIONS,
+              );
             });
           }
         });
@@ -594,6 +634,7 @@ function assertValidTestCasePasses(test: ValidTestCase, plugin: Plugin, config: 
  * @param plugin - Plugin containing rule being tested
  * @param config - Config from `RuleTester` instance
  * @param seenTestCases - Set of serialized test cases to check for duplicates
+ * @param assertionOptions - Requirements for invalid test assertions
  * @throws {AssertionError} If the test case fails
  */
 function runInvalidTestCase(
@@ -601,12 +642,13 @@ function runInvalidTestCase(
   plugin: Plugin,
   config: Config,
   seenTestCases: Set<string>,
+  assertionOptions: AssertionOptions,
 ): void {
   const ruleName = Object.keys(plugin.rules)[0];
   try {
     runBeforeHook(test);
-    assertInvalidTestCaseIsWellFormed(test, seenTestCases, ruleName);
-    assertInvalidTestCasePasses(test, plugin, config);
+    assertInvalidTestCaseIsWellFormed(test, seenTestCases, ruleName, assertionOptions);
+    assertInvalidTestCasePasses(test, plugin, config, assertionOptions);
   } finally {
     runAfterHook(test);
   }
@@ -617,12 +659,26 @@ function runInvalidTestCase(
  * @param test - Invalid test case
  * @param plugin - Plugin containing rule being tested
  * @param config - Config from `RuleTester` instance
+ * @param assertionOptions - Requirements for invalid test assertions
  * @throws {AssertionError} If the test case fails
  */
-function assertInvalidTestCasePasses(test: InvalidTestCase, plugin: Plugin, config: Config): void {
+function assertInvalidTestCasePasses(
+  test: InvalidTestCase,
+  plugin: Plugin,
+  config: Config,
+  assertionOptions: AssertionOptions,
+): void {
   test = mergeConfigIntoTestCase(test, config);
 
-  const diagnostics = lint(test, plugin);
+  const { requireMessage, requireLocation, requireData } = assertionOptions;
+  const rule = Object.values(plugin.rules)[0],
+    messages = rule.meta?.messages ?? null;
+  assert(
+    requireMessage !== "messageId" || messages !== null,
+    'Assertion options cannot use `requireMessage: "messageId"` if rule under test doesn\'t define `meta.messages`',
+  );
+
+  const diagnostics = lint(test, plugin, requireLocation === true);
 
   const { errors } = test;
   if (typeof errors === "number") {
@@ -639,9 +695,6 @@ function assertInvalidTestCasePasses(test: InvalidTestCase, plugin: Plugin, conf
     // Sort diagnostics by line and column before comparing to expected errors. ESLint does the same.
     diagnostics.sort((diag1, diag2) => diag1.line - diag2.line || diag1.column - diag2.column);
 
-    const rule = Object.values(plugin.rules)[0],
-      messages = rule.meta?.messages ?? null;
-
     for (let errorIndex = 0; errorIndex < errors.length; errorIndex++) {
       const error: ErrorEntry = errors[errorIndex]!,
         diagnostic = diagnostics[errorIndex]!;
@@ -655,8 +708,13 @@ function assertInvalidTestCasePasses(test: InvalidTestCase, plugin: Plugin, conf
         );
       } else {
         // `error` is an error object
-        assertInvalidTestCaseMessageIsCorrect(diagnostic, error, messages);
-        assertInvalidTestCaseLocationIsCorrect(diagnostic, error, test);
+        assertInvalidTestCaseMessageIsCorrect(
+          diagnostic,
+          error,
+          messages,
+          requireData === true || requireData === "error",
+        );
+        assertInvalidTestCaseLocationIsCorrect(diagnostic, error, test, requireLocation === true);
 
         // Test suggestions
         if (Object.hasOwn(error, "suggestions")) {
@@ -664,7 +722,13 @@ function assertInvalidTestCasePasses(test: InvalidTestCase, plugin: Plugin, conf
             // `suggestions: null` means "expect no suggestions"
             assert(diagnostic.suggestions === null, "Rule produced suggestions");
           } else {
-            assertSuggestionsAreCorrect(diagnostic, error, messages, test);
+            assertSuggestionsAreCorrect(
+              diagnostic,
+              error,
+              messages,
+              test,
+              requireData === true || requireData === "suggestion",
+            );
           }
         }
       }
@@ -734,12 +798,14 @@ function runFixes(diagnostics: Diagnostic[], code: string): string | null {
  * @param diagnostic - Diagnostic emitted by rule under test
  * @param error - Error object from test case
  * @param messages - Messages from rule under test
+ * @param requireData - Require data for message templates with placeholders
  * @throws {AssertionError} If `message` / `messageId` is not correct
  */
 function assertInvalidTestCaseMessageIsCorrect(
   diagnostic: Diagnostic,
   error: Error,
   messages: Record<string, string> | null,
+  requireData: boolean,
 ): void {
   // Check `message` property
   if (Object.hasOwn(error, "message")) {
@@ -762,9 +828,10 @@ function assertInvalidTestCaseMessageIsCorrect(
     diagnostic.messageId,
     diagnostic.message,
     error.messageId!,
-    error.data,
+    requireData && !Object.hasOwn(error, "data") ? undefined : error.data,
     messages,
     "",
+    requireData,
   );
 }
 
@@ -777,6 +844,7 @@ function assertInvalidTestCaseMessageIsCorrect(
  * @param data - Data from the test case (if provided)
  * @param messages - Messages from the rule under test
  * @param prefix - Prefix for assertion error messages (e.g. "" or "Suggestion at index 0: ")
+ * @param requireData - Require data for message templates with placeholders
  * @throws {AssertionError} If messageId is not correct
  * @throws {AssertionError} If message tenplate with placeholder data inserted does not match reported message
  */
@@ -787,6 +855,7 @@ function assertMessageIdIsCorrect(
   data: DiagnosticData | undefined,
   messages: Record<string, string> | null,
   prefix: string,
+  requireData: boolean,
 ): void {
   assert(
     messages !== null,
@@ -833,6 +902,11 @@ function assertMessageIdIsCorrect(
       rehydratedMessage,
       `${prefix}Hydrated message "${rehydratedMessage}" does not match "${reportedMessage}"`,
     );
+  } else if (requireData) {
+    assert(
+      ruleMessage.search(PLACEHOLDER_REGEX) === -1,
+      `${prefix}Expected \`data\` because the referenced message has placeholders`,
+    );
   }
 }
 
@@ -840,13 +914,15 @@ function assertMessageIdIsCorrect(
  * Assert that location reported by rule under test matches the expected location.
  * @param diagnostic - Diagnostic emitted by rule under test
  * @param error - Error object from test case
- * @param config - Config for this test case
+ * @param test - Test case including compatibility options
+ * @param requireLocation - Require assertions for all reported location properties
  * @throws {AssertionError} If diagnostic's location does not match expected location
  */
 function assertInvalidTestCaseLocationIsCorrect(
   diagnostic: Diagnostic,
   error: Error,
   test: TestCase,
+  requireLocation: boolean,
 ) {
   interface Location {
     line?: number;
@@ -879,11 +955,26 @@ function assertInvalidTestCaseLocationIsCorrect(
   // In ESLint compat mode, deal with this incompatibility.
   const canVoidEndLocation =
     test.eslintCompat === true
-    && diagnostic.endLine === diagnostic.line
-    && diagnostic.endColumn === diagnostic.column;
+    && (requireLocation
+      ? diagnostic.hasEndLocation === false
+      : diagnostic.endLine === diagnostic.line && diagnostic.endColumn === diagnostic.column);
+
+  if (requireLocation) {
+    const missing = [];
+    if (!Object.hasOwn(error, "line")) missing.push("line");
+    if (!Object.hasOwn(error, "column")) missing.push("column");
+    if (test.eslintCompat !== true || diagnostic.hasEndLocation) {
+      if (!Object.hasOwn(error, "endLine")) missing.push("endLine");
+      if (!Object.hasOwn(error, "endColumn")) missing.push("endColumn");
+    }
+    assert(
+      missing.length === 0,
+      `Error is missing expected location properties: ${missing.join(", ")}`,
+    );
+  }
 
   if (Object.hasOwn(error, "endLine")) {
-    if (error.endLine === undefined && canVoidEndLocation) {
+    if (canVoidEndLocation && (requireLocation || error.endLine === undefined)) {
       actualLocation.endLine = undefined;
     } else {
       actualLocation.endLine = diagnostic.endLine;
@@ -892,7 +983,7 @@ function assertInvalidTestCaseLocationIsCorrect(
   }
 
   if (Object.hasOwn(error, "endColumn")) {
-    if (error.endColumn === undefined && canVoidEndLocation) {
+    if (canVoidEndLocation && (requireLocation || error.endColumn === undefined)) {
       actualLocation.endColumn = undefined;
     } else {
       actualLocation.endColumn = diagnostic.endColumn + columnOffset;
@@ -915,6 +1006,7 @@ function assertInvalidTestCaseLocationIsCorrect(
  * @param error - Error object from the test case
  * @param messages - Messages from the rule under test
  * @param test - Test case
+ * @param requireData - Require data for suggestion templates with placeholders
  * @throws {AssertionError} If suggestions do not match
  */
 function assertSuggestionsAreCorrect(
@@ -922,6 +1014,7 @@ function assertSuggestionsAreCorrect(
   error: Error,
   messages: Record<string, string> | null,
   test: TestCase,
+  requireData: boolean,
 ): void {
   const actualSuggestions = diagnostic.suggestions ?? [];
   const expectedSuggestions = error.suggestions!;
@@ -939,7 +1032,7 @@ function assertSuggestionsAreCorrect(
     const prefix = `Suggestion at index ${i}`;
 
     // Validate suggestion message (`desc` or `messageId` + `data`)
-    assertSuggestionMessageIsCorrect(actual, expected, messages, prefix);
+    assertSuggestionMessageIsCorrect(actual, expected, messages, prefix, requireData);
 
     // Validate output
     assert(Object.hasOwn(expected, "output"), `${prefix}: \`output\` property is required`);
@@ -967,6 +1060,7 @@ function assertSuggestionsAreCorrect(
  * @param expected - Expected suggestion from the test case
  * @param messages - Messages from the rule under test
  * @param prefix - Prefix for assertion error messages
+ * @param requireData - Require data for suggestion templates with placeholders
  * @throws {AssertionError} If suggestion message does not match
  */
 function assertSuggestionMessageIsCorrect(
@@ -974,6 +1068,7 @@ function assertSuggestionMessageIsCorrect(
   expected: ErrorSuggestion,
   messages: Record<string, string> | null,
   prefix: string,
+  requireData: boolean,
 ): void {
   if (Object.hasOwn(expected, "desc")) {
     assert(
@@ -997,9 +1092,10 @@ function assertSuggestionMessageIsCorrect(
       actual.messageId,
       actual.message,
       expected.messageId!,
-      expected.data,
+      requireData && !Object.hasOwn(expected, "data") ? undefined : expected.data,
       messages,
       `${prefix}: `,
+      requireData,
     );
     return;
   }
@@ -1216,9 +1312,10 @@ function mergeGlobals(
  * Lint a test case.
  * @param test - Test case
  * @param plugin - Plugin containing rule being tested
+ * @param requireLocation - Preserve whether an end location was reported for location assertions
  * @returns Array of diagnostics
  */
-function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
+function lint(test: TestCase, plugin: Plugin, requireLocation = false): Diagnostic[] {
   // Get parse options
   const parseOptions = getParseOptions(test);
 
@@ -1291,7 +1388,7 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
       }
 
       const node = getNodeByRangeIndex(diagnostic.start);
-      return {
+      const result: Diagnostic = {
         ruleId,
         message: diagnostic.message,
         messageId: diagnostic.messageId,
@@ -1304,6 +1401,8 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
         fixes: diagnostic.fixes,
         suggestions: diagnostic.suggestions,
       };
+      if (requireLocation) result.hasEndLocation = diagnostic[HAS_END_LOCATION];
+      return result;
     });
   } finally {
     // Reset state
@@ -1631,18 +1730,25 @@ function assertValidTestCaseIsWellFormed(test: ValidTestCase, seenTestCases: Set
  * @param test - Invalid test case object to check
  * @param seenTestCases - Set of serialized test cases to check for duplicates
  * @param ruleName - Name of the rule being tested
+ * @param assertionOptions - Requirements for invalid test assertions
  * @throws {AssertionError} If the test case is not valid
  */
 function assertInvalidTestCaseIsWellFormed(
   test: InvalidTestCase,
   seenTestCases: Set<string>,
   ruleName: string,
+  assertionOptions: AssertionOptions,
 ): void {
   assertTestCaseCommonPropertiesAreWellFormed(test);
 
   // `errors` must be a number greater than 0, or a non-empty array
   const { errors } = test;
+  const { requireMessage, requireLocation } = assertionOptions;
   if (typeof errors === "number") {
+    assert(
+      !requireMessage && !requireLocation,
+      "Invalid cases must have `errors` value as an array",
+    );
     assert(errors > 0, "Invalid cases must have `errors` value greater than 0");
   } else if (CONFORMANCE && (errors as unknown as string) === "__unknown__") {
     // In conformance tests, sometimes test cases don't specify `errors` property
@@ -1659,6 +1765,24 @@ function assertInvalidTestCaseIsWellFormed(
         + `expected a number or an array but got ${errors === null ? "null" : typeof errors}`,
     );
     assert(errors.length !== 0, "Invalid cases must have at least one error");
+
+    if (requireMessage || requireLocation) {
+      for (let i = 0; i < errors.length; i++) {
+        const error = errors[i];
+        if (typeof error === "string" || error instanceof RegExp) {
+          assert(
+            requireMessage !== "messageId" && !requireLocation,
+            `errors[${i}] must be an object when \`requireMessage\` is "messageId" or \`requireLocation\` is true`,
+          );
+        } else if (requireMessage === "message" || requireMessage === "messageId") {
+          const other = requireMessage === "message" ? "messageId" : "message";
+          assert(
+            Object.hasOwn(error, requireMessage) && !Object.hasOwn(error, other),
+            `errors[${i}] must specify \`${requireMessage}\` (and not \`${other}\`) when \`requireMessage\` is "${requireMessage}"`,
+          );
+        }
+      }
+    }
   }
 
   // `output` is optional, but if it exists it must be a string or `null`
@@ -1786,6 +1910,7 @@ type _ItFn = ItFn;
 type _ValidTestCase = ValidTestCase;
 type _InvalidTestCase = InvalidTestCase;
 type _TestCases = TestCases;
+type _AssertionOptions = AssertionOptions;
 type _Error = Error;
 type _ErrorSuggestion = ErrorSuggestion;
 
@@ -1803,6 +1928,7 @@ export namespace RuleTester {
   export type ValidTestCase = _ValidTestCase;
   export type InvalidTestCase = _InvalidTestCase;
   export type TestCases = _TestCases;
+  export type AssertionOptions = _AssertionOptions;
   export type Error = _Error;
   export type ErrorSuggestion = _ErrorSuggestion;
 }
