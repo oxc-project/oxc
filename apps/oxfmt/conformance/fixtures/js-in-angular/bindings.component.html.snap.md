@@ -1,0 +1,23 @@
+# Input
+
+`````html
+<li *ngFor="let a of b | async as list">{{a}}</li>
+<div bind-x="a+b" on-y="a=1" bindon-z="a" [x]="a+b" (y)="a=1" [(z)]="a"></div>
+<div *ngIf="aVeryVeryVeryVeryVeryLongConditionName && anotherVeryVeryVeryVeryVeryLongConditionName"></div>
+<p>{{a|b}} {{ a }} {{a   +b}}</p>
+
+`````
+
+# Output
+
+## `{}`
+
+`````html
+<li *ngFor="let a of b | async as list">{{ a }}</li>
+<div bind-x="a + b" on-y="a = 1" bindon-z="a" [x]="a + b" (y)="a = 1" [(z)]="a"></div>
+<div
+  *ngIf="aVeryVeryVeryVeryVeryLongConditionName && anotherVeryVeryVeryVeryVeryLongConditionName"
+></div>
+<p>{{ a | b }} {{ a }} {{ a + b }}</p>
+
+`````

@@ -1,0 +1,20 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<!doctype html><HTML></HTML>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<!doctype html>
+<HTML></HTML>
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<!doctype html>
+<HTML></HTML>
+
+===================== End =====================
