@@ -12,12 +12,13 @@ pub(super) enum FileType {
     ScriptJSX,
     ScriptTSX,
     ModuleJS,
+    ModuleTS,
 }
 
 impl FileType {
     /// Check if this [`FileType`] is TS or TSX.
     pub const fn is_ts(self) -> bool {
-        matches!(self, Self::ScriptTS | Self::ScriptTSX)
+        matches!(self, Self::ScriptTS | Self::ScriptTSX | Self::ModuleTS)
     }
 
     /// Check if this [`FileType`] is JSX or TSX.
@@ -27,7 +28,7 @@ impl FileType {
 
     /// Check if this [`FileType`] is an ESM module.
     pub const fn is_module(self) -> bool {
-        matches!(self, Self::ModuleJS)
+        matches!(self, Self::ModuleJS | Self::ModuleTS)
     }
 
     /// Create [`LexOptions`] for lexing this file type.
