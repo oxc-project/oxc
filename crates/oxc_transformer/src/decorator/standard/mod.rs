@@ -112,6 +112,47 @@ impl DecoratorElementKind {
         }
     }
 }
+/// `runInitializers(array, flags, self, value)` protocol.
+///
+/// `decoratorStart` (`npm/runtime/scripts/helpers/decoratorStart.js`) creates the context array:
+/// slot 0 holds class extra initializers, 1 static method extra initializers, 2 instance method
+/// extra initializers and 3 the metadata object. From slot 4, each decorated field or accessor has
+/// an `[initializers, extra initializers]` pair of slots.
+///
+/// `runInitializers` (`npm/runtime/scripts/helpers/runInitializers.js`) reads slot `flags >> 1`.
+/// If `flags & 1`, it calls extra initializers for their side effects; otherwise it threads the
+/// value through the initializers.
+pub mod run_initializers {
+    const CLASS_EXTRAS_SLOT: u32 = 0;
+    const STATIC_METHOD_EXTRAS_SLOT: u32 = 1;
+    const INSTANCE_METHOD_EXTRAS_SLOT: u32 = 2;
+    const FIRST_ELEMENT_SLOT: u32 = 4;
+
+    const fn extras(slot: u32) -> u32 {
+        (slot << 1) | 1
+    }
+
+    /// Flags for class extra initializers.
+    pub const CLASS_EXTRAS: u32 = extras(CLASS_EXTRAS_SLOT);
+    /// Flags for static method, getter and setter extra initializers.
+    pub const STATIC_METHOD_EXTRAS: u32 = extras(STATIC_METHOD_EXTRAS_SLOT);
+    /// Flags for instance method, getter and setter extra initializers.
+    pub const INSTANCE_METHOD_EXTRAS: u32 = extras(INSTANCE_METHOD_EXTRAS_SLOT);
+
+    /// Flags for the initializers of the decorated field or accessor at `index`.
+    pub const fn element_initializers(index: u32) -> u32 {
+        (FIRST_ELEMENT_SLOT + 2 * index) << 1
+    }
+
+    /// Flags for the extra initializers of the decorated field or accessor at `index`.
+    pub const fn element_extras(index: u32) -> u32 {
+        extras(FIRST_ELEMENT_SLOT + 2 * index + 1)
+    }
+}
+
+/// `decorateElement` flags (`npm/runtime/scripts/helpers/decorateElement.js`): the low 3 bits
+/// hold the [`DecoratorElementKind`], `0` for the class itself.
+const CLASS_KIND: u32 = 0;
 const FLAG_STATIC: u32 = 8;
 const FLAG_PRIVATE: u32 = 16;
 

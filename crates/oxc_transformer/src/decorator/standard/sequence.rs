@@ -17,8 +17,8 @@ use crate::{
 };
 
 use super::{
-    ClassDecoratorBindings, ClassDecoratorState, DecoratorElementKind, FLAG_PRIVATE, FLAG_STATIC,
-    PrivateDecoratorAccess, StandardDecoratorState,
+    CLASS_KIND, ClassDecoratorBindings, ClassDecoratorState, DecoratorElementKind, FLAG_PRIVATE,
+    FLAG_STATIC, PrivateDecoratorAccess, StandardDecoratorState, run_initializers,
 };
 
 impl<'a> StandardDecoratorState<'a> {
@@ -317,7 +317,7 @@ impl<'a> StandardDecoratorState<'a> {
             let arguments = ArenaVec::from_array_in(
                 [
                     Argument::from(init.create_read_expression(ctx)),
-                    number(0, ctx),
+                    number(CLASS_KIND, ctx),
                     Argument::from(name),
                     Argument::from(decorators.create_read_expression(ctx)),
                     Argument::from(target),
@@ -351,12 +351,16 @@ impl<'a> StandardDecoratorState<'a> {
 
         if static_method_extras {
             let target = bindings.target.create_read_expression(ctx);
-            exprs.push(state.run_initializers_call(3, target, ctx));
+            exprs.push(state.run_initializers_call(
+                run_initializers::STATIC_METHOD_EXTRAS,
+                target,
+                ctx,
+            ));
         }
 
         let class_extras = class_decorators.map(|_| {
             let target = bindings.target.create_read_expression(ctx);
-            state.run_initializers_call(1, target, ctx)
+            state.run_initializers_call(run_initializers::CLASS_EXTRAS, target, ctx)
         });
 
         (exprs, class_extras)
@@ -386,14 +390,14 @@ impl<'a> ClassDecoratorState<'a> {
         })
     }
 
-    /// `__runInitializers(_init, ((5 + 2 * index) << 1) | 1, this)`
+    /// `runInitializers(_init, run_initializers::element_extras(index), this)`
     pub(crate) fn decorated_field_extra_initializers(
         &self,
         index: u32,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         self.run_initializers_call(
-            ((5 + 2 * index) << 1) | 1,
+            run_initializers::element_extras(index),
             Expression::new_this_expression(SPAN, ctx),
             ctx,
         )
@@ -418,7 +422,7 @@ impl<'a> ClassDecoratorState<'a> {
         helper_call_expr(Helper::RunInitializers, arguments, ctx)
     }
 
-    /// `__runInitializers(_init, (4 + 2 * index) << 1, this, value)`
+    /// `runInitializers(_init, run_initializers::element_initializers(index), this, value)`
     pub(crate) fn wrap_decorated_field_value(
         &self,
         value: Option<Expression<'a>>,
@@ -428,7 +432,7 @@ impl<'a> ClassDecoratorState<'a> {
         let init = &self.init;
         let mut arguments = ArenaVec::with_capacity_in(4, ctx);
         arguments.push(Argument::from(init.create_read_expression(ctx)));
-        arguments.push(number((4 + 2 * index) << 1, ctx));
+        arguments.push(number(run_initializers::element_initializers(index), ctx));
         arguments.push(Argument::new_this_expression(SPAN, ctx));
         if let Some(value) = value {
             arguments.push(Argument::from(value));
