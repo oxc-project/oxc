@@ -112,11 +112,11 @@ impl Walk {
                 // a function / arrow head.
                 let nx = tokens.peek(end, cpu);
                 (matches_tk!(nx.kind, Ident | String | Number | PrivateIdent)
-                    || (nx.kind >= OP_KIND_BASE && matches!(nx.byte, b'(' | b'*' | b'['))
-                    || (tokens.is_ts
-                        && nx.kind >= OP_KIND_BASE
-                        && nx.byte == b'<'
-                        && arrow_type_params_at(tokens, nx.pos, cpu)))
+                    || (nx.kind >= OP_KIND_BASE
+                        && (matches!(nx.byte, b'(' | b'*' | b'[')
+                            || (nx.byte == b'<'
+                                && tokens.is_ts
+                                && arrow_type_params_at(tokens, nx.pos)))))
                     && !tokens.line_break_between(end, nx.pos, cpu)
             }
             tk!(KwType | KwInterface | KwNamespace | KwModule | KwDeclare) => {
