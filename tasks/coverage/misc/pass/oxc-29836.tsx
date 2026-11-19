@@ -3,7 +3,6 @@
 x = y ? (z) : <div>(// c)</div>;
 foo();
 x = y ? (z) : <div>(/* c */)</div>;
-x = <T extends U>(/* c */)</T>;
 
 function f() {
   switch (y) {

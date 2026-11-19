@@ -738,10 +738,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 if matches!(next, Kind::Eq | Kind::RAngle | Kind::Slash) {
                     // An attribute: `<T extends={U}>`, `<T extends>`, `<T extends />`.
                     Tristate::False
-                } else if next.is_binding_identifier() {
-                    // `<T extends U>(a) => a`, or an element with attributes `extends` and `U`.
-                    Tristate::Maybe
                 } else {
+                    // A constraint: `<T extends U>(a) => a`. `<T extends U` could also start an
+                    // element with attributes `extends` and `U`, but TypeScript always reads it
+                    // as type parameters, so `<T extends U>(a)</T>` is a syntax error.
                     Tristate::True
                 }
             }
