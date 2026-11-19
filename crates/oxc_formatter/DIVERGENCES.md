@@ -990,6 +990,46 @@ Prettier also drops them under an ancestor's parens after `export default` (`` e
 and for a sequence or assignment arrow body (`() => ({}.a, 1)`, `() => ({}.a = 1)`),
 but not at statement start or for other arrow bodies.
 
+## class-extends-single-parens
+
+- Why: uniform-rule (same construct, same output: the fitting clause, a breaking superclass without parens of its own)
+- Pin: `tests/fixtures/ts/class/extends-single-parens.ts`
+
+```ts
+// input
+DynamicErrorBoundary = class extends (
+  React.Component<DynamicErrorBoundaryProps, DynamicErrorBoundaryState>
+) {};
+DynamicErrorBoundary = class extends (React.Component<Props, State>) {};
+DynamicErrorBoundary = class extends (
+  someobjectsomepropertysomeotherproperty.someotherpropertyyyyyyyyy.SomeClass
+) {};
+
+// ours
+DynamicErrorBoundary = class extends (
+  React.Component<DynamicErrorBoundaryProps, DynamicErrorBoundaryState>
+) {};
+DynamicErrorBoundary = class extends (React.Component<Props, State>) {};
+DynamicErrorBoundary = class extends (
+  someobjectsomepropertysomeotherproperty.someotherpropertyyyyyyyyy.SomeClass
+) {};
+
+// prettier
+DynamicErrorBoundary = class extends (
+  (React.Component<DynamicErrorBoundaryProps, DynamicErrorBoundaryState>)
+) {};
+DynamicErrorBoundary = class extends (React.Component<Props, State>) {};
+DynamicErrorBoundary = class extends (
+  someobjectsomepropertysomeotherproperty.someotherpropertyyyyyyyyy.SomeClass
+) {};
+```
+
+The class of an assignment wraps a breaking superclass in parens.
+Prettier prints that pair around a superclass's own parens too, so only a breaking one gets two:
+the same superclass prints one pair when the clause fits, as a breaking superclass without parens of its own does.
+We print one pair in every case:
+always around a superclass with parens of its own (an instantiation expression, `new`, a binary, an object, ...), only when breaking around the others.
+
 ## text-display-width
 
 - Why: uniform-rule (text width is the display width; oxc#23863, prettier/prettier#19538)

@@ -87,6 +87,10 @@ pub struct JsFormatContext<'ast> {
     /// Set (and cleared) by `WithAssignmentLayout` around formatting the arrow, taken by the arrow's `write`.
     arrow_assignment_layout: Option<(Span, AssignmentLikeLayout)>,
 
+    /// The superclass whose parentheses its class clause prints instead of the superclass itself.
+    /// Set by `FormatClass` for an assignment's class while it prints the superclass.
+    class_parenthesized_superclass: Option<Span>,
+
     /// Tracks whether quotes are needed for properties in the current object-like node.
     ///
     /// When [`JsFormatOptions::quote_properties`] is [`crate::QuoteProperties::Consistent`], each entry indicates
@@ -167,6 +171,7 @@ impl<'ast> JsFormatContext<'ast> {
             comments: Comments::new(source_text, comments),
             cached_elements: FxHashMap::default(),
             arrow_assignment_layout: None,
+            class_parenthesized_superclass: None,
             quote_needed_stack: Vec::new(),
             tailwind_context_stack: Vec::new(),
             embedding: Embedding::default(),
@@ -231,6 +236,20 @@ impl<'ast> JsFormatContext<'ast> {
     /// `write` (a suppressed arrow prints its source verbatim instead).
     pub(crate) fn clear_arrow_assignment_layout(&mut self) {
         self.arrow_assignment_layout = None;
+    }
+
+    /// See the [`Self::class_parenthesized_superclass`] field.
+    /// Returns the previous one, to restore after printing.
+    pub(crate) fn replace_class_parenthesized_superclass(
+        &mut self,
+        span: Option<Span>,
+    ) -> Option<Span> {
+        std::mem::replace(&mut self.class_parenthesized_superclass, span)
+    }
+
+    /// See the [`Self::class_parenthesized_superclass`] field.
+    pub(crate) fn is_class_parenthesized_superclass(&self, span: Span) -> bool {
+        self.class_parenthesized_superclass == Some(span)
     }
 
     /// Pushes a new quote needed state onto the stack.

@@ -36,6 +36,9 @@ aaaaaaaaaaaaaaaaaaaa = bbbbbbbbbbbbbbbbbbbbb = /** @type {T} */ ((xxxxxxxxxxxxxx
 const someLongVariableNameForArrow3 = /** @type {Handler} */ ((a) => (b) => (c) => (d) => someLongFunctionCall(a, b, c, d, eeeeeeeeeee));
 const someLongVariableNameHereForNot = !/** @type {Promise<string>} */ ("some long string literal here ok yes");
 
+// An assigned class's superclass: the cast's parens are the clause's parens, none added around them.
+a = class extends /** @type {X} */ (b || c) {};
+
 // Nested casts: each cast keeps its own parens.
 const outer = /** @type {U} */ (/** @type {T} */ (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa).bbbbbbbbbbbbbbbb);
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb = /** @type {T} */ (cccccccccccccccc = /** @type {S} */ (dddddddddddddddd = eeeeeeeeeeeeeeee));
@@ -119,6 +122,9 @@ const someLongVariableNameForArrow3 = /** @type {Handler} */ (
 const someLongVariableNameHereForNot = !(
   /** @type {Promise<string>} */ ("some long string literal here ok yes")
 );
+
+// An assigned class's superclass: the cast's parens are the clause's parens, none added around them.
+a = class extends /** @type {X} */ (b || c) {};
 
 // Nested casts: each cast keeps its own parens.
 const outer = /** @type {U} */ (
@@ -235,6 +241,9 @@ const someLongVariableNameForArrow3 = /** @type {Handler} */ (
 const someLongVariableNameHereForNot = !(
   /** @type {Promise<string>} */ ("some long string literal here ok yes")
 );
+
+// An assigned class's superclass: the cast's parens are the clause's parens, none added around them.
+a = class extends /** @type {X} */ (b || c) {};
 
 // Nested casts: each cast keeps its own parens.
 const outer = /** @type {U} */ (

@@ -37,6 +37,7 @@ use crate::{
         object::{format_property_key, should_preserve_quote},
         statement_body::write_head_body_separator,
         suppressed::write_suppressed_content,
+        typecast::{TypeCast, classify_type_cast, is_cast_target},
     },
     write,
 };
@@ -356,16 +357,17 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
                 // Format the extends clause with its expression and optional type arguments
                 let format_super = format_with(|f| {
                     let type_arguments = super_type_arguments;
+                    let bare = type_arguments.is_none() && implements.is_empty();
 
                     // Collect comments after the extends expression (and type arguments if present)
                     // These comments need careful handling to preserve their association
                     // with the extends clause rather than the class body
-                    let comments = if type_arguments.is_some() || !implements.is_empty() {
-                        &[]
-                    } else {
+                    let comments = if bare {
                         f.context()
                             .comments()
                             .comments_in_range(extends.span().end, body.span.start)
+                    } else {
+                        &[]
                     };
 
                     // Check if there are trailing line comments after the extends clause
@@ -373,31 +375,78 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
                     // relative to the extends expression and any type arguments
                     let has_trailing_line_comments = comments.iter().any(Comment::is_line);
 
-                    let content = format_with(|f| {
-                        if type_arguments.is_none() && implements.is_empty() {
-                            FormatNodeWithoutTrailingComments(&extends).fmt(f);
+                    let trailing_comments = format_with(|f| {
+                        if bare {
                             // Line comments are handled separately to ensure proper placement
                             if !has_trailing_line_comments {
                                 FormatTrailingComments::Comments(comments).fmt(f);
                             }
                         } else {
+                            format_trailing_comments(
+                                extends.parent().span(),
+                                extends.span(),
+                                extends.following_span_start(),
+                            )
+                            .fmt(f);
+                        }
+                    });
+                    let content = format_with(|f| {
+                        if bare {
+                            write!(
+                                f,
+                                [FormatNodeWithoutTrailingComments(&extends), trailing_comments]
+                            );
+                        } else {
                             extends.fmt(f);
                         }
                     });
 
-                    if matches!(extends.grand_parent(), AstNodes::AssignmentExpression(_)) {
-                        let content = content.memoized();
-                        write!(
-                            f,
-                            [group(&format_args!(
-                                &if_group_breaks(&format_args!(
-                                    token("("),
-                                    &soft_block_indent(&content),
-                                    token(")"),
-                                )),
-                                &if_group_fits_on_line(&content)
-                            ))]
-                        );
+                    if matches!(extends.grand_parent(), AstNodes::AssignmentExpression(_))
+                        // A cast target's parens are its pair already
+                        && !is_cast_target(extends.span(), f)
+                    {
+                        // A superclass with parentheses of its own prints in these instead,
+                        // see DIVERGENCES.md#class-extends-single-parens
+                        if extends.needs_parentheses(f) {
+                            // Its leading comments stay outside them, as they would around its own,
+                            // except with one ending its line or a cast comment binding inside it, which go inside
+                            let leading_outside = !f
+                                .comments()
+                                .has_leading_own_line_comment(extends.span().start)
+                                && matches!(classify_type_cast(extends.span(), f), TypeCast::None);
+                            let outer = f
+                                .context_mut()
+                                .replace_class_parenthesized_superclass(Some(extends.span()));
+                            write!(
+                                f,
+                                [
+                                    leading_outside
+                                        .then(|| format_leading_comments(extends.span())),
+                                    group(&format_args!(
+                                        token("("),
+                                        &soft_block_indent(&FormatNodeWithoutTrailingComments(
+                                            &extends
+                                        )),
+                                        token(")"),
+                                    )),
+                                    trailing_comments
+                                ]
+                            );
+                            f.context_mut().replace_class_parenthesized_superclass(outer);
+                        } else {
+                            let content = content.memoized();
+                            write!(
+                                f,
+                                [group(&format_args!(
+                                    &if_group_breaks(&format_args!(
+                                        token("("),
+                                        &soft_block_indent(&content),
+                                        token(")"),
+                                    )),
+                                    &if_group_fits_on_line(&content)
+                                ))]
+                            );
+                        }
                     } else {
                         content.fmt(f);
                     }
