@@ -25,7 +25,9 @@ pub(super) struct ClassDetails<'a> {
     /// Bindings for class name and temp var for class
     pub bindings: ClassBindings<'a>,
     /// Standard decorators state. `Some` if class is decorated.
-    pub decorators: Option<ClassDecoratorState<'a>>,
+    ///
+    /// Boxed because decorated classes are rare, and this keeps `ClassDetails` small.
+    pub decorators: Option<Box<ClassDecoratorState<'a>>>,
     /// Whether standard decorator lowering gives this class per-evaluation state: it is decorated
     /// or had auto-accessors (see [`ClassLowering::handles_standard_decorators`]).
     ///

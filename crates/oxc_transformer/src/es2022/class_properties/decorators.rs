@@ -9,7 +9,7 @@ use oxc_traverse::{Ancestor, BoundIdentifier};
 
 use crate::{
     common::{
-        class_lowering::ClassLoweringMode,
+        class_lowering::{ClassLowering, ClassLoweringMode},
         helper_loader::{Helper, helper_call_expr},
     },
     context::TraverseCtx,
@@ -23,7 +23,7 @@ use super::{ClassBindings, ClassProperties, IdentIndexMap, PrivateProp};
 
 /// Decorator setup produced before the class is pushed onto the class stack.
 pub(super) struct DecoratorBodyEntry<'a> {
-    pub state: Option<ClassDecoratorState<'a>>,
+    pub state: Option<Box<ClassDecoratorState<'a>>>,
     pub static_accessor_binding: Option<BoundIdentifier<'a>>,
     /// See [`ClassDetails::per_evaluation_state`](super::ClassDetails::per_evaluation_state).
     pub per_evaluation_state: bool,
@@ -114,11 +114,10 @@ impl<'a> ClassProperties<'a> {
         &mut self,
         body: &mut ClassBody<'a>,
         class_name_binding: Option<&BoundIdentifier<'a>>,
+        class_scope_id: ScopeId,
+        lowering: ClassLowering,
         ctx: &mut TraverseCtx<'a>,
     ) -> DecoratorBodyEntry<'a> {
-        let Ancestor::ClassBody(class) = ctx.parent() else { unreachable!() };
-        let class_scope_id = class.scope_id().get().unwrap();
-        let lowering = ctx.state.class_lowering_of(class_scope_id);
         let standard = self.decorator_state.enabled();
         let is_decorated = standard && lowering.has_decorators();
         let has_auto_accessor = standard && lowering.has_auto_accessor();
@@ -173,7 +172,7 @@ impl<'a> ClassProperties<'a> {
             );
         }
         let state = if is_decorated {
-            Some(StandardDecoratorState::prepare_class_decorators(body, tables, ctx))
+            Some(Box::new(StandardDecoratorState::prepare_class_decorators(body, tables, ctx)))
         } else {
             None
         };

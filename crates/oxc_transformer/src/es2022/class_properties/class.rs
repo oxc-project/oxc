@@ -104,7 +104,8 @@ impl<'a> ClassProperties<'a> {
             !is_declaration && Self::should_emit_private_method_helpers_in_class_sequence(ctx);
 
         let lowering = ctx.state.class_lowering_of(class_scope_id);
-        let mut entry = self.on_body_entry(body, class_name_binding.as_ref(), ctx);
+        let mut entry =
+            self.on_body_entry(body, class_name_binding.as_ref(), class_scope_id, lowering, ctx);
         let per_evaluation_state = entry.per_evaluation_state;
         if matches!(lowering.mode(), ClassLoweringMode::Native | ClassLoweringMode::Preserve) {
             // Register private names only when they can shadow a lowered name in an enclosing

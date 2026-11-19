@@ -11,7 +11,7 @@ use oxc_traverse::{Ancestor, BoundIdentifier};
 
 use crate::{
     common::{
-        class_lowering::ClassLoweringMode,
+        class_lowering::{ClassLowering, ClassLoweringMode},
         helper_loader::{Helper, helper_call_expr},
     },
     context::TraverseCtx,
@@ -25,6 +25,7 @@ impl<'a> StandardDecoratorState<'a> {
     pub(crate) fn wrap_native_accessor_expression(
         &mut self,
         expression: &mut Expression<'a>,
+        lowering: ClassLowering,
         ctx: &mut TraverseCtx<'a>,
     ) {
         let Expression::ClassExpression(class) = expression else { return };
@@ -46,7 +47,7 @@ impl<'a> StandardDecoratorState<'a> {
             return;
         }
         // A class which lowers its own decorators and accessors wraps them when it is entered.
-        if ctx.state.class_lowering_before_entry(class).mode() != ClassLoweringMode::Native {
+        if lowering.mode() != ClassLoweringMode::Native {
             return;
         }
         if class.id.is_none()
@@ -73,10 +74,10 @@ impl<'a> StandardDecoratorState<'a> {
     pub(crate) fn wrap_class_in_initializer(
         &mut self,
         expression: &mut Expression<'a>,
+        lowering: ClassLowering,
         ctx: &mut TraverseCtx<'a>,
     ) {
         let Expression::ClassExpression(class) = expression else { return };
-        let lowering = ctx.state.class_lowering_before_entry(class);
         if !lowering.handles_standard_decorators()
             || matches!(lowering.mode(), ClassLoweringMode::Native | ClassLoweringMode::Preserve)
         {
@@ -183,7 +184,12 @@ impl<'a> StandardDecoratorState<'a> {
                         tables.accessor_storage.insert(storage.address());
                     }
                 }
-                if let Some(name) = name {
+                // Only an anonymous class initializer looks its name up.
+                if let Some(name) = name
+                    && let Some(Expression::ClassExpression(class)) =
+                        storage.value.as_ref().map(Expression::get_inner_expression)
+                    && class.id.is_none()
+                {
                     self.accessor_names.insert(storage.address(), name);
                 }
                 if !native_fields {

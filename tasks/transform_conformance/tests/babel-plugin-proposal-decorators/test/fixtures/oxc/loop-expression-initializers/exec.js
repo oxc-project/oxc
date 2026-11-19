@@ -129,3 +129,11 @@ return (async () => {
   expect(classes.map(C => new C().x)).toEqual([1, 2, 3, 4]);
   expect(log).toEqual(["base:1", "base:2", "body:3", "update:3", "body:4", "update:4"]);
 })();
+
+// A decorated class created by a function in an unbraced loop body keeps per-call state.
+{
+  const makers = [];
+  for (let i = 0; i < 2; i++) makers.push(function () { return class { @capture(i) x; }; });
+  const [A, B] = makers.map((make) => make());
+  expect([new A().x, new B().x, new (makers[0]())().x]).toEqual([0, 1, 0]);
+}

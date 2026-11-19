@@ -45,7 +45,15 @@ impl<'a> StandardDecoratorState<'a> {
         if !self.enabled {
             return;
         }
-        Self::scope_decorated_loop_header(statement, ctx);
+        if matches!(
+            statement,
+            Statement::WhileStatement(_)
+                | Statement::ForStatement(_)
+                | Statement::DoWhileStatement(_)
+                | Statement::LabeledStatement(_)
+        ) {
+            Self::scope_decorated_loop_header(statement, ctx);
+        }
         if !matches!(statement, Statement::BlockStatement(_))
             && matches!(
                 ctx.parent(),
@@ -82,8 +90,10 @@ impl<'a> StandardDecoratorState<'a> {
                         | Statement::DoWhileStatement(_)
                 )
                 .then(|| statement.address());
+                // Each cached loop is looked up at most once: a later search starts below the loop
+                // which cached it, and stops at the first cached loop.
                 if let Some(address) = loop_address
-                    && let Some(&found) = self.loop_classes.get(&address)
+                    && let Some(found) = self.loop_classes.remove(&address)
                 {
                     self.found |= found;
                     return;
@@ -105,6 +115,10 @@ impl<'a> StandardDecoratorState<'a> {
                     oxc_ast_visit::walk::walk_class(self, class);
                 }
             }
+
+            // A class inside a function gets its state from that function's body on each call.
+            fn visit_function(&mut self, _: &Function<'a>, _: ScopeFlags) {}
+            fn visit_arrow_function_expression(&mut self, _: &ArrowFunctionExpression<'a>) {}
         }
         let found = {
             let mut finder = DecoratedClassFinder {
@@ -124,6 +138,7 @@ impl<'a> StandardDecoratorState<'a> {
 
     /// Move repeated header evaluations into a fresh block without introducing a function.
     /// This keeps await/yield and lexical this/arguments/super in their original context.
+    #[inline(never)]
     fn scope_decorated_loop_header(statement: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let needs_first = match Self::loop_statement(statement) {
             Statement::WhileStatement(loop_stmt) => {

@@ -18,3 +18,12 @@ expect([A.a, B.a]).toEqual([1, 2]);
   while ((C = class { accessor x = i; }, i++ < 3)) instances.push(new C());
   expect(instances.map((c) => c.x)).toEqual([1, 2, 3]);
 }
+
+// A class created by a function in an unbraced loop body owns its storage per call.
+{
+  const makers = [];
+  for (let i = 0; i < 2; i++) makers.push(() => class { accessor x = i; });
+  const [A, B] = makers.map((make) => make());
+  const A2 = makers[0]();
+  expect([new A().x, new B().x, new A2().x]).toEqual([0, 1, 0]);
+}
