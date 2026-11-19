@@ -1,5 +1,7 @@
 use std::{
-    env, fmt,
+    env,
+    ffi::OsStr,
+    fmt,
     io::{self, IsTerminal},
 };
 
@@ -12,11 +14,6 @@ pub struct GraphicalTheme {
     pub(super) styles: ThemeStyles,
 }
 
-fn force_color() -> bool {
-    // Assume CI can always print colors.
-    env::var_os("CI").is_some() || env::var_os("FORCE_COLOR").is_some_and(|value| value != "0")
-}
-
 impl Default for GraphicalTheme {
     fn default() -> Self {
         Self::new(io::stdout().is_terminal() && io::stderr().is_terminal())
@@ -27,10 +24,28 @@ impl GraphicalTheme {
     /// Chooses a graphical theme based on terminal and environment support.
     #[must_use]
     pub(super) fn new(is_terminal: bool) -> Self {
-        if force_color() {
+        Self::from_env(
+            is_terminal,
+            env::var_os("CI").is_some(),
+            env::var_os("FORCE_COLOR").as_deref(),
+            env::var_os("NO_COLOR").as_deref(),
+        )
+    }
+
+    fn from_env(
+        is_terminal: bool,
+        is_ci: bool,
+        force_color: Option<&OsStr>,
+        no_color: Option<&OsStr>,
+    ) -> Self {
+        // An explicit opt-out takes precedence over automatic CI color support.
+        // Preserve the existing priority of an explicit FORCE_COLOR override.
+        if force_color.is_some_and(|value| value != "0")
+            || (is_ci && no_color.is_none_or(|value| value == "0"))
+        {
             return Self::unicode();
         }
-        match env::var_os("NO_COLOR") {
+        match no_color {
             _ if !is_terminal => Self::none(),
             Some(value) if value != "0" => Self::unicode_nocolor(),
             _ => Self::unicode(),
@@ -243,6 +258,68 @@ impl ThemeCharacters {
             error: "x",
             warning: "!",
             advice: ">",
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::ffi::OsStr;
+
+    use super::GraphicalTheme;
+
+    fn has_color(theme: &GraphicalTheme) -> bool {
+        let mut output = String::new();
+        theme.write_warning(&mut output, "warning").unwrap();
+        output.contains('\x1b')
+    }
+
+    #[test]
+    fn no_color_disables_automatic_ci_colors() {
+        for is_terminal in [false, true] {
+            for force_color in [None, Some(OsStr::new("0"))] {
+                assert!(!has_color(&GraphicalTheme::from_env(
+                    is_terminal,
+                    true,
+                    force_color,
+                    Some(OsStr::new("1")),
+                )));
+            }
+        }
+    }
+
+    #[test]
+    fn ci_keeps_automatic_colors_without_an_opt_out() {
+        for no_color in [None, Some(OsStr::new("0"))] {
+            assert!(has_color(&GraphicalTheme::from_env(false, true, None, no_color)));
+        }
+    }
+
+    #[test]
+    fn explicit_force_color_keeps_precedence() {
+        for is_ci in [false, true] {
+            assert!(has_color(&GraphicalTheme::from_env(
+                false,
+                is_ci,
+                Some(OsStr::new("1")),
+                Some(OsStr::new("1")),
+            )));
+        }
+    }
+
+    #[test]
+    fn terminal_detection_is_preserved() {
+        for is_terminal in [false, true] {
+            assert_eq!(
+                has_color(&GraphicalTheme::from_env(is_terminal, false, None, None)),
+                is_terminal,
+            );
+            assert!(!has_color(&GraphicalTheme::from_env(
+                is_terminal,
+                false,
+                None,
+                Some(OsStr::new("1")),
+            )));
         }
     }
 }
