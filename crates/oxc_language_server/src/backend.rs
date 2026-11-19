@@ -25,6 +25,7 @@ use crate::{
     capabilities::{Capabilities, DiagnosticMode, server_capabilities},
     file_system::LSPFileSystem,
     options::WorkspaceOption,
+    utils::set_nested_contexts,
     worker::WorkspaceWorker,
     worker_manager::WorkerManager,
 };
@@ -72,6 +73,10 @@ pub struct Backend {
     // Messages collected during `initialize` that must be deferred until `initialized`,
     // because the LSP spec forbids server-to-client communication before the initialize response is sent.
     pending_initialization_messages: OnceCell<Vec<ClientMessage>>,
+    // The client can send workspace folder changes while the server still handles a previous one:
+    // handlers run concurrently. A change computes the nested folders from the workers there are,
+    // and has to insert its own before the next one looks at them.
+    workspace_folders_lock: tokio::sync::Mutex<()>,
 }
 
 impl LanguageServer for Backend {
@@ -146,6 +151,10 @@ impl LanguageServer for Backend {
             self.worker_manager.set_single_file_mode(true);
             vec![]
         };
+
+        // Workspace folders nested in each other are served by the worker of the innermost one.
+        // Each worker has to know about the others before its tool is built, here or in `initialized`.
+        set_nested_contexts(&workers.iter().collect::<Vec<_>>()).await;
 
         // When the client did not send our custom `initialization_options`,
         // or the client does not support `workspace/configuration` request,
@@ -241,22 +250,10 @@ impl LanguageServer for Backend {
             // This is necessary because the worker was not started before.
             // On Pull diagnostic model, we will ask the client to refresh diagnostics instead of sending them all.
             if capabilities.diagnostic_mode == DiagnosticMode::Push {
-                for uri in &known_uris {
-                    // Check if this worker is the most specific one for this URI
-                    let Some(worker) = self.worker_manager.get_worker_for_uri(uri).await else {
-                        continue;
-                    };
-                    let document = self.file_system.get_document(uri);
-                    let diagnostics = worker.run_diagnostic(document).await;
-                    match diagnostics {
-                        Err(err) => {
-                            error!("running diagnostics for {uri} failed: {err}");
-                            client_messages
-                                .push(ClientMessage { r#type: MessageType::Error, message: err });
-                        }
-                        Ok(diagnostics) => new_diagnostics.extend(diagnostics),
-                    }
-                }
+                // Each document is linted by the most specific worker for its URI
+                let (diagnostics, messages) = self.run_diagnostics(&known_uris, |_, _| true).await;
+                new_diagnostics.extend(diagnostics);
+                client_messages.extend(messages);
             }
 
             if !new_diagnostics.is_empty() {
@@ -509,8 +506,17 @@ impl LanguageServer for Backend {
     /// When all workspace folders are removed, the server enters single-file mode so that
     /// subsequent file opens will again create workers dynamically.
     ///
+    /// Workspace folders can be nested in each other. A file belongs to the innermost folder, so
+    /// the worker of an outer folder skips the folders nested in it, and the worker of a nested
+    /// folder still honours the ignore files of the outermost folder around it. Only the
+    /// workspace folders decide that: when they change, the workers whose nested folders changed
+    /// are rebuilt and the open documents of the workers involved are validated again.
+    ///
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_didChangeWorkspaceFolders>
     async fn did_change_workspace_folders(&self, params: DidChangeWorkspaceFoldersParams) {
+        // The `workspace/configuration` answer does not need a free handler slot, so waiting for
+        // it while holding the lock cannot block it.
+        let _changing_folders = self.workspace_folders_lock.lock().await;
         let capabilities = self.capabilities();
         let diagnostic_mode = capabilities.diagnostic_mode.clone();
 
@@ -521,7 +527,9 @@ impl LanguageServer for Backend {
             .update_workspace_folders(&params.event.added, &params.event.removed)
             .await;
 
-        // === Phase 2: Shut down removed workers (no lock held) ===
+        // === Phase 2: Shut down removed workers and clear their diagnostics (no lock held) ===
+        // The diagnostics are cleared before anything is validated again: a file of a removed
+        // folder can now belong to another worker, whose diagnostics must not be cleared after.
         let mut cleared_diagnostics = vec![];
         let mut removed_registrations = vec![];
         let mut client_messages = vec![];
@@ -529,6 +537,10 @@ impl LanguageServer for Backend {
             let (uris, unregistrations) = worker.shutdown().await;
             cleared_diagnostics.extend(uris);
             removed_registrations.extend(unregistrations);
+        }
+
+        if diagnostic_mode == DiagnosticMode::Push && !cleared_diagnostics.is_empty() {
+            self.clear_diagnostics(cleared_diagnostics.clone()).await;
         }
 
         // === Phase 3: Request configuration and start new workers (no lock held) ===
@@ -541,40 +553,95 @@ impl LanguageServer for Backend {
             vec![]
         };
 
-        let mut new_workers = vec![];
+        let new_workers = params
+            .event
+            .added
+            .into_iter()
+            .map(|folder| self.worker_manager.create_worker(folder.uri, diagnostic_mode.clone()))
+            .collect::<Vec<_>>();
+
+        // The nested folders are known to every worker before a new one is started.
+        // The workers of single-file mode have no workspace folder: they get no context, each
+        // serves the files its root covers.
+        let mut context_changed_roots = vec![];
+        let mut nested_new_roots = vec![];
+        if !self.worker_manager.is_single_file_mode() {
+            let workers = self.worker_manager.read_workspace_workers().await;
+            let all = workers.iter().chain(&new_workers).collect::<Vec<_>>();
+            for (index, changed) in set_nested_contexts(&all).await.into_iter().enumerate() {
+                if !changed {
+                    continue;
+                }
+                let root = all[index].get_root_uri().clone();
+                if index < workers.len() {
+                    context_changed_roots.push(root);
+                } else {
+                    nested_new_roots.push(root);
+                }
+            }
+        }
+
         let mut added_registrations = vec![];
-        for (index, folder) in params.event.added.into_iter().enumerate() {
-            let worker = self.worker_manager.create_worker(folder.uri, diagnostic_mode.clone());
+        for (index, worker) in new_workers.iter().enumerate() {
             let options = configurations.get(index).unwrap_or(&serde_json::Value::Null);
 
             client_messages.extend(worker.start_worker(options.clone()).await);
             added_registrations.extend(worker.init_watchers().await);
-            new_workers.push(worker);
         }
 
         // === Phase 4: Insert new workers (brief write lock, no async I/O) ===
         self.worker_manager.add_workers(new_workers).await;
 
-        // === Phase 5: Clear diagnostics and update client watchers (no lock held) ===
-        if diagnostic_mode == DiagnosticMode::Push && !cleared_diagnostics.is_empty() {
-            self.clear_diagnostics(cleared_diagnostics).await;
+        // === Phase 5: Rebuild the tools whose nested folders changed (no lock held) ===
+        // Once, and after the new workers are routable.
+        for worker in self.worker_manager.read_workspace_workers().await.iter() {
+            if !context_changed_roots.contains(worker.get_root_uri()) {
+                continue;
+            }
+            let (messages, unregistrations, registrations) = worker.rebuild_tool().await;
+            client_messages.extend(messages);
+            removed_registrations.extend(unregistrations);
+            added_registrations.extend(registrations);
         }
 
-        if capabilities.dynamic_watchers {
-            if !added_registrations.is_empty()
-                && let Err(err) = self.client.register_capability(added_registrations).await
-            {
-                warn!("sending registerCapability.didChangeWatchedFiles failed: {err}");
+        // === Phase 6: Validate the documents of the workers involved again ===
+        // Files change owner when a folder is nested in another one.
+        // Only the workers which nest, or are nested in, a changed folder are involved: a folder
+        // which is not nested validates nothing, whatever else changed in the same event.
+        // The documents cleared above are validated by the worker they belong to now, which can be
+        // a worker whose own context did not change.
+        let involved_roots = [context_changed_roots, nested_new_roots].concat();
+        if !involved_roots.is_empty() {
+            if diagnostic_mode == DiagnosticMode::Push {
+                let uris = self.file_system.keys();
+                let (diagnostics, messages) = self
+                    .run_diagnostics(&uris, |uri, root| {
+                        involved_roots.contains(root) || cleared_diagnostics.contains(uri)
+                    })
+                    .await;
+                client_messages.extend(messages);
+                self.publish_all_diagnostics(diagnostics, ConcurrentHashMap::default()).await;
+            } else if diagnostic_mode == DiagnosticMode::Pull {
+                self.spawn_diagnostic_refresh();
             }
+        }
 
+        // === Phase 7: Update client watchers (no lock held) ===
+        if capabilities.dynamic_watchers {
             if !removed_registrations.is_empty()
                 && let Err(err) = self.client.unregister_capability(removed_registrations).await
             {
                 warn!("sending unregisterCapability.didChangeWatchedFiles failed: {err}");
             }
+
+            if !added_registrations.is_empty()
+                && let Err(err) = self.client.register_capability(added_registrations).await
+            {
+                warn!("sending registerCapability.didChangeWatchedFiles failed: {err}");
+            }
         }
 
-        // === Phase 6: Show messages to the client ===
+        // === Phase 8: Show messages to the client ===
         self.send_client_messages(client_messages).await;
     }
 
@@ -978,6 +1045,7 @@ impl Backend {
             capabilities: OnceCell::new(),
             file_system: Arc::new(LSPFileSystem::default()),
             pending_initialization_messages: OnceCell::new(),
+            workspace_folders_lock: tokio::sync::Mutex::new(()),
         }
     }
 
@@ -1040,6 +1108,39 @@ impl Backend {
         );
 
         configs
+    }
+
+    /// Run the diagnostics of the `uris` which belong to a worker, as the worker manager routes
+    /// them, when `is_wanted` accepts the document and the root of that worker.
+    /// Returns the diagnostics to publish and the messages for the client.
+    async fn run_diagnostics(
+        &self,
+        uris: &[Uri],
+        is_wanted: impl Fn(&Uri, &Uri) -> bool,
+    ) -> (Vec<(Uri, Vec<Diagnostic>)>, Vec<ClientMessage>) {
+        let mut diagnostics = Vec::new();
+        let mut client_messages = Vec::new();
+
+        for uri in uris {
+            let Some(worker) = self.worker_manager.get_worker_for_uri(uri).await else {
+                continue;
+            };
+            if !is_wanted(uri, worker.get_root_uri()) {
+                continue;
+            }
+
+            let document = self.file_system.get_document(uri);
+            match worker.run_diagnostic(document).await {
+                Err(err) => {
+                    error!("running diagnostics for {uri} failed: {err}");
+                    client_messages
+                        .push(ClientMessage { r#type: MessageType::Error, message: err });
+                }
+                Ok(reports) => diagnostics.extend(reports),
+            }
+        }
+
+        (diagnostics, client_messages)
     }
 
     async fn clear_diagnostics(&self, uris: Vec<Uri>) {

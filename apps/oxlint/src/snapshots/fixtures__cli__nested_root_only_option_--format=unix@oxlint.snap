@@ -1,0 +1,13 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=unix
+working directory: fixtures/cli/nested_root_only_option
+----------
+index.js:1:1: `debugger` statement is not allowed [Error/eslint(no-debugger)]
+
+1 problem
+----------
+CLI result: LintFoundErrors
+----------

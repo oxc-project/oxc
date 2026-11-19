@@ -11,8 +11,8 @@ use tower_lsp_server::gen_lsp_types::{
 use tracing::{debug, error, warn};
 
 use oxc_language_server::{
-    Capabilities, ClientMessage, LanguageId, TextDocument, Tool, ToolBuildResult, ToolBuilder,
-    ToolRestartChanges, offset_to_position, uri_utils::uri_to_file_path,
+    BuildContext, Capabilities, ClientMessage, LanguageId, TextDocument, Tool, ToolBuildResult,
+    ToolBuilder, ToolRestartChanges, offset_to_position, uri_utils::uri_to_file_path,
     utils::normalize_user_config_path_to_watch_pattern,
 };
 
@@ -56,6 +56,22 @@ impl ServerFormatterBuilder {
         root_uri: &Uri,
         options: serde_json::Value,
     ) -> (ServerFormatter, Vec<ClientMessage>) {
+        self.build_with_parent_root(root_uri, options, None)
+    }
+
+    /// Same as [`Self::build`], honouring the `.prettierignore` of `parent_root`.
+    ///
+    /// `parent_root` is the outermost workspace folder around the root, if any: the formatter of
+    /// a nested folder still honours the `.prettierignore` of the folder above it.
+    ///
+    /// # Panics
+    /// Panics if the root URI cannot be converted to a file path.
+    pub fn build_with_parent_root(
+        &self,
+        root_uri: &Uri,
+        options: serde_json::Value,
+        parent_root: Option<&Path>,
+    ) -> (ServerFormatter, Vec<ClientMessage>) {
         let options = deserialize_lsp_options(options);
 
         let root_path = uri_to_file_path(root_uri).unwrap();
@@ -82,6 +98,7 @@ impl ServerFormatterBuilder {
             root_path.to_path_buf(),
             source_formatter,
             JsConfigLoaderCb::clone(&self.js_config_loader),
+            parent_root.map(Path::to_path_buf),
             explicit_config_path,
             use_nested_config,
         );
@@ -103,6 +120,23 @@ impl ToolBuilder for ServerFormatterBuilder {
         let (tool, client_messages) = self.build(root_uri, options);
         ToolBuildResult { tool: Box::new(tool), client_messages }
     }
+
+    fn build_with_context(
+        &self,
+        root_uri: &Uri,
+        options: serde_json::Value,
+        context: BuildContext<'_>,
+    ) -> ToolBuildResult {
+        // `context.excluded_roots` is deliberately ignored: the formatter resolves its
+        // configuration lazily, by walking upwards from the file being formatted, so it never
+        // eagerly loads anything from a nested workspace folder.
+        let (tool, client_messages) = self.build_with_parent_root(
+            root_uri,
+            options,
+            context.parent_root_path(root_uri).as_deref(),
+        );
+        ToolBuildResult { tool: Box::new(tool), client_messages }
+    }
 }
 
 // ---
@@ -111,6 +145,9 @@ pub struct ServerFormatter {
     root_path: PathBuf,
     source_formatter: SourceFormatter,
     js_config_loader: JsConfigLoaderCb,
+    /// The outermost workspace folder around `root_path`, whose `.prettierignore` is still
+    /// honoured.
+    parent_root: Option<PathBuf>,
     /// Explicit `fmt.configPath` from LSP settings.
     /// When set, all files use this single config.
     explicit_config_path: Option<PathBuf>,
@@ -202,6 +239,7 @@ impl Tool for ServerFormatter {
         // But format requests are sporadic enough that lazy re-population costs nothing observable.
         let (new_state, client_message) = Self::build_state(
             &self.root_path,
+            self.parent_root.as_deref(),
             self.explicit_config_path.as_deref(),
             self.use_nested_config,
             &self.js_config_loader,
@@ -279,11 +317,13 @@ impl ServerFormatter {
         root_path: PathBuf,
         source_formatter: SourceFormatter,
         js_config_loader: JsConfigLoaderCb,
+        parent_root: Option<PathBuf>,
         explicit_config_path: Option<PathBuf>,
         use_nested_config: bool,
     ) -> (Self, Vec<ClientMessage>) {
         let (state, client_message) = Self::build_state(
             &root_path,
+            parent_root.as_deref(),
             explicit_config_path.as_deref(),
             use_nested_config,
             &js_config_loader,
@@ -293,6 +333,7 @@ impl ServerFormatter {
                 root_path,
                 source_formatter,
                 js_config_loader,
+                parent_root,
                 explicit_config_path,
                 use_nested_config,
                 state: RwLock::new(Arc::new(state)),
@@ -312,6 +353,7 @@ impl ServerFormatter {
     /// Likewise, a broken `.prettierignore` is skipped with a warning.
     fn build_state(
         root_path: &Path,
+        parent_root: Option<&Path>,
         explicit_config_path: Option<&Path>,
         use_nested_config: bool,
         js_config_loader: &JsConfigLoaderCb,
@@ -343,20 +385,32 @@ impl ServerFormatter {
         // NOTE: `.gitignore` is intentionally NOT included here.
         // An LSP document is explicitly formatted by the user.
         // (CLI also formats explicitly specified git ignored files.)
-        let ignore_matchers = match resolve_ignore_paths(root_path, &[])
-            .and_then(|paths| build_global_ignore_matchers(root_path, &[], &paths))
+        let mut ignore_matchers = Self::load_ignore_matchers(root_path).unwrap_or_else(|err| {
+            client_message.push(ClientMessage {
+                message: format!("Failed to load .prettierignore: {err}"),
+                r#type: MessageType::Error,
+            });
+            vec![]
+        });
+
+        // A nested workspace folder is formatted by its own worker, but a file is still ignored
+        // when the formatter ignores it with the outer folder opened on its own. Like Prettier,
+        // no `.prettierignore` between the two is read.
+        // An outer `.prettierignore` which fails to load ignores nothing here, without a message:
+        // the worker of the outer folder reports it.
+        if let Some(parent_root) = parent_root
+            && let Ok(matchers) = Self::load_ignore_matchers(parent_root)
         {
-            Ok(matchers) => matchers,
-            Err(err) => {
-                client_message.push(ClientMessage {
-                    message: format!("Failed to load .prettierignore: {err}"),
-                    r#type: MessageType::Error,
-                });
-                vec![]
-            }
-        };
+            ignore_matchers.extend(matchers);
+        }
 
         (FormatterState { scopes, ignore_matchers }, client_message)
+    }
+
+    /// The `.prettierignore` matchers of `directory`.
+    fn load_ignore_matchers(directory: &Path) -> Result<Vec<Gitignore>, String> {
+        resolve_ignore_paths(directory, &[])
+            .and_then(|paths| build_global_ignore_matchers(directory, &[], &paths))
     }
 
     /// Snapshot the current state.
@@ -535,6 +589,48 @@ mod tests_builder {
             capabilities.document_formatting_provider,
             Some(DocumentFormattingProvider::Bool(true))
         );
+    }
+}
+
+#[cfg(test)]
+mod test_nested_workspace_folders {
+    use std::{fs, path::Path};
+
+    use oxc_language_server::uri_utils::file_path_to_uri;
+
+    use crate::lsp::server_formatter::ServerFormatterBuilder;
+
+    /// Whether the formatter of the folder `root` ignores `file`, given the outer folder.
+    fn is_ignored(root: &Path, parent_root: Option<&Path>, file: &str) -> bool {
+        let (formatter, _client_messages) = ServerFormatterBuilder::dummy().build_with_parent_root(
+            &file_path_to_uri(root).unwrap(),
+            serde_json::json!({}),
+            parent_root,
+        );
+
+        formatter.format_file(&root.join(file), "const a =  \"x\"  ;\n").unwrap().is_none()
+    }
+
+    /// A file is ignored when the `.prettierignore` of the outer workspace folder ignores it, like
+    /// Prettier run from the outer folder: the one of a directory between the two is not read.
+    #[test]
+    fn test_a_nested_workspace_folder_honours_the_prettierignore_of_the_outer_folder() {
+        let outer = tempfile::tempdir().unwrap();
+        let packages = outer.path().join("packages");
+        let nested = packages.join("a");
+        fs::create_dir_all(&nested).unwrap();
+        fs::write(outer.path().join(".prettierignore"), "ignored.ts\n").unwrap();
+        fs::write(packages.join(".prettierignore"), "between.ts\n").unwrap();
+        for file in ["between.ts", "ignored.ts", "test.ts"] {
+            fs::write(nested.join(file), "").unwrap();
+        }
+
+        assert!(is_ignored(&nested, Some(outer.path()), "ignored.ts"));
+        assert!(!is_ignored(&nested, Some(outer.path()), "between.ts"));
+        assert!(!is_ignored(&nested, Some(outer.path()), "test.ts"));
+
+        // the ignore file belongs to the outer folder only
+        assert!(!is_ignored(&nested, None, "ignored.ts"));
     }
 }
 

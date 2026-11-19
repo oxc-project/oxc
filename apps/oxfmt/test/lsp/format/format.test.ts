@@ -144,6 +144,30 @@ describe("LSP formatting", () => {
       expect(await formatFixture(FIXTURES_DIR, path, "typescript", client)).toMatchSnapshot();
     });
 
+    it.each([
+      "nested-workspaces-prettierignore/second/ignored.ts",
+      "nested-workspaces-prettierignore/second/test.ts",
+    ])("should apply the `.prettierignore` of the outer workspace folder to %s", async (path) => {
+      const outerUri = pathToFileURL(join(FIXTURES_DIR, "nested-workspaces-prettierignore")).href;
+      const nestedUri = pathToFileURL(
+        join(FIXTURES_DIR, "nested-workspaces-prettierignore", "second"),
+      ).href;
+      await using client = createLspConnection();
+      await client.initialize(
+        [
+          { uri: outerUri, name: "outer" },
+          { uri: nestedUri, name: "nested" },
+        ],
+        {},
+        [
+          { workspaceUri: outerUri, options: null },
+          { workspaceUri: nestedUri, options: null },
+        ],
+      );
+
+      expect(await formatFixture(FIXTURES_DIR, path, "typescript", client)).toMatchSnapshot();
+    });
+
     it("should reload `.prettierignore` on watched file change", async () => {
       const dir = await fs.mkdtemp(join(tmpdir(), "oxfmt-lsp-prettierignore-"));
       try {

@@ -407,6 +407,30 @@ Config resolve error for <cwd>/test/lsp/format/fixtures/config-invalid-override/
 --------------------"
 `;
 
+exports[`LSP formatting > ignore patterns > should apply the \`.prettierignore\` of the outer workspace folder to nested-workspaces-prettierignore/second/ignored.ts 1`] = `
+"--- URI -----------
+file://<fixture>/nested-workspaces-prettierignore/second/ignored.ts
+--- BEFORE ---------
+const x = '1'
+
+--- AFTER ----------
+const x = '1'
+
+--------------------"
+`;
+
+exports[`LSP formatting > ignore patterns > should apply the \`.prettierignore\` of the outer workspace folder to nested-workspaces-prettierignore/second/test.ts 1`] = `
+"--- URI -----------
+file://<fixture>/nested-workspaces-prettierignore/second/test.ts
+--- BEFORE ---------
+const x = '1'
+
+--- AFTER ----------
+const x = "1";
+
+--------------------"
+`;
+
 exports[`LSP formatting > ignore patterns > should handle ignore-config/file.generated.ts 1`] = `
 "--- URI -----------
 file://<fixture>/ignore-config/file.generated.ts
