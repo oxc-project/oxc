@@ -1,8 +1,8 @@
 //! Angular control flow blocks: transparent, their markers print no box (`@if (a) {` … `}`).
 
 use oxc_formatter_core::{
-    builders::{hard_line_break, indent, space, text},
-    write,
+    builders::{group, hard_line_break, indent, soft_block_indent, space, text},
+    format_args, write,
 };
 use oxc_htmlish_parser::ast::{Block, BlockKind, NodeId};
 
@@ -45,16 +45,21 @@ pub fn write_block<'a>(
     if let Some(parameters) = super::angular::format_block_parameters(block, f) {
         write!(f, [space(), parameters]);
     } else if !block.parameters.is_empty() {
+        // Each as written: a block whose parameters are no expressions (`@defer`'s), or one that does not format.
+        // They break as formatted ones do; one holding a line break measures to it, as Prettier does not break on it
+        let parameters = format_with(|f| {
+            f.join_with(super::angular::SEPARATOR).entries(
+                block
+                    .parameters
+                    .iter()
+                    .map(|p| text(p.span.slice(t.source())).without_expand_parent()),
+            );
+        });
         // `@default never(state)`: Prettier glues the parameters to `never`
-        write!(f, if default_never { "(" } else { " (" });
-        for (i, parameter) in block.parameters.iter().enumerate() {
-            if i > 0 {
-                write!(f, "; ");
-            }
-            // As written: a block whose parameters are no expressions (`@defer`'s), or one that does not format
-            write!(f, text(parameter.span.slice(t.source())));
+        if !default_never {
+            write!(f, space());
         }
-        write!(f, ")");
+        write!(f, group(&format_args!("(", soft_block_indent(&parameters), ")")));
     }
     if block.close.is_none() {
         // `@default never;`; a fall-through `@case (a)` has nothing more

@@ -84,7 +84,7 @@ fn write_child<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'_, 'a>
     if opening_start_borrowed(t, id) {
         start += opening_start_marker(t, id).len();
     }
-    let mut end = ignored_end(t, id) as usize;
+    let mut end = end_with_content(t, id) as usize;
     // Whoever borrows the closing `>` prints it,
     // the parent included (DIVERGENCES.md#ignored-closing-end-once)
     if closing_end_borrowed(t, id) {
@@ -94,12 +94,12 @@ fn write_child<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'_, 'a>
     write!(f, [opening_tag_prefix(t, id), text(raw), closing_tag_suffix(t, id)]);
 }
 
-/// Where an ignored node's source ends: an unclosed element extends to its last child.
-fn ignored_end(t: &Tree<'_>, id: NodeId) -> u32 {
+/// Where a node's source ends, its content included: an unclosed element extends to its last child.
+fn end_with_content(t: &Tree<'_>, id: NodeId) -> u32 {
     let end = t.source_end(id);
     match t.kind(id) {
         NodeKind::Element(el) if el.end_tag.is_none() => {
-            t[id].last_child.map_or(end, |last| end.max(ignored_end(t, last)))
+            t[id].last_child.map_or(end, |last| end.max(end_with_content(t, last)))
         }
         _ => end,
     }

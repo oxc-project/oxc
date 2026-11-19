@@ -562,6 +562,8 @@ Prettier closes it where the fragment ends, which changes the page it is joined 
 
 - Why: uniform-rule (a normalization is applied only where it is known safe for every reader: `oxc_formatter_css`'s AGENTS.md "Case")
 - Pin: `tests/fixtures/html/omitted-end-tag.html`
+- Conformance:
+  - `externals/prettier/html/prettier_ignore/unclosed2.html`
 
 ```html
 <!-- input -->
@@ -590,6 +592,10 @@ To a browser reading the page the end tag changes nothing, but in a template the
 {% if x %}<p>a{% else %}<p>b{% endif %}<div>
 <!-- an end tag added before the second <p> lands in the else branch: a stray </p>, which makes an empty p -->
 ```
+
+A blank line before the next sibling is the source's, counted from where the element's content ends.
+Prettier counts from its start tag, so `<p>⏎  a⏎<div>` gets one (with the `</p>` it adds);
+without the end tag, that would not be a fixpoint: a `<p>` whose content breaks onto lines of its own would get one on the next pass.
 
 ## pre-content-without-end-tag
 
