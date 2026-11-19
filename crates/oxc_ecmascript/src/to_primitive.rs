@@ -87,12 +87,20 @@ pub fn maybe_object_with_to_primitive_related_properties_overridden(
     obj.properties.iter().any(|prop| match prop {
         ObjectPropertyKind::ObjectProperty(prop) => match &prop.key {
             PropertyKey::StaticIdentifier(id) => {
-                matches!(id.name.as_str(), "toString" | "valueOf")
+                // A `__proto__` property changes the object's [[Prototype]], so its
+                // ToPrimitive can throw a `TypeError` (e.g. `{ __proto__: null }`)
+                // instead of returning `"[object Object]"`.
+                matches!(id.name.as_str(), "toString" | "valueOf" | "__proto__")
             }
             PropertyKey::PrivateIdentifier(_) => false,
-            PropertyKey::StringLiteral(str) => str.value == "toString" || str.value == "valueOf",
+            PropertyKey::StringLiteral(str) => {
+                matches!(str.value.as_str(), Some("toString" | "valueOf" | "__proto__"))
+            }
             PropertyKey::TemplateLiteral(temp) => {
-                temp.single_quasi().is_some_and(|val| val == "toString" || val == "valueOf")
+                let val = temp.single_quasi();
+                val.is_some_and(|val| {
+                    matches!(val.as_str(), Some("toString" | "valueOf" | "__proto__"))
+                })
             }
             _ => true,
         },
