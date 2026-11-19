@@ -366,6 +366,11 @@ impl DisableDirectives {
     }
 
     pub fn contains(&self, rule_name: &str, span: Span) -> bool {
+        // File-level diagnostics use an empty span at the start of the file. Check all
+        // disable intervals for these diagnostics, including empty intervals at EOF.
+        let is_file_level = span == Span::default();
+        let query_end = if is_file_level { u32::MAX } else { span.end };
+
         // For `eslint-disable-next-line` and `eslint-disable-line` directives, we only check
         // if the diagnostic's starting position falls within the disabled interval.
         // This prevents suppressing diagnostics for larger constructs (like functions) that
@@ -376,7 +381,7 @@ impl DisableDirectives {
         // This ensures that diagnostics starting before the disable comment (like no-empty-file)
         // are still suppressed.
         let mut has_match = false;
-        for interval in self.intervals.find(span.start, span.end) {
+        for interval in self.intervals.find(span.start, query_end) {
             // Check if this rule should be disabled
             let rule_matches = match &interval.val {
                 DisabledRule::All { .. } => true,
@@ -405,7 +410,10 @@ impl DisableDirectives {
             }
 
             // Check if the diagnostic span is covered by this interval
-            let span_covered = if interval.val.is_next_line() {
+            let span_covered = if is_file_level {
+                // A file-level diagnostic has no line for line-specific directives to suppress.
+                !interval.val.is_next_line()
+            } else if interval.val.is_next_line() {
                 // For next-line directives, only check if the diagnostic starts within the interval
                 // We intentionally only check span.start (not span.end) to avoid suppressing
                 // diagnostics for large constructs that merely contain the disabled line
@@ -2084,6 +2092,92 @@ function test() {
             !directives.contains("no-console", second_console_log_span),
             "eslint-disable-next-line should NOT suppress diagnostics on lines after the next line"
         );
+    }
+
+    #[test]
+    fn file_level_diagnostics_use_disable_directives() {
+        for rules in ["", " import/unambiguous"] {
+            for block_comment in [false, true] {
+                test_directives(
+                    |prefix| {
+                        if block_comment {
+                            format!("/* license */\n/* {prefix}-disable{rules} */")
+                        } else {
+                            format!("// {prefix}-disable{rules}")
+                        }
+                    },
+                    |_, _, directives| {
+                        assert!(directives.contains("unambiguous", Span::default()));
+                        assert_eq!(directives.collect_unused_disable_comments(), []);
+                    },
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn file_level_diagnostics_leave_unrelated_directives_unused() {
+        for directive in [
+            "disable-next-line import/unambiguous",
+            "disable-line import/unambiguous",
+            "disable-next-line",
+            "disable-line",
+            "disable no-console",
+        ] {
+            test_directives(
+                |prefix| format!("/* {prefix}-{directive} */\nconsole.log();"),
+                |_, _, directives| {
+                    assert!(!directives.contains("unambiguous", Span::default()));
+                    assert_eq!(directives.collect_unused_disable_comments().len(), 1);
+                },
+            );
+        }
+
+        test_directives(
+            |prefix| {
+                format!("/* {prefix}-disable import/unambiguous, no-console */\nconsole.log();")
+            },
+            |_, _, directives| {
+                assert!(directives.contains("unambiguous", Span::default()));
+                let unused = directives.collect_unused_disable_comments();
+                assert_eq!(unused.len(), 1);
+                let RuleCommentType::Single(rules) = &unused[0].r#type else {
+                    panic!("Only no-console should be unused");
+                };
+                assert_eq!(rules.len(), 1);
+                assert_eq!(rules[0].rule_name, "no-console");
+            },
+        );
+    }
+
+    #[test]
+    fn file_level_rule_suppression() {
+        use crate::tester::Tester;
+
+        for (plugin, rule, source, config) in [
+            ("import", "unambiguous", "console.log();", None),
+            ("unicorn", "filename-case", "", None),
+            (
+                "oxc",
+                "no-barrel-file",
+                "export * from './a';",
+                Some(serde_json::json!([{ "threshold": 0 }])),
+            ),
+        ] {
+            let sources: Vec<_> = ["eslint", "oxlint"]
+                .into_iter()
+                .flat_map(|prefix| {
+                    [
+                        format!("/* {prefix}-disable {plugin}/{rule} */\n{source}"),
+                        format!("// {prefix}-disable {plugin}/{rule}\n{source}"),
+                        format!("/* {prefix}-disable */\n{source}"),
+                    ]
+                })
+                .collect();
+            let pass = sources.iter().map(|source| (source.as_str(), config.clone())).collect();
+            let fail = vec![(source, config)];
+            Tester::new(rule, plugin, pass, fail).change_rule_path("FooBar.ts").test();
+        }
     }
 
     /// Helper: apply a `Fix::delete` on `span` to `source_text` and return the resulting string.
