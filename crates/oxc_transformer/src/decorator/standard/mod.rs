@@ -4,16 +4,19 @@
 //!
 //! Decorated classes are lowered entirely: all fields, private names and static blocks, the same
 //! as esbuild's `computeClassLoweringInfo` does when any element is decorated. Decorator calls are
-//! emitted after the class using esbuild's runtime helpers:
+//! emitted after the class using the `@oxc-project/runtime` helpers adapted from esbuild's runtime
+//! (`npm/runtime/scripts/helpers/`):
 //!
 //! ```js
-//! _init = __decoratorStart(base);
-//! __decorateElement(_init, flags, key, _x_dec, Class);   // per element, spec order
-//! Class = __decorateElement(_init, 0, "Class", _Class_decorators, Class);
-//! __runInitializers(_init, 3, Class);                     // static method extra initializers
+//! _init = decoratorStart(base);
+//! decorateElement(_init, flags, key, _x_dec, Class);      // per element, spec order
+//! Class = decorateElement(_init, 0, "Class", _Class_decorators, Class);
+//! runInitializers(_init, 3, Class);                       // static method extra initializers
 //! /* static fields and blocks */
-//! __runInitializers(_init, 1, Class);                     // class extra initializers
+//! runInitializers(_init, 1, Class);                       // class extra initializers
 //! ```
+//!
+//! See [`run_initializers`] for the flags passed to `runInitializers`.
 //!
 //! Undecorated auto-accessors are rewritten in place when class fields are native. Standard and
 //! legacy decorators share the storage/getter/setter builder. Static accessors use a class reference
@@ -24,9 +27,7 @@
 //! erasure still run.
 //!
 //! Babel's 2023-* decorator fixtures are execution oracles, not output snapshots: their helper
-//! protocol differs from ours. Local output fixtures cover Oxc's lowering choices. Optional calls
-//! on lowered private fields use `?.bind`, so an undefined private callee short-circuits. This also
-//! affects undecorated classes at targets which lower private fields.
+//! protocol differs from ours. Local output fixtures cover Oxc's lowering choices.
 //!
 //! ## Class replacement
 //!
@@ -183,7 +184,7 @@ pub struct StandardDecoratorState<'a> {
 /// Scratch state used after all nested classes have finished their traversal.
 #[derive(Default)]
 struct DecoratorExitState<'a> {
-    /// `__decorateElement` calls, in evaluation order.
+    /// `decorateElement` calls, in evaluation order.
     elements: [Vec<Expression<'a>>; 4],
     /// `_Class_decorators` binding.
     class_decorators: Option<BoundIdentifier<'a>>,
@@ -238,7 +239,7 @@ pub struct ClassDecoratorState<'a> {
     pub(crate) tables: ClassDecoratorTables<'a>,
 }
 
-/// Bucket indexes for `__decorateElement` calls, in the order they are evaluated.
+/// Bucket indexes for `decorateElement` calls, in the order they are evaluated.
 #[derive(Clone, Copy)]
 #[expect(clippy::enum_variant_names)]
 enum DecoratorBucket {

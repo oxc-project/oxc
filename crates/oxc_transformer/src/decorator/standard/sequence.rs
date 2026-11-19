@@ -117,7 +117,7 @@ impl<'a> StandardDecoratorState<'a> {
         ))
     }
 
-    /// Exit phase: `__decorateElement(_init, flags, key, _x_dec, Class)`
+    /// Exit phase: `decorateElement(_init, flags, key, _x_dec, Class)`
     pub(crate) fn push_decorate_element(
         &mut self,
         kind: DecoratorElementKind,
@@ -259,7 +259,7 @@ impl<'a> StandardDecoratorState<'a> {
             exprs.push(create_assignment(original_class, class, SPAN, ctx));
         }
 
-        // `_init = __decoratorStart(base)`
+        // `_init = decoratorStart(base)`
         let base = match &self.exit.super_class.take() {
             Some(binding) => binding.create_read_expression(ctx),
             None => Expression::new_null_literal(SPAN, ctx),
@@ -306,7 +306,7 @@ impl<'a> StandardDecoratorState<'a> {
 
         let class_decorators = self.exit.class_decorators.take();
         if let Some(decorators) = &class_decorators {
-            // `Class = __decorateElement(_init, 0, "Class", _Class_decorators, Class)`
+            // `Class = decorateElement(_init, 0, "Class", _Class_decorators, Class)`
             let inferred_name = self.exit.class_name.take();
             let name = match &class.id {
                 Some(id) => Expression::new_string_literal(SPAN, id.name, None, ctx),
@@ -340,7 +340,7 @@ impl<'a> StandardDecoratorState<'a> {
             }
             exprs.push(call);
         } else {
-            // `__decoratorMetadata(_init, Class)`
+            // `decoratorMetadata(_init, Class)`
             let target = bindings.target.create_read_expression(ctx);
             let arguments = ArenaVec::from_array_in(
                 [Argument::from(init.create_read_expression(ctx)), Argument::from(target)],
@@ -403,7 +403,7 @@ impl<'a> ClassDecoratorState<'a> {
         )
     }
 
-    /// `__runInitializers(_init, flags, target)`
+    /// `runInitializers(_init, flags, target)`
     pub(crate) fn run_initializers_call(
         &self,
         flags: u32,

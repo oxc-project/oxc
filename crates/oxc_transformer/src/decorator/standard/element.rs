@@ -451,7 +451,7 @@ impl<'a> StandardDecoratorState<'a> {
 
     /// Entry phase: assign initializer slot indexes to decorated fields and accessors.
     ///
-    /// Order matches the order `__decorateElement` is called in:
+    /// Order matches the order `decorateElement` is called in:
     /// static accessors, instance accessors, static fields, instance fields.
     pub(crate) fn prepare_class_decorators(
         body: &ClassBody<'a>,
@@ -711,7 +711,7 @@ impl<'a> StandardDecoratorState<'a> {
         }
     }
 
-    /// Expression for element name passed to `__decorateElement`.
+    /// Expression for element name passed to `decorateElement`.
     pub(crate) fn decorator_key_expr(
         key: &PropertyKey<'a>,
         ctx: &mut TraverseCtx<'a>,
