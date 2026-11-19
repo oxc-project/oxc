@@ -12,7 +12,7 @@
 //!
 //! [`match_delim_back`]: crate::pipeline::disambiguate::TokensView::match_delim_back
 
-use oxc_simd::{Cpu, cpu_multiversion};
+use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
 
 use crate::token::{OP_KIND_BASE, matches_tk, tk};
 
@@ -97,6 +97,18 @@ pub(super) fn arrow_after_params(tokens: &TokensView, lp: usize, cpu: impl Cpu) 
     };
     let ar = skip_trivia_fwd(src, n, rp + 1, cpu);
     ar < n && src[ar] == b'=' && src[ar + 1] == b'>'
+}
+
+/// Is the < at lt a list followed by a parameter list, as the type parameters of an arrow are?
+#[cpu_version(Generic)]
+pub fn arrow_type_params_at(tokens: &TokensView, lt: usize) -> bool {
+    let cpu = BASELINE;
+
+    let TokensView { src, n, .. } = *tokens;
+    list_closer(tokens, lt, cpu).is_some_and(|gt| {
+        let lp = skip_trivia_fwd(src, n, gt + 1, cpu);
+        lp < n && src[lp] == b'('
+    })
 }
 
 #[cpu_multiversion]

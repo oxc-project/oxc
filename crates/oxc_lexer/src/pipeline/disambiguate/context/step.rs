@@ -61,7 +61,7 @@ impl Walk {
         }
 
         // ASI: a value ended the previous line and this token cannot continue it.
-        if newline && !self.operand_allowed() && !continues_expression(tokens, pos) {
+        if newline && !self.operand_allowed() && !self.continues_line(tokens, pos) {
             self.asi(tokens, pos);
         }
         // A binding that ended the line goes on with =, a comma or a type annotation only.
@@ -169,15 +169,24 @@ impl Walk {
             return;
         }
         match self.top_kind() {
-            FrameKind::ClassBody => {
-                // Member initializer ended; a new member starts.
-                self.top_mut().next_member();
-                self.set_operand();
-            }
-            k if k.is_stmt_holder() => self.end_statement(),
+            k if k == FrameKind::ClassBody || k.is_stmt_holder() => self.end_statement(),
             // Lists, calls, literals and types hold no statements: nothing ends.
             _ => {}
         }
+    }
+
+    /// Can the token at pos go on after the value that ended the previous line?
+    #[cpu_version(Generic)]
+    #[inline(always)]
+    fn continues_line(&self, tokens: &TokensView, pos: usize) -> bool {
+        let cpu = BASELINE;
+
+        // A class member key takes only its parameters, type parameters, type or initializer.
+        if self.top_kind() == FrameKind::ClassBody && self.top().member == Member::KeySeen {
+            return tokens.base_kind(pos, cpu) >= OP_KIND_BASE
+                && b"(<=:?!".contains(&tokens.src[pos]);
+        }
+        continues_expression(tokens, pos)
     }
 
     /// Can the token at pos go on after a type that ended the previous line?
@@ -205,22 +214,7 @@ impl Walk {
     fn end_region_by_break(&mut self) {
         let r = self.pop();
         match r.region {
-            RegionRule::Stmt => self.end_statement(),
-            RegionRule::Inline => {
-                // A declarator / member annotation ended by a line break.
-                match self.top_kind() {
-                    FrameKind::ClassBody => {
-                        self.top_mut().next_member();
-                        self.set_operand();
-                    }
-                    FrameKind::FnHead => {
-                        // Return type of a bodiless signature.
-                        self.pop();
-                        self.end_statement();
-                    }
-                    _ => self.end_statement(),
-                }
-            }
+            RegionRule::Stmt | RegionRule::Inline => self.end_statement(),
             RegionRule::Expr => {
                 // `x as T` then a new line: the value is complete.
                 self.set_value();
