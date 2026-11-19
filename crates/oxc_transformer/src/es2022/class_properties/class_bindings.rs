@@ -71,6 +71,16 @@ pub(super) struct ClassBindings<'a> {
 }
 
 impl<'a> ClassBindings<'a> {
+    /// Binding which refers to the class from outside its body, e.g. for static initializers and
+    /// decorator application.
+    ///
+    /// A class declaration uses its name (or a temp for `export default class {}`). A class
+    /// expression always uses the temp var.
+    pub fn outer_binding(&self, is_declaration: bool) -> &BoundIdentifier<'a> {
+        if is_declaration { self.name.as_ref().or(self.temp.as_ref()) } else { self.temp.as_ref() }
+            .expect("class referenced from outside its body always has a binding")
+    }
+
     /// Create new `ClassBindings`.
     pub fn new(
         name_binding: Option<BoundIdentifier<'a>>,

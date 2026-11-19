@@ -138,14 +138,7 @@ impl<'a> ClassProperties<'a> {
 
             // Convert to assignment or `_defineProperty` call, depending on `loose` option
             let class_details = self.current_class();
-            let class_binding = if class_details.is_declaration {
-                // Class declarations always have a name except `export default class {}`.
-                // For default export, binding is created when static prop found in 1st pass.
-                class_details.bindings.name.as_ref().unwrap()
-            } else {
-                // Binding is created when static prop found in 1st pass.
-                class_details.bindings.temp.as_ref().unwrap()
-            };
+            let class_binding = class_details.bindings.outer_binding(class_details.is_declaration);
 
             let assignee = class_binding.create_read_expression(ctx);
             let init_expr = self.create_init_assignment(prop, value, assignee, true, ctx);
@@ -171,11 +164,7 @@ impl<'a> ClassProperties<'a> {
         let class_details = self.current_class();
         let private_prop = &class_details.private_props.lowered().unwrap()[&ident.name];
         if private_prop.uses_weakmap {
-            let class_binding = if class_details.is_declaration {
-                class_details.bindings.name.as_ref().unwrap()
-            } else {
-                class_details.bindings.temp.as_ref().unwrap()
-            };
+            let class_binding = class_details.bindings.outer_binding(class_details.is_declaration);
             let receiver = class_binding.create_read_expression(ctx);
             let init =
                 self.create_private_field_init_assignment_not_loose(ident, receiver, value, ctx);
@@ -196,16 +185,8 @@ impl<'a> ClassProperties<'a> {
         span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        // TODO: This logic appears elsewhere. De-duplicate it.
         let class_details = self.current_class();
-        let class_binding = if class_details.is_declaration {
-            // Class declarations always have a name except `export default class {}`.
-            // For default export, binding is created when static prop found in 1st pass.
-            class_details.bindings.name.as_ref().unwrap()
-        } else {
-            // Binding is created when static prop found in 1st pass.
-            class_details.bindings.temp.as_ref().unwrap()
-        };
+        let class_binding = class_details.bindings.outer_binding(class_details.is_declaration);
 
         let assignee = class_binding.create_read_expression(ctx);
         let assignment =

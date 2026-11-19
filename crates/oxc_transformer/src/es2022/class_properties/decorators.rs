@@ -527,12 +527,7 @@ impl<'a> ClassProperties<'a> {
     /// The binding that holds the class while decorators are applied.
     fn decorator_class_binding(&self) -> &BoundIdentifier<'a> {
         let details = self.current_class();
-        if details.is_declaration {
-            details.bindings.name.as_ref().or(details.bindings.temp.as_ref())
-        } else {
-            details.bindings.temp.as_ref()
-        }
-        .expect("decorated class always has a binding")
+        details.bindings.outer_binding(details.is_declaration)
     }
 
     pub(super) fn get_or_init_original_class_for_super(
@@ -573,12 +568,7 @@ impl<'a> ClassProperties<'a> {
             };
             PrivateDecoratorAccess { brand, value: prop.binding.clone(), getter, setter }
         });
-        let target = if details.is_declaration {
-            details.bindings.name.as_ref().or(details.bindings.temp.as_ref())
-        } else {
-            details.bindings.temp.as_ref()
-        }
-        .expect("decorated class always has a binding");
+        let target = details.bindings.outer_binding(details.is_declaration);
         self.decorator_state.push_decorate_element(
             kind,
             is_static,
@@ -599,12 +589,7 @@ impl<'a> ClassProperties<'a> {
     ) -> (Vec<Expression<'a>>, Option<Expression<'a>>) {
         let details = self.classes_stack.last();
         let bindings = &details.bindings;
-        let target = if details.is_declaration {
-            bindings.name.as_ref().or(bindings.temp.as_ref())
-        } else {
-            bindings.temp.as_ref()
-        }
-        .expect("decorated class always has a binding");
+        let target = bindings.outer_binding(details.is_declaration);
         self.decorator_state.build_decorator_sequence(
             class,
             details.decorators.as_ref().unwrap(),
