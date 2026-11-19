@@ -6,6 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeId;
 use oxc_span::{GetSpan, Span};
+use oxc_str::Ident;
 use oxc_syntax::line_terminator::is_line_terminator;
 
 use crate::{
@@ -203,16 +204,54 @@ fn is_safe_from_name_collisions(
             let parent_bindings = scopes.get_bindings(parent_scope_id);
 
             !bindings.iter().any(|(name, symbol_id)| {
-                let Some((parent_name, parent_symbol_id)) = parent_bindings.get_key_value(name)
-                else {
-                    return false;
-                };
-                parent_name == name && symbol_id != parent_symbol_id
+                if let Some((parent_name, parent_symbol_id)) = parent_bindings.get_key_value(name)
+                    && parent_name == name
+                    && symbol_id != parent_symbol_id
+                {
+                    return true;
+                }
+                is_name_used_from_outer_scope(ctx, parent_scope_id, *name)
             })
         }
         Statement::FunctionDeclaration(_) => false,
         _ => true,
     }
+}
+
+/// Checks whether hoisting a declaration of `name` into `scope_id` would change
+/// what an existing identifier refers to, i.e. whether `name` is referenced or
+/// `var`-declared inside `scope_id` but resolves to a binding outside of it
+/// (or to an undeclared global).
+///
+/// For example, removing the `else` here would make `config` in the `if` test
+/// refer to the inner `const config`, which throws a `ReferenceError` (TDZ):
+/// ```js
+/// function f() { if (config.debug) { return 1; } else { const config = 2; return config; } }
+/// ```
+fn is_name_used_from_outer_scope(ctx: &LintContext, scope_id: ScopeId, name: Ident<'_>) -> bool {
+    let scoping = ctx.scoping();
+    let scope_span = ctx.nodes().get_node(scoping.get_node_id(scope_id)).span();
+
+    let outer_symbol_id = scoping
+        .scope_parent_id(scope_id)
+        .and_then(|parent_id| scoping.find_binding(parent_id, name));
+    let reference_ids = match outer_symbol_id {
+        Some(symbol_id) => {
+            // A `var` declared in a nested block is bound in the enclosing function scope.
+            if scope_span.contains_inclusive(scoping.symbol_span(symbol_id)) {
+                return true;
+            }
+            scoping.get_resolved_reference_ids(symbol_id)
+        }
+        None => {
+            scoping.root_unresolved_references().get(&name).map_or(&[][..], |ids| ids.as_slice())
+        }
+    };
+
+    reference_ids.iter().any(|&reference_id| {
+        let node_id = scoping.get_reference(reference_id).node_id();
+        scope_span.contains_inclusive(ctx.nodes().get_node(node_id).span())
+    })
 }
 
 fn no_else_return_diagnostic_fix(
@@ -667,6 +706,16 @@ fn test() {
         ("if (foo) { return true; } else { let a; }", None), // { "ecmaVersion": 6, "sourceType": "commonjs" },
         ("let a; if (foo) { return true; } else { let a; }", None), // { "ecmaVersion": 6, "sourceType": "commonjs" }
         (
+            "const config = {}; function foo() { if (config.debug) { return 1; } else { const config = 2; return config; } }",
+            None,
+        ),
+        ("function foo() { if (bar) { return true; } else { let a; } a(); }", None),
+        (
+            "function foo() { if (bar) { if (baz) { return true; } else { let a; } if (quux) { var a; } } }",
+            None,
+        ),
+        ("function foo() { if (bar) { return true; } else { let a = 1; foo(a); } b(); }", None),
+        (
             "
                 function createReexports(meta, builder, value) {
                     return meta.items.map(item => {
@@ -912,6 +961,27 @@ fn test() {
         (
             "function foo(){if(foo){return bar}else{if(a)baz=qux}while(baz){}}",
             "function foo(){if(foo){return bar}if(a)baz=qux;while(baz){}}",
+            None,
+        ),
+        // Hoisting the declarations would change what an existing reference resolves to
+        (
+            "const config = {}; function foo() { if (config.debug) { return 1; } else { const config = 2; return config; } }",
+            "const config = {}; function foo() { if (config.debug) { return 1; } else { const config = 2; return config; } }",
+            None,
+        ),
+        (
+            "function foo() { if (bar) { return true; } else { let a; } a(); }",
+            "function foo() { if (bar) { return true; } else { let a; } a(); }",
+            None,
+        ),
+        (
+            "function foo() { if (bar) { if (baz) { return true; } else { let a; } if (quux) { var a; } } }",
+            "function foo() { if (bar) { if (baz) { return true; } else { let a; } if (quux) { var a; } } }",
+            None,
+        ),
+        (
+            "function foo() { if (bar) { return true; } else { let a = 1; foo(a); } b(); }",
+            "function foo() { if (bar) { return true; } let a = 1; foo(a);  b(); }",
             None,
         ),
     ];
