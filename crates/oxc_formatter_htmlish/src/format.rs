@@ -216,6 +216,7 @@ fn build_context<'a>(
         options.whitespace_sensitivity,
         options.variant,
         standalone,
+        options.sort_tailwindcss.as_deref(),
     ));
     HtmlishFormatContext::new(options, tree, embedded_in)
 }

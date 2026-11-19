@@ -207,7 +207,12 @@ fn is_in_return_context<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
 fn is_returned_or_awaited<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     let parent = ctx.semantic().nodes().parent_node(node.id());
 
-    matches!(parent.kind(), AstKind::ReturnStatement(_) | AstKind::AwaitExpression(_))
+    matches!(
+        parent.kind(),
+        AstKind::ReturnStatement(_)
+            | AstKind::AwaitExpression(_)
+            | AstKind::ArrowFunctionExpression(_)
+    )
 }
 
 #[test]
@@ -263,6 +268,12 @@ fn test() {
 "
                     test('should pass', () => {
                       return (sideEffect(), expect.poll(() => element).toBeInTheDocument());
+                    });
+                  ",
+"
+                    test('should pass', async () => {
+                      const equal = (value) => expect.poll(() => value).toBeInTheDocument();
+                      await equal(element);
                     });
                   "
     ];

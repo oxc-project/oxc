@@ -46,7 +46,8 @@ declare_oxc_lint!(
     recommended,
     pending,
     version = "0.0.18",
-    short_description = "Disallow `if` statements as the only statement in `if` blocks without `else`.",
+    short_description =
+        "Disallow `if` statements as the only statement in `if` blocks without `else`.",
 );
 
 impl Rule for NoLonelyIf {

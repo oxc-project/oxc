@@ -473,7 +473,8 @@ impl Rule for NewCap {
                     name,
                     self.cap_is_new_exceptions.iter().map(CompactStr::as_str).chain(CAPS_ALLOWED),
                     self.cap_is_new_exception_pattern.as_ref(),
-                ) || (!self.properties && short_name != name);
+                ) || (!self.properties && short_name != name)
+                    || is_global_date_utc(callee, ctx);
 
                 if !allowed {
                     ctx.diagnostic(new_cap_diagnostic(short_name_span, capitalization));
@@ -575,16 +576,39 @@ where
         }
     }
 
-    if name == "Date.UTC" {
-        return true;
-    }
-
     if let Some(pattern) = &patterns {
         // A name with a lone surrogate matches no exception pattern.
         return name.as_str().is_some_and(|name| pattern.is_match(name));
     }
 
     false
+}
+
+/// `Date.UTC`, where `Date` is the global built-in: `Date` itself, or `Date`
+/// read from the global object (`globalThis.Date`, `window.Date`, ...).
+fn is_global_date_utc(callee: &Expression, ctx: &LintContext) -> bool {
+    callee.get_member_expr().is_some_and(|member| {
+        extract_name_from_expression(callee).is_some_and(|(name, _)| name == "UTC")
+            && is_global_built_in(member.object(), "Date", ctx)
+    })
+}
+
+fn is_global_built_in(expr: &Expression, name: &str, ctx: &LintContext) -> bool {
+    let expr = expr.without_parentheses();
+    if let Some(member) = expr.get_member_expr() {
+        return extract_name_from_expression(expr).is_some_and(|(prop, _)| prop == name)
+            && matches!(
+                member.object().without_parentheses(),
+                Expression::Identifier(object)
+                    if matches!(object.name.as_str(), "global" | "globalThis" | "self" | "window")
+                        && ctx.is_reference_to_global_variable(object)
+            );
+    }
+    matches!(
+        expr,
+        Expression::Identifier(ident)
+            if ident.name == name && ctx.is_reference_to_global_variable(ident)
+    )
 }
 
 #[derive(PartialEq, Debug)]
@@ -713,6 +737,23 @@ fn test() {
                 "capIsNewExceptions": ["services.registry.CreateDocumentForCurrentSession"]
             }])),
         ),
+        ("globalThis.Date.UTC(2000, 0);", None),
+        ("globalThis['Date'].UTC(2000, 0);", None),
+        ("globalThis?.Date.UTC(2000, 0);", None),
+        ("globalThis.Date?.UTC(2000, 0);", None),
+        ("window.Date.UTC(2000, 0);", None),
+        ("self.Date.UTC(2000, 0);", None),
+        ("global.Date.UTC(2000, 0);", None),
+        (
+            "const Date = { UTC() {} }; Date.UTC(2000, 0);",
+            Some(serde_json::json!([{ "capIsNewExceptions": ["UTC"] }])),
+        ),
+        ("Date[('UTC')](2000, 0);", None),
+        ("Date[(`UTC`)](2000, 0);", None),
+        ("Date?.[('UTC')](2000, 0);", None),
+        ("globalThis[('Date')].UTC(2000, 0);", None),
+        ("globalThis[(`Date`)].UTC(2000, 0);", None),
+        ("globalThis?.[('Date')]?.[('UTC')](2000, 0);", None),
     ];
 
     let fail = vec![
@@ -793,6 +834,13 @@ fn test() {
             }])),
         ),
         (r#"(services.registry?.["\u0043reateDocumentForCurrentSession"])();"#, None),
+        ("const Date = { UTC() {} }; Date.UTC(2000, 0);", None),
+        ("function foo(Date) { return Date.UTC(2000, 0); }", None),
+        ("import { Date } from 'foo'; Date?.UTC(2000, 0);", None),
+        ("function foo(globalThis) { return globalThis.Date.UTC(2000, 0); }", None),
+        ("globalThis.foo.UTC(2000, 0);", None),
+        ("function foo(Date) { Date[('UTC')](2000, 0); }", None),
+        ("function foo(globalThis) { globalThis[('Date')].UTC(2000, 0); }", None),
     ];
 
     Tester::new(NewCap::NAME, NewCap::PLUGIN, pass, fail).test_and_snapshot();

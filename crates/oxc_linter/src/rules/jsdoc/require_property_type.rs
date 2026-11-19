@@ -48,7 +48,8 @@ declare_oxc_lint!(
     correctness,
     recommended,
     version = "0.2.18",
-    short_description = "Requires that each `@property` tag has a type value (within curly brackets).",
+    short_description =
+        "Requires that each `@property` tag has a type value (within curly brackets).",
 );
 
 impl Rule for RequirePropertyType {

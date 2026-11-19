@@ -1,7 +1,10 @@
 use super::{PeepholeOptimizations, remove_unused_expression::ClassRemovability};
-use crate::{CompressOptionsUnused, TraverseCtx};
+use crate::{CompressOptionsUnused, TraverseCtx, traverse_context::redeclared_symbols};
 use oxc_ast::ast::*;
-use oxc_ecmascript::constant_evaluation::{DetermineValueType, ValueType};
+use oxc_ecmascript::{
+    BoundNames,
+    constant_evaluation::{DetermineValueType, ValueType},
+};
 use oxc_syntax::symbol::SymbolId;
 
 impl<'a> PeepholeOptimizations {
@@ -119,6 +122,14 @@ impl<'a> PeepholeOptimizations {
         match &decl.id {
             BindingPattern::BindingIdentifier(ident) => {
                 if let Some(symbol_id) = ident.symbol_id.get() {
+                    // A catch-local `var` also declares the enclosing binding (its identifier
+                    // carries the catch parameter). Keep it while that binding is used.
+                    if kind.is_var()
+                        && let Some(outer) = ctx.scoping().catch_var_binding(symbol_id)
+                        && !Self::symbol_is_unused_by_count(outer, ctx)
+                    {
+                        return false;
+                    }
                     let is_unused = Self::symbol_is_unused_by_count(symbol_id, ctx)
                         || Self::self_recursive_function_declarator_is_unused(decl, symbol_id, ctx);
                     return is_unused && !Self::class_initializer_name_needs_to_be_kept(decl, ctx);
@@ -154,10 +165,11 @@ impl<'a> PeepholeOptimizations {
     /// in the live AST changed this pass, and a spurious mutation spins the
     /// fixed-point loop past its iteration guard (bluebird.js, monitor-oxc).
     /// Installing — or declining to install — the filtered statement is the
-    /// caller's mutation event.
+    /// caller's mutation event. Removed declarations still need journaling:
+    /// identity drops may have skipped the original subtree's drop walk.
     pub fn remove_unused_variable_declaration(
         mut stmt: Statement<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Option<Statement<'a>> {
         let Statement::VariableDeclaration(var_decl) = &mut stmt else { return Some(stmt) };
         if !Self::can_remove_unused_declarators(ctx) {
@@ -170,7 +182,18 @@ impl<'a> PeepholeOptimizations {
                 "callers must pass KeepVar output (init-less declarators); a declarator \
                  with an init would need a `drop_*` walk for its references"
             );
-            !Self::should_remove_unused_declarator(decl, kind, ctx)
+            if !Self::should_remove_unused_declarator(decl, kind, ctx) {
+                return true;
+            }
+            let scoping = ctx.scoping.scoping();
+            let removed = &mut ctx.state.pass_changes.removed_declarations;
+            decl.id.bound_names(&mut |ident| {
+                let Some(symbol_id) = ident.symbol_id.get() else { return };
+                for symbol_id in redeclared_symbols(symbol_id, scoping, false) {
+                    removed.insert((symbol_id, ident.span));
+                }
+            });
+            false
         });
         if var_decl.declarations.is_empty() {
             return None;

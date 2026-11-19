@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, fmt::Write};
 
 use oxc_diagnostics::{
     Error, Severity,
@@ -6,11 +6,36 @@ use oxc_diagnostics::{
 };
 
 use crate::output_formatter::InternalFormatter;
+use oxc_linter::table::RuleTable;
+use rustc_hash::FxHashSet;
 
 #[derive(Debug, Default)]
 pub struct AgentOutputFormatter;
 
 impl InternalFormatter for AgentOutputFormatter {
+    fn all_rules(&self, enabled_rules: FxHashSet<(&str, &str)>) -> Option<String> {
+        let table = RuleTable::default();
+        let total = table.total;
+        let enabled_count = enabled_rules.len();
+
+        let mut output = String::new();
+        let _ = writeln!(output, "## Rules ({total} total, {enabled_count} enabled)");
+
+        for section in &table.sections {
+            let _ = writeln!(output, "## {}", section.category);
+            for row in &section.rows {
+                let enabled = if enabled_rules.contains(&(row.plugin.as_str(), row.name)) {
+                    "✅"
+                } else {
+                    ""
+                };
+                let _ = writeln!(output, "{enabled} {} {}", row.plugin, row.name);
+            }
+        }
+
+        Some(output)
+    }
+
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
         Box::new(AgentReporter)
     }
@@ -54,10 +79,8 @@ fn format_agent(diagnostic: &Error) -> String {
     let rendered_message =
         if info_message.is_empty() { diagnostic.to_string() } else { info_message };
     let message = compact_message(&rendered_message);
-    let help = diagnostic
-        .help()
-        .map(|help| format!(" help: {}", compact_message(&help)))
-        .unwrap_or_default();
+    let help =
+        diagnostic.help().map_or_default(|help| format!(" help: {}", compact_message(&help)));
     let location =
         if start.line == 0 { String::new() } else { format!(":{}:{}", start.line, start.column) };
 
@@ -104,7 +127,17 @@ mod test {
     use oxc_diagnostics::{NamedSource, OxcDiagnostic, reporter::DiagnosticReporter};
     use oxc_span::Span;
 
-    use super::{AgentReporter, compact_message};
+    use super::{AgentOutputFormatter, AgentReporter, compact_message};
+    use crate::output_formatter::InternalFormatter;
+    use rustc_hash::FxHashSet;
+
+    #[test]
+    fn all_rules() {
+        let formatter = AgentOutputFormatter;
+        let result = formatter.all_rules(FxHashSet::default());
+        assert!(result.is_some());
+        assert!(result.unwrap().contains("## Rules"));
+    }
 
     // The borrowed fast path has to agree with the collapsing slow path on every input,
     // or messages silently change shape depending on which branch is taken.

@@ -152,13 +152,14 @@ impl ServerLinterBuilder {
         // so the `root_path` fallback is an arbitrary placeholder.
         let base_ignore_root = oxlintrc.dir().unwrap_or(&root_path).to_path_buf();
 
-        let config_builder = match ConfigStoreBuilder::from_oxlintrc(
-            false,
-            oxlintrc,
+        let config_builder = match ConfigLoader::new(
             external_linter,
             &mut external_plugin_store,
+            &[],
             Some(root_uri.as_ref()),
-        ) {
+        )
+        .create_config_builder(oxlintrc)
+        {
             Ok(builder) => builder,
             Err(e) => {
                 client_messages.insert(ClientMessage {

@@ -11,11 +11,13 @@ use rustc_hash::FxHashMap;
 
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::RegExpFlags;
+use oxc_data_structures::brands::BrandOrigin;
+#[cfg(any(test, feature = "benchmarking"))]
+use oxc_data_structures::brands::BrandScope;
 use oxc_span::{SourceType, Span};
 use oxc_str::JSStr;
 
 use crate::{
-    UniquePromise,
     config::LexerConfig as Config,
     diagnostics::{self, ParserDiagnostic},
 };
@@ -24,6 +26,7 @@ mod byte_handlers;
 mod comment;
 mod identifier;
 mod jsx;
+mod keyword;
 mod kind;
 mod number;
 mod numeric;
@@ -46,22 +49,27 @@ pub use number::{parse_big_int, parse_float, parse_int};
 pub use token::Token;
 
 use source::{Source, SourcePosition};
-use trivia_builder::{AnnotationComments, TriviaBuilder};
+use token::PendingToken;
+use trivia_builder::{TriviaBuilder, TriviaCheckpoint};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct LexerCheckpoint<'a> {
     source_position: SourcePosition<'a>,
-    errors_snapshot: ErrorSnapshot<'a>,
+    errors_len: usize,
     tokens_len: usize,
-    annotation_comments: AnnotationComments,
+    trivia: TriviaCheckpoint,
 }
 
-#[derive(Debug)]
-enum ErrorSnapshot<'a> {
-    Empty,
-    Count(usize),
-    Full(Vec<ParserDiagnostic<'a>>),
+impl LexerCheckpoint<'_> {
+    pub(crate) fn errors_len(&self) -> usize {
+        self.errors_len
+    }
 }
+
+/// Number of bytes which are always available to read from the position passed to a token handler.
+/// i.e. a token handler can read the byte after the first byte of the token, without checking
+/// whether it is at the end of the source.
+const TOKEN_HANDLER_MIN_BYTES: usize = 2;
 
 /// Action to take when finishing a token.
 /// Passed to [`Lexer::finish_next_inner`].
@@ -80,18 +88,23 @@ pub struct Lexer<'a, C: Config> {
 
     source_type: SourceType,
 
-    /// The token currently being built.
-    /// Only its start and flags are written here; its kind and end remain zero until
-    /// `Token::finish` constructs the completed token.
+    /// Start of the token currently being lexed.
+    token_start: u32,
+
+    /// Flags of the token currently being lexed, and trivia state since the previous token.
+    /// The `Token` itself is only constructed by `Token::new` once its kind and end are known.
     ///
-    /// Between lexer calls, `token` is always `Token::default()`. Every method which produces a token
-    /// ends in `finish_next_inner` or `finish_re_lex`, and both reset it.
+    /// Between lexer calls, `pending` is always `PendingToken::NONE`. Every method which produces
+    /// a token ends in one of:
+    /// * `finish_next_inner`, which resets it.
+    /// * `finish_re_lex`, which never alters it.
+    /// * `finish_fresh_token`, which is only for tokens which nothing has altered it for.
     ///
-    /// The one exception is before the first token is lexed, when it is `Token::new_on_new_line()`.
-    /// `checkpoint` and `rewind` can never see that state, because the parser lexes the first token
-    /// before it does anything else, and they are the only things which depend on `token` being
-    /// `Token::default()`. Both assert it.
-    token: Token,
+    /// The one exception is before the first token is lexed, when it is `PendingToken::START_OF_FILE`.
+    /// `next_token`, `checkpoint` and `rewind` depend on `pending` being `PendingToken::NONE`,
+    /// and assert it in debug builds. They can never see that state, because the parser lexes
+    /// the first token with `first_token` before it does anything else.
+    pending: PendingToken,
 
     pub(crate) errors: Vec<ParserDiagnostic<'a>>,
 
@@ -112,9 +125,6 @@ pub struct Lexer<'a, C: Config> {
     /// `None` is saved when the string contains an invalid escape sequence.
     pub escaped_templates: FxHashMap<u32, Option<JSStr<'a>>>,
 
-    /// `memchr` Finder for end of multi-line comments. Created lazily when first used.
-    multi_line_comment_end_finder: Option<memchr::memmem::Finder<'static>>,
-
     /// Collected tokens in source order.
     tokens: ArenaVec<'a, Token>,
 
@@ -125,16 +135,15 @@ pub struct Lexer<'a, C: Config> {
 impl<'a, C: Config> Lexer<'a, C> {
     /// Create new `Lexer`.
     ///
-    /// Requiring a `UniquePromise` to be provided guarantees only 1 `Lexer` can exist
-    /// on a single thread at one time.
+    /// `brand_origin` is for the `Lexer`'s `Source` (see `Source` docs).
     pub(super) fn new(
         allocator: &'a Allocator,
         source_text: &'a str,
         source_type: SourceType,
         config: C,
-        unique: UniquePromise,
+        brand_origin: BrandOrigin<'a>,
     ) -> Self {
-        let source = Source::new(source_text, unique);
+        let source = Source::new(source_text, brand_origin);
 
         // If collecting tokens, allocate enough space so that the `Vec<Token>` will not have to grow during parsing.
         // `source_text.len() + 1` is almost always a large overestimate of number of tokens, but it's impossible to
@@ -153,35 +162,47 @@ impl<'a, C: Config> Lexer<'a, C> {
             ArenaVec::new_in(&allocator)
         };
 
-        // The first token is at the start of file, so is allows on a new line
-        let token = Token::new_on_new_line();
         Self {
             allocator,
             source,
             source_type,
-            token,
+            token_start: 0,
+            // The first token is at the start of file, so is always on a new line
+            pending: PendingToken::START_OF_FILE,
             errors: vec![],
             deferred_module_errors: vec![],
             trivia_builder: TriviaBuilder::new_in(allocator),
             escaped_strings: FxHashMap::default(),
             escaped_templates: FxHashMap::default(),
-            multi_line_comment_end_finder: None,
             tokens,
             config,
         }
     }
 
-    /// Backdoor to create a `Lexer` without holding a `UniquePromise`, for benchmarks.
-    /// This function must NOT be exposed in public API as it breaks safety invariants.
-    #[cfg(feature = "benchmarking")]
-    pub fn new_for_benchmarks(
+    /// Create a [`Lexer`], and call `f` with it. Returns what `f` returns.
+    ///
+    /// The `Lexer` is passed to `f`, not returned, because that's what makes `'brand`
+    /// unique to it. `f` must accept a `Lexer` with any lifetime `'brand`, so code in `f`
+    /// can't treat `'brand` as the same as any other lifetime. That makes `'brand` a brand
+    /// (see [`brands`]).
+    ///
+    /// For tests and benchmarks only.
+    /// The parser creates its `Lexer` with `ParserImpl::scope`, and `Lexer::new`.
+    ///
+    /// [`brands`]: oxc_data_structures::brands
+    #[cfg(any(test, feature = "benchmarking"))]
+    pub fn scope<R>(
         allocator: &'a Allocator,
         source_text: &'a str,
         source_type: SourceType,
         config: C,
-    ) -> Self {
-        let unique = UniquePromise::new_for_tests_and_benchmarks();
-        Self::new(allocator, source_text, source_type, config, unique)
+        f: impl for<'brand> FnOnce(Lexer<'brand, C>) -> R,
+    ) -> R {
+        BrandOrigin::scope_within(|brand_origin, _: BrandScope<'_, 'a>| {
+            // `allocator` and `source_text` are shortened from `'a` to `'brand` here
+            let lexer = Lexer::new(allocator, source_text, source_type, config, brand_origin);
+            f(lexer)
+        })
     }
 
     /// Get errors.
@@ -199,57 +220,32 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// Creates a checkpoint storing the current lexer state.
     /// Use `rewind` to restore the lexer to the state stored in the checkpoint.
     pub fn checkpoint(&self) -> LexerCheckpoint<'a> {
-        // `token` is always `Token::default()` here, so it does not need to be saved. See `token` field docs.
-        debug_assert_eq!(self.token, Token::default());
-
-        let errors_snapshot = if self.errors.is_empty() {
-            ErrorSnapshot::Empty
-        } else {
-            ErrorSnapshot::Count(self.errors.len())
-        };
+        // `pending` is always `PendingToken::NONE` here, so it does not need to be saved. See `pending` field docs.
+        debug_assert_eq!(self.pending, PendingToken::NONE);
 
         LexerCheckpoint {
             source_position: self.source.position(),
-            errors_snapshot,
+            errors_len: self.errors.len(),
             tokens_len: self.tokens.len(),
-            annotation_comments: self.trivia_builder.annotation_comments,
-        }
-    }
-
-    /// Create a checkpoint that can handle error popping.
-    /// This is more expensive as it clones the errors vector.
-    pub(crate) fn checkpoint_with_error_recovery(&self) -> LexerCheckpoint<'a> {
-        // `token` is always `Token::default()` here, so it does not need to be saved. See `token` field docs.
-        debug_assert_eq!(self.token, Token::default());
-
-        let errors_snapshot = if self.errors.is_empty() {
-            ErrorSnapshot::Empty
-        } else {
-            ErrorSnapshot::Full(self.errors.clone())
-        };
-
-        LexerCheckpoint {
-            source_position: self.source.position(),
-            errors_snapshot,
-            tokens_len: self.tokens.len(),
-            annotation_comments: self.trivia_builder.annotation_comments,
+            trivia: self.trivia_builder.checkpoint(),
         }
     }
 
     /// Rewinds the lexer to the same state as when the passed in `checkpoint` was created.
     pub fn rewind(&mut self, checkpoint: LexerCheckpoint<'a>) {
-        // `token` is always `Token::default()` here, so it does not need to be restored. See `token` field docs.
-        debug_assert_eq!(self.token, Token::default());
+        // `pending` is always `PendingToken::NONE` here, so it does not need to be restored. See `pending` field docs.
+        debug_assert_eq!(self.pending, PendingToken::NONE);
 
-        match checkpoint.errors_snapshot {
-            ErrorSnapshot::Empty => self.errors.clear(),
-            ErrorSnapshot::Count(len) => self.errors.truncate(len),
-            ErrorSnapshot::Full(errors) => self.errors = errors,
-        }
+        self.errors.truncate(checkpoint.errors_len);
 
         self.tokens.truncate(checkpoint.tokens_len);
         self.source.set_position(checkpoint.source_position);
-        self.trivia_builder.annotation_comments = checkpoint.annotation_comments;
+        self.trivia_builder.rewind(checkpoint.trivia);
+    }
+
+    /// Make rewinding to `checkpoint` keep the comments and irregular whitespace lexed after it.
+    pub(crate) fn keep_trivia(&self, checkpoint: &mut LexerCheckpoint<'a>) {
+        self.trivia_builder.keep_trivia(&mut checkpoint.trivia);
     }
 
     pub fn peek_token(&mut self) -> Token {
@@ -267,18 +263,183 @@ impl<'a, C: Config> Lexer<'a, C> {
             // SAFETY: Next 2 bytes are `#!`
             let kind = unsafe { self.read_hashbang_comment() };
             // Hashbangs are not included in tokens
-            self.finish_next_inner(kind, FinishTokenMode::Discard)
+            self.finish_next_inner(kind, self.source.position(), FinishTokenMode::Discard)
         } else {
-            let kind = self.read_next_token();
-            self.finish_next(kind)
+            self.first_token_without_hashbang()
         }
     }
 
+    /// Read first token, without treating `#!` as the start of a hashbang comment.
+    /// For source which is not a whole file e.g. a lone expression.
+    pub fn first_token_without_hashbang(&mut self) -> Token {
+        let (kind, end) = self.read_next_token();
+        self.finish_next_inner(kind, end, FinishTokenMode::Push)
+    }
+
     /// Read next token in file.
-    /// Use `first_token` for first token, and this method for all further tokens.
+    ///
+    /// Use `first_token` or `first_token_without_hashbang` for first token, and this method for
+    /// all further tokens. This method relies on `pending` being `PendingToken::NONE`, which it is
+    /// after any token has been read, but not at the start of the file. Reading the first token
+    /// with this method gives that token, and a later one, the wrong `is_on_new_line` flag.
+    /// That is only checked in debug builds.
     pub fn next_token(&mut self) -> Token {
-        let kind = self.read_next_token();
-        self.finish_next(kind)
+        self.next_token_impl()
+    }
+
+    /// Read next token in file.
+    ///
+    /// This is inlined into every place the parser advances, so it only contains what most tokens
+    /// need: skip one space, then either complete a single-byte token, or call a token handler.
+    // `#[inline(always)]` so `next_token` and `next_token_for_benchmarks` contain the same code
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn next_token_impl(&mut self) -> Token {
+        // No trivia has been seen since the previous token. See `pending` field docs.
+        debug_assert_eq!(self.pending, PendingToken::NONE);
+
+        self.trivia_builder.clear_annotation_comments();
+
+        let mut pos = self.source.position();
+        // SAFETY: `source.end()` is always equal to or after `source.position()`
+        let remaining_bytes = unsafe { self.source.end().offset_from(pos) };
+        if remaining_bytes > TOKEN_HANDLER_MIN_BYTES {
+            // SAFETY: There are more than `TOKEN_HANDLER_MIN_BYTES` bytes remaining in source
+            let mut byte = unsafe { pos.read() };
+            if byte == b' ' {
+                // SAFETY: A space is ASCII, and `TOKEN_HANDLER_MIN_BYTES` bytes remain after it
+                pos = unsafe { pos.add(1) };
+                // SAFETY: `TOKEN_HANDLER_MIN_BYTES` bytes remain after the space
+                byte = unsafe { pos.read() };
+            }
+
+            if let Some(kind) = byte_handlers::single_byte_token(byte) {
+                // SAFETY: Single-byte tokens are ASCII, and at least 1 byte remains after `pos`
+                let end = unsafe { pos.add(1) };
+                self.source.set_position(end);
+                return self.finish_fresh_token(kind, pos, end);
+            }
+
+            let token_handlers = &Self::TOKEN_HANDLERS;
+            // SAFETY: `byte` is the byte at `pos`. `TOKEN_HANDLER_MIN_BYTES` bytes remain from
+            // `pos`. No trivia has been seen since the previous token, other than one space.
+            return unsafe { token_handlers[byte as usize](self, pos) };
+        }
+
+        self.next_token_after_trivia()
+    }
+
+    /// Read next token, starting from the current position of source.
+    ///
+    /// Token handlers continue here once they have skipped whitespace or a comment.
+    /// `next_token_impl` calls this if it is at the end of the source.
+    #[inline(never)]
+    fn next_token_after_trivia(&mut self) -> Token {
+        let (kind, end) = self.read_next_token_after_trivia();
+        self.finish_next_inner(kind, end, FinishTokenMode::Push)
+    }
+
+    /// Finish a token which starts at `start` and ends at `end`, where all of these are true:
+    ///
+    /// * No trivia was seen between the previous token and it, other than one space.
+    /// * It has no flags (`escaped` or `has_separator`).
+    /// * Position of source has been set to `end`.
+    ///
+    /// Such a token is not on a new line, and has no comments to attach, so `pending` is neither
+    /// read nor reset. `token_start` is not read either, so does not need to have been set.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn finish_fresh_token(
+        &mut self,
+        kind: Kind,
+        start: SourcePosition<'a>,
+        end: SourcePosition<'a>,
+    ) -> Token {
+        self.finish_token_without_comments(kind, start, end, PendingToken::NONE)
+    }
+
+    /// Same as `finish_fresh_token`, for a token which only line breaks and regular whitespace
+    /// were seen before. The token is on a new line.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn finish_fresh_token_on_new_line(
+        &mut self,
+        kind: Kind,
+        start: SourcePosition<'a>,
+        end: SourcePosition<'a>,
+    ) -> Token {
+        self.finish_token_without_comments(kind, start, end, PendingToken::AFTER_LINE_BREAK)
+    }
+
+    /// Finish a token which has no flags, and which no comments were seen before.
+    /// `trivia` is what else was seen before it. `pending` must not have been altered.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn finish_token_without_comments(
+        &mut self,
+        kind: Kind,
+        start: SourcePosition<'a>,
+        end: SourcePosition<'a>,
+        trivia: PendingToken,
+    ) -> Token {
+        debug_assert_eq!(end, self.source.position());
+        debug_assert_ne!(kind, Kind::Skip);
+        #[cfg(debug_assertions)]
+        self.assert_byte_handler_produces_token(kind, start, end);
+
+        let token =
+            Token::new(kind, self.source.offset_of(start), self.source.offset_of(end), trivia);
+        self.record_token_without_comments(token)
+    }
+
+    /// Check that the byte handler for the first byte of a token produces that same token,
+    /// with no flags.
+    ///
+    /// Code which finishes a token with `finish_fresh_token` decides for itself where the token
+    /// ends, what `Kind` it is, and that it has no flags. Byte handlers lex the same token where
+    /// it follows a comment or other trivia, so the two must agree. This checks that they do,
+    /// in debug builds, which all tests and conformance runs are.
+    #[cfg(debug_assertions)]
+    fn assert_byte_handler_produces_token(
+        &mut self,
+        kind: Kind,
+        start: SourcePosition<'a>,
+        end: SourcePosition<'a>,
+    ) {
+        let token_start = self.token_start;
+        let error_count = self.errors.len();
+
+        self.source.set_position(start);
+        self.token_start = self.source.offset_of(start);
+        // SAFETY: A token starts at `start`, so it is not the end of the source
+        let byte = unsafe { start.read() };
+        // SAFETY: `byte` is the byte at `start`, which is the current position of source
+        let byte_handler_kind = unsafe { self.handle_byte(byte) };
+
+        assert_eq!(
+            (byte_handler_kind, self.source.position()),
+            (kind, end),
+            "Byte handler lexes a different token"
+        );
+        assert_eq!(self.pending, PendingToken::NONE, "Byte handler gives the token flags");
+        assert_eq!(self.errors.len(), error_count, "Byte handler reports an error for the token");
+
+        self.token_start = token_start;
+    }
+
+    /// Record a finished token, where no comments were seen since the previous token,
+    /// and `pending` has not been altered since then.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn record_token_without_comments(&mut self, token: Token) -> Token {
+        debug_assert_eq!(self.pending, PendingToken::NONE);
+        if self.config.tokens() {
+            // We allocated sufficient capacity in the `Vec` for all tokens at the start.
+            // `push_fast` is optimized for the "doesn't need to grow" case.
+            self.tokens.push_fast(token);
+        }
+        self.trivia_builder.set_previous_token(token);
+        token
     }
 
     /// Read the next token after `=` in a JSX attribute.
@@ -288,31 +449,37 @@ impl<'a, C: Config> Lexer<'a, C> {
     }
 
     // This is a workaround for a problem where `next_token` is not inlined in lexer benchmark.
-    // Must be kept in sync with `next_token` above, and contain exactly the same code.
+    // It contains exactly the same code as `next_token` above, as both only call `next_token_impl`.
     #[cfg(feature = "benchmarking")]
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn next_token_for_benchmarks(&mut self) -> Token {
-        let kind = self.read_next_token();
-        self.finish_next(kind)
+        self.next_token_impl()
     }
 
     #[inline]
     fn finish_next(&mut self, kind: Kind) -> Token {
-        self.finish_next_inner(kind, FinishTokenMode::Push)
+        self.finish_next_inner(kind, self.source.position(), FinishTokenMode::Push)
     }
 
     #[inline]
     fn finish_next_retokenized(&mut self, kind: Kind) -> Token {
-        self.finish_next_inner(kind, FinishTokenMode::Replace)
+        self.finish_next_inner(kind, self.source.position(), FinishTokenMode::Replace)
     }
 
     // `#[inline(always)]` to ensure is inlined into `finish_next` and `finish_next_retokenized`,
     // so that `mode` is statically known
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    fn finish_next_inner(&mut self, kind: Kind, mode: FinishTokenMode) -> Token {
-        let token = self.token.finish(kind, self.offset());
+    fn finish_next_inner(
+        &mut self,
+        kind: Kind,
+        end: SourcePosition<'a>,
+        mode: FinishTokenMode,
+    ) -> Token {
+        debug_assert_eq!(end, self.source.position());
+        let pending = mem::replace(&mut self.pending, PendingToken::NONE);
+        let token = Token::new(kind, self.token_start, self.source.offset_of(end), pending);
         if self.config.tokens() {
             match mode {
                 FinishTokenMode::Push => {
@@ -330,17 +497,15 @@ impl<'a, C: Config> Lexer<'a, C> {
                 FinishTokenMode::Discard => {}
             }
         }
-        self.trivia_builder.handle_token(token);
-        self.token = Token::default();
+        self.trivia_builder.handle_token(token, pending);
         token
     }
 
     /// Finish a re-lexed token used only for parser disambiguation.
     /// This must not mutate the externally collected token stream.
-    fn finish_re_lex(&mut self, kind: Kind) -> Token {
-        let token = self.token.finish(kind, self.offset());
-        self.token = Token::default();
-        token
+    fn finish_re_lex(&self, kind: Kind) -> Token {
+        debug_assert_eq!(self.pending, PendingToken::NONE);
+        Token::new(kind, self.token_start, self.offset(), PendingToken::NONE)
     }
 
     /// Overwrite the last token in the collected token stream.
@@ -421,7 +586,7 @@ impl<'a, C: Config> Lexer<'a, C> {
 
     /// Get the current unterminated token range
     fn unterminated_range(&self) -> Span {
-        Span::new(self.token.start(), self.offset())
+        Span::new(self.token_start, self.offset())
     }
 
     /// Consume the current char if not at EOF
@@ -484,6 +649,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     }
 
     /// Return `IllegalCharacter` Error or `UnexpectedEnd` if EOF
+    #[cold]
     fn unexpected_err(&mut self) {
         let offset = self.current_offset();
         match self.peek_char() {
@@ -494,16 +660,22 @@ impl<'a, C: Config> Lexer<'a, C> {
 
     /// Read each char and set the current token
     /// Whitespace and line terminators are skipped
-    #[inline] // Make sure is inlined into `next_token`
-    fn read_next_token(&mut self) -> Kind {
+    /// Returns the `Kind` of the token, and the position of its end, which is current position of source.
+    #[inline] // Make sure is inlined into `first_token`
+    fn read_next_token(&mut self) -> (Kind, SourcePosition<'a>) {
         self.trivia_builder.clear_annotation_comments();
+        self.read_next_token_after_trivia()
+    }
 
+    /// Same as `read_next_token`, but keeps any annotation comments found before the token so far.
+    #[inline]
+    fn read_next_token_after_trivia(&mut self) -> (Kind, SourcePosition<'a>) {
         let end_pos = self.source.end();
+        let mut pos = self.source.position();
         loop {
             // Single spaces between tokens are common, so consume a space before processing the next token.
             // Can only do this if there are at least 2 bytes left in source.
             // If there aren't 2 bytes left, delegate to `read_next_token_at_end` (cold branch).
-            let mut pos = self.source.position();
             // SAFETY: `source.end()` is always equal to or after `source.position()`
             let remaining_bytes = unsafe { end_pos.offset_from(pos) };
             if remaining_bytes >= 2 {
@@ -522,17 +694,27 @@ impl<'a, C: Config> Lexer<'a, C> {
 
                 // Set token start
                 let offset = self.source.offset_of(pos);
-                self.token.set_start(offset);
+                self.token_start = offset;
 
+                if let Some(kind) = byte_handlers::single_byte_token(byte) {
+                    // SAFETY: Single-byte tokens are ASCII, and at least 1 byte remains after `pos`
+                    let end = unsafe { pos.add(1) };
+                    self.source.set_position(end);
+                    return (kind, end);
+                }
+
+                let byte_handlers = self.config.byte_handlers();
+                let kind;
                 // SAFETY: `byte` is byte value at current position in source
-                let kind = unsafe { self.handle_byte(byte) };
+                (kind, pos) = unsafe { byte_handlers[byte as usize](self, pos) };
                 if kind != Kind::Skip {
-                    return kind;
+                    return (kind, pos);
                 }
             } else {
                 // Only 0 or 1 bytes left in source.
                 // Delegate to `#[cold]` function as this is a very rare case.
-                return self.read_next_token_at_end();
+                let kind = self.read_next_token_at_end();
+                return (kind, self.source.position());
             }
         }
     }
@@ -542,7 +724,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     #[cold]
     fn read_next_token_at_end(&mut self) -> Kind {
         let offset = self.offset();
-        self.token.set_start(offset);
+        self.token_start = offset;
 
         if let Some(byte) = self.peek_byte() {
             // SAFETY: `byte` is byte value at current position in source
@@ -551,7 +733,7 @@ impl<'a, C: Config> Lexer<'a, C> {
                 return kind;
             }
             // Last byte was whitespace/line break (`Kind::Skip`), so now at EOF
-            self.token.set_start(offset + 1);
+            self.token_start = offset + 1;
         }
 
         Kind::Eof
@@ -581,7 +763,7 @@ impl<'a, C: Config> Lexer<'a, C> {
                 }
 
                 let offset = self.source.offset_of(pos);
-                self.token.set_start(offset);
+                self.token_start = offset;
 
                 if matches!(byte, b'"' | b'\'') {
                     // SAFETY: `byte` is the current ASCII quote delimiter.
@@ -603,7 +785,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     #[cold]
     fn read_next_jsx_attribute_value_at_end(&mut self) -> Kind {
         let offset = self.offset();
-        self.token.set_start(offset);
+        self.token_start = offset;
 
         if let Some(byte) = self.peek_byte() {
             if matches!(byte, b'"' | b'\'') {
@@ -616,7 +798,7 @@ impl<'a, C: Config> Lexer<'a, C> {
             if kind != Kind::Skip {
                 return kind;
             }
-            self.token.set_start(offset + 1);
+            self.token_start = offset + 1;
         }
 
         Kind::Eof

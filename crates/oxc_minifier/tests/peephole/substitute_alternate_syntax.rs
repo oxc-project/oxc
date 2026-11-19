@@ -2,8 +2,8 @@ use oxc_span::SourceType;
 
 use crate::{
     CompressOptions, CompressOptionsKeepNames, CompressOptionsUnused, default_options, test,
-    test_options, test_same, test_same_options, test_same_options_source_type, test_smallest,
-    test_target_same,
+    test_options, test_same, test_same_options, test_same_options_source_type, test_same_smallest,
+    test_smallest, test_target_same,
 };
 
 #[test]
@@ -913,14 +913,70 @@ fn optional_catch_binding() {
     // Regression tests for https://github.com/oxc-project/oxc/issues/17307
     test(
         "try {} catch (e) { try {} catch (e) { var e = 'e'; console.log(e === 'e') } } console.log(e === undefined)",
-        "try {} catch (e) { var e } console.log(e === void 0)",
+        "try {} catch { var e } console.log(!0)",
     );
     test(
         "try { throw 1 } catch (e) { try { throw 2 } catch (e) { var e = 'e'; console.log(e === 'e') } } console.log(e === undefined)",
-        "try { throw 1 } catch (e) { try { throw 2 } catch (e) { var e = 'e'; console.log(e === 'e') } } console.log(e === void 0)",
+        "try { throw 1 } catch { try { throw 2 } catch (e) { var e = 'e'; console.log(e === 'e') } } console.log(e === void 0)",
     );
 
     test_target_same("try { foo } catch(e) {}", "chrome65");
+}
+
+/// Once a `var` redeclaring a catch parameter is removed, the catch parameter can
+/// be removed in the same run: <https://github.com/oxc-project/oxc/issues/27548>
+#[test]
+fn optional_catch_binding_after_removed_var() {
+    test_smallest(
+        "export function f() { try { x() } catch (a) { var a } }",
+        "export function f() { try { x() } catch {} }",
+    );
+    // Each `var` also redeclares the enclosing binding.
+    test_smallest(
+        "export function f() { try { x() } catch (e) { var e; var e } }",
+        "export function f() { try { x() } catch {} }",
+    );
+    // Removed by dead code elimination (`KeepVar`).
+    test_smallest(
+        "export function f() { try { x() } catch (e) { if (0) { var e } } }",
+        "export function f() { try { x() } catch {} }",
+    );
+    test_smallest(
+        "export function f() { try { x() } catch (e) { try { y() } catch (e) { var e } } }",
+        "export function f() { try { x() } catch { try { y() } catch {} } }",
+    );
+    // The initializer writes the catch parameter, which is never read.
+    test_smallest(
+        "export function f() { try { x() } catch (e) { var e = 1 } }",
+        "export function f() { try { x() } catch {} }",
+    );
+    // A dead nested catch's `var`, kept by `KeepVar` in the body of an outer catch whose
+    // parameter is still read.
+    test_smallest(
+        "export function f() { try { x() } catch (e) { if (0) { try { y() } catch (e) { var e } } return e } }",
+        "export function f() { try { x() } catch (e) { return e } }",
+    );
+    // An unreachable initializer-free `var` skips the drop walk, but `KeepVar`
+    // can still change its symbol when the catch parameter is unused.
+    test_same_smallest("export function f() { try { x() } catch (e) { return; var e } return e }");
+    test_smallest(
+        "export function f() { try { x() } catch (e) { return; var e; var e } return e }",
+        "export function f() { try { x() } catch (e) { return; var e, e } return e }",
+    );
+    test_same_smallest(
+        "export function f() { var e = 1; try { x() } catch (e) { return; var e } return e }",
+    );
+    // A referenced catch parameter must keep its redeclaration link.
+    test_same_smallest(
+        "export function f() { try { x() } catch (e) { return e; var e } return e }",
+    );
+    // The `var` is kept, so the catch parameter stays.
+    test_same_smallest("export function f() { try { x() } catch (e) { if (0) var e } return e }");
+    test_same_smallest("export function f() { try { x() } catch (e) { var e = 1; return e } }");
+    test_smallest(
+        "export function f() { try { x() } catch (e) { if (0) { var e } return e } }",
+        "export function f() { try { x() } catch (e) { if (0) var e; return e } }",
+    );
 }
 
 #[test]

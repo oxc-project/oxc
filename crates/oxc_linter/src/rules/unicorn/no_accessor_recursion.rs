@@ -109,7 +109,7 @@ impl Rule for NoAccessorRecursion {
 
         match target.kind() {
             AstKind::VariableDeclarator(decl) => {
-                let Some(key_name) = get_property_or_method_def_name(func_parent) else {
+                let Some(key_name) = get_public_property_or_method_def_name(func_parent) else {
                     return;
                 };
                 if let BindingPattern::ObjectPattern(obj_pattern) = &decl.id {
@@ -136,12 +136,11 @@ impl Rule for NoAccessorRecursion {
                             return;
                         };
                         let is_same_key = {
-                            if matches!(member_expr, MemberExpressionKind::PrivateField(_)) {
-                                matches!(&property.key, PropertyKey::PrivateIdentifier(_))
-                                    && prop_key_name == expr_key_name
-                            } else {
-                                prop_key_name == expr_key_name
-                            }
+                            let key_is_private =
+                                matches!(property.key, PropertyKey::PrivateIdentifier(_));
+                            let member_is_private =
+                                matches!(member_expr, MemberExpressionKind::PrivateField(_));
+                            key_is_private == member_is_private && prop_key_name == expr_key_name
                         };
                         if !is_same_key {
                             return;
@@ -166,12 +165,11 @@ impl Rule for NoAccessorRecursion {
                             return;
                         };
                         let is_same_key = {
-                            if matches!(member_expr, MemberExpressionKind::PrivateField(_)) {
-                                matches!(&method_def.key, PropertyKey::PrivateIdentifier(_))
-                                    && prop_key_name == expr_key_name
-                            } else {
-                                prop_key_name == expr_key_name
-                            }
+                            let key_is_private =
+                                matches!(method_def.key, PropertyKey::PrivateIdentifier(_));
+                            let member_is_private =
+                                matches!(member_expr, MemberExpressionKind::PrivateField(_));
+                            key_is_private == member_is_private && prop_key_name == expr_key_name
                         };
                         if !is_same_key {
                             return;
@@ -300,10 +298,16 @@ fn get_nearest_function<'a>(node: &AstNode, ctx: &'a LintContext) -> Option<&'a 
     if matches!(parent.kind(), AstKind::Function(_)) { Some(parent) } else { None }
 }
 
-fn get_property_or_method_def_name<'a>(parent: &'a AstNode<'a>) -> Option<StaticPropertyName<'a>> {
+fn get_public_property_or_method_def_name<'a>(
+    parent: &'a AstNode<'a>,
+) -> Option<StaticPropertyName<'a>> {
     match parent.kind() {
         AstKind::ObjectProperty(ObjectProperty { key, .. })
-        | AstKind::MethodDefinition(MethodDefinition { key, .. }) => key.name(),
+        | AstKind::MethodDefinition(MethodDefinition { key, .. })
+            if !key.is_private_identifier() =>
+        {
+            key.name()
+        }
         _ => None,
     }
 }
@@ -413,6 +417,12 @@ fn test() {
             }
         ",
         r"
+            class C {
+                get #x() { return this.x }
+                get x() { return 2 }
+            }
+        ",
+        r"
             class Foo{
                 get bar() {
                     const {[bar]: bar} = this;
@@ -466,6 +476,33 @@ fn test() {
             };
         ",
         r#"const o = { get "\uD800"() { return this["\uDC00"]; } };"#,
+        r"
+            class C {
+                get #x() {
+                    const { x } = this;
+                    return x;
+                }
+                get x() { return 2; }
+            }
+        ",
+        r"
+            class C {
+                get #x() {
+                    const { 'x': value } = this;
+                    return value;
+                }
+                get x() { return 2; }
+            }
+        ",
+        r"
+            class C {
+                static get #x() {
+                    const { x: value } = this;
+                    return value;
+                }
+                static get x() { return 2; }
+            }
+        ",
     ];
 
     let fail = vec![

@@ -12,3 +12,17 @@ class Component {
     return this._renderMessage();
   }
 }
+
+
+const sproutInputs = [
+  ["hello"],
+  ["updated"],
+];
+export const FIXTURE_ENTRYPOINT = {
+  fn: args => {
+    "use no memo";
+    return (() => { const instance = new Component(); instance.state = {message:args[0]}; return instance.render(); })();
+  },
+  params: [sproutInputs[0]],
+  sequentialRenders: [sproutInputs[0], sproutInputs[0], ...sproutInputs.slice(1), sproutInputs.at(-1), sproutInputs[0]],
+};

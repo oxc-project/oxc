@@ -141,3 +141,4 @@ type A implements B { # c
 ```
 
 Prettier's attachment scatters the comment to the line end, across `implements B {`; same class: `f(x) # c` + break + `: T` is pulled inside the parens (`x # c` before the `)`), user content crossed in both.
+

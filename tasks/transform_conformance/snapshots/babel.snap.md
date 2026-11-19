@@ -1,6 +1,6 @@
-commit: d7a0cccb
+commit: 16a2d671
 
-Passed: 741/1169
+Passed: 754/1190
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -158,7 +158,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-explicit-resource-management (25/28)
+# babel-plugin-transform-explicit-resource-management (26/29)
 * integration/commonjs-transform/input.js
 x Output mismatch
 
@@ -371,7 +371,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-static-block (21/24)
+# babel-plugin-transform-class-static-block (22/25)
 * integration/in-class-heritage/input.js
 x Output mismatch
 
@@ -1070,7 +1070,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-exponentiation-operator (2/7)
+# babel-plugin-transform-exponentiation-operator (7/12)
 * exponentiation-operator/memoise-object/input.js
 x Output mismatch
 
@@ -1138,7 +1138,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (110/158)
+# babel-plugin-transform-typescript (113/161)
 * class/accessor-allowDeclareFields-false/input.ts
 
   x TS(18010): An accessibility modifier cannot be used with a private
@@ -1645,5 +1645,31 @@ transform-react-jsx-development: unknown field `sourceSelf`, expected one of `ru
 
 * cross-platform/within-ts-module-block/input.ts
 transform-react-jsx-development: unknown field `sourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
+
+
+# babel-plugin-proposal-decorators (0/8)
+* 2023-11-misc/setting-private-method/input.js
+x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
+
+* 2023-11-misc/setting-private-method-in-body/input.js
+x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
+
+* 2023-11-misc/setting-private-method-via-array-pattern/input.js
+x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
+
+* 2023-11-misc/setting-private-method-via-for-of/input.js
+x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
+
+* 2023-11-misc/setting-private-method-via-object-pattern/input.js
+x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
+
+* 2023-11-misc/setting-private-method-via-rest/input.js
+x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
+
+* 2023-11-misc/setting-private-method-via-update/input.js
+x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
+
+* legacy-regression/7030/input.js
+x Output mismatch
 
 

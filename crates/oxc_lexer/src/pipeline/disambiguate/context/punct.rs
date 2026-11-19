@@ -71,7 +71,7 @@ impl Walk {
             b'=' if len == 2 && c1 == b'>' => self.arrow(tokens, pos),
             b'=' if len == 1 => self.assign(),
             // A postfix non-null assertion, or a definite assignment.
-            b'!' if len == 1 && tokens.ts && postfix => self.value_done(),
+            b'!' if len == 1 && tokens.is_ts && postfix => self.value_done(),
             // A postfix increment or decrement keeps the value.
             b'+' | b'-' if len == 2 && c1 == c && postfix => self.value_done(),
             b'*' if len == 1 && self.top_kind() == FrameKind::FnHead => {
@@ -92,7 +92,7 @@ impl Walk {
             // Two openers, not a shift.
             b'<' if c1 == b'<'
                 && len == 2
-                && tokens.ts
+                && tokens.is_ts
                 && (!self.operand_allowed() || self.after_dot)
                 && !self.no_type_args
                 && lt_run_split(tokens, pos, cpu) =>
@@ -191,7 +191,7 @@ impl Walk {
             }
             // A member, parameter or index signature annotation.
             FrameKind::ClassBody | FrameKind::Params | FrameKind::ComputedKey => {
-                if tokens.ts {
+                if tokens.is_ts {
                     self.open_region(RegionRule::Inline);
                 } else {
                     self.operand_done();
@@ -199,7 +199,7 @@ impl Walk {
                 return;
             }
             FrameKind::Group | FrameKind::Call => {
-                if tokens.ts && !self.operand_allowed() {
+                if tokens.is_ts && !self.operand_allowed() {
                     // Arrow parameter annotation.
                     self.open_region(RegionRule::Inline);
                 } else {
@@ -219,12 +219,12 @@ impl Walk {
             self.clear_prev();
             return;
         }
-        if tokens.ts && self.top().declarator == Declarator::Bound {
+        if tokens.is_ts && self.top().declarator == Declarator::Bound {
             // Declarator type annotation.
             self.open_region(RegionRule::Inline);
             return;
         }
-        if tokens.ts && self.closed_group && top != FrameKind::Head {
+        if tokens.is_ts && self.closed_group && top != FrameKind::Head {
             // `(a): T =>` arrow return type; remember the group's `async`.
             let is_async = self.closed_group_async;
             self.open_region(RegionRule::ArrowRet);

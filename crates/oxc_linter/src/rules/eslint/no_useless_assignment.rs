@@ -23,7 +23,7 @@ use oxc_semantic::{NodeId, Reference, ScopeId, SymbolId};
 use oxc_span::GetSpan;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{context::LintContext, rule::Rule, utils::declarator_initializes};
 
 fn no_useless_assignment_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("This assigned value is not used in subsequent statements.")
@@ -195,7 +195,11 @@ impl Rule for NoUselessAssignment {
             });
 
             // Collect ops for this symbol (formerly Pass 2)
-            if var_decl.is_some_and(|var_decl| var_decl.init.is_some()) {
+            // In `catch (e) { var e = 1 }`, the initializer writes the catch parameter,
+            // not the enclosing binding declared by the `var`.
+            if var_decl.is_some_and(|var_decl| {
+                var_decl.init.is_some() && declarator_initializes(var_decl, symbol_id)
+            }) {
                 Self::push_op(
                     ctx,
                     graph,
@@ -1609,6 +1613,7 @@ function useResource(unsafe: (resource: { readonly release: () => void }) => voi
     ];
 
     let fail = vec![
+        "function f() { try {} catch (e) { var e = 1; use(e); } e = 2; e = 3; use(e); }",
         "let v = 'used';
                         console.log(v);
                         v = 'unused'",

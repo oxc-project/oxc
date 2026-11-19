@@ -1,7 +1,7 @@
 use rustc_hash::FxHashSet;
 
 use crate::diagnostics;
-use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::environment::{Environment, OutputMode};
 use crate::react_compiler_hir::*;
 use crate::react_compiler_utils::{FxIndexMap, FxIndexSet, IdentIndexMap};
 use crate::scope::BindingKind as AstBindingKind;
@@ -576,6 +576,19 @@ pub fn lower<'a>(
     // Pre-compute context identifiers: variables captured across function boundaries
     let context_identifiers = find_context_identifiers(func, scope, &identifier_spans)?;
 
+    // Unlike the TS implementation, we support updates to captured parameters.
+    // A nested factory can return a closure that mutates its own parameter cell,
+    // though: caching that factory call would retain the cell across renders.
+    // Preserve the source until inference can model these fresh mutable cells.
+    if env.output_mode != OutputMode::Lint
+        && context_identifiers.iter().any(|&symbol| {
+            scope.binding_kind(symbol) == AstBindingKind::Param
+                && scope.symbol_scope(symbol) != scope_id
+        })
+    {
+        env.skip_compilation = true;
+    }
+
     // For top-level functions, context is empty (no captured refs)
     let context_map: FxIndexMap<SymbolId, Option<Span>> = FxIndexMap::default();
 
@@ -734,7 +747,21 @@ fn lower_inner<'a>(
         promote_temporary(&mut builder, place.identifier);
         hir_params.push(ParamPattern::Place(Place { span: None, ..place }));
         let value = if let Some(initializer) = &param.initializer {
-            lower_default_to_temp(&mut builder, param_span, initializer, place)?
+            if builder.environment().output_mode != OutputMode::Lint
+                && matches!(
+                    &**initializer,
+                    oxc::Expression::JSXElement(_) | oxc::Expression::JSXFragment(_)
+                )
+            {
+                // Unlike the TS implementation, retain JSX defaults in their
+                // parameter environment. Moving them into the body can change
+                // which binding a tag resolves to (including fbt/fbs imports).
+                // Lint still lowers the default and validates the function.
+                builder.environment_mut().skip_compilation = true;
+                place
+            } else {
+                lower_default_to_temp(&mut builder, param_span, initializer, place)?
+            }
         } else {
             place
         };
@@ -3672,23 +3699,19 @@ impl<'a> Visit<'a> for TSEnumCaptureVisitor<'_, 'a> {
     }
 }
 
-/// Whether preserving an enum as an opaque node would hide a capture from the
-/// nested function's HIR. Top-level component enums cannot capture component
-/// state, and module bindings are outside the captured scope range.
+/// Whether an opaque enum would hide reads or writes of function-local bindings
+/// from HIR analysis. Module bindings remain outside the captured scope range.
 fn ts_enum_has_captured_reference<'a>(
     builder: &HirBuilder<'a, '_>,
     declaration: &oxc::TSEnumDeclaration<'a>,
 ) -> bool {
     let function_scope = builder.function_scope();
-    if function_scope == builder.component_scope() {
-        return false;
-    }
-    let Some(parent_scope) = builder.scope().scope_parent(function_scope) else {
-        return false;
-    };
     let mut visitor = TSEnumCaptureVisitor {
         scope: builder.scope(),
-        captured_scopes: capture_scopes(builder.scope(), parent_scope, builder.component_scope()),
+        // Unlike the TS implementation, include the current function's locals:
+        // opaque enum initializers can read or write them, and HIR optimization
+        // must not erase those bindings or fold values across hidden writes.
+        captured_scopes: capture_scopes(builder.scope(), function_scope, builder.component_scope()),
         found: false,
     };
     visitor.visit_ts_enum_declaration(declaration);

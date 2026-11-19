@@ -3,6 +3,14 @@
     "correctness": "off"
   },
   "rules": {
+    "typescript/no-misused-promises": [
+      "error",
+      {
+        "checksConditionals": {
+          "flagUnions": "strict"
+        }
+      }
+    ],
     "typescript/await-thenable": [
       "error",
       {

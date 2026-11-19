@@ -56,6 +56,12 @@ fn test() {
 			    ",
             None,
         ), // { "parserOptions": { "sourceType": "module" } }
+        (
+            "const method = 'fn'; vi[method]().mock.calls.at(0);",
+            Some(serde_json::json!([{ "mock": null }])),
+        ),
+        ("vi[getMethod()]().mock.calls.at(0);", Some(serde_json::json!([{ "mock": null }]))),
+        ("vi().mock().calls.at(0);", Some(serde_json::json!([{ "mock": null }]))),
     ];
 
     let fail = vec![
@@ -69,6 +75,11 @@ fn test() {
             Some(serde_json::json!([{ "advanceTimersByTime": null }])),
         ), // { "parserOptions": { "sourceType": "module" } },
         (r#"vi["fn"]()"#, Some(serde_json::json!([{ "fn": null }]))),
+        (
+            "vi.spyOn({m:()=>0}, 'm').mockImplementation(() => 1);",
+            Some(serde_json::json!([{ "spyOn": null }])),
+        ),
+        ("vi.fn().mockReturnValue(1);", Some(serde_json::json!([{ "fn": null }]))),
     ];
 
     Tester::new(NoRestrictedViMethods::NAME, NoRestrictedViMethods::PLUGIN, pass, fail)

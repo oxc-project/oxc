@@ -1,4 +1,4 @@
-use crate::es2022::{ClassPropertiesOptions, ES2022Options};
+use crate::{decorator::DecoratorMode, es2022::ClassPropertiesOptions, options::EnvOptions};
 
 /// Program-wide ownership of class field and static block lowering.
 ///
@@ -14,15 +14,18 @@ pub enum ClassTransform {
     ClassProperties {
         options: ClassPropertiesOptions,
         transform_static_blocks: bool,
+        decorator_mode: DecoratorMode,
     },
 }
 
 impl ClassTransform {
-    pub fn new(options: ES2022Options) -> Self {
+    pub fn new(env: &EnvOptions, decorator_mode: DecoratorMode) -> Self {
+        let options = env.es2022;
         if let Some(properties_options) = options.class_properties {
             Self::ClassProperties {
                 options: properties_options,
                 transform_static_blocks: options.class_static_block,
+                decorator_mode,
             }
         } else if options.class_static_block {
             Self::StaticBlocks
@@ -31,11 +34,11 @@ impl ClassTransform {
         }
     }
 
-    /// Whether class-properties owns field lowering and initialization order.
+    /// Whether class-properties owns field lowering and initialization order for all classes.
     ///
     /// TypeScript must leave field lowering to it, and legacy decorators must leave class-alias
     /// initialization to it instead of inserting an alias assignment in a static block.
-    pub fn transforms_fields(self) -> bool {
-        matches!(self, Self::ClassProperties { .. })
+    pub fn owns_all_class_fields(self) -> bool {
+        matches!(self, Self::ClassProperties { decorator_mode, .. } if decorator_mode != DecoratorMode::Preserve)
     }
 }

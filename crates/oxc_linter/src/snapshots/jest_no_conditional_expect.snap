@@ -457,3 +457,12 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                     ──────
    ╰────
   help: Avoid calling `expect` conditionally
+
+  ⚠ jest(no-conditional-expect): Unexpected conditional expect
+   ╭─[no_conditional_expect.tsx:3:32]
+ 2 │             customTest('foo', () => {
+ 3 │                 if (condition) expect(1).toBe(1);
+   ·                                ──────
+ 4 │             });
+   ╰────
+  help: Avoid calling `expect` conditionally

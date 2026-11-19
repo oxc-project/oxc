@@ -1,0 +1,48 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<p i18n>  Hello   <b>world</b>
+  {count, plural, =0 {none} other {many}}  </p>
+<div><p i18n="@@id" class="aaaaaaaaaaaaaaaaaaaaaaaaaaa" title="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb">  Hello  </p></div>
+<span i18n>x</span>   <b>y</b>
+<p i18n></p>
+<p i18n-title title="a">  not   a   message </p>
+<span>{count, plural, =0 {none} other {many}}</span>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<p i18n>  Hello   <b>world</b>
+  {count, plural, =0 {none} other {many}}  </p>
+<div>
+  <p
+    i18n="@@id"
+    class="aaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    title="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  >  Hello  </p>
+</div>
+<span i18n>x</span> <b>y</b>
+<p i18n></p>
+<p i18n-title title="a">not a message</p>
+<span>{count, plural, =0 {none} other {many}}</span>
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<p i18n>  Hello   <b>world</b>
+  {count, plural, =0 {none} other {many}}  </p>
+<div>
+  <p
+    i18n="@@id"
+    class="aaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    title="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  >  Hello  </p>
+</div>
+<span i18n>x</span> <b>y</b>
+<p i18n></p>
+<p i18n-title title="a">not a message</p>
+<span>{count, plural, =0 {none} other {many}}</span>
+
+===================== End =====================

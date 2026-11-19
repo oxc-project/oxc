@@ -2,6 +2,7 @@
 
 mod constants;
 mod driver;
+mod esbuild;
 mod exec;
 mod test_case;
 
@@ -73,6 +74,10 @@ fn fixture_root() -> PathBuf {
     conformance_root().join("fixtures")
 }
 
+fn expanded_test_root() -> PathBuf {
+    fixture_root().join("sources")
+}
+
 impl TestRunner {
     pub fn new(options: TestRunnerOptions) -> Self {
         let snapshot = Snapshot::new(&babel_root(), /* show_commit */ true);
@@ -92,6 +97,9 @@ impl TestRunner {
             let transform_paths = Self::generate_test_cases(root, &self.options);
             self.generate_snapshot(root, &snap_root().join(snapshot), transform_paths);
             if self.options.exec {
+                if *name == "oxc" {
+                    esbuild::run(&self.options);
+                }
                 self.run_vitest(&format!("./fixtures/{name}"), &snap_root().join(exec_snapshot));
             }
         }
