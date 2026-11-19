@@ -1,0 +1,9 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(name-replacements): The filename `http-err.js` should be named `http-error.js`. A more descriptive name will do too.
+
+  ⚠ unicorn(name-replacements): The filename `err.js` should be named `error.js`. A more descriptive name will do too.
+
+  ⚠ unicorn(name-replacements): The filename `btn-click.js` should be named `button-click.js`. A more descriptive name will do too.
