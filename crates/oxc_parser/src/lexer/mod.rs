@@ -644,6 +644,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     }
 
     /// Return `IllegalCharacter` Error or `UnexpectedEnd` if EOF
+    #[cold]
     fn unexpected_err(&mut self) {
         let offset = self.current_offset();
         match self.peek_char() {
