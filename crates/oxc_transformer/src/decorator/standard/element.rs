@@ -16,7 +16,7 @@ use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolFlags,
 };
-use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
+use oxc_traverse::{Ancestor, BoundIdentifier};
 
 use crate::{
     common::{
@@ -342,7 +342,7 @@ impl<'a> StandardDecoratorState<'a> {
         if matches!(expression, Expression::ChainExpression(_)) {
             // Capture only after the optional checks have succeeded. Pulling a member's
             // object out of a chain would turn `null?.child.dec` into an early throw.
-            OptionalChaining::new().enter_expression(expression, ctx);
+            OptionalChaining::lower_chain_expression(expression, ctx);
             Self::capture_optional_decorator_receiver(expression, ctx);
         } else {
             Self::capture_decorator_receiver_pair(expression, ctx);
