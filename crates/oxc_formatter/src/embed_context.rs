@@ -30,9 +30,9 @@ pub struct MarkdownInJsTemplate;
 ///
 /// A child may change its case (CSS lowercases a property name: `${b}: 1px` in a `<style>`),
 /// so it is found ASCII case-insensitively in the child's IR.
-/// The shape stays Prettier's because angular-in-js still formats through Prettier,
+/// The shape is still Prettier's, from when angular-in-js formatted through Prettier,
 /// which recognizes `/^PRETTIER_HTML_PLACEHOLDER_\d+_\d+_IN_JS$/` (unquoted values, parens around an identifier).
-/// TODO: Once Angular formats natively, the name is ours to choose,
+/// TODO: No child is Prettier anymore, so the name is ours to choose,
 /// e.g. one no child changes the case of, and the case-insensitive search can go.
 pub const HTML_PLACEHOLDER_PREFIX: &str = "PRETTIER_HTML_PLACEHOLDER_";
 pub const HTML_PLACEHOLDER_SUFFIX: &str = "_IN_JS";
