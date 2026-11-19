@@ -1,6 +1,6 @@
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::{ArenaVec, ReplaceWith, TakeIn};
+use oxc_allocator::{ArenaVec, CloneIn, GetAllocator, ReplaceWith, TakeIn};
 use oxc_ast::ast::*;
 use oxc_semantic::{ScopeFlags, ScopeId};
 use oxc_span::SPAN;
@@ -464,13 +464,20 @@ impl<'a> TypeScript<'a> {
                 // Note: Key can also be static `StringLiteral` or `NumericLiteral`.
                 // `class C { 'x' = true; 123 = false; }`
                 // No temp var is created for these.
+                //
+                // The class field declaration is kept in the class body when
+                // `remove_class_fields_without_initializer` is `false`, so the key must never be
+                // taken out of it: the `take_in` dummy is a `NullLiteral`, which would leave a
+                // bogus `null;` / `[null];` member behind. Instead, leave a key with the original
+                // property name in the declaration and clone it for the `this[...]` assignment.
                 let new_key = if key_needs_temp_var(key, ctx) {
                     let taken_key = key.take_in(ctx);
                     let (assignment, ident) = create_computed_key_temp_var(taken_key, ctx);
                     computed_key_assignments.push(assignment);
+                    *key = ident.clone_in(ctx.allocator());
                     ident
                 } else {
-                    key.take_in(ctx)
+                    key.clone_in(ctx.allocator())
                 };
 
                 MemberExpression::new_computed_member_expression(
