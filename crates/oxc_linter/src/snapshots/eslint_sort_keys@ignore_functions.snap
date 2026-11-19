@@ -1,0 +1,101 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:15]
+ 1 │ otherFunction({ reducer, middleware });
+   ·               ───────────────────────
+   ╰────
+  help: Replace `reducer, middleware` with `middleware, reducer`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:16]
+ 1 │ ConfigureStore({ reducer, middleware });
+   ·                ───────────────────────
+   ╰────
+  help: Replace `reducer, middleware` with `middleware, reducer`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:75]
+ 1 │ import { configureStore as makeStore } from '@reduxjs/toolkit'; makeStore({ reducer, middleware });
+   ·                                                                           ───────────────────────
+   ╰────
+  help: Replace `reducer, middleware` with `middleware, reducer`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:17]
+ 1 │ const options = { reducer, middleware }; configureStore(options);
+   ·                 ───────────────────────
+   ╰────
+  help: Replace `reducer, middleware` with `middleware, reducer`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:17]
+ 1 │ toolkit[method]({ reducer, middleware });
+   ·                 ───────────────────────
+   ╰────
+  help: Replace `reducer, middleware` with `middleware, reducer`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:27]
+ 1 │ configureStore({ reducer: { z: 1, a: 2 }, middleware });
+   ·                           ──────────────
+   ╰────
+  help: Replace `z: 1, a: 2` with `a: 2, z: 1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:23]
+ 1 │ configureStore(() => ({ reducer, middleware }));
+   ·                       ───────────────────────
+   ╰────
+  help: Replace `reducer, middleware` with `middleware, reducer`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:17]
+ 1 │ configureStore([{ reducer, middleware }]);
+   ·                 ───────────────────────
+   ╰────
+  help: Replace `reducer, middleware` with `middleware, reducer`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:28]
+ 1 │ configureStore(condition ? { reducer, middleware } : options);
+   ·                            ───────────────────────
+   ╰────
+  help: Replace `reducer, middleware` with `middleware, reducer`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:30]
+ 1 │ configureStore(otherFunction({ reducer, middleware }));
+   ·                              ───────────────────────
+   ╰────
+  help: Replace `reducer, middleware` with `middleware, reducer`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:20]
+ 1 │ new configureStore({ reducer, middleware });
+   ·                    ───────────────────────
+   ╰────
+  help: Replace `reducer, middleware` with `middleware, reducer`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:2]
+ 1 │ ({ reducer, middleware }).configureStore();
+   ·  ───────────────────────
+   ╰────
+  help: Replace `reducer, middleware` with `middleware, reducer`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:16]
+ 1 │ configureStore({ reducer, middleware });
+   ·                ───────────────────────
+   ╰────
+  help: Replace `reducer, middleware` with `middleware, reducer`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:16]
+ 1 │ configureStore({ reducer, middleware });
+   ·                ───────────────────────
+   ╰────
+  help: Replace `reducer, middleware` with `middleware, reducer`.
