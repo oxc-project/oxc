@@ -3,16 +3,16 @@
 //! (a divergence needs its own pin; the big conformance file is only a regression net).
 //!
 //! Expected outputs were verified against `prettier` by hand;
-//! when adding a fixture, do the same (`npx prettier@<oxfmt-bundle-version> --parser <variant>`).
+//! when adding a fixture, do the same with the oxfmt-bundled one
+//! (`node apps/oxfmt/node_modules/prettier/bin/prettier.cjs --parser <variant>`, see `FORMATTER_POLICY.md` "Verification").
 
 use std::path::Path;
 
 use oxc_allocator::{Allocator, ArenaVec};
-use oxc_formatter_css::{CssFormatOptions, CssRoot, CssVariant, format, parse_for_format};
-use oxc_formatter_tests::{FixtureFormatter, OptionSet, build_fixture_snapshot};
-
-mod options;
-use options::apply_css_options;
+use oxc_formatter_css::{
+    CssFormatOptions, CssRoot, CssVariant, SingleQuote, TrailingCommas, format, parse_for_format,
+};
+use oxc_formatter_tests::{FixtureFormatter, InputVariant, OptionValue, build_fixture_snapshot};
 
 struct CssHarness;
 
@@ -26,13 +26,29 @@ impl FixtureFormatter for CssHarness {
     type Options = CssFormatOptions;
     type Fingerprint = Fingerprint;
 
-    fn parse_options(json: &OptionSet) -> Self::Options {
-        let mut options = CssFormatOptions::default();
-        apply_css_options(&mut options, json);
-        options
+    fn apply_option(options: &mut Self::Options, key: &str, value: &OptionValue) -> bool {
+        match key {
+            "trailingComma" => {
+                if let Some(s) = value.as_str() {
+                    options.trailing_commas =
+                        if s == "none" { TrailingCommas::Never } else { TrailingCommas::Always };
+                }
+            }
+            "singleQuote" => {
+                if let Some(b) = value.as_bool() {
+                    options.single_quote = SingleQuote::from(b);
+                }
+            }
+            _ => return false,
+        }
+        true
     }
 
-    fn format(source: &str, path: &Path, options: &Self::Options) -> String {
+    fn format(
+        source: &str,
+        path: &Path,
+        options: &Self::Options,
+    ) -> Result<String, Box<dyn std::error::Error>> {
         let options = CssFormatOptions { variant: variant_of(path), ..*options };
 
         if is_embedded(path) {
@@ -40,11 +56,7 @@ impl FixtureFormatter for CssHarness {
         }
 
         let allocator = Allocator::default();
-        format(&allocator, source, options)
-            .expect("format should succeed")
-            .print()
-            .expect("print should succeed")
-            .into_code()
+        Ok(format(&allocator, source, options)?.print()?.into_code())
     }
 
     fn fingerprint(source: &str, path: &Path, options: &Self::Options) -> Fingerprint {
@@ -58,6 +70,11 @@ impl FixtureFormatter for CssHarness {
         )
         .expect("source should parse");
         Fingerprint { comments: parsed.comments.len() }
+    }
+
+    fn input_variants(path: &Path) -> &'static [InputVariant] {
+        // An embedded entry never sees a BOM: a leading U+FEFF there is content
+        if is_embedded(path) { &[InputVariant::Crlf, InputVariant::Cr] } else { InputVariant::ALL }
     }
 }
 
@@ -79,16 +96,21 @@ fn is_embedded(path: &Path) -> bool {
 
 /// Format through `format_to_ir` and print the raw IR, mirroring what the
 /// oxfmt dispatcher + parent template printing do (minus `${}` substitution).
-fn format_embedded(source: &str, options: CssFormatOptions) -> String {
-    use oxc_formatter_core::{Document, FormatElement, FormatOptions, TextWidth};
+fn format_embedded(
+    source: &str,
+    options: CssFormatOptions,
+) -> Result<String, Box<dyn std::error::Error>> {
+    use oxc_formatter_core::{Document, FormatElement, FormatOptions};
 
     let allocator = Allocator::default();
     let session =
         oxc_formatter_core::FormatSession::new(&allocator, oxc_formatter_core::InputKind::Fragment);
     let embedded = oxc_formatter_css::format_to_ir(
-        &session, source, options, /* template_placeholders */ true,
-    )
-    .expect("format should succeed");
+        &session,
+        source,
+        options,
+        Some(oxc_formatter_css::CssEmbeddedIn::CssInJsTemplate),
+    )?;
     // Simulate the host: replace each typed placeholder with the canonical
     // sentinel (the real host substitutes `${expr}`; tests have no expressions).
     // The printer `debug_assert`s on any surviving `EmbedPlaceholder`.
@@ -96,23 +118,19 @@ fn format_embedded(source: &str, options: CssFormatOptions) -> String {
         embedded.ir.iter().map(|element| match element {
             FormatElement::EmbedPlaceholder(index) => {
                 let text = allocator.alloc_str(&std::format!("`PLACEHOLDER-{index}`"));
-                FormatElement::Text {
-                    text,
-                    width: TextWidth::from_text(text, options.indent_width),
-                }
+                FormatElement::text(text, options.indent_width)
             }
             other => other.clone(),
         }),
         &session.allocator(),
     );
     let mut code = Document::new(elements, Vec::new())
-        .print(source.len(), options.as_print_options())
-        .expect("print should succeed")
+        .print(source.len(), options.as_print_options())?
         .into_code();
     // The embedded entry point emits no trailing newline (the parent owns it);
     // add one so snapshots stay diff-friendly.
     code.push('\n');
-    code
+    Ok(code)
 }
 
 fn test_file(path: &Path) {
@@ -177,8 +195,35 @@ fn parse_error_is_err() {
         // when a declaration's value hits a top-level `{` (name + `:` parsed);
         // a selector error with no such head stays a hard error.
         ("a, { color: red; }", css),
-        // Pin for crates/oxc_formatter_css/DIVERGENCES.md#less-value-interpolation-rejected
+        // A stray closing brace (postcss rejects it too, "Unexpected }")
+        ("} a { color: red }", css),
+        // postcss tolerates this as raw at-rule params (Prettier destroys it to `@media ;`)
+        ("@media ( { }", css),
+        // Pin for crates/oxc_formatter_css/DIVERGENCES.md#grammar-owner-rejected, one input per shape.
+        // CSS: a browser drops the rule
+        ("a[id=func(\"foo\")] {}", css),
+        ("-Option/root .a {}", css),
+        (".a >>> .b {}", css),
+        (".icon.is-$(network) {}", css),
+        (":not(\".a\") {}", css),
+        ("one \"two\" three {}", css),
+        ("@import (multiple) \"a.less\";", css),
+        ("@import \"a.css\" {}", css),
+        ("@import ur l(a.css);", css),
+        ("color: red;", css),
+        ("--foo: { color: red; }", css),
+        ("@charset UTF-8;", css),
+        // SCSS: dart-sass rejects (root declarations: `display: flex;` above)
+        ("@for $i from 1 end 3 {}", scss),
+        ("a { color: @var; }", scss),
+        ("@import ur l(a.css);", scss),
+        // Less: lessc rejects
         (".a { width: @{min-width}; }", less),
+        (".a { width: #{$var}; }", less),
+        ("@IMPORT a;", less),
+        ("@c: { a: true; }\n.m() when (@c [ a ] = true) {}", less),
+        (".a { b: ++1; }", less),
+        ("@import ur l(a.css);", less),
     ] {
         assert!(format(&allocator, source, options).is_err(), "{source:?} should fail to format");
     }

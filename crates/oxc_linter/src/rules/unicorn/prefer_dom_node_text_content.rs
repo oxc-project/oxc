@@ -1,7 +1,7 @@
-use oxc_ast::{AstKind, ast::PropertyKey};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -61,18 +61,14 @@ impl Rule for PreferDomNodeTextContent {
             // `const {innerText} = node`, `const {innerText: text} = node`,
             // function params `function foo({innerText}) {}`, etc.
             AstKind::BindingProperty(prop) => {
-                if let PropertyKey::StaticIdentifier(ident) = &prop.key
-                    && ident.name == "innerText"
-                {
-                    ctx.diagnostic(prefer_dom_node_text_content_diagnostic(ident.span));
+                if prop.key.is_specific_id("innerText") {
+                    ctx.diagnostic(prefer_dom_node_text_content_diagnostic(prop.key.span()));
                 }
             }
             // `({innerText: text} = node)`
             AstKind::AssignmentTargetPropertyProperty(prop) => {
-                if let PropertyKey::StaticIdentifier(ident) = &prop.name
-                    && ident.name == "innerText"
-                {
-                    ctx.diagnostic(prefer_dom_node_text_content_diagnostic(ident.span));
+                if prop.name.is_specific_id("innerText") {
+                    ctx.diagnostic(prefer_dom_node_text_content_diagnostic(prop.name.span()));
                 }
             }
             // `({innerText} = node)` (shorthand)

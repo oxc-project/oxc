@@ -15,6 +15,8 @@ use oxc_allocator::Vec as ArenaVec;
 use oxc_index::IndexVec;
 use oxc_span::Span;
 use oxc_str::{Ident, IdentHashSet, format_ident};
+use oxc_syntax::identifier::is_identifier_name;
+use oxc_syntax::keyword::is_reserved_keyword;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::react_compiler_hir::Effect;
@@ -114,8 +116,7 @@ fn outline_jsx_impl<'a>(
                 InstructionValue::JsxExpression { children, .. } => {
                     let child_ids = children
                         .as_ref()
-                        .map(|kids| kids.iter().map(|c| c.identifier).collect())
-                        .unwrap_or_default();
+                        .map_or_default(|kids| kids.iter().map(|c| c.identifier).collect());
                     actions.push(InstrAction::JsxExpr {
                         lvalue_id,
                         instr_idx: iid.index(),
@@ -277,7 +278,13 @@ fn collect_props<'a>(
                 match attr {
                     JsxAttribute::SpreadAttribute { .. } => return None,
                     JsxAttribute::Attribute { name, name_span, place } => {
-                        let new_name = generate_name(*name);
+                        let binding_name = if is_identifier_name(name) && !is_reserved_keyword(name)
+                        {
+                            *name
+                        } else {
+                            Ident::from("p")
+                        };
+                        let new_name = generate_name(binding_name);
                         attributes.push(OutlinedJsxAttribute {
                             original_name: *name,
                             new_name,
@@ -459,6 +466,7 @@ fn emit_outlined_fn<'a>(
         params: ArenaVec::from_array_in([ParamPattern::Place(props_obj)], &env.allocator),
         returns: returns_place,
         context: ArenaVec::new_in(&env.allocator),
+        has_outer_lexical_reference: false,
         body: HIR { entry: BlockId::ENTRY, blocks },
         instructions: instr_table,
         generator: false,

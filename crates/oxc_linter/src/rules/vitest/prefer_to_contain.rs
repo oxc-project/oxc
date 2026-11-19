@@ -1,30 +1,39 @@
+use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::Rule,
     rules::shared::prefer_to_contain::{DOCUMENTATION, run},
-    utils::PossibleJestNode,
 };
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferToContain;
 
-declare_oxc_lint!(PreferToContain, vitest, style, fix, docs = DOCUMENTATION, version = "0.2.14",);
+declare_oxc_lint!(
+    PreferToContain,
+    vitest,
+    style,
+    suggestion,
+    docs = DOCUMENTATION,
+    version = "0.2.14",
+);
 
 impl Rule for PreferToContain {
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        run(jest_node, ctx);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(_) = node.kind() else { return };
+        run(node, ctx);
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_test()
     }
 }
 
 #[test]
 fn tests() {
-    use crate::tester::Tester;
+    use crate::{fixer::FixKind, tester::Tester};
 
     #[expect(clippy::literal_string_with_formatting_args)]
     let pass = vec![
@@ -112,6 +121,11 @@ fn tests() {
                     import { expect as pleaseExpect } from 'vitest';
                     pleaseExpect([{a:1}].includes({a:1})).not.toStrictEqual(false);
                 ",
+            None,
+        ),
+        ("expect([NaN].includes(NaN)).toBe(true);", None),
+        (
+            "class Tags { includes(tag: string) { return tag === 'a'; } } const tags = new Tags(); expect(tags.includes('a')).toBe(true);",
             None,
         ),
     ];
@@ -215,6 +229,21 @@ fn tests() {
             None,
         ),
     ];
+
+    let mut fix = fix
+        .into_iter()
+        .map(|(source, expected, config)| (source, expected, config, FixKind::Suggestion))
+        .collect::<Vec<_>>();
+    for (source, expected) in [
+        ("expect([NaN].includes(NaN)).toBe(true);", "expect([NaN]).toContain(NaN);"),
+        (
+            "class Tags { includes(tag: string) { return tag === 'a'; } } const tags = new Tags(); expect(tags.includes('a')).toBe(true);",
+            "class Tags { includes(tag: string) { return tag === 'a'; } } const tags = new Tags(); expect(tags).toContain('a');",
+        ),
+    ] {
+        fix.push((source, source, None, FixKind::Fix));
+        fix.push((source, expected, None, FixKind::Suggestion));
+    }
 
     Tester::new(PreferToContain::NAME, PreferToContain::PLUGIN, pass, fail)
         .expect_fix(fix)

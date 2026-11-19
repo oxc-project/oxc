@@ -187,6 +187,15 @@ source: crates/oxc_linter/src/tester.rs
   help: Define an explicit return type for the function.
 
   ⚠ typescript(explicit-module-boundary-types): Missing return type on function
+   ╭─[explicit_module_boundary_types.tsx:4:15]
+ 3 │             export const x: Foo = {
+ 4 │               "foo\uDC00": () => {},
+   ·               ───────────
+ 5 │             };
+   ╰────
+  help: Define an explicit return type for the function.
+
+  ⚠ typescript(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:1:22]
  1 │ export default () => () => {};
    ·                      ──

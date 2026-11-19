@@ -49,4 +49,42 @@ describe("isolated declaration", () => {
     expect(asyncResult.errors.length).toBe(syncResult.errors.length);
     expect(asyncResult.map).toMatchObject(syncResult.map!);
   });
+
+  it.each([isolatedDeclarationSync, isolatedDeclaration])(
+    "retains types referenced by exported ambient variables",
+    async (transform) => {
+      const result = await transform(
+        "input.ts",
+        `import type { Opts } from "./opts";
+interface Internal { i: 1 }
+export declare const defaults: Opts;
+export declare let state: Internal;`,
+      );
+
+      expect(result.errors).toEqual([]);
+      expect(result.code).toBe(
+        'import type { Opts } from "./opts";\n'
+          + "interface Internal {\n\ti: 1;\n}\n"
+          + "export declare const defaults: Opts;\n"
+          + "export declare let state: Internal;\n"
+          + "export {};\n",
+      );
+    },
+  );
+
+  it("evaluates enum template literal initializers", () => {
+    const source =
+      'export enum Ev { Prefix = "app", Click = `${Prefix}:click`, Multi = `line1\\nline2`, Num = `x${1}y` }';
+    const result = isolatedDeclarationSync("test.ts", source);
+
+    expect(result.errors).toEqual([]);
+    expect(result.code).toBe(
+      "export declare enum Ev {\n"
+        + '\tPrefix = "app",\n'
+        + '\tClick = "app:click",\n'
+        + '\tMulti = "line1\\nline2",\n'
+        + '\tNum = "x1y"\n'
+        + "}\n",
+    );
+  });
 });

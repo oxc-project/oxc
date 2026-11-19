@@ -88,7 +88,7 @@ pub fn write_code_block<'a>(code: &'a CodeBlock<'a>, f: &mut MarkdownFormatter<'
 ///
 /// Sent to every child language as `DispatchRequest::parent_context`;
 /// the host translates it into the pair's data once the child language is known
-/// (e.g. JS's `JsEmbeddedIn`: a lone JSX element prints without its semicolon).
+/// (e.g. JS's `JsRoot::Program`: a lone JSX element prints without its semicolon).
 pub struct XxxInMarkdownCodeBlock {
     /// This host is embedded in a JS template literal,
     /// so a Markdown child prints `~` fences too.

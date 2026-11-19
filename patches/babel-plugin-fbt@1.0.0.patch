@@ -1,0 +1,8 @@
+diff --git a/dist/FbtNodeChecker.js b/dist/FbtNodeChecker.js
+--- a/dist/FbtNodeChecker.js
++++ b/dist/FbtNodeChecker.js
+@@ -81,3 +81,3 @@
+   isJSModuleBound(path) {
+-    const binding = path.context.scope.getBinding(this.moduleName);
++    const binding = path.scope.getBinding(this.moduleName);
+     return !!(binding && binding.path.node);

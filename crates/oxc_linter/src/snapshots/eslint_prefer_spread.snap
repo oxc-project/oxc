@@ -128,3 +128,129 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ─────────────────────────
    ╰────
   help: Replace `.apply()` with spread syntax (`...args`).
+
+  ⚠ eslint(prefer-spread): Use spread operators instead of `.apply()`.
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ (c ? a : b).apply(null, args);
+   · ─────────────────────────────
+   ╰────
+  help: Replace `.apply()` with spread syntax (`...args`).
+
+  ⚠ eslint(prefer-spread): Use spread operators instead of `.apply()`.
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ m!.apply(null, args);
+   · ────────────────────
+   ╰────
+  help: Replace `.apply()` with spread syntax (`...args`).
+
+  ⚠ eslint(prefer-spread): Use spread operators instead of `.apply()`.
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ (a as typeof b).apply(null, args);
+   · ─────────────────────────────────
+   ╰────
+  help: Replace `.apply()` with spread syntax (`...args`).
+
+  ⚠ eslint(prefer-spread): Use spread operators instead of `.apply()`.
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ (a satisfies typeof b).apply(null, args);
+   · ────────────────────────────────────────
+   ╰────
+  help: Replace `.apply()` with spread syntax (`...args`).
+
+  ⚠ eslint(prefer-spread): Use spread operators instead of `.apply()`.
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ (c ? a : b).apply(undefined, args);
+   · ──────────────────────────────────
+   ╰────
+  help: Replace `.apply()` with spread syntax (`...args`).
+
+  ⚠ eslint(prefer-spread): Use spread operators instead of `.apply()`.
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ ((a)).apply(void 0, args);
+   · ─────────────────────────
+   ╰────
+  help: Replace `.apply()` with spread syntax (`...args`).
+
+  ⚠ eslint(prefer-spread): Use spread operators instead of `.apply()`.
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ (a, b).apply(null, args);
+   · ────────────────────────
+   ╰────
+  help: Replace `.apply()` with spread syntax (`...args`).
+
+  ⚠ eslint(prefer-spread): Use spread operators instead of `.apply()`.
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ (() => {}).apply(null, args);
+   · ────────────────────────────
+   ╰────
+  help: Replace `.apply()` with spread syntax (`...args`).
+
+  ⚠ eslint(prefer-spread): Use spread operators instead of `.apply()`.
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ (function() {}).apply(null, args);
+   · ─────────────────────────────────
+   ╰────
+  help: Replace `.apply()` with spread syntax (`...args`).
+
+  ⚠ eslint(prefer-spread): Use spread operators instead of `.apply()`.
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ getFunc().apply(null, args);
+   · ───────────────────────────
+   ╰────
+  help: Replace `.apply()` with spread syntax (`...args`).
+
+  ⚠ eslint(prefer-spread): Use spread operators instead of `.apply()`.
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ (obj.foo as typeof b).apply(obj, args);
+   · ──────────────────────────────────────
+   ╰────
+  help: Replace `.apply()` with spread syntax (`...args`).
+
+  ⚠ eslint(prefer-spread): Use spread operators instead of `.apply()`.
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ obj.foo!.apply(obj, args);
+   · ─────────────────────────
+   ╰────
+  help: Replace `.apply()` with spread syntax (`...args`).
+
+  ⚠ eslint(prefer-spread): Use spread operators instead of `.apply()`.
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ (obj.foo satisfies typeof b).apply(obj, args);
+   · ─────────────────────────────────────────────
+   ╰────
+  help: Replace `.apply()` with spread syntax (`...args`).
+
+  ⚠ eslint(prefer-spread): Use spread operators instead of `.apply()`.
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ (obj.foo!)?.apply(obj, args);
+   · ────────────────────────────
+   ╰────
+  help: Replace `.apply()` with spread syntax (`...args`).
+
+  ⚠ eslint(prefer-spread): Use spread operators instead of `.apply()`.
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ (obj?.foo!).apply(obj, args);
+   · ────────────────────────────
+   ╰────
+  help: Replace `.apply()` with spread syntax (`...args`).
+
+  ⚠ eslint(prefer-spread): Use spread operators instead of `.apply()`.
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ (obj?.foo!)!.apply(obj, args);
+   · ─────────────────────────────
+   ╰────
+  help: Replace `.apply()` with spread syntax (`...args`).
+
+  ⚠ eslint(prefer-spread): Use spread operators instead of `.apply()`.
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ (obj.foo<number>).apply(obj, args);
+   · ──────────────────────────────────
+   ╰────
+  help: Replace `.apply()` with spread syntax (`...args`).
+
+  ⚠ eslint(prefer-spread): Use spread operators instead of `.apply()`.
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ obj[key]!.apply(obj, args);
+   · ──────────────────────────
+   ╰────
+  help: Replace `.apply()` with spread syntax (`...args`).

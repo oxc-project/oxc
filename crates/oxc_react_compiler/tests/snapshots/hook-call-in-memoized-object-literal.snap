@@ -1,0 +1,44 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/hook-call-in-memoized-object-literal.js
+---
+import { c as _c } from "react/compiler-runtime";
+import { useRef, useState } from "react";
+function useOptions(options) {
+	return options;
+}
+// `useRef()` inside an object literal is called on every render, not only when
+// the memoized object is created.
+function Component(t0) {
+	const $ = _c(4);
+	const { value } = t0;
+	const t1 = useRef(0);
+	let t2;
+	if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+		t2 = { countRef: t1 };
+		$[0] = t2;
+	} else {
+		t2 = $[0];
+	}
+	useOptions(t2);
+	const [initial] = useState(value);
+	let t3;
+	if ($[1] !== initial || $[2] !== value) {
+		t3 = <div>{initial}:{value}</div>;
+		$[1] = initial;
+		$[2] = value;
+		$[3] = t3;
+	} else {
+		t3 = $[3];
+	}
+	return t3;
+}
+export const FIXTURE_ENTRYPOINT = {
+	fn: Component,
+	params: [{ value: 1 }],
+	sequentialRenders: [
+		{ value: 1 },
+		{ value: 2 },
+		{ value: 2 }
+	]
+};

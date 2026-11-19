@@ -1,384 +1,333 @@
-use oxc_ast::CommentKind;
+use oxc_simd::{Cpu, cpu_multiversion};
 
-use crate::{comment_meta, error::DiagCode, lanes::Lanes, token::tk};
+use crate::{error::DiagCode, token::TokenKind};
 
 use crate::pipeline::{
-    bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0, bm_set},
-    bytes::hex_val,
-    disambiguate::not_operator_position,
-    find::find_line_terminator,
-    scan::{scan_block_comment, scan_line_comment, scan_quoted, scan_regex, scan_tmpl_text},
-    token_view,
+    bitmap::{Bitmap, Bitmaps},
+    bytes::{hex_digit, is_ls_ps_tail},
+    disambiguate::DisambiguateState,
+    find::find,
+    kinds::Kinds,
+    lanes::Lanes,
+    lex::Lex,
+    scan::{TemplateEnd, scan_quoted, scan_regex, scan_tmpl_text},
+    source::Source,
 };
+
+use super::comments::{lex_block_comment, lex_line_comment};
+
+/// Ordered for speed, pairing `'` with `/` and `<` with `>` (see `any_of` in `find/avx2.rs`).
+pub(super) const OPENER_BYTES: [u8; 6] = [b'"', b'`', b'\'', b'/', b'<', b'>'];
+
+/// Ordered for speed, pairing `'` with `/` and `<` with `>` (see `any_of` in `find/avx2.rs`).
+pub(super) const OPENER8_BYTES: [u8; 8] = [b'"', b'`', b'\'', b'/', b'{', b'}', b'<', b'>'];
+
+/// [`OPENER_BYTES`] without the closing angle bracket, which only scripts need.
+pub(super) const OPENER_MODULE_BYTES: [u8; 5] = [b'"', b'`', b'\'', b'/', b'<'];
+
+/// [`OPENER8_BYTES`] without the closing angle bracket, which only scripts need.
+pub(super) const OPENER8_MODULE_BYTES: [u8; 7] = [b'"', b'`', b'\'', b'/', b'{', b'}', b'<'];
+
+/// Kind the token at s and fold s + 1..end into it.
+#[cpu_multiversion]
+#[inline(always)]
+pub(super) fn mark_token(
+    token_start: Bitmap,
+    kinds: Kinds,
+    s: usize,
+    end: usize,
+    kind: TokenKind,
+    cpu: impl Cpu,
+) {
+    kinds.set(s, kind);
+    if end > s + 1 {
+        token_start.clear_range(s + 1, end - 1, cpu);
+    }
+}
 
 /// Lex the string literal opening at `s`. Returns the resume index. Shared
 /// by `carve` and `carve_jsx` JS mode.
+#[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn lex_string(
-    src: *const u8,
-    srcs: &[u8],
-    n: usize,
-    st: *mut u64,
-    kind: *mut u8,
+pub(super) fn lex_string(
+    src: Source,
+    token_start: Bitmap,
+    kinds: Kinds,
     s: usize,
     c: u8,
     lanes: &mut Lanes,
+    cpu: impl Cpu,
 ) -> usize {
     let mut saw_nl = false;
-    let e = scan_quoted(src, n, s + 1, c, &mut saw_nl);
-    let end = if e < n { e + 1 } else { n };
+    let e = scan_quoted(src, s + 1, c, &mut saw_nl, cpu);
     if saw_nl {
         // The terminator wins over unterminated-at-EOF, same as oxc_parser.
-        lanes.push_line_terminator_in_string(srcs, s, end);
-    } else if e >= n {
-        lanes.push_diag(s as u32, (n - s) as u32, DiagCode::UnterminatedString);
+        let end = if e < src.len() { e + 1 } else { src.len() };
+        lanes.push_line_terminator_in_string(src.padded(), s, end);
+    } else if e >= src.len() {
+        lanes.push_diag(s as u32, (src.len() - s) as u32, DiagCode::UnterminatedString);
     }
-    *kind.add(s) = tk!(String);
-    if end > s + 1 {
-        bm_clear_range(st, s + 1, end - 1);
-    }
-    let be = if e < n {
-        e
-    } else if n > s + 1 && *src.add(n - 1) == c {
-        n - 1
-    } else {
-        n
-    };
-    lanes.push_string(srcs, s + 1, be);
+    let (end, be) = mark_string(src, token_start, kinds, s, c, e, cpu);
+    lanes.push_string(src.padded(), s + 1, be, cpu);
     end
+}
+
+/// Lex the JSX attribute string at s, which has no escapes and ends at the next matching quote.
+#[cpu_multiversion]
+#[inline(always)]
+pub(super) fn lex_jsx_attribute_string(
+    src: Source,
+    token_start: Bitmap,
+    kinds: Kinds,
+    s: usize,
+    c: u8,
+    lanes: &mut Lanes,
+    cpu: impl Cpu,
+) -> usize {
+    let e = find(src, s + 1, [c], cpu);
+    if e >= src.len() {
+        lanes.push_diag(s as u32, (src.len() - s) as u32, DiagCode::UnterminatedString);
+    }
+    let (end, be) = mark_string(src, token_start, kinds, s, c, e, cpu);
+    lanes.push_string_raw(src.padded(), s + 1, be, cpu);
+    end
+}
+
+/// Mark the string at s, closed by the quote at e unless e is the end; returns end and body end.
+#[cpu_multiversion]
+#[inline(always)]
+fn mark_string(
+    src: Source,
+    token_start: Bitmap,
+    kinds: Kinds,
+    s: usize,
+    c: u8,
+    e: usize,
+    cpu: impl Cpu,
+) -> (usize, usize) {
+    let end = if e < src.len() { e + 1 } else { src.len() };
+    mark_token(token_start, kinds, s, end, TokenKind::String, cpu);
+    let be = if e < src.len() {
+        e
+    } else if src.len() > s + 1 && src[src.len() - 1] == c {
+        src.len() - 1
+    } else {
+        src.len()
+    };
+    (end, be)
 }
 
 /// Lex the template text segment starting at `s` (a backtick or a
 /// substitution-closing `}`): `head_kind` if it ends in `${`, `flat_kind` if
 /// it closes or runs to EOF. Returns `(resume index, substitution opened)`;
 /// the caller pushes its own nesting frame.
+#[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn lex_template_segment(
-    src: *const u8,
-    srcs: &[u8],
-    n: usize,
-    st: *mut u64,
-    kind: *mut u8,
+pub(super) fn lex_template_segment(
+    src: Source,
+    token_start: Bitmap,
+    kinds: Kinds,
     s: usize,
-    head_kind: u8,
-    flat_kind: u8,
+    head_kind: TokenKind,
+    flat_kind: TokenKind,
     lanes: &mut Lanes,
+    cpu: impl Cpu,
 ) -> (usize, bool) {
-    let mut term = 0i32;
-    let end = scan_tmpl_text(src, n, s + 1, &mut term);
-    if term == 0 {
+    let (end, ended_by) = scan_tmpl_text(src, s + 1, cpu);
+    if ended_by == TemplateEnd::Unterminated {
         lanes.push_diag(s as u32, (end - s) as u32, DiagCode::UnterminatedTemplate);
     }
-    *kind.add(s) = if term == 2 { head_kind } else { flat_kind };
-    if end > s + 1 {
-        bm_clear_range(st, s + 1, end - 1);
+    let opens_substitution = ended_by == TemplateEnd::Substitution;
+    let kind = if opens_substitution { head_kind } else { flat_kind };
+    mark_token(token_start, kinds, s, end, kind, cpu);
+    lanes.push_template(src.padded(), s + 1, end - ended_by.delimiter_len(), cpu);
+    (end, opens_substitution)
+}
+
+/// The template substitutions open at the carve position, innermost last, with their open braces.
+#[derive(Default)]
+pub(in crate::pipeline) struct Substitutions(Vec<u32>);
+
+impl Substitutions {
+    pub(super) fn clear(&mut self) {
+        self.0.clear();
     }
-    lanes.push_template(srcs, s + 1, end - [0usize, 1, 2][term as usize]);
-    (end, term == 2)
+
+    pub(super) fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    /// Lex the template at the backtick at s, opening a substitution if it ends in a dollar brace.
+    #[cpu_multiversion]
+    #[inline(always)]
+    pub(super) fn lex_template(
+        &mut self,
+        src: Source,
+        token_start: Bitmap,
+        kinds: Kinds,
+        s: usize,
+        lanes: &mut Lanes,
+        cpu: impl Cpu,
+    ) -> usize {
+        let (head, flat) = (TokenKind::TemplateHead, TokenKind::TemplateNoSub);
+        let (end, opened) =
+            lex_template_segment(src, token_start, kinds, s, head, flat, lanes, cpu);
+        if opened {
+            self.0.push(0);
+        }
+        end
+    }
+
+    pub(super) fn open_brace(&mut self) {
+        let top = self.0.len() - 1;
+        self.0[top] += 1;
+    }
+
+    /// Close a nested brace, or else the substitution and lex the template text after it.
+    #[cpu_multiversion]
+    #[inline(always)]
+    pub(super) fn close_brace(
+        &mut self,
+        src: Source,
+        token_start: Bitmap,
+        kinds: Kinds,
+        s: usize,
+        lanes: &mut Lanes,
+        cpu: impl Cpu,
+    ) -> usize {
+        let top = self.0.len() - 1;
+        if self.0[top] > 0 {
+            self.0[top] -= 1;
+            return s + 1;
+        }
+        self.0.pop();
+        let (middle, tail) = (TokenKind::TemplateMiddle, TokenKind::TemplateTail);
+        let (end, opened) =
+            lex_template_segment(src, token_start, kinds, s, middle, tail, lanes, cpu);
+        if opened {
+            self.0.push(0);
+        }
+        end
+    }
+}
+
+/// Lex a hashbang line at the start of the source; returns where carving resumes, 0 without one.
+#[cpu_multiversion]
+#[inline(always)]
+pub(super) fn lex_hashbang(src: Source, token_start: Bitmap, kinds: Kinds, cpu: impl Cpu) -> usize {
+    if !(src.len() >= 2 && src[0] == b'#' && src[1] == b'!') {
+        return 0;
+    }
+    let end = find_line_terminator(src, 2, cpu);
+    kinds.set(0, TokenKind::Hashbang);
+    token_start.clear_range(1, end - 1, cpu);
+    if end < src.len() {
+        token_start.set(end, cpu);
+    }
+    end
+}
+
+/// Whether the brace at s opens the code point of a backslash-u escape.
+#[cpu_multiversion]
+#[inline(always)]
+pub(super) fn is_unicode_escape_brace(src: Source, s: usize, _cpu: impl Cpu) -> bool {
+    s >= 2 && src[s - 1] == b'u' && src[s - 2] == b'\\'
 }
 
 /// The `/` dispatch shared by `carve` and `carve_jsx` JS mode: line comment,
 /// block comment, regex, `/=`, or a bare slash left for `coalesce`.
+#[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn lex_slash(
-    src: *const u8,
-    srcs: &[u8],
-    n: usize,
-    st: *mut u64,
-    kind: *mut u8,
-    opch: *mut u64,
-    word: *const u64,
-    ts: bool,
+pub(super) fn lex_slash(
+    lex: Lex,
     s: usize,
     lanes: &mut Lanes,
+    disambiguate: &mut DisambiguateState,
+    cpu: impl Cpu,
 ) -> usize {
-    let d = if s + 1 < n { *src.add(s + 1) } else { 0 };
+    let Lex { src, bitmaps, kinds, .. } = lex;
+    let Bitmaps { token_start, word, op_char, .. } = *bitmaps;
+    let d = if s + 1 < src.len() { src[s + 1] } else { 0 };
     if d == b'/' {
-        lex_line_comment(src, srcs, n, st, kind, s, lanes)
+        lex_line_comment(src, token_start, kinds, s, lanes, cpu)
     } else if d == b'*' {
-        lex_block_comment(src, srcs, n, st, kind, s, lanes)
-    } else if not_operator_position(
-        &token_view(
-            src,
-            st,
-            opch,
-            kind,
-            n,
-            ts,
-            0,
-            lanes.module,
-            &lanes.disambiguate.brackets,
-            &lanes.disambiguate.closers,
-        ),
-        &mut lanes.disambiguate.walks,
-        s,
-    ) {
-        lex_regex(src, srcs, n, st, kind, word, s, lanes)
-    } else if s + 1 < n && *src.add(s + 1) == b'=' {
+        lex_block_comment(src, token_start, kinds, s, lanes, cpu)
+    } else if disambiguate.not_operator_position(lex, s, cpu) {
+        lex_regex(src, token_start, kinds, word, s, lanes, cpu)
+    } else if s + 1 < src.len() && src[s + 1] == b'=' {
         // `/=`: absorb the `=`.
-        *kind.add(s) = tk!(SlashEq);
-        bm_clear(st, s + 1);
-        bm_clear(opch, s + 1);
+        kinds.set(s, TokenKind::SlashEq);
+        token_start.clear(s + 1, cpu);
+        op_char.clear(s + 1, cpu);
         s + 2
     } else {
         s + 1
     }
 }
 
-/// Lex the `//` line comment at `s`. Returns the resume index.
-#[inline(always)]
-pub(super) unsafe fn lex_line_comment(
-    src: *const u8,
-    srcs: &[u8],
-    n: usize,
-    st: *mut u64,
-    kind: *mut u8,
-    s: usize,
-    lanes: &mut Lanes,
-) -> usize {
-    let (end, lic_q) = scan_line_comment(src, n, s + 2);
-    *kind.add(s) = tk!(LineComment);
-    if end > s + 1 {
-        bm_clear_range(st, s + 1, end - 1);
-    }
-    if end < n {
-        bm_set(st, end);
-    }
-    let lic = lic_q >= 0 && (lic_q as usize) + 8 < end;
-    let m = comment_meta::meta_byte_flags(&srcs[..n], s as u32, end as u32, false, false, lic);
-    debug_assert_eq!(
-        m,
-        comment_meta::meta_byte_exact(&srcs[..n], s as u32, end as u32, false),
-        "LCOM meta fused != exact at {s}"
-    );
-    lanes.comment_meta.push(m);
-    lanes.push_comment_record(srcs, n, s as u32, end as u32, false, m);
-    end
-}
-
-/// Lex the `/*` block comment at `s` (unterminated at EOF is diagnosed).
-/// Returns the resume index.
-#[inline(always)]
-pub(super) unsafe fn lex_block_comment(
-    src: *const u8,
-    srcs: &[u8],
-    n: usize,
-    st: *mut u64,
-    kind: *mut u8,
-    s: usize,
-    lanes: &mut Lanes,
-) -> usize {
-    let (e, saw_nl, lic_q) = scan_block_comment(src, n, s + 2);
-    let end = if e < n { e + 1 } else { n };
-    if e >= n {
-        lanes.push_diag(s as u32, (n - s) as u32, DiagCode::UnterminatedBlockComment);
-    }
-    *kind.add(s) = tk!(BlockComment);
-    if end > s + 1 {
-        bm_clear_range(st, s + 1, end - 1);
-    }
-    let m = if e < n {
-        let lic = lic_q >= 0 && (lic_q as usize) + 8 < e - 1;
-        comment_meta::meta_byte_flags(&srcs[..n], s as u32, end as u32, true, saw_nl, lic)
-    } else {
-        comment_meta::meta_byte_exact(&srcs[..n], s as u32, end as u32, true)
-    };
-    debug_assert_eq!(
-        m,
-        comment_meta::meta_byte_exact(&srcs[..n], s as u32, end as u32, true),
-        "BCOM meta fused != exact at {s}"
-    );
-    lanes.comment_meta.push(m);
-    lanes.push_comment_record(srcs, n, s as u32, end as u32, true, m);
-    end
-}
-
 /// Lex the regex literal at `s` (the regex-vs-division decision is already
 /// made): body, flag run, diagnostics. Returns the resume index.
+#[cpu_multiversion]
 #[inline(always)]
-unsafe fn lex_regex(
-    src: *const u8,
-    srcs: &[u8],
-    n: usize,
-    st: *mut u64,
-    kind: *mut u8,
-    word: *const u64,
+fn lex_regex(
+    src: Source,
+    token_start: Bitmap,
+    kinds: Kinds,
+    word: Bitmap,
     s: usize,
     lanes: &mut Lanes,
+    cpu: impl Cpu,
 ) -> usize {
-    let mut nl_at = usize::MAX;
-    let e = scan_regex(src, n, s + 1, &mut nl_at);
-    let fs = if e < n { e + 1 } else { n };
-    if nl_at != usize::MAX {
+    let (e, nl_at) = scan_regex(src, s + 1, cpu);
+    let fs = if e < src.len() { e + 1 } else { src.len() };
+    if let Some(nl_at) = nl_at {
         // oxc_parser reports a line terminator in the body as "unterminated"
         // with a span ending just past the first one, even when a later `/`
         // closes our token.
         lanes.push_diag(s as u32, (nl_at + 1 - s) as u32, DiagCode::LineTerminatorInRegexp);
-    } else if e >= n {
-        lanes.push_diag(s as u32, (n - s) as u32, DiagCode::UnterminatedRegexp);
+    } else if e >= src.len() {
+        lanes.push_diag(s as u32, (src.len() - s) as u32, DiagCode::UnterminatedRegexp);
     }
     let mut end = fs;
-    if end < n && bm_get(word, end) {
-        end = bm_next0(word, end, n);
+    if end < src.len() && word.get(end, cpu) {
+        end = word.next0(end, src.len(), cpu);
     }
-    *kind.add(s) = tk!(RegExp);
-    if end > s + 1 {
-        bm_clear_range(st, s + 1, end - 1);
-    }
-    lanes.push_regex_flags(srcs, fs, end);
+    mark_token(token_start, kinds, s, end, TokenKind::RegExp, cpu);
+    lanes.push_regex_flags(src.padded(), fs, end, cpu);
     end
 }
 
 /// Skip the payload of a brace-form unicode escape whose `{` is at `s`: the
 /// escape was already joined into its identifier by `misc_pre`, and its
 /// braces must not count toward substitution nesting.
+#[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn skip_unicode_brace_escape(src: *const u8, n: usize, s: usize) -> usize {
+pub(super) fn skip_unicode_brace_escape(src: Source, s: usize, cpu: impl Cpu) -> usize {
     let mut j = s + 1;
-    while j < n && hex_val(*src.add(j)) != 255 {
+    while j < src.len() && hex_digit(src[j], cpu).is_some() {
         j += 1;
     }
-    if j < n && *src.add(j) == b'}' {
+    if j < src.len() && src[j] == b'}' {
         j += 1;
     }
     j
 }
 
-/// Annex B B.1.1: does the `<` at `s` open a `<!--` comment? Always in a script; in a module
-/// only at line start, where it is diagnosed rather than read as operators. Shared by `carve`
-/// and `carve_jsx` JS mode: the goal, not the JSX setting, decides.
-#[inline(always)]
-pub(super) fn html_open_comment_at(srcs: &[u8], n: usize, s: usize, module: bool) -> bool {
-    s + 3 < n
-        && srcs[s + 1] == b'!'
-        && srcs[s + 2] == b'-'
-        && srcs[s + 3] == b'-'
-        && (!module || html_close_at_line_start(srcs, s))
-}
-
-/// Lex the `<!--` comment opening at `s` (see [`html_open_comment_at`]). Returns the resume
-/// index. Cold: a literal `<!--`.
-#[cold]
-pub(super) unsafe fn lex_html_open_comment(
-    src: *const u8,
-    srcs: &[u8],
-    n: usize,
-    st: *mut u64,
-    kind: *mut u8,
-    opch: *mut u64,
-    s: usize,
-    lanes: &mut Lanes,
-) -> usize {
-    if lanes.module {
-        lanes.push_diag(s as u32, 4, DiagCode::HtmlCommentInModule);
-    }
-    let end = find_line_terminator(src, n, s + 4);
-    *kind.add(s) = tk!(LineComment);
-    if end > s + 1 {
-        bm_clear_range(st, s + 1, end - 1);
-    }
-    if end < n {
-        bm_set(st, end);
-    }
-    // `<`, `!`, `-` are opchars: clear the span from `opch` or `coalesce`
-    // would re-tokenize `<!--` as operators.
-    bm_clear_range(opch, s, end - 1);
-    // meta_byte_exact skips a 2-byte delimiter; pass s + 2 so the 4-byte
-    // `<!--` is skipped. The record keeps (s, end).
-    let m = comment_meta::meta_byte_exact(&srcs[..n], (s + 2) as u32, end as u32, false);
-    lanes.comment_meta.push(m);
-    lanes.push_comment_record(srcs, n, s as u32, end as u32, false, m);
-    lanes.comments.last_mut().unwrap().kind = CommentKind::HtmlOpen;
-    end
-}
-
-/// Annex B B.1.3: does the `>` at `s` end a `-->` that opens a comment? Only in a script, and
-/// only at line start.
-#[inline(always)]
-pub(super) fn html_close_comment_at(srcs: &[u8], s: usize, module: bool) -> bool {
-    !module
-        && s >= 2
-        && srcs[s - 1] == b'-'
-        && srcs[s - 2] == b'-'
-        && html_close_at_line_start(srcs, s - 2)
-}
-
-/// Lex the `-->` comment whose `>` is at `s` (see [`html_close_comment_at`]). Returns the
-/// resume index. Cold: a literal `-->` at line start.
-#[cold]
-pub(super) unsafe fn lex_html_close_comment(
-    src: *const u8,
-    srcs: &[u8],
-    n: usize,
-    st: *mut u64,
-    kind: *mut u8,
-    opch: *mut u64,
-    s: usize,
-    lanes: &mut Lanes,
-) -> usize {
-    let start = s - 2;
-    let end = find_line_terminator(src, n, s + 1);
-    *kind.add(start) = tk!(LineComment);
-    bm_set(st, start);
-    if end > start + 1 {
-        bm_clear_range(st, start + 1, end - 1);
-    }
-    if end < n {
-        bm_set(st, end);
-    }
-    // Clear the span from `opch` (see `<!--` above).
-    bm_clear_range(opch, start, end - 1);
-    // `-->` is a 3-byte delimiter; pass start + 1 so the 2-byte-delimiter
-    // body resolves to [s + 1, end).
-    let m = comment_meta::meta_byte_exact(&srcs[..n], (start + 1) as u32, end as u32, false);
-    lanes.comment_meta.push(m);
-    lanes.push_comment_record(srcs, n, start as u32, end as u32, false, m);
-    lanes.comments.last_mut().unwrap().kind = CommentKind::HtmlClose;
-    end
-}
-
-/// Annex B B.1.3: a `-->` close-comment counts only at line start - scanning
-/// back must reach a LineTerminator (or start of input) crossing nothing but
-/// whitespace and block comments; a newline inside a crossed block comment
-/// also qualifies. Cold: called only on a literal `-->`.
-fn html_close_at_line_start(src: &[u8], mut q: usize) -> bool {
+/// First ECMAScript LineTerminator at/after `i`: LF, CR, or the 3-byte LS/PS
+/// (U+2028/U+2029). Stops at LS/PS too, so the hashbang scan cannot run
+/// through one. A 0xE2 that isn't LS/PS keeps scanning; the 2-byte confirm
+/// past a trailing 0xE2 reads the pad, which can never match 0x80.
+#[cpu_multiversion]
+#[inline]
+pub(super) fn find_line_terminator(src: Source, mut i: usize, cpu: impl Cpu) -> usize {
     loop {
-        if q == 0 {
-            return true; // start of input
+        let p = find(src, i, [b'\n', b'\r', 0xE2], cpu);
+        if p >= src.len() {
+            return src.len();
         }
-        let c = src[q - 1];
-        match c {
-            b' ' | b'\t' | 0x0b | 0x0c => q -= 1,
-            b'\n' | b'\r' => return true,
-            // LS/PS ending at q-1.
-            0xA8 | 0xA9 => {
-                return q >= 3 && src[q - 2] == 0x80 && src[q - 3] == 0xE2;
-            }
-            // `*/` at (q-2, q-1): skip back to its `/*`; a newline inside the
-            // comment body satisfies the rule.
-            b'/' if q >= 2 && src[q - 2] == b'*' => {
-                let mut m = q - 2;
-                let mut saw_nl = false;
-                loop {
-                    if m < 2 {
-                        return saw_nl; // unbalanced `*/`
-                    }
-                    if src[m - 2] == b'/' && src[m - 1] == b'*' {
-                        q = m - 2;
-                        break;
-                    }
-                    let b = src[m - 1];
-                    if b == b'\n' || b == b'\r' {
-                        saw_nl = true;
-                    }
-                    m -= 1;
-                }
-                if saw_nl {
-                    return true;
-                }
-                // single-line block comment skipped; keep scanning
-            }
-            _ => return false,
+        if src[p] != 0xE2 || is_ls_ps_tail(src[p + 1], src[p + 2], cpu) {
+            return p;
         }
+        i = p + 1;
     }
 }

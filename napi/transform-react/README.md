@@ -120,6 +120,12 @@ omitted.
 | `sources`                | `string[]`                            | All except `node_modules` | Only run React Compiler when the filename contains one of the provided strings. Providing this option replaces the default filter.                                                           |
 | `environment`            | `ReactCompilerEnvironmentOptions`     | Compiler defaults         | Override compiler feature flags and validation settings.                                                                                                                                     |
 
+Like upstream, `eslintSuppressionRules` only applies when
+`environment.validateHooksUsage` or
+`environment.validateExhaustiveMemoizationDependencies` is disabled. Both are
+enabled by default, and the compiler then validates those rules itself, so
+suppression comments for them do not opt a function out.
+
 Despite its upstream-compatible name, `eslintSuppressionRules` recognizes both
 ESLint and Oxlint comments: `eslint-disable`, `eslint-disable-next-line`,
 `eslint-enable`, `oxlint-disable`, `oxlint-disable-next-line`, and
@@ -160,7 +166,7 @@ Unset environment properties retain the compiler defaults shown here.
 | `enableResetCacheOnSourceFileChanges`           | `boolean`  | Unsupported | Accepted for upstream option compatibility but currently has no effect.                                         |
 | `enablePreserveExistingMemoizationGuarantees`   | `boolean`  | `true`      | Use existing `useMemo` and `useCallback` information to preserve referential-equality behavior.                 |
 | `validatePreserveExistingMemoizationGuarantees` | `boolean`  | `true`      | Validate that compilation preserves existing manual memoization guarantees.                                     |
-| `validateExhaustiveMemoizationDependencies`     | `boolean`  | `false`     | Validate that manual memoization dependency arrays are exhaustive.                                              |
+| `validateExhaustiveMemoizationDependencies`     | `boolean`  | `true`      | Validate that manual memoization dependency arrays are exhaustive.                                              |
 | `validateExhaustiveEffectDependencies`          | `string`   | `"off"`     | Validate effect dependencies with `"off"`, `"all"`, `"missing-only"`, or `"extra-only"`.                        |
 | `enableOptionalDependencies`                    | `boolean`  | Unsupported | Accepted for upstream option compatibility but currently has no effect.                                         |
 | `enableNameAnonymousFunctions`                  | `boolean`  | `false`     | Give generated or outlined anonymous functions inferred names.                                                  |

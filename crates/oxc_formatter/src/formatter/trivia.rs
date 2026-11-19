@@ -451,14 +451,15 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatDanglingComments<'a> {
                         should_nestle_adjacent_comments(previous_comment, comment, f.source_text())
                     });
 
-                    write!(
-                        f,
-                        [
-                            (previous_comment.is_some() && !should_nestle)
-                                .then_some(hard_line_break()),
-                            format_comment_text(comment)
-                        ]
-                    );
+                    // A blank line between them is kept, as between statements
+                    let separator = (previous_comment.is_some() && !should_nestle).then(|| {
+                        if f.lines_before(comment.span) > 1 {
+                            empty_line()
+                        } else {
+                            hard_line_break()
+                        }
+                    });
+                    write!(f, [separator, format_comment_text(comment)]);
 
                     previous_comment = Some(comment);
                 }
@@ -555,6 +556,12 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatCommentText<'_> {
             write!(f, [formatted]);
         } else {
             let content = f.source_text().text_for(&comment.span);
+            // `-->` is a comment only at the start of a line, but it may be printed after code (`const --> c`).
+            // Whether it starts a line is unknown here, so always break before it.
+            // This also splits an already valid `/* c */ --> c`, see DIVERGENCES.md#html-close-comment-newline
+            if comment.kind == CommentKind::HtmlClose {
+                write!(f, hard_line_break());
+            }
             if comment.is_multiline_block() {
                 if is_alignable_comment(content) {
                     let mut lines = LineTerminatorSplitter::new(content);

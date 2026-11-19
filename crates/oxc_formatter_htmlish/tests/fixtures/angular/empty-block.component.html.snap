@@ -1,0 +1,32 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<div>@switch (a) {@case (1)@case (2) {x}}</div>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<div>
+  @switch (a) {
+    @case (1)
+    @case (2) {
+      x
+    }
+  }
+</div>
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<div>
+  @switch (a) {
+    @case (1)
+    @case (2) {
+      x
+    }
+  }
+</div>
+
+===================== End =====================

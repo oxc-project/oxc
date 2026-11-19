@@ -4,10 +4,11 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 use oxc_span::Span;
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::Rule,
     utils::{PossibleJestNode, is_equality_matcher, parse_expect_and_typeof_vitest_fn_call},
 };
@@ -104,12 +105,16 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferToBeTruthy {
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        prefer_to_be_simply_bool(jest_node, ctx, true);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(call_expr) = node.kind() else { return };
+        let Some(jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx) else {
+            return;
+        };
+        prefer_to_be_simply_bool(&jest_node, ctx, true);
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_test()
     }
 }
 

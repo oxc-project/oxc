@@ -1,0 +1,22 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: index.ts
+working directory: fixtures/suppression/type_check_only_with_regular_rule
+----------
+Found 0 warnings and 0 errors.
+Finished in <variable>ms on 1 file with 97 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------
+
+########## 
+arguments: --type-check-only index.ts
+working directory: fixtures/suppression/type_check_only_with_regular_rule
+----------
+Found 0 warnings and 0 errors.
+Finished in <variable>ms on 1 file using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

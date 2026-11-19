@@ -23,14 +23,17 @@ use crate::{
         call_expression::is_test_each_pattern,
         expression::is_member_expression_without_chain_wrappers,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
-        tailwindcss::{is_tailwind_function_call, write_tailwind_template_element},
+        tailwindcss::{
+            tailwind_context_for_callee, tailwind_context_for_class_list,
+            write_tailwind_template_element,
+        },
     },
     write,
 };
 
 use super::FormatWrite;
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TemplateLiteral<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TemplateLiteral<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         if embed::try_format_template_literal(self, f) {
             return;
@@ -40,7 +43,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TemplateLiteral<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TaggedTemplateExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         // Format the tag and type arguments.
         // Comments between the tag (or type arguments) and the quasi always belong to the quasi
@@ -54,9 +57,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
         // printing ``foo /* c */`x`;``.
         // Unlike the no-newline form which attaches to the quasi, so formatting is not idempotent.
         if let Some(type_arguments) = self.type_arguments() {
-            write!(f, [self.tag(), FormatNodeWithoutTrailingComments(type_arguments)]);
+            write!(f, [self.tag(), FormatNodeWithoutTrailingComments(&type_arguments)]);
         } else {
-            write!(f, [FormatNodeWithoutTrailingComments(self.tag())]);
+            write!(f, [FormatNodeWithoutTrailingComments(&self.tag())]);
         }
 
         let quasi = self.quasi();
@@ -86,25 +89,19 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
         write!(f, [line_suffix_boundary()]);
 
         // Check if this is a Tailwind function call (e.g., tw`flex p-4`)
-        // Extract context entry before mutating f
-        let tailwind_ctx_to_push = f
-            .options()
-            .sort_tailwindcss
-            .as_ref()
-            .filter(|opts| is_tailwind_function_call(&self.tag, opts))
-            .map(|opts| TailwindContextEntry::new(opts.preserve_whitespace));
+        let tailwind_ctx_to_push = tailwind_context_for_callee(&self.tag, f);
 
         if let Some(ctx) = tailwind_ctx_to_push {
             f.context_mut().push_tailwind_context(ctx);
         }
 
         if embed::try_format_embedded_template(self, f) {
-        } else if is_test_each_pattern(&self.tag) && EachTemplateTable::is_table_like(quasi) {
-            let template = &EachTemplateTable::from_template(quasi, f);
+        } else if is_test_each_pattern(&self.tag) && EachTemplateTable::is_table_like(&quasi) {
+            let template = &EachTemplateTable::from_template(&quasi, f);
             // Use table formatting
             write!(f, template);
         } else {
-            let template = TemplateLike::TemplateLiteral(quasi);
+            let template = TemplateLike::TemplateLiteral(&quasi);
             write!(f, template);
         }
 
@@ -114,18 +111,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TemplateElement<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TemplateElement<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        let source = f.source_text().text_for(self);
-
         // Check if we're in a Tailwind context via the stack
         // (handles JSXAttribute, CallExpression, TaggedTemplateExpression, and nested contexts)
-        let tailwind_ctx = f.context().tailwind_context().copied().filter(|_| {
-            // No whitespace means only one class, so no need to sort
-            source.as_bytes().iter().any(|&b| b.is_ascii_whitespace())
-        });
-
-        if let Some(ctx) = tailwind_ctx {
+        if let Some(ctx) = tailwind_context_for_class_list(self, f) {
             write_tailwind_template_element(self, ctx, f);
         } else {
             write!(f, text(self.value.raw.as_str()));
@@ -133,7 +123,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TemplateElement<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSTemplateLiteralType<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSTemplateLiteralType<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let template = TemplateLike::TSTemplateLiteralType(self);
         write!(f, template);
@@ -207,13 +197,13 @@ impl TemplateElementIndention {
 
 /// Unified enum for handling both JS template literals and TS template literal types
 pub enum TemplateLike<'a, 'b> {
-    TemplateLiteral(&'b AstNode<'a, TemplateLiteral<'a>>),
-    TSTemplateLiteralType(&'b AstNode<'a, TSTemplateLiteralType<'a>>),
+    TemplateLiteral(&'b AstNode<'b, 'a, TemplateLiteral<'a>>),
+    TSTemplateLiteralType(&'b AstNode<'b, 'a, TSTemplateLiteralType<'a>>),
 }
 
-impl<'a> TemplateLike<'a, '_> {
+impl<'a, 'b> TemplateLike<'a, 'b> {
     #[inline]
-    pub fn quasis(&self) -> &AstNode<'a, ArenaVec<'a, TemplateElement<'a>>> {
+    pub fn quasis(&self) -> AstNode<'b, 'a, ArenaVec<'a, TemplateElement<'a>>> {
         match self {
             Self::TemplateLiteral(t) => t.quasis(),
             Self::TSTemplateLiteralType(t) => t.quasis(),
@@ -222,13 +212,13 @@ impl<'a> TemplateLike<'a, '_> {
 }
 
 /// Iterator that yields template expressions without allocation
-enum TemplateExpressionIterator<'a> {
-    Expression(AstNodeIterator<'a, Expression<'a>>),
-    TSType(AstNodeIterator<'a, TSType<'a>>),
+enum TemplateExpressionIterator<'a, 'b> {
+    Expression(AstNodeIterator<'b, 'a, Expression<'a>>),
+    TSType(AstNodeIterator<'b, 'a, TSType<'a>>),
 }
 
-impl<'a> Iterator for TemplateExpressionIterator<'a> {
-    type Item = TemplateExpression<'a, 'a>;
+impl<'a, 'b> Iterator for TemplateExpressionIterator<'a, 'b> {
+    type Item = TemplateExpression<'a, 'b>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
@@ -268,7 +258,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for TemplateLike<'a, '_> {
                 f.context_mut().push_tailwind_context(ctx.with_quasi_position(is_first, is_last));
             }
 
-            write!(f, *quasi);
+            write!(f, quasi);
 
             // Pop quasi position context
             if tailwind_ctx.is_some() {
@@ -329,12 +319,12 @@ pub struct FormatTemplateExpressionOptions {
 }
 
 pub enum TemplateExpression<'a, 'b> {
-    Expression(&'b AstNode<'a, Expression<'a>>),
-    TSType(&'b AstNode<'a, TSType<'a>>),
+    Expression(AstNode<'b, 'a, Expression<'a>>),
+    TSType(AstNode<'b, 'a, TSType<'a>>),
 }
 
 impl TemplateExpression<'_, '_> {
-    pub fn as_expression(&self) -> Option<&AstNode<'_, Expression<'_>>> {
+    pub fn as_expression(&self) -> Option<&AstNode<'_, '_, Expression<'_>>> {
         match self {
             Self::Expression(e) => Some(e),
             Self::TSType(_) => None,
@@ -677,7 +667,7 @@ impl<'a> EachTemplateTable<'a> {
     }
 
     pub(crate) fn from_template(
-        quasi: &AstNode<'a, TemplateLiteral<'a>>,
+        quasi: &AstNode<'_, 'a, TemplateLiteral<'a>>,
         f: &mut JsFormatter<'_, 'a>,
     ) -> Self {
         let mut builder = EachTemplateTableBuilder::new();
@@ -696,7 +686,7 @@ impl<'a> EachTemplateTable<'a> {
 
         builder.entry(EachTemplateElement::LineBreak);
 
-        for expr in quasi.expressions() {
+        for expr in &quasi.expressions() {
             let options = FormatTemplateExpressionOptions {
                 after_new_line: false,
                 indention: TemplateElementIndention::default(),

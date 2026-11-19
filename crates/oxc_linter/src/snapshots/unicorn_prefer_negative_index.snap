@@ -584,3 +584,17 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────────────────────────────────────────────────────────
    ╰────
   help: Replace length expression with negative index
+
+  ⚠ unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
+   ╭─[prefer_negative_index.tsx:1:1]
+ 1 │ foo.slice(foo.length - 1);
+   · ─────────────────────────
+   ╰────
+  help: Replace length expression with negative index
+
+  ⚠ unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
+   ╭─[prefer_negative_index.tsx:1:1]
+ 1 │ foo.slice(foo.length - 1);
+   · ─────────────────────────
+   ╰────
+  help: Replace length expression with negative index

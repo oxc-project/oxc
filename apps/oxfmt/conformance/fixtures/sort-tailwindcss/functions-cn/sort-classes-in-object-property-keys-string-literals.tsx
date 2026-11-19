@@ -1,0 +1,1 @@
+const A = <div className={cn({ 'p-[2px] elevation-elevated-selected': true })}>Hello</div>;

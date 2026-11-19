@@ -1,10 +1,11 @@
+use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::Rule,
     rules::shared::padding_around_after_all_blocks::{DOCUMENTATION, run},
-    utils::PossibleJestNode,
 };
 
 #[derive(Debug, Default, Clone)]
@@ -20,12 +21,13 @@ declare_oxc_lint!(
 );
 
 impl Rule for PaddingAroundAfterAllBlocks {
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        run(jest_node, ctx);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(_) = node.kind() else { return };
+        run(node, ctx);
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_test()
     }
 }
 
@@ -38,6 +40,12 @@ fn test() {
         "const thing = 123;\n\nafterAll(() => {});",
         "describe('foo', () => {\nafterAll(() => {});\n});",
         "const thing = 123;\n\n/* one */\n/* two */\nafterAll(() => {});",
+        "const cleanUp = false; cleanUp && afterAll(() => {});",
+        "const cleanUp = false;\nif (cleanUp)\n  afterAll(() => {});",
+        "const cleanUp = false; if (cleanUp) afterAll(() => {});",
+        "const cleanUp = false; if (cleanUp)\n  afterAll(() => {});",
+        "const cleanUp = false; while (cleanUp) afterAll(() => {});",
+        "const cleanUp = false; for (; cleanUp;) afterAll(() => {});",
     ];
 
     let fail = vec![
@@ -50,6 +58,26 @@ fn test() {
         (
             "const thing = 123;\n/* one */\n/* two */\nafterAll(() => {});",
             "const thing = 123;\n\n/* one */\n/* two */\nafterAll(() => {});",
+        ),
+        (
+            "const thing = 123; afterAll(() => {}), foo();",
+            "const thing = 123;\n\nafterAll(() => {}), foo();",
+        ),
+        (
+            "const thing = 123; afterAll(() => {}) && foo();",
+            "const thing = 123;\n\nafterAll(() => {}) && foo();",
+        ),
+        (
+            "const thing = 123; await afterAll(() => {});",
+            "const thing = 123;\n\nawait afterAll(() => {});",
+        ),
+        (
+            "const thing = 123;\nawait afterAll(() => {});",
+            "const thing = 123;\n\nawait afterAll(() => {});",
+        ),
+        (
+            "const thing = 123; await /* hook */ afterAll(() => {});",
+            "const thing = 123;\n\nawait /* hook */ afterAll(() => {});",
         ),
     ];
 

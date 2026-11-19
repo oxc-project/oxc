@@ -8,7 +8,7 @@ use oxc_ast::{
 use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::Span;
 use oxc_str::CompactStr;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
@@ -16,7 +16,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
-    ast_util::{iter_outer_expressions, outermost_paren_parent},
+    ast_util::{is_iife, outermost_paren_parent},
     context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
 };
@@ -135,7 +135,8 @@ declare_oxc_lint!(
     restriction,
     config = ExplicitFunctionReturnTypeConfig,
     version = "0.4.4",
-    short_description = "This rule enforces that functions have an explicit return type annotation.",
+    short_description =
+        "This rule enforces that functions have an explicit return type annotation.",
 );
 
 fn explicit_function_return_type_diagnostic(span: Span) -> OxcDiagnostic {
@@ -312,7 +313,7 @@ impl ExplicitFunctionReturnType {
                 if self.allow_functions_without_type_parameters && func.type_parameters.is_none() {
                     return true;
                 }
-                if self.allow_iifes && is_iife(node, ctx) {
+                if self.allow_iifes && is_iife(node, ctx.semantic()) {
                     return true;
                 }
                 if self.allowed_names.is_empty() {
@@ -327,7 +328,7 @@ impl ExplicitFunctionReturnType {
                 if self.allow_functions_without_type_parameters && func.type_parameters.is_none() {
                     return true;
                 }
-                if self.allow_iifes && is_iife(node, ctx) {
+                if self.allow_iifes && is_iife(node, ctx.semantic()) {
                     return true;
                 }
                 if self.allowed_names.is_empty() {
@@ -449,19 +450,10 @@ impl ExplicitFunctionReturnType {
         if let AstKind::ArrowFunctionExpression(arrow_func_expr) = node.kind()
             && let Some(func_body_expr) = arrow_func_expr.get_expression()
         {
-            return is_function(func_body_expr);
+            return func_body_expr.get_inner_expression().is_function();
         }
         all_return_statements_are_functions(node)
     }
-}
-
-// check function is IIFE (Immediately Invoked Function Expression)
-fn is_iife<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    let Some(AstKind::CallExpression(call)) = iter_outer_expressions(ctx.nodes(), node.id()).next()
-    else {
-        return false;
-    };
-    call.callee.span().contains_inclusive(node.span())
 }
 
 /**
@@ -497,15 +489,15 @@ fn is_setter(node: &AstNode) -> bool {
 
 fn check_typed_function_expression<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     let Some(parent) = outermost_paren_parent(node, ctx) else { return false };
-    is_typed_parent(parent, Some(node), ctx)
+    is_typed_parent(parent, Some(node))
         || is_property_of_object_with_type(parent, ctx)
         || is_constructor_argument(parent)
 }
 
-fn is_typed_parent(parent: &AstNode, callee: Option<&AstNode>, ctx: &LintContext) -> bool {
+fn is_typed_parent(parent: &AstNode, callee: Option<&AstNode>) -> bool {
     is_type_assertion(parent)
         || is_variable_declarator_with_type_annotation(parent)
-        || is_default_function_parameter_with_type_annotation(parent, ctx)
+        || is_default_function_parameter_with_type_annotation(parent)
         || is_property_definition_with_type_annotation(parent)
         || is_function_argument(parent, callee)
         || is_typed_jsx(parent)
@@ -543,13 +535,8 @@ fn is_function_argument(parent: &AstNode, callee: Option<&AstNode>) -> bool {
 fn is_type_assertion(node: &AstNode) -> bool {
     matches!(node.kind(), AstKind::TSAsExpression(_) | AstKind::TSTypeAssertion(_))
 }
-fn is_default_function_parameter_with_type_annotation(node: &AstNode, ctx: &LintContext) -> bool {
-    let AstKind::AssignmentPattern(_assign) = node.kind() else { return false };
-    match ctx.nodes().parent_kind(node.id()) {
-        AstKind::FormalParameter(f) => f.type_annotation.is_some(),
-        AstKind::FormalParameterRest(f) => f.type_annotation.is_some(),
-        _ => false,
-    }
+fn is_default_function_parameter_with_type_annotation(node: &AstNode) -> bool {
+    matches!(node.kind(), AstKind::FormalParameter(param) if param.type_annotation.is_some())
 }
 
 /**
@@ -575,22 +562,20 @@ fn is_typed_jsx(node: &AstNode) -> bool {
     matches!(node.kind(), AstKind::JSXExpressionContainer(_) | AstKind::JSXSpreadAttribute(_))
 }
 
-fn is_function(expr: &Expression) -> bool {
-    matches!(
-        expr.get_inner_expression(),
-        Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_)
-    )
-}
-
 fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     let Some(parent) = outermost_paren_parent(node, ctx) else { return false };
 
-    if let AstKind::ObjectProperty(prop) = parent.kind()
-        && let Expression::ArrowFunctionExpression(func) = &prop.value
-        && func.get_function_body().is_some_and(|body| !body.statements.is_empty())
-        && func.return_type.is_some()
-    {
-        return true;
+    let can_inherit_return_type = match parent.kind() {
+        AstKind::ReturnStatement(_) => true,
+        AstKind::ArrowFunctionExpression(func) => func.get_expression().is_some(),
+        AstKind::ObjectProperty(prop) => matches!(
+            prop.value.without_parentheses(),
+            Expression::ArrowFunctionExpression(func) if func.get_expression().is_some()
+        ),
+        _ => false,
+    };
+    if !can_inherit_return_type {
+        return false;
     }
 
     for ancestor in ctx.nodes().ancestors(node.id()) {
@@ -650,8 +635,10 @@ struct ReturnStatementChecker {
 impl<'a> VisitJs<'a> for ReturnStatementChecker {
     fn visit_return_statement(&mut self, return_statement: &ReturnStatement<'a>) {
         self.has_return = true;
-        self.all_returns_are_functions &=
-            return_statement.argument.as_ref().is_some_and(|argument| is_function(argument));
+        self.all_returns_are_functions &= return_statement
+            .argument
+            .as_ref()
+            .is_some_and(|argument| argument.get_inner_expression().is_function());
     }
 
     fn visit_function(&mut self, _func: &Function<'a>, _flags: oxc_semantic::ScopeFlags) {}
@@ -679,8 +666,7 @@ fn is_property_of_object_with_type(node: &AstNode, ctx: &LintContext) -> bool {
     let Some(obj_expr_parent) = outermost_paren_parent(parent, ctx) else {
         return false;
     };
-    is_typed_parent(obj_expr_parent, None, ctx)
-        || is_property_of_object_with_type(obj_expr_parent, ctx)
+    is_typed_parent(obj_expr_parent, None) || is_property_of_object_with_type(obj_expr_parent, ctx)
 }
 
 #[test]
@@ -1507,6 +1493,17 @@ fn test() {
             None,
             None,
         ),
+        (
+            "
+            type R = { run: () => Promise<number> };
+            export function f(): R {
+              return { run: async () => 1 };
+            }
+            ",
+            None,
+            None,
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -2120,6 +2117,21 @@ fn test() {
         (
             "export function myFunction3() { try { throw new Error('some error'); } catch (error) { throw error; } }",
             Some(serde_json::json!([{ "allowHigherOrderFunctions": true }])),
+            None,
+            None,
+        ),
+        (
+            "
+            type R = { run: () => Promise<number> };
+            export function f(): R {
+              return {
+                run: async () => {
+                  return 1;
+                },
+              };
+            }
+            ",
+            None,
             None,
             None,
         ),

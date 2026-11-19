@@ -1,12 +1,17 @@
-use std::cell::RefCell;
+use std::{borrow::Cow, cell::RefCell, hash::BuildHasher};
 
 use itertools::Itertools;
 use oxc_ast::Comment;
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
+use oxc_syntax::line_terminator::is_line_terminator;
 use rust_lapper::{Interval, Lapper};
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxBuildHasher, FxHashMap};
 
-use crate::{FixKind, fixer::Fix};
+use crate::{
+    FixKind,
+    fixer::{Fix, Message, PossibleFixes},
+};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum DirectivePrefix {
@@ -36,6 +41,19 @@ impl DirectivePrefix {
         match self {
             Self::Eslint => "eslint-enable",
             Self::Oxlint => "oxlint-enable",
+        }
+    }
+
+    /// Kind of fix used to remove an unused directive with this prefix.
+    ///
+    /// `oxlint-` directives are only read by oxlint, so removing them is safe.
+    /// `eslint-` directives may still be needed by ESLint (e.g. for rules oxlint
+    /// does not support), so removing them is only a suggestion.
+    #[must_use]
+    pub const fn unused_directive_fix_kind(self) -> FixKind {
+        match self {
+            Self::Eslint => FixKind::Suggestion,
+            Self::Oxlint => FixKind::Fix,
         }
     }
 
@@ -209,7 +227,7 @@ impl RuleCommentRule {
                 comment_span.start + before_trimmed.len() as u32 - 1,
                 self.name_span.end,
             ))
-            .with_kind(FixKind::Suggestion);
+            .with_kind(self.directive_prefix.unused_directive_fix_kind());
         }
 
         let after_source = &source_text[self.name_span.end as usize..comment_span.end as usize];
@@ -221,7 +239,7 @@ impl RuleCommentRule {
                 self.name_span.start,
                 self.name_span.end + whitespace_after as u32 + 1 + whitespace_after_comma as u32,
             ))
-            .with_kind(FixKind::Suggestion);
+            .with_kind(self.directive_prefix.unused_directive_fix_kind());
         }
 
         if whitespace_after > 0
@@ -233,7 +251,7 @@ impl RuleCommentRule {
                 self.name_span.start,
                 self.name_span.end + whitespace_after as u32,
             ))
-            .with_kind(FixKind::Suggestion);
+            .with_kind(self.directive_prefix.unused_directive_fix_kind());
         }
 
         let whitespace_before = before_source.len() - before_trimmed.len();
@@ -242,7 +260,7 @@ impl RuleCommentRule {
                 self.name_span.start - whitespace_before as u32,
                 self.name_span.end,
             ))
-            .with_kind(FixKind::Suggestion);
+            .with_kind(self.directive_prefix.unused_directive_fix_kind());
         }
 
         unreachable!(
@@ -286,6 +304,37 @@ pub struct DisableRuleComment {
     pub r#type: RuleCommentType,
 }
 
+impl DisableRuleComment {
+    /// Remove the comment, preserving separators when it shares a line with code.
+    pub fn create_fix(&self, source_text: &str) -> Fix {
+        let has_code_before = source_text[..self.span.start as usize]
+            .rsplit(is_line_terminator)
+            .next()
+            .is_some_and(|text| !text.trim().is_empty());
+        let has_code_after = source_text[self.span.end as usize..]
+            .split(is_line_terminator)
+            .next()
+            .is_some_and(|text| !text.trim().is_empty());
+        let replacement = if has_code_before || has_code_after {
+            let line_terminators: String = self
+                .span
+                .source_text(source_text)
+                .chars()
+                .filter(|&ch| is_line_terminator(ch))
+                .collect();
+            if line_terminators.is_empty() {
+                Cow::Borrowed(" ")
+            } else {
+                Cow::Owned(line_terminators)
+            }
+        } else {
+            Cow::Borrowed("")
+        };
+        Fix::new(replacement, self.fix_span)
+            .with_kind(self.directive_prefix.unused_directive_fix_kind())
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct DisableDirectives {
     /// All the disabled rules with their corresponding covering spans
@@ -296,9 +345,22 @@ pub struct DisableDirectives {
     unused_enable_comments: Box<[(DirectivePrefix, Option<String>, Span)]>,
     /// Spans of used enable directives, to filter out unused
     used_disable_comments: RefCell<Vec<DisabledRule>>,
+    /// Hash of the source text these directives were built from, if recorded
+    source_hash: Option<u64>,
 }
 
 impl DisableDirectives {
+    /// Record the source text these directives were built from, so that fixes for
+    /// unused directives can later be skipped if the file has changed since.
+    pub fn record_source(&mut self, source_text: &str) {
+        self.source_hash = Some(FxBuildHasher.hash_one(source_text));
+    }
+
+    /// Whether `source_text` is the recorded source these directives were built from.
+    pub fn matches_source(&self, source_text: &str) -> bool {
+        self.source_hash == Some(FxBuildHasher.hash_one(source_text))
+    }
+
     fn mark_disable_directive_used(&self, disable_directive: DisabledRule) {
         self.used_disable_comments.borrow_mut().push(disable_directive);
     }
@@ -484,6 +546,7 @@ impl DisableDirectivesBuilder {
             disable_rule_comments: self.disable_rule_comments.into_boxed_slice(),
             unused_enable_comments: self.unused_enable_comments.into_boxed_slice(),
             used_disable_comments: RefCell::new(Vec::new()),
+            source_hash: None,
         }
     }
 
@@ -497,9 +560,6 @@ impl DisableDirectivesBuilder {
     /// span that covers the entire line (including leading whitespace and the
     /// trailing newline). Otherwise returns the comment's full outer span
     /// (including `//` or `/* */` delimiters).
-    ///
-    /// This span is stored in [`DisabledRule`] so that `Fix::delete(span)`
-    /// produces the correct edit without any extra post-processing in callers.
     #[expect(clippy::cast_possible_truncation)]
     pub(crate) fn compute_comment_fix_span(comment: &Comment, source_text: &str) -> Span {
         let outer_start = comment.span.start as usize;
@@ -726,14 +786,20 @@ impl DisableDirectivesBuilder {
                 }
                 DirectiveKind::Enable => {
                     if rule_names.is_empty() {
-                        if let Some((start, disable_prefix, _, _)) = self.disable_all_start.take() {
+                        if let Some((
+                            start,
+                            disable_prefix,
+                            disable_comment_span,
+                            disable_fix_span,
+                        )) = self.disable_all_start.take()
+                        {
                             self.add_interval(
                                 start,
                                 comment_span.start,
                                 DisabledRule::All {
                                     directive_prefix: disable_prefix,
-                                    comment_span: outer_span,
-                                    fix_span: comment_fix_span,
+                                    comment_span: disable_comment_span,
+                                    fix_span: disable_fix_span,
                                     is_next_line: false,
                                 },
                             );
@@ -745,8 +811,13 @@ impl DisableDirectivesBuilder {
                         // `eslint-enable rule-name1, rule-name2`
                         for (rule_name, name_span) in rule_names {
                             let name_span = name_span.move_right(rule_list_start);
-                            if let Some((start, disable_prefix, _, _, _)) =
-                                self.disable_start_map.remove(rule_name)
+                            if let Some((
+                                start,
+                                disable_prefix,
+                                disable_name_span,
+                                disable_comment_span,
+                                disable_fix_span,
+                            )) = self.disable_start_map.remove(rule_name)
                             {
                                 self.add_interval(
                                     start,
@@ -754,9 +825,9 @@ impl DisableDirectivesBuilder {
                                     DisabledRule::Single {
                                         directive_prefix: disable_prefix,
                                         rule_name: rule_name.to_string(),
-                                        name_span,
-                                        comment_span: outer_span,
-                                        fix_span: comment_fix_span,
+                                        name_span: disable_name_span,
+                                        comment_span: disable_comment_span,
+                                        fix_span: disable_fix_span,
                                         is_next_line: false,
                                     },
                                 );
@@ -1341,53 +1412,64 @@ semi*/
     }
 }
 
-/// Create diagnostics for unused disable directives.
+/// Create messages for unused disable and enable directives.
 ///
-/// This utility function generates `OxcDiagnostic` instances for:
-/// - Unused disable directives (no problems were reported)
-/// - Unused enable directives (no matching disable directives)
-///
-/// # Arguments
-/// * `directives` - The disable directives to check for unused comments
-/// * `severity` - The severity level (Warn or Deny) for the diagnostics
-///
-/// # Returns
-/// A vector of diagnostics for all unused directives
-pub fn create_unused_directives_diagnostics(
+/// With `fix`, unused disable directives get a fix that removes them when the given
+/// [`FixKind`] allows it. Fixes are computed against the given source text, which must
+/// be the source the directives were built from.
+pub fn create_unused_directives_messages(
     directives: &DisableDirectives,
     severity: crate::AllowWarnDeny,
-) -> Vec<oxc_diagnostics::OxcDiagnostic> {
-    use oxc_diagnostics::OxcDiagnostic;
-
-    let mut diagnostics = Vec::new();
-
+    fix: Option<(FixKind, &str)>,
+) -> Vec<Message> {
+    let fix_message = "remove unused disable directive";
     let severity = if severity == crate::AllowWarnDeny::Deny {
         oxc_diagnostics::Severity::Error
     } else {
         oxc_diagnostics::Severity::Warning
     };
+    let diagnostic = |message: String, span: Span| {
+        OxcDiagnostic::warn(message).with_label(span).with_severity(severity)
+    };
+
+    let mut messages = Vec::new();
 
     // Report unused disable comments
     let unused_disable = directives.collect_unused_disable_comments();
     for unused_comment in unused_disable {
         let span = unused_comment.span;
+        let prefix = unused_comment.directive_prefix;
+        let fix_source_text = fix
+            .filter(|(kind, _)| kind.can_apply(prefix.unused_directive_fix_kind()))
+            .map(|(_, source_text)| source_text);
         match unused_comment.r#type {
             RuleCommentType::All => {
-                diagnostics.push(
-                    OxcDiagnostic::warn(unused_comment.directive_prefix.unused_disable_message())
-                        .with_label(span)
-                        .with_severity(severity),
-                );
+                let fixes = if let Some(source_text) = fix_source_text {
+                    PossibleFixes::Single(
+                        unused_comment.create_fix(source_text).with_message(fix_message),
+                    )
+                } else {
+                    PossibleFixes::None
+                };
+                messages
+                    .push(Message::new(diagnostic(prefix.unused_disable_message(), span), fixes));
             }
             RuleCommentType::Single(rules) => {
                 for rule in rules {
-                    let rule_message =
-                        rule.directive_prefix.unused_disable_rule_message(&rule.rule_name);
-                    diagnostics.push(
-                        OxcDiagnostic::warn(rule_message)
-                            .with_label(rule.name_span)
-                            .with_severity(severity),
-                    );
+                    let fixes = if let Some(source_text) = fix_source_text {
+                        PossibleFixes::Single(
+                            rule.create_fix(source_text, span).with_message(fix_message),
+                        )
+                    } else {
+                        PossibleFixes::None
+                    };
+                    messages.push(Message::new(
+                        diagnostic(
+                            rule.directive_prefix.unused_disable_rule_message(&rule.rule_name),
+                            rule.name_span,
+                        ),
+                        fixes,
+                    ));
                 }
             }
         }
@@ -1401,16 +1483,17 @@ pub fn create_unused_directives_diagnostics(
         } else {
             directive_prefix.unused_enable_message()
         };
-        diagnostics.push(OxcDiagnostic::warn(message).with_label(*span).with_severity(severity));
+        messages.push(Message::new(diagnostic(message, *span), PossibleFixes::None));
     }
 
-    diagnostics
+    messages
 }
 
 #[cfg(test)]
 mod tests {
     use oxc_allocator::Allocator;
     use oxc_ast::Comment;
+    use oxc_diagnostics::OxcDiagnostic;
     use oxc_parser::Parser;
     use oxc_semantic::{Semantic, SemanticBuilder};
     use oxc_span::{SourceType, Span};
@@ -1418,6 +1501,7 @@ mod tests {
     use crate::disable_directives::{
         DirectivePrefix, DisabledRule, RuleCommentRule, RuleCommentType,
     };
+    use crate::fixer::{Fixer, Message, PossibleFixes};
 
     use super::{DisableDirectives, DisableDirectivesBuilder};
 
@@ -1427,6 +1511,31 @@ mod tests {
         assert!(parser_ret.diagnostics.is_empty());
         let semantic_ret = SemanticBuilder::new_linter().build(allocator.alloc(parser_ret.program));
         semantic_ret.semantic
+    }
+
+    #[test]
+    fn test_fix_unused_disable_directives_inline() {
+        for prefix in ["eslint", "oxlint"] {
+            for line_terminator in ["", "\n", "\r\n", "\r", "\u{2028}", "\u{2029}"] {
+                let source_text = format!(
+                    "function f() {{ return/* {prefix}-disable no-debugger{line_terminator}*/42; }}"
+                );
+                let allocator = Allocator::default();
+                let semantic = process_source(&allocator, &source_text);
+                let directives =
+                    DisableDirectivesBuilder::new().build(&source_text, semantic.comments());
+                let unused_comments = directives.collect_unused_disable_comments();
+                let fix = unused_comments[0].create_fix(&source_text);
+                let messages = vec![Message::new(
+                    OxcDiagnostic::warn("Unused directive"),
+                    PossibleFixes::Single(fix),
+                )];
+                let result = Fixer::new(&source_text, messages, Some(SourceType::default())).fix();
+                let separator = if line_terminator.is_empty() { " " } else { line_terminator };
+                assert_eq!(result.fixed_code, format!("function f() {{ return{separator}42; }}"));
+                assert_eq!(result.messages, []);
+            }
+        }
     }
 
     /// Replicates the `compute_comment_fix_span` logic for use in tests.

@@ -38,10 +38,10 @@ pub(super) fn write_less_variable_declaration<'a>(
     write!(f, "@");
     let name_span = to_span(decl.name.name.span());
     write!(f, text(source.text_for(&name_span)));
-    let colon_end = to_span(&decl.colon_span).end;
+    let colon_end = decl.colon_span.end;
     // Inline comments around the colon make postcss-less treat this as a plain at-rule:
     // the raw text is kept and the block loses its `;`.
-    let value_start = to_span(decl.value.span()).start;
+    let value_start = decl.value.span().start;
     let inline_before_colon = f.context().comments().iter_before(colon_end).any(|c| c.inline);
     let inline_after_colon = f
         .context()
@@ -90,7 +90,7 @@ pub(super) fn write_less_variable_declaration<'a>(
     } else {
         write!(f, body);
     }
-    write_terminator_tail_comments(to_span(&decl.span).end, f);
+    write_terminator_tail_comments(decl.span.end, f);
     true
 }
 
@@ -109,8 +109,8 @@ pub(super) fn write_less_mixin_definition<'a>(
     def: &LessMixinDefinition<'a>,
     f: &mut CssFormatter<'_, 'a>,
 ) {
-    let start = to_span(def.name.span()).start;
-    if has_comments_between(start, to_span(&def.block.span).start, f) {
+    let start = def.name.span().start;
+    if has_comments_between(start, def.block.span.start, f) {
         write_verbatim_prelude_rule(start, &def.block, true, f);
         return;
     }
@@ -118,11 +118,11 @@ pub(super) fn write_less_mixin_definition<'a>(
     // The prelude breaks like a selector: at its word gaps, all at once, one indent in
     let prelude = format_with(|f: &mut CssFormatter<'_, 'a>| {
         write_mixin_name(&def.name, f);
-        if !is_glued(def.name.span(), &def.params.span) {
+        if !is_glued(def.name.span(), def.params.span) {
             write!(f, soft_line_break_or_space());
         }
         let source = f.context().source_text();
-        value::write_adjusted_verbatim(source.text_for(&to_span(&def.params.span)), f);
+        value::write_adjusted_verbatim(source.text_for(&to_span(def.params.span)), f);
         if let Some(guard) = &def.guard {
             write_less_guard(guard, f);
         }
@@ -138,8 +138,8 @@ pub(super) fn write_less_conditional_qualified_rule<'a>(
     rule: &LessConditionalQualifiedRule<'a>,
     f: &mut CssFormatter<'_, 'a>,
 ) {
-    let start = to_span(&rule.span).start;
-    if has_comments_between(start, to_span(&rule.block.span).start, f) {
+    let start = rule.span.start;
+    if has_comments_between(start, rule.block.span.start, f) {
         write_verbatim_prelude_rule(start, &rule.block, true, f);
         return;
     }
@@ -162,7 +162,7 @@ fn write_less_guard<'a>(guard: &LessConditions<'a>, f: &mut CssFormatter<'_, 'a>
     for (i, condition) in guard.conditions.iter().enumerate() {
         if i > 0 {
             write!(f, [",", soft_line_break_or_space()]);
-        } else if !is_glued(&guard.when_span, condition.span()) {
+        } else if !is_glued(guard.when_span, condition.span()) {
             write!(f, space());
         }
         value::write_adjusted_verbatim(source.text_for(&to_span(condition.span())), f);
@@ -181,8 +181,8 @@ pub(super) fn write_less_mixin_call_statement<'a>(
     f: &mut CssFormatter<'_, 'a>,
 ) {
     let source = f.context().source_text();
-    let span = to_span(&call.span);
-    let end = call.important.as_ref().map_or(span.end, |imp| to_span(&imp.span).start);
+    let span = call.span;
+    let end = call.important.as_ref().map_or(span.end, |imp| imp.span.start);
     let raw = source.slice_range(span.start, end).trim_end();
     let _ = f.context().comments().take_before(end);
     value::write_adjusted_verbatim(raw, f);
@@ -197,7 +197,7 @@ fn write_less_mixin_call<'a>(call: &LessMixinCall<'a>, f: &mut CssFormatter<'_, 
     let source = f.context().source_text();
     for child in &call.callee.children {
         if let Some(combinator) = &child.combinator {
-            let span = to_span(&combinator.span);
+            let span = to_span(combinator.span);
             write!(f, [space(), text(source.text_for(&span)), space()]);
         }
         write_mixin_name(&child.name, f);
@@ -236,7 +236,7 @@ fn write_less_condition<'a>(condition: &LessCondition<'a>, f: &mut CssFormatter<
     match condition {
         LessCondition::Binary(binary) => {
             write_less_condition(&binary.left, f);
-            let op_span = to_span(&binary.op.span);
+            let op_span = to_span(binary.op.span);
             write!(f, [space(), text(source.text_for(&op_span)), space()]);
             write_less_condition(&binary.right, f);
         }
@@ -287,7 +287,7 @@ fn write_less_detached_ruleset<'a>(
     f: &mut CssFormatter<'_, 'a>,
 ) {
     // Block comments before `{` stay inline; `//` ends its line.
-    let block_start = to_span(&ruleset.block.span).start;
+    let block_start = ruleset.block.span.start;
     for &comment in f.context().comments().take_before(block_start) {
         write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::Space));
     }

@@ -2754,12 +2754,7 @@ pub mod walk_mut {
         visitor.visit_decorators(&mut it.decorators);
         visitor.visit_property_key(&mut it.key);
         {
-            let flags = match it.kind {
-                MethodDefinitionKind::Get => ScopeFlags::Function | ScopeFlags::GetAccessor,
-                MethodDefinitionKind::Set => ScopeFlags::Function | ScopeFlags::SetAccessor,
-                MethodDefinitionKind::Constructor => ScopeFlags::Function | ScopeFlags::Constructor,
-                MethodDefinitionKind::Method => ScopeFlags::Function,
-            };
+            let flags = it.kind.scope_flags();
             visitor.visit_function(&mut it.value, flags);
         }
         visitor.leave_node(kind);

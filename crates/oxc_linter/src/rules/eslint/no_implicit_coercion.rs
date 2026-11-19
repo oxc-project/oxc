@@ -181,7 +181,8 @@ declare_oxc_lint!(
     fix,
     config = NoImplicitCoercionConfig,
     version = "1.33.0",
-    short_description = "Disallow shorthand type conversions using operators like `!!`, unary `+`, and `\"\" +`.",
+    short_description =
+        "Disallow shorthand type conversions using operators like `!!`, unary `+`, and `\"\" +`.",
 );
 
 impl Rule for NoImplicitCoercion {
@@ -363,9 +364,7 @@ fn is_empty_string(expr: &Expression) -> bool {
     match expr.without_parentheses() {
         Expression::StringLiteral(lit) => lit.value.is_empty(),
         Expression::TemplateLiteral(template) => {
-            template.expressions.is_empty()
-                && template.quasis.len() == 1
-                && template.quasis[0].value.raw.is_empty()
+            template.is_no_substitution_template() && template.quasis[0].value.raw.is_empty()
         }
         _ => false,
     }

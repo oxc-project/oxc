@@ -134,3 +134,21 @@ source: crates/oxc_linter/src/tester.rs
  2 │               beforeEach(() => setupSomething(input));
    ╰────
   help: Prefer using `describe.each` rather than a manual loop.
+
+  ⚠ jest(prefer-each): Enforce using `each` rather than manual loops
+   ╭─[prefer_each.tsx:2:13]
+ 1 │ import { test as customTest } from '@jest/globals';
+ 2 │             for (const value of values) {
+   ·             ────────────────────────────
+ 3 │                 customTest('foo', () => {});
+   ╰────
+  help: Prefer using `it.each` rather than a manual loop.
+
+  ⚠ jest(prefer-each): Enforce using `each` rather than manual loops
+   ╭─[prefer_each.tsx:2:13]
+ 1 │ import { describe as suite } from '@jest/globals';
+ 2 │             for (const value of values) {
+   ·             ────────────────────────────
+ 3 │                 suite('foo', () => {});
+   ╰────
+  help: Prefer using `describe.each` rather than a manual loop.

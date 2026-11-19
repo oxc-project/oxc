@@ -92,7 +92,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     recommended,
-    fix,
+    dangerous_suggestion,
     config = NoUselessEscapeConfig,
     version = "0.0.5",
     short_description = "Disallow unnecessary escape characters.",
@@ -120,9 +120,10 @@ impl Rule for NoUselessEscape {
                             continue;
                         }
 
-                        ctx.diagnostic_with_fix(no_useless_escape_diagnostic(c, span), |fixer| {
-                            fixer.replace(span, c.to_string())
-                        });
+                        ctx.diagnostic_with_suggestion(
+                            no_useless_escape_diagnostic(c, span),
+                            |fixer| fixer.replace(span, c.to_string()),
+                        );
                     }
                 }
             }
@@ -166,9 +167,17 @@ fn check(ctx: &LintContext<'_>, node_id: NodeId, start: u32, offsets: &[usize]) 
 
         if !is_within_jsx_attribute(node_id, ctx) {
             let span = Span::new(offset - 1, offset + len);
-            ctx.diagnostic_with_fix(no_useless_escape_diagnostic(c, span), |fixer| {
-                fixer.replace(span, c.to_string())
-            });
+            let fix_kind = match ctx.nodes().parent_kind(node_id) {
+                AstKind::Directive(directive) if directive.expression.value == "use strict" => {
+                    FixKind::DangerousSuggestion
+                }
+                _ => FixKind::Suggestion,
+            };
+            ctx.diagnostic_with_fix_of_kind(
+                no_useless_escape_diagnostic(c, span),
+                fix_kind,
+                |fixer| fixer.replace(span, c.to_string()),
+            );
         }
     }
 }
@@ -365,7 +374,10 @@ impl<'a> Visit<'a> for UselessEscapeFinder<'a> {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::{
+        FixKind,
+        tester::{ExpectFixTestCase, Tester},
+    };
 
     let pass = vec![
         ("var foo = /\\./", None),
@@ -651,9 +663,7 @@ fn test() {
         (r"var foo = /\（([^\）\（]+)\）$|\(([^\)\)]+)\)$/;", None),
         (r#"var stringLiteralWithNextLine = "line 1\line 2";"#, None),
         (r"var stringLiteralWithNextLine = `line 1\line 2`;", None),
-        // spellchecker:off
         (r#"({ foo() { "foo"; "bar"; "ba\z" } })"#, None), // { "ecmaVersion": 6 },
-        // spellchecker:on
         // Carets
         (r"/[^\^]/", None),
         (r"/[^\^]/u", None), // { "ecmaVersion": 2015 },
@@ -693,7 +703,7 @@ fn test() {
         (r"/[\@\@]/v", Some(serde_json::json!([{ "allowRegexCharacters": ["#"] }]))), // { "ecmaVersion": 2024 }
     ];
 
-    let fix = vec![
+    let mut fix: Vec<ExpectFixTestCase> = vec![
         ("var foo = /\\#/;", "var foo = /#/;", None),
         ("var foo = /\\;/;", "var foo = /;/;", None),
         ("var foo = \"\\'\";", "var foo = \"'\";", None),
@@ -720,9 +730,7 @@ fn test() {
         ("let foo = /\\ /;", "let foo = / /;", None),
         ("var foo = `\\$\\{{${foo}`;", "var foo = `$\\{{${foo}`;", None),
         (r#""use\ strict";"#, r#""use strict";"#, None),
-        // spellchecker:off
         (r#"({ foo() { "foo"; "bar"; "ba\z" } })"#, r#"({ foo() { "foo"; "bar"; "baz" } })"#, None), // { "ecmaVersion": 6 }
-        // spellchecker:on
         // Carets
         (r"/[^\^]/", r"/[^^]/", None),
         (r"/[^\^]/u", r"/[^^]/u", None), // { "ecmaVersion": 2015 },
@@ -762,7 +770,43 @@ fn test() {
             r"const regex = /(https?:\/\/github\.com\/(([^\s]+)\/([^\s]+))\/([^\s]+\/)?(issues|pull)\/([0-9]+))|(([^\s]+)\/([^\s]+))?#([1-9][0-9]*)($|[\s:\;\-(\=])/;",
             None,
         ),
-    ];
+    ]
+    .into_iter()
+    .map(Into::into)
+    .collect();
+
+    // Removing a useless escape can create a Use Strict Directive or change
+    // `RegExp.prototype.source`, so it must not be applied as a safe fix.
+    // Regression for https://github.com/oxc-project/oxc/issues/29467
+    fix.extend(
+        [
+            (r#""use\ strict";"#, r#""use\ strict";"#, None, FixKind::SafeFix),
+            (r"const re = /\!/;", r"const re = /\!/;", None, FixKind::SafeFix),
+            (r#""use\ strict";"#, r#""use strict";"#, None, FixKind::DangerousSuggestion),
+            (
+                r#"function f(a = 0) { "use\ strict"; }"#,
+                r#"function f(a = 0) { "use\ strict"; }"#,
+                None,
+                FixKind::Suggestion,
+            ),
+            (
+                r#"function f() { "use\ strict"; }"#,
+                r#"function f() { "use strict"; }"#,
+                None,
+                FixKind::DangerousSuggestion,
+            ),
+            (
+                r#"const s = "use\ strict";"#,
+                r#"const s = "use strict";"#,
+                None,
+                FixKind::Suggestion,
+            ),
+            (r#""some\ directive";"#, r#""some directive";"#, None, FixKind::Suggestion),
+            (r"const re = /\!/;", r"const re = /!/;", None, FixKind::Suggestion),
+        ]
+        .into_iter()
+        .map(Into::into),
+    );
 
     Tester::new(NoUselessEscape::NAME, NoUselessEscape::PLUGIN, pass, fail)
         .expect_fix(fix)

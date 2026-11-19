@@ -53,9 +53,9 @@
   x bom-plugin(bom):
   | hasBOM: true
   | sourceText: "/*x*/'é';/*y*/ऊ=1;debugger;\n// 😀🤪😆😎🤮\ndebugger;\ndebugger;"
-  | Program span: 5-61
+  | Program span: 0-61
   | comments: [{"start":0,"end":5,"text":"/*x*/"},{"start":9,"end":14,"text":"/*y*/"},{"start":28,"end":41,"text":"// 😀🤪😆😎🤮"}]
-   ,-[files/bom_unicode.js:1:9]
+   ,-[files/bom_unicode.js:1:4]
  1 | ,-> ﻿/*x*/'é';/*y*/ऊ=1;debugger;
  2 | |   // 😀🤪😆😎🤮
  3 | |   debugger;
@@ -134,9 +134,9 @@
   x bom-plugin(bom):
   | hasBOM: false
   | sourceText: "/*x*/'é';/*y*/ऊ=1;debugger;\n// 😀🤪😆😎🤮\ndebugger;\ndebugger;"
-  | Program span: 5-61
+  | Program span: 0-61
   | comments: [{"start":0,"end":5,"text":"/*x*/"},{"start":9,"end":14,"text":"/*y*/"},{"start":28,"end":41,"text":"// 😀🤪😆😎🤮"}]
-   ,-[files/no_bom_unicode.js:1:6]
+   ,-[files/no_bom_unicode.js:1:1]
  1 | ,-> /*x*/'é';/*y*/ऊ=1;debugger;
  2 | |   // 😀🤪😆😎🤮
  3 | |   debugger;

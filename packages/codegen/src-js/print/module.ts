@@ -72,13 +72,12 @@ export function printImportDeclaration(node: ESTree.ImportDeclaration, state: St
         }
 
         printSpaceBeforeIdentifier(state);
-        writeWithMap(
+        writeWithMapNamed(
           state,
           specifier.local.name,
-          CAT_IDENT,
-          specifier.start,
-          specifier.end,
-          specifier,
+          specifier.local.start,
+          specifier.local.end,
+          specifier.local,
         );
 
         if (i === length - 1) write(state, " ", CAT_OTHER);

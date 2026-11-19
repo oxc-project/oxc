@@ -33,7 +33,7 @@ pub struct OxlintOptions {
     /// Note that this requires the `oxlint-tsgolint` package to be installed.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub type_aware: Option<bool>,
-    /// Enable experimental type checking (includes TypeScript compiler diagnostics).
+    /// Enable type checking (includes TypeScript compiler diagnostics).
     ///
     /// Equivalent to passing `--type-check` on the CLI.
     ///
@@ -262,6 +262,7 @@ pub struct Oxlintrc {
     /// Plugin-specific configuration for both built-in and custom plugins.
     /// This includes settings for built-in plugins such as `react` and `jsdoc`
     /// as well as configuring settings for JS custom plugins loaded via `jsPlugins`.
+    #[serde(serialize_with = "OxlintSettings::serialize_with_custom")]
     pub settings: OxlintSettings,
     /// Environments enable and disable collections of global variables.
     pub env: OxlintEnv,
@@ -324,7 +325,6 @@ impl Oxlintrc {
             ))
         })?;
 
-        // jsonc support
         json_strip_comments::strip(&mut string).map_err(|err| {
             OxcDiagnostic::error(format!("Failed to parse jsonc file {}: {err:?}", path.display()))
         })?;
@@ -332,7 +332,6 @@ impl Oxlintrc {
         let json = serde_json::from_str::<serde_json::Value>(&string).map_err(|err| {
             let ext = path.extension().and_then(OsStr::to_str);
             let err = match ext {
-                // syntax error
                 Some(ext) if is_json_ext(ext) => err.to_string(),
                 Some(_) => "Only JSON configuration files are supported".to_string(),
                 None => {

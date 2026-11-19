@@ -16,15 +16,13 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
-    config::GlobalValue,
     context::{ContextHost, LintContext},
     rule::{Rule, TupleRuleConfig},
-    utils::deserialize_required_regex_option,
+    utils::{deserialize_required_regex_option, is_enabled_global_reference},
 };
 
 fn id_match_diagnostic(span: Span, name: &str, pattern: &str) -> OxcDiagnostic {
@@ -262,7 +260,7 @@ impl IdMatch {
             return;
         }
 
-        if is_known_external_global(ident, ctx) {
+        if is_enabled_global_reference(ident, ctx) {
             return;
         }
 
@@ -529,13 +527,6 @@ impl IdMatch {
             _ => false,
         }
     }
-}
-
-pub fn is_known_external_global(ident: &IdentifierReference, ctx: &LintContext) -> bool {
-    ident.is_global_reference(ctx.scoping())
-        && ctx
-            .get_global_variable_value(ident.name.as_str())
-            .is_some_and(|value| value != GlobalValue::Off)
 }
 
 fn binding_is_import_local<'a>(ident: &BindingIdentifier<'a>, parent: &AstNode<'a>) -> bool {

@@ -172,7 +172,8 @@ impl<'a> Transformer<'a> {
             ),
             x2_es2026: ES2026::new(self.env.es2026),
             x2_es2022: ES2022::new(
-                self.env.es2022,
+                self.env.es2022.top_level_await,
+                self.state.class_transform,
                 !self.typescript.allow_declare_fields
                     || self.typescript.remove_class_fields_without_initializer,
             ),
@@ -596,6 +597,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_statements(stmts, ctx);
         }
+        self.decorator.enter_statements(stmts, ctx);
     }
 
     fn exit_arrow_function_expression(
@@ -637,7 +639,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
     }
 
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.decorator.enter_statement(stmt, ctx);
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_statement(stmt, ctx);
         }

@@ -11,8 +11,17 @@ function foo(props) {
   return y;
 }
 
+const sproutInputs = [
+  [{min:-1,max:10,cond:true,increment:1}],
+  [{min:-1,max:10,cond:false,increment:3}],
+  [{min:0,max:5,cond:true,increment:1}],
+];
+
 export const FIXTURE_ENTRYPOINT = {
-  fn: foo,
-  params: ['TodoAdd'],
-  isComponent: 'TodoAdd',
+  fn: args => {
+    "use no memo";
+    return foo(...args);
+  },
+  params: [sproutInputs[0]],
+  sequentialRenders: [sproutInputs[0], sproutInputs[0], sproutInputs[1], sproutInputs[1], sproutInputs[2], sproutInputs[2], sproutInputs[0]],
 };

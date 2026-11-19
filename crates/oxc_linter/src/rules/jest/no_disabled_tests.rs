@@ -1,10 +1,11 @@
+use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::Rule,
-    rules::shared::no_disabled_tests::{DOCUMENTATION, SHORT_DESCRIPTION, run_on_jest_node},
-    utils::PossibleJestNode,
+    rules::shared::no_disabled_tests::{DOCUMENTATION, SHORT_DESCRIPTION, run},
 };
 
 #[derive(Debug, Default, Clone)]
@@ -21,12 +22,13 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDisabledTests {
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        run_on_jest_node(jest_node, ctx);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(_) = node.kind() else { return };
+        run(node, ctx);
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_test()
     }
 }
 

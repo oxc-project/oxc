@@ -1,0 +1,45 @@
+import { memo } from "react";
+function Page() {
+  return /* @__PURE__ */ React.createElement("div", null);
+}
+_c = Page;
+export const As = memo(Page);
+_c2 = As;
+export const NonNull = memo(Page);
+_c3 = NonNull;
+export const Satisfies = memo(Page);
+_c4 = Satisfies;
+export const Instantiation = memo(Page);
+_c5 = Instantiation;
+export const Parenthesized = memo(Page);
+_c6 = Parenthesized;
+export const Combined = memo(Page);
+_c7 = Combined;
+export const Nested = memo(_c8 = memo(Page));
+_c9 = Nested;
+export const InlineArrow = memo(_c10 = (() => null));
+_c11 = InlineArrow;
+export const InlineFunction = memo(_c12 = (function() {
+  return null;
+}));
+_c13 = InlineFunction;
+export const Unwrapped = memo(Page);
+_c14 = Unwrapped;
+export const NotAComponent = memo(value);
+export default _c15 = memo(Page);
+var _c, _c2, _c3, _c4, _c5, _c6, _c7, _c8, _c9, _c10, _c11, _c12, _c13, _c14, _c15;
+$RefreshReg$(_c, "Page");
+$RefreshReg$(_c2, "As");
+$RefreshReg$(_c3, "NonNull");
+$RefreshReg$(_c4, "Satisfies");
+$RefreshReg$(_c5, "Instantiation");
+$RefreshReg$(_c6, "Parenthesized");
+$RefreshReg$(_c7, "Combined");
+$RefreshReg$(_c8, "Nested$memo");
+$RefreshReg$(_c9, "Nested");
+$RefreshReg$(_c10, "InlineArrow$memo");
+$RefreshReg$(_c11, "InlineArrow");
+$RefreshReg$(_c12, "InlineFunction$memo");
+$RefreshReg$(_c13, "InlineFunction");
+$RefreshReg$(_c14, "Unwrapped");
+$RefreshReg$(_c15, "%default%");

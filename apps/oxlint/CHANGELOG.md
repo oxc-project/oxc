@@ -4,6 +4,86 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.94.0] - 2026-11-16
+
+### 🚀 Features
+
+- db5bc6b linter: Output recommended flag in `--rules` JSON output (#29338) (Cam McHenry)
+- acd8814 linter/typescript/no-misused-promises: Add `flagUnions` option (#29380) (camc314)
+- fa492d6 minifier: Merge adjacent switch cases with identical bodies (#29316) (camc314)
+
+### 🐛 Bug Fixes
+
+- b31fb57 linter/eslint/no-new-wrappers: Offer wrapper rewrites as suggestions (#29494) (oxc-captain[bot])
+- 523d59b linter/eslint/no-useless-escape: Demote useless escape fixes to suggestions (#29508) (oxc-captain[bot])
+- 6da36f8 linter: Print config: validate CLI options before printing config (#29538) (Cam McHenry)
+- dda4d11 linter: Print config: reflect CLI options like `--type-aware` in the printed config (#29537) (Cam McHenry)
+- 0b643b3 linter: Print config: use resolved config instead of config builder (#29533) (Cam McHenry)
+- 09ef22f linter: Print config: preserve original rule configuration when generating rule sets (#29530) (Cam McHenry)
+- 9f465fd react-compiler: Preserve ref mutation hints (#28553) (Nash Aschenbath)
+
+### ⚡ Performance
+
+- aed0190 parser: Skip unused identifier hashes (#29168) (Boshen)
+- 0dfb188 oxlint: Build diagnostic output while linting runs (#28747) (YT)
+
+### 📚 Documentation
+
+- cdb5ac4 oxlint: Remove experimental label from `typeCheck` (#29175) (Yuji Sugiura)
+
+## [1.93.0] - 2026-11-09
+
+### 🐛 Bug Fixes
+
+- 6bbb92a linter: Remove unused `oxlint-disable` directives with `--fix` (#27698) (Ryan Tsao)
+- 3b35cb6 linter/disable-directives: Preserve separators and disable spans (#28921) (camc314)
+
+## [1.92.0] - 2026-11-06
+
+### 🚀 Features
+
+- b7d2c75 linter/eslint/no-redeclare: Add `ignoreDeclarationMerge` option (#28816) (Cam McHenry)
+
+### 🐛 Bug Fixes
+
+- fa66fde oxlint,oxfmt: Resolve Vite+ config root from the config file directory (#28801) (MK (fengmk2))
+- 3d3a6f4 react-compiler: Ignore callback-local reassignments (#28820) (camc314)
+- 28442f7 oxlint: Prevent --init from overwriting existing configs (#28754) (camc314)
+
+### ⚡ Performance
+
+- 74d50c1 linter: Overlap import graph batches instead of polling on a pool worker (#28323) (Dunqing)
+
+## [1.91.0] - 2026-11-02
+
+### 🚀 Features
+
+- 419c1b0 linter: Add allow and allowPattern options to react/capitalized-calls (Christian Vuerings)
+
+### 🐛 Bug Fixes
+
+- c67167e linter: Only run React Compiler rules on files with top-level components or hooks (Boshen)
+- 4c9d5aa linter: Treat Reanimated shared values as ref-like in React Compiler rules (Boshen)
+- ed7df7d ast/estree: Include comments in TS Program span (#28326) (camc314)
+- 31cbe37 linter: Make gitlab fingerprints unique per diagnostic (#28307) (camc314)
+
+### ⚡ Performance
+
+- fd68928 react-compiler: Skip passes lint does not need (Yagiz Nizipli)
+- 481b638 linter/plugins: Create AST nodes with `Object.create` instead of `__proto__` literals (#27816) (Charles Wang)
+
+## [1.90.0] - 2026-10-27
+
+### 🚀 Features
+
+- cf34678 oxlint: Export `Oxlintrc` type (#28132) (Sysix)
+- d1b00f4 linter/typescript: Implement no-unsafe-enum-assignment rule (#28117) (camc314)
+- 165c91f linter/typescript/await-thenable: Support `allowMixedPromiseArrays` option (#28116) (camc314)
+
+### 🐛 Bug Fixes
+
+- 53be530 linter: Filter by type aware rules when looking up tsgolint rule severity (#28138) (NavpreetSSidhu)
+
 ## [1.89.0] - 2026-10-19
 
 ### 🐛 Bug Fixes

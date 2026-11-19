@@ -264,7 +264,6 @@ pub(super) struct ResolvedGetSetPrivateProp<'a, 'b> {
     pub is_method: bool,
     /// `true` if is a private accessor property or [`PrivateProp::method_kind`] is
     /// `Some(MethodDefinitionKind::Get)` or `Some(MethodDefinitionKind::Set)`
-    #[expect(unused)]
     pub is_accessor: bool,
     /// `true` if class which defines this property is a class declaration
     pub is_declaration: bool,

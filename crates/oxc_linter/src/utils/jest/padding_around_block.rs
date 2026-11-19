@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::Statement};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, Statement},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
@@ -16,18 +19,38 @@ pub fn report_missing_padding_before_jest_block<'a>(
     ctx: &LintContext<'a>,
     name: &str,
 ) {
+    let mut statement_node = ctx.nodes().parent_node(node.id());
+    let statement = loop {
+        match statement_node.kind() {
+            AstKind::ExpressionStatement(statement) => break statement,
+            AstKind::AwaitExpression(_) => {}
+            _ if statement_node.span().start == node.span().start => {}
+            _ => return,
+        }
+        statement_node = ctx.nodes().parent_node(statement_node.id());
+    };
+    let leading_expression = match &statement.expression {
+        Expression::AwaitExpression(await_expr) => &await_expr.argument,
+        expression => expression,
+    };
+    if leading_expression.span().start != node.span().start {
+        return;
+    }
+
     let scope_node = ctx.nodes().get_node(ctx.scoping().get_node_id(node.scope_id()));
     let prev_statement_span = match scope_node.kind() {
-        AstKind::Program(program) => get_statement_span_before_node(node, program.body.as_slice()),
+        AstKind::Program(program) => {
+            get_statement_span_before_node(statement_node, program.body.as_slice())
+        }
         AstKind::ArrowFunctionExpression(arrow_func_expr) => {
             let Some(body) = arrow_func_expr.get_function_body() else { return };
-            get_statement_span_before_node(node, body.statements.as_slice())
+            get_statement_span_before_node(statement_node, body.statements.as_slice())
         }
         AstKind::Function(function) => {
             let Some(body) = &function.body else {
                 return;
             };
-            get_statement_span_before_node(node, body.statements.as_slice())
+            get_statement_span_before_node(statement_node, body.statements.as_slice())
         }
         _ => None,
     };
@@ -35,10 +58,11 @@ pub fn report_missing_padding_before_jest_block<'a>(
         return;
     };
 
-    let comments_range = ctx.comments_range(prev_statement_span.end..node.span().start);
+    let statement_start = statement_node.span().start;
+    let comments_range = ctx.comments_range(prev_statement_span.end..statement_start);
     let mut span_between_start = prev_statement_span.end;
-    let mut span_between_end = node.span().start;
-    let mut next_attached_start = node.span().start;
+    let mut span_between_end = statement_start;
+    let mut next_attached_start = statement_start;
     for comment in comments_range.rev() {
         let comment_span = comment.span;
         let space_after = ctx.source_range(Span::new(comment_span.end, next_attached_start));
@@ -72,10 +96,5 @@ pub fn report_missing_padding_before_jest_block<'a>(
 }
 
 fn get_statement_span_before_node(node: &AstNode, statements: &[Statement]) -> Option<Span> {
-    statements
-        .iter()
-        .filter_map(|statement| {
-            if statement.span().end <= node.span().start { Some(statement.span()) } else { None }
-        })
-        .next_back()
+    statements.windows(2).find_map(|pair| (pair[1].span() == node.span()).then(|| pair[0].span()))
 }

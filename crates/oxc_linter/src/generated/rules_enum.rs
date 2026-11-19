@@ -3,7 +3,6 @@
 
 #![expect(
     clippy::default_constructed_unit_structs,
-    clippy::semicolon_if_nothing_returned,
     clippy::wrong_self_convention,
     clippy::missing_errors_doc,
     clippy::match_same_arms
@@ -579,6 +578,7 @@ pub use crate::rules::typescript::no_unsafe_argument::NoUnsafeArgument as Typesc
 pub use crate::rules::typescript::no_unsafe_assignment::NoUnsafeAssignment as TypescriptNoUnsafeAssignment;
 pub use crate::rules::typescript::no_unsafe_call::NoUnsafeCall as TypescriptNoUnsafeCall;
 pub use crate::rules::typescript::no_unsafe_declaration_merging::NoUnsafeDeclarationMerging as TypescriptNoUnsafeDeclarationMerging;
+pub use crate::rules::typescript::no_unsafe_enum_assignment::NoUnsafeEnumAssignment as TypescriptNoUnsafeEnumAssignment;
 pub use crate::rules::typescript::no_unsafe_enum_comparison::NoUnsafeEnumComparison as TypescriptNoUnsafeEnumComparison;
 pub use crate::rules::typescript::no_unsafe_function_type::NoUnsafeFunctionType as TypescriptNoUnsafeFunctionType;
 pub use crate::rules::typescript::no_unsafe_member_access::NoUnsafeMemberAccess as TypescriptNoUnsafeMemberAccess;
@@ -889,7 +889,6 @@ use crate::{
         RuleRunner,
     },
     timing::RuleTimingStat,
-    utils::PossibleJestNode,
 };
 use oxc_semantic::AstTypesBitset;
 #[derive(Debug, Clone)]
@@ -1182,6 +1181,7 @@ pub enum RuleEnum {
     TypescriptNoUnsafeAssignment(TypescriptNoUnsafeAssignment),
     TypescriptNoUnsafeCall(TypescriptNoUnsafeCall),
     TypescriptNoUnsafeDeclarationMerging(TypescriptNoUnsafeDeclarationMerging),
+    TypescriptNoUnsafeEnumAssignment(TypescriptNoUnsafeEnumAssignment),
     TypescriptNoUnsafeEnumComparison(TypescriptNoUnsafeEnumComparison),
     TypescriptNoUnsafeFunctionType(TypescriptNoUnsafeFunctionType),
     TypescriptNoUnsafeMemberAccess(TypescriptNoUnsafeMemberAccess),
@@ -2060,592 +2060,593 @@ const TYPESCRIPT_NO_UNSAFE_ARGUMENT_ID: usize = 282usize;
 const TYPESCRIPT_NO_UNSAFE_ASSIGNMENT_ID: usize = 283usize;
 const TYPESCRIPT_NO_UNSAFE_CALL_ID: usize = 284usize;
 const TYPESCRIPT_NO_UNSAFE_DECLARATION_MERGING_ID: usize = 285usize;
-const TYPESCRIPT_NO_UNSAFE_ENUM_COMPARISON_ID: usize = 286usize;
-const TYPESCRIPT_NO_UNSAFE_FUNCTION_TYPE_ID: usize = 287usize;
-const TYPESCRIPT_NO_UNSAFE_MEMBER_ACCESS_ID: usize = 288usize;
-const TYPESCRIPT_NO_UNSAFE_RETURN_ID: usize = 289usize;
-const TYPESCRIPT_NO_UNSAFE_TYPE_ASSERTION_ID: usize = 290usize;
-const TYPESCRIPT_NO_UNSAFE_UNARY_MINUS_ID: usize = 291usize;
-const TYPESCRIPT_NO_USELESS_DEFAULT_ASSIGNMENT_ID: usize = 292usize;
-const TYPESCRIPT_NO_USELESS_EMPTY_EXPORT_ID: usize = 293usize;
-const TYPESCRIPT_NO_VAR_REQUIRES_ID: usize = 294usize;
-const TYPESCRIPT_NO_WRAPPER_OBJECT_TYPES_ID: usize = 295usize;
-const TYPESCRIPT_NON_NULLABLE_TYPE_ASSERTION_STYLE_ID: usize = 296usize;
-const TYPESCRIPT_ONLY_THROW_ERROR_ID: usize = 297usize;
-const TYPESCRIPT_PARAMETER_PROPERTIES_ID: usize = 298usize;
-const TYPESCRIPT_PREFER_AS_CONST_ID: usize = 299usize;
-const TYPESCRIPT_PREFER_ENUM_INITIALIZERS_ID: usize = 300usize;
-const TYPESCRIPT_PREFER_FIND_ID: usize = 301usize;
-const TYPESCRIPT_PREFER_FOR_OF_ID: usize = 302usize;
-const TYPESCRIPT_PREFER_FUNCTION_TYPE_ID: usize = 303usize;
-const TYPESCRIPT_PREFER_INCLUDES_ID: usize = 304usize;
-const TYPESCRIPT_PREFER_LITERAL_ENUM_MEMBER_ID: usize = 305usize;
-const TYPESCRIPT_PREFER_NAMESPACE_KEYWORD_ID: usize = 306usize;
-const TYPESCRIPT_PREFER_NULLISH_COALESCING_ID: usize = 307usize;
-const TYPESCRIPT_PREFER_OPTIONAL_CHAIN_ID: usize = 308usize;
-const TYPESCRIPT_PREFER_PROMISE_REJECT_ERRORS_ID: usize = 309usize;
-const TYPESCRIPT_PREFER_READONLY_ID: usize = 310usize;
-const TYPESCRIPT_PREFER_READONLY_PARAMETER_TYPES_ID: usize = 311usize;
-const TYPESCRIPT_PREFER_REDUCE_TYPE_PARAMETER_ID: usize = 312usize;
-const TYPESCRIPT_PREFER_REGEXP_EXEC_ID: usize = 313usize;
-const TYPESCRIPT_PREFER_RETURN_THIS_TYPE_ID: usize = 314usize;
-const TYPESCRIPT_PREFER_STRING_STARTS_ENDS_WITH_ID: usize = 315usize;
-const TYPESCRIPT_PREFER_TS_EXPECT_ERROR_ID: usize = 316usize;
-const TYPESCRIPT_PROMISE_FUNCTION_ASYNC_ID: usize = 317usize;
-const TYPESCRIPT_RELATED_GETTER_SETTER_PAIRS_ID: usize = 318usize;
-const TYPESCRIPT_REQUIRE_ARRAY_SORT_COMPARE_ID: usize = 319usize;
-const TYPESCRIPT_REQUIRE_AWAIT_ID: usize = 320usize;
-const TYPESCRIPT_RESTRICT_PLUS_OPERANDS_ID: usize = 321usize;
-const TYPESCRIPT_RESTRICT_TEMPLATE_EXPRESSIONS_ID: usize = 322usize;
-const TYPESCRIPT_RETURN_AWAIT_ID: usize = 323usize;
-const TYPESCRIPT_STRICT_BOOLEAN_EXPRESSIONS_ID: usize = 324usize;
-const TYPESCRIPT_STRICT_VOID_RETURN_ID: usize = 325usize;
-const TYPESCRIPT_SWITCH_EXHAUSTIVENESS_CHECK_ID: usize = 326usize;
-const TYPESCRIPT_TRIPLE_SLASH_REFERENCE_ID: usize = 327usize;
-const TYPESCRIPT_UNBOUND_METHOD_ID: usize = 328usize;
-const TYPESCRIPT_UNIFIED_SIGNATURES_ID: usize = 329usize;
-const TYPESCRIPT_USE_UNKNOWN_IN_CATCH_CALLBACK_VARIABLE_ID: usize = 330usize;
-const JEST_CONSISTENT_TEST_IT_ID: usize = 331usize;
-const JEST_EXPECT_EXPECT_ID: usize = 332usize;
-const JEST_MAX_EXPECTS_ID: usize = 333usize;
-const JEST_MAX_NESTED_DESCRIBE_ID: usize = 334usize;
-const JEST_NO_ALIAS_METHODS_ID: usize = 335usize;
-const JEST_NO_COMMENTED_OUT_TESTS_ID: usize = 336usize;
-const JEST_NO_CONDITIONAL_EXPECT_ID: usize = 337usize;
-const JEST_NO_CONDITIONAL_IN_TEST_ID: usize = 338usize;
-const JEST_NO_CONFUSING_SET_TIMEOUT_ID: usize = 339usize;
-const JEST_NO_DEPRECATED_FUNCTIONS_ID: usize = 340usize;
-const JEST_NO_DISABLED_TESTS_ID: usize = 341usize;
-const JEST_NO_DONE_CALLBACK_ID: usize = 342usize;
-const JEST_NO_DUPLICATE_HOOKS_ID: usize = 343usize;
-const JEST_NO_EXPORT_ID: usize = 344usize;
-const JEST_NO_FOCUSED_TESTS_ID: usize = 345usize;
-const JEST_NO_HOOKS_ID: usize = 346usize;
-const JEST_NO_IDENTICAL_TITLE_ID: usize = 347usize;
-const JEST_NO_INTERPOLATION_IN_SNAPSHOTS_ID: usize = 348usize;
-const JEST_NO_JASMINE_GLOBALS_ID: usize = 349usize;
-const JEST_NO_LARGE_SNAPSHOTS_ID: usize = 350usize;
-const JEST_NO_MOCKS_IMPORT_ID: usize = 351usize;
-const JEST_NO_RESTRICTED_JEST_METHODS_ID: usize = 352usize;
-const JEST_NO_RESTRICTED_MATCHERS_ID: usize = 353usize;
-const JEST_NO_STANDALONE_EXPECT_ID: usize = 354usize;
-const JEST_NO_TEST_PREFIXES_ID: usize = 355usize;
-const JEST_NO_TEST_RETURN_STATEMENT_ID: usize = 356usize;
-const JEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID: usize = 357usize;
-const JEST_NO_UNTYPED_MOCK_FACTORY_ID: usize = 358usize;
-const JEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID: usize = 359usize;
-const JEST_PADDING_AROUND_TEST_BLOCKS_ID: usize = 360usize;
-const JEST_PREFER_CALLED_WITH_ID: usize = 361usize;
-const JEST_PREFER_COMPARISON_MATCHER_ID: usize = 362usize;
-const JEST_PREFER_EACH_ID: usize = 363usize;
-const JEST_PREFER_ENDING_WITH_AN_EXPECT_ID: usize = 364usize;
-const JEST_PREFER_EQUALITY_MATCHER_ID: usize = 365usize;
-const JEST_PREFER_EXPECT_ASSERTIONS_ID: usize = 366usize;
-const JEST_PREFER_EXPECT_RESOLVES_ID: usize = 367usize;
-const JEST_PREFER_HOOKS_IN_ORDER_ID: usize = 368usize;
-const JEST_PREFER_HOOKS_ON_TOP_ID: usize = 369usize;
-const JEST_PREFER_IMPORTING_JEST_GLOBALS_ID: usize = 370usize;
-const JEST_PREFER_JEST_MOCKED_ID: usize = 371usize;
-const JEST_PREFER_LOWERCASE_TITLE_ID: usize = 372usize;
-const JEST_PREFER_MOCK_PROMISE_SHORTHAND_ID: usize = 373usize;
-const JEST_PREFER_MOCK_RETURN_SHORTHAND_ID: usize = 374usize;
-const JEST_PREFER_SNAPSHOT_HINT_ID: usize = 375usize;
-const JEST_PREFER_SPY_ON_ID: usize = 376usize;
-const JEST_PREFER_STRICT_EQUAL_ID: usize = 377usize;
-const JEST_PREFER_TO_BE_ID: usize = 378usize;
-const JEST_PREFER_TO_CONTAIN_ID: usize = 379usize;
-const JEST_PREFER_TO_HAVE_BEEN_CALLED_ID: usize = 380usize;
-const JEST_PREFER_TO_HAVE_BEEN_CALLED_TIMES_ID: usize = 381usize;
-const JEST_PREFER_TO_HAVE_LENGTH_ID: usize = 382usize;
-const JEST_PREFER_TODO_ID: usize = 383usize;
-const JEST_REQUIRE_HOOK_ID: usize = 384usize;
-const JEST_REQUIRE_TO_THROW_MESSAGE_ID: usize = 385usize;
-const JEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID: usize = 386usize;
-const JEST_VALID_DESCRIBE_CALLBACK_ID: usize = 387usize;
-const JEST_VALID_EXPECT_ID: usize = 388usize;
-const JEST_VALID_EXPECT_IN_PROMISE_ID: usize = 389usize;
-const JEST_VALID_TITLE_ID: usize = 390usize;
-const REACT_BUTTON_HAS_TYPE_ID: usize = 391usize;
-const REACT_CAPITALIZED_CALLS_ID: usize = 392usize;
-const REACT_CHECKED_REQUIRES_ONCHANGE_OR_READONLY_ID: usize = 393usize;
-const REACT_DISPLAY_NAME_ID: usize = 394usize;
-const REACT_ERROR_BOUNDARIES_ID: usize = 395usize;
-const REACT_EXHAUSTIVE_DEPS_ID: usize = 396usize;
-const REACT_EXHAUSTIVE_EFFECT_DEPENDENCIES_ID: usize = 397usize;
-const REACT_FORBID_COMPONENT_PROPS_ID: usize = 398usize;
-const REACT_FORBID_DOM_PROPS_ID: usize = 399usize;
-const REACT_FORBID_ELEMENTS_ID: usize = 400usize;
-const REACT_FORWARD_REF_USES_REF_ID: usize = 401usize;
-const REACT_FUNCTION_COMPONENT_DEFINITION_ID: usize = 402usize;
-const REACT_GLOBALS_ID: usize = 403usize;
-const REACT_HOOK_USE_STATE_ID: usize = 404usize;
-const REACT_HOOKS_ID: usize = 405usize;
-const REACT_IFRAME_MISSING_SANDBOX_ID: usize = 406usize;
-const REACT_IMMUTABILITY_ID: usize = 407usize;
-const REACT_INCOMPATIBLE_LIBRARY_ID: usize = 408usize;
-const REACT_INVARIANT_ID: usize = 409usize;
-const REACT_JSX_BOOLEAN_VALUE_ID: usize = 410usize;
-const REACT_JSX_CURLY_BRACE_PRESENCE_ID: usize = 411usize;
-const REACT_JSX_FILENAME_EXTENSION_ID: usize = 412usize;
-const REACT_JSX_FRAGMENTS_ID: usize = 413usize;
-const REACT_JSX_HANDLER_NAMES_ID: usize = 414usize;
-const REACT_JSX_KEY_ID: usize = 415usize;
-const REACT_JSX_MAX_DEPTH_ID: usize = 416usize;
-const REACT_JSX_NO_COMMENT_TEXTNODES_ID: usize = 417usize;
-const REACT_JSX_NO_CONSTRUCTED_CONTEXT_VALUES_ID: usize = 418usize;
-const REACT_JSX_NO_DUPLICATE_PROPS_ID: usize = 419usize;
-const REACT_JSX_NO_LITERALS_ID: usize = 420usize;
-const REACT_JSX_NO_SCRIPT_URL_ID: usize = 421usize;
-const REACT_JSX_NO_TARGET_BLANK_ID: usize = 422usize;
-const REACT_JSX_NO_UNDEF_ID: usize = 423usize;
-const REACT_JSX_NO_USELESS_FRAGMENT_ID: usize = 424usize;
-const REACT_JSX_PASCAL_CASE_ID: usize = 425usize;
-const REACT_JSX_PROPS_NO_SPREAD_MULTI_ID: usize = 426usize;
-const REACT_JSX_PROPS_NO_SPREADING_ID: usize = 427usize;
-const REACT_MEMO_DEPENDENCIES_ID: usize = 428usize;
-const REACT_NO_ARRAY_INDEX_KEY_ID: usize = 429usize;
-const REACT_NO_CHILDREN_PROP_ID: usize = 430usize;
-const REACT_NO_CLONE_ELEMENT_ID: usize = 431usize;
-const REACT_NO_DANGER_ID: usize = 432usize;
-const REACT_NO_DANGER_WITH_CHILDREN_ID: usize = 433usize;
-const REACT_NO_DERIVING_STATE_IN_EFFECTS_ID: usize = 434usize;
-const REACT_NO_DID_MOUNT_SET_STATE_ID: usize = 435usize;
-const REACT_NO_DID_UPDATE_SET_STATE_ID: usize = 436usize;
-const REACT_NO_DIRECT_MUTATION_STATE_ID: usize = 437usize;
-const REACT_NO_FIND_DOM_NODE_ID: usize = 438usize;
-const REACT_NO_IS_MOUNTED_ID: usize = 439usize;
-const REACT_NO_MULTI_COMP_ID: usize = 440usize;
-const REACT_NO_NAMESPACE_ID: usize = 441usize;
-const REACT_NO_OBJECT_TYPE_AS_DEFAULT_PROP_ID: usize = 442usize;
-const REACT_NO_REACT_CHILDREN_ID: usize = 443usize;
-const REACT_NO_REDUNDANT_SHOULD_COMPONENT_UPDATE_ID: usize = 444usize;
-const REACT_NO_RENDER_RETURN_VALUE_ID: usize = 445usize;
-const REACT_NO_SET_STATE_ID: usize = 446usize;
-const REACT_NO_STRING_REFS_ID: usize = 447usize;
-const REACT_NO_THIS_IN_SFC_ID: usize = 448usize;
-const REACT_NO_UNESCAPED_ENTITIES_ID: usize = 449usize;
-const REACT_NO_UNKNOWN_PROPERTY_ID: usize = 450usize;
-const REACT_NO_UNSAFE_ID: usize = 451usize;
-const REACT_NO_UNSTABLE_NESTED_COMPONENTS_ID: usize = 452usize;
-const REACT_NO_WILL_UPDATE_SET_STATE_ID: usize = 453usize;
-const REACT_ONLY_EXPORT_COMPONENTS_ID: usize = 454usize;
-const REACT_PREFER_ES_6_CLASS_ID: usize = 455usize;
-const REACT_PREFER_FUNCTION_COMPONENT_ID: usize = 456usize;
-const REACT_PRESERVE_MANUAL_MEMOIZATION_ID: usize = 457usize;
-const REACT_PURITY_ID: usize = 458usize;
-const REACT_REACT_IN_JSX_SCOPE_ID: usize = 459usize;
-const REACT_REFS_ID: usize = 460usize;
-const REACT_REQUIRE_RENDER_RETURN_ID: usize = 461usize;
-const REACT_RULE_SUPPRESSION_ID: usize = 462usize;
-const REACT_RULES_OF_HOOKS_ID: usize = 463usize;
-const REACT_SELF_CLOSING_COMP_ID: usize = 464usize;
-const REACT_SET_STATE_IN_EFFECT_ID: usize = 465usize;
-const REACT_SET_STATE_IN_RENDER_ID: usize = 466usize;
-const REACT_STATE_IN_CONSTRUCTOR_ID: usize = 467usize;
-const REACT_STATIC_COMPONENTS_ID: usize = 468usize;
-const REACT_STYLE_PROP_OBJECT_ID: usize = 469usize;
-const REACT_SYNTAX_ID: usize = 470usize;
-const REACT_TODO_ID: usize = 471usize;
-const REACT_UNSUPPORTED_SYNTAX_ID: usize = 472usize;
-const REACT_USE_MEMO_ID: usize = 473usize;
-const REACT_VOID_DOM_ELEMENTS_NO_CHILDREN_ID: usize = 474usize;
-const REACT_VOID_USE_MEMO_ID: usize = 475usize;
-const REACT_PERF_JSX_NO_JSX_AS_PROP_ID: usize = 476usize;
-const REACT_PERF_JSX_NO_NEW_ARRAY_AS_PROP_ID: usize = 477usize;
-const REACT_PERF_JSX_NO_NEW_FUNCTION_AS_PROP_ID: usize = 478usize;
-const REACT_PERF_JSX_NO_NEW_OBJECT_AS_PROP_ID: usize = 479usize;
-const UNICORN_CATCH_ERROR_NAME_ID: usize = 480usize;
-const UNICORN_CONSISTENT_ASSERT_ID: usize = 481usize;
-const UNICORN_CONSISTENT_DATE_CLONE_ID: usize = 482usize;
-const UNICORN_CONSISTENT_EMPTY_ARRAY_SPREAD_ID: usize = 483usize;
-const UNICORN_CONSISTENT_EXISTENCE_INDEX_CHECK_ID: usize = 484usize;
-const UNICORN_CONSISTENT_FUNCTION_SCOPING_ID: usize = 485usize;
-const UNICORN_CONSISTENT_TEMPLATE_LITERAL_ESCAPE_ID: usize = 486usize;
-const UNICORN_CUSTOM_ERROR_DEFINITION_ID: usize = 487usize;
-const UNICORN_EMPTY_BRACE_SPACES_ID: usize = 488usize;
-const UNICORN_ERROR_MESSAGE_ID: usize = 489usize;
-const UNICORN_ESCAPE_CASE_ID: usize = 490usize;
-const UNICORN_EXPLICIT_LENGTH_CHECK_ID: usize = 491usize;
-const UNICORN_EXPLICIT_TIMER_DELAY_ID: usize = 492usize;
-const UNICORN_FILENAME_CASE_ID: usize = 493usize;
-const UNICORN_IMPORT_STYLE_ID: usize = 494usize;
-const UNICORN_MAX_NESTED_CALLS_ID: usize = 495usize;
-const UNICORN_NEW_FOR_BUILTINS_ID: usize = 496usize;
-const UNICORN_NO_ABUSIVE_ESLINT_DISABLE_ID: usize = 497usize;
-const UNICORN_NO_ACCESSOR_RECURSION_ID: usize = 498usize;
-const UNICORN_NO_ANONYMOUS_DEFAULT_EXPORT_ID: usize = 499usize;
-const UNICORN_NO_ARRAY_CALLBACK_REFERENCE_ID: usize = 500usize;
-const UNICORN_NO_ARRAY_FILL_WITH_REFERENCE_TYPE_ID: usize = 501usize;
-const UNICORN_NO_ARRAY_FOR_EACH_ID: usize = 502usize;
-const UNICORN_NO_ARRAY_METHOD_THIS_ARGUMENT_ID: usize = 503usize;
-const UNICORN_NO_ARRAY_REDUCE_ID: usize = 504usize;
-const UNICORN_NO_ARRAY_REVERSE_ID: usize = 505usize;
-const UNICORN_NO_ARRAY_SORT_ID: usize = 506usize;
-const UNICORN_NO_AWAIT_EXPRESSION_MEMBER_ID: usize = 507usize;
-const UNICORN_NO_AWAIT_IN_PROMISE_METHODS_ID: usize = 508usize;
-const UNICORN_NO_CONFUSING_ARRAY_WITH_ID: usize = 509usize;
-const UNICORN_NO_CONSOLE_SPACES_ID: usize = 510usize;
-const UNICORN_NO_DOCUMENT_COOKIE_ID: usize = 511usize;
-const UNICORN_NO_EMPTY_FILE_ID: usize = 512usize;
-const UNICORN_NO_HEX_ESCAPE_ID: usize = 513usize;
-const UNICORN_NO_IMMEDIATE_MUTATION_ID: usize = 514usize;
-const UNICORN_NO_INSTANCEOF_ARRAY_ID: usize = 515usize;
-const UNICORN_NO_INSTANCEOF_BUILTINS_ID: usize = 516usize;
-const UNICORN_NO_INVALID_FETCH_OPTIONS_ID: usize = 517usize;
-const UNICORN_NO_INVALID_REMOVE_EVENT_LISTENER_ID: usize = 518usize;
-const UNICORN_NO_LENGTH_AS_SLICE_END_ID: usize = 519usize;
-const UNICORN_NO_LONELY_IF_ID: usize = 520usize;
-const UNICORN_NO_MAGIC_ARRAY_FLAT_DEPTH_ID: usize = 521usize;
-const UNICORN_NO_NEGATED_CONDITION_ID: usize = 522usize;
-const UNICORN_NO_NEGATION_IN_EQUALITY_CHECK_ID: usize = 523usize;
-const UNICORN_NO_NESTED_TERNARY_ID: usize = 524usize;
-const UNICORN_NO_NEW_ARRAY_ID: usize = 525usize;
-const UNICORN_NO_NEW_BUFFER_ID: usize = 526usize;
-const UNICORN_NO_NULL_ID: usize = 527usize;
-const UNICORN_NO_OBJECT_AS_DEFAULT_PARAMETER_ID: usize = 528usize;
-const UNICORN_NO_PROCESS_EXIT_ID: usize = 529usize;
-const UNICORN_NO_SINGLE_PROMISE_IN_PROMISE_METHODS_ID: usize = 530usize;
-const UNICORN_NO_STATIC_ONLY_CLASS_ID: usize = 531usize;
-const UNICORN_NO_THENABLE_ID: usize = 532usize;
-const UNICORN_NO_THIS_ASSIGNMENT_ID: usize = 533usize;
-const UNICORN_NO_TYPEOF_UNDEFINED_ID: usize = 534usize;
-const UNICORN_NO_UNNECESSARY_ARRAY_FLAT_DEPTH_ID: usize = 535usize;
-const UNICORN_NO_UNNECESSARY_ARRAY_SPLICE_COUNT_ID: usize = 536usize;
-const UNICORN_NO_UNNECESSARY_AWAIT_ID: usize = 537usize;
-const UNICORN_NO_UNNECESSARY_SLICE_END_ID: usize = 538usize;
-const UNICORN_NO_UNREADABLE_ARRAY_DESTRUCTURING_ID: usize = 539usize;
-const UNICORN_NO_UNREADABLE_IIFE_ID: usize = 540usize;
-const UNICORN_NO_USELESS_COLLECTION_ARGUMENT_ID: usize = 541usize;
-const UNICORN_NO_USELESS_ERROR_CAPTURE_STACK_TRACE_ID: usize = 542usize;
-const UNICORN_NO_USELESS_FALLBACK_IN_SPREAD_ID: usize = 543usize;
-const UNICORN_NO_USELESS_ITERATOR_TO_ARRAY_ID: usize = 544usize;
-const UNICORN_NO_USELESS_LENGTH_CHECK_ID: usize = 545usize;
-const UNICORN_NO_USELESS_PROMISE_RESOLVE_REJECT_ID: usize = 546usize;
-const UNICORN_NO_USELESS_SPREAD_ID: usize = 547usize;
-const UNICORN_NO_USELESS_SWITCH_CASE_ID: usize = 548usize;
-const UNICORN_NO_USELESS_UNDEFINED_ID: usize = 549usize;
-const UNICORN_NO_ZERO_FRACTIONS_ID: usize = 550usize;
-const UNICORN_NUMBER_LITERAL_CASE_ID: usize = 551usize;
-const UNICORN_NUMERIC_SEPARATORS_STYLE_ID: usize = 552usize;
-const UNICORN_PREFER_ADD_EVENT_LISTENER_ID: usize = 553usize;
-const UNICORN_PREFER_ARRAY_FIND_ID: usize = 554usize;
-const UNICORN_PREFER_ARRAY_FLAT_ID: usize = 555usize;
-const UNICORN_PREFER_ARRAY_FLAT_MAP_ID: usize = 556usize;
-const UNICORN_PREFER_ARRAY_INDEX_OF_ID: usize = 557usize;
-const UNICORN_PREFER_ARRAY_SOME_ID: usize = 558usize;
-const UNICORN_PREFER_AT_ID: usize = 559usize;
-const UNICORN_PREFER_BIGINT_LITERALS_ID: usize = 560usize;
-const UNICORN_PREFER_BLOB_READING_METHODS_ID: usize = 561usize;
-const UNICORN_PREFER_CLASS_FIELDS_ID: usize = 562usize;
-const UNICORN_PREFER_CLASSLIST_TOGGLE_ID: usize = 563usize;
-const UNICORN_PREFER_CODE_POINT_ID: usize = 564usize;
-const UNICORN_PREFER_DATE_NOW_ID: usize = 565usize;
-const UNICORN_PREFER_DEFAULT_PARAMETERS_ID: usize = 566usize;
-const UNICORN_PREFER_DOM_NODE_APPEND_ID: usize = 567usize;
-const UNICORN_PREFER_DOM_NODE_DATASET_ID: usize = 568usize;
-const UNICORN_PREFER_DOM_NODE_REMOVE_ID: usize = 569usize;
-const UNICORN_PREFER_DOM_NODE_TEXT_CONTENT_ID: usize = 570usize;
-const UNICORN_PREFER_EVENT_TARGET_ID: usize = 571usize;
-const UNICORN_PREFER_EXPORT_FROM_ID: usize = 572usize;
-const UNICORN_PREFER_GLOBAL_THIS_ID: usize = 573usize;
-const UNICORN_PREFER_IMPORT_META_PROPERTIES_ID: usize = 574usize;
-const UNICORN_PREFER_INCLUDES_ID: usize = 575usize;
-const UNICORN_PREFER_KEYBOARD_EVENT_KEY_ID: usize = 576usize;
-const UNICORN_PREFER_LOGICAL_OPERATOR_OVER_TERNARY_ID: usize = 577usize;
-const UNICORN_PREFER_MATH_MIN_MAX_ID: usize = 578usize;
-const UNICORN_PREFER_MATH_TRUNC_ID: usize = 579usize;
-const UNICORN_PREFER_MODERN_DOM_APIS_ID: usize = 580usize;
-const UNICORN_PREFER_MODERN_MATH_APIS_ID: usize = 581usize;
-const UNICORN_PREFER_MODULE_ID: usize = 582usize;
-const UNICORN_PREFER_NATIVE_COERCION_FUNCTIONS_ID: usize = 583usize;
-const UNICORN_PREFER_NEGATIVE_INDEX_ID: usize = 584usize;
-const UNICORN_PREFER_NODE_PROTOCOL_ID: usize = 585usize;
-const UNICORN_PREFER_NUMBER_COERCION_ID: usize = 586usize;
-const UNICORN_PREFER_NUMBER_PROPERTIES_ID: usize = 587usize;
-const UNICORN_PREFER_OBJECT_FROM_ENTRIES_ID: usize = 588usize;
-const UNICORN_PREFER_OPTIONAL_CATCH_BINDING_ID: usize = 589usize;
-const UNICORN_PREFER_PROTOTYPE_METHODS_ID: usize = 590usize;
-const UNICORN_PREFER_QUERY_SELECTOR_ID: usize = 591usize;
-const UNICORN_PREFER_REFLECT_APPLY_ID: usize = 592usize;
-const UNICORN_PREFER_REGEXP_TEST_ID: usize = 593usize;
-const UNICORN_PREFER_RESPONSE_STATIC_JSON_ID: usize = 594usize;
-const UNICORN_PREFER_SET_HAS_ID: usize = 595usize;
-const UNICORN_PREFER_SET_SIZE_ID: usize = 596usize;
-const UNICORN_PREFER_SINGLE_CALL_ID: usize = 597usize;
-const UNICORN_PREFER_SPREAD_ID: usize = 598usize;
-const UNICORN_PREFER_STRING_RAW_ID: usize = 599usize;
-const UNICORN_PREFER_STRING_REPLACE_ALL_ID: usize = 600usize;
-const UNICORN_PREFER_STRING_SLICE_ID: usize = 601usize;
-const UNICORN_PREFER_STRING_STARTS_ENDS_WITH_ID: usize = 602usize;
-const UNICORN_PREFER_STRING_TRIM_START_END_ID: usize = 603usize;
-const UNICORN_PREFER_STRUCTURED_CLONE_ID: usize = 604usize;
-const UNICORN_PREFER_TERNARY_ID: usize = 605usize;
-const UNICORN_PREFER_TOP_LEVEL_AWAIT_ID: usize = 606usize;
-const UNICORN_PREFER_TYPE_ERROR_ID: usize = 607usize;
-const UNICORN_RELATIVE_URL_STYLE_ID: usize = 608usize;
-const UNICORN_REQUIRE_ARRAY_JOIN_SEPARATOR_ID: usize = 609usize;
-const UNICORN_REQUIRE_MODULE_ATTRIBUTES_ID: usize = 610usize;
-const UNICORN_REQUIRE_MODULE_SPECIFIERS_ID: usize = 611usize;
-const UNICORN_REQUIRE_NUMBER_TO_FIXED_DIGITS_ARGUMENT_ID: usize = 612usize;
-const UNICORN_REQUIRE_POST_MESSAGE_TARGET_ORIGIN_ID: usize = 613usize;
-const UNICORN_SWITCH_CASE_BRACES_ID: usize = 614usize;
-const UNICORN_SWITCH_CASE_BREAK_POSITION_ID: usize = 615usize;
-const UNICORN_TEXT_ENCODING_IDENTIFIER_CASE_ID: usize = 616usize;
-const UNICORN_THROW_NEW_ERROR_ID: usize = 617usize;
-const JSX_A_11_Y_ALT_TEXT_ID: usize = 618usize;
-const JSX_A_11_Y_ANCHOR_AMBIGUOUS_TEXT_ID: usize = 619usize;
-const JSX_A_11_Y_ANCHOR_HAS_CONTENT_ID: usize = 620usize;
-const JSX_A_11_Y_ANCHOR_IS_VALID_ID: usize = 621usize;
-const JSX_A_11_Y_ARIA_ACTIVEDESCENDANT_HAS_TABINDEX_ID: usize = 622usize;
-const JSX_A_11_Y_ARIA_PROPS_ID: usize = 623usize;
-const JSX_A_11_Y_ARIA_PROPTYPES_ID: usize = 624usize;
-const JSX_A_11_Y_ARIA_ROLE_ID: usize = 625usize;
-const JSX_A_11_Y_ARIA_UNSUPPORTED_ELEMENTS_ID: usize = 626usize;
-const JSX_A_11_Y_AUTOCOMPLETE_VALID_ID: usize = 627usize;
-const JSX_A_11_Y_CLICK_EVENTS_HAVE_KEY_EVENTS_ID: usize = 628usize;
-const JSX_A_11_Y_CONTROL_HAS_ASSOCIATED_LABEL_ID: usize = 629usize;
-const JSX_A_11_Y_HEADING_HAS_CONTENT_ID: usize = 630usize;
-const JSX_A_11_Y_HTML_HAS_LANG_ID: usize = 631usize;
-const JSX_A_11_Y_IFRAME_HAS_TITLE_ID: usize = 632usize;
-const JSX_A_11_Y_IMG_REDUNDANT_ALT_ID: usize = 633usize;
-const JSX_A_11_Y_INTERACTIVE_SUPPORTS_FOCUS_ID: usize = 634usize;
-const JSX_A_11_Y_LABEL_HAS_ASSOCIATED_CONTROL_ID: usize = 635usize;
-const JSX_A_11_Y_LANG_ID: usize = 636usize;
-const JSX_A_11_Y_MEDIA_HAS_CAPTION_ID: usize = 637usize;
-const JSX_A_11_Y_MOUSE_EVENTS_HAVE_KEY_EVENTS_ID: usize = 638usize;
-const JSX_A_11_Y_NO_ACCESS_KEY_ID: usize = 639usize;
-const JSX_A_11_Y_NO_ARIA_HIDDEN_ON_FOCUSABLE_ID: usize = 640usize;
-const JSX_A_11_Y_NO_AUTOFOCUS_ID: usize = 641usize;
-const JSX_A_11_Y_NO_DISTRACTING_ELEMENTS_ID: usize = 642usize;
-const JSX_A_11_Y_NO_INTERACTIVE_ELEMENT_TO_NONINTERACTIVE_ROLE_ID: usize = 643usize;
-const JSX_A_11_Y_NO_NONINTERACTIVE_ELEMENT_INTERACTIONS_ID: usize = 644usize;
-const JSX_A_11_Y_NO_NONINTERACTIVE_ELEMENT_TO_INTERACTIVE_ROLE_ID: usize = 645usize;
-const JSX_A_11_Y_NO_NONINTERACTIVE_TABINDEX_ID: usize = 646usize;
-const JSX_A_11_Y_NO_REDUNDANT_ROLES_ID: usize = 647usize;
-const JSX_A_11_Y_NO_STATIC_ELEMENT_INTERACTIONS_ID: usize = 648usize;
-const JSX_A_11_Y_PREFER_TAG_OVER_ROLE_ID: usize = 649usize;
-const JSX_A_11_Y_ROLE_HAS_REQUIRED_ARIA_PROPS_ID: usize = 650usize;
-const JSX_A_11_Y_ROLE_SUPPORTS_ARIA_PROPS_ID: usize = 651usize;
-const JSX_A_11_Y_SCOPE_ID: usize = 652usize;
-const JSX_A_11_Y_TABINDEX_NO_POSITIVE_ID: usize = 653usize;
-const OXC_APPROX_CONSTANT_ID: usize = 654usize;
-const OXC_BAD_ARRAY_METHOD_ON_ARGUMENTS_ID: usize = 655usize;
-const OXC_BAD_BITWISE_OPERATOR_ID: usize = 656usize;
-const OXC_BAD_CHAR_AT_COMPARISON_ID: usize = 657usize;
-const OXC_BAD_COMPARISON_SEQUENCE_ID: usize = 658usize;
-const OXC_BAD_MATCH_ALL_ARG_ID: usize = 659usize;
-const OXC_BAD_MIN_MAX_FUNC_ID: usize = 660usize;
-const OXC_BAD_OBJECT_LITERAL_COMPARISON_ID: usize = 661usize;
-const OXC_BAD_REPLACE_ALL_ARG_ID: usize = 662usize;
-const OXC_BRANCHES_SHARING_CODE_ID: usize = 663usize;
-const OXC_CONST_COMPARISONS_ID: usize = 664usize;
-const OXC_DOUBLE_COMPARISONS_ID: usize = 665usize;
-const OXC_ERASING_OP_ID: usize = 666usize;
-const OXC_MISREFACTORED_ASSIGN_OP_ID: usize = 667usize;
-const OXC_MISSING_THROW_ID: usize = 668usize;
-const OXC_NO_ACCUMULATING_SPREAD_ID: usize = 669usize;
-const OXC_NO_ASYNC_AWAIT_ID: usize = 670usize;
-const OXC_NO_ASYNC_ENDPOINT_HANDLERS_ID: usize = 671usize;
-const OXC_NO_BARREL_FILE_ID: usize = 672usize;
-const OXC_NO_CONST_ENUM_ID: usize = 673usize;
-const OXC_NO_MAP_SPREAD_ID: usize = 674usize;
-const OXC_NO_OPTIONAL_CHAINING_ID: usize = 675usize;
-const OXC_NO_REST_SPREAD_PROPERTIES_ID: usize = 676usize;
-const OXC_NO_THIS_IN_EXPORTED_FUNCTION_ID: usize = 677usize;
-const OXC_NUMBER_ARG_OUT_OF_RANGE_ID: usize = 678usize;
-const OXC_ONLY_USED_IN_RECURSION_ID: usize = 679usize;
-const OXC_UNINVOKED_ARRAY_CALLBACK_ID: usize = 680usize;
-const NEXTJS_GOOGLE_FONT_DISPLAY_ID: usize = 681usize;
-const NEXTJS_GOOGLE_FONT_PRECONNECT_ID: usize = 682usize;
-const NEXTJS_INLINE_SCRIPT_ID_ID: usize = 683usize;
-const NEXTJS_NEXT_SCRIPT_FOR_GA_ID: usize = 684usize;
-const NEXTJS_NO_ASSIGN_MODULE_VARIABLE_ID: usize = 685usize;
-const NEXTJS_NO_ASYNC_CLIENT_COMPONENT_ID: usize = 686usize;
-const NEXTJS_NO_BEFORE_INTERACTIVE_SCRIPT_OUTSIDE_DOCUMENT_ID: usize = 687usize;
-const NEXTJS_NO_CSS_TAGS_ID: usize = 688usize;
-const NEXTJS_NO_DOCUMENT_IMPORT_IN_PAGE_ID: usize = 689usize;
-const NEXTJS_NO_DUPLICATE_HEAD_ID: usize = 690usize;
-const NEXTJS_NO_HEAD_ELEMENT_ID: usize = 691usize;
-const NEXTJS_NO_HEAD_IMPORT_IN_DOCUMENT_ID: usize = 692usize;
-const NEXTJS_NO_HTML_LINK_FOR_PAGES_ID: usize = 693usize;
-const NEXTJS_NO_IMG_ELEMENT_ID: usize = 694usize;
-const NEXTJS_NO_PAGE_CUSTOM_FONT_ID: usize = 695usize;
-const NEXTJS_NO_SCRIPT_COMPONENT_IN_HEAD_ID: usize = 696usize;
-const NEXTJS_NO_STYLED_JSX_IN_DOCUMENT_ID: usize = 697usize;
-const NEXTJS_NO_SYNC_SCRIPTS_ID: usize = 698usize;
-const NEXTJS_NO_TITLE_IN_DOCUMENT_HEAD_ID: usize = 699usize;
-const NEXTJS_NO_TYPOS_ID: usize = 700usize;
-const NEXTJS_NO_UNWANTED_POLYFILLIO_ID: usize = 701usize;
-const JSDOC_CHECK_ACCESS_ID: usize = 702usize;
-const JSDOC_CHECK_PROPERTY_NAMES_ID: usize = 703usize;
-const JSDOC_CHECK_TAG_NAMES_ID: usize = 704usize;
-const JSDOC_EMPTY_TAGS_ID: usize = 705usize;
-const JSDOC_IMPLEMENTS_ON_CLASSES_ID: usize = 706usize;
-const JSDOC_NO_BLANK_BLOCKS_ID: usize = 707usize;
-const JSDOC_NO_DEFAULTS_ID: usize = 708usize;
-const JSDOC_REQUIRE_PARAM_ID: usize = 709usize;
-const JSDOC_REQUIRE_PARAM_DESCRIPTION_ID: usize = 710usize;
-const JSDOC_REQUIRE_PARAM_NAME_ID: usize = 711usize;
-const JSDOC_REQUIRE_PARAM_TYPE_ID: usize = 712usize;
-const JSDOC_REQUIRE_PROPERTY_ID: usize = 713usize;
-const JSDOC_REQUIRE_PROPERTY_DESCRIPTION_ID: usize = 714usize;
-const JSDOC_REQUIRE_PROPERTY_NAME_ID: usize = 715usize;
-const JSDOC_REQUIRE_PROPERTY_TYPE_ID: usize = 716usize;
-const JSDOC_REQUIRE_RETURNS_ID: usize = 717usize;
-const JSDOC_REQUIRE_RETURNS_DESCRIPTION_ID: usize = 718usize;
-const JSDOC_REQUIRE_RETURNS_TYPE_ID: usize = 719usize;
-const JSDOC_REQUIRE_THROWS_DESCRIPTION_ID: usize = 720usize;
-const JSDOC_REQUIRE_THROWS_TYPE_ID: usize = 721usize;
-const JSDOC_REQUIRE_YIELDS_ID: usize = 722usize;
-const JSDOC_REQUIRE_YIELDS_DESCRIPTION_ID: usize = 723usize;
-const JSDOC_REQUIRE_YIELDS_TYPE_ID: usize = 724usize;
-const PROMISE_ALWAYS_RETURN_ID: usize = 725usize;
-const PROMISE_AVOID_NEW_ID: usize = 726usize;
-const PROMISE_CATCH_OR_RETURN_ID: usize = 727usize;
-const PROMISE_NO_CALLBACK_IN_PROMISE_ID: usize = 728usize;
-const PROMISE_NO_MULTIPLE_RESOLVED_ID: usize = 729usize;
-const PROMISE_NO_NESTING_ID: usize = 730usize;
-const PROMISE_NO_NEW_STATICS_ID: usize = 731usize;
-const PROMISE_NO_PROMISE_IN_CALLBACK_ID: usize = 732usize;
-const PROMISE_NO_RETURN_IN_FINALLY_ID: usize = 733usize;
-const PROMISE_NO_RETURN_WRAP_ID: usize = 734usize;
-const PROMISE_PARAM_NAMES_ID: usize = 735usize;
-const PROMISE_PREFER_AWAIT_TO_CALLBACKS_ID: usize = 736usize;
-const PROMISE_PREFER_AWAIT_TO_THEN_ID: usize = 737usize;
-const PROMISE_PREFER_CATCH_ID: usize = 738usize;
-const PROMISE_SPEC_ONLY_ID: usize = 739usize;
-const PROMISE_VALID_PARAMS_ID: usize = 740usize;
-const VITEST_CONSISTENT_EACH_FOR_ID: usize = 741usize;
-const VITEST_CONSISTENT_TEST_FILENAME_ID: usize = 742usize;
-const VITEST_CONSISTENT_TEST_IT_ID: usize = 743usize;
-const VITEST_CONSISTENT_VITEST_VI_ID: usize = 744usize;
-const VITEST_EXPECT_EXPECT_ID: usize = 745usize;
-const VITEST_HOISTED_APIS_ON_TOP_ID: usize = 746usize;
-const VITEST_MAX_EXPECTS_ID: usize = 747usize;
-const VITEST_MAX_NESTED_DESCRIBE_ID: usize = 748usize;
-const VITEST_NO_ALIAS_METHODS_ID: usize = 749usize;
-const VITEST_NO_COMMENTED_OUT_TESTS_ID: usize = 750usize;
-const VITEST_NO_CONDITIONAL_EXPECT_ID: usize = 751usize;
-const VITEST_NO_CONDITIONAL_IN_TEST_ID: usize = 752usize;
-const VITEST_NO_CONDITIONAL_TESTS_ID: usize = 753usize;
-const VITEST_NO_DISABLED_TESTS_ID: usize = 754usize;
-const VITEST_NO_DUPLICATE_HOOKS_ID: usize = 755usize;
-const VITEST_NO_FOCUSED_TESTS_ID: usize = 756usize;
-const VITEST_NO_HOOKS_ID: usize = 757usize;
-const VITEST_NO_IDENTICAL_TITLE_ID: usize = 758usize;
-const VITEST_NO_IMPORT_NODE_TEST_ID: usize = 759usize;
-const VITEST_NO_IMPORTING_VITEST_GLOBALS_ID: usize = 760usize;
-const VITEST_NO_INTERPOLATION_IN_SNAPSHOTS_ID: usize = 761usize;
-const VITEST_NO_LARGE_SNAPSHOTS_ID: usize = 762usize;
-const VITEST_NO_MOCKS_IMPORT_ID: usize = 763usize;
-const VITEST_NO_RESTRICTED_MATCHERS_ID: usize = 764usize;
-const VITEST_NO_RESTRICTED_VI_METHODS_ID: usize = 765usize;
-const VITEST_NO_STANDALONE_EXPECT_ID: usize = 766usize;
-const VITEST_NO_TEST_PREFIXES_ID: usize = 767usize;
-const VITEST_NO_TEST_RETURN_STATEMENT_ID: usize = 768usize;
-const VITEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID: usize = 769usize;
-const VITEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID: usize = 770usize;
-const VITEST_PADDING_AROUND_TEST_BLOCKS_ID: usize = 771usize;
-const VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID: usize = 772usize;
-const VITEST_PREFER_CALLED_ONCE_ID: usize = 773usize;
-const VITEST_PREFER_CALLED_TIMES_ID: usize = 774usize;
-const VITEST_PREFER_CALLED_WITH_ID: usize = 775usize;
-const VITEST_PREFER_COMPARISON_MATCHER_ID: usize = 776usize;
-const VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID: usize = 777usize;
-const VITEST_PREFER_EACH_ID: usize = 778usize;
-const VITEST_PREFER_EQUALITY_MATCHER_ID: usize = 779usize;
-const VITEST_PREFER_EXPECT_ASSERTIONS_ID: usize = 780usize;
-const VITEST_PREFER_EXPECT_RESOLVES_ID: usize = 781usize;
-const VITEST_PREFER_EXPECT_TYPE_OF_ID: usize = 782usize;
-const VITEST_PREFER_HOOKS_IN_ORDER_ID: usize = 783usize;
-const VITEST_PREFER_HOOKS_ON_TOP_ID: usize = 784usize;
-const VITEST_PREFER_IMPORT_IN_MOCK_ID: usize = 785usize;
-const VITEST_PREFER_IMPORTING_VITEST_GLOBALS_ID: usize = 786usize;
-const VITEST_PREFER_LOWERCASE_TITLE_ID: usize = 787usize;
-const VITEST_PREFER_MOCK_PROMISE_SHORTHAND_ID: usize = 788usize;
-const VITEST_PREFER_MOCK_RETURN_SHORTHAND_ID: usize = 789usize;
-const VITEST_PREFER_SNAPSHOT_HINT_ID: usize = 790usize;
-const VITEST_PREFER_SPY_ON_ID: usize = 791usize;
-const VITEST_PREFER_STRICT_BOOLEAN_MATCHERS_ID: usize = 792usize;
-const VITEST_PREFER_STRICT_EQUAL_ID: usize = 793usize;
-const VITEST_PREFER_TO_BE_ID: usize = 794usize;
-const VITEST_PREFER_TO_BE_FALSY_ID: usize = 795usize;
-const VITEST_PREFER_TO_BE_OBJECT_ID: usize = 796usize;
-const VITEST_PREFER_TO_BE_TRUTHY_ID: usize = 797usize;
-const VITEST_PREFER_TO_CONTAIN_ID: usize = 798usize;
-const VITEST_PREFER_TO_HAVE_BEEN_CALLED_TIMES_ID: usize = 799usize;
-const VITEST_PREFER_TO_HAVE_LENGTH_ID: usize = 800usize;
-const VITEST_PREFER_TODO_ID: usize = 801usize;
-const VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID: usize = 802usize;
-const VITEST_REQUIRE_HOOK_ID: usize = 803usize;
-const VITEST_REQUIRE_LOCAL_TEST_CONTEXT_FOR_CONCURRENT_SNAPSHOTS_ID: usize = 804usize;
-const VITEST_REQUIRE_MOCK_TYPE_PARAMETERS_ID: usize = 805usize;
-const VITEST_REQUIRE_TEST_TIMEOUT_ID: usize = 806usize;
-const VITEST_REQUIRE_TO_THROW_MESSAGE_ID: usize = 807usize;
-const VITEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID: usize = 808usize;
-const VITEST_VALID_DESCRIBE_CALLBACK_ID: usize = 809usize;
-const VITEST_VALID_EXPECT_ID: usize = 810usize;
-const VITEST_VALID_EXPECT_IN_PROMISE_ID: usize = 811usize;
-const VITEST_VALID_TITLE_ID: usize = 812usize;
-const VITEST_WARN_TODO_ID: usize = 813usize;
-const NODE_CALLBACK_RETURN_ID: usize = 814usize;
-const NODE_EXPORTS_STYLE_ID: usize = 815usize;
-const NODE_GLOBAL_REQUIRE_ID: usize = 816usize;
-const NODE_HANDLE_CALLBACK_ERR_ID: usize = 817usize;
-const NODE_NO_EXPORTS_ASSIGN_ID: usize = 818usize;
-const NODE_NO_MIXED_REQUIRES_ID: usize = 819usize;
-const NODE_NO_NEW_REQUIRE_ID: usize = 820usize;
-const NODE_NO_PATH_CONCAT_ID: usize = 821usize;
-const NODE_NO_PROCESS_ENV_ID: usize = 822usize;
-const NODE_NO_SYNC_ID: usize = 823usize;
-const NODE_NO_TOP_LEVEL_AWAIT_ID: usize = 824usize;
-const VUE_COMPONENT_DEFINITION_NAME_CASING_ID: usize = 825usize;
-const VUE_DEFINE_EMITS_DECLARATION_ID: usize = 826usize;
-const VUE_DEFINE_PROPS_DECLARATION_ID: usize = 827usize;
-const VUE_DEFINE_PROPS_DESTRUCTURING_ID: usize = 828usize;
-const VUE_MAX_PROPS_ID: usize = 829usize;
-const VUE_NEXT_TICK_STYLE_ID: usize = 830usize;
-const VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID: usize = 831usize;
-const VUE_NO_ASYNC_IN_COMPUTED_PROPERTIES_ID: usize = 832usize;
-const VUE_NO_COMPUTED_PROPERTIES_IN_DATA_ID: usize = 833usize;
-const VUE_NO_DEPRECATED_DATA_OBJECT_DECLARATION_ID: usize = 834usize;
-const VUE_NO_DEPRECATED_DELETE_SET_ID: usize = 835usize;
-const VUE_NO_DEPRECATED_DESTROYED_LIFECYCLE_ID: usize = 836usize;
-const VUE_NO_DEPRECATED_EVENTS_API_ID: usize = 837usize;
-const VUE_NO_DEPRECATED_MODEL_DEFINITION_ID: usize = 838usize;
-const VUE_NO_DEPRECATED_PROPS_DEFAULT_THIS_ID: usize = 839usize;
-const VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID: usize = 840usize;
-const VUE_NO_DUPE_KEYS_ID: usize = 841usize;
-const VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID: usize = 842usize;
-const VUE_NO_EXPOSE_AFTER_AWAIT_ID: usize = 843usize;
-const VUE_NO_IMPORT_COMPILER_MACROS_ID: usize = 844usize;
-const VUE_NO_LIFECYCLE_AFTER_AWAIT_ID: usize = 845usize;
-const VUE_NO_MULTIPLE_SLOT_ARGS_ID: usize = 846usize;
-const VUE_NO_REQUIRED_PROP_WITH_DEFAULT_ID: usize = 847usize;
-const VUE_NO_RESERVED_COMPONENT_NAMES_ID: usize = 848usize;
-const VUE_NO_RESERVED_KEYS_ID: usize = 849usize;
-const VUE_NO_RESERVED_PROPS_ID: usize = 850usize;
-const VUE_NO_SHARED_COMPONENT_DATA_ID: usize = 851usize;
-const VUE_NO_SIDE_EFFECTS_IN_COMPUTED_PROPERTIES_ID: usize = 852usize;
-const VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID: usize = 853usize;
-const VUE_NO_WATCH_AFTER_AWAIT_ID: usize = 854usize;
-const VUE_PREFER_IMPORT_FROM_VUE_ID: usize = 855usize;
-const VUE_PROP_NAME_CASING_ID: usize = 856usize;
-const VUE_REQUIRE_DEFAULT_EXPORT_ID: usize = 857usize;
-const VUE_REQUIRE_DEFAULT_PROP_ID: usize = 858usize;
-const VUE_REQUIRE_DIRECT_EXPORT_ID: usize = 859usize;
-const VUE_REQUIRE_PROP_TYPE_CONSTRUCTOR_ID: usize = 860usize;
-const VUE_REQUIRE_PROP_TYPES_ID: usize = 861usize;
-const VUE_REQUIRE_RENDER_RETURN_ID: usize = 862usize;
-const VUE_REQUIRE_SLOTS_AS_FUNCTIONS_ID: usize = 863usize;
-const VUE_REQUIRE_TYPED_REF_ID: usize = 864usize;
-const VUE_RETURN_IN_COMPUTED_PROPERTY_ID: usize = 865usize;
-const VUE_RETURN_IN_EMITS_VALIDATOR_ID: usize = 866usize;
-const VUE_VALID_DEFINE_EMITS_ID: usize = 867usize;
-const VUE_VALID_DEFINE_OPTIONS_ID: usize = 868usize;
-const VUE_VALID_DEFINE_PROPS_ID: usize = 869usize;
-const VUE_VALID_NEXT_TICK_ID: usize = 870usize;
-static RULE_NAMES: [&str; 871usize] = [
+const TYPESCRIPT_NO_UNSAFE_ENUM_ASSIGNMENT_ID: usize = 286usize;
+const TYPESCRIPT_NO_UNSAFE_ENUM_COMPARISON_ID: usize = 287usize;
+const TYPESCRIPT_NO_UNSAFE_FUNCTION_TYPE_ID: usize = 288usize;
+const TYPESCRIPT_NO_UNSAFE_MEMBER_ACCESS_ID: usize = 289usize;
+const TYPESCRIPT_NO_UNSAFE_RETURN_ID: usize = 290usize;
+const TYPESCRIPT_NO_UNSAFE_TYPE_ASSERTION_ID: usize = 291usize;
+const TYPESCRIPT_NO_UNSAFE_UNARY_MINUS_ID: usize = 292usize;
+const TYPESCRIPT_NO_USELESS_DEFAULT_ASSIGNMENT_ID: usize = 293usize;
+const TYPESCRIPT_NO_USELESS_EMPTY_EXPORT_ID: usize = 294usize;
+const TYPESCRIPT_NO_VAR_REQUIRES_ID: usize = 295usize;
+const TYPESCRIPT_NO_WRAPPER_OBJECT_TYPES_ID: usize = 296usize;
+const TYPESCRIPT_NON_NULLABLE_TYPE_ASSERTION_STYLE_ID: usize = 297usize;
+const TYPESCRIPT_ONLY_THROW_ERROR_ID: usize = 298usize;
+const TYPESCRIPT_PARAMETER_PROPERTIES_ID: usize = 299usize;
+const TYPESCRIPT_PREFER_AS_CONST_ID: usize = 300usize;
+const TYPESCRIPT_PREFER_ENUM_INITIALIZERS_ID: usize = 301usize;
+const TYPESCRIPT_PREFER_FIND_ID: usize = 302usize;
+const TYPESCRIPT_PREFER_FOR_OF_ID: usize = 303usize;
+const TYPESCRIPT_PREFER_FUNCTION_TYPE_ID: usize = 304usize;
+const TYPESCRIPT_PREFER_INCLUDES_ID: usize = 305usize;
+const TYPESCRIPT_PREFER_LITERAL_ENUM_MEMBER_ID: usize = 306usize;
+const TYPESCRIPT_PREFER_NAMESPACE_KEYWORD_ID: usize = 307usize;
+const TYPESCRIPT_PREFER_NULLISH_COALESCING_ID: usize = 308usize;
+const TYPESCRIPT_PREFER_OPTIONAL_CHAIN_ID: usize = 309usize;
+const TYPESCRIPT_PREFER_PROMISE_REJECT_ERRORS_ID: usize = 310usize;
+const TYPESCRIPT_PREFER_READONLY_ID: usize = 311usize;
+const TYPESCRIPT_PREFER_READONLY_PARAMETER_TYPES_ID: usize = 312usize;
+const TYPESCRIPT_PREFER_REDUCE_TYPE_PARAMETER_ID: usize = 313usize;
+const TYPESCRIPT_PREFER_REGEXP_EXEC_ID: usize = 314usize;
+const TYPESCRIPT_PREFER_RETURN_THIS_TYPE_ID: usize = 315usize;
+const TYPESCRIPT_PREFER_STRING_STARTS_ENDS_WITH_ID: usize = 316usize;
+const TYPESCRIPT_PREFER_TS_EXPECT_ERROR_ID: usize = 317usize;
+const TYPESCRIPT_PROMISE_FUNCTION_ASYNC_ID: usize = 318usize;
+const TYPESCRIPT_RELATED_GETTER_SETTER_PAIRS_ID: usize = 319usize;
+const TYPESCRIPT_REQUIRE_ARRAY_SORT_COMPARE_ID: usize = 320usize;
+const TYPESCRIPT_REQUIRE_AWAIT_ID: usize = 321usize;
+const TYPESCRIPT_RESTRICT_PLUS_OPERANDS_ID: usize = 322usize;
+const TYPESCRIPT_RESTRICT_TEMPLATE_EXPRESSIONS_ID: usize = 323usize;
+const TYPESCRIPT_RETURN_AWAIT_ID: usize = 324usize;
+const TYPESCRIPT_STRICT_BOOLEAN_EXPRESSIONS_ID: usize = 325usize;
+const TYPESCRIPT_STRICT_VOID_RETURN_ID: usize = 326usize;
+const TYPESCRIPT_SWITCH_EXHAUSTIVENESS_CHECK_ID: usize = 327usize;
+const TYPESCRIPT_TRIPLE_SLASH_REFERENCE_ID: usize = 328usize;
+const TYPESCRIPT_UNBOUND_METHOD_ID: usize = 329usize;
+const TYPESCRIPT_UNIFIED_SIGNATURES_ID: usize = 330usize;
+const TYPESCRIPT_USE_UNKNOWN_IN_CATCH_CALLBACK_VARIABLE_ID: usize = 331usize;
+const JEST_CONSISTENT_TEST_IT_ID: usize = 332usize;
+const JEST_EXPECT_EXPECT_ID: usize = 333usize;
+const JEST_MAX_EXPECTS_ID: usize = 334usize;
+const JEST_MAX_NESTED_DESCRIBE_ID: usize = 335usize;
+const JEST_NO_ALIAS_METHODS_ID: usize = 336usize;
+const JEST_NO_COMMENTED_OUT_TESTS_ID: usize = 337usize;
+const JEST_NO_CONDITIONAL_EXPECT_ID: usize = 338usize;
+const JEST_NO_CONDITIONAL_IN_TEST_ID: usize = 339usize;
+const JEST_NO_CONFUSING_SET_TIMEOUT_ID: usize = 340usize;
+const JEST_NO_DEPRECATED_FUNCTIONS_ID: usize = 341usize;
+const JEST_NO_DISABLED_TESTS_ID: usize = 342usize;
+const JEST_NO_DONE_CALLBACK_ID: usize = 343usize;
+const JEST_NO_DUPLICATE_HOOKS_ID: usize = 344usize;
+const JEST_NO_EXPORT_ID: usize = 345usize;
+const JEST_NO_FOCUSED_TESTS_ID: usize = 346usize;
+const JEST_NO_HOOKS_ID: usize = 347usize;
+const JEST_NO_IDENTICAL_TITLE_ID: usize = 348usize;
+const JEST_NO_INTERPOLATION_IN_SNAPSHOTS_ID: usize = 349usize;
+const JEST_NO_JASMINE_GLOBALS_ID: usize = 350usize;
+const JEST_NO_LARGE_SNAPSHOTS_ID: usize = 351usize;
+const JEST_NO_MOCKS_IMPORT_ID: usize = 352usize;
+const JEST_NO_RESTRICTED_JEST_METHODS_ID: usize = 353usize;
+const JEST_NO_RESTRICTED_MATCHERS_ID: usize = 354usize;
+const JEST_NO_STANDALONE_EXPECT_ID: usize = 355usize;
+const JEST_NO_TEST_PREFIXES_ID: usize = 356usize;
+const JEST_NO_TEST_RETURN_STATEMENT_ID: usize = 357usize;
+const JEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID: usize = 358usize;
+const JEST_NO_UNTYPED_MOCK_FACTORY_ID: usize = 359usize;
+const JEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID: usize = 360usize;
+const JEST_PADDING_AROUND_TEST_BLOCKS_ID: usize = 361usize;
+const JEST_PREFER_CALLED_WITH_ID: usize = 362usize;
+const JEST_PREFER_COMPARISON_MATCHER_ID: usize = 363usize;
+const JEST_PREFER_EACH_ID: usize = 364usize;
+const JEST_PREFER_ENDING_WITH_AN_EXPECT_ID: usize = 365usize;
+const JEST_PREFER_EQUALITY_MATCHER_ID: usize = 366usize;
+const JEST_PREFER_EXPECT_ASSERTIONS_ID: usize = 367usize;
+const JEST_PREFER_EXPECT_RESOLVES_ID: usize = 368usize;
+const JEST_PREFER_HOOKS_IN_ORDER_ID: usize = 369usize;
+const JEST_PREFER_HOOKS_ON_TOP_ID: usize = 370usize;
+const JEST_PREFER_IMPORTING_JEST_GLOBALS_ID: usize = 371usize;
+const JEST_PREFER_JEST_MOCKED_ID: usize = 372usize;
+const JEST_PREFER_LOWERCASE_TITLE_ID: usize = 373usize;
+const JEST_PREFER_MOCK_PROMISE_SHORTHAND_ID: usize = 374usize;
+const JEST_PREFER_MOCK_RETURN_SHORTHAND_ID: usize = 375usize;
+const JEST_PREFER_SNAPSHOT_HINT_ID: usize = 376usize;
+const JEST_PREFER_SPY_ON_ID: usize = 377usize;
+const JEST_PREFER_STRICT_EQUAL_ID: usize = 378usize;
+const JEST_PREFER_TO_BE_ID: usize = 379usize;
+const JEST_PREFER_TO_CONTAIN_ID: usize = 380usize;
+const JEST_PREFER_TO_HAVE_BEEN_CALLED_ID: usize = 381usize;
+const JEST_PREFER_TO_HAVE_BEEN_CALLED_TIMES_ID: usize = 382usize;
+const JEST_PREFER_TO_HAVE_LENGTH_ID: usize = 383usize;
+const JEST_PREFER_TODO_ID: usize = 384usize;
+const JEST_REQUIRE_HOOK_ID: usize = 385usize;
+const JEST_REQUIRE_TO_THROW_MESSAGE_ID: usize = 386usize;
+const JEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID: usize = 387usize;
+const JEST_VALID_DESCRIBE_CALLBACK_ID: usize = 388usize;
+const JEST_VALID_EXPECT_ID: usize = 389usize;
+const JEST_VALID_EXPECT_IN_PROMISE_ID: usize = 390usize;
+const JEST_VALID_TITLE_ID: usize = 391usize;
+const REACT_BUTTON_HAS_TYPE_ID: usize = 392usize;
+const REACT_CAPITALIZED_CALLS_ID: usize = 393usize;
+const REACT_CHECKED_REQUIRES_ONCHANGE_OR_READONLY_ID: usize = 394usize;
+const REACT_DISPLAY_NAME_ID: usize = 395usize;
+const REACT_ERROR_BOUNDARIES_ID: usize = 396usize;
+const REACT_EXHAUSTIVE_DEPS_ID: usize = 397usize;
+const REACT_EXHAUSTIVE_EFFECT_DEPENDENCIES_ID: usize = 398usize;
+const REACT_FORBID_COMPONENT_PROPS_ID: usize = 399usize;
+const REACT_FORBID_DOM_PROPS_ID: usize = 400usize;
+const REACT_FORBID_ELEMENTS_ID: usize = 401usize;
+const REACT_FORWARD_REF_USES_REF_ID: usize = 402usize;
+const REACT_FUNCTION_COMPONENT_DEFINITION_ID: usize = 403usize;
+const REACT_GLOBALS_ID: usize = 404usize;
+const REACT_HOOK_USE_STATE_ID: usize = 405usize;
+const REACT_HOOKS_ID: usize = 406usize;
+const REACT_IFRAME_MISSING_SANDBOX_ID: usize = 407usize;
+const REACT_IMMUTABILITY_ID: usize = 408usize;
+const REACT_INCOMPATIBLE_LIBRARY_ID: usize = 409usize;
+const REACT_INVARIANT_ID: usize = 410usize;
+const REACT_JSX_BOOLEAN_VALUE_ID: usize = 411usize;
+const REACT_JSX_CURLY_BRACE_PRESENCE_ID: usize = 412usize;
+const REACT_JSX_FILENAME_EXTENSION_ID: usize = 413usize;
+const REACT_JSX_FRAGMENTS_ID: usize = 414usize;
+const REACT_JSX_HANDLER_NAMES_ID: usize = 415usize;
+const REACT_JSX_KEY_ID: usize = 416usize;
+const REACT_JSX_MAX_DEPTH_ID: usize = 417usize;
+const REACT_JSX_NO_COMMENT_TEXTNODES_ID: usize = 418usize;
+const REACT_JSX_NO_CONSTRUCTED_CONTEXT_VALUES_ID: usize = 419usize;
+const REACT_JSX_NO_DUPLICATE_PROPS_ID: usize = 420usize;
+const REACT_JSX_NO_LITERALS_ID: usize = 421usize;
+const REACT_JSX_NO_SCRIPT_URL_ID: usize = 422usize;
+const REACT_JSX_NO_TARGET_BLANK_ID: usize = 423usize;
+const REACT_JSX_NO_UNDEF_ID: usize = 424usize;
+const REACT_JSX_NO_USELESS_FRAGMENT_ID: usize = 425usize;
+const REACT_JSX_PASCAL_CASE_ID: usize = 426usize;
+const REACT_JSX_PROPS_NO_SPREAD_MULTI_ID: usize = 427usize;
+const REACT_JSX_PROPS_NO_SPREADING_ID: usize = 428usize;
+const REACT_MEMO_DEPENDENCIES_ID: usize = 429usize;
+const REACT_NO_ARRAY_INDEX_KEY_ID: usize = 430usize;
+const REACT_NO_CHILDREN_PROP_ID: usize = 431usize;
+const REACT_NO_CLONE_ELEMENT_ID: usize = 432usize;
+const REACT_NO_DANGER_ID: usize = 433usize;
+const REACT_NO_DANGER_WITH_CHILDREN_ID: usize = 434usize;
+const REACT_NO_DERIVING_STATE_IN_EFFECTS_ID: usize = 435usize;
+const REACT_NO_DID_MOUNT_SET_STATE_ID: usize = 436usize;
+const REACT_NO_DID_UPDATE_SET_STATE_ID: usize = 437usize;
+const REACT_NO_DIRECT_MUTATION_STATE_ID: usize = 438usize;
+const REACT_NO_FIND_DOM_NODE_ID: usize = 439usize;
+const REACT_NO_IS_MOUNTED_ID: usize = 440usize;
+const REACT_NO_MULTI_COMP_ID: usize = 441usize;
+const REACT_NO_NAMESPACE_ID: usize = 442usize;
+const REACT_NO_OBJECT_TYPE_AS_DEFAULT_PROP_ID: usize = 443usize;
+const REACT_NO_REACT_CHILDREN_ID: usize = 444usize;
+const REACT_NO_REDUNDANT_SHOULD_COMPONENT_UPDATE_ID: usize = 445usize;
+const REACT_NO_RENDER_RETURN_VALUE_ID: usize = 446usize;
+const REACT_NO_SET_STATE_ID: usize = 447usize;
+const REACT_NO_STRING_REFS_ID: usize = 448usize;
+const REACT_NO_THIS_IN_SFC_ID: usize = 449usize;
+const REACT_NO_UNESCAPED_ENTITIES_ID: usize = 450usize;
+const REACT_NO_UNKNOWN_PROPERTY_ID: usize = 451usize;
+const REACT_NO_UNSAFE_ID: usize = 452usize;
+const REACT_NO_UNSTABLE_NESTED_COMPONENTS_ID: usize = 453usize;
+const REACT_NO_WILL_UPDATE_SET_STATE_ID: usize = 454usize;
+const REACT_ONLY_EXPORT_COMPONENTS_ID: usize = 455usize;
+const REACT_PREFER_ES_6_CLASS_ID: usize = 456usize;
+const REACT_PREFER_FUNCTION_COMPONENT_ID: usize = 457usize;
+const REACT_PRESERVE_MANUAL_MEMOIZATION_ID: usize = 458usize;
+const REACT_PURITY_ID: usize = 459usize;
+const REACT_REACT_IN_JSX_SCOPE_ID: usize = 460usize;
+const REACT_REFS_ID: usize = 461usize;
+const REACT_REQUIRE_RENDER_RETURN_ID: usize = 462usize;
+const REACT_RULE_SUPPRESSION_ID: usize = 463usize;
+const REACT_RULES_OF_HOOKS_ID: usize = 464usize;
+const REACT_SELF_CLOSING_COMP_ID: usize = 465usize;
+const REACT_SET_STATE_IN_EFFECT_ID: usize = 466usize;
+const REACT_SET_STATE_IN_RENDER_ID: usize = 467usize;
+const REACT_STATE_IN_CONSTRUCTOR_ID: usize = 468usize;
+const REACT_STATIC_COMPONENTS_ID: usize = 469usize;
+const REACT_STYLE_PROP_OBJECT_ID: usize = 470usize;
+const REACT_SYNTAX_ID: usize = 471usize;
+const REACT_TODO_ID: usize = 472usize;
+const REACT_UNSUPPORTED_SYNTAX_ID: usize = 473usize;
+const REACT_USE_MEMO_ID: usize = 474usize;
+const REACT_VOID_DOM_ELEMENTS_NO_CHILDREN_ID: usize = 475usize;
+const REACT_VOID_USE_MEMO_ID: usize = 476usize;
+const REACT_PERF_JSX_NO_JSX_AS_PROP_ID: usize = 477usize;
+const REACT_PERF_JSX_NO_NEW_ARRAY_AS_PROP_ID: usize = 478usize;
+const REACT_PERF_JSX_NO_NEW_FUNCTION_AS_PROP_ID: usize = 479usize;
+const REACT_PERF_JSX_NO_NEW_OBJECT_AS_PROP_ID: usize = 480usize;
+const UNICORN_CATCH_ERROR_NAME_ID: usize = 481usize;
+const UNICORN_CONSISTENT_ASSERT_ID: usize = 482usize;
+const UNICORN_CONSISTENT_DATE_CLONE_ID: usize = 483usize;
+const UNICORN_CONSISTENT_EMPTY_ARRAY_SPREAD_ID: usize = 484usize;
+const UNICORN_CONSISTENT_EXISTENCE_INDEX_CHECK_ID: usize = 485usize;
+const UNICORN_CONSISTENT_FUNCTION_SCOPING_ID: usize = 486usize;
+const UNICORN_CONSISTENT_TEMPLATE_LITERAL_ESCAPE_ID: usize = 487usize;
+const UNICORN_CUSTOM_ERROR_DEFINITION_ID: usize = 488usize;
+const UNICORN_EMPTY_BRACE_SPACES_ID: usize = 489usize;
+const UNICORN_ERROR_MESSAGE_ID: usize = 490usize;
+const UNICORN_ESCAPE_CASE_ID: usize = 491usize;
+const UNICORN_EXPLICIT_LENGTH_CHECK_ID: usize = 492usize;
+const UNICORN_EXPLICIT_TIMER_DELAY_ID: usize = 493usize;
+const UNICORN_FILENAME_CASE_ID: usize = 494usize;
+const UNICORN_IMPORT_STYLE_ID: usize = 495usize;
+const UNICORN_MAX_NESTED_CALLS_ID: usize = 496usize;
+const UNICORN_NEW_FOR_BUILTINS_ID: usize = 497usize;
+const UNICORN_NO_ABUSIVE_ESLINT_DISABLE_ID: usize = 498usize;
+const UNICORN_NO_ACCESSOR_RECURSION_ID: usize = 499usize;
+const UNICORN_NO_ANONYMOUS_DEFAULT_EXPORT_ID: usize = 500usize;
+const UNICORN_NO_ARRAY_CALLBACK_REFERENCE_ID: usize = 501usize;
+const UNICORN_NO_ARRAY_FILL_WITH_REFERENCE_TYPE_ID: usize = 502usize;
+const UNICORN_NO_ARRAY_FOR_EACH_ID: usize = 503usize;
+const UNICORN_NO_ARRAY_METHOD_THIS_ARGUMENT_ID: usize = 504usize;
+const UNICORN_NO_ARRAY_REDUCE_ID: usize = 505usize;
+const UNICORN_NO_ARRAY_REVERSE_ID: usize = 506usize;
+const UNICORN_NO_ARRAY_SORT_ID: usize = 507usize;
+const UNICORN_NO_AWAIT_EXPRESSION_MEMBER_ID: usize = 508usize;
+const UNICORN_NO_AWAIT_IN_PROMISE_METHODS_ID: usize = 509usize;
+const UNICORN_NO_CONFUSING_ARRAY_WITH_ID: usize = 510usize;
+const UNICORN_NO_CONSOLE_SPACES_ID: usize = 511usize;
+const UNICORN_NO_DOCUMENT_COOKIE_ID: usize = 512usize;
+const UNICORN_NO_EMPTY_FILE_ID: usize = 513usize;
+const UNICORN_NO_HEX_ESCAPE_ID: usize = 514usize;
+const UNICORN_NO_IMMEDIATE_MUTATION_ID: usize = 515usize;
+const UNICORN_NO_INSTANCEOF_ARRAY_ID: usize = 516usize;
+const UNICORN_NO_INSTANCEOF_BUILTINS_ID: usize = 517usize;
+const UNICORN_NO_INVALID_FETCH_OPTIONS_ID: usize = 518usize;
+const UNICORN_NO_INVALID_REMOVE_EVENT_LISTENER_ID: usize = 519usize;
+const UNICORN_NO_LENGTH_AS_SLICE_END_ID: usize = 520usize;
+const UNICORN_NO_LONELY_IF_ID: usize = 521usize;
+const UNICORN_NO_MAGIC_ARRAY_FLAT_DEPTH_ID: usize = 522usize;
+const UNICORN_NO_NEGATED_CONDITION_ID: usize = 523usize;
+const UNICORN_NO_NEGATION_IN_EQUALITY_CHECK_ID: usize = 524usize;
+const UNICORN_NO_NESTED_TERNARY_ID: usize = 525usize;
+const UNICORN_NO_NEW_ARRAY_ID: usize = 526usize;
+const UNICORN_NO_NEW_BUFFER_ID: usize = 527usize;
+const UNICORN_NO_NULL_ID: usize = 528usize;
+const UNICORN_NO_OBJECT_AS_DEFAULT_PARAMETER_ID: usize = 529usize;
+const UNICORN_NO_PROCESS_EXIT_ID: usize = 530usize;
+const UNICORN_NO_SINGLE_PROMISE_IN_PROMISE_METHODS_ID: usize = 531usize;
+const UNICORN_NO_STATIC_ONLY_CLASS_ID: usize = 532usize;
+const UNICORN_NO_THENABLE_ID: usize = 533usize;
+const UNICORN_NO_THIS_ASSIGNMENT_ID: usize = 534usize;
+const UNICORN_NO_TYPEOF_UNDEFINED_ID: usize = 535usize;
+const UNICORN_NO_UNNECESSARY_ARRAY_FLAT_DEPTH_ID: usize = 536usize;
+const UNICORN_NO_UNNECESSARY_ARRAY_SPLICE_COUNT_ID: usize = 537usize;
+const UNICORN_NO_UNNECESSARY_AWAIT_ID: usize = 538usize;
+const UNICORN_NO_UNNECESSARY_SLICE_END_ID: usize = 539usize;
+const UNICORN_NO_UNREADABLE_ARRAY_DESTRUCTURING_ID: usize = 540usize;
+const UNICORN_NO_UNREADABLE_IIFE_ID: usize = 541usize;
+const UNICORN_NO_USELESS_COLLECTION_ARGUMENT_ID: usize = 542usize;
+const UNICORN_NO_USELESS_ERROR_CAPTURE_STACK_TRACE_ID: usize = 543usize;
+const UNICORN_NO_USELESS_FALLBACK_IN_SPREAD_ID: usize = 544usize;
+const UNICORN_NO_USELESS_ITERATOR_TO_ARRAY_ID: usize = 545usize;
+const UNICORN_NO_USELESS_LENGTH_CHECK_ID: usize = 546usize;
+const UNICORN_NO_USELESS_PROMISE_RESOLVE_REJECT_ID: usize = 547usize;
+const UNICORN_NO_USELESS_SPREAD_ID: usize = 548usize;
+const UNICORN_NO_USELESS_SWITCH_CASE_ID: usize = 549usize;
+const UNICORN_NO_USELESS_UNDEFINED_ID: usize = 550usize;
+const UNICORN_NO_ZERO_FRACTIONS_ID: usize = 551usize;
+const UNICORN_NUMBER_LITERAL_CASE_ID: usize = 552usize;
+const UNICORN_NUMERIC_SEPARATORS_STYLE_ID: usize = 553usize;
+const UNICORN_PREFER_ADD_EVENT_LISTENER_ID: usize = 554usize;
+const UNICORN_PREFER_ARRAY_FIND_ID: usize = 555usize;
+const UNICORN_PREFER_ARRAY_FLAT_ID: usize = 556usize;
+const UNICORN_PREFER_ARRAY_FLAT_MAP_ID: usize = 557usize;
+const UNICORN_PREFER_ARRAY_INDEX_OF_ID: usize = 558usize;
+const UNICORN_PREFER_ARRAY_SOME_ID: usize = 559usize;
+const UNICORN_PREFER_AT_ID: usize = 560usize;
+const UNICORN_PREFER_BIGINT_LITERALS_ID: usize = 561usize;
+const UNICORN_PREFER_BLOB_READING_METHODS_ID: usize = 562usize;
+const UNICORN_PREFER_CLASS_FIELDS_ID: usize = 563usize;
+const UNICORN_PREFER_CLASSLIST_TOGGLE_ID: usize = 564usize;
+const UNICORN_PREFER_CODE_POINT_ID: usize = 565usize;
+const UNICORN_PREFER_DATE_NOW_ID: usize = 566usize;
+const UNICORN_PREFER_DEFAULT_PARAMETERS_ID: usize = 567usize;
+const UNICORN_PREFER_DOM_NODE_APPEND_ID: usize = 568usize;
+const UNICORN_PREFER_DOM_NODE_DATASET_ID: usize = 569usize;
+const UNICORN_PREFER_DOM_NODE_REMOVE_ID: usize = 570usize;
+const UNICORN_PREFER_DOM_NODE_TEXT_CONTENT_ID: usize = 571usize;
+const UNICORN_PREFER_EVENT_TARGET_ID: usize = 572usize;
+const UNICORN_PREFER_EXPORT_FROM_ID: usize = 573usize;
+const UNICORN_PREFER_GLOBAL_THIS_ID: usize = 574usize;
+const UNICORN_PREFER_IMPORT_META_PROPERTIES_ID: usize = 575usize;
+const UNICORN_PREFER_INCLUDES_ID: usize = 576usize;
+const UNICORN_PREFER_KEYBOARD_EVENT_KEY_ID: usize = 577usize;
+const UNICORN_PREFER_LOGICAL_OPERATOR_OVER_TERNARY_ID: usize = 578usize;
+const UNICORN_PREFER_MATH_MIN_MAX_ID: usize = 579usize;
+const UNICORN_PREFER_MATH_TRUNC_ID: usize = 580usize;
+const UNICORN_PREFER_MODERN_DOM_APIS_ID: usize = 581usize;
+const UNICORN_PREFER_MODERN_MATH_APIS_ID: usize = 582usize;
+const UNICORN_PREFER_MODULE_ID: usize = 583usize;
+const UNICORN_PREFER_NATIVE_COERCION_FUNCTIONS_ID: usize = 584usize;
+const UNICORN_PREFER_NEGATIVE_INDEX_ID: usize = 585usize;
+const UNICORN_PREFER_NODE_PROTOCOL_ID: usize = 586usize;
+const UNICORN_PREFER_NUMBER_COERCION_ID: usize = 587usize;
+const UNICORN_PREFER_NUMBER_PROPERTIES_ID: usize = 588usize;
+const UNICORN_PREFER_OBJECT_FROM_ENTRIES_ID: usize = 589usize;
+const UNICORN_PREFER_OPTIONAL_CATCH_BINDING_ID: usize = 590usize;
+const UNICORN_PREFER_PROTOTYPE_METHODS_ID: usize = 591usize;
+const UNICORN_PREFER_QUERY_SELECTOR_ID: usize = 592usize;
+const UNICORN_PREFER_REFLECT_APPLY_ID: usize = 593usize;
+const UNICORN_PREFER_REGEXP_TEST_ID: usize = 594usize;
+const UNICORN_PREFER_RESPONSE_STATIC_JSON_ID: usize = 595usize;
+const UNICORN_PREFER_SET_HAS_ID: usize = 596usize;
+const UNICORN_PREFER_SET_SIZE_ID: usize = 597usize;
+const UNICORN_PREFER_SINGLE_CALL_ID: usize = 598usize;
+const UNICORN_PREFER_SPREAD_ID: usize = 599usize;
+const UNICORN_PREFER_STRING_RAW_ID: usize = 600usize;
+const UNICORN_PREFER_STRING_REPLACE_ALL_ID: usize = 601usize;
+const UNICORN_PREFER_STRING_SLICE_ID: usize = 602usize;
+const UNICORN_PREFER_STRING_STARTS_ENDS_WITH_ID: usize = 603usize;
+const UNICORN_PREFER_STRING_TRIM_START_END_ID: usize = 604usize;
+const UNICORN_PREFER_STRUCTURED_CLONE_ID: usize = 605usize;
+const UNICORN_PREFER_TERNARY_ID: usize = 606usize;
+const UNICORN_PREFER_TOP_LEVEL_AWAIT_ID: usize = 607usize;
+const UNICORN_PREFER_TYPE_ERROR_ID: usize = 608usize;
+const UNICORN_RELATIVE_URL_STYLE_ID: usize = 609usize;
+const UNICORN_REQUIRE_ARRAY_JOIN_SEPARATOR_ID: usize = 610usize;
+const UNICORN_REQUIRE_MODULE_ATTRIBUTES_ID: usize = 611usize;
+const UNICORN_REQUIRE_MODULE_SPECIFIERS_ID: usize = 612usize;
+const UNICORN_REQUIRE_NUMBER_TO_FIXED_DIGITS_ARGUMENT_ID: usize = 613usize;
+const UNICORN_REQUIRE_POST_MESSAGE_TARGET_ORIGIN_ID: usize = 614usize;
+const UNICORN_SWITCH_CASE_BRACES_ID: usize = 615usize;
+const UNICORN_SWITCH_CASE_BREAK_POSITION_ID: usize = 616usize;
+const UNICORN_TEXT_ENCODING_IDENTIFIER_CASE_ID: usize = 617usize;
+const UNICORN_THROW_NEW_ERROR_ID: usize = 618usize;
+const JSX_A_11_Y_ALT_TEXT_ID: usize = 619usize;
+const JSX_A_11_Y_ANCHOR_AMBIGUOUS_TEXT_ID: usize = 620usize;
+const JSX_A_11_Y_ANCHOR_HAS_CONTENT_ID: usize = 621usize;
+const JSX_A_11_Y_ANCHOR_IS_VALID_ID: usize = 622usize;
+const JSX_A_11_Y_ARIA_ACTIVEDESCENDANT_HAS_TABINDEX_ID: usize = 623usize;
+const JSX_A_11_Y_ARIA_PROPS_ID: usize = 624usize;
+const JSX_A_11_Y_ARIA_PROPTYPES_ID: usize = 625usize;
+const JSX_A_11_Y_ARIA_ROLE_ID: usize = 626usize;
+const JSX_A_11_Y_ARIA_UNSUPPORTED_ELEMENTS_ID: usize = 627usize;
+const JSX_A_11_Y_AUTOCOMPLETE_VALID_ID: usize = 628usize;
+const JSX_A_11_Y_CLICK_EVENTS_HAVE_KEY_EVENTS_ID: usize = 629usize;
+const JSX_A_11_Y_CONTROL_HAS_ASSOCIATED_LABEL_ID: usize = 630usize;
+const JSX_A_11_Y_HEADING_HAS_CONTENT_ID: usize = 631usize;
+const JSX_A_11_Y_HTML_HAS_LANG_ID: usize = 632usize;
+const JSX_A_11_Y_IFRAME_HAS_TITLE_ID: usize = 633usize;
+const JSX_A_11_Y_IMG_REDUNDANT_ALT_ID: usize = 634usize;
+const JSX_A_11_Y_INTERACTIVE_SUPPORTS_FOCUS_ID: usize = 635usize;
+const JSX_A_11_Y_LABEL_HAS_ASSOCIATED_CONTROL_ID: usize = 636usize;
+const JSX_A_11_Y_LANG_ID: usize = 637usize;
+const JSX_A_11_Y_MEDIA_HAS_CAPTION_ID: usize = 638usize;
+const JSX_A_11_Y_MOUSE_EVENTS_HAVE_KEY_EVENTS_ID: usize = 639usize;
+const JSX_A_11_Y_NO_ACCESS_KEY_ID: usize = 640usize;
+const JSX_A_11_Y_NO_ARIA_HIDDEN_ON_FOCUSABLE_ID: usize = 641usize;
+const JSX_A_11_Y_NO_AUTOFOCUS_ID: usize = 642usize;
+const JSX_A_11_Y_NO_DISTRACTING_ELEMENTS_ID: usize = 643usize;
+const JSX_A_11_Y_NO_INTERACTIVE_ELEMENT_TO_NONINTERACTIVE_ROLE_ID: usize = 644usize;
+const JSX_A_11_Y_NO_NONINTERACTIVE_ELEMENT_INTERACTIONS_ID: usize = 645usize;
+const JSX_A_11_Y_NO_NONINTERACTIVE_ELEMENT_TO_INTERACTIVE_ROLE_ID: usize = 646usize;
+const JSX_A_11_Y_NO_NONINTERACTIVE_TABINDEX_ID: usize = 647usize;
+const JSX_A_11_Y_NO_REDUNDANT_ROLES_ID: usize = 648usize;
+const JSX_A_11_Y_NO_STATIC_ELEMENT_INTERACTIONS_ID: usize = 649usize;
+const JSX_A_11_Y_PREFER_TAG_OVER_ROLE_ID: usize = 650usize;
+const JSX_A_11_Y_ROLE_HAS_REQUIRED_ARIA_PROPS_ID: usize = 651usize;
+const JSX_A_11_Y_ROLE_SUPPORTS_ARIA_PROPS_ID: usize = 652usize;
+const JSX_A_11_Y_SCOPE_ID: usize = 653usize;
+const JSX_A_11_Y_TABINDEX_NO_POSITIVE_ID: usize = 654usize;
+const OXC_APPROX_CONSTANT_ID: usize = 655usize;
+const OXC_BAD_ARRAY_METHOD_ON_ARGUMENTS_ID: usize = 656usize;
+const OXC_BAD_BITWISE_OPERATOR_ID: usize = 657usize;
+const OXC_BAD_CHAR_AT_COMPARISON_ID: usize = 658usize;
+const OXC_BAD_COMPARISON_SEQUENCE_ID: usize = 659usize;
+const OXC_BAD_MATCH_ALL_ARG_ID: usize = 660usize;
+const OXC_BAD_MIN_MAX_FUNC_ID: usize = 661usize;
+const OXC_BAD_OBJECT_LITERAL_COMPARISON_ID: usize = 662usize;
+const OXC_BAD_REPLACE_ALL_ARG_ID: usize = 663usize;
+const OXC_BRANCHES_SHARING_CODE_ID: usize = 664usize;
+const OXC_CONST_COMPARISONS_ID: usize = 665usize;
+const OXC_DOUBLE_COMPARISONS_ID: usize = 666usize;
+const OXC_ERASING_OP_ID: usize = 667usize;
+const OXC_MISREFACTORED_ASSIGN_OP_ID: usize = 668usize;
+const OXC_MISSING_THROW_ID: usize = 669usize;
+const OXC_NO_ACCUMULATING_SPREAD_ID: usize = 670usize;
+const OXC_NO_ASYNC_AWAIT_ID: usize = 671usize;
+const OXC_NO_ASYNC_ENDPOINT_HANDLERS_ID: usize = 672usize;
+const OXC_NO_BARREL_FILE_ID: usize = 673usize;
+const OXC_NO_CONST_ENUM_ID: usize = 674usize;
+const OXC_NO_MAP_SPREAD_ID: usize = 675usize;
+const OXC_NO_OPTIONAL_CHAINING_ID: usize = 676usize;
+const OXC_NO_REST_SPREAD_PROPERTIES_ID: usize = 677usize;
+const OXC_NO_THIS_IN_EXPORTED_FUNCTION_ID: usize = 678usize;
+const OXC_NUMBER_ARG_OUT_OF_RANGE_ID: usize = 679usize;
+const OXC_ONLY_USED_IN_RECURSION_ID: usize = 680usize;
+const OXC_UNINVOKED_ARRAY_CALLBACK_ID: usize = 681usize;
+const NEXTJS_GOOGLE_FONT_DISPLAY_ID: usize = 682usize;
+const NEXTJS_GOOGLE_FONT_PRECONNECT_ID: usize = 683usize;
+const NEXTJS_INLINE_SCRIPT_ID_ID: usize = 684usize;
+const NEXTJS_NEXT_SCRIPT_FOR_GA_ID: usize = 685usize;
+const NEXTJS_NO_ASSIGN_MODULE_VARIABLE_ID: usize = 686usize;
+const NEXTJS_NO_ASYNC_CLIENT_COMPONENT_ID: usize = 687usize;
+const NEXTJS_NO_BEFORE_INTERACTIVE_SCRIPT_OUTSIDE_DOCUMENT_ID: usize = 688usize;
+const NEXTJS_NO_CSS_TAGS_ID: usize = 689usize;
+const NEXTJS_NO_DOCUMENT_IMPORT_IN_PAGE_ID: usize = 690usize;
+const NEXTJS_NO_DUPLICATE_HEAD_ID: usize = 691usize;
+const NEXTJS_NO_HEAD_ELEMENT_ID: usize = 692usize;
+const NEXTJS_NO_HEAD_IMPORT_IN_DOCUMENT_ID: usize = 693usize;
+const NEXTJS_NO_HTML_LINK_FOR_PAGES_ID: usize = 694usize;
+const NEXTJS_NO_IMG_ELEMENT_ID: usize = 695usize;
+const NEXTJS_NO_PAGE_CUSTOM_FONT_ID: usize = 696usize;
+const NEXTJS_NO_SCRIPT_COMPONENT_IN_HEAD_ID: usize = 697usize;
+const NEXTJS_NO_STYLED_JSX_IN_DOCUMENT_ID: usize = 698usize;
+const NEXTJS_NO_SYNC_SCRIPTS_ID: usize = 699usize;
+const NEXTJS_NO_TITLE_IN_DOCUMENT_HEAD_ID: usize = 700usize;
+const NEXTJS_NO_TYPOS_ID: usize = 701usize;
+const NEXTJS_NO_UNWANTED_POLYFILLIO_ID: usize = 702usize;
+const JSDOC_CHECK_ACCESS_ID: usize = 703usize;
+const JSDOC_CHECK_PROPERTY_NAMES_ID: usize = 704usize;
+const JSDOC_CHECK_TAG_NAMES_ID: usize = 705usize;
+const JSDOC_EMPTY_TAGS_ID: usize = 706usize;
+const JSDOC_IMPLEMENTS_ON_CLASSES_ID: usize = 707usize;
+const JSDOC_NO_BLANK_BLOCKS_ID: usize = 708usize;
+const JSDOC_NO_DEFAULTS_ID: usize = 709usize;
+const JSDOC_REQUIRE_PARAM_ID: usize = 710usize;
+const JSDOC_REQUIRE_PARAM_DESCRIPTION_ID: usize = 711usize;
+const JSDOC_REQUIRE_PARAM_NAME_ID: usize = 712usize;
+const JSDOC_REQUIRE_PARAM_TYPE_ID: usize = 713usize;
+const JSDOC_REQUIRE_PROPERTY_ID: usize = 714usize;
+const JSDOC_REQUIRE_PROPERTY_DESCRIPTION_ID: usize = 715usize;
+const JSDOC_REQUIRE_PROPERTY_NAME_ID: usize = 716usize;
+const JSDOC_REQUIRE_PROPERTY_TYPE_ID: usize = 717usize;
+const JSDOC_REQUIRE_RETURNS_ID: usize = 718usize;
+const JSDOC_REQUIRE_RETURNS_DESCRIPTION_ID: usize = 719usize;
+const JSDOC_REQUIRE_RETURNS_TYPE_ID: usize = 720usize;
+const JSDOC_REQUIRE_THROWS_DESCRIPTION_ID: usize = 721usize;
+const JSDOC_REQUIRE_THROWS_TYPE_ID: usize = 722usize;
+const JSDOC_REQUIRE_YIELDS_ID: usize = 723usize;
+const JSDOC_REQUIRE_YIELDS_DESCRIPTION_ID: usize = 724usize;
+const JSDOC_REQUIRE_YIELDS_TYPE_ID: usize = 725usize;
+const PROMISE_ALWAYS_RETURN_ID: usize = 726usize;
+const PROMISE_AVOID_NEW_ID: usize = 727usize;
+const PROMISE_CATCH_OR_RETURN_ID: usize = 728usize;
+const PROMISE_NO_CALLBACK_IN_PROMISE_ID: usize = 729usize;
+const PROMISE_NO_MULTIPLE_RESOLVED_ID: usize = 730usize;
+const PROMISE_NO_NESTING_ID: usize = 731usize;
+const PROMISE_NO_NEW_STATICS_ID: usize = 732usize;
+const PROMISE_NO_PROMISE_IN_CALLBACK_ID: usize = 733usize;
+const PROMISE_NO_RETURN_IN_FINALLY_ID: usize = 734usize;
+const PROMISE_NO_RETURN_WRAP_ID: usize = 735usize;
+const PROMISE_PARAM_NAMES_ID: usize = 736usize;
+const PROMISE_PREFER_AWAIT_TO_CALLBACKS_ID: usize = 737usize;
+const PROMISE_PREFER_AWAIT_TO_THEN_ID: usize = 738usize;
+const PROMISE_PREFER_CATCH_ID: usize = 739usize;
+const PROMISE_SPEC_ONLY_ID: usize = 740usize;
+const PROMISE_VALID_PARAMS_ID: usize = 741usize;
+const VITEST_CONSISTENT_EACH_FOR_ID: usize = 742usize;
+const VITEST_CONSISTENT_TEST_FILENAME_ID: usize = 743usize;
+const VITEST_CONSISTENT_TEST_IT_ID: usize = 744usize;
+const VITEST_CONSISTENT_VITEST_VI_ID: usize = 745usize;
+const VITEST_EXPECT_EXPECT_ID: usize = 746usize;
+const VITEST_HOISTED_APIS_ON_TOP_ID: usize = 747usize;
+const VITEST_MAX_EXPECTS_ID: usize = 748usize;
+const VITEST_MAX_NESTED_DESCRIBE_ID: usize = 749usize;
+const VITEST_NO_ALIAS_METHODS_ID: usize = 750usize;
+const VITEST_NO_COMMENTED_OUT_TESTS_ID: usize = 751usize;
+const VITEST_NO_CONDITIONAL_EXPECT_ID: usize = 752usize;
+const VITEST_NO_CONDITIONAL_IN_TEST_ID: usize = 753usize;
+const VITEST_NO_CONDITIONAL_TESTS_ID: usize = 754usize;
+const VITEST_NO_DISABLED_TESTS_ID: usize = 755usize;
+const VITEST_NO_DUPLICATE_HOOKS_ID: usize = 756usize;
+const VITEST_NO_FOCUSED_TESTS_ID: usize = 757usize;
+const VITEST_NO_HOOKS_ID: usize = 758usize;
+const VITEST_NO_IDENTICAL_TITLE_ID: usize = 759usize;
+const VITEST_NO_IMPORT_NODE_TEST_ID: usize = 760usize;
+const VITEST_NO_IMPORTING_VITEST_GLOBALS_ID: usize = 761usize;
+const VITEST_NO_INTERPOLATION_IN_SNAPSHOTS_ID: usize = 762usize;
+const VITEST_NO_LARGE_SNAPSHOTS_ID: usize = 763usize;
+const VITEST_NO_MOCKS_IMPORT_ID: usize = 764usize;
+const VITEST_NO_RESTRICTED_MATCHERS_ID: usize = 765usize;
+const VITEST_NO_RESTRICTED_VI_METHODS_ID: usize = 766usize;
+const VITEST_NO_STANDALONE_EXPECT_ID: usize = 767usize;
+const VITEST_NO_TEST_PREFIXES_ID: usize = 768usize;
+const VITEST_NO_TEST_RETURN_STATEMENT_ID: usize = 769usize;
+const VITEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID: usize = 770usize;
+const VITEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID: usize = 771usize;
+const VITEST_PADDING_AROUND_TEST_BLOCKS_ID: usize = 772usize;
+const VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID: usize = 773usize;
+const VITEST_PREFER_CALLED_ONCE_ID: usize = 774usize;
+const VITEST_PREFER_CALLED_TIMES_ID: usize = 775usize;
+const VITEST_PREFER_CALLED_WITH_ID: usize = 776usize;
+const VITEST_PREFER_COMPARISON_MATCHER_ID: usize = 777usize;
+const VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID: usize = 778usize;
+const VITEST_PREFER_EACH_ID: usize = 779usize;
+const VITEST_PREFER_EQUALITY_MATCHER_ID: usize = 780usize;
+const VITEST_PREFER_EXPECT_ASSERTIONS_ID: usize = 781usize;
+const VITEST_PREFER_EXPECT_RESOLVES_ID: usize = 782usize;
+const VITEST_PREFER_EXPECT_TYPE_OF_ID: usize = 783usize;
+const VITEST_PREFER_HOOKS_IN_ORDER_ID: usize = 784usize;
+const VITEST_PREFER_HOOKS_ON_TOP_ID: usize = 785usize;
+const VITEST_PREFER_IMPORT_IN_MOCK_ID: usize = 786usize;
+const VITEST_PREFER_IMPORTING_VITEST_GLOBALS_ID: usize = 787usize;
+const VITEST_PREFER_LOWERCASE_TITLE_ID: usize = 788usize;
+const VITEST_PREFER_MOCK_PROMISE_SHORTHAND_ID: usize = 789usize;
+const VITEST_PREFER_MOCK_RETURN_SHORTHAND_ID: usize = 790usize;
+const VITEST_PREFER_SNAPSHOT_HINT_ID: usize = 791usize;
+const VITEST_PREFER_SPY_ON_ID: usize = 792usize;
+const VITEST_PREFER_STRICT_BOOLEAN_MATCHERS_ID: usize = 793usize;
+const VITEST_PREFER_STRICT_EQUAL_ID: usize = 794usize;
+const VITEST_PREFER_TO_BE_ID: usize = 795usize;
+const VITEST_PREFER_TO_BE_FALSY_ID: usize = 796usize;
+const VITEST_PREFER_TO_BE_OBJECT_ID: usize = 797usize;
+const VITEST_PREFER_TO_BE_TRUTHY_ID: usize = 798usize;
+const VITEST_PREFER_TO_CONTAIN_ID: usize = 799usize;
+const VITEST_PREFER_TO_HAVE_BEEN_CALLED_TIMES_ID: usize = 800usize;
+const VITEST_PREFER_TO_HAVE_LENGTH_ID: usize = 801usize;
+const VITEST_PREFER_TODO_ID: usize = 802usize;
+const VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID: usize = 803usize;
+const VITEST_REQUIRE_HOOK_ID: usize = 804usize;
+const VITEST_REQUIRE_LOCAL_TEST_CONTEXT_FOR_CONCURRENT_SNAPSHOTS_ID: usize = 805usize;
+const VITEST_REQUIRE_MOCK_TYPE_PARAMETERS_ID: usize = 806usize;
+const VITEST_REQUIRE_TEST_TIMEOUT_ID: usize = 807usize;
+const VITEST_REQUIRE_TO_THROW_MESSAGE_ID: usize = 808usize;
+const VITEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID: usize = 809usize;
+const VITEST_VALID_DESCRIBE_CALLBACK_ID: usize = 810usize;
+const VITEST_VALID_EXPECT_ID: usize = 811usize;
+const VITEST_VALID_EXPECT_IN_PROMISE_ID: usize = 812usize;
+const VITEST_VALID_TITLE_ID: usize = 813usize;
+const VITEST_WARN_TODO_ID: usize = 814usize;
+const NODE_CALLBACK_RETURN_ID: usize = 815usize;
+const NODE_EXPORTS_STYLE_ID: usize = 816usize;
+const NODE_GLOBAL_REQUIRE_ID: usize = 817usize;
+const NODE_HANDLE_CALLBACK_ERR_ID: usize = 818usize;
+const NODE_NO_EXPORTS_ASSIGN_ID: usize = 819usize;
+const NODE_NO_MIXED_REQUIRES_ID: usize = 820usize;
+const NODE_NO_NEW_REQUIRE_ID: usize = 821usize;
+const NODE_NO_PATH_CONCAT_ID: usize = 822usize;
+const NODE_NO_PROCESS_ENV_ID: usize = 823usize;
+const NODE_NO_SYNC_ID: usize = 824usize;
+const NODE_NO_TOP_LEVEL_AWAIT_ID: usize = 825usize;
+const VUE_COMPONENT_DEFINITION_NAME_CASING_ID: usize = 826usize;
+const VUE_DEFINE_EMITS_DECLARATION_ID: usize = 827usize;
+const VUE_DEFINE_PROPS_DECLARATION_ID: usize = 828usize;
+const VUE_DEFINE_PROPS_DESTRUCTURING_ID: usize = 829usize;
+const VUE_MAX_PROPS_ID: usize = 830usize;
+const VUE_NEXT_TICK_STYLE_ID: usize = 831usize;
+const VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID: usize = 832usize;
+const VUE_NO_ASYNC_IN_COMPUTED_PROPERTIES_ID: usize = 833usize;
+const VUE_NO_COMPUTED_PROPERTIES_IN_DATA_ID: usize = 834usize;
+const VUE_NO_DEPRECATED_DATA_OBJECT_DECLARATION_ID: usize = 835usize;
+const VUE_NO_DEPRECATED_DELETE_SET_ID: usize = 836usize;
+const VUE_NO_DEPRECATED_DESTROYED_LIFECYCLE_ID: usize = 837usize;
+const VUE_NO_DEPRECATED_EVENTS_API_ID: usize = 838usize;
+const VUE_NO_DEPRECATED_MODEL_DEFINITION_ID: usize = 839usize;
+const VUE_NO_DEPRECATED_PROPS_DEFAULT_THIS_ID: usize = 840usize;
+const VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID: usize = 841usize;
+const VUE_NO_DUPE_KEYS_ID: usize = 842usize;
+const VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID: usize = 843usize;
+const VUE_NO_EXPOSE_AFTER_AWAIT_ID: usize = 844usize;
+const VUE_NO_IMPORT_COMPILER_MACROS_ID: usize = 845usize;
+const VUE_NO_LIFECYCLE_AFTER_AWAIT_ID: usize = 846usize;
+const VUE_NO_MULTIPLE_SLOT_ARGS_ID: usize = 847usize;
+const VUE_NO_REQUIRED_PROP_WITH_DEFAULT_ID: usize = 848usize;
+const VUE_NO_RESERVED_COMPONENT_NAMES_ID: usize = 849usize;
+const VUE_NO_RESERVED_KEYS_ID: usize = 850usize;
+const VUE_NO_RESERVED_PROPS_ID: usize = 851usize;
+const VUE_NO_SHARED_COMPONENT_DATA_ID: usize = 852usize;
+const VUE_NO_SIDE_EFFECTS_IN_COMPUTED_PROPERTIES_ID: usize = 853usize;
+const VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID: usize = 854usize;
+const VUE_NO_WATCH_AFTER_AWAIT_ID: usize = 855usize;
+const VUE_PREFER_IMPORT_FROM_VUE_ID: usize = 856usize;
+const VUE_PROP_NAME_CASING_ID: usize = 857usize;
+const VUE_REQUIRE_DEFAULT_EXPORT_ID: usize = 858usize;
+const VUE_REQUIRE_DEFAULT_PROP_ID: usize = 859usize;
+const VUE_REQUIRE_DIRECT_EXPORT_ID: usize = 860usize;
+const VUE_REQUIRE_PROP_TYPE_CONSTRUCTOR_ID: usize = 861usize;
+const VUE_REQUIRE_PROP_TYPES_ID: usize = 862usize;
+const VUE_REQUIRE_RENDER_RETURN_ID: usize = 863usize;
+const VUE_REQUIRE_SLOTS_AS_FUNCTIONS_ID: usize = 864usize;
+const VUE_REQUIRE_TYPED_REF_ID: usize = 865usize;
+const VUE_RETURN_IN_COMPUTED_PROPERTY_ID: usize = 866usize;
+const VUE_RETURN_IN_EMITS_VALIDATOR_ID: usize = 867usize;
+const VUE_VALID_DEFINE_EMITS_ID: usize = 868usize;
+const VUE_VALID_DEFINE_OPTIONS_ID: usize = 869usize;
+const VUE_VALID_DEFINE_PROPS_ID: usize = 870usize;
+const VUE_VALID_NEXT_TICK_ID: usize = 871usize;
+static RULE_NAMES: [&str; 872usize] = [
     ImportConsistentTypeSpecifierStyle::NAME,
     ImportDefault::NAME,
     ImportExport::NAME,
@@ -2932,6 +2933,7 @@ static RULE_NAMES: [&str; 871usize] = [
     TypescriptNoUnsafeAssignment::NAME,
     TypescriptNoUnsafeCall::NAME,
     TypescriptNoUnsafeDeclarationMerging::NAME,
+    TypescriptNoUnsafeEnumAssignment::NAME,
     TypescriptNoUnsafeEnumComparison::NAME,
     TypescriptNoUnsafeFunctionType::NAME,
     TypescriptNoUnsafeMemberAccess::NAME,
@@ -3859,6 +3861,7 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeDeclarationMerging(_) => {
                 TYPESCRIPT_NO_UNSAFE_DECLARATION_MERGING_ID
             }
+            Self::TypescriptNoUnsafeEnumAssignment(_) => TYPESCRIPT_NO_UNSAFE_ENUM_ASSIGNMENT_ID,
             Self::TypescriptNoUnsafeEnumComparison(_) => TYPESCRIPT_NO_UNSAFE_ENUM_COMPARISON_ID,
             Self::TypescriptNoUnsafeFunctionType(_) => TYPESCRIPT_NO_UNSAFE_FUNCTION_TYPE_ID,
             Self::TypescriptNoUnsafeMemberAccess(_) => TYPESCRIPT_NO_UNSAFE_MEMBER_ACCESS_ID,
@@ -4879,6 +4882,7 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeDeclarationMerging(_) => {
                 TypescriptNoUnsafeDeclarationMerging::CATEGORY
             }
+            Self::TypescriptNoUnsafeEnumAssignment(_) => TypescriptNoUnsafeEnumAssignment::CATEGORY,
             Self::TypescriptNoUnsafeEnumComparison(_) => TypescriptNoUnsafeEnumComparison::CATEGORY,
             Self::TypescriptNoUnsafeFunctionType(_) => TypescriptNoUnsafeFunctionType::CATEGORY,
             Self::TypescriptNoUnsafeMemberAccess(_) => TypescriptNoUnsafeMemberAccess::CATEGORY,
@@ -5919,6 +5923,7 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeDeclarationMerging(_) => {
                 TypescriptNoUnsafeDeclarationMerging::FIX
             }
+            Self::TypescriptNoUnsafeEnumAssignment(_) => TypescriptNoUnsafeEnumAssignment::FIX,
             Self::TypescriptNoUnsafeEnumComparison(_) => TypescriptNoUnsafeEnumComparison::FIX,
             Self::TypescriptNoUnsafeFunctionType(_) => TypescriptNoUnsafeFunctionType::FIX,
             Self::TypescriptNoUnsafeMemberAccess(_) => TypescriptNoUnsafeMemberAccess::FIX,
@@ -6962,6 +6967,9 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeCall(_) => TypescriptNoUnsafeCall::documentation(),
             Self::TypescriptNoUnsafeDeclarationMerging(_) => {
                 TypescriptNoUnsafeDeclarationMerging::documentation()
+            }
+            Self::TypescriptNoUnsafeEnumAssignment(_) => {
+                TypescriptNoUnsafeEnumAssignment::documentation()
             }
             Self::TypescriptNoUnsafeEnumComparison(_) => {
                 TypescriptNoUnsafeEnumComparison::documentation()
@@ -8637,6 +8645,10 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeDeclarationMerging(_) => {
                 TypescriptNoUnsafeDeclarationMerging::config_schema(generator)
                     .or_else(|| TypescriptNoUnsafeDeclarationMerging::schema(generator))
+            }
+            Self::TypescriptNoUnsafeEnumAssignment(_) => {
+                TypescriptNoUnsafeEnumAssignment::config_schema(generator)
+                    .or_else(|| TypescriptNoUnsafeEnumAssignment::schema(generator))
             }
             Self::TypescriptNoUnsafeEnumComparison(_) => {
                 TypescriptNoUnsafeEnumComparison::config_schema(generator)
@@ -10629,6 +10641,7 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeAssignment(_) => "typescript",
             Self::TypescriptNoUnsafeCall(_) => "typescript",
             Self::TypescriptNoUnsafeDeclarationMerging(_) => "typescript",
+            Self::TypescriptNoUnsafeEnumAssignment(_) => "typescript",
             Self::TypescriptNoUnsafeEnumComparison(_) => "typescript",
             Self::TypescriptNoUnsafeFunctionType(_) => "typescript",
             Self::TypescriptNoUnsafeMemberAccess(_) => "typescript",
@@ -11565,6 +11578,9 @@ impl RuleEnum {
             Self::TypescriptArrayType(_) => {
                 Ok(Self::TypescriptArrayType(TypescriptArrayType::from_configuration(value)?))
             }
+            Self::TypescriptAwaitThenable(_) => Ok(Self::TypescriptAwaitThenable(
+                TypescriptAwaitThenable::from_configuration(value)?,
+            )),
             Self::TypescriptBanTsComment(_) => {
                 Ok(Self::TypescriptBanTsComment(TypescriptBanTsComment::from_configuration(value)?))
             }
@@ -11836,6 +11852,9 @@ impl RuleEnum {
             }
             Self::ReactButtonHasType(_) => {
                 Ok(Self::ReactButtonHasType(ReactButtonHasType::from_configuration(value)?))
+            }
+            Self::ReactCapitalizedCalls(_) => {
+                Ok(Self::ReactCapitalizedCalls(ReactCapitalizedCalls::from_configuration(value)?))
             }
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 Ok(Self::ReactCheckedRequiresOnchangeOrReadonly(
@@ -12316,6 +12335,7 @@ impl RuleEnum {
     }
     pub fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
         match self {
+            Self::TypescriptAwaitThenable(rule) => rule.to_configuration(),
             Self::TypescriptClassLiteralPropertyStyle(rule) => rule.to_configuration(),
             Self::TypescriptConsistentReturn(rule) => rule.to_configuration(),
             Self::TypescriptConsistentTypeExports(rule) => rule.to_configuration(),
@@ -12641,6 +12661,7 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeAssignment(rule) => rule.run(node, ctx),
             Self::TypescriptNoUnsafeCall(rule) => rule.run(node, ctx),
             Self::TypescriptNoUnsafeDeclarationMerging(rule) => rule.run(node, ctx),
+            Self::TypescriptNoUnsafeEnumAssignment(rule) => rule.run(node, ctx),
             Self::TypescriptNoUnsafeEnumComparison(rule) => rule.run(node, ctx),
             Self::TypescriptNoUnsafeFunctionType(rule) => rule.run(node, ctx),
             Self::TypescriptNoUnsafeMemberAccess(rule) => rule.run(node, ctx),
@@ -13529,6 +13550,7 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeAssignment(rule) => rule.run_once(ctx),
             Self::TypescriptNoUnsafeCall(rule) => rule.run_once(ctx),
             Self::TypescriptNoUnsafeDeclarationMerging(rule) => rule.run_once(ctx),
+            Self::TypescriptNoUnsafeEnumAssignment(rule) => rule.run_once(ctx),
             Self::TypescriptNoUnsafeEnumComparison(rule) => rule.run_once(ctx),
             Self::TypescriptNoUnsafeFunctionType(rule) => rule.run_once(ctx),
             Self::TypescriptNoUnsafeMemberAccess(rule) => rule.run_once(ctx),
@@ -14127,1016 +14149,6 @@ impl RuleEnum {
             self.run_once_dispatch(ctx);
         }
     }
-    #[inline(never)]
-    fn run_on_jest_node_dispatch<'a, 'c>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        match self {
-            Self::ImportConsistentTypeSpecifierStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ImportDefault(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ImportExport(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ImportExportsLast(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ImportExtensions(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ImportFirst(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ImportGroupExports(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ImportMaxDependencies(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ImportNamed(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ImportNamespace(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ImportNewlineAfterImport(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ImportNoAbsolutePath(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ImportNoAmd(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ImportNoAnonymousDefaultExport(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ImportNoCommonjs(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ImportNoCycle(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ImportNoDefaultExport(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ImportNoDuplicates(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ImportNoDynamicRequire(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ImportNoEmptyNamedBlocks(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ImportNoMutableExports(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ImportNoNamedAsDefault(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ImportNoNamedAsDefaultMember(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ImportNoNamedDefault(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ImportNoNamedExport(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ImportNoNamespace(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ImportNoNodejsModules(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ImportNoRelativeParentImports(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ImportNoSelfImport(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ImportNoUnassignedImport(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ImportNoWebpackLoaderSyntax(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ImportPreferDefaultExport(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ImportUnambiguous(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintAccessorPairs(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintArrayCallbackReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintArrowBodyStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintBlockScopedVar(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintCapitalizedComments(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintClassMethodsUseThis(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintComplexity(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintConstructorSuper(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintCurly(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintDefaultCase(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintDefaultCaseLast(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintDefaultParamLast(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintEqeqeq(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintForDirection(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintFuncNameMatching(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintFuncNames(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintFuncStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintGetterReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintGroupedAccessorPairs(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintGuardForIn(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintIdDenylist(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintIdLength(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintIdMatch(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintInitDeclarations(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintLogicalAssignmentOperators(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintMaxClassesPerFile(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintMaxDepth(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintMaxLines(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintMaxLinesPerFunction(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintMaxNestedCallbacks(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintMaxParams(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintMaxStatements(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNewCap(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoAlert(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoArrayConstructor(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoAsyncPromiseExecutor(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoAwaitInLoop(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoBitwise(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoCaller(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoCaseDeclarations(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoClassAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoCompareNegZero(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoCondAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoConsole(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoConstAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoConstantBinaryExpression(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoConstantCondition(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoConstructorReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoContinue(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoControlRegex(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoDebugger(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoDeleteVar(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoDivRegex(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoDupeClassMembers(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoDupeElseIf(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoDupeKeys(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoDuplicateCase(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoDuplicateImports(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoElseReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoEmpty(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoEmptyCharacterClass(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoEmptyFunction(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoEmptyPattern(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoEmptyStaticBlock(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoEqNull(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoEval(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoExAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoExtendNative(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoExtraBind(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoExtraBooleanCast(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoExtraLabel(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoFallthrough(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoFuncAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoGlobalAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoImplicitCoercion(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoImplicitGlobals(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoImpliedEval(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoImportAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoInlineComments(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoInnerDeclarations(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoInvalidRegexp(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoIrregularWhitespace(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoIterator(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoLabelVar(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoLabels(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoLoneBlocks(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoLonelyIf(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoLoopFunc(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoLossOfPrecision(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoMagicNumbers(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoMisleadingCharacterClass(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoMultiAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoMultiStr(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoNegatedCondition(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoNestedTernary(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoNew(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoNewFunc(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoNewNativeNonconstructor(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoNewWrappers(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoNonoctalDecimalEscape(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoObjCalls(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoObjectConstructor(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoParamReassign(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoPlusplus(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoPromiseExecutorReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoProto(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoPrototypeBuiltins(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoRedeclare(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoRegexSpaces(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoRestrictedExports(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoRestrictedGlobals(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoRestrictedImports(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoRestrictedProperties(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoReturnAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoScriptUrl(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoSelfAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoSelfCompare(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoSequences(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoSetterReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoShadow(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoShadowRestrictedNames(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoSparseArrays(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoTemplateCurlyInString(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoTernary(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoThisBeforeSuper(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoThrowLiteral(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoUnassignedVars(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoUndef(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoUndefined(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoUnderscoreDangle(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoUnexpectedMultiline(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoUnmodifiedLoopCondition(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoUnneededTernary(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoUnreachable(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoUnreachableLoop(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoUnsafeFinally(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoUnsafeNegation(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoUnsafeOptionalChaining(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoUnusedExpressions(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoUnusedLabels(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoUnusedPrivateClassMembers(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoUnusedVars(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoUseBeforeDefine(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoUselessAssignment(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoUselessBackreference(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoUselessCall(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoUselessCatch(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoUselessComputedKey(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoUselessConcat(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoUselessConstructor(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoUselessEscape(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoUselessRename(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoUselessReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoVar(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoVoid(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoWarningComments(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintNoWith(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintObjectShorthand(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintOneVar(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintOperatorAssignment(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintPreferArrowCallback(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintPreferConst(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintPreferDestructuring(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintPreferExponentiationOperator(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintPreferNamedCaptureGroup(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintPreferNumericLiterals(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintPreferObjectHasOwn(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintPreferObjectSpread(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintPreferPromiseRejectErrors(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintPreferRegexLiterals(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintPreferRestParams(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintPreferSpread(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintPreferTemplate(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintPreserveCaughtError(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintRadix(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintRequireAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintRequireUnicodeRegexp(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintRequireYield(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintSortImports(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintSortKeys(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintSortVars(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintSymbolDescription(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintUnicodeBom(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintUseIsnan(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintValidTypeof(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintVarsOnTop(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::EslintYoda(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptAdjacentOverloadSignatures(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::TypescriptArrayType(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptAwaitThenable(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptBanTsComment(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptBanTslintComment(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptBanTypes(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptClassLiteralPropertyStyle(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::TypescriptConsistentGenericConstructors(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::TypescriptConsistentIndexedObjectStyle(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::TypescriptConsistentReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptConsistentTypeAssertions(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptConsistentTypeDefinitions(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::TypescriptConsistentTypeExports(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptConsistentTypeImports(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptDotNotation(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptExplicitFunctionReturnType(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::TypescriptExplicitMemberAccessibility(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::TypescriptExplicitModuleBoundaryTypes(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::TypescriptMethodSignatureStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoArrayDelete(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoBaseToString(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoConfusingNonNullAssertion(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::TypescriptNoConfusingVoidExpression(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::TypescriptNoDeprecated(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoDuplicateEnumValues(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoDuplicateTypeConstituents(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::TypescriptNoDynamicDelete(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoEmptyInterface(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoEmptyObjectType(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoExplicitAny(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoExtraNonNullAssertion(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoExtraneousClass(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoFloatingPromises(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoForInArray(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoGeneratedEmptyObjectType(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::TypescriptNoImpliedEval(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoImportTypeSideEffects(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoInferrableTypes(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoInvalidVoidType(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoMeaninglessVoidOperator(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::TypescriptNoMisusedNew(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoMisusedPromises(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoMisusedSpread(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoMixedEnums(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoNamespace(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoNonNullAssertedNullishCoalescing(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::TypescriptNoNonNullAssertedOptionalChain(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::TypescriptNoNonNullAssertion(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoRedundantTypeConstituents(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::TypescriptNoRequireImports(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoRestrictedTypes(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoThisAlias(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoUnnecessaryBooleanLiteralCompare(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::TypescriptNoUnnecessaryCondition(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoUnnecessaryParameterPropertyAssignment(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::TypescriptNoUnnecessaryQualifier(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoUnnecessaryTemplateExpression(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::TypescriptNoUnnecessaryTypeArguments(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::TypescriptNoUnnecessaryTypeAssertion(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::TypescriptNoUnnecessaryTypeConstraint(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::TypescriptNoUnnecessaryTypeConversion(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::TypescriptNoUnnecessaryTypeParameters(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::TypescriptNoUnsafeArgument(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoUnsafeAssignment(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoUnsafeCall(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoUnsafeDeclarationMerging(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::TypescriptNoUnsafeEnumComparison(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoUnsafeFunctionType(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoUnsafeMemberAccess(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoUnsafeReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoUnsafeTypeAssertion(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoUnsafeUnaryMinus(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoUselessDefaultAssignment(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::TypescriptNoUselessEmptyExport(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoVarRequires(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoWrapperObjectTypes(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNonNullableTypeAssertionStyle(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::TypescriptOnlyThrowError(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptParameterProperties(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptPreferAsConst(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptPreferEnumInitializers(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptPreferFind(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptPreferForOf(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptPreferFunctionType(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptPreferIncludes(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptPreferLiteralEnumMember(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptPreferNamespaceKeyword(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptPreferNullishCoalescing(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptPreferOptionalChain(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptPreferPromiseRejectErrors(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::TypescriptPreferReadonly(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptPreferReadonlyParameterTypes(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::TypescriptPreferReduceTypeParameter(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::TypescriptPreferRegexpExec(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptPreferReturnThisType(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptPreferStringStartsEndsWith(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::TypescriptPreferTsExpectError(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptPromiseFunctionAsync(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptRelatedGetterSetterPairs(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptRequireArraySortCompare(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptRequireAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptRestrictPlusOperands(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptRestrictTemplateExpressions(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::TypescriptReturnAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptStrictBooleanExpressions(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptStrictVoidReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptSwitchExhaustivenessCheck(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::TypescriptTripleSlashReference(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptUnboundMethod(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptUnifiedSignatures(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptUseUnknownInCatchCallbackVariable(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::JestConsistentTestIt(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestExpectExpect(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestMaxExpects(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestMaxNestedDescribe(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestNoAliasMethods(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestNoCommentedOutTests(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestNoConditionalExpect(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestNoConditionalInTest(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestNoConfusingSetTimeout(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestNoDeprecatedFunctions(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestNoDisabledTests(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestNoDoneCallback(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestNoDuplicateHooks(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestNoExport(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestNoFocusedTests(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestNoHooks(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestNoIdenticalTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestNoInterpolationInSnapshots(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestNoJasmineGlobals(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestNoLargeSnapshots(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestNoMocksImport(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestNoRestrictedJestMethods(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestNoRestrictedMatchers(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestNoStandaloneExpect(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestNoTestPrefixes(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestNoTestReturnStatement(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestNoUnneededAsyncExpectFunction(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestNoUntypedMockFactory(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestPaddingAroundAfterAllBlocks(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestPaddingAroundTestBlocks(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestPreferCalledWith(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestPreferComparisonMatcher(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestPreferEach(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestPreferEndingWithAnExpect(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestPreferEqualityMatcher(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestPreferExpectAssertions(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestPreferExpectResolves(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestPreferHooksInOrder(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestPreferHooksOnTop(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestPreferImportingJestGlobals(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestPreferJestMocked(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestPreferLowercaseTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestPreferMockPromiseShorthand(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestPreferMockReturnShorthand(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestPreferSnapshotHint(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestPreferSpyOn(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestPreferStrictEqual(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestPreferToBe(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestPreferToContain(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestPreferToHaveBeenCalled(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestPreferToHaveBeenCalledTimes(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestPreferToHaveLength(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestPreferTodo(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestRequireHook(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestRequireToThrowMessage(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestRequireTopLevelDescribe(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestValidDescribeCallback(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestValidExpect(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestValidExpectInPromise(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JestValidTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactButtonHasType(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactCapitalizedCalls(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::ReactDisplayName(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactErrorBoundaries(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactExhaustiveDeps(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactExhaustiveEffectDependencies(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactForbidComponentProps(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactForbidDomProps(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactForbidElements(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactForwardRefUsesRef(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactFunctionComponentDefinition(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactGlobals(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactHookUseState(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactHooks(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactIframeMissingSandbox(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactImmutability(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactIncompatibleLibrary(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactInvariant(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactJsxBooleanValue(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactJsxCurlyBracePresence(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactJsxFilenameExtension(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactJsxFragments(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactJsxHandlerNames(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactJsxKey(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactJsxMaxDepth(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactJsxNoCommentTextnodes(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactJsxNoConstructedContextValues(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactJsxNoDuplicateProps(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactJsxNoLiterals(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactJsxNoScriptUrl(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactJsxNoTargetBlank(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactJsxNoUndef(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactJsxNoUselessFragment(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactJsxPascalCase(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactJsxPropsNoSpreadMulti(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactJsxPropsNoSpreading(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactMemoDependencies(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactNoArrayIndexKey(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactNoChildrenProp(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactNoCloneElement(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactNoDanger(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactNoDangerWithChildren(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactNoDerivingStateInEffects(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactNoDidMountSetState(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactNoDidUpdateSetState(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactNoDirectMutationState(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactNoFindDomNode(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactNoIsMounted(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactNoMultiComp(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactNoNamespace(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactNoObjectTypeAsDefaultProp(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactNoReactChildren(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactNoRedundantShouldComponentUpdate(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::ReactNoRenderReturnValue(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactNoSetState(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactNoStringRefs(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactNoThisInSfc(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactNoUnescapedEntities(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactNoUnknownProperty(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactNoUnsafe(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactNoUnstableNestedComponents(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactNoWillUpdateSetState(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactOnlyExportComponents(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactPreferEs6Class(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactPreferFunctionComponent(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactPreserveManualMemoization(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactPurity(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactReactInJsxScope(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactRefs(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactRequireRenderReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactRuleSuppression(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactRulesOfHooks(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactSelfClosingComp(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactSetStateInEffect(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactSetStateInRender(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactStateInConstructor(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactStaticComponents(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactStylePropObject(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactSyntax(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactTodo(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactUnsupportedSyntax(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactUseMemo(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactVoidDomElementsNoChildren(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactVoidUseMemo(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactPerfJsxNoJsxAsProp(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactPerfJsxNoNewObjectAsProp(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornCatchErrorName(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornConsistentAssert(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornConsistentDateClone(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornConsistentEmptyArraySpread(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornConsistentExistenceIndexCheck(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::UnicornConsistentFunctionScoping(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornConsistentTemplateLiteralEscape(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::UnicornCustomErrorDefinition(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornEmptyBraceSpaces(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornErrorMessage(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornEscapeCase(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornExplicitLengthCheck(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornExplicitTimerDelay(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornFilenameCase(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornImportStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornMaxNestedCalls(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNewForBuiltins(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoAbusiveEslintDisable(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoAccessorRecursion(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoAnonymousDefaultExport(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoArrayCallbackReference(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoArrayFillWithReferenceType(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::UnicornNoArrayForEach(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoArrayMethodThisArgument(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoArrayReduce(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoArrayReverse(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoArraySort(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoAwaitExpressionMember(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoAwaitInPromiseMethods(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoConfusingArrayWith(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoConsoleSpaces(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoDocumentCookie(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoEmptyFile(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoHexEscape(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoImmediateMutation(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoInstanceofArray(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoInstanceofBuiltins(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoInvalidFetchOptions(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoInvalidRemoveEventListener(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::UnicornNoLengthAsSliceEnd(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoLonelyIf(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoMagicArrayFlatDepth(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoNegatedCondition(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoNegationInEqualityCheck(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoNestedTernary(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoNewArray(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoNewBuffer(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoNull(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoObjectAsDefaultParameter(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoProcessExit(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoSinglePromiseInPromiseMethods(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::UnicornNoStaticOnlyClass(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoThenable(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoThisAssignment(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoTypeofUndefined(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoUnnecessaryArrayFlatDepth(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoUnnecessaryArraySpliceCount(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::UnicornNoUnnecessaryAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoUnnecessarySliceEnd(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoUnreadableArrayDestructuring(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::UnicornNoUnreadableIife(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoUselessCollectionArgument(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoUselessErrorCaptureStackTrace(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::UnicornNoUselessFallbackInSpread(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoUselessIteratorToArray(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoUselessLengthCheck(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoUselessPromiseResolveReject(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::UnicornNoUselessSpread(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoUselessSwitchCase(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoUselessUndefined(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNoZeroFractions(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNumberLiteralCase(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornNumericSeparatorsStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferAddEventListener(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferArrayFind(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferArrayFlat(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferArrayFlatMap(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferArrayIndexOf(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferArraySome(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferAt(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferBigintLiterals(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferBlobReadingMethods(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferClassFields(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferClasslistToggle(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferCodePoint(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferDateNow(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferDefaultParameters(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferDomNodeAppend(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferDomNodeDataset(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferDomNodeRemove(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferDomNodeTextContent(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferEventTarget(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferExportFrom(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferGlobalThis(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferImportMetaProperties(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferIncludes(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferKeyboardEventKey(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferLogicalOperatorOverTernary(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::UnicornPreferMathMinMax(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferMathTrunc(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferModernDomApis(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferModernMathApis(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferModule(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferNativeCoercionFunctions(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::UnicornPreferNegativeIndex(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferNodeProtocol(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferNumberCoercion(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferNumberProperties(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferObjectFromEntries(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferOptionalCatchBinding(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferPrototypeMethods(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferQuerySelector(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferReflectApply(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferRegexpTest(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferResponseStaticJson(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferSetHas(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferSetSize(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferSingleCall(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferSpread(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferStringRaw(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferStringReplaceAll(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferStringSlice(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferStringStartsEndsWith(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferStringTrimStartEnd(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferStructuredClone(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferTernary(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferTopLevelAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornPreferTypeError(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornRelativeUrlStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornRequireArrayJoinSeparator(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornRequireModuleAttributes(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornRequireModuleSpecifiers(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornRequireNumberToFixedDigitsArgument(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::UnicornRequirePostMessageTargetOrigin(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::UnicornSwitchCaseBraces(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornSwitchCaseBreakPosition(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornTextEncodingIdentifierCase(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::UnicornThrowNewError(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsxA11YAltText(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsxA11YAnchorAmbiguousText(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsxA11YAnchorHasContent(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsxA11YAnchorIsValid(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsxA11YAriaActivedescendantHasTabindex(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::JsxA11YAriaProps(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsxA11YAriaProptypes(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsxA11YAriaRole(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsxA11YAriaUnsupportedElements(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsxA11YAutocompleteValid(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsxA11YClickEventsHaveKeyEvents(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsxA11YControlHasAssociatedLabel(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsxA11YHeadingHasContent(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsxA11YHtmlHasLang(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsxA11YIframeHasTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsxA11YImgRedundantAlt(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsxA11YInteractiveSupportsFocus(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsxA11YLabelHasAssociatedControl(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsxA11YLang(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsxA11YMediaHasCaption(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsxA11YMouseEventsHaveKeyEvents(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsxA11YNoAccessKey(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsxA11YNoAriaHiddenOnFocusable(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsxA11YNoAutofocus(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsxA11YNoDistractingElements(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsxA11YNoInteractiveElementToNoninteractiveRole(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::JsxA11YNoNoninteractiveElementInteractions(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::JsxA11YNoNoninteractiveTabindex(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsxA11YNoRedundantRoles(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsxA11YNoStaticElementInteractions(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsxA11YPreferTagOverRole(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsxA11YRoleHasRequiredAriaProps(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsxA11YRoleSupportsAriaProps(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsxA11YScope(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsxA11YTabindexNoPositive(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::OxcApproxConstant(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::OxcBadArrayMethodOnArguments(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::OxcBadBitwiseOperator(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::OxcBadCharAtComparison(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::OxcBadComparisonSequence(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::OxcBadMatchAllArg(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::OxcBadMinMaxFunc(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::OxcBadObjectLiteralComparison(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::OxcBadReplaceAllArg(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::OxcBranchesSharingCode(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::OxcConstComparisons(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::OxcDoubleComparisons(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::OxcErasingOp(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::OxcMisrefactoredAssignOp(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::OxcMissingThrow(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::OxcNoAccumulatingSpread(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::OxcNoAsyncAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::OxcNoAsyncEndpointHandlers(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::OxcNoBarrelFile(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::OxcNoConstEnum(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::OxcNoMapSpread(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::OxcNoOptionalChaining(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::OxcNoRestSpreadProperties(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::OxcNoThisInExportedFunction(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::OxcNumberArgOutOfRange(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::OxcOnlyUsedInRecursion(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::OxcUninvokedArrayCallback(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::NextjsGoogleFontDisplay(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::NextjsGoogleFontPreconnect(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::NextjsInlineScriptId(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::NextjsNextScriptForGa(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::NextjsNoAssignModuleVariable(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::NextjsNoAsyncClientComponent(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::NextjsNoBeforeInteractiveScriptOutsideDocument(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::NextjsNoCssTags(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::NextjsNoDocumentImportInPage(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::NextjsNoDuplicateHead(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::NextjsNoHeadElement(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::NextjsNoHeadImportInDocument(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::NextjsNoHtmlLinkForPages(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::NextjsNoImgElement(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::NextjsNoPageCustomFont(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::NextjsNoScriptComponentInHead(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::NextjsNoStyledJsxInDocument(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::NextjsNoSyncScripts(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::NextjsNoTitleInDocumentHead(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::NextjsNoTypos(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::NextjsNoUnwantedPolyfillio(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsdocCheckAccess(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsdocCheckPropertyNames(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsdocCheckTagNames(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsdocEmptyTags(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsdocImplementsOnClasses(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsdocNoBlankBlocks(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsdocNoDefaults(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsdocRequireParam(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsdocRequireParamDescription(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsdocRequireParamName(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsdocRequireParamType(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsdocRequireProperty(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsdocRequirePropertyDescription(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsdocRequirePropertyName(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsdocRequirePropertyType(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsdocRequireReturns(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsdocRequireReturnsDescription(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsdocRequireReturnsType(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsdocRequireThrowsDescription(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsdocRequireThrowsType(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsdocRequireYields(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsdocRequireYieldsDescription(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::JsdocRequireYieldsType(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::PromiseAlwaysReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::PromiseAvoidNew(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::PromiseCatchOrReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::PromiseNoCallbackInPromise(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::PromiseNoMultipleResolved(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::PromiseNoNesting(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::PromiseNoNewStatics(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::PromiseNoPromiseInCallback(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::PromiseNoReturnInFinally(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::PromiseNoReturnWrap(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::PromiseParamNames(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::PromisePreferAwaitToCallbacks(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::PromisePreferAwaitToThen(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::PromisePreferCatch(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::PromiseSpecOnly(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::PromiseValidParams(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestConsistentEachFor(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestConsistentTestFilename(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestConsistentTestIt(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestConsistentVitestVi(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestExpectExpect(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestHoistedApisOnTop(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestMaxExpects(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestMaxNestedDescribe(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestNoAliasMethods(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestNoCommentedOutTests(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestNoConditionalExpect(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestNoConditionalInTest(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestNoConditionalTests(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestNoDisabledTests(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestNoDuplicateHooks(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestNoFocusedTests(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestNoHooks(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestNoIdenticalTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestNoImportNodeTest(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestNoImportingVitestGlobals(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestNoInterpolationInSnapshots(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestNoLargeSnapshots(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestNoMocksImport(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestNoRestrictedMatchers(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestNoRestrictedViMethods(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestNoStandaloneExpect(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestNoTestPrefixes(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestNoTestReturnStatement(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestNoUnneededAsyncExpectFunction(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestPaddingAroundTestBlocks(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestPreferCalledOnce(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestPreferCalledTimes(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestPreferCalledWith(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestPreferComparisonMatcher(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestPreferDescribeFunctionTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestPreferEach(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestPreferEqualityMatcher(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestPreferExpectAssertions(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestPreferExpectResolves(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestPreferExpectTypeOf(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestPreferHooksInOrder(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestPreferHooksOnTop(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestPreferImportInMock(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestPreferImportingVitestGlobals(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestPreferLowercaseTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestPreferMockPromiseShorthand(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestPreferMockReturnShorthand(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestPreferSnapshotHint(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestPreferSpyOn(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestPreferStrictBooleanMatchers(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestPreferStrictEqual(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestPreferToBe(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestPreferToBeFalsy(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestPreferToBeObject(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestPreferToBeTruthy(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestPreferToContain(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestPreferToHaveBeenCalledTimes(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestPreferToHaveLength(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestPreferTodo(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestRequireAwaitedExpectPoll(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestRequireHook(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::VitestRequireMockTypeParameters(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestRequireTestTimeout(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestRequireToThrowMessage(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestRequireTopLevelDescribe(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestValidDescribeCallback(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestValidExpect(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestValidExpectInPromise(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestValidTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestWarnTodo(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::NodeCallbackReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::NodeExportsStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::NodeGlobalRequire(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::NodeHandleCallbackErr(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::NodeNoExportsAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::NodeNoMixedRequires(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::NodeNoNewRequire(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::NodeNoPathConcat(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::NodeNoProcessEnv(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::NodeNoSync(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::NodeNoTopLevelAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueComponentDefinitionNameCasing(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueDefineEmitsDeclaration(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueDefinePropsDeclaration(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueDefinePropsDestructuring(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueMaxProps(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueNextTickStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueNoArrowFunctionsInWatch(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueNoAsyncInComputedProperties(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueNoComputedPropertiesInData(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueNoDeprecatedDataObjectDeclaration(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::VueNoDeprecatedDeleteSet(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueNoDeprecatedEventsApi(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueNoDeprecatedModelDefinition(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueNoDupeKeys(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueNoExportInScriptSetup(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueNoExposeAfterAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueNoImportCompilerMacros(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueNoLifecycleAfterAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueNoMultipleSlotArgs(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueNoRequiredPropWithDefault(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueNoReservedComponentNames(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueNoReservedKeys(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueNoReservedProps(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueNoSharedComponentData(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueNoSideEffectsInComputedProperties(rule) => {
-                rule.run_on_jest_node(jest_node, ctx)
-            }
-            Self::VueNoThisInBeforeRouteEnter(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueNoWatchAfterAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VuePreferImportFromVue(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VuePropNameCasing(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueRequireDefaultExport(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueRequireDefaultProp(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueRequireDirectExport(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueRequirePropTypeConstructor(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueRequirePropTypes(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueRequireRenderReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueRequireSlotsAsFunctions(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueRequireTypedRef(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueReturnInComputedProperty(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueReturnInEmitsValidator(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueValidDefineEmits(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueValidDefineOptions(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueValidDefineProps(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueValidNextTick(rule) => rule.run_on_jest_node(jest_node, ctx),
-        }
-    }
-    pub(crate) fn run_on_jest_node<'a, 'c, const TIMINGS: bool>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-        timing_stat: Option<&mut RuleTimingStat>,
-    ) {
-        if TIMINGS {
-            timing_stat
-                .expect("missing rule timing stat")
-                .time(|| self.run_on_jest_node_dispatch(jest_node, ctx));
-        } else {
-            self.run_on_jest_node_dispatch(jest_node, ctx);
-        }
-    }
     pub(crate) fn should_run(&self, ctx: &ContextHost) -> bool {
         match self {
             Self::ImportConsistentTypeSpecifierStyle(rule) => rule.should_run(ctx),
@@ -15425,6 +14437,7 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeAssignment(rule) => rule.should_run(ctx),
             Self::TypescriptNoUnsafeCall(rule) => rule.should_run(ctx),
             Self::TypescriptNoUnsafeDeclarationMerging(rule) => rule.should_run(ctx),
+            Self::TypescriptNoUnsafeEnumAssignment(rule) => rule.should_run(ctx),
             Self::TypescriptNoUnsafeEnumComparison(rule) => rule.should_run(ctx),
             Self::TypescriptNoUnsafeFunctionType(rule) => rule.should_run(ctx),
             Self::TypescriptNoUnsafeMemberAccess(rule) => rule.should_run(ctx),
@@ -16357,6 +15370,7 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeDeclarationMerging(_) => {
                 TypescriptNoUnsafeDeclarationMerging::FLAGS
             }
+            Self::TypescriptNoUnsafeEnumAssignment(_) => TypescriptNoUnsafeEnumAssignment::FLAGS,
             Self::TypescriptNoUnsafeEnumComparison(_) => TypescriptNoUnsafeEnumComparison::FLAGS,
             Self::TypescriptNoUnsafeFunctionType(_) => TypescriptNoUnsafeFunctionType::FLAGS,
             Self::TypescriptNoUnsafeMemberAccess(_) => TypescriptNoUnsafeMemberAccess::FLAGS,
@@ -17383,6 +16397,7 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeDeclarationMerging(_) => {
                 TypescriptNoUnsafeDeclarationMerging::VERSION
             }
+            Self::TypescriptNoUnsafeEnumAssignment(_) => TypescriptNoUnsafeEnumAssignment::VERSION,
             Self::TypescriptNoUnsafeEnumComparison(_) => TypescriptNoUnsafeEnumComparison::VERSION,
             Self::TypescriptNoUnsafeFunctionType(_) => TypescriptNoUnsafeFunctionType::VERSION,
             Self::TypescriptNoUnsafeMemberAccess(_) => TypescriptNoUnsafeMemberAccess::VERSION,
@@ -18428,6 +17443,7 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeDeclarationMerging(_) => {
                 TypescriptNoUnsafeDeclarationMerging::INFO
             }
+            Self::TypescriptNoUnsafeEnumAssignment(_) => TypescriptNoUnsafeEnumAssignment::INFO,
             Self::TypescriptNoUnsafeEnumComparison(_) => TypescriptNoUnsafeEnumComparison::INFO,
             Self::TypescriptNoUnsafeFunctionType(_) => TypescriptNoUnsafeFunctionType::INFO,
             Self::TypescriptNoUnsafeMemberAccess(_) => TypescriptNoUnsafeMemberAccess::INFO,
@@ -19374,6 +18390,7 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeAssignment(rule) => rule.types_info(),
             Self::TypescriptNoUnsafeCall(rule) => rule.types_info(),
             Self::TypescriptNoUnsafeDeclarationMerging(rule) => rule.types_info(),
+            Self::TypescriptNoUnsafeEnumAssignment(rule) => rule.types_info(),
             Self::TypescriptNoUnsafeEnumComparison(rule) => rule.types_info(),
             Self::TypescriptNoUnsafeFunctionType(rule) => rule.types_info(),
             Self::TypescriptNoUnsafeMemberAccess(rule) => rule.types_info(),
@@ -20249,6 +19266,7 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeAssignment(rule) => rule.run_info(),
             Self::TypescriptNoUnsafeCall(rule) => rule.run_info(),
             Self::TypescriptNoUnsafeDeclarationMerging(rule) => rule.run_info(),
+            Self::TypescriptNoUnsafeEnumAssignment(rule) => rule.run_info(),
             Self::TypescriptNoUnsafeEnumComparison(rule) => rule.run_info(),
             Self::TypescriptNoUnsafeFunctionType(rule) => rule.run_info(),
             Self::TypescriptNoUnsafeMemberAccess(rule) => rule.run_info(),
@@ -21196,6 +20214,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::TypescriptNoUnsafeDeclarationMerging(
             TypescriptNoUnsafeDeclarationMerging::default(),
         ),
+        RuleEnum::TypescriptNoUnsafeEnumAssignment(TypescriptNoUnsafeEnumAssignment::default()),
         RuleEnum::TypescriptNoUnsafeEnumComparison(TypescriptNoUnsafeEnumComparison::default()),
         RuleEnum::TypescriptNoUnsafeFunctionType(TypescriptNoUnsafeFunctionType::default()),
         RuleEnum::TypescriptNoUnsafeMemberAccess(TypescriptNoUnsafeMemberAccess::default()),

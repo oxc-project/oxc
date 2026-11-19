@@ -32,14 +32,11 @@ impl PartialEq for ScientificNotation<'_> {
 
 impl<'a> RawNum<'a> {
     fn new(num: &str) -> Option<RawNum<'_>> {
-        // remove sign
         let num = num.trim_start_matches(['+', '-']);
 
         let (int, num_without_int) = {
-            // skip leading zeros
             let num_without_zeros = num.trim_start_matches('0');
 
-            // read the integer part and store the end index
             let int_end = num_without_zeros
                 .chars()
                 .position(|ch| !ch.is_ascii_digit())
@@ -48,7 +45,6 @@ impl<'a> RawNum<'a> {
             // if no integer part was found, default to 0
             let int = if int_end == 0 { "0" } else { &num_without_zeros[..int_end] };
 
-            // make a slice of the rest of the string
             let num_without_int = &num_without_zeros[int_end..];
 
             (int, num_without_int)
@@ -128,6 +124,16 @@ fn strip_numeric_separators(raw: &str) -> Cow<'_, str> {
         return Cow::Borrowed(raw);
     }
     raw.cow_replace('_', "")
+}
+
+/// Drops a `.` that no digit follows (`5.`, `1.e5`), as ESLint does: it
+/// doesn't make the literal a float, so its trailing zeros stay insignificant.
+fn without_empty_fraction(raw: &str) -> Cow<'_, str> {
+    let mantissa_end = raw.find(['e', 'E']).unwrap_or(raw.len());
+    if mantissa_end == 0 || raw.as_bytes()[mantissa_end - 1] != b'.' {
+        return Cow::Borrowed(raw);
+    }
+    Cow::Owned(format!("{}{}", &raw[..mantissa_end - 1], &raw[mantissa_end..]))
 }
 
 fn non_base_ten_literal_is_exact(raw: &str) -> bool {
@@ -263,6 +269,7 @@ fn base_ten_loses_precision(node: &'_ NumericLiteral) -> bool {
     }
 
     let raw = strip_numeric_separators(raw);
+    let raw = without_empty_fraction(&raw);
     let Some(raw) = normalize(&raw, false) else {
         return true;
     };

@@ -69,7 +69,7 @@ impl Rule for NoImportAssign {
         let symbol_table = ctx.scoping();
         if let Some(specifiers) = &import_decl.specifiers {
             for specifier in specifiers {
-                let symbol_id = specifier.local().symbol_id();
+                let symbol_id = specifier.symbol_id();
                 let is_namespace_specifier =
                     matches!(specifier, ImportDeclarationSpecifier::ImportNamespaceSpecifier(_));
                 for reference in symbol_table.get_resolved_references(symbol_id) {

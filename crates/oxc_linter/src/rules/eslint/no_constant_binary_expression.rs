@@ -203,7 +203,7 @@ impl NoConstantBinaryExpression {
                 unary_expr.argument.get_inner_expression().is_literal()
             }
             Expression::Identifier(ident) => {
-                ident.name == "undefined" && ctx.is_reference_to_global_variable(ident)
+                ident.is_undefined() && ctx.is_reference_to_global_variable(ident)
             }
             expr => expr.is_literal() || expr.is_no_substitution_template(),
         }

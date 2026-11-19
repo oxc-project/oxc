@@ -2,6 +2,7 @@ use std::path::Path;
 
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_semantic::AstNode;
 use oxc_span::Span;
 use oxc_str::CompactStr;
 use rustc_hash::FxHashMap;
@@ -105,17 +106,20 @@ impl NoRestrictedMatchersConfig {
         DefaultRuleConfig::<Self>::from_value(value.clone()).map(DefaultRuleConfig::into_inner)
     }
 
-    pub fn run<'a>(&self, possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-        let node = possible_jest_node.node;
+    pub fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
 
-        if !is_type_of_jest_fn_call(call_expr, possible_jest_node, ctx, &[JestFnKind::Expect]) {
+        let Some(possible_jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx)
+        else {
+            return;
+        };
+        if !is_type_of_jest_fn_call(call_expr, &possible_jest_node, ctx, &[JestFnKind::Expect]) {
             return;
         }
 
-        let Some(jest_fn_call) = parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx)
+        let Some(jest_fn_call) = parse_expect_jest_fn_call(call_expr, &possible_jest_node, ctx)
         else {
             return;
         };

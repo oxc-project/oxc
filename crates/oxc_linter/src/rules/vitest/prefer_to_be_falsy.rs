@@ -1,6 +1,12 @@
+use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    utils::PossibleJestNode,
+};
 
 use super::prefer_to_be_truthy::prefer_to_be_simply_bool;
 
@@ -42,12 +48,16 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferToBeFalsy {
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        jest_node: &crate::utils::PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        prefer_to_be_simply_bool(jest_node, ctx, false);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(call_expr) = node.kind() else { return };
+        let Some(jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx) else {
+            return;
+        };
+        prefer_to_be_simply_bool(&jest_node, ctx, false);
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_test()
     }
 }
 

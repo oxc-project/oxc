@@ -33,7 +33,9 @@ impl Tester {
 
         let options = lint_command().run_inner(new_args.as_slice()).unwrap();
         let mut output = Vec::new();
-        let _ = CliRunner::new(options, None).with_cwd(self.cwd.clone()).run(&mut output);
+        let _ = CliRunner::new(options, None)
+            .with_cwd(self.cwd.clone())
+            .run(&mut output, &mut Vec::new());
     }
 
     pub fn test_output(&self, args: &[&str]) -> (String, CliRunResult) {
@@ -42,14 +44,30 @@ impl Tester {
 
         let options = lint_command().run_inner(new_args.as_slice()).unwrap();
         let mut output = Vec::new();
-        let result = CliRunner::new(options, None).with_cwd(self.cwd.clone()).run(&mut output);
+        let result = CliRunner::new(options, None)
+            .with_cwd(self.cwd.clone())
+            .run(&mut output, &mut Vec::new());
         (String::from_utf8(output).unwrap(), result)
+    }
+
+    pub fn test_output_with_stderr(&self, args: &[&str]) -> (String, String, CliRunResult) {
+        let mut new_args = vec!["--silent"];
+        new_args.extend(args);
+
+        let options = lint_command().run_inner(new_args.as_slice()).unwrap();
+        let mut stdout = Vec::new();
+        let mut stderr = Vec::new();
+        let result =
+            CliRunner::new(options, None).with_cwd(self.cwd.clone()).run(&mut stdout, &mut stderr);
+        (String::from_utf8(stdout).unwrap(), String::from_utf8(stderr).unwrap(), result)
     }
 
     pub fn test_output_verbose(&self, args: &[&str]) -> String {
         let options = lint_command().run_inner(args).unwrap();
         let mut output = Vec::new();
-        let _ = CliRunner::new(options, None).with_cwd(self.cwd.clone()).run(&mut output);
+        let _ = CliRunner::new(options, None)
+            .with_cwd(self.cwd.clone())
+            .run(&mut output, &mut Vec::new());
 
         String::from_utf8(output).unwrap()
     }
@@ -92,6 +110,16 @@ impl Tester {
     }
 
     pub fn test_and_snapshot_multiple(&self, multiple_args: &[&[&str]]) {
+        let current_cwd = std::env::current_dir().unwrap();
+        let relative_dir = self.cwd.strip_prefix(&current_cwd).unwrap_or(&self.cwd);
+        let full_args_list =
+            multiple_args.iter().map(|args| args.join(" ")).collect::<Vec<String>>().join(" ");
+        let snapshot_file_name = format!("{}_{}", relative_dir.to_str().unwrap(), full_args_list);
+
+        self.test_and_snapshot_named(&snapshot_file_name, multiple_args);
+    }
+
+    pub fn test_and_snapshot_named(&self, name: &str, multiple_args: &[&[&str]]) {
         let mut output: Vec<u8> = Vec::new();
         let current_cwd = std::env::current_dir().unwrap();
         let relative_dir = self.cwd.strip_prefix(&current_cwd).unwrap_or(&self.cwd);
@@ -106,7 +134,9 @@ impl Tester {
                 format!("working directory: {}\n", relative_dir.to_str().unwrap()).as_bytes(),
             );
             output.extend_from_slice(b"----------\n");
-            let result = CliRunner::new(options, None).with_cwd(self.cwd.clone()).run(&mut output);
+            let result = CliRunner::new(options, None)
+                .with_cwd(self.cwd.clone())
+                .run(&mut output, &mut Vec::new());
 
             output.extend_from_slice(b"----------\n");
             output.extend_from_slice(format!("CLI result: {result:?}\n").as_bytes());
@@ -150,14 +180,8 @@ impl Tester {
         let cwd_string = cwd_string.cow_replace('\\', "/").to_string(); // for windows
         let output_string = output_string.cow_replace(&cwd_string, "<cwd>");
 
-        let full_args_list =
-            multiple_args.iter().map(|args| args.join(" ")).collect::<Vec<String>>().join(" ");
-
-        let snapshot_file_name = format!("{}_{}", relative_dir.to_str().unwrap(), full_args_list);
-
         // windows can not handle filenames with *
-        // allow replace instead of cow_replace. It only test
-        let snapshot_file_name = snapshot_file_name.cow_replace('*', "_").to_string();
+        let snapshot_file_name = name.cow_replace('*', "_").to_string();
         settings.bind(|| {
             insta::assert_snapshot!(snapshot_file_name, output_string);
         });

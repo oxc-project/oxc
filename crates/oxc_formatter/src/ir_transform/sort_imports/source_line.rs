@@ -90,7 +90,7 @@ impl<'a> SourceLine<'a> {
 
             // Everything before the `import` keyword (e.g. leading comments) is not the head.
             if !seen_import_keyword {
-                if matches!(element, FormatElement::Token { text: "import" }) {
+                if matches!(element, FormatElement::Token { text } if text.as_str() == "import") {
                     seen_import_keyword = true;
                     expect_type_keyword = true;
                 }
@@ -100,7 +100,7 @@ impl<'a> SourceLine<'a> {
             match element {
                 FormatElement::Token { text } => {
                     if !seen_from_keyword {
-                        match *text {
+                        match text.as_str() {
                             "type" if expect_type_keyword => is_type_import = true,
                             "*" => has_namespace_specifier = true,
                             "{" => has_named_specifier = true,
@@ -115,7 +115,7 @@ impl<'a> SourceLine<'a> {
                 }
                 FormatElement::Text { text, .. } => {
                     if source.is_none() {
-                        source = Some(text);
+                        source = Some(text.as_str());
                         // The first `Text` after `from` is the source;
                         // nothing after it (import attributes, trailing comments) affects the metadata.
                         if seen_from_keyword {

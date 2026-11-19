@@ -1,0 +1,69 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/exhaustive-deps/lint-try-finally-dependencies.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "`try`/`finally` without `catch` is not supported by React Compiler", labels: [LabeledSpan { label: Some("Unsupported `try` starts here"), span: Span { start: 419, end: 422 }, primary: true }, LabeledSpan { label: Some("This `finally` clause requires unsupported control flow"), span: Span { start: 449, end: 458 }, primary: false }], help: Some("React Compiler cannot analyze this control flow. Refactor the cleanup to avoid `finally`, or suppress this warning if this function should remain uncompiled"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Advice, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "`try`/`finally` without `catch` is not supported by React Compiler", labels: [LabeledSpan { label: Some("Unsupported `try` starts here"), span: Span { start: 577, end: 580 }, primary: true }, LabeledSpan { label: Some("This `finally` clause requires unsupported control flow"), span: Span { start: 607, end: 616 }, primary: false }], help: Some("React Compiler cannot analyze this control flow. Refactor the cleanup to avoid `finally`, or suppress this warning if this function should remain uncompiled"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Advice, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "(BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause", labels: [LabeledSpan { label: None, span: Span { start: 856, end: 865 }, primary: true }], help: Some("Rewrite the highlighted code using syntax supported by React Compiler"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Advice, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "`try`/`finally` without `catch` is not supported by React Compiler", labels: [LabeledSpan { label: Some("Unsupported `try` starts here"), span: Span { start: 1008, end: 1011 }, primary: true }, LabeledSpan { label: Some("This `finally` clause requires unsupported control flow"), span: Span { start: 1037, end: 1046 }, primary: false }], help: Some("React Compiler cannot analyze this control flow. Refactor the cleanup to avoid `finally`, or suppress this warning if this function should remain uncompiled"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Advice, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "`try`/`finally` without `catch` is not supported by React Compiler", labels: [LabeledSpan { label: Some("Unsupported `try` starts here"), span: Span { start: 1213, end: 1216 }, primary: true }, LabeledSpan { label: Some("This `finally` clause requires unsupported control flow"), span: Span { start: 1243, end: 1252 }, primary: false }], help: Some("React Compiler cannot analyze this control flow. Refactor the cleanup to avoid `finally`, or suppress this warning if this function should remain uncompiled"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Advice, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Found missing effect dependencies", labels: [LabeledSpan { label: Some("This dependency list is missing values used by the callback"), span: Span { start: 1284, end: 1286 }, primary: true }, LabeledSpan { label: Some("Missing dependency `foo`"), span: Span { start: 1267, end: 1270 }, primary: false }], help: Some("Missing dependencies can cause an effect to fire less often than it should"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("EffectExhaustiveDependencies") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/exhaustive-deps") } }
+
+// @validateExhaustiveEffectDependencies:"all" @validateNoVoidUseMemo @outputMode:"lint" @panicThreshold:"none"
+import { useCallback, useEffect, useMemo, useState } from "react";
+// A `finally` clause is not compiled, but lint rules still see the values that
+// the `try` and `finally` blocks use. Only `MissingFinallyDependency` is invalid.
+function TryBody() {
+	const [foo] = useState("bar");
+	useEffect(() => {
+		try {
+			report(foo);
+		} finally {}
+	}, [foo]);
+}
+function FinallyBody() {
+	const [foo] = useState("bar");
+	const cb = useCallback(() => {
+		try {
+			report("x");
+		} finally {
+			report(foo);
+		}
+	}, [foo]);
+	return <button onClick={cb} />;
+}
+function FinallyWithCatch() {
+	const [foo] = useState("bar");
+	const cb = useCallback(() => {
+		try {
+			report("x");
+		} catch {
+			report("y");
+		} finally {
+			report(foo);
+		}
+	}, [foo]);
+	return <button onClick={cb} />;
+}
+function ReturnInTry({ foo }) {
+	const value = useMemo(() => {
+		try {
+			return foo;
+		} finally {
+			report("z");
+		}
+	}, [foo]);
+	return <div>{value}</div>;
+}
+function MissingFinallyDependency() {
+	const [foo] = useState("bar");
+	useEffect(() => {
+		try {
+			report("x");
+		} finally {
+			report(foo);
+		}
+	}, []);
+}

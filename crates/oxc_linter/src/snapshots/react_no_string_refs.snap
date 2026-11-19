@@ -3,6 +3,20 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ react(no-string-refs): Using this.refs is deprecated.
+   ╭─[no_string_refs.tsx:1:53]
+ 1 │ class C extends React.Component { method() { return this['refs']; } }
+   ·                                                     ────────────
+   ╰────
+  help: Using this.xxx instead of this.refs.xxx
+
+  ⚠ react(no-string-refs): Using this.refs is deprecated.
+   ╭─[no_string_refs.tsx:1:53]
+ 1 │ class C extends React.Component { method() { return this?.refs; } }
+   ·                                                     ──────────
+   ╰────
+  help: Using this.xxx instead of this.refs.xxx
+
+  ⚠ react(no-string-refs): Using this.refs is deprecated.
    ╭─[no_string_refs.tsx:4:35]
  3 │                 componentDidMount: function() {
  4 │                   var component = this.refs.hello;

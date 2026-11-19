@@ -105,17 +105,11 @@ impl Rule for NoZeroFractions {
 }
 
 fn format_raw(raw: &str) -> Option<(String, bool)> {
-    // Check if the string contains 'e' or 'E' (scientific notation)
-    if let Some((base, exp)) = raw.split_once(['e', 'E']) {
-        // Process the base part
-        let (formatted_base, has_fraction) = format_raw(base)?;
-        // Recombine the scientific notation
-        return Some((format!("{formatted_base}e{exp}"), has_fraction));
-    }
     let (before, after_and_dot) = raw.split_once('.')?;
-    let mut after_parts = after_and_dot.splitn(2, |c: char| !c.is_ascii_digit() && c != '_');
-    let dot_and_fractions = after_parts.next()?;
-    let after = after_parts.next().unwrap_or("");
+    let fraction_end = after_and_dot
+        .find(|c: char| !c.is_ascii_digit() && c != '_')
+        .unwrap_or(after_and_dot.len());
+    let (dot_and_fractions, after) = after_and_dot.split_at(fraction_end);
 
     let fixed_dot_and_fractions = dot_and_fractions.trim_end_matches(['0', '.', '_']);
     let formatted = format!(
@@ -145,6 +139,10 @@ fn test() {
         "const foo = 123123123.4",
         "const foo = 1e3",
         "1 .toString()",
+        "export const a = -4.6566128731E+100;",
+        "export const b = -4.6566128731e+100;",
+        "export const c = 4.6566128731E+100;",
+        "export const d = 4.6566128731E+10;",
     ];
 
     let fail = vec![
@@ -228,6 +226,10 @@ fn test() {
         (r"async function foo(){await.0}", r"async function foo(){await 0}"),
         (r"function* foo(){yield.0}", r"function* foo(){yield 0}"),
         (r"delete.0", r"delete 0"),
+        (r"const foo = 1.0E+10", r"const foo = 1E+10"),
+        (r"const foo = 1.2300E-10", r"const foo = 1.23E-10"),
+        (r"const foo = 1.E10", r"const foo = 1E10"),
+        (r"const foo = -.0E+10", r"const foo = -0E+10"),
     ];
 
     Tester::new(NoZeroFractions::NAME, NoZeroFractions::PLUGIN, pass, fail)

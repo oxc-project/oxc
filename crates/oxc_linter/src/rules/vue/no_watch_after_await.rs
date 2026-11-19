@@ -14,9 +14,7 @@ use oxc_semantic::{ScopeFlags, Scoping, SymbolId};
 use oxc_span::Span;
 
 use crate::module_record::{ImportEntry, ImportImportName};
-use crate::{
-    AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule, utils::find_property,
-};
+use crate::{AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule};
 
 fn no_watch_after_await_diagnostic(span: Span, name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("`{name}` is forbidden after an `await` expression."))
@@ -107,7 +105,7 @@ impl Rule for NoWatchAfterAwait {
 }
 
 fn check_setup_in_object<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
-    let Some(setup_prop) = find_property(obj_expr, "setup") else {
+    let Some(setup_prop) = obj_expr.find_property("setup") else {
         return;
     };
 

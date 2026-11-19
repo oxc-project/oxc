@@ -139,7 +139,8 @@ function printNumericLiteral(
     } else {
       printSpaceBeforeIdentifier(state);
     }
-    writeWithMap(state, "Infinity", CAT_IDENT, node.start, node.end, node);
+    // Not `Infinity`, a local binding can shadow the global
+    writeWithMap(state, "1e400", CAT_IDENT, node.start, node.end, node);
 
     if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
   } else if (Object.is(value, 0)) {

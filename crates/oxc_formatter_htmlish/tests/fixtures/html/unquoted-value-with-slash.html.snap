@@ -1,0 +1,21 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<a href=https://www.mozilla.org/>favorite website</a>
+<img src=a.png/>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<a href="https://www.mozilla.org/">favorite website</a>
+<img src="a.png/" />
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<a href="https://www.mozilla.org/">favorite website</a>
+<img src="a.png/" />
+
+===================== End =====================

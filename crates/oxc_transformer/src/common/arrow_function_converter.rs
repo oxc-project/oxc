@@ -957,18 +957,8 @@ impl<'a> ArrowFunctionConverter<'a> {
             // in `prop => super[prop]` or `(prop, value) => super[prop] = value` which can clash.
             let param_binding =
                 ctx.generate_uid("prop", scope_id, SymbolFlags::FunctionScopedVariable);
-            let param = FormalParameter::new(
-                SPAN,
-                [],
-                param_binding.create_binding_pattern(ctx),
-                None,
-                None,
-                false,
-                None,
-                false,
-                false,
-                ctx,
-            );
+            let param =
+                FormalParameter::new_plain(SPAN, param_binding.create_binding_pattern(ctx), ctx);
             items.push(param);
 
             // `super` -> `super[prop]`
@@ -987,18 +977,8 @@ impl<'a> ArrowFunctionConverter<'a> {
             // in `value => super.prop = value` or `(prop, value) => super[prop] = value` which can clash.
             let param_binding =
                 ctx.generate_uid("value", scope_id, SymbolFlags::FunctionScopedVariable);
-            let param = FormalParameter::new(
-                SPAN,
-                [],
-                param_binding.create_binding_pattern(ctx),
-                None,
-                None,
-                false,
-                None,
-                false,
-                false,
-                ctx,
-            );
+            let param =
+                FormalParameter::new_plain(SPAN, param_binding.create_binding_pattern(ctx), ctx);
             items.push(param);
 
             // `super[prop]` -> `super[prop] = value`

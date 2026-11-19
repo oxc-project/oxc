@@ -2,8 +2,11 @@
 //! destinations and titles are re-derived from their cooked values,
 //! reference forms other than `[text][label]` are re-emitted from the source.
 
+use std::borrow::Cow;
+
 use oxc_allocator::StringBuilder;
 use oxc_formatter_core::{
+    arena_cow_str,
     builders::{group, indent, soft_line_break_or_space, text, token},
     write,
 };
@@ -190,7 +193,7 @@ fn print_label<'a>(pieces: &[Segment], f: &MarkdownFormatter<'_, 'a>) -> &'a str
     out.into_str()
 }
 
-/// The destination as Prettier `main` prints it (prettier/prettier#19482, #19849, #19891):
+/// The destination as Prettier prints it (prettier/prettier#19482, #19849, #19891):
 ///
 /// - `\` followed by ASCII punctuation, or last, is doubled (it would start an escape)
 /// - `&` that would start a character reference becomes `\&`
@@ -198,7 +201,7 @@ fn print_label<'a>(pieces: &[Segment], f: &MarkdownFormatter<'_, 'a>) -> &'a str
 ///   a control character, a leading `<`, or parentheses;
 ///   definitions tolerate balanced parentheses (CommonMark: nested up to three deep)
 fn print_url<'a>(
-    url: &str,
+    url: &Cow<'a, str>,
     unwrap_balanced_parens: bool,
     f: &MarkdownFormatter<'_, 'a>,
 ) -> &'a str {
@@ -210,6 +213,10 @@ fn print_url<'a>(
         } else {
             url.contains(['(', ')'])
         };
+    // Nothing to escape: the (usually borrowed) url prints as is
+    if !needs_brackets && !bytes.iter().any(|&b| matches!(b, b'\\' | b'&')) {
+        return arena_cow_str(url, f);
+    }
     let mut out = StringBuilder::with_capacity_in(url.len() + 2, f.allocator());
     if needs_brackets {
         out.push('<');

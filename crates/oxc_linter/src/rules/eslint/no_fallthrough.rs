@@ -9,18 +9,19 @@ use serde::Deserialize;
 
 use oxc_ast::{
     AstKind,
-    ast::{Statement, SwitchCase, SwitchStatement},
+    ast::{Expression, Statement, SwitchCase, SwitchStatement},
 };
 use oxc_cfg::{
-    BlockNodeId, EdgeType, ErrorEdgeKind, InstructionKind,
+    BlockNodeId, EdgeType, ErrorEdgeKind, EvalConstConditionResult, Instruction, InstructionKind,
     graph::{
         Direction,
-        visit::{EdgeRef, neighbors_filtered_by_edge_weight},
+        visit::{Control, DfsEvent, EdgeRef, set_depth_first_search},
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_syntax::line_terminator::is_line_terminator;
 
 use crate::{
     AstNode,
@@ -268,53 +269,43 @@ impl Rule for NoFallthrough {
 
         let (cfg_ids, tests, default, exit) = get_switch_semantic_cases(ctx, node, switch);
 
-        let Some(default_or_exit) = default.or(exit) else {
+        if default.or(exit).is_none() {
             // TODO: our `get_switch_semantic_cases` can't evaluate cfg_ids for switch statements
             // with conditional discriminant. If we can access the IDs correctly it should never be `None`.
             return;
-        };
+        }
 
-        let fallthroughs: FxHashSet<BlockNodeId> = neighbors_filtered_by_edge_weight(
-            graph,
-            switch_id,
-            &|edge_type| match edge_type {
-                EdgeType::Normal | EdgeType::Jump | EdgeType::Error(ErrorEdgeKind::Explicit) => {
-                    None
-                }
-                _ => Some(None),
-            },
-            &mut |&node, last_cond: Option<BlockNodeId>| {
-                if node == switch_id {
-                    (last_cond, true)
-                } else if node == default_or_exit {
-                    if default.is_some() {
-                        // Continue past default to detect fallthrough FROM default
-                        (last_cond, true)
-                    } else {
-                        // Stop at exit block to prevent exploring outside switch
-                        (last_cond, false)
-                    }
-                } else if default.is_some() && Some(node) == exit {
-                    // When a default exists, stop at the shared end-of-switch block
-                    // to avoid traversing beyond the switch body.
-                    (last_cond, false)
-                } else if tests.contains_key(&node) {
-                    (last_cond, true)
-                } else if cfg.basic_block(node).is_unreachable() {
-                    (None, false)
+        let mut fallthroughs = FxHashSet::default();
+        let _: Control<()> = set_depth_first_search(graph, Some(switch_id), |event| match event {
+            DfsEvent::TreeEdge(source, target) => {
+                if graph.edges_connecting(source, target).any(|edge| match edge.weight() {
+                    EdgeType::Normal => !is_always_true_loop_condition(source, ctx),
+                    EdgeType::Jump | EdgeType::Error(ErrorEdgeKind::Explicit) => true,
+                    _ => false,
+                }) {
+                    Control::Continue
                 } else {
-                    let fallthrough = graph
-                        .edges_directed(node, Direction::Outgoing)
-                        .map(|edge| edge.target())
-                        .find(|target| Some(*target) == default || tests.contains_key(target));
-
-                    (fallthrough, fallthrough.is_none())
+                    Control::Prune
                 }
-            },
-        )
-        .into_iter()
-        .flatten()
-        .collect();
+            }
+            DfsEvent::Discover(node, _) => {
+                if node == switch_id || Some(node) == default || tests.contains_key(&node) {
+                    Control::Continue
+                } else if Some(node) == exit || cfg.basic_block(node).is_unreachable() {
+                    Control::Prune
+                } else if let Some(fallthrough) = graph
+                    .edges_directed(node, Direction::Outgoing)
+                    .map(|edge| edge.target())
+                    .find(|target| Some(*target) == default || tests.contains_key(target))
+                {
+                    fallthroughs.insert(fallthrough);
+                    Control::Prune
+                } else {
+                    Control::Continue
+                }
+            }
+            _ => Control::Continue,
+        });
 
         let mut iter = switch.cases.iter().zip(cfg_ids).peekable();
         while let Some((case, _)) = iter.next() {
@@ -347,6 +338,31 @@ impl Rule for NoFallthrough {
     }
 }
 
+fn is_always_true_loop_condition(node: BlockNodeId, ctx: &LintContext) -> bool {
+    let cfg = ctx.cfg();
+    let instructions = cfg.basic_block(node).instructions();
+    if instructions.is_empty() {
+        return cfg
+            .is_infinite_loop_start(node, |_| EvalConstConditionResult::NotFound)
+            .is_some_and(|(_, loop_end)| loop_end == node);
+    }
+
+    let [Instruction { kind: InstructionKind::Condition, node_id: Some(id) }] =
+        instructions.as_slice()
+    else {
+        return false;
+    };
+    let test = match ctx.nodes().parent_kind(*id) {
+        AstKind::WhileStatement(statement) => Some(&statement.test),
+        AstKind::DoWhileStatement(statement) => Some(&statement.test),
+        AstKind::ForStatement(statement) => statement.test.as_ref(),
+        _ => None,
+    };
+    test.is_some_and(
+        |test| matches!(test.without_parentheses(), Expression::BooleanLiteral(lit) if lit.value),
+    )
+}
+
 fn possible_fallthrough_comment_span(case: &SwitchCase) -> (u32, Option<u32>) {
     if let Ok(Statement::BlockStatement(block)) = case.consequent.iter().exactly_one() {
         let span = block.span;
@@ -366,7 +382,21 @@ impl NoFallthrough {
     fn has_blanks_between(ctx: &LintContext, range: Range<u32>) -> bool {
         let in_between = &ctx.source_text()[range.start as usize..range.end as usize];
         // check for at least 2 new lines, we allow the first new line for formatting.
-        in_between.bytes().filter(|it| *it == b'\n').nth(1).is_some()
+        let mut chars = in_between.chars().peekable();
+        let mut line_breaks = 0;
+        while let Some(ch) = chars.next() {
+            if !is_line_terminator(ch) {
+                continue;
+            }
+            if ch == '\r' && chars.peek() == Some(&'\n') {
+                chars.next();
+            }
+            line_breaks += 1;
+            if line_breaks == 2 {
+                return true;
+            }
+        }
+        false
     }
 
     fn maybe_allow_fallthrough_trivia(
@@ -619,6 +649,36 @@ fn test() {
         ),
         // Issue #21320: breaks on multi-line case statements
         ("switch(foo) {\n  case A\n    .B:\n  case B.A:\n    break;\n}", None),
+        (
+            "export async function run(cmd: string, poll: () => Promise<boolean>) {
+                switch (cmd) {
+                    case 'wait': {
+                        while (true) {
+                            if (await poll()) return 0;
+                        }
+                    }
+                    case 'other':
+                        return 1;
+                }
+                return 2;
+            }",
+            None,
+        ),
+        ("switch(foo) { case 0: while (true) {} case 1: bar(); }", None),
+        ("switch(foo) { case 0: for (;;) {} case 1: bar(); }", None),
+        ("switch(foo) { case 0: do {} while (true); case 1: bar(); }", None),
+        (
+            "switch(foo) { case 0: while (true) { switch (bar) { case 0: break; } } case 1: baz(); }",
+            None,
+        ),
+        ("switch(foo) { case 0: while (true) { while (bar()) { break; } } case 1: baz(); }", None),
+        ("switch(foo) { case 0: while (true) { continue; } case 1: baz(); }", None),
+        ("switch(foo) { case 0: while (true) {} bar(); default: baz(); }", None),
+        ("switch(foo) { case 0: do { bar(); } while (true); case 1: baz(); }", None),
+        ("switch(foo) { case 0: while ((true)) { bar(); } case 1: baz(); }", None),
+        ("switch(foo) { case 0: do { bar(); } while ((true)); case 1: baz(); }", None),
+        ("switch(foo) { case 0: for (; (true); bar()) {} case 1: baz(); }", None),
+        ("switch(foo) { case 0: while (true) { throw x; break; } case 1: baz(); }", None),
     ];
 
     let fail = vec![
@@ -689,9 +749,38 @@ fn test() {
         // Issue #6417: switch with logical operators should detect fallthrough
         ("switch(true) { case x === 1 || x === 2: a(); case x === 3: b(); }", None),
         ("switch(true) { case x === 1 && y: a(); case x === 3: b(); }", None),
+        ("switch(foo) { case 0: while (true) { if (bar()) break; } case 1: baz(); }", None),
+        ("switch(foo) { case 0: do { if (bar()) break; } while (true); case 1: baz(); }", None),
+        ("switch(foo) { case 0: for (;;) { if (bar()) break; } case 1: baz(); }", None),
+        ("switch(foo) { case 0: while (bar()) {} case 1: baz(); }", None),
+        ("switch(foo) { case 0: if (bar()) { while (true) {} } case 1: baz(); }", None),
+        ("switch(foo) { case 0: label: while (true) { break label; } case 1: baz(); }", None),
+        (
+            "switch(foo) { case 0: while (true) {} /* falls through */ case 1: baz(); }",
+            Some(serde_json::json!([{ "reportUnusedFallthroughComment": true }])),
+        ),
         // TODO: it should fail but doesn't, we ignore conditional discriminants for now.
         // ("switch (a === b ? c : d) { case 1: ; case 2: ; case 3: ; }", None)
     ];
 
     Tester::new(NoFallthrough::NAME, NoFallthrough::PLUGIN, pass, fail).test_and_snapshot();
+}
+
+#[test]
+fn empty_case_line_terminators() {
+    use crate::tester::Tester;
+
+    let mut pass = Vec::new();
+    let mut fail: Vec<(String, Option<serde_json::Value>)> = Vec::new();
+    for separator in ["\n", "\r", "\r\n", "\u{2028}", "\u{2029}"] {
+        pass.push((format!("switch (x) {{ case 1:{separator}case 2: break; }}"), None));
+        fail.push((format!("switch (x) {{ case 1:{separator}{separator}case 2: break; }}"), None));
+        pass.push((
+            format!("switch (x) {{ case 1:{separator}{separator}case 2: break; }}"),
+            Some(serde_json::json!([{ "allowEmptyCase": true }])),
+        ));
+    }
+    let pass = pass.iter().map(|(code, config)| (code.as_str(), config.clone())).collect();
+    let fail = fail.iter().map(|(code, config)| (code.as_str(), config.clone())).collect();
+    Tester::new(NoFallthrough::NAME, NoFallthrough::PLUGIN, pass, fail).test();
 }

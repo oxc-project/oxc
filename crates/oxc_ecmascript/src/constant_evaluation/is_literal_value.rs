@@ -261,14 +261,10 @@ fn can_convert_to_number_transparently<'a>(
             | BinaryOperator::BitwiseOR
             | BinaryOperator::BitwiseXOR
             | BinaryOperator::BitwiseAnd => {
-                if (matches!(&e.left, Expression::NumericLiteral(_))
+                (matches!(&e.left, Expression::NumericLiteral(_))
                     && can_convert_to_number_transparently(&e.right, include_functions, ctx))
                     || (matches!(&e.right, Expression::NumericLiteral(_))
                         && can_convert_to_number_transparently(&e.left, include_functions, ctx))
-                {
-                    return true;
-                }
-                false
             }
             BinaryOperator::LessThan
             | BinaryOperator::LessEqualThan

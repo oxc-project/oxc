@@ -76,6 +76,13 @@ pub fn invalid_extended_atom_escape(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn invalid_atom_escape(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("{PREFIX} Invalid escape sequence"))
+        .with_label(span)
+        .with_help("Use a valid escape sequence or escape the backslash with `\\\\`")
+}
+
+#[cold]
 pub fn invalid_braced_quantifier(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("{PREFIX} Invalid braced quantifier"))
         .with_label(span)

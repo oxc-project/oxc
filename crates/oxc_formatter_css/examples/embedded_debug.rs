@@ -13,7 +13,7 @@ use std::path::Path;
 
 use oxc_allocator::Allocator;
 use oxc_formatter_core::{Document, FormatOptions, FormatSession, InputKind};
-use oxc_formatter_css::{CssFormatOptions, CssVariant, format_to_ir};
+use oxc_formatter_css::{CssEmbeddedIn, CssFormatOptions, CssVariant, format_to_ir};
 
 fn main() {
     let mut args = pico_args::Arguments::from_env();
@@ -32,7 +32,7 @@ fn main() {
     let allocator = Allocator::new();
     let session = FormatSession::new(&allocator, InputKind::Fragment);
 
-    match format_to_ir(&session, &source_text, options, /* template_placeholders */ true) {
+    match format_to_ir(&session, &source_text, options, Some(CssEmbeddedIn::CssInJsTemplate)) {
         Ok(embedded) => {
             let document = Document::new(embedded.ir, Vec::new());
             // `elements` borrows the arena (not the document) and group modes are `Cell`s,

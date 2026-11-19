@@ -6,7 +6,6 @@ use oxfmt::cli::{CliRunResult, WalkRunner, format_command, init_rayon, init_trac
 
 #[tokio::main]
 async fn main() -> CliRunResult {
-    // Parse command line arguments from std::env::args()
     let command = format_command().run();
 
     init_tracing();

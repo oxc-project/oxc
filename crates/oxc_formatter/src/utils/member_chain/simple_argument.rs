@@ -1,3 +1,5 @@
+use unicode_width::UnicodeWidthStr;
+
 use oxc_ast::{ast::*, match_expression};
 
 /// This enum tracks the arguments inside a call expressions and checks if they are
@@ -8,9 +10,9 @@ use oxc_ast::{ast::*, match_expression};
 ///
 /// Criteria are different:
 /// - *complex*: if the chain of simple arguments exceeds the depth 2 or higher
-/// - *complex*: if the argument is a [RegExpLiteral] with len() greater than 5
+/// - *complex*: if the argument is a [RegExpLiteral] with width greater than 5
 /// - *simple*: the argument is a literal
-/// - *simple*: the argument is a [RegExpLiteral] with len() less than 5
+/// - *simple*: the argument is a [RegExpLiteral] with width less than 5
 /// - *simple*: the argument is a [`ThisExpression`]
 /// - *simple*: the argument is a [`IdentifierReference`]
 /// - *simple*: the argument is a [`Super`]
@@ -68,7 +70,7 @@ impl<'a, 'b> SimpleArgument<'a, 'b> {
                 | Expression::ThisExpression(_)
                 | Expression::Identifier(_)
                 | Expression::Super(_) => true,
-                Expression::RegExpLiteral(regex) => regex.regex.pattern.text.len() <= 5,
+                Expression::RegExpLiteral(regex) => regex.regex.pattern.text.width() <= 5,
                 Expression::TemplateLiteral(template) => {
                     is_simple_template_literal(template, depth + 1)
                 }

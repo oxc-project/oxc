@@ -81,7 +81,7 @@ pub fn run() -> Result<(), io::Error> {
 
     let mut out = String::new();
 
-    let width = 10;
+    let width = 11;
     writeln!(
         out,
         "{:width$} | {:width$} | {:width$} | {:width$} | {:width$} |",
@@ -127,9 +127,9 @@ pub fn run() -> Result<(), io::Error> {
         let s = format!(
             "{:width$} | {:width$} | {:width$} | {:width$} | {:width$} | {:width$} | {}\n\n",
             format_size(file.source_text.len(), DECIMAL),
-            format_size(minified.len(), DECIMAL),
+            format_bytes(minified.len()),
             targets[file.file_name.as_str()],
-            format_size(gzip_size(&minified), DECIMAL),
+            format_bytes(gzip_size(&minified)),
             gzip_targets[file.file_name.as_str()],
             iterations,
             file.file_name,
@@ -192,6 +192,20 @@ fn property_mangle_options() -> ManglePropertiesOptions {
     let mut options = ManglePropertiesOptions::from_pattern("^_").expect("valid property regex");
     options.mangle_quoted = true;
     options
+}
+
+/// Exact byte count, e.g. `3,311,949 B`, so that every byte of change shows in the snapshot.
+fn format_bytes(bytes: usize) -> String {
+    let digits = bytes.to_string();
+    let mut out = String::with_capacity(digits.len() + digits.len() / 3 + 2);
+    for (i, digit) in digits.chars().enumerate() {
+        if i > 0 && (digits.len() - i).is_multiple_of(3) {
+            out.push(',');
+        }
+        out.push(digit);
+    }
+    out.push_str(" B");
+    out
 }
 
 fn gzip_size(s: &str) -> usize {

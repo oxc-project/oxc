@@ -18,72 +18,150 @@
 //! - [`type_context`]: Is an angle bracket part of a TypeScript type?
 //!   `coalesce` asks this for runs like `>>` and `<<`, and `carve` for some `<` in `.tsx` files.
 //!
-//! Every question reads the lex through a [`Tokens`] view, which the asking stage builds over its
-//! buffers, and keeps what it learns across the lex in a [`State`] the lexer owns. [`common`]
-//! holds the parts both questions need.
+//! Every question reads the lex through a [`TokensView`], which the asking stage builds over its
+//! buffers, and keeps what it learns across the lex in a [`DisambiguateState`] the lexer owns.
+//! [`common`] holds the parts both questions need.
+
+use oxc_simd::{Cpu, cpu_multiversion, cpu_version};
+
+use crate::pipeline::lex::Lex;
 
 mod common;
 mod context;
 mod operator;
 mod type_context;
 
-pub(super) use common::{Brackets, Closers, Tokens, prev_sig};
-pub(super) use context::Walks;
-pub(super) use operator::not_operator_position;
-pub(super) use type_context::{gt_run_split, jsx_over_generic, lt_run_split};
+#[cfg(test)]
+mod tests;
+
+use common::{Brackets, Closers, TokensView};
+use context::Walks;
 
 // Every scan is exact past its budget; the budget only bounds the work one site can spend.
 
 /// Step cap for the scan back to an anchor (tokens plus the groups it jumps over);
 /// past it the walk from the start of the source answers.
-pub(crate) const WALK_SCAN_CAP: u32 = 2048;
+const WALK_SCAN_CAP: u32 = 2048;
 
 /// Scan steps bounded walks may take, plus one per 32 bytes, before the full walk answers the rest.
-pub(crate) const LOCAL_WALK_BUDGET: u32 = 16384;
+const LOCAL_WALK_BUDGET: u32 = 16384;
 
 /// Step cap for the rules which answer without a walk: finding the JSX tag around a keyword,
 /// and settling a `>` run from the tokens around it.
-pub(crate) const RULE_SCAN_CAP: u32 = 256;
+const RULE_SCAN_CAP: u32 = 256;
 
 /// Bracket steps a backward match takes before the per-lex closer-to-opener table answers, so a
 /// group matched again and again (queries after a huge wrapper function) costs a lookup, not a
 /// pass over its brackets each time.
-pub(crate) const BRACKET_STEP_CAP: u32 = 1024;
+const BRACKET_STEP_CAP: u32 = 1024;
 
 /// Byte cap on the forward scans. Past it one pass resolves the opener exactly, and records what
 /// it crosses in [`Closers`].
-pub(crate) const FORWARD_SCAN_CAP: usize = 4096;
-
-#[cfg(test)]
-mod tests;
+const FORWARD_SCAN_CAP: usize = 4096;
 
 /// What the questions keep across a lex: the context walks, the bracket bitmap and the closers
 /// the forward scans resolved. Owned by the lexer, begun at each lex, restarted when `coalesce`
 /// starts asking.
-pub(crate) struct State {
-    pub(crate) walks: Walks,
-    pub(crate) brackets: Brackets,
-    pub(crate) closers: Closers,
+pub(super) struct DisambiguateState {
+    walks: Walks,
+    shared: Shared,
 }
 
-impl Default for State {
+/// What every view of the lex reads besides the stage's buffers.
+#[derive(Default)]
+pub struct Shared {
+    brackets: Brackets,
+    closers: Closers,
+    is_ts: bool,
+    is_module: bool,
+}
+
+impl Default for DisambiguateState {
+    #[cpu_version(Generic)]
     fn default() -> Self {
-        State { walks: Walks::new(), brackets: Brackets::default(), closers: Closers::default() }
+        Self { walks: Walks::new(), shared: Shared::default() }
     }
 }
 
-impl State {
+impl DisambiguateState {
     /// A new lex over `n` bytes of a script or module.
-    pub(crate) fn begin(&mut self, n: usize, module: bool) {
-        self.walks.restart(module);
-        self.brackets.begin(n);
-        self.closers.clear();
+    #[cpu_multiversion]
+    pub fn begin(&mut self, n: usize, is_ts: bool, is_module: bool, cpu: impl Cpu) {
+        self.shared.is_ts = is_ts;
+        self.shared.is_module = is_module;
+        self.walks.restart(is_module, cpu);
+        self.shared.brackets.begin(n, cpu);
+        self.shared.closers.clear(cpu);
     }
 
     /// `coalesce` starts asking: it sees keyword kinds `carve` did not, so the walks start over.
-    pub(crate) fn restart(&mut self, module: bool) {
-        self.walks.restart(module);
+    #[cpu_multiversion]
+    pub fn restart(&mut self, cpu: impl Cpu) {
+        self.walks.restart(self.shared.is_module, cpu);
         // carve has hidden the JSX brackets these were computed over.
-        self.closers.clear();
+        self.shared.closers.clear(cpu);
+    }
+
+    #[cpu_multiversion]
+    #[inline(always)]
+    fn view<'a>(&'a self, lex: Lex<'a>, kw_final: usize, cpu: impl Cpu) -> TokensView<'a> {
+        TokensView::new(lex, kw_final, &self.shared, cpu)
+    }
+
+    #[cpu_multiversion]
+    #[inline(always)]
+    fn view_and_walks<'a>(
+        &'a mut self,
+        lex: Lex<'a>,
+        kw_final: usize,
+        cpu: impl Cpu,
+    ) -> (TokensView<'a>, &'a mut Walks) {
+        (TokensView::new(lex, kw_final, &self.shared, cpu), &mut self.walks)
+    }
+
+    #[cpu_multiversion]
+    #[inline(always)]
+    pub fn prev_sig(&self, lex: Lex, pos: usize, cpu: impl Cpu) -> Option<usize> {
+        self.view(lex, 0, cpu).prev_sig(pos, cpu)
+    }
+
+    #[cpu_multiversion]
+    #[inline(always)]
+    pub fn not_operator_position(&mut self, lex: Lex, p: usize, cpu: impl Cpu) -> bool {
+        let (tokens, walks) = self.view_and_walks(lex, 0, cpu);
+        operator::not_operator_position(&tokens, walks, p, cpu)
+    }
+
+    #[cpu_multiversion]
+    #[inline(always)]
+    pub fn gt_run_split(
+        &mut self,
+        lex: Lex,
+        kw_final: usize,
+        p: usize,
+        run: usize,
+        cpu: impl Cpu,
+    ) -> usize {
+        let (tokens, walks) = self.view_and_walks(lex, kw_final, cpu);
+        type_context::gt_run_split(&tokens, walks, p, run, cpu)
+    }
+
+    #[cpu_multiversion]
+    #[inline(always)]
+    pub fn lt_run_split(&self, lex: Lex, lt: usize, cpu: impl Cpu) -> bool {
+        type_context::lt_run_split(&self.view(lex, 0, cpu), lt, cpu)
+    }
+
+    #[cpu_multiversion]
+    #[inline(always)]
+    pub fn jsx_over_generic(
+        &mut self,
+        lex: Lex,
+        lt: usize,
+        lp: usize,
+        cpu: impl Cpu,
+    ) -> (bool, bool) {
+        let (tokens, walks) = self.view_and_walks(lex, 0, cpu);
+        type_context::jsx_over_generic(&tokens, walks, lt, lp, cpu)
     }
 }

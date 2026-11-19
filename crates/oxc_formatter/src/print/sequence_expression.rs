@@ -25,14 +25,12 @@ pub fn sequence_leading_comments_start(sequence: &SequenceExpression<'_>) -> u32
     sequence.expressions.first().map_or(sequence.span.start, |e| e.span().start)
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, SequenceExpression<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, SequenceExpression<'a>> {
     fn leading_comments_start(&self) -> u32 {
         sequence_leading_comments_start(self)
     }
 
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_arrow_body = matches!(self.parent(), AstNodes::ArrowFunctionExpression(_));
-
         let format_inner = format_with(|f| {
             let mut expressions = self.expressions().iter();
             let separator = format_with(|f| {
@@ -68,7 +66,17 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SequenceExpression<'a>> {
         // For arrow bodies, own the `soft_block_indent` so the break decision is made
         // at the opening `(`, not at the already-indented column inside it. The arrow
         // body handler skips its own indent to defer to this group.
-        if is_arrow_body {
+        // A unary's argument indents inside its parentheses too:
+        // ```js
+        // !(
+        //   a,
+        //   b
+        // );
+        // ```
+        if matches!(
+            self.parent(),
+            AstNodes::ArrowFunctionExpression(_) | AstNodes::UnaryExpression(_)
+        ) {
             write!(f, group(&soft_block_indent(&format_inner)));
         } else {
             write!(f, group(&format_inner));
