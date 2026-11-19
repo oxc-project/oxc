@@ -16,6 +16,7 @@ use crate::{
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::{DefaultRuleConfig, Rule},
+    utils::pad_fix_with_token_boundary,
 };
 
 fn prefer_structured_clone_diagnostic(span: Span) -> OxcDiagnostic {
@@ -162,7 +163,9 @@ fn replace_with_structured_clone(
     codegen.print_str("structuredClone(");
     codegen.print_expression(first_argument);
     codegen.print_str(")");
-    fixer.replace(call_expr.span, codegen.into_source_text())
+    let mut replacement = codegen.into_source_text();
+    pad_fix_with_token_boundary(fixer.source_text(), call_expr.span, &mut replacement);
+    fixer.replace(call_expr.span, replacement)
 }
 
 #[test]
@@ -276,6 +279,11 @@ fn test() {
             "my.cloneDeep(foo,)",
             "structuredClone(foo)",
             Some(serde_json::json!([{"functions": ["my.cloneDeep"]}])),
+        ),
+        (
+            "function f(foo){return(JSON.parse)(JSON.stringify(foo))}",
+            "function f(foo){return structuredClone(foo)}",
+            None,
         ),
     ];
 

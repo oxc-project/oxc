@@ -11,7 +11,7 @@ use crate::{
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
-    utils::is_same_expression,
+    utils::{is_same_expression, pad_fix_with_token_boundary},
 };
 
 fn prefer_classlist_toggle_diagnostic(span: Span) -> OxcDiagnostic {
@@ -390,7 +390,8 @@ fn fix_conditional_expression<'a>(
     let test_text = test.span().source_text(ctx.source_text());
     let condition = if is_add_first { test_text.to_string() } else { format!("!({test_text})") };
 
-    let replacement = format!("{classlist_text}.toggle({class_name_text}, {condition})");
+    let mut replacement = format!("{classlist_text}.toggle({class_name_text}, {condition})");
+    pad_fix_with_token_boundary(ctx.source_text(), node.span(), &mut replacement);
     fixer.replace(node.span(), replacement)
 }
 
@@ -729,6 +730,10 @@ fn test() {
         (
             "if (foo) element.classList.add('bar'); else element.classList.remove('bar');",
             "element.classList.toggle('bar', foo);",
+        ),
+        (
+            "function foo() { return!foo ? element.classList.add(className) : element.classList.remove(className) }",
+            "function foo() { return element.classList.toggle(className, !foo) }",
         ),
     ];
 

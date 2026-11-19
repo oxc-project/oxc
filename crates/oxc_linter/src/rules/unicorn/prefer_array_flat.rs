@@ -17,7 +17,7 @@ use crate::{
     rule::Rule,
     utils::{
         get_first_parameter_name, get_return_identifier_name, is_empty_array_expression,
-        is_prototype_property,
+        is_prototype_property, pad_fix_with_token_boundary,
     },
 };
 
@@ -385,7 +385,8 @@ fn check_array_prototype_concat_case<'a>(call_expr: &CallExpression<'a>, ctx: &L
                 && let Some(Argument::Identifier(array)) = call_expr.arguments.get(1)
                 && array.name != "arguments"
             {
-                let replacement = format!("{}.flat()", ctx.source_range(array.span));
+                let mut replacement = format!("{}.flat()", ctx.source_range(array.span));
+                pad_fix_with_token_boundary(ctx.source_text(), call_expr.span, &mut replacement);
                 ctx.diagnostic_with_dangerous_fix(
                     prefer_array_flat_diagnostic(call_expr.span),
                     |fixer| fixer.replace(call_expr.span, replacement),
@@ -698,6 +699,12 @@ fn test() {
         ),
         ("/**/[].concat.apply([], array)", "/**/array.flat()", None, FixKind::DangerousFix),
         ("Array.prototype.concat.apply([], array)", "array.flat()", None, FixKind::DangerousFix),
+        (
+            "function f(array){return[].concat.apply([], array)}",
+            "function f(array){return array.flat()}",
+            None,
+            FixKind::DangerousFix,
+        ),
     ];
 
     Tester::new(PreferArrayFlat::NAME, PreferArrayFlat::PLUGIN, pass, fail)

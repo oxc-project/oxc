@@ -13,6 +13,7 @@ use crate::{
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
+    utils::pad_fix_with_token_boundary,
 };
 
 fn starts_with(span: Span) -> OxcDiagnostic {
@@ -129,7 +130,9 @@ fn do_fix<'a>(
     content.print_str(&format!(r"{}.{}(", fixer.source_range(target_span), method));
     content.print_string(&argument);
     content.print_str(r")");
-    fixer.replace(call_expr.span, content.into_source_text())
+    let mut replacement = content.into_source_text();
+    pad_fix_with_token_boundary(fixer.source_text(), call_expr.span, &mut replacement);
+    fixer.replace(call_expr.span, replacement)
 }
 
 fn can_replace(call_expr: &CallExpression) -> Option<Span> {
@@ -325,6 +328,14 @@ fn test() {
         ("/^foo/.test(5)", "/^foo/.test(5)"),
         ("/^foo/.test(x?.y)", "/^foo/.test(x?.y)"),
         ("/^foo/.test(x + y)", "/^foo/.test(x + y)"),
+        (
+            "function f(bar) { return/^foo/.test(bar) }",
+            "function f(bar) { return bar.startsWith('foo') }",
+        ),
+        (
+            "function f(bar) { return/foo$/.test(bar) }",
+            "function f(bar) { return bar.endsWith('foo') }",
+        ),
     ];
 
     Tester::new(PreferStringStartsEndsWith::NAME, PreferStringStartsEndsWith::PLUGIN, pass, fail)

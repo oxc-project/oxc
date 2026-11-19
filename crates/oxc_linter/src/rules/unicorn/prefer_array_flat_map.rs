@@ -15,6 +15,7 @@ use crate::{
     context::LintContext,
     fixer::Fix,
     rule::Rule,
+    utils::pad_fix_with_token_boundary,
 };
 
 fn prefer_array_flat_map_diagnostic(span: Span) -> OxcDiagnostic {
@@ -188,13 +189,12 @@ fn check_filter_flat_map<'a>(call: &CallExpression<'a>, ctx: &LintContext<'a>) {
                     Cow::Borrowed(predicate_text)
                 };
                 let mapped = fixer.source_range(mapped.without_parentheses().span());
+                let mut replacement = format!(
+                    "{receiver}.flatMap({filter_name} => {predicate_text} ? {mapped} : [])"
+                );
+                pad_fix_with_token_boundary(fixer.source_text(), call.span, &mut replacement);
                 fixer
-                    .replace(
-                        call.span,
-                        format!(
-                            "{receiver}.flatMap({filter_name} => {predicate_text} ? {mapped} : [])"
-                        ),
-                    )
+                    .replace(call.span, replacement)
                     .with_message("Replace `.filter(…).flatMap(…)` with a single `.flatMap(…)`.")
             },
         );
@@ -548,6 +548,12 @@ fn test() {
         (
             "array.filter(x => (x.a, x.b)).flatMap(x => [x, x]);",
             "array.flatMap(x => (x.a, x.b) ? [x, x] : []);",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "function f(array){return((array.filter(x => x))).flatMap(x => [x, x])}",
+            "function f(array){return array.flatMap(x => x ? [x, x] : [])}",
             None,
             FixKind::Suggestion,
         ),

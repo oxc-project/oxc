@@ -81,7 +81,13 @@ impl Rule for PreferDateNow {
                             if ctx.has_comments_between(call_expr.span) {
                                 return fixer.noop();
                             }
-                            fixer.replace(call_expr.span, "Date.now()")
+                            let mut replacement = "Date.now()".to_string();
+                            pad_fix_with_token_boundary(
+                                fixer.source_text(),
+                                call_expr.span,
+                                &mut replacement,
+                            );
+                            fixer.replace(call_expr.span, replacement)
                         },
                     );
                 }
@@ -299,6 +305,7 @@ fn test() {
         ("function* foo(){yield+new Date}", "function* foo(){yield Date.now()}"),
         ("async function foo(){await+new Date}", "async function foo(){await Date.now()}"),
         ("function foo(){return\n+new Date}", "function foo(){return\nDate.now()}"),
+        ("function foo(){return(new Date()).getTime()}", "function foo(){return Date.now()}"),
     ];
 
     Tester::new(PreferDateNow::NAME, PreferDateNow::PLUGIN, pass, fail)

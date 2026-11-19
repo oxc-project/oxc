@@ -15,6 +15,7 @@ use crate::{
     fixer::RuleFixer,
     globals::GLOBAL_OBJECT_NAMES,
     rule::{DefaultRuleConfig, Rule},
+    utils::pad_fix_with_token_boundary,
 };
 
 fn prefer_number_properties_diagnostic(span: Span, method_name: &str) -> OxcDiagnostic {
@@ -227,7 +228,15 @@ impl Rule for PreferNumberProperties {
                     AstKind::ObjectProperty(prop) if prop.shorthand => {
                         fixer.insert_text_before(&ident_ref.span, format!("{name}: Number."))
                     }
-                    _ if is_infinity => fixer.replace(replacement_span, replacement_text),
+                    _ if is_infinity => {
+                        let mut replacement = replacement_text.to_string();
+                        pad_fix_with_token_boundary(
+                            fixer.source_text(),
+                            replacement_span,
+                            &mut replacement,
+                        );
+                        fixer.replace(replacement_span, replacement)
+                    }
                     _ => fixer.insert_text_before(&ident_ref.span, "Number."),
                 };
 
@@ -571,6 +580,11 @@ function inner() {
         ("parseInt<number>(value)", "Number.parseInt<number>(value)", None),
         ("window.parseInt<number>(value)", "Number.parseInt<number>(value)", None),
         ("window['parseInt'](value)", "Number.parseInt(value)", None),
+        (
+            "function foo() {return-Infinity}",
+            "function foo() {return Number.NEGATIVE_INFINITY}",
+            Some(json!([{"checkInfinity":true}])),
+        ),
     ];
 
     Tester::new(PreferNumberProperties::NAME, PreferNumberProperties::PLUGIN, pass, fail)

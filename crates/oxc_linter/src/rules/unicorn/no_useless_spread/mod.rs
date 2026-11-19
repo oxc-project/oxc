@@ -25,6 +25,7 @@ use crate::{
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
+    utils::pad_fix_with_token_boundary,
 };
 
 fn spread_in_list(span: Span, arr_or_obj: &str) -> OxcDiagnostic {
@@ -459,10 +460,14 @@ fn check_useless_clone<'a>(
 
             if is_array_constructor && new_expr.arguments.len() == 1 {
                 ctx.diagnostic_with_fix(clone(span, is_array, name), |fixer| {
-                    fixer.replace(
+                    let mut replacement =
+                        format!("{}.fill()", fixer.source_range(spread_elem.argument.span()));
+                    pad_fix_with_token_boundary(
+                        fixer.source_text(),
                         array_or_obj_span,
-                        format!("{}.fill()", fixer.source_range(spread_elem.argument.span())),
-                    )
+                        &mut replacement,
+                    );
+                    fixer.replace(array_or_obj_span, replacement)
                 });
                 return;
             }
@@ -493,7 +498,10 @@ fn fix_by_removing_array_spread<'a, S: GetSpan>(
     iterable: &S,
     spread: &SpreadElement<'a>,
 ) -> RuleFix {
-    fixer.replace_with(iterable, &spread.argument)
+    let span = iterable.span();
+    let mut replacement = fixer.source_range(spread.argument.span()).to_string();
+    pad_fix_with_token_boundary(fixer.source_text(), span, &mut replacement);
+    fixer.replace(span, replacement)
 }
 
 /// Creates a fix that replaces `{...spread}` with `spread`, when `spread` is an
@@ -866,6 +874,11 @@ fn test() {
     });",
             "jsxEl(({\n\tclassName,\n\tonClick: () => console.log('click')\n}));",
         ),
+        (
+            "function f(foo, bar) { return[...foo.concat(bar)] }",
+            "function f(foo, bar) { return foo.concat(bar) }",
+        ),
+        ("function f() { return[...new Array(3)] }", "function f() { return new Array(3).fill() }"),
     ];
     Tester::new(NoUselessSpread::NAME, NoUselessSpread::PLUGIN, pass, fail)
         .change_rule_path_extension("mjs")

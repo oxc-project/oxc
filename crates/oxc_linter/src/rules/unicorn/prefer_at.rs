@@ -21,7 +21,7 @@ use crate::{
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
-    utils::{get_precedence, is_same_expression},
+    utils::{get_precedence, is_same_expression, pad_fix_with_token_boundary},
 };
 
 fn prefer_at_diagnostic(span: Span, method: &str) -> OxcDiagnostic {
@@ -753,7 +753,8 @@ fn create_at_fix_with_arg(
     full_span: Span,
     argument: &str,
 ) -> RuleFix {
-    let new_code = format!("{}.at({})", fixer.source_range(object_span), argument);
+    let mut new_code = format!("{}.at({})", fixer.source_range(object_span), argument);
+    pad_fix_with_token_boundary(fixer.source_text(), full_span, &mut new_code);
     fixer.replace(full_span, new_code)
 }
 
@@ -1191,6 +1192,16 @@ fn test() {
         ),
         ("({slice(){return []}}.slice(-1)).pop()", "({slice(){return []}}.at(-1))", None),
         ("(function(){}.slice(-1)).pop()", "(function(){}.at(-1))", None),
+        (
+            "function f(string){return(( string.charAt ))(string.length - 1)}",
+            "function f(string){return string.at(-1)}",
+            None,
+        ),
+        (
+            "function f(array){return(array.slice(-1))[0]}",
+            "function f(array){return array.at(-1)}",
+            None,
+        ),
     ];
 
     Tester::new(PreferAt::NAME, PreferAt::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
