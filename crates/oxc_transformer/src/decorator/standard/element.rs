@@ -7,6 +7,7 @@ use rustc_hash::FxHashMap;
 use oxc_allocator::{Address, ArenaBox, ArenaVec, CloneIn, GetAddress, GetAllocator, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::SPAN;
 use oxc_str::Str;
 use oxc_syntax::{
@@ -305,6 +306,19 @@ impl<'a> StandardDecoratorState<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         if !self.enabled {
+            return;
+        }
+        // Standard decorators cannot decorate parameters. Leave the parameter untouched and
+        // report the error that TypeScript reports as TS1206.
+        if matches!(
+            ctx.parent(),
+            Ancestor::FormalParameterDecorators(_) | Ancestor::FormalParameterRestDecorators(_)
+        ) {
+            ctx.state.error(
+                OxcDiagnostic::error("Decorators are not valid here.")
+                    .with_help("Parameter decorators require `experimentalDecorators` (legacy decorators).")
+                    .with_label(decorator.span),
+            );
             return;
         }
         let expression = decorator.expression.get_inner_expression_mut();
