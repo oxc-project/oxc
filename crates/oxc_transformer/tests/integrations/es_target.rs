@@ -155,6 +155,43 @@ fn standard_decorators_compat_targets() {
 }
 
 #[test]
+fn standard_decorators_skip_sources_without_decorator_syntax() {
+    // Neither `@` nor `accessor`: decorator lowering is skipped entirely. The output must match
+    // both an explicit opt-out and the full path, which a `@` in a comment forces.
+    let plain = "for (let i = 0; i < 2; i++) list.push(class { static x = i; #y = 1; static { effect(this); } get y() { return this.#y; } });\nclass Plain { value = 1; static #count = 0; static next() { return ++Plain.#count; } }\n";
+    let with_comment = format!("{plain}// @ in a comment\n");
+    for target in ["es2015", "es2022", "chrome94", "safari15"] {
+        let options = TransformOptions::from_target(target).unwrap();
+        let mut preserve = options.clone();
+        preserve.decorator.lower = Some(false);
+        let fast = test(plain, &options).unwrap();
+        assert_eq!(Ok(fast.clone()), test(plain, &preserve), "{target}");
+        let full = test(&with_comment, &options).unwrap();
+        let full = full.trim_end().trim_end_matches("// @ in a comment").trim_end();
+        assert_eq!(full, fast.trim_end(), "{target}");
+    }
+
+    // `@` in package specifiers and comments keeps the fast path, but decorators anywhere else,
+    // even directly after a keyword, are still lowered.
+    let options = TransformOptions::from_target("es2022").unwrap();
+    for source in [
+        "import x from '@scope/pkg'; /** @internal */ export default@dec class {}",
+        "function f() { return@dec class {}; } // @",
+        "let s = `@`; [@dec class {}];",
+    ] {
+        let output = test(source, &options).unwrap();
+        assert!(output.contains("decorateElement"), "{source}");
+        assert!(!output.contains("@dec"), "{source}");
+    }
+
+    // `accessor` alone still lowers.
+    let output =
+        test("class A { accessor x = 1; }", &TransformOptions::from_target("es2022").unwrap())
+            .unwrap();
+    assert!(!output.contains("accessor x"));
+}
+
+#[test]
 fn standard_decorators_opt_out_keeps_other_transforms() {
     let source = "function run() { using resource = acquire(); @decorate class Example { @decorate method() {} } return Example; }";
     let mut options = TransformOptions::from(ESTarget::ES2022);

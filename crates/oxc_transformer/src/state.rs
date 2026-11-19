@@ -9,7 +9,7 @@ use oxc_span::SourceType;
 use oxc_syntax::scope::ScopeId;
 
 use crate::{
-    CompilerAssumptions, HelperLoaderOptions, Module, TransformOptions,
+    CompilerAssumptions, DecoratorMode, EnvOptions, HelperLoaderOptions, Module, TransformOptions,
     common::{
         class_lowering::{ClassLowering, ClassLoweringDecisions},
         class_transform::ClassTransform,
@@ -103,6 +103,13 @@ impl<'a> TransformState<'a> {
             class_transform,
             class_lowering_decisions: ClassLoweringDecisions::new(class_transform, decorator_mode),
         }
+    }
+
+    /// Replace the decorator mode chosen from options, before transformation starts.
+    pub(crate) fn set_decorator_mode(&mut self, env: &EnvOptions, decorator_mode: DecoratorMode) {
+        self.class_transform = ClassTransform::new(env, decorator_mode);
+        self.class_lowering_decisions =
+            ClassLoweringDecisions::new(self.class_transform, decorator_mode);
     }
 
     /// Record the lowering of a class before its decorators or auto-accessors are rewritten.

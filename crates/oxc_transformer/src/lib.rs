@@ -42,7 +42,7 @@ mod plugins;
 
 use common::{Common, class_transform::ClassTransform};
 use context::TraverseCtx;
-use decorator::Decorator;
+use decorator::{Decorator, DecoratorMode};
 use es2015::ES2015;
 use es2016::ES2016;
 use es2017::ES2017;
@@ -135,7 +135,15 @@ impl<'a> Transformer<'a> {
         program: &mut Program<'a>,
     ) -> TransformerReturn {
         let allocator = self.allocator;
-        let decorator_mode = self.decorator.mode(self.env.standard_decorators);
+        let mut decorator_mode = self.decorator.mode(self.env.standard_decorators);
+        // Standard decorator lowering makes class-properties visit every class and loop. Without
+        // `@` or `accessor` in the source there is nothing for it to lower, so skip it entirely.
+        if decorator_mode == DecoratorMode::Standard
+            && !may_contain_standard_decorator_syntax(program.source_text, &program.comments)
+        {
+            decorator_mode = DecoratorMode::Preserve;
+            self.state.set_decorator_mode(&self.env, decorator_mode);
+        }
 
         let ast_builder = AstBuilder::new(allocator);
 
@@ -817,4 +825,31 @@ impl<'a> TransformerImpl<'a> {
         self.x2_es2018.exit_expression(expr, ctx);
         self.x2_es2017.exit_expression(expr, ctx);
     }
+}
+
+/// Whether `source_text` may contain a decorator or an auto-accessor.
+///
+/// Both need a `@` or an `accessor` token. To keep common code on the fast path, ignore
+/// occurrences inside comments (JSDoc tags) and a `@` directly after a quote (package specifiers
+/// such as `"@scope/pkg"`): a decorator cannot follow a string literal token. `accessor` must
+/// be a whole word. Any other occurrence, including in a string or JSX text, takes the full
+/// path. Non-ASCII identifier characters adjacent to `accessor` also take the full path.
+fn may_contain_standard_decorator_syntax(source_text: &str, comments: &[Comment]) -> bool {
+    let in_comment = |position: usize| {
+        let Ok(position) = u32::try_from(position) else { return false };
+        let index = comments.partition_point(|comment| comment.span.end <= position);
+        comments.get(index).is_some_and(|comment| comment.span.start <= position)
+    };
+    let bytes = source_text.as_bytes();
+    memchr::memchr_iter(b'@', bytes).any(|position| {
+        (position == 0 || !matches!(bytes[position - 1], b'"' | b'\'' | b'`'))
+            && !in_comment(position)
+    }) || source_text.match_indices("accessor").any(|(position, _)| {
+        // `accessor` must be a whole word, not part of e.g. `getAccessor` or `accessorName`.
+        let is_word_byte = |byte: u8| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'$');
+        let end = position + b"accessor".len();
+        (position == 0 || !is_word_byte(bytes[position - 1]))
+            && bytes.get(end).is_none_or(|&byte| !is_word_byte(byte))
+            && !in_comment(position)
+    })
 }
