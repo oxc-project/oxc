@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+assertion_line: 505
 ---
 
   ⚠ jsx-a11y(autocomplete-valid): `foo` is not a valid value for `autocomplete`.
@@ -8,6 +9,20 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ──────────────────
    ╰────
   help: Change `foo` to a valid value for `autocomplete`.
+
+  ⚠ jsx-a11y(autocomplete-valid): `webauthn email` is not a valid value for `autocomplete`.
+   ╭─[autocomplete_valid.tsx:1:20]
+ 1 │ <input type='text' autocomplete='webauthn email' />;
+   ·                    ─────────────────────────────
+   ╰────
+  help: Change `webauthn email` to a valid value for `autocomplete`.
+
+  ⚠ jsx-a11y(autocomplete-valid): `foo webauthn` is not a valid value for `autocomplete`.
+   ╭─[autocomplete_valid.tsx:1:20]
+ 1 │ <input type='text' autocomplete='foo webauthn' />;
+   ·                    ───────────────────────────
+   ╰────
+  help: Change `foo webauthn` to a valid value for `autocomplete`.
 
   ⚠ jsx-a11y(autocomplete-valid): `name invalid` is not a valid value for `autocomplete`.
    ╭─[autocomplete_valid.tsx:1:20]
