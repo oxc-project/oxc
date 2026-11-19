@@ -1,7 +1,7 @@
 //! Angular: the JS of a template (`{{ }}`, `[a]`, `[(a)]`, `(a)`, `*a`, `{{ }}` in another attribute's value, block parameters, `@let`),
 //! formatted by the session's dispatcher as TS fragments, split as the parser reads it ([`AngularExpression`] and the rest):
 //! each piece of code is dispatched, Angular's own syntax around them (pipes, comments, `;`, microsyntax, block parameters) prints here.
-//! A piece the dispatcher does not format leaves what holds it as written: the value, a block's parameters, a `{{ }}`;
+//! A piece the dispatcher does not format leaves what holds it as written: the value, a block's parameters, a `{{ }}`, a `@let`'s value up to its `;`;
 //! as one holding a pipe below its root does (apps/oxfmt/DIVERGENCES.md#js-in-angular-nested-pipe-as-written),
 //! or a JS reserved word (apps/oxfmt/DIVERGENCES.md#js-in-angular-reserved-word-as-written), which TS reads otherwise.
 
@@ -340,20 +340,42 @@ pub fn format_block_parameters<'a>(
     }))
 }
 
-/// Writes `@let name = value;` formatted, breaking after the `=` (as Prettier prints it);
-/// `false` to print it as written, its name and `=` too (apps/oxfmt/DIVERGENCES.md#js-in-angular-let-head-as-written).
+/// Writes `@let name = value;`, breaking after the `=` (as Prettier prints it),
+/// its value formatted, or as written up to the `;` where it does not format (`embeddedLanguageFormatting: off`, a comment in it);
+/// `end` is the declaration's, past its `;`.
+/// `false` to print it all as written, where Angular reads no declaration: no name, an error in the value
+/// (apps/oxfmt/DIVERGENCES.md#js-in-angular-unread-code-as-written).
 /// The `;` ends it whatever `semi` says: Angular's lexer ends the value there.
-pub fn write_let(declaration: &LetDeclaration<'_>, f: &mut HtmlishFormatter<'_, '_>) -> bool {
+pub fn write_let(
+    declaration: &LetDeclaration<'_>,
+    end: u32,
+    f: &mut HtmlishFormatter<'_, '_>,
+) -> bool {
     let source = f.context().tree().source();
-    // A comment would print after the `;`, in the text
-    let Some(angular) = declaration.angular.as_deref().filter(|e| e.comment.is_none()) else {
+    if declaration.name.is_empty() {
         return false;
-    };
-    let Some(parts) = Parts::dispatch(angular, JsInAngularTemplate::BlockPiece, f) else {
-        return false;
-    };
+    }
+    let Some(angular) = declaration.angular.as_deref() else { return false };
     let name = declaration.name.slice(source);
-    let value = parts.format();
+    // A formatted comment would print after the `;`, in the text (apps/oxfmt/DIVERGENCES.md#js-in-angular-let-comment-as-written)
+    let parts = if angular.comment.is_none() {
+        Parts::dispatch(angular, JsInAngularTemplate::BlockPiece, f)
+    } else {
+        None
+    };
+    let value = format_once(|f| {
+        if let Some(parts) = parts {
+            write!(f, parts.format());
+        } else {
+            // Up to the `;` the declaration's `end` follows, the whitespace before it too: a line break that ends a line comment.
+            // Its first line decides whether it breaks after the `=`, as Prettier measures it
+            write!(
+                f,
+                text(&source[declaration.value.start as usize..end as usize - 1])
+                    .without_expand_parent()
+            );
+        }
+    });
     write!(
         f,
         group(&format_args!(

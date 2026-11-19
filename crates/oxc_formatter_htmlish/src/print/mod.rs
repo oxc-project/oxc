@@ -156,7 +156,7 @@ fn write_node<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'_, 'a>)
         }
         NodeKind::LetDeclaration(declaration) => {
             write!(f, opening_tag_prefix(t, id));
-            if !angular::write_let(declaration, f) {
+            if !angular::write_let(declaration, item.span.end, f) {
                 write!(f, text(item.span.slice(t.source())));
             }
             write!(f, closing_tag_suffix(t, id));
