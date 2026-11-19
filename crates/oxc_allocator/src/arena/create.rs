@@ -1,7 +1,7 @@
 //! Methods to create an `Arena`.
 
 use std::{
-    alloc::{self, Layout},
+    alloc::{self, GlobalAlloc, Layout},
     cell::Cell,
     cmp::max,
     ptr::NonNull,
@@ -153,6 +153,34 @@ impl Arena<1> {
     pub fn try_with_capacity(capacity: usize) -> Result<Self, AllocErr> {
         Self::try_with_min_align_and_capacity(capacity)
     }
+
+    /// Construct a new arena which allocates its chunks from `chunk_alloc`.
+    ///
+    /// No memory is allocated until the first allocation into the arena.
+    ///
+    /// See [`Arena::with_min_align_in`] for more details.
+    #[inline] // Because it's very cheap
+    pub fn new_in(chunk_alloc: &'static (dyn GlobalAlloc + Sync)) -> Self {
+        Self::with_min_align_in(chunk_alloc)
+    }
+
+    /// Construct a new arena with the specified byte capacity, which allocates its chunks from `chunk_alloc`.
+    ///
+    /// When `capacity` is `0`, no memory is allocated until the first allocation into the arena.
+    ///
+    /// See [`Arena::with_min_align_in`] for more details.
+    ///
+    /// # Panics
+    ///
+    /// Panics if allocating the initial capacity fails.
+    #[inline] // Because it just delegates
+    pub fn with_capacity_in(
+        capacity: usize,
+        chunk_alloc: &'static (dyn GlobalAlloc + Sync),
+    ) -> Self {
+        Self::try_with_min_align_and_capacity_impl(capacity, Some(chunk_alloc))
+            .unwrap_or_else(|_| oom())
+    }
 }
 
 impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
@@ -183,7 +211,37 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     // for specifying the minimum alignment.
     #[inline] // Because it's very cheap
     pub fn with_min_align() -> Self {
-        Self::new_impl(EMPTY_ARENA_DATA_PTR, EMPTY_ARENA_DATA_PTR, None)
+        Self::new_impl(EMPTY_ARENA_DATA_PTR, EMPTY_ARENA_DATA_PTR, None, None)
+    }
+
+    /// Create a new `Arena` that enforces a minimum alignment, and allocates its chunks from `chunk_alloc`.
+    ///
+    /// No memory is allocated until the first allocation into the arena.
+    ///
+    /// The `Arena` allocates the backing memory for all of its chunks from `chunk_alloc`,
+    /// and deallocates the chunks to `chunk_alloc` when it is reset or dropped.
+    /// Allocations *into* the arena (for example [`Arena::alloc`]) do not call `chunk_alloc`,
+    /// except when the arena needs a new chunk.
+    ///
+    /// The chunk allocator of an `Arena` cannot be changed after the `Arena` is created.
+    ///
+    /// `chunk_alloc` must be `Sync`, because an `Arena` can be sent to another thread and dropped there.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use oxc_allocator::arena::Arena;
+    /// use std::alloc::System;
+    ///
+    /// static SYSTEM: System = System;
+    ///
+    /// let arena = Arena::<8>::with_min_align_in(&SYSTEM);
+    /// let x = arena.alloc(123u64);
+    /// assert_eq!(*x, 123);
+    /// ```
+    #[inline] // Because it's very cheap
+    pub fn with_min_align_in(chunk_alloc: &'static (dyn GlobalAlloc + Sync)) -> Self {
+        Self::new_impl(EMPTY_ARENA_DATA_PTR, EMPTY_ARENA_DATA_PTR, None, Some(chunk_alloc))
     }
 
     /// Create a new `Arena` that enforces a minimum alignment, and starts with room for at least `capacity` bytes.
@@ -256,8 +314,25 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     ///
     /// When `capacity` is 0, no allocation is performed, and `Ok` is always returned.
     pub fn try_with_min_align_and_capacity(capacity: usize) -> Result<Self, AllocErr> {
+        Self::try_with_min_align_and_capacity_impl(capacity, None)
+    }
+
+    /// Create a new `Arena` that enforces a minimum alignment, and starts with room for at least `capacity` bytes.
+    ///
+    /// Chunks are allocated from `chunk_alloc`, or from the global allocator if `chunk_alloc` is `None`.
+    ///
+    /// When `capacity` is 0, no allocation is performed, and `Ok` is always returned.
+    fn try_with_min_align_and_capacity_impl(
+        capacity: usize,
+        chunk_alloc: Option<&'static (dyn GlobalAlloc + Sync)>,
+    ) -> Result<Self, AllocErr> {
         if capacity == 0 {
-            return Ok(Self::with_min_align());
+            return Ok(Self::new_impl(
+                EMPTY_ARENA_DATA_PTR,
+                EMPTY_ARENA_DATA_PTR,
+                None,
+                chunk_alloc,
+            ));
         }
 
         let layout = layout_from_size_align(capacity, MIN_ALIGN)?;
@@ -270,19 +345,24 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         // `Arena::with_capacity` allocating 16 KiB even when requested `capacity` is much smaller.
         //
         // SAFETY: We pass `None` as `previous_chunk_footer_ptr` (because we're creating the first chunk).
+        // We pass the same `chunk_alloc` that we store in the `Arena` below.
         let (start_ptr, chunk_footer_ptr) =
-            unsafe { Self::new_chunk(capacity, layout, None) }.ok_or(AllocErr)?;
+            unsafe { Self::new_chunk(capacity, layout, None, chunk_alloc) }.ok_or(AllocErr)?;
 
         // Initial cursor sits at the footer, which is the end of the allocatable region.
         // The footer is aligned on `CHUNK_ALIGN`, which is `>= MIN_ALIGN`, so this is already aligned to `MIN_ALIGN`.
         let cursor_ptr = chunk_footer_ptr.cast::<u8>();
 
-        Ok(Self::new_impl(start_ptr, cursor_ptr, Some(chunk_footer_ptr)))
+        Ok(Self::new_impl(start_ptr, cursor_ptr, Some(chunk_footer_ptr), chunk_alloc))
     }
 
     /// Create a new `Arena`.
     ///
     /// `chunk_footer_ptr` is `None` if no initial chunk has been allocated (the empty `Arena` case).
+    ///
+    /// `chunk_alloc` is the allocator for chunks (`None` for the global allocator).
+    /// If `chunk_footer_ptr` is `Some` and that chunk is not fixed-size, the chunk must have been allocated
+    /// from `chunk_alloc`.
     ///
     /// This is a helper function for all code paths which create an `Arena`.
     /// All code paths which create an `Arena` must go through this method in order to validate `MIN_ALIGN`.
@@ -291,6 +371,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         start_ptr: NonNull<u8>,
         cursor_ptr: NonNull<u8>,
         chunk_footer_ptr: Option<NonNull<ChunkFooter>>,
+        chunk_alloc: Option<&'static (dyn GlobalAlloc + Sync)>,
     ) -> Self {
         // Const assert that `MIN_ALIGN` is valid.
         // This line must be present - the validation assertions don't run unless the const is referenced
@@ -308,6 +389,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
             cursor_ptr: Cell::new(cursor_ptr),
             current_chunk_footer_ptr: Cell::new(chunk_footer_ptr),
             start_ptr: Cell::new(start_ptr),
+            chunk_alloc,
             #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
             stats: AllocationStats::default(),
         }
@@ -316,23 +398,27 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// Allocate a new chunk and return pointers to its start and its initialized footer.
     ///
     /// The actual chunk size is derived from `new_size_without_footer` and `requested_layout`,
-    /// rounded up to play nicely with the global allocator
+    /// rounded up to play nicely with the allocator
     /// (power of two for small chunks, or a page boundary for larger ones).
     ///
     /// `previous_chunk_footer_ptr` is `None` when the new chunk will be the first chunk in the arena.
     ///
+    /// The chunk is allocated from `chunk_alloc`, or from the global allocator if `chunk_alloc` is `None`.
+    ///
     /// Returns `None` if either:
-    /// * The requested size/layout is too large for the global allocator to service.
-    /// * The global allocator fails to allocate the requested size.
+    /// * The requested size/layout is too large for the allocator to service.
+    /// * The allocator fails to allocate the requested size.
     ///
     /// # SAFETY
     ///
-    /// `previous_chunk_footer_ptr` must point to the current `ChunkFooter` for this `Arena`,
-    /// or `None` if this will be the first chunk in the arena.
+    /// * `previous_chunk_footer_ptr` must point to the current `ChunkFooter` for this `Arena`,
+    ///   or `None` if this will be the first chunk in the arena.
+    /// * `chunk_alloc` must be the chunk allocator of the `Arena` that will own the new chunk.
     pub(super) unsafe fn new_chunk(
         new_size_without_footer: usize,
         requested_layout: Layout,
         previous_chunk_footer_ptr: Option<NonNull<ChunkFooter>>,
+        chunk_alloc: Option<&'static (dyn GlobalAlloc + Sync)>,
     ) -> Option<(
         // Pointer to start of allocatable region of the new chunk
         NonNull<u8>,
@@ -416,8 +502,12 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         crate::tracking::start_chunk_operation();
 
         // Allocate memory for the chunk.
-        // SAFETY: `layout` has non-zero size.
-        let start_ptr = unsafe { alloc::alloc(layout) };
+        let start_ptr = match chunk_alloc {
+            // SAFETY: `layout` has non-zero size.
+            Some(chunk_alloc) => unsafe { chunk_alloc.alloc(layout) },
+            // SAFETY: `layout` has non-zero size.
+            None => unsafe { alloc::alloc(layout) },
+        };
         let start_ptr = NonNull::new(start_ptr)?;
 
         // The `ChunkFooter` is at the end of the chunk.

@@ -1,5 +1,5 @@
 use std::{
-    alloc::Layout,
+    alloc::{GlobalAlloc, Layout},
     ptr::{self, NonNull},
     slice, str,
 };
@@ -255,6 +255,70 @@ impl Allocator {
     #[inline(always)]
     pub fn with_capacity(capacity: usize) -> Self {
         Self { arena: Arena::with_capacity(capacity) }
+    }
+
+    /// Create a new [`Allocator`] with no initial capacity, which allocates its chunks from `chunk_alloc`.
+    ///
+    /// An [`Allocator`] gets large blocks of memory ("chunks") from an underlying allocator,
+    /// and then allocates objects inside these chunks. By default, chunks come from the global allocator.
+    /// [`Allocator`]s created with this method get their chunks from `chunk_alloc` instead,
+    /// and return the chunks to `chunk_alloc` when they are [`reset`] or dropped.
+    ///
+    /// Allocations into the [`Allocator`] (for example [`Allocator::alloc`]) do not call `chunk_alloc`,
+    /// except when the [`Allocator`] needs a new chunk.
+    ///
+    /// Use this method, for example, to put the memory of some [`Allocator`]s in a separate heap.
+    ///
+    /// The chunk allocator cannot be changed after the [`Allocator`] is created.
+    ///
+    /// Like [`new`], this method does not reserve any memory. The first chunk is allocated
+    /// from `chunk_alloc` when you make the first allocation into this [`Allocator`].
+    ///
+    /// `chunk_alloc` must be [`Sync`], because an [`Allocator`] can be sent to another thread,
+    /// and dropped there.
+    ///
+    /// # Examples
+    /// ```
+    /// use std::alloc::System;
+    ///
+    /// use oxc_allocator::Allocator;
+    ///
+    /// static SYSTEM: System = System;
+    ///
+    /// let allocator = Allocator::new_in(&SYSTEM);
+    /// let x = allocator.alloc([1u8; 20]);
+    /// assert_eq!(x, &[1u8; 20]);
+    /// ```
+    ///
+    /// [`new`]: Allocator::new
+    /// [`reset`]: Allocator::reset
+    //
+    // `#[inline(always)]` because just delegates to `Arena` method
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub fn new_in(chunk_alloc: &'static (dyn GlobalAlloc + Sync)) -> Self {
+        Self { arena: Arena::new_in(chunk_alloc) }
+    }
+
+    /// Create a new [`Allocator`] with specified capacity, which allocates its chunks from `chunk_alloc`.
+    ///
+    /// If `capacity` is 0, no memory is reserved until the first allocation, the same as [`new_in`].
+    ///
+    /// See [`new_in`] for more information about `chunk_alloc`.
+    ///
+    /// # Panics
+    /// Panics if allocating the initial capacity fails.
+    ///
+    /// [`new_in`]: Allocator::new_in
+    //
+    // `#[inline(always)]` because just delegates to `Arena` method
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub fn with_capacity_in(
+        capacity: usize,
+        chunk_alloc: &'static (dyn GlobalAlloc + Sync),
+    ) -> Self {
+        Self { arena: Arena::with_capacity_in(capacity, chunk_alloc) }
     }
 
     /// Allocate an object in this [`Allocator`] and return an exclusive reference to it.
