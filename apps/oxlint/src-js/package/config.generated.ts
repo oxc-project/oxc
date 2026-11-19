@@ -1082,6 +1082,7 @@ export interface DummyRuleMap {
   "jsx-a11y/role-has-required-aria-props"?: RuleNoConfig;
   "jsx-a11y/role-supports-aria-props"?: RuleNoConfig;
   "jsx-a11y/scope"?: RuleNoConfig;
+  "jsx-a11y/svg-has-title"?: RuleNoConfig;
   "jsx-a11y/tabindex-no-positive"?: RuleNoConfig;
   "logical-assignment-operators"?:
     RuleNoConfig | [AllowWarnDeny, AlwaysNever] | [AllowWarnDeny, AlwaysNever, LogicalAssignmentOperatorsConfig];

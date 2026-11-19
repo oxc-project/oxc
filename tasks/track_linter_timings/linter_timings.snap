@@ -300,6 +300,7 @@ jsx_a11y/prefer-tag-over-role                           |    452
 jsx_a11y/role-has-required-aria-props                   |    452
 jsx_a11y/role-supports-aria-props                       |    452
 jsx_a11y/scope                                          |    452
+jsx_a11y/svg-has-title                                  |    452
 jsx_a11y/tabindex-no-positive                           |    452
 nextjs/google-font-display                              |    452
 nextjs/google-font-preconnect                           |    452
