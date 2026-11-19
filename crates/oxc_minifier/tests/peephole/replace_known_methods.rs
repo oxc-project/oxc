@@ -286,9 +286,51 @@ fn test_fold_string_replace_all_size() {
     test("x = 'aaaaaaa'.replaceAll('a', 'aaaaaaa') ? 1 : 2", "x = 1");
     test("x = 'aaaaaaa'.replaceAll('a', 'aaaaaaa') && y", "x = y");
     test("x = ('aaaaaaa'.replaceAll('a', 'aaaaaaa'), y)", "x = y");
-    // As an argument or a returned value it is printed as it is: kept.
+    // As an argument, a returned value, or in `new`, an array or an object it is printed
+    // as it is: kept.
     test_same("f('aaaaaaa'.replaceAll('a', 'aaaaaaa'))");
+    test_same("console.log('aaaaaaa'.replaceAll('a', 'aaaaaaa'))");
     test_same("function f() { return 'aaaaaaa'.replaceAll('a', 'aaaaaaa') }");
+    test_same("x = new Foo('aaaaaaa'.replaceAll('a', 'aaaaaaa'))");
+    test_same("x = ['aaaaaaa'.replaceAll('a', 'aaaaaaa')]");
+    test_same("x = { a: 'aaaaaaa'.replaceAll('a', 'aaaaaaa') }");
+    test_same("x.y = 'aaaaaaa'.replaceAll('a', 'aaaaaaa')");
+    // A global function or a `Math`/`String` method can fold its literal
+    // argument: folds as before.
+    test("x = Number('aaaaaaa'.replaceAll('a', 'aaaaaaa'))", "x = NaN");
+    test("x = parseInt('aaaaaaa'.replaceAll('a', 'aaaaaaa'))", "x = NaN");
+    test("x = isNaN('aaaaaaa'.replaceAll('a', 'aaaaaaa'))", "x = !0");
+    // `Number`'s methods don't fold a string argument: kept.
+    test_same("x = Number.isNaN('aaaaaaa'.replaceAll('a', 'aaaaaaa'))");
+    test("x = Math.abs('aaaaaaa'.replaceAll('a', 'aaaaaaa'))", "x = NaN");
+    test("x = String.fromCharCode('aaaaaaa'.replaceAll('a', 'aaaaaaa'))", "x = '\\0'");
+    test(
+        "x = String('aaaaaaa'.replaceAll('a', 'aaaaaaa'))",
+        "x = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'",
+    );
+    test(
+        "x = encodeURIComponent('aaaaaaa'.replaceAll('a', 'aaaaaaa'))",
+        "x = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'",
+    );
+    // So can a method of a string literal.
+    test("x = 'abc'.indexOf('aaaaaaa'.replaceAll('a', 'aaaaaaa'))", "x = -1");
+    // A local function of the same name is any other call: kept.
+    test_same("function g(Number) { return Number('aaaaaaa'.replaceAll('a', 'aaaaaaa')) }");
+    // A local binding's value reaches its uses, which fold it: folds as before.
+    test_options(
+        "function f() { let s; s = 'aaaaaaa'.replaceAll('a', 'aaaaaaa'); return s.length } x = f()",
+        "function f() { return 49 } x = f()",
+        &remove,
+    );
+    // A line feed prints as it is in a template literal, so it costs no escape.
+    test("x = 'aaaaaaaa'.replaceAll('a', '\\n\\n\\n')", &format!("x = '{}'", r"\n".repeat(24)));
+    test_same("x = 'aaaaaaaa'.replaceAll('a', '\\r\\r\\r')");
+    // The call's own literals count every escape they may need: its receiver prints
+    // ten `\n` (56 characters in all), longer than the 48-character template literal.
+    test(
+        r"x = '````````````\n\n\n\n\n\n\n\n\n\n'.replaceAll('`', 'yyy')",
+        &format!("x = '{}{}'", "yyy".repeat(12), r"\n".repeat(10)),
+    );
     // A script's top-level binding stays even when unused: kept.
     test_same_options_source_type(
         "var s = 'aaaaaaa'.replaceAll('a', 'aaaaaaa')",
