@@ -386,9 +386,20 @@ pub fn create_export_named_class_reference<'a>(
     class_binding: &BoundIdentifier<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) -> Statement<'a> {
+    create_export_class_reference_as(class_binding, class_binding.name.into(), ctx)
+}
+
+/// `export { Class as exported }`
+///
+/// Unlike `export default Class`, this exports the live binding.
+pub fn create_export_class_reference_as<'a>(
+    class_binding: &BoundIdentifier<'a>,
+    exported: Str<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) -> Statement<'a> {
     let kind = ImportOrExportKind::Value;
     let local = ModuleExportName::IdentifierReference(class_binding.create_read_reference(ctx));
-    let exported = ModuleExportName::new_identifier_name(SPAN, class_binding.name, ctx);
+    let exported = ModuleExportName::new_identifier_name(SPAN, exported, ctx);
     let specifiers = [ExportSpecifier::new(SPAN, local, exported, kind, ctx)];
     let export_class_reference =
         ModuleDeclaration::new_export_named_declaration(SPAN, specifiers, kind, ctx);

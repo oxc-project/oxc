@@ -11,8 +11,8 @@ use crate::{
     common::helper_loader::{Helper, helper_call_expr},
     context::TraverseCtx,
     utils::ast_builder::{
-        create_assignment, create_export_default_class_reference,
-        create_export_named_class_reference, create_new_weakset,
+        create_assignment, create_export_class_reference_as, create_export_named_class_reference,
+        create_new_weakset,
     },
 };
 
@@ -85,7 +85,9 @@ impl<'a> StandardDecoratorState<'a> {
                 ctx.state.statement_injector.insert_after(&new_stmt, export);
             }
             Export::Default => {
-                let export = create_export_default_class_reference(&outer, ctx);
+                // `export { Foo as default }` keeps the export live, as `export default class Foo`
+                // does. `export default Foo` would snapshot the binding.
+                let export = create_export_class_reference_as(&outer, Str::from("default"), ctx);
                 ctx.state.statement_injector.insert_after(&new_stmt, export);
             }
         }
