@@ -46,11 +46,17 @@ impl<'a> ClassDetails<'a> {
         }
     }
 
+    /// Whether this class's temporaries are block-scoped `let`s, so repeated evaluations keep
+    /// separate state. Decorated classes and lowered auto-accessors need this.
+    pub fn block_scoped_temps(&self) -> bool {
+        self.decorators.is_some() || self.has_auto_accessor
+    }
+
     /// Declare a temporary for this class.
     ///
-    /// Decorated classes use block-scoped `let` so repeated evaluations keep separate state.
+    /// See [`Self::block_scoped_temps`].
     pub fn declare_temp(&self, binding: &BoundIdentifier<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.decorators.is_some() {
+        if self.block_scoped_temps() {
             ctx.state.var_declarations.insert_let(binding, None, &ctx.ast);
         } else {
             ctx.state.var_declarations.insert_var(binding, &ctx.ast);
@@ -64,7 +70,7 @@ impl<'a> ClassDetails<'a> {
         init: Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Statement<'a> {
-        if self.decorators.is_some() {
+        if self.block_scoped_temps() {
             StandardDecoratorState::create_let(binding, init, ctx)
         } else {
             create_variable_declaration(binding, init, ctx)

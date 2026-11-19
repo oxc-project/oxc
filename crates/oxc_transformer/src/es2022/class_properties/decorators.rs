@@ -38,8 +38,15 @@ impl<'a> DecoratorBodyEntry<'a> {
         self.is_decorated() || self.has_auto_accessor
     }
 
+    /// Whether per-class temporaries are block-scoped, so each evaluation of the class gets its
+    /// own, e.g. in a loop body. Decorated classes and lowered auto-accessors need this because
+    /// their storage and decorator state belong to one class evaluation.
+    fn block_scoped_temps(&self) -> bool {
+        self.lowers_static_blocks()
+    }
+
     pub fn create_binding(&self, name: &str, ctx: &mut TraverseCtx<'a>) -> BoundIdentifier<'a> {
-        if self.is_decorated() {
+        if self.block_scoped_temps() {
             ctx.generate_uid(name, ctx.current_block_scope_id(), SymbolFlags::BlockScopedVariable)
         } else {
             ctx.generate_uid_in_current_hoist_scope(name)
@@ -53,7 +60,7 @@ impl<'a> DecoratorBodyEntry<'a> {
     ) -> (ScopeId, SymbolFlags) {
         if !in_class_sequence {
             (ctx.current_block_scope_id(), SymbolFlags::Function)
-        } else if self.is_decorated() {
+        } else if self.block_scoped_temps() {
             (ctx.current_block_scope_id(), SymbolFlags::BlockScopedVariable)
         } else {
             (ctx.current_hoist_scope_id(), SymbolFlags::FunctionScopedVariable)
@@ -65,7 +72,7 @@ impl<'a> DecoratorBodyEntry<'a> {
         name: Option<&BoundIdentifier<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
-        if self.is_decorated() {
+        if self.block_scoped_temps() {
             self.create_binding(name.map_or("Class", |binding| binding.name.as_str()), ctx)
         } else {
             ClassBindings::create_temp_binding(name, ctx.current_hoist_scope_id(), ctx)
@@ -73,7 +80,7 @@ impl<'a> DecoratorBodyEntry<'a> {
     }
 
     pub fn declare_temp(&self, binding: &BoundIdentifier<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.is_decorated() {
+        if self.block_scoped_temps() {
             ctx.state.var_declarations.insert_let(binding, None, &ctx.ast);
         } else {
             ctx.state.var_declarations.insert_var(binding, &ctx.ast);
@@ -156,16 +163,9 @@ impl<'a> ClassProperties<'a> {
                 matches!(element, ClassElement::AccessorProperty(prop) if prop.r#static && !prop.r#type.is_abstract())
             }))
         .then(|| {
-            if is_decorated {
-                let name = class_name_binding.map_or("Class", |binding| binding.name.as_str());
-                ctx.generate_uid(name, ctx.current_block_scope_id(), SymbolFlags::BlockScopedVariable)
-            } else {
-                ClassBindings::create_temp_binding(
-                    class_name_binding,
-                    ctx.current_hoist_scope_id(),
-                    ctx,
-                )
-            }
+            // Block-scoped, like the other temporaries of decorated and auto-accessor classes.
+            let name = class_name_binding.map_or("Class", |binding| binding.name.as_str());
+            ctx.generate_uid(name, ctx.current_block_scope_id(), SymbolFlags::BlockScopedVariable)
         });
         if is_decorated {
             StandardDecoratorState::report_decorated_private_method_writes(body, ctx);
