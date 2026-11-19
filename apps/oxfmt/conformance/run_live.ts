@@ -36,6 +36,10 @@ type Source = {
   resolveFilePath?: (name: string) => string;
 };
 
+/** An Angular template's name oxfmt reads as one (`app.html` as `app.component.html`) */
+const asComponentTemplate = (name: string) =>
+  name.endsWith(".component.html") ? name : name.replace(/\.html$/, ".component.html");
+
 const categories: Category[] = [
   {
     name: "js-in-vue",
@@ -54,6 +58,58 @@ const categories: Category[] = [
     // Components with an inline template (`@Component({ template: `…` })`)
     name: "angular-in-js",
     projects: [{ dir: join(EXTERNALS_DIR, "ng-zorro-antd"), ext: ".component.ts" }],
+    optionSets: [{ printWidth: 80 }, { printWidth: 100, htmlWhitespaceSensitivity: "ignore" }],
+  },
+  {
+    // Templates in their own file, a `.html` without `.component` too (Angular's style guide since v20).
+    // Areas of different authors and syntax (`@if` and `*ngIf`), but no pages (`index.html`) or sets of near-identical demos
+    name: "angular",
+    projects: [
+      {
+        dir: join(EXTERNALS_DIR, "angular-adev"),
+        ext: ".html",
+        excludes: ["index.html", "examples/aria/", "examples/drag-drop/"],
+        resolveFilePath: asComponentTemplate,
+      },
+      {
+        dir: join(EXTERNALS_DIR, "angular-devtools"),
+        ext: ".html",
+        excludes: ["index.html", "/devtools.html"],
+        resolveFilePath: asComponentTemplate,
+      },
+      {
+        dir: join(EXTERNALS_DIR, "angular-components", "material"),
+        ext: ".html",
+        resolveFilePath: asComponentTemplate,
+      },
+      {
+        dir: join(EXTERNALS_DIR, "angular-components", "dev-app"),
+        ext: ".html",
+        excludes: ["index.html"],
+        resolveFilePath: asComponentTemplate,
+      },
+      {
+        dir: join(EXTERNALS_DIR, "bitwarden-components"),
+        ext: ".html",
+        excludes: ["index.html"],
+        resolveFilePath: asComponentTemplate,
+      },
+      {
+        dir: join(EXTERNALS_DIR, "bitwarden-angular"),
+        ext: ".html",
+        resolveFilePath: asComponentTemplate,
+      },
+      {
+        dir: join(EXTERNALS_DIR, "bitwarden-web", "auth"),
+        ext: ".html",
+        resolveFilePath: asComponentTemplate,
+      },
+      {
+        dir: join(EXTERNALS_DIR, "bitwarden-web", "vault"),
+        ext: ".html",
+        resolveFilePath: asComponentTemplate,
+      },
+    ],
     optionSets: [{ printWidth: 80 }, { printWidth: 100, htmlWhitespaceSensitivity: "ignore" }],
   },
   {
