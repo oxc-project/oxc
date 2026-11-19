@@ -139,6 +139,7 @@ Prettier's attachment artifacts that relocate a comment across tokens are diverg
 
 - Leading / trailing: the newline is the boundary, not the node's span.
   Trailing is the same-line run after content; a comment preceded by a newline is leading for what follows (`formatter/trivia.rs` module doc)
+  - Never `Comment::position` APIs (e.g. `is_trailing()`): the parser sets it for codegen, not for formatter's requirement
 - Deferred: left unprinted on purpose for a later pass (the next sibling's leading pass or the container's dangling pass)
 - Claim: a pass prints a comment and advances the cursor past it
 - Hide: a pass makes comments invisible to a sub-printer (`limit_comments_up_to`) so a later pass can print them
