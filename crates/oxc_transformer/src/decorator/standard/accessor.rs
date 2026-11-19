@@ -117,6 +117,7 @@ impl<'a> StandardDecoratorState<'a> {
             class_scope_id,
             static_binding,
             native_fields,
+            true,
             |storage, _getter, key, name, ctx| {
                 if let Some(name) = name {
                     self.accessor_names.insert(storage.address(), name);
