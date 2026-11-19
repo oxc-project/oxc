@@ -304,7 +304,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     );
                     return Some((arrow, true));
                 }
-            } else if kind == Kind::LAngle {
+            } else if kind == Kind::LAngle && self.is_ts {
+                // `async <T>(x) => ...`.
+                // `is_ts` check above because in JS/JSX, `async <` is a comparison
+                // (`f(async < b, c)`).
                 self.rewind(checkpoint);
                 return self
                     .try_parse_generic_arrow_function_expression(
@@ -611,6 +614,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Parse an arrow function with type parameters, if `<` starts one: `<T>(a: T) => a`.
     ///
     /// The cursor is at `<`, or at an `async` that is followed by `<` on the same line.
+    ///
+    /// In JS/JSX this always returns `None`, as type parameters are a TS-only thing.
+    /// This function is only called in a JS file for a `<` at the start of an expression,
+    /// which is a syntax error. Checking `is_ts` here, or before calling this function,
+    /// would add a branch to valid TS/TSX, just to bail out sooner on invalid JS (rare).
     pub(super) fn try_parse_generic_arrow_function_expression(
         &mut self,
         allow_return_type_in_arrow_function: bool,
@@ -647,6 +655,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// Whether the `<` at the cursor starts the type parameters of an arrow function.
+    ///
+    /// Called in TS, in TSX only after `async`, and in JS only for invalid code.
+    /// Never called in JSX.
     fn is_generic_arrow_function_expression(&mut self) -> Tristate {
         debug_assert!(self.at(Kind::LAngle));
         self.bump_any(); // `<`
@@ -658,8 +669,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return Tristate::False;
         }
 
-        // JSX overrides
+        // TSX overrides. Only `async <` gets here in TSX.
         if self.source_type.is_jsx() {
+            debug_assert!(self.is_ts);
             // <const Ident extends Ident>
             //  ^^^^^ Optional
             self.bump(Kind::Const);
@@ -673,6 +685,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // followed by `,`, `=`, `extends` or `>`, not by the rest of a type as in `<A.B>a`,
         // `<A[]>a`, `<A | B>a` and `<A<B>>a`, and the `>` of type parameters is followed by
         // `(`, not by an operand as in `<T>a` and `<any>{}`.
+        // JS only gets here for invalid code. `Maybe` gives it a better error for `<T,>`.
         if !self.is_ts || second == Kind::Const {
             return Tristate::Maybe;
         }
@@ -698,7 +711,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
-    /// Whether `<` and a name start the type parameters of an arrow function in a JSX file,
+    /// Whether `<` and a name start the type parameters of an arrow function in a TSX file,
     /// where they can also start a JSX element. The cursor is at the token after the name,
     /// and moves past an `extends`.
     ///
@@ -713,10 +726,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// a JSX element is followed by `.`, `:`, `<`, `{`, `/`, `>` or an attribute name, which may
     /// be `extends`. So `,` and `=` are type parameters, `extends` is decided by the token
     /// after it, and everything else is a JSX element. That includes `<T>`, which is why
-    /// the type parameters of an arrow function are written `<T,>` in a JSX file.
+    /// the type parameters of an arrow function are written `<T,>` in a TSX file.
     #[expect(clippy::inline_always)]
     #[inline(always)] // Keep `is_generic_arrow_function_expression` in one piece.
     pub(crate) fn is_generic_arrow_function_expression_after_jsx_name(&mut self) -> Tristate {
+        debug_assert!(self.is_ts);
         match self.cur_kind() {
             Kind::Extends => {
                 self.bump_any();

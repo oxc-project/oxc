@@ -1806,10 +1806,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     }
                     // `<div />`, `<T,>(x) => {}`
                     Kind::LAngle if self.source_type.is_jsx() => {
-                        let (expression, is_arrow) = self
-                            .parse_jsx_expression_or_generic_arrow_function(
+                        // In a JSX file, `<` can only start JSX.
+                        // Checking here skips the checkpoint which TSX needs.
+                        let (expression, is_arrow) = if self.is_ts {
+                            self.parse_jsx_expression_or_generic_arrow_function(
                                 allow_return_type_in_arrow_function,
-                            );
+                            )
+                        } else {
+                            (self.parse_jsx_expression(), false)
+                        };
                         if !is_arrow {
                             // A JSX element is a complete `UpdateExpression`.
                             break 'parse_lhs if kind_to_precedence(self.cur_kind()).is_none() {
@@ -1825,6 +1830,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         }
                         Some(expression)
                     }
+                    // `<T>(x) => {}` in TS. JSX and TSX files take the branch above.
+                    // In JS, `<` here is a syntax error, so it's not worth checking `is_ts` first.
                     Kind::LAngle => self.try_parse_generic_arrow_function_expression(
                         allow_return_type_in_arrow_function,
                     ),
