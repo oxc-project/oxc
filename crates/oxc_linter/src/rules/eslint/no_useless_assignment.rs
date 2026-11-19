@@ -901,6 +901,12 @@ impl NoUselessAssignment {
                         continue;
                     }
 
+                    let is_error = matches!(edge.weight(), EdgeType::Error(_));
+                    if is_error {
+                        for &sym_idx in &newly_killed {
+                            killed_on_path.unset_bit(sym_idx);
+                        }
+                    }
                     Self::analyze_loop_recursive(
                         graph,
                         target,
@@ -910,6 +916,11 @@ impl NoUselessAssignment {
                         killed_on_path,
                         visited,
                     );
+                    if is_error {
+                        for &sym_idx in &newly_killed {
+                            killed_on_path.set_bit(sym_idx);
+                        }
+                    }
                 }
                 EdgeType::Finalize | EdgeType::Join | EdgeType::Unreachable => {}
             }
@@ -1610,6 +1621,18 @@ function useResource(unsafe: (resource: { readonly release: () => void }) => voi
         "function f(p, q = (p = 1), r = (p = 2)) { return p; }",
         "function f(p, { [p = 1]: q } = (p = 2, {})) { return p; }",
         "function f(p, { a = (p = 1) } = (p = 2, {})) { return p; }",
+        "export function poll(fetchOnce, wait) {
+                        let delay = 1000;
+                        for (let attempt = 0; attempt < 5; attempt++) {
+                            try {
+                                fetchOnce();
+                                delay = 1000;
+                            } catch {
+                                wait(delay);
+                                delay *= 2;
+                            }
+                        }
+                    }",
     ];
 
     let fail = vec![
