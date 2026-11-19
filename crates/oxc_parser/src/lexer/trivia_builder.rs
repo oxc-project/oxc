@@ -990,13 +990,18 @@ token /* Trailing 1 */
             ("a /* trailing */\n+ b", CommentPosition::Trailing, 1),
             ("a\n/* leading */ +b", CommentPosition::Leading, 16),
             ("void /* leading */ +value", CommentPosition::Leading, 19),
+            ("x = a < b < c >> /*x*/ + d;", CommentPosition::Leading, 23),
             ("a /* webpackFoo: 1 */ + b", CommentPosition::Trailing, 1),
             ("foo(); /* trailing */", CommentPosition::Trailing, 6),
         ] {
-            let comments = get_comments(source_text);
-            assert_eq!(comments.len(), 1, "{source_text}");
-            assert_eq!(comments[0].position, position, "{source_text}");
-            assert_eq!(comments[0].attached_to, attached_to, "{source_text}");
+            for (language, comments) in [
+                ("JavaScript", get_comments(source_text)),
+                ("TypeScript", get_comments_typescript(source_text)),
+            ] {
+                assert_eq!(comments.len(), 1, "{language}: {source_text}");
+                assert_eq!(comments[0].position, position, "{language}: {source_text}");
+                assert_eq!(comments[0].attached_to, attached_to, "{language}: {source_text}");
+            }
         }
     }
 
