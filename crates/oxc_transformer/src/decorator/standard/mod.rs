@@ -28,6 +28,46 @@
 //! on lowered private fields use `?.bind`, so an undefined private callee short-circuits. This also
 //! affects undecorated classes at targets which lower private fields.
 //!
+//! ## Class replacement
+//!
+//! Oxc follows `ClassDefinitionEvaluation` in the decorators specification
+//! ([tc39/ecma262#2417](https://github.com/tc39/ecma262/pull/2417), revision of 2024-02-02).
+//! The steps below are numbered as in that revision. `F` is the original constructor and `newF`
+//! is the value returned by the last class decorator.
+//!
+//! 1. All elements are evaluated against `F` (`ClassElementEvaluation`, the "for each ClassElement"
+//!    loop). Every method, accessor, field initializer and static block therefore has `F`, or
+//!    `F.prototype`, as its `[[HomeObject]]`. `super` inside a static element always resolves
+//!    through the *original* class's prototype chain, even after replacement. Oxc saves `F` in
+//!    `_originalClass` for lowered `super` accesses.
+//! 2. Element decorators run, then `InitializePrivateMethods(F, staticElements)` installs static
+//!    private methods, getters, setters and the private `get`/`set` pair of `static accessor #x`
+//!    on `F`. This happens *before* class decorators run, so they are never present on `newF`.
+//!    `newF.#m()`, `#m in newF` and `newF.#a` throw or are `false`. Oxc adds `F` to the static
+//!    brand before applying class decorators.
+//! 3. `ApplyDecoratorsToClassDefinition` returns `newF`; `F` is set to `newF` and the inner class
+//!    binding is initialized with it ("Set F to newF.\[\[Value\]\]", then
+//!    `classEnv.InitializeBinding`).
+//! 4. Static method extra initializers are called with `this` = `newF`.
+//! 5. Static fields and the storage of static auto-accessors are defined on `newF`
+//!    (`InitializeFieldOrAccessor(F, ...)` after step 3), and their initializers and static blocks
+//!    run with `this` = `newF`. Static private *fields* are therefore present on `newF`, unlike
+//!    static private methods.
+//! 6. Class extra initializers run with `this` = `newF`.
+//!
+//! Babel (2023-11) and esbuild differ from this model in places. Babel installs static private
+//! methods on `newF`, resolves `super` through `newF`, and calls static method extra
+//! initializers with `F`; esbuild runs static field initializers against `F`. The Babel exec
+//! fixtures that depend on those choices fail in `babel_exec.snap.md` and are expected to:
+//! `2023-11-classes[--to-es2015]/replacement-static-{block-super, property-super,
+//! elements-super-this, method-private-environment-super, method-private-instance-element-super,
+//! private-instance-element-access, installed-on-correct-class, decorator-initializer-this}`.
+//! `oxc/replacement-super-home-object` and `oxc/replacement-static-spec-model` pin the
+//! behaviour above. `replacement-static-private-instance-element-destructuring` uses the
+//! unsupported private destructuring proposal (`{ #x: x }`), and
+//! `replacement-static-method-private-instance-element-super-assumption-ignoreFunctionLength`
+//! uses the unsupported `ignoreFunctionLength` assumption; neither reaches decorator lowering.
+//!
 //! `StandardDecoratorState` is split by concern: `element` collects decorators, `accessor`
 //! lowers `accessor` properties, `name` handles named evaluation, and `sequence` emits the
 //! decorator calls. Class-properties drives them in evaluation order; see
