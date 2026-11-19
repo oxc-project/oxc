@@ -1,130 +1,150 @@
+use std::{mem::MaybeUninit, slice};
+
+use oxc_simd::{Cpu, DynCpu, cpu_multiversion};
 use oxc_span::Span;
 
-use crate::token::{SPAN_SENTINELS, tk};
-
-use crate::pipeline::{
-    cpu::{Cpu, DynCpu, apply, cpu_select, cpu_versions},
-    lanes::Lanes,
+use crate::{
+    PAD,
+    token::{SPAN_SENTINELS, TokenKind, debug_assert_kind_bytes, tk},
 };
 
-#[cfg(target_arch = "x86_64")]
+use crate::pipeline::{bitmap::Bitmap, kinds::Kinds, lanes::Lanes, lex::Lex};
+
 mod avx2;
-#[cfg(target_arch = "x86_64")]
-use avx2::{build_spans_avx2, compress_blocks_avx2, init_pair_luts_avx2, lanes_post_avx2};
-
-mod generic;
-use generic::{build_spans_generic, compress_blocks_generic, lanes_post_generic};
-
 mod common;
+mod generic;
+mod neon;
+mod pair_luts;
+
+#[cfg(test)]
+mod tests;
+
+use avx2::{build_spans_avx2, compress_blocks_avx2, lanes_post_avx2};
+use generic::{build_spans_generic, compress_blocks_generic, lanes_post_generic};
+use neon::{build_spans_neon, compress_blocks_neon, lanes_post_neon};
 
 const STAGE_BLOCKS: usize = 32;
 pub const STAGE_CAP: usize = STAGE_BLOCKS * 64 + 128;
 
-#[apply(cpu_versions)]
+/// Fill kinds and spans with the significant tokens, then the sentinels; returns the token count.
+#[cpu_multiversion]
 #[inline(never)]
-pub unsafe fn compress(
-    src: &[u8],
-    n: usize,
-    nb: usize,
-    st: *const u64,
-    kind: *const u8,
-    stage_pos: *mut u32,
-    stage_kind: *mut u8,
-    out_kinds: *mut u8,
-    out_spans: *mut Span,
-    lanes: &mut Lanes,
+pub fn compress(
+    lex: Lex,
+    stage_pos: &mut [u32; STAGE_CAP],
+    stage_kind: &mut [u8; STAGE_CAP],
+    out_kinds: &mut Vec<TokenKind>,
+    out_spans: &mut Vec<Span>,
     cpu: impl Cpu,
 ) -> usize {
+    let Lex { src, bitmaps, kinds, .. } = lex;
+    // Can't wrap: n + PAD fits in the source slice, and SPAN_SENTINELS is small.
+    let capacity = src.len() + PAD + SPAN_SENTINELS;
+    out_kinds.clear();
+    out_kinds.reserve(capacity);
+    out_spans.clear();
+    out_spans.reserve(capacity);
+    let spans = out_spans.spare_capacity_mut();
+    let sig_kinds = kind_slots(out_kinds.spare_capacity_mut());
     let mut c = 0usize;
     let mut w = 0usize;
     let mut b = 0usize;
-    while b < nb {
-        let b1 = (b + STAGE_BLOCKS).min(nb);
-        c += compress_blocks(st, kind, b, b1, stage_pos.add(c), stage_kind.add(c), cpu);
+    let block_count = src.block_count();
+    while b < block_count {
+        let b1 = (b + STAGE_BLOCKS).min(block_count);
+        let (pos, kind) = (&mut stage_pos[c..], &mut stage_kind[c..]);
+        c += compress_blocks(bitmaps.token_start, kinds, b, b1, pos, kind, cpu);
         b = b1;
         if c > 1 {
-            w += build_spans(stage_kind, stage_pos, c - 1, out_spans.add(w), out_kinds.add(w), cpu);
-            *stage_pos = *stage_pos.add(c - 1);
-            *stage_kind = *stage_kind.add(c - 1);
+            let (kind, pos) = (&stage_kind[..c - 1], &stage_pos[..c]);
+            w += build_spans(kind, pos, &mut spans[w..], &mut sig_kinds[w..], cpu);
+            stage_pos[0] = stage_pos[c - 1];
+            stage_kind[0] = stage_kind[c - 1];
             c = 1;
         }
     }
     if c == 1 {
-        *stage_pos.add(1) = n as u32;
-        w += build_spans(stage_kind, stage_pos, 1, out_spans.add(w), out_kinds.add(w), cpu);
+        stage_pos[1] = src.len() as u32;
+        let (kind, pos) = (&stage_kind[..1], &stage_pos[..2]);
+        w += build_spans(kind, pos, &mut spans[w..], &mut sig_kinds[w..], cpu);
     }
-    write_sentinels(n as u32, out_spans.add(w), out_kinds.add(w));
-    lanes_post(src, out_kinds, out_spans, w, n as u32, lanes, cpu);
+    let len = w + SPAN_SENTINELS;
+    let eof = Span::new(src.len() as u32, src.len() as u32);
+    for (span, kind) in spans[w..len].iter_mut().zip(&mut sig_kinds[w..len]) {
+        span.write(eof);
+        kind.write(tk!(Eof));
+    }
+    // SAFETY: build_spans filled each slot below w with a Kinds byte, and the loop the sentinels.
+    unsafe {
+        debug_assert_kind_bytes(slice::from_raw_parts(out_kinds.as_ptr().cast::<u8>(), len));
+        out_kinds.set_len(len);
+        out_spans.set_len(len);
+    }
     w
 }
 
-pub unsafe fn write_sentinels(n: u32, spans: *mut Span, sig_kinds: *mut u8) {
-    let eof = u64::from(n) | (u64::from(n) << 32);
-    for s in 0..SPAN_SENTINELS {
-        *spans.cast::<u64>().add(s) = eof;
-        *sig_kinds.add(s) = tk!(Eof);
+/// The kind slots as bytes, for the kernels to fill from the staged kinds.
+fn kind_slots(slots: &mut [MaybeUninit<TokenKind>]) -> &mut [MaybeUninit<u8>] {
+    // SAFETY: TokenKind is repr(u8), and a MaybeUninit byte may hold any value.
+    unsafe { slice::from_raw_parts_mut(slots.as_mut_ptr().cast(), slots.len()) }
+}
+
+/// Stage the token starts and kinds of blocks b0..b1, at most 64 a block; returns the count.
+#[cpu_multiversion]
+#[inline(always)]
+fn compress_blocks(
+    token_start: Bitmap,
+    kinds: Kinds,
+    b0: usize,
+    b1: usize,
+    starts: &mut [u32],
+    stage_kinds: &mut [u8],
+    cpu: impl Cpu,
+) -> usize {
+    match DynCpu::from(cpu) {
+        DynCpu::Avx2(cpu) => {
+            compress_blocks_avx2(token_start, kinds, b0, b1, starts, stage_kinds, cpu)
+        }
+        DynCpu::Neon(cpu) => {
+            compress_blocks_neon(token_start, kinds, b0, b1, starts, stage_kinds, cpu)
+        }
+        DynCpu::Generic(_) => {
+            compress_blocks_generic(token_start, kinds, b0, b1, starts, stage_kinds)
+        }
     }
 }
 
-/// Initialize the global `PairLuts` instance.
-///
-/// This function must be called before calling [`compress`].
-///
-/// `PairLuts` is only used by AVX2 implementation, so this function is a no-op on other CPUs.
-pub(super) fn init_pair_luts(cpu: DynCpu) {
-    cpu_select!(cpu, {
-        Avx2(cpu) => init_pair_luts_avx2(cpu),
-        Neon(_) => {}
-        Generic(_) => {}
-    });
-}
-
+/// Write the kept staged tokens to every slot below the returned count, which compress relies on.
+#[cpu_multiversion]
 #[inline(always)]
-unsafe fn compress_blocks(
-    st: *const u64,
-    kind: *const u8,
-    b0: usize,
-    b1: usize,
-    starts: *mut u32,
-    kinds: *mut u8,
+fn build_spans(
+    stage_kind: &[u8],
+    stage_pos: &[u32],
+    spans: &mut [MaybeUninit<Span>],
+    sig_kinds: &mut [MaybeUninit<u8>],
     cpu: impl Cpu,
 ) -> usize {
-    cpu_select!(cpu, {
-        Avx2(cpu) => compress_blocks_avx2(st, kind, b0, b1, starts, kinds, cpu),
-        Neon(_) => compress_blocks_generic(st, kind, b0, b1, starts, kinds),
-        Generic(_) => compress_blocks_generic(st, kind, b0, b1, starts, kinds),
-    })
+    match DynCpu::from(cpu) {
+        DynCpu::Avx2(cpu) => build_spans_avx2(stage_kind, stage_pos, spans, sig_kinds, cpu),
+        DynCpu::Neon(cpu) => build_spans_neon(stage_kind, stage_pos, spans, sig_kinds, cpu),
+        DynCpu::Generic(_) => build_spans_generic(stage_kind, stage_pos, spans, sig_kinds),
+    }
 }
 
-#[inline(always)]
-unsafe fn build_spans(
-    stage_kind: *const u8,
-    stage_pos: *const u32,
-    m: usize,
-    spans: *mut Span,
-    sig_kinds: *mut u8,
-    cpu: impl Cpu,
-) -> usize {
-    cpu_select!(cpu, {
-        Avx2(cpu) => build_spans_avx2(stage_kind, stage_pos, m, spans, sig_kinds, cpu),
-        Neon(_) => build_spans_generic(stage_kind, stage_pos, m, spans, sig_kinds),
-        Generic(_) => build_spans_generic(stage_kind, stage_pos, m, spans, sig_kinds),
-    })
-}
-
-#[inline(always)]
-unsafe fn lanes_post(
+/// Push the values of the number and escaped identifier tokens, and flag the invalid ones.
+#[cpu_multiversion]
+#[inline(never)]
+pub fn lanes_post(
     src: &[u8],
-    out_kinds: *const u8,
-    out_spans: *const Span,
-    m: usize,
-    nn: u32,
+    kinds: &[u8],
+    spans: &[Span],
+    src_len: u32,
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) {
-    cpu_select!(cpu, {
-        Avx2(cpu) => lanes_post_avx2(src, out_kinds, out_spans, m, nn, lanes, cpu),
-        Neon(_) => lanes_post_generic(src, out_kinds, out_spans, m, nn, lanes),
-        Generic(_) => lanes_post_generic(src, out_kinds, out_spans, m, nn, lanes),
-    });
+    match DynCpu::from(cpu) {
+        DynCpu::Avx2(cpu) => lanes_post_avx2(src, kinds, spans, src_len, lanes, cpu),
+        DynCpu::Neon(cpu) => lanes_post_neon(src, kinds, spans, src_len, lanes, cpu),
+        DynCpu::Generic(_) => lanes_post_generic(src, kinds, spans, src_len, lanes),
+    };
 }

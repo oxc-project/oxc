@@ -104,6 +104,9 @@ impl<'a> ContextIdentifierVisitor<'a> {
             Some(id) => id,
             None => return,
         };
+        if self.scope.is_ambient_binding(symbol_id) {
+            return;
+        }
         let &fn_scope = match self.function_stack.last() {
             Some(s) => s,
             None => return,
@@ -116,6 +119,9 @@ impl<'a> ContextIdentifierVisitor<'a> {
 
     fn handle_reassignment_identifier(&mut self, name: &str, current_scope: ScopeId) {
         if let Some(symbol_id) = self.scope.find_binding(current_scope, name) {
+            if self.scope.is_ambient_binding(symbol_id) {
+                return;
+            }
             let info = self.binding_info.entry(symbol_id).or_default();
             info.reassigned = true;
             if let Some(&fn_scope) = self.function_stack.last()
@@ -238,7 +244,16 @@ impl<'a> VisitJs<'a> for ContextIdentifierVisitor<'a> {
 
     fn visit_assignment_expression(&mut self, it: &AssignmentExpression<'a>) {
         let current_scope = self.current_scope();
-        self.walk_assignment_target_for_reassignment(&it.left, current_scope);
+        // `const v = 1; () => { v ??= 2 }` never assigns, but marking `v`
+        // reassigned makes it a context identifier and the declaration is then
+        // rejected as a Syntax error. Logical assignment to a const is a
+        // lowering Todo instead (the store may be dead, and compiling it would
+        // rewrite `const` to `let`). `let` targets are still reassignments.
+        if !(it.operator.to_logical_operator().is_some()
+            && logical_assignment_target_is_const(self.scope, current_scope, &it.left))
+        {
+            self.walk_assignment_target_for_reassignment(&it.left, current_scope);
+        }
         oxc_ast_visit::walk_js::walk_assignment_expression(self, it);
     }
 
@@ -373,33 +388,17 @@ impl<'a> ContextIdentifierVisitor<'a> {
             SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
                 self.handle_reassignment_identifier(&ident.name, current_scope);
             }
-            SimpleAssignmentTarget::TSAsExpression(node) => {
-                self.walk_assignment_target_expression_for_reassignment(
-                    &node.expression,
-                    current_scope,
-                );
-            }
-            SimpleAssignmentTarget::TSSatisfiesExpression(node) => {
-                self.walk_assignment_target_expression_for_reassignment(
-                    &node.expression,
-                    current_scope,
-                );
-            }
-            SimpleAssignmentTarget::TSNonNullExpression(node) => {
-                self.walk_assignment_target_expression_for_reassignment(
-                    &node.expression,
-                    current_scope,
-                );
-            }
-            SimpleAssignmentTarget::TSTypeAssertion(node) => {
-                self.walk_assignment_target_expression_for_reassignment(
-                    &node.expression,
-                    current_scope,
-                );
-            }
             SimpleAssignmentTarget::StaticMemberExpression(_)
             | SimpleAssignmentTarget::ComputedMemberExpression(_)
             | SimpleAssignmentTarget::PrivateFieldExpression(_) => {}
+            _ => {
+                if let Some(expression) = target.get_expression() {
+                    self.walk_assignment_target_expression_for_reassignment(
+                        expression,
+                        current_scope,
+                    );
+                }
+            }
         }
     }
 
@@ -420,6 +419,31 @@ impl<'a> ContextIdentifierVisitor<'a> {
             }
         }
     }
+}
+
+/// Whether `target` is a simple assignment to a `const` binding.
+fn logical_assignment_target_is_const(
+    scope: &ScopeResolver<'_, '_>,
+    current_scope: ScopeId,
+    target: &AssignmentTarget<'_>,
+) -> bool {
+    let name = match target {
+        AssignmentTarget::AssignmentTargetIdentifier(ident) => ident.name.as_str(),
+        _ => {
+            let Some(expression) =
+                target.as_simple_assignment_target().and_then(|t| t.get_expression())
+            else {
+                return false;
+            };
+            let Expression::Identifier(ident) = expression.get_inner_expression() else {
+                return false;
+            };
+            ident.name.as_str()
+        }
+    };
+    scope
+        .find_binding(current_scope, name)
+        .is_some_and(|symbol_id| scope.binding_kind(symbol_id) == crate::scope::BindingKind::Const)
 }
 
 /// Check if a binding declared at `binding_scope` is captured by a function at `function_scope`.

@@ -17,7 +17,7 @@ use crate::{
 };
 
 use super::{
-    function::function_content_end, import_declaration::module_source_end,
+    format_with, function::function_content_end, import_declaration::module_source_end,
     write_leading_comments_with_asi_guard,
 };
 
@@ -60,6 +60,16 @@ pub fn trailing_comments_to_move_behind_semicolon<'a>(
     {
         return None;
     }
+    end_of_line_comments_behind_semicolon(f, content_end)
+}
+
+/// The same-line comments after `content_end` that move behind a semicolon,
+/// `None` for a trailing suppression comment, which stays visible to the content so it keeps its text.
+fn end_of_line_comments_behind_semicolon<'a>(
+    f: &JsFormatter<'_, 'a>,
+    content_end: u32,
+) -> Option<&'a [Comment]> {
+    let comments = f.context().comments();
     let trailing_comments = comments.end_of_line_comments_after(content_end);
     if trailing_comments.iter().any(|comment| comments.is_suppression_comment(comment)) {
         return None;
@@ -246,10 +256,23 @@ where
     T: Format<'a, JsFormatContext<'a>>,
 {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let Some(trailing_comments) =
+        // The separator an embedded program writes (`TopLevelSemicolons::Separated`) is this statement's `;`,
+        // with or without a source one
+        let separator = f.context_mut().take_separator_at(self.node_end);
+        let semicolon = format_with(|f| {
+            if separator {
+                write!(f, ";");
+            } else {
+                write!(f, OptionalSemicolon);
+            }
+        });
+        let trailing_comments = if separator {
+            end_of_line_comments_behind_semicolon(f, self.content_end)
+        } else {
             trailing_comments_to_move_behind_semicolon(f, self.content_end, self.node_end)
-        else {
-            write!(f, [self.content, OptionalSemicolon]);
+        };
+        let Some(trailing_comments) = trailing_comments else {
+            write!(f, [self.content, semicolon]);
             return;
         };
 
@@ -257,7 +280,7 @@ where
         // So they are not printed before the semicolon.
         format_content_without_comments_after(self.content, self.content_end, f);
 
-        write!(f, [OptionalSemicolon, FormatTrailingComments::Comments(trailing_comments)]);
+        write!(f, [semicolon, FormatTrailingComments::Comments(trailing_comments)]);
     }
 }
 

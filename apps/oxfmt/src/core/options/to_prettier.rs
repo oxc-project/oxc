@@ -10,8 +10,7 @@ use super::super::oxfmtrc::{
     ArrowParensConfig, AstroCompressHtmlConfig, AstroConfig, AstroUserConfig,
     EmbeddedLanguageFormattingConfig, EndOfLineConfig, FormatConfig,
     HtmlWhitespaceSensitivityConfig, ObjectWrapConfig, OperatorPositionConfig, ProseWrapConfig,
-    QuotePropsConfig, SortTailwindcssUserConfig, SvelteConfig, SvelteUserConfig,
-    TrailingCommaConfig,
+    QuotePropsConfig, SvelteConfig, SvelteUserConfig, TrailingCommaConfig,
 };
 #[cfg(feature = "napi")]
 use super::super::support::PrettierLanguage;
@@ -172,15 +171,6 @@ pub fn inject_parser(opts: &mut Value, parser_name: &str) {
     as_object_mut(opts).insert("parser".to_string(), Value::String(parser_name.to_string()));
 }
 
-/// Inject the keys for a string re-embedded into the parent's IR, overriding the configured ones:
-/// - `printWidth`: the effective width at the embedding position
-/// - `endOfLine`: `lf`, since the IR only takes `\n`
-pub fn inject_string_embed_options(opts: &mut Value, print_width: usize) {
-    let opts = as_object_mut(opts);
-    opts.insert("printWidth".to_string(), Value::from(print_width));
-    opts.insert("endOfLine".to_string(), Value::from("lf"));
-}
-
 /// Inject `filepath` key.
 ///
 /// Some plugins (Tailwind sorter, etc.) depend on it.
@@ -198,8 +188,7 @@ pub fn inject_filepath(opts: &mut Value, path: &Path) {
 ///
 /// See: <https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options>
 pub fn inject_tailwind_plugin_payload(opts: &mut Value, config: &FormatConfig) {
-    let Some(tw) = config.sort_tailwindcss.clone().and_then(SortTailwindcssUserConfig::into_config)
-    else {
+    let Some(tw) = config.tailwind_config() else {
         return;
     };
     let map = as_object_mut(opts);

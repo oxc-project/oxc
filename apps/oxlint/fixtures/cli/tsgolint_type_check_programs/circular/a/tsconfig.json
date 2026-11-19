@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "strict": true
+  },
+  "include": [
+    "*.ts"
+  ],
+  "references": [
+    {
+      "path": "../b"
+    }
+  ]
+}

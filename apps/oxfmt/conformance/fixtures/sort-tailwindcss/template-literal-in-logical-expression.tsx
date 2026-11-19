@@ -1,0 +1,1 @@
+const A = <div className={variant || `p-4 flex`} />;

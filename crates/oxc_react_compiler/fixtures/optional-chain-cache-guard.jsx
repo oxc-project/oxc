@@ -47,3 +47,36 @@ export function ConditionalComputedContinuation({ obj, getKey, getArg }) {
 export function ConditionalFullyOptional({ obj, getArg }) {
   return <span>{getArg() ? obj?.a?.b(getArg()) : null}</span>;
 }
+
+
+const sproutInputs = [[{
+  obj: null,
+  getArg: () => {
+    "use no memo";
+
+    return 1;
+  }
+}], [{
+  obj: {
+    a: {
+      b: v => {
+        "use no memo";
+
+        return v + 1;
+      }
+    }
+  },
+  getArg: () => {
+    "use no memo";
+
+    return 2;
+  }
+}]];
+export const FIXTURE_ENTRYPOINT = {
+  fn: args => {
+    "use no memo";
+    return StaticContinuation(...args);
+  },
+  params: [sproutInputs[0]],
+  sequentialRenders: [sproutInputs[0], sproutInputs[0], ...sproutInputs.slice(1), sproutInputs.at(-1), sproutInputs[0]],
+};

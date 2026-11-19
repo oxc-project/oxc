@@ -1,9 +1,12 @@
 use std::ops::Deref;
 
-use oxc_ast::ast::{JSXAttributeItem, JSXAttributeValue, JSXOpeningElement, StringLiteral};
+use oxc_ast::ast::{JSXAttributeItem, JSXAttributeValue, JSXOpeningElement};
 use oxc_span::GetSpan;
 
-use crate::{ast_nodes::AstNode, formatter::prelude::*, write};
+use crate::{
+    ast_nodes::AstNode, formatter::prelude::*,
+    utils::tailwindcss::tailwind_context_for_jsx_attribute, write,
+};
 
 pub struct FormatOpeningElement<'a, 'b> {
     element: &'b AstNode<'b, 'a, JSXOpeningElement<'a>>,
@@ -45,7 +48,7 @@ impl<'a, 'b> FormatOpeningElement<'a, 'b> {
         } else if attributes.len() == 1
             && !name_has_comment
             && !last_attribute_has_comment
-            && is_single_line_string_literal_attribute(&attributes[0])
+            && string_literal_attribute_has_line_break(&attributes[0], f) == Some(false)
         {
             OpeningElementLayout::SingleStringAttribute
         } else {
@@ -54,17 +57,28 @@ impl<'a, 'b> FormatOpeningElement<'a, 'b> {
     }
 }
 
-/// Returns `true` if this is an attribute with a [`StringLiteral`] initializer that contains at least one new line character.
-fn is_multiline_string_literal_attribute(attribute: &JSXAttributeItem<'_>) -> bool {
+/// Whether this attribute's string literal value is printed with a line break,
+/// or `None` if the value isn't a string literal.
+/// - Tailwind sorting without `preserveWhitespace` collapses line breaks,
+///   so checking the source value alone would make formatting non-idempotent
+fn string_literal_attribute_has_line_break(
+    attribute: &JSXAttributeItem<'_>,
+    f: &JsFormatter<'_, '_>,
+) -> Option<bool> {
     let JSXAttributeItem::Attribute(attr) = attribute else {
-        return false;
+        return None;
     };
-    attr.value.as_ref().is_some_and(|value| {
-        matches!(
-            value,
-            JSXAttributeValue::StringLiteral(s) if s.value.contains(|c: char| matches!(c, '\n' | '\r'))
-        )
-    })
+    let Some(JSXAttributeValue::StringLiteral(string)) = &attr.value else {
+        return None;
+    };
+
+    if !string.value.contains(|c: char| matches!(c, '\n' | '\r')) {
+        return Some(false);
+    }
+
+    let collapses_whitespace = tailwind_context_for_jsx_attribute(&attr.name, f)
+        .is_some_and(|ctx| !ctx.preserve_whitespace);
+    Some(!collapses_whitespace)
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatOpeningElement<'a, '_> {
@@ -115,9 +129,9 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatOpeningElement<'a, '_> {
                     }
                 });
 
-                let has_multiline_string_attribute = attributes
-                    .iter()
-                    .any(|attribute| is_multiline_string_literal_attribute(&attribute));
+                let has_multiline_string_attribute = attributes.iter().any(|attribute| {
+                    string_literal_attribute_has_line_break(&attribute, f) == Some(true)
+                });
                 write!(f, [group(&format_inner).should_expand(has_multiline_string_attribute)]);
             }
         }
@@ -152,27 +166,4 @@ pub enum OpeningElementLayout {
     /// ></div>;
     /// ```
     IndentAttributes { name_has_comment: bool, last_attribute_has_comment: bool },
-}
-
-/// Returns `true` if this is an attribute with a string literal initializer that does not contain any new line characters.
-fn is_single_line_string_literal_attribute(attribute: &JSXAttributeItem) -> bool {
-    as_string_literal_attribute_value(attribute)
-        .is_some_and(|string| !string.value.contains(|c: char| matches!(c, '\n' | '\r')))
-}
-
-/// Returns `Some` if the initializer value of this attribute is a string literal.
-/// Returns [None] otherwise.
-fn as_string_literal_attribute_value<'a>(
-    attribute: &'a JSXAttributeItem<'a>,
-) -> Option<&'a StringLiteral<'a>> {
-    match attribute {
-        JSXAttributeItem::Attribute(attr) => {
-            if let Some(JSXAttributeValue::StringLiteral(string)) = &attr.value {
-                Some(string.as_ref())
-            } else {
-                None
-            }
-        }
-        JSXAttributeItem::SpreadAttribute(_) => None,
-    }
 }

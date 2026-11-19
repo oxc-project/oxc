@@ -13,8 +13,42 @@ function foo(a, b, c, d, e) {
 	}
 	return x;
 }
+const sproutInputs = [
+	[
+		true,
+		1,
+		false,
+		2,
+		3
+	],
+	[
+		false,
+		4,
+		true,
+		5,
+		6
+	],
+	[
+		false,
+		7,
+		false,
+		8,
+		9
+	]
+];
 export const FIXTURE_ENTRYPOINT = {
-	fn: foo,
-	params: ["TodoAdd"],
-	isComponent: "TodoAdd"
+	fn: (args) => {
+		"use no memo";
+		return foo(...args);
+	},
+	params: [sproutInputs[0]],
+	sequentialRenders: [
+		sproutInputs[0],
+		sproutInputs[0],
+		sproutInputs[1],
+		sproutInputs[1],
+		sproutInputs[2],
+		sproutInputs[2],
+		sproutInputs[0]
+	]
 };

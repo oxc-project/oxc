@@ -38,7 +38,7 @@ end-of-line whitespace never appearing in the output is guaranteed by constructi
 Text/Token content is the emitter's responsibility, language crates write their values pre-trimmed.
 
 NOTE: The printer's runtime optimizations (pending-space dedup, consecutive-hardline merging, this no-trim rule, ...) are mirrored downstream by `apps/oxfmt`'s `prettier_compat` (IR ↔ Prettier Doc interop; kept there because core never learns Prettier-as-a-system).
-When changing printer runtime behavior, update that mirror in the same PR; oxfmt's embedded/E2E conformance is the backstop that catches drift.
+When changing printer runtime behavior, update that mirror in the same PR; oxfmt's conformance is the backstop that catches drift.
 
 ### Choosing a staging buffer
 
@@ -90,7 +90,7 @@ The core is parameterized over a consumer-supplied context so it stays language-
 - Only language-pair specific data crosses as `dyn Any`, core never learns concrete languages:
   - When the parent picks the child language, it passes the pair's own data (css-in-js's `CssInJsTemplate`, html-in-js's `HtmlInJsTemplate`)
   - When it cannot (a Markdown code block's name resolves in the host), it passes a fact about itself to every child,
-    and the host translates it into the pair's data once the child language is known (`XxxInMarkdownCodeBlock` → `JsEmbeddedIn`)
+    and the host translates it into the pair's data once the child language is known (`XxxInMarkdownCodeBlock` → JS's `JsRoot::Program`)
 - `FormatSession` (`session/mod.rs`) is the execution unit:
   - One arena, one shared `GroupId` space (`Arc<UniqueGroupIdBuilder>`), one Tailwind class scope (`Rc<RefCell<Vec<String>>>`), the host's `SessionServices`, and the input's envelope semantics (`InputKind`), usable by standalone roots and dispatched children alike
   - `SessionServices` names the three per-run duties, one field each: `dispatcher` (IR channel), `string_embedder` (string-out channel, `(language, code, print_width)`; temporary, see domain (4)'s exit criterion), `tailwind_sorter` (print-time batch sort). Core only transports them
@@ -125,7 +125,7 @@ Output targets Prettier compatibility, but the domain is defined by what it is, 
 
 Admission: core stores the service and hands it back (or applies it mechanically at finalize);
 every value crossing the closure boundary is an opaque string/vec, never a language enum or an option type, and core makes no decision from the result.
-`string_embedder` additionally carries an exit criterion: it is removed when (a) html gains an IR-capable formatter AND (b) the host's string-out consumers (JSDoc fences) can express their re-embedding in IR (see `apps/oxfmt`'s AGENTS.md for that half); until then it is the string-out channel's transport.
+`string_embedder` additionally carries an exit criterion: it is removed when the host's string-out consumers (JSDoc fences) can express their re-embedding in IR (see `apps/oxfmt`'s AGENTS.md for that half; html, the other half, has an IR-capable formatter now); until then it is the string-out channel's transport.
 
 - (5) `envelope/`: IR-composing behavior shared by document-envelope hosts (`write_front_matter`)
 
@@ -175,5 +175,5 @@ Quote-style options, comment rules, and the like are likewise consumer-owned.
 cargo c -p oxc_formatter_core
 ```
 
-This crate has basic tests only of its own, it is exercised through the conformance/snapshot tests of its consumers.
+This crate has basic tests only of its own, it is exercised through its consumers' fixture tests and oxfmt's conformance.
 The fixture-test infrastructure those consumers use lives in `crates/oxc_formatter_tests`.

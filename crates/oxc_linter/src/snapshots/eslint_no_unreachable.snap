@@ -199,3 +199,17 @@ source: crates/oxc_linter/src/tester.rs
    ·                                              ──────────
    ╰────
   help: Remove the unreachable code or fix the control flow to make it reachable.
+
+  ⚠ eslint(no-unreachable): Unreachable code.
+   ╭─[no_unreachable.tsx:1:41]
+ 1 │ function f() { for (;;) { B: { break; } throw 1; } return "ok"; }
+   ·                                         ────────
+   ╰────
+  help: Remove the unreachable code or fix the control flow to make it reachable.
+
+  ⚠ eslint(no-unreachable): Unreachable code.
+   ╭─[no_unreachable.tsx:1:53]
+ 1 │ function f(x) { switch (x) { default: B: { break; } throw 1; } return "ok"; }
+   ·                                                     ────────
+   ╰────
+  help: Remove the unreachable code or fix the control flow to make it reachable.

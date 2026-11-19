@@ -227,6 +227,19 @@ fn test_fold_string_replace_all() {
 }
 
 #[test]
+fn test_fold_string_replace_all_empty_search_utf16() {
+    test(r"x = 'a😀z'.replaceAll('', '-')", r"x = '-a-\uD83D-\uDE00-z-'");
+    test(r"x = '😀😀'.replaceAll('', '-')", r"x = '-\uD83D-\uDE00-\uD83D-\uDE00-'");
+    test(r"x = '😀'.replaceAll('', '😁')", r"x = '😁\uD83D😁\uDE00😁'");
+    test("x = '😀'.replaceAll('', '')", "x = '😀'");
+    test("x = ''.replaceAll('', '-')", "x = '-'");
+    test(
+        r"x = (() => ((p) => 'a😀z'.replaceAll('', p))('-'))()",
+        r"x = ((p) => '-a-\uD83D-\uDE00-z-')('-')",
+    );
+}
+
+#[test]
 fn test_fold_string_substring() {
     test("x = 'abcde'.substring(0,2)", "x = 'ab'");
     test("x = 'abcde'.substring(1,2)", "x = 'b'");
@@ -467,7 +480,7 @@ fn test_fold_math_functions_abs() {
     test_value("Math.abs('')", "0");
     test_value("Math.abs(NaN)", "NaN");
     test_value("Math.abs(-0)", "0");
-    test_value("Math.abs(-Infinity)", "Infinity");
+    test_value("Math.abs(-Infinity)", "1e400");
     test_value("Math.abs([])", "0");
     test_value("Math.abs([2])", "2");
     test_value("Math.abs([1,2])", "NaN");
@@ -515,8 +528,8 @@ fn test_fold_math_functions_fround() {
     test_same_value("Math.fround(Math.random())");
 
     test_value("Math.fround(NaN)", "NaN");
-    test_value("Math.fround(Infinity)", "Infinity");
-    test_value("Math.fround(-Infinity)", "-Infinity");
+    test_value("Math.fround(Infinity)", "1e400");
+    test_value("Math.fround(-Infinity)", "-1e400");
     test_value("Math.fround(1)", "1");
     test_value("Math.fround(0)", "0");
     test_value("Math.fround(16777217)", "16777216");
@@ -596,7 +609,7 @@ fn test_fold_math_functions_clz32() {
 fn test_fold_math_functions_max() {
     test_same_value("Math.max(Math.random(), 1)");
 
-    test_value("Math.max()", "-Infinity");
+    test_value("Math.max()", "-1e400");
     test_value("Math.max(0)", "0");
     test_value("Math.max(0, 1)", "1");
     test_value("Math.max(0, 1, -1, 200)", "200");
@@ -611,11 +624,11 @@ fn test_fold_math_functions_max() {
 fn test_fold_math_functions_min() {
     test_same_value("Math.min(Math.random(), 1)");
 
-    test_value("Math.min()", "Infinity");
+    test_value("Math.min()", "1e400");
     test_value("Math.min(3)", "3");
     test_value("Math.min(0, 1)", "0");
     test_value("Math.min(0, 1, -1, 200)", "-1");
-    test_value("Math.min(0, -1, -Infinity)", "-Infinity");
+    test_value("Math.min(0, -1, -Infinity)", "-1e400");
     test_value("Math.min(0, -1, -Infinity, NaN)", "NaN");
     test_value("Math.min(0, -0)", "-0");
     test_value("Math.min(-0, 0)", "-0");
@@ -629,7 +642,7 @@ fn test_fold_math_functions_pow() {
     test_value("Math.pow(2, 2)", "4");
     test_value("Math.pow(2, 32)", "2 ** 32");
     test_value("Math.pow(Infinity, 0)", "1");
-    test_value("Math.pow(Infinity, 1)", "Infinity");
+    test_value("Math.pow(Infinity, 1)", "1e400");
     test_value("Math.pow('a', 33)", "NaN");
     test_value("Math.pow(2, 3)", "8");
     test_value("Math.pow(a, 3)", "a ** 3");
@@ -653,7 +666,7 @@ fn test_fold_math_functions_sqrt() {
     test_same_value("Math.sqrt(...a)");
     test_same_value("Math.sqrt(a)"); // a maybe -0
     test_same_value("Math.sqrt(2n)");
-    test_value("Math.sqrt(Infinity)", "Infinity");
+    test_value("Math.sqrt(Infinity)", "1e400");
     test_value("Math.sqrt(NaN)", "NaN");
     test_value("Math.sqrt(0)", "0");
     test_value("Math.sqrt(-0)", "-0");
@@ -679,9 +692,9 @@ fn test_fold_math_functions_cbrt() {
     // unlike `Math.sqrt`, `Math.cbrt` of a negative number is not NaN
     test_value("Math.cbrt(-1)", "-1");
     test_value("Math.cbrt(-8)", "-2");
-    test_value("Math.cbrt(-Infinity)", "-Infinity");
+    test_value("Math.cbrt(-Infinity)", "-1e400");
     test_value("Math.cbrt(NaN)", "NaN");
-    test_value("Math.cbrt(Infinity)", "Infinity");
+    test_value("Math.cbrt(Infinity)", "1e400");
     test_same_value("Math.cbrt(-2)");
 }
 
@@ -856,14 +869,14 @@ fn test_fold_parse_numbers_additional() {
     test_value("parseFloat('')", "NaN");
     test_value("parseFloat(' ')", "NaN");
     test_value("parseFloat('abc')", "NaN");
-    test_value("parseFloat('Infinity')", "Infinity");
-    test_value("parseFloat('-Infinity')", "-Infinity");
+    test_value("parseFloat('Infinity')", "1e400");
+    test_value("parseFloat('-Infinity')", "-1e400");
     // `TrimString` removes `WhiteSpace` and `LineTerminator`: U+FEFF is one, U+0085 is not
     test_value("parseFloat('\\u{FEFF}7')", "7");
     test_value("parseInt('\\u{FEFF}7')", "7");
     test_value("parseFloat('\\u00857')", "NaN");
     test_value("parseInt('\\u00857')", "NaN");
-    test_value("parseFloat('+Infinity')", "Infinity");
+    test_value("parseFloat('+Infinity')", "1e400");
     test_same_value("parseInt(unknown)");
     test_same_value("parseInt((foo, '0'))"); // foo may have side effects
     test_same_value("parseFloat(unknown)");
@@ -932,6 +945,32 @@ fn test_fold_concat_chaining() {
     test("var y; [1].concat(x).concat(y)", "var y; [1].concat(x, y)"); // x might have a getter that updates y, but that side effect is preserved correctly
     test("var x; [1].concat(x.a).concat(x)", "var x; [1].concat(x.a, x)"); // x.a might have a getter that updates x, but that side effect is preserved correctly
     test_same("x = [].map(a => a + 1).concat(1)");
+    // Merging would read `arr` after `arr.pop()` runs.
+    test_same("function f(arr) { return [].concat(arr).concat(arr.pop()) }");
+    // The innermost call still folds its leading literals into the array it is called on.
+    test(
+        "function f(arr) { return [1].concat(1, [2], arr).concat(arr.pop()) }",
+        "function f(arr) { return [1, 1, 2].concat(arr).concat(arr.pop()) }",
+    );
+    test(
+        "function f(arr) { return [].concat(1, arr).concat(2).concat(arr.pop()) }",
+        "function f(arr) { return [1].concat(arr).concat(2).concat(arr.pop()) }",
+    );
+    test_same("x = [].concat(a).concat(b)"); // reading the global `b` may run a getter
+    // A spread runs an iterator, and the values it passes are read later.
+    test_same("function f(arr) { return [].concat(arr).concat(...arr) }");
+    test_same("function f(arr) { return [].concat(...arr).concat(arr.pop()) }");
+    // Primitives and array literals have no elements that a later argument can change.
+    test("var y; x = [].concat(1).concat(y, f())", "var y; x = [1].concat(y, f())");
+    test(
+        "function f(a) { return [].concat([a]).concat(a.pop()) }",
+        "function f(a) { return [a].concat(a.pop()) }",
+    );
+    // The read and the side effect are in the same call, so merging keeps their order.
+    test(
+        "function f(arr) { return [].concat(arr, arr.pop()).concat(1) }",
+        "function f(arr) { return [].concat(arr, arr.pop(), 1) }",
+    );
 
     // string
     test("x = '1'.concat(1).concat(2,['abc']).concat('abc')", "x = '112abcabc'");
@@ -1172,8 +1211,8 @@ fn test_to_string() {
 
 #[test]
 fn test_number_constants() {
-    test("v = Number.POSITIVE_INFINITY", "v = Infinity");
-    test("v = Number.NEGATIVE_INFINITY", "v = -Infinity");
+    test("v = Number.POSITIVE_INFINITY", "v = 1e400");
+    test("v = Number.NEGATIVE_INFINITY", "v = -1e400");
     test("v = Number.NaN", "v = NaN");
     test("v = Number.MAX_SAFE_INTEGER", "v = 2**53-1");
     test("v = Number.MIN_SAFE_INTEGER", "v = -(2**53-1)");
@@ -1290,7 +1329,7 @@ fn test_fold_encode_uri() {
     test("x = encodeURI('ABC-_abc.!~*()123')", "x = 'ABC-_abc.!~*()123'");
     test("x = encodeURI('hello<>\"')", "x = 'hello%3C%3E%22'");
     test("x = encodeURI('hello\\t\\n')", "x = 'hello%09%0A'");
-    test("x = encodeURI('café')", "x = 'caf%C3%A9'"); // spellchecker:disable-line
+    test("x = encodeURI('café')", "x = 'caf%C3%A9'");
     test("x = encodeURI('测试')", "x = '%E6%B5%8B%E8%AF%95'");
 
     test_same("x = encodeURI('a', 'b')");
@@ -1309,7 +1348,7 @@ fn test_fold_encode_uri_component() {
     test("x = encodeURIComponent('#')", "x = '%23'");
     test("x = encodeURIComponent('hello world')", "x = 'hello%20world'");
     test("x = encodeURIComponent('hello<>\"')", "x = 'hello%3C%3E%22'");
-    test("x = encodeURIComponent('café')", "x = 'caf%C3%A9'"); // spellchecker:disable-line
+    test("x = encodeURIComponent('café')", "x = 'caf%C3%A9'");
     test("x = encodeURIComponent('测试')", "x = '%E6%B5%8B%E8%AF%95'");
 
     test_same("x = encodeURIComponent('a', 'b')");
@@ -1330,7 +1369,7 @@ fn test_fold_decode_uri() {
     test("x = decodeURI('%23hash')", "x = '%23hash'");
     test("x = decodeURI('hello%3C%3E%22')", "x = 'hello<>\"'");
     test("x = decodeURI('hello%09%0A')", "x = 'hello\\t\\n'");
-    test("x = decodeURI('caf%C3%A9')", "x = 'café'"); // spellchecker:disable-line
+    test("x = decodeURI('caf%C3%A9')", "x = 'café'");
     test("x = decodeURI('%E6%B5%8B%E8%AF%95')", "x = '测试'");
 
     test_same("x = decodeURI('%ZZ')"); // URIError
@@ -1353,7 +1392,7 @@ fn test_fold_decode_uri_component() {
     test("x = decodeURIComponent('%23hash')", "x = '#hash'");
     test("x = decodeURIComponent('hello%3C%3E%22')", "x = 'hello<>\"'");
     test("x = decodeURIComponent('hello%09%0A')", "x = 'hello\\t\\n'");
-    test("x = decodeURIComponent('caf%C3%A9')", "x = 'café'"); // spellchecker:disable-line
+    test("x = decodeURIComponent('caf%C3%A9')", "x = 'café'");
     test("x = decodeURIComponent('%E6%B5%8B%E8%AF%95')", "x = '测试'");
 
     test_same("x = decodeURIComponent('%ZZ')"); // URIError

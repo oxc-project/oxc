@@ -14,13 +14,14 @@ use crate::{
         trivia::{FormatTrailingComments, is_alignable_block_comment},
     },
     print::{
-        BinaryLikeExpression, alias_union_breaks_after_operator, embed_hug,
-        is_line_ending_trailing_jsdoc_comment, type_alias_left_end, union_prints_itself,
+        BinaryLikeExpression, alias_union_breaks_after_operator, alias_union_owns_break, embed_hug,
+        is_line_ending_trailing_jsdoc_comment, type_alias_left_end,
     },
     utils::{
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         member_chain::is_member_call_chain,
         object::{format_property_key, write_member_name},
+        tailwindcss::{collapsed_class_list_width, tailwind_context_for_callee},
         typecast::is_cast_target,
     },
     write,
@@ -429,22 +430,24 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
             return AssignmentLikeLayout::BreakLeftHandSide;
         }
 
-        // An alias-level union that runs its own printer owns the break and indentation under the `=`;
-        // a suppressed one prints verbatim and is laid out like any other type.
-        let alias_union_prints_itself = matches!(
+        // Before the alias union's predicates: they read the comments still to print,
+        // and only this layout prints any between here and the union (the operator's line run, after a line comment)
+        if has_line_comment_on_operator_line {
+            return AssignmentLikeLayout::BreakAfterOperator;
+        }
+
+        let alias_union_owns_break = matches!(
             self,
             AssignmentLike::TSTypeAliasDeclaration(decl)
-                if union_prints_itself(&decl.type_annotation, f.comments())
+                if alias_union_owns_break(&decl.type_annotation(), f)
         );
 
-        if has_line_comment_on_operator_line
-            || self.should_break_after_operator(
-                self.get_right_expression(),
-                is_left_short,
-                alias_union_prints_itself,
-                f,
-            )
-        {
+        if self.should_break_after_operator(
+            self.get_right_expression(),
+            is_left_short,
+            alias_union_owns_break,
+            f,
+        ) {
             return AssignmentLikeLayout::BreakAfterOperator;
         }
 
@@ -455,7 +458,7 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
         // The union's leading soft line break per member and one indent level;
         // the fluid group would stack a second indent on top when a long left-hand side makes it break before the union does.
         // (The end-of-line-comment case takes `BreakAfterOperator` above.)
-        if alias_union_prints_itself {
+        if alias_union_owns_break {
             return AssignmentLikeLayout::NeverBreakAfterOperator;
         }
 
@@ -689,7 +692,7 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
         &self,
         right_expression: Option<AstNode<'_, 'a, Expression<'a>>>,
         is_left_short: bool,
-        alias_union_prints_itself: bool,
+        alias_union_owns_break: bool,
         f: &mut JsFormatter<'_, 'a>,
     ) -> bool {
         let comments = f.context().comments();
@@ -703,6 +706,9 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
                     let is_generic = |ts_type: &TSType<'a>| -> bool {
                         match ts_type {
                             TSType::TSFunctionType(function) => function.type_parameters.is_some(),
+                            TSType::TSConstructorType(constructor) => {
+                                constructor.type_parameters.is_some()
+                            }
                             TSType::TSTypeReference(reference) => {
                                 reference.type_arguments.is_some()
                             }
@@ -715,7 +721,7 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
                 }
                 // `TSUnionType` has its own indentation logic,
                 // EXCEPT when the union suppresses it and relies on the operator-side break + indent instead.
-                TSType::TSUnionType(_) if alias_union_prints_itself => {
+                TSType::TSUnionType(_) if alias_union_owns_break => {
                     alias_union_breaks_after_operator(
                         decl,
                         comments
@@ -1211,7 +1217,7 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
                 // An embedded template is formatted, so its source length says nothing
                 Some(first_argument) => first_argument.as_expression().is_none_or(|e| {
                     embed_hug(e, Some(call_expression), f).is_some()
-                        || !is_short_argument(e, threshold, f)
+                        || !is_short_argument(e, threshold, &call_expression.callee, f)
                 }),
                 None => false,
             },
@@ -1238,11 +1244,23 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
 /// We need it to decide if [`CallExpression`] with the argument is breakable or not
 /// If the argument is short the function call isn't breakable
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/utils/index.js#L433-L484>
-fn is_short_argument(argument: &Expression, threshold: u16, f: &JsFormatter) -> bool {
+///
+/// A string or template whose whitespace is collapsed by Tailwind sorting under `callee`
+/// is measured as printed, as Prettier measures the plugin's output.
+fn is_short_argument(
+    argument: &Expression,
+    threshold: u16,
+    callee: &Expression,
+    f: &JsFormatter,
+) -> bool {
+    // Decided by `callee` alone: a Tailwind one pushes its context, a non-Tailwind one hides an outer one
+    let collapses_tailwind_whitespace =
+        || tailwind_context_for_callee(callee, f).is_some_and(|ctx| !ctx.preserve_whitespace);
+
     match argument {
         Expression::Identifier(identifier) => identifier.name.width() <= threshold as usize,
         Expression::UnaryExpression(unary_expression) => {
-            is_short_argument(&unary_expression.argument, threshold, f)
+            is_short_argument(&unary_expression.argument, threshold, callee, f)
         }
         Expression::RegExpLiteral(regex) => regex.regex.pattern.text.width() <= threshold as usize,
         Expression::StringLiteral(literal) => {
@@ -1251,8 +1269,15 @@ fn is_short_argument(argument: &Expression, threshold: u16, f: &JsFormatter) -> 
                 false,
                 StringLiteralParentKind::Expression,
             );
+            let text = formatter.clean_text(f);
 
-            formatter.clean_text(f).width() <= threshold as usize
+            let width = if collapses_tailwind_whitespace() {
+                // Opening and closing quotes, and the classes
+                2 + collapsed_class_list_width(&text[1..text.len() - 1])
+            } else {
+                text.width()
+            };
+            width <= threshold as usize
         }
         Expression::TemplateLiteral(literal) => {
             // Besides checking length exceed we also need to check that the template doesn't have any expressions.
@@ -1260,7 +1285,11 @@ fn is_short_argument(argument: &Expression, threshold: u16, f: &JsFormatter) -> 
             // Prettier: https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L402-L405
             literal.quasis.len() == 1 && {
                 let raw = literal.quasis[0].value.raw;
-                raw.width() <= threshold as usize && !raw.contains('\n')
+                if collapses_tailwind_whitespace() {
+                    collapsed_class_list_width(&raw) <= threshold as usize
+                } else {
+                    raw.width() <= threshold as usize && !raw.contains('\n')
+                }
             }
         }
         Expression::CallExpression(call) => {

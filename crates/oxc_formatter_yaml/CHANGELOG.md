@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.79.0] - 2026-11-16
+
+### 🚀 Features
+
+- 292f216 oxfmt: Bump prettier to 3.10.1 (#29333) (leaysgur)
+
+## [0.76.0] - 2026-11-02
+
+### ⚡ Performance
+
+- f680ee1 formatter_yaml: Use `multiline` flag for flow scalars (#28707) (leaysgur)
+
+### 📚 Documentation
+
+- a363c27 formatter_css,formatter_yaml: Point parser citations at AGENTS.md (#28466) (Yuji Sugiura)
+
 ## [0.74.0] - 2026-10-19
 
 ### 🐛 Bug Fixes

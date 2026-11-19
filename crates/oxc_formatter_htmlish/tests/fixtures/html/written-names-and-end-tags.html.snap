@@ -1,0 +1,32 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<div>a</div foo>b
+<p>x<b>y</b foo>z</p>
+<p=e>x</p=e>
+<a<C />
+<div <span>x</div>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<div>a</div foo>
+b
+<p>x<b>y</b foo>z</p>
+<p=e>x</p=e>
+<a<C />
+<div <span>x</div>
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<div>a</div foo>
+b
+<p>x<b>y</b foo>z</p>
+<p=e>x</p=e>
+<a<C />
+<div <span>x</div>
+
+===================== End =====================

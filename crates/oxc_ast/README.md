@@ -16,7 +16,7 @@ This crate provides comprehensive AST (Abstract Syntax Tree) node definitions th
 
 ## AST Design Principles
 
-The AST design differs from estree in several important ways:
+The AST design differs from ESTree in several important ways:
 
 - **Explicit identifiers**: Uses specific types like `BindingIdentifier`, `IdentifierReference`, and `IdentifierName` instead of generic `Identifier`
 - **Precise assignment targets**: `AssignmentExpression.left` uses `AssignmentTarget` instead of generic `Pattern`
@@ -32,4 +32,4 @@ The AST is designed for:
 - **Visit**: Systematic traversal for analysis
 - **Codegen**: Clean conversion back to source code
 
-All AST nodes are allocated in an arena (`oxc_allocator`) for optimal performance.
+AST containers and boxed nodes use an arena (`oxc_allocator`) for allocation; other nodes are stored inline.

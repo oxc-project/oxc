@@ -667,3 +667,27 @@ source: crates/oxc_linter/src/tester.rs
  1 │ ({...q} = foo);
    ·      ─
    ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:6]
+ 1 │ type A = ns.x;
+   ·      ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:7]
+ 1 │ const a: ns.x = value;
+   ·       ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:13]
+ 1 │ import * as a from "mod"; type Foo = a.b;
+   ·             ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too long (> 5).
+   ╭─[id_length.tsx:1:6]
+ 1 │ type VeryLongAlias = ns.VeryLongType;
+   ·      ─────────────
+   ╰────

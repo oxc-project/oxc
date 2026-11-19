@@ -720,8 +720,8 @@ fn test_property_key() {
     test_same("var { [-2]: _ } = {}");
     test_same("class C { [-2] = _; static [-3]() {} }");
     test_same("class C { accessor [-2] = _ }");
-    test_same("var { [Infinity]: _ } = {}");
-    test_same("var { [-Infinity]: _ } = {}");
+    test("var { [Infinity]: _ } = {}", "var { [1e400]: _ } = {}");
+    test("var { [-Infinity]: _ } = {}", "var { [-1e400]: _ } = {}");
     test_same("class C { [NaN]() {} }");
     test_same("v = { [-0]: _ }");
 
@@ -913,11 +913,11 @@ fn optional_catch_binding() {
     // Regression tests for https://github.com/oxc-project/oxc/issues/17307
     test(
         "try {} catch (e) { try {} catch (e) { var e = 'e'; console.log(e === 'e') } } console.log(e === undefined)",
-        "try {} catch (e) { var e } console.log(e === void 0)",
+        "try {} catch { var e } console.log(!0)",
     );
     test(
         "try { throw 1 } catch (e) { try { throw 2 } catch (e) { var e = 'e'; console.log(e === 'e') } } console.log(e === undefined)",
-        "try { throw 1 } catch (e) { try { throw 2 } catch (e) { var e = 'e'; console.log(e === 'e') } } console.log(e === void 0)",
+        "try { throw 1 } catch { try { throw 2 } catch (e) { var e = 'e'; console.log(e === 'e') } } console.log(e === void 0)",
     );
 
     test_target_same("try { foo } catch(e) {}", "chrome65");

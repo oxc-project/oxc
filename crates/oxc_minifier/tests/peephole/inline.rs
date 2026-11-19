@@ -329,7 +329,7 @@ fn conditional_labeled_var_declarator_not_inlined() {
     // conditional body explicitly.
     test_smallest(
         "function t(c) { if (c) L: var flag = true; return () => flag ? 'ng' : 'ok'; } NOOP(t());",
-        "function t(c) { if (c) L: var flag = !0; return () => flag ? 'ng' : 'ok'; } NOOP(t());",
+        "function t(c) { if (c) var flag = !0; return () => flag ? 'ng' : 'ok'; } NOOP(t());",
     );
 }
 
@@ -602,6 +602,18 @@ fn r#const() {
 
     test_options("let foo = 1; log(foo)", "log(1)", &options);
     test_options("export let foo = 1; log(foo)", "export let foo = 1; log(1)", &options);
+
+    // A constant with a statically unknown type can still be a string.
+    test_options(
+        "function f() { const y = (true ? '5' : true) + 1; return [y, y]; } log(f());",
+        "function f() { return ['51', '51']; } log(f());",
+        &options,
+    );
+    test_options(
+        "function f() { const y = (true ? '5' : true) + null; return [y, y]; } log(f());",
+        "function f() { let y = '5null'; return [y, y]; } log(f());",
+        &options,
+    );
 }
 
 // https://github.com/oxc-project/oxc/issues/20282

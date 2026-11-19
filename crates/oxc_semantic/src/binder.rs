@@ -4,7 +4,7 @@ use smallvec::SmallVec;
 
 use oxc_allocator::{GetAddress, UnstableAddress};
 use oxc_ast::{AstKind, ast::*};
-use oxc_ecmascript::{BoundNames, IsSimpleParameterList};
+use oxc_ecmascript::BoundNames;
 use oxc_span::GetSpan;
 use oxc_str::Ident;
 use oxc_syntax::{node::NodeId, scope::ScopeFlags, scope::ScopeId, symbol::SymbolFlags};
@@ -69,15 +69,35 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                 let span = ident.span;
                 let name = ident.name;
                 let mut declared_symbol_id = None;
+                let mut catch_symbol_id = None;
 
                 for &scope_id in &var_scope_ids {
+                    // Only local bindings matter here, to find catch parameters. An earlier
+                    // `var` cached in `hoisting_variables` is found through the target scope
+                    // instead, so its diagnostics are not repeated for every scope.
                     // Type-only bindings (type aliases, interfaces) live in a separate
                     // declaration space, so a hoisted `var` must not merge into them.
-                    if let Some(symbol_id) =
-                        builder.check_redeclaration(scope_id, span, name, excludes)
+                    if let Some(symbol_id) = builder.scoping.get_binding(scope_id, name)
+                        && let Some(symbol_id) = builder.check_redeclaration_with_binding(
+                            scope_id,
+                            Some(symbol_id),
+                            span,
+                            name,
+                            excludes,
+                        )
                         && builder.scoping.symbol_flags(symbol_id).can_be_referenced_by_value()
                         && builder.scoping.symbol_flags(symbol_id).is_value()
                     {
+                        // A simple catch parameter can be redeclared by `var`, but the `var`
+                        // also creates a separate binding in the enclosing var scope. Its
+                        // initializer assigns to the nearest catch binding. Destructured catch
+                        // parameters already reported an error above; keep the bindings separate
+                        // during recovery too. The innermost catch parameter wins; keep checking
+                        // the enclosing scopes for conflicts.
+                        if builder.scoping.symbol_flags(symbol_id).is_catch_variable() {
+                            catch_symbol_id.get_or_insert(symbol_id);
+                            continue;
+                        }
                         builder.add_redeclare_variable(symbol_id, includes, span);
                         declared_symbol_id = Some(symbol_id);
 
@@ -100,7 +120,14 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                 let symbol_id = declared_symbol_id.unwrap_or_else(|| {
                     builder.declare_symbol_on_scope(span, name, target_scope_id, includes, excludes)
                 });
-                ident.symbol_id.set(Some(symbol_id));
+                if let Some(catch_symbol_id) = catch_symbol_id {
+                    // This redeclaration links the catch to `symbol_id`; see
+                    // `Scoping::catch_var_binding`.
+                    builder.add_redeclare_variable(catch_symbol_id, includes, span);
+                    ident.symbol_id.set(Some(catch_symbol_id));
+                } else {
+                    ident.symbol_id.set(Some(symbol_id));
+                }
 
                 // Finally, add the variable to all hoisted scopes
                 // to support redeclaration checks when declaring variables with the same name later.
@@ -250,30 +277,8 @@ impl<'a> Binder<'a> for BindingRestElement<'a> {
 impl<'a> Binder<'a> for FormalParameter<'a> {
     // Binds the FormalParameter of a function or method.
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
-        let parent_kind = builder.ancestry().parent_kind();
-        let AstKind::FormalParameters(parameters) = parent_kind else { unreachable!() };
-
         let includes = SymbolFlags::FunctionScopedVariable;
-
-        let is_not_allowed_duplicate_parameters = matches!(
-                parameters.kind,
-                // ArrowFormalParameters: UniqueFormalParameters
-                FormalParameterKind::ArrowFormalParameters |
-                // UniqueFormalParameters : FormalParameters
-                // * It is a Syntax Error if BoundNames of FormalParameters contains any duplicate elements.
-                FormalParameterKind::UniqueFormalParameters
-            ) ||
-            // Multiple occurrences of the same BindingIdentifier in a FormalParameterList is only allowed for functions which have simple parameter lists and which are not defined in strict mode code.
-            builder.strict_mode() ||
-            // FormalParameters : FormalParameterList
-            // * It is a Syntax Error if IsSimpleParameterList of FormalParameterList is false and BoundNames of FormalParameterList contains any duplicate elements.
-            !parameters.is_simple_parameter_list();
-
-        let excludes = if is_not_allowed_duplicate_parameters {
-            SymbolFlags::FunctionScopedVariable | SymbolFlags::FunctionScopedVariableExcludes
-        } else {
-            SymbolFlags::FunctionScopedVariableExcludes
-        };
+        let excludes = builder.formal_parameter_excludes;
 
         self.bound_names(&mut |ident| {
             let symbol_id = builder.declare_symbol(ident.span, ident.name, includes, excludes);
@@ -285,30 +290,11 @@ impl<'a> Binder<'a> for FormalParameter<'a> {
 impl<'a> Binder<'a> for FormalParameterRest<'a> {
     // Binds the FormalParameter of a function or method.
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
-        let parent_kind = builder.ancestry().parent_kind();
-        let AstKind::FormalParameters(parameters) = parent_kind else { unreachable!() };
-
         let includes = SymbolFlags::FunctionScopedVariable;
-
-        let is_not_allowed_duplicate_parameters = matches!(
-                parameters.kind,
-                // ArrowFormalParameters: UniqueFormalParameters
-                FormalParameterKind::ArrowFormalParameters |
-                // UniqueFormalParameters : FormalParameters
-                // * It is a Syntax Error if BoundNames of FormalParameters contains any duplicate elements.
-                FormalParameterKind::UniqueFormalParameters
-            ) ||
-            // Multiple occurrences of the same BindingIdentifier in a FormalParameterList is only allowed for functions which have simple parameter lists and which are not defined in strict mode code.
-            builder.strict_mode() ||
-            // FormalParameters : FormalParameterList
-            // * It is a Syntax Error if IsSimpleParameterList of FormalParameterList is false and BoundNames of FormalParameterList contains any duplicate elements.
-            !parameters.is_simple_parameter_list();
-
-        let excludes = if is_not_allowed_duplicate_parameters {
-            SymbolFlags::FunctionScopedVariable | SymbolFlags::FunctionScopedVariableExcludes
-        } else {
-            SymbolFlags::FunctionScopedVariableExcludes
-        };
+        // A rest parameter makes the parameter list non-simple in every context,
+        // so duplicate bindings are always forbidden.
+        let excludes =
+            SymbolFlags::FunctionScopedVariable | SymbolFlags::FunctionScopedVariableExcludes;
 
         self.rest.argument.bound_names(&mut |ident| {
             let symbol_id = builder.declare_symbol(ident.span, ident.name, includes, excludes);

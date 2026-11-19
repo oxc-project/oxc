@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.94.0] - 2026-11-16
+
+### 🚀 Features
+
+- acd8814 linter/typescript/no-misused-promises: Add `flagUnions` option (#29380) (camc314)
+
+### 📚 Documentation
+
+- cdb5ac4 oxlint: Remove experimental label from `typeCheck` (#29175) (Yuji Sugiura)
+
+## [1.92.0] - 2026-11-06
+
+### 🚀 Features
+
+- b7d2c75 linter/eslint/no-redeclare: Add `ignoreDeclarationMerge` option (#28816) (Cam McHenry)
+
+## [1.91.0] - 2026-11-02
+
+### 🚀 Features
+
+- 419c1b0 linter: Add allow and allowPattern options to react/capitalized-calls (Christian Vuerings)
+
 ## [1.90.0] - 2026-10-27
 
 ### 🚀 Features

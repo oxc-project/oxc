@@ -216,10 +216,11 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, Hashbang<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, ["#!", text(self.value().as_str().trim_end())]);
 
-        if f.source_text().lines_after(self.span.end) > 1 {
-            write!(f, [empty_line()]);
-        } else {
-            write!(f, [hard_line_break()]);
+        // The line break separates it from what follows; alone, it ends with the code (`onclick="#!a"` stays on its line)
+        match f.source_text().lines_after(self.span.end) {
+            0 => {}
+            1 => write!(f, [hard_line_break()]),
+            _ => write!(f, [empty_line()]),
         }
     }
 }

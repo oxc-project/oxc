@@ -1,10 +1,11 @@
-commit: b835f0c6
+commit: 16a2d671
 
-Passed: 306/435
+Passed: 333/460
 
 # All Passed:
 * babel-plugin-transform-class-static-block
 * babel-plugin-transform-private-methods
+* babel-plugin-transform-private-property-in-object
 * babel-plugin-transform-logical-assignment-operators
 * babel-plugin-transform-nullish-coalescing-operator
 * babel-plugin-transform-optional-chaining
@@ -34,7 +35,7 @@ after transform: SymbolId(1) "C"
 rebuilt        : SymbolId(3) "C"
 
 
-# babel-plugin-transform-class-properties (31/35)
+# babel-plugin-transform-class-properties (36/40)
 * private-field-resolve-to-method/input.js
 x Output mismatch
 
@@ -48,12 +49,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (43/63)
-* allow-declare-fields-false/input.ts
-Unresolved references mismatch:
-after transform: ["dce"]
-rebuilt        : []
-
+# babel-plugin-transform-typescript (48/66)
 * computed-constant-value/input.ts
 x Output mismatch
 
@@ -183,11 +179,6 @@ Symbol redeclarations mismatch for "B":
 after transform: SymbolId(2): [Span { start: 289, end: 290 }, Span { start: 304, end: 305 }]
 rebuilt        : SymbolId(2): []
 
-* remove-class-properties-without-initializer/input.ts
-Unresolved references mismatch:
-after transform: ["dce"]
-rebuilt        : []
-
 * remove-unused-import-equals/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["D", "a", "b", "bar", "c"]
@@ -210,7 +201,7 @@ after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4), ReferenceId(9)
 rebuilt        : [ReferenceId(5)]
 
 
-# babel-plugin-transform-react-jsx (55/58)
+# babel-plugin-transform-react-jsx (56/59)
 * refresh/import-after-component/input.js
 Missing ScopeId
 Missing ReferenceId: "useFoo"
@@ -225,7 +216,7 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (20/106)
+# legacy-decorators (23/109)
 * oxc/accessor/input.ts
 x Output mismatch
 

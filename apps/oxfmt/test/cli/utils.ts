@@ -340,10 +340,12 @@ function normalizeOutput(output: string, cwd: string): string {
 
   return (
     output
-      // Collapse Vite+ diagnostics first, they contain ANSI codes of their own
+      // Collapse Vite+ diagnostics first, they contain ANSI codes of their own.
+      // e.g. `vite.config.ts (1:2) [UNRESOLVED_IMPORT] ...`, followed by a code frame box.
+      // When the checkout path makes the source line long, ` - ...` detail lines replace the box.
       .replace(
         // oxlint-disable-next-line no-control-regex
-        /vite\.config\.ts \(\d+:\d+\) [\s\S]*?─╯(?:\x1b\[[0-9;]*m)*\n?/g,
+        /vite\.config\.ts \(\d+:\d+\) [^\n]*(?:(?:\n - [^\n]*)+|\n[ \t]*(?:\x1b\[[0-9;]*m)*╭[\s\S]*?─╯(?:\x1b\[[0-9;]*m)*)?\n?/g,
         "<Vite+ diagnostic>\n",
       )
       // Make ANSI style codes visible so snapshots can pin color behavior

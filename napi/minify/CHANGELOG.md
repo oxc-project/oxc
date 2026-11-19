@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.159.0] - 2026-11-16
+
+### 🚀 Features
+
+- 63b8158 minifier: Inline single use function declaration to assignment (#28917) (Aadharsh  Pannirselvam)
+- eb1833e mangler: Mangle labels (#29614) (camc314)
+- ccca379 minifier: Remove unused labels (#29607) (camc314)
+
+### 🐛 Bug Fixes
+
+- 1dc0ee9 semantic: Preserve catch and var binding identities (#28739) (Dunqing)
+
+## [0.158.0] - 2026-11-09
+
+### 🐛 Bug Fixes
+
+- 7243594 minifier: Preserve throwing ArrayBuffer and URI calls (#29012) (camc314)
+
+### 📚 Documentation
+
+- 157fc5a napi/minify: Correct minifier capabilities and caveats (#29064) (camc314)
+
 ## [0.156.0] - 2026-10-27
 
 ### 💥 BREAKING CHANGES

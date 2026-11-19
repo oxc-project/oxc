@@ -5,11 +5,8 @@ pub fn is_valid_unicode_property(name: &str, value: &str) -> bool {
     if matches!(name, "General_Category" | "gc") {
         return GC_PROPERTY_VALUES.contains(value);
     }
-    if matches!(name, "Script" | "sc") {
+    if matches!(name, "Script" | "sc" | "Script_Extensions" | "scx") {
         return SC_PROPERTY_VALUES.contains(value);
-    }
-    if matches!(name, "Script_Extensions" | "scx") {
-        return SC_PROPERTY_VALUES.contains(value) || SCX_PROPERTY_VALUES.contains(value);
     }
     false
 }
@@ -22,7 +19,6 @@ pub fn is_valid_lone_unicode_property_of_strings(name_or_value: &str) -> bool {
     BINARY_UNICODE_PROPERTIES_OF_STRINGS.contains(name_or_value)
 }
 
-// spellchecker:off
 // # General_Category (gc)
 // https://unicode.org/Public/UCD/latest/ucd/PropertyValueAliases.txt
 static GC_PROPERTY_VALUES: Set<&'static str> = phf_set! {
@@ -245,10 +241,6 @@ static SC_PROPERTY_VALUES: Set<&'static str> = phf_set! {
     "Zzzz", "Unknown",
 };
 
-static SCX_PROPERTY_VALUES: Set<&'static str> = phf_set! {
-    // Empty
-};
-
 // Table 66: Binary Unicode property aliases
 // https://tc39.es/ecma262/2024/multipage/text-processing.html#table-binary-unicode-properties
 static BINARY_UNICODE_PROPERTIES: Set<&'static str> = phf_set! {
@@ -363,4 +355,3 @@ static BINARY_UNICODE_PROPERTIES_OF_STRINGS: Set<&'static str> = phf_set! {
     "RGI_Emoji_ZWJ_Sequence",
     "RGI_Emoji",
 };
-// spellchecker:on

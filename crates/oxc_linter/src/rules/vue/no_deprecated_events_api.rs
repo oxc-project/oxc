@@ -1,7 +1,4 @@
-use oxc_ast::{
-    AstKind,
-    ast::{Expression, MemberExpression},
-};
+use oxc_ast::{AstKind, ast::MemberExpression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -73,7 +70,8 @@ declare_oxc_lint!(
     correctness,
     recommended,
     version = "1.62.0",
-    short_description = "Disallow using deprecated Events API (`$on`, `$off`, `$once`) in Vue.js 3.0.0+.",
+    short_description =
+        "Disallow using deprecated Events API (`$on`, `$off`, `$once`) in Vue.js 3.0.0+.",
 );
 
 impl Rule for NoDeprecatedEventsApi {
@@ -87,17 +85,10 @@ impl Rule for NoDeprecatedEventsApi {
             return;
         }
 
-        let member_expr = match call_expr.callee.get_inner_expression() {
-            Expression::StaticMemberExpression(member_expr) => member_expr.as_ref(),
-            Expression::ChainExpression(chain_expr) => {
-                let Some(MemberExpression::StaticMemberExpression(member_expr)) =
-                    chain_expr.expression.as_member_expression()
-                else {
-                    return;
-                };
-                member_expr.as_ref()
-            }
-            _ => return,
+        let Some(MemberExpression::StaticMemberExpression(member_expr)) =
+            call_expr.callee.get_member_expr()
+        else {
+            return;
         };
 
         let prop_name = member_expr.property.name.as_str();

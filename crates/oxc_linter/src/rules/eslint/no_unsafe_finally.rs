@@ -62,10 +62,11 @@ impl Rule for NoUnsafeFinally {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let sentinel_node_type = match node.kind() {
             AstKind::BreakStatement(stmt) if stmt.label.is_none() => SentinelNodeType::Break,
-            AstKind::ContinueStatement(_) => SentinelNodeType::Continue,
+            AstKind::ContinueStatement(stmt) if stmt.label.is_none() => SentinelNodeType::Continue,
             AstKind::ReturnStatement(_)
             | AstKind::ThrowStatement(_)
-            | AstKind::BreakStatement(_) => SentinelNodeType::ReturnThrow,
+            | AstKind::BreakStatement(_)
+            | AstKind::ContinueStatement(_) => SentinelNodeType::ReturnThrow,
             _ => return,
         };
 
@@ -170,4 +171,33 @@ fn test() {
     ];
 
     Tester::new(NoUnsafeFinally::NAME, NoUnsafeFinally::PLUGIN, pass, fail).test_and_snapshot();
+}
+
+#[test]
+fn labeled_continue_across_finally() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        "function f() { try {} finally { while (true) { continue; } } }".to_string(),
+        "function f() { try {} finally { inner: while (true) { continue inner; } } }".to_string(),
+        "function f() { try {} finally { inner: while (true) { while (true) { continue inner; } } } }".to_string(),
+        "function f() { try {} finally { inner: while (true) { switch (x) { case 0: continue inner; } } } }".to_string(),
+        "function f() { outer: while (true) { try { while (true) { continue outer; } } finally {} } }".to_string(),
+    ];
+    let fail = [
+        "while (true) { continue outer; }",
+        "do { continue outer; } while (true);",
+        "for (;;) { continue outer; }",
+        "for (const x in xs) { continue outer; }",
+        "for (const x of xs) { continue outer; }",
+        "while (true) { switch (x) { case 0: continue outer; } }",
+    ]
+    .into_iter()
+    .map(|body| {
+        format!(
+            "function f() {{ outer: while (true) {{ try {{ return 1; }} finally {{ {body} }} }} }}"
+        )
+    })
+    .collect();
+    Tester::new(NoUnsafeFinally::NAME, NoUnsafeFinally::PLUGIN, pass, fail).test();
 }

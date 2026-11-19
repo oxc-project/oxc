@@ -238,6 +238,16 @@ npx oxfmt@latest --check
 - JS/TS, JSON/JSONC/JSON5, CSS/SCSS/Less, GraphQL, YAML, Markdown, TOML: Formatted natively by Oxfmt
 - HTML, Vue, Svelte, Astro, etc.: Delegated to Prettier internally (when using `npx oxfmt`)
 
+## Step 5: Review Formatting Changes
+
+Run `npx oxfmt@latest` and review the diff.
+
+Oxfmt uses Prettier's output as its baseline, but deliberately fixes cases where Prettier's behavior is a bug or inconsistent across similar cases.
+Before treating a difference from Prettier as a migration mistake or an Oxfmt bug, check [Known Divergences](https://oxc.rs/docs/guide/usage/formatter/migrate-from-prettier.html#known-divergences):
+
+- Listed there: intentional. Keep Oxfmt's output, do not try to reproduce Prettier's output with options or ignore comments.
+- Not listed, and not explained by a config difference (e.g. `printWidth`): likely an Oxfmt bug. Tell the user, who can report it at https://github.com/oxc-project/oxc/issues.
+
 ## Tips
 
 - Config file: `.oxfmtrc.jsonc` and `oxfmt.config.ts` are also supported as auto-discovered config file names, in addition to `.oxfmtrc.json`. `--migrate` and `--init` only generate `.oxfmtrc.json`; keep it as-is unless the user explicitly asks for another format or the source config had logic to preserve (see Step 1).
@@ -253,3 +263,4 @@ npx oxfmt@latest --check
 - [CLI Reference](https://oxc.rs/docs/guide/usage/formatter/cli.html)
 - [Config File Reference](https://oxc.rs/docs/guide/usage/formatter/config-file-reference.html)
 - [Unsupported Features](https://oxc.rs/docs/guide/usage/formatter/unsupported-features.html)
+- [Known Divergences](https://oxc.rs/docs/guide/usage/formatter/migrate-from-prettier.html#known-divergences)

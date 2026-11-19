@@ -293,9 +293,8 @@ impl<'a, 'b> ParameterList<'a, 'b> {
         Self { list, this, layout: Some(layout), trailing_separator_override: None }
     }
 
-    /// Suppresses trailing commas regardless of the `trailingComma` option.
-    /// This is used for fragment formatting like `v-for="(item, index) in items"`.
-    ///                                                    ^^^^^^^^^^^
+    /// Suppresses trailing commas regardless of the `trailingComma` option,
+    /// for embedded params ([`crate::JsRoot::FunctionParams`]), whose host puts its own delimiters around them.
     #[must_use]
     pub fn with_omit_trailing_separator(mut self) -> Self {
         self.trailing_separator_override = Some(TrailingSeparator::Omit);

@@ -8,9 +8,8 @@ use oxc_cfg::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashSet;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -77,8 +76,7 @@ impl Rule for NoThisBeforeSuper {
         // first pass -> find super calls and local violations
         let mut wanted_nodes = Vec::new();
         let mut basic_blocks_with_super_called = FxHashSet::<BlockNodeId>::default();
-        let mut basic_blocks_with_local_violations =
-            FxHashMap::<BlockNodeId, Vec<NodeId>>::default();
+        let mut basic_blocks_with_local_violations = FxHashSet::<BlockNodeId>::default();
         for node in ctx.nodes() {
             match node.kind() {
                 AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)
@@ -97,19 +95,13 @@ impl Rule for NoThisBeforeSuper {
                         }
                     }
                     if !basic_blocks_with_super_called.contains(&basic_block_id) {
-                        basic_blocks_with_local_violations
-                            .entry(basic_block_id)
-                            .or_default()
-                            .push(node.id());
+                        basic_blocks_with_local_violations.insert(basic_block_id);
                     }
                 }
                 AstKind::ThisExpression(_) => {
                     let basic_block_id = ctx.nodes().cfg_id(node.id());
                     if !basic_blocks_with_super_called.contains(&basic_block_id) {
-                        basic_blocks_with_local_violations
-                            .entry(basic_block_id)
-                            .or_default()
-                            .push(node.id());
+                        basic_blocks_with_local_violations.insert(basic_block_id);
                     }
                 }
                 _ => {}
@@ -172,7 +164,7 @@ impl NoThisBeforeSuper {
         cfg: &ControlFlowGraph,
         id: BlockNodeId,
         basic_blocks_with_super_called: &FxHashSet<BlockNodeId>,
-        basic_blocks_with_local_violations: &FxHashMap<BlockNodeId, Vec<NodeId>>,
+        basic_blocks_with_local_violations: &FxHashSet<BlockNodeId>,
         follow_join: bool,
     ) -> Vec<DefinitelyCallsThisBeforeSuper> {
         neighbors_filtered_by_edge_weight(
@@ -190,7 +182,7 @@ impl NoThisBeforeSuper {
             },
             &mut |basic_block_id, _| {
                 let super_called = basic_blocks_with_super_called.contains(basic_block_id);
-                if basic_blocks_with_local_violations.contains_key(basic_block_id) {
+                if basic_blocks_with_local_violations.contains(basic_block_id) {
                     // super was not called before this in the current code path:
                     return (DefinitelyCallsThisBeforeSuper::Yes, false);
                 }
@@ -231,7 +223,7 @@ impl NoThisBeforeSuper {
         cfg: &ControlFlowGraph,
         output: Vec<DefinitelyCallsThisBeforeSuper>,
         basic_blocks_with_super_called: &FxHashSet<BlockNodeId>,
-        basic_blocks_with_local_violations: &FxHashMap<BlockNodeId, Vec<NodeId>>,
+        basic_blocks_with_local_violations: &FxHashSet<BlockNodeId>,
     ) -> bool {
         // Deciding whether we definitely call this before super in all
         // codepaths is as simple as seeing if any individual codepath

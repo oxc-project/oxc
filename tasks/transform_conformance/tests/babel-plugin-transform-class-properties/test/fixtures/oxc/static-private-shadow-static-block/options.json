@@ -1,0 +1,13 @@
+{
+  "presets": [
+    [
+      "env",
+      {
+        "targets": {
+          "chrome": "94"
+        }
+      }
+    ]
+  ],
+  "sourceType": "module"
+}

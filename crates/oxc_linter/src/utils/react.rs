@@ -5,10 +5,10 @@ use rustc_hash::FxHashSet;
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrowFunctionBody, ArrowFunctionExpression, CallExpression, Class, Expression, Function,
-        FunctionBody, JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild, JSXElement,
-        JSXElementName, JSXExpression, JSXFragment, JSXMemberExpression, JSXMemberExpressionObject,
-        JSXOpeningElement, Statement, StaticMemberExpression,
+        Argument, ArrowFunctionBody, ArrowFunctionExpression, CallExpression, Class, Expression,
+        Function, FunctionBody, JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild,
+        JSXElement, JSXElementName, JSXExpression, JSXFragment, JSXMemberExpression,
+        JSXMemberExpressionObject, JSXOpeningElement, Statement, StaticMemberExpression,
     },
     match_expression,
 };
@@ -23,8 +23,8 @@ use oxc_syntax::node::NodeId;
 use oxc_syntax::operator::UnaryOperator;
 use oxc_syntax::scope::ScopeFlags;
 
-use crate::globals::HTML_TAG;
 use crate::{LintContext, OxlintSettings};
+use crate::{globals::HTML_TAG, utils::is_import_from_module};
 
 pub fn is_create_element_call(call_expr: &CallExpression) -> bool {
     match &call_expr.callee {
@@ -868,6 +868,41 @@ pub fn is_hoc_call(callee_name: &str, ctx: &LintContext) -> bool {
     ctx.settings().react.is_component_wrapper_function(callee_name)
 }
 
+/// Checks for a component wrapper call, resolving bare React wrappers to their bindings.
+pub fn is_component_wrapper_call(call: &CallExpression, ctx: &LintContext) -> bool {
+    let Some(callee_name) = call.callee_name() else { return false };
+    ctx.settings().react.is_component_wrapper_function(callee_name)
+        || match &call.callee {
+            Expression::Identifier(ident) if matches!(callee_name, "memo" | "forwardRef") => {
+                if is_import_from_module(ident, "react", ctx) {
+                    true
+                } else if let Some(symbol_id) =
+                    ctx.scoping().get_reference(ident.reference_id()).symbol_id()
+                    && let AstKind::VariableDeclarator(decl) =
+                        ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id)).kind()
+                    && let Some(init) = &decl.init
+                {
+                    let source = init.as_member_expression().map_or(init, |member| member.object());
+                    match source {
+                        Expression::Identifier(ident) => ident.name == "React",
+                        Expression::CallExpression(call) => {
+                            call.is_require_call()
+                                && matches!(call.arguments.first(), Some(Argument::StringLiteral(source)) if source.value == "react")
+                        }
+                        _ => false,
+                    }
+                } else {
+                    false
+                }
+            }
+            Expression::StaticMemberExpression(member) => {
+                matches!(callee_name, "memo" | "forwardRef")
+                    && member.object.is_specific_id("React")
+            }
+            _ => false,
+        }
+}
+
 #[derive(Debug, Default, Clone, Copy)]
 pub struct FunctionReturns {
     jsx: bool,
@@ -1002,10 +1037,7 @@ pub fn find_innermost_function_with_jsx<'a>(
 ) -> Option<InnermostFunction<'a>> {
     match expr {
         Expression::CallExpression(call) => {
-            // Check if this is a HOC call
-            if let Some(callee_name) = call.callee_name()
-                && is_hoc_call(callee_name, ctx)
-            {
+            if is_component_wrapper_call(call, ctx) {
                 // This is a HOC, recursively check the first argument
                 if let Some(first_arg) = call.arguments.first()
                     && let Some(inner_expr) = first_arg.as_expression()

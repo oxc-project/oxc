@@ -17,7 +17,7 @@ export type FormatFileResult = { ok: true; code: string } | { ok: false; error: 
 export async function toFormatFileResult(run: Promise<string>): Promise<FormatFileResult> {
   return run
     .then((code) => ({ ok: true as const, code }))
-    .catch((err) => ({ ok: false as const, error: errorToMessage(err) }));
+    .catch((err) => ({ ok: false as const, error: String(err) }));
 }
 
 /**
@@ -26,19 +26,4 @@ export async function toFormatFileResult(run: Promise<string>): Promise<FormatFi
  */
 export async function toNullable<T>(run: Promise<T>): Promise<T | null> {
   return run.catch(() => null);
-}
-
-// Reproduces the `name: message` form (e.g. `SyntaxError: ...`) that Rust previously
-// received when these errors crossed the NAPI boundary as rejected Promises.
-function errorToMessage(err: unknown): string {
-  if (err instanceof Error) return String(err);
-  // `tinypool` with `runtime: "child_process"` serializes Error as a plain object
-  // via IPC (e.g. `{ name, message, stack, ... }`), so rebuild the form from it.
-  if (err !== null && typeof err === "object") {
-    const { name, message } = err as { name?: unknown; message?: unknown };
-    if (typeof message === "string") {
-      return typeof name === "string" && name.length > 0 ? `${name}: ${message}` : message;
-    }
-  }
-  return String(err);
 }

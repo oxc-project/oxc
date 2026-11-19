@@ -6,7 +6,7 @@ import { c as _c } from "react/compiler-runtime";
 import { isForgetEnabled_Fixtures } from "ReactForgetFeatureFlag";
 // @gating @compilationMode:"infer"
 import React from "react";
-export default React.forwardRef(isForgetEnabled_Fixtures() ? function notNamedLikeAComponent(props) {
+const SproutComponent = React.forwardRef(isForgetEnabled_Fixtures() ? function notNamedLikeAComponent(props) {
 	const $ = _c(1);
 	let t0;
 	if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
@@ -19,3 +19,19 @@ export default React.forwardRef(isForgetEnabled_Fixtures() ? function notNamedLi
 } : function notNamedLikeAComponent(props) {
 	return <div />;
 });
+export default SproutComponent;
+const sproutInputs = [[], []];
+export const FIXTURE_ENTRYPOINT = {
+	fn: (args) => {
+		"use no memo";
+		return React.createElement(SproutComponent, args[0]);
+	},
+	params: [sproutInputs[0]],
+	sequentialRenders: [
+		sproutInputs[0],
+		sproutInputs[0],
+		...sproutInputs.slice(1),
+		sproutInputs.at(-1),
+		sproutInputs[0]
+	]
+};

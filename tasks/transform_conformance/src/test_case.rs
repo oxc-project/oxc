@@ -257,11 +257,11 @@ impl TestCase {
         if !errors.is_empty() {
             let source = NamedSource::new(
                 path.strip_prefix(project_root).unwrap().to_string_lossy(),
-                source_text,
+                source_text.as_str(),
             );
             return Err(errors
                 .into_iter()
-                .map(|err| err.render_with_source_code(source.clone()))
+                .map(|err| err.render_with_source_code(&source))
                 .collect::<Vec<_>>()
                 .join("\n"));
         }
@@ -326,6 +326,7 @@ impl TestCase {
                         .with_options(ParseOptions {
                             // Related: async to generator, regression
                             allow_return_outside_function: true,
+                            enable_ident_hashes: false,
                             ..Default::default()
                         })
                         .parse();

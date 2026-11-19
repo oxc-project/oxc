@@ -84,7 +84,7 @@ impl<'a> AnyJsxTagWithChildren<'a, '_> {
 
     /// Checks if a JSX Element should be wrapped in parentheses. Returns a [WrapState] which
     /// indicates when the element should be wrapped in parentheses.
-    pub fn get_wrap_state(&self) -> WrapState {
+    pub fn get_wrap_state(&self, f: &JsFormatter<'_, 'a>) -> WrapState {
         let parent = self.parent();
         // Call site has ensures that only non-nested JSX elements are passed.
         debug_assert!(!matches!(parent, AstNodes::JSXElement(_) | AstNodes::JSXFragment(_)));
@@ -95,6 +95,8 @@ impl<'a> AnyJsxTagWithChildren<'a, '_> {
             | AstNodes::JSXExpressionContainer(_)
             | AstNodes::ConditionalExpression(_)
             | AstNodes::ExpressionStatement(_) => WrapState::NoWrap,
+            // An embedded expression's root
+            parent if f.context().is_embedded_root(parent) => WrapState::NoWrap,
             // It is a argument of a call expression
             AstNodes::CallExpression(call) if call.is_argument_span(self.span()) => {
                 WrapState::NoWrap
@@ -176,7 +178,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AnyJsxTagWithChildren<'a, '_> {
             return write!(f, [format_tag]);
         }
 
-        let wrap = self.get_wrap_state();
+        let wrap = self.get_wrap_state(f);
         match wrap {
             WrapState::NoWrap => {
                 write!(

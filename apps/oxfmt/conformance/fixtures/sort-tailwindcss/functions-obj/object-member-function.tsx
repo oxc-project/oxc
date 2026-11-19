@@ -1,0 +1,1 @@
+const A = <div className={obj.clsx("p-4 flex")}>Hello</div>;

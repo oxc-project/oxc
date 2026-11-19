@@ -1,120 +1,45 @@
-use crate::pipeline::chunk::{eqm, load64};
+use oxc_simd::cpu_version;
 
-#[inline]
-pub unsafe fn find1_generic(src: *const u8, n: usize, mut i: usize, a: u8) -> usize {
-    while i + 8 <= n {
-        let m = eqm(load64(src, i), a);
-        if m != 0 {
-            return i + (m.trailing_zeros() >> 3) as usize;
-        }
-        i += 8;
-    }
-    while i < n {
-        if *src.add(i) == a {
-            return i;
-        }
-        i += 1;
-    }
-    n
-}
+use crate::pipeline::{chunk::eqm, source::Source};
 
-#[inline]
-pub unsafe fn find2_generic(src: *const u8, n: usize, mut i: usize, a: u8, b: u8) -> usize {
-    while i + 8 <= n {
-        let x = load64(src, i);
-        let m = eqm(x, a) | eqm(x, b);
-        if m != 0 {
-            return i + (m.trailing_zeros() >> 3) as usize;
-        }
-        i += 8;
-    }
-    while i < n {
-        let c = *src.add(i);
-        if c == a || c == b {
-            return i;
-        }
-        i += 1;
-    }
-    n
-}
-
-#[inline]
-pub unsafe fn find3_generic(src: *const u8, n: usize, mut i: usize, a: u8, b: u8, c: u8) -> usize {
-    while i + 8 <= n {
-        let x = load64(src, i);
-        let m = eqm(x, a) | eqm(x, b) | eqm(x, c);
-        if m != 0 {
-            return i + (m.trailing_zeros() >> 3) as usize;
-        }
-        i += 8;
-    }
-    while i < n {
-        let ch = *src.add(i);
-        if ch == a || ch == b || ch == c {
-            return i;
-        }
-        i += 1;
-    }
-    n
-}
-
-#[inline]
-pub unsafe fn find4_generic(
-    src: *const u8,
-    n: usize,
-    mut i: usize,
-    a: u8,
-    b: u8,
-    c: u8,
-    d: u8,
-) -> usize {
-    while i + 8 <= n {
-        let x = load64(src, i);
-        let m = eqm(x, a) | eqm(x, b) | eqm(x, c) | eqm(x, d);
-        if m != 0 {
-            return i + (m.trailing_zeros() >> 3) as usize;
-        }
-        i += 8;
-    }
-    while i < n {
-        let x = *src.add(i);
-        if x == a || x == b || x == c || x == d {
-            return i;
-        }
-        i += 1;
-    }
-    n
-}
-
-macro_rules! define_find_function_generic {
-    ($(#[$attr:meta])* $name:ident: $($needle:expr),+ $(,)?) => {
-        $(#[$attr])*
-        #[inline]
-        pub unsafe fn $name(src: *const u8, n: usize, mut i: usize) -> usize {
-            use crate::pipeline::chunk::{load64, eqm};
-
-            while i + 8 <= n {
-                let x = load64(src, i);
-                let m = $(eqm(x, $needle))|+;
-                if m != 0 {
-                    return i + (m.trailing_zeros() >> 3) as usize;
-                }
-                i += 8;
+/// First byte at or after i that is one of needles, or src.len().
+#[cpu_version(Generic)]
+#[inline(always)]
+pub fn find_generic<const K: usize>(src: Source, mut i: usize, needles: [u8; K]) -> usize {
+    let n = src.len();
+    if let Some(last) = n.checked_sub(8) {
+        while i <= last {
+            let m = any_of8(u64::from_le_bytes(*src.window(i)), needles);
+            if m != 0 {
+                return i + (m.trailing_zeros() >> 3) as usize;
             }
-            while i < n {
-                let c = *src.add(i);
-                if $(c == $needle)||+ {
-                    return i;
-                }
-                i += 1;
-            }
-            n
+            i += 8;
         }
-    };
+    }
+    if i < n {
+        // The last window reaches into the padding, so its bytes past n are dropped.
+        let m = any_of8(u64::from_le_bytes(*src.window(i)), needles);
+        let m = m & (u64::MAX >> (8 * (8 - (n - i))));
+        if m != 0 {
+            return i + (m.trailing_zeros() >> 3) as usize;
+        }
+    }
+    n
 }
-pub(super) use define_find_function_generic;
+
+/// The high bit of each byte of x that equals one of needles.
+#[cpu_version(Generic)]
+#[inline(always)]
+fn any_of8<const K: usize>(x: u64, needles: [u8; K]) -> u64 {
+    let mut m = 0u64;
+    for c in needles {
+        m |= eqm(x, c);
+    }
+    m
+}
 
 /// Bits of the 64 bytes at `base` that are brackets (`(){}[]`): bit `i` for byte `base + i`.
+#[cpu_version(Generic)]
 #[inline]
 pub fn bracket_bits_generic(src: &[u8], base: usize) -> u64 {
     let mut out = 0u64;

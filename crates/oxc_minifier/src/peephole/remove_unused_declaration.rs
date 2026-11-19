@@ -119,6 +119,14 @@ impl<'a> PeepholeOptimizations {
         match &decl.id {
             BindingPattern::BindingIdentifier(ident) => {
                 if let Some(symbol_id) = ident.symbol_id.get() {
+                    // A catch-local `var` also declares the enclosing binding (its identifier
+                    // carries the catch parameter). Keep it while that binding is used.
+                    if kind.is_var()
+                        && let Some(outer) = ctx.scoping().catch_var_binding(symbol_id)
+                        && !Self::symbol_is_unused_by_count(outer, ctx)
+                    {
+                        return false;
+                    }
                     let is_unused = Self::symbol_is_unused_by_count(symbol_id, ctx)
                         || Self::self_recursive_function_declarator_is_unused(decl, symbol_id, ctx);
                     return is_unused && !Self::class_initializer_name_needs_to_be_kept(decl, ctx);
@@ -277,7 +285,7 @@ impl<'a> PeepholeOptimizations {
         if let Some(phase) = import_decl.phase {
             let (ImportPhase::Defer | ImportPhase::Source) = phase;
             if ctx.scoping().symbol_is_unused(
-                import_decl.specifiers.as_ref().unwrap().first().unwrap().local().symbol_id(),
+                import_decl.specifiers.as_ref().unwrap().first().unwrap().symbol_id(),
             ) {
                 let new_stmt = Statement::new_empty_statement(import_decl.span, ctx);
                 ctx.replace_statement(stmt, new_stmt);
@@ -292,16 +300,7 @@ impl<'a> PeepholeOptimizations {
 
         let original_len = specifiers.len();
 
-        specifiers.retain(|specifier| {
-            let local = match specifier {
-                ImportDeclarationSpecifier::ImportSpecifier(s) => &s.local,
-                ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => &s.local,
-                ImportDeclarationSpecifier::ImportNamespaceSpecifier(s) => &s.local,
-            };
-
-            let symbol_id = local.symbol_id();
-            !ctx.scoping().symbol_is_unused(symbol_id)
-        });
+        specifiers.retain(|specifier| !ctx.scoping().symbol_is_unused(specifier.symbol_id()));
 
         if specifiers.len() != original_len {
             ctx.notice_change();

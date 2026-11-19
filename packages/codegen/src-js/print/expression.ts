@@ -777,15 +777,11 @@ function printUnaryExpression(
   if (wrap) write(state, "(", CAT_OTHER);
 
   const { operator } = node;
-  let isDeleteInfinity = false;
   if (operator.length > 1) {
     // typeof, void, delete
     printSpaceBeforeIdentifier(state);
     writeWithMap(state, operator, CAT_IDENT, node.start, node.end, node);
     write(state, " ", CAT_OTHER);
-    // `delete Infinity` is a syntax error in strict mode
-    isDeleteInfinity =
-      operator === "delete" && node.argument.type === "Literal" && node.argument.value === Infinity;
   } else {
     let operatorCode = unaryOperatorCode(operator);
     printSpaceBeforeOperator(state, operatorCode);
@@ -796,9 +792,7 @@ function printUnaryExpression(
     writeWithMap(state, operator, operatorCode, node.start, node.end, node);
   }
 
-  if (isDeleteInfinity) write(state, "(0, ", CAT_OTHER);
   printExpression(node.argument, state, PREC_EXPONENTIATION, ctx);
-  if (isDeleteInfinity) write(state, ")", CAT_CLOSE_BRACKET);
 
   if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
 }

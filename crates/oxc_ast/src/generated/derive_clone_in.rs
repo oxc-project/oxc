@@ -279,6 +279,10 @@ impl<'new_alloc> CloneIn<'new_alloc> for LabelIdentifier<'_> {
             node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
             name: CloneIn::clone_in_impl(&self.name, with_semantic_ids, allocator),
+            label_id: oxc_syntax::semantic_id::SemanticId::clone_cell_option_id(
+                &self.label_id,
+                with_semantic_ids,
+            ),
         }
     }
 }

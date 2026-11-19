@@ -1038,7 +1038,7 @@ impl<'a> PeepholeOptimizations {
             let next_quasi = (idx + 1 < t.quasis.len()).then(|| t.quasis.remove(idx + 1));
             let quasi = &mut t.quasis[idx];
             let escaped = Self::escape_string_for_template_literal(value);
-            let next_raw = next_quasi.as_ref().map(|q| q.value.raw.as_str()).unwrap_or_default();
+            let next_raw = next_quasi.as_ref().map_or_default(|q| q.value.raw.as_str());
             let raw = quasi.value.raw.as_str();
             quasi.value.raw = Self::concat_template_literal_raw([raw, &escaped, next_raw], ctx);
             let new_cooked = if let (Some(cooked1), Some(cooked2)) =

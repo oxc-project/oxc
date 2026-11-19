@@ -126,6 +126,16 @@ fn strip_numeric_separators(raw: &str) -> Cow<'_, str> {
     raw.cow_replace('_', "")
 }
 
+/// Drops a `.` that no digit follows (`5.`, `1.e5`), as ESLint does: it
+/// doesn't make the literal a float, so its trailing zeros stay insignificant.
+fn without_empty_fraction(raw: &str) -> Cow<'_, str> {
+    let mantissa_end = raw.find(['e', 'E']).unwrap_or(raw.len());
+    if mantissa_end == 0 || raw.as_bytes()[mantissa_end - 1] != b'.' {
+        return Cow::Borrowed(raw);
+    }
+    Cow::Owned(format!("{}{}", &raw[..mantissa_end - 1], &raw[mantissa_end..]))
+}
+
 fn non_base_ten_literal_is_exact(raw: &str) -> bool {
     let raw = raw.trim_start_matches(['+', '-']);
     let (radix, digits) =
@@ -259,6 +269,7 @@ fn base_ten_loses_precision(node: &'_ NumericLiteral) -> bool {
     }
 
     let raw = strip_numeric_separators(raw);
+    let raw = without_empty_fraction(&raw);
     let Some(raw) = normalize(&raw, false) else {
         return true;
     };

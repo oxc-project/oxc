@@ -26,7 +26,8 @@ declare_oxc_lint!(
     fix,
     config = ConsistentTestItConfig,
     version = "0.5.3",
-    short_description = "Enforce consistent use of either the `it` or `test` keyword for defining tests.",
+    short_description =
+        "Enforce consistent use of either the `it` or `test` keyword for defining tests.",
 );
 
 impl Rule for ConsistentTestIt {

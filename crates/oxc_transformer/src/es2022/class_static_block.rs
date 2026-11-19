@@ -59,9 +59,12 @@ use crate::{
     common::helper_loader::{Helper, helper_call_expr},
     context::TraverseCtx,
     state::TransformState,
-    utils::ast_builder::{
-        create_assignment, wrap_expression_in_arrow_function_iife,
-        wrap_statements_in_arrow_function_iife,
+    utils::{
+        ast_builder::{
+            create_assignment, wrap_expression_in_arrow_function_iife,
+            wrap_statements_in_arrow_function_iife,
+        },
+        class_name::contextual_class_name,
     },
 };
 
@@ -293,8 +296,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
                 ClassElement::TSIndexSignature(_) => continue,
             };
 
-            if let PropertyKey::PrivateIdentifier(id) = key {
-                keys.reserve(id.name.as_str());
+            if let Some(name) = key.private_name() {
+                keys.reserve(name.as_str());
             }
         }
 
@@ -441,34 +444,8 @@ impl<'a> ClassStaticBlock<'a> {
         }
         let name = ctx
             .ancestors()
-            .find_map(|ancestor| match ancestor {
-                Ancestor::ParenthesizedExpressionExpression(_) => None,
-                Ancestor::VariableDeclaratorInit(decl) => {
-                    Some(decl.id().get_identifier_name().map(Str::from))
-                }
-                Ancestor::AssignmentPatternRight(pattern) => {
-                    Some(pattern.left().get_identifier_name().map(Str::from))
-                }
-                Ancestor::FormalParameterInitializer(param) => {
-                    Some(param.pattern().get_identifier_name().map(Str::from))
-                }
-                Ancestor::AssignmentExpressionRight(assign)
-                    if assign.operator().is_assign() || assign.operator().is_logical() =>
-                {
-                    Some(Self::assignment_name(assign.left()))
-                }
-                Ancestor::AssignmentTargetWithDefaultInit(target) => {
-                    Some(Self::assignment_name(target.binding()))
-                }
-                Ancestor::AssignmentTargetPropertyIdentifierInit(target) => {
-                    Some(Some(Str::from(target.binding().name)))
-                }
-                Ancestor::ExportDefaultDeclarationDeclaration(_) => {
-                    Some(Some(Str::from("default")))
-                }
-                _ => Some(None),
-            })
-            .flatten();
+            .find(|ancestor| !matches!(ancestor, Ancestor::ParenthesizedExpressionExpression(_)))
+            .and_then(|ancestor| contextual_class_name(&ancestor));
         if let Some(name) = name {
             self.pending_classes.entry(class.body.address()).or_default().inferred_name =
                 Some(InferredName::Static(JSStr::from(name)));
@@ -684,13 +661,6 @@ impl<'a> ClassStaticBlock<'a> {
         class.body.body = captures;
     }
 
-    fn assignment_name(target: &AssignmentTarget<'a>) -> Option<Str<'a>> {
-        match target {
-            AssignmentTarget::AssignmentTargetIdentifier(ident) => Some(ident.name.into()),
-            _ => None,
-        }
-    }
-
     fn has_trailing_blocks(class: &Class<'_>) -> bool {
         for element in class.body.body.iter().rev() {
             match element {
@@ -885,18 +855,7 @@ impl<'a> ClassStaticBlock<'a> {
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
         let params = bindings.map(|binding| {
-            FormalParameter::new(
-                SPAN,
-                [],
-                binding.create_binding_pattern(ctx),
-                None,
-                None,
-                false,
-                None,
-                false,
-                false,
-                ctx,
-            )
+            FormalParameter::new_plain(SPAN, binding.create_binding_pattern(ctx), ctx)
         });
         let params = FormalParameters::boxed(
             SPAN,

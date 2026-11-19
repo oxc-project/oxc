@@ -116,8 +116,7 @@ fn outline_jsx_impl<'a>(
                 InstructionValue::JsxExpression { children, .. } => {
                     let child_ids = children
                         .as_ref()
-                        .map(|kids| kids.iter().map(|c| c.identifier).collect())
-                        .unwrap_or_default();
+                        .map_or_default(|kids| kids.iter().map(|c| c.identifier).collect());
                     actions.push(InstrAction::JsxExpr {
                         lvalue_id,
                         instr_idx: iid.index(),
@@ -467,6 +466,7 @@ fn emit_outlined_fn<'a>(
         params: ArenaVec::from_array_in([ParamPattern::Place(props_obj)], &env.allocator),
         returns: returns_place,
         context: ArenaVec::new_in(&env.allocator),
+        has_outer_lexical_reference: false,
         body: HIR { entry: BlockId::ENTRY, blocks },
         instructions: instr_table,
         generator: false,

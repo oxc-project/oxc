@@ -1,11 +1,12 @@
 use std::borrow::Cow;
 
 use lazy_regex::Regex;
-use rustc_hash::{FxBuildHasher, FxHashSet};
+use rustc_hash::FxHashSet;
+use smallvec::SmallVec;
 
 use oxc_ast::{
     AstKind, FunctionKind,
-    ast::{ArrowFunctionExpression, CallExpression, Function, NewExpression},
+    ast::{ArrowFunctionExpression, CallExpression, Expression, Function, NewExpression},
 };
 use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_cfg::{ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind, graph::visit::EdgeRef};
@@ -18,7 +19,10 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::Rule,
-    utils::{is_react_component_or_hook_name, is_react_function_call, is_react_hook},
+    utils::{
+        is_react_component_name, is_react_component_or_hook_name, is_react_function_call,
+        is_react_hook,
+    },
 };
 
 mod diagnostics {
@@ -616,11 +620,9 @@ fn has_conditional_path_accept_throw(
     let from_graph_id = nodes.cfg_id(from.id());
     let to_graph_id = nodes.cfg_id(to.id());
     let graph = cfg.graph();
-    let block_count = graph.node_count();
-    let mut stack = Vec::with_capacity(block_count);
+    let mut stack = SmallVec::<[_; 8]>::new();
     stack.push((from_graph_id, false));
-    let mut visited =
-        FxHashSet::with_capacity_and_hasher(block_count.saturating_mul(2), FxBuildHasher);
+    let mut visited = FxHashSet::default();
 
     while let Some((block_id, passed_hook)) = stack.pop() {
         if !visited.insert((block_id, passed_hook)) {
@@ -866,9 +868,26 @@ fn is_effect_or_effect_event_call(
         || is_react_function_call(call, "useInsertionEffect")
         || is_react_function_call(call, "useEffectEvent")
         || additional_effect_hooks.is_some_and(|regex| {
-            call.callee_name()
-                .is_some_and(|name| is_react_function_call(call, name) && regex.is_match(name))
+            additional_effect_hook_name(&call.callee).is_some_and(|name| regex.is_match(name))
         })
+}
+
+/// Returns the name to match against `settings["react-hooks"].additionalEffectHooks`.
+///
+/// Accepts a bare call (`useMyEffect()`) and a call on a PascalCase namespace
+/// (`EffectHooks.useMyEffect()`, `React.useMyEffect()`, `React['useMyEffect']()`),
+/// which is the same namespace form this rule recognizes for hook calls
+/// (see [`is_react_hook`]).
+fn additional_effect_hook_name<'a>(callee: &'a Expression<'a>) -> Option<&'a str> {
+    if let Expression::Identifier(ident) = callee {
+        return Some(ident.name.as_str());
+    }
+    let member = callee.as_member_expression()?;
+    let object = member.object().get_identifier_reference()?;
+    if !is_react_component_name(&object.name) {
+        return None;
+    }
+    member.static_property_name()?.as_str()
 }
 
 fn is_reference_call_callee(nodes: &AstNodes<'_>, node_id: NodeId, span: Span) -> bool {
@@ -1720,8 +1739,9 @@ fn test() {
         ",
     ];
 
-    let pass_additional_effect_hooks = vec![(
-        r"
+    let pass_additional_effect_hooks = vec![
+        (
+            r"
             function MyComponent({ theme }) {
               const onClick = useEffectEvent(() => {
                 showNotification(theme);
@@ -1734,15 +1754,54 @@ fn test() {
               });
             }
         ",
-        None,
-        Some(serde_json::json!({
-            "settings": {
-                "react-hooks": {
-                    "additionalEffectHooks": "(useMyEffect|useServerEffect)"
+            None,
+            Some(serde_json::json!({
+                "settings": {
+                    "react-hooks": {
+                        "additionalEffectHooks": "(useMyEffect|useServerEffect)"
+                    }
                 }
+            })),
+        ),
+        (
+            r"
+            function MyComponent({ theme }) {
+              const onClick = useEffectEvent(() => {
+                showNotification(theme);
+              });
+              EffectHooks.useMyEffect(() => {
+                onClick();
+              });
+              React.useMyEffect(() => {
+                onClick();
+              });
+              React['useMyEffect'](() => {
+                onClick();
+              });
+              EffectHooks['useMyEffect'](() => {
+                onClick();
+              });
+              (React).useMyEffect(() => {
+                onClick();
+              });
+              (React as typeof React).useMyEffect(() => {
+                onClick();
+              });
+              React!.useMyEffect(() => {
+                onClick();
+              });
             }
-        })),
-    )];
+        ",
+            None,
+            Some(serde_json::json!({
+                "settings": {
+                    "react-hooks": {
+                        "additionalEffectHooks": "^useMyEffect$"
+                    }
+                }
+            })),
+        ),
+    ];
 
     let fail = vec![
         // Invalid because it's dangerous and might not warn otherwise.
@@ -2634,8 +2693,9 @@ fn test() {
 }",
     ];
 
-    let fail_additional_effect_hooks = vec![(
-        r"
+    let fail_additional_effect_hooks = vec![
+        (
+            r"
             function MyComponent({ theme }) {
               const onClick = useEffectEvent(() => {
                 showNotification(theme);
@@ -2645,15 +2705,39 @@ fn test() {
               });
             }
         ",
-        None,
-        Some(serde_json::json!({
-            "settings": {
-                "react-hooks": {
-                    "additionalEffectHooks": "useMyEffect"
+            None,
+            Some(serde_json::json!({
+                "settings": {
+                    "react-hooks": {
+                        "additionalEffectHooks": "useMyEffect"
+                    }
                 }
+            })),
+        ),
+        (
+            r"
+            function MyComponent({ theme }) {
+              const onClick = useEffectEvent(() => {
+                showNotification(theme);
+              });
+              effectHooks.useMyEffect(() => {
+                onClick();
+              });
+              Hooks.Effects.useMyEffect(() => {
+                onClick();
+              });
             }
-        })),
-    )];
+        ",
+            None,
+            Some(serde_json::json!({
+                "settings": {
+                    "react-hooks": {
+                        "additionalEffectHooks": "useMyEffect"
+                    }
+                }
+            })),
+        ),
+    ];
 
     Tester::new(
         RulesOfHooks::NAME,

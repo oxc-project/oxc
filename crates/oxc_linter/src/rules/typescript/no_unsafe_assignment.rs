@@ -61,7 +61,8 @@ declare_oxc_lint!(
     pedantic,
     recommended,
     version = "1.12.0",
-    short_description = "This rule disallows assigning a value with type `any` to variables and properties.",
+    short_description =
+        "This rule disallows assigning a value with type `any` to variables and properties.",
 );
 
 impl Rule for NoUnsafeAssignment {}

@@ -6,7 +6,8 @@ mod statements;
 
 pub use context::{MayHaveSideEffectsContext, PropertyReadSideEffects};
 pub use known_globals::{
-    is_error_constructor, is_regexp_syntax_supported, is_typed_array_constructor, is_valid_regexp,
+    is_error_constructor, is_pure_global_constructor, is_regexp_syntax_supported,
+    is_typed_array_constructor, is_valid_regexp,
 };
 pub use pure_function::is_pure_function;
 

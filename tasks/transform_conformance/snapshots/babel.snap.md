@@ -1,6 +1,6 @@
-commit: b835f0c6
+commit: 16a2d671
 
-Passed: 741/1168
+Passed: 754/1182
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -158,7 +158,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-explicit-resource-management (25/28)
+# babel-plugin-transform-explicit-resource-management (26/29)
 * integration/commonjs-transform/input.js
 x Output mismatch
 
@@ -371,7 +371,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-static-block (21/24)
+# babel-plugin-transform-class-static-block (22/25)
 * integration/in-class-heritage/input.js
 x Output mismatch
 
@@ -894,8 +894,11 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-optional-chaining (45/46)
+# babel-plugin-transform-optional-chaining (45/47)
 * general/iife-rest-param/input.js
+x Output mismatch
+
+* transparent-expr-wrappers/ts-instantiation-call-context/input.ts
 x Output mismatch
 
 
@@ -1067,7 +1070,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-exponentiation-operator (2/7)
+# babel-plugin-transform-exponentiation-operator (7/12)
 * exponentiation-operator/memoise-object/input.js
 x Output mismatch
 
@@ -1135,7 +1138,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (110/158)
+# babel-plugin-transform-typescript (113/161)
 * class/accessor-allowDeclareFields-false/input.ts
 
   x TS(18010): An accessibility modifier cannot be used with a private

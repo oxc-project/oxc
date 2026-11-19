@@ -6,8 +6,14 @@ Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md`
 
 - Why: uniform-rule (line_suffix is never measured)
 - Pin: `tests/fixtures/format/less/trailing-inline-comment-width.less`
-- Conformance: `less/less-test-suite/globalVars/extended.less`, `less/less-test-suite/color-functions/rgba.less`, `less/less-test-suite/extend-selector/extend-selector.less`
-- Oxfmt: `externals/ng-zorro-antd/components/style/themes/default.less`, `externals/ng-zorro-antd/components/style/themes/variable.less`, `externals/ng-zorro-antd/components/style/themes/dark.less`, `externals/gitlab/stylesheets/pages/profile.scss`
+- Conformance:
+  - `externals/prettier/less/less-test-suite/snippet: tests-config/globalVars/extended.less`
+  - `externals/prettier/less/less-test-suite/snippet: tests-unit/color-functions/rgba.less`
+  - `externals/prettier/less/less-test-suite/snippet: tests-unit/extend-selector/extend-selector.less`
+  - `externals/ng-zorro-antd/components/style/themes/default.less`
+  - `externals/ng-zorro-antd/components/style/themes/variable.less`
+  - `externals/ng-zorro-antd/components/style/themes/dark.less`
+  - `externals/gitlab/stylesheets/pages/profile.scss`
 
 ```scss
 /* input */
@@ -95,25 +101,6 @@ a {
 Prettier lands at +4 (comma-separated selectors, above) / +6 (wrapped selector parts, also pinned), an artifact of its generic at-rule params indent.
 Layout-only, deprecated syntax, triggers only on width overflow.
 
-## nth-anb-leading-sign
-
-- Why: semantics
-- Pin: `tests/fixtures/format/css/nth-an-plus-b.css`
-
-```css
-/* input */
-:nth-child(+3n - 2)
-
-/* ours */
-:nth-child(+3n - 2)
-
-/* prettier */
-:nth-child(+ 3n - 2)
-```
-
-The An+B grammar forbids whitespace between a leading sign and its term,
-so Prettier's output (`postcss-selector-parser` tokenizes every `+` as a combinator) no longer parses as a selector and breaks formatter idempotency: the second pass fails to parse.
-
 ## forward-members-with-config
 
 - Why: uniform-rule (same construct, same output: `@use ... with (...)` and config-less `@forward`)
@@ -172,20 +159,27 @@ Heads that still never break in Prettier's value-parse (`@for` bounds, `@namespa
 ```css
 /* input */
 @media (not ( screen and ( color ) )) { }
+@media (foo bar:baz , qux) { }
 
 /* ours */
 @media (not (screen and (color))) {
+}
+@media (foo bar:baz, qux) {
 }
 
 /* prettier */
 @media (not ( screen and ( color ) )) {
 }
+@media (foo bar: baz , qux) {
+}
 ```
 
 `<general-enclosed>` preludes (unparsable as `<media-condition>`) normalize whitespace fully: source gap → one space, paren inner edges tight.
+So does a `@supports` one, and a `selector()` whose argument is not a selector (`selector(A < B)`).
 Prettier only collapses space RUNS inside the unparsable paren;
 reproducing that half-normalization is pure tokenizer-artifact matching.
-Gap-based spacing never fuses tokens the source kept apart (`and (` can't become a function token `and(`).
+Gap-based spacing never splits or fuses tokens: `and (` can't become a function token `and(`,
+and no space is added where the source has none, so a pseudo-class keeps its `:` (`selector(:before)`), unlike Prettier's `: ` after any colon.
 
 ## value-glued-bracket
 
@@ -316,7 +310,8 @@ Prettier keeps SELECTOR interpolation verbatim.
 
 - Why: uniform-rule (option governs: singleQuote)
 - Pin: `tests/fixtures/format/scss/unknown-at-rule-edges.scss`, `tests/fixtures/format/css/prelude-string-requote.css`
-- Oxfmt: `externals/mdn-css-guides/values_and_units/textual_data_types/index.md`
+- Conformance:
+  - `externals/mdn-css-guides/values_and_units/textual_data_types/index.md`
 
 ```scss
 /* input */
@@ -338,6 +333,45 @@ A string in an at-rule prelude we parse typed re-quotes per the `singleQuote` op
 the `@warn` / `@error` prelude (a `SassExpr`) and a `@keyframes` name (`at_rule.rs` `write_keyframes_name`) go through the structured printer;
 Prettier keeps the at-rule params as a raw string verbatim.
 Every other string in a declaration value re-quotes per the same option in both formatters.
+
+## less-escape-hugs-string
+
+- Why: uniform-rule (same construct, same output: a declaration value)
+- Pin: `tests/fixtures/format/less/escaped-string.less`
+
+```less
+/* input */
+a { value: ~ 'x'; }
+@media (min-width: ~ '768px') {}
+[class^=~ 'col-'] {}
+@keyframes ~ 'name' {}
+
+/* ours */
+a {
+  value: ~"x";
+}
+@media (min-width: ~"768px") {
+}
+[class^=~"col-"] {
+}
+@keyframes ~"name" {
+}
+
+/* prettier */
+a {
+  value: ~"x";
+}
+@media (min-width: ~ "768px") {
+}
+[class^=~ "col-"] {
+}
+@keyframes ~ 'name' {
+}
+```
+
+A Less escape (`LessEscapedStr`) prints as `~` hugging its re-quoted string wherever it is typed (`value.rs` `write_less_escaped_str`);
+Prettier does so in a declaration value and `url()`, but keeps the space in a media feature and an attribute value, and the `@keyframes` name verbatim (see prelude-string-requote).
+The Prettier-compat raw paths keep the source as-is: a selector or at-rule prelude with a comment, and Less mixin call / definition arguments and `when` guards.
 
 ## call-after-line-comment-indent
 
@@ -412,38 +446,30 @@ Prettier double-indents it (closing `)` floating between levels) when the neares
 ## comment-preceded-map-indent
 
 - Why: uniform-rule (comment presence never changes layout)
-- Pin: `tests/fixtures/format/scss/map-comment-block-value-comma.scss`, `tests/fixtures/format/scss/variable-inline-comment.scss`
-- Conformance: `scss/map/comment.scss` (the `key4` indent; its dropped trailing comma is `map-leading-comment-layout`), `scss/parens/2.scss`
+- Pin: `tests/fixtures/format/scss/variable-inline-comment.scss`
 
 ```scss
 /* input */
-$m: (
-  /* c */
-  b: (x: 2),
-);
+$m: // c
+  (k: v);
 
 /* ours */
-$m: (
-  /* c */
-  b: (
-    x: 2,
-  ),
-);
+$m: // c
+  (
+    k: v,
+  );
 
 /* prettier */
-$m: (
-  /* c */
-  b: (
-      x: 2,
-    ),
+$m: // c
+  (
+  k: v,
 );
 ```
 
-A comment-preceded block map value prints at the normal nested-map indent;
-Prettier double-indents it (+6 body / +4 `)`) because its dedent applies only when the pair doc is a plain `group(indent(fill))` and a leading comment changes the doc shape.
-Comment presence must not change layout: same dedent-skip artifact class as `nested-map-context-indent`
-(paren-block KEYS still keep the pair indent, matching Prettier: that trigger is content, not trivia).
-The other direction of the same artifact: a map value after `$v: // c` keeps its shape under the continuation indent (`(\n    k: v,\n  )`), Prettier dedents it to `(\n  k: v,\n)` with the body level with the `(`.
+A map value after a trailing comment on the `$var:` line keeps its shape under the continuation indent;
+Prettier dedents it, the body level with the `(` and the `)` at the declaration's column,
+because its dedent applies only when the pair doc is a plain `group(indent(fill))` and the comment changes the doc shape.
+Same dedent-skip artifact class as `nested-map-context-indent`.
 
 ## map-item-break-comma-lists-only
 
@@ -467,39 +493,30 @@ The other direction of the same artifact: a map value after `$v: // c` keeps its
 
 The map-item break (one element per line + trailing comma) applies ONLY to parens whose contents are already a comma-separated list:
 `(x,)` is a single-element list in Sass, so the added comma is a semantic no-op for a comma list and NOWHERE else.
-Prettier 3.9.6 changes `key: ($a + $b)` from a number to a list, restructures `key: (a b)` (2-element space list → nested 1-element list), and emits non-compiling output for `key: 2 * ($a + $b)` inside `$var:` declarations (dart-sass: `Undefined operation "2 * (3px,)"`).
+Prettier changes `key: ($a + $b)` from a number to a list, restructures `key: (a b)` (2-element space list → nested 1-element list), and emits non-compiling output for `key: 2 * ($a + $b)` inside `$var:` declarations (dart-sass: `Undefined operation "2 * (3px,)"`).
 Prettier's own prettier/prettier#18530 / prettier/prettier#19091 fixed subsets of this; we extend the same rule to every non-comma-list.
 
 ## single-item-list-trailing-comma
 
 - Why: semantics (prettier/prettier#19928)
 - Pin: `tests/fixtures/format/scss/single-item-list-trailing-comma.scss`
-- Drop when: upstream also keeps the paren-less form and `(fn(1),)` (dropped as a source-span artifact of its value parser)
+- Drop when: upstream also keeps the paren-less form
 
 ```scss
 /* input */
-$list: ("a",);
 $bare: "a",;
-$map: (k: ("a",));
 
 /* ours */
-$list: ("a",);
 $bare: "a",;
-$map: (
-  k: ("a",),
-);
 
 /* prettier */
-$list: ("a");
 $bare: "a";
-$map: (
-  k: ("a"),
-);
 ```
 
 `("a",)` and `$x: "a",` are one-element lists in Sass while `"a"` is a string (dart-sass `type-of`):
 dropping the comma changes the value for `nth()` / `@each` / `list.append()`.
-Prettier 3.9.6 drops it everywhere but `var()`; we keep it whenever the list has exactly one element
+Prettier keeps it in parens since #19928 and still drops it from the paren-less form (`$x: "a",`, `@return "a",`);
+we keep it whenever the list has exactly one element
 (multi-element lists and function arguments still drop theirs, the list is a list without it).
 
 ## bracket-list-layout
@@ -536,8 +553,21 @@ so a comment, a sibling token or an overflow hard-breaks that outer list around 
 
 - Why: uniform-rule (the formatter owns the trivia up to a terminator)
 - Pin: `tests/fixtures/format/scss/terminator-gap.scss`
-- Conformance: `css/stylefmt-repo/at-media/at-media.css`, `css/stylefmt-repo/cssnext-example/cssnext-example.css`, `css/stylefmt-repo/media-queries-ranges/media-queries-ranges.css`, `css/postcss-plugins/postcss-nesting.css`, `css/comments/declaration.css`,
-  `scss/comments/4878.scss`, `scss/map/function-argument/functional-argument.scss`, `scss/parens/issue-16594.scss`, `scss/trailing-comma/comments.scss`, `scss/trailing-comma/list.scss`, `scss/trailing-comma/variable.scss`, `scss/function/arbitrary-arguments-comment.scss`, `scss/map/15193.scss`, `scss/comments/variable-declaration.scss`
+- Conformance:
+  - `externals/prettier/css/stylefmt-repo/at-media/at-media.css`
+  - `externals/prettier/css/stylefmt-repo/cssnext-example/cssnext-example.css`
+  - `externals/prettier/css/stylefmt-repo/media-queries-ranges/media-queries-ranges.css`
+  - `externals/prettier/css/postcss-plugins/postcss-nesting.css`
+  - `externals/prettier/css/comments/declaration.css`
+  - `externals/prettier/scss/comments/4878.scss`
+  - `externals/prettier/scss/map/function-argument/functional-argument.scss`
+  - `externals/prettier/scss/parens/issue-16594.scss`
+  - `externals/prettier/scss/trailing-comma/comments.scss`
+  - `externals/prettier/scss/trailing-comma/list.scss`
+  - `externals/prettier/scss/trailing-comma/variable.scss`
+  - `externals/prettier/scss/function/arbitrary-arguments-comment.scss`
+  - `externals/prettier/scss/map/15193.scss`
+  - `externals/prettier/scss/comments/variable-declaration.scss`
 
 ```scss
 /* input */
@@ -594,6 +624,8 @@ Its JS printer follows the option (`[1, 2\n // own]`), and so do all our formatt
 
 - Why: invariant
 - Pin: `tests/fixtures/format/scss/module-config-comments.scss`, `tests/fixtures/format/scss/paren-tail-own-line-comment.scss`
+- Conformance:
+  - `externals/prettier/scss/trailing-comma/issue-6356.scss`
 
 ```scss
 /* input */
@@ -627,30 +659,6 @@ An own-line trailing comment before a closing `)` keeps its own line
 
 Prettier's output changes line, own-line to the last item's line, a `lineSuffix` artifact of its comma-group printing.
 Same-line trailing comments still glue (matching Prettier); moving an own-line comment up would destroy the author's visual grouping.
-
-## map-leading-comment-layout
-
-- Why: uniform-rule (comment presence never changes layout)
-- Pin: `tests/fixtures/format/scss/map-comment-only.scss`
-- Conformance: `scss/map/comment.scss` (the map's trailing comma under `trailingComma: es5`)
-
-```scss
-/* input */
-$b: (/* c */ a: 1,);
-
-/* ours */
-$b: (
-  /* c */ a: 1,
-);
-
-/* prettier */
-$b: (/* c */ a: 1);
-```
-
-A map whose FIRST item is preceded by a block comment loses map-item-ness in Prettier:
-it inlines when it fits and drops the trailing comma.
-We print it as the same map without the comment (`$b: (a: 1,)`): one item per line, comma per `trailingComma`.
-A comment before a LATER item keeps both in Prettier too.
 
 ## comment-only-map-indent
 
@@ -726,7 +734,14 @@ the same `join(line)` + deferred `lineSuffix` artifact as "comment-only-map-inde
 
 - Why: invariant
 - Pin: `tests/fixtures/format/scss/line-comment-after-comma.scss`, `tests/fixtures/format/less/line-comment-after-comma.less`
-- Conformance: `scss/comments/4594.scss`, `scss/comments/lists.scss`, `scss/comments/maps.scss`, `scss/trailing-comma/issue-6920.scss`, `scss/trailing-comma/comments.scss`, `less/comments/value-lists.less`
+- Conformance:
+  - `externals/prettier/scss/comments/4594.scss`
+  - `externals/prettier/scss/comments/lists.scss`
+  - `externals/prettier/scss/comments/maps.scss`
+  - `externals/prettier/scss/trailing-comma/issue-6920.scss`
+  - `externals/prettier/scss/trailing-comma/comments.scss`
+  - `externals/prettier/scss/map/empty-line-after-function.scss`
+  - `externals/prettier/less/comments/value-lists.less`
 
 ```scss
 /* input */
@@ -821,7 +836,9 @@ so the entry BEFORE the comment (`in a,`) breaks away from `$k` too; the same so
 
 - Why: invariant
 - Pin: `tests/fixtures/format/less/variable-value-comments.less`, `tests/fixtures/format/less/important-comments.less`
-- Conformance: `less/less-test-suite/comments/comments2.less`, `less/less-test-suite/property-name-interp/property-name-interp.less`
+- Conformance:
+  - `externals/prettier/less/less-test-suite/snippet: tests-unit/comments/comments2.less`
+  - `externals/prettier/less/less-test-suite/snippet: tests-unit/property-name-interp/property-name-interp.less`
 
 ```less
 /* input */
@@ -845,7 +862,8 @@ and its at-rule printer drops the block comments in there (a trailing one surviv
 
 - Why: uniform-rule (same construct, same output: selector-position `&:extend(...)`; prettier/prettier#19550)
 - Pin: `tests/fixtures/format/less/extend-rule.less`
-- Conformance: `less/less-test-suite/extend-chaining/extend-chaining.less`
+- Conformance:
+  - `externals/prettier/less/less-test-suite/snippet: tests-unit/extend-chaining/extend-chaining.less`
 - Drop when: the selector-list leak is fixed (prettier/prettier#19550 covered only the indentation) and the pin catches up
 
 ```less
@@ -864,7 +882,7 @@ and its at-rule printer drops the block comments in there (a trailing one surviv
 
 Statement-position `&:extend(...)` breaks only on overflow, like the selector-position form
 (inline when it fits; parens on their own lines + one selector per line on overflow, the same shape as Prettier's break).
-Prettier (3.9.5+) ALWAYS breaks multiple selectors there and never breaks a single one:
+Prettier ALWAYS breaks multiple selectors there and never breaks a single one:
 postcss-less models the statement as a rule node, so the top-level selector-list printer (hardline commas) leaks into the parens.
 
 ## unary-plus-glue
@@ -872,7 +890,8 @@ postcss-less models the statement as a rule node, so the top-level selector-list
 - Why: cost
 - Pin: `tests/fixtures/format/css/token-soup-math-glue.css` (Css mode),
   `tests/fixtures/format/less/signed-value-args.less` (Less mode)
-- Conformance: `css/parens/parens.css` (`prop34`; the file also has unclassified diffs, see AGENTS.md)
+- Conformance:
+  - `externals/prettier/css/parens/parens.css` (`prop34`; the file also has unclassified diffs)
 
 ```css
 /* input */
@@ -894,8 +913,10 @@ A sign GLUED in the source never gains a space in either implementation (that di
 
 - Why: uniform-rule (same construct, same output: the item in first position, an unsigned item)
 - Pin: `tests/fixtures/format/css/signed-value-resplit.css`
-- Conformance: `css/fill-value/fill.css`
-- Oxfmt: `externals/gitlab/stylesheets/framework/variables.scss`, `externals/ng-zorro-antd/components/table/style/index.less`
+- Conformance:
+  - `externals/prettier/css/fill-value/fill.css`
+  - `externals/gitlab/stylesheets/framework/variables.scss`
+  - `externals/ng-zorro-antd/components/table/style/index.less`
 
 ```css
 /* input */
@@ -932,7 +953,8 @@ Ours prints a signed item as one word, like the same item in first position or u
 
 - Why: uniform-rule (same construct, same output: the `-(` shapes Prettier keeps glued)
 - Pin: `tests/fixtures/format/css/token-soup-math-glue.css`
-- Conformance: `css/parens/parens.css` (`prop`/`prop44`; the file also has unclassified diffs, see AGENTS.md)
+- Conformance:
+  - `externals/prettier/css/parens/parens.css` (`prop`/`prop44`; the file also has unclassified diffs)
 
 ```css
 /* input */
@@ -957,9 +979,15 @@ Css mode only (hence the prefix): in Less and Scss, Prettier keeps `3px -(4px)` 
 
 - Why: cost
 - Pin: `tests/fixtures/format/scss/fill-break-position.scss`
-- Oxfmt: `externals/webawesome/number-input/number-input.styles.ts`, `externals/webawesome/page/page.styles.ts`,
-  `externals/ng-zorro-antd/components/style/themes/default.less`, `externals/ng-zorro-antd/components/style/themes/variable.less`, `externals/ng-zorro-antd/components/table/style/rtl.less`,
-  `externals/gitlab/stylesheets/components/content_editor.scss`, `externals/gitlab/stylesheets/page_bundles/_ide_theme_overrides.scss`, `externals/gitlab/stylesheets/framework/sidebar.scss`
+- Conformance:
+  - `externals/webawesome/number-input/number-input.styles.ts`
+  - `externals/webawesome/page/page.styles.ts`
+  - `externals/ng-zorro-antd/components/style/themes/default.less`
+  - `externals/ng-zorro-antd/components/style/themes/variable.less`
+  - `externals/ng-zorro-antd/components/table/style/rtl.less`
+  - `externals/gitlab/stylesheets/components/content_editor.scss`
+  - `externals/gitlab/stylesheets/page_bundles/_ide_theme_overrides.scss`
+  - `externals/gitlab/stylesheets/framework/sidebar.scss`
 
 ```scss
 /* input (nested three levels, print width 80) */
@@ -984,10 +1012,33 @@ our core `fill` (biome semantics) breaks only at the last fitting separator.
 Layout-only, the principled fix is the shared core-fill fit-check change (needs a JS-conformance impact experiment first).
 A spaced `/` is not part of this: it glues to its left operand and breaks after, as in Prettier (`tests/fixtures/format/css/fill-math-chunk-break.css`).
 
-## less-value-interpolation-rejected
+## grammar-owner-rejected
 
-- Why: uniform-rule (error semantics)
+- Why: uniform-rule (acceptance: the grammar owner decides)
 - Pin: `tests/fixtures/mod.rs::parse_error_is_err` (parser-level: the rejection is asserted directly)
+- Conformance:
+  - `externals/prettier/css/atrule/charset.css`
+  - `externals/prettier/css/atrule/import.css`
+  - `externals/prettier/css/attribute/quotes.css`
+  - `externals/prettier/css/combinator/combinator.css`
+  - `externals/prettier/css/comments/selectors.css`
+  - `externals/prettier/css/custom-properties/emoji.css`
+  - `externals/prettier/css/no-semicolon/url.css`
+  - `externals/prettier/css/postcss-plugins/postcss-mixins.css`
+  - `externals/prettier/css/postcss-plugins/postcss-simple-vars.css`
+  - `externals/prettier/css/quotes/quotes.css`
+  - `externals/prettier/css/selector-list/selectors.css`
+  - `externals/prettier/css/selector-string/string.css`
+  - `externals/prettier/scss/atrule/for.scss`
+  - `externals/prettier/scss/comments/CRLF.scss`
+  - `externals/prettier/scss/math/3945.scss`
+  - `externals/prettier/scss/no-semicolon/url.scss`
+  - `externals/prettier/scss/parens/parens.scss`
+  - `externals/prettier/less/case/case.less`
+  - `externals/prettier/less/comments/in-value.less`
+  - `externals/prettier/less/interpolation/interpolation.less`
+  - `externals/prettier/less/lookup/lookup-1.less`
+  - `externals/prettier/less/no-semicolon/url.less`
 
 ```less
 /* input */
@@ -1001,15 +1052,33 @@ A spaced `/` is not part of this: it glues to its left operand and breaks after,
 }
 ```
 
-Value-position `@{var}` interpolation: `oxc-css-parser` rejects it matching `lessc`;
-Prettier (postcss) accepts and prints verbatim. Per the policy's "Error semantics",
-we never format what the reference compiler rejects (a parse error is the SAFE failure).
+`oxc-css-parser` rejects what the variant's grammar owner rejects (oxc-css-parser AGENTS.md "Acceptance"),
+so per the policy's "Error semantics" we leave it as-is (a parse error is the SAFE failure);
+Prettier (postcss) accepts these and prints them, mostly verbatim.
+
+- CSS, a browser drops the rule (Chrome; lightningcss, built on `cssparser`):
+  - invalid selectors: `a[id=func("foo")]`, `-Option/root .a`, `>>>`, `.is-$(var)`, `:not(".a")`, `one "two" three`
+  - invalid `@import` preludes: `@import (multiple) "a";`, `@import "a" {}`
+  - root declarations, `--foo: { }` included (a custom property, not the raw-prelude `x: { }` rule)
+  - `@charset UTF-8;`: only the exact `@charset "...";` form means anything (css-syntax-3); a browser drops both forms, so this one rests on the spec
+- SCSS, dart-sass rejects: `@for $i from 1 end 3`, a Less variable (`@var`) in a value, root declarations
+- Less, lessc rejects: value-position `@{var}`, SCSS interpolation (`#{$var}`), `@IMPORT a;`, a spaced lookup (`@c [ a ]`), `++1`
+- Every owner rejects `@import ur l(a.css);`
 
 ## media-query-operator-spacing
 
 - Why: uniform-rule (same construct, same output: the same expression in a declaration value; prettier/prettier#1811)
 - Pin: `tests/fixtures/format/scss/media-query-operator-spacing.scss`
-- Oxfmt: `externals/gitlab/stylesheets/framework/diffs.scss`, `externals/gitlab/stylesheets/page_bundles/editor.scss`, `externals/gitlab/stylesheets/page_bundles/issuable_list.scss`, `externals/gitlab/stylesheets/page_bundles/labels.scss`, `externals/gitlab/stylesheets/page_bundles/environments.scss`, `externals/gitlab/stylesheets/page_bundles/merge_requests.scss`, `externals/gitlab/stylesheets/page_bundles/settings.scss`, `externals/gitlab/stylesheets/page_bundles/projects.scss`, `externals/gitlab/stylesheets/pages/settings.scss`
+- Conformance:
+  - `externals/gitlab/stylesheets/framework/diffs.scss`
+  - `externals/gitlab/stylesheets/page_bundles/editor.scss`
+  - `externals/gitlab/stylesheets/page_bundles/issuable_list.scss`
+  - `externals/gitlab/stylesheets/page_bundles/labels.scss`
+  - `externals/gitlab/stylesheets/page_bundles/environments.scss`
+  - `externals/gitlab/stylesheets/page_bundles/merge_requests.scss`
+  - `externals/gitlab/stylesheets/page_bundles/settings.scss`
+  - `externals/gitlab/stylesheets/page_bundles/projects.scss`
+  - `externals/gitlab/stylesheets/pages/settings.scss`
 
 ```scss
 /* input */
@@ -1083,42 +1152,11 @@ Everywhere else BOTH implementations keep the glue, so there is nothing to diver
 where exactly ours keeps it is printer mechanism, documented at `write_less_binary_operation` / `write_sass_binary`
 (and pinned by the same fixtures plus `tests/fixtures/format/scss/calc-glued-minus.scss` for Scss calculation args).
 
-## map-paren-value-blank-lines
-
-- Why: uniform-rule (blank-line preservation; prettier/prettier#16824)
-- Pin: `tests/fixtures/format/scss/map-paren-value-blank-lines.scss`
-
-```scss
-/* input */
-$colors: (
-  a: rgba(#fff, 0.1),
-
-  b: #111,
-);
-
-/* ours */
-$colors: (
-  a: rgba(#fff, 0.1),
-
-  b: #111,
-);
-
-/* prettier */
-$colors: (
-  a: rgba(#fff, 0.1),
-  b: #111,
-);
-```
-
-A blank line after a map item is preserved per the blank-line preservation rule regardless of the value's shape,
-as after a map item with a non-paren value (Prettier itself keeps that one);
-Prettier drops it when the item's value is paren-ish (a call / paren group), an artifact of its comma-group splitting.
-
 ## paren-group-glued-word
 
 - Why: semantics
 - Pin: `tests/fixtures/format/css/paren-group-glued-word.css`
-  (`css/postcss-plugins/postcss-simple-vars.css` carries the case too, but its root declarations keep it skipped in conformance)
+  (`css/postcss-plugins/postcss-simple-vars.css` carries the case too, but its root declarations fail to parse)
 
 ```css
 /* input */
@@ -1173,7 +1211,10 @@ Escaped custom property names therefore preserve their source spelling, like nam
 
 - Why: uniform-rule (raw is verbatim; AGENTS.md "Printing raw vs typed")
 - Pin: `tests/fixtures/format/css/custom-property-raw-verbatim.css`, `tests/fixtures/format/scss/custom-property-raw-verbatim.scss`, `tests/fixtures/format/scss/custom-property-text.scss`
-- Conformance: `css/postcss-8-improment/test.css`, `scss/variables/postcss-8-improment.scss`, `less/postcss-8-improment/test.less`
+- Conformance:
+  - `externals/prettier/css/postcss-8-improment/test.css`
+  - `externals/prettier/scss/variables/postcss-8-improment.scss`
+  - `externals/prettier/less/postcss-8-improment/test.less`
 
 ```css
 /* input */
@@ -1214,7 +1255,8 @@ re-spacing a value we could not read is not a layout rule of ours.
 
 - Why: semantics
 - Pin: `tests/fixtures/format/css/postcss-simple-vars/vars.css`
-- Conformance: `css/parens/empty-lines.css`
+- Conformance:
+  - `externals/prettier/css/parens/empty-lines.css`
 
 ```css
 /* input and ours */
@@ -1265,7 +1307,8 @@ and prints any other run verbatim, so a comment inside freezes the keyword's cas
 
 - Why: semantics
 - Pin: `tests/fixtures/format/less/javascript-verbatim.less`
-- Conformance: `less/less-test-suite/javascript/javascript.less`
+- Conformance:
+  - `externals/prettier/less/less-test-suite/snippet: tests-unit/javascript/javascript.less`
 
 ```less
 /* input */
@@ -1296,7 +1339,9 @@ it pads the backticks, re-quotes JavaScript strings and reflows a multi-line fun
 
 - Why: invariant
 - Pin: `tests/fixtures/format/less/escaped-string-gap.less`
-- Conformance: `less/less-test-suite/variables/variables.less`, `less/less-test-suite/strings/strings.less`
+- Conformance:
+  - `externals/prettier/less/less-test-suite/snippet: tests-unit/variables/variables.less`
+  - `externals/prettier/less/less-test-suite/snippet: tests-unit/strings/strings.less`
 
 ```less
 /* input */
@@ -1314,42 +1359,47 @@ Prettier's `~` handling for escaped strings (`~"..."`) fires on a string whose c
 
 ## less-lookup-glue
 
-- Why: semantics
+- Why: uniform-rule (same construct, same output: `#namespace[$@prop-name]`)
 - Pin: `tests/fixtures/format/less/lookup-glue.less`
-- Conformance: `less/less-test-suite/namespacing/namespacing-functions.less`, `less/less-test-suite/namespacing/namespacing-media.less`, `less/less-test-suite/namespace-targeted/namespace-targeted.less`
+- Conformance:
+  - `externals/prettier/less/less-test-suite/snippet: tests-config/namespacing/namespacing-functions.less`
+  - `externals/prettier/less/less-test-suite/snippet: tests-config/namespacing/namespacing-media.less`
 
 ```less
 /* input */
 .a {
-  value: #namespace[$@prop-name];
   width: .add(10px, 10px)[];
 }
+@media #ns.breakpoint(.valToGet[])[@max] {}
 
 /* ours */
 .a {
-  value: #namespace[$@prop-name];
   width: .add(10px, 10px)[];
+}
+@media #ns.breakpoint(.valToGet[])[@max] {
 }
 
 /* prettier */
 .a {
-  value: #namespace[$ @prop-name];
   width: .add(10px, 10px) [];
+}
+@media #ns.breakpoint(.valToGet[]) [@max] {
 }
 ```
 
-`$@var` inside a lookup is one token (a property name held in a variable): less.js rejects `[$ @prop-name]` ("Unrecognised input").
-The space before `[]` is harmless to less.js (`.add() []` still evaluates), so that half is the lossless side of the same rule:
-a lookup prints glued as written, like a selector's attribute bracket.
-Prettier's value printer treats `[` as a word boundary and `$` as a postcss-simple-vars prefix, spacing both.
-The `$@` half is fixed upstream after v3.9.6 (prettier/prettier#19782 keeps `[$@prop-name]` tight); the `[]` half remains.
+A lookup prints glued to what it reads from, as written, like a selector's attribute bracket.
+Prettier glues one after a name (`#namespace[$@prop-name]`, since prettier/prettier#19782 and prettier/prettier#20279 also after `$@`)
+and spaces one after a call's `)`, where its value printer treats `[` as a word boundary.
+less.js (4.9.1) evaluates both forms the same.
 
 ## less-guard-list-inline
 
 - Why: uniform-rule (same construct, same output: guard alternatives are a list, not selectors; the `less-extend-statement-break` leak again)
 - Pin: `tests/fixtures/format/less/mixin-selector-list.less`
-- Conformance: `less/less-test-suite/mixins-guards/mixins-guards.less`, `less/less-test-suite/mixins-guards-default-func/mixins-guards-default-func.less`
-- Oxfmt: `externals/ng-zorro-antd/components/style/mixins/customize.less`
+- Conformance:
+  - `externals/prettier/less/less-test-suite/snippet: tests-unit/mixins-guards/mixins-guards.less`
+  - `externals/prettier/less/less-test-suite/snippet: tests-unit/mixins-guards-default-func/mixins-guards-default-func.less`
+  - `externals/ng-zorro-antd/components/style/mixins/customize.less`
 
 ```less
 /* input */
@@ -1376,7 +1426,8 @@ over the width every word gap is a descendant combinator, so `when`, `and` and e
 
 - Why: uniform-rule (same construct, same output: the width-wrapped continuation of the same operation)
 - Pin: `tests/fixtures/format/less/line-comment-continuation-indent.less`, `tests/fixtures/format/scss/line-comment-continuation-indent.scss`
-- Conformance: `less/less-test-suite/comments/comments2.less`
+- Conformance:
+  - `externals/prettier/less/less-test-suite/snippet: tests-unit/comments/comments2.less`
 
 ```less
 /* input */
@@ -1450,7 +1501,7 @@ a {
 /* prettier: CssSyntaxError: Missed semicolon, the input is left as-is */
 ```
 
-A `;`-less declaration runs to the next `;`: `oxc-css-parser` reads one declaration, a value being any component-value run (css-syntax-3; its README "Acceptance");
+A `;`-less declaration runs to the next `;`: `oxc-css-parser` reads one declaration, a value being any component-value run (css-syntax-3; oxc-css-parser AGENTS.md "Acceptance");
 postcss rejects a value with a `word:` after its first word.
 Same tokens, so same meaning: a browser drops the declaration,
 or keeps it the same way when the value holds an arbitrary substitution function (`var()`, `env()`).
@@ -1521,7 +1572,8 @@ A raw prelude (unknown at-rule params) still takes the same `//` test as Prettie
 
 - Why: uniform-rule (same construct, same output: the SCSS `if()` branch separator; prettier/prettier#19384)
 - Pin: `tests/fixtures/format/css/value-semicolon-glue.css`
-- Oxfmt: `externals/mdn-css-guides/custom_functions_and_mixins/using_custom_functions/index.md`
+- Conformance:
+  - `externals/mdn-css-guides/custom_functions_and_mixins/using_custom_functions/index.md`
 
 ```css
 /* input */
@@ -1579,11 +1631,50 @@ Prettier glues it only between SCSS `if()` branches and keeps the source space e
 A broken function call inside a `@supports` declaration indents its arguments one level, as the same declaration does inside a rule;
 Prettier indents the arguments and `)` one level further there, its prelude value group adding its own indent.
 
+## supports-declaration-long-value
+
+- Why: uniform-rule (same construct, same output: the declaration in a rule)
+- Pin: `tests/fixtures/format/css/supports-declaration-long-value.css`
+- Conformance:
+  - `externals/prettier/css/atrule/supports.css`
+
+```css
+/* input */
+@supports (text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-and-longer) {}
+a {
+  text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-long-long;
+}
+
+/* ours */
+@supports (
+  text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-and-longer
+) {
+}
+a {
+  text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-long-long;
+}
+
+/* prettier */
+@supports (
+  text-decoration-skip-ink:
+    an-experimental-keyword-value-that-is-quite-long-and-longer
+) {
+}
+a {
+  text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-long-long;
+}
+```
+
+An over-wide `@supports` declaration opens its parens and stays on one line, as the same declaration does in a rule;
+Prettier breaks after its `:` there too, its prelude value group allowing a break the declaration printer does not.
+
 ## grid-value-broken-in-function
 
 - Why: invariant
 - Pin: `tests/fixtures/format/scss/grid-value-broken-in-function.scss`
-- Oxfmt: `externals/gitlab/stylesheets/page_bundles/work_items.scss`, `externals/webawesome/page/page.styles.ts`
+- Conformance:
+  - `externals/gitlab/stylesheets/page_bundles/work_items.scss`
+  - `externals/webawesome/page/page.styles.ts`
 
 ```scss
 /* input (= ours; Prettier's output for the value on one line) */
