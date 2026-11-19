@@ -87,11 +87,12 @@ fn params_take_their_functions_kind(cpu: DynCpu) {
 }
 
 #[test_cpus]
-fn module_goal_keeps_yield_and_await_reserved(cpu: DynCpu) {
-    let ks = kinds_of("var r = await /re/.test(x);", ModuleJS, cpu);
-    assert!(ks.contains(&TokenKind::RegExp), "module keeps await reserved: {ks:?}");
-    let ks = kinds_of("var r = yield /re/;", ModuleJS, cpu);
-    assert!(ks.contains(&TokenKind::RegExp), "module keeps yield reserved: {ks:?}");
+fn module_goal_scopes_yield_and_await(cpu: DynCpu) {
+    regex("var r = await /re/.test(x);", ModuleJS, cpu);
+    regex("function* g() { yield /re/; }", ModuleJS, cpu);
+    division("var r = yield /2/g;", ModuleJS, cpu);
+    division("function f() { return await /2/g; }", ModuleJS, cpu);
+    division("namespace N { let x = await / 2 / 1; }", ModuleTS, cpu);
 }
 
 #[test_cpus]

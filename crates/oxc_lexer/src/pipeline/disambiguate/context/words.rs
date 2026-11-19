@@ -300,6 +300,11 @@ impl Walk {
                 self.keyword(kw);
                 self.set_stmt_reg(StmtReg::DeclareModule);
             }
+            tk!(KwNamespace | KwModule) => {
+                // A namespace body is a scope of its own, never async.
+                self.push(FrameKind::FnHead);
+                self.value_done();
+            }
             _ => {
                 // A plain name, or any other keyword spelling used as one.
                 self.plain_word();
