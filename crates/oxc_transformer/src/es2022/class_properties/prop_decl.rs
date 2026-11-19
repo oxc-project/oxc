@@ -3,9 +3,11 @@
 
 use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
-use oxc_span::{SPAN, Span};
+use oxc_ast_visit::{VisitMut, walk_mut};
+use oxc_span::{GetSpan, SPAN, Span};
 use oxc_str::static_ident;
 use oxc_syntax::reference::ReferenceFlags;
+use oxc_syntax::scope::ScopeFlags;
 
 use crate::{
     common::helper_loader::{Helper, helper_call_expr},
@@ -26,7 +28,10 @@ impl<'a> ClassProperties<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         // Get value
-        let value = prop.value.take();
+        let mut value = prop.value.take();
+        if let Some(value) = &mut value {
+            replace_new_target_in_initializer(value, ctx);
+        }
 
         let span = prop.span;
         let init_expr = if let PropertyKey::PrivateIdentifier(ident) = &mut prop.key {
@@ -418,4 +423,51 @@ impl<'a> ClassProperties<'a> {
         );
         Expression::new_call_expression(span, callee, None, arguments, false, ctx)
     }
+}
+
+/// `new.target` is `undefined` in a field initializer. Replace it before the initializer moves
+/// into the constructor, where it would be the constructor instead.
+///
+/// Arrow functions inherit `new.target`; other functions and classes have their own.
+fn replace_new_target_in_initializer<'a>(value: &mut Expression<'a>, ctx: &TraverseCtx<'a>) {
+    struct Replacer<'c, 'a> {
+        ctx: &'c TraverseCtx<'a>,
+    }
+    impl<'a> VisitMut<'a> for Replacer<'_, 'a> {
+        fn visit_expression(&mut self, expr: &mut Expression<'a>) {
+            if let Expression::NewTarget(new_target) = expr {
+                *expr = Expression::new_void_0(new_target.span, self.ctx);
+            } else {
+                walk_mut::walk_expression(self, expr);
+            }
+        }
+        fn visit_function(&mut self, _function: &mut Function<'a>, _flags: ScopeFlags) {}
+        fn visit_class(&mut self, class: &mut Class<'a>) {
+            // Computed keys and the heritage are evaluated in the initializer's context.
+            if let Some(heritage) = &mut class.heritage {
+                self.visit_expression(&mut heritage.expression);
+            }
+            for element in &mut class.body.body {
+                let key = match element {
+                    ClassElement::MethodDefinition(method) if method.computed => &mut method.key,
+                    ClassElement::PropertyDefinition(prop) if prop.computed => &mut prop.key,
+                    ClassElement::AccessorProperty(prop) if prop.computed => &mut prop.key,
+                    _ => continue,
+                };
+                self.visit_property_key(key);
+            }
+        }
+    }
+    // `new.target` can't contain escapes, so an initializer without the text `target` has none.
+    // Check only the initializer's own source text: checking the whole file for each field made
+    // transforming large files with many fields quadratic. Generated initializers have an empty
+    // span, so walk them.
+    let span = value.span();
+    if let Some(text) = ctx.state.source_text.get(span.start as usize..span.end as usize)
+        && !text.is_empty()
+        && !text.contains("target")
+    {
+        return;
+    }
+    Replacer { ctx }.visit_expression(value);
 }
