@@ -3,7 +3,7 @@
 use std::{
     fmt,
     path::{Path, PathBuf},
-    sync::{Arc, OnceLock, RwLock, RwLockReadGuard, RwLockWriteGuard, Weak},
+    sync::{Arc, OnceLock, RwLock, RwLockReadGuard, RwLockWriteGuard, Weak, atomic::Ordering},
 };
 
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -13,7 +13,45 @@ use oxc_span::Span;
 use oxc_str::CompactStr;
 pub use oxc_syntax::module_record::RequestedModule;
 
+use crate::module_graph_scc::ImportGraphGroup;
+
 type SortedLoadedModules = Arc<[(CompactStr, Weak<ModuleRecord>)]>;
+
+/// A file's position in its linked group's component table.
+#[derive(Debug)]
+struct ImportGraphSlot {
+    group: Arc<ImportGraphGroup>,
+    index: usize,
+}
+
+/// A file's strongly connected component in the import graph.
+#[derive(Debug, Clone, Copy)]
+pub struct ImportGraphComponent<'a> {
+    group: &'a ImportGraphGroup,
+    id: usize,
+    cyclic: bool,
+}
+
+impl ImportGraphComponent<'_> {
+    /// Whether the file is in an import cycle: its component has several files, or it imports
+    /// itself.
+    pub fn is_cyclic(&self) -> bool {
+        self.cyclic
+    }
+
+    /// Whether `module` is known to be in another component, so no import path from it leads
+    /// back into this one.
+    pub fn excludes_module(&self, module: &ModuleRecord) -> bool {
+        module.import_graph_component().is_some_and(|other| {
+            if std::ptr::eq(self.group, other.group) {
+                self.id != other.id
+            } else {
+                // A different completed group in this run cannot lead back to this one.
+                Arc::ptr_eq(&self.group.run, &other.group.run)
+            }
+        })
+    }
+}
 
 /// ESM Module Record
 ///
@@ -54,6 +92,9 @@ pub struct ModuleRecord {
     loaded_modules: RwLock<FxHashMap<CompactStr, Weak<ModuleRecord>>>,
 
     sorted_loaded_modules: RwLock<Option<SortedLoadedModules>>,
+
+    // Published after linking; all lint workers read the same labels.
+    import_graph_component: OnceLock<ImportGraphSlot>,
 
     /// `[[ImportEntries]]`
     ///
@@ -110,6 +151,10 @@ impl fmt::Debug for ModuleRecord {
             .field("requested_modules", &self.requested_modules)
             .field("loaded_modules", &loaded_modules)
             .field("sorted_loaded_modules", &self.sorted_loaded_modules)
+            .field(
+                "import_graph_component",
+                &self.import_graph_component.get().map(|slot| slot.index),
+            )
             .field("import_entries", &self.import_entries)
             .field("local_export_entries", &self.local_export_entries)
             .field("indirect_export_entries", &self.indirect_export_entries)
@@ -549,7 +594,7 @@ impl ModuleRecord {
         }))
     }
 
-    /// Invalidates the sorted snapshot before granting write access.
+    /// Invalidates sorted snapshots and import-graph components before granting write access.
     ///
     /// # Panics
     ///
@@ -558,8 +603,31 @@ impl ModuleRecord {
         &self,
     ) -> RwLockWriteGuard<'_, FxHashMap<CompactStr, Weak<ModuleRecord>>> {
         let loaded_modules = self.loaded_modules.write().unwrap();
+        if let Some(slot) = self.import_graph_component.get() {
+            slot.group.run.valid.store(false, Ordering::Release);
+        }
         *self.sorted_loaded_modules.write().unwrap() = None;
         loaded_modules
+    }
+
+    /// This file's strongly connected component in the import graph, once its group is linked.
+    pub fn import_graph_component(&self) -> Option<ImportGraphComponent<'_>> {
+        let slot = self.import_graph_component.get()?;
+        let group = &slot.group;
+        if !group.run.valid.load(Ordering::Acquire) {
+            return None;
+        }
+        let (id, cyclic) = group.components[slot.index];
+        Some(ImportGraphComponent { group, id, cyclic })
+    }
+
+    pub(crate) fn set_import_graph_component(&self, group: Arc<ImportGraphGroup>, index: usize) {
+        if let Err(slot) = self.import_graph_component.set(ImportGraphSlot { group, index }) {
+            // Reused records cannot retain either run's labels.
+            slot.group.run.valid.store(false, Ordering::Release);
+            let existing = self.import_graph_component.get().unwrap();
+            existing.group.run.valid.store(false, Ordering::Release);
+        }
     }
 
     /// Get a loaded module by upgrading the weak reference to an Arc.
