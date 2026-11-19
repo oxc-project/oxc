@@ -18,6 +18,9 @@ use crate::{TraverseCtx, generated::ancestor::Ancestor};
 
 use super::PeepholeOptimizations;
 
+/// `Number.MAX_SAFE_INTEGER`
+const MAX_SAFE_INTEGER: f64 = 9_007_199_254_740_991.0;
+
 /// Constant Folding
 ///
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
@@ -360,6 +363,7 @@ impl<'a> PeepholeOptimizations {
                     })
                     .and_then(|_| ctx.eval_binary(e))
                     .or_else(|| Self::try_fold_int32_add_sub(e, ctx))
+                    .or_else(|| Self::try_fold_numeric_identity(e, ctx))
             }
             BinaryOperator::Multiplication
             | BinaryOperator::Exponential
@@ -378,7 +382,7 @@ impl<'a> PeepholeOptimizations {
                     }
                     _ => None,
                 };
-                shorter_numeric_expression.or_else(|| {
+                let folded = shorter_numeric_expression.or_else(|| {
                     Self::extract_numeric_values(e, ctx)
                         .filter(|(left, right)| {
                             *left == 0.0
@@ -395,7 +399,8 @@ impl<'a> PeepholeOptimizations {
                                     && right.fract() == 0.0)
                         })
                         .and_then(|_| ctx.eval_binary(e))
-                })
+                });
+                folded.or_else(|| Self::try_fold_numeric_identity(e, ctx))
             }
             BinaryOperator::Division => Self::try_fold_safe_integer_numeric_expression(e, ctx)
                 .or_else(|| {
@@ -409,7 +414,8 @@ impl<'a> PeepholeOptimizations {
                                 || right.is_infinite()
                         })
                         .and_then(|_| ctx.eval_binary(e))
-                }),
+                })
+                .or_else(|| Self::try_fold_numeric_identity(e, ctx)),
             BinaryOperator::ShiftLeft => {
                 Self::extract_numeric_values(e, ctx).and_then(|(left, right)| {
                     let result = e.evaluate_value(ctx)?.into_number()?;
@@ -514,7 +520,7 @@ impl<'a> PeepholeOptimizations {
     ) -> Option<Expression<'a>> {
         Self::extract_numeric_values(e, ctx)?;
         let result = e.evaluate_value(ctx)?.into_number()?;
-        let is_safe_integer = result.fract() == 0.0 && result.abs() <= 9_007_199_254_740_991.0;
+        let is_safe_integer = result.fract() == 0.0 && result.abs() <= MAX_SAFE_INTEGER;
         (is_safe_integer && Self::folded_numeric_expression_is_shorter(e, result) == Some(true))
             .then(|| ctx.value_to_expr(e.span, ConstantValue::Number(result)))
     }
@@ -625,19 +631,26 @@ impl<'a> PeepholeOptimizations {
         Self::try_fold_int32_add_sub(e, ctx)
     }
 
-    #[expect(clippy::cast_possible_truncation)]
-    fn safe_int_literal(expr: &Expression<'a>) -> Option<i64> {
+    /// The value of a numeric literal that is a safe integer.
+    fn safe_int_literal(expr: &Expression<'a>) -> Option<f64> {
         let Expression::NumericLiteral(lit) = expr else { return None };
-        (lit.value.fract() == 0.0 && lit.value.abs() <= 9_007_199_254_740_991.0)
-            .then(|| lit.value as i64)
+        (lit.value.fract() == 0.0 && lit.value.abs() <= MAX_SAFE_INTEGER).then_some(lit.value)
     }
 
-    #[expect(clippy::cast_precision_loss)]
+    /// Folds additive identities and constant offsets around an expression `A` known to be an
+    /// int32 or uint32, such as the result of a bitwise operator:
+    ///
+    /// * `A + 0`, `0 + A`, `A - 0` -> `A`
+    /// * `(A ± c1) ± c2` -> `A ± c`, or `A` when the offsets cancel out
     fn try_fold_int32_add_sub(
         e: &mut BinaryExpression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        const MAX_SAFE_OFFSET: i64 = ((1_i64 << 53) - 1) - (u32::MAX as i64);
+        // `A` is within `[-2^31, 2^32 - 1]`, so `A + k` for an integer `k` up to this bound is an
+        // integer within `[-MAX_SAFE_INTEGER, MAX_SAFE_INTEGER]`, which IEEE-754 computes exactly.
+        // `c1 ± c2` below is exact while it is at most `2^53`, and rounds to at least `2^53`
+        // otherwise, so either way the bound check is exact.
+        const MAX_SAFE_OFFSET: f64 = MAX_SAFE_INTEGER - 4_294_967_295.0;
 
         if e.right.is_number_0() && e.left.is_int32_or_uint32(ctx) {
             return Some(e.left.take_in(ctx));
@@ -662,20 +675,18 @@ impl<'a> PeepholeOptimizations {
         let s1 = if left_bin.operator == BinaryOperator::Addition { c1 } else { -c1 };
         let s2 = if e.operator == BinaryOperator::Addition { c2 } else { -c2 };
         let combined = s1 + s2;
-        // ECMA-262 IEEE-754 exactness requires `A + s1` and `A + (s1 + s2)` within `[-MAX_SAFE_INTEGER, MAX_SAFE_INTEGER]` for all `i32`/`u32` `A`.
         if s1.abs() > MAX_SAFE_OFFSET || combined.abs() > MAX_SAFE_OFFSET {
             return None;
         }
-        if combined == 0 {
+        if combined == 0.0 {
             return Some(left_bin.left.take_in(ctx));
         }
 
         let new_op =
-            if combined > 0 { BinaryOperator::Addition } else { BinaryOperator::Subtraction };
-        let new_abs = combined.unsigned_abs() as f64;
-        let original_len = 2
-            + Self::number_literal_source_len(c1 as f64)?
-            + Self::number_literal_source_len(c2 as f64)?;
+            if combined > 0.0 { BinaryOperator::Addition } else { BinaryOperator::Subtraction };
+        let new_abs = combined.abs();
+        let original_len =
+            2 + Self::number_literal_source_len(c1)? + Self::number_literal_source_len(c2)?;
         if 1 + Self::number_literal_source_len(new_abs)? > original_len {
             return None;
         }
@@ -689,6 +700,58 @@ impl<'a> PeepholeOptimizations {
             right,
             ctx,
         ))
+    }
+
+    /// Folds `A - 0`, `A * 1`, `1 * A` and `A / 1`.
+    ///
+    /// For every number `n`, `n - 0`, `n * 1` and `n / 1` are `n` (including `-0`, `NaN` and the
+    /// infinities), so when `A` is a number the operation is dropped. Otherwise each of them is
+    /// `ToNumber(A)` (and throws a `TypeError` for a `BigInt`, just like `+A`), so `A` is
+    /// converted with the shorter unary `+` instead.
+    fn try_fold_numeric_identity(
+        e: &mut BinaryExpression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        let is_literal = |expr: &Expression<'a>, value: f64| {
+            matches!(expr, Expression::NumericLiteral(lit)
+                if lit.value.to_bits() == value.to_bits())
+        };
+        let operand = match e.operator {
+            BinaryOperator::Subtraction if is_literal(&e.right, 0.0) => &mut e.left,
+            BinaryOperator::Division | BinaryOperator::Multiplication
+                if is_literal(&e.right, 1.0) =>
+            {
+                &mut e.left
+            }
+            BinaryOperator::Multiplication if is_literal(&e.left, 1.0) => &mut e.right,
+            _ => return None,
+        };
+        match operand.value_type(ctx) {
+            ValueType::Number => Some(operand.take_in(ctx)),
+            ValueType::BigInt => None,
+            _ => {
+                // Only when `+A` needs no parentheses, so the result is always shorter.
+                let needs_no_parens = match operand {
+                    Expression::Identifier(_)
+                    | Expression::ThisExpression(_)
+                    | Expression::CallExpression(_)
+                    | Expression::AwaitExpression(_)
+                    | Expression::UnaryExpression(_)
+                    | Expression::ArrayExpression(_)
+                    | Expression::ObjectExpression(_)
+                    | Expression::TemplateLiteral(_) => true,
+                    _ => operand.is_member_expression(),
+                };
+                needs_no_parens.then(|| {
+                    Expression::new_unary_expression(
+                        e.span,
+                        UnaryOperator::UnaryPlus,
+                        operand.take_in(ctx),
+                        ctx,
+                    )
+                })
+            }
+        }
     }
 
     fn try_fold_add_op(

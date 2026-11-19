@@ -1122,7 +1122,7 @@ fn test_fold_division() {
     fold_same("x = 1 / 1e-15");
     fold_same("x = 9007199254740991 / 0.5");
     fold_same("x = f() / 2");
-    fold_same("x = (void f()) / 1");
+    fold("x = (void f()) / 1", "x = +void f()");
     fold_same("x = ({ valueOf: f }) / 2");
     fold_same("x = 4n / 2n");
     fold_same("x = 4n / 2");
@@ -1355,8 +1355,8 @@ fn test_fold_left_child_op() {
     fold_same("1 + x - 2 + 1");
     fold_same("1 + x - 2 + 3");
     fold_same("1 + x - 2 + 3 - 1");
-    fold_same("f(x)-0");
-    fold_same("x-0-0"); // FIXME: want x - 0
+    fold("f(x)-0", "+f(x)");
+    fold("x-0-0", "+x");
     fold_same("x+2-2+2");
     fold_same("x+2-2+2-2");
     fold_same("x-2+2");
@@ -1933,7 +1933,7 @@ fn test_fold_int32_add_sub() {
     fold_same("(a << b) - 4 + 1");
     fold_same("~a + 0");
     fold_same("a + 0");
-    fold_same("(a * 1 - 5) + 1");
+    fold("(a * 1 - 5) + 1", "a - 5 + 1");
     fold_same("(a << 2) - 4.5 + 1");
     fold_same("(a ? -0 : b << 2) + 0");
     fold_same("(a << 2) + 9007194959773697 - 1");
@@ -1941,4 +1941,44 @@ fn test_fold_int32_add_sub() {
     fold_same("(a << 2) - 1e9 - 1");
     fold_same("(a << 2) + 0n");
     fold_same("(a << 2) + NaN - NaN");
+}
+
+#[test]
+fn test_fold_numeric_identity() {
+    // `n - 0`, `n * 1` and `n / 1` are `n` for every number, including `-0` and `NaN`.
+    fold("(a << 2) * 1", "a << 2");
+    fold("1 * (a << 2)", "a << 2");
+    fold("(a << 2) / 1", "a << 2");
+    fold("(a * 2) - 0", "a * 2");
+    fold("(a * 2) * 1", "a * 2");
+    fold("(+a) - 0", "+a");
+    fold("2 ** a - 0", "2 ** a");
+    // Otherwise they are all `ToNumber(A)`, which `+A` does in fewer bytes.
+    fold("a - 0", "+a");
+    fold("a * 1", "+a");
+    fold("1 * a", "+a");
+    fold("a / 1", "+a");
+    fold("a.b - 0", "+a.b");
+    fold("f() * 1", "+f()");
+    fold("-a - 0", "+-a");
+    fold("typeof a - 0", "+typeof a");
+    fold("[a] - 0", "+[a]");
+    fold("`${a}` - 0", "+`${a}`");
+    fold("'a' + (a - 0)", "'a' + +a");
+    // `+A` would need parentheses.
+    fold_same("a * b - 0");
+    fold_same("(a ? 1 : b) - 0");
+    fold_same("a++ - 0");
+    // `n - -0` is `+0` for `n === -0`, and `+` may concatenate.
+    fold_same("a - -0");
+    fold_same("(a * 2) - -0");
+    fold_same("a + 0");
+    fold_same("(a * 2) + 0");
+    // Not the identity element.
+    fold_same("a * -1");
+    fold_same("1 / a");
+    fold_same("0 - a");
+    // `BigInt` operands throw; leave them alone.
+    fold_same("1n - 0");
+    fold_same("a.b * 1n");
 }
