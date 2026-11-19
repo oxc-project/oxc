@@ -300,9 +300,12 @@ The second line of each item is the drift symptom.
 - `Comments::is_quiet` (the generated `fmt` fast path) ⇄ the bound of `get_trailing_comments` (the parent's end), `is_span_suppressed`, `classify_type_cast`
   - a comment near no other one is dropped or misplaced
 
-### Open debts
+## Open debts
 
-Behavior our own rules want otherwise, mostly where it follows Prettier. Not accepted, only not fixed yet; each fix is a DIVERGENCES entry plus a fixture pin.
+Behavior our own rules want otherwise, mostly where it follows Prettier.
+Not accepted, only not fixed yet (for compatibility).
+
+### Comments
 
 - TS-only statements (`import A = B;` / `export = x;` / `export as namespace X;` / `declare function f(): void;` / `declare module "m";`)
   and class index signatures keep a same-line comment before their `;` (`import A = B /* c */;`), instead of the glued `;` above.
@@ -323,10 +326,22 @@ Behavior our own rules want otherwise, mostly where it follows Prettier. Not acc
 - An own-line comment right after a kept union's `(` prints outside it (`keyof (` + break + `/* c */ X | null)` -> `keyof /* c */ (X | null)`),
   crossing the `(` onto the previous line (`outer_leading_comments_len`); Prettier keeps it inside, behind the first `|`.
   The hug decision follows that placement (`first_member_comment`), so a fix changes both
-- A type predicate's object type is not a fixpoint: `function f(x: unknown): x is { ... } {}` breaks the parameters on the first pass
-  and rejoins them on the second (Prettier too); a plain return type (`): { ... } {}`) is stable
+- An own-line comment right after a heritage keyword (`extends` / `implements`, a class's or an interface's) crosses it:
+  `class A extends` + break + `// c` + break + `B {}` prints `class A` + break + `// c` + break + `extends B {}` (Prettier too),
+  and in a class without a name the comment is flushed past the whole statement, not a fixpoint (`should_group` sees no span before the superclass).
+  The class head claims every comment before the superclass as the name's trailing ones; the fix bounds that at the keyword
+  and breaks + indents after it, as after `=` (Prettier prints that for an `implements` after an `extends`)
 
 The flat JSX arrow body is a limitation, not a debt: the paren decision is a group fit, unknowable at comment time (DIVERGENCES.md#paren-comment-fixpoint).
+
+### Layout
+
+- A type predicate's object type is not a fixpoint: `function f(x: unknown): x is { ... } {}` breaks the parameters on the first pass
+  and rejoins them on the second (Prettier too); a plain return type (`): { ... } {}`) is stable
+- Only a member expression superclass without type arguments moves `extends` to the next line (`should_group`, prettier#18325);
+  any other breaks inside itself, so `class X extends a.B<T> {}` overflows when neither `a.B` nor `<T>` can break (Prettier too).
+  Moving it always is worse: a superclass breaking inside anyway only gets indented deeper (`extends Modal<` + break + ... + `>` + break + `{`).
+  The fix moves it only when it then fits, a fits check in the class head
 
 ## Verification
 
