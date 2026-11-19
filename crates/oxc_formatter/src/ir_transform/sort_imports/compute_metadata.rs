@@ -5,19 +5,19 @@ use phf::phf_set;
 
 use crate::ir_transform::sort_imports::{
     group_config::{ImportModifier, ImportSelector},
-    group_matcher::{GroupMatcher, ImportMetadata},
+    group_matcher::{GroupIndex, GroupMatcher, ImportMetadata},
     options::SortImportsOptions,
     source_line::ImportLineMetadata,
 };
 
 /// Compute all metadata derived from import line metadata.
 ///
-/// Returns `(group_idx, normalized_source, is_ignored)`.
+/// Returns `((group_idx, subgroup_idx), normalized_source, is_ignored)`.
 pub fn compute_import_metadata<'a>(
     metadata: &ImportLineMetadata<'a>,
     group_matcher: &GroupMatcher,
     options: &SortImportsOptions,
-) -> (usize, Cow<'a, str>, bool) {
+) -> (GroupIndex, Cow<'a, str>, bool) {
     let source = extract_source_path(metadata.source);
     let is_style_import = is_style(source);
     let path_kind = to_path_kind(source, options);
