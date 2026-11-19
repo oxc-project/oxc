@@ -10,6 +10,27 @@ source: crates/oxc_linter/src/tester.rs
   help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
 
   ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:24]
+ 1 │ <a href="http://x.y.z" role="separator" />
+   ·                        ────────────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:9]
+ 1 │ <button role="separator" />
+   ·         ────────────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:8]
+ 1 │ <input role="separator" />
+   ·        ────────────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
    ╭─[no_interactive_element_to_noninteractive_role.tsx:1:37]
  1 │ <a href="http://x.y.z" tabIndex="0" role="img" />
    ·                                     ──────────

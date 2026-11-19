@@ -571,6 +571,15 @@ fn test_recommended() {
             ),
             None,
         ),
+        // `separator` is a non-interactive role, so no label is required,
+        // matching eslint-plugin-jsx-a11y.
+        (
+            r#"<div role="separator" />"#,
+            Some(
+                serde_json::json!([{"ignoreElements":["audio","canvas","embed","input","textarea","tr","video"],"ignoreRoles":["grid","listbox","menu","menubar","radiogroup","row","tablist","toolbar","tree","treegrid"]}]),
+            ),
+            None,
+        ),
         (
             r#"<div role="button" aria-label="Save" />"#,
             Some(
@@ -1950,13 +1959,6 @@ fn test_recommended() {
         ),
         (
             r#"<div role="searchbox" />"#,
-            Some(
-                serde_json::json!([{"ignoreElements":["audio","canvas","embed","input","textarea","tr","video"],"ignoreRoles":["grid","listbox","menu","menubar","radiogroup","row","tablist","toolbar","tree","treegrid"]}]),
-            ),
-            None,
-        ),
-        (
-            r#"<div role="separator" />"#,
             Some(
                 serde_json::json!([{"ignoreElements":["audio","canvas","embed","input","textarea","tr","video"],"ignoreRoles":["grid","listbox","menu","menubar","radiogroup","row","tablist","toolbar","tree","treegrid"]}]),
             ),
@@ -2292,6 +2294,15 @@ fn test_strict() {
             ),
             None,
         ),
+        // `separator` is a non-interactive role, so no label is required,
+        // matching eslint-plugin-jsx-a11y.
+        (
+            r#"<div role="separator" />"#,
+            Some(
+                serde_json::json!([{"ignoreElements":["audio","canvas","embed","input","textarea","tr","video"],"ignoreRoles":["grid","listbox","menu","menubar","radiogroup","row","tablist","toolbar","tree","treegrid"]}]),
+            ),
+            None,
+        ),
         (
             r#"<div role="button" aria-label="Save" />"#,
             Some(
@@ -3671,13 +3682,6 @@ fn test_strict() {
         ),
         (
             r#"<div role="searchbox" />"#,
-            Some(
-                serde_json::json!([{"ignoreElements":["audio","canvas","embed","input","textarea","tr","video"],"ignoreRoles":["grid","listbox","menu","menubar","radiogroup","row","tablist","toolbar","tree","treegrid"]}]),
-            ),
-            None,
-        ),
-        (
-            r#"<div role="separator" />"#,
             Some(
                 serde_json::json!([{"ignoreElements":["audio","canvas","embed","input","textarea","tr","video"],"ignoreRoles":["grid","listbox","menu","menubar","radiogroup","row","tablist","toolbar","tree","treegrid"]}]),
             ),

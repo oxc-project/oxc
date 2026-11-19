@@ -292,6 +292,10 @@ fn test() {
         (r#"<img role="listitem" />"#, None, None),
         (r#"<li role="listitem" />"#, None, None),
         (r#"<li role="presentation" />"#, None, None),
+        // `separator` is a non-interactive (structure) role, so it is not
+        // flagged. https://github.com/oxc-project/oxc/issues/29773
+        (r#"<li role="separator" />"#, None, None),
+        (r#"<div role="separator" />"#, None, None),
         (r#"<main role="listitem" />"#, None, None),
         (r#"<nav role="listitem" />"#, None, None),
         (r#"<ol role="listitem" />"#, None, None),
