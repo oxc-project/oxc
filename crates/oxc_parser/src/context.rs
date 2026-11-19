@@ -169,6 +169,11 @@ impl Context {
     }
 
     #[inline]
+    pub(crate) fn and_top_level(self, include: bool) -> Self {
+        self.and(Self::TopLevel, include)
+    }
+
+    #[inline]
     fn and(self, flag: Self, set: bool) -> Self {
         if set { self | flag } else { self - flag }
     }

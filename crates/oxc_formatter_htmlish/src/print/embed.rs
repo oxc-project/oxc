@@ -339,11 +339,8 @@ pub fn write_interpolation<'a>(
     };
     let content = expression[..lf].trim_end_matches('\n');
     write!(f, text(content));
-    // Its own line break before a borrowed `}}` is the one between the siblings
-    let breaks = lf - content.len() + usize::from(!borrowed);
-    if breaks > 0 {
-        write!(f, exact_line_breaks(breaks));
-    }
+    // A borrowed `}}`'s line break, the one between the siblings, prints nothing after these
+    write!(f, exact_line_breaks(lf - content.len() + 1));
     if borrowed {
         write!(f, expand_parent());
     }

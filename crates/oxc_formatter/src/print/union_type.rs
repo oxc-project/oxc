@@ -294,7 +294,7 @@ impl LeadingCommentsInfo {
             info.has_own_line_comment |= comment.preceded_by_newline();
             info.has_end_of_line_comment |= comment.followed_by_newline();
             info.has_line_ending_trailing_non_jsdoc_block_comment |= comment.is_block()
-                && comment.is_trailing()
+                && !comment.preceded_by_newline()
                 && comment.followed_by_newline()
                 && !is_jsdoc_comment(comment);
             info.has_line_ending_trailing_jsdoc_comment |=
@@ -307,7 +307,7 @@ impl LeadingCommentsInfo {
 /// A trailing (same-line start) jsdoc comment that ends its source line;
 /// NOT own-line (that vocabulary means preceded by a newline, see `formatter/trivia.rs`)
 pub fn is_line_ending_trailing_jsdoc_comment(comment: &Comment) -> bool {
-    is_jsdoc_comment(comment) && comment.is_trailing() && comment.followed_by_newline()
+    is_jsdoc_comment(comment) && !comment.preceded_by_newline() && comment.followed_by_newline()
 }
 
 pub fn should_hug_type(node: &AstNode<'_, '_, TSUnionType<'_>>, f: &JsFormatter<'_, '_>) -> bool {

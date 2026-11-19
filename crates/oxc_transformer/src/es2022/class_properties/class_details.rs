@@ -14,11 +14,8 @@ pub(super) struct ClassDetails<'a> {
     pub private_method_helpers_in_class_sequence: bool,
     /// `true` if class requires no transformation
     pub is_transform_required: bool,
-    /// Private properties.
-    /// Mapping private prop name to binding for temp var.
-    /// This is then used as lookup when transforming e.g. `this.#x`.
-    /// `None` if class has no private properties.
-    pub private_props: Option<IdentIndexMap<'a, PrivateProp<'a>>>,
+    /// Native private names or bindings used to lower this class's private properties.
+    pub private_props: PrivateProps<'a>,
     /// Bindings for class name and temp var for class
     pub bindings: ClassBindings<'a>,
 }
@@ -26,16 +23,41 @@ pub(super) struct ClassDetails<'a> {
 impl ClassDetails<'_> {
     /// Create dummy `ClassDetails`.
     ///
-    /// Used for dummy entry at top of `ClassesStack`.
-    pub fn dummy(is_declaration: bool) -> Self {
+    /// Used for the first entry in `ClassesStack`.
+    fn dummy() -> Self {
         Self {
-            is_declaration,
+            is_declaration: false,
             private_method_helpers_in_class_sequence: false,
             is_transform_required: false,
-            private_props: None,
+            private_props: PrivateProps::Lowered(IdentIndexMap::default()),
             bindings: ClassBindings::dummy(),
         }
     }
+}
+
+/// Private names belonging to one class. Native names only participate in lexical resolution.
+pub(super) enum PrivateProps<'a> {
+    Native(IdentIndexMap<'a, ()>),
+    Lowered(IdentIndexMap<'a, PrivateProp<'a>>),
+}
+
+impl<'a> PrivateProps<'a> {
+    pub fn lowered(&self) -> Option<&IdentIndexMap<'a, PrivateProp<'a>>> {
+        match self {
+            Self::Native(_) => None,
+            Self::Lowered(props) => Some(props),
+        }
+    }
+}
+
+/// A private name resolved to its owning class, including that class's effective storage mode.
+pub(super) enum ResolvedPrivateName<'a, 'b> {
+    Native,
+    Lowered {
+        prop: &'b PrivateProp<'a>,
+        class_bindings: &'b mut ClassBindings<'a>,
+        is_declaration: bool,
+    },
 }
 
 /// Details of a private property.
@@ -91,7 +113,7 @@ impl<'a> ClassesStack<'a> {
     /// Create new `ClassesStack`.
     pub fn new() -> Self {
         // Default stack capacity is 4. That's is probably good. More than 4 nested classes is rare.
-        Self { stack: NonEmptyStack::new(ClassDetails::dummy(false)) }
+        Self { stack: NonEmptyStack::new(ClassDetails::dummy()) }
     }
 
     /// Push an entry to stack.
@@ -118,6 +140,34 @@ impl<'a> ClassesStack<'a> {
         self.stack.last_mut()
     }
 
+    /// Resolve the nearest private name without inventing bindings for untouched classes.
+    pub fn resolve_private_name<'b>(
+        &'b mut self,
+        ident: &PrivateIdentifier<'a>,
+    ) -> ResolvedPrivateName<'a, 'b> {
+        // Skip the dummy entry and search the closest class first.
+        for class in self.stack[1..].iter_mut().rev() {
+            match &class.private_props {
+                PrivateProps::Native(names) => {
+                    if names.contains_key(&ident.name) {
+                        return ResolvedPrivateName::Native;
+                    }
+                }
+                PrivateProps::Lowered(props) => {
+                    if let Some(prop) = props.get(&ident.name) {
+                        return ResolvedPrivateName::Lowered {
+                            prop,
+                            class_bindings: &mut class.bindings,
+                            is_declaration: class.is_declaration,
+                        };
+                    }
+                }
+            }
+        }
+        // Native names need not be registered when there is no enclosing lowered name to shadow.
+        ResolvedPrivateName::Native
+    }
+
     fn lookup_private_prop<
         'b,
         Ret,
@@ -127,17 +177,12 @@ impl<'a> ClassesStack<'a> {
         ident: &PrivateIdentifier<'a>,
         ret_fn: RetFn,
     ) -> Ret {
-        // Check for binding in closest class first, then enclosing classes.
-        // We skip the first, because this is a `NonEmptyStack` with dummy first entry.
-        // TODO: Check there are tests for bindings in enclosing classes.
-        for class in self.stack[1..].iter_mut().rev() {
-            if let Some(private_props) = &mut class.private_props
-                && let Some(prop) = private_props.get(&ident.name)
-            {
-                return ret_fn(prop, &mut class.bindings, class.is_declaration);
-            }
-        }
-        unreachable!();
+        let ResolvedPrivateName::Lowered { prop, class_bindings, is_declaration } =
+            self.resolve_private_name(ident)
+        else {
+            unreachable!("native private names do not have lowered bindings");
+        };
+        ret_fn(prop, class_bindings, is_declaration)
     }
 
     /// Lookup details of private property referred to by `ident`.

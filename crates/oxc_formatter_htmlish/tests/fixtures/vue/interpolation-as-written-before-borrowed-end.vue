@@ -6,4 +6,7 @@
     aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ({{ a
     }})
   </div>
+  <div>({{ a
+
+  }})</div>
 </template>

@@ -5392,7 +5392,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                       ───
    ╰────
 
-  × Cannot use import statement outside a module
+  × 'import statement' declaration can only be used at the top level of a module
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/291/input.js:1:8]
  1 │ if (1) import "acorn";
    ·        ──────

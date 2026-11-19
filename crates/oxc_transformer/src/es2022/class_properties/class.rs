@@ -12,13 +12,16 @@ use oxc_syntax::{
 use oxc_traverse::{Ancestor, BoundIdentifier};
 
 use crate::{
-    common::helper_loader::{Helper, helper_call_expr},
+    common::{
+        class_lowering::ClassLoweringMode,
+        helper_loader::{Helper, helper_call_expr},
+    },
     context::TraverseCtx,
     utils::ast_builder::{create_assignment, create_new_weakset, create_variable_declaration},
 };
 
 use super::{
-    ClassBindings, ClassDetails, ClassProperties, IdentIndexMap, PrivateProp,
+    ClassBindings, ClassDetails, ClassProperties, IdentIndexMap, PrivateProp, PrivateProps,
     utils::exprs_into_stmts,
 };
 
@@ -73,6 +76,33 @@ impl<'a> ClassProperties<'a> {
         let private_method_helpers_in_class_sequence =
             !is_declaration && Self::should_emit_private_method_helpers_in_class_sequence(ctx);
 
+        let lowering = ctx.state.class_lowering_of(class_scope_id);
+        if matches!(lowering.mode(), ClassLoweringMode::Native | ClassLoweringMode::Preserve) {
+            // Register private names only when they can shadow a lowered name in an enclosing
+            // class. Other unresolved names belong to untouched classes and are left as-is.
+            let mut private_names = IdentIndexMap::default();
+            if self.private_field_count != 0 {
+                for element in &body.body {
+                    let key = match element {
+                        ClassElement::PropertyDefinition(prop) => &prop.key,
+                        ClassElement::MethodDefinition(method) => &method.key,
+                        ClassElement::AccessorProperty(prop) => &prop.key,
+                        _ => continue,
+                    };
+                    if let PropertyKey::PrivateIdentifier(ident) = key {
+                        private_names.insert(ident.name, ());
+                    }
+                }
+            }
+            self.classes_stack.push(ClassDetails {
+                is_declaration,
+                private_method_helpers_in_class_sequence: false,
+                is_transform_required: false,
+                private_props: PrivateProps::Native(private_names),
+                bindings: ClassBindings::dummy(),
+            });
+            return;
+        }
         // Check if class has any properties, private methods, or static blocks
         let mut instance_prop_count = 0;
         let mut has_static_prop = false;
@@ -178,7 +208,7 @@ impl<'a> ClassProperties<'a> {
                 is_declaration,
                 private_method_helpers_in_class_sequence,
                 is_transform_required: false,
-                private_props: if private_props.is_empty() { None } else { Some(private_props) },
+                private_props: PrivateProps::Lowered(private_props),
                 bindings: ClassBindings::dummy(),
             });
             return;
@@ -234,7 +264,7 @@ impl<'a> ClassProperties<'a> {
             is_declaration,
             private_method_helpers_in_class_sequence,
             is_transform_required: true,
-            private_props: if private_props.is_empty() { None } else { Some(private_props) },
+            private_props: PrivateProps::Lowered(private_props),
             bindings: class_bindings,
         });
 
@@ -341,7 +371,7 @@ impl<'a> ClassProperties<'a> {
         }
         // Pop off stack. We're done!
         let class_details = self.classes_stack.pop();
-        if let Some(private_props) = &class_details.private_props {
+        if let Some(private_props) = class_details.private_props.lowered() {
             // Note: `private_props` can be non-empty even if `is_transform_required == false`,
             // if class contains private accessors, which we don't transform yet
             self.private_field_count -= private_props.len();
@@ -464,7 +494,7 @@ impl<'a> ClassProperties<'a> {
             );
         }
 
-        if let Some(private_props) = &class_details.private_props {
+        if let Some(private_props) = class_details.private_props.lowered() {
             if self.private_fields_as_properties {
                 let props_to_init: Vec<_> = private_props
                     .iter()
@@ -566,7 +596,7 @@ impl<'a> ClassProperties<'a> {
 
         // Pop off stack. We're done!
         let class_details = self.classes_stack.pop();
-        if let Some(private_props) = &class_details.private_props {
+        if let Some(private_props) = class_details.private_props.lowered() {
             // Note: `private_props` can be non-empty even if `is_transform_required == false`,
             // if class contains private accessors, which we don't transform yet
             self.private_field_count -= private_props.len();
@@ -608,7 +638,7 @@ impl<'a> ClassProperties<'a> {
             // Private method helpers are emitted into the class-expression sequence (see below).
             expr_count += self.insert_after_stmts.len();
         }
-        if let Some(private_props) = &class_details.private_props {
+        if let Some(private_props) = class_details.private_props.lowered() {
             expr_count += private_props.len();
         }
 
@@ -625,7 +655,7 @@ impl<'a> ClassProperties<'a> {
         // (or `_prop = _classPrivateFieldLooseKey("prop")` if loose mode).
         // Babel has these always go first, regardless of order of class elements.
         // Also insert `var _prop;` temp var declarations for private static props.
-        if let Some(private_props) = &class_details.private_props {
+        if let Some(private_props) = class_details.private_props.lowered() {
             // Insert `var _prop;` declarations here rather than when binding was created to maintain
             // same order of `var` declarations as Babel.
             // `c = class C { #x = 1; static y = 2; }` -> `var _C, _x;`
@@ -775,7 +805,11 @@ impl<'a> ClassProperties<'a> {
     /// * Transform private methods and insert after class.
     /// * Extract computed key assignments and insert them before class.
     /// * Remove all properties, private methods and static blocks from class body.
-    fn transform_class_elements(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+    pub(super) fn transform_class_elements(
+        &mut self,
+        class: &mut Class<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         let mut class_methods = vec![];
         class.body.body.retain_mut(|element| {
             match element {

@@ -29,8 +29,17 @@ AssertionError: expected '_Class' to be 'Foo' // Object.is equality
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-assumption-setPublicClassFields-static-infer-name-exec.test.js:8:19
 
 ./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-nested-class-super-call-in-decorator-exec.test.js
-AssertionError: expected undefined to be 'hello' // Object.is equality
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-nested-class-super-call-in-decorator-exec.test.js:21:28
+./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-nested-class-super-call-in-decorator-exec.test.js:14
+	      @(super()) hello;
+	      ^
+
+SyntaxError: Invalid or unexpected token
+    at new Script (node:vm:118:7)
+    at createScript (node:vm:270:10)
+    at Object.runInThisContext (node:vm:318:10)
+    at VitestModuleRunner.directRequest (./node_modules/vite/dist/node/module-runner.js:1288:80)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async VitestModuleRunner.cachedRequest (./node_modules/vite/dist/node/module-runner.js:1195:73)
 
 ./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-nested-class-super-property-in-accessor-key-exec.test.js
 ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-nested-class-super-property-in-accessor-key-exec.test.js:15
@@ -46,8 +55,17 @@ SyntaxError: Unexpected token '['
     at async VitestModuleRunner.cachedRequest (./node_modules/vite/dist/node/module-runner.js:1195:73)
 
 ./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-nested-class-super-property-in-decorator-exec.test.js
-AssertionError: expected undefined to be 'hello' // Object.is equality
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-nested-class-super-property-in-decorator-exec.test.js:22:28
+./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-nested-class-super-property-in-decorator-exec.test.js:15
+	      @(super.dec) hello;
+	      ^
+
+SyntaxError: Invalid or unexpected token
+    at new Script (node:vm:118:7)
+    at createScript (node:vm:270:10)
+    at Object.runInThisContext (node:vm:318:10)
+    at VitestModuleRunner.directRequest (./node_modules/vite/dist/node/module-runner.js:1288:80)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async VitestModuleRunner.cachedRequest (./node_modules/vite/dist/node/module-runner.js:1195:73)
 
 ./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-before-member-call-with-transform-exec.test.js
 AssertionError: expected undefined to deeply equal 1
