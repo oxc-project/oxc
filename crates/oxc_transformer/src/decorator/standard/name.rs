@@ -34,7 +34,8 @@ impl<'a> StandardDecoratorState<'a> {
         value: &Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::ClassExpression(class) = value.without_parentheses() else { return };
+        // TypeScript wrappers are erased, so they do not prevent named evaluation.
+        let Expression::ClassExpression(class) = value.get_inner_expression() else { return };
         if !self.enabled || class.id.is_some() || self.named_classes.contains_key(&class.address())
         {
             return;
@@ -66,7 +67,7 @@ impl<'a> StandardDecoratorState<'a> {
     ) {
         // Almost no property value is a class, so check that before the key.
         if !self.enabled
-            || !matches!(prop.value.without_parentheses(), Expression::ClassExpression(_))
+            || !matches!(prop.value.get_inner_expression(), Expression::ClassExpression(_))
         {
             return;
         }
@@ -88,9 +89,16 @@ impl<'a> StandardDecoratorState<'a> {
         if let Some(name) = self.named_classes.remove(&class_address) {
             return Some(name);
         }
-        let parent = ctx
-            .ancestors()
-            .find(|ancestor| !matches!(ancestor, Ancestor::ParenthesizedExpressionExpression(_)))?;
+        let parent = ctx.ancestors().find(|ancestor| {
+            !matches!(
+                ancestor,
+                Ancestor::ParenthesizedExpressionExpression(_)
+                    | Ancestor::TSAsExpressionExpression(_)
+                    | Ancestor::TSSatisfiesExpressionExpression(_)
+                    | Ancestor::TSNonNullExpressionExpression(_)
+                    | Ancestor::TSTypeAssertionExpression(_)
+            )
+        })?;
         let name = match parent {
             Ancestor::PropertyDefinitionValue(prop) => {
                 self.accessor_names.get(&parent.address()).copied().or_else(|| {
