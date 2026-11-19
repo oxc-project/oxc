@@ -12,6 +12,7 @@
   "files": [
     "src",
     "CHANGELOG.md",
+    "LICENSE-esbuild",
     "upstream.json"
   ],
   "type": "commonjs",

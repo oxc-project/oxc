@@ -639,3 +639,16 @@ for (const mode of ["commonjs", "esm"]) {
     assert.equal(decorateMetadata("design:type", Function), undefined);
   });
 }
+
+test("the package ships esbuild's license notice for the adapted decorator helpers", () => {
+  const runtimeDir = new URL("../", import.meta.url);
+  const packageJson = JSON.parse(readFileSync(new URL("package.json", runtimeDir), "utf8"));
+  assert.ok(packageJson.files.includes("LICENSE-esbuild"));
+  const notice = readFileSync(new URL("LICENSE-esbuild", runtimeDir), "utf8");
+  assert.match(notice, /Copyright \(c\) 2020 Evan Wallace/);
+  assert.match(notice, /Permission is hereby granted, free of charge/);
+  for (const helper of ["decorateElement", "decoratorStart", "runInitializers"]) {
+    const source = readFileSync(new URL(`scripts/helpers/${helper}.js`, runtimeDir), "utf8");
+    assert.match(source, /Adapted from esbuild's runtime/);
+  }
+});
