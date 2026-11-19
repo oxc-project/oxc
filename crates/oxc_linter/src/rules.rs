@@ -223,6 +223,7 @@ pub(crate) mod eslint {
     pub mod sort_imports;
     pub mod sort_keys;
     pub mod sort_vars;
+    pub mod strict;
     pub mod symbol_description;
     pub mod unicode_bom;
     pub mod use_isnan;

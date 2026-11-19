@@ -7612,6 +7612,26 @@
             }
           ]
         },
+        "strict": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/Strict"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "symbol-description": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -19336,6 +19356,9 @@
       },
       "additionalProperties": false
     },
+    "Strict": {
+      "$ref": "#/definitions/StrictOption"
+    },
     "StrictBooleanExpressionsConfig": {
       "type": "object",
       "properties": {
@@ -19389,6 +19412,15 @@
         }
       },
       "additionalProperties": false
+    },
+    "StrictOption": {
+      "type": "string",
+      "enum": [
+        "safe",
+        "global",
+        "function",
+        "never"
+      ]
     },
     "StrictVoidReturnConfig": {
       "type": "object",
