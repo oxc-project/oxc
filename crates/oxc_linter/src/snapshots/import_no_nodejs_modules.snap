@@ -190,3 +190,59 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────
    ╰────
   help: Use a browser-compatible alternative or add this module to the `allow` list if Node.js usage is intentional.
+
+  ⚠ import(no-nodejs-modules): Do not import Node.js builtin module `stream`
+   ╭─[no_nodejs_modules.tsx:1:1]
+ 1 │ import type { Readable } from "stream"
+   · ──────────────────────────────────────
+   ╰────
+  help: Use a browser-compatible alternative or add this module to the `allow` list if Node.js usage is intentional.
+
+  ⚠ import(no-nodejs-modules): Do not import Node.js builtin module `fs`
+   ╭─[no_nodejs_modules.tsx:1:1]
+ 1 │ export type * from "fs"
+   · ───────────────────────
+   ╰────
+  help: Use a browser-compatible alternative or add this module to the `allow` list if Node.js usage is intentional.
+
+  ⚠ import(no-nodejs-modules): Do not import Node.js builtin module `fs`
+   ╭─[no_nodejs_modules.tsx:1:1]
+ 1 │ import { type A, B } from "fs"
+   · ──────────────────────────────
+   ╰────
+  help: Use a browser-compatible alternative or add this module to the `allow` list if Node.js usage is intentional.
+
+  ⚠ import(no-nodejs-modules): Do not import Node.js builtin module `fs`
+   ╭─[no_nodejs_modules.tsx:1:1]
+ 1 │ import fs, { type A } from "fs"
+   · ───────────────────────────────
+   ╰────
+  help: Use a browser-compatible alternative or add this module to the `allow` list if Node.js usage is intentional.
+
+  ⚠ import(no-nodejs-modules): Do not import Node.js builtin module `fs`
+   ╭─[no_nodejs_modules.tsx:1:1]
+ 1 │ import {} from "fs"
+   · ───────────────────
+   ╰────
+  help: Use a browser-compatible alternative or add this module to the `allow` list if Node.js usage is intentional.
+
+  ⚠ import(no-nodejs-modules): Do not import Node.js builtin module `fs`
+   ╭─[no_nodejs_modules.tsx:1:1]
+ 1 │ export { type A, B } from "fs"
+   · ──────────────────────────────
+   ╰────
+  help: Use a browser-compatible alternative or add this module to the `allow` list if Node.js usage is intentional.
+
+  ⚠ import(no-nodejs-modules): Do not import Node.js builtin module `fs`
+   ╭─[no_nodejs_modules.tsx:1:1]
+ 1 │ import fs = require("fs")
+   · ─────────────────────────
+   ╰────
+  help: Use a browser-compatible alternative or add this module to the `allow` list if Node.js usage is intentional.
+
+  ⚠ import(no-nodejs-modules): Do not import Node.js builtin module `fs`
+   ╭─[no_nodejs_modules.tsx:1:10]
+ 1 │ var fs = require("fs")
+   ·          ─────────────
+   ╰────
+  help: Use a browser-compatible alternative or add this module to the `allow` list if Node.js usage is intentional.

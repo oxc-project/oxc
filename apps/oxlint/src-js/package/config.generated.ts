@@ -2624,7 +2624,21 @@ export interface NoNodejsModulesConfig {
   /**
    * Array of names of allowed modules. Defaults to an empty array.
    */
-  allow: string[];
+  allow?: string[];
+  /**
+   * Ignore type-only imports and exports, which TypeScript erases from the output.
+   *
+   * ```ts
+   * // Not reported if `ignoreTypeImports` is true:
+   * import type { Readable } from 'stream';
+   * import { type SecureVersion } from 'tls';
+   * export type { Socket } from 'net';
+   * ```
+   *
+   * An import with any value specifier, e.g. `import { type A, B } from 'fs'`, is still reported.
+   * Under `verbatimModuleSyntax`, `import { type A } from 'fs'` is emitted as `import {} from 'fs'`.
+   */
+  ignoreTypeImports?: boolean;
 }
 export interface NoUnassignedImportConfig {
   /**

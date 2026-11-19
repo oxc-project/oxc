@@ -1,7 +1,7 @@
 use nodejs_built_in_modules::is_nodejs_builtin_module;
 use oxc_ast::{
     AstKind,
-    ast::{Expression, TSModuleReference},
+    ast::{Expression, ImportDeclarationSpecifier, TSModuleReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -24,10 +24,23 @@ fn no_nodejs_modules_diagnostic(span: Span, module_name: impl std::fmt::Display)
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 #[schemars(rename_all = "camelCase", deny_unknown_fields)]
 pub struct NoNodejsModulesConfig {
     /// Array of names of allowed modules. Defaults to an empty array.
     allow: FxHashSet<CompactStr>,
+    /// Ignore type-only imports and exports, which TypeScript erases from the output.
+    ///
+    /// ```ts
+    /// // Not reported if `ignoreTypeImports` is true:
+    /// import type { Readable } from 'stream';
+    /// import { type SecureVersion } from 'tls';
+    /// export type { Socket } from 'net';
+    /// ```
+    ///
+    /// An import with any value specifier, e.g. `import { type A, B } from 'fs'`, is still reported.
+    /// Under `verbatimModuleSyntax`, `import { type A } from 'fs'` is emitted as `import {} from 'fs'`.
+    ignore_type_imports: bool,
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
@@ -116,6 +129,10 @@ impl Rule for NoNodejsModules {
             return;
         };
 
+        if self.ignore_type_imports && is_type_only(node.kind()) {
+            return;
+        }
+
         let Some(name) = module_name.as_str() else {
             // A name with a lone surrogate matches neither the `allow` list nor a builtin,
             // but the `node:` scheme still marks a Node.js module.
@@ -135,9 +152,34 @@ impl Rule for NoNodejsModules {
     }
 }
 
+/// `import type`, `export type`, or only inline `type` specifiers (`import { type A } from 'x'`).
+fn is_type_only(kind: AstKind) -> bool {
+    match kind {
+        AstKind::ImportDeclaration(import) => {
+            import.import_kind.is_type()
+                || import.specifiers.as_ref().is_some_and(|specifiers| {
+                    !specifiers.is_empty()
+                        && specifiers.iter().all(|s| {
+                            matches!(s, ImportDeclarationSpecifier::ImportSpecifier(s) if s.import_kind.is_type())
+                        })
+                })
+        }
+        AstKind::ExportFromDeclaration(export) => {
+            export.export_kind.is_type()
+                || (!export.specifiers.is_empty()
+                    && export.specifiers.iter().all(|s| s.export_kind.is_type()))
+        }
+        AstKind::ExportAllDeclaration(export) => export.export_kind.is_type(),
+        AstKind::TSImportEqualsDeclaration(import) => import.import_kind.is_type(),
+        _ => false,
+    }
+}
+
 #[test]
 fn test() {
     use crate::tester::Tester;
+
+    let ignore_types = || Some(serde_json::json!([{ "ignoreTypeImports": true }]));
 
     let pass = vec![
         // Lone surrogates are part of the value.
@@ -194,6 +236,13 @@ fn test() {
         (r"import(`lodash`)", None),
         (r#"import("./foo")"#, None),
         (r#"import("@scope/foo")"#, None),
+        // With ignoreTypeImports option
+        (r#"import type { Readable } from "stream""#, ignore_types()),
+        (r#"import { type A, type B } from "node:fs""#, ignore_types()),
+        (r#"import type fs = require("fs")"#, ignore_types()),
+        (r#"export type { Socket } from "net""#, ignore_types()),
+        (r#"export { type Socket } from "net""#, ignore_types()),
+        (r#"export type * from "fs""#, ignore_types()),
     ];
 
     let fail = vec![
@@ -231,6 +280,16 @@ fn test() {
         (r#"export { foo } from "fs""#, None),
         (r#"export { default as foo } from "crypto""#, None),
         (r#"export * from "path""#, None),
+        // Type-only imports without ignoreTypeImports
+        (r#"import type { Readable } from "stream""#, None),
+        (r#"export type * from "fs""#, None),
+        // Value imports with ignoreTypeImports
+        (r#"import { type A, B } from "fs""#, ignore_types()),
+        (r#"import fs, { type A } from "fs""#, ignore_types()),
+        (r#"import {} from "fs""#, ignore_types()),
+        (r#"export { type A, B } from "fs""#, ignore_types()),
+        (r#"import fs = require("fs")"#, ignore_types()),
+        (r#"var fs = require("fs")"#, ignore_types()),
     ];
 
     Tester::new(NoNodejsModules::NAME, NoNodejsModules::PLUGIN, pass, fail).test_and_snapshot();
