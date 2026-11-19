@@ -299,8 +299,6 @@ fn test() {
         ("var a = foo + bar ? false : true;", "var a = !(foo + bar);", None),
         ("var a = x instanceof foo ? false : true;", "var a = !(x instanceof foo);", None),
         ("var a = foo ? false : false;", "var a = false;", None),
-        // Equal boolean literals with a test that may have side effects are not fixed,
-        // matching upstream ESLint (`foo() ? true : true` is left alone).
         ("var a = foo() ? false : false;", "var a = foo() ? false : false;", None),
         ("var a = f() ? true : true;", "var a = f() ? true : true;", None),
         ("var a = a + b ? true : true;", "var a = a + b ? true : true;", None),
