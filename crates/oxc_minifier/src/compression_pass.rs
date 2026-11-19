@@ -7,18 +7,14 @@
 //! refresh direct-eval scope flags, then derive function reachability from the
 //! settled semantic state.
 
-use oxc_ast_visit::{Visit, VisitJs, walk::walk_catch_parameter, walk_js::walk_call_expression};
-use rustc_hash::{FxHashMap, FxHashSet};
+use oxc_ast_visit::{Visit, VisitJs, walk_js::walk_call_expression};
+use rustc_hash::FxHashSet;
 
 use oxc_allocator::{BitSet, GetAllocator};
-use oxc_ast::{AstKind, ast::*};
-use oxc_ecmascript::BoundNames;
+use oxc_ast::ast::*;
 use oxc_semantic::{Scoping, SymbolId};
 use oxc_span::Span;
-use oxc_syntax::{
-    node::NodeId,
-    scope::{ScopeFlags, ScopeId},
-};
+use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 use crate::{
     ReusableTraverseCtx, TraverseCtx,
@@ -26,7 +22,7 @@ use crate::{
     peephole::PeepholeOptimizations,
     state::PassChanges,
     symbol_liveness,
-    traverse_context::{as_direct_eval_call, redeclared_symbols},
+    traverse_context::{RedeclaredBindings, as_direct_eval_call},
 };
 
 /// The fixed-point decision produced by one completed peephole pass.
@@ -153,7 +149,9 @@ pub fn debug_assert_no_under_prune(
 /// `Scoping::symbol_redeclarations` must still be in the live program. A
 /// violation means a site discarded a declaration without routing it through a
 /// `drop_*` / `replace_*` helper (the leak direction: stale redeclarations
-/// silently keep optimizations conservative).
+/// silently keep optimizations conservative). Declarations whose span is shared
+/// with another declaration of the symbol are never pruned (see
+/// [`has_unique_span`]), so they are skipped.
 ///
 /// Allocation-free like the other debug guards: instead of collecting the live
 /// declarations, it compares both the number and a fingerprint (a wrapping sum
@@ -169,59 +167,33 @@ pub fn debug_assert_no_stale_redeclarations(program: &Program<'_>, scoping: &Sco
         hasher.finish()
     }
 
-    struct LiveRedeclarations<'s> {
-        scoping: &'s Scoping,
-        found: usize,
-        fingerprint: u64,
-        catch_parameter: Option<SymbolId>,
-    }
-    impl<'a> Visit<'a> for LiveRedeclarations<'_> {
-        fn visit_binding_identifier(&mut self, it: &BindingIdentifier<'a>) {
-            let Some(symbol_id) = it.symbol_id.get() else { return };
-            for symbol_id in
-                redeclared_symbols(symbol_id, self.scoping, self.catch_parameter == Some(symbol_id))
-            {
-                let redeclarations = self.scoping.symbol_redeclarations(symbol_id);
-                if redeclarations.iter().any(|redeclaration| redeclaration.span == it.span) {
-                    self.found += 1;
-                    self.fingerprint =
-                        self.fingerprint.wrapping_add(fingerprint(symbol_id, it.span));
-                }
-            }
-        }
-
-        fn visit_catch_parameter(&mut self, it: &CatchParameter<'a>) {
-            let previous = self.catch_parameter;
-            self.catch_parameter = match &it.pattern {
-                BindingPattern::BindingIdentifier(ident) => ident.symbol_id.get(),
-                _ => None,
-            };
-            walk_catch_parameter(self, it);
-            self.catch_parameter = previous;
-        }
-    }
     let (recorded, expected_fingerprint) = scoping
         .symbol_ids()
         .flat_map(|symbol_id| {
             scoping
                 .symbol_redeclarations(symbol_id)
                 .iter()
+                .filter(move |redeclaration| has_unique_span(scoping, symbol_id, redeclaration.span))
                 .map(move |redeclaration| fingerprint(symbol_id, redeclaration.span))
         })
         .fold((0usize, 0u64), |(count, sum), hash| (count + 1, sum.wrapping_add(hash)));
     if recorded == 0 {
         return;
     }
-    let mut live = LiveRedeclarations { scoping, found: 0, fingerprint: 0, catch_parameter: None };
-    live.visit_program(program);
+    let (mut found, mut live_fingerprint) = (0usize, 0u64);
+    RedeclaredBindings::new(scoping, |symbol_id, span| {
+        if has_unique_span(scoping, symbol_id, span) {
+            found += 1;
+            live_fingerprint = live_fingerprint.wrapping_add(fingerprint(symbol_id, span));
+        }
+    })
+    .visit_program(program);
     assert!(
-        live.found == recorded && live.fingerprint == expected_fingerprint,
+        found == recorded && live_fingerprint == expected_fingerprint,
         "stale redeclarations: {recorded} declarations recorded in \
-         `Scoping::symbol_redeclarations`, {} matching ones in the program (fingerprints \
-         {expected_fingerprint:#x} recorded, {:#x} live) — a drop site bypassed the \
-         `drop_*` / `replace_*` helpers",
-        live.found,
-        live.fingerprint,
+         `Scoping::symbol_redeclarations`, {found} matching ones in the program (fingerprints \
+         {expected_fingerprint:#x} recorded, {live_fingerprint:#x} live) — a drop site bypassed \
+         the `drop_*` / `replace_*` helpers",
     );
 }
 
@@ -243,40 +215,15 @@ fn debug_assert_no_revived_declarations(
     removed: &FxHashSet<(SymbolId, Span)>,
     reemitted: &FxHashSet<(SymbolId, Span)>,
 ) {
-    struct RevivedDeclarationCheck<'s> {
-        scoping: &'s Scoping,
-        removed: &'s FxHashSet<(SymbolId, Span)>,
-        reemitted: &'s FxHashSet<(SymbolId, Span)>,
-        catch_parameter: Option<SymbolId>,
-    }
-    impl<'a> Visit<'a> for RevivedDeclarationCheck<'_> {
-        fn visit_binding_identifier(&mut self, it: &BindingIdentifier<'a>) {
-            let Some(symbol_id) = it.symbol_id.get() else { return };
-            for symbol_id in
-                redeclared_symbols(symbol_id, self.scoping, self.catch_parameter == Some(symbol_id))
-            {
-                let declaration = (symbol_id, it.span);
-                assert!(
-                    !self.removed.contains(&declaration) || self.reemitted.contains(&declaration),
-                    "revived declaration: {declaration:?} was dropped and is still in the \
-                     program, but `KeepVar` did not re-emit it — see \
-                     `PassChanges::reemitted_declarations`",
-                );
-            }
-        }
-
-        fn visit_catch_parameter(&mut self, it: &CatchParameter<'a>) {
-            let previous = self.catch_parameter;
-            self.catch_parameter = match &it.pattern {
-                BindingPattern::BindingIdentifier(ident) => ident.symbol_id.get(),
-                _ => None,
-            };
-            walk_catch_parameter(self, it);
-            self.catch_parameter = previous;
-        }
-    }
-    RevivedDeclarationCheck { scoping, removed, reemitted, catch_parameter: None }
-        .visit_program(program);
+    RedeclaredBindings::new(scoping, |symbol_id, span| {
+        let declaration = (symbol_id, span);
+        assert!(
+            !removed.contains(&declaration) || reemitted.contains(&declaration),
+            "revived declaration: {declaration:?} was dropped and is still in the program, \
+             but `KeepVar` did not re-emit it — see `PassChanges::reemitted_declarations`",
+        );
+    })
+    .visit_program(program);
 }
 
 /// Debug-only guard for the gated direct-eval refresh: every live direct
@@ -338,111 +285,34 @@ fn debug_assert_no_stale_direct_eval(program: &Program<'_>, scoping: &Scoping) {
     DirectEvalFlagCheck { scoping }.visit_program(program);
 }
 
-/// Resolve removal keys shared by multiple declarations, e.g. synthesized `SPAN`s.
-/// A span cannot identify which declaration survived. Count live bindings by their
-/// declaration node as well, retaining exactly that many matching records.
-fn prune_ambiguous_declarations(program: &Program<'_>, ctx: &mut TraverseCtx<'_>) {
-    struct LiveDeclarationNodes<'s> {
-        scoping: &'s Scoping,
-        ambiguous: &'s FxHashSet<(SymbolId, Span)>,
-        counts: FxHashMap<(SymbolId, Span, NodeId), usize>,
-    }
-    impl<'a> Visit<'a> for LiveDeclarationNodes<'_> {
-        fn enter_node(&mut self, kind: AstKind<'a>) {
-            let node_id = kind.node_id();
-            let mut binding = |ident: &BindingIdentifier<'a>| {
-                let Some(symbol_id) = ident.symbol_id.get() else { return };
-                for symbol_id in redeclared_symbols(
-                    symbol_id,
-                    self.scoping,
-                    matches!(kind, AstKind::CatchParameter(_)),
-                ) {
-                    if self.ambiguous.contains(&(symbol_id, ident.span)) {
-                        *self.counts.entry((symbol_id, ident.span, node_id)).or_default() += 1;
-                    }
-                }
-            };
-            // These are the JavaScript declaration nodes recorded by SemanticBuilder.
-            // BoundNames excludes bindings inside initializers and nested scopes.
-            match kind {
-                AstKind::VariableDeclarator(it) => it.id.bound_names(&mut binding),
-                AstKind::FormalParameter(it) => it.pattern.bound_names(&mut binding),
-                AstKind::FormalParameterRest(it) => it.rest.argument.bound_names(&mut binding),
-                AstKind::CatchParameter(it) => it.pattern.bound_names(&mut binding),
-                AstKind::Function(it) => {
-                    if let Some(id) = &it.id {
-                        binding(id);
-                    }
-                }
-                AstKind::Class(it) => {
-                    if let Some(id) = &it.id {
-                        binding(id);
-                    }
-                }
-                AstKind::ImportSpecifier(it) => binding(&it.local),
-                AstKind::ImportDefaultSpecifier(it) => binding(&it.local),
-                AstKind::ImportNamespaceSpecifier(it) => binding(&it.local),
-                _ => {}
-            }
-        }
-    }
-    let scoping = ctx.scoping();
-    let ambiguous: FxHashSet<_> = ctx
-        .state
-        .pass_changes
-        .removed_declarations
+/// Whether `span` identifies exactly one recorded declaration of `symbol_id`.
+///
+/// Bindings with synthesized spans (e.g. `SPAN` from a transform) can share one,
+/// and then a span cannot tell which of them a dropped binding was. Such
+/// declarations are never pruned: a stale redeclaration only keeps optimizations
+/// conservative, while pruning the wrong one would drop a live declaration.
+fn has_unique_span(scoping: &Scoping, symbol_id: SymbolId, span: Span) -> bool {
+    let mut matching = scoping
+        .symbol_redeclarations(symbol_id)
         .iter()
-        .filter(|&&(symbol_id, span)| {
-            scoping
-                .symbol_redeclarations(symbol_id)
-                .iter()
-                .filter(|declaration| declaration.span == span)
-                .take(2)
-                .count()
-                > 1
-        })
-        .copied()
-        .collect();
-    if ambiguous.is_empty() {
-        return;
-    }
-
-    let mut live =
-        LiveDeclarationNodes { scoping, ambiguous: &ambiguous, counts: FxHashMap::default() };
-    live.visit_program(program);
-    let mut counts = live.counts;
-    for &(symbol_id, span) in &ambiguous {
-        ctx.scoping_mut().retain_symbol_declarations(symbol_id, |declaration| {
-            if declaration.span != span {
-                return true;
-            }
-            let count = counts.entry((symbol_id, span, declaration.declaration)).or_default();
-            if *count == 0 {
-                return false;
-            }
-            *count -= 1;
-            true
-        });
-        ctx.state.pass_changes.removed_declarations.remove(&(symbol_id, span));
-    }
-    debug_assert!(
-        counts.values().all(|&count| count == 0),
-        "unrecorded live declaration with a shared span"
-    );
+        .filter(|redeclaration| redeclaration.span == span);
+    matching.next().is_some() && matching.next().is_none()
 }
 
 /// Remove [`PassChanges::removed_declarations`] from
 /// `Scoping::symbol_redeclarations`, so e.g. `catch (a) { var a }` can drop `a`
-/// once the `var` is gone (#27548).
+/// once the `var` is gone (#27548). A declaration is identified by its symbol
+/// and binding span; keys whose span is shared are skipped (see
+/// [`has_unique_span`]).
 ///
 /// Unlike a `ReferenceId`, a dropped binding can reappear: `KeepVar` re-emits
 /// dropped `var`s with their symbol and span, and records them in
 /// [`PassChanges::reemitted_declarations`]. Only when a removed declaration was
-/// re-emitted, or multiple declarations share its span, is the program walked
-/// to keep those still present. The unique-span fast path relies on
-/// `KeepVar` being the only site that re-emits a dropped binding, which debug
-/// builds check with a separate walk (`debug_assert_no_revived_declarations`);
-/// the pruning itself takes the same path in debug and release builds.
+/// re-emitted is the program walked to keep those still present. Skipping the
+/// walk otherwise relies on `KeepVar` being the only site that re-emits a
+/// dropped binding, which debug builds check with a separate walk
+/// (`debug_assert_no_revived_declarations`); the pruning itself takes the same
+/// path in debug and release builds.
 ///
 /// Removals are applied in hash-set order. The order does not matter unless
 /// every declaration of a symbol is removed: `remove_symbol_declaration` stops
@@ -451,16 +321,18 @@ fn prune_ambiguous_declarations(program: &Program<'_>, ctx: &mut TraverseCtx<'_>
 /// declaration that was. Nothing declares such a symbol anymore, so this is
 /// harmless.
 fn prune_removed_declarations(program: &Program<'_>, ctx: &mut TraverseCtx<'_>) {
-    // Resolve ambiguous keys before applying the unique-span guards and fast path.
-    prune_ambiguous_declarations(program, ctx);
     let PassChanges { removed_declarations: removed, reemitted_declarations: reemitted, .. } =
         &mut ctx.state.pass_changes;
     let scoping = ctx.scoping.scoping();
+    removed.retain(|&(symbol_id, span)| has_unique_span(scoping, symbol_id, span));
     #[cfg(debug_assertions)]
     debug_assert_no_revived_declarations(program, scoping, removed, reemitted);
     // `is_disjoint` iterates the smaller set.
     if !removed.is_disjoint(reemitted) {
-        LiveDeclarations { scoping, removed, catch_parameter: None }.visit_program(program);
+        RedeclaredBindings::new(scoping, |symbol_id, span| {
+            removed.remove(&(symbol_id, span));
+        })
+        .visit_program(program);
     }
     let scoping = ctx.scoping.scoping_mut();
     for (symbol_id, span) in removed.drain() {
@@ -610,35 +482,5 @@ impl<'a> VisitJs<'a> for LiveDirectEvalCollector<'_> {
         }
         // Recurse — `eval` may be nested in another call's arguments, e.g. `foo(eval('x'))`.
         walk_call_expression(self, it);
-    }
-}
-
-/// Walks the live program to keep declarations that are still present out of
-/// [`PassChanges::removed_declarations`]. Used by
-/// [`prune_removed_declarations`].
-struct LiveDeclarations<'b> {
-    scoping: &'b Scoping,
-    removed: &'b mut FxHashSet<(SymbolId, Span)>,
-    catch_parameter: Option<SymbolId>,
-}
-
-impl<'a> Visit<'a> for LiveDeclarations<'_> {
-    fn visit_binding_identifier(&mut self, it: &BindingIdentifier<'a>) {
-        let Some(symbol_id) = it.symbol_id.get() else { return };
-        for symbol_id in
-            redeclared_symbols(symbol_id, self.scoping, self.catch_parameter == Some(symbol_id))
-        {
-            self.removed.remove(&(symbol_id, it.span));
-        }
-    }
-
-    fn visit_catch_parameter(&mut self, it: &CatchParameter<'a>) {
-        let previous = self.catch_parameter;
-        self.catch_parameter = match &it.pattern {
-            BindingPattern::BindingIdentifier(ident) => ident.symbol_id.get(),
-            _ => None,
-        };
-        walk_catch_parameter(self, it);
-        self.catch_parameter = previous;
     }
 }

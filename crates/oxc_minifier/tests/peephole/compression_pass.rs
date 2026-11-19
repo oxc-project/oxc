@@ -23,9 +23,11 @@ fn redeclarations_with_synthetic_spans() {
         "export function f(e) { try { x() } catch (e) { var e } return e }",
         "export function f(e) { try { x() } catch (e) { var e } return e }",
     );
+    // The catch parameter and the `var` share a span, so the dropped `var` is not
+    // pruned from the catch parameter's redeclarations; a second run removes it.
     test_unspanned_bindings(
         "export function f() { try { x() } catch (e) { var e } }",
-        "export function f() { try { x() } catch {} }",
+        "export function f() { try { x() } catch (e) {} }",
     );
     test_unspanned_bindings(
         "export function f(e) { var e; return e }",

@@ -155,14 +155,14 @@ fn run_with_iterations(
     run_with_binding_spans(source_text, source_type, options, false)
 }
 
+/// Like [`test_smallest`], with every binding given the synthesized `SPAN`, so
+/// redeclarations cannot be told apart by span. No idempotency check: such
+/// redeclarations are never pruned, so the output may shrink on a second run.
 #[track_caller]
 pub(crate) fn test_unspanned_bindings(source_text: &str, expected: &str) {
     let options = CompressOptions::smallest();
-    let first =
-        run_with_binding_spans(source_text, SourceType::mjs(), Some(options.clone()), true).0;
-    assert_eq!(first, run(expected, SourceType::mjs(), None), "for source\n{source_text}");
-    let second = run_with_binding_spans(&first, SourceType::mjs(), Some(options), true).0;
-    assert_eq!(first, second, "idempotency for source\n{source_text}");
+    let output = run_with_binding_spans(source_text, SourceType::mjs(), Some(options), true).0;
+    assert_eq!(output, run(expected, SourceType::mjs(), None), "for source\n{source_text}");
 }
 
 fn run_with_binding_spans(

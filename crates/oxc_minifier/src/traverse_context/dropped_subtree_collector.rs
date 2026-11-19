@@ -4,6 +4,7 @@ use oxc_ast_visit::{
     walk::{walk_call_expression, walk_catch_parameter},
 };
 use oxc_semantic::Scoping;
+use oxc_span::Span;
 use oxc_syntax::symbol::SymbolId;
 
 use crate::state::PassChanges;
@@ -35,6 +36,48 @@ pub fn redeclared_symbols(
     std::iter::once(symbol_id)
         .chain((!is_catch_parameter).then(|| scoping.catch_var_binding(symbol_id)).flatten())
         .filter(|&symbol_id| !scoping.symbol_redeclarations(symbol_id).is_empty())
+}
+
+/// The symbol of a simple catch parameter: the one binding [`redeclared_symbols`]
+/// must be told about, since it does not also declare the enclosing var binding.
+fn catch_parameter_symbol(it: &CatchParameter<'_>) -> Option<SymbolId> {
+    match &it.pattern {
+        BindingPattern::BindingIdentifier(ident) => ident.symbol_id.get(),
+        _ => None,
+    }
+}
+
+/// Calls `on_declaration` with `(symbol, binding span)` for every declaration of
+/// a redeclared symbol in the visited subtree, i.e. for every binding the
+/// [`DroppedSubtreeCollector`] would record in `PassChanges::removed_declarations`.
+/// Used by the pass flush and its debug checks to find the live declarations.
+pub struct RedeclaredBindings<'s, F> {
+    scoping: &'s Scoping,
+    catch_parameter: Option<SymbolId>,
+    on_declaration: F,
+}
+
+impl<'s, F: FnMut(SymbolId, Span)> RedeclaredBindings<'s, F> {
+    pub fn new(scoping: &'s Scoping, on_declaration: F) -> Self {
+        Self { scoping, catch_parameter: None, on_declaration }
+    }
+}
+
+impl<'a, F: FnMut(SymbolId, Span)> Visit<'a> for RedeclaredBindings<'_, F> {
+    fn visit_binding_identifier(&mut self, it: &BindingIdentifier<'a>) {
+        let Some(symbol_id) = it.symbol_id.get() else { return };
+        for symbol_id in
+            redeclared_symbols(symbol_id, self.scoping, self.catch_parameter == Some(symbol_id))
+        {
+            (self.on_declaration)(symbol_id, it.span);
+        }
+    }
+
+    fn visit_catch_parameter(&mut self, it: &CatchParameter<'a>) {
+        let previous = std::mem::replace(&mut self.catch_parameter, catch_parameter_symbol(it));
+        walk_catch_parameter(self, it);
+        self.catch_parameter = previous;
+    }
 }
 
 /// Walks AST subtrees being dropped or replaced, collecting
@@ -99,11 +142,7 @@ impl<'a> Visit<'a> for DroppedSubtreeCollector<'a, '_> {
     }
 
     fn visit_catch_parameter(&mut self, it: &CatchParameter<'a>) {
-        let previous = self.catch_parameter;
-        self.catch_parameter = match &it.pattern {
-            BindingPattern::BindingIdentifier(ident) => ident.symbol_id.get(),
-            _ => None,
-        };
+        let previous = std::mem::replace(&mut self.catch_parameter, catch_parameter_symbol(it));
         walk_catch_parameter(self, it);
         self.catch_parameter = previous;
     }

@@ -666,21 +666,11 @@ impl Scoping {
 
     /// Remove one declaration from a merged symbol and promote the first surviving declaration.
     pub fn remove_symbol_declaration(&mut self, symbol_id: SymbolId, span: Span) {
-        self.retain_symbol_declarations(symbol_id, |declaration| declaration.span != span);
-    }
-
-    /// Retain matching declarations and promote the first survivor, updating the symbol's flags.
-    /// Unlike span-based removal, this can distinguish declarations sharing a generated span.
-    pub fn retain_symbol_declarations(
-        &mut self,
-        symbol_id: SymbolId,
-        mut keep: impl FnMut(&Redeclaration) -> bool,
-    ) {
         let replacement = self.cell.with_dependent_mut(|_allocator, cell| {
             let redeclarations = cell.symbol_redeclarations.get_mut(&symbol_id)?;
-            redeclarations.retain(|redeclaration| keep(redeclaration));
+            redeclarations.retain(|redeclaration| redeclaration.span != span);
 
-            let first = redeclarations.first().cloned();
+            let first = redeclarations.first()?.clone();
             let flags = redeclarations
                 .iter()
                 .fold(SymbolFlags::None, |flags, redeclaration| flags | redeclaration.flags);
@@ -689,7 +679,7 @@ impl Scoping {
                 cell.symbol_redeclarations.remove(&symbol_id);
             }
 
-            first.map(|first| (first, flags))
+            Some((first, flags))
         });
 
         if let Some((replacement, flags)) = replacement {
