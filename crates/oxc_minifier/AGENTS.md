@@ -195,9 +195,11 @@ if let Expression::BinaryExpression(e) = expr {
 - Test with real-world code
 - Learn from other minifiers
 
-## Pull request descriptions
+## Pull request guidance
 
-Follow the shared [PR guidance](../../.agents/pr-guidance.md), including a runnable example and playground link. Capture the before and after outputs with the minifier example. Save the input outside the repository and run the example before making the change:
+Follow the shared [PR guide](../../.agents/skills/pr-guide/SKILL.md) for titles and descriptions.
+
+For the before-and-after example in the PR description, capture the outputs with the minifier example. Save the input outside the repository and run the example before making the change:
 
 ```sh
 cargo run -p oxc_minifier --example minifier -- /tmp/repro.js --nospace
