@@ -68,6 +68,7 @@ define_generator!(FormatterFormatGenerator);
 impl Generator for FormatterFormatGenerator {
     fn generate(&self, schema: &Schema, _codegen: &Codegen) -> Output {
         let parenthesis_type_ids = get_needs_parentheses_type_ids(schema);
+        let expression_type_ids = get_expression_type_ids(schema);
 
         let impls = schema
             .structs_and_enums()
@@ -75,7 +76,12 @@ impl Generator for FormatterFormatGenerator {
                 StructOrEnum::Struct(struct_def)
                     if struct_def.visit.has_visitor() && !struct_def.builder.skip =>
                 {
-                    Some(generate_struct_implementation(struct_def, &parenthesis_type_ids, schema))
+                    Some(generate_struct_implementation(
+                        struct_def,
+                        &parenthesis_type_ids,
+                        &expression_type_ids,
+                        schema,
+                    ))
                 }
                 StructOrEnum::Enum(enum_def) if enum_def.visit.has_visitor() => {
                     Some(generate_enum_implementation(enum_def, schema))
@@ -95,7 +101,7 @@ impl Generator for FormatterFormatGenerator {
                 formatter::{JsFormatContext, JsFormatter, JsFormatterExt as _, trivia::{format_leading_comments, format_trailing_comments}},
                 parentheses::NeedsParentheses,
                 ast_nodes::AstNode,
-                utils::{suppressed::{FormatSuppressedNode, write_suppressed_expression}, typecast::{TypeCast, classify_type_cast, format_type_cast_comment_node, format_leading_comments_and_open_paren, format_outer_leading_comments_and_open_paren}},
+                utils::{suppressed::{FormatSuppressedNode, write_suppressed_expression}, typecast::{TypeCast, classify_type_cast, format_type_cast_comment_node, format_in_block_parens, format_leading_comments_and_open_paren, format_outer_leading_comments_and_open_paren}},
                 print::{FormatWrite, semicolon::write_suppressed_statement},
             };
 
@@ -109,6 +115,7 @@ impl Generator for FormatterFormatGenerator {
 fn generate_struct_implementation(
     struct_def: &StructDef,
     parenthesis_type_ids: &[TypeId],
+    expression_type_ids: &[TypeId],
     schema: &Schema,
 ) -> TokenStream {
     let type_ty = struct_def.ty(schema);
@@ -122,6 +129,9 @@ fn generate_struct_implementation(
         || AST_NODE_WITHOUT_PRINTING_LEADING_COMMENTS_LIST.contains(&struct_name);
 
     let needs_parentheses = parenthesis_type_ids.contains(&struct_def.id);
+    // An `Expression` variant can also print breaking inside its parentheses (`format_in_block_parens`),
+    // a second instance of `fmt` selected at compile time, so the usual one has no extra branch
+    let block_parens = expression_type_ids.contains(&struct_def.id);
 
     // For nodes that may get formatter-added parentheses,
     // leading comments are printed by the parentheses block below (ordering depends on the comments),
@@ -269,6 +279,8 @@ fn generate_struct_implementation(
 
         // Most nodes have no comment near them: skip all of the comment handling below.
         // Only nodes that may get parentheses can be a cast target
+        let not_block_parens = block_parens.then(|| quote! { !BLOCK_PARENS && });
+        let prints_leading_comments = !do_not_print_comment;
         let quiet = (suppressed_check.is_some() && !do_not_print_leading_comment).then(|| {
             let open_paren = needs_parentheses.then_some(&bare_open_paren);
             // The type cast handling it skips (`format_type_cast_comment_node`, `format_leading_comments_and_open_paren`)
@@ -281,7 +293,7 @@ fn generate_struct_implementation(
                 }
             });
             quote! {
-                if f.comments().is_quiet(self.span(), || self.parent.span(), self.following_span_start, #needs_parentheses) {
+                if #not_block_parens f.comments().is_quiet(self.span(), || self.parent.span(), self.following_span_start, #needs_parentheses) {
                     #no_type_cast
                     #open_paren
                     self.write(f);
@@ -298,25 +310,63 @@ fn generate_struct_implementation(
                 #write_implementation
             }
         } else {
+            let parenthesized = if block_parens {
+                // `needs_parentheses_before` binds `needs_parentheses` in the usual branch
+                quote! {
+                    if BLOCK_PARENS && self.needs_parentheses(f) {
+                        format_in_block_parens(self.span(), self.leading_comments_start(), #prints_leading_comments, f, |f| {
+                            #write_implementation
+                        });
+                    } else {
+                        #needs_parentheses_before
+                        #write_implementation
+                        #needs_parentheses_after
+                    }
+                }
+            } else {
+                quote! {
+                    #needs_parentheses_before
+                    #write_implementation
+                    #needs_parentheses_after
+                }
+            };
             quote! {
                 #quiet
                 #suppressed_check
                 #suppressed_expression_return
                 #type_cast_comment_formatting
                 #leading_comments
-                #needs_parentheses_before
-                #write_implementation
-                #needs_parentheses_after
+                #parenthesized
                 #trailing_comments
             }
         }
     };
 
-    quote! {
-        ///@@line_break
-        impl<'a> Format<'a, JsFormatContext<'a>> for #type_ty {
-            fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-                #fmt_implementation
+    if block_parens {
+        quote! {
+            ///@@line_break
+            impl<'a> Format<'a, JsFormatContext<'a>> for #type_ty {
+                #[inline]
+                fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+                    self.fmt_parenthesized::<false>(f);
+                }
+            }
+
+            ///@@line_break
+            impl<'a> #type_ty {
+                /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+                pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+                    #fmt_implementation
+                }
+            }
+        }
+    } else {
+        quote! {
+            ///@@line_break
+            impl<'a> Format<'a, JsFormatContext<'a>> for #type_ty {
+                fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+                    #fmt_implementation
+                }
             }
         }
     }
@@ -381,8 +431,11 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
     };
 
     // Every variant of `Expression` implements `NeedsParentheses`, see `get_needs_parentheses_type_ids`
-    let needs_parentheses_impl =
-        (enum_def.name() == "Expression").then(|| generate_needs_parentheses(enum_def, schema));
+    let needs_parentheses_impl = (enum_def.name() == "Expression").then(|| {
+        let needs_parentheses = generate_needs_parentheses(enum_def, schema);
+        let block_parens = generate_fmt_in_block_parens(enum_def, schema);
+        quote! { #needs_parentheses #block_parens }
+    });
 
     quote! {
         ///@@line_break
@@ -429,6 +482,47 @@ fn generate_needs_parentheses(enum_def: &EnumDef, schema: &Schema) -> TokenStrea
             }
         }
     }
+}
+
+/// Dispatches `fmt_parenthesized::<true>` to the variant in a single match.
+fn generate_fmt_in_block_parens(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
+    let enum_ident = enum_def.ident();
+    let enum_ty = enum_def.ty(schema);
+
+    let match_arms = enum_def.all_variants(schema).map(|variant| {
+        let variant_name = variant.ident();
+        let node_type = variant.field_type(schema).unwrap().innermost_type(schema).ident();
+        quote! {
+            #enum_ident::#variant_name(inner) => AstNode::<#node_type> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }.fmt_parenthesized::<true>(f),
+        }
+    });
+
+    quote! {
+        ///@@line_break
+        impl<'a> AstNode<'_, 'a, #enum_ty> {
+            /// Formats the expression as `fmt` does, except that its parentheses (`needs_parentheses`) break inside:
+            /// `(` + indent + the expression + `)`, see `format_in_block_parens`.
+            pub(crate) fn fmt_in_block_parens(&self, f: &mut JsFormatter<'_, 'a>) {
+                match self.inner {
+                    #(#match_arms)*
+                }
+            }
+        }
+    }
+}
+
+/// Get [`TypeId`]s of the `Expression` variants' types.
+fn get_expression_type_ids(schema: &Schema) -> Vec<TypeId> {
+    let expression_enum = schema.type_by_name("Expression").as_enum().unwrap();
+    expression_enum
+        .all_variants(schema)
+        .filter_map(|variant| variant.field_type(schema))
+        .map(|variant_type| variant_type.innermost_type(schema).id())
+        .collect()
 }
 
 /// Get [`TypeId`]s of types which do not have a following node.

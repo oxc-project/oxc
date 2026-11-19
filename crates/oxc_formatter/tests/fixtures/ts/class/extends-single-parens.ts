@@ -19,3 +19,4 @@ a = class extends (B<T>)<U> {};
 a = class extends (b || c) {};
 a = class extends (b, c) {};
 a = class extends /* c */ (Foo<T>) /* d */ {};
+a = class extends /* prettier-ignore */ (b    ||    c) {};

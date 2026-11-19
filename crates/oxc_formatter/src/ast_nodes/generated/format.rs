@@ -17,8 +17,9 @@ use crate::{
     utils::{
         suppressed::{FormatSuppressedNode, write_suppressed_expression},
         typecast::{
-            TypeCast, classify_type_cast, format_leading_comments_and_open_paren,
-            format_outer_leading_comments_and_open_paren, format_type_cast_comment_node,
+            TypeCast, classify_type_cast, format_in_block_parens,
+            format_leading_comments_and_open_paren, format_outer_leading_comments_and_open_paren,
+            format_type_cast_comment_node,
         },
     },
 };
@@ -638,6 +639,279 @@ impl<'a> NeedsParentheses<'a> for AstNode<'_, 'a, Expression<'a>> {
     }
 }
 
+impl<'a> AstNode<'_, 'a, Expression<'a>> {
+    /// Formats the expression as `fmt` does, except that its parentheses (`needs_parentheses`) break inside:
+    /// `(` + indent + the expression + `)`, see `format_in_block_parens`.
+    pub(crate) fn fmt_in_block_parens(&self, f: &mut JsFormatter<'_, 'a>) {
+        match self.inner {
+            Expression::BooleanLiteral(inner) => AstNode::<BooleanLiteral> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::NullLiteral(inner) => AstNode::<NullLiteral> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::NumericLiteral(inner) => AstNode::<NumericLiteral> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::BigIntLiteral(inner) => AstNode::<BigIntLiteral> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::RegExpLiteral(inner) => AstNode::<RegExpLiteral> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::StringLiteral(inner) => AstNode::<StringLiteral> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::TemplateLiteral(inner) => AstNode::<TemplateLiteral> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::Identifier(inner) => AstNode::<IdentifierReference> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::Super(inner) => AstNode::<Super> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::ArrayExpression(inner) => AstNode::<ArrayExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::ArrowFunctionExpression(inner) => AstNode::<ArrowFunctionExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::AssignmentExpression(inner) => AstNode::<AssignmentExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::AwaitExpression(inner) => AstNode::<AwaitExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::BinaryExpression(inner) => AstNode::<BinaryExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::CallExpression(inner) => AstNode::<CallExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::ChainExpression(inner) => AstNode::<ChainExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::ClassExpression(inner) => AstNode::<Class> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::ConditionalExpression(inner) => AstNode::<ConditionalExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::FunctionExpression(inner) => AstNode::<Function> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::ImportExpression(inner) => AstNode::<ImportExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::LogicalExpression(inner) => AstNode::<LogicalExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::NewExpression(inner) => AstNode::<NewExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::ObjectExpression(inner) => AstNode::<ObjectExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::ParenthesizedExpression(inner) => AstNode::<ParenthesizedExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::SequenceExpression(inner) => AstNode::<SequenceExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::TaggedTemplateExpression(inner) => AstNode::<TaggedTemplateExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::ThisExpression(inner) => AstNode::<ThisExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::UnaryExpression(inner) => AstNode::<UnaryExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::UpdateExpression(inner) => AstNode::<UpdateExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::YieldExpression(inner) => AstNode::<YieldExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::PrivateInExpression(inner) => AstNode::<PrivateInExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::ImportMeta(inner) => AstNode::<ImportMeta> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::NewTarget(inner) => AstNode::<NewTarget> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::JSXElement(inner) => AstNode::<JSXElement> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::JSXFragment(inner) => AstNode::<JSXFragment> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::TSAsExpression(inner) => AstNode::<TSAsExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::TSSatisfiesExpression(inner) => AstNode::<TSSatisfiesExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::TSTypeAssertion(inner) => AstNode::<TSTypeAssertion> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::TSNonNullExpression(inner) => AstNode::<TSNonNullExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::TSInstantiationExpression(inner) => AstNode::<TSInstantiationExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::V8IntrinsicExpression(inner) => AstNode::<V8IntrinsicExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::ComputedMemberExpression(inner) => AstNode::<ComputedMemberExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::StaticMemberExpression(inner) => AstNode::<StaticMemberExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+            Expression::PrivateFieldExpression(inner) => AstNode::<PrivateFieldExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .fmt_parenthesized::<true>(f),
+        }
+    }
+}
+
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, IdentifierName<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         if f.comments().is_quiet(
@@ -661,13 +935,23 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, IdentifierName<'a>>
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, IdentifierReference<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, IdentifierReference<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -696,16 +980,22 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, IdentifierReference
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
@@ -756,13 +1046,23 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, LabelIdentifier<'a>
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ThisExpression> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, ThisExpression> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -791,29 +1091,45 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ThisExpression> {
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArrayExpression<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, ArrayExpression<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -842,16 +1158,22 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArrayExpression<'a>
         if format_type_cast_comment_node(self, true, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
@@ -914,13 +1236,23 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, Elision> {
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ObjectExpression<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, ObjectExpression<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -949,16 +1281,22 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ObjectExpression<'a
         if format_type_cast_comment_node(self, true, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
@@ -1046,13 +1384,23 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, PropertyKey<'a>> {
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TemplateLiteral<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, TemplateLiteral<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -1081,29 +1429,45 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TemplateLiteral<'a>
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TaggedTemplateExpression<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, TaggedTemplateExpression<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -1132,16 +1496,22 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TaggedTemplateExpre
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
@@ -1194,13 +1564,23 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, MemberExpression<'a
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ComputedMemberExpression<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, ComputedMemberExpression<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -1229,29 +1609,45 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ComputedMemberExpre
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, StaticMemberExpression<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, StaticMemberExpression<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -1280,29 +1676,45 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, StaticMemberExpress
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, PrivateFieldExpression<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, PrivateFieldExpression<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -1331,29 +1743,45 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, PrivateFieldExpress
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, CallExpression<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, CallExpression<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -1382,29 +1810,45 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, CallExpression<'a>>
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, NewExpression<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, NewExpression<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -1433,29 +1877,45 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, NewExpression<'a>> 
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ImportMeta> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, ImportMeta> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -1484,29 +1944,45 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ImportMeta> {
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, NewTarget> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, NewTarget> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -1535,16 +2011,22 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, NewTarget> {
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
@@ -1599,13 +2081,23 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, Argument<'a>> {
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, UpdateExpression<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, UpdateExpression<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -1634,29 +2126,45 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, UpdateExpression<'a
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, UnaryExpression<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, UnaryExpression<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -1685,29 +2193,45 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, UnaryExpression<'a>
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, BinaryExpression<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, BinaryExpression<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -1736,29 +2260,45 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, BinaryExpression<'a
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, PrivateInExpression<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, PrivateInExpression<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -1787,29 +2327,45 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, PrivateInExpression
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, LogicalExpression<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, LogicalExpression<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -1838,29 +2394,45 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, LogicalExpression<'
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ConditionalExpression<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, ConditionalExpression<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -1889,29 +2461,45 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ConditionalExpressi
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, AssignmentExpression<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, AssignmentExpression<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -1940,16 +2528,22 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, AssignmentExpressio
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
@@ -2251,13 +2845,23 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, AssignmentTargetPro
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, SequenceExpression<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, SequenceExpression<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -2286,29 +2890,45 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, SequenceExpression<
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, Super> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, Super> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -2337,29 +2957,45 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, Super> {
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, AwaitExpression<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, AwaitExpression<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -2388,29 +3024,45 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, AwaitExpression<'a>
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ChainExpression<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, ChainExpression<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -2439,16 +3091,22 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ChainExpression<'a>
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
@@ -2489,13 +3147,23 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ChainElement<'a>> {
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ParenthesizedExpression<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, ParenthesizedExpression<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -2524,16 +3192,22 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ParenthesizedExpres
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
@@ -3531,13 +4205,23 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, BindingRestElement<
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, Function<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, Function<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -3566,16 +4250,22 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, Function<'a>> {
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
@@ -3678,13 +4368,23 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArrowFunctionBody<'
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArrowFunctionExpression<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, ArrowFunctionExpression<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -3713,29 +4413,45 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArrowFunctionExpres
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, YieldExpression<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, YieldExpression<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -3764,29 +4480,45 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, YieldExpression<'a>
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, Class<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, Class<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -3815,16 +4547,22 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, Class<'a>> {
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
@@ -4098,13 +4836,23 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, AccessorProperty<'a
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ImportExpression<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, ImportExpression<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -4133,16 +4881,22 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ImportExpression<'a
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
@@ -4492,13 +5246,23 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ModuleExportName<'a
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, V8IntrinsicExpression<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, V8IntrinsicExpression<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -4527,29 +5291,45 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, V8IntrinsicExpressi
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, BooleanLiteral> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, BooleanLiteral> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -4578,29 +5358,45 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, BooleanLiteral> {
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, NullLiteral> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, NullLiteral> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -4629,29 +5425,45 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, NullLiteral> {
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, NumericLiteral<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, NumericLiteral<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -4680,29 +5492,45 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, NumericLiteral<'a>>
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, StringLiteral<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, StringLiteral<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -4731,29 +5559,45 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, StringLiteral<'a>> 
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, BigIntLiteral<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, BigIntLiteral<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -4782,29 +5626,45 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, BigIntLiteral<'a>> 
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, RegExpLiteral<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, RegExpLiteral<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -4833,33 +5693,53 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, RegExpLiteral<'a>> 
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, JSXElement<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, JSXElement<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), false, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
     }
 }
@@ -4909,17 +5789,31 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, JSXClosingElement<'
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, JSXFragment<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, JSXFragment<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), false, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
     }
 }
@@ -7584,13 +8478,23 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSTemplateLiteralTy
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSAsExpression<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, TSAsExpression<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -7619,29 +8523,45 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSAsExpression<'a>>
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSSatisfiesExpression<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, TSSatisfiesExpression<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -7670,29 +8590,45 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSSatisfiesExpressi
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSTypeAssertion<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, TSTypeAssertion<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -7721,16 +8657,22 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSTypeAssertion<'a>
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
@@ -7814,13 +8756,23 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSExternalModuleRef
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSNonNullExpression<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, TSNonNullExpression<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -7849,16 +8801,22 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSNonNullExpression
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }
@@ -7931,13 +8889,23 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSNamespaceExportDe
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSInstantiationExpression<'a>> {
+    #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_quiet(
-            self.span(),
-            || self.parent.span(),
-            self.following_span_start,
-            true,
-        ) {
+        self.fmt_parenthesized::<false>(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, TSInstantiationExpression<'a>> {
+    /// See [`AstNode::<Expression>::fmt_in_block_parens`].
+    pub(crate) fn fmt_parenthesized<const BLOCK_PARENS: bool>(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !BLOCK_PARENS
+            && f.comments().is_quiet(
+                self.span(),
+                || self.parent.span(),
+                self.following_span_start,
+                true,
+            )
+        {
             debug_assert!(
                 matches!(classify_type_cast(self.span(), f), TypeCast::None),
                 "a quiet node is in a type cast"
@@ -7966,16 +8934,22 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSInstantiationExpr
         if format_type_cast_comment_node(self, false, f) {
             return;
         }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(
-            self.span(),
-            self.leading_comments_start(),
-            needs_parentheses,
-            f,
-        );
-        self.write(f);
-        if needs_parentheses {
-            ")".fmt(f);
+        if BLOCK_PARENS && self.needs_parentheses(f) {
+            format_in_block_parens(self.span(), self.leading_comments_start(), true, f, |f| {
+                self.write(f);
+            });
+        } else {
+            let needs_parentheses = self.needs_parentheses(f);
+            format_leading_comments_and_open_paren(
+                self.span(),
+                self.leading_comments_start(),
+                needs_parentheses,
+                f,
+            );
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
         }
         self.format_trailing_comments(f);
     }

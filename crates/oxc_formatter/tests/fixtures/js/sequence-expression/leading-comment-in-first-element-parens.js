@@ -11,6 +11,8 @@
   a
 ), b);
 const v = ((/* c */ a), b);
+// As the superclass of an assignment's class, in the clause's parens
+x = class extends ((/* c */ a), b) {};
 
 // A comment on a later element stays with that element
 ((a), /* c */ b);

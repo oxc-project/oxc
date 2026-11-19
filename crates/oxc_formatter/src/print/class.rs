@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     Semicolons, TrailingSeparator,
@@ -37,7 +37,7 @@ use crate::{
         object::{format_property_key, should_preserve_quote},
         statement_body::write_head_body_separator,
         suppressed::write_suppressed_content,
-        typecast::{TypeCast, classify_type_cast, is_cast_target},
+        typecast::is_cast_target,
     },
     write,
 };
@@ -357,17 +357,16 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
                 // Format the extends clause with its expression and optional type arguments
                 let format_super = format_with(|f| {
                     let type_arguments = super_type_arguments;
-                    let bare = type_arguments.is_none() && implements.is_empty();
 
                     // Collect comments after the extends expression (and type arguments if present)
                     // These comments need careful handling to preserve their association
                     // with the extends clause rather than the class body
-                    let comments = if bare {
+                    let comments = if type_arguments.is_some() || !implements.is_empty() {
+                        &[]
+                    } else {
                         f.context()
                             .comments()
                             .comments_in_range(extends.span().end, body.span.start)
-                    } else {
-                        &[]
                     };
 
                     // Check if there are trailing line comments after the extends clause
@@ -375,78 +374,43 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
                     // relative to the extends expression and any type arguments
                     let has_trailing_line_comments = comments.iter().any(Comment::is_line);
 
-                    let trailing_comments = format_with(|f| {
-                        if bare {
+                    // The class of an assignment wraps a breaking superclass in parens,
+                    // which are the superclass's own when it has them (DIVERGENCES.md#class-extends-single-parens);
+                    // a cast target's are its own already
+                    // NOTE: The group mode instead is an open debt, see AGENTS.md "Open debts"
+                    let wraps_in_parens =
+                        matches!(extends.grand_parent(), AstNodes::AssignmentExpression(_))
+                            && !is_cast_target(extends.span(), f);
+                    let extends = FormatSuperClass {
+                        node: extends,
+                        block_parens: wraps_in_parens && extends.needs_parentheses(f),
+                    };
+
+                    let content = format_with(|f| {
+                        if type_arguments.is_none() && implements.is_empty() {
+                            FormatNodeWithoutTrailingComments(&extends).fmt(f);
                             // Line comments are handled separately to ensure proper placement
                             if !has_trailing_line_comments {
                                 FormatTrailingComments::Comments(comments).fmt(f);
                             }
                         } else {
-                            format_trailing_comments(
-                                extends.parent().span(),
-                                extends.span(),
-                                extends.following_span_start(),
-                            )
-                            .fmt(f);
-                        }
-                    });
-                    let content = format_with(|f| {
-                        if bare {
-                            write!(
-                                f,
-                                [FormatNodeWithoutTrailingComments(&extends), trailing_comments]
-                            );
-                        } else {
                             extends.fmt(f);
                         }
                     });
 
-                    if matches!(extends.grand_parent(), AstNodes::AssignmentExpression(_))
-                        // A cast target's parens are its pair already
-                        && !is_cast_target(extends.span(), f)
-                    {
-                        // A superclass with parentheses of its own prints in these instead,
-                        // see DIVERGENCES.md#class-extends-single-parens
-                        if extends.needs_parentheses(f) {
-                            // Its leading comments stay outside them, as they would around its own,
-                            // except with one ending its line or a cast comment binding inside it, which go inside
-                            let leading_outside = !f
-                                .comments()
-                                .has_leading_own_line_comment(extends.span().start)
-                                && matches!(classify_type_cast(extends.span(), f), TypeCast::None);
-                            let outer = f
-                                .context_mut()
-                                .replace_class_parenthesized_superclass(Some(extends.span()));
-                            write!(
-                                f,
-                                [
-                                    leading_outside
-                                        .then(|| format_leading_comments(extends.span())),
-                                    group(&format_args!(
-                                        token("("),
-                                        &soft_block_indent(&FormatNodeWithoutTrailingComments(
-                                            &extends
-                                        )),
-                                        token(")"),
-                                    )),
-                                    trailing_comments
-                                ]
-                            );
-                            f.context_mut().replace_class_parenthesized_superclass(outer);
-                        } else {
-                            let content = content.memoized();
-                            write!(
-                                f,
-                                [group(&format_args!(
-                                    &if_group_breaks(&format_args!(
-                                        token("("),
-                                        &soft_block_indent(&content),
-                                        token(")"),
-                                    )),
-                                    &if_group_fits_on_line(&content)
-                                ))]
-                            );
-                        }
+                    if wraps_in_parens && !extends.block_parens {
+                        let content = content.memoized();
+                        write!(
+                            f,
+                            [group(&format_args!(
+                                &if_group_breaks(&format_args!(
+                                    token("("),
+                                    &soft_block_indent(&content),
+                                    token(")"),
+                                )),
+                                &if_group_fits_on_line(&content)
+                            ))]
+                        );
                     } else {
                         content.fmt(f);
                     }
@@ -594,6 +558,28 @@ fn should_group<'a>(class: &AstNode<'_, 'a, Class<'a>>, f: &JsFormatter<'_, 'a>)
         }
     }
     false
+}
+
+/// The superclass, breaking inside its own parentheses with `block_parens`.
+struct FormatSuperClass<'a, 'b> {
+    node: AstNode<'b, 'a, Expression<'a>>,
+    block_parens: bool,
+}
+
+impl GetSpan for FormatSuperClass<'_, '_> {
+    fn span(&self) -> Span {
+        self.node.span()
+    }
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatSuperClass<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        if self.block_parens {
+            self.node.fmt_in_block_parens(f);
+        } else {
+            self.node.fmt(f);
+        }
+    }
 }
 
 pub struct FormatClassElementWithSemicolon<'a, 'b> {

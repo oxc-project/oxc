@@ -345,6 +345,45 @@ pub fn format_leading_comments_and_open_paren(
     }
 }
 
+/// The parenthesized node (`needs_parentheses`) printed by `write`, breaking inside the parentheses:
+/// `(` + indent + `write` + `)`, for the superclass of an assignment's class (DIVERGENCES.md#class-extends-single-parens).
+/// With `leading_comments`, the node's leading comments print as [`format_leading_comments_and_open_paren`] does,
+/// except that a run with a comment ending its line goes inside, so the `(` does not start a line.
+pub fn format_in_block_parens<'a>(
+    span: Span,
+    leading_comments_start: u32,
+    leading_comments: bool,
+    f: &mut JsFormatter<'_, 'a>,
+    write: impl Fn(&mut JsFormatter<'_, 'a>),
+) {
+    let comments: &[Comment] = if leading_comments {
+        f.context().comments().comments_before(leading_comments_start)
+    } else {
+        &[]
+    };
+    let outside_len = match classify_type_cast(span, f) {
+        // Only the cast comment goes inside, as for the added `(`
+        TypeCast::BindsInner(cast) if leading_comments => cast.len() - 1,
+        _ if comments.iter().any(Comment::followed_by_newline) => 0,
+        _ => comments.len(),
+    };
+    let (outside, inside) = comments.split_at(outside_len);
+    write!(
+        f,
+        [
+            FormatLeadingComments::CommentsOfNode(outside, leading_comments_start),
+            group(&format_args!(
+                "(",
+                soft_block_indent(&format_args!(
+                    FormatLeadingComments::CommentsOfNode(inside, leading_comments_start),
+                    format_with(write)
+                )),
+                ")"
+            ))
+        ]
+    );
+}
+
 /// Variant of [`format_leading_comments_and_open_paren`] for nodes
 /// that print their own leading comments in `write` (the generator's `AST_NODE_WITHOUT_PRINTING_LEADING_COMMENTS_LIST`):
 /// prints the leading comments that belong OUTSIDE the formatter-added `(`,
