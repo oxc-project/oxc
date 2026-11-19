@@ -7,7 +7,7 @@ var _assertClassBrand = require("@oxc-project/runtime/helpers/assertClassBrand")
 var _decorateElement = require("@oxc-project/runtime/helpers/decorateElement");
 var _decoratorStart = require("@oxc-project/runtime/helpers/decoratorStart");
 var _C_decorators, _member_dec, _member_dec2, _member_dec3, _member_dec4, _member_dec5, _descriptor;
-let _init, _C2, _staticBrand;
+let _init, _staticBrand, _C2;
 let _field = /* @__PURE__ */ new WeakMap();
 let _C_brand = /* @__PURE__ */ new WeakSet();
 let _staticField = /* @__PURE__ */ new WeakMap();

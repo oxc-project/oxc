@@ -254,7 +254,10 @@ impl<'a> ClassProperties<'a> {
         // Initialize class binding vars.
         // Static prop in class expression or anonymous `export default class {}` always require
         // temp var for class. Static prop in class declaration doesn't.
-        let need_temp_var = entry.is_decorated()
+        // A decorated class declaration is decorated through its name binding; it needs a temp var
+        // only for the reasons an undecorated class does.
+        let need_temp_var = (entry.is_decorated()
+            && (!is_declaration || class_name_binding.is_none()))
             || entry.static_accessor_binding.is_some()
             || (has_static_prop && (!is_declaration || class_name_binding.is_none()));
 
@@ -298,6 +301,9 @@ impl<'a> ClassProperties<'a> {
             self.private_fields_as_properties && !entry.is_decorated(),
         );
 
+        if entry.per_evaluation_state {
+            class_bindings.block_temp_scope_id = Some(ctx.current_block_scope_id());
+        }
         entry.configure_bindings(&mut class_bindings, &private_props, ctx);
         entry.rewrite_expression_name(body, &class_bindings, is_declaration, ctx);
 

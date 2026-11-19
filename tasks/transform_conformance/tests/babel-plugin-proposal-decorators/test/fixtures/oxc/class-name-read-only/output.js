@@ -4,7 +4,7 @@ var _decoratorStart = require("@oxc-project/runtime/helpers/decoratorStart");
 var _decoratorMetadata = require("@oxc-project/runtime/helpers/decoratorMetadata");
 var _runInitializers = require("@oxc-project/runtime/helpers/runInitializers");
 var _assign_dec, _compound_dec, _update_dec, _assign_dec2;
-let _init, _K2, _init2, _E;
+let _init, _init2, _E;
 const dec = () => {};
 _assign_dec = [[void 0, dec]];
 _compound_dec = [[void 0, dec]];
@@ -23,7 +23,6 @@ let _K = class K {
     return _K;
   }
 };
-_K2 = _K;
 _init = _decoratorStart(null);
 _decorateElement(_init, 9, "assign", _assign_dec, _K);
 _decorateElement(_init, 9, "compound", _compound_dec, _K);

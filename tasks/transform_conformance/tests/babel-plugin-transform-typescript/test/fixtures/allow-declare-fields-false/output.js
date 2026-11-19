@@ -4,7 +4,7 @@ var _decorateElement = require("@oxc-project/runtime/helpers/decorateElement");
 var _decoratorStart = require("@oxc-project/runtime/helpers/decoratorStart");
 var _decoratorMetadata = require("@oxc-project/runtime/helpers/decoratorMetadata");
 var _z_dec;
-let _init, _Cls;
+let _init;
 _z_dec = [[void 0, dce]];
 class Cls {
   constructor() {
@@ -13,7 +13,6 @@ class Cls {
     _runInitializers(_init, 11, this);
   }
 }
-_Cls = Cls;
 _init = _decoratorStart(null);
 _decorateElement(_init, 5, "z", _z_dec, Cls);
 _decoratorMetadata(_init, Cls);

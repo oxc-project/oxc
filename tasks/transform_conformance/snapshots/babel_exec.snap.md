@@ -118,18 +118,18 @@ TypeError: _superPropGet(...) is not a function
 ./fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-duplicated-keys--to-es2015-computed-keys-same-value-exec.test.js
 AssertionError: expected [Function] to throw an error
     at Proxy.methodWrapper (./node_modules/chai/index.js:1737:25)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-duplicated-keys--to-es2015-computed-keys-same-value-exec.test.js:48:4
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-duplicated-keys--to-es2015-computed-keys-same-value-exec.test.js:47:4
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-duplicated-keys--to-es2015-computed-keys-same-value-exec.test.js:25:7
 
 ./fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-duplicated-keys--to-es2015-methods-with-same-key-exec.test.js
 AssertionError: expected [Function] to throw an error
     at Proxy.methodWrapper (./node_modules/chai/index.js:1737:25)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-duplicated-keys--to-es2015-methods-with-same-key-exec.test.js:42:4
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-duplicated-keys--to-es2015-methods-with-same-key-exec.test.js:41:4
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-duplicated-keys--to-es2015-methods-with-same-key-exec.test.js:23:7
 
 ./fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-misc--to-es2015-outer-class-binding-mutated-exec.test.js
 AssertionError: expected function to throw an error, but it didn't
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-misc--to-es2015-outer-class-binding-mutated-exec.test.js:50:18
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-misc--to-es2015-outer-class-binding-mutated-exec.test.js:49:18
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-misc--to-es2015-outer-class-binding-mutated-exec.test.js:25:7
 
 ./fixtures/babel/babel-plugin-transform-arrow-functions-test-fixtures-arrow-functions-implicit-var-arguments-exec.test.js

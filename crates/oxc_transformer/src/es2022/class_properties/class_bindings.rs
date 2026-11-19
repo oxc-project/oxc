@@ -68,6 +68,9 @@ pub(super) struct ClassBindings<'a> {
     pub static_private_fields_use_temp: bool,
     /// `true` if temp var for class has been inserted
     pub temp_var_is_created: bool,
+    /// Block scope for a lazily created temp var, if this class declares its temps with `let`.
+    /// See `ClassDetails::block_scoped_temps`.
+    pub block_temp_scope_id: Option<ScopeId>,
 }
 
 impl<'a> ClassBindings<'a> {
@@ -102,6 +105,7 @@ impl<'a> ClassBindings<'a> {
             outer_hoist_scope_id: outer_scope_id,
             static_private_fields_use_temp,
             temp_var_is_created,
+            block_temp_scope_id: None,
         }
     }
 
@@ -147,8 +151,15 @@ impl<'a> ClassBindings<'a> {
     ) -> &BoundIdentifier<'a> {
         if self.static_private_fields_use_temp {
             // Create temp binding if doesn't already exist
-            self.temp.get_or_insert_with(|| {
-                Self::create_temp_binding(self.name.as_ref(), self.outer_hoist_scope_id, ctx)
+            self.temp.get_or_insert_with(|| match self.block_temp_scope_id {
+                Some(scope_id) => ctx.generate_uid(
+                    self.name.as_ref().map_or("Class", |name| name.name.as_str()),
+                    scope_id,
+                    SymbolFlags::BlockScopedVariable,
+                ),
+                None => {
+                    Self::create_temp_binding(self.name.as_ref(), self.outer_hoist_scope_id, ctx)
+                }
             })
         } else {
             // `static_private_fields_use_temp` is always `true` for class expressions.
