@@ -3,9 +3,30 @@ use std::{
     ptr::NonNull,
     sync::{
         Mutex,
-        atomic::{AtomicBool, Ordering},
+        atomic::{AtomicBool, AtomicU32, Ordering},
     },
 };
+
+/// Process-wide id stamped into each fixed-size arena's `metadata.id`.
+///
+/// Two pools in one process (LSP folders) must not share ids, so this is not a pool slot index.
+static NEXT_BUFFER_ID: AtomicU32 = AtomicU32::new(0);
+
+fn next_buffer_id() -> u32 {
+    loop {
+        let id = NEXT_BUFFER_ID.load(Ordering::Relaxed);
+        #[expect(clippy::manual_assert)]
+        if id == u32::MAX {
+            panic!("fixed-size allocator buffer_id overflow");
+        }
+        if NEXT_BUFFER_ID
+            .compare_exchange_weak(id, id + 1, Ordering::Relaxed, Ordering::Relaxed)
+            .is_ok()
+        {
+            return id;
+        }
+    }
+}
 
 #[cfg(target_os = "windows")]
 use std::sync::Condvar;
@@ -82,6 +103,12 @@ pub struct FixedSizeAllocatorPool {
     /// Only used on Windows. On *nix systems, we don't need this synchronization.
     #[cfg(target_os = "windows")]
     available: Condvar,
+
+    /// Number of allocators actually created. On Windows this can be less than `thread_count`.
+    len: usize,
+
+    /// Buffer ids of every allocator in this pool, in creation order.
+    buffer_ids: Box<[u32]>,
 }
 
 impl FixedSizeAllocatorPool {
@@ -102,18 +129,23 @@ impl FixedSizeAllocatorPool {
     #[cfg(not(target_os = "windows"))]
     pub fn new(thread_count: usize) -> Self {
         let mut allocators = Stack::with_capacity(thread_count);
+        let mut buffer_ids = Vec::with_capacity(thread_count);
 
         // Create `thread_count` allocators
-        for i in 0..thread_count {
+        for _ in 0..thread_count {
             // It's impossible to create more than `u32::MAX` allocators, as `u32::MAX` x 4 GiB allocations would
             // consume almost the entirety of a 64-bit address space. No platform has such a large address space.
             // Typically they use 48 bit address space, or 53 bit at most.
-            #[expect(clippy::cast_possible_truncation)]
-            let allocator = FixedSizeAllocator::try_new(i as u32).unwrap();
+            let allocator = FixedSizeAllocator::try_new().unwrap();
+            buffer_ids.push(allocator.buffer_id());
             allocators.push(allocator);
         }
 
-        Self { allocators: Mutex::new(allocators) }
+        Self {
+            allocators: Mutex::new(allocators),
+            len: thread_count,
+            buffer_ids: buffer_ids.into_boxed_slice(),
+        }
     }
 
     /// Create a new [`FixedSizeAllocatorPool`] containing *up to* `thread_count` allocators.
@@ -151,15 +183,16 @@ impl FixedSizeAllocatorPool {
         let capacity = thread_count + 1;
 
         let mut allocators = Stack::with_capacity(capacity);
+        let mut buffer_ids = Vec::with_capacity(capacity);
 
         // Get as many allocators as possible, up to `capacity`
-        for i in 0..capacity {
+        for _ in 0..capacity {
             // It's impossible to create more than `u32::MAX` allocators, as `u32::MAX` x 4 GiB allocations would
             // consume almost the entirety of a 64-bit address space. No platform has such a large address space.
             // Typically they use 48 bit address space, or 53 bit at most.
-            #[expect(clippy::cast_possible_truncation)]
-            let allocator = FixedSizeAllocator::try_new(i as u32);
+            let allocator = FixedSizeAllocator::try_new();
             let Ok(allocator) = allocator else { break };
+            buffer_ids.push(allocator.buffer_id());
             allocators.push(allocator);
         }
 
@@ -175,10 +208,17 @@ impl FixedSizeAllocatorPool {
             // Otherwise, discard the last allocator we got, to leave memory free for other allocations
             _ => {
                 allocators.pop();
+                buffer_ids.pop();
             }
         }
 
-        Self { allocators: Mutex::new(allocators), available: Condvar::new() }
+        let len = allocators.len();
+        Self {
+            allocators: Mutex::new(allocators),
+            available: Condvar::new(),
+            len,
+            buffer_ids: buffer_ids.into_boxed_slice(),
+        }
     }
 
     /// Retrieve an [`Allocator`] from the pool.
@@ -252,6 +292,16 @@ impl FixedSizeAllocatorPool {
         // On Windows, notify waiting threads that an allocator is available (see Windows impl of `get`)
         #[cfg(target_os = "windows")]
         self.available.notify_one();
+    }
+
+    /// Number of allocators actually created for this pool.
+    pub fn len(&self) -> usize {
+        self.len
+    }
+
+    /// Buffer ids of every allocator in this pool.
+    pub fn buffer_ids(&self) -> &[u32] {
+        &self.buffer_ids
     }
 }
 
@@ -363,7 +413,7 @@ impl FixedSizeAllocator {
     /// Try to create a new [`FixedSizeAllocator`].
     ///
     /// Returns `Err` if memory allocation fails.
-    fn try_new(id: u32) -> Result<Self, ()> {
+    fn try_new() -> Result<Self, ()> {
         // Only support little-endian systems. `Allocator::from_raw_parts` includes this same assertion.
         // This module is only compiled on 64-bit little-endian systems, so it should be impossible for
         // this panic to occur. But we want to make absolutely sure that if there's a mistake elsewhere,
@@ -378,6 +428,7 @@ impl FixedSizeAllocator {
         // Wrap `Allocator` in `ManuallyDrop` so that we can control whether it's dropped in `FixedSizeAllocator`'s
         // `Drop` impl, depending on whether the buffer is currently shared with JS.
         let allocator = Allocator::new_fixed_size().ok_or(())?;
+        let id = next_buffer_id();
         let allocator = ManuallyDrop::new(allocator);
 
         // Pointer to the start of the chunk. `data_end_ptr` is the start of the `ChunkFooter`,
@@ -425,6 +476,14 @@ impl FixedSizeAllocator {
             debug_assert!(cursor_ptr.addr().get().is_multiple_of(CURSOR_MIN_ALIGN));
             self.allocator.set_cursor_ptr(cursor_ptr);
         }
+    }
+
+    /// Process-wide buffer id stamped into this allocator by [`try_new`].
+    ///
+    /// [`try_new`]: Self::try_new
+    fn buffer_id(&self) -> u32 {
+        // SAFETY: `try_new` wrote a `FixedSizeAllocatorMetadata` for this `Allocator`.
+        unsafe { self.allocator.fixed_size_buffer_id() }
     }
 
     /// Unwrap a [`FixedSizeAllocator`] into the [`Allocator`] it contains.
@@ -505,6 +564,16 @@ pub unsafe fn free_fixed_size_allocator(metadata_ptr: NonNull<FixedSizeAllocator
 }
 
 impl Allocator {
+    /// Process-wide id stamped into this fixed-size arena.
+    ///
+    /// # SAFETY
+    /// This `Allocator` must have been created by a `FixedSizeAllocator`.
+    pub unsafe fn fixed_size_buffer_id(&self) -> u32 {
+        debug_assert!(self.is_fixed_size());
+        // SAFETY: Caller guarantees this `Allocator` was created by a `FixedSizeAllocator`.
+        unsafe { self.fixed_size_metadata_ptr().as_ref().id }
+    }
+
     /// Get pointer to the `FixedSizeAllocatorMetadata` for this [`Allocator`].
     ///
     /// # SAFETY
