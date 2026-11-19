@@ -46,6 +46,7 @@ pub trait GenExpr: GetSpan {
 impl Gen for Program<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.is_jsx = self.source_type.is_jsx();
+        p.is_typescript = self.source_type.is_typescript();
 
         // Allow for inserting comments to the top of the file.
         p.print_comments_at(0);
@@ -1914,6 +1915,7 @@ impl GenExpr for ArrowFunctionExpression<'_> {
                 type_parameters.print(p, ctx);
             }
             let remove_params_wrap = p.options.minify
+                && !ctx.contains(Context::FORBID_ARROW_PARAMS_UNWRAP)
                 && self.params.items.len() == 1
                 && self.params.rest.is_none()
                 && self.type_parameters.is_none()
@@ -2095,7 +2097,12 @@ impl GenExpr for ConditionalExpression<'_> {
             p.print_colon();
             p.print_soft_space();
             p.print_leading_comments_before_expression(&self.alternate);
-            self.alternate.print_expr(p, Precedence::Yield, ctx & Context::FORBID_IN);
+            let alternate_ctx = if p.is_typescript {
+                (ctx & Context::FORBID_IN) | Context::FORBID_ARROW_PARAMS_UNWRAP
+            } else {
+                ctx & Context::FORBID_IN
+            };
+            self.alternate.print_expr(p, Precedence::Yield, alternate_ctx);
         });
     }
 }
