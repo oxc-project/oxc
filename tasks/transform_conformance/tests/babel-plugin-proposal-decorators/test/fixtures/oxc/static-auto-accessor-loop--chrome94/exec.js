@@ -9,3 +9,12 @@ expect(classes.map((C) => C.a)).toEqual([5, 1]);
 const make = (value) => class { static accessor a = value; };
 const [A, B] = [make(1), make(2)];
 expect([A.a, B.a]).toEqual([1, 2]);
+
+// A class evaluated repeatedly in a loop header also owns its own accessor storage.
+{
+  const instances = [];
+  let i = 0;
+  let C;
+  while ((C = class { accessor x = i; }, i++ < 3)) instances.push(new C());
+  expect(instances.map((c) => c.x)).toEqual([1, 2, 3]);
+}

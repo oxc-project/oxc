@@ -222,7 +222,8 @@ impl<'a> StandardDecoratorState<'a> {
         }
         impl<'a> Visit<'a> for Finder<'_, 'a> {
             fn visit_class(&mut self, class: &Class<'a>) {
-                self.found |= self.state.class_lowering_before_entry(class).has_decorators();
+                self.found |=
+                    self.state.class_lowering_before_entry(class).handles_standard_decorators();
                 if !self.found {
                     oxc_ast_visit::walk::walk_class(self, class);
                 }
