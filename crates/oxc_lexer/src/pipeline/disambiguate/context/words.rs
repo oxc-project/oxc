@@ -301,7 +301,7 @@ impl Walk {
                 self.set_stmt_reg(StmtReg::DeclareModule);
             }
             tk!(KwNamespace | KwModule) => {
-                // A namespace body is a scope of its own, never async.
+                // A namespace body is never async: `namespace N { await / 2 }` divides.
                 self.push(FrameKind::FnHead);
                 self.value_done();
             }

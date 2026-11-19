@@ -1,3 +1,26 @@
+//! Is a position directly after a complete value?
+//!
+//! [`not_operator_position`] answers this for `carve`, to tell a regex from division,
+//! and a JSX element from less-than. Its doc comment explains the question in detail.
+//!
+//! The token before the position settles nearly every case. Reading it takes most of this file,
+//! because the token stream `carve` has built so far is not final:
+//!
+//! - Operators and numbers such as `x++`, `a?.b` and `1.5e+3` aren't formed into their final
+//!   tokens until `coalesce`, which runs later, so the bytes around a punctuator are read
+//!   directly ([`TokensView::property_name`]).
+//! - After `)`, what the parens closed decides it: `if (c) /re/` has a regex, but `f(c) / 2` has
+//!   a division ([`paren_close_is_regex`]).
+//!
+//! The cases left over are questions about the parser's state, which [`context`] answers by
+//! walking forward to the position:
+//!
+//! - After `}`, whether the braces closed a block or a value.
+//! - Whether `yield` and `await` are keywords, which depends on the enclosing functions (a
+//!   module's top level is async), and whether `of` is the keyword of a `for ... of` head.
+//! - In TypeScript, a `>` which may close type arguments, a `void` which is a type rather than
+//!   the operator, and the line breaks after which a declaration ends without a semicolon.
+
 use oxc_simd::{Cpu, cpu_multiversion};
 
 use crate::token::{OP_KIND_BASE, is_trivia_byte, matches_tk, tk};
@@ -72,6 +95,7 @@ pub fn not_operator_position(
                     // `x as void / 2` is division; `void /re/` is not.
                     return context::after(tokens, walks, qi) != After::Value;
                 }
+                // `yield /re/` in a generator is a regex; `yield / 2` outside one is division.
                 if matches_tk!(kw, KwYield | KwAwait) {
                     return context::after(tokens, walks, qi) != After::Value;
                 }
