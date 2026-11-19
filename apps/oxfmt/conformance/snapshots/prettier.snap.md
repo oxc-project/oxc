@@ -574,8 +574,9 @@
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#unclosed-at-end
 - externals/prettier/html/basics/with-colon.html (💥, 98.37%)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#prefixed-script-style
-- externals/prettier/html/prettier_ignore/unclosed2.html (💥, 80.00%)
+- externals/prettier/html/prettier_ignore/unclosed2.html (💥, 66.67%)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#unclosed-at-end
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#omitted-end-tag
 - externals/prettier/html/tags/tags.html (💥✨✨✨, 99.82%)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#script-display-none
 - externals/prettier/html/tags/tags2.html (💥💥✨✨, 97.17%)
