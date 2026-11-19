@@ -31,8 +31,14 @@
 //!
 //! ## Class replacement
 //!
-//! Oxc follows `ClassDefinitionEvaluation` in the decorators specification
+//! Oxc follows `ClassDefinitionEvaluation` in the draft specification of the decorators proposal
 //! ([tc39/ecma262#2417](https://github.com/tc39/ecma262/pull/2417), revision of 2024-02-02).
+//! The proposal moved back from Stage 3 to Stage 2.7 in May 2026
+//! ([notes](https://github.com/tc39/notes/blob/HEAD/meetings/2026-05/may-19.md)), and Test262
+//! has no semantic tests for it yet, so this text may still change. The draft's known spec bugs
+//! (tc39/proposal-decorators#568, #569, #572) do not affect the steps below; Oxc already uses the
+//! initializer order that #569 asks for.
+//!
 //! The steps below are numbered as in that revision. `F` is the original constructor and `newF`
 //! is the value returned by the last class decorator.
 //!
@@ -56,10 +62,34 @@
 //!    static private methods.
 //! 6. Class extra initializers run with `this` = `newF`.
 //!
-//! Babel (2023-11) and esbuild differ from this model in places. Babel installs static private
-//! methods on `newF`, resolves `super` through `newF`, and calls static method extra
-//! initializers with `F`; esbuild runs static field initializers against `F`. The Babel exec
-//! fixtures that depend on those choices fail in `babel_exec.snap.md` and are expected to:
+//! ### Comparison with Babel and esbuild
+//!
+//! Without semantic Test262 tests, each implementation's behaviour follows from how it lowers the
+//! class. Babel moves static elements into a wrapper class whose `super(_Class)` call returns the
+//! replacement, so its static elements are installed on, and resolve `super` through, the
+//! replacement. esbuild applies decorators in a flat sequence after the class and adds the static
+//! brand after replacing the class binding. For static elements, observed with Babel's `2023-11`
+//! version:
+//!
+//! | | field `this` | `super` | method extra initializer `this` | `newF.#m()` |
+//! |---|---|---|---|---|
+//! | Draft, Oxc | `newF` | `F`'s parent | `newF` | throws |
+//! | Babel | `newF` | `newF`'s parent | `F` | works |
+//! | esbuild | `newF` | varies by case | `newF` | works |
+//!
+//! - `super`: the draft is the only reading that works for the common
+//!   `(C) => class extends C {}` replacement. Resolving through `newF` finds `C`'s own static
+//!   methods instead of its parent's (Babel's `static x = super.who()` returns `C.who()`).
+//! - Static method extra initializers: the draft, esbuild and Oxc agree on `newF`.
+//! - Static private methods are the open question. The draft installs them on `F` but static
+//!   private fields on `newF`, so with a replacing class decorator `A.#m()` throws inside the
+//!   class body while `A.#field` works. Babel and esbuild install them on the replacement only.
+//!   No spec issue tracks this yet. Oxc keeps the draft: adding `newF` to the static brand as
+//!   well would match neither (`#m in F` stays true), and moving the brand to `newF` alone
+//!   would break static private calls from element decorators, which run before replacement.
+//!
+//! The Babel exec fixtures that depend on Babel's choices fail in `babel_exec.snap.md` and are
+//! expected to:
 //! `2023-11-classes[--to-es2015]/replacement-static-{block-super, property-super,
 //! elements-super-this, method-private-environment-super, method-private-instance-element-super,
 //! private-instance-element-access, installed-on-correct-class, decorator-initializer-this}`.
