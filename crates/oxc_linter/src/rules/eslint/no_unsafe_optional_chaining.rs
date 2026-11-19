@@ -108,6 +108,9 @@ impl NoUnsafeOptionalChaining {
                 {
                     current_id = parent_id;
                 }
+                // A cast does not make the chain safe, so the walk continues through it.
+                // A non-null assertion (`x?.y!`) is deliberately not walked through:
+                // `typescript/no-non-null-asserted-optional-chain` reports that one.
                 AstKind::TSAsExpression(expr) if expr.expression.node_id() == current_id => {
                     current_id = parent_id;
                 }
@@ -115,9 +118,6 @@ impl NoUnsafeOptionalChaining {
                     current_id = parent_id;
                 }
                 AstKind::TSTypeAssertion(expr) if expr.expression.node_id() == current_id => {
-                    current_id = parent_id;
-                }
-                AstKind::TSNonNullExpression(expr) if expr.expression.node_id() == current_id => {
                     current_id = parent_id;
                 }
                 AstKind::TSInstantiationExpression(expr)
@@ -336,6 +336,11 @@ fn test() {
         ("f?.<Q>();", None),
         ("a?.c?.b<c>", None),
         ("const baz = {...obj?.foo };", None),
+        // A non-null assertion ends the check: `typescript/no-non-null-asserted-optional-chain`
+        // reports `x?.y!` itself.
+        ("(obj?.foo)!.bar;", None),
+        ("obj?.foo!.bar;", None),
+        ("(obj?.foo)!();", None),
     ];
 
     let fail = vec![
@@ -357,6 +362,9 @@ fn test() {
         ("const s = [], t = [...obj?.foo];", None),
         ("const c = () => ([...(obj?.foo)]);", None),
         ("bar + obj?.foo;", Some(serde_json::json!([{ "disallowArithmeticOperators": true }]))),
+        // A cast does not make the chain safe.
+        ("(obj?.foo as Foo).bar;", None),
+        ("(obj?.foo satisfies Foo)();", None),
     ];
 
     Tester::new(NoUnsafeOptionalChaining::NAME, NoUnsafeOptionalChaining::PLUGIN, pass, fail)
