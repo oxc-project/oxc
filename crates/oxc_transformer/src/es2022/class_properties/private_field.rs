@@ -32,6 +32,15 @@ use super::{
 };
 
 impl<'a> ClassProperties<'a> {
+    /// Whether the class owning private name `ident` stores private fields as properties.
+    ///
+    /// Only loose mode resolves the owning class: decorated classes opt out of loose storage, but
+    /// no class opts in, so without loose mode the answer is always `false`.
+    #[inline]
+    fn private_field_is_property(&mut self, ident: &PrivateIdentifier<'a>) -> bool {
+        self.private_fields_as_properties && self.classes_stack.private_fields_as_properties(ident)
+    }
+
     /// Transform private field expression.
     ///
     /// Not loose:
@@ -121,7 +130,7 @@ impl<'a> ClassProperties<'a> {
 
             // If `object` is reference to class name, there's no need for the class brand assertion
             if let Some((class_symbol_id, object_reference_id)) = Self::shortcut_static_class(
-                is_declaration && !class_bindings.force_private_spec,
+                is_declaration && !class_bindings.no_static_class_shortcut,
                 class_bindings.name_symbol_id(),
                 &object,
                 ctx,
@@ -267,7 +276,7 @@ impl<'a> ClassProperties<'a> {
             unreachable!()
         };
 
-        if self.classes_stack.private_fields_as_properties(&field_expr.field) {
+        if self.private_field_is_property(&field_expr.field) {
             // `object.#prop(arg)` -> `_classPrivateFieldLooseBase(object, _prop)[_prop](arg)`
             call_expr.callee.get_inner_expression_mut().replace_with(|callee| {
                 let Expression::PrivateFieldExpression(field_expr) = callee else { unreachable!() };
@@ -380,7 +389,7 @@ impl<'a> ClassProperties<'a> {
             // TODO: Combine this check with `duplicate_object`. Both check if `object` is an identifier,
             // and look up the `SymbolId`
             if Self::shortcut_static_class(
-                is_declaration && !class_bindings.force_private_spec,
+                is_declaration && !class_bindings.no_static_class_shortcut,
                 class_bindings.name_symbol_id(),
                 &object,
                 ctx,
@@ -475,7 +484,7 @@ impl<'a> ClassProperties<'a> {
         let Expression::AssignmentExpression(assign_expr) = expr else { unreachable!() };
         if let AssignmentTarget::PrivateFieldExpression(field) = &assign_expr.left {
             if assign_expr.operator.to_logical_operator().is_some()
-                && !self.classes_stack.private_fields_as_properties(&field.field)
+                && !self.private_field_is_property(&field.field)
                 && ctx
                     .ancestors()
                     .take_while(|ancestor| {
@@ -979,7 +988,7 @@ impl<'a> ClassProperties<'a> {
             _ => unreachable!(),
         };
 
-        if self.classes_stack.private_fields_as_properties(&field_expr.field) {
+        if self.private_field_is_property(&field_expr.field) {
             // `object.#prop++` -> `_classPrivateFieldLooseBase(object, _prop)[_prop]++`
             update_expr.argument.replace_with(|argument| {
                 let SimpleAssignmentTarget::PrivateFieldExpression(field_expr) = argument else {
@@ -1044,7 +1053,7 @@ impl<'a> ClassProperties<'a> {
             // TODO: Combine this check with `duplicate_object`. Both check if `object` is an identifier,
             // and look up the `SymbolId`.
             let object_reference = Self::shortcut_static_class(
-                is_declaration && !class_bindings.force_private_spec,
+                is_declaration && !class_bindings.no_static_class_shortcut,
                 class_bindings.name_symbol_id(),
                 &object,
                 ctx,
@@ -1875,7 +1884,7 @@ impl<'a> ClassProperties<'a> {
         field_expr: &mut PrivateFieldExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        if self.classes_stack.private_fields_as_properties(&field_expr.field) {
+        if self.private_field_is_property(&field_expr.field) {
             // "object.#prop`xyz`" -> "_classPrivateFieldLooseBase(object, _prop)[_prop]`xyz`"
             //
             // Babel adds an additional `.bind(object)`:
@@ -2011,9 +2020,10 @@ impl<'a> ClassProperties<'a> {
         } = self.classes_stack.find_private_prop(&left);
 
         if is_static && class_bindings.decorator_static_brand.is_none() {
+            let as_properties = class_bindings.private_fields_as_properties();
             let class_binding = class_bindings.get_or_init_static_private_binding(ctx);
             let class_ident = class_binding.create_read_expression(ctx);
-            let initialized = if is_method || is_accessor || self.private_fields_as_properties {
+            let initialized = if is_method || is_accessor || as_properties {
                 None
             } else {
                 let storage = prop_binding.create_read_expression(ctx);

@@ -93,7 +93,7 @@ impl<'a> DecoratorBodyEntry<'a> {
         if !self.is_decorated() {
             return;
         }
-        bindings.force_private_spec = true;
+        bindings.no_static_class_shortcut = true;
         if private_props.values().any(|prop| prop.is_static && prop.is_method()) {
             let brand = self.create_binding("staticBrand", ctx);
             ctx.state.var_declarations.insert_let(&brand, None, &ctx.ast);

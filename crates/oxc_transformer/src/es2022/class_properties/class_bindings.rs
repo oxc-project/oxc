@@ -55,8 +55,10 @@ pub(super) struct ClassBindings<'a> {
     /// WeakSet containing the original constructor for static private method and accessor checks.
     /// A class decorator's replacement constructor does not inherit this brand.
     pub decorator_static_brand: Option<BoundIdentifier<'a>>,
-    /// Use brand-checked private storage for decorated classes, even under loose assumptions.
-    pub force_private_spec: bool,
+    /// Brand-check static private accesses through the class name too, instead of taking the
+    /// `C.#x` shortcut. Set for decorated classes: a class decorator can replace the class, so
+    /// the name may no longer refer to the original constructor.
+    pub no_static_class_shortcut: bool,
     /// Effective private-storage mode selected when the owning class is entered.
     private_fields_as_properties: bool,
     /// `ScopeId` of hoist scope outside class (which temp `var` binding would be created in)
@@ -85,7 +87,7 @@ impl<'a> ClassBindings<'a> {
             shadowed_name: None,
             brand: brand_binding,
             decorator_static_brand: None,
-            force_private_spec: false,
+            no_static_class_shortcut: false,
             private_fields_as_properties,
             outer_hoist_scope_id: outer_scope_id,
             static_private_fields_use_temp,
