@@ -3,8 +3,14 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn uppercase_prefix(span: Span, prefix: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected number literal prefix in uppercase.")
@@ -18,29 +24,65 @@ fn uppercase_exponential_notation(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-fn lowercase_hexadecimal_digits(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected hexadecimal digits in lowercase.")
-        .with_help("Use uppercase for hexadecimal digits.")
-        .with_label(span)
-}
-
-fn uppercase_prefix_and_lowercase_hexadecimal_digits(span: Span, prefix: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "Unexpected number literal prefix in uppercase and hexadecimal digits in lowercase.",
-    )
-    .with_help(format!(
-        "Use lowercase for the number literal prefix `{prefix}` and uppercase for hexadecimal digits."
-    ))
+fn wrong_case_hexadecimal_digits(span: Span, case: HexadecimalValue) -> OxcDiagnostic {
+    match case {
+        HexadecimalValue::Uppercase => {
+            OxcDiagnostic::warn("Unexpected hexadecimal digits in lowercase.")
+                .with_help("Use uppercase for hexadecimal digits.")
+        }
+        HexadecimalValue::Lowercase => {
+            OxcDiagnostic::warn("Unexpected hexadecimal digits in uppercase.")
+                .with_help("Use lowercase for hexadecimal digits.")
+        }
+    }
     .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct NumberLiteralCase;
+fn uppercase_prefix_and_wrong_case_hexadecimal_digits(
+    span: Span,
+    prefix: &str,
+    case: HexadecimalValue,
+) -> OxcDiagnostic {
+    let (message, expected_case) = match case {
+        HexadecimalValue::Uppercase => (
+            "Unexpected number literal prefix in uppercase and hexadecimal digits in lowercase.",
+            "uppercase",
+        ),
+        HexadecimalValue::Lowercase => (
+            "Unexpected number literal prefix in uppercase and hexadecimal digits in uppercase.",
+            "lowercase",
+        ),
+    };
+    OxcDiagnostic::warn(message)
+        .with_help(format!(
+            "Use lowercase for the number literal prefix `{prefix}` and {expected_case} for hexadecimal digits."
+        ))
+        .with_label(span)
+}
+
+#[derive(Debug, Default, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+enum HexadecimalValue {
+    #[default]
+    Uppercase,
+    Lowercase,
+}
+
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct NumberLiteralCase {
+    /// The case of hexadecimal digits. Prefixes and exponential notation always use lowercase.
+    hexadecimal_value: HexadecimalValue,
+}
 
 declare_oxc_lint!(
     /// ### What it does
     ///
     /// This rule enforces proper case for numeric literals.
+    /// Hexadecimal digits use uppercase by default. Set `hexadecimalValue` to
+    /// `"lowercase"` to match formatters that emit lowercase hexadecimal digits.
+    /// This option applies to both numbers and bigints; numeric prefixes and
+    /// exponential notation always use lowercase.
     ///
     /// ### Why is this bad?
     ///
@@ -80,11 +122,16 @@ declare_oxc_lint!(
     unicorn,
     style,
     fix,
+    config = NumberLiteralCase,
     version = "0.0.18",
     short_description = "This rule enforces proper case for numeric literals.",
 );
 
 impl Rule for NumberLiteralCase {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let (raw_literal, raw_span) = match node.kind() {
             AstKind::NumericLiteral(number) => (number.raw.as_ref().unwrap().as_str(), number.span),
@@ -95,14 +142,20 @@ impl Rule for NumberLiteralCase {
             _ => return,
         };
 
-        if let Some((diagnostic, fixed_literal)) = check_number_literal(raw_literal, raw_span) {
+        if let Some((diagnostic, fixed_literal)) =
+            check_number_literal(raw_literal, raw_span, self.hexadecimal_value)
+        {
             ctx.diagnostic_with_fix(diagnostic, |fixer| fixer.replace(raw_span, fixed_literal));
         }
     }
 }
 
 #[expect(clippy::cast_possible_truncation)]
-fn check_number_literal(number_literal: &str, raw_span: Span) -> Option<(OxcDiagnostic, String)> {
+fn check_number_literal(
+    number_literal: &str,
+    raw_span: Span,
+    hexadecimal_value: HexadecimalValue,
+) -> Option<(OxcDiagnostic, String)> {
     if number_literal.starts_with("0B") || number_literal.starts_with("0O") {
         return Some((
             uppercase_prefix(
@@ -114,26 +167,34 @@ fn check_number_literal(number_literal: &str, raw_span: Span) -> Option<(OxcDiag
     }
     if number_literal.starts_with("0X") || number_literal.starts_with("0x") {
         let has_uppercase_prefix = number_literal.starts_with("0X");
-        let has_lowercase_digits = number_literal[2..].chars().any(|c| ('a'..='f').contains(&c));
-        if has_uppercase_prefix && has_lowercase_digits {
-            return Some((
-                uppercase_prefix_and_lowercase_hexadecimal_digits(raw_span, "0x"),
-                "0x".to_owned() + &digits_to_uppercase(&number_literal[2..]),
-            ));
+        let has_wrong_case_digits =
+            number_literal[2..].bytes().any(|digit| match hexadecimal_value {
+                HexadecimalValue::Uppercase => (b'a'..=b'f').contains(&digit),
+                HexadecimalValue::Lowercase => (b'A'..=b'F').contains(&digit),
+            });
+        if !has_uppercase_prefix && !has_wrong_case_digits {
+            return None;
         }
-        if has_uppercase_prefix {
-            return Some((
-                uppercase_prefix(Span::new(raw_span.start + 1, raw_span.start + 2), "0x"),
-                "0x".to_owned() + &number_literal[2..],
-            ));
+        let diagnostic = if has_uppercase_prefix && has_wrong_case_digits {
+            uppercase_prefix_and_wrong_case_hexadecimal_digits(raw_span, "0x", hexadecimal_value)
+        } else if has_uppercase_prefix {
+            uppercase_prefix(Span::new(raw_span.start + 1, raw_span.start + 2), "0x")
+        } else {
+            wrong_case_hexadecimal_digits(
+                Span::new(raw_span.start + 2, raw_span.end),
+                hexadecimal_value,
+            )
+        };
+        let mut fixed_literal = number_literal.to_owned();
+        fixed_literal[1..2].make_ascii_lowercase();
+        if has_wrong_case_digits {
+            let digits_end = number_literal.len() - usize::from(number_literal.ends_with('n'));
+            match hexadecimal_value {
+                HexadecimalValue::Uppercase => fixed_literal[2..digits_end].make_ascii_uppercase(),
+                HexadecimalValue::Lowercase => fixed_literal[2..digits_end].make_ascii_lowercase(),
+            }
         }
-        if has_lowercase_digits {
-            return Some((
-                lowercase_hexadecimal_digits(Span::new(raw_span.start + 2, raw_span.end)),
-                "0x".to_owned() + &digits_to_uppercase(&number_literal[2..]),
-            ));
-        }
-        return None;
+        return Some((diagnostic, fixed_literal));
     }
     if let Some(index) = number_literal.find('E') {
         let char_position = raw_span.start + index as u32;
@@ -143,15 +204,6 @@ fn check_number_literal(number_literal: &str, raw_span: Span) -> Option<(OxcDiag
         ));
     }
     None
-}
-
-fn digits_to_uppercase(digits: &str) -> String {
-    let mut result = digits.cow_to_ascii_uppercase().into_owned();
-    if result.ends_with('N') {
-        result.truncate(result.len() - 1);
-        result.push('n');
-    }
-    result
 }
 
 #[test]
@@ -250,6 +302,38 @@ fn test() {
     ];
 
     Tester::new(NumberLiteralCase::NAME, NumberLiteralCase::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_lowercase_hexadecimal_value() {
+    use crate::tester::Tester;
+
+    let config = Some(serde_json::json!([{ "hexadecimalValue": "lowercase" }]));
+    let pass = vec![
+        ("const foo = 0xabcdef", config.clone()),
+        ("const foo = 0xdead_beefn", config.clone()),
+        ("const foo = 0x0123n", config.clone()),
+        ("const foo = 0b1010n", config.clone()),
+        ("const foo = 0o76", config.clone()),
+        ("const foo = 1.2e+3", config.clone()),
+    ];
+    let fail = vec![
+        ("const foo = 0xABCDEF", config.clone()),
+        ("const foo = 0Xabcdef", config.clone()),
+        ("const foo = 0XaBcD_EFn", config.clone()),
+    ];
+    let fix = vec![
+        ("const foo = 0xABCDEF", "const foo = 0xabcdef", config.clone()),
+        ("const foo = 0Xabcdef", "const foo = 0xabcdef", config.clone()),
+        ("const foo = 0XaBcD_EFn", "const foo = 0xabcd_efn", config.clone()),
+        ("const foo = 0B10n", "const foo = 0b10n", config.clone()),
+        ("const foo = 0O76", "const foo = 0o76", config.clone()),
+        ("const foo = 1.2E+3", "const foo = 1.2e+3", config),
+    ];
+    Tester::new(NumberLiteralCase::NAME, NumberLiteralCase::PLUGIN, pass, fail)
+        .with_snapshot_suffix("lowercase_hexadecimal_value")
         .expect_fix(fix)
         .test_and_snapshot();
 }
