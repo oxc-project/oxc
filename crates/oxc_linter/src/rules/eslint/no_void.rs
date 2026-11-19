@@ -52,7 +52,7 @@ declare_oxc_lint!(
     NoVoid,
     eslint,
     restriction,
-    suggestion,
+    conditional_suggestion,
     config = NoVoid,
     version = "0.2.5",
     short_description = "Disallows the use of the `void` operator.",
@@ -76,9 +76,13 @@ impl Rule for NoVoid {
         }
 
         if unary_expr.operator.is_void() {
-            ctx.diagnostic_with_suggestion(no_void_diagnostic(unary_expr.span), |fixer| {
-                fixer.replace(unary_expr.span, "undefined")
-            });
+            if unary_expr.argument.without_parentheses().is_literal() {
+                ctx.diagnostic_with_suggestion(no_void_diagnostic(unary_expr.span), |fixer| {
+                    fixer.replace(unary_expr.span, "undefined")
+                });
+            } else {
+                ctx.diagnostic(no_void_diagnostic(unary_expr.span));
+            }
         }
     }
 }
@@ -117,6 +121,10 @@ fn test() {
             "var foo = undefined",
             Some(serde_json::json!([{ "allowAsStatement": true }])),
         ),
+        ("void foo()", "void foo()", None),
+        ("var foo = void bar()", "var foo = void bar()", None),
+        ("void (a = 1)", "void (a = 1)", None),
+        ("void foo", "void foo", None),
     ];
 
     Tester::new(NoVoid::NAME, NoVoid::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
