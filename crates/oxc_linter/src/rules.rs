@@ -762,6 +762,7 @@ pub(crate) mod oxc {
     pub mod no_async_endpoint_handlers;
     pub mod no_barrel_file;
     pub mod no_const_enum;
+    pub mod no_export_then;
     pub mod no_map_spread;
     pub mod no_optional_chaining;
     pub mod no_rest_spread_properties;

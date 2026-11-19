@@ -351,6 +351,7 @@ oxc/no-async-await                                      |  16812
 oxc/no-async-endpoint-handlers                          |  62606
 oxc/no-barrel-file                                      |      7
 oxc/no-const-enum                                       |     23
+oxc/no-export-then                                      |     68
 oxc/no-map-spread                                       |  62606
 oxc/no-optional-chaining                                |    792
 oxc/no-rest-spread-properties                           |    564
