@@ -379,6 +379,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.state.cover_parenthesized.truncate(cover_parenthesized_len);
     }
 
+    /// Rewind to `checkpoint`, keeping the comments and irregular whitespace lexed after it.
+    /// Only for when the source after `checkpoint` is not all lexed again.
+    pub(crate) fn rewind_keeping_trivia(&mut self, mut checkpoint: ParserCheckpoint<'a>) {
+        self.lexer.keep_trivia(&mut checkpoint.lexer);
+        self.rewind(checkpoint);
+    }
+
     pub(crate) fn lookahead<U>(&mut self, predicate: impl Fn(&mut ParserImpl<'a, C>) -> U) -> U {
         let checkpoint = self.checkpoint();
         let answer = predicate(self);

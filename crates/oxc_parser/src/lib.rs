@@ -837,7 +837,8 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             self,
         );
         for (stmt_index, checkpoint) in checkpoints {
-            self.rewind(checkpoint);
+            // Only the statement is parsed again, so trivia after it is not lexed again.
+            self.rewind_keeping_trivia(checkpoint);
             let replacement_start = replacements.len();
 
             if self.lexer.config.tokens() {

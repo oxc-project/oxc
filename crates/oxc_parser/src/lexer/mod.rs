@@ -50,14 +50,14 @@ pub use token::Token;
 
 use source::{Source, SourcePosition};
 use token::PendingToken;
-use trivia_builder::{AnnotationComments, TriviaBuilder};
+use trivia_builder::{TriviaBuilder, TriviaCheckpoint};
 
 #[derive(Debug, Clone, Copy)]
 pub struct LexerCheckpoint<'a> {
     source_position: SourcePosition<'a>,
     errors_len: usize,
     tokens_len: usize,
-    annotation_comments: AnnotationComments,
+    trivia: TriviaCheckpoint,
 }
 
 impl LexerCheckpoint<'_> {
@@ -227,7 +227,7 @@ impl<'a, C: Config> Lexer<'a, C> {
             source_position: self.source.position(),
             errors_len: self.errors.len(),
             tokens_len: self.tokens.len(),
-            annotation_comments: self.trivia_builder.annotation_comments,
+            trivia: self.trivia_builder.checkpoint(),
         }
     }
 
@@ -240,7 +240,12 @@ impl<'a, C: Config> Lexer<'a, C> {
 
         self.tokens.truncate(checkpoint.tokens_len);
         self.source.set_position(checkpoint.source_position);
-        self.trivia_builder.annotation_comments = checkpoint.annotation_comments;
+        self.trivia_builder.rewind(checkpoint.trivia);
+    }
+
+    /// Make rewinding to `checkpoint` keep the comments and irregular whitespace lexed after it.
+    pub(crate) fn keep_trivia(&self, checkpoint: &mut LexerCheckpoint<'a>) {
+        self.trivia_builder.keep_trivia(&mut checkpoint.trivia);
     }
 
     pub fn peek_token(&mut self) -> Token {

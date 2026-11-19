@@ -49,15 +49,24 @@ impl<'a> Comments<'a> {
     fn push(&mut self, comment: Comment) {
         debug_assert!(!self.is_seen(comment.span.start));
         self.starts_end = comment.span.start + 1;
-        if self.len < self.inline.len() {
+        if self.vec.is_empty() && self.len < self.inline.len() {
             self.inline[self.len] = comment;
         } else {
-            if self.len == self.inline.len() {
+            if self.vec.is_empty() {
                 self.move_inline_to_vec();
             }
             self.vec.push(comment);
         }
         self.len += 1;
+    }
+
+    /// Discard comments after the first `len`.
+    fn truncate(&mut self, len: usize) {
+        if len < self.len {
+            self.len = len;
+            self.vec.truncate(len);
+            self.starts_end = self.last().map_or(0, |comment| comment.span.start + 1);
+        }
     }
 
     /// Move the comments to arena storage, once there are too many to store inline.
@@ -116,7 +125,16 @@ pub struct TriviaBuilder<'a> {
     previous_token: Token,
 
     /// Annotation ranges preceding the current token, also saved by lexer checkpoints.
-    pub(super) annotation_comments: AnnotationComments,
+    annotation_comments: AnnotationComments,
+}
+
+/// Trivia state saved by lexer checkpoints.
+#[derive(Clone, Copy, Debug)]
+pub(super) struct TriviaCheckpoint {
+    comments_len: usize,
+    irregular_whitespaces_len: usize,
+    previous_token: Token,
+    annotation_comments: AnnotationComments,
 }
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -140,6 +158,31 @@ impl<'a> TriviaBuilder<'a> {
             previous_token,
             annotation_comments: AnnotationComments::default(),
         }
+    }
+
+    pub(super) fn checkpoint(&self) -> TriviaCheckpoint {
+        TriviaCheckpoint {
+            comments_len: self.comments.len(),
+            irregular_whitespaces_len: self.irregular_whitespaces.len(),
+            previous_token: self.previous_token,
+            annotation_comments: self.annotation_comments,
+        }
+    }
+
+    /// Discard trivia lexed after `checkpoint`. It is lexed again, maybe differently:
+    /// a speculative parse can lex JSX text as a comment.
+    pub(super) fn rewind(&mut self, checkpoint: TriviaCheckpoint) {
+        self.comments.truncate(checkpoint.comments_len);
+        self.irregular_whitespaces.truncate(checkpoint.irregular_whitespaces_len);
+        self.processed = self.comments.len();
+        self.previous_token = checkpoint.previous_token;
+        self.annotation_comments = checkpoint.annotation_comments;
+    }
+
+    /// Make rewinding to `checkpoint` keep the trivia lexed after it.
+    pub(super) fn keep_trivia(&self, checkpoint: &mut TriviaCheckpoint) {
+        checkpoint.comments_len = self.comments.len();
+        checkpoint.irregular_whitespaces_len = self.irregular_whitespaces.len();
     }
 
     pub fn previous_token_pure_comments(&self) -> Option<(u32, NonZeroU32)> {
@@ -172,8 +215,8 @@ impl<'a> TriviaBuilder<'a> {
 
     pub fn add_irregular_whitespace(&mut self, start: u32, end: u32) {
         // The irregular whitespaces array is ordered; only add if not added before, to avoid
-        // duplicates when the parser looks ahead (e.g. `peek_token`) and rewinds, then re-lexes the
-        // same whitespace. Same approach as `add_comment`.
+        // duplicates when the parser rewinds keeping trivia, then re-lexes the same whitespace.
+        // Same approach as comments.
         if let Some(last) = self.irregular_whitespaces.last()
             && start <= last.start
         {
