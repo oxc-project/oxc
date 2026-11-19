@@ -292,8 +292,15 @@ for (const mode of ["commonjs", "esm", "coverage"]) {
     assert.equal(initial.get, array.p[5].get);
     assert.equal(initial.set, array.p[5].set);
     assert.equal(initial.enumerable, false);
-    assert.equal(Object.hasOwn(C.prototype, "method"), false);
-    assert.equal(Object.getOwnPropertySymbols(C).length, 0);
+    // The first element of each name reserves its position, as an undecorated method would be
+    // defined by the class body. Later elements of the same name replace it in place.
+    assert.equal(Object.getOwnPropertyDescriptor(C.prototype, "method").value, array.p[0].value);
+    assert.deepEqual(Object.getOwnPropertyNames(C.prototype), [
+      "constructor",
+      "method",
+      "accessor",
+    ]);
+    assert.deepEqual(Object.getOwnPropertySymbols(C), [name]);
     assert.equal(Object.getOwnPropertySymbols(C.prototype).length, 0);
     const seen = [];
     const decorators = [

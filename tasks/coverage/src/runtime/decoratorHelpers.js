@@ -251,10 +251,16 @@
           if ((flags & 7) === 3) delete desc.get;
           return desc;
         });
-        // Public auto-accessors expose their raw pair before nonfield decorators run.
+        // Define each public name in source order, so the decorated definitions that replace them
+        // keep the class's property order. Public auto-accessors also expose their raw pair before
+        // nonfield decorators run. Later elements with the same name are defined by
+        // `decorateElement`, after the earlier ones, as class definition evaluation would.
         for (var i = 0; i < elements.length; i++) {
-          var element = elements[i];
-          if ((element[0] & 7) === 4)
+          var element = elements[i],
+            first = true;
+          for (var j = 0; j < i && first; j++)
+            first = (elements[j][0] & 8) !== (element[0] & 8) || elements[j][1] !== element[1];
+          if (first || (element[0] & 7) === 4)
             Object.defineProperty(
               element[0] & 8 ? target : target.prototype,
               element[1],
