@@ -16678,7 +16678,7 @@
           "default": 4294967295,
           "type": "integer",
           "format": "uint32",
-          "minimum": 0.0,
+          "minimum": 1.0,
           "markdownDescription": "The size a group of digits in the fractional part (after the decimal point) should be."
         },
         "groupLength": {
@@ -16686,7 +16686,7 @@
           "default": 3,
           "type": "integer",
           "format": "uint32",
-          "minimum": 0.0,
+          "minimum": 1.0,
           "markdownDescription": "The number of digits per group when inserting numeric separators.\nFor example, a `groupLength` of 3 formats `1234567` as `1_234_567`."
         },
         "minimumDigits": {
@@ -16721,7 +16721,7 @@
               "default": 4,
               "type": "integer",
               "format": "uint32",
-              "minimum": 0.0,
+              "minimum": 1.0,
               "markdownDescription": "The number of digits per group when inserting numeric separators.\nFor example, a `groupLength` of 3 formats `1234567` as `1_234_567`."
             },
             "minimumDigits": {
@@ -16754,7 +16754,7 @@
               "default": 2,
               "type": "integer",
               "format": "uint32",
-              "minimum": 0.0,
+              "minimum": 1.0,
               "markdownDescription": "The number of digits per group when inserting numeric separators.\nFor example, a `groupLength` of 3 formats `1234567` as `1_234_567`."
             },
             "minimumDigits": {
@@ -16796,7 +16796,7 @@
               "default": 4,
               "type": "integer",
               "format": "uint32",
-              "minimum": 0.0,
+              "minimum": 1.0,
               "markdownDescription": "The number of digits per group when inserting numeric separators.\nFor example, a `groupLength` of 3 formats `1234567` as `1_234_567`."
             },
             "minimumDigits": {
