@@ -17,8 +17,8 @@ use oxc_diagnostics::{
 };
 use oxc_linter::{
     AllowWarnDeny, ConfigBuilderError, ConfigStore, ExternalLinter, ExternalPluginStore,
-    InvalidFilterKind, LintFilter, LintOptions, LintRunner, LintServiceOptions, Linter,
-    OxlintSuppressionFileAction, RuleTimingStore, SuppressionManager,
+    InvalidFilterKind, LintFilter, LintOptions, LintRunError, LintRunner, LintServiceOptions,
+    Linter, OxlintSuppressionFileAction, RuleTimingStore, SuppressionManager,
 };
 
 #[cfg(feature = "napi")]
@@ -26,7 +26,8 @@ use crate::js_config::JsConfigLoaderCb;
 use crate::{
     cli::{CliRunResult, DebugOption, LintCommand, MiscOptions, WarningOptions},
     config_loader::{
-        CliConfigLoadError, ConfigLoadError, ConfigLoader, LoadedConfigs, config_discovery,
+        CliConfigLoadError, ConfigLoadError, ConfigLoader, LoadedConfigs, RunOverrides,
+        config_discovery, config_display_path,
     },
     output_formatter::{LintCommandInfo, OutputFormatter},
     walk::Walk,
@@ -248,8 +249,16 @@ impl CliRunner {
             !self.options.list_rules &&
             config_discovery().nested_configs();
 
+        // `--type-aware` / `--type-check-only` apply type-aware linting to every file, whereas
+        // `options.typeAware` in a config only applies to the files that config governs.
+        let type_aware_forced = config_options.type_aware == Some(true);
+        let type_check_flag = config_options.type_check == Some(true);
+        let type_check_only = self.options.type_check_only;
+        let run_overrides = RunOverrides::for_cli(type_aware_forced, type_check_flag);
+
         let mut config_loader =
-            ConfigLoader::new(external_linter, &mut external_plugin_store, &filters, None);
+            ConfigLoader::new(external_linter, &mut external_plugin_store, &filters, None)
+                .with_run_overrides(run_overrides);
         #[cfg(feature = "napi")]
         {
             config_loader = config_loader.with_js_config_loader(self.js_config_loader.as_ref());
@@ -267,6 +276,8 @@ impl CliRunner {
             root_builder: config_builder,
             nested: nested_configs,
             nested_ignore_patterns,
+            // Problems which did not stop the load.
+            warnings: mut config_warnings,
         } = match config_result {
             Ok(loaded) => loaded,
             Err(error) => {
@@ -328,6 +339,8 @@ impl CliRunner {
             }
         };
 
+        // What the root config declares, before the CLI options are merged into it.
+        let declared_type_check = config_builder.type_check();
         let lint_config =
             match config_builder.with_options(&config_options).build(&mut external_plugin_store) {
                 Ok(config) => config,
@@ -373,15 +386,38 @@ impl CliRunner {
         let use_cross_module = lint_config.plugins().has_import()
             || nested_configs.values().any(|config| config.plugins().has_import());
 
+        // The loader prepares the root builder; it is built above, once the CLI options are
+        // applied, so the warnings which need the root config, or the whole set of configs, are
+        // found now. The root's `typeCheck` is the declared one, not the one `--type-check`
+        // merged into it.
+        config_warnings.extend(ConfigLoader::finish_load(
+            &lint_config,
+            declared_type_check,
+            &nested_configs,
+            Some(&self.cwd),
+            run_overrides,
+        ));
+
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
-        let type_check_only = self.options.type_check_only;
-        let type_aware = config_store.type_aware_enabled();
-        let type_check = config_store.type_check_enabled();
+        let type_aware = type_aware_forced || config_store.type_aware_enabled();
+        // `--type-check` / `--type-check-only` type-check every file, whereas `options.typeCheck`
+        // in a config only type-checks the files that config governs.
+        let type_check = type_check_flag || config_store.type_check_enabled();
+
+        // Type checking without type-aware linting anywhere type-checks nothing, and is fatal.
+        // Once some config, or a flag, enables type-aware linting, a config which sets
+        // `options.typeCheck` without `options.typeAware` is only a warning, since the run still
+        // lints and type-checks the rest.
         if type_check && !type_aware {
-            print_and_flush_stdout(
-                stdout,
-                "The `--type-check` option requires type-aware linting.\nUse `--type-aware --type-check` or enable `options.typeAware` in your config.\n",
-            );
+            let message = if type_check_flag {
+                "The `--type-check` option requires type-aware linting.\nUse `--type-aware --type-check` or enable `options.typeAware` in your config.\n".to_string()
+            } else {
+                type_check_without_type_aware_message(
+                    &config_store.type_check_config_paths(),
+                    &self.cwd,
+                )
+            };
+            print_and_flush_stdout(stdout, &message);
             return CliRunResult::InvalidOptionTypeCheckWithoutTypeAware;
         }
         if type_check_only && fix_options.is_enabled() {
@@ -424,16 +460,25 @@ impl CliRunner {
         let deny_warnings = config_store.deny_warnings();
         let max_warnings = config_store.max_warnings();
 
-        // Only propagate Warn/Deny; treat Allow (off) as disabling reports.
-        let report_unused_directives = config_store
-            .report_unused_disable_directives()
-            .filter(|severity| severity.is_warn_deny());
+        // The CLI flag overrides the config. `Some(AllowWarnDeny::Allow)` means "explicitly off",
+        // `None` means "not set on the CLI", in which case the config which governs each file
+        // decides (see `LintRunner::report_unused_directive_for`).
+        let report_unused_directives = config_options.report_unused_disable_directives;
         let (mut diagnostic_service, tx_error) = Self::get_diagnostic_service(
             &output_formatter,
             &warning_options,
             &misc_options,
             max_warnings,
         );
+
+        // Non-fatal config problems, reported before the files' diagnostics, by the formats which
+        // can carry a problem that is not about a linted file. Whether a config which names
+        // type-aware rules without enabling `options.typeAware` is reported depends on
+        // `type_aware_forced`. They do not count towards `--deny-warnings` or `--max-warnings`.
+        if !config_warnings.is_empty() && output_formatter.reports_config_warnings() {
+            let warnings = config_warnings.into_iter().map(Into::into).collect();
+            diagnostic_service.report_uncounted(warnings, stdout);
+        }
 
         // Send JS plugins config to JS side
         if let Some(external_linter) = &external_linter {
@@ -490,10 +535,10 @@ impl CliRunner {
 
         let cwd = options.cwd().to_path_buf();
 
-        // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
         let lint_runner = match LintRunner::builder(options, linter)
             .with_type_aware(type_aware)
-            .with_type_check(type_check)
+            .with_type_aware_forced(type_aware_forced)
+            .with_type_check_override(type_check_flag.then_some(true))
             .with_silent(misc_options.silent)
             .with_fix_kind(fix_options.fix_kind())
             .with_type_check_only(type_check_only)
@@ -516,10 +561,12 @@ impl CliRunner {
         // of the run time, with all the lint threads idle.
         // The diagnostics are rendered into a buffer, and the buffer is written to `stdout` only
         // after linting finishes. So output that JS plugins or `tsgolint` print during linting
-        // does not appear between the diagnostics, and a `tsgolint` failure prints only its error.
+        // does not appear between the diagnostics, and a failure to plan type-aware linting
+        // prints only its error.
         let (lint_result, diagnostic_result, rendered) = std::thread::scope(|scope| {
             let lint_thread = scope.spawn(|| -> Result<_, String> {
-                let lint_result = if let Some(rule_timing_store) = &rule_timing_store {
+                let (lint_runner, lint_result) = if let Some(rule_timing_store) = &rule_timing_store
+                {
                     lint_runner.lint_files::<true>(
                         &files_to_lint,
                         tx_error.clone(),
@@ -534,13 +581,29 @@ impl CliRunner {
                         None,
                     )
                 };
-                let lint_runner = lint_result?;
-                lint_runner.report_unused_directives(report_unused_directives, &tx_error);
+
+                let mut type_aware_failed = false;
+                match lint_result {
+                    Ok(()) => lint_runner.report_unused_directives(&tx_error),
+                    Err(LintRunError::Planning(err)) => {
+                        // Nothing was linted, so there is nothing to render it alongside and no
+                        // run to summarize. Printing an all-clear count here would be incorrect.
+                        return Err(err);
+                    }
+                    Err(LintRunError::Running(_)) => {
+                        // The regular pass ran, so its unused directives are still valid. The
+                        // failure itself was already reported as a diagnostic on the file it
+                        // concerns, by the code which knew which files those were.
+                        lint_runner.report_unused_directives(&tx_error);
+                        type_aware_failed = true;
+                    }
+                }
 
                 // A suppression file can contain regular lint rules that were not run in
                 // type-check-only mode, so its runtime diff is incomplete and cannot be used to
                 // validate the baseline.
-                let result = if type_check_only {
+                // The same is true when type-aware linting failed part way through.
+                let result = if type_check_only || type_aware_failed {
                     Ok(())
                 } else {
                     suppression_manager.finalize(diff_manager, &tx_error, &cwd)
@@ -548,7 +611,7 @@ impl CliRunner {
 
                 // Close the channel, so that `diagnostic_service.run` returns.
                 drop(tx_error);
-                Ok(result)
+                Ok((result, type_aware_failed))
             });
 
             let mut rendered = Vec::new();
@@ -558,8 +621,8 @@ impl CliRunner {
             (lint_result, diagnostic_result, rendered)
         });
 
-        let result = match lint_result {
-            Ok(result) => result,
+        let (result, type_aware_failed) = match lint_result {
+            Ok(outcome) => outcome,
             Err(err) => {
                 print_and_flush_stdout(stdout, &format!("{err}\n"));
                 return CliRunResult::TsGoLintError;
@@ -594,6 +657,11 @@ impl CliRunner {
             }),
         }) {
             print_and_flush_stdout(stdout, &end);
+        }
+
+        // Every diagnostic has been emitted, including the failure itself.
+        if type_aware_failed {
+            return CliRunResult::TsGoLintError;
         }
 
         // When --suppress-all is used and the file was written successfully,
@@ -719,6 +787,29 @@ impl CliRunner {
 
         Ok(filters)
     }
+}
+
+/// The error when configs, and no flag, ask for type checking without type-aware linting.
+///
+/// A nested config may be far from the working directory, so the configs are named, unless none
+/// of them has a file.
+fn type_check_without_type_aware_message(config_paths: &[Option<&Path>], cwd: &Path) -> String {
+    if config_paths.iter().all(Option::is_none) {
+        return "The `options.typeCheck` option requires type-aware linting.\nEnable `options.typeAware` in your config, or pass `--type-aware`.\n".to_string();
+    }
+    let configs = config_paths
+        .iter()
+        .map(|path| {
+            path.map_or_else(
+                || "a config without a file".to_string(),
+                |path| config_display_path(path, Some(cwd)),
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(", ");
+    format!(
+        "The `options.typeCheck` option requires type-aware linting, but no config enables `options.typeAware`.\n`options.typeCheck` is set in: {configs}\nEnable `options.typeAware` in those configs, or pass `--type-aware`.\n"
+    )
 }
 
 pub fn print_and_flush_stdout(stdout: &mut dyn Write, message: &str) {
@@ -2202,10 +2293,181 @@ mod test {
         Tester::new().with_cwd("fixtures/cli/tsgolint".into()).test_and_snapshot(args);
     }
 
+    /// `reportUnusedDisableDirectives` is resolved per file, so a package can turn it on without
+    /// the rest of the monorepo reporting unused directives, and a package which leaves it unset
+    /// does not inherit the value of the root config.
+    #[test]
+    fn test_nested_config_report_unused_directives() {
+        Tester::new()
+            .with_cwd("fixtures/cli/nested_report_unused_directives".into())
+            .test_and_snapshot(&[]);
+    }
+
+    /// `options.respectEslintDisableDirectives` of a nested config only applies to the files it
+    /// governs: `pkg` reports the `debugger` its `eslint-disable` comment would hide, the root
+    /// keeps respecting it.
+    #[test]
+    fn test_nested_config_respect_eslint_disable_directives() {
+        Tester::new()
+            .with_cwd("fixtures/cli/nested_respect_eslint_disable_directives".into())
+            .test_and_snapshot(&[]);
+    }
+
+    /// `denyWarnings` and `maxWarnings` decide the process exit code, so they stay root-only.
+    /// A nested config which sets one of them gets a warning and keeps working, instead of being
+    /// dropped entirely. See <https://github.com/oxc-project/oxc/issues/19937>.
+    #[test]
+    fn test_nested_config_root_only_option_warns() {
+        Tester::new()
+            .with_cwd("fixtures/cli/nested_root_only_option".into())
+            .test_and_snapshot(&[]);
+    }
+
+    /// The formats with a shape for a problem which is not about a linted file report the nested
+    /// config warning there, the others leave it out: `github` prints it, `unix` does not.
+    #[test]
+    fn test_nested_config_root_only_option_warning_formats() {
+        let tester = Tester::new().with_cwd("fixtures/cli/nested_root_only_option".into());
+        tester.test_and_snapshot(&["--format=github"]);
+        tester.test_and_snapshot(&["--format=unix"]);
+    }
+
+    /// The configs which ask for type checking are named, except when none of them has a file.
+    #[test]
+    fn test_type_check_without_type_aware_message() {
+        let cwd = std::path::Path::new("/root");
+        let nested = std::path::Path::new("/root/packages/app/.oxlintrc.json");
+
+        let message = super::type_check_without_type_aware_message(&[None], cwd);
+        assert!(!message.contains("is set in"), "{message}");
+        assert!(message.contains("Enable `options.typeAware` in your config"), "{message}");
+
+        let message = super::type_check_without_type_aware_message(&[Some(nested)], cwd);
+        assert!(message.contains("is set in: packages/app/.oxlintrc.json\n"), "{message}");
+
+        let message = super::type_check_without_type_aware_message(&[None, Some(nested)], cwd);
+        assert!(
+            message.contains("is set in: a config without a file, packages/app/.oxlintrc.json\n"),
+            "{message}"
+        );
+    }
+
+    /// A nested `typeCheck` with no config enabling `typeAware` stops the run, and the message
+    /// names the config which asked for it.
+    #[test]
+    fn test_nested_config_type_check_without_type_aware() {
+        Tester::new()
+            .with_cwd("fixtures/cli/nested_type_check_without_type_aware".into())
+            .test_and_snapshot(&[]);
+    }
+
+    /// A nested `typeCheck` only type-checks the files its config governs, so it is not warned
+    /// about, with or without `--type-check`.
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_nested_config_type_check() {
+        Tester::new()
+            .with_cwd("fixtures/cli/tsgolint_nested_type_check".into())
+            .test_and_snapshot_multiple(&[&[], &["--type-check"]]);
+    }
+
+    /// A run which stops on a fatal error reports no config warning: the nested `denyWarnings`
+    /// here is dropped along with the run, which fails on `--type-check` without type-aware
+    /// linting.
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_nested_config_warnings_are_dropped_on_fatal_type_check() {
+        Tester::new()
+            .with_cwd("fixtures/cli/nested_root_only_option".into())
+            .test_and_snapshot(&["--type-check"]);
+    }
+
+    /// `--quiet` hides warnings, including the ones about nested configs.
+    #[test]
+    fn test_nested_config_root_only_option_warning_quiet() {
+        Tester::new()
+            .with_cwd("fixtures/cli/nested_root_only_option".into())
+            .test_and_snapshot(&["--quiet"]);
+    }
+
+    /// `options.typeAware` in a nested config only enables type-aware linting for the files that
+    /// config governs. `packages/plain` enables the same rule without `typeAware`, and must not
+    /// report it. See <https://github.com/oxc-project/oxc/issues/19937>.
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_nested_config_type_aware() {
+        Tester::new()
+            .with_cwd("fixtures/cli/tsgolint_nested_type_aware".into())
+            .test_and_snapshot(&[]);
+    }
+
+    /// `options` is not inherited from the root config, so `extends` is how a package picks up a
+    /// shared `typeAware`. End-to-end check of the recommended monorepo pattern.
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_nested_config_type_aware_from_extends() {
+        Tester::new()
+            .with_cwd("fixtures/cli/tsgolint_nested_type_aware_extends".into())
+            .test_and_snapshot(&[]);
+    }
+
+    /// `--type-aware` applies to every file, including the packages whose config does not enable
+    /// it.
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_nested_config_type_aware_forced_by_cli_flag() {
+        Tester::new()
+            .with_cwd("fixtures/cli/tsgolint_nested_type_aware".into())
+            .test_and_snapshot(&["--type-aware"]);
+    }
+
     #[test]
     #[cfg(not(target_endian = "big"))]
     fn test_tsgolint_type_error() {
         let args = &["--type-aware", "--type-check"];
+        Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into()).test_and_snapshot(args);
+    }
+
+    /// `options.typeCheck` is never inherited, so a root config which enables it leaves every
+    /// type-aware package which does not set it un-type-checked, which is warned about once per
+    /// package. Only `index.ts` (governed by the root config, which type-checks) has a type
+    /// error, so one file carries a diagnostic and the warning stands alone: whether the
+    /// installed `tsgolint` honours the per-config `type_check` field for `packages/app` is
+    /// covered by the payload tests in `oxc_linter::tsgolint`.
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_root_type_check_warns_about_nested_configs_without_it() {
+        Tester::new()
+            .with_cwd("fixtures/cli/tsgolint_root_type_check".into())
+            .test_and_snapshot(&[]);
+    }
+
+    /// A nested `typeCheck` with no `typeAware` of its own type-checks nothing. That stops the run
+    /// only when no config enables `typeAware`: here the root config does, so it is a warning.
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_nested_config_type_check_without_type_aware_in_type_aware_run() {
+        Tester::new()
+            .with_cwd("fixtures/cli/nested_type_check_with_type_aware_root".into())
+            .test_and_snapshot(&[]);
+    }
+
+    /// `--type-check` is merged into the root config, which sets nothing itself: the root is not
+    /// reported as setting `typeCheck` without `typeAware`.
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_type_check_flag_does_not_warn_about_a_root_which_sets_nothing() {
+        Tester::new()
+            .with_cwd("fixtures/cli/nested_type_aware_type_check_flag".into())
+            .test_and_snapshot(&["--type-check"]);
+    }
+
+    /// `--type-check` on top of a config which sets `typeCheck` without `typeAware`: the fatal
+    /// message is the flag's, and the only one printed.
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_config_type_check_without_type_aware_and_flag_is_fatal() {
+        let args = &["--type-check", "-c", "config-type-check-without-type-aware.json"];
         Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into()).test_and_snapshot(args);
     }
 
@@ -2225,6 +2487,15 @@ mod test {
                 &["--type-check-only", "index.ts"],
                 &["--type-check-only", "type-error.ts"],
             ]);
+    }
+
+    /// `--type-check-only` type-checks every file, whatever `options.typeCheck` says: the config
+    /// here enables `typeAware` and turns `typeCheck` off.
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_only_overrides_config_type_check() {
+        let args = &["--type-check-only", "-c", "config-type-check-false.json"];
+        Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into()).test_and_snapshot(args);
     }
 
     #[test]
@@ -2476,7 +2747,8 @@ mod test {
     #[cfg(all(not(target_os = "windows"), not(target_endian = "big")))]
     fn test_tsgolint_failure() {
         // The fixture has a fake `tsgolint` that exits with an error.
-        // Only the error is printed; diagnostics from regular linting are not.
+        // The failure is reported on the file it concerns, next to the diagnostics from regular
+        // linting, and the run ends with `TsGoLintError`.
         let args = &["--type-aware"];
         Tester::new().with_cwd("fixtures/cli/tsgolint_failure".into()).test_and_snapshot(args);
     }

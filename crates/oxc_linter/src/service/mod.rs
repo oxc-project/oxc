@@ -82,6 +82,10 @@ impl LintService {
         self.runtime.run::<TIMINGS>(file_system, paths, tx_error, diff_manager, rule_timing_store);
     }
 
+    pub(crate) fn linter(&self) -> &Linter {
+        &self.runtime.linter
+    }
+
     pub fn set_disable_directives_map(
         &mut self,
         map: Arc<Mutex<FxHashMap<PathBuf, crate::disable_directives::DisableDirectives>>>,

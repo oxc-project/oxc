@@ -399,6 +399,7 @@ impl<'a> ContextHost<'a> {
             self.disable_directives(),
             severity,
             Some((self.fix, self.source_text())),
+            |_| true,
         ));
     }
 

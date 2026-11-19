@@ -13,12 +13,16 @@ use tower_lsp_server::{
 };
 
 use crate::{
-    DiagnosticMode, TextDocument, Tool, ToolBuildResult, ToolBuilder, ToolRestartChanges,
-    WorkerManager,
+    BuildContext, DiagnosticMode, TextDocument, Tool, ToolBuildResult, ToolBuilder,
+    ToolRestartChanges, WorkerManager,
     backend::Backend,
     build_lsp_service,
     tool::{ClientMessage, DiagnosticResult},
+    uri_utils::uri_to_file_path,
 };
+
+/// The root, the excluded roots and the parent root of one build of the fake tool.
+pub type BuiltContext = (Uri, Vec<Uri>, Option<Uri>);
 
 #[derive(Default)]
 pub struct FakeToolBuilder {
@@ -26,6 +30,7 @@ pub struct FakeToolBuilder {
     cache_uris: Option<Arc<Mutex<Vec<Uri>>>>,
     pub build_client_message: Vec<ClientMessage>,
     delays: FakeToolDelays,
+    built_contexts: Option<Arc<Mutex<Vec<BuiltContext>>>>,
 }
 
 #[derive(Default, Clone, Copy)]
@@ -40,7 +45,13 @@ impl FakeToolBuilder {
             cache_uris: None,
             build_client_message: Vec::new(),
             delays: FakeToolDelays::default(),
+            built_contexts: None,
         }
+    }
+
+    /// Record the context of every build, in build order.
+    pub fn with_context_tracking(self, built_contexts: Arc<Mutex<Vec<BuiltContext>>>) -> Self {
+        Self { built_contexts: Some(built_contexts), ..self }
     }
 
     pub fn with_cache_tracking(self, cache_uris: Arc<Mutex<Vec<Uri>>>) -> Self {
@@ -52,12 +63,39 @@ impl FakeToolBuilder {
     }
 }
 
-impl ToolBuilder for FakeToolBuilder {
-    fn build(&self, _root_uri: &Uri, _options: serde_json::Value) -> ToolBuildResult {
+impl FakeToolBuilder {
+    fn result(&self, excluded_roots: Vec<Uri>) -> ToolBuildResult {
         ToolBuildResult {
-            tool: Box::new(FakeTool { cache_uris: self.cache_uris.clone(), delays: self.delays }),
+            tool: Box::new(FakeTool {
+                cache_uris: self.cache_uris.clone(),
+                delays: self.delays,
+                excluded_roots,
+            }),
             client_messages: self.build_client_message.clone(),
         }
+    }
+}
+
+impl ToolBuilder for FakeToolBuilder {
+    fn build(&self, _root_uri: &Uri, _options: serde_json::Value) -> ToolBuildResult {
+        self.result(Vec::new())
+    }
+
+    fn build_with_context(
+        &self,
+        root_uri: &Uri,
+        _options: serde_json::Value,
+        context: BuildContext<'_>,
+    ) -> ToolBuildResult {
+        if let Some(built_contexts) = &self.built_contexts {
+            built_contexts.lock().unwrap().push((
+                root_uri.clone(),
+                context.excluded_roots.to_vec(),
+                context.parent_root.cloned(),
+            ));
+        }
+
+        self.result(context.excluded_roots.to_vec())
     }
 
     fn server_capabilities(
@@ -80,6 +118,7 @@ impl ToolBuilder for FakeToolBuilder {
 pub struct FakeTool {
     cache_uris: Option<Arc<Mutex<Vec<Uri>>>>,
     delays: FakeToolDelays,
+    excluded_roots: Vec<Uri>,
 }
 
 pub const FAKE_COMMAND: &str = "fake.command";
@@ -98,6 +137,18 @@ impl Tool for FakeTool {
     ) -> Result<Option<WorkspaceEdit>, ErrorCode> {
         if command != FAKE_COMMAND {
             return Err(ErrorCode::InvalidParams);
+        }
+
+        // like the tools which answer for the files below their root, except for the excluded ones
+        let uri = arguments.first().and_then(Value::as_str).and_then(|uri| Uri::from_str(uri).ok());
+        let path = uri.as_ref().and_then(uri_to_file_path);
+        if path.is_some_and(|path| {
+            self.excluded_roots
+                .iter()
+                .filter_map(uri_to_file_path)
+                .any(|root| path.starts_with(root))
+        }) {
+            return Ok(None);
         }
 
         if !arguments.is_empty() {
@@ -146,6 +197,10 @@ impl Tool for FakeTool {
         &self,
         options: serde_json::Value,
     ) -> Vec<tower_lsp_server::gen_lsp_types::Pattern> {
+        // watches the excluded roots, to change the patterns with the context only
+        if options.get("watchExcludedRoots") == Some(&json!(true)) {
+            return self.excluded_roots.iter().map(ToString::to_string).collect();
+        }
         if !matches!(options, serde_json::Value::Null) {
             return vec![];
         }
@@ -685,14 +740,15 @@ mod test_suite {
         ClientMessage, DiagnosticMode,
         backend::Backend,
         tests::{
-            FAKE_COMMAND, FakeToolBuilder, InitializeRequestOptions, NESTED_WORKSPACE, TestServer,
-            WORKSPACE, WORKSPACE_2, acknowledge_diagnostic_refresh, acknowledge_registrations,
-            acknowledge_unregistrations, code_action, create_workspace_manager,
-            create_workspace_manager_with_builder, diagnostic, did_change,
-            did_change_configuration, did_change_watched_files, did_close, did_open, did_save,
-            execute_command_request, initialize_request, initialize_request_workspace_folders,
-            initialized_notification, response_to_configuration, shutdown_request,
-            test_configuration_request, workspace_folders_changed,
+            BuiltContext, FAKE_COMMAND, FakeToolBuilder, InitializeRequestOptions,
+            NESTED_WORKSPACE, TestServer, WORKSPACE, WORKSPACE_2, acknowledge_diagnostic_refresh,
+            acknowledge_registrations, acknowledge_unregistrations, code_action,
+            create_workspace_manager, create_workspace_manager_with_builder, diagnostic,
+            did_change, did_change_configuration, did_change_watched_files, did_close, did_open,
+            did_save, execute_command_request, initialize_request,
+            initialize_request_workspace_folders, initialized_notification,
+            response_to_configuration, shutdown_request, test_configuration_request,
+            workspace_folders_changed,
         },
     };
 
@@ -1374,6 +1430,495 @@ mod test_suite {
         acknowledge_unregistrations(&mut server).await;
 
         server.shutdown(2).await;
+    }
+
+    async fn start_server(
+        builder: FakeToolBuilder,
+        initialize: tower_lsp_server::jsonrpc::Request,
+    ) -> TestServer {
+        TestServer::new_initialized(
+            |client| {
+                Backend::new(client, server_info(), create_workspace_manager_with_builder(builder))
+            },
+            initialize,
+        )
+        .await
+    }
+
+    fn folder(uri: &str) -> WorkspaceFolder {
+        WorkspaceFolder { uri: uri.parse().unwrap(), name: uri.to_string() }
+    }
+
+    /// The builds of the tool the workers did, sorted by root: the excluded roots and the parent
+    /// root of each of them.
+    fn built_contexts(built: &Mutex<Vec<BuiltContext>>) -> Vec<BuiltContext> {
+        let mut built = built.lock().unwrap().clone();
+        built.sort_by_key(|(root, ..)| root.to_string());
+        built
+    }
+
+    /// A worker starts already knowing the folders nested in its root, and the folder it is nested
+    /// in, whether it starts in `initialize` or after the client answered `workspace/configuration`.
+    #[tokio::test]
+    async fn test_nested_workspace_folders_know_each_other_when_their_workers_start() {
+        for initialization_options in [Some(json!([])), None] {
+            let built = Arc::new(Mutex::new(vec![]));
+            let tracked = Arc::clone(&built);
+            let started_on_initialize = initialization_options.is_some();
+
+            let mut server = TestServer::new_initialized(
+                |client| {
+                    Backend::new(
+                        client,
+                        server_info(),
+                        create_workspace_manager_with_builder(
+                            FakeToolBuilder::default().with_context_tracking(tracked),
+                        ),
+                    )
+                },
+                initialize_request_workspace_folders(InitializeRequestOptions {
+                    dynamic_watchers: true,
+                    initialization_options,
+                    workspace_configuration: true,
+                    workspace_folders: Some(vec![folder(NESTED_WORKSPACE), folder(WORKSPACE)]),
+                    ..Default::default()
+                }),
+            )
+            .await;
+            if !started_on_initialize {
+                response_to_configuration(&mut server, vec![json!(null), json!(null)]).await;
+            }
+            acknowledge_registrations(&mut server).await;
+
+            assert_eq!(
+                built_contexts(&built),
+                vec![
+                    (WORKSPACE.parse().unwrap(), vec![NESTED_WORKSPACE.parse().unwrap()], None),
+                    (NESTED_WORKSPACE.parse().unwrap(), vec![], Some(WORKSPACE.parse().unwrap())),
+                ]
+            );
+
+            server.shutdown(2).await;
+        }
+    }
+
+    #[tokio::test]
+    async fn test_adding_a_folder_below_a_folder_rebuilds_the_outer_worker() {
+        let built = Arc::new(Mutex::new(vec![]));
+        let tracked = Arc::clone(&built);
+        let mut server = start_server(
+            FakeToolBuilder::default().with_context_tracking(tracked),
+            initialize_request(InitializeRequestOptions {
+                dynamic_watchers: true,
+                ..Default::default()
+            }),
+        )
+        .await;
+        acknowledge_registrations(&mut server).await;
+        built.lock().unwrap().clear();
+
+        server
+            .send_request(workspace_folders_changed(vec![folder(NESTED_WORKSPACE)], vec![]))
+            .await;
+        // the watchers of the new worker
+        acknowledge_registrations(&mut server).await;
+
+        // the new worker is built once, so is the outer one, which skips it from now on
+        assert_eq!(
+            built_contexts(&built),
+            vec![
+                (WORKSPACE.parse().unwrap(), vec![NESTED_WORKSPACE.parse().unwrap()], None),
+                (NESTED_WORKSPACE.parse().unwrap(), vec![], Some(WORKSPACE.parse().unwrap())),
+            ]
+        );
+
+        server.shutdown(2).await;
+    }
+
+    #[tokio::test]
+    async fn test_adding_a_folder_above_a_folder_rebuilds_the_inner_worker() {
+        let built = Arc::new(Mutex::new(vec![]));
+        let tracked = Arc::clone(&built);
+        let mut server = start_server(
+            FakeToolBuilder::default().with_context_tracking(tracked),
+            initialize_request_workspace_folders(InitializeRequestOptions {
+                dynamic_watchers: true,
+                workspace_folders: Some(vec![folder(NESTED_WORKSPACE)]),
+                ..Default::default()
+            }),
+        )
+        .await;
+        acknowledge_registrations(&mut server).await;
+        built.lock().unwrap().clear();
+
+        server.send_request(workspace_folders_changed(vec![folder(WORKSPACE)], vec![])).await;
+        // the watchers of the new worker
+        acknowledge_registrations(&mut server).await;
+
+        // the inner worker honours the ignore files of the new folder from now on
+        assert_eq!(
+            built_contexts(&built),
+            vec![
+                (WORKSPACE.parse().unwrap(), vec![NESTED_WORKSPACE.parse().unwrap()], None),
+                (NESTED_WORKSPACE.parse().unwrap(), vec![], Some(WORKSPACE.parse().unwrap())),
+            ]
+        );
+
+        server.shutdown(2).await;
+    }
+
+    /// The files of a removed folder are linted by the outer worker, with the diagnostics of the
+    /// removed worker cleared before, so that the clear does not wipe what the outer one publishes.
+    #[tokio::test]
+    async fn test_removing_a_nested_folder_clears_its_diagnostics_before_the_outer_worker_lints() {
+        let built = Arc::new(Mutex::new(vec![]));
+        let tracked = Arc::clone(&built);
+        let mut server = start_server(
+            FakeToolBuilder::new(DiagnosticMode::Push).with_context_tracking(tracked),
+            initialize_request_workspace_folders(InitializeRequestOptions {
+                workspace_folders: Some(vec![folder(WORKSPACE), folder(NESTED_WORKSPACE)]),
+                ..Default::default()
+            }),
+        )
+        .await;
+
+        let uri = format!("{NESTED_WORKSPACE}/diagnostics.config");
+        server.send_request(did_open(&uri, "content")).await;
+        let published = server.recv_notification().await;
+        assert_eq!(published.method(), "textDocument/publishDiagnostics");
+        built.lock().unwrap().clear();
+
+        server
+            .send_request(workspace_folders_changed(vec![], vec![folder(NESTED_WORKSPACE)]))
+            .await;
+
+        let cleared = server.recv_notification().await;
+        assert_eq!(cleared.method(), "textDocument/publishDiagnostics");
+        let params: PublishDiagnosticsParams =
+            serde_json::from_value(cleared.params().unwrap().clone()).unwrap();
+        assert_eq!(params.uri, Uri::from_str(&uri).unwrap());
+        assert_eq!(params.diagnostics, []);
+
+        let republished = server.recv_notification().await;
+        assert_eq!(republished.method(), "textDocument/publishDiagnostics");
+        let params: PublishDiagnosticsParams =
+            serde_json::from_value(republished.params().unwrap().clone()).unwrap();
+        assert_eq!(params.uri, Uri::from_str(&uri).unwrap());
+        assert_eq!(params.diagnostics.len(), 1);
+
+        // the outer worker takes back what it skipped
+        assert_eq!(built_contexts(&built), vec![(WORKSPACE.parse().unwrap(), vec![], None)]);
+
+        server.shutdown_with_diagnostic_clear(2, vec![uri.parse().unwrap()]).await;
+    }
+
+    /// The documents of a nested folder are linted again by their new owner once the folder is
+    /// added, and only by it.
+    #[tokio::test]
+    async fn test_adding_a_nested_folder_validates_the_documents_by_their_new_owner() {
+        let linted = Arc::new(Mutex::new(vec![]));
+        let tracked = Arc::clone(&linted);
+        let mut server = start_server(
+            FakeToolBuilder::new(DiagnosticMode::Push).with_cache_tracking(tracked),
+            initialize_request(InitializeRequestOptions::default()),
+        )
+        .await;
+
+        let outer_uri = format!("{WORKSPACE}/diagnostics.config");
+        let uri = format!("{NESTED_WORKSPACE}/diagnostics.config");
+        for document in [&outer_uri, &uri] {
+            server.send_request(did_open(document, "content")).await;
+            let published = server.recv_notification().await;
+            assert_eq!(published.method(), "textDocument/publishDiagnostics");
+        }
+        linted.lock().unwrap().clear();
+
+        server
+            .send_request(workspace_folders_changed(vec![folder(NESTED_WORKSPACE)], vec![]))
+            .await;
+        for _ in 0..2 {
+            let published = server.recv_notification().await;
+            assert_eq!(published.method(), "textDocument/publishDiagnostics");
+            let params: PublishDiagnosticsParams =
+                serde_json::from_value(published.params().unwrap().clone()).unwrap();
+            assert_eq!(params.diagnostics.len(), 1);
+        }
+
+        let mut linted = linted.lock().unwrap().clone();
+        linted.sort_by_key(ToString::to_string);
+        assert_eq!(
+            linted,
+            vec![Uri::from_str(&outer_uri).unwrap(), Uri::from_str(&uri).unwrap()],
+            "a document was not linted exactly once"
+        );
+
+        // the outer worker published both documents before, the nested one published one
+        server.send_request(shutdown_request(2)).await;
+        for _ in 0..3 {
+            let cleared = server.recv_notification().await;
+            assert_eq!(cleared.method(), "textDocument/publishDiagnostics");
+        }
+        assert!(server.recv_response().await.is_ok());
+    }
+
+    /// The folder in the middle of three nested ones is removed. Its worker published the
+    /// documents of the innermost folder before that folder was added, so the clear which follows
+    /// reaches them, and the innermost worker, whose own context did not change, publishes them
+    /// again.
+    #[tokio::test]
+    async fn test_removing_a_middle_folder_validates_the_documents_of_the_inner_folder_again() {
+        let inner_folder = format!("{NESTED_WORKSPACE}/inner");
+        let mut server = start_server(
+            FakeToolBuilder::new(DiagnosticMode::Push),
+            initialize_request_workspace_folders(InitializeRequestOptions {
+                workspace_folders: Some(vec![folder(WORKSPACE), folder(NESTED_WORKSPACE)]),
+                ..Default::default()
+            }),
+        )
+        .await;
+
+        let uri = format!("{inner_folder}/diagnostics.config");
+        server.send_request(did_open(&uri, "content")).await;
+        let published = server.recv_notification().await;
+        assert_eq!(published.method(), "textDocument/publishDiagnostics");
+
+        // the innermost worker takes the document from the middle one
+        server.send_request(workspace_folders_changed(vec![folder(&inner_folder)], vec![])).await;
+        let published = server.recv_notification().await;
+        assert_eq!(published.method(), "textDocument/publishDiagnostics");
+
+        server
+            .send_request(workspace_folders_changed(vec![], vec![folder(NESTED_WORKSPACE)]))
+            .await;
+        for expected in [0, 1] {
+            let published = server.recv_notification().await;
+            assert_eq!(published.method(), "textDocument/publishDiagnostics");
+            let params: PublishDiagnosticsParams =
+                serde_json::from_value(published.params().unwrap().clone()).unwrap();
+            assert_eq!(params.uri, Uri::from_str(&uri).unwrap());
+            assert_eq!(params.diagnostics.len(), expected);
+        }
+
+        server.shutdown_with_diagnostic_clear(2, vec![uri.parse().unwrap()]).await;
+    }
+
+    /// A nested folder which loses its outer folder is rebuilt without a parent, and its documents
+    /// are validated again.
+    #[tokio::test]
+    async fn test_removing_an_outer_folder_rebuilds_the_nested_worker() {
+        let built = Arc::new(Mutex::new(vec![]));
+        let tracked = Arc::clone(&built);
+        let mut server = start_server(
+            FakeToolBuilder::new(DiagnosticMode::Push).with_context_tracking(tracked),
+            initialize_request_workspace_folders(InitializeRequestOptions {
+                workspace_folders: Some(vec![folder(WORKSPACE), folder(NESTED_WORKSPACE)]),
+                ..Default::default()
+            }),
+        )
+        .await;
+
+        let uri = format!("{NESTED_WORKSPACE}/diagnostics.config");
+        server.send_request(did_open(&uri, "content")).await;
+        let published = server.recv_notification().await;
+        assert_eq!(published.method(), "textDocument/publishDiagnostics");
+        built.lock().unwrap().clear();
+
+        server.send_request(workspace_folders_changed(vec![], vec![folder(WORKSPACE)])).await;
+        let published = server.recv_notification().await;
+        assert_eq!(published.method(), "textDocument/publishDiagnostics");
+
+        assert_eq!(built_contexts(&built), vec![(NESTED_WORKSPACE.parse().unwrap(), vec![], None)]);
+
+        server.shutdown_with_diagnostic_clear(2, vec![uri.parse().unwrap()]).await;
+    }
+
+    /// The tool had no watcher patterns before the rebuild: nothing was registered under the id of
+    /// its worker, so there is nothing to unregister.
+    #[tokio::test]
+    async fn test_a_rebuild_does_not_unregister_watchers_which_were_never_registered() {
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
+            initialize_request_workspace_folders(InitializeRequestOptions {
+                dynamic_watchers: true,
+                initialization_options: Some(json!([{
+                    "workspaceUri": WORKSPACE,
+                    "options": { "watchExcludedRoots": true },
+                }])),
+                workspace_folders: Some(vec![folder(WORKSPACE)]),
+                ..Default::default()
+            }),
+        )
+        .await;
+
+        server
+            .send_request(workspace_folders_changed(vec![folder(NESTED_WORKSPACE)], vec![]))
+            .await;
+        // the registrations come first: the outer worker now watches the nested folder
+        acknowledge_registrations(&mut server).await;
+
+        server.shutdown(2).await;
+    }
+
+    /// A folder which is not nested validates nothing, even when another folder added in the same
+    /// event is nested.
+    #[tokio::test]
+    async fn test_a_folder_which_is_not_nested_validates_nothing_when_another_one_is() {
+        let linted = Arc::new(Mutex::new(vec![]));
+        let tracked = Arc::clone(&linted);
+        let mut server = start_server(
+            FakeToolBuilder::new(DiagnosticMode::Push).with_cache_tracking(tracked),
+            initialize_request(InitializeRequestOptions::default()),
+        )
+        .await;
+
+        let outer_uri = format!("{WORKSPACE}/diagnostics.config");
+        let unrelated_uri = format!("{WORKSPACE_2}/diagnostics.config");
+        server.send_request(did_open(&outer_uri, "content")).await;
+        let published = server.recv_notification().await;
+        assert_eq!(published.method(), "textDocument/publishDiagnostics");
+        // no worker serves it yet
+        server.send_request(did_open(&unrelated_uri, "content")).await;
+        linted.lock().unwrap().clear();
+
+        server
+            .send_request(workspace_folders_changed(
+                vec![folder(NESTED_WORKSPACE), folder(WORKSPACE_2)],
+                vec![],
+            ))
+            .await;
+        let published = server.recv_notification().await;
+        assert_eq!(published.method(), "textDocument/publishDiagnostics");
+        let params: PublishDiagnosticsParams =
+            serde_json::from_value(published.params().unwrap().clone()).unwrap();
+        assert_eq!(params.uri, Uri::from_str(&outer_uri).unwrap());
+
+        // a second publish for the unrelated document would come before the shutdown response
+        server.shutdown_with_diagnostic_clear(2, vec![outer_uri.parse().unwrap()]).await;
+        assert_eq!(*linted.lock().unwrap(), vec![Uri::from_str(&outer_uri).unwrap()]);
+    }
+
+    #[tokio::test]
+    async fn test_nested_folder_changes_refresh_the_diagnostics_in_pull_mode() {
+        let mut server = start_server(
+            FakeToolBuilder::new(DiagnosticMode::Pull),
+            initialize_request(InitializeRequestOptions { pull_mode: true, ..Default::default() }),
+        )
+        .await;
+
+        server
+            .send_request(workspace_folders_changed(vec![folder(NESTED_WORKSPACE)], vec![]))
+            .await;
+        let refresh =
+            tokio::time::timeout(std::time::Duration::from_secs(5), server.recv_notification())
+                .await
+                .expect("the diagnostics were not refreshed");
+        assert_eq!(refresh.method(), "workspace/diagnostic/refresh");
+        server.send_ack(refresh.id().unwrap()).await;
+
+        server.shutdown(2).await;
+    }
+
+    /// A tool swap keeps the folders nested in the worker excluded, and lints the documents of the
+    /// worker only: a document of a nested folder, or of the outer folder, is linted by its own
+    /// worker, once.
+    #[tokio::test]
+    async fn test_a_tool_swap_lints_only_the_documents_of_its_own_worker() {
+        let built = Arc::new(Mutex::new(vec![]));
+        let tracked = Arc::clone(&built);
+        let linted = Arc::new(Mutex::new(vec![]));
+        let tracked_cache = Arc::clone(&linted);
+        let mut server = start_server(
+            FakeToolBuilder::new(DiagnosticMode::Push)
+                .with_cache_tracking(tracked_cache)
+                .with_context_tracking(tracked),
+            initialize_request_workspace_folders(InitializeRequestOptions {
+                workspace_folders: Some(vec![folder(WORKSPACE), folder(NESTED_WORKSPACE)]),
+                ..Default::default()
+            }),
+        )
+        .await;
+
+        let outer_uri = format!("{WORKSPACE}/diagnostics.config");
+        let uri = format!("{NESTED_WORKSPACE}/diagnostics.config");
+        for document in [&outer_uri, &uri] {
+            server.send_request(did_open(document, "content")).await;
+            let published = server.recv_notification().await;
+            assert_eq!(published.method(), "textDocument/publishDiagnostics");
+        }
+        built.lock().unwrap().clear();
+        linted.lock().unwrap().clear();
+
+        // every worker rebuilds its tool
+        server.send_request(did_change_watched_files(&format!("{WORKSPACE}/tool.config"))).await;
+        for _ in 0..2 {
+            let published = server.recv_notification().await;
+            assert_eq!(published.method(), "textDocument/publishDiagnostics");
+        }
+
+        assert_eq!(
+            built_contexts(&built),
+            vec![
+                (WORKSPACE.parse().unwrap(), vec![NESTED_WORKSPACE.parse().unwrap()], None),
+                (NESTED_WORKSPACE.parse().unwrap(), vec![], Some(WORKSPACE.parse().unwrap())),
+            ]
+        );
+        let mut linted = linted.lock().unwrap().clone();
+        linted.sort_by_key(ToString::to_string);
+        assert_eq!(
+            linted,
+            vec![Uri::from_str(&outer_uri).unwrap(), Uri::from_str(&uri).unwrap()],
+            "a document was linted by more than one worker"
+        );
+
+        server
+            .shutdown_with_diagnostic_clear(
+                2,
+                vec![outer_uri.parse().unwrap(), uri.parse().unwrap()],
+            )
+            .await;
+    }
+
+    /// A command which targets a file of a nested folder is answered by the worker of that folder
+    /// only, so the edit is applied once.
+    #[tokio::test]
+    async fn test_a_command_is_answered_by_the_worker_of_the_innermost_folder() {
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
+            initialize_request_workspace_folders(InitializeRequestOptions {
+                workspace_edit: true,
+                workspace_folders: Some(vec![folder(WORKSPACE), folder(NESTED_WORKSPACE)]),
+                ..Default::default()
+            }),
+        )
+        .await;
+
+        server
+            .send_request(execute_command_request(
+                FAKE_COMMAND,
+                &[json!(format!("{NESTED_WORKSPACE}/file.js"))],
+                3,
+            ))
+            .await;
+
+        let apply_edit_request = server.recv_notification().await;
+        assert_eq!(apply_edit_request.method(), "workspace/applyEdit");
+        server
+            .send_response(Response::from_ok(
+                apply_edit_request.id().unwrap().clone(),
+                json!(ApplyWorkspaceEditResult {
+                    applied: true,
+                    failure_reason: None,
+                    failed_change: None
+                }),
+            ))
+            .await;
+
+        // a second edit would be requested before the command is answered
+        let execute_command_response = server.recv_response().await;
+        assert!(execute_command_response.is_ok());
+        assert_eq!(execute_command_response.id(), &Id::Number(3));
+
+        server.shutdown(4).await;
     }
 
     #[tokio::test]
@@ -2436,6 +2981,36 @@ mod test_suite {
             let response = server.recv_response().await;
             assert!(response.is_ok());
             assert_eq!(response.result().unwrap().as_array().unwrap().len(), 2);
+
+            server.shutdown(4).await;
+        }
+
+        /// The workers of single-file mode belong to no workspace folder, a folder change does not
+        /// nest them in each other.
+        #[tokio::test]
+        async fn test_single_file_mode_workers_are_not_nested() {
+            let built = Arc::new(Mutex::new(vec![]));
+            let tracked = Arc::clone(&built);
+            let mut server = start_server(
+                FakeToolBuilder::default().with_context_tracking(tracked),
+                initialize_request_workspace_folders(single_file_mode_initialize()),
+            )
+            .await;
+
+            // the inner directory first, or the outer worker would already cover its file
+            server.send_request(did_open("file:///path/to/dir/inner/file.js", "inner")).await;
+            server.send_request(did_open("file:///path/to/dir/file.js", "outer")).await;
+            server.send_request(test_configuration_request(2)).await;
+            let response = server.recv_response().await;
+            assert_eq!(response.result().unwrap().as_array().unwrap().len(), 2);
+            built.lock().unwrap().clear();
+
+            server.send_request(workspace_folders_changed(vec![], vec![folder(WORKSPACE_2)])).await;
+            server.send_request(test_configuration_request(3)).await;
+            let response = server.recv_response().await;
+            assert_eq!(response.result().unwrap().as_array().unwrap().len(), 2);
+
+            assert_eq!(built_contexts(&built), vec![]);
 
             server.shutdown(4).await;
         }

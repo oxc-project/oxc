@@ -21,6 +21,11 @@ const CONFIGURATION_NOTIFICATION_ID: &str = "OXL0999";
 pub struct SarifOutputFormatter;
 
 impl InternalFormatter for SarifOutputFormatter {
+    /// As a `toolConfigurationNotifications` entry, see `SarifBuilder::add_diagnostic`.
+    fn reports_config_warnings(&self) -> bool {
+        true
+    }
+
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
         Box::<SarifReporter>::default()
     }
