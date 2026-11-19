@@ -565,6 +565,7 @@ impl<'a> StandardDecoratorState<'a> {
             instance_method_extras,
             static_method_extras,
             original_class: None,
+            heritage_class_symbol: None,
             tables,
         }
     }

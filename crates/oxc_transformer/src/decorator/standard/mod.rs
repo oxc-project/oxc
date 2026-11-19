@@ -191,6 +191,8 @@ pub struct ClassDecoratorState<'a> {
     pub(crate) static_method_extras: bool,
     /// Original constructor used by `super` in moved class elements.
     original_class: Option<BoundIdentifier<'a>>,
+    /// Class name symbol referenced by the class heritage, which must see the decorated class.
+    pub(crate) heritage_class_symbol: Option<oxc_syntax::symbol::SymbolId>,
     /// Element tables of this class.
     pub(crate) tables: ClassDecoratorTables<'a>,
 }

@@ -141,6 +141,16 @@ impl<'a> ClassProperties<'a> {
         let is_decorated = standard && lowering.has_decorators();
         let has_auto_accessor = standard && lowering.has_auto_accessor();
         let per_evaluation_state = standard && lowering.handles_standard_decorators();
+        // The heritage is evaluated in the class scope, where the class name is the inner binding
+        // that the class decorators initialize.
+        let heritage_class_symbol = class_name_binding
+            .as_ref()
+            .filter(|_| is_decorated)
+            .zip(class.heritage().as_ref())
+            .filter(|(name, heritage)| {
+                ClassNameRewriter::references(&heritage.expression, name.symbol_id, ctx)
+            })
+            .map(|(name, _)| name.symbol_id);
         if standard {
             for element in &mut body.body {
                 let (key, computed, value) = match element {
@@ -190,11 +200,15 @@ impl<'a> ClassProperties<'a> {
                 ctx,
             );
         }
-        let state = if is_decorated {
+        let mut state = if is_decorated {
             Some(Box::new(StandardDecoratorState::prepare_class_decorators(body, tables, ctx)))
         } else {
             None
         };
+        let heritage_refs_name = heritage_class_symbol.is_some();
+        if let Some(state) = state.as_mut() {
+            state.heritage_class_symbol = heritage_class_symbol;
+        }
 
         // A class decorator can replace the outer binding while the class keeps its inner name.
         if is_decorated
@@ -202,14 +216,17 @@ impl<'a> ClassProperties<'a> {
             && let Some(name_binding) = class_name_binding
         {
             let outer_scope_id = ctx.scoping().scope_parent_id(class_scope_id).unwrap();
-            let inner = ClassNameRewriter::new(
+            let mut rewriter = ClassNameRewriter::new(
                 name_binding.symbol_id,
                 name_binding.name,
                 None,
                 Some(outer_scope_id),
                 ctx,
-            )
-            .rewrite(body);
+            );
+            if heritage_refs_name {
+                rewriter = rewriter.with_replacement();
+            }
+            let inner = rewriter.rewrite(body);
             if let Some(inner) = inner {
                 self.decorator_state.record_declaration_rewrite(
                     class_address,
@@ -465,6 +482,19 @@ impl<'a> ClassProperties<'a> {
             self.decorator_state.take_class_decorators(class, &mut self.insert_before, ctx);
         }
 
+        if let Some(symbol_id) =
+            self.current_class().decorators.as_ref().and_then(|state| state.heritage_class_symbol)
+            && let Some(heritage) = &mut class.heritage
+        {
+            // A declaration's inner binding is a fresh `let`, in its TDZ until the class is
+            // decorated. An expression's temporary is already initialized.
+            let is_declaration = self.current_class().is_declaration;
+            let replacement = self.decorator_class_binding().clone();
+            let name = replacement.name;
+            ClassNameRewriter::new(symbol_id, name, Some(replacement), None, ctx)
+                .rewrite_expression(&mut heritage.expression, !is_declaration);
+        }
+
         let class_methods_count = self.transform_class_elements(class, ctx);
 
         if is_decorated {
@@ -492,6 +522,17 @@ impl<'a> ClassProperties<'a> {
             }
         }
         inferred_name
+    }
+
+    /// The binding that holds the class while decorators are applied.
+    fn decorator_class_binding(&self) -> &BoundIdentifier<'a> {
+        let details = self.current_class();
+        if details.is_declaration {
+            details.bindings.name.as_ref().or(details.bindings.temp.as_ref())
+        } else {
+            details.bindings.temp.as_ref()
+        }
+        .expect("decorated class always has a binding")
     }
 
     pub(super) fn get_or_init_original_class_for_super(

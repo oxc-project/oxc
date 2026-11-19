@@ -1,10 +1,10 @@
 use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
-use oxc_ast_visit::{VisitMut, walk_mut};
+use oxc_ast_visit::{Visit, VisitMut, walk_mut};
 use oxc_span::{GetSpan, SPAN};
 use oxc_str::Ident;
 use oxc_syntax::{
-    scope::ScopeId,
+    scope::{ScopeFlags, ScopeId},
     symbol::{SymbolFlags, SymbolId},
 };
 use oxc_traverse::BoundIdentifier;
@@ -46,6 +46,63 @@ impl<'a, 'ctx> ClassNameRewriter<'a, 'ctx> {
     pub fn rewrite(mut self, body: &mut ClassBody<'a>) -> Option<BoundIdentifier<'a>> {
         self.visit_class_body(body);
         self.replacement
+    }
+
+    /// Create the replacement binding even if the class body never references the name.
+    #[must_use]
+    pub fn with_replacement(mut self) -> Self {
+        self.replacement();
+        self
+    }
+
+    /// Rewrite references in the class heritage, which is evaluated in the class scope.
+    ///
+    /// If `only_in_functions`, references evaluated directly by the heritage are kept: they read
+    /// the original inner binding, which is still in its TDZ, and so throw as they should. Only
+    /// references in functions, which can run after the class decorators, are rewritten.
+    pub fn rewrite_expression(mut self, expression: &mut Expression<'a>, only_in_functions: bool) {
+        struct Functions<'r, 'a, 'ctx>(&'r mut ClassNameRewriter<'a, 'ctx>);
+        impl<'a> VisitMut<'a> for Functions<'_, 'a, '_> {
+            fn visit_function(&mut self, function: &mut Function<'a>, flags: ScopeFlags) {
+                self.0.visit_function(function, flags);
+            }
+            fn visit_arrow_function_expression(&mut self, arrow: &mut ArrowFunctionExpression<'a>) {
+                self.0.visit_arrow_function_expression(arrow);
+            }
+            fn visit_class(&mut self, class: &mut Class<'a>) {
+                self.0.visit_class(class);
+            }
+        }
+        if !only_in_functions {
+            self.visit_expression(expression);
+            return;
+        }
+        Functions(&mut self).visit_expression(expression);
+    }
+
+    /// Whether `expression` references the class binding `symbol_id`.
+    pub fn references(
+        expression: &Expression<'a>,
+        symbol_id: SymbolId,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        struct Finder<'s> {
+            symbol_id: SymbolId,
+            scoping: &'s oxc_semantic::Scoping,
+            found: bool,
+        }
+        impl<'a> Visit<'a> for Finder<'_> {
+            fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
+                if self.scoping.get_reference(ident.reference_id()).symbol_id()
+                    == Some(self.symbol_id)
+                {
+                    self.found = true;
+                }
+            }
+        }
+        let mut finder = Finder { symbol_id, scoping: ctx.scoping(), found: false };
+        finder.visit_expression(expression);
+        finder.found
     }
 
     fn replacement(&mut self) -> Option<BoundIdentifier<'a>> {
