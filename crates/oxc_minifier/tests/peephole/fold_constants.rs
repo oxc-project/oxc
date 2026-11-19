@@ -1898,3 +1898,47 @@ fn test_fold_left_child_op_keeps_side_effects() {
     // Still folds when nothing has side effects.
     fold("(3 ^ x) ^ [1, 1].length", "x ^ 1");
 }
+
+#[test]
+fn test_fold_int32_add_sub() {
+    test_smallest(
+        "const SIZE = 4; const SIZE_SHIFT = 2; const START_OFFSET = 0; const TYPE_OFFSET = 1; export let start = buffer[(index << SIZE_SHIFT) + START_OFFSET]; export let previousType = buffer[(index << SIZE_SHIFT) - SIZE + TYPE_OFFSET];",
+        "export let start = buffer[index << 2]; export let previousType = buffer[(index << 2) - 3];",
+    );
+
+    fold("(a << 2) + 0", "a << 2");
+    fold("0 + (a << 2)", "a << 2");
+    fold("(a << 2) - 0", "a << 2");
+    fold("(a >>> b) + 0", "a >>> b");
+    fold("(~+a) + 0", "~+a");
+    fold("(a << 2) + -0", "a << 2");
+    fold("(f() << 2) + 0", "f() << 2");
+
+    fold("(a << 2) - 4 + 1", "(a << 2) - 3");
+    fold("(a << 2) + 4 - 1", "(a << 2) + 3");
+    fold("(a << 2) + 4 + 1", "(a << 2) + 5");
+    fold("(a << 2) - 4 - 1", "(a << 2) - 5");
+    fold("(a << 2) - 1 + 4", "(a << 2) + 3");
+    fold("(a << 2) - 4 + 4", "a << 2");
+    fold("(a << 2) - 4 + 1 + 2", "(a << 2) - 1");
+    fold("(a << 2) + 9007194959773696 - 1", "(a << 2) + 9007194959773695");
+    fold("(a << 2) + 1e9 - 1e9", "a << 2");
+    fold("(1e9 - 4) + 1", "1e9 - 3");
+    fold("(1e9 + 4) + 1", "1e9 + 5");
+    fold("(1e9 + 1) + 0", "1e9 + 1");
+    fold("(1e9 + 4) - 1", "1e9 + 3");
+
+    fold_same("0 - (a << 2)");
+    fold_same("(a << b) + 0");
+    fold_same("(a << b) - 4 + 1");
+    fold_same("~a + 0");
+    fold_same("a + 0");
+    fold_same("(a * 1 - 5) + 1");
+    fold_same("(a << 2) - 4.5 + 1");
+    fold_same("(a ? -0 : b << 2) + 0");
+    fold_same("(a << 2) + 9007194959773697 - 1");
+    fold_same("(a << 2) + 9007194959773696 + 1");
+    fold_same("(a << 2) - 1e9 - 1");
+    fold_same("(a << 2) + 0n");
+    fold_same("(a << 2) + NaN - NaN");
+}
