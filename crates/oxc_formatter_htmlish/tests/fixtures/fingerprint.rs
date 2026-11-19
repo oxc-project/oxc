@@ -124,6 +124,11 @@ fn walk(
                 walk(source, root, id, text, fold_names, out);
                 out.push_str(if block.close.is_some() { "}]" } else { "]" });
             }
+            // Its head is formatted, its value prints as written with no dispatcher
+            NodeKind::LetDeclaration(declaration) => {
+                let name = declaration.name.slice(source);
+                write!(out, "[@let {name} = {:?}]", declaration.value.slice(source)).unwrap();
+            }
             // HTML reads a doctype ASCII case-insensitively
             NodeKind::DocType(_) => {
                 write!(out, "[{:?}]", words(&node.span.slice(source).cow_to_ascii_lowercase()))
