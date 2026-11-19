@@ -110,17 +110,25 @@ impl EngineTargets {
     /// Unlike [`Self::has_feature`], this is a strict capability query: an empty target or an
     /// engine missing from the compatibility table is treated as unsupported.
     pub fn supports_es_feature(&self, feature: ESFeature) -> bool {
+        self.supports_feature_targets(&features()[&feature])
+    }
+
+    /// [`Self::supports_es_feature`] against an explicit compatibility table entry.
+    fn supports_feature_targets(&self, feature_engine_targets: &EngineTargets) -> bool {
         if self.is_any_target() {
             return false;
         }
 
-        let feature_engine_targets = &features()[&feature];
+        let has_es_entry = feature_engine_targets.contains_key(&Engine::Es);
+        let has_other_engine = self.keys().any(|engine| *engine != Engine::Es);
         self.iter().all(|(engine, target_version)| {
-            // Browser targets include an implicit esnext. For proposals, only the engines decide
-            // support; an edition-only target still cannot support an unstandardized feature.
+            // Browser targets include an implicit `esnext`. A proposal has no ES edition, so only
+            // the engines decide support. An explicitly requested older edition (`es2015,chrome100`)
+            // still applies: it cannot support an unstandardized feature.
             if *engine == Engine::Es
-                && self.len() > 1
-                && !feature_engine_targets.contains_key(engine)
+                && !has_es_entry
+                && has_other_engine
+                && target_version.0 >= ESTarget::ESNext.version().0
             {
                 return true;
             }
@@ -255,6 +263,29 @@ fn test_standard_decorators_follow_target() {
             "{target}"
         );
     }
+}
+
+#[test]
+fn test_proposal_support_respects_explicit_edition() {
+    // A proposal recorded as supported by an engine, but without an ES edition.
+    let proposal = EngineTargets::new(FxHashMap::from_iter([(Engine::Chrome, Version(100, 0, 0))]));
+
+    for (target, supported) in [
+        ("chrome100", true),
+        ("esnext,chrome100", true),
+        ("chrome99", false),
+        ("esnext", false),
+        ("es2015,chrome100", false),
+        ("es2024,chrome100", false),
+        ("es2015", false),
+    ] {
+        let targets = EngineTargets::from_target(target).unwrap();
+        assert_eq!(targets.supports_feature_targets(&proposal), supported, "{target}");
+    }
+
+    // Engine maps from browserslist or Babel need not contain an ES edition.
+    let chrome = EngineTargets::new(FxHashMap::from_iter([(Engine::Chrome, Version(100, 0, 0))]));
+    assert!(chrome.supports_feature_targets(&proposal));
 }
 
 #[test]
