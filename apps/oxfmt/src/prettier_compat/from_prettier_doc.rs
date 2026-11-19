@@ -1,8 +1,7 @@
 //! Prettier Doc JSON → FormatElement IR conversion primitives.
 //!
-//! [`convert_envelope`] is the public entry point:
-//! it unwraps the `[doc, metadata]` envelope sent from the JS side
-//! and converts the doc through the private `convert_*` walkers into a flat `FormatElement` IR.
+//! [`convert`] is the public entry point:
+//! it converts the doc JSON sent from the JS side through the private `convert_*` walkers into a flat `FormatElement` IR.
 //! Language-specific routing lives in `core::embed`;
 //! [`postprocess`] here is the conversion's finishing pass (Prettier-fallback path only).
 
@@ -22,34 +21,20 @@ use oxc_formatter_core::{
 /// See `src-js/lib/apis.ts` for details.
 const NEGATIVE_INFINITY_MARKER: &str = "__NEGATIVE_INFINITY__";
 
-/// Unwrap a `[doc, metadata]` envelope and convert the doc JSON to IR.
-///
-/// Doc JSONs from the JS side always come wrapped in this uniform envelope
-/// so the dispatcher can carry language-specific metadata alongside the doc itself.
-///
-/// Panics on invalid envelope format (internal protocol we control on both sides).
+/// Convert the doc JSON sent from the JS side to IR.
 ///
 /// # Errors
-/// Returns an error if the embedded doc JSON itself fails to convert
+/// Returns an error if the doc JSON fails to convert
 /// (unknown Doc type, unsupported construct, malformed group ID, ...).
-pub fn convert_envelope<'a>(
-    envelope: Value,
+pub fn convert<'a>(
+    doc_json: &Value,
     allocator: &'a Allocator,
     group_id_builder: &UniqueGroupIdBuilder,
-) -> Result<(ArenaVec<'a, FormatElement<'a>>, serde_json::Map<String, Value>), String> {
-    let Value::Array(mut arr) = envelope else {
-        unreachable!("Doc JSON envelope must be [doc, metadata]");
-    };
-    let metadata = match arr.pop() {
-        Some(Value::Object(obj)) => obj,
-        _ => serde_json::Map::new(),
-    };
-    let doc_json = arr.into_iter().next().expect("Doc JSON envelope must contain doc");
-
+) -> Result<ArenaVec<'a, FormatElement<'a>>, String> {
     let mut ctx = FmtCtx::new(allocator, group_id_builder);
     let mut ir = ArenaVec::new_in(&allocator);
-    convert_doc(&doc_json, &mut ir, &mut ctx)?;
-    Ok((ir, metadata))
+    convert_doc(doc_json, &mut ir, &mut ctx)?;
+    Ok(ir)
 }
 
 /// Conversion context holding the allocator, group ID builder, and group ID mapping.
@@ -594,7 +579,7 @@ mod tests {
     };
     use serde_json::{Value, json};
 
-    use super::{convert_envelope, postprocess};
+    use super::{convert, postprocess};
 
     fn print_doc(doc: &Value, print_width: u32) -> String {
         print_doc_with(
@@ -606,8 +591,7 @@ mod tests {
     fn print_doc_with(doc: &Value, options: PrinterOptions) -> String {
         let allocator = Allocator::default();
         let group_id_builder = UniqueGroupIdBuilder::default();
-        let (mut ir, _) =
-            convert_envelope(json!([doc, {}]), &allocator, &group_id_builder).unwrap();
+        let mut ir = convert(doc, &allocator, &group_id_builder).unwrap();
         postprocess(&mut ir, &allocator);
         Document::new(ir, vec![]).print(0, options).unwrap().into_code()
     }

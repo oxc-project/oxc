@@ -161,7 +161,7 @@ impl Language {
             Self::Markdown => Route::Native(NativeLanguage::Markdown),
             Self::Toml => Route::Native(NativeLanguage::Toml),
             Self::Html => Route::Native(NativeLanguage::Html(HtmlishVariant::Html)),
-            Self::AngularHtml => Route::Prettier(PrettierLanguage::Angular),
+            Self::AngularHtml => Route::Native(NativeLanguage::Html(HtmlishVariant::Angular)),
             Self::Vue => Route::Native(NativeLanguage::Html(HtmlishVariant::Vue)),
             Self::Svelte => Route::Prettier(PrettierLanguage::Svelte),
             Self::Astro => Route::Prettier(PrettierLanguage::Astro),
@@ -193,8 +193,6 @@ mod tests {
     #[test]
     fn prettier_fences_and_lsp_ids() {
         for (fence, parser) in [
-            ("angular", "angular"),
-            ("angular-html", "angular"),
             ("svelte", "svelte"),
             ("astro", "astro"),
             ("handlebars", "glimmer"),
