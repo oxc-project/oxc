@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_isolated_declarations/tests/mod.rs
+assertion_line: 54
 input_file: crates/oxc_isolated_declarations/tests/fixtures/default-parameter-indexed-access.ts
 ---
 ```
@@ -10,4 +11,4 @@ export interface UserConfig {
 }
 export type Base = UserConfig["base"];
 export declare function resolveBaseUrl(base: UserConfig["base"], isBuild: boolean): string;
-export declare function resolveAliasedBaseUrl(base: Base, isBuild: boolean): string;
+export declare function resolveAliasedBaseUrl(base: Base | undefined, isBuild: boolean): string;
