@@ -280,12 +280,36 @@ impl<'a> StandardDecoratorState<'a> {
     }
 
     /// Decorator context names use the property key after a single ToPropertyKey conversion.
+    ///
+    /// Entry phase: convert keys of decorated elements, and computed keys of fields, with
+    /// `ToPropertyKey` before the class body is lowered.
     pub(crate) fn coerce_decorated_keys(body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
         for element in &mut body.body {
             let (key, computed, decorated) = match element {
+                // Lowered fields are defined later, from the constructor or after the class.
+                // Convert their keys once, in element order, as class definition evaluation does.
                 ClassElement::PropertyDefinition(prop) => {
                     let prop = &mut **prop;
-                    (&mut prop.key, &mut prop.computed, !prop.decorators.is_empty())
+                    let decorated = !prop.decorators.is_empty();
+                    if !decorated
+                        && prop.computed
+                        && let Some(key) = prop.key.as_expression_mut()
+                        && !matches!(
+                            key,
+                            Expression::StringLiteral(_)
+                                | Expression::NumericLiteral(_)
+                                | Expression::BigIntLiteral(_)
+                        )
+                    {
+                        let value = key.take_in(ctx);
+                        *key = helper_call_expr(
+                            Helper::ToPropertyKey,
+                            ArenaVec::from_value_in(Argument::from(value), ctx),
+                            ctx,
+                        );
+                        continue;
+                    }
+                    (&mut prop.key, &mut prop.computed, decorated)
                 }
                 ClassElement::MethodDefinition(method) => {
                     let method = &mut **method;
