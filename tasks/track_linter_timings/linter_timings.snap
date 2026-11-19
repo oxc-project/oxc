@@ -553,6 +553,7 @@ unicorn/no-invalid-remove-event-listener                |  62606
 unicorn/no-length-as-slice-end                          |  62606
 unicorn/no-lonely-if                                    |  13190
 unicorn/no-magic-array-flat-depth                       |  62606
+unicorn/no-multiple-promise-resolver-calls              |   1421
 unicorn/no-negated-condition                            |  17912
 unicorn/no-negation-in-equality-check                   |  20604
 unicorn/no-nested-ternary                               |   4722

@@ -1,0 +1,11 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 522
+---
+
+  ⚠ unicorn(no-multiple-promise-resolver-calls): Promise executor resolver functions may be called multiple times on the same execution path.
+   ╭─[no_multiple_promise_resolver_calls.tsx:1:635]
+ 1 │ new Promise(resolve => { while (condition) {while (condition) {while (condition) {while (condition) {while (condition) {while (condition) {while (condition) {while (condition) {while (condition) {while (condition) {while (condition) {while (condition) {while (condition) {while (condition) {while (condition) {while (condition) {while (condition) {while (condition) {while (condition) {while (condition) {while (condition) {while (condition) {while (condition) {while (condition) {while (condition) {while (condition) {while (condition) {while (condition) {while (condition) {while (condition) {while (condition) {while (condition) { resolve(); }}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}} });
+   ·                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           ─────────
+   ╰────
+  help: Return after settling the Promise, or make the resolver calls mutually exclusive.
