@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 148/148 (100.00%)
 Positive Passed: 148/148 (100.00%)
-Negative Passed: 285/285 (100.00%)
+Negative Passed: 288/288 (100.00%)
 
   × TS(1029): 'declare' modifier must precede 'abstract' modifier.
    ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
@@ -4944,6 +4944,26 @@ Negative Passed: 285/285 (100.00%)
    ·            ────────
  5 │ }
    ╰────
+
+  × Expected `{` but found `>`
+   ╭─[misc/fail/oxc-29314-1.ts:1:8]
+ 1 │ f<class>(h);
+   ·        ┬
+   ·        ╰── `{` expected
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/oxc-29314-2.ts:1:5]
+ 1 │ f<A<return>>(h);
+   ·     ──────
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/oxc-29314-3.ts:1:14]
+ 1 │ type T = null.x;
+   ·              ▲
+   ╰────
+  help: Try inserting a semicolon here
 
   × `await` is only allowed within async functions and at the top levels of modules
    ╭─[misc/fail/oxc-29896.js:1:17]

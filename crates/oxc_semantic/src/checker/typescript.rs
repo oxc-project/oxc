@@ -10,15 +10,20 @@ use oxc_str::{JSStr, Str};
 
 use crate::{builder::SemanticBuilder, diagnostics};
 
-pub fn check_ts_type_annotation(annotation: &TSTypeAnnotation<'_>, ctx: &SemanticBuilder<'_>) {
-    let (modifier, is_start, span_with_illegal_modifier) = match &annotation.type_annotation {
-        TSType::JSDocNonNullableType(ty) => ('!', !ty.postfix, ty.span()),
-        TSType::JSDocNullableType(ty) => ('?', !ty.postfix, ty.span()),
-        _ => {
-            return;
-        }
-    };
+pub fn check_jsdoc_nullable_type(ty: &JSDocNullableType<'_>, ctx: &SemanticBuilder<'_>) {
+    check_jsdoc_type_modifier('?', !ty.postfix, ty.span, ctx);
+}
 
+pub fn check_jsdoc_non_nullable_type(ty: &JSDocNonNullableType<'_>, ctx: &SemanticBuilder<'_>) {
+    check_jsdoc_type_modifier('!', !ty.postfix, ty.span, ctx);
+}
+
+fn check_jsdoc_type_modifier(
+    modifier: char,
+    is_start: bool,
+    span_with_illegal_modifier: Span,
+    ctx: &SemanticBuilder<'_>,
+) {
     let valid_type_span = if is_start {
         span_with_illegal_modifier.shrink_left(1)
     } else {
@@ -32,12 +37,16 @@ pub fn check_ts_type_annotation(annotation: &TSTypeAnnotation<'_>, ctx: &Semanti
         Cow::Borrowed(suggestion)
     };
 
-    ctx.error(diagnostics::jsdoc_type_in_annotation(
+    ctx.error(diagnostics::jsdoc_type_modifier(
         modifier,
         is_start,
         span_with_illegal_modifier,
         &suggestion,
     ));
+}
+
+pub fn check_jsdoc_unknown_type(ty: &JSDocUnknownType, ctx: &SemanticBuilder<'_>) {
+    ctx.error(diagnostics::jsdoc_type(ty.span));
 }
 
 pub fn check_ts_type_predicate(predicate: &TSTypePredicate<'_>, ctx: &SemanticBuilder<'_>) {

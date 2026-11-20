@@ -466,9 +466,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             | Kind::Boolean
             | Kind::Undefined
             | Kind::Never
-            | Kind::Object
+            | Kind::Object => self.parse_keyword_type(),
             // Parse `null` as `TSNullKeyword` instead of null literal to align with typescript eslint.
-            | Kind::Null => self.parse_keyword_type(),
+            // Unlike the keywords above, it cannot begin a qualified name: `null.x`.
+            Kind::Null => {
+                let span = self.cur_token().span();
+                self.bump_any();
+                TSType::new_ts_null_keyword(span, self)
+            }
             // TODO: js doc types: `JSDocAllType`, `JSDocFunctionType`
             // Kind::StarEq => {
             // scanner.reScanAsteriskEqualsToken();
@@ -491,7 +496,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let start = self.cur_start();
                 let literal = self.parse_template_literal(false);
                 let span = self.end_span(start);
-                TSType::new_ts_literal_type(span, TSLiteral::TemplateLiteral(self.alloc(literal)), self)
+                TSType::new_ts_literal_type(
+                    span,
+                    TSLiteral::TemplateLiteral(self.alloc(literal)),
+                    self,
+                )
             }
             Kind::Minus => {
                 if self.lexer.peek_token().kind().is_number() {
@@ -517,9 +526,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     TSType::TSThisType(this_type)
                 }
             }
-            Kind::Typeof => {
-                self.parse_type_query()
-            }
+            Kind::Typeof => self.parse_type_query(),
             Kind::LCurly => {
                 let opening_span = self.cur_token().span();
                 self.bump_any();
@@ -576,7 +583,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::Symbol => TSType::new_ts_symbol_keyword(span, self),
             Kind::Undefined => TSType::new_ts_undefined_keyword(span, self),
             Kind::Unknown => TSType::new_ts_unknown_keyword(span, self),
-            Kind::Null => TSType::new_ts_null_keyword(span, self),
             _ => unreachable!(),
         }
     }
@@ -935,7 +941,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 Kind::RAngle,
                 Kind::Comma,
                 opening_span,
-                Self::parse_ts_type,
+                Self::parse_type_argument,
             );
             self.expect(Kind::RAngle);
             let span = self.end_span(start);
@@ -1013,7 +1019,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 Kind::RAngle,
                 Kind::Comma,
                 opening_span,
-                Self::parse_ts_type,
+                Self::parse_type_argument,
             );
             self.expect(Kind::RAngle);
             let span = self.end_span(start);
@@ -1023,6 +1029,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return Some(TSTypeParameterInstantiation::boxed(span, params, self));
         }
         None
+    }
+
+    /// Parse one type in a `TypeArguments` list.
+    ///
+    /// TypeScript parses a type argument only from a token which can start a type. A type
+    /// reference otherwise accepts any identifier name, as in `let a: class`, but `A<class>`
+    /// is not a type-argument list.
+    fn parse_type_argument(&mut self) -> TSType<'a> {
+        if is_reserved_non_type_start(self.cur_kind()) {
+            return self.unexpected();
+        }
+        self.parse_ts_type()
     }
 
     /// Speculatively parse a `<T, U>` type-argument list in an expression
@@ -1089,8 +1107,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let opening_span = self.cur_token().span();
         debug_assert!(self.at(Kind::LAngle));
         self.advance(Kind::LAngle);
-        let (params, _) =
-            self.parse_delimited_list(Kind::RAngle, Kind::Comma, opening_span, Self::parse_ts_type);
+        let (params, _) = self.parse_delimited_list(
+            Kind::RAngle,
+            Kind::Comma,
+            opening_span,
+            Self::parse_type_argument,
+        );
         // A contiguous `>=` remains a relational operator: `a < b >= c`. A separated
         // `> =` can end an instantiation before `=`; assignment validity is checked later.
         // Re-lex before consuming `>` so whitespace between these spellings matters.
@@ -1151,9 +1173,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///
     /// plus the JSDoc postfix `!` and `?`, which the type parser accepts in order to report them.
     /// Any other token ends the list early: `a < b;`, `a < b.c)`, `a < 0 &&`, `a < this.b`.
+    /// A reserved word which cannot start a type rules out the list at once: `a < class {}`.
     ///
     /// The lexer is positioned after `first`. The checks mirror `parse_non_array_type`,
-    /// `parse_postfix_type_rest` and their callers, and must be kept in step with them.
+    /// `parse_postfix_type_rest`, `parse_type_argument` and their callers, and must be kept in
+    /// step with them.
     fn can_start_type_argument_after(&mut self, first: Kind) -> bool {
         let is_name = matches!(
             first,
@@ -1168,13 +1192,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 | Kind::Undefined
                 | Kind::Never
                 | Kind::Object
-                | Kind::Null
         );
         if !is_name
-            && !matches!(first, Kind::This | Kind::Str | Kind::True | Kind::False)
+            && !matches!(first, Kind::Null | Kind::This | Kind::Str | Kind::True | Kind::False)
             && !first.is_number()
         {
-            return true;
+            return !is_reserved_non_type_start(first);
         }
         let mut next = self.lexer.next_token().kind();
         while is_name && next == Kind::Dot {
@@ -2002,4 +2025,25 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             kind => kind.is_identifier_reference(self.ctx.has_yield(), self.ctx.has_await()),
         }
     }
+}
+
+/// Whether `kind` is a reserved word which cannot start a type.
+///
+/// `await` and `yield` are excluded because outside their own contexts they are identifiers.
+const fn is_reserved_non_type_start(kind: Kind) -> bool {
+    kind.is_reserved_keyword()
+        && !matches!(
+            kind,
+            Kind::Await
+                | Kind::False
+                | Kind::Function
+                | Kind::Import
+                | Kind::New
+                | Kind::Null
+                | Kind::This
+                | Kind::True
+                | Kind::Typeof
+                | Kind::Void
+                | Kind::Yield
+        )
 }
