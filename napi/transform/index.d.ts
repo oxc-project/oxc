@@ -155,9 +155,10 @@ export interface DecoratorOptions {
   /**
    * Lower standard decorators and auto-accessors.
    *
-   * When omitted or `false`, this syntax is preserved for a later transform at any target
-   * while TypeScript types are still stripped. Set to `true` to lower it.
-   * Other target-selected transforms still run on unrelated syntax.
+   * When omitted, lowering follows the target: a concrete target lowers them, and `esnext`
+   * or no target preserves them. Set to `false` to preserve this syntax for a later transform
+   * at any target while stripping TypeScript types. Set to `true` to lower it regardless of
+   * target. Other target-selected transforms still run on unrelated syntax.
    * `legacy: true` takes precedence over this option.
    *
    * Lowering needs helpers that only `@oxc-project/runtime` provides, so it reports an error

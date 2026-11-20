@@ -1,3 +1,5 @@
+import { createRequire } from "node:module";
+import { runInNewContext } from "node:vm";
 import { Worker } from "node:worker_threads";
 import { describe, expect, it, test } from "vitest";
 
@@ -331,6 +333,32 @@ describe("standard decorators", () => {
     expect(ret.code).not.toContain(": T");
   });
 
+  it("follows the target and honors the lower override", () => {
+    const code = "@decorate class Example { @decorate method() {} }";
+
+    for (const options of [{}, { target: "esnext" }]) {
+      const preserved = transformSync("test.js", code, options);
+      expect(preserved.errors).toEqual([]);
+      expect(preserved.code).toContain("@decorate");
+      expect(preserved.code).not.toContain("decorateElement");
+      expect(preserved.helpersUsed).toEqual({});
+    }
+
+    const implicit = transformSync("test.js", code, { target: "es2015" });
+    expect(implicit.errors).toEqual([]);
+    expect(implicit.code).not.toContain("@decorate");
+    expect(implicit.code).toContain("decorateElement");
+
+    const explicit = transformSync("test.js", code, {
+      target: "esnext",
+      decorator: { lower: true },
+    });
+    expect(explicit.errors).toEqual([]);
+    expect(explicit.code).not.toContain("@decorate");
+    expect(explicit.code).toContain("decorateElement");
+    expect(explicit.helpersUsed).toEqual(implicit.helpersUsed);
+  });
+
   it("keeps unrelated target transforms enabled when standard lowering is disabled", () => {
     const ret = transformSync(
       "test.js",
@@ -378,6 +406,41 @@ describe("standard decorators", () => {
     expect(legacy.code).toContain("_decorate(");
     expect(disabledStandard.code).toEqual(legacy.code);
     expect(disabledStandard.helpersUsed).toEqual(legacy.helpersUsed);
+  });
+
+  test.each(["esnext", "es2015"])("runs through the public API targeting %s", (target) => {
+    const ret = transformSync(
+      "test.js",
+      `
+        const calls = [];
+        const holder = {
+          decorate(value, context) {
+            if (this !== holder) throw new Error("Lost decorator receiver");
+            calls.push(context.name);
+            return value;
+          }
+        };
+        const Decorated = @holder.decorate class {
+          @holder.decorate #value = 1;
+          static accessor count = 2;
+          get value() { return this.#value; }
+        };
+        const result = [calls, new Decorated().value, Decorated.count];
+      `,
+      {
+        target,
+        decorator: target === "esnext" ? { lower: true } : undefined,
+        sourceType: "script",
+        helpers: { mode: HelperMode.External },
+      },
+    );
+    expect(ret.errors).toEqual([]);
+    const require = createRequire(import.meta.url);
+    const helpers = Object.fromEntries(
+      Object.entries(ret.helpersUsed).map(([name, path]) => [name, require(path)]),
+    );
+    const result = runInNewContext(`${ret.code}\nresult;`, { babelHelpers: helpers });
+    expect(result).toEqual([["#value", "Decorated"], 1, 2]);
   });
 });
 

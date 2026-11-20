@@ -15,9 +15,10 @@ pub struct DecoratorOptions {
 
     /// Lower standard decorators and auto-accessors.
     ///
-    /// When omitted or `false`, this syntax is preserved for a later transform at any target
-    /// while TypeScript types are still stripped. Set to `true` to lower it.
-    /// Other target-selected transforms still run on unrelated syntax.
+    /// When omitted, lowering follows the target: a concrete target lowers them, and `esnext`
+    /// or no target preserves them. Set to `false` to preserve this syntax for a later transform
+    /// at any target while stripping TypeScript types. Set to `true` to lower it regardless of
+    /// target. Other target-selected transforms still run on unrelated syntax.
     /// `legacy: true` takes precedence over this option.
     ///
     /// Lowering needs helpers that only `@oxc-project/runtime` provides, so it reports an error
@@ -72,10 +73,10 @@ impl DecoratorMode {
 }
 
 impl DecoratorOptions {
-    pub(crate) fn mode(self) -> DecoratorMode {
+    pub(crate) fn mode(self, standard_decorators: bool) -> DecoratorMode {
         if self.legacy {
             DecoratorMode::Legacy
-        } else if self.lower == Some(true) {
+        } else if self.lower.unwrap_or(standard_decorators) {
             DecoratorMode::Standard
         } else {
             DecoratorMode::Preserve

@@ -96,6 +96,102 @@ fn standard_decorators_opt_out() {
 }
 
 #[test]
+fn standard_decorators_follow_target() {
+    let source = "@decorate class Example { @decorate method() {} }";
+
+    // An unspecified target and `esnext` preserve proposal syntax.
+    for options in [TransformOptions::default(), TransformOptions::from(ESTarget::ESNext)] {
+        for decorator in [
+            DecoratorOptions::default(),
+            DecoratorOptions { lower: Some(false), ..DecoratorOptions::default() },
+        ] {
+            let options = TransformOptions { decorator, ..options.clone() };
+            let preserved = test(source, &options).unwrap();
+            assert!(preserved.contains("@decorate"));
+            assert!(!preserved.contains("decorateElement"));
+        }
+    }
+
+    let explicit = TransformOptions {
+        decorator: serde_json::from_str::<DecoratorOptions>(r#"{"lower":true}"#).unwrap(),
+        ..TransformOptions::from(ESTarget::ESNext)
+    };
+    let lowered = test(source, &explicit).unwrap();
+    assert!(!lowered.contains("@decorate"));
+    assert!(lowered.contains("decorateElement"));
+
+    // Legacy decorators lower regardless of the standard option.
+    let mut legacy_options = TransformOptions::from(ESTarget::ESNext);
+    legacy_options.decorator.legacy = true;
+    let legacy_output = test(source, &legacy_options).unwrap();
+    assert!(!legacy_output.contains("@decorate"));
+    assert!(legacy_output.contains("_decorate("));
+    assert!(!legacy_output.contains("decorateElement"));
+    legacy_options.decorator.lower = Some(false);
+    assert_eq!(test(source, &legacy_options), Ok(legacy_output));
+}
+
+#[test]
+fn standard_decorators_compat_targets() {
+    let source =
+        "@decorate class Example { accessor value = 1; } class Plain { accessor value = 2; }";
+    let plain = "class Plain { value = 1; #private = 2; read() { return this.#private; } static { effect(); } }";
+    for (options, lowers) in [
+        (TransformOptions::default(), false),
+        (TransformOptions::from_target("esnext").unwrap(), false),
+        (TransformOptions::from_target("es2015").unwrap(), true),
+        (TransformOptions::from_target("safari16").unwrap(), true),
+        (TransformOptions::from_target("chrome999").unwrap(), true),
+    ] {
+        assert_eq!(options.env.standard_decorators, lowers);
+        let output = test(source, &options).unwrap();
+        assert_eq!(output.contains("@decorate"), !lowers);
+        assert_eq!(output.contains("accessor value"), !lowers);
+        assert_eq!(output.contains("decorateElement"), lowers);
+        let mut preserve_options = options.clone();
+        preserve_options.decorator.lower = Some(false);
+        assert_eq!(test(plain, &options), test(plain, &preserve_options));
+    }
+}
+
+#[test]
+fn standard_decorators_skip_sources_without_decorator_syntax() {
+    // Neither `@` nor `accessor`: decorator lowering is skipped entirely. The output must match
+    // both an explicit opt-out and the full path, which a `@` in a comment forces.
+    let plain = "for (let i = 0; i < 2; i++) list.push(class { static x = i; #y = 1; static { effect(this); } get y() { return this.#y; } });\nclass Plain { value = 1; static #count = 0; static next() { return ++Plain.#count; } }\n";
+    let with_comment = format!("{plain}// @ in a comment\n");
+    for target in ["es2015", "es2022", "chrome94", "safari15"] {
+        let options = TransformOptions::from_target(target).unwrap();
+        let mut preserve = options.clone();
+        preserve.decorator.lower = Some(false);
+        let fast = test(plain, &options).unwrap();
+        assert_eq!(Ok(fast.clone()), test(plain, &preserve), "{target}");
+        let full = test(&with_comment, &options).unwrap();
+        let full = full.trim_end().trim_end_matches("// @ in a comment").trim_end();
+        assert_eq!(full, fast.trim_end(), "{target}");
+    }
+
+    // `@` in package specifiers and comments keeps the fast path, but decorators anywhere else,
+    // even directly after a keyword, are still lowered.
+    let options = TransformOptions::from_target("es2022").unwrap();
+    for source in [
+        "import x from '@scope/pkg'; /** @internal */ export default@dec class {}",
+        "function f() { return@dec class {}; } // @",
+        "let s = `@`; [@dec class {}];",
+    ] {
+        let output = test(source, &options).unwrap();
+        assert!(output.contains("decorateElement"), "{source}");
+        assert!(!output.contains("@dec"), "{source}");
+    }
+
+    // `accessor` alone still lowers.
+    let output =
+        test("class A { accessor x = 1; }", &TransformOptions::from_target("es2022").unwrap())
+            .unwrap();
+    assert!(!output.contains("accessor x"));
+}
+
+#[test]
 fn standard_decorators_opt_out_keeps_other_transforms() {
     let source = "function run() { using resource = acquire(); @decorate class Example { @decorate method() {} } return Example; }";
     let mut options = TransformOptions::from(ESTarget::ES2022);
@@ -135,6 +231,7 @@ fn babel_options_standard_decorators() {
 
     // `preset-env` does not include the decorators proposal, so its targets alone preserve it.
     let options = from(r#"{ "presets": [["env", { "targets": { "chrome": "80" } }]] }"#).unwrap();
+    assert!(options.env.standard_decorators);
     let output = test(source, &options).unwrap();
     assert!(output.contains("@decorate"));
     assert!(!output.contains("decorateElement"));
