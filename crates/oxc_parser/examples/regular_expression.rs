@@ -1,44 +1,46 @@
 #![expect(clippy::print_stdout)]
-use std::{env, fs, path::Path};
+
+use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 use oxc_ast_visit::VisitJs;
-use oxc_parser::{ParseOptions, Parser};
+use oxc_parser::{ParseOptions, Source, SourceFileError};
 use oxc_regular_expression::{ConstructorParser as RegExpParser, Options as RegExpParserOptions};
-use oxc_span::SourceType;
 
 // `cargo run -p oxc_parser --example regular_expression`
 
-fn main() {
-    // 1. Get the file content and parse
+fn main() -> Result<(), SourceFileError> {
+    // Get the file content and parse
     let name = env::args().nth(1).unwrap_or_else(|| "test.js".to_string());
     let path = Path::new(&name);
 
-    let source_text = fs::read_to_string(path).unwrap();
-    let source_type = SourceType::from_path(path).unwrap();
-
     let allocator = Allocator::default();
+    let source = Source::from_file(path, &allocator)?;
+
     let options = ParseOptions {
         parse_regular_expression: true,
         enable_ident_hashes: false,
         ..ParseOptions::default()
     };
+    let parser_ret = source.parse_with_options(options);
 
-    let parser_ret =
-        Parser::new(&allocator, &source_text, source_type).with_options(options).parse();
+    let source_text = parser_ret.program.source_text;
+
     if !parser_ret.diagnostics.is_empty() {
         println!("Parsing failed:");
         for error in parser_ret.diagnostics {
-            println!("{}", error.render_with_source_code(source_text.as_str()));
+            println!("{}", error.render_with_source_code(source_text));
         }
-        return;
+        return Ok(());
     }
 
     // Parse regular expressions
     // - RegExpLiteral
     // - new RegExp() with string or template literal if static
-    RegularExpressionVisitor { source_text: &source_text }.visit_program(&parser_ret.program);
+    RegularExpressionVisitor { source_text }.visit_program(&parser_ret.program);
+
+    Ok(())
 }
 
 struct RegularExpressionVisitor<'a> {

@@ -32,12 +32,12 @@ use crate::lexer::{ByteHandler, ByteHandlers, byte_handler_tables};
 ///
 /// You can also create your own config by implementing [`ParserConfig`] on a type.
 ///
-/// Implementors must be `'static` because `Parser`'s entry points dispatch via [`Any`]
+/// Implementors must be `'static` because `Source`'s parse methods dispatch via [`Any`]
 /// to non-generic helpers for the known configs. This avoids per-consuming-crate
-/// monomorphization of the parser body - see comments on [`Parser::parse`].
+/// monomorphization of the parser body - see comments on [`Source::parse_with_config`].
 ///
 /// [`Any`]: std::any::Any
-/// [`Parser::parse`]: crate::Parser::parse
+/// [`Source::parse_with_config`]: crate::Source::parse_with_config
 pub trait ParserConfig: Default + 'static {
     /// Type of [`LexerConfig`] this [`ParserConfig`] uses.
     type LexerConfig: LexerConfig;

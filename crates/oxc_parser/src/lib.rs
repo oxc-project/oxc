@@ -10,9 +10,10 @@
 //!
 //! The parser has a minimal API with three inputs (a [memory arena](oxc_allocator::Allocator), a
 //! source string, and a [`SourceType`]) and one return struct (a [ParserReturn]).
+//! Create a [`Source`] from the inputs, and call [`Source::parse`].
 //!
 //! ```rust,ignore
-//! let parser_return = Parser::new(&allocator, &source_text, source_type).parse();
+//! let parser_return = Source::from_str(&source_text, source_type, &allocator).parse();
 //! ```
 //!
 //! # Abstract Syntax Tree (AST)
@@ -154,7 +155,7 @@ static MAX_LEN_ERROR: &str = if size_of::<usize>() >= 8 {
     "Source length exceeds 2 GiB limit"
 };
 
-/// Return value of [`Parser::parse`] consisting of AST, errors and comments
+/// Return value of [`Parser::parse`] and [`Source::parse`], consisting of AST, errors and comments.
 ///
 /// ## AST Validity
 ///
@@ -251,7 +252,7 @@ unsafe impl Unbranded for ParserReturn<'_> {
 
 /// Parse options
 ///
-/// You may provide options to the [`Parser`] using [`Parser::with_options`].
+/// You may provide options using [`Source::parse_with_options`].
 #[derive(Debug, Clone, Copy)]
 pub struct ParseOptions {
     /// Whether to parse regular expressions or not.
@@ -1137,8 +1138,8 @@ mod test {
     fn parse_program_smoke_test() {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
-        let source = "";
-        let ret = Parser::new(&allocator, source, source_type).parse();
+        let source_text = "";
+        let ret = Source::from_str(source_text, source_type, &allocator).parse();
         assert!(ret.program.is_empty());
         assert!(ret.diagnostics.is_empty());
         assert!(!ret.is_flow_language);
@@ -1148,8 +1149,9 @@ mod test {
     fn parse_expression_smoke_test() {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
-        let source = "a";
-        let expr = Parser::new(&allocator, source, source_type).parse_expression().unwrap();
+        let source_text = "a";
+        let source = Source::from_str(source_text, source_type, &allocator);
+        let expr = source.parse_expression().unwrap();
         assert!(matches!(expr, Expression::Identifier(_)));
     }
 
@@ -1157,15 +1159,16 @@ mod test {
     fn parse_expression_rejects_trailing_tokens() {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
-        for source in ["a b", "a;", "let x = 1"] {
-            assert!(Parser::new(&allocator, source, source_type).parse_expression().is_err());
+        for source_text in ["a b", "a;", "let x = 1"] {
+            let source = Source::from_str(source_text, source_type, &allocator);
+            assert!(source.parse_expression().is_err());
         }
     }
 
     #[test]
     fn asserted_exponentiation_preserve_parens() {
         for preserve_parens in [true, false] {
-            for source in [
+            for source_text in [
                 "(-value) as number ** 2",
                 "(-value as number) ** 2",
                 "(-value) as any satisfies number ** 2",
@@ -1173,27 +1176,36 @@ mod test {
                 "async () => (await value) as number ** 2",
             ] {
                 let allocator = Allocator::default();
-                let result = Parser::new(&allocator, source, SourceType::ts())
-                    .with_options(ParseOptions { preserve_parens, ..ParseOptions::default() })
-                    .parse_expression();
-                assert!(result.is_ok(), "{source}, preserve_parens={preserve_parens}");
+                let source = Source::from_str(source_text, SourceType::ts(), &allocator);
+                let result = source.parse_expression_with_options(ParseOptions {
+                    preserve_parens,
+                    ..ParseOptions::default()
+                });
+                assert!(result.is_ok(), "{source_text}, preserve_parens={preserve_parens}");
             }
 
-            for (source, operand) in [
+            for (source_text, operand) in [
                 ("-value as any satisfies number ** 2", "-value"),
                 ("<number>value as number ** 2", "<number>value"),
                 ("async () => await value as number ** 2", "await value"),
             ] {
                 let allocator = Allocator::default();
-                let diagnostics = Parser::new(&allocator, source, SourceType::ts())
-                    .with_options(ParseOptions { preserve_parens, ..ParseOptions::default() })
-                    .parse_expression()
+                let source = Source::from_str(source_text, SourceType::ts(), &allocator);
+                let diagnostics = source
+                    .parse_expression_with_options(ParseOptions {
+                        preserve_parens,
+                        ..ParseOptions::default()
+                    })
                     .unwrap_err();
-                assert_eq!(diagnostics.len(), 1, "{source}, preserve_parens={preserve_parens}");
+                assert_eq!(
+                    diagnostics.len(),
+                    1,
+                    "{source_text}, preserve_parens={preserve_parens}"
+                );
                 let label = &diagnostics[0].labels[0];
                 let start = label.offset() as usize;
                 let end = start + label.len() as usize;
-                assert_eq!(&source[start..end], operand);
+                assert_eq!(&source_text[start..end], operand);
             }
         }
     }
@@ -1204,7 +1216,7 @@ mod test {
     fn parenthesized_instantiation_expression() {
         for preserve_parens in [true, false] {
             // (source, keeps instantiation, outer has type arguments)
-            for (source, expected) in [
+            for (source_text, expected) in [
                 ("a<b>()", (false, true)),
                 ("(a<b>)()", (true, false)),
                 ("new a<b>()", (false, true)),
@@ -1218,10 +1230,13 @@ mod test {
                 ("class extends (B<T>)<U> {}", (true, true)),
             ] {
                 let allocator = Allocator::default();
-                let expr = Parser::new(&allocator, source, SourceType::ts())
-                    .with_options(ParseOptions { preserve_parens, ..ParseOptions::default() })
-                    .parse_expression()
-                    .unwrap_or_else(|_| panic!("{source}, preserve_parens={preserve_parens}"));
+                let source = Source::from_str(source_text, SourceType::ts(), &allocator);
+                let expr = source
+                    .parse_expression_with_options(ParseOptions {
+                        preserve_parens,
+                        ..ParseOptions::default()
+                    })
+                    .unwrap_or_else(|_| panic!("{source_text}, preserve_parens={preserve_parens}"));
                 let (target, type_arguments) = match &expr {
                     Expression::CallExpression(call) => (&call.callee, &call.type_arguments),
                     Expression::NewExpression(new) => (&new.callee, &new.type_arguments),
@@ -1232,7 +1247,7 @@ mod test {
                         let heritage = class.heritage.as_ref().unwrap();
                         (&heritage.expression, &heritage.type_arguments)
                     }
-                    _ => unreachable!("{source}"),
+                    _ => unreachable!("{source_text}"),
                 };
                 let actual = (
                     matches!(
@@ -1241,53 +1256,53 @@ mod test {
                     ),
                     type_arguments.is_some(),
                 );
-                assert_eq!(actual, expected, "{source}, preserve_parens={preserve_parens}");
+                assert_eq!(actual, expected, "{source_text}, preserve_parens={preserve_parens}");
             }
         }
     }
 
     #[test]
     fn simple_arrow_no_side_effects_annotations() {
-        for source in [
+        for source_text in [
             "/*#__NO_SIDE_EFFECTS__*/ value => value",
             "/*#__NO_SIDE_EFFECTS__*/ async value => value",
             "/*#__NO_SIDE_EFFECTS__*/ async of => of",
         ] {
             let allocator = Allocator::default();
-            let expr =
-                Parser::new(&allocator, source, SourceType::default()).parse_expression().unwrap();
-            let Expression::ArrowFunctionExpression(arrow) = expr else { panic!("{source}") };
-            assert!(arrow.pure, "{source}");
+            let source = Source::from_str(source_text, SourceType::default(), &allocator);
+            let expr = source.parse_expression().unwrap();
+            let Expression::ArrowFunctionExpression(arrow) = expr else { panic!("{source_text}") };
+            assert!(arrow.pure, "{source_text}");
         }
     }
 
     #[test]
     fn identifier_continuation_pure_annotations() {
-        for source in [
+        for source_text in [
             "/*#__PURE__*/ callee()",
             "/*#__PURE__*/ callee<T>()",
             "/*#__PURE__*/ callee!.method()",
         ] {
             let allocator = Allocator::default();
-            let expr =
-                Parser::new(&allocator, source, SourceType::ts()).parse_expression().unwrap();
-            let Expression::CallExpression(call) = expr else { panic!("{source}") };
-            assert!(call.pure, "{source}");
+            let source = Source::from_str(source_text, SourceType::ts(), &allocator);
+            let expr = source.parse_expression().unwrap();
+            let Expression::CallExpression(call) = expr else { panic!("{source_text}") };
+            assert!(call.pure, "{source_text}");
         }
 
         // Check both the assignment-expression entry and a binary RHS continuation.
-        for (source, annotated_left) in [
+        for (source_text, annotated_left) in [
             ("/*#__PURE__*/ callee() + other()", true),
             ("other() + /*#__PURE__*/ callee()", false),
         ] {
             let allocator = Allocator::default();
-            let expr =
-                Parser::new(&allocator, source, SourceType::default()).parse_expression().unwrap();
-            let Expression::BinaryExpression(binary) = expr else { panic!("{source}") };
-            let Expression::CallExpression(left) = &binary.left else { panic!("{source}") };
-            let Expression::CallExpression(right) = &binary.right else { panic!("{source}") };
-            assert_eq!(left.pure, annotated_left, "{source}");
-            assert_eq!(right.pure, !annotated_left, "{source}");
+            let source = Source::from_str(source_text, SourceType::default(), &allocator);
+            let expr = source.parse_expression().unwrap();
+            let Expression::BinaryExpression(binary) = expr else { panic!("{source_text}") };
+            let Expression::CallExpression(left) = &binary.left else { panic!("{source_text}") };
+            let Expression::CallExpression(right) = &binary.right else { panic!("{source_text}") };
+            assert_eq!(left.pure, annotated_left, "{source_text}");
+            assert_eq!(right.pure, !annotated_left, "{source_text}");
         }
     }
 
@@ -1305,8 +1320,8 @@ mod test {
              ",
             "/* @flow */ super;",
         ];
-        for source in sources {
-            let ret = Parser::new(&allocator, source, source_type).parse();
+        for source_text in sources {
+            let ret = Source::from_str(source_text, source_type, &allocator).parse();
             assert!(ret.is_flow_language);
             assert_eq!(ret.diagnostics.len(), 1);
             assert_eq!(ret.diagnostics.first().unwrap().to_string(), "Flow is not supported");
@@ -1317,9 +1332,9 @@ mod test {
     fn ts_module_declaration() {
         let allocator = Allocator::default();
         let source_type = SourceType::from_path(Path::new("module.ts")).unwrap();
-        let source =
+        let source_text =
             "declare module 'test'; namespace Foo.Bar {} module Baz {} declare module 'raw' {}";
-        let ret = Parser::new(&allocator, source, source_type).parse();
+        let ret = Source::from_str(source_text, source_type, &allocator).parse();
         assert!(ret.diagnostics.is_empty());
 
         let Statement::TSExternalModuleDeclaration(external) = &ret.program.body[0] else {
@@ -1367,13 +1382,15 @@ mod test {
             "\\uD83D\\\n\\uDE00",
         ];
         for escape in escapes {
-            let source = format!("'{escape}'");
-            let expr = Parser::new(&allocator, &source, source_type).parse_expression().unwrap();
-            let Expression::StringLiteral(literal) = expr else { panic!("{source}") };
-            assert_eq!(literal.value.as_str(), Some("😀"), "{source}");
+            let source_text = format!("'{escape}'");
+            let source = Source::from_str(&source_text, source_type, &allocator);
+            let expr = source.parse_expression().unwrap();
+            let Expression::StringLiteral(literal) = expr else { panic!("{source_text}") };
+            assert_eq!(literal.value.as_str(), Some("😀"), "{source_text}");
 
             let source = format!("`{escape}`");
-            let expr = Parser::new(&allocator, &source, source_type).parse_expression().unwrap();
+            let expr =
+                Source::from_str(&source, source_type, &allocator).parse_expression().unwrap();
             let Expression::TemplateLiteral(template) = expr else { panic!("{source}") };
             let cooked = template.quasis[0].value.cooked.and_then(oxc_str::JSStr::as_str);
             assert_eq!(cooked, Some("😀"), "{source}");
@@ -1401,9 +1418,12 @@ mod test {
             ("tag`ok\r\n`", &[("ok\n", Some("ok\n"))]),
             ("tag`ok\rx`", &[("ok\nx", Some("ok\nx"))]),
         ];
-        for &(source, expected) in cases {
-            let expr = Parser::new(&allocator, source, source_type).parse_expression().unwrap();
-            let Expression::TaggedTemplateExpression(tagged) = expr else { panic!("{source:?}") };
+        for &(source_text, expected) in cases {
+            let source = Source::from_str(source_text, source_type, &allocator);
+            let expr = source.parse_expression().unwrap();
+            let Expression::TaggedTemplateExpression(tagged) = expr else {
+                panic!("{source_text:?}")
+            };
             let values = tagged
                 .quasi
                 .quasis
@@ -1413,7 +1433,7 @@ mod test {
                     (quasi.value.raw.as_str(), cooked)
                 })
                 .collect::<Vec<_>>();
-            assert_eq!(values, expected, "{source:?}");
+            assert_eq!(values, expected, "{source_text:?}");
         }
     }
 
@@ -1428,12 +1448,14 @@ mod test {
             ("('use strict'); 'use strict';", 2),
         ];
         for preserve_parens in [true, false] {
-            for (source, body_length) in sources {
-                let ret = Parser::new(&allocator, source, source_type)
-                    .with_options(ParseOptions { preserve_parens, ..ParseOptions::default() })
-                    .parse();
-                assert!(ret.program.directives.is_empty(), "{source}");
-                assert_eq!(ret.program.body.len(), body_length, "{source}");
+            for (source_text, body_length) in sources {
+                let source = Source::from_str(source_text, source_type, &allocator);
+                let ret = source.parse_with_options(ParseOptions {
+                    preserve_parens,
+                    ..ParseOptions::default()
+                });
+                assert!(ret.program.directives.is_empty(), "{source_text}");
+                assert_eq!(ret.program.body.len(), body_length, "{source_text}");
             }
         }
     }
@@ -1443,14 +1465,15 @@ mod test {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
         {
-            let source = "%DebugPrint('Raging against the Dying Light')";
+            let source_text = "%DebugPrint('Raging against the Dying Light')";
+            let source = Source::from_str(source_text, source_type, &allocator);
             let opts = ParseOptions { allow_v8_intrinsics: true, ..ParseOptions::default() };
-            let ret = Parser::new(&allocator, source, source_type).with_options(opts).parse();
+            let ret = source.parse_with_options(opts);
             assert!(ret.diagnostics.is_empty());
 
             if let Some(Statement::ExpressionStatement(expr_stmt)) = ret.program.body.first() {
                 if let Expression::V8IntrinsicExpression(expr) = &expr_stmt.expression {
-                    assert_eq!(expr.span().source_text(source), source);
+                    assert_eq!(expr.span().source_text(source_text), source_text);
                 } else {
                     panic!("Expected V8IntrinsicExpression");
                 }
@@ -1459,9 +1482,10 @@ mod test {
             }
         }
         {
-            let source = "%DebugPrint(...illegalSpread)";
+            let source_text = "%DebugPrint(...illegalSpread)";
+            let source = Source::from_str(source_text, source_type, &allocator);
             let opts = ParseOptions { allow_v8_intrinsics: true, ..ParseOptions::default() };
-            let ret = Parser::new(&allocator, source, source_type).with_options(opts).parse();
+            let ret = source.parse_with_options(opts);
             assert_eq!(ret.diagnostics.len(), 1);
             assert_eq!(
                 ret.diagnostics[0].to_string(),
@@ -1469,20 +1493,21 @@ mod test {
             );
         }
         {
-            let source = "%DebugPrint('~~')";
-            let ret = Parser::new(&allocator, source, source_type).parse();
+            let source_text = "%DebugPrint('~~')";
+            let ret = Source::from_str(source_text, source_type, &allocator).parse();
             assert_eq!(ret.diagnostics.len(), 1);
             assert_eq!(ret.diagnostics[0].to_string(), "Unexpected token");
         }
         {
             // https://github.com/oxc-project/oxc/issues/12121
-            let source = "interface Props extends %enuProps {}";
+            let source_text = "interface Props extends %enuProps {}";
             let source_type = SourceType::default().with_typescript(true);
+            let source = Source::from_str(source_text, source_type, &allocator);
             // Should not panic whether `allow_v8_intrinsics` is set or not.
             let opts = ParseOptions { allow_v8_intrinsics: true, ..ParseOptions::default() };
-            let ret = Parser::new(&allocator, source, source_type).with_options(opts).parse();
+            let ret = source.parse_with_options(opts);
             assert_eq!(ret.diagnostics.len(), 1);
-            let ret = Parser::new(&allocator, source, source_type).parse();
+            let ret = Source::from_str(source_text, source_type, &allocator).parse();
             assert_eq!(ret.diagnostics.len(), 1);
         }
     }
@@ -1499,11 +1524,11 @@ mod test {
                 CommentKind::SingleLineBlock,
             ),
         ];
-        for (source, kind) in sources {
-            let ret = Parser::new(&allocator, source, source_type).parse();
+        for (source_text, kind) in sources {
+            let ret = Source::from_str(source_text, source_type, &allocator).parse();
             let comments = &ret.program.comments;
-            assert_eq!(comments.len(), 1, "{source}");
-            assert_eq!(comments.first().unwrap().kind, kind, "{source}");
+            assert_eq!(comments.len(), 1, "{source_text}");
+            assert_eq!(comments.first().unwrap().kind, kind, "{source_text}");
         }
     }
 
@@ -1511,8 +1536,8 @@ mod test {
     fn hashbang() {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
-        let source = "#!/usr/bin/node\n;";
-        let ret = Parser::new(&allocator, source, source_type).parse();
+        let source_text = "#!/usr/bin/node\n;";
+        let ret = Source::from_str(source_text, source_type, &allocator).parse();
         assert_eq!(ret.program.hashbang.unwrap().value.as_str(), "/usr/bin/node");
     }
 
@@ -1522,14 +1547,14 @@ mod test {
         let source_type = SourceType::unambiguous();
         assert!(source_type.is_unambiguous());
         let sources = ["import x from 'foo';", "export {x} from 'foo';", "import.meta"];
-        for source in sources {
-            let ret = Parser::new(&allocator, source, source_type).parse();
+        for source_text in sources {
+            let ret = Source::from_str(source_text, source_type, &allocator).parse();
             assert!(ret.program.source_type.is_module());
         }
 
         let sources = ["", "import('foo')"];
-        for source in sources {
-            let ret = Parser::new(&allocator, source, source_type).parse();
+        for source_text in sources {
+            let ret = Source::from_str(source_text, source_type, &allocator).parse();
             assert!(ret.program.source_type.is_script());
         }
     }
@@ -1653,19 +1678,42 @@ mod test {
         assert_ne!(ret.program.source_text.as_ptr(), source_text.as_ptr());
     }
 
+    /// `Parser` passes its options and config on to the parser.
+    #[test]
+    fn parser_options_and_config() {
+        let allocator = Allocator::default();
+        let options = ParseOptions { preserve_parens: false, ..ParseOptions::default() };
+
+        let ret = Parser::new(&allocator, "(x);", SourceType::mjs())
+            .with_options(options)
+            .with_config(config::TokensParserConfig)
+            .parse();
+        assert!(ret.diagnostics.is_empty());
+        let Statement::ExpressionStatement(stmt) = &ret.program.body[0] else { unreachable!() };
+        assert!(matches!(stmt.expression, Expression::Identifier(_)));
+        assert!(!ret.tokens.is_empty());
+
+        let expr = Parser::new(&allocator, "(x)", SourceType::mjs())
+            .with_options(options)
+            .with_config(config::TokensParserConfig)
+            .parse_expression()
+            .unwrap();
+        assert!(matches!(expr, Expression::Identifier(_)));
+    }
+
     #[test]
     fn binary_file() {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
 
         // U+FFFD as a standalone token — file appears to be binary
-        let ret = Parser::new(&allocator, "\u{FFFD}", source_type).parse();
+        let ret = Source::from_str("\u{FFFD}", source_type, &allocator).parse();
         assert!(ret.program.is_empty());
         assert_eq!(ret.diagnostics.len(), 1);
         assert_eq!(ret.diagnostics[0].to_string(), "File appears to be binary.");
 
         // U+FFFD inside string literals — should parse fine
-        let ret = Parser::new(&allocator, "\"oops \u{FFFD} oops\";", source_type).parse();
+        let ret = Source::from_str("\"oops \u{FFFD} oops\";", source_type, &allocator).parse();
         assert!(!ret.program.is_empty());
         assert!(ret.diagnostics.is_empty());
     }
@@ -1675,8 +1723,8 @@ mod test {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
         let sources = ["2n", ";'1234567890123456789012345678901234567890'"];
-        for source in sources {
-            let ret = Parser::new(&allocator, source, source_type).parse();
+        for source_text in sources {
+            let ret = Source::from_str(source_text, source_type, &allocator).parse();
             assert!(!ret.program.body.is_empty());
         }
     }
@@ -1808,9 +1856,8 @@ mod test {
     #[test]
     fn tokens_when_lexing_ends_in_error() {
         let allocator = Allocator::default();
-        let ret = Parser::new(&allocator, "foo();\n'unterminated", SourceType::default())
-            .with_config(config::TokensParserConfig)
-            .parse();
+        let source = Source::from_str("foo();\n'unterminated", SourceType::default(), &allocator);
+        let ret = source.parse_with_config(ParseOptions::default(), config::TokensParserConfig);
 
         assert!(!ret.fatal_error);
         assert_eq!(ret.diagnostics.len(), 1);
@@ -1834,7 +1881,7 @@ mod test {
 
     #[test]
     fn tokens_after_unambiguous_await_reparse() {
-        for source in [
+        for source_text in [
             "await /x/u; export {};",
             // Reparsing merges `/a/`, but splits `/b/g`, increasing the token count.
             "await /a/ /b/g; export {};",
@@ -1852,13 +1899,12 @@ mod test {
         ] {
             let allocator = Allocator::default();
             let parse = |source_type| {
-                Parser::new(&allocator, source, source_type)
-                    .with_config(config::TokensParserConfig)
-                    .parse()
+                let source = Source::from_str(source_text, source_type, &allocator);
+                source.parse_with_config(ParseOptions::default(), config::TokensParserConfig)
             };
             let unambiguous = parse(SourceType::unambiguous());
             let module = parse(SourceType::mjs());
-            assert_eq!(unambiguous.tokens.as_slice(), module.tokens.as_slice(), "{source}");
+            assert_eq!(unambiguous.tokens.as_slice(), module.tokens.as_slice(), "{source_text}");
         }
     }
 
@@ -1868,9 +1914,8 @@ mod test {
     #[test]
     fn tokens_when_template_substitution_fails() {
         let allocator = Allocator::default();
-        let ret = Parser::new(&allocator, "`${}`", SourceType::default())
-            .with_config(config::TokensParserConfig)
-            .parse();
+        let source = Source::from_str("`${}`", SourceType::default(), &allocator);
+        let ret = source.parse_with_config(ParseOptions::default(), config::TokensParserConfig);
 
         assert!(ret.fatal_error);
         assert!(ret.tokens.is_empty());
