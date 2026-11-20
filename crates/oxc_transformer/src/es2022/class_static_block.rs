@@ -56,7 +56,10 @@ use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 use rustc_hash::FxHashMap;
 
 use crate::{
-    common::helper_loader::{Helper, helper_call_expr},
+    common::{
+        class_lowering::{ClassLowering, ClassLoweringMode},
+        helper_loader::{Helper, helper_call_expr},
+    },
     context::TraverseCtx,
     state::TransformState,
     utils::{
@@ -69,6 +72,8 @@ use crate::{
 };
 
 pub struct ClassStaticBlock<'a> {
+    /// If `true`, skip classes which class properties transform lowers for standard decorators.
+    skip_decorated_classes: bool,
     classes: Vec<ClassState<'a>>,
     pending_classes: FxHashMap<Address, PendingClass<'a>>,
 }
@@ -110,21 +115,40 @@ impl<'a> InferredName<'a> {
     }
 }
 
-impl ClassStaticBlock<'_> {
-    pub fn new() -> Self {
-        Self { classes: Vec::new(), pending_classes: FxHashMap::default() }
+impl<'a> ClassStaticBlock<'a> {
+    pub fn new(skip_decorated_classes: bool) -> Self {
+        Self { skip_decorated_classes, classes: Vec::new(), pending_classes: FxHashMap::default() }
+    }
+
+    /// Whether class properties transform lowers this class, including its static blocks.
+    fn is_skipped(&self, class: &Class<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        self.skip_decorated_classes
+            && Self::lowered_for_decorators(ctx.state.class_lowering_before_entry(class))
+    }
+
+    /// Same as [`Self::is_skipped`], for a class which has been entered.
+    fn is_entered_class_skipped(&self, scope_id: ScopeId, ctx: &TraverseCtx<'a>) -> bool {
+        self.skip_decorated_classes
+            && Self::lowered_for_decorators(ctx.state.class_lowering_of(scope_id))
+    }
+
+    fn lowered_for_decorators(lowering: ClassLowering) -> bool {
+        lowering.mode() == ClassLoweringMode::LowerForDecorators
     }
 }
 
 impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         match stmt {
-            Statement::ClassDeclaration(class) if Self::needs_declaration_initializer(class) => {
+            Statement::ClassDeclaration(class)
+                if !self.is_skipped(class, ctx) && Self::needs_declaration_initializer(class) =>
+            {
                 let declaration = Self::class_declaration_initializer(class.take_in(ctx), ctx);
                 *stmt = Statement::VariableDeclaration(declaration);
             }
             Statement::ExportDeclaration(export) => {
                 if let Declaration::ClassDeclaration(class) = &mut export.declaration
+                    && !self.is_skipped(class, ctx)
                     && Self::needs_declaration_initializer(class)
                 {
                     let declaration = Self::class_declaration_initializer(class.take_in(ctx), ctx);
@@ -136,7 +160,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
                 else {
                     return;
                 };
-                if !Self::needs_declaration_initializer(class) {
+                if self.is_skipped(class, ctx) || !Self::needs_declaration_initializer(class) {
                     return;
                 }
                 let mut class = class.take_in(ctx);
@@ -169,6 +193,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
     }
 
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Expression::ClassExpression(class) = expr.get_inner_expression()
+            && self.is_skipped(class, ctx)
+        {
+            return;
+        }
         // Parameter evaluation has no statement list for per-call temporaries. Wrap before
         // capturing object keys so their declarations are inserted inside the fresh scope.
         if matches!(ctx.parent(), Ancestor::FormalParameterInitializer(_))
@@ -267,6 +296,17 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
             .pending_classes
             .remove(&body.unstable_address())
             .and_then(|pending| pending.inferred_name);
+
+        // Class properties transform lowers this class, including its static blocks. Push empty
+        // state, so `exit_class_expression` leaves the class properties output untouched.
+        if self.skip_decorated_classes {
+            let Ancestor::ClassBody(class) = ctx.parent() else { unreachable!() };
+            if self.is_entered_class_skipped(class.scope_id().get().unwrap(), ctx) {
+                self.classes.push(ClassState { inferred_name: None, deferred: None });
+                return;
+            }
+        }
+
         self.classes.push(ClassState { inferred_name, deferred: None });
 
         // Loop through class body elements and:
@@ -397,9 +437,15 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
             );
         }
     }
+}
 
-    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::ClassExpression(_) = expr else { return };
+impl<'a> ClassStaticBlock<'a> {
+    /// Exit a class expression.
+    ///
+    /// `expr` was a `ClassExpression` on entry, but an earlier transform may have replaced it,
+    /// e.g. class properties transform for a class it lowers for decorators. Such a class has
+    /// empty state, so nothing here depends on the shape of `expr`.
+    pub fn exit_class_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let state = self.classes.pop().expect("class body must be entered first");
         if let Some(name) = state.inferred_name {
             // Let the engine perform NamedEvaluation before static initialization. Setting

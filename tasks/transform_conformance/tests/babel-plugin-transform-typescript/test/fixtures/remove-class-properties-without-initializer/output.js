@@ -1,5 +1,19 @@
+var _defineProperty = require("@oxc-project/runtime/helpers/defineProperty");
+var _runInitializers = require("@oxc-project/runtime/helpers/runInitializers");
+var _decorateElement = require("@oxc-project/runtime/helpers/decorateElement");
+var _decoratorStart = require("@oxc-project/runtime/helpers/decoratorStart");
+var _decoratorMetadata = require("@oxc-project/runtime/helpers/decoratorMetadata");
+var _z_dec;
+let _init, _Cls;
+_z_dec = [[void 0, dce]];
 class Cls {
-  y = 1;
-  @dce
-  z;
+  constructor() {
+    _defineProperty(this, "y", 1);
+    _defineProperty(this, "z", _runInitializers(_init, 8, this));
+    _runInitializers(_init, 11, this);
+  }
 }
+_Cls = Cls;
+_init = _decoratorStart(null);
+_decorateElement(_init, 5, "z", _z_dec, Cls);
+_decoratorMetadata(_init, Cls);

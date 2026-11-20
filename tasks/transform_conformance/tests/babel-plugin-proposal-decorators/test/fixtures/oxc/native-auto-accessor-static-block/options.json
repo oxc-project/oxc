@@ -1,0 +1,4 @@
+{
+  "presets": [["env", { "targets": { "safari": "16" } }]],
+  "externalHelpers": false
+}

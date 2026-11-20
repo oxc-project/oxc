@@ -325,7 +325,15 @@ impl TestCase {
         let mut actual_errors = None;
         let mut transform_options = None;
 
-        match self.transform(HelperLoaderMode::External, false) {
+        // Babel fixtures load helpers from `babelHelpers` unless they set `externalHelpers: false`.
+        // Those that do import them from `@oxc-project/runtime` instead, which standard decorator
+        // lowering needs.
+        let mode = if self.options.external_helpers {
+            HelperLoaderMode::External
+        } else {
+            HelperLoaderMode::Runtime
+        };
+        match self.transform(mode, false) {
             Err(error) => {
                 actual_errors.replace(get_babel_error(&error));
             }

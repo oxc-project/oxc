@@ -1,0 +1,16 @@
+{
+  "plugins": [
+    [
+      "proposal-decorators",
+      {
+        "version": "2023-11"
+      }
+    ],
+    [
+      "transform-typescript",
+      {
+        "allowDeclareFields": false
+      }
+    ]
+  ]
+}

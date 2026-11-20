@@ -148,12 +148,15 @@ export interface DecoratorOptions {
    */
   legacy?: boolean
   /**
-   * Lower standard auto-accessors. Decorated classes are preserved.
+   * Lower standard decorators and auto-accessors.
    *
    * When omitted or `false`, this syntax is preserved for a later transform at any target
    * while TypeScript types are still stripped. Set to `true` to lower it.
    * Other target-selected transforms still run on unrelated syntax.
    * `legacy: true` takes precedence over this option.
+   *
+   * Lowering needs helpers that only `@oxc-project/runtime` provides, so it reports an error
+   * with `helpers: { mode: "External" }`.
    *
    * @default undefined
    */
@@ -207,6 +210,9 @@ export declare const enum HelperMode {
    * ```js
    * babelHelpers.helperName(...arguments);
    * ```
+   *
+   * Lowering standard decorators is not supported in this mode: it needs helpers that only
+   * `@oxc-project/runtime` provides, so it reports an error. Use `Runtime` mode instead.
    */
   External = 'External',
 }

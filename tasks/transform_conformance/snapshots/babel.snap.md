@@ -1,6 +1,6 @@
 commit: 16a2d671
 
-Passed: 760/1190
+Passed: 767/1190
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -224,16 +224,34 @@ x Output mismatch
 x Output mismatch
 
 * class-name-tdz/typescript-type/input.ts
-x Output mismatch
+
+  x Lowering standard decorators needs the `runInitializers` helper, which
+  | only `@oxc-project/runtime` provides. Babel's `babelHelpers` object
+  | (external helper mode) does not define it.
+  help: Use the runtime helper mode to import helpers from `@oxc-project/
+        runtime`.
+
 
 * nested-class/super-call-in-decorator/input.js
-x Output mismatch
+
+  x Lowering standard decorators needs the `runInitializers` helper, which
+  | only `@oxc-project/runtime` provides. Babel's `babelHelpers` object
+  | (external helper mode) does not define it.
+  help: Use the runtime helper mode to import helpers from `@oxc-project/
+        runtime`.
+
 
 * nested-class/super-property-in-accessor-key/input.js
 x Output mismatch
 
 * nested-class/super-property-in-decorator/input.js
-x Output mismatch
+
+  x Lowering standard decorators needs the `runInitializers` helper, which
+  | only `@oxc-project/runtime` provides. Babel's `babelHelpers` object
+  | (external helper mode) does not define it.
+  help: Use the runtime helper mode to import helpers from `@oxc-project/
+        runtime`.
+
 
 * private/class-shadow-builtins/input.mjs
 x Output mismatch
@@ -1581,28 +1599,7 @@ transform-react-jsx-development: unknown field `sourceSelf`, expected one of `ru
 transform-react-jsx-development: unknown field `sourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
 
 
-# babel-plugin-proposal-decorators (0/8)
-* 2023-11-misc/setting-private-method/input.js
-x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
-
-* 2023-11-misc/setting-private-method-in-body/input.js
-x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
-
-* 2023-11-misc/setting-private-method-via-array-pattern/input.js
-x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
-
-* 2023-11-misc/setting-private-method-via-for-of/input.js
-x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
-
-* 2023-11-misc/setting-private-method-via-object-pattern/input.js
-x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
-
-* 2023-11-misc/setting-private-method-via-rest/input.js
-x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
-
-* 2023-11-misc/setting-private-method-via-update/input.js
-x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
-
+# babel-plugin-proposal-decorators (7/8)
 * legacy-regression/7030/input.js
 x Output mismatch
 

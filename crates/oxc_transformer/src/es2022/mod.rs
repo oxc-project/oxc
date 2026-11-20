@@ -47,7 +47,7 @@ impl ES2022<'_> {
                 )),
             ),
             ClassTransform::StandardDecorators { transform_static_blocks } => (
-                transform_static_blocks.then(ClassStaticBlock::new),
+                transform_static_blocks.then(|| ClassStaticBlock::new(true)),
                 Some(ClassProperties::new(
                     ClassPropertiesOptions::default(),
                     transform_static_blocks,
@@ -55,7 +55,7 @@ impl ES2022<'_> {
                     DecoratorMode::Standard,
                 )),
             ),
-            ClassTransform::StaticBlocks => (Some(ClassStaticBlock::new()), None),
+            ClassTransform::StaticBlocks => (Some(ClassStaticBlock::new(false)), None),
             ClassTransform::None => (None, None),
         };
         Self { top_level_await, class_static_block, class_properties }
@@ -103,12 +103,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
         }
         // Both transforms are present only when class properties transform lowers decorated
         // classes, and static block transform handles the rest. Class properties transform runs
-        // first. If it replaced the class, static block transform skipped that class.
+        // first and may replace the class, so static block transform exits it regardless of what
+        // `expr` now is.
         if let Some(class_properties) = &mut self.class_properties {
             class_properties.exit_expression(expr, ctx);
         }
         if let Some(class_static_block) = &mut self.class_static_block {
-            class_static_block.exit_expression(expr, ctx);
+            class_static_block.exit_class_expression(expr, ctx);
         }
     }
 

@@ -3,9 +3,11 @@
 
 use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
-use oxc_span::{SPAN, Span};
+use oxc_ast_visit::{VisitMut, walk_mut};
+use oxc_span::{GetSpan, SPAN, Span};
 use oxc_str::static_ident;
 use oxc_syntax::reference::ReferenceFlags;
+use oxc_syntax::scope::ScopeFlags;
 
 use crate::{
     common::helper_loader::{Helper, helper_call_expr},
@@ -26,7 +28,10 @@ impl<'a> ClassProperties<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         // Get value
-        let value = prop.value.take();
+        let mut value = prop.value.take();
+        if let Some(value) = &mut value {
+            replace_new_target_in_initializer(value, ctx);
+        }
 
         let span = prop.span;
         let init_expr = if let PropertyKey::PrivateIdentifier(ident) = &mut prop.key {
@@ -65,18 +70,19 @@ impl<'a> ClassProperties<'a> {
         span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        if self.private_fields_as_properties {
-            let this = Expression::new_this_expression(SPAN, ctx);
+        let this = Expression::new_this_expression(SPAN, ctx);
+        if self.current_class().bindings.private_fields_as_properties() {
             self.create_private_init_assignment_loose(ident, value, this, span, ctx)
         } else {
-            self.create_private_instance_init_assignment_not_loose(ident, value, ctx)
+            self.create_private_field_init_assignment_not_loose(ident, this, value, ctx)
         }
     }
 
-    /// `_classPrivateFieldInitSpec(this, _prop, value)`
-    fn create_private_instance_init_assignment_not_loose(
+    /// `_classPrivateFieldInitSpec(receiver, _prop, value)`
+    fn create_private_field_init_assignment_not_loose(
         &self,
         ident: &PrivateIdentifier<'a>,
+        receiver: Expression<'a>,
         value: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
@@ -84,7 +90,7 @@ impl<'a> ClassProperties<'a> {
         let prop = &private_props[&ident.name];
         let arguments = ArenaVec::from_array_in(
             [
-                Argument::new_this_expression(SPAN, ctx),
+                Argument::from(receiver),
                 Argument::from(prop.binding.create_read_expression(ctx)),
                 Argument::from(value),
             ],
@@ -162,7 +168,19 @@ impl<'a> ClassProperties<'a> {
         span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if self.private_fields_as_properties {
+        let class_details = self.current_class();
+        let private_prop = &class_details.private_props.lowered().unwrap()[&ident.name];
+        if private_prop.uses_weakmap {
+            let class_binding = if class_details.is_declaration {
+                class_details.bindings.name.as_ref().unwrap()
+            } else {
+                class_details.bindings.temp.as_ref().unwrap()
+            };
+            let receiver = class_binding.create_read_expression(ctx);
+            let init =
+                self.create_private_field_init_assignment_not_loose(ident, receiver, value, ctx);
+            self.insert_expr_after_class(init, ctx);
+        } else if class_details.bindings.private_fields_as_properties() {
             self.insert_private_static_init_assignment_loose(ident, value, span, ctx);
         } else {
             self.insert_private_static_init_assignment_not_loose(ident, value, ctx);
@@ -405,4 +423,51 @@ impl<'a> ClassProperties<'a> {
         );
         Expression::new_call_expression(span, callee, None, arguments, false, ctx)
     }
+}
+
+/// `new.target` is `undefined` in a field initializer. Replace it before the initializer moves
+/// into the constructor, where it would be the constructor instead.
+///
+/// Arrow functions inherit `new.target`; other functions and classes have their own.
+fn replace_new_target_in_initializer<'a>(value: &mut Expression<'a>, ctx: &TraverseCtx<'a>) {
+    struct Replacer<'c, 'a> {
+        ctx: &'c TraverseCtx<'a>,
+    }
+    impl<'a> VisitMut<'a> for Replacer<'_, 'a> {
+        fn visit_expression(&mut self, expr: &mut Expression<'a>) {
+            if let Expression::NewTarget(new_target) = expr {
+                *expr = Expression::new_void_0(new_target.span, self.ctx);
+            } else {
+                walk_mut::walk_expression(self, expr);
+            }
+        }
+        fn visit_function(&mut self, _function: &mut Function<'a>, _flags: ScopeFlags) {}
+        fn visit_class(&mut self, class: &mut Class<'a>) {
+            // Computed keys and the heritage are evaluated in the initializer's context.
+            if let Some(heritage) = &mut class.heritage {
+                self.visit_expression(&mut heritage.expression);
+            }
+            for element in &mut class.body.body {
+                let key = match element {
+                    ClassElement::MethodDefinition(method) if method.computed => &mut method.key,
+                    ClassElement::PropertyDefinition(prop) if prop.computed => &mut prop.key,
+                    ClassElement::AccessorProperty(prop) if prop.computed => &mut prop.key,
+                    _ => continue,
+                };
+                self.visit_property_key(key);
+            }
+        }
+    }
+    // `new.target` can't contain escapes, so an initializer without the text `target` has none.
+    // Check only the initializer's own source text: checking the whole file for each field made
+    // transforming large files with many fields quadratic. Generated initializers have an empty
+    // span, so walk them.
+    let span = value.span();
+    if let Some(text) = ctx.state.source_text.get(span.start as usize..span.end as usize)
+        && !text.is_empty()
+        && !text.contains("target")
+    {
+        return;
+    }
+    Replacer { ctx }.visit_expression(value);
 }

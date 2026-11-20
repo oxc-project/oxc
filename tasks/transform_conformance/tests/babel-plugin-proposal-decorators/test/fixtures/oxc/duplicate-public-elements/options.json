@@ -1,0 +1,4 @@
+{
+  "presets": [["env", { "targets": { "chrome": "49" } }]],
+  "externalHelpers": false
+}

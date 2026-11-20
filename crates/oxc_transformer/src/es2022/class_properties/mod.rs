@@ -322,6 +322,9 @@ impl ClassProperties<'_> {
 }
 
 impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
+    // `#[inline]` because this runs on every statement and is a no-op unless standard decorator
+    // lowering is enabled
+    #[inline]
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         self.decorator_state.wrap_decorated_loop_body(stmt, ctx);
     }
@@ -373,8 +376,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
     // `#[inline]` for fast exit for expressions which are not any of the transformed types
     #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.decorator_state.enabled() && matches!(expr, Expression::ClassExpression(_)) {
-            self.decorator_state.wrap_native_accessor_expression(expr, ctx);
+        if self.decorator_state.enabled()
+            && let Expression::ClassExpression(class) = expr
+        {
+            // At most one of these wraps the class: one handles native classes, the other
+            // lowered ones.
+            let lowering = ctx.state.class_lowering_before_entry(class);
+            self.decorator_state.wrap_native_accessor_expression(expr, lowering, ctx);
+            self.decorator_state.wrap_class_in_initializer(expr, lowering, ctx);
         }
         // All of transforms below only act on `PrivateFieldExpression`s or `PrivateInExpression`s.
         // If we're not inside a class which has private fields, `#prop` can't be present here,

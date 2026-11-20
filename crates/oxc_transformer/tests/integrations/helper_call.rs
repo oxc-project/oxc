@@ -44,3 +44,36 @@ fn helper_call_idempotency() {
         );
     }
 }
+
+/// Standard decorator helpers only exist in `@oxc-project/runtime`, so external helper mode,
+/// which loads helpers from Babel's `babelHelpers`, reports an error once instead of emitting
+/// `babelHelpers.decoratorStart(...)` and friends.
+#[test]
+fn external_helpers_reject_standard_decorator_helpers() {
+    use oxc_transformer::{HelperLoaderMode, TransformOptions};
+
+    let source = "class A { @dec method() {} @dec static field = 1; } @dec class B {}";
+    let mut options = TransformOptions::default();
+    options.decorator.lower = Some(true);
+
+    options.helper_loader.mode = HelperLoaderMode::External;
+    let errors = test(source, &options).expect_err("external helpers should be rejected");
+    assert_eq!(errors.len(), 1, "reported once per file: {errors:?}");
+    let message = errors[0].to_string();
+    assert!(message.starts_with("Lowering standard decorators needs the `"), "{message}");
+    assert!(message.contains("only `@oxc-project/runtime` provides"), "{message}");
+
+    // Babel helpers are still loaded from `babelHelpers`.
+    let output = test("class A { #x = 1; static { this.y = { ...z }; } }", &{
+        let mut options = TransformOptions::from(oxc_transformer::ESTarget::ES2015);
+        options.helper_loader.mode = HelperLoaderMode::External;
+        options
+    })
+    .unwrap();
+    assert!(output.contains("babelHelpers.objectSpread2("), "{output}");
+
+    options.helper_loader.mode = HelperLoaderMode::Runtime;
+    let output = test(source, &options).unwrap();
+    assert!(output.contains("@oxc-project/runtime/helpers/decoratorStart"), "{output}");
+    assert!(!output.contains("babelHelpers"), "{output}");
+}
