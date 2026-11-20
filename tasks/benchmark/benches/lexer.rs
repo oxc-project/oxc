@@ -7,7 +7,7 @@ use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use oxc_parser::{
-    ParseOptions, Parser,
+    ParseOptions, Parser, Source,
     config::{LexerConfig, NoTokensLexerConfig},
     lexer::{Kind, Lexer},
 };
@@ -26,9 +26,13 @@ fn bench_lexer(criterion: &mut Criterion) {
             // User code would likely reuse the same allocator over and over to parse multiple files,
             // so we do the same here.
             let mut allocator = Allocator::default();
-            b.iter(|| {
-                lex_whole_file(&allocator, source_text, source_type, NoTokensLexerConfig);
+            b.iter_with_setup_wrapper(|runner| {
                 allocator.reset();
+
+                // Do not include copying source text into arena in benchmark
+                let source = Source::from_str(source_text, source_type, &allocator);
+
+                runner.run(|| lex_whole_file(source, NoTokensLexerConfig));
             });
         });
     }
@@ -66,19 +70,14 @@ fn cleaned_test_files() -> Vec<TestFile> {
         .collect()
 }
 
-/// Lex the whole of `source_text`. Returns the number of errors.
+/// Lex the whole of `source`. Returns the number of errors.
 //
 // `#[inline(always)]` to ensure this is inlined into benchmark.
 // It's also used in `SourceCleaner` below.
 #[expect(clippy::inline_always)]
 #[inline(always)]
-fn lex_whole_file<C: LexerConfig>(
-    allocator: &Allocator,
-    source_text: &str,
-    source_type: SourceType,
-    config: C,
-) -> usize {
-    Lexer::scope(allocator, source_text, source_type, config, |mut lexer| {
+fn lex_whole_file<C: LexerConfig>(source: Source<'_>, config: C) -> usize {
+    Lexer::scope(source, config, |mut lexer| {
         if lexer.first_token().kind() != Kind::Eof {
             // Use `next_token_for_benchmarks` instead of `next_token`, to work around problem
             // where `next_token` wasn't inlined here.
@@ -132,8 +131,8 @@ fn clean<'a>(source_text: &'a str, source_type: SourceType, allocator: &'a Alloc
     clean_source_text.push_str(&source_text[last_index..]);
 
     // Check lexer can lex it without any errors
-    let error_count =
-        lex_whole_file(allocator, &clean_source_text, source_type, NoTokensLexerConfig);
+    let source = Source::from_str(&clean_source_text, source_type, allocator);
+    let error_count = lex_whole_file(source, NoTokensLexerConfig);
     assert_eq!(error_count, 0);
 
     clean_source_text
