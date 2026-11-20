@@ -246,7 +246,26 @@ fn is_functional_array_method(call_expr: &CallExpression) -> bool {
         ]),
         None,
         None,
-    )
+    ) && !is_iterator_helper_call(call_expr)
+}
+
+/// `<expr>.{filter,flatMap,map}`, where `<expr>` is a call or a `new` expression
+/// whose result is not a known array.
+///
+/// `Iterator.prototype` has `filter`, `flatMap` and `map` of its own, the iterator
+/// helpers, and they return another iterator. A receiver like `map.keys()` may
+/// therefore hand back an iterator, so spreading the call converts it to an array
+/// instead of cloning one.
+fn is_iterator_helper_call(call_expr: &CallExpression) -> bool {
+    if !is_method_call(call_expr, None, Some(&["filter", "flatMap", "map"]), None, None) {
+        return false;
+    }
+    let Some(member_expr) = call_expr.callee.get_member_expr() else {
+        return false;
+    };
+    let receiver = member_expr.object().get_inner_expression();
+    matches!(receiver, Expression::CallExpression(_) | Expression::NewExpression(_))
+        && matches!(receiver.const_eval(), ValueHint::Unknown)
 }
 
 /// Matches `<expr>.reduce(a, b)`, which usually looks like
