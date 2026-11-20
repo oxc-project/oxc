@@ -313,10 +313,13 @@ pub fn build_dispatcher(
                             .parent_context_as::<CssInJsTemplate>()
                             .is_some()
                         {
+                            // A JS template literal's CSS (`css`/`styled` tags, a `<style jsx>` body)
                             (CssVariant::Scss, Some(CssEmbeddedIn::CssInJsTemplate))
                         } else if request.parent_context_as::<CssInHtmlStyleAttribute>().is_some() {
+                            // An HTML `style` attribute's declarations
                             (variant, Some(CssEmbeddedIn::HtmlStyleAttribute))
                         } else {
+                            // A whole stylesheet: a `<style>` body, a Markdown code block
                             (variant, None)
                         };
                         oxc_formatter_css::format_to_ir(
@@ -357,15 +360,22 @@ pub fn build_dispatcher(
                     ),
                     NativeLanguage::Html(variant) => {
                         // Every part is embedded in its parent, but a JSDoc code block, formatted on its own
+                        let html_part = request.parent_context_as::<HtmlishEmbeddedIn>();
                         let embedded_in =
                             if let Some(c) = request.parent_context_as::<HtmlInJsTemplate>() {
+                                // A JS template literal's HTML (`html` tag, Angular's `@Component` template), its `${}` placeholders
                                 Some(HtmlishEmbeddedIn {
                                     indent_multiple_roots: c.indent_multiple_roots,
                                     placeholder: Some(c.placeholder),
                                 })
+                            } else if let Some(&c) = html_part {
+                                // A `<script type="text/html">` body in one: its parent's placeholders, its own layout
+                                Some(HtmlishEmbeddedIn { indent_multiple_roots: false, ..c })
                             } else if request.parent_context_as::<XxxInJsdocFence>().is_some() {
+                                // A JSDoc code block
                                 None
                             } else {
+                                // Any other part: a Markdown code block, a `<script type="text/html">` body
                                 Some(HtmlishEmbeddedIn::default())
                             };
                         oxc_formatter_htmlish::format_to_ir(
@@ -415,6 +425,7 @@ fn js_root_of(request: &DispatchRequest<'_>) -> (JsRoot, JsEmbeddedIn) {
         host_suffix: 0,
     };
     if let Some(&part) = request.parent_context_as::<JsInVueTemplate>() {
+        // Vue: a template's `{{ }}`, a directive's value, `v-for`'s and `v-slot`'s parts, `<script generic>`
         let root = match part {
             JsInVueTemplate::Interpolation => JsRoot::Expression(ExpressionRoot {
                 ends_at_double_brace: true,
@@ -451,6 +462,7 @@ fn js_root_of(request: &DispatchRequest<'_>) -> (JsRoot, JsEmbeddedIn) {
         );
     }
     if let Some(&part) = request.parent_context_as::<JsInAngularTemplate>() {
+        // Angular: a template's `{{ }}`, a binding's value or piece of one, a block's parameters, `@let`
         let root = match part {
             JsInAngularTemplate::Interpolation { before_brace }
             | JsInAngularTemplate::ValueInterpolation { before_brace } => ExpressionRoot {
@@ -479,9 +491,11 @@ fn js_root_of(request: &DispatchRequest<'_>) -> (JsRoot, JsEmbeddedIn) {
         return (JsRoot::Expression(root), embedded_in);
     }
     if request.parent_context_as::<JsInHtmlEventHandler>().is_some() {
+        // An HTML `on*` attribute's statements
         let root = in_attribute(ProgramSemicolons::LoneExpressionOmitted);
         return (root, JsEmbeddedIn { in_html_attribute: true, ..JsEmbeddedIn::default() });
     }
+    // A program: a `<script>` body, a Markdown code block (which shows a lone JSX snippet), a JSDoc code block
     let semicolons = if request.parent_context_as::<XxxInMarkdownCodeBlock>().is_some() {
         ProgramSemicolons::LoneJsxOmitted
     } else {

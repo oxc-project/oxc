@@ -141,7 +141,7 @@ pub fn format_to_ir<'a>(
 
 /// What the HTML is embedded in, for the print rules that depend on it.
 ///
-/// The host translates the parent's request into this;
+/// The host translates the parent's request into this, or takes it as is from a `<script type="text/html">` body's parent, whose placeholders it keeps;
 /// `None` is a part formatted on its own (e.g. a JSDoc code block).
 /// Embedded HTML leaves `style`, `on*`, `class` and `allow` values as written, as Prettier does.
 #[derive(Clone, Copy, Debug, Default)]
