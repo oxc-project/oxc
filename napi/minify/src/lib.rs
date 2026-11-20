@@ -17,15 +17,15 @@ mod options;
 
 use std::{collections::BTreeMap, path::PathBuf};
 
-use napi::{Either, Task, bindgen_prelude::AsyncTask};
+use napi::{Either, JsString, Task, bindgen_prelude::AsyncTask};
 use napi_derive::napi;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_minifier::Minifier;
-use oxc_napi::OxcError;
-use oxc_parser::Parser;
+use oxc_napi::{OxcError, SendableSource};
+use oxc_parser::Source;
 use oxc_sourcemap::napi::SourceMap;
 use oxc_span::SourceType;
 
@@ -58,40 +58,42 @@ fn to_napi_mangle_cache(
         .collect()
 }
 
-fn minify_impl(filename: &str, source_text: &str, options: Option<MinifyOptions>) -> MinifyResult {
-    use oxc_codegen::CodegenOptions;
-    let options = options.unwrap_or_default();
+/// Get [`SourceType`] for a file, from its filename and `options`.
+fn source_type_for(filename: &str, options: &MinifyOptions) -> SourceType {
+    if options.module == Some(true) {
+        SourceType::mjs()
+    } else {
+        SourceType::from_path(filename).unwrap_or_default()
+    }
+}
 
-    let mut minifier_options = match oxc_minifier::MinifierOptions::try_from(&options) {
+/// Parse `source`, minify it, and generate code, with options set according to `options`.
+fn minify_impl(filename: &str, source: Source<'_>, options: &MinifyOptions) -> MinifyResult {
+    use oxc_codegen::CodegenOptions;
+
+    let mut minifier_options = match oxc_minifier::MinifierOptions::try_from(options) {
         Ok(options) => options,
         Err(error) => {
+            // Diagnostic has no labels, so source text is not needed to render it
             return MinifyResult {
-                errors: OxcError::from_diagnostics(
-                    filename,
-                    source_text,
-                    vec![OxcDiagnostic::error(error)],
-                ),
+                errors: OxcError::from_diagnostics(filename, "", vec![OxcDiagnostic::error(error)]),
                 ..MinifyResult::default()
             };
         }
     };
 
-    let allocator = Allocator::default();
+    let allocator = source.allocator();
 
-    let source_type = if options.module == Some(true) {
-        SourceType::mjs()
-    } else {
-        SourceType::from_path(filename).unwrap_or_default()
-    };
-
-    let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
+    let parser_ret = source.parse();
     if !parser_ret.diagnostics.is_empty() {
         // A recovered AST may be incomplete, so skip property mangling and its cache.
         minifier_options.mangle_properties = None;
     }
-    let mut program = parser_ret.program;
 
-    let minifier_ret = Minifier::new(minifier_options).minify(&allocator, &mut program);
+    let mut program = parser_ret.program;
+    let source_text = program.source_text;
+
+    let minifier_ret = Minifier::new(minifier_options).minify(allocator, &mut program);
     let scoping = minifier_ret.scoping;
     let class_private_mappings = minifier_ret.class_private_mappings;
     let mangle_cache = parser_ret
@@ -143,17 +145,26 @@ fn minify_impl(filename: &str, source_text: &str, options: Option<MinifyOptions>
 
 /// Minify synchronously.
 #[napi]
+#[allow(clippy::missing_errors_doc, clippy::allow_attributes)]
 pub fn minify_sync(
     filename: String,
-    source_text: String,
+    source_text: JsString,
     options: Option<MinifyOptions>,
-) -> MinifyResult {
-    minify_impl(&filename, &source_text, options)
+) -> napi::Result<MinifyResult> {
+    let options = options.unwrap_or_default();
+    let source_type = source_type_for(&filename, &options);
+
+    // Copy source text from JS string directly into the arena
+    let allocator = Allocator::default();
+    let source = Source::from_napi_js_string(&source_text, source_type, &allocator)?;
+
+    Ok(minify_impl(&filename, source, &options))
 }
 
 pub struct MinifyTask {
     filename: String,
-    source_text: String,
+    /// Source text. `None` after `compute` has run.
+    source: Option<SendableSource>,
     options: Option<MinifyOptions>,
 }
 
@@ -163,7 +174,15 @@ impl Task for MinifyTask {
     type Output = MinifyResult;
 
     fn compute(&mut self) -> napi::Result<Self::Output> {
-        Ok(minify_impl(&self.filename, &self.source_text, self.options.take()))
+        let options = &*self.options.get_or_insert_default();
+        let source_type = source_type_for(&self.filename, options);
+
+        // Take the source out of the task, so its `Allocator` is dropped at end of this method.
+        // That frees its memory on this thread, not on main thread when the task is dropped.
+        let mut sendable_source = self.source.take().expect("`compute` called more than once");
+        let source = sendable_source.source(source_type);
+
+        Ok(minify_impl(&self.filename, source, options))
     }
 
     fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {
@@ -175,10 +194,15 @@ impl Task for MinifyTask {
 ///
 /// Note: This function can be slower than `minifySync` due to the overhead of spawning a thread.
 #[napi]
+#[allow(clippy::missing_errors_doc, clippy::allow_attributes)]
 pub fn minify(
     filename: String,
-    source_text: String,
+    source_text: JsString,
     options: Option<MinifyOptions>,
-) -> AsyncTask<MinifyTask> {
-    AsyncTask::new(MinifyTask { filename, source_text, options })
+) -> napi::Result<AsyncTask<MinifyTask>> {
+    // Copy source text from JS string directly into an arena.
+    // This has to happen here, on main thread, as JS values cannot be accessed on other threads.
+    let source = SendableSource::from_napi_js_string(&source_text)?;
+
+    Ok(AsyncTask::new(MinifyTask { filename, source: Some(source), options }))
 }

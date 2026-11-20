@@ -1,10 +1,12 @@
 mod comment;
 mod error;
 mod js_reg_exp;
+mod sendable_source;
 
 pub use comment::*;
 pub use error::*;
 pub use js_reg_exp::*;
+pub use sendable_source::*;
 
 use oxc_ast::{CommentKind, ast::Program};
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;

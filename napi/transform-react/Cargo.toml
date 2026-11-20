@@ -22,7 +22,7 @@ test = false
 doctest = false
 
 [dependencies]
-oxc = { workspace = true, features = ["full"] }
+oxc = { workspace = true, features = ["full", "napi"] }
 oxc_napi = { workspace = true }
 oxc_react_compiler = { workspace = true }
 oxc_sourcemap = { workspace = true, features = ["napi"] }

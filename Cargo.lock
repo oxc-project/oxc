@@ -2467,9 +2467,12 @@ dependencies = [
  "napi",
  "napi-build",
  "napi-derive",
+ "oxc_allocator",
  "oxc_ast",
  "oxc_ast_visit",
+ "oxc_data_structures",
  "oxc_diagnostics",
+ "oxc_parser",
  "oxc_span",
  "oxc_syntax",
 ]

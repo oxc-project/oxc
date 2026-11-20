@@ -7,7 +7,7 @@ use std::{
 };
 
 use napi::{
-    Either, Task,
+    Either, JsString, Task,
     bindgen_prelude::{AsyncTask, Utf16String},
 };
 use napi_derive::napi;
@@ -18,7 +18,7 @@ use oxc::{
     allocator::Allocator,
     codegen::{Codegen, CodegenOptions, CodegenReturn},
     diagnostics::{Diagnostics, OxcDiagnostic},
-    parser::Parser,
+    parser::Source,
     semantic::{SemanticBuilder, SemanticBuilderReturn},
     span::SourceType,
     str::JSStr,
@@ -30,7 +30,7 @@ use oxc::{
         ReplaceGlobalDefinesConfig,
     },
 };
-use oxc_napi::{OxcError, get_source_type};
+use oxc_napi::{OxcError, SendableSource, get_source_type};
 use oxc_sourcemap::napi::SourceMap;
 
 use crate::IsolatedDeclarationsOptions;
@@ -898,13 +898,13 @@ impl CompilerInterface for Compiler {
 ///
 /// @returns an object containing the transformed code, source maps, and any
 /// errors that occurred during parsing or transformation.
-#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
+#[allow(clippy::needless_pass_by_value, clippy::missing_errors_doc, clippy::allow_attributes)]
 #[napi]
 pub fn transform_sync(
     filename: String,
-    source_text: String,
+    source_text: JsString,
     options: Option<TransformOptions>,
-) -> TransformResult {
+) -> napi::Result<TransformResult> {
     let source_path = Path::new(&filename);
 
     let source_type = get_source_type(
@@ -919,28 +919,33 @@ pub fn transform_sync(
             // Options errors are not errors in the source text. If they have labels
             // (e.g. a syntax error in a `define` value), the labels are offsets into
             // the option's value, so don't render them against the source text.
-            return TransformResult {
+            return Ok(TransformResult {
                 errors: OxcError::from_diagnostics(&filename, "", errors),
                 ..Default::default()
-            };
+            });
         }
     };
 
-    compiler.compile(&source_text, source_type, source_path);
+    // Copy source text from JS string directly into the arena
+    let allocator = Allocator::default();
+    let source = Source::from_napi_js_string(&source_text, source_type, &allocator)?;
 
-    TransformResult {
+    let source_text = compiler.compile_source(source, source_path);
+
+    Ok(TransformResult {
         code: compiler.printed,
         map: compiler.printed_sourcemap,
         declaration: compiler.declaration,
         declaration_map: compiler.declaration_map,
         helpers_used: compiler.helpers_used,
-        errors: OxcError::from_diagnostics(&filename, &source_text, compiler.errors),
-    }
+        errors: OxcError::from_diagnostics(&filename, source_text, compiler.errors),
+    })
 }
 
 pub struct TransformTask {
     filename: String,
-    source_text: String,
+    /// Source text. `None` after `compute` has run.
+    source: Option<SendableSource>,
     options: Option<TransformOptions>,
 }
 
@@ -958,6 +963,12 @@ impl Task for TransformTask {
             self.options.as_ref().and_then(|options| options.source_type.as_deref()),
         );
 
+        // Take the source out of the task, so its `Allocator` is dropped at end of this method.
+        // That frees its memory on this thread, not on main thread when the task is dropped.
+        // Do this before validating compiler options, which can early exit.
+        let mut sendable_source = self.source.take().expect("`compute` called more than once");
+        let source = sendable_source.source(source_type);
+
         let mut compiler = match Compiler::new(self.options.take()) {
             Ok(compiler) => compiler,
             Err(errors) => {
@@ -971,7 +982,7 @@ impl Task for TransformTask {
             }
         };
 
-        compiler.compile(&self.source_text, source_type, source_path);
+        let source_text = compiler.compile_source(source, source_path);
 
         Ok(TransformResult {
             code: compiler.printed,
@@ -979,7 +990,7 @@ impl Task for TransformTask {
             declaration: compiler.declaration,
             declaration_map: compiler.declaration_map,
             helpers_used: compiler.helpers_used,
-            errors: OxcError::from_diagnostics(&self.filename, &self.source_text, compiler.errors),
+            errors: OxcError::from_diagnostics(&self.filename, source_text, compiler.errors),
         })
     }
 
@@ -1000,13 +1011,18 @@ impl Task for TransformTask {
 ///
 /// @returns a promise that resolves to an object containing the transformed code,
 /// source maps, and any errors that occurred during parsing or transformation.
+#[allow(clippy::missing_errors_doc, clippy::allow_attributes)]
 #[napi]
 pub fn transform(
     filename: String,
-    source_text: String,
+    source_text: JsString,
     options: Option<TransformOptions>,
-) -> AsyncTask<TransformTask> {
-    AsyncTask::new(TransformTask { filename, source_text, options })
+) -> napi::Result<AsyncTask<TransformTask>> {
+    // Copy source text from JS string directly into an arena.
+    // This has to happen here, on main thread, as JS values cannot be accessed on other threads.
+    let source = SendableSource::from_napi_js_string(&source_text)?;
+
+    Ok(AsyncTask::new(TransformTask { filename, source: Some(source), options }))
 }
 
 #[derive(Default)]
@@ -1051,10 +1067,26 @@ pub struct ModuleRunnerTransformResult {
     pub errors: Vec<OxcError>,
 }
 
+/// Get [`SourceType`] for a file, from its filename.
+///
+/// # Errors
+///
+/// Returns a [`ModuleRunnerTransformResult`] containing the error, if the file extension
+/// is not supported.
+fn module_runner_source_type(filename: &str) -> Result<SourceType, ModuleRunnerTransformResult> {
+    SourceType::from_path(Path::new(filename)).map_err(|err| ModuleRunnerTransformResult {
+        code: String::default(),
+        map: None,
+        deps: vec![],
+        dynamic_deps: vec![],
+        errors: vec![OxcError::new(err.to_string())],
+    })
+}
+
 /// Transform JavaScript code to a Vite Node runnable module.
 ///
 /// @param filename The name of the file being transformed.
-/// @param sourceText the source code itself
+/// @param source the source code itself
 /// @param options The options for the transformation. See {@link
 /// ModuleRunnerTransformOptions} for more information.
 ///
@@ -1063,26 +1095,11 @@ pub struct ModuleRunnerTransformResult {
 ///
 fn module_runner_transform_impl(
     filename: &str,
-    source_text: &str,
+    source: Source<'_>,
     options: Option<ModuleRunnerTransformOptions>,
 ) -> ModuleRunnerTransformResult {
-    let file_path = Path::new(filename);
-    let source_type = SourceType::from_path(file_path);
-    let source_type = match source_type {
-        Ok(s) => s,
-        Err(err) => {
-            return ModuleRunnerTransformResult {
-                code: String::default(),
-                map: None,
-                deps: vec![],
-                dynamic_deps: vec![],
-                errors: vec![OxcError::new(err.to_string())],
-            };
-        }
-    };
-
-    let allocator = Allocator::default();
-    let mut parser_ret = Parser::new(&allocator, source_text, source_type).parse();
+    let allocator = source.allocator();
+    let mut parser_ret = source.parse();
     let mut program = parser_ret.program;
 
     let SemanticBuilderReturn { semantic, diagnostics } =
@@ -1091,8 +1108,9 @@ fn module_runner_transform_impl(
 
     let scoping = semantic.into_scoping();
     let (deps, dynamic_deps) =
-        ModuleRunnerTransform::default().transform(&allocator, &mut program, scoping);
+        ModuleRunnerTransform::default().transform(allocator, &mut program, scoping);
 
+    let file_path = Path::new(filename);
     let CodegenReturn { code, map, .. } = Codegen::new()
         .with_options(CodegenOptions {
             source_map_path: options.and_then(|opts| {
@@ -1113,24 +1131,34 @@ fn module_runner_transform_impl(
         map: map.map(Into::into),
         deps: deps.into_iter().map(to_napi_string).collect(),
         dynamic_deps: dynamic_deps.into_iter().map(to_napi_string).collect(),
-        errors: OxcError::from_diagnostics(filename, source_text, parser_ret.diagnostics),
+        errors: OxcError::from_diagnostics(filename, program.source_text, parser_ret.diagnostics),
     }
 }
 
 /// @deprecated Only works for Vite.
-#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
+#[allow(clippy::needless_pass_by_value, clippy::missing_errors_doc, clippy::allow_attributes)]
 #[napi]
 pub fn module_runner_transform_sync(
     filename: String,
-    source_text: String,
+    source_text: JsString,
     options: Option<ModuleRunnerTransformOptions>,
-) -> ModuleRunnerTransformResult {
-    module_runner_transform_impl(&filename, &source_text, options)
+) -> napi::Result<ModuleRunnerTransformResult> {
+    let source_type = match module_runner_source_type(&filename) {
+        Ok(source_type) => source_type,
+        Err(ret) => return Ok(ret),
+    };
+
+    // Copy source text from JS string directly into the arena
+    let allocator = Allocator::default();
+    let source = Source::from_napi_js_string(&source_text, source_type, &allocator)?;
+
+    Ok(module_runner_transform_impl(&filename, source, options))
 }
 
 pub struct ModuleRunnerTransformTask {
     filename: String,
-    source_text: String,
+    /// Source text. `None` after `compute` has run.
+    source: Option<SendableSource>,
     options: Option<ModuleRunnerTransformOptions>,
 }
 
@@ -1140,7 +1168,17 @@ impl Task for ModuleRunnerTransformTask {
     type Output = ModuleRunnerTransformResult;
 
     fn compute(&mut self) -> napi::Result<Self::Output> {
-        Ok(module_runner_transform_impl(&self.filename, &self.source_text, self.options.take()))
+        // Take the source out of the task, so its `Allocator` is dropped at end of this method.
+        // That frees its memory on this thread, not on main thread when the task is dropped.
+        let mut sendable_source = self.source.take().expect("`compute` called more than once");
+
+        let source_type = match module_runner_source_type(&self.filename) {
+            Ok(source_type) => source_type,
+            Err(ret) => return Ok(ret),
+        };
+        let source = sendable_source.source(source_type);
+
+        Ok(module_runner_transform_impl(&self.filename, source, self.options.take()))
     }
 
     fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {
@@ -1161,11 +1199,16 @@ impl Task for ModuleRunnerTransformTask {
 /// Note: This function can be slower than `moduleRunnerTransformSync` due to the overhead of spawning a thread.
 ///
 /// @deprecated Only works for Vite.
+#[allow(clippy::missing_errors_doc, clippy::allow_attributes)]
 #[napi]
 pub fn module_runner_transform(
     filename: String,
-    source_text: String,
+    source_text: JsString,
     options: Option<ModuleRunnerTransformOptions>,
-) -> AsyncTask<ModuleRunnerTransformTask> {
-    AsyncTask::new(ModuleRunnerTransformTask { filename, source_text, options })
+) -> napi::Result<AsyncTask<ModuleRunnerTransformTask>> {
+    // Copy source text from JS string directly into an arena.
+    // This has to happen here, on main thread, as JS values cannot be accessed on other threads.
+    let source = SendableSource::from_napi_js_string(&source_text)?;
+
+    Ok(AsyncTask::new(ModuleRunnerTransformTask { filename, source: Some(source), options }))
 }

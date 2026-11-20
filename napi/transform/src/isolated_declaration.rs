@@ -1,16 +1,16 @@
 use std::path::Path;
 
-use napi::{Task, bindgen_prelude::AsyncTask};
+use napi::{JsString, Task, bindgen_prelude::AsyncTask};
 use napi_derive::napi;
 
 use oxc::{
     allocator::Allocator,
     codegen::{Codegen, CodegenOptions, CommentOptions},
     isolated_declarations::IsolatedDeclarations,
-    parser::Parser,
+    parser::Source,
     span::SourceType,
 };
-use oxc_napi::OxcError;
+use oxc_napi::{OxcError, SendableSource};
 use oxc_sourcemap::napi::SourceMap;
 
 #[napi(object)]
@@ -40,25 +40,31 @@ impl From<IsolatedDeclarationsOptions> for oxc::isolated_declarations::IsolatedD
     }
 }
 
+/// Get [`SourceType`] for a file, from its filename. Source is always parsed as TypeScript.
+fn source_type_for(filename: &str) -> SourceType {
+    SourceType::from_path(Path::new(filename)).unwrap_or_default().with_typescript(true)
+}
+
+/// Parse `source`, and generate a declaration file for it.
 fn isolated_declaration_impl(
     filename: &str,
-    source_text: &str,
+    source: Source<'_>,
     options: Option<IsolatedDeclarationsOptions>,
 ) -> IsolatedDeclarationsResult {
     let source_path = Path::new(filename);
-    let source_type = SourceType::from_path(source_path).unwrap_or_default().with_typescript(true);
-    let allocator = Allocator::default();
+    let allocator = source.allocator();
     let options = options.unwrap_or_default();
 
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let ret = source.parse();
+    let program = ret.program;
 
     let transformed_ret = IsolatedDeclarations::new(
-        &allocator,
+        allocator,
         oxc::isolated_declarations::IsolatedDeclarationsOptions {
             strip_internal: options.strip_internal.unwrap_or(false),
         },
     )
-    .build(&ret.program);
+    .build(&program);
 
     let source_map_path = match options.sourcemap {
         Some(true) => Some(source_path.to_path_buf()),
@@ -74,7 +80,7 @@ fn isolated_declaration_impl(
 
     let diagnostics =
         ret.diagnostics.into_iter().chain(transformed_ret.diagnostics).collect::<Vec<_>>();
-    let errors = OxcError::from_diagnostics(filename, source_text, diagnostics);
+    let errors = OxcError::from_diagnostics(filename, program.source_text, diagnostics);
 
     IsolatedDeclarationsResult {
         code: codegen_ret.code,
@@ -84,19 +90,26 @@ fn isolated_declaration_impl(
 }
 
 /// TypeScript Isolated Declarations for Standalone DTS Emit
-#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
+#[allow(clippy::needless_pass_by_value, clippy::missing_errors_doc, clippy::allow_attributes)]
 #[napi]
 pub fn isolated_declaration_sync(
     filename: String,
-    source_text: String,
+    source_text: JsString,
     options: Option<IsolatedDeclarationsOptions>,
-) -> IsolatedDeclarationsResult {
-    isolated_declaration_impl(&filename, &source_text, options)
+) -> napi::Result<IsolatedDeclarationsResult> {
+    let source_type = source_type_for(&filename);
+
+    // Copy source text from JS string directly into the arena
+    let allocator = Allocator::default();
+    let source = Source::from_napi_js_string(&source_text, source_type, &allocator)?;
+
+    Ok(isolated_declaration_impl(&filename, source, options))
 }
 
 pub struct IsolatedDeclarationTask {
     filename: String,
-    source_text: String,
+    /// Source text. `None` after `compute` has run.
+    source: Option<SendableSource>,
     options: Option<IsolatedDeclarationsOptions>,
 }
 
@@ -106,7 +119,14 @@ impl Task for IsolatedDeclarationTask {
     type Output = IsolatedDeclarationsResult;
 
     fn compute(&mut self) -> napi::Result<Self::Output> {
-        Ok(isolated_declaration_impl(&self.filename, &self.source_text, self.options.take()))
+        let source_type = source_type_for(&self.filename);
+
+        // Take the source out of the task, so its `Allocator` is dropped at end of this method.
+        // That frees its memory on this thread, not on main thread when the task is dropped.
+        let mut sendable_source = self.source.take().expect("`compute` called more than once");
+        let source = sendable_source.source(source_type);
+
+        Ok(isolated_declaration_impl(&self.filename, source, self.options.take()))
     }
 
     fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {
@@ -117,11 +137,16 @@ impl Task for IsolatedDeclarationTask {
 /// TypeScript Isolated Declarations for Standalone DTS Emit (async)
 ///
 /// Note: This function can be slower than `isolatedDeclarationSync` due to the overhead of spawning a thread.
+#[allow(clippy::missing_errors_doc, clippy::allow_attributes)]
 #[napi]
 pub fn isolated_declaration(
     filename: String,
-    source_text: String,
+    source_text: JsString,
     options: Option<IsolatedDeclarationsOptions>,
-) -> AsyncTask<IsolatedDeclarationTask> {
-    AsyncTask::new(IsolatedDeclarationTask { filename, source_text, options })
+) -> napi::Result<AsyncTask<IsolatedDeclarationTask>> {
+    // Copy source text from JS string directly into an arena.
+    // This has to happen here, on main thread, as JS values cannot be accessed on other threads.
+    let source = SendableSource::from_napi_js_string(&source_text)?;
+
+    Ok(AsyncTask::new(IsolatedDeclarationTask { filename, source: Some(source), options }))
 }
