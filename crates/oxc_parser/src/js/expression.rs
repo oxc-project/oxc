@@ -500,17 +500,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let token = self.cur_token();
         let kind = token.kind();
         let has_separator = token.has_separator();
-        let (base, number_kind) = match kind {
-            Kind::DecimalBigInt => (BigintBase::Decimal, Kind::Decimal),
-            Kind::BinaryBigInt => (BigintBase::Binary, Kind::Binary),
-            Kind::OctalBigInt => (BigintBase::Octal, Kind::Octal),
-            Kind::HexBigInt => (BigintBase::Hex, Kind::Hex),
+        let base = match kind {
+            Kind::DecimalBigInt => BigintBase::Decimal,
+            Kind::BinaryBigInt => BigintBase::Binary,
+            Kind::OctalBigInt => BigintBase::Octal,
+            Kind::HexBigInt => BigintBase::Hex,
             _ => return self.unexpected(),
         };
         let span = token.span();
         let raw = self.cur_src();
         let src = raw.strip_suffix('n').unwrap();
-        let value = parse_big_int(src, number_kind, has_separator, self.allocator());
+        let value = parse_big_int(src, kind, has_separator, self.allocator());
 
         self.bump_any();
         BigIntLiteral::boxed(span, value, Some(Str::from(raw)), base, self)
