@@ -251,11 +251,23 @@ fn no_else_return_diagnostic_fix(
             _ => false,
         };
 
+        let content_start = match else_stmt {
+            Statement::BlockStatement(block) => block.body.first().map(|stmt| stmt.span().start),
+            _ => Some(else_content_span.start),
+        };
+        let needs_leading_semicolon = needs_newline
+            && content_start.is_some_and(|start| {
+                ctx.source_text()[start as usize..].starts_with(is_asi_hazard_char)
+            });
+
         let needs_trailing_semicolon =
             needs_trailing_statement_separator(ctx, else_stmt, target_span.end);
         if needs_newline || needs_trailing_semicolon {
             let replacement_text = ctx.source_range(replacement_span);
-            let mut replacement = String::with_capacity(replacement_text.len() + 2);
+            let mut replacement = String::with_capacity(replacement_text.len() + 3);
+            if needs_leading_semicolon {
+                replacement.push(';');
+            }
             if needs_newline {
                 replacement.push('\n');
             }
@@ -278,17 +290,24 @@ fn needs_trailing_statement_separator(
     if let Some(last_stmt) = last_statement(else_stmt)
         && !ctx.source_range(last_stmt.span()).trim_end().ends_with([';', '}'])
     {
+        let mut after_newline = false;
         for ch in ctx.source_text()[target_end as usize..].chars() {
-            if is_line_terminator(ch) || ch == '}' || ch == ';' {
+            if is_line_terminator(ch) {
+                after_newline = true;
+            } else if ch == '}' || ch == ';' {
                 return false;
-            }
-            if !ch.is_whitespace() {
-                return true;
+            } else if !ch.is_whitespace() {
+                return !after_newline || is_asi_hazard_char(ch);
             }
         }
     }
 
     false
+}
+
+/// A statement that starts with one of these continues the previous line.
+fn is_asi_hazard_char(ch: char) -> bool {
+    matches!(ch, '(' | '[' | '/' | '+' | '-' | '`')
 }
 
 fn last_statement<'a>(stmt: &'a Statement<'a>) -> Option<&'a Statement<'a>> {
@@ -912,6 +931,31 @@ fn test() {
         (
             "function foo(){if(foo){return bar}else{if(a)baz=qux}while(baz){}}",
             "function foo(){if(foo){return bar}if(a)baz=qux;while(baz){}}",
+            None,
+        ),
+        (
+            "function foo11() { if (foo) return bar \nelse { [1, 2, 3].map(foo) } }",
+            "function foo11() { if (foo) return bar;\n [1, 2, 3].map(foo)  }",
+            None,
+        ),
+        (
+            "function foo12() { if (foo) return bar \nelse { baz() } \n[1, 2, 3].map(foo) }",
+            "function foo12() { if (foo) return bar\n baz() ; \n[1, 2, 3].map(foo) }",
+            None,
+        ),
+        (
+            "function foo18() { if (foo) return function() {} \nelse [1, 2, 3].map(bar) }",
+            "function foo18() { if (foo) return function() {};\n[1, 2, 3].map(bar) }",
+            None,
+        ),
+        (
+            "function foo() { if (foo) return bar\nelse { (a || b).c() } }",
+            "function foo() { if (foo) return bar;\n (a || b).c()  }",
+            None,
+        ),
+        (
+            "function foo() { if (foo) return bar\nelse { baz() }\nqaz() }",
+            "function foo() { if (foo) return bar\n baz() \nqaz() }",
             None,
         ),
     ];
