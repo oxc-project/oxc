@@ -31,6 +31,8 @@ The host translates either into JS's `JsRoot` and `JsEmbeddedIn`.
 An attribute's value is laid out by its language, in the layout its marker names (JS's `JsRoot`, CSS's `CssEmbeddedIn`):
 this crate only quotes it (`write_quoted`: the `"` and a group; a `"` in the value is `&quot;`, by `dispatch_attribute_value`), and knows nothing of the language's syntax,
 but Angular's own (laid out around the pieces of JS in `src/print/angular.rs`).
+A `<script>` body's output gets one HTML fact back, which no source body holds: a `</script` it prints, which would end the element, is `<\/script` (`escape_script_end`),
+the same in a JS string or template and in JSON (an html-in-js template re-cooked from `<\/script>` prints one).
 
 #### What Vue reads
 
