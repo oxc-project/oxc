@@ -363,7 +363,6 @@ impl<'a> PeepholeOptimizations {
                     })
                     .and_then(|_| ctx.eval_binary(e))
                     .or_else(|| Self::try_fold_int32_add_sub(e, ctx))
-                    .or_else(|| Self::try_fold_numeric_identity(e, ctx))
             }
             BinaryOperator::Multiplication
             | BinaryOperator::Exponential
@@ -382,7 +381,7 @@ impl<'a> PeepholeOptimizations {
                     }
                     _ => None,
                 };
-                let folded = shorter_numeric_expression.or_else(|| {
+                shorter_numeric_expression.or_else(|| {
                     Self::extract_numeric_values(e, ctx)
                         .filter(|(left, right)| {
                             *left == 0.0
@@ -399,8 +398,7 @@ impl<'a> PeepholeOptimizations {
                                     && right.fract() == 0.0)
                         })
                         .and_then(|_| ctx.eval_binary(e))
-                });
-                folded.or_else(|| Self::try_fold_numeric_identity(e, ctx))
+                })
             }
             BinaryOperator::Division => Self::try_fold_safe_integer_numeric_expression(e, ctx)
                 .or_else(|| {
@@ -414,8 +412,7 @@ impl<'a> PeepholeOptimizations {
                                 || right.is_infinite()
                         })
                         .and_then(|_| ctx.eval_binary(e))
-                })
-                .or_else(|| Self::try_fold_numeric_identity(e, ctx)),
+                }),
             BinaryOperator::ShiftLeft => {
                 Self::extract_numeric_values(e, ctx).and_then(|(left, right)| {
                     let result = e.evaluate_value(ctx)?.into_number()?;
@@ -437,7 +434,10 @@ impl<'a> PeepholeOptimizations {
                 })
             }
             BinaryOperator::In => None,
-        };
+        }
+        // Last, so that operands which evaluate fold first: `void 0 - 0` becomes `NaN`, not
+        // `+void 0`.
+        .or_else(|| Self::try_fold_numeric_identity(e, ctx));
         if let Some(changed) = changed {
             ctx.replace_expression(expr, changed);
         }

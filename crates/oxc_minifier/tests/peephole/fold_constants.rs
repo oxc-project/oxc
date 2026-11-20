@@ -1981,4 +1981,8 @@ fn test_fold_numeric_identity() {
     // `BigInt` operands throw; leave them alone.
     fold_same("1n - 0");
     fold_same("a.b * 1n");
+    // Operands that evaluate fold to their value first, rather than becoming `+A`.
+    fold("x = void 0 - 0", "x = NaN");
+    fold("x = '3' * 1", "x = 3");
+    fold("x = null / 1", "x = 0");
 }
