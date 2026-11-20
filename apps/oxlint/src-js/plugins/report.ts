@@ -30,6 +30,11 @@ export type Diagnostic = RequireAtLeastOne<
 interface DiagnosticBase {
   message?: string | null | undefined;
   messageId?: string | null | undefined;
+  /**
+   * Additional guidance displayed separately from the diagnostic message.
+   * This is an Oxlint extension; ESLint ignores this field.
+   */
+  help?: string | null | undefined;
   node?: Ranged;
   loc?: LocationWithOptionalEnd | LineColumn;
   data?: DiagnosticData | null | undefined;
@@ -77,6 +82,7 @@ export interface SuggestionReport {
  */
 export interface DiagnosticReport {
   message: string;
+  help: string | null;
   start: number;
   end: number;
   ruleIndex: number;
@@ -117,6 +123,11 @@ export function report(
     diagnostic,
     ruleDetails,
   );
+
+  const help = diagnostic.help ?? null;
+  if (help !== null && typeof help !== "string") {
+    throw new TypeError("`help` must be a string if provided");
+  }
 
   // TODO: Validate `diagnostic`
   let start: number, end: number, loc: LocationWithOptionalEnd | LineColumn | undefined;
@@ -192,6 +203,7 @@ export function report(
   diagnostics.push({
     message,
     messageId,
+    help,
     start,
     end,
     ruleIndex: ruleDetails.ruleIndex,
