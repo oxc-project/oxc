@@ -165,6 +165,12 @@ fn mangler() {
         "function _() { class Foo { foo() { var x } } }",
         "function _() { var Foo = class { foo() { var x } } }",
         "function _() { var foo; try {} catch (foo) { var foo = function() {} } }",
+        // Redeclared `var`s: the redeclaration (not the first declaration) names the
+        // anonymous function or class, and the parameter redeclared by `var` likewise.
+        "function _() { var foo; var foo = function() { var x } }",
+        "function _() { var foo = 1; var foo = () => { var x } }",
+        "function _() { var Foo; var Foo = class { foo() { var x } } }",
+        "function _(foo) { var foo = function() { var x } }",
     ];
 
     let mut snapshot = String::new();

@@ -65,10 +65,13 @@ impl<'a, 'b: 'a, 't> NameSymbolCollector<'a, 'b, 't> {
         self.scoping
             .symbol_ids()
             .filter(|symbol_id| {
-                let decl_node =
-                    self.ast_nodes.get_node(self.scoping.symbol_declaration(*symbol_id));
-                self.is_name_set_declare_node(decl_node, *symbol_id)
-                    || self.has_name_set_reference_node(*symbol_id)
+                // Check every declaration, not just the first: `var foo; var foo = function () {}`
+                // names the anonymous function via the *redeclaration*, which only
+                // `symbol_declarations` (first declaration + redeclarations) exposes.
+                let name_set = self.scoping.symbol_declarations(*symbol_id).any(|decl_node_id| {
+                    self.is_name_set_declare_node(self.ast_nodes.get_node(decl_node_id), *symbol_id)
+                });
+                name_set || self.has_name_set_reference_node(*symbol_id)
             })
             .for_each(|symbol_id| symbol_ids.set_bit(symbol_id.index()));
         symbol_ids
