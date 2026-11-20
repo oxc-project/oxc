@@ -21,6 +21,9 @@ Based on Taplo's default style, aligned with the other languages where they agre
   - Blank lines between its values are kept only when it expands
   - Like every group, the fit is measured up to the first line break:
     a value already broken by a comment or a multi-line string does not expand because of a later long line (`strings.toml`)
+    - Known limit, left by decision: what follows a multi-line string can overflow (`last_line_long`), or only a nested array expands (`nested_after`).
+      Taplo expands the outer array instead, measuring the last line;
+      the printer stops at the first line break as Prettier does (CSS relies on it), so matching would need a TOML-only exception for a rare shape
   - An array with a comment anywhere inside keeps one value or comment per line
 - An inline table is always printed on one line, even when written multi-line or too long, since TOML 1.0 has no multi-line inline tables
   - Except with a comment of its own, then one entry or comment per line (TOML 1.1), blank lines dropped
