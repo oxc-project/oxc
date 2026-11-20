@@ -888,6 +888,42 @@ Prettier looks it up in linguist, where `lwc` is an alias of its Lightning Web C
 A blank `.json` file formats to an empty one, and so does a code block of blank lines, an empty block like `jsonc` / `css` / `js` in Prettier too.
 Prettier keeps `json` / `json5` blocks as written: their parser rejects a blank document inside Markdown.
 
+## multiline-text-in-code-block-group
+
+- Why: cost
+- Pin: `conformance/fixtures/xxx-in-md/multiline-text-in-group.md`
+- Drop when: `push_text_with_literal_lines` no longer rewrites a non-expanding `Text` (see its TODO in `oxc_formatter_core`)
+
+`````markdown
+<!-- input -->
+```yaml
+k: [aaaaaaaa, bbbbbbbbb,
+
+  c]
+```
+
+<!-- ours -->
+```yaml
+k: [
+    aaaaaaaa,
+    bbbbbbbbb,
+
+    c,
+  ]
+```
+
+<!-- prettier -->
+```yaml
+k: [aaaaaaaa, bbbbbbbbb, c]
+```
+`````
+
+A code block's IR has each newline inside a `Text` rewritten to a literal line, so that it resumes at the fence's column.
+A literal line always expands its groups, and the rewrite drops the `Text`'s non-expanding flag:
+YAML's blank line kept only in a broken flow (`text("\n\n").without_expand_parent()` in `if_group_breaks`) and TOML's multi-line string in an array then expand them.
+Prettier's children turn their newlines into lines themselves, so its `replaceEndOfLine()` finds none to rewrite.
+Matching needs a non-expanding literal line in the core printer, mirrored by `to_prettier_doc`.
+
 ## astro-style-lang-sass
 
 - Why: cost
