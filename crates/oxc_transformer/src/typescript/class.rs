@@ -173,7 +173,10 @@ impl<'a> TypeScript<'a> {
                 ClassElement::MethodDefinition(method) => {
                     if method.kind == MethodDefinitionKind::Constructor {
                         constructor = Some(&mut method.value);
-                    } else {
+                    } else if method.computed {
+                        // A non-computed key (e.g. `"m"() {}`) has no side effects, and can't hold
+                        // a sequence expression. Pending assignments go to the next computed key
+                        // or the static block instead.
                         Self::convert_computed_key(
                             &mut method.key,
                             &mut computed_key_assignments,
@@ -181,7 +184,7 @@ impl<'a> TypeScript<'a> {
                         );
                     }
                 }
-                ClassElement::AccessorProperty(accessor) => {
+                ClassElement::AccessorProperty(accessor) if accessor.computed => {
                     Self::convert_computed_key(
                         &mut accessor.key,
                         &mut computed_key_assignments,
