@@ -20,4 +20,11 @@ d = 4
 [u]
 e = 5
 
+[empty]
+
+[after_empty]
+
+# a comment after a blank line
+f = 6
+
 

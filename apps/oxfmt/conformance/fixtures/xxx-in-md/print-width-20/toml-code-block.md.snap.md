@@ -21,7 +21,10 @@
 - a
 
   ```toml
-  a = ["aaaa", "bbbb"]
+  a = [
+    "aaaa",
+    "bbbb",
+  ]
   ```
 
   ```yaml
