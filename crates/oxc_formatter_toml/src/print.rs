@@ -119,8 +119,7 @@ fn write_verbatim(node: &SyntaxNode, f: &mut TomlFormatter<'_, '_>) {
 /// Source text prints as written, but its line breaks follow `endOfLine`.
 fn write_source_text<'a>(source_text: &'a str, f: &mut TomlFormatter<'_, 'a>) {
     let normalized = normalize_newlines(source_text, ['\r']);
-    // A multi-line string, like a long scalar, never expands the array around it
-    write!(f, text(arena_cow_str(&normalized, f)).without_expand_parent());
+    write!(f, text(arena_cow_str(&normalized, f)));
 }
 
 fn write_trailing_comment<'a>(comment: Option<&'a str>, f: &mut TomlFormatter<'_, 'a>) {

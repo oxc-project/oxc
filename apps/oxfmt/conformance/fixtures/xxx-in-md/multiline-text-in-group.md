@@ -1,4 +1,4 @@
-A non-expanding multi-line text keeps its group flat, as in its standalone file
+A multi-line text lays out as in its standalone file: a non-expanding one keeps its group flat (yaml), an expanding one expands it (toml)
 
 ```yaml
 k: [aaaaaaaa, bbbbbbbbb,
