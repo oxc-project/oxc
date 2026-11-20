@@ -201,7 +201,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 break;
             }
             let (extend, type_argument) = split_unparenthesized_instantiation(extend, start);
-            let type_argument = type_argument.or_else(|| self.try_parse_type_arguments());
+            let type_argument = type_argument.or_else(|| {
+                let type_argument = self.try_parse_type_arguments()?;
+                if !self.is_ts {
+                    self.error(diagnostics::type_arguments_in_ts(type_argument.span));
+                }
+                Some(type_argument)
+            });
 
             extends.push((extend, type_argument));
 

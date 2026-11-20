@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 148/148 (100.00%)
-Positive Passed: 148/148 (100.00%)
-Negative Passed: 288/288 (100.00%)
+AST Parsed     : 150/150 (100.00%)
+Positive Passed: 150/150 (100.00%)
+Negative Passed: 294/294 (100.00%)
 
   × TS(1029): 'declare' modifier must precede 'abstract' modifier.
    ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
@@ -5594,6 +5594,58 @@ Negative Passed: 288/288 (100.00%)
  2 │ interface B extends this {}
  3 │ interface C extends this.D {}
    ·                     ──────
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/ts-tuple-element-reserved-word-label.ts:1:17]
+ 1 │ let a: [string, class?: string];
+   ·                 ─────
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/ts-tuple-element-reserved-word.ts:1:9]
+ 1 │ let a: [class];
+   ·         ─────
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/ts-type-argument-await-implements.ts:2:24]
+ 1 │ async function f() {
+ 2 │   class C implements G<await> {}
+   ·                        ─────
+ 3 │ }
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/ts-type-argument-await-jsx.tsx:2:13]
+ 1 │ async function f() {
+ 2 │   return <C<await> />;
+   ·             ─────
+ 3 │ }
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/ts-type-argument-await.ts:2:18]
+ 1 │ async function f() {
+ 2 │   g<string, await>(h);
+   ·                  ─
+ 3 │ }
+   ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[misc/fail/ts-type-argument-yield.ts:2:9]
+ 1 │ function* f() {
+ 2 │   new G<yield>();
+   ·         ─────
+ 3 │ }
+   ╰────
+
+  × Empty parenthesized expression
+   ╭─[misc/fail/ts-type-argument-yield.ts:2:15]
+ 1 │ function* f() {
+ 2 │   new G<yield>();
+   ·               ──
+ 3 │ }
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
