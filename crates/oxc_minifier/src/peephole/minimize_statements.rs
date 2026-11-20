@@ -1901,30 +1901,15 @@ impl<'a> PeepholeOptimizations {
                         }
                         ObjectPropertyKind::ShorthandProperty(shorthand) => {
                             if shorthand.value.name == search_for {
-                                let span = shorthand.span;
                                 let target_span = shorthand.value.span;
-                                let key = if shorthand.name == "__proto__" {
-                                    // { __proto__ } -> { ['__proto__']: value }
-                                    PropertyKey::new_string_literal(
-                                        target_span,
-                                        "__proto__",
-                                        None,
-                                        ctx,
-                                    )
-                                } else {
-                                    PropertyKey::new_static_identifier(
-                                        target_span,
-                                        shorthand.name,
-                                        ctx,
-                                    )
-                                };
                                 // Preserve the span of the target identifier so that comments
                                 // attached to it remain correctly associated with the replacement.
                                 let mut value = replacement.take_in(ctx);
                                 *value.span_mut() = target_span;
-                                let new_prop = ObjectPropertyKind::new_key_value_property(
-                                    span, key, value, ctx,
-                                );
+                                let new_prop =
+                                    ObjectPropertyKind::new_key_value_property_from_shorthand(
+                                        shorthand, value, ctx,
+                                    );
                                 ctx.replace_object_property_kind(prop, new_prop);
                                 return Some(true);
                             }

@@ -58,16 +58,7 @@ impl<'a> MatchDetector<'a> {
     fn extract_variants_from_match_arm(&mut self, arm: &Arm) -> CollectionResult {
         let pat = &arm.pat;
         match pat {
-            Pat::TupleStruct(ts) => {
-                if let Some(variant) = astkind_variant_from_path(&ts.path) {
-                    // NOTE: If there is a guard, we assume that it may or may not be taken and collect all AST kinds
-                    // regardless of the guard condition.
-                    self.node_types.insert(variant);
-                    CollectionResult::Complete
-                } else {
-                    CollectionResult::Incomplete
-                }
-            }
+            Pat::TupleStruct(_) | Pat::Or(_) => self.extract_variants_from_pat(pat),
             Pat::Wild(_) => {
                 // Body must be completely empty, or return empty type only `()`
                 if let Expr::Block(block) = &*arm.body {
@@ -87,12 +78,10 @@ impl<'a> MatchDetector<'a> {
                 }
             }
             Pat::Guard(guard) => {
-                if let Pat::TupleStruct(ts) = guard.pat.as_ref() {
-                    if let Some(variant) = astkind_variant_from_path(&ts.path) {
-                        self.node_types.insert(variant);
-                        return CollectionResult::Complete;
-                    }
-                    return CollectionResult::Incomplete;
+                if matches!(guard.pat.as_ref(), Pat::TupleStruct(_) | Pat::Or(_)) {
+                    // NOTE: We assume that the guard may or may not be taken and collect all AST kinds
+                    // regardless of the guard condition.
+                    return self.extract_variants_from_pat(&guard.pat);
                 }
                 let Pat::Ident(ident) = guard.pat.as_ref() else {
                     return CollectionResult::Incomplete;
@@ -111,6 +100,29 @@ impl<'a> MatchDetector<'a> {
                 } else {
                     CollectionResult::Incomplete
                 }
+            }
+            _ => CollectionResult::Incomplete,
+        }
+    }
+
+    fn extract_variants_from_pat(&mut self, pat: &Pat) -> CollectionResult {
+        match pat {
+            Pat::TupleStruct(ts) => {
+                if let Some(variant) = astkind_variant_from_path(&ts.path) {
+                    self.node_types.insert(variant);
+                    CollectionResult::Complete
+                } else {
+                    CollectionResult::Incomplete
+                }
+            }
+            Pat::Or(or) => {
+                let mut overall_result = CollectionResult::Complete;
+                for case in &or.cases {
+                    if self.extract_variants_from_pat(case) == CollectionResult::Incomplete {
+                        overall_result = CollectionResult::Incomplete;
+                    }
+                }
+                overall_result
             }
             _ => CollectionResult::Incomplete,
         }

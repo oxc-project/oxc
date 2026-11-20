@@ -324,10 +324,7 @@ fn is_valid_identifier_name(name: &str) -> bool {
 /// Determines whether the current FunctionExpression node is a get, set, or
 /// shorthand method in an object literal or a class.
 fn is_object_or_class_method(parent_node: &AstNode) -> bool {
-    match parent_node.kind() {
-        AstKind::MethodDefinition(_) | AstKind::ObjectMethodProperty(_) => true,
-        _ => false,
-    }
+    matches!(parent_node.kind(), AstKind::MethodDefinition(_) | AstKind::ObjectMethodProperty(_))
 }
 
 fn has_object_assignment_target_name<'a>(

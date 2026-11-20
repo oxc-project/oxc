@@ -116,7 +116,7 @@ impl Rule for PreferNativeCoercionFunctions {
                         matches!(ret.type_annotation, TSType::TSTypePredicate(_))
                     })
                     || matches!(ctx.nodes().parent_kind(node.id()), AstKind::ObjectMethodProperty(property)
-                        if property.kind == ObjectMethodKind::Set)
+                        if property.kind == ObjectMethodKind::Set && property.value.span == func.span)
                 {
                     return;
                 }

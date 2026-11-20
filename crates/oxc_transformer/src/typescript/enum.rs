@@ -652,6 +652,14 @@ impl<'a, 'ctx> IdentifierReferenceRename<'a, 'ctx> {
             ctx,
         }
     }
+
+    /// `name` -> `EnumName.name`
+    fn create_enum_member_expression(&self, name: Ident<'a>) -> Expression<'a> {
+        let object = Expression::new_identifier(SPAN, self.enum_name, self.ctx);
+        let property = IdentifierName::new(SPAN, name, self.ctx);
+        MemberExpression::new_static_member_expression(SPAN, object, property, false, self.ctx)
+            .into()
+    }
 }
 
 impl IdentifierReferenceRename<'_, '_> {
@@ -746,16 +754,24 @@ impl<'a> VisitJsMut<'a> for IdentifierReferenceRename<'a, '_> {
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         match expr {
             Expression::Identifier(ident) if self.should_reference_enum_member(ident) => {
-                let object = Expression::new_identifier(SPAN, self.enum_name, self.ctx);
-                let property = IdentifierName::new(SPAN, ident.name, self.ctx);
-                *expr = MemberExpression::new_static_member_expression(
-                    SPAN, object, property, false, self.ctx,
-                )
-                .into();
+                *expr = self.create_enum_member_expression(ident.name);
             }
             _ => {
                 walk_js_mut::walk_expression(self, expr);
             }
         }
+    }
+
+    fn visit_object_property_kind(&mut self, prop: &mut ObjectPropertyKind<'a>) {
+        if let ObjectPropertyKind::ShorthandProperty(shorthand) = prop
+            && self.should_reference_enum_member(&shorthand.value)
+        {
+            let value = self.create_enum_member_expression(shorthand.value.name);
+            *prop = ObjectPropertyKind::new_key_value_property_from_shorthand(
+                shorthand, value, self.ctx,
+            );
+            return;
+        }
+        walk_js_mut::walk_object_property_kind(self, prop);
     }
 }

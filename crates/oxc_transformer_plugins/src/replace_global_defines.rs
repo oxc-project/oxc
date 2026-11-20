@@ -29,8 +29,8 @@ use std::sync::Arc;
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use oxc_allocator::{Address, Allocator, ArenaBox, GetAddress, ReplaceWith, UnstableAddress};
-use oxc_ast::ast::*;
+use oxc_allocator::{Address, Allocator, GetAddress, ReplaceWith, UnstableAddress};
+use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_ast_visit::{VisitJsMut, walk_js_mut};
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_parser::{ParseOptions, Parser};
@@ -386,6 +386,20 @@ impl<'a> VisitJsMut<'a> for ReplaceGlobalDefines<'a> {
         self.non_arrow_function_depth -= 1;
     }
 
+    fn visit_object_property_kind(&mut self, prop: &mut ObjectPropertyKind<'a>) {
+        if self.ast_node_lock.is_none()
+            && let ObjectPropertyKind::ShorthandProperty(shorthand) = prop
+            && let Some(value) = self.replace_identifier_define_impl(&shorthand.value)
+        {
+            let ast = AstBuilder::new(self.allocator);
+            *prop =
+                ObjectPropertyKind::new_key_value_property_from_shorthand(shorthand, value, &ast);
+            self.mark_as_changed();
+            return;
+        }
+        walk_js_mut::walk_object_property_kind(self, prop);
+    }
+
     fn visit_property_definition(&mut self, property: &mut PropertyDefinition<'a>) {
         self.visit_decorators(&mut property.decorators);
         self.visit_property_key(&mut property.key);
@@ -592,7 +606,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
 
     fn replace_identifier_define_impl(
         &mut self,
-        ident: &ArenaBox<'_, IdentifierReference<'_>>,
+        ident: &IdentifierReference<'_>,
     ) -> Option<Expression<'a>> {
         if !Self::is_global_or_ambient_reference(self.scoping(), ident) {
             return None;

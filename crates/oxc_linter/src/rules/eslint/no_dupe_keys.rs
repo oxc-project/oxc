@@ -74,6 +74,8 @@ declare_oxc_lint!(
 
 const INLINE_CAPACITY: usize = 8;
 
+type KeyEntry<'a> = (StaticPropertyName<'a>, (Option<ObjectMethodKind>, Span));
+
 impl Rule for NoDupeKeys {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ObjectExpression(obj_expr) = node.kind() else {
@@ -83,9 +85,7 @@ impl Rule for NoDupeKeys {
         if len <= 1 {
             return;
         }
-        let mut inline: SmallVec<
-            [(StaticPropertyName<'_>, (Option<ObjectMethodKind>, Span)); INLINE_CAPACITY],
-        > = SmallVec::new();
+        let mut inline: SmallVec<[KeyEntry<'_>; INLINE_CAPACITY]> = SmallVec::new();
         // Bound linear searches to small objects; retain hashing for larger ones.
         let mut map = FxHashMap::with_capacity_and_hasher(
             if len > INLINE_CAPACITY { len } else { 0 },

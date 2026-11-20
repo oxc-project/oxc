@@ -228,11 +228,11 @@ impl CatchErrorName {
                         let Some(id) = node.as_identifier_reference() else { continue };
 
                         // Expand shorthand properties (`{ e }`, `({ e } = o)`) so the key is kept.
-                        let is_shorthand = match ctx.nodes().parent_kind(reference.node_id()) {
+                        let is_shorthand = matches!(
+                            ctx.nodes().parent_kind(reference.node_id()),
                             AstKind::ObjectShorthandProperty(_)
-                            | AstKind::AssignmentTargetPropertyIdentifier(_) => true,
-                            _ => false,
-                        };
+                                | AstKind::AssignmentTargetPropertyIdentifier(_)
+                        );
                         if is_shorthand {
                             declaration_fix
                                 .push(fixer.replace(id.span, format!("{}: {fixed_name}", id.name)));

@@ -183,7 +183,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "esbuild tests cannot contain spread properties")]
+    #[should_panic(expected = "esbuild tests must be key-value properties")]
     fn rejects_properties_that_cannot_be_expanded() {
         Suite::parse("const tests = { ...otherTests }; async function run() {}");
     }

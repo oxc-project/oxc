@@ -1240,7 +1240,13 @@ impl RuleRunner for crate::rules::eslint::no_useless_catch::NoUselessCatch {
 }
 
 impl RuleRunner for crate::rules::eslint::no_useless_computed_key::NoUselessComputedKey {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::BindingProperty,
+        AstType::MethodDefinition,
+        AstType::ObjectKeyValueProperty,
+        AstType::ObjectMethodProperty,
+        AstType::PropertyDefinition,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -2951,7 +2957,12 @@ impl RuleRunner for crate::rules::react::no_unknown_property::NoUnknownProperty 
 }
 
 impl RuleRunner for crate::rules::react::no_unsafe::NoUnsafe {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::MethodDefinition,
+        AstType::ObjectKeyValueProperty,
+        AstType::ObjectMethodProperty,
+        AstType::ObjectShorthandProperty,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

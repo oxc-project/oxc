@@ -284,7 +284,6 @@ impl IdMatch {
                     return;
                 }
             }
-            AstKind::ObjectMethodProperty(_) => {}
             AstKind::BindingProperty(property) => {
                 // A computed destructuring key is a reference expression, not
                 // a binding introduced by destructuring.
@@ -322,7 +321,7 @@ impl IdMatch {
                 }
                 return;
             }
-            AstKind::AssignmentTargetRest(_) => {}
+            AstKind::ObjectMethodProperty(_) | AstKind::AssignmentTargetRest(_) => {}
             // The right-hand side of a default value, such as `bad_name` in
             // `p = bad_name`, is skipped to match ESLint's default-value guard.
             AstKind::AssignmentPattern(_) | AstKind::FormalParameter(_) => return,

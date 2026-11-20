@@ -50,7 +50,7 @@ use std::iter;
 use itoa::Buffer as ItoaBuffer;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use oxc_allocator::{Allocator, ArenaBox, ArenaVec, GetAllocator, ReplaceWith};
+use oxc_allocator::{Allocator, ArenaBox, ArenaVec, GetAllocator, ReplaceWith, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, Scoping, SymbolFlags, SymbolId};
@@ -112,9 +112,38 @@ impl<'a> Traverse<'a, ()> for ModuleRunnerTransform<'a> {
             _ => {}
         }
     }
+
+    /// Expand a shorthand property which refers to an import binding (`{ foo }` -> `{ foo: foo }`),
+    /// so that `enter_expression` can transform its value.
+    #[inline]
+    fn enter_object_property_kind(
+        &mut self,
+        prop: &mut ObjectPropertyKind<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if let ObjectPropertyKind::ShorthandProperty(shorthand) = prop
+            && self.is_import_binding_reference(&shorthand.value, ctx)
+        {
+            let value = Expression::Identifier(shorthand.value.take_in_box(ctx));
+            *prop =
+                ObjectPropertyKind::new_key_value_property_from_shorthand(shorthand, value, ctx);
+        }
+    }
 }
 
 impl<'a> ModuleRunnerTransform<'a> {
+    fn is_import_binding_reference(
+        &self,
+        ident: &IdentifierReference<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        ident
+            .reference_id
+            .get()
+            .and_then(|id| ctx.scoping().get_reference(id).symbol_id())
+            .is_some_and(|id| self.import_bindings.contains_key(&id))
+    }
+
     /// Transform import and export declarations.
     fn transform_imports_and_exports(
         &mut self,

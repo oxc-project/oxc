@@ -67,7 +67,7 @@ impl<'a> PeepholeOptimizations {
     /// mutation.
     fn normalize_object_property_shorthand(
         prop: &mut ObjectPropertyKind<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) {
         let ObjectPropertyKind::KeyValueProperty(key_value) = prop else { return };
         let key_value = &mut **key_value;

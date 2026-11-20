@@ -282,8 +282,8 @@ impl<'a> VisitJs<'a> for TestCase {
 
     fn visit_object_expression(&mut self, expr: &ObjectExpression<'a>) {
         for obj_prop in &expr.properties {
-            match obj_prop {
-                ObjectPropertyKind::KeyValueProperty(prop) => match &prop.key {
+            if let ObjectPropertyKind::KeyValueProperty(prop) = obj_prop {
+                match &prop.key {
                     PropertyKey::StaticIdentifier(ident) if ident.name == "code" => {
                         self.code = match &prop.value {
                             Expression::StringLiteral(s) => s.value.as_str().map(str::to_owned),
@@ -363,8 +363,7 @@ impl<'a> VisitJs<'a> for TestCase {
                         self.language_options = Some(language_options);
                     }
                     _ => {}
-                },
-                _ => {}
+                }
             }
         }
     }

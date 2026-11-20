@@ -335,16 +335,13 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
                 let operator = assignment.operator.as_str();
                 write!(f, [space(), operator]);
             }
-            Self::ObjectProperty(_) => {
+            Self::ObjectProperty(_) | Self::AssignmentTargetPropertyProperty(_) => {
                 write!(f, [":"]);
             }
             Self::BindingProperty(property) => {
                 if !property.shorthand {
                     write!(f, [":"]);
                 }
-            }
-            Self::AssignmentTargetPropertyProperty(_) => {
-                write!(f, [":"]);
             }
             Self::PropertyDefinition(property_class_member) => {
                 debug_assert!(property_class_member.value().is_some());

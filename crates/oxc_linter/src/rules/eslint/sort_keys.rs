@@ -152,47 +152,45 @@ fn is_object_sorted(
     let mut prev_key: Option<StaticPropertyName<'_>> = None;
 
     for (i, prop) in object.properties.iter().enumerate() {
-        match prop {
-            ObjectPropertyKind::SpreadProperty(_) => {
-                prev_key = None;
+        if prop.is_spread() {
+            prev_key = None;
+            continue;
+        }
+
+        let Some(key) = prop.static_name().or_else(|| {
+            match prop.key()?.as_expression()?.without_parentheses() {
+                Expression::Identifier(ident) => Some(StaticPropertyName::from(ident.name)),
+                _ => None,
             }
-            _ => {
-                let Some(key) = prop.static_name().or_else(|| {
-                    match prop.key()?.as_expression()?.without_parentheses() {
-                        Expression::Identifier(ident) => Some(StaticPropertyName::from(ident.name)),
-                        _ => None,
-                    }
-                }) else {
-                    continue;
-                };
+        }) else {
+            continue;
+        };
 
-                if let Some(ref prev) = prev_key {
-                    let ordering = compare_keys(prev, &key, options);
-                    let is_ordered = match sort_order {
-                        SortOrder::Asc => ordering != Ordering::Greater,
-                        SortOrder::Desc => ordering != Ordering::Less,
-                    };
+        if let Some(ref prev) = prev_key {
+            let ordering = compare_keys(prev, &key, options);
+            let is_ordered = match sort_order {
+                SortOrder::Asc => ordering != Ordering::Greater,
+                SortOrder::Desc => ordering != Ordering::Less,
+            };
 
-                    if !is_ordered {
-                        return false;
-                    }
-                }
-
-                if options.allow_line_separated_groups && i + 1 < object.properties.len() {
-                    let text_between = extract_text_between_spans(
-                        source_text,
-                        prop.span(),
-                        object.properties[i + 1].span(),
-                    );
-                    if has_blank_line(text_between) {
-                        prev_key = None;
-                        continue;
-                    }
-                }
-
-                prev_key = Some(key);
+            if !is_ordered {
+                return false;
             }
         }
+
+        if options.allow_line_separated_groups && i + 1 < object.properties.len() {
+            let text_between = extract_text_between_spans(
+                source_text,
+                prop.span(),
+                object.properties[i + 1].span(),
+            );
+            if has_blank_line(text_between) {
+                prev_key = None;
+                continue;
+            }
+        }
+
+        prev_key = Some(key);
     }
 
     true
@@ -233,28 +231,25 @@ fn count_static_groups(
     let mut in_static_group = false;
 
     for (i, prop) in object.properties.iter().enumerate() {
-        match prop {
-            ObjectPropertyKind::SpreadProperty(_) => {
+        if prop.is_spread() {
+            in_static_group = false;
+            continue;
+        }
+        if prop.static_name().is_none() {
+            continue;
+        }
+        if !in_static_group {
+            count += 1;
+            in_static_group = true;
+        }
+        if options.allow_line_separated_groups && i + 1 < object.properties.len() {
+            let text_between = extract_text_between_spans(
+                source_text,
+                prop.span(),
+                object.properties[i + 1].span(),
+            );
+            if has_blank_line(text_between) {
                 in_static_group = false;
-            }
-            _ => {
-                if prop.static_name().is_none() {
-                    continue;
-                }
-                if !in_static_group {
-                    count += 1;
-                    in_static_group = true;
-                }
-                if options.allow_line_separated_groups && i + 1 < object.properties.len() {
-                    let text_between = extract_text_between_spans(
-                        source_text,
-                        prop.span(),
-                        object.properties[i + 1].span(),
-                    );
-                    if has_blank_line(text_between) {
-                        in_static_group = false;
-                    }
-                }
             }
         }
     }
@@ -361,42 +356,40 @@ fn collect_fixable_properties<'a>(
     for (i, prop) in object.properties.iter().enumerate() {
         let gap_after = (i + 1 < object.properties.len())
             .then(|| Span::new(lifted[i].end, lifted[i + 1].start));
-        match prop {
-            ObjectPropertyKind::SpreadProperty(_) => {
-                if object.properties.get(i + 1).is_some_and(|next| !next.is_spread())
-                    && let Some(gap) = gap_after
-                    && ctx.has_comments_between(gap)
-                {
-                    return None;
-                }
-
-                match spread_pos {
-                    SpreadPos::Start | SpreadPos::End => {}
-                    SpreadPos::CanEnd => spread_pos = SpreadPos::End,
-                }
+        if prop.is_spread() {
+            if object.properties.get(i + 1).is_some_and(|next| !next.is_spread())
+                && let Some(gap) = gap_after
+                && ctx.has_comments_between(gap)
+            {
+                return None;
             }
-            _ => {
-                match spread_pos {
-                    SpreadPos::Start => spread_pos = SpreadPos::CanEnd,
-                    SpreadPos::CanEnd => {}
-                    SpreadPos::End => return None,
-                }
 
-                let key = prop.static_name()?;
-
-                props.push(FixableProperty {
-                    key,
-                    span: lifted[i],
-                    text: build_property_text(prop, lifted[i], ctx, sort_order, options),
-                    consumed_trailing_comma: lifted[i].end > prop.span().end,
-                });
-
-                if let Some(gap) = gap_after
-                    && ctx.has_comments_between(gap)
-                {
-                    return None;
-                }
+            match spread_pos {
+                SpreadPos::Start | SpreadPos::End => {}
+                SpreadPos::CanEnd => spread_pos = SpreadPos::End,
             }
+            continue;
+        }
+
+        match spread_pos {
+            SpreadPos::Start => spread_pos = SpreadPos::CanEnd,
+            SpreadPos::CanEnd => {}
+            SpreadPos::End => return None,
+        }
+
+        let key = prop.static_name()?;
+
+        props.push(FixableProperty {
+            key,
+            span: lifted[i],
+            text: build_property_text(prop, lifted[i], ctx, sort_order, options),
+            consumed_trailing_comma: lifted[i].end > prop.span().end,
+        });
+
+        if let Some(gap) = gap_after
+            && ctx.has_comments_between(gap)
+        {
+            return None;
         }
     }
 

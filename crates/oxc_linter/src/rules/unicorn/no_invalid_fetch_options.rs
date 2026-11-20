@@ -100,14 +100,13 @@ fn is_invalid_fetch_options<'a>(
             return None;
         }
 
-        let (key_name, key_span) = match property {
-            ObjectPropertyKind::ShorthandProperty(prop) => (prop.name, prop.span),
-            _ => {
-                let Some(PropertyKey::StaticIdentifier(key_ident)) = property.key() else {
-                    continue;
-                };
-                (key_ident.name, key_ident.span)
-            }
+        let (key_name, key_span) = if let ObjectPropertyKind::ShorthandProperty(prop) = property {
+            (prop.name, prop.span)
+        } else {
+            let Some(PropertyKey::StaticIdentifier(key_ident)) = property.key() else {
+                continue;
+            };
+            (key_ident.name, key_ident.span)
         };
 
         let key_ident_name = key_name.as_str();
@@ -225,7 +224,7 @@ fn update_method_name_from_reference<'a>(
                 *method_name = str_lit
                     .value
                     .as_str()
-                    .map_or(UNKNOWN_METHOD_NAME, |value| value.cow_to_ascii_uppercase());
+                    .map_or(UNKNOWN_METHOD_NAME, CowUtils::cow_to_ascii_uppercase);
             }
             Some(Expression::TemplateLiteral(template_lit)) => {
                 *method_name = extract_method_name_from_template_literal(template_lit);
@@ -260,7 +259,7 @@ fn update_method_name_from_reference<'a>(
                         *method_name = str_lit
                             .value
                             .as_str()
-                            .map_or(UNKNOWN_METHOD_NAME, |value| value.cow_to_ascii_uppercase());
+                            .map_or(UNKNOWN_METHOD_NAME, CowUtils::cow_to_ascii_uppercase);
                     }
                 }
                 _ => {

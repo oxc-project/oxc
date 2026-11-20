@@ -524,10 +524,7 @@ impl NoEmptyFunction {
     }
 
     fn is_plain_function_expression_container(parent: AstKind) -> bool {
-        match parent {
-            AstKind::MethodDefinition(_) | AstKind::ObjectMethodProperty(_) => false,
-            _ => true,
-        }
+        !matches!(parent, AstKind::MethodDefinition(_) | AstKind::ObjectMethodProperty(_))
     }
 
     fn allow_decorated_function(&self) -> bool {
