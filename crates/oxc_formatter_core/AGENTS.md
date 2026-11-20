@@ -115,6 +115,9 @@ The core is parameterized over a consumer-supplied context so it stays language-
   - `FormatSession::dispatch` owns the no-dispatcher case and the recursion limit (`MAX_DISPATCH_DEPTH`), and runs the callback on a `derive_child`ed session
 - A host that puts stand-ins for its own parts in the code it dispatches (css-in-js's `${}`, Angular's nested pipes) uses `Placeholder` (`session/placeholder.rs`):
   core owns its grammar (`{prefix}{index}{suffix}`, found in the child's IR, in order), the host its affixes and the substitution (`map_text_in_ir`)
+  - The affixes are their reader's: the child's input protocol where its parser tokenizes one (css-in-js's, whose backticks oxc-css-parser fixes; the host keeps a copy), the host's otherwise
+  - A child that reads a parent's learns it from the dispatch context (html-in-js's, `HtmlInJsTemplate::placeholder`);
+    a host that finds its own coming back through another child needs none (JS knows html-in-js's in a `<script>`, `is_html_placeholder`)
 
 ## What belongs in core (the boundary)
 
