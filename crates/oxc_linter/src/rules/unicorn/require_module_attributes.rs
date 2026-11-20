@@ -1,7 +1,7 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
-    ast::{Expression, ObjectProperty, ObjectPropertyKind, PropertyKind, WithClause},
+    ast::{Expression, ObjectKeyValueProperty, ObjectPropertyKind, WithClause},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -91,11 +91,8 @@ impl Rule for RequireModuleAttributes {
                 }
 
                 let empty_with_prop = obj_expr.properties.iter().find_map(|prop| {
-                    let obj_prop = prop.as_property()?;
-                    if !obj_prop.method
-                        && !obj_prop.shorthand
-                        && obj_prop.kind == PropertyKind::Init
-                        && obj_prop.key.is_specific_literal_name("with")
+                    let ObjectPropertyKind::KeyValueProperty(obj_prop) = prop else { return None };
+                    if obj_prop.key.is_specific_literal_name("with")
                         && is_empty_object_expression(obj_prop.value.get_inner_expression())
                     {
                         Some(obj_prop)
@@ -175,13 +172,12 @@ fn check_with_clause(
 /// Fix for empty `with: {}` property when there are other properties
 fn fix_empty_with_property(
     fixer: RuleFixer<'_, '_>,
-    empty_with_prop: &ObjectProperty<'_>,
+    empty_with_prop: &ObjectKeyValueProperty<'_>,
     properties: &ArenaVec<'_, ObjectPropertyKind<'_>>,
 ) -> RuleFix {
     // Find the position of the empty_with_prop in properties
-    let prop_index = properties
-        .iter()
-        .position(|p| p.as_property().is_some_and(|prop| prop.span() == empty_with_prop.span()));
+    let prop_index =
+        properties.iter().position(|p| !p.is_spread() && p.span() == empty_with_prop.span());
 
     let Some(idx) = prop_index else {
         return fixer.noop();

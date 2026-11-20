@@ -9,7 +9,7 @@ use oxc_ast::{
     ast::{
         Argument, ArrowFunctionBody, ArrowFunctionExpression, CallExpression, Class, Expression,
         Function, FunctionBody, JSXExpression, JSXExpressionContainer, MemberExpression,
-        ReturnStatement,
+        ObjectKeyValueProperty, ObjectMethodProperty, ReturnStatement,
     },
     match_expression,
 };
@@ -465,8 +465,9 @@ fn function_like_name(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option<Strin
         AstKind::VariableDeclarator(decl) => {
             decl.id.get_identifier_name().map(|name| name.to_string())
         }
-        AstKind::ObjectProperty(prop) => {
-            prop.key.static_name().and_then(StaticPropertyName::into_cow_str).map(Cow::into_owned)
+        AstKind::ObjectKeyValueProperty(ObjectKeyValueProperty { key, .. })
+        | AstKind::ObjectMethodProperty(ObjectMethodProperty { key, .. }) => {
+            key.static_name().and_then(StaticPropertyName::into_cow_str).map(Cow::into_owned)
         }
         AstKind::AssignmentExpression(assign) => {
             assign.left.get_identifier_name().map(ToString::to_string)
@@ -495,7 +496,10 @@ fn is_anonymous_default_export(node: &AstNode<'_>, ctx: &LintContext<'_>) -> boo
 fn is_component_declared_in_prop(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
     let parent = ctx.nodes().parent_node(node.id());
 
-    if matches!(parent.kind(), AstKind::ObjectProperty(_)) {
+    if matches!(
+        parent.kind(),
+        AstKind::ObjectKeyValueProperty(_) | AstKind::ObjectMethodProperty(_)
+    ) {
         return true;
     }
 
@@ -585,10 +589,12 @@ fn nearest_jsx_attribute_name(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Opti
 
 fn direct_object_property_name(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option<String> {
     let parent = ctx.nodes().parent_node(node.id());
-    let AstKind::ObjectProperty(prop) = parent.kind() else {
+    let (AstKind::ObjectKeyValueProperty(ObjectKeyValueProperty { key, .. })
+    | AstKind::ObjectMethodProperty(ObjectMethodProperty { key, .. })) = parent.kind()
+    else {
         return None;
     };
-    prop.key.static_name().and_then(StaticPropertyName::into_cow_str).map(Cow::into_owned)
+    key.static_name().and_then(StaticPropertyName::into_cow_str).map(Cow::into_owned)
 }
 
 fn is_direct_jsx_child_render_prop(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {

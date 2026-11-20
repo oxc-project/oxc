@@ -93,8 +93,18 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
-    fn visit_object_property(&mut self, it: &mut ObjectProperty<'a>) {
-        walk_object_property(self, it);
+    fn visit_object_key_value_property(&mut self, it: &mut ObjectKeyValueProperty<'a>) {
+        walk_object_key_value_property(self, it);
+    }
+
+    #[inline]
+    fn visit_object_shorthand_property(&mut self, it: &mut ObjectShorthandProperty<'a>) {
+        walk_object_shorthand_property(self, it);
+    }
+
+    #[inline]
+    fn visit_object_method_property(&mut self, it: &mut ObjectMethodProperty<'a>) {
+        walk_object_method_property(self, it);
     }
 
     #[inline]
@@ -1553,18 +1563,53 @@ pub mod walk_mut {
     ) {
         // No `AstType` for this type
         match it {
-            ObjectPropertyKind::ObjectProperty(it) => visitor.visit_object_property(it),
+            ObjectPropertyKind::KeyValueProperty(it) => visitor.visit_object_key_value_property(it),
+            ObjectPropertyKind::ShorthandProperty(it) => {
+                visitor.visit_object_shorthand_property(it)
+            }
+            ObjectPropertyKind::MethodProperty(it) => visitor.visit_object_method_property(it),
             ObjectPropertyKind::SpreadProperty(it) => visitor.visit_spread_element(it),
         }
     }
 
     #[inline]
-    pub fn walk_object_property<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut ObjectProperty<'a>) {
-        let kind = AstType::ObjectProperty;
+    pub fn walk_object_key_value_property<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut ObjectKeyValueProperty<'a>,
+    ) {
+        let kind = AstType::ObjectKeyValueProperty;
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_property_key(&mut it.key);
         visitor.visit_expression(&mut it.value);
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_object_shorthand_property<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut ObjectShorthandProperty<'a>,
+    ) {
+        let kind = AstType::ObjectShorthandProperty;
+        visitor.enter_node(kind);
+        visitor.visit_span(&mut it.span);
+        visitor.visit_identifier_reference(&mut it.value);
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_object_method_property<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut ObjectMethodProperty<'a>,
+    ) {
+        let kind = AstType::ObjectMethodProperty;
+        visitor.enter_node(kind);
+        visitor.visit_span(&mut it.span);
+        visitor.visit_property_key(&mut it.key);
+        {
+            let flags = ScopeFlags::Function;
+            visitor.visit_function(&mut it.value, flags);
+        }
         visitor.leave_node(kind);
     }
 

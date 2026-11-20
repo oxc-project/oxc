@@ -114,19 +114,49 @@ export interface ObjectExpression extends Span {
   parent: Node;
 }
 
-export type ObjectPropertyKind = ObjectProperty | SpreadElement;
+export type ObjectPropertyKind =
+  | ObjectKeyValueProperty
+  | ObjectShorthandProperty
+  | ObjectMethodProperty
+  | SpreadElement;
 
-export interface ObjectProperty extends Span {
+export interface ObjectKeyValueProperty extends Span {
   type: "Property";
-  kind: PropertyKind;
+  kind: "init";
   key: PropertyKey;
   value: Expression;
-  method: boolean;
-  shorthand: boolean;
+  method: false;
+  shorthand: false;
   computed: boolean;
   optional?: false;
   parent: Node;
 }
+
+export interface ObjectShorthandProperty extends Span {
+  type: "Property";
+  kind: "init";
+  key: IdentifierName;
+  value: IdentifierReference;
+  method: false;
+  shorthand: true;
+  computed: false;
+  optional?: false;
+  parent: Node;
+}
+
+export interface ObjectMethodProperty extends Span {
+  type: "Property";
+  kind: ObjectMethodKind;
+  key: PropertyKey;
+  value: Function;
+  method: boolean;
+  shorthand: false;
+  computed: boolean;
+  optional?: false;
+  parent: Node;
+}
+
+export type ObjectMethodKind = "init" | "get" | "set";
 
 export type PropertyKey =
   | IdentifierName
@@ -135,8 +165,6 @@ export type PropertyKey =
   | BigIntLiteral
   | PrivateIdentifier
   | Expression;
-
-export type PropertyKind = "init" | "get" | "set";
 
 export interface TemplateLiteral extends Span {
   type: "TemplateLiteral";
@@ -1742,7 +1770,9 @@ export type Node =
   | ThisExpression
   | ArrayExpression
   | ObjectExpression
-  | ObjectProperty
+  | ObjectKeyValueProperty
+  | ObjectShorthandProperty
+  | ObjectMethodProperty
   | TemplateLiteral
   | TaggedTemplateExpression
   | TemplateElement

@@ -546,7 +546,7 @@ fn as_single_obj_spread<'a, 's>(node: &'s ObjectExpression<'a>) -> Option<&'s Sp
     }
     match &node.properties[0] {
         ObjectPropertyKind::SpreadProperty(spread) => Some(spread.as_ref()),
-        ObjectPropertyKind::ObjectProperty(_) => None,
+        _ => None,
     }
 }
 

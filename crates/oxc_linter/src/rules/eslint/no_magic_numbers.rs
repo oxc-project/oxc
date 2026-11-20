@@ -372,7 +372,12 @@ fn is_class_field_initial_value(current_kind: &AstKind<'_>, parent_kind: &AstKin
 }
 
 fn is_detectable_object(parent_kind: &AstKind<'_>) -> bool {
-    matches!(parent_kind, AstKind::ObjectExpression(_) | AstKind::ObjectProperty(_))
+    matches!(
+        parent_kind,
+        AstKind::ObjectExpression(_)
+            | AstKind::ObjectKeyValueProperty(_)
+            | AstKind::ObjectMethodProperty(_)
+    )
 }
 
 fn is_parse_int_radix(parent_kind: &AstKind<'_>) -> bool {

@@ -103,7 +103,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName {
                     return;
                 }
                 // `{foo: React.createClass({})}`
-                Ancestor::ObjectPropertyValue(prop) => {
+                Ancestor::ObjectKeyValuePropertyValue(prop) => {
                     // Babel only handles static identifiers e.g. `{foo: React.createClass({})}`,
                     // whereas we also handle e.g. `{"foo-bar": React.createClass({})}`,
                     // so we diverge from Babel here, but that's probably an improvement
@@ -159,21 +159,19 @@ impl<'a> ReactDisplayName {
         const DISPLAY_NAME: Ident<'static> = static_ident!("displayName");
 
         // Not safe with existing display name.
-        let not_safe = obj_expr.properties.iter().any(|prop| {
-            matches!(prop, ObjectPropertyKind::ObjectProperty(p) if p.key.static_name().is_some_and(|name| name == DISPLAY_NAME))
-        });
+        let not_safe = obj_expr
+            .properties
+            .iter()
+            .any(|prop| prop.static_name().is_some_and(|name| name == DISPLAY_NAME));
         if not_safe {
             return;
         }
         obj_expr.properties.insert(
             0,
-            ObjectPropertyKind::new_object_property(
+            ObjectPropertyKind::new_key_value_property(
                 SPAN,
-                PropertyKind::Init,
                 PropertyKey::new_static_identifier(SPAN, DISPLAY_NAME, ctx),
                 Expression::new_string_literal(SPAN, name, None, ctx),
-                false,
-                false,
                 ctx,
             ),
         );

@@ -441,10 +441,14 @@ impl<'a> StyledComponents<'a> {
                 && self.is_styled(&member.object, ctx)
                 && let Some(Argument::ObjectExpression(object)) = call.arguments.first_mut()
                 && !object.properties.iter().any(|prop| {
-                    matches!(prop, ObjectPropertyKind::ObjectProperty(property)
-                        if matches!(&property.key, PropertyKey::StaticIdentifier(ident)
-                        if matches!(ident.name.as_str(), "displayName" | "componentId"))
-                    )
+                    let name = match prop {
+                        ObjectPropertyKind::ShorthandProperty(property) => property.name,
+                        _ => match prop.key() {
+                            Some(PropertyKey::StaticIdentifier(ident)) => ident.name,
+                            _ => return false,
+                        },
+                    };
+                    matches!(name.as_str(), "displayName" | "componentId")
                 })
             {
                 self.add_properties(&mut object.properties, ctx);
@@ -577,7 +581,7 @@ impl<'a> StyledComponents<'a> {
                     };
                 }
                 // `const X = { Y: styled }`
-                Ancestor::ObjectPropertyValue(property) => {
+                Ancestor::ObjectKeyValuePropertyValue(property) => {
                     return if let PropertyKey::StaticIdentifier(ident) = property.key() {
                         Some(ident.name.into())
                     } else {
@@ -806,15 +810,7 @@ impl<'a> StyledComponents<'a> {
     ) -> ObjectPropertyKind<'a> {
         let key = PropertyKey::new_static_identifier(SPAN, key, ctx);
         let value = Expression::new_string_literal(SPAN, value, None, ctx);
-        ObjectPropertyKind::new_object_property(
-            SPAN,
-            PropertyKind::Init,
-            key,
-            value,
-            false,
-            false,
-            ctx,
-        )
+        ObjectPropertyKind::new_key_value_property(SPAN, key, value, ctx)
     }
 }
 

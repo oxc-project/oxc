@@ -85,9 +85,13 @@ impl Rule for NoThenable {
         match node.kind() {
             AstKind::ObjectExpression(expr) => {
                 expr.properties.iter().for_each(|prop| {
-                    if let ObjectPropertyKind::ObjectProperty(prop) = prop
-                        && let Some(span) = contains_then(&prop.key, ctx)
-                    {
+                    let span = match prop {
+                        ObjectPropertyKind::ShorthandProperty(prop) => {
+                            (prop.name == "then").then_some(prop.span)
+                        }
+                        _ => prop.key().and_then(|key| contains_then(key, ctx)),
+                    };
+                    if let Some(span) = span {
                         ctx.diagnostic(object(span));
                     }
                 });

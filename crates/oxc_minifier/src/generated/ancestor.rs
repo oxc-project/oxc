@@ -27,304 +27,307 @@ pub(crate) enum AncestorType {
     ProgramBody = 3,
     ArrayExpressionElements = 4,
     ObjectExpressionProperties = 5,
-    ObjectPropertyKey = 6,
-    ObjectPropertyValue = 7,
-    TemplateLiteralQuasis = 8,
-    TemplateLiteralExpressions = 9,
-    TaggedTemplateExpressionTag = 10,
-    TaggedTemplateExpressionTypeArguments = 11,
-    TaggedTemplateExpressionQuasi = 12,
-    ComputedMemberExpressionObject = 13,
-    ComputedMemberExpressionExpression = 14,
-    StaticMemberExpressionObject = 15,
-    StaticMemberExpressionProperty = 16,
-    PrivateFieldExpressionObject = 17,
-    PrivateFieldExpressionField = 18,
-    CallExpressionCallee = 19,
-    CallExpressionTypeArguments = 20,
-    CallExpressionArguments = 21,
-    NewExpressionCallee = 22,
-    NewExpressionTypeArguments = 23,
-    NewExpressionArguments = 24,
-    SpreadElementArgument = 25,
-    UpdateExpressionArgument = 26,
-    UnaryExpressionArgument = 27,
-    BinaryExpressionLeft = 28,
-    BinaryExpressionRight = 29,
-    PrivateInExpressionLeft = 30,
-    PrivateInExpressionRight = 31,
-    LogicalExpressionLeft = 32,
-    LogicalExpressionRight = 33,
-    ConditionalExpressionTest = 34,
-    ConditionalExpressionConsequent = 35,
-    ConditionalExpressionAlternate = 36,
-    AssignmentExpressionLeft = 37,
-    AssignmentExpressionRight = 38,
-    ArrayAssignmentTargetElements = 39,
-    ArrayAssignmentTargetRest = 40,
-    ObjectAssignmentTargetProperties = 41,
-    ObjectAssignmentTargetRest = 42,
-    AssignmentTargetRestTarget = 43,
-    AssignmentTargetWithDefaultBinding = 44,
-    AssignmentTargetWithDefaultInit = 45,
-    AssignmentTargetPropertyIdentifierBinding = 46,
-    AssignmentTargetPropertyIdentifierInit = 47,
-    AssignmentTargetPropertyPropertyName = 48,
-    AssignmentTargetPropertyPropertyBinding = 49,
-    SequenceExpressionExpressions = 50,
-    AwaitExpressionArgument = 51,
-    ChainExpressionExpression = 52,
-    ParenthesizedExpressionExpression = 53,
-    DirectiveExpression = 54,
-    BlockStatementBody = 55,
-    VariableDeclarationDeclarations = 56,
-    VariableDeclaratorId = 57,
-    VariableDeclaratorTypeAnnotation = 58,
-    VariableDeclaratorInit = 59,
-    ExpressionStatementExpression = 60,
-    IfStatementTest = 61,
-    IfStatementConsequent = 62,
-    IfStatementAlternate = 63,
-    DoWhileStatementBody = 64,
-    DoWhileStatementTest = 65,
-    WhileStatementTest = 66,
-    WhileStatementBody = 67,
-    ForStatementInit = 68,
-    ForStatementTest = 69,
-    ForStatementUpdate = 70,
-    ForStatementBody = 71,
-    ForInStatementLeft = 72,
-    ForInStatementRight = 73,
-    ForInStatementBody = 74,
-    ForOfStatementLeft = 75,
-    ForOfStatementRight = 76,
-    ForOfStatementBody = 77,
-    ContinueStatementLabel = 78,
-    BreakStatementLabel = 79,
-    ReturnStatementArgument = 80,
-    WithStatementObject = 81,
-    WithStatementBody = 82,
-    SwitchStatementDiscriminant = 83,
-    SwitchStatementCases = 84,
-    SwitchCaseTest = 85,
-    SwitchCaseConsequent = 86,
-    LabeledStatementLabel = 87,
-    LabeledStatementBody = 88,
-    ThrowStatementArgument = 89,
-    TryStatementBlock = 90,
-    TryStatementHandler = 91,
-    TryStatementFinalizer = 92,
-    CatchClauseParam = 93,
-    CatchClauseBody = 94,
-    CatchParameterPattern = 95,
-    CatchParameterTypeAnnotation = 96,
-    AssignmentPatternLeft = 97,
-    AssignmentPatternRight = 98,
-    ObjectPatternProperties = 99,
-    ObjectPatternRest = 100,
-    BindingPropertyKey = 101,
-    BindingPropertyValue = 102,
-    ArrayPatternElements = 103,
-    ArrayPatternRest = 104,
-    BindingRestElementArgument = 105,
-    FunctionId = 106,
-    FunctionTypeParameters = 107,
-    FunctionThisParam = 108,
-    FunctionParams = 109,
-    FunctionReturnType = 110,
-    FunctionBody = 111,
-    FormalParametersItems = 112,
-    FormalParametersRest = 113,
-    FormalParameterDecorators = 114,
-    FormalParameterPattern = 115,
-    FormalParameterTypeAnnotation = 116,
-    FormalParameterInitializer = 117,
-    FormalParameterRestDecorators = 118,
-    FormalParameterRestRest = 119,
-    FormalParameterRestTypeAnnotation = 120,
-    FunctionBodyDirectives = 121,
-    FunctionBodyStatements = 122,
-    ArrowFunctionExpressionTypeParameters = 123,
-    ArrowFunctionExpressionParams = 124,
-    ArrowFunctionExpressionReturnType = 125,
-    ArrowFunctionExpressionBody = 126,
-    YieldExpressionArgument = 127,
-    ClassDecorators = 128,
-    ClassId = 129,
-    ClassTypeParameters = 130,
-    ClassHeritage = 131,
-    ClassImplements = 132,
-    ClassBody = 133,
-    ClassHeritageExpression = 134,
-    ClassHeritageTypeArguments = 135,
-    ClassBodyBody = 136,
-    MethodDefinitionDecorators = 137,
-    MethodDefinitionKey = 138,
-    MethodDefinitionValue = 139,
-    PropertyDefinitionDecorators = 140,
-    PropertyDefinitionKey = 141,
-    PropertyDefinitionTypeAnnotation = 142,
-    PropertyDefinitionValue = 143,
-    StaticBlockBody = 144,
-    AccessorPropertyDecorators = 145,
-    AccessorPropertyKey = 146,
-    AccessorPropertyTypeAnnotation = 147,
-    AccessorPropertyValue = 148,
-    ImportExpressionSource = 149,
-    ImportExpressionOptions = 150,
-    ImportDeclarationSpecifiers = 151,
-    ImportDeclarationSource = 152,
-    ImportDeclarationWithClause = 153,
-    ImportSpecifierImported = 154,
-    ImportSpecifierLocal = 155,
-    ImportDefaultSpecifierLocal = 156,
-    ImportNamespaceSpecifierLocal = 157,
-    WithClauseWithEntries = 158,
-    ImportAttributeKey = 159,
-    ImportAttributeValue = 160,
-    ExportDeclarationDeclaration = 161,
-    ExportNamedDeclarationSpecifiers = 162,
-    ExportFromDeclarationSpecifiers = 163,
-    ExportFromDeclarationSource = 164,
-    ExportFromDeclarationWithClause = 165,
-    ExportDefaultDeclarationDeclaration = 166,
-    ExportAllDeclarationExported = 167,
-    ExportAllDeclarationSource = 168,
-    ExportAllDeclarationWithClause = 169,
-    ExportSpecifierLocal = 170,
-    ExportSpecifierExported = 171,
-    V8IntrinsicExpressionName = 172,
-    V8IntrinsicExpressionArguments = 173,
-    JSXElementOpeningElement = 174,
-    JSXElementChildren = 175,
-    JSXElementClosingElement = 176,
-    JSXOpeningElementName = 177,
-    JSXOpeningElementTypeArguments = 178,
-    JSXOpeningElementAttributes = 179,
-    JSXClosingElementName = 180,
-    JSXFragmentOpeningFragment = 181,
-    JSXFragmentChildren = 182,
-    JSXFragmentClosingFragment = 183,
-    JSXNamespacedNameNamespace = 184,
-    JSXNamespacedNameName = 185,
-    JSXMemberExpressionObject = 186,
-    JSXMemberExpressionProperty = 187,
-    JSXExpressionContainerExpression = 188,
-    JSXAttributeName = 189,
-    JSXAttributeValue = 190,
-    JSXSpreadAttributeArgument = 191,
-    JSXSpreadChildExpression = 192,
-    TSThisParameterTypeAnnotation = 193,
-    TSEnumDeclarationId = 194,
-    TSEnumDeclarationBody = 195,
-    TSEnumBodyMembers = 196,
-    TSEnumMemberId = 197,
-    TSEnumMemberInitializer = 198,
-    TSTypeAnnotationTypeAnnotation = 199,
-    TSLiteralTypeLiteral = 200,
-    TSConditionalTypeCheckType = 201,
-    TSConditionalTypeExtendsType = 202,
-    TSConditionalTypeTrueType = 203,
-    TSConditionalTypeFalseType = 204,
-    TSUnionTypeTypes = 205,
-    TSIntersectionTypeTypes = 206,
-    TSParenthesizedTypeTypeAnnotation = 207,
-    TSTypeOperatorTypeAnnotation = 208,
-    TSArrayTypeElementType = 209,
-    TSIndexedAccessTypeObjectType = 210,
-    TSIndexedAccessTypeIndexType = 211,
-    TSTupleTypeElementTypes = 212,
-    TSNamedTupleMemberLabel = 213,
-    TSNamedTupleMemberElementType = 214,
-    TSOptionalTypeTypeAnnotation = 215,
-    TSRestTypeTypeAnnotation = 216,
-    TSTypeReferenceTypeName = 217,
-    TSTypeReferenceTypeArguments = 218,
-    TSQualifiedNameLeft = 219,
-    TSQualifiedNameRight = 220,
-    TSTypeParameterInstantiationParams = 221,
-    TSTypeParameterName = 222,
-    TSTypeParameterConstraint = 223,
-    TSTypeParameterDefault = 224,
-    TSTypeParameterDeclarationParams = 225,
-    TSTypeAliasDeclarationId = 226,
-    TSTypeAliasDeclarationTypeParameters = 227,
-    TSTypeAliasDeclarationTypeAnnotation = 228,
-    TSClassImplementsExpression = 229,
-    TSClassImplementsTypeArguments = 230,
-    TSInterfaceDeclarationId = 231,
-    TSInterfaceDeclarationTypeParameters = 232,
-    TSInterfaceDeclarationExtends = 233,
-    TSInterfaceDeclarationBody = 234,
-    TSInterfaceBodyBody = 235,
-    TSPropertySignatureKey = 236,
-    TSPropertySignatureTypeAnnotation = 237,
-    TSIndexSignatureParameter = 238,
-    TSIndexSignatureTypeAnnotation = 239,
-    TSCallSignatureDeclarationTypeParameters = 240,
-    TSCallSignatureDeclarationThisParam = 241,
-    TSCallSignatureDeclarationParams = 242,
-    TSCallSignatureDeclarationReturnType = 243,
-    TSMethodSignatureKey = 244,
-    TSMethodSignatureTypeParameters = 245,
-    TSMethodSignatureThisParam = 246,
-    TSMethodSignatureParams = 247,
-    TSMethodSignatureReturnType = 248,
-    TSConstructSignatureDeclarationTypeParameters = 249,
-    TSConstructSignatureDeclarationParams = 250,
-    TSConstructSignatureDeclarationReturnType = 251,
-    TSIndexSignatureNameTypeAnnotation = 252,
-    TSInterfaceHeritageTypeName = 253,
-    TSInterfaceHeritageTypeArguments = 254,
-    TSTypePredicateParameterName = 255,
-    TSTypePredicateTypeAnnotation = 256,
-    TSExternalModuleDeclarationId = 257,
-    TSExternalModuleDeclarationBody = 258,
-    TSNamespaceDeclarationId = 259,
-    TSNamespaceDeclarationBody = 260,
-    TSGlobalDeclarationBody = 261,
-    TSModuleBlockDirectives = 262,
-    TSModuleBlockBody = 263,
-    TSTypeLiteralMembers = 264,
-    TSInferTypeTypeParameter = 265,
-    TSTypeQueryExprName = 266,
-    TSTypeQueryTypeArguments = 267,
-    TSImportTypeSource = 268,
-    TSImportTypeOptions = 269,
-    TSImportTypeQualifier = 270,
-    TSImportTypeTypeArguments = 271,
-    TSImportTypeQualifiedNameLeft = 272,
-    TSImportTypeQualifiedNameRight = 273,
-    TSFunctionTypeTypeParameters = 274,
-    TSFunctionTypeThisParam = 275,
-    TSFunctionTypeParams = 276,
-    TSFunctionTypeReturnType = 277,
-    TSConstructorTypeTypeParameters = 278,
-    TSConstructorTypeParams = 279,
-    TSConstructorTypeReturnType = 280,
-    TSMappedTypeKey = 281,
-    TSMappedTypeConstraint = 282,
-    TSMappedTypeNameType = 283,
-    TSMappedTypeTypeAnnotation = 284,
-    TSTemplateLiteralTypeQuasis = 285,
-    TSTemplateLiteralTypeTypes = 286,
-    TSAsExpressionExpression = 287,
-    TSAsExpressionTypeAnnotation = 288,
-    TSSatisfiesExpressionExpression = 289,
-    TSSatisfiesExpressionTypeAnnotation = 290,
-    TSTypeAssertionTypeAnnotation = 291,
-    TSTypeAssertionExpression = 292,
-    TSImportEqualsDeclarationId = 293,
-    TSImportEqualsDeclarationModuleReference = 294,
-    TSExternalModuleReferenceExpression = 295,
-    TSNonNullExpressionExpression = 296,
-    DecoratorExpression = 297,
-    TSExportAssignmentExpression = 298,
-    TSNamespaceExportDeclarationId = 299,
-    TSInstantiationExpressionExpression = 300,
-    TSInstantiationExpressionTypeArguments = 301,
-    JSDocNullableTypeTypeAnnotation = 302,
-    JSDocNonNullableTypeTypeAnnotation = 303,
+    ObjectKeyValuePropertyKey = 6,
+    ObjectKeyValuePropertyValue = 7,
+    ObjectShorthandPropertyValue = 8,
+    ObjectMethodPropertyKey = 9,
+    ObjectMethodPropertyValue = 10,
+    TemplateLiteralQuasis = 11,
+    TemplateLiteralExpressions = 12,
+    TaggedTemplateExpressionTag = 13,
+    TaggedTemplateExpressionTypeArguments = 14,
+    TaggedTemplateExpressionQuasi = 15,
+    ComputedMemberExpressionObject = 16,
+    ComputedMemberExpressionExpression = 17,
+    StaticMemberExpressionObject = 18,
+    StaticMemberExpressionProperty = 19,
+    PrivateFieldExpressionObject = 20,
+    PrivateFieldExpressionField = 21,
+    CallExpressionCallee = 22,
+    CallExpressionTypeArguments = 23,
+    CallExpressionArguments = 24,
+    NewExpressionCallee = 25,
+    NewExpressionTypeArguments = 26,
+    NewExpressionArguments = 27,
+    SpreadElementArgument = 28,
+    UpdateExpressionArgument = 29,
+    UnaryExpressionArgument = 30,
+    BinaryExpressionLeft = 31,
+    BinaryExpressionRight = 32,
+    PrivateInExpressionLeft = 33,
+    PrivateInExpressionRight = 34,
+    LogicalExpressionLeft = 35,
+    LogicalExpressionRight = 36,
+    ConditionalExpressionTest = 37,
+    ConditionalExpressionConsequent = 38,
+    ConditionalExpressionAlternate = 39,
+    AssignmentExpressionLeft = 40,
+    AssignmentExpressionRight = 41,
+    ArrayAssignmentTargetElements = 42,
+    ArrayAssignmentTargetRest = 43,
+    ObjectAssignmentTargetProperties = 44,
+    ObjectAssignmentTargetRest = 45,
+    AssignmentTargetRestTarget = 46,
+    AssignmentTargetWithDefaultBinding = 47,
+    AssignmentTargetWithDefaultInit = 48,
+    AssignmentTargetPropertyIdentifierBinding = 49,
+    AssignmentTargetPropertyIdentifierInit = 50,
+    AssignmentTargetPropertyPropertyName = 51,
+    AssignmentTargetPropertyPropertyBinding = 52,
+    SequenceExpressionExpressions = 53,
+    AwaitExpressionArgument = 54,
+    ChainExpressionExpression = 55,
+    ParenthesizedExpressionExpression = 56,
+    DirectiveExpression = 57,
+    BlockStatementBody = 58,
+    VariableDeclarationDeclarations = 59,
+    VariableDeclaratorId = 60,
+    VariableDeclaratorTypeAnnotation = 61,
+    VariableDeclaratorInit = 62,
+    ExpressionStatementExpression = 63,
+    IfStatementTest = 64,
+    IfStatementConsequent = 65,
+    IfStatementAlternate = 66,
+    DoWhileStatementBody = 67,
+    DoWhileStatementTest = 68,
+    WhileStatementTest = 69,
+    WhileStatementBody = 70,
+    ForStatementInit = 71,
+    ForStatementTest = 72,
+    ForStatementUpdate = 73,
+    ForStatementBody = 74,
+    ForInStatementLeft = 75,
+    ForInStatementRight = 76,
+    ForInStatementBody = 77,
+    ForOfStatementLeft = 78,
+    ForOfStatementRight = 79,
+    ForOfStatementBody = 80,
+    ContinueStatementLabel = 81,
+    BreakStatementLabel = 82,
+    ReturnStatementArgument = 83,
+    WithStatementObject = 84,
+    WithStatementBody = 85,
+    SwitchStatementDiscriminant = 86,
+    SwitchStatementCases = 87,
+    SwitchCaseTest = 88,
+    SwitchCaseConsequent = 89,
+    LabeledStatementLabel = 90,
+    LabeledStatementBody = 91,
+    ThrowStatementArgument = 92,
+    TryStatementBlock = 93,
+    TryStatementHandler = 94,
+    TryStatementFinalizer = 95,
+    CatchClauseParam = 96,
+    CatchClauseBody = 97,
+    CatchParameterPattern = 98,
+    CatchParameterTypeAnnotation = 99,
+    AssignmentPatternLeft = 100,
+    AssignmentPatternRight = 101,
+    ObjectPatternProperties = 102,
+    ObjectPatternRest = 103,
+    BindingPropertyKey = 104,
+    BindingPropertyValue = 105,
+    ArrayPatternElements = 106,
+    ArrayPatternRest = 107,
+    BindingRestElementArgument = 108,
+    FunctionId = 109,
+    FunctionTypeParameters = 110,
+    FunctionThisParam = 111,
+    FunctionParams = 112,
+    FunctionReturnType = 113,
+    FunctionBody = 114,
+    FormalParametersItems = 115,
+    FormalParametersRest = 116,
+    FormalParameterDecorators = 117,
+    FormalParameterPattern = 118,
+    FormalParameterTypeAnnotation = 119,
+    FormalParameterInitializer = 120,
+    FormalParameterRestDecorators = 121,
+    FormalParameterRestRest = 122,
+    FormalParameterRestTypeAnnotation = 123,
+    FunctionBodyDirectives = 124,
+    FunctionBodyStatements = 125,
+    ArrowFunctionExpressionTypeParameters = 126,
+    ArrowFunctionExpressionParams = 127,
+    ArrowFunctionExpressionReturnType = 128,
+    ArrowFunctionExpressionBody = 129,
+    YieldExpressionArgument = 130,
+    ClassDecorators = 131,
+    ClassId = 132,
+    ClassTypeParameters = 133,
+    ClassHeritage = 134,
+    ClassImplements = 135,
+    ClassBody = 136,
+    ClassHeritageExpression = 137,
+    ClassHeritageTypeArguments = 138,
+    ClassBodyBody = 139,
+    MethodDefinitionDecorators = 140,
+    MethodDefinitionKey = 141,
+    MethodDefinitionValue = 142,
+    PropertyDefinitionDecorators = 143,
+    PropertyDefinitionKey = 144,
+    PropertyDefinitionTypeAnnotation = 145,
+    PropertyDefinitionValue = 146,
+    StaticBlockBody = 147,
+    AccessorPropertyDecorators = 148,
+    AccessorPropertyKey = 149,
+    AccessorPropertyTypeAnnotation = 150,
+    AccessorPropertyValue = 151,
+    ImportExpressionSource = 152,
+    ImportExpressionOptions = 153,
+    ImportDeclarationSpecifiers = 154,
+    ImportDeclarationSource = 155,
+    ImportDeclarationWithClause = 156,
+    ImportSpecifierImported = 157,
+    ImportSpecifierLocal = 158,
+    ImportDefaultSpecifierLocal = 159,
+    ImportNamespaceSpecifierLocal = 160,
+    WithClauseWithEntries = 161,
+    ImportAttributeKey = 162,
+    ImportAttributeValue = 163,
+    ExportDeclarationDeclaration = 164,
+    ExportNamedDeclarationSpecifiers = 165,
+    ExportFromDeclarationSpecifiers = 166,
+    ExportFromDeclarationSource = 167,
+    ExportFromDeclarationWithClause = 168,
+    ExportDefaultDeclarationDeclaration = 169,
+    ExportAllDeclarationExported = 170,
+    ExportAllDeclarationSource = 171,
+    ExportAllDeclarationWithClause = 172,
+    ExportSpecifierLocal = 173,
+    ExportSpecifierExported = 174,
+    V8IntrinsicExpressionName = 175,
+    V8IntrinsicExpressionArguments = 176,
+    JSXElementOpeningElement = 177,
+    JSXElementChildren = 178,
+    JSXElementClosingElement = 179,
+    JSXOpeningElementName = 180,
+    JSXOpeningElementTypeArguments = 181,
+    JSXOpeningElementAttributes = 182,
+    JSXClosingElementName = 183,
+    JSXFragmentOpeningFragment = 184,
+    JSXFragmentChildren = 185,
+    JSXFragmentClosingFragment = 186,
+    JSXNamespacedNameNamespace = 187,
+    JSXNamespacedNameName = 188,
+    JSXMemberExpressionObject = 189,
+    JSXMemberExpressionProperty = 190,
+    JSXExpressionContainerExpression = 191,
+    JSXAttributeName = 192,
+    JSXAttributeValue = 193,
+    JSXSpreadAttributeArgument = 194,
+    JSXSpreadChildExpression = 195,
+    TSThisParameterTypeAnnotation = 196,
+    TSEnumDeclarationId = 197,
+    TSEnumDeclarationBody = 198,
+    TSEnumBodyMembers = 199,
+    TSEnumMemberId = 200,
+    TSEnumMemberInitializer = 201,
+    TSTypeAnnotationTypeAnnotation = 202,
+    TSLiteralTypeLiteral = 203,
+    TSConditionalTypeCheckType = 204,
+    TSConditionalTypeExtendsType = 205,
+    TSConditionalTypeTrueType = 206,
+    TSConditionalTypeFalseType = 207,
+    TSUnionTypeTypes = 208,
+    TSIntersectionTypeTypes = 209,
+    TSParenthesizedTypeTypeAnnotation = 210,
+    TSTypeOperatorTypeAnnotation = 211,
+    TSArrayTypeElementType = 212,
+    TSIndexedAccessTypeObjectType = 213,
+    TSIndexedAccessTypeIndexType = 214,
+    TSTupleTypeElementTypes = 215,
+    TSNamedTupleMemberLabel = 216,
+    TSNamedTupleMemberElementType = 217,
+    TSOptionalTypeTypeAnnotation = 218,
+    TSRestTypeTypeAnnotation = 219,
+    TSTypeReferenceTypeName = 220,
+    TSTypeReferenceTypeArguments = 221,
+    TSQualifiedNameLeft = 222,
+    TSQualifiedNameRight = 223,
+    TSTypeParameterInstantiationParams = 224,
+    TSTypeParameterName = 225,
+    TSTypeParameterConstraint = 226,
+    TSTypeParameterDefault = 227,
+    TSTypeParameterDeclarationParams = 228,
+    TSTypeAliasDeclarationId = 229,
+    TSTypeAliasDeclarationTypeParameters = 230,
+    TSTypeAliasDeclarationTypeAnnotation = 231,
+    TSClassImplementsExpression = 232,
+    TSClassImplementsTypeArguments = 233,
+    TSInterfaceDeclarationId = 234,
+    TSInterfaceDeclarationTypeParameters = 235,
+    TSInterfaceDeclarationExtends = 236,
+    TSInterfaceDeclarationBody = 237,
+    TSInterfaceBodyBody = 238,
+    TSPropertySignatureKey = 239,
+    TSPropertySignatureTypeAnnotation = 240,
+    TSIndexSignatureParameter = 241,
+    TSIndexSignatureTypeAnnotation = 242,
+    TSCallSignatureDeclarationTypeParameters = 243,
+    TSCallSignatureDeclarationThisParam = 244,
+    TSCallSignatureDeclarationParams = 245,
+    TSCallSignatureDeclarationReturnType = 246,
+    TSMethodSignatureKey = 247,
+    TSMethodSignatureTypeParameters = 248,
+    TSMethodSignatureThisParam = 249,
+    TSMethodSignatureParams = 250,
+    TSMethodSignatureReturnType = 251,
+    TSConstructSignatureDeclarationTypeParameters = 252,
+    TSConstructSignatureDeclarationParams = 253,
+    TSConstructSignatureDeclarationReturnType = 254,
+    TSIndexSignatureNameTypeAnnotation = 255,
+    TSInterfaceHeritageTypeName = 256,
+    TSInterfaceHeritageTypeArguments = 257,
+    TSTypePredicateParameterName = 258,
+    TSTypePredicateTypeAnnotation = 259,
+    TSExternalModuleDeclarationId = 260,
+    TSExternalModuleDeclarationBody = 261,
+    TSNamespaceDeclarationId = 262,
+    TSNamespaceDeclarationBody = 263,
+    TSGlobalDeclarationBody = 264,
+    TSModuleBlockDirectives = 265,
+    TSModuleBlockBody = 266,
+    TSTypeLiteralMembers = 267,
+    TSInferTypeTypeParameter = 268,
+    TSTypeQueryExprName = 269,
+    TSTypeQueryTypeArguments = 270,
+    TSImportTypeSource = 271,
+    TSImportTypeOptions = 272,
+    TSImportTypeQualifier = 273,
+    TSImportTypeTypeArguments = 274,
+    TSImportTypeQualifiedNameLeft = 275,
+    TSImportTypeQualifiedNameRight = 276,
+    TSFunctionTypeTypeParameters = 277,
+    TSFunctionTypeThisParam = 278,
+    TSFunctionTypeParams = 279,
+    TSFunctionTypeReturnType = 280,
+    TSConstructorTypeTypeParameters = 281,
+    TSConstructorTypeParams = 282,
+    TSConstructorTypeReturnType = 283,
+    TSMappedTypeKey = 284,
+    TSMappedTypeConstraint = 285,
+    TSMappedTypeNameType = 286,
+    TSMappedTypeTypeAnnotation = 287,
+    TSTemplateLiteralTypeQuasis = 288,
+    TSTemplateLiteralTypeTypes = 289,
+    TSAsExpressionExpression = 290,
+    TSAsExpressionTypeAnnotation = 291,
+    TSSatisfiesExpressionExpression = 292,
+    TSSatisfiesExpressionTypeAnnotation = 293,
+    TSTypeAssertionTypeAnnotation = 294,
+    TSTypeAssertionExpression = 295,
+    TSImportEqualsDeclarationId = 296,
+    TSImportEqualsDeclarationModuleReference = 297,
+    TSExternalModuleReferenceExpression = 298,
+    TSNonNullExpressionExpression = 299,
+    DecoratorExpression = 300,
+    TSExportAssignmentExpression = 301,
+    TSNamespaceExportDeclarationId = 302,
+    TSInstantiationExpressionExpression = 303,
+    TSInstantiationExpressionTypeArguments = 304,
+    JSDocNullableTypeTypeAnnotation = 305,
+    JSDocNonNullableTypeTypeAnnotation = 306,
 }
 
 /// Ancestor type used in AST traversal.
@@ -356,9 +359,16 @@ pub enum Ancestor<'a, 't> {
         AncestorType::ArrayExpressionElements as u16,
     ObjectExpressionProperties(ObjectExpressionWithoutProperties<'a, 't>) =
         AncestorType::ObjectExpressionProperties as u16,
-    ObjectPropertyKey(ObjectPropertyWithoutKey<'a, 't>) = AncestorType::ObjectPropertyKey as u16,
-    ObjectPropertyValue(ObjectPropertyWithoutValue<'a, 't>) =
-        AncestorType::ObjectPropertyValue as u16,
+    ObjectKeyValuePropertyKey(ObjectKeyValuePropertyWithoutKey<'a, 't>) =
+        AncestorType::ObjectKeyValuePropertyKey as u16,
+    ObjectKeyValuePropertyValue(ObjectKeyValuePropertyWithoutValue<'a, 't>) =
+        AncestorType::ObjectKeyValuePropertyValue as u16,
+    ObjectShorthandPropertyValue(ObjectShorthandPropertyWithoutValue<'a, 't>) =
+        AncestorType::ObjectShorthandPropertyValue as u16,
+    ObjectMethodPropertyKey(ObjectMethodPropertyWithoutKey<'a, 't>) =
+        AncestorType::ObjectMethodPropertyKey as u16,
+    ObjectMethodPropertyValue(ObjectMethodPropertyWithoutValue<'a, 't>) =
+        AncestorType::ObjectMethodPropertyValue as u16,
     TemplateLiteralQuasis(TemplateLiteralWithoutQuasis<'a, 't>) =
         AncestorType::TemplateLiteralQuasis as u16,
     TemplateLiteralExpressions(TemplateLiteralWithoutExpressions<'a, 't>) =
@@ -933,8 +943,18 @@ impl<'a, 't> Ancestor<'a, 't> {
     }
 
     #[inline]
-    pub fn is_object_property(self) -> bool {
-        matches!(self, Self::ObjectPropertyKey(_) | Self::ObjectPropertyValue(_))
+    pub fn is_object_key_value_property(self) -> bool {
+        matches!(self, Self::ObjectKeyValuePropertyKey(_) | Self::ObjectKeyValuePropertyValue(_))
+    }
+
+    #[inline]
+    pub fn is_object_shorthand_property(self) -> bool {
+        matches!(self, Self::ObjectShorthandPropertyValue(_))
+    }
+
+    #[inline]
+    pub fn is_object_method_property(self) -> bool {
+        matches!(self, Self::ObjectMethodPropertyKey(_) | Self::ObjectMethodPropertyValue(_))
     }
 
     #[inline]
@@ -1961,7 +1981,8 @@ impl<'a, 't> Ancestor<'a, 't> {
     pub fn is_parent_of_property_key(self) -> bool {
         matches!(
             self,
-            Self::ObjectPropertyKey(_)
+            Self::ObjectKeyValuePropertyKey(_)
+                | Self::ObjectMethodPropertyKey(_)
                 | Self::AssignmentTargetPropertyPropertyName(_)
                 | Self::BindingPropertyKey(_)
                 | Self::MethodDefinitionKey(_)
@@ -1976,7 +1997,7 @@ impl<'a, 't> Ancestor<'a, 't> {
     pub fn is_parent_of_expression(self) -> bool {
         matches!(
             self,
-            Self::ObjectPropertyValue(_)
+            Self::ObjectKeyValuePropertyValue(_)
                 | Self::TemplateLiteralExpressions(_)
                 | Self::TaggedTemplateExpressionTag(_)
                 | Self::ComputedMemberExpressionObject(_)
@@ -2283,8 +2304,11 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::ProgramBody(a) => a.address(),
             Self::ArrayExpressionElements(a) => a.address(),
             Self::ObjectExpressionProperties(a) => a.address(),
-            Self::ObjectPropertyKey(a) => a.address(),
-            Self::ObjectPropertyValue(a) => a.address(),
+            Self::ObjectKeyValuePropertyKey(a) => a.address(),
+            Self::ObjectKeyValuePropertyValue(a) => a.address(),
+            Self::ObjectShorthandPropertyValue(a) => a.address(),
+            Self::ObjectMethodPropertyKey(a) => a.address(),
+            Self::ObjectMethodPropertyValue(a) => a.address(),
             Self::TemplateLiteralQuasis(a) => a.address(),
             Self::TemplateLiteralExpressions(a) => a.address(),
             Self::TaggedTemplateExpressionTag(a) => a.address(),
@@ -2854,58 +2878,48 @@ impl<'a, 't> GetAddress for ObjectExpressionWithoutProperties<'a, 't> {
     }
 }
 
-pub(crate) const OFFSET_OBJECT_PROPERTY_NODE_ID: usize = offset_of!(ObjectProperty, node_id);
-pub(crate) const OFFSET_OBJECT_PROPERTY_SPAN: usize = offset_of!(ObjectProperty, span);
-pub(crate) const OFFSET_OBJECT_PROPERTY_KIND: usize = offset_of!(ObjectProperty, kind);
-pub(crate) const OFFSET_OBJECT_PROPERTY_KEY: usize = offset_of!(ObjectProperty, key);
-pub(crate) const OFFSET_OBJECT_PROPERTY_VALUE: usize = offset_of!(ObjectProperty, value);
-pub(crate) const OFFSET_OBJECT_PROPERTY_METHOD: usize = offset_of!(ObjectProperty, method);
-pub(crate) const OFFSET_OBJECT_PROPERTY_SHORTHAND: usize = offset_of!(ObjectProperty, shorthand);
+pub(crate) const OFFSET_OBJECT_KEY_VALUE_PROPERTY_NODE_ID: usize =
+    offset_of!(ObjectKeyValueProperty, node_id);
+pub(crate) const OFFSET_OBJECT_KEY_VALUE_PROPERTY_SPAN: usize =
+    offset_of!(ObjectKeyValueProperty, span);
+pub(crate) const OFFSET_OBJECT_KEY_VALUE_PROPERTY_KEY: usize =
+    offset_of!(ObjectKeyValueProperty, key);
+pub(crate) const OFFSET_OBJECT_KEY_VALUE_PROPERTY_VALUE: usize =
+    offset_of!(ObjectKeyValueProperty, value);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-pub struct ObjectPropertyWithoutKey<'a, 't>(
-    pub(crate) *const ObjectProperty<'a>,
+pub struct ObjectKeyValuePropertyWithoutKey<'a, 't>(
+    pub(crate) *const ObjectKeyValueProperty<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
-impl<'a, 't> ObjectPropertyWithoutKey<'a, 't> {
+impl<'a, 't> ObjectKeyValuePropertyWithoutKey<'a, 't> {
     #[inline]
     pub fn node_id(self) -> &'t Cell<NodeId> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_NODE_ID) as *const Cell<NodeId>)
+            &*((self.0 as *const u8).add(OFFSET_OBJECT_KEY_VALUE_PROPERTY_NODE_ID)
+                as *const Cell<NodeId>)
         }
     }
 
     #[inline]
     pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn kind(self) -> &'t PropertyKind {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_KIND) as *const PropertyKind) }
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_OBJECT_KEY_VALUE_PROPERTY_SPAN) as *const Span)
+        }
     }
 
     #[inline]
     pub fn value(self) -> &'t Expression<'a> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_VALUE) as *const Expression<'a>)
+            &*((self.0 as *const u8).add(OFFSET_OBJECT_KEY_VALUE_PROPERTY_VALUE)
+                as *const Expression<'a>)
         }
-    }
-
-    #[inline]
-    pub fn method(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_METHOD) as *const bool) }
-    }
-
-    #[inline]
-    pub fn shorthand(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_SHORTHAND) as *const bool) }
     }
 }
 
-impl<'a, 't> GetAddress for ObjectPropertyWithoutKey<'a, 't> {
+impl<'a, 't> GetAddress for ObjectKeyValuePropertyWithoutKey<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         unsafe { Address::from_ptr(self.0) }
@@ -2914,48 +2928,182 @@ impl<'a, 't> GetAddress for ObjectPropertyWithoutKey<'a, 't> {
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-pub struct ObjectPropertyWithoutValue<'a, 't>(
-    pub(crate) *const ObjectProperty<'a>,
+pub struct ObjectKeyValuePropertyWithoutValue<'a, 't>(
+    pub(crate) *const ObjectKeyValueProperty<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
-impl<'a, 't> ObjectPropertyWithoutValue<'a, 't> {
+impl<'a, 't> ObjectKeyValuePropertyWithoutValue<'a, 't> {
     #[inline]
     pub fn node_id(self) -> &'t Cell<NodeId> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_NODE_ID) as *const Cell<NodeId>)
+            &*((self.0 as *const u8).add(OFFSET_OBJECT_KEY_VALUE_PROPERTY_NODE_ID)
+                as *const Cell<NodeId>)
         }
     }
 
     #[inline]
     pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn kind(self) -> &'t PropertyKind {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_KIND) as *const PropertyKind) }
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_OBJECT_KEY_VALUE_PROPERTY_SPAN) as *const Span)
+        }
     }
 
     #[inline]
     pub fn key(self) -> &'t PropertyKey<'a> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_KEY) as *const PropertyKey<'a>)
+            &*((self.0 as *const u8).add(OFFSET_OBJECT_KEY_VALUE_PROPERTY_KEY)
+                as *const PropertyKey<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ObjectKeyValuePropertyWithoutValue<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_OBJECT_SHORTHAND_PROPERTY_NODE_ID: usize =
+    offset_of!(ObjectShorthandProperty, node_id);
+pub(crate) const OFFSET_OBJECT_SHORTHAND_PROPERTY_SPAN: usize =
+    offset_of!(ObjectShorthandProperty, span);
+pub(crate) const OFFSET_OBJECT_SHORTHAND_PROPERTY_NAME: usize =
+    offset_of!(ObjectShorthandProperty, name);
+pub(crate) const OFFSET_OBJECT_SHORTHAND_PROPERTY_VALUE: usize =
+    offset_of!(ObjectShorthandProperty, value);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ObjectShorthandPropertyWithoutValue<'a, 't>(
+    pub(crate) *const ObjectShorthandProperty<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ObjectShorthandPropertyWithoutValue<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_OBJECT_SHORTHAND_PROPERTY_NODE_ID)
+                as *const Cell<NodeId>)
         }
     }
 
     #[inline]
-    pub fn method(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_METHOD) as *const bool) }
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_OBJECT_SHORTHAND_PROPERTY_SPAN) as *const Span)
+        }
     }
 
     #[inline]
-    pub fn shorthand(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_SHORTHAND) as *const bool) }
+    pub fn name(self) -> &'t Ident<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_OBJECT_SHORTHAND_PROPERTY_NAME) as *const Ident<'a>)
+        }
     }
 }
 
-impl<'a, 't> GetAddress for ObjectPropertyWithoutValue<'a, 't> {
+impl<'a, 't> GetAddress for ObjectShorthandPropertyWithoutValue<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_OBJECT_METHOD_PROPERTY_NODE_ID: usize =
+    offset_of!(ObjectMethodProperty, node_id);
+pub(crate) const OFFSET_OBJECT_METHOD_PROPERTY_SPAN: usize = offset_of!(ObjectMethodProperty, span);
+pub(crate) const OFFSET_OBJECT_METHOD_PROPERTY_KIND: usize = offset_of!(ObjectMethodProperty, kind);
+pub(crate) const OFFSET_OBJECT_METHOD_PROPERTY_KEY: usize = offset_of!(ObjectMethodProperty, key);
+pub(crate) const OFFSET_OBJECT_METHOD_PROPERTY_VALUE: usize =
+    offset_of!(ObjectMethodProperty, value);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ObjectMethodPropertyWithoutKey<'a, 't>(
+    pub(crate) *const ObjectMethodProperty<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ObjectMethodPropertyWithoutKey<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_OBJECT_METHOD_PROPERTY_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_METHOD_PROPERTY_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn kind(self) -> &'t ObjectMethodKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_OBJECT_METHOD_PROPERTY_KIND)
+                as *const ObjectMethodKind)
+        }
+    }
+
+    #[inline]
+    pub fn value(self) -> &'t ArenaBox<'a, Function<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_OBJECT_METHOD_PROPERTY_VALUE)
+                as *const ArenaBox<'a, Function<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ObjectMethodPropertyWithoutKey<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ObjectMethodPropertyWithoutValue<'a, 't>(
+    pub(crate) *const ObjectMethodProperty<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ObjectMethodPropertyWithoutValue<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_OBJECT_METHOD_PROPERTY_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_METHOD_PROPERTY_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn kind(self) -> &'t ObjectMethodKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_OBJECT_METHOD_PROPERTY_KIND)
+                as *const ObjectMethodKind)
+        }
+    }
+
+    #[inline]
+    pub fn key(self) -> &'t PropertyKey<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_OBJECT_METHOD_PROPERTY_KEY)
+                as *const PropertyKey<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ObjectMethodPropertyWithoutValue<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         unsafe { Address::from_ptr(self.0) }

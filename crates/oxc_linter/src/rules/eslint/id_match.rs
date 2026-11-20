@@ -10,8 +10,8 @@ use oxc_ast::{
     ast::{
         AssignmentTarget, AssignmentTargetMaybeDefault, AssignmentTargetPropertyProperty,
         BindingIdentifier, BindingPattern, BindingProperty, ExportSpecifier, FunctionType,
-        IdentifierName, IdentifierReference, LabelIdentifier, ModuleExportName, ObjectProperty,
-        PrivateIdentifier, PropertyKey,
+        IdentifierName, IdentifierReference, LabelIdentifier, ModuleExportName,
+        ObjectKeyValueProperty, ObjectMethodProperty, PrivateIdentifier, PropertyKey,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -271,14 +271,20 @@ impl IdMatch {
         }
 
         match parent.kind() {
-            AstKind::ObjectProperty(property) => {
-                if property.shorthand {
-                    return;
+            AstKind::ObjectShorthandProperty(_) => {
+                if self.options().properties
+                    && !is_dynamic_import_attribute_object_property(parent, ctx)
+                {
+                    self.report(ctx, node.span(), name);
                 }
+                return;
+            }
+            AstKind::ObjectKeyValueProperty(property) => {
                 if !self.options().properties && !property.key.is_computed() {
                     return;
                 }
             }
+            AstKind::ObjectMethodProperty(_) => {}
             AstKind::BindingProperty(property) => {
                 // A computed destructuring key is a reference expression, not
                 // a binding introduced by destructuring.
@@ -358,14 +364,14 @@ impl IdMatch {
                 }
                 return;
             }
-            AstKind::ObjectProperty(property)
-                if property.key.span().contains_inclusive(ident.span)
-                    && !property.key.is_computed() =>
+            AstKind::ObjectKeyValueProperty(ObjectKeyValueProperty { key, .. })
+            | AstKind::ObjectMethodProperty(ObjectMethodProperty { key, .. })
+                if key.span().contains_inclusive(ident.span) && !key.is_computed() =>
             {
                 if !self.options().properties {
                     return;
                 }
-                if is_dynamic_import_attribute_object_property(property, ctx) {
+                if is_dynamic_import_attribute_object_property(parent, ctx) {
                     return;
                 }
                 self.report(ctx, node.span(), name);
@@ -663,26 +669,33 @@ fn is_inside_object_assignment_target<'a>(node: &AstNode<'a>, ctx: &LintContext<
     false
 }
 
+/// Returns `true` if `property_node` is a non-computed object property in the options or `with`
+/// attributes object of a dynamic `import()`.
 pub fn is_dynamic_import_attribute_object_property<'a>(
-    property: &ObjectProperty<'a>,
+    property_node: &AstNode<'a>,
     ctx: &LintContext<'a>,
 ) -> bool {
-    if property.key.is_computed() {
+    let name = match property_node.kind() {
+        AstKind::ObjectKeyValueProperty(property) => property.key.literal_name(),
+        AstKind::ObjectMethodProperty(property) => property.key.literal_name(),
+        AstKind::ObjectShorthandProperty(property) => Some(property.name.into()),
+        _ => None,
+    };
+    let Some(name) = name else {
         return false;
+    };
+
+    if name == "with" {
+        return object_property_is_import_options_with(property_node, ctx);
     }
 
-    if property.key.is_specific_static_name("with") {
-        return object_property_is_import_options_with(property, ctx);
-    }
-
-    object_property_is_inside_dynamic_import_with(property, ctx)
+    object_property_is_inside_dynamic_import_with(property_node, ctx)
 }
 
 fn object_property_is_import_options_with<'a>(
-    property: &ObjectProperty<'a>,
+    property_node: &AstNode<'a>,
     ctx: &LintContext<'a>,
 ) -> bool {
-    let property_node = ctx.nodes().get_node(property.node_id());
     let object_node = ctx.nodes().parent_node(property_node.id());
     matches!(
         ctx.nodes().parent_kind(object_node.id()),
@@ -692,13 +705,12 @@ fn object_property_is_import_options_with<'a>(
 }
 
 fn object_property_is_inside_dynamic_import_with<'a>(
-    property: &ObjectProperty<'a>,
+    property_node: &AstNode<'a>,
     ctx: &LintContext<'a>,
 ) -> bool {
-    let property_node = ctx.nodes().get_node(property.node_id());
     let object_node = ctx.nodes().parent_node(property_node.id());
     let outer_property_node = ctx.nodes().parent_node(object_node.id());
-    let AstKind::ObjectProperty(outer_property) = outer_property_node.kind() else {
+    let AstKind::ObjectKeyValueProperty(outer_property) = outer_property_node.kind() else {
         return false;
     };
     if !outer_property.key.is_specific_static_name("with")
@@ -706,7 +718,7 @@ fn object_property_is_inside_dynamic_import_with<'a>(
     {
         return false;
     }
-    object_property_is_import_options_with(outer_property, ctx)
+    object_property_is_import_options_with(outer_property_node, ctx)
 }
 
 fn property_static_identifier_name<'a>(key: &'a PropertyKey<'a>) -> Option<&'a str> {

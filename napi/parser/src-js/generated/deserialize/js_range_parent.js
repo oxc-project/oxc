@@ -368,25 +368,29 @@ function deserializeObjectExpression(pos) {
 function deserializeObjectPropertyKind(pos) {
   switch (uint8[pos]) {
     case 0:
-      return deserializeBoxObjectProperty(pos + 8);
+      return deserializeBoxObjectKeyValueProperty(pos + 8);
     case 1:
+      return deserializeBoxObjectShorthandProperty(pos + 8);
+    case 2:
+      return deserializeBoxObjectMethodProperty(pos + 8);
+    case 3:
       return deserializeBoxSpreadElement(pos + 8);
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for ObjectPropertyKind`);
   }
 }
 
-function deserializeObjectProperty(pos) {
+function deserializeObjectKeyValueProperty(pos) {
   let start,
     end,
     previousParent = parent,
     node = (parent = {
       type: "Property",
-      kind: deserializePropertyKind(pos + 12),
+      kind: "init",
       key: null,
       value: null,
-      method: deserializeBool(pos + 13),
-      shorthand: deserializeBool(pos + 14),
+      method: false,
+      shorthand: false,
       computed: uint8[pos + 16] < 64,
       start: (start = deserializeI32(pos)),
       end: (end = deserializeI32(pos + 4)),
@@ -397,6 +401,74 @@ function deserializeObjectProperty(pos) {
   node.value = deserializeExpression(pos + 32);
   parent = previousParent;
   return node;
+}
+
+function deserializeObjectShorthandProperty(pos) {
+  let start,
+    end,
+    previousParent = parent,
+    node = (parent = {
+      type: "Property",
+      kind: "init",
+      key: null,
+      value: null,
+      method: false,
+      shorthand: true,
+      computed: false,
+      start: (start = deserializeI32(pos)),
+      end: (end = deserializeI32(pos + 4)),
+      range: [start, end],
+      parent,
+    }),
+    shorthandKeyStart,
+    shorthandKeyEnd;
+  node.key = {
+    type: "Identifier",
+    name: deserializeStr(pos + 16),
+    start: (shorthandKeyStart = deserializeI32(pos + 32)),
+    end: (shorthandKeyEnd = deserializeI32(pos + 36)),
+    range: [shorthandKeyStart, shorthandKeyEnd],
+    parent,
+  };
+  node.value = deserializeIdentifierReference(pos + 32);
+  parent = previousParent;
+  return node;
+}
+
+function deserializeObjectMethodProperty(pos) {
+  let start,
+    end,
+    previousParent = parent,
+    node = (parent = {
+      type: "Property",
+      kind: deserializeObjectMethodKind(pos + 12),
+      key: null,
+      value: null,
+      method: uint8[pos + 12] === 0,
+      shorthand: false,
+      computed: uint8[pos + 16] < 64,
+      start: (start = deserializeI32(pos)),
+      end: (end = deserializeI32(pos + 4)),
+      range: [start, end],
+      parent,
+    });
+  node.key = deserializePropertyKey(pos + 16);
+  node.value = deserializeBoxFunction(pos + 32);
+  parent = previousParent;
+  return node;
+}
+
+function deserializeObjectMethodKind(pos) {
+  switch (uint8[pos]) {
+    case 0:
+      return "init";
+    case 1:
+      return "get";
+    case 2:
+      return "set";
+    default:
+      throw Error(`Unexpected discriminant ${uint8[pos]} for ObjectMethodKind`);
+  }
 }
 
 function deserializePropertyKey(pos) {
@@ -501,19 +573,6 @@ function deserializePropertyKey(pos) {
       return deserializeBoxPrivateIdentifier(pos + 8);
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for PropertyKey`);
-  }
-}
-
-function deserializePropertyKind(pos) {
-  switch (uint8[pos]) {
-    case 0:
-      return "init";
-    case 1:
-      return "get";
-    case 2:
-      return "set";
-    default:
-      throw Error(`Unexpected discriminant ${uint8[pos]} for PropertyKind`);
   }
 }
 
@@ -6088,12 +6147,16 @@ function deserializeVecObjectPropertyKind(pos) {
   return arr;
 }
 
-function deserializeBoxObjectProperty(pos) {
-  return deserializeObjectProperty(int32[pos >> 2]);
+function deserializeBoxObjectKeyValueProperty(pos) {
+  return deserializeObjectKeyValueProperty(int32[pos >> 2]);
 }
 
-function deserializeBool(pos) {
-  return uint8[pos] === 1;
+function deserializeBoxObjectShorthandProperty(pos) {
+  return deserializeObjectShorthandProperty(int32[pos >> 2]);
+}
+
+function deserializeBoxObjectMethodProperty(pos) {
+  return deserializeObjectMethodProperty(int32[pos >> 2]);
 }
 
 function deserializeBoxIdentifierName(pos) {
@@ -6136,6 +6199,10 @@ function deserializeOptionBoxTSTypeParameterInstantiation(pos) {
   return int32[pos >> 2] === 0 && int32[(pos >> 2) + 1] === 0
     ? null
     : deserializeBoxTSTypeParameterInstantiation(pos);
+}
+
+function deserializeBool(pos) {
+  return uint8[pos] === 1;
 }
 
 function deserializeJSStr(pos) {

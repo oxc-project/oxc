@@ -517,15 +517,11 @@ impl<'a> GatherNodeParts<'a> for AccessorProperty<'a> {
 impl<'a> GatherNodeParts<'a> for ObjectPropertyKind<'a> {
     fn gather<F: FnMut(&str)>(&self, f: &mut F) {
         match self {
-            ObjectPropertyKind::ObjectProperty(prop) => prop.gather(f),
+            ObjectPropertyKind::KeyValueProperty(prop) => prop.key.gather(f),
+            ObjectPropertyKind::ShorthandProperty(prop) => f(prop.name.as_str()),
+            ObjectPropertyKind::MethodProperty(prop) => prop.key.gather(f),
             ObjectPropertyKind::SpreadProperty(prop) => prop.gather(f),
         }
-    }
-}
-
-impl<'a> GatherNodeParts<'a> for ObjectProperty<'a> {
-    fn gather<F: FnMut(&str)>(&self, f: &mut F) {
-        self.key.gather(f);
     }
 }
 

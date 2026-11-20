@@ -256,9 +256,9 @@ fn get_angular_component_property<'a>(
     node: &AstNode<'_, 'a, TemplateLiteral<'a>>,
 ) -> Option<&'a str> {
     let prop = match node.parent() {
-        AstNodes::ObjectProperty(prop) => prop,
+        AstNodes::ObjectKeyValueProperty(prop) => prop,
         AstNodes::ArrayExpression(arr) => {
-            let AstNodes::ObjectProperty(prop) = arr.parent() else {
+            let AstNodes::ObjectKeyValueProperty(prop) = arr.parent() else {
                 return None;
             };
             prop

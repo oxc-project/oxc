@@ -70,7 +70,7 @@ impl<'a, C: Context> Visit<'a> for Visitor<C> {
         if let Some(options) = &import_type.options {
             for property in &options.properties {
                 match property {
-                    ObjectPropertyKind::ObjectProperty(property) => {
+                    ObjectPropertyKind::KeyValueProperty(property) => {
                         let is_with_key = matches!(
                             &property.key,
                             PropertyKey::StaticIdentifier(id) if id.name == "with"
@@ -80,9 +80,7 @@ impl<'a, C: Context> Visit<'a> for Visitor<C> {
                         }
                         self.visit_expression(&property.value);
                     }
-                    ObjectPropertyKind::SpreadProperty(spread) => {
-                        self.visit_spread_element(spread);
-                    }
+                    _ => self.visit_object_property_kind(property),
                 }
             }
         }
@@ -131,15 +129,6 @@ impl<'a, C: Context> Visit<'a> for Visitor<C> {
     fn visit_ts_this_parameter(&mut self, parameter: &TSThisParameter<'a>) {
         self.ctx.emit_this_identifier_at(parameter.this_span.start);
         walk::walk_ts_this_parameter(self, parameter);
-    }
-
-    fn visit_object_property(&mut self, property: &ObjectProperty<'a>) {
-        // For shorthand `{ x }`, key and value share the same span.
-        // Skip the key to avoid emitting the same token twice.
-        if !property.shorthand {
-            self.visit_property_key(&property.key);
-        }
-        self.visit_expression(&property.value);
     }
 
     fn visit_binding_property(&mut self, property: &BindingProperty<'a>) {

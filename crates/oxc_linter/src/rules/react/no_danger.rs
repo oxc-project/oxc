@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, JSXAttributeItem, ObjectPropertyKind},
+    ast::{Argument, JSXAttributeItem},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -79,11 +79,10 @@ impl Rule for NoDanger {
                 };
 
                 for prop in &obj_expr.properties {
-                    if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop
-                        && let Some(prop_name) = obj_prop.key.static_name()
-                        && prop_name == "dangerouslySetInnerHTML"
-                    {
-                        ctx.diagnostic(no_danger_diagnostic(obj_prop.key.span()));
+                    if prop.is_specific_static_name("dangerouslySetInnerHTML") {
+                        ctx.diagnostic(no_danger_diagnostic(
+                            prop.key().map_or_else(|| prop.span(), GetSpan::span),
+                        ));
                     }
                 }
             }

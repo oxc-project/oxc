@@ -219,8 +219,8 @@ impl ObjectExpression<'_> {
     }
 }
 
-impl ObjectProperty<'_> {
-    /// Get [`NodeId`] of [`ObjectProperty`].
+impl ObjectKeyValueProperty<'_> {
+    /// Get [`NodeId`] of [`ObjectKeyValueProperty`].
     ///
     /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
@@ -228,7 +228,39 @@ impl ObjectProperty<'_> {
         self.node_id.get()
     }
 
-    /// Set [`NodeId`] of [`ObjectProperty`].
+    /// Set [`NodeId`] of [`ObjectKeyValueProperty`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+}
+
+impl ObjectShorthandProperty<'_> {
+    /// Get [`NodeId`] of [`ObjectShorthandProperty`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`ObjectShorthandProperty`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+}
+
+impl ObjectMethodProperty<'_> {
+    /// Get [`NodeId`] of [`ObjectMethodProperty`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`ObjectMethodProperty`].
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
@@ -3775,7 +3807,9 @@ impl ObjectPropertyKind<'_> {
     #[inline(always)]
     pub fn node_id(&self) -> NodeId {
         match self {
-            Self::ObjectProperty(it) => it.node_id(),
+            Self::KeyValueProperty(it) => it.node_id(),
+            Self::ShorthandProperty(it) => it.node_id(),
+            Self::MethodProperty(it) => it.node_id(),
             Self::SpreadProperty(it) => it.node_id(),
         }
     }
@@ -3784,7 +3818,9 @@ impl ObjectPropertyKind<'_> {
     #[inline(always)]
     pub fn set_node_id(&self, node_id: NodeId) {
         match self {
-            Self::ObjectProperty(it) => it.set_node_id(node_id),
+            Self::KeyValueProperty(it) => it.set_node_id(node_id),
+            Self::ShorthandProperty(it) => it.set_node_id(node_id),
+            Self::MethodProperty(it) => it.set_node_id(node_id),
             Self::SpreadProperty(it) => it.set_node_id(node_id),
         }
     }

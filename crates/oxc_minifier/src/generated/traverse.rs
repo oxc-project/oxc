@@ -131,9 +131,49 @@ pub trait Traverse<'a> {
     }
 
     #[inline]
-    fn enter_object_property(&mut self, node: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {}
+    fn enter_object_key_value_property(
+        &mut self,
+        node: &mut ObjectKeyValueProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
     #[inline]
-    fn exit_object_property(&mut self, node: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {}
+    fn exit_object_key_value_property(
+        &mut self,
+        node: &mut ObjectKeyValueProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_object_shorthand_property(
+        &mut self,
+        node: &mut ObjectShorthandProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_object_shorthand_property(
+        &mut self,
+        node: &mut ObjectShorthandProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_object_method_property(
+        &mut self,
+        node: &mut ObjectMethodProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_object_method_property(
+        &mut self,
+        node: &mut ObjectMethodProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
 
     #[inline]
     fn enter_property_key(&mut self, node: &mut PropertyKey<'a>, ctx: &mut TraverseCtx<'a>) {}

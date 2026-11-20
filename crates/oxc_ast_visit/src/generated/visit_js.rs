@@ -128,8 +128,18 @@ pub trait VisitJs<'a>: Sized {
     }
 
     #[inline]
-    fn visit_object_property(&mut self, it: &ObjectProperty<'a>) {
-        walk_object_property(self, it);
+    fn visit_object_key_value_property(&mut self, it: &ObjectKeyValueProperty<'a>) {
+        walk_object_key_value_property(self, it);
+    }
+
+    #[inline]
+    fn visit_object_shorthand_property(&mut self, it: &ObjectShorthandProperty<'a>) {
+        walk_object_shorthand_property(self, it);
+    }
+
+    #[inline]
+    fn visit_object_method_property(&mut self, it: &ObjectMethodProperty<'a>) {
+        walk_object_method_property(self, it);
     }
 
     #[inline]
@@ -1223,18 +1233,53 @@ pub mod walk_js {
     ) {
         // No `AstKind` for this type
         match it {
-            ObjectPropertyKind::ObjectProperty(it) => visitor.visit_object_property(it),
+            ObjectPropertyKind::KeyValueProperty(it) => visitor.visit_object_key_value_property(it),
+            ObjectPropertyKind::ShorthandProperty(it) => {
+                visitor.visit_object_shorthand_property(it)
+            }
+            ObjectPropertyKind::MethodProperty(it) => visitor.visit_object_method_property(it),
             ObjectPropertyKind::SpreadProperty(it) => visitor.visit_spread_element(it),
         }
     }
 
     #[inline]
-    pub fn walk_object_property<'a, V: VisitJs<'a>>(visitor: &mut V, it: &ObjectProperty<'a>) {
-        let kind = AstKind::ObjectProperty(visitor.alloc(it));
+    pub fn walk_object_key_value_property<'a, V: VisitJs<'a>>(
+        visitor: &mut V,
+        it: &ObjectKeyValueProperty<'a>,
+    ) {
+        let kind = AstKind::ObjectKeyValueProperty(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_property_key(&it.key);
         visitor.visit_expression(&it.value);
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_object_shorthand_property<'a, V: VisitJs<'a>>(
+        visitor: &mut V,
+        it: &ObjectShorthandProperty<'a>,
+    ) {
+        let kind = AstKind::ObjectShorthandProperty(visitor.alloc(it));
+        visitor.enter_node(kind);
+        visitor.visit_span(&it.span);
+        visitor.visit_identifier_reference(&it.value);
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_object_method_property<'a, V: VisitJs<'a>>(
+        visitor: &mut V,
+        it: &ObjectMethodProperty<'a>,
+    ) {
+        let kind = AstKind::ObjectMethodProperty(visitor.alloc(it));
+        visitor.enter_node(kind);
+        visitor.visit_span(&it.span);
+        visitor.visit_property_key(&it.key);
+        {
+            let flags = ScopeFlags::Function;
+            visitor.visit_function(&it.value, flags);
+        }
         visitor.leave_node(kind);
     }
 

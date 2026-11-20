@@ -195,7 +195,10 @@ impl Rule for PreferNumberProperties {
                 let is_method_shorthand =
                     matches!(name, "isNaN" | "isFinite" | "parseFloat" | "parseInt");
                 if is_method_shorthand
-                    && !matches!(ctx.nodes().parent_kind(node.id()), AstKind::ObjectProperty(_))
+                    && !matches!(
+                        ctx.nodes().parent_kind(node.id()),
+                        AstKind::ObjectKeyValueProperty(_) | AstKind::ObjectShorthandProperty(_)
+                    )
                 {
                     continue;
                 }
@@ -221,10 +224,10 @@ impl Rule for PreferNumberProperties {
                 };
 
                 let fixer = |fixer: RuleFixer<'_, '_>| match ctx.nodes().parent_kind(node.id()) {
-                    AstKind::ObjectProperty(prop) if prop.shorthand && is_infinity => {
+                    AstKind::ObjectShorthandProperty(_) if is_infinity => {
                         fixer.insert_text_after(&ident_ref.span, format!(": {replacement_text}"))
                     }
-                    AstKind::ObjectProperty(prop) if prop.shorthand => {
+                    AstKind::ObjectShorthandProperty(_) => {
                         fixer.insert_text_before(&ident_ref.span, format!("{name}: Number."))
                     }
                     _ if is_infinity => fixer.replace(replacement_span, replacement_text),

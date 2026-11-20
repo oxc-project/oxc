@@ -206,7 +206,8 @@ impl StatsCollector {
         // Therefore, we should count their value instead of their node type.
         if matches!(
             parent_kind,
-            AstKind::ObjectProperty(_)
+            AstKind::ObjectKeyValueProperty(_)
+                | AstKind::ObjectMethodProperty(_)
                 | AstKind::BindingProperty(_)
                 | AstKind::AssignmentTargetPropertyProperty(_)
                 | AstKind::MethodDefinition(_)

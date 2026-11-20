@@ -122,29 +122,35 @@ impl Rule for NoReservedComponentNames {
 
 impl NoReservedComponentNames {
     fn check_options_object<'a>(&self, obj: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
-        if let Some(name_prop) = obj.find_property("name") {
+        if let Some(ObjectPropertyKind::KeyValueProperty(name_prop)) = obj.find_property("name") {
             self.check_name_expression(name_prop.value.get_inner_expression(), ctx);
         }
-        let Some(components_prop) = obj.find_property("components") else { return };
+        let Some(ObjectPropertyKind::KeyValueProperty(components_prop)) =
+            obj.find_property("components")
+        else {
+            return;
+        };
         let Expression::ObjectExpression(components_obj) =
             components_prop.value.get_inner_expression()
         else {
             return;
         };
         for entry in &components_obj.properties {
-            let ObjectPropertyKind::ObjectProperty(prop) = entry else { continue };
-            let Some(name) = prop.key.static_name().and_then(StaticPropertyName::into_cow_str)
-            else {
+            let Some(name) = entry.static_name().and_then(StaticPropertyName::into_cow_str) else {
                 continue;
             };
-            self.report_if_reserved(&name, prop.key.span(), ctx);
+            let span = entry.key().map_or_else(|| entry.span(), GetSpan::span);
+            self.report_if_reserved(&name, span, ctx);
         }
     }
 
     fn check_define_options<'a>(&self, call: &CallExpression<'a>, ctx: &LintContext<'a>) {
         let Some(arg) = call.arguments.first().and_then(|a| a.as_expression()) else { return };
         let Expression::ObjectExpression(obj) = arg.get_inner_expression() else { return };
-        let Some(name_prop) = obj.find_property("name") else { return };
+        let Some(ObjectPropertyKind::KeyValueProperty(name_prop)) = obj.find_property("name")
+        else {
+            return;
+        };
         self.check_name_expression(name_prop.value.get_inner_expression(), ctx);
     }
 

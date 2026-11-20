@@ -1,7 +1,10 @@
 use oxc_allocator::{GetAddress, UnstableAddress};
 use oxc_ast::{
     AstKind,
-    ast::{JSXAttributeValue, PropertyKey, TSEnumMemberName, TSLiteral},
+    ast::{
+        JSXAttributeValue, ObjectKeyValueProperty, ObjectMethodProperty, PropertyKey,
+        TSEnumMemberName, TSLiteral,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -97,8 +100,9 @@ impl Rule for PreferStringRaw {
             AstKind::ExportAllDeclaration(decl) if string_literal.span == decl.source.span => {
                 return;
             }
-            AstKind::ObjectProperty(prop) => {
-                if let PropertyKey::StaticStringLiteral(key) = &prop.key
+            AstKind::ObjectKeyValueProperty(ObjectKeyValueProperty { key, .. })
+            | AstKind::ObjectMethodProperty(ObjectMethodProperty { key, .. }) => {
+                if let PropertyKey::StaticStringLiteral(key) = key
                     && string_literal.span == key.span
                 {
                     return;

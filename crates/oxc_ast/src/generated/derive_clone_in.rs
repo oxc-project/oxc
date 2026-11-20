@@ -425,7 +425,13 @@ impl<'new_alloc> CloneIn<'new_alloc> for ObjectPropertyKind<'_> {
         allocator: &'new_alloc Allocator,
     ) -> Self::Cloned {
         match self {
-            Self::ObjectProperty(it) => ObjectPropertyKind::ObjectProperty(CloneIn::clone_in_impl(
+            Self::KeyValueProperty(it) => ObjectPropertyKind::KeyValueProperty(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
+            Self::ShorthandProperty(it) => ObjectPropertyKind::ShorthandProperty(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
+            Self::MethodProperty(it) => ObjectPropertyKind::MethodProperty(CloneIn::clone_in_impl(
                 it,
                 with_semantic_ids,
                 allocator,
@@ -439,23 +445,68 @@ impl<'new_alloc> CloneIn<'new_alloc> for ObjectPropertyKind<'_> {
     }
 }
 
-impl<'new_alloc> CloneIn<'new_alloc> for ObjectProperty<'_> {
-    type Cloned = ObjectProperty<'new_alloc>;
+impl<'new_alloc> CloneIn<'new_alloc> for ObjectKeyValueProperty<'_> {
+    type Cloned = ObjectKeyValueProperty<'new_alloc>;
 
     fn clone_in_impl(
         &self,
         with_semantic_ids: CloneInSemanticIds,
         allocator: &'new_alloc Allocator,
     ) -> Self::Cloned {
-        ObjectProperty {
+        ObjectKeyValueProperty {
+            node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
+            span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
+            key: CloneIn::clone_in_impl(&self.key, with_semantic_ids, allocator),
+            value: CloneIn::clone_in_impl(&self.value, with_semantic_ids, allocator),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for ObjectShorthandProperty<'_> {
+    type Cloned = ObjectShorthandProperty<'new_alloc>;
+
+    fn clone_in_impl(
+        &self,
+        with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        ObjectShorthandProperty {
+            node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
+            span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
+            name: CloneIn::clone_in_impl(&self.name, with_semantic_ids, allocator),
+            value: CloneIn::clone_in_impl(&self.value, with_semantic_ids, allocator),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for ObjectMethodProperty<'_> {
+    type Cloned = ObjectMethodProperty<'new_alloc>;
+
+    fn clone_in_impl(
+        &self,
+        with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        ObjectMethodProperty {
             node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
             kind: CloneIn::clone_in_impl(&self.kind, with_semantic_ids, allocator),
             key: CloneIn::clone_in_impl(&self.key, with_semantic_ids, allocator),
             value: CloneIn::clone_in_impl(&self.value, with_semantic_ids, allocator),
-            method: CloneIn::clone_in_impl(&self.method, with_semantic_ids, allocator),
-            shorthand: CloneIn::clone_in_impl(&self.shorthand, with_semantic_ids, allocator),
         }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for ObjectMethodKind {
+    type Cloned = ObjectMethodKind;
+
+    #[inline(always)]
+    fn clone_in_impl(
+        &self,
+        _with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        *self
     }
 }
 
@@ -536,19 +587,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for PropertyKey<'_> {
                 allocator,
             )),
         }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for PropertyKind {
-    type Cloned = PropertyKind;
-
-    #[inline(always)]
-    fn clone_in_impl(
-        &self,
-        _with_semantic_ids: CloneInSemanticIds,
-        allocator: &'new_alloc Allocator,
-    ) -> Self::Cloned {
-        *self
     }
 }
 

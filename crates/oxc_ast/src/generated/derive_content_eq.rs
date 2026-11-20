@@ -189,20 +189,40 @@ impl ContentEq for ObjectExpression<'_> {
 impl ContentEq for ObjectPropertyKind<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (Self::ObjectProperty(a), Self::ObjectProperty(b)) => a.content_eq(b),
+            (Self::KeyValueProperty(a), Self::KeyValueProperty(b)) => a.content_eq(b),
+            (Self::ShorthandProperty(a), Self::ShorthandProperty(b)) => a.content_eq(b),
+            (Self::MethodProperty(a), Self::MethodProperty(b)) => a.content_eq(b),
             (Self::SpreadProperty(a), Self::SpreadProperty(b)) => a.content_eq(b),
             _ => false,
         }
     }
 }
 
-impl ContentEq for ObjectProperty<'_> {
+impl ContentEq for ObjectKeyValueProperty<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.key, &other.key)
+            && ContentEq::content_eq(&self.value, &other.value)
+    }
+}
+
+impl ContentEq for ObjectShorthandProperty<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.name, &other.name)
+            && ContentEq::content_eq(&self.value, &other.value)
+    }
+}
+
+impl ContentEq for ObjectMethodProperty<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.kind, &other.kind)
             && ContentEq::content_eq(&self.key, &other.key)
             && ContentEq::content_eq(&self.value, &other.value)
-            && ContentEq::content_eq(&self.method, &other.method)
-            && ContentEq::content_eq(&self.shorthand, &other.shorthand)
+    }
+}
+
+impl ContentEq for ObjectMethodKind {
+    fn content_eq(&self, other: &Self) -> bool {
+        self == other
     }
 }
 
@@ -266,12 +286,6 @@ impl ContentEq for PropertyKey<'_> {
             (Self::PrivateFieldExpression(a), Self::PrivateFieldExpression(b)) => a.content_eq(b),
             _ => false,
         }
-    }
-}
-
-impl ContentEq for PropertyKind {
-    fn content_eq(&self, other: &Self) -> bool {
-        self == other
     }
 }
 

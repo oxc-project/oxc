@@ -216,9 +216,36 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     }
 
     #[inline]
-    fn visit_object_property(&mut self, it: &ObjectProperty<'a>) {
+    fn visit_object_property_kind(&mut self, it: &ObjectPropertyKind<'a>) {
+        match it {
+            ObjectPropertyKind::KeyValueProperty(it) => self.visit_object_key_value_property(it),
+            ObjectPropertyKind::MethodProperty(it) => self.visit_object_method_property(it),
+            ObjectPropertyKind::SpreadProperty(it) => self.visit_spread_element(it),
+            _ => {
+                // Remaining variants do not contain scopes:
+                // `ShorthandProperty`
+            }
+        }
+    }
+
+    #[inline]
+    fn visit_object_key_value_property(&mut self, it: &ObjectKeyValueProperty<'a>) {
         self.visit_property_key(&it.key);
         self.visit_expression(&it.value);
+    }
+
+    #[inline(always)]
+    fn visit_object_shorthand_property(&mut self, it: &ObjectShorthandProperty<'a>) {
+        // Struct does not contain a scope. Halt traversal.
+    }
+
+    #[inline]
+    fn visit_object_method_property(&mut self, it: &ObjectMethodProperty<'a>) {
+        self.visit_property_key(&it.key);
+        {
+            let flags = ScopeFlags::Function;
+            self.visit_function(&it.value, flags);
+        }
     }
 
     fn visit_property_key(&mut self, it: &PropertyKey<'a>) {

@@ -3,8 +3,8 @@ use oxc_ast::{
     ast::{
         Argument, ArrowFunctionExpression, AssignmentExpression, AssignmentTarget, CallExpression,
         Class, ExportDefaultDeclaration, ExportDefaultDeclarationKind, Expression, Function,
-        JSXAttributeItem, JSXElementName, ObjectProperty, PropertyKey, Statement,
-        VariableDeclarator,
+        JSXAttributeItem, JSXElementName, ObjectKeyValueProperty, ObjectMethodProperty,
+        PropertyKey, Statement, VariableDeclarator,
     },
 };
 use oxc_ast_visit::{VisitJs, walk_js};
@@ -215,8 +215,8 @@ impl<'a> VisitJs<'a> for ComponentFinder<'a, '_> {
         }
     }
 
-    fn visit_object_property(&mut self, prop: &ObjectProperty<'a>) {
-        // { RenderFoo() { return <div/> } }
+    fn visit_object_key_value_property(&mut self, prop: &ObjectKeyValueProperty<'a>) {
+        // { RenderFoo: function() { return <div/> } }
         // We increment depth after recording to prevent the inner function from being
         // detected again when visiting the function expression.
         if let PropertyKey::StaticIdentifier(id) = &prop.key
@@ -226,10 +226,25 @@ impl<'a> VisitJs<'a> for ComponentFinder<'a, '_> {
         {
             self.record_component(id.name.to_string(), prop.span, true);
             self.component_depth += 1;
-            walk_js::walk_object_property(self, prop);
+            walk_js::walk_object_key_value_property(self, prop);
             self.component_depth -= 1;
         } else {
-            walk_js::walk_object_property(self, prop);
+            walk_js::walk_object_key_value_property(self, prop);
+        }
+    }
+
+    fn visit_object_method_property(&mut self, prop: &ObjectMethodProperty<'a>) {
+        // { RenderFoo() { return <div/> } }
+        if let PropertyKey::StaticIdentifier(id) = &prop.key
+            && is_react_component_name(&id.name)
+            && function_contains_jsx(&prop.value)
+        {
+            self.record_component(id.name.to_string(), prop.span, true);
+            self.component_depth += 1;
+            walk_js::walk_object_method_property(self, prop);
+            self.component_depth -= 1;
+        } else {
+            walk_js::walk_object_method_property(self, prop);
         }
     }
 

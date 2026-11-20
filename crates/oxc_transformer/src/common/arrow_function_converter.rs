@@ -720,7 +720,9 @@ impl<'a> ArrowFunctionConverter<'a> {
             Ancestor::MethodDefinitionValue(_) => true,
             // Only `({ async foo() {} })` does not include non-method like `({ foo: async function() {} })`,
             // because it's just a property with a function value
-            Ancestor::ObjectPropertyValue(property) => *property.method(),
+            Ancestor::ObjectMethodPropertyValue(property) => {
+                *property.kind() == ObjectMethodKind::Method
+            }
             _ => false,
         }
     }

@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, Expression, JSXAttribute, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
-        ObjectPropertyKind, TSType,
+        Argument, Expression, IdentifierReference, JSXAttribute, JSXAttributeItem,
+        JSXAttributeName, JSXAttributeValue, ObjectPropertyKind, TSType,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -109,23 +109,25 @@ fn is_invalid_expression<'a>(expression: Option<&Expression<'a>>, ctx: &LintCont
         Expression::StringLiteral(_)
         | Expression::BooleanLiteral(_)
         | Expression::TemplateLiteral(_) => true,
-        Expression::Identifier(ident) => {
-            let Some(node) = get_declaration_of_variable(ident, ctx) else {
-                return false;
-            };
-
-            let AstKind::VariableDeclarator(var_decl) = node.kind() else {
-                return false;
-            };
-
-            if let Some(asd) = var_decl.type_annotation.as_ref() {
-                return is_invalid_type(&asd.type_annotation);
-            }
-
-            is_invalid_expression(var_decl.init.as_ref(), ctx)
-        }
+        Expression::Identifier(ident) => is_invalid_identifier(ident, ctx),
         _ => false,
     }
+}
+
+fn is_invalid_identifier<'a>(ident: &IdentifierReference<'a>, ctx: &LintContext<'a>) -> bool {
+    let Some(node) = get_declaration_of_variable(ident, ctx) else {
+        return false;
+    };
+
+    let AstKind::VariableDeclarator(var_decl) = node.kind() else {
+        return false;
+    };
+
+    if let Some(asd) = var_decl.type_annotation.as_ref() {
+        return is_invalid_type(&asd.type_annotation);
+    }
+
+    is_invalid_expression(var_decl.init.as_ref(), ctx)
 }
 
 fn is_invalid_style_attribute<'a>(attribute: &JSXAttribute<'a>, ctx: &LintContext<'a>) -> bool {
@@ -208,12 +210,20 @@ impl Rule for StylePropObject {
                 };
 
                 for prop in &obj_expr.properties {
-                    if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop
-                        && let Some(prop_name) = obj_prop.key.static_name()
-                        && prop_name == "style"
-                        && is_invalid_expression(Some(&obj_prop.value), ctx)
-                    {
-                        ctx.diagnostic(style_prop_object_diagnostic(obj_prop.value.span()));
+                    if !prop.is_specific_static_name("style") {
+                        continue;
+                    }
+                    let invalid_span = match prop {
+                        ObjectPropertyKind::KeyValueProperty(prop) => {
+                            is_invalid_expression(Some(&prop.value), ctx).then(|| prop.value.span())
+                        }
+                        ObjectPropertyKind::ShorthandProperty(prop) => {
+                            is_invalid_identifier(&prop.value, ctx).then_some(prop.value.span)
+                        }
+                        _ => None,
+                    };
+                    if let Some(span) = invalid_span {
+                        ctx.diagnostic(style_prop_object_diagnostic(span));
                     }
                 }
             }

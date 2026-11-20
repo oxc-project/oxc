@@ -208,13 +208,10 @@ impl<'a> ClassProperties<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         // `_prop = {_: value}`
-        let property = ObjectPropertyKind::new_object_property(
+        let property = ObjectPropertyKind::new_key_value_property(
             SPAN,
-            PropertyKind::Init,
             PropertyKey::StaticIdentifier(ArenaBox::new_in(create_underscore_ident_name(ctx), ctx)),
             value,
-            false,
-            false,
             ctx,
         );
         let obj = Expression::new_object_expression(SPAN, [property], ctx);
@@ -375,22 +372,16 @@ impl<'a> ClassProperties<'a> {
         let prop_def = Expression::new_object_expression(
             SPAN,
             [
-                ObjectPropertyKind::new_object_property(
+                ObjectPropertyKind::new_key_value_property(
                     SPAN,
-                    PropertyKind::Init,
                     PropertyKey::new_static_identifier(SPAN, "writable", ctx),
                     Expression::new_boolean_literal(SPAN, true, ctx),
-                    false,
-                    false,
                     ctx,
                 ),
-                ObjectPropertyKind::new_object_property(
+                ObjectPropertyKind::new_key_value_property(
                     SPAN,
-                    PropertyKind::Init,
                     PropertyKey::new_static_identifier(SPAN, "value", ctx),
                     value,
-                    false,
-                    false,
                     ctx,
                 ),
             ],

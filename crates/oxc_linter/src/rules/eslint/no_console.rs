@@ -173,7 +173,8 @@ fn remove_console<'c, 'a: 'c>(
             // from: const x = (console.log("foo"), 5);
             // to:   const x = (undefined, 5);
             | AstKind::SequenceExpression(_)
-            | AstKind::ObjectProperty(_)
+            | AstKind::ObjectKeyValueProperty(_)
+            | AstKind::ObjectMethodProperty(_)
             => {
                 return fixer.replace(node_to_delete.span(), "undefined").dangerously()
             }

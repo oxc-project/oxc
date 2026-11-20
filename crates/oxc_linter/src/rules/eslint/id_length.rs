@@ -338,7 +338,8 @@ impl IdLength {
                     return;
                 }
             }
-            AstKind::ObjectProperty(_)
+            AstKind::ObjectKeyValueProperty(_)
+            | AstKind::ObjectMethodProperty(_)
             | AstKind::TSPropertySignature(_)
             | AstKind::TSMethodSignature(_)
                 if self.properties == AlwaysNever::Never => {
@@ -365,6 +366,8 @@ impl IdLength {
 
     /// A variable assigned in a destructuring assignment, like `q` in `[q] = a`,
     /// `({ a: q } = o)` or `for ([k, v] of e)`. A plain `q = 1` is not checked.
+    ///
+    /// Also checks the property name of a shorthand property, like `q` in `({ q })`.
     fn handle_assignment_target(
         &self,
         ident: &IdentifierReference,
@@ -402,6 +405,9 @@ impl IdLength {
                 if property.binding.span == ident.span
                     && (property.init.is_some() || self.properties == AlwaysNever::Always) =>
             {
+                ident.span
+            }
+            AstKind::ObjectShorthandProperty(_) if self.properties == AlwaysNever::Always => {
                 ident.span
             }
             _ => return,

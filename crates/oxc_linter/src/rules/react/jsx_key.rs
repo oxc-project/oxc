@@ -266,7 +266,7 @@ fn is_in_array_or_iter<'a, 'b>(
                     return None;
                 }
 
-                if let AstKind::ObjectProperty(_) = ctx.nodes().parent_kind(parent.id()) {
+                if let AstKind::ObjectKeyValueProperty(_) = ctx.nodes().parent_kind(parent.id()) {
                     return None;
                 }
                 if is_outside_containing_function {
@@ -276,7 +276,9 @@ fn is_in_array_or_iter<'a, 'b>(
                 is_outside_containing_function = true;
             }
             AstKind::Function(_) => {
-                if let AstKind::ObjectProperty(_) = ctx.nodes().parent_kind(parent.id()) {
+                if let AstKind::ObjectKeyValueProperty(_) | AstKind::ObjectMethodProperty(_) =
+                    ctx.nodes().parent_kind(parent.id())
+                {
                     return None;
                 }
                 if is_outside_containing_function {
@@ -315,7 +317,8 @@ fn is_in_array_or_iter<'a, 'b>(
             }
             AstKind::JSXElement(_)
             | AstKind::JSXOpeningElement(_)
-            | AstKind::ObjectProperty(_)
+            | AstKind::ObjectKeyValueProperty(_)
+            | AstKind::ObjectMethodProperty(_)
             | AstKind::JSXFragment(_) => return None,
             AstKind::ReturnStatement(_) => {
                 is_explicit_return = true;

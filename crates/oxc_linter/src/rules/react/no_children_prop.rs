@@ -76,7 +76,9 @@ impl Rule for NoChildrenProp {
                     && call_expr.arguments.get(1).is_some_and(|arg| arg.span() == obj_expr.span)
                     && let Some(prop) = obj_expr.find_property("children")
                 {
-                    ctx.diagnostic(no_children_prop_diagnostic(prop.key.span()));
+                    ctx.diagnostic(no_children_prop_diagnostic(
+                        prop.key().map_or_else(|| prop.span(), GetSpan::span),
+                    ));
                 }
             }
             _ => {}

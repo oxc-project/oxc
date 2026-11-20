@@ -159,16 +159,46 @@ pub trait Traverse<'a, State> {
     }
 
     #[inline]
-    fn enter_object_property(
+    fn enter_object_key_value_property(
         &mut self,
-        node: &mut ObjectProperty<'a>,
+        node: &mut ObjectKeyValueProperty<'a>,
         ctx: &mut TraverseCtx<'a, State>,
     ) {
     }
     #[inline]
-    fn exit_object_property(
+    fn exit_object_key_value_property(
         &mut self,
-        node: &mut ObjectProperty<'a>,
+        node: &mut ObjectKeyValueProperty<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_object_shorthand_property(
+        &mut self,
+        node: &mut ObjectShorthandProperty<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+    #[inline]
+    fn exit_object_shorthand_property(
+        &mut self,
+        node: &mut ObjectShorthandProperty<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_object_method_property(
+        &mut self,
+        node: &mut ObjectMethodProperty<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+    #[inline]
+    fn exit_object_method_property(
+        &mut self,
+        node: &mut ObjectMethodProperty<'a>,
         ctx: &mut TraverseCtx<'a, State>,
     ) {
     }

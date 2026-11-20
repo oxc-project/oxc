@@ -667,14 +667,23 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_, '_> {
         walk_mut::walk_property_key(self, key);
     }
 
-    fn visit_object_property(&mut self, property: &mut ObjectProperty<'a>) {
+    fn visit_object_key_value_property(&mut self, property: &mut ObjectKeyValueProperty<'a>) {
         let original_string = Self::direct_string_key(&property.key);
-        let expands_shorthand = property.shorthand
-            && matches!(&property.key, PropertyKey::StaticIdentifier(identifier) if self.target(identifier.name).is_some());
-        walk_mut::walk_object_property(self, property);
-        if expands_shorthand {
-            property.shorthand = false;
+        walk_mut::walk_object_key_value_property(self, property);
+        self.rewrite_key_position(&mut property.key, original_string);
+    }
+
+    fn visit_object_shorthand_property(&mut self, property: &mut ObjectShorthandProperty<'a>) {
+        // Codegen expands the shorthand when `name` no longer matches the variable.
+        if let Some(target) = self.target(property.name) {
+            property.name = Ident::from_str_in(target.as_str(), &self.ast);
         }
+        walk_mut::walk_object_shorthand_property(self, property);
+    }
+
+    fn visit_object_method_property(&mut self, property: &mut ObjectMethodProperty<'a>) {
+        let original_string = Self::direct_string_key(&property.key);
+        walk_mut::walk_object_method_property(self, property);
         self.rewrite_key_position(&mut property.key, original_string);
     }
 

@@ -4,7 +4,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         CallExpression, ExportDefaultDeclarationKind, Expression, IdentifierReference,
-        ObjectPropertyKind, TSSignature, TSType, TSTypeName,
+        ObjectKeyValueProperty, ObjectMethodProperty, TSSignature, TSType, TSTypeName,
     },
 };
 use oxc_span::{GetSpan, Span};
@@ -90,13 +90,10 @@ pub fn has_default_exports_property(others: &Vec<&ContextSubHost<'_>>, check_nam
                 continue;
             };
 
-            let has_emits_exports = export_obj.properties.iter().any(|property| {
-                let ObjectPropertyKind::ObjectProperty(property) = property else {
-                    return false;
-                };
-
-                property.key.name().is_some_and(|name| name == check_name)
-            });
+            let has_emits_exports = export_obj
+                .properties
+                .iter()
+                .any(|property| property.is_specific_static_name(check_name));
 
             if has_emits_exports {
                 return true;
@@ -188,9 +185,12 @@ pub fn is_in_vue_component_instance_method(node: &AstNode<'_>, ctx: &LintContext
     };
 
     let property_node = ctx.nodes().parent_node(function_node.id());
-    let AstKind::ObjectProperty(_) = property_node.kind() else {
+    if !matches!(
+        property_node.kind(),
+        AstKind::ObjectKeyValueProperty(_) | AstKind::ObjectMethodProperty(_)
+    ) {
         return false;
-    };
+    }
 
     let object_node = ctx.nodes().parent_node(property_node.id());
     if is_vue_component_options_object(object_node, ctx) {
@@ -198,13 +198,9 @@ pub fn is_in_vue_component_instance_method(node: &AstNode<'_>, ctx: &LintContext
     }
 
     let container_property_node = ctx.nodes().parent_node(object_node.id());
-    if !matches!(container_property_node.kind(), AstKind::ObjectProperty(_)) {
-        return false;
-    }
-
     let Some(container_name) = container_property_node
         .kind()
-        .as_object_property()
+        .as_object_key_value_property()
         .and_then(|prop| prop.key.literal_name())
     else {
         return false;
@@ -445,33 +441,34 @@ pub fn get_computed_getter_context(
             return Some(ComputedContext::CompositionApi(fn_span));
         }
 
-        AstKind::ObjectProperty(prop) => {
+        AstKind::ObjectKeyValueProperty(ObjectKeyValueProperty { key: prop_key, .. })
+        | AstKind::ObjectMethodProperty(ObjectMethodProperty { key: prop_key, .. }) => {
             let grandparent = nodes.parent_node(parent.id());
             let AstKind::ObjectExpression(_) = grandparent.kind() else { return None };
             let great = nodes.parent_node(grandparent.id());
 
             match great.kind() {
                 // Case A: `computed: { key() {} }` or `computed: { key: function() {} }`
-                AstKind::ObjectProperty(outer)
+                AstKind::ObjectKeyValueProperty(outer)
                     if outer.key.is_specific_static_name("computed")
                         && matches!(fn_node.kind(), AstKind::Function(_)) =>
                 {
                     let vue_options = nodes.parent_node(great.id());
                     if is_vue_component_options_object(vue_options, ctx) {
-                        let key = prop.key.static_name().map(|s| s.display().to_string());
+                        let key = prop_key.static_name().map(|s| s.display().to_string());
                         return Some(ComputedContext::OptionsApi(key));
                     }
                 }
 
                 // Case B: `computed: { key: { get() {} } }`
-                AstKind::ObjectProperty(key_prop)
-                    if prop.key.is_specific_static_name("get")
+                AstKind::ObjectKeyValueProperty(key_prop)
+                    if prop_key.is_specific_static_name("get")
                         && matches!(fn_node.kind(), AstKind::Function(_)) =>
                 {
                     let key_obj_expr = nodes.parent_node(great.id());
                     let AstKind::ObjectExpression(_) = key_obj_expr.kind() else { return None };
                     let computed_prop_node = nodes.parent_node(key_obj_expr.id());
-                    if let AstKind::ObjectProperty(cp) = computed_prop_node.kind()
+                    if let AstKind::ObjectKeyValueProperty(cp) = computed_prop_node.kind()
                         && cp.key.is_specific_static_name("computed")
                     {
                         let vue_options = nodes.parent_node(computed_prop_node.id());
@@ -484,7 +481,7 @@ pub fn get_computed_getter_context(
 
                 // Case C variant: `computed({ get() {}, set() {} })`
                 AstKind::CallExpression(call)
-                    if prop.key.is_specific_static_name("get")
+                    if prop_key.is_specific_static_name("get")
                         && is_vue_computed_call(call, ctx) =>
                 {
                     return Some(ComputedContext::CompositionApi(fn_span));

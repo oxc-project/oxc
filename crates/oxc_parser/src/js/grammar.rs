@@ -194,8 +194,32 @@ impl<'a, C: Config> CoverGrammar<'a, ObjectExpression<'a>, C> for ObjectAssignme
 
         for (i, elem) in expr.properties.into_iter().enumerate() {
             match elem {
-                ObjectPropertyKind::ObjectProperty(property) => {
-                    let target = AssignmentTargetProperty::cover(property.unbox(), p);
+                ObjectPropertyKind::KeyValueProperty(property) => {
+                    let ObjectKeyValueProperty { span, key, value, .. } = property.unbox();
+                    let binding = AssignmentTargetMaybeDefault::cover(value, p);
+                    properties.push(
+                        AssignmentTargetProperty::new_assignment_target_property_property(
+                            span, key, binding, p,
+                        ),
+                    );
+                }
+                ObjectPropertyKind::ShorthandProperty(property) => {
+                    let ObjectShorthandProperty { span, value, .. } = property.unbox();
+                    // convert `CoverInitializedName`
+                    let init = p
+                        .state
+                        .cover_initialized_name
+                        .remove(&span.start)
+                        .map(|cover| cover.initializer);
+                    properties.push(
+                        AssignmentTargetProperty::new_assignment_target_property_identifier(
+                            span, value, init, p,
+                        ),
+                    );
+                }
+                ObjectPropertyKind::MethodProperty(property) => {
+                    let target =
+                        p.fatal_error(diagnostics::invalid_assignment(property.value.span));
                     properties.push(target);
                 }
                 ObjectPropertyKind::SpreadProperty(spread) => {
@@ -224,37 +248,6 @@ impl<'a, C: Config> CoverGrammar<'a, ObjectExpression<'a>, C> for ObjectAssignme
         }
 
         ObjectAssignmentTarget::new(expr.span, properties, rest, p)
-    }
-}
-
-impl<'a, C: Config> CoverGrammar<'a, ObjectProperty<'a>, C> for AssignmentTargetProperty<'a> {
-    fn cover(property: ObjectProperty<'a>, p: &mut ParserImpl<'a, C>) -> Self {
-        if property.shorthand {
-            let binding = match property.value {
-                Expression::Identifier(ident) => ident.unbox(),
-                _ => return p.unexpected(),
-            };
-            // convert `CoverInitializedName`
-            let init = p
-                .state
-                .cover_initialized_name
-                .remove(&property.span.start)
-                .map(|cover| cover.initializer);
-            AssignmentTargetProperty::new_assignment_target_property_identifier(
-                property.span,
-                binding,
-                init,
-                p,
-            )
-        } else {
-            let binding = AssignmentTargetMaybeDefault::cover(property.value, p);
-            AssignmentTargetProperty::new_assignment_target_property_property(
-                property.span,
-                property.key,
-                binding,
-                p,
-            )
-        }
     }
 }
 
@@ -322,16 +315,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let last = object.properties.len().wrapping_sub(1);
                 for (index, property) in object.properties.iter().enumerate() {
                     match property {
-                        ObjectPropertyKind::ObjectProperty(property) => {
+                        ObjectPropertyKind::KeyValueProperty(property) => {
+                            self.check_cover_binding_element(&property.value)?;
+                        }
+                        ObjectPropertyKind::ShorthandProperty(_) => {}
+                        ObjectPropertyKind::MethodProperty(property) => {
                             // Methods and accessors are not properties of a pattern.
-                            if property.kind != PropertyKind::Init || property.method {
-                                return Err(diagnostics::invalid_arrow_function_parameter(
-                                    property.span,
-                                ));
-                            }
-                            if !property.shorthand {
-                                self.check_cover_binding_element(&property.value)?;
-                            }
+                            return Err(diagnostics::invalid_arrow_function_parameter(
+                                property.span,
+                            ));
                         }
                         ObjectPropertyKind::SpreadProperty(spread) => {
                             if index != last {
@@ -470,32 +462,38 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let mut rest = None;
                 for property in properties {
                     match property {
-                        ObjectPropertyKind::ObjectProperty(property) => {
-                            let ObjectProperty { span, key, value, shorthand, .. } =
-                                property.unbox();
-                            let value = if shorthand {
-                                // `{ a }`, or the `CoverInitializedName` `{ a = b }`.
-                                let binding = self.cover_expression_to_binding_pattern(value);
-                                let cover_initialized_name = &mut self.state.cover_initialized_name;
-                                if cover_initialized_name.is_empty() {
-                                    binding
-                                } else if let Some(cover) =
-                                    cover_initialized_name.remove(&span.start)
-                                {
-                                    BindingPattern::new_assignment_pattern(
-                                        span,
-                                        binding,
-                                        cover.initializer,
-                                        self,
-                                    )
-                                } else {
-                                    binding
-                                }
-                            } else {
-                                self.cover_expression_to_binding_element(value)
-                            };
-                            list.push(BindingProperty::new(span, key, value, shorthand, self));
+                        ObjectPropertyKind::KeyValueProperty(property) => {
+                            let ObjectKeyValueProperty { span, key, value, .. } = property.unbox();
+                            let value = self.cover_expression_to_binding_element(value);
+                            list.push(BindingProperty::new(span, key, value, false, self));
                         }
+                        ObjectPropertyKind::ShorthandProperty(property) => {
+                            // `{ a }`, or the `CoverInitializedName` `{ a = b }`.
+                            let ObjectShorthandProperty { span, name, value, .. } =
+                                property.unbox();
+                            let key = PropertyKey::StaticIdentifier(IdentifierName::boxed(
+                                value.span, name, self,
+                            ));
+                            let binding = BindingPattern::new_binding_identifier(
+                                value.span, value.name, self,
+                            );
+                            let cover_initialized_name = &mut self.state.cover_initialized_name;
+                            let value = if cover_initialized_name.is_empty() {
+                                binding
+                            } else if let Some(cover) = cover_initialized_name.remove(&span.start) {
+                                BindingPattern::new_assignment_pattern(
+                                    span,
+                                    binding,
+                                    cover.initializer,
+                                    self,
+                                )
+                            } else {
+                                binding
+                            };
+                            list.push(BindingProperty::new(span, key, value, true, self));
+                        }
+                        // The check rejects methods and accessors.
+                        ObjectPropertyKind::MethodProperty(_) => {}
                         ObjectPropertyKind::SpreadProperty(spread) => {
                             rest = Some(self.cover_spread_to_binding_rest(spread, span.start));
                         }

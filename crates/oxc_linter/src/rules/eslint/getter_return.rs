@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        ChainElement, Expression, MemberExpression, MethodDefinitionKind, ObjectProperty,
-        PropertyKind, match_member_expression,
+        ChainElement, Expression, MemberExpression, MethodDefinitionKind, ObjectKeyValueProperty,
+        ObjectMethodKind, ObjectMethodProperty, match_member_expression,
     },
 };
 use oxc_cfg::{
@@ -158,10 +158,14 @@ impl GetterReturn {
                     return true;
                 }
             }
-            AstKind::ObjectProperty(ObjectProperty { kind, key: prop_key, .. }) => {
-                if matches!(kind, PropertyKind::Get) {
-                    return true;
-                }
+            AstKind::ObjectMethodProperty(ObjectMethodProperty {
+                kind: ObjectMethodKind::Get,
+                ..
+            }) => {
+                return true;
+            }
+            AstKind::ObjectKeyValueProperty(ObjectKeyValueProperty { key: prop_key, .. })
+            | AstKind::ObjectMethodProperty(ObjectMethodProperty { key: prop_key, .. }) => {
                 if prop_key.name().is_some_and(|key| key != "get") {
                     return false;
                 }

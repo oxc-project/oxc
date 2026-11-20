@@ -206,19 +206,7 @@ fn collect_hash_from_object_expr<'a>(
     if obj.properties.is_empty() {
         return None;
     }
-    let key_hash = obj
-        .properties
-        .iter()
-        .filter_map(|item| {
-            if let ObjectPropertyKind::ObjectProperty(obj_prop) = item
-                && let Some(key) = obj_prop.key.static_name()
-            {
-                Some(key)
-            } else {
-                None
-            }
-        })
-        .collect();
+    let key_hash = obj.properties.iter().filter_map(ObjectPropertyKind::static_name).collect();
     Some(key_hash)
 }
 
@@ -322,7 +310,7 @@ fn handle_type_argument<'a>(
 }
 
 fn handle_object_expression<'a>(ctx: &LintContext<'a>, obj: &ObjectExpression<'a>) {
-    let Some(prop_obj) = obj.find_property("props") else {
+    let Some(ObjectPropertyKind::KeyValueProperty(prop_obj)) = obj.find_property("props") else {
         return;
     };
     let Expression::ObjectExpression(prop_obj_expr) = prop_obj.value.get_inner_expression() else {
@@ -337,7 +325,7 @@ fn handle_prop_object<'a>(
     key_hash: Option<&FxHashSet<StaticPropertyName<'a>>>,
 ) {
     obj.properties.iter().for_each(|v| {
-        if let ObjectPropertyKind::ObjectProperty(inner_prop) = v
+        if let ObjectPropertyKind::KeyValueProperty(inner_prop) = v
             && let Some(inner_key) = inner_prop.key.static_name()
             && let Expression::ObjectExpression(inner_prop_value_expr) =
                 inner_prop.value.get_inner_expression()
@@ -352,13 +340,14 @@ fn handle_prop_object<'a>(
             }
 
             for property in &inner_prop_value_expr.properties {
-                if let ObjectPropertyKind::ObjectProperty(item_obj) = property
-                    && let Some(item_key) = item_obj.key.static_name()
-                {
+                if let Some(item_key) = property.static_name() {
                     if item_key == "default" {
                         has_default_key = true;
                     }
                     if item_key == "required" {
+                        let ObjectPropertyKind::KeyValueProperty(item_obj) = property else {
+                            continue;
+                        };
                         let Expression::BooleanLiteral(inner_value) = &item_obj.value else {
                             continue;
                         };

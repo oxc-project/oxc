@@ -293,9 +293,6 @@ fn does_object_var_have_prop_name(
     };
 
     obj_expr.properties.iter().any(|prop| match prop {
-        ObjectPropertyKind::ObjectProperty(obj_prop) => {
-            obj_prop.key.is_specific_static_name(prop_name)
-        }
         ObjectPropertyKind::SpreadProperty(spread_prop) => {
             let Some(ident) = spread_prop.argument.get_identifier_reference() else {
                 return false;
@@ -310,6 +307,7 @@ fn does_object_var_have_prop_name(
 
             does_object_var_have_prop_name(ctx, symbol, ident.name, prop_name)
         }
+        _ => prop.is_specific_static_name(prop_name),
     })
 }
 
@@ -329,10 +327,5 @@ fn is_object_with_prop_name(
     obj_props: &ArenaVec<'_, ObjectPropertyKind<'_>>,
     prop_name: &str,
 ) -> bool {
-    obj_props.iter().any(|prop| {
-        let ObjectPropertyKind::ObjectProperty(obj_prop) = prop else {
-            return false;
-        };
-        obj_prop.key.is_specific_static_name(prop_name)
-    })
+    obj_props.iter().any(|prop| prop.is_specific_static_name(prop_name))
 }

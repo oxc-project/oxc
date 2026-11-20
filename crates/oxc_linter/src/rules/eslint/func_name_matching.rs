@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, AssignmentTarget, CallExpression, Expression, Function, ObjectProperty,
+        Argument, AssignmentTarget, CallExpression, Expression, Function, ObjectKeyValueProperty,
         PropertyDefinition, PropertyKey,
     },
 };
@@ -237,7 +237,7 @@ impl Rule for FuncNameMatching {
                     ctx,
                 );
             }
-            AstKind::ObjectProperty(property) => {
+            AstKind::ObjectKeyValueProperty(property) => {
                 self.check_object_property(property, node, ctx);
             }
             AstKind::PropertyDefinition(property_def) => {
@@ -276,7 +276,7 @@ impl FuncNameMatching {
 
     fn check_object_property<'a>(
         &self,
-        property: &ObjectProperty<'a>,
+        property: &ObjectKeyValueProperty<'a>,
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
     ) {
@@ -374,7 +374,7 @@ fn property_descriptor_name<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> De
                     DescriptorName::Name(StaticPropertyName::from(name))
                 })
         }
-        AstKind::ObjectProperty(descriptor_property) => {
+        AstKind::ObjectKeyValueProperty(descriptor_property) => {
             if !property_key_is_identifier(&descriptor_property.key) {
                 return DescriptorName::Unresolved;
             }

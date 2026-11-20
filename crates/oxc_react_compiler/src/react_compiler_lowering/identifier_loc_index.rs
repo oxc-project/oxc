@@ -163,12 +163,20 @@ impl<'a> Visit<'a> for IdentifierLocVisitor {
         self.visit_expression(&it.object);
     }
 
-    fn visit_object_property(&mut self, it: &ObjectProperty<'a>) {
+    fn visit_object_key_value_property(&mut self, it: &ObjectKeyValueProperty<'a>) {
         // Original walked the key only when computed.
         if it.key.is_computed() {
             self.visit_property_key(&it.key);
         }
         self.visit_expression(&it.value);
+    }
+
+    fn visit_object_method_property(&mut self, it: &ObjectMethodProperty<'a>) {
+        // Original walked the key only when computed.
+        if it.key.is_computed() {
+            self.visit_property_key(&it.key);
+        }
+        self.visit_function(&it.value, oxc_syntax::scope::ScopeFlags::Function);
     }
 
     fn visit_jsx_element(&mut self, it: &JSXElement<'a>) {

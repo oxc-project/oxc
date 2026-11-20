@@ -136,13 +136,15 @@ impl Rule for VoidDomElementsNoChildren {
 
                 let has_children_prop_or_danger =
                     obj_expr.properties.iter().any(|property| match property {
-                        ObjectPropertyKind::ObjectProperty(prop) => match &prop.key {
-                            PropertyKey::StaticIdentifier(iden) => {
+                        ObjectPropertyKind::ShorthandProperty(prop) => {
+                            prop.name == "children" || prop.name == "dangerouslySetInnerHTML"
+                        }
+                        _ => match property.key() {
+                            Some(PropertyKey::StaticIdentifier(iden)) => {
                                 iden.name == "children" || iden.name == "dangerouslySetInnerHTML"
                             }
                             _ => false,
                         },
-                        ObjectPropertyKind::SpreadProperty(_) => false,
                     });
 
                 if call_expr.arguments.get(2).is_some() || has_children_prop_or_danger {

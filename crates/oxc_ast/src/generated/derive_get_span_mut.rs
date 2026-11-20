@@ -180,13 +180,29 @@ impl GetSpanMut for ObjectExpression<'_> {
 impl GetSpanMut for ObjectPropertyKind<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::ObjectProperty(it) => GetSpanMut::span_mut(&mut **it),
+            Self::KeyValueProperty(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ShorthandProperty(it) => GetSpanMut::span_mut(&mut **it),
+            Self::MethodProperty(it) => GetSpanMut::span_mut(&mut **it),
             Self::SpreadProperty(it) => GetSpanMut::span_mut(&mut **it),
         }
     }
 }
 
-impl GetSpanMut for ObjectProperty<'_> {
+impl GetSpanMut for ObjectKeyValueProperty<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for ObjectShorthandProperty<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for ObjectMethodProperty<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span

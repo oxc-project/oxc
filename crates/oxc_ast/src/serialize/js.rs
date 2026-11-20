@@ -895,7 +895,8 @@ macro_rules! impl_property_key_computed {
 }
 
 impl_property_key_computed!(
-    ObjectProperty,
+    ObjectKeyValueProperty,
+    ObjectMethodProperty,
     BindingProperty,
     MethodDefinition,
     PropertyDefinition,
@@ -903,6 +904,60 @@ impl_property_key_computed!(
     TSPropertySignature,
     TSMethodSignature,
 );
+
+/// Serializer for the `key` field of [`ObjectShorthandProperty`].
+///
+/// ESTree represents the property name as an `Identifier` with the same span as `value`.
+#[ast_meta]
+#[estree(
+    ts_type = "IdentifierName",
+    raw_deser = "
+        let shorthandKeyStart, shorthandKeyEnd;
+        const shorthandKey = {
+            type: 'Identifier',
+            ...(IS_TS && { decorators: [] }),
+            name: DESER[Ident](POS_OFFSET.name),
+            ...(IS_TS && {
+                optional: false,
+                typeAnnotation: null,
+            }),
+            start: shorthandKeyStart = DESER[i32](POS_OFFSET.value.span.start),
+            end: shorthandKeyEnd = DESER[i32](POS_OFFSET.value.span.end),
+            ...(RANGE && { range: [shorthandKeyStart, shorthandKeyEnd] }),
+            ...(PARENT && { parent }),
+        };
+        shorthandKey
+    "
+)]
+pub struct ObjectShorthandPropertyKey<'a, 'b>(pub &'b ObjectShorthandProperty<'a>);
+
+impl ESTree for ObjectShorthandPropertyKey<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let property = self.0;
+        IdentifierName {
+            node_id: Cell::new(NodeId::DUMMY),
+            span: property.value.span,
+            name: property.name,
+        }
+        .serialize(serializer);
+    }
+}
+
+/// Serializer for the derived `method` field of [`ObjectMethodProperty`].
+#[ast_meta]
+#[estree(
+    ts_type = "boolean",
+    raw_deser = "uint8[POS_OFFSET.kind] === 0",
+    raw_deser_inline,
+    raw_deser_lazy
+)]
+pub struct ObjectMethodPropertyMethod<'a, 'b>(pub &'b ObjectMethodProperty<'a>);
+
+impl ESTree for ObjectMethodPropertyMethod<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        (self.0.kind == ObjectMethodKind::Method).serialize(serializer);
+    }
+}
 
 /// Serializer for the derived `computed` field of [`AssignmentTargetPropertyProperty`].
 ///

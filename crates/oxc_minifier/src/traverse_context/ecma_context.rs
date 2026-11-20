@@ -510,6 +510,18 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         self.state.record_ast_change();
     }
 
+    /// Replace an object-property slot. Marks the pass as having mutated the AST.
+    #[inline]
+    pub fn replace_object_property_kind(
+        &mut self,
+        slot: &mut ObjectPropertyKind<'a>,
+        new: ObjectPropertyKind<'a>,
+    ) {
+        self.dropped_subtree_collector().visit_object_property_kind(slot);
+        *slot = new;
+        self.state.record_ast_change();
+    }
+
     /// Replace a property-key slot. Marks the pass as having mutated the AST.
     #[inline]
     pub fn replace_property_key(&mut self, slot: &mut PropertyKey<'a>, new: PropertyKey<'a>) {

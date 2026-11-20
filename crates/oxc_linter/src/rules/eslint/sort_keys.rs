@@ -2,7 +2,7 @@ use std::{borrow::Cow, cmp::Ordering, iter::Peekable};
 
 use oxc_ast::{
     AstKind, StaticPropertyName,
-    ast::{Expression, ObjectExpression, ObjectProperty, ObjectPropertyKind},
+    ast::{Expression, ObjectExpression, ObjectPropertyKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -156,9 +156,9 @@ fn is_object_sorted(
             ObjectPropertyKind::SpreadProperty(_) => {
                 prev_key = None;
             }
-            ObjectPropertyKind::ObjectProperty(obj) => {
-                let Some(key) = obj.key.static_name().or_else(|| {
-                    match obj.key.as_expression()?.without_parentheses() {
+            _ => {
+                let Some(key) = prop.static_name().or_else(|| {
+                    match prop.key()?.as_expression()?.without_parentheses() {
                         Expression::Identifier(ident) => Some(StaticPropertyName::from(ident.name)),
                         _ => None,
                     }
@@ -237,8 +237,8 @@ fn count_static_groups(
             ObjectPropertyKind::SpreadProperty(_) => {
                 in_static_group = false;
             }
-            ObjectPropertyKind::ObjectProperty(obj) => {
-                if obj.key.static_name().is_none() {
+            _ => {
+                if prop.static_name().is_none() {
                     continue;
                 }
                 if !in_static_group {
@@ -363,7 +363,7 @@ fn collect_fixable_properties<'a>(
             .then(|| Span::new(lifted[i].end, lifted[i + 1].start));
         match prop {
             ObjectPropertyKind::SpreadProperty(_) => {
-                if let Some(ObjectPropertyKind::ObjectProperty(_)) = object.properties.get(i + 1)
+                if object.properties.get(i + 1).is_some_and(|next| !next.is_spread())
                     && let Some(gap) = gap_after
                     && ctx.has_comments_between(gap)
                 {
@@ -375,19 +375,19 @@ fn collect_fixable_properties<'a>(
                     SpreadPos::CanEnd => spread_pos = SpreadPos::End,
                 }
             }
-            ObjectPropertyKind::ObjectProperty(obj) => {
+            _ => {
                 match spread_pos {
                     SpreadPos::Start => spread_pos = SpreadPos::CanEnd,
                     SpreadPos::CanEnd => {}
                     SpreadPos::End => return None,
                 }
 
-                let key = obj.key.static_name()?;
+                let key = prop.static_name()?;
 
                 props.push(FixableProperty {
                     key,
                     span: lifted[i],
-                    text: build_property_text(obj, lifted[i], ctx, sort_order, options),
+                    text: build_property_text(prop, lifted[i], ctx, sort_order, options),
                     consumed_trailing_comma: lifted[i].end > prop.span().end,
                 });
 
@@ -451,12 +451,15 @@ fn sorted_property_indices(
 }
 
 fn build_property_text<'a>(
-    property: &'a ObjectProperty<'a>,
+    property: &'a ObjectPropertyKind<'a>,
     span: Span,
     ctx: &LintContext<'a>,
     sort_order: &SortOrder,
     options: &SortKeysOptions,
 ) -> Cow<'a, str> {
+    let ObjectPropertyKind::KeyValueProperty(property) = property else {
+        return Cow::Borrowed(ctx.source_range(span));
+    };
     let Expression::ObjectExpression(object) = &property.value else {
         return Cow::Borrowed(ctx.source_range(span));
     };

@@ -3,10 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
     AstKind, StaticPropertyName,
-    ast::{
-        ArrayExpression, CallExpression, Expression, ObjectExpression, ObjectPropertyKind,
-        TSSignature,
-    },
+    ast::{ArrayExpression, CallExpression, Expression, ObjectExpression, TSSignature},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -108,7 +105,7 @@ impl Rule for NoReservedProps {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::CallExpression(call) => self.check_define_props(call, ctx),
-            AstKind::ObjectProperty(prop) => {
+            AstKind::ObjectKeyValueProperty(prop) => {
                 if !prop.key.is_specific_static_name("props") {
                     return;
                 }
@@ -165,11 +162,15 @@ impl NoReservedProps {
     /// `props: { ref: String }` — object declaration.
     fn check_object_props<'a>(&self, obj: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
         for prop_kind in &obj.properties {
-            let ObjectPropertyKind::ObjectProperty(p) = prop_kind else { continue };
-            let Some(name) = p.key.static_name().and_then(StaticPropertyName::into_cow_str) else {
+            let Some(name) = prop_kind.static_name().and_then(StaticPropertyName::into_cow_str)
+            else {
                 continue;
             };
-            self.report(&name, p.key.span(), ctx);
+            self.report(
+                &name,
+                prop_kind.key().map_or_else(|| prop_kind.span(), GetSpan::span),
+                ctx,
+            );
         }
     }
 

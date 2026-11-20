@@ -85,21 +85,15 @@ pub fn maybe_object_with_to_primitive_related_properties_overridden(
     obj: &ObjectExpression<'_>,
 ) -> bool {
     obj.properties.iter().any(|prop| match prop {
-        ObjectPropertyKind::ObjectProperty(prop) => match &prop.key {
-            PropertyKey::StaticIdentifier(id) => {
-                matches!(id.name.as_str(), "toString" | "valueOf")
-            }
-            PropertyKey::PrivateIdentifier(_)
-            | PropertyKey::StaticNumericLiteral(_)
-            | PropertyKey::StaticBigIntLiteral(_) => false,
-            PropertyKey::StaticStringLiteral(str) | PropertyKey::StringLiteral(str) => {
-                str.value == "toString" || str.value == "valueOf"
-            }
-            PropertyKey::TemplateLiteral(temp) => {
-                temp.single_quasi().is_some_and(|val| val == "toString" || val == "valueOf")
-            }
-            _ => true,
-        },
+        ObjectPropertyKind::KeyValueProperty(prop) => {
+            may_be_to_primitive_related_property_key(&prop.key)
+        }
+        ObjectPropertyKind::MethodProperty(prop) => {
+            may_be_to_primitive_related_property_key(&prop.key)
+        }
+        ObjectPropertyKind::ShorthandProperty(prop) => {
+            matches!(prop.name.as_str(), "toString" | "valueOf")
+        }
         ObjectPropertyKind::SpreadProperty(e) => match &e.argument {
             Expression::ObjectExpression(obj) => {
                 maybe_object_with_to_primitive_related_properties_overridden(obj)
@@ -110,4 +104,20 @@ pub fn maybe_object_with_to_primitive_related_properties_overridden(
             _ => true,
         },
     })
+}
+
+fn may_be_to_primitive_related_property_key(key: &PropertyKey<'_>) -> bool {
+    match key {
+        PropertyKey::StaticIdentifier(id) => matches!(id.name.as_str(), "toString" | "valueOf"),
+        PropertyKey::PrivateIdentifier(_)
+        | PropertyKey::StaticNumericLiteral(_)
+        | PropertyKey::StaticBigIntLiteral(_) => false,
+        PropertyKey::StaticStringLiteral(str) | PropertyKey::StringLiteral(str) => {
+            str.value == "toString" || str.value == "valueOf"
+        }
+        PropertyKey::TemplateLiteral(temp) => {
+            temp.single_quasi().is_some_and(|val| val == "toString" || val == "valueOf")
+        }
+        _ => true,
+    }
 }

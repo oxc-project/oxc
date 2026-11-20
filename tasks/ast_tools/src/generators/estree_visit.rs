@@ -343,7 +343,9 @@ fn generate(codegen: &Codegen) -> Codes {
                 "TSIndexSignatureName",
             ]),
             "Property" => Some(&[
-                "ObjectProperty",
+                "ObjectKeyValueProperty",
+                "ObjectShorthandProperty",
+                "ObjectMethodProperty",
                 "AssignmentTargetProperty",
                 "AssignmentTargetPropertyProperty",
                 "BindingProperty",

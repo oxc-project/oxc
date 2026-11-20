@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         Expression, JSXAttributeItem, JSXAttributeValue, JSXElementName, JSXExpression,
-        JSXOpeningElement, ObjectProperty, ObjectPropertyKind,
+        JSXOpeningElement, ObjectKeyValueProperty, ObjectPropertyKind,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -134,7 +134,7 @@ const SUPPORTED_HTML_CONTENT_URLS: [&str; 2] =
 
 fn get_dangerously_set_inner_html_prop_value<'a>(
     jsx_opening_element: &'a JSXOpeningElement<'a>,
-) -> Option<&'a ObjectProperty<'a>> {
+) -> Option<&'a ObjectKeyValueProperty<'a>> {
     let Some(JSXAttributeItem::Attribute(dangerously_set_inner_html_prop)) =
         has_jsx_prop_ignore_case(jsx_opening_element, "dangerouslysetinnerhtml")
     else {
@@ -149,15 +149,12 @@ fn get_dangerously_set_inner_html_prop_value<'a>(
         return None;
     };
 
-    object_expr.properties.iter().find_map(|prop| {
-        if let ObjectPropertyKind::ObjectProperty(html_prop) = prop
-            && html_prop.key.is_specific_id("__html")
-        {
-            Some(&**html_prop)
-        } else {
-            None
-        }
-    })
+    let html_prop = object_expr.properties.iter().find(|prop| match prop {
+        ObjectPropertyKind::ShorthandProperty(prop) => prop.name == "__html",
+        _ => prop.key().is_some_and(|key| key.is_specific_id("__html")),
+    })?;
+    let ObjectPropertyKind::KeyValueProperty(html_prop) = html_prop else { return None };
+    Some(html_prop)
 }
 
 #[test]

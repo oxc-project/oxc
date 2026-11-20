@@ -32,7 +32,11 @@ impl<'a> ReplaceWith<'a> for ObjectExpression<'a> {}
 
 impl<'a> ReplaceWith<'a> for ObjectPropertyKind<'a> {}
 
-impl<'a> ReplaceWith<'a> for ObjectProperty<'a> {}
+impl<'a> ReplaceWith<'a> for ObjectKeyValueProperty<'a> {}
+
+impl<'a> ReplaceWith<'a> for ObjectShorthandProperty<'a> {}
+
+impl<'a> ReplaceWith<'a> for ObjectMethodProperty<'a> {}
 
 impl<'a> ReplaceWith<'a> for PropertyKey<'a> {}
 

@@ -103,13 +103,12 @@ impl<'s> Suite<'s> {
             .properties
             .iter()
             .map(|property| {
-                let ObjectPropertyKind::ObjectProperty(property) = property else {
-                    panic!("esbuild tests cannot contain spread properties");
+                let ObjectPropertyKind::KeyValueProperty(property) = property else {
+                    panic!("esbuild tests must be key-value properties");
                 };
                 let PropertyKey::StaticStringLiteral(key) = &property.key else {
                     panic!("esbuild test names must be string literals");
                 };
-                assert!(!property.method);
                 assert!(
                     matches!(&property.value, Expression::ArrowFunctionExpression(_)),
                     "esbuild test must be an arrow callback"

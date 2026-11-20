@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ObjectKeyValueProperty, ObjectMethodProperty},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -109,12 +112,15 @@ impl Rule for NoWillUpdateSetState {
                 }
 
                 let is_component_will_update = match ancestor.kind() {
-                    AstKind::ObjectProperty(prop) => prop.key.static_name().is_some_and(|key| {
-                        if key == "UNSAFE_componentWillUpdate" && !check_unsafe_prefix {
-                            return false;
-                        }
-                        key == "componentWillUpdate" || key == "UNSAFE_componentWillUpdate"
-                    }),
+                    AstKind::ObjectKeyValueProperty(ObjectKeyValueProperty { key, .. })
+                    | AstKind::ObjectMethodProperty(ObjectMethodProperty { key, .. }) => {
+                        key.static_name().is_some_and(|key| {
+                            if key == "UNSAFE_componentWillUpdate" && !check_unsafe_prefix {
+                                return false;
+                            }
+                            key == "componentWillUpdate" || key == "UNSAFE_componentWillUpdate"
+                        })
+                    }
                     AstKind::MethodDefinition(method) => {
                         method.key.static_name().is_some_and(|name| {
                             if name == "UNSAFE_componentWillUpdate" && !check_unsafe_prefix {

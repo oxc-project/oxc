@@ -5,8 +5,8 @@ use serde::{Deserialize, Serialize};
 use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
-        BindingPattern, CallExpression, Expression, ObjectExpression, ObjectPropertyKind,
-        PropertyKey, PropertyKind, Statement, TSSignature,
+        BindingPattern, CallExpression, Expression, ObjectExpression, ObjectMethodKind,
+        ObjectPropertyKind, PropertyKey, Statement, TSSignature,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -118,12 +118,21 @@ impl NoDupeKeys {
         let mut seen: FxHashSet<StaticPropertyName<'a>> = FxHashSet::default();
         // Walk all properties in source order so duplicate group names are both visited
         for prop_kind in &obj.properties {
-            let ObjectPropertyKind::ObjectProperty(prop) = prop_kind else { continue };
-            let Some(group_name) = static_key_name(&prop.key) else { continue };
+            let Some(group_name) = prop_kind.key().and_then(static_key_name) else { continue };
             if !group_name.as_str().is_some_and(|name| groups.contains(name)) {
                 continue;
             }
-            collect_group_keys(&prop.value, &mut seen, ctx);
+            match prop_kind {
+                ObjectPropertyKind::KeyValueProperty(prop) => {
+                    collect_group_keys(&prop.value, &mut seen, ctx);
+                }
+                ObjectPropertyKind::MethodProperty(prop) => {
+                    if let Some(body) = &prop.value.body {
+                        collect_returned_object_keys(&body.statements, &mut seen, ctx);
+                    }
+                }
+                _ => {}
+            }
         }
     }
 }
@@ -274,23 +283,25 @@ fn collect_object_keys<'a>(
     let getter_names: FxHashSet<StaticPropertyName<'a>> = obj
         .properties
         .iter()
-        .filter_map(|p| {
-            let prop = p.as_property()?;
-            if prop.kind == PropertyKind::Get { static_key_name(&prop.key) } else { None }
+        .filter_map(|p| match p {
+            ObjectPropertyKind::MethodProperty(prop) if prop.kind == ObjectMethodKind::Get => {
+                static_key_name(&prop.key)
+            }
+            _ => None,
         })
         .collect();
 
     let mut used_getters: FxHashSet<StaticPropertyName<'a>> = FxHashSet::default();
 
     for prop_kind in &obj.properties {
-        let ObjectPropertyKind::ObjectProperty(prop) = prop_kind else { continue };
-        let Some(name) = static_key_name(&prop.key) else { continue };
+        let Some(name) = property_name(prop_kind) else { continue };
         // upstream skips empty names (`if (name)`)
         if name == "" {
             continue;
         }
 
-        if prop.kind == PropertyKind::Set
+        if let ObjectPropertyKind::MethodProperty(prop) = prop_kind
+            && prop.kind == ObjectMethodKind::Set
             && getter_names.contains(&name)
             && !used_getters.contains(&name)
         {
@@ -298,7 +309,8 @@ fn collect_object_keys<'a>(
             continue;
         }
 
-        report_or_add(name, prop.key.span(), seen, ctx);
+        let span = prop_kind.key().map_or_else(|| prop_kind.span(), GetSpan::span);
+        report_or_add(name, span, seen, ctx);
     }
 }
 
@@ -338,6 +350,13 @@ fn literal_element_name<'a>(expr: &Expression<'a>) -> Option<StaticPropertyName<
 /// a computed `[true]` key is named "true", and a computed `[null]` key has no name
 /// (upstream's `getStringLiteralValue` bails on `value == null`; a plain `null` key
 /// is an identifier, not this variant).
+fn property_name<'a>(prop: &ObjectPropertyKind<'a>) -> Option<StaticPropertyName<'a>> {
+    match prop {
+        ObjectPropertyKind::ShorthandProperty(prop) => Some(StaticPropertyName::from(prop.name)),
+        _ => static_key_name(prop.key()?),
+    }
+}
+
 fn static_key_name<'a>(key: &PropertyKey<'a>) -> Option<StaticPropertyName<'a>> {
     match key {
         PropertyKey::StaticNumericLiteral(n) | PropertyKey::NumericLiteral(n) => {
@@ -438,9 +457,7 @@ fn collect_prop_names_from_call<'a>(
         match arg.without_parentheses() {
             Expression::ObjectExpression(obj) => {
                 for prop_kind in &obj.properties {
-                    if let ObjectPropertyKind::ObjectProperty(p) = prop_kind
-                        && let Some(name) = static_key_name(&p.key)
-                    {
+                    if let Some(name) = property_name(prop_kind) {
                         props.push(name);
                     }
                 }

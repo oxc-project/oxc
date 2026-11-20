@@ -1,6 +1,5 @@
 use oxc_ast::ast::{
-    ClassElement, MethodDefinition, ObjectProperty, ObjectPropertyKind, PropertyDefinition,
-    PropertyKey,
+    ClassElement, MethodDefinition, ObjectPropertyKind, PropertyDefinition, PropertyKey,
 };
 use oxc_span::Span;
 
@@ -11,19 +10,17 @@ pub trait PropName {
 
 impl PropName for ObjectPropertyKind<'_> {
     fn prop_name(&self) -> Option<(&str, Span)> {
-        match self {
-            ObjectPropertyKind::ObjectProperty(prop) => prop.prop_name(),
-            ObjectPropertyKind::SpreadProperty(_) => None,
-        }
-    }
-}
-
-impl PropName for ObjectProperty<'_> {
-    fn prop_name(&self) -> Option<(&str, Span)> {
-        if self.shorthand || self.key.is_computed() {
+        let key = match self {
+            ObjectPropertyKind::KeyValueProperty(prop) => &prop.key,
+            ObjectPropertyKind::MethodProperty(prop) => &prop.key,
+            ObjectPropertyKind::ShorthandProperty(_) | ObjectPropertyKind::SpreadProperty(_) => {
+                return None;
+            }
+        };
+        if key.is_computed() {
             return None;
         }
-        self.key.prop_name()
+        key.prop_name()
     }
 }
 

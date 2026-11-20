@@ -33,7 +33,7 @@ use super::string::{FormatLiteralStringToken, StringLiteralParentKind};
 pub enum AssignmentLike<'a, 'b> {
     VariableDeclarator(&'b AstNode<'b, 'a, VariableDeclarator<'a>>),
     AssignmentExpression(&'b AstNode<'b, 'a, AssignmentExpression<'a>>),
-    ObjectProperty(&'b AstNode<'b, 'a, ObjectProperty<'a>>),
+    ObjectProperty(&'b AstNode<'b, 'a, ObjectKeyValueProperty<'a>>),
     BindingProperty(&'b AstNode<'b, 'a, BindingProperty<'a>>),
     AssignmentTargetPropertyProperty(&'b AstNode<'b, 'a, AssignmentTargetPropertyProperty<'a>>),
     PropertyDefinition(&'b AstNode<'b, 'a, PropertyDefinition<'a>>),
@@ -202,12 +202,6 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
                 if property.key.is_computed() {
                     write!(f, ["[", property.key(), "]"]);
                     f.source_text().text_for(&property.key).width() + 2 < text_width_for_break
-                } else if property.shorthand {
-                    let PropertyKey::StaticIdentifier(ident) = &property.key else {
-                        unreachable!("Expected static identifier for shorthand property");
-                    };
-                    write!(f, text(ident.name.as_str()));
-                    false
                 } else {
                     let width = write_member_name(&property.key(), f);
 
@@ -341,8 +335,7 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
                 let operator = assignment.operator.as_str();
                 write!(f, [space(), operator]);
             }
-            Self::ObjectProperty(property) => {
-                debug_assert!(!property.shorthand);
+            Self::ObjectProperty(_) => {
                 write!(f, [":"]);
             }
             Self::BindingProperty(property) => {
@@ -588,6 +581,7 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
     fn has_only_left_hand_side(&self) -> bool {
         match self {
             Self::AssignmentExpression(_)
+            | Self::ObjectProperty(_)
             | Self::AssignmentTargetPropertyProperty(_)
             | Self::TSTypeAliasDeclaration(_) => false,
             Self::VariableDeclarator(declarator) => declarator.init.is_none(),
@@ -603,7 +597,6 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
                     && (property.value.is_binding_identifier()
                         || property.value.is_assignment_pattern())
             }
-            Self::ObjectProperty(property) => property.shorthand,
         }
     }
 

@@ -83,12 +83,11 @@ pub(super) fn is_template_expression(expression: &Expression<'_>) -> bool {
                 ObjectPropertyKind::SpreadProperty(spread) => {
                     is_template_expression(&spread.argument)
                 }
-                ObjectPropertyKind::ObjectProperty(property) => {
-                    property.kind == PropertyKind::Init
-                        && !property.method
-                        && !property.key.is_computed()
-                        && is_template_expression(&property.value)
+                ObjectPropertyKind::KeyValueProperty(property) => {
+                    !property.key.is_computed() && is_template_expression(&property.value)
                 }
+                ObjectPropertyKind::ShorthandProperty(_) => true,
+                ObjectPropertyKind::MethodProperty(_) => false,
             })
         }
         Expression::ArrowFunctionExpression(arrow) => {

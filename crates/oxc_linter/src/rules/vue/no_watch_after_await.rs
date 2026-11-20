@@ -4,7 +4,7 @@ use oxc_ast::{
     AstKind, FunctionKind,
     ast::{
         ArrowFunctionExpression, AwaitExpression, ChainElement, ExportDefaultDeclarationKind,
-        Expression, ExpressionStatement, Function, ObjectExpression,
+        Expression, ExpressionStatement, Function, ObjectExpression, ObjectPropertyKind,
     },
 };
 use oxc_ast_visit::{VisitJs, walk_js};
@@ -109,9 +109,13 @@ fn check_setup_in_object<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContext<
         return;
     };
 
-    let function = match &setup_prop.value {
-        Expression::FunctionExpression(func) => FunctionKind::Function(func),
-        Expression::ArrowFunctionExpression(arrow) => FunctionKind::Arrow(arrow),
+    let function = match setup_prop {
+        ObjectPropertyKind::KeyValueProperty(prop) => match &prop.value {
+            Expression::FunctionExpression(func) => FunctionKind::Function(func),
+            Expression::ArrowFunctionExpression(arrow) => FunctionKind::Arrow(arrow),
+            _ => return,
+        },
+        ObjectPropertyKind::MethodProperty(prop) => FunctionKind::Function(&prop.value),
         _ => return,
     };
 

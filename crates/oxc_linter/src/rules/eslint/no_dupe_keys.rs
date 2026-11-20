@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use oxc_ast::{
     AstKind, StaticPropertyName,
-    ast::{ObjectProperty, ObjectPropertyKind, PropertyKey, PropertyKind},
+    ast::{ObjectMethodKind, ObjectPropertyKind, PropertyKey},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -84,7 +84,7 @@ impl Rule for NoDupeKeys {
             return;
         }
         let mut inline: SmallVec<
-            [(StaticPropertyName<'_>, (PropertyKind, Span)); INLINE_CAPACITY],
+            [(StaticPropertyName<'_>, (Option<ObjectMethodKind>, Span)); INLINE_CAPACITY],
         > = SmallVec::new();
         // Bound linear searches to small objects; retain hashing for larger ones.
         let mut map = FxHashMap::with_capacity_and_hasher(
@@ -92,16 +92,30 @@ impl Rule for NoDupeKeys {
             FxBuildHasher,
         );
         for prop in &obj_expr.properties {
-            let ObjectPropertyKind::ObjectProperty(prop) = prop else {
-                continue;
+            // `None` for properties with ESTree `kind: "init"`, the accessor kind otherwise.
+            let (name, accessor_kind, key_span) = match prop {
+                ObjectPropertyKind::KeyValueProperty(prop) => {
+                    let Some(name) = prop.key.static_name() else {
+                        continue;
+                    };
+                    // `__proto__: a` sets the prototype, rather than defining a property.
+                    if name == "__proto__" && !prop.key.is_computed() {
+                        continue;
+                    }
+                    (name, None, prop.key.span())
+                }
+                ObjectPropertyKind::ShorthandProperty(prop) => {
+                    (StaticPropertyName::from(prop.name), None, prop.span)
+                }
+                ObjectPropertyKind::MethodProperty(prop) => {
+                    let Some(name) = prop.key.static_name() else {
+                        continue;
+                    };
+                    (name, Some(prop.kind).filter(|kind| kind.is_accessor()), prop.key.span())
+                }
+                ObjectPropertyKind::SpreadProperty(_) => continue,
             };
-            let Some(name) = prop.key.static_name() else {
-                continue;
-            };
-            if is_proto_setter_property(prop, &name) {
-                continue;
-            }
-            let value = (prop.kind, prop.key.span());
+            let value = (accessor_kind, key_span);
             let previous = if len <= INLINE_CAPACITY {
                 if let Some((_, previous)) = inline.iter_mut().find(|(key, _)| *key == name) {
                     Some(std::mem::replace(previous, value))
@@ -113,28 +127,26 @@ impl Rule for NoDupeKeys {
                 map.insert(name, value)
             };
             if let Some((prev_kind, prev_span)) = previous
-                && (prev_kind == PropertyKind::Init
-                    || prop.kind == PropertyKind::Init
-                    || prev_kind == prop.kind)
+                && (prev_kind.is_none() || accessor_kind.is_none() || prev_kind == accessor_kind)
             {
-                let name = prop_key_name(&prop.key, ctx);
-                ctx.diagnostic(no_dupe_keys_diagnostic(prev_span, prop.key.span(), &name));
+                let name = prop_key_name(prop, ctx);
+                ctx.diagnostic(no_dupe_keys_diagnostic(prev_span, key_span, &name));
             }
         }
     }
 }
 
-fn is_proto_setter_property(prop: &ObjectProperty<'_>, name: &StaticPropertyName<'_>) -> bool {
-    name == "__proto__"
-        && prop.kind == PropertyKind::Init
-        && !prop.key.is_computed()
-        && !prop.shorthand
-        && !prop.method
-}
-
 /// Display spelling for the diagnostic.
 /// Key identity uses `StaticPropertyName`; never compare these values.
-fn prop_key_name<'a>(key: &PropertyKey<'a>, ctx: &LintContext<'a>) -> Cow<'a, str> {
+fn prop_key_name<'a>(prop: &ObjectPropertyKind<'a>, ctx: &LintContext<'a>) -> Cow<'a, str> {
+    let key = match prop {
+        ObjectPropertyKind::KeyValueProperty(prop) => &prop.key,
+        ObjectPropertyKind::MethodProperty(prop) => &prop.key,
+        ObjectPropertyKind::ShorthandProperty(prop) => return Cow::Borrowed(prop.name.as_str()),
+        ObjectPropertyKind::SpreadProperty(spread) => {
+            return Cow::Borrowed(ctx.source_range(spread.span));
+        }
+    };
     match key {
         PropertyKey::Identifier(ident) => Cow::Borrowed(ident.name.as_str()),
         PropertyKey::StaticIdentifier(ident) => Cow::Borrowed(ident.name.as_str()),

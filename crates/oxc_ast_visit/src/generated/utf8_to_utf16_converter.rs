@@ -61,9 +61,22 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut it.span.end);
     }
 
-    fn visit_object_property(&mut self, it: &mut ObjectProperty<'a>) {
-        // Custom implementation
-        self.convert_object_property(it);
+    fn visit_object_key_value_property(&mut self, it: &mut ObjectKeyValueProperty<'a>) {
+        self.convert_offset(&mut it.span.start);
+        walk_mut::walk_object_key_value_property(self, it);
+        self.convert_offset(&mut it.span.end);
+    }
+
+    fn visit_object_shorthand_property(&mut self, it: &mut ObjectShorthandProperty<'a>) {
+        self.convert_offset(&mut it.span.start);
+        walk_mut::walk_object_shorthand_property(self, it);
+        self.convert_offset(&mut it.span.end);
+    }
+
+    fn visit_object_method_property(&mut self, it: &mut ObjectMethodProperty<'a>) {
+        self.convert_offset(&mut it.span.start);
+        walk_mut::walk_object_method_property(self, it);
+        self.convert_offset(&mut it.span.end);
     }
 
     fn visit_template_literal(&mut self, it: &mut TemplateLiteral<'a>) {

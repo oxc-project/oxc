@@ -15,7 +15,7 @@ use serde::Serialize;
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::{
     Argument, ArrayExpression, ArrayExpressionElement, AssignmentTarget, CallExpression,
-    Expression, ExpressionStatement, IdentifierName, ObjectExpression, ObjectProperty,
+    Expression, ExpressionStatement, IdentifierName, ObjectExpression, ObjectKeyValueProperty,
     ObjectPropertyKind, Program, PropertyKey, Statement, StaticMemberExpression, StringLiteral,
     TaggedTemplateExpression, TemplateLiteral,
 };
@@ -283,7 +283,7 @@ impl<'a> VisitJs<'a> for TestCase {
     fn visit_object_expression(&mut self, expr: &ObjectExpression<'a>) {
         for obj_prop in &expr.properties {
             match obj_prop {
-                ObjectPropertyKind::ObjectProperty(prop) => match &prop.key {
+                ObjectPropertyKind::KeyValueProperty(prop) => match &prop.key {
                     PropertyKey::StaticIdentifier(ident) if ident.name == "code" => {
                         self.code = match &prop.value {
                             Expression::StringLiteral(s) => s.value.as_str().map(str::to_owned),
@@ -364,7 +364,7 @@ impl<'a> VisitJs<'a> for TestCase {
                     }
                     _ => {}
                 },
-                ObjectPropertyKind::SpreadProperty(_) => {}
+                _ => {}
             }
         }
     }
@@ -575,7 +575,7 @@ impl<'a> VisitJs<'a> for State<'a> {
         self.visit_expression(&expr.callee);
     }
 
-    fn visit_object_property(&mut self, prop: &ObjectProperty<'a>) {
+    fn visit_object_key_value_property(&mut self, prop: &ObjectKeyValueProperty<'a>) {
         let PropertyKey::StaticIdentifier(ident) = &prop.key else { return };
         match ident.name.as_str() {
             "valid" => {
@@ -1060,7 +1060,8 @@ impl<'a> RuleConfig<'a> {
     ) -> FxHashMap<String, RuleConfigElement> {
         let mut properties: FxHashMap<String, RuleConfigElement> = FxHashMap::default();
         for object_property_kind in &object_expression.properties {
-            let ObjectPropertyKind::ObjectProperty(object_property) = &object_property_kind else {
+            let ObjectPropertyKind::KeyValueProperty(object_property) = &object_property_kind
+            else {
                 self.log_error(&format!(
                     "Cannot parse object property kind: {}",
                     object_property_kind.span().source_text(self.source_text)
@@ -1190,7 +1191,8 @@ impl<'a> VisitJs<'a> for RuleConfig<'a> {
             return;
         };
         for object_property_kind in &object_expression.properties {
-            let ObjectPropertyKind::ObjectProperty(object_property) = &object_property_kind else {
+            let ObjectPropertyKind::KeyValueProperty(object_property) = &object_property_kind
+            else {
                 continue;
             };
             let PropertyKey::StaticIdentifier(identifier) = &object_property.key else {
@@ -1203,7 +1205,7 @@ impl<'a> VisitJs<'a> for RuleConfig<'a> {
                 continue;
             };
             for object_property_kind in &object_expression.properties {
-                let ObjectPropertyKind::ObjectProperty(object_property) = &object_property_kind
+                let ObjectPropertyKind::KeyValueProperty(object_property) = &object_property_kind
                 else {
                     continue;
                 };
@@ -1253,7 +1255,8 @@ impl<'a> VisitJs<'a> for RuleConfig<'a> {
         let mut rule_config_element = None;
         let mut is_unique = false;
         for object_property_kind in &object_expression.properties {
-            let ObjectPropertyKind::ObjectProperty(object_property) = &object_property_kind else {
+            let ObjectPropertyKind::KeyValueProperty(object_property) = &object_property_kind
+            else {
                 self.log_error(&format!(
                     "Cannot parse object property kind: {}",
                     object_property_kind.span().source_text(self.source_text)

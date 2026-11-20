@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, MemberExpression, ObjectPropertyKind, PropertyKind},
+    ast::{Expression, MemberExpression, ObjectPropertyKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -192,8 +192,10 @@ impl Rule for PreferObjectFromEntries {
                 return;
             }
 
-            let ObjectPropertyKind::ObjectProperty(k) = &source.properties[0] else { return };
-            if k.kind != PropertyKind::Init || k.method {
+            if !matches!(
+                &source.properties[0],
+                ObjectPropertyKind::KeyValueProperty(_) | ObjectPropertyKind::ShorthandProperty(_)
+            ) {
                 return;
             }
 
@@ -217,11 +219,10 @@ impl Rule for PreferObjectFromEntries {
             if spread_symbol_id != accumulator_ident.symbol_id() {
                 return;
             }
-            let ObjectPropertyKind::ObjectProperty(object_prop) = &object_expr.properties[1] else {
-                return;
-            };
-
-            if object_prop.kind != PropertyKind::Init || object_prop.method {
+            if !matches!(
+                &object_expr.properties[1],
+                ObjectPropertyKind::KeyValueProperty(_) | ObjectPropertyKind::ShorthandProperty(_)
+            ) {
                 return;
             }
 
