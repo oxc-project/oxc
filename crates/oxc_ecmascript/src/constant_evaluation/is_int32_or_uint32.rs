@@ -7,7 +7,7 @@ use super::DetermineValueType;
 
 pub trait IsInt32OrUint32<'a> {
     /// Whether the value of the expression is a int32 or uint32.
-    /// If this method returns `true`, we know that the value cannot be NaN or Infinity.
+    /// If this method returns `true`, we know that the value cannot be NaN, Infinity, or -0.
     ///
     /// - true means it is int32 or uint32.
     /// - false means it is neither int32 nor uint32, or it is unknown.
@@ -37,7 +37,8 @@ impl<'a> IsInt32OrUint32<'a> for Expression<'a> {
 
 impl<'a> IsInt32OrUint32<'a> for NumericLiteral<'a> {
     fn is_int32_or_uint32(&self, _ctx: &impl GlobalContext<'a>) -> bool {
-        self.value.fract() == 0.0
+        self.value.to_bits() != (-0.0_f64).to_bits()
+            && self.value.fract() == 0.0
             && (self.value.to_i32().is_some() || self.value.to_u32().is_some())
     }
 }

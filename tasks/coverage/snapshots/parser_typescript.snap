@@ -9536,6 +9536,12 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: TypeScript transforms 'import ... =' to 'const ... ='
 
+  × Cannot use import statement outside a module
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationImportEqualsSyntax.ts:1:1]
+ 1 │ import a = b;
+   · ──────
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationInterfaceSyntax.ts:1:10]
  1 │ interface I { }

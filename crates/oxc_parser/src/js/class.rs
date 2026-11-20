@@ -429,7 +429,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let value = self.eat(Kind::Eq).then(|| {
             self.context(
                 Context::In | Context::NewTarget,
-                Context::Yield | Context::Await,
+                Context::Yield | Context::Await | Context::TopLevel,
                 Self::parse_assignment_expression_or_higher,
             )
         });
@@ -743,11 +743,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> ClassElement<'a> {
         let type_annotation = if self.is_ts { self.parse_ts_type_annotation() } else { None };
         // Initializer[+In, ?Yield, ?Await]opt
-        // `new.target` is allowed in a class field initializer.
+        // `new.target` is allowed in a class field initializer, and `await` in it is not
+        // top-level `await`.
         let initializer = self.eat(Kind::Eq).then(|| {
             self.context(
                 Context::In | Context::NewTarget,
-                Context::Yield | Context::Await,
+                Context::Yield | Context::Await | Context::TopLevel,
                 Self::parse_assignment_expression_or_higher,
             )
         });

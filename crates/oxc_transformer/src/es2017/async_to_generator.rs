@@ -623,13 +623,19 @@ impl<'a> AsyncGeneratorExecutor<'a> {
 
     /// Normalizes the function name.
     ///
+    /// Based on Babel's [`ensureFunctionName`] and [`toIdentifier`].
+    ///
     /// Examples:
     ///
     /// * Valid: `foo` -> `foo`
-    /// * Contains space: `foo bar` -> `foo_bar`
+    /// * Contains space or `/`: `foo bar` -> `foo_bar`, `a/b` -> `a_b`
+    /// * Starts with digits: `12a` -> `a`, `12` -> `_`
     /// * Reserved keyword: `this` -> `_this`
     /// * Not allowed as a binding name in strict mode: `arguments` -> `_arguments`,
     ///   `eval` -> `_eval`
+    ///
+    /// [`ensureFunctionName`]: https://github.com/babel/babel/blob/16a2d6718c7905bedab7324677b9b9881a00b954/packages/babel-traverse/src/path/conversion.ts#L922
+    /// [`toIdentifier`]: https://github.com/babel/babel/blob/16a2d6718c7905bedab7324677b9b9881a00b954/packages/babel-types/src/converters/toIdentifier.ts#L13-L14
     fn normalize_function_name(input: StaticPropertyName<'a>, ctx: &TraverseCtx<'a>) -> Ident<'a> {
         let input_str = input.into_js_str_in(ctx);
         if let Some(name) = input_str.as_str()
@@ -642,22 +648,24 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         let mut name = ArenaStringBuilder::with_capacity_in(input_str.len() + 1, ctx.allocator());
         let mut capitalize_next = false;
 
-        let mut chars = input_str.chars();
-        let first = chars.next();
-        let drops_lone_surrogate_start = first.is_some_and(|first| first.to_char().is_none());
-        if let Some(first) = first.and_then(oxc_str::JSChar::to_char)
-            && is_identifier_start(first)
-        {
-            name.push(first);
-        }
+        // Like Babel, first change each space and `/` to `_`. Then remove the leading ASCII digits
+        // and the leading characters that cannot be part of an identifier. A `_` from a space or
+        // `/` does not make the next letter uppercase: `a- b` -> `a_b`.
+        let becomes_underscore = |c: char| c == ' ' || c == '/';
+        let chars = input_str.chars().skip_while(|ch| {
+            ch.to_char().is_none_or(|c| {
+                !becomes_underscore(c) && (c.is_ascii_digit() || !is_identifier_part(c))
+            })
+        });
 
         for ch in chars {
             let Some(c) = ch.to_char() else {
                 capitalize_next = true;
                 continue;
             };
-            if c == ' ' {
+            if becomes_underscore(c) {
                 name.push('_');
+                capitalize_next = false;
             } else if !is_identifier_part(c) {
                 capitalize_next = true;
             } else if capitalize_next {
@@ -672,12 +680,10 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             return static_ident!("_");
         }
 
-        // A dropped leading lone surrogate can leave a name that starts with an identifier part,
-        // such as `1` from `"\uD8001"`.
+        // The name can still start with a character that cannot start an identifier,
+        // such as U+0661 (ARABIC-INDIC DIGIT ONE) from `"\u0661a"`.
         let starts_identifier = name.as_str().chars().next().is_some_and(is_identifier_start);
-        if (drops_lone_surrogate_start && !starts_identifier)
-            || Self::is_invalid_binding_name(name.as_str())
-        {
+        if !starts_identifier || Self::is_invalid_binding_name(name.as_str()) {
             name.push_ascii_byte_start(b'_');
         }
 

@@ -154,6 +154,9 @@ impl Walk {
             AngleList::Assert => {
                 // Type assertion `<T>`: an operand follows.
                 self.type_operator();
+                if a.mods & MOD_ASYNC != 0 {
+                    self.prev_kw = tk!(KwAsync);
+                }
             }
             AngleList::Value => {
                 // The head or instantiation is a value, and no second list may follow.
@@ -181,7 +184,10 @@ impl Walk {
             None
         };
         if let Some(list) = list {
-            self.push(FrameKind::Angle).angle = list;
+            let is_async = self.prev_kw == tk!(KwAsync);
+            let f = self.push(FrameKind::Angle);
+            f.angle = list;
+            f.mods = if is_async { MOD_ASYNC } else { 0 };
         }
         self.operand_done();
     }

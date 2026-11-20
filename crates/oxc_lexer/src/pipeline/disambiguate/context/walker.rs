@@ -268,6 +268,13 @@ impl Walk {
     pub(super) fn end_statement(&mut self) {
         // Bodiless signatures and open type regions end with the statement.
         self.pop_virtual();
+        if self.top_kind() == FrameKind::ClassBody {
+            // A class body holds members, so the next one starts.
+            self.top_mut().next_member();
+            self.set_operand();
+            self.decorator = 0;
+            return;
+        }
         self.after_statement();
     }
 

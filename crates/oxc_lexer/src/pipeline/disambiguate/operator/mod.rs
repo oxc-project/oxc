@@ -16,8 +16,8 @@
 //! walking forward to the position:
 //!
 //! - After `}`, whether the braces closed a block or a value.
-//! - Outside modules, whether `yield` and `await` are keywords, which depends on the enclosing
-//!   functions, and whether `of` is the keyword of a `for ... of` head.
+//! - Whether `yield` and `await` are keywords, which depends on the enclosing functions (a
+//!   module's top level is async), and whether `of` is the keyword of a `for ... of` head.
 //! - In TypeScript, a `>` which may close type arguments, a `void` which is a type rather than
 //!   the operator, and the line breaks after which a declaration ends without a semicolon.
 
@@ -62,7 +62,6 @@ pub fn not_operator_position(
     cpu: impl Cpu,
 ) -> bool {
     let is_ts = tokens.is_ts;
-    let is_module = tokens.is_module;
     let src = tokens.src;
     let mut q = tokens.token_start.prev1(p, cpu);
     while let Some(qi) = q {
@@ -96,7 +95,8 @@ pub fn not_operator_position(
                     // `x as void / 2` is division; `void /re/` is not.
                     return context::after(tokens, walks, qi) != After::Value;
                 }
-                if !is_module && matches_tk!(kw, KwYield | KwAwait) {
+                // `yield /re/` in a generator is a regex; `yield / 2` outside one is division.
+                if matches_tk!(kw, KwYield | KwAwait) {
                     return context::after(tokens, walks, qi) != After::Value;
                 }
                 return true;

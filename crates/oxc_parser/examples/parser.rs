@@ -86,7 +86,7 @@ fn main() -> Result<(), String> {
         println!("Parsed Successfully.");
     } else {
         for error in ret.diagnostics {
-            println!("{}", error.render_with_source_code(source_text.clone()));
+            println!("{}", error.render_with_source_code(source_text.as_str()));
         }
         println!("Parsed with Errors.");
     }
