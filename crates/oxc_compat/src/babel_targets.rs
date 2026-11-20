@@ -41,24 +41,20 @@ impl TryFrom<BabelTargets> for EngineTargets {
             BabelTargets::Map(map) => {
                 let mut engine_targets = Self::default();
                 for (key, value) in map {
-                    // TODO: Implement these targets.
                     if matches!(key.as_str(), "esmodules" | "browsers") {
-                        continue;
+                        return Err(format!("Babel target `{key}` is not supported"));
                     }
-                    // TODO: Implement `Version::from_number`
                     if matches!(value, BabelTargetsValue::Int(_) | BabelTargetsValue::Float(_)) {
-                        continue;
+                        return Err(format!("numeric Babel target `{key}` is not supported"));
                     }
                     let BabelTargetsValue::String(v) = value else {
                         return Err(format!("{value:?} is not a string for {key}."));
                     };
-                    // TODO: Implement this target.
                     if key == "node" && v == "current" {
-                        continue;
+                        return Err("Babel target `node=current` is not supported".into());
                     }
-                    // TODO: Implement this target.
                     if key == "safari" && v == "tp" {
-                        continue;
+                        return Err("Babel target `safari=tp` is not supported".into());
                     }
                     // TODO: Some keys are not implemented yet.
                     // <https://babel.dev/docs/options#targets>:
@@ -77,6 +73,30 @@ impl TryFrom<BabelTargets> for EngineTargets {
                 }
                 Ok(engine_targets)
             }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn unsupported_babel_targets_are_not_silently_dropped() {
+        let cases = [
+            ("esmodules", BabelTargetsValue::Bool(true)),
+            ("browsers", BabelTargetsValue::Array(vec!["defaults".into()])),
+            ("chrome", BabelTargetsValue::Int(120)),
+            ("firefox", BabelTargetsValue::Float(120.5)),
+            ("node", BabelTargetsValue::String("current".into())),
+            ("safari", BabelTargetsValue::String("tp".into())),
+        ];
+        for (key, value) in cases {
+            let targets = BabelTargets::Map(FxHashMap::from_iter([
+                ("chrome".into(), BabelTargetsValue::String("100".into())),
+                (key.into(), value),
+            ]));
+            assert!(EngineTargets::try_from(targets).is_err(), "{key} was silently ignored");
         }
     }
 }
