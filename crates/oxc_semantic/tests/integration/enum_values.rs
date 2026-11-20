@@ -257,3 +257,16 @@ fn surrogate_member_string_kind() {
         assert!(scoping.is_string_enum_member(scope, member.id.static_name()));
     }
 }
+
+#[test]
+fn exponentiate_is_not_ieee_pow() {
+    // `Number::exponentiate` returns `NaN` when the base has magnitude `1` and the
+    // exponent is infinite; IEEE 754 `pow` (and so `f64::powf`) returns `1`.
+    let source = "enum E { X = 1 ** Infinity, Y = (-1) ** Infinity, Z = 2 ** 3 }";
+    let value = |name: &str| get_enum_member_value(source, name);
+    let Some(ConstantValue::Number(x)) = value("X") else { panic!("X should be a number") };
+    assert!(x.is_nan(), "1 ** Infinity should be NaN, got {x}");
+    let Some(ConstantValue::Number(y)) = value("Y") else { panic!("Y should be a number") };
+    assert!(y.is_nan(), "(-1) ** Infinity should be NaN, got {y}");
+    assert_eq!(value("Z"), Some(ConstantValue::Number(8.0)));
+}

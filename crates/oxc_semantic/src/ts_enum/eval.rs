@@ -301,7 +301,23 @@ fn eval_binary_expression(
         BinaryOperator::Addition => Some(ConstantValue::Number(left + right)),
         BinaryOperator::Subtraction => Some(ConstantValue::Number(left - right)),
         BinaryOperator::Remainder => Some(ConstantValue::Number(left % right)),
-        BinaryOperator::Exponential => Some(ConstantValue::Number(left.powf(right))),
+        BinaryOperator::Exponential => {
+            // `Number::exponentiate` is not IEEE 754 `pow`, which `f64::powf`
+            // implements. `pow` returns `1` for a base of magnitude `1` whatever
+            // the exponent; the abstract operation returns `NaN` when the exponent
+            // is `NaN` and when the base has magnitude `1` and the exponent is
+            // infinite. Only the exponent-is-zero case is shared, and `powf`
+            // already agrees there.
+            // <https://tc39.es/ecma262/#sec-numeric-types-number-exponentiate>
+            #[expect(clippy::float_cmp)]
+            let base_is_one = left.abs() == 1.0;
+            let value = if right.is_nan() || (base_is_one && right.is_infinite()) {
+                f64::NAN
+            } else {
+                left.powf(right)
+            };
+            Some(ConstantValue::Number(value))
+        }
         _ => None,
     }
 }
