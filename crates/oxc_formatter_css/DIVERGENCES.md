@@ -1770,3 +1770,37 @@ Prettier's output is not a fixpoint here.
 A grid value too long for one line breaks inside its function, as Prettier prints it from one line;
 Prettier then reads the line breaks it printed inside the function as the grid's line structure,
 so a second pass moves each top-level value to its own line.
+
+## value-multiline-comment-expands
+
+- Why: uniform-rule (same construct, same output: a multi-line block comment in JS)
+- Pin: `tests/fixtures/format/css/value-multiline-comment.css`
+
+```css
+/* input */
+a {
+  b: f(to top, x 1px /* c,
+    d */);
+}
+
+/* ours */
+a {
+  b: f(
+    to top,
+    x 1px
+      /* c,
+    d */
+  );
+}
+
+/* prettier */
+a {
+  b: f(to top, x 1px /* c,
+    d */);
+}
+```
+
+A block comment spanning lines inside a value expands its enclosing groups,
+like Prettier's JS, JSONC, HTML and Markdown comments (`literalline` / `hardline` carry a break-parent).
+Prettier's CSS prints the `value-comment` as a raw string with `\n`, so only its width decides:
+the group stays flat when the whole comment, measured as one line, fits.
