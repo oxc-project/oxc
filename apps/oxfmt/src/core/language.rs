@@ -16,7 +16,7 @@ use super::support::{NativeLanguage, PrettierLanguage};
 
 /// "Which formatter serves this language?" for a name as written (e.g. a code fence),
 /// via the [`Language`] table plus the JS/TS extension fallback.
-/// [`build_dispatcher`](super::embed::dispatcher::build_dispatcher) and the napi string channel's fence routing both consult it,
+/// [`build_dispatcher`](super::embed::dispatcher::build_dispatcher) consults it, the JSDoc fences' string channel too (through a fallback-less dispatcher),
 /// so their notions of who formats what can never drift.
 pub fn route_embedded(name: &str) -> Route {
     if let Some(language) = Language::from_embedded(name) {
@@ -32,8 +32,8 @@ pub enum Route {
     /// A Rust formatter branch in [`build_dispatcher`](super::embed::dispatcher::build_dispatcher);
     /// never re-routed to Prettier.
     Native(NativeLanguage),
-    /// Prettier serves it (napi Doc→IR fallback / string channel);
-    /// the pure build preserves it as-is.
+    /// Prettier serves it (the napi Doc→IR fallback);
+    /// the pure build and the JSDoc fences' string channel preserve it as-is.
     Prettier(PrettierLanguage),
     /// No formatter anywhere: the part deliberately stays as-is in every build.
     Unsupported,
