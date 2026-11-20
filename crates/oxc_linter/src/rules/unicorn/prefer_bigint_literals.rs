@@ -3,13 +3,15 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::number::{BigintBase, NumberBase};
 
 use crate::{
     AstNode,
     context::LintContext,
     rule::Rule,
-    utils::{integer_literal_loses_precision, pad_fix_with_token_boundary},
+    utils::{
+        NumberBase, has_fraction_or_exponent, integer_literal_loses_precision, number_base,
+        pad_fix_with_token_boundary,
+    },
 };
 
 fn prefer_bigint_literals_diagnostic(span: Span) -> OxcDiagnostic {
@@ -117,22 +119,14 @@ impl Rule for PreferBigintLiterals {
                     return;
                 }
 
-                let raw_text = numeric_literal.raw.as_ref().map_or_else(
-                    || {
-                        debug_assert!(false, "ASTs from the linter should always have raw values");
-                        ctx.source_range(numeric_literal.span)
-                    },
-                    |raw| raw.as_str(),
-                );
+                let raw_text = numeric_literal.raw.unwrap().as_str();
 
                 if integer_literal_loses_precision(numeric_literal) {
                     ctx.diagnostic(
                         prefer_bigint_literals_diagnostic(arg.span())
                             .with_note("Integer literal loses precision"),
                     );
-                } else if let Some(mut replacement) =
-                    bigint_literal_from_numeric(raw_text, numeric_literal.base)
-                {
+                } else if let Some(mut replacement) = bigint_literal_from_numeric(raw_text) {
                     ctx.diagnostic_with_fix(
                         prefer_bigint_literals_diagnostic(arg.span()),
                         |fixer| {
@@ -154,30 +148,30 @@ impl Rule for PreferBigintLiterals {
     }
 }
 
-fn matches_js_integer_literal(s: &str) -> Option<BigintBase> {
+fn matches_js_integer_literal(s: &str) -> Option<NumberBase> {
     let s = s.trim();
     let mut chars = s.chars();
 
     match chars.next() {
         Some('0') => match chars.next() {
             Some('b' | 'B') => {
-                chars.all(|char| matches!(char, '0' | '1')).then_some(BigintBase::Binary)
+                chars.all(|char| matches!(char, '0' | '1')).then_some(NumberBase::Binary)
             }
 
             Some('o' | 'O') => {
-                chars.all(|char| matches!(char, '0'..='7')).then_some(BigintBase::Octal)
+                chars.all(|char| matches!(char, '0'..='7')).then_some(NumberBase::Octal)
             }
 
             Some('x' | 'X') => {
-                chars.all(|char| char.is_ascii_hexdigit()).then_some(BigintBase::Hex)
+                chars.all(|char| char.is_ascii_hexdigit()).then_some(NumberBase::Hex)
             }
             Some('0'..='9') => {
-                chars.all(|char| char.is_ascii_digit()).then_some(BigintBase::Decimal)
+                chars.all(|char| char.is_ascii_digit()).then_some(NumberBase::Decimal)
             }
-            None => Some(BigintBase::Decimal),
+            None => Some(NumberBase::Decimal),
             _ => None,
         },
-        Some('1'..='9') => chars.all(|char| char.is_ascii_digit()).then_some(BigintBase::Decimal),
+        Some('1'..='9') => chars.all(|char| char.is_ascii_digit()).then_some(NumberBase::Decimal),
         _ => None,
     }
 }
@@ -188,8 +182,8 @@ fn bigint_literal_from_string(raw: &str) -> Option<String> {
     let base = matches_js_integer_literal(trimmed)?;
 
     match base {
-        BigintBase::Binary | BigintBase::Octal | BigintBase::Hex => Some(format!("{trimmed}n")),
-        BigintBase::Decimal => Some(format!("{}n", trim_leading_zeros(trimmed))),
+        NumberBase::Binary | NumberBase::Octal | NumberBase::Hex => Some(format!("{trimmed}n")),
+        NumberBase::Decimal => Some(format!("{}n", trim_leading_zeros(trimmed))),
     }
 }
 
@@ -198,12 +192,8 @@ fn trim_leading_zeros(raw: &str) -> &str {
     if trimmed.is_empty() { "0" } else { trimmed }
 }
 
-fn bigint_literal_from_numeric(raw: &str, base: NumberBase) -> Option<String> {
-    if raw.contains('e') || raw.contains('E') {
-        return None;
-    }
-
-    let literal = match base {
+fn bigint_literal_from_numeric(raw: &str) -> Option<String> {
+    let literal = match number_base(raw) {
         NumberBase::Binary | NumberBase::Hex => format!("{raw}n"),
         NumberBase::Octal => {
             if raw.starts_with("0o") || raw.starts_with("0O") {
@@ -213,8 +203,13 @@ fn bigint_literal_from_numeric(raw: &str, base: NumberBase) -> Option<String> {
                 format!("0o{}n", trim_leading_zeros(raw))
             }
         }
-        NumberBase::Decimal => format!("{}n", trim_leading_zeros(raw)),
-        NumberBase::Float => return None,
+        NumberBase::Decimal => {
+            // Fractions and exponents (`1.0`, `1e3`) are not valid in BigInt literals
+            if has_fraction_or_exponent(raw) {
+                return None;
+            }
+            format!("{}n", trim_leading_zeros(raw))
+        }
     };
     Some(literal)
 }
@@ -298,6 +293,7 @@ fn test() {
         (r"BigInt(1n).toString()", r"1n.toString()"),
         (r"BigInt(0B11_11)", "0B11_11n"),
         (r"BigInt(0O777_777)", "0O777_777n"),
+        (r"BigInt(0XFe_fE)", "0XFe_fEn"),
         (r"BigInt(0777)", "0o777n"),
         (r"BigInt(0888)", "888n"),
         (r"BigInt(1000000000000000100)", r"BigInt(1000000000000000100)"),

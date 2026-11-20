@@ -224,6 +224,27 @@ impl<'a> ControlFlowGraphBuilder<'a> {
         self.ctx_stack.last_mut().filter(|it| it.label.is_some()).map(RefCtxCursor)
     }
 
+    pub(super) fn append_labeled_continue(&mut self, label: &str, source: BlockNodeId) {
+        let Some(label_index) = self
+            .ctx_stack
+            .iter()
+            .enumerate()
+            .rev()
+            .take_while(|(_, ctx)| !ctx.flags.contains(CtxFlags::FUNCTION))
+            .find_map(|(index, ctx)| ctx.is(label).then_some(index))
+        else {
+            return;
+        };
+
+        if let Some(ctx) = self.ctx_stack[label_index + 1..]
+            .iter_mut()
+            .find(|ctx| ctx.label.is_none())
+            .filter(|ctx| ctx.flags.contains(CtxFlags::CONTINUE))
+        {
+            ctx.r#continue(source);
+        }
+    }
+
     fn in_break_context<F: Fn(&mut Ctx<'a>)>(&mut self, label: Option<&str>, f: F) {
         self.in_context(label, CtxFlags::BREAK, f);
     }
@@ -247,7 +268,7 @@ impl<'a> ControlFlowGraphBuilder<'a> {
                 .rev()
                 // anything up the function is unreachable
                 .take_while(|it| !it.flags.intersects(CtxFlags::FUNCTION))
-                .find(|it| it.flags.contains(flag))
+                .find(|it| it.label.is_none() && it.flags.contains(flag))
         };
 
         if let Some(ctx) = ctx {

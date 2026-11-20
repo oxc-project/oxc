@@ -5,7 +5,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, SymbolId};
 use oxc_span::Span;
 
-use crate::{ast_util::variable_declaration_kind, context::LintContext, rule::Rule};
+use crate::{context::LintContext, rule::Rule};
 
 fn no_const_assign_diagnostic(name: &str, decl_span: Span, assign_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Unexpected re-assignment of `const` variable {name}."))
@@ -61,12 +61,11 @@ declare_oxc_lint!(
 
 impl Rule for NoConstAssign {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::VariableDeclarator(decl) = node.kind() else { return };
-        let Some(kind) = variable_declaration_kind(decl, ctx.nodes()) else {
-            return;
-        };
-        if kind.is_const() || kind.is_using() {
-            decl.id.bound_names(&mut |ident| check_symbol_id(ident.symbol_id(), ctx));
+        let AstKind::VariableDeclaration(declaration) = node.kind() else { return };
+        if declaration.kind.is_const() || declaration.kind.is_using() {
+            for declarator in &declaration.declarations {
+                declarator.id.bound_names(&mut |ident| check_symbol_id(ident.symbol_id(), ctx));
+            }
         }
     }
 }
@@ -112,6 +111,7 @@ fn test() {
         "using x = foo(); bar(x);",
         "await using x = foo(); bar(x);",
         "type t = (a, ...b) => void",
+        "let a = 1, b = 2; a = 3; b = 4;",
     ];
 
     let fail = vec![
@@ -142,6 +142,8 @@ fn test() {
         "await using x = foo(); [x = baz, y] = bar();",
         "using x = foo(); ({a: x} = bar());",
         "await using x = foo(); ({a: x = baz} = bar());",
+        "const a = 1, {b} = source; a = 2; b = 3;",
+        "using a = foo(), b = bar(); b = baz();",
     ];
 
     Tester::new(NoConstAssign::NAME, NoConstAssign::PLUGIN, pass, fail).test_and_snapshot();

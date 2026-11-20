@@ -2,8 +2,7 @@ use oxc_ast::{
     AstKind, FunctionKind,
     ast::{
         ArrowFunctionExpression, AwaitExpression, BindingPattern, CallExpression, ChainElement,
-        ExportDefaultDeclarationKind, Expression, Function, ObjectExpression, ObjectPropertyKind,
-        Program, Statement,
+        ExportDefaultDeclarationKind, Expression, Function, ObjectExpression, Program, Statement,
     },
 };
 use oxc_ast_visit::{VisitJs, walk_js};
@@ -98,12 +97,7 @@ impl Rule for NoExposeAfterAwait {
 }
 
 fn check_setup_in_object<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
-    let Some(setup_prop) = obj_expr.properties.iter().find_map(|prop| {
-        let ObjectPropertyKind::ObjectProperty(obj_prop) = prop else {
-            return None;
-        };
-        obj_prop.key.static_name().is_some_and(|name| name == "setup").then_some(obj_prop)
-    }) else {
+    let Some(setup_prop) = obj_expr.find_property("setup") else {
         return;
     };
 

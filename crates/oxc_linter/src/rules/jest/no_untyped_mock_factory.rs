@@ -4,6 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 use oxc_span::Span;
 use oxc_str::JSStr;
 
@@ -92,22 +93,18 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUntypedMockFactory {
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        Self::run(jest_node, ctx);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(_) = node.kind() else { return };
+        Self::run(node, ctx);
     }
 
     fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
-        ctx.source_type().is_typescript()
+        ctx.source_type().is_typescript() && ctx.frameworks().is_test()
     }
 }
 
 impl NoUntypedMockFactory {
-    fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-        let node = possible_jest_node.node;
+    fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
@@ -131,6 +128,10 @@ impl NoUntypedMockFactory {
             return;
         }
 
+        if PossibleJestNode::from_call_expression(node, call_expr, ctx).is_none() {
+            return;
+        }
+
         let Some(name_node) = call_expr.arguments.first() else {
             return;
         };
@@ -139,21 +140,14 @@ impl NoUntypedMockFactory {
         };
 
         if let Expression::StringLiteral(string_literal) = expr {
-            let value = string_literal.value;
             ctx.diagnostic_with_fix(
-                add_type_parameter_to_module_mock_diagnostic(value, property_span),
+                add_type_parameter_to_module_mock_diagnostic(string_literal.value, property_span),
                 |fixer| {
-                    // The fix is built from `&str`, so a name with a lone surrogate is
-                    // reported without it.
-                    let Some(value) = value.as_str() else {
-                        return fixer.noop();
-                    };
-                    let mut code = String::with_capacity(value.len() + 20);
-                    code.push_str("<typeof import('");
-                    code.push_str(value);
-                    code.push_str("')>");
-
-                    fixer.insert_text_after(&call_expr.callee, code)
+                    // Copy the literal as written, as eslint-plugin-jest does, so its quotes
+                    // and escapes stay valid, e.g. `"it's"` or `'a\\b'`.
+                    let literal = fixer.source_range(string_literal.span);
+                    fixer
+                        .insert_text_after(&call_expr.callee, format!("<typeof import({literal})>"))
                 },
             );
         } else if let Expression::Identifier(ident) = expr {
@@ -344,8 +338,6 @@ fn test() {
     ];
 
     let fix = vec![
-        // A name with a lone surrogate gets no fix.
-        (r"jest.mock('\uD800', () => ({}))", r"jest.mock('\uD800', () => ({}))", None),
         (
             "
                 jest.mock('../moduleName', () => {
@@ -423,6 +415,21 @@ fn test() {
   'foo',
   () => {}
 );",
+            None,
+        ),
+        (
+            r"jest.mock('\uD800', () => ({}))",
+            r"jest.mock<typeof import('\uD800')>('\uD800', () => ({}))",
+            None,
+        ),
+        (
+            r#"jest.mock("it's", () => ({}))"#,
+            r#"jest.mock<typeof import("it's")>("it's", () => ({}))"#,
+            None,
+        ),
+        (
+            r"jest.mock('a\\b', () => ({}))",
+            r"jest.mock<typeof import('a\\b')>('a\\b', () => ({}))",
             None,
         ),
     ];

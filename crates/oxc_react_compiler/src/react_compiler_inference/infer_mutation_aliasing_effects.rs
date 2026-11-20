@@ -115,8 +115,10 @@ pub fn infer_mutation_aliasing_effects<'a>(
         initial_state.define(self_binding.identifier, value_id);
     }
 
+    let mutable_param_kind =
+        AbstractValue { kind: ValueKind::Mutable, reason: ReasonSet::single(ValueReason::Other) };
     let param_kind: AbstractValue = if is_function_expression {
-        AbstractValue { kind: ValueKind::Mutable, reason: ReasonSet::single(ValueReason::Other) }
+        mutable_param_kind
     } else {
         AbstractValue {
             kind: ValueKind::Frozen,
@@ -131,26 +133,20 @@ pub fn infer_mutation_aliasing_effects<'a>(
             infer_param(&func.params[0], &mut initial_state, &param_kind);
         }
         if params_len > 1 {
-            let ref_place = match &func.params[1] {
-                ParamPattern::Place(p) => p,
-                ParamPattern::Spread(s) => &s.place,
-            };
-            let value_id = ValueId::new();
-            initial_state.initialize(
-                value_id,
-                AbstractValue {
-                    kind: ValueKind::Mutable,
-                    reason: ReasonSet::single(ValueReason::Other),
-                },
-            );
-            initial_state.define(ref_place.identifier, value_id);
+            infer_param(&func.params[1], &mut initial_state, &mutable_param_kind);
         }
     } else {
         for param in &func.params {
             infer_param(param, &mut initial_state, &param_kind);
         }
     }
-
+    infer_context_parameter_bindings(
+        func,
+        env,
+        &mut initial_state,
+        &param_kind,
+        &mutable_param_kind,
+    );
     let mut queued_states: FxIndexMap<BlockId, InferenceState> = FxIndexMap::default();
 
     // Queue helper
@@ -188,6 +184,7 @@ pub fn infer_mutation_aliasing_effects<'a>(
         catch_handlers: FxHashMap::default(),
         is_function_expression,
         hoisted_context_declarations,
+        hoisted_function_initializer: None,
         non_mutating_spreads,
         effect_value_id_cache: FxHashMap::default(),
         function_values: FxHashMap::default(),
@@ -241,17 +238,14 @@ pub fn infer_mutation_aliasing_effects<'a>(
                 let ident_info = env.identifiers.get(uninitialized_id);
                 let name = ident_info
                     .and_then(|ident| ident.name.as_ref())
-                    .map(|n| n.value().to_string())
-                    .unwrap_or_default();
+                    .map_or_default(|n| n.value().to_string());
                 // Use usage_span if available, otherwise fall back to identifier's own span
                 let error_span = usage_span.or_else(|| ident_info.and_then(|i| i.span));
                 // Match TS printPlace format: "<unknown> name$id:type"
-                let type_str = ident_info
-                    .map(|ident| {
-                        let ty = &env.types[ident.type_];
-                        format_type_for_print(ty)
-                    })
-                    .unwrap_or_default();
+                let type_str = ident_info.map_or_default(|ident| {
+                    let ty = &env.types[ident.type_];
+                    format_type_for_print(ty)
+                });
                 let description =
                     format!("<unknown> {}${}{}", name, uninitialized_id.index(), type_str);
                 let diag = diagnostics::uninitialized_value(description, error_span);
@@ -775,6 +769,9 @@ struct Context<'a> {
     catch_handlers: FxHashMap<BlockId, Place>,
     is_function_expression: bool,
     hoisted_context_declarations: FxHashMap<DeclarationId, Option<Place>>,
+    /// Set while applying the effects of the `StoreContext` that initializes a
+    /// hoisted function declaration.
+    hoisted_function_initializer: Option<DeclarationId>,
     non_mutating_spreads: FxHashSet<IdentifierId>,
     /// Cache of ValueIds keyed by effect key, ensuring stable allocation-site identity
     /// across fixpoint iterations. Mirrors TS `effectInstructionValueCache`.
@@ -1207,6 +1204,59 @@ fn infer_param(param: &ParamPattern, state: &mut InferenceState, param_kind: &Ab
     state.define(place.identifier, value_id);
 }
 
+/// Non-plain parameters use temporary entries in `func.params`; their named bindings
+/// are initialized by stores in the parameter prologue. Seed the declaration identifiers
+/// behind those SSA stores before interpreting the prologue so earlier default-value
+/// closures can read or update a later parameter binding.
+fn infer_context_parameter_bindings(
+    func: &HirFunction,
+    env: &Environment,
+    state: &mut InferenceState,
+    param_kind: &AbstractValue,
+    mutable_param_kind: &AbstractValue,
+) {
+    for (_, block) in &func.body.blocks {
+        for &instruction_id in &block.instructions {
+            let lvalue = match &func.instructions[instruction_id.index()].value {
+                InstructionValue::StoreContext { lvalue, .. }
+                | InstructionValue::StoreLocal { lvalue, .. } => lvalue,
+                _ => continue,
+            };
+            let declaration_id = env.identifiers[lvalue.place.identifier].declaration_id;
+            let identifier = IdentifierId::from_usize(declaration_id.index());
+            if !matches!(env.identifiers[identifier].name, Some(IdentifierName::Named(_))) {
+                continue;
+            }
+            let parameter_kind = env.identifiers[identifier].span.and_then(|binding_span| {
+                func.params.iter().enumerate().find_map(|(index, param)| {
+                    let parameter = match param {
+                        ParamPattern::Place(place) => place,
+                        ParamPattern::Spread(spread) => &spread.place,
+                    };
+                    env.identifiers[parameter.identifier].span.and_then(|parameter_span| {
+                        (binding_span.start >= parameter_span.start
+                            && binding_span.end <= parameter_span.end)
+                            .then_some(
+                                if func.fn_type == ReactFunctionType::Component && index == 1 {
+                                    mutable_param_kind
+                                } else {
+                                    param_kind
+                                },
+                            )
+                    })
+                })
+            });
+            if state.is_defined(identifier) {
+                continue;
+            }
+            let Some(parameter_kind) = parameter_kind else { continue };
+            let value_id = ValueId::new();
+            state.initialize(value_id, *parameter_kind);
+            state.define(identifier, value_id);
+        }
+    }
+}
+
 // =============================================================================
 // inferBlock
 // =============================================================================
@@ -1384,6 +1434,13 @@ fn apply_signature<'a>(
                             &variable,
                             mutate_value.span,
                             ident.span,
+                            matches!(
+                                effect,
+                                AliasingEffect::Mutate {
+                                    reason: Some(MutationReason::AssignCurrentProperty),
+                                    ..
+                                }
+                            ),
                         );
                         let error =
                             env.intern_aliasing_diagnostic(mutate_value.identifier, diagnostic);
@@ -1401,9 +1458,20 @@ fn apply_signature<'a>(
     // Get the cached signature effects
     let sig = Rc::clone(context.instruction_signature_cache.get(&instr_idx).unwrap());
 
-    for effect in &sig.effects {
-        apply_effect_ref(context, state, effect, &mut initialized, &mut effects, env)?;
-    }
+    context.hoisted_function_initializer = match &instr.value {
+        InstructionValue::StoreContext { lvalue, .. }
+            if lvalue.kind == InstructionKind::Function =>
+        {
+            let decl_id = env.identifiers[lvalue.place.identifier].declaration_id;
+            context.hoisted_context_declarations.contains_key(&decl_id).then_some(decl_id)
+        }
+        _ => None,
+    };
+    let result = sig.effects.iter().try_for_each(|effect| {
+        apply_effect_ref(context, state, effect, &mut initialized, &mut effects, env)
+    });
+    context.hoisted_function_initializer = None;
+    result?;
 
     // If lvalue is not yet defined, initialize it with a default value.
     // The TS version asserts this as an invariant, but the Rust port may have
@@ -1987,6 +2055,18 @@ fn apply_effect_ref<'a>(
                 let decl_id = ident.declaration_id;
 
                 if mutation_kind == MutationResult::MutateFrozen
+                    && context.hoisted_function_initializer == Some(decl_id)
+                {
+                    // Unlike the TS implementation, do not report the initializer of a
+                    // hoisted function declaration as an access before declaration. The
+                    // binding is initialized on scope entry, so an earlier capture (e.g.
+                    // `useHook(() => fn())` before `function fn() {}`) always observes
+                    // the function. The TS implementation records this false positive
+                    // but then usually discards it when `PruneHoistedContexts` throws an
+                    // invariant, so `eslint-plugin-react-hooks` reports nothing. Keep the
+                    // `Mutate` so mutable ranges still cover the initialization.
+                    effects.push(effect.clone_in(context.alloc));
+                } else if mutation_kind == MutationResult::MutateFrozen
                     && context.hoisted_context_declarations.contains_key(&decl_id)
                 {
                     let variable = match &ident.name {
@@ -2021,8 +2101,19 @@ fn apply_effect_ref<'a>(
                         }
                         _ => "value".to_string(),
                     };
-                    let diagnostic =
-                        diagnostics::immutable_value(reason_str, &variable, value.span, ident.span);
+                    let diagnostic = diagnostics::immutable_value(
+                        reason_str,
+                        &variable,
+                        value.span,
+                        ident.span,
+                        matches!(
+                            effect,
+                            AliasingEffect::Mutate {
+                                reason: Some(MutationReason::AssignCurrentProperty),
+                                ..
+                            }
+                        ),
+                    );
 
                     let error = env.intern_aliasing_diagnostic(value.identifier, diagnostic);
                     let error_kind = if abstract_value.kind == ValueKind::Frozen {
@@ -2394,8 +2485,8 @@ fn compute_signature_for_instruction<'a>(
             effects.push(AliasingEffect::Assign { from: *sl_value, into: sl.place });
             effects.push(AliasingEffect::Assign { from: *sl_value, into: *lvalue });
         }
-        InstructionValue::PostfixUpdate { lvalue: pf_lvalue, .. }
-        | InstructionValue::PrefixUpdate { lvalue: pf_lvalue, .. } => {
+        InstructionValue::PostfixUpdateLocal { lvalue: pf_lvalue, .. }
+        | InstructionValue::PrefixUpdateLocal { lvalue: pf_lvalue, .. } => {
             effects.push(AliasingEffect::Create {
                 into: *lvalue,
                 value: ValueKind::Primitive,
@@ -2406,6 +2497,15 @@ fn compute_signature_for_instruction<'a>(
                 value: ValueKind::Primitive,
                 reason: ValueReason::Other,
             });
+        }
+        InstructionValue::PostfixUpdateContext { value: pf_value, .. }
+        | InstructionValue::PrefixUpdateContext { value: pf_value, .. } => {
+            effects.push(AliasingEffect::Create {
+                into: *lvalue,
+                value: ValueKind::Primitive,
+                reason: ValueReason::Other,
+            });
+            effects.push(AliasingEffect::Mutate { value: *pf_value, reason: None });
         }
         InstructionValue::StoreGlobal { name, value: sg_value, .. } => {
             let variable = format!("`{}`", name);
@@ -2485,9 +2585,16 @@ fn compute_effects_for_legacy_signature<'a>(
         reason: return_value_reason,
     });
 
+    // Unlike the TS implementation, argument-dependent impurity (zero-argument
+    // `new Date()`) is only reported in the component or hook body, not inside
+    // nested functions. Callbacks passed to an unknown function such as
+    // `form.handleSubmit(onSubmit)` are assumed to run during render, which
+    // flagged `new Date()` in event-time callbacks after it became impure
+    // (oxc-project/oxc#29094). Always-impure functions such as `Date.now()` are
+    // unchanged.
     if signature.impure
         && env.config.validate_no_impure_functions_in_render
-        && (!signature.impure_if_no_args || args.is_empty())
+        && (!signature.impure_if_no_args || (args.is_empty() && !state.is_function_expression))
     {
         let diagnostic =
             diagnostics::impure_function(signature.canonical_name.as_deref(), span.copied());

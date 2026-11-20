@@ -778,10 +778,14 @@ impl SourceCode for str {
     }
 }
 
-/// Supports borrowed source text in generic contexts.
-impl SourceCode for &str {
+/// Supports borrowed source code (e.g. `&str` or `&NamedSource`) in generic contexts.
+impl<T: ?Sized + SourceCode> SourceCode for &T {
     fn data(&self) -> &[u8] {
-        self.as_bytes()
+        (**self).data()
+    }
+
+    fn name(&self) -> Option<&str> {
+        (**self).name()
     }
 }
 

@@ -154,6 +154,10 @@ pub struct HirBuilder<'a, 'b> {
     context_identifiers: rustc_hash::FxHashSet<SymbolId>,
     /// Index mapping identifier byte offsets to source locations and JSX status.
     identifier_spans: &'b IdentifierLocIndex,
+    /// Whether this function references a binding in an enclosing function
+    /// outside the compiled-function boundary. Such a function cannot be
+    /// safely outlined to module scope.
+    has_outer_lexical_reference: bool,
 }
 
 impl<'a, 'b> HirBuilder<'a, 'b> {
@@ -201,6 +205,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
             component_scope,
             context_identifiers,
             identifier_spans,
+            has_outer_lexical_reference: false,
         }
     }
 
@@ -274,6 +279,18 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// Returns the 'a reference to avoid conflicts with mutable borrows on self.
     pub fn identifier_spans(&self) -> &'b IdentifierLocIndex {
         self.identifier_spans
+    }
+
+    /// Mark this function as depending on an enclosing lexical binding that is
+    /// outside the compiled-function boundary.
+    pub fn note_outer_lexical_reference(&mut self) {
+        self.has_outer_lexical_reference = true;
+    }
+
+    /// Whether this function depends on an enclosing lexical binding outside
+    /// the compiled-function boundary.
+    pub fn has_outer_lexical_reference(&self) -> bool {
+        self.has_outer_lexical_reference
     }
 
     /// Access the bindings map.
@@ -789,6 +806,9 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
             // No binding found: this is a global
             return Ok(VariableBinding::Global { name });
         };
+        if self.scope.is_ambient_binding(symbol_id) {
+            return Ok(VariableBinding::Global { name });
+        }
         // Treat type-only declarations as globals so the compiler doesn't try to
         // create or initialize HIR bindings for them. Inline enums are opaque
         // pass-through instructions, matching upstream's `UnsupportedNode`, so
@@ -821,6 +841,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 None => VariableBinding::ModuleLocal { name },
             })
         } else if !self.is_scope_within_compiled_function(symbol_scope) {
+            self.has_outer_lexical_reference = true;
             Ok(VariableBinding::ModuleLocal { name })
         } else {
             let binding_kind = crate::react_compiler_lowering::convert_binding_kind(
@@ -932,15 +953,22 @@ pub fn get_reverse_postordered_blocks<'a>(
     let mut used_fallthroughs: FxHashSet<BlockId> = FxHashSet::default();
     let mut postorder: Vec<BlockId> = Vec::new();
 
-    fn visit(
-        hir: &HIR<'_>,
-        block_id: BlockId,
-        is_used: bool,
-        visited: &mut FxHashSet<BlockId>,
-        used: &mut FxHashSet<BlockId>,
-        used_fallthroughs: &mut FxHashSet<BlockId>,
-        postorder: &mut Vec<BlockId>,
-    ) {
+    enum Visit {
+        Enter { block_id: BlockId, is_used: bool },
+        Exit(BlockId),
+    }
+
+    // Keep DFS state on the heap: even shallow generated source can lower to
+    // a long chain of blocks that exceeds the native or WebAssembly call stack.
+    let mut stack = vec![Visit::Enter { block_id: hir.entry, is_used: true }];
+    while let Some(visit) = stack.pop() {
+        let (block_id, is_used) = match visit {
+            Visit::Enter { block_id, is_used } => (block_id, is_used),
+            Visit::Exit(block_id) => {
+                postorder.push(block_id);
+                continue;
+            }
+        };
         let was_used = used.contains(&block_id);
         let was_visited = visited.contains(&block_id);
         visited.insert(block_id);
@@ -948,7 +976,7 @@ pub fn get_reverse_postordered_blocks<'a>(
             used.insert(block_id);
         }
         if was_visited && (was_used || !is_used) {
-            return;
+            continue;
         }
 
         let block = hir
@@ -956,10 +984,17 @@ pub fn get_reverse_postordered_blocks<'a>(
             .get(&block_id)
             .unwrap_or_else(|| panic!("[HIRBuilder] expected block {:?} to exist", block_id));
 
-        // Visit successors in reverse order so that when we reverse the
-        // postorder list, sibling edges come out in program order.
-        let mut successors = each_terminal_successor(&block.terminal);
-        successors.reverse();
+        // A fallthrough first visited as unused must be traversed again when
+        // reached by a used successor, but must only be emitted once.
+        if !was_visited {
+            stack.push(Visit::Exit(block_id));
+        }
+
+        // LIFO visits successors in reverse order, so reversing postorder
+        // restores source order. Push fallthrough last to visit it first.
+        for successor in each_terminal_successor(&block.terminal) {
+            stack.push(Visit::Enter { block_id: successor, is_used });
+        }
 
         let fallthrough = terminal_fallthrough(&block.terminal);
 
@@ -969,18 +1004,9 @@ pub fn get_reverse_postordered_blocks<'a>(
             if is_used {
                 used_fallthroughs.insert(ft);
             }
-            visit(hir, ft, false, visited, used, used_fallthroughs, postorder);
-        }
-        for successor in successors {
-            visit(hir, successor, is_used, visited, used, used_fallthroughs, postorder);
-        }
-
-        if !was_visited {
-            postorder.push(block_id);
+            stack.push(Visit::Enter { block_id: ft, is_used: false });
         }
     }
-
-    visit(hir, hir.entry, true, &mut visited, &mut used, &mut used_fallthroughs, &mut postorder);
 
     let mut blocks = OrderedMap::default();
     for block_id in postorder.into_iter().rev() {
@@ -1119,23 +1145,19 @@ pub fn mark_predecessors(hir: &mut HIR) {
 
     let mut visited: FxHashSet<BlockId> = FxHashSet::default();
 
-    fn visit(
-        hir: &mut HIR,
-        block_id: BlockId,
-        prev_block_id: Option<BlockId>,
-        visited: &mut FxHashSet<BlockId>,
-    ) {
+    let mut stack = vec![(hir.entry, None)];
+    while let Some((block_id, prev_block_id)) = stack.pop() {
         // Add predecessor
         if let Some(prev_id) = prev_block_id {
             if let Some(block) = hir.blocks.get_mut(&block_id) {
                 block.preds.insert(prev_id);
             } else {
-                return;
+                continue;
             }
         }
 
         if visited.contains(&block_id) {
-            return;
+            continue;
         }
         visited.insert(block_id);
 
@@ -1143,15 +1165,15 @@ pub fn mark_predecessors(hir: &mut HIR) {
         let successors = if let Some(block) = hir.blocks.get(&block_id) {
             each_terminal_successor(&block.terminal)
         } else {
-            return;
+            continue;
         };
 
-        for successor in successors {
-            visit(hir, successor, Some(block_id), visited);
+        // Preserve the recursive DFS's predecessor insertion order, including
+        // edges to already-visited blocks. Phi operand order depends on it.
+        for successor in successors.into_iter().rev() {
+            stack.push((successor, Some(block_id)));
         }
     }
-
-    visit(hir, hir.entry, None, &mut visited);
 }
 
 // ---------------------------------------------------------------------------

@@ -189,14 +189,16 @@ impl<'a, 'b> MemberChainGroup<'a, 'b> {
     }
 
     fn needs_empty_line_before(&self, f: &JsFormatter) -> bool {
-        let Some(ChainMember::StaticMember(expression)) = self.members.first() else {
+        let Some((object, property_span, _)) =
+            self.members.first().and_then(ChainMember::as_non_computed_member)
+        else {
             return false;
         };
 
         // Prettier doesn't preserve blank lines after a terminal call like `fn()`
         // whose callee is not part of the chain: `fn()\n\n.bar()` becomes `fn().bar()`.
         // <https://github.com/prettier/prettier/blob/812a4d0071270f61a7aa549d625b618be7e09d71/src/language-js/print/member-chain.js#L101-L121>
-        if let Expression::CallExpression(call) = expression.object().as_ref()
+        if let Expression::CallExpression(call) = object
             && !call.callee.is_member_expression()
             && !call.callee.is_call_expression()
         {
@@ -208,8 +210,8 @@ impl<'a, 'b> MemberChainGroup<'a, 'b> {
         // `A \n\n/* comment . */ . / comment . */ B`
         //    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         // Check whether has more than 1 continuous new lines before the operator (`.`)
-        let start = expression.object().span().end;
-        let mut end = expression.property().span().start;
+        let start = object.span().end;
+        let mut end = property_span.start;
 
         // We should found the real `end` position that is before comments and it is not after the operator `.`
         if let Some(printed_comment) = f

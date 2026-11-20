@@ -1,0 +1,76 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// A Less escape `~"..."` hugs its re-quoted string in every position
+a {
+  value: ~"x";
+  spaced: ~ 'x';
+  url: url(~ 'x.png');
+}
+@media (min-width: ~ '768px') {}
+[class^=~ 'col-'] {}
+@keyframes ~ 'name' {}
+
+// Comments after the `~` hug it, each followed by one space; a `//` keeps its line break
+a {
+  value: ~ /* c */ 'x';
+  glued: ~ /* c */'x';
+  spaced: ~/* a */   /* b */
+    'x';
+  line: ~ // c
+    'x';
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// A Less escape `~"..."` hugs its re-quoted string in every position
+a {
+  value: ~"x";
+  spaced: ~"x";
+  url: url(~"x.png");
+}
+@media (min-width: ~"768px") {
+}
+[class^=~"col-"] {
+}
+@keyframes ~"name" {
+}
+
+// Comments after the `~` hug it, each followed by one space; a `//` keeps its line break
+a {
+  value: ~/* c */ "x";
+  glued: ~/* c */ "x";
+  spaced: ~/* a */ /* b */ "x";
+  line: ~// c
+    "x";
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// A Less escape `~"..."` hugs its re-quoted string in every position
+a {
+  value: ~"x";
+  spaced: ~"x";
+  url: url(~"x.png");
+}
+@media (min-width: ~"768px") {
+}
+[class^=~"col-"] {
+}
+@keyframes ~"name" {
+}
+
+// Comments after the `~` hug it, each followed by one space; a `//` keeps its line break
+a {
+  value: ~/* c */ "x";
+  glued: ~/* c */ "x";
+  spaced: ~/* a */ /* b */ "x";
+  line: ~// c
+    "x";
+}
+
+===================== End =====================

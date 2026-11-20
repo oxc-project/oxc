@@ -4,6 +4,71 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.159.0] - 2026-11-16
+
+### 🚀 Features
+
+- 63b8158 minifier: Inline single use function declaration to assignment (#28917) (Aadharsh  Pannirselvam)
+- eb1833e mangler: Mangle labels (#29614) (camc314)
+- ccca379 minifier: Remove unused labels (#29607) (camc314)
+- fa492d6 minifier: Merge adjacent switch cases with identical bodies (#29316) (camc314)
+- 8cc6101 minifier: Inline member reads into callees as indirect calls (#29305) (camc314)
+- e3d7d91 minifier: Inline member reads into `new` expressions (#29304) (camc314)
+- 57211d0 minifier: Inline member reads into call arguments (#29303) (camc314)
+
+### 🐛 Bug Fixes
+
+- 1dc0ee9 semantic: Preserve catch and var binding identities (#28739) (Dunqing)
+
+### 📚 Documentation
+
+- 9e5a2bb agents: Require runnable playground reproductions in PRs (#29450) (Dunqing)
+- c4d1024 minifier: Require examples in fix and optimization PRs (#29439) (Dunqing)
+
+## [0.158.0] - 2026-11-09
+
+### 🐛 Bug Fixes
+
+- 7243594 minifier: Preserve throwing ArrayBuffer and URI calls (#29012) (camc314)
+- 595f3c2 minifier: Preserve left-hand side effects in instanceof checks (#29011) (camc314)
+- 0b48483 minifier: Preserve UTF-16 boundaries in empty-search replaceAll folding (#28807) (huuya)
+- 1e57a4e codegen: Print infinite numeric literals as `1e400` instead of `Infinity` (#28812) (Dominic Elm)
+- ae7474e minifier: Keep array concat chain reads before later side effects (#28261) (Dunqing)
+
+## [0.157.0] - 2026-11-02
+
+### 🐛 Bug Fixes
+
+- eaa8e90 ecmascript: Avoid numeric `+` folding when an operand may be a string (#28544) (camc314)
+
+### ⚡ Performance
+
+- df42953 minifier: Don't request another pass for block unwrapping (#28315) (Dunqing)
+
+## [0.156.0] - 2026-10-27
+
+### 💥 BREAKING CHANGES
+
+- cf8296f ecmascript: [**BREAKING**] Fold surrogate strings with JSStr constants (#27098) (Dunqing)
+
+### 🚀 Features
+
+- dd6cb2b minifier: Fold out-of-bounds string indices to `void 0` (#28004) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 9ec6617 minifier: Keep brackets on negative and non-finite numeric keys (#27855) (Yunus Ozen)
+- 520a26e minifier: Keep the default in shorthand assignment targets (#28183) (waltu)
+- 6d7b372 minifier: Handle sequence exprs when folding if to expr statement (#27939) (Armano)
+- 09bdb80 minifier: Allow argument rewrite with with leading var assignments (#28056) (Armano)
+- ebcdcd9 minifier: Preserve rest destructuring side effects (#27981) (camc314)
+- bd70a9b ecmascript: Use ECMAScript whitespace when folding `parseFloat`/`parseInt`/`trim` (#27719) (Dunqing)
+- 4c0fa90 minifier,linter: Keep `delete` of constant members and later JSX keys (#27990) (Dunqing)
+
+### ⚡ Performance
+
+- 3493ce3 minifier: Reuse is_error_constructor and simplify substitute_global_new_expression (#28149) (Armano)
+
 ## [0.155.0] - 2026-10-19
 
 ### 🚀 Features

@@ -298,10 +298,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
 
     #[inline]
     pub fn is_identifier_undefined(&self, ident: &IdentifierReference) -> bool {
-        if ident.name == "undefined" && ident.is_global_reference(self.scoping()) {
-            return true;
-        }
-        false
+        ident.name == "undefined" && ident.is_global_reference(self.scoping())
     }
 
     pub fn init_value(
@@ -436,7 +433,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     /// Used by the `replace_*` / `drop_*` helpers.
     #[inline]
     fn dropped_subtree_collector(&mut self) -> DroppedSubtreeCollector<'a, '_> {
-        DroppedSubtreeCollector::new(&mut self.state.pass_changes)
+        DroppedSubtreeCollector::new(&mut self.state.pass_changes, self.scoping.scoping())
     }
 
     /// Replace an expression slot. Marks the pass as having mutated the AST.
@@ -477,6 +474,19 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         self.dropped_subtree_collector().visit_statement(slot);
         *slot = new;
         self.state.record_ast_change();
+    }
+
+    /// Replace a statement slot without requesting another pass.
+    ///
+    /// Only for rewrites the rest of the current pass fully consumes: every
+    /// node that could react to the new shape has not exited yet, and the
+    /// rewrite changes no fact that already-visited nodes read (resolved
+    /// references, symbol values, side effects). Dropped-subtree bookkeeping
+    /// still runs, so the caller must not drop any references.
+    #[inline]
+    pub fn replace_statement_settled(&mut self, slot: &mut Statement<'a>, new: Statement<'a>) {
+        self.dropped_subtree_collector().visit_statement(slot);
+        *slot = new;
     }
 
     /// Replace a statement slot with a value built from the owned old statement.

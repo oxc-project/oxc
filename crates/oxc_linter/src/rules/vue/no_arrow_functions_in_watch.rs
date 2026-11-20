@@ -9,9 +9,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{
-    AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule, utils::find_property,
-};
+use crate::{AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule};
 
 fn no_arrow_functions_in_watch_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("You should not use an arrow function to define a watcher.")
@@ -135,7 +133,7 @@ fn check_define_component_function<'a>(call_expr: &'a CallExpression<'a>, ctx: &
 fn get_watch_object_expression<'a>(
     obj_expr: &'a ObjectExpression<'a>,
 ) -> Option<&'a ObjectExpression<'a>> {
-    let watch_prop = find_property(obj_expr, "watch")?;
+    let watch_prop = obj_expr.find_property("watch")?;
     let Expression::ObjectExpression(watch_obj) = watch_prop.value.get_inner_expression() else {
         return None;
     };
@@ -147,7 +145,7 @@ fn handle_watch_inner_property<'a>(inner_prop: &ObjectPropertyKind<'a>, ctx: &Li
         return;
     };
 
-    if obj_prop.key.static_name().is_some_and(|key| key == "handler")
+    if obj_prop.key.is_specific_static_name("handler")
         && matches!(obj_prop.value.get_inner_expression(), Expression::ArrowFunctionExpression(_))
     {
         ctx.diagnostic(no_arrow_functions_in_watch_diagnostic(obj_prop.value.span()));

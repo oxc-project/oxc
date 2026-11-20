@@ -244,10 +244,6 @@ impl<'o, 'a> PropertyCollector<'o, 'a> {
     }
 
     fn candidate(&mut self, name: Ident<'a>) {
-        if let Some(count) = self.state.frequencies.get_mut(&name) {
-            *count = count.saturating_add(1);
-            return;
-        }
         let count = self.state.frequencies.entry(name).or_default();
         *count = count.saturating_add(1);
     }

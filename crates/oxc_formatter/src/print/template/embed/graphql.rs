@@ -1,8 +1,7 @@
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_formatter_core::{
-    FormatElement, IndentWidth, dispatch_fragment_ir,
-    format_element::{LineMode, TextWidth},
+    FormatElement, IndentWidth, dispatch_fragment_ir, format_element::LineMode,
 };
 
 use crate::{
@@ -21,7 +20,7 @@ use crate::{
 /// - tagged template (gql`...`)
 /// - and function call (`graphql(schema, `...`)`)
 pub(super) fn format_graphql_doc<'a>(
-    quasi: &AstNode<'a, TemplateLiteral<'a>>,
+    quasi: &AstNode<'_, 'a, TemplateLiteral<'a>>,
     f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     let quasis = &quasi.quasis;
@@ -139,7 +138,7 @@ pub(super) fn format_graphql_doc<'a>(
                     if has_prev_part {
                         write!(f, [hard_line_break()]);
                     }
-                    let te = TemplateExpression::Expression(expr);
+                    let te = TemplateExpression::Expression(*expr);
                     FormatTemplateExpression::new(&te, FormatTemplateExpressionOptions::default())
                         .fmt(f);
                     has_prev_part = true;
@@ -187,18 +186,11 @@ fn build_graphql_comment_ir<'a>(
             // Blank line before this comment group -> emit empty line + text
             parts.push(FormatElement::Line(LineMode::Empty));
             parts.push(FormatElement::ExpandParent);
-            let arena_text = allocator.alloc_str(line);
-            let width = TextWidth::from_text(arena_text, indent_width);
-            parts.push(FormatElement::Text { text: arena_text, width });
-        } else {
-            if seen_comment {
-                parts.push(FormatElement::Line(LineMode::Hard));
-                parts.push(FormatElement::ExpandParent);
-            }
-            let arena_text = allocator.alloc_str(line);
-            let width = TextWidth::from_text(arena_text, indent_width);
-            parts.push(FormatElement::Text { text: arena_text, width });
+        } else if seen_comment {
+            parts.push(FormatElement::Line(LineMode::Hard));
+            parts.push(FormatElement::ExpandParent);
         }
+        parts.push(FormatElement::text(allocator.alloc_str(line), indent_width));
 
         seen_comment = true;
     }

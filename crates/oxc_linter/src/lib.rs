@@ -6,28 +6,40 @@
 // Rule::from_configuration returns Result but documenting errors is not useful here.
 #![expect(clippy::missing_errors_doc)]
 
+use std::{path::Path, rc::Rc};
+
+use oxc_allocator::{Allocator, AllocatorPool};
+use oxc_ast::ast_kind::AST_TYPE_MAX;
+use oxc_ast_macros::ast;
+use oxc_data_structures::box_macros::boxed_array;
+use oxc_semantic::{AstNode, Semantic};
+
+// JS plugins are only supported on 64-bit little-endian platforms
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
 use std::{
     iter,
-    path::Path,
     ptr::{self, NonNull},
-    rc::Rc,
     string::ToString,
     time::Duration,
 };
 
-use oxc_allocator::{Allocator, AllocatorPool, ArenaVec, CloneIn, TakeIn};
-use oxc_ast::{
-    ast::{Comment, CommentContent, CommentKind, Program},
-    ast_kind::AST_TYPE_MAX,
-};
-use oxc_ast_macros::ast;
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+use oxc_allocator::{ArenaVec, CloneIn, TakeIn};
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+use oxc_ast::ast::{Comment, CommentContent, CommentKind, Program};
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
-use oxc_data_structures::box_macros::boxed_array;
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
 use oxc_diagnostics::OxcDiagnostic;
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
 use oxc_estree_tokens::update_tokens_as_js;
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
 use oxc_parser::Token;
-use oxc_semantic::{AstNode, Semantic};
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
 use oxc_span::Span;
+
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+use crate::external_linter::GlobalsAndEnvs;
 
 mod ast_util;
 mod config;
@@ -67,12 +79,12 @@ mod lint_runner;
 pub use crate::config::{normalize_rule_name, plugins::normalize_plugin_name};
 pub use crate::disable_directives::{
     DirectivePrefix, DisableDirectives, DisableRuleComment, RuleCommentRule, RuleCommentType,
-    create_unused_directives_diagnostics,
+    create_unused_directives_messages,
 };
 pub use crate::{
     config::{
         Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ESLintRule, LintIgnoreMatcher,
-        LintPlugins, Oxlintrc, ResolvedLinterState,
+        LintPlugins, OxlintOptions, Oxlintrc, ResolvedLinterState, RuleConfig,
     },
     context::{ContextSubHost, ContextSubHostOptions, LintContext},
     external_linter::{
@@ -95,18 +107,16 @@ pub use crate::{
     service::{LintService, LintServiceOptions, OsFileSystem, RuntimeFileSystem},
     suppression::{OxlintSuppressionFileAction, SuppressionManager},
     timing::{RuleTimingRecord, RuleTimingSource, RuleTimingStore},
-    tsgolint::TsGoLintState,
+    tsgolint::{TsGoLintRun, TsGoLintState},
     utils::{read_to_arena_str, read_to_string},
 };
 use crate::{
     config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings},
     context::ContextHost,
-    external_linter::GlobalsAndEnvs,
     fixer::CompositeFix,
     loader::LINT_PARTIAL_LOADER_EXTENSIONS,
     rules::RuleEnum,
     timing::{RuleTimingRecorder, RuleTimingStat},
-    utils::iter_possible_jest_call_node,
 };
 
 #[cfg(target_pointer_width = "64")]
@@ -188,7 +198,6 @@ thread_local! {
 fn execute_rules<'a, const TIMINGS: bool>(
     rules: &[(&RuleEnum, LintContext<'a>)],
     semantic: &Semantic<'a>,
-    should_run_on_jest_node: bool,
     with_runtime_optimization: bool,
     mut timing_recorder: Option<&mut RuleTimingRecorder>,
 ) {
@@ -233,18 +242,6 @@ fn execute_rules<'a, const TIMINGS: bool>(
                     rule.run::<TIMINGS>(node, ctx, timing_stat);
                 }
             }
-
-            if should_run_on_jest_node {
-                for jest_node in iter_possible_jest_call_node(semantic) {
-                    for (rule_index, (rule, ctx)) in rules.iter().enumerate() {
-                        if rule.run_info().is_run_on_jest_node_implemented() {
-                            let timing_stat =
-                                get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
-                            rule.run_on_jest_node::<TIMINGS>(&jest_node, ctx, timing_stat);
-                        }
-                    }
-                }
-            }
         });
     } else {
         // Unoptimized reference path: every rule runs on every node, with no type filtering. Used
@@ -256,13 +253,6 @@ fn execute_rules<'a, const TIMINGS: bool>(
             for node in semantic.nodes() {
                 let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
                 rule.run::<TIMINGS>(node, ctx, timing_stat);
-            }
-
-            if should_run_on_jest_node {
-                for jest_node in iter_possible_jest_call_node(semantic) {
-                    let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
-                    rule.run_on_jest_node::<TIMINGS>(&jest_node, ctx, timing_stat);
-                }
             }
         }
     }
@@ -367,8 +357,24 @@ impl Linter {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
         let mut timing_recorder = TIMINGS.then(|| RuleTimingRecorder::with_capacity(rules.len()));
 
-        let mut ctx_host =
-            Rc::new(ContextHost::new(path, context_sub_hosts, allocator, self.options, config));
+        // The shared React Compiler run takes its environment additions from the
+        // `react/capitalized-calls` rule's resolved options, and runs the passes
+        // that only report `Todo` and `Invariant` when their rules are enabled.
+        let mut react_compiler_env_options = rules
+            .iter()
+            .find_map(|(rule, _)| match rule {
+                RuleEnum::ReactCapitalizedCalls(rule) => Some(rule.react_compiler_env_options()),
+                _ => None,
+            })
+            .unwrap_or_default();
+        react_compiler_env_options.report_todo_and_invariant = rules
+            .iter()
+            .any(|(rule, _)| matches!(rule, RuleEnum::ReactTodo(_) | RuleEnum::ReactInvariant(_)));
+
+        let mut ctx_host = Rc::new(
+            ContextHost::new(path, context_sub_hosts, allocator, self.options, config)
+                .with_react_compiler_env_options(react_compiler_env_options),
+        );
 
         #[cfg(debug_assertions)]
         let mut current_diagnostic_index = 0;
@@ -415,24 +421,15 @@ impl Linter {
 
                     rule.should_run(&ctx_host)
                 })
-                .map(|(rule, severity)| (rule, Rc::clone(&ctx_host).spawn(rule, *severity)))
+                .map(|(rule, config)| (rule, Rc::clone(&ctx_host).spawn(rule, config.severity)))
                 .collect::<Vec<_>>();
 
-            let should_run_on_jest_node =
-                ctx_host.plugins().has_test() && ctx_host.frameworks().is_test();
-
-            execute_rules::<TIMINGS>(
-                &rules,
-                semantic,
-                should_run_on_jest_node,
-                true,
-                timing_recorder.as_mut(),
-            );
+            execute_rules::<TIMINGS>(&rules, semantic, true, timing_recorder.as_mut());
 
             #[cfg(debug_assertions)]
             {
                 let diagnostics_after_optimized = ctx_host.diagnostic_count();
-                execute_rules::<false>(&rules, semantic, should_run_on_jest_node, false, None);
+                execute_rules::<false>(&rules, semantic, false, None);
                 let diagnostics_after_unoptimized = ctx_host.diagnostic_count();
                 ctx_host.get_diagnostics(|diagnostics| {
                     let optimized_diagnostics = &diagnostics[current_diagnostic_index..diagnostics_after_optimized];
@@ -513,7 +510,7 @@ impl Linter {
         {
             ctx_host.rewind_sub_hosts();
             loop {
-                ctx_host.report_unused_directives(severity.into());
+                ctx_host.report_unused_directives(severity);
 
                 if !ctx_host.next_sub_host() {
                     break;
@@ -972,6 +969,7 @@ impl Linter {
         }
     }
 
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
     fn record_external_timings(
         &self,
         rule_timing_store: Option<&RuleTimingStore>,
@@ -993,6 +991,7 @@ impl Linter {
         );
     }
 
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
     fn external_rule_timing_record(
         &self,
         external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
@@ -1012,6 +1011,7 @@ impl Linter {
         })
     }
 
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
     fn duration_from_millis(duration_ms: f64) -> Option<Duration> {
         Duration::try_from_secs_f64(duration_ms / 1000.0).ok()
     }

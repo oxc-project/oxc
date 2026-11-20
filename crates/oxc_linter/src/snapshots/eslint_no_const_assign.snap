@@ -226,3 +226,30 @@ source: crates/oxc_linter/src/tester.rs
    ·             ╰── x is declared here as `const`.
    ╰────
   help: Use `let` instead of `const` if you need to reassign this variable.
+
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable a.
+   ╭─[no_const_assign.tsx:1:7]
+ 1 │ const a = 1, {b} = source; a = 2; b = 3;
+   ·       ┬                    ┬
+   ·       │                    ╰── a is re-assigned here.
+   ·       ╰── a is declared here as `const`.
+   ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
+
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable b.
+   ╭─[no_const_assign.tsx:1:15]
+ 1 │ const a = 1, {b} = source; a = 2; b = 3;
+   ·               ┬                   ┬
+   ·               │                   ╰── b is re-assigned here.
+   ·               ╰── b is declared here as `const`.
+   ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
+
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable b.
+   ╭─[no_const_assign.tsx:1:18]
+ 1 │ using a = foo(), b = bar(); b = baz();
+   ·                  ┬          ┬
+   ·                  │          ╰── b is re-assigned here.
+   ·                  ╰── b is declared here as `const`.
+   ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.

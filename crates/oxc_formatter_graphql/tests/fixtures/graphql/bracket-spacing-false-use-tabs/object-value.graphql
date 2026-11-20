@@ -1,0 +1,1 @@
+{ user(filters: { active: true }) { name } }

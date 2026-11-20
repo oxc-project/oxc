@@ -23,13 +23,18 @@ pub enum FlowScalarKind {
 }
 
 /// Emits a plain scalar: raw slice content, line-folded per `proseWrap`.
-pub fn write_plain(span: Span, f: &mut YamlFormatter<'_, '_>) {
+pub fn write_plain(span: Span, multiline: bool, f: &mut YamlFormatter<'_, '_>) {
     let content = f.context().source_text().text_for(&span);
-    write_flow_scalar_content(FlowScalarKind::Plain, content, f);
+    write_flow_scalar_content(FlowScalarKind::Plain, content, multiline, f);
 }
 
 /// Emits a quoted scalar with Prettier's `quoteDouble`/`quoteSingle` case.
-pub fn write_quoted(kind: FlowScalarKind, span: Span, f: &mut YamlFormatter<'_, '_>) {
+pub fn write_quoted(
+    kind: FlowScalarKind,
+    span: Span,
+    multiline: bool,
+    f: &mut YamlFormatter<'_, '_>,
+) {
     let source = f.context().source_text();
     // Inner content between the quotes
     let raw = source.text_for(&Span::new(span.start + 1, span.end - 1));
@@ -47,7 +52,7 @@ pub fn write_quoted(kind: FlowScalarKind, span: Span, f: &mut YamlFormatter<'_, 
     if has_unreencodable_escape {
         let quote = if kind == FlowScalarKind::QuoteDouble { "\"" } else { "'" };
         write!(f, text(quote));
-        write_flow_scalar_content(kind, raw, f);
+        write_flow_scalar_content(kind, raw, multiline, f);
         write!(f, text(quote));
         return;
     }
@@ -60,9 +65,9 @@ pub fn write_quoted(kind: FlowScalarKind, span: Span, f: &mut YamlFormatter<'_, 
             // (The guarding `contains('"')` means the first replace always matches,
             // so the chain is owned; copy it into the arena once.)
             let content = raw.cow_replace("\\\"", "\"").cow_replace('\'', "''").into_owned();
-            write_flow_scalar_content(kind, f.allocator().alloc_str(&content), f);
+            write_flow_scalar_content(kind, f.allocator().alloc_str(&content), multiline, f);
         } else {
-            write_flow_scalar_content(kind, raw, f);
+            write_flow_scalar_content(kind, raw, multiline, f);
         }
         write!(f, text("'"));
         return;
@@ -74,9 +79,9 @@ pub fn write_quoted(kind: FlowScalarKind, span: Span, f: &mut YamlFormatter<'_, 
         if kind == FlowScalarKind::QuoteSingle {
             // `''` unescapes to `'` (nothing else needs escaping in double quotes here)
             let content = raw.cow_replace("''", "'");
-            write_flow_scalar_content(kind, arena_cow_str(&content, f), f);
+            write_flow_scalar_content(kind, arena_cow_str(&content, f), multiline, f);
         } else {
-            write_flow_scalar_content(kind, raw, f);
+            write_flow_scalar_content(kind, raw, multiline, f);
         }
         write!(f, text("\""));
         return;
@@ -84,22 +89,24 @@ pub fn write_quoted(kind: FlowScalarKind, span: Span, f: &mut YamlFormatter<'_, 
 
     let quote = f.options().single_quote.as_str();
     write!(f, text(quote));
-    write_flow_scalar_content(kind, raw, f);
+    write_flow_scalar_content(kind, raw, multiline, f);
     write!(f, text(quote));
 }
 
 /// Prettier's `printFlowScalarContent`:
 /// each reflow group becomes a `fill(join(line, words))`, groups joined by hardlines.
+/// `multiline` is the parser's flag for the scalar crossing a line break.
 pub fn write_flow_scalar_content<'a>(
     kind: FlowScalarKind,
     content: &'a str,
+    multiline: bool,
     f: &mut YamlFormatter<'_, 'a>,
 ) {
     let prose_wrap = f.options().prose_wrap;
     // Fast path:
     // a single-line scalar under `preserve` (the default) prints verbatim,
     // skip the line-contents machinery and its allocations.
-    if prose_wrap == ProseWrap::Preserve && !content.contains('\n') {
+    if prose_wrap == ProseWrap::Preserve && !multiline {
         if !content.is_empty() {
             write!(f, text(content));
         }

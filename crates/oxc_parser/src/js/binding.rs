@@ -24,6 +24,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     pub(crate) fn parse_binding_pattern(&mut self) -> BindingPattern<'a> {
         match self.cur_kind() {
+            Kind::Ident => {
+                let ident = self.parse_plain_binding_identifier();
+                BindingPattern::BindingIdentifier(self.alloc(ident))
+            }
             Kind::LCurly => self.parse_object_binding_pattern(),
             Kind::LBrack => self.parse_array_binding_pattern(),
             _ => self.parse_binding_pattern_identifier(),
@@ -37,9 +41,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Section 14.3.3 Object Binding Pattern
     fn parse_object_binding_pattern(&mut self) -> BindingPattern<'a> {
+        debug_assert!(self.at(Kind::LCurly));
         let start = self.cur_start();
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LCurly);
+        self.advance(Kind::LCurly);
         let (list, rest) = self.parse_delimited_list_with_rest(
             Kind::RCurly,
             opening_span,
@@ -60,9 +65,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Section 14.3.3 Array Binding Pattern
     fn parse_array_binding_pattern(&mut self) -> BindingPattern<'a> {
+        debug_assert!(self.at(Kind::LBrack));
         let start = self.cur_start();
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LBrack);
+        self.advance(Kind::LBrack);
         let (list, rest) = self.parse_delimited_list_with_rest(
             Kind::RBrack,
             opening_span,

@@ -11,3 +11,22 @@
 
 <!-- prettier-ignore -->
 *   also   kept
+
+::: details X
+
+<!-- prettier-ignore-start -->
+| a | b |
+| - | - |
+*   kept
+<!-- prettier-ignore-end -->
+
+:::
+
+> ::: details Y
+>
+> <!-- prettier-ignore-start -->
+> | a | b |
+> | - | - |
+> <!-- prettier-ignore-end -->
+>
+> :::

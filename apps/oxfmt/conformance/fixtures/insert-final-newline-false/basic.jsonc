@@ -1,0 +1,6 @@
+{
+  // Package name
+  "foo": "my",
+  // Trailing comma test
+  "bar": "1",
+}

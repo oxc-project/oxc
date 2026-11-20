@@ -1,4 +1,6 @@
 pub mod ast_builder;
+pub mod class_name;
+pub mod decorated_class;
 
 use oxc_ast::ast::Function;
 use oxc_syntax::symbol::SymbolFlags;

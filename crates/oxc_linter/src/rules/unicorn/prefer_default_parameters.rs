@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         AssignmentOperator, AssignmentTarget, BindingPattern, Expression, FormalParameter,
-        LogicalOperator, MethodDefinitionKind, PropertyKind, Statement, UnaryOperator,
+        LogicalOperator, PropertyKind, Statement, UnaryOperator,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -377,7 +377,7 @@ fn find_enclosing_function<'a>(
 
 fn is_setter_function(ctx: &LintContext, function_id: NodeId) -> bool {
     match ctx.nodes().parent_kind(function_id) {
-        AstKind::MethodDefinition(method) => method.kind == MethodDefinitionKind::Set,
+        AstKind::MethodDefinition(method) => method.kind.is_set(),
         AstKind::ObjectProperty(property) => property.kind == PropertyKind::Set,
         _ => false,
     }

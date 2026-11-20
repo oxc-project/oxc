@@ -50,6 +50,7 @@ fn bench_estree(criterion: &mut Criterion) {
                 let mut program = Parser::new(&allocator, source_text, source_type)
                     .with_options(ParseOptions {
                         parse_regular_expression: true,
+                        enable_ident_hashes: false,
                         ..ParseOptions::default()
                     })
                     .parse()
@@ -91,6 +92,7 @@ fn bench_estree_tokens(criterion: &mut Criterion) {
                 let ret = Parser::new(&allocator, source_text, source_type)
                     .with_options(ParseOptions {
                         parse_regular_expression: true,
+                        enable_ident_hashes: false,
                         ..ParseOptions::default()
                     })
                     .with_config(config)

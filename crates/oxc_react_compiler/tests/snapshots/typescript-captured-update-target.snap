@@ -2,8 +2,22 @@
 source: crates/oxc_react_compiler/tests/snapshot.rs
 input_file: crates/oxc_react_compiler/fixtures/typescript-captured-update-target.ts
 ---
-Diagnostics:
-
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "(BuildHIR::lowerExpression) Handle UpdateExpression to variables captured within lambdas.", labels: [LabeledSpan { label: None, span: Span { start: 71, end: 90 }, primary: true }], help: Some("Rewrite the highlighted code using syntax supported by React Compiler"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Advice, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
-
-No changes.
+import { c as _c } from "react/compiler-runtime";
+function Component() {
+	const $ = _c(1);
+	let t0;
+	if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+		let value = 0;
+		const read = () => value;
+		value++;
+		t0 = read();
+		$[0] = t0;
+	} else {
+		t0 = $[0];
+	}
+	return t0;
+}
+export const FIXTURE_ENTRYPOINT = {
+	fn: Component,
+	params: []
+};

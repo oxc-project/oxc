@@ -9,6 +9,7 @@ use oxc_ast::{
     ast::{Argument, BinaryExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
 use oxc_str::{CompactStr, JSChar, JSStr};
 
@@ -151,8 +152,7 @@ impl ValidTitleConfig {
         let disallowed_words: Vec<&str> = config
             .and_then(|v| v.get("disallowedWords"))
             .and_then(|v| v.as_array())
-            .map(|v| v.iter().filter_map(|v| v.as_str()).collect())
-            .unwrap_or_default();
+            .map_or_default(|v| v.iter().filter_map(|v| v.as_str()).collect());
         let disallowed_words_reg = (!disallowed_words.is_empty()).then(|| {
             let disallowed_words_pattern =
                 disallowed_words.iter().map(|word| regex::escape(word)).join("|");
@@ -179,16 +179,16 @@ impl ValidTitleConfig {
         })
     }
 
-    pub fn run_rule<'a>(
-        config: &ValidTitleConfig,
-        possible_jest_fn_node: &PossibleJestNode<'a, '_>,
-        ctx: &LintContext<'a>,
-    ) {
-        let node = possible_jest_fn_node.node;
+    pub fn run_rule<'a>(config: &ValidTitleConfig, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
-        let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, possible_jest_fn_node, ctx)
+        let Some(possible_jest_fn_node) =
+            PossibleJestNode::from_call_expression(node, call_expr, ctx)
+        else {
+            return;
+        };
+        let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, &possible_jest_fn_node, ctx)
         else {
             return;
         };

@@ -10,13 +10,10 @@ use oxc_syntax::reference::ReferenceFlags;
 use crate::{
     common::helper_loader::{Helper, helper_call_expr},
     context::TraverseCtx,
-    utils::ast_builder::create_assignment,
+    utils::ast_builder::{create_assignment, create_variable_declaration},
 };
 
-use super::{
-    ClassProperties,
-    utils::{create_underscore_ident_name, create_variable_declaration},
-};
+use super::{ClassProperties, utils::create_underscore_ident_name};
 
 // Instance properties
 impl<'a> ClassProperties<'a> {
@@ -83,7 +80,7 @@ impl<'a> ClassProperties<'a> {
         value: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let private_props = self.current_class().private_props.as_ref().unwrap();
+        let private_props = self.current_class().private_props.lowered().unwrap();
         let prop = &private_props[&ident.name];
         let arguments = ArenaVec::from_array_in(
             [
@@ -223,7 +220,7 @@ impl<'a> ClassProperties<'a> {
 
         // Insert after class
         let class_details = self.current_class();
-        let private_props = class_details.private_props.as_ref().unwrap();
+        let private_props = class_details.private_props.lowered().unwrap();
         let prop_binding = &private_props[&ident.name].binding;
 
         if class_details.is_declaration {
@@ -396,7 +393,7 @@ impl<'a> ClassProperties<'a> {
             ctx,
         );
 
-        let private_props = self.current_class().private_props.as_ref().unwrap();
+        let private_props = self.current_class().private_props.lowered().unwrap();
         let prop_binding = &private_props[&ident.name].binding;
         let arguments = ArenaVec::from_array_in(
             [

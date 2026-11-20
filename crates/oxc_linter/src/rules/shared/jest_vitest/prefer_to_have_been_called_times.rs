@@ -1,4 +1,5 @@
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -50,14 +51,16 @@ expect(method.mock.calls[0][0]).toStrictEqual(value);
 ```
 ";
 
-pub fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-    let node = possible_jest_node.node;
-
+pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
     let AstKind::CallExpression(call_expr) = node.kind() else {
         return;
     };
 
-    let Some(parsed_expect_call) = parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx)
+    let Some(possible_jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx)
+    else {
+        return;
+    };
+    let Some(parsed_expect_call) = parse_expect_jest_fn_call(call_expr, &possible_jest_node, ctx)
     else {
         return;
     };

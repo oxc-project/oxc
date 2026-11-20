@@ -1,7 +1,4 @@
-use oxc_ast::{
-    AstKind,
-    ast::{Argument, JSXAttributeName, ObjectPropertyKind},
-};
+use oxc_ast::{AstKind, ast::JSXAttributeName};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -71,20 +68,15 @@ impl Rule for NoChildrenProp {
                     ctx.diagnostic(no_children_prop_diagnostic(attr_ident.span));
                 }
             }
-            AstKind::CallExpression(call_expr) => {
+            AstKind::ObjectExpression(obj_expr) => {
+                let AstKind::CallExpression(call_expr) = ctx.nodes().parent_kind(node.id()) else {
+                    return;
+                };
                 if is_create_element_call(call_expr)
-                    && let Some(Argument::ObjectExpression(obj_expr)) = call_expr.arguments.get(1)
-                    && let Some(span) = obj_expr.properties.iter().find_map(|prop| {
-                        if let ObjectPropertyKind::ObjectProperty(prop) = prop
-                            && prop.key.is_specific_static_name("children")
-                        {
-                            return Some(prop.key.span());
-                        }
-
-                        None
-                    })
+                    && call_expr.arguments.get(1).is_some_and(|arg| arg.span() == obj_expr.span)
+                    && let Some(prop) = obj_expr.find_property("children")
                 {
-                    ctx.diagnostic(no_children_prop_diagnostic(span));
+                    ctx.diagnostic(no_children_prop_diagnostic(prop.key.span()));
                 }
             }
             _ => {}
@@ -136,6 +128,10 @@ fn test() {
         r#"<MyComponent className="class-name" {...props} />;"#,
         r#"foo(MyComponent, {...props, children: "Children"})"#,
         r#"React.createElement(MyComponent, {className: "class-name", ...props});"#,
+        r#"React.createElement({children: "Children"}, {});"#,
+        r#"React.createElement("div", {}, {children: "Children"});"#,
+        r#"React.createElement("div", ({children: "Children"}));"#,
+        r#"React.createElement("div", {props: {children: "Children"}});"#,
     ];
 
     #[rustfmt::skip]

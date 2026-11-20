@@ -66,10 +66,8 @@ $m: (
 @for $i from /* c */ 1 through /* d */ $n {
 }
 // `@while` shares `@if`'s chain layout when the condition overflows
-@while $i <
-  10 and
-  $very-long-variable-name-here ==
-  $another-long-variable-name and
+@while $i < 10 and
+  $very-long-variable-name-here == $another-long-variable-name and
   $x
 {
 }

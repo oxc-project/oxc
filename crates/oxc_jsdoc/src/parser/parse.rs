@@ -1,4 +1,5 @@
 use oxc_span::Span;
+use oxc_syntax::line_terminator::is_line_terminator;
 
 use super::{
     jsdoc_parts::{JSDocCommentPart, JSDocTagKindPart},
@@ -24,8 +25,8 @@ pub fn parse_jsdoc(
     // This will collect all the @tags found in the JSDoc
     let mut tags = vec![];
 
-    // Tracks how deeply nested we are inside curly braces `{}`.
-    // Used to ignore `@` characters inside objects or inline tag syntax like {@link ...}
+    // Tracks how deeply nested we are inside curly braces `{}` on the current line.
+    // Used to decide whether a backtick inside quotes opens a code span.
     let mut curly_brace_depth: i32 = 0;
 
     let mut brace_depth: i32 = 0;
@@ -38,6 +39,7 @@ pub fn parse_jsdoc(
     // This includes inline code blocks or markdown-style code inside comments.
     // When 0, we're outside backticks. When > 0, stores the count of opening backticks,
     // so we can match the closing sequence (per CommonMark, backtick strings must match).
+    // Inline code (1-2 backticks) ends at the line end, code fences (3+) span lines.
     let mut backtick_count: u32 = 0;
 
     // Track whether we're currently inside quotes '...' or "..."
@@ -71,15 +73,6 @@ pub fn parse_jsdoc(
 
     // Iterate through every character in the input string
     while let Some(ch) = chars.next() {
-        // A `@` is only considered the start of a tag if we are not nested inside
-        // braces, square brackets, or backtick-quoted sections
-        let can_parse = curly_brace_depth == 0
-            && square_brace_depth == 0
-            && brace_depth == 0
-            && backtick_count == 0
-            && !in_double_quotes
-            && !in_single_quotes;
-
         match ch {
             // Handle backtick sequences of any length (per CommonMark):
             // - 1 backtick: inline code
@@ -109,25 +102,29 @@ pub fn parse_jsdoc(
                 // Mismatched count inside a backtick section: ignore
             }
             // Inside backtick-quoted sections (inline code / code fences),
-            // all bracket/quote tracking is suspended. Characters like `{`, `}`,
-            // `"`, etc. inside code literals are not syntactic and must not
-            // affect `can_parse` — otherwise a stray `{` in inline code
-            // (e.g. `` `{` ``) would prevent subsequent `@` tags from being
-            // recognized, causing them to merge into the description.
+            // all bracket/quote tracking is suspended. Characters like `{`, `}`, `"`, etc.
+            // inside code literals are not syntactic and must not be tracked,
+            // otherwise a stray `{` in inline code (e.g. `` `{` ``) would prevent subsequent `@` tags
+            // from being recognized, causing them to merge into the description.
             '"' if backtick_count == 0 && !in_single_quotes => {
                 in_double_quotes = !in_double_quotes;
             }
             '\'' if backtick_count == 0 && !in_double_quotes => {
                 in_single_quotes = !in_single_quotes;
             }
-            '\n' => {
+            c if is_line_terminator(c) => {
                 in_double_quotes = false;
                 in_single_quotes = false;
-                // Parentheses and square-bracket syntaxes are line-oriented in JSDoc.
-                // Reset them on each new line so prose such as `[min, max)` does not
-                // block parsing subsequent `@tag` lines.
+                // Brackets, braces and inline code are line-oriented in JSDoc.
+                // Reset them on each new line so prose such as `[min, max)`, `Example { a`
+                // or `Example `a` does not swallow subsequent `@tag` lines.
+                // Code fences (3+ backticks) persist so `@` inside them is not a tag.
                 brace_depth = 0;
                 square_brace_depth = 0;
+                curly_brace_depth = 0;
+                if backtick_count < 3 {
+                    backtick_count = 0;
+                }
             }
             '{' if backtick_count == 0 && !in_double_quotes && !in_single_quotes => {
                 curly_brace_depth += 1;
@@ -148,9 +145,12 @@ pub fn parse_jsdoc(
                 square_brace_depth = (square_brace_depth - 1).max(0);
             }
 
-            '@' if can_parse
+            // Every other tracked syntax is reset on each new line,
+            // so only a code fence can hide a line-start `@`.
+            '@' if backtick_count == 0
                 && at_line_start
-                && !is_indented_code_block(line_seen_star, spaces_after_star) =>
+                && !is_indented_code_block(line_seen_star, spaces_after_star)
+                && starts_block_tag(&source_text[end..]) =>
             {
                 let part = &source_text[start..end];
                 let span = Span::new(
@@ -176,10 +176,10 @@ pub fn parse_jsdoc(
         }
 
         // Update line-start tracking:
-        // - `\n` resets to true (new line)
+        // - A line terminator resets to true (new line)
         // - Whitespace and `*` preserve true (JSDoc line leaders like ` * `)
         // - Everything else sets to false
-        if ch == '\n' {
+        if is_line_terminator(ch) {
             at_line_start = true;
             line_seen_star = false;
             spaces_after_star = 0;
@@ -187,7 +187,7 @@ pub fn parse_jsdoc(
             if ch == '*' {
                 line_seen_star = true;
                 spaces_after_star = 0;
-            } else if matches!(ch, ' ' | '\t' | '\r') {
+            } else if matches!(ch, ' ' | '\t') {
                 if line_seen_star {
                     spaces_after_star += 1;
                 }
@@ -226,6 +226,18 @@ pub fn parse_jsdoc(
 fn is_indented_code_block(line_seen_star: bool, spaces_after_star: u32) -> bool {
     // 5 = 1 conventional space after `*` + 4 for indented code block
     line_seen_star && spaces_after_star >= 5
+}
+
+/// Whether `text`, placed at a line start, opens a block tag.
+///
+/// A `/` in the tag name (e.g. an npm scope `@scope/pkg`) means prose,
+/// as comment-parser's `reTag` (`/^@[^\s/]+(?=\s|$)/`) used by eslint-plugin-jsdoc.
+///
+/// Unlike `reTag`, the name ends at `{` too (same as `parse_jsdoc_tag`),
+/// so `@param{import('./a').B} x` stays a tag, as TypeScript reads it.
+pub fn starts_block_tag(text: &str) -> bool {
+    text.starts_with('@')
+        && utils::find_token_range(text).is_some_and(|(_, end)| !text[..end].contains('/'))
 }
 
 /// tag_content: Starts with `@`, may be multiline
@@ -350,6 +362,16 @@ mod tests {
     }
 
     #[test]
+    fn tags_split_on_every_line_terminator() {
+        for newline in ["\r", "\r\n", "\u{2028}", "\u{2029}"] {
+            let src = format!(
+                "{newline} * @param {{string}} name{newline} * @returns {{boolean}}{newline} "
+            );
+            assert_eq!(tag_kinds(&src), vec!["param", "returns"], "{newline:?}");
+        }
+    }
+
+    #[test]
     fn inline_link_does_not_split_tag() {
         // {@link ...} should NOT start a new tag
         let src = " \n * @param {string} name See {@link Foo} for details\n * @returns {void}";
@@ -400,5 +422,30 @@ mod tests {
         let kinds = tag_kinds(src);
         // 4 spaces after `*` = 1 conventional + 3 indent → NOT an indented code block
         assert_eq!(kinds, vec!["deprecated", "type"]);
+    }
+
+    #[test]
+    fn slash_in_tag_name_is_not_a_tag() {
+        // An npm scope wrapped to a line start stays prose, as in comment-parser
+        let src = " The cues in\n * @scope/pkg).\n * @foo bar\n * @param{import('./a').B} x";
+        let (comment, tags) = parse_jsdoc(src, 0);
+        assert!(comment.parsed().contains("@scope/pkg)."));
+        assert_eq!(tags.iter().map(|t| t.kind.parsed()).collect::<Vec<_>>(), vec!["foo", "param"]);
+    }
+
+    #[test]
+    fn line_scoped_braces_and_code_spans_do_not_prevent_tag_split() {
+        // https://github.com/oxc-project/oxc/issues/28859
+        for description in [
+            "Example { a",
+            "Example `a",
+            "Example { a }",
+            "Example `{ a }`",
+            "Example a }",
+            "For example, if the map looks like this `{ \"domain1.com\": \"test.local\" }",
+        ] {
+            let source = format!("\n * {description}\n *\n * @param p the param");
+            assert_eq!(tag_kinds(&source), vec!["param"], "{description}");
+        }
     }
 }

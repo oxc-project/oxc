@@ -445,6 +445,17 @@ impl<'a> From<Argument<'a>> for ArrayExpressionElement<'a> {
     }
 }
 
+impl<'a> ObjectExpression<'a> {
+    /// Finds the first [`ObjectProperty`] whose static key matches `name`.
+    /// Spread properties are skipped.
+    pub fn find_property(&self, name: &str) -> Option<&ObjectProperty<'a>> {
+        self.properties.iter().find_map(|prop| {
+            let ObjectPropertyKind::ObjectProperty(prop) = prop else { return None };
+            prop.key.is_specific_static_name(name).then_some(prop.as_ref())
+        })
+    }
+}
+
 impl<'a> ObjectPropertyKind<'a> {
     /// Returns `true` if this object property is a [spread](SpreadElement).
     #[inline]
@@ -463,14 +474,17 @@ impl<'a> ObjectPropertyKind<'a> {
 }
 
 impl<'a> PropertyKey<'a> {
-    /// Returns the static name of this property, if it has one, or `None` otherwise.
+    /// Returns the name of a [`PropertyKey::StaticIdentifier`] or a string, numeric, bigint,
+    /// regular expression, `null`, or no-substitution template literal.
+    /// Returns `None` for other keys.
     ///
     /// ## Example
     ///
     /// - `a: 1` in `{ a: 1 }` would return `a`
-    /// - `#a: 1` in `class C { #a: 1 }` would return `None`
+    /// - `#a = 1` in `class C { #a = 1 }` would return `None`
     /// - `'a': 1` in `{ 'a': 1 }` would return `a`
     /// - `[a]: 1` in `{ [a]: 1 }` would return `None`
+    /// - `[true]` and `[-1]` in `{ [true]: 1, [-1]: 1 }` would return `None`
     pub fn static_name(&self) -> Option<StaticPropertyName<'a>> {
         match self {
             Self::StaticIdentifier(ident) => Some(StaticPropertyName::from(ident.name)),
@@ -1195,7 +1209,7 @@ impl VariableDeclarationKind {
     }
 
     /// Returns `true` if declared using `await using` (such as `await using x`)
-    pub fn is_await(self) -> bool {
+    pub fn is_await_using(self) -> bool {
         self == Self::AwaitUsing
     }
 
@@ -1388,6 +1402,17 @@ impl<'a> BindingPattern<'a> {
                         .is_none_or(|rest| rest.argument.all_binding_identifiers(predicate))
             }
         }
+    }
+
+    /// Returns `true` if any binding identifier in this pattern satisfies the given predicate.
+    ///
+    /// Does not allocate and short-circuits on the first `true` result.
+    /// If the pattern contains no binding identifiers, returns `false`.
+    pub fn any_binding_identifiers<F>(&self, predicate: &mut F) -> bool
+    where
+        F: FnMut(&BindingIdentifier<'a>) -> bool,
+    {
+        !self.all_binding_identifiers(&mut |ident| !predicate(ident))
     }
 
     /// Returns `true` if this binding pattern is destructuring.

@@ -1,0 +1,29 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<script src="a"/>
+<div/>after
+<p><my-el/>in p</p>
+<textarea/>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<script src="a" />
+<div />
+after
+<p><my-el />in p</p>
+<textarea />
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<script src="a" />
+<div />
+after
+<p><my-el />in p</p>
+<textarea />
+
+===================== End =====================

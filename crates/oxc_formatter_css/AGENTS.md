@@ -25,7 +25,7 @@ The fork adds:
   - the css-in-js parse mode, enabled only by `format_to_ir`
   - Rationale, gating and per-position coverage: see "css-in-js specifics" below
 - Bug fixes toward the reference compilers for valid CSS/SCSS/Less syntax `raffia` miss parses or rejects;
-- The acceptance line: the fork's README "Acceptance", see "Acceptance" below
+- The acceptance line: see "Acceptance" below
 
 Prettier operates on `postcss` + three sub-parsers (`postcss-selector-parser`, `postcss-values-parser`, `postcss-media-query-parser`) and depends on `raws` (source gaps).
 
@@ -36,7 +36,7 @@ Prettier operates on `postcss` + three sub-parsers (`postcss-selector-parser`, `
 The shared policy applies; CSS specifics:
 
 - `oxc-css-parser` is error-tolerant via `parser.recoverable_errors()`, but any parse error still bails out
-- `TopLevelDeclaration`: a root declaration in Css and Scss, so standalone `format()` rejects it (README "Acceptance")
+- `TopLevelDeclaration`: a root declaration in Css and Scss, so standalone `format()` rejects it (oxc-css-parser AGENTS.md "Acceptance")
   - `format_to_ir()` parses a fragment (`CssRoot::Fragment`, the parser's `block_contents`): the root follows the rules inside a block, so it is a statement
     - `` css`display: flex;` `` is the dominant css-in-js shape, and MDN-style property snippets in Markdown code blocks
   - Less parses and formats it: less.js accepts it at parse time and fails only at eval
@@ -48,7 +48,7 @@ they are collected via `ParserBuilder::comments()` into a positional cursor over
 
 Ownership is a claim discipline, not attachment: each printer claims the comments inside what it prints, in source order.
 
-- Statement level: `flush_leading_comments` before the statement, `write_terminator_tail_comments` before its `;`
+- Statement level: `write_comments` before the statement (then `write_statement_separator`), `write_terminator_tail_comments` before its `;`
 - Value level: a comma group claims its own head (`write_comma_group`); a bare value has no group to do so,
   its CALLER claims (`write_list_element` / `write_top_level_list_element`), never `write_component_value` itself (a `//` hardline would land inside the indent an arm opens)
 - After each statement, the sequence DISCARDS unclaimed comments inside the statement span:
@@ -82,6 +82,8 @@ The shared invariants (FORMATTER_POLICY.md "Comment placement invariants") apply
     and `write_at_rule` writes whatever is still pending before the `;` / `{`, so a prelude comment is never lost
   - own-line comments stay own-line at statement and trailing level, but a value-level own-line BLOCK comment is a plain fill item (joins the line when it fits):
     - it carries no line-based semantics, and freezing it own-line would pin a wrapped layout (= not idempotent)
+  - a `style` attribute's statements share a line when they fit, and its comments take the same separator (`write_statement_separator`):
+    they share the line exactly when the declarations do, own-line ones included (a same-line comment pair keeps its space)
 
 ### Line endings
 
@@ -129,7 +131,7 @@ FM behavior is verified through oxfmt; this crate carries no dispatcher-wired FM
 
 ### Acceptance
 
-What the parser takes in is the oxc-css-parser's README "Acceptance": one grammar owner per variant.
+What the parser takes in is oxc-css-parser AGENTS.md "Acceptance": one grammar owner per variant.
 Never "postcss keeps the bytes", never "Prettier prints it".
 
 The formatter's side: postcss gives Prettier statements whose selectors, values and params are strings, and Prettier re-tokenizes those with its own sub-parsers and word rules.
@@ -152,6 +154,11 @@ What the formatter relies on per shape:
   A postcss-simple-vars value the typed grammar could not read is verbatim too: the plugin substitutes those bytes textually.
   "Raw plus a little normalization" is the failure mode: re-spacing unknown params corrupts Tailwind syntax (`dark:bg-x` → `dark: bg-x`, `py-1.5` → `py-10.5`).
   A normal property's `<any-value>` fallback is not raw in this sense; it rides the value writer
+- The one sanctioned "raw plus normalization" (`adjust_numbers_and_strings`):
+  Less mixin calls / params / guards, Less verbatim preludes, and a media keyword glued to its parens (`and(...)`, every variant)
+  - It re-scans bytes, so every token it does not know is a corruption risk: only STANDALONE numbers normalize, and strings re-quote
+  - Verbatim: comments, unquoted `url()`, hash tokens (`#1e0`, never `#1`), and glued number runs, head included (`a.10.2`, `1.20.3`)
+  - Glued-run rule shared with the typed side (`is_word_glued_number` / `is_glued_number_head`); change both together
 - The print-layer word heuristics (`value.rs`) rebuild postcss's word model from spec tokens.
   A new one is admitted when its scope is bounded and it improves how structured output is laid out;
   never to match a fixture, and never to reproduce Prettier's string handling
@@ -180,7 +187,7 @@ Plugin dialects (`xstyled` dotted tokens, Tailwind `theme()` paths, postcss plug
 5. A dedicated `CssVariant` only for real languages with reference compilers. Never for a plugin
 
 A report is first translated into "which line, which shape or which rung is this?", never "how do we support plugin Xxx?".
-Triage follows the shared policy (don't corrupt → then accept → then pretty-print); the CSS-shaped UNSAFE failure is silent token corruption like `sandstone.10` → `sandstone 0.1`.
+Triage follows the shared policy (don't corrupt → then accept → then pretty-print); the CSS-shaped UNSAFE failure is silent token corruption like `sandstone.10` → `sandstone 0.1`, or `#1e0` → `#1` / `a.10.2` → `a.100.2` in a raw slice.
 Specific plugin names accumulating in code is the red flag.
 
 ### Tailwind `@apply` sorting (`CssFormatOptions::sort_tailwindcss`)
@@ -193,24 +200,13 @@ and a host-supplied `TailwindSorter` does the ordering and dedup outside this cr
 Covered: `$var: value !important;` declarations (root and inside rules), `$var` references in property values and at-rule preludes,
 `$(var)` interpolation in property names.
 
-NOT covered: `$(var)` interpolation inside values and selectors (`.icon.is-$(network)`), selector-position bare `$var` (`.$prefix`), comment substitutions (`<<$(var)>>`).
+NOT covered: `$(var)` interpolation inside values and selectors (`.icon.is-$(network)`, rejected: DIVERGENCES.md#grammar-owner-rejected), selector-position bare `$var` (`.$prefix`), comment substitutions (`<<$(var)>>`).
 
 ## Verification
 
 ### Fixture tests
 
 The harness snapshots both `--print-width 80` and `100`; verify fixtures at both widths.
-
-### Prettier conformance
-
-Every failing file is accounted for by a DIVERGENCES.md entry's `Conformance:` line, except these unclassified hunks:
-
-- `css/parens/parens.css` (~93% match) token-soup math spacing; besides the css-glued-minus-paren / unary-plus-glue hunks:
-  - normalization-direction difference (open question, low value)
-    - a math operator adjacent to a function/paren boundary gets uniform `op` spacing from Prettier regardless of source (`round(1.5)+2` -> `round(1.5) + 2`, calc `*`/`/`);
-    - ours preserves the source spacing per token (`prop13/14`, `prop57-60`, `prop73/74`)
-  - within-a-word runs (`1+1+1+1`, `calc(100%+2px)`) match
-    - glued number-ish runs are ONE postcss word and print raw (see `is_word_glued_number`)
 
 ### Manual checks
 

@@ -213,7 +213,7 @@ impl ArrowBodyStyle {
         ctx: &LintContext<'a>,
     ) {
         let ArrowBodyStyle(mode, config) = self;
-        let inner_expr = arrow_func_expr.get_expression().map(Expression::get_inner_expression);
+        let inner_expr = arrow_func_expr.get_expression().map(Expression::without_parentheses);
 
         let should_report = *mode == Mode::Always
             || (*mode == Mode::AsNeeded
@@ -277,7 +277,7 @@ impl ArrowBodyStyle {
                 if let Statement::ReturnStatement(return_statement) = &body.statements[0] {
                     if self.1.require_return_for_object_literal
                         && matches!(
-                            return_statement.argument,
+                            return_statement.argument.as_ref().map(Expression::without_parentheses),
                             Some(Expression::ObjectExpression(_))
                         )
                     {
@@ -564,6 +564,10 @@ fn test() {
         ),
         (
             "var foo = () => { return { bar: 0 }; };",
+            Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
+        ),
+        (
+            "var foo = () => { return (({ bar: 0 })); };",
             Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
         ),
         (r#"var foo = () => { "use strict"; return 0; };"#, None),
@@ -1130,6 +1134,46 @@ fn test_typescript() {
     let pass = vec![
         ("var foo = () => { return <Foo>{ id }; };", Some(serde_json::json!(["always"]))),
         ("var foo = () => { return { id } as Foo; };", Some(serde_json::json!(["always"]))),
+        (
+            "var foo = () => ({ id } satisfies Foo);",
+            Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
+        ),
+        (
+            "var foo = () => ({ id }) satisfies Foo;",
+            Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
+        ),
+        (
+            "var foo = () => ({ id }) as Foo;",
+            Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
+        ),
+        (
+            "var foo = () => <Foo>{ id };",
+            Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
+        ),
+        (
+            "var foo = () => ({ id })!;",
+            Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
+        ),
+        (
+            "var foo = () => (({ id }) as Foo) satisfies Foo;",
+            Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
+        ),
+        (
+            "var foo = () => (value satisfies Foo);",
+            Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
+        ),
+        (
+            "var foo = () => ( { id } satisfies Foo );",
+            Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
+        ),
+        (
+            "var foo = () => ( { id } as Foo );",
+            Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
+        ),
+        (
+            "var foo = () => ( { id }! );",
+            Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
+        ),
     ];
 
     let fail = vec![
@@ -1141,7 +1185,43 @@ fn test_typescript() {
         ("var foo = () => (({ id }) as Foo);", Some(serde_json::json!(["always"]))),
         ("var foo = () => <Foo>JSON.parse(id);", Some(serde_json::json!(["always"]))),
         (
-            "var foo = () => ({ id }) as Foo;",
+            "var foo = () => { return ({ id } satisfies Foo); };",
+            Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
+        ),
+        (
+            "var foo = () => { return ({ id }) satisfies Foo; };",
+            Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
+        ),
+        (
+            "var foo = () => { return ({ id }) as Foo; };",
+            Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
+        ),
+        (
+            "var foo = () => { return <Foo>{ id }; };",
+            Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
+        ),
+        (
+            "var foo = () => { return ({ id })!; };",
+            Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
+        ),
+        (
+            "var foo = () => { return (({ id }) as Foo) satisfies Foo; };",
+            Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
+        ),
+        (
+            "var foo = () => { return (value satisfies Foo); };",
+            Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
+        ),
+        (
+            "var foo = () => { return { id } satisfies Foo; };",
+            Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
+        ),
+        (
+            "var foo = () => { return { id } as Foo; };",
+            Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
+        ),
+        (
+            "var foo = () => { return { id }!; };",
             Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
         ),
     ];
@@ -1183,8 +1263,53 @@ fn test_typescript() {
             Some(serde_json::json!(["always"])),
         ),
         (
-            "var foo = () => ({ id }) as Foo;",
-            "var foo = () => {return { id } as Foo};",
+            "var foo = () => { return ({ id } satisfies Foo); };",
+            "var foo = () =>  ({ id } satisfies Foo) ;",
+            Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
+        ),
+        (
+            "var foo = () => { return ({ id }) satisfies Foo; };",
+            "var foo = () => ( ({ id }) satisfies Foo );",
+            Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
+        ),
+        (
+            "var foo = () => { return ({ id }) as Foo; };",
+            "var foo = () => ( ({ id }) as Foo );",
+            Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
+        ),
+        (
+            "var foo = () => { return <Foo>{ id }; };",
+            "var foo = () => ( <Foo>{ id } );",
+            Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
+        ),
+        (
+            "var foo = () => { return ({ id })!; };",
+            "var foo = () => ( ({ id })! );",
+            Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
+        ),
+        (
+            "var foo = () => { return (({ id }) as Foo) satisfies Foo; };",
+            "var foo = () => ( (({ id }) as Foo) satisfies Foo );",
+            Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
+        ),
+        (
+            "var foo = () => { return (value satisfies Foo); };",
+            "var foo = () =>  (value satisfies Foo) ;",
+            Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
+        ),
+        (
+            "var foo = () => { return { id } satisfies Foo; };",
+            "var foo = () => ( { id } satisfies Foo );",
+            Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
+        ),
+        (
+            "var foo = () => { return { id } as Foo; };",
+            "var foo = () => ( { id } as Foo );",
+            Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
+        ),
+        (
+            "var foo = () => { return { id }!; };",
+            "var foo = () => ( { id }! );",
             Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
         ),
     ];

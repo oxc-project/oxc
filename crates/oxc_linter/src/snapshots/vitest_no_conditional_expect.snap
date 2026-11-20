@@ -417,6 +417,48 @@ source: crates/oxc_linter/src/tester.rs
   help: Avoid calling `expect` conditionally
 
   ⚠ vitest(no-conditional-expect): Unexpected conditional expect
+   ╭─[no_conditional_expect.tsx:1:34]
+ 1 │ it('foo', function () { if (x) { expect(1).toBe(1); } });
+   ·                                  ──────
+   ╰────
+  help: Avoid calling `expect` conditionally
+
+  ⚠ vitest(no-conditional-expect): Unexpected conditional expect
+   ╭─[no_conditional_expect.tsx:1:42]
+ 1 │ it('foo', function callback() { if (x) { expect(1).toBe(1); } });
+   ·                                          ──────
+   ╰────
+  help: Avoid calling `expect` conditionally
+
+  ⚠ vitest(no-conditional-expect): Unexpected conditional expect
+   ╭─[no_conditional_expect.tsx:1:40]
+ 1 │ it('foo', async function () { if (x) { expect(1).toBe(1); } });
+   ·                                        ──────
+   ╰────
+  help: Avoid calling `expect` conditionally
+
+  ⚠ vitest(no-conditional-expect): Unexpected conditional expect
+   ╭─[no_conditional_expect.tsx:1:37]
+ 1 │ test.only('foo', function () { x && expect(1).toBe(1); });
+   ·                                     ──────
+   ╰────
+  help: Avoid calling `expect` conditionally
+
+  ⚠ vitest(no-conditional-expect): Unexpected conditional expect
+   ╭─[no_conditional_expect.tsx:1:41]
+ 1 │ test.each([1])('foo', function () { x ? expect(1).toBe(1) : noop(); });
+   ·                                         ──────
+   ╰────
+  help: Avoid calling `expect` conditionally
+
+  ⚠ vitest(no-conditional-expect): Unexpected conditional expect
+   ╭─[no_conditional_expect.tsx:1:53]
+ 1 │ it('foo', function () { promise.catch(function () { expect(1).toBe(1); }); });
+   ·                                                     ──────
+   ╰────
+  help: Avoid calling `expect` conditionally
+
+  ⚠ vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:30]
  2 │             it('foo', () => {
  3 │                 something && expect(something).toHaveBeenCalled();
@@ -485,5 +527,41 @@ source: crates/oxc_linter/src/tester.rs
  3 │                 something ? noop() : expect(something).toHaveBeenCalled();
    ·                                      ──────
  4 │             })
+   ╰────
+  help: Avoid calling `expect` conditionally
+
+  ⚠ vitest(no-conditional-expect): Unexpected conditional expect
+   ╭─[no_conditional_expect.tsx:5:28]
+ 4 │         customTest.only('foo', () => {
+ 5 │             if (condition) expect(1).toBe(1);
+   ·                            ──────
+ 6 │             promise.catch(() => expect(1).toBe(1));
+   ╰────
+  help: Avoid calling `expect` conditionally
+
+  ⚠ vitest(no-conditional-expect): Unexpected conditional expect
+   ╭─[no_conditional_expect.tsx:6:33]
+ 5 │             if (condition) expect(1).toBe(1);
+ 6 │             promise.catch(() => expect(1).toBe(1));
+   ·                                 ──────
+ 7 │         });
+   ╰────
+  help: Avoid calling `expect` conditionally
+
+  ⚠ vitest(no-conditional-expect): Unexpected conditional expect
+   ╭─[no_conditional_expect.tsx:3:26]
+ 2 │         function callback() {
+ 3 │             condition && expect(1).toBe(1);
+   ·                          ──────
+ 4 │         }
+   ╰────
+  help: Avoid calling `expect` conditionally
+
+  ⚠ vitest(no-conditional-expect): Unexpected conditional expect
+   ╭─[no_conditional_expect.tsx:4:28]
+ 3 │         function helper() {
+ 4 │             if (condition) expect(1).toBe(1);
+   ·                            ──────
+ 5 │         }
    ╰────
   help: Avoid calling `expect` conditionally

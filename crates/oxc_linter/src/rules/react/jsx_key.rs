@@ -20,7 +20,7 @@ use oxc_str::JSStr;
 
 use crate::{
     AstNode,
-    ast_util::is_node_within_call_argument,
+    ast_util::{is_node_within_call_argument, outermost_paren},
     context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
     utils::default_true,
@@ -286,7 +286,7 @@ fn is_in_array_or_iter<'a, 'b>(
                 is_outside_containing_function = true;
             }
             AstKind::ArrayExpression(_) => {
-                if is_outside_containing_function {
+                if node.id() != outermost_paren(jsx_node, ctx).id() {
                     return None;
                 }
 
@@ -419,7 +419,9 @@ fn get_jsx_element_key_value<'a>(
                                 return Some((value, attr.span));
                             }
                             JSXExpression::TemplateLiteral(lit) => {
-                                return lit.single_quasi().map(|value| (value, attr.span));
+                                if let Some(value) = lit.single_quasi() {
+                                    return Some((value, attr.span));
+                                }
                             }
                             _ => {}
                         }
@@ -612,7 +614,24 @@ fn test() {
         ("[1, 2, 3].map((item) => {
             return item === 'bar' ? <div key={item}>{item}</div> : <span key={item}>{item}</span>;
           })", None, None
-        )
+        ),
+        (
+            "declare const Counter: (props: { onCount: (n: number) => void }) => React.ReactNode;
+             export const useCount = (needed: boolean, set: (n: number) => void) =>
+               [needed ? 1 : undefined, needed ? <Counter onCount={set} /> : null] as const;",
+            None,
+            None,
+        ),
+        ("[condition ? <App /> : null];", None, None),
+        ("[condition ? null : <App />];", None, None),
+        ("[condition ? <App /> : <Other />];", None, None),
+        ("[condition && <App />];", None, None),
+        ("[(condition ? (<App />) : null)];", None, None),
+        (
+            "[condition ? <></> : null];",
+            Some(serde_json::json!([{ "checkFragmentShorthand": true }])),
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -675,6 +694,17 @@ fn test() {
                       <span key="notunique"/>,
                     ];
                   "#,
+            Some(serde_json::json!([{ "warnOnDuplicates": true }])),
+            None,
+        ),
+        // A template key with a substitution leaves the element's later `key` to compare.
+        (
+            r#"const spans = [<span key={`${a}`} key="dup"/>, <span key={`${a}`} key="dup"/>];"#,
+            Some(serde_json::json!([{ "warnOnDuplicates": true }])),
+            None,
+        ),
+        (
+            r#"const div = <div><span key={`${a}`} key="dup"/><span key="dup"/></div>;"#,
             Some(serde_json::json!([{ "warnOnDuplicates": true }])),
             None,
         ),
@@ -826,6 +856,8 @@ fn test() {
             None,
             None,
         ),
+        ("[((<App />))];", None, None),
+        ("[condition ? [<App />] : null];", None, None),
     ];
 
     Tester::new(JsxKey::NAME, JsxKey::PLUGIN, pass, fail).test_and_snapshot();

@@ -1,0 +1,20 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/exhaustive-deps/lint-effect-hook-destructured-from-react.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Hooks may not be referenced as normal values; they must be called", labels: [LabeledSpan { label: Some("This Hook is used as a value"), span: Span { start: 365, end: 374 }, primary: true }], help: Some("Call the Hook directly instead of passing or storing it as a value"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Hooks") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/rules-of-hooks") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Found missing effect dependencies", labels: [LabeledSpan { label: Some("This dependency list is missing values used by the callback"), span: Span { start: 412, end: 414 }, primary: true }, LabeledSpan { label: Some("Missing dependency `value`"), span: Span { start: 399, end: 404 }, primary: false }], help: Some("Missing dependencies can cause an effect to fire less often than it should"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("EffectExhaustiveDependencies") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/exhaustive-deps") } }
+
+// @validateExhaustiveEffectDependencies:"all" @outputMode:"lint" @panicThreshold:"none" @lintSkipReactiveScopePasses
+import * as React from "react";
+// The effect hook is only recognisable by its type: the callee is a local
+// destructured from the React namespace, not a `useEffect` load or property.
+function Component({ value }) {
+	const { useEffect } = React;
+	useEffect(() => {
+		console.log(value);
+	}, []);
+	return <div>{value}</div>;
+}

@@ -1,0 +1,7 @@
+{
+  "categories": { "correctness": "off" },
+  "plugins": ["react"],
+  "rules": {
+    "react/capitalized-calls": ["error", { "allow": ["Child"], "allowPattern": "Event$" }]
+  }
+}

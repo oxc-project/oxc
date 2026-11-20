@@ -2,7 +2,8 @@ use oxc_span::SourceType;
 
 use crate::{
     CompressOptions, CompressOptionsKeepNames, CompressOptionsUnused, default_options, test,
-    test_options, test_same, test_same_options, test_same_options_source_type, test_target_same,
+    test_options, test_same, test_same_options, test_same_options_source_type, test_same_smallest,
+    test_smallest, test_target_same,
 };
 
 #[test]
@@ -711,6 +712,19 @@ fn test_property_key() {
 
     test("class C { ['-1']() {} }", "class C { '-1'() {} }");
 
+    // Negative and non-finite numeric keys keep their brackets.
+    // <https://github.com/oxc-project/oxc/issues/27834>
+    test_same("v = { [-2]: _ }");
+    test_same("v = { [-1]() {} }");
+    test_same("({ [-2]: _ } = {})");
+    test_same("var { [-2]: _ } = {}");
+    test_same("class C { [-2] = _; static [-3]() {} }");
+    test_same("class C { accessor [-2] = _ }");
+    test("var { [Infinity]: _ } = {}", "var { [1e400]: _ } = {}");
+    test("var { [-Infinity]: _ } = {}", "var { [-1e400]: _ } = {}");
+    test_same("class C { [NaN]() {} }");
+    test_same("v = { [-0]: _ }");
+
     // <https://tc39.es/ecma262/2024/multipage/ecmascript-language-expressions.html#sec-runtime-semantics-propertydefinitionevaluation>
     test_same("v = ({ ['__proto__']: 0 })"); // { __proto__: 0 } will have `isProtoSetter = true`
     test("v = ({ ['__proto__']() {} })", "v = ({ __proto__() {} })");
@@ -899,14 +913,70 @@ fn optional_catch_binding() {
     // Regression tests for https://github.com/oxc-project/oxc/issues/17307
     test(
         "try {} catch (e) { try {} catch (e) { var e = 'e'; console.log(e === 'e') } } console.log(e === undefined)",
-        "try {} catch (e) { var e } console.log(e === void 0)",
+        "try {} catch { var e } console.log(!0)",
     );
     test(
         "try { throw 1 } catch (e) { try { throw 2 } catch (e) { var e = 'e'; console.log(e === 'e') } } console.log(e === undefined)",
-        "try { throw 1 } catch (e) { try { throw 2 } catch (e) { var e = 'e'; console.log(e === 'e') } } console.log(e === void 0)",
+        "try { throw 1 } catch { try { throw 2 } catch (e) { var e = 'e'; console.log(e === 'e') } } console.log(e === void 0)",
     );
 
     test_target_same("try { foo } catch(e) {}", "chrome65");
+}
+
+/// Once a `var` redeclaring a catch parameter is removed, the catch parameter can
+/// be removed in the same run: <https://github.com/oxc-project/oxc/issues/27548>
+#[test]
+fn optional_catch_binding_after_removed_var() {
+    test_smallest(
+        "export function f() { try { x() } catch (a) { var a } }",
+        "export function f() { try { x() } catch {} }",
+    );
+    // Each `var` also redeclares the enclosing binding.
+    test_smallest(
+        "export function f() { try { x() } catch (e) { var e; var e } }",
+        "export function f() { try { x() } catch {} }",
+    );
+    // Removed by dead code elimination (`KeepVar`).
+    test_smallest(
+        "export function f() { try { x() } catch (e) { if (0) { var e } } }",
+        "export function f() { try { x() } catch {} }",
+    );
+    test_smallest(
+        "export function f() { try { x() } catch (e) { try { y() } catch (e) { var e } } }",
+        "export function f() { try { x() } catch { try { y() } catch {} } }",
+    );
+    // The initializer writes the catch parameter, which is never read.
+    test_smallest(
+        "export function f() { try { x() } catch (e) { var e = 1 } }",
+        "export function f() { try { x() } catch {} }",
+    );
+    // A dead nested catch's `var`, kept by `KeepVar` in the body of an outer catch whose
+    // parameter is still read.
+    test_smallest(
+        "export function f() { try { x() } catch (e) { if (0) { try { y() } catch (e) { var e } } return e } }",
+        "export function f() { try { x() } catch (e) { return e } }",
+    );
+    // An unreachable initializer-free `var` skips the drop walk, but `KeepVar`
+    // can still change its symbol when the catch parameter is unused.
+    test_same_smallest("export function f() { try { x() } catch (e) { return; var e } return e }");
+    test_smallest(
+        "export function f() { try { x() } catch (e) { return; var e; var e } return e }",
+        "export function f() { try { x() } catch (e) { return; var e, e } return e }",
+    );
+    test_same_smallest(
+        "export function f() { var e = 1; try { x() } catch (e) { return; var e } return e }",
+    );
+    // A referenced catch parameter must keep its redeclaration link.
+    test_same_smallest(
+        "export function f() { try { x() } catch (e) { return e; var e } return e }",
+    );
+    // The `var` is kept, so the catch parameter stays.
+    test_same_smallest("export function f() { try { x() } catch (e) { if (0) var e } return e }");
+    test_same_smallest("export function f() { try { x() } catch (e) { var e = 1; return e } }");
+    test_smallest(
+        "export function f() { try { x() } catch (e) { if (0) { var e } return e } }",
+        "export function f() { try { x() } catch (e) { if (0) var e; return e } }",
+    );
 }
 
 #[test]
@@ -938,6 +1008,33 @@ fn test_compress_destructuring_assignment_target() {
     test("var {y: y} = x", "var {y} = x");
     test("var {y: z, 'z': y} = x", "var {y: z, z: y} = x");
     test("var {y: y, 'z': z} = x", "var {y, z} = x");
+    test("var {y: y = f()} = x", "var {y = f()} = x");
+
+    test("({ y: y } = x)", "({ y } = x)");
+    test("({ 'y': y } = x)", "({ y } = x)");
+    test("({ y: y = 1 } = x)", "({ y = 1 } = x)");
+    test("({ y: y = f() } = x)", "({ y = f() } = x)");
+    test("({ y: y = y } = x)", "({ y = y } = x)");
+    test("({ y: y = function() {} } = x)", "({ y = function() {} } = x)");
+    test("({ y: y = f(), z: z } = x)", "({ y = f(), z } = x)");
+    test("({ a: { y: y = f() } } = x)", "({ a: { y = f() } } = x)");
+    test("[{ y: y = f() }] = x", "[{ y = f() }] = x");
+    test("for ({ y: y = f() } of x);", "for ({ y = f() } of x);");
+    test("for ({ y: y = f() } in x);", "for ({ y = f() } in x);");
+    test(
+        "async function g() { for await ({ y: y = f() } of x); }",
+        "async function g() { for await ({ y = f() } of x); }",
+    );
+    test("function* g() { ({ y: y = yield } = x) }", "function* g() { ({ y = yield } = x) }");
+    test(
+        "async function g() { ({ y: y = await f() } = x) }",
+        "async function g() { ({ y = await f() } = x) }",
+    );
+    test("({ y: y = 1, ...z } = x)", "({ y = 1, ...z } = x)");
+    test("({ ['y']: y = 1 } = x)", "({ y = 1 } = x)");
+    test_same("({ [y]: y = 1 } = x)");
+    test_same("({ y: z = f() } = x)");
+    test_same("({ y: a.y = f() } = x)");
 }
 
 #[test]
@@ -1078,6 +1175,14 @@ fn test_rewrite_arguments_copy_loop() {
         "function _() { var r = [...arguments], keep; use(r, keep) }",
     );
     test(
+        "function _() { for (var keep, r = [], a = 0; a < arguments.length; a++) r[a] = arguments[a]; use(r, keep) }",
+        "function _() { var keep, r = [...arguments]; use(r, keep) }",
+    );
+    test(
+        "function _() { for (var first, second, r = [], a = 0; a < arguments.length; a++) r[a] = arguments[a]; use(r, first, second) }",
+        "function _() { var first, second, r = [...arguments]; use(r, first, second) }",
+    );
+    test(
         "function _() { var items = [], t = 0, i, u, r; for (; t < arguments.length; t++) items[t] = arguments[t]; if (this.list = [], items != null) for (i = 0, u = items; i < u.length; i++) r = u[i], this.list.push(r) }",
         "function _() { var items = [...arguments], i, u, r; if (this.list = [], items != null) for (i = 0, u = items; i < u.length; i++) r = u[i], this.list.push(r) }",
     );
@@ -1087,6 +1192,12 @@ fn test_rewrite_arguments_copy_loop() {
     );
     test_same(
         "function _() { for (var r = [], a = 0, keep = side(); a < arguments.length; a++) r[a] = arguments[a]; use(r, keep) }",
+    );
+    test_same(
+        "function _() { for (var keep = side(), r = [], a = 0; a < arguments.length; a++) r[a] = arguments[a]; use(r, keep) }",
+    );
+    test_same(
+        "function _() { for (var keep; a < arguments.length; a++) r[a] = arguments[a]; use(r, keep) }",
     );
 }
 
@@ -1165,4 +1276,30 @@ fn test_substitute_yield_expression() {
     test("function* a() { yield* undefined; }", "function* a() { yield* void 0; }");
     test("function* a() { yield* fn(); }", "function* a() { yield* fn(); }");
     test_same("function* a(undefined) { yield undefined; }");
+}
+
+#[test]
+fn empty_iife_preserves_rest_destructuring() {
+    test_smallest(
+        "var n = 0; (function (...[v = n++]) {})(); console.log(n);",
+        "var n = 0; (function (...[v = n++]) {})(), console.log(n);",
+    );
+    test_smallest(
+        "var n = 0; ((...[v = n++]) => {})(); console.log(n);",
+        "var n = 0; ((...[v = n++]) => {})(), console.log(n);",
+    );
+    test_smallest(
+        "var n = 0; (function (...{0: v = n++}) {})(); console.log(n);",
+        "var n = 0; (function (...{0: v = n++}) {})(), console.log(n);",
+    );
+    test_smallest(
+        "var n = 0; ((...{0: v = n++}) => {})(); console.log(n);",
+        "var n = 0; ((...{0: v = n++}) => {})(), console.log(n);",
+    );
+    test_same("(function (...[[v]]) {})();");
+    test_same("((...[[v]]) => {})();");
+    test("(function (...args) {})();", "");
+    test("((...args) => {})();", "");
+    test("x = (function (...args) {})();", "x = void 0;");
+    test("x = ((...args) => {})();", "x = void 0;");
 }

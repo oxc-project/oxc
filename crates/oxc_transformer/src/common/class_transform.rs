@@ -1,0 +1,44 @@
+use crate::{decorator::DecoratorMode, es2022::ClassPropertiesOptions, options::EnvOptions};
+
+/// Program-wide ownership of class field and static block lowering.
+///
+/// Class-properties handles both when field lowering is enabled, so the standalone static block
+/// transform must not also run. Otherwise TypeScript handles its field semantics, and static blocks
+/// can be lowered independently. TypeScript still removes type syntax and lowers parameter
+/// properties in either case.
+#[derive(Clone, Copy, Default)]
+pub enum ClassTransform {
+    #[default]
+    None,
+    StaticBlocks,
+    ClassProperties {
+        options: ClassPropertiesOptions,
+        transform_static_blocks: bool,
+        decorator_mode: DecoratorMode,
+    },
+}
+
+impl ClassTransform {
+    pub fn new(env: &EnvOptions, decorator_mode: DecoratorMode) -> Self {
+        let options = env.es2022;
+        if let Some(properties_options) = options.class_properties {
+            Self::ClassProperties {
+                options: properties_options,
+                transform_static_blocks: options.class_static_block,
+                decorator_mode,
+            }
+        } else if options.class_static_block {
+            Self::StaticBlocks
+        } else {
+            Self::None
+        }
+    }
+
+    /// Whether class-properties owns field lowering and initialization order for all classes.
+    ///
+    /// TypeScript must leave field lowering to it, and legacy decorators must leave class-alias
+    /// initialization to it instead of inserting an alias assignment in a static block.
+    pub fn owns_all_class_fields(self) -> bool {
+        matches!(self, Self::ClassProperties { decorator_mode, .. } if decorator_mode != DecoratorMode::Preserve)
+    }
+}

@@ -4,6 +4,12 @@
   },
   "plugins": [
     [
+      "syntax-decorators",
+      {
+        "version": "2023-11"
+      }
+    ],
+    [
       "transform-typescript",
       {
         "removeClassFieldsWithoutInitializer": true

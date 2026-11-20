@@ -7,6 +7,9 @@ use super::markers::is_block_marker_token;
 /// which is what our core printer's `TextWidth` (via `unicode_width`) mirrors.
 ///
 /// Fast path: for ASCII-only strings (99%+ of JSDoc content), `len()` equals UTF-16 count.
+///
+/// TODO: The wrap width is a column budget, so the display width (FORMATTER_POLICY.md "Text width") is the consistent measure.
+/// Kept on the plugin's `.length` for now; switching moves the wrap points of JSDoc with wide characters.
 #[inline]
 pub fn str_width(s: &str) -> usize {
     if s.is_ascii() { s.len() } else { s.encode_utf16().count() }

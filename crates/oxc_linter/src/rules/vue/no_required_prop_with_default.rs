@@ -19,7 +19,7 @@ use crate::{
     fixer::{RuleFix, RuleFixer},
     frameworks::FrameworkOptions,
     rule::Rule,
-    utils::{find_property, for_each_define_props_type_signature},
+    utils::for_each_define_props_type_signature,
 };
 
 fn no_required_prop_with_default_diagnostic(
@@ -322,7 +322,7 @@ fn handle_type_argument<'a>(
 }
 
 fn handle_object_expression<'a>(ctx: &LintContext<'a>, obj: &ObjectExpression<'a>) {
-    let Some(prop_obj) = find_property(obj, "props") else {
+    let Some(prop_obj) = obj.find_property("props") else {
         return;
     };
     let Expression::ObjectExpression(prop_obj_expr) = prop_obj.value.get_inner_expression() else {

@@ -15,8 +15,7 @@ $multi: (
 );
 // Regression guards: a truly empty map stays `()`, and a map WITH items still
 // renders its leading comment normally. A comment before the FIRST item changes
-// nothing: `$with-block` prints like `$no-comment`. Prettier inlines it and drops
-// the trailing comma (DIVERGENCES.md#map-leading-comment-layout).
+// nothing: `$with-block` prints like `$no-comment`.
 $empty: ();
 $with-items: (
   // comment

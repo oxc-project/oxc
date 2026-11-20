@@ -13,6 +13,11 @@ use crate::options::TomlFormatOptions;
 /// Returns an [`OxcDiagnostic`] when the parse produces any error.
 pub fn format(source_text: &str, options: TomlFormatOptions) -> Result<String, OxcDiagnostic> {
     let (has_bom, stripped) = split_bom(source_text);
+    // TODO: `oxc_toml::format()` adds the trailing newline even to an empty output.
+    // Handle this when updating `oxc-toml` as parser only crate like other languages.
+    if stripped.trim().is_empty() {
+        return Ok(if has_bom { "\u{feff}" } else { "" }.to_string());
+    }
     let parse = parse_for_format(stripped).map_err(|mut err| {
         oxc_formatter_core::rebase_labels(&mut err.labels, source_text, stripped);
         err

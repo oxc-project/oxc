@@ -135,11 +135,44 @@ export function Component({ value }) {
 }
 
 #[test]
+fn bails_out_when_manual_memoization_cannot_be_preserved() {
+    let sources = [
+        include_str!("../fixtures/keep-manual-memo-missing-deps-rest-props.jsx"),
+        include_str!("../fixtures/keep-manual-memo-missing-deps.jsx"),
+        include_str!("../fixtures/keep-manual-memo-extra-deps.jsx"),
+        include_str!("../fixtures/keep-manual-memo-use-callback-partial-deps.jsx"),
+        include_str!("../fixtures/keep-manual-memo-non-inline-callback.jsx"),
+        include_str!("../fixtures/keep-manual-memo-one-of-two.jsx"),
+        include_str!("../fixtures/keep-manual-memo-no-hoisted-property-read.jsx"),
+        include_str!("../fixtures/keep-manual-memo-set-state-still-bails.jsx"),
+    ];
+
+    for source in sources {
+        let allocator = Allocator::default();
+        let (_program, result) =
+            transform_source(source, SourceType::tsx(), &allocator, PluginOptions::default());
+
+        assert!(!result.changed, "manual memoization must be left untouched:\n{source}");
+        assert!(!result.fatal, "bailouts must be recoverable: {:?}", result.diagnostics);
+        assert!(result.diagnostics.has_errors(), "expected a bailout diagnostic:\n{source}");
+    }
+}
+
+#[test]
 fn skips_non_react_code() {
     let source = "function add(a, b) {\n  return a + b;\n}\n";
     let allocator = Allocator::default();
     let (_program, result) = transform_source(source, SourceType::tsx(), &allocator, options());
     assert!(!result.changed, "non-React code must not be transformed");
+}
+
+/// Options under which ESLint suppressions are consulted: like upstream, they are
+/// ignored while both `validate_hooks_usage` and
+/// `validate_exhaustive_memoization_dependencies` are enabled.
+fn suppression_checked_options() -> PluginOptions {
+    let mut options = PluginOptions::default();
+    options.environment.validate_exhaustive_memoization_dependencies = false;
+    options
 }
 
 #[test]
@@ -159,8 +192,12 @@ fn default_lint_suppressions_bail_out() {
         for (kind, source) in fixtures {
             let source = source.cow_replace("eslint", prefix);
             let allocator = Allocator::default();
-            let (_program, result) =
-                transform_source(&source, SourceType::tsx(), &allocator, PluginOptions::default());
+            let (_program, result) = transform_source(
+                &source,
+                SourceType::tsx(),
+                &allocator,
+                suppression_checked_options(),
+            );
 
             assert!(!result.changed, "{prefix} {kind} must prevent compilation");
             assert!(!result.fatal, "{prefix} {kind} must not produce a fatal result");
@@ -186,8 +223,10 @@ fn flow_suppressions_still_bail_out_by_default() {
 #[test]
 fn empty_eslint_suppression_rules_disable_bailouts() {
     let source = include_str!("../fixtures/default-suppression-eslint-next-line.js");
-    let options =
-        PluginOptions { eslint_suppression_rules: Some(Vec::new()), ..PluginOptions::default() };
+    let options = PluginOptions {
+        eslint_suppression_rules: Some(Vec::new()),
+        ..suppression_checked_options()
+    };
     let allocator = Allocator::default();
     let (_program, result) = transform_source(source, SourceType::tsx(), &allocator, options);
 
@@ -197,7 +236,7 @@ fn empty_eslint_suppression_rules_disable_bailouts() {
 }
 
 #[test]
-fn eslint_suppressions_take_precedence_over_internal_validations() {
+fn eslint_suppressions_are_ignored_when_internal_validations_are_enabled() {
     let cases = [
         (
             "memo dependencies",
@@ -225,17 +264,17 @@ function Component({ condition }) {
         ),
     ];
 
+    // The compiler reports its own validation error instead of a suppression.
     for (kind, source) in cases {
-        let mut options = PluginOptions::default();
-        options.environment.validate_exhaustive_memoization_dependencies = true;
         let allocator = Allocator::default();
-        let (_program, result) = transform_source(source, SourceType::tsx(), &allocator, options);
+        let (_program, result) =
+            transform_source(source, SourceType::tsx(), &allocator, PluginOptions::default());
 
-        assert!(!result.changed, "{kind} suppression must prevent compilation");
-        assert_eq!(result.diagnostics.len(), 1);
+        assert!(!result.changed, "{kind} violation must prevent compilation");
+        assert!(result.diagnostics.has_errors(), "{kind} violation must be reported");
         assert!(
-            ErrorCategory::Suppression.matches(&result.diagnostics[0]),
-            "expected a suppression diagnostic, got {:?}",
+            !result.diagnostics.iter().any(|d| ErrorCategory::Suppression.matches(d)),
+            "expected no suppression diagnostic, got {:?}",
             result.diagnostics
         );
     }
@@ -254,32 +293,31 @@ function Component({ value }) {
     let allocator = Allocator::default();
     let options = PluginOptions {
         eslint_suppression_rules: Some(vec!["custom/react-rule".to_string()]),
-        ..PluginOptions::default()
+        ..suppression_checked_options()
     };
     let (_program, result) = transform_source(source, SourceType::tsx(), &allocator, options);
-    assert!(!result.changed, "custom suppression must bail out by default");
+    assert!(!result.changed, "custom suppression must bail out when a validation is disabled");
     assert_eq!(result.diagnostics.len(), 1);
     assert!(ErrorCategory::Suppression.matches(&result.diagnostics[0]));
 
     let allocator = Allocator::default();
-    let mut options = PluginOptions {
+    let options = PluginOptions {
         eslint_suppression_rules: Some(vec!["custom/react-rule".to_string()]),
         ..PluginOptions::default()
     };
-    options.environment.validate_exhaustive_memoization_dependencies = true;
     let (_program, result) = transform_source(source, SourceType::tsx(), &allocator, options);
-    assert!(!result.changed, "custom suppression must bail out with both validations enabled");
-    assert_eq!(result.diagnostics.len(), 1);
-    assert!(ErrorCategory::Suppression.matches(&result.diagnostics[0]));
+    assert!(result.changed, "custom suppression must be ignored with both validations enabled");
+    assert!(!result.diagnostics.has_errors());
 }
 
 #[test]
 fn all_errors_makes_enabled_eslint_suppressions_fatal() {
     let source = include_str!("../fixtures/default-suppression-eslint-next-line.js");
     let allocator = Allocator::default();
-    let mut options =
-        PluginOptions { panic_threshold: PanicThreshold::AllErrors, ..PluginOptions::default() };
-    options.environment.validate_exhaustive_memoization_dependencies = true;
+    let options = PluginOptions {
+        panic_threshold: PanicThreshold::AllErrors,
+        ..suppression_checked_options()
+    };
     let (_program, result) = transform_source(source, SourceType::tsx(), &allocator, options);
 
     assert!(result.fatal, "all_errors must escalate suppression diagnostics");

@@ -1,0 +1,54 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+a {
+  b {
+    grid-template-columns: minmax(0, 1fr) $work-item-overview-right-sidebar-width-x;
+  }
+}
+c {
+  d {
+    grid-template-columns: minmax(
+        0,
+        1fr
+      ) $work-item-overview-right-sidebar-width-x;
+  }
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+a {
+  b {
+    grid-template-columns: minmax(
+        0,
+        1fr
+      ) $work-item-overview-right-sidebar-width-x;
+  }
+}
+c {
+  d {
+    grid-template-columns: minmax(
+        0,
+        1fr
+      ) $work-item-overview-right-sidebar-width-x;
+  }
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+a {
+  b {
+    grid-template-columns: minmax(0, 1fr) $work-item-overview-right-sidebar-width-x;
+  }
+}
+c {
+  d {
+    grid-template-columns: minmax(0, 1fr) $work-item-overview-right-sidebar-width-x;
+  }
+}
+
+===================== End =====================

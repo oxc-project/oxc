@@ -150,7 +150,7 @@ fn get_function_name<'a, 'b>(
     ctx: &'b LintContext<'a>,
 ) -> Option<&'b str> {
     match function_node.kind() {
-        AstKind::Function(func) => func.id.as_ref().map(|id| id.name.as_str()),
+        AstKind::Function(func) => func.name().map(|name| name.as_str()),
         AstKind::ArrowFunctionExpression(_) => {
             let parent = ctx.nodes().parent_node(function_node.id());
             if let AstKind::VariableDeclarator(declarator) = parent.kind()

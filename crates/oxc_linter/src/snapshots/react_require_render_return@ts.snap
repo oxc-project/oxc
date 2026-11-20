@@ -1,0 +1,21 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react(require-render-return): Your `render` method should have a `return` statement.
+   ╭─[require_render_return.ts:3:23]
+ 2 │                     class Hello extends React.Component {
+ 3 │                       render() {}
+   ·                       ──────
+ 4 │                     }
+   ╰────
+  help: When writing the `render` method in a component it is easy to forget to return the JSX content. This rule will warn if the `return` statement is missing.
+
+  ⚠ react(require-render-return): Your `render` method should have a `return` statement.
+   ╭─[require_render_return.ts:4:23]
+ 3 │                     export class Example extends Component {
+ 4 │                       render() {
+   ·                       ──────
+ 5 │                         console.log('render');
+   ╰────
+  help: When writing the `render` method in a component it is easy to forget to return the JSX content. This rule will warn if the `return` statement is missing.

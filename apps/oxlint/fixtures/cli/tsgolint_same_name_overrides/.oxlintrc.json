@@ -1,0 +1,7 @@
+{
+  "plugins": ["typescript", "unicorn"],
+  "categories": { "correctness": "error" },
+  "options": { "typeAware": true },
+  "rules": { "typescript/prefer-string-starts-ends-with": "warn" },
+  "overrides": [{ "files": ["**/*.tsx"], "env": { "browser": true } }]
+}

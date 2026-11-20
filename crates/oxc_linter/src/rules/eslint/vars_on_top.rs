@@ -1,5 +1,5 @@
 use oxc_ast::AstKind;
-use oxc_ast::ast::{Declaration, Expression, Program, Statement, VariableDeclarationKind};
+use oxc_ast::ast::{Declaration, Expression, Program, Statement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -90,7 +90,8 @@ declare_oxc_lint!(
     eslint,
     style,
     version = "0.15.4",
-    short_description = "Enforces that all `var` declarations are placed at the top of their containing scope.",
+    short_description =
+        "Enforces that all `var` declarations are placed at the top of their containing scope.",
 );
 
 impl Rule for VarsOnTop {
@@ -98,7 +99,7 @@ impl Rule for VarsOnTop {
         let AstKind::VariableDeclaration(declaration) = node.kind() else {
             return;
         };
-        if declaration.kind != VariableDeclarationKind::Var {
+        if !declaration.kind.is_var() {
             return;
         }
 
@@ -214,15 +215,10 @@ fn check_var_on_top_in_function_scope(
     ctx: &LintContext,
 ) -> bool {
     let grandparent = ctx.nodes().parent_node(parent.id());
-    if matches!(
+    matches!(
         grandparent.kind(),
         AstKind::Function(_) | AstKind::FunctionBody(_) | AstKind::ArrowFunctionExpression(_)
     ) && is_var_on_top(node, statements, ctx)
-    {
-        return true;
-    }
-
-    false
 }
 
 #[test]

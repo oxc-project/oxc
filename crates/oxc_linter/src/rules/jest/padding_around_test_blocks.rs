@@ -1,10 +1,11 @@
+use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::Rule,
     rules::shared::padding_around_test_blocks::{DOCUMENTATION, run},
-    utils::PossibleJestNode,
 };
 
 #[derive(Debug, Default, Clone)]
@@ -22,12 +23,13 @@ declare_oxc_lint!(
 );
 
 impl Rule for PaddingAroundTestBlocks {
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        run(jest_node, ctx);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(_) = node.kind() else { return };
+        run(node, ctx);
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_test()
     }
 }
 
@@ -42,6 +44,12 @@ fn test() {
         "{ test('foo', () => {}); }",
         "describe('foo', () => {\ntest('bar', () => {});\n});",
         "const thing = 123;\n\n/* one */\n/* two */\ntest('foo', () => {});",
+        "const slow = false; slow && test('slow', () => {});",
+        "const slow = false;\nif (slow)\n  test('slow', () => {});",
+        "const slow = false; if (slow) test('slow', () => {});",
+        "const slow = false; if (slow)\n  test('slow', () => {});",
+        "const slow = false; while (slow) test('slow', () => {});",
+        "const slow = false; for (; slow;) test('slow', () => {});",
     ];
 
     let fail = vec![
@@ -189,6 +197,26 @@ describe('other bar', function() {
     });
 });
             ",
+        ),
+        (
+            "const thing = 123; test('foo', () => {}), foo();",
+            "const thing = 123;\n\ntest('foo', () => {}), foo();",
+        ),
+        (
+            "const thing = 123; test('foo', () => {}) && foo();",
+            "const thing = 123;\n\ntest('foo', () => {}) && foo();",
+        ),
+        (
+            "const thing = 123; await test('foo', () => {});",
+            "const thing = 123;\n\nawait test('foo', () => {});",
+        ),
+        (
+            "const thing = 123;\nawait test('foo', () => {});",
+            "const thing = 123;\n\nawait test('foo', () => {});",
+        ),
+        (
+            "const thing = 123; await /* hook */ test('foo', () => {});",
+            "const thing = 123;\n\nawait /* hook */ test('foo', () => {});",
         ),
     ];
     Tester::new(PaddingAroundTestBlocks::NAME, PaddingAroundTestBlocks::PLUGIN, pass, fail)

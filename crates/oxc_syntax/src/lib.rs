@@ -9,6 +9,7 @@ pub mod constant_value;
 pub mod es_target;
 pub mod identifier;
 pub mod keyword;
+pub mod label;
 pub mod line_terminator;
 pub mod module_record;
 pub mod node;

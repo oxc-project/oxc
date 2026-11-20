@@ -43,3 +43,17 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ──────────────────
    ╰────
   help: The first argument of 'Number.prototype.toPrecision' should be a number between 1 and 21
+
+  ⚠ oxc(number-arg-out-of-range): Radix or precision arguments of number-related functions should not exceed the limit
+   ╭─[number_arg_out_of_range.tsx:1:1]
+ 1 │ x.toString(1, 43)
+   · ─────────────────
+   ╰────
+  help: The first argument of 'Number.prototype.toString' should be a number between 2 and 36
+
+  ⚠ oxc(number-arg-out-of-range): Radix or precision arguments of number-related functions should not exceed the limit
+   ╭─[number_arg_out_of_range.tsx:1:1]
+ 1 │ x?.toFixed(22)
+   · ──────────────
+   ╰────
+  help: The first argument of 'Number.prototype.toFixed' should be a number between 0 and 20

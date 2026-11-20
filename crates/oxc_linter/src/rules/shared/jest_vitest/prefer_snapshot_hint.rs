@@ -7,14 +7,14 @@ use oxc_ast::{
     ast::{CallExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_semantic::NodeId;
+use oxc_semantic::{AstNode, NodeId};
 use oxc_span::Span;
 
 use crate::{
     context::LintContext,
     utils::{
         JestFnKind, JestGeneralFnKind, PossibleJestNode, collect_possible_jest_call_node,
-        parse_expect_jest_fn_call,
+        parse_expect_jest_fn_call, parse_general_jest_fn_call,
     },
 };
 
@@ -222,11 +222,12 @@ impl SnapshotHintMode {
     pub fn run_once<'a>(self, ctx: &LintContext<'a>) {
         let mut scoped_expects: FxHashMap<NodeId, Vec<&'a CallExpression<'a>>> =
             FxHashMap::default();
+        let mut test_call_cache = FxHashMap::default();
         let mut possible_jest_nodes = collect_possible_jest_call_node(ctx);
         possible_jest_nodes.sort_unstable_by_key(|n| n.node.id());
 
         for possible_jest_node in possible_jest_nodes {
-            check_node(&possible_jest_node, &mut scoped_expects, ctx);
+            check_node(&possible_jest_node, &mut scoped_expects, &mut test_call_cache, ctx);
         }
 
         for call_expects in scoped_expects.values() {
@@ -275,15 +276,38 @@ impl SnapshotHintMode {
     }
 }
 
-fn is_test_node(ancestor_call_expr: &CallExpression<'_>) -> bool {
-    let Some(id) = ancestor_call_expr.callee_name() else {
+fn is_test_node<'a>(
+    node: &AstNode<'a>,
+    test_call_cache: &mut FxHashMap<NodeId, bool>,
+    ctx: &LintContext<'a>,
+) -> bool {
+    let AstKind::CallExpression(call_expr) = node.kind() else {
         return false;
     };
 
-    matches!(JestFnKind::from(id), JestFnKind::General(JestGeneralFnKind::Test))
+    if call_expr
+        .callee_name()
+        .is_some_and(|name| JestFnKind::from(name) == JestFnKind::General(JestGeneralFnKind::Test))
+    {
+        return true;
+    }
+
+    *test_call_cache.entry(node.id()).or_insert_with(|| {
+        let Some(possible_jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx)
+        else {
+            return false;
+        };
+
+        parse_general_jest_fn_call(call_expr, &possible_jest_node, ctx)
+            .is_some_and(|call| call.kind == JestFnKind::General(JestGeneralFnKind::Test))
+    })
 }
 
-fn get_scope_owner(node_id: NodeId, ctx: &LintContext<'_>) -> NodeId {
+fn get_scope_owner(
+    node_id: NodeId,
+    test_call_cache: &mut FxHashMap<NodeId, bool>,
+    ctx: &LintContext<'_>,
+) -> NodeId {
     let mut last_function_id = None;
 
     for ancestor in ctx.nodes().ancestors(node_id) {
@@ -292,9 +316,7 @@ fn get_scope_owner(node_id: NodeId, ctx: &LintContext<'_>) -> NodeId {
                 last_function_id = Some(ancestor.id());
 
                 let parent = ctx.nodes().parent_node(ancestor.id());
-                if let AstKind::CallExpression(call) = parent.kind()
-                    && is_test_node(call)
-                {
+                if is_test_node(parent, test_call_cache, ctx) {
                     return ancestor.id();
                 }
             }
@@ -311,6 +333,7 @@ fn get_scope_owner(node_id: NodeId, ctx: &LintContext<'_>) -> NodeId {
 fn check_node<'a>(
     possible_jest_node: &PossibleJestNode<'a, '_>,
     scoped_expects: &mut FxHashMap<NodeId, Vec<&'a CallExpression<'a>>>,
+    test_call_cache: &mut FxHashMap<NodeId, bool>,
     ctx: &LintContext<'a>,
 ) {
     let node = possible_jest_node.node;
@@ -330,7 +353,7 @@ fn check_node<'a>(
         return;
     }
 
-    let scope_owner = get_scope_owner(node.id(), ctx);
+    let scope_owner = get_scope_owner(node.id(), test_call_cache, ctx);
 
     if let Some(expects) = scoped_expects.get_mut(&scope_owner) {
         expects.push(call_expr);

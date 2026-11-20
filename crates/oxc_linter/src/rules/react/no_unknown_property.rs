@@ -4,7 +4,7 @@ use cow_utils::CowUtils;
 use itertools::Itertools;
 use oxc_ast::{
     AstKind,
-    ast::{JSXAttributeItem, JSXAttributeName, JSXElementName},
+    ast::{JSXAttributeItem, JSXElementName},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -519,70 +519,64 @@ impl Rule for NoUnknownProperty {
 
         let is_valid_html_tag = matches_html_tag_conventions(el_type)
             && el.attributes.iter().all(|attr| {
-                let JSXAttributeItem::Attribute(jsx_attr) = attr else {
+                let Some(jsx_attr) = attr.as_attribute() else {
                     return true;
                 };
-                let JSXAttributeName::Identifier(ident) = &jsx_attr.name else {
+                let Some(ident) = jsx_attr.name.as_identifier() else {
                     return true;
                 };
                 ident.name.as_str() != "is"
             });
 
-        el.attributes
-            .iter()
-            .filter_map(|attr| match &attr {
-                JSXAttributeItem::Attribute(regular) => Some(&**regular),
-                JSXAttributeItem::SpreadAttribute(_) => None,
-            })
-            .for_each(|attr| {
-                let span = attr.name.span();
-                let actual_name = get_jsx_attribute_name(&attr.name);
-                if self.0.ignore.contains(&(actual_name)) {
-                    return;
+        el.attributes.iter().filter_map(JSXAttributeItem::as_attribute).for_each(|attr| {
+            let span = attr.name.span();
+            let actual_name = get_jsx_attribute_name(&attr.name);
+            if self.0.ignore.contains(&(actual_name)) {
+                return;
+            }
+            if is_valid_data_attr(&actual_name) {
+                if self.0.require_data_lowercase && has_uppercase(&actual_name) {
+                    ctx.diagnostic(data_lowercase_required(
+                        span,
+                        &actual_name.cow_to_ascii_lowercase(),
+                    ));
                 }
-                if is_valid_data_attr(&actual_name) {
-                    if self.0.require_data_lowercase && has_uppercase(&actual_name) {
-                        ctx.diagnostic(data_lowercase_required(
-                            span,
-                            &actual_name.cow_to_ascii_lowercase(),
-                        ));
-                    }
-                    return;
+                return;
+            }
+            if is_valid_aria_property(&actual_name) || !is_valid_html_tag {
+                return;
+            }
+            let name = normalize_attribute_case(&actual_name);
+            if let Some(tags) = ATTRIBUTE_TAGS_MAP.get(name) {
+                if !tags.contains(el_type) {
+                    ctx.diagnostic(invalid_prop_on_tag(
+                        span,
+                        &actual_name,
+                        &tags.iter().join(", "),
+                    ));
                 }
-                if is_valid_aria_property(&actual_name) || !is_valid_html_tag {
-                    return;
-                }
-                let name = normalize_attribute_case(&actual_name);
-                if let Some(tags) = ATTRIBUTE_TAGS_MAP.get(name) {
-                    if !tags.contains(el_type) {
-                        ctx.diagnostic(invalid_prop_on_tag(
-                            span,
-                            &actual_name,
-                            &tags.iter().join(", "),
-                        ));
-                    }
-                    return;
-                }
+                return;
+            }
 
-                if DOM_PROPERTIES_NAMES.contains(name) {
-                    return;
-                }
+            if DOM_PROPERTIES_NAMES.contains(name) {
+                return;
+            }
 
-                dom_properties_lower_map()
-                    .get(&name.cow_to_ascii_lowercase())
-                    .or_else(|| DOM_ATTRIBUTES_TO_CAMEL.get(name))
-                    .map_or_else(
-                        || {
-                            ctx.diagnostic(unknown_prop(span));
-                        },
-                        |prop| {
-                            ctx.diagnostic_with_suggestion(
-                                unknown_prop_with_standard_name(span, prop),
-                                |fixer| fixer.replace(span, *prop),
-                            );
-                        },
-                    );
-            });
+            dom_properties_lower_map()
+                .get(&name.cow_to_ascii_lowercase())
+                .or_else(|| DOM_ATTRIBUTES_TO_CAMEL.get(name))
+                .map_or_else(
+                    || {
+                        ctx.diagnostic(unknown_prop(span));
+                    },
+                    |prop| {
+                        ctx.diagnostic_with_suggestion(
+                            unknown_prop_with_standard_name(span, prop),
+                            |fixer| fixer.replace(span, *prop),
+                        );
+                    },
+                );
+        });
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {

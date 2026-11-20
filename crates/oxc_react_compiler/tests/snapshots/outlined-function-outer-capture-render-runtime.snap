@@ -1,0 +1,47 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/outlined-function-outer-capture-render-runtime.js
+---
+import { c as _c } from "react/compiler-runtime";
+// @compilationMode:"infer"
+import { useState } from "react";
+function createLabel(prefix) {
+	const useLabel = (name) => {
+		const $ = _c(1);
+		const [suffix] = useState("!");
+		let t0;
+		if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+			t0 = () => prefix + ":";
+			$[0] = t0;
+		} else {
+			t0 = $[0];
+		}
+		const format = t0;
+		return format() + name + suffix;
+	};
+	return useLabel;
+}
+const useLabel = createLabel("hello");
+function Component(t0) {
+	const $ = _c(2);
+	const { name } = t0;
+	const label = useLabel(name);
+	let t1;
+	if ($[0] !== label) {
+		t1 = <div>{label}</div>;
+		$[0] = label;
+		$[1] = t1;
+	} else {
+		t1 = $[1];
+	}
+	return t1;
+}
+export const FIXTURE_ENTRYPOINT = {
+	fn: Component,
+	params: [{ name: "a" }],
+	sequentialRenders: [
+		{ name: "a" },
+		{ name: "a" },
+		{ name: "b" }
+	]
+};

@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "target": "ES2022",
+    "module": "commonjs",
+    "strictNullChecks": false
+  },
+  "include": [
+    "**/*.ts"
+  ],
+  "exclude": [
+    "excluded"
+  ]
+}

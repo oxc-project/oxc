@@ -1,0 +1,5 @@
+{
+  "original": "throw new Error(\"initialization\");function Component() {return 42;}\nexport const FIXTURE_ENTRYPOINT = {fn: Component, params: []};",
+  "compiled": "throw new Error(\"initialization\");function Component() {return 42;}\nexport const FIXTURE_ENTRYPOINT = {fn: Component, params: []};",
+  "expected": "invalid"
+}

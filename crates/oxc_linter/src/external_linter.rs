@@ -1,15 +1,20 @@
 use std::{fmt::Debug, sync::Arc};
 
-use serde::{Deserialize, Serialize, Serializer, ser::SerializeMap};
+use serde::Deserialize;
 
 use oxc_allocator::Allocator;
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_span::Span;
 
+use crate::fixer::{CompositeFix, Fix, MergeFixesError};
+
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+use serde::{Serialize, Serializer, ser::SerializeMap};
+
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
 use crate::{
     config::{OxlintEnv, OxlintGlobals},
     context::ContextHost,
-    fixer::{CompositeFix, Fix, MergeFixesError},
 };
 
 pub type ExternalLinterCreateWorkspaceCb =
@@ -286,6 +291,7 @@ fn create_invalid_offset_error(span: Span) -> Result<Fix, MergeFixesError> {
 pub struct ExternalLinter {
     pub(crate) load_plugin: ExternalLinterLoadPluginCb,
     pub(crate) setup_rule_configs: ExternalLinterSetupRuleConfigsCb,
+    #[cfg_attr(not(all(target_pointer_width = "64", target_endian = "little")), expect(dead_code))]
     pub(crate) lint_file: ExternalLinterLintFileCb,
     pub create_workspace: ExternalLinterCreateWorkspaceCb,
     pub destroy_workspace: ExternalLinterDestroyWorkspaceCb,
@@ -313,20 +319,24 @@ impl Debug for ExternalLinter {
 ///
 /// Serializes as `{ "globals": { "React": "readonly" }, "envs": { "browser": true } }`.
 /// `envs` only includes the environments that are enabled, so all properties are `true`.
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
 #[derive(Serialize)]
 pub struct GlobalsAndEnvs<'c> {
     globals: &'c OxlintGlobals,
     envs: EnabledEnvs<'c>,
 }
 
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
 impl<'c> GlobalsAndEnvs<'c> {
     pub fn new(ctx_host: &'c ContextHost<'_>) -> Self {
         Self { globals: ctx_host.globals(), envs: EnabledEnvs(ctx_host.env()) }
     }
 }
 
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
 struct EnabledEnvs<'c>(&'c OxlintEnv);
 
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
 impl Serialize for EnabledEnvs<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;

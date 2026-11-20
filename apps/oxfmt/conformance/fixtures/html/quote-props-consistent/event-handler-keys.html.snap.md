@@ -1,0 +1,17 @@
+# Input
+
+`````html
+<button onclick="f({a: 1, 'b-c': 2})">x</button>
+<button onclick="f({1: 1, 'b-c': 2})">x</button>
+
+`````
+
+# Output
+
+## `{"quoteProps":"consistent"}`
+
+`````html
+<button onclick="f({ 'a': 1, 'b-c': 2 })">x</button>
+<button onclick="f({ '1': 1, 'b-c': 2 })">x</button>
+
+`````

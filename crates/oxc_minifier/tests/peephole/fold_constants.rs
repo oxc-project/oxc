@@ -481,7 +481,7 @@ fn test_fold_unary() {
 
     fold("a=-0", "a=-0");
     fold("a=-(0)", "a=-0");
-    fold_same("a=-Infinity");
+    fold("a=-Infinity", "a=-1e400");
     fold("a=-NaN", "a=NaN");
     fold_same("a=-foo()");
     fold("-undefined", "NaN");
@@ -497,7 +497,7 @@ fn test_fold_unary() {
     fold("a=+(f?!0:!1)", "a=+!!f");
     fold_same("a=+(f?(foo, !0):(bar, !1))");
     fold("a=+0", "a=0");
-    fold("a=+Infinity", "a=Infinity");
+    fold("a=+Infinity", "a=1e400");
     fold("a=+NaN", "a=NaN");
     fold("a=+-7", "a=-7");
     fold("a=+.5", "a=.5");
@@ -1014,10 +1014,10 @@ fn test_fold_arithmetic() {
 
 #[test]
 fn test_fold_arithmetic_infinity() {
-    fold("x=-Infinity-2", "x=-Infinity");
-    fold("x=Infinity-2", "x=Infinity");
-    fold("x=Infinity*5", "x=Infinity");
-    fold("x = Infinity ** 2", "x = Infinity");
+    fold("x=-Infinity-2", "x=-1e400");
+    fold("x=Infinity-2", "x=1e400");
+    fold("x=Infinity*5", "x=1e400");
+    fold("x = Infinity ** 2", "x = 1e400");
     fold("x = Infinity ** -2", "x = 0");
 
     fold("x = Infinity % Infinity", "x = NaN");
@@ -1100,13 +1100,13 @@ fn test_fold_multiply() {
 #[test]
 fn test_fold_division() {
     fold("x = Infinity / Infinity", "x = NaN");
-    fold("x = Infinity / 0", "x = Infinity");
+    fold("x = Infinity / 0", "x = 1e400");
     // `1 / 0` is the canonical printed spelling of Infinity and is kept as-is.
     fold_same("x = 1 / 0");
     fold_same("x = -1 / 0");
     // A negative-zero divisor is not canonical and can still be folded.
-    fold("x = 1 / -0", "x = -Infinity");
-    fold("x = -1 / -0", "x = Infinity");
+    fold("x = 1 / -0", "x = -1e400");
+    fold("x = -1 / -0", "x = 1e400");
     fold("x = 0 / 0", "x = NaN");
     fold("x = 360 / 360", "x = 1");
     fold("x = 10.5 / 0.75", "x = 14");
@@ -1191,7 +1191,7 @@ fn test_fold_exponential_disagrees_with_ieee_pow() {
     fold("x = (-1) ** NaN", "x = NaN");
 
     // The cases `pow` and `Number::exponentiate` agree on.
-    fold("x = 2 ** Infinity", "x = Infinity");
+    fold("x = 2 ** Infinity", "x = 1e400");
     fold("x = 2 ** NaN", "x = NaN");
     fold("x = NaN ** 0", "x = 1");
     fold("x = Infinity ** 0", "x = 1");
@@ -1332,10 +1332,24 @@ fn test_fold_instance_of_additional() {
 }
 
 #[test]
+fn test_instance_of_preserves_left_side_effects() {
+    for constructor in ["Object", "Number", "Boolean", "String", "Array"] {
+        for left in ["foo() > 0", "!foo()", "[foo()]", "class { static value = foo() }"] {
+            fold_same(&format!("({left}) instanceof {constructor}"));
+            test_same(&format!("({left}) instanceof {constructor};"));
+        }
+    }
+    test(
+        "function main() { var log = []; return [(log.push(1) > 0) instanceof Object, log]; } console.log(JSON.stringify(main()));",
+        "function main() { var log = []; return [log.push(1) > 0 instanceof Object, log]; } console.log(JSON.stringify(main()));",
+    );
+}
+
+#[test]
 fn test_fold_left_child_op() {
     fold("x & Infinity & 2", "x & 0");
-    fold_same("x - Infinity - 2"); // FIXME: want "x-Infinity"
-    fold_same("x - 1 + Infinity");
+    fold("x - Infinity - 2", "x - 1e400 - 2"); // FIXME: want "x-1e400"
+    fold("x - 1 + Infinity", "x - 1 + 1e400");
     fold_same("x - 2 + 1");
     fold_same("x - 2 + 3");
     fold_same("1 + x - 2 + 1");
@@ -1397,8 +1411,8 @@ fn test_does_not_duplicate_large_tracked_strings_when_folding_addition() {
 #[test]
 fn test_to_number() {
     fold("x = +''", "x = 0");
-    fold("x = +'+Infinity'", "x = Infinity");
-    fold("x = +'-Infinity'", "x = -Infinity");
+    fold("x = +'+Infinity'", "x = 1e400");
+    fold("x = +'-Infinity'", "x = -1e400");
 
     for op in ["", "+", "-"] {
         for s in ["inf", "infinity", "INFINITY", "InFiNiTy"] {
@@ -1883,4 +1897,48 @@ fn test_fold_left_child_op_keeps_side_effects() {
     fold_same("(x ^ [(y = 9), 1].length) ^ 3");
     // Still folds when nothing has side effects.
     fold("(3 ^ x) ^ [1, 1].length", "x ^ 1");
+}
+
+#[test]
+fn test_fold_int32_add_sub() {
+    test_smallest(
+        "const SIZE = 4; const SIZE_SHIFT = 2; const START_OFFSET = 0; const TYPE_OFFSET = 1; export let start = buffer[(index << SIZE_SHIFT) + START_OFFSET]; export let previousType = buffer[(index << SIZE_SHIFT) - SIZE + TYPE_OFFSET];",
+        "export let start = buffer[index << 2]; export let previousType = buffer[(index << 2) - 3];",
+    );
+
+    fold("(a << 2) + 0", "a << 2");
+    fold("0 + (a << 2)", "a << 2");
+    fold("(a << 2) - 0", "a << 2");
+    fold("(a >>> b) + 0", "a >>> b");
+    fold("(~+a) + 0", "~+a");
+    fold("(a << 2) + -0", "a << 2");
+    fold("(f() << 2) + 0", "f() << 2");
+
+    fold("(a << 2) - 4 + 1", "(a << 2) - 3");
+    fold("(a << 2) + 4 - 1", "(a << 2) + 3");
+    fold("(a << 2) + 4 + 1", "(a << 2) + 5");
+    fold("(a << 2) - 4 - 1", "(a << 2) - 5");
+    fold("(a << 2) - 1 + 4", "(a << 2) + 3");
+    fold("(a << 2) - 4 + 4", "a << 2");
+    fold("(a << 2) - 4 + 1 + 2", "(a << 2) - 1");
+    fold("(a << 2) + 9007194959773696 - 1", "(a << 2) + 9007194959773695");
+    fold("(a << 2) + 1e9 - 1e9", "a << 2");
+    fold("(1e9 - 4) + 1", "1e9 - 3");
+    fold("(1e9 + 4) + 1", "1e9 + 5");
+    fold("(1e9 + 1) + 0", "1e9 + 1");
+    fold("(1e9 + 4) - 1", "1e9 + 3");
+
+    fold_same("0 - (a << 2)");
+    fold_same("(a << b) + 0");
+    fold_same("(a << b) - 4 + 1");
+    fold_same("~a + 0");
+    fold_same("a + 0");
+    fold_same("(a * 1 - 5) + 1");
+    fold_same("(a << 2) - 4.5 + 1");
+    fold_same("(a ? -0 : b << 2) + 0");
+    fold_same("(a << 2) + 9007194959773697 - 1");
+    fold_same("(a << 2) + 9007194959773696 + 1");
+    fold_same("(a << 2) - 1e9 - 1");
+    fold_same("(a << 2) + 0n");
+    fold_same("(a << 2) + NaN - NaN");
 }

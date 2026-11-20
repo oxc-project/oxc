@@ -1,0 +1,1 @@
+const A = <div class="p-4 flex">Hello</div>;

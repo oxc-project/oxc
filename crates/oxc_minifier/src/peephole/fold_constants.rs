@@ -3,7 +3,8 @@ use oxc_ast::ast::*;
 use oxc_ecmascript::{
     GlobalContext, ToJsString,
     constant_evaluation::{
-        ConstantEvaluation, ConstantValue, DetermineValueType, ValueType, evaluate_to_js_string,
+        ConstantEvaluation, ConstantValue, DetermineValueType, IsInt32OrUint32, ValueType,
+        evaluate_to_js_string,
     },
     side_effects::MayHaveSideEffects,
     with_number_literal,
@@ -11,7 +12,7 @@ use oxc_ecmascript::{
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, SPAN};
 use oxc_str::JSStr;
-use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
+use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
 use crate::{TraverseCtx, generated::ancestor::Ancestor};
 
@@ -71,8 +72,18 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Whether the current node is the operand of `delete`. `delete "a".length` deletes a
+    /// non-configurable property, so it is false (or throws in strict mode), while deleting the
+    /// folded value would be true.
+    pub(super) fn is_delete_argument(ctx: &TraverseCtx<'a>) -> bool {
+        matches!(ctx.parent(), Ancestor::UnaryExpressionArgument(unary) if unary.operator().is_delete())
+    }
+
     pub fn fold_static_member_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::StaticMemberExpression(e) = expr else { return };
+        if Self::is_delete_argument(ctx) {
+            return;
+        }
         // TODO: tryFoldObjectPropAccess(n, left, name)
         // `evaluate_value` only folds a narrow set of member accesses (currently
         // `.length` on constant strings/arrays) and bails cheaply otherwise.
@@ -89,6 +100,9 @@ impl<'a> PeepholeOptimizations {
 
     pub fn fold_computed_member_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::ComputedMemberExpression(e) = expr else { return };
+        if Self::is_delete_argument(ctx) {
+            return;
+        }
         // TODO: tryFoldObjectPropAccess(n, left, name)
         // See `fold_static_member_expr`: bail via the cheap `evaluate_value`
         // check before walking the object and key for side effects.
@@ -230,12 +244,8 @@ impl<'a> PeepholeOptimizations {
         };
         let e = e.unbox();
         ctx.drop_expression(&e.right);
-        if Self::should_keep_indirect_access(&e.left, ctx) {
-            // `(o.f OP V)()` => `(0, o.f)()`
-            Self::preserve_indirect_access(e.right.span(), e.left, ctx)
-        } else {
-            e.left
-        }
+        // `(o.f OP V)()` => `(0, o.f)()`
+        Self::preserve_indirect_access_if_needed(e.right.span(), e.left, ctx)
     }
 
     /// Unfold the right side of the logical expression.
@@ -248,17 +258,14 @@ impl<'a> PeepholeOptimizations {
             unreachable!();
         };
         let mut e = e.unbox();
-        if !Self::remove_unused_expression(&mut e.left, ctx) {
+        if Self::remove_unused_expression(&mut e.left, ctx) {
+            ctx.drop_expression(&e.left);
+            // `(V OP o.f)` => `(0, o.f)`
+            // `(V OP x)` => `x`
+            Self::preserve_indirect_access_if_needed(e.left.span(), e.right, ctx)
+        } else {
             // `(a(), V) OP 1` => `(a(), V, 1)`
             Self::join_sequence(e.span, e.left, e.right, ctx)
-        } else if Self::should_keep_indirect_access(&e.right, ctx) {
-            // `(V OP o.f)` => `(0, o.f)`
-            ctx.drop_expression(&e.left);
-            Self::preserve_indirect_access(e.left.span(), e.right, ctx)
-        } else {
-            // `(V OP x)` => `x`
-            ctx.drop_expression(&e.left);
-            e.right
         }
     }
 
@@ -311,7 +318,7 @@ impl<'a> PeepholeOptimizations {
         if e.operator == BinaryOperator::Division
             && matches!(&e.right, Expression::NumericLiteral(r) if r.value == 0.0 && r.value.is_sign_positive())
             && matches!(&e.left, Expression::NumericLiteral(l) if l.value.abs() == 1.0)
-            && !matches!(&ctx.parent(), Ancestor::UnaryExpressionArgument(unary) if unary.operator().is_delete())
+            && !Self::is_delete_argument(ctx)
         {
             return;
         }
@@ -352,6 +359,7 @@ impl<'a> PeepholeOptimizations {
                         Self::folded_numeric_expression_is_shorter(e, left - right) != Some(false)
                     })
                     .and_then(|_| ctx.eval_binary(e))
+                    .or_else(|| Self::try_fold_int32_add_sub(e, ctx))
             }
             BinaryOperator::Multiplication
             | BinaryOperator::Exponential
@@ -559,7 +567,7 @@ impl<'a> PeepholeOptimizations {
             if let ConstantValue::Number(result) = &v
                 && Self::folded_numeric_expression_is_shorter(e, *result) == Some(false)
             {
-                return None;
+                return Self::try_fold_int32_add_sub(e, ctx);
             }
             if let ConstantValue::String(result) = &v
                 && let Some((left_size, left_has_non_inlineable)) =
@@ -614,7 +622,73 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
-        None
+        Self::try_fold_int32_add_sub(e, ctx)
+    }
+
+    #[expect(clippy::cast_possible_truncation)]
+    fn safe_int_literal(expr: &Expression<'a>) -> Option<i64> {
+        let Expression::NumericLiteral(lit) = expr else { return None };
+        (lit.value.fract() == 0.0 && lit.value.abs() <= 9_007_199_254_740_991.0)
+            .then(|| lit.value as i64)
+    }
+
+    #[expect(clippy::cast_precision_loss)]
+    fn try_fold_int32_add_sub(
+        e: &mut BinaryExpression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        const MAX_SAFE_OFFSET: i64 = ((1_i64 << 53) - 1) - (u32::MAX as i64);
+
+        if e.right.is_number_0() && e.left.is_int32_or_uint32(ctx) {
+            return Some(e.left.take_in(ctx));
+        }
+        if e.operator == BinaryOperator::Addition
+            && e.left.is_number_0()
+            && e.right.is_int32_or_uint32(ctx)
+        {
+            return Some(e.right.take_in(ctx));
+        }
+
+        let c2 = Self::safe_int_literal(&e.right)?;
+        let Expression::BinaryExpression(left_bin) = &mut e.left else { return None };
+        if !matches!(left_bin.operator, BinaryOperator::Addition | BinaryOperator::Subtraction) {
+            return None;
+        }
+        let c1 = Self::safe_int_literal(&left_bin.right)?;
+        if !left_bin.left.is_int32_or_uint32(ctx) {
+            return None;
+        }
+
+        let s1 = if left_bin.operator == BinaryOperator::Addition { c1 } else { -c1 };
+        let s2 = if e.operator == BinaryOperator::Addition { c2 } else { -c2 };
+        let combined = s1 + s2;
+        // ECMA-262 IEEE-754 exactness requires `A + s1` and `A + (s1 + s2)` within `[-MAX_SAFE_INTEGER, MAX_SAFE_INTEGER]` for all `i32`/`u32` `A`.
+        if s1.abs() > MAX_SAFE_OFFSET || combined.abs() > MAX_SAFE_OFFSET {
+            return None;
+        }
+        if combined == 0 {
+            return Some(left_bin.left.take_in(ctx));
+        }
+
+        let new_op =
+            if combined > 0 { BinaryOperator::Addition } else { BinaryOperator::Subtraction };
+        let new_abs = combined.unsigned_abs() as f64;
+        let original_len = 2
+            + Self::number_literal_source_len(c1 as f64)?
+            + Self::number_literal_source_len(c2 as f64)?;
+        if 1 + Self::number_literal_source_len(new_abs)? > original_len {
+            return None;
+        }
+
+        let right_span = left_bin.right.span().merge_within(e.right.span(), e.span).unwrap_or(SPAN);
+        let right = ctx.value_to_expr(right_span, ConstantValue::Number(new_abs));
+        Some(Expression::new_binary_expression(
+            e.span,
+            left_bin.left.take_in(ctx),
+            new_op,
+            right,
+            ctx,
+        ))
     }
 
     fn try_fold_add_op(
@@ -1032,7 +1106,7 @@ impl<'a> PeepholeOptimizations {
             let next_quasi = (idx + 1 < t.quasis.len()).then(|| t.quasis.remove(idx + 1));
             let quasi = &mut t.quasis[idx];
             let escaped = Self::escape_string_for_template_literal(value);
-            let next_raw = next_quasi.as_ref().map(|q| q.value.raw.as_str()).unwrap_or_default();
+            let next_raw = next_quasi.as_ref().map_or_default(|q| q.value.raw.as_str());
             let raw = quasi.value.raw.as_str();
             quasi.value.raw = Self::concat_template_literal_raw([raw, &escaped, next_raw], ctx);
             let new_cooked = if let (Some(cooked1), Some(cooked2)) =
@@ -1196,7 +1270,7 @@ pub(super) fn is_cjs_module_exports_hint(expr: &Expression<'_>) -> bool {
     let Expression::AssignmentExpression(assign) = expr else {
         return false;
     };
-    assign.operator == AssignmentOperator::Assign
+    assign.operator.is_assign()
         && assign
             .left
             .as_member_expression()

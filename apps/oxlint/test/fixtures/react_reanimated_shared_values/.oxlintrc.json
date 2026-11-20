@@ -1,0 +1,5 @@
+{
+  "categories": { "correctness": "off" },
+  "plugins": ["react"],
+  "rules": { "react/immutability": "error", "react/refs": "error" }
+}

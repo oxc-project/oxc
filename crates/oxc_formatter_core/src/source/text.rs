@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use oxc_span::{GetSpan, Span};
+use oxc_span::GetSpan;
 
 /// Source text wrapper providing mechanical byte/offset access for the formatter.
 ///
@@ -107,11 +107,5 @@ impl<'a> SourceText<'a> {
     /// Extract text for an object that has a span
     pub fn text_for<T: GetSpan>(&self, obj: &T) -> &'a str {
         obj.span().source_text(self.text)
-    }
-
-    // Utility methods
-    /// Get character count of span
-    pub fn span_width(&self, span: Span) -> usize {
-        self.text_for(&span).chars().count()
     }
 }

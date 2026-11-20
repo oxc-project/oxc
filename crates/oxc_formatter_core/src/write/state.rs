@@ -93,7 +93,6 @@ impl<'ast, C> FormatState<'ast, C> {
         self.session.group_id_builder().group_id(debug_name)
     }
 
-    #[expect(clippy::mutable_key_type)]
     pub fn printed_interned_elements(&mut self) -> &mut FxHashMap<Interned<'ast>, usize> {
         &mut self.printed_interned_elements
     }

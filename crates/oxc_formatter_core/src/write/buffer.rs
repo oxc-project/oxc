@@ -1,4 +1,3 @@
-#![expect(clippy::mutable_key_type)]
 use std::{fmt::Debug, ops::Deref};
 
 use rustc_hash::FxHashMap;

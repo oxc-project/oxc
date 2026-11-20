@@ -69,8 +69,7 @@ impl NoUnusedVars {
         specifiers: &[ImportDeclarationSpecifier<'_>],
     ) -> bool {
         specifiers.iter().all(|specifier| {
-            let specifier_symbol =
-                Symbol::new(ctx, ctx.module_record(), specifier.local().symbol_id());
+            let specifier_symbol = Symbol::new(ctx, ctx.module_record(), specifier.symbol_id());
             !Self::should_skip_symbol(&specifier_symbol)
                 && self.is_ignored(&specifier_symbol).is_none()
                 && !specifier_symbol.is_exported_binding()

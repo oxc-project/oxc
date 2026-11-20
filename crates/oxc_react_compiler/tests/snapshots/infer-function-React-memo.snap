@@ -4,7 +4,7 @@ input_file: crates/oxc_react_compiler/fixtures/infer-function-React-memo.js
 ---
 import { c as _c } from "react/compiler-runtime";
 // @compilationMode:"infer"
-React.memo((props) => {
+const SproutComponent = React.memo((props) => {
 	const $ = _c(1);
 	let t0;
 	if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
@@ -15,3 +15,18 @@ React.memo((props) => {
 	}
 	return t0;
 });
+const sproutInputs = [[], []];
+export const FIXTURE_ENTRYPOINT = {
+	fn: (args) => {
+		"use no memo";
+		return React.createElement(SproutComponent, args[0]);
+	},
+	params: [sproutInputs[0]],
+	sequentialRenders: [
+		sproutInputs[0],
+		sproutInputs[0],
+		...sproutInputs.slice(1),
+		sproutInputs.at(-1),
+		sproutInputs[0]
+	]
+};
