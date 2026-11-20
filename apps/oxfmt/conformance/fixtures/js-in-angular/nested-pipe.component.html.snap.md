@@ -5,6 +5,7 @@
 <p>{{(birthday | date:'longDate') | uppercase}}</p>
 <p [ngClass]="{'btn-success':(dialog$|async).level===1}"></p>
 <p>{{[...a|p, ...(b|q)]}} {{f(...c|r)}} {{ {...d|s} }}</p>
+<p [x]="(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | async)"></p>
 
 `````
 
@@ -24,5 +25,11 @@
 <p>{{ birthday | date: "longDate" | uppercase }}</p>
 <p [ngClass]="{ 'btn-success': (dialog$ | async).level === 1 }"></p>
 <p>{{ [...(a | p), ...(b | q)] }} {{ f(...(c | r)) }} {{ { ...(d | s) } }}</p>
+<p
+  [x]="
+    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      | async
+  "
+></p>
 
 `````
