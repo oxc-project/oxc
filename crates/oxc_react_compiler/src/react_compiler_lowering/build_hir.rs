@@ -3753,7 +3753,7 @@ fn lower_expression<'a>(
             span: Some(lit.span),
         }),
         oxc::Expression::BigIntLiteral(lit) => Ok(InstructionValue::Primitive {
-            value: PrimitiveValue::BigInt { value: lit.value, raw: lit.raw, base: lit.base },
+            value: PrimitiveValue::BigInt { value: lit.value, raw: lit.raw },
             span: Some(lit.span),
         }),
         oxc::Expression::RegExpLiteral(regexp) => Ok(InstructionValue::RegExpLiteral {
