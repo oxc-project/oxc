@@ -740,7 +740,6 @@ impl<'a> ModuleRunnerTransform<'a> {
             value,
             false,
             false,
-            false,
             ctx,
         );
         Argument::new_object_expression(SPAN, [imported_names], ctx)
@@ -792,7 +791,6 @@ impl<'a> ModuleRunnerTransform<'a> {
             PropertyKey::new_static_identifier(SPAN, key, ctx),
             value.unwrap_or_else(|| Expression::new_boolean_literal(SPAN, true, ctx)),
             is_method,
-            false,
             false,
             ctx,
         )

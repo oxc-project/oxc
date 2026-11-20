@@ -1526,7 +1526,7 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
             BindingPattern::BindingIdentifier(_) => {}
             BindingPattern::ObjectPattern(object) => {
                 for property in &object.properties {
-                    if property.computed {
+                    if property.key.is_computed() {
                         self.walk_property_key(&property.key);
                     }
                     self.walk_binding_pattern(&property.value);
@@ -1980,7 +1980,7 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
         match prop {
             ObjectPropertyKind::SpreadProperty(s) => self.walk_expression(&s.argument),
             ObjectPropertyKind::ObjectProperty(p) => {
-                if p.computed {
+                if p.key.is_computed() {
                     self.walk_property_key(&p.key);
                 }
                 // Object methods (`{ foo() {} }`, getters/setters): Babel modeled
@@ -3185,7 +3185,7 @@ fn ox_add_imports_to_program<'a>(
                     ox_atom(ast, &spec.name),
                     ast,
                 );
-                props.push(BindingProperty::new(import_span, key, value, false, false, ast));
+                props.push(BindingProperty::new(import_span, key, value, false, ast));
             }
             let object_pattern = BindingPattern::new_object_pattern(import_span, props, None, ast);
             let require_call = Expression::new_call_expression(

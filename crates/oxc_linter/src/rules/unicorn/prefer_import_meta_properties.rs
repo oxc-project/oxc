@@ -347,7 +347,7 @@ fn check_variable_declarator(
         }
         BindingPattern::ObjectPattern(object_pattern) => {
             for property in &object_pattern.properties {
-                if property.computed {
+                if property.key.is_computed() {
                     continue;
                 }
                 let BindingPattern::BindingIdentifier(binding_identifier) = &property.value else {

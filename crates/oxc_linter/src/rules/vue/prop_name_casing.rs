@@ -209,7 +209,10 @@ impl PropNameCasing {
 fn property_key_static_name<'a>(key: &PropertyKey<'a>) -> Option<(JSStr<'a>, Span)> {
     match key {
         PropertyKey::StaticIdentifier(ident) => Some((ident.name.into(), ident.span)),
-        PropertyKey::PrivateIdentifier(_) => None,
+        PropertyKey::StaticStringLiteral(lit) => Some((lit.value, lit.span)),
+        PropertyKey::StaticNumericLiteral(_)
+        | PropertyKey::StaticBigIntLiteral(_)
+        | PropertyKey::PrivateIdentifier(_) => None,
         key => {
             // Computed key expressions: pull the inner expression and accept
             // statically resolvable literals. Dynamic shapes (variable,

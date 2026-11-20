@@ -1457,13 +1457,15 @@ impl GenExpr for NumericLiteral<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         p.add_source_mapping(self.span);
         let value = self.value;
-        if ctx.contains(Context::TYPESCRIPT) {
+        let typescript = ctx.contains(Context::TYPESCRIPT);
+        if typescript && (!value.is_infinite() || self.raw.is_some()) {
             p.print_str(&self.raw_str());
         } else if value.is_nan() {
             p.print_space_before_identifier();
             p.print_str("NaN");
         } else if value.is_infinite() {
-            let wrap = (p.options.minify && precedence >= Precedence::Multiply)
+            let minify_as_expression = p.options.minify && !typescript;
+            let wrap = (minify_as_expression && precedence >= Precedence::Multiply)
                 || (value.is_sign_negative() && precedence >= Precedence::Prefix);
             p.wrap(wrap, |p| {
                 if value.is_sign_negative() {
@@ -1472,8 +1474,8 @@ impl GenExpr for NumericLiteral<'_> {
                 } else {
                     p.print_space_before_identifier();
                 }
-                // Not `Infinity`, a local binding can shadow the global
-                if p.options.minify {
+                // A local binding can shadow `Infinity`, and TypeScript literal types require a literal.
+                if minify_as_expression {
                     p.print_str("1/0");
                 } else {
                     p.print_str("1e400");
@@ -1808,13 +1810,7 @@ impl Gen for ObjectProperty<'_> {
                 if func.generator {
                     p.print_ascii_byte(b'*');
                 }
-                if self.computed {
-                    p.print_ascii_byte(b'[');
-                }
                 self.key.print(p, ctx);
-                if self.computed {
-                    p.print_ascii_byte(b']');
-                }
                 if let Some(type_parameters) = &func.type_parameters {
                     type_parameters.print(p, ctx);
                 }
@@ -1852,25 +1848,8 @@ impl Gen for ObjectProperty<'_> {
             }
         }
 
-        let mut computed = self.computed;
-
-        // "{ -1: 0 }" must be printed as "{ [-1]: 0 }"
-        // "{ 1/0: 0 }" must be printed as "{ [1/0]: 0 }"
-        if !computed
-            && let Some(Expression::NumericLiteral(n)) = self.key.as_expression()
-            && (n.value.is_sign_negative() || n.value.is_infinite())
-        {
-            computed = true;
-        }
-
         if !shorthand {
-            if computed {
-                p.print_ascii_byte(b'[');
-            }
             self.key.print(p, ctx);
-            if computed {
-                p.print_ascii_byte(b']');
-            }
             p.print_colon();
             p.print_soft_space();
         }
@@ -1885,8 +1864,28 @@ impl Gen for PropertyKey<'_> {
         match self {
             Self::StaticIdentifier(ident) => ident.print(p, ctx),
             Self::PrivateIdentifier(ident) => ident.print(p, ctx),
-            Self::StringLiteral(s) => p.print_string_literal(s, /* allow_backtick */ false),
-            _ => self.to_expression().print_expr(p, Precedence::Comma, Context::empty()),
+            Self::StaticStringLiteral(s) => {
+                p.print_string_literal(s, /* allow_backtick */ false);
+            }
+            Self::StaticNumericLiteral(n) => {
+                debug_assert!(
+                    n.value.is_sign_positive() && !n.value.is_nan(),
+                    "a non-computed numeric property key must be non-negative"
+                );
+                if n.value.is_infinite() && !ctx.contains(Context::TYPESCRIPT) {
+                    p.add_source_mapping(n.span);
+                    p.print_space_before_identifier();
+                    p.print_str("1e400");
+                } else {
+                    n.print_expr(p, Precedence::Comma, ctx & Context::TYPESCRIPT);
+                }
+            }
+            Self::StaticBigIntLiteral(n) => n.print_expr(p, Precedence::Comma, Context::empty()),
+            _ => {
+                p.print_ascii_byte(b'[');
+                self.to_expression().print_expr(p, Precedence::Comma, Context::empty());
+                p.print_ascii_byte(b']');
+            }
         }
     }
 }
@@ -2288,32 +2287,7 @@ impl Gen for AssignmentTargetPropertyProperty<'_> {
             false
         };
         if !omit_key {
-            match &self.name {
-                PropertyKey::StaticIdentifier(ident) => {
-                    ident.print(p, ctx);
-                }
-                PropertyKey::PrivateIdentifier(ident) => {
-                    ident.print(p, ctx);
-                }
-                PropertyKey::StringLiteral(s) => {
-                    if self.computed {
-                        p.print_ascii_byte(b'[');
-                    }
-                    p.print_string_literal(s, /* allow_backtick */ false);
-                    if self.computed {
-                        p.print_ascii_byte(b']');
-                    }
-                }
-                key => {
-                    if self.computed {
-                        p.print_ascii_byte(b'[');
-                    }
-                    key.to_expression().print_expr(p, Precedence::Comma, Context::empty());
-                    if self.computed {
-                        p.print_ascii_byte(b']');
-                    }
-                }
-            }
+            self.name.print(p, ctx);
             p.print_colon();
             p.print_soft_space();
         }
@@ -2985,13 +2959,7 @@ impl Gen for MethodDefinition<'_> {
         if self.value.generator {
             p.print_ascii_byte(b'*');
         }
-        if self.computed {
-            p.print_ascii_byte(b'[');
-        }
         self.key.print(p, ctx);
-        if self.computed {
-            p.print_ascii_byte(b']');
-        }
         if self.optional {
             p.print_ascii_byte(b'?');
         }
@@ -3056,13 +3024,7 @@ impl Gen for PropertyDefinition<'_> {
             p.print_str("readonly");
             p.print_soft_space();
         }
-        if self.computed {
-            p.print_ascii_byte(b'[');
-        }
         self.key.print(p, ctx);
-        if self.computed {
-            p.print_ascii_byte(b']');
-        }
         if self.optional {
             p.print_ascii_byte(b'?');
         }
@@ -3109,18 +3071,12 @@ impl Gen for AccessorProperty<'_> {
         }
         p.print_space_before_identifier();
         p.print_str("accessor");
-        if self.computed {
-            p.print_soft_space();
-            p.print_ascii_byte(b'[');
-        } else if matches!(self.key, PropertyKey::PrivateIdentifier(_)) {
+        if self.key.is_computed() || matches!(self.key, PropertyKey::PrivateIdentifier(_)) {
             p.print_soft_space();
         } else {
             p.print_hard_space();
         }
         self.key.print(p, ctx);
-        if self.computed {
-            p.print_ascii_byte(b']');
-        }
         if self.definite {
             p.print_ascii_byte(b'!');
         }
@@ -3210,13 +3166,7 @@ impl Gen for BindingProperty<'_> {
         }
 
         if !shorthand {
-            if self.computed {
-                p.print_ascii_byte(b'[');
-            }
             self.key.print(p, ctx);
-            if self.computed {
-                p.print_ascii_byte(b']');
-            }
             p.print_colon();
             p.print_soft_space();
         }
@@ -3879,26 +3829,7 @@ impl Gen for TSSignature<'_> {
                     TSMethodSignatureKind::Get => p.print_str("get "),
                     TSMethodSignatureKind::Set => p.print_str("set "),
                 }
-                if signature.computed {
-                    p.print_ascii_byte(b'[');
-                    signature.key.print(p, ctx);
-                    p.print_ascii_byte(b']');
-                } else {
-                    match &signature.key {
-                        PropertyKey::StaticIdentifier(key) => {
-                            key.print(p, ctx);
-                        }
-                        PropertyKey::PrivateIdentifier(key) => {
-                            key.print(p, ctx);
-                        }
-                        PropertyKey::StringLiteral(key) => {
-                            p.print_string_literal(key, false);
-                        }
-                        key => {
-                            key.to_expression().print_expr(p, Precedence::Comma, ctx);
-                        }
-                    }
-                }
+                signature.key.print(p, ctx);
                 if signature.optional {
                     p.print_ascii_byte(b'?');
                 }
@@ -3930,26 +3861,7 @@ impl Gen for TSPropertySignature<'_> {
         if self.readonly {
             p.print_str("readonly ");
         }
-        if self.computed {
-            p.print_ascii_byte(b'[');
-            self.key.print(p, ctx);
-            p.print_ascii_byte(b']');
-        } else {
-            match &self.key {
-                PropertyKey::StaticIdentifier(key) => {
-                    key.print(p, ctx);
-                }
-                PropertyKey::PrivateIdentifier(key) => {
-                    key.print(p, ctx);
-                }
-                PropertyKey::StringLiteral(key) => {
-                    p.print_string_literal(key, false);
-                }
-                key => {
-                    key.to_expression().print_expr(p, Precedence::Comma, ctx);
-                }
-            }
-        }
+        self.key.print(p, ctx);
         if self.optional {
             p.print_ascii_byte(b'?');
         }

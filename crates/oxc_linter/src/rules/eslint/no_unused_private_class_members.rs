@@ -189,7 +189,7 @@ fn is_read(current_node_id: NodeId, semantic: &Semantic) -> bool {
                 AstKind::PrivateFieldExpression(_),
                 AstKind::AssignmentTargetPropertyProperty(prop),
             ) => {
-                if prop.computed && prop.name.span() == curr.span() {
+                if prop.name.is_computed() && prop.name.span() == curr.span() {
                     return true;
                 }
             }

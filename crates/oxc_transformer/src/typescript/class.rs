@@ -1,6 +1,6 @@
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::{ArenaVec, ReplaceWith, TakeIn};
+use oxc_allocator::{ArenaVec, CloneIn, GetAllocator, ReplaceWith, TakeIn};
 use oxc_ast::ast::*;
 use oxc_semantic::{ScopeFlags, ScopeId};
 use oxc_span::SPAN;
@@ -16,6 +16,7 @@ use crate::{
     context::TraverseCtx,
     utils::ast_builder::{
         create_class_constructor, create_this_property_access, create_this_property_assignment,
+        take_literal_property_key,
     },
 };
 
@@ -159,7 +160,7 @@ impl<'a> TypeScript<'a> {
                             // keeps and is evaluated in the same order as the original class field in static block.
                             computed_key_assignments.push(key.take_in(ctx));
                         }
-                    } else if !prop.declare && prop.computed {
+                    } else if !prop.declare && prop.key.is_computed() {
                         // The property declaration without initializer is kept in the class body, so its
                         // computed key is evaluated during class definition. Any pending computed key
                         // assignments from previous elements must be evaluated before it.
@@ -173,7 +174,7 @@ impl<'a> TypeScript<'a> {
                 ClassElement::MethodDefinition(method) => {
                     if method.kind == MethodDefinitionKind::Constructor {
                         constructor = Some(&mut method.value);
-                    } else if method.computed {
+                    } else if method.key.is_computed() {
                         // A non-computed key (e.g. `"m"() {}`) has no side effects, and can't hold
                         // a sequence expression. Pending assignments go to the next computed key
                         // or the static block instead.
@@ -184,7 +185,7 @@ impl<'a> TypeScript<'a> {
                         );
                     }
                 }
-                ClassElement::AccessorProperty(accessor) if accessor.computed => {
+                ClassElement::AccessorProperty(accessor) if accessor.key.is_computed() => {
                     Self::convert_computed_key(
                         &mut accessor.key,
                         &mut computed_key_assignments,
@@ -383,7 +384,6 @@ impl<'a> TypeScript<'a> {
             false,
             false,
             false,
-            false,
             None,
             ctx,
         )
@@ -488,11 +488,29 @@ impl<'a> TypeScript<'a> {
                     ctx,
                 )
             }
+            PropertyKey::StaticStringLiteral(_)
+            | PropertyKey::StaticNumericLiteral(_)
+            | PropertyKey::StaticBigIntLiteral(_) => {
+                // `class C { 'x' = true; 123 = false; }`
+                let new_key = if keep_declaration {
+                    // Keep the original key in the kept declaration, rather than leaving
+                    // the `NullLiteral` dummy from `take_in`, which would create a `null` property.
+                    // A literal key is side-effect free, so the copy can be used in the assignment.
+                    take_literal_property_key(&mut key.clone_in(ctx.allocator()), ctx)
+                } else {
+                    take_literal_property_key(key, ctx)
+                }
+                .unwrap();
+                MemberExpression::new_computed_member_expression(
+                    SPAN,
+                    Expression::new_this_expression(SPAN, ctx),
+                    new_key,
+                    false,
+                    ctx,
+                )
+            }
             key @ match_expression!(PropertyKey) => {
                 let key = key.to_expression_mut();
-                // Note: Key can also be static `StringLiteral` or `NumericLiteral`.
-                // `class C { 'x' = true; 123 = false; }`
-                // No temp var is created for these.
                 let new_key = if key_needs_temp_var(key, ctx) {
                     let taken_key = key.take_in(ctx);
                     let (assignment, ident) = create_computed_key_temp_var(taken_key, ctx);

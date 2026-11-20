@@ -375,7 +375,6 @@ impl<'a> LegacyDecorator<'a> {
 
             let mut accessor = accessor.unbox();
             let is_static = accessor.r#static;
-            let computed = accessor.computed;
 
             // Transfer decorators to the getter so legacy decorator transform can process them.
             let decorators = std::mem::replace(&mut accessor.decorators, ArenaVec::new_in(ctx));
@@ -390,7 +389,7 @@ impl<'a> LegacyDecorator<'a> {
             //   `get [_expr = expr]() { ... } set [expr](value) { ... }`
             // Note: Legacy decorators do not support private identifiers,
             // so we only handle static identifiers and computed keys.
-            let (storage_name, getter_key, setter_key) = if accessor.computed {
+            let (storage_name, getter_key, setter_key) = if accessor.key.is_computed() {
                 let key_expr = accessor.key.into_expression();
                 let (assignment, reference) = duplicate_expression(key_expr, true, ctx);
 
@@ -431,7 +430,6 @@ impl<'a> LegacyDecorator<'a> {
                 PropertyKey::new_private_identifier(SPAN, storage_name, ctx),
                 None,
                 accessor.value.take(),
-                false,
                 is_static,
                 false,
                 false,
@@ -447,7 +445,6 @@ impl<'a> LegacyDecorator<'a> {
                 decorators,
                 getter_key,
                 MethodDefinitionKind::Get,
-                computed,
                 is_static,
                 storage_name,
                 object_binding,
@@ -461,7 +458,6 @@ impl<'a> LegacyDecorator<'a> {
                 ArenaVec::new_in(ctx),
                 setter_key,
                 MethodDefinitionKind::Set,
-                computed,
                 is_static,
                 storage_name,
                 object_binding,
@@ -1270,6 +1266,10 @@ impl<'a> LegacyDecorator<'a> {
     ///
     /// * StaticIdentifier: `a = 0;` -> `a`
     /// * PrivateIdentifier: `#a = 0;` -> `""`
+    /// * Literal key:
+    ///    * StaticStringLiteral: `"a" = 0;` -> `"a"`
+    ///    * StaticNumericLiteral: `1 = 0;` -> `1`
+    ///    * StaticBigIntLiteral: `1n = 0;` -> `1n`
     /// * Computed property key:
     ///  * Copiable key:
     ///    * NumericLiteral: `[1] = 0;` -> `1`
@@ -1293,11 +1293,14 @@ impl<'a> LegacyDecorator<'a> {
                 Expression::new_string_literal(SPAN, "", None, ctx)
             }
             // Copiable literals
-            PropertyKey::NumericLiteral(literal) => {
+            PropertyKey::StaticNumericLiteral(literal) | PropertyKey::NumericLiteral(literal) => {
                 Expression::NumericLiteral(literal.clone_in(ctx.allocator()))
             }
-            PropertyKey::StringLiteral(literal) => {
+            PropertyKey::StaticStringLiteral(literal) | PropertyKey::StringLiteral(literal) => {
                 Expression::StringLiteral(literal.clone_in(ctx.allocator()))
+            }
+            PropertyKey::StaticBigIntLiteral(literal) => {
+                Expression::BigIntLiteral(literal.clone_in(ctx.allocator()))
             }
             PropertyKey::TemplateLiteral(literal) if literal.expressions.is_empty() => {
                 let quasis = literal.quasis.clone_in(ctx.allocator());

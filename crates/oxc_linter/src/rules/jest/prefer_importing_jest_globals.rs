@@ -300,10 +300,7 @@ fn try_merge_cjs_require<'a>(
         // Merge existing destructured properties
         if let BindingPattern::ObjectPattern(pattern) = &declarator.id {
             for prop in &pattern.properties {
-                if prop.computed {
-                    continue;
-                }
-                let Some(key_name) = prop.key.static_name() else { continue };
+                let Some(key_name) = prop.key.literal_name() else { continue };
                 let BindingPattern::BindingIdentifier(value_ident) = &prop.value else {
                     continue;
                 };

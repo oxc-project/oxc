@@ -272,9 +272,11 @@ fn get_member_expr_key_name<'a>(expr: &MemberExpressionKind<'a>) -> Option<JSStr
 
 fn is_property_or_method_def<'a>(parent: &'a AstNode<'a>) -> bool {
     match parent.kind() {
-        AstKind::ObjectProperty(obj_prop) => !obj_prop.computed && obj_prop.kind.is_accessor(),
+        AstKind::ObjectProperty(obj_prop) => {
+            !obj_prop.key.is_computed() && obj_prop.kind.is_accessor()
+        }
         AstKind::MethodDefinition(method_def) => {
-            !method_def.computed && method_def.kind.is_accessor()
+            !method_def.key.is_computed() && method_def.kind.is_accessor()
         }
         _ => false,
     }

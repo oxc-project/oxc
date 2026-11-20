@@ -825,20 +825,22 @@ pub fn is_default_this_binding<'a>(
 }
 
 pub fn get_static_property_name<'a>(parent_node: &AstNode<'a>) -> Option<StaticPropertyName<'a>> {
-    let (key, computed) = match parent_node.kind() {
-        AstKind::PropertyDefinition(definition) => (&definition.key, definition.computed),
-        AstKind::MethodDefinition(definition) => (&definition.key, definition.computed),
-        AstKind::ObjectProperty(property) => (&property.key, property.computed),
+    let key = match parent_node.kind() {
+        AstKind::PropertyDefinition(definition) => &definition.key,
+        AstKind::MethodDefinition(definition) => &definition.key,
+        AstKind::ObjectProperty(property) => &property.key,
         _ => return None,
     };
-    if key.is_identifier() && !computed {
+    if key.is_identifier() {
         return key.name();
     }
     match key {
         PropertyKey::NullLiteral(_) => Some(StaticPropertyName::from("null")),
         // A regex key names its canonical runtime string: `[/a/ig]` names `/a/gi`.
         PropertyKey::RegExpLiteral(_) => key.static_name(),
-        PropertyKey::BigIntLiteral(bigint) => Some(StaticPropertyName::from(bigint.value.as_str())),
+        PropertyKey::StaticBigIntLiteral(bigint) | PropertyKey::BigIntLiteral(bigint) => {
+            Some(StaticPropertyName::from(bigint.value.as_str()))
+        }
         PropertyKey::TemplateLiteral(template) => {
             template.single_quasi().map(StaticPropertyName::from)
         }
@@ -859,7 +861,7 @@ pub fn get_function_name_with_kind<'a>(node: &AstNode<'a>, parent_node: &AstNode
 
     match parent_node.kind() {
         AstKind::MethodDefinition(definition) => {
-            if !definition.computed && definition.key.is_private_identifier() {
+            if definition.key.is_private_identifier() {
                 tokens.push(Cow::Borrowed("private"));
             } else if let Some(accessibility) = definition.accessibility {
                 tokens.push(Cow::Borrowed(accessibility.as_str()));
@@ -870,7 +872,7 @@ pub fn get_function_name_with_kind<'a>(node: &AstNode<'a>, parent_node: &AstNode
             }
         }
         AstKind::PropertyDefinition(definition) => {
-            if !definition.computed && definition.key.is_private_identifier() {
+            if definition.key.is_private_identifier() {
                 tokens.push(Cow::Borrowed("private"));
             } else if let Some(accessibility) = definition.accessibility {
                 tokens.push(Cow::Borrowed(accessibility.as_str()));
@@ -904,12 +906,12 @@ pub fn get_function_name_with_kind<'a>(node: &AstNode<'a>, parent_node: &AstNode
 
     let method_name = match parent_node.kind() {
         AstKind::MethodDefinition(method_definition)
-            if !method_definition.computed && method_definition.key.is_private_identifier() =>
+            if method_definition.key.is_private_identifier() =>
         {
             method_definition.key.name()
         }
         AstKind::PropertyDefinition(definition) => {
-            if !definition.computed && definition.key.is_private_identifier() {
+            if definition.key.is_private_identifier() {
                 definition.key.name()
             } else if let Some(static_name) = get_static_property_name(parent_node) {
                 Some(static_name)

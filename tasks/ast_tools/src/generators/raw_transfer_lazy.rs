@@ -2,6 +2,8 @@
 
 use std::{borrow::Cow, fmt::Debug, str};
 
+use lazy_regex::{Captures, Lazy, Regex, lazy_regex};
+
 use oxc_index::{IndexVec, index_vec};
 
 use crate::{
@@ -13,8 +15,8 @@ use crate::{
     },
     output::Output,
     schema::{
-        BoxDef, CellDef, Def, EnumDef, FieldDef, OptionDef, PointerDef, PrimitiveDef, Schema,
-        StructDef, TypeDef, TypeId, VecDef,
+        BoxDef, CellDef, Def, EnumDef, FieldDef, MetaType, OptionDef, PointerDef, PrimitiveDef,
+        Schema, StructDef, TypeDef, TypeId, VecDef,
         extensions::layout::{GetLayout, GetOffset},
     },
     utils::{format_cow, upper_case_first, write_it},
@@ -739,6 +741,25 @@ fn generate_struct(
         write_it!(to_json, "{field_name}: this.{field_name},\n");
     }
 
+    for (field_name, converter_name) in &struct_def.estree.add_fields {
+        let converter = schema.meta_by_name(converter_name);
+        if !converter.estree.raw_deser_lazy {
+            continue;
+        }
+
+        let value = generate_added_field_value(converter, struct_def);
+
+        #[rustfmt::skip]
+        write_it!(getters, "
+            get {field_name}() {{
+                const internal = this.#internal;
+                return {value};
+            }}
+        ");
+
+        write_it!(to_json, "{field_name}: this.{field_name},\n");
+    }
+
     let type_prop_init = if !has_type_field && !struct_def.estree.no_type {
         to_json = format!("type: '{struct_name}',\n{to_json}");
         format!("type = '{struct_name}';")
@@ -853,6 +874,33 @@ fn generate_struct(
     }
 
     write_it!(state.walked_constructor_names, "{struct_name}, ");
+}
+
+static UINT8_POS_OFFSET_REGEX: Lazy<Regex> = lazy_regex!(r"uint8\[POS_OFFSET\.([a-zA-Z_]+)\]");
+
+/// Generate getter value for a field added by `#[estree(add_fields(...))]`.
+fn generate_added_field_value(converter: &MetaType, struct_def: &StructDef) -> String {
+    let raw_deser = converter.estree.raw_deser.as_deref().unwrap_or_else(|| {
+        panic!("`raw_deser_lazy` converter `{}` must have `raw_deser`", converter.name())
+    });
+
+    let unsupported = UINT8_POS_OFFSET_REGEX.replace_all(raw_deser, "");
+    assert!(
+        !unsupported.contains('\n')
+            && !["POS", "DESER", "THIS", "SOURCE_TEXT", "int", "float"]
+                .iter()
+                .any(|token| unsupported.contains(token)),
+        "`raw_deser_lazy` converter `{}` can only read `uint8[POS_OFFSET.<field>]`",
+        converter.name()
+    );
+
+    UINT8_POS_OFFSET_REGEX
+        .replace_all(raw_deser, |captures: &Captures| {
+            let field = struct_def.field_by_name(&captures[1]);
+            let pos = internal_pos_offset(field.offset_64());
+            format!("internal.ast.buffer[{pos}]")
+        })
+        .into_owned()
 }
 
 /// Generate construct and walk functions for an enum.

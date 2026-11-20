@@ -49,9 +49,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ClassBody<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         if f.options().quote_properties.is_consistent() {
             let quote_needed = self.body.iter().any(|element| {
-                element
-                    .property_key()
-                    .is_some_and(|key| should_preserve_quote(key, element.computed(), f))
+                element.property_key().is_some_and(|key| should_preserve_quote(key, f))
             });
             f.context_mut().push_quote_needed(quote_needed);
         }
@@ -118,7 +116,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, MethodDefinition<'a>> {
         if value.generator {
             write!(f, "*");
         }
-        format_property_key(&self.key(), self.computed, f);
+        format_property_key(&self.key(), f);
 
         if self.optional {
             write!(f, "?");
@@ -588,7 +586,7 @@ impl<'a, 'b> FormatClassElementWithSemicolon<'a, 'b> {
 fn is_binary_keyword_key(key: &PropertyKey<'_>) -> bool {
     match key {
         PropertyKey::StaticIdentifier(ident) => matches!(ident.name.as_str(), "in" | "instanceof"),
-        PropertyKey::StringLiteral(literal) => {
+        PropertyKey::StaticStringLiteral(literal) => {
             literal.value == "in" || literal.value == "instanceof"
         }
         _ => false,

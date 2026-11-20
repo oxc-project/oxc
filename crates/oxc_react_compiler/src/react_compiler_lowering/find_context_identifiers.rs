@@ -272,7 +272,7 @@ impl<'a> VisitJs<'a> for ContextIdentifierVisitor<'a> {
 
     fn visit_object_property(&mut self, it: &ObjectProperty<'a>) {
         // Non-computed object keys were never visited.
-        if it.computed {
+        if it.key.is_computed() {
             self.visit_property_key(&it.key);
         }
         self.visit_expression(&it.value);

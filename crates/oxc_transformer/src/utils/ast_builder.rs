@@ -1,6 +1,6 @@
 use std::iter;
 
-use oxc_allocator::{ArenaBox, ArenaVec, ReplaceWith};
+use oxc_allocator::{ArenaBox, ArenaVec, ReplaceWith, TakeIn};
 use oxc_ast::ast::*;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{GetSpan, SPAN};
@@ -23,6 +23,31 @@ pub fn arrow_function_body_as_function_body_mut<'a, 'b>(
         });
     }
     body.as_function_body_mut().unwrap()
+}
+
+/// Take a non-computed string, numeric or BigInt literal property key as an expression.
+///
+/// `'x'` -> `"x"`, `123` -> `123`, `1n` -> `1n`.
+/// Returns `None` for other keys.
+pub fn take_literal_property_key<'a>(
+    key: &mut PropertyKey<'a>,
+    ctx: &TraverseCtx<'a>,
+) -> Option<Expression<'a>> {
+    if !matches!(
+        key,
+        PropertyKey::StaticStringLiteral(_)
+            | PropertyKey::StaticNumericLiteral(_)
+            | PropertyKey::StaticBigIntLiteral(_)
+    ) {
+        return None;
+    }
+    let expr = match key.take_in(ctx) {
+        PropertyKey::StaticStringLiteral(lit) => Expression::StringLiteral(lit),
+        PropertyKey::StaticNumericLiteral(lit) => Expression::NumericLiteral(lit),
+        PropertyKey::StaticBigIntLiteral(lit) => Expression::BigIntLiteral(lit),
+        _ => unreachable!(),
+    };
+    Some(expr)
 }
 
 /// `object` -> `object.call`.
@@ -232,7 +257,6 @@ pub fn create_class_constructor_with_params<'a>(
         None,
         stmts,
         false,
-        false,
         scope_id,
         ctx,
     )
@@ -246,7 +270,6 @@ pub fn create_class_method<'a>(
     params: ArenaBox<'a, FormalParameters<'a>>,
     return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
     stmts: ArenaVec<'a, Statement<'a>>,
-    computed: bool,
     is_static: bool,
     scope_id: ScopeId,
     ctx: &TraverseCtx<'a>,
@@ -272,7 +295,6 @@ pub fn create_class_method<'a>(
             ctx,
         ),
         kind,
-        computed,
         is_static,
         false,
         false,
@@ -289,7 +311,6 @@ pub fn create_accessor_method<'a>(
     decorators: ArenaVec<'a, Decorator<'a>>,
     key: PropertyKey<'a>,
     kind: MethodDefinitionKind,
-    computed: bool,
     is_static: bool,
     storage_name: Str<'a>,
     object_binding: Option<&BoundIdentifier<'a>>,
@@ -358,7 +379,6 @@ pub fn create_accessor_method<'a>(
         params,
         return_type,
         ArenaVec::from_value_in(body_stmt, ctx),
-        computed,
         is_static,
         scope_id,
         ctx,

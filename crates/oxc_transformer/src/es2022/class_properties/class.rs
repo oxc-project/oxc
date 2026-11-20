@@ -820,7 +820,7 @@ impl<'a> ClassProperties<'a> {
                     );
                     if prop.r#static {
                         self.convert_static_property(prop, ctx);
-                    } else if prop.computed {
+                    } else if prop.key.is_computed() {
                         self.extract_instance_prop_computed_key(prop, ctx);
                     }
                     return false;

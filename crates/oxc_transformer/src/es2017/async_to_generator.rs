@@ -1044,7 +1044,7 @@ impl<'a> VisitJs<'a> for BindingMover<'a, '_> {
     fn visit_binding_property(&mut self, property: &BindingProperty<'a>) {
         // Computed keys are expressions, not binding positions. They can still contain direct
         // scopes that moved with the parameter list.
-        if property.computed {
+        if property.key.is_computed() {
             self.visit_property_key(&property.key);
         }
         self.visit_binding_pattern(&property.value);

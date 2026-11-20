@@ -138,7 +138,9 @@ fn expr() {
     test("x = y / 2e308", "x = y / 1e400;\n");
     test("x = 2e308 in y", "x = 1e400 in y;\n");
     test("x = y instanceof 2e308", "x = y instanceof 1e400;\n");
-    test("x = { 2e308: 0 }", "x = { [1e400]: 0 };\n");
+    test("x = { 2e308: 0 }", "x = { 1e400: 0 };\n");
+    test_minify("x = { 2e308: 0 }", "x={1e400:0};");
+    test_minify("x = { [2e308]: 0 }", "x={[1/0]:0};");
     test_minify("function f(Infinity) { return 2e308; }", "function f(Infinity){return 1/0}");
     test_minify("x = y / 2e308", "x=y/(1/0);");
 
@@ -464,7 +466,7 @@ fn assignment() {
     test_minify(r#"({"my-key": value} = obj);"#, r#"({"my-key":value}=obj);"#);
     test_minify(
         r#"({["computed"]: a, "literal": b} = obj);"#,
-        r#"({["computed"]:a,"literal":b}=obj);"#,
+        r#"({[`computed`]:a,"literal":b}=obj);"#,
     );
     test_minify(r#"let {"test-key": testKey} = obj;"#, r#"let{"test-key":testKey}=obj;"#);
 

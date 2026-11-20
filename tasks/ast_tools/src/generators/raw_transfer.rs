@@ -1955,7 +1955,7 @@ impl<'a> LocFieldAdder<'a> {
     /// * `get foo() {}` ->
     ///   `Object.defineProperty(node$0, 'foo', { get() {}, enumerable: true, configurable: true })`
     fn define(&self, prop: ArenaBox<'a, ObjectProperty<'a>>, temp: Ident<'a>) -> Expression<'a> {
-        assert!(!prop.computed && !prop.method, "Unsupported property in object literal");
+        assert!(!prop.method, "Unsupported property in object literal");
         let PropertyKey::StaticIdentifier(key) = &prop.key else {
             panic!("Unsupported property in object literal");
         };
@@ -1991,7 +1991,6 @@ impl<'a> LocFieldAdder<'a> {
                         PropertyKey::new_static_identifier(SPAN, name, &self.ast),
                         value,
                         method,
-                        false,
                         false,
                         &self.ast,
                     )

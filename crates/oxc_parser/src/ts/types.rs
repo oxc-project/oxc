@@ -1556,7 +1556,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             value,
             false,
             false,
-            false,
             self,
         );
 
@@ -1598,7 +1597,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
             let prop_start = self.cur_start();
 
-            let (key, value, computed) = if self.at(Kind::LBrack) {
+            let (key, value) = if self.at(Kind::LBrack) {
                 let bracket_span = self.cur_token().span();
                 self.error(diagnostics::ts_import_type_options_invalid_key(bracket_span));
                 // Parse as computed to recover
@@ -1608,18 +1607,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.expect(Kind::Colon);
                 let value = self.parse_assignment_expression_or_higher();
                 let key = PropertyKey::new_string_literal(bracket_span, "", None, self);
-                (key, value, true)
+                (key, value)
             } else {
                 let key = if self.at(Kind::Str) {
                     let string_literal = self.parse_known_literal_string();
-                    PropertyKey::StringLiteral(self.alloc(string_literal))
+                    PropertyKey::StaticStringLiteral(self.alloc(string_literal))
                 } else {
                     let ident = self.parse_identifier_name();
                     PropertyKey::StaticIdentifier(self.alloc(ident))
                 };
                 self.expect(Kind::Colon);
                 let value = self.parse_assignment_expression_or_higher();
-                (key, value, false)
+                (key, value)
             };
 
             let property = ObjectPropertyKind::new_object_property(
@@ -1629,7 +1628,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 value,
                 false,
                 false,
-                computed,
                 self,
             );
             properties.push(property);
@@ -1751,7 +1749,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         start: u32,
         kind: TSMethodSignatureKind,
     ) -> TSSignature<'a> {
-        let (key, computed) = self.parse_property_name();
+        let key = self.parse_property_name();
         let (this_param, params) =
             self.parse_formal_parameters(FunctionKind::Declaration, FormalParameterKind::Signature);
         let return_type = self.parse_ts_return_type_annotation();
@@ -1793,7 +1791,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         TSSignature::new_ts_method_signature(
             self.end_span(start),
             key,
-            computed,
             /* optional */ false,
             kind,
             None,
@@ -1809,7 +1806,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         start: u32,
         modifiers: &Modifiers,
     ) -> TSSignature<'a> {
-        let (key, computed) = self.parse_property_name();
+        let key = self.parse_property_name();
         let optional = self.eat(Kind::Question);
 
         let kind = self.cur_kind();
@@ -1829,7 +1826,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             TSSignature::new_ts_method_signature(
                 self.end_span(start),
                 key,
-                computed,
                 optional,
                 TSMethodSignatureKind::Method,
                 type_parameters,
@@ -1843,7 +1839,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.parse_type_member_semicolon();
             TSSignature::new_ts_property_signature(
                 self.end_span(start),
-                computed,
                 optional,
                 modifiers.contains_readonly(),
                 key,

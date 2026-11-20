@@ -306,7 +306,7 @@ fn strip_suffix_case_insensitive<'a>(value: &'a str, suffix: &str) -> Option<&'a
 }
 
 fn is_name_property_definition(prop: &PropertyDefinition) -> bool {
-    !prop.r#static && !prop.computed && prop.key.is_specific_static_name("name")
+    !prop.r#static && prop.key.is_specific_literal_name("name")
 }
 
 fn is_valid_super_class_name(name: &str) -> bool {

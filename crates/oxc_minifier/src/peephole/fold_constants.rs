@@ -1007,9 +1007,7 @@ impl<'a> PeepholeOptimizations {
                                     new_properties.push(prop);
                                 }
                                 ObjectPropertyKind::ObjectProperty(p)
-                                    if p.computed
-                                        || p.method
-                                        || !p.key.is_specific_static_name("__proto__") =>
+                                    if p.method || !p.key.is_specific_literal_name("__proto__") =>
                                 {
                                     new_properties.push(prop);
                                 }
@@ -1054,9 +1052,8 @@ impl<'a> PeepholeOptimizations {
                 matches!(p.kind, PropertyKind::Init)
                     && (
                         // non-computed __proto__ property sets the prototype of the object instead
-                        p.computed
-                            || p.method
-                            || !p.key.is_specific_static_name("__proto__")
+                        p.method
+                            || !p.key.is_specific_literal_name("__proto__")
                             || !p.value.may_have_side_effects(ctx)
                     )
             }

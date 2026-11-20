@@ -189,9 +189,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ObjectExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         if f.options().quote_properties.is_consistent() {
             let quote_needed = self.properties.iter().any(|kind| {
-                kind.as_property().is_some_and(|property| {
-                    should_preserve_quote(&property.key, property.computed, f)
-                })
+                kind.as_property().is_some_and(|property| should_preserve_quote(&property.key, f))
             });
             f.context_mut().push_quote_needed(quote_needed);
         }
@@ -242,7 +240,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ObjectProperty<'a>> {
             if value.generator() {
                 write!(f, "*");
             }
-            format_property_key(&self.key(), self.computed, f);
+            format_property_key(&self.key(), f);
 
             format_grouped_parameters_with_return_type_for_method(
                 value.type_parameters(),
@@ -1182,14 +1180,16 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, NumericLiteral<'a>> {
         // We need to check that this literal's span matches the key's span, not just that the parent is a property.
         // Computed keys like `[1]` are expressions, so they are never quoted.
         let (key_span, computed) = match self.parent() {
-            AstNodes::ObjectProperty(prop) => (prop.key.span(), prop.computed),
-            AstNodes::BindingProperty(prop) => (prop.key.span(), prop.computed),
-            AstNodes::AssignmentTargetPropertyProperty(prop) => (prop.name.span(), prop.computed),
-            AstNodes::TSPropertySignature(prop) => (prop.key.span(), prop.computed),
-            AstNodes::TSMethodSignature(prop) => (prop.key.span(), prop.computed),
-            AstNodes::MethodDefinition(prop) => (prop.key.span(), prop.computed),
-            AstNodes::PropertyDefinition(prop) => (prop.key.span(), prop.computed),
-            AstNodes::AccessorProperty(prop) => (prop.key.span(), prop.computed),
+            AstNodes::ObjectProperty(prop) => (prop.key.span(), prop.key.is_computed()),
+            AstNodes::BindingProperty(prop) => (prop.key.span(), prop.key.is_computed()),
+            AstNodes::AssignmentTargetPropertyProperty(prop) => {
+                (prop.name.span(), prop.name.is_computed())
+            }
+            AstNodes::TSPropertySignature(prop) => (prop.key.span(), prop.key.is_computed()),
+            AstNodes::TSMethodSignature(prop) => (prop.key.span(), prop.key.is_computed()),
+            AstNodes::MethodDefinition(prop) => (prop.key.span(), prop.key.is_computed()),
+            AstNodes::PropertyDefinition(prop) => (prop.key.span(), prop.key.is_computed()),
+            AstNodes::AccessorProperty(prop) => (prop.key.span(), prop.key.is_computed()),
             _ => (Span::default(), true),
         };
         let is_property_key = !computed && key_span == self.span();
@@ -1740,7 +1740,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSPropertySignature<'a>> {
         if self.readonly() {
             write!(f, ["readonly", space()]);
         }
-        format_property_key(&self.key(), self.computed(), f);
+        format_property_key(&self.key(), f);
         if self.optional() {
             write!(f, "?");
         }
@@ -1807,12 +1807,12 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArenaVec<'a, TSSign
             let quote_needed = self.as_ref().iter().any(|signature| {
                 match signature {
                     TSSignature::TSPropertySignature(property) => {
-                        should_preserve_quote(&property.key, property.computed, f)
+                        should_preserve_quote(&property.key, f)
                     }
                     TSSignature::TSMethodSignature(method) => {
                         // A quoted `new` method keeps its quotes, so it forces quoting the sibling members as well
                         is_quoted_new_method_signature(method)
-                            || should_preserve_quote(&method.key, method.computed, f)
+                            || should_preserve_quote(&method.key, f)
                     }
                     _ => false,
                 }

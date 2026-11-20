@@ -1870,7 +1870,7 @@ impl<'a> PeepholeOptimizations {
                 for prop in &mut obj_expr.properties {
                     match prop {
                         ObjectPropertyKind::ObjectProperty(prop) => {
-                            if prop.computed {
+                            if prop.key.is_computed() {
                                 if let Some(changed) =
                                     Self::substitute_single_use_symbol_in_expression(
                                         prop.key.to_expression_mut(),
@@ -1895,7 +1895,6 @@ impl<'a> PeepholeOptimizations {
                             ) {
                                 if prop.shorthand && prop.key.is_specific_id("__proto__") {
                                     // { __proto__ } -> { ['__proto__']: value }
-                                    prop.computed = true;
                                     prop.key = PropertyKey::new_string_literal(
                                         prop.key.span(),
                                         "__proto__",

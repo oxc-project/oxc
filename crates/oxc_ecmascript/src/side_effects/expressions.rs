@@ -334,7 +334,11 @@ impl<'a> MayHaveSideEffects<'a> for ObjectProperty<'a> {
 impl<'a> MayHaveSideEffects<'a> for PropertyKey<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         match self {
-            PropertyKey::StaticIdentifier(_) | PropertyKey::PrivateIdentifier(_) => false,
+            PropertyKey::StaticIdentifier(_)
+            | PropertyKey::StaticStringLiteral(_)
+            | PropertyKey::StaticNumericLiteral(_)
+            | PropertyKey::StaticBigIntLiteral(_)
+            | PropertyKey::PrivateIdentifier(_) => false,
             match_expression!(PropertyKey) => {
                 // ToPropertyKey(key) throws an error when ToPrimitive(key) throws an Error
                 // But we can ignore that by using the assumption.

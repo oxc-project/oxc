@@ -266,7 +266,7 @@ fn get_angular_component_property<'a>(
         _ => return None,
     };
 
-    if prop.computed {
+    if prop.key.is_computed() {
         return None;
     }
     let PropertyKey::StaticIdentifier(key) = &prop.key else {

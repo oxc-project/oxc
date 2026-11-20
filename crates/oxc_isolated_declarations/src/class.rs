@@ -43,9 +43,10 @@ impl<'a> IsolatedDeclarations<'a> {
     pub(crate) fn accessor_keys_match(left: &PropertyKey<'a>, right: &PropertyKey<'a>) -> bool {
         match (left, right) {
             #[expect(clippy::float_cmp, reason = "Numeric property keys require exact equality.")]
-            (PropertyKey::NumericLiteral(left), PropertyKey::NumericLiteral(right)) => {
-                left.value == right.value
-            }
+            (
+                PropertyKey::StaticNumericLiteral(left) | PropertyKey::NumericLiteral(left),
+                PropertyKey::StaticNumericLiteral(right) | PropertyKey::NumericLiteral(right),
+            ) => left.value == right.value,
             _ => {
                 Self::accessor_key_name(left)
                     .zip(Self::accessor_key_name(right))
@@ -57,7 +58,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
     fn accessor_key_name(key: &PropertyKey<'a>) -> Option<StaticPropertyName<'a>> {
         match key {
-            PropertyKey::NumericLiteral(number) => {
+            PropertyKey::StaticNumericLiteral(number) | PropertyKey::NumericLiteral(number) => {
                 Some(StaticPropertyName::Owned(number.value.to_js_string().into()))
             }
             PropertyKey::UnaryExpression(expr)
@@ -172,7 +173,6 @@ impl<'a> IsolatedDeclarations<'a> {
             property.key.clone_in(self.allocator()),
             type_annotation,
             value,
-            property.computed,
             property.r#static,
             false,
             property.r#override,
@@ -224,7 +224,6 @@ impl<'a> IsolatedDeclarations<'a> {
             definition.key.clone_in(self.allocator()),
             value,
             definition.kind,
-            definition.computed,
             definition.r#static,
             definition.r#override,
             definition.optional,
@@ -249,7 +248,6 @@ impl<'a> IsolatedDeclarations<'a> {
             key,
             None,
             None,
-            false,
             r#static,
             false,
             r#override,
@@ -278,7 +276,6 @@ impl<'a> IsolatedDeclarations<'a> {
             key,
             type_annotation,
             None,
-            false,
             false,
             false,
             param.r#override,
@@ -413,7 +410,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 // valid sources for pair-based inference on a public/protected counterpart
                 // (e.g. untyped getter paired with a `private set(v: T)`).
                 if method.key.is_private_identifier()
-                    || (method.computed && !Self::is_valid_property_key(&method.key))
+                    || (method.key.is_computed() && !Self::is_valid_property_key(&method.key))
                 {
                     continue;
                 }
@@ -487,7 +484,7 @@ impl<'a> IsolatedDeclarations<'a> {
             getter.kind == MethodDefinitionKind::Get
                 && getter.r#static == setter.r#static
                 && !getter.key.is_private_identifier()
-                && (Self::is_valid_property_key(&getter.key) || !getter.computed)
+                && (Self::is_valid_property_key(&getter.key) || !getter.key.is_computed())
                 && Self::accessor_keys_match(&getter.key, &setter.key)
                 && !getter.accessibility.is_some_and(TSAccessibility::is_private)
         })
@@ -539,7 +536,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         has_private_key = true;
                         continue;
                     }
-                    if method.computed && self.report_property_key(&method.key) {
+                    if method.key.is_computed() && self.report_property_key(&method.key) {
                         continue;
                     }
 
@@ -669,7 +666,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         continue;
                     }
 
-                    if property.computed && self.report_property_key(&property.key) {
+                    if property.key.is_computed() && self.report_property_key(&property.key) {
                         continue;
                     }
 
@@ -684,7 +681,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         continue;
                     }
 
-                    if property.computed && self.report_property_key(&property.key) {
+                    if property.key.is_computed() && self.report_property_key(&property.key) {
                         continue;
                     }
 
@@ -718,7 +715,6 @@ impl<'a> IsolatedDeclarations<'a> {
                         property.key.clone_in(self.allocator()),
                         type_annotation,
                         None,
-                        property.computed,
                         property.r#static,
                         property.r#override,
                         false,
@@ -750,7 +746,6 @@ impl<'a> IsolatedDeclarations<'a> {
                 ident,
                 None,
                 None,
-                false,
                 false,
                 false,
                 false,

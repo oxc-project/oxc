@@ -428,7 +428,7 @@ impl<'a> VisitMut<'a> for StaticVisitor<'a, '_> {
 
         // TODO: Are decorators in scope?
         self.visit_decorators(&mut prop.decorators);
-        if prop.computed {
+        if prop.key.is_computed() {
             self.visit_property_key(&mut prop.key);
         }
 
@@ -450,7 +450,7 @@ impl<'a> VisitMut<'a> for StaticVisitor<'a, '_> {
         // Treat `key` and `value` in same way as `visit_property_definition` above.
         // TODO: Are decorators in scope?
         self.visit_decorators(&mut prop.decorators);
-        if prop.computed {
+        if prop.key.is_computed() {
             self.visit_property_key(&mut prop.key);
         }
 

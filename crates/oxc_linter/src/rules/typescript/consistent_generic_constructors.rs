@@ -379,7 +379,7 @@ impl ConsistentGenericConstructors {
             AstKind::PropertyDefinition(prop_def) => {
                 // For computed properties like `[a]` or `[a + b]`, we need to insert
                 // after the closing bracket `]`, not after the key expression
-                if prop_def.computed {
+                if prop_def.key.is_computed() {
                     // Find the closing bracket after the key
                     let key_end = prop_def.key.span().end;
                     ctx.find_next_token_within(key_end, prop_def.span.end, "]")
@@ -390,7 +390,7 @@ impl ConsistentGenericConstructors {
                 }
             }
             AstKind::AccessorProperty(accessor) => {
-                if accessor.computed {
+                if accessor.key.is_computed() {
                     let key_end = accessor.key.span().end;
                     ctx.find_next_token_within(key_end, accessor.span.end, "]")
                         .map(|offset| key_end + offset + 1)

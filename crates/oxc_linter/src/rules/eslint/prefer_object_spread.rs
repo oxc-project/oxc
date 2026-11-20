@@ -270,10 +270,10 @@ fn has_proto_property(obj_expr: &ObjectExpression) -> bool {
 fn is_plain_data_object(obj_expr: &ObjectExpression) -> bool {
     obj_expr.properties.iter().all(|p| {
         matches!(p, ObjectPropertyKind::ObjectProperty(p)
-            if !p.computed
+            if !p.key.is_computed()
                 && !p.method
                 && p.kind == PropertyKind::Init
-                && !p.key.is_specific_static_name("__proto__"))
+                && !p.key.is_specific_literal_name("__proto__"))
     })
 }
 

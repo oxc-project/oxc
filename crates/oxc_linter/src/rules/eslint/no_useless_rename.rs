@@ -95,7 +95,7 @@ impl Rule for NoUselessRename {
                 }
 
                 for property in &object_pattern.properties {
-                    if property.shorthand || property.computed {
+                    if property.shorthand || property.key.is_computed() {
                         continue;
                     }
 

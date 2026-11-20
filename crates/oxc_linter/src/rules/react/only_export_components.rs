@@ -260,20 +260,17 @@ impl OnlyExportComponents {
                 }
 
                 // An anonymous function gets its name from a static property key.
-                let has_component_name = !property.computed
-                    && match &property.key {
-                        PropertyKey::StaticIdentifier(ident) => {
-                            is_react_component_name(&ident.name)
-                        }
-                        // Only the first character decides a component name.
-                        PropertyKey::StringLiteral(literal) => literal
-                            .value
-                            .chars()
-                            .next()
-                            .and_then(JSChar::to_char)
-                            .is_some_and(|c| c.is_ascii_uppercase()),
-                        _ => false,
-                    };
+                let has_component_name = match &property.key {
+                    PropertyKey::StaticIdentifier(ident) => is_react_component_name(&ident.name),
+                    // Only the first character decides a component name.
+                    PropertyKey::StaticStringLiteral(literal) => literal
+                        .value
+                        .chars()
+                        .next()
+                        .and_then(JSChar::to_char)
+                        .is_some_and(|c| c.is_ascii_uppercase()),
+                    _ => false,
+                };
                 self.is_compound_component_value(&property.value, has_component_name)
             })
     }
