@@ -1575,6 +1575,7 @@ export interface DummyRuleMap {
   "unicorn/no-instanceof-array"?: RuleNoConfig;
   "unicorn/no-instanceof-builtins"?: RuleNoConfig | [AllowWarnDeny, NoInstanceofBuiltinsConfig];
   "unicorn/no-invalid-fetch-options"?: RuleNoConfig;
+  "unicorn/no-invalid-intl-options"?: RuleNoConfig;
   "unicorn/no-invalid-remove-event-listener"?: RuleNoConfig;
   "unicorn/no-length-as-slice-end"?: RuleNoConfig;
   "unicorn/no-lonely-if"?: RuleNoConfig;
