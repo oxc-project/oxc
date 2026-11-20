@@ -266,7 +266,8 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             //   }
             //
             // The "_x" and "_x1" are dummy variables to ensure "foo.length" is 2.
-            let new_params = Self::create_placeholder_params(&func.params, wrapper_scope_id, ctx);
+            let new_params =
+                Self::create_placeholder_params(&func.params, wrapper_scope_id, None, ctx);
             mem::replace(&mut func.params, new_params)
         } else {
             Self::create_empty_params(ctx)
@@ -342,16 +343,20 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             (scope_id, wrapper_scope_id)
         };
 
+        let inferred_name =
+            if id.is_none() { Self::infer_function_name_from_parent_node(ctx) } else { None };
+
         let bound_ident = Self::create_bound_identifier(
             id.as_ref(),
             wrapper_scope_id,
             SymbolFlags::FunctionScopedVariable,
+            inferred_name,
             ctx,
         );
 
         let caller_function = {
             let scope_id = ctx.create_child_scope(wrapper_scope_id, ScopeFlags::Function);
-            let params = Self::create_placeholder_params(&params, scope_id, ctx);
+            let params = Self::create_placeholder_params(&params, scope_id, inferred_name, ctx);
             let statements =
                 ArenaVec::from_value_in(Self::create_apply_call_statement(&bound_ident, ctx), ctx);
             let body = FunctionBody::boxed(SPAN, [], statements, ctx);
@@ -363,10 +368,11 @@ impl<'a> AsyncGeneratorExecutor<'a> {
                 // Caller is emitted as a named function expression; per the JS spec, its name
                 // binds only inside the function itself — place the inferred id's binding in
                 // the caller's own scope, not the wrapper scope.
-                (
-                    FunctionType::FunctionExpression,
-                    Self::infer_function_id_from_parent_node(scope_id, ctx),
-                )
+                let id = inferred_name.map(|name| {
+                    ctx.generate_binding(name, scope_id, SymbolFlags::Function)
+                        .create_binding_identifier(ctx)
+                });
+                (FunctionType::FunctionExpression, id)
             };
             Self::create_function(r#type, id, params, body, scope_id, ctx)
         };
@@ -430,7 +436,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         };
         let body = wrapper_function.body.take().unwrap();
         let params =
-            Self::create_placeholder_params(&wrapper_function.params, wrapper_scope_id, ctx);
+            Self::create_placeholder_params(&wrapper_function.params, wrapper_scope_id, None, ctx);
         let params = mem::replace(&mut wrapper_function.params, params);
 
         let function_binding_scope_id =
@@ -445,6 +451,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             wrapper_function.id.as_ref(),
             Self::function_declaration_binding_scope_id(None, ctx),
             SymbolFlags::Function,
+            None,
             ctx,
         );
 
@@ -548,12 +555,13 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             None,
             wrapper_scope_id,
             SymbolFlags::FunctionScopedVariable,
+            function_name,
             ctx,
         );
 
         let caller_function = {
             let scope_id = ctx.create_child_scope(wrapper_scope_id, ScopeFlags::Function);
-            let params = Self::create_placeholder_params(&params, scope_id, ctx);
+            let params = Self::create_placeholder_params(&params, scope_id, function_name, ctx);
             let statements =
                 ArenaVec::from_value_in(Self::create_apply_call_statement(&bound_ident, ctx), ctx);
             let body = FunctionBody::boxed(SPAN, [], statements, ctx);
@@ -598,18 +606,6 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         }
     }
 
-    /// Infers the function id from [`TraverseCtx::parent`].
-    fn infer_function_id_from_parent_node(
-        scope_id: ScopeId,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Option<BindingIdentifier<'a>> {
-        let name = Self::infer_function_name_from_parent_node(ctx)?;
-        Some(
-            ctx.generate_binding(name, scope_id, SymbolFlags::Function)
-                .create_binding_identifier(ctx),
-        )
-    }
-
     /// Infers the function name from the [`TraverseCtx::parent`].
     fn infer_function_name_from_parent_node(ctx: &TraverseCtx<'a>) -> Option<Ident<'a>> {
         match ctx.parent() {
@@ -635,13 +631,15 @@ impl<'a> AsyncGeneratorExecutor<'a> {
     /// * Contains space or `/`: `foo bar` -> `foo_bar`, `a/b` -> `a_b`
     /// * Starts with digits: `12a` -> `a`, `12` -> `_`
     /// * Reserved keyword: `this` -> `_this`
+    /// * Not allowed as a binding name in strict mode: `arguments` -> `_arguments`,
+    ///   `eval` -> `_eval`
     ///
     /// [`ensureFunctionName`]: https://github.com/babel/babel/blob/16a2d6718c7905bedab7324677b9b9881a00b954/packages/babel-traverse/src/path/conversion.ts#L922
     /// [`toIdentifier`]: https://github.com/babel/babel/blob/16a2d6718c7905bedab7324677b9b9881a00b954/packages/babel-types/src/converters/toIdentifier.ts#L13-L14
     fn normalize_function_name(input: StaticPropertyName<'a>, ctx: &TraverseCtx<'a>) -> Ident<'a> {
         let input_str = input.into_js_str_in(ctx);
         if let Some(name) = input_str.as_str()
-            && !is_reserved_keyword(name)
+            && !Self::is_invalid_binding_name(name)
             && is_identifier_name(name)
         {
             return Ident::from(name);
@@ -685,11 +683,17 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         // The name can still start with a character that cannot start an identifier,
         // such as U+0661 (ARABIC-INDIC DIGIT ONE) from `"\u0661a"`.
         let starts_identifier = name.as_str().chars().next().is_some_and(is_identifier_start);
-        if !starts_identifier || is_reserved_keyword(name.as_str()) {
+        if !starts_identifier || Self::is_invalid_binding_name(name.as_str()) {
             name.push_ascii_byte_start(b'_');
         }
 
         Ident::from(name)
+    }
+
+    /// Returns `true` if `name` is a reserved keyword, or `eval` or `arguments`, which strict mode
+    /// code does not allow as binding names.
+    fn is_invalid_binding_name(name: &str) -> bool {
+        is_reserved_keyword(name) || matches!(name, "eval" | "arguments")
     }
 
     /// Creates a [`Function`] with the specified params, body and scope_id.
@@ -861,9 +865,12 @@ impl<'a> AsyncGeneratorExecutor<'a> {
 
     /// Creates placeholder [`FormalParameters`] which named `_x` based on the passed-in parameters.
     /// `function p(x, y, z, d = 0, ...rest) {}` -> `function* (_x, _x1, _x2) {}`
+    ///
+    /// No parameter is named `caller_name`. See [`Self::generate_uid_except`].
     fn create_placeholder_params(
         params: &FormalParameters<'a>,
         scope_id: ScopeId,
+        caller_name: Option<Ident<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> ArenaBox<'a, FormalParameters<'a>> {
         let mut parameters = ArenaVec::with_capacity_in(params.items.len(), ctx);
@@ -871,7 +878,13 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             if param.initializer.is_some() {
                 break;
             }
-            let binding = ctx.generate_uid("x", scope_id, SymbolFlags::FunctionScopedVariable);
+            let binding = Self::generate_uid_except(
+                "x",
+                scope_id,
+                SymbolFlags::FunctionScopedVariable,
+                caller_name,
+                ctx,
+            );
             parameters.push(FormalParameter::new_plain(
                 param.span(),
                 binding.create_binding_pattern(ctx),
@@ -889,14 +902,37 @@ impl<'a> AsyncGeneratorExecutor<'a> {
     }
 
     /// Creates a [`BoundIdentifier`] for the id of the function.
+    ///
+    /// The name is not `caller_name`. See [`Self::generate_uid_except`].
     #[inline]
     fn create_bound_identifier(
         id: Option<&BindingIdentifier<'a>>,
         scope_id: ScopeId,
         flags: SymbolFlags,
+        caller_name: Option<Ident<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
-        ctx.generate_uid(id.as_ref().map_or_else(|| "ref", |id| id.name.as_str()), scope_id, flags)
+        let name = id.as_ref().map_or_else(|| "ref", |id| id.name.as_str());
+        Self::generate_uid_except(name, scope_id, flags, caller_name, ctx)
+    }
+
+    /// Generates a UID binding whose name is not `caller_name`.
+    ///
+    /// The UID generator does not know names that come from property keys, such as `_ref` in
+    /// `{ _ref: async (x) => x }`.
+    fn generate_uid_except(
+        name: &str,
+        scope_id: ScopeId,
+        flags: SymbolFlags,
+        caller_name: Option<Ident<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> BoundIdentifier<'a> {
+        let mut uid = ctx.generate_uid_name(name);
+        if caller_name == Some(uid) {
+            // The UID generator never returns the same name twice.
+            uid = ctx.generate_uid_name(name);
+        }
+        ctx.generate_binding(uid, scope_id, flags)
     }
 
     /// Check whether the given [`Ancestor`] is a class method-like node.
