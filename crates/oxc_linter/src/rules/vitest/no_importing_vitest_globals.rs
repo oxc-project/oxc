@@ -334,6 +334,7 @@ fn test() {
     let fail = vec![
         "import { describe } from 'vitest';",
         "import { describe } from '@effect/vitest';",
+        "import { describe } from '@rstest/core';",
         "import { describe, it } from 'vitest';",
         "import { describe, BenchFactory } from 'vitest';",
         "import { describe, BenchFactory } from 'vite-plus/test';",

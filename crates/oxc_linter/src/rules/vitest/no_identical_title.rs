@@ -382,6 +382,13 @@ fn test() {
                 it('works', () => {});
             });
         ",
+        "
+            import { describe, it } from '@rstest/core';
+            describe('foo', () => {
+                it('works', () => {});
+                it('works', () => {});
+            });
+        ",
     ];
 
     pass.extend(pass_vitest.into_iter().map(|x| (x, None)));

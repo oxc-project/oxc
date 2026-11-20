@@ -142,3 +142,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │                 t.test("emitter with newListener that removes handler", function(t) {
    ╰────
   help: Add assertion(s) in this Test
+
+  ⚠ jest(expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:4:13]
+ 3 │ 
+ 4 │             it("should fail", () => {
+   ·             ──
+ 5 │                 foo();
+   ╰────
+  help: Add assertion(s) in this Test

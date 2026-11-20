@@ -65,8 +65,10 @@ impl Rule for PreferExpectAssertions {
         // Resolve the file-level expect local name once (e.g. `"expect"` or `"e"`
         // for `import { expect as e }`). Per-callback vitest fixture overrides
         // are handled in `resolve_expect_source`.
-        let file_expect_prefix =
-            resolve_expect_local_name(ctx, &["vitest", "vite-plus/test", "@effect/vitest"]);
+        let file_expect_prefix = resolve_expect_local_name(
+            ctx,
+            &["vitest", "vite-plus/test", "@effect/vitest", "@rstest/core"],
+        );
 
         let mut covered_describe_ids: Vec<NodeId> = Vec::new();
 
@@ -309,6 +311,13 @@ fn test() {
             None,
         ),
         (
+            r#"import { it } from 'vitest';
+            import { expect as e } from '@rstest/core';
+            it("it1", () => { e.assertions(0); });
+                "#,
+            None,
+        ),
+        (
             r#"import { test } from 'vitest';
             test("renamed hasAssertions", async ({ expect: e }) => {
                 e.hasAssertions();
@@ -424,6 +433,13 @@ fn test() {
 
     let fail = vec![
         (r#"it("it1", () => foo())"#, None),
+        (
+            r#"import { it } from 'vitest';
+            import { expect as e } from '@rstest/core';
+            it("it1", () => { consume(() => { e(1); }); });
+                "#,
+            Some(serde_json::json!([{ "onlyFunctionsWithExpectInCallback": true }])),
+        ),
         (
             "
             import * as vi from 'vitest';
