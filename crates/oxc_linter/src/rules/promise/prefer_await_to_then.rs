@@ -167,10 +167,17 @@ fn test() {
         ("function x () { return Promise.all() } ", None),
         ("function foo() { return hey.then(x => x) }", None),
         ("async function foo() { return thing().then(x => x) }", None),
+        ("import * as utils from './utils'; const result = utils.then(value)", None),
+        ("import * as tasks from './tasks'; const safe = program.pipe(tasks.catch(handler))", None),
+        ("import * as tasks from './tasks'; const safe = tasks.catch(program, handler)", None),
     ];
 
     let fail = vec![
         ("function foo() { hey.then(x => {}) }", None),
+        ("import { pending } from './pending'; const next = pending.then(x => x)", None),
+        ("import pending from './pending'; const next = pending.catch(x => x)", None),
+        ("const pending = import('./module'); const next = pending.then(x => x)", None),
+        ("const next = import('./module').then(x => x)", None),
         ("function foo() { hey.then(function() { }).then() }", None),
         ("function foo() { hey.then(function() { }).then(x).catch() }", None),
         ("async function a() { hey.then(function() { }).then(function() { }) }", None),

@@ -114,6 +114,8 @@ fn classify_identifier_receiver<'a>(
             .init
             .as_ref()
             .map_or(ReceiverKind::Unknown, |init| classify_receiver(init, ctx, visited)),
+        // A module namespace object is never a Promise: `ns.then()` calls the module's export.
+        AstKind::ImportNamespaceSpecifier(_) => ReceiverKind::NotPromise,
         _ => ReceiverKind::Unknown,
     }
 }
