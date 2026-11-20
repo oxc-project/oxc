@@ -730,19 +730,20 @@ impl<'a> PeepholeOptimizations {
             ValueType::Number => Some(operand.take_in(ctx)),
             ValueType::BigInt => None,
             _ => {
-                // Only when `+A` needs no parentheses, so the result is always shorter.
-                let needs_no_parens = match operand {
-                    Expression::Identifier(_)
-                    | Expression::ThisExpression(_)
-                    | Expression::CallExpression(_)
-                    | Expression::AwaitExpression(_)
-                    | Expression::UnaryExpression(_)
-                    | Expression::ArrayExpression(_)
-                    | Expression::ObjectExpression(_)
-                    | Expression::TemplateLiteral(_) => true,
-                    _ => operand.is_member_expression(),
-                };
-                needs_no_parens.then(|| {
+                // `+A` needs parentheses when `A` binds less tightly than a prefix operator, and
+                // `+ ++a` needs a space; neither is shorter than the original.
+                let binds_loosely = matches!(
+                    operand,
+                    Expression::SequenceExpression(_)
+                        | Expression::AssignmentExpression(_)
+                        | Expression::YieldExpression(_)
+                        | Expression::ArrowFunctionExpression(_)
+                        | Expression::ConditionalExpression(_)
+                        | Expression::LogicalExpression(_)
+                        | Expression::BinaryExpression(_)
+                        | Expression::PrivateInExpression(_)
+                ) || matches!(operand, Expression::UpdateExpression(u) if u.prefix);
+                (!binds_loosely).then(|| {
                     Expression::new_unary_expression(
                         e.span,
                         UnaryOperator::UnaryPlus,

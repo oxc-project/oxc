@@ -1965,10 +1965,14 @@ fn test_fold_numeric_identity() {
     fold("[a] - 0", "+[a]");
     fold("`${a}` - 0", "+`${a}`");
     fold("'a' + (a - 0)", "'a' + +a");
-    // `+A` would need parentheses.
+    fold("new A - 0", "+new A()");
+    fold("a?.b * 1", "+a?.b");
+    fold("tag`x` / 1", "+tag`x`");
+    fold("a++ - 0", "+a++");
+    // `+A` would need parentheses, or a space in `+ ++a`.
     fold_same("a * b - 0");
     fold_same("(a ? 1 : b) - 0");
-    fold_same("a++ - 0");
+    fold_same("++a - 0");
     // `n - -0` is `+0` for `n === -0`, and `+` may concatenate.
     fold_same("a - -0");
     fold_same("(a * 2) - -0");
