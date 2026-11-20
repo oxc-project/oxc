@@ -117,13 +117,7 @@ impl Rule for PreferBigintLiterals {
                     return;
                 }
 
-                let raw_text = numeric_literal.raw.as_ref().map_or_else(
-                    || {
-                        debug_assert!(false, "ASTs from the linter should always have raw values");
-                        ctx.source_range(numeric_literal.span)
-                    },
-                    |raw| raw.as_str(),
-                );
+                let raw_text = numeric_literal.raw.unwrap().as_str();
 
                 if integer_literal_loses_precision(numeric_literal) {
                     ctx.diagnostic(
