@@ -108,18 +108,17 @@ pub fn write_binding<'a>(
     f: &mut HtmlishFormatter<'_, 'a>,
 ) -> bool {
     let Some(expression) = expression else { return false };
+    let part = JsInAngularTemplate::Binding { tailwind_classes };
     // The whole value, its quote entities read back by the caller, which an object or an array hugs
-    let whole = expression.pipes.is_empty() && expression.comment.is_none();
-    let part = if whole {
-        JsInAngularTemplate::Binding { tailwind_classes }
-    } else {
-        JsInAngularTemplate::AttributePiece { tailwind_classes }
-    };
-    if whole && expression.code.nested.is_empty() {
+    if expression.pipes.is_empty()
+        && expression.comment.is_none()
+        && expression.code.nested.is_empty()
+    {
         return embed::write_attribute_value("ts", &part, value, f);
     }
     let Some(parts) = Parts::dispatch(expression, part, f) else { return false };
-    if whole {
+    // Pipes (in parens all of the code too: `(a | p)`) or a comment lay out around the code
+    if parts.pipes.is_empty() && parts.comment.is_none() {
         embed::write_quoted(&parts.format(), f);
     } else {
         embed::write_quoted(&soft_block_indent(&parts.format()), f);
@@ -563,6 +562,15 @@ impl<'a> Parts<'a> {
     ) -> Option<Self> {
         let source = f.context().tree().source();
         let comment = expression.comment.map(|comment| comment.slice(source));
+        // A binding's value hugs the quotes only as a whole: none of its pieces does when pipes or a comment follow
+        let part = match part {
+            JsInAngularTemplate::Binding { tailwind_classes }
+                if !expression.pipes.is_empty() || comment.is_some() =>
+            {
+                JsInAngularTemplate::AttributePiece { tailwind_classes }
+            }
+            part => part,
+        };
         // What follows the expression follows its last piece only: the code, or the last pipe's last argument
         let inner = part.before_brace(false);
         let part_of = |last: bool| if last { part } else { inner };
