@@ -23,26 +23,21 @@ pub struct CssInJsTemplate;
 /// which would need escaping in the template.
 pub struct MarkdownInJsTemplate;
 
-/// Prettier uses `PRETTIER_HTML_PLACEHOLDER_{index}_{counter}_IN_JS` as placeholders, the counter global.
-/// Ours is `PRETTIER_HTML_PLACEHOLDER_{depth}_{index}_IN_JS`, the session's dispatch depth:
-/// an html-in-js nested in this one (in its `<script>`) is deeper, so neither takes the other's placeholders,
-/// and the same input always gets the same placeholders.
-///
-/// A child may change its case (CSS lowercases a property name: `${b}: 1px` in a `<style>`),
-/// so it is found ASCII case-insensitively in the child's IR.
-/// The shape is still Prettier's, from when angular-in-js formatted through Prettier,
-/// which recognizes `/^PRETTIER_HTML_PLACEHOLDER_\d+_\d+_IN_JS$/` (unquoted values, parens around an identifier).
-/// TODO: No child is Prettier anymore, so the name is ours to choose,
-/// e.g. one no child changes the case of, and the case-insensitive search can go.
-pub const HTML_PLACEHOLDER_PREFIX: &str = "PRETTIER_HTML_PLACEHOLDER_";
-pub const HTML_PLACEHOLDER_SUFFIX: &str = "_IN_JS";
+/// An html-in-js placeholder ([`oxc_formatter_core::Placeholder`]) is `oxfmt_html_{depth}_{index}_`,
+/// `depth` the session's dispatch depth: an html-in-js nested in this one (in its `<script>`) is deeper,
+/// so neither takes the other's placeholders, and the same input always gets the same placeholders.
+/// A name in every child (a tag's, an attribute's, JS's, CSS's), lowercase as CSS prints a property name.
+pub const HTML_PLACEHOLDER_PREFIX: &str = "oxfmt_html_";
+pub const HTML_PLACEHOLDER_SUFFIX: &str = "_";
 
 /// `name` is an html-in-js placeholder, of any depth.
 /// One in a `<script>` stands in for an expression of any precedence (`f((${a + b}) / 2)`),
 /// so the parens around it in the source stay.
 pub fn is_html_placeholder(name: &str) -> bool {
+    let digits = |s: &str| !s.is_empty() && s.bytes().all(|b| b.is_ascii_digit());
     name.strip_circumfix(HTML_PLACEHOLDER_PREFIX, HTML_PLACEHOLDER_SUFFIX)
-        .is_some_and(|id| !id.is_empty() && id.bytes().all(|b| b.is_ascii_digit() || b == b'_'))
+        .and_then(|id| id.split_once('_'))
+        .is_some_and(|(depth, index)| digits(depth) && digits(index))
 }
 
 /// Parent→child context for HTML/Angular dispatched from a JS template literal (html-in-js).
