@@ -32,7 +32,8 @@ use crate::{
     context::CssFormatContext,
     format::to_span,
     print::{
-        CssFormatter, format_with, is_glued, normalize_whitespace, scss, selector, statement,
+        CssFormatter, block_comment_end, format_with, is_glued, normalize_whitespace, scss,
+        selector, statement,
         value::{self, ValueContext},
         write_maybe_lowercase,
     },
@@ -386,6 +387,10 @@ fn write_block_or_semicolon<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, '
 /// queries split on top-level commas (`,` + line in a group),
 /// tokens joined by single spaces, `( feature : value )` re-spaced
 /// when the parser would have recognized it (spaces around the `:`), kept verbatim otherwise.
+///
+/// NOTE: the params are a typed `MediaQueryList` and the comments are in the comment store,
+/// so the structured printer placing them (`value::write_with_comments`) is possible.
+/// However, we rebuild from source for Prettier alignment (its layout follows postcss-media-query-parser tokens).
 fn write_commented_media_params<'a>(raw: &'a str, f: &mut CssFormatter<'_, 'a>) {
     let queries = split_top_level(raw, b',');
     let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
@@ -408,10 +413,13 @@ fn write_commented_media_params<'a>(raw: &'a str, f: &mut CssFormatter<'_, 'a>) 
 
 /// `@import` / `@supports` params containing comments,
 /// laid out the way Prettier's value parser + fill does.
-/// (Required because `oxc-css-parser` drops params-embedded comments, they only survive via this source-rebuild.)
 /// Separator breaks are simulated with static widths
 /// (Prettier's fill fit-checks the next item; our core fill measures only up to a hardline).
 /// `allow_commas`: comma chunks get an extra indent level for their internal wraps.
+///
+/// NOTE: the params are typed (`ImportPrelude` / `SupportsCondition`) and the comments are in the comment store
+/// (the AST holds none), so the structured printers placing them is possible.
+/// However, we rebuild from source for Prettier alignment (its layout follows postcss-value-parser tokens).
 fn write_commented_value_params<'a>(
     raw: &'a str,
     start_col: u32,
@@ -509,16 +517,6 @@ fn write_commented_value_params<'a>(
     write!(f, indent(&body));
 }
 
-/// `start` points at the `/` of a `/*`; returns the index of the closing `/`
-/// (clamped to the last byte when unterminated).
-fn block_comment_end(bytes: &[u8], start: usize) -> usize {
-    let mut i = start + 2;
-    while i + 1 < bytes.len() && !(bytes[i] == b'*' && bytes[i + 1] == b'/') {
-        i += 1;
-    }
-    (i + 1).min(bytes.len() - 1)
-}
-
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum TokenizeMode {
     /// `@import` / `@supports` values:
@@ -547,16 +545,16 @@ fn tokenize(raw: &str, mode: TokenizeMode) -> Vec<&str> {
                     if let Some(s) = start.take() {
                         tokens.push(&raw[s..i]);
                     }
-                    let end = block_comment_end(bytes, i);
-                    tokens.push(&raw[i..=end]);
-                    i = end;
+                    let end = block_comment_end(raw, i);
+                    tokens.push(&raw[i..end]);
+                    i = end - 1;
                 } else {
                     // depth > 0 OR AbsorbComments at depth 0:
                     // comment becomes part of the current token (or starts one if between tokens).
                     if start.is_none() {
                         start = Some(i);
                     }
-                    i = block_comment_end(bytes, i);
+                    i = block_comment_end(raw, i) - 1;
                 }
             }
             b'(' => {
@@ -668,7 +666,7 @@ fn split_top_level(raw: &str, sep: u8) -> Vec<&str> {
     while i < bytes.len() {
         match bytes[i] {
             b'/' if bytes.get(i + 1) == Some(&b'*') => {
-                i = block_comment_end(bytes, i);
+                i = block_comment_end(raw, i) - 1;
             }
             b'(' => depth += 1,
             b')' => depth -= 1,
@@ -726,7 +724,7 @@ fn find_outside_comments(raw: &str, needle: u8) -> Option<usize> {
     let mut i = 0usize;
     while i < bytes.len() {
         if bytes[i] == b'/' && bytes.get(i + 1) == Some(&b'*') {
-            i = block_comment_end(bytes, i) + 1;
+            i = block_comment_end(raw, i);
             continue;
         }
         if bytes[i] == needle {

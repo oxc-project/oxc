@@ -22,8 +22,8 @@ use crate::{
     },
     format::to_span,
     print::{
-        CssFormatter, at_rule, format_with, has_comments_between, is_glued, less,
-        postcss_simple_vars, scss, selector,
+        CssFormatter, at_rule, block_comment_end, format_with, has_comments_between, is_glued,
+        less, postcss_simple_vars, scss, selector,
         value::{self, ValueContext},
         write_maybe_lowercase,
     },
@@ -37,6 +37,9 @@ pub(super) fn stmt_end(stmt: &Statement<'_>, f: &CssFormatter<'_, '_>) -> u32 {
 }
 
 /// Extends `end` over any whitespace, comments and a final `;` in the source.
+///
+/// NOTE: `oxc-css-parser` records no `;` span, so this scans the source.
+/// Recording it in the parser would retire the scan (the comments are in the comment store too).
 /// End of an at-rule's params region: the block start, or (without a block) the span end,
 /// extended over a trailing `;` and shrunk back so the `;` itself stays outside the region.
 pub(super) fn params_region_end<'a>(
@@ -63,13 +66,8 @@ pub(super) fn end_with_semicolon(end: u32, f: &CssFormatter<'_, '_>) -> u32 {
         }
         // Skip a block comment between the statement and its `;`
         if i + 1 < bytes.len() && bytes[i] == b'/' && bytes[i + 1] == b'*' {
-            match source[i + 2..].find("*/") {
-                Some(close) => {
-                    i = i + 2 + close + 2;
-                    continue;
-                }
-                None => break,
-            }
+            i = block_comment_end(&source, i);
+            continue;
         }
         break;
     }
@@ -665,10 +663,7 @@ fn find_colon_outside_comments(line: &str) -> Option<usize> {
     let mut i = 0;
     while i < bytes.len() {
         if bytes[i] == b'/' && bytes.get(i + 1) == Some(&b'*') {
-            match line[i + 2..].find("*/") {
-                Some(close) => i = i + 2 + close + 2,
-                None => return None,
-            }
+            i = block_comment_end(line, i);
             continue;
         }
         if bytes[i] == b':' {
@@ -692,10 +687,7 @@ fn respace_value_tokens(v: &str) -> String {
         }
         let start = i;
         if bytes[i] == b'/' && bytes.get(i + 1) == Some(&b'*') {
-            match v[i + 2..].find("*/") {
-                Some(close) => i = i + 2 + close + 2,
-                None => i = bytes.len(),
-            }
+            i = block_comment_end(v, i);
         } else {
             while i < bytes.len()
                 && !bytes[i].is_ascii_whitespace()

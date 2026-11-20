@@ -42,7 +42,10 @@ use crate::{
     CssFormatOptions, CssVariant,
     comments::{self, BlockCommentAfter, FormatCommentBeforeContent, FormatLineCommentSuffix},
     format::to_span,
-    print::{CssFormatter, format_with, has_comments_between, is_glued, less, scss, statement},
+    print::{
+        CssFormatter, block_comment_end, format_with, has_comments_between, is_glued, less, scss,
+        statement,
+    },
 };
 
 /// Prettier's `printNumber` + `printCssNumber` (trailing `.0` removal included).
@@ -171,7 +174,14 @@ pub(super) fn write_adjusted_verbatim<'a>(raw: &'a str, f: &mut CssFormatter<'_,
 /// strings re-quote via `printString`,
 /// standalone numbers (not glued to a word part) get `printCssNumber` + lowercased/canonical unit;
 /// Everything else (whitespace and newlines included) stays verbatim.
-/// Used where Prettier prints raw selector text: Less mixin definitions/calls and `when` guards.
+/// Used where Prettier prints raw selector text: Less mixin definitions/calls and `when` guards,
+/// and a media keyword glued to its parens (`and(...)`).
+///
+/// NOTE: every caller's slice is a typed node
+/// (`LessMixinParameters`, `LessConditions`, `LessMixinCall` args, `MediaInParens`),
+/// so splicing the printed `Number` / `Dimension` / `Str` leaves into the verbatim slice is possible
+/// and would retire this byte re-scan, with its comment / `url()` / hash skips.
+/// However, we keep the scan for now: `oxc-css-parser` has no visitor to collect those leaves.
 pub(super) fn adjust_numbers_and_strings<'a>(
     raw: &'a str,
     options: &CssFormatOptions,
@@ -251,7 +261,7 @@ pub(super) fn adjust_numbers_and_strings<'a>(
         let b = bytes[i];
         // Comments are the user's: always verbatim.
         let comment_end = match (b, bytes.get(i + 1)) {
-            (b'/', Some(b'*')) => raw[i + 2..].find("*/").map_or(raw.len(), |end| i + end + 4),
+            (b'/', Some(b'*')) => block_comment_end(raw, i),
             (b'/', Some(b'/')) if options.variant != CssVariant::Css => {
                 raw[i..].find('\n').map_or(raw.len(), |end| i + end)
             }
