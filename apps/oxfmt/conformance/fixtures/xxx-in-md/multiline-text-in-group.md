@@ -1,4 +1,4 @@
-A multi-line text inside a group expands it here, but not in its standalone file
+A non-expanding multi-line text keeps its group flat, as in its standalone file
 
 ```yaml
 k: [aaaaaaaa, bbbbbbbbb,
@@ -6,7 +6,7 @@ k: [aaaaaaaa, bbbbbbbbb,
   c]
 ```
 
-```toml
-a = ["""x
-y""", 2]
-```
+> ```toml
+> a = ["""x
+> y""", 2]
+> ```
