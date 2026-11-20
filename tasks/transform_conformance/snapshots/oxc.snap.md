@@ -1,6 +1,6 @@
 commit: 16a2d671
 
-Passed: 342/467
+Passed: 344/469
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -49,7 +49,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (51/67)
+# babel-plugin-transform-typescript (53/69)
 * computed-constant-value/input.ts
 x Output mismatch
 

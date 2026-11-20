@@ -9,7 +9,10 @@ use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::BoundIdentifier;
 
 use crate::{
-    common::computed_key::{create_computed_key_temp_var, key_needs_temp_var},
+    common::{
+        computed_key::{create_computed_key_temp_var, key_needs_temp_var},
+        duplicate::duplicate_expression,
+    },
     context::TraverseCtx,
     utils::ast_builder::{
         create_class_constructor, create_this_property_access, create_this_property_assignment,
@@ -120,9 +123,17 @@ impl<'a> TypeScript<'a> {
                         || (!prop.r#static && will_hoist_initializers_to_constructor) =>
                 {
                     if let Some(value) = prop.value.take() {
+                        // A static property is replaced by a static block below, and an instance
+                        // property is removed later when `remove_class_fields_without_initializer`
+                        // is `true`. Otherwise, the instance property declaration stays in the
+                        // class body (without its initializer), so its key is still evaluated
+                        // during class definition.
+                        let keep_declaration =
+                            !prop.r#static && !self.remove_class_fields_without_initializer;
                         let assignment = self.convert_property_definition(
                             &mut prop.key,
                             value,
+                            keep_declaration,
                             &mut computed_key_assignments,
                             ctx,
                         );
@@ -148,6 +159,15 @@ impl<'a> TypeScript<'a> {
                             // keeps and is evaluated in the same order as the original class field in static block.
                             computed_key_assignments.push(key.take_in(ctx));
                         }
+                    } else if !prop.declare && prop.computed {
+                        // The property declaration without initializer is kept in the class body, so its
+                        // computed key is evaluated during class definition. Any pending computed key
+                        // assignments from previous elements must be evaluated before it.
+                        Self::convert_computed_key(
+                            &mut prop.key,
+                            &mut computed_key_assignments,
+                            ctx,
+                        );
                     }
                 }
                 ClassElement::MethodDefinition(method) => {
@@ -435,12 +455,18 @@ impl<'a> TypeScript<'a> {
     /// * Static key:
     ///   `class C { x = 1; }` -> `class C { constructor() { this.x = 1; } }`
     ///
+    /// When `keep_declaration` is `true`, the property declaration stays in the class body, so
+    /// its key is still evaluated during class definition. In that case the temp var is assigned
+    /// inside the key itself, so the key expression is evaluated exactly once and in source order:
+    ///   `class C { [x()] = 1; }` -> `let _x; class C { constructor() { this[_x] = 1; } [_x = x()]; }`
+    ///
     /// Returns an assignment statement which would be inserted in the constructor body.
     #[expect(clippy::unused_self)]
     fn convert_property_definition(
         &self,
         key: &mut PropertyKey<'a>,
         value: Expression<'a>,
+        keep_declaration: bool,
         computed_key_assignments: &mut Vec<Expression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
@@ -467,8 +493,25 @@ impl<'a> TypeScript<'a> {
                 let new_key = if key_needs_temp_var(key, ctx) {
                     let taken_key = key.take_in(ctx);
                     let (assignment, ident) = create_computed_key_temp_var(taken_key, ctx);
-                    computed_key_assignments.push(assignment);
+                    if keep_declaration {
+                        // All computed keys are evaluated during class definition, before any
+                        // static block runs, so assigning the temp var in a static block would
+                        // leave it `undefined` when the kept declaration's key is evaluated.
+                        // Assign it in the key instead: `[x()] = 1` -> `[_x = x()];`.
+                        *key = assignment;
+                        Self::prepend_computed_key_assignments(key, computed_key_assignments, ctx);
+                    } else {
+                        computed_key_assignments.push(assignment);
+                    }
                     ident
+                } else if keep_declaration {
+                    // Keep the original key in the kept declaration, rather than leaving
+                    // the `NullLiteral` dummy from `take_in`, which would create a `null` property.
+                    // The key is side-effect free here, so it can be duplicated without a temp var.
+                    let (original_key, new_key) =
+                        duplicate_expression(key.take_in(ctx), false, ctx);
+                    *key = original_key;
+                    new_key
                 } else {
                     key.take_in(ctx)
                 };
@@ -534,23 +577,31 @@ impl<'a> TypeScript<'a> {
         assignments: &mut Vec<Expression<'a>>,
         ctx: &TraverseCtx<'a>,
     ) {
+        if let Some(key) = key.as_expression_mut() {
+            Self::prepend_computed_key_assignments(key, assignments, ctx);
+        }
+    }
+
+    /// Prepend pending computed key `assignments` to `key`: `key` -> `(_x = x(), key)`.
+    fn prepend_computed_key_assignments(
+        key: &mut Expression<'a>,
+        assignments: &mut Vec<Expression<'a>>,
+        ctx: &TraverseCtx<'a>,
+    ) {
         if assignments.is_empty() {
             return;
         }
-        if let Some(key) = key.as_expression_mut() {
-            // If the key is already an expression, we need to create a new expression sequence
-            // to insert the assignments into.
-            key.replace_with(|original_key| {
-                Expression::new_sequence_expression(
-                    SPAN,
-                    ArenaVec::from_iter_in(
-                        assignments.split_off(0).into_iter().chain(std::iter::once(original_key)),
-                        ctx,
-                    ),
+        // Create a new expression sequence to insert the assignments into.
+        key.replace_with(|original_key| {
+            Expression::new_sequence_expression(
+                SPAN,
+                ArenaVec::from_iter_in(
+                    assignments.drain(..).chain(std::iter::once(original_key)),
                     ctx,
-                )
-            });
-        }
+                ),
+                ctx,
+            )
+        });
     }
 
     /// Convert constructor parameters that include modifier to `this` assignments
