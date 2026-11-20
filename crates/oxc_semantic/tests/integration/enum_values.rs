@@ -257,3 +257,64 @@ fn surrogate_member_string_kind() {
         assert!(scoping.is_string_enum_member(scope, member.id.static_name()));
     }
 }
+
+fn check_diagnostics(source: &str) -> Vec<String> {
+    let allocator = Allocator::default();
+    let parsed = Parser::new(&allocator, source, SourceType::ts()).parse();
+    assert!(parsed.diagnostics.is_empty(), "Parse errors: {:?}", parsed.diagnostics);
+    let ret = SemanticBuilder::new()
+        .with_check_syntax_error(true)
+        .with_enum_eval(true)
+        .build(&parsed.program);
+    ret.diagnostics.errors().map(oxc_diagnostics::OxcDiagnostic::render).collect()
+}
+
+#[test]
+fn checker_member_without_initializer_after_non_numeric_constant() {
+    // `foo() + 1` is not a constant enum expression, so the next member cannot
+    // auto-increment and must have its own initializer (tsc TS1061).
+    let diags = check_diagnostics("declare function foo(): number; enum E { A = foo() + 1, B }");
+    assert!(
+        diags.iter().any(|m| m.contains("Enum member must have initializer")),
+        "expected a missing-initializer diagnostic, got {diags:?}"
+    );
+
+    // `typeof foo` is not a numeric constant either.
+    let diags = check_diagnostics("declare function foo(): number; enum E { A = typeof foo, B }");
+    assert!(
+        diags.iter().any(|m| m.contains("Enum member must have initializer")),
+        "expected a missing-initializer diagnostic, got {diags:?}"
+    );
+
+    // A string-valued member reference does not support auto-increment.
+    let diags = check_diagnostics("enum E0 { Str = \"s\" } enum E { A = E0.Str, B }");
+    assert!(
+        diags.iter().any(|m| m.contains("Enum member must have initializer")),
+        "expected a missing-initializer diagnostic, got {diags:?}"
+    );
+
+    // Numeric constants still auto-increment without diagnostics.
+    let diags = check_diagnostics("enum E { A = 1, B, C = 5, D }");
+    assert!(diags.is_empty(), "expected no diagnostics, got {diags:?}");
+
+    let diags = check_diagnostics("enum E0 { Num = 1 } enum E { A = E0.Num, B }");
+    assert!(diags.is_empty(), "expected no diagnostics, got {diags:?}");
+
+    // A string-literal member still requires the next member to have an initializer.
+    let diags = check_diagnostics("enum E { A = \"x\", B }");
+    assert!(
+        diags.iter().any(|m| m.contains("Enum member must have initializer")),
+        "expected a missing-initializer diagnostic, got {diags:?}"
+    );
+
+    // Without enum evaluation the syntactic check is unchanged.
+    let allocator = Allocator::default();
+    let source = "enum E { A = 1, B }";
+    let parsed = Parser::new(&allocator, source, SourceType::ts()).parse();
+    let ret = SemanticBuilder::new().with_check_syntax_error(true).build(&parsed.program);
+    assert!(
+        ret.diagnostics.errors().next().is_none(),
+        "expected no diagnostics, got {:?}",
+        ret.diagnostics
+    );
+}
