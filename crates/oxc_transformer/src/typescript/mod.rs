@@ -120,10 +120,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
         self.annotations.enter_class(class, ctx);
 
         if lowering.mode() == ClassLoweringMode::Preserve {
-            // Keep field decorators and initializer order for the downstream decorator transform,
-            // even when TypeScript normally moves fields into constructor assignments.
-            self.remove_uninitialized_class_fields(class, true, ctx);
-            if !self.set_public_class_fields {
+            // No transform lowers a preserved class, so TypeScript still converts its fields.
+            // Decorated fields, auto-accessors, and their initializer order are kept for the
+            // downstream decorator transform.
+            if self.set_public_class_fields {
+                self.transform_class_fields(class, true, ctx);
+                self.remove_uninitialized_class_fields(class, true, ctx);
+            } else {
+                self.remove_uninitialized_class_fields(class, true, ctx);
                 Self::add_parameter_property_fields(class, ctx);
             }
             return;
@@ -134,7 +138,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
         if !ctx.state.class_transform.owns_all_class_fields() {
             if lowering.mode() == ClassLoweringMode::Native {
                 if self.set_public_class_fields {
-                    self.transform_class_fields(class, ctx);
+                    self.transform_class_fields(class, false, ctx);
                 } else {
                     // Default oxc behavior matches `useDefineForClassFields: true`. Emit an
                     // uninitialized field declaration for each constructor parameter property so
@@ -207,8 +211,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.annotations.enter_method_definition(def, ctx);
-        let class_fields_handled =
-            ctx.state.class_lowering_of(ctx.current_scope_id()).mode() != ClassLoweringMode::Native;
+        // `transform_class_fields` converts parameter properties itself.
+        let class_fields_handled = ctx.state.class_lowering_of(ctx.current_scope_id()).mode()
+            == ClassLoweringMode::LowerAll;
         if class_fields_handled || !self.set_public_class_fields {
             Self::transform_class_constructor(def, ctx);
         }

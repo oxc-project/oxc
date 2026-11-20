@@ -97,16 +97,38 @@ impl<'a> TypeScript<'a> {
     /// The transformation way is also the same as `TypeScript`, the advantage from the implementation is that
     /// we don't need extra transformation for static properties, the output is the same as instance properties
     /// transformation, and the greatest advantage is we don't need to care about `this` usage in static block.
-    pub(super) fn transform_class_fields(&self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+    ///
+    /// When `preserve_decorated_fields` is `true`, the class is kept for a downstream decorator
+    /// transform. Decorated fields stay in the class, and so does every instance field before the
+    /// last kept instance initializer, because hoisted initializers would run after it.
+    pub(super) fn transform_class_fields(
+        &self,
+        class: &mut Class<'a>,
+        preserve_decorated_fields: bool,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let is_kept = |prop: &PropertyDefinition<'a>| {
+            preserve_decorated_fields && !prop.decorators.is_empty()
+        };
+        // Instance fields at or before this index stay in the class.
+        let first_hoistable_index = if preserve_decorated_fields {
+            Self::last_kept_instance_initializer(class).map_or(0, |index| index + 1)
+        } else {
+            0
+        };
+        let is_hoistable = |index: usize, prop: &PropertyDefinition<'a>| {
+            !is_kept(prop) && (prop.r#static || index >= first_hoistable_index)
+        };
         // When any non-private instance field has an initializer, all instance field
         // initializers (including private) must be hoisted to the constructor to preserve
         // execution order. This matches TypeScript's `WillHoistInitializersToConstructor`:
         // https://github.com/microsoft/TypeScript/blob/7b8cb3bdf8/src/compiler/transformers/classFields.ts#L339
-        let will_hoist_initializers_to_constructor = class.body.body.iter().any(|e| {
-            matches!(e, ClassElement::PropertyDefinition(prop)
-                if !prop.r#static && !prop.declare && !prop.key.is_private_identifier() && prop.value.is_some()
-            )
-        });
+        let will_hoist_initializers_to_constructor =
+            class.body.body.iter().enumerate().any(|(index, e)| {
+                matches!(e, ClassElement::PropertyDefinition(prop)
+                    if !prop.r#static && !prop.declare && !prop.key.is_private_identifier() && prop.value.is_some() && is_hoistable(index, prop)
+                )
+            });
 
         // Static blocks created below must be parented to the class body scope,
         // not the current traversal scope (which is the scope enclosing the class).
@@ -115,13 +137,14 @@ impl<'a> TypeScript<'a> {
         let mut constructor = None;
         let mut property_assignments = Vec::new();
         let mut computed_key_assignments = Vec::new();
-        for element in &mut class.body.body {
+        for (index, element) in class.body.body.iter_mut().enumerate() {
             match element {
                 // Skip static private properties — converting them to static blocks
                 // would lose the private field declaration.
                 ClassElement::PropertyDefinition(prop)
-                    if !prop.key.is_private_identifier()
-                        || (!prop.r#static && will_hoist_initializers_to_constructor) =>
+                    if is_hoistable(index, prop)
+                        && (!prop.key.is_private_identifier()
+                            || (!prop.r#static && will_hoist_initializers_to_constructor)) =>
                 {
                     if let Some(value) = prop.value.take() {
                         // A static property is replaced by a static block below, and an instance
@@ -191,6 +214,10 @@ impl<'a> TypeScript<'a> {
                         &mut computed_key_assignments,
                         ctx,
                     );
+                }
+                // Kept field: evaluate pending computed keys before its own key.
+                ClassElement::PropertyDefinition(prop) => {
+                    Self::convert_computed_key(&mut prop.key, &mut computed_key_assignments, ctx);
                 }
                 _ => (),
             }
@@ -264,6 +291,20 @@ impl<'a> TypeScript<'a> {
         } else if let Some(element) = computed_key_assignment_static_block {
             class.body.body.insert(0, element);
         }
+    }
+
+    /// Index of the last instance element whose initializer stays in a preserved class: a
+    /// decorated field, or an auto-accessor with an initializer or decorators.
+    fn last_kept_instance_initializer(class: &Class<'a>) -> Option<usize> {
+        class.body.body.iter().rposition(|element| match element {
+            ClassElement::PropertyDefinition(prop) => {
+                !prop.r#static && !prop.declare && !prop.decorators.is_empty()
+            }
+            ClassElement::AccessorProperty(accessor) => {
+                !accessor.r#static && (accessor.value.is_some() || !accessor.decorators.is_empty())
+            }
+            _ => false,
+        })
     }
 
     /// Insert an uninitialized class field declaration for each constructor parameter property.
