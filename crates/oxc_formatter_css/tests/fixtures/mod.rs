@@ -89,7 +89,7 @@ fn variant_of(path: &Path) -> CssVariant {
 
 /// Fixtures under `embedded/` exercise the dispatcher entry point
 /// (`format_to_ir`, css-in-js), which tolerates
-/// `` `PLACEHOLDER-N` `` markers in value/selector position.
+/// `` `oxfmt_css_N` `` markers in value/selector position.
 fn is_embedded(path: &Path) -> bool {
     path.components().any(|c| c.as_os_str() == "embedded")
 }
@@ -117,7 +117,7 @@ fn format_embedded(
     let elements = ArenaVec::from_iter_in(
         embedded.ir.iter().map(|element| match element {
             FormatElement::EmbedPlaceholder(index) => {
-                let text = allocator.alloc_str(&std::format!("`PLACEHOLDER-{index}`"));
+                let text = allocator.alloc_str(&std::format!("`oxfmt_css_{index}`"));
                 FormatElement::text(text, options.indent_width)
             }
             other => other.clone(),
@@ -186,11 +186,11 @@ fn parse_error_is_err() {
         ("a { width: calc(100% - 10px", css),
         ("a { --x: {", css),
         // css-in-js `${}` markers in value position...
-        ("a { color: `PLACEHOLDER-0`; }", scss),
+        ("a { color: `oxfmt_css_0`; }", scss),
         // ...and in selector position stay errors in the STANDALONE entry
         // (`format_to_ir` tolerates them via the oxc-css-parser fork option;
         // see `fixtures/embedded/`).
-        (".a-`PLACEHOLDER-0` {\n}", scss),
+        (".a-`oxfmt_css_0` {\n}", scss),
         // The raw-prelude fallback (`unknown-qualified-rule.css`) fires only
         // when a declaration's value hits a top-level `{` (name + `:` parsed);
         // a selector error with no such head stays a hard error.

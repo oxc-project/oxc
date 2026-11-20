@@ -1621,9 +1621,8 @@ const a = html`<style>
 </style>`;
 ```
 
-An html-in-js placeholder is found in the child's output ASCII case-insensitively (`HTML_PLACEHOLDER_PREFIX` in `oxc_formatter`):
-CSS lowercases a property name, and the placeholder standing in it with it.
-Prettier looks for the placeholder as it wrote it, so the lowercased one stays in the output and `${b}` is lost.
+An html-in-js placeholder is an ASCII lowercase name (`HTML_PLACEHOLDER_PREFIX` in `oxc_formatter`), which CSS prints as written in a property name.
+Prettier's has uppercase letters, which CSS lowercases there: Prettier no longer finds it, so the lowercased one stays in the output and `${b}` is lost.
 
 ## pre-like-template-expression
 

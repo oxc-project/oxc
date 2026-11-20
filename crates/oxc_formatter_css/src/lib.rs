@@ -19,10 +19,12 @@ mod format;
 mod options;
 mod print;
 
-/// css-in-js `${}` interpolation marker, opening affix.
+use oxc_formatter_core::Placeholder;
+
+/// css-in-js `${}` interpolation marker.
 ///
 /// The parent (JS) formatter substitutes each interpolation with a
-/// backtick-delimited `` `PLACEHOLDER-N` `` marker before dispatching to [`format_to_ir`].
+/// backtick-delimited `` `oxfmt_css_N` `` marker before dispatching to [`format_to_ir`].
 /// Backtick is invalid SCSS (the css-in-js variant),
 /// so the marker is unmistakably out-of-band, not a real `@var`/`$var` or at-rule.
 /// (Like Prettier, which uses `@prettier-placeholder-N-id`)
@@ -30,10 +32,9 @@ mod print;
 /// consuming the leading backtick as the sigil (so `format.rs` passes the affix without it).
 ///
 /// The producer-side constant lives in `oxc_formatter`'s `embed/css.rs`
-/// (which doesn't depend on this crate); orchestrator-side consumers (oxfmt) should use these.
-pub const TEMPLATE_PLACEHOLDER_PREFIX: &str = "`PLACEHOLDER-";
-/// Closing affix of the css-in-js marker (the closing backtick).
-pub const TEMPLATE_PLACEHOLDER_SUFFIX: &str = "`";
+/// (which doesn't depend on this crate); orchestrator-side consumers (oxfmt) should use this.
+pub const TEMPLATE_PLACEHOLDER: Placeholder<'static> =
+    Placeholder { prefix: "`oxfmt_css_", suffix: "`" };
 
 pub use crate::{
     comments::CssComment,
