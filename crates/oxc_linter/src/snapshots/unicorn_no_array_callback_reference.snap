@@ -123,3 +123,38 @@ source: crates/oxc_linter/src/tester.rs
  12 │             }
     ╰────
   help: Wrap the function in an arrow function to explicitly pass only the element argument
+
+  ⚠ unicorn(no-array-callback-reference): Avoid passing a function reference directly to iterator methods
+   ╭─[no_array_callback_reference.tsx:1:93]
+ 1 │ function isString(value: unknown): boolean { return typeof value === 'string'; } foo.filter(isString);
+   ·                                                                                             ────────
+   ╰────
+  help: Wrap the function in an arrow function to explicitly pass only the element argument
+
+  ⚠ unicorn(no-array-callback-reference): Avoid passing a function reference directly to iterator methods
+   ╭─[no_array_callback_reference.tsx:1:98]
+ 1 │ function isString(value: unknown): value is string { return typeof value === 'string'; } foo.map(isString);
+   ·                                                                                                  ────────
+   ╰────
+  help: Wrap the function in an arrow function to explicitly pass only the element argument
+
+  ⚠ unicorn(no-array-callback-reference): Avoid passing a function reference directly to iterator methods
+   ╭─[no_array_callback_reference.tsx:1:46]
+ 1 │ import { isString } from './guards'; foo.map(isString);
+   ·                                              ────────
+   ╰────
+  help: Wrap the function in an arrow function to explicitly pass only the element argument
+
+  ⚠ unicorn(no-array-callback-reference): Avoid passing a function reference directly to iterator methods
+   ╭─[no_array_callback_reference.tsx:1:182]
+ 1 │ function isString(value: unknown): value is string { return typeof value === 'string'; } function isObject(value: unknown): boolean { return typeof value === 'object'; } foo.filter(condition ? isString : isObject);
+   ·                                                                                                                                                                                      ───────────────────────────────
+   ╰────
+  help: Wrap the function in an arrow function to explicitly pass only the element argument
+
+  ⚠ unicorn(no-array-callback-reference): Avoid passing a function reference directly to iterator methods
+   ╭─[no_array_callback_reference.tsx:1:38]
+ 1 │ try {} catch (callback) { foo.filter(callback); }
+   ·                                      ────────
+   ╰────
+  help: Wrap the function in an arrow function to explicitly pass only the element argument
