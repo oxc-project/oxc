@@ -7,15 +7,13 @@ use napi::{
 use napi_derive::napi;
 
 use oxc::{
-    allocator::Allocator,
     codegen::{Codegen, CodegenOptions, CodegenReturn},
-    parser::Parser,
     semantic::{SemanticBuilder, SemanticBuilderReturn},
     span::SourceType,
     str::JSStr,
     transformer_plugins::ModuleRunnerTransform,
 };
-use oxc_napi::OxcError;
+use oxc_napi::{NapiSource, OxcError};
 use oxc_sourcemap::napi::SourceMap;
 
 #[derive(Clone, Copy, Default)]
@@ -64,8 +62,8 @@ pub struct ModuleRunnerTransformResult {
 pub struct ModuleRunnerTransformTask {
     /// File path.
     filename: String,
-    /// Source text.
-    source_text: String,
+    /// Source text. `None` if `compute` has run.
+    source: Option<NapiSource>,
     /// Options. `None` if no options provided.
     options: Option<ModuleRunnerTransformOptions>,
 }
@@ -79,8 +77,8 @@ impl Task for ModuleRunnerTransformTask {
         // Move filename and source text out of the task, so they're dropped here on worker thread.
         // `ModuleRunnerTransformOptions` is `Copy` so no need to move it.
         let filename = mem::take(&mut self.filename);
-        let source_text = mem::take(&mut self.source_text);
-        Ok(module_runner_transform_impl(&filename, &source_text, self.options))
+        let mut napi_source = self.source.take().expect("`compute` called more than once");
+        Ok(module_runner_transform_impl(&filename, &mut napi_source, self.options))
     }
 
     fn resolve(
@@ -107,10 +105,10 @@ impl Task for ModuleRunnerTransformTask {
 #[napi]
 pub fn module_runner_transform(
     filename: String,
-    source_text: String,
+    #[napi(ts_arg_type = "string")] source_text: NapiSource,
     options: Option<ModuleRunnerTransformOptions>,
 ) -> AsyncTask<ModuleRunnerTransformTask> {
-    AsyncTask::new(ModuleRunnerTransformTask { filename, source_text, options })
+    AsyncTask::new(ModuleRunnerTransformTask { filename, source: Some(source_text), options })
 }
 
 /// Transform JavaScript code to a Vite Node runnable module, synchronously on current thread.
@@ -126,16 +124,16 @@ pub fn module_runner_transform(
 #[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
 pub fn module_runner_transform_sync(
     filename: String,
-    source_text: String,
+    #[napi(ts_arg_type = "string")] mut source_text: NapiSource,
     options: Option<ModuleRunnerTransformOptions>,
 ) -> ModuleRunnerTransformResult {
-    module_runner_transform_impl(&filename, &source_text, options)
+    module_runner_transform_impl(&filename, &mut source_text, options)
 }
 
 /// Transform JavaScript code to a Vite Node runnable module.
 fn module_runner_transform_impl(
     filename: &str,
-    source_text: &str,
+    napi_source: &mut NapiSource,
     options: Option<ModuleRunnerTransformOptions>,
 ) -> ModuleRunnerTransformResult {
     let file_path = Path::new(filename);
@@ -153,9 +151,11 @@ fn module_runner_transform_impl(
         }
     };
 
-    let allocator = Allocator::default();
-    let mut parser_ret = Parser::new(&allocator, source_text, source_type).parse();
+    let source = napi_source.source(source_type);
+    let allocator = source.allocator();
+    let mut parser_ret = source.parse();
     let mut program = parser_ret.program;
+    let source_text = program.source_text;
 
     let SemanticBuilderReturn { semantic, diagnostics } =
         SemanticBuilder::new_compiler().build(&program);
@@ -163,7 +163,7 @@ fn module_runner_transform_impl(
 
     let scoping = semantic.into_scoping();
     let (deps, dynamic_deps) =
-        ModuleRunnerTransform::default().transform(&allocator, &mut program, scoping);
+        ModuleRunnerTransform::default().transform(allocator, &mut program, scoping);
 
     let CodegenReturn { code, map, .. } = Codegen::new()
         .with_options(CodegenOptions {

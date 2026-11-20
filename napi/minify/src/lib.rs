@@ -5,11 +5,9 @@ use std::{collections::BTreeMap, mem, path::PathBuf};
 use napi::{Either, Task, bindgen_prelude::AsyncTask};
 use napi_derive::napi;
 
-use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_minifier::{Minifier, MinifierOptions};
-use oxc_napi::OxcError;
-use oxc_parser::Parser;
+use oxc_napi::{NapiSource, OxcError};
 use oxc_sourcemap::napi::SourceMap;
 use oxc_span::SourceType;
 
@@ -48,8 +46,8 @@ pub struct MinifyResult {
 pub struct MinifyTask {
     /// File path.
     filename: String,
-    /// Source text.
-    source_text: String,
+    /// Source text. `None` if `compute` has run.
+    source: Option<NapiSource>,
     /// Options. `None` if no options provided, or if `compute` has run.
     options: Option<MinifyOptions>,
 }
@@ -62,9 +60,9 @@ impl Task for MinifyTask {
     fn compute(&mut self) -> napi::Result<MinifyResult> {
         // Move all data out of the task, so it's dropped here on worker thread
         let filename = mem::take(&mut self.filename);
-        let source_text = mem::take(&mut self.source_text);
+        let mut napi_source = self.source.take().expect("`compute` called more than once");
         let mut options = self.options.take();
-        Ok(minify_impl(&filename, &source_text, &mut options))
+        Ok(minify_impl(&filename, &mut napi_source, &mut options))
     }
 
     fn resolve(&mut self, _: napi::Env, result: MinifyResult) -> napi::Result<MinifyResult> {
@@ -85,10 +83,10 @@ impl Task for MinifyTask {
 #[napi]
 pub fn minify(
     filename: String,
-    source_text: String,
+    #[napi(ts_arg_type = "string")] source_text: NapiSource,
     options: Option<MinifyOptions>,
 ) -> AsyncTask<MinifyTask> {
-    AsyncTask::new(MinifyTask { filename, source_text, options })
+    AsyncTask::new(MinifyTask { filename, source: Some(source_text), options })
 }
 
 /// Minify, synchronously on current thread.
@@ -100,13 +98,13 @@ pub fn minify(
 #[napi]
 pub fn minify_sync(
     filename: String,
-    source_text: String,
+    #[napi(ts_arg_type = "string")] mut source_text: NapiSource,
     mut options: Option<MinifyOptions>,
 ) -> MinifyResult {
-    minify_impl(&filename, &source_text, &mut options)
+    minify_impl(&filename, &mut source_text, &mut options)
 }
 
-/// Parse `source_text`, minify it, and generate code.
+/// Parse the source in `napi_source`, minify it, and generate code.
 ///
 /// `options` are the options as passed in from JS.
 /// If `None`, default options are used, and are written into `options` in place.
@@ -117,7 +115,7 @@ pub fn minify_sync(
 /// It's `&mut` so that the default options have somewhere to be written to.
 fn minify_impl(
     filename: &str,
-    source_text: &str,
+    napi_source: &mut NapiSource,
     options: &mut Option<MinifyOptions>,
 ) -> MinifyResult {
     use oxc_codegen::CodegenOptions;
@@ -132,22 +130,23 @@ fn minify_impl(
         }
     };
 
-    let allocator = Allocator::default();
-
     let source_type = if options.module == Some(true) {
         SourceType::mjs()
     } else {
         SourceType::from_path(filename).unwrap_or_default()
     };
 
-    let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
+    let source = napi_source.source(source_type);
+    let allocator = source.allocator();
+    let parser_ret = source.parse();
     if !parser_ret.diagnostics.is_empty() {
         // A recovered AST may be incomplete, so skip property mangling and its cache.
         minifier_options.mangle_properties = None;
     }
     let mut program = parser_ret.program;
+    let source_text = program.source_text;
 
-    let minifier_ret = Minifier::new(minifier_options).minify(&allocator, &mut program);
+    let minifier_ret = Minifier::new(minifier_options).minify(allocator, &mut program);
     let scoping = minifier_ret.scoping;
     let class_private_mappings = minifier_ret.class_private_mappings;
     let mangle_cache = parser_ret

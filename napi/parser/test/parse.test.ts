@@ -883,6 +883,37 @@ describe("UTF-16 span", () => {
   });
 });
 
+describe("source text", () => {
+  it("lone surrogate is replaced with lossy replacement character", async () => {
+    // A JS string can contain a lone surrogate, which cannot be encoded as UTF-8.
+    // It's replaced with U+FFFD when the source text is converted to UTF-8.
+    const code = ';"a\ud800b";';
+    for (const ret of [parseSync("test.js", code), await parse("test.js", code)]) {
+      expect(ret.errors.length).toBe(0);
+      expect(ret.program.body.length).toBe(2);
+      expect(ret.program.body[1]).toEqual({
+        type: "ExpressionStatement",
+        start: 1,
+        end: 7,
+        expression: {
+          type: "Literal",
+          start: 1,
+          end: 6,
+          value: "a\ufffdb",
+          raw: '"a\ufffdb"',
+        },
+      });
+    }
+  });
+
+  it("throws if not a string", async () => {
+    // @ts-expect-error Testing runtime validation
+    expect(() => parseSync("test.js", 123)).toThrow("Source text must be a string");
+    // @ts-expect-error Testing runtime validation
+    await expect(parse("test.js", 123)).rejects.toThrow("Source text must be a string");
+  });
+});
+
 describe("error", () => {
   const code = "asdf asdf";
 

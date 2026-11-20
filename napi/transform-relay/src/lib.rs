@@ -6,13 +6,11 @@ use napi::{Task, bindgen_prelude::AsyncTask};
 use napi_derive::napi;
 
 use oxc::{
-    allocator::Allocator,
     codegen::{Codegen, CodegenOptions},
     diagnostics::Diagnostics,
-    parser::Parser,
     semantic::SemanticBuilder,
 };
-use oxc_napi::{OxcError, get_source_type};
+use oxc_napi::{NapiSource, OxcError, get_source_type};
 use oxc_relay::Relay;
 use oxc_sourcemap::napi::SourceMap;
 
@@ -53,8 +51,8 @@ pub struct TransformResult {
 pub struct TransformTask {
     /// File path.
     filename: String,
-    /// Source text.
-    source_text: String,
+    /// Source text. `None` if `compute` has run.
+    source: Option<NapiSource>,
     /// Options. `None` if no options provided, or if `compute` has run.
     options: Option<TransformOptions>,
 }
@@ -67,9 +65,9 @@ impl Task for TransformTask {
     fn compute(&mut self) -> napi::Result<TransformResult> {
         // Move all data out of the task, so it's dropped here on worker thread
         let filename = mem::take(&mut self.filename);
-        let source_text = mem::take(&mut self.source_text);
+        let mut napi_source = self.source.take().expect("`compute` called more than once");
         let options = self.options.take();
-        Ok(transform_impl(&filename, &source_text, options))
+        Ok(transform_impl(&filename, &mut napi_source, options))
     }
 
     fn resolve(&mut self, _: napi::Env, result: TransformResult) -> napi::Result<TransformResult> {
@@ -93,10 +91,10 @@ impl Task for TransformTask {
 #[napi]
 pub fn transform(
     filename: String,
-    source_text: String,
+    #[napi(ts_arg_type = "string")] source_text: NapiSource,
     options: Option<TransformOptions>,
 ) -> AsyncTask<TransformTask> {
-    AsyncTask::new(TransformTask { filename, source_text, options })
+    AsyncTask::new(TransformTask { filename, source: Some(source_text), options })
 }
 
 /// Apply the Relay `graphql` tagged template transform, synchronously on current thread.
@@ -112,15 +110,17 @@ pub fn transform(
 #[napi]
 pub fn transform_sync(
     filename: String,
-    source_text: String,
+    #[napi(ts_arg_type = "string")] mut source_text: NapiSource,
     options: Option<TransformOptions>,
 ) -> TransformResult {
-    transform_impl(&filename, &source_text, options)
+    transform_impl(&filename, &mut source_text, options)
 }
 
+/// Parse the source in `napi_source`, apply the Relay transform, and return
+/// the generated code, source map and errors.
 fn transform_impl(
     filename: &str,
-    source_text: &str,
+    napi_source: &mut NapiSource,
     options: Option<TransformOptions>,
 ) -> TransformResult {
     let source_type = get_source_type(
@@ -141,10 +141,12 @@ fn transform_impl(
         }
     };
 
-    let allocator = Allocator::default();
-    let parser_return = Parser::new(&allocator, source_text, source_type).parse();
+    let source = napi_source.source(source_type);
+    let allocator = source.allocator();
+    let parser_return = source.parse();
     let mut diagnostics = parser_return.diagnostics;
     let mut program = parser_return.program;
+    let source_text = program.source_text;
     if diagnostics.has_errors() {
         return error_result(filename, source_text, diagnostics);
     }
@@ -157,7 +159,7 @@ fn transform_impl(
 
     let scoping = semantic_return.semantic.into_scoping();
     let relay_return =
-        Relay::new(relay_options, Path::new(filename)).build(&allocator, &mut program, scoping);
+        Relay::new(relay_options, Path::new(filename)).build(allocator, &mut program, scoping);
     let relay_has_errors = relay_return.diagnostics.has_errors();
     diagnostics.extend(relay_return.diagnostics);
     if relay_has_errors {

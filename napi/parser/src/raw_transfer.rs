@@ -14,6 +14,7 @@ use napi_derive::napi;
 use oxc::{
     allocator::{Allocator, ArenaVec, FromIn},
     ast_visit::utf8_to_utf16::Utf8ToUtf16,
+    parser::Source,
     semantic::SemanticBuilder,
 };
 use oxc_napi::get_source_type;
@@ -272,7 +273,8 @@ unsafe fn parse_raw_impl(
         };
 
         // Parse
-        let ret = parse_impl(allocator, source_type, source_text, options);
+        let source = Source::from_str(source_text, source_type, allocator);
+        let ret = parse_impl(source, options);
         let mut program = ret.program;
         let mut module_record = ret.module_record;
 

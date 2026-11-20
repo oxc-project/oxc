@@ -17,7 +17,7 @@ use oxc::{
     isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions},
     mangler::{MangleOptions, MangleOptionsKeepNames},
     minifier::{CompressOptions, Minifier, MinifierOptions, MinifierReturn},
-    parser::{ParseOptions, Parser, ParserReturn},
+    parser::{ParseOptions, ParserReturn, Source},
     semantic::{
         Scoping, SemanticBuilder,
         dot::{DebugDot, DebugDotContext},
@@ -202,7 +202,7 @@ impl Oxc {
     fn parse_source<'a>(
         &mut self,
         allocator: &'a Allocator,
-        source_text: &'a str,
+        source_text: &str,
         source_type: SourceType,
         parser_options: &OxcParserOptions,
     ) -> (Program<'a>, oxc::syntax::module_record::ModuleRecord<'a>) {
@@ -213,8 +213,9 @@ impl Oxc {
             allow_v8_intrinsics: parser_options.allow_v8_intrinsics,
             ..ParseOptions::default()
         };
+        let source = Source::from_str(source_text, source_type, allocator);
         let ParserReturn { program, diagnostics, module_record, .. } =
-            Parser::new(allocator, source_text, source_type).with_options(parser_options).parse();
+            source.parse_with_options(parser_options);
         self.diagnostics.extend(diagnostics);
         (program, module_record)
     }

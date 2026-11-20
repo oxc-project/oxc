@@ -4,13 +4,14 @@ use napi::{Task, bindgen_prelude::AsyncTask};
 use napi_derive::napi;
 
 use oxc::{
-    allocator::Allocator,
-    parser::{ParseOptions, Parser, ParserReturn},
+    parser::{ParseOptions, ParserReturn, Source},
     semantic::SemanticBuilder,
     span::SourceType,
 };
-use oxc_napi::{Comment, OxcError, convert_utf8_to_utf16, get_source_type};
+use oxc_napi::{Comment, NapiSource, OxcError, convert_utf8_to_utf16, get_source_type};
 
+#[cfg(not(feature = "tokens"))]
+use oxc::parser::config::NoTokensParserConfig;
 #[cfg(feature = "tokens")]
 use oxc::parser::config::RuntimeParserConfig;
 
@@ -83,8 +84,8 @@ pub fn raw_transfer_supported() -> bool {
 pub struct ParseTask {
     /// File path.
     filename: String,
-    /// Source text.
-    source_text: String,
+    /// Source text. `None` if `compute` has run.
+    source: Option<NapiSource>,
     /// Options. `None` if no options provided, or if `compute` has run.
     options: Option<ParserOptions>,
 }
@@ -97,9 +98,9 @@ impl Task for ParseTask {
     fn compute(&mut self) -> napi::Result<ParseResult> {
         // Move all data out of the task, so it's dropped here on worker thread
         let filename = mem::take(&mut self.filename);
-        let source_text = mem::take(&mut self.source_text);
+        let mut napi_source = self.source.take().expect("`compute` called more than once");
         let mut options = self.options.take();
-        Ok(parse_with_return(&filename, &source_text, &mut options))
+        Ok(parse_with_return(&filename, &mut napi_source, &mut options))
     }
 
     fn resolve(&mut self, _: napi::Env, result: ParseResult) -> napi::Result<ParseResult> {
@@ -128,10 +129,10 @@ impl Task for ParseTask {
 #[napi]
 pub fn parse(
     filename: String,
-    source_text: String,
+    #[napi(ts_arg_type = "string")] source_text: NapiSource,
     options: Option<ParserOptions>,
 ) -> AsyncTask<ParseTask> {
-    AsyncTask::new(ParseTask { filename, source_text, options })
+    AsyncTask::new(ParseTask { filename, source: Some(source_text), options })
 }
 
 /// Parse JS/TS source, synchronously on current thread.
@@ -152,13 +153,13 @@ pub fn parse(
 #[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
 pub fn parse_sync(
     filename: String,
-    source_text: String,
+    #[napi(ts_arg_type = "string")] mut source_text: NapiSource,
     mut options: Option<ParserOptions>,
 ) -> ParseResult {
-    parse_with_return(&filename, &source_text, &mut options)
+    parse_with_return(&filename, &mut source_text, &mut options)
 }
 
-/// Parse `source_text`, and convert the AST, module record, comments and errors
+/// Parse the source in `napi_source`, and convert the AST, module record, comments and errors
 /// to a [`ParseResult`].
 ///
 /// The [`SourceType`] to parse as is determined from `filename` and `options`.
@@ -172,18 +173,20 @@ pub fn parse_sync(
 /// It's `&mut` so that the default options have somewhere to be written to.
 fn parse_with_return(
     filename: &str,
-    source_text: &str,
+    napi_source: &mut NapiSource,
     options: &mut Option<ParserOptions>,
 ) -> ParseResult {
     let options = &*options.get_or_insert_default();
-    let allocator = Allocator::default();
     let source_type =
         get_source_type(filename, options.lang.as_deref(), options.source_type.as_deref());
     let ast_type = get_ast_type(source_type, options);
     let ranges = options.range.unwrap_or(false);
-    let ret = parse_impl(&allocator, source_type, source_text, options);
+
+    let source = napi_source.source(source_type);
+    let ret = parse_impl(source, options);
 
     let mut program = ret.program;
+    let source_text = program.source_text;
     let mut module_record = ret.module_record;
     let mut diagnostics = ret.diagnostics;
 
@@ -223,25 +226,23 @@ fn parse_with_return(
     ParseResult { program_and_fixes, module, comments, errors }
 }
 
-fn parse_impl<'a>(
-    allocator: &'a Allocator,
-    source_type: SourceType,
-    source_text: &'a str,
-    options: &ParserOptions,
-) -> ParserReturn<'a> {
-    let parser = Parser::new(allocator, source_text, source_type).with_options(ParseOptions {
+/// Parse `source`, with parse options and parser config set according to `options`.
+fn parse_impl<'a>(source: Source<'a>, options: &ParserOptions) -> ParserReturn<'a> {
+    let parse_options = ParseOptions {
         preserve_parens: options.preserve_parens.unwrap_or(true),
         // Ident hashes are only consumed by semantic analysis, which this crate runs solely when
         // semantic errors are requested. Skip hashing otherwise to speed up parse-and-serialize.
         enable_ident_hashes: options.show_semantic_errors == Some(true),
         ..ParseOptions::default()
-    });
+    };
 
     // When `tokens` feature is disabled, parser uses the default `NoTokensParserConfig`,
     // which avoids the runtime branch on whether to collect tokens, and so is faster.
     // The `experimentalTokens` option in `ParserOptions` is silently ignored in that case.
-    #[cfg(feature = "tokens")]
-    let parser = parser.with_config(RuntimeParserConfig::new(options.tokens.unwrap_or(false)));
+    let config = cfg_select! {
+        feature = "tokens" => RuntimeParserConfig::new(options.tokens.unwrap_or(false)),
+        _ => NoTokensParserConfig,
+    };
 
-    parser.parse()
+    source.parse_with_config(parse_options, config)
 }

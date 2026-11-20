@@ -4,13 +4,11 @@ use napi::{Task, bindgen_prelude::AsyncTask};
 use napi_derive::napi;
 
 use oxc::{
-    allocator::Allocator,
     codegen::{Codegen, CodegenOptions, CommentOptions},
     isolated_declarations::IsolatedDeclarations,
-    parser::Parser,
     span::SourceType,
 };
-use oxc_napi::OxcError;
+use oxc_napi::{NapiSource, OxcError};
 use oxc_sourcemap::napi::SourceMap;
 
 #[napi(object)]
@@ -44,8 +42,8 @@ pub struct IsolatedDeclarationsResult {
 pub struct IsolatedDeclarationTask {
     /// File path.
     filename: String,
-    /// Source text.
-    source_text: String,
+    /// Source text. `None` if `compute` has run.
+    source: Option<NapiSource>,
     /// Options. `None` if no options provided.
     options: Option<IsolatedDeclarationsOptions>,
 }
@@ -59,8 +57,8 @@ impl Task for IsolatedDeclarationTask {
         // Move filename and source text out of the task, so they're dropped here on worker thread.
         // `IsolatedDeclarationsOptions` is `Copy` so no need to move it.
         let filename = mem::take(&mut self.filename);
-        let source_text = mem::take(&mut self.source_text);
-        Ok(isolated_declaration_impl(&filename, &source_text, self.options))
+        let mut napi_source = self.source.take().expect("`compute` called more than once");
+        Ok(isolated_declaration_impl(&filename, &mut napi_source, self.options))
     }
 
     fn resolve(
@@ -85,10 +83,10 @@ impl Task for IsolatedDeclarationTask {
 #[napi]
 pub fn isolated_declaration(
     filename: String,
-    source_text: String,
+    #[napi(ts_arg_type = "string")] source_text: NapiSource,
     options: Option<IsolatedDeclarationsOptions>,
 ) -> AsyncTask<IsolatedDeclarationTask> {
-    AsyncTask::new(IsolatedDeclarationTask { filename, source_text, options })
+    AsyncTask::new(IsolatedDeclarationTask { filename, source: Some(source_text), options })
 }
 
 /// TypeScript Isolated Declarations for Standalone DTS Emit, synchronously on current thread.
@@ -102,26 +100,29 @@ pub fn isolated_declaration(
 #[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
 pub fn isolated_declaration_sync(
     filename: String,
-    source_text: String,
+    #[napi(ts_arg_type = "string")] mut source_text: NapiSource,
     options: Option<IsolatedDeclarationsOptions>,
 ) -> IsolatedDeclarationsResult {
-    isolated_declaration_impl(&filename, &source_text, options)
+    isolated_declaration_impl(&filename, &mut source_text, options)
 }
 
+/// Parse the source in `napi_source`, and generate a declaration file for it.
 fn isolated_declaration_impl(
     filename: &str,
-    source_text: &str,
+    napi_source: &mut NapiSource,
     options: Option<IsolatedDeclarationsOptions>,
 ) -> IsolatedDeclarationsResult {
     let source_path = Path::new(filename);
     let source_type = SourceType::from_path(source_path).unwrap_or_default().with_typescript(true);
-    let allocator = Allocator::default();
+    let source = napi_source.source(source_type);
+    let allocator = source.allocator();
     let options = options.unwrap_or_default();
 
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let ret = source.parse();
+    let source_text = ret.program.source_text;
 
     let transformed_ret = IsolatedDeclarations::new(
-        &allocator,
+        allocator,
         oxc::isolated_declarations::IsolatedDeclarationsOptions {
             strip_internal: options.strip_internal.unwrap_or(false),
         },
