@@ -5,9 +5,11 @@ use std::ops::ControlFlow;
 use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::BindingRestElement;
 use oxc_span::{GetSpan, Span};
+use oxc_syntax::node::GetNodeId;
 
 use crate::{
     ParserConfig as Config, ParserImpl,
+    comment_attachment::{ListElement, SeparatedElement},
     diagnostics::{self, ParserDiagnostic},
     lexer::Kind,
 };
@@ -31,13 +33,41 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let Some(fifth) = next(self) else {
             return ArenaVec::from_array_in([first, second, third, fourth], self);
         };
+        let mut list = ArenaVec::with_capacity_in(8, self);
+        list.extend([first, second, third, fourth, fifth]);
+        while let Some(element) = next(self) {
+            list.push(element);
+        }
+        list
+    }
+
+    /// Collect a parser list as [`Self::collect_list`] does, passing the last element collected to
+    /// `next`.
+    #[inline]
+    pub(crate) fn collect_list_with_previous<T>(
+        &mut self,
+        mut next: impl FnMut(&mut Self, Option<&T>) -> Option<T>,
+    ) -> ArenaVec<'a, T> {
+        let Some(first) = next(self, None) else { return ArenaVec::new_in(self) };
+        let Some(second) = next(self, Some(&first)) else {
+            return ArenaVec::from_value_in(first, self);
+        };
+        let Some(third) = next(self, Some(&second)) else {
+            return ArenaVec::from_array_in([first, second], self);
+        };
+        let Some(fourth) = next(self, Some(&third)) else {
+            return ArenaVec::from_array_in([first, second, third], self);
+        };
+        let Some(fifth) = next(self, Some(&fourth)) else {
+            return ArenaVec::from_array_in([first, second, third, fourth], self);
+        };
         let prefix = [first, second, third, fourth, fifth];
         if size_of::<T>() <= 16 {
             return self.collect_long_list(prefix, next);
         }
         let mut list = ArenaVec::with_capacity_in(8, self);
         list.extend(prefix);
-        while let Some(element) = next(self) {
+        while let Some(element) = next(self, list.last()) {
             list.push(element);
         }
         list
@@ -49,25 +79,26 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn collect_long_list<T>(
         &mut self,
         prefix: [T; 5],
-        mut next: impl FnMut(&mut Self) -> Option<T>,
+        mut next: impl FnMut(&mut Self, Option<&T>) -> Option<T>,
     ) -> ArenaVec<'a, T> {
         let mut tail: [Option<T>; 11] = std::array::from_fn(|_| None);
-        for (index, slot) in tail.iter_mut().enumerate() {
-            let Some(element) = next(self) else {
+        for index in 0..tail.len() {
+            let previous = if index == 0 { prefix.last() } else { tail[index - 1].as_ref() };
+            let Some(element) = next(self, previous) else {
                 let mut list = ArenaVec::with_capacity_in(5 + index, self);
                 list.extend(prefix);
                 list.extend(tail.into_iter().flatten());
                 return list;
             };
-            *slot = Some(element);
+            tail[index] = Some(element);
         }
-        let extra = next(self);
+        let extra = next(self, tail.last().and_then(Option::as_ref));
         let mut list = ArenaVec::with_capacity_in(if extra.is_some() { 32 } else { 16 }, self);
         list.extend(prefix);
         list.extend(tail.into_iter().flatten());
         if let Some(extra) = extra {
             list.push(extra);
-            while let Some(element) = next(self) {
+            while let Some(element) = next(self, list.last()) {
                 list.push(element);
             }
         }
@@ -104,7 +135,41 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         list
     }
 
-    pub(crate) fn parse_delimited_list<F, T>(
+    /// Parse a `{ }` list of elements without separators: statements in a block, switch cases or
+    /// class elements. Comments are assigned as each element is parsed. With `SKIP_SEMICOLONS`, `;`
+    /// between elements is skipped, as in a class body, where it is an empty element with no node.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub(crate) fn parse_braced_list<const SKIP_SEMICOLONS: bool, T: ListElement<'a>>(
+        &mut self,
+        mut parse_element: impl FnMut(&mut Self) -> T,
+    ) -> ArenaVec<'a, T> {
+        let opening_span = self.cur_token().span();
+        self.expect(Kind::LCurly);
+        let mut list_comments = self.start_list_comments();
+        let list = self.collect_list_with_previous(|p, mut previous| {
+            loop {
+                if p.at(Kind::RCurly) || p.has_fatal_error() {
+                    return None;
+                }
+                if SKIP_SEMICOLONS && p.eat(Kind::Semicolon) {
+                    while p.eat(Kind::Semicolon) {}
+                    list_comments.restart(p.prev_token_end);
+                    // Elements before `;` are not next to the following element.
+                    previous = None;
+                    continue;
+                }
+                let element = parse_element(p);
+                p.finish_list_element_comments(&element, &list_comments, &[], previous);
+                return Some(element);
+            }
+        });
+        self.attach_comments_after_last(&list);
+        self.expect_closing(Kind::RCurly, opening_span);
+        list
+    }
+
+    pub(crate) fn parse_delimited_list<F, T: GetSpan + GetNodeId>(
         &mut self,
         close: Kind,
         separator: Kind,
@@ -118,7 +183,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// Include an already parsed prefix without consuming a separator for it.
-    pub(crate) fn parse_delimited_list_with_prefix<F, T>(
+    pub(crate) fn parse_delimited_list_with_prefix<F, T: GetSpan + GetNodeId>(
         &mut self,
         mut first: Option<T>,
         close: Kind,
@@ -131,28 +196,35 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     {
         let mut finished = self.at(close) || self.has_fatal_error();
         let mut trailing_separator = None;
-        let list = self.collect_list(|p| {
-            if let Some(first) = first.take() {
-                return Some(first);
-            }
-            if finished {
-                return None;
-            }
-            let element = parse_element(p);
-            if let ControlFlow::Break(trailing) =
-                p.parse_delimited_list_separator(close, separator, opening_span)
-            {
-                trailing_separator = trailing;
-                finished = true;
-            }
-            Some(element)
-        });
+        let delimited_comments = self.start_delimited_list_comments(opening_span);
+        let list = self.collect_list(
+            #[inline(always)]
+            |p| {
+                if let Some(first) = first.take() {
+                    return Some(first);
+                }
+                if finished {
+                    return None;
+                }
+                let element = parse_element(p);
+                if let ControlFlow::Break(trailing) =
+                    p.parse_delimited_list_separator(&element, close, separator, opening_span)
+                {
+                    trailing_separator = trailing;
+                    finished = true;
+                }
+                Some(element)
+            },
+        );
+        self.finish_delimited_list_comments(&list, delimited_comments);
         (list, trailing_separator)
     }
 
-    #[inline]
-    fn parse_delimited_list_separator(
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn parse_delimited_list_separator<T: GetSpan + GetNodeId>(
         &mut self,
+        element: &T,
         close: Kind,
         separator: Kind,
         opening_span: Span,
@@ -171,7 +243,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             ));
             return ControlFlow::Break(None);
         }
+        self.attach_comments_before_token(element);
         self.advance(separator);
+        if self.cur_token().follows_comment() {
+            self.attach_comments_after_delimited_list_separator(element);
+        }
         let kind = self.cur_kind();
         if kind == close {
             let trailing_separator = self.prev_token_end - 1;
@@ -183,7 +259,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         ControlFlow::Continue(())
     }
 
-    pub(crate) fn parse_delimited_list_with_rest<E, A, R, D>(
+    pub(crate) fn parse_delimited_list_with_rest<E, A: SeparatedElement, R, D>(
         &mut self,
         close: Kind,
         opening_span: Span,
@@ -198,7 +274,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     {
         let mut rest: Option<ArenaBox<'a, BindingRestElement<'a>>> = None;
         let mut first = true;
-        let list = self.collect_list(|p| {
+        let list = self.collect_list_with_previous(|p, previous| {
             loop {
                 let kind = p.cur_kind();
                 if kind == close || p.has_fatal_error() {
@@ -221,6 +297,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         return None;
                     }
                     p.bump_any();
+                    if p.cur_token().follows_comment() {
+                        if let Some(rest) = rest.as_deref() {
+                            p.attach_comments_after_separator(rest);
+                        } else if let Some(element) = previous {
+                            p.attach_comments_after_separated_element(element);
+                        }
+                    }
                     let kind = p.cur_kind();
                     if kind == close {
                         if rest.is_some() && !p.ctx.has_ambient() {

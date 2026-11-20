@@ -9,6 +9,7 @@ use oxc_regular_expression::ast::Pattern;
 use oxc_span::{GetSpan, Span};
 use oxc_str::{Ident, JSStr, Str};
 use oxc_syntax::{
+    node::NodeId,
     number::{BigintBase, NumberBase},
     precedence::Precedence,
 };
@@ -70,7 +71,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_paren_expression(&mut self) -> Expression<'a> {
         let opening_span = self.cur_token().span();
         self.expect(Kind::LParen);
-        let expression = self.parse_expr();
+        let expression = self.parse_after_delimiter(Self::parse_expr);
+        self.attach_comments_before_token(&expression);
         self.expect_closing(Kind::RParen, opening_span);
         expression
     }
@@ -355,6 +357,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.lexer.trivia_builder.previous_token_no_side_effects_comments();
         self.bump_any(); // `bump` `(`
         let expr_start = self.cur_start();
+        let leading_comments = self.delimited_comments();
         let (expression, comma_start) = self.context(Context::In, Context::Decorator, |p| {
             if p.at(Kind::RParen) || p.has_fatal_error() {
                 return (None, None);
@@ -362,6 +365,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let first = p.parse_assignment_expression_or_higher();
             // A single parenthesized expression does not need a temporary arena vector.
             if p.at(Kind::RParen) || p.has_fatal_error() {
+                // Comments before the first or after the last expression of a sequence are next
+                // to the sequence rather than the expression, so only those around a single
+                // expression are assigned here.
+                if let Some(leading) = leading_comments {
+                    p.attach_delimited_leading_comments(
+                        leading,
+                        first.span().start,
+                        first.node_id(),
+                    );
+                }
+                p.attach_comments_before_token(&first);
                 return (Some(first), None);
             }
             let mut first = Some(first);
@@ -397,14 +411,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 arrow_expr.pife = true;
                 if let Some(comments) = no_side_effects_comments {
                     arrow_expr.pure = true;
-                    self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+                    self.apply_no_side_effects_comments(comments, arrow_expr.node_id());
                 }
             }
             Expression::FunctionExpression(func_expr) => {
                 func_expr.pife = true;
                 if let Some(comments) = no_side_effects_comments {
                     func_expr.pure = true;
-                    self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+                    self.apply_no_side_effects_comments(comments, func_expr.node_id());
                 }
             }
             _ => {}
@@ -1185,6 +1199,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     Self::parse_call_argument,
                 )
             });
+            self.attach_comments_after_last(&call_arguments);
             self.expect(Kind::RParen);
             call_arguments
         } else {
@@ -1303,6 +1318,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 Self::parse_call_argument,
             )
         });
+        self.attach_comments_after_last(&call_arguments);
         self.expect(Kind::RParen);
         Expression::new_call_expression(
             self.end_span(lhs_start),
@@ -1450,6 +1466,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // suffixes directly, keeping pure annotations inside the postfix update.
             let pure_comments = self.lexer.trivia_builder.previous_token_pure_comments();
             let primary = self.parse_plain_identifier_expression();
+            if self.at_expression_delimiter() {
+                return primary;
+            }
             self.parse_primary_expression_rest(lhs_start, primary, pure_comments)
         } else if self.ctx.has_in() && kind == Kind::PrivateIdentifier {
             // [+In] PrivateIdentifier in ShiftExpression[?Yield, ?Await]
@@ -1470,6 +1489,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return lhs;
         }
         self.parse_binary_expression_rest(lhs_start, lhs, lhs_parenthesized, lhs_precedence)
+    }
+
+    #[inline]
+    fn at_expression_delimiter(&self) -> bool {
+        matches!(
+            self.cur_kind(),
+            Kind::Comma
+                | Kind::RParen
+                | Kind::RBrack
+                | Kind::RCurly
+                | Kind::Semicolon
+                | Kind::Colon
+        )
     }
 
     #[expect(clippy::inline_always)]
@@ -1582,9 +1614,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 continue;
             }
 
+            self.attach_comments_before_token(&lhs);
             self.bump_any(); // bump operator
             let rhs_start = self.cur_start();
-            let rhs = self.parse_binary_expression_or_higher(left_precedence);
+            let rhs = if let Some(leading) = self.delimited_comments() {
+                self.parse_binary_rhs_with_comments(left_precedence, leading)
+            } else {
+                self.parse_binary_expression_or_higher(left_precedence)
+            };
 
             lhs = if kind.is_logical_operator() {
                 let span = self.end_span(lhs_start);
@@ -1645,6 +1682,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         lhs
     }
 
+    #[cold]
+    #[inline(never)]
+    fn parse_binary_rhs_with_comments(
+        &mut self,
+        precedence: Precedence,
+        leading: crate::comment_attachment::DelimitedComments,
+    ) -> Expression<'a> {
+        let node = self.parse_binary_expression_or_higher(precedence);
+        self.attach_delimited_leading_comments(leading, node.span().start, node.node_id());
+        node
+    }
+
     /// Section 13.14 Conditional Expression
     /// `ConditionalExpression`[In, Yield, Await] :
     ///     `ShortCircuitExpression`[?In, ?Yield, ?Await]
@@ -1658,9 +1707,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
         let question_span = self.token.span();
-        if !self.eat(Kind::Question) {
+        if !self.at(Kind::Question) {
             return lhs;
         }
+        self.attach_comments_before_token(&lhs);
+        self.bump_any();
         self.parse_conditional_expression_after_question(
             lhs_start,
             lhs,
@@ -1680,13 +1731,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
         let consequent = self.context_add(Context::In, |p| {
-            p.parse_assignment_expression_or_higher_impl(
-                /* allow_return_type_in_arrow_function */ false,
-            )
+            p.parse_after_delimiter(|p| {
+                p.parse_assignment_expression_or_higher_impl(
+                    /* allow_return_type_in_arrow_function */ false,
+                )
+            })
         });
+        self.attach_comments_before_token(&consequent);
         self.expect_conditional_alternative(question_span);
-        let alternate =
-            self.parse_assignment_expression_or_higher_impl(allow_return_type_in_arrow_function);
+        let alternate = self.parse_after_delimiter(|p| {
+            p.parse_assignment_expression_or_higher_impl(allow_return_type_in_arrow_function)
+        });
         Expression::new_conditional_expression(
             self.end_span(lhs_start),
             lhs,
@@ -1731,9 +1786,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                             && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
                         {
                             func.pure = true;
-                            self.lexer
-                                .trivia_builder
-                                .mark_no_side_effects_comments_applied(comments);
+                            self.apply_no_side_effects_comments(comments, func.node_id());
                         }
                         return arrow_expr;
                     }
@@ -1743,15 +1796,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 _ => self.parse_literal_expression(),
             };
             // The leaf is complete when the next token is an expression delimiter.
-            if matches!(
-                self.cur_kind(),
-                Kind::Comma
-                    | Kind::RParen
-                    | Kind::RBrack
-                    | Kind::RCurly
-                    | Kind::Semicolon
-                    | Kind::Colon
-            ) {
+            if self.at_expression_delimiter() {
                 return primary;
             }
             let lhs = self.parse_primary_expression_rest(start, primary, pure_comments);
@@ -1842,7 +1887,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
                     {
                         func.pure = true;
-                        self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+                        self.apply_no_side_effects_comments(comments, func.node_id());
                     }
                     return arrow_expr;
                 }
@@ -1857,6 +1902,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             && let Expression::Identifier(ident) = &lhs
         {
             let binding = BindingIdentifier::new(ident.span, ident.name, self);
+            binding.set_node_id(ident.node_id());
             let mut arrow_expr = self.parse_simple_arrow_function_expression(
                 start,
                 binding,
@@ -1867,7 +1913,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
             {
                 func.pure = true;
-                self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+                self.apply_no_side_effects_comments(comments, func.node_id());
             }
             return arrow_expr;
         }
@@ -1947,8 +1993,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         comments: (u32, NonZeroU32),
         expr: &mut Expression<'a>,
     ) {
-        if Self::set_pure_on_call_or_new_expr(expr) {
+        if let Some(node_id) = Self::set_pure_on_call_or_new_expr(expr) {
             self.lexer.trivia_builder.mark_pure_comments_applied(comments);
+            self.attach_annotation_comments(comments.0, comments.1.get(), node_id);
         }
     }
 
@@ -1959,20 +2006,29 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         comments: (u32, NonZeroU32),
         expr: &mut Expression<'a>,
     ) {
-        if Self::set_pure_on_function_expr(expr) {
-            self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+        if let Some(node_id) = Self::set_pure_on_function_expr(expr) {
+            self.apply_no_side_effects_comments(comments, node_id);
         }
     }
 
-    fn set_pure_on_call_or_new_expr(expr: &mut Expression<'a>) -> bool {
+    pub(crate) fn apply_no_side_effects_comments(
+        &mut self,
+        comments: (u32, NonZeroU32),
+        node_id: NodeId,
+    ) {
+        self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+        self.attach_annotation_comments(comments.0, comments.1.get(), node_id);
+    }
+
+    fn set_pure_on_call_or_new_expr(expr: &mut Expression<'a>) -> Option<NodeId> {
         match expr.get_inner_expression_mut() {
             Expression::CallExpression(call_expr) => {
                 call_expr.pure = true;
-                true
+                Some(call_expr.node_id())
             }
             Expression::NewExpression(new_expr) => {
                 new_expr.pure = true;
-                true
+                Some(new_expr.node_id())
             }
             expr @ match_member_expression!(Expression) => {
                 Self::set_pure_on_call_or_new_expr(expr.to_member_expression_mut().object_mut())
@@ -1980,7 +2036,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Expression::ChainExpression(chain_expr) => match &mut chain_expr.expression {
                 ChainElement::CallExpression(call_expr) => {
                     call_expr.pure = true;
-                    true
+                    Some(call_expr.node_id())
                 }
                 element @ match_member_expression!(ChainElement) => {
                     Self::set_pure_on_call_or_new_expr(
@@ -1991,21 +2047,21 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     Self::set_pure_on_call_or_new_expr(&mut non_null_expr.expression)
                 }
             },
-            _ => false,
+            _ => None,
         }
     }
 
-    pub(crate) fn set_pure_on_function_expr(expr: &mut Expression<'a>) -> bool {
+    pub(crate) fn set_pure_on_function_expr(expr: &mut Expression<'a>) -> Option<NodeId> {
         match expr {
             Expression::FunctionExpression(func) => {
                 func.pure = true;
-                true
+                Some(func.node_id())
             }
             Expression::ArrowFunctionExpression(func) => {
                 func.pure = true;
-                true
+                Some(func.node_id())
             }
-            _ => false,
+            _ => None,
         }
     }
 
