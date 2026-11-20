@@ -18,7 +18,10 @@ use simdutf8::basic;
 use oxc_allocator::Allocator;
 use oxc_span::SourceType;
 
-use crate::diagnostics::{self, ParserDiagnostic};
+use crate::{
+    MAX_LEN,
+    diagnostics::{self, ParserDiagnostic},
+};
 
 /// Source to be parsed.
 ///
@@ -417,11 +420,18 @@ impl<'a> Source<'a> {
 
 /// A [`Source`] which has been validated, and so can be parsed.
 ///
-/// Its source text is valid UTF-8.
+/// Its source text is:
+///
+/// - No longer than `MAX_LEN`.
+/// - Valid UTF-8.
 ///
 /// The only way to create a `ValidSource` is [`ValidSource::new`], which performs the validation.
 /// `ParserImpl::new` takes a `ValidSource`, so a `ParserImpl` cannot be created for a source
 /// which has not been validated.
+///
+/// The length limit is required for soundness. If source text was longer than `MAX_LEN`,
+/// offsets in `Token`s could wrap around, and `ParserImpl::token_source` relies on them
+/// being accurate.
 pub struct ValidSource<'a> {
     /// Source text.
     source_text: &'a str,
@@ -436,9 +446,15 @@ impl<'a> ValidSource<'a> {
     ///
     /// # Errors
     ///
-    /// Returns the [`ParserDiagnostic`] to report, if source is not valid UTF-8.
+    /// Returns the [`ParserDiagnostic`] to report, if source is longer than `MAX_LEN`,
+    /// or is not valid UTF-8.
     #[inline]
     pub fn new(source: Source<'a>) -> Result<Self, ParserDiagnostic<'a>> {
+        // Check length first, to avoid checking a very long source is valid UTF-8 for no reason
+        if source.len > MAX_LEN {
+            return Err(diagnostics::overlong_source());
+        }
+
         let source_type = source.source_type;
         let allocator = source.allocator;
         let Ok(source_text) = source.into_str() else {

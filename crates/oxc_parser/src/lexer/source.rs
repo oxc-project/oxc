@@ -5,8 +5,6 @@ use oxc_data_structures::{
     brands::{Brand, BrandOrigin},
 };
 
-use crate::MAX_LEN;
-
 use super::search::SEARCH_BATCH_SIZE;
 
 /// `LexerSource` holds the source text for the lexer, and provides APIs to read it.
@@ -104,13 +102,7 @@ impl<'a> LexerSource<'a> {
     /// Create [`LexerSource`] from `&str`.
     ///
     /// `brand_origin` is the origin of this `LexerSource`'s brand `'a` (see [`LexerSource`] docs).
-    pub(super) fn new(mut source_text: &'a str, brand_origin: BrandOrigin<'a>) -> Self {
-        // If source text exceeds size limit, substitute a short source text which will fail to parse.
-        // `Parser::parse` will convert error to `diagnostics::overlong_source()`.
-        if source_text.len() > MAX_LEN {
-            source_text = "\0";
-        }
-
+    pub(super) fn new(source_text: &'a str, brand_origin: BrandOrigin<'a>) -> Self {
         let start = source_text.as_ptr();
         // SAFETY: Adding `source_text.len()` to the starting pointer gives a pointer
         // at the end of `source_text`. `end` will never be dereferenced, only checked
@@ -726,7 +718,7 @@ impl<'a> SourcePosition<'a> {
     pub(super) unsafe fn offset_from_u32(self, origin: Self) -> u32 {
         // SAFETY: Caller guarantees `self` is not before `origin`.
         let offset = unsafe { self.offset_from(origin) };
-        // Cannot overflow `u32` because of `MAX_LEN` check in `LexerSource::new`
+        // Cannot overflow `u32` because of `MAX_LEN` check in `ValidSource::new`
         #[expect(clippy::cast_possible_truncation)]
         let offset = offset as u32;
         offset
