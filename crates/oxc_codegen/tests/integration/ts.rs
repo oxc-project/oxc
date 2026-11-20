@@ -599,3 +599,17 @@ fn ts_cast_assignment_target_is_parenthesized() {
     test_idempotency("(foo as Bar) = baz");
     test_idempotency("(foo satisfies Bar) = baz");
 }
+
+#[test]
+fn ts_as_satisfies_left_operand_parenthesization() {
+    // `|`, `&` and `<` directly after the type of an unparenthesized left operand
+    // would be absorbed into the type (`a as T | b` is a union type, `a as T < b`
+    // is a syntax error), so the operand must stay parenthesized.
+    use crate::tester::{test, test_same};
+    test("(a as T) | (b as U);\n", "(a as T) | b as U;\n");
+    test("(a as T) & (b as U);\n", "(a as T) & b as U;\n");
+    test("(a satisfies T) | (b satisfies U);\n", "(a satisfies T) | b satisfies U;\n");
+    test_same("(a as T) < b;\n");
+    test_same("(a as T) < {} > c;\n");
+    test_same("(a as T) << b;\n");
+}

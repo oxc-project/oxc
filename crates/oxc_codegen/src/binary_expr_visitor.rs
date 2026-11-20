@@ -214,10 +214,18 @@ impl<'a> BinaryExpressionVisitor<'a> {
                     self.left_precedence = Precedence::Call;
                 }
             }
-            BinaryishOperator::Binary(BinaryOperator::BitwiseOR | BinaryOperator::BitwiseAnd) => {
+            BinaryishOperator::Binary(
+                BinaryOperator::BitwiseOR | BinaryOperator::BitwiseAnd | BinaryOperator::LessThan,
+            ) => {
                 // Without parentheses, `|` or `&` becomes part of the type in
-                // `(value satisfies Type) | other` or `(value satisfies Type) & other`.
-                if matches!(e.left(), Expression::TSSatisfiesExpression(_)) {
+                // `(value as Type) | other` or `(value satisfies Type) | other`, and
+                // `<` starts type arguments in `(value as Type) < other` — the printed
+                // `(a as T) < {} > c` would reparse as a type argument list and is a
+                // syntax error in both oxc and tsc.
+                if matches!(
+                    e.left(),
+                    Expression::TSAsExpression(_) | Expression::TSSatisfiesExpression(_)
+                ) {
                     self.left_precedence = Precedence::Compare;
                 }
             }
