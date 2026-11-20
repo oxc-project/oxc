@@ -2,6 +2,7 @@ use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_span::Span;
 use oxc_str::Ident;
+use oxc_syntax::scope::ScopeId;
 use oxc_traverse::Traverse;
 
 use crate::{common::class_lowering::ClassLowering, context::TraverseCtx, state::TransformState};
@@ -55,8 +56,9 @@ pub struct TypeScript<'a> {
     remove_class_fields_without_initializer: bool,
     /// Parameter properties of the entered classes, for [`Self::add_parameter_property_fields`].
     parameter_properties: Vec<(Span, Ident<'a>)>,
-    /// Where each entered class's parameter properties start in `parameter_properties`.
-    parameter_properties_starts: Vec<usize>,
+    /// Entered classes with parameter properties, and where theirs start in
+    /// `parameter_properties`. Classes without any push nothing, so most files never allocate.
+    parameter_properties_starts: Vec<(ScopeId, usize)>,
 }
 
 impl<'a> TypeScript<'a> {
@@ -138,8 +140,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
             self.transform_class_fields(class, lowering, ctx);
         } else {
             // Define semantics: parameter properties also get field declarations.
-            self.parameter_properties_starts.push(self.parameter_properties.len());
+            let start = self.parameter_properties.len();
             Self::collect_parameter_properties(class, &mut self.parameter_properties);
+            if self.parameter_properties.len() > start {
+                self.parameter_properties_starts.push((class.scope_id(), start));
+            }
         }
     }
 
@@ -151,8 +156,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
             return;
         }
         self.remove_uninitialized_class_fields(class, ctx);
-        if !self.assigns_fields(lowering) {
-            let start = self.parameter_properties_starts.pop().unwrap();
+        if let Some((_, start)) =
+            self.parameter_properties_starts.pop_if(|(scope_id, _)| *scope_id == class.scope_id())
+        {
             Self::add_parameter_property_fields(class, &self.parameter_properties[start..], ctx);
             self.parameter_properties.truncate(start);
         }
