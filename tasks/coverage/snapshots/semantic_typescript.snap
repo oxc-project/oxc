@@ -16468,14 +16468,14 @@ rebuilt        : ["f"]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/typeInferenceWithExcessPropertiesJsx.tsx
 Bindings mismatch:
-after transform: ScopeId(0): ["T", "_jsxFileName", "_reactJsxRuntime"]
-rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime"]
+after transform: ScopeId(0): ["T", "_jsx", "_jsxFileName"]
+rebuilt        : ScopeId(0): ["_jsx", "_jsxFileName"]
 Reference symbol mismatch for "T":
 after transform: SymbolId(6) "T"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["require"]
-rebuilt        : ["T", "require"]
+after transform: []
+rebuilt        : ["T"]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/typeInferenceWithTypeAnnotation.ts
 Bindings mismatch:
@@ -24903,19 +24903,19 @@ rebuilt        : ["A", "require"]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/jsx/tsxReactComponentWithDefaultTypeParameter1.tsx
 Bindings mismatch:
-after transform: ScopeId(0): ["MyComp", "_jsxFileName", "_reactJsxRuntime", "x"]
-rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime", "x"]
+after transform: ScopeId(0): ["MyComp", "_jsx", "_jsxFileName", "x"]
+rebuilt        : ScopeId(0): ["_jsx", "_jsxFileName", "x"]
 Reference symbol mismatch for "MyComp":
 after transform: SymbolId(2) "MyComp"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["require"]
-rebuilt        : ["MyComp", "require"]
+after transform: []
+rebuilt        : ["MyComp"]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/jsx/tsxReactComponentWithDefaultTypeParameter2.tsx
 Bindings mismatch:
-after transform: ScopeId(0): ["MyComp", "_jsxFileName", "_reactJsxRuntime", "x", "x1"]
-rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime", "x", "x1"]
+after transform: ScopeId(0): ["MyComp", "_jsx", "_jsxFileName", "x", "x1"]
+rebuilt        : ScopeId(0): ["_jsx", "_jsxFileName", "x", "x1"]
 Reference symbol mismatch for "MyComp":
 after transform: SymbolId(2) "MyComp"
 rebuilt        : <None>
@@ -24923,8 +24923,8 @@ Reference symbol mismatch for "MyComp":
 after transform: SymbolId(2) "MyComp"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["require"]
-rebuilt        : ["MyComp", "require"]
+after transform: []
+rebuilt        : ["MyComp"]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/jsx/tsxReactEmit2.tsx
 Bindings mismatch:
@@ -25101,8 +25101,8 @@ rebuilt        : ["ThreeThing", "ZeroThingOrTwoThing", "require"]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/jsx/tsxStatelessFunctionComponentsWithTypeArguments1.tsx
 Bindings mismatch:
-after transform: ScopeId(0): ["Baz", "ComponentWithTwoAttributes", "InferParamComponent", "Link", "_jsxFileName", "_react", "_reactJsxRuntime", "createLink", "createLink1", "i"]
-rebuilt        : ScopeId(0): ["Baz", "_jsxFileName", "_react", "_reactJsxRuntime", "createLink", "createLink1", "i"]
+after transform: ScopeId(0): ["Baz", "ComponentWithTwoAttributes", "InferParamComponent", "Link", "_createElement", "_jsx", "_jsxFileName", "createLink", "createLink1", "i"]
+rebuilt        : ScopeId(0): ["Baz", "_createElement", "_jsx", "_jsxFileName", "createLink", "createLink1", "i"]
 Reference symbol mismatch for "ComponentWithTwoAttributes":
 after transform: SymbolId(1) "ComponentWithTwoAttributes"
 rebuilt        : <None>
@@ -25119,13 +25119,13 @@ Reference symbol mismatch for "InferParamComponent":
 after transform: SymbolId(27) "InferParamComponent"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["require"]
-rebuilt        : ["ComponentWithTwoAttributes", "InferParamComponent", "Link", "require"]
+after transform: []
+rebuilt        : ["ComponentWithTwoAttributes", "InferParamComponent", "Link"]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/jsx/tsxStatelessFunctionComponentsWithTypeArguments3.tsx
 Bindings mismatch:
-after transform: ScopeId(0): ["Baz", "Link", "OverloadComponent", "_jsxFileName", "_objectSpread", "_reactJsxRuntime", "createLink"]
-rebuilt        : ScopeId(0): ["Baz", "_jsxFileName", "_objectSpread", "_reactJsxRuntime", "createLink"]
+after transform: ScopeId(0): ["Baz", "Link", "OverloadComponent", "_jsx", "_jsxFileName", "_objectSpread", "createLink"]
+rebuilt        : ScopeId(0): ["Baz", "_jsx", "_jsxFileName", "_objectSpread", "createLink"]
 Reference symbol mismatch for "OverloadComponent":
 after transform: SymbolId(1) "OverloadComponent"
 rebuilt        : <None>
@@ -25154,13 +25154,13 @@ Reference symbol mismatch for "Link":
 after transform: SymbolId(20) "Link"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["require"]
-rebuilt        : ["Link", "OverloadComponent", "require"]
+after transform: []
+rebuilt        : ["Link", "OverloadComponent"]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/jsx/tsxStatelessFunctionComponentsWithTypeArguments5.tsx
 Bindings mismatch:
-after transform: ScopeId(0): ["Bar", "Component", "ComponentSpecific", "ComponentSpecific1", "_jsxFileName", "_objectSpread", "_reactJsxRuntime", "createComponent"]
-rebuilt        : ScopeId(0): ["Bar", "_jsxFileName", "_objectSpread", "_reactJsxRuntime", "createComponent"]
+after transform: ScopeId(0): ["Bar", "Component", "ComponentSpecific", "ComponentSpecific1", "_jsx", "_jsxFileName", "_objectSpread", "createComponent"]
+rebuilt        : ScopeId(0): ["Bar", "_jsx", "_jsxFileName", "_objectSpread", "createComponent"]
 Reference symbol mismatch for "Component":
 after transform: SymbolId(1) "Component"
 rebuilt        : <None>
@@ -25180,8 +25180,8 @@ Reference symbol mismatch for "ComponentSpecific":
 after transform: SymbolId(9) "ComponentSpecific"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["require"]
-rebuilt        : ["Component", "ComponentSpecific", "ComponentSpecific1", "require"]
+after transform: []
+rebuilt        : ["Component", "ComponentSpecific", "ComponentSpecific1"]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration17.ts
 Bindings mismatch:
