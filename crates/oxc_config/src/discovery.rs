@@ -110,6 +110,30 @@ impl ConfigDiscovery {
         self.entries.iter().map(|(name, _)| *name).collect()
     }
 
+    /// Find the unique config file directly inside `dir`, reading `dir` only when a candidate exists.
+    ///
+    /// Checks each supported name before listing `dir`.
+    /// This is cheaper when most directories do not contain a config.
+    /// A matching file defers to [`Self::find_unique_config_by_readdir`],
+    /// which keeps exact-name matching on case-insensitive file systems and conflict handling.
+    ///
+    /// # Errors
+    /// Returns the same [`ConfigConflict`] as [`Self::find_unique_config_by_readdir`].
+    pub fn find_unique_config(
+        &self,
+        dir: &Path,
+    ) -> Result<Option<DiscoveredConfigFile>, ConfigConflict> {
+        let mut path = dir.to_path_buf();
+        let has_candidate = self.entries.iter().any(|(name, _)| {
+            path.push(name);
+            let is_file = path.is_file();
+            path.pop();
+            is_file
+        });
+
+        if has_candidate { self.find_unique_config_by_readdir(dir) } else { Ok(None) }
+    }
+
     /// Find the unique config file directly inside `dir` using a single `read_dir`.
     ///
     /// Issues one `read_dir()` and matches entry names in memory,
@@ -345,6 +369,34 @@ mod test {
         fs::write(temp_dir.path().join(".oxlintrc.jsonc"), "{}").unwrap();
 
         assert!(discovery().find_unique_config_by_readdir(temp_dir.path()).is_err());
+    }
+
+    #[test]
+    fn find_unique_config_finds_json_config() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let cfg_path = temp_dir.path().join(JSON);
+        fs::write(&cfg_path, "{}").unwrap();
+
+        let found = discovery().find_unique_config(temp_dir.path()).unwrap();
+        assert!(matches!(found, Some(DiscoveredConfigFile::Json(p)) if p == cfg_path));
+    }
+
+    #[test]
+    fn find_unique_config_returns_conflict_for_multiple_configs() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        fs::write(temp_dir.path().join(JSON), "{}").unwrap();
+        fs::write(temp_dir.path().join(".oxlintrc.jsonc"), "{}").unwrap();
+
+        assert!(discovery().find_unique_config(temp_dir.path()).is_err());
+    }
+
+    #[test]
+    fn find_unique_config_requires_exact_name() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        // Case-insensitive file systems match this name when probing, but not when listing.
+        fs::write(temp_dir.path().join(".OXLINTRC.JSON"), "{}").unwrap();
+
+        assert!(discovery().find_unique_config(temp_dir.path()).unwrap().is_none());
     }
 
     #[test]
