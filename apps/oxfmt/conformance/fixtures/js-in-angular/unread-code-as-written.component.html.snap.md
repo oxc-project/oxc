@@ -8,6 +8,7 @@
 @for (let   item of items;index as i) {
   x
 }
+@let = 1;
 
 `````
 
@@ -23,5 +24,6 @@
 @for (let   item of items; index as i) {
   x
 }
+@let = 1;
 
 `````
