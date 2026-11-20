@@ -40,3 +40,10 @@ class KeptLiteralKey {
   @dec "x" = 2;
   @dec [m()] = 3;
 }
+
+// A `declare` field is erased, so pending computed keys skip it.
+class KeptDeclareKey {
+  static [n()] = 1;
+  declare [o()]: number;
+  accessor p = 1;
+}

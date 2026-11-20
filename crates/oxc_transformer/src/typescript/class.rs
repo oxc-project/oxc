@@ -207,7 +207,9 @@ impl<'a> TypeScript<'a> {
                     );
                 }
                 // A computed key that stays in the class still evaluates after the keys before it.
-                ClassElement::PropertyDefinition(prop) if prop.key.is_computed() => {
+                ClassElement::PropertyDefinition(prop)
+                    if !prop.declare && prop.key.is_computed() =>
+                {
                     Self::convert_computed_key(&mut prop.key, &mut computed_key_assignments, ctx);
                 }
                 _ => (),

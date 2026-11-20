@@ -1,4 +1,4 @@
-let _k;
+let _k, _n;
 // Auto-accessors are kept, other fields use assignment semantics.
 class StaticAccessor {
   static accessor a = b;
@@ -56,5 +56,15 @@ class KeptLiteralKey {
   }
   @dec "x" = 2;
   @dec [(_k = k(), m())] = 3;
+}
+// A `declare` field is erased, so pending computed keys skip it.
+class KeptDeclareKey {
+  static {
+    _n = n();
+  }
+  static {
+    this[_n] = 1;
+  }
+  accessor p = 1;
 }
 
