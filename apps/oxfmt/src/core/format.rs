@@ -159,7 +159,13 @@ impl SourceFormatter {
                     .and_then(|formatted| print(formatted, &path))
             }
             FormatStrategy::Native(NativeLanguage::Toml) => {
-                oxc_formatter_toml::format(source_text, to_oxc_formatter_toml(&config, core))
+                let allocator = self.allocator_pool.get();
+                oxc_formatter_toml::format(
+                    &allocator,
+                    source_text,
+                    to_oxc_formatter_toml(&config, core),
+                )
+                .and_then(|formatted| print(formatted, &path))
             }
             #[cfg(feature = "napi")]
             FormatStrategy::Prettier(language) => {

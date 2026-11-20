@@ -8,7 +8,7 @@ chars_81 = ["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "b"
 chars_100 = ["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "b"]
 chars_101 = ["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "b"]
 
-# Known bug: counted in Unicode scalars, not display width (see AGENTS.md): CJK and emoji are wider on screen
+# Display width: CJK and emoji take 2 columns each
 cjk_80 = ["ああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああ", "b"]
 emoji_80 = ["😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀", "b"]
 cjk_81 = ["あああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああ", "b"]
@@ -26,20 +26,20 @@ scalar_in_array = ["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 table_in_array = [{ name = "aaaaaaaaaaaaaaaa", features = ["bbbbbbbbbbbbbbbb", "cccccccccccccccc"] }]
 short_and_long = [[1, 2], ["aaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbb", "cccccccccccccccc", "dddddddddddddddd", "e"]]
 
-# Known bug: counted in Unicode scalars, not display width (see AGENTS.md): a raw tab is wider, combining marks and ZWJ sequences narrower
+# Display width: a raw tab takes `tabWidth`, combining marks and ZWJ sequences take fewer columns than their scalars
 tab_80 = ["	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "b"]
 tab_81 = ["	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "b"]
 combining_81 = ["ééééééééééééééééééééééééééééa", "b"]
 zwj_81 = ["👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧aaa", "b"]
 
-# A comment keeps the array multiline: one long row expands every nested value of the entry
-propagate = [
+# A comment keeps the array multiline: only the row that does not fit expands
+one_row_too_long = [
   1, # c
   ["aaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbb", "cccccccccccccccc", "dddddddddddddddd", "eeeeeeeeeeeeeeee"],
   [1, 2],
   { x = [1, 2] },
 ]
-no_propagate = [
+all_rows_fit = [
   1, # c
   [
     1,
@@ -82,9 +82,15 @@ chars_101 = [
   "b",
 ]
 
-# Known bug: counted in Unicode scalars, not display width (see AGENTS.md): CJK and emoji are wider on screen
-cjk_80 = ["ああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああ", "b"]
-emoji_80 = ["😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀", "b"]
+# Display width: CJK and emoji take 2 columns each
+cjk_80 = [
+  "ああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああ",
+  "b",
+]
+emoji_80 = [
+  "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀",
+  "b",
+]
 cjk_81 = [
   "あああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああ",
   "b",
@@ -115,10 +121,7 @@ table_in_array = [
   ] },
 ]
 short_and_long = [
-  [
-    1,
-    2,
-  ],
+  [1, 2],
   [
     "aaaaaaaaaaaaaaaa",
     "bbbbbbbbbbbbbbbb",
@@ -128,23 +131,20 @@ short_and_long = [
   ],
 ]
 
-# Known bug: counted in Unicode scalars, not display width (see AGENTS.md): a raw tab is wider, combining marks and ZWJ sequences narrower
-tab_80 = ["	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "b"]
+# Display width: a raw tab takes `tabWidth`, combining marks and ZWJ sequences take fewer columns than their scalars
+tab_80 = [
+  "	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "b",
+]
 tab_81 = [
   "	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "b",
 ]
-combining_81 = [
-  "ééééééééééééééééééééééééééééa",
-  "b",
-]
-zwj_81 = [
-  "👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧aaa",
-  "b",
-]
+combining_81 = ["ééééééééééééééééééééééééééééa", "b"]
+zwj_81 = ["👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧aaa", "b"]
 
-# A comment keeps the array multiline: one long row expands every nested value of the entry
-propagate = [
+# A comment keeps the array multiline: only the row that does not fit expands
+one_row_too_long = [
   1, # c
   [
     "aaaaaaaaaaaaaaaa",
@@ -153,16 +153,10 @@ propagate = [
     "dddddddddddddddd",
     "eeeeeeeeeeeeeeee",
   ],
-  [
-    1,
-    2,
-  ],
-  { x = [
-    1,
-    2,
-  ] },
+  [1, 2],
+  { x = [1, 2] },
 ]
-no_propagate = [
+all_rows_fit = [
   1, # c
   [1, 2],
 ]
@@ -177,23 +171,17 @@ commented_table = {
     "dddddddddddddddd",
     "eeeeeeeeeeeeeeee",
   ],
-  c = [
-    1,
-    2,
-  ]
+  c = [1, 2]
 }
 
 # Empty arrays and tables under a forced expansion
 empty_in_array = [
-  [
-  ],
+  [],
   {},
   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 ]
-empty_in_table = { x = [
-], y = {}, z = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" }
-empty_with_long_comment = [
-] # cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+empty_in_table = { x = [], y = {}, z = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" }
+empty_with_long_comment = [] # cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
 # A long scalar or inline table with a trailing comment: the re-format keeps the comment
 scalar_comment = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" # c
@@ -211,11 +199,23 @@ chars_101 = [
   "b",
 ]
 
-# Known bug: counted in Unicode scalars, not display width (see AGENTS.md): CJK and emoji are wider on screen
-cjk_80 = ["ああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああ", "b"]
-emoji_80 = ["😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀", "b"]
-cjk_81 = ["あああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああ", "b"]
-emoji_81 = ["😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀", "b"]
+# Display width: CJK and emoji take 2 columns each
+cjk_80 = [
+  "ああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああ",
+  "b",
+]
+emoji_80 = [
+  "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀",
+  "b",
+]
+cjk_81 = [
+  "あああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああ",
+  "b",
+]
+emoji_81 = [
+  "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀",
+  "b",
+]
 
 # A trailing comment counts toward the width
 comment_80 = ["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "b"] # c
@@ -229,33 +229,21 @@ scalar_in_array = [
 
 # Expansion inside inline tables and arrays
 table_in_array = [
-  { name = "aaaaaaaaaaaaaaaa", features = [
-    "bbbbbbbbbbbbbbbb",
-    "cccccccccccccccc",
-  ] },
+  { name = "aaaaaaaaaaaaaaaa", features = ["bbbbbbbbbbbbbbbb", "cccccccccccccccc"] },
 ]
 short_and_long = [
-  [
-    1,
-    2,
-  ],
-  [
-    "aaaaaaaaaaaaaaaa",
-    "bbbbbbbbbbbbbbbb",
-    "cccccccccccccccc",
-    "dddddddddddddddd",
-    "e",
-  ],
+  [1, 2],
+  ["aaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbb", "cccccccccccccccc", "dddddddddddddddd", "e"],
 ]
 
-# Known bug: counted in Unicode scalars, not display width (see AGENTS.md): a raw tab is wider, combining marks and ZWJ sequences narrower
+# Display width: a raw tab takes `tabWidth`, combining marks and ZWJ sequences take fewer columns than their scalars
 tab_80 = ["	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "b"]
 tab_81 = ["	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "b"]
 combining_81 = ["ééééééééééééééééééééééééééééa", "b"]
 zwj_81 = ["👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧aaa", "b"]
 
-# A comment keeps the array multiline: one long row expands every nested value of the entry
-propagate = [
+# A comment keeps the array multiline: only the row that does not fit expands
+one_row_too_long = [
   1, # c
   [
     "aaaaaaaaaaaaaaaa",
@@ -264,16 +252,10 @@ propagate = [
     "dddddddddddddddd",
     "eeeeeeeeeeeeeeee",
   ],
-  [
-    1,
-    2,
-  ],
-  { x = [
-    1,
-    2,
-  ] },
+  [1, 2],
+  { x = [1, 2] },
 ]
-no_propagate = [
+all_rows_fit = [
   1, # c
   [1, 2],
 ]
@@ -288,23 +270,17 @@ commented_table = {
     "dddddddddddddddd",
     "eeeeeeeeeeeeeeee",
   ],
-  c = [
-    1,
-    2,
-  ]
+  c = [1, 2]
 }
 
 # Empty arrays and tables under a forced expansion
 empty_in_array = [
-  [
-  ],
+  [],
   {},
   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 ]
-empty_in_table = { x = [
-], y = {}, z = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" }
-empty_with_long_comment = [
-] # cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+empty_in_table = { x = [], y = {}, z = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" }
+empty_with_long_comment = [] # cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
 # A long scalar or inline table with a trailing comment: the re-format keeps the comment
 scalar_comment = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" # c

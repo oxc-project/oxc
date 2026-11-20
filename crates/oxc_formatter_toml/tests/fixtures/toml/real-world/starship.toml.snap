@@ -82,7 +82,6 @@ ahead = "⇡${count}"
 behind = "⇣${count}"
 diverged = "⇕⇡${ahead_count}⇣${behind_count}"
 
----------- Input variants differ: CRLF ----------
 -------------------
 { printWidth: 100 }
 -------------------
@@ -124,5 +123,4 @@ ahead = "⇡${count}"
 behind = "⇣${count}"
 diverged = "⇕⇡${ahead_count}⇣${behind_count}"
 
----------- Input variants differ: CRLF ----------
 ===================== End =====================
