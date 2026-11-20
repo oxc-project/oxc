@@ -2,7 +2,7 @@ commit: 16a2d671
 
 node: v26.12.1
 
-Passed: 74 of 370 (20.00%)
+Passed: 74 of 372 (19.89%)
 
 Failures:
 
@@ -3836,3 +3836,12 @@ AssertionError: expected [Function] to throw error including 'Receiver must be a
 ./fixtures/oxc/babel-plugin-transform-class-properties-test-fixtures-static-super-tagged-template-exec.test.js
 AssertionError: expected undefined to be [Function C] // Object.is equality
     at ./tasks/transform_conformance/fixtures/oxc/babel-plugin-transform-class-properties-test-fixtures-static-super-tagged-template-exec.test.js:15:17
+
+./fixtures/oxc/legacy-decorators-test-fixtures-oxc-field-decorators-class-properties-remove-fields-exec-exec.test.js
+AssertionError: expected true to be false // Object.is equality
+    at ./tasks/transform_conformance/fixtures/oxc/legacy-decorators-test-fixtures-oxc-field-decorators-class-properties-remove-fields-exec-exec.test.js:70:36
+
+
+./fixtures/oxc/legacy-decorators-test-fixtures-oxc-field-decorators-typescript-set-public-fields-remove-fields-exec-exec.test.js
+AssertionError: expected [ 'key:a', 'key:b', 'key:m', …(10) ] to deeply equal [ 'key:a', 'key:b', 'key:m', …(12) ]
+    at ./tasks/transform_conformance/fixtures/oxc/legacy-decorators-test-fixtures-oxc-field-decorators-typescript-set-public-fields-remove-fields-exec-exec.test.js:43:14

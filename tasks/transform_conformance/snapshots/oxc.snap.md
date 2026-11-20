@@ -1,6 +1,6 @@
 commit: 16a2d671
 
-Passed: 348/473
+Passed: 350/478
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -206,7 +206,7 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (24/110)
+# legacy-decorators (26/115)
 * oxc/accessor/input.ts
 x Output mismatch
 
@@ -260,6 +260,27 @@ rebuilt        : ["WeakMap", "a", "babelHelpers", "dec"]
 Symbol flags mismatch for "_default":
 after transform: SymbolId(1): SymbolFlags(Class)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
+
+* oxc/field-decorators/class-properties-remove-fields/private-names/input.ts
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(1))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(1))
+rebuilt        : ScopeId(7): Some(ScopeId(5))
+
+* oxc/field-decorators/typescript/typescript-syntax/input.ts
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(1))
+rebuilt        : ScopeId(2): Some(ScopeId(0))
+
+* oxc/field-decorators/typescript-set-public-fields-remove-fields/computed-keys/input.ts
+Unresolved reference IDs mismatch for "dec":
+after transform: [ReferenceId(1), ReferenceId(3), ReferenceId(6), ReferenceId(8), ReferenceId(11)]
+rebuilt        : [ReferenceId(14), ReferenceId(17), ReferenceId(20), ReferenceId(23)]
 
 * oxc/metadata/ambient-declared-class/input.ts
 Bindings mismatch:
