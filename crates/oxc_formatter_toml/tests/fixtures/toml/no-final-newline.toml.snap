@@ -1,0 +1,17 @@
+---
+source: crates/oxc_formatter_toml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+no_final_newline = 1
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+no_final_newline = 1
+
+-------------------
+{ printWidth: 100 }
+-------------------
+no_final_newline = 1
+
+===================== End =====================
