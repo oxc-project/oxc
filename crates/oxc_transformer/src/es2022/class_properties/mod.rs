@@ -212,6 +212,7 @@ use crate::{context::TraverseCtx, state::TransformState};
 mod class;
 mod class_bindings;
 mod class_details;
+mod class_name;
 mod computed_key;
 mod constructor;
 mod instance_prop_init;
@@ -316,6 +317,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
     #[inline(always)] // Because this is a no-op in release mode
     fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
         debug_assert_eq!(self.private_field_count, 0);
+    }
+
+    fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.transform_anonymous_export_default_class(stmt, ctx);
     }
 
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {

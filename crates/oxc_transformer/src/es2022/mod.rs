@@ -53,7 +53,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
         ) {
             return;
         }
-        if let Some(class_static_block) = &mut self.class_static_block {
+        if let Some(class_properties) = &mut self.class_properties {
+            class_properties.enter_statement(stmt, ctx);
+        } else if let Some(class_static_block) = &mut self.class_static_block {
             class_static_block.enter_statement(stmt, ctx);
         }
     }

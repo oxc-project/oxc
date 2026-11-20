@@ -609,6 +609,7 @@ impl<'a> ClassProperties<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let Expression::ClassExpression(class) = expr else { unreachable!() };
+        let is_anonymous = class.id.is_none();
 
         // Transform static properties, remove static and instance properties, and move computed keys
         // to before class
@@ -753,7 +754,10 @@ impl<'a> ClassProperties<'a> {
             }
 
             // `_Class = class {}`
-            let class_expr = expr.take_in(ctx);
+            let mut class_expr = expr.take_in(ctx);
+            if is_anonymous {
+                class_expr = Self::preserve_anonymous_class_name(class_expr, true, ctx);
+            }
             let assignment = create_assignment(binding, class_expr, SPAN, ctx);
 
             if exprs.is_empty() && self.insert_after_exprs.is_empty() {
@@ -782,7 +786,10 @@ impl<'a> ClassProperties<'a> {
                 return;
             }
 
-            let class_expr = expr.take_in(ctx);
+            let mut class_expr = expr.take_in(ctx);
+            if is_anonymous {
+                class_expr = Self::preserve_anonymous_class_name(class_expr, false, ctx);
+            }
             exprs.push(class_expr);
         }
 
