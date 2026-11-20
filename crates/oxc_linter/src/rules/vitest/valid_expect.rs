@@ -11,7 +11,7 @@ pub struct ValidExpect(Box<ValidExpectConfig>);
 
 impl Default for ValidExpect {
     fn default() -> Self {
-        Self(Box::new(ValidExpectConfig::default().allow_string_message_arg()))
+        Self(Box::new(ValidExpectConfig::default().for_vitest()))
     }
 }
 
@@ -29,7 +29,7 @@ declare_oxc_lint!(
 
 impl Rule for ValidExpect {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(Self(Box::new(ValidExpectConfig::from_configuration(&value).allow_string_message_arg())))
+        Ok(Self(Box::new(ValidExpectConfig::from_configuration(&value).for_vitest())))
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -692,4 +692,45 @@ fn test() {
         .expect_fix(fix)
         .with_vitest_plugin(true)
         .test_and_snapshot();
+}
+
+#[test]
+fn type_assertions() {
+    use std::path::PathBuf;
+
+    use serde_json::json;
+
+    use crate::tester::Tester;
+
+    let pass = [
+        "expectTypeOf<number>().toEqualTypeOf<number>();",
+        "consume(expectTypeOf<number>()['toEqualTypeOf']<number>());",
+        "expectTypeOf<() => Promise<number>>().returns.resolves.not.toEqualTypeOf<string>();",
+        "expectTypeOf<number[]>().items.branded.toEqualTypeOf<number>();",
+        "import { expectTypeOf as assertType } from 'vitest'; assertType<number>().toBeNumber();",
+        "function expectTypeOf() {} expectTypeOf();",
+    ];
+    let fail = [
+        "expectTypeOf<number>();",
+        "consume(expectTypeOf<number>());",
+        "expectTypeOf(value).toEqualTypeOf;",
+        "expectTypeOf(value).to.toMatchTypeOf();",
+        "expectTypeOf(value).returns();",
+        "expectTypeOf(value).not.returns.not.toBeNumber();",
+        "import { expectTypeOf as assertType } from 'vitest'; assertType(value);",
+    ];
+    let settings = json!({ "settings": { "vitest": { "typecheck": true } } });
+    let type_test_case = |source| {
+        (source, None, Some(settings.clone()), Some(PathBuf::from("valid-expect.test-d.ts")))
+    };
+
+    Tester::new(
+        ValidExpect::NAME,
+        ValidExpect::PLUGIN,
+        pass.into_iter().map(type_test_case).collect(),
+        fail.into_iter().map(type_test_case).collect(),
+    )
+    .with_vitest_plugin(true)
+    .intentionally_allow_no_fix_tests()
+    .test();
 }

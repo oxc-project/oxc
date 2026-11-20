@@ -2,7 +2,7 @@ use std::{borrow::Cow, cmp::Ordering};
 
 use cow_utils::CowUtils;
 
-use oxc_allocator::ArenaVec;
+use oxc_allocator::{ArenaVec, GetAddress};
 use oxc_ast::{
     AstKind,
     ast::{
@@ -296,6 +296,104 @@ fn find_modifiers_and_matcher(
     }
 
     Err(ExpectError::MatcherNotFound)
+}
+
+/// Validate the matcher chain of a recognized Vitest type assertion.
+/// Returns `None` for calls that are not rooted in `expectTypeOf`.
+pub fn validate_expect_type_of_call<'a>(
+    call_expr: &'a CallExpression<'a>,
+    possible_jest_node: &PossibleJestNode<'a, '_>,
+    ctx: &LintContext<'a>,
+) -> Option<Result<(), ExpectError>> {
+    let name = possible_jest_node
+        .original
+        .or_else(|| resolve_first_ident(&call_expr.callee).map(|ident| ident.name.as_str()))?;
+    if name != "expectTypeOf" {
+        return None;
+    }
+
+    let node = possible_jest_node.node;
+    if has_outer_assertion_call(node, ctx) {
+        return Some(Ok(()));
+    }
+
+    let chain = get_node_chain(&NodeChainParams {
+        expr: &call_expr.callee,
+        parent: None,
+        parent_kind: Some(KnownMemberExpressionParentKind::Call),
+        grandparent_kind: None,
+    });
+    let (_, members) = chain.split_first()?;
+    let result = validate_type_matcher_chain(members);
+    if matches!(result, Err(ExpectError::MatcherNotFound))
+        && matches!(
+            ctx.nodes().parent_kind(node.id()),
+            AstKind::StaticMemberExpression(_) | AstKind::ComputedMemberExpression(_)
+        )
+    {
+        return Some(Err(ExpectError::MatcherNotCalled));
+    }
+    Some(result)
+}
+
+fn validate_type_matcher_chain(
+    members: &[KnownMemberExpressionProperty],
+) -> Result<(), ExpectError> {
+    let mut seen_not = false;
+
+    for member in members {
+        let name = member.name();
+        let name = name.as_deref();
+        let is_type_modifier = matches!(
+            name,
+            Some(
+                "asserts"
+                    | "branded"
+                    | "constructorParameters"
+                    | "guards"
+                    | "instance"
+                    | "items"
+                    | "not"
+                    | "parameters"
+                    | "resolves"
+                    | "returns"
+                    | "thisParameter"
+            )
+        );
+
+        if matches!(member.parent_kind, Some(KnownMemberExpressionParentKind::Member))
+            && matches!(member.grandparent_kind, Some(KnownMemberExpressionParentKind::Call))
+        {
+            return if is_type_modifier { Err(ExpectError::ModifierUnknown) } else { Ok(()) };
+        }
+        if !is_type_modifier {
+            return Err(ExpectError::ModifierUnknown);
+        }
+        if name == Some("not") {
+            if seen_not {
+                return Err(ExpectError::ModifierUnknown);
+            }
+            seen_not = true;
+        }
+    }
+
+    Err(ExpectError::MatcherNotFound)
+}
+
+fn has_outer_assertion_call<'a, 'b>(mut node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
+    loop {
+        let parent = ctx.nodes().parent_node(node.id());
+        let object = match parent.kind() {
+            AstKind::CallExpression(call) => return call.callee.address() == node.address(),
+            AstKind::StaticMemberExpression(member) => &member.object,
+            AstKind::ComputedMemberExpression(member) => &member.object,
+            _ => return false,
+        };
+        if object.address() != node.address() {
+            return false;
+        }
+        node = parent;
+    }
 }
 
 fn is_top_most_call_expr<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {

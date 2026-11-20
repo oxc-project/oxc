@@ -17,7 +17,7 @@ use oxc_str::CompactStr;
 pub use crate::utils::jest::parse_jest_fn::{
     ExpectError, KnownMemberExpressionParentKind, KnownMemberExpressionProperty,
     MemberExpressionElement, ParsedExpectFnCall, ParsedGeneralJestFnCall,
-    ParsedJestFnCall as ParsedJestFnCallNew, parse_jest_fn_call,
+    ParsedJestFnCall as ParsedJestFnCallNew, parse_jest_fn_call, validate_expect_type_of_call,
 };
 use crate::{LintContext, ast_util::get_symbol_id_of_variable};
 pub use padding_around_block::report_missing_padding_before_jest_block;
