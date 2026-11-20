@@ -1,3 +1,4 @@
+let _k;
 // Auto-accessors are kept, other fields use assignment semantics.
 class StaticAccessor {
   static accessor a = b;
@@ -47,5 +48,13 @@ class DecoratedFields {
     this.g = h;
   }
   @dec static i = j;
+}
+// Pending computed keys move past a kept field with a non-computed key.
+class KeptLiteralKey {
+  static {
+    this[_k] = 1;
+  }
+  @dec "x" = 2;
+  @dec [(_k = k(), m())] = 3;
 }
 

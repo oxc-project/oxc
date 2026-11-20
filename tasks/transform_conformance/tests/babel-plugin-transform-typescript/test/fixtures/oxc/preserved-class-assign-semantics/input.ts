@@ -33,3 +33,10 @@ class DecoratedFields {
   static g = h;
   @dec static i = j;
 }
+
+// Pending computed keys move past a kept field with a non-computed key.
+class KeptLiteralKey {
+  static [k()] = 1;
+  @dec "x" = 2;
+  @dec [m()] = 3;
+}
