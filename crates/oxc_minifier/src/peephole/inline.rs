@@ -7,7 +7,7 @@ use oxc_syntax::symbol::SymbolId;
 use crate::TraverseCtx;
 use crate::symbol_value::FreshValueKind;
 
-use super::PeepholeOptimizations;
+use super::{PeepholeOptimizations, normalize::Normalize};
 
 impl<'a> PeepholeOptimizations {
     /// Seed parameter constants before traversing an immediately invoked function.
@@ -331,6 +331,12 @@ impl<'a> PeepholeOptimizations {
 
     pub fn inline_identifier_reference(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::Identifier(ident) = expr else { return };
+        // `delete x` on a binding is not a value read: sloppy-mode `DeleteBinding`
+        // returns `false` for a declared binding, while `delete <constant>` returns
+        // `true`. Inlining would change that result.
+        if Normalize::is_unary_delete_ancestor(ctx.ancestors()) {
+            return;
+        }
         let reference_id = ident.reference_id();
         let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() else { return };
         let Some(symbol_value) = ctx.state.symbols.value(symbol_id) else {
