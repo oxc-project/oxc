@@ -5,20 +5,7 @@
 
 use oxc_span::ContentEq;
 
-use crate::number::*;
 use crate::operator::*;
-
-impl ContentEq for NumberBase {
-    fn content_eq(&self, other: &Self) -> bool {
-        self == other
-    }
-}
-
-impl ContentEq for BigintBase {
-    fn content_eq(&self, other: &Self) -> bool {
-        self == other
-    }
-}
 
 impl ContentEq for AssignmentOperator {
     fn content_eq(&self, other: &Self) -> bool {
