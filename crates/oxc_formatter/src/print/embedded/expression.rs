@@ -126,6 +126,8 @@ fn skip_trivia(program: &Program<'_>, source: &Range<usize>, position: usize) ->
 pub struct FormatName<'a> {
     pub name: &'a str,
     layout: ExpressionLayout,
+    /// The host's text after it ([`crate::ExpressionRoot::host_suffix`]).
+    suffix: &'a str,
 }
 
 impl<'a> FormatName<'a> {
@@ -133,20 +135,32 @@ impl<'a> FormatName<'a> {
     ///
     /// - A reserved word is a name only as a value (`true`, `false`, `null`, `this`)
     /// - Any other reserved word (`if`, and contextual ones like `let`) is left to the parse, which decides
-    pub fn new(allocator: &'a Allocator, code: &str, root: JsRoot) -> Option<Self> {
+    pub fn new(
+        allocator: &'a Allocator,
+        code: &str,
+        root: JsRoot,
+        suffix: &'a str,
+    ) -> Option<Self> {
         let JsRoot::Expression(root) = root else { return None };
         // Non-ASCII whitespace (NBSP, U+2028) stays, fails `is_identifier_name` and goes to the parse
         let code = code.trim_ascii();
         let is_name = is_identifier_name(code)
             && (!is_reserved_keyword(code) || matches!(code, "true" | "false" | "null" | "this"));
-        is_name.then(|| Self { name: allocator.alloc_str(code), layout: root.layout })
+        is_name.then(|| Self { name: allocator.alloc_str(code), layout: root.layout, suffix })
     }
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatName<'a> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         // A name never hugs, and has no comment
-        write_in_layout(&text_without_whitespace(self.name), self.layout, false, false, f);
+        write_in_layout(
+            &text_without_whitespace(self.name),
+            self.suffix,
+            self.layout,
+            false,
+            false,
+            f,
+        );
     }
 }
 
@@ -156,6 +170,7 @@ pub(super) fn write_expression<'a>(
     expression: &'a Expression<'a>,
     root: ExpressionRoot,
     ends_in_line_comment: bool,
+    suffix: &'a str,
     f: &mut JsFormatter<'_, 'a>,
 ) {
     f.context_mut().set_expression_root(root);
@@ -177,21 +192,28 @@ pub(super) fn write_expression<'a>(
         }
         _ => false,
     };
-    write_in_layout(&expression, root.layout, hugs, ends_in_line_comment, f);
+    write_in_layout(&expression, suffix, root.layout, hugs, ends_in_line_comment, f);
     if tailwind.is_some() {
         f.context_mut().pop_tailwind_context();
     }
 }
 
-/// Writes `expression` in `layout`.
+/// Writes `expression` and the host's `suffix` after it ([`crate::ExpressionRoot::host_suffix`]) in `layout`.
 /// `hugs`: it hugs under `ExpressionLayout::Hug`; `ends_in_line_comment`: on its own lines unless `Bare`.
 fn write_in_layout<'a>(
     expression: &impl Format<'a, JsFormatContext<'a>>,
+    suffix: &'a str,
     layout: ExpressionLayout,
     hugs: bool,
     ends_in_line_comment: bool,
     f: &mut JsFormatter<'_, 'a>,
 ) {
+    let expression = &format_with(|f| {
+        write!(f, expression);
+        if !suffix.is_empty() {
+            write!(f, text(suffix));
+        }
+    });
     match layout {
         ExpressionLayout::Bare => write!(f, expression),
         _ if ends_in_line_comment => write!(f, soft_block_indent(expression)),
