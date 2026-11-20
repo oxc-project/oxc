@@ -412,6 +412,7 @@ fn js_root_of(request: &DispatchRequest<'_>) -> (JsRoot, JsEmbeddedIn) {
         ends_before_brace: false,
         reads_as_statements: false,
         in_parens: false,
+        host_suffix: 0,
     };
     if let Some(&part) = request.parent_context_as::<JsInVueTemplate>() {
         let root = match part {
@@ -457,8 +458,9 @@ fn js_root_of(request: &DispatchRequest<'_>) -> (JsRoot, JsEmbeddedIn) {
                 ends_before_brace: before_brace,
                 ..expression(ExpressionLayout::Bare)
             },
-            JsInAngularTemplate::Binding { tailwind_classes } => ExpressionRoot {
+            JsInAngularTemplate::Binding { tailwind_classes, .. } => ExpressionRoot {
                 tailwind_classes,
+                host_suffix: part.suffix_len(),
                 ..expression(ExpressionLayout::Hug { literals: true })
             },
             JsInAngularTemplate::AttributePiece { tailwind_classes } => {
