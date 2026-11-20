@@ -31,9 +31,9 @@ use oxc_formatter_core::Placeholder;
 /// `oxc-css-parser` tokenizes it via the fork's `template_placeholder` option,
 /// consuming the leading backtick as the sigil (so `format.rs` passes the affix without it).
 ///
-/// The producer-side constant lives in `oxc_formatter`'s `embed/css.rs`
-/// (which doesn't depend on this crate); orchestrator-side consumers (oxfmt) should use this.
-pub const TEMPLATE_PLACEHOLDER: Placeholder<'static> =
+/// The marker is this crate's input protocol, the producer's copy in `oxc_formatter`'s `embed/css.rs`
+/// (which doesn't depend on this crate): a drift fails every css-in-js snapshot, the marker no token then.
+pub(crate) const TEMPLATE_PLACEHOLDER: Placeholder<'static> =
     Placeholder { prefix: "`oxfmt_css_", suffix: "`" };
 
 pub use crate::{
