@@ -1,15 +1,17 @@
 use cow_utils::CowUtils;
-use oxc_ast::{
-    AstKind,
-    ast::{BigIntLiteral, BigintBase, NumberBase, NumericLiteral},
-};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::{JsonSchema, SchemaGenerator, schema::Schema};
 use serde::{Deserialize, Serialize};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::Rule,
+    utils::{NumberBase, number_base},
+};
 
 fn numeric_separators_style_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Invalid group length in numeric value.")
@@ -245,13 +247,15 @@ impl Rule for NumericSeparatorsStyle {
         match node.kind() {
             AstKind::NumericLiteral(number) => {
                 let raw = number.raw.as_ref().unwrap().as_str();
-                if self.is_short_decimal_integer(raw)
-                    || (!raw.contains('_') && self.skip_number_separator(number.base))
-                {
+                if self.is_short_decimal_integer(raw) {
+                    return;
+                }
+                let base = number_base(raw);
+                if !raw.contains('_') && self.skip_number_separator(base) {
                     return;
                 }
 
-                let formatted = self.format_number(number);
+                let formatted = self.format_number(raw, base);
 
                 if formatted != raw {
                     ctx.diagnostic_with_fix(
@@ -262,18 +266,25 @@ impl Rule for NumericSeparatorsStyle {
             }
             AstKind::BigIntLiteral(number) => {
                 let raw = number.raw.unwrap().as_str();
-                if self.is_short_decimal_integer(&raw[..raw.len() - 1])
-                    || (!raw.contains('_') && self.skip_bigint_separator(number.base))
-                {
+                // Exclude `n` suffix
+                let raw = &raw[..raw.len() - 1];
+                if self.is_short_decimal_integer(raw) {
+                    return;
+                }
+                let base = number_base(raw);
+                if self.skip_number_separator(base) && !raw.contains('_') {
                     return;
                 }
 
-                let formatted = self.format_bigint(number, raw);
+                let mut formatted = self.format_number(raw, base);
 
                 if formatted != raw {
                     ctx.diagnostic_with_fix(
                         numeric_separators_style_diagnostic(number.span),
-                        |fixer| fixer.replace(number.span, formatted),
+                        |fixer| {
+                            formatted.push('n');
+                            fixer.replace(number.span, formatted)
+                        },
                     );
                 }
             }
@@ -295,47 +306,20 @@ impl NumericSeparatorsStyle {
     fn skip_number_separator(&self, base: NumberBase) -> bool {
         let base_config = match base {
             NumberBase::Binary => self.binary.only_if_contains_separator,
-            NumberBase::Decimal | NumberBase::Float => self.number.base.only_if_contains_separator,
+            NumberBase::Decimal => self.number.base.only_if_contains_separator,
             NumberBase::Hex => self.hexadecimal.only_if_contains_separator,
             NumberBase::Octal => self.octal.only_if_contains_separator,
         };
         base_config.unwrap_or(self.only_if_contains_separator)
     }
 
-    fn skip_bigint_separator(&self, base: BigintBase) -> bool {
-        let base_config = match base {
-            BigintBase::Binary => self.binary.only_if_contains_separator,
-            BigintBase::Decimal => self.number.base.only_if_contains_separator,
-            BigintBase::Hex => self.hexadecimal.only_if_contains_separator,
-            BigintBase::Octal => self.octal.only_if_contains_separator,
-        };
-        base_config.unwrap_or(self.only_if_contains_separator)
-    }
-
-    fn format_number(&self, number: &NumericLiteral) -> String {
-        use oxc_syntax::number::NumberBase;
-
-        let raw = number.raw.as_ref().unwrap();
-        match number.base {
+    fn format_number(&self, raw: &str, base: NumberBase) -> String {
+        match base {
             NumberBase::Binary => self.format_binary(raw),
-            NumberBase::Decimal | NumberBase::Float => self.format_decimal(raw),
+            NumberBase::Decimal => self.format_decimal(raw),
             NumberBase::Hex => self.format_hex(raw),
             NumberBase::Octal => self.format_octal(raw),
         }
-    }
-
-    fn format_bigint(&self, number: &BigIntLiteral, raw: &str) -> String {
-        use oxc_syntax::number::BigintBase;
-
-        let raw_without_bigint_n_suffix = &raw[..raw.len() - 1];
-        let mut formatted = match number.base {
-            BigintBase::Binary => self.format_binary(raw_without_bigint_n_suffix),
-            BigintBase::Decimal => self.format_decimal(raw_without_bigint_n_suffix),
-            BigintBase::Hex => self.format_hex(raw_without_bigint_n_suffix),
-            BigintBase::Octal => self.format_octal(raw_without_bigint_n_suffix),
-        };
-        formatted.push('n');
-        formatted
     }
 
     fn format_binary(&self, raw_number: &str) -> String {
