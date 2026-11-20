@@ -19,7 +19,13 @@ Key IR pieces are all exported from the crate root.
 Every scope `Tag` acts on the line breaks inside it, never on the content (the `indent` rustdoc has the examples and the rationale).
 
 The semantics of each building block live in the `write/builders.rs` rustdocs.
-e.g. the mechanisms for verbatim multi-line content (`exact_line_breaks()` for blank runs exempt from newline collapsing, `literal_line_break()`, multiline `text()`, `text(..).without_expand_parent()`, and `mark_as_root` / `dedent_to_root`), with the non-obvious behaviors pinned by printer tests verified against Prettier's `printDocToString`.
+e.g. the mechanisms for verbatim multi-line content (`exact_line_breaks()` for blank runs exempt from newline collapsing, `literal_line_break()`, multiline `text()`, `text(..).without_expand_parent()`, and `mark_as_root` / `embedded_root` / `dedent_to_root`), with the non-obvious behaviors pinned by printer tests verified against Prettier's `printDocToString`.
+
+A newline inside a `Text` has two readings, and the IR keeps the `Text` one element (with its width flags) for both:
+
+- Raw (the default): it prints as is, at column 0, as Prettier prints a string
+- Inside an `embedded_root` (a host around another language's IR): it resumes at the embedding, as Prettier's `replaceEndOfLine()` makes it a literal line
+  - A host never rewrites a child's `Text` into lines: that would drop its `without_expand_parent()`
 
 Every Prettier doc primitive its own language printers emit has a counterpart here; composite ones translate rather than port 1:1:
 
