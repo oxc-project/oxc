@@ -1644,6 +1644,7 @@ export interface DummyRuleMap {
   "unicorn/prefer-negative-index"?: RuleNoConfig;
   "unicorn/prefer-node-protocol"?: RuleNoConfig;
   "unicorn/prefer-number-coercion"?: RuleNoConfig;
+  "unicorn/prefer-number-is-safe-integer"?: RuleNoConfig;
   "unicorn/prefer-number-properties"?: RuleNoConfig | [AllowWarnDeny, PreferNumberPropertiesConfig];
   "unicorn/prefer-object-from-entries"?: RuleNoConfig | [AllowWarnDeny, PreferObjectFromEntriesConfig];
   "unicorn/prefer-optional-catch-binding"?: RuleNoConfig;
