@@ -17,8 +17,7 @@ use crate::{
 // css-in-js interpolation marker `` `oxfmt_css_N` ``.
 // Backtick is invalid SCSS (the variant the dispatcher formats as),
 // so the marker is unmistakably out-of-band.
-// NOTE: Keep these in sync with `oxc_formatter_css`'s.
-// Or pass it from the dispatcher?
+// NOTE: A copy of `oxc_formatter_css`'s, whose parser reads it (its backticks are oxc-css-parser's): keep them in sync.
 const PLACEHOLDER: Placeholder<'static> = Placeholder { prefix: "`oxfmt_css_", suffix: "`" };
 
 /// Re-emit a (already arena-backed) text slice as a `Text` element.
