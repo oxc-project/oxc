@@ -18,6 +18,8 @@ pub(super) struct ClassDetails<'a> {
     pub private_props: PrivateProps<'a>,
     /// Bindings for class name and temp var for class
     pub bindings: ClassBindings<'a>,
+    /// Class contained auto-accessors before they were lowered.
+    pub has_auto_accessor: bool,
 }
 
 impl ClassDetails<'_> {
@@ -31,6 +33,7 @@ impl ClassDetails<'_> {
             is_transform_required: false,
             private_props: PrivateProps::Lowered(IdentIndexMap::default()),
             bindings: ClassBindings::dummy(),
+            has_auto_accessor: false,
         }
     }
 }

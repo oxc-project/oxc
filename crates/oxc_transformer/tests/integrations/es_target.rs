@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use oxc_span::SourceType;
-use oxc_transformer::{ESTarget, TransformOptions};
+use oxc_transformer::{DecoratorOptions, ESTarget, TransformOptions};
 
 use crate::{codegen, test, test_with_source_type};
 
@@ -75,10 +75,13 @@ fn standard_decorators_opt_out() {
             "@decorate class Example { #value = 1; read(obj) { obj.#value = 4; return obj.#value; } }",
         ),
     ];
-    {
+    for decorator in [
+        DecoratorOptions { lower: Some(false), ..DecoratorOptions::default() },
+        serde_json::from_str::<DecoratorOptions>(r#"{"lower":false}"#).unwrap(),
+    ] {
         for target in [ESTarget::ES2015, ESTarget::ES2020, ESTarget::ES2022, ESTarget::ESNext] {
             for set_public_class_fields in [false, true] {
-                let mut options = TransformOptions::from(target);
+                let mut options = TransformOptions { decorator, ..TransformOptions::from(target) };
                 options.assumptions.set_public_class_fields = set_public_class_fields;
                 for (source, expected) in cases {
                     assert_eq!(
@@ -95,7 +98,8 @@ fn standard_decorators_opt_out() {
 #[test]
 fn standard_decorators_opt_out_keeps_other_transforms() {
     let source = "function run() { using resource = acquire(); @decorate class Example { @decorate method() {} } return Example; }";
-    let options = TransformOptions::from(ESTarget::ES2022);
+    let mut options = TransformOptions::from(ESTarget::ES2022);
+    options.decorator.lower = Some(false);
     let output = test(source, &options).unwrap();
     assert!(output.contains("@decorate"));
     assert!(!output.contains("using resource"));
@@ -104,7 +108,8 @@ fn standard_decorators_opt_out_keeps_other_transforms() {
 
 #[test]
 fn standard_decorators_opt_out_keeps_plain_class_field_lowering() {
-    let options = TransformOptions::from(ESTarget::ES2015);
+    let mut options = TransformOptions::from(ESTarget::ES2015);
+    options.decorator.lower = Some(false);
     let output =
         test("class Plain { value = 1; } class Example { @decorate value = 1; }", &options)
             .unwrap();

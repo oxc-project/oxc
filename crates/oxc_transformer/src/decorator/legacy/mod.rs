@@ -342,6 +342,7 @@ impl<'a> LegacyDecorator<'a> {
             class.scope_id.get().unwrap(),
             binding.as_ref(),
             false,
+            false,
             |_, _, _, _, _| {},
             ctx,
         );
