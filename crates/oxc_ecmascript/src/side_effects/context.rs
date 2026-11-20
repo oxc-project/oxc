@@ -57,4 +57,14 @@ pub trait MayHaveSideEffectsContext<'a>: GlobalContext<'a> {
     ///
     /// <https://rollupjs.org/configuration-options/#treeshake-unknownglobalsideeffects>
     fn unknown_global_side_effects(&self) -> bool;
+
+    /// Whether the current position is enclosed by a non-arrow function scope, i.e.
+    /// whether reading `arguments` is legal — it is bound only inside non-arrow
+    /// functions, not at module/script top level.
+    ///
+    /// The default returns `true`, matching the historical assumption; implementors
+    /// with scope information should override it.
+    fn is_inside_function_scope(&self) -> bool {
+        true
+    }
 }
