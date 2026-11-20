@@ -703,7 +703,22 @@ fn type_assertions() {
     use crate::tester::Tester;
 
     let pass = [
+        // Type assertion fixtures from eslint-plugin-vitest v1.6.28.
+        "expectTypeOf().returns.toMatchTypeOf();",
+        "expectTypeOf().branded.toMatchTypeOf();",
+        "expectTypeOf().asserts.toMatchTypeOf();",
+        "expectTypeOf().constructorParameters.toMatchTypeOf();",
+        "expectTypeOf().parameters.toMatchTypeOf();",
+        "expectTypeOf().thisParameter.toMatchTypeOf();",
+        "expectTypeOf().guards.toMatchTypeOf();",
+        "expectTypeOf().instance.toMatchTypeOf();",
+        "expectTypeOf().items.toMatchTypeOf();",
+        "expectTypeOf(Promise.resolve(1)).resolves.toEqualTypeOf<number>();",
+        "expectTypeOf(Promise.resolve({ a: 1 })).resolves.not.toEqualTypeOf<string>();",
         "expectTypeOf<number>().toEqualTypeOf<number>();",
+        "(expectTypeOf<number>()).toBeNumber();",
+        "(expectTypeOf<number>().toBeNumber)();",
+        "import { expectTypeOf as assertType } from 'vitest'; ((assertType)<number>()).toBeNumber();",
         "consume(expectTypeOf<number>()['toEqualTypeOf']<number>());",
         "expectTypeOf<() => Promise<number>>().returns.resolves.not.toEqualTypeOf<string>();",
         "expectTypeOf<number[]>().items.branded.toEqualTypeOf<number>();",
@@ -712,8 +727,12 @@ fn type_assertions() {
     ];
     let fail = [
         "expectTypeOf<number>();",
+        "(expectTypeOf)<number>();",
+        "(expectTypeOf<number>()).toBeNumber;",
+        "consume((expectTypeOf<number>()));",
         "consume(expectTypeOf<number>());",
         "expectTypeOf(value).toEqualTypeOf;",
+        // The invalid type assertion fixture from eslint-plugin-vitest v1.6.28.
         "expectTypeOf(value).to.toMatchTypeOf();",
         "expectTypeOf(value).returns();",
         "expectTypeOf(value).not.returns.not.toBeNumber();",
