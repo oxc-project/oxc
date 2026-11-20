@@ -348,6 +348,7 @@ mod test {
             SemanticBuilder::new_linter().build(allocator.alloc(parsed.program)).semantic;
         let ctx = Rc::new(ContextHost::new(
             "/test.snap",
+            None,
             vec![ContextSubHost::new(
                 semantic,
                 Arc::new(ModuleRecord::default()),
