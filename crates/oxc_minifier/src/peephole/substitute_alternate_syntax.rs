@@ -19,7 +19,6 @@ use oxc_span::{GetSpan, SPAN};
 use oxc_str::static_ident;
 use oxc_syntax::{
     identifier::is_identifier_name_patched,
-    number::NumberBase,
     operator::{BinaryOperator, UnaryOperator},
     precedence::GetPrecedence,
 };
@@ -1019,7 +1018,7 @@ impl<'a> PeepholeOptimizations {
                     SPAN,
                     callee,
                     None,
-                    [Argument::new_numeric_literal(SPAN, offset, None, NumberBase::Decimal, ctx)],
+                    [Argument::new_numeric_literal(SPAN, offset, None, ctx)],
                     false,
                     ctx,
                 )
@@ -1173,7 +1172,6 @@ impl<'a> PeepholeOptimizations {
                     }
                 },
                 None,
-                NumberBase::Decimal,
                 ctx,
             )),
             // `BigInt(1n)` -> `1n`
@@ -1430,13 +1428,7 @@ impl<'a> PeepholeOptimizations {
                 if let Some(value) = TraverseCtx::string_to_equivalent_number_value(value)
                     && value >= 0.0
                 {
-                    let new_key = PropertyKey::new_numeric_literal(
-                        s.span,
-                        value,
-                        None,
-                        NumberBase::Decimal,
-                        ctx,
-                    );
+                    let new_key = PropertyKey::new_numeric_literal(s.span, value, None, ctx);
                     ctx.replace_property_key(key, new_key);
                 }
             }
@@ -1609,13 +1601,8 @@ impl<'a> PeepholeOptimizations {
     /// Transforms boolean expression `true` => `!0` `false` => `!1`.
     pub fn substitute_boolean(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::BooleanLiteral(lit) = expr else { return };
-        let num = Expression::new_numeric_literal(
-            lit.span,
-            if lit.value { 0.0 } else { 1.0 },
-            None,
-            NumberBase::Decimal,
-            ctx,
-        );
+        let num =
+            Expression::new_numeric_literal(lit.span, if lit.value { 0.0 } else { 1.0 }, None, ctx);
         let new_value =
             Expression::new_unary_expression(lit.span, UnaryOperator::LogicalNot, num, ctx);
         ctx.replace_expression(expr, new_value);

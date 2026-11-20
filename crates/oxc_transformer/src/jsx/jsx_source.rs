@@ -36,7 +36,7 @@
 use oxc_ast::ast::*;
 use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_span::SPAN;
-use oxc_syntax::{number::NumberBase, symbol::SymbolFlags};
+use oxc_syntax::symbol::SymbolFlags;
 use oxc_traverse::{BoundIdentifier, Traverse};
 
 use crate::{context::TraverseCtx, state::TransformState};
@@ -149,8 +149,7 @@ impl<'a> JsxSource<'a> {
 
         let line_number = {
             let key = PropertyKey::new_static_identifier(SPAN, "lineNumber", ctx);
-            let value =
-                Expression::new_numeric_literal(SPAN, line as f64, None, NumberBase::Decimal, ctx);
+            let value = Expression::new_numeric_literal(SPAN, line as f64, None, ctx);
             ObjectPropertyKind::new_object_property(
                 SPAN, kind, key, value, false, false, false, ctx,
             )
@@ -158,13 +157,7 @@ impl<'a> JsxSource<'a> {
 
         let column_number = {
             let key = PropertyKey::new_static_identifier(SPAN, "columnNumber", ctx);
-            let value = Expression::new_numeric_literal(
-                SPAN,
-                column as f64,
-                None,
-                NumberBase::Decimal,
-                ctx,
-            );
+            let value = Expression::new_numeric_literal(SPAN, column as f64, None, ctx);
             ObjectPropertyKind::new_object_property(
                 SPAN, kind, key, value, false, false, false, ctx,
             )

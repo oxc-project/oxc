@@ -1801,7 +1801,6 @@ impl<'a> Dummy<'a> for NumericLiteral<'a> {
             span: Dummy::dummy(allocator),
             value: Dummy::dummy(allocator),
             raw: Dummy::dummy(allocator),
-            base: Dummy::dummy(allocator),
         }
     }
 }
@@ -1830,7 +1829,6 @@ impl<'a> Dummy<'a> for BigIntLiteral<'a> {
             span: Dummy::dummy(allocator),
             value: Dummy::dummy(allocator),
             raw: Dummy::dummy(allocator),
-            base: Dummy::dummy(allocator),
         }
     }
 }

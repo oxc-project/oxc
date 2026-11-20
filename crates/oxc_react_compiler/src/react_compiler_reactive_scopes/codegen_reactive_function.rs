@@ -382,7 +382,7 @@ fn ox_number<'a>(
     value: f64,
     span: Span,
 ) -> oxc::Expression<'a> {
-    oxc_ast::ast::Expression::new_numeric_literal(span, value, None, oxc::NumberBase::Decimal, ast)
+    oxc_ast::ast::Expression::new_numeric_literal(span, value, None, ast)
 }
 
 /// Allocate a `&'a str` in the arena (satisfies the builders' `IntoIn` slots for
@@ -3674,7 +3674,6 @@ fn ox_codegen_primitive_value<'a>(
             span,
             ox_str(ast, value.as_str()),
             raw.as_ref().map(|r| oxc_str::Str::from(ox_str(ast, r.as_str()))),
-            oxc::BigintBase::Decimal,
             ast,
         ),
         PrimitiveValue::Null => oxc_ast::ast::Expression::new_null_literal(span, ast),

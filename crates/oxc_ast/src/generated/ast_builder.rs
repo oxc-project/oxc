@@ -130,16 +130,14 @@ impl<'a> Expression<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The value of the number, converted into base 10
     /// * `raw`: The number as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_numeric_literal(
         span: Span,
         value: f64,
         raw: Option<Str<'a>>,
-        base: NumberBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build an [`Expression::BigIntLiteral`].
@@ -150,16 +148,14 @@ impl<'a> Expression<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: Bigint value in base 10 with no underscores
     /// * `raw`: The bigint as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_big_int_literal(
         span: Span,
         value: impl Into<Str<'a>>,
         raw: Option<Str<'a>>,
-        base: BigintBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build an [`Expression::RegExpLiteral`].
@@ -1659,16 +1655,14 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The value of the number, converted into base 10
     /// * `raw`: The number as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_numeric_literal(
         span: Span,
         value: f64,
         raw: Option<Str<'a>>,
-        base: NumberBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build an [`ArrayExpressionElement::BigIntLiteral`].
@@ -1679,16 +1673,14 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: Bigint value in base 10 with no underscores
     /// * `raw`: The bigint as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_big_int_literal(
         span: Span,
         value: impl Into<Str<'a>>,
         raw: Option<Str<'a>>,
-        base: BigintBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build an [`ArrayExpressionElement::RegExpLiteral`].
@@ -3068,16 +3060,14 @@ impl<'a> PropertyKey<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The value of the number, converted into base 10
     /// * `raw`: The number as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_numeric_literal(
         span: Span,
         value: f64,
         raw: Option<Str<'a>>,
-        base: NumberBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build a [`PropertyKey::BigIntLiteral`].
@@ -3088,16 +3078,14 @@ impl<'a> PropertyKey<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: Bigint value in base 10 with no underscores
     /// * `raw`: The bigint as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_big_int_literal(
         span: Span,
         value: impl Into<Str<'a>>,
         raw: Option<Str<'a>>,
-        base: BigintBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build a [`PropertyKey::RegExpLiteral`].
@@ -4953,16 +4941,14 @@ impl<'a> Argument<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The value of the number, converted into base 10
     /// * `raw`: The number as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_numeric_literal(
         span: Span,
         value: f64,
         raw: Option<Str<'a>>,
-        base: NumberBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build an [`Argument::BigIntLiteral`].
@@ -4973,16 +4959,14 @@ impl<'a> Argument<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: Bigint value in base 10 with no underscores
     /// * `raw`: The bigint as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_big_int_literal(
         span: Span,
         value: impl Into<Str<'a>>,
         raw: Option<Str<'a>>,
-        base: BigintBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build an [`Argument::RegExpLiteral`].
@@ -10263,16 +10247,14 @@ impl<'a> ForStatementInit<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The value of the number, converted into base 10
     /// * `raw`: The number as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_numeric_literal(
         span: Span,
         value: f64,
         raw: Option<Str<'a>>,
-        base: NumberBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build a [`ForStatementInit::BigIntLiteral`].
@@ -10283,16 +10265,14 @@ impl<'a> ForStatementInit<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: Bigint value in base 10 with no underscores
     /// * `raw`: The bigint as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_big_int_literal(
         span: Span,
         value: impl Into<Str<'a>>,
         raw: Option<Str<'a>>,
-        base: BigintBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build a [`ForStatementInit::RegExpLiteral`].
@@ -13299,16 +13279,14 @@ impl<'a> ArrowFunctionBody<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The value of the number, converted into base 10
     /// * `raw`: The number as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_numeric_literal(
         span: Span,
         value: f64,
         raw: Option<Str<'a>>,
-        base: NumberBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build an [`ArrowFunctionBody::BigIntLiteral`].
@@ -13319,16 +13297,14 @@ impl<'a> ArrowFunctionBody<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: Bigint value in base 10 with no underscores
     /// * `raw`: The bigint as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_big_int_literal(
         span: Span,
         value: impl Into<Str<'a>>,
         raw: Option<Str<'a>>,
-        base: BigintBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build an [`ArrowFunctionBody::RegExpLiteral`].
@@ -16718,16 +16694,14 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The value of the number, converted into base 10
     /// * `raw`: The number as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_numeric_literal(
         span: Span,
         value: f64,
         raw: Option<Str<'a>>,
-        base: NumberBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::BigIntLiteral`].
@@ -16738,16 +16712,14 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: Bigint value in base 10 with no underscores
     /// * `raw`: The bigint as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_big_int_literal(
         span: Span,
         value: impl Into<Str<'a>>,
         raw: Option<Str<'a>>,
-        base: BigintBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::RegExpLiteral`].
@@ -18056,17 +18028,15 @@ impl<'a> NumericLiteral<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The value of the number, converted into base 10
     /// * `raw`: The number as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new(
         span: Span,
         value: f64,
         raw: Option<Str<'a>>,
-        base: NumberBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        NumericLiteral { node_id: Cell::new(builder.node_id()), span, value, raw, base }
+        NumericLiteral { node_id: Cell::new(builder.node_id()), span, value, raw }
     }
 
     /// Build a [`NumericLiteral`], and store it in the memory arena.
@@ -18078,17 +18048,15 @@ impl<'a> NumericLiteral<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The value of the number, converted into base 10
     /// * `raw`: The number as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn boxed(
         span: Span,
         value: f64,
         raw: Option<Str<'a>>,
-        base: NumberBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, value, raw, base, builder), &builder.allocator())
+        ArenaBox::new_in(Self::new(span, value, raw, builder), &builder.allocator())
     }
 }
 
@@ -18144,23 +18112,15 @@ impl<'a> BigIntLiteral<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: Bigint value in base 10 with no underscores
     /// * `raw`: The bigint as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new(
         span: Span,
         value: impl Into<Str<'a>>,
         raw: Option<Str<'a>>,
-        base: BigintBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        BigIntLiteral {
-            node_id: Cell::new(builder.node_id()),
-            span,
-            value: value.into(),
-            raw,
-            base,
-        }
+        BigIntLiteral { node_id: Cell::new(builder.node_id()), span, value: value.into(), raw }
     }
 
     /// Build a [`BigIntLiteral`], and store it in the memory arena.
@@ -18172,17 +18132,15 @@ impl<'a> BigIntLiteral<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: Bigint value in base 10 with no underscores
     /// * `raw`: The bigint as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn boxed(
         span: Span,
         value: impl Into<Str<'a>>,
         raw: Option<Str<'a>>,
-        base: BigintBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, value, raw, base, builder), &builder.allocator())
+        ArenaBox::new_in(Self::new(span, value, raw, builder), &builder.allocator())
     }
 }
 
@@ -18800,16 +18758,14 @@ impl<'a> JSXExpression<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The value of the number, converted into base 10
     /// * `raw`: The number as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_numeric_literal(
         span: Span,
         value: f64,
         raw: Option<Str<'a>>,
-        base: NumberBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build a [`JSXExpression::BigIntLiteral`].
@@ -18820,16 +18776,14 @@ impl<'a> JSXExpression<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: Bigint value in base 10 with no underscores
     /// * `raw`: The bigint as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_big_int_literal(
         span: Span,
         value: impl Into<Str<'a>>,
         raw: Option<Str<'a>>,
-        base: BigintBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build a [`JSXExpression::RegExpLiteral`].
@@ -20766,16 +20720,14 @@ impl<'a> TSLiteral<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The value of the number, converted into base 10
     /// * `raw`: The number as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_numeric_literal(
         span: Span,
         value: f64,
         raw: Option<Str<'a>>,
-        base: NumberBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build a [`TSLiteral::BigIntLiteral`].
@@ -20786,16 +20738,14 @@ impl<'a> TSLiteral<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: Bigint value in base 10 with no underscores
     /// * `raw`: The bigint as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_big_int_literal(
         span: Span,
         value: impl Into<Str<'a>>,
         raw: Option<Str<'a>>,
-        base: BigintBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build a [`TSLiteral::StringLiteral`].

@@ -1109,13 +1109,7 @@ impl<'a> LegacyDecorator<'a> {
             }
             decorations.extend(param.decorators.drain(..).map(|decorator| {
                 // (index, decorator)
-                let index = Expression::new_numeric_literal(
-                    SPAN,
-                    index as f64,
-                    None,
-                    NumberBase::Decimal,
-                    ctx,
-                );
+                let index = Expression::new_numeric_literal(SPAN, index as f64, None, ctx);
                 let arguments = ArenaVec::from_array_in(
                     [Argument::from(index), Argument::from(decorator.expression)],
                     ctx,

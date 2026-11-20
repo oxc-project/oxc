@@ -991,12 +991,11 @@ const _: () = {
     assert!(offset_of!(NullLiteral, span) == 0);
     assert!(offset_of!(NullLiteral, node_id) == 8);
 
-    // Padding: 3 bytes
+    // Padding: 4 bytes
     assert!(size_of::<NumericLiteral>() == 40);
     assert!(align_of::<NumericLiteral>() == 8);
     assert!(offset_of!(NumericLiteral, span) == 0);
     assert!(offset_of!(NumericLiteral, node_id) == 8);
-    assert!(offset_of!(NumericLiteral, base) == 12);
     assert!(offset_of!(NumericLiteral, raw) == 16);
     assert!(offset_of!(NumericLiteral, value) == 32);
 
@@ -1008,12 +1007,11 @@ const _: () = {
     assert!(offset_of!(StringLiteral, value) == 16);
     assert!(offset_of!(StringLiteral, raw) == 32);
 
-    // Padding: 3 bytes
+    // Padding: 4 bytes
     assert!(size_of::<BigIntLiteral>() == 48);
     assert!(align_of::<BigIntLiteral>() == 8);
     assert!(offset_of!(BigIntLiteral, span) == 0);
     assert!(offset_of!(BigIntLiteral, node_id) == 8);
-    assert!(offset_of!(BigIntLiteral, base) == 12);
     assert!(offset_of!(BigIntLiteral, value) == 16);
     assert!(offset_of!(BigIntLiteral, raw) == 32);
 
@@ -2837,13 +2835,12 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(NullLiteral, span) == 0);
     assert!(offset_of!(NullLiteral, node_id) == 8);
 
-    // Padding: 3 bytes
+    // Padding: 4 bytes
     assert!(size_of::<NumericLiteral>() == 32);
     assert!(align_of::<NumericLiteral>() == 8);
     assert!(offset_of!(NumericLiteral, span) == 0);
     assert!(offset_of!(NumericLiteral, node_id) == 8);
-    assert!(offset_of!(NumericLiteral, base) == 12);
-    assert!(offset_of!(NumericLiteral, raw) == 16);
+    assert!(offset_of!(NumericLiteral, raw) == 12);
     assert!(offset_of!(NumericLiteral, value) == 24);
 
     // Padding: 0 bytes
@@ -2854,14 +2851,13 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(StringLiteral, value) == 12);
     assert!(offset_of!(StringLiteral, raw) == 24);
 
-    // Padding: 3 bytes
-    assert!(size_of::<BigIntLiteral>() == 32);
+    // Padding: 0 bytes
+    assert!(size_of::<BigIntLiteral>() == 28);
     assert!(align_of::<BigIntLiteral>() == 4);
     assert!(offset_of!(BigIntLiteral, span) == 0);
     assert!(offset_of!(BigIntLiteral, node_id) == 8);
-    assert!(offset_of!(BigIntLiteral, base) == 12);
-    assert!(offset_of!(BigIntLiteral, value) == 16);
-    assert!(offset_of!(BigIntLiteral, raw) == 24);
+    assert!(offset_of!(BigIntLiteral, value) == 12);
+    assert!(offset_of!(BigIntLiteral, raw) == 20);
 
     // Padding: 0 bytes
     assert!(size_of::<RegExpLiteral>() == 36);

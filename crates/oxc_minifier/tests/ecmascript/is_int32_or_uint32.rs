@@ -1,6 +1,6 @@
 use oxc_allocator::Allocator;
 use oxc_ast::{
-    ast::{Expression, NumberBase, Statement},
+    ast::{Expression, Statement},
     builder::AstBuilder,
 };
 use oxc_ecmascript::{WithoutGlobalReferenceInformation, constant_evaluation::IsInt32OrUint32};
@@ -119,8 +119,8 @@ fn undetermined_tests() {
 fn negative_zero_numeric_literal() {
     let allocator = Allocator::default();
     let ast = AstBuilder::new(&allocator);
-    let pos_zero = Expression::new_numeric_literal(SPAN, 0.0, None, NumberBase::Decimal, &ast);
-    let neg_zero = Expression::new_numeric_literal(SPAN, -0.0, None, NumberBase::Decimal, &ast);
+    let pos_zero = Expression::new_numeric_literal(SPAN, 0.0, None, &ast);
+    let neg_zero = Expression::new_numeric_literal(SPAN, -0.0, None, &ast);
     assert!(pos_zero.is_int32_or_uint32(&WithoutGlobalReferenceInformation {}));
     assert!(!neg_zero.is_int32_or_uint32(&WithoutGlobalReferenceInformation {}));
 }

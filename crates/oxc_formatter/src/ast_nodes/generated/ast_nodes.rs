@@ -6374,11 +6374,6 @@ impl<'parent, 'a> AstNode<'parent, 'a, NumericLiteral<'a>> {
         self.inner.raw
     }
 
-    #[inline]
-    pub fn base(&self) -> NumberBase {
-        self.inner.base
-    }
-
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
@@ -6429,11 +6424,6 @@ impl<'parent, 'a> AstNode<'parent, 'a, BigIntLiteral<'a>> {
     #[inline]
     pub fn raw(&self) -> Option<Str<'a>> {
         self.inner.raw
-    }
-
-    #[inline]
-    pub fn base(&self) -> BigintBase {
-        self.inner.base
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {

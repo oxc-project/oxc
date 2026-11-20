@@ -8,10 +8,7 @@ use oxc_data_structures::buffered_vec::BufferedVec;
 use oxc_regular_expression::ast::Pattern;
 use oxc_span::{GetSpan, Span};
 use oxc_str::{Ident, JSStr, Str};
-use oxc_syntax::{
-    number::{BigintBase, NumberBase},
-    precedence::Precedence,
-};
+use oxc_syntax::precedence::Precedence;
 
 use super::{
     grammar::CoverGrammar,
@@ -477,43 +474,21 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.set_fatal_error(diagnostics::invalid_number(err, span));
             0.0 // Dummy value
         });
-        let base = match kind {
-            Kind::Decimal => NumberBase::Decimal,
-            Kind::Float => NumberBase::Float,
-            Kind::Binary => NumberBase::Binary,
-            Kind::Octal => NumberBase::Octal,
-            Kind::Hex => NumberBase::Hex,
-            Kind::PositiveExponential | Kind::NegativeExponential => {
-                if value.fract() == 0.0 {
-                    NumberBase::Decimal
-                } else {
-                    NumberBase::Float
-                }
-            }
-            _ => return self.unexpected(),
-        };
         self.bump_any();
-        NumericLiteral::boxed(span, value, Some(Str::from(src)), base, self)
+        NumericLiteral::boxed(span, value, Some(Str::from(src)), self)
     }
 
     pub(crate) fn parse_literal_bigint(&mut self) -> ArenaBox<'a, BigIntLiteral<'a>> {
         let token = self.cur_token();
         let kind = token.kind();
         let has_separator = token.has_separator();
-        let base = match kind {
-            Kind::DecimalBigInt => BigintBase::Decimal,
-            Kind::BinaryBigInt => BigintBase::Binary,
-            Kind::OctalBigInt => BigintBase::Octal,
-            Kind::HexBigInt => BigintBase::Hex,
-            _ => return self.unexpected(),
-        };
         let span = token.span();
         let raw = self.cur_src();
         let src = raw.strip_suffix('n').unwrap();
         let value = parse_big_int(src, kind, has_separator, self.allocator());
 
         self.bump_any();
-        BigIntLiteral::boxed(span, value, Some(Str::from(raw)), base, self)
+        BigIntLiteral::boxed(span, value, Some(Str::from(raw)), self)
     }
 
     pub(crate) fn parse_literal_regexp(&mut self) -> ArenaBox<'a, RegExpLiteral<'a>> {

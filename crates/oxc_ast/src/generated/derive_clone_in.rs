@@ -3220,7 +3220,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for NumericLiteral<'_> {
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
             value: CloneIn::clone_in_impl(&self.value, with_semantic_ids, allocator),
             raw: CloneIn::clone_in_impl(&self.raw, with_semantic_ids, allocator),
-            base: CloneIn::clone_in_impl(&self.base, with_semantic_ids, allocator),
         }
     }
 }
@@ -3255,7 +3254,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for BigIntLiteral<'_> {
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
             value: CloneIn::clone_in_impl(&self.value, with_semantic_ids, allocator),
             raw: CloneIn::clone_in_impl(&self.raw, with_semantic_ids, allocator),
-            base: CloneIn::clone_in_impl(&self.base, with_semantic_ids, allocator),
         }
     }
 }

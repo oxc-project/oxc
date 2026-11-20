@@ -316,13 +316,7 @@ impl<'a> Normalize {
                 if Self::is_unary_delete_ancestor(ctx.ancestors()) {
                     return None;
                 }
-                Some(Expression::new_numeric_literal(
-                    ident.span,
-                    f64::INFINITY,
-                    None,
-                    NumberBase::Decimal,
-                    ctx,
-                ))
+                Some(Expression::new_numeric_literal(ident.span, f64::INFINITY, None, ctx))
             }
             "NaN" if ident.is_global_reference(ctx.scoping()) => {
                 // `delete NaN` returns `false`

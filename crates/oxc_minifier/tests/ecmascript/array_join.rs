@@ -14,22 +14,10 @@ fn test() {
         [
             ArrayExpressionElement::new_elision(SPAN, ast),
             ArrayExpressionElement::new_null_literal(SPAN, ast),
-            ArrayExpressionElement::new_numeric_literal(
-                SPAN,
-                42f64,
-                None,
-                NumberBase::Decimal,
-                ast,
-            ),
+            ArrayExpressionElement::new_numeric_literal(SPAN, 42f64, None, ast),
             ArrayExpressionElement::new_string_literal(SPAN, "foo", None, ast),
             ArrayExpressionElement::new_boolean_literal(SPAN, true, ast),
-            ArrayExpressionElement::new_big_int_literal(
-                SPAN,
-                "42",
-                Some(Str::from("42n")),
-                BigintBase::Decimal,
-                ast,
-            ),
+            ArrayExpressionElement::new_big_int_literal(SPAN, "42", Some(Str::from("42n")), ast),
         ],
         ast,
     );

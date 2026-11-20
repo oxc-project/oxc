@@ -108,7 +108,6 @@ impl<'a> PeepholeOptimizations {
                     if_stmt.test.span(),
                     if boolean { 1.0 } else { 0.0 },
                     None,
-                    NumberBase::Decimal,
                     ctx,
                 );
                 ctx.replace_expression(&mut if_stmt.test, new_test);

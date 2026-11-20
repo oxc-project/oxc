@@ -815,8 +815,7 @@ fn negative_big_int_literal() {
     let allocator = Allocator::default();
     let ast = AstBuilder::new(&allocator);
 
-    let negative_one =
-        || Expression::new_big_int_literal(SPAN, "-1", None, BigintBase::Decimal, &ast);
+    let negative_one = || Expression::new_big_int_literal(SPAN, "-1", None, &ast);
     let expr_stmt = |expr| Statement::new_expression_statement(SPAN, expr, &ast);
     let cases = [
         // `-(-1n)`
