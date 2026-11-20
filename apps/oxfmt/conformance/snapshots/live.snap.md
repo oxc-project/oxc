@@ -117,7 +117,7 @@
 
 ## angular-in-js
 
-### Option 1: 222/240 (92.50%)
+### Option 1: 221/240 (92.08%)
 
 ```json
 {"printWidth":80}
@@ -155,6 +155,8 @@
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/ng-zorro-antd/components/time-picker/time-picker-panel.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__time-picker__time-picker-panel.component.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/transfer/transfer-list.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__transfer__transfer-list.component.ts.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-root-chain-not-indented
 - [externals/ng-zorro-antd/components/tree-select/tree-select.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__tree-select__tree-select.component.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/ng-zorro-antd/components/upload/upload.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__upload__upload.component.ts.md)

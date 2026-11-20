@@ -1265,6 +1265,8 @@ The computed property (`a[b + c]`) keeps its own layout.
 
 - Why: uniform-rule (same construct, same output: `foo.b`)
 - Pin: `tests/fixtures/js/member-expression/single-level-member-no-break.mjs`
+- Conformance:
+  - `externals/prettier/angular/angular/attributes.component.html` (`printWidth: 1`, `this.a`)
 
 ```js
 // input (printWidth: 80)

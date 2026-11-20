@@ -1,7 +1,9 @@
 //! Angular: the JS of a template (`{{ }}`, `[a]`, `[(a)]`, `(a)`, `*a`, `{{ }}` in another attribute's value, block parameters, `@let`),
 //! formatted by the session's dispatcher as TS fragments, split as the parser reads it ([`AngularExpression`] and the rest):
 //! each piece of code is dispatched, Angular's own syntax around them (pipes, comments, `;`, microsyntax, block parameters) prints here.
-//! A piece the dispatcher does not format leaves what holds it as written: the value, a block's parameters, a `{{ }}`.
+//! A piece the dispatcher does not format leaves what holds it as written: the value, a block's parameters, a `{{ }}`;
+//! as one holding a pipe below its root does (apps/oxfmt/DIVERGENCES.md#js-in-angular-nested-pipe-as-written),
+//! or a JS reserved word (apps/oxfmt/DIVERGENCES.md#js-in-angular-reserved-word-as-written), which TS reads otherwise.
 
 use oxc_allocator::ArenaVec;
 use oxc_formatter_core::{
@@ -176,7 +178,8 @@ pub fn write_value_interpolations<'a>(
 }
 
 /// Writes a structural directive's value (`*ngFor`) formatted, quoted: its bindings as Prettier prints them,
-/// `;` between them (a space before `of`), a `:` after a key but `of`, `then`, `else` and `track`;
+/// `;` between them (a space before `of`), a `:` after a key but `of`, `then`, `else` and `track`,
+/// each key as written (apps/oxfmt/DIVERGENCES.md#js-in-angular-microsyntax-keys-as-written);
 /// the directive's own expression alone as a binding's value (`value`, its quote entities read back);
 /// `false` to print it as written.
 pub fn write_template_bindings<'a>(
@@ -338,7 +341,7 @@ pub fn format_block_parameters<'a>(
 }
 
 /// Writes `@let name = value;` formatted, breaking after the `=` (as Prettier prints it);
-/// `false` to print it as written.
+/// `false` to print it as written, its name and `=` too (apps/oxfmt/DIVERGENCES.md#js-in-angular-let-head-as-written).
 /// The `;` ends it whatever `semi` says: Angular's lexer ends the value there.
 pub fn write_let(declaration: &LetDeclaration<'_>, f: &mut HtmlishFormatter<'_, '_>) -> bool {
     let source = f.context().tree().source();
@@ -364,7 +367,8 @@ pub fn write_let(declaration: &LetDeclaration<'_>, f: &mut HtmlishFormatter<'_, 
     true
 }
 
-/// A comment the code ends in, which runs to its end: the host's next delimiter goes on a line of its own.
+/// A comment the code ends in, which runs to its end: the host's next delimiter goes on a line of its own,
+/// inside the quotes (apps/oxfmt/DIVERGENCES.md#js-in-angular-binding-comment-in-quotes).
 fn write_comment<'a>(comment: Option<&'a str>, f: &mut HtmlishFormatter<'_, 'a>) {
     if let Some(comment) = comment {
         write!(f, [line_suffix(&format_args!(space(), text(comment))), expand_parent()]);
@@ -431,7 +435,7 @@ impl<'a> Parts<'a> {
     /// The code, then each pipe on a line of its own when they break, its arguments too (as Prettier prints them);
     /// a lone pipe breaks on its own (`f(⏎…⏎) | async`).
     /// The code's own lines do not indent: they read as one operand
-    /// (apps/oxfmt/DIVERGENCES.md#angular-pipe-operand-as-root, written with the switch to native Angular).
+    /// (apps/oxfmt/DIVERGENCES.md#js-in-angular-pipe-operand-as-root).
     fn write(self, f: &mut HtmlishFormatter<'_, 'a>) {
         let Self { code, pipes, comment } = self;
         if pipes.is_empty() {
