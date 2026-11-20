@@ -11,7 +11,7 @@ use oxc_formatter_core::{
 use oxc_span::Span;
 
 use crate::{
-    TEMPLATE_PLACEHOLDER_PREFIX, TEMPLATE_PLACEHOLDER_SUFFIX,
+    TEMPLATE_PLACEHOLDER,
     comments::CssComment,
     context::CssFormatContext,
     options::CssFormatOptions,
@@ -189,7 +189,7 @@ pub enum CssRoot {
     /// An embedded part (JSDoc / Markdown code block): the root parses as a block's contents,
     /// so a root declaration is a statement (AGENTS.md "Error semantics").
     Fragment,
-    /// A [`Self::Fragment`] from a css-in-js template, with `` `PLACEHOLDER-N` `` markers.
+    /// A [`Self::Fragment`] from a css-in-js template, with `` `oxfmt_css_N` `` markers.
     CssInJsTemplate,
 }
 
@@ -244,12 +244,13 @@ fn parse_stylesheet<'a>(
         .options(ParserOptions {
             // Derive the affix from the host sentinel (single source of truth),
             // minus the leading backtick which oxc-css-parser consumes as the placeholder sigil
-            // (the closing backtick `TEMPLATE_PLACEHOLDER_SUFFIX` is fixed in oxc-css-parser).
+            // (the closing backtick, `TEMPLATE_PLACEHOLDER.suffix`, is fixed in oxc-css-parser).
             // Only valid for SCSS; oxc-css-parser asserts that.
             template_placeholder: (root == CssRoot::CssInJsTemplate).then_some(
                 TemplatePlaceholder {
-                    prefix: TEMPLATE_PLACEHOLDER_PREFIX
-                        .strip_prefix(TEMPLATE_PLACEHOLDER_SUFFIX)
+                    prefix: TEMPLATE_PLACEHOLDER
+                        .prefix
+                        .strip_prefix(TEMPLATE_PLACEHOLDER.suffix)
                         .expect("placeholder prefix starts with a backtick"),
                 },
             ),

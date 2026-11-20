@@ -7,11 +7,9 @@
 //! as one naming a JS reserved word does (apps/oxfmt/DIVERGENCES.md#js-in-angular-reserved-word-as-written), which TS reads otherwise,
 //! or holding a pipe the parser leaves in the code (apps/oxfmt/DIVERGENCES.md#js-in-angular-nested-pipe-as-written).
 
-use std::fmt::Write as _;
-
 use oxc_allocator::ArenaVec;
 use oxc_formatter_core::{
-    Format, FormatElement,
+    Format, FormatElement, Placeholder, PlaceholderPiece,
     builders::{
         FormatWith, align, expand_parent, group, indent, line_suffix, soft_block_indent,
         soft_line_break, soft_line_break_or_space, soft_space_or_block_indent, space, text,
@@ -488,8 +486,9 @@ struct Replacement<'a> {
     in_parens: bool,
 }
 
-/// What a nested pipe is dispatched as: a name of its own, `{PLACEHOLDER}{index}__`.
-const PLACEHOLDER: &str = "__ng";
+/// What a nested pipe is dispatched as: a name of its own, `oxfmt_ng_{index}_`.
+/// Each `Code` checks its own IR for its own: a nested one's is dispatched on its own, and goes in resolved, not scanned again.
+const PLACEHOLDER: Placeholder<'static> = Placeholder { prefix: "oxfmt_ng_", suffix: "_" };
 
 impl<'a> Code<'a> {
     /// `code` formatted as `part`, each nested pipe dispatched as a name standing for it (TS reads `|` as a bitwise or);
@@ -507,7 +506,7 @@ impl<'a> Code<'a> {
             let ir = dispatch_piece(part, piece, f)?;
             return Some(Self { ir, conditional: code.conditional, replacements: vec![] });
         }
-        if piece.contains(PLACEHOLDER) {
+        if PLACEHOLDER.is_in(piece) {
             return None;
         }
         // A nested pipe is no binding's whole value, which hugs the quotes; nor what follows the code follows it
@@ -524,7 +523,7 @@ impl<'a> Code<'a> {
             replaced.push_str(&source[at..span.start as usize]);
             // A spread's prints in parens, as Prettier parens it (`[...(a | p)]`); one in parens already is `in_parens`
             let spread = replaced.trim_end().ends_with("...");
-            std::write!(replaced, "{PLACEHOLDER}{}__", replacements.len()).ok()?;
+            PLACEHOLDER.write(&mut replaced, replacements.len());
             // The last value of an object: its `}` and the pipe's last may meet (`{k: a | p: {x: 1}}`), which ends a `{{ }}`.
             // In parens too, where they cannot, as Prettier parens it (`{k: (a | p: ({x: 1}))}`), but a spread's (`{...(a | p: {x: 1})}`)
             let before_brace = *last_value && !spread;
@@ -534,27 +533,21 @@ impl<'a> Code<'a> {
         }
         replaced.push_str(&source[at..code.span.end as usize]);
         let ir = dispatch_piece(part, f.allocator().alloc_str(&replaced), f)?;
-        // Each name once: one dropped or printed twice would lose the pipe or repeat it
-        let mut counts = vec![0usize; replacements.len()];
-        // Every index is one of these: the code holds no placeholder of its own
-        let ir = map_text_in_ir(ir, f.allocator(), &mut |text, _| {
-            for_each_placeholder(text, |_, _, index| counts[index] += 1);
-            false
-        });
-        counts.iter().all(|&count| count == 1).then_some(Self {
+        // Each name once, in order: one dropped or printed twice would lose the pipe or repeat it
+        PLACEHOLDER.are_sequential(&ir, replacements.len()).then_some(Self {
             ir,
             conditional: code.conditional,
             replacements,
         })
     }
 
-    /// Its IR, each placeholder replaced with what it stands for.
+    /// Its IR, each placeholder replaced with what it stands for, in every variant of a `BestFitting`.
     fn resolve(self, f: &mut HtmlishFormatter<'_, 'a>) -> Ir<'a> {
         if self.replacements.is_empty() {
             return self.ir;
         }
         let indent_width = f.options().indent_width;
-        let mut replacements: Vec<_> = self
+        let replacements: Vec<_> = self
             .replacements
             .into_iter()
             .map(|replacement| match replacement {
@@ -563,20 +556,18 @@ impl<'a> Code<'a> {
             })
             .collect();
         map_text_in_ir(self.ir, f.allocator(), &mut |text, out| {
-            let mut changed = false;
-            let mut rest = 0;
-            for_each_placeholder(text, |start, end, index| {
-                if start > rest {
-                    out.push(FormatElement::text(&text[rest..start], indent_width));
-                }
-                out.extend(replacements[index].take());
-                rest = end;
-                changed = true;
-            });
-            if changed && rest < text.len() {
-                out.push(FormatElement::text(&text[rest..], indent_width));
+            if !PLACEHOLDER.is_in(text) {
+                return false;
             }
-            changed
+            for piece in PLACEHOLDER.pieces(text) {
+                match piece {
+                    PlaceholderPiece::Text(text) => {
+                        out.push(FormatElement::text(text, indent_width));
+                    }
+                    PlaceholderPiece::Index(index) => out.extend(replacements[index].clone()),
+                }
+            }
+            true
         })
     }
 
@@ -726,23 +717,5 @@ fn write_pipe<'a>(
         write!(f, group(&pipe));
     } else {
         write!(f, pipe);
-    }
-}
-
-/// Calls `found` with where each nested pipe's name is in `text` ([`PLACEHOLDER`]), and its index.
-fn for_each_placeholder(text: &str, mut found: impl FnMut(usize, usize, usize)) {
-    let mut from = 0;
-    while let Some(start) = text[from..].find(PLACEHOLDER).map(|i| from + i) {
-        let digits = &text[start + PLACEHOLDER.len()..];
-        let len = digits.bytes().take_while(u8::is_ascii_digit).count();
-        from = start + PLACEHOLDER.len();
-        if len > 0
-            && digits[len..].starts_with("__")
-            && let Ok(index) = digits[..len].parse()
-        {
-            let end = from + len + 2;
-            found(start, end, index);
-            from = end;
-        }
     }
 }

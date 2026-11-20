@@ -2,7 +2,7 @@
 //! (`format_to_ir`), the dispatcher path oxfmt uses for css-in-js.
 //! The dispatcher always parses as SCSS, so this example is hardcoded
 //! to `CssVariant::Scss`. Unlike `css_formatter`, this tolerates
-//! `` `PLACEHOLDER-N` `` markers in value/selector position.
+//! `` `oxfmt_css_N` `` markers in value/selector position.
 //!
 //! ```sh
 //! cargo run -p oxc_formatter_css --example embedded_debug -- [filename]
