@@ -853,35 +853,72 @@ Prettier indents it when a pipe follows, in a `{{ }}` and a binding (`[title]`) 
 An action's statement prints as the expression it is, as Prettier prints a Vue handler's and a binding's value.
 Prettier wraps one without a side effect (neither an assignment nor a call) in parens, which Angular reads alike, to make a possible mistake visible (`foo == $event`).
 
+## js-in-angular-nested-pipe-as-name
+
+- Why: cost
+- Pin: `conformance/fixtures/js-in-angular/nested-pipe.component.html`
+- Conformance:
+  - `externals/prettier/angular/angular/attributes.component.html`
+  - `externals/prettier/angular/angular/interpolation.component.html`
+
+```html
+<!-- input -->
+<p [x]="f(x, {aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb | pppp})"></p>
+
+<!-- ours -->
+<p
+  [x]="
+    f(x, {
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+        | pppp,
+    })
+  "
+></p>
+
+<!-- prettier -->
+<p
+  [x]="
+    f(x, {
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:
+        bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb | pppp,
+    })
+  "
+></p>
+```
+
+A pipe below the root (`(x$ | async).level`, `f(a | p)`, `{k: a | p}`) formats, a name of its own standing for it while JS lays the code out:
+where JS decides the layout by a node's kind, it decides for a name, which it does not break after a property's `:` nor before a `.` (`).level`),
+where Prettier breaks a pipe there.
+Doubled parens around one at the root keep one (`((a | p)) | q`).
+Matching would need JS to read Angular's pipe (`NGPipeExpression` in Prettier's estree).
+
 ## js-in-angular-nested-pipe-as-written
 
 - Why: cost
 - Pin: `conformance/fixtures/js-in-angular/nested-pipe-as-written.component.html`
-- Conformance:
-  - `externals/prettier/angular/angular/attributes.component.html`
-  - `externals/prettier/angular/angular/interpolation.component.html`
-  - `externals/prettier/angular/angular/real-world.component.html`
-  - `externals/prettier/angular/let-declaration/complex.html`
-  - `externals/bitwarden-web/vault/components/vault-items/vault-cipher-row.component.html`
-- Drop when: the parser reads a pipe inside the code, and the formatter dispatches the code with a placeholder in its place
+- Drop when: the parser reads these pipes as nested ones (`AngularCode::nested`)
 
 ```html
 <!-- input -->
-<p>{{(birthday | date:'longDate') | uppercase}}</p>
-<p [ngClass]="{'btn-success':(dialog$|async).level===1}"></p>
+<p>{{a?b:c|p}}</p>
+<p>{{ f(a ? b : c|p) }}</p>
+<p>{{ `${a|p}` }}</p>
 
 <!-- ours -->
-<p>{{(birthday | date:'longDate') | uppercase}}</p>
-<p [ngClass]="{'btn-success':(dialog$|async).level===1}"></p>
+<p>{{a?b:c|p}}</p>
+<p>{{ f(a ? b : c|p) }}</p>
+<p>{{ `${a|p}` }}</p>
 
 <!-- prettier -->
-<p>{{ birthday | date: "longDate" | uppercase }}</p>
-<p [ngClass]="{ 'btn-success': (dialog$ | async).level === 1 }"></p>
+<p>{{ a ? b : (c | p) }}</p>
+<p>{{ f(a ? b : (c | p)) }}</p>
+<p>{{ `${(a | p)}` }}</p>
 ```
 
-A value holding a pipe inside its code (in parens, an argument, an array's element or an object's value) prints as written; a pipe at its root formats.
-The code is formatted as TS, which has no pipe: `|` is a bitwise or there, whose parens the formatter may drop (`a || (b | async)`).
-About 1% of the expressions in real templates hold one.
+A pipe in a conditional's alternate (at the root too) or in a template literal's `${}` prints as written, as the parser does not split it from the code (the other nested ones format: DIVERGENCES.md#js-in-angular-nested-pipe-as-name):
+TS reads its `|` as a bitwise or, which Angular does not read.
+None was found in about 1400 real templates.
+Matching would need the parser to read the alternate's pipe (after the conditional's last `:`) and a template literal's `${}`, which its lexer skips.
 
 ## js-in-angular-reserved-word-as-written
 
@@ -889,7 +926,6 @@ About 1% of the expressions in real templates hold one.
 - Pin: `conformance/fixtures/js-in-angular/reserved-word-as-written.component.html`
 - Conformance:
   - `externals/prettier/angular/control-flow/multiple-switch-cases.html`
-- Drop when: the formatter dispatches the code with a placeholder in a reserved word's place, as for a pipe (DIVERGENCES.md#js-in-angular-nested-pipe-as-written)
 
 ```html
 <!-- input -->
@@ -906,6 +942,8 @@ About 1% of the expressions in real templates hold one.
 ```
 
 Code naming a JS reserved word prints as written: Angular reads it as a name (its keywords are only 14), and the code is formatted as TS, which does not parse it.
+Matching would need the names replaced before the TS parse, as a nested pipe is (DIVERGENCES.md#js-in-angular-nested-pipe-as-name):
+the parser would have to know JS's reserved words to find them, for code real templates rarely hold (a `delete(…)` mostly).
 
 ## js-in-angular-for-let-formatted
 
