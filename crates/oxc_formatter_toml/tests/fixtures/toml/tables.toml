@@ -1,0 +1,15 @@
+root = "before any header"
+[a]
+x = 1
+[ a.b ]
+y = 2
+[a . "quoted key" . 'literal']
+z = 3
+[[products]]
+name = "Hammer"
+[[products]]
+[[products]]
+name = "Nail"
+[empty]
+[after_empty]
+k = "v"

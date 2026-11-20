@@ -1,0 +1,44 @@
+[build-system]
+requires = ["hatchling>=1.24", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "example"
+dynamic = ["version"]
+description = "An example package with a reasonably long description line"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Example Author", email = "author@example.com" }]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+]
+dependencies = ["httpx>=0.27", "pydantic>=2.7", "rich>=13.7", "typer>=0.12", "tomli>=2.0; python_version < '3.11'"]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8",  # test runner
+  "ruff",
+]
+
+[project.scripts]
+example = "example.cli:app"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+ignore = [
+    # line length is handled by the formatter
+    "E501",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101", "PLR2004"]
+
+[[tool.mypy.overrides]]
+module = ["yaml.*", "toml.*"]
+ignore_missing_imports = true

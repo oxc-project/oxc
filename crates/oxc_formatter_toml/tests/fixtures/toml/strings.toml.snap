@@ -1,0 +1,92 @@
+---
+source: crates/oxc_formatter_toml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+# Known bug: line breaks inside multi-line strings are not normalized (`Input variants differ: CRLF`) (see AGENTS.md)
+basic = "basic \"escaped\" \t \u00E9"
+literal = 'C:\Users\path'
+multi_basic = """
+Roses are red
+Violets are blue"""
+multi_basic_continuation = """\
+  The quick brown \
+  fox."""
+multi_literal = '''
+first line
+  indented line
+'''
+array_of_multiline = ["""
+a
+b""", 'c']
+
+# Only the last line of a multi-line value is long
+last_line_long = ["""
+short""", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"]
+first_line_long = ["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", """
+short"""]
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+# Known bug: line breaks inside multi-line strings are not normalized (`Input variants differ: CRLF`) (see AGENTS.md)
+basic = "basic \"escaped\" \t \u00E9"
+literal = 'C:\Users\path'
+multi_basic = """
+Roses are red
+Violets are blue"""
+multi_basic_continuation = """\
+  The quick brown \
+  fox."""
+multi_literal = '''
+first line
+  indented line
+'''
+array_of_multiline = ["""
+a
+b""", 'c']
+
+# Only the last line of a multi-line value is long
+last_line_long = [
+  """
+short""",
+  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+]
+first_line_long = [
+  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  """
+short""",
+]
+
+---------- Input variants differ: CRLF ----------
+-------------------
+{ printWidth: 100 }
+-------------------
+# Known bug: line breaks inside multi-line strings are not normalized (`Input variants differ: CRLF`) (see AGENTS.md)
+basic = "basic \"escaped\" \t \u00E9"
+literal = 'C:\Users\path'
+multi_basic = """
+Roses are red
+Violets are blue"""
+multi_basic_continuation = """\
+  The quick brown \
+  fox."""
+multi_literal = '''
+first line
+  indented line
+'''
+array_of_multiline = ["""
+a
+b""", 'c']
+
+# Only the last line of a multi-line value is long
+last_line_long = ["""
+short""", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"]
+first_line_long = [
+  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  """
+short""",
+]
+
+---------- Input variants differ: CRLF ----------
+===================== End =====================
