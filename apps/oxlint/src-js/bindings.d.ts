@@ -61,6 +61,19 @@ export declare function applyFixes(sourceText: string, fixesJson: string): strin
  */
 export declare function getBufferOffset(buffer: Uint8Array): number
 
+/**
+ * Get the type of the node spanning `start..end` (UTF-16 offsets) in `file_path`.
+ *
+ * The type comes from the `tsrs-lint` process that runs type-aware rules, so this
+ * blocks until that process has linted, then answers.
+ *
+ * Returns the type as JSON (`{ nodeKind, flags, text }`), or `null` if no node spans the range.
+ *
+ * # Errors
+ * Throws if type information is unavailable, or the query failed.
+ */
+export declare function getTypeAtLocation(filePath: string, start: number, end: number): string | null
+
 /** JS callback to create a workspace. */
 export type JsCreateWorkspaceCb = ((arg: string) => Promise<undefined>)
 

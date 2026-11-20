@@ -17,6 +17,7 @@ import { ecmaVersion } from "./context.ts";
 import * as directiveMethods from "./directives.ts";
 import * as locationMethods from "./location.ts";
 import { initLines, lines, lineStartIndices, resetLinesAndLocs } from "./location.ts";
+import { PARSER_SERVICES } from "./parser_services.ts";
 import { resetScopeManager, SCOPE_MANAGER } from "./scope.ts";
 import * as scopeMethods from "./scope.ts";
 import { resetTokens } from "./tokens.ts";
@@ -229,9 +230,9 @@ export const SOURCE_CODE = Object.freeze({
   /**
    * Parser services for the file.
    *
-   * Oxlint does not offer any parser services.
+   * Experimental: `getTypeAtLocation(node)` provides type information with `--type-aware` and `tsrs-lint`.
    */
-  parserServices: Object.freeze({} as Record<string, unknown>),
+  parserServices: PARSER_SERVICES,
 
   /**
    * Source text as array of lines, split according to specification's definition of line breaks.
