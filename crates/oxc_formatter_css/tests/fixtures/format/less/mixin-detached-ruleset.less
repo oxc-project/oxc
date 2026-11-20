@@ -1,0 +1,23 @@
+// A detached ruleset argument makes the whole call print verbatim: no
+// number/string adjustments run over the ruleset body
+// (DIVERGENCES.md#less-mixin-detached-ruleset-verbatim).
+.on-mobile({
+  .a {
+    background: url(img/a.1.2.png);
+    /* block 1.2.3 */
+    // line 4.5.6
+    color: .5px;
+    width: 0.50px;
+    content: "x";
+  }
+});
+// Same without a comment: Prettier itself rewrites `img/b.1.2.png` here, we keep it.
+.on-pc(@width; {
+  .b {
+    background: url(img/b.1.2.png);
+  }
+});
+// A comment in the call slice is Prettier's `selector-unknown` fallback: verbatim too.
+.with-comment(1.2.3 /* keep me */);
+// No detached ruleset, no comment: number adjustments apply, Prettier-matched.
+.adjusted(1.2.3, "x");

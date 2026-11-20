@@ -184,8 +184,24 @@ pub(super) fn write_less_mixin_call_statement<'a>(
     let span = call.span;
     let end = call.important.as_ref().map_or(span.end, |imp| imp.span.start);
     let raw = source.slice_range(span.start, end).trim_end();
+    // A comment in the call slice makes Prettier bail to `selector-unknown` and print
+    // verbatim (no number/string adjustments); ours takes the same branch.
+    // An argument that is a detached ruleset keeps the same verbatim branch as OUR
+    // divergence (DIVERGENCES.md#less-mixin-detached-ruleset-verbatim): Prettier's
+    // `adjustNumbers` runs over the ruleset body and silently rewrites `url()` paths,
+    // non-idempotently (`img/a.1.2.png` -> `img/a.10.2.png` -> `img/a.100.2.png`).
+    let verbatim = has_comments_between(span.start, end, f)
+        || call.args.as_ref().is_some_and(|args| {
+            args.args.iter().any(|arg| {
+                matches!(arg, LessMixinArgument::Value(ComponentValue::LessDetachedRuleset(_)))
+            })
+        });
     let _ = f.context().comments().take_before(end);
-    value::write_adjusted_verbatim(raw, f);
+    if verbatim {
+        write!(f, text(raw));
+    } else {
+        value::write_adjusted_verbatim(raw, f);
+    }
     if let Some(important) = &call.important {
         value::write_trailing_important(important, f);
     }

@@ -1422,7 +1422,48 @@ Over the width the prelude breaks like a selector, one indent in: before `when` 
 Prettier reads the whole prelude with postcss-selector-parser, where every top-level comma is a selector boundary, except that it throws on a `(`-led piece (`when (a), (b)` prints verbatim), so the same guard list breaks or not depending on whether the alternative starts with `not`;
 over the width every word gap is a descendant combinator, so `when`, `and` and each condition land on their own line, while a `,`-joined guard never breaks at all.
 
+## less-mixin-detached-ruleset-verbatim
+
+- Why: semantics (a rewritten `url()` path), idempotency (a further pass rewrites again, no fixpoint)
+- Pin: `tests/fixtures/format/less/mixin-detached-ruleset.less`
+
+```less
+/* input */
+.on-mobile({
+  .b {
+    background: url(img/b.1.2.png);
+  }
+});
+
+/* ours */
+.on-mobile({
+  .b {
+    background: url(img/b.1.2.png);
+  }
+});
+
+/* prettier */
+.on-mobile({
+  .b {
+    background: url(img/b.10.2.png);
+  }
+});
+```
+
+A statement-position Less mixin call whose argument is a detached ruleset prints its raw slice
+verbatim, without the number/string adjustments (`write_adjusted_verbatim`).
+Prettier re-parses the whole call text as a selector and prints the `selector-class` value
+through `adjustNumbers(adjustStrings(...))`; the loose class capture swallows the `{ ... }`,
+so the pass runs over the ruleset BODY: `a.1` is kept as a word + glued number, the following
+standalone `.2` gains a leading zero, and `url(img/b.1.2.png)` becomes `url(img/b.10.2.png)`
+— a different (404) URL, re-corrupted on every further run (`b.100.2.png`, ...), so `--check`
+never stabilizes. Don't corrupt outranks matching the pass; the adjustment still applies to a
+call without a detached ruleset, Prettier-matched.
+A comment anywhere in the call slice makes Prettier bail to `selector-unknown` and print
+verbatim; ours takes the same verbatim branch for both triggers.
+
 ## line-comment-continuation-indent
+
 
 - Why: uniform-rule (same construct, same output: the width-wrapped continuation of the same operation)
 - Pin: `tests/fixtures/format/less/line-comment-continuation-indent.less`, `tests/fixtures/format/scss/line-comment-continuation-indent.scss`
