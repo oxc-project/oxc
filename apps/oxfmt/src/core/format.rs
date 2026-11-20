@@ -96,9 +96,11 @@ impl SourceFormatter {
                 }
                 result
             }
-            FormatStrategy::Native(NativeLanguage::Json(variant)) => {
-                self.format_json(source_text, &path, to_oxc_formatter_json(&config, core, variant))
-            }
+            FormatStrategy::Native(NativeLanguage::Json(variant)) => self.format_json(
+                source_text,
+                &path,
+                to_oxc_formatter_json(&config, core, variant, validated.array_line_pattern.clone()),
+            ),
             FormatStrategy::PackageJson => {
                 // `sort_package_json` only accepts strictly valid JSON,
                 // but the `json-stringify` parser also accepts unquoted keys, trailing commas, etc.
@@ -109,7 +111,12 @@ impl SourceFormatter {
                 self.format_json(
                     sorted.as_deref().unwrap_or(source_text),
                     &path,
-                    to_oxc_formatter_json(&config, core, JsonVariant::JsonStringify),
+                    to_oxc_formatter_json(
+                        &config,
+                        core,
+                        JsonVariant::JsonStringify,
+                        validated.array_line_pattern.clone(),
+                    ),
                 )
             }
             FormatStrategy::Native(NativeLanguage::Graphql) => {
@@ -135,7 +142,12 @@ impl SourceFormatter {
                 .format_json(
                     source_text,
                     &path,
-                    to_oxc_formatter_json(&config, core, JsonVariant::Json),
+                    to_oxc_formatter_json(
+                        &config,
+                        core,
+                        JsonVariant::Json,
+                        validated.array_line_pattern.clone(),
+                    ),
                 )
                 .or_else(|_| {
                     self.format_yaml(source_text, &path, to_oxc_formatter_yaml(&config, core))

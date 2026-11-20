@@ -1,0 +1,7 @@
+[
+  { "arrayWrap": "auto" },
+  { "arrayWrap": "preserve" },
+  { "arrayWrap": "collapse" },
+  { "arrayWrap": { "wrapThreshold": 2 } },
+  { "arrayWrap": { "linePattern": "2 1", "wrapThreshold": 3 } }
+]
