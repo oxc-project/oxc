@@ -2481,6 +2481,7 @@ dependencies = [
  "bitflags",
  "cow-utils",
  "memchr",
+ "napi",
  "num-bigint",
  "num-traits",
  "oxc_allocator",

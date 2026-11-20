@@ -37,6 +37,7 @@ oxc_syntax = { workspace = true }
 
 bitflags = { workspace = true }
 cow-utils = { workspace = true }
+napi = { workspace = true, optional = true }
 num-bigint = { workspace = true }
 num-traits = { workspace = true }
 rustc-hash = { workspace = true }
@@ -59,3 +60,5 @@ regular_expression = ["dep:oxc_regular_expression"]
 mutate_tokens = []
 # Expose Lexer for benchmarks
 benchmarking = []
+# Enable `Source::from_napi_js_string`
+napi = ["dep:napi"]
