@@ -813,7 +813,7 @@ impl<'a> ClassProperties<'a> {
                 ClassElement::PropertyDefinition(prop) => {
                     debug_assert!(
                         !prop.declare,
-                        "`declare` property should have been removed in the TypeScript plugin's `exit_class`"
+                        "`declare` property should have been removed in the TypeScript plugin's `enter_class`"
                     );
                     if prop.r#static {
                         self.convert_static_property(prop, ctx);

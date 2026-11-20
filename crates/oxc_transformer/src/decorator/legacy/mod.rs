@@ -45,8 +45,7 @@
 
 mod metadata;
 
-use std::borrow::Cow;
-use std::mem;
+use std::{borrow::Cow, cell::Cell, mem};
 
 use oxc_allocator::{
     Address, ArenaVec, CloneIn, GetAddress, GetAllocator, ReplaceWith, TakeIn, UnstableAddress,
@@ -54,7 +53,7 @@ use oxc_allocator::{
 use oxc_ast::{StaticPropertyName, ast::*};
 use oxc_ast_visit::{VisitJs, VisitMut};
 use oxc_data_structures::stack::NonEmptyStack;
-use oxc_semantic::{ScopeFlags, SymbolFlags};
+use oxc_semantic::{ScopeFlags, ScopeId, Scoping, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, ast_operations::get_var_name_from_node};
@@ -89,32 +88,19 @@ struct ClassDecorations<'a> {
     /// Flag indicating whether the current class needs to transform or not,
     /// `false` if the class is an expression or `declare`.
     should_transform: bool,
-    /// Decoration statements accumulated for the current class.
-    /// These will be applied when the class processing is complete.
-    decoration_stmts: Vec<Statement<'a>>,
-    /// Decoration statements of static members, kept apart from `decoration_stmts`
-    /// because TypeScript applies every instance member decorator first, then
-    /// every static member decorator. See [`ClassDecorations::append_static_decorations`].
-    static_decoration_stmts: Vec<Statement<'a>>,
+    /// Number of member decorations parked at the end of `class.decorators`, which are taken
+    /// back on class exit. See [`LegacyDecorator::transform_member_decorators`].
+    parked_member_decorations: usize,
+    /// Scope of the static block that holds the member decorations when a decorator refers to a
+    /// private name. See [`LegacyDecorator::transform_member_decorators`].
+    member_decorations_block: Option<ScopeId>,
     /// Binding for the current class being processed.
-    /// Generated on-demand when the first decorator needs it.
+    /// Generated on class entry when a class member is decorated.
     class_binding: Option<BoundIdentifier<'a>>,
-    /// Flag indicating whether the current class has a private `in` expression in any decorator.
+    /// Flag indicating whether a decorator of a member of the current class, or of a parameter of
+    /// its constructor, refers to a private name.
     /// This affects where decorations are placed (in static block vs after class).
-    class_has_private_in_expression_in_decorator: bool,
-}
-
-impl ClassDecorations<'_> {
-    fn with_should_transform(mut self, should_transform: bool) -> Self {
-        self.should_transform = should_transform;
-        self
-    }
-
-    /// Move the static member decorations after the instance member ones,
-    /// the order TypeScript applies them in.
-    fn append_static_decorations(&mut self) {
-        self.decoration_stmts.append(&mut self.static_decoration_stmts);
-    }
+    class_has_private_name_in_decorator: bool,
 }
 
 pub struct LegacyDecorator<'a> {
@@ -124,10 +110,10 @@ pub struct LegacyDecorator<'a> {
     ///
     /// The data assigned in [`Self::transform_class`] and used in places where statements contain
     /// a decorated class declaration because decorated class needs to transform into `let c = class c {}`.
-    /// The reason we why don't transform class in [`Self::exit_statement`] is the decorator transform
-    /// must run first. Since the `class-properties` plugin transforms class in `exit_class`, so that
-    /// we have to transforms decorators to `exit_class` otherwise after class is being transformed by
-    /// `class-properties` plugin, the decorators' nodes might be lost.
+    /// The class and constructor decorators are transformed in `exit_class` rather than in
+    /// [`Self::exit_statement`], because the `class-properties` plugin also transforms the class in
+    /// `exit_class`, after which the decorators' nodes might be lost. Member decorators are
+    /// transformed on class entry, see [`Self::transform_member_decorators`].
     class_decorated_data: Option<ClassDecoratedData<'a>>,
     /// Transformed decorators, they will be inserted in the statements at [`Self::exit_class_at_end`].
     decorations: FxHashMap<Address, Vec<Statement<'a>>>,
@@ -180,14 +166,18 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a> {
         // transform the newly created private backing fields.
         Self::lower_accessor_properties(class, ctx);
 
-        self.class_decorations_stack.push(
-            ClassDecorations::default()
-                .with_should_transform(!(class.is_expression() || class.declare)),
-        );
-
+        // Runs before member decorations are parked on `class.decorators`, as it checks whether
+        // the class is decorated.
         if self.emit_decorator_metadata {
             self.metadata.enter_class(class, ctx);
         }
+
+        let mut decorations = ClassDecorations {
+            should_transform: !(class.is_expression() || class.declare),
+            ..ClassDecorations::default()
+        };
+        self.transform_member_decorators(class, &mut decorations, ctx);
+        self.class_decorations_stack.push(decorations);
     }
 
     #[inline]
@@ -207,120 +197,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a> {
                 self.transform_export_default_class(stmt, ctx);
             }
             _ => {}
-        }
-    }
-
-    #[inline]
-    fn enter_method_definition(
-        &mut self,
-        node: &mut MethodDefinition<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if self.emit_decorator_metadata {
-            self.metadata.enter_method_definition(node, ctx);
-        }
-    }
-
-    #[inline]
-    fn enter_accessor_property(
-        &mut self,
-        node: &mut AccessorProperty<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if self.emit_decorator_metadata {
-            self.metadata.enter_accessor_property(node, ctx);
-        }
-    }
-
-    #[inline]
-    fn enter_property_definition(
-        &mut self,
-        node: &mut PropertyDefinition<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if self.emit_decorator_metadata {
-            self.metadata.enter_property_definition(node, ctx);
-        }
-    }
-
-    #[inline]
-    fn exit_method_definition(
-        &mut self,
-        method: &mut MethodDefinition<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        // `constructor` will handle in `transform_decorators_of_class_and_constructor`.
-        if method.kind.is_constructor() {
-            return;
-        }
-
-        if let Some(decorations) = self.get_all_decorators_of_class_method(method, ctx) {
-            // We emit `null` here to indicate to `_decorate` that it can invoke `Object.getOwnPropertyDescriptor` directly.
-            let descriptor = Expression::new_null_literal(SPAN, ctx);
-            self.handle_decorated_class_element(
-                method.r#static,
-                &mut method.key,
-                descriptor,
-                decorations,
-                ctx,
-            );
-        }
-    }
-
-    #[inline]
-    fn exit_property_definition(
-        &mut self,
-        prop: &mut PropertyDefinition<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if prop.decorators.is_empty() {
-            return;
-        }
-
-        let decorations =
-            Self::convert_decorators_to_array_expression(prop.decorators.drain(..), ctx);
-
-        // We emit `void 0` here to indicate to `_decorate` that it can invoke `Object.defineProperty` directly.
-        let descriptor = Expression::new_void_0(SPAN, ctx);
-        self.handle_decorated_class_element(
-            prop.r#static,
-            &mut prop.key,
-            descriptor,
-            decorations,
-            ctx,
-        );
-    }
-
-    #[inline]
-    fn exit_accessor_property(
-        &mut self,
-        accessor: &mut AccessorProperty<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if accessor.decorators.is_empty() {
-            return;
-        }
-
-        let decorations =
-            Self::convert_decorators_to_array_expression(accessor.decorators.drain(..), ctx);
-        // We emit `null` here to indicate to `_decorate` that it can invoke `Object.getOwnPropertyDescriptor` directly.
-        let descriptor = Expression::new_null_literal(SPAN, ctx);
-        self.handle_decorated_class_element(
-            accessor.r#static,
-            &mut accessor.key,
-            descriptor,
-            decorations,
-            ctx,
-        );
-    }
-
-    fn enter_decorator(&mut self, node: &mut Decorator<'a>, _ctx: &mut TraverseCtx<'a>) {
-        let current_class = self.class_decorations_stack.last_mut();
-        if current_class.should_transform
-            && !current_class.class_has_private_in_expression_in_decorator
-        {
-            current_class.class_has_private_in_expression_in_decorator =
-                PrivateInExpressionDetector::has_private_in_expression(&node.expression);
         }
     }
 }
@@ -478,48 +354,169 @@ impl<'a> LegacyDecorator<'a> {
         class.body.body = new_body;
     }
 
-    /// Helper method to handle a decorated class element (method, property, or accessor).
-    /// Accumulates decoration statements in the current decoration stack.
-    fn handle_decorated_class_element(
+    /// Transform the decorators of class members (fields, methods, getters and setters, and the
+    /// parameters of methods) into `_decorate(...)` calls on class entry, and take them off the
+    /// members.
+    ///
+    /// Doing this before the TypeScript and class-properties transforms see the class means they
+    /// only see undecorated members. They can erase a decorated field without an initializer like
+    /// any other, and rewrite fields without losing a decoration or its computed key. Computed keys
+    /// are replaced with an assignment to a temp var (`[_a = foo()]`), so they stay in the class and
+    /// are still evaluated once, in order.
+    ///
+    /// The other transforms must still visit the calls, as decorators can contain TypeScript
+    /// syntax, private names, and other syntax to lower. So the calls are parked where they will be
+    /// evaluated:
+    ///
+    /// * Usually after the class. The calls are appended to `class.decorators`, which are visited
+    ///   outside the class, and taken back on class exit (see [`Self::take_member_decorations`]).
+    /// * In a static block at the end of the class body if a decorator refers to a private name,
+    ///   such as `#x in obj` or `obj.#x`, which can only be evaluated inside the class.
+    ///
+    /// TypeScript applies every instance member decoration first, then every static one.
+    fn transform_member_decorators(
         &mut self,
-        is_static: bool,
-        key: &mut PropertyKey<'a>,
-        descriptor: Expression<'a>,
-        decorations: Expression<'a>,
+        class: &mut Class<'a>,
+        decorations: &mut ClassDecorations<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let current_class = self.class_decorations_stack.last_mut();
-
-        if !current_class.should_transform {
+        // Legacy decorators are not applied to class expressions or `declare` classes, so their
+        // member decorators are dropped.
+        if !decorations.should_transform {
+            Self::drop_member_decorators(class);
             return;
         }
 
-        // Get current class binding from stack
-        let class_binding = current_class.class_binding.get_or_insert_with(|| {
-            let Ancestor::ClassBody(class) = ctx.ancestor(1) else {
-                unreachable!("The grandparent of a class element is always a class.");
+        let mut instance_calls = vec![];
+        let mut static_calls = vec![];
+        let mut has_private_name = false;
+        let class_id = class.id.as_ref();
+        let class_scope_id = class.scope_id();
+
+        for element in &mut class.body.body {
+            let (is_static, key, descriptor, decorators) = match element {
+                ClassElement::PropertyDefinition(prop) => {
+                    if prop.decorators.is_empty() {
+                        continue;
+                    }
+                    let decorators = prop.decorators.take_in(ctx);
+                    has_private_name = has_private_name
+                        || PrivateNameDetector::has_private_name_in_decorators(&decorators);
+                    let metadata = self.emit_decorator_metadata.then(|| {
+                        self.metadata
+                            .create_design_type_metadata(prop.type_annotation.as_ref(), ctx)
+                    });
+                    let decorators = Self::create_decorations_array(
+                        decorators
+                            .into_iter()
+                            .map(|decorator| decorator.expression)
+                            .chain(metadata),
+                        ctx,
+                    );
+                    // `void 0` tells `_decorate` to invoke `Object.defineProperty` directly.
+                    let descriptor = Expression::new_void_0(SPAN, ctx);
+                    (prop.r#static, &mut prop.key, descriptor, decorators)
+                }
+                ClassElement::MethodDefinition(method) => {
+                    // TypeScript erases methods without a body, such as overloads.
+                    if method.value.is_typescript_syntax() {
+                        continue;
+                    }
+                    has_private_name = has_private_name
+                        || PrivateNameDetector::has_private_name_in_method_decorators(method);
+                    // The constructor's parameters are decorated with the class, on class exit.
+                    if method.kind.is_constructor() {
+                        continue;
+                    }
+                    let Some(decorators) = self.get_all_decorators_of_class_method(method, ctx)
+                    else {
+                        continue;
+                    };
+                    // `null` tells `_decorate` to invoke `Object.getOwnPropertyDescriptor` directly.
+                    let descriptor = Expression::new_null_literal(SPAN, ctx);
+                    (method.r#static, &mut method.key, descriptor, decorators)
+                }
+                _ => continue,
             };
-            if let Some(ident) = class.id() {
-                BoundIdentifier::from_binding_ident(ident)
-            } else {
-                let class_scope_id = class.scope_id().get().unwrap();
-                let outer_scope_id = ctx.scoping().scope_parent_id(class_scope_id).unwrap();
-                ctx.generate_uid("default", outer_scope_id, SymbolFlags::Class)
-            }
-        });
 
-        let prefix = Self::get_class_member_prefix(class_binding, is_static, ctx);
-        let name = self.get_name_of_property_key(key, ctx);
-        let decorator_stmt = self.create_decorator(decorations, prefix, name, descriptor, ctx);
+            let class_binding = decorations.class_binding.get_or_insert_with(|| {
+                if let Some(ident) = class_id {
+                    BoundIdentifier::from_binding_ident(ident)
+                } else {
+                    let outer_scope_id = ctx.scoping().scope_parent_id(class_scope_id).unwrap();
+                    ctx.generate_uid("default", outer_scope_id, SymbolFlags::Class)
+                }
+            });
+            let prefix = Self::get_class_member_prefix(class_binding, is_static, ctx);
+            let name = Self::get_name_of_property_key(key, ctx);
+            let call = Self::create_decorate_call(decorators, prefix, name, descriptor, ctx);
+            if is_static { static_calls.push(call) } else { instance_calls.push(call) }
+        }
 
-        // Push to current decoration stack
-        let current_class = self.class_decorations_stack.last_mut();
-        if is_static {
-            current_class.static_decoration_stmts.push(decorator_stmt);
+        decorations.class_has_private_name_in_decorator = has_private_name;
+        if instance_calls.is_empty() && static_calls.is_empty() {
+            return;
+        }
+        instance_calls.append(&mut static_calls);
+
+        if has_private_name {
+            let stmts = instance_calls
+                .into_iter()
+                .map(|call| Statement::new_expression_statement(SPAN, call, ctx))
+                .collect();
+            decorations.member_decorations_block =
+                Some(Self::insert_decorations_into_class_static_block(class, stmts, ctx));
         } else {
-            current_class.decoration_stmts.push(decorator_stmt);
+            // The calls are evaluated after the class.
+            let outer_scope_id = ctx.scoping().scope_parent_id(class.scope_id()).unwrap();
+            let mut reparenter = ChildScopeReparenter::new(outer_scope_id, ctx);
+            for call in &instance_calls {
+                reparenter.visit_expression(call);
+            }
+            decorations.parked_member_decorations = instance_calls.len();
+            class
+                .decorators
+                .extend(instance_calls.into_iter().map(|call| Decorator::new(SPAN, call, ctx)));
         }
     }
+
+    /// Drop the decorators of class members, except the constructor's parameters, which are
+    /// handled on class exit.
+    fn drop_member_decorators(class: &mut Class<'a>) {
+        for element in &mut class.body.body {
+            match element {
+                ClassElement::PropertyDefinition(prop) => prop.decorators.clear(),
+                ClassElement::MethodDefinition(method)
+                    if !method.kind.is_constructor() && !method.value.is_typescript_syntax() =>
+                {
+                    method.decorators.clear();
+                    for param in &mut method.value.params.items {
+                        param.decorators.clear();
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+
+    /// Take back the member decorations parked on `class.decorators` by
+    /// [`Self::transform_member_decorators`], once the other transforms have visited them.
+    fn take_member_decorations(
+        class: &mut Class<'a>,
+        parked_member_decorations: usize,
+        ctx: &TraverseCtx<'a>,
+    ) -> Vec<Statement<'a>> {
+        if parked_member_decorations == 0 {
+            return vec![];
+        }
+        let start = class.decorators.len() - parked_member_decorations;
+        class
+            .decorators
+            .drain(start..)
+            .map(|decorator| Statement::new_expression_statement(SPAN, decorator.expression, ctx))
+            .collect()
+    }
+
     /// Transforms a statement that is a class declaration
     ///
     ///
@@ -666,8 +663,12 @@ impl<'a> LegacyDecorator<'a> {
     }
 
     fn transform_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
-        let mut current_class_decorations = self.class_decorations_stack.pop();
-        current_class_decorations.append_static_decorations();
+        let current_class_decorations = self.class_decorations_stack.pop();
+        let decoration_stmts = Self::take_member_decorations(
+            class,
+            current_class_decorations.parked_member_decorations,
+            ctx,
+        );
 
         // Legacy decorator does not allow in class expression.
         if current_class_decorations.should_transform {
@@ -678,13 +679,16 @@ impl<'a> LegacyDecorator<'a> {
                 self.transform_class_declaration_with_class_decorators(
                     class,
                     current_class_decorations,
+                    decoration_stmts,
                     ctx,
                 );
                 return;
-            } else if !current_class_decorations.decoration_stmts.is_empty() {
+            } else if current_class_decorations.class_binding.is_some() {
+                // A class member is decorated.
                 self.transform_class_declaration_without_class_decorators(
                     class,
                     current_class_decorations,
+                    decoration_stmts,
                     ctx,
                 );
             }
@@ -710,6 +714,7 @@ impl<'a> LegacyDecorator<'a> {
         &mut self,
         class: &mut Class<'a>,
         current_class_decorations: ClassDecorations<'a>,
+        mut decoration_stmts: Vec<Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         // When we emit an ES6 class that has a class decorator, we must tailor the
@@ -818,14 +823,19 @@ impl<'a> LegacyDecorator<'a> {
             BoundIdentifier::new(ident.name, old_class_symbol_id)
         });
         let class_alias_binding = class_binding.as_ref().and_then(|id| {
-            ClassReferenceChanger::new(id.clone(), ctx).get_class_alias_if_needed(&mut class.body)
+            ClassReferenceChanger::new(
+                id.clone(),
+                current_class_decorations.member_decorations_block,
+                ctx,
+            )
+            .get_class_alias_if_needed(&mut class.body)
         });
 
         let ClassDecorations {
             class_binding: class_binding_tmp,
-            mut decoration_stmts,
-            static_decoration_stmts: _,
-            class_has_private_in_expression_in_decorator,
+            parked_member_decorations: _,
+            member_decorations_block: _,
+            class_has_private_name_in_decorator,
             should_transform: _,
         } = current_class_decorations;
 
@@ -881,10 +891,9 @@ impl<'a> LegacyDecorator<'a> {
                 })
             };
 
-        if class_has_private_in_expression_in_decorator {
-            let decorations = mem::take(&mut decoration_stmts);
-            Self::insert_decorations_into_class_static_block(class, decorations, ctx);
-        } else {
+        // When a decorator refers to a private name, the member decorations are already in a
+        // static block (see `transform_member_decorators`).
+        if !class_has_private_name_in_decorator {
             let address = match ctx.parent() {
                 parent @ (Ancestor::ExportDefaultDeclarationDeclaration(_)
                 | Ancestor::ExportDeclarationDeclaration(_)) => parent.address(),
@@ -957,20 +966,21 @@ impl<'a> LegacyDecorator<'a> {
         &mut self,
         class: &mut Class<'a>,
         current_class_decorations: ClassDecorations<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        mut decoration_stmts: Vec<Statement<'a>>,
+        ctx: &TraverseCtx<'a>,
     ) {
         let ClassDecorations {
             class_binding,
-            mut decoration_stmts,
-            static_decoration_stmts: _,
-            class_has_private_in_expression_in_decorator,
+            parked_member_decorations: _,
+            member_decorations_block: _,
+            class_has_private_name_in_decorator: _,
             should_transform: _,
         } = current_class_decorations;
 
         let Some(class_binding) = class_binding else {
             unreachable!(
                 "Always has a class binding because there are decorators in class elements,
-                so that it has been added in `handle_decorated_class_element`"
+                so that it has been added in `transform_member_decorators`"
             );
         };
 
@@ -979,9 +989,8 @@ impl<'a> LegacyDecorator<'a> {
             class.id = Some(class_binding.create_binding_identifier(ctx));
         }
 
-        if class_has_private_in_expression_in_decorator {
-            Self::insert_decorations_into_class_static_block(class, decoration_stmts, ctx);
-        } else {
+        // Empty when the member decorations are in a static block.
+        if !decoration_stmts.is_empty() {
             let stmt_address = match ctx.parent() {
                 parent @ (Ancestor::ExportDefaultDeclarationDeclaration(_)
                 | Ancestor::ExportDeclarationDeclaration(_)) => parent.address(),
@@ -1037,7 +1046,10 @@ impl<'a> LegacyDecorator<'a> {
                 !self.emit_decorator_metadata || self.metadata.pop_constructor_metadata().is_none(),
                 "`pop_constructor_metadata` should be `None` because there is no `constructor`, so no metadata was generated."
             );
-            Self::convert_decorators_to_array_expression(class.decorators.drain(..), ctx)
+            Self::create_decorations_array(
+                class.decorators.drain(..).map(|decorator| decorator.expression),
+                ctx,
+            )
         };
 
         // `Class = _decorate(decorations, Class)`
@@ -1084,12 +1096,17 @@ impl<'a> LegacyDecorator<'a> {
         class: &mut Class<'a>,
         decorations: Vec<Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
-    ) {
+    ) -> ScopeId {
         let scope_id = ctx.create_child_scope(class.scope_id(), ScopeFlags::ClassStaticBlock);
+        let mut reparenter = ChildScopeReparenter::new(scope_id, ctx);
+        for stmt in &decorations {
+            reparenter.visit_statement(stmt);
+        }
         let decorations = ArenaVec::from_iter_in(decorations, ctx);
         let element =
             ClassElement::new_static_block_with_scope_id(SPAN, decorations, scope_id, ctx);
         class.body.body.push(element);
+        scope_id
     }
 
     /// Transforms the decorators of the parameters of a class method.
@@ -1129,15 +1146,13 @@ impl<'a> LegacyDecorator<'a> {
         }
     }
 
-    /// Converts a vec of [`Decorator`] to [`Expression::ArrayExpression`].
-    fn convert_decorators_to_array_expression(
-        decorators_iter: impl Iterator<Item = Decorator<'a>>,
+    /// Converts decorator expressions to [`Expression::ArrayExpression`].
+    fn create_decorations_array(
+        decorations: impl Iterator<Item = Expression<'a>>,
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let decorations = ArenaVec::from_iter_in(
-            decorators_iter.map(|decorator| ArrayExpressionElement::from(decorator.expression)),
-            ctx,
-        );
+        let decorations =
+            ArenaVec::from_iter_in(decorations.map(ArrayExpressionElement::from), ctx);
         Expression::new_array_expression(SPAN, decorations, ctx)
     }
 
@@ -1168,18 +1183,11 @@ impl<'a> LegacyDecorator<'a> {
         let method_decoration_count = method.decorators.len() + param_decoration_count;
 
         if method_decoration_count == 0 {
-            if self.emit_decorator_metadata {
-                if method.kind.is_constructor() {
-                    debug_assert!(
-                        self.metadata.pop_constructor_metadata().is_none(),
-                        "No method decorators, so `pop_constructor_metadata` should be `None`"
-                    );
-                } else {
-                    debug_assert!(
-                        self.metadata.pop_method_metadata().is_none(),
-                        "No method decorators, so `pop_method_metadata` should be `None`"
-                    );
-                }
+            if self.emit_decorator_metadata && method.kind.is_constructor() {
+                debug_assert!(
+                    self.metadata.pop_constructor_metadata().is_none(),
+                    "No method decorators, so `pop_constructor_metadata` should be `None`"
+                );
             }
             return None;
         }
@@ -1206,7 +1214,8 @@ impl<'a> LegacyDecorator<'a> {
                 if let Some(metadata) = self.metadata.pop_constructor_metadata() {
                     decorations.push(ArrayExpressionElement::from(metadata));
                 }
-            } else if let Some(metadata) = self.metadata.pop_method_metadata() {
+            } else {
+                let metadata = self.metadata.method_metadata(method, ctx);
                 decorations.push(ArrayExpressionElement::from(metadata.r#type));
                 decorations.push(ArrayExpressionElement::from(metadata.param_types));
                 if let Some(return_type) = metadata.return_type {
@@ -1279,9 +1288,7 @@ impl<'a> LegacyDecorator<'a> {
     ///    * NullLiteral: `[null] = 0;` -> `null`
     ///  * Non-copiable key:
     ///    * `[a()] = 0;` mutates the key to `[_a = a()] = 0;` and returns `_a`
-    #[expect(clippy::unused_self)]
     fn get_name_of_property_key(
-        &self,
         key: &mut PropertyKey<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
@@ -1336,16 +1343,14 @@ impl<'a> LegacyDecorator<'a> {
         }
     }
 
-    /// `_decorator([...decorators], Class, name, descriptor)`
-    #[expect(clippy::unused_self)]
-    fn create_decorator(
-        &self,
+    /// `_decorate([...decorators], Class, name, descriptor)`
+    fn create_decorate_call(
         decorations: Expression<'a>,
         prefix: Expression<'a>,
         name: Expression<'a>,
         descriptor: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Statement<'a> {
+    ) -> Expression<'a> {
         let arguments = ArenaVec::from_array_in(
             [
                 Argument::from(decorations),
@@ -1355,38 +1360,78 @@ impl<'a> LegacyDecorator<'a> {
             ],
             ctx,
         );
-        let helper = helper_call_expr(Helper::Decorate, arguments, ctx);
-        Statement::new_expression_statement(SPAN, helper, ctx)
+        helper_call_expr(Helper::Decorate, arguments, ctx)
     }
 }
 
-/// Visitor to detect if a private-in expression is present in a decorator
+/// Visitor to detect if a decorator refers to a private name, such as `#x in obj` or `obj.#x`.
+///
+/// Such decorators must be evaluated inside the class, like TypeScript does.
 #[derive(Default)]
-struct PrivateInExpressionDetector {
-    has_private_in_expression: bool,
+struct PrivateNameDetector {
+    has_private_name: bool,
 }
 
-impl VisitJs<'_> for PrivateInExpressionDetector {
-    fn visit_private_in_expression(&mut self, _it: &PrivateInExpression<'_>) {
-        self.has_private_in_expression = true;
-    }
-
-    fn visit_decorators(&mut self, decorators: &ArenaVec<'_, Decorator<'_>>) {
-        for decorator in decorators {
-            self.visit_expression(&decorator.expression);
-            // Early exit if a private-in expression is found
-            if self.has_private_in_expression {
-                break;
-            }
-        }
+impl VisitJs<'_> for PrivateNameDetector {
+    fn visit_private_identifier(&mut self, _it: &PrivateIdentifier<'_>) {
+        self.has_private_name = true;
     }
 }
 
-impl PrivateInExpressionDetector {
-    fn has_private_in_expression(expression: &Expression<'_>) -> bool {
+impl PrivateNameDetector {
+    fn has_private_name(expression: &Expression<'_>) -> bool {
         let mut detector = Self::default();
         detector.visit_expression(expression);
-        detector.has_private_in_expression
+        detector.has_private_name
+    }
+
+    fn has_private_name_in_decorators(decorators: &[Decorator<'_>]) -> bool {
+        decorators.iter().any(|decorator| Self::has_private_name(&decorator.expression))
+    }
+
+    /// Whether the decorators of a method or of its parameters refer to a private name.
+    fn has_private_name_in_method_decorators(method: &MethodDefinition<'_>) -> bool {
+        Self::has_private_name_in_decorators(&method.decorators)
+            || method
+                .value
+                .params
+                .items
+                .iter()
+                .any(|param| Self::has_private_name_in_decorators(&param.decorators))
+    }
+}
+
+/// Visitor to move the scopes in decorator expressions to where the expressions end up, such as
+/// after the class or in a static block. Only the outermost scopes are moved, the scopes within
+/// them keep their parents.
+struct ChildScopeReparenter<'s> {
+    scoping: &'s mut Scoping,
+    parent_scope_id: ScopeId,
+}
+
+impl<'s> ChildScopeReparenter<'s> {
+    fn new(parent_scope_id: ScopeId, ctx: &'s mut TraverseCtx<'_>) -> Self {
+        Self { scoping: ctx.scoping_mut(), parent_scope_id }
+    }
+
+    fn reparent_scope(&mut self, scope_id: &Cell<Option<ScopeId>>) {
+        self.scoping.change_scope_parent_id(scope_id.get().unwrap(), Some(self.parent_scope_id));
+    }
+}
+
+impl<'a> VisitJs<'a> for ChildScopeReparenter<'_> {
+    fn visit_function(&mut self, func: &Function<'a>, _flags: ScopeFlags) {
+        self.reparent_scope(&func.scope_id);
+    }
+
+    fn visit_arrow_function_expression(&mut self, func: &ArrowFunctionExpression<'a>) {
+        self.reparent_scope(&func.scope_id);
+    }
+
+    fn visit_class(&mut self, class: &Class<'a>) {
+        // `decorators` is outside `Class`'s scope and can contain scopes itself
+        self.visit_decorators(&class.decorators);
+        self.reparent_scope(&class.scope_id);
     }
 }
 
@@ -1394,14 +1439,21 @@ impl PrivateInExpressionDetector {
 /// <https://github.com/microsoft/TypeScript/blob/8da951cbb629b648753454872df4e1754982aef1/src/compiler/transformers/legacyDecorators.ts#L770-L783>
 struct ClassReferenceChanger<'a, 'ctx> {
     class_binding: BoundIdentifier<'a>,
+    /// Like TypeScript, member decorations in a static block refer to the class itself, not to
+    /// the alias. See [`ClassDecorations::member_decorations_block`].
+    member_decorations_block: Option<ScopeId>,
     // `Some` if there are references to the class inside the class body
     class_alias_binding: Option<BoundIdentifier<'a>>,
     ctx: &'ctx mut TraverseCtx<'a>,
 }
 
 impl<'a, 'ctx> ClassReferenceChanger<'a, 'ctx> {
-    fn new(class_binding: BoundIdentifier<'a>, ctx: &'ctx mut TraverseCtx<'a>) -> Self {
-        Self { class_binding, class_alias_binding: None, ctx }
+    fn new(
+        class_binding: BoundIdentifier<'a>,
+        member_decorations_block: Option<ScopeId>,
+        ctx: &'ctx mut TraverseCtx<'a>,
+    ) -> Self {
+        Self { class_binding, member_decorations_block, class_alias_binding: None, ctx }
     }
 
     fn get_class_alias_if_needed(
@@ -1414,6 +1466,12 @@ impl<'a, 'ctx> ClassReferenceChanger<'a, 'ctx> {
 }
 
 impl<'a> VisitMut<'a> for ClassReferenceChanger<'a, '_> {
+    fn visit_static_block(&mut self, block: &mut StaticBlock<'a>) {
+        if self.member_decorations_block != Some(block.scope_id()) {
+            self.visit_statements(&mut block.body);
+        }
+    }
+
     #[inline]
     fn visit_identifier_reference(&mut self, ident: &mut IdentifierReference<'a>) {
         if self.is_class_reference(ident) {

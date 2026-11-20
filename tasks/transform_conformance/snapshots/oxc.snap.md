@@ -1,6 +1,6 @@
 commit: 16a2d671
 
-Passed: 350/478
+Passed: 352/478
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -206,7 +206,7 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (26/115)
+# legacy-decorators (28/115)
 * oxc/accessor/input.ts
 x Output mismatch
 
@@ -261,26 +261,10 @@ Symbol flags mismatch for "_default":
 after transform: SymbolId(1): SymbolFlags(Class)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
 
-* oxc/field-decorators/class-properties-remove-fields/private-names/input.ts
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(6): Some(ScopeId(5))
-Scope parent mismatch:
-after transform: ScopeId(3): Some(ScopeId(1))
-rebuilt        : ScopeId(7): Some(ScopeId(5))
-
 * oxc/field-decorators/typescript/typescript-syntax/input.ts
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
 rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(2): Some(ScopeId(0))
-
-* oxc/field-decorators/typescript-set-public-fields-remove-fields/computed-keys/input.ts
-Unresolved reference IDs mismatch for "dec":
-after transform: [ReferenceId(1), ReferenceId(3), ReferenceId(6), ReferenceId(8), ReferenceId(11)]
-rebuilt        : [ReferenceId(14), ReferenceId(17), ReferenceId(20), ReferenceId(23)]
 
 * oxc/metadata/ambient-declared-class/input.ts
 Bindings mismatch:
@@ -519,7 +503,7 @@ Reference symbol mismatch for "Cls2":
 after transform: SymbolId(2) "Cls2"
 rebuilt        : SymbolId(2) "Cls2"
 Unresolved reference IDs mismatch for "babelHelpers":
-after transform: [ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(20), ReferenceId(22), ReferenceId(24)]
+after transform: [ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(15), ReferenceId(18), ReferenceId(19), ReferenceId(20), ReferenceId(22), ReferenceId(24)]
 rebuilt        : [ReferenceId(0), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(9), ReferenceId(12), ReferenceId(14), ReferenceId(16)]
 
 * oxc/metadata/readonly-array/input.ts
@@ -762,9 +746,6 @@ rebuilt        : ["Something", "babelHelpers"]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function | Arrow)
 rebuilt        : ScopeId(4): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(3): Some(ScopeId(2))
-rebuilt        : ScopeId(4): Some(ScopeId(0))
 
 * typescript/decoratorOnClass1/input.ts
 Bindings mismatch:
@@ -934,7 +915,18 @@ after transform: ["Object", "babelHelpers"]
 rebuilt        : ["Object", "babelHelpers", "decorator"]
 
 * typescript/method/decoratorOnClassMethod19/input.ts
-x Output mismatch
+Bindings mismatch:
+after transform: ScopeId(0): ["C1", "C2", "decorator"]
+rebuilt        : ScopeId(0): ["C1", "C2"]
+Reference symbol mismatch for "decorator":
+after transform: SymbolId(0) "decorator"
+rebuilt        : <None>
+Reference symbol mismatch for "decorator":
+after transform: SymbolId(0) "decorator"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["Function", "Object", "babelHelpers"]
+rebuilt        : ["Function", "Object", "babelHelpers", "decorator"]
 
 * typescript/method/decoratorOnClassMethod2/input.ts
 Bindings mismatch:

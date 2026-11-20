@@ -115,7 +115,7 @@ impl<'a> TypeScript<'a> {
         let will_hoist_initializers_to_constructor =
             class.body.body[first_movable_index..].iter().any(|e| {
                 matches!(e, ClassElement::PropertyDefinition(prop)
-                    if !prop.r#static && !prop.declare && !prop.key.is_private_identifier() && prop.value.is_some()
+                    if !prop.r#static && !prop.key.is_private_identifier() && prop.value.is_some()
                 )
             });
 
@@ -139,8 +139,8 @@ impl<'a> TypeScript<'a> {
                 {
                     if let Some(value) = prop.value.take() {
                         // A static property is replaced by a static block below, and an instance
-                        // property is removed later when `remove_class_fields_without_initializer`
-                        // is `true`. Otherwise, the instance property declaration stays in the
+                        // property is removed right after this transform when
+                        // `remove_class_fields_without_initializer` is `true`. Otherwise, the instance property declaration stays in the
                         // class body (without its initializer), so its key is still evaluated
                         // during class definition.
                         let keep_declaration =
@@ -170,11 +170,11 @@ impl<'a> TypeScript<'a> {
                         // https://github.com/microsoft/TypeScript/blob/8c62e08448e0ec76203bd519dd39608dbcb31705/src/compiler/transformers/classFields.ts#L2720
                         if key_needs_temp_var(key, ctx) {
                             // When `remove_class_fields_without_initializer` is true, the property without initializer
-                            // would be removed in the `transform_class_on_exit`. We need to make sure the computed key
+                            // is removed right after this transform. We need to make sure the computed key
                             // keeps and is evaluated in the same order as the original class field in static block.
                             computed_key_assignments.push(key.take_in(ctx));
                         }
-                    } else if !prop.declare && prop.key.is_computed() {
+                    } else if prop.key.is_computed() {
                         // The property declaration without initializer is kept in the class body, so its
                         // computed key is evaluated during class definition. Any pending computed key
                         // assignments from previous elements must be evaluated before it.
@@ -207,9 +207,7 @@ impl<'a> TypeScript<'a> {
                     );
                 }
                 // A computed key that stays in the class still evaluates after the keys before it.
-                ClassElement::PropertyDefinition(prop)
-                    if !prop.declare && prop.key.is_computed() =>
-                {
+                ClassElement::PropertyDefinition(prop) if prop.key.is_computed() => {
                     Self::convert_computed_key(&mut prop.key, &mut computed_key_assignments, ctx);
                 }
                 _ => (),
@@ -311,46 +309,30 @@ impl<'a> TypeScript<'a> {
     ///
     /// Skips parameter properties whose name matches an existing instance field declaration on
     /// the same class (matching TypeScript's dedup). Only static-identifier instance fields
-    /// count — static, private, computed, and `declare`-only fields don't suppress the new field.
+    /// count — static, private, and computed fields don't suppress the new field.
     ///
-    /// `properties` comes from [`Self::collect_parameter_properties`] on class entry, before
-    /// parameter modifiers are erased. Fields are added on class exit, after fields without
-    /// initializers are removed, so neither the removal nor a removed field affects them.
-    pub(super) fn add_parameter_property_fields(
-        class: &mut Class<'a>,
-        properties: &[(Span, Ident<'a>)],
-        ctx: &TraverseCtx<'a>,
-    ) {
+    /// Runs on class entry, before parameter modifiers are erased (and before any rename, so
+    /// reading the binding names is safe), and after fields without initializers are removed,
+    /// so neither the removal nor a removed field affects them.
+    pub(super) fn add_parameter_property_fields(class: &mut Class<'a>, ctx: &TraverseCtx<'a>) {
+        let Some(params) = Self::find_constructor_params(class) else {
+            return;
+        };
+        if !params.iter().any(FormalParameter::has_modifier) {
+            return;
+        }
         let mut declared_names = Self::collect_instance_field_names(class);
         let fields = ArenaVec::from_iter_in(
-            properties
+            params
                 .iter()
-                .filter(|(_, name)| declared_names.insert(*name))
-                .map(|&(span, name)| Self::build_uninitialized_field(span, name, ctx)),
+                .filter(|param| param.has_modifier())
+                .filter_map(|param| param.pattern.get_binding_identifier())
+                .filter(|id| declared_names.insert(id.name))
+                .map(|id| Self::build_uninitialized_field(id.span, id.name, ctx)),
             ctx,
         );
 
         class.body.body.splice(0..0, fields);
-    }
-
-    /// Append the span and name of each constructor parameter property to `properties`.
-    ///
-    /// Safe to read `id.name` directly here: this runs on class entry, before any rename.
-    /// `convert_constructor_params` uses the span trick because it also runs alongside
-    /// class-properties.
-    pub(super) fn collect_parameter_properties(
-        class: &Class<'a>,
-        properties: &mut Vec<(Span, Ident<'a>)>,
-    ) {
-        if let Some(params) = Self::find_constructor_params(class) {
-            properties.extend(
-                params
-                    .iter()
-                    .filter(|param| param.has_modifier())
-                    .filter_map(|param| param.pattern.get_binding_identifier())
-                    .map(|id| (id.span, id.name)),
-            );
-        }
     }
 
     /// Returns the body-bearing constructor's parameter list, or `None` if the class has none.
@@ -371,8 +353,8 @@ impl<'a> TypeScript<'a> {
 
     /// Collect names of instance field declarations keyed by a static identifier.
     ///
-    /// Static, private, computed, and `declare`-only fields don't suppress a parameter-property
-    /// field — they're different bindings or erased before emit. Plain instance-field collisions
+    /// Static, private, and computed fields don't suppress a parameter-property field — they're
+    /// different bindings. `declare` fields are already erased in `TypeScriptAnnotations`. Plain instance-field collisions
     /// are a TS `Duplicate identifier` error, so this dedup is mostly defensive.
     fn collect_instance_field_names(class: &Class<'a>) -> FxHashSet<Ident<'a>> {
         class
@@ -382,7 +364,6 @@ impl<'a> TypeScript<'a> {
             .filter_map(|element| match element {
                 ClassElement::PropertyDefinition(prop)
                     if !prop.r#static
-                        && !prop.declare
                         && let PropertyKey::StaticIdentifier(ident) = &prop.key =>
                 {
                     Some(ident.name)
@@ -425,8 +406,8 @@ impl<'a> TypeScript<'a> {
 
     /// Remove fields without initializers, as TypeScript erases them.
     ///
-    /// Decorated fields stay, for a downstream transform or for legacy decorators to lower. See
-    /// `TransformerImpl::exit_class` for how this interacts with legacy decorators on class exit.
+    /// Decorated fields stay for a downstream transform. Legacy decorators take the decorators off
+    /// fields before this runs, so those fields are removed.
     pub(super) fn remove_uninitialized_class_fields(
         &self,
         class: &mut Class<'a>,

@@ -236,8 +236,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
                 matches!(method.r#type, MethodDefinitionType::MethodDefinition)
                     && !method.value.is_typescript_syntax()
             }
+            // Legacy decorators have already lowered the decorators of `declare` fields.
             ClassElement::PropertyDefinition(prop) => {
-                matches!(prop.r#type, PropertyDefinitionType::PropertyDefinition)
+                matches!(prop.r#type, PropertyDefinitionType::PropertyDefinition) && !prop.declare
             }
             ClassElement::AccessorProperty(prop) => {
                 matches!(prop.r#type, AccessorPropertyType::AccessorProperty)
@@ -245,16 +246,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
             ClassElement::TSIndexSignature(_) => false,
             ClassElement::StaticBlock(_) => true,
         });
-    }
-
-    fn exit_class(&mut self, class: &mut Class<'a>, _: &mut TraverseCtx<'a>) {
-        // Remove `declare` properties from the class body, other ts-only properties have been removed in `enter_class`.
-        // The reason that removing `declare` properties here because the legacy-decorator plugin needs to transform
-        // `declare` field in the `exit_class` phase, so we have to ensure this step is run after the legacy-decorator plugin.
-        class
-            .body
-            .body
-            .retain(|elem| !matches!(elem, ClassElement::PropertyDefinition(prop) if prop.declare));
     }
 
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {

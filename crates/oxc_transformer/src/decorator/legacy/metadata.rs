@@ -115,18 +115,11 @@ pub(super) struct MethodMetadata<'a> {
 }
 
 pub struct LegacyDecoratorMetadata<'a> {
-    /// Stack of method metadata.
-    ///
-    /// Only the method that needs to be pushed onto a stack is the method metadata,
-    /// which should be inserted after all real decorators. However, method parameters
-    /// will be processed before the metadata generation, so we need to temporarily store
-    /// them in a stack and pop them when in exit_method_definition.
-    method_metadata_stack: SparseStack<MethodMetadata<'a>>,
     /// Stack of constructor metadata expressions, each expression
     /// is the `design:paramtypes`.
     ///
-    /// Same as `method_metadata_stack`, but for constructors. Because the constructor is specially treated
-    /// in the class, we need to handle it in `exit_class` rather than `exit_method_definition`.
+    /// The constructor's metadata is generated on class entry, before TypeScript erases parameter
+    /// types, but the constructor is decorated on class exit.
     constructor_metadata_stack: SparseStack<Expression<'a>>,
     enum_types: FxHashMap<SymbolId, EnumType>,
     strict_null_checks: bool,
@@ -135,7 +128,6 @@ pub struct LegacyDecoratorMetadata<'a> {
 impl LegacyDecoratorMetadata<'_> {
     pub fn new(options: DecoratorOptions) -> Self {
         LegacyDecoratorMetadata {
-            method_metadata_stack: SparseStack::new(),
             constructor_metadata_stack: SparseStack::new(),
             enum_types: FxHashMap::default(),
             strict_null_checks: options.strict_null_checks,
@@ -146,10 +138,6 @@ impl LegacyDecoratorMetadata<'_> {
 impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecoratorMetadata<'a> {
     #[inline]
     fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
-        debug_assert!(
-            self.method_metadata_stack.is_exhausted(),
-            "All method metadata should have been popped."
-        );
         debug_assert!(
             self.constructor_metadata_stack.is_exhausted(),
             "All constructor metadata should have been popped."
@@ -204,80 +192,44 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecoratorMetadata<'a> {
 
         self.constructor_metadata_stack.push(metadata);
     }
-
-    fn enter_method_definition(
-        &mut self,
-        method: &mut MethodDefinition<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if method.kind.is_constructor() {
-            // Handle constructor in `enter_class`
-            return;
-        }
-
-        let is_typescript_syntax = method.value.is_typescript_syntax();
-        let is_decorated = !is_typescript_syntax
-            && (!method.decorators.is_empty()
-                || method.value.params.items.iter().any(|param| !param.decorators.is_empty()));
-
-        let metadata = is_decorated.then(|| {
-            // TypeScript only emits `design:returntype` for regular methods,
-            // not for getters or setters.
-
-            let (design_type, return_type) = if method.kind.is_get() {
-                // For getters, the design type is the return type (or `Object` if untyped)
-                (self.serialize_type_annotation(method.value.return_type.as_ref(), ctx), None)
-            } else if method.kind.is_set()
-                && let Some(param) = method.value.params.items.first()
-            {
-                // For setters, the design type is the type of the first parameter
-                (self.serialize_parameter_types_of_node(param, ctx), None)
-            } else {
-                // For methods, the design type is always `Function`
-                (
-                    Self::global_function(ctx),
-                    Some(self.serialize_return_type_of_node(&method.value, ctx)),
-                )
-            };
-
-            let param_types = self.serialize_parameters_types_of_node(&method.value.params, ctx);
-
-            MethodMetadata {
-                r#type: self.create_metadata("design:type", design_type, ctx),
-                param_types: self.create_metadata("design:paramtypes", param_types, ctx),
-                return_type: return_type.map(|t| self.create_metadata("design:returntype", t, ctx)),
-            }
-        });
-
-        self.method_metadata_stack.push(metadata);
-    }
-
-    #[inline]
-    fn enter_property_definition(
-        &mut self,
-        prop: &mut PropertyDefinition<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if prop.decorators.is_empty() {
-            return;
-        }
-        prop.decorators.push(self.create_design_type_metadata(prop.type_annotation.as_ref(), ctx));
-    }
-
-    #[inline]
-    fn enter_accessor_property(
-        &mut self,
-        prop: &mut AccessorProperty<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if !prop.decorators.is_empty() {
-            prop.decorators
-                .push(self.create_design_type_metadata(prop.type_annotation.as_ref(), ctx));
-        }
-    }
 }
 
 impl<'a> LegacyDecoratorMetadata<'a> {
+    /// Metadata for a decorated method, getter or setter.
+    ///
+    /// Must be called before TypeScript erases the method's type annotations.
+    pub(super) fn method_metadata(
+        &mut self,
+        method: &MethodDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> MethodMetadata<'a> {
+        // TypeScript only emits `design:returntype` for regular methods,
+        // not for getters or setters.
+        let (design_type, return_type) = if method.kind.is_get() {
+            // For getters, the design type is the return type (or `Object` if untyped)
+            (self.serialize_type_annotation(method.value.return_type.as_ref(), ctx), None)
+        } else if method.kind.is_set()
+            && let Some(param) = method.value.params.items.first()
+        {
+            // For setters, the design type is the type of the first parameter
+            (self.serialize_parameter_types_of_node(param, ctx), None)
+        } else {
+            // For methods, the design type is always `Function`
+            (
+                Self::global_function(ctx),
+                Some(self.serialize_return_type_of_node(&method.value, ctx)),
+            )
+        };
+
+        let param_types = self.serialize_parameters_types_of_node(&method.value.params, ctx);
+
+        MethodMetadata {
+            r#type: self.create_metadata("design:type", design_type, ctx),
+            param_types: self.create_metadata("design:paramtypes", param_types, ctx),
+            return_type: return_type.map(|t| self.create_metadata("design:returntype", t, ctx)),
+        }
+    }
+
     /// Collects enum type information for decorator metadata generation.
     fn collect_enum_type(&mut self, decl: &TSEnumDeclaration<'a>, ctx: &TraverseCtx<'a>) {
         let symbol_id = decl.id.symbol_id();
@@ -338,10 +290,6 @@ impl<'a> LegacyDecoratorMetadata<'a> {
         }
 
         enum_type
-    }
-
-    pub fn pop_method_metadata(&mut self) -> Option<MethodMetadata<'a>> {
-        self.method_metadata_stack.pop()
     }
 
     pub fn pop_constructor_metadata(&mut self) -> Option<Expression<'a>> {
@@ -799,23 +747,15 @@ impl<'a> LegacyDecoratorMetadata<'a> {
         helper_call_expr(Helper::DecorateMetadata, arguments, ctx)
     }
 
-    // `_metadata(key, value)
-    fn create_metadata_decorate(
-        &self,
-        key: &'a str,
-        value: Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Decorator<'a> {
-        Decorator::new(SPAN, self.create_metadata(key, value, ctx), ctx)
-    }
-
     /// `_metadata("design:type", type)`
-    fn create_design_type_metadata(
+    ///
+    /// Must be called before TypeScript erases the type annotation.
+    pub(super) fn create_design_type_metadata(
         &mut self,
         type_annotation: Option<&ArenaBox<'a, TSTypeAnnotation<'a>>>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Decorator<'a> {
+    ) -> Expression<'a> {
         let serialized_type = self.serialize_type_annotation(type_annotation, ctx);
-        self.create_metadata_decorate("design:type", serialized_type, ctx)
+        self.create_metadata("design:type", serialized_type, ctx)
     }
 }

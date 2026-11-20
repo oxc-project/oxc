@@ -55,3 +55,16 @@ expect(A.d).toBe(2);
 expect(a.p).toBe(3);
 expect(Object.hasOwn(a, "field")).toBe(OWN_UNINITIALIZED_FIELD);
 expect(a.field).toBe(OWN_UNINITIALIZED_FIELD ? undefined : "accessor");
+
+// Decorators that read a private name are evaluated inside the class.
+let readPrivate: ((b: B) => number)[] = [];
+const capture = (read: (b: B) => number) => {
+  readPrivate.push(read);
+  return () => {};
+};
+class B {
+  #p = 4;
+  @capture((b: B) => b.#p) field: number;
+  @capture((b: B) => b.#p) method() {}
+}
+expect(readPrivate.map((read) => read(new B()))).toEqual([4, 4]);

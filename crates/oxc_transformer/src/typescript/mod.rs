@@ -1,8 +1,5 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
-use oxc_span::Span;
-use oxc_str::Ident;
-use oxc_syntax::scope::ScopeId;
 use oxc_traverse::Traverse;
 
 use crate::{common::class_lowering::ClassLowering, context::TraverseCtx, state::TransformState};
@@ -54,11 +51,6 @@ pub struct TypeScript<'a> {
     source_type_is_typescript_definition: bool,
     set_public_class_fields: bool,
     remove_class_fields_without_initializer: bool,
-    /// Parameter properties of the entered classes, for [`Self::add_parameter_property_fields`].
-    parameter_properties: Vec<(Span, Ident<'a>)>,
-    /// Entered classes with parameter properties, and where theirs start in
-    /// `parameter_properties`. Classes without any push nothing, so most files never allocate.
-    parameter_properties_starts: Vec<(ScopeId, usize)>,
 }
 
 impl<'a> TypeScript<'a> {
@@ -73,8 +65,6 @@ impl<'a> TypeScript<'a> {
             set_public_class_fields: state.assumptions.set_public_class_fields,
             remove_class_fields_without_initializer: !options.allow_declare_fields
                 || options.remove_class_fields_without_initializer,
-            parameter_properties: Vec::new(),
-            parameter_properties_starts: Vec::new(),
         }
     }
 
@@ -133,34 +123,18 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
         let lowering = ctx.state.class_lowering_of(class.scope_id());
         self.annotations.enter_class(class, ctx);
 
-        if lowering.lowers_fields() {
-            // Erase type-only fields before class-properties lowers the rest.
-            self.remove_uninitialized_class_fields(class, ctx);
-        } else if self.assigns_fields(lowering) {
+        let assigns_fields = self.assigns_fields(lowering);
+        if assigns_fields {
             self.transform_class_fields(class, lowering, ctx);
-        } else {
-            // Define semantics: parameter properties also get field declarations.
-            let start = self.parameter_properties.len();
-            Self::collect_parameter_properties(class, &mut self.parameter_properties);
-            if self.parameter_properties.len() > start {
-                self.parameter_properties_starts.push((class.scope_id(), start));
-            }
         }
-    }
-
-    fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.annotations.exit_class(class, ctx);
-
-        let lowering = ctx.state.class_lowering_of(class.scope_id());
-        if lowering.lowers_fields() {
-            return;
-        }
+        // Legacy decorators have already taken the decorators off the fields on class entry, so
+        // decorated fields without an initializer are removed like any other. Runs after
+        // `transform_class_fields`, which moves the computed keys out of these fields.
         self.remove_uninitialized_class_fields(class, ctx);
-        if let Some((_, start)) =
-            self.parameter_properties_starts.pop_if(|(scope_id, _)| *scope_id == class.scope_id())
-        {
-            Self::add_parameter_property_fields(class, &self.parameter_properties[start..], ctx);
-            self.parameter_properties.truncate(start);
+        if !assigns_fields && !lowering.lowers_fields() {
+            // Define semantics: parameter properties also get field declarations. Added after the
+            // removal, which would remove them, and before parameter modifiers are erased.
+            Self::add_parameter_property_fields(class, ctx);
         }
     }
 

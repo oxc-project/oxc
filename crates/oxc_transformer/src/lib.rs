@@ -352,11 +352,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
 
     fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         self.decorator.exit_class(class, ctx);
-        // Legacy decorators have taken the decorators off the fields they lowered, so TypeScript
-        // can now remove those fields if they have no initializer.
-        if let Some(typescript) = self.x0_typescript.as_mut() {
-            typescript.exit_class(class, ctx);
-        }
         self.x2_es2022.exit_class(class, ctx);
         // `decorator` has some statements should be inserted after `class-properties` plugin.
         self.decorator.exit_class_at_end(class, ctx);
@@ -537,18 +532,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         def: &mut MethodDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        self.decorator.enter_method_definition(def, ctx);
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_method_definition(def, ctx);
         }
-    }
-
-    fn exit_method_definition(
-        &mut self,
-        def: &mut MethodDefinition<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        self.decorator.exit_method_definition(def, ctx);
     }
 
     fn enter_new_expression(&mut self, expr: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -562,7 +548,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         def: &mut PropertyDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        self.decorator.enter_property_definition(def, ctx);
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_property_definition(def, ctx);
         }
@@ -574,7 +559,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         def: &mut PropertyDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        self.decorator.exit_property_definition(def, ctx);
         self.x2_es2022.exit_property_definition(def, ctx);
     }
 
@@ -583,18 +567,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         node: &mut AccessorProperty<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        self.decorator.enter_accessor_property(node, ctx);
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_accessor_property(node, ctx);
         }
-    }
-
-    fn exit_accessor_property(
-        &mut self,
-        node: &mut AccessorProperty<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        self.decorator.exit_accessor_property(node, ctx);
     }
 
     fn enter_statements(
@@ -773,14 +748,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_ts_export_assignment(export_assignment, ctx);
         }
-    }
-
-    fn enter_decorator(
-        &mut self,
-        node: &mut oxc_ast::ast::Decorator<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        self.decorator.enter_decorator(node, ctx);
     }
 
     fn enter_formal_parameter_rest(

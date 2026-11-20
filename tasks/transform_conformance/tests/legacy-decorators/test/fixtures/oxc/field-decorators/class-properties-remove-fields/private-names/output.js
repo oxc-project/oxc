@@ -2,7 +2,6 @@ var _p = /* @__PURE__ */ new WeakMap();
 class A {
   constructor() {
     babelHelpers.classPrivateFieldInitSpec(this, _p, 1);
-    babelHelpers.defineProperty(this, "a", void 0);
     babelHelpers.defineProperty(this, "b", 1);
   }
   m() {}
