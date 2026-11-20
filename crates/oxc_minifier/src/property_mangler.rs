@@ -528,7 +528,7 @@ impl<'a, 'p> PropertyRewriter<'a, '_, 'p> {
             && let Some(target) = self.target(Ident::from(name))
         {
             literal.value = Str::from_str_in(target.as_str(), &self.ast).into();
-            literal.raw = None;
+            literal.is_raw = false;
         }
     }
 

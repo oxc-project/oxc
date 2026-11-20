@@ -187,7 +187,7 @@ fn json5_write_object_key<'a>(
                 QuoteProps::Consistent => !force_quote,
                 QuoteProps::Preserve => false,
             };
-            if may_unquote && let Some(unquoted) = json5_unquoted_key(lit) {
+            if may_unquote && let Some(unquoted) = json5_unquoted_key(lit, f) {
                 write!(f, text(unquoted));
                 return;
             }
@@ -214,8 +214,8 @@ fn json5_write_object_key<'a>(
 /// so numeric-string keys (`"1.5"`, `"0"`) stay quoted.
 ///
 /// Returns `None` when the key must stay quoted.
-fn json5_unquoted_key<'a>(lit: &StringLiteral<'a>) -> Option<&'a str> {
-    let raw = lit.raw.as_ref()?.as_str();
+fn json5_unquoted_key<'a>(lit: &StringLiteral<'a>, f: &JsonFormatter<'_, 'a>) -> Option<&'a str> {
+    let raw = f.context().source_text().text_for(lit);
     // Body between the quotes; bail on anything that isn't a well-formed quoted literal
     let inner = raw.get(1..raw.len().checked_sub(1)?)?;
     let value = lit.value.as_str()?;
@@ -240,7 +240,10 @@ fn json5_write_quoted_key<'a>(content: &'a str, f: &mut JsonFormatter<'_, 'a>) {
 /// safely unquoted), which forces every quotable key in the object to be quoted.
 ///
 /// Caller must already have established the `json5` variant, this only resolves the `quoteProps` mode.
-fn json5_consistent_force_quote(object: &ObjectExpression<'_>, f: &JsonFormatter<'_, '_>) -> bool {
+fn json5_consistent_force_quote<'a>(
+    object: &ObjectExpression<'a>,
+    f: &JsonFormatter<'_, 'a>,
+) -> bool {
     if !matches!(f.context().options().quote_props, QuoteProps::Consistent) {
         return false;
     }
@@ -248,7 +251,7 @@ fn json5_consistent_force_quote(object: &ObjectExpression<'_>, f: &JsonFormatter
         matches!(
             property,
             ObjectPropertyKind::ObjectProperty(prop)
-                if matches!(&prop.key, PropertyKey::StaticStringLiteral(lit) if json5_unquoted_key(lit).is_none())
+                if matches!(&prop.key, PropertyKey::StaticStringLiteral(lit) if json5_unquoted_key(lit, f).is_none())
         )
     })
 }

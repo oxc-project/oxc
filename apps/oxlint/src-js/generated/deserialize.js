@@ -1577,7 +1577,7 @@ function deserializeDirective(pos) {
       ((node$0 = Object.create(NodeProto)),
       (node$0.type = "ExpressionStatement"),
       (node$0.expression = null),
-      (node$0.directive = deserializeStr(pos + 64)),
+      (node$0.directive = deserializeStr(pos + 48)),
       (node$0.start = start = deserializeI32(pos)),
       (node$0.end = end = deserializeI32(pos + 4)),
       (node$0.range = [start, end]),
@@ -3059,7 +3059,7 @@ function deserializeImportDeclaration(pos) {
       node$0)),
     specifiers = deserializeOptionVecImportDeclarationSpecifier(pos + 16);
   specifiers === null && (specifiers = []);
-  let withClause = deserializeOptionBoxWithClause(pos + 88);
+  let withClause = deserializeOptionBoxWithClause(pos + 72);
   node.specifiers = specifiers;
   node.source = deserializeStringLiteral(pos + 40);
   node.attributes = withClause === null ? [] : withClause.attributes;
@@ -3108,7 +3108,7 @@ function deserializeImportSpecifier(pos) {
       (node$0.parent = parent),
       node$0));
   node.imported = deserializeModuleExportName(pos + 16);
-  node.local = deserializeBindingIdentifier(pos + 72);
+  node.local = deserializeBindingIdentifier(pos + 56);
   parent = previousParent;
   return node;
 }
@@ -3171,7 +3171,7 @@ function deserializeImportAttribute(pos) {
       (node$0.parent = parent),
       node$0));
   node.key = deserializeImportAttributeKey(pos + 16);
-  node.value = deserializeStringLiteral(pos + 72);
+  node.value = deserializeStringLiteral(pos + 56);
   parent = previousParent;
   return node;
 }
@@ -3258,7 +3258,7 @@ function deserializeExportFromDeclaration(pos) {
       (node$0.range = [start, end]),
       (node$0.parent = parent),
       node$0)),
-    withClause = deserializeOptionBoxWithClause(pos + 88);
+    withClause = deserializeOptionBoxWithClause(pos + 72);
   node.specifiers = deserializeVecExportSpecifier(pos + 16);
   node.source = deserializeStringLiteral(pos + 40);
   node.attributes = withClause === null ? [] : withClause.attributes;
@@ -3303,9 +3303,9 @@ function deserializeExportAllDeclaration(pos) {
       (node$0.range = [start, end]),
       (node$0.parent = parent),
       node$0)),
-    withClause = deserializeOptionBoxWithClause(pos + 120);
+    withClause = deserializeOptionBoxWithClause(pos + 88);
   node.exported = deserializeOptionModuleExportName(pos + 16);
-  node.source = deserializeStringLiteral(pos + 72);
+  node.source = deserializeStringLiteral(pos + 56);
   node.attributes = withClause === null ? [] : withClause.attributes;
   parent = previousParent;
   return node;
@@ -3328,7 +3328,7 @@ function deserializeExportSpecifier(pos) {
       (node$0.parent = parent),
       node$0));
   node.local = deserializeModuleExportName(pos + 16);
-  node.exported = deserializeModuleExportName(pos + 72);
+  node.exported = deserializeModuleExportName(pos + 56);
   parent = previousParent;
   return node;
 }
@@ -3534,10 +3534,7 @@ function deserializeStringLiteral(pos) {
     (node$0 = Object.create(NodeProto)),
     (node$0.type = "Literal"),
     (node$0.value = deserializeJSStr(pos + 16)),
-    (node$0.raw =
-      int32[(pos >> 2) + 8] === 0 && int32[(pos >> 2) + 9] === 0
-        ? null
-        : sourceText.slice(start, end)),
+    (node$0.raw = deserializeBool(pos + 12) && start < end ? sourceText.slice(start, end) : null),
     (node$0.start = start),
     (node$0.end = end),
     (node$0.range = [start, end]),
@@ -5401,9 +5398,9 @@ function deserializeTSExternalModuleDeclaration(pos) {
   let node$0,
     start = deserializeI32(pos),
     end = deserializeI32(pos + 4),
-    declare = deserializeBool(pos + 72),
+    declare = deserializeBool(pos + 56),
     previousParent = parent,
-    body = deserializeOptionBoxTSModuleBlock(pos + 64),
+    body = deserializeOptionBoxTSModuleBlock(pos + 48),
     node = (parent =
       ((node$0 = Object.create(NodeProto)),
       (node$0.type = "TSModuleDeclaration"),
@@ -5672,9 +5669,9 @@ function deserializeTSImportType(pos) {
       (node$0.parent = parent),
       node$0));
   node.source = deserializeStringLiteral(pos + 16);
-  node.options = deserializeOptionBoxObjectExpression(pos + 64);
-  node.qualifier = deserializeOptionTSImportTypeQualifier(pos + 72);
-  node.typeArguments = deserializeOptionBoxTSTypeParameterInstantiation(pos + 88);
+  node.options = deserializeOptionBoxObjectExpression(pos + 48);
+  node.qualifier = deserializeOptionTSImportTypeQualifier(pos + 56);
+  node.typeArguments = deserializeOptionBoxTSTypeParameterInstantiation(pos + 72);
   parent = previousParent;
   return node;
 }
@@ -6286,10 +6283,10 @@ function deserializeVecDirective(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 80;
+  let endPos = pos + (int32[pos32 + 2] << 6);
   for (; pos !== endPos;) {
     arr.push(deserializeDirective(pos));
-    pos += 80;
+    pos += 64;
   }
   return arr;
 }
@@ -7102,10 +7099,10 @@ function deserializeVecImportAttribute(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 120;
+  let endPos = pos + int32[pos32 + 2] * 88;
   for (; pos !== endPos;) {
     arr.push(deserializeImportAttribute(pos));
-    pos += 120;
+    pos += 88;
   }
   return arr;
 }
@@ -7114,10 +7111,10 @@ function deserializeVecExportSpecifier(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + (int32[pos32 + 2] << 7);
+  let endPos = pos + int32[pos32 + 2] * 96;
   for (; pos !== endPos;) {
     arr.push(deserializeExportSpecifier(pos));
-    pos += 128;
+    pos += 96;
   }
   return arr;
 }

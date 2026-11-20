@@ -11,13 +11,15 @@ use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_span::SourceType;
 use oxc_syntax::module_record::ModuleRecord;
 
-/// Convert spans to UTF-16
+/// Convert spans to UTF-16.
+///
+/// Returns comments, and the span converter, which is needed to serialize `program` to ESTree JSON.
 pub fn convert_utf8_to_utf16(
     source_text: &str,
     program: &mut Program,
     module_record: &mut ModuleRecord,
     errors: &mut [OxcError],
-) -> Vec<Comment> {
+) -> (Vec<Comment>, Utf8ToUtf16) {
     let span_converter = Utf8ToUtf16::new(source_text);
     span_converter.convert_program(program);
 
@@ -61,7 +63,7 @@ pub fn convert_utf8_to_utf16(
         }
     }
 
-    comments
+    (comments, span_converter)
 }
 
 pub fn get_source_type(

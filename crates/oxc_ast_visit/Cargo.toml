@@ -22,14 +22,17 @@ doctest = false
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
+oxc_estree = { workspace = true, optional = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
 [features]
 default = []
 serialize = [
+  "dep:oxc_estree",
   "oxc_allocator/serialize",
   "oxc_ast/serialize",
+  "oxc_estree/serialize",
   "oxc_span/serialize",
   "oxc_syntax/serialize",
 ]

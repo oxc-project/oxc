@@ -56,17 +56,17 @@ pub trait StructSerializer {
 /// Serializer for structs.
 ///
 /// This is returned by `ESTreeSerializer::serialize_struct`.
-pub struct ESTreeStructSerializer<'s, C: Config, F: Formatter> {
+pub struct ESTreeStructSerializer<'s, 't, C: Config, F: Formatter> {
     /// Serializer
-    serializer: &'s mut ESTreeSerializer<C, F>,
+    serializer: &'s mut ESTreeSerializer<'t, C, F>,
     /// State of struct.
     /// Starts as `StructState::Empty`, transitions to `StructState::HasFields` on first field.
     state: StructState,
 }
 
-impl<'s, C: Config, F: Formatter> ESTreeStructSerializer<'s, C, F> {
+impl<'s, 't, C: Config, F: Formatter> ESTreeStructSerializer<'s, 't, C, F> {
     /// Create new [`ESTreeStructSerializer`].
-    pub(super) fn new(mut serializer: &'s mut ESTreeSerializer<C, F>) -> Self {
+    pub(super) fn new(mut serializer: &'s mut ESTreeSerializer<'t, C, F>) -> Self {
         // Push item to `trace_path`. It will be replaced with a `TracePathPart::Key`
         // when serializing each field in the struct, and popped off again in `end` method.
         if serializer.config.fixes() {
@@ -79,7 +79,7 @@ impl<'s, C: Config, F: Formatter> ESTreeStructSerializer<'s, C, F> {
     }
 }
 
-impl<C: Config, F: Formatter> StructSerializer for ESTreeStructSerializer<'_, C, F> {
+impl<C: Config, F: Formatter> StructSerializer for ESTreeStructSerializer<'_, '_, C, F> {
     type Config = C;
     type Formatter = F;
 
@@ -236,14 +236,14 @@ pub struct FlatStructSerializer<'p, P: StructSerializer>(pub &'p mut P);
 impl<'p, P: StructSerializer> Serializer for FlatStructSerializer<'p, P> {
     type Formatter = P::Formatter;
     type StructSerializer = Self;
-    type SequenceSerializer = ESTreeSequenceSerializer<'p, P::Config, P::Formatter>;
+    type SequenceSerializer = ESTreeSequenceSerializer<'p, 'p, P::Config, P::Formatter>;
 
     /// Serialize struct.
     fn serialize_struct(self) -> Self {
         self
     }
 
-    fn serialize_sequence(self) -> ESTreeSequenceSerializer<'p, P::Config, P::Formatter> {
+    fn serialize_sequence(self) -> ESTreeSequenceSerializer<'p, 'p, P::Config, P::Formatter> {
         const {
             panic!("Cannot flatten a sequence into a struct");
         }
@@ -252,6 +252,12 @@ impl<'p, P: StructSerializer> Serializer for FlatStructSerializer<'p, P> {
     fn record_fix_path(&mut self) {
         const {
             panic!("Cannot call `record_fix_path` on a `FlatStructSerializer`");
+        }
+    }
+
+    fn serialize_source_text_slice(self, _start: u32, _end: u32) {
+        const {
+            panic!("Cannot flatten anything but a struct into another struct");
         }
     }
 

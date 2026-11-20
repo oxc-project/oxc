@@ -164,7 +164,7 @@ impl PreferExportFrom {
                             .as_str()
                             .unwrap_or_else(|| ctx.source_range(string_literal.span)),
                     };
-                    let value = &attribute.value.raw.unwrap();
+                    let value = ctx.source_range(attribute.value.span);
                     format!("{key}: {value}")
                 })
                 .join(", ");
@@ -231,6 +231,7 @@ impl PreferExportFrom {
                         if matches!(ref_node.kind(), AstKind::IdentifierReference(_)) =>
                     {
                         Self::analyze_default_export_usage(
+                            ctx,
                             specifier_spec,
                             *symbol_id,
                             reference.node_id(),
@@ -332,6 +333,7 @@ impl PreferExportFrom {
     }
 
     fn analyze_default_export_usage(
+        ctx: &LintContext<'_>,
         specifier_spec: &SpecifierSpec<'_>,
         symbol_id: SymbolId,
         reference_node_id: NodeId,
@@ -344,7 +346,7 @@ impl PreferExportFrom {
             return None;
         }
 
-        let mut target_name = Self::get_target_name_for_default_export(specifier_spec);
+        let mut target_name = Self::get_target_name_for_default_export(ctx, specifier_spec);
 
         if specifier_spec.decl_type
             && matches!(
@@ -389,7 +391,7 @@ impl PreferExportFrom {
                 return None;
             }
 
-            let export_name = Self::get_export_name(specifier_spec, export_specifier);
+            let export_name = Self::get_export_name(ctx, specifier_spec, export_specifier);
 
             if matches!(
                 specifier_spec.specifier,
@@ -472,7 +474,7 @@ impl PreferExportFrom {
 
             let full_target_name = format!(
                 "{} as {}",
-                Self::get_export_name_for_export_decl(specifier_spec),
+                Self::get_export_name_for_export_decl(ctx, specifier_spec),
                 target_name
             );
 
@@ -509,14 +511,17 @@ impl PreferExportFrom {
         }
     }
 
-    fn get_target_name_for_default_export(specifier_spec: &SpecifierSpec<'_>) -> String {
+    fn get_target_name_for_default_export(
+        ctx: &LintContext<'_>,
+        specifier_spec: &SpecifierSpec<'_>,
+    ) -> String {
         match specifier_spec.specifier {
             ImportDeclarationSpecifier::ImportDefaultSpecifier(_) => "default".to_string(),
             ImportDeclarationSpecifier::ImportSpecifier(import_specifier) => {
                 let imported_name = match &import_specifier.imported {
                     ModuleExportName::IdentifierName(ident_name) => ident_name.name.as_str(),
                     ModuleExportName::IdentifierReference(ident_ref) => ident_ref.name.as_str(),
-                    ModuleExportName::StringLiteral(literal) => &literal.raw.unwrap(),
+                    ModuleExportName::StringLiteral(literal) => ctx.source_range(literal.span),
                 };
                 let imported_local_name = import_specifier.local.name.as_str();
                 let temp_name = specifier_spec.name.as_str();
@@ -545,14 +550,17 @@ impl PreferExportFrom {
         })
     }
 
-    fn get_export_name_for_export_decl(specifier_spec: &SpecifierSpec<'_>) -> String {
+    fn get_export_name_for_export_decl(
+        ctx: &LintContext<'_>,
+        specifier_spec: &SpecifierSpec<'_>,
+    ) -> String {
         match specifier_spec.specifier {
             ImportDeclarationSpecifier::ImportDefaultSpecifier(_) => "default".to_string(),
             ImportDeclarationSpecifier::ImportSpecifier(import_specifier) => {
                 let imported_name = match &import_specifier.imported {
                     ModuleExportName::IdentifierName(ident_name) => ident_name.name.as_str(),
                     ModuleExportName::IdentifierReference(ident_ref) => ident_ref.name.as_str(),
-                    ModuleExportName::StringLiteral(literal) => &literal.raw.unwrap(),
+                    ModuleExportName::StringLiteral(literal) => ctx.source_range(literal.span),
                 };
 
                 imported_name.to_string()
@@ -562,6 +570,7 @@ impl PreferExportFrom {
     }
 
     fn get_export_name(
+        ctx: &LintContext<'_>,
         specifier_spec: &SpecifierSpec<'_>,
         export_specifier: &ExportSpecifier,
     ) -> String {
@@ -578,11 +587,11 @@ impl PreferExportFrom {
                 let imported_name = match &import_specifier.imported {
                     ModuleExportName::IdentifierName(ident_name) => ident_name.name.as_str(),
                     ModuleExportName::IdentifierReference(ident_ref) => ident_ref.name.as_str(),
-                    ModuleExportName::StringLiteral(literal) => &literal.raw.unwrap(),
+                    ModuleExportName::StringLiteral(literal) => ctx.source_range(literal.span),
                 };
                 let temp_export =
                     if let ModuleExportName::StringLiteral(literal) = &export_specifier.exported {
-                        literal.raw.as_ref().unwrap().as_str()
+                        ctx.source_range(literal.span)
                     } else {
                         export_specifier.exported.name().as_str()
                     };
@@ -924,7 +933,7 @@ impl PreferExportFrom {
         let processed_exports_str = Self::get_processed_exports_str(exports_str, re_export);
 
         if is_namespace {
-            let source = re_export.source.raw.unwrap();
+            let source = fixer.source_range(re_export.source.span);
             let final_replacement = format!("export {processed_exports_str} from {source}");
             rule_fixes.push(fixer.replace(import_decl.span(), final_replacement));
         } else {

@@ -1035,7 +1035,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 ModuleExportName::new_identifier_reference(ident.span, ident.name, self)
             }
             ModuleExportName::StringLiteral(literal) => {
-                ModuleExportName::new_string_literal(literal.span, literal.value, literal.raw, self)
+                ModuleExportName::new_string_literal_with_is_raw(
+                    literal.span,
+                    literal.value,
+                    literal.is_raw,
+                    self,
+                )
             }
         }
     }

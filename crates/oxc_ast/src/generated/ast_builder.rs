@@ -183,15 +183,36 @@ impl<'a> Expression<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
     #[inline]
     pub fn new_string_literal(
         span: Span,
         value: impl Into<JSStr<'a>>,
-        raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder.builder()))
+        Self::StringLiteral(StringLiteral::boxed(span, value, builder.builder()))
+    }
+
+    /// Build an [`Expression::StringLiteral`] with `is_raw`.
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The value of the string.
+    /// * `is_raw`: `true` if slicing the source text with `span` gives the string as it appears in source code,
+    #[inline]
+    pub fn new_string_literal_with_is_raw(
+        span: Span,
+        value: impl Into<JSStr<'a>>,
+        is_raw: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::StringLiteral(StringLiteral::boxed_with_is_raw(
+            span,
+            value,
+            is_raw,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`Expression::TemplateLiteral`].
@@ -1708,15 +1729,36 @@ impl<'a> ArrayExpressionElement<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
     #[inline]
     pub fn new_string_literal(
         span: Span,
         value: impl Into<JSStr<'a>>,
-        raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder.builder()))
+        Self::StringLiteral(StringLiteral::boxed(span, value, builder.builder()))
+    }
+
+    /// Build an [`ArrayExpressionElement::StringLiteral`] with `is_raw`.
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The value of the string.
+    /// * `is_raw`: `true` if slicing the source text with `span` gives the string as it appears in source code,
+    #[inline]
+    pub fn new_string_literal_with_is_raw(
+        span: Span,
+        value: impl Into<JSStr<'a>>,
+        is_raw: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::StringLiteral(StringLiteral::boxed_with_is_raw(
+            span,
+            value,
+            is_raw,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`ArrayExpressionElement::TemplateLiteral`].
@@ -3012,15 +3054,36 @@ impl<'a> PropertyKey<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
     #[inline]
     pub fn new_static_string_literal(
         span: Span,
         value: impl Into<JSStr<'a>>,
-        raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::StaticStringLiteral(StringLiteral::boxed(span, value, raw, builder.builder()))
+        Self::StaticStringLiteral(StringLiteral::boxed(span, value, builder.builder()))
+    }
+
+    /// Build a [`PropertyKey::StaticStringLiteral`] with `is_raw`.
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The value of the string.
+    /// * `is_raw`: `true` if slicing the source text with `span` gives the string as it appears in source code,
+    #[inline]
+    pub fn new_static_string_literal_with_is_raw(
+        span: Span,
+        value: impl Into<JSStr<'a>>,
+        is_raw: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::StaticStringLiteral(StringLiteral::boxed_with_is_raw(
+            span,
+            value,
+            is_raw,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`PropertyKey::StaticNumericLiteral`].
@@ -3159,15 +3222,36 @@ impl<'a> PropertyKey<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
     #[inline]
     pub fn new_string_literal(
         span: Span,
         value: impl Into<JSStr<'a>>,
-        raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder.builder()))
+        Self::StringLiteral(StringLiteral::boxed(span, value, builder.builder()))
+    }
+
+    /// Build a [`PropertyKey::StringLiteral`] with `is_raw`.
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The value of the string.
+    /// * `is_raw`: `true` if slicing the source text with `span` gives the string as it appears in source code,
+    #[inline]
+    pub fn new_string_literal_with_is_raw(
+        span: Span,
+        value: impl Into<JSStr<'a>>,
+        is_raw: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::StringLiteral(StringLiteral::boxed_with_is_raw(
+            span,
+            value,
+            is_raw,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`PropertyKey::TemplateLiteral`].
@@ -5040,15 +5124,36 @@ impl<'a> Argument<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
     #[inline]
     pub fn new_string_literal(
         span: Span,
         value: impl Into<JSStr<'a>>,
-        raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder.builder()))
+        Self::StringLiteral(StringLiteral::boxed(span, value, builder.builder()))
+    }
+
+    /// Build an [`Argument::StringLiteral`] with `is_raw`.
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The value of the string.
+    /// * `is_raw`: `true` if slicing the source text with `span` gives the string as it appears in source code,
+    #[inline]
+    pub fn new_string_literal_with_is_raw(
+        span: Span,
+        value: impl Into<JSStr<'a>>,
+        is_raw: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::StringLiteral(StringLiteral::boxed_with_is_raw(
+            span,
+            value,
+            is_raw,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`Argument::TemplateLiteral`].
@@ -10338,15 +10443,36 @@ impl<'a> ForStatementInit<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
     #[inline]
     pub fn new_string_literal(
         span: Span,
         value: impl Into<JSStr<'a>>,
-        raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder.builder()))
+        Self::StringLiteral(StringLiteral::boxed(span, value, builder.builder()))
+    }
+
+    /// Build a [`ForStatementInit::StringLiteral`] with `is_raw`.
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The value of the string.
+    /// * `is_raw`: `true` if slicing the source text with `span` gives the string as it appears in source code,
+    #[inline]
+    pub fn new_string_literal_with_is_raw(
+        span: Span,
+        value: impl Into<JSStr<'a>>,
+        is_raw: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::StringLiteral(StringLiteral::boxed_with_is_raw(
+            span,
+            value,
+            is_raw,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`ForStatementInit::TemplateLiteral`].
@@ -13361,15 +13487,36 @@ impl<'a> ArrowFunctionBody<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
     #[inline]
     pub fn new_string_literal(
         span: Span,
         value: impl Into<JSStr<'a>>,
-        raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder.builder()))
+        Self::StringLiteral(StringLiteral::boxed(span, value, builder.builder()))
+    }
+
+    /// Build an [`ArrowFunctionBody::StringLiteral`] with `is_raw`.
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The value of the string.
+    /// * `is_raw`: `true` if slicing the source text with `span` gives the string as it appears in source code,
+    #[inline]
+    pub fn new_string_literal_with_is_raw(
+        span: Span,
+        value: impl Into<JSStr<'a>>,
+        is_raw: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::StringLiteral(StringLiteral::boxed_with_is_raw(
+            span,
+            value,
+            is_raw,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`ArrowFunctionBody::TemplateLiteral`].
@@ -16125,15 +16272,29 @@ impl<'a> ImportAttributeKey<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
     #[inline]
     pub fn new_string_literal(
         span: Span,
         value: impl Into<JSStr<'a>>,
-        raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::StringLiteral(StringLiteral::new(span, value, raw, builder.builder()))
+        Self::StringLiteral(StringLiteral::new(span, value, builder.builder()))
+    }
+
+    /// Build an [`ImportAttributeKey::StringLiteral`] with `is_raw`.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The value of the string.
+    /// * `is_raw`: `true` if slicing the source text with `span` gives the string as it appears in source code,
+    #[inline]
+    pub fn new_string_literal_with_is_raw(
+        span: Span,
+        value: impl Into<JSStr<'a>>,
+        is_raw: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::StringLiteral(StringLiteral::new_with_is_raw(span, value, is_raw, builder.builder()))
     }
 }
 
@@ -16749,15 +16910,36 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
     #[inline]
     pub fn new_string_literal(
         span: Span,
         value: impl Into<JSStr<'a>>,
-        raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder.builder()))
+        Self::StringLiteral(StringLiteral::boxed(span, value, builder.builder()))
+    }
+
+    /// Build an [`ExportDefaultDeclarationKind::StringLiteral`] with `is_raw`.
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The value of the string.
+    /// * `is_raw`: `true` if slicing the source text with `span` gives the string as it appears in source code,
+    #[inline]
+    pub fn new_string_literal_with_is_raw(
+        span: Span,
+        value: impl Into<JSStr<'a>>,
+        is_raw: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::StringLiteral(StringLiteral::boxed_with_is_raw(
+            span,
+            value,
+            is_raw,
+            builder.builder(),
+        ))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::TemplateLiteral`].
@@ -17899,15 +18081,29 @@ impl<'a> ModuleExportName<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
     #[inline]
     pub fn new_string_literal(
         span: Span,
         value: impl Into<JSStr<'a>>,
-        raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::StringLiteral(StringLiteral::new(span, value, raw, builder.builder()))
+        Self::StringLiteral(StringLiteral::new(span, value, builder.builder()))
+    }
+
+    /// Build a [`ModuleExportName::StringLiteral`] with `is_raw`.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The value of the string.
+    /// * `is_raw`: `true` if slicing the source text with `span` gives the string as it appears in source code,
+    #[inline]
+    pub fn new_string_literal_with_is_raw(
+        span: Span,
+        value: impl Into<JSStr<'a>>,
+        is_raw: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::StringLiteral(StringLiteral::new_with_is_raw(span, value, is_raw, builder.builder()))
     }
 }
 
@@ -18071,16 +18267,15 @@ impl<'a> StringLiteral<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn new(
-        span: Span,
-        value: impl Into<JSStr<'a>>,
-        raw: Option<Str<'a>>,
-        builder: &impl GetAstBuilder<'a>,
-    ) -> Self {
+    pub fn new(span: Span, value: impl Into<JSStr<'a>>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        StringLiteral { node_id: Cell::new(builder.node_id()), span, value: value.into(), raw }
+        StringLiteral {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            value: value.into(),
+            is_raw: Default::default(),
+        }
     }
 
     /// Build a [`StringLiteral`], and store it in the memory arena.
@@ -18091,16 +18286,54 @@ impl<'a> StringLiteral<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
     #[inline]
     pub fn boxed(
         span: Span,
         value: impl Into<JSStr<'a>>,
-        raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, value, raw, builder), &builder.allocator())
+        ArenaBox::new_in(Self::new(span, value, builder), &builder.allocator())
+    }
+
+    /// Build a [`StringLiteral`] with `is_raw`.
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`StringLiteral::boxed_with_is_raw`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The value of the string.
+    /// * `is_raw`: `true` if slicing the source text with `span` gives the string as it appears in source code,
+    #[inline]
+    pub fn new_with_is_raw(
+        span: Span,
+        value: impl Into<JSStr<'a>>,
+        is_raw: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        let builder = builder.builder();
+        StringLiteral { node_id: Cell::new(builder.node_id()), span, value: value.into(), is_raw }
+    }
+
+    /// Build a [`StringLiteral`] with `is_raw`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`StringLiteral::new_with_is_raw`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The value of the string.
+    /// * `is_raw`: `true` if slicing the source text with `span` gives the string as it appears in source code,
+    #[inline]
+    pub fn boxed_with_is_raw(
+        span: Span,
+        value: impl Into<JSStr<'a>>,
+        is_raw: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> ArenaBox<'a, Self> {
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new_with_is_raw(span, value, is_raw, builder), &builder.allocator())
     }
 }
 
@@ -18813,15 +19046,36 @@ impl<'a> JSXExpression<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
     #[inline]
     pub fn new_string_literal(
         span: Span,
         value: impl Into<JSStr<'a>>,
-        raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder.builder()))
+        Self::StringLiteral(StringLiteral::boxed(span, value, builder.builder()))
+    }
+
+    /// Build a [`JSXExpression::StringLiteral`] with `is_raw`.
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The value of the string.
+    /// * `is_raw`: `true` if slicing the source text with `span` gives the string as it appears in source code,
+    #[inline]
+    pub fn new_string_literal_with_is_raw(
+        span: Span,
+        value: impl Into<JSStr<'a>>,
+        is_raw: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::StringLiteral(StringLiteral::boxed_with_is_raw(
+            span,
+            value,
+            is_raw,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`JSXExpression::TemplateLiteral`].
@@ -20092,15 +20346,36 @@ impl<'a> JSXAttributeValue<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
     #[inline]
     pub fn new_string_literal(
         span: Span,
         value: impl Into<JSStr<'a>>,
-        raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder.builder()))
+        Self::StringLiteral(StringLiteral::boxed(span, value, builder.builder()))
+    }
+
+    /// Build a [`JSXAttributeValue::StringLiteral`] with `is_raw`.
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The value of the string.
+    /// * `is_raw`: `true` if slicing the source text with `span` gives the string as it appears in source code,
+    #[inline]
+    pub fn new_string_literal_with_is_raw(
+        span: Span,
+        value: impl Into<JSStr<'a>>,
+        is_raw: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::StringLiteral(StringLiteral::boxed_with_is_raw(
+            span,
+            value,
+            is_raw,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`JSXAttributeValue::ExpressionContainer`].
@@ -20580,15 +20855,31 @@ impl<'a> TSEnumMemberName<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
     #[inline]
     pub fn new_string(
         span: Span,
         value: impl Into<JSStr<'a>>,
-        raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::String(StringLiteral::boxed(span, value, raw, builder.builder()))
+        Self::String(StringLiteral::boxed(span, value, builder.builder()))
+    }
+
+    /// Build a [`TSEnumMemberName::String`] with `is_raw`.
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The value of the string.
+    /// * `is_raw`: `true` if slicing the source text with `span` gives the string as it appears in source code,
+    #[inline]
+    pub fn new_string_with_is_raw(
+        span: Span,
+        value: impl Into<JSStr<'a>>,
+        is_raw: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::String(StringLiteral::boxed_with_is_raw(span, value, is_raw, builder.builder()))
     }
 
     /// Build a [`TSEnumMemberName::ComputedString`].
@@ -20598,15 +20889,36 @@ impl<'a> TSEnumMemberName<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
     #[inline]
     pub fn new_computed_string(
         span: Span,
         value: impl Into<JSStr<'a>>,
-        raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::ComputedString(StringLiteral::boxed(span, value, raw, builder.builder()))
+        Self::ComputedString(StringLiteral::boxed(span, value, builder.builder()))
+    }
+
+    /// Build a [`TSEnumMemberName::ComputedString`] with `is_raw`.
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The value of the string.
+    /// * `is_raw`: `true` if slicing the source text with `span` gives the string as it appears in source code,
+    #[inline]
+    pub fn new_computed_string_with_is_raw(
+        span: Span,
+        value: impl Into<JSStr<'a>>,
+        is_raw: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::ComputedString(StringLiteral::boxed_with_is_raw(
+            span,
+            value,
+            is_raw,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`TSEnumMemberName::ComputedTemplateString`].
@@ -20757,15 +21069,36 @@ impl<'a> TSLiteral<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
     #[inline]
     pub fn new_string_literal(
         span: Span,
         value: impl Into<JSStr<'a>>,
-        raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder.builder()))
+        Self::StringLiteral(StringLiteral::boxed(span, value, builder.builder()))
+    }
+
+    /// Build a [`TSLiteral::StringLiteral`] with `is_raw`.
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The value of the string.
+    /// * `is_raw`: `true` if slicing the source text with `span` gives the string as it appears in source code,
+    #[inline]
+    pub fn new_string_literal_with_is_raw(
+        span: Span,
+        value: impl Into<JSStr<'a>>,
+        is_raw: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::StringLiteral(StringLiteral::boxed_with_is_raw(
+            span,
+            value,
+            is_raw,
+            builder.builder(),
+        ))
     }
 
     /// Build a [`TSLiteral::TemplateLiteral`].

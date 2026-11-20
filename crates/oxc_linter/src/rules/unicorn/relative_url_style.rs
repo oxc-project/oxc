@@ -110,11 +110,9 @@ impl Rule for RelativeUrlStyle {
 
                 match self.0 {
                     RelativeUrlStyleConfig::Never => {
-                        let raw = str_lit.raw.as_ref().map_or(url, |r| {
-                            let s = r.as_str();
-                            // remove surrounding quotes
-                            &s[1..s.len() - 1]
-                        });
+                        let raw = ctx.source_range(str_lit.span);
+                        // remove surrounding quotes
+                        let raw = raw.get(1..raw.len().saturating_sub(1)).unwrap_or(url);
 
                         if can_remove_dot_slash(raw, new_expr) {
                             ctx.diagnostic_with_fix(never_diagnostic(str_lit.span), |fixer| {

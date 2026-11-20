@@ -163,7 +163,12 @@ impl<'a> TypeScriptModule {
                 let callee =
                     ctx.create_ident_expr(SPAN, require, require_symbol_id, ReferenceFlags::Read);
                 let str_lit = &reference.expression;
-                let str_lit = StringLiteral::boxed(str_lit.span, str_lit.value, str_lit.raw, ctx);
+                let str_lit = StringLiteral::boxed_with_is_raw(
+                    str_lit.span,
+                    str_lit.value,
+                    str_lit.is_raw,
+                    ctx,
+                );
                 let argument = Argument::StringLiteral(str_lit);
                 (
                     VariableDeclarationKind::Const,

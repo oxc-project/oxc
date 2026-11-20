@@ -331,7 +331,7 @@ impl<'a> ObjectRestSpread<'a> {
             object_assignment_target.properties.iter_mut().filter_map(|e| match e {
                 AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(ident) => {
                     let name = ident.binding.name;
-                    let expr = Expression::new_string_literal(SPAN, name, None, ctx);
+                    let expr = Expression::new_string_literal(SPAN, name, ctx);
                     Some(ArrayExpressionElement::from(expr))
                 }
                 AssignmentTargetProperty::AssignmentTargetPropertyProperty(p) => {
@@ -1053,14 +1053,14 @@ impl<'a> ObjectRestSpread<'a> {
             // `let { a, ... rest }`
             PropertyKey::StaticIdentifier(ident) => {
                 let name = ident.name;
-                let expr = Expression::new_string_literal(ident.span, name, None, ctx);
+                let expr = Expression::new_string_literal(ident.span, name, ctx);
                 Some(ArrayExpressionElement::from(expr))
             }
             // `let { 'a', ... rest }`
             // `let { ['a'], ... rest }`
             PropertyKey::StaticStringLiteral(lit) | PropertyKey::StringLiteral(lit) => {
                 let name = lit.value;
-                let expr = Expression::new_string_literal(lit.span, name, None, ctx);
+                let expr = Expression::new_string_literal(lit.span, name, ctx);
                 Some(ArrayExpressionElement::from(expr))
             }
             // `let { [`a`], ... rest }`
@@ -1073,14 +1073,14 @@ impl<'a> ObjectRestSpread<'a> {
             PropertyKey::StaticNumericLiteral(lit) => {
                 let s = lit.to_js_string(&WithoutGlobalReferenceInformation {}).unwrap();
                 let s = Str::from_cow_in(&s, ctx);
-                let expr = Expression::new_string_literal(lit.span, s, None, ctx);
+                let expr = Expression::new_string_literal(lit.span, s, ctx);
                 Some(ArrayExpressionElement::from(expr))
             }
             // `let { 1n: a, ... rest }`
             PropertyKey::StaticBigIntLiteral(lit) => {
                 let s = lit.to_js_string(&WithoutGlobalReferenceInformation {}).unwrap();
                 let s = Str::from_cow_in(&s, ctx);
-                let expr = Expression::new_string_literal(lit.span, s, None, ctx);
+                let expr = Expression::new_string_literal(lit.span, s, ctx);
                 Some(ArrayExpressionElement::from(expr))
             }
             PropertyKey::PrivateIdentifier(_) => {
@@ -1094,7 +1094,7 @@ impl<'a> ObjectRestSpread<'a> {
                     let span = expr.span();
                     let s = expr.to_js_string(&WithoutGlobalReferenceInformation {}).unwrap();
                     let s = Str::from_cow_in(&s, ctx);
-                    let expr = Expression::new_string_literal(span, s, None, ctx);
+                    let expr = Expression::new_string_literal(span, s, ctx);
                     return Some(ArrayExpressionElement::from(expr));
                 }
                 *all_primitives = false;

@@ -13,7 +13,6 @@ impl<'a> IsolatedDeclarations<'a> {
                 StringLiteral::boxed(
                     lit.span,
                     item.value.cooked.unwrap_or_else(|| item.value.raw.into()),
-                    None,
                     self,
                 )
             })

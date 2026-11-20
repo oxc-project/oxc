@@ -38,6 +38,14 @@ it("parses", () => {
   expect(declarator.type).toBe("VariableDeclarator");
 });
 
+it("preserves the raw spelling of string literals", () => {
+  const source = String.raw`let str = 'é\u{1F600}';`;
+  const { program } = parseSyncLazy("test.js", source);
+  const { init } = program.body[0].declarations[0];
+  expect(init.raw).toBe(String.raw`'é\u{1F600}'`);
+  expect(init.toJSON().raw).toBe(init.raw);
+});
+
 it("returns same node objects and node arrays on each access", () => {
   const data = parseSyncLazy("test.js", "let x = y + z;");
   const { program } = data;

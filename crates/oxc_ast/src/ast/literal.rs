@@ -77,7 +77,7 @@ pub struct NumericLiteral<'a> {
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
-#[estree(rename = "Literal")]
+#[estree(rename = "Literal", add_fields(raw = StringLiteralRaw))]
 pub struct StringLiteral<'a> {
     /// Unique identifier for this AST node.
     pub node_id: Cell<NodeId>,
@@ -87,13 +87,15 @@ pub struct StringLiteral<'a> {
     ///
     /// Any escape sequences in the raw code are unescaped.
     pub value: JSStr<'a>,
-
-    /// The raw string as it appears in source code.
+    /// `true` if slicing the source text with `span` gives the string as it appears in source code,
+    /// including quotes.
     ///
-    /// `None` when this ast node is not constructed from the parser.
+    /// The parser sets this to `true`. A `StringLiteral` created by a transform has `false`.
+    /// Set this to `false` if changing `value` or replacing `span` with a different source range.
+    #[builder(default)]
     #[content_eq(skip)]
-    #[estree(from_span)]
-    pub raw: Option<Str<'a>>,
+    #[estree(skip)]
+    pub is_raw: bool,
 }
 
 /// BigInt literal

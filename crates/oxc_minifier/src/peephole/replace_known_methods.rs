@@ -402,7 +402,7 @@ impl<'a> PeepholeOptimizations {
         }
         let tail = cooked.into_js_str();
         if expressions.is_empty() {
-            return Expression::new_string_literal(span, tail, None, ast);
+            return Expression::new_string_literal(span, tail, ast);
         }
         quasis.push(Self::template_element(tail, true, ast));
         Expression::new_template_literal(span, quasis, expressions, ast)
@@ -505,7 +505,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         let joined = array.array_join(ctx, Some(separator))?;
-        Some(Expression::new_string_literal(span, Str::from_str_in(&joined, ctx), None, ctx))
+        Some(Expression::new_string_literal(span, Str::from_str_in(&joined, ctx), ctx))
     }
 
     /// A template quasi holding `cooked`.
@@ -683,12 +683,7 @@ impl<'a> PeepholeOptimizations {
                             ctx,
                         )
                     {
-                        Some(Expression::new_string_literal(
-                            span,
-                            regex.regex.pattern.text,
-                            None,
-                            ctx,
-                        ))
+                        Some(Expression::new_string_literal(span, regex.regex.pattern.text, ctx))
                     } else {
                         // the pattern might be invalid, keep it as-is to preserve the error
                         None
@@ -797,7 +792,7 @@ impl<'a> PeepholeOptimizations {
                 builder.push_code_unit(unit);
                 s.span = span;
                 s.value = builder.into_js_str();
-                s.raw = None;
+                s.is_raw = false;
                 Some(object.take_in(ctx))
             }
             Expression::ArrayExpression(array_expr) => {

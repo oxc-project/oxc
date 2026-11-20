@@ -329,7 +329,7 @@ impl<'a> ClassProperties<'a> {
     ) -> Expression<'a> {
         let key = match &mut prop.key {
             PropertyKey::StaticIdentifier(ident) => {
-                Expression::new_string_literal(ident.span, ident.name, None, ctx)
+                Expression::new_string_literal(ident.span, ident.name, ctx)
             }
             key @ (PropertyKey::StaticStringLiteral(_)
             | PropertyKey::StaticNumericLiteral(_)

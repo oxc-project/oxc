@@ -1474,7 +1474,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 span = self.cur_token().span();
             }
             self.error(diagnostics::ts_string_literal_expected(span));
-            StringLiteral::new(span, "", None, self)
+            StringLiteral::new(span, "", self)
         };
 
         let options =
@@ -1595,7 +1595,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.expect(Kind::RBrack);
                 self.expect(Kind::Colon);
                 let value = self.parse_assignment_expression_or_higher();
-                let key = PropertyKey::new_string_literal(bracket_span, "", None, self);
+                let key = PropertyKey::new_string_literal(bracket_span, "", self);
                 (key, value)
             } else {
                 let key = if self.at(Kind::Str) {

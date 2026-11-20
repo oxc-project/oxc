@@ -93,7 +93,7 @@ impl TypeScriptRewriteExtensions {
     pub fn rewrite_extensions<'a>(&self, source: &mut StringLiteral<'a>, ctx: &TraverseCtx<'a>) {
         if let Some(rewritten) = rewritten_js_specifier(source.value, self.mode, ctx) {
             source.value = rewritten;
-            source.raw = None;
+            source.is_raw = false;
         }
     }
 

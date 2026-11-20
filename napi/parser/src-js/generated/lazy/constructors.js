@@ -2746,7 +2746,7 @@ export class Directive {
     const internal = this.#internal,
       cached = internal.$directive;
     if (cached !== void 0) return cached;
-    return (internal.$directive = constructStr(internal.pos + 64, internal.ast));
+    return (internal.$directive = constructStr(internal.pos + 48, internal.ast));
   }
 
   toJSON() {
@@ -5719,7 +5719,7 @@ export class ImportDeclaration {
 
   get attributes() {
     const internal = this.#internal;
-    return constructOptionBoxWithClause(internal.pos + 88, internal.ast);
+    return constructOptionBoxWithClause(internal.pos + 72, internal.ast);
   }
 
   get importKind() {
@@ -5803,7 +5803,7 @@ export class ImportSpecifier {
 
   get local() {
     const internal = this.#internal;
-    return new BindingIdentifier(internal.pos + 72, internal.ast);
+    return new BindingIdentifier(internal.pos + 56, internal.ast);
   }
 
   get importKind() {
@@ -5987,7 +5987,7 @@ export class ImportAttribute {
 
   get value() {
     const internal = this.#internal;
-    return new StringLiteral(internal.pos + 72, internal.ast);
+    return new StringLiteral(internal.pos + 56, internal.ast);
   }
 
   toJSON() {
@@ -6162,7 +6162,7 @@ export class ExportFromDeclaration {
 
   get attributes() {
     const internal = this.#internal;
-    return constructOptionBoxWithClause(internal.pos + 88, internal.ast);
+    return constructOptionBoxWithClause(internal.pos + 72, internal.ast);
   }
 
   toJSON() {
@@ -6262,12 +6262,12 @@ export class ExportAllDeclaration {
 
   get source() {
     const internal = this.#internal;
-    return new StringLiteral(internal.pos + 72, internal.ast);
+    return new StringLiteral(internal.pos + 56, internal.ast);
   }
 
   get attributes() {
     const internal = this.#internal;
-    return constructOptionBoxWithClause(internal.pos + 120, internal.ast);
+    return constructOptionBoxWithClause(internal.pos + 88, internal.ast);
   }
 
   get exportKind() {
@@ -6326,7 +6326,7 @@ export class ExportSpecifier {
 
   get exported() {
     const internal = this.#internal;
-    return constructModuleExportName(internal.pos + 72, internal.ast);
+    return constructModuleExportName(internal.pos + 56, internal.ast);
   }
 
   get exportKind() {
@@ -6673,7 +6673,7 @@ export class StringLiteral {
     const cached = nodes.get(pos);
     if (cached !== void 0) return cached;
 
-    this.#internal = { pos, ast, $value: void 0, $raw: void 0 };
+    this.#internal = { pos, ast, $value: void 0 };
     nodes.set(pos, this);
   }
 
@@ -6695,10 +6695,10 @@ export class StringLiteral {
   }
 
   get raw() {
-    const internal = this.#internal,
-      cached = internal.$raw;
-    if (cached !== void 0) return cached;
-    return (internal.$raw = constructOptionStr(internal.pos + 32, internal.ast));
+    const internal = this.#internal;
+    if (!constructBool(internal.pos + 12, internal.ast)) return null;
+    const { start, end } = this;
+    return start < end ? internal.ast.sourceText.slice(start, end) : null;
   }
 
   toJSON() {
@@ -10587,12 +10587,12 @@ export class TSExternalModuleDeclaration {
 
   get body() {
     const internal = this.#internal;
-    return constructOptionBoxTSModuleBlock(internal.pos + 64, internal.ast);
+    return constructOptionBoxTSModuleBlock(internal.pos + 48, internal.ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 72, internal.ast);
+    return constructBool(internal.pos + 56, internal.ast);
   }
 
   toJSON() {
@@ -10992,17 +10992,17 @@ export class TSImportType {
 
   get options() {
     const internal = this.#internal;
-    return constructOptionBoxObjectExpression(internal.pos + 64, internal.ast);
+    return constructOptionBoxObjectExpression(internal.pos + 48, internal.ast);
   }
 
   get qualifier() {
     const internal = this.#internal;
-    return constructOptionTSImportTypeQualifier(internal.pos + 72, internal.ast);
+    return constructOptionTSImportTypeQualifier(internal.pos + 56, internal.ast);
   }
 
   get typeArguments() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 88, internal.ast);
+    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 72, internal.ast);
   }
 
   toJSON() {
@@ -12961,7 +12961,7 @@ function constructOptionHashbang(pos, ast) {
 function constructVecDirective(pos, ast) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(int32[pos32], int32[pos32 + 2], 80, constructDirective, ast);
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 64, constructDirective, ast);
 }
 
 function constructDirective(pos, ast) {
@@ -13712,7 +13712,7 @@ function constructBoxImportNamespaceSpecifier(pos, ast) {
 function constructVecImportAttribute(pos, ast) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(int32[pos32], int32[pos32 + 2], 120, constructImportAttribute, ast);
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 88, constructImportAttribute, ast);
 }
 
 function constructImportAttribute(pos, ast) {
@@ -13722,7 +13722,7 @@ function constructImportAttribute(pos, ast) {
 function constructVecExportSpecifier(pos, ast) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(int32[pos32], int32[pos32 + 2], 128, constructExportSpecifier, ast);
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 96, constructExportSpecifier, ast);
 }
 
 function constructExportSpecifier(pos, ast) {

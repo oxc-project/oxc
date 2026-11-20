@@ -1290,12 +1290,10 @@ impl<'a> LegacyDecorator<'a> {
     ) -> Expression<'a> {
         match key {
             PropertyKey::StaticIdentifier(ident) => {
-                Expression::new_string_literal(SPAN, ident.name, None, ctx)
+                Expression::new_string_literal(SPAN, ident.name, ctx)
             }
             // Legacy decorators do not support private key
-            PropertyKey::PrivateIdentifier(_) => {
-                Expression::new_string_literal(SPAN, "", None, ctx)
-            }
+            PropertyKey::PrivateIdentifier(_) => Expression::new_string_literal(SPAN, "", ctx),
             // Copiable literals
             PropertyKey::StaticNumericLiteral(literal) | PropertyKey::NumericLiteral(literal) => {
                 Expression::NumericLiteral(literal.clone_in(ctx.allocator()))

@@ -415,7 +415,7 @@ impl<'a> StyledComponents<'a> {
 
         let quasis_elements = ArenaVec::from_iter_in(
             quasis.into_iter().map(|quasi| {
-                ArrayExpressionElement::new_string_literal(quasi.span, quasi.value.raw, None, ctx)
+                ArrayExpressionElement::new_string_literal(quasi.span, quasi.value.raw, ctx)
             }),
             ctx,
         );
@@ -805,7 +805,7 @@ impl<'a> StyledComponents<'a> {
         ctx: &TraverseCtx<'a>,
     ) -> ObjectPropertyKind<'a> {
         let key = PropertyKey::new_static_identifier(SPAN, key, ctx);
-        let value = Expression::new_string_literal(SPAN, value, None, ctx);
+        let value = Expression::new_string_literal(SPAN, value, ctx);
         ObjectPropertyKind::new_object_property(
             SPAN,
             PropertyKind::Init,

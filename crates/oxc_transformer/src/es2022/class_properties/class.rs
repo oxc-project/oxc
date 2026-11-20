@@ -898,7 +898,7 @@ impl<'a> ClassProperties<'a> {
     fn create_private_prop_key_loose(name: Ident<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         helper_call_expr(
             Helper::ClassPrivateFieldLooseKey,
-            ArenaVec::from_value_in(Argument::new_string_literal(SPAN, name, None, ctx), ctx),
+            ArenaVec::from_value_in(Argument::new_string_literal(SPAN, name, ctx), ctx),
             ctx,
         )
     }

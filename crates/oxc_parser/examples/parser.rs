@@ -72,13 +72,21 @@ fn main() -> Result<(), String> {
 
     // Display ESTree representation if requested
     if show_estree {
-        Utf8ToUtf16::new(&source_text).convert_program(&mut program);
+        let span_converter = Utf8ToUtf16::new(&source_text);
+        span_converter.convert_program(&mut program);
         if source_type.is_javascript() {
             println!("ESTree AST:");
         } else {
             println!("TS-ESTree AST:");
         }
-        println!("{}", program.to_pretty_estree_json(!source_type.is_javascript(), false));
+        println!(
+            "{}",
+            program.to_pretty_estree_json(
+                !source_type.is_javascript(),
+                false,
+                span_converter.as_utf16_to_utf8(),
+            )
+        );
     }
 
     // Report parsing results

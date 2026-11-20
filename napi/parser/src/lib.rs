@@ -118,7 +118,7 @@ fn parse_with_return(filename: &str, source_text: &str, options: &ParserOptions)
 
     let mut errors = OxcError::from_diagnostics(filename, source_text, diagnostics);
 
-    let mut comments =
+    let (mut comments, span_converter) =
         convert_utf8_to_utf16(source_text, &mut program, &mut module_record, &mut errors);
 
     if ast_type == AstType::JavaScript {
@@ -140,7 +140,11 @@ fn parse_with_return(filename: &str, source_text: &str, options: &ParserOptions)
     }
 
     let include_ts_fields = ast_type == AstType::TypeScript;
-    let program_and_fixes = program.to_estree_json_with_fixes(include_ts_fields, ranges);
+    let program_and_fixes = program.to_estree_json_with_fixes(
+        include_ts_fields,
+        ranges,
+        span_converter.as_utf16_to_utf8(),
+    );
 
     let module = EcmaScriptModule::from(&module_record);
 

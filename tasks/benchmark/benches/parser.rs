@@ -60,7 +60,11 @@ fn bench_estree(criterion: &mut Criterion) {
                     let span_converter = Utf8ToUtf16::new(program.source_text);
                     span_converter.convert_program_and_comments(&mut program);
 
-                    black_box(program.to_estree_json_with_fixes(true, false));
+                    black_box(program.to_estree_json_with_fixes(
+                        true,
+                        false,
+                        span_converter.as_utf16_to_utf8(),
+                    ));
                     program
                 });
             });

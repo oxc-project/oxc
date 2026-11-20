@@ -2403,7 +2403,7 @@ impl<'a> ClassProperties<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let message = Str::from_strs_array_in(["#", private_name], ctx);
-        let message = Expression::new_string_literal(SPAN, message, None, ctx);
+        let message = Expression::new_string_literal(SPAN, message, ctx);
         helper_call_expr(helper, ArenaVec::from_value_in(Argument::from(message), ctx), ctx)
     }
 

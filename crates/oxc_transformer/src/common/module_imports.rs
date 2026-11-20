@@ -162,7 +162,7 @@ impl<'a> ModuleImportsStore<'a> {
         Statement::new_import_declaration(
             SPAN,
             Some(specifiers),
-            StringLiteral::new(SPAN, source, None, ctx),
+            StringLiteral::new(SPAN, source, ctx),
             None,
             None,
             ImportOrExportKind::Value,
@@ -184,7 +184,7 @@ impl<'a> ModuleImportsStore<'a> {
         );
 
         let args = {
-            let arg = Argument::new_string_literal(SPAN, source, None, ctx);
+            let arg = Argument::new_string_literal(SPAN, source, ctx);
             [arg]
         };
         let Some(Import::Default(local)) = names.into_iter().next() else { unreachable!() };

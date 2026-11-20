@@ -18,9 +18,7 @@ pub struct FmtJsonString<'a, 'b> {
 
 impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonString<'a, '_> {
     fn fmt(&self, f: &mut JsonFormatter<'_, 'a>) {
-        // The parser always populates `raw` (see `oxc_parser::js::expression`)
-        let raw = self.lit.raw.as_ref().unwrap_or_else(|| unreachable!("parser always sets `raw`"));
-        let raw_str = raw.as_str();
+        let raw_str = f.context().source_text().text_for(self.lit);
 
         // Detect the outer quote.
         // Anything unexpected (no surrounding quotes, mismatched delimiters) falls back to verbatim source.

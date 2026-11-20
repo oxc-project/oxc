@@ -167,11 +167,10 @@ impl<'a> RegExp {
         };
 
         let arguments = [
-            Argument::new_string_literal(SPAN, pattern_text, None, ctx),
+            Argument::new_string_literal(SPAN, pattern_text, ctx),
             Argument::new_string_literal(
                 SPAN,
                 Str::from_str_in(flags.to_inline_string().as_str(), ctx),
-                None,
                 ctx,
             ),
         ];

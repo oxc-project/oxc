@@ -1429,7 +1429,7 @@ fn module_export_name_with_lone_surrogate() {
     let mut builder = JSStrBuilder::new_in(&&allocator);
     builder.push_code_unit(0xD800);
     literal.value = builder.into_js_str();
-    literal.raw = None;
+    literal.is_raw = false;
     assert_eq!(decl.specifiers[0].exported.to_string(), r#""\ud800""#);
 
     let output = Codegen::new().build(&parsed.program).code;
@@ -1472,7 +1472,7 @@ fn js_str_round_trip() {
             let mut builder = JSStrBuilder::new_in(&&allocator);
             builder.push_utf16(units);
             literal.value = builder.into_js_str();
-            literal.raw = None;
+            literal.is_raw = false;
 
             let output = Codegen::new()
                 .with_options(CodegenOptions { minify, ascii_only, ..CodegenOptions::default() })
@@ -1546,7 +1546,7 @@ fn jsx_attribute_with_lone_surrogate_value() {
         let mut builder = JSStrBuilder::new_in(&&allocator);
         builder.push_utf16(units);
         literal.value = builder.into_js_str();
-        literal.raw = None;
+        literal.is_raw = false;
     }
 
     for minify in [false, true] {

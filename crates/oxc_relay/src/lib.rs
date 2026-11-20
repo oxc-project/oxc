@@ -193,7 +193,7 @@ impl<'a> Traverse<'a, ()> for Relay<'a> {
         } else {
             let callee =
                 ctx.create_unbound_ident_expr(SPAN, static_ident!("require"), ReferenceFlags::Read);
-            let argument = Argument::new_string_literal(SPAN, source, None, ctx);
+            let argument = Argument::new_string_literal(SPAN, source, ctx);
             Expression::new_call_expression(span, callee, None, [argument], false, ctx)
         };
     }
@@ -208,7 +208,7 @@ impl<'a> Traverse<'a, ()> for Relay<'a> {
             let specifier =
                 ImportDeclarationSpecifier::new_import_default_specifier(SPAN, local, ctx);
             let specifiers = Some(ArenaVec::from_value_in(specifier, ctx));
-            let source = StringLiteral::new(SPAN, source, None, ctx);
+            let source = StringLiteral::new(SPAN, source, ctx);
             Statement::new_import_declaration(
                 SPAN,
                 specifiers,

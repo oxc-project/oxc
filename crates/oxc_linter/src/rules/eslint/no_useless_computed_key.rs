@@ -220,7 +220,7 @@ fn check_computed_class_member(
                     diagnostic_span,
                     member_span,
                     expr.span(),
-                    lit.raw,
+                    Some(ctx.source_range(lit.span).into()),
                 );
             }
         }

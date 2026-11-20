@@ -171,7 +171,7 @@ impl<'a> ReactDisplayName {
                 SPAN,
                 PropertyKind::Init,
                 PropertyKey::new_static_identifier(SPAN, DISPLAY_NAME, ctx),
-                Expression::new_string_literal(SPAN, name, None, ctx),
+                Expression::new_string_literal(SPAN, name, ctx),
                 false,
                 false,
                 ctx,

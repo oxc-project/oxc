@@ -1456,6 +1456,9 @@ impl<'a> PeepholeOptimizations {
                     let mut new_expr = replacement.take_in(ctx);
                     // Span fix-up on the still-owned new node before the slot replacement, not the slot replacement itself.
                     *new_expr.span_mut() = target_span;
+                    if let Expression::StringLiteral(lit) = &mut new_expr {
+                        lit.is_raw = false;
+                    }
                     ctx.replace_expression(target_expr, new_expr);
                     return Some(true);
                 }
@@ -1904,7 +1907,6 @@ impl<'a> PeepholeOptimizations {
                                     prop.key = PropertyKey::new_string_literal(
                                         prop.key.span(),
                                         "__proto__",
-                                        None,
                                         ctx,
                                     );
                                 }

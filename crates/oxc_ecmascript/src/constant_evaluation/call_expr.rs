@@ -298,7 +298,7 @@ mod substring_tests {
         ] {
             let allocator = Allocator::new();
             let ctx = Context(AstBuilder::new(&allocator));
-            let object = Expression::new_string_literal(SPAN, JSStr::from(text), None, &ctx);
+            let object = Expression::new_string_literal(SPAN, JSStr::from(text), &ctx);
             let args = ArenaVec::from_iter_in(
                 std::iter::once(start).chain(end).map(|value| {
                     Argument::from(Expression::new_numeric_literal(SPAN, value, None, &ctx))

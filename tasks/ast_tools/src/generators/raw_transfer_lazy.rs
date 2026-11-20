@@ -760,6 +760,23 @@ fn generate_struct(
         write_it!(to_json, "{field_name}: this.{field_name},\n");
     }
 
+    // String literals derive their raw spelling from source text.
+    if struct_name == "StringLiteral" {
+        let is_raw = struct_def.fields.iter().find(|field| field.name() == "is_raw").unwrap();
+        let pos = internal_pos_offset(is_raw.offset_64());
+        let construct_bool = is_raw.type_def(schema).constructor_name(schema);
+        #[rustfmt::skip]
+        write_it!(getters, "
+            get raw() {{
+                const internal = this.#internal;
+                if (!{construct_bool}({pos}, internal.ast)) return null;
+                const {{ start, end }} = this;
+                return start < end ? internal.ast.sourceText.slice(start, end) : null;
+            }}
+        ");
+        write_it!(to_json, "raw: this.raw,\n");
+    }
+
     let type_prop_init = if !has_type_field && !struct_def.estree.no_type {
         to_json = format!("type: '{struct_name}',\n{to_json}");
         format!("type = '{struct_name}';")

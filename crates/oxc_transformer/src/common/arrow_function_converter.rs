@@ -1172,7 +1172,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             );
             let typeof_arguments =
                 Expression::new_unary_expression(SPAN, UnaryOperator::Typeof, argument, ctx);
-            let undefined_literal = Expression::new_string_literal(SPAN, "undefined", None, ctx);
+            let undefined_literal = Expression::new_string_literal(SPAN, "undefined", ctx);
             let test = Expression::new_binary_expression(
                 SPAN,
                 typeof_arguments,

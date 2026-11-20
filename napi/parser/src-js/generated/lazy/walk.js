@@ -2699,7 +2699,7 @@ function walkImportDeclaration(pos, ast, visitors) {
 
   walkOptionVecImportDeclarationSpecifier(pos + 16, ast, visitors);
   walkStringLiteral(pos + 40, ast, visitors);
-  walkOptionBoxWithClause(pos + 88, ast, visitors);
+  walkOptionBoxWithClause(pos + 72, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2732,7 +2732,7 @@ function walkImportSpecifier(pos, ast, visitors) {
   }
 
   walkModuleExportName(pos + 16, ast, visitors);
-  walkBindingIdentifier(pos + 72, ast, visitors);
+  walkBindingIdentifier(pos + 56, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2785,7 +2785,7 @@ function walkImportAttribute(pos, ast, visitors) {
   }
 
   walkImportAttributeKey(pos + 16, ast, visitors);
-  walkStringLiteral(pos + 72, ast, visitors);
+  walkStringLiteral(pos + 56, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2848,7 +2848,7 @@ function walkExportFromDeclaration(pos, ast, visitors) {
 
   walkVecExportSpecifier(pos + 16, ast, visitors);
   walkStringLiteral(pos + 40, ast, visitors);
-  walkOptionBoxWithClause(pos + 88, ast, visitors);
+  walkOptionBoxWithClause(pos + 72, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2881,8 +2881,8 @@ function walkExportAllDeclaration(pos, ast, visitors) {
   }
 
   walkOptionModuleExportName(pos + 16, ast, visitors);
-  walkStringLiteral(pos + 72, ast, visitors);
-  walkOptionBoxWithClause(pos + 120, ast, visitors);
+  walkStringLiteral(pos + 56, ast, visitors);
+  walkOptionBoxWithClause(pos + 88, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2899,7 +2899,7 @@ function walkExportSpecifier(pos, ast, visitors) {
   }
 
   walkModuleExportName(pos + 16, ast, visitors);
-  walkModuleExportName(pos + 72, ast, visitors);
+  walkModuleExportName(pos + 56, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4551,7 +4551,7 @@ function walkTSExternalModuleDeclaration(pos, ast, visitors) {
   }
 
   walkStringLiteral(pos + 16, ast, visitors);
-  walkOptionBoxTSModuleBlock(pos + 64, ast, visitors);
+  walkOptionBoxTSModuleBlock(pos + 48, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4699,9 +4699,9 @@ function walkTSImportType(pos, ast, visitors) {
   }
 
   walkStringLiteral(pos + 16, ast, visitors);
-  walkOptionBoxObjectExpression(pos + 64, ast, visitors);
-  walkOptionTSImportTypeQualifier(pos + 72, ast, visitors);
-  walkOptionBoxTSTypeParameterInstantiation(pos + 88, ast, visitors);
+  walkOptionBoxObjectExpression(pos + 48, ast, visitors);
+  walkOptionTSImportTypeQualifier(pos + 56, ast, visitors);
+  walkOptionBoxTSTypeParameterInstantiation(pos + 72, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -5036,10 +5036,10 @@ function walkVecDirective(pos, ast, visitors) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = int32[pos32];
-  const endPos = pos + int32[pos32 + 2] * 80;
+  const endPos = pos + int32[pos32 + 2] * 64;
   while (pos < endPos) {
     walkDirective(pos, ast, visitors);
-    pos += 80;
+    pos += 64;
   }
 }
 
@@ -5789,10 +5789,10 @@ function walkVecImportAttribute(pos, ast, visitors) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = int32[pos32];
-  const endPos = pos + int32[pos32 + 2] * 120;
+  const endPos = pos + int32[pos32 + 2] * 88;
   while (pos < endPos) {
     walkImportAttribute(pos, ast, visitors);
-    pos += 120;
+    pos += 88;
   }
 }
 
@@ -5800,10 +5800,10 @@ function walkVecExportSpecifier(pos, ast, visitors) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = int32[pos32];
-  const endPos = pos + int32[pos32 + 2] * 128;
+  const endPos = pos + int32[pos32 + 2] * 96;
   while (pos < endPos) {
     walkExportSpecifier(pos, ast, visitors);
-    pos += 128;
+    pos += 96;
   }
 }
 

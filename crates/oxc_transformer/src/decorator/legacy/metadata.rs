@@ -604,7 +604,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
 
     fn typeof_undefined(expr: Expression<'a>, ctx: &TraverseCtx<'a>) -> Expression<'a> {
         let typeof_expr = Expression::new_unary_expression(SPAN, UnaryOperator::Typeof, expr, ctx);
-        let undefined_str = Expression::new_string_literal(SPAN, "undefined", None, ctx);
+        let undefined_str = Expression::new_string_literal(SPAN, "undefined", ctx);
         Expression::new_binary_expression(
             SPAN,
             typeof_expr,
@@ -793,7 +793,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let arguments = ArenaVec::from_array_in(
-            [Argument::new_string_literal(SPAN, key, None, ctx), Argument::from(value)],
+            [Argument::new_string_literal(SPAN, key, ctx), Argument::from(value)],
             ctx,
         );
         helper_call_expr(Helper::DecorateMetadata, arguments, ctx)

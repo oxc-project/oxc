@@ -444,7 +444,6 @@ fn ox_symbol_for<'a>(ast: &oxc_ast::builder::AstBuilder<'a>, name: &str) -> oxc:
         [oxc::Argument::from(oxc_ast::ast::Expression::new_string_literal(
             SPAN,
             ox_str(ast, name),
-            None,
             ast,
         ))],
         false,
@@ -500,7 +499,6 @@ fn ox_codegen_reactive_function<'a>(
                 oxc_ast::ast::StringLiteral::new(
                     d.expression_span,
                     d.value.clone_in(cx.ast.allocator()),
-                    None,
                     &cx.ast,
                 ),
                 ox_str(&cx.ast, d.value.as_str().unwrap_or(&d.raw)),
@@ -1450,7 +1448,7 @@ fn ox_convert_value_to_expression<'a>(
     match value {
         OxValue::Expression(e) => e,
         OxValue::JsxText(text) => {
-            oxc_ast::ast::Expression::new_string_literal(text.span, text.value.as_str(), None, ast)
+            oxc_ast::ast::Expression::new_string_literal(text.span, text.value.as_str(), ast)
         }
     }
 }
@@ -1802,7 +1800,6 @@ fn ox_codegen_instruction_value<'a>(
                         expressions.push(oxc_ast::ast::Expression::new_string_literal(
                             span,
                             "TODO handle declaration",
-                            None,
                             &cx.ast,
                         ));
                     }
@@ -1811,7 +1808,6 @@ fn ox_codegen_instruction_value<'a>(
                         expressions.push(oxc_ast::ast::Expression::new_string_literal(
                             span,
                             "TODO handle statement",
-                            None,
                             &cx.ast,
                         ));
                     }
@@ -2263,7 +2259,6 @@ fn ox_codegen_base_instruction_value<'a>(
             None => OxValue::Expression(oxc_ast::ast::Expression::new_string_literal(
                 span,
                 value.clone_in(cx.ast.allocator()),
-                None,
                 &cx.ast,
             )),
         }),
@@ -2337,7 +2332,6 @@ fn ox_property_member<'a>(
                 oxc_ast::ast::Expression::new_string_literal(
                     property_span,
                     ox_str(&cx.ast, s),
-                    None,
                     &cx.ast,
                 ),
                 false,
@@ -2633,12 +2627,9 @@ fn ox_codegen_object_property_key<'a>(
 ) -> Result<oxc::PropertyKey<'a>, OxcDiagnostic> {
     let span = key.span().unwrap_or(span);
     match key {
-        ObjectPropertyKey::String { name, .. } => Ok(oxc::PropertyKey::new_static_string_literal(
-            span,
-            ox_str(&cx.ast, name),
-            None,
-            &cx.ast,
-        )),
+        ObjectPropertyKey::String { name, .. } => {
+            Ok(oxc::PropertyKey::new_static_string_literal(span, ox_str(&cx.ast, name), &cx.ast))
+        }
         ObjectPropertyKey::Identifier { name, .. } => Ok(
             oxc_ast::ast::PropertyKey::new_static_identifier(span, ox_str(&cx.ast, name), &cx.ast),
         ),
@@ -2965,12 +2956,8 @@ fn ox_codegen_function_expression<'a>(
     // enableNameAnonymousFunctions: `({ "<hint>": <fn> })["<hint>"]`
     if cx.env.config.enable_name_anonymous_functions && name.is_none() && name_hint.is_some() {
         let hint = *name_hint.as_ref().unwrap();
-        let key = oxc::PropertyKey::new_static_string_literal(
-            SPAN,
-            ox_str(&cx.ast, &hint),
-            None,
-            &cx.ast,
-        );
+        let key =
+            oxc::PropertyKey::new_static_string_literal(SPAN, ox_str(&cx.ast, &hint), &cx.ast);
         let prop = oxc_ast::ast::ObjectPropertyKind::new_object_property(
             SPAN,
             oxc::PropertyKind::Init,
@@ -2984,12 +2971,7 @@ fn ox_codegen_function_expression<'a>(
         let member = oxc_ast::ast::MemberExpression::new_computed_member_expression(
             SPAN,
             object,
-            oxc_ast::ast::Expression::new_string_literal(
-                SPAN,
-                ox_str(&cx.ast, &hint),
-                None,
-                &cx.ast,
-            ),
+            oxc_ast::ast::Expression::new_string_literal(SPAN, ox_str(&cx.ast, &hint), &cx.ast),
             false,
             &cx.ast,
         );
@@ -3163,7 +3145,6 @@ fn ox_codegen_jsx_expression<'a>(
                 oxc_ast::ast::Expression::new_string_literal(
                     opening_name_span,
                     ox_str(&cx.ast, &builtin.name),
-                    None,
                     &cx.ast,
                 ),
                 is_fbt,
@@ -3275,7 +3256,7 @@ fn ox_codegen_jsx_attribute<'a>(
                 {
                     let value = s.value;
                     Some(oxc_ast::ast::JSXAttributeValue::new_string_literal(
-                        value_span, value, None, &cx.ast,
+                        value_span, value, &cx.ast,
                     ))
                 }
                 _ => {
@@ -3311,7 +3292,6 @@ fn ox_codegen_jsx_element<'a>(
                 let lit = oxc_ast::ast::Expression::new_string_literal(
                     span,
                     ox_str(&cx.ast, raw),
-                    None,
                     &cx.ast,
                 );
                 Ok(oxc_ast::ast::JSXChild::new_expression_container(
@@ -3646,12 +3626,9 @@ fn ox_codegen_primitive_value<'a>(
             }
         }
         PrimitiveValue::Boolean(b) => oxc_ast::ast::Expression::new_boolean_literal(span, *b, ast),
-        PrimitiveValue::String(s) => oxc_ast::ast::Expression::new_string_literal(
-            span,
-            s.clone_in(ast.allocator()),
-            None,
-            ast,
-        ),
+        PrimitiveValue::String(s) => {
+            oxc_ast::ast::Expression::new_string_literal(span, s.clone_in(ast.allocator()), ast)
+        }
         PrimitiveValue::BigInt { value, raw } => oxc_ast::ast::Expression::new_big_int_literal(
             span,
             ox_str(ast, value.as_str()),

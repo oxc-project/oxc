@@ -187,7 +187,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
             let callee = self.refresh_reg.to_expression(ctx);
             let arguments = [
                 Argument::from(binding.create_read_expression(ctx)),
-                Argument::new_string_literal(SPAN, *persistent_id, None, ctx),
+                Argument::new_string_literal(SPAN, *persistent_id, ctx),
             ];
             Statement::new_expression_statement(
                 SPAN,
@@ -641,7 +641,7 @@ impl<'a> ReactRefresh<'a> {
         let force_reset = custom_hooks_in_scope.len() != callee_len;
 
         let mut arguments = ArenaVec::new_in(ctx);
-        arguments.push(Argument::new_string_literal(SPAN, key, None, ctx));
+        arguments.push(Argument::new_string_literal(SPAN, key, ctx));
 
         if force_reset || !custom_hooks_in_scope.is_empty() {
             arguments.push(Argument::new_boolean_literal(SPAN, force_reset, ctx));

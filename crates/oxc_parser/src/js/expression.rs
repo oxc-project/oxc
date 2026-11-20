@@ -572,7 +572,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             JSStr::from(&raw[1..raw.len() - 1])
         };
         self.bump_any();
-        StringLiteral::new(span, value, Some(Str::from(raw)), self)
+        StringLiteral::new_with_is_raw(span, value, true, self)
     }
 
     /// Section [Array Expression](https://tc39.es/ecma262/#prod-ArrayLiteral)

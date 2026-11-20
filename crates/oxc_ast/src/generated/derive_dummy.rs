@@ -1808,7 +1808,7 @@ impl<'a> Dummy<'a> for StringLiteral<'a> {
             node_id: Dummy::dummy(allocator),
             span: Dummy::dummy(allocator),
             value: Dummy::dummy(allocator),
-            raw: Dummy::dummy(allocator),
+            is_raw: Dummy::dummy(allocator),
         }
     }
 }
@@ -2060,7 +2060,7 @@ impl<'a> Dummy<'a> for JSXAttributeName<'a> {
 impl<'a> Dummy<'a> for JSXAttributeValue<'a> {
     /// Create a dummy [`JSXAttributeValue`].
     ///
-    /// Has cost of making 1 allocation (48 bytes).
+    /// Has cost of making 1 allocation (32 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self::StringLiteral(Dummy::dummy(allocator))
     }

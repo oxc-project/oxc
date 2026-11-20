@@ -181,7 +181,7 @@ impl<'a> JsxSource<'a> {
 
         let id = filename_var.create_binding_pattern(ctx);
         let source_path = Str::from_str_in(&ctx.state.source_path.to_string_lossy(), ctx);
-        let init = Expression::new_string_literal(SPAN, source_path, None, ctx);
+        let init = Expression::new_string_literal(SPAN, source_path, ctx);
         let decl = VariableDeclarator::new(SPAN, id, None, Some(init), false, ctx);
         Some(decl)
     }

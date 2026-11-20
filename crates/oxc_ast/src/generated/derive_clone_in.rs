@@ -3239,7 +3239,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for StringLiteral<'_> {
             node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
             value: CloneIn::clone_in_impl(&self.value, with_semantic_ids, allocator),
-            raw: CloneIn::clone_in_impl(&self.raw, with_semantic_ids, allocator),
+            is_raw: CloneIn::clone_in_impl(&self.is_raw, with_semantic_ids, allocator),
         }
     }
 }
