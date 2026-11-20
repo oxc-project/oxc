@@ -1,0 +1,23 @@
+# Leading comment
+# Second leading comment
+
+# Comment before entry
+a = 1 # trailing on entry
+b = 2
+# Comment right after entries
+c = [1, 2] # trailing after array
+d = { x = 1 } # trailing after inline table
+
+# Comment before table
+[table] # trailing on header
+# Comment before the first entry
+key = "value" # trailing
+
+[[array_of_tables]] # trailing on array table header
+name = "x"
+#nospace
+f=1#c
+    # indented comment
+  [indented_table]  # indented header
+  g = 1
+# Dangling comment at the end

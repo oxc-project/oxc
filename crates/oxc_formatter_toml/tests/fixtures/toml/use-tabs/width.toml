@@ -1,0 +1,10 @@
+# The 2nd line is exactly 80 / 81 after formatting
+# Known bug: an indent counts as its string length, so a tab is 1 column instead of tabWidth (see AGENTS.md)
+indented_80 = [
+	["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "b"], # c
+	[1, 2],
+]
+indented_81 = [
+	["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "b"], # c
+	[1, 2],
+]

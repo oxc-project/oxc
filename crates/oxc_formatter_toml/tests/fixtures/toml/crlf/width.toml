@@ -1,0 +1,9 @@
+# Known bug: the old formatter counts `\r` toward the width, so CRLF output expands at exactly 80 / 100 (see AGENTS.md)
+inner_80 = [
+  ["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "b"], # c
+  [1, 2],
+]
+inner_100 = [
+  ["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "b"], # c
+  [1, 2],
+]
