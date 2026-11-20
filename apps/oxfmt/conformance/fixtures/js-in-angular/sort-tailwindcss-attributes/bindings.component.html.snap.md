@@ -26,6 +26,6 @@
   ngClass="p-4 flex"
   class="p-4 flex {{ a }}"
 ></div>
-<div [class]="cn('p-4 flex')" [ngClass]="('p-4 flex' | async)"></div>
+<div [class]="cn('p-4 flex')" [ngClass]="'flex p-4' | async"></div>
 
 `````

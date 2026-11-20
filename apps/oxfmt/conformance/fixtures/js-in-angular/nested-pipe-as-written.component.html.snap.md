@@ -1,8 +1,9 @@
 # Input
 
 `````html
-<p>{{(birthday | date:'longDate') | uppercase}}</p>
-<p [ngClass]="{'btn-success':(dialog$|async).level===1}"></p>
+<p>{{a?b:c|p}}</p>
+<p>{{ f(a ? b : c|p) }}</p>
+<p>{{ `${a|p}` }}</p>
 
 `````
 
@@ -11,7 +12,8 @@
 ## `{}`
 
 `````html
-<p>{{(birthday | date:'longDate') | uppercase}}</p>
-<p [ngClass]="{'btn-success':(dialog$|async).level===1}"></p>
+<p>{{a?b:c|p}}</p>
+<p>{{ f(a ? b : c|p) }}</p>
+<p>{{ `${a|p}` }}</p>
 
 `````

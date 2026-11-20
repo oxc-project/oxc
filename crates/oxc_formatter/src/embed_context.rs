@@ -114,6 +114,9 @@ pub struct ExpressionRoot {
     /// before a template literal substitution's `}` and, under `bracketSpacing: false`, an object's
     /// (but for the known gap, `crates/oxc_formatter/AGENTS.md` "js-in-xxx").
     pub ends_at_double_brace: bool,
+    /// The host prints an object's `}` right after the code (an Angular pipe's last argument, the last value of an object):
+    /// with `ends_at_double_brace`, an object ending the code prints in parens under `bracketSpacing: false`, as one ending an object's last value does.
+    pub ends_before_brace: bool,
     /// The root starts a statement: the host reads code holding a `;` as statements (Vue's `@click`), and its bodies may print one.
     /// A leading `{`, `function`, `class` or `let[` (an object pattern's assignment too) prints in parens, as in an expression statement.
     pub reads_as_statements: bool,

@@ -584,28 +584,27 @@
 
 ## angular-html
 
-83/128 (64.84%)
+84/128 (65.63%)
 
 ### Failed
 
 - externals/prettier/angular/angular/angularjs.html (💥💥💥💥💥, 54.99%)
   - apps/oxfmt/DIVERGENCES.md#js-in-angular-angularjs-attributes-as-written
-- externals/prettier/angular/angular/attributes.component.html (💥💥💥💥💥, 76.94%)
+- externals/prettier/angular/angular/attributes.component.html (💥💥💥💥💥, 79.92%)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-i18n-content-as-written
   - crates/oxc_formatter/DIVERGENCES.md#single-level-member-no-break
   - apps/oxfmt/DIVERGENCES.md#js-in-angular-root-chain-not-indented
   - apps/oxfmt/DIVERGENCES.md#js-in-angular-action-without-parens
-  - apps/oxfmt/DIVERGENCES.md#js-in-angular-nested-pipe-as-written
-- externals/prettier/angular/angular/interpolation.component.html (💥💥💥💥💥, 95.83%)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-nested-pipe-as-name
+- externals/prettier/angular/angular/interpolation.component.html (💥💥💥💥💥, 97.73%)
   - apps/oxfmt/DIVERGENCES.md#js-in-angular-root-chain-not-indented
-  - apps/oxfmt/DIVERGENCES.md#js-in-angular-nested-pipe-as-written
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-nested-pipe-as-name
 - externals/prettier/angular/angular/ng-model-options.html (💥💥💥💥💥, 8.00%)
   - apps/oxfmt/DIVERGENCES.md#js-in-angular-angularjs-attributes-as-written
-- externals/prettier/angular/angular/real-world.component.html (💥💥💥💥💥, 99.53%)
+- externals/prettier/angular/angular/real-world.component.html (💥💥💥💥💥, 99.75%)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#omitted-end-tag
   - apps/oxfmt/DIVERGENCES.md#js-in-angular-root-chain-not-indented
   - apps/oxfmt/DIVERGENCES.md#js-in-angular-action-without-parens
-  - apps/oxfmt/DIVERGENCES.md#js-in-angular-nested-pipe-as-written
 - externals/prettier/angular/bracket-same-line/angularjs.html (💥💥, 73.08%)
   - apps/oxfmt/DIVERGENCES.md#js-in-angular-action-without-parens
   - apps/oxfmt/DIVERGENCES.md#js-in-angular-angularjs-attributes-as-written
@@ -634,8 +633,6 @@
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-i18n-content-as-written
 - externals/prettier/angular/icu-expression/combination-01.html (💥, 25.00%)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-i18n-content-as-written
-- externals/prettier/angular/let-declaration/complex.html (💥, 96.70%)
-  - apps/oxfmt/DIVERGENCES.md#js-in-angular-nested-pipe-as-written
 - externals/prettier/angular/template-literal/template-literal.html (💥, 88.89%)
   - apps/oxfmt/DIVERGENCES.md#js-in-angular-action-without-parens
 - externals/prettier/angular/trailing-comma/trailing-comma.html (💥💥💥, 92.78%)
