@@ -14,8 +14,8 @@ use crate::{
     },
     context::TraverseCtx,
     decorator::standard::{
-        ClassDecoratorBindings, ClassDecoratorState, ClassDecoratorTables, DecoratorElementKind,
-        PrivateDecoratorAccess, StandardDecoratorState,
+        ClassDecoratorBindings, ClassDecoratorState, ClassDecoratorTables, ClassNameRewriter,
+        DecoratorElementKind, PrivateDecoratorAccess, StandardDecoratorState, run_initializers,
     },
 };
 
@@ -100,6 +100,22 @@ impl<'a> DecoratorBodyEntry<'a> {
             bindings.decorator_static_brand = Some(brand);
         }
     }
+
+    pub fn rewrite_expression_name(
+        &self,
+        body: &mut ClassBody<'a>,
+        bindings: &ClassBindings<'a>,
+        is_declaration: bool,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.is_decorated()
+            && !is_declaration
+            && let (Some(name), Some(temp)) = (&bindings.name, &bindings.temp)
+        {
+            ClassNameRewriter::new(name.symbol_id, name.name, Some(temp.clone()), None, ctx)
+                .rewrite(body);
+        }
+    }
 }
 
 /// Instance field initializers move on entry; decorators and keys are collected on exit.
@@ -113,15 +129,28 @@ impl<'a> ClassProperties<'a> {
     pub(super) fn on_body_entry(
         &mut self,
         body: &mut ClassBody<'a>,
-        class_name_binding: Option<&BoundIdentifier<'a>>,
+        class_name_binding: &mut Option<BoundIdentifier<'a>>,
         class_scope_id: ScopeId,
         lowering: ClassLowering,
         ctx: &mut TraverseCtx<'a>,
     ) -> DecoratorBodyEntry<'a> {
+        let Ancestor::ClassBody(class) = ctx.parent() else { unreachable!() };
+        let class_address = class.address();
+        let is_declaration = *class.r#type() == ClassType::ClassDeclaration;
         let standard = self.decorator_state.enabled();
         let is_decorated = standard && lowering.has_decorators();
         let has_auto_accessor = standard && lowering.has_auto_accessor();
         let per_evaluation_state = standard && lowering.handles_standard_decorators();
+        // The heritage is evaluated in the class scope, where the class name is the inner binding
+        // that the class decorators initialize.
+        let heritage_class_symbol = class_name_binding
+            .as_ref()
+            .filter(|_| is_decorated)
+            .zip(class.heritage().as_ref())
+            .filter(|(name, heritage)| {
+                ClassNameRewriter::references(&heritage.expression, name.symbol_id, ctx)
+            })
+            .map(|(name, _)| name.symbol_id);
         if standard {
             for element in &mut body.body {
                 let (key, computed, value) = match element {
@@ -153,7 +182,7 @@ impl<'a> ClassProperties<'a> {
             }))
         .then(|| {
             // Block-scoped, like the other temporaries of decorated and auto-accessor classes.
-            let name = class_name_binding.map_or("Class", |binding| binding.name.as_str());
+            let name = class_name_binding.as_ref().map_or("Class", |binding| binding.name.as_str());
             ctx.generate_uid(name, ctx.current_block_scope_id(), SymbolFlags::BlockScopedVariable)
         });
         if is_decorated {
@@ -171,12 +200,41 @@ impl<'a> ClassProperties<'a> {
                 ctx,
             );
         }
-        let state = if is_decorated {
+        let mut state = if is_decorated {
             Some(Box::new(StandardDecoratorState::prepare_class_decorators(body, tables, ctx)))
         } else {
             None
         };
+        let heritage_refs_name = heritage_class_symbol.is_some();
+        if let Some(state) = state.as_mut() {
+            state.heritage_class_symbol = heritage_class_symbol;
+        }
 
+        // A class decorator can replace the outer binding while the class keeps its inner name.
+        if is_decorated
+            && is_declaration
+            && let Some(name_binding) = class_name_binding
+        {
+            let outer_scope_id = ctx.scoping().scope_parent_id(class_scope_id).unwrap();
+            let mut rewriter = ClassNameRewriter::new(
+                name_binding.symbol_id,
+                name_binding.name,
+                None,
+                Some(outer_scope_id),
+                ctx,
+            );
+            if heritage_refs_name {
+                rewriter = rewriter.with_replacement();
+            }
+            let inner = rewriter.rewrite(body);
+            if let Some(inner) = inner {
+                self.decorator_state.record_declaration_rewrite(
+                    class_address,
+                    (inner.clone(), name_binding.clone()),
+                );
+                *name_binding = inner;
+            }
+        }
         DecoratorBodyEntry { state, static_accessor_binding, per_evaluation_state }
     }
 
@@ -189,7 +247,11 @@ impl<'a> ClassProperties<'a> {
             && state.instance_method_extras
         {
             let this = Expression::new_this_expression(SPAN, ctx);
-            instance_inits.push(state.run_initializers_call(5, this, ctx));
+            instance_inits.push(state.run_initializers_call(
+                run_initializers::INSTANCE_METHOD_EXTRAS,
+                this,
+                ctx,
+            ));
         }
     }
 
@@ -424,6 +486,19 @@ impl<'a> ClassProperties<'a> {
             self.decorator_state.take_class_decorators(class, &mut self.insert_before, ctx);
         }
 
+        if let Some(symbol_id) =
+            self.current_class().decorators.as_ref().and_then(|state| state.heritage_class_symbol)
+            && let Some(heritage) = &mut class.heritage
+        {
+            // A declaration's inner binding is a fresh `let`, in its TDZ until the class is
+            // decorated. An expression's temporary is already initialized.
+            let is_declaration = self.current_class().is_declaration;
+            let replacement = self.decorator_class_binding().clone();
+            let name = replacement.name;
+            ClassNameRewriter::new(symbol_id, name, Some(replacement), None, ctx)
+                .rewrite_expression(&mut heritage.expression, !is_declaration);
+        }
+
         let class_methods_count = self.transform_class_elements(class, ctx);
 
         if is_decorated {
@@ -453,6 +528,23 @@ impl<'a> ClassProperties<'a> {
         inferred_name
     }
 
+    /// The binding that holds the class while decorators are applied.
+    fn decorator_class_binding(&self) -> &BoundIdentifier<'a> {
+        let details = self.current_class();
+        details.bindings.outer_binding(details.is_declaration)
+    }
+
+    pub(super) fn get_or_init_original_class_for_super(
+        &mut self,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<&BoundIdentifier<'a>> {
+        if !self.decorator_state.has_class_decorators() {
+            return None;
+        }
+        let state = self.current_class_mut().decorators.as_mut().unwrap();
+        Some(state.get_or_init_original_class_for_super(ctx))
+    }
+
     pub(super) fn push_decorate_element(
         &mut self,
         kind: DecoratorElementKind,
@@ -480,12 +572,7 @@ impl<'a> ClassProperties<'a> {
             };
             PrivateDecoratorAccess { brand, value: prop.binding.clone(), getter, setter }
         });
-        let target = if details.is_declaration {
-            details.bindings.name.as_ref().or(details.bindings.temp.as_ref())
-        } else {
-            details.bindings.temp.as_ref()
-        }
-        .expect("decorated class always has a binding");
+        let target = details.bindings.outer_binding(details.is_declaration);
         self.decorator_state.push_decorate_element(
             kind,
             is_static,
@@ -506,12 +593,7 @@ impl<'a> ClassProperties<'a> {
     ) -> (Vec<Expression<'a>>, Option<Expression<'a>>) {
         let details = self.classes_stack.last();
         let bindings = &details.bindings;
-        let target = if details.is_declaration {
-            bindings.name.as_ref().or(bindings.temp.as_ref())
-        } else {
-            bindings.temp.as_ref()
-        }
-        .expect("decorated class always has a binding");
+        let target = bindings.outer_binding(details.is_declaration);
         self.decorator_state.build_decorator_sequence(
             class,
             details.decorators.as_ref().unwrap(),

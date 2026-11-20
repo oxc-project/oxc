@@ -105,7 +105,7 @@ impl<'a> ClassProperties<'a> {
 
         let lowering = ctx.state.class_lowering_of(class_scope_id);
         let mut entry =
-            self.on_body_entry(body, class_name_binding.as_ref(), class_scope_id, lowering, ctx);
+            self.on_body_entry(body, &mut class_name_binding, class_scope_id, lowering, ctx);
         let per_evaluation_state = entry.per_evaluation_state;
         if matches!(lowering.mode(), ClassLoweringMode::Native | ClassLoweringMode::Preserve) {
             // Register private names only when they can shadow a lowered name in an enclosing
@@ -254,7 +254,10 @@ impl<'a> ClassProperties<'a> {
         // Initialize class binding vars.
         // Static prop in class expression or anonymous `export default class {}` always require
         // temp var for class. Static prop in class declaration doesn't.
-        let need_temp_var = entry.is_decorated()
+        // A decorated class declaration is decorated through its name binding; it needs a temp var
+        // only for the reasons an undecorated class does.
+        let need_temp_var = (entry.is_decorated()
+            && (!is_declaration || class_name_binding.is_none()))
             || entry.static_accessor_binding.is_some()
             || (has_static_prop && (!is_declaration || class_name_binding.is_none()));
 
@@ -298,7 +301,11 @@ impl<'a> ClassProperties<'a> {
             self.private_fields_as_properties && !entry.is_decorated(),
         );
 
+        if entry.per_evaluation_state {
+            class_bindings.block_temp_scope_id = Some(ctx.current_block_scope_id());
+        }
         entry.configure_bindings(&mut class_bindings, &private_props, ctx);
+        entry.rewrite_expression_name(body, &class_bindings, is_declaration, ctx);
 
         // Add entry to `classes_stack`
         self.classes_stack.push(ClassDetails {
@@ -419,6 +426,9 @@ impl<'a> ClassProperties<'a> {
         }
         // Pop off stack. We're done!
         let class_details = self.classes_stack.pop();
+        if self.classes_stack.is_outermost() {
+            self.decorator_state.clear_class_tree_entries();
+        }
         if let Some(private_props) = class_details.private_props.lowered() {
             // Note: `private_props` can be non-empty even if `is_transform_required == false`,
             // if class contains private accessors, which we don't transform yet
@@ -654,6 +664,9 @@ impl<'a> ClassProperties<'a> {
 
         // Pop off stack. We're done!
         let class_details = self.classes_stack.pop();
+        if self.classes_stack.is_outermost() {
+            self.decorator_state.clear_class_tree_entries();
+        }
         if let Some(private_props) = class_details.private_props.lowered() {
             // Note: `private_props` can be non-empty even if `is_transform_required == false`,
             // if class contains private accessors, which we don't transform yet

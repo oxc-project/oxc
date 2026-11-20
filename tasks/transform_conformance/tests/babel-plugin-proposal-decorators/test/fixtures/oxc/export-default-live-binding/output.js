@@ -1,0 +1,15 @@
+import _defineProperty from "@oxc-project/runtime/helpers/defineProperty";
+import _decoratorStart from "@oxc-project/runtime/helpers/decoratorStart";
+import _decorateElement from "@oxc-project/runtime/helpers/decorateElement";
+import _runInitializers from "@oxc-project/runtime/helpers/runInitializers";
+var _Foo_decorators;
+let _init, _Foo2;
+_Foo_decorators = [[void 0, dec]];
+let _Foo = class Foo {};
+_Foo2 = _Foo;
+_init = _decoratorStart(null);
+_Foo2 = _Foo = _decorateElement(_init, 0, "Foo", _Foo_decorators, _Foo);
+_defineProperty(_Foo, "self", _Foo2);
+_runInitializers(_init, 1, _Foo);
+let Foo = _Foo;
+export { Foo as default };

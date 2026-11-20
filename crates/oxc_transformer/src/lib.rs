@@ -639,6 +639,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
             typescript.exit_statement(stmt, ctx);
         }
         self.decorator.exit_statement(stmt, ctx);
+        self.x2_es2022.exit_statement(stmt, ctx);
         self.x2_es2018.exit_statement(stmt, ctx);
         self.x2_es2017.exit_statement(stmt, ctx);
     }
@@ -787,6 +788,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.decorator.enter_decorator(node, ctx);
+        self.x2_es2022.enter_decorator(node, ctx);
     }
 
     fn enter_formal_parameter_rest(

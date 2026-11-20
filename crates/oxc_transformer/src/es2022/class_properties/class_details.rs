@@ -182,6 +182,13 @@ impl<'a> ClassesStack<'a> {
         self.stack.pop()
     }
 
+    /// Whether no class is being transformed.
+    #[inline]
+    pub fn is_outermost(&self) -> bool {
+        // The stack always holds a dummy entry.
+        self.stack.len() == 1
+    }
+
     /// Get details of current class.
     #[inline]
     pub fn last(&self) -> &ClassDetails<'a> {

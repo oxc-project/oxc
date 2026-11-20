@@ -68,9 +68,22 @@ pub(super) struct ClassBindings<'a> {
     pub static_private_fields_use_temp: bool,
     /// `true` if temp var for class has been inserted
     pub temp_var_is_created: bool,
+    /// Block scope for a lazily created temp var, if this class declares its temps with `let`.
+    /// See `ClassDetails::block_scoped_temps`.
+    pub block_temp_scope_id: Option<ScopeId>,
 }
 
 impl<'a> ClassBindings<'a> {
+    /// Binding which refers to the class from outside its body, e.g. for static initializers and
+    /// decorator application.
+    ///
+    /// A class declaration uses its name (or a temp for `export default class {}`). A class
+    /// expression always uses the temp var.
+    pub fn outer_binding(&self, is_declaration: bool) -> &BoundIdentifier<'a> {
+        if is_declaration { self.name.as_ref().or(self.temp.as_ref()) } else { self.temp.as_ref() }
+            .expect("class referenced from outside its body always has a binding")
+    }
+
     /// Create new `ClassBindings`.
     pub fn new(
         name_binding: Option<BoundIdentifier<'a>>,
@@ -92,6 +105,7 @@ impl<'a> ClassBindings<'a> {
             outer_hoist_scope_id: outer_scope_id,
             static_private_fields_use_temp,
             temp_var_is_created,
+            block_temp_scope_id: None,
         }
     }
 
@@ -137,8 +151,15 @@ impl<'a> ClassBindings<'a> {
     ) -> &BoundIdentifier<'a> {
         if self.static_private_fields_use_temp {
             // Create temp binding if doesn't already exist
-            self.temp.get_or_insert_with(|| {
-                Self::create_temp_binding(self.name.as_ref(), self.outer_hoist_scope_id, ctx)
+            self.temp.get_or_insert_with(|| match self.block_temp_scope_id {
+                Some(scope_id) => ctx.generate_uid(
+                    self.name.as_ref().map_or("Class", |name| name.name.as_str()),
+                    scope_id,
+                    SymbolFlags::BlockScopedVariable,
+                ),
+                None => {
+                    Self::create_temp_binding(self.name.as_ref(), self.outer_hoist_scope_id, ctx)
+                }
             })
         } else {
             // `static_private_fields_use_temp` is always `true` for class expressions.

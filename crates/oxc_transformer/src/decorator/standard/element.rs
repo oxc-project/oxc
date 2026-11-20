@@ -7,6 +7,7 @@ use rustc_hash::FxHashMap;
 use oxc_allocator::{Address, ArenaBox, ArenaVec, CloneIn, GetAddress, GetAllocator, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::SPAN;
 use oxc_str::Str;
 use oxc_syntax::{
@@ -20,9 +21,11 @@ use oxc_traverse::{Ancestor, BoundIdentifier};
 use crate::{
     common::{
         computed_key::{create_computed_key_temp_var, key_needs_temp_var},
+        duplicate::duplicate_expression,
         helper_loader::{Helper, helper_call_expr},
     },
     context::TraverseCtx,
+    es2020::OptionalChaining,
     state::TransformState,
     utils::ast_builder::create_assignment,
 };
@@ -81,17 +84,18 @@ impl<'a> StandardDecoratorState<'a> {
         }
         impl<'a> Visit<'a> for DecoratedClassFinder<'_, 'a> {
             fn visit_statement(&mut self, statement: &Statement<'a>) {
-                let loop_address = matches!(
-                    statement,
-                    Statement::ForStatement(_)
-                        | Statement::ForInStatement(_)
-                        | Statement::ForOfStatement(_)
-                        | Statement::WhileStatement(_)
-                        | Statement::DoWhileStatement(_)
-                )
-                .then(|| statement.address());
-                // Each cached loop is looked up at most once: a later search starts below the loop
-                // which cached it, and stops at the first cached loop.
+                // Only unbraced loop bodies are visited by `wrap_loop_body_if_decorated`, which
+                // consumes the cached result. Braced loops are not cached, so nothing is left over.
+                let loop_address = match statement {
+                    Statement::ForStatement(s) => Some(&s.body),
+                    Statement::ForInStatement(s) => Some(&s.body),
+                    Statement::ForOfStatement(s) => Some(&s.body),
+                    Statement::WhileStatement(s) => Some(&s.body),
+                    Statement::DoWhileStatement(s) => Some(&s.body),
+                    _ => None,
+                }
+                .filter(|body| !matches!(body, Statement::BlockStatement(_)))
+                .map(|_| statement.address());
                 if let Some(address) = loop_address
                     && let Some(found) = self.loop_classes.remove(&address)
                 {
@@ -119,6 +123,16 @@ impl<'a> StandardDecoratorState<'a> {
             // A class inside a function gets its state from that function's body on each call.
             fn visit_function(&mut self, _: &Function<'a>, _: ScopeFlags) {}
             fn visit_arrow_function_expression(&mut self, _: &ArrowFunctionExpression<'a>) {}
+        }
+        // A loop nested in an unbraced loop body was already searched with its parent.
+        if let Some(found) = self.loop_classes.remove(&ctx.parent().address()) {
+            if found {
+                let scope_id = ctx.insert_scope_below_statement(statement, ScopeFlags::empty());
+                let body = statement.take_in(ctx);
+                *statement =
+                    Statement::new_block_statement_with_scope_id(SPAN, [body], scope_id, ctx);
+            }
+            return;
         }
         let found = {
             let mut finder = DecoratedClassFinder {
@@ -295,6 +309,86 @@ impl<'a> StandardDecoratorState<'a> {
         )
     }
 
+    /// Preserve the receiver before private fields and `super` accesses are lowered.
+    /// Each decorator is stored as `[receiver, function]` in evaluation order.
+    pub(crate) fn capture_decorator_receiver(
+        &self,
+        decorator: &mut Decorator<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if !self.enabled {
+            return;
+        }
+        // Standard decorators cannot decorate parameters. Leave the parameter untouched and
+        // report the error that TypeScript reports as TS1206.
+        if matches!(
+            ctx.parent(),
+            Ancestor::FormalParameterDecorators(_) | Ancestor::FormalParameterRestDecorators(_)
+        ) {
+            ctx.state.error(
+                OxcDiagnostic::error("Decorators are not valid here.")
+                    .with_help("Parameter decorators require `experimentalDecorators` (legacy decorators).")
+                    .with_label(decorator.span),
+            );
+            return;
+        }
+        // TypeScript erases `declare` fields together with their decorators.
+        if let Ancestor::PropertyDefinitionDecorators(prop) = ctx.parent()
+            && *prop.declare()
+        {
+            return;
+        }
+        let expression = decorator.expression.get_inner_expression_mut();
+        if matches!(expression, Expression::ChainExpression(_)) {
+            // Capture only after the optional checks have succeeded. Pulling a member's
+            // object out of a chain would turn `null?.child.dec` into an early throw.
+            OptionalChaining::lower_chain_expression(expression, ctx);
+            Self::capture_optional_decorator_receiver(expression, ctx);
+        } else {
+            Self::capture_decorator_receiver_pair(expression, ctx);
+        }
+    }
+
+    fn capture_optional_decorator_receiver(
+        expression: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        match expression {
+            Expression::ConditionalExpression(conditional) => {
+                Self::capture_optional_decorator_receiver(&mut conditional.consequent, ctx);
+                Self::capture_optional_decorator_receiver(&mut conditional.alternate, ctx);
+            }
+            Expression::SequenceExpression(sequence) => {
+                Self::capture_optional_decorator_receiver(
+                    sequence.expressions.last_mut().unwrap(),
+                    ctx,
+                );
+            }
+            expression => Self::capture_decorator_receiver_pair(expression, ctx),
+        }
+    }
+
+    fn capture_decorator_receiver_pair(expression: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let receiver = if let Some(member) = expression.as_member_expression_mut() {
+            let object = member.object_mut();
+            if matches!(object.get_inner_expression(), Expression::Super(_)) {
+                Expression::new_this_expression(SPAN, ctx)
+            } else {
+                let (receiver, reference) = duplicate_expression(object.take_in(ctx), true, ctx);
+                *object = reference;
+                receiver
+            }
+        } else {
+            Expression::new_void_0(SPAN, ctx)
+        };
+        let function = expression.take_in(ctx);
+        *expression = Expression::new_array_expression(
+            SPAN,
+            [ArrayExpressionElement::from(receiver), ArrayExpressionElement::from(function)],
+            ctx,
+        );
+    }
+
     /// Decorator context names use the property key after a single ToPropertyKey conversion.
     ///
     /// Entry phase: convert keys of decorated elements, and computed keys of fields, with
@@ -357,7 +451,7 @@ impl<'a> StandardDecoratorState<'a> {
 
     /// Entry phase: assign initializer slot indexes to decorated fields and accessors.
     ///
-    /// Order matches the order `__decorateElement` is called in:
+    /// Order matches the order `decorateElement` is called in:
     /// static accessors, instance accessors, static fields, instance fields.
     pub(crate) fn prepare_class_decorators(
         body: &ClassBody<'a>,
@@ -477,7 +571,14 @@ impl<'a> StandardDecoratorState<'a> {
             SymbolFlags::BlockScopedVariable,
         );
         ctx.state.var_declarations.insert_let(&init, None, &ctx.ast);
-        ClassDecoratorState { init, instance_method_extras, static_method_extras, tables }
+        ClassDecoratorState {
+            init,
+            instance_method_extras,
+            static_method_extras,
+            original_class: None,
+            heritage_class_symbol: None,
+            tables,
+        }
     }
 
     /// Exit phase: evaluate class decorators into `_Class_decorators = [...]` before class,
@@ -492,7 +593,11 @@ impl<'a> StandardDecoratorState<'a> {
             let name = class.id.as_ref().map_or("Class", |id| id.name.as_str());
             let binding = ctx.generate_uid_in_current_hoist_scope(&format!("{name}_decorators"));
             ctx.state.var_declarations.insert_var(&binding, &ctx.ast);
-            let array = Self::decorator_array(&mut class.decorators, ctx);
+            let elements = ArenaVec::from_iter_in(
+                class.decorators.drain(..).map(|d| ArrayExpressionElement::from(d.expression)),
+                ctx,
+            );
+            let array = Expression::new_array_expression(SPAN, elements, ctx);
             insert_before.push(create_assignment(&binding, array, SPAN, ctx));
             self.exit.class_decorators = Some(binding);
         }
@@ -543,30 +648,13 @@ impl<'a> StandardDecoratorState<'a> {
         };
         let binding = ctx.generate_uid_in_current_hoist_scope(&format!("{hint}_dec"));
         ctx.state.var_declarations.insert_var(&binding, &ctx.ast);
-        let array = Self::decorator_array(decorators, ctx);
+        let elements = ArenaVec::from_iter_in(
+            decorators.drain(..).map(|d| ArrayExpressionElement::from(d.expression)),
+            ctx,
+        );
+        let array = Expression::new_array_expression(SPAN, elements, ctx);
         insert_before.push(create_assignment(&binding, array, SPAN, ctx));
         binding
-    }
-
-    /// Decorators as `[receiver, function]` pairs, which the runtime expects.
-    fn decorator_array(
-        decorators: &mut ArenaVec<'a, Decorator<'a>>,
-        ctx: &TraverseCtx<'a>,
-    ) -> Expression<'a> {
-        let mut elements = ArenaVec::with_capacity_in(decorators.len(), ctx);
-        for decorator in decorators.drain(..) {
-            let receiver = Expression::new_void_0(SPAN, ctx);
-            let pair = Expression::new_array_expression(
-                SPAN,
-                [
-                    ArrayExpressionElement::from(receiver),
-                    ArrayExpressionElement::from(decorator.expression),
-                ],
-                ctx,
-            );
-            elements.push(ArrayExpressionElement::from(pair));
-        }
-        Expression::new_array_expression(SPAN, elements, ctx)
     }
 
     /// Give a public method a temporary symbol key so later same-name methods cannot overwrite
@@ -623,7 +711,7 @@ impl<'a> StandardDecoratorState<'a> {
         }
     }
 
-    /// Expression for element name passed to `__decorateElement`.
+    /// Expression for element name passed to `decorateElement`.
     pub(crate) fn decorator_key_expr(
         key: &PropertyKey<'a>,
         ctx: &mut TraverseCtx<'a>,

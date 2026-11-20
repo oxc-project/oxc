@@ -125,6 +125,27 @@ impl<'a> Traverse<'a, TransformState<'a>> for OptionalChaining<'a> {
 }
 
 impl<'a> OptionalChaining<'a> {
+    /// Lower a single optional chain on behalf of another transform.
+    ///
+    /// Unlike the traversal hooks, this lowers `chain` regardless of the target, and it must not
+    /// be called inside function parameters, where temporaries would be declared in the
+    /// function body. Decorator lowering uses it to capture a decorator's receiver after the
+    /// chain's checks have succeeded; a decorated class in a parameter initializer is wrapped in
+    /// its own function first.
+    pub fn lower_chain_expression(chain: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        debug_assert!(matches!(chain, Expression::ChainExpression(_)));
+        debug_assert!(
+            !ctx.ancestors()
+                .take_while(|ancestor| !matches!(
+                    ancestor,
+                    Ancestor::FunctionBodyStatements(_) | Ancestor::ArrowFunctionExpressionBody(_)
+                ))
+                .any(|ancestor| matches!(ancestor, Ancestor::FormalParametersItems(_))),
+            "optional chain lowered inside function parameters"
+        );
+        *chain = Self::new().transform_chain_expression_impl(false, chain, ctx);
+    }
+
     fn set_temp_binding(&mut self, binding: BoundIdentifier<'a>) {
         self.temp_binding.replace(binding);
     }
