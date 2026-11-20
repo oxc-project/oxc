@@ -71,16 +71,17 @@ fn transform_impl(
 
     let options = options.unwrap_or_default();
     let report_diagnostics = options.report_react_compiler_diagnostics();
-    let (react_compiler_options, transform_options) = match options.resolve(filename) {
-        Ok(options) => options,
-        Err(error) => {
-            return TransformResult {
-                fatal: true,
-                errors: OxcError::from_diagnostics(filename, source_text, [error]),
-                ..TransformResult::default()
-            };
-        }
-    };
+    let (react_compiler_options, transform_options, preserve_typescript) =
+        match options.resolve(filename) {
+            Ok(options) => options,
+            Err(error) => {
+                return TransformResult {
+                    fatal: true,
+                    errors: OxcError::from_diagnostics(filename, source_text, [error]),
+                    ..TransformResult::default()
+                };
+            }
+        };
 
     let allocator = Allocator::default();
     let parser_return = Parser::new(&allocator, source_text, source_type).parse();
@@ -126,8 +127,15 @@ fn transform_impl(
             SemanticBuilder::new().with_enum_eval(true).build(&program).semantic.into_scoping();
     }
 
+    // The transformer removes TypeScript syntax from TypeScript programs. Presenting the
+    // program as JavaScript keeps its type syntax in the AST for codegen to print.
+    let program_source_type = program.source_type;
+    if preserve_typescript {
+        program.source_type = program_source_type.with_javascript(true);
+    }
     let transformer_return = Transformer::new(&allocator, Path::new(filename), &transform_options)
         .build_with_scoping(scoping, &mut program);
+    program.source_type = program_source_type;
     let transform_has_errors = transformer_return.diagnostics.has_errors();
     diagnostics.extend(transformer_return.diagnostics);
     if transform_has_errors {
@@ -159,7 +167,7 @@ fn error_result(filename: &str, source_text: &str, diagnostics: Diagnostics) -> 
 /// Compile a JavaScript or TypeScript React module synchronously.
 ///
 /// The React Compiler runs first on the pristine AST. TypeScript syntax is
-/// removed and configured JSX transforms run afterwards.
+/// removed unless preserved, and configured JSX transforms run afterwards.
 #[napi]
 pub fn transform_sync(
     filename: String,

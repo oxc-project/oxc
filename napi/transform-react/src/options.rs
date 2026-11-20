@@ -36,11 +36,11 @@ pub struct TransformOptions {
     #[napi(ts_type = "'preserve' | JsxOptions")]
     pub jsx: Option<Either<String, JsxOptions>>,
 
-    /// Configure how Typescript is transformed.
+    /// Configure how TypeScript is transformed, or preserve TypeScript syntax.
     ///
     /// @see <https://oxc.rs/docs/guide/usage/transformer/typescript>
-    #[napi(ts_type = "TypeScriptOptions")]
-    pub typescript: Option<TypeScriptOptions>,
+    #[napi(ts_type = "'preserve' | TypeScriptOptions")]
+    pub typescript: Option<Either<String, TypeScriptOptions>>,
 
     /// Configure React Compiler, or disable it with `false`.
     ///
@@ -323,7 +323,8 @@ impl TransformOptions {
     pub(crate) fn resolve(
         self,
         filename: &str,
-    ) -> Result<(Option<PluginOptions>, oxc::transformer::TransformOptions), OxcDiagnostic> {
+    ) -> Result<(Option<PluginOptions>, oxc::transformer::TransformOptions, bool), OxcDiagnostic>
+    {
         let react_compiler = match self.react_compiler {
             None | Some(Either::A(true)) => {
                 should_compile_react_source(filename, None).then(PluginOptions::default)
@@ -341,9 +342,13 @@ impl TransformOptions {
             Some(Either::B(options)) => oxc::transformer::JsxOptions::from(options),
         };
 
-        let typescript: oxc::transformer::TypeScriptOptions = match self.typescript {
-            None => oxc::transformer::TypeScriptOptions::default(),
-            Some(options) => oxc::transformer::TypeScriptOptions::from(options),
+        let (typescript, preserve_typescript) = match self.typescript {
+            None => (oxc::transformer::TypeScriptOptions::default(), false),
+            Some(Either::A(value)) if value == "preserve" => {
+                (oxc::transformer::TypeScriptOptions::default(), true)
+            }
+            Some(Either::A(value)) => return Err(invalid_typescript_option(&value)),
+            Some(Either::B(options)) => (oxc::transformer::TypeScriptOptions::from(options), false),
         };
 
         Ok((
@@ -353,6 +358,7 @@ impl TransformOptions {
                 typescript,
                 ..oxc::transformer::TransformOptions::default()
             },
+            preserve_typescript,
         ))
     }
 }
@@ -572,4 +578,8 @@ fn invalid_option(option: &str, value: &str) -> OxcDiagnostic {
 
 fn invalid_jsx_option(value: &str) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Invalid `jsx` option: `{value}`."))
+}
+
+fn invalid_typescript_option(value: &str) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("Invalid `typescript` option: `{value}`."))
 }
