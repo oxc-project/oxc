@@ -193,10 +193,6 @@ fn trim_leading_zeros(raw: &str) -> &str {
 }
 
 fn bigint_literal_from_numeric(raw: &str, base: NumberBase) -> Option<String> {
-    if raw.contains('e') || raw.contains('E') {
-        return None;
-    }
-
     let literal = match base {
         NumberBase::Binary | NumberBase::Hex => format!("{raw}n"),
         NumberBase::Octal => {
@@ -207,7 +203,14 @@ fn bigint_literal_from_numeric(raw: &str, base: NumberBase) -> Option<String> {
                 format!("0o{}n", trim_leading_zeros(raw))
             }
         }
-        NumberBase::Decimal => format!("{}n", trim_leading_zeros(raw)),
+        NumberBase::Decimal => {
+            // Integer-valued exponent literals (`1e3`) are `Decimal`,
+            // but exponents are not valid in BigInt literals
+            if raw.contains('e') || raw.contains('E') {
+                return None;
+            }
+            format!("{}n", trim_leading_zeros(raw))
+        }
         NumberBase::Float => return None,
     };
     Some(literal)
@@ -292,6 +295,7 @@ fn test() {
         (r"BigInt(1n).toString()", r"1n.toString()"),
         (r"BigInt(0B11_11)", "0B11_11n"),
         (r"BigInt(0O777_777)", "0O777_777n"),
+        (r"BigInt(0XFe_fE)", "0XFe_fEn"),
         (r"BigInt(0777)", "0o777n"),
         (r"BigInt(0888)", "888n"),
         (r"BigInt(1000000000000000100)", r"BigInt(1000000000000000100)"),
