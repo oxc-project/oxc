@@ -8360,7 +8360,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·                    ───────
  11 │ const NopeFoo = foo<?string>;
     ╰────
-  help: Did you mean to write 'string | null | undefined'?
+  help: Did you mean to write 'string | undefined'?
 
   × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:11:21]
@@ -8378,7 +8378,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·                        ───────
  13 │ 
     ╰────
-  help: Did you mean to write 'string | null | undefined'?
+  help: Did you mean to write 'string | undefined'?
 
   × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:12:23]
@@ -8387,7 +8387,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·                       ────────
  13 │ 
     ╰────
-  help: Did you mean to write 'string? | null | undefined'?
+  help: Did you mean to write 'string | null | undefined'?
 
   × TS(8020): JSDoc types can only be used inside documentation comments.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:14:28]
@@ -8404,7 +8404,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·                           ───────
  16 │ type TNopeFoo = typeof foo<?string>;
     ╰────
-  help: Did you mean to write 'string | null | undefined'?
+  help: Did you mean to write 'string | undefined'?
 
   × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:16:28]
@@ -8422,7 +8422,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·                               ───────
  18 │ 
     ╰────
-  help: Did you mean to write 'string | null | undefined'?
+  help: Did you mean to write 'string | undefined'?
 
   × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:17:30]
@@ -8431,7 +8431,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·                              ────────
  18 │ 
     ╰────
-  help: Did you mean to write 'string? | null | undefined'?
+  help: Did you mean to write 'string | null | undefined'?
 
   × TS(8020): JSDoc types can only be used inside documentation comments.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:19:21]
@@ -8448,7 +8448,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·                    ───────
  21 │ const NopeBar = Bar<?string>;
     ╰────
-  help: Did you mean to write 'string | null | undefined'?
+  help: Did you mean to write 'string | undefined'?
 
   × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:21:21]
@@ -8466,7 +8466,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·                        ───────
  23 │ 
     ╰────
-  help: Did you mean to write 'string | null | undefined'?
+  help: Did you mean to write 'string | undefined'?
 
   × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:22:23]
@@ -8475,7 +8475,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·                       ────────
  23 │ 
     ╰────
-  help: Did you mean to write 'string? | null | undefined'?
+  help: Did you mean to write 'string | null | undefined'?
 
   × TS(8020): JSDoc types can only be used inside documentation comments.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:24:28]
@@ -8492,7 +8492,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·                           ───────
  26 │ type TNopeBar = typeof Bar<?string>;
     ╰────
-  help: Did you mean to write 'string | null | undefined'?
+  help: Did you mean to write 'string | undefined'?
 
   × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:26:28]
@@ -8509,7 +8509,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  27 │ type TComeOnBar = typeof Bar<?string?>;
     ·                               ───────
     ╰────
-  help: Did you mean to write 'string | null | undefined'?
+  help: Did you mean to write 'string | undefined'?
 
   × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:27:30]
@@ -8517,7 +8517,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  27 │ type TComeOnBar = typeof Bar<?string?>;
     ·                              ────────
     ╰────
-  help: Did you mean to write 'string? | null | undefined'?
+  help: Did you mean to write 'string | null | undefined'?
 
   × await expression not allowed in formal parameter
    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionsForbiddenInParameterInitializers.ts:1:35]
@@ -12152,7 +12152,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ·                ───────
  6 │ function f3(a: number?) {}
    ╰────
-  help: Did you mean to write 'string | null | undefined'?
+  help: Did you mean to write 'string | undefined'?
 
   × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:6:16]
@@ -12161,7 +12161,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ·                ───────
  7 │ 
    ╰────
-  help: Did you mean to write 'number | null | undefined'?
+  help: Did you mean to write 'number | undefined'?
 
   × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:8:16]
@@ -12197,7 +12197,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·                ────
  16 │ const b: number? = 1;
     ╰────
-  help: Did you mean to write 'any | null | undefined'?
+  help: Did you mean to write 'any'?
 
   × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:16:10]
@@ -12206,7 +12206,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·          ───────
  17 │ 
     ╰────
-  help: Did you mean to write 'number | null | undefined'?
+  help: Did you mean to write 'number | undefined'?
 
   × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:18:16]
@@ -12215,7 +12215,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·                ────
  19 │ const d: ?number = 1;
     ╰────
-  help: Did you mean to write 'any | null | undefined'?
+  help: Did you mean to write 'any'?
 
   × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:19:10]
@@ -12233,7 +12233,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·        ────────
  22 │ let f: never?;
     ╰────
-  help: Did you mean to write 'unknown | null | undefined'?
+  help: Did you mean to write 'unknown'?
 
   × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:22:8]
@@ -12242,7 +12242,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·        ──────
  23 │ let g: void?;
     ╰────
-  help: Did you mean to write 'never | null | undefined'?
+  help: Did you mean to write 'never'?
 
   × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:23:8]
@@ -12251,7 +12251,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·        ─────
  24 │ let h: undefined?;
     ╰────
-  help: Did you mean to write 'void | null | undefined'?
+  help: Did you mean to write 'void'?
 
   × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:24:8]
@@ -12259,7 +12259,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  24 │ let h: undefined?;
     ·        ──────────
     ╰────
-  help: Did you mean to write 'undefined | null | undefined'?
+  help: Did you mean to write 'undefined'?
 
   × Unexpected JSX expression
    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseJsxElementInUnaryExpressionNoCrash1.ts:1:2]
@@ -33262,7 +33262,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·                ───────
  11 │ type T10 = [string, ...[...string[]]];
     ╰────
-  help: Did you mean to write 'string | null | undefined'?
+  help: Did you mean to write 'string | undefined'?
 
   × TS(1257): A required element cannot follow an optional element.
     ╭─[typescript/tsc/testdata/tests/cases/conformance/types/tuple/variadicTuples2.ts:9:21]
