@@ -187,7 +187,7 @@ pub fn compile_fn<'a, const EMIT: bool>(
         return Err(env.take_invariant_errors());
     }
 
-    infer_mutation_aliasing_effects(&mut hir, &mut env, false)?;
+    infer_mutation_aliasing_effects(&mut hir, &mut env, false, false)?;
 
     if env.output_mode == OutputMode::Ssr {
         optimize_for_ssr(&mut hir, &env);
