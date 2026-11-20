@@ -21,7 +21,7 @@ use serde_json::Value;
 
 use crate::{
     AstNode,
-    context::{ContextHost, LintContext},
+    context::LintContext,
     rule::{DefaultRuleConfig, Rule},
 };
 
@@ -54,8 +54,11 @@ declare_oxc_lint!(
     ///
     /// Getters should always return a value. If they don't, it's probably a mistake.
     ///
-    /// This rule does not run on TypeScript files, since type checking will
-    /// catch getters that do not return a value.
+    /// In TypeScript files, it checks only the getters of property descriptors
+    /// (`Object.defineProperty`, `Reflect.defineProperty`, `Object.create` and
+    /// `Object.defineProperties`). The type checker reports a class or object
+    /// literal getter with no `return` statement (TS2378), but not these. A getter
+    /// whose return type includes `undefined` is not reported.
     ///
     /// ### Examples
     ///
@@ -72,6 +75,12 @@ declare_oxc_lint!(
     ///         // object getter are also checked
     ///     }
     /// }
+    ///
+    /// Object.defineProperty(obj, "bar", {
+    ///     get() {
+    ///         // property descriptor getters are checked, also in TypeScript files
+    ///     }
+    /// });
     /// ```
     ///
     /// Examples of **correct** code for this rule:
@@ -106,11 +115,6 @@ impl Rule for GetterReturn {
             }
             _ => {}
         }
-    }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        // https://eslint.org/docs/latest/rules/getter-return#handled_by_typescript
-        !ctx.source_type().is_typescript()
     }
 }
 
@@ -151,16 +155,20 @@ impl GetterReturn {
 
     /// Checks whether it is necessary to check the node
     fn is_wanted_node(node: &AstNode, ctx: &LintContext<'_>) -> bool {
+        // TypeScript reports a class or object literal getter without a `return`
+        // itself, so in TypeScript files only property descriptor getters are checked.
+        // https://eslint.org/docs/latest/rules/getter-return#handled_by_typescript
+        let is_typescript = ctx.source_type().is_typescript();
         let parent = ctx.nodes().parent_node(node.id());
         match parent.kind() {
             AstKind::MethodDefinition(mdef) => {
                 if matches!(mdef.kind, MethodDefinitionKind::Get) {
-                    return true;
+                    return !is_typescript;
                 }
             }
             AstKind::ObjectProperty(ObjectProperty { kind, key: prop_key, .. }) => {
                 if matches!(kind, PropertyKind::Get) {
-                    return true;
+                    return !is_typescript;
                 }
                 if prop_key.name().is_some_and(|key| key != "get") {
                     return false;
@@ -221,18 +229,20 @@ impl GetterReturn {
             // ```js
             // const fn = () => 1;
             // ```
-            if let AstKind::ArrowFunctionExpression(arrow_expr) = node.kind() {
-                if arrow_expr.is_expression() {
-                    break 'returns true;
-                }
-                // If the signature of function supports the return of the `undefined` value,
-                // you do not need to check this rule
-                if let AstKind::Function(func) = node.kind()
-                    && let Some(ret) = &func.return_type
-                    && ret.type_annotation.is_maybe_undefined()
-                {
-                    break 'returns true;
-                }
+            if let AstKind::ArrowFunctionExpression(arrow_expr) = node.kind()
+                && arrow_expr.is_expression()
+            {
+                break 'returns true;
+            }
+            // If the signature of function supports the return of the `undefined` value,
+            // you do not need to check this rule
+            let return_type = match node.kind() {
+                AstKind::Function(func) => func.return_type.as_ref(),
+                AstKind::ArrowFunctionExpression(arrow) => arrow.return_type.as_ref(),
+                _ => None,
+            };
+            if return_type.is_some_and(|ret| ret.type_annotation.is_maybe_undefined()) {
+                break 'returns true;
             }
             let output =
                 set_depth_first_search(graph, Some(ctx.nodes().cfg_id(node.id())), |event| {
@@ -524,19 +534,44 @@ fn test() {
         .change_rule_path_extension("js")
         .test_and_snapshot();
 
-    // TypeScript tests
-    let pass = vec![(
-        "var foo = {
+    // TypeScript tests: class and object literal getters are left to the type checker.
+    let pass = vec![
+        (
+            "var foo = {
             get bar(): boolean | undefined {
                 if (Math.random() > 0.5) {
                     return true;
                 }
             }
         };",
-        None,
-    )];
+            None,
+        ),
+        ("const o = { get a() { console.log(1); } };", None),
+        ("class C { get b() { console.log(2); } }", None),
+        ("Object.defineProperty({}, 'c', { get() { return 3; } });", None),
+        ("Object.defineProperty({}, 'd', { get: (): number => 4 });", None),
+        // A return type that includes `undefined` allows the getter to end without a value.
+        (
+            "Object.defineProperty({}, 'e', { get(): number | undefined { if (x) { return 1; } } });",
+            None,
+        ),
+        (
+            "Object.defineProperty({}, 'f', { get: (): number | undefined => { if (x) { return 1; } } });",
+            None,
+        ),
+    ];
 
-    let fail = vec![];
+    let fail = vec![
+        ("Object.defineProperty({}, 'c', { get() { console.log(3); } });", None),
+        ("Object.defineProperty({}, 'd', { get: () => { console.log(4); } });", None),
+        ("Object.defineProperty({}, 'e', { get: function () { console.log(5); } });", None),
+        ("Reflect.defineProperty({}, 'f', { get() {} });", None),
+        ("Object.create(null, { g: { get(): number { if (x) { return 1; } } } });", None),
+        ("Object.defineProperties({}, { h: { get() {} } });", None),
+        ("Object.defineProperty({}, 'i', { get() { if (x) { return 1; } } });", None),
+    ];
 
-    Tester::new(GetterReturn::NAME, GetterReturn::PLUGIN, pass, fail).test();
+    Tester::new(GetterReturn::NAME, GetterReturn::PLUGIN, pass, fail)
+        .with_snapshot_suffix("ts")
+        .test_and_snapshot();
 }
