@@ -37,9 +37,58 @@ impl ExternalOptionsId {
     pub const NONE: Self = Self::from_usize(0);
 }
 
+/// Identity of the plugin a config asks to load: package name, version and entry point.
+///
+/// The same package can be installed at several paths: npm and Yarn with the `node_modules` linker
+/// nest a copy under each dependent which cannot share a hoisted one, and pnpm gives each peer
+/// dependency variant of a version its own store entry. Each copy has its own realpath, so
+/// deduplication by path does not recognise them as one plugin. The identity is read from the
+/// plugin's own `package.json`, which every copy carries unchanged. Only plugins installed under
+/// `node_modules` get an identity.
+///
+/// The same name and version is treated as the same code, so a patched copy at the same version
+/// (`pnpm patch`, a `file:` install) is merged with the unpatched one.
+#[derive(Debug, PartialEq, Eq, Hash)]
+pub struct ExternalPluginIdentity {
+    pub package_name: String,
+    pub version: String,
+    /// Relative to the directory containing the package's `package.json`.
+    /// A package can contain several plugins, which all share its `package.json`.
+    pub entry_path: PathBuf,
+}
+
+/// Name a plugin was registered under.
+#[derive(Debug)]
+struct RegisteredName {
+    name: String,
+    /// The name was given by an alias in the config.
+    is_alias: bool,
+}
+
+/// Store of the external (JS) plugins loaded for one workspace, and of their rules and options.
+///
+/// # Semantics
+///
+/// A plugin whose resolved path is not registered is reused when another installation of it is
+/// registered: same package name, version and entry point.
+///
+/// 1. A request without an alias reuses a registration which had no alias. A request with an alias
+///    reuses a registration whose name is that alias. Any other request is loaded, because the
+///    alias decides the name a plugin is registered under. In particular a request without an
+///    alias does not reuse an aliased registration, even one aliased to the plugin's own name, so
+///    such a mix can be reported as a clash by the JS side depending on the load order. A request
+///    for a registered path is reused whatever its alias, as
+///    [`ExternalPluginStore::is_plugin_registered`] is keyed by path only.
+/// 2. A plugin without a `name` or a `version` in its `package.json`, or which is not installed
+///    under `node_modules`, has no identity and is never reused. It is loaded, and a name clash
+///    is reported by the JS side.
+/// 3. Two versions of a package are different plugins. Both are loaded, and a name clash is
+///    reported by the JS side.
 #[derive(Debug)]
 pub struct ExternalPluginStore {
     registered_plugin_paths: FxHashSet<PathBuf>,
+    /// Names the plugins of each identity are registered under.
+    registered_plugin_identities: FxHashMap<ExternalPluginIdentity, Vec<RegisteredName>>,
 
     plugins: IndexVec<ExternalPluginId, ExternalPlugin>,
     plugin_names: FxHashMap<String, ExternalPluginId>,
@@ -63,6 +112,7 @@ impl ExternalPluginStore {
 
         Self {
             registered_plugin_paths: FxHashSet::default(),
+            registered_plugin_identities: FxHashMap::default(),
             plugins: IndexVec::default(),
             plugin_names: FxHashMap::default(),
             rules: IndexVec::default(),
@@ -85,6 +135,30 @@ impl ExternalPluginStore {
         self.registered_plugin_paths.contains(plugin_path)
     }
 
+    /// Returns `true` if the plugin at `plugin_path` is another installation of a registered plugin
+    /// and is reused, so the caller must not load it on JS side.
+    /// The path is recorded, so [`ExternalPluginStore::is_plugin_registered`] matches it later.
+    pub fn try_reuse_plugin(
+        &mut self,
+        plugin_path: &Path,
+        identity: Option<&ExternalPluginIdentity>,
+        alias: Option<&str>,
+    ) -> bool {
+        let Some(identity) = identity else { return false };
+        let Some(registered_names) = self.registered_plugin_identities.get(identity) else {
+            return false;
+        };
+
+        let is_reused = registered_names.iter().any(|registered| match alias {
+            Some(alias) => registered.name == alias,
+            None => !registered.is_alias,
+        });
+        if is_reused {
+            self.registered_plugin_paths.insert(plugin_path.to_path_buf());
+        }
+        is_reused
+    }
+
     /// Register plugin.
     ///
     /// # Panics
@@ -95,11 +169,20 @@ impl ExternalPluginStore {
         &mut self,
         plugin_path: PathBuf,
         plugin_name: String,
+        is_alias: bool,
+        identity: Option<ExternalPluginIdentity>,
         offset: usize,
         rule_names: Vec<String>,
     ) {
         let newly_inserted = self.registered_plugin_paths.insert(plugin_path);
         assert!(newly_inserted, "register_plugin: plugin already registered");
+
+        if let Some(identity) = identity {
+            self.registered_plugin_identities
+                .entry(identity)
+                .or_default()
+                .push(RegisteredName { name: plugin_name.clone(), is_alias });
+        }
 
         let plugin_id = self
             .plugins

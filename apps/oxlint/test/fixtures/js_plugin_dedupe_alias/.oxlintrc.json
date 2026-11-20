@@ -1,0 +1,18 @@
+{
+  "categories": {
+    "correctness": "off"
+  },
+  "jsPlugins": [
+    // Both plugins set `meta.name` to "dupe". The alias takes priority over it, so the first one
+    // is registered as "dupe-alias" and is not merged with the second.
+    {
+      "name": "dupe-alias",
+      "specifier": "./packages/a/node_modules/oxlint-plugin-dupe"
+    },
+    "./packages/b/node_modules/oxlint-plugin-dupe"
+  ],
+  "rules": {
+    "dupe/no-debugger": "error",
+    "dupe-alias/no-debugger": "error"
+  }
+}
