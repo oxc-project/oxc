@@ -1,3 +1,8 @@
+var _classPrivateFieldGet = require("@oxc-project/runtime/helpers/classPrivateFieldGet2");
+var _classPrivateFieldInitSpec = require("@oxc-project/runtime/helpers/classPrivateFieldInitSpec");
+var _decoratorStart = require("@oxc-project/runtime/helpers/decoratorStart");
+var _decorateElement = require("@oxc-project/runtime/helpers/decorateElement");
+var _runInitializers = require("@oxc-project/runtime/helpers/runInitializers");
 var _Decorated_decorators, _staticBlock, _staticBlock2;
 let _init, _Decorated;
 function keep(value) {
@@ -7,11 +12,11 @@ let _value = /* @__PURE__ */ new WeakMap();
 _Decorated_decorators = [[void 0, keep]];
 class Decorated {}
 _Decorated = Decorated;
-_init = babelHelpers.decoratorStart(null);
-_Decorated = Decorated = babelHelpers.decorateElement(_init, 0, "Decorated", _Decorated_decorators, Decorated);
-babelHelpers.classPrivateFieldInitSpec(Decorated, _value, 1);
-_Decorated.value = babelHelpers.classPrivateFieldGet2(_value, _Decorated);
-babelHelpers.runInitializers(_init, 1, Decorated);
+_init = _decoratorStart(null);
+_Decorated = Decorated = _decorateElement(_init, 0, "Decorated", _Decorated_decorators, Decorated);
+_classPrivateFieldInitSpec(Decorated, _value, 1);
+_Decorated.value = _classPrivateFieldGet(_value, _Decorated);
+_runInitializers(_init, 1, Decorated);
 let Plain = (class Plain {
   static #value = ((_value2) => (_staticBlock = () => (this.value = this.#value, this), _value2))(2);
 }, _staticBlock());

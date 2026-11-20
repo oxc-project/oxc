@@ -45,6 +45,9 @@
 //!
 //! Based on [@babel/plugin-external-helpers](https://github.com/babel/babel/tree/v7.26.2/packages/babel-plugin-external-helpers).
 //!
+//! Helpers that only `@oxc-project/runtime` provides (see [`Helper::is_oxc_runtime_only`]) are
+//! reported as an error in this mode, because a Babel `babelHelpers` object does not define them.
+//!
 //! ### Inline ([`HelperLoaderMode::Inline`])
 //!
 //! > Note: This mode is not currently implemented.
@@ -72,6 +75,7 @@ use serde::Deserialize;
 
 use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::{Argument, CallExpression, Expression, IdentifierName};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_str::{Str, static_ident};
@@ -100,6 +104,9 @@ pub enum HelperLoaderMode {
     /// ```js
     /// babelHelpers.helperName(...arguments);
     /// ```
+    ///
+    /// Lowering standard decorators is not supported in this mode: it needs helpers that only
+    /// `@oxc-project/runtime` provides, so it reports an error. Use [`HelperLoaderMode::Runtime`].
     External,
     /// Runtime mode: Helper functions are imported from a runtime package.
     ///
@@ -256,6 +263,22 @@ impl Helper {
         }
     }
 
+    /// Whether this helper only exists in `@oxc-project/runtime`, not in Babel's helpers.
+    ///
+    /// These are the standard decorator helpers. Babel lowers 2023-11 decorators with
+    /// `applyDecs2311` instead, so a `babelHelpers` object does not define them.
+    pub const fn is_oxc_runtime_only(self) -> bool {
+        matches!(
+            self,
+            Self::SetClassName
+                | Self::DecoratorKey
+                | Self::DecoratorStart
+                | Self::DecorateElement
+                | Self::RunInitializers
+                | Self::DecoratorMetadata
+        )
+    }
+
     /// Whether calling this helper is side-effect free.
     pub const fn pure(self) -> bool {
         matches!(self, Self::ClassPrivateFieldLooseKey)
@@ -269,6 +292,8 @@ pub struct HelperLoaderStore<'a> {
     /// Loaded helpers, determined what helpers are loaded and what imports should be added.
     loaded_helpers: FxHashMap<Helper, BoundIdentifier<'a>>,
     pub(crate) used_helpers: FxHashMap<Helper, String>,
+    /// Whether the error for an `@oxc-project/runtime`-only helper in external mode was reported.
+    reported_external_runtime_only: bool,
 }
 
 impl HelperLoaderStore<'_> {
@@ -278,6 +303,7 @@ impl HelperLoaderStore<'_> {
             mode: options.mode,
             loaded_helpers: FxHashMap::default(),
             used_helpers: FxHashMap::default(),
+            reported_external_runtime_only: false,
         }
     }
 }
@@ -337,7 +363,12 @@ pub fn helper_load<'a>(helper: Helper, ctx: &mut TraverseCtx<'a>) -> Expression<
 
             binding.create_read_expression(ctx)
         }
-        HelperLoaderMode::External => HelperLoaderStore::transform_for_external_helper(helper, ctx),
+        HelperLoaderMode::External => {
+            if helper.is_oxc_runtime_only() {
+                HelperLoaderStore::report_external_runtime_only(helper, ctx);
+            }
+            HelperLoaderStore::transform_for_external_helper(helper, ctx)
+        }
         HelperLoaderMode::Inline => {
             unreachable!("Inline helpers are not supported yet");
         }
@@ -349,6 +380,25 @@ impl<'a> HelperLoaderStore<'a> {
     // Construct string directly in arena without an intermediate temp allocation
     fn get_runtime_source(&self, helper: Helper, ctx: &TraverseCtx<'a>) -> Str<'a> {
         Str::from_strs_array_in([&self.module_name, "/helpers/", helper.name()], ctx)
+    }
+
+    /// Report once per file that `helper` cannot be loaded from `babelHelpers`.
+    ///
+    /// Emitting `babelHelpers.<helper>` would produce code that fails at runtime against Babel's
+    /// helpers, so this is an error rather than silently broken output.
+    fn report_external_runtime_only(helper: Helper, ctx: &mut TraverseCtx<'a>) {
+        let loader = &mut ctx.state.helper_loader;
+        if loader.reported_external_runtime_only {
+            return;
+        }
+        loader.reported_external_runtime_only = true;
+        ctx.state.error(
+            OxcDiagnostic::error(format!(
+                "Lowering standard decorators needs the `{}` helper, which only `@oxc-project/runtime` provides. Babel's `babelHelpers` object (external helper mode) does not define it.",
+                helper.name()
+            ))
+            .with_help("Use the runtime helper mode to import helpers from `@oxc-project/runtime`."),
+        );
     }
 
     fn transform_for_external_helper(helper: Helper, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {

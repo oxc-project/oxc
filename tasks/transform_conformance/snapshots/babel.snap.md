@@ -224,16 +224,34 @@ x Output mismatch
 x Output mismatch
 
 * class-name-tdz/typescript-type/input.ts
-x Output mismatch
+
+  x Lowering standard decorators needs the `runInitializers` helper, which
+  | only `@oxc-project/runtime` provides. Babel's `babelHelpers` object
+  | (external helper mode) does not define it.
+  help: Use the runtime helper mode to import helpers from `@oxc-project/
+        runtime`.
+
 
 * nested-class/super-call-in-decorator/input.js
-x Output mismatch
+
+  x Lowering standard decorators needs the `runInitializers` helper, which
+  | only `@oxc-project/runtime` provides. Babel's `babelHelpers` object
+  | (external helper mode) does not define it.
+  help: Use the runtime helper mode to import helpers from `@oxc-project/
+        runtime`.
+
 
 * nested-class/super-property-in-accessor-key/input.js
 x Output mismatch
 
 * nested-class/super-property-in-decorator/input.js
-x Output mismatch
+
+  x Lowering standard decorators needs the `runInitializers` helper, which
+  | only `@oxc-project/runtime` provides. Babel's `babelHelpers` object
+  | (external helper mode) does not define it.
+  help: Use the runtime helper mode to import helpers from `@oxc-project/
+        runtime`.
+
 
 * private/class-shadow-builtins/input.mjs
 x Output mismatch

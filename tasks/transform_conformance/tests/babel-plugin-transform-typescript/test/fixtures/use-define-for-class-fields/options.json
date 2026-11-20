@@ -16,5 +16,6 @@
         "removeClassFieldsWithoutInitializer": true
       }
     ]
-  ]
+  ],
+  "externalHelpers": false
 }

@@ -139,10 +139,13 @@ fn babel_options_standard_decorators() {
     assert!(output.contains("@decorate"));
     assert!(!output.contains("decorateElement"));
 
-    // Listing the plugin lowers them.
+    // Listing the plugin lowers them. The helpers only exist in `@oxc-project/runtime`, so Babel's
+    // default external helpers are turned off.
     for version in ["", r#", { "version": "2023-11" }"#] {
-        let options =
-            from(&format!(r#"{{ "plugins": [["proposal-decorators"{version}]] }}"#)).unwrap();
+        let options = from(&format!(
+            r#"{{ "plugins": [["proposal-decorators"{version}]], "externalHelpers": false }}"#
+        ))
+        .unwrap();
         let output = test(source, &options).unwrap();
         assert!(!output.contains("@decorate"));
         assert!(output.contains("decorateElement"));

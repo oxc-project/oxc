@@ -19,6 +19,9 @@ pub struct DecoratorOptions {
     /// while TypeScript types are still stripped. Set to `true` to lower it.
     /// Other target-selected transforms still run on unrelated syntax.
     /// `legacy: true` takes precedence over this option.
+    ///
+    /// Lowering needs helpers that only `@oxc-project/runtime` provides, so it reports an error
+    /// with [`HelperLoaderMode::External`](crate::HelperLoaderMode::External).
     #[serde(default)]
     pub lower: Option<bool>,
 
