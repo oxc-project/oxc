@@ -71,14 +71,14 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/import/equals-t
         ]
       },
       {
-        "flags": "SymbolFlags(Import)",
+        "flags": "SymbolFlags(TypeImport)",
         "id": 3,
         "name": "Foo",
         "node": "TSImportEqualsDeclaration",
         "references": []
       },
       {
-        "flags": "SymbolFlags(Import)",
+        "flags": "SymbolFlags(TypeImport)",
         "id": 4,
         "name": "Qualified",
         "node": "TSImportEqualsDeclaration",
