@@ -142,7 +142,6 @@ commit_parsers = [
   { message = ".*", skip = true },
 ]
 
----------- Input variants differ: CRLF ----------
 -------------------
 { printWidth: 100 }
 -------------------
@@ -214,5 +213,4 @@ commit_parsers = [
   { message = ".*", skip = true },
 ]
 
----------- Input variants differ: CRLF ----------
 ===================== End =====================

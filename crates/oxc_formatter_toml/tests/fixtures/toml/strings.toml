@@ -1,4 +1,3 @@
-# Known bug: line breaks inside multi-line strings are not normalized (`Input variants differ: CRLF`) (see AGENTS.md)
 basic = "basic \"escaped\" \t \u00E9"
 literal = 'C:\Users\path'
 multi_basic = """

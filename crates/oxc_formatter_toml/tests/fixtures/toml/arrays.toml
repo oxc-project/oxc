@@ -62,3 +62,8 @@ array_of_inline_tables = [
   { name = "a", value = 1 },
   { name = "b", value = 2 },
 ]
+comment_after_commented_value = [
+  1 # a
+  , # b
+  2,
+]

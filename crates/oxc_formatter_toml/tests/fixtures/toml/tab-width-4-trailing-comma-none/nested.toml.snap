@@ -24,17 +24,9 @@ with_comments = [
     2
 ]
 nested = [
-    [
-        "aaaaaaaaaaaaaaaa",
-        "bbbbbbbbbbbbbbbb"
-    ],
-    [
-        "cccccccccccccccc",
-        "dddddddddddddddd"
-    ],
-    [
-        "e"
-    ]
+    ["aaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbb"],
+    ["cccccccccccccccc", "dddddddddddddddd"],
+    ["e"]
 ]
 inline = {
     a = 1, # c

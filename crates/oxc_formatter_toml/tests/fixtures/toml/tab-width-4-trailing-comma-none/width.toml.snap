@@ -26,10 +26,7 @@ indented_81 = [
         "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "b"
     ], # c
-    [
-        1,
-        2
-    ]
+    [1, 2]
 ]
 
 -------------------------------------------------------
