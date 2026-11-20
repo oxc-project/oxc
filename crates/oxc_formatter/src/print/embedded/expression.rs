@@ -204,7 +204,8 @@ fn write_in_layout<'a>(
 /// The object at `span`, in an embedded expression its host ends at the first `}}` ([`ExpressionRoot::ends_at_double_brace`]),
 /// prints right before another `}`: it prints in parens.
 /// A template literal's substitution closes right after it (`${({a: 1})}`), whatever `bracketSpacing` says;
-/// without bracket spacing, an object's does too (`{a: ({b: 1})}`, `{...({a: 1})}`).
+/// without bracket spacing, an object's does too (`{a: ({b: 1})}`, `{...({a: 1})}`),
+/// and the host's right after the root ([`ExpressionRoot::ends_before_brace`]).
 ///
 /// Prettier parens a property's value only (`apps/oxfmt/DIVERGENCES.md#js-in-vue-object-before-double-brace`).
 ///
@@ -214,17 +215,31 @@ pub fn object_prints_double_brace(
     parent: &AstNodes<'_, '_>,
     f: &JsFormatter<'_, '_>,
 ) -> bool {
-    f.context().expression_root().is_some_and(|root| root.ends_at_double_brace)
-        && is_followed_by_right_bracket(span, parent, f.options().bracket_spacing.value())
+    let Some(root) = f.context().expression_root().filter(|root| root.ends_at_double_brace) else {
+        return false;
+    };
+    let bracket_spacing = f.options().bracket_spacing.value();
+    is_followed_by_right_bracket(
+        span,
+        parent,
+        bracket_spacing,
+        !bracket_spacing && root.ends_before_brace,
+        f,
+    )
 }
 
 /// The node at `span` prints right before a `}`: a template literal's substitution's,
-/// or an object's without `bracket_spacing`.
+/// or an object's without `bracket_spacing`, or the host's right after the root (`root_before_brace`).
 fn is_followed_by_right_bracket(
     span: Span,
     parent: &AstNodes<'_, '_>,
     bracket_spacing: bool,
+    root_before_brace: bool,
+    f: &JsFormatter<'_, '_>,
 ) -> bool {
+    if f.context().is_embedded_root(parent) {
+        return root_before_brace;
+    }
     // `node` at `span` is the last of the object `parent`, whose `}` prints right after it without bracket spacing
     let ends_object = |parent: &AstNodes<'_, '_>, span: Span| {
         !bracket_spacing
@@ -252,5 +267,12 @@ fn is_followed_by_right_bracket(
         AstNodes::UnaryExpression(_) => true,
         _ => false,
     };
-    ends_parent && is_followed_by_right_bracket(parent.span(), parent.parent(), bracket_spacing)
+    ends_parent
+        && is_followed_by_right_bracket(
+            parent.span(),
+            parent.parent(),
+            bracket_spacing,
+            root_before_brace,
+            f,
+        )
 }
