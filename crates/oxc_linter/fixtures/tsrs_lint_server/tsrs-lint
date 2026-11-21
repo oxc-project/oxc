@@ -1,0 +1,81 @@
+#!/usr/bin/env node
+// Fake `tsrs-lint server` for the client tests in `src/tsgolint/server.rs`.
+//
+// It reads its behavior from `behavior.json` in its working directory, and appends every event
+// (its start, and each frame it receives) as a JSON line to `frames.jsonl` there.
+//
+// behavior.json:
+// - `lint`: "done" (default) answers a Lint with a diagnostic for another request id, a diagnostic
+//   for this one and Done.
+
+"use strict";
+
+const fs = require("node:fs");
+const path = require("node:path");
+
+const cwd = process.cwd();
+const behaviorPath = path.join(cwd, "behavior.json");
+const behavior = fs.existsSync(behaviorPath)
+  ? JSON.parse(fs.readFileSync(behaviorPath, "utf8"))
+  : {};
+const logPath = path.join(cwd, "frames.jsonl");
+
+function log(entry) {
+  fs.appendFileSync(logPath, `${JSON.stringify(entry)}\n`);
+}
+
+function write(type, message) {
+  const json = Buffer.from(JSON.stringify(message), "utf8");
+  const header = Buffer.alloc(5);
+  header.writeUInt32LE(json.length, 0);
+  header.writeUInt8(type, 4);
+  process.stdout.write(Buffer.concat([header, json]));
+}
+
+function diagnostic(id, filePath) {
+  return {
+    id,
+    kind: 0,
+    range: { pos: 0, end: 1 },
+    message: { id: "fake", description: `fake diagnostic for request ${id}`, help: null },
+    file_path: filePath,
+    rule: "no-floating-promises",
+  };
+}
+
+log({ event: "start", pid: process.pid, argv: process.argv.slice(2) });
+
+function handle(type, message) {
+  log({ type, message });
+  switch (type) {
+    // Lint
+    case 20: {
+      const mode = behavior.lint ?? "done";
+      {
+        const filePath = message.configs[0]?.file_paths[0] ?? "unknown.ts";
+        write(1, diagnostic(message.id + 1000, filePath));
+        write(1, diagnostic(message.id, filePath));
+        write(3, { id: message.id });
+      }
+      break;
+    }
+    default:
+      break;
+  }
+}
+
+let buffer = Buffer.alloc(0);
+process.stdin.on("data", (chunk) => {
+  buffer = Buffer.concat([buffer, chunk]);
+  while (buffer.length >= 5) {
+    const length = buffer.readUInt32LE(0);
+    if (buffer.length < 5 + length) {
+      break;
+    }
+    const type = buffer.readUInt8(4);
+    const message = JSON.parse(buffer.subarray(5, 5 + length).toString("utf8"));
+    buffer = buffer.subarray(5 + length);
+    handle(type, message);
+  }
+});
+process.stdin.on("end", () => process.exit(0));

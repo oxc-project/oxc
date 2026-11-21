@@ -11,7 +11,7 @@ use oxc_span::{SourceType, Span};
 
 use crate::{
     AllowWarnDeny, DisableDirectives, FixKind, Fixer, LintService, LintServiceOptions, Linter,
-    Message, OsFileSystem, RuleTimingStore, RuntimeFileSystem, TsGoLintState,
+    Message, OsFileSystem, RuleTimingStore, RuntimeFileSystem, TsGoLintState, TsrsLintServer,
     create_unused_directives_messages, suppression::DiffManager,
 };
 
@@ -195,6 +195,7 @@ pub struct LintRunnerBuilder {
     type_check_only: bool,
     timings: bool,
     with_ignore_fixes: bool,
+    tsrs_server: Option<Arc<TsrsLintServer>>,
 }
 
 impl LintRunnerBuilder {
@@ -209,6 +210,7 @@ impl LintRunnerBuilder {
             type_check_only: false,
             timings: false,
             with_ignore_fixes: false,
+            tsrs_server: None,
         }
     }
 
@@ -254,6 +256,14 @@ impl LintRunnerBuilder {
         self
     }
 
+    /// Lint type-aware rules through a long-lived `tsrs-lint server` in [`LintRunner::run_source`].
+    /// It is used only when the resolved type-aware executable is the server's.
+    #[must_use]
+    pub fn with_tsrs_server(mut self, server: Option<Arc<TsrsLintServer>>) -> Self {
+        self.tsrs_server = server;
+        self
+    }
+
     /// # Errors
     /// Returns an error if the type-aware linter fails to initialize.
     pub fn build(self) -> Result<LintRunner, String> {
@@ -271,7 +281,8 @@ impl LintRunnerBuilder {
                         .with_type_check(self.type_check)
                         .with_type_check_only(self.type_check_only)
                         .with_timings(self.timings)
-                        .with_ignore_fixes(self.with_ignore_fixes),
+                        .with_ignore_fixes(self.with_ignore_fixes)
+                        .with_server(self.tsrs_server),
                 ),
                 Err(e) => return Err(e),
             }
@@ -367,6 +378,11 @@ impl LintRunner {
         }
 
         Ok(messages)
+    }
+
+    /// Check if type-aware rules are linted through a long-lived `tsrs-lint server`.
+    pub fn has_tsrs_server(&self) -> bool {
+        self.type_aware_linter.as_ref().is_some_and(|linter| linter.server().is_some())
     }
 
     /// Report unused disable directives

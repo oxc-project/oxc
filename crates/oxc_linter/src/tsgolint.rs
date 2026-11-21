@@ -11,6 +11,7 @@ use std::{
     time::Duration,
 };
 
+use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
@@ -19,6 +20,10 @@ use oxc_diagnostics::{DiagnosticSender, DiagnosticService, NamedSource, OxcDiagn
 use oxc_span::{SourceType, Span};
 
 use super::{AllowWarnDeny, ConfigStore, DisableDirectives, ResolvedLinterState, read_to_string};
+
+mod server;
+
+pub use server::{FileChangeKind, TsrsLintServer, is_tsrs_lint_executable};
 
 use crate::{
     CompositeFix, FixKind, Fixer, Message, PossibleFixes, RuleTimingRecord, RuleTimingSource,
@@ -49,6 +54,9 @@ pub struct TsGoLintState {
     timings: bool,
     /// If `true`, the linter will create "ignore this section / line" fixes for all diagnostics
     with_ignore_fixes: bool,
+    /// The long-lived `tsrs-lint server` the language server lints with, when the executable is
+    /// `tsrs-lint`.
+    server: Option<Arc<TsrsLintServer>>,
 }
 
 impl TsGoLintState {
@@ -67,6 +75,7 @@ impl TsGoLintState {
             type_check_only: false,
             timings: false,
             with_ignore_fixes: false,
+            server: None,
         }
     }
 
@@ -92,6 +101,7 @@ impl TsGoLintState {
             type_check_only: false,
             timings: false,
             with_ignore_fixes: false,
+            server: None,
         })
     }
 
@@ -136,6 +146,19 @@ impl TsGoLintState {
     pub fn with_ignore_fixes(mut self, yes: bool) -> Self {
         self.with_ignore_fixes = yes;
         self
+    }
+
+    /// Lint through a long-lived `tsrs-lint server` in [`Self::lint_source`].
+    /// The server is used only when it runs the executable this state resolved.
+    #[must_use]
+    pub fn with_server(mut self, server: Option<Arc<TsrsLintServer>>) -> Self {
+        self.server = server.filter(|server| server.executable_path() == self.executable_path);
+        self
+    }
+
+    /// The long-lived server, if this state lints through one.
+    pub fn server(&self) -> Option<&Arc<TsrsLintServer>> {
+        self.server.as_ref()
     }
 
     /// Runs `tsgolint` on `paths` to completion. Equivalent to [`Self::start`] followed by
@@ -561,6 +584,17 @@ impl TsGoLintState {
         let path_file_name =
             Path::new(paths[0].as_ref()).file_name().unwrap_or_default().to_os_string();
 
+        if let Some(server) = &self.server {
+            return self.lint_source_with_server(
+                server,
+                &json_input.configs,
+                &source_overrides,
+                &resolved_configs,
+                &path_file_name,
+                disable_directives_map,
+            );
+        }
+
         let mut child = self.spawn_tsgolint(&json_input)?;
         let stdout = child.stdout.take().expect("Failed to open tsgolint stdout");
         let diagnostics = (|| -> Result<Vec<Message>, String> {
@@ -649,6 +683,56 @@ impl TsGoLintState {
             if severity == AllowWarnDeny::Deny { Severity::Error } else { Severity::Warning };
 
         Some(message)
+    }
+
+    /// Lints `paths` through the long-lived server, which already has the unsaved text of open
+    /// files, and converts the diagnostics as the one-shot path does.
+    fn lint_source_with_server(
+        &self,
+        server: &TsrsLintServer,
+        configs: &[Config],
+        source_overrides: &FxHashMap<String, String>,
+        resolved_configs: &FxHashMap<PathBuf, ResolvedLinterState>,
+        path_file_name: &OsStr,
+        disable_directives_map: &Arc<Mutex<FxHashMap<PathBuf, DisableDirectives>>>,
+    ) -> Result<Vec<Message>, String> {
+        if configs.is_empty() {
+            return Ok(vec![]);
+        }
+        let diagnostics = server.lint(configs, self.fix, self.fix_suggestions)?;
+        let disable_directives_map =
+            disable_directives_map.lock().expect("disable_directives_map mutex poisoned");
+        let mut result = vec![];
+        for diagnostic in diagnostics {
+            match diagnostic {
+                TsGoLintDiagnostic::Rule(mut rule) => {
+                    // tsrs reports normalized file names, which use forward slashes.
+                    let file_name =
+                        normalize_slashes(&rule.file_path.to_string_lossy()).into_owned();
+                    let Some((path, source_text)) = source_overrides
+                        .iter()
+                        .find(|(path, _)| normalize_slashes(path) == file_name.as_str())
+                    else {
+                        continue;
+                    };
+                    rule.file_path = PathBuf::from(path);
+                    result.extend(self.rule_diagnostic_to_message(
+                        rule,
+                        resolved_configs,
+                        &disable_directives_map,
+                        source_text,
+                    ));
+                }
+                TsGoLintDiagnostic::Internal(e) => {
+                    let attach_span = e
+                        .file_path
+                        .as_ref()
+                        .is_some_and(|f| f.file_name().unwrap_or_default() == path_file_name);
+                    result.push(internal_diagnostic_to_message(e, attach_span));
+                }
+            }
+        }
+        Ok(result)
     }
 
     /// Create a JSON input for STDIN of tsgolint in this format:
@@ -745,8 +829,8 @@ fn internal_diagnostic_to_message(e: TsGoLintInternalDiagnostic, attach_span: bo
     Message::new(diagnostic, PossibleFixes::None)
 }
 
-/// The command that runs the type-aware linter executable in `mode`, talking
-/// over piped stdin and stdout, with its stderr shown as oxlint's.
+/// The command that runs the type-aware linter executable in `mode` (`headless` or `server`),
+/// talking over piped stdin and stdout, with its stderr shown as oxlint's.
 fn type_aware_command(executable_path: &Path, mode: &str) -> std::process::Command {
     let mut cmd = std::process::Command::new(executable_path);
     cmd.arg(mode)
@@ -754,6 +838,11 @@ fn type_aware_command(executable_path: &Path, mode: &str) -> std::process::Comma
         .stdout(std::process::Stdio::piped())
         .stderr(stderr());
     cmd
+}
+
+/// tsrs reports file names with forward slashes.
+fn normalize_slashes(path: &str) -> Cow<'_, str> {
+    path.cow_replace('\\', "/")
 }
 
 /// Represents the input JSON to `tsgolint`, like:
@@ -1361,7 +1450,7 @@ fn should_skip_diagnostic(
     }
 }
 
-/// Reads one frame of the type-aware linter's binary protocol:
+/// Reads one frame of the type-aware linter's binary protocol, used in both directions:
 ///
 /// `| Payload Size (uint32 LE) - 4 bytes | Message Type (uint8) - 1 byte | Payload |`
 ///

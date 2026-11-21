@@ -1,4 +1,4 @@
-use std::{fmt::Write, path::PathBuf};
+use std::{fmt::Write, path::PathBuf, sync::Arc};
 
 use oxc_language_server::{
     DiagnosticResult, TextDocument, Tool, ToolRestartChanges, uri_utils::file_path_to_uri,
@@ -266,6 +266,46 @@ impl Tester<'_> {
         settings.set_omit_expression(true);
         #[expect(clippy::disallowed_methods)]
         settings.set_snapshot_suffix(relative_file_paths.join("_").replace('\\', "/"));
+        settings.bind(|| {
+            insta::assert_snapshot!(snapshot_name, snapshot_result);
+        });
+    }
+
+    /// Opens `relative_file_path` in `linter` with the unsaved `text`, and lints it, as the
+    /// backend does. Snapshots its diagnostics with `snapshot_suffix`.
+    pub fn test_and_snapshot_open_file(
+        &self,
+        linter: &ServerLinter,
+        relative_file_path: &str,
+        text: &str,
+        snapshot_suffix: &str,
+    ) {
+        let uri = self.get_file_uri(relative_file_path);
+        let text: Arc<str> = Arc::from(text);
+        let document = |text: &Arc<str>| TextDocument {
+            uri: &uri,
+            language_id: oxc_language_server::LanguageId::default(),
+            text: Some(Arc::clone(text)),
+            version: Some(1),
+        };
+        linter.did_open(&document(&text));
+        let diagnostic = linter.run_diagnostic(document(&text));
+
+        let snapshot_result = match &diagnostic {
+            Ok(diagnostics) => get_snapshot_from_diagnostic_result(diagnostics),
+            Err(err) => format!("Error running diagnostics: {err}"),
+        };
+        let snapshot_result = format!(
+            "########## \nLinted open file: {}/{relative_file_path}\n----------\n{snapshot_result}\n",
+            self.relative_root_dir,
+        );
+
+        #[expect(clippy::disallowed_methods)]
+        let snapshot_name = self.relative_root_dir.replace('/', "_");
+        let mut settings = insta::Settings::clone_current();
+        settings.set_prepend_module_to_snapshot(false);
+        settings.set_omit_expression(true);
+        settings.set_snapshot_suffix(snapshot_suffix);
         settings.bind(|| {
             insta::assert_snapshot!(snapshot_name, snapshot_result);
         });

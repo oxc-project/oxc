@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
-use std::sync::{Arc, OnceLock};
+use std::sync::{Arc, Mutex, OnceLock};
 
 use ignore::gitignore::Gitignore;
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -8,8 +8,8 @@ use tower_lsp_server::{
     gen_lsp_types::{
         CodeActionKind, CodeActionOptions, CodeActionProvider, CodeActionResponse,
         CodeActionTriggerKind, Diagnostic, DiagnosticOptions, DiagnosticProvider,
-        ExecuteCommandOptions, MessageType, Pattern, ServerCapabilities, Uri,
-        WorkDoneProgressOptions, WorkspaceEdit,
+        ExecuteCommandOptions, FileChangeType, FileEvent, MessageType, Pattern, ServerCapabilities,
+        Uri, WorkDoneProgressOptions, WorkspaceEdit,
     },
     jsonrpc::ErrorCode,
 };
@@ -17,8 +17,9 @@ use tracing::{debug, error, warn};
 
 use oxc_linter::{
     AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
-    FixKind, LINTABLE_EXTENSIONS, LintIgnoreMatcher, LintOptions, LintRunner, LintRunnerBuilder,
-    LintServiceOptions, Linter, Oxlintrc, read_to_string,
+    FileChangeKind, FixKind, LINTABLE_EXTENSIONS, LintIgnoreMatcher, LintOptions, LintRunner,
+    LintRunnerBuilder, LintServiceOptions, Linter, Oxlintrc, TsrsLintServer,
+    is_tsrs_lint_executable, read_to_string, try_find_tsgolint_executable,
 };
 
 use oxc_language_server::{
@@ -59,6 +60,52 @@ pub struct ServerLinterBuilder {
     external_linter: Option<ExternalLinter>,
     #[cfg(feature = "napi")]
     js_config_loader: Option<crate::js_config::JsConfigLoaderCb>,
+    /// The state each workspace keeps across linter rebuilds, by workspace root.
+    workspaces: Mutex<FxHashMap<Uri, Arc<WorkspaceState>>>,
+}
+
+/// What a workspace keeps across linter rebuilds (a configuration change rebuilds the linter).
+#[derive(Default)]
+struct WorkspaceState {
+    /// The open documents with their unsaved text, by URI.
+    open_documents: Mutex<FxHashMap<Uri, OpenDocument>>,
+    /// The workspace's long-lived `tsrs-lint server`. Once started, it is kept for the language
+    /// server's lifetime.
+    tsrs_server: Mutex<Option<Arc<TsrsLintServer>>>,
+}
+
+#[derive(Clone)]
+struct OpenDocument {
+    path: PathBuf,
+    version: i32,
+    text: Arc<str>,
+}
+
+impl WorkspaceState {
+    fn server(&self) -> Option<Arc<TsrsLintServer>> {
+        self.tsrs_server.lock().expect("tsrs server mutex poisoned").clone()
+    }
+
+    /// The `tsrs-lint server` type-aware linting uses in this workspace, when the type-aware
+    /// executable found from `root_path` is `tsrs-lint`. A new server is sent the open documents.
+    fn tsrs_server_for(&self, root_path: &Path) -> Option<Arc<TsrsLintServer>> {
+        let executable = try_find_tsgolint_executable(root_path)
+            .ok()
+            .filter(|path| is_tsrs_lint_executable(path))?;
+        let mut slot = self.tsrs_server.lock().expect("tsrs server mutex poisoned");
+        if let Some(server) =
+            slot.as_ref().filter(|server| server.executable_path() == executable.as_path())
+        {
+            return Some(Arc::clone(server));
+        }
+        let server = Arc::new(TsrsLintServer::new(executable, root_path.to_path_buf()));
+        for document in self.open_documents.lock().expect("open documents mutex poisoned").values()
+        {
+            server.did_open(&document.path, document.version, Arc::clone(&document.text));
+        }
+        *slot = Some(Arc::clone(&server));
+        Some(server)
+    }
 }
 
 impl ServerLinterBuilder {
@@ -70,7 +117,18 @@ impl ServerLinterBuilder {
             external_linter,
             #[cfg(feature = "napi")]
             js_config_loader,
+            workspaces: Mutex::default(),
         }
+    }
+
+    fn workspace(&self, root_uri: &Uri) -> Arc<WorkspaceState> {
+        Arc::clone(
+            self.workspaces
+                .lock()
+                .expect("workspaces mutex poisoned")
+                .entry(root_uri.clone())
+                .or_default(),
+        )
     }
 
     /// Creates a new `ServerLinter` instance based on the provided root URI and options.
@@ -210,6 +268,8 @@ impl ServerLinterBuilder {
 
         let type_aware = options.type_aware.unwrap_or(config_store.type_aware_enabled());
         let config_store_clone = config_store.clone();
+        let workspace = self.workspace(root_uri);
+        let tsrs_server = if type_aware { workspace.tsrs_server_for(&root_path) } else { None };
 
         // Send JS plugins config to JS side
         if let Some(external_linter) = external_linter {
@@ -243,6 +303,7 @@ impl ServerLinterBuilder {
             .with_type_aware(type_aware)
             .with_fix_kind(fix_kind)
             .with_ignore_fixes(true)
+            .with_tsrs_server(tsrs_server)
             .build()
         {
             Ok(runner) => runner,
@@ -274,6 +335,7 @@ impl ServerLinterBuilder {
                 fix_kind,
                 lint_options.report_unused_directive,
                 options.rules_customization,
+                workspace,
             ),
             client_messages.into_iter().collect(),
         )
@@ -436,6 +498,7 @@ pub struct ServerLinter {
     fix_kind: FixKind,
     unused_directives_severity: Option<AllowWarnDeny>,
     rules_customization: Option<RulesCustomization>,
+    workspace: Arc<WorkspaceState>,
 }
 
 impl Tool for ServerLinter {
@@ -528,9 +591,73 @@ impl Tool for ServerLinter {
 
         if options.type_aware.unwrap_or(self.runner.has_type_aware()) {
             watchers.push("**/tsconfig*.json".to_string());
+            // The `tsrs-lint server` keeps programs between requests, so it needs to know about
+            // every change on disk that can affect them.
+            if self.runner.has_tsrs_server() {
+                watchers.push("**/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs,json}".to_string());
+                watchers.push("**/package.json".to_string());
+            }
         }
 
         watchers
+    }
+
+    /// With a `tsrs-lint server`, only changes to lint configuration files restart the linter.
+    /// Other changes (sources, `package.json`, `tsconfig.json`) are sent to the server, so its
+    /// programs match the disk as a one-shot run's would. Open files are not linted again.
+    fn handle_watched_file_event(
+        &self,
+        builder: &dyn ToolBuilder,
+        file_event: &FileEvent,
+        root_uri: &Uri,
+        options: serde_json::Value,
+    ) -> ToolRestartChanges {
+        if let Some(server) = self.workspace.server().filter(|_| self.runner.has_tsrs_server())
+            && let Some(path) = uri_to_file_path(&file_event.uri)
+            && !self.is_lint_config_file(&path, &options)
+        {
+            if !path.starts_with(&self.cwd) {
+                return ToolRestartChanges {
+                    tool: None,
+                    watch_patterns: None,
+                    client_messages: vec![],
+                };
+            }
+            let kind = match file_event.kind {
+                FileChangeType::Created => FileChangeKind::Created,
+                FileChangeType::Deleted => FileChangeKind::Deleted,
+                _ => FileChangeKind::Changed,
+            };
+            server.files_changed(&[(path.into_owned(), kind)]);
+            return ToolRestartChanges {
+                tool: None,
+                watch_patterns: None,
+                client_messages: vec![],
+            };
+        }
+        self.handle_watched_file_change(builder, &file_event.uri, root_uri, options)
+    }
+
+    fn did_open(&self, document: &TextDocument) {
+        self.update_document(document, true);
+    }
+
+    fn did_change(&self, document: &TextDocument) {
+        self.update_document(document, false);
+    }
+
+    fn did_close(&self, uri: &Uri) {
+        let removed = self
+            .workspace
+            .open_documents
+            .lock()
+            .expect("open documents mutex poisoned")
+            .remove(uri);
+        if let Some(document) = removed
+            && let Some(server) = self.workspace.server()
+        {
+            server.did_close(&document.path);
+        }
     }
 
     fn handle_watched_file_change(
@@ -731,7 +858,7 @@ impl Tool for ServerLinter {
 impl ServerLinter {
     /// # Panics
     /// Panics if the root URI cannot be converted to a file path.
-    pub fn new(
+    fn new(
         run: Run,
         cwd: PathBuf,
         ignore_matcher: LintIgnoreMatcher,
@@ -741,6 +868,7 @@ impl ServerLinter {
         fix_kind: FixKind,
         unused_directives_severity: Option<AllowWarnDeny>,
         rules_customization: Option<RulesCustomization>,
+        workspace: Arc<WorkspaceState>,
     ) -> Self {
         Self {
             run,
@@ -753,7 +881,67 @@ impl ServerLinter {
             fix_kind,
             unused_directives_severity,
             rules_customization,
+            workspace,
         }
+    }
+
+    /// Records an opened or changed document and sends it to the workspace's `tsrs-lint server`,
+    /// whatever the run mode: the server always sees the unsaved text of every open file.
+    fn update_document(&self, document: &TextDocument, open: bool) {
+        let Some(text) = document.text.as_ref() else {
+            return;
+        };
+        let Some(path) = uri_to_file_path(document.uri) else {
+            return;
+        };
+        // Only JS/TS sources go to the type-aware linter: the one-shot path never sends partially
+        // loaded files (`.vue`, `.svelte`, `.astro`) either.
+        if oxc_span::SourceType::from_path(&path).is_err() || !path.starts_with(&self.cwd) {
+            return;
+        }
+        let version = document.version.unwrap_or(0);
+        let was_open = self
+            .workspace
+            .open_documents
+            .lock()
+            .expect("open documents mutex poisoned")
+            .insert(
+                document.uri.clone(),
+                OpenDocument { path: path.to_path_buf(), version, text: Arc::clone(text) },
+            )
+            .is_some();
+        if let Some(server) = self.workspace.server() {
+            if open || !was_open {
+                server.did_open(&path, version, Arc::clone(text));
+            } else {
+                server.did_change(&path, version, Arc::clone(text));
+            }
+        }
+    }
+
+    /// Whether `path` is a lint configuration file, whose change restarts the linter.
+    fn is_lint_config_file(&self, path: &Path, options: &serde_json::Value) -> bool {
+        if self.extended_paths.contains(path) {
+            return true;
+        }
+        if path
+            .file_name()
+            .and_then(std::ffi::OsStr::to_str)
+            .is_some_and(|name| config_file_names().contains(&name))
+        {
+            return true;
+        }
+        let config_path = serde_json::from_value::<LSPLintOptions>(options.clone())
+            .ok()
+            .and_then(|options| options.config_path);
+        config_path.is_some_and(|config_path| {
+            let config_path = Path::new(&config_path);
+            if config_path.is_absolute() {
+                path == config_path
+            } else {
+                path == self.cwd.join(config_path)
+            }
+        })
     }
 
     fn get_code_actions_for_uri(
@@ -1634,5 +1822,104 @@ mod test {
     fn test_issue_22758() {
         let tester = Tester::new("fixtures/lsp/issue_22758/apps/api", json!({}));
         tester.test_and_snapshot_single_file("app/auth/guard/firebase.ts");
+    }
+}
+
+/// Type-aware linting with `tsrs-lint`, found in a fixture's `node_modules/.bin`.
+#[cfg(all(test, unix, not(target_endian = "big")))]
+mod test_tsrs_lint {
+    use std::{
+        path::Path,
+        sync::atomic::{AtomicUsize, Ordering},
+    };
+
+    use oxc_language_server::{LanguageId, TextDocument, Tool};
+    use serde_json::json;
+    use tower_lsp_server::gen_lsp_types::{Code, Diagnostic};
+
+    use crate::lsp::tester::{Tester, get_file_path};
+
+    /// The fixture whose `node_modules/.bin/tsrs-lint` links to a real `tsrs-lint`.
+    const SERVER_FIXTURE: &str = "fixtures/lsp/tsrs_server";
+    /// The watcher pattern for sources, watched only with a `tsrs-lint server`.
+    const SOURCES_PATTERN: &str = "**/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs,json}";
+
+    /// Links `node_modules/.bin/tsrs-lint` in [`SERVER_FIXTURE`] to the `tsrs-lint` named by
+    /// `OXLINT_TSRS_LINT_TEST_BIN`. Returns `false`, and the test is skipped, when it is unset.
+    ///
+    /// The link is replaced atomically, so tests (and test processes) running at once always see
+    /// a complete link.
+    #[expect(clippy::print_stderr, reason = "reports a skipped test")]
+    fn link_tsrs_lint() -> bool {
+        static NEXT: AtomicUsize = AtomicUsize::new(0);
+        let Some(binary) = std::env::var_os("OXLINT_TSRS_LINT_TEST_BIN") else {
+            eprintln!("skipping tsrs-lint test: OXLINT_TSRS_LINT_TEST_BIN is not set");
+            return false;
+        };
+        let bin_dir = get_file_path(SERVER_FIXTURE).join("node_modules/.bin");
+        std::fs::create_dir_all(&bin_dir).expect("failed to create node_modules/.bin");
+        let temporary = bin_dir.join(format!(
+            "tsrs-lint.{}.{}",
+            std::process::id(),
+            NEXT.fetch_add(1, Ordering::Relaxed)
+        ));
+        std::os::unix::fs::symlink(Path::new(&binary), &temporary)
+            .expect("failed to link tsrs-lint");
+        std::fs::rename(&temporary, bin_dir.join("tsrs-lint")).expect("failed to link tsrs-lint");
+        true
+    }
+
+    fn codes(diagnostics: &[Diagnostic]) -> Vec<String> {
+        diagnostics
+            .iter()
+            .map(|diagnostic| match &diagnostic.code {
+                Some(Code::String(code)) => code.clone(),
+                Some(Code::Int(code)) => code.to_string(),
+                None => "None".to_string(),
+            })
+            .collect()
+    }
+
+    /// The text of `index.ts` with the unsaved `statement` appended.
+    fn unsaved_text(statement: &str) -> String {
+        let on_disk = std::fs::read_to_string(get_file_path(&format!("{SERVER_FIXTURE}/index.ts")))
+            .expect("failed to read index.ts");
+        assert!(!on_disk.contains("load();"));
+        format!("{on_disk}\n{statement}\n")
+    }
+
+    #[test]
+    fn test_tsrs_server_lints_unsaved_text() {
+        if !link_tsrs_lint() {
+            return;
+        }
+        let options = json!({ "typeAware": true });
+        let tester = Tester::new(SERVER_FIXTURE, options.clone());
+        let linter = tester.create_linter();
+        assert!(linter.runner.has_tsrs_server());
+        assert!(linter.get_watcher_patterns(options).contains(&SOURCES_PATTERN.to_string()));
+
+        // The server lints the open document's unsaved text, which has a floating promise.
+        tester.test_and_snapshot_open_file(
+            &linter,
+            "index.ts",
+            &unsaved_text("load();"),
+            "index.ts_server",
+        );
+        assert!(linter.workspace.server().is_some());
+
+        // An edit that fixes it reaches the server.
+        let uri = tester.get_file_uri("index.ts");
+        let fixed = unsaved_text("void load();");
+        let document = TextDocument {
+            uri: &uri,
+            language_id: LanguageId::default(),
+            text: Some(fixed.into()),
+            version: Some(2),
+        };
+        linter.did_change(&document);
+        let diagnostics = linter.run_diagnostic(document).expect("lint failed");
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(codes(&diagnostics[0].1), [] as [String; 0]);
     }
 }

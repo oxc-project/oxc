@@ -107,7 +107,10 @@ pub use crate::{
     service::{LintService, LintServiceOptions, OsFileSystem, RuntimeFileSystem},
     suppression::{OxlintSuppressionFileAction, SuppressionManager},
     timing::{RuleTimingRecord, RuleTimingSource, RuleTimingStore},
-    tsgolint::{TsGoLintRun, TsGoLintState},
+    tsgolint::{
+        FileChangeKind, TsGoLintRun, TsGoLintState, TsrsLintServer, is_tsrs_lint_executable,
+        try_find_tsgolint_executable,
+    },
     utils::{read_to_arena_str, read_to_string},
 };
 use crate::{
