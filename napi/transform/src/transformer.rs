@@ -916,8 +916,11 @@ pub fn transform_sync(
     let mut compiler = match Compiler::new(options) {
         Ok(compiler) => compiler,
         Err(errors) => {
+            // Options errors are not errors in the source text. If they have labels
+            // (e.g. a syntax error in a `define` value), the labels are offsets into
+            // the option's value, so don't render them against the source text.
             return TransformResult {
-                errors: OxcError::from_diagnostics(&filename, &source_text, errors),
+                errors: OxcError::from_diagnostics(&filename, "", errors),
                 ..Default::default()
             };
         }
@@ -958,8 +961,11 @@ impl Task for TransformTask {
         let mut compiler = match Compiler::new(self.options.take()) {
             Ok(compiler) => compiler,
             Err(errors) => {
+                // Options errors are not errors in the source text. If they have labels
+                // (e.g. a syntax error in a `define` value), the labels are offsets into
+                // the option's value, so don't render them against the source text.
                 return Ok(TransformResult {
-                    errors: OxcError::from_diagnostics(&self.filename, &self.source_text, errors),
+                    errors: OxcError::from_diagnostics(&self.filename, "", errors),
                     ..Default::default()
                 });
             }
