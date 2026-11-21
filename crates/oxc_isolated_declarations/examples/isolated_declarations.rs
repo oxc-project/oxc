@@ -16,8 +16,7 @@ use std::{env, path::Path};
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions, CommentOptions};
 use oxc_isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions};
-use oxc_parser::Parser;
-use oxc_span::SourceType;
+use oxc_parser::{Source, SourceFileError};
 
 // Instruction:
 // create a `test.js`,
@@ -25,18 +24,20 @@ use oxc_span::SourceType;
 // or `just example isolated_declarations`
 
 /// Generate TypeScript declaration files from TypeScript source
-fn main() -> std::io::Result<()> {
+fn main() -> Result<(), SourceFileError> {
     let name = env::args().nth(1).unwrap_or_else(|| "test.ts".to_string());
     let path = Path::new(&name);
-    let source_text = std::fs::read_to_string(path)?;
-    let allocator = Allocator::default();
-    let source_type = SourceType::from_path(path).unwrap();
 
-    let ret = Parser::new(&allocator, &source_text, source_type).parse();
+    let allocator = Allocator::default();
+    let source = Source::from_file(path, &allocator)?;
+
+    let ret = source.parse();
+    let program = ret.program;
+    let source_text = program.source_text;
 
     if !ret.diagnostics.is_empty() {
         for error in ret.diagnostics {
-            println!("{}", error.render_with_source_code(source_text.as_str()));
+            println!("{}", error.render_with_source_code(source_text));
         }
         return Ok(());
     }
@@ -46,7 +47,7 @@ fn main() -> std::io::Result<()> {
 
     let id_ret =
         IsolatedDeclarations::new(&allocator, IsolatedDeclarationsOptions { strip_internal: true })
-            .build(&ret.program);
+            .build(&program);
     let printed = Codegen::new()
         .with_options(CodegenOptions {
             comments: CommentOptions { jsdoc: true, ..CommentOptions::disabled() },
@@ -61,7 +62,7 @@ fn main() -> std::io::Result<()> {
     if !id_ret.diagnostics.is_empty() {
         println!("Transformed dts failed:\n");
         for error in id_ret.diagnostics {
-            println!("{}", error.render_with_source_code(source_text.as_str()));
+            println!("{}", error.render_with_source_code(source_text));
         }
     }
 
