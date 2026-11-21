@@ -842,43 +842,44 @@ impl<'a> LegacyDecorator<'a> {
             ctx,
         );
 
-        let class_alias_with_this_assignment = if ctx.state.class_transform.owns_all_class_fields()
-        {
-            None
-        } else {
-            // If we're emitting to ES2022 or later then we need to reassign the class alias before
-            // static initializers are evaluated.
-            // <https://github.com/microsoft/TypeScript/blob/b86ab7dbe0eb2f1c9a624486d72590d638495c97/src/compiler/transformers/legacyDecorators.ts#L345-L366>
-            class_alias_binding.as_ref().and_then(|class_alias_binding| {
-                let has_static_field_or_block = class.body.body.iter().any(|element| {
-                    matches!(element, ClassElement::StaticBlock(_))
-                        || matches!(element, ClassElement::PropertyDefinition(prop)
-                                if prop.r#static
-                        )
-                });
+        let class_alias_with_this_assignment =
+            if ctx.state.class_lowering_of(class.scope_id()).lowers_fields() {
+                None
+            } else {
+                // If we're emitting to ES2022 or later then we need to reassign the class alias before
+                // static initializers are evaluated.
+                // <https://github.com/microsoft/TypeScript/blob/b86ab7dbe0eb2f1c9a624486d72590d638495c97/src/compiler/transformers/legacyDecorators.ts#L345-L366>
+                class_alias_binding.as_ref().and_then(|class_alias_binding| {
+                    let has_static_field_or_block = class.body.body.iter().any(|element| {
+                        matches!(element, ClassElement::StaticBlock(_))
+                            || matches!(element, ClassElement::PropertyDefinition(prop)
+                                    if prop.r#static
+                            )
+                    });
 
-                if has_static_field_or_block {
-                    // `_Class = this`;
-                    let class_alias_with_this_assignment = Statement::new_expression_statement(
-                        SPAN,
-                        create_assignment(
-                            class_alias_binding,
-                            Expression::new_this_expression(SPAN, ctx),
+                    if has_static_field_or_block {
+                        // `_Class = this`;
+                        let class_alias_with_this_assignment = Statement::new_expression_statement(
                             SPAN,
+                            create_assignment(
+                                class_alias_binding,
+                                Expression::new_this_expression(SPAN, ctx),
+                                SPAN,
+                                ctx,
+                            ),
                             ctx,
-                        ),
-                        ctx,
-                    );
-                    let body = [class_alias_with_this_assignment];
-                    let scope_id = ctx.create_child_scope_of_current(ScopeFlags::ClassStaticBlock);
-                    let element =
-                        ClassElement::new_static_block_with_scope_id(SPAN, body, scope_id, ctx);
-                    Some(element)
-                } else {
-                    None
-                }
-            })
-        };
+                        );
+                        let body = [class_alias_with_this_assignment];
+                        let scope_id =
+                            ctx.create_child_scope_of_current(ScopeFlags::ClassStaticBlock);
+                        let element =
+                            ClassElement::new_static_block_with_scope_id(SPAN, body, scope_id, ctx);
+                        Some(element)
+                    } else {
+                        None
+                    }
+                })
+            };
 
         if class_has_private_in_expression_in_decorator {
             let decorations = mem::take(&mut decoration_stmts);

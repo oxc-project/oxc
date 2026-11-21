@@ -1,3 +1,5 @@
+let _y, _y2, _a, _c;
+
 class Cls {
   y = 1;
   @dce z;
@@ -23,11 +25,14 @@ class ClsWithConstructor extends Cls {
 }
 
 class StaticCls {
-  static y = 1;
+  static {
+    this.y = 1;
+  }
   @dce static z;
-  static [x];
-  static [y] = 1;
-  @dce static [z];
+  static {
+    this[_y] = 1;
+  }
+  @dce static [(x, _y = y, z)];
 }
 
 class ClsWithComputedKeyMethods {
@@ -42,10 +47,15 @@ class ClsWithComputedKeyMethods {
 
 class StaticClsWithComputedKeyMethods {
   static [x()]() {}
-  static [y()] = 1;
-  static [z()]() {}
-  static [a()] = 2;
-  static [b()];
-  static [c()] = 3;
-  static accessor [e()] = 4;
+  static {
+    this[_y2] = 1;
+  }
+  static [(_y2 = y(), z())]() {}
+  static {
+    this[_a] = 2;
+  }
+  static {
+    this[_c] = 3;
+  }
+  static accessor [(_a = a(), b(), _c = c(), e())] = 4;
 }
