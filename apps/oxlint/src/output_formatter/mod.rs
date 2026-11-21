@@ -193,9 +193,39 @@ impl OutputFormatter {
 
 #[cfg(test)]
 mod test {
+    use oxc_diagnostics::{DiagnosticService, NamedSource, OxcDiagnostic};
+
+    use super::{OutputFormat, OutputFormatter};
     use crate::tester::Tester;
 
     const TEST_CWD: &str = "fixtures/cli/output_formatter_diagnostic";
+
+    #[test]
+    fn test_output_formatter_diagnostic_without_labels() {
+        let cases = [
+            (OutputFormat::Unix, "file.js:0:0: plugin crashed [Error]"),
+            (OutputFormat::Checkstyle, "severity=\"error\" message=\"plugin crashed\""),
+            (OutputFormat::Github, "::error file=file.js,"),
+            (OutputFormat::Gitlab, "\"severity\": \"critical\""),
+            (OutputFormat::JUnit, "<error message=\"plugin crashed\">"),
+        ];
+
+        for (format, expected) in cases {
+            let reporter = OutputFormatter::new(format).get_diagnostic_reporter();
+            let (mut service, sender) = DiagnosticService::new(reporter);
+            let error = OxcDiagnostic::error("plugin crashed")
+                .with_source_code(NamedSource::new("file.js", "const a = 1;"));
+            sender.send(vec![error]).unwrap();
+            drop(sender);
+
+            let mut output = Vec::new();
+            service.run(&mut output);
+            let output = String::from_utf8(output).unwrap();
+
+            assert!(output.contains("plugin crashed"), "{format:?}: {output}");
+            assert!(output.contains(expected), "{format:?}: {output}");
+        }
+    }
 
     #[test]
     fn test_output_formatter_diagnostic_formats() {
