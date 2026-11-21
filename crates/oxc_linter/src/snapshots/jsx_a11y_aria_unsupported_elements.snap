@@ -232,3 +232,17 @@ source: crates/oxc_linter/src/tester.rs
    ·       ─────────────────────
    ╰────
   help: Try removing the prop `aria-hidden`.
+
+  ⚠ jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states, or properties.
+   ╭─[aria_unsupported_elements.tsx:1:18]
+ 1 │ <meta {...props} aria-hidden="true" />
+   ·                  ──────────────────
+   ╰────
+  help: Try removing the prop `aria-hidden`.
+
+  ⚠ jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states, or properties.
+   ╭─[aria_unsupported_elements.tsx:1:18]
+ 1 │ <meta {...props} role />
+   ·                  ────
+   ╰────
+  help: Try removing the prop `role`.
