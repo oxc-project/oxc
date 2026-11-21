@@ -390,7 +390,11 @@ impl<'a> Normalize {
         };
         if let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id() {
             // Apply `/* #__NO_SIDE_EFFECTS__ */`
-            if ctx.scoping().no_side_effects().contains(&symbol_id) {
+            // The annotation only describes the function value at declaration, so a call
+            // cannot be treated as pure when the binding is reassigned to another value.
+            if ctx.scoping().no_side_effects().contains(&symbol_id)
+                && !ctx.scoping().symbol_is_mutated(symbol_id)
+            {
                 call_expr.pure = true;
             }
         }
@@ -410,7 +414,10 @@ impl<'a> Normalize {
         };
         if let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id() {
             // Apply `/* #__NO_SIDE_EFFECTS__ */`
-            if ctx.scoping().no_side_effects().contains(&symbol_id) {
+            // Same as calls: the annotation is invalid once the binding is reassigned.
+            if ctx.scoping().no_side_effects().contains(&symbol_id)
+                && !ctx.scoping().symbol_is_mutated(symbol_id)
+            {
                 new_expr.pure = true;
             }
             return;
