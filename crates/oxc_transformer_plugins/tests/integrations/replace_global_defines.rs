@@ -2,7 +2,7 @@ use oxc_allocator::Allocator;
 use oxc_ast_visit::Visit;
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_minifier::{CompressOptions, Compressor};
-use oxc_parser::{ParseOptions, Parser};
+use oxc_parser::{ParseOptions, Source};
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_transformer_plugins::{ReplaceGlobalDefines, ReplaceGlobalDefinesConfig};
@@ -13,7 +13,7 @@ use crate::codegen;
 pub fn test(source_text: &str, expected: &str, config: &ReplaceGlobalDefinesConfig) {
     let source_type = SourceType::ts().with_module(true);
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let ret = Source::from_str(source_text, source_type, &allocator).parse();
     assert!(ret.diagnostics.is_empty());
     let mut program = ret.program;
     let mut scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
@@ -47,7 +47,7 @@ pub fn test(source_text: &str, expected: &str, config: &ReplaceGlobalDefinesConf
 fn test_define_only(source_text: &str, expected: &str, config: &ReplaceGlobalDefinesConfig) {
     let source_type = SourceType::ts().with_module(true);
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let ret = Source::from_str(source_text, source_type, &allocator).parse();
     assert!(ret.diagnostics.is_empty());
     let mut program = ret.program;
     let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
@@ -605,7 +605,7 @@ log(__MEMBER__);
 
     let source_type = SourceType::default();
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let ret = Source::from_str(source_text, source_type, &allocator).parse();
     let mut program = ret.program;
     let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
     let _ = ReplaceGlobalDefines::new(&allocator, c).build(scoping, &mut program);
@@ -672,9 +672,9 @@ fn test_define_then_transform_impl(
     use std::path::Path;
 
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, source_type)
-        .with_options(ParseOptions { preserve_parens, ..ParseOptions::default() })
-        .parse();
+    let source = Source::from_str(source_text, source_type, &allocator);
+    let options = ParseOptions { preserve_parens, ..ParseOptions::default() };
+    let ret = source.parse_with_options(options);
     assert!(ret.diagnostics.is_empty());
     let mut program = ret.program;
 
