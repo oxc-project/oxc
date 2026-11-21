@@ -236,7 +236,7 @@ impl<'a, 'b: 'a, 't> NameSymbolCollector<'a, 'b, 't> {
 #[cfg(test)]
 mod test {
     use oxc_allocator::Allocator;
-    use oxc_parser::Parser;
+    use oxc_parser::Source;
     use oxc_semantic::{SemanticBuilder, SymbolId};
     use oxc_span::SourceType;
     use rustc_hash::FxHashSet;
@@ -245,7 +245,7 @@ mod test {
 
     fn collect(opts: MangleOptionsKeepNames, source_text: &str) -> FxHashSet<String> {
         let allocator = Allocator::default();
-        let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
+        let ret = Source::from_str(source_text, SourceType::mjs(), &allocator).parse();
         assert!(!ret.fatal_error, "{source_text}");
         assert!(ret.diagnostics.is_empty(), "{source_text}");
         let ret = SemanticBuilder::new().with_build_nodes(true).build(&ret.program);
