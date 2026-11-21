@@ -622,6 +622,9 @@ impl<'a> SlotAssignment<'a> {
             ArenaVec::<BitSet>::with_capacity_in(scoping.symbols_len(), &allocator);
         let mut tmp_bindings = ArenaVec::with_capacity_in(100, &allocator);
         let mut reusable_slots = ArenaVec::new_in(&allocator);
+        // Scratch buffers for `promote_hot_bindings`.
+        let mut promote_outsiders = ArenaVec::new_in(&allocator);
+        let mut promote_insiders = ArenaVec::new_in(&allocator);
         // Pre-computed BitSet for ancestor membership tests - reused across iterations
         let mut ancestor_set = BitSet::new_in(scoping.scopes_len(), allocator);
 
@@ -652,6 +655,15 @@ impl<'a> SlotAssignment<'a> {
                 continue;
             }
             tmp_bindings.sort_unstable();
+            if tmp_bindings.len() >= PROMOTE_MIN_BINDINGS {
+                promote_hot_bindings(
+                    &mut tmp_bindings,
+                    scoping,
+                    ast_nodes,
+                    &mut promote_outsiders,
+                    &mut promote_insiders,
+                );
+            }
 
             let mut slot = slot_liveness.len();
 
@@ -879,6 +891,74 @@ impl<'a, const CAPACITY: usize> NameTable<'a, CAPACITY> {
                     .set_symbol_names(&symbol_to_rename.symbol_ids, Ident::from(new_name.as_str()));
             }
         }
+    }
+}
+
+/// Scopes with fewer mangle candidates than this keep pure declaration order.
+const PROMOTE_MIN_BINDINGS: usize = 100;
+/// Number of leading bindings treated as the scope's "front" (one per 1-char name).
+const PROMOTE_FRONT: usize = 54;
+/// Upper bound on swaps per scope.
+const PROMOTE_MAX_SWAPS: usize = 20;
+/// A binding is only promoted when it has more than this many times the uses of the binding it
+/// displaces.
+const PROMOTE_MIN_USE_RATIO: usize = 4;
+
+/// In a large scope, swap a few heavily-used bindings declared late into the scope's front.
+///
+/// Bindings take free slots in declaration order, so the first bindings of a scope get its
+/// lowest free slots. Inner scopes reuse those same low slots for their own parameters and locals
+/// (wherever the outer binding is not live), which makes them the hottest slots in the program
+/// and gives them 1-char names, even when the outer binding itself is barely used. A hot binding
+/// declared late instead gets a fresh slot that nothing else shares.
+///
+/// Moving such a binding into a front slot adds its uses to a slot that already gets a 1-char name,
+/// and its old slot cools down, freeing a 1-char name for another slot.
+///
+/// The changes are kept minimal because declaration order is what makes neighbouring names
+/// similar, which gzip relies on: only up to [`PROMOTE_MAX_SWAPS`] swaps per scope, only when
+/// the promoted binding has more than [`PROMOTE_MIN_USE_RATIO`] times the uses of the coldest
+/// front binding it displaces, and never involving parameters, so `function(e,t,n)` patterns
+/// survive.
+fn promote_hot_bindings(
+    bindings: &mut [SymbolId],
+    scoping: &Scoping,
+    ast_nodes: &AstNodes,
+    outsiders: &mut ArenaVec<'_, (usize, usize)>,
+    insiders: &mut ArenaVec<'_, (usize, usize)>,
+) {
+    debug_assert!(bindings.len() > PROMOTE_FRONT);
+    let is_param = |symbol_id: SymbolId| {
+        matches!(
+            ast_nodes.kind(scoping.symbol_declaration(symbol_id)),
+            AstKind::FormalParameter(_) | AstKind::FormalParameterRest(_)
+        )
+    };
+    // Each candidate is `(uses, index into bindings)`, where uses counts the declaration too.
+    let candidates = |range: std::ops::Range<usize>| {
+        range.filter_map(|index| {
+            let symbol_id = bindings[index];
+            (!is_param(symbol_id))
+                .then(|| (scoping.get_resolved_reference_ids(symbol_id).len() + 1, index))
+        })
+    };
+
+    insiders.clear();
+    insiders.extend(candidates(0..PROMOTE_FRONT));
+    outsiders.clear();
+    outsiders.extend(candidates(PROMOTE_FRONT..bindings.len()));
+    // Coldest front binding first; on a tie, the latest declared, to keep the start of the scope intact.
+    insiders.sort_unstable_by_key(|&(uses, index)| (uses, std::cmp::Reverse(index)));
+    // Hottest late binding first; on a tie, the earliest declared.
+    outsiders.sort_unstable_by_key(|&(uses, index)| (std::cmp::Reverse(uses), index));
+
+    for (&(out_uses, out_index), &(in_uses, in_index)) in
+        outsiders.iter().zip(insiders.iter()).take(PROMOTE_MAX_SWAPS)
+    {
+        if out_uses <= PROMOTE_MIN_USE_RATIO * in_uses {
+            break;
+        }
+        bindings.swap(out_index, in_index);
     }
 }
 

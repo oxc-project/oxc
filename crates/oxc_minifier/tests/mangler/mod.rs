@@ -543,3 +543,41 @@ fn labels() {
         assert_eq!(pass1, pass2);
     }
 }
+
+#[test]
+fn promote_hot_binding_in_large_scope() {
+    // `outer` has 100 barely used bindings declared before `hot`. `g` is a sibling scope whose 54
+    // heavily used parameters reuse the outer scope's lowest slots, so those slots get the 54
+    // one-character names. In declaration order, `hot` gets a fresh slot of its own with fewer uses
+    // than any of them, and therefore a two-character name. It is swapped into the front of the
+    // scope, sharing a slot with one of `g`'s parameters.
+    let mut source_text = String::from("function outer() {");
+    for i in 0..100 {
+        write!(source_text, "var cold{i};").unwrap();
+    }
+    source_text.push_str("function g(");
+    source_text.push_str(&(0..54).map(|i| format!("p{i}")).collect::<Vec<_>>().join(","));
+    source_text.push_str(") {");
+    for _ in 0..20 {
+        for i in 0..54 {
+            write!(source_text, "p{i};").unwrap();
+        }
+    }
+    source_text.push('}');
+    source_text.push_str("var hot;");
+    source_text.push_str(&"hot;".repeat(15));
+    source_text.push_str("return [g, hot]; }");
+
+    let options = MangleOptions::default();
+    let mangled = mangle(&source_text, &options);
+    let hot_name = mangled
+        .rsplit_once("return [")
+        .and_then(|(_, rest)| rest.split_once(']'))
+        .and_then(|(names, _)| names.split_once(", "))
+        .map(|(_, hot)| hot)
+        .unwrap();
+    assert_eq!(hot_name.len(), 1, "`hot` should get a one-character name, got `{hot_name}`");
+
+    let remangled = mangle(&mangled, &options);
+    assert_eq!(mangled, remangled);
+}
