@@ -482,6 +482,13 @@ impl<'a> LegacyDecorator<'a> {
         instance_calls.append(&mut static_calls);
 
         if private_name_detector.found {
+            // The static block runs before the class is assigned to its binding, so it refers to
+            // the class by its inner name. Give an anonymous class one.
+            if class.id.is_none()
+                && let Some(class_binding) = &decorations.class_binding
+            {
+                class.id = Some(class_binding.create_binding_identifier(ctx));
+            }
             decorations.member_decorations_for_block = instance_calls
                 .into_iter()
                 .map(|call| Statement::new_expression_statement(SPAN, call, ctx))
@@ -1443,10 +1450,15 @@ impl<'a> VisitJs<'a> for PrivateNameDetector<'a> {
             walk_js::walk_class(self, class);
             return;
         }
+        // Only the class body is in the scope of the nested class's private names.
+        self.visit_decorators(&class.decorators);
+        if let Some(heritage) = &class.heritage {
+            self.visit_expression(&heritage.expression);
+        }
         let names = self.names.clone();
         let declared = Self::declared_names(&class.body).collect::<Vec<_>>();
         self.names.retain(|name| !declared.contains(name));
-        walk_js::walk_class(self, class);
+        self.visit_class_body(&class.body);
         self.names = names;
     }
 }
@@ -1505,9 +1517,11 @@ struct ValueReferences<'s> {
 
 impl<'a> VisitJs<'a> for ValueReferences<'_> {
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
+        // Semantic turns `ValueAsType` into `Type` when it resolves the reference.
+        let type_flags = ReferenceFlags::Type | ReferenceFlags::ValueAsType;
         let flags = self.scoping.get_reference_mut(ident.reference_id()).flags_mut();
-        if flags.is_value_as_type() {
-            *flags = ReferenceFlags::Read;
+        if flags.intersects(type_flags) {
+            *flags = (*flags - type_flags) | ReferenceFlags::Read;
         }
     }
 }
@@ -1580,9 +1594,10 @@ impl<'a> VisitMut<'a> for ClassReferenceChanger<'a, '_> {
     fn visit_static_block(&mut self, block: &mut StaticBlock<'a>) {
         let is_member_decorations_block =
             self.member_decorations_block.is_some_and(|(_, scope_id)| scope_id == block.scope_id());
-        self.in_member_decorations_block = is_member_decorations_block;
+        let in_member_decorations_block = self.in_member_decorations_block;
+        self.in_member_decorations_block |= is_member_decorations_block;
         self.visit_statements(&mut block.body);
-        self.in_member_decorations_block = false;
+        self.in_member_decorations_block = in_member_decorations_block;
     }
 
     #[inline]

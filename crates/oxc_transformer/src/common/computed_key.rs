@@ -60,8 +60,8 @@ pub fn key_needs_temp_var(key: &Expression, ctx: &TraverseCtx) -> bool {
 /// Create `let _x;` statement and insert it.
 /// Return `_x = x()` assignment, and `_x` identifier referencing same temp var.
 ///
-/// If `key` already assigns a variable that nothing else writes, such as a temp var created by
-/// another transform (`[_x = x()]`), that variable is reused instead of creating another.
+/// If `key` already assigns a temp var created by another transform (`[_x = x()]`), and nothing
+/// else writes it, that temp var is reused instead of creating another.
 pub fn create_computed_key_temp_var<'a>(
     key: Expression<'a>,
     ctx: &mut TraverseCtx<'a>,
@@ -83,20 +83,25 @@ pub fn create_computed_key_temp_var<'a>(
     (assignment, ident)
 }
 
-/// If `key` is `x = ...` and that assignment is the only write to `x`, return a read of `x`.
-/// `x` then always holds the key's value after the key is evaluated.
+/// If `key` is `_x = ...` created by a transform, and that assignment is the only write to the
+/// temp var `_x`, return a read of `_x`. `_x` then always holds the key's value after the key is
+/// evaluated. A variable written in the source is not reused: it is shared, for example between
+/// classes created by the same function.
 fn assigned_single_write_var<'a>(
     key: &Expression<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) -> Option<Expression<'a>> {
     let Expression::AssignmentExpression(assignment) = key else { return None };
-    if assignment.operator != AssignmentOperator::Assign {
+    if assignment.operator != AssignmentOperator::Assign || !assignment.span.is_empty() {
         return None;
     }
     let AssignmentTarget::AssignmentTargetIdentifier(target) = &assignment.left else {
         return None;
     };
     let symbol_id = ctx.scoping().get_reference(target.reference_id()).symbol_id()?;
+    if !ctx.scoping().symbol_span(symbol_id).is_empty() {
+        return None;
+    }
     let writes = ctx.scoping().get_resolved_references(symbol_id).filter(|r| r.is_write()).count();
     if writes != 1 {
         return None;

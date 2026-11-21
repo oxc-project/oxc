@@ -10227,9 +10227,6 @@ rebuilt        : <None>
 Reference symbol mismatch for "sym":
 after transform: SymbolId(3) "sym"
 rebuilt        : <None>
-Reference flags mismatch for "sym":
-after transform: ReferenceId(2): ReferenceFlags(Type)
-rebuilt        : ReferenceId(7): ReferenceFlags(Read)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -19360,18 +19357,12 @@ semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/d
 Bindings mismatch:
 after transform: ScopeId(0): ["Foo", "_decorate", "_decorateMetadata", "b", "decorator"]
 rebuilt        : ScopeId(0): ["Foo", "_decorate", "_decorateMetadata", "b"]
-Symbol reference IDs mismatch for "b":
-after transform: SymbolId(3): []
-rebuilt        : SymbolId(2): [ReferenceId(13)]
 Reference symbol mismatch for "decorator":
 after transform: SymbolId(0) "decorator"
 rebuilt        : <None>
 Reference symbol mismatch for "decorator":
 after transform: SymbolId(0) "decorator"
 rebuilt        : <None>
-Reference flags mismatch for "b":
-after transform: ReferenceId(3): ReferenceFlags(Type)
-rebuilt        : ReferenceId(13): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["Number", "Symbol", "require"]
 rebuilt        : ["Number", "Symbol", "decorator", "require"]
