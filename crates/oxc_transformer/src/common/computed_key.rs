@@ -19,7 +19,8 @@ use crate::{context::TraverseCtx, utils::ast_builder::create_assignment};
 // TODO(improve-on-babel): Can avoid the temp var if key is for a static prop/method,
 // as in that case the usage of `this` stays outside the class.
 pub fn key_needs_temp_var(key: &Expression, ctx: &TraverseCtx) -> bool {
-    match key {
+    // TypeScript syntax such as `k as any` is erased, so it doesn't affect the key.
+    match key.get_inner_expression() {
         // Literals cannot have side effects.
         // e.g. `let x = 'x'; class C { [x] = 1; }` or `class C { ['x'] = 1; }`.
         Expression::BooleanLiteral(_)
@@ -85,8 +86,9 @@ pub fn create_computed_key_temp_var<'a>(
 
 /// If `key` is `_x = ...` created by a transform, and that assignment is the only write to the
 /// temp var `_x`, return a read of `_x`. `_x` then always holds the key's value after the key is
-/// evaluated. A variable written in the source is not reused: it is shared, for example between
-/// classes created by the same function.
+/// evaluated. `_x` must be a `let` in the block a new temp var would go in, so that each
+/// evaluation of the class, such as in a loop, keeps its own key. A variable written in the source
+/// is not reused: it is shared, for example between classes created by the same function.
 fn assigned_single_write_var<'a>(
     key: &Expression<'a>,
     ctx: &mut TraverseCtx<'a>,
@@ -99,7 +101,11 @@ fn assigned_single_write_var<'a>(
         return None;
     };
     let symbol_id = ctx.scoping().get_reference(target.reference_id()).symbol_id()?;
-    if !ctx.scoping().symbol_span(symbol_id).is_empty() {
+    let scoping = ctx.scoping();
+    if !scoping.symbol_span(symbol_id).is_empty()
+        || !scoping.symbol_flags(symbol_id).contains(SymbolFlags::BlockScopedVariable)
+        || scoping.symbol_scope_id(symbol_id) != ctx.current_block_scope_id()
+    {
         return None;
     }
     let writes = ctx.scoping().get_resolved_references(symbol_id).filter(|r| r.is_write()).count();

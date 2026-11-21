@@ -1,6 +1,6 @@
 commit: 16a2d671
 
-Passed: 360/482
+Passed: 361/483
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -49,7 +49,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (56/72)
+# babel-plugin-transform-typescript (56/73)
 * computed-constant-value/input.ts
 x Output mismatch
 
@@ -162,6 +162,11 @@ Unresolved references mismatch:
 after transform: ["A"]
 rebuilt        : []
 
+* oxc/typescript-syntax-computed-key-remove-uninitialized/input.ts
+Symbol reference IDs mismatch for "k":
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2)]
+rebuilt        : SymbolId(0): []
+
 * redeclarations/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["A"]
@@ -206,55 +211,15 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (36/119)
+# legacy-decorators (37/119)
 * oxc/accessor/input.ts
 x Output mismatch
 
 * oxc/accessor-name-collision/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Foo", "_prop", "_prop2", "_prop3", "prop", "property"]
-rebuilt        : ScopeId(0): ["Foo", "_prop", "_prop2", "_prop3", "prop"]
-Reference symbol mismatch for "property":
-after transform: SymbolId(0) "property"
-rebuilt        : <None>
-Reference symbol mismatch for "property":
-after transform: SymbolId(0) "property"
-rebuilt        : <None>
-Reference symbol mismatch for "property":
-after transform: SymbolId(0) "property"
-rebuilt        : <None>
-Reference symbol mismatch for "property":
-after transform: SymbolId(0) "property"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "property"]
+x Output mismatch
 
 * oxc/accessor-with-class-properties/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "_a", "_a_accessor_storage", "_a_computed_accessor_storage", "_b_accessor_storage", "_c_accessor_storage", "a", "dec"]
-rebuilt        : ScopeId(0): ["C", "_a", "_a_accessor_storage", "_a_computed_accessor_storage", "_b_accessor_storage", "_c_accessor_storage"]
-Reference symbol mismatch for "a":
-after transform: SymbolId(4) "a"
-rebuilt        : <None>
-Reference symbol mismatch for "a":
-after transform: SymbolId(4) "a"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["WeakMap", "babelHelpers"]
-rebuilt        : ["WeakMap", "a", "babelHelpers", "dec"]
+x Output mismatch
 
 * oxc/class-without-name-with-decorated_class/input.ts
 Symbol flags mismatch for "_default":
@@ -459,9 +424,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Boolean", "Function", "Number", "String", "babelHelpers"]
 rebuilt        : ["Boolean", "Function", "Number", "String", "babelHelpers", "methodDecorator", "paramDecorator"]
-
-* oxc/metadata/private-in-expression-in-decorator/input.ts
-x Output mismatch
 
 * oxc/metadata/readonly-array/input.ts
 Bindings mismatch:

@@ -48,7 +48,7 @@ mod metadata;
 use std::{borrow::Cow, cell::Cell, mem};
 
 use oxc_allocator::{
-    Address, ArenaVec, CloneIn, GetAddress, GetAllocator, ReplaceWith, TakeIn, UnstableAddress,
+    Address, ArenaVec, CloneIn, GetAddress, GetAllocator, TakeIn, UnstableAddress,
 };
 use oxc_ast::{StaticPropertyName, ast::*};
 use oxc_ast_visit::{VisitJs, VisitMut, walk_js};
@@ -62,8 +62,8 @@ use rustc_hash::FxHashMap;
 use crate::{
     Helper,
     common::{
-        duplicate::duplicate_expression, helper_loader::helper_call_expr,
-        var_declarations::VarDeclarationsStore,
+        computed_key::create_computed_key_temp_var, duplicate::duplicate_expression,
+        helper_loader::helper_call_expr, var_declarations::VarDeclarationsStore,
     },
     context::TraverseCtx,
     decorator::DecoratorOptions,
@@ -1359,14 +1359,11 @@ impl<'a> LegacyDecorator<'a> {
 
                 let key = key.to_expression_mut();
 
-                // Create a unique binding for the computed property key, and insert it outside of the class
-                let binding = VarDeclarationsStore::create_uid_var_based_on_node(key, ctx);
-                let operator = AssignmentOperator::Assign;
-                let left = binding.create_write_target(ctx);
-                key.replace_with(|right| {
-                    Expression::new_assignment_expression(SPAN, operator, left, right, ctx)
-                });
-                binding.create_read_expression(ctx)
+                // Create a unique binding for the computed property key, and insert it outside of
+                // the class. It is block-scoped, so each class defined in a loop keeps its own key.
+                let (assignment, ident) = create_computed_key_temp_var(key.take_in(ctx), ctx);
+                *key = assignment;
+                ident
             }
         }
     }

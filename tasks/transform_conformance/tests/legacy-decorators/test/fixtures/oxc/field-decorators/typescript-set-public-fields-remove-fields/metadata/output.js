@@ -1,4 +1,4 @@
-var _k;
+let _k;
 let A = class A {
   static {
     _k = k;

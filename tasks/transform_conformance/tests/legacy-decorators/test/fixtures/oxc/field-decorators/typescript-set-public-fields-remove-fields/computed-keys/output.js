@@ -1,5 +1,4 @@
-var _key, _key2, _key3, _key4;
-let _key5;
+let _key, _key2, _key3, _key4, _key5;
 class A {
   constructor() {
     this[_key2] = 1;

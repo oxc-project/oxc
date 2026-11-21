@@ -1,0 +1,7 @@
+// TypeScript syntax around a computed key doesn't keep a field without an initializer.
+const k = "x";
+class A {
+  [k as any]: number;
+  ["y" as const]: number;
+  [k satisfies string]: number;
+}
