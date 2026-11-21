@@ -75,16 +75,23 @@ const INLINE_RECORDS: usize = 8;
 pub struct ClassLoweringDecisions {
     class_transform: ClassTransform,
     decorator_mode: DecoratorMode,
+    /// `CompilerAssumptions::set_public_class_fields`
+    set_public_class_fields: bool,
     /// The first few decisions fit inline without allocating.
     entries: SmallVec<[(ScopeId, ClassLowering); INLINE_RECORDS]>,
     spilled: FxHashMap<ScopeId, ClassLowering>,
 }
 
 impl ClassLoweringDecisions {
-    pub fn new(class_transform: ClassTransform, decorator_mode: DecoratorMode) -> Self {
+    pub fn new(
+        class_transform: ClassTransform,
+        decorator_mode: DecoratorMode,
+        set_public_class_fields: bool,
+    ) -> Self {
         Self {
             class_transform,
             decorator_mode,
+            set_public_class_fields,
             entries: SmallVec::new(),
             spilled: FxHashMap::default(),
         }
@@ -93,7 +100,24 @@ impl ClassLoweringDecisions {
     /// Record the lowering of a class before its decorators or auto-accessors are rewritten.
     pub fn record(&mut self, class: &Class<'_>) {
         // Legacy decorators run their own lowering, so options alone determine class ownership.
+        // The exception is `setPublicClassFields` without a class-properties target, where
+        // TypeScript owns field lowering: a decorated class must then be preserved, or
+        // TypeScript moves decorated fields into constructor/static-block assignments and
+        // silently drops their decorators before the legacy decorator transform can lower them.
         if self.decorator_mode.is_legacy() {
+            if self.set_public_class_fields
+                && !matches!(self.class_transform, ClassTransform::ClassProperties { .. })
+                && class_has_decorators(class)
+            {
+                self.insert(
+                    class.scope_id(),
+                    ClassLowering {
+                        mode: ClassLoweringMode::Preserve,
+                        has_decorators: true,
+                        has_auto_accessor: false,
+                    },
+                );
+            }
             return;
         }
         let lowering = ClassLowering::compute(self.class_transform, class);
@@ -140,6 +164,6 @@ impl ClassLoweringDecisions {
 impl Default for ClassLoweringDecisions {
     fn default() -> Self {
         // Matches the default options: no class lowering, standard decorators preserved.
-        Self::new(ClassTransform::default(), DecoratorMode::Preserve)
+        Self::new(ClassTransform::default(), DecoratorMode::Preserve, false)
     }
 }
