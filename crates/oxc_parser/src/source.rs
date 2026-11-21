@@ -13,7 +13,13 @@ use std::{
     str::{self, Utf8Error},
 };
 
+#[cfg(feature = "napi")]
+use std::ptr;
+
 use simdutf8::basic;
+
+#[cfg(feature = "napi")]
+use napi::{JsString, JsValue, check_status, sys as napi_sys};
 
 use oxc_allocator::Allocator;
 use oxc_span::SourceType;
@@ -190,6 +196,101 @@ impl<'a> Source<'a> {
         unsafe { ptr.add(len).write_bytes(0, Self::PADDING) };
 
         Self { ptr, len, is_valid_utf8, source_type, allocator }
+    }
+
+    /// Convert this [`Source`] into its raw parts.
+    ///
+    /// Returns the same values as [`Source::from_raw_parts`] takes, in the same order:
+    ///
+    /// - Pointer to the start of the source bytes.
+    /// - Length of the source in bytes, not including padding.
+    /// - `true` if the source bytes are known to be valid UTF-8.
+    /// - [`SourceType`] of the source.
+    /// - [`Allocator`] which the source bytes are stored in.
+    ///
+    /// The source bytes remain in the [`Allocator`]. A `Source` borrows its [`Allocator`],
+    /// so the two cannot be moved together (e.g. to another thread). The pointer, length
+    /// and other values can be moved along with the [`Allocator`], and the [`Source`] recreated
+    /// later with [`Source::from_raw_parts`].
+    #[inline]
+    pub fn into_raw_parts(self) -> (NonNull<u8>, usize, bool, SourceType, &'a Allocator) {
+        (self.ptr, self.len, self.is_valid_utf8, self.source_type, self.allocator)
+    }
+
+    /// Create a [`Source`] from a NAPI JS string.
+    ///
+    /// The string is converted to UTF-8, and written directly into `allocator`.
+    /// This avoids the intermediate `String` which NAPI-RS creates when a function
+    /// takes a `String` argument, and then copying that `String` into the arena.
+    ///
+    /// `Source` does not implement NAPI-RS's `FromNapiValue` trait, because creating
+    /// a `Source` requires an [`Allocator`]. Instead, a function exposed to JS can take
+    /// a [`JsString`] argument, create an [`Allocator`], and then call this method.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`napi::Error`] if either:
+    ///
+    /// - `js_string` is not a JS string.
+    /// - The string as UTF-8, plus padding, is larger than `isize::MAX` bytes.
+    #[cfg(feature = "napi")]
+    pub fn from_napi_js_string(
+        js_string: &JsString<'_>,
+        source_type: SourceType,
+        allocator: &'a Allocator,
+    ) -> napi::Result<Self> {
+        // `napi_get_value_string_utf8` writes a NUL terminator after the string.
+        // It goes in the 1st byte of the padding.
+        const _: () = assert!(Source::PADDING >= 1);
+
+        let value = js_string.value();
+        let env = value.env;
+        let value = value.value;
+
+        // Get length of the string as UTF-8, in bytes
+        let mut len = 0;
+        // SAFETY: `env` and `value` come from a `JsString`, so they're valid.
+        // When buffer pointer is null, N-API only writes the length to `len`.
+        let status = unsafe {
+            napi_sys::napi_get_value_string_utf8(env, value, ptr::null_mut(), 0, &raw mut len)
+        };
+        check_status!(status, "Failed to convert JavaScript value into `Source`")?;
+
+        // Allocate space for the string and padding in arena
+        let Some(layout) = padded_layout(len) else {
+            return Err(napi::Error::from_reason("Source text is too long"));
+        };
+        let ptr = allocator.alloc_layout(layout);
+
+        // Write the string into the allocated space, as UTF-8
+        let mut written_len = 0;
+        // SAFETY: `env` and `value` come from a `JsString`, so they're valid.
+        // `ptr` points to a new allocation of `len + PADDING` bytes, so it's valid for writing
+        // `len + 1` bytes, which is the buffer size passed to N-API (`len` bytes of string + NUL).
+        let status = unsafe {
+            napi_sys::napi_get_value_string_utf8(
+                env,
+                value,
+                ptr.as_ptr().cast(),
+                len + 1,
+                &raw mut written_len,
+            )
+        };
+        check_status!(status, "Failed to copy JS string")?;
+
+        // N-API writes at most 1 byte less than buffer size, not including the NUL terminator
+        debug_assert!(written_len <= len);
+
+        // SAFETY:
+        // - `ptr` points to a new allocation of `len + PADDING` bytes in `allocator`'s arena.
+        //   Nothing else has a pointer or reference to it.
+        // - `written_len <= len`.
+        // - The first `written_len` bytes were initialized by N-API.
+        // - N-API specifies that `napi_get_value_string_utf8` writes the string encoded as UTF-8.
+        //   A JS string can contain lone surrogates, which cannot be encoded as UTF-8,
+        //   so a conforming implementation must replace them (Node writes U+FFFD).
+        //   NAPI-RS relies on the same guarantee when it converts a JS string to a `String`.
+        Ok(unsafe { Self::from_raw_parts(ptr, written_len, true, source_type, allocator) })
     }
 
     /// Get [`SourceType`] which source will be parsed as.
@@ -552,7 +653,7 @@ mod tests {
         env, fs, io,
         path::{Path, PathBuf},
         process,
-        ptr::NonNull,
+        ptr::{self, NonNull},
         slice, str,
     };
 
@@ -667,6 +768,36 @@ mod tests {
         assert_eq!(source.source_type(), SourceType::cjs());
         // Source is not copied
         assert_eq!(source.as_bytes().as_ptr(), ptr.as_ptr().cast_const());
+    }
+
+    /// `Source::into_raw_parts` returns parts which `Source::from_raw_parts`
+    /// can recreate the `Source` from, after the `Allocator` has been moved.
+    #[test]
+    fn into_raw_parts() {
+        let allocator = Allocator::default();
+        let text = "let x = 1;";
+
+        let source = Source::from_str(text, SourceType::cjs(), &allocator);
+        let parts = source.into_raw_parts();
+        let (source_ptr, len, is_valid_utf8, source_type, source_allocator) = parts;
+        assert_eq!(len, text.len());
+        assert!(is_valid_utf8);
+        assert_eq!(source_type, SourceType::cjs());
+        assert!(ptr::eq(source_allocator, &raw const allocator));
+
+        let source = Source::from_bytes(text.as_bytes(), SourceType::cjs(), &allocator);
+        assert!(!source.into_raw_parts().2);
+
+        // Move the `Allocator`. The source bytes it contains do not move.
+        let allocator = Box::new(allocator);
+
+        // SAFETY: `source_ptr` and `len` are from a `Source` which was created in `allocator`.
+        // That `Source` no longer exists, and nothing else refers to its source bytes.
+        // They are valid UTF-8.
+        let source =
+            unsafe { Source::from_raw_parts(source_ptr, len, true, source_type, &allocator) };
+        assert_source(&source, text.as_bytes(), true);
+        assert_eq!(source.as_bytes().as_ptr(), source_ptr.as_ptr().cast_const());
     }
 
     #[test]
