@@ -644,6 +644,76 @@ import B from "b";
 // ---
 
 #[test]
+fn should_partition_by_side_effect() {
+    // https://github.com/oxc-project/oxc/issues/21689
+    assert_format(
+        r#"
+import { b } from "b-package";
+
+import "./side-effect";
+
+import { a } from "a-package";
+"#,
+        r#"{ "sortImports": { "partitionBySideEffect": true } }"#,
+        r#"
+import { b } from "b-package";
+
+import "./side-effect";
+
+import { a } from "a-package";
+"#,
+    );
+    // Each partition is still sorted
+    assert_format(
+        r#"
+import c from "c";
+import b from "b";
+import "s";
+import z from "z";
+import a from "a";
+import "t";
+import "u";
+import y from "y";
+import x from "x";
+"#,
+        r#"{ "sortImports": { "partitionBySideEffect": true } }"#,
+        r#"
+import b from "b";
+import c from "c";
+import "s";
+import a from "a";
+import z from "z";
+import "t";
+import "u";
+import x from "x";
+import y from "y";
+"#,
+    );
+    // Groups and blank lines are applied within each partition
+    assert_format(
+        r#"
+import { z } from "./z";
+import fs from "node:fs";
+import "./polyfill.css";
+// Attached to `a`
+import { a } from "./a";
+import react from "react";
+"#,
+        r#"{ "sortImports": { "partitionBySideEffect": true } }"#,
+        r#"
+import fs from "node:fs";
+
+import { z } from "./z";
+import "./polyfill.css";
+import react from "react";
+
+// Attached to `a`
+import { a } from "./a";
+"#,
+    );
+}
+
+#[test]
 fn should_not_attach_comment_if_newline_between_import() {
     assert_format(
         r#"
