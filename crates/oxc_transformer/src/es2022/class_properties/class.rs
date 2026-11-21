@@ -12,10 +12,7 @@ use oxc_syntax::{
 use oxc_traverse::{Ancestor, BoundIdentifier};
 
 use crate::{
-    common::{
-        class_lowering::ClassLoweringMode,
-        helper_loader::{Helper, helper_call_expr},
-    },
+    common::helper_loader::{Helper, helper_call_expr},
     context::TraverseCtx,
     utils::ast_builder::{create_assignment, create_new_weakset, create_variable_declaration},
 };
@@ -77,7 +74,7 @@ impl<'a> ClassProperties<'a> {
             !is_declaration && Self::should_emit_private_method_helpers_in_class_sequence(ctx);
 
         let lowering = ctx.state.class_lowering_of(class_scope_id);
-        if matches!(lowering.mode(), ClassLoweringMode::Native | ClassLoweringMode::Preserve) {
+        if !lowering.lowers_fields() {
             // Register private names only when they can shadow a lowered name in an enclosing
             // class. Other unresolved names belong to untouched classes and are left as-is.
             let mut private_names = IdentIndexMap::default();
