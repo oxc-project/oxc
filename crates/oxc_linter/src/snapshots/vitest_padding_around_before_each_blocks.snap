@@ -1,0 +1,93 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vitest(padding-around-before-each-blocks): Expected a blank line before this statement
+   ╭─[padding_around_before_each_blocks.tsx:3:1]
+ 2 │ const someText = 'abc';
+ 3 │ beforeEach(() => {
+   · ▲
+ 4 │ });
+   ╰────
+  help: Add an empty line around the `beforeEach` hook.
+
+  ⚠ vitest(padding-around-before-each-blocks): Expected a blank line before this statement
+   ╭─[padding_around_before_each_blocks.tsx:5:1]
+ 4 │ });
+ 5 │ describe('someText', () => {
+   · ▲
+ 6 │   const something = 'abc';
+   ╰────
+  help: Add an empty line around the `beforeEach` hook.
+
+  ⚠ vitest(padding-around-before-each-blocks): Expected a blank line before this statement
+   ╭─[padding_around_before_each_blocks.tsx:8:3]
+ 7 │   // A comment
+ 8 │   beforeEach(() => {
+   ·   ▲
+ 9 │     // stuff
+   ╰────
+  help: Add an empty line around the `beforeEach` hook.
+
+  ⚠ vitest(padding-around-before-each-blocks): Expected a blank line before this statement
+    ╭─[padding_around_before_each_blocks.tsx:11:3]
+ 10 │   });
+ 11 │   beforeEach(() => {
+    ·   ▲
+ 12 │     // other stuff
+    ╰────
+  help: Add an empty line around the `beforeEach` hook.
+
+  ⚠ vitest(padding-around-before-each-blocks): Expected a blank line before this statement
+    ╭─[padding_around_before_each_blocks.tsx:18:3]
+ 17 │   const something = 'abc';
+ 18 │   beforeEach(() => {
+    ·   ▲
+ 19 │     // stuff
+    ╰────
+  help: Add an empty line around the `beforeEach` hook.
+
+  ⚠ vitest(padding-around-before-each-blocks): Expected a blank line before this statement
+   ╭─[padding_around_before_each_blocks.tsx:3:1]
+ 2 │ const someText = 'abc';
+ 3 │ beforeEach(() => {
+   · ▲
+ 4 │ });
+   ╰────
+  help: Add an empty line around the `beforeEach` hook.
+
+  ⚠ vitest(padding-around-before-each-blocks): Expected a blank line before this statement
+   ╭─[padding_around_before_each_blocks.tsx:5:1]
+ 4 │ });
+ 5 │ describe('someText', () => {
+   · ▲
+ 6 │   const something = 'abc';
+   ╰────
+  help: Add an empty line around the `beforeEach` hook.
+
+  ⚠ vitest(padding-around-before-each-blocks): Expected a blank line before this statement
+   ╭─[padding_around_before_each_blocks.tsx:8:3]
+ 7 │   // A comment
+ 8 │   beforeEach(() => {
+   ·   ▲
+ 9 │     // stuff
+   ╰────
+  help: Add an empty line around the `beforeEach` hook.
+
+  ⚠ vitest(padding-around-before-each-blocks): Expected a blank line before this statement
+    ╭─[padding_around_before_each_blocks.tsx:11:3]
+ 10 │   });
+ 11 │   beforeEach(() => {
+    ·   ▲
+ 12 │     // other stuff
+    ╰────
+  help: Add an empty line around the `beforeEach` hook.
+
+  ⚠ vitest(padding-around-before-each-blocks): Expected a blank line before this statement
+    ╭─[padding_around_before_each_blocks.tsx:18:3]
+ 17 │   const something = 'abc';
+ 18 │   beforeEach(() => {
+    ·   ▲
+ 19 │     // stuff
+    ╰────
+  help: Add an empty line around the `beforeEach` hook.

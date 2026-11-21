@@ -793,6 +793,7 @@ pub use crate::rules::vitest::no_test_prefixes::NoTestPrefixes as VitestNoTestPr
 pub use crate::rules::vitest::no_test_return_statement::NoTestReturnStatement as VitestNoTestReturnStatement;
 pub use crate::rules::vitest::no_unneeded_async_expect_function::NoUnneededAsyncExpectFunction as VitestNoUnneededAsyncExpectFunction;
 pub use crate::rules::vitest::padding_around_after_all_blocks::PaddingAroundAfterAllBlocks as VitestPaddingAroundAfterAllBlocks;
+pub use crate::rules::vitest::padding_around_before_each_blocks::PaddingAroundBeforeEachBlocks as VitestPaddingAroundBeforeEachBlocks;
 pub use crate::rules::vitest::padding_around_test_blocks::PaddingAroundTestBlocks as VitestPaddingAroundTestBlocks;
 pub use crate::rules::vitest::prefer_called_exactly_once_with::PreferCalledExactlyOnceWith as VitestPreferCalledExactlyOnceWith;
 pub use crate::rules::vitest::prefer_called_once::PreferCalledOnce as VitestPreferCalledOnce;
@@ -1673,6 +1674,7 @@ pub enum RuleEnum {
     VitestNoTestReturnStatement(VitestNoTestReturnStatement),
     VitestNoUnneededAsyncExpectFunction(VitestNoUnneededAsyncExpectFunction),
     VitestPaddingAroundAfterAllBlocks(VitestPaddingAroundAfterAllBlocks),
+    VitestPaddingAroundBeforeEachBlocks(VitestPaddingAroundBeforeEachBlocks),
     VitestPaddingAroundTestBlocks(VitestPaddingAroundTestBlocks),
     VitestPreferCalledExactlyOnceWith(VitestPreferCalledExactlyOnceWith),
     VitestPreferCalledOnce(VitestPreferCalledOnce),
@@ -2549,107 +2551,108 @@ const VITEST_NO_TEST_PREFIXES_ID: usize = 769usize;
 const VITEST_NO_TEST_RETURN_STATEMENT_ID: usize = 770usize;
 const VITEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID: usize = 771usize;
 const VITEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID: usize = 772usize;
-const VITEST_PADDING_AROUND_TEST_BLOCKS_ID: usize = 773usize;
-const VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID: usize = 774usize;
-const VITEST_PREFER_CALLED_ONCE_ID: usize = 775usize;
-const VITEST_PREFER_CALLED_TIMES_ID: usize = 776usize;
-const VITEST_PREFER_CALLED_WITH_ID: usize = 777usize;
-const VITEST_PREFER_COMPARISON_MATCHER_ID: usize = 778usize;
-const VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID: usize = 779usize;
-const VITEST_PREFER_EACH_ID: usize = 780usize;
-const VITEST_PREFER_EQUALITY_MATCHER_ID: usize = 781usize;
-const VITEST_PREFER_EXPECT_ASSERTIONS_ID: usize = 782usize;
-const VITEST_PREFER_EXPECT_RESOLVES_ID: usize = 783usize;
-const VITEST_PREFER_EXPECT_TYPE_OF_ID: usize = 784usize;
-const VITEST_PREFER_HOOKS_IN_ORDER_ID: usize = 785usize;
-const VITEST_PREFER_HOOKS_ON_TOP_ID: usize = 786usize;
-const VITEST_PREFER_IMPORT_IN_MOCK_ID: usize = 787usize;
-const VITEST_PREFER_IMPORTING_VITEST_GLOBALS_ID: usize = 788usize;
-const VITEST_PREFER_LOWERCASE_TITLE_ID: usize = 789usize;
-const VITEST_PREFER_MOCK_PROMISE_SHORTHAND_ID: usize = 790usize;
-const VITEST_PREFER_MOCK_RETURN_SHORTHAND_ID: usize = 791usize;
-const VITEST_PREFER_SNAPSHOT_HINT_ID: usize = 792usize;
-const VITEST_PREFER_SPY_ON_ID: usize = 793usize;
-const VITEST_PREFER_STRICT_BOOLEAN_MATCHERS_ID: usize = 794usize;
-const VITEST_PREFER_STRICT_EQUAL_ID: usize = 795usize;
-const VITEST_PREFER_TO_BE_ID: usize = 796usize;
-const VITEST_PREFER_TO_BE_FALSY_ID: usize = 797usize;
-const VITEST_PREFER_TO_BE_OBJECT_ID: usize = 798usize;
-const VITEST_PREFER_TO_BE_TRUTHY_ID: usize = 799usize;
-const VITEST_PREFER_TO_CONTAIN_ID: usize = 800usize;
-const VITEST_PREFER_TO_HAVE_BEEN_CALLED_TIMES_ID: usize = 801usize;
-const VITEST_PREFER_TO_HAVE_LENGTH_ID: usize = 802usize;
-const VITEST_PREFER_TODO_ID: usize = 803usize;
-const VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID: usize = 804usize;
-const VITEST_REQUIRE_HOOK_ID: usize = 805usize;
-const VITEST_REQUIRE_LOCAL_TEST_CONTEXT_FOR_CONCURRENT_SNAPSHOTS_ID: usize = 806usize;
-const VITEST_REQUIRE_MOCK_TYPE_PARAMETERS_ID: usize = 807usize;
-const VITEST_REQUIRE_TEST_TIMEOUT_ID: usize = 808usize;
-const VITEST_REQUIRE_TO_THROW_MESSAGE_ID: usize = 809usize;
-const VITEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID: usize = 810usize;
-const VITEST_VALID_DESCRIBE_CALLBACK_ID: usize = 811usize;
-const VITEST_VALID_EXPECT_ID: usize = 812usize;
-const VITEST_VALID_EXPECT_IN_PROMISE_ID: usize = 813usize;
-const VITEST_VALID_TITLE_ID: usize = 814usize;
-const VITEST_WARN_TODO_ID: usize = 815usize;
-const NODE_CALLBACK_RETURN_ID: usize = 816usize;
-const NODE_EXPORTS_STYLE_ID: usize = 817usize;
-const NODE_GLOBAL_REQUIRE_ID: usize = 818usize;
-const NODE_HANDLE_CALLBACK_ERR_ID: usize = 819usize;
-const NODE_NO_EXPORTS_ASSIGN_ID: usize = 820usize;
-const NODE_NO_MIXED_REQUIRES_ID: usize = 821usize;
-const NODE_NO_NEW_REQUIRE_ID: usize = 822usize;
-const NODE_NO_PATH_CONCAT_ID: usize = 823usize;
-const NODE_NO_PROCESS_ENV_ID: usize = 824usize;
-const NODE_NO_SYNC_ID: usize = 825usize;
-const NODE_NO_TOP_LEVEL_AWAIT_ID: usize = 826usize;
-const VUE_COMPONENT_DEFINITION_NAME_CASING_ID: usize = 827usize;
-const VUE_DEFINE_EMITS_DECLARATION_ID: usize = 828usize;
-const VUE_DEFINE_PROPS_DECLARATION_ID: usize = 829usize;
-const VUE_DEFINE_PROPS_DESTRUCTURING_ID: usize = 830usize;
-const VUE_MAX_PROPS_ID: usize = 831usize;
-const VUE_NEXT_TICK_STYLE_ID: usize = 832usize;
-const VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID: usize = 833usize;
-const VUE_NO_ASYNC_IN_COMPUTED_PROPERTIES_ID: usize = 834usize;
-const VUE_NO_COMPUTED_PROPERTIES_IN_DATA_ID: usize = 835usize;
-const VUE_NO_DEPRECATED_DATA_OBJECT_DECLARATION_ID: usize = 836usize;
-const VUE_NO_DEPRECATED_DELETE_SET_ID: usize = 837usize;
-const VUE_NO_DEPRECATED_DESTROYED_LIFECYCLE_ID: usize = 838usize;
-const VUE_NO_DEPRECATED_EVENTS_API_ID: usize = 839usize;
-const VUE_NO_DEPRECATED_MODEL_DEFINITION_ID: usize = 840usize;
-const VUE_NO_DEPRECATED_PROPS_DEFAULT_THIS_ID: usize = 841usize;
-const VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID: usize = 842usize;
-const VUE_NO_DUPE_KEYS_ID: usize = 843usize;
-const VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID: usize = 844usize;
-const VUE_NO_EXPOSE_AFTER_AWAIT_ID: usize = 845usize;
-const VUE_NO_IMPORT_COMPILER_MACROS_ID: usize = 846usize;
-const VUE_NO_LIFECYCLE_AFTER_AWAIT_ID: usize = 847usize;
-const VUE_NO_MULTIPLE_SLOT_ARGS_ID: usize = 848usize;
-const VUE_NO_REQUIRED_PROP_WITH_DEFAULT_ID: usize = 849usize;
-const VUE_NO_RESERVED_COMPONENT_NAMES_ID: usize = 850usize;
-const VUE_NO_RESERVED_KEYS_ID: usize = 851usize;
-const VUE_NO_RESERVED_PROPS_ID: usize = 852usize;
-const VUE_NO_SHARED_COMPONENT_DATA_ID: usize = 853usize;
-const VUE_NO_SIDE_EFFECTS_IN_COMPUTED_PROPERTIES_ID: usize = 854usize;
-const VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID: usize = 855usize;
-const VUE_NO_WATCH_AFTER_AWAIT_ID: usize = 856usize;
-const VUE_PREFER_IMPORT_FROM_VUE_ID: usize = 857usize;
-const VUE_PROP_NAME_CASING_ID: usize = 858usize;
-const VUE_REQUIRE_DEFAULT_EXPORT_ID: usize = 859usize;
-const VUE_REQUIRE_DEFAULT_PROP_ID: usize = 860usize;
-const VUE_REQUIRE_DIRECT_EXPORT_ID: usize = 861usize;
-const VUE_REQUIRE_PROP_TYPE_CONSTRUCTOR_ID: usize = 862usize;
-const VUE_REQUIRE_PROP_TYPES_ID: usize = 863usize;
-const VUE_REQUIRE_RENDER_RETURN_ID: usize = 864usize;
-const VUE_REQUIRE_SLOTS_AS_FUNCTIONS_ID: usize = 865usize;
-const VUE_REQUIRE_TYPED_REF_ID: usize = 866usize;
-const VUE_RETURN_IN_COMPUTED_PROPERTY_ID: usize = 867usize;
-const VUE_RETURN_IN_EMITS_VALIDATOR_ID: usize = 868usize;
-const VUE_VALID_DEFINE_EMITS_ID: usize = 869usize;
-const VUE_VALID_DEFINE_OPTIONS_ID: usize = 870usize;
-const VUE_VALID_DEFINE_PROPS_ID: usize = 871usize;
-const VUE_VALID_NEXT_TICK_ID: usize = 872usize;
-static RULE_NAMES: [&str; 873usize] = [
+const VITEST_PADDING_AROUND_BEFORE_EACH_BLOCKS_ID: usize = 773usize;
+const VITEST_PADDING_AROUND_TEST_BLOCKS_ID: usize = 774usize;
+const VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID: usize = 775usize;
+const VITEST_PREFER_CALLED_ONCE_ID: usize = 776usize;
+const VITEST_PREFER_CALLED_TIMES_ID: usize = 777usize;
+const VITEST_PREFER_CALLED_WITH_ID: usize = 778usize;
+const VITEST_PREFER_COMPARISON_MATCHER_ID: usize = 779usize;
+const VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID: usize = 780usize;
+const VITEST_PREFER_EACH_ID: usize = 781usize;
+const VITEST_PREFER_EQUALITY_MATCHER_ID: usize = 782usize;
+const VITEST_PREFER_EXPECT_ASSERTIONS_ID: usize = 783usize;
+const VITEST_PREFER_EXPECT_RESOLVES_ID: usize = 784usize;
+const VITEST_PREFER_EXPECT_TYPE_OF_ID: usize = 785usize;
+const VITEST_PREFER_HOOKS_IN_ORDER_ID: usize = 786usize;
+const VITEST_PREFER_HOOKS_ON_TOP_ID: usize = 787usize;
+const VITEST_PREFER_IMPORT_IN_MOCK_ID: usize = 788usize;
+const VITEST_PREFER_IMPORTING_VITEST_GLOBALS_ID: usize = 789usize;
+const VITEST_PREFER_LOWERCASE_TITLE_ID: usize = 790usize;
+const VITEST_PREFER_MOCK_PROMISE_SHORTHAND_ID: usize = 791usize;
+const VITEST_PREFER_MOCK_RETURN_SHORTHAND_ID: usize = 792usize;
+const VITEST_PREFER_SNAPSHOT_HINT_ID: usize = 793usize;
+const VITEST_PREFER_SPY_ON_ID: usize = 794usize;
+const VITEST_PREFER_STRICT_BOOLEAN_MATCHERS_ID: usize = 795usize;
+const VITEST_PREFER_STRICT_EQUAL_ID: usize = 796usize;
+const VITEST_PREFER_TO_BE_ID: usize = 797usize;
+const VITEST_PREFER_TO_BE_FALSY_ID: usize = 798usize;
+const VITEST_PREFER_TO_BE_OBJECT_ID: usize = 799usize;
+const VITEST_PREFER_TO_BE_TRUTHY_ID: usize = 800usize;
+const VITEST_PREFER_TO_CONTAIN_ID: usize = 801usize;
+const VITEST_PREFER_TO_HAVE_BEEN_CALLED_TIMES_ID: usize = 802usize;
+const VITEST_PREFER_TO_HAVE_LENGTH_ID: usize = 803usize;
+const VITEST_PREFER_TODO_ID: usize = 804usize;
+const VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID: usize = 805usize;
+const VITEST_REQUIRE_HOOK_ID: usize = 806usize;
+const VITEST_REQUIRE_LOCAL_TEST_CONTEXT_FOR_CONCURRENT_SNAPSHOTS_ID: usize = 807usize;
+const VITEST_REQUIRE_MOCK_TYPE_PARAMETERS_ID: usize = 808usize;
+const VITEST_REQUIRE_TEST_TIMEOUT_ID: usize = 809usize;
+const VITEST_REQUIRE_TO_THROW_MESSAGE_ID: usize = 810usize;
+const VITEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID: usize = 811usize;
+const VITEST_VALID_DESCRIBE_CALLBACK_ID: usize = 812usize;
+const VITEST_VALID_EXPECT_ID: usize = 813usize;
+const VITEST_VALID_EXPECT_IN_PROMISE_ID: usize = 814usize;
+const VITEST_VALID_TITLE_ID: usize = 815usize;
+const VITEST_WARN_TODO_ID: usize = 816usize;
+const NODE_CALLBACK_RETURN_ID: usize = 817usize;
+const NODE_EXPORTS_STYLE_ID: usize = 818usize;
+const NODE_GLOBAL_REQUIRE_ID: usize = 819usize;
+const NODE_HANDLE_CALLBACK_ERR_ID: usize = 820usize;
+const NODE_NO_EXPORTS_ASSIGN_ID: usize = 821usize;
+const NODE_NO_MIXED_REQUIRES_ID: usize = 822usize;
+const NODE_NO_NEW_REQUIRE_ID: usize = 823usize;
+const NODE_NO_PATH_CONCAT_ID: usize = 824usize;
+const NODE_NO_PROCESS_ENV_ID: usize = 825usize;
+const NODE_NO_SYNC_ID: usize = 826usize;
+const NODE_NO_TOP_LEVEL_AWAIT_ID: usize = 827usize;
+const VUE_COMPONENT_DEFINITION_NAME_CASING_ID: usize = 828usize;
+const VUE_DEFINE_EMITS_DECLARATION_ID: usize = 829usize;
+const VUE_DEFINE_PROPS_DECLARATION_ID: usize = 830usize;
+const VUE_DEFINE_PROPS_DESTRUCTURING_ID: usize = 831usize;
+const VUE_MAX_PROPS_ID: usize = 832usize;
+const VUE_NEXT_TICK_STYLE_ID: usize = 833usize;
+const VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID: usize = 834usize;
+const VUE_NO_ASYNC_IN_COMPUTED_PROPERTIES_ID: usize = 835usize;
+const VUE_NO_COMPUTED_PROPERTIES_IN_DATA_ID: usize = 836usize;
+const VUE_NO_DEPRECATED_DATA_OBJECT_DECLARATION_ID: usize = 837usize;
+const VUE_NO_DEPRECATED_DELETE_SET_ID: usize = 838usize;
+const VUE_NO_DEPRECATED_DESTROYED_LIFECYCLE_ID: usize = 839usize;
+const VUE_NO_DEPRECATED_EVENTS_API_ID: usize = 840usize;
+const VUE_NO_DEPRECATED_MODEL_DEFINITION_ID: usize = 841usize;
+const VUE_NO_DEPRECATED_PROPS_DEFAULT_THIS_ID: usize = 842usize;
+const VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID: usize = 843usize;
+const VUE_NO_DUPE_KEYS_ID: usize = 844usize;
+const VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID: usize = 845usize;
+const VUE_NO_EXPOSE_AFTER_AWAIT_ID: usize = 846usize;
+const VUE_NO_IMPORT_COMPILER_MACROS_ID: usize = 847usize;
+const VUE_NO_LIFECYCLE_AFTER_AWAIT_ID: usize = 848usize;
+const VUE_NO_MULTIPLE_SLOT_ARGS_ID: usize = 849usize;
+const VUE_NO_REQUIRED_PROP_WITH_DEFAULT_ID: usize = 850usize;
+const VUE_NO_RESERVED_COMPONENT_NAMES_ID: usize = 851usize;
+const VUE_NO_RESERVED_KEYS_ID: usize = 852usize;
+const VUE_NO_RESERVED_PROPS_ID: usize = 853usize;
+const VUE_NO_SHARED_COMPONENT_DATA_ID: usize = 854usize;
+const VUE_NO_SIDE_EFFECTS_IN_COMPUTED_PROPERTIES_ID: usize = 855usize;
+const VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID: usize = 856usize;
+const VUE_NO_WATCH_AFTER_AWAIT_ID: usize = 857usize;
+const VUE_PREFER_IMPORT_FROM_VUE_ID: usize = 858usize;
+const VUE_PROP_NAME_CASING_ID: usize = 859usize;
+const VUE_REQUIRE_DEFAULT_EXPORT_ID: usize = 860usize;
+const VUE_REQUIRE_DEFAULT_PROP_ID: usize = 861usize;
+const VUE_REQUIRE_DIRECT_EXPORT_ID: usize = 862usize;
+const VUE_REQUIRE_PROP_TYPE_CONSTRUCTOR_ID: usize = 863usize;
+const VUE_REQUIRE_PROP_TYPES_ID: usize = 864usize;
+const VUE_REQUIRE_RENDER_RETURN_ID: usize = 865usize;
+const VUE_REQUIRE_SLOTS_AS_FUNCTIONS_ID: usize = 866usize;
+const VUE_REQUIRE_TYPED_REF_ID: usize = 867usize;
+const VUE_RETURN_IN_COMPUTED_PROPERTY_ID: usize = 868usize;
+const VUE_RETURN_IN_EMITS_VALIDATOR_ID: usize = 869usize;
+const VUE_VALID_DEFINE_EMITS_ID: usize = 870usize;
+const VUE_VALID_DEFINE_OPTIONS_ID: usize = 871usize;
+const VUE_VALID_DEFINE_PROPS_ID: usize = 872usize;
+const VUE_VALID_NEXT_TICK_ID: usize = 873usize;
+static RULE_NAMES: [&str; 874usize] = [
     ImportConsistentTypeSpecifierStyle::NAME,
     ImportDefault::NAME,
     ImportExport::NAME,
@@ -3423,6 +3426,7 @@ static RULE_NAMES: [&str; 873usize] = [
     VitestNoTestReturnStatement::NAME,
     VitestNoUnneededAsyncExpectFunction::NAME,
     VitestPaddingAroundAfterAllBlocks::NAME,
+    VitestPaddingAroundBeforeEachBlocks::NAME,
     VitestPaddingAroundTestBlocks::NAME,
     VitestPreferCalledExactlyOnceWith::NAME,
     VitestPreferCalledOnce::NAME,
@@ -4424,6 +4428,9 @@ impl RuleEnum {
                 VITEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID
             }
             Self::VitestPaddingAroundAfterAllBlocks(_) => VITEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID,
+            Self::VitestPaddingAroundBeforeEachBlocks(_) => {
+                VITEST_PADDING_AROUND_BEFORE_EACH_BLOCKS_ID
+            }
             Self::VitestPaddingAroundTestBlocks(_) => VITEST_PADDING_AROUND_TEST_BLOCKS_ID,
             Self::VitestPreferCalledExactlyOnceWith(_) => VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID,
             Self::VitestPreferCalledOnce(_) => VITEST_PREFER_CALLED_ONCE_ID,
@@ -5474,6 +5481,9 @@ impl RuleEnum {
             Self::VitestPaddingAroundAfterAllBlocks(_) => {
                 VitestPaddingAroundAfterAllBlocks::CATEGORY
             }
+            Self::VitestPaddingAroundBeforeEachBlocks(_) => {
+                VitestPaddingAroundBeforeEachBlocks::CATEGORY
+            }
             Self::VitestPaddingAroundTestBlocks(_) => VitestPaddingAroundTestBlocks::CATEGORY,
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::CATEGORY
@@ -6482,6 +6492,9 @@ impl RuleEnum {
                 VitestNoUnneededAsyncExpectFunction::FIX
             }
             Self::VitestPaddingAroundAfterAllBlocks(_) => VitestPaddingAroundAfterAllBlocks::FIX,
+            Self::VitestPaddingAroundBeforeEachBlocks(_) => {
+                VitestPaddingAroundBeforeEachBlocks::FIX
+            }
             Self::VitestPaddingAroundTestBlocks(_) => VitestPaddingAroundTestBlocks::FIX,
             Self::VitestPreferCalledExactlyOnceWith(_) => VitestPreferCalledExactlyOnceWith::FIX,
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::FIX,
@@ -7713,6 +7726,9 @@ impl RuleEnum {
             }
             Self::VitestPaddingAroundAfterAllBlocks(_) => {
                 VitestPaddingAroundAfterAllBlocks::documentation()
+            }
+            Self::VitestPaddingAroundBeforeEachBlocks(_) => {
+                VitestPaddingAroundBeforeEachBlocks::documentation()
             }
             Self::VitestPaddingAroundTestBlocks(_) => {
                 VitestPaddingAroundTestBlocks::documentation()
@@ -10084,6 +10100,10 @@ impl RuleEnum {
                 VitestPaddingAroundAfterAllBlocks::config_schema(generator)
                     .or_else(|| VitestPaddingAroundAfterAllBlocks::schema(generator))
             }
+            Self::VitestPaddingAroundBeforeEachBlocks(_) => {
+                VitestPaddingAroundBeforeEachBlocks::config_schema(generator)
+                    .or_else(|| VitestPaddingAroundBeforeEachBlocks::schema(generator))
+            }
             Self::VitestPaddingAroundTestBlocks(_) => {
                 VitestPaddingAroundTestBlocks::config_schema(generator)
                     .or_else(|| VitestPaddingAroundTestBlocks::schema(generator))
@@ -11148,6 +11168,7 @@ impl RuleEnum {
             Self::VitestNoTestReturnStatement(_) => "vitest",
             Self::VitestNoUnneededAsyncExpectFunction(_) => "vitest",
             Self::VitestPaddingAroundAfterAllBlocks(_) => "vitest",
+            Self::VitestPaddingAroundBeforeEachBlocks(_) => "vitest",
             Self::VitestPaddingAroundTestBlocks(_) => "vitest",
             Self::VitestPreferCalledExactlyOnceWith(_) => "vitest",
             Self::VitestPreferCalledOnce(_) => "vitest",
@@ -13169,6 +13190,7 @@ impl RuleEnum {
             Self::VitestNoTestReturnStatement(rule) => rule.run(node, ctx),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.run(node, ctx),
             Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.run(node, ctx),
+            Self::VitestPaddingAroundBeforeEachBlocks(rule) => rule.run(node, ctx),
             Self::VitestPaddingAroundTestBlocks(rule) => rule.run(node, ctx),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run(node, ctx),
             Self::VitestPreferCalledOnce(rule) => rule.run(node, ctx),
@@ -14059,6 +14081,7 @@ impl RuleEnum {
             Self::VitestNoTestReturnStatement(rule) => rule.run_once(ctx),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.run_once(ctx),
             Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.run_once(ctx),
+            Self::VitestPaddingAroundBeforeEachBlocks(rule) => rule.run_once(ctx),
             Self::VitestPaddingAroundTestBlocks(rule) => rule.run_once(ctx),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run_once(ctx),
             Self::VitestPreferCalledOnce(rule) => rule.run_once(ctx),
@@ -14947,6 +14970,7 @@ impl RuleEnum {
             Self::VitestNoTestReturnStatement(rule) => rule.should_run(ctx),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.should_run(ctx),
             Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.should_run(ctx),
+            Self::VitestPaddingAroundBeforeEachBlocks(rule) => rule.should_run(ctx),
             Self::VitestPaddingAroundTestBlocks(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledOnce(rule) => rule.should_run(ctx),
@@ -15955,6 +15979,9 @@ impl RuleEnum {
                 VitestNoUnneededAsyncExpectFunction::FLAGS
             }
             Self::VitestPaddingAroundAfterAllBlocks(_) => VitestPaddingAroundAfterAllBlocks::FLAGS,
+            Self::VitestPaddingAroundBeforeEachBlocks(_) => {
+                VitestPaddingAroundBeforeEachBlocks::FLAGS
+            }
             Self::VitestPaddingAroundTestBlocks(_) => VitestPaddingAroundTestBlocks::FLAGS,
             Self::VitestPreferCalledExactlyOnceWith(_) => VitestPreferCalledExactlyOnceWith::FLAGS,
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::FLAGS,
@@ -17009,6 +17036,9 @@ impl RuleEnum {
             Self::VitestPaddingAroundAfterAllBlocks(_) => {
                 VitestPaddingAroundAfterAllBlocks::VERSION
             }
+            Self::VitestPaddingAroundBeforeEachBlocks(_) => {
+                VitestPaddingAroundBeforeEachBlocks::VERSION
+            }
             Self::VitestPaddingAroundTestBlocks(_) => VitestPaddingAroundTestBlocks::VERSION,
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::VERSION
@@ -18022,6 +18052,9 @@ impl RuleEnum {
                 VitestNoUnneededAsyncExpectFunction::INFO
             }
             Self::VitestPaddingAroundAfterAllBlocks(_) => VitestPaddingAroundAfterAllBlocks::INFO,
+            Self::VitestPaddingAroundBeforeEachBlocks(_) => {
+                VitestPaddingAroundBeforeEachBlocks::INFO
+            }
             Self::VitestPaddingAroundTestBlocks(_) => VitestPaddingAroundTestBlocks::INFO,
             Self::VitestPreferCalledExactlyOnceWith(_) => VitestPreferCalledExactlyOnceWith::INFO,
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::INFO,
@@ -18910,6 +18943,7 @@ impl RuleEnum {
             Self::VitestNoTestReturnStatement(rule) => rule.types_info(),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.types_info(),
             Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.types_info(),
+            Self::VitestPaddingAroundBeforeEachBlocks(rule) => rule.types_info(),
             Self::VitestPaddingAroundTestBlocks(rule) => rule.types_info(),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.types_info(),
             Self::VitestPreferCalledOnce(rule) => rule.types_info(),
@@ -19787,6 +19821,7 @@ impl RuleEnum {
             Self::VitestNoTestReturnStatement(rule) => rule.run_info(),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.run_info(),
             Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.run_info(),
+            Self::VitestPaddingAroundBeforeEachBlocks(rule) => rule.run_info(),
             Self::VitestPaddingAroundTestBlocks(rule) => rule.run_info(),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run_info(),
             Self::VitestPreferCalledOnce(rule) => rule.run_info(),
@@ -20798,6 +20833,9 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
             VitestNoUnneededAsyncExpectFunction::default(),
         ),
         RuleEnum::VitestPaddingAroundAfterAllBlocks(VitestPaddingAroundAfterAllBlocks::default()),
+        RuleEnum::VitestPaddingAroundBeforeEachBlocks(
+            VitestPaddingAroundBeforeEachBlocks::default(),
+        ),
         RuleEnum::VitestPaddingAroundTestBlocks(VitestPaddingAroundTestBlocks::default()),
         RuleEnum::VitestPreferCalledExactlyOnceWith(VitestPreferCalledExactlyOnceWith::default()),
         RuleEnum::VitestPreferCalledOnce(VitestPreferCalledOnce::default()),
