@@ -1,0 +1,258 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.keys()` does not return Map contents.
+   ╭─[no_object_methods_with_collections.ts:1:8]
+ 1 │ Object.keys(new Map())
+   ·        ────
+   ╰────
+  help: Replace `Object.keys(new Map())` with `Array.from(new Map().keys())`.
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.values()` does not return Map contents.
+   ╭─[no_object_methods_with_collections.ts:1:8]
+ 1 │ Object.values(new Map())
+   ·        ──────
+   ╰────
+  help: Replace `Object.values(new Map())` with `Array.from(new Map().values())`.
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.entries()` does not return Map contents.
+   ╭─[no_object_methods_with_collections.ts:1:8]
+ 1 │ Object.entries(new Map())
+   ·        ───────
+   ╰────
+  help: Replace `Object.entries(new Map())` with `Array.from(new Map().entries())`.
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.keys()` does not return Set contents.
+   ╭─[no_object_methods_with_collections.ts:1:8]
+ 1 │ Object.keys(new Set())
+   ·        ────
+   ╰────
+  help: Replace `Object.keys(new Set())` with `Array.from(new Set().keys())`.
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.values()` does not return Set contents.
+   ╭─[no_object_methods_with_collections.ts:1:8]
+ 1 │ Object.values(new Set())
+   ·        ──────
+   ╰────
+  help: Replace `Object.values(new Set())` with `Array.from(new Set().values())`.
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.entries()` does not return Set contents.
+   ╭─[no_object_methods_with_collections.ts:1:8]
+ 1 │ Object.entries(new Set())
+   ·        ───────
+   ╰────
+  help: Replace `Object.entries(new Set())` with `Array.from(new Set().entries())`.
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.keys()` does not return Map contents.
+   ╭─[no_object_methods_with_collections.ts:1:31]
+ 1 │ const map = new Map(); Object.keys(map);
+   ·                               ────
+   ╰────
+  help: Replace `Object.keys(map)` with `Array.from(map.keys())`.
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.values()` does not return Set contents.
+   ╭─[no_object_methods_with_collections.ts:1:31]
+ 1 │ const set = new Set(); Object.values(set);
+   ·                               ──────
+   ╰────
+  help: Replace `Object.values(set)` with `Array.from(set.values())`.
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.keys()` does not return Map contents.
+   ╭─[no_object_methods_with_collections.ts:1:8]
+ 1 │ Object.keys((new Map()))
+   ·        ────
+   ╰────
+  help: Replace `Object.keys((new Map()))` with `Array.from((new Map()).keys())`.
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.values()` does not return Set contents.
+   ╭─[no_object_methods_with_collections.ts:1:8]
+ 1 │ Object.values((new Set()))
+   ·        ──────
+   ╰────
+  help: Replace `Object.values((new Set()))` with `Array.from((new Set()).values())`.
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.keys()` does not return Map contents.
+   ╭─[no_object_methods_with_collections.ts:1:8]
+ 1 │ Object.keys(/* keep */ new Map())
+   ·        ────
+   ╰────
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.keys()` does not return Map contents.
+   ╭─[no_object_methods_with_collections.ts:1:56]
+ 1 │ function foo(map: Map<string, number>) { return Object.keys(map); }
+   ·                                                        ────
+   ╰────
+  help: Replace `Object.keys(map)` with `Array.from(map.keys())`.
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.values()` does not return Map contents.
+   ╭─[no_object_methods_with_collections.ts:1:64]
+ 1 │ function foo(map: ReadonlyMap<string, number>) { return Object.values(map); }
+   ·                                                                ──────
+   ╰────
+  help: Replace `Object.values(map)` with `Array.from(map.values())`.
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.entries()` does not return Set contents.
+   ╭─[no_object_methods_with_collections.ts:1:48]
+ 1 │ function foo(set: Set<string>) { return Object.entries(set); }
+   ·                                                ───────
+   ╰────
+  help: Replace `Object.entries(set)` with `Array.from(set.entries())`.
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.keys()` does not return Set contents.
+   ╭─[no_object_methods_with_collections.ts:1:56]
+ 1 │ function foo(set: ReadonlySet<string>) { return Object.keys(set); }
+   ·                                                        ────
+   ╰────
+  help: Replace `Object.keys(set)` with `Array.from(set.keys())`.
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.entries()` does not return Map contents.
+   ╭─[no_object_methods_with_collections.ts:1:8]
+ 1 │ Object.entries(value as Map<string, number>);
+   ·        ───────
+   ╰────
+  help: Replace `Object.entries(value as Map<string, number>)` with `Array.from((value as Map<string, number>).entries())`.
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.values()` does not return Set contents.
+   ╭─[no_object_methods_with_collections.ts:1:8]
+ 1 │ Object.values(value satisfies Set<string>);
+   ·        ──────
+   ╰────
+  help: Replace `Object.values(value satisfies Set<string>)` with `Array.from((value satisfies Set<string>).values())`.
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.entries()` does not return Map contents.
+   ╭─[no_object_methods_with_collections.ts:1:50]
+ 1 │ const map = value as Map<string, number>; Object.entries(map);
+   ·                                                  ───────
+   ╰────
+  help: Replace `Object.entries(map)` with `Array.from(map.entries())`.
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.values()` does not return Set contents.
+   ╭─[no_object_methods_with_collections.ts:1:49]
+ 1 │ const set = value satisfies Set<string>; Object.values(set);
+   ·                                                 ──────
+   ╰────
+  help: Replace `Object.values(set)` with `Array.from(set.values())`.
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.keys()` does not return Map contents.
+   ╭─[no_object_methods_with_collections.ts:1:48]
+ 1 │ const map = <Map<string, number>>value; Object.keys(map);
+   ·                                                ────
+   ╰────
+  help: Replace `Object.keys(map)` with `Array.from(map.keys())`.
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.keys()` does not return Map contents.
+   ╭─[no_object_methods_with_collections.ts:1:50]
+ 1 │ const map = value as Map<string, number>; Object.keys(map!);
+   ·                                                  ────
+   ╰────
+  help: Replace `Object.keys(map!)` with `Array.from(map!.keys())`.
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.keys()` does not return Map contents.
+   ╭─[no_object_methods_with_collections.ts:1:70]
+ 1 │ type Items = Map<string, number>; declare const items: Items; Object.keys(items);
+   ·                                                                      ────
+   ╰────
+  help: Replace `Object.keys(items)` with `Array.from(items.keys())`.
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.values()` does not return Set contents.
+   ╭─[no_object_methods_with_collections.ts:1:70]
+ 1 │ type Items = ReadonlySet<string>; declare const items: Items; Object.values(items);
+   ·                                                                      ──────
+   ╰────
+  help: Replace `Object.values(items)` with `Array.from(items.values())`.
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.entries()` does not return Map contents.
+   ╭─[no_object_methods_with_collections.ts:1:100]
+ 1 │ type Items = Map<string, number> | ReadonlyMap<string, number>; declare const items: Items; Object.entries(items);
+   ·                                                                                                    ───────
+   ╰────
+  help: Replace `Object.entries(items)` with `Array.from(items.entries())`.
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.values()` does not return Set contents.
+   ╭─[no_object_methods_with_collections.ts:1:8]
+ 1 │ Object.values((value as Set<string>));
+   ·        ──────
+   ╰────
+  help: Replace `Object.values((value as Set<string>))` with `Array.from((value as Set<string>).values())`.
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.values()` does not return Set contents.
+   ╭─[no_object_methods_with_collections.ts:1:8]
+ 1 │ Object.values((value as /* keep */ Set<string>))
+   ·        ──────
+   ╰────
+  help: Replace `Object.values((value as /* keep */ Set<string>))` with `Array.from((value as /* keep */ Set<string>).values())`.
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.keys()` does not return Map contents.
+   ╭─[no_object_methods_with_collections.ts:1:18]
+ 1 │ Object./* keep */keys(new Map())
+   ·                  ────
+   ╰────
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.keys()` does not return Map contents.
+   ╭─[no_object_methods_with_collections.ts:1:8]
+ 1 │ Object.keys(new Map() /* keep */)
+   ·        ────
+   ╰────
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.entries()` does not return Map contents.
+   ╭─[no_object_methods_with_collections.ts:1:30]
+ 1 │ function f() {return(Object).entries(new Map([[1, /* keep */ 2]]));}
+   ·                              ───────
+   ╰────
+  help: Replace `(Object).entries(new Map([[1, /* keep */ 2]]))` with ` Array.from(new Map([[1, /* keep */ 2]]).entries())`.
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.entries()` does not return Map contents.
+   ╭─[no_object_methods_with_collections.ts:1:29]
+ 1 │ function f() {throw(Object).entries(new Map([[1, /* keep */ 2]]));}
+   ·                             ───────
+   ╰────
+  help: Replace `(Object).entries(new Map([[1, /* keep */ 2]]))` with ` Array.from(new Map([[1, /* keep */ 2]]).entries())`.
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.keys()` does not return Map contents.
+   ╭─[no_object_methods_with_collections.ts:1:26]
+ 1 │ if (flag) {}else(Object).keys(new Map(/* keep */));
+   ·                          ────
+   ╰────
+  help: Replace `(Object).keys(new Map(/* keep */))` with ` Array.from(new Map(/* keep */).keys())`.
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.values()` does not return Set contents.
+   ╭─[no_object_methods_with_collections.ts:1:12]
+ 1 │ do(Object).values(new Set(/* keep */));while (flag);
+   ·            ──────
+   ╰────
+  help: Replace `(Object).values(new Set(/* keep */))` with ` Array.from(new Set(/* keep */).values())`.
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.keys()` does not return Map contents.
+   ╭─[no_object_methods_with_collections.ts:1:50]
+ 1 │ const map = new Map(); const alias = map; Object.keys(alias);
+   ·                                                  ────
+   ╰────
+  help: Replace `Object.keys(alias)` with `Array.from(alias.keys())`.
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.keys()` does not return Map contents.
+   ╭─[no_object_methods_with_collections.ts:1:8]
+ 1 │ Object.keys(flag ? new Map() : new Map());
+   ·        ────
+   ╰────
+  help: Replace `Object.keys(flag ? new Map() : new Map())` with `Array.from((flag ? new Map() : new Map()).keys())`.
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.values()` does not return Set contents.
+   ╭─[no_object_methods_with_collections.ts:1:8]
+ 1 │ Object.values(new Set(// keep
+   ·        ──────
+ 2 │ ))
+   ╰────
+  help: Replace `Object.values(new Set(// keep
+        ))` with `Array.from(new Set(// keep
+        ).values())`.
+
+  ⚠ unicorn(no-object-methods-with-collections): `Object.values()` does not return Set contents.
+   ╭─[no_object_methods_with_collections.ts:1:8]
+ 1 │ Object.values(new Set(// keep
+   ·        ──────
+ 2 │ ))
+   ╰────
+  help: Replace `Object.values(new Set(// keep
+        ))` with `Array.from(new Set(// keep
+        ).values())`.
