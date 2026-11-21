@@ -1,17 +1,17 @@
-use std::mem;
-
-use napi::{Task, bindgen_prelude::AsyncTask};
+use napi::{JsString, Task, bindgen_prelude::AsyncTask};
 use napi_derive::napi;
 
+#[cfg(not(feature = "tokens"))]
+use oxc::parser::config::NoTokensParserConfig;
 #[cfg(feature = "tokens")]
 use oxc::parser::config::RuntimeParserConfig;
 use oxc::{
     allocator::Allocator,
-    parser::{ParseOptions, Parser, ParserReturn},
+    parser::{ParseOptions, ParserReturn, Source},
     semantic::SemanticBuilder,
     span::SourceType,
 };
-use oxc_napi::{Comment, OxcError, convert_utf8_to_utf16, get_source_type};
+use oxc_napi::{Comment, OxcError, SendableSource, convert_utf8_to_utf16, get_source_type};
 
 mod convert;
 mod types;
@@ -76,38 +76,40 @@ fn get_ast_type(source_type: SourceType, options: &ParserOptions) -> AstType {
     }
 }
 
-fn parse_impl<'a>(
-    allocator: &'a Allocator,
-    source_type: SourceType,
-    source_text: &'a str,
-    options: &ParserOptions,
-) -> ParserReturn<'a> {
-    let parser = Parser::new(allocator, source_text, source_type).with_options(ParseOptions {
+/// Parse `source`, with parse options and parser config set according to `options`.
+fn parse_impl<'a>(source: Source<'a>, options: &ParserOptions) -> ParserReturn<'a> {
+    let parse_options = ParseOptions {
         preserve_parens: options.preserve_parens.unwrap_or(true),
         // Ident hashes are only consumed by semantic analysis, which this crate runs solely when
         // semantic errors are requested. Skip hashing otherwise to speed up parse-and-serialize.
         enable_ident_hashes: options.show_semantic_errors == Some(true),
         ..ParseOptions::default()
-    });
+    };
 
     // When `tokens` feature is disabled, parser uses the default `NoTokensParserConfig`,
     // which avoids the runtime branch on whether to collect tokens, and so is faster.
     // The `experimentalTokens` option in `ParserOptions` is silently ignored in that case.
     #[cfg(feature = "tokens")]
-    let parser = parser.with_config(RuntimeParserConfig::new(options.tokens.unwrap_or(false)));
+    let config = RuntimeParserConfig::new(options.tokens.unwrap_or(false));
+    #[cfg(not(feature = "tokens"))]
+    let config = NoTokensParserConfig;
 
-    parser.parse()
+    source.parse_with_config(parse_options, config)
 }
 
-fn parse_with_return(filename: &str, source_text: &str, options: &ParserOptions) -> ParseResult {
-    let allocator = Allocator::default();
-    let source_type =
-        get_source_type(filename, options.lang.as_deref(), options.source_type.as_deref());
-    let ast_type = get_ast_type(source_type, options);
+/// Get [`SourceType`] for a file, from its filename and `options`.
+fn source_type_for(filename: &str, options: &ParserOptions) -> SourceType {
+    get_source_type(filename, options.lang.as_deref(), options.source_type.as_deref())
+}
+
+/// Parse `source`, and convert the AST, module record, comments and errors to a [`ParseResult`].
+fn parse_with_return(filename: &str, source: Source<'_>, options: &ParserOptions) -> ParseResult {
+    let ast_type = get_ast_type(source.source_type(), options);
     let ranges = options.range.unwrap_or(false);
-    let ret = parse_impl(&allocator, source_type, source_text, options);
+    let ret = parse_impl(source, options);
 
     let mut program = ret.program;
+    let source_text = program.source_text;
     let mut module_record = ret.module_record;
     let mut diagnostics = ret.diagnostics;
 
@@ -156,20 +158,29 @@ fn parse_with_return(filename: &str, source_text: &str, options: &ParserOptions)
 /// If you need to parallelize parsing multiple files, it is recommended to use worker threads
 /// with `parseSync` rather than using `parse`.
 #[napi]
-#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
+#[allow(clippy::needless_pass_by_value, clippy::missing_errors_doc, clippy::allow_attributes)]
 pub fn parse_sync(
     filename: String,
-    source_text: String,
+    source_text: JsString,
     options: Option<ParserOptions>,
-) -> ParseResult {
+) -> napi::Result<ParseResult> {
     let options = options.unwrap_or_default();
-    parse_with_return(&filename, &source_text, &options)
+    let source_type = source_type_for(&filename, &options);
+
+    // Copy source text from JS string directly into the arena
+    let allocator = Allocator::default();
+    let source = Source::from_napi_js_string(&source_text, source_type, &allocator)?;
+
+    Ok(parse_with_return(&filename, source, &options))
 }
 
 pub struct ResolveTask {
+    /// File path.
     filename: String,
-    source_text: String,
-    options: ParserOptions,
+    /// Source text. `None` after `compute` has run.
+    source: Option<SendableSource>,
+    /// Options, as passed in from JS.
+    options: Option<ParserOptions>,
 }
 
 #[napi]
@@ -178,8 +189,15 @@ impl Task for ResolveTask {
     type Output = ParseResult;
 
     fn compute(&mut self) -> napi::Result<Self::Output> {
-        let source_text = mem::take(&mut self.source_text);
-        Ok(parse_with_return(&self.filename, &source_text, &self.options))
+        let options = &*self.options.get_or_insert_default();
+        let source_type = source_type_for(&self.filename, options);
+
+        // Take the source out of the task, so its `Allocator` is dropped at end of this method.
+        // That frees its memory on this thread, not on main thread when the task is dropped.
+        let mut sendable_source = self.source.take().expect("`compute` called more than once");
+        let source = sendable_source.source(source_type);
+
+        Ok(parse_with_return(&self.filename, source, options))
     }
 
     fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {
@@ -199,11 +217,15 @@ impl Task for ResolveTask {
 /// Generally `parseSync` is preferable to use as it does not have the overhead of spawning a thread.
 /// If you need to parallelize parsing multiple files, it is recommended to use worker threads.
 #[napi]
+#[allow(clippy::missing_errors_doc, clippy::allow_attributes)]
 pub fn parse(
     filename: String,
-    source_text: String,
+    source_text: JsString,
     options: Option<ParserOptions>,
-) -> AsyncTask<ResolveTask> {
-    let options = options.unwrap_or_default();
-    AsyncTask::new(ResolveTask { filename, source_text, options })
+) -> napi::Result<AsyncTask<ResolveTask>> {
+    // Copy source text from JS string directly into an arena.
+    // This has to happen here, on main thread, as JS values cannot be accessed on other threads.
+    let source = SendableSource::from_napi_js_string(&source_text)?;
+
+    Ok(AsyncTask::new(ResolveTask { filename, source: Some(source), options }))
 }

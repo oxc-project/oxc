@@ -29,7 +29,7 @@ oxc_str = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_minifier = { workspace = true }
 oxc_napi = { workspace = true }
-oxc_parser = { workspace = true }
+oxc_parser = { workspace = true, features = ["napi"] }
 oxc_sourcemap = { workspace = true, features = ["napi"] }
 oxc_span = { workspace = true }
 

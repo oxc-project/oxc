@@ -17,18 +17,19 @@ mod options;
 
 use std::path::Path;
 
-use napi::{Task, bindgen_prelude::AsyncTask};
+use napi::{JsString, Task, bindgen_prelude::AsyncTask};
 use napi_derive::napi;
 
 use oxc::{
     allocator::Allocator,
     codegen::{Codegen, CodegenOptions},
     diagnostics::Diagnostics,
-    parser::Parser,
+    parser::Source,
     semantic::{SemanticBuilder, SemanticBuilderReturn},
+    span::SourceType,
     transformer::Transformer,
 };
-use oxc_napi::{OxcError, get_source_type};
+use oxc_napi::{OxcError, SendableSource, get_source_type};
 use oxc_react_compiler::{CompileResult, compile as react_compiler_compile};
 use oxc_sourcemap::napi::SourceMap;
 
@@ -57,16 +58,21 @@ pub struct TransformResult {
     pub errors: Vec<OxcError>,
 }
 
+/// Get [`SourceType`] for a file, from its filename and `options`.
+fn source_type_for(filename: &str, options: Option<&TransformOptions>) -> SourceType {
+    get_source_type(
+        filename,
+        options.and_then(|options| options.lang.as_deref()),
+        options.and_then(|options| options.source_type.as_deref()),
+    )
+}
+
+/// Parse `source`, compile and transform it, and return the generated code, source map and errors.
 fn transform_impl(
     filename: &str,
-    source_text: &str,
+    source: Source<'_>,
     options: Option<TransformOptions>,
 ) -> TransformResult {
-    let source_type = get_source_type(
-        filename,
-        options.as_ref().and_then(|options| options.lang.as_deref()),
-        options.as_ref().and_then(|options| options.source_type.as_deref()),
-    );
     let sourcemap = options.as_ref().and_then(|options| options.sourcemap).unwrap_or(false);
 
     let options = options.unwrap_or_default();
@@ -74,19 +80,21 @@ fn transform_impl(
     let (react_compiler_options, transform_options) = match options.resolve(filename) {
         Ok(options) => options,
         Err(error) => {
+            // Options diagnostic has no labels, so source text is not needed to render it
             return TransformResult {
                 fatal: true,
-                errors: OxcError::from_diagnostics(filename, source_text, [error]),
+                errors: OxcError::from_diagnostics(filename, "", [error]),
                 ..TransformResult::default()
             };
         }
     };
 
-    let allocator = Allocator::default();
-    let parser_return = Parser::new(&allocator, source_text, source_type).parse();
+    let allocator = source.allocator();
+    let parser_return = source.parse();
     let parser_has_errors = parser_return.diagnostics.has_errors();
     let mut diagnostics = parser_return.diagnostics;
     let mut program = parser_return.program;
+    let source_text = program.source_text;
     if parser_has_errors {
         return error_result(filename, source_text, diagnostics);
     }
@@ -104,7 +112,7 @@ fn transform_impl(
 
     let react_output = match react_compiler_options {
         None => None,
-        Some(options) => match react_compiler_compile(&program, &semantic, &allocator, options) {
+        Some(options) => match react_compiler_compile(&program, &semantic, allocator, options) {
             // Include recoverable diagnostics only when requested.
             CompileResult::Success { output, diagnostics: react_diagnostics } => {
                 if report_diagnostics {
@@ -126,7 +134,7 @@ fn transform_impl(
             SemanticBuilder::new().with_enum_eval(true).build(&program).semantic.into_scoping();
     }
 
-    let transformer_return = Transformer::new(&allocator, Path::new(filename), &transform_options)
+    let transformer_return = Transformer::new(allocator, Path::new(filename), &transform_options)
         .build_with_scoping(scoping, &mut program);
     let transform_has_errors = transformer_return.diagnostics.has_errors();
     diagnostics.extend(transformer_return.diagnostics);
@@ -161,17 +169,25 @@ fn error_result(filename: &str, source_text: &str, diagnostics: Diagnostics) -> 
 /// The React Compiler runs first on the pristine AST. TypeScript syntax is
 /// removed and configured JSX transforms run afterwards.
 #[napi]
+#[allow(clippy::missing_errors_doc, clippy::allow_attributes)]
 pub fn transform_sync(
     filename: String,
-    source_text: String,
+    source_text: JsString,
     options: Option<TransformOptions>,
-) -> TransformResult {
-    transform_impl(&filename, &source_text, options)
+) -> napi::Result<TransformResult> {
+    let source_type = source_type_for(&filename, options.as_ref());
+
+    // Copy source text from JS string directly into the arena
+    let allocator = Allocator::default();
+    let source = Source::from_napi_js_string(&source_text, source_type, &allocator)?;
+
+    Ok(transform_impl(&filename, source, options))
 }
 
 pub struct TransformTask {
     filename: String,
-    source_text: String,
+    /// Source text. `None` after `compute` has run.
+    source: Option<SendableSource>,
     options: Option<TransformOptions>,
 }
 
@@ -181,7 +197,14 @@ impl Task for TransformTask {
     type Output = TransformResult;
 
     fn compute(&mut self) -> napi::Result<Self::Output> {
-        Ok(transform_impl(&self.filename, &self.source_text, self.options.take()))
+        let source_type = source_type_for(&self.filename, self.options.as_ref());
+
+        // Take the source out of the task, so its `Allocator` is dropped at end of this method.
+        // That frees its memory on this thread, not on main thread when the task is dropped.
+        let mut sendable_source = self.source.take().expect("`compute` called more than once");
+        let source = sendable_source.source(source_type);
+
+        Ok(transform_impl(&self.filename, source, self.options.take()))
     }
 
     fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {
@@ -194,10 +217,15 @@ impl Task for TransformTask {
 /// This uses a worker-pool thread and can be slower than `transformSync` for a
 /// single small module.
 #[napi]
+#[allow(clippy::missing_errors_doc, clippy::allow_attributes)]
 pub fn transform(
     filename: String,
-    source_text: String,
+    source_text: JsString,
     options: Option<TransformOptions>,
-) -> AsyncTask<TransformTask> {
-    AsyncTask::new(TransformTask { filename, source_text, options })
+) -> napi::Result<AsyncTask<TransformTask>> {
+    // Copy source text from JS string directly into an arena.
+    // This has to happen here, on main thread, as JS values cannot be accessed on other threads.
+    let source = SendableSource::from_napi_js_string(&source_text)?;
+
+    Ok(AsyncTask::new(TransformTask { filename, source: Some(source), options }))
 }

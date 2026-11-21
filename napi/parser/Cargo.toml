@@ -22,7 +22,13 @@ test = false
 doctest = false
 
 [dependencies]
-oxc = { workspace = true, features = ["ast_visit", "regular_expression", "semantic", "serialize"] }
+oxc = { workspace = true, features = [
+  "ast_visit",
+  "napi",
+  "regular_expression",
+  "semantic",
+  "serialize",
+] }
 oxc_ast_macros = { workspace = true }
 oxc_estree = { workspace = true }
 oxc_estree_tokens = { workspace = true, optional = true }
