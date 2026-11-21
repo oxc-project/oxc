@@ -85,7 +85,7 @@ pub fn infer_mutation_aliasing_effects<'a>(
     env: &mut Environment<'a>,
     is_function_expression: bool,
 ) -> Result<(), OxcDiagnostic> {
-    let mut initial_state = InferenceState::empty(is_function_expression);
+    let mut initial_state = InferenceState::empty(!is_function_expression || func.is_memo_callback);
 
     // Map of blocks to the last (merged) incoming state that was processed
     let mut states_by_block: FxHashMap<BlockId, InferenceState> = FxHashMap::default();
@@ -448,7 +448,7 @@ impl ValueIdSet {
 /// the `uninitialized_access` Cell).
 #[derive(Debug, Clone)]
 struct InferenceState {
-    is_function_expression: bool,
+    is_render_time: bool,
     /// The kind of each value, based on its allocation site
     values: FxHashMap<ValueId, AbstractValue>,
     /// The set of values pointed to by each identifier.
@@ -461,9 +461,9 @@ struct InferenceState {
 }
 
 impl InferenceState {
-    fn empty(is_function_expression: bool) -> Self {
+    fn empty(is_render_time: bool) -> Self {
         InferenceState {
-            is_function_expression,
+            is_render_time,
             values: FxHashMap::default(),
             variables: FxHashMap::default(),
             uninitialized_access: Cell::new(None),
@@ -660,7 +660,7 @@ impl InferenceState {
             None
         } else {
             Some(InferenceState {
-                is_function_expression: self.is_function_expression,
+                is_render_time: self.is_render_time,
                 values: next_values.unwrap_or_else(|| self.values.clone()),
                 variables: next_variables.unwrap_or_else(|| self.variables.clone()),
                 uninitialized_access: Cell::new(None),
@@ -2586,15 +2586,15 @@ fn compute_effects_for_legacy_signature<'a>(
     });
 
     // Unlike the TS implementation, argument-dependent impurity (zero-argument
-    // `new Date()`) is only reported in the component or hook body, not inside
-    // nested functions. Callbacks passed to an unknown function such as
-    // `form.handleSubmit(onSubmit)` are assumed to run during render, which
-    // flagged `new Date()` in event-time callbacks after it became impure
+    // `new Date()`) is only reported in the component or hook body and preserved
+    // useMemo callbacks, not arbitrary nested functions. Callbacks passed to an
+    // unknown function such as `form.handleSubmit(onSubmit)` are assumed to run
+    // during render, which flagged `new Date()` in event-time callbacks after it became impure
     // (oxc-project/oxc#29094). Always-impure functions such as `Date.now()` are
     // unchanged.
     if signature.impure
         && env.config.validate_no_impure_functions_in_render
-        && (!signature.impure_if_no_args || (args.is_empty() && !state.is_function_expression))
+        && (!signature.impure_if_no_args || (args.is_empty() && state.is_render_time))
     {
         let diagnostic =
             diagnostics::impure_function(signature.canonical_name.as_deref(), span.copied());

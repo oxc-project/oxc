@@ -16,35 +16,57 @@
 //! Port of ValidateNoJSXInTryStatement.ts.
 
 use oxc_diagnostics::Diagnostics;
+use oxc_index::IndexSlice;
+use smallvec::SmallVec;
 
 use crate::diagnostics;
-use crate::react_compiler_hir::{BlockId, HirFunction, InstructionValue, Terminal};
+use crate::react_compiler_hir::{BlockId, FunctionId, HirFunction, InstructionValue, Terminal};
 
-pub fn validate_no_jsx_in_try_statement(func: &HirFunction) -> Diagnostics {
-    let mut active_try_blocks: Vec<BlockId> = Vec::new();
+pub fn validate_no_jsx_in_try_statement<'a>(
+    func: &HirFunction<'a>,
+    functions: &IndexSlice<FunctionId, [HirFunction<'a>]>,
+) -> Diagnostics {
     let mut error = Diagnostics::new();
+    let has_memo_callbacks = functions.iter().any(|func| func.is_memo_callback);
+    let mut worklist: SmallVec<[_; 1]> = smallvec::smallvec![(func, false)];
 
-    for (_block_id, block) in &func.body.blocks {
-        // Remove completed try blocks (retainWhere equivalent)
-        active_try_blocks.retain(|id| *id != block.id);
+    while let Some((func, in_outer_try)) = worklist.pop() {
+        let mut active_try_blocks: Vec<BlockId> = Vec::new();
 
-        if !active_try_blocks.is_empty() {
-            for &instr_id in &block.instructions {
-                let instr = &func.instructions[instr_id.index()];
-                match &instr.value {
-                    InstructionValue::JsxExpression { opening_name_span, span, .. } => {
-                        error.push(diagnostics::jsx_in_try(opening_name_span.or(*span)));
+        for (_block_id, block) in &func.body.blocks {
+            // Remove completed try blocks (retainWhere equivalent)
+            active_try_blocks.retain(|id| *id != block.id);
+            let in_try = in_outer_try || !active_try_blocks.is_empty();
+
+            if in_try || has_memo_callbacks {
+                for &instr_id in &block.instructions {
+                    let instr = &func.instructions[instr_id.index()];
+                    match &instr.value {
+                        InstructionValue::FunctionExpression { lowered_func, .. } => {
+                            let callback = &functions[lowered_func.func];
+                            // Unlike the TS implementation, some inline useMemo callbacks
+                            // retain their scope. Their bodies still execute during render,
+                            // including within an enclosing try block. Returned handlers do not.
+                            if callback.is_memo_callback {
+                                worklist.push((callback, in_try));
+                            }
+                        }
+                        InstructionValue::JsxExpression { opening_name_span, span, .. }
+                            if in_try =>
+                        {
+                            error.push(diagnostics::jsx_in_try(opening_name_span.or(*span)));
+                        }
+                        InstructionValue::JsxFragment { opening_span, span, .. } if in_try => {
+                            error.push(diagnostics::jsx_in_try(opening_span.or(*span)));
+                        }
+                        _ => {}
                     }
-                    InstructionValue::JsxFragment { opening_span, span, .. } => {
-                        error.push(diagnostics::jsx_in_try(opening_span.or(*span)));
-                    }
-                    _ => {}
                 }
             }
-        }
 
-        if let Terminal::Try { handler, .. } = &block.terminal {
-            active_try_blocks.push(*handler);
+            if let Terminal::Try { handler, .. } = &block.terminal {
+                active_try_blocks.push(*handler);
+            }
         }
     }
 

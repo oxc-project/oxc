@@ -119,6 +119,9 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
                     };
 
                     let inner_func = &env.functions[inner_func_id];
+                    if inner_func.is_memo_callback {
+                        continue;
+                    }
                     if !inner_func.params.is_empty() || inner_func.is_async || inner_func.generator
                     {
                         // Can't inline functions with params, or async/generator functions
