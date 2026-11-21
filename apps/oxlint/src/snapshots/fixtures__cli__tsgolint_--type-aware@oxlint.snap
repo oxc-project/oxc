@@ -352,6 +352,22 @@ working directory: fixtures/cli/tsgolint
  3 | 
    `----
 
+  x typescript(no-unsafe-class-instance-assignment): This object literal is used where an instance of class `Session` is expected.
+    ,-[no-unsafe-class-instance-assignment.ts:12:26]
+ 11 | const validSession: Session = new Session("guest");
+ 12 | const session: Session = { id: "guest" };
+    :                          ^^^^^^^^^^^^^^^
+ 13 | const sessions: Session[] = [new SessionRecord("guest")];
+    `----
+
+  x typescript(no-unsafe-class-instance-assignment): This value is used where an instance of class `Session` is expected, but was not created by its constructor.
+    ,-[no-unsafe-class-instance-assignment.ts:13:30]
+ 12 | const session: Session = { id: "guest" };
+ 13 | const sessions: Session[] = [new SessionRecord("guest")];
+    :                              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 14 | const guestSessions: Session[] = [new GuestSession("guest")];
+    `----
+
   x typescript(no-unsafe-enum-assignment): The value assigned here does not have a shared enum type with the expected enum 'Fruit'.
    ,-[no-unsafe-enum-assignment.ts:6:7]
  5 | 
@@ -768,8 +784,8 @@ working directory: fixtures/cli/tsgolint
    `----
   help: If your function does not access `this`, you can annotate it with `this: void`, or consider using an arrow function instead.
 
-Found 0 warnings and 92 errors.
-Finished in <variable>ms on 62 files with 61 rules using 1 threads.
+Found 0 warnings and 94 errors.
+Finished in <variable>ms on 63 files with 62 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------
