@@ -7,7 +7,7 @@ use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
     ArrayJoin, ToBigInt, ToIntegerIndex, ToJsString,
-    constant_evaluation::{ConstantEvaluation, DetermineValueType, ValueType},
+    constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType, ValueType},
     side_effects::{MayHaveSideEffects, is_regexp_syntax_supported},
 };
 use oxc_span::SPAN;
@@ -27,6 +27,18 @@ impl<'a> PeepholeOptimizations {
 
         // Use constant evaluation for known method calls
         if let Some(constant_value) = ce.evaluate_value(ctx) {
+            // A string result can be longer than the call that produces it,
+            // e.g. `'aaaaaaa'.replaceAll('a', 'aaaaaaa')`, so keep the call where the
+            // result would be printed as it is. Anywhere else (a comparison, `!`,
+            // `typeof`, a test, `+`, a member access, an unused value) the literal lets
+            // the parent fold further, so it folds as before.
+            if let ConstantValue::String(result) = &constant_value
+                && Self::value_is_printed_as_is(ctx)
+                && Self::method_call_size(ce, ctx)
+                    .is_some_and(|size| Self::printed_string_len_lower_bound(*result) > size)
+            {
+                return;
+            }
             let new_expr = ctx.value_to_expr(ce.span, constant_value);
             ctx.replace_expression(node, new_expr);
             return;
@@ -59,6 +71,143 @@ impl<'a> PeepholeOptimizations {
         if let Some(replacement) = replacement {
             ctx.replace_expression(node, replacement);
         }
+    }
+
+    /// Whether the value of the expression being visited is printed as it is: assigned to
+    /// anything but a local binding, passed to a call the compressor doesn't fold, passed
+    /// to `new`, returned, put in an array or object, or initializing a binding that stays.
+    fn value_is_printed_as_is(ctx: &TraverseCtx<'a>) -> bool {
+        match ctx.parent() {
+            // A local binding's value can be propagated to its uses (`s = C; s.length`),
+            // which fold it, so it folds here too.
+            Ancestor::AssignmentExpressionRight(assign) => !matches!(
+                assign.left(),
+                AssignmentTarget::AssignmentTargetIdentifier(ident)
+                    if !ctx.is_global_reference(ident)
+            ),
+            Ancestor::CallExpressionArguments(call) => {
+                !Self::call_folds_literal_argument(call.callee(), ctx)
+            }
+            Ancestor::NewExpressionArguments(_)
+            | Ancestor::ReturnStatementArgument(_)
+            | Ancestor::ArrayExpressionElements(_)
+            | Ancestor::ObjectPropertyValue(_) => true,
+            // A binding the compressor drops once it is unused: its value folds, so the
+            // declaration can go. Any other binding (read, at a script's top level, with
+            // `unused: Keep` or a direct `eval`, a `using`) keeps its value and prints it.
+            Ancestor::VariableDeclaratorInit(decl) => {
+                let is_using = matches!(
+                    ctx.ancestor(1),
+                    Ancestor::VariableDeclarationDeclarations(declaration)
+                        if declaration.kind().is_using()
+                );
+                let is_dropped = Self::can_remove_unused_declarators(ctx)
+                    && !is_using
+                    && decl
+                        .id()
+                        .get_binding_identifier()
+                        .and_then(|ident| ident.symbol_id.get())
+                        .is_some_and(|symbol_id| Self::symbol_is_unused_by_count(symbol_id, ctx));
+                !is_dropped
+            }
+            _ => false,
+        }
+    }
+
+    /// Whether a call to `callee` can fold once its argument is a literal: a global function
+    /// that the constant evaluator or `substitute_simple_function_call` folds (`Number(C)`,
+    /// `parseInt(C)`, `isNaN(C)`), a method of `Math` or `String`, or a method of a string
+    /// literal (`'abc'.indexOf(C)`).
+    fn call_folds_literal_argument(callee: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        match callee {
+            Expression::Identifier(ident) => {
+                matches!(
+                    ident.name.as_str(),
+                    "Boolean"
+                        | "Number"
+                        | "String"
+                        | "encodeURI"
+                        | "encodeURIComponent"
+                        | "decodeURI"
+                        | "decodeURIComponent"
+                        | "isNaN"
+                        | "isFinite"
+                        | "parseFloat"
+                        | "parseInt"
+                ) && ctx.is_global_reference(ident)
+            }
+            Expression::StaticMemberExpression(member) => match &member.object {
+                Expression::StringLiteral(_) => true,
+                Expression::Identifier(object) => {
+                    matches!(object.name.as_str(), "Math" | "String")
+                        && ctx.is_global_reference(object)
+                }
+                _ => false,
+            },
+            _ => false,
+        }
+    }
+
+    /// At most the length of `value` printed as a string literal by the minifier: its
+    /// quotes, a backslash for each backslash and `\r`, `\u2028` or `\u2029` for U+2028 and
+    /// U+2029, and the escapes of the quote that costs least: `'` or `"` with the escaped
+    /// line feeds, or `` ` ``, which prints a line feed as it is, with `` \` `` and `\${`.
+    /// It leaves out the rarer escapes (`\0`, `</script`, non-ASCII under `ascii_only`),
+    /// and a value with a lone surrogate counts its bytes and quotes only. Used for the
+    /// folded literal: counting low only folds as before.
+    fn printed_string_len_lower_bound(value: JSStr<'_>) -> usize {
+        let Some(value) = value.as_str() else { return value.len() + 2 };
+        let count = |c: char| value.chars().filter(|&x| x == c).count();
+        let line_feeds = count('\n');
+        let quotes = (count('\'') + line_feeds)
+            .min(count('"') + line_feeds)
+            .min(count('`') + value.matches("${").count());
+        value.len()
+            + 2
+            + count('\\')
+            + count('\r')
+            + 3 * (count('\u{2028}') + count('\u{2029}'))
+            + quotes
+    }
+
+    /// At least the length of `value` printed as a string literal, whatever the codegen
+    /// options: its quotes, and every character that may be escaped (any quote character,
+    /// `$`, `<`, a backslash, a control character, a non-ASCII one) at its longest escape
+    /// (`\x00`, `\uXXXX\uXXXX`). `None` for a value with a lone surrogate. Used for the
+    /// call: counting high only folds as before.
+    fn printed_string_len_upper_bound(value: JSStr<'_>) -> Option<usize> {
+        let value = value.as_str()?;
+        let escapes: usize = value
+            .chars()
+            .map(|c| match c {
+                '\\' | '\'' | '"' | '`' | '$' | '<' | '\n' | '\r' | '\u{8}' | '\u{b}' | '\u{c}' => {
+                    1
+                }
+                '\0'..='\u{1f}' => 3,
+                c if c.is_ascii() => 0,
+                c => 12 - c.len_utf8(),
+            })
+            .sum();
+        Some(value.len() + 2 + escapes)
+    }
+
+    /// Approximate minified size of a method call such as `'abc'.replaceAll('b', 'x')`:
+    /// receiver, member, arguments, commas and parentheses, with string literals counted
+    /// at their longest. `None` when an operand cannot be sized. A computed key such as
+    /// `['replaceAll']` is a static member by the time the call is visited.
+    fn method_call_size(ce: &CallExpression<'a>, ctx: &TraverseCtx<'a>) -> Option<usize> {
+        let operand_size = |expr: &Expression<'a>| match expr {
+            Expression::StringLiteral(lit) => Self::printed_string_len_upper_bound(lit.value),
+            // Its string literals would be counted low, so it isn't sized.
+            Expression::BinaryExpression(_) => None,
+            _ => Self::string_expression_size_lower_bound(expr, ctx).map(|(size, _)| size),
+        };
+        let Expression::StaticMemberExpression(member) = &ce.callee else { return None };
+        let mut size = operand_size(&member.object)? + 1 + member.property.name.len();
+        for arg in &ce.arguments {
+            size += operand_size(arg.as_expression()?)?;
+        }
+        Some(size + ce.arguments.len().saturating_sub(1) + 2)
     }
 
     /// `Math.pow(a, b)` -> `+(a) ** +b`
