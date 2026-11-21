@@ -5,7 +5,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::{ModuleExportName, Program, Statement};
 use oxc_codegen::Codegen;
 use oxc_diagnostics::{Diagnostics, Severity};
-use oxc_parser::Parser;
+use oxc_parser::Source;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 
@@ -26,12 +26,12 @@ struct TransformResult {
 /// Parse `source_text` then run the compiler in place, returning the
 /// (possibly rewritten) program together with the result.
 fn transform_source<'a>(
-    source_text: &'a str,
+    source_text: &str,
     source_type: SourceType,
     allocator: &'a Allocator,
     options: PluginOptions,
 ) -> (Program<'a>, TransformResult) {
-    let mut program = Parser::new(allocator, source_text, source_type).parse().program;
+    let mut program = Source::from_str(source_text, source_type, allocator).parse().program;
     let result = {
         let semantic = SemanticBuilder::new().with_build_nodes(true).build(&program).semantic;
         compile(&program, &semantic, allocator, options)

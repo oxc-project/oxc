@@ -23,7 +23,7 @@ use std::{
 use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
-use oxc_parser::Parser;
+use oxc_parser::Source;
 use oxc_react_compiler::{CompileResult, CompilerOutputMode, compile, lint};
 use oxc_semantic::SemanticBuilder;
 
@@ -71,7 +71,7 @@ fn run_fixture(source: &str) -> String {
     let lint_mode = CompilerOutputMode::from_opts(&options) == CompilerOutputMode::Lint;
 
     let allocator = Allocator::default();
-    let parsed = Parser::new(&allocator, source, source_type).parse();
+    let parsed = Source::from_str(source, source_type, &allocator).parse();
     let mut program = parsed.program;
 
     let mut out = String::new();
