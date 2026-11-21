@@ -1460,6 +1460,14 @@ impl GenExpr for NumericLiteral<'_> {
         let typescript = ctx.contains(Context::TYPESCRIPT);
         if typescript && (!value.is_infinite() || self.raw.is_some()) {
             p.print_str(&self.raw_str());
+        } else if p.options.preserve_numeric_literals
+            && let Some(raw) = &self.raw
+        {
+            p.print_space_before_identifier();
+            p.print_str(raw);
+            if raw.bytes().all(|b| b.is_ascii_digit() || b == b'_') {
+                p.need_space_before_dot = p.code_len();
+            }
         } else if value.is_nan() {
             p.print_space_before_identifier();
             p.print_str("NaN");
