@@ -18,7 +18,7 @@ use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_minifier::{
     CompressOptions, MangleOptions, ManglePropertiesOptions, Minifier, MinifierOptions,
 };
-use oxc_parser::Parser;
+use oxc_parser::Source;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_tasks_common::{TestFile, TestFiles, project_root};
@@ -164,7 +164,7 @@ fn minify(
     mangle_properties: bool,
 ) -> (String, u8) {
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let ret = Source::from_str(source_text, source_type, &allocator).parse();
     assert!(ret.diagnostics.is_empty());
     let mut program = ret.program;
     let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();

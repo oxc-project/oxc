@@ -1,6 +1,6 @@
 use oxc_allocator::Allocator;
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use oxc_parser::{Parser, ParserReturn};
+use oxc_parser::Source;
 use oxc_react_compiler::{CompileResult, PluginOptions, compile};
 use oxc_semantic::SemanticBuilder;
 use oxc_tasks_common::TestFiles;
@@ -26,8 +26,8 @@ fn bench_react_compiler(criterion: &mut Criterion) {
 
                 // Create a fresh AST for each iteration. The compiler builds
                 // semantic data and allocates the compiled program in the same arena.
-                let ParserReturn { mut program, .. } =
-                    Parser::new(&allocator, source_text, source_type).parse();
+                let source = Source::from_str(source_text, source_type, &allocator);
+                let mut program = source.parse().program;
 
                 runner.run(|| {
                     let result = {

@@ -4,7 +4,7 @@ use std::io::{self, BufRead, Write};
 
 use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
-use oxc_parser::Parser;
+use oxc_parser::Source;
 use oxc_react_compiler::{CompileResult, compile};
 use oxc_semantic::SemanticBuilder;
 use serde::{Deserialize, Serialize};
@@ -29,7 +29,7 @@ struct Output {
 fn transform(input: Input) -> Output {
     let allocator = Allocator::default();
     let (source_type, options) = fixture::parse_pragma(&input.source);
-    let parsed = Parser::new(&allocator, &input.source, source_type).parse();
+    let parsed = Source::from_str(&input.source, source_type, &allocator).parse();
     let mut program = parsed.program;
     let mut diagnostics = parsed.diagnostics;
     let mut code = None;

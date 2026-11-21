@@ -3,7 +3,7 @@ use std::path::Path;
 use oxc_allocator::Allocator;
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use oxc_isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions};
-use oxc_parser::{Parser, ParserReturn};
+use oxc_parser::Source;
 use oxc_semantic::SemanticBuilder;
 use oxc_tasks_common::{TestFile, TestFiles};
 use oxc_transformer::{EnvOptions, TransformOptions, Transformer};
@@ -31,8 +31,8 @@ fn bench_transformer(criterion: &mut Criterion) {
                 allocator.reset();
 
                 // Create fresh AST + semantic data for each iteration
-                let ParserReturn { mut program, .. } =
-                    Parser::new(&allocator, source_text, source_type).parse();
+                let source = Source::from_str(source_text, source_type, &allocator);
+                let mut program = source.parse().program;
                 let scoping = SemanticBuilder::new()
                     // Estimate transformer will triple scopes, symbols, references
                     .with_excess_capacity(2.0)
@@ -66,7 +66,7 @@ fn bench_isolated_declarations(criterion: &mut Criterion) {
     let source_type = file.source_type;
 
     let ast_allocator = Allocator::new();
-    let program = Parser::new(&ast_allocator, source_text, source_type).parse().program;
+    let program = Source::from_str(source_text, source_type, &ast_allocator).parse().program;
 
     // Create `Allocator` outside of `bench_function`, so same allocator is used for
     // both the warmup and measurement phases

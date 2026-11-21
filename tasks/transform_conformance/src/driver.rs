@@ -2,10 +2,11 @@ use std::{mem, ops::ControlFlow, path::Path};
 
 use oxc::{
     CompilerInterface,
+    allocator::Allocator,
     ast::ast::Program,
     codegen::{CodegenOptions, CodegenReturn, CommentOptions, IndentChar},
     diagnostics::{Diagnostics, OxcDiagnostic},
-    parser::ParseOptions,
+    parser::{ParseOptions, Source},
     span::SourceType,
     transformer::{TransformOptions, TransformerReturn},
 };
@@ -104,7 +105,9 @@ impl Driver {
         source_type: SourceType,
         source_path: &Path,
     ) -> Self {
-        self.compile(source_text, source_type, source_path);
+        let allocator = Allocator::default();
+        let source = Source::from_str(source_text, source_type, &allocator);
+        self.compile_source(source, source_path);
         self
     }
 }

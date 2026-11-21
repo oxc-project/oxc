@@ -11,7 +11,7 @@ use oxc::{
     ast_visit::utf8_to_utf16::Utf8ToUtf16,
     diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource, OxcDiagnostic},
     minifier::CompressOptions,
-    parser::{ParseOptions, Parser, ParserReturn, config::RuntimeParserConfig},
+    parser::{ParseOptions, ParserReturn, Source, config::RuntimeParserConfig},
     span::{ModuleKind, SourceType, Span},
     transformer::{JsxOptions, JsxRuntime, TransformOptions},
 };
@@ -760,13 +760,11 @@ fn run_estree_test262_impl(
             let source_text = test_file.code.as_str();
 
             let allocator = Allocator::new();
-            let ret = Parser::new(&allocator, source_text, source_type)
-                .with_options(ParseOptions {
-                    enable_ident_hashes: false,
-                    ..ParseOptions::default()
-                })
-                .with_config(parser_config)
-                .parse();
+            let source = Source::from_str(source_text, source_type, &allocator);
+            let ret = source.parse_with_config(
+                ParseOptions { enable_ident_hashes: false, ..ParseOptions::default() },
+                parser_config,
+            );
 
             if ret.fatal_error || !ret.diagnostics.is_empty() {
                 let error = ret
@@ -838,13 +836,11 @@ fn run_estree_acorn_jsx_impl(
             let source_text = test_file.code.as_str();
 
             let allocator = Allocator::new();
-            let ret = Parser::new(&allocator, source_text, source_type)
-                .with_options(ParseOptions {
-                    enable_ident_hashes: false,
-                    ..ParseOptions::default()
-                })
-                .with_config(parser_config)
-                .parse();
+            let source = Source::from_str(source_text, source_type, &allocator);
+            let ret = source.parse_with_config(
+                ParseOptions { enable_ident_hashes: false, ..ParseOptions::default() },
+                parser_config,
+            );
 
             if ret.fatal_error || !ret.diagnostics.is_empty() {
                 let error = ret
@@ -985,10 +981,8 @@ fn run_estree_typescript_impl(
                 };
 
                 let allocator = Allocator::new();
-                let ret = Parser::new(&allocator, source_text, source_type)
-                    .with_options(parse_options)
-                    .with_config(parser_config)
-                    .parse();
+                let source = Source::from_str(source_text, source_type, &allocator);
+                let ret = source.parse_with_config(parse_options, parser_config);
 
                 if ret.fatal_error || !ret.diagnostics.is_empty() {
                     let error = ret
