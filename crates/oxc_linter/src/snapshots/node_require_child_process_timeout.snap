@@ -1,0 +1,549 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ node(require-child-process-timeout): `execFile()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:43]
+ 1 │ import { execFile } from 'child_process'; execFile('cmd', undefined)
+   ·                                           ──────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `execFile()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `execFileSync()` is called without a timeout.
+   ╭─[require_child_process_timeout.tsx:1:47]
+ 1 │ import { execFileSync } from 'child_process'; execFileSync('cmd', undefined)
+   ·                                               ──────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option to `execFileSync()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `spawn()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:40]
+ 1 │ import { spawn } from 'child_process'; spawn('cmd', undefined)
+   ·                                        ───────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `spawn()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `spawnSync()` is called without a timeout.
+   ╭─[require_child_process_timeout.tsx:1:44]
+ 1 │ import { spawnSync } from 'child_process'; spawnSync('cmd', undefined)
+   ·                                            ───────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option to `spawnSync()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `fork()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:39]
+ 1 │ import { fork } from 'child_process'; fork('cmd', undefined)
+   ·                                       ──────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `fork()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `exec()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:39]
+ 1 │ import { exec } from 'child_process'; exec('cmd', { signal: false })
+   ·                                       ──────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `exec()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `exec()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:39]
+ 1 │ import { exec } from 'child_process'; exec('cmd', { signal: 0 })
+   ·                                       ──────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `exec()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `exec()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:44]
+ 1 │ import { exec } from 'node:child_process'; exec('command')
+   ·                                            ───────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `exec()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `exec()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:38]
+ 1 │ import * as cp from 'child_process'; cp.exec('command', {})
+   ·                                      ──────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `exec()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `exec()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:54]
+ 1 │ const { exec: run } = require('node:child_process'); run('command', { timeout: 0 })
+   ·                                                      ──────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `exec()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `exec()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:1]
+ 1 │ require('child_process').exec('command', { timeout: undefined })
+   · ────────────────────────────────────────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `exec()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `exec()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:38]
+ 1 │ import cp from 'node:child_process'; cp.exec('command', { timeout: null })
+   ·                                      ─────────────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `exec()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `execFile()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:48]
+ 1 │ import { execFile } from 'node:child_process'; execFile('command')
+   ·                                                ───────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `execFile()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `execFile()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:38]
+ 1 │ import * as cp from 'child_process'; cp.execFile('command', {})
+   ·                                      ──────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `execFile()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `execFile()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:58]
+ 1 │ const { execFile: run } = require('node:child_process'); run('command', { timeout: 0 })
+   ·                                                          ──────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `execFile()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `execFile()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:1]
+ 1 │ require('child_process').execFile('command', { timeout: undefined })
+   · ────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `execFile()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `execFile()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:38]
+ 1 │ import cp from 'node:child_process'; cp.execFile('command', { timeout: null })
+   ·                                      ─────────────────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `execFile()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `execSync()` is called without a timeout.
+   ╭─[require_child_process_timeout.tsx:1:48]
+ 1 │ import { execSync } from 'node:child_process'; execSync('command')
+   ·                                                ───────────────────
+   ╰────
+  help: Pass a positive `timeout` option to `execSync()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `execSync()` is called without a timeout.
+   ╭─[require_child_process_timeout.tsx:1:38]
+ 1 │ import * as cp from 'child_process'; cp.execSync('command', {})
+   ·                                      ──────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option to `execSync()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `execSync()` is called without a timeout.
+   ╭─[require_child_process_timeout.tsx:1:58]
+ 1 │ const { execSync: run } = require('node:child_process'); run('command', { timeout: 0 })
+   ·                                                          ──────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option to `execSync()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `execSync()` is called without a timeout.
+   ╭─[require_child_process_timeout.tsx:1:1]
+ 1 │ require('child_process').execSync('command', { timeout: undefined })
+   · ────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option to `execSync()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `execSync()` is called without a timeout.
+   ╭─[require_child_process_timeout.tsx:1:38]
+ 1 │ import cp from 'node:child_process'; cp.execSync('command', { timeout: null })
+   ·                                      ─────────────────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option to `execSync()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `execFileSync()` is called without a timeout.
+   ╭─[require_child_process_timeout.tsx:1:52]
+ 1 │ import { execFileSync } from 'node:child_process'; execFileSync('command')
+   ·                                                    ───────────────────────
+   ╰────
+  help: Pass a positive `timeout` option to `execFileSync()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `execFileSync()` is called without a timeout.
+   ╭─[require_child_process_timeout.tsx:1:38]
+ 1 │ import * as cp from 'child_process'; cp.execFileSync('command', {})
+   ·                                      ──────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option to `execFileSync()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `execFileSync()` is called without a timeout.
+   ╭─[require_child_process_timeout.tsx:1:62]
+ 1 │ const { execFileSync: run } = require('node:child_process'); run('command', { timeout: 0 })
+   ·                                                              ──────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option to `execFileSync()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `execFileSync()` is called without a timeout.
+   ╭─[require_child_process_timeout.tsx:1:1]
+ 1 │ require('child_process').execFileSync('command', { timeout: undefined })
+   · ────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option to `execFileSync()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `execFileSync()` is called without a timeout.
+   ╭─[require_child_process_timeout.tsx:1:38]
+ 1 │ import cp from 'node:child_process'; cp.execFileSync('command', { timeout: null })
+   ·                                      ─────────────────────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option to `execFileSync()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `spawn()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:45]
+ 1 │ import { spawn } from 'node:child_process'; spawn('command')
+   ·                                             ────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `spawn()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `spawn()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:38]
+ 1 │ import * as cp from 'child_process'; cp.spawn('command', {})
+   ·                                      ───────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `spawn()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `spawn()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:55]
+ 1 │ const { spawn: run } = require('node:child_process'); run('command', { timeout: 0 })
+   ·                                                       ──────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `spawn()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `spawn()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:1]
+ 1 │ require('child_process').spawn('command', { timeout: undefined })
+   · ─────────────────────────────────────────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `spawn()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `spawn()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:38]
+ 1 │ import cp from 'node:child_process'; cp.spawn('command', { timeout: null })
+   ·                                      ──────────────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `spawn()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `spawnSync()` is called without a timeout.
+   ╭─[require_child_process_timeout.tsx:1:49]
+ 1 │ import { spawnSync } from 'node:child_process'; spawnSync('command')
+   ·                                                 ────────────────────
+   ╰────
+  help: Pass a positive `timeout` option to `spawnSync()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `spawnSync()` is called without a timeout.
+   ╭─[require_child_process_timeout.tsx:1:38]
+ 1 │ import * as cp from 'child_process'; cp.spawnSync('command', {})
+   ·                                      ───────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option to `spawnSync()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `spawnSync()` is called without a timeout.
+   ╭─[require_child_process_timeout.tsx:1:59]
+ 1 │ const { spawnSync: run } = require('node:child_process'); run('command', { timeout: 0 })
+   ·                                                           ──────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option to `spawnSync()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `spawnSync()` is called without a timeout.
+   ╭─[require_child_process_timeout.tsx:1:1]
+ 1 │ require('child_process').spawnSync('command', { timeout: undefined })
+   · ─────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option to `spawnSync()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `spawnSync()` is called without a timeout.
+   ╭─[require_child_process_timeout.tsx:1:38]
+ 1 │ import cp from 'node:child_process'; cp.spawnSync('command', { timeout: null })
+   ·                                      ──────────────────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option to `spawnSync()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `fork()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:44]
+ 1 │ import { fork } from 'node:child_process'; fork('command')
+   ·                                            ───────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `fork()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `fork()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:38]
+ 1 │ import * as cp from 'child_process'; cp.fork('command', {})
+   ·                                      ──────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `fork()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `fork()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:54]
+ 1 │ const { fork: run } = require('node:child_process'); run('command', { timeout: 0 })
+   ·                                                      ──────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `fork()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `fork()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:1]
+ 1 │ require('child_process').fork('command', { timeout: undefined })
+   · ────────────────────────────────────────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `fork()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `fork()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:38]
+ 1 │ import cp from 'node:child_process'; cp.fork('command', { timeout: null })
+   ·                                      ─────────────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `fork()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `execFile()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:38]
+ 1 │ const cp = require('child_process'); cp.execFile('command', [])
+   ·                                      ──────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `execFile()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `execFile()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:38]
+ 1 │ const cp = require('child_process'); cp.execFile('command', ['arg'], {})
+   ·                                      ───────────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `execFile()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `execFileSync()` is called without a timeout.
+   ╭─[require_child_process_timeout.tsx:1:38]
+ 1 │ const cp = require('child_process'); cp.execFileSync('command', [])
+   ·                                      ──────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option to `execFileSync()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `execFileSync()` is called without a timeout.
+   ╭─[require_child_process_timeout.tsx:1:38]
+ 1 │ const cp = require('child_process'); cp.execFileSync('command', ['arg'], {})
+   ·                                      ───────────────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option to `execFileSync()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `spawn()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:38]
+ 1 │ const cp = require('child_process'); cp.spawn('command', [])
+   ·                                      ───────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `spawn()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `spawn()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:38]
+ 1 │ const cp = require('child_process'); cp.spawn('command', ['arg'], {})
+   ·                                      ────────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `spawn()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `spawnSync()` is called without a timeout.
+   ╭─[require_child_process_timeout.tsx:1:38]
+ 1 │ const cp = require('child_process'); cp.spawnSync('command', [])
+   ·                                      ───────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option to `spawnSync()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `spawnSync()` is called without a timeout.
+   ╭─[require_child_process_timeout.tsx:1:38]
+ 1 │ const cp = require('child_process'); cp.spawnSync('command', ['arg'], {})
+   ·                                      ────────────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option to `spawnSync()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `fork()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:38]
+ 1 │ const cp = require('child_process'); cp.fork('command', [])
+   ·                                      ──────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `fork()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `fork()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:38]
+ 1 │ const cp = require('child_process'); cp.fork('command', ['arg'], {})
+   ·                                      ───────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `fork()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `exec()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:39]
+ 1 │ import { exec } from 'child_process'; exec('cmd', { signal: null })
+   ·                                       ─────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `exec()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `execFile()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:43]
+ 1 │ import { execFile } from 'child_process'; execFile('cmd', { signal: null })
+   ·                                           ─────────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `execFile()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `spawn()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:40]
+ 1 │ import { spawn } from 'child_process'; spawn('cmd', { signal: null })
+   ·                                        ──────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `spawn()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `fork()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:39]
+ 1 │ import { fork } from 'child_process'; fork('cmd', { signal: null })
+   ·                                       ─────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `fork()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `execSync()` is called without a timeout.
+   ╭─[require_child_process_timeout.tsx:1:43]
+ 1 │ import { execSync } from 'child_process'; execSync('cmd', { signal: controller.signal })
+   ·                                           ──────────────────────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option to `execSync()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `execFileSync()` is called without a timeout.
+   ╭─[require_child_process_timeout.tsx:1:47]
+ 1 │ import { execFileSync } from 'child_process'; execFileSync('cmd', { signal: controller.signal })
+   ·                                               ──────────────────────────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option to `execFileSync()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `spawnSync()` is called without a timeout.
+   ╭─[require_child_process_timeout.tsx:1:44]
+ 1 │ import { spawnSync } from 'child_process'; spawnSync('cmd', { signal: controller.signal })
+   ·                                            ───────────────────────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option to `spawnSync()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `exec()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:39]
+ 1 │ import { exec } from 'child_process'; exec('cmd', () => {})
+   ·                                       ─────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `exec()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `exec()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:39]
+ 1 │ import { exec } from 'child_process'; exec('cmd', {}, () => {})
+   ·                                       ─────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `exec()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `execFile()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:43]
+ 1 │ import { execFile } from 'child_process'; execFile('cmd', [], () => {})
+   ·                                           ─────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `execFile()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `exec()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:58]
+ 1 │ import { exec } from 'child_process'; function done() {} exec('cmd', done)
+   ·                                                          ─────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `exec()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `exec()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:82]
+ 1 │ import { exec } from 'child_process'; const options = {}; const alias = options; exec('cmd', alias)
+   ·                                                                                  ──────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `exec()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `exec()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:39]
+ 1 │ import { exec } from 'child_process'; exec('cmd', { ['timeout']: 0 })
+   ·                                       ───────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `exec()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `exec()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:61]
+ 1 │ import { exec } from 'child_process'; const key = 'signal'; exec('cmd', { [key]: undefined })
+   ·                                                             ─────────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `exec()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `exec()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:39]
+ 1 │ import { exec } from 'child_process'; exec('cmd', { timeout: -1 })
+   ·                                       ────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `exec()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `exec()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:39]
+ 1 │ import { exec } from 'child_process'; exec('cmd', { timeout: 1000, timeout: 0 })
+   ·                                       ──────────────────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `exec()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `exec()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:39]
+ 1 │ import { exec } from 'child_process'; exec('cmd', { signal: controller.signal, signal: null })
+   ·                                       ────────────────────────────────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `exec()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `execSync()` is called without a timeout.
+   ╭─[require_child_process_timeout.tsx:1:43]
+ 1 │ import { execSync } from 'child_process'; execSync('cmd', { ...options, timeout: 0 })
+   ·                                           ───────────────────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option to `execSync()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `exec()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:60]
+ 1 │ const cp = process.getBuiltinModule('node:child_process'); cp.exec('cmd')
+   ·                                                            ──────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `exec()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `exec()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:65]
+ 1 │ import { exec as run } from 'child_process'; const alias = run; alias('cmd')
+   ·                                                                 ────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `exec()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `exec()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:73]
+ 1 │ import { exec } from 'child_process'; import { promisify } from 'util'; promisify(exec)('cmd')
+   ·                                                                         ──────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `exec()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `execFile()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:135]
+ 1 │ import { execFile as run } from 'node:child_process'; import { promisify as promise } from 'node:util'; const execute = promise(run); execute('cmd', [])
+   ·                                                                                                                                       ──────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `execFile()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `exec()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:112]
+ 1 │ const { exec } = require('child_process'); const { promisify } = require('util'); const run = promisify(exec); run('cmd')
+   ·                                                                                                                ──────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `exec()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `exec()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:78]
+ 1 │ const cp = require('node:child_process'); const util = require('node:util'); util.promisify(cp.exec)('cmd')
+   ·                                                                              ──────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `exec()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `exec()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:100]
+ 1 │ import * as cp from 'child_process'; import util from 'util'; const run = util.promisify(cp.exec); run('cmd')
+   ·                                                                                                    ──────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `exec()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `exec()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:59]
+ 1 │ const cp = require('child_process'); const run = cp.exec; require('util').promisify(run)('cmd')
+   ·                                                           ─────────────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `exec()` to bound its execution.

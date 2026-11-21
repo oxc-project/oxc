@@ -933,6 +933,7 @@ pub(crate) mod node {
     pub mod no_process_env;
     pub mod no_sync;
     pub mod no_top_level_await;
+    pub mod require_child_process_timeout;
 }
 
 /// <https://github.com/vuejs/eslint-plugin-vue>
