@@ -105,13 +105,13 @@ pub struct CodegenReturn<'a> {
 /// ```rust
 /// use oxc_codegen::{Codegen, CodegenOptions};
 /// use oxc_ast::ast::Program;
-/// use oxc_parser::Parser;
+/// use oxc_parser::Source;
 /// use oxc_allocator::Allocator;
 /// use oxc_span::SourceType;
 ///
 /// let allocator = Allocator::default();
 /// let source = "const a = 1 + 2;";
-/// let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
+/// let parsed = Source::from_str(source, SourceType::mjs(), &allocator).parse();
 /// assert!(parsed.diagnostics.is_empty());
 ///
 /// let js = Codegen::new().build(&parsed.program);

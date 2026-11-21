@@ -4,7 +4,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::{Expression, Statement};
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_index::IndexVec;
-use oxc_parser::Parser;
+use oxc_parser::Source;
 use oxc_span::{SourceType, Span};
 use oxc_str::CompactStr;
 use rustc_hash::FxHashMap;
@@ -29,7 +29,7 @@ fn pos(line: u32, col: u32) -> Position {
 
 fn sourcemap_tokens(source_text: &str, source_type: SourceType) -> Vec<Mapping> {
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let ret = Source::from_str(source_text, source_type, &allocator).parse();
     assert!(ret.diagnostics.is_empty(), "parse errors: {:?}", ret.diagnostics);
 
     Codegen::new()
@@ -93,7 +93,7 @@ fn incorrect_ast() {
     let allocator = Allocator::default();
     let source_type = SourceType::ts();
     let source_text = "foo\nvar bar = '测试'";
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let ret = Source::from_str(source_text, source_type, &allocator).parse();
     assert!(ret.diagnostics.is_empty());
 
     let mut program = ret.program;
@@ -129,7 +129,7 @@ fn no_invalid_tokens_beyond_source() {
     for source_text in test_cases {
         let allocator = Allocator::default();
         let source_type = SourceType::mjs();
-        let ret = Parser::new(&allocator, source_text, source_type).parse();
+        let ret = Source::from_str(source_text, source_type, &allocator).parse();
         assert!(ret.diagnostics.is_empty());
 
         let result = Codegen::new()
@@ -238,7 +238,7 @@ fn class_member_mappings_start_before_member_keys() {
 fn synthesized_block_closing_braces_are_mapped() {
     let source_text = "if (foo) {\n  if (bar)\n    baz();\n} else\n  qux();";
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
+    let ret = Source::from_str(source_text, SourceType::mjs(), &allocator).parse();
     assert!(ret.diagnostics.is_empty(), "parse errors: {:?}", ret.diagnostics);
 
     let mut program = ret.program;
@@ -496,7 +496,7 @@ longFunctionName(0);
 #[cfg(all(not(target_endian = "big"), target_pointer_width = "64"))]
 fn codegen(code: &str) -> (String, String) {
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, code, SourceType::mjs()).parse();
+    let ret = Source::from_str(code, SourceType::mjs(), &allocator).parse();
     assert!(ret.diagnostics.is_empty());
     let ret = Codegen::new()
         .with_options(CodegenOptions {
@@ -511,7 +511,7 @@ fn codegen(code: &str) -> (String, String) {
 /// and return the names its source map records.
 fn mangled_private_names(source_text: &str, mappings: &[(&str, &str)]) -> Vec<String> {
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
+    let ret = Source::from_str(source_text, SourceType::mjs(), &allocator).parse();
     assert!(ret.diagnostics.is_empty(), "parse errors: {:?}", ret.diagnostics);
 
     let mut class_mappings = IndexVec::new();
@@ -550,7 +550,7 @@ fn codegen_mangled(code: &str) -> (String, String, Vec<String>) {
     use oxc_mangler::{MangleOptions, Mangler};
 
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, code, SourceType::mjs()).parse();
+    let ret = Source::from_str(code, SourceType::mjs(), &allocator).parse();
     assert!(ret.diagnostics.is_empty());
     let program = ret.program;
     let mangler = Mangler::new()
@@ -596,7 +596,7 @@ fn execute_with_node(code: &str, sourcemap_url: &str) -> String {
 fn minified_template_dollar_escapes() {
     let source = r"`\$${first}\$${second}\$`;after();";
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source, SourceType::mjs()).parse();
+    let ret = Source::from_str(source, SourceType::mjs(), &allocator).parse();
     assert!(ret.diagnostics.is_empty());
     let result = Codegen::new()
         .with_options(CodegenOptions { minify: true, ..default_options() })
@@ -622,7 +622,7 @@ fn renamed_label_records_original_name() {
     use oxc_semantic::{LabelId, SemanticBuilder};
 
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, "outer: { break outer; }", SourceType::mjs()).parse();
+    let ret = Source::from_str("outer: { break outer; }", SourceType::mjs(), &allocator).parse();
     assert!(ret.diagnostics.is_empty(), "parse errors: {:?}", ret.diagnostics);
     let program = ret.program;
     let mut scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
