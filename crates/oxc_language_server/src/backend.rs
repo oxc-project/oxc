@@ -639,6 +639,7 @@ impl LanguageServer for Backend {
         // This should never happen, because this server expects `textDocument/diagnostic` is requested beforehand.
         // Sadly, some editors/extensions have bugs, so we need to make sure the cache is cleared on change.
         worker.remove_uri_cache(&uri).await;
+        worker.did_change(&document).await;
 
         if self.capabilities().diagnostic_mode == DiagnosticMode::Push {
             match worker.run_diagnostic_on_change(document).await {
@@ -698,13 +699,14 @@ impl LanguageServer for Backend {
             content,
         );
 
+        let Some(worker) = self.worker_manager.get_worker_for_uri(&uri).await else {
+            return;
+        };
+
+        let document = self.file_system.get_document(&uri);
+        worker.did_open(&document).await;
+
         if self.capabilities().diagnostic_mode == DiagnosticMode::Push {
-            let Some(worker) = self.worker_manager.get_worker_for_uri(&uri).await else {
-                return;
-            };
-
-            let document = self.file_system.get_document(&uri);
-
             match worker.run_diagnostic(document).await {
                 Err(err) => {
                     error!("running diagnostics for {uri} failed: {err}");
@@ -737,6 +739,7 @@ impl LanguageServer for Backend {
         };
 
         worker.remove_uri_cache(&params.text_document.uri).await;
+        worker.did_close(&params.text_document.uri).await;
 
         // Clone the root URI now so we can use it after dropping the read lock.
         let worker_root_uri = if self.worker_manager.is_single_file_mode() {

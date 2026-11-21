@@ -1,7 +1,7 @@
 use tower_lsp_server::{
     gen_lsp_types::{
-        CodeActionResponse, Diagnostic, MessageType, Pattern, ServerCapabilities, TextEdit, Uri,
-        WorkspaceEdit,
+        CodeActionResponse, Diagnostic, FileEvent, MessageType, Pattern, ServerCapabilities,
+        TextEdit, Uri, WorkspaceEdit,
     },
     jsonrpc::ErrorCode,
 };
@@ -56,6 +56,29 @@ pub trait Tool: Send + Sync {
         root_uri: &Uri,
         options: serde_json::Value,
     ) -> ToolRestartChanges;
+
+    /// Handle a watched file change event, including its change type.
+    /// Defaults to [`Tool::handle_watched_file_change`] with the event's URI.
+    fn handle_watched_file_event(
+        &self,
+        builder: &dyn ToolBuilder,
+        file_event: &FileEvent,
+        root_uri: &Uri,
+        options: serde_json::Value,
+    ) -> ToolRestartChanges {
+        self.handle_watched_file_change(builder, &file_event.uri, root_uri, options)
+    }
+
+    /// A text document was opened in the client.
+    /// Called in both push and pull diagnostic modes, before any diagnostics run for it.
+    fn did_open(&self, _document: &TextDocument) {}
+
+    /// A text document changed in the client.
+    /// Called in both push and pull diagnostic modes, before any diagnostics run for it.
+    fn did_change(&self, _document: &TextDocument) {}
+
+    /// A text document was closed in the client.
+    fn did_close(&self, _uri: &Uri) {}
 
     /// Tries to execute the given command with the provided arguments.
     /// If the command is not recognized, returns `Err(ErrorCode)`.

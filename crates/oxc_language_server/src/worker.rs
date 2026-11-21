@@ -107,6 +107,27 @@ impl WorkspaceWorker {
         self.options.lock().await.is_none()
     }
 
+    /// Notify the tool that a text document was opened.
+    pub async fn did_open(&self, document: &TextDocument<'_>) {
+        if let Some(tool) = self.tool.read().await.as_ref() {
+            tool.did_open(document);
+        }
+    }
+
+    /// Notify the tool that a text document changed.
+    pub async fn did_change(&self, document: &TextDocument<'_>) {
+        if let Some(tool) = self.tool.read().await.as_ref() {
+            tool.did_change(document);
+        }
+    }
+
+    /// Notify the tool that a text document was closed.
+    pub async fn did_close(&self, uri: &Uri) {
+        if let Some(tool) = self.tool.read().await.as_ref() {
+            tool.did_close(uri);
+        }
+    }
+
     /// Remove all internal cache for the given URI, if any.
     pub async fn remove_uri_cache(&self, uri: &Uri) {
         if let Some(tool) = self.tool.read().await.as_ref() {
@@ -240,8 +261,8 @@ impl WorkspaceWorker {
     }
 
     /// Handle file changes that are watched by the client
-    /// At the moment, this only handles changes to lint configuration files
-    /// When a change is detected, the linter is refreshed and all diagnostics are revalidated
+    /// The tool decides what a change means: when it restarts (for example on a lint configuration
+    /// change), all diagnostics are revalidated
     pub async fn did_change_watched_files(
         &self,
         file_event: &FileEvent,
@@ -255,7 +276,7 @@ impl WorkspaceWorker {
         };
 
         self.handle_tool_changes(file_system, needs_diagnostic_refresh, move |tool, builder| {
-            tool.handle_watched_file_change(builder, &file_event.uri, &self.root_uri, options)
+            tool.handle_watched_file_event(builder, file_event, &self.root_uri, options)
         })
         .await
     }

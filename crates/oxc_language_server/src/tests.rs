@@ -24,6 +24,7 @@ use crate::{
 pub struct FakeToolBuilder {
     diagnostic_mode: DiagnosticMode,
     cache_uris: Option<Arc<Mutex<Vec<Uri>>>>,
+    document_events: Option<Arc<Mutex<Vec<String>>>>,
     pub build_client_message: Vec<ClientMessage>,
     delays: FakeToolDelays,
 }
@@ -38,6 +39,7 @@ impl FakeToolBuilder {
         Self {
             diagnostic_mode,
             cache_uris: None,
+            document_events: None,
             build_client_message: Vec::new(),
             delays: FakeToolDelays::default(),
         }
@@ -45,6 +47,11 @@ impl FakeToolBuilder {
 
     pub fn with_cache_tracking(self, cache_uris: Arc<Mutex<Vec<Uri>>>) -> Self {
         Self { cache_uris: Some(cache_uris), ..self }
+    }
+
+    /// Records the document events the tool receives, as `"<event> <uri> <version>"`.
+    pub fn with_document_tracking(self, document_events: Arc<Mutex<Vec<String>>>) -> Self {
+        Self { document_events: Some(document_events), ..self }
     }
 
     pub fn with_delays(self, delays: FakeToolDelays) -> Self {
@@ -55,7 +62,11 @@ impl FakeToolBuilder {
 impl ToolBuilder for FakeToolBuilder {
     fn build(&self, _root_uri: &Uri, _options: serde_json::Value) -> ToolBuildResult {
         ToolBuildResult {
-            tool: Box::new(FakeTool { cache_uris: self.cache_uris.clone(), delays: self.delays }),
+            tool: Box::new(FakeTool {
+                cache_uris: self.cache_uris.clone(),
+                document_events: self.document_events.clone(),
+                delays: self.delays,
+            }),
             client_messages: self.build_client_message.clone(),
         }
     }
@@ -79,6 +90,7 @@ impl ToolBuilder for FakeToolBuilder {
 
 pub struct FakeTool {
     cache_uris: Option<Arc<Mutex<Vec<Uri>>>>,
+    document_events: Option<Arc<Mutex<Vec<String>>>>,
     delays: FakeToolDelays,
 }
 
@@ -253,6 +265,34 @@ impl Tool for FakeTool {
     fn remove_uri_cache(&self, uri: &Uri) {
         if let Some(cache_uris) = &self.cache_uris {
             cache_uris.lock().unwrap().retain(|cached_uri| cached_uri != uri);
+        }
+    }
+
+    fn did_open(&self, document: &TextDocument) {
+        self.record_document_event(format!(
+            "open {} {:?}",
+            document.uri.as_str(),
+            document.version
+        ));
+    }
+
+    fn did_change(&self, document: &TextDocument) {
+        self.record_document_event(format!(
+            "change {} {:?}",
+            document.uri.as_str(),
+            document.version
+        ));
+    }
+
+    fn did_close(&self, uri: &Uri) {
+        self.record_document_event(format!("close {}", uri.as_str()));
+    }
+}
+
+impl FakeTool {
+    fn record_document_event(&self, event: String) {
+        if let Some(document_events) = &self.document_events {
+            document_events.lock().unwrap().push(event);
         }
     }
 }
@@ -1869,6 +1909,49 @@ mod test_suite {
         }
 
         server.shutdown(5).await;
+    }
+
+    #[tokio::test]
+    async fn test_document_events_reach_the_tool_in_pull_mode() {
+        let init_options = InitializeRequestOptions { pull_mode: true, ..Default::default() };
+        let document_events = Arc::new(Mutex::new(Vec::new()));
+
+        let mut server = TestServer::new_initialized(
+            |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    create_workspace_manager_with_builder(
+                        FakeToolBuilder::new(DiagnosticMode::Pull)
+                            .with_document_tracking(Arc::clone(&document_events)),
+                    ),
+                )
+            },
+            initialize_request(init_options),
+        )
+        .await;
+
+        let file = format!("{WORKSPACE}/file.txt");
+        server.send_request(did_open(&file, "some text")).await;
+        server.send_request(did_change(&file, "changed text")).await;
+        server.send_request(did_close(&file)).await;
+
+        // The notifications are processed before a later request is answered.
+        server.send_request(test_configuration_request(3)).await;
+        let response = server.recv_response().await;
+        assert!(response.is_ok());
+        assert_eq!(response.id(), &Id::Number(3));
+
+        assert_eq!(
+            *document_events.lock().unwrap(),
+            [
+                format!("open {file} Some(1)"),
+                format!("change {file} Some(2)"),
+                format!("close {file}")
+            ]
+        );
+
+        server.shutdown(4).await;
     }
 
     #[tokio::test]
