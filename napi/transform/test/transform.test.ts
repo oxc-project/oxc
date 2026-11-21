@@ -278,6 +278,21 @@ describe("define plugin", () => {
     });
     expect(ret.code).toEqual("Bar;\ndebugger;\n");
   });
+
+  it("does not render error in a value against the source text", async () => {
+    // Position of the error is an offset into the value `1 +`, not into the source text
+    const code = "const first = 'aaa';\nconst second = 'bbb';\n";
+    const options = { define: { Foo: "1 +" } };
+
+    for (const ret of [
+      transformSync("test.js", code, options),
+      await transform("test.js", code, options),
+    ]) {
+      expect(ret.errors.length).toBe(1);
+      expect(ret.errors[0].message).toBe("Unexpected token");
+      expect(ret.errors[0].codeframe).not.toContain("const first");
+    }
+  });
 });
 
 describe("inject plugin", () => {
