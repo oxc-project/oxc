@@ -379,7 +379,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
             }
         }
 
-        // Get a new chunk from the chunk allocator (the global allocator by default).
+        // Get a new chunk from the parent allocator (the global allocator by default).
         // By default, we want our new chunk to be about twice as big as the previous chunk.
         // If the allocator refuses it, we try to divide it by half until it works for `layout`
         // or the requested size is smaller than the default chunk size.
@@ -401,9 +401,9 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         let (new_start_ptr, new_footer_ptr) = loop {
             // Try to allocate a chunk of `size` bytes (plus footer and rounding).
             // SAFETY: `current_footer_ptr` points to a valid `ChunkFooter` for a chunk in this `Arena`, or it's `None`.
-            // `self.chunk_alloc` is this `Arena`'s chunk allocator.
+            // `self.parent` is this `Arena`'s parent allocator.
             let new_chunk =
-                unsafe { Self::new_chunk(size, layout, current_footer_ptr, self.chunk_alloc) };
+                unsafe { Self::new_chunk(size, layout, current_footer_ptr, self.parent) };
             if let Some(new_chunk) = new_chunk {
                 break new_chunk;
             }

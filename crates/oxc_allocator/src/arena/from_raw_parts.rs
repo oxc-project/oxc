@@ -94,8 +94,8 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         unsafe { chunk_footer_ptr.write(chunk_footer) };
 
         // Create `Arena`.
-        // Chunk allocator is `None`. It is never used, because the chunk is fixed-size, and the `Arena`
-        // cannot get any further chunks.
+        // Parent allocator is `None`. The `Arena` cannot get any further chunks, so it never allocates a chunk
+        // from a parent allocator.
         Self::new_impl(start_ptr, cursor_ptr, Some(chunk_footer_ptr), None)
     }
 

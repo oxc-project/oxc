@@ -15,7 +15,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// on deallocated objects. See [the top-level documentation] for details.
     ///
     /// If this arena has allocated multiple chunks to allocate into, then the excess chunks are returned to
-    /// the arena's chunk allocator (the global allocator by default).
+    /// the arena's parent allocator (the global allocator by default).
     ///
     /// # Example
     ///
@@ -56,9 +56,9 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
             // Deallocate all chunks except the current one
             let prev_footer_ptr =
                 current_footer_ptr.as_ref().previous_chunk_footer_ptr.replace(None);
-            // `self.chunk_alloc` never changes after the `Arena` is created, so all non-fixed-size chunks
-            // in the list were allocated from `self.chunk_alloc`
-            dealloc_chunk_list(prev_footer_ptr, self.chunk_alloc);
+            // `self.parent` never changes after the `Arena` is created, so all non-fixed-size chunks
+            // in the list were allocated from `self.parent`
+            dealloc_chunk_list(prev_footer_ptr, self.parent);
 
             // Reset the bump cursor to the end of the chunk.
             // We don't need to reset `cursor_ptr` in `ChunkFooter`, as it'll be set if the chunk is retired later on.
@@ -87,10 +87,10 @@ impl<const MIN_ALIGN: usize> Drop for Arena<MIN_ALIGN> {
     fn drop(&mut self) {
         // SAFETY: `current_chunk_footer_ptr` is either `None` or points to a valid `ChunkFooter`,
         // which is the start of the linked list of all chunks owned by this `Arena`.
-        // `self.chunk_alloc` never changes after the `Arena` is created, so all non-fixed-size chunks
-        // in the list were allocated from `self.chunk_alloc`.
+        // `self.parent` never changes after the `Arena` is created, so all non-fixed-size chunks
+        // in the list were allocated from `self.parent`.
         unsafe {
-            dealloc_chunk_list(self.current_chunk_footer_ptr.get(), self.chunk_alloc);
+            dealloc_chunk_list(self.current_chunk_footer_ptr.get(), self.parent);
         }
     }
 }
@@ -99,12 +99,12 @@ impl<const MIN_ALIGN: usize> Drop for Arena<MIN_ALIGN> {
 ///
 /// # SAFETY
 /// * `footer_ptr` must be `None` or point to a valid `ChunkFooter`.
-/// * Every chunk in the list which is not fixed-size must have been allocated from `chunk_alloc`
-///   (or from the global allocator if `chunk_alloc` is `None`).
+/// * Every chunk in the list which is not fixed-size must have been allocated from `parent`
+///   (or from the global allocator if `parent` is `None`).
 #[inline]
 unsafe fn dealloc_chunk_list(
     footer_ptr: Option<NonNull<ChunkFooter>>,
-    chunk_alloc: Option<&'static (dyn GlobalAlloc + Sync)>,
+    parent: Option<&'static (dyn GlobalAlloc + Sync)>,
 ) {
     let mut next_footer_ptr = footer_ptr;
 
@@ -117,8 +117,8 @@ unsafe fn dealloc_chunk_list(
         }
 
         // SAFETY: `footer_ptr` always points to a valid `ChunkFooter`.
-        // Caller guarantees that the chunk was allocated from `chunk_alloc`, if it is not fixed-size.
-        unsafe { dealloc_chunk(footer_ptr, chunk_alloc) };
+        // Caller guarantees that the chunk was allocated from `parent`, if it is not fixed-size.
+        unsafe { dealloc_chunk(footer_ptr, parent) };
     }
 }
 
@@ -126,11 +126,11 @@ unsafe fn dealloc_chunk_list(
 ///
 /// # SAFETY
 /// * `footer_ptr` must point to a valid `ChunkFooter`.
-/// * If the chunk is not fixed-size, it must have been allocated from `chunk_alloc`
-///   (or from the global allocator if `chunk_alloc` is `None`).
+/// * If the chunk is not fixed-size, it must have been allocated from `parent`
+///   (or from the global allocator if `parent` is `None`).
 unsafe fn dealloc_chunk(
     footer_ptr: NonNull<ChunkFooter>,
-    chunk_alloc: Option<&'static (dyn GlobalAlloc + Sync)>,
+    parent: Option<&'static (dyn GlobalAlloc + Sync)>,
 ) {
     // Create `&ChunkFooter` reference within a block, to ensure the reference is not live
     // when we deallocate the chunk's memory (which includes the `ChunkFooter`)
@@ -169,19 +169,22 @@ unsafe fn dealloc_chunk(
         }
     }
 
-    // Mark the upcoming deallocation as a chunk operation, so the allocation-tracking
-    // task can exclude it from its heap metrics. Must be set immediately before the
-    // `dealloc` call, with no allocations in between.
-    #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
-    crate::tracking::start_chunk_operation();
+    if let Some(parent) = parent {
+        // Not marked as a chunk operation. A parent allocator does not necessarily call the global allocator,
+        // and then nothing would consume the marker.
+        // SAFETY: Each `ChunkFooter`'s `backing_alloc_ptr` and `layout` describe its backing allocation.
+        // `is_fixed_size` is `false`, so caller guarantees that backing allocation was made via `parent`.
+        unsafe { parent.dealloc(backing_alloc_ptr, layout) };
+    } else {
+        // Mark the upcoming deallocation as a chunk operation, so the allocation-tracking
+        // task can exclude it from its heap metrics. Must be set immediately before the
+        // `dealloc` call, with no allocations in between.
+        #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+        crate::tracking::start_chunk_operation();
 
-    match chunk_alloc {
         // SAFETY: Each `ChunkFooter`'s `backing_alloc_ptr` and `layout` describe its backing allocation.
-        // `is_fixed_size` is `false`, so caller guarantees that backing allocation was made via `chunk_alloc`.
-        Some(chunk_alloc) => unsafe { chunk_alloc.dealloc(backing_alloc_ptr, layout) },
-        // SAFETY: Each `ChunkFooter`'s `backing_alloc_ptr` and `layout` describe its backing allocation.
-        // `is_fixed_size` is `false`, and `chunk_alloc` is `None`, so caller guarantees that backing allocation
+        // `is_fixed_size` is `false`, and `parent` is `None`, so caller guarantees that backing allocation
         // was made via global allocator.
-        None => unsafe { alloc::dealloc(backing_alloc_ptr, layout) },
+        unsafe { alloc::dealloc(backing_alloc_ptr, layout) };
     }
 }

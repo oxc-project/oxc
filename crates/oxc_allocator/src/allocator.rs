@@ -31,8 +31,9 @@ use oxc_data_structures::assert_unchecked;
 /// Each chunk is at least double the size of the last one, so growth in capacity is exponential.
 ///
 /// [`Allocator::reset`] keeps only the last chunk (the biggest one), and discards any other chunks,
-/// returning their memory to the global allocator. The last chunk has its cursor rewound back to
-/// the start, so it's empty, ready to be re-used for allocating more data.
+/// returning their memory to the parent allocator (the global allocator by default).
+/// The last chunk has its cursor rewound back to the start, so it's empty,
+/// ready to be re-used for allocating more data.
 ///
 /// # Recycling allocators
 ///
@@ -80,8 +81,9 @@ use oxc_data_structures::assert_unchecked;
 ///
 /// #### 1. Avoid expensive system calls
 ///
-/// Creating an [`Allocator`] is a fairly expensive operation as it involves a call into global allocator,
-/// which in turn will likely make a system call. Ditto when the [`Allocator`] is dropped.
+/// Creating an [`Allocator`] is a fairly expensive operation as it involves a call into the parent allocator
+/// (the global allocator by default), which in turn will likely make a system call.
+/// Ditto when the [`Allocator`] is dropped.
 /// Re-using an existing [`Allocator`] avoids these costs.
 ///
 /// #### 2. CPU cache
@@ -257,24 +259,26 @@ impl Allocator {
         Self { arena: Arena::with_capacity(capacity) }
     }
 
-    /// Create a new [`Allocator`] with no initial capacity, which allocates its chunks from `chunk_alloc`.
+    /// Create a new [`Allocator`] with no initial capacity, which allocates its chunks from a parent allocator.
     ///
-    /// An [`Allocator`] gets large blocks of memory ("chunks") from an underlying allocator,
-    /// and then allocates objects inside these chunks. By default, chunks come from the global allocator.
-    /// [`Allocator`]s created with this method get their chunks from `chunk_alloc` instead,
-    /// and return the chunks to `chunk_alloc` when they are [`reset`] or dropped.
+    /// An [`Allocator`] gets large blocks of memory ("chunks") from a parent allocator,
+    /// and then allocates objects inside these chunks. By default, the parent allocator is the global allocator.
+    /// [`Allocator`]s created with this method get their chunks from `parent` instead.
     ///
-    /// Allocations into the [`Allocator`] (for example [`Allocator::alloc`]) do not call `chunk_alloc`,
+    /// [`reset`] keeps the last chunk for reuse, and returns all other chunks to `parent`.
+    /// Dropping the [`Allocator`] returns all its chunks to `parent`.
+    ///
+    /// Allocations into the [`Allocator`] (for example [`Allocator::alloc`]) do not call `parent`,
     /// except when the [`Allocator`] needs a new chunk.
     ///
     /// Use this method, for example, to put the memory of some [`Allocator`]s in a separate heap.
     ///
-    /// The chunk allocator cannot be changed after the [`Allocator`] is created.
+    /// The parent allocator cannot be changed after the [`Allocator`] is created.
     ///
     /// Like [`new`], this method does not reserve any memory. The first chunk is allocated
-    /// from `chunk_alloc` when you make the first allocation into this [`Allocator`].
+    /// from `parent` when the [`Allocator`] first needs memory for an allocation.
     ///
-    /// `chunk_alloc` must be [`Sync`], because an [`Allocator`] can be sent to another thread,
+    /// `parent` must be [`Sync`], because an [`Allocator`] can be sent to another thread,
     /// and dropped there.
     ///
     /// # Examples
@@ -285,7 +289,7 @@ impl Allocator {
     ///
     /// static SYSTEM: System = System;
     ///
-    /// let allocator = Allocator::new_in(&SYSTEM);
+    /// let allocator = Allocator::new_in_parent(&SYSTEM);
     /// let x = allocator.alloc([1u8; 20]);
     /// assert_eq!(x, &[1u8; 20]);
     /// ```
@@ -296,29 +300,29 @@ impl Allocator {
     // `#[inline(always)]` because just delegates to `Arena` method
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    pub fn new_in(chunk_alloc: &'static (dyn GlobalAlloc + Sync)) -> Self {
-        Self { arena: Arena::new_in(chunk_alloc) }
+    pub fn new_in_parent(parent: &'static (dyn GlobalAlloc + Sync)) -> Self {
+        Self { arena: Arena::new_in_parent(parent) }
     }
 
-    /// Create a new [`Allocator`] with specified capacity, which allocates its chunks from `chunk_alloc`.
+    /// Create a new [`Allocator`] with specified capacity, which allocates its chunks from a parent allocator.
     ///
-    /// If `capacity` is 0, no memory is reserved until the first allocation, the same as [`new_in`].
+    /// If `capacity` is 0, no memory is reserved until the first allocation, the same as [`new_in_parent`].
     ///
-    /// See [`new_in`] for more information about `chunk_alloc`.
+    /// See [`new_in_parent`] for more information about `parent`.
     ///
     /// # Panics
     /// Panics if allocating the initial capacity fails.
     ///
-    /// [`new_in`]: Allocator::new_in
+    /// [`new_in_parent`]: Allocator::new_in_parent
     //
     // `#[inline(always)]` because just delegates to `Arena` method
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    pub fn with_capacity_in(
+    pub fn with_capacity_in_parent(
         capacity: usize,
-        chunk_alloc: &'static (dyn GlobalAlloc + Sync),
+        parent: &'static (dyn GlobalAlloc + Sync),
     ) -> Self {
-        Self { arena: Arena::with_capacity_in(capacity, chunk_alloc) }
+        Self { arena: Arena::with_capacity_in_parent(capacity, parent) }
     }
 
     /// Allocate an object in this [`Allocator`] and return an exclusive reference to it.
@@ -515,7 +519,7 @@ impl Allocator {
     /// Does not run any `Drop` implementations on deallocated objects.
     ///
     /// If this arena has allocated multiple chunks to bump allocate into, then the excess chunks
-    /// are returned to the global allocator.
+    /// are returned to the parent allocator (the global allocator by default).
     ///
     /// # Examples
     /// ```

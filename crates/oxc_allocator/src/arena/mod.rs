@@ -176,7 +176,7 @@ mod tests_alloc;
 // forcing LLVM to emit two independent 8-byte `ldr`s, each of which forwards cleanly.
 // More background here: https://eme64.github.io/blog/2024/06/24/Auto-Vectorization-and-Store-to-Load-Forwarding.html
 //
-// `chunk_alloc` is placed after these 3 pointer fields, so it does not change their offsets (0, 8, and 16).
+// `cursor_ptr` is first field, as it's the hottest. It can be accessed with no offset.
 #[repr(C)]
 pub struct Arena<const MIN_ALIGN: usize = 1> {
     /// Bump allocation cursor.
@@ -208,7 +208,7 @@ pub struct Arena<const MIN_ALIGN: usize = 1> {
     /// This field is duplicated in `ChunkFooter`.
     start_ptr: Cell<NonNull<u8>>,
 
-    /// Allocator which backing memory for chunks is allocated from and deallocated to.
+    /// Parent allocator, which backing memory for chunks is allocated from and deallocated to.
     ///
     /// `None` means the global allocator.
     ///
@@ -219,10 +219,10 @@ pub struct Arena<const MIN_ALIGN: usize = 1> {
     /// Their `ChunkFooter` has `is_fixed_size` set to `true`, and they are deallocated in a different way.
     ///
     /// `+ Sync` is required because `Arena` is `Send`. An `Arena` can be created on one thread
-    /// and dropped on another, so the chunk allocator can be used from more than one thread.
+    /// and dropped on another, so the parent allocator can be used from more than one thread.
     ///
     /// [`Arena::from_raw_parts`]: Arena::from_raw_parts
-    chunk_alloc: Option<&'static (dyn GlobalAlloc + Sync)>,
+    parent: Option<&'static (dyn GlobalAlloc + Sync)>,
 
     /// Used to track number of allocations made in this `Arena` when `track_allocations` feature is enabled.
     #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
@@ -271,28 +271,28 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     }
 }
 
-impl<const MIN_ALIGN: usize> fmt::Debug for Arena<MIN_ALIGN> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // `dyn GlobalAlloc` does not implement `Debug`, so only show whether a chunk allocator is set
-        let mut s = f.debug_struct("Arena");
-        s.field("cursor_ptr", &self.cursor_ptr)
-            .field("current_chunk_footer_ptr", &self.current_chunk_footer_ptr)
-            .field("start_ptr", &self.start_ptr)
-            .field("has_chunk_alloc", &self.chunk_alloc.is_some());
-        #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
-        s.field("stats", &self.stats);
-        s.finish()
-    }
-}
-
 // SAFETY:
 // `Arena`s are safe to send between threads because nothing aliases its owned chunks until you start allocating
 // from it. But by the time you allocate from it, the returned references to allocations borrow the `Arena` and
 // therefore prevent sending the `Arena` across threads until the borrows end.
 //
-// `chunk_alloc` is `&'static (dyn GlobalAlloc + Sync)`, which is `Send` and `Sync`. So the chunk allocator
+// `parent` is `&'static (dyn GlobalAlloc + Sync)`, which is `Send` and `Sync`. So the parent allocator
 // can be used to deallocate chunks on whichever thread the `Arena` is dropped or reset on.
 unsafe impl<const MIN_ALIGN: usize> Send for Arena<MIN_ALIGN> {}
+
+impl<const MIN_ALIGN: usize> fmt::Debug for Arena<MIN_ALIGN> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // `dyn GlobalAlloc` does not implement `Debug`, so only show whether a parent allocator is set
+        let mut s = f.debug_struct("Arena");
+        s.field("cursor_ptr", &self.cursor_ptr)
+            .field("current_chunk_footer_ptr", &self.current_chunk_footer_ptr)
+            .field("start_ptr", &self.start_ptr)
+            .field("has_parent", &self.parent.is_some());
+        #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+        s.field("stats", &self.stats);
+        s.finish()
+    }
+}
 
 /// Footer containing details about a chunk of memory owned by an `Arena`.
 ///
@@ -311,7 +311,7 @@ unsafe impl<const MIN_ALIGN: usize> Send for Arena<MIN_ALIGN> {}
 pub(crate) struct ChunkFooter {
     /// Pointer to the start of the allocation backing this chunk.
     ///
-    /// This pointer is passed to the `Arena`'s chunk allocator (the global allocator by default),
+    /// This pointer is passed to the `Arena`'s parent allocator (the global allocator by default),
     /// or to `System.dealloc` if `is_fixed_size` is `true`, when deallocating the chunk.
     backing_alloc_ptr: NonNull<u8>,
 
@@ -329,10 +329,10 @@ pub(crate) struct ChunkFooter {
     /// This field is only used in `ChunkIter` and `ChunkRawIter` iterators, and `used_bytes` method.
     cursor_ptr: Cell<NonNull<u8>>,
 
-    /// `true` if backing allocation was made via [`System`] allocator (rather than the `Arena`'s chunk allocator).
+    /// `true` if backing allocation was made via [`System`] allocator (rather than the `Arena`'s parent allocator).
     ///
     /// `Arena`'s [`Drop`] impl uses this to know whether to free the backing allocation via [`System`]
-    /// or the `Arena`'s chunk allocator.
+    /// or the `Arena`'s parent allocator.
     ///
     /// Set to `true` for chunks created via [`Arena::from_raw_parts`], `false` otherwise.
     ///
