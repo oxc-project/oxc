@@ -101,7 +101,11 @@ impl<'a> TransformState<'a> {
             statement_injector: StatementInjectorStore::new(),
             top_level_statements: TopLevelStatementsStore::new(),
             class_transform,
-            class_lowering_decisions: ClassLoweringDecisions::new(class_transform, decorator_mode),
+            class_lowering_decisions: ClassLoweringDecisions::new(
+                class_transform,
+                decorator_mode,
+                options.assumptions.set_public_class_fields,
+            ),
         }
     }
 
