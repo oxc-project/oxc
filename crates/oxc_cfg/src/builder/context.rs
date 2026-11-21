@@ -1,5 +1,5 @@
 use super::ControlFlowGraphBuilder;
-use crate::{BlockNodeId, EdgeType};
+use crate::BlockNodeId;
 
 bitflags::bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -148,8 +148,8 @@ impl<'a, 'c> QueryCtx<'a, 'c> {
             (Some(break_), Some(continue_)) => {
                 for entry in ctx.entries {
                     match entry.0 {
-                        CtxFlags::BREAK => self.0.add_edge(entry.1, break_, EdgeType::Jump),
-                        CtxFlags::CONTINUE => self.0.add_edge(entry.1, continue_, EdgeType::Jump),
+                        CtxFlags::BREAK => self.0.add_jump_edge(entry.1, break_),
+                        CtxFlags::CONTINUE => self.0.add_jump_edge(entry.1, continue_),
                         _ => {}
                     }
                 }
@@ -157,14 +157,14 @@ impl<'a, 'c> QueryCtx<'a, 'c> {
             (Some(jmp), None) => {
                 for entry in ctx.entries {
                     if matches!(entry.0, CtxFlags::BREAK) {
-                        self.0.add_edge(entry.1, jmp, EdgeType::Jump);
+                        self.0.add_jump_edge(entry.1, jmp);
                     }
                 }
             }
             (None, Some(jmp)) => {
                 for entry in ctx.entries {
                     if matches!(entry.0, CtxFlags::CONTINUE) {
-                        self.0.add_edge(entry.1, jmp, EdgeType::Jump);
+                        self.0.add_jump_edge(entry.1, jmp);
                     }
                 }
             }

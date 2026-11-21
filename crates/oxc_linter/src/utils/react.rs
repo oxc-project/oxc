@@ -1015,7 +1015,10 @@ fn cfg_returns(node_id: NodeId, ctx: &LintContext<'_>) -> FunctionReturns {
             cfg.graph()
                 .edges_directed(block_id, Direction::Outgoing)
                 .filter(|edge| {
-                    !matches!(edge.weight(), EdgeType::NewFunction | EdgeType::Unreachable)
+                    !matches!(
+                        edge.weight(),
+                        EdgeType::NewFunction | EdgeType::Unreachable | EdgeType::Liveness
+                    )
                 })
                 .map(|edge| edge.target()),
         );
