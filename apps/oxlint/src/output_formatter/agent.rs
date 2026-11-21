@@ -36,6 +36,11 @@ impl InternalFormatter for AgentOutputFormatter {
         Some(output)
     }
 
+    /// As a line without a position, see `format_agent`.
+    fn reports_config_warnings(&self) -> bool {
+        true
+    }
+
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
         Box::new(AgentReporter)
     }
