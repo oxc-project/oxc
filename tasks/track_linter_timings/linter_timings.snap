@@ -546,6 +546,7 @@ unicorn/no-document-cookie                              |  13005
 unicorn/no-empty-file                                   |      7
 unicorn/no-hex-escape                                   |  63282
 unicorn/no-immediate-mutation                           |  24802
+unicorn/no-incorrect-query-selector                     | 310528
 unicorn/no-instanceof-array                             |  20604
 unicorn/no-instanceof-builtins                          |  20604
 unicorn/no-invalid-fetch-options                        |  14125

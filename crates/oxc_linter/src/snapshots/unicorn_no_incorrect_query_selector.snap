@@ -1,0 +1,348 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(no-incorrect-query-selector): Prefer `.querySelector()` when only the first match is used.
+   ╭─[no_incorrect_query_selector.tsx:1:1]
+ 1 │ document.querySelectorAll("form")[0].addEventListener("submit", submitFunction);
+   · ────────────────────────────────────
+   ╰────
+  help: Use `.querySelector()` instead of taking the first item of `.querySelectorAll()`.
+
+  ⚠ unicorn(no-incorrect-query-selector): Prefer `.querySelector()` when only the first match is used.
+   ╭─[no_incorrect_query_selector.tsx:1:1]
+ 1 │ document.querySelectorAll("form").at(0).addEventListener("submit", submitFunction);
+   · ───────────────────────────────────────
+   ╰────
+  help: Use `.querySelector()` instead of taking the first item of `.querySelectorAll()`.
+
+  ⚠ unicorn(no-incorrect-query-selector): Prefer `.querySelector()` when only the first match is used.
+   ╭─[no_incorrect_query_selector.tsx:1:1]
+ 1 │ document.querySelectorAll("form").item(0).addEventListener("submit", submitFunction);
+   · ─────────────────────────────────────────
+   ╰────
+  help: Use `.querySelector()` instead of taking the first item of `.querySelectorAll()`.
+
+  ⚠ unicorn(no-incorrect-query-selector): Prefer `.querySelector()` when only the first match is used.
+   ╭─[no_incorrect_query_selector.tsx:1:1]
+ 1 │ document.querySelectorAll("#foo").at(0);
+   · ───────────────────────────────────────
+   ╰────
+  help: Use `.querySelector()` instead of taking the first item of `.querySelectorAll()`.
+
+  ⚠ unicorn(no-incorrect-query-selector): Prefer `.querySelector()` when only the first match is used.
+   ╭─[no_incorrect_query_selector.tsx:1:1]
+ 1 │ (document.querySelectorAll("form"))[0];
+   · ──────────────────────────────────────
+   ╰────
+  help: Use `.querySelector()` instead of taking the first item of `.querySelectorAll()`.
+
+  ⚠ unicorn(no-incorrect-query-selector): Prefer `.querySelector()` when only the first match is used.
+   ╭─[no_incorrect_query_selector.tsx:1:1]
+ 1 │ (document.querySelectorAll("form")).at(0);
+   · ─────────────────────────────────────────
+   ╰────
+  help: Use `.querySelector()` instead of taking the first item of `.querySelectorAll()`.
+
+  ⚠ unicorn(no-incorrect-query-selector): Prefer `.querySelector()` for a simple ID selector.
+   ╭─[no_incorrect_query_selector.tsx:1:10]
+ 1 │ document.querySelectorAll("#foo");
+   ·          ────────────────
+   ╰────
+  help: An ID selector matches a single element, so use `.querySelector()`.
+
+  ⚠ unicorn(no-incorrect-query-selector): Prefer `.querySelector()` for a simple ID selector.
+   ╭─[no_incorrect_query_selector.tsx:1:10]
+ 1 │ document.querySelectorAll(`#foo`);
+   ·          ────────────────
+   ╰────
+  help: An ID selector matches a single element, so use `.querySelector()`.
+
+  ⚠ unicorn(no-incorrect-query-selector): Check `.length` instead of the `NodeList` object itself.
+   ╭─[no_incorrect_query_selector.tsx:1:5]
+ 1 │ if (document.querySelectorAll(".item")) {}
+   ·     ──────────────────────────────────
+   ╰────
+  help: A `NodeList` is always truthy, even when it is empty.
+
+  ⚠ unicorn(no-incorrect-query-selector): Check `.length` instead of the `NodeList` object itself.
+   ╭─[no_incorrect_query_selector.tsx:1:6]
+ 1 │ if (!document.querySelectorAll(".item")) {}
+   ·      ──────────────────────────────────
+   ╰────
+  help: A `NodeList` is always truthy, even when it is empty.
+
+  ⚠ unicorn(no-incorrect-query-selector): Check `.length` instead of the `NodeList` object itself.
+   ╭─[no_incorrect_query_selector.tsx:1:8]
+ 1 │ while (document.querySelectorAll(".item")) {}
+   ·        ──────────────────────────────────
+   ╰────
+  help: A `NodeList` is always truthy, even when it is empty.
+
+  ⚠ unicorn(no-incorrect-query-selector): Check `.length` instead of the `NodeList` object itself.
+   ╭─[no_incorrect_query_selector.tsx:1:18]
+ 1 │ const hasItems = document.querySelectorAll(".item") ? true : false;
+   ·                  ──────────────────────────────────
+   ╰────
+  help: A `NodeList` is always truthy, even when it is empty.
+
+  ⚠ unicorn(no-incorrect-query-selector): Check `.length` instead of the `NodeList` object itself.
+   ╭─[no_incorrect_query_selector.tsx:1:5]
+ 1 │ if (document.querySelectorAll(".item") && ready) {}
+   ·     ──────────────────────────────────
+   ╰────
+  help: A `NodeList` is always truthy, even when it is empty.
+
+  ⚠ unicorn(no-incorrect-query-selector): Check `.length` instead of the `NodeList` object itself.
+   ╭─[no_incorrect_query_selector.tsx:2:17]
+ 1 │ const elements = document.querySelectorAll(".item");
+ 2 │             if (elements && ready) {}
+   ·                 ────────
+   ╰────
+  help: A `NodeList` is always truthy, even when it is empty.
+
+  ⚠ unicorn(no-incorrect-query-selector): Check `.length` instead of the `NodeList` object itself.
+   ╭─[no_incorrect_query_selector.tsx:1:13]
+ 1 │ if (Boolean(document.querySelectorAll(".item"))) {}
+   ·             ──────────────────────────────────
+   ╰────
+  help: A `NodeList` is always truthy, even when it is empty.
+
+  ⚠ unicorn(no-incorrect-query-selector): Check `.length` instead of the `NodeList` object itself.
+   ╭─[no_incorrect_query_selector.tsx:1:14]
+ 1 │ if (!Boolean(document.querySelectorAll(".item"))) {}
+   ·              ──────────────────────────────────
+   ╰────
+  help: A `NodeList` is always truthy, even when it is empty.
+
+  ⚠ unicorn(no-incorrect-query-selector): Check `.length` instead of the `NodeList` object itself.
+   ╭─[no_incorrect_query_selector.tsx:1:15]
+ 1 │ if (!!Boolean(document.querySelectorAll(".item"))) {}
+   ·               ──────────────────────────────────
+   ╰────
+  help: A `NodeList` is always truthy, even when it is empty.
+
+  ⚠ unicorn(no-incorrect-query-selector): Check `.length` instead of the `NodeList` object itself.
+   ╭─[no_incorrect_query_selector.tsx:2:17]
+ 1 │ const elements = document.querySelectorAll(".item");
+ 2 │             if (elements) {}
+   ·                 ────────
+   ╰────
+  help: A `NodeList` is always truthy, even when it is empty.
+
+  ⚠ unicorn(no-incorrect-query-selector): Check `.length` instead of the `NodeList` object itself.
+   ╭─[no_incorrect_query_selector.tsx:2:18]
+ 1 │ const elements = document.querySelectorAll(".item");
+ 2 │             if (!elements) {}
+   ·                  ────────
+   ╰────
+  help: A `NodeList` is always truthy, even when it is empty.
+
+  ⚠ unicorn(no-incorrect-query-selector): Check `.length` instead of the `NodeList` object itself.
+   ╭─[no_incorrect_query_selector.tsx:1:24]
+ 1 │ if (Boolean(/* keep */ document.querySelectorAll(".item"))) {}
+   ·                        ──────────────────────────────────
+   ╰────
+  help: A `NodeList` is always truthy, even when it is empty.
+
+  ⚠ unicorn(no-incorrect-query-selector): Check `.length` instead of the `NodeList` object itself.
+   ╭─[no_incorrect_query_selector.tsx:1:17]
+ 1 │ if (!/* keep */ document.querySelectorAll(".item")) {}
+   ·                 ──────────────────────────────────
+   ╰────
+  help: A `NodeList` is always truthy, even when it is empty.
+
+  ⚠ unicorn(no-incorrect-query-selector): Check `.length` instead of comparing the `NodeList` object with `null` or `undefined`.
+   ╭─[no_incorrect_query_selector.tsx:1:1]
+ 1 │ document.querySelectorAll(".item") === null;
+   · ───────────────────────────────────────────
+   ╰────
+  help: `.querySelectorAll()` always returns a `NodeList`, never `null` or `undefined`.
+
+  ⚠ unicorn(no-incorrect-query-selector): Check `.length` instead of comparing the `NodeList` object with `null` or `undefined`.
+   ╭─[no_incorrect_query_selector.tsx:1:1]
+ 1 │ document.querySelectorAll(".item") !== null;
+   · ───────────────────────────────────────────
+   ╰────
+  help: `.querySelectorAll()` always returns a `NodeList`, never `null` or `undefined`.
+
+  ⚠ unicorn(no-incorrect-query-selector): Check `.length` instead of comparing the `NodeList` object with `null` or `undefined`.
+   ╭─[no_incorrect_query_selector.tsx:1:1]
+ 1 │ document.querySelectorAll(".item") == null;
+   · ──────────────────────────────────────────
+   ╰────
+  help: `.querySelectorAll()` always returns a `NodeList`, never `null` or `undefined`.
+
+  ⚠ unicorn(no-incorrect-query-selector): Check `.length` instead of comparing the `NodeList` object with `null` or `undefined`.
+   ╭─[no_incorrect_query_selector.tsx:1:1]
+ 1 │ document.querySelectorAll(".item") != null;
+   · ──────────────────────────────────────────
+   ╰────
+  help: `.querySelectorAll()` always returns a `NodeList`, never `null` or `undefined`.
+
+  ⚠ unicorn(no-incorrect-query-selector): Check `.length` instead of comparing the `NodeList` object with `null` or `undefined`.
+   ╭─[no_incorrect_query_selector.tsx:1:1]
+ 1 │ document.querySelectorAll(".item") === undefined;
+   · ────────────────────────────────────────────────
+   ╰────
+  help: `.querySelectorAll()` always returns a `NodeList`, never `null` or `undefined`.
+
+  ⚠ unicorn(no-incorrect-query-selector): Check `.length` instead of comparing the `NodeList` object with `null` or `undefined`.
+   ╭─[no_incorrect_query_selector.tsx:1:1]
+ 1 │ document.querySelectorAll(".item") !== undefined;
+   · ────────────────────────────────────────────────
+   ╰────
+  help: `.querySelectorAll()` always returns a `NodeList`, never `null` or `undefined`.
+
+  ⚠ unicorn(no-incorrect-query-selector): Check `.length` instead of comparing the `NodeList` object with `null` or `undefined`.
+   ╭─[no_incorrect_query_selector.tsx:1:1]
+ 1 │ null === document.querySelectorAll(".item");
+   · ───────────────────────────────────────────
+   ╰────
+  help: `.querySelectorAll()` always returns a `NodeList`, never `null` or `undefined`.
+
+  ⚠ unicorn(no-incorrect-query-selector): Check `.length` instead of comparing the `NodeList` object with `null` or `undefined`.
+   ╭─[no_incorrect_query_selector.tsx:1:1]
+ 1 │ undefined !== document.querySelectorAll(".item");
+   · ────────────────────────────────────────────────
+   ╰────
+  help: `.querySelectorAll()` always returns a `NodeList`, never `null` or `undefined`.
+
+  ⚠ unicorn(no-incorrect-query-selector): Check `.length` instead of comparing the `NodeList` object with `null` or `undefined`.
+   ╭─[no_incorrect_query_selector.tsx:1:1]
+ 1 │ document.querySelectorAll(".item") /* keep */ === null;
+   · ──────────────────────────────────────────────────────
+   ╰────
+  help: `.querySelectorAll()` always returns a `NodeList`, never `null` or `undefined`.
+
+  ⚠ unicorn(no-incorrect-query-selector): Compare the result of `.querySelector()` with `null` instead of `undefined`.
+   ╭─[no_incorrect_query_selector.tsx:1:1]
+ 1 │ document.querySelector(".item") === undefined;
+   · ─────────────────────────────────────────────
+   ╰────
+  help: `.querySelector()` returns `null` when nothing matches.
+
+  ⚠ unicorn(no-incorrect-query-selector): Compare the result of `.querySelector()` with `null` instead of `undefined`.
+   ╭─[no_incorrect_query_selector.tsx:1:1]
+ 1 │ document.querySelector(".item") !== undefined;
+   · ─────────────────────────────────────────────
+   ╰────
+  help: `.querySelector()` returns `null` when nothing matches.
+
+  ⚠ unicorn(no-incorrect-query-selector): Compare the result of `.querySelector()` with `null` instead of `undefined`.
+   ╭─[no_incorrect_query_selector.tsx:1:1]
+ 1 │ undefined === document.querySelector(".item");
+   · ─────────────────────────────────────────────
+   ╰────
+  help: `.querySelector()` returns `null` when nothing matches.
+
+  ⚠ unicorn(no-incorrect-query-selector): Check `.length` instead of comparing the `NodeList` object with `null` or `undefined`.
+   ╭─[no_incorrect_query_selector.tsx:1:54]
+ 1 │ const elements = document.querySelectorAll(".item"); elements === null;
+   ·                                                      ─────────────────
+   ╰────
+  help: `.querySelectorAll()` always returns a `NodeList`, never `null` or `undefined`.
+
+  ⚠ unicorn(no-incorrect-query-selector): Check `.length` instead of comparing the `NodeList` object with `null` or `undefined`.
+   ╭─[no_incorrect_query_selector.tsx:1:54]
+ 1 │ const elements = document.querySelectorAll(".item"); elements !== undefined;
+   ·                                                      ──────────────────────
+   ╰────
+  help: `.querySelectorAll()` always returns a `NodeList`, never `null` or `undefined`.
+
+  ⚠ unicorn(no-incorrect-query-selector): Compare the result of `.querySelector()` with `null` instead of `undefined`.
+   ╭─[no_incorrect_query_selector.tsx:1:50]
+ 1 │ const element = document.querySelector(".item"); element === undefined;
+   ·                                                  ─────────────────────
+   ╰────
+  help: `.querySelector()` returns `null` when nothing matches.
+
+  ⚠ unicorn(no-incorrect-query-selector): Prefer `.querySelector()` when only the first match is used.
+   ╭─[no_incorrect_query_selector.tsx:1:19]
+ 1 │ for (const key in document.querySelectorAll("form")[0]) {}
+   ·                   ────────────────────────────────────
+   ╰────
+  help: Use `.querySelector()` instead of taking the first item of `.querySelectorAll()`.
+
+  ⚠ unicorn(no-incorrect-query-selector): Prefer `.querySelector()` when only the first match is used.
+   ╭─[no_incorrect_query_selector.tsx:1:1]
+ 1 │ document.querySelectorAll("form") /* keep */ [0];
+   · ────────────────────────────────────────────────
+   ╰────
+  help: Use `.querySelector()` instead of taking the first item of `.querySelectorAll()`.
+
+  ⚠ unicorn(no-incorrect-query-selector): Prefer `.querySelector()` when only the first match is used.
+   ╭─[no_incorrect_query_selector.tsx:1:1]
+ 1 │ document.querySelectorAll("form").at(/* keep */ 0);
+   · ──────────────────────────────────────────────────
+   ╰────
+  help: Use `.querySelector()` instead of taking the first item of `.querySelectorAll()`.
+
+  ⚠ unicorn(no-incorrect-query-selector): Prefer `.querySelector()` when only the first match is used.
+   ╭─[no_incorrect_query_selector.tsx:1:1]
+ 1 │ document.querySelectorAll("form").item(/* keep */ 0);
+   · ────────────────────────────────────────────────────
+   ╰────
+  help: Use `.querySelector()` instead of taking the first item of `.querySelectorAll()`.
+
+  ⚠ unicorn(no-incorrect-query-selector): Check `.length` instead of the `NodeList` object itself.
+   ╭─[no_incorrect_query_selector.tsx:1:5]
+ 1 │ if (document.querySelectorAll(/* c */ a)) {}
+   ·     ────────────────────────────────────
+   ╰────
+  help: A `NodeList` is always truthy, even when it is empty.
+
+  ⚠ unicorn(no-incorrect-query-selector): Check `.length` instead of the `NodeList` object itself.
+   ╭─[no_incorrect_query_selector.tsx:1:14]
+ 1 │ if (!/* c */ document.querySelectorAll(a)) {}
+   ·              ────────────────────────────
+   ╰────
+  help: A `NodeList` is always truthy, even when it is empty.
+
+  ⚠ unicorn(no-incorrect-query-selector): Check `.length` instead of the `NodeList` object itself.
+   ╭─[no_incorrect_query_selector.tsx:1:5]
+ 1 │ if (document.querySelectorAll(a) /* c */) {}
+   ·     ────────────────────────────
+   ╰────
+  help: A `NodeList` is always truthy, even when it is empty.
+
+  ⚠ unicorn(no-incorrect-query-selector): Check `.length` instead of the `NodeList` object itself.
+   ╭─[no_incorrect_query_selector.tsx:1:5]
+ 1 │ if (document.querySelectorAll(a) // c
+   ·     ────────────────────────────
+ 2 │             ) {}
+   ╰────
+  help: A `NodeList` is always truthy, even when it is empty.
+
+  ⚠ unicorn(no-incorrect-query-selector): Check `.length` instead of the `NodeList` object itself.
+   ╭─[no_incorrect_query_selector.tsx:1:5]
+ 1 │ if (document.querySelectorAll(a)) {
+   ·     ────────────────────────────
+ 2 │                 // c
+   ╰────
+  help: A `NodeList` is always truthy, even when it is empty.
+
+  ⚠ unicorn(no-incorrect-query-selector): Check `.length` instead of the `NodeList` object itself.
+   ╭─[no_incorrect_query_selector.tsx:2:18]
+ 1 │ const elements = document.querySelectorAll(a);
+ 2 │             if (!elements) {
+   ·                  ────────
+ 3 │                 // c
+   ╰────
+  help: A `NodeList` is always truthy, even when it is empty.
+
+  ⚠ unicorn(no-incorrect-query-selector): Check `.length` instead of the `NodeList` object itself.
+   ╭─[no_incorrect_query_selector.tsx:2:27]
+ 1 │ const elements = document.querySelectorAll(a);
+ 2 │             if (!(/* c */ elements)) {}
+   ·                           ────────
+   ╰────
+  help: A `NodeList` is always truthy, even when it is empty.
+
+  ⚠ unicorn(no-incorrect-query-selector): Check `.length` instead of the `NodeList` object itself.
+   ╭─[no_incorrect_query_selector.tsx:2:26]
+ 1 │ const elements = document.querySelectorAll(a);
+ 2 │             if ((/* c */ elements)) {}
+   ·                          ────────
+   ╰────
+  help: A `NodeList` is always truthy, even when it is empty.
