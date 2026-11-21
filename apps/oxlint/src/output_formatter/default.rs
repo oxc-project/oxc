@@ -24,6 +24,11 @@ impl InternalFormatter for DefaultOutputFormatter {
         Some(output)
     }
 
+    /// Rendered like any other diagnostic, without a source excerpt.
+    fn reports_config_warnings(&self) -> bool {
+        true
+    }
+
     fn lint_command_info(&self, lint_command_info: &super::LintCommandInfo) -> Option<String> {
         let mut output = lint_command_info.format_execution_summary();
 

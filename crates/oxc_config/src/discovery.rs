@@ -194,6 +194,11 @@ impl ConfigConflict {
         Self { dir, configs }
     }
 
+    /// Directory containing the conflicting config files.
+    pub fn dir(&self) -> &Path {
+        &self.dir
+    }
+
     fn message(&self) -> String {
         let mut config_names = self.config_names();
 
