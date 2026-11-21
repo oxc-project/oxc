@@ -197,7 +197,7 @@ if let Expression::BinaryExpression(e) = expr {
 
 ## Pull request guidance
 
-Follow the shared [PR guide](../../.agents/skills/pr-guide/SKILL.md) for titles and descriptions.
+Follow the shared [PR writing skill](../../.agents/skills/pr-writer/SKILL.md) for titles and descriptions.
 
 For the before-and-after example in the PR description, capture the outputs with the minifier example. Save the input outside the repository and run the example before making the change:
 
