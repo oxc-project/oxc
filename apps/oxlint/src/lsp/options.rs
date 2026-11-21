@@ -101,7 +101,10 @@ pub struct LintOptions {
     /// What kind of fixes to generate for code actions.
     #[schemars(with = "Option<LintFixKindFlag>")]
     pub fix_kind: LintFixKindFlag,
-    /// Customization for individual rules, allows to override the linter's diagnostics and autofix.
+    /// Customization for rules, allows to override the linter's diagnostics and autofix.
+    /// Keys may contain `*` to match any sequence of characters, such as `perfectionist/*`.
+    /// Each property uses its most specific matching key: exact names first, then patterns with
+    /// the most literal characters. Ties use the lexicographically last key.
     /// Example of lowering the severity of "no-unused-vars" rule to "hint" and disabling autofix for it:
     /// ```json
     /// {
@@ -124,6 +127,45 @@ pub struct RulesCustomization {
     pub rules: FxHashMap<String, RuleCustomization>,
 }
 
+impl RulesCustomization {
+    pub(super) fn get<T>(
+        &self,
+        rule_name: &str,
+        property: impl Fn(&RuleCustomization) -> Option<T>,
+    ) -> Option<T> {
+        self.rules.get(rule_name).and_then(&property).or_else(|| {
+            self.rules
+                .iter()
+                .filter_map(|(pattern, customization)| {
+                    let value = property(customization)?;
+                    let matches = if let Some(pattern) = pattern.strip_prefix("eslint/") {
+                        !rule_name.contains('/') && matches_rule_pattern(pattern, rule_name)
+                    } else {
+                        matches_rule_pattern(pattern, rule_name)
+                    };
+                    matches.then_some((pattern, value))
+                })
+                .max_by_key(|(pattern, _)| {
+                    (pattern.bytes().filter(|&byte| byte != b'*').count(), *pattern)
+                })
+                .map(|(_, value)| value)
+        })
+    }
+}
+
+fn matches_rule_pattern(pattern: &str, mut rule_name: &str) -> bool {
+    let mut parts = pattern.split('*');
+    let prefix = parts.next().unwrap_or_default();
+    let Some(rest) = rule_name.strip_prefix(prefix) else { return false };
+    rule_name = rest;
+    let Some(suffix) = parts.next_back() else { return rule_name.is_empty() };
+    for part in parts {
+        let Some(index) = rule_name.find(part) else { return false };
+        rule_name = &rule_name[index + part.len()..];
+    }
+    rule_name.ends_with(suffix)
+}
+
 impl<'de> Deserialize<'de> for RulesCustomization {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -140,7 +182,12 @@ impl<'de> Deserialize<'de> for RulesCustomization {
                 error!("failed to deserialize customization for rule {rule_name}, skipping.");
                 continue;
             };
-            rules.insert(normalize_rule_name(rule_name), customization);
+            let mut normalized = normalize_rule_name(rule_name);
+            // Preserve the ESLint namespace on patterns: `eslint/*` must not match plugin rules.
+            if rule_name.contains('*') && rule_name.contains('/') && !normalized.contains('/') {
+                normalized.insert_str(0, "eslint/");
+            }
+            rules.insert(normalized, customization);
         }
 
         Ok(Self { rules })
@@ -282,7 +329,76 @@ impl TryFrom<Value> for LintOptions {
 mod test {
     use serde_json::json;
 
-    use super::{LintOptions, RuleCustomizationSeverity, Run, UnusedDisableDirectives};
+    use super::{
+        LintOptions, RuleCustomizationSeverity, RulesCustomization, Run, UnusedDisableDirectives,
+        matches_rule_pattern,
+    };
+
+    #[test]
+    fn test_rule_patterns() {
+        for (pattern, rule, expected) in [
+            ("perfectionist/*", "perfectionist/sort-objects", true),
+            ("perfectionist/*", "unicorn/prefer-set-has", false),
+            ("*", "unicorn/prefer-set-has", true),
+            ("*unused*", "typescript/no-unused-vars", true),
+            ("no-*-vars", "no-unused-vars", true),
+            ("no-*-vars", "no-unused-expressions", false),
+            ("no-*", "no-", true),
+            ("no-unused-vars", "no-unused-vars-extra", false),
+            ("abc*bc", "abc", false),
+            ("*a*b*", "ba", false),
+            ("réact/*", "réact/rule", true),
+        ] {
+            assert_eq!(matches_rule_pattern(pattern, rule), expected, "{pattern}: {rule}");
+        }
+    }
+
+    #[test]
+    fn test_rule_pattern_precedence_and_aliases() {
+        let rules: RulesCustomization = serde_json::from_value(json!({
+            "*": { "severity": "hint", "autofix": false },
+            "perfectionist/*": { "severity": "warn" },
+            "perfectionist/sort-*": { "severity": "error" },
+            "perfectionist/sort-objects": { "autofix": true },
+            "@typescript-eslint/*": { "severity": "info" },
+            "eslint/no-*": { "severity": "off" },
+            "no-debugger": { "severity": "warn" }
+        }))
+        .unwrap();
+
+        for (rule, expected) in [
+            ("perfectionist/sort-objects", RuleCustomizationSeverity::Error),
+            ("perfectionist/sort-arrays", RuleCustomizationSeverity::Error),
+            ("typescript/no-unused-vars", RuleCustomizationSeverity::Info),
+            ("no-console", RuleCustomizationSeverity::Off),
+            ("no-debugger", RuleCustomizationSeverity::Warn),
+            ("react/jsx-key", RuleCustomizationSeverity::Hint),
+        ] {
+            assert_eq!(rules.get(rule, |c| c.severity.clone()), Some(expected), "{rule}");
+        }
+        assert_eq!(rules.get("perfectionist/sort-objects", |c| c.autofix), Some(true));
+        assert_eq!(rules.get("perfectionist/sort-arrays", |c| c.autofix), Some(false));
+    }
+
+    #[test]
+    fn test_eslint_rule_pattern_scope() {
+        let rules: RulesCustomization = serde_json::from_value(json!({
+            "eslint/*": { "autofix": false }
+        }))
+        .unwrap();
+        assert_eq!(rules.get("no-unused-vars", |c| c.autofix), Some(false));
+        assert_eq!(rules.get("typescript/no-unused-vars", |c| c.autofix), None);
+    }
+
+    #[test]
+    fn test_rule_pattern_ties_are_deterministic() {
+        let rules: RulesCustomization = serde_json::from_value(json!({
+            "no-*vars": { "autofix": false },
+            "no-un*rs": { "autofix": true }
+        }))
+        .unwrap();
+        assert_eq!(rules.get("no-unused-vars", |c| c.autofix), Some(true));
+    }
 
     #[test]
     fn test_valid_options_json() {

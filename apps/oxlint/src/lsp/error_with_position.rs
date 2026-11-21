@@ -47,7 +47,7 @@ pub enum FixedContentKind {
 impl RulesCustomization {
     fn get_severity_for_rule(&self, code: &OxcCode) -> Option<RuleCustomizationSeverity> {
         let lookup = get_full_rule_name(code)?;
-        self.rules.get(lookup.as_ref()).and_then(|customization| customization.severity.clone())
+        self.get(lookup.as_ref(), |customization| customization.severity.clone())
     }
 }
 
