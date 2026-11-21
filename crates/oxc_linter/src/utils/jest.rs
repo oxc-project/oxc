@@ -17,7 +17,7 @@ use oxc_str::CompactStr;
 pub use crate::utils::jest::parse_jest_fn::{
     ExpectError, KnownMemberExpressionParentKind, KnownMemberExpressionProperty,
     MemberExpressionElement, ParsedExpectFnCall, ParsedGeneralJestFnCall,
-    ParsedJestFnCall as ParsedJestFnCallNew, parse_jest_fn_call,
+    ParsedJestFnCall as ParsedJestFnCallNew, parse_jest_fn_call, validate_expect_type_of_call,
 };
 use crate::{LintContext, ast_util::get_symbol_id_of_variable};
 pub use padding_around_block::report_missing_padding_before_jest_block;
@@ -240,6 +240,14 @@ pub fn collect_possible_jest_call_node<'a, 'c>(
 pub fn iter_possible_jest_call_node<'a, 'c>(
     ctx: &'c LintContext<'a>,
 ) -> impl Iterator<Item = PossibleJestNode<'a, 'c>> + 'c {
+    iter_possible_jest_call_node_with_parentheses(ctx, false)
+}
+
+/// Optionally walk through parentheses around Vitest type assertions.
+pub fn iter_possible_jest_call_node_with_parentheses<'a, 'c>(
+    ctx: &'c LintContext<'a>,
+    follow_type_assertion_parentheses: bool,
+) -> impl Iterator<Item = PossibleJestNode<'a, 'c>> + 'c {
     let semantic = ctx.semantic();
     // Some people may write codes like below, we need lookup imported test function and global test function.
     // ```
@@ -259,6 +267,10 @@ pub fn iter_possible_jest_call_node<'a, 'c>(
     // get the longest valid chain of Jest Call Expression
     reference_id_with_original_list.flat_map(move |(reference_id, original)| {
         let mut id = semantic.scoping().get_reference(reference_id).node_id();
+        let follow_parentheses = follow_type_assertion_parentheses
+            && original.or_else(|| {
+                semantic.nodes().kind(id).as_identifier_reference().map(|ident| ident.name.as_str())
+            }) == Some("expectTypeOf");
         std::iter::from_fn(move || {
             loop {
                 let parent = semantic.nodes().parent_node(id);
@@ -273,7 +285,9 @@ pub fn iter_possible_jest_call_node<'a, 'c>(
                     AstKind::StaticMemberExpression(_)
                         | AstKind::TaggedTemplateExpression(_)
                         | AstKind::ComputedMemberExpression(_)
-                ) {
+                ) || (follow_parentheses
+                    && matches!(parent_kind, AstKind::ParenthesizedExpression(_)))
+                {
                     id = parent.id();
                 } else {
                     return None;
