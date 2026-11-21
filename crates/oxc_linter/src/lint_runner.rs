@@ -10,9 +10,9 @@ use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic};
 use oxc_span::{SourceType, Span};
 
 use crate::{
-    AllowWarnDeny, DisableDirectives, FixKind, Fixer, LintService, LintServiceOptions, Linter,
-    Message, OsFileSystem, RuleTimingStore, RuntimeFileSystem, TsGoLintState,
-    create_unused_directives_messages, suppression::DiffManager,
+    AllowWarnDeny, DisableDirectives, FixKind, Fixer, KnownRuleIds, LintService,
+    LintServiceOptions, Linter, Message, OsFileSystem, RuleTimingStore, RuntimeFileSystem,
+    TsGoLintState, create_unused_directives_messages, suppression::DiffManager,
 };
 
 /// Unified runner that orchestrates both regular (oxc) and type-aware (tsgolint) linting
@@ -91,6 +91,9 @@ impl DirectivesStore {
 
     /// Report unused disable directives, removing them according to `fix_kind`.
     ///
+    /// Unknown rule IDs in `oxlint-*` directives are reported as errors
+    /// ("Definition for rule '...' was not found") instead of unused directives.
+    ///
     /// Fixes are skipped for files that changed after their directives were collected
     /// (e.g. by other fixes), because the directive spans would be stale.
     ///
@@ -101,11 +104,13 @@ impl DirectivesStore {
         severity: AllowWarnDeny,
         fix_kind: FixKind,
         cwd: &Path,
+        known_rule_ids: &KnownRuleIds,
         tx_error: &DiagnosticSender,
     ) {
         let map = self.map.lock().expect("DirectivesStore mutex poisoned in report_unused");
         for (path, directives) in map.iter() {
-            let mut messages = create_unused_directives_messages(directives, severity, None);
+            let mut messages =
+                create_unused_directives_messages(directives, severity, None, Some(known_rule_ids));
             if messages.is_empty() {
                 continue;
             }
@@ -116,6 +121,7 @@ impl DirectivesStore {
                     directives,
                     severity,
                     Some((fix_kind, &source_text)),
+                    Some(known_rule_ids),
                 );
                 let source_type = SourceType::from_path(path)
                     .ok()
@@ -376,8 +382,22 @@ impl LintRunner {
         tx_error: &DiagnosticSender,
     ) {
         if let Some(severity) = severity {
-            self.directives_store.report_unused(severity, self.fix_kind, &self.cwd, tx_error);
+            self.directives_store.report_unused(
+                severity,
+                self.fix_kind,
+                &self.cwd,
+                self.lint_service.linter().known_rule_ids(),
+                tx_error,
+            );
         }
+    }
+
+    /// Rule IDs that `oxlint-*` disable directives can validly reference.
+    ///
+    /// Used to report unknown rule IDs in directives as errors, mirroring
+    /// ESLint's `Definition for rule '...' was not found`.
+    pub fn known_rule_ids(&self) -> &KnownRuleIds {
+        self.lint_service.linter().known_rule_ids()
     }
 
     /// Get the directives coordinator for external use

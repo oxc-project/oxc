@@ -6,7 +6,7 @@
 // Rule::from_configuration returns Result but documenting errors is not useful here.
 #![expect(clippy::missing_errors_doc)]
 
-use std::{path::Path, rc::Rc};
+use std::{path::Path, rc::Rc, sync::OnceLock};
 
 use oxc_allocator::{Allocator, AllocatorPool};
 use oxc_ast::ast_kind::AST_TYPE_MAX;
@@ -78,8 +78,8 @@ mod lint_runner;
 
 pub use crate::config::{normalize_rule_name, plugins::normalize_plugin_name};
 pub use crate::disable_directives::{
-    DirectivePrefix, DisableDirectives, DisableRuleComment, RuleCommentRule, RuleCommentType,
-    create_unused_directives_messages,
+    DirectivePrefix, DisableDirectives, DisableRuleComment, KnownRuleIds, RuleCommentRule,
+    RuleCommentType, create_unused_directives_messages,
 };
 pub use crate::{
     config::{
@@ -276,6 +276,9 @@ pub struct Linter {
     config: ConfigStore,
     external_linter: Option<ExternalLinter>,
     workspace_uri: Option<Box<str>>,
+    /// Rule IDs that `oxlint-*` disable directives can validly reference.
+    /// Lazily computed from the rule catalog and the external plugin store.
+    known_rule_ids: OnceLock<KnownRuleIds>,
 }
 
 impl Linter {
@@ -284,7 +287,23 @@ impl Linter {
         config: ConfigStore,
         external_linter: Option<ExternalLinter>,
     ) -> Self {
-        Self { options, config, external_linter, workspace_uri: None }
+        Self {
+            options,
+            config,
+            external_linter,
+            workspace_uri: None,
+            known_rule_ids: OnceLock::new(),
+        }
+    }
+
+    /// Rule IDs that `oxlint-*` disable directives can validly reference.
+    ///
+    /// Contains every rule known to oxlint (builtin rules from all plugins plus
+    /// external JS plugin rules), regardless of whether they are enabled by the
+    /// configuration. Used to report unknown rule IDs in directives as errors,
+    /// mirroring ESLint's `Definition for rule '...' was not found`.
+    pub fn known_rule_ids(&self) -> &KnownRuleIds {
+        self.known_rule_ids.get_or_init(|| KnownRuleIds::new(self.config.external_plugin_store()))
     }
 
     #[must_use]
@@ -510,7 +529,7 @@ impl Linter {
         {
             ctx_host.rewind_sub_hosts();
             loop {
-                ctx_host.report_unused_directives(severity);
+                ctx_host.report_unused_directives(severity, self.known_rule_ids());
 
                 if !ctx_host.next_sub_host() {
                     break;

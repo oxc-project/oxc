@@ -886,7 +886,12 @@ impl ServerLinter {
         if let Some(severity) = self.unused_directives_severity
             && let Some(directives) = directives
         {
-            messages.extend(create_unused_directives_report(&directives, severity, source_text));
+            messages.extend(create_unused_directives_report(
+                &directives,
+                severity,
+                source_text,
+                self.runner.known_rule_ids(),
+            ));
         }
         Ok(messages)
     }

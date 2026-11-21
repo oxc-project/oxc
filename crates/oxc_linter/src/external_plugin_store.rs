@@ -147,6 +147,11 @@ impl ExternalPluginStore {
         (&plugin.name, &external_rule.name)
     }
 
+    /// Names of all rules registered from external plugins.
+    pub fn rule_names(&self) -> impl Iterator<Item = &str> + '_ {
+        self.rules.iter().map(|rule| rule.name.as_str())
+    }
+
     pub(crate) fn resolve_rule_options(
         &self,
         options_id: ExternalOptionsId,

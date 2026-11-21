@@ -6,11 +6,12 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 use oxc_syntax::line_terminator::is_line_terminator;
 use rust_lapper::{Interval, Lapper};
-use rustc_hash::{FxBuildHasher, FxHashMap};
+use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
 use crate::{
     FixKind,
     fixer::{Fix, Message, PossibleFixes},
+    rules::RULES,
 };
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -434,7 +435,10 @@ impl DisableDirectives {
         &self.unused_enable_comments
     }
 
-    pub fn collect_unused_disable_comments(&self) -> Vec<DisableRuleComment> {
+    pub fn collect_unused_disable_comments(
+        &self,
+        known_rule_ids: Option<&KnownRuleIds>,
+    ) -> Vec<DisableRuleComment> {
         let used = self.used_disable_comments.borrow();
 
         self.intervals
@@ -462,7 +466,16 @@ impl DisableDirectives {
                             return None;
                         }
                         match &interval.val {
-                            DisabledRule::Single { rule_name, name_span, .. } => {
+                            DisabledRule::Single {
+                                directive_prefix, rule_name, name_span, ..
+                            } => {
+                                // Unknown rule IDs in `oxlint-*` directives are reported
+                                // separately as errors by `collect_unknown_rule_ids`,
+                                // so they are skipped here.
+                                if is_unknown_rule_id(*directive_prefix, rule_name, known_rule_ids)
+                                {
+                                    return None;
+                                }
                                 Some(RuleCommentRule {
                                     directive_prefix: interval.val.directive_prefix(),
                                     rule_name: rule_name.clone(),
@@ -499,6 +512,84 @@ impl DisableDirectives {
                 })
             })
             .collect()
+    }
+
+    /// Collect unused rule IDs from `oxlint-*` disable directives that do not match
+    /// any rule known to oxlint, as `(rule_id, name_span)` pairs in source order.
+    ///
+    /// These are reported as errors (`Definition for rule '...' was not found`),
+    /// mirroring ESLint, instead of being mistaken for unused suppressions.
+    ///
+    /// Only native `oxlint-*` directives are checked: `eslint-*` directives may
+    /// reference rules from ESLint plugins that oxlint does not implement.
+    pub fn collect_unknown_rule_ids(&self, known_rule_ids: &KnownRuleIds) -> Vec<(&str, Span)> {
+        let used = self.used_disable_comments.borrow();
+
+        self.intervals
+            .iter()
+            .filter_map(|interval| {
+                let DisabledRule::Single { directive_prefix, rule_name, name_span, .. } =
+                    &interval.val
+                else {
+                    return None;
+                };
+                if used.contains(&interval.val) {
+                    return None;
+                }
+                (*directive_prefix == DirectivePrefix::Oxlint
+                    && !known_rule_ids.contains(rule_name))
+                .then_some((rule_name.as_str(), *name_span))
+            })
+            .collect()
+    }
+}
+
+/// Whether the rule ID of a disable directive is unknown to oxlint.
+///
+/// Only native `oxlint-*` directives are checked: `eslint-*` directives may
+/// reference rules from ESLint plugins that oxlint does not implement.
+fn is_unknown_rule_id(
+    directive_prefix: DirectivePrefix,
+    rule_id: &str,
+    known_rule_ids: Option<&KnownRuleIds>,
+) -> bool {
+    directive_prefix == DirectivePrefix::Oxlint
+        && known_rule_ids.is_some_and(|known| !known.contains(rule_id))
+}
+
+/// Rule IDs that disable directives can validly reference.
+///
+/// Contains the names of every rule known to oxlint: all builtin rules (from
+/// every plugin) plus the rules of registered external (JS) plugins. A rule
+/// that is merely configured off is still included, mirroring ESLint, where a
+/// known rule ID in a disable directive is not an error even when the rule is
+/// disabled.
+///
+/// Lookup mirrors [`DisableDirectives::contains`]: plugin prefixes such as
+/// `typescript/` are stripped, so `typescript/no-explicit-any` and
+/// `no-explicit-any` resolve to the same rule ID.
+#[derive(Debug)]
+pub struct KnownRuleIds(FxHashSet<Box<str>>);
+
+impl KnownRuleIds {
+    #[must_use]
+    pub fn new(external_plugin_store: &crate::ExternalPluginStore) -> Self {
+        let mut ids: FxHashSet<Box<str>> =
+            FxHashSet::with_capacity_and_hasher(RULES.len() + 16, FxBuildHasher);
+        for rule in RULES.iter() {
+            ids.insert(rule.name().into());
+        }
+        for rule_name in external_plugin_store.rule_names() {
+            ids.insert(rule_name.into());
+        }
+        Self(ids)
+    }
+
+    /// Whether a rule ID from a disable directive refers to a rule known to oxlint.
+    #[must_use]
+    pub fn contains(&self, rule_id: &str) -> bool {
+        let rule_name = rule_id.rsplit_once('/').map_or(rule_id, |(_, rule_name)| rule_name);
+        self.0.contains(rule_name)
     }
 }
 
@@ -1417,10 +1508,16 @@ semi*/
 /// With `fix`, unused disable directives get a fix that removes them when the given
 /// [`FixKind`] allows it. Fixes are computed against the given source text, which must
 /// be the source the directives were built from.
+///
+/// With `known_rule_ids`, rule IDs in `oxlint-*` directives that do not match any
+/// rule known to oxlint are reported as errors (`Definition for rule '...' was not
+/// found`), mirroring ESLint, instead of as unused directives. Known-but-unused rule
+/// IDs keep the given `severity`.
 pub fn create_unused_directives_messages(
     directives: &DisableDirectives,
     severity: crate::AllowWarnDeny,
     fix: Option<(FixKind, &str)>,
+    known_rule_ids: Option<&KnownRuleIds>,
 ) -> Vec<Message> {
     let fix_message = "remove unused disable directive";
     let severity = if severity == crate::AllowWarnDeny::Deny {
@@ -1435,7 +1532,7 @@ pub fn create_unused_directives_messages(
     let mut messages = Vec::new();
 
     // Report unused disable comments
-    let unused_disable = directives.collect_unused_disable_comments();
+    let unused_disable = directives.collect_unused_disable_comments(known_rule_ids);
     for unused_comment in unused_disable {
         let span = unused_comment.span;
         let prefix = unused_comment.directive_prefix;
@@ -1475,6 +1572,19 @@ pub fn create_unused_directives_messages(
         }
     }
 
+    // Report rule IDs in `oxlint-*` directives that do not match any known rule,
+    // mirroring ESLint's `Definition for rule '...' was not found`.
+    // These are always errors, regardless of the unused-directive severity.
+    if let Some(known_rule_ids) = known_rule_ids {
+        for (rule_id, name_span) in directives.collect_unknown_rule_ids(known_rule_ids) {
+            messages.push(Message::new(
+                OxcDiagnostic::error(format!("Definition for rule '{rule_id}' was not found"))
+                    .with_label(name_span),
+                PossibleFixes::None,
+            ));
+        }
+    }
+
     // Report unused enable comments
     let unused_enable = directives.unused_enable_comments();
     for (directive_prefix, rule_name, span) in unused_enable {
@@ -1503,7 +1613,10 @@ mod tests {
     };
     use crate::fixer::{Fixer, Message, PossibleFixes};
 
-    use super::{DisableDirectives, DisableDirectivesBuilder};
+    use super::{
+        DisableDirectives, DisableDirectivesBuilder, KnownRuleIds,
+        create_unused_directives_messages,
+    };
 
     fn process_source<'a>(allocator: &'a Allocator, source_text: &'a str) -> Semantic<'a> {
         let source_type = SourceType::default();
@@ -1524,7 +1637,7 @@ mod tests {
                 let semantic = process_source(&allocator, &source_text);
                 let directives =
                     DisableDirectivesBuilder::new().build(&source_text, semantic.comments());
-                let unused_comments = directives.collect_unused_disable_comments();
+                let unused_comments = directives.collect_unused_disable_comments(None);
                 let fix = unused_comments[0].create_fix(&source_text);
                 let messages = vec![Message::new(
                     OxcDiagnostic::warn("Unused directive"),
@@ -1735,7 +1848,7 @@ mod tests {
                 )
             },
             |source_text, comments, directives| {
-                let unused = directives.collect_unused_disable_comments();
+                let unused = directives.collect_unused_disable_comments(None);
 
                 assert_eq!(unused.len(), 1);
 
@@ -1777,7 +1890,7 @@ mod tests {
                 )
             },
             |source_text, comments, directives| {
-                let unused = directives.collect_unused_disable_comments();
+                let unused = directives.collect_unused_disable_comments(None);
 
                 assert_eq!(unused.len(), 1);
 
@@ -1843,9 +1956,108 @@ mod tests {
                     is_next_line: false,
                 });
 
-                assert_eq!(directives.collect_unused_disable_comments(), []);
+                assert_eq!(directives.collect_unused_disable_comments(None), []);
             },
         );
+    }
+
+    fn known_rule_ids() -> KnownRuleIds {
+        KnownRuleIds::new(&crate::ExternalPluginStore::default())
+    }
+
+    #[test]
+    fn known_rule_ids_match_all_builtin_rules_with_or_without_plugin_prefix() {
+        let known_rule_ids = known_rule_ids();
+
+        // Builtin rules are known, with or without a plugin prefix, and even
+        // when they are not enabled by the configuration.
+        for rule_id in ["no-debugger", "no-console", "typescript/no-explicit-any"] {
+            assert!(known_rule_ids.contains(rule_id), "`{rule_id}` should be known");
+        }
+
+        // Unknown rule IDs are not known.
+        for rule_id in ["no-consoel", "typescript/no-consoel", "not-a-real-rule"] {
+            assert!(!known_rule_ids.contains(rule_id), "`{rule_id}` should not be known");
+        }
+    }
+
+    #[test]
+    fn known_rule_ids_include_external_plugin_rules() {
+        let mut external_plugin_store = crate::ExternalPluginStore::default();
+        external_plugin_store.register_plugin(
+            std::path::PathBuf::from("plugin.js"),
+            "test-plugin".to_string(),
+            0,
+            vec!["my-rule".to_string()],
+        );
+
+        let known_rule_ids = KnownRuleIds::new(&external_plugin_store);
+        assert!(known_rule_ids.contains("my-rule"));
+        assert!(known_rule_ids.contains("test-plugin/my-rule"));
+        assert!(!known_rule_ids.contains("my-other-rule"));
+    }
+
+    #[test]
+    fn unknown_rule_ids_in_oxlint_directives_are_reported_as_errors() {
+        let source_text = r"
+// oxlint-disable-next-line no-debugger
+debugger;
+// oxlint-disable-next-line no-consoel
+void 0;
+// eslint-disable-next-line no-consoel
+void 0;
+";
+        let allocator = Allocator::default();
+        let semantic = process_source(&allocator, source_text);
+        let comments = semantic.comments();
+        let directives = DisableDirectivesBuilder::new().build(semantic.source_text(), comments);
+
+        // Mark the first directive as used, the same way `DisableDirectives::contains`
+        // would while suppressing a `no-debugger` diagnostic.
+        let debugger_start = semantic.source_text().find("debugger;").unwrap();
+        #[expect(clippy::cast_possible_truncation)] // for `as u32`
+        let debugger_span = Span::sized(debugger_start as u32, "debugger;".len() as u32);
+        assert!(directives.contains("no-debugger", debugger_span));
+
+        let known_rule_ids = known_rule_ids();
+
+        // Only the unknown rule ID of the `oxlint-*` directive is collected;
+        // the equivalent `eslint-*` directive is not validated.
+        let unknown_rule_ids = directives.collect_unknown_rule_ids(&known_rule_ids);
+        assert_eq!(unknown_rule_ids.len(), 1);
+        assert_eq!(unknown_rule_ids[0].0, "no-consoel");
+
+        // Unknown rule IDs are skipped when collecting unused directives.
+        let unused = directives.collect_unused_disable_comments(Some(&known_rule_ids));
+        assert_eq!(unused.len(), 1);
+        assert_eq!(unused[0].directive_prefix, DirectivePrefix::Eslint);
+
+        // Without the known rule IDs, the unknown rule ID would be mistaken for
+        // an unused suppression.
+        assert_eq!(directives.collect_unused_disable_comments(None).len(), 2);
+
+        let messages = create_unused_directives_messages(
+            &directives,
+            crate::AllowWarnDeny::Warn,
+            None,
+            Some(&known_rule_ids),
+        );
+        assert_eq!(messages.len(), 2);
+
+        // The unknown rule ID is an error, regardless of the unused-directive severity.
+        let unknown_message = messages
+            .iter()
+            .find(|message| message.error.message.contains("no-consoel"))
+            .expect("unknown rule ID should be reported");
+        assert_eq!(unknown_message.error.severity, oxc_diagnostics::Severity::Error);
+        assert_eq!(unknown_message.error.message, "Definition for rule 'no-consoel' was not found");
+
+        // The unused `eslint-*` directive is still a warning.
+        let unused_message = messages
+            .iter()
+            .find(|message| message.error.message.starts_with("Unused eslint-disable"))
+            .expect("unused eslint directive should be reported");
+        assert_eq!(unused_message.error.severity, oxc_diagnostics::Severity::Warning);
     }
 
     #[test]
@@ -1929,7 +2141,7 @@ mod tests {
         let x_span = Span::sized(source_text.find("const x").unwrap() as u32, 5);
         assert!(directives.contains("no-bitwise", x_span));
 
-        let unused = directives.collect_unused_disable_comments();
+        let unused = directives.collect_unused_disable_comments(None);
         assert_eq!(unused.len(), 1);
 
         let RuleCommentType::Single(rules) = &unused[0].r#type else {
@@ -2104,7 +2316,7 @@ function test() {
         let directives =
             DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
 
-        let unused = directives.collect_unused_disable_comments();
+        let unused = directives.collect_unused_disable_comments(None);
         assert_eq!(unused.len(), 1);
 
         // span must be the outer comment span only (no line extension).
@@ -2130,7 +2342,7 @@ function test() {
         let directives =
             DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
 
-        let unused = directives.collect_unused_disable_comments();
+        let unused = directives.collect_unused_disable_comments(None);
         assert_eq!(unused.len(), 1);
 
         // span must be the outer comment span only.
@@ -2156,7 +2368,7 @@ function test() {
         let directives =
             DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
 
-        let unused = directives.collect_unused_disable_comments();
+        let unused = directives.collect_unused_disable_comments(None);
         assert_eq!(unused.len(), 1);
 
         // fix_span deletes only the comment; code on the same line is preserved.
@@ -2179,7 +2391,7 @@ function test() {
         let directives =
             DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
 
-        let unused = directives.collect_unused_disable_comments();
+        let unused = directives.collect_unused_disable_comments(None);
         assert_eq!(unused.len(), 1);
 
         // span must be the outer comment span (starts at `//`, not at the indentation).
