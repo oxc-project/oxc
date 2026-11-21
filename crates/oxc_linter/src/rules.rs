@@ -643,6 +643,7 @@ pub(crate) mod unicorn {
     pub mod prefer_at;
     pub mod prefer_bigint_literals;
     pub mod prefer_blob_reading_methods;
+    pub mod prefer_boolean_return;
     pub mod prefer_class_fields;
     pub mod prefer_classlist_toggle;
     pub mod prefer_code_point;

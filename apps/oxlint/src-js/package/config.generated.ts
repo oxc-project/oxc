@@ -1619,6 +1619,7 @@ export interface DummyRuleMap {
   "unicorn/prefer-at"?: RuleNoConfig | [AllowWarnDeny, PreferAtConfig];
   "unicorn/prefer-bigint-literals"?: RuleNoConfig;
   "unicorn/prefer-blob-reading-methods"?: RuleNoConfig;
+  "unicorn/prefer-boolean-return"?: RuleNoConfig;
   "unicorn/prefer-class-fields"?: RuleNoConfig;
   "unicorn/prefer-classlist-toggle"?: RuleNoConfig;
   "unicorn/prefer-code-point"?: RuleNoConfig;

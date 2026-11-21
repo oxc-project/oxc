@@ -3681,6 +3681,12 @@ impl RuleRunner for crate::rules::unicorn::prefer_blob_reading_methods::PreferBl
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::unicorn::prefer_boolean_return::PreferBooleanReturn {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::IfStatement]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner for crate::rules::unicorn::prefer_class_fields::PreferClassFields {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::Class]));
