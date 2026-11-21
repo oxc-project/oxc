@@ -73,7 +73,9 @@ pub struct SourcemapBuilder<'a> {
     original_source: &'a str,
     names: Vec<&'a str>,
     names_map: FxHashMap<&'a str, u32>,
-    tokens: Vec<oxc_sourcemap::Token>,
+    mappings: oxc_sourcemap::Mappings,
+    /// The last token, not yet in `mappings`: a later mapping at the same position can replace it.
+    last_token: Option<oxc_sourcemap::Token>,
     last_generated_update: usize,
     last_position: Option<u32>,
     last_token_has_name: bool,
@@ -96,7 +98,8 @@ impl<'a> SourcemapBuilder<'a> {
             original_source: source_text,
             names: Vec::with_capacity(source_len / 64),
             names_map: FxHashMap::default(),
-            tokens: Vec::with_capacity(source_len / 4),
+            mappings: oxc_sourcemap::Mappings::with_capacity(source_len / 4),
+            last_token: None,
             last_generated_update: 0,
             last_position: None,
             last_token_has_name: false,
@@ -107,15 +110,18 @@ impl<'a> SourcemapBuilder<'a> {
         }
     }
 
-    pub fn into_sourcemap(self) -> oxc_sourcemap::SourceMap<'a> {
+    pub fn into_sourcemap(mut self) -> oxc_sourcemap::SourceMap<'a> {
+        if let Some(token) = self.last_token.take() {
+            self.mappings.push(token);
+        }
+        self.mappings.shrink_to_fit();
         oxc_sourcemap::SourceMap::from_parts(oxc_sourcemap::SourceMapParts {
             file: None,
             names: self.names.into_iter().map(Cow::Borrowed).collect(),
             source_root: None,
             sources: vec![Some(Cow::Owned(self.source_name))],
             source_contents: vec![Some(Cow::Borrowed(self.original_source))],
-            tokens: self.tokens.into_boxed_slice(),
-            token_chunks: None,
+            mappings: self.mappings,
             ignore_list: None,
             debug_id: None,
         })
@@ -162,7 +168,7 @@ impl<'a> SourcemapBuilder<'a> {
                 && !self.last_token_has_name
             {
                 let name_id = self.add_name(name);
-                let token = self.tokens.last_mut().unwrap();
+                let token = self.last_token.as_mut().unwrap();
                 *token = oxc_sourcemap::Token::new(
                     token.get_dst_line(),
                     token.get_dst_col(),
@@ -190,14 +196,18 @@ impl<'a> SourcemapBuilder<'a> {
         // (for example a class member that starts at a removed `public` modifier, or a removed `(`).
         // Source map consumers use the first mapping at a generated position,
         // so replace it with this mapping, which is for the token that is printed here.
-        match self.tokens.last_mut() {
+        match &mut self.last_token {
             Some(last)
                 if last.get_dst_line() == self.generated_line
                     && last.get_dst_col() == self.generated_column =>
             {
                 *last = token;
             }
-            _ => self.tokens.push(token),
+            last => {
+                if let Some(previous) = last.replace(token) {
+                    self.mappings.push(previous);
+                }
+            }
         }
         self.last_position = Some(position);
         self.last_token_has_name = name_id.is_some();
@@ -880,14 +890,16 @@ mod test {
         let sm = builder.into_sourcemap();
         // The name `a` not change.
         assert_eq!(
-            sm.get_source_view_token(0_u32)
+            sm.get_source_view_tokens()
+                .next()
                 .as_ref()
                 .and_then(oxc_sourcemap::SourceViewToken::get_name),
             None
         );
         // The name `b` -> `c`, save `b` to token.
         assert_eq!(
-            sm.get_source_view_token(1_u32)
+            sm.get_source_view_tokens()
+                .nth(1)
                 .as_ref()
                 .and_then(oxc_sourcemap::SourceViewToken::get_name),
             Some("b")
@@ -931,7 +943,8 @@ mod test {
         builder.add_source_mapping_for_name(output, Span::new(0, 4), "foo");
         let sm = builder.into_sourcemap();
         assert_eq!(
-            sm.get_source_view_token(0_u32)
+            sm.get_source_view_tokens()
+                .next()
                 .as_ref()
                 .and_then(oxc_sourcemap::SourceViewToken::get_name),
             Some("#foo")
@@ -946,14 +959,16 @@ mod test {
         let sm = builder.into_sourcemap();
         // The name `#a` not change.
         assert_eq!(
-            sm.get_source_view_token(0_u32)
+            sm.get_source_view_tokens()
+                .next()
                 .as_ref()
                 .and_then(oxc_sourcemap::SourceViewToken::get_name),
             None
         );
         // The name `#b` -> `#c`, save `#b` to token, `#` included.
         assert_eq!(
-            sm.get_source_view_token(1_u32)
+            sm.get_source_view_tokens()
+                .nth(1)
                 .as_ref()
                 .and_then(oxc_sourcemap::SourceViewToken::get_name),
             Some("#b")
@@ -969,7 +984,8 @@ mod test {
         builder.add_source_mapping_for_private_name(output, Span::new(0, 4), "foo");
         let sm = builder.into_sourcemap();
         assert_eq!(
-            sm.get_source_view_token(0_u32)
+            sm.get_source_view_tokens()
+                .next()
                 .as_ref()
                 .and_then(oxc_sourcemap::SourceViewToken::get_name),
             Some("ffoo")
