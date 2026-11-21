@@ -93,6 +93,8 @@ Arguments:
   Apply auto-fixable suggestions. May change program behavior.
 - **`    --fix-dangerously`** &mdash; 
   Apply dangerous fixes and suggestions
+- **`    --hide-fixable`** &mdash; 
+  Hide diagnostics with a safe automatic fix, without modifying files. Cannot be combined with fix flags. Suggestions and dangerous fixes are still reported.
 
 
 
