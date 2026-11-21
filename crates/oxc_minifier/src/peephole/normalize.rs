@@ -390,7 +390,7 @@ impl<'a> Normalize {
         };
         if let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id() {
             // Apply `/* #__NO_SIDE_EFFECTS__ */`
-            if ctx.scoping().no_side_effects().contains(&symbol_id) {
+            if ctx.state.has_no_side_effects(ctx.scoping(), symbol_id) {
                 call_expr.pure = true;
             }
         }
@@ -410,7 +410,7 @@ impl<'a> Normalize {
         };
         if let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id() {
             // Apply `/* #__NO_SIDE_EFFECTS__ */`
-            if ctx.scoping().no_side_effects().contains(&symbol_id) {
+            if ctx.state.has_no_side_effects(ctx.scoping(), symbol_id) {
                 new_expr.pure = true;
             }
             return;

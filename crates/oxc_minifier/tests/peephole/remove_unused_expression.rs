@@ -700,7 +700,7 @@ fn no_side_effects() {
         // let input = format!("{source_text}; html``");
         // test(&input, source_text);
     }
-    check("/* @__NO_SIDE_EFFECTS__ */ function f() {}");
+    check("/* @__NO_SIDE_EFFECTS__ */ function f() { sideEffect() }");
     check("/* @__NO_SIDE_EFFECTS__ */ export function f() {}");
     check("export /*@__NO_SIDE_EFFECTS__*/ function f() { sideEffect() }");
     check("export /* @__NO_SIDE_EFFECTS__ */ async function f() { sideEffect() }");
@@ -708,7 +708,7 @@ fn no_side_effects() {
     check("export /* @__NO_SIDE_EFFECTS__ */ async function* f() { sideEffect() }");
     check("/* @__NO_SIDE_EFFECTS__ */ export default function f() {}");
     check("export default /* @__NO_SIDE_EFFECTS__ */ function f() {}");
-    check("const f = /* @__NO_SIDE_EFFECTS__ */ function() {}");
+    check("const f = /* @__NO_SIDE_EFFECTS__ */ function() { sideEffect() }");
     check("export const f = /* @__NO_SIDE_EFFECTS__ */ function() {}");
     check("/* @__NO_SIDE_EFFECTS__ */ const f = function() {}");
     check("/* @__NO_SIDE_EFFECTS__ */ export const f = function() {}");
@@ -716,6 +716,23 @@ fn no_side_effects() {
     check("export const f = /* @__NO_SIDE_EFFECTS__ */ () => {}");
     check("/* @__NO_SIDE_EFFECTS__ */ const f = () => {}");
     check("/* @__NO_SIDE_EFFECTS__ */ export const f = () => {}");
+}
+
+#[test]
+fn no_side_effects_reassigned_function() {
+    test_same("/* @__NO_SIDE_EFFECTS__ */ function f() {} f = () => sideEffect(), f()");
+}
+
+#[test]
+fn no_side_effects_reassigned_arrow() {
+    test_same("let f = /* @__NO_SIDE_EFFECTS__ */ () => {}; f = () => sideEffect(), f()");
+}
+
+#[test]
+fn no_side_effects_reassigned_constructor() {
+    test_same(
+        "/* @__NO_SIDE_EFFECTS__ */ function F() {} F = function() { sideEffect() }, new F()",
+    );
 }
 
 #[test]

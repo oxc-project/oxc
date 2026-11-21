@@ -107,6 +107,9 @@ pub struct MinifierState<'a> {
     /// reachability data indexed by semantic symbols.
     pub(crate) symbols: SymbolState<'a>,
 
+    /// Annotated symbols with writes in the input program.
+    reassigned_no_side_effects: FxHashSet<SymbolId>,
+
     /// Private-name usage scoped by nested classes. This tracks `#name`
     /// strings, not semantic `SymbolId`s, so it deliberately stays outside
     /// `SymbolState`.
@@ -130,9 +133,16 @@ impl<'a> MinifierState<'a> {
         allocator: &'a Allocator,
     ) -> Self {
         let symbols = SymbolState::new(source_type, &options, scoping, allocator);
+        let reassigned_no_side_effects = scoping
+            .no_side_effects()
+            .iter()
+            .copied()
+            .filter(|&symbol_id| scoping.symbol_is_mutated(symbol_id))
+            .collect();
         Self {
             config: CompressionConfig { source_type, options, mode },
             symbols,
+            reassigned_no_side_effects,
             private_member_usage: PrivateMemberUsageStack::new(),
             body_frames: NonEmptyStack::new(BodyFrame {
                 scope_id: scoping.root_scope_id(),
@@ -141,6 +151,11 @@ impl<'a> MinifierState<'a> {
             }),
             pass_changes: PassChanges::new(scoping.references_len(), allocator),
         }
+    }
+
+    pub(crate) fn has_no_side_effects(&self, scoping: &Scoping, symbol_id: SymbolId) -> bool {
+        scoping.no_side_effects().contains(&symbol_id)
+            && !self.reassigned_no_side_effects.contains(&symbol_id)
     }
 
     /// Whether `Normalize`'s member-write scan should seed persistent metadata,
