@@ -1,4 +1,4 @@
-var _prop2, _prop3;
+let _prop2, _prop3;
 const prop = "foo";
 const _prop = "bar";
 export class Foo {
@@ -35,3 +35,4 @@ babelHelpers.decorate([property()], Foo.prototype, "prop", null);
 babelHelpers.decorate([property()], Foo.prototype, "_prop", null);
 babelHelpers.decorate([property()], Foo.prototype, _prop2, null);
 babelHelpers.decorate([property()], Foo.prototype, _prop3, null);
+

@@ -48,7 +48,7 @@ mod metadata;
 use std::{borrow::Cow, cell::Cell, mem};
 
 use oxc_allocator::{
-    Address, ArenaVec, CloneIn, GetAddress, GetAllocator, TakeIn, UnstableAddress,
+    Address, ArenaBox, ArenaVec, CloneIn, GetAddress, GetAllocator, TakeIn, UnstableAddress,
 };
 use oxc_ast::{StaticPropertyName, ast::*};
 use oxc_ast_visit::{VisitJs, VisitMut, walk_js};
@@ -401,6 +401,10 @@ impl<'a> LegacyDecorator<'a> {
             return;
         }
 
+        if !Self::has_member_decorators(&class.body) {
+            return;
+        }
+
         let mut instance_calls = vec![];
         let mut static_calls = vec![];
         let mut private_name_detector = PrivateNameDetector::new(&class.body);
@@ -415,17 +419,8 @@ impl<'a> LegacyDecorator<'a> {
                     }
                     let decorators = prop.decorators.take_in(ctx);
                     private_name_detector.visit_decorators(&decorators);
-                    let metadata = self.emit_decorator_metadata.then(|| {
-                        self.metadata
-                            .create_design_type_metadata(prop.type_annotation.as_ref(), ctx)
-                    });
-                    let decorators = Self::create_decorations_array(
-                        decorators
-                            .into_iter()
-                            .map(|decorator| decorator.expression)
-                            .chain(metadata),
-                        ctx,
-                    );
+                    let decorators =
+                        self.field_decorations(decorators, prop.type_annotation.as_ref(), ctx);
                     // `void 0` tells `_decorate` to invoke `Object.defineProperty` directly.
                     let descriptor = Expression::new_void_0(SPAN, ctx);
                     // TypeScript erases `declare` and abstract fields, and with them a computed
@@ -434,6 +429,20 @@ impl<'a> LegacyDecorator<'a> {
                     let erased = prop.declare
                         || prop.r#type == PropertyDefinitionType::TSAbstractPropertyDefinition;
                     (prop.r#static, &mut prop.key, erased, descriptor, decorators)
+                }
+                // Other auto-accessors are lowered to getters and setters on class entry, so these
+                // are abstract ones, which TypeScript erases. Like TypeScript, decorate them as
+                // abstract fields.
+                ClassElement::AccessorProperty(accessor) => {
+                    if accessor.decorators.is_empty() {
+                        continue;
+                    }
+                    let decorators = accessor.decorators.take_in(ctx);
+                    private_name_detector.visit_decorators(&decorators);
+                    let decorators =
+                        self.field_decorations(decorators, accessor.type_annotation.as_ref(), ctx);
+                    let descriptor = Expression::new_void_0(SPAN, ctx);
+                    (accessor.r#static, &mut accessor.key, true, descriptor, decorators)
                 }
                 ClassElement::MethodDefinition(method) => {
                     // TypeScript erases methods without a body, such as overloads.
@@ -505,6 +514,38 @@ impl<'a> LegacyDecorator<'a> {
                 .decorators
                 .extend(instance_calls.into_iter().map(|call| Decorator::new(SPAN, call, ctx)));
         }
+    }
+
+    /// Whether a member decorated on class entry (see [`Self::transform_member_decorators`]) has
+    /// decorators, or a method has decorated parameters.
+    fn has_member_decorators(body: &ClassBody<'a>) -> bool {
+        body.body.iter().any(|element| match element {
+            ClassElement::PropertyDefinition(prop) => !prop.decorators.is_empty(),
+            ClassElement::AccessorProperty(accessor) => !accessor.decorators.is_empty(),
+            ClassElement::MethodDefinition(method) => {
+                !method.kind.is_constructor()
+                    && !method.value.is_typescript_syntax()
+                    && (!method.decorators.is_empty()
+                        || method.value.params.items.iter().any(|p| !p.decorators.is_empty()))
+            }
+            ClassElement::StaticBlock(_) | ClassElement::TSIndexSignature(_) => false,
+        })
+    }
+
+    /// The decorations array of a field: its decorators, followed by its `design:type` metadata.
+    fn field_decorations(
+        &mut self,
+        decorators: ArenaVec<'a, Decorator<'a>>,
+        type_annotation: Option<&ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let metadata = self
+            .emit_decorator_metadata
+            .then(|| self.metadata.create_design_type_metadata(type_annotation, ctx));
+        Self::create_decorations_array(
+            decorators.into_iter().map(|decorator| decorator.expression).chain(metadata),
+            ctx,
+        )
     }
 
     /// Drop the decorators of class members, except the constructor's parameters, which are

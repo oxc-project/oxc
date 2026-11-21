@@ -2,6 +2,7 @@ use rustc_hash::FxHashSet;
 
 use oxc_allocator::{ArenaVec, CloneIn, GetAllocator, ReplaceWith, TakeIn};
 use oxc_ast::ast::*;
+use oxc_ast_visit::VisitJs;
 use oxc_semantic::{ScopeFlags, ScopeId};
 use oxc_span::{SPAN, Span};
 use oxc_str::Ident;
@@ -406,30 +407,74 @@ impl<'a> TypeScript<'a> {
 
     /// Remove fields without initializers, as TypeScript erases them.
     ///
-    /// Decorated fields stay for a downstream transform. Legacy decorators take the decorators off
-    /// fields before this runs, so those fields are removed.
+    /// Decorated fields stay for a downstream transform. A field whose computed key may have side
+    /// effects also stays, so the key is still evaluated.
+    ///
+    /// Legacy decorators take the decorators off fields before this runs, so those fields are
+    /// removed too. Their computed keys were rewritten to temp var assignments (`[_a = a()]`),
+    /// which the decorations read after the class, so they must still be evaluated where they
+    /// were: they move into the next computed key in the class, or, if there is none, into a static
+    /// block at the start of the class, which runs after all keys and before any static
+    /// initializer. `class C { [_a = a()]: T; [b()] = 1 }` -> `class C { [(_a = a(), b())] = 1 }`
     pub(super) fn remove_uninitialized_class_fields(
         &self,
         class: &mut Class<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         if !self.remove_class_fields_without_initializer {
             return;
         }
 
-        class.body.body.retain(|element| {
+        let mut pending_keys = Vec::new();
+        class.body.body.retain_mut(|element| {
             if let ClassElement::PropertyDefinition(prop) = element
                 && prop.value.is_none()
                 && prop.decorators.is_empty()
                 && !prop.key.is_private_identifier()
             {
-                if let Some(key) = prop.key.as_expression() {
-                    return key_needs_temp_var(key, ctx);
+                if let Some(key) = prop.key.as_expression_mut() {
+                    if matches!(key, Expression::AssignmentExpression(assignment) if assignment.span.is_empty())
+                    {
+                        // A temp var assignment created by legacy decorators.
+                        pending_keys.push(key.take_in(ctx));
+                    } else if key_needs_temp_var(key, ctx) {
+                        Self::convert_computed_key(&mut prop.key, &mut pending_keys, ctx);
+                        return true;
+                    } else {
+                        // The key is erased with the field.
+                        KeyReferenceRemover { ctx }.visit_expression(key);
+                    }
                 }
                 return false;
             }
+            let key = match element {
+                ClassElement::PropertyDefinition(prop) => &mut prop.key,
+                ClassElement::MethodDefinition(method) => &mut method.key,
+                ClassElement::AccessorProperty(accessor) => &mut accessor.key,
+                ClassElement::StaticBlock(_) | ClassElement::TSIndexSignature(_) => return true,
+            };
+            Self::convert_computed_key(key, &mut pending_keys, ctx);
             true
         });
+
+        if !pending_keys.is_empty() {
+            let expression = if pending_keys.len() == 1 {
+                pending_keys.pop().unwrap()
+            } else {
+                Expression::new_sequence_expression(
+                    SPAN,
+                    ArenaVec::from_iter_in(pending_keys, ctx),
+                    ctx,
+                )
+            };
+            let statement = Statement::new_expression_statement(SPAN, expression, ctx);
+            let block = Self::create_class_static_block(
+                ArenaVec::from_value_in(statement, ctx),
+                class.scope_id(),
+                ctx,
+            );
+            class.body.body.insert(0, block);
+        }
     }
 
     /// Transform constructor parameters that include modifier to `this` assignments and
@@ -697,5 +742,16 @@ impl<'a> TypeScript<'a> {
         );
 
         ClassElement::new_static_block_with_scope_id(SPAN, body, scope_id, ctx)
+    }
+}
+
+/// Visitor to delete the references in an expression that is erased.
+struct KeyReferenceRemover<'a, 'c> {
+    ctx: &'c mut TraverseCtx<'a>,
+}
+
+impl<'a> VisitJs<'a> for KeyReferenceRemover<'a, '_> {
+    fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
+        self.ctx.delete_reference_for_identifier(ident);
     }
 }

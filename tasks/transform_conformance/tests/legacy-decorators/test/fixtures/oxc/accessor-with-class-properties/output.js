@@ -1,4 +1,4 @@
-var _a;
+let _a;
 var _a_accessor_storage = /* @__PURE__ */ new WeakMap();
 var _c_accessor_storage = /* @__PURE__ */ new WeakMap();
 var _a_computed_accessor_storage = /* @__PURE__ */ new WeakMap();
