@@ -56,7 +56,7 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonObject<'a, '_> {
             write_separated(f, &spans, trailing, self.object.span.end, |i, f| {
                 let property = &self.object.properties[i];
                 match property {
-                    ObjectPropertyKind::ObjectProperty(prop) => {
+                    ObjectPropertyKind::KeyValueProperty(prop) => {
                         if is_suppressed_before(f, prop.span.start) {
                             write!(f, FormatSuppressedNode(prop.span));
                         } else {
@@ -70,8 +70,10 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonObject<'a, '_> {
                             FmtJsonValue { expression: &prop.value }.fmt(f);
                         }
                     }
-                    ObjectPropertyKind::SpreadProperty(spread) => {
-                        write!(f, FormatInvalidJson(spread.span));
+                    ObjectPropertyKind::ShorthandProperty(_)
+                    | ObjectPropertyKind::MethodProperty(_)
+                    | ObjectPropertyKind::SpreadProperty(_) => {
+                        write!(f, FormatInvalidJson(property.span()));
                     }
                 }
             });
@@ -247,7 +249,7 @@ fn json5_consistent_force_quote(object: &ObjectExpression<'_>, f: &JsonFormatter
     object.properties.iter().any(|property| {
         matches!(
             property,
-            ObjectPropertyKind::ObjectProperty(prop)
+            ObjectPropertyKind::KeyValueProperty(prop)
                 if matches!(&prop.key, PropertyKey::StaticStringLiteral(lit) if json5_unquoted_key(lit).is_none())
         )
     })

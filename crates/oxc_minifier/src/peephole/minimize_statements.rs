@@ -1465,9 +1465,12 @@ impl<'a> PeepholeOptimizations {
                 // in particular before a side-effecting replacement such as an
                 // `await` — can surface a `ReferenceError` that the original order
                 // avoids. https://github.com/rolldown/rolldown/issues/9959
-                if !Self::identifier_read_blocks_reorder(id, ctx) {
-                    return None;
-                }
+                return Self::substitute_single_use_symbol_past_identifier(
+                    id,
+                    replacement,
+                    replacement_has_side_effect,
+                    ctx,
+                );
             }
             Expression::AwaitExpression(await_expr) => {
                 if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
@@ -1869,7 +1872,7 @@ impl<'a> PeepholeOptimizations {
             Expression::ObjectExpression(obj_expr) => {
                 for prop in &mut obj_expr.properties {
                     match prop {
-                        ObjectPropertyKind::ObjectProperty(prop) => {
+                        ObjectPropertyKind::KeyValueProperty(prop) => {
                             if prop.key.is_computed() {
                                 if let Some(changed) =
                                     Self::substitute_single_use_symbol_in_expression(
@@ -1893,17 +1896,49 @@ impl<'a> PeepholeOptimizations {
                                 replacement_has_side_effect,
                                 ctx,
                             ) {
-                                if prop.shorthand && prop.key.is_specific_id("__proto__") {
-                                    // { __proto__ } -> { ['__proto__']: value }
-                                    prop.key = PropertyKey::new_string_literal(
-                                        prop.key.span(),
-                                        "__proto__",
-                                        None,
-                                        ctx,
-                                    );
-                                }
-                                prop.shorthand = false;
                                 return Some(changed);
+                            }
+                        }
+                        ObjectPropertyKind::ShorthandProperty(shorthand) => {
+                            if shorthand.value.name == search_for {
+                                let target_span = shorthand.value.span;
+                                // Preserve the span of the target identifier so that comments
+                                // attached to it remain correctly associated with the replacement.
+                                let mut value = replacement.take_in(ctx);
+                                *value.span_mut() = target_span;
+                                let new_prop =
+                                    ObjectPropertyKind::new_key_value_property_from_shorthand(
+                                        shorthand, value, ctx,
+                                    );
+                                ctx.replace_object_property_kind(prop, new_prop);
+                                return Some(true);
+                            }
+                            if let Some(changed) =
+                                Self::substitute_single_use_symbol_past_identifier(
+                                    &shorthand.value,
+                                    replacement,
+                                    replacement_has_side_effect,
+                                    ctx,
+                                )
+                            {
+                                return Some(changed);
+                            }
+                        }
+                        ObjectPropertyKind::MethodProperty(prop) => {
+                            if prop.key.is_computed() {
+                                if let Some(changed) =
+                                    Self::substitute_single_use_symbol_in_expression(
+                                        prop.key.to_expression_mut(),
+                                        search_for,
+                                        replacement,
+                                        replacement_has_side_effect,
+                                        ctx,
+                                    )
+                                {
+                                    return Some(changed);
+                                }
+                                // Stop now because computed keys have side effects
+                                return Some(false);
                             }
                         }
                         ObjectPropertyKind::SpreadProperty(prop) => {
@@ -2018,6 +2053,26 @@ impl<'a> PeepholeOptimizations {
         }
 
         // Otherwise we should stop trying to substitute past this point
+        Some(false)
+    }
+
+    /// [`Self::substitute_single_use_symbol_in_expression`] for an identifier that is not the
+    /// symbol being substituted.
+    fn substitute_single_use_symbol_past_identifier(
+        id: &IdentifierReference<'a>,
+        replacement: &Expression<'a>,
+        replacement_has_side_effect: bool,
+        ctx: &TraverseCtx<'a>,
+    ) -> Option<bool> {
+        if !Self::identifier_read_blocks_reorder(id, ctx) {
+            return None;
+        }
+        if !replacement_has_side_effect && !id.may_have_side_effects(ctx) {
+            return None;
+        }
+        if replacement.is_literal_value(true, ctx) || id.is_literal_value(true, ctx) {
+            return None;
+        }
         Some(false)
     }
 

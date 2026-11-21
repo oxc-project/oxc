@@ -2,13 +2,14 @@ use oxc_ast::{
     AstKind,
     ast::{
         ArrayExpressionElement, AssignmentTarget, AssignmentTargetMaybeDefault,
-        AssignmentTargetProperty, Expression, MemberExpression, ObjectProperty, ObjectPropertyKind,
+        AssignmentTargetProperty, Expression, MemberExpression, ObjectPropertyKind,
         SimpleAssignmentTarget, match_assignment_target, match_simple_assignment_target,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::Ident;
 use oxc_syntax::operator::AssignmentOperator;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -138,13 +139,10 @@ impl NoSelfAssign {
         match left {
             match_simple_assignment_target!(AssignmentTarget) => {
                 let simple_assignment_target = left.to_simple_assignment_target();
-                if let Expression::Identifier(id2) = right.without_parentheses() {
-                    let self_assign = matches!(simple_assignment_target.get_expression(), Some(Expression::Identifier(id1)) if id1.name == id2.name)
-                        || matches!(simple_assignment_target, SimpleAssignmentTarget::AssignmentTargetIdentifier(id1) if id1.name == id2.name);
-
-                    if self_assign {
-                        ctx.diagnostic(no_self_assign_diagnostic(right.span()));
-                    }
+                if let Expression::Identifier(id2) = right.without_parentheses()
+                    && is_identifier_target_named(simple_assignment_target, id2.name)
+                {
+                    ctx.diagnostic(no_self_assign_diagnostic(right.span()));
                 }
 
                 let Some(member_target) = simple_assignment_target.as_member_expression() else {
@@ -289,19 +287,23 @@ impl NoSelfAssign {
             AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(id1)
                 if id1.init.is_none() =>
             {
-                let ObjectPropertyKind::ObjectProperty(obj_prop) = right else {
-                    return;
+                let name = id1.binding.name;
+                let is_self_assignment = match right {
+                    ObjectPropertyKind::KeyValueProperty(prop) => {
+                        prop.key.is_specific_static_name(name.as_str())
+                            && matches!(
+                                prop.value.without_parentheses(),
+                                Expression::Identifier(id2) if id2.name == name
+                            )
+                    }
+                    ObjectPropertyKind::ShorthandProperty(prop) => {
+                        prop.name == name && prop.value.name == name
+                    }
+                    ObjectPropertyKind::MethodProperty(_)
+                    | ObjectPropertyKind::SpreadProperty(_) => false,
                 };
-
-                let ObjectProperty { method: false, value: expr, span, key, .. } = &**obj_prop
-                else {
-                    return;
-                };
-                if key.is_specific_static_name(id1.binding.name.as_str())
-                    && let Expression::Identifier(id2) = expr.without_parentheses()
-                    && id1.binding.name == id2.name
-                {
-                    ctx.diagnostic(no_self_assign_diagnostic(*span));
+                if is_self_assignment {
+                    ctx.diagnostic(no_self_assign_diagnostic(right.span()));
                 }
             }
             AssignmentTargetProperty::AssignmentTargetPropertyProperty(property) => {
@@ -311,22 +313,37 @@ impl NoSelfAssign {
                     }
                     AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(_) => return,
                 };
-                let ObjectPropertyKind::ObjectProperty(obj_prop) = right else {
+                let Some(property_name) = property.name.static_name() else {
                     return;
                 };
-                let ObjectProperty { method: false, value: expr, key, .. } = &**obj_prop else {
-                    return;
-                };
-
-                let property_name = property.name.static_name();
-                let key_name = key.static_name();
-                if property_name.is_some() && property_name == key_name {
-                    self.each_self_assignment(left, expr, ctx);
+                match right {
+                    ObjectPropertyKind::KeyValueProperty(prop) => {
+                        if prop.key.static_name().is_some_and(|key_name| key_name == property_name)
+                        {
+                            self.each_self_assignment(left, &prop.value, ctx);
+                        }
+                    }
+                    ObjectPropertyKind::ShorthandProperty(prop) => {
+                        if property_name == prop.name
+                            && left.as_simple_assignment_target().is_some_and(|target| {
+                                is_identifier_target_named(target, prop.value.name)
+                            })
+                        {
+                            ctx.diagnostic(no_self_assign_diagnostic(prop.value.span));
+                        }
+                    }
+                    ObjectPropertyKind::MethodProperty(_)
+                    | ObjectPropertyKind::SpreadProperty(_) => {}
                 }
             }
             AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(_) => {}
         }
     }
+}
+
+fn is_identifier_target_named(target: &SimpleAssignmentTarget, name: Ident) -> bool {
+    matches!(target.get_expression(), Some(Expression::Identifier(id)) if id.name == name)
+        || matches!(target, SimpleAssignmentTarget::AssignmentTargetIdentifier(id) if id.name == name)
 }
 
 #[test]

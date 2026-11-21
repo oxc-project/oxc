@@ -95,7 +95,11 @@ impl Rule for RequireDefaultProp {
                 if !is_vue_component_options_object_excluding_instance(node, ctx) {
                     return;
                 }
-                let Some(props_prop) = obj.find_property("props") else { return };
+                let Some(ObjectPropertyKind::KeyValueProperty(props_prop)) =
+                    obj.find_property("props")
+                else {
+                    return;
+                };
                 if let Expression::ObjectExpression(props_obj) =
                     props_prop.value.get_inner_expression()
                 {
@@ -198,15 +202,20 @@ fn check_object_props<'a>(
     pc: &PropsContext<'a>,
 ) {
     for prop in &obj.properties {
-        let ObjectPropertyKind::ObjectProperty(prop) = prop else { continue };
-        if prop.shorthand {
-            continue;
-        }
-        let value = prop.value.get_inner_expression();
-        if !is_without_default_value(value) || is_boolean_prop(value) {
-            continue;
-        }
-        let name = prop.key.static_name();
+        let key = match prop {
+            ObjectPropertyKind::KeyValueProperty(prop) => {
+                let value = prop.value.get_inner_expression();
+                if !is_without_default_value(value) || is_boolean_prop(value) {
+                    continue;
+                }
+                &prop.key
+            }
+            ObjectPropertyKind::MethodProperty(prop) => &prop.key,
+            ObjectPropertyKind::ShorthandProperty(_) | ObjectPropertyKind::SpreadProperty(_) => {
+                continue;
+            }
+        };
+        let name = key.static_name();
         if let Some(destructure) = pc.destructure {
             match &name {
                 // A computed key whose name is unknown is ignored under a destructure.
@@ -218,7 +227,7 @@ fn check_object_props<'a>(
         if let Some(name) = &name {
             ctx.diagnostic(require_default_prop_diagnostic(prop.span(), name.display()));
         } else {
-            let display = format!("[{}]", prop.key.span().source_text(ctx.source_text()));
+            let display = format!("[{}]", key.span().source_text(ctx.source_text()));
             ctx.diagnostic(require_default_prop_diagnostic(prop.span(), &display));
         }
     }
@@ -232,10 +241,7 @@ fn has_destructure_default(pattern: &ObjectPattern, name: &StaticPropertyName<'_
 }
 
 fn object_has_key(obj: &ObjectExpression, name: &StaticPropertyName<'_>) -> bool {
-    obj.properties.iter().any(|prop| {
-        matches!(prop, ObjectPropertyKind::ObjectProperty(prop)
-            if prop.key.static_name().is_some_and(|key| key == *name))
-    })
+    obj.properties.iter().any(|prop| prop.static_name().is_some_and(|key| key == *name))
 }
 
 fn check_type_signature<'a>(
@@ -289,7 +295,7 @@ fn is_without_default_value(value: &Expression) -> bool {
 
 fn prop_is_required(obj: &ObjectExpression) -> bool {
     obj.properties.iter().any(|prop| {
-        matches!(prop, ObjectPropertyKind::ObjectProperty(prop)
+        matches!(prop, ObjectPropertyKind::KeyValueProperty(prop)
             if prop.key.is_specific_static_name("required")
                 && matches!(prop.value.get_inner_expression(), Expression::BooleanLiteral(lit) if lit.value))
     })
@@ -301,7 +307,7 @@ fn is_boolean_prop(value: &Expression) -> bool {
     }
     let Expression::ObjectExpression(obj) = value else { return false };
     obj.properties.iter().any(|prop| {
-        matches!(prop, ObjectPropertyKind::ObjectProperty(prop)
+        matches!(prop, ObjectPropertyKind::KeyValueProperty(prop)
             if matches!(&prop.key, PropertyKey::StaticIdentifier(key) if key.name == "type")
                 && is_value_node_of_boolean_type(prop.value.get_inner_expression()))
     })

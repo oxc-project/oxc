@@ -489,8 +489,16 @@ impl<'a> AstKind<'a> {
             Self::ImportExpression(_) => "ImportExpression".into(),
             Self::PrivateInExpression(_) => "PrivateInExpression".into(),
 
-            Self::ObjectProperty(p) => format!(
-                "ObjectProperty({})",
+            Self::ObjectKeyValueProperty(p) => format!(
+                "ObjectKeyValueProperty({})",
+                p.key.name().unwrap_or_else(|| StaticPropertyName::from(COMPUTED)).display()
+            )
+            .into(),
+            Self::ObjectShorthandProperty(p) => {
+                format!("ObjectShorthandProperty({})", p.name).into()
+            }
+            Self::ObjectMethodProperty(p) => format!(
+                "ObjectMethodProperty({})",
                 p.key.name().unwrap_or_else(|| StaticPropertyName::from(COMPUTED)).display()
             )
             .into(),

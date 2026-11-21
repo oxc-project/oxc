@@ -648,7 +648,7 @@ fn should_indent_if_parent_inlines(parent: &AstNodes<'_, '_>) -> bool {
     matches!(
         parent,
         AstNodes::AssignmentExpression(_)
-            | AstNodes::ObjectProperty(_)
+            | AstNodes::ObjectKeyValueProperty(_)
             | AstNodes::VariableDeclarator(_)
             | AstNodes::PropertyDefinition(_)
     )

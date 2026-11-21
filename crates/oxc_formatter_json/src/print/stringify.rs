@@ -124,13 +124,15 @@ fn write_object<'a>(object: &ObjectExpression<'a>, f: &mut JsonFormatter<'_, 'a>
     }
 
     write_hard_broken_entries(f, object.properties.len(), |i, f| match &object.properties[i] {
-        ObjectPropertyKind::ObjectProperty(prop) => {
+        ObjectPropertyKind::KeyValueProperty(prop) => {
             write_object_key(&prop.key, f);
             write!(f, [":", space()]);
             FmtJsonStringifyValue { expression: &prop.value }.fmt(f);
         }
-        ObjectPropertyKind::SpreadProperty(spread) => {
-            write!(f, FormatInvalidJson(spread.span));
+        property @ (ObjectPropertyKind::ShorthandProperty(_)
+        | ObjectPropertyKind::MethodProperty(_)
+        | ObjectPropertyKind::SpreadProperty(_)) => {
+            write!(f, FormatInvalidJson(property.span()));
         }
     });
     write!(f, "}");

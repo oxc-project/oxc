@@ -618,18 +618,13 @@ fn calls_hooks_or_creates_jsx_in_expr(expr: &Expression) -> bool {
             // Object methods (`{ foo() {} }`, getters/setters): Babel modeled these
             // as `ObjectMethod` and traversed their body statements. Regular
             // properties traverse their value (nested functions are skipped).
-            ObjectPropertyKind::ObjectProperty(p) => {
-                if p.method || matches!(p.kind, PropertyKind::Get | PropertyKind::Set) {
-                    if let Expression::FunctionExpression(func) = &p.value
-                        && let Some(body) = &func.body
-                    {
-                        return calls_hooks_or_creates_jsx_in_stmts(&body.statements);
-                    }
-                    false
-                } else {
-                    calls_hooks_or_creates_jsx_in_expr(&p.value)
-                }
-            }
+            ObjectPropertyKind::MethodProperty(p) => p
+                .value
+                .body
+                .as_ref()
+                .is_some_and(|body| calls_hooks_or_creates_jsx_in_stmts(&body.statements)),
+            ObjectPropertyKind::KeyValueProperty(p) => calls_hooks_or_creates_jsx_in_expr(&p.value),
+            ObjectPropertyKind::ShorthandProperty(_) => false,
         }),
         Expression::ParenthesizedExpression(paren) => {
             calls_hooks_or_creates_jsx_in_expr(&paren.expression)
@@ -1979,27 +1974,28 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
     fn walk_object_property(&mut self, prop: &'b ObjectPropertyKind<'ast>) {
         match prop {
             ObjectPropertyKind::SpreadProperty(s) => self.walk_expression(&s.argument),
-            ObjectPropertyKind::ObjectProperty(p) => {
+            ObjectPropertyKind::KeyValueProperty(p) => {
                 if p.key.is_computed() {
                     self.walk_property_key(&p.key);
                 }
-                // Object methods (`{ foo() {} }`, getters/setters): Babel modeled
-                // these as `ObjectMethod` and walked the body without queuing the
-                // method itself; the body is the value FunctionExpression's body.
-                let is_method = p.method || matches!(p.kind, PropertyKind::Get | PropertyKind::Set);
-                if is_method {
-                    if let Expression::FunctionExpression(func) = &p.value {
-                        let pushed = self.try_push_scope(func.scope_id.get());
-                        self.walk_formal_parameters(&func.params);
-                        if let Some(body) = &func.body {
-                            self.walk_function_body_block(body);
-                        }
-                        if pushed {
-                            self.scope_stack.pop();
-                        }
-                    }
-                } else {
-                    self.walk_expression(&p.value);
+                self.walk_expression(&p.value);
+            }
+            ObjectPropertyKind::ShorthandProperty(_) => {}
+            // Object methods (`{ foo() {} }`, getters/setters): Babel modeled
+            // these as `ObjectMethod` and walked the body without queuing the
+            // method itself.
+            ObjectPropertyKind::MethodProperty(p) => {
+                if p.key.is_computed() {
+                    self.walk_property_key(&p.key);
+                }
+                let func = &p.value;
+                let pushed = self.try_push_scope(func.scope_id.get());
+                self.walk_formal_parameters(&func.params);
+                if let Some(body) = &func.body {
+                    self.walk_function_body_block(body);
+                }
+                if pushed {
+                    self.scope_stack.pop();
                 }
             }
         }

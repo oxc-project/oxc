@@ -50,6 +50,31 @@ impl<'a> Expression<'a> {
     }
 }
 
+impl<'a> ObjectPropertyKind<'a> {
+    /// Build an [`ObjectPropertyKind::KeyValueProperty`] which replaces `shorthand`, with a new `value`.
+    ///
+    /// The key is `shorthand.name`. A `__proto__` shorthand gets the computed key `["__proto__"]`,
+    /// because a non-computed `__proto__: value` would set the prototype instead of creating an own property.
+    ///
+    /// ## Parameters
+    /// * `shorthand`: The shorthand property being replaced
+    /// * `value`: The value of the new property
+    pub fn new_key_value_property_from_shorthand(
+        shorthand: &ObjectShorthandProperty<'a>,
+        value: Expression<'a>,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        let builder = builder.builder();
+        let span = shorthand.span;
+        let key = if shorthand.name == "__proto__" {
+            PropertyKey::new_string_literal(span, "__proto__", None, builder)
+        } else {
+            PropertyKey::new_static_identifier(span, shorthand.name, builder)
+        };
+        ObjectPropertyKind::new_key_value_property(span, key, value, builder)
+    }
+}
+
 impl<'a> Directive<'a> {
     /// Build a `"use strict"` [`Directive`].
     #[inline]

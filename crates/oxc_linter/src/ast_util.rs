@@ -732,8 +732,11 @@ pub fn is_default_this_binding<'a>(
                 }
                 current_node = outermost_paren_parent(parent, semantic).unwrap();
             }
-            AstKind::ObjectProperty(obj) => {
+            AstKind::ObjectKeyValueProperty(obj) => {
                 return obj.value.span() != current_node.span();
+            }
+            AstKind::ObjectMethodProperty(obj) => {
+                return obj.value.span != current_node.span();
             }
             AstKind::MethodDefinition(method) => {
                 return method.value.span != current_node.span();
@@ -828,7 +831,11 @@ pub fn get_static_property_name<'a>(parent_node: &AstNode<'a>) -> Option<StaticP
     let key = match parent_node.kind() {
         AstKind::PropertyDefinition(definition) => &definition.key,
         AstKind::MethodDefinition(definition) => &definition.key,
-        AstKind::ObjectProperty(property) => &property.key,
+        AstKind::ObjectKeyValueProperty(property) => &property.key,
+        AstKind::ObjectMethodProperty(property) => &property.key,
+        AstKind::ObjectShorthandProperty(property) => {
+            return Some(StaticPropertyName::from(property.name));
+        }
         _ => return None,
     };
     if key.is_identifier() {

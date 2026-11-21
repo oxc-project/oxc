@@ -1549,13 +1549,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         };
 
         // Create the outer `with: { ... }` property
-        let with_property = ObjectPropertyKind::new_object_property(
+        let with_property = ObjectPropertyKind::new_key_value_property(
             self.end_span(with_key_start),
-            PropertyKind::Init,
             PropertyKey::StaticIdentifier(with_key),
             value,
-            false,
-            false,
             self,
         );
 
@@ -1621,13 +1618,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 (key, value)
             };
 
-            let property = ObjectPropertyKind::new_object_property(
+            let property = ObjectPropertyKind::new_key_value_property(
                 self.end_span(prop_start),
-                PropertyKind::Init,
                 key,
                 value,
-                false,
-                false,
                 self,
             );
             properties.push(property);

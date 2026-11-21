@@ -278,19 +278,17 @@ pub fn collect_params(
                     };
 
                     collected.extend(obj.properties.iter().filter_map(|prop| {
-                        let ObjectPropertyKind::ObjectProperty(obj_prop) = &prop else {
-                            return None;
+                        let (name, span) = if let ObjectPropertyKind::ShorthandProperty(prop) = prop
+                        {
+                            (prop.name, prop.value.span)
+                        } else {
+                            let Some(PropertyKey::StaticIdentifier(ident)) = prop.key() else {
+                                return None;
+                            };
+                            (ident.name, ident.span)
                         };
 
-                        let PropertyKey::StaticIdentifier(ident) = &obj_prop.key else {
-                            return None;
-                        };
-
-                        Some(Param {
-                            name: ident.name.to_string(),
-                            is_rest: false,
-                            span: ident.span,
-                        })
+                        Some(Param { name: name.to_string(), is_rest: false, span })
                     }));
 
                     ParamKind::Nested(collected)

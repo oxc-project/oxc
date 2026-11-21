@@ -50,7 +50,7 @@ use std::iter;
 use itoa::Buffer as ItoaBuffer;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use oxc_allocator::{Allocator, ArenaBox, ArenaVec, GetAllocator, ReplaceWith};
+use oxc_allocator::{Allocator, ArenaBox, ArenaVec, GetAllocator, ReplaceWith, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, Scoping, SymbolFlags, SymbolId};
@@ -112,9 +112,38 @@ impl<'a> Traverse<'a, ()> for ModuleRunnerTransform<'a> {
             _ => {}
         }
     }
+
+    /// Expand a shorthand property which refers to an import binding (`{ foo }` -> `{ foo: foo }`),
+    /// so that `enter_expression` can transform its value.
+    #[inline]
+    fn enter_object_property_kind(
+        &mut self,
+        prop: &mut ObjectPropertyKind<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if let ObjectPropertyKind::ShorthandProperty(shorthand) = prop
+            && self.is_import_binding_reference(&shorthand.value, ctx)
+        {
+            let value = Expression::Identifier(shorthand.value.take_in_box(ctx));
+            *prop =
+                ObjectPropertyKind::new_key_value_property_from_shorthand(shorthand, value, ctx);
+        }
+    }
 }
 
 impl<'a> ModuleRunnerTransform<'a> {
+    fn is_import_binding_reference(
+        &self,
+        ident: &IdentifierReference<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        ident
+            .reference_id
+            .get()
+            .and_then(|id| ctx.scoping().get_reference(id).symbol_id())
+            .is_some_and(|id| self.import_bindings.contains_key(&id))
+    }
+
     /// Transform import and export declarations.
     fn transform_imports_and_exports(
         &mut self,
@@ -733,15 +762,7 @@ impl<'a> ModuleRunnerTransform<'a> {
     ) -> Argument<'a> {
         let value = Expression::new_array_expression(SPAN, elements, ctx);
         let key = PropertyKey::new_static_identifier(SPAN, Str::from("importedNames"), ctx);
-        let imported_names = ObjectPropertyKind::new_object_property(
-            SPAN,
-            PropertyKind::Init,
-            key,
-            value,
-            false,
-            false,
-            ctx,
-        );
+        let imported_names = ObjectPropertyKind::new_key_value_property(SPAN, key, value, ctx);
         Argument::new_object_expression(SPAN, [imported_names], ctx)
     }
 
@@ -778,36 +799,42 @@ impl<'a> ModuleRunnerTransform<'a> {
         Expression::new_call_expression(SPAN, member, None, arguments, false, ctx)
     }
 
-    // `key: value` or `key() {}`
+    // `key: true` or `key() {}`
     fn create_object_property(
         key: &'static str,
-        value: Option<Expression<'a>>,
+        method: Option<ArenaBox<'a, Function<'a>>>,
         ctx: &TraverseCtx<'a>,
     ) -> ObjectPropertyKind<'a> {
-        let is_method = value.is_some();
-        ObjectPropertyKind::new_object_property(
-            SPAN,
-            PropertyKind::Init,
-            PropertyKey::new_static_identifier(SPAN, key, ctx),
-            value.unwrap_or_else(|| Expression::new_boolean_literal(SPAN, true, ctx)),
-            is_method,
-            false,
-            ctx,
-        )
+        let key = PropertyKey::new_static_identifier(SPAN, key, ctx);
+        match method {
+            Some(function) => ObjectPropertyKind::new_method_property(
+                SPAN,
+                ObjectMethodKind::Method,
+                key,
+                function,
+                ctx,
+            ),
+            None => ObjectPropertyKind::new_key_value_property(
+                SPAN,
+                key,
+                Expression::new_boolean_literal(SPAN, true, ctx),
+                ctx,
+            ),
+        }
     }
 
     /// `{ enumerable: true, configurable: true, get(){ return expr } }`
     fn create_function_with_return_statement(
         expr: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Expression<'a> {
+    ) -> ArenaBox<'a, Function<'a>> {
         let kind = FormalParameterKind::FormalParameter;
         let params = FormalParameters::boxed(SPAN, kind, [], None, ctx);
         let statement = Statement::new_return_statement(SPAN, Some(expr), ctx);
         let body = FunctionBody::boxed(SPAN, [], [statement], ctx);
         let r#type = FunctionType::FunctionExpression;
         let scope_id = ctx.create_child_scope(ctx.scoping().root_scope_id(), ScopeFlags::Function);
-        Expression::new_function_expression_with_scope_id_and_pure_and_pife(
+        Function::boxed_with_scope_id_and_pure_and_pife(
             SPAN,
             r#type,
             None,

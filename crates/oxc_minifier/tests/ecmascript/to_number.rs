@@ -20,13 +20,10 @@ fn test() {
     let empty_object = Expression::new_object_expression(SPAN, [], ast);
     let object_with_to_string = Expression::new_object_expression(
         SPAN,
-        [ObjectPropertyKind::new_object_property(
+        [ObjectPropertyKind::new_key_value_property(
             SPAN,
-            PropertyKind::Init,
             PropertyKey::new_static_identifier(SPAN, "toString", ast),
             Expression::new_string_literal(SPAN, "foo", None, ast),
-            false,
-            false,
             ast,
         )],
         ast,

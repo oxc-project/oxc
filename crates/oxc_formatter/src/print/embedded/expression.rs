@@ -234,7 +234,7 @@ fn is_followed_by_right_bracket(
     let ends_parent = match parent {
         // One of its expressions, which its substitution's `}` closes
         AstNodes::TemplateLiteral(_) => return true,
-        AstNodes::ObjectProperty(property) if property.value.span() == span => {
+        AstNodes::ObjectKeyValueProperty(property) if property.value.span() == span => {
             return ends_object(property.parent(), property.span);
         }
         // Another argument (a conditional, a logical, an assignment) prints in parens there

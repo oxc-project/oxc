@@ -194,14 +194,18 @@ interface StrictVisitorObject {
   "Program:exit"?: (node: ESTree.Program) => void;
   Property?: (
     node:
-      | ESTree.ObjectProperty
+      | ESTree.ObjectKeyValueProperty
+      | ESTree.ObjectShorthandProperty
+      | ESTree.ObjectMethodProperty
       | ESTree.AssignmentTargetProperty
       | ESTree.AssignmentTargetPropertyProperty
       | ESTree.BindingProperty,
   ) => void;
   "Property:exit"?: (
     node:
-      | ESTree.ObjectProperty
+      | ESTree.ObjectKeyValueProperty
+      | ESTree.ObjectShorthandProperty
+      | ESTree.ObjectMethodProperty
       | ESTree.AssignmentTargetProperty
       | ESTree.AssignmentTargetPropertyProperty
       | ESTree.BindingProperty,

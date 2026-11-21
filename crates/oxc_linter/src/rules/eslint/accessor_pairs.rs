@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
         Argument, CallExpression, ChainElement, ClassBody, ClassElement, Expression,
-        MethodDefinitionKind, ObjectExpression, ObjectPropertyKind, PropertyKey, PropertyKind,
+        MethodDefinitionKind, ObjectExpression, ObjectMethodKind, ObjectPropertyKind, PropertyKey,
         TSMethodSignatureKind, TSSignature, TSTypeLiteral,
     },
 };
@@ -171,10 +171,10 @@ impl AccessorPairs {
 
     fn check_object_expression<'a>(&self, obj: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
         let mut accessors: FxHashMap<StaticPropertyName<'a>, AccessorInfo> = FxHashMap::default();
-        let mut computed_accessors: Vec<(&PropertyKey, PropertyKind, Span)> = vec![];
+        let mut computed_accessors: Vec<(&PropertyKey, ObjectMethodKind, Span)> = vec![];
 
         for prop in &obj.properties {
-            let ObjectPropertyKind::ObjectProperty(prop) = prop else {
+            let ObjectPropertyKind::MethodProperty(prop) = prop else {
                 continue;
             };
 
@@ -185,7 +185,7 @@ impl AccessorPairs {
 
             if let Some(name) = prop.key.static_name() {
                 let info = accessors.entry(name).or_default();
-                if kind == PropertyKind::Get {
+                if kind == ObjectMethodKind::Get {
                     info.getter = Some(prop.key.span());
                 } else {
                     info.setter = Some(prop.key.span());
@@ -245,7 +245,7 @@ impl AccessorPairs {
 
     fn check_computed_accessors(
         &self,
-        accessors: &[(&PropertyKey, PropertyKind, Span)],
+        accessors: &[(&PropertyKey, ObjectMethodKind, Span)],
         ctx: &LintContext,
     ) {
         for (i, (key1, kind1, span1)) in accessors.iter().enumerate() {
@@ -254,9 +254,9 @@ impl AccessorPairs {
             });
 
             if !has_pair {
-                if *kind1 == PropertyKind::Set && self.set_without_get {
+                if *kind1 == ObjectMethodKind::Set && self.set_without_get {
                     ctx.diagnostic(setter_without_getter_diagnostic(*span1));
-                } else if *kind1 == PropertyKind::Get && self.get_without_set {
+                } else if *kind1 == ObjectMethodKind::Get && self.get_without_set {
                     ctx.diagnostic(getter_without_setter_diagnostic(*span1));
                 }
             }
@@ -327,7 +327,7 @@ impl AccessorPairs {
                 // Object.create(proto, props)
                 if let Some(Argument::ObjectExpression(props)) = call.arguments.get(1) {
                     for prop in &props.properties {
-                        if let ObjectPropertyKind::ObjectProperty(prop) = prop
+                        if let ObjectPropertyKind::KeyValueProperty(prop) = prop
                             && let Expression::ObjectExpression(descriptor) = &prop.value
                         {
                             self.check_property_descriptor(descriptor, ctx);
@@ -382,12 +382,7 @@ impl AccessorPairs {
         let mut set_span = None;
 
         for prop in &descriptor.properties {
-            let ObjectPropertyKind::ObjectProperty(prop) = prop else {
-                continue;
-            };
-
-            let Some(name) = prop.key.static_name().and_then(StaticPropertyName::into_cow_str)
-            else {
+            let Some(name) = prop.static_name().and_then(StaticPropertyName::into_cow_str) else {
                 continue;
             };
 
@@ -395,7 +390,7 @@ impl AccessorPairs {
                 "get" => has_get = true,
                 "set" => {
                     has_set = true;
-                    set_span = Some(prop.key.span());
+                    set_span = Some(prop.key().map_or_else(|| prop.span(), GetSpan::span));
                 }
                 _ => {}
             }

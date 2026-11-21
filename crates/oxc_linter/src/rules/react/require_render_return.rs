@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ObjectKeyValueProperty, ObjectMethodProperty},
+};
 use oxc_cfg::{
     EdgeType, Instruction, InstructionKind, ReturnInstructionKind,
     graph::visit::neighbors_filtered_by_edge_weight,
@@ -100,8 +103,9 @@ impl Rule for RequireRenderReturn {
                 AstKind::PropertyDefinition(property) => {
                     ctx.diagnostic(require_render_return_diagnostic(property.key.span()));
                 }
-                AstKind::ObjectProperty(property) => {
-                    ctx.diagnostic(require_render_return_diagnostic(property.key.span()));
+                AstKind::ObjectKeyValueProperty(ObjectKeyValueProperty { key, .. })
+                | AstKind::ObjectMethodProperty(ObjectMethodProperty { key, .. }) => {
+                    ctx.diagnostic(require_render_return_diagnostic(key.span()));
                 }
                 _ => {}
             }
@@ -183,9 +187,14 @@ fn is_render_fn(node: &AstNode) -> bool {
         {
             return true;
         }
-        AstKind::ObjectProperty(property)
+        AstKind::ObjectKeyValueProperty(property)
             if property.key.is_specific_static_name(RENDER_METHOD_NAME)
                 && property.value.is_function() =>
+        {
+            return true;
+        }
+        AstKind::ObjectMethodProperty(property)
+            if property.key.is_specific_static_name(RENDER_METHOD_NAME) =>
         {
             return true;
         }

@@ -6,8 +6,8 @@ use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
         ArrowFunctionExpression, Expression, Function, IdentifierReference, NewTarget,
-        ObjectExpression, ObjectProperty, ObjectPropertyKind, PropertyKey, PropertyKind, Super,
-        ThisExpression,
+        ObjectExpression, ObjectKeyValueProperty, ObjectMethodKind, ObjectMethodProperty,
+        ObjectPropertyKind, ObjectShorthandProperty, PropertyKey, Super, ThisExpression,
     },
 };
 use oxc_ast_visit::{Visit, walk};
@@ -176,7 +176,15 @@ impl Rule for ObjectShorthand {
                     check_consistency(ctx, object_expr, true);
                 }
             }
-            AstKind::ObjectProperty(property) => check_object_property(self, ctx, property),
+            AstKind::ObjectKeyValueProperty(property) => {
+                check_key_value_property(self, ctx, property);
+            }
+            AstKind::ObjectShorthandProperty(property) => {
+                if self.apply_never && property.name != "__proto__" {
+                    check_shorthand_properties(ctx, property);
+                }
+            }
+            AstKind::ObjectMethodProperty(property) => check_method_property(self, ctx, property),
             _ => {}
         }
     }
@@ -194,7 +202,7 @@ impl<'de> Deserialize<'de> for ObjectShorthand {
 
 fn make_function_shorthand<'a>(
     ctx: &LintContext<'a>,
-    property: &ObjectProperty<'a>,
+    property: &ObjectKeyValueProperty<'a>,
     fn_or_arrow_fn: Either<&Function<'a>, &ArrowFunctionExpression<'a>>,
 ) {
     let span = match fn_or_arrow_fn {
@@ -309,7 +317,7 @@ fn make_function_shorthand<'a>(
 fn make_function_long_form<'a>(
     rule: &ObjectShorthand,
     ctx: &LintContext<'a>,
-    property: &ObjectProperty<'a>,
+    property: &ObjectMethodProperty<'a>,
 ) {
     let diagnostic = if rule.apply_never {
         expected_method_longform(property.span)
@@ -334,9 +342,7 @@ fn make_function_long_form<'a>(
         };
         let key_text = ctx.source_range(key_text_range);
 
-        let Expression::FunctionExpression(func) = &property.value.without_parentheses() else {
-            return fixer.noop();
-        };
+        let func = &property.value;
         let function_header = match (func.r#async, func.generator) {
             (true, true) => "async function*",
             (true, false) => "async function",
@@ -352,7 +358,7 @@ fn make_function_long_form<'a>(
 fn check_longform_methods<'a>(
     rule: &ObjectShorthand,
     ctx: &LintContext<'a>,
-    property: &ObjectProperty<'a>,
+    property: &ObjectKeyValueProperty<'a>,
 ) {
     if rule.ignore_constructors
         && property.key.is_identifier()
@@ -372,7 +378,7 @@ fn check_longform_methods<'a>(
         return;
     }
 
-    let is_key_string_literal = is_property_key_string_literal(property);
+    let is_key_string_literal = is_property_key_string_literal(&property.key);
     if rule.avoid_quotes && is_key_string_literal {
         return;
     }
@@ -390,20 +396,19 @@ fn check_longform_methods<'a>(
     }
 }
 
-fn check_shorthand_properties<'a>(ctx: &LintContext<'a>, property: &ObjectProperty<'a>) {
-    if let Some(property_name) = property.key.name().and_then(StaticPropertyName::into_cow_str) {
-        ctx.diagnostic_with_fix(expected_property_longform(property.span), |fixer| {
-            fixer.replace(property.span, format!("{property_name}: {property_name}"))
-        });
-    }
+fn check_shorthand_properties<'a>(ctx: &LintContext<'a>, property: &ObjectShorthandProperty<'a>) {
+    let property_name = property.name;
+    ctx.diagnostic_with_fix(expected_property_longform(property.span), |fixer| {
+        fixer.replace(property.span, format!("{property_name}: {property_name}"))
+    });
 }
 
 fn check_longform_properties<'a>(
     rule: &ObjectShorthand,
     ctx: &LintContext<'a>,
-    property: &ObjectProperty<'a>,
+    property: &ObjectKeyValueProperty<'a>,
 ) {
-    if rule.avoid_quotes && is_property_key_string_literal(property) {
+    if rule.avoid_quotes && is_property_key_string_literal(&property.key) {
         return;
     }
 
@@ -440,12 +445,8 @@ fn check_consistency<'a>(
     obj_expr: &ObjectExpression<'a>,
     check_redundancy: bool,
 ) {
-    let properties = obj_expr.properties.iter().filter_map(|property_kind| match property_kind {
-        ObjectPropertyKind::ObjectProperty(property) => {
-            can_property_have_shorthand(property).then_some(property)
-        }
-        ObjectPropertyKind::SpreadProperty(_) => None,
-    });
+    let properties =
+        obj_expr.properties.iter().filter(|property| can_property_have_shorthand(property));
 
     let properties_count = properties.clone().count();
     if properties_count > 0 {
@@ -462,26 +463,32 @@ fn check_consistency<'a>(
     }
 }
 
-fn check_object_property<'a>(
+fn check_method_property<'a>(
     rule: &ObjectShorthand,
     ctx: &LintContext<'a>,
-    property: &ObjectProperty<'a>,
+    property: &ObjectMethodProperty<'a>,
 ) {
-    let is_concise_property = property.shorthand || property.method;
-
-    if !can_property_have_shorthand(property) {
+    if property.kind != ObjectMethodKind::Method
+        || property.key.is_specific_literal_name("__proto__")
+    {
         return;
     }
 
-    if is_concise_property {
-        if property.method
-            && (rule.apply_never || rule.avoid_quotes && is_property_key_string_literal(property))
-        {
-            make_function_long_form(rule, ctx, property);
-        } else if rule.apply_never {
-            check_shorthand_properties(ctx, property);
-        }
-    } else if rule.apply_to_methods && is_property_value_anonymous_function(property) {
+    if rule.apply_never || rule.avoid_quotes && is_property_key_string_literal(&property.key) {
+        make_function_long_form(rule, ctx, property);
+    }
+}
+
+fn check_key_value_property<'a>(
+    rule: &ObjectShorthand,
+    ctx: &LintContext<'a>,
+    property: &ObjectKeyValueProperty<'a>,
+) {
+    if !can_key_value_property_have_shorthand(property) {
+        return;
+    }
+
+    if rule.apply_to_methods && is_property_value_anonymous_function(property) {
         check_longform_methods(rule, ctx, property);
     } else if rule.apply_to_properties {
         check_longform_properties(rule, ctx, property);
@@ -565,14 +572,14 @@ fn is_constructor<N: AsRef<str>>(name: N) -> bool {
         .is_some_and(char::is_uppercase)
 }
 
-fn is_property_value_function(property: &ObjectProperty) -> bool {
+fn is_property_value_function(property: &ObjectKeyValueProperty) -> bool {
     matches!(
         property.value,
         Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_)
     )
 }
 
-fn is_property_value_anonymous_function(property: &ObjectProperty) -> bool {
+fn is_property_value_anonymous_function(property: &ObjectKeyValueProperty) -> bool {
     match &property.value.without_parentheses() {
         Expression::FunctionExpression(func) => func.id.is_none(),
         Expression::ArrowFunctionExpression(_) => true,
@@ -580,15 +587,21 @@ fn is_property_value_anonymous_function(property: &ObjectProperty) -> bool {
     }
 }
 
-fn is_property_key_string_literal(property: &ObjectProperty) -> bool {
-    matches!(property.key, PropertyKey::StaticStringLiteral(_) | PropertyKey::StringLiteral(_))
+fn is_property_key_string_literal(key: &PropertyKey) -> bool {
+    matches!(key, PropertyKey::StaticStringLiteral(_) | PropertyKey::StringLiteral(_))
 }
 
-fn is_shorthand_property(property: &ObjectProperty) -> bool {
-    property.shorthand || property.method
+fn is_shorthand_property(property: &ObjectPropertyKind) -> bool {
+    matches!(
+        property,
+        ObjectPropertyKind::ShorthandProperty(_) | ObjectPropertyKind::MethodProperty(_)
+    )
 }
 
-fn is_redundant_property(property: &ObjectProperty) -> bool {
+fn is_redundant_property(property: &ObjectPropertyKind) -> bool {
+    let ObjectPropertyKind::KeyValueProperty(property) = property else {
+        return is_shorthand_property(property);
+    };
     match &property.value {
         Expression::FunctionExpression(func) => func.id.is_none(),
         Expression::Identifier(value_identifier) => {
@@ -604,9 +617,22 @@ fn is_redundant_property(property: &ObjectProperty) -> bool {
     }
 }
 
-fn can_property_have_shorthand(property: &ObjectProperty) -> bool {
-    property.kind == PropertyKind::Init
-        && !property.key.is_specific_literal_name("__proto__")
+fn can_property_have_shorthand(property: &ObjectPropertyKind) -> bool {
+    match property {
+        ObjectPropertyKind::KeyValueProperty(property) => {
+            can_key_value_property_have_shorthand(property)
+        }
+        ObjectPropertyKind::ShorthandProperty(property) => property.name != "__proto__",
+        ObjectPropertyKind::MethodProperty(property) => {
+            property.kind == ObjectMethodKind::Method
+                && !property.key.is_specific_literal_name("__proto__")
+        }
+        ObjectPropertyKind::SpreadProperty(_) => false,
+    }
+}
+
+fn can_key_value_property_have_shorthand(property: &ObjectKeyValueProperty) -> bool {
+    !property.key.is_specific_literal_name("__proto__")
         && (!property.key.is_computed() || is_property_value_function(property))
 }
 

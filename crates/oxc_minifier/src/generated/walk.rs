@@ -364,8 +364,14 @@ unsafe fn walk_object_property_kind<'a, Tr: Traverse<'a>>(
 ) {
     traverser.enter_object_property_kind(&mut *node, ctx);
     match &mut *node {
-        ObjectPropertyKind::ObjectProperty(node) => {
-            walk_object_property(traverser, (&mut **node) as *mut _, ctx)
+        ObjectPropertyKind::KeyValueProperty(node) => {
+            walk_object_key_value_property(traverser, (&mut **node) as *mut _, ctx)
+        }
+        ObjectPropertyKind::ShorthandProperty(node) => {
+            walk_object_shorthand_property(traverser, (&mut **node) as *mut _, ctx)
+        }
+        ObjectPropertyKind::MethodProperty(node) => {
+            walk_object_method_property(traverser, (&mut **node) as *mut _, ctx)
         }
         ObjectPropertyKind::SpreadProperty(node) => {
             walk_spread_element(traverser, (&mut **node) as *mut _, ctx)
@@ -374,28 +380,72 @@ unsafe fn walk_object_property_kind<'a, Tr: Traverse<'a>>(
     traverser.exit_object_property_kind(&mut *node, ctx);
 }
 
-unsafe fn walk_object_property<'a, Tr: Traverse<'a>>(
+unsafe fn walk_object_key_value_property<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
-    node: *mut ObjectProperty<'a>,
+    node: *mut ObjectKeyValueProperty<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) {
-    traverser.enter_object_property(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::ObjectPropertyKey(
-        ancestor::ObjectPropertyWithoutKey(node, PhantomData),
+    traverser.enter_object_key_value_property(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ObjectKeyValuePropertyKey(
+        ancestor::ObjectKeyValuePropertyWithoutKey(node, PhantomData),
     ));
     walk_property_key(
         traverser,
-        (node as *mut u8).add(ancestor::OFFSET_OBJECT_PROPERTY_KEY) as *mut PropertyKey,
+        (node as *mut u8).add(ancestor::OFFSET_OBJECT_KEY_VALUE_PROPERTY_KEY) as *mut PropertyKey,
         ctx,
     );
-    ctx.retag_stack(AncestorType::ObjectPropertyValue);
+    ctx.retag_stack(AncestorType::ObjectKeyValuePropertyValue);
     walk_expression(
         traverser,
-        (node as *mut u8).add(ancestor::OFFSET_OBJECT_PROPERTY_VALUE) as *mut Expression,
+        (node as *mut u8).add(ancestor::OFFSET_OBJECT_KEY_VALUE_PROPERTY_VALUE) as *mut Expression,
         ctx,
     );
     ctx.pop_stack(pop_token);
-    traverser.exit_object_property(&mut *node, ctx);
+    traverser.exit_object_key_value_property(&mut *node, ctx);
+}
+
+unsafe fn walk_object_shorthand_property<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ObjectShorthandProperty<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_object_shorthand_property(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ObjectShorthandPropertyValue(
+        ancestor::ObjectShorthandPropertyWithoutValue(node, PhantomData),
+    ));
+    walk_identifier_reference(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_OBJECT_SHORTHAND_PROPERTY_VALUE)
+            as *mut IdentifierReference,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_object_shorthand_property(&mut *node, ctx);
+}
+
+unsafe fn walk_object_method_property<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ObjectMethodProperty<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_object_method_property(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ObjectMethodPropertyKey(
+        ancestor::ObjectMethodPropertyWithoutKey(node, PhantomData),
+    ));
+    walk_property_key(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_OBJECT_METHOD_PROPERTY_KEY) as *mut PropertyKey,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::ObjectMethodPropertyValue);
+    walk_function(
+        traverser,
+        (&mut **((node as *mut u8).add(ancestor::OFFSET_OBJECT_METHOD_PROPERTY_VALUE)
+            as *mut ArenaBox<Function>)) as *mut _,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_object_method_property(&mut *node, ctx);
 }
 
 unsafe fn walk_property_key<'a, Tr: Traverse<'a>>(

@@ -1,6 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, ObjectExpression, ObjectPropertyKind},
+    ast::{
+        Expression, ObjectExpression, ObjectKeyValueProperty, ObjectMethodProperty,
+        ObjectPropertyKind,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -88,8 +91,12 @@ impl Rule for NoDeprecatedPropsDefaultThis {
         };
 
         let prop_node = nodes.parent_node(fn_id);
-        let AstKind::ObjectProperty(default_prop) = prop_node.kind() else { return };
-        if !default_prop.key.is_specific_static_name("default") {
+        let (AstKind::ObjectKeyValueProperty(ObjectKeyValueProperty { key, .. })
+        | AstKind::ObjectMethodProperty(ObjectMethodProperty { key, .. })) = prop_node.kind()
+        else {
+            return;
+        };
+        if !key.is_specific_static_name("default") {
             return;
         }
 
@@ -102,7 +109,7 @@ impl Rule for NoDeprecatedPropsDefaultThis {
         }
 
         let prop_definition_node = nodes.parent_node(opts_node.id());
-        if !matches!(prop_definition_node.kind(), AstKind::ObjectProperty(_)) {
+        if !matches!(prop_definition_node.kind(), AstKind::ObjectKeyValueProperty(_)) {
             return;
         }
 
@@ -112,7 +119,7 @@ impl Rule for NoDeprecatedPropsDefaultThis {
         }
 
         let props_node = nodes.parent_node(props_object_node.id());
-        let AstKind::ObjectProperty(props_prop) = props_node.kind() else { return };
+        let AstKind::ObjectKeyValueProperty(props_prop) = props_node.kind() else { return };
         if !props_prop.key.is_specific_static_name("props") {
             return;
         }
@@ -132,7 +139,7 @@ impl Rule for NoDeprecatedPropsDefaultThis {
 
 fn has_function_type(opts: &ObjectExpression<'_>) -> bool {
     for property_kind in &opts.properties {
-        let ObjectPropertyKind::ObjectProperty(prop) = property_kind else { continue };
+        let ObjectPropertyKind::KeyValueProperty(prop) = property_kind else { continue };
         if !prop.key.is_specific_static_name("type") {
             continue;
         }

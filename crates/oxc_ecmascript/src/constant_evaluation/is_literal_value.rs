@@ -30,10 +30,7 @@ impl<'a> IsLiteralValue<'a, '_> for Expression<'a> {
             | Self::RegExpLiteral(_)
             | Self::StringLiteral(_) => true,
             Self::TemplateLiteral(lit) => lit.is_literal_value(include_functions, ctx),
-            Self::Identifier(ident) => {
-                matches!(ident.name.as_str(), "undefined" | "Infinity" | "NaN")
-                    && ctx.is_global_reference(ident)
-            }
+            Self::Identifier(ident) => ident.is_literal_value(include_functions, ctx),
             Self::ArrayExpression(expr) => expr.is_literal_value(include_functions, ctx),
             Self::ObjectExpression(expr) => expr.is_literal_value(include_functions, ctx),
             Self::FunctionExpression(_) | Self::ArrowFunctionExpression(_) => include_functions,
@@ -158,6 +155,13 @@ impl<'a> IsLiteralValue<'a, '_> for BinaryExpression<'a> {
     }
 }
 
+impl<'a> IsLiteralValue<'a, '_> for IdentifierReference<'a> {
+    fn is_literal_value(&self, _include_functions: bool, ctx: &impl GlobalContext<'a>) -> bool {
+        matches!(self.name.as_str(), "undefined" | "Infinity" | "NaN")
+            && ctx.is_global_reference(self)
+    }
+}
+
 impl<'a> IsLiteralValue<'a, '_> for ArrayExpressionElement<'a> {
     fn is_literal_value(&self, include_functions: bool, ctx: &impl GlobalContext<'a>) -> bool {
         match self {
@@ -174,7 +178,16 @@ impl<'a> IsLiteralValue<'a, '_> for ArrayExpressionElement<'a> {
 impl<'a> IsLiteralValue<'a, '_> for ObjectPropertyKind<'a> {
     fn is_literal_value(&self, include_functions: bool, ctx: &impl GlobalContext<'a>) -> bool {
         match self {
-            Self::ObjectProperty(property) => property.is_literal_value(include_functions, ctx),
+            Self::KeyValueProperty(property) => {
+                property.key.is_literal_value(include_functions, ctx)
+                    && property.value.is_literal_value(include_functions, ctx)
+            }
+            Self::ShorthandProperty(property) => {
+                property.value.is_literal_value(include_functions, ctx)
+            }
+            Self::MethodProperty(property) => {
+                include_functions && property.key.is_literal_value(include_functions, ctx)
+            }
             Self::SpreadProperty(property) => match &property.argument {
                 Expression::ArrayExpression(expr) => expr.is_literal_value(include_functions, ctx),
                 Expression::StringLiteral(_) => true,
@@ -183,13 +196,6 @@ impl<'a> IsLiteralValue<'a, '_> for ObjectPropertyKind<'a> {
                 _ => false,
             },
         }
-    }
-}
-
-impl<'a> IsLiteralValue<'a, '_> for ObjectProperty<'a> {
-    fn is_literal_value(&self, include_functions: bool, ctx: &impl GlobalContext<'a>) -> bool {
-        self.key.is_literal_value(include_functions, ctx)
-            && self.value.is_literal_value(include_functions, ctx)
     }
 }
 

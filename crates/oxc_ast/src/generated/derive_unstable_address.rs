@@ -26,7 +26,11 @@ impl UnstableAddress for Elision {}
 
 impl UnstableAddress for ObjectExpression<'_> {}
 
-impl UnstableAddress for ObjectProperty<'_> {}
+impl UnstableAddress for ObjectKeyValueProperty<'_> {}
+
+impl UnstableAddress for ObjectShorthandProperty<'_> {}
+
+impl UnstableAddress for ObjectMethodProperty<'_> {}
 
 impl UnstableAddress for TemplateLiteral<'_> {}
 

@@ -637,16 +637,132 @@ const DebugObjectExpression = class ObjectExpression {};
 function constructObjectPropertyKind(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxObjectProperty(pos + 8, ast);
+      return constructBoxObjectKeyValueProperty(pos + 8, ast);
     case 1:
+      return constructBoxObjectShorthandProperty(pos + 8, ast);
+    case 2:
+      return constructBoxObjectMethodProperty(pos + 8, ast);
+    case 3:
       return constructBoxSpreadElement(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ObjectPropertyKind`);
   }
 }
 
-export class ObjectProperty {
-  type = "ObjectProperty";
+export class ObjectKeyValueProperty {
+  type = "ObjectKeyValueProperty";
+  #internal;
+
+  constructor(pos, ast) {
+    if (ast?.token !== TOKEN) constructorError();
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
+    this.#internal = { pos, ast };
+    nodes.set(pos, this);
+  }
+
+  get start() {
+    const internal = this.#internal;
+    return constructI32(internal.pos, internal.ast);
+  }
+
+  get end() {
+    const internal = this.#internal;
+    return constructI32(internal.pos + 4, internal.ast);
+  }
+
+  get key() {
+    const internal = this.#internal;
+    return constructPropertyKey(internal.pos + 16, internal.ast);
+  }
+
+  get value() {
+    const internal = this.#internal;
+    return constructExpression(internal.pos + 32, internal.ast);
+  }
+
+  get computed() {
+    const internal = this.#internal;
+    return internal.ast.buffer[internal.pos + 16] < 64;
+  }
+
+  toJSON() {
+    return {
+      type: "ObjectKeyValueProperty",
+      start: this.start,
+      end: this.end,
+      key: this.key,
+      value: this.value,
+      computed: this.computed,
+    };
+  }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugObjectKeyValueProperty.prototype);
+  }
+}
+
+const DebugObjectKeyValueProperty = class ObjectKeyValueProperty {};
+
+export class ObjectShorthandProperty {
+  type = "ObjectShorthandProperty";
+  #internal;
+
+  constructor(pos, ast) {
+    if (ast?.token !== TOKEN) constructorError();
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
+    this.#internal = { pos, ast, $key: void 0 };
+    nodes.set(pos, this);
+  }
+
+  get start() {
+    const internal = this.#internal;
+    return constructI32(internal.pos, internal.ast);
+  }
+
+  get end() {
+    const internal = this.#internal;
+    return constructI32(internal.pos + 4, internal.ast);
+  }
+
+  get key() {
+    const internal = this.#internal,
+      cached = internal.$key;
+    if (cached !== void 0) return cached;
+    return (internal.$key = constructStr(internal.pos + 16, internal.ast));
+  }
+
+  get value() {
+    const internal = this.#internal;
+    return new IdentifierReference(internal.pos + 32, internal.ast);
+  }
+
+  toJSON() {
+    return {
+      type: "ObjectShorthandProperty",
+      start: this.start,
+      end: this.end,
+      key: this.key,
+      value: this.value,
+    };
+  }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugObjectShorthandProperty.prototype);
+  }
+}
+
+const DebugObjectShorthandProperty = class ObjectShorthandProperty {};
+
+export class ObjectMethodProperty {
+  type = "ObjectMethodProperty";
   #internal;
 
   constructor(pos, ast) {
@@ -672,7 +788,7 @@ export class ObjectProperty {
 
   get kind() {
     const internal = this.#internal;
-    return constructPropertyKind(internal.pos + 12, internal.ast);
+    return constructObjectMethodKind(internal.pos + 12, internal.ast);
   }
 
   get key() {
@@ -682,17 +798,12 @@ export class ObjectProperty {
 
   get value() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 32, internal.ast);
+    return constructBoxFunction(internal.pos + 32, internal.ast);
   }
 
   get method() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 13, internal.ast);
-  }
-
-  get shorthand() {
-    const internal = this.#internal;
-    return constructBool(internal.pos + 14, internal.ast);
+    return internal.ast.buffer[internal.pos + 12] === 0;
   }
 
   get computed() {
@@ -702,24 +813,36 @@ export class ObjectProperty {
 
   toJSON() {
     return {
-      type: "ObjectProperty",
+      type: "ObjectMethodProperty",
       start: this.start,
       end: this.end,
       kind: this.kind,
       key: this.key,
       value: this.value,
       method: this.method,
-      shorthand: this.shorthand,
       computed: this.computed,
     };
   }
 
   [inspectSymbol]() {
-    return Object.setPrototypeOf(this.toJSON(), DebugObjectProperty.prototype);
+    return Object.setPrototypeOf(this.toJSON(), DebugObjectMethodProperty.prototype);
   }
 }
 
-const DebugObjectProperty = class ObjectProperty {};
+const DebugObjectMethodProperty = class ObjectMethodProperty {};
+
+function constructObjectMethodKind(pos, ast) {
+  switch (ast.buffer[pos]) {
+    case 0:
+      return "init";
+    case 1:
+      return "get";
+    case 2:
+      return "set";
+    default:
+      throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ObjectMethodKind`);
+  }
+}
 
 function constructPropertyKey(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -823,19 +946,6 @@ function constructPropertyKey(pos, ast) {
       return constructBoxPrivateIdentifier(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for PropertyKey`);
-  }
-}
-
-function constructPropertyKind(pos, ast) {
-  switch (ast.buffer[pos]) {
-    case 0:
-      return "init";
-    case 1:
-      return "get";
-    case 2:
-      return "set";
-    default:
-      throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for PropertyKind`);
   }
 }
 
@@ -13158,12 +13268,16 @@ function constructVecObjectPropertyKind(pos, ast) {
   return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructObjectPropertyKind, ast);
 }
 
-function constructBoxObjectProperty(pos, ast) {
-  return new ObjectProperty(ast.buffer.int32[pos >> 2], ast);
+function constructBoxObjectKeyValueProperty(pos, ast) {
+  return new ObjectKeyValueProperty(ast.buffer.int32[pos >> 2], ast);
 }
 
-function constructBool(pos, ast) {
-  return ast.buffer[pos] === 1;
+function constructBoxObjectShorthandProperty(pos, ast) {
+  return new ObjectShorthandProperty(ast.buffer.int32[pos >> 2], ast);
+}
+
+function constructBoxObjectMethodProperty(pos, ast) {
+  return new ObjectMethodProperty(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxIdentifierName(pos, ast) {
@@ -13197,6 +13311,10 @@ function constructBoxTSTypeParameterInstantiation(pos, ast) {
 function constructOptionBoxTSTypeParameterInstantiation(pos, ast) {
   if (ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0) return null;
   return constructBoxTSTypeParameterInstantiation(pos, ast);
+}
+
+function constructBool(pos, ast) {
+  return ast.buffer[pos] === 1;
 }
 
 function constructJSStr(pos, ast) {

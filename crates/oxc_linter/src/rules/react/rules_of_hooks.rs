@@ -6,7 +6,10 @@ use smallvec::SmallVec;
 
 use oxc_ast::{
     AstKind, FunctionKind,
-    ast::{ArrowFunctionExpression, CallExpression, Expression, Function, NewExpression},
+    ast::{
+        ArrowFunctionExpression, CallExpression, Expression, Function, NewExpression,
+        ObjectKeyValueProperty, ObjectMethodProperty,
+    },
 };
 use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_cfg::{ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind, graph::visit::EdgeRef};
@@ -971,8 +974,9 @@ fn get_declaration_identifier<'a>(
                 }
                 // { useHook: () => {} }
                 // { useHook() {} }
-                AstKind::ObjectProperty(prop) => {
-                    let name = prop.key.name()?;
+                AstKind::ObjectKeyValueProperty(ObjectKeyValueProperty { key, .. })
+                | AstKind::ObjectMethodProperty(ObjectMethodProperty { key, .. }) => {
+                    let name = key.name()?;
                     // The name is only classified as a component or hook name. A lone surrogate
                     // is neither an uppercase letter nor a digit, and neither is U+FFFD.
                     let replaced = name.as_str().is_none().then(|| {

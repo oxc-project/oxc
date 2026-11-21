@@ -136,10 +136,17 @@ impl Rule for InlineScriptId {
                             spread_attr.argument.without_parentheses()
                         {
                             for prop in &obj_expr.properties {
-                                if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop
-                                    && let PropertyKey::StaticIdentifier(ident) = &obj_prop.key
-                                {
-                                    prop_names_hash_set.insert(ident.name.into());
+                                let name = match prop {
+                                    ObjectPropertyKind::ShorthandProperty(prop) => Some(prop.name),
+                                    _ => match prop.key() {
+                                        Some(PropertyKey::StaticIdentifier(ident)) => {
+                                            Some(ident.name)
+                                        }
+                                        _ => None,
+                                    },
+                                };
+                                if let Some(name) = name {
+                                    prop_names_hash_set.insert(name.into());
                                 }
                             }
                         } else {

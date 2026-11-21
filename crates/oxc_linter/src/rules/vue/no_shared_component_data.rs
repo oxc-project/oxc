@@ -69,7 +69,7 @@ declare_oxc_lint!(
 
 impl Rule for NoSharedComponentData {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ObjectProperty(prop) = node.kind() else { return };
+        let AstKind::ObjectKeyValueProperty(prop) = node.kind() else { return };
 
         if !prop.key.is_specific_static_name("data") {
             return;

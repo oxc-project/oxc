@@ -851,7 +851,7 @@ describe("Visitor", () => {
       },
     );
     expect(computed).toStrictEqual({
-      ObjectProperty: [false, true],
+      ObjectKeyValueProperty: [false, true],
       AssignmentTargetPropertyProperty: [false, true],
       BindingProperty: [false, true],
       MethodDefinition: [false, true],

@@ -32,50 +32,61 @@ use super::PeepholeOptimizations;
 /// with literals, and simplifying returns.
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntax.java>
 impl<'a> PeepholeOptimizations {
-    pub fn substitute_object_property(prop: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {
-        // <https://tc39.es/ecma262/2024/multipage/ecmascript-language-expressions.html#sec-runtime-semantics-propertydefinitionevaluation>
-        if !prop.method
-            && let PropertyKey::StringLiteral(str) | PropertyKey::StaticStringLiteral(str) =
-                &prop.key
-        {
-            // "{ __proto__ }" sets prototype, while "{ ['__proto__'] }" does not
-            if str.value == "__proto__" {
-                return;
-            }
-        }
+    pub fn substitute_object_property(
+        prop: &mut ObjectPropertyKind<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        match prop {
+            ObjectPropertyKind::KeyValueProperty(key_value) => {
+                // <https://tc39.es/ecma262/2024/multipage/ecmascript-language-expressions.html#sec-runtime-semantics-propertydefinitionevaluation>
+                // "{ __proto__: x }" sets prototype, while "{ ['__proto__']: x }" does not
+                if key_value.key.is_specific_string_literal("__proto__") {
+                    return;
+                }
 
-        // Normalise the key before checking shorthand: `try_compress_property_key`
-        // can turn `{ "x": x }` into `{ x: x }`, which then becomes a candidate
-        // for shorthand normalisation in the same visit.
-        Self::try_compress_property_key(&mut prop.key, ctx);
-        Self::normalize_object_property_shorthand(prop);
+                // Normalise the key before checking shorthand: `try_compress_property_key`
+                // can turn `{ "x": x }` into `{ x: x }`, which then becomes a candidate
+                // for shorthand normalisation in the same visit.
+                Self::try_compress_property_key(&mut key_value.key, ctx);
+                Self::normalize_object_property_shorthand(prop, ctx);
+            }
+            ObjectPropertyKind::MethodProperty(method) => {
+                Self::try_compress_property_key(&mut method.key, ctx);
+            }
+            ObjectPropertyKind::ShorthandProperty(_) | ObjectPropertyKind::SpreadProperty(_) => {}
+        }
     }
 
     /// `{ x: x }` is observationally equivalent to `{ x }`, and codegen always
-    /// prints it as `{ x }`. Set `shorthand = true` so the AST matches the
+    /// prints it as `{ x }`. Convert it to a shorthand property so the AST matches the
     /// printed output; otherwise content-equality checks (e.g. when merging
     /// adjacent `if` statements with identical jump bodies) treat the two
     /// forms as different on the first pass and only converge on the second.
     ///
     /// Output text is unchanged, so we deliberately do not record a
     /// mutation.
-    fn normalize_object_property_shorthand(prop: &mut ObjectProperty<'a>) {
-        if prop.shorthand {
+    fn normalize_object_property_shorthand(
+        prop: &mut ObjectPropertyKind<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) {
+        let ObjectPropertyKind::KeyValueProperty(key_value) = prop else { return };
+        let key_value = &mut **key_value;
+        let (PropertyKey::StaticIdentifier(key), Expression::Identifier(value)) =
+            (&key_value.key, &mut key_value.value)
+        else {
             return;
-        }
-        let Expression::Identifier(value) = &prop.value else { return };
-        if prop.key.is_computed() || prop.method || prop.kind != PropertyKind::Init {
-            return;
-        }
-        let PropertyKey::StaticIdentifier(key) = &prop.key else { return };
+        };
         // `{ __proto__: __proto__ }` triggers the Annex B.3.1 proto setter
         // (literal `__proto__` key, non-computed, non-shorthand, non-method),
         // but `{ __proto__ }` is a plain shorthand `IdentifierReference` that
         // creates a regular own data property and does NOT set `[[Prototype]]`.
         // Converting would change observable behaviour, so bail out.
-        if key.name == value.name && key.name != "__proto__" {
-            prop.shorthand = true;
+        if key.name != value.name || key.name == "__proto__" {
+            return;
         }
+        let name = key.name;
+        let value = value.as_mut().take_in(ctx);
+        *prop = ObjectPropertyKind::new_shorthand_property(key_value.span, name, value, ctx);
     }
 
     pub fn substitute_assignment_target_property_property(

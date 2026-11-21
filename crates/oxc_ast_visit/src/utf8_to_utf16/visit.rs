@@ -30,24 +30,6 @@ impl Utf8ToUtf16Converter<'_> {
         }
     }
 
-    pub(crate) fn convert_object_property(&mut self, prop: &mut ObjectProperty<'_>) {
-        self.convert_offset(&mut prop.span.start);
-
-        // If shorthand, span of `key` and `value` are the same
-        match (prop.shorthand, &mut prop.key, &mut prop.value) {
-            (true, PropertyKey::StaticIdentifier(key), Expression::Identifier(value)) => {
-                self.visit_identifier_name(key);
-                value.span = key.span;
-            }
-            (_, key, value) => {
-                self.visit_property_key(key);
-                self.visit_expression(value);
-            }
-        }
-
-        self.convert_offset(&mut prop.span.end);
-    }
-
     pub(crate) fn convert_binding_property(&mut self, prop: &mut BindingProperty<'_>) {
         self.convert_offset(&mut prop.span.start);
 

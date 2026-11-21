@@ -74,7 +74,7 @@ impl Rule for NoRenderReturnValue {
             if matches!(
                 parent_node.kind(),
                 AstKind::VariableDeclarator(_)
-                    | AstKind::ObjectProperty(_)
+                    | AstKind::ObjectKeyValueProperty(_)
                     | AstKind::ReturnStatement(_)
                     | AstKind::AssignmentExpression(_)
                     | AstKind::ArrowFunctionExpression(_)

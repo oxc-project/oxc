@@ -86,6 +86,14 @@ fn simple() {
 }
 
 #[test]
+fn shorthand_property() {
+    let config = config(&[("id", "text"), ("__proto__", "'text'")]);
+    test("foo({ id })", "foo({ id: text })", &config);
+    test("foo({ __proto__ })", "foo({ ['__proto__']: 'text' })", &config);
+    test_same("(function (id) { foo({ id }) })()", &config);
+}
+
+#[test]
 fn shadowed() {
     let config =
         config(&[("undefined", "text"), ("NaN", "'text'"), ("process.env.NODE_ENV", "'test'")]);

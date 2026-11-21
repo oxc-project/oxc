@@ -83,7 +83,11 @@ impl Rule for RequirePropTypeConstructor {
                 if !is_vue_component_options_object_excluding_instance(node, ctx) {
                     return;
                 }
-                let Some(props_prop) = obj.find_property("props") else { return };
+                let Some(ObjectPropertyKind::KeyValueProperty(props_prop)) =
+                    obj.find_property("props")
+                else {
+                    return;
+                };
                 let Expression::ObjectExpression(props_obj) =
                     props_prop.value.get_inner_expression()
                 else {
@@ -118,7 +122,7 @@ impl Rule for RequirePropTypeConstructor {
 
 fn verify_props<'a>(props_obj: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
     for entry in &props_obj.properties {
-        let ObjectPropertyKind::ObjectProperty(prop) = entry else { continue };
+        let ObjectPropertyKind::KeyValueProperty(prop) = entry else { continue };
         let Some(prop_name) = prop.key.static_name() else { continue };
         let value = prop.value.get_inner_expression();
 
@@ -127,7 +131,11 @@ fn verify_props<'a>(props_obj: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
                 check_array_elements(arr, &prop_name.display(), ctx);
             }
             Expression::ObjectExpression(obj) => {
-                let Some(type_prop) = obj.find_property("type") else { continue };
+                let Some(ObjectPropertyKind::KeyValueProperty(type_prop)) =
+                    obj.find_property("type")
+                else {
+                    continue;
+                };
                 let type_value = type_prop.value.get_inner_expression();
                 if let Expression::ArrayExpression(arr) = type_value {
                     check_array_elements(arr, &prop_name.display(), ctx);

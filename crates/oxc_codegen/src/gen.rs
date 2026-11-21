@@ -1778,75 +1778,26 @@ impl GenExpr for ObjectExpression<'_> {
 impl Gen for ObjectPropertyKind<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            Self::ObjectProperty(prop) => prop.print(p, ctx),
+            Self::KeyValueProperty(prop) => prop.print(p, ctx),
+            Self::ShorthandProperty(prop) => prop.print(p, ctx),
+            Self::MethodProperty(prop) => prop.print(p, ctx),
             Self::SpreadProperty(elem) => elem.print(p, ctx),
         }
     }
 }
 
-impl Gen for ObjectProperty<'_> {
+impl Gen for ObjectKeyValueProperty<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        if let Expression::FunctionExpression(func) = &self.value {
+        if matches!(self.value, Expression::FunctionExpression(_)) {
             p.add_source_mapping(self.span);
-            let is_accessor = match &self.kind {
-                PropertyKind::Init => false,
-                PropertyKind::Get => {
-                    p.print_str("get");
-                    p.print_soft_space();
-                    true
-                }
-                PropertyKind::Set => {
-                    p.print_str("set");
-                    p.print_soft_space();
-                    true
-                }
-            };
-            if self.method || is_accessor {
-                if func.r#async {
-                    p.print_space_before_identifier();
-                    p.print_str("async");
-                    p.print_soft_space();
-                }
-                if func.generator {
-                    p.print_ascii_byte(b'*');
-                }
-                self.key.print(p, ctx);
-                if let Some(type_parameters) = &func.type_parameters {
-                    type_parameters.print(p, ctx);
-                }
-                p.print_ascii_byte(b'(');
-                if let Some(this_param) = &func.this_param {
-                    this_param.print(p, ctx);
-                    if !func.params.is_empty() || func.params.rest.is_some() {
-                        p.print_ascii_byte(b',');
-                        p.print_soft_space();
-                    }
-                }
-                func.params.print(p, ctx);
-                p.print_ascii_byte(b')');
-                if let Some(return_type) = &func.return_type {
-                    p.print_colon();
-                    p.print_soft_space();
-                    return_type.print(p, ctx);
-                }
-                if let Some(body) = &func.body {
-                    p.print_soft_space();
-                    body.print(p, ctx);
-                }
-                return;
-            }
         }
 
-        let mut shorthand = false;
-        if let PropertyKey::StaticIdentifier(key) = &self.key {
-            if key.name == "__proto__" {
-                shorthand = self.shorthand;
-            } else if let Expression::Identifier(ident) = self.value.without_parentheses()
-                && key.name == p.get_identifier_reference_name(ident)
-            {
-                shorthand = true;
-            }
-        }
+        // `{ __proto__: __proto__ }` sets the prototype, but `{ __proto__ }` does not.
+        let shorthand = matches!(
+            (&self.key, self.value.without_parentheses()),
+            (PropertyKey::StaticIdentifier(key), Expression::Identifier(ident))
+                if key.name != "__proto__" && key.name == p.get_identifier_reference_name(ident)
+        );
 
         if !shorthand {
             self.key.print(p, ctx);
@@ -1856,6 +1807,77 @@ impl Gen for ObjectProperty<'_> {
 
         p.print_leading_comments_before_expression(&self.value);
         self.value.print_expr(p, Precedence::Comma, Context::empty());
+    }
+}
+
+impl Gen for ObjectShorthandProperty<'_> {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        // Print `{ name: value }` if `value` has been renamed.
+        if self.name != p.get_identifier_reference_name(&self.value) {
+            if self.name == "__proto__" {
+                // `{ __proto__: value }` would set the prototype, so use a computed key.
+                p.print_ascii_byte(b'[');
+                p.print_string_impl(JSStr::from("__proto__"), /* allow_backtick */ false);
+                p.print_ascii_byte(b']');
+            } else {
+                p.print_space_before_identifier();
+                p.add_source_mapping_for_name(self.value.span, &self.name);
+                p.print_name(self.name.as_str());
+            }
+            p.print_colon();
+            p.print_soft_space();
+        }
+
+        self.value.print(p, ctx);
+    }
+}
+
+impl Gen for ObjectMethodProperty<'_> {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        let func = &self.value;
+        p.add_source_mapping(self.span);
+        match self.kind {
+            ObjectMethodKind::Method => {}
+            ObjectMethodKind::Get => {
+                p.print_str("get");
+                p.print_soft_space();
+            }
+            ObjectMethodKind::Set => {
+                p.print_str("set");
+                p.print_soft_space();
+            }
+        }
+        if func.r#async {
+            p.print_space_before_identifier();
+            p.print_str("async");
+            p.print_soft_space();
+        }
+        if func.generator {
+            p.print_ascii_byte(b'*');
+        }
+        self.key.print(p, ctx);
+        if let Some(type_parameters) = &func.type_parameters {
+            type_parameters.print(p, ctx);
+        }
+        p.print_ascii_byte(b'(');
+        if let Some(this_param) = &func.this_param {
+            this_param.print(p, ctx);
+            if !func.params.is_empty() || func.params.rest.is_some() {
+                p.print_ascii_byte(b',');
+                p.print_soft_space();
+            }
+        }
+        func.params.print(p, ctx);
+        p.print_ascii_byte(b')');
+        if let Some(return_type) = &func.return_type {
+            p.print_colon();
+            p.print_soft_space();
+            return_type.print(p, ctx);
+        }
+        if let Some(body) = &func.body {
+            p.print_soft_space();
+            body.print(p, ctx);
+        }
     }
 }
 

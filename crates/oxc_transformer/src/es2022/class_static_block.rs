@@ -186,7 +186,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
         match expr {
             Expression::ObjectExpression(object) => {
                 for prop in &mut object.properties {
-                    let ObjectPropertyKind::ObjectProperty(prop) = prop else { continue };
+                    let ObjectPropertyKind::KeyValueProperty(prop) = prop else { continue };
                     let prop = &mut **prop;
                     // A prototype setter does not perform NamedEvaluation.
                     if prop.key.is_specific_literal_name("__proto__") {
@@ -410,15 +410,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
                 }
                 _ => PropertyKey::from(name.expression(ctx)),
             };
-            let property = ObjectPropertyKind::new_object_property(
-                SPAN,
-                PropertyKind::Init,
-                key,
-                expr.take_in(ctx),
-                false,
-                false,
-                ctx,
-            );
+            let property =
+                ObjectPropertyKind::new_key_value_property(SPAN, key, expr.take_in(ctx), ctx);
             let object = Expression::new_object_expression(SPAN, [property], ctx);
             let key = name.expression(ctx);
             *expr = if matches!(name, InferredName::Computed(_)) {

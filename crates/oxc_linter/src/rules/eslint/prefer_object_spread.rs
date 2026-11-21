@@ -2,9 +2,7 @@ use std::cmp::max;
 
 use oxc_allocator::ArenaBox;
 use oxc_ast::AstKind;
-use oxc_ast::ast::{
-    CallExpression, Expression, ObjectExpression, ObjectPropertyKind, PropertyKind,
-};
+use oxc_ast::ast::{CallExpression, Expression, ObjectExpression, ObjectPropertyKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -181,7 +179,8 @@ fn fix_object_assign<'c, 'a: 'c>(
             | AstKind::ArrayExpression(_)
             | AstKind::ReturnStatement(_)
             | AstKind::CallExpression(_)
-            | AstKind::ObjectProperty(_)
+            | AstKind::ObjectKeyValueProperty(_)
+            | AstKind::ObjectMethodProperty(_)
             | AstKind::AssignmentExpression(_)
     );
 
@@ -242,13 +241,10 @@ fn fix_object_assign<'c, 'a: 'c>(
 }
 
 fn has_get_or_set_property(obj_expr: &ObjectExpression) -> bool {
-    obj_expr.properties.iter().any(|p| {
-        let ObjectPropertyKind::ObjectProperty(p) = p else {
-            return false;
-        };
-
-        p.kind == PropertyKind::Get || p.kind == PropertyKind::Set
-    })
+    obj_expr
+        .properties
+        .iter()
+        .any(|p| matches!(p, ObjectPropertyKind::MethodProperty(p) if p.kind.is_accessor()))
 }
 
 /// Returns `true` if the object expression has a `__proto__` property.
@@ -258,22 +254,16 @@ fn has_get_or_set_property(obj_expr: &ObjectExpression) -> bool {
 /// `__["__proto__"]`, method `__proto__()`, etc.) also differ between copying
 /// with `[[Set]]` and defining an own property, so they are treated the same.
 fn has_proto_property(obj_expr: &ObjectExpression) -> bool {
-    obj_expr.properties.iter().any(|p| {
-        let ObjectPropertyKind::ObjectProperty(p) = p else {
-            return false;
-        };
-
-        p.key.is_specific_static_name("__proto__")
-    })
+    obj_expr.properties.iter().any(|p| p.is_specific_static_name("__proto__"))
 }
 
 fn is_plain_data_object(obj_expr: &ObjectExpression) -> bool {
-    obj_expr.properties.iter().all(|p| {
-        matches!(p, ObjectPropertyKind::ObjectProperty(p)
-            if !p.key.is_computed()
-                && !p.method
-                && p.kind == PropertyKind::Init
-                && !p.key.is_specific_literal_name("__proto__"))
+    obj_expr.properties.iter().all(|p| match p {
+        ObjectPropertyKind::KeyValueProperty(p) => {
+            !p.key.is_computed() && !p.key.is_specific_literal_name("__proto__")
+        }
+        ObjectPropertyKind::ShorthandProperty(p) => p.name != "__proto__",
+        ObjectPropertyKind::MethodProperty(_) | ObjectPropertyKind::SpreadProperty(_) => false,
     })
 }
 

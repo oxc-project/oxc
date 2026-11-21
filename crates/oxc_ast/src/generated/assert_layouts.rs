@@ -88,22 +88,36 @@ const _: () = {
     assert!(size_of::<ObjectPropertyKind>() == 16);
     assert!(align_of::<ObjectPropertyKind>() == 8);
 
-    // Padding: 1 bytes
-    assert!(size_of::<ObjectProperty>() == 48);
-    assert!(align_of::<ObjectProperty>() == 8);
-    assert!(offset_of!(ObjectProperty, span) == 0);
-    assert!(offset_of!(ObjectProperty, node_id) == 8);
-    assert!(offset_of!(ObjectProperty, kind) == 12);
-    assert!(offset_of!(ObjectProperty, method) == 13);
-    assert!(offset_of!(ObjectProperty, shorthand) == 14);
-    assert!(offset_of!(ObjectProperty, key) == 16);
-    assert!(offset_of!(ObjectProperty, value) == 32);
+    // Padding: 4 bytes
+    assert!(size_of::<ObjectKeyValueProperty>() == 48);
+    assert!(align_of::<ObjectKeyValueProperty>() == 8);
+    assert!(offset_of!(ObjectKeyValueProperty, span) == 0);
+    assert!(offset_of!(ObjectKeyValueProperty, node_id) == 8);
+    assert!(offset_of!(ObjectKeyValueProperty, key) == 16);
+    assert!(offset_of!(ObjectKeyValueProperty, value) == 32);
+
+    // Padding: 4 bytes
+    assert!(size_of::<ObjectShorthandProperty>() == 64);
+    assert!(align_of::<ObjectShorthandProperty>() == 8);
+    assert!(offset_of!(ObjectShorthandProperty, span) == 0);
+    assert!(offset_of!(ObjectShorthandProperty, node_id) == 8);
+    assert!(offset_of!(ObjectShorthandProperty, name) == 16);
+    assert!(offset_of!(ObjectShorthandProperty, value) == 32);
+
+    // Padding: 3 bytes
+    assert!(size_of::<ObjectMethodProperty>() == 40);
+    assert!(align_of::<ObjectMethodProperty>() == 8);
+    assert!(offset_of!(ObjectMethodProperty, span) == 0);
+    assert!(offset_of!(ObjectMethodProperty, node_id) == 8);
+    assert!(offset_of!(ObjectMethodProperty, kind) == 12);
+    assert!(offset_of!(ObjectMethodProperty, key) == 16);
+    assert!(offset_of!(ObjectMethodProperty, value) == 32);
+
+    assert!(size_of::<ObjectMethodKind>() == 1);
+    assert!(align_of::<ObjectMethodKind>() == 1);
 
     assert!(size_of::<PropertyKey>() == 16);
     assert!(align_of::<PropertyKey>() == 8);
-
-    assert!(size_of::<PropertyKind>() == 1);
-    assert!(align_of::<PropertyKind>() == 1);
 
     // Padding: 4 bytes
     assert!(size_of::<TemplateLiteral>() == 64);
@@ -1924,22 +1938,36 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(size_of::<ObjectPropertyKind>() == 8);
     assert!(align_of::<ObjectPropertyKind>() == 4);
 
-    // Padding: 1 bytes
-    assert!(size_of::<ObjectProperty>() == 32);
-    assert!(align_of::<ObjectProperty>() == 4);
-    assert!(offset_of!(ObjectProperty, span) == 0);
-    assert!(offset_of!(ObjectProperty, node_id) == 8);
-    assert!(offset_of!(ObjectProperty, kind) == 12);
-    assert!(offset_of!(ObjectProperty, method) == 13);
-    assert!(offset_of!(ObjectProperty, shorthand) == 14);
-    assert!(offset_of!(ObjectProperty, key) == 16);
-    assert!(offset_of!(ObjectProperty, value) == 24);
+    // Padding: 0 bytes
+    assert!(size_of::<ObjectKeyValueProperty>() == 28);
+    assert!(align_of::<ObjectKeyValueProperty>() == 4);
+    assert!(offset_of!(ObjectKeyValueProperty, span) == 0);
+    assert!(offset_of!(ObjectKeyValueProperty, node_id) == 8);
+    assert!(offset_of!(ObjectKeyValueProperty, key) == 12);
+    assert!(offset_of!(ObjectKeyValueProperty, value) == 20);
+
+    // Padding: 0 bytes
+    assert!(size_of::<ObjectShorthandProperty>() == 52);
+    assert!(align_of::<ObjectShorthandProperty>() == 4);
+    assert!(offset_of!(ObjectShorthandProperty, span) == 0);
+    assert!(offset_of!(ObjectShorthandProperty, node_id) == 8);
+    assert!(offset_of!(ObjectShorthandProperty, name) == 12);
+    assert!(offset_of!(ObjectShorthandProperty, value) == 24);
+
+    // Padding: 3 bytes
+    assert!(size_of::<ObjectMethodProperty>() == 28);
+    assert!(align_of::<ObjectMethodProperty>() == 4);
+    assert!(offset_of!(ObjectMethodProperty, span) == 0);
+    assert!(offset_of!(ObjectMethodProperty, node_id) == 8);
+    assert!(offset_of!(ObjectMethodProperty, kind) == 12);
+    assert!(offset_of!(ObjectMethodProperty, key) == 16);
+    assert!(offset_of!(ObjectMethodProperty, value) == 24);
+
+    assert!(size_of::<ObjectMethodKind>() == 1);
+    assert!(align_of::<ObjectMethodKind>() == 1);
 
     assert!(size_of::<PropertyKey>() == 8);
     assert!(align_of::<PropertyKey>() == 4);
-
-    assert!(size_of::<PropertyKind>() == 1);
-    assert!(align_of::<PropertyKind>() == 1);
 
     // Padding: 0 bytes
     assert!(size_of::<TemplateLiteral>() == 44);

@@ -2971,15 +2971,8 @@ fn ox_codegen_function_expression<'a>(
             None,
             &cx.ast,
         );
-        let prop = oxc_ast::ast::ObjectPropertyKind::new_object_property(
-            SPAN,
-            oxc::PropertyKind::Init,
-            key,
-            value,
-            false,
-            false,
-            &cx.ast,
-        );
+        let prop =
+            oxc_ast::ast::ObjectPropertyKind::new_key_value_property(SPAN, key, value, &cx.ast);
         let object = oxc_ast::ast::Expression::new_object_expression(SPAN, [prop], &cx.ast);
         let member = oxc_ast::ast::MemberExpression::new_computed_member_expression(
             SPAN,
@@ -3042,23 +3035,24 @@ fn ox_codegen_object_expression<'a>(
                 match obj_prop.property_type {
                     ObjectPropertyType::Property => {
                         let value = ox_codegen_place_to_expression(cx, &obj_prop.place)?;
-                        let shorthand = matches!(
-                            (&key, &value),
-                            (oxc::PropertyKey::StaticIdentifier(k), oxc::Expression::Identifier(v))
-                                if k.name == v.name
-                        );
-                        let p = oxc_ast::ast::ObjectProperty::new(
-                            obj_prop.place.span.unwrap_or_default(),
-                            oxc::PropertyKind::Init,
-                            key,
-                            value,
-                            false,
-                            shorthand,
-                            &cx.ast,
-                        );
-                        props.push(oxc::ObjectPropertyKind::ObjectProperty(
-                            oxc_allocator::ArenaBox::new_in(p, &cx.ast),
-                        ));
+                        let span = obj_prop.place.span.unwrap_or_default();
+                        let p = match (key, value) {
+                            (
+                                oxc::PropertyKey::StaticIdentifier(k),
+                                oxc::Expression::Identifier(v),
+                            ) if k.name == v.name => {
+                                oxc::ObjectPropertyKind::new_shorthand_property(
+                                    span,
+                                    k.name,
+                                    v.unbox(),
+                                    &cx.ast,
+                                )
+                            }
+                            (key, value) => oxc::ObjectPropertyKind::new_key_value_property(
+                                span, key, value, &cx.ast,
+                            ),
+                        };
+                        props.push(p);
                     }
                     ObjectPropertyType::Method => {
                         let method_data = cx
@@ -3079,7 +3073,7 @@ fn ox_codegen_object_expression<'a>(
                         prune_unused_lvalues(&mut reactive_fn, cx.env);
 
                         let fn_result = ox_codegen_inner_function(cx, &reactive_fn)?;
-                        let method = oxc_ast::ast::Function::new(
+                        let method = oxc_ast::ast::Function::boxed(
                             property_span,
                             oxc::FunctionType::FunctionExpression,
                             None,
@@ -3093,20 +3087,12 @@ fn ox_codegen_object_expression<'a>(
                             Some(fn_result.body),
                             &cx.ast,
                         );
-                        let func_expr = oxc::Expression::FunctionExpression(
-                            oxc_allocator::ArenaBox::new_in(method, &cx.ast),
-                        );
-                        let p = oxc_ast::ast::ObjectProperty::new(
+                        props.push(oxc::ObjectPropertyKind::new_method_property(
                             obj_prop.place.span.unwrap_or_default(),
-                            oxc::PropertyKind::Init,
+                            oxc::ObjectMethodKind::Method,
                             key,
-                            func_expr,
-                            true,
-                            false,
+                            method,
                             &cx.ast,
-                        );
-                        props.push(oxc::ObjectPropertyKind::ObjectProperty(
-                            oxc_allocator::ArenaBox::new_in(p, &cx.ast),
                         ));
                     }
                 }

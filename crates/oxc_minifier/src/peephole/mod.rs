@@ -700,7 +700,11 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         Normalize::set_pure_or_no_side_effects_to_new_expr(e, ctx);
     }
 
-    fn exit_object_property(&mut self, prop: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn exit_object_property_kind(
+        &mut self,
+        prop: &mut ObjectPropertyKind<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         if ctx.is_tree_shake_only() {
             return;
         }

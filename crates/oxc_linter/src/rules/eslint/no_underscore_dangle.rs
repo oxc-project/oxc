@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 use oxc_ast::{
     AstKind,
     ast::{
-        BindingIdentifier, Expression, FunctionType, PrivateFieldExpression, PropertyKey,
-        StaticMemberExpression,
+        BindingIdentifier, Expression, FunctionType, ObjectMethodKind, PrivateFieldExpression,
+        PropertyKey, StaticMemberExpression,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -135,7 +135,9 @@ impl Rule for NoUnderscoreDangle {
             AstKind::MethodDefinition(m) if self.enforce_in_method_names => {
                 self.check_property_key(ctx, &m.key);
             }
-            AstKind::ObjectProperty(o) if self.enforce_in_method_names && o.method => {
+            AstKind::ObjectMethodProperty(o)
+                if self.enforce_in_method_names && o.kind == ObjectMethodKind::Method =>
+            {
                 self.check_property_key(ctx, &o.key);
             }
             AstKind::PropertyDefinition(p) if self.enforce_in_class_fields => {

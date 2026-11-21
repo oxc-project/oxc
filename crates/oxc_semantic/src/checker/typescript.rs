@@ -112,7 +112,7 @@ fn is_allowed_type_predicate_position(ctx: &SemanticBuilder<'_>) -> bool {
     match ancestors.next() {
         Some(AstKind::Function(_)) => match ancestors.next() {
             Some(AstKind::MethodDefinition(method)) => method.kind.is_method(),
-            Some(AstKind::ObjectProperty(property)) => !property.kind.is_accessor(),
+            Some(AstKind::ObjectMethodProperty(property)) => !property.kind.is_accessor(),
             _ => true,
         },
         Some(

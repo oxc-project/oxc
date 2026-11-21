@@ -70,7 +70,7 @@ impl Rule for NoAsyncAwait {
                         //     async foo() {}
                         // };
                         // ```
-                        AstKind::ObjectProperty(obj_prop) => {
+                        AstKind::ObjectMethodProperty(obj_prop) => {
                             Span::new(obj_prop.span.start, obj_prop.key.span().start)
                         }
                         _ => func_decl.span,
@@ -162,6 +162,7 @@ fn test() {
         ",
         "/* async */ async function foo() {}",
         "class Foo { /* async */ async bar() {} }",
+        "const obj = { foo: async function() {} }",
     ];
 
     Tester::new(NoAsyncAwait::NAME, NoAsyncAwait::PLUGIN, pass, fail).test_and_snapshot();

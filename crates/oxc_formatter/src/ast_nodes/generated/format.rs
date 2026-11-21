@@ -969,8 +969,24 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ObjectPropertyKind<
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let parent = self.parent;
         match self.inner {
-            ObjectPropertyKind::ObjectProperty(inner) => {
-                AstNode::<ObjectProperty> {
+            ObjectPropertyKind::KeyValueProperty(inner) => {
+                AstNode::<ObjectKeyValueProperty> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
+            }
+            ObjectPropertyKind::ShorthandProperty(inner) => {
+                AstNode::<ObjectShorthandProperty> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
+            }
+            ObjectPropertyKind::MethodProperty(inner) => {
+                AstNode::<ObjectMethodProperty> {
                     inner,
                     parent,
                     following_span_start: self.following_span_start,
@@ -989,7 +1005,51 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ObjectPropertyKind<
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ObjectProperty<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ObjectKeyValueProperty<'a>> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
+        self.format_leading_comments(f);
+        if is_suppressed {
+            FormatSuppressedNode(self.span()).fmt(f);
+        } else {
+            self.write(f);
+        }
+        self.format_trailing_comments(f);
+    }
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ObjectShorthandProperty<'a>> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
+        self.format_leading_comments(f);
+        if is_suppressed {
+            FormatSuppressedNode(self.span()).fmt(f);
+        } else {
+            self.write(f);
+        }
+        self.format_trailing_comments(f);
+    }
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ObjectMethodProperty<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         if f.comments().is_quiet(
             self.span(),

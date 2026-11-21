@@ -2,7 +2,10 @@ use rustc_hash::FxHashSet;
 
 use oxc_ast::{
     AstKind, StaticPropertyName,
-    ast::{Expression, ObjectExpression, ObjectPropertyKind},
+    ast::{
+        Expression, ObjectExpression, ObjectKeyValueProperty, ObjectMethodProperty,
+        ObjectPropertyKind,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -108,8 +111,12 @@ fn enclosing_data_options<'a>(
     })?;
 
     let prop_node = nodes.parent_node(function_node.id());
-    let AstKind::ObjectProperty(prop) = prop_node.kind() else { return None };
-    if !prop.key.is_specific_static_name("data") {
+    let (AstKind::ObjectKeyValueProperty(ObjectKeyValueProperty { key, .. })
+    | AstKind::ObjectMethodProperty(ObjectMethodProperty { key, .. })) = prop_node.kind()
+    else {
+        return None;
+    };
+    if !key.is_specific_static_name("data") {
         return None;
     }
 
@@ -123,7 +130,7 @@ fn enclosing_data_options<'a>(
 
 fn collect_computed_names<'a>(options: &ObjectExpression<'a>) -> FxHashSet<&'a str> {
     let Some(computed_obj) = options.properties.iter().find_map(|p| match p {
-        ObjectPropertyKind::ObjectProperty(prop)
+        ObjectPropertyKind::KeyValueProperty(prop)
             if prop.key.is_specific_static_name("computed") =>
         {
             match prop.value.get_inner_expression() {
@@ -139,9 +146,8 @@ fn collect_computed_names<'a>(options: &ObjectExpression<'a>) -> FxHashSet<&'a s
     computed_obj
         .properties
         .iter()
-        .filter_map(ObjectPropertyKind::as_property)
         // Numeric keys are not valid identifiers to reference via `this`.
-        .filter_map(|prop| match prop.key.literal_name()? {
+        .filter_map(|prop| match prop.literal_name()? {
             StaticPropertyName::Borrowed(name) => name.as_str(),
             StaticPropertyName::Owned(_) => None,
         })

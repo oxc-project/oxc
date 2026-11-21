@@ -251,27 +251,21 @@ impl OnlyExportComponents {
 
     fn is_compound_component(&self, object: &ObjectExpression) -> bool {
         !object.properties.is_empty()
-            && object.properties.iter().all(|property| {
-                let ObjectPropertyKind::ObjectProperty(property) = property else {
-                    return false;
-                };
-                if property.kind != PropertyKind::Init {
-                    return false;
+            && object.properties.iter().all(|property| match property {
+                ObjectPropertyKind::KeyValueProperty(property) => self.is_compound_component_value(
+                    &property.value,
+                    key_has_component_name(&property.key),
+                ),
+                ObjectPropertyKind::ShorthandProperty(property) => {
+                    is_react_component_name(&property.name)
                 }
-
-                // An anonymous function gets its name from a static property key.
-                let has_component_name = match &property.key {
-                    PropertyKey::StaticIdentifier(ident) => is_react_component_name(&ident.name),
-                    // Only the first character decides a component name.
-                    PropertyKey::StaticStringLiteral(literal) => literal
-                        .value
-                        .chars()
-                        .next()
-                        .and_then(JSChar::to_char)
-                        .is_some_and(|c| c.is_ascii_uppercase()),
-                    _ => false,
-                };
-                self.is_compound_component_value(&property.value, has_component_name)
+                ObjectPropertyKind::MethodProperty(property) => {
+                    property.kind == ObjectMethodKind::Method
+                        && property.value.body.is_some()
+                        && property.value.params.parameters_count() <= 2
+                        && key_has_component_name(&property.key)
+                }
+                ObjectPropertyKind::SpreadProperty(_) => false,
             })
     }
 
@@ -855,6 +849,21 @@ enum ExportType {
     NonComponent(Span),
     ReactContext(Span),
     Allowed,
+}
+
+/// An anonymous function gets its name from a static property key.
+fn key_has_component_name(key: &PropertyKey) -> bool {
+    match key {
+        PropertyKey::StaticIdentifier(ident) => is_react_component_name(&ident.name),
+        // Only the first character decides a component name.
+        PropertyKey::StaticStringLiteral(literal) => literal
+            .value
+            .chars()
+            .next()
+            .and_then(JSChar::to_char)
+            .is_some_and(|c| c.is_ascii_uppercase()),
+        _ => false,
+    }
 }
 
 #[test]

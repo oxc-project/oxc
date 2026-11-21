@@ -181,13 +181,29 @@ impl GetSpan for ObjectExpression<'_> {
 impl GetSpan for ObjectPropertyKind<'_> {
     fn span(&self) -> Span {
         match self {
-            Self::ObjectProperty(it) => GetSpan::span(&**it),
+            Self::KeyValueProperty(it) => GetSpan::span(&**it),
+            Self::ShorthandProperty(it) => GetSpan::span(&**it),
+            Self::MethodProperty(it) => GetSpan::span(&**it),
             Self::SpreadProperty(it) => GetSpan::span(&**it),
         }
     }
 }
 
-impl GetSpan for ObjectProperty<'_> {
+impl GetSpan for ObjectKeyValueProperty<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for ObjectShorthandProperty<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for ObjectMethodProperty<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span

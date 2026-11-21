@@ -52,7 +52,6 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
     // Types with custom visitors (see comment above)
     let custom_visitor_type_ids = [
         "FormalParameters",
-        "ObjectProperty",
         "BindingProperty",
         "ExportDeclaration",
         "ExportDefaultDeclaration",

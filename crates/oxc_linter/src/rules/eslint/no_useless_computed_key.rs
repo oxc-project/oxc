@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ObjectKeyValueProperty, ObjectMethodProperty},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -128,14 +131,15 @@ impl Rule for NoUselessComputedKey {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::ObjectProperty(property) if property.key.is_computed() => {
-                if let Some(expr) =
-                    property.key.as_expression().map(Expression::without_parentheses)
-                {
+            AstKind::ObjectKeyValueProperty(ObjectKeyValueProperty { key, span, .. })
+            | AstKind::ObjectMethodProperty(ObjectMethodProperty { key, span, .. })
+                if key.is_computed() =>
+            {
+                if let Some(expr) = key.as_expression().map(Expression::without_parentheses) {
                     check_computed_class_member(
                         ctx,
-                        property.key.span(),
-                        property.span,
+                        key.span(),
+                        *span,
                         expr,
                         false,
                         &[],

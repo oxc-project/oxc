@@ -10,7 +10,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         BindingIdentifier, ExportSpecifier, IdentifierName, IdentifierReference, LabelIdentifier,
-        ModuleExportName, PrivateIdentifier,
+        ModuleExportName, ObjectKeyValueProperty, ObjectMethodProperty, PrivateIdentifier,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -184,7 +184,12 @@ impl IdDenylist {
         let (parent, _) = transparent_reference_parent(node, ctx);
         match parent.kind() {
             AstKind::CallExpression(_) | AstKind::NewExpression(_) => return,
-            AstKind::ObjectProperty(property) if property.shorthand => return,
+            AstKind::ObjectShorthandProperty(_) => {
+                if !is_dynamic_import_attribute_object_property(parent, ctx) {
+                    ctx.diagnostic(id_denylist_diagnostic(node.span(), name));
+                }
+                return;
+            }
             AstKind::AssignmentTargetPropertyProperty(property)
                 if property.name.span().contains_inclusive(ident.span)
                     && !property.name.is_computed() =>
@@ -217,11 +222,11 @@ impl IdDenylist {
                     return;
                 }
             }
-            AstKind::ObjectProperty(property)
-                if property.key.span().contains_inclusive(ident.span)
-                    && !property.key.is_computed() =>
+            AstKind::ObjectKeyValueProperty(ObjectKeyValueProperty { key, .. })
+            | AstKind::ObjectMethodProperty(ObjectMethodProperty { key, .. })
+                if key.span().contains_inclusive(ident.span) && !key.is_computed() =>
             {
-                if is_dynamic_import_attribute_object_property(property, ctx) {
+                if is_dynamic_import_attribute_object_property(parent, ctx) {
                     return;
                 }
             }

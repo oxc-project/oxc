@@ -298,7 +298,9 @@ impl<'a> MayHaveSideEffects<'a> for ArrayExpressionElement<'a> {
 impl<'a> MayHaveSideEffects<'a> for ObjectPropertyKind<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         match self {
-            ObjectPropertyKind::ObjectProperty(o) => o.may_have_side_effects(ctx),
+            ObjectPropertyKind::KeyValueProperty(o) => o.may_have_side_effects(ctx),
+            ObjectPropertyKind::ShorthandProperty(o) => o.value.may_have_side_effects(ctx),
+            ObjectPropertyKind::MethodProperty(o) => o.key.may_have_side_effects(ctx),
             ObjectPropertyKind::SpreadProperty(e) => {
                 if ctx.property_read_side_effects() == PropertyReadSideEffects::None {
                     e.argument.may_have_side_effects(ctx)
@@ -307,8 +309,15 @@ impl<'a> MayHaveSideEffects<'a> for ObjectPropertyKind<'a> {
                         Expression::ArrayExpression(arr) => arr.may_have_side_effects(ctx),
                         Expression::ObjectExpression(obj) => {
                             obj.properties.iter().any(|property| match property {
-                                ObjectPropertyKind::ObjectProperty(p) => {
-                                    p.kind == PropertyKind::Get || p.may_have_side_effects(ctx)
+                                ObjectPropertyKind::KeyValueProperty(p) => {
+                                    p.may_have_side_effects(ctx)
+                                }
+                                ObjectPropertyKind::ShorthandProperty(p) => {
+                                    p.value.may_have_side_effects(ctx)
+                                }
+                                ObjectPropertyKind::MethodProperty(p) => {
+                                    p.kind == ObjectMethodKind::Get
+                                        || p.key.may_have_side_effects(ctx)
                                 }
                                 ObjectPropertyKind::SpreadProperty(e) => {
                                     e.argument.may_have_side_effects(ctx)
@@ -325,7 +334,7 @@ impl<'a> MayHaveSideEffects<'a> for ObjectPropertyKind<'a> {
     }
 }
 
-impl<'a> MayHaveSideEffects<'a> for ObjectProperty<'a> {
+impl<'a> MayHaveSideEffects<'a> for ObjectKeyValueProperty<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         self.key.may_have_side_effects(ctx) || self.value.may_have_side_effects(ctx)
     }

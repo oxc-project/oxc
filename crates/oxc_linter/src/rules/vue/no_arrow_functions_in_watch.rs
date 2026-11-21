@@ -106,7 +106,7 @@ fn check_export_default_declaration<'a>(
     };
 
     for prop in &watch_obj.properties {
-        if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop {
+        if let ObjectPropertyKind::KeyValueProperty(obj_prop) = prop {
             handle_watch_value(&obj_prop.value, ctx);
         }
     }
@@ -133,7 +133,9 @@ fn check_define_component_function<'a>(call_expr: &'a CallExpression<'a>, ctx: &
 fn get_watch_object_expression<'a>(
     obj_expr: &'a ObjectExpression<'a>,
 ) -> Option<&'a ObjectExpression<'a>> {
-    let watch_prop = obj_expr.find_property("watch")?;
+    let ObjectPropertyKind::KeyValueProperty(watch_prop) = obj_expr.find_property("watch")? else {
+        return None;
+    };
     let Expression::ObjectExpression(watch_obj) = watch_prop.value.get_inner_expression() else {
         return None;
     };
@@ -141,7 +143,7 @@ fn get_watch_object_expression<'a>(
 }
 
 fn handle_watch_inner_property<'a>(inner_prop: &ObjectPropertyKind<'a>, ctx: &LintContext<'a>) {
-    let ObjectPropertyKind::ObjectProperty(obj_prop) = inner_prop else {
+    let ObjectPropertyKind::KeyValueProperty(obj_prop) = inner_prop else {
         return;
     };
 

@@ -92,7 +92,21 @@ impl GetNodeId for ObjectPropertyKind<'_> {
     }
 }
 
-impl GetNodeId for ObjectProperty<'_> {
+impl GetNodeId for ObjectKeyValueProperty<'_> {
+    #[inline]
+    fn node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
+
+impl GetNodeId for ObjectShorthandProperty<'_> {
+    #[inline]
+    fn node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
+
+impl GetNodeId for ObjectMethodProperty<'_> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id()

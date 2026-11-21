@@ -4,7 +4,7 @@ use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
         AssignmentTarget, AssignmentTargetProperty, BindingPattern, Expression, Function,
-        FunctionType, ObjectAssignmentTarget,
+        FunctionType, ObjectAssignmentTarget, ObjectKeyValueProperty, ObjectMethodProperty,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -324,11 +324,7 @@ fn is_valid_identifier_name(name: &str) -> bool {
 /// Determines whether the current FunctionExpression node is a get, set, or
 /// shorthand method in an object literal or a class.
 fn is_object_or_class_method(parent_node: &AstNode) -> bool {
-    match parent_node.kind() {
-        AstKind::MethodDefinition(_) => true,
-        AstKind::ObjectProperty(property) => property.method || property.kind.is_accessor(),
-        _ => false,
-    }
+    matches!(parent_node.kind(), AstKind::MethodDefinition(_) | AstKind::ObjectMethodProperty(_))
 }
 
 fn has_object_assignment_target_name<'a>(
@@ -357,7 +353,7 @@ fn has_inferred_name<'a>(function: &Function<'a>, parent_node: &AstNode<'a>) -> 
             matches!(declarator.id, BindingPattern::BindingIdentifier(_))
                 && declarator.init.as_ref().is_some_and(|init| is_same_function(init, function))
         }
-        AstKind::ObjectProperty(property) => is_same_function(&property.value, function),
+        AstKind::ObjectKeyValueProperty(property) => is_same_function(&property.value, function),
         AstKind::PropertyDefinition(definition) => {
             definition.value.as_ref().is_some_and(|value| is_same_function(value, function))
         }
@@ -458,10 +454,10 @@ fn guess_function_name<'a>(ctx: &LintContext<'a>, node_id: NodeId) -> Option<Cow
                     .filter(|name| is_valid_identifier_name(name))
                     .map(Cow::Borrowed);
             }
-            AstKind::ObjectProperty(prop) => {
+            AstKind::ObjectKeyValueProperty(ObjectKeyValueProperty { key, .. })
+            | AstKind::ObjectMethodProperty(ObjectMethodProperty { key, .. }) => {
                 // Stop here - we found the direct property context
-                return prop
-                    .key
+                return key
                     .static_name()
                     .and_then(StaticPropertyName::into_cow_str)
                     .filter(|name| is_valid_identifier_name(name));

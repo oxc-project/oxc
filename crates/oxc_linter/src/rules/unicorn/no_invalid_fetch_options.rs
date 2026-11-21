@@ -5,8 +5,8 @@ use cow_utils::CowUtils;
 use oxc_ast::{
     AstKind,
     ast::{
-        Expression, FormalParameter, ObjectExpression, ObjectPropertyKind, PropertyKey, TSLiteral,
-        TSLiteralType, TSType, TSTypeAnnotation, TemplateLiteral,
+        Expression, FormalParameter, IdentifierReference, ObjectExpression, ObjectPropertyKind,
+        PropertyKey, TSLiteral, TSLiteralType, TSType, TSTypeAnnotation, TemplateLiteral,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -100,22 +100,37 @@ fn is_invalid_fetch_options<'a>(
             return None;
         }
 
-        let ObjectPropertyKind::ObjectProperty(obj_prop) = property else {
-            continue;
-        };
-        let PropertyKey::StaticIdentifier(key_ident) = &obj_prop.key else {
-            continue;
+        let (key_name, key_span) = if let ObjectPropertyKind::ShorthandProperty(prop) = property {
+            (prop.name, prop.span)
+        } else {
+            let Some(PropertyKey::StaticIdentifier(key_ident)) = property.key() else {
+                continue;
+            };
+            (key_ident.name, key_ident.span)
         };
 
-        let key_ident_name = key_ident.name.as_str();
+        let key_ident_name = key_name.as_str();
 
         if key_ident_name == "body" {
-            if obj_prop.value.is_null_or_undefined() {
+            if let ObjectPropertyKind::KeyValueProperty(obj_prop) = property
+                && obj_prop.value.is_null_or_undefined()
+            {
                 body_span.end = body_span.start;
             } else {
-                body_span = key_ident.span;
+                body_span = key_span;
             }
         } else if key_ident_name == "method" {
+            let obj_prop = match property {
+                ObjectPropertyKind::KeyValueProperty(obj_prop) => obj_prop,
+                ObjectPropertyKind::ShorthandProperty(prop) => {
+                    update_method_name_from_reference(&prop.value, &mut method_name, ctx);
+                    continue;
+                }
+                _ => {
+                    method_name = UNKNOWN_METHOD_NAME;
+                    continue;
+                }
+            };
             match &obj_prop.value {
                 Expression::StaticMemberExpression(s) => {
                     let symbols = ctx.scoping();
@@ -172,77 +187,7 @@ fn is_invalid_fetch_options<'a>(
                     method_name = extract_method_name_from_template_literal(template_lit);
                 }
                 Expression::Identifier(value_ident) => {
-                    let symbols = ctx.scoping();
-                    let reference_id = value_ident.reference_id();
-
-                    let Some(symbol_id) = symbols.get_reference(reference_id).symbol_id() else {
-                        method_name = UNKNOWN_METHOD_NAME;
-                        continue;
-                    };
-
-                    let decl = ctx.nodes().get_node(symbols.symbol_declaration(symbol_id));
-
-                    match decl.kind() {
-                        AstKind::VariableDeclarator(declarator) => match &declarator.init {
-                            Some(Expression::StringLiteral(str_lit)) => {
-                                method_name =
-                                    str_lit.value.as_str().map_or(UNKNOWN_METHOD_NAME, |value| {
-                                        value.cow_to_ascii_uppercase()
-                                    });
-                            }
-                            Some(Expression::TemplateLiteral(template_lit)) => {
-                                method_name =
-                                    extract_method_name_from_template_literal(template_lit);
-                            }
-                            _ => {
-                                method_name = UNKNOWN_METHOD_NAME;
-                            }
-                        },
-                        AstKind::FormalParameter(FormalParameter {
-                            type_annotation: Some(annotation),
-                            ..
-                        }) => {
-                            let TSTypeAnnotation { type_annotation, .. } = &**annotation;
-                            match type_annotation {
-                                TSType::TSUnionType(union_type) => {
-                                    if !union_type.types.iter().any(|ty| {
-                                        if let TSType::TSLiteralType(ty) = ty {
-                                            let TSLiteralType { literal, .. } = &**ty;
-                                            if let TSLiteral::StringLiteral(str_lit) = literal {
-                                                let method = str_lit
-                                                    .value
-                                                    .as_str()
-                                                    .map_or(UNKNOWN_METHOD_NAME, |value| {
-                                                        value.cow_to_ascii_uppercase()
-                                                    });
-                                                return method == "GET" || method == "HEAD";
-                                            }
-                                        }
-                                        false
-                                    }) {
-                                        method_name = UNKNOWN_METHOD_NAME;
-                                    }
-                                }
-                                TSType::TSLiteralType(literal_type) => {
-                                    let TSLiteralType { literal, .. } = &**literal_type;
-                                    if let TSLiteral::StringLiteral(str_lit) = literal {
-                                        method_name = str_lit
-                                            .value
-                                            .as_str()
-                                            .map_or(UNKNOWN_METHOD_NAME, |value| {
-                                                value.cow_to_ascii_uppercase()
-                                            });
-                                    }
-                                }
-                                _ => {
-                                    method_name = UNKNOWN_METHOD_NAME;
-                                }
-                            }
-                        }
-                        _ => {
-                            method_name = UNKNOWN_METHOD_NAME;
-                        }
-                    }
+                    update_method_name_from_reference(value_ident, &mut method_name, ctx);
                 }
                 _ => {
                     method_name = UNKNOWN_METHOD_NAME;
@@ -255,6 +200,76 @@ fn is_invalid_fetch_options<'a>(
         Some((method_name, body_span))
     } else {
         None
+    }
+}
+
+fn update_method_name_from_reference<'a>(
+    value_ident: &IdentifierReference<'_>,
+    method_name: &mut Cow<'a, str>,
+    ctx: &'a LintContext<'_>,
+) {
+    let symbols = ctx.scoping();
+    let reference_id = value_ident.reference_id();
+
+    let Some(symbol_id) = symbols.get_reference(reference_id).symbol_id() else {
+        *method_name = UNKNOWN_METHOD_NAME;
+        return;
+    };
+
+    let decl = ctx.nodes().get_node(symbols.symbol_declaration(symbol_id));
+
+    match decl.kind() {
+        AstKind::VariableDeclarator(declarator) => match &declarator.init {
+            Some(Expression::StringLiteral(str_lit)) => {
+                *method_name = str_lit
+                    .value
+                    .as_str()
+                    .map_or(UNKNOWN_METHOD_NAME, CowUtils::cow_to_ascii_uppercase);
+            }
+            Some(Expression::TemplateLiteral(template_lit)) => {
+                *method_name = extract_method_name_from_template_literal(template_lit);
+            }
+            _ => {
+                *method_name = UNKNOWN_METHOD_NAME;
+            }
+        },
+        AstKind::FormalParameter(FormalParameter { type_annotation: Some(annotation), .. }) => {
+            let TSTypeAnnotation { type_annotation, .. } = &**annotation;
+            match type_annotation {
+                TSType::TSUnionType(union_type) => {
+                    if !union_type.types.iter().any(|ty| {
+                        if let TSType::TSLiteralType(ty) = ty {
+                            let TSLiteralType { literal, .. } = &**ty;
+                            if let TSLiteral::StringLiteral(str_lit) = literal {
+                                let method =
+                                    str_lit.value.as_str().map_or(UNKNOWN_METHOD_NAME, |value| {
+                                        value.cow_to_ascii_uppercase()
+                                    });
+                                return method == "GET" || method == "HEAD";
+                            }
+                        }
+                        false
+                    }) {
+                        *method_name = UNKNOWN_METHOD_NAME;
+                    }
+                }
+                TSType::TSLiteralType(literal_type) => {
+                    let TSLiteralType { literal, .. } = &**literal_type;
+                    if let TSLiteral::StringLiteral(str_lit) = literal {
+                        *method_name = str_lit
+                            .value
+                            .as_str()
+                            .map_or(UNKNOWN_METHOD_NAME, CowUtils::cow_to_ascii_uppercase);
+                    }
+                }
+                _ => {
+                    *method_name = UNKNOWN_METHOD_NAME;
+                }
+            }
+        }
+        _ => {
+            *method_name = UNKNOWN_METHOD_NAME;
+        }
     }
 }
 

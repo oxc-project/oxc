@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, StaticPropertyName};
+use oxc_ast::{
+    AstKind, StaticPropertyName,
+    ast::{ObjectKeyValueProperty, ObjectMethodProperty},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -108,18 +111,17 @@ impl Rule for NoUnsafe {
                     ctx.diagnostic(no_unsafe_diagnostic(&name, method_def.key.span()));
                 }
             }
-            AstKind::ObjectProperty(obj_prop) => {
-                if let Some(name) =
-                    obj_prop.key.static_name().and_then(StaticPropertyName::into_cow_str)
-                    && is_unsafe_method(&name, self.0.check_aliases, ctx)
-                {
-                    for ancestor in ctx.nodes().ancestors(node.id()) {
-                        if is_es5_component(ancestor) {
-                            ctx.diagnostic(no_unsafe_diagnostic(&name, obj_prop.key.span()));
-                            break;
-                        }
-                    }
-                }
+            AstKind::ObjectKeyValueProperty(ObjectKeyValueProperty { key, .. })
+            | AstKind::ObjectMethodProperty(ObjectMethodProperty { key, .. }) => {
+                self.check_object_property(key.static_name(), key.span(), node, ctx);
+            }
+            AstKind::ObjectShorthandProperty(prop) => {
+                self.check_object_property(
+                    Some(StaticPropertyName::from(prop.name)),
+                    prop.span,
+                    node,
+                    ctx,
+                );
             }
             _ => {}
         }
@@ -131,6 +133,27 @@ impl Rule for NoUnsafe {
 }
 
 /// Check if a method name is an unsafe lifecycle method
+impl NoUnsafe {
+    fn check_object_property(
+        &self,
+        name: Option<StaticPropertyName<'_>>,
+        span: Span,
+        node: &AstNode<'_>,
+        ctx: &LintContext<'_>,
+    ) {
+        if let Some(name) = name.and_then(StaticPropertyName::into_cow_str)
+            && is_unsafe_method(&name, self.0.check_aliases, ctx)
+        {
+            for ancestor in ctx.nodes().ancestors(node.id()) {
+                if is_es5_component(ancestor) {
+                    ctx.diagnostic(no_unsafe_diagnostic(&name, span));
+                    break;
+                }
+            }
+        }
+    }
+}
+
 fn is_unsafe_method(name: &str, check_aliases: bool, ctx: &LintContext) -> bool {
     let check_unsafe_prefix = ctx
         .settings()

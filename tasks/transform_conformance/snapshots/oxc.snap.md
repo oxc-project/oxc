@@ -1,6 +1,6 @@
 commit: 16a2d671
 
-Passed: 345/470
+Passed: 345/471
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -49,7 +49,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (54/70)
+# babel-plugin-transform-typescript (54/71)
 * computed-constant-value/input.ts
 x Output mismatch
 
@@ -99,6 +99,13 @@ rebuilt        : SymbolId(5): [ReferenceId(16), ReferenceId(17), ReferenceId(18)
 Symbol reference IDs mismatch for "NestInner":
 after transform: SymbolId(18): [ReferenceId(31), ReferenceId(32), ReferenceId(33), ReferenceId(34), ReferenceId(35)]
 rebuilt        : SymbolId(9): [ReferenceId(25), ReferenceId(26), ReferenceId(28), ReferenceId(29), ReferenceId(30), ReferenceId(31)]
+
+* enum-member-reference-shorthand/input.ts
+Missing ReferenceId: "Foo"
+Missing ReferenceId: "Foo"
+Symbol reference IDs mismatch for "Foo":
+after transform: SymbolId(5): [ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(10), ReferenceId(11), ReferenceId(12)]
+rebuilt        : SymbolId(1): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(9), ReferenceId(10), ReferenceId(11), ReferenceId(12)]
 
 * enum-string-alias-member/input.ts
 Symbol reference IDs mismatch for "Color":

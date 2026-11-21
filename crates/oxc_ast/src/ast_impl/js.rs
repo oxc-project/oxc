@@ -448,13 +448,12 @@ impl<'a> From<Argument<'a>> for ArrayExpressionElement<'a> {
 }
 
 impl<'a> ObjectExpression<'a> {
-    /// Finds the first [`ObjectProperty`] whose static key matches `name`.
+    /// Finds the first property whose static name matches `name`.
     /// Spread properties are skipped.
-    pub fn find_property(&self, name: &str) -> Option<&ObjectProperty<'a>> {
-        self.properties.iter().find_map(|prop| {
-            let ObjectPropertyKind::ObjectProperty(prop) = prop else { return None };
-            prop.key.is_specific_static_name(name).then_some(prop.as_ref())
-        })
+    ///
+    /// See [`ObjectPropertyKind::static_name`].
+    pub fn find_property(&self, name: &str) -> Option<&ObjectPropertyKind<'a>> {
+        self.properties.iter().find(|prop| prop.is_specific_static_name(name))
     }
 }
 
@@ -465,13 +464,47 @@ impl<'a> ObjectPropertyKind<'a> {
         matches!(self, Self::SpreadProperty(_))
     }
 
-    /// Returns [`Some`] for non-spread [object properties](ObjectProperty).
+    /// Returns the key of a key-value property or method.
+    ///
+    /// Returns `None` for shorthand and spread properties, which have no [`PropertyKey`].
     #[inline]
-    pub fn as_property(&self) -> Option<&ObjectProperty<'a>> {
+    pub fn key(&self) -> Option<&PropertyKey<'a>> {
         match self {
-            Self::ObjectProperty(prop) => Some(prop),
-            Self::SpreadProperty(_) => None,
+            Self::KeyValueProperty(prop) => Some(&prop.key),
+            Self::MethodProperty(prop) => Some(&prop.key),
+            Self::ShorthandProperty(_) | Self::SpreadProperty(_) => None,
         }
+    }
+
+    /// Returns the non-computed name of this property.
+    ///
+    /// Shorthand properties return their name. Spread properties return `None`.
+    ///
+    /// See [`PropertyKey::literal_name`].
+    pub fn literal_name(&self) -> Option<StaticPropertyName<'a>> {
+        match self {
+            Self::ShorthandProperty(prop) => Some(StaticPropertyName::from(prop.name)),
+            _ => self.key()?.literal_name(),
+        }
+    }
+
+    /// Returns the name of this property if it is known before runtime.
+    ///
+    /// Shorthand properties return their name. Spread properties return `None`.
+    ///
+    /// See [`PropertyKey::static_name`].
+    pub fn static_name(&self) -> Option<StaticPropertyName<'a>> {
+        match self {
+            Self::ShorthandProperty(prop) => Some(StaticPropertyName::from(prop.name)),
+            _ => self.key()?.static_name(),
+        }
+    }
+
+    /// Returns `true` if the static name of this property is exactly equal to the given name.
+    ///
+    /// See [`ObjectPropertyKind::static_name`].
+    pub fn is_specific_static_name(&self, name: &str) -> bool {
+        self.static_name().is_some_and(|n| n == name)
     }
 }
 
@@ -613,7 +646,7 @@ impl<'a> PropertyKey<'a> {
     }
 }
 
-impl PropertyKind {
+impl ObjectMethodKind {
     /// Returns `true` if this property is a getter or setter.
     ///
     /// Analogous to [`MethodDefinitionKind::is_accessor`].
@@ -1970,7 +2003,7 @@ impl MethodDefinitionKind {
 
     /// Returns `true` if this method is a getter or a setter.
     ///
-    /// Analogous to [`PropertyKind::is_accessor`].
+    /// Analogous to [`ObjectMethodKind::is_accessor`].
     pub fn is_accessor(self) -> bool {
         matches!(self, Self::Get | Self::Set)
     }

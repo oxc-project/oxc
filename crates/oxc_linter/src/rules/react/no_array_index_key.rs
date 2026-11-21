@@ -9,7 +9,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
@@ -102,14 +102,12 @@ fn check_react_clone_element<'a>(
     let mut key_props = obj_expr
         .properties
         .iter()
-        .filter_map(|prop_kind| {
-            let ObjectPropertyKind::ObjectProperty(prop) = prop_kind else {
-                return None;
-            };
-            let PropertyKey::StaticIdentifier(key_ident) = &prop.key else {
-                return None;
-            };
-            (key_ident.name.as_str() == "key").then_some((prop.span, &prop.value))
+        .filter(|prop_kind| match prop_kind {
+            ObjectPropertyKind::ShorthandProperty(prop) => prop.name == "key",
+            _ => matches!(
+                prop_kind.key(),
+                Some(PropertyKey::StaticIdentifier(key_ident)) if key_ident.name == "key"
+            ),
         })
         .peekable();
 
@@ -120,9 +118,19 @@ fn check_react_clone_element<'a>(
         return;
     };
 
-    for (span, value) in key_props {
-        if expression_uses_index(ctx, index_param_symbol_id, value) {
-            ctx.diagnostic(no_array_index_key_diagnostic(span));
+    for prop in key_props {
+        let uses_index = match prop {
+            ObjectPropertyKind::KeyValueProperty(prop) => {
+                expression_uses_index(ctx, index_param_symbol_id, &prop.value)
+            }
+            ObjectPropertyKind::ShorthandProperty(prop) => {
+                ctx.scoping().get_reference(prop.value.reference_id()).symbol_id()
+                    == Some(index_param_symbol_id)
+            }
+            _ => false,
+        };
+        if uses_index {
+            ctx.diagnostic(no_array_index_key_diagnostic(prop.span()));
         }
     }
 }
