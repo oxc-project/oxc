@@ -1,7 +1,7 @@
 use std::{fs, path::Path};
 
 use oxc_allocator::Allocator;
-use oxc_parser::Parser;
+use oxc_parser::Source;
 use oxc_semantic::{ScopeId, Semantic, SemanticBuilder};
 use oxc_span::SourceType;
 
@@ -131,7 +131,7 @@ fn analyze(
 ) -> (String, String) {
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(path).unwrap();
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let ret = Source::from_str(source_text, source_type, &allocator).parse();
     // The conformance checks read `Semantic::nodes()`, so use the linter preset.
     let semantic =
         SemanticBuilder::new_compiler().with_build_nodes(true).build(&ret.program).semantic;

@@ -295,18 +295,19 @@ impl<'a> Semantic<'a> {
 mod tests {
     use oxc_allocator::Allocator;
     use oxc_ast::{AstKind, ast::VariableDeclarationKind};
+    use oxc_parser::Source;
     use oxc_span::SourceType;
     use oxc_str::{Str, static_ident};
 
     use super::*;
 
     /// Create a [`Semantic`] from source code, assuming there are no syntax/semantic errors.
-    fn get_semantic<'s, 'a: 's>(
+    fn get_semantic<'a>(
         allocator: &'a Allocator,
-        source: &'s str,
+        source_text: &str,
         source_type: SourceType,
-    ) -> Semantic<'s> {
-        let parse = oxc_parser::Parser::new(allocator, source, source_type).parse();
+    ) -> Semantic<'a> {
+        let parse = Source::from_str(source_text, source_type, allocator).parse();
         assert!(parse.diagnostics.is_empty());
         let semantic =
             SemanticBuilder::new().with_build_nodes(true).build(allocator.alloc(parse.program));
@@ -362,7 +363,7 @@ mod tests {
         let allocator = Allocator::default();
         let source = "export const X = class Base {};";
         let source_type = SourceType::ts();
-        let parse = oxc_parser::Parser::new(&allocator, source, source_type).parse();
+        let parse = Source::from_str(source, source_type, &allocator).parse();
 
         assert!(parse.diagnostics.is_empty());
 

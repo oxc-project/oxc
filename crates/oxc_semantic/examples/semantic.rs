@@ -22,9 +22,9 @@ use itertools::Itertools;
 
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{GraphicalReportHandler, OxcDiagnostic};
-use oxc_parser::Parser;
+use oxc_parser::{Source, SourceFileError};
 use oxc_semantic::SemanticBuilder;
-use oxc_span::{GetSpan, SourceType};
+use oxc_span::GetSpan;
 
 // Instruction:
 // create a `test.js`,
@@ -32,29 +32,32 @@ use oxc_span::{GetSpan, SourceType};
 // or `just watch "run -p oxc_semantic --example semantic"`
 
 /// Perform semantic analysis on a JavaScript or TypeScript file
-fn main() -> std::io::Result<()> {
+fn main() -> Result<(), SourceFileError> {
     let name = env::args().nth(1).unwrap_or_else(|| "test.js".to_string());
     let show_symbols = env::args().skip(1).any(|arg| arg == "--symbols");
     let show_symbol_references = env::args().skip(1).any(|arg| arg == "--symbol-references");
     let path = Path::new(&name);
-    let source_text = std::fs::read_to_string(path)?;
-    let source_type = SourceType::from_path(path).unwrap();
+
     // Memory arena where Semantic and Parser allocate objects
     let allocator = Allocator::default();
 
+    let source = Source::from_file(path, &allocator)?;
+
     // Parse the source text into an AST
-    let parser_ret = Parser::new(&allocator, &source_text, source_type).parse();
+    let parser_ret = source.parse();
+
+    let program = parser_ret.program;
+    let source_text = program.source_text;
+
     if !parser_ret.diagnostics.is_empty() {
         let error_message: String = parser_ret
             .diagnostics
             .into_iter()
-            .map(|error| error.render_with_source_code(source_text.as_str()))
+            .map(|error| error.render_with_source_code(source_text))
             .join("\n");
         println!("Parsing failed:\n\n{error_message}");
         return Ok(());
     }
-
-    let program = parser_ret.program;
 
     // Compiler-pipeline defaults, plus the full `AstNodes` store since this
     // example reads `semantic.nodes()`.
@@ -65,7 +68,7 @@ fn main() -> std::io::Result<()> {
         let error_message: String = semantic
             .diagnostics
             .into_iter()
-            .map(|error| error.render_with_source_code(source_text.as_str()))
+            .map(|error| error.render_with_source_code(source_text))
             .join("\n");
         println!("Semantic analysis failed:\n\n{error_message}");
     }
@@ -111,7 +114,7 @@ fn main() -> std::io::Result<()> {
                 info = info.with_note("This symbol has no references.");
             }
 
-            let info = info.with_source_code(source_text.as_str());
+            let info = info.with_source_code(source_text);
 
             let mut s = String::new();
             reporter.render_report(&mut s, info.as_ref()).unwrap();
@@ -133,7 +136,7 @@ fn main() -> std::io::Result<()> {
                     }),
             );
 
-            let info = info.with_source_code(source_text.as_str());
+            let info = info.with_source_code(source_text);
 
             let mut s = String::new();
             reporter.render_report(&mut s, info.as_ref()).unwrap();

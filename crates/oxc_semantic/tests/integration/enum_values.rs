@@ -1,5 +1,5 @@
 use oxc_allocator::Allocator;
-use oxc_parser::Parser;
+use oxc_parser::Source;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_syntax::constant_value::ConstantValue;
@@ -7,7 +7,7 @@ use oxc_syntax::constant_value::ConstantValue;
 fn get_enum_member_value(source: &str, member_name: &str) -> Option<ConstantValue> {
     let allocator = Allocator::default();
     let source_type = SourceType::ts();
-    let parser_ret = Parser::new(&allocator, source, source_type).parse();
+    let parser_ret = Source::from_str(source, source_type, &allocator).parse();
     assert!(parser_ret.diagnostics.is_empty(), "Parse errors: {:?}", parser_ret.diagnostics);
     let semantic_ret = SemanticBuilder::new().with_enum_eval(true).build(&parser_ret.program);
     assert!(semantic_ret.diagnostics.is_empty(), "Semantic errors: {:?}", semantic_ret.diagnostics);
@@ -243,7 +243,7 @@ fn unary_on_string_member_reference() {
 fn surrogate_member_string_kind() {
     let allocator = Allocator::default();
     let source = r#"enum E { "\uD800" = "x", B = E["\uD800"], C = "\uD800", D = C }"#;
-    let parsed = Parser::new(&allocator, source, SourceType::ts()).parse();
+    let parsed = Source::from_str(source, SourceType::ts(), &allocator).parse();
     assert!(parsed.diagnostics.is_empty());
     let semantic = SemanticBuilder::new().with_enum_eval(true).build(&parsed.program);
     assert!(semantic.diagnostics.is_empty());

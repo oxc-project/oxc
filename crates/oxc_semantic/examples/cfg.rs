@@ -17,7 +17,7 @@
 //! - CFG blocks (`test.cfg.txt`)
 //! - CFG graph in DOT format (`test.dot`)
 
-use std::{env, path::Path};
+use std::{env, error::Error, path::Path};
 
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
@@ -30,9 +30,8 @@ use oxc_cfg::{
         visit::EdgeRef,
     },
 };
-use oxc_parser::Parser;
+use oxc_parser::Source;
 use oxc_semantic::{SemanticBuilder, dot::DebugDot};
-use oxc_span::SourceType;
 
 // Instruction:
 // 1. create a `test.js`,
@@ -44,7 +43,7 @@ use oxc_span::SourceType;
 //    - CFG graph (test.dot)
 
 /// Generate control flow graph visualizations from JavaScript/TypeScript code
-fn main() -> std::io::Result<()> {
+fn main() -> Result<(), Box<dyn Error>> {
     let test_file_name = env::args().nth(1).unwrap_or_else(|| "test.js".to_string());
     let ast_file_name = format!("{test_file_name}.ast.txt");
     let cfg_file_name = format!("{test_file_name}.cfg.txt");
@@ -55,16 +54,16 @@ fn main() -> std::io::Result<()> {
     let cfg_file_path = Path::new(&cfg_file_name);
     let dot_file_path = Path::new(&dot_file_name);
 
-    let source_text = std::fs::read_to_string(test_file_path)?;
     let allocator = Allocator::default();
-    let source_type = SourceType::from_path(test_file_path).unwrap();
-    let parser_ret = Parser::new(&allocator, &source_text, source_type).parse();
+    let source = Source::from_file(test_file_path, &allocator)?;
+    let parser_ret = source.parse();
+    let source_text = parser_ret.program.source_text;
 
     if !parser_ret.diagnostics.is_empty() {
         let error_message: String = parser_ret
             .diagnostics
             .into_iter()
-            .map(|error| error.with_source_code(source_text.as_str()).to_string())
+            .map(|error| error.with_source_code(source_text).to_string())
             .join("\n\n");
 
         println!("Parsing failed:\n\n{error_message}");
@@ -82,7 +81,7 @@ fn main() -> std::io::Result<()> {
         let error_message: String = semantic
             .diagnostics
             .into_iter()
-            .map(|error| error.with_source_code(source_text.as_str()).to_string())
+            .map(|error| error.with_source_code(source_text).to_string())
             .join("\n\n");
 
         println!("Semantic analysis failed:\n\n{error_message}");

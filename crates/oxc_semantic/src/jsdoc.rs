@@ -55,29 +55,29 @@ impl<'a> JSDocFinder<'a> {
 mod test {
     use oxc_allocator::Allocator;
     use oxc_jsdoc::JSDoc;
-    use oxc_parser::Parser;
+    use oxc_parser::Source;
     use oxc_span::{SourceType, Span};
 
     use crate::{Semantic, SemanticBuilder};
 
-    fn build_semantic_default<'a>(allocator: &'a Allocator, source_text: &'a str) -> Semantic<'a> {
+    fn build_semantic_default<'a>(allocator: &'a Allocator, source_text: &str) -> Semantic<'a> {
         build_semantic(allocator, source_text, None)
     }
 
     fn build_semantic<'a>(
         allocator: &'a Allocator,
-        source_text: &'a str,
+        source_text: &str,
         source_type: Option<SourceType>,
     ) -> Semantic<'a> {
         let source_type = source_type.unwrap_or_default();
-        let ret = Parser::new(allocator, source_text, source_type).parse();
+        let ret = Source::from_str(source_text, source_type, allocator).parse();
         SemanticBuilder::new().with_build_nodes(true).build(allocator.alloc(ret.program)).semantic
     }
 
     fn get_jsdocs<'a>(
         allocator: &'a Allocator,
-        source_text: &'a str,
-        symbol: &'a str,
+        source_text: &str,
+        symbol: &str,
         source_type: Option<SourceType>,
     ) -> Option<Vec<JSDoc<'a>>> {
         let semantic = build_semantic(allocator, source_text, source_type);
