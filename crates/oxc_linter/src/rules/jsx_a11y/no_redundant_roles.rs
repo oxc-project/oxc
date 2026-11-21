@@ -93,7 +93,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     recommended,
-    fix,
+    suggestion,
     config = NoRedundantRolesConfig,
     version = "0.2.1",
     short_description = "Enforces that code does not include a redundant `role` property, in the case that it's identical to the implicit `role` property of the element type.",
@@ -129,13 +129,21 @@ impl Rule for NoRedundantRoles {
             {
                 let diagnostic =
                     no_redundant_roles_diagnostic(attr.span, &component, implicit_role);
-                // Only safe-fix the whole attribute when it consists of a
-                // single valid token. With multiple tokens, deleting the
-                // attribute could change the effective role by removing
-                // fallbacks that are not redundant.
+                // Removing the `role` attribute is never provably behavior
+                // preserving: the rendered DOM still exposes the attribute
+                // even when it is redundant, spreads before or after the
+                // attribute can re-expose or nullify props (e.g. a later
+                // spread can remove `href`, making `role="link"` load
+                // bearing), and `href={undefined}` renders no `href` at all.
+                // Offer the removal as a suggestion, not a safe fix (#29786).
                 if value.split_whitespace().count() == 1 {
-                    ctx.diagnostic_with_fix(diagnostic, |fixer| fixer.delete_range(attr.span));
+                    ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
+                        fixer.delete_range(attr.span)
+                    });
                 } else {
+                    // With multiple tokens, deleting the whole attribute
+                    // could also drop fallback roles that are not redundant,
+                    // so do not even offer a suggestion.
                     ctx.diagnostic(diagnostic);
                 }
             }
@@ -529,7 +537,27 @@ fn test() {
         (r#"<button role="button foo" />"#, r#"<button role="button foo" />"#),
         (r#"<button role="foo button" />"#, r#"<button role="foo button" />"#),
         (r#"<button role="  button  " />"#, "<button  />"),
+        // Regression for #29786: removal is offered as a suggestion even when
+        // an earlier spread can re-expose a different `role` after the fix,
+        // or when the rendered DOM has no `href` to supply the implicit role.
+        (r#"<button {...props} role="button" />"#, "<button {...props}  />"),
+        (r#"<a href={undefined} role="link" />"#, "<a href={undefined}  />"),
     ];
+
+    // Removing a `role` attribute can change the rendered roles or other
+    // observable behavior (e.g. re-exposing an earlier spread's `role`, or
+    // dropping link semantics when the rendered DOM has no `href`), so it is
+    // only offered as a suggestion, never as a safe fix (#29786). A safe fix
+    // must leave the reported roles in place.
+    let fix: Vec<(&str, &str, Option<serde_json::Value>, crate::fixer::FixKind)> = fix
+        .into_iter()
+        .flat_map(|(source, expected)| {
+            [
+                (source, source, None, crate::fixer::FixKind::Fix),
+                (source, expected, None, crate::fixer::FixKind::Suggestion),
+            ]
+        })
+        .collect();
 
     Tester::new(NoRedundantRoles::NAME, NoRedundantRoles::PLUGIN, pass, fail)
         .expect_fix(fix)
