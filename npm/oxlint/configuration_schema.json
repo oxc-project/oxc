@@ -8439,6 +8439,9 @@
         "typescript/no-unsafe-call": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "typescript/no-unsafe-class-instance-assignment": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "typescript/no-unsafe-declaration-merging": {
           "$ref": "#/definitions/RuleNoConfig"
         },
