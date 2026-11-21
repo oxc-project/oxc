@@ -426,3 +426,48 @@ source: crates/oxc_linter/src/tester.rs
  8 │                 void p;
    ╰────
   help: Add `@param` tag with name.
+
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:6:19]
+ 5 │                */
+ 6 │               run(a: string): void;
+   ·                   ─
+ 7 │             }
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:24]
+ 4 │              */
+ 5 │             let test: (id: number) => void;
+   ·                        ──
+ 6 │             
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:34]
+ 4 │              */
+ 5 │             declare function run(a: string): void;
+   ·                                  ─
+ 6 │             
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:6:16]
+ 5 │                */
+ 6 │               (a: string): void;
+   ·                ─
+ 7 │             }
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:27]
+ 4 │              */
+ 5 │             function quux(foo) {}
+   ·                           ───
+ 6 │             
+   ╰────
+  help: Add `@param` tag with name.

@@ -200,6 +200,13 @@ fn should_attach_jsdoc(kind: &AstKind) -> bool {
         | AstKind::ExportFromDeclaration(_)
         | AstKind::ImportDeclaration(_)
 
-        // Maybe JSX, TS related kinds should be added?
+        // Type signatures so a JSDoc immediately above them can be found.
+        // Comments on a variable or type alias stay on that declaration; these
+        // nodes cover the signature itself and properties that wrap a function type.
+        | AstKind::TSTypeAliasDeclaration(_)
+        | AstKind::TSPropertySignature(_)
+        | AstKind::TSCallSignatureDeclaration(_)
+        | AstKind::TSMethodSignature(_)
+        | AstKind::TSFunctionType(_)
     )
 }
