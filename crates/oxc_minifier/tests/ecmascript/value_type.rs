@@ -4,7 +4,7 @@ use oxc_ecmascript::{
     GlobalContext,
     constant_evaluation::{DetermineValueType, ValueType},
 };
-use oxc_parser::Parser;
+use oxc_parser::Source;
 use oxc_span::SourceType;
 
 struct GlobalReferenceChecker {
@@ -31,7 +31,7 @@ fn test_with_global_variables(
     expected: ValueType,
 ) {
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
+    let ret = Source::from_str(source_text, SourceType::mjs(), &allocator).parse();
     assert!(!ret.fatal_error, "{source_text}");
     assert!(ret.diagnostics.is_empty(), "{source_text}");
 

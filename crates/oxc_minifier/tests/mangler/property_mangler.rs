@@ -5,7 +5,7 @@ use oxc_minifier::{
     CompressOptions, MangleOptions, ManglePropertiesOptions, ManglePropertyCache, Minifier,
     MinifierOptions, PropertyMangleCollection, PropertyMangler,
 };
-use oxc_parser::Parser;
+use oxc_parser::Source;
 use oxc_span::{SourceType, Span};
 
 fn options(pattern: &str) -> ManglePropertiesOptions {
@@ -14,7 +14,7 @@ fn options(pattern: &str) -> ManglePropertiesOptions {
 
 fn codegen(source: &str, source_type: SourceType) -> String {
     let allocator = Allocator::default();
-    let parsed = Parser::new(&allocator, source, source_type).parse();
+    let parsed = Source::from_str(source, source_type, &allocator).parse();
     assert!(parsed.diagnostics.is_empty(), "{:?}", parsed.diagnostics);
     Codegen::new().build(&parsed.program).code
 }
@@ -25,7 +25,7 @@ fn mangle_with(
     options: ManglePropertiesOptions,
 ) -> (String, ManglePropertyCache) {
     let allocator = Allocator::default();
-    let parsed = Parser::new(&allocator, source, source_type).parse();
+    let parsed = Source::from_str(source, source_type, &allocator).parse();
     assert!(parsed.diagnostics.is_empty(), "{:?}", parsed.diagnostics);
     let mut program = parsed.program;
     let mut mangler = PropertyMangler::new_in(options, &allocator);
@@ -147,7 +147,7 @@ fn annotations_override_quoted_behavior() {
 fn property_key_annotations_survive_codegen_before_mangling() {
     let source = "const object = { _field: 1 }; const key = /* #__KEY__ */ '_field'; object[key];";
     let allocator = Allocator::default();
-    let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
+    let parsed = Source::from_str(source, SourceType::mjs(), &allocator).parse();
     assert!(parsed.diagnostics.is_empty(), "{:?}", parsed.diagnostics);
     let rendered = Codegen::new()
         .with_options(CodegenOptions {
@@ -392,8 +392,8 @@ fn eval_function_and_with_do_not_disable_property_mangling() {
 #[test]
 fn rewrite_happens_before_compression_erases_quotes() {
     let allocator = Allocator::default();
-    let parsed =
-        Parser::new(&allocator, "globalThis._foo; globalThis['_foo'];", SourceType::mjs()).parse();
+    let source = "globalThis._foo; globalThis['_foo'];";
+    let parsed = Source::from_str(source, SourceType::mjs(), &allocator).parse();
     let mut program = parsed.program;
     let result = Minifier::new(MinifierOptions {
         mangle: None,
@@ -409,12 +409,12 @@ fn rewrite_happens_before_compression_erases_quotes() {
 #[test]
 fn property_identifier_and_compression_pipeline_runs_together() {
     let allocator = Allocator::default();
-    let parsed = Parser::new(
-        &allocator,
+    let source = Source::from_str(
         "export function read(_object) { const _local = _object; return _local._field + _local._field; }",
         SourceType::mjs(),
-    )
-    .parse();
+        &allocator,
+    );
+    let parsed = source.parse();
     let mut program = parsed.program;
     let result = Minifier::new(MinifierOptions {
         mangle: Some(MangleOptions::default()),
@@ -431,12 +431,12 @@ fn property_identifier_and_compression_pipeline_runs_together() {
 #[test]
 fn compression_does_not_revisit_folded_computed_keys() {
     let allocator = Allocator::default();
-    let parsed = Parser::new(
-        &allocator,
+    let source = Source::from_str(
         "export const o = { ['f' + 'oo_']: 1 }; export const v = o.foo_;",
         SourceType::mjs(),
-    )
-    .parse();
+        &allocator,
+    );
+    let parsed = source.parse();
     let mut program = parsed.program;
     let result = Minifier::new(MinifierOptions {
         mangle: None,
@@ -454,12 +454,12 @@ fn compression_does_not_revisit_folded_computed_keys() {
 #[test]
 fn automatic_names_avoid_keys_materialized_by_compression() {
     let allocator = Allocator::default();
-    let parsed = Parser::new(
-        &allocator,
+    let source = Source::from_str(
         "export function f(obj) { const key = 'e'; return obj[key] + obj._foo + obj._foo; }",
         SourceType::mjs(),
-    )
-    .parse();
+        &allocator,
+    );
+    let parsed = source.parse();
     let mut program = parsed.program;
     let result = Minifier::new(MinifierOptions {
         mangle: None,
@@ -486,9 +486,8 @@ impl VisitMut<'_> for ZeroSpans {
 #[test]
 fn duplicated_spans_do_not_skip_property_rewrites() {
     let allocator = Allocator::default();
-    let parsed =
-        Parser::new(&allocator, "x = { _a: 1, _b: 2 }; use_(x._a, x._b);", SourceType::mjs())
-            .parse();
+    let source = "x = { _a: 1, _b: 2 }; use_(x._a, x._b);";
+    let parsed = Source::from_str(source, SourceType::mjs(), &allocator).parse();
     let mut program = parsed.program;
     ZeroSpans.visit_program(&mut program);
 
@@ -507,12 +506,10 @@ fn duplicated_spans_do_not_skip_property_rewrites() {
 fn one_assignment_can_be_shared_across_programs() {
     let allocator_a = Allocator::default();
     let allocator_b = Allocator::default();
-    let mut program_a =
-        Parser::new(&allocator_a, "a._shared; a._local;", SourceType::mjs()).parse().program;
-    let mut program_b =
-        Parser::new(&allocator_b, "b._shared; b._shared; b['_quoted'];", SourceType::mjs())
-            .parse()
-            .program;
+    let source_a = "a._shared; a._local;";
+    let source_b = "b._shared; b._shared; b['_quoted'];";
+    let mut program_a = Source::from_str(source_a, SourceType::mjs(), &allocator_a).parse().program;
+    let mut program_b = Source::from_str(source_b, SourceType::mjs(), &allocator_b).parse().program;
 
     let mut mangler = PropertyMangler::new_in(options("^_"), &allocator_a);
     mangler.collect(&program_a);
@@ -532,12 +529,10 @@ fn one_assignment_can_be_shared_across_programs() {
 fn independently_collected_programs_can_be_merged_before_assignment() {
     let allocator_a = Allocator::default();
     let allocator_b = Allocator::default();
-    let mut program_a =
-        Parser::new(&allocator_a, "a._shared; a._local;", SourceType::mjs()).parse().program;
-    let mut program_b =
-        Parser::new(&allocator_b, "b._shared; b._shared; b['_quoted'];", SourceType::mjs())
-            .parse()
-            .program;
+    let source_a = "a._shared; a._local;";
+    let source_b = "b._shared; b._shared; b['_quoted'];";
+    let mut program_a = Source::from_str(source_a, SourceType::mjs(), &allocator_a).parse().program;
+    let mut program_b = Source::from_str(source_b, SourceType::mjs(), &allocator_b).parse().program;
 
     let options = options("^_");
     let collected_a = PropertyMangleCollection::from_program(&options, &program_a, &allocator_a);
