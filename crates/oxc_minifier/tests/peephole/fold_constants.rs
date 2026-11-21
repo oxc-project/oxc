@@ -1964,7 +1964,6 @@ fn test_fold_numeric_identity() {
     fold("typeof a - 0", "+typeof a");
     fold("[a] - 0", "+[a]");
     fold("`${a}` - 0", "+`${a}`");
-    fold("'a' + (a - 0)", "'a' + +a");
     fold("new A - 0", "+new A()");
     fold("a?.b * 1", "+a?.b");
     fold("tag`x` / 1", "+tag`x`");
@@ -1973,6 +1972,12 @@ fn test_fold_numeric_identity() {
     fold_same("a * b - 0");
     fold_same("(a ? 1 : b) - 0");
     fold_same("++a - 0");
+    // After another `+`, `+A` needs a space (`a+ +b`) and saves nothing.
+    fold_same("'a' + (a - 0)");
+    fold_same("x = 0 * a + 1 * b + 1 * c");
+    fold_same("x = +(a * 1)");
+    fold("x = 1 * a + 0 * b", "x = +a + 0 * b");
+    fold("x = c - 1 * a", "x = c - +a");
     // `n - -0` is `+0` for `n === -0`, and `+` may concatenate.
     fold_same("a - -0");
     fold_same("(a * 2) - -0");

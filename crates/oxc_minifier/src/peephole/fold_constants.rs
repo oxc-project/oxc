@@ -743,7 +743,18 @@ impl<'a> PeepholeOptimizations {
                         | Expression::BinaryExpression(_)
                         | Expression::PrivateInExpression(_)
                 ) || matches!(operand, Expression::UpdateExpression(u) if u.prefix);
-                (!binds_loosely).then(|| {
+                // After another `+`, `+A` needs a space (`a+ +b`), so it is no shorter than
+                // `a+1*b` and only breaks up repeated text that compresses well.
+                let follows_plus = match ctx.parent() {
+                    Ancestor::BinaryExpressionRight(parent) => {
+                        *parent.operator() == BinaryOperator::Addition
+                    }
+                    Ancestor::UnaryExpressionArgument(parent) => {
+                        *parent.operator() == UnaryOperator::UnaryPlus
+                    }
+                    _ => false,
+                };
+                (!binds_loosely && !follows_plus).then(|| {
                     Expression::new_unary_expression(
                         e.span,
                         UnaryOperator::UnaryPlus,
