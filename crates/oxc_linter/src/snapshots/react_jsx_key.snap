@@ -53,6 +53,42 @@ source: crates/oxc_linter/src/tester.rs
   help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
 
   ⚠ react(jsx-key): Missing "key" prop for element in iterator.
+   ╭─[jsx_key.tsx:1:8]
+ 1 │ [1, 2].map(x => <App />);
+   ·        ─┬─       ─┬─
+   ·         │         ╰── Element generated here.
+   ·         ╰── Iterator starts here.
+   ╰────
+  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
+
+  ⚠ react(jsx-key): Missing "key" prop for element in iterator.
+   ╭─[jsx_key.tsx:1:5]
+ 1 │ arr.map(x => <App />);
+   ·     ─┬─       ─┬─
+   ·      │         ╰── Element generated here.
+   ·      ╰── Iterator starts here.
+   ╰────
+  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
+
+  ⚠ react(jsx-key): Missing "key" prop for element in iterator.
+   ╭─[jsx_key.tsx:1:7]
+ 1 │ ITEMS.map(x => <App />);
+   ·       ─┬─       ─┬─
+   ·        │         ╰── Element generated here.
+   ·        ╰── Iterator starts here.
+   ╰────
+  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
+
+  ⚠ react(jsx-key): Missing "key" prop for element in iterator.
+   ╭─[jsx_key.tsx:1:56]
+ 1 │ import { R } from '@praha/byethrow'; R.map(name => arr.map(x => <App />));
+   ·                                                        ─┬─       ─┬─
+   ·                                                         │         ╰── Element generated here.
+   ·                                                         ╰── Iterator starts here.
+   ╰────
+  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
+
+  ⚠ react(jsx-key): Missing "key" prop for element in iterator.
    ╭─[jsx_key.tsx:1:11]
  1 │ [1, 2 ,3].map(x => x && <App x={x} />);
    ·           ─┬─            ─┬─
@@ -489,3 +525,129 @@ source: crates/oxc_linter/src/tester.rs
  1 │ [condition ? [<App />] : null];
    ·                ───
    ╰────
+
+  ⚠ react(jsx-key): Missing "key" prop for element in iterator.
+   ╭─[jsx_key.tsx:1:29]
+ 1 │ const Items = [1, 2]; Items.map(x => <App />);
+   ·                             ─┬─       ─┬─
+   ·                              │         ╰── Element generated here.
+   ·                              ╰── Iterator starts here.
+   ╰────
+  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
+
+  ⚠ react(jsx-key): Missing "key" prop for element in iterator.
+   ╭─[jsx_key.tsx:1:21]
+ 1 │ const R = [1, 2]; R.flatMap(x => <App />);
+   ·                     ───┬───       ─┬─
+   ·                        │           ╰── Element generated here.
+   ·                        ╰── Iterator starts here.
+   ╰────
+  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
+
+  ⚠ react(jsx-key): Missing "key" prop for element in iterator.
+   ╭─[jsx_key.tsx:1:41]
+ 1 │ function render(Result) { return Result.map(x => <></>); }
+   ·                                         ─┬─      ─┬
+   ·                                          │        ╰── Element generated here.
+   ·                                          ╰── Iterator starts here.
+   ╰────
+  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
+
+  ⚠ react(jsx-key): Missing "key" prop for element in iterator.
+   ╭─[jsx_key.tsx:1:31]
+ 1 │ import * as R from 'ramda'; R.map(x => <App />, [1, 2]);
+   ·                               ─┬─       ─┬─
+   ·                                │         ╰── Element generated here.
+   ·                                ╰── Iterator starts here.
+   ╰────
+  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
+
+  ⚠ react(jsx-key): Missing "key" prop for element in iterator.
+   ╭─[jsx_key.tsx:1:68]
+ 1 │ import { R } from '@praha/byethrow'; function render(R) { return R.map(x => <App />); }
+   ·                                                                    ─┬─       ─┬─
+   ·                                                                     │         ╰── Element generated here.
+   ·                                                                     ╰── Iterator starts here.
+   ╰────
+  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
+
+  ⚠ react(jsx-key): Missing "key" prop for element in iterator.
+   ╭─[jsx_key.tsx:1:41]
+ 1 │ import { Result } from './data'; Result.map(x => <App />);
+   ·                                         ─┬─       ─┬─
+   ·                                          │         ╰── Element generated here.
+   ·                                          ╰── Iterator starts here.
+   ╰────
+  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
+
+  ⚠ react(jsx-key): Missing "key" prop for element in iterator.
+   ╭─[jsx_key.tsx:1:36]
+ 1 │ import R from '@praha/byethrow'; R.map(x => <App />);
+   ·                                    ─┬─       ─┬─
+   ·                                     │         ╰── Element generated here.
+   ·                                     ╰── Iterator starts here.
+   ╰────
+  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
+
+  ⚠ react(jsx-key): Missing "key" prop for element in iterator.
+   ╭─[jsx_key.tsx:1:41]
+ 1 │ import * as R from '@praha/byethrow'; R.map(x => <App />);
+   ·                                         ─┬─       ─┬─
+   ·                                          │         ╰── Element generated here.
+   ·                                          ╰── Iterator starts here.
+   ╰────
+  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
+
+  ⚠ react(jsx-key): Missing "key" prop for element in iterator.
+   ╭─[jsx_key.tsx:1:48]
+ 1 │ import { pipe as R } from '@praha/byethrow'; R.map(x => <App />);
+   ·                                                ─┬─       ─┬─
+   ·                                                 │         ╰── Element generated here.
+   ·                                                 ╰── Iterator starts here.
+   ╰────
+  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
+
+  ⚠ react(jsx-key): Missing "key" prop for element in iterator.
+   ╭─[jsx_key.tsx:1:45]
+ 1 │ import type { R } from '@praha/byethrow'; R.map(x => <App />);
+   ·                                             ─┬─       ─┬─
+   ·                                              │         ╰── Element generated here.
+   ·                                              ╰── Iterator starts here.
+   ╰────
+  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
+
+  ⚠ react(jsx-key): Missing "key" prop for element in iterator.
+   ╭─[jsx_key.tsx:1:45]
+ 1 │ import { type R } from '@praha/byethrow'; R.map(x => <App />);
+   ·                                             ─┬─       ─┬─
+   ·                                              │         ╰── Element generated here.
+   ·                                              ╰── Iterator starts here.
+   ╰────
+  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
+
+  ⚠ react(jsx-key): Missing "key" prop for element in iterator.
+   ╭─[jsx_key.tsx:1:44]
+ 1 │ import { R } from '@praha/byethrow'; Array.from(items, x => <App />);
+   ·                                            ──┬─              ─┬─
+   ·                                              │                ╰── Element generated here.
+   ·                                              ╰── Iterator starts here.
+   ╰────
+  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
+
+  ⚠ react(jsx-key): Missing "key" prop for element in iterator.
+   ╭─[jsx_key.tsx:1:40]
+ 1 │ import { R } from '@praha/byethrow'; R.flatMap(x => <App />);
+   ·                                        ───┬───       ─┬─
+   ·                                           │           ╰── Element generated here.
+   ·                                           ╰── Iterator starts here.
+   ╰────
+  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
+
+  ⚠ react(jsx-key): Missing "key" prop for element in iterator.
+   ╭─[jsx_key.tsx:1:8]
+ 1 │ Result.map(x => <App />);
+   ·        ─┬─       ─┬─
+   ·         │         ╰── Element generated here.
+   ·         ╰── Iterator starts here.
+   ╰────
+  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
