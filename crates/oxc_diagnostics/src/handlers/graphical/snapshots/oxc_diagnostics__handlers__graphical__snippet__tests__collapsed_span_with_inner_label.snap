@@ -1,0 +1,30 @@
+---
+source: crates/oxc_diagnostics/src/handlers/graphical/snippet.rs
+expression: output
+---
+
+  ! long span
+    ,-[1:1]
+  1 | ,-> line0001();
+  2 | |   line0002();
+  3 | |   line0003();
+  4 | |   line0004();
+  5 | |   line0005();
+... : |   
+ 11 | |   line0011();
+ 12 | |   line0012();
+ 13 | |   line0013();
+ 14 | |   line0014();
+ 15 | |   line0015();
+    : |   ^^^^
+ 16 | |   line0016();
+ 17 | |   line0017();
+ 18 | |   line0018();
+ 19 | |   line0019();
+... : |   
+ 36 | |   line0036();
+ 37 | |   line0037();
+ 38 | |   line0038();
+ 39 | |   line0039();
+ 40 | `-> line0040();
+    `----
