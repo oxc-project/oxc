@@ -22,7 +22,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// when the `Arena` is dropped, using `backing_alloc_ptr` and `layout`.
     ///
     /// The method used to free the backing allocation depends on platform and Cargo features:
-    /// * Linux/Mac: via [`System`] allocator
+    /// * Non-Windows: via [`System`] allocator
     /// * Windows with `fixed_size` Cargo feature disabled: via [`System`] allocator
     /// * Windows with `fixed_size` Cargo feature enabled: `VirtualFree`
     ///
@@ -50,6 +50,41 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         size: usize,
         backing_alloc_ptr: NonNull<u8>,
         layout: Layout,
+    ) -> Self {
+        // SAFETY: The caller upholds the public constructor's allocation and chunk requirements.
+        unsafe { Self::from_raw_parts_impl(start_ptr, size, backing_alloc_ptr, layout, false) }
+    }
+
+    /// Construct an arena from the writable portion of a Unix virtual-memory reservation.
+    ///
+    /// # SAFETY
+    /// The chunk must satisfy `from_raw_parts`' alignment and bounds requirements, and its
+    /// backing allocation must be a live mapping that can be released with `munmap`.
+    #[cfg(all(
+        feature = "fixed_size",
+        unix,
+        target_pointer_width = "64",
+        target_endian = "little"
+    ))]
+    pub(super) unsafe fn from_mapped_parts(
+        start_ptr: NonNull<u8>,
+        size: usize,
+        backing_alloc_ptr: NonNull<u8>,
+        layout: Layout,
+    ) -> Self {
+        // SAFETY: The caller upholds the mapped constructor's allocation and chunk requirements.
+        unsafe { Self::from_raw_parts_impl(start_ptr, size, backing_alloc_ptr, layout, true) }
+    }
+
+    /// # SAFETY
+    /// The chunk must satisfy `from_raw_parts`' alignment and bounds requirements. The backing
+    /// allocation must match the ownership mode specified by `is_mapped`.
+    unsafe fn from_raw_parts_impl(
+        start_ptr: NonNull<u8>,
+        size: usize,
+        backing_alloc_ptr: NonNull<u8>,
+        layout: Layout,
+        is_mapped: bool,
     ) -> Self {
         // Debug assert that `start_ptr` and `size` fulfill size and alignment requirements
         debug_assert!(is_pointer_aligned_to(start_ptr, CHUNK_ALIGN));
@@ -87,6 +122,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
             previous_chunk_footer_ptr: Cell::new(None),
             cursor_ptr: Cell::new(cursor_ptr),
             is_fixed_size: true,
+            is_mapped,
         };
         // SAFETY: If caller has upheld safety requirements, `chunk_footer_ptr` is `CHUNK_FOOTER_SIZE` bytes
         // from the end of the chunk region, and aligned on `CHUNK_ALIGN`.
