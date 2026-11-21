@@ -82,3 +82,73 @@ source: crates/oxc_linter/src/tester.rs
  5 │             
    ╰────
   help: Reduce the number of dependencies in this file
+
+  ⚠ import(max-dependencies): File has too many dependencies (2). Maximum allowed is 1.
+   ╭─[index.ts:1:46]
+ 1 │ export { x } from './foo'; export { y } from './bar';
+   ·                                              ───────
+   ╰────
+  help: Reduce the number of dependencies in this file
+
+  ⚠ import(max-dependencies): File has too many dependencies (2). Maximum allowed is 1.
+   ╭─[index.ts:1:38]
+ 1 │ export * from './foo'; export * from './bar';
+   ·                                      ───────
+   ╰────
+  help: Reduce the number of dependencies in this file
+
+  ⚠ import(max-dependencies): File has too many dependencies (2). Maximum allowed is 1.
+   ╭─[index.ts:1:52]
+ 1 │ export * as foo from './foo'; export * as bar from './bar';
+   ·                                                    ───────
+   ╰────
+  help: Reduce the number of dependencies in this file
+
+  ⚠ import(max-dependencies): File has too many dependencies (2). Maximum allowed is 1.
+   ╭─[index.ts:1:61]
+ 1 │ async function load() { await import('./foo'); await import('./bar'); }
+   ·                                                             ───────
+   ╰────
+  help: Reduce the number of dependencies in this file
+
+  ⚠ import(max-dependencies): File has too many dependencies (3). Maximum allowed is 1.
+   ╭─[index.ts:1:32]
+ 1 │ import('./foo'); export * from './bar'; import './baz';
+   ·                                ───────
+   ╰────
+  help: Reduce the number of dependencies in this file
+
+  ⚠ import(max-dependencies): File has too many dependencies (2). Maximum allowed is 1.
+   ╭─[index.ts:1:52]
+ 1 │ export type { X } from './foo'; export type * from './bar';
+   ·                                                    ───────
+   ╰────
+  help: Reduce the number of dependencies in this file
+
+  ⚠ import(max-dependencies): File has too many dependencies (2). Maximum allowed is 1.
+   ╭─[index.ts:1:40]
+ 1 │ export {} from './foo'; export {} from './bar';
+   ·                                        ───────
+   ╰────
+  help: Reduce the number of dependencies in this file
+
+  ⚠ import(max-dependencies): File has too many dependencies (2). Maximum allowed is 1.
+   ╭─[index.ts:1:53]
+ 1 │ import('./foo', { with: { type: 'json' } }); import('./bar');
+   ·                                                     ───────
+   ╰────
+  help: Reduce the number of dependencies in this file
+
+  ⚠ import(max-dependencies): File has too many dependencies (2). Maximum allowed is 1.
+   ╭─[index.ts:1:27]
+ 1 │ import(('./foo')); import('./bar');
+   ·                           ───────
+   ╰────
+  help: Reduce the number of dependencies in this file
+
+  ⚠ import(max-dependencies): File has too many dependencies (1). Maximum allowed is 0.
+   ╭─[index.ts:1:8]
+ 1 │ import('./foo');
+   ·        ───────
+   ╰────
+  help: Reduce the number of dependencies in this file
