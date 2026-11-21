@@ -105,7 +105,8 @@ impl Rule for PreferExponentiationOperator {
                 && let Some(base) = call_expr.arguments[0].as_expression()
                 && let Some(exponent) = call_expr.arguments[1].as_expression()
             {
-                let base_text = if does_base_need_parens(base) {
+                let base_needs_parens = does_base_need_parens(base);
+                let base_text = if base_needs_parens {
                     format!("({})", base.span().source_text(ctx.source_text()))
                 } else {
                     base.span().source_text(ctx.source_text()).to_string()
@@ -116,11 +117,21 @@ impl Rule for PreferExponentiationOperator {
                 let replacement = format!("{base_text} ** {exponent_text}");
 
                 // Check if we need to wrap the entire expression in parentheses based on parent context
-                let mut replacement = if needs_parens_for_parent(node, ctx) {
-                    format!("({replacement})")
-                } else {
-                    replacement
-                };
+                let mut needs_parens = needs_parens_for_parent(node, ctx);
+                // A `{`, `function`, `class`, or `async function` token at the start of an
+                // expression statement or a concise arrow body is parsed as a block or a
+                // declaration, so the whole replacement must be parenthesized.
+                // <https://github.com/eslint/eslint/issues/20987>
+                if !needs_parens
+                    && !base_needs_parens
+                    && starts_with_block_or_declaration_token(&base_text)
+                    && is_at_start_of_statement_expression(node, ctx)
+                {
+                    needs_parens = true;
+                }
+
+                let mut replacement =
+                    if needs_parens { format!("({replacement})") } else { replacement };
                 if replacement.starts_with(['[', '(', '/', '+', '-', '`'])
                     && could_be_asi_hazard(node, ctx)
                 {
@@ -168,6 +179,38 @@ fn get_exponent_text(source_text: &str, expr: &Expression) -> String {
     } else {
         source_text.to_string()
     }
+}
+
+/// Returns `true` if the source text starts with a token that cannot begin an
+/// expression statement or a concise arrow body: `{` would be parsed as a block,
+/// and `function`, `class`, and `async function` as declarations.
+/// <https://github.com/eslint/eslint/issues/20987>
+fn starts_with_block_or_declaration_token(text: &str) -> bool {
+    fn keyword(text: &str, keyword: &str) -> bool {
+        text.starts_with(keyword)
+            && !text[keyword.len()..]
+                .starts_with(|c: char| c.is_alphanumeric() || matches!(c, '_' | '$'))
+    }
+    text.starts_with('{')
+        || keyword(text, "function")
+        || keyword(text, "class")
+        || (keyword(text, "async") && keyword(text["async".len()..].trim_start(), "function"))
+}
+
+/// Returns `true` if the node sits at the start of an enclosing expression statement
+/// or of a concise arrow function body.
+fn is_at_start_of_statement_expression(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
+    let start = node.span().start;
+    for ancestor in ctx.nodes().ancestors(node.id()) {
+        match ancestor.kind() {
+            AstKind::ExpressionStatement(stmt) => return stmt.span.start == start,
+            AstKind::ArrowFunctionExpression(arrow) if arrow.is_expression() => {
+                return arrow.body.span().start == start;
+            }
+            _ => {}
+        }
+    }
+    false
 }
 
 fn needs_parens_for_parent(node: &AstNode, ctx: &LintContext) -> bool {
@@ -254,6 +297,15 @@ fn test() {
         "(Math.pow(a, b)).toFixed(2)",
         "Math.pow(a, b)<T>()",
         "Math.pow(a, b)<T>",
+        // Statement-start and concise-arrow-body contexts require the whole
+        // replacement to be parenthesized when the base starts with `{`,
+        // `function`, `class`, or `async function`.
+        "Math.pow({ a: 2 }[k], 2) > 3 && go()",
+        "const f = () => Math.pow({ a: 2 }[k], 2)",
+        "Math.pow(function (x) {}.length, 2) > 0 && f()",
+        "Math.pow({ a: 1 }.a, 2)",
+        "Math.pow(async function () {}, 2)",
+        "Math.pow(class {}, 2)",
     ];
 
     let fix = vec![
@@ -314,6 +366,21 @@ fn test() {
         ("foo\nMath.pow(a.b, c)", "foo\na.b ** c"),
         ("Math.pow((a).b, c)", "(a).b ** c"),
         ("foo;\nMath.pow((a).b, c)", "foo;\n(a).b ** c"),
+        // A replacement starting with `{`, `function`, `class`, or `async function`
+        // must be parenthesized at the start of an expression statement or a
+        // concise arrow body, where those tokens parse as a block or a declaration.
+        ("Math.pow({ a: 2 }[k], 2) > 3 && go()", "({ a: 2 }[k] ** 2) > 3 && go()"),
+        ("const f = () => Math.pow({ a: 2 }[k], 2)", "const f = () => ({ a: 2 }[k] ** 2)"),
+        (
+            "Math.pow(function (x) {}.length, 2) > 0 && f()",
+            "(function (x) {}.length ** 2) > 0 && f()",
+        ),
+        ("Math.pow({ a: 1 }.a, 2)", "({ a: 1 }.a ** 2)"),
+        ("Math.pow(async function () {}, 2)", "(async function () {} ** 2)"),
+        ("Math.pow(class {}, 2)", "(class {} ** 2)"),
+        // In other expression contexts no extra parentheses are needed.
+        ("const x = Math.pow({ a: 1 }.a, 2)", "const x = { a: 1 }.a ** 2"),
+        ("foo(Math.pow({ a: 1 }.a, 2))", "foo({ a: 1 }.a ** 2)"),
     ];
 
     Tester::new(

@@ -177,3 +177,45 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────
    ╰────
   help: Replace `Math.pow(a, b)` with `a ** b`.
+
+  ⚠ eslint(prefer-exponentiation-operator): Prefer `**` over `Math.pow`.
+   ╭─[prefer_exponentiation_operator.tsx:1:1]
+ 1 │ Math.pow({ a: 2 }[k], 2) > 3 && go()
+   · ────────────────────────
+   ╰────
+  help: Replace `Math.pow(a, b)` with `a ** b`.
+
+  ⚠ eslint(prefer-exponentiation-operator): Prefer `**` over `Math.pow`.
+   ╭─[prefer_exponentiation_operator.tsx:1:17]
+ 1 │ const f = () => Math.pow({ a: 2 }[k], 2)
+   ·                 ────────────────────────
+   ╰────
+  help: Replace `Math.pow(a, b)` with `a ** b`.
+
+  ⚠ eslint(prefer-exponentiation-operator): Prefer `**` over `Math.pow`.
+   ╭─[prefer_exponentiation_operator.tsx:1:1]
+ 1 │ Math.pow(function (x) {}.length, 2) > 0 && f()
+   · ───────────────────────────────────
+   ╰────
+  help: Replace `Math.pow(a, b)` with `a ** b`.
+
+  ⚠ eslint(prefer-exponentiation-operator): Prefer `**` over `Math.pow`.
+   ╭─[prefer_exponentiation_operator.tsx:1:1]
+ 1 │ Math.pow({ a: 1 }.a, 2)
+   · ───────────────────────
+   ╰────
+  help: Replace `Math.pow(a, b)` with `a ** b`.
+
+  ⚠ eslint(prefer-exponentiation-operator): Prefer `**` over `Math.pow`.
+   ╭─[prefer_exponentiation_operator.tsx:1:1]
+ 1 │ Math.pow(async function () {}, 2)
+   · ─────────────────────────────────
+   ╰────
+  help: Replace `Math.pow(a, b)` with `a ** b`.
+
+  ⚠ eslint(prefer-exponentiation-operator): Prefer `**` over `Math.pow`.
+   ╭─[prefer_exponentiation_operator.tsx:1:1]
+ 1 │ Math.pow(class {}, 2)
+   · ─────────────────────
+   ╰────
+  help: Replace `Math.pow(a, b)` with `a ** b`.
