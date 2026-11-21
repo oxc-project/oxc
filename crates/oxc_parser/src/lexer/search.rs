@@ -254,7 +254,7 @@ pub(crate) use safe_byte_match_table;
 ///
 /// Using `byte_search!` with the provided `SafeByteMatchTable` is guaranteed to leave
 /// `lexer.source` positioned on a UTF-8 character boundary when entering `handle_match`, which
-/// makes the internal calls to `Source`'s unsafe methods sound.
+/// makes the internal calls to `LexerSource`'s unsafe methods sound.
 macro_rules! byte_search {
     // Simple version.
     // `start` is calculated from current position of `lexer.source`.

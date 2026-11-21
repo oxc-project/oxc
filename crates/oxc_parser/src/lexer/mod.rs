@@ -48,7 +48,7 @@ pub use kind::Kind;
 pub use number::{parse_big_int, parse_float, parse_int};
 pub use token::Token;
 
-use source::{Source, SourcePosition};
+use source::{LexerSource, SourcePosition};
 use token::PendingToken;
 use trivia_builder::{TriviaBuilder, TriviaCheckpoint};
 
@@ -84,7 +84,7 @@ pub struct Lexer<'a, C: Config> {
     allocator: &'a Allocator,
 
     // Wrapper around source text. Must not be changed after initialization.
-    source: Source<'a>,
+    source: LexerSource<'a>,
 
     source_type: SourceType,
 
@@ -135,7 +135,7 @@ pub struct Lexer<'a, C: Config> {
 impl<'a, C: Config> Lexer<'a, C> {
     /// Create new `Lexer`.
     ///
-    /// `brand_origin` is for the `Lexer`'s `Source` (see `Source` docs).
+    /// `brand_origin` is for the `Lexer`'s `LexerSource` (see `LexerSource` docs).
     pub(super) fn new(
         allocator: &'a Allocator,
         source_text: &'a str,
@@ -143,7 +143,7 @@ impl<'a, C: Config> Lexer<'a, C> {
         config: C,
         brand_origin: BrandOrigin<'a>,
     ) -> Self {
-        let source = Source::new(source_text, brand_origin);
+        let source = LexerSource::new(source_text, brand_origin);
 
         // If collecting tokens, allocate enough space so that the `Vec<Token>` will not have to grow during parsing.
         // `source_text.len() + 1` is almost always a large overestimate of number of tokens, but it's impossible to
@@ -212,7 +212,7 @@ impl<'a, C: Config> Lexer<'a, C> {
         &self.errors
     }
 
-    /// Remaining string from `Source`
+    /// Remaining string from `LexerSource`
     pub fn remaining(&self) -> &'a str {
         self.source.remaining()
     }
