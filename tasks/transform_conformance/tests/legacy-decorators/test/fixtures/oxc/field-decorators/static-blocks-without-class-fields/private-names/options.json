@@ -1,0 +1,7 @@
+{
+  "plugins": [
+    "transform-legacy-decorator",
+    "transform-typescript",
+    "transform-class-static-block"
+  ]
+}

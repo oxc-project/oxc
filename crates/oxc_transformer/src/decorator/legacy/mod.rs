@@ -51,9 +51,9 @@ use oxc_allocator::{
     Address, ArenaVec, CloneIn, GetAddress, GetAllocator, ReplaceWith, TakeIn, UnstableAddress,
 };
 use oxc_ast::{StaticPropertyName, ast::*};
-use oxc_ast_visit::{VisitJs, VisitMut};
+use oxc_ast_visit::{VisitJs, VisitMut, walk_js};
 use oxc_data_structures::stack::NonEmptyStack;
-use oxc_semantic::{ScopeFlags, ScopeId, Scoping, SymbolFlags};
+use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, Scoping, SymbolFlags, SymbolId};
 use oxc_span::SPAN;
 use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, ast_operations::get_var_name_from_node};
@@ -91,16 +91,14 @@ struct ClassDecorations<'a> {
     /// Number of member decorations parked at the end of `class.decorators`, which are taken
     /// back on class exit. See [`LegacyDecorator::transform_member_decorators`].
     parked_member_decorations: usize,
-    /// Scope of the static block that holds the member decorations when a decorator refers to a
-    /// private name. See [`LegacyDecorator::transform_member_decorators`].
+    /// Member decorations that go in a static block, because a decorator refers to a private
+    /// name of the class. The block is added in [`LegacyDecorator::enter_class_body`].
+    member_decorations_for_block: Vec<Statement<'a>>,
+    /// Scope of the static block that holds the member decorations, once added.
     member_decorations_block: Option<ScopeId>,
     /// Binding for the current class being processed.
     /// Generated on class entry when a class member is decorated.
     class_binding: Option<BoundIdentifier<'a>>,
-    /// Flag indicating whether a decorator of a member of the current class, or of a parameter of
-    /// its constructor, refers to a private name.
-    /// This affects where decorations are placed (in static block vs after class).
-    class_has_private_name_in_decorator: bool,
 }
 
 pub struct LegacyDecorator<'a> {
@@ -178,6 +176,22 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a> {
         };
         self.transform_member_decorators(class, &mut decorations, ctx);
         self.class_decorations_stack.push(decorations);
+    }
+
+    /// Add the static block for member decorations that refer to a private name of the class.
+    ///
+    /// The block is added here rather than on class entry, after the class-properties and
+    /// class-static-block transforms have entered the class body, so that they don't treat it as
+    /// a static block written in the source (like other code added on class exit). Its contents
+    /// are still visited in the class body.
+    fn enter_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
+        let decorations = self.class_decorations_stack.last_mut();
+        if decorations.member_decorations_for_block.is_empty() {
+            return;
+        }
+        let stmts = mem::take(&mut decorations.member_decorations_for_block);
+        let scope_id = Self::insert_decorations_into_class_static_block(body, stmts, ctx);
+        self.class_decorations_stack.last_mut().member_decorations_block = Some(scope_id);
     }
 
     #[inline]
@@ -389,19 +403,18 @@ impl<'a> LegacyDecorator<'a> {
 
         let mut instance_calls = vec![];
         let mut static_calls = vec![];
-        let mut has_private_name = false;
+        let mut private_name_detector = PrivateNameDetector::new(&class.body);
         let class_id = class.id.as_ref();
         let class_scope_id = class.scope_id();
 
         for element in &mut class.body.body {
-            let (is_static, key, descriptor, decorators) = match element {
+            let (is_static, key, erased, descriptor, decorators) = match element {
                 ClassElement::PropertyDefinition(prop) => {
                     if prop.decorators.is_empty() {
                         continue;
                     }
                     let decorators = prop.decorators.take_in(ctx);
-                    has_private_name = has_private_name
-                        || PrivateNameDetector::has_private_name_in_decorators(&decorators);
+                    private_name_detector.visit_decorators(&decorators);
                     let metadata = self.emit_decorator_metadata.then(|| {
                         self.metadata
                             .create_design_type_metadata(prop.type_annotation.as_ref(), ctx)
@@ -415,26 +428,30 @@ impl<'a> LegacyDecorator<'a> {
                     );
                     // `void 0` tells `_decorate` to invoke `Object.defineProperty` directly.
                     let descriptor = Expression::new_void_0(SPAN, ctx);
-                    (prop.r#static, &mut prop.key, descriptor, decorators)
+                    // TypeScript erases `declare` and abstract fields, and with them a computed
+                    // key rewritten to `[_a = foo()]`. Like TypeScript, pass the key expression
+                    // to `_decorate` instead.
+                    let erased = prop.declare
+                        || prop.r#type == PropertyDefinitionType::TSAbstractPropertyDefinition;
+                    (prop.r#static, &mut prop.key, erased, descriptor, decorators)
                 }
                 ClassElement::MethodDefinition(method) => {
                     // TypeScript erases methods without a body, such as overloads.
                     if method.value.is_typescript_syntax() {
                         continue;
                     }
-                    has_private_name = has_private_name
-                        || PrivateNameDetector::has_private_name_in_method_decorators(method);
                     // The constructor's parameters are decorated with the class, on class exit.
                     if method.kind.is_constructor() {
                         continue;
                     }
+                    private_name_detector.visit_method_decorators(method);
                     let Some(decorators) = self.get_all_decorators_of_class_method(method, ctx)
                     else {
                         continue;
                     };
                     // `null` tells `_decorate` to invoke `Object.getOwnPropertyDescriptor` directly.
                     let descriptor = Expression::new_null_literal(SPAN, ctx);
-                    (method.r#static, &mut method.key, descriptor, decorators)
+                    (method.r#static, &mut method.key, false, descriptor, decorators)
                 }
                 _ => continue,
             };
@@ -448,24 +465,27 @@ impl<'a> LegacyDecorator<'a> {
                 }
             });
             let prefix = Self::get_class_member_prefix(class_binding, is_static, ctx);
-            let name = Self::get_name_of_property_key(key, ctx);
+            let name = if erased && let Some(key) = key.as_expression_mut() {
+                // References in the key of a `declare` field are type-only so far.
+                ValueReferences { scoping: ctx.scoping_mut() }.visit_expression(key);
+                key.take_in(ctx)
+            } else {
+                Self::get_name_of_property_key(key, ctx)
+            };
             let call = Self::create_decorate_call(decorators, prefix, name, descriptor, ctx);
             if is_static { static_calls.push(call) } else { instance_calls.push(call) }
         }
 
-        decorations.class_has_private_name_in_decorator = has_private_name;
         if instance_calls.is_empty() && static_calls.is_empty() {
             return;
         }
         instance_calls.append(&mut static_calls);
 
-        if has_private_name {
-            let stmts = instance_calls
+        if private_name_detector.found {
+            decorations.member_decorations_for_block = instance_calls
                 .into_iter()
                 .map(|call| Statement::new_expression_statement(SPAN, call, ctx))
                 .collect();
-            decorations.member_decorations_block =
-                Some(Self::insert_decorations_into_class_static_block(class, stmts, ctx));
         } else {
             // The calls are evaluated after the class.
             let outer_scope_id = ctx.scoping().scope_parent_id(class.scope_id()).unwrap();
@@ -822,10 +842,11 @@ impl<'a> LegacyDecorator<'a> {
                 SymbolFlags::BlockScopedVariable;
             BoundIdentifier::new(ident.name, old_class_symbol_id)
         });
+        let inner_class_symbol_id = class.id.as_ref().map(BindingIdentifier::symbol_id);
         let class_alias_binding = class_binding.as_ref().and_then(|id| {
             ClassReferenceChanger::new(
                 id.clone(),
-                current_class_decorations.member_decorations_block,
+                inner_class_symbol_id.zip(current_class_decorations.member_decorations_block),
                 ctx,
             )
             .get_class_alias_if_needed(&mut class.body)
@@ -834,8 +855,8 @@ impl<'a> LegacyDecorator<'a> {
         let ClassDecorations {
             class_binding: class_binding_tmp,
             parked_member_decorations: _,
+            member_decorations_for_block: _,
             member_decorations_block: _,
-            class_has_private_name_in_decorator,
             should_transform: _,
         } = current_class_decorations;
 
@@ -880,8 +901,10 @@ impl<'a> LegacyDecorator<'a> {
                             ctx,
                         );
                         let body = [class_alias_with_this_assignment];
-                        let scope_id =
-                            ctx.create_child_scope_of_current(ScopeFlags::ClassStaticBlock);
+                        let scope_id = ctx.create_child_scope(
+                            class.scope_id(),
+                            ScopeFlags::StrictMode | ScopeFlags::ClassStaticBlock,
+                        );
                         let element =
                             ClassElement::new_static_block_with_scope_id(SPAN, body, scope_id, ctx);
                         Some(element)
@@ -891,34 +914,30 @@ impl<'a> LegacyDecorator<'a> {
                 })
             };
 
-        // When a decorator refers to a private name, the member decorations are already in a
-        // static block (see `transform_member_decorators`).
-        if !class_has_private_name_in_decorator {
-            let address = match ctx.parent() {
-                parent @ (Ancestor::ExportDefaultDeclarationDeclaration(_)
-                | Ancestor::ExportDeclarationDeclaration(_)) => parent.address(),
-                // `Class` is always stored in a `Box`, so has a stable memory location
-                _ => class.unstable_address(),
-            };
+        let address = match ctx.parent() {
+            parent @ (Ancestor::ExportDefaultDeclarationDeclaration(_)
+            | Ancestor::ExportDeclarationDeclaration(_)) => parent.address(),
+            // `Class` is always stored in a `Box`, so has a stable memory location
+            _ => class.unstable_address(),
+        };
 
-            decoration_stmts.push(constructor_decoration);
-            self.decorations.entry(address).or_default().append(&mut decoration_stmts);
-            self.class_decorated_data = Some(ClassDecoratedData {
-                binding: class_binding,
-                // If the class alias has reassigned to `this` in the static block, then
-                // don't assign `class` to the class alias again.
-                //
-                // * class_alias_with_this_assignment is `None`:
-                //   `Class = _Class = class Class {}`
-                // * class_alias_with_this_assignment is `Some`:
-                //   `Class = class Class { static { _Class = this; } }`
-                alias_binding: if class_alias_with_this_assignment.is_none() {
-                    class_alias_binding
-                } else {
-                    None
-                },
-            });
-        }
+        decoration_stmts.push(constructor_decoration);
+        self.decorations.entry(address).or_default().append(&mut decoration_stmts);
+        self.class_decorated_data = Some(ClassDecoratedData {
+            binding: class_binding,
+            // If the class alias has reassigned to `this` in the static block, then
+            // don't assign `class` to the class alias again.
+            //
+            // * class_alias_with_this_assignment is `None`:
+            //   `Class = _Class = class Class {}`
+            // * class_alias_with_this_assignment is `Some`:
+            //   `Class = class Class { static { _Class = this; } }`
+            alias_binding: if class_alias_with_this_assignment.is_none() {
+                class_alias_binding
+            } else {
+                None
+            },
+        });
 
         if let Some(class_alias_with_this_assignment) = class_alias_with_this_assignment {
             class.body.body.insert(0, class_alias_with_this_assignment);
@@ -972,8 +991,8 @@ impl<'a> LegacyDecorator<'a> {
         let ClassDecorations {
             class_binding,
             parked_member_decorations: _,
+            member_decorations_for_block: _,
             member_decorations_block: _,
-            class_has_private_name_in_decorator: _,
             should_transform: _,
         } = current_class_decorations;
 
@@ -1093,11 +1112,13 @@ impl<'a> LegacyDecorator<'a> {
     /// }
     /// ```
     fn insert_decorations_into_class_static_block(
-        class: &mut Class<'a>,
+        body: &mut ClassBody<'a>,
         decorations: Vec<Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> ScopeId {
-        let scope_id = ctx.create_child_scope(class.scope_id(), ScopeFlags::ClassStaticBlock);
+        // Called on class body entry, so the current scope is the class's.
+        let scope_id = ctx
+            .create_child_scope_of_current(ScopeFlags::StrictMode | ScopeFlags::ClassStaticBlock);
         let mut reparenter = ChildScopeReparenter::new(scope_id, ctx);
         for stmt in &decorations {
             reparenter.visit_statement(stmt);
@@ -1105,7 +1126,7 @@ impl<'a> LegacyDecorator<'a> {
         let decorations = ArenaVec::from_iter_in(decorations, ctx);
         let element =
             ClassElement::new_static_block_with_scope_id(SPAN, decorations, scope_id, ctx);
-        class.body.body.push(element);
+        body.body.push(element);
         scope_id
     }
 
@@ -1364,54 +1385,89 @@ impl<'a> LegacyDecorator<'a> {
     }
 }
 
-/// Visitor to detect if a decorator refers to a private name, such as `#x in obj` or `obj.#x`.
+/// Visitor to detect if a decorator refers to a private name of the decorated class, such as
+/// `#x in obj` or `obj.#x`.
 ///
-/// Such decorators must be evaluated inside the class, like TypeScript does.
-#[derive(Default)]
-struct PrivateNameDetector {
-    has_private_name: bool,
+/// Such decorators must be evaluated inside the class, like TypeScript does. Private names of an
+/// enclosing class are accessible after the class too, where `this` is unchanged.
+struct PrivateNameDetector<'a> {
+    /// Private names declared by the class, without those shadowed by a nested class.
+    names: Vec<Ident<'a>>,
+    found: bool,
 }
 
-impl VisitJs<'_> for PrivateNameDetector {
-    fn visit_private_identifier(&mut self, _it: &PrivateIdentifier<'_>) {
-        self.has_private_name = true;
+impl<'a> PrivateNameDetector<'a> {
+    fn new(body: &ClassBody<'a>) -> Self {
+        Self { names: Self::declared_names(body).collect(), found: false }
+    }
+
+    fn declared_names<'b>(body: &'b ClassBody<'a>) -> impl Iterator<Item = Ident<'a>> + 'b {
+        body.body.iter().filter_map(|element| {
+            let key = match element {
+                ClassElement::PropertyDefinition(prop) => &prop.key,
+                ClassElement::MethodDefinition(method) => &method.key,
+                ClassElement::AccessorProperty(accessor) => &accessor.key,
+                ClassElement::StaticBlock(_) | ClassElement::TSIndexSignature(_) => return None,
+            };
+            key.private_name()
+        })
+    }
+
+    fn visit_method_decorators(&mut self, method: &MethodDefinition<'a>) {
+        self.visit_decorators(&method.decorators);
+        for param in &method.value.params.items {
+            self.visit_decorators(&param.decorators);
+        }
     }
 }
 
-impl PrivateNameDetector {
-    fn has_private_name(expression: &Expression<'_>) -> bool {
-        let mut detector = Self::default();
-        detector.visit_expression(expression);
-        detector.has_private_name
+impl<'a> VisitJs<'a> for PrivateNameDetector<'a> {
+    fn visit_decorators(&mut self, decorators: &ArenaVec<'a, Decorator<'a>>) {
+        if self.names.is_empty() || self.found {
+            return;
+        }
+        for decorator in decorators {
+            self.visit_expression(&decorator.expression);
+        }
     }
 
-    fn has_private_name_in_decorators(decorators: &[Decorator<'_>]) -> bool {
-        decorators.iter().any(|decorator| Self::has_private_name(&decorator.expression))
+    fn visit_private_identifier(&mut self, ident: &PrivateIdentifier<'a>) {
+        if self.names.contains(&ident.name) {
+            self.found = true;
+        }
     }
 
-    /// Whether the decorators of a method or of its parameters refer to a private name.
-    fn has_private_name_in_method_decorators(method: &MethodDefinition<'_>) -> bool {
-        Self::has_private_name_in_decorators(&method.decorators)
-            || method
-                .value
-                .params
-                .items
-                .iter()
-                .any(|param| Self::has_private_name_in_decorators(&param.decorators))
+    fn visit_class(&mut self, class: &Class<'a>) {
+        let shadowed = Self::declared_names(&class.body).any(|name| self.names.contains(&name));
+        if !shadowed {
+            walk_js::walk_class(self, class);
+            return;
+        }
+        let names = self.names.clone();
+        let declared = Self::declared_names(&class.body).collect::<Vec<_>>();
+        self.names.retain(|name| !declared.contains(name));
+        walk_js::walk_class(self, class);
+        self.names = names;
     }
 }
 
 /// Visitor to move the scopes in decorator expressions to where the expressions end up, such as
 /// after the class or in a static block. Only the outermost scopes are moved, the scopes within
 /// them keep their parents.
+///
+/// Code in a class is strict, so moved scopes lose their strict mode when the new parent is
+/// sloppy, unless they are strict on their own.
 struct ChildScopeReparenter<'s> {
     scoping: &'s mut Scoping,
     parent_scope_id: ScopeId,
+    make_sloppy: bool,
 }
 
 impl<'s> ChildScopeReparenter<'s> {
     fn new(parent_scope_id: ScopeId, ctx: &'s mut TraverseCtx<'_>) -> Self {
-        Self { scoping: ctx.scoping_mut(), parent_scope_id }
+        let scoping = ctx.scoping_mut();
+        let make_sloppy = !scoping.scope_flags(parent_scope_id).is_strict_mode();
+        Self { scoping, parent_scope_id, make_sloppy }
     }
 
     fn reparent_scope(&mut self, scope_id: &Cell<Option<ScopeId>>) {
@@ -1420,12 +1476,18 @@ impl<'s> ChildScopeReparenter<'s> {
 }
 
 impl<'a> VisitJs<'a> for ChildScopeReparenter<'_> {
-    fn visit_function(&mut self, func: &Function<'a>, _flags: ScopeFlags) {
+    fn visit_function(&mut self, func: &Function<'a>, flags: ScopeFlags) {
         self.reparent_scope(&func.scope_id);
+        if self.make_sloppy {
+            SloppyScopes { scoping: self.scoping }.visit_function(func, flags);
+        }
     }
 
     fn visit_arrow_function_expression(&mut self, func: &ArrowFunctionExpression<'a>) {
         self.reparent_scope(&func.scope_id);
+        if self.make_sloppy {
+            SloppyScopes { scoping: self.scoping }.visit_arrow_function_expression(func);
+        }
     }
 
     fn visit_class(&mut self, class: &Class<'a>) {
@@ -1435,13 +1497,56 @@ impl<'a> VisitJs<'a> for ChildScopeReparenter<'_> {
     }
 }
 
+/// Visitor to turn type-only references into value reads, for an expression that moves out of a
+/// type-only position.
+struct ValueReferences<'s> {
+    scoping: &'s mut Scoping,
+}
+
+impl<'a> VisitJs<'a> for ValueReferences<'_> {
+    fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
+        let flags = self.scoping.get_reference_mut(ident.reference_id()).flags_mut();
+        if flags.is_value_as_type() {
+            *flags = ReferenceFlags::Read;
+        }
+    }
+}
+
+/// Visitor to remove strict mode from scopes that are no longer in strict code.
+struct SloppyScopes<'s> {
+    scoping: &'s mut Scoping,
+}
+
+impl<'a> VisitJs<'a> for SloppyScopes<'_> {
+    fn enter_scope(&mut self, _flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
+        *self.scoping.scope_flags_mut(scope_id.get().unwrap()) -= ScopeFlags::StrictMode;
+    }
+
+    fn visit_function(&mut self, func: &Function<'a>, flags: ScopeFlags) {
+        if !func.has_use_strict_directive() {
+            walk_js::walk_function(self, func, flags);
+        }
+    }
+
+    fn visit_arrow_function_expression(&mut self, func: &ArrowFunctionExpression<'a>) {
+        if !func.has_use_strict_directive() {
+            walk_js::walk_arrow_function_expression(self, func);
+        }
+    }
+
+    // Classes are always strict.
+    fn visit_class(&mut self, _class: &Class<'a>) {}
+}
+
 /// Visitor to change references to the class to a local alias
 /// <https://github.com/microsoft/TypeScript/blob/8da951cbb629b648753454872df4e1754982aef1/src/compiler/transformers/legacyDecorators.ts#L770-L783>
 struct ClassReferenceChanger<'a, 'ctx> {
     class_binding: BoundIdentifier<'a>,
-    /// Like TypeScript, member decorations in a static block refer to the class itself, not to
-    /// the alias. See [`ClassDecorations::member_decorations_block`].
-    member_decorations_block: Option<ScopeId>,
+    /// The class's inner name binding, and the scope of the static block holding the member
+    /// decorations. Like TypeScript, member decorations refer to the class itself rather than
+    /// to the alias, through its inner name. See [`ClassDecorations::member_decorations_block`].
+    member_decorations_block: Option<(SymbolId, ScopeId)>,
+    in_member_decorations_block: bool,
     // `Some` if there are references to the class inside the class body
     class_alias_binding: Option<BoundIdentifier<'a>>,
     ctx: &'ctx mut TraverseCtx<'a>,
@@ -1450,10 +1555,16 @@ struct ClassReferenceChanger<'a, 'ctx> {
 impl<'a, 'ctx> ClassReferenceChanger<'a, 'ctx> {
     fn new(
         class_binding: BoundIdentifier<'a>,
-        member_decorations_block: Option<ScopeId>,
+        member_decorations_block: Option<(SymbolId, ScopeId)>,
         ctx: &'ctx mut TraverseCtx<'a>,
     ) -> Self {
-        Self { class_binding, member_decorations_block, class_alias_binding: None, ctx }
+        Self {
+            class_binding,
+            member_decorations_block,
+            in_member_decorations_block: false,
+            class_alias_binding: None,
+            ctx,
+        }
     }
 
     fn get_class_alias_if_needed(
@@ -1467,14 +1578,31 @@ impl<'a, 'ctx> ClassReferenceChanger<'a, 'ctx> {
 
 impl<'a> VisitMut<'a> for ClassReferenceChanger<'a, '_> {
     fn visit_static_block(&mut self, block: &mut StaticBlock<'a>) {
-        if self.member_decorations_block != Some(block.scope_id()) {
-            self.visit_statements(&mut block.body);
-        }
+        let is_member_decorations_block =
+            self.member_decorations_block.is_some_and(|(_, scope_id)| scope_id == block.scope_id());
+        self.in_member_decorations_block = is_member_decorations_block;
+        self.visit_statements(&mut block.body);
+        self.in_member_decorations_block = false;
     }
 
     #[inline]
     fn visit_identifier_reference(&mut self, ident: &mut IdentifierReference<'a>) {
-        if self.is_class_reference(ident) {
+        if !self.is_class_reference(ident) {
+            return;
+        }
+        if self.in_member_decorations_block
+            && let Some((inner_symbol_id, _)) = self.member_decorations_block
+        {
+            let reference_id = ident.reference_id();
+            let scoping = self.ctx.scoping_mut();
+            scoping.get_reference_mut(reference_id).set_symbol_id(inner_symbol_id);
+            scoping.delete_resolved_reference(self.class_binding.symbol_id, reference_id);
+            scoping.add_resolved_reference(inner_symbol_id, reference_id);
+        } else {
+            let reference_id = ident.reference_id();
+            self.ctx
+                .scoping_mut()
+                .delete_resolved_reference(self.class_binding.symbol_id, reference_id);
             *ident = self.get_alias_ident_reference();
         }
     }

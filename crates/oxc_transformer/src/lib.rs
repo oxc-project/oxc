@@ -359,6 +359,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
 
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x2_es2022.enter_class_body(body, ctx);
+        // After es2022, see `LegacyDecorator::enter_class_body`.
+        self.decorator.enter_class_body(body, ctx);
     }
 
     fn enter_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {

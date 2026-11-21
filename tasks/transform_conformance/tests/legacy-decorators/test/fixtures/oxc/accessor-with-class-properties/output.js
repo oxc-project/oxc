@@ -1,9 +1,8 @@
 var _a;
-let _a2;
 var _a_accessor_storage = /* @__PURE__ */ new WeakMap();
 var _c_accessor_storage = /* @__PURE__ */ new WeakMap();
 var _a_computed_accessor_storage = /* @__PURE__ */ new WeakMap();
-_a2 = _a = a;
+_a = a;
 class C {
   constructor() {
     babelHelpers.classPrivateFieldInitSpec(this, _a_accessor_storage, void 0);
@@ -28,7 +27,7 @@ class C {
   set c(value) {
     babelHelpers.classPrivateFieldSet2(_c_accessor_storage, this, value);
   }
-  get [_a2]() {
+  get [_a]() {
     return babelHelpers.classPrivateFieldGet2(_a_computed_accessor_storage, this);
   }
   set [a](value) {
@@ -40,3 +39,4 @@ babelHelpers.decorate([dec], C.prototype, "a", null);
 babelHelpers.decorate([dec], C.prototype, "c", null);
 babelHelpers.decorate([dec], C.prototype, _a, null);
 babelHelpers.decorate([dec], C, "b", null);
+

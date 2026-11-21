@@ -1,8 +1,10 @@
 //! Utilities to computed key expressions.
 
-use oxc_ast::ast::Expression;
+use oxc_ast::ast::{AssignmentTarget, Expression};
 use oxc_semantic::SymbolFlags;
 use oxc_span::SPAN;
+use oxc_syntax::operator::AssignmentOperator;
+use oxc_traverse::BoundIdentifier;
 
 use crate::{context::TraverseCtx, utils::ast_builder::create_assignment};
 
@@ -57,10 +59,17 @@ pub fn key_needs_temp_var(key: &Expression, ctx: &TraverseCtx) -> bool {
 
 /// Create `let _x;` statement and insert it.
 /// Return `_x = x()` assignment, and `_x` identifier referencing same temp var.
+///
+/// If `key` already assigns a variable that nothing else writes, such as a temp var created by
+/// another transform (`[_x = x()]`), that variable is reused instead of creating another.
 pub fn create_computed_key_temp_var<'a>(
     key: Expression<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) -> (/* assignment */ Expression<'a>, /* identifier */ Expression<'a>) {
+    if let Some(ident) = assigned_single_write_var(&key, ctx) {
+        return (key, ident);
+    }
+
     let outer_scope_id = ctx.current_block_scope_id();
     // TODO: Handle if is a class expression defined in a function's params.
     let binding =
@@ -72,4 +81,25 @@ pub fn create_computed_key_temp_var<'a>(
     let ident = binding.create_read_expression(ctx);
 
     (assignment, ident)
+}
+
+/// If `key` is `x = ...` and that assignment is the only write to `x`, return a read of `x`.
+/// `x` then always holds the key's value after the key is evaluated.
+fn assigned_single_write_var<'a>(
+    key: &Expression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) -> Option<Expression<'a>> {
+    let Expression::AssignmentExpression(assignment) = key else { return None };
+    if assignment.operator != AssignmentOperator::Assign {
+        return None;
+    }
+    let AssignmentTarget::AssignmentTargetIdentifier(target) = &assignment.left else {
+        return None;
+    };
+    let symbol_id = ctx.scoping().get_reference(target.reference_id()).symbol_id()?;
+    let writes = ctx.scoping().get_resolved_references(symbol_id).filter(|r| r.is_write()).count();
+    if writes != 1 {
+        return None;
+    }
+    Some(BoundIdentifier::new(target.name, symbol_id).create_read_expression(ctx))
 }

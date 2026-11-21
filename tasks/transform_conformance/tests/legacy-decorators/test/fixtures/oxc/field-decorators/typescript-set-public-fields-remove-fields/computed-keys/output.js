@@ -1,16 +1,16 @@
 var _key, _key2, _key3, _key4;
-let _key5, _key6, _key7;
+let _key5;
 class A {
   constructor() {
-    this[_key5] = 1;
-    this[_key7] = 3;
+    this[_key2] = 1;
+    this[_key5] = 3;
   }
   static {
-    _key3 = key("d"), _key6 = _key4 = key("e"), _key7 = key("f");
+    _key3 = key("d"), _key4 = key("e"), _key5 = key("f");
   }
-  [(key("a"), _key = key("b"), _key5 = _key2 = key("c"), key("m"))]() {}
+  [(key("a"), _key = key("b"), _key2 = key("c"), key("m"))]() {}
   static {
-    this[_key6] = 2;
+    this[_key4] = 2;
   }
 }
 babelHelpers.decorate([dec], A.prototype, _key, void 0);

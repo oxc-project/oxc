@@ -61,6 +61,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for Decorator<'a> {
     }
 
     #[inline]
+    fn enter_class_body(&mut self, node: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.mode.is_legacy() {
+            self.legacy_decorator.enter_class_body(node, ctx);
+        }
+    }
+
+    #[inline]
     fn exit_class(&mut self, node: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.mode.is_legacy() {
             self.legacy_decorator.exit_class(node, ctx);
