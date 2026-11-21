@@ -58,7 +58,7 @@ fn format_junit(diagnostics: &[Error]) -> String {
 
         for &index in indices {
             let Info { message, start, rule_id, .. } = &infos[index];
-            let rule = rule_id.as_deref().unwrap_or("");
+            let rule = xml_escape(rule_id.as_deref().unwrap_or(""));
 
             let severity = if diagnostics[index].severity() == Some(Severity::Error) {
                 total_errors += 1;
@@ -81,9 +81,10 @@ fn format_junit(diagnostics: &[Error]) -> String {
         if suite_index > 0 {
             test_suites.push('\n');
         }
+        let escaped_filename = xml_escape(filename);
         let _ = write!(
             test_suites,
-            "    <testsuite name=\"{filename}\" tests=\"{}\" disabled=\"0\" errors=\"{error}\" failures=\"{warning}\">{test_cases}\n    </testsuite>",
+            "    <testsuite name=\"{escaped_filename}\" tests=\"{}\" disabled=\"0\" errors=\"{error}\" failures=\"{warning}\">{test_cases}\n    </testsuite>",
             indices.len(),
         );
     }
@@ -151,6 +152,30 @@ mod test {
                 .with_error_code("eslint", "no-debugger")
                 .with_label(Span::new(0, 8))
                 .with_source_code(NamedSource::new("file.js", "debugger;")),
+        );
+
+        let output = reporter.finish(&DiagnosticResult::default()).unwrap();
+        assert_eq!(output, EXPECTED_REPORT);
+    }
+
+    #[test]
+    fn test_junit_reporter_escapes_filename_and_rule() {
+        const EXPECTED_REPORT: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Oxlint" tests="1" failures="0" errors="1">
+    <testsuite name="a&amp;b&lt;&quot;c&quot;.js" tests="1" disabled="0" errors="1" failures="0">
+        <testcase name="plugin(a&amp;b&quot;c)">
+            <error message="error message">line 1, column 1, error message</error>
+        </testcase>
+    </testsuite>
+</testsuites>
+"#;
+        let mut reporter = JUnitReporter::default();
+
+        reporter.render_error(
+            OxcDiagnostic::error("error message")
+                .with_error_code("plugin", "a&b\"c")
+                .with_label(Span::new(0, 8))
+                .with_source_code(NamedSource::new("a&b<\"c\".js", "let a = ;")),
         );
 
         let output = reporter.finish(&DiagnosticResult::default()).unwrap();
