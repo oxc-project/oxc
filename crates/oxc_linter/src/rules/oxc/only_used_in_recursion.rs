@@ -62,9 +62,11 @@ declare_oxc_lint!(
     OnlyUsedInRecursion,
     oxc,
     correctness,
+    recommended,
     dangerous_fix,
     version = "0.1.1",
-    short_description = "Checks for arguments that are only used in recursion with no side effects.",
+    short_description =
+        "Checks for arguments that are only used in recursion with no side effects.",
 );
 
 fn is_exported(id: &BindingIdentifier<'_>, ctx: &LintContext<'_>) -> bool {
@@ -167,12 +169,12 @@ fn report_parameter(
         );
 
         // Delete the parameter, including the comma before it
-        fix.push(delete_with_preceding_separator(ctx.source_text(), parameter.span));
+        fix.push(delete_with_preceding_separator(ctx, parameter.span));
 
         for reference in ctx.semantic().symbol_references(parameter.symbol_id()) {
             let node = ctx.nodes().get_node(reference.node_id());
             // Delete the argument reference, including the comma before it
-            fix.push(delete_with_preceding_separator(ctx.source_text(), node.span()));
+            fix.push(delete_with_preceding_separator(ctx, node.span()));
         }
 
         // Search for references to the function and remove the argument.
@@ -189,7 +191,7 @@ fn report_parameter(
             }
 
             fix.push(delete_with_preceding_separator(
-                ctx.source_text(),
+                ctx,
                 call_expr.arguments[parameter_index].span(),
             ));
         }
@@ -227,7 +229,7 @@ fn report_jsx_property(
     ctx.diagnostic_with_dangerous_fix(diagnostic(), |fixer| {
         let reference_count = ctx.semantic().symbol_references(property_symbol_id).count();
         let mut fix = fixer.new_fix_with_capacity(reference_count + 1);
-        fix.push(delete_with_surrounding_separators(ctx.source_text(), property.span));
+        fix.push(delete_with_surrounding_separators(ctx, property.span));
 
         // Search for references to the property and remove the JSX attribute.
         for reference in ctx.semantic().symbol_references(property_symbol_id) {
@@ -422,14 +424,37 @@ fn skip_to_next_char(s: &str, start: u32, direction: Direction) -> Option<u32> {
     }
 }
 
-fn delete_with_preceding_separator(source: &str, span: Span) -> Fix {
-    let start = skip_to_next_char(source, span.start, Direction::Backward).unwrap_or(span.start);
-    Fix::delete(Span::new(start, span.end))
+/// The start of the whitespace and commas before `span`. In `a, // comment\n b`, the line
+/// break that ends the comment is kept, or the `)` or `}` after `b` would become part of
+/// the comment once `b` is deleted.
+#[expect(clippy::cast_possible_truncation)]
+fn preceding_separator_start(ctx: &LintContext, span: Span) -> u32 {
+    let source = ctx.source_text();
+    let mut start =
+        skip_to_next_char(source, span.start, Direction::Backward).unwrap_or(span.start);
+    if start > 0
+        && let Some(comment) = ctx.semantic().get_comment_at(start - 1)
+        && comment.is_line()
+    {
+        start = comment.span.end;
+        let rest = &source[start as usize..];
+        start += if rest.starts_with("\r\n") {
+            2
+        } else {
+            rest.chars().next().map_or(0, char::len_utf8)
+        } as u32;
+    }
+    start
 }
 
-fn delete_with_surrounding_separators(source: &str, span: Span) -> Fix {
-    let start = skip_to_next_char(source, span.start, Direction::Backward).unwrap_or(span.start);
-    let end = skip_to_next_char(source, span.end, Direction::Forward).unwrap_or(span.end);
+fn delete_with_preceding_separator(ctx: &LintContext, span: Span) -> Fix {
+    Fix::delete(Span::new(preceding_separator_start(ctx, span), span.end))
+}
+
+fn delete_with_surrounding_separators(ctx: &LintContext, span: Span) -> Fix {
+    let start = preceding_separator_start(ctx, span);
+    let end =
+        skip_to_next_char(ctx.source_text(), span.end, Direction::Forward).unwrap_or(span.end);
     Fix::delete(Span::new(start, end))
 }
 
@@ -835,6 +860,42 @@ function writeChunks(a,callac){writeChunks(m,callac)}writeChunks(i,{})",
             }
             recurse(0);
             ",
+        ),
+        (
+            "function test(arg0, // first\n  arg1) {\n  return test(\"\", // first\n    arg1);\n}",
+            "function test(arg0, // first\n) {\n  return test(\"\", // first\n);\n}",
+        ),
+        (
+            "function test(arg0 // first\n  , arg1) {\n  return test(\"\", arg1);\n}",
+            "function test(arg0 // first\n) {\n  return test(\"\");\n}",
+        ),
+        (
+            "function Test({a, // first\n  b}) {\n  a++;\n  return <Test a={a} b={b}/>;\n}",
+            "function Test({a, // first\n}) {\n  a++;\n  return <Test a={a} />;\n}",
+        ),
+        (
+            "function test(arg0, // first \n  arg1) {\n  return test(\"\", // first,\n    arg1);\n}\ntest(\"\", // first\t\n  0);",
+            "function test(arg0, // first \n) {\n  return test(\"\", // first,\n);\n}\ntest(\"\", // first\t\n);",
+        ),
+        (
+            "function test(arg0, // first,\t\r\n  arg1) {\r\n  return test(\"\", arg1);\r\n}",
+            "function test(arg0, // first,\t\r\n) {\r\n  return test(\"\");\r\n}",
+        ),
+        (
+            "function test(arg0, // first \r  arg1) {\r  return test(\"\", arg1);\r}",
+            "function test(arg0, // first \r) {\r  return test(\"\");\r}",
+        ),
+        (
+            "function test(arg0, // first,\u{2028}  arg1) { return test(\"\", arg1); }",
+            "function test(arg0, // first,\u{2028}) { return test(\"\"); }",
+        ),
+        (
+            "function test(arg0, // first\u{a0}\u{2029}  arg1) { return test(\"\", arg1); }",
+            "function test(arg0, // first\u{a0}\u{2029}) { return test(\"\"); }",
+        ),
+        (
+            "function Test({a, // first, \n  b}) {\n  a++;\n  return <Test a={a} b={b}/>;\n}",
+            "function Test({a, // first, \n}) {\n  a++;\n  return <Test a={a} />;\n}",
         ),
     ];
 

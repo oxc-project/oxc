@@ -190,7 +190,7 @@ fn get_property_key_info(prop: &ObjectProperty) -> Option<(String, Span, bool, K
         PropertyKey::StaticIdentifier(ident) => {
             Some((ident.name.to_string(), ident.span, prop.shorthand, KeyType::Identifier))
         }
-        PropertyKey::StringLiteral(lit) => {
+        PropertyKey::StaticStringLiteral(lit) | PropertyKey::StringLiteral(lit) => {
             Some((lit.value.as_str()?.to_owned(), lit.span, false, KeyType::StringLiteral))
         }
         PropertyKey::TemplateLiteral(tpl) if tpl.is_no_substitution_template() => tpl

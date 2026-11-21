@@ -11,6 +11,30 @@ use crate::{
 };
 
 #[test]
+fn infinite_numeric_literals() {
+    use oxc_allocator::Allocator;
+    use oxc_ast::{ast::*, builder::AstBuilder};
+    use oxc_codegen::{Codegen, Context, Gen};
+    use oxc_span::SPAN;
+
+    test_ts("type T = { 2e308: 2e308 };", "type T = {\n\t2e308: 2e308;\n};\n");
+
+    let allocator = Allocator::new();
+    let ast = AstBuilder::new(&allocator);
+    let key = PropertyKey::new_static_numeric_literal(SPAN, f64::INFINITY, None, &ast);
+    let literal = TSLiteral::new_numeric_literal(SPAN, f64::INFINITY, None, &ast);
+    let ctx = Context::default().with_typescript();
+
+    for options in [CodegenOptions::default(), CodegenOptions::minify()] {
+        let mut codegen = Codegen::new().with_options(options);
+        key.print(&mut codegen, ctx);
+        codegen.print_str(":");
+        literal.print(&mut codegen, ctx);
+        assert_eq!(codegen.into_source_text(), "1e400:1e400");
+    }
+}
+
+#[test]
 fn abstract_accessor_modifiers() {
     test_ts(
         "abstract class C { public abstract accessor x: number; protected abstract accessor y: string; }",

@@ -1,0 +1,152 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<div a="1" // c
+  b="2"></div>
+<div a // c
+></div>
+<div a="1" /* c
+   d */ b="2">x</div>
+<div a="1" /* c */></div>
+<div // c
+>text</div>
+<img // c
+/>
+<span>x<b // c
+>y</b>z</span>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<div
+  a="1" // c
+  b="2"
+></div>
+<div
+  a // c
+></div>
+<div
+  a="1"
+  /* c
+   d */
+  b="2"
+>
+  x
+</div>
+<div a="1" /* c */></div>
+<div
+  // c
+>
+  text
+</div>
+<img
+  // c
+/>
+<span
+  >x<b
+    // c
+    >y</b
+  >z</span
+>
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<div
+  a="1" // c
+  b="2"
+></div>
+<div
+  a // c
+></div>
+<div
+  a="1"
+  /* c
+   d */
+  b="2"
+>
+  x
+</div>
+<div a="1" /* c */></div>
+<div
+  // c
+>
+  text
+</div>
+<img
+  // c
+/>
+<span
+  >x<b
+    // c
+    >y</b
+  >z</span
+>
+
+-----------------------------------------
+{ bracketSameLine: true, printWidth: 80 }
+-----------------------------------------
+<div
+  a="1" // c
+  b="2"></div>
+<div
+  a // c
+></div>
+<div
+  a="1"
+  /* c
+   d */
+  b="2">
+  x
+</div>
+<div a="1" /* c */></div>
+<div
+  // c
+>
+  text
+</div>
+<img
+  // c
+/>
+<span
+  >x<b
+    // c
+    >y</b
+  >z</span
+>
+
+------------------------------------------
+{ bracketSameLine: true, printWidth: 100 }
+------------------------------------------
+<div
+  a="1" // c
+  b="2"></div>
+<div
+  a // c
+></div>
+<div
+  a="1"
+  /* c
+   d */
+  b="2">
+  x
+</div>
+<div a="1" /* c */></div>
+<div
+  // c
+>
+  text
+</div>
+<img
+  // c
+/>
+<span
+  >x<b
+    // c
+    >y</b
+  >z</span
+>
+
+===================== End =====================

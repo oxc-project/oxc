@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.94.0] - 2026-11-16
+
+### 🚀 Features
+
+- acd8814 linter/typescript/no-misused-promises: Add `flagUnions` option (#29380) (camc314)
+
+### 📚 Documentation
+
+- cdb5ac4 oxlint: Remove experimental label from `typeCheck` (#29175) (Yuji Sugiura)
+
 ## [1.92.0] - 2026-11-06
 
 ### 🚀 Features

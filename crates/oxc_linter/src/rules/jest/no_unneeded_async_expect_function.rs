@@ -15,7 +15,7 @@ declare_oxc_lint!(
     NoUnneededAsyncExpectFunction,
     jest,
     style,
-    fix,
+    suggestion,
     docs = DOCUMENTATION,
     version = "1.39.0",
 );
@@ -287,4 +287,39 @@ fn test() {
     .with_jest_plugin(true)
     .expect_fix(fix)
     .test_and_snapshot();
+}
+
+#[test]
+fn test_fix_kind() {
+    use crate::{fixer::FixKind, tester::Tester};
+
+    let source = r"
+function load(id) {
+    if (!id) throw new Error('missing id');
+    return Promise.resolve({ id });
+}
+it('rejects without an id', async () => {
+    await expect(async () => { await load(''); }).rejects.toThrow('missing id');
+});";
+    let expected = r"
+function load(id) {
+    if (!id) throw new Error('missing id');
+    return Promise.resolve({ id });
+}
+it('rejects without an id', async () => {
+    await expect(load('')).rejects.toThrow('missing id');
+});";
+
+    Tester::new(
+        NoUnneededAsyncExpectFunction::NAME,
+        NoUnneededAsyncExpectFunction::PLUGIN,
+        vec![],
+        vec![source],
+    )
+    .with_jest_plugin(true)
+    .expect_fix(vec![
+        (source, source, None, FixKind::SafeFix),
+        (source, expected, None, FixKind::Suggestion),
+    ])
+    .test();
 }

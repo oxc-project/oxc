@@ -709,9 +709,7 @@ impl<'a> PeepholeOptimizations {
         span: Span,
         ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        let num = |span: Span, n: f64| {
-            Expression::new_numeric_literal(span, n, None, NumberBase::Decimal, ctx)
-        };
+        let num = |span: Span, n: f64| Expression::new_numeric_literal(span, n, None, ctx);
         // [neg] base ** exponent [op] a
         let pow_with_expr =
             |span: Span, base: f64, exponent: f64, op: BinaryOperator, a: f64| -> Expression<'a> {

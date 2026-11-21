@@ -141,6 +141,7 @@ impl RuleTimingStore {
         }
     }
 
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
     pub(crate) fn record_js_plugin_runtime(&self, duration: Duration) {
         *self.js_plugin_runtime.lock().expect("JS plugin runtime mutex poisoned") += duration;
     }

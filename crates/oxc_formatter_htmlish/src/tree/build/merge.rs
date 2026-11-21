@@ -1,5 +1,4 @@
-//! Siblings that print as one text: CDATA sections with the texts around them,
-//! and a simple inline element with the texts on both sides.
+//! Siblings that print as one text: a simple inline element with the texts on both sides.
 
 use oxc_allocator::StringBuilder;
 use oxc_htmlish_parser::ast::NodeId;
@@ -7,22 +6,6 @@ use oxc_htmlish_parser::ast::NodeId;
 use super::Builder;
 
 impl Builder<'_> {
-    /// Texts and CDATA sections next to each other print as one text;
-    /// the source between them, whitespace included, is the merged value.
-    pub(super) fn merge_cdata(&mut self, parent: NodeId) {
-        let mut next = self.tree[parent].first_child;
-        while let Some(id) = next {
-            next = self.tree[id].next;
-            let Some(after) = next else { break };
-            // The parser never puts two texts side by side, so a pair here always holds a section
-            if self.tree.is_text(id) && self.tree.is_text(after) {
-                self.absorb(parent, id, after);
-                // The merged text may absorb the next one too
-                next = Some(id);
-            }
-        }
-    }
-
     /// `keep` extends over its siblings up to `last`, which leave the printed links.
     fn absorb(&mut self, parent: NodeId, keep: NodeId, last: NodeId) {
         let last = self.tree[last];
@@ -30,7 +13,6 @@ impl Builder<'_> {
         facts.span.end = last.span.end;
         facts.trailing_sensitive = last.trailing_sensitive;
         facts.has_trailing_spaces = last.has_trailing_spaces;
-        facts.has_cdata |= last.has_cdata;
         facts.next = last.next;
         match last.next {
             Some(after_next) => self.facts(after_next).prev = Some(keep),
@@ -80,9 +62,7 @@ impl Builder<'_> {
                         value.push_str(piece);
                     }
                 }
-                let child_has_cdata = t[child].has_cdata;
                 self.absorb(parent, text, after);
-                self.facts(text).has_cdata |= child_has_cdata;
             }
             if let Some(value) = rebuilt {
                 self.tree.merged_texts.push((text, value.into_str()));

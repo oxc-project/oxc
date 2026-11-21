@@ -97,7 +97,8 @@ declare_oxc_lint!(
     pedantic,
     fix,
     version = "1.59.0",
-    short_description = "Prefer `import.meta.{dirname,filename}` over legacy techniques for getting file paths.",
+    short_description =
+        "Prefer `import.meta.{dirname,filename}` over legacy techniques for getting file paths.",
 );
 
 impl Rule for PreferImportMetaProperties {
@@ -346,7 +347,7 @@ fn check_variable_declarator(
         }
         BindingPattern::ObjectPattern(object_pattern) => {
             for property in &object_pattern.properties {
-                if property.computed {
+                if property.key.is_computed() {
                     continue;
                 }
                 let BindingPattern::BindingIdentifier(binding_identifier) = &property.value else {

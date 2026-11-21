@@ -15,6 +15,7 @@ use serde::Deserialize;
 
 use crate::{
     AstNode,
+    ast_util::could_be_asi_hazard,
     context::LintContext,
     rule::{Rule, TupleRuleConfig},
     utils::is_same_expression,
@@ -255,12 +256,12 @@ impl Rule for Yoda {
 
         // never
         if allow_yoda == &AllowYoda::Never && is_yoda(expr) {
-            do_diagnostic_with_fix(expr, ctx, true);
+            do_diagnostic_with_fix(expr, node, ctx, true);
         }
 
         // always
         if allow_yoda == &AllowYoda::Always && is_not_yoda(expr) {
-            do_diagnostic_with_fix(expr, ctx, false);
+            do_diagnostic_with_fix(expr, node, ctx, false);
         }
     }
 }
@@ -276,8 +277,23 @@ fn is_not_yoda(expr: &BinaryExpression) -> bool {
 }
 
 #[expect(clippy::cast_possible_truncation)]
-fn do_diagnostic_with_fix(expr: &BinaryExpression, ctx: &LintContext, never: bool) {
+fn do_diagnostic_with_fix(expr: &BinaryExpression, node: &AstNode, ctx: &LintContext, never: bool) {
     ctx.diagnostic_with_fix(yoda_diagnostic(expr.span, never, expr.operator.as_str()), |fix| {
+        // The operands of a relational comparison are converted to primitives
+        // in a left-first order that is reversed when the operands are swapped.
+        // A regex literal is an object, so its conversion is observable and the
+        // swap is not behavior-preserving; skip the safe fix in that case.
+        if expr.operator.is_compare() {
+            let literal_expr = if never {
+                expr.left.get_inner_expression()
+            } else {
+                expr.right.get_inner_expression()
+            };
+            if matches!(literal_expr, Expression::RegExpLiteral(_)) {
+                return fix.noop();
+            }
+        }
+
         let left_span = expr.left.span();
         let right_span = expr.right.span();
 
@@ -313,9 +329,15 @@ fn do_diagnostic_with_fix(expr: &BinaryExpression, ctx: &LintContext, never: boo
         let left_str = ctx.source_range(left_span);
         let right_str = ctx.source_range(right_span);
         let flipped_operator_str = flip_operator(expr.operator).as_str();
+        let prefix = if right_str.starts_with(['[', '(', '/', '+', '-', '`']) && could_be_asi_hazard(node, ctx) {
+            ";"
+        } else if left_prev_token {
+            " "
+        } else {
+            ""
+        };
         let replacement = format!(
-            "{}{right_str}{str_between_left_and_operator}{flipped_operator_str}{str_between_operator_and_right}{left_str}{}",
-            if left_prev_token { " " } else { "" },
+            "{prefix}{right_str}{str_between_left_and_operator}{flipped_operator_str}{str_between_operator_and_right}{left_str}{}",
             if right_next_token { " " } else { "" }
         );
 
@@ -878,6 +900,10 @@ fn test() {
         ("if (0 < a && b < max) {}", Some(serde_json::json!(["never", { "exceptRange": true }]))),
         // Issue: <https://github.com/oxc-project/oxc/issues/7714>
         ("{( t=='' )}", Some(serde_json::json!(["always", { "onlyEquality": true }]))),
+        // Issue: <https://github.com/oxc-project/oxc/issues/29471>
+        ("if (/x/ < value) {}", Some(serde_json::json!(["never"]))),
+        ("if (value > /x/) {}", Some(serde_json::json!(["always"]))),
+        ("if (/x/ === value) {}", Some(serde_json::json!(["never"]))),
     ];
 
     let fix = vec![
@@ -1236,6 +1262,19 @@ fn test() {
             "function a(){return\"x\"===new Foo()}",
             "function a(){return new Foo()===\"x\"}",
             Some(serde_json::json!(["never"])),
+        ),
+        // Issue: <https://github.com/oxc-project/oxc/issues/29471>
+        ("if (/x/ < value) {}", "if (/x/ < value) {}", Some(serde_json::json!(["never"]))),
+        ("if (value > /x/) {}", "if (value > /x/) {}", Some(serde_json::json!(["always"]))),
+        ("if (/x/ === value) {}", "if (value === /x/) {}", Some(serde_json::json!(["never"]))),
+        ("foo()\n0 === [a, b].indexOf(x) && go()", "foo()\n;[a, b].indexOf(x) === 0 && go()", None),
+        ("foo()\n0 === (a || b) && go()", "foo()\n;(a || b) === 0 && go()", None),
+        ("foo()\n0 === -x && go()", "foo()\n;-x === 0 && go()", None),
+        ("a++\n0 === +x && go()", "a++\n;+x === 0 && go()", None),
+        (
+            "foo();\n0 === [a, b].indexOf(x) && go();",
+            "foo();\n[a, b].indexOf(x) === 0 && go();",
+            None,
         ),
     ];
 

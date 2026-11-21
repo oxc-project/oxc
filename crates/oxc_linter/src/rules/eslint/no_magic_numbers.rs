@@ -94,7 +94,7 @@ impl TryFrom<&serde_json::Value> for NoMagicNumbersConfig {
                     ignore: object
                         .get("ignore")
                         .and_then(serde_json::Value::as_array)
-                        .map(|v| {
+                        .map_or_default(|v| {
                             v.iter()
                                 .map(|v| {
                                     if v.is_number() {
@@ -104,8 +104,7 @@ impl TryFrom<&serde_json::Value> for NoMagicNumbersConfig {
                                     }
                                 })
                                 .collect()
-                        })
-                        .unwrap_or_default(),
+                        }),
                     ignore_array_indexes: get_bool_property(object, "ignoreArrayIndexes"),
                     ignore_default_values: get_bool_property(object, "ignoreDefaultValues"),
                     ignore_class_field_initial_values: get_bool_property(

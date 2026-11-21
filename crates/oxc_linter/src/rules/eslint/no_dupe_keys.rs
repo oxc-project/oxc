@@ -127,7 +127,7 @@ impl Rule for NoDupeKeys {
 fn is_proto_setter_property(prop: &ObjectProperty<'_>, name: &StaticPropertyName<'_>) -> bool {
     name == "__proto__"
         && prop.kind == PropertyKind::Init
-        && !prop.computed
+        && !prop.key.is_computed()
         && !prop.shorthand
         && !prop.method
 }
@@ -139,12 +139,16 @@ fn prop_key_name<'a>(key: &PropertyKey<'a>, ctx: &LintContext<'a>) -> Cow<'a, st
         PropertyKey::Identifier(ident) => Cow::Borrowed(ident.name.as_str()),
         PropertyKey::StaticIdentifier(ident) => Cow::Borrowed(ident.name.as_str()),
         PropertyKey::PrivateIdentifier(ident) => Cow::Borrowed(ident.name.as_str()),
-        PropertyKey::StringLiteral(lit) => match lit.value.as_str() {
-            Some(name) => Cow::Borrowed(name),
-            // Escape lone surrogates for display.
-            None => Cow::Owned(lit.value.display().to_string()),
-        },
-        PropertyKey::NumericLiteral(lit) => Cow::Borrowed(lit.raw.as_ref().unwrap().as_str()),
+        PropertyKey::StaticStringLiteral(lit) | PropertyKey::StringLiteral(lit) => {
+            match lit.value.as_str() {
+                Some(name) => Cow::Borrowed(name),
+                // Escape lone surrogates for display.
+                None => Cow::Owned(lit.value.display().to_string()),
+            }
+        }
+        PropertyKey::StaticNumericLiteral(lit) | PropertyKey::NumericLiteral(lit) => {
+            Cow::Borrowed(lit.raw.as_ref().unwrap().as_str())
+        }
         _ => Cow::Borrowed(ctx.source_range(key.span())),
     }
 }

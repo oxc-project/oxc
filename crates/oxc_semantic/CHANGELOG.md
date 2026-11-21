@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.159.0] - 2026-11-16
+
+### 🚀 Features
+
+- 750033a semantic: Resolve labels to label IDs (#29612) (camc314)
+
+### 🐛 Bug Fixes
+
+- 1dc0ee9 semantic: Preserve catch and var binding identities (#28739) (Dunqing)
+
+## [0.158.0] - 2026-11-09
+
+### 🐛 Bug Fixes
+
+- a791a5b cfg: Resolve continues through stacked loop labels (#29016) (camc314)
+- ec327aa semantic: Keep block type bindings separate from hoisted vars (#28601) (YT)
+
 ## [0.157.0] - 2026-11-02
 
 ### 🐛 Bug Fixes

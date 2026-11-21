@@ -1,11 +1,10 @@
-use crate::{
-    cpu::{BASELINE, cpu_version},
-    token::{OP_KIND_BASE, matches_tk, tk},
-};
+use oxc_simd::{BASELINE, cpu_version};
+
+use crate::token::{OP_KIND_BASE, matches_tk, tk};
 
 use crate::pipeline::disambiguate::{
     RULE_SCAN_CAP,
-    common::{Peek, Prev, Tokens},
+    common::{Peek, Prev, TokensView},
 };
 
 /// Where a bounded walk starts.
@@ -20,7 +19,7 @@ pub(super) enum Anchor {
 /// Is the word at `p` an attribute inside a JSX opening tag? Scans back over attribute names,
 /// values and `=` to the tag's `<`.
 #[cpu_version(Generic)]
-fn in_jsx_tag(tokens: &Tokens, p: usize) -> bool {
+fn in_jsx_tag(tokens: &TokensView, p: usize) -> bool {
     let cpu = BASELINE;
 
     let mut q = tokens.prev_sig(p, cpu);
@@ -71,7 +70,7 @@ fn keyword_follower(f: Peek) -> bool {
 /// Does a statement start at `p` as far as the token before it can tell? `}` needs the JSX check
 /// (an attribute after a `{...}` value); a line break allows a statement after anything else.
 #[cpu_version(Generic)]
-fn stmt_boundary(tokens: &Tokens, p: usize, prev: Prev) -> bool {
+fn stmt_boundary(tokens: &TokensView, p: usize, prev: Prev) -> bool {
     let cpu = BASELINE;
 
     match prev {
@@ -88,7 +87,7 @@ fn stmt_boundary(tokens: &Tokens, p: usize, prev: Prev) -> bool {
 
 /// Is the word at `p` an anchor? Also its keyword code (0: a plain name).
 #[cpu_version(Generic)]
-pub(super) fn anchor_at(tokens: &Tokens, p: usize) -> (u8, Option<Anchor>) {
+pub(super) fn anchor_at(tokens: &TokensView, p: usize) -> (u8, Option<Anchor>) {
     let cpu = BASELINE;
 
     let e = tokens.next_start(p + 1, cpu);
@@ -98,7 +97,7 @@ pub(super) fn anchor_at(tokens: &Tokens, p: usize) -> (u8, Option<Anchor>) {
 
 #[cpu_version(Generic)]
 #[rustfmt::skip::macros(tk)]
-fn anchor_of(tokens: &Tokens, p: usize, e: usize, kw: u8) -> Option<Anchor> {
+fn anchor_of(tokens: &TokensView, p: usize, e: usize, kw: u8) -> Option<Anchor> {
     let cpu = BASELINE;
 
     if kw == 0 {
@@ -202,7 +201,7 @@ fn anchor_of(tokens: &Tokens, p: usize, e: usize, kw: u8) -> Option<Anchor> {
 
 /// Is the significant token after the word at `f` one of `ops`?
 #[cpu_version(Generic)]
-fn second_follower(tokens: &Tokens, f: usize, ops: &[u8]) -> bool {
+fn second_follower(tokens: &TokensView, f: usize, ops: &[u8]) -> bool {
     let cpu = BASELINE;
 
     let s = tokens.peek(f + 1, cpu);
@@ -211,7 +210,7 @@ fn second_follower(tokens: &Tokens, f: usize, ops: &[u8]) -> bool {
 
 /// Keyword code of the significant word after the word at `f` (0 if none).
 #[cpu_version(Generic)]
-fn second_word(tokens: &Tokens, f: usize) -> u8 {
+fn second_word(tokens: &TokensView, f: usize) -> u8 {
     let cpu = BASELINE;
 
     let s = tokens.peek(f + 1, cpu);
@@ -223,7 +222,7 @@ fn second_word(tokens: &Tokens, f: usize) -> u8 {
 /// `:`, `=`, `,`, `<` or `=>`: the walk then reaches it from an anchor further back.
 #[cpu_version(Generic)]
 #[rustfmt::skip::macros(tk)]
-pub(super) fn paren_anchor(tokens: &Tokens, p: usize) -> Option<Anchor> {
+pub(super) fn paren_anchor(tokens: &TokensView, p: usize) -> Option<Anchor> {
     let cpu = BASELINE;
 
     match tokens.prev_token(p, cpu) {

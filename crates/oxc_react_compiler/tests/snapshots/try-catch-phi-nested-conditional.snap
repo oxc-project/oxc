@@ -1,0 +1,22 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/try-catch-phi-nested-conditional.jsx
+---
+import { c as _c } from "react/compiler-runtime";
+import { useMemo } from "react";
+export function useParsed(json) {
+	const $ = _c(2);
+	let result = 0;
+	try {
+		let t0;
+		if ($[0] !== json) {
+			t0 = json ? f(json) : null;
+			$[0] = json;
+			$[1] = t0;
+		} else {
+			t0 = $[1];
+		}
+		result = t0;
+	} catch {}
+	return result;
+}

@@ -205,7 +205,7 @@ pub fn is_in_vue_component_instance_method(node: &AstNode<'_>, ctx: &LintContext
     let Some(container_name) = container_property_node
         .kind()
         .as_object_property()
-        .and_then(|prop| if prop.computed { None } else { prop.key.static_name() })
+        .and_then(|prop| prop.key.literal_name())
     else {
         return false;
     };

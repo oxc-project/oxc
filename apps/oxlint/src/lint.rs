@@ -16,20 +16,17 @@ use oxc_diagnostics::{
     DiagnosticSender, DiagnosticService, GraphicalReportHandler, GraphicalTheme, OxcDiagnostic,
 };
 use oxc_linter::{
-    AllowWarnDeny, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ExternalLinter,
-    ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintRunner,
-    LintServiceOptions, Linter, OxlintSuppressionFileAction, RuleTimingStore, SuppressionManager,
+    AllowWarnDeny, ConfigBuilderError, ConfigStore, ExternalLinter, ExternalPluginStore,
+    InvalidFilterKind, LintFilter, LintOptions, LintRunner, LintServiceOptions, Linter,
+    OxlintSuppressionFileAction, RuleTimingStore, SuppressionManager,
 };
 
 #[cfg(feature = "napi")]
 use crate::js_config::JsConfigLoaderCb;
 use crate::{
-    cli::{
-        CliRunResult, DebugOption, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions,
-    },
+    cli::{CliRunResult, DebugOption, LintCommand, MiscOptions, WarningOptions},
     config_loader::{
-        CliConfigLoadError, ConfigLoadError, ConfigLoader, config_discovery,
-        materialize_default_plugins,
+        CliConfigLoadError, ConfigLoadError, ConfigLoader, LoadedConfigs, config_discovery,
     },
     output_formatter::{LintCommandInfo, OutputFormatter},
     walk::Walk,
@@ -75,11 +72,12 @@ impl CliRunner {
     }
 
     /// # Panics
-    pub fn run(self, stdout: &mut dyn Write) -> CliRunResult {
+    pub fn run(self, stdout: &mut dyn Write, stderr: &mut dyn Write) -> CliRunResult {
         let format_str = self.options.output_options.format;
         let debug_files = self.options.output_options.debug.contains(DebugOption::Files);
         let debug_timings = self.options.output_options.debug.contains(DebugOption::Timings);
         let output_formatter = OutputFormatter::new(format_str);
+        let config_options = self.options.config_options();
 
         let LintCommand {
             paths,
@@ -91,13 +89,12 @@ impl CliRunner {
             enable_plugins,
             misc_options,
             disable_nested_config,
-            inline_config_options,
             suppression_options,
             ..
         } = self.options;
 
         if basic_options.init {
-            return crate::mode::run_init(&self.cwd, stdout);
+            return crate::mode::run_init(&self.cwd, stdout, stderr);
         }
 
         let external_linter = self.external_linter.as_ref();
@@ -251,23 +248,27 @@ impl CliRunner {
             !self.options.list_rules &&
             config_discovery().nested_configs();
 
-        let config_result = {
-            let mut config_loader =
-                ConfigLoader::new(external_linter, &mut external_plugin_store, &filters, None);
-            #[cfg(feature = "napi")]
-            {
-                config_loader = config_loader.with_js_config_loader(self.js_config_loader.as_ref());
-            }
-            config_loader.load_root_and_nested(
-                &self.cwd,
-                basic_options.config.as_ref(),
-                &paths,
-                search_for_nested_configs,
-            )
-        };
+        let mut config_loader =
+            ConfigLoader::new(external_linter, &mut external_plugin_store, &filters, None);
+        #[cfg(feature = "napi")]
+        {
+            config_loader = config_loader.with_js_config_loader(self.js_config_loader.as_ref());
+        }
+        let config_result = config_loader.load_root_and_nested(
+            &self.cwd,
+            basic_options.config.as_ref(),
+            &paths,
+            search_for_nested_configs,
+            &enable_plugins,
+        );
 
-        let (mut root_config, nested_configs, nested_ignore_patterns) = match config_result {
-            Ok(loaded) => (loaded.root, loaded.nested, loaded.nested_ignore_patterns),
+        let LoadedConfigs {
+            root: root_config,
+            root_builder: config_builder,
+            nested: nested_configs,
+            nested_ignore_patterns,
+        } = match config_result {
+            Ok(loaded) => loaded,
             Err(error) => {
                 match error {
                     CliConfigLoadError::RootConfig(error) => {
@@ -276,6 +277,15 @@ impl CliRunner {
                             &format!(
                                 "Failed to parse oxlint configuration file.\n{}\n",
                                 render_report(&handler, &error)
+                            ),
+                        );
+                    }
+                    CliConfigLoadError::RootConfigBuild(error) => {
+                        print_and_flush_stdout(
+                            stdout,
+                            &format!(
+                                "Failed to parse oxlint configuration file.\n{}\n",
+                                render_config_builder_error(&handler, error)
                             ),
                         );
                     }
@@ -318,51 +328,22 @@ impl CliRunner {
             }
         };
 
-        materialize_default_plugins(&mut root_config);
-        let mut plugins = root_config.plugins.unwrap_or_default();
-        enable_plugins.apply_overrides(&mut plugins);
-        root_config.plugins = Some(plugins);
+        let lint_config =
+            match config_builder.with_options(&config_options).build(&mut external_plugin_store) {
+                Ok(config) => config,
+                Err(e) => {
+                    print_and_flush_stdout(
+                        stdout,
+                        &format!(
+                            "Failed to build configuration.\n{}\n",
+                            render_config_builder_error(&handler, e)
+                        ),
+                    );
+                    return CliRunResult::InvalidOptionConfig;
+                }
+            };
 
-        let config_builder = match ConfigStoreBuilder::from_oxlintrc(
-            false,
-            root_config.clone(),
-            external_linter,
-            &mut external_plugin_store,
-            None,
-        ) {
-            Ok(builder) => builder,
-            Err(e) => {
-                print_and_flush_stdout(
-                    stdout,
-                    &format!(
-                        "Failed to parse oxlint configuration file.\n{}\n",
-                        render_config_builder_error(&handler, e)
-                    ),
-                );
-                return CliRunResult::InvalidOptionConfig;
-            }
-        }
-        .with_filters(&filters);
-
-        if misc_options.print_config {
-            return crate::mode::run_print_config(&config_builder, root_config, stdout);
-        }
-
-        let lint_config = match config_builder.build(&mut external_plugin_store) {
-            Ok(config) => config,
-            Err(e) => {
-                print_and_flush_stdout(
-                    stdout,
-                    &format!(
-                        "Failed to build configuration.\n{}\n",
-                        render_config_builder_error(&handler, e)
-                    ),
-                );
-                return CliRunResult::InvalidOptionConfig;
-            }
-        };
-
-        if self.options.list_rules {
+        if self.options.list_rules && !misc_options.print_config {
             return crate::mode::run_rules(&lint_config, &output_formatter, stdout);
         }
 
@@ -379,7 +360,7 @@ impl CliRunner {
             .filter(|path| !ignore_matcher.should_ignore(Path::new(path)))
             .collect::<Vec<Arc<OsStr>>>();
 
-        if debug_files {
+        if debug_files && !misc_options.print_config {
             return crate::mode::run_debug_files(
                 files_to_lint.iter().map(|path| Path::new(path.as_ref())),
                 &self.cwd,
@@ -387,32 +368,15 @@ impl CliRunner {
             );
         }
 
-        // If no external rules, discard `ExternalLinter`
-        let mut external_linter = self.external_linter;
-        if external_plugin_store.is_empty() {
-            external_linter = None;
-        }
-
         // TODO(refactor): pull this into a shared function, so that the language server can use
         // the same functionality.
         let use_cross_module = lint_config.plugins().has_import()
             || nested_configs.values().any(|config| config.plugins().has_import());
-        let mut options =
-            LintServiceOptions::new(self.cwd.clone()).with_cross_module(use_cross_module);
-
-        let mut suppression_manager = SuppressionManager::load(
-            options.cwd(),
-            "oxlint-suppressions.json",
-            suppression_options.suppress_all,
-            suppression_options.prune_suppressions || fix_options.is_enabled(),
-        );
 
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
         let type_check_only = self.options.type_check_only;
-        let type_aware =
-            type_check_only || self.options.type_aware || config_store.type_aware_enabled();
-        let type_check =
-            type_check_only || self.options.type_check || config_store.type_check_enabled();
+        let type_aware = config_store.type_aware_enabled();
+        let type_check = config_store.type_check_enabled();
         if type_check && !type_aware {
             print_and_flush_stdout(
                 stdout,
@@ -436,25 +400,34 @@ impl CliRunner {
             );
             return CliRunResult::InvalidOptionTypeCheckOnlyWithSuppressionUpdate;
         }
-        let deny_warnings = warning_options.deny_warnings || config_store.deny_warnings();
-        let max_warnings = warning_options.max_warnings.or(config_store.max_warnings());
+
+        if misc_options.print_config {
+            return crate::mode::run_print_config(&config_store, stdout);
+        }
+
+        // If no external rules, discard `ExternalLinter`
+        let mut external_linter = self.external_linter;
+        if config_store.external_plugin_store().is_empty() {
+            external_linter = None;
+        }
+
+        let mut options =
+            LintServiceOptions::new(self.cwd.clone()).with_cross_module(use_cross_module);
+
+        let mut suppression_manager = SuppressionManager::load(
+            options.cwd(),
+            "oxlint-suppressions.json",
+            suppression_options.suppress_all,
+            suppression_options.prune_suppressions || fix_options.is_enabled(),
+        );
+
+        let deny_warnings = config_store.deny_warnings();
+        let max_warnings = config_store.max_warnings();
 
         // Only propagate Warn/Deny; treat Allow (off) as disabling reports.
-        let report_unused_directives = if type_check_only {
-            None
-        } else {
-            match inline_config_options.report_unused_directives {
-                ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),
-                ReportUnusedDirectives::WithSeverity(Some(severity)) if severity.is_warn_deny() => {
-                    Some(severity)
-                }
-                ReportUnusedDirectives::WithSeverity(Some(_)) => None,
-                _ => match config_store.report_unused_disable_directives() {
-                    Some(severity) if severity.is_warn_deny() => Some(severity),
-                    _ => None,
-                },
-            }
-        };
+        let report_unused_directives = config_store
+            .report_unused_disable_directives()
+            .filter(|severity| severity.is_warn_deny());
         let (mut diagnostic_service, tx_error) = Self::get_diagnostic_service(
             &output_formatter,
             &warning_options,
@@ -537,39 +510,64 @@ impl CliRunner {
         let diff_manager = suppression_manager.build_diff();
 
         let rule_timing_store = debug_timings.then(RuleTimingStore::new);
-        let lint_result = if let Some(rule_timing_store) = &rule_timing_store {
-            lint_runner.lint_files::<true>(
-                &files_to_lint,
-                tx_error.clone(),
-                &diff_manager,
-                Some(rule_timing_store),
-            )
-        } else {
-            lint_runner.lint_files::<false>(&files_to_lint, tx_error.clone(), &diff_manager, None)
-        };
 
-        match lint_result {
-            Ok(lint_runner) => {
+        // Lint on a separate thread, and render the diagnostics on this thread while linting runs.
+        // When there are many diagnostics, rendering them after linting would take a large part
+        // of the run time, with all the lint threads idle.
+        // The diagnostics are rendered into a buffer, and the buffer is written to `stdout` only
+        // after linting finishes. So output that JS plugins or `tsgolint` print during linting
+        // does not appear between the diagnostics, and a `tsgolint` failure prints only its error.
+        let (lint_result, diagnostic_result, rendered) = std::thread::scope(|scope| {
+            let lint_thread = scope.spawn(|| -> Result<_, String> {
+                let lint_result = if let Some(rule_timing_store) = &rule_timing_store {
+                    lint_runner.lint_files::<true>(
+                        &files_to_lint,
+                        tx_error.clone(),
+                        &diff_manager,
+                        Some(rule_timing_store),
+                    )
+                } else {
+                    lint_runner.lint_files::<false>(
+                        &files_to_lint,
+                        tx_error.clone(),
+                        &diff_manager,
+                        None,
+                    )
+                };
+                let lint_runner = lint_result?;
                 lint_runner.report_unused_directives(report_unused_directives, &tx_error);
-            }
+
+                // A suppression file can contain regular lint rules that were not run in
+                // type-check-only mode, so its runtime diff is incomplete and cannot be used to
+                // validate the baseline.
+                let result = if type_check_only {
+                    Ok(())
+                } else {
+                    suppression_manager.finalize(diff_manager, &tx_error, &cwd)
+                };
+
+                // Close the channel, so that `diagnostic_service.run` returns.
+                drop(tx_error);
+                Ok(result)
+            });
+
+            let mut rendered = Vec::new();
+            let diagnostic_result = diagnostic_service.run(&mut rendered);
+            let lint_result =
+                lint_thread.join().unwrap_or_else(|payload| std::panic::resume_unwind(payload));
+            (lint_result, diagnostic_result, rendered)
+        });
+
+        let result = match lint_result {
+            Ok(result) => result,
             Err(err) => {
                 print_and_flush_stdout(stdout, &format!("{err}\n"));
                 return CliRunResult::TsGoLintError;
             }
-        }
-
-        // A suppression file can contain regular lint rules that were not run in type-check-only
-        // mode, so its runtime diff is incomplete and cannot be used to validate the baseline.
-        let result = if type_check_only {
-            Ok(())
-        } else {
-            suppression_manager.finalize(diff_manager, &tx_error, &cwd)
         };
+        write_and_flush(stdout, &rendered);
+
         let suppress_all_succeeded = suppression_options.suppress_all && result.is_ok();
-
-        drop(tx_error);
-
-        let diagnostic_result = diagnostic_service.run(stdout);
 
         let oxlint_suppression_file_action = if let Err(report_suppression_error) = result {
             OxlintSuppressionFileAction::UnableToPerformFsOperation(report_suppression_error)
@@ -724,8 +722,16 @@ impl CliRunner {
 }
 
 pub fn print_and_flush_stdout(stdout: &mut dyn Write, message: &str) {
-    stdout.write_all(message.as_bytes()).or_else(check_for_writer_error).unwrap();
-    stdout.flush().or_else(check_for_writer_error).unwrap();
+    write_and_flush(stdout, message.as_bytes());
+}
+
+pub fn print_and_flush_stderr(stderr: &mut dyn Write, message: &str) {
+    write_and_flush(stderr, message.as_bytes());
+}
+
+fn write_and_flush(out: &mut dyn Write, bytes: &[u8]) {
+    out.write_all(bytes).or_else(check_for_writer_error).unwrap();
+    out.flush().or_else(check_for_writer_error).unwrap();
 }
 
 fn check_for_writer_error(error: std::io::Error) -> Result<(), std::io::Error> {
@@ -1276,18 +1282,19 @@ mod test {
     }
 
     #[test]
-    fn test_fix() {
+    fn test_fix_no_new_wrappers() {
         let tester = Tester::new().with_cwd("fixtures/cli/fix_argument".into());
-        tester.test_fix(
-            "fix.js",
-            "var x = new String('Hello world');\n",
-            "var x = 'Hello world';\n",
-        );
-        tester.test_fix(
-            "fix.vue",
-            "<script>var x = new String('Hello world');</script>\n<script>var y = new String('Hello world');</script>\n",
-            "<script>var x = 'Hello world';</script>\n<script>var y = 'Hello world';</script>\n",
-        );
+        for (file, before, after) in [
+            ("fix.js", "var x = new String('Hello world');\n", "var x = 'Hello world';\n"),
+            (
+                "fix.vue",
+                "<script>var x = new String('Hello world');</script>\n<script>var y = new String('Hello world');</script>\n",
+                "<script>var x = 'Hello world';</script>\n<script>var y = 'Hello world';</script>\n",
+            ),
+        ] {
+            tester.test_fix(file, before, before);
+            tester.test_fix_with_args(file, before, after, &["--fix-suggestions"]);
+        }
     }
 
     #[test]
@@ -1386,14 +1393,209 @@ mod test {
     }
 
     #[test]
+    fn test_print_config_cli_option_precedence() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let options = serde_json::json!({
+            "typeAware": false,
+            "typeCheck": false,
+            "denyWarnings": false,
+            "maxWarnings": 5,
+            "reportUnusedDisableDirectives": "deny",
+            "respectEslintDisableDirectives": false
+        });
+        fs::write(
+            temp_dir.path().join("base.json"),
+            serde_json::to_string(&serde_json::json!({ "options": options })).unwrap(),
+        )
+        .unwrap();
+        fs::write(temp_dir.path().join(DEFAULT_OXLINTRC_NAME), r#"{ "extends": ["./base.json"] }"#)
+            .unwrap();
+        let tester = Tester::new().with_cwd(temp_dir.path().to_path_buf());
+        let cases: &[(&[&str], serde_json::Value)] = &[
+            (&[], serde_json::json!({})),
+            (
+                &[
+                    "--type-aware",
+                    "--type-check",
+                    "--deny-warnings",
+                    "--max-warnings",
+                    "0",
+                    "--report-unused-disable-directives-severity",
+                    "off",
+                ],
+                serde_json::json!({
+                    "typeAware": true,
+                    "typeCheck": true,
+                    "denyWarnings": true,
+                    "maxWarnings": 0,
+                    "reportUnusedDisableDirectives": "allow"
+                }),
+            ),
+            (
+                &["--report-unused-disable-directives"],
+                serde_json::json!({ "reportUnusedDisableDirectives": "warn" }),
+            ),
+            (
+                &["--report-unused-disable-directives-severity", "warn"],
+                serde_json::json!({ "reportUnusedDisableDirectives": "warn" }),
+            ),
+            (
+                &["--type-check-only", "--report-unused-disable-directives"],
+                serde_json::json!({
+                    "typeAware": true,
+                    "typeCheck": true,
+                    "reportUnusedDisableDirectives": "allow"
+                }),
+            ),
+        ];
+        for (flags, overrides) in cases {
+            let mut args = vec!["--print-config"];
+            args.extend_from_slice(flags);
+            let (output, result) = tester.test_output(&args);
+            assert!(matches!(result, CliRunResult::PrintConfigResult), "{args:?}: {output}");
+            let printed: serde_json::Value = serde_json::from_str(&output).unwrap();
+            let mut expected = options.clone();
+            expected.as_object_mut().unwrap().extend(overrides.as_object().unwrap().clone());
+            assert_eq!(printed["options"], expected, "{args:?}");
+        }
+    }
+
+    #[test]
+    fn test_print_config_custom_settings() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let settings = serde_json::json!({
+            "custom": { "values": [null, true, 42, "value"] },
+            "react": { "custom": { "enabled": true } },
+            "jest": { "version": "20.1.23" }
+        });
+        fs::write(
+            temp_dir.path().join(DEFAULT_OXLINTRC_NAME),
+            serde_json::to_string(&serde_json::json!({ "settings": settings })).unwrap(),
+        )
+        .unwrap();
+        let (output, result) =
+            Tester::new().with_cwd(temp_dir.path().to_path_buf()).test_output(&["--print-config"]);
+        assert!(matches!(result, CliRunResult::PrintConfigResult));
+        let printed: serde_json::Value = serde_json::from_str(&output).unwrap();
+        assert_eq!(printed["settings"]["custom"], settings["custom"]);
+        assert_eq!(printed["settings"]["react"]["custom"], settings["react"]["custom"]);
+        assert_eq!(printed["settings"]["react"]["formComponents"], serde_json::json!([]));
+        assert_eq!(printed["settings"]["jest"]["version"], 20);
+    }
+
+    #[test]
+    fn test_print_config_validates_option_combinations() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        fs::write(temp_dir.path().join("test.ts"), "").unwrap();
+        let tester = Tester::new().with_cwd(temp_dir.path().to_path_buf());
+        let cases: &[&[&str]] = &[
+            &["--type-check"],
+            &["--type-check-only", "--fix"],
+            &["--type-check-only", "--fix-suggestions"],
+            &["--type-check-only", "--fix-dangerously"],
+            &["--type-check-only", "--suppress-all"],
+            &["--type-check-only", "--prune-suppressions"],
+            &["--type-check-only", "--fix", "--suppress-all"],
+        ];
+        let modes: &[&[&str]] = &[&[], &["--rules"], &["--debug", "files"]];
+        for flags in cases {
+            let mut args = vec!["test.ts"];
+            args.extend_from_slice(flags);
+            let (lint_output, lint_result) = tester.test_output(&args);
+            assert!(matches!(
+                lint_result,
+                CliRunResult::InvalidOptionTypeCheckWithoutTypeAware
+                    | CliRunResult::InvalidOptionTypeCheckOnlyWithFix
+                    | CliRunResult::InvalidOptionTypeCheckOnlyWithSuppressionUpdate
+            ));
+
+            args.push("--print-config");
+            for mode in modes {
+                let mut print_args = args.clone();
+                print_args.extend_from_slice(mode);
+                let (print_output, print_result) = tester.test_output(&print_args);
+                assert_eq!(
+                    std::mem::discriminant(&print_result),
+                    std::mem::discriminant(&lint_result),
+                    "{print_args:?}"
+                );
+                assert_eq!(print_output, lint_output, "{print_args:?}");
+            }
+        }
+    }
+
+    #[test]
+    fn test_print_config_validates_inherited_type_check_options() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        fs::write(temp_dir.path().join("test.ts"), "").unwrap();
+        fs::write(
+            temp_dir.path().join("base.json"),
+            r#"{ "options": { "typeCheck": true, "typeAware": false } }"#,
+        )
+        .unwrap();
+        fs::write(temp_dir.path().join(DEFAULT_OXLINTRC_NAME), r#"{ "extends": ["./base.json"] }"#)
+            .unwrap();
+        let tester = Tester::new().with_cwd(temp_dir.path().to_path_buf());
+        let (lint_output, lint_result) = tester.test_output(&["test.ts"]);
+        let (print_output, print_result) = tester.test_output(&["--print-config"]);
+        assert!(matches!(lint_result, CliRunResult::InvalidOptionTypeCheckWithoutTypeAware));
+        assert!(matches!(print_result, CliRunResult::InvalidOptionTypeCheckWithoutTypeAware));
+        assert_eq!(print_output, lint_output);
+
+        let (output, result) = tester.test_output(&["--print-config", "--type-aware"]);
+        assert!(matches!(result, CliRunResult::PrintConfigResult));
+        let printed: serde_json::Value = serde_json::from_str(&output).unwrap();
+        assert_eq!(printed["options"]["typeAware"], true);
+        assert_eq!(printed["options"]["typeCheck"], true);
+    }
+
+    #[test]
+    fn test_inspection_modes_skip_lint_option_validation() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        fs::write(temp_dir.path().join("test.ts"), "").unwrap();
+        let tester = Tester::new().with_cwd(temp_dir.path().to_path_buf());
+        let (_, result) = tester.test_output(&["--rules", "--type-check"]);
+        assert!(matches!(result, CliRunResult::None));
+        let (output, result) = tester.test_output(&["--debug", "files", "--type-check", "test.ts"]);
+        assert!(matches!(result, CliRunResult::LintSucceeded));
+        assert_eq!(output, "test.ts\n");
+    }
+
+    #[test]
+    fn test_print_config_validates_overrides() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        fs::write(temp_dir.path().join("test.ts"), "").unwrap();
+        fs::write(
+            temp_dir.path().join(DEFAULT_OXLINTRC_NAME),
+            r#"{
+                "overrides": [{
+                    "files": ["*.ts"],
+                    "rules": { "not-a-real-rule": "error" }
+                }]
+            }"#,
+        )
+        .unwrap();
+        let tester = Tester::new().with_cwd(temp_dir.path().to_path_buf());
+        let (lint_output, lint_result) = tester.test_output(&["test.ts"]);
+        let (print_output, print_result) = tester.test_output(&["--print-config"]);
+
+        assert!(matches!(lint_result, CliRunResult::InvalidOptionConfig));
+        assert!(matches!(print_result, CliRunResult::InvalidOptionConfig));
+        assert!(print_output.contains("Failed to build configuration."));
+        assert!(print_output.contains("not-a-real-rule"));
+        assert_eq!(print_output, lint_output);
+    }
+
+    #[test]
     fn test_init_config() {
         let temp_dir = tempfile::tempdir().expect("Could not create a temp dir");
         let config_path = temp_dir.path().join(DEFAULT_OXLINTRC_NAME);
         assert!(!fs::exists(&config_path).unwrap());
 
         let tester = Tester::new().with_cwd(temp_dir.path().to_path_buf());
-        let (output, result) = tester.test_output(&["--init"]);
+        let (output, stderr, result) = tester.test_output_with_stderr(&["--init"]);
         assert_eq!(output, "Configuration file created\n");
+        assert_eq!(stderr, "");
         assert!(matches!(result, CliRunResult::ConfigFileInitSucceeded));
         assert_eq!(result.report(), std::process::ExitCode::SUCCESS);
 
@@ -1408,8 +1610,9 @@ mod test {
     }
 
     fn assert_init_config_already_exists(tester: &Tester) {
-        let (output, result) = tester.test_output(&["--init"]);
-        assert_eq!(output, "Oxlint config file already exists.\nRemove it and re-run.\n");
+        let (stdout, stderr, result) = tester.test_output_with_stderr(&["--init"]);
+        assert_eq!(stdout, "");
+        assert_eq!(stderr, "Oxlint config file already exists.\nRemove it and re-run.\n");
         assert!(matches!(result, CliRunResult::ConfigFileInitFailed));
         assert_eq!(result.report(), std::process::ExitCode::FAILURE);
     }
@@ -1513,9 +1716,11 @@ mod test {
         let child_dir = temp_dir.path().join("child");
         fs::create_dir(&child_dir).unwrap();
 
-        let (output, result) = Tester::new().with_cwd(child_dir.clone()).test_output(&["--init"]);
+        let (output, stderr, result) =
+            Tester::new().with_cwd(child_dir.clone()).test_output_with_stderr(&["--init"]);
 
         assert_eq!(output, "Configuration file created\n");
+        assert_eq!(stderr, "");
         assert!(matches!(result, CliRunResult::ConfigFileInitSucceeded));
         assert!(child_dir.join(DEFAULT_OXLINTRC_NAME).is_file());
         assert_eq!(fs::read_to_string(parent_config_path).unwrap(), content);
@@ -1526,9 +1731,11 @@ mod test {
         let temp_dir = tempfile::tempdir().unwrap();
         let cwd = temp_dir.path().join("missing");
 
-        let (output, result) = Tester::new().with_cwd(cwd.clone()).test_output(&["--init"]);
+        let (stdout, stderr, result) =
+            Tester::new().with_cwd(cwd.clone()).test_output_with_stderr(&["--init"]);
 
-        assert_eq!(output, "Failed to create configuration file\n");
+        assert_eq!(stdout, "");
+        assert_eq!(stderr, "Failed to create configuration file\n");
         assert!(matches!(result, CliRunResult::ConfigFileInitFailed));
         assert_eq!(result.report(), std::process::ExitCode::FAILURE);
         assert!(!cwd.exists());
@@ -1874,6 +2081,10 @@ mod test {
             assert!(rule_obj.contains_key("fix"), "Rule should contain 'fix' field");
             assert!(rule_obj.contains_key("default"), "Rule should contain 'default' field");
             assert!(rule_obj.contains_key("docs_url"), "Rule should contain 'docs_url' field");
+            assert!(
+                rule_obj.contains_key("recommended"),
+                "Rule should contain 'recommended' field"
+            );
         }
 
         // Verify that the rules list is sorted by scope and value.
@@ -2263,6 +2474,15 @@ mod test {
 
     #[test]
     #[cfg(all(not(target_os = "windows"), not(target_endian = "big")))]
+    fn test_tsgolint_failure() {
+        // The fixture has a fake `tsgolint` that exits with an error.
+        // Only the error is printed; diagnostics from regular linting are not.
+        let args = &["--type-aware"];
+        Tester::new().with_cwd("fixtures/cli/tsgolint_failure".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(all(not(target_os = "windows"), not(target_endian = "big")))]
     fn test_tsgolint_tsconfig_extends_config_err() {
         let args = &["--type-aware", "-D", "no-floating-promises"];
         Tester::new()
@@ -2489,6 +2709,27 @@ mod suppression {
             !stdout.contains("typescript-eslint(array-type)"),
             "array-type error should be suppressed with --suppress-all.\nOutput: {stdout}"
         );
+    }
+
+    #[test]
+    #[cfg(all(not(target_os = "windows"), not(target_endian = "big")))]
+    fn test_suppress_all_does_not_write_file_when_tsgolint_fails() {
+        // The fixture has a fake `tsgolint` that exits with an error.
+        // The suppression file is not written, because the lint results are incomplete.
+        let args = &["--suppress-all", "--type-aware"];
+        let (stdout, result) =
+            Tester::new().with_cwd("fixtures/cli/tsgolint_failure".into()).test_output(args);
+        // Remove the file before the assertions, so that a failed test does not leave it behind.
+        let suppression_file = std::env::current_dir()
+            .unwrap()
+            .join("fixtures/cli/tsgolint_failure/oxlint-suppressions.json");
+        let file_exists = suppression_file.exists();
+        let _ = std::fs::remove_file(&suppression_file);
+        assert!(
+            matches!(result, CliRunResult::TsGoLintError),
+            "Expected TsGoLintError, got {result:?}.\nOutput: {stdout}"
+        );
+        assert!(!file_exists, "The suppression file should not be written when tsgolint fails");
     }
 
     #[test]

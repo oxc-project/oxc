@@ -25,7 +25,7 @@ The easiest way to get started with `oxc` is by adding this to your `Cargo.toml`
 
 ```toml
 [dependencies]
-oxc = { version = "*", features = ["full"] }
+oxc = { version = "*", features = ["full", "cfg"] }
 ```
 
 In most cases, code using oxc will follow this general pipeline:
@@ -98,7 +98,7 @@ if fatal_error {
 // these, and they are disabled by default.
 let SemanticBuilderReturn {
     semantic,
-    errors: semantic_errors,
+    diagnostics: semantic_errors,
 } = SemanticBuilder::new()
     .with_check_syntax_error(true) // Enable extra syntax error checking
     .with_cfg(true)                // Build a Control Flow Graph
@@ -127,8 +127,8 @@ These feature flags enable/disable various tools in oxc's toolchain:
 - `minifier`: Enable the `minifier` and `mangler` modules for terser-like minification.
 - `codegen`: Enable the `codegen` module, which prints ASTs to source code and source maps.
 - `mangler`: Enable the `mangler` module without enabling `minifier`.
-- `cfg`: Expose the `cfg` module. CFGs may still be created in `semantic`
-  without turning this on.
+- `cfg`: Expose the `cfg` module and enable control flow graph construction in `semantic`.
+  This feature is not included in `full`.
 - `ast_visit`: Enable the `ast_visit` module for AST traversal.
 - `regular_expression`: Enable regular expression parsing support.
 - `isolated_declarations`: enable the `isolated_declarations` module for
@@ -137,8 +137,8 @@ These feature flags enable/disable various tools in oxc's toolchain:
 These feature flags modify the behavior of oxc's tools. None of them are enabled
 by the `full` feature.
 
-- `serialize`: Implements `Serialize` and `Deserialize` for various oxc data
-  structures.
+- `serialize`: Enable ESTree JSON serialization for AST nodes and serialization support
+  for supporting data structures.
 - `conformance`: Enables additional AST visitor hooks for conformance tests.
 
 [crate-oxc-badge]: https://img.shields.io/crates/v/oxc?style=flat-square&logo=rust

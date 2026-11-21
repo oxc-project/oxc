@@ -1,0 +1,68 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// An assignment's class breaks its heritage as a class anywhere else (each `const` line): DIVERGENCES.md#assignment-class-heritage.
+DynamicErrorBoundary = class extends (
+  React.Component<DynamicErrorBoundaryProps, DynamicErrorBoundaryState>
+) {};
+const DynamicErrorBoundary2 = class extends (
+  React.Component<DynamicErrorBoundaryProps, DynamicErrorBoundaryState>
+) {};
+someNamespace.longRunningProvider = class extends someNamespace.languages.SignatureHelpProvider {};
+const longRunningProvider = class extends someNamespace.languages.SignatureHelpProvider {};
+someNamespace.longRunningProviderX = class extends someNamespace.languages.SignatureHelp<Hello> {};
+const longRunningProviderXX = class extends someNamespace.languages.SignatureHelp<Hello> {};
+globalThis.IntersectionObserver = class IntersectionObserverMock extends OriginalIntersectionObserver {};
+const IntersectionObserver = class IntersectionObserverMock extends OriginalIntersectionObserver {};
+a = class extends (Foo<Bar>) {};
+a = class extends Foo {};
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// An assignment's class breaks its heritage as a class anywhere else (each `const` line): DIVERGENCES.md#assignment-class-heritage.
+DynamicErrorBoundary = class extends (React.Component<
+  DynamicErrorBoundaryProps,
+  DynamicErrorBoundaryState
+>) {};
+const DynamicErrorBoundary2 = class extends (React.Component<
+  DynamicErrorBoundaryProps,
+  DynamicErrorBoundaryState
+>) {};
+someNamespace.longRunningProvider = class
+  extends someNamespace.languages.SignatureHelpProvider {};
+const longRunningProvider = class
+  extends someNamespace.languages.SignatureHelpProvider {};
+someNamespace.longRunningProviderX = class extends someNamespace.languages
+  .SignatureHelp<Hello> {};
+const longRunningProviderXX = class extends someNamespace.languages
+  .SignatureHelp<Hello> {};
+globalThis.IntersectionObserver = class IntersectionObserverMock extends OriginalIntersectionObserver {};
+const IntersectionObserver = class IntersectionObserverMock extends OriginalIntersectionObserver {};
+a = class extends (Foo<Bar>) {};
+a = class extends Foo {};
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// An assignment's class breaks its heritage as a class anywhere else (each `const` line): DIVERGENCES.md#assignment-class-heritage.
+DynamicErrorBoundary = class extends (React.Component<
+  DynamicErrorBoundaryProps,
+  DynamicErrorBoundaryState
+>) {};
+const DynamicErrorBoundary2 = class extends (React.Component<
+  DynamicErrorBoundaryProps,
+  DynamicErrorBoundaryState
+>) {};
+someNamespace.longRunningProvider = class extends someNamespace.languages.SignatureHelpProvider {};
+const longRunningProvider = class extends someNamespace.languages.SignatureHelpProvider {};
+someNamespace.longRunningProviderX = class extends someNamespace.languages.SignatureHelp<Hello> {};
+const longRunningProviderXX = class extends someNamespace.languages.SignatureHelp<Hello> {};
+globalThis.IntersectionObserver = class IntersectionObserverMock extends OriginalIntersectionObserver {};
+const IntersectionObserver = class IntersectionObserverMock extends OriginalIntersectionObserver {};
+a = class extends (Foo<Bar>) {};
+a = class extends Foo {};
+
+===================== End =====================

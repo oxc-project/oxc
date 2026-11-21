@@ -11,14 +11,11 @@ working directory:
     "typescript",
     "oxc"
   ],
-  "categories": {},
+  "categories": {
+    "correctness": "warn"
+  },
   "rules": {
-    "eqeqeq": [
-      "deny",
-      [
-        "always"
-      ]
-    ]
+    "eqeqeq": "deny"
   },
   "settings": {
     "jsx-a11y": {

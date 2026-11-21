@@ -204,7 +204,7 @@ export function Component({ value }: { value: string }) {
     expect(result.code).toContain("import { CSS_VAR }");
   });
 
-  it("honors ESLint suppressions when internal validations are enabled", () => {
+  it("ignores ESLint suppressions when internal validations are enabled", () => {
     const result = transformSync(
       "Counter.jsx",
       `import { useEffect, useRef, useState } from "react";
@@ -228,11 +228,11 @@ export function Component({ value }: { value: string }) {
 
     expect(result.fatal).toBe(false);
     expect(result.errors).toEqual([]);
-    expect(result.code).not.toContain("react/compiler-runtime");
-    expect(result.code).not.toContain("_c(");
+    expect(result.code).toContain("react/compiler-runtime");
+    expect(result.code).toContain("_c(");
   });
 
-  it("honors ESLint suppressions by default", () => {
+  it("ignores ESLint suppressions by default", () => {
     const result = transformSync(
       "Component.tsx",
       `function Component({ value }: { value: number }) {
@@ -244,8 +244,27 @@ export function Component({ value }: { value: string }) {
 
     expect(result.fatal).toBe(false);
     expect(result.errors).toEqual([]);
-    expect(result.code).not.toContain("react/compiler-runtime");
+    expect(result.code).toContain("react/compiler-runtime");
   });
+
+  it.each(["validateHooksUsage", "validateExhaustiveMemoizationDependencies"] as const)(
+    "honors ESLint suppressions when %s is disabled",
+    (validation) => {
+      const result = transformSync(
+        "Component.tsx",
+        `function Component({ value }: { value: number }) {
+          // eslint-disable-next-line react-hooks/exhaustive-deps
+          const doubled = value * 2;
+          return <div>{doubled}</div>;
+        }`,
+        { reactCompiler: { environment: { [validation]: false } } },
+      );
+
+      expect(result.fatal).toBe(false);
+      expect(result.errors).toEqual([]);
+      expect(result.code).not.toContain("react/compiler-runtime");
+    },
+  );
 
   it("allows ESLint suppression bailouts to be disabled", () => {
     const result = transformSync(
@@ -258,6 +277,7 @@ export function Component({ value }: { value: string }) {
       {
         reactCompiler: {
           eslintSuppressionRules: [],
+          environment: { validateExhaustiveMemoizationDependencies: false },
         },
       },
     );
@@ -367,6 +387,7 @@ export function Component({ value }: { value: string }) {
       export function Component(props: { text: string }) {
         return <span>{props.text}</span>;
       }`,
+      { reactCompiler: { environment: { validateExhaustiveMemoizationDependencies: false } } },
     );
 
     expect(result.fatal).toBe(false);
@@ -386,12 +407,13 @@ export function Component({ value }: { value: string }) {
       return <span>{props.text}</span>;
     }`;
 
-    const silent = transformSync("Components.tsx", source);
+    const environment = { validateExhaustiveMemoizationDependencies: false };
+    const silent = transformSync("Components.tsx", source, { reactCompiler: { environment } });
     expect(silent.fatal).toBe(false);
     expect(silent.errors).toEqual([]);
 
     const reported = transformSync("Components.tsx", source, {
-      reactCompiler: { reportDiagnostics: true },
+      reactCompiler: { reportDiagnostics: true, environment },
     });
     expect(reported.fatal).toBe(false);
     expect(reported.code).toBe(silent.code);
@@ -422,7 +444,12 @@ export function Component({ value }: { value: string }) {
       export function Component(props: { text: string }) {
         return <span>{props.text}</span>;
       }`,
-      { reactCompiler: { reportDiagnostics: true } },
+      {
+        reactCompiler: {
+          reportDiagnostics: true,
+          environment: { validateExhaustiveMemoizationDependencies: false },
+        },
+      },
     );
 
     expect(result.fatal).toBe(false);
@@ -441,7 +468,13 @@ export function Component({ value }: { value: string }) {
         const doubled = value * 2;
         return <div>{doubled}</div>;
       }`,
-      { reactCompiler: { outputMode: "lint", reportDiagnostics: true } },
+      {
+        reactCompiler: {
+          outputMode: "lint",
+          reportDiagnostics: true,
+          environment: { validateExhaustiveMemoizationDependencies: false },
+        },
+      },
     );
 
     expect(result.fatal).toBe(false);
@@ -464,6 +497,7 @@ export function Component({ value }: { value: string }) {
         {
           reactCompiler: {
             panicThreshold,
+            environment: { validateExhaustiveMemoizationDependencies: false },
           },
         },
       );

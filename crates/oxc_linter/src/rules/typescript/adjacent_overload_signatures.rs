@@ -101,8 +101,10 @@ fn get_kind_from_key(key: &PropertyKey) -> MethodKind {
     match key {
         PropertyKey::StaticIdentifier(_) => MethodKind::Normal,
         PropertyKey::PrivateIdentifier(_) => MethodKind::Private,
-        PropertyKey::StringLiteral(_) => MethodKind::Normal,
-        PropertyKey::NumericLiteral(_)
+        PropertyKey::StaticStringLiteral(_) | PropertyKey::StringLiteral(_) => MethodKind::Normal,
+        PropertyKey::StaticNumericLiteral(_)
+        | PropertyKey::StaticBigIntLiteral(_)
+        | PropertyKey::NumericLiteral(_)
         | PropertyKey::BigIntLiteral(_)
         | PropertyKey::TemplateLiteral(_)
         | PropertyKey::RegExpLiteral(_)

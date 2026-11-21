@@ -245,7 +245,9 @@ describe("member access on numbers", () => {
     // The shortened forms, which all carry a `.`, an `e` or an `x` of their own and so must NOT
     // gain the space, against the long integers which stay plain digits and must
     ["int-1500", e(member(num(1500), id("x"))), "1500 .x;\n"],
-    ["int-max-safe", e(member(num(9007199254740991), id("x"))), "9007199254740991 .x;\n"],
+    ["int-max-safe", e(member(num(9007199254740991), id("x"))), "0x1fffffffffffff.x;\n"],
+    ["hex-tie", e(member(num(1048575), id("x"))), "0xfffff.x;\n"],
+    ["hex-tie-negative", e(member(num(-1048575), id("x"))), "(-0xfffff).x;\n"],
     ["hex", e(member(num(281474976710655), id("x"))), "0xffffffffffff.x;\n"],
     ["exponent-fold", e(member(num(1.2e101), id("x"))), "12e100.x;\n"],
   ]);
@@ -280,19 +282,19 @@ describe("numbers", () => {
   // integers. Every form and every "not worth it" boundary is here.
   checkCases([
     ["int-1500", e(num(1500)), "1500;\n"], // trailing zeros too few to pay for the `e`
-    // 16 digits, and hexadecimal still does not pay
-    ["int-max-safe", e(num(9007199254740991)), "9007199254740991;\n"],
+    ["int-max-safe", e(num(9007199254740991)), "0x1fffffffffffff;\n"],
+    ["hex-too-short", e(num(999999)), "999999;\n"],
+    ["hex-first-tie", e(num(1000001)), "0xf4241;\n"],
+    ["hex-tie", e(num(1048575)), "0xfffff;\n"],
+    ["hex-tie-negative", e(num(-1048575)), "-0xfffff;\n"],
+    ["hex-longer", e(num(1048576)), "1048576;\n"],
+    ["hex-exponent-tie", e(num(1000123456000)), "0xe8dc00da00;\n"],
     ["hex", e(num(281474976710655)), "0xffffffffffff;\n"],
     ["hex-negative", e(num(-281474976710655)), "-0xffffffffffff;\n"],
-    // hexadecimal is tried first and wins, though `1e12` is shorter
-    ["hex-over-exponent", e(num(1e12)), "0xe8d4a51000;\n"],
-    // The two cases above reach the hexadecimal test from plain digits. These reach it from
-    // exponent notation, where the length it is judged against is one less than the text `String`
-    // gave, because the `+` of the exponent always goes. The second is the boundary: hexadecimal is
-    // exactly as long as the exponent form, so it must lose - and would wrongly win, as
-    // `0x21e2073de72ea800000`, if that one character were not taken off.
-    ["hex-from-exponent", e(num(1.0000990573316814e21)), "0x36372999e429e40000;\n"],
-    ["hex-from-exponent-boundary", e(num(1.0000473745167254e22)), "10000473745167254e6;\n"],
+    ["exponent-over-hex", e(num(1e12)), "1e12;\n"],
+    ["exponent-over-hex-million", e(num(1e6)), "1e6;\n"],
+    ["exponent-over-hex-large", e(num(1.0000990573316814e21)), "10000990573316814e5;\n"],
+    ["exponent-over-hex-boundary", e(num(1.0000473745167254e22)), "10000473745167254e6;\n"],
     ["exponent-fold", e(num(1.2e101)), "12e100;\n"], // the point folds into the exponent
     ["max-value", e(num(1.7976931348623157e308)), "17976931348623157e292;\n"],
     ["min-value", e(num(5e-324)), "5e-324;\n"],

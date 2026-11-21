@@ -165,7 +165,7 @@ impl<'a> Visit<'a> for IdentifierLocVisitor {
 
     fn visit_object_property(&mut self, it: &ObjectProperty<'a>) {
         // Original walked the key only when computed.
-        if it.computed {
+        if it.key.is_computed() {
             self.visit_property_key(&it.key);
         }
         self.visit_expression(&it.value);

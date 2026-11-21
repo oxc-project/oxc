@@ -4,6 +4,33 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.159.0] - 2026-11-16
+
+### 🐛 Bug Fixes
+
+- d520358 transformer: Retain decorated fields with define semantics (#29444) (Dunqing)
+- f8e329c transformer: Preserve optional calls on private field chains (#29443) (Dunqing)
+- e64155e transformer/react-refresh: Recognize TypeScript wrappers in HOC arguments (#29290) (camc314)
+- b372b04 transformer/optional-chaining: Preserve parenthesized chain boundaries (#29218) (camc314)
+- efcdf06 transformer: Isolate logical assignment temporaries in parameters (#29182) (Dunqing)
+- b515929 transformer: Lower wrapped assignments and preserve computed receivers (#29113) (camc314)
+
+### 📚 Documentation
+
+- 9e5a2bb agents: Require runnable playground reproductions in PRs (#29450) (Dunqing)
+- 521d194 transformer: Require reproductions in fix PR descriptions (#29224) (Dunqing)
+
+## [0.158.0] - 2026-11-09
+
+### 🐛 Bug Fixes
+
+- 3729ce1 transformer/typescript: Merge exported enums across namespace blocks (#28999) (camc314)
+- 99e67d3 transformer: Preserve static private brands with shadowed class names (#28894) (Dunqing)
+- 28a44b7 transformer/class-properties: Preserve private accessor assignment receivers (#28790) (Dunqing)
+- ea76490 transformer/class-properties: Preserve private method values in assignments (#28788) (Dunqing)
+- 8432de6 transformer/class-properties: Apply a compound assignment to a static private field once (#28606) (YT)
+- e3b1bb4 transformer/class-properties: Keep the value of a private accessor assignment (#28716) (YT)
+
 ## [0.155.0] - 2026-10-19
 
 ### 💥 BREAKING CHANGES

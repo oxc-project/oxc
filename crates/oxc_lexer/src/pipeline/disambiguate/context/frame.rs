@@ -1,7 +1,7 @@
 //! What the walk remembers per frame: the kind of every open bracket or virtual frame,
 //! its per-kind state, and the keyword codes the walk reads off the source.
 
-use crate::cpu::cpu_version;
+use oxc_simd::cpu_version;
 
 #[derive(Clone, Copy, PartialEq, Eq, Default, Debug)]
 pub(super) enum FrameKind {
@@ -131,7 +131,7 @@ pub(super) struct Frame {
     /// JsxTag: open angle brackets of its type arguments.
     pub(super) jsx_depth: u8,
     pub(super) reg: StmtReg,
-    /// Modifier bits: an Object or ClassBody member's, or the async before a Group.
+    /// Modifier bits: an Object or ClassBody member's, or the async before a Group or an Angle.
     pub(super) mods: u8,
     pub(super) open_questions: u16,
 }

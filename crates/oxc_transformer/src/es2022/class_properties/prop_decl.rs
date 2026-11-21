@@ -10,13 +10,12 @@ use oxc_syntax::reference::ReferenceFlags;
 use crate::{
     common::helper_loader::{Helper, helper_call_expr},
     context::TraverseCtx,
-    utils::ast_builder::create_assignment,
+    utils::ast_builder::{
+        create_assignment, create_variable_declaration, take_literal_property_key,
+    },
 };
 
-use super::{
-    ClassProperties,
-    utils::{create_underscore_ident_name, create_variable_declaration},
-};
+use super::{ClassProperties, utils::create_underscore_ident_name};
 
 // Instance properties
 impl<'a> ClassProperties<'a> {
@@ -83,7 +82,7 @@ impl<'a> ClassProperties<'a> {
         value: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let private_props = self.current_class().private_props.as_ref().unwrap();
+        let private_props = self.current_class().private_props.lowered().unwrap();
         let prop = &private_props[&ident.name];
         let arguments = ArenaVec::from_array_in(
             [
@@ -216,14 +215,13 @@ impl<'a> ClassProperties<'a> {
             value,
             false,
             false,
-            false,
             ctx,
         );
         let obj = Expression::new_object_expression(SPAN, [property], ctx);
 
         // Insert after class
         let class_details = self.current_class();
-        let private_props = class_details.private_props.as_ref().unwrap();
+        let private_props = class_details.private_props.lowered().unwrap();
         let prop_binding = &private_props[&ident.name].binding;
 
         if class_details.is_declaration {
@@ -287,18 +285,21 @@ impl<'a> ClassProperties<'a> {
                     ctx,
                 )
             }
-            PropertyKey::StringLiteral(str_lit)
+            PropertyKey::StaticStringLiteral(str_lit) | PropertyKey::StringLiteral(str_lit)
                 if str_lit.value.as_str().is_some_and(needs_define) =>
             {
                 return self
                     .create_init_assignment_not_loose(prop, value, assignee, is_static, ctx);
             }
+            key @ (PropertyKey::StaticStringLiteral(_)
+            | PropertyKey::StaticNumericLiteral(_)
+            | PropertyKey::StaticBigIntLiteral(_)) => {
+                // `class C { 'x' = true; 123 = false; }`
+                let key = take_literal_property_key(key, ctx).unwrap();
+                MemberExpression::new_computed_member_expression(SPAN, assignee, key, false, ctx)
+            }
             key @ match_expression!(PropertyKey) => {
                 let key = key.to_expression_mut();
-                // Note: Key can also be static `StringLiteral` or `NumericLiteral`.
-                // `class C { 'x' = true; 123 = false; }`
-                // No temp var is created for these.
-                // TODO: Any other possible static key types?
                 let key = self.create_computed_key_temp_var_if_required(key, is_static, ctx);
                 MemberExpression::new_computed_member_expression(SPAN, assignee, key, false, ctx)
             }
@@ -330,12 +331,14 @@ impl<'a> ClassProperties<'a> {
             PropertyKey::StaticIdentifier(ident) => {
                 Expression::new_string_literal(ident.span, ident.name, None, ctx)
             }
+            key @ (PropertyKey::StaticStringLiteral(_)
+            | PropertyKey::StaticNumericLiteral(_)
+            | PropertyKey::StaticBigIntLiteral(_)) => {
+                // `class C { 'x' = true; 123 = false; }`
+                take_literal_property_key(key, ctx).unwrap()
+            }
             key @ match_expression!(PropertyKey) => {
                 let key = key.to_expression_mut();
-                // Note: Key can also be static `StringLiteral` or `NumericLiteral`.
-                // `class C { 'x' = true; 123 = false; }`
-                // No temp var is created for these.
-                // TODO: Any other possible static key types?
                 self.create_computed_key_temp_var_if_required(key, is_static, ctx)
             }
             PropertyKey::PrivateIdentifier(_) => {
@@ -379,7 +382,6 @@ impl<'a> ClassProperties<'a> {
                     Expression::new_boolean_literal(SPAN, true, ctx),
                     false,
                     false,
-                    false,
                     ctx,
                 ),
                 ObjectPropertyKind::new_object_property(
@@ -389,14 +391,13 @@ impl<'a> ClassProperties<'a> {
                     value,
                     false,
                     false,
-                    false,
                     ctx,
                 ),
             ],
             ctx,
         );
 
-        let private_props = self.current_class().private_props.as_ref().unwrap();
+        let private_props = self.current_class().private_props.lowered().unwrap();
         let prop_binding = &private_props[&ident.name].binding;
         let arguments = ArenaVec::from_array_in(
             [

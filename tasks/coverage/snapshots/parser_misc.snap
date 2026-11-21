@@ -1,7 +1,15 @@
 parser_misc Summary:
-AST Parsed     : 135/135 (100.00%)
-Positive Passed: 135/135 (100.00%)
-Negative Passed: 271/271 (100.00%)
+AST Parsed     : 148/148 (100.00%)
+Positive Passed: 148/148 (100.00%)
+Negative Passed: 288/288 (100.00%)
+
+  × TS(1029): 'declare' modifier must precede 'abstract' modifier.
+   ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
+ 1 │ abstract class C {
+ 2 │     abstract declare p: string;
+   ·              ───────
+ 3 │ }
+   ╰────
 
   × TS(1275): 'accessor' modifier can only appear on a property declaration.
    ╭─[misc/fail/accessor-modifier-abstract-method.ts:1:29]
@@ -223,6 +231,14 @@ Negative Passed: 271/271 (100.00%)
    ·                                         ─────
    ╰────
 
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/asserted-unary-exponentiation-right-operand.ts:1:29]
+ 1 │ 2 ** -value satisfies number ** 2;
+   ·                             ▲
+ 2 │ 2 ** value as number ** 2;
+   ╰────
+  help: Try inserting a semicolon here
+
   × 'async' modifier cannot be used here.
    ╭─[misc/fail/async-field.js:1:11]
  1 │ class C { async x; }
@@ -252,6 +268,23 @@ Negative Passed: 271/271 (100.00%)
  4 │   }
    ╰────
   help: Either remove this `yield` or change the enclosing function to a generator function (`function*`)
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[misc/fail/await-arrow-parameter-before-export.js:2:6]
+ 1 │ // `await` is reserved once `export` makes this file a module.
+ 2 │ y = (await) => 1;
+   ·      ─────
+ 3 │ export {};
+   ╰────
+
+  × The keyword 'await' is reserved
+   ╭─[misc/fail/await-arrow-parameter-before-export.js:2:6]
+ 1 │ // `await` is reserved once `export` makes this file a module.
+ 2 │ y = (await) => 1;
+   ·      ─────
+ 3 │ export {};
+   ╰────
+  note: The identifier `await` is reserved in module code
 
   × Cannot use await in class static initialization block
    ╭─[misc/fail/await-expr-in-block-in-class-static-block.mjs:4:7]
@@ -314,6 +347,63 @@ Negative Passed: 271/271 (100.00%)
  11 │ }
     ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × Identifier `e` has already been declared
+   ╭─[misc/fail/catch-parameter-class-redeclaration.js:1:15]
+ 1 │ try {} catch (e) { class e {} }
+   ·               ┬          ┬
+   ·               │          ╰── It can not be redeclared here
+   ·               ╰── `e` has already been declared here
+   ╰────
+
+  × Identifier `e` has already been declared
+   ╭─[misc/fail/catch-parameter-destructured-const-redeclaration.js:1:16]
+ 1 │ try {} catch ([e]) { const e = 1; }
+   ·                ┬           ┬
+   ·                │           ╰── It can not be redeclared here
+   ·                ╰── `e` has already been declared here
+   ╰────
+
+  × Identifier `e` has already been declared
+   ╭─[misc/fail/catch-parameter-destructured-var-redeclaration.js:1:17]
+ 1 │ try {} catch ({ e }) { var e; }
+   ·                 ┬          ┬
+   ·                 │          ╰── It can not be redeclared here
+   ·                 ╰── `e` has already been declared here
+   ╰────
+
+  × Identifier `e` has already been declared
+   ╭─[misc/fail/catch-parameter-function-redeclaration-with-outer-var.cjs:2:15]
+ 1 │ var e;
+ 2 │ try {} catch (e) { function e() {} }
+   ·               ┬             ┬
+   ·               │             ╰── It can not be redeclared here
+   ·               ╰── `e` has already been declared here
+   ╰────
+
+  × Identifier `e` has already been declared
+   ╭─[misc/fail/catch-parameter-function-redeclaration.cjs:1:15]
+ 1 │ try {} catch (e) { function e() {} }
+   ·               ┬             ┬
+   ·               │             ╰── It can not be redeclared here
+   ·               ╰── `e` has already been declared here
+   ╰────
+
+  × Identifier `e` has already been declared
+   ╭─[misc/fail/catch-parameter-function-redeclaration.js:1:15]
+ 1 │ try {} catch (e) { function e() {} }
+   ·               ┬             ┬
+   ·               │             ╰── It can not be redeclared here
+   ·               ╰── `e` has already been declared here
+   ╰────
+
+  × Identifier `e` has already been declared
+   ╭─[misc/fail/catch-parameter-let-redeclaration.js:1:15]
+ 1 │ try {} catch (e) { let e; }
+   ·               ┬        ┬
+   ·               │        ╰── It can not be redeclared here
+   ·               ╰── `e` has already been declared here
+   ╰────
 
   × Expected `;` but found `,`
    ╭─[misc/fail/class-field-comma-expression.js:1:16]
@@ -1417,6 +1507,12 @@ Negative Passed: 271/271 (100.00%)
   × Expected `from` but found `EOF`
    ╭─[misc/fail/oxc-11453.js:2:1]
  1 │ export import
+   ╰────
+
+  × Cannot use export statement outside a module
+   ╭─[misc/fail/oxc-11453.js:1:1]
+ 1 │ export import
+   · ──────
    ╰────
 
   × Decorators may not appear after 'export' or 'export default' if they also appear before 'export'.
@@ -4849,6 +4945,157 @@ Negative Passed: 271/271 (100.00%)
  5 │ }
    ╰────
 
+  × Expected `{` but found `>`
+   ╭─[misc/fail/oxc-29314-1.ts:1:8]
+ 1 │ f<class>(h);
+   ·        ┬
+   ·        ╰── `{` expected
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/oxc-29314-2.ts:1:5]
+ 1 │ f<A<return>>(h);
+   ·     ──────
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/oxc-29314-3.ts:1:14]
+ 1 │ type T = null.x;
+   ·              ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/oxc-29896.js:1:17]
+ 1 │ function fn(x = await 1) {}
+   ·                 ─────
+ 2 │ var fe = function (x = await 1) {};
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/oxc-29896.js:2:24]
+ 1 │ function fn(x = await 1) {}
+ 2 │ var fe = function (x = await 1) {};
+   ·                        ─────
+ 3 │ function* g(x = await 1) {}
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/oxc-29896.js:3:17]
+ 2 │ var fe = function (x = await 1) {};
+ 3 │ function* g(x = await 1) {}
+   ·                 ─────
+ 4 │ ({ m(x = await 1) {} });
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/oxc-29896.js:4:10]
+ 3 │ function* g(x = await 1) {}
+ 4 │ ({ m(x = await 1) {} });
+   ·          ─────
+ 5 │ class C { m(x = await 1) {} }
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/oxc-29896.js:5:17]
+ 4 │ ({ m(x = await 1) {} });
+ 5 │ class C { m(x = await 1) {} }
+   ·                 ─────
+ 6 │ class D { p = await 0 }
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/oxc-29896.js:6:15]
+ 5 │ class C { m(x = await 1) {} }
+ 6 │ class D { p = await 0 }
+   ·               ─────
+ 7 │ class E { static p = await 0 }
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/oxc-29896.js:7:22]
+ 6 │ class D { p = await 0 }
+ 7 │ class E { static p = await 0 }
+   ·                      ─────
+ 8 │ class F { accessor p = await 0 }
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/oxc-29896.js:8:24]
+ 7 │ class E { static p = await 0 }
+ 8 │ class F { accessor p = await 0 }
+   ·                        ─────
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × await expression not allowed in formal parameter
+   ╭─[misc/fail/oxc-29896.js:1:17]
+ 1 │ function fn(x = await 1) {}
+   ·                 ───┬───
+   ·                    ╰── await expression not allowed in formal parameter
+ 2 │ var fe = function (x = await 1) {};
+   ╰────
+
+  × await expression not allowed in formal parameter
+   ╭─[misc/fail/oxc-29896.js:2:24]
+ 1 │ function fn(x = await 1) {}
+ 2 │ var fe = function (x = await 1) {};
+   ·                        ───┬───
+   ·                           ╰── await expression not allowed in formal parameter
+ 3 │ function* g(x = await 1) {}
+   ╰────
+
+  × await expression not allowed in formal parameter
+   ╭─[misc/fail/oxc-29896.js:3:17]
+ 2 │ var fe = function (x = await 1) {};
+ 3 │ function* g(x = await 1) {}
+   ·                 ───┬───
+   ·                    ╰── await expression not allowed in formal parameter
+ 4 │ ({ m(x = await 1) {} });
+   ╰────
+
+  × await expression not allowed in formal parameter
+   ╭─[misc/fail/oxc-29896.js:4:10]
+ 3 │ function* g(x = await 1) {}
+ 4 │ ({ m(x = await 1) {} });
+   ·          ───┬───
+   ·             ╰── await expression not allowed in formal parameter
+ 5 │ class C { m(x = await 1) {} }
+   ╰────
+
+  × await expression not allowed in formal parameter
+   ╭─[misc/fail/oxc-29896.js:5:17]
+ 4 │ ({ m(x = await 1) {} });
+ 5 │ class C { m(x = await 1) {} }
+   ·                 ───┬───
+   ·                    ╰── await expression not allowed in formal parameter
+ 6 │ class D { p = await 0 }
+   ╰────
+
+  × Expected `=>` but found `<`
+   ╭─[misc/fail/oxc-29899-1.tsx:4:21]
+ 3 │ // So this is an arrow function with no `=>`, not a JSX element with attributes `extends` and `U`.
+ 4 │ x = <T extends U>(x)</T>;
+   ·                     ┬
+   ·                     ╰── `=>` expected
+   ╰────
+
+  × Expected `,` or `>` but found `/`
+   ╭─[misc/fail/oxc-29899-2.tsx:4:18]
+ 3 │ // not a JSX element with attributes `extends` and `foo`.
+ 4 │ <div extends foo />;
+   · ┬                ┬
+   · │                ╰── `,` or `>` expected
+   · ╰── Opened here
+   ╰────
+
   × Expected `:` but found `[`
    ╭─[misc/fail/oxc-3320.tsx:1:8]
  1 │ m< $<{3[   $<{3[  $<{3[ m< m$<{3[ m< mm< $<{3[   $<{3[  $<{3[ m< m$<{3[ m< m$<{3[  $<{3[ m< m$<{3[
@@ -5087,6 +5334,14 @@ Negative Passed: 271/271 (100.00%)
  2 │ class B {constructor(readonly constructor){}}
    ·                               ───────────
    ╰────
+
+  × Invalid arrow function parameter
+   ╭─[misc/fail/parenthesized-arrow-parameter-default.js:2:4]
+ 1 │ // Parentheses inside an arrow parameter are an error, also when an assignment target drops them.
+ 2 │ (((a)) = 1) => 0;
+   ·    ─
+   ╰────
+  help: Expected an identifier or a destructuring pattern.
 
   × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
    ╭─[misc/fail/readonly-constructor-ambient.ts:1:19]

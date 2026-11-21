@@ -1,12 +1,11 @@
 //! Inside a JSX tag or element only the structure matters: nested tags, containers and the
 //! end of the element.
 
-use crate::{
-    cpu::{BASELINE, cpu_version},
-    token::{OP_KIND_BASE, tk},
-};
+use oxc_simd::{BASELINE, cpu_version};
 
-use crate::pipeline::disambiguate::common::Tokens;
+use crate::token::{OP_KIND_BASE, tk};
+
+use crate::pipeline::disambiguate::common::TokensView;
 
 use super::{frame::FrameKind, walker::Walk};
 
@@ -21,7 +20,7 @@ impl Walk {
     }
 
     #[cpu_version(Generic)]
-    pub(super) fn jsx_lt(&mut self, tokens: &Tokens, pos: usize) -> usize {
+    pub(super) fn jsx_lt(&mut self, tokens: &TokensView, pos: usize) -> usize {
         let cpu = BASELINE;
 
         let tpos = tokens.next_sig(pos + 1, cpu);
@@ -38,7 +37,7 @@ impl Walk {
     }
 
     #[cpu_version(Generic)]
-    pub(super) fn step_jsx(&mut self, tokens: &Tokens, pos: usize, k: u8) -> usize {
+    pub(super) fn step_jsx(&mut self, tokens: &TokensView, pos: usize, k: u8) -> usize {
         let c = tokens.src[pos];
         match k {
             tk!(JsxLt) => self.jsx_lt(tokens, pos),

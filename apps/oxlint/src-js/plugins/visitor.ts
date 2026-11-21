@@ -349,7 +349,7 @@ export function addVisitorToCompiled(visitor: VisitorObject, timing?: RuleTiming
       visitProp.specificity |= selector.specificity;
 
       if (selector.isComplex) {
-        visitProp.fn = wrapVisitFnWithSelectorMatch(visitFn, selector.esquerySelector);
+        visitProp.fn = wrapVisitFnWithSelectorMatch(visitFn, selector.matcher);
         if (timing !== undefined) visitProp.fn = wrapTimedFunction(visitProp.fn, timing);
       }
 

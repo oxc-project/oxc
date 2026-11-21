@@ -1,3 +1,3 @@
 # Oxc Types
 
-Typescript definitions for Oxc AST nodes.
+TypeScript definitions for Oxc AST nodes.

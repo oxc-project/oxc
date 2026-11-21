@@ -88,6 +88,7 @@ fn is_descriptor_setter<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     let AstKind::ObjectProperty(prop) = property.kind() else { return false };
     let is_set = match &prop.key {
         PropertyKey::StaticIdentifier(ident) => ident.name == "set",
+        PropertyKey::StaticStringLiteral(lit) => lit.value == "set",
         key => key.as_expression().is_some_and(|expr| is_static_string(expr, "set")),
     };
     if !is_set || prop.value.without_parentheses().span() != node.kind().span() {

@@ -118,8 +118,18 @@ fn invalid_json_is_err() {
     // `json` / `jsonc` / `json5` share one printer, `json-stringify` has its own
     for variant in [JsonVariant::Json, JsonVariant::JsonStringify] {
         let options = JsonFormatOptions { variant, ..Default::default() };
-        // Unary other than `+` / `-` before a number, `Infinity` or `NaN`
-        for source in ["!true", "typeof Infinity", "-true", "-undefined", "-(-1)", "+ +1"] {
+        // Unary other than `+` / `-` before a number, `Infinity` or `NaN`, and computed keys
+        for source in [
+            "!true",
+            "typeof Infinity",
+            "-true",
+            "-undefined",
+            "-(-1)",
+            "+ +1",
+            r#"{ ["a"]: 1 }"#,
+            "{ [1]: 1 }",
+            "{ [1n]: 1 }",
+        ] {
             let allocator = Allocator::default();
             assert!(format(&allocator, source, options).is_err(), "{variant:?}: {source:?}");
         }

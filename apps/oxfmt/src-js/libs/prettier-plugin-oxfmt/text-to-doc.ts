@@ -4,15 +4,16 @@ import type { Parser, Doc } from "prettier";
 export const textToDoc: Parser<Doc>["parse"] = async (embeddedSourceText, textToDocOptions) => {
   // `_oxfmtPluginOptionsJson` is a JSON string bundled by Rust (`to_prettier::inject_oxfmt_plugin_payload`),
   // carrying the typed `FormatConfig` + parent filepath for the Rust-side `oxc_formatter`.
-  const { parser, filepath, _oxfmtPluginOptionsJson } = textToDocOptions;
+  const { parser, parentParser, filepath, _oxfmtPluginOptionsJson } = textToDocOptions;
 
   // For (j|t)s-in-xxx, default `parser` is either `babel`(JS), `babel-ts` or `typescript`.
   // We need to infer the parse grammar (`source_ext`) for `oxc_formatter`.
   // - JS: always enable JSX for js-in-xxx, it's syntactically valid
   // - TS: `typescript` or `babel-ts`
   //   - In case of ts-in-mdx, `filepath` is overridden as `dummy.ts(x)` to distinguish TSX or TS
+  //   - In case of ts-in-astro, `parentParser` is "astro"; Astro parses frontmatter and `<script>` as TSX
   const isTS = parser === "typescript" || parser === "babel-ts";
-  const isTSX = filepath.endsWith(".tsx");
+  const isTSX = filepath.endsWith(".tsx") || parentParser === "astro";
   const embeddedSourceExt = isTS ? (isTSX ? "tsx" : "ts") : "jsx";
 
   const docJSON = await jsTextToDoc(

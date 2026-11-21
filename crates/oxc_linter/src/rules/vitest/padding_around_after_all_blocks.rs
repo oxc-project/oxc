@@ -49,6 +49,12 @@ fn test() {
         "const thing = 123;\n\n/**\n * JSDoc attached to afterAll\n */\nafterAll(() => {});",
         "const thing = 123; /* trailing on prev */\n\nafterAll(() => {});",
         "describe('foo', () => {\nafterAll(() => {});\n\nafterAll(() => {});\n});",
+        "const cleanUp = false; cleanUp && afterAll(() => {});",
+        "const cleanUp = false;\nif (cleanUp)\n  afterAll(() => {});",
+        "const cleanUp = false; if (cleanUp) afterAll(() => {});",
+        "const cleanUp = false; if (cleanUp)\n  afterAll(() => {});",
+        "const cleanUp = false; while (cleanUp) afterAll(() => {});",
+        "const cleanUp = false; for (; cleanUp;) afterAll(() => {});",
     ];
 
     let fail = vec![
@@ -85,6 +91,26 @@ fn test() {
         (
             "describe('foo', () => {\nafterAll(() => {});\nafterAll(() => {});\n});",
             "describe('foo', () => {\nafterAll(() => {});\n\nafterAll(() => {});\n});",
+        ),
+        (
+            "const thing = 123; afterAll(() => {}), foo();",
+            "const thing = 123;\n\nafterAll(() => {}), foo();",
+        ),
+        (
+            "const thing = 123; afterAll(() => {}) && foo();",
+            "const thing = 123;\n\nafterAll(() => {}) && foo();",
+        ),
+        (
+            "const thing = 123; await afterAll(() => {});",
+            "const thing = 123;\n\nawait afterAll(() => {});",
+        ),
+        (
+            "const thing = 123;\nawait afterAll(() => {});",
+            "const thing = 123;\n\nawait afterAll(() => {});",
+        ),
+        (
+            "const thing = 123; await /* hook */ afterAll(() => {});",
+            "const thing = 123;\n\nawait /* hook */ afterAll(() => {});",
         ),
     ];
 

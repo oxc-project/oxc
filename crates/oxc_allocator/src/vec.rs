@@ -17,6 +17,8 @@ use std::{
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer as SerdeSerializer};
 
+use oxc_data_structures::buffered_vec::BufferedVecBacking;
+
 #[cfg(feature = "serialize")]
 use oxc_estree::{ConcatElement, ESTree, SequenceSerializer, Serializer as ESTreeSerializer};
 
@@ -54,6 +56,38 @@ pub struct Vec<'alloc, T>(InnerVec<'alloc, T>);
 /// threads to both allocate into same arena simultaneously. `Arena` is not thread-safe, and this would
 /// be undefined behavior.
 unsafe impl<T: Sync> Sync for Vec<'_, T> {}
+
+impl<T> BufferedVecBacking for Vec<'_, T> {
+    #[inline]
+    fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    #[inline]
+    fn capacity(&self) -> usize {
+        self.0.capacity()
+    }
+
+    #[inline]
+    fn reserve(&mut self, additional: usize) {
+        self.0.reserve(additional);
+    }
+
+    #[inline]
+    fn reserve_exact(&mut self, additional: usize) {
+        self.0.reserve_exact(additional);
+    }
+
+    #[inline]
+    fn push(&mut self, value: T) {
+        self.0.push(value);
+    }
+
+    #[inline]
+    fn extend(&mut self, iter: impl IntoIterator<Item = T>) {
+        self.0.extend(iter);
+    }
+}
 
 impl<'alloc, T> Vec<'alloc, T> {
     /// Const assertion that `T` is not `Drop`.

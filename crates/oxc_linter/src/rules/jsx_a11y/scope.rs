@@ -47,7 +47,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     recommended,
-    fix,
+    fix = conditional_fix_suggestion,
     version = "0.0.19",
     short_description = "The scope prop should be used only on `<th>` elements.",
 );
@@ -74,15 +74,38 @@ impl Rule for Scope {
             return;
         }
 
-        ctx.diagnostic_with_fix(scope_diagnostic(scope_attribute.span), |fixer| {
-            fixer.delete_range(scope_attribute.span)
-        });
+        let is_safe_to_delete = scope_attribute.value.as_ref().is_none_or(is_safe_to_remove_value);
+        let diagnostic = scope_diagnostic(scope_attribute.span);
+
+        if is_safe_to_delete {
+            ctx.diagnostic_with_fix(diagnostic, |fixer| fixer.delete_range(scope_attribute.span));
+        } else {
+            ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
+                fixer.delete_range(scope_attribute.span)
+            });
+        }
+    }
+}
+
+/// Returns `true` when removing the attribute will not discard any
+/// potentially side-effecting expression.
+fn is_safe_to_remove_value(value: &oxc_ast::ast::JSXAttributeValue) -> bool {
+    match value {
+        oxc_ast::ast::JSXAttributeValue::StringLiteral(_) => true,
+        oxc_ast::ast::JSXAttributeValue::ExpressionContainer(container) => {
+            container.expression.as_expression().is_none_or(oxc_ast::ast::Expression::is_literal)
+        }
+        oxc_ast::ast::JSXAttributeValue::Element(_)
+        | oxc_ast::ast::JSXAttributeValue::Fragment(_) => false,
     }
 }
 
 #[test]
 fn test() {
-    use crate::tester::{ExpectFixTestCase, Tester};
+    use crate::{
+        fixer::FixKind,
+        tester::{ExpectFixTestCase, Tester},
+    };
 
     fn settings() -> serde_json::Value {
         serde_json::json!({
@@ -106,13 +129,18 @@ fn test() {
         (r"<TableHeader scope='row' />", None, Some(settings())),
     ];
 
-    let fail =
-        vec![(r"<div scope />", None, None), (r"<Foo scope='bar' />;", None, Some(settings()))];
+    let fail = vec![
+        (r"<div scope />", None, None),
+        (r"<Foo scope='bar' />;", None, Some(settings())),
+        (r"<div scope={track()} />", None, None),
+    ];
 
     let fix: Vec<ExpectFixTestCase> = vec![
         (r"<div scope />", r"<div  />", None).into(),
         (r"<Foo scope='bar' />;", r"<Foo  />;", None, Some(settings())).into(),
         (r"<h1 scope='bar' />;", r"<h1  />;", None).into(),
+        (r"<div scope={'col'} />", r"<div  />", None).into(),
+        (r"<div scope={track()} />", r"<div  />", None, FixKind::Suggestion).into(),
     ];
 
     Tester::new(Scope::NAME, Scope::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();

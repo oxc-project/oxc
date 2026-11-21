@@ -44,7 +44,8 @@ declare_oxc_lint!(
     recommended,
     pending,
     version = "0.0.16",
-    short_description = "Prefer `.addEventListener()` and `.removeEventListener()` over `on`-functions.",
+    short_description =
+        "Prefer `.addEventListener()` and `.removeEventListener()` over `on`-functions.",
 );
 
 impl Rule for PreferAddEventListener {

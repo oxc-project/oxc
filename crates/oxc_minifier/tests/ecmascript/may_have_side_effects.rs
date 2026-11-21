@@ -720,6 +720,18 @@ fn test_binary_expressions() {
     test("[] instanceof 1", true); // throws an error
     test("[] instanceof { [Symbol.hasInstance]() { throw 'foo' } }", true);
     test("[] instanceof Object", false);
+    for constructor in ["Object", "Number", "Boolean", "String", "Array"] {
+        for left in [
+            "(foo() > 0)",
+            "!foo()",
+            "void foo()",
+            "[foo()]",
+            "({ value: foo() })",
+            "(class { static value = foo() })",
+        ] {
+            test(&format!("{left} instanceof {constructor}"), true);
+        }
+    }
     test("a instanceof Object", true); // a maybe a proxy that has a side effectful "getPrototypeOf" trap
 
     // b maybe not a object
@@ -1000,6 +1012,7 @@ fn test_new_expressions() {
     test("new ReferenceError", false);
     // RegExp() with no arguments is valid (returns /(?:)/)
     test("new RegExp", false);
+    test("new RegExp('x', 'g', foo())", true);
     test("new SyntaxError", false);
     test("new TypeError", false);
     test("new URIError", false);
@@ -1056,6 +1069,7 @@ fn test_new_expressions() {
     // --- ArrayBuffer: ToIndex -> ToNumber, Symbol and BigInt throw ---
     test("new ArrayBuffer()", false);
     test("new ArrayBuffer(16)", false);
+    test("new ArrayBuffer(void foo())", true);
     test("new ArrayBuffer(x)", true); // unknown -> could be Symbol or BigInt
     test("new ArrayBuffer(0n)", true); // ToNumber(BigInt) throws
 
@@ -1665,4 +1679,39 @@ fn test_property_write_side_effects_support() {
     // Sub-expression side effects still propagate
     test_with_ctx("(foo()).b = 1", &no_side_effects_ctx, true);
     test_with_ctx("a[foo()] = 1", &no_side_effects_ctx, true);
+}
+
+#[test]
+fn throwing_buffer_lengths_and_uri_arguments() {
+    for source in [
+        "new ArrayBuffer(-1)",
+        "new ArrayBuffer('-1')",
+        "new ArrayBuffer(-Infinity)",
+        "new ArrayBuffer(0n)",
+        "new ArrayBuffer(...[])",
+        "new ArrayBuffer(Infinity)",
+        "new ArrayBuffer(9007199254740992)",
+        "new ArrayBuffer(0, { get maxByteLength() { foo(); } })",
+        "decodeURI('%')",
+        "decodeURIComponent('%')",
+        "decodeURIComponent('%C0%AF')",
+        "decodeURIComponent(...[])",
+        "decodeURIComponent('%ED%A0%80')",
+        r#"encodeURI("\uD800")"#,
+        r#"encodeURIComponent("\uDC00")"#,
+        "decodeURIComponent(x)",
+        "encodeURI(x)",
+    ] {
+        test(source, true);
+    }
+    for source in [
+        "new ArrayBuffer(-0.5)",
+        "new ArrayBuffer(NaN)",
+        "decodeURI('hello')",
+        "decodeURIComponent(123)",
+        r#"encodeURI("\uD83D\uDE00")"#,
+        "encodeURIComponent(123)",
+    ] {
+        test(source, false);
+    }
 }

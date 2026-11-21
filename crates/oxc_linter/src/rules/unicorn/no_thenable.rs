@@ -261,6 +261,7 @@ fn check_expression(expr: &Expression, ctx: &LintContext<'_>) -> Option<oxc_span
 fn contains_then(key: &PropertyKey, ctx: &LintContext) -> Option<Span> {
     match key {
         PropertyKey::StaticIdentifier(ident) if ident.name == "then" => Some(ident.span),
+        PropertyKey::StaticStringLiteral(lit) if lit.value == "then" => Some(lit.span),
         match_expression!(PropertyKey) => check_expression(key.to_expression(), ctx),
         _ => None,
     }

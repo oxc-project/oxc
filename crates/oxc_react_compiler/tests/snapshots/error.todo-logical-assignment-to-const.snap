@@ -1,0 +1,29 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.todo-logical-assignment-to-const.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Logical assignment to `const` variable `value` is not supported", labels: [LabeledSpan { label: Some("Cannot compile logical assignment to const `value`"), span: Span { start: 503, end: 508 }, primary: true }], help: Some("Declare `value` with `let` if it may be assigned, or write a nullish/logical expression instead of a logical assignment"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Advice, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Logical assignment to `const` variable `value` is not supported", labels: [LabeledSpan { label: Some("Cannot compile logical assignment to const `value`"), span: Span { start: 629, end: 634 }, primary: true }], help: Some("Declare `value` with `let` if it may be assigned, or write a nullish/logical expression instead of a logical assignment"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Advice, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
+
+// @panicThreshold:"none"
+// `const value = 1; value ??= 2` never assigns, so this must not be reported
+// as a Syntax error. The conditional store is still a compiler limitation:
+// when the store is taken, JavaScript throws, and lowering it as a
+// reassignment would rewrite `const` to `let` and swallow that TypeError.
+// A const closed over by a nested function is the same limitation — marking
+// it reassigned would reject the declaration as Syntax.
+function Component() {
+	const value = 1;
+	value ??= 2;
+	return <div>{value}</div>;
+}
+function ComponentClosedOver() {
+	const value = 1;
+	const assign = () => {
+		value &&= 2;
+		return value;
+	};
+	return <div>{assign()}</div>;
+}

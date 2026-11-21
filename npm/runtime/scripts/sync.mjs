@@ -31,7 +31,13 @@ files.sort((a, b) => (a === b ? 0 : a < b ? -1 : 1));
 
 const helpersDir = join(runtimeDir, "src/helpers");
 const upstreamHelpers = files.filter((name) => !name.includes("/") && name.endsWith(".js"));
-const customHelpers = ["decorate.js", "decorateMetadata.js", "decorateParam.js"];
+const previous = JSON.parse(readFileSync(join(runtimeDir, "upstream.json"), "utf8"));
+const { customHelpers, patches } = previous;
+for (const name of customHelpers) {
+  if (files.includes(name) || files.includes(`esm/${name}`)) {
+    throw new Error(`Upstream helper conflicts with Oxc-owned helper ${name}`);
+  }
+}
 const legacyHelpers = readdirSync(helpersDir)
   .filter(
     (name) =>
@@ -46,8 +52,6 @@ const hashes = Object.fromEntries(
       .digest("hex"),
   ]),
 );
-const previous = JSON.parse(readFileSync(join(runtimeDir, "upstream.json"), "utf8"));
-const { patches } = previous;
 for (const [relative, patch] of Object.entries(patches)) {
   if (hashes[relative] !== previous.files[relative]) {
     throw new Error(`Review the local patch for changed upstream helper ${relative}`);
@@ -122,5 +126,5 @@ writeFileSync(
 );
 // oxlint-disable-next-line no-console
 console.log(
-  `Copied @babel/runtime@${upstreamPackage.version}: ${upstreamHelpers.length} helper pairs; retained ${legacyHelpers.length} legacy and ${customHelpers.length} TypeScript helpers.`,
+  `Copied @babel/runtime@${upstreamPackage.version}: ${upstreamHelpers.length} helper pairs; retained ${legacyHelpers.length} legacy and ${customHelpers.length} Oxc-owned helpers.`,
 );

@@ -1,0 +1,11 @@
+// less.js accepts a percentage as a selector element outside `@keyframes` too,
+// so these are plain rules: no keyframe-selector normalization (`FROM`, `50.0%` stay as written)
+@frames: { FROM, 50.0% { top: 0; } };
+@keyframes: { 50% { top: 0; } };
+.a, 50% { top: 0; }
+.a 50% { top: 0; }
+50% > a { top: 0; }
+50% { top: 0; }
+
+// Inside `@keyframes`, it is a keyframe selector (`FROM` lowercases)
+@keyframes k { FROM, 50% { top: 0; } }

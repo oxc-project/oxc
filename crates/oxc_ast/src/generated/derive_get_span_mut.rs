@@ -197,6 +197,9 @@ impl GetSpanMut for PropertyKey<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::StaticIdentifier(it) => GetSpanMut::span_mut(&mut **it),
+            Self::StaticStringLiteral(it) => GetSpanMut::span_mut(&mut **it),
+            Self::StaticNumericLiteral(it) => GetSpanMut::span_mut(&mut **it),
+            Self::StaticBigIntLiteral(it) => GetSpanMut::span_mut(&mut **it),
             Self::PrivateIdentifier(it) => GetSpanMut::span_mut(&mut **it),
             Self::BooleanLiteral(it) => GetSpanMut::span_mut(&mut **it),
             Self::NullLiteral(it) => GetSpanMut::span_mut(&mut **it),
