@@ -151,7 +151,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// you've allocated in the arena.
     ///
     /// The allocated bytes do not include the size of arena metadata, so the amount of memory requested from
-    /// the Rust allocator is higher than the returned value.
+    /// the parent allocator (the global allocator by default) is higher than the returned value.
     ///
     /// # Example
     ///
