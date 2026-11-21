@@ -220,7 +220,7 @@ impl Rule for NoUselessAssignment {
             for reference in ctx.symbol_references(symbol_id) {
                 let mut is_within_pending_assignment = false;
                 if let Some((lhs, previous_value_read)) = pending_assignment_lhs
-                    && let Some(assign_node_id) = Self::get_assignment_node(ctx, lhs)
+                    && let Some(assign_node_id) = Self::get_assignment_node(ctx, lhs.node_id())
                 {
                     let assign_node = ctx.nodes().get_node(assign_node_id);
                     if assign_node
@@ -309,7 +309,9 @@ impl Rule for NoUselessAssignment {
                     continue;
                 }
 
-                if reference.is_write() && Self::get_assignment_node(ctx, reference).is_some() {
+                if reference.is_write()
+                    && Self::get_assignment_node(ctx, reference.node_id()).is_some()
+                {
                     if let Some((prev, previous_value_read)) = pending_assignment_lhs.take() {
                         Self::process_reference_deferred(
                             ctx,
@@ -526,7 +528,12 @@ impl NoUselessAssignment {
         op: Operation,
         compact_idx: u32,
     ) {
-        let block_id = Self::block_id_for_node(ctx, graph, node);
+        let block_node = if op == Operation::Write {
+            Self::get_assignment_node(ctx, node).unwrap_or(node)
+        } else {
+            node
+        };
+        let block_id = Self::block_id_for_node(ctx, graph, block_node);
         cfg_ops[block_id].push(OpAtNode { op, node, compact_idx });
     }
 
@@ -638,8 +645,8 @@ impl NoUselessAssignment {
         last
     }
 
-    fn get_assignment_node(ctx: &LintContext, reference: &Reference) -> Option<NodeId> {
-        let node = ctx.nodes().get_node(reference.node_id());
+    fn get_assignment_node(ctx: &LintContext, node_id: NodeId) -> Option<NodeId> {
+        let node = ctx.nodes().get_node(node_id);
         if !matches!(node.kind(), AstKind::IdentifierReference(_)) {
             return None;
         }
@@ -746,7 +753,7 @@ impl NoUselessAssignment {
                 }
 
                 if reference.is_write()
-                    && Self::get_assignment_node(ctx, reference) == Some(usage.node_id)
+                    && Self::get_assignment_node(ctx, reference.node_id()) == Some(usage.node_id)
                 {
                     if usage.direct_target.replace(reference.node_id()).is_some() {
                         usage.can_defer_target = false;
@@ -1610,6 +1617,14 @@ function useResource(unsafe: (resource: { readonly release: () => void }) => voi
         "function f(p, q = (p = 1), r = (p = 2)) { return p; }",
         "function f(p, { [p = 1]: q } = (p = 2, {})) { return p; }",
         "function f(p, { a = (p = 1) } = (p = 2, {})) { return p; }",
+        "function load(cache, key, compute) { let value = null; cache?.set(key, (value = compute(key))); return value; }",
+        "let x = 0; o?.[x = 1]; use(x);",
+        "let x = 0; f?.(x = 1); use(x);",
+        "let x = 0; o?.f.g(x = 1); use(x);",
+        "let x = 0; o?.a[x = 1]; use(x);",
+        "let x = 0; o?.[x++]; use(x);",
+        "let x = 0; while (condition) { use(x); o?.f(x = 1); }",
+        "let x = 0; o?.f(() => { x = 1; use(x); }); use(x);",
     ];
 
     let fail = vec![
@@ -1978,6 +1993,12 @@ function useResource(unsafe: (resource: { readonly release: () => void }) => voi
         "function f(p) { use(p); p = 1; }",
         "function f(p, q = p) { p = 1; return q; }",
         "function f(cb = p => { p = 1; p = 2; return p; }) { return cb; }",
+        "let x = 0; (o?.f)(x = 1); use(x);",
+        "let x = 0; (x = 1)?.f(); use(x);",
+        "let x = 0; o?.f(x = 1); x = 2; use(x);",
+        "let x = 0; o?.f(x = 1, x);",
+        "let x = 0; o?.f(x = 1, x = 2); use(x);",
+        "let x = 0; x = o?.f(x);",
     ];
 
     Tester::new(NoUselessAssignment::NAME, NoUselessAssignment::PLUGIN, pass, fail)
