@@ -1,0 +1,31 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ import(export): Multiple exports of name 'value'.
+   ╭─[index.ts:1:1]
+ 1 │ export * from 'export-star-regression'; export const value = 2;
+   · ───────────────────────────────────────              ─────
+   ╰────
+  help: Rename or remove the duplicate export so each name is exported only once.
+
+  ⚠ import(export): Multiple exports of name 'nested'.
+   ╭─[index.ts:1:1]
+ 1 │ export * from 'export-star-regression'; export const nested = 3;
+   · ───────────────────────────────────────              ──────
+   ╰────
+  help: Rename or remove the duplicate export so each name is exported only once.
+
+  ⚠ import(export): No named exports found in module 'export-star-regression/default-only.js'
+   ╭─[index.ts:1:15]
+ 1 │ export * from 'export-star-regression/default-only.js';
+   ·               ────────────────────────────────────────
+   ╰────
+  help: Remove the `export *` re-export, or add named exports to the target module.
+
+  ⚠ import(export): Multiple exports of name 'b'.
+   ╭─[index.ts:1:1]
+ 1 │ export * from 'export-star-regression/cycle-a.js'; export const b = 3;
+   · ──────────────────────────────────────────────────              ─
+   ╰────
+  help: Rename or remove the duplicate export so each name is exported only once.
