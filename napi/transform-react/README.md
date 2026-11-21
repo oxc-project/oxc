@@ -212,8 +212,9 @@ an array of filename substrings instead.
   The bundler or development server must provide the Refresh runtime and HMR
   integration.
 - The transform stages are independent. `reactCompiler: false` still removes
-  TypeScript and transforms JSX, while `jsx: "preserve"` retains JSX without
-  disabling React Compiler. Recoverable compiler bail-outs still run the
+  TypeScript and transforms JSX, while `jsx: "preserve"` retains JSX and
+  `typescript: "preserve"` retains TypeScript syntax without disabling React
+  Compiler. Recoverable compiler bail-outs still run the
   downstream TypeScript and JSX transforms.
 
 See [`index.d.ts`] for the generated TypeScript declarations and the [Oxc JSX

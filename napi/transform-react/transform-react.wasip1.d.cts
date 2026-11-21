@@ -358,11 +358,11 @@ export interface TransformOptions {
    */
   jsx?: 'preserve' | JsxOptions
   /**
-   * Configure how Typescript is transformed.
+   * Configure how TypeScript is transformed, or preserve TypeScript syntax.
    *
    * @see <https://oxc.rs/docs/guide/usage/transformer/typescript>
    */
-  typescript?: TypeScriptOptions
+  typescript?: 'preserve' | TypeScriptOptions
   /**
    * Configure React Compiler, or disable it with `false`.
    *
@@ -397,7 +397,7 @@ export interface TransformResult {
  * Compile a JavaScript or TypeScript React module synchronously.
  *
  * The React Compiler runs first on the pristine AST. TypeScript syntax is
- * removed and configured JSX transforms run afterwards.
+ * removed unless preserved, and configured JSX transforms run afterwards.
  */
 export declare function transformSync(filename: string, sourceText: string, options?: TransformOptions | undefined | null): TransformResult
 
