@@ -86,6 +86,26 @@ impl<'a> MatchDetector<'a> {
                     CollectionResult::Incomplete
                 }
             }
+            Pat::Or(or) => {
+                let mut overall_result = CollectionResult::Complete;
+                for case in &or.cases {
+                    let result = match case {
+                        Pat::TupleStruct(ts) => {
+                            if let Some(variant) = astkind_variant_from_path(&ts.path) {
+                                self.node_types.insert(variant);
+                                CollectionResult::Complete
+                            } else {
+                                CollectionResult::Incomplete
+                            }
+                        }
+                        _ => CollectionResult::Incomplete,
+                    };
+                    if result == CollectionResult::Incomplete {
+                        overall_result = CollectionResult::Incomplete;
+                    }
+                }
+                overall_result
+            }
             Pat::Guard(guard) => {
                 if let Pat::TupleStruct(ts) = guard.pat.as_ref() {
                     if let Some(variant) = astkind_variant_from_path(&ts.path) {

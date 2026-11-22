@@ -20,9 +20,9 @@ pub use crate::utils::jest::parse_jest_fn::{
     ParsedJestFnCall as ParsedJestFnCallNew, parse_jest_fn_call, validate_expect_type_of_call,
 };
 use crate::{LintContext, ast_util::get_symbol_id_of_variable};
-pub use padding_around_block::report_missing_padding_before_jest_block;
+pub use padding::{PaddingConfig, PaddingStatement, check_padding};
 
-mod padding_around_block;
+mod padding;
 mod parse_jest_fn;
 
 const JEST_METHOD_NAMES: [&str; 19] = [
