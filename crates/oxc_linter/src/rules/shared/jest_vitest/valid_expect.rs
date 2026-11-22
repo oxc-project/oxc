@@ -12,7 +12,7 @@ use crate::{
     AstNode,
     context::LintContext,
     utils::{
-        ExpectError, PossibleJestNode, iter_possible_jest_call_node_with_parentheses,
+        ExpectError, PossibleJestNode, iter_possible_jest_call_node_with_wrappers,
         parse_expect_jest_fn_call, validate_expect_type_of_call,
     },
 };
@@ -134,8 +134,7 @@ impl ValidExpectConfig {
 
     pub fn run_once(&self, ctx: &LintContext) {
         let mut possible_jest_nodes: Vec<_> =
-            iter_possible_jest_call_node_with_parentheses(ctx, self.supports_vitest_syntax)
-                .collect();
+            iter_possible_jest_call_node_with_wrappers(ctx, self.supports_vitest_syntax).collect();
         possible_jest_nodes.sort_unstable_by_key(|node| node.node.id());
         let mut fixed_function_expression: FxHashSet<ScopeId> = FxHashSet::default();
 

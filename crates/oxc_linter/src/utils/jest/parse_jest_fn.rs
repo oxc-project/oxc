@@ -13,6 +13,8 @@ use oxc_ast::{
 use oxc_semantic::AstNode;
 use oxc_span::Span;
 
+use super::type_assertion_wrapper_expression;
+
 use crate::{
     context::LintContext,
     utils::{
@@ -330,7 +332,7 @@ pub fn validate_expect_type_of_call<'a>(
     let result = validate_type_matcher_chain(members);
     if matches!(result, Err(ExpectError::MatcherNotFound)) {
         let mut parent = ctx.nodes().parent_node(node.id());
-        while matches!(parent.kind(), AstKind::ParenthesizedExpression(_)) {
+        while type_assertion_wrapper_expression(parent.kind()).is_some() {
             parent = ctx.nodes().parent_node(parent.id());
         }
         if matches!(
@@ -394,8 +396,10 @@ fn has_outer_assertion_call<'a, 'b>(mut node: &'b AstNode<'a>, ctx: &'b LintCont
             AstKind::CallExpression(call) => return call.callee.address() == node.address(),
             AstKind::StaticMemberExpression(member) => &member.object,
             AstKind::ComputedMemberExpression(member) => &member.object,
-            AstKind::ParenthesizedExpression(paren) => &paren.expression,
-            _ => return false,
+            kind => {
+                let Some(inner) = type_assertion_wrapper_expression(kind) else { return false };
+                inner
+            }
         };
         if object.address() != node.address() {
             return false;
@@ -490,19 +494,19 @@ fn resolve_to_jest_fn<'a>(
 
 fn resolve_first_ident<'a>(
     expr: &'a Expression<'a>,
-    follow_parentheses: bool,
+    unwrap_wrappers: bool,
 ) -> Option<&'a IdentifierReference<'a>> {
-    let expr = if follow_parentheses { expr.without_parentheses() } else { expr };
+    let expr = if unwrap_wrappers { expr.get_inner_expression() } else { expr };
     match expr {
         Expression::Identifier(ident) => Some(ident),
         match_member_expression!(Expression) => {
-            resolve_first_ident(expr.to_member_expression().object(), follow_parentheses)
+            resolve_first_ident(expr.to_member_expression().object(), unwrap_wrappers)
         }
         Expression::CallExpression(call_expr) => {
-            resolve_first_ident(&call_expr.callee, follow_parentheses)
+            resolve_first_ident(&call_expr.callee, unwrap_wrappers)
         }
         Expression::TaggedTemplateExpression(tagged_expr) => {
-            resolve_first_ident(&tagged_expr.tag, follow_parentheses)
+            resolve_first_ident(&tagged_expr.tag, unwrap_wrappers)
         }
         _ => None,
     }
@@ -677,20 +681,20 @@ struct NodeChainParams<'a> {
 /// Port from [eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest/blob/a058f22f94774eeea7980ea2d1f24c6808bf3e2c/src/rules/utils/parseJestFnCall.ts#L36-L51)
 fn get_node_chain<'a>(
     params: &NodeChainParams<'a>,
-    follow_parentheses: bool,
+    unwrap_wrappers: bool,
 ) -> Vec<KnownMemberExpressionProperty<'a>> {
     let mut chain = Vec::new();
-    recurse_extend_node_chain(params, &mut chain, follow_parentheses);
+    recurse_extend_node_chain(params, &mut chain, unwrap_wrappers);
     chain
 }
 
 fn recurse_extend_node_chain<'a>(
     params: &NodeChainParams<'a>,
     chain: &mut Vec<KnownMemberExpressionProperty<'a>>,
-    follow_parentheses: bool,
+    unwrap_wrappers: bool,
 ) {
     let NodeChainParams { expr, parent, parent_kind, grandparent_kind } = params;
-    let expr = if follow_parentheses { expr.without_parentheses() } else { expr };
+    let expr = if unwrap_wrappers { expr.get_inner_expression() } else { expr };
 
     match expr {
         match_member_expression!(Expression) => {
@@ -702,7 +706,7 @@ fn recurse_extend_node_chain<'a>(
                 grandparent_kind: *parent_kind,
             };
 
-            recurse_extend_node_chain(&params, chain, follow_parentheses);
+            recurse_extend_node_chain(&params, chain, unwrap_wrappers);
             if let Some((span, element)) = MemberExpressionElement::from_member_expr(member_expr) {
                 chain.push(KnownMemberExpressionProperty {
                     element,
@@ -729,7 +733,7 @@ fn recurse_extend_node_chain<'a>(
                 parent_kind: Some(KnownMemberExpressionParentKind::Call),
                 grandparent_kind: *parent_kind,
             };
-            recurse_extend_node_chain(&params, chain, follow_parentheses);
+            recurse_extend_node_chain(&params, chain, unwrap_wrappers);
         }
         Expression::TaggedTemplateExpression(tagged_expr) => {
             let params = NodeChainParams {
@@ -738,7 +742,7 @@ fn recurse_extend_node_chain<'a>(
                 parent_kind: Some(KnownMemberExpressionParentKind::TaggedTemplate),
                 grandparent_kind: *parent_kind,
             };
-            recurse_extend_node_chain(&params, chain, follow_parentheses);
+            recurse_extend_node_chain(&params, chain, unwrap_wrappers);
         }
         Expression::StringLiteral(string_literal) => {
             chain.push(KnownMemberExpressionProperty {
