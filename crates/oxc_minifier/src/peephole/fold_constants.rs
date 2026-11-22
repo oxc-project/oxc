@@ -471,6 +471,11 @@ impl<'a> PeepholeOptimizations {
     /// result could differ from the runtime value.
     fn numeric_expression_size_lower_bound(expr: &Expression<'a>) -> Option<usize> {
         match expr {
+            // Minified codegen prints non-finite numbers as `1/0` or `-1/0`, which the next run
+            // measures as a division.
+            Expression::NumericLiteral(lit) if lit.value.is_infinite() => {
+                Some(usize::from(lit.value.is_sign_negative()) + "1/0".len())
+            }
             Expression::NumericLiteral(lit) => Self::number_literal_source_len(lit.value),
             Expression::UnaryExpression(e)
                 if matches!(

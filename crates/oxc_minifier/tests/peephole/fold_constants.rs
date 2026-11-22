@@ -1128,6 +1128,8 @@ fn test_fold_division() {
     fold("x = 3 / 2", "x = 1.5");
     fold("x = 1e-323 / 2", "x = 5e-324");
     fold("x = 9007199254740991 / 0.5", "x = 18014398509481982");
+    fold("x = 1 / 3 / Infinity", "x = 0");
+    fold("x = 1 / 3 / -Infinity", "x = -0");
 
     fold_same("x = 1 / 3");
     fold_same("x = 1 / 8");
