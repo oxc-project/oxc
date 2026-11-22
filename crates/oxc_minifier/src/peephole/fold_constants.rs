@@ -827,13 +827,26 @@ impl<'a> PeepholeOptimizations {
                 left.span = left.span.merge_within(right.span, parent_span).unwrap_or(SPAN);
                 let left_last_quasi =
                     left.quasis.last_mut().expect("template literal must have at least one quasi");
-                let mut right_quasis = right.quasis.drain(..);
-                Self::join_template_quasis(
-                    left_last_quasi,
-                    &[right_quasis.next().expect("template literal must have at least one quasi")],
+                let right_first_quasi = right
+                    .quasis
+                    .first_mut()
+                    .expect("template literal must have at least one quasi");
+                left_last_quasi.value.raw = Self::concat_template_literal_raw(
+                    [left_last_quasi.value.raw.as_str(), right_first_quasi.value.raw.as_str()],
                     ctx,
                 );
-                left.quasis.extend(right_quasis);
+                let new_cooked = if let (Some(cooked1), Some(cooked2)) =
+                    (left_last_quasi.value.cooked, right_first_quasi.value.cooked)
+                {
+                    Some(JSStr::from_js_strs_array_in([cooked1, cooked2], ctx))
+                } else {
+                    None
+                };
+                left_last_quasi.value.cooked = new_cooked;
+                if !right.quasis.is_empty() {
+                    left_last_quasi.tail = false;
+                }
+                left.quasis.extend(right.quasis.drain(1..)); // first quasi is already handled
                 left.expressions.extend(right.expressions.drain(..));
                 return Some(left_expr.take_in(ctx));
             }
@@ -1190,54 +1203,51 @@ impl<'a> PeepholeOptimizations {
     fn flatten_nested_template_literals(t: &mut TemplateLiteral<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut expressions = ArenaVec::with_capacity_in(t.expressions.len(), ctx);
         let mut quasis = ArenaVec::with_capacity_in(t.quasis.len(), ctx);
-        let mut parent_iters = Vec::new();
-        let mut pending_quasis = Vec::new();
+        let mut parent = None;
+        let mut ancestors = Vec::new();
         let mut remaining_quasis = t.quasis.take_in(ctx).into_iter();
         let mut remaining_exprs = t.expressions.take_in(ctx).into_iter();
-        pending_quasis.push(remaining_quasis.next().unwrap());
+        quasis.push(remaining_quasis.next().unwrap());
         loop {
             match remaining_exprs.next() {
                 Some(Expression::TemplateLiteral(nested)) => {
                     let nested = nested.unbox();
-                    parent_iters.push((remaining_quasis, remaining_exprs));
+                    if let Some(ancestor) = parent.replace((remaining_quasis, remaining_exprs)) {
+                        ancestors.push(ancestor);
+                    }
                     remaining_quasis = nested.quasis.into_iter();
                     remaining_exprs = nested.expressions.into_iter();
                 }
                 Some(expr) => {
-                    quasis.push(Self::merge_pending_template_quasis(&mut pending_quasis, ctx));
+                    Self::merge_template_quasis(&mut quasis, expressions.len(), ctx);
                     expressions.push(expr);
                 }
                 None => {
-                    let Some(parent) = parent_iters.pop() else { break };
-                    (remaining_quasis, remaining_exprs) = parent;
+                    let Some(resume) = parent.take() else { break };
+                    (remaining_quasis, remaining_exprs) = resume;
+                    parent = ancestors.pop();
                 }
             }
-            pending_quasis.push(remaining_quasis.next().unwrap());
+            quasis.push(remaining_quasis.next().unwrap());
         }
-        quasis.push(Self::merge_pending_template_quasis(&mut pending_quasis, ctx));
+        Self::merge_template_quasis(&mut quasis, expressions.len(), ctx);
         t.expressions = expressions;
         t.quasis = quasis;
         ctx.notice_change();
     }
 
-    fn merge_pending_template_quasis(
-        pending: &mut Vec<TemplateElement<'a>>,
-        ctx: &TraverseCtx<'a>,
-    ) -> TemplateElement<'a> {
-        let mut parts = pending.drain(..);
-        let mut first = parts.next().unwrap();
-        Self::join_template_quasis(&mut first, parts.as_slice(), ctx);
-        first
-    }
-
-    fn join_template_quasis(
-        left: &mut TemplateElement<'a>,
-        right: &[TemplateElement<'a>],
+    fn merge_template_quasis(
+        quasis: &mut ArenaVec<'a, TemplateElement<'a>>,
+        start: usize,
         ctx: &TraverseCtx<'a>,
     ) {
-        let Some(last) = right.last() else { return };
-        left.tail = last.tail;
-        let parts = std::iter::once(&*left).chain(right).filter(|part| !part.value.raw.is_empty());
+        let pending = &quasis[start..];
+        if pending.len() == 1 {
+            return;
+        }
+        let last = pending.last().unwrap();
+        let tail = last.tail;
+        let parts = pending.iter().filter(|part| !part.value.raw.is_empty());
         let mut nonempty = parts.clone();
         let first = nonempty.next().unwrap_or(last);
         let span = first.span;
@@ -1261,8 +1271,10 @@ impl<'a> PeepholeOptimizations {
         } else {
             first.value.clone()
         };
-        left.span = span;
-        left.value = value;
+        quasis[start].tail = tail;
+        quasis[start].span = span;
+        quasis[start].value = value;
+        quasis.truncate(start + 1);
     }
 
     /// Inline constant values in template literals
