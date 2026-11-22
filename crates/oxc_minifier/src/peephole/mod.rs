@@ -576,7 +576,12 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
             }
         } else {
             match expr {
-                Expression::TemplateLiteral(_) => Self::fold_template_literal(expr, ctx),
+                Expression::TemplateLiteral(_) => Self::fold_template_literal::<false>(expr, ctx),
+                Expression::TaggedTemplateExpression(tagged) => {
+                    for substitution in &mut tagged.quasi.expressions {
+                        Self::fold_template_literal::<true>(substitution, ctx);
+                    }
+                }
                 Expression::ObjectExpression(e) => Self::fold_object_exp(e, ctx),
                 Expression::BinaryExpression(e) => {
                     Self::substitute_swap_binary_expressions(e);

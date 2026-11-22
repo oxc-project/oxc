@@ -1184,17 +1184,21 @@ impl<'a> PeepholeOptimizations {
         })
     }
 
-    pub fn fold_template_literal(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+    pub fn fold_template_literal<const TAGGED_SUBSTITUTION: bool>(
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         let Expression::TemplateLiteral(template) = expr else { return };
         if template.expressions.iter().any(|expr| matches!(expr, Expression::TemplateLiteral(_))) {
-            if matches!(ctx.parent(), Ancestor::TemplateLiteralExpressions(_))
-                && !matches!(ctx.ancestor(1), Ancestor::TaggedTemplateExpressionQuasi(_))
+            if !TAGGED_SUBSTITUTION
+                && matches!(ctx.parent(), Ancestor::TemplateLiteralExpressions(_))
             {
-                // Let the outer untagged template flatten the whole chain at once.
                 Self::inline_template_literal::<true>(template, ctx);
                 return;
             }
             Self::flatten_nested_template_literals(template, ctx);
+        } else if TAGGED_SUBSTITUTION {
+            return;
         }
         Self::inline_template_literal::<false>(template, ctx);
         Self::substitute_template_literal(expr, ctx);
