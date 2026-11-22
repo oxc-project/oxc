@@ -9,9 +9,12 @@ pub fn class_has_decorators(class: &Class<'_>) -> bool {
 
 /// Whether a class contains runtime auto-accessors.
 pub fn class_body_has_auto_accessors(body: &ClassBody<'_>) -> bool {
-    body.body.iter().any(|element| {
-        matches!(element, ClassElement::AccessorProperty(prop) if !prop.r#type.is_abstract())
-    })
+    body.body.iter().any(is_auto_accessor)
+}
+
+/// Whether a class element is a runtime auto-accessor.
+pub fn is_auto_accessor(element: &ClassElement<'_>) -> bool {
+    matches!(element, ClassElement::AccessorProperty(prop) if !prop.r#type.is_abstract())
 }
 
 /// Returns `true` if any class element is decorated.

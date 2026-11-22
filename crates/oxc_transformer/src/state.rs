@@ -85,7 +85,7 @@ impl<'a> TransformState<'a> {
             .map_or_else(|| String::from("unknown"), |name| name.to_string_lossy().to_string());
 
         let decorator_mode = options.decorator.mode();
-        let class_transform = ClassTransform::new(&options.env, decorator_mode);
+        let class_transform = ClassTransform::new(&options.env);
 
         Self {
             errors: vec![],

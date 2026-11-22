@@ -3,21 +3,23 @@
 //! Transforms look up the lowering decision by class scope. Decisions that depend on decorators
 //! or auto-accessors are recorded at class entry, before any transform can change the class.
 
-use oxc_ast::ast::Class;
+use oxc_ast::ast::{Class, ClassElement};
 use oxc_syntax::scope::ScopeId;
 use rustc_hash::FxHashMap;
 use smallvec::SmallVec;
 
 use crate::{
     decorator::DecoratorMode,
-    utils::decorated_class::{class_body_has_auto_accessors, class_has_decorators},
+    utils::decorated_class::{
+        class_body_has_auto_accessors, class_has_decorators, is_auto_accessor,
+    },
 };
 
 use super::class_transform::ClassTransform;
 
 /// Which transform owns a class.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum ClassLoweringMode {
+enum ClassLoweringMode {
     /// Class fields stay native; auto-accessors and static blocks may still be lowered.
     Native,
     /// Class-properties lowers this class because the target requires class field lowering.
@@ -50,8 +52,48 @@ impl ClassLowering {
         Self { mode, has_decorators, has_auto_accessor }
     }
 
-    pub fn mode(self) -> ClassLoweringMode {
-        self.mode
+    /// Whether class-properties lowers the fields of this class.
+    pub fn lowers_fields(self) -> bool {
+        self.mode == ClassLoweringMode::LowerAll
+    }
+
+    /// Whether a field or auto-accessor stays as written for the downstream transform.
+    ///
+    /// A preserved class keeps its decorated fields and its auto-accessors. Transforms that
+    /// rewrite the other fields must leave these in place, and must not move other initializers
+    /// after theirs (see [`Self::first_movable_instance_field`]).
+    pub fn keeps_field(self, element: &ClassElement<'_>) -> bool {
+        self.mode == ClassLoweringMode::Preserve
+            && (is_auto_accessor(element)
+                || matches!(element, ClassElement::PropertyDefinition(_))
+                    && element.has_decorator())
+    }
+
+    /// Index of the first instance field whose initializer can move after the field
+    /// initializers that stay in the class, such as into the constructor.
+    ///
+    /// Instance fields before the last kept instance field that runs code on initialization (a
+    /// decorated field, or an auto-accessor with an initializer or decorators) must stay in
+    /// place, or their initializers would run after it.
+    pub fn first_movable_instance_field(self, class: &Class<'_>) -> usize {
+        if self.mode != ClassLoweringMode::Preserve {
+            return 0;
+        }
+        class
+            .body
+            .body
+            .iter()
+            .rposition(|element| {
+                !element.r#static()
+                    && self.keeps_field(element)
+                    && match element {
+                        ClassElement::AccessorProperty(accessor) => {
+                            accessor.value.is_some() || element.has_decorator()
+                        }
+                        _ => true,
+                    }
+            })
+            .map_or(0, |index| index + 1)
     }
 
     /// Whether the class or one of its elements is decorated.
