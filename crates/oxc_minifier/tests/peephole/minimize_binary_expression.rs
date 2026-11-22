@@ -55,6 +55,28 @@ fn minimize_bitwise_binary_expr() {
     fold_same("(a | 0) & b");
     fold_same("a & (b | 0)");
 
+    // `(a | 0) OP n` -> `a OP n` and `n OP (a | 0)` -> `n OP a`.
+    fold("(a | 0) << 1", "a << 1");
+    fold("1 << (a | 0)", "1 << a");
+    fold("(a | 0) >> 1", "a >> 1");
+    fold("1 >> (a | 0)", "1 >> a");
+    fold("(a | 0) >>> 1", "a >>> 1");
+    fold("1 >>> (a | 0)", "1 >>> a");
+    fold("(a | 0) | 1", "a | 1");
+    fold("1 | (a | 0)", "1 | a");
+    fold("(a | 0) ^ 1", "a ^ 1");
+    fold("1 ^ (a | 0)", "1 ^ a");
+    fold("(a | 0) & 1", "a & 1");
+    fold("1 & (a | 0)", "1 & a");
+    fold("(0 | a) ^ 1", "a ^ 1");
+    fold("(a | 0) ^ (b | 0)", "(a | 0) ^ b");
+    fold("(b = 1) ^ (a | 0)", "(b = 1) ^ a");
+
+    fold_same("(a | 0) ^ (b = 1)");
+    fold_same("(a | 0) ^ 1n");
+    fold_same("1n ^ (a | 0)");
+    fold_same("(a | 0) + 1");
+
     // `a OP 0` -> `a | 0`
     fold("a << 0", "a | 0");
     fold("a >> 0", "a | 0");
