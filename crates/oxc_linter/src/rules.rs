@@ -382,6 +382,7 @@ pub(crate) mod jest {
     pub mod padding_around_after_each_blocks;
     pub mod padding_around_before_all_blocks;
     pub mod padding_around_before_each_blocks;
+    pub mod padding_around_describe_blocks;
     pub mod padding_around_test_blocks;
     pub mod prefer_called_with;
     pub mod prefer_comparison_matcher;
@@ -882,6 +883,7 @@ pub(crate) mod vitest {
     pub mod padding_around_after_each_blocks;
     pub mod padding_around_before_all_blocks;
     pub mod padding_around_before_each_blocks;
+    pub mod padding_around_describe_blocks;
     pub mod padding_around_test_blocks;
     pub mod prefer_called_exactly_once_with;
     pub mod prefer_called_once;
