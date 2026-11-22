@@ -1,7 +1,6 @@
 use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
-use oxc_semantic::ReferenceFlags;
 use oxc_span::{ContentEq, GetSpan, SPAN};
 
 use crate::{TraverseCtx, symbol_metadata::MemberWriteEffect};
@@ -311,8 +310,7 @@ impl<'a> PeepholeOptimizations {
     ) {
         let object = match assign_target {
             AssignmentTarget::AssignmentTargetIdentifier(id) => {
-                let reference = ctx.scoping_mut().get_reference_mut(id.reference_id());
-                reference.flags_mut().insert(ReferenceFlags::Read);
+                ctx.mark_reference_as_read(id.reference_id());
                 return;
             }
             AssignmentTarget::StaticMemberExpression(e) => &e.object,

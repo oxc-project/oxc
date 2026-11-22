@@ -93,6 +93,60 @@ fn debug_assert_no_over_prune(program: &Program<'_>, removed_references: &BitSet
     OverPruneCheck { removed_references }.visit_program(program);
 }
 
+/// Debug-only guard for the per-pass reference counts in
+/// [`crate::symbol_value::SymbolValue::references`], run at the end of every
+/// peephole pass:
+///
+/// - every symbol's counts are current against scoping, as checked by
+///   [`TraverseCtx::debug_assert_reference_counts_current`];
+/// - they never miss a reference still in the program. They may still count
+///   references that are gone: a reference minted this pass and dropped
+///   later in it stays counted.
+///
+/// `DroppedSubtreeCollector` stops counting a read as soon as it is dropped,
+/// so a site that mints a bound reference or adds `Read` to one without
+/// `create_counted_reference` or `mark_reference_as_read`, or that drops a
+/// reference still in the program, would let a single-use check see fewer
+/// reads than the program has.
+#[cfg(debug_assertions)]
+fn debug_assert_reference_counts(program: &Program<'_>, ctx: &TraverseCtx<'_>) {
+    use crate::symbol_value::ReferenceCounts;
+
+    struct LiveReferenceCounts<'b> {
+        scoping: &'b Scoping,
+        counts: Vec<ReferenceCounts>,
+    }
+    impl<'a> Visit<'a> for LiveReferenceCounts<'_> {
+        fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
+            let Some(reference_id) = it.reference_id.get() else { return };
+            let reference = self.scoping.get_reference(reference_id);
+            if let Some(symbol_id) = reference.symbol_id() {
+                self.counts[symbol_id.index()].record(reference.flags());
+            }
+        }
+    }
+    let scoping = ctx.scoping();
+    let mut live = LiveReferenceCounts {
+        scoping,
+        counts: vec![ReferenceCounts::default(); scoping.symbols_len()],
+    };
+    live.visit_program(program);
+    for (index, live_counts) in live.counts.into_iter().enumerate() {
+        let symbol_id = SymbolId::from_usize(index);
+        if let Some(value) = ctx.state.symbols.value(symbol_id) {
+            ctx.debug_assert_reference_counts_current(symbol_id);
+            assert!(
+                value.references.covers(live_counts),
+                "per-pass reference counts for `{}` miss references still in the program: \
+                 counted {:?}, in the program {:?}",
+                scoping.symbol_name(symbol_id),
+                value.references,
+                live_counts,
+            );
+        }
+    }
+}
+
 /// Debug-only converse of [`debug_assert_no_over_prune`], run once by the
 /// `Compressor` driver after the fixed-point loop: every reference that
 /// existed when the loop began and is still in a symbol's resolved-references
@@ -388,6 +442,8 @@ pub fn run_peephole_pass<'a>(
     traverse_mut_with_ctx(&mut PeepholeOptimizations, program, ctx);
 
     let ctx = ctx.get_mut();
+    #[cfg(debug_assertions)]
+    debug_assert_reference_counts(program, ctx);
     let revisit_requested = ctx.state.take_revisit_requested();
     let newly_dead = finish_pass(program, ctx, /* force_liveness_analysis */ false);
     debug_assert!(

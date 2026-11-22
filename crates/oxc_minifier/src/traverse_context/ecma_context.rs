@@ -11,8 +11,11 @@ use oxc_ecmascript::{
     },
 };
 use oxc_semantic::{IsGlobalReference, SymbolId};
-use oxc_str::format_str;
-use oxc_syntax::{reference::ReferenceId, scope::ScopeFlags};
+use oxc_str::{Ident, format_str};
+use oxc_syntax::{
+    reference::{ReferenceFlags, ReferenceId},
+    scope::ScopeFlags,
+};
 
 use crate::{
     generated::ancestor::Ancestor,
@@ -302,10 +305,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         falsy_init: bool,
         implicit_undefined_source: bool,
     ) -> &mut SymbolValue<'a> {
-        let mut references = ReferenceCounts::default();
-        for reference in self.scoping().get_resolved_references(symbol_id) {
-            references.record(reference.flags());
-        }
+        let references = self.current_reference_counts(symbol_id);
 
         let scope_id = self.scoping().symbol_scope_id(symbol_id);
         let scope_flags = self.scoping().scope_flags(scope_id);
@@ -360,6 +360,47 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
             boolean_falsy,
         };
         self.state.symbols.init_value(symbol_id, symbol_value)
+    }
+
+    /// Count the resolved references to `symbol_id` that are still live.
+    ///
+    /// Scoping keeps references dropped earlier in this pass until the pass
+    /// finishes, so skip them here. After a value is initialized,
+    /// `DroppedSubtreeCollector` removes later drops from its counts.
+    fn current_reference_counts(&self, symbol_id: SymbolId) -> ReferenceCounts {
+        let mut references = ReferenceCounts::default();
+        let removed_references = &self.state.pass_changes.removed_references;
+        for &reference_id in self.scoping().get_resolved_reference_ids(symbol_id) {
+            if !removed_references.contains(reference_id.index()) {
+                references.record(self.scoping().get_reference(reference_id).flags());
+            }
+        }
+        references
+    }
+
+    /// Debug-only check that `symbol_id`'s per-pass reference counts are
+    /// current. Call it before a decision that relies on how many reads a
+    /// binding has.
+    ///
+    /// A read missing from the counts lets an unused or single-use check fire
+    /// on a binding that is still read. A read that stays counted after it was
+    /// dropped delays the optimization to a later pass.
+    #[inline]
+    pub fn debug_assert_reference_counts_current(&self, symbol_id: SymbolId) {
+        if cfg!(debug_assertions)
+            && let Some(value) = self.state.symbols.value(symbol_id)
+        {
+            let current = self.current_reference_counts(symbol_id);
+            assert!(
+                value.references.is_current(current),
+                "per-pass reference counts for `{}` are stale: counted {:?}, current {:?}. A \
+                 site minted a bound reference or added `Read` to one without \
+                 `create_counted_reference` or `mark_reference_as_read`",
+                self.scoping().symbol_name(symbol_id),
+                value.references,
+                current,
+            );
+        }
     }
 
     /// If two expressions are equal.
@@ -426,7 +467,46 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     /// Used by the `replace_*` / `drop_*` helpers.
     #[inline]
     fn dropped_subtree_collector(&mut self) -> DroppedSubtreeCollector<'a, '_> {
-        DroppedSubtreeCollector::new(&mut self.state.pass_changes, self.scoping.scoping())
+        DroppedSubtreeCollector::new(
+            &mut self.state.pass_changes,
+            &mut self.state.symbols,
+            self.scoping.scoping(),
+        )
+    }
+
+    /// Add `Read` to a write reference that now also reads its binding, such
+    /// as the target of `a = a || b` rewritten to `a ||= b`.
+    ///
+    /// Counts the new read in the binding's per-pass reference counts, which
+    /// [`DroppedSubtreeCollector`] lowers when the replaced read is dropped.
+    pub fn mark_reference_as_read(&mut self, reference_id: ReferenceId) {
+        let reference = self.scoping.scoping_mut().get_reference_mut(reference_id);
+        if reference.flags().is_read() {
+            return;
+        }
+        reference.flags_mut().insert(ReferenceFlags::Read);
+        if let Some(symbol_id) = reference.symbol_id() {
+            self.state.symbols.record_reference(symbol_id, ReferenceFlags::Read);
+        }
+    }
+
+    /// Create a reference and count it in the binding's per-pass reference counts.
+    ///
+    /// Use this instead of [`Self::create_reference`] for a bound reference
+    /// that replaces one in a dropped subtree. [`DroppedSubtreeCollector`]
+    /// stops counting the dropped reference, so an uncounted replacement
+    /// would leave the binding with fewer counted reads than it has.
+    pub fn create_counted_reference(
+        &mut self,
+        name: Ident<'_>,
+        symbol_id: Option<SymbolId>,
+        flags: ReferenceFlags,
+    ) -> ReferenceId {
+        let reference_id = self.create_reference(name, symbol_id, flags);
+        if let Some(symbol_id) = symbol_id {
+            self.state.symbols.record_reference(symbol_id, flags);
+        }
+        reference_id
     }
 
     /// Replace an expression slot. Marks the pass as having mutated the AST.

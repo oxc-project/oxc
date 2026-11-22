@@ -72,6 +72,23 @@ fn iteration_counts() {
 }
 
 #[test]
+fn dropped_reads_leave_reference_counts_in_same_pass() {
+    // Folding the copy loop drops its read of `r` in `r[a - 1] = ...`, so the
+    // same pass sees a single read left and inlines it.
+    let options = CompressOptions::smallest();
+    test_options_with_iterations(
+        "export function f(g) {
+            var r = [];
+            for (var a = 1; a < arguments.length; a++) r[a - 1] = arguments[a];
+            return g(r);
+        }",
+        "export function f(g) { return g([...arguments].slice(1)) }",
+        2,
+        &options,
+    );
+}
+
+#[test]
 fn normalize_flushes_before_initial_liveness() {
     let options = CompressOptions { drop_console: true, ..CompressOptions::smallest() };
     test_options("console.log(eval('x')); function f() { f() }", "", &options);

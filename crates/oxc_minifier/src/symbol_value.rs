@@ -28,6 +28,11 @@ pub enum FreshValueKind {
 
 /// Cached counts for the resolved references to a symbol.
 ///
+/// Reads stay current within a pass: dropping a reference removes its read,
+/// and new reads are counted where they are created. Dropped writes stay
+/// counted until the next pass. See
+/// `TraverseCtx::debug_assert_reference_counts_current`.
+///
 /// Keep queries here so consumers do not have to coordinate related counters
 /// or repeat the invariant that member-write target reads are a subset of all
 /// reads.
@@ -51,6 +56,43 @@ impl ReferenceCounts {
         if flags.is_member_write_target() {
             self.member_write_target_reads += 1;
         }
+    }
+
+    /// Remove the read that [`Self::record`] counted for a reference that
+    /// left the AST, so reads stay current within a pass.
+    ///
+    /// Writes stay counted. Dropping a write reference does not always drop
+    /// the write: merging `var x; x = 1` into `var x = 1` moves the value into
+    /// an initializer that `SymbolValue::initialized_constant` never saw.
+    #[inline]
+    pub fn forget_read(&mut self, flags: ReferenceFlags) {
+        if flags.is_read() {
+            debug_assert!(self.reads > 0);
+            self.reads -= 1;
+            if flags.is_member_write_target() {
+                debug_assert!(self.member_write_target_reads > 0);
+                self.member_write_target_reads -= 1;
+            }
+        }
+    }
+
+    /// Whether these counts match `current`, the counts of the references
+    /// still live in scoping: the same reads and member-write-target reads,
+    /// and at least as many writes (see [`Self::forget_read`]).
+    pub fn is_current(self, current: Self) -> bool {
+        self.reads == current.reads
+            && self.member_write_target_reads == current.member_write_target_reads
+            && self.writes >= current.writes
+    }
+
+    /// Whether these counts cover every reference in `live`: never fewer
+    /// reads, other-than-member-write-target reads, or writes.
+    #[cfg(debug_assertions)]
+    pub fn covers(self, live: Self) -> bool {
+        self.reads >= live.reads
+            && self.reads - self.member_write_target_reads
+                >= live.reads - live.member_write_target_reads
+            && self.writes >= live.writes
     }
 
     #[inline]

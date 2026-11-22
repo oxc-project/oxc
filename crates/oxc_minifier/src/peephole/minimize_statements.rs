@@ -1401,6 +1401,7 @@ impl<'a> PeepholeOptimizations {
             if ctx.is_expression_whose_name_needs_to_be_kept(prev_decl_init) {
                 return true;
             }
+            ctx.debug_assert_reference_counts_current(prev_decl_id.symbol_id());
             let Some(symbol_value) = ctx.state.symbols.value(prev_decl_id.symbol_id()) else {
                 return true;
             };

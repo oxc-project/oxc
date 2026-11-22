@@ -580,7 +580,8 @@ impl<'a> PeepholeOptimizations {
         // The replacement must not alias `ReferenceId`s from the dropped subtree:
         // `replace_expression` walks the old tree and marks its references dead,
         // so a reused id would be pruned from scoping while still live in the
-        // program. Mint fresh references (same name, same resolution) instead.
+        // program. Mint fresh references (same name, same resolution) instead,
+        // counted so the bindings' per-pass read counts still match the AST.
         let typeof_symbol_id =
             ctx.scoping().get_reference(typeof_id_ref.reference_id()).symbol_id();
         let is_null_symbol_id =
@@ -594,8 +595,11 @@ impl<'a> PeepholeOptimizations {
         if let Expression::BinaryExpression(new_left_expr_binary) = &mut new_left_expr {
             new_left_expr_binary.operator =
                 if inversed { BinaryOperator::Inequality } else { BinaryOperator::Equality };
-            let fresh_reference_id =
-                ctx.create_reference(typeof_id_ref.name, typeof_symbol_id, ReferenceFlags::Read);
+            let fresh_reference_id = ctx.create_counted_reference(
+                typeof_id_ref.name,
+                typeof_symbol_id,
+                ReferenceFlags::Read,
+            );
             let BinaryExpression { left, right, .. } = &mut **new_left_expr_binary;
             for operand in [left, right] {
                 if let Expression::UnaryExpression(unary) = operand
@@ -609,11 +613,16 @@ impl<'a> PeepholeOptimizations {
             unreachable!();
         }
 
-        let is_null_id_ref = ctx.create_ident_expr(
-            is_null_id_ref.span,
+        let is_null_reference_id = ctx.create_counted_reference(
             is_null_id_ref.name,
             is_null_symbol_id,
             ReferenceFlags::Read,
+        );
+        let is_null_id_ref = Expression::new_identifier_with_reference_id(
+            is_null_id_ref.span,
+            is_null_id_ref.name,
+            is_null_reference_id,
+            ctx,
         );
 
         let new_right_expr = if inversed {
