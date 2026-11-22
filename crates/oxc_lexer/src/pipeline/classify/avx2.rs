@@ -4,7 +4,7 @@ use crate::token::tk;
 
 use super::{
     Planes,
-    luts::{DIGIT_MASK, KWINIT_MASK, MERGED_LUTS, OPCH_MASK, WORD_LUTS, WORD_MASK, WS_MASK},
+    luts::{DIGIT_MASK, KWINIT_MASK, MERGED_LUTS, WORD_LUTS, WORD_MASK, WS_MASK},
     punct::{PUNCT_HASH_HI, PUNCT_HASH_KINDS, PUNCT_HASH_LO},
 };
 
@@ -70,13 +70,16 @@ pub(super) fn classify_avx2(ts: bool, src: &[[u8; 64]], n: usize, out: Planes, c
         misc[b] = misc0 | (misc1 << 32) | vt_ff;
         let t0 = v_mlo.shuffle_u8s(v0) & v_mhi.shuffle_u8s(hn0);
         let t1 = v_mlo.shuffle_u8s(v1) & v_mhi.shuffle_u8s(hn1);
-        dot[b] = (t0.movemask() as u64) | ((t1.movemask() as u64) << 32);
+        let dotm = (t0.movemask() as u64) | ((t1.movemask() as u64) << 32);
+        dot[b] = dotm;
         let kw0 = (t0 & KWINIT_MASK).gt_i8(0).movemask() as u64;
         let kw1 = (t1 & KWINIT_MASK).gt_i8(0).movemask() as u64;
         kwinit[b] = kw0 | (kw1 << 32);
-        let op0 = (t0 & OPCH_MASK).gt_i8(0).movemask() as u64;
-        let op1 = (t1 & OPCH_MASK).gt_i8(0).movemask() as u64;
-        opch[b] = op0 | (op1 << 32);
+        // Operator chars have some bit above the keyword-start bits set.
+        // The signed compare misses `.`, which has the top bit, so add it back from the dot mask.
+        let op0 = t0.gt_i8(KWINIT_MASK as i8).movemask() as u64;
+        let op1 = t1.gt_i8(KWINIT_MASK as i8).movemask() as u64;
+        opch[b] = op0 | (op1 << 32) | dotm;
         let wprev = (wordm << 1) | cw;
         let sprev = (wsm << 1) | cs;
         cw = wordm >> 63;
