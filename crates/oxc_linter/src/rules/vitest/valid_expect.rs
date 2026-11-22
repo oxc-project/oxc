@@ -738,6 +738,8 @@ fn type_assertions() {
         "expectTypeOf<number>().toEqualTypeOf<number>;",
         "consume(expectTypeOf<number>() satisfies unknown);",
         "(expectTypeOf<number>()).toBeNumber;",
+        "expectTypeOf<number>()!.toBeNumber;",
+        "(expectTypeOf<number>().returns as unknown).toBeNumber;",
         "consume((expectTypeOf<number>()));",
         "consume(expectTypeOf<number>());",
         "expectTypeOf(value).toEqualTypeOf;",

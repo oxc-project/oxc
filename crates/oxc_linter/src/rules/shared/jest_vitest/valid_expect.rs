@@ -13,7 +13,7 @@ use crate::{
     context::LintContext,
     utils::{
         ExpectError, PossibleJestNode, iter_possible_jest_call_node_with_wrappers,
-        parse_expect_jest_fn_call, validate_expect_type_of_call,
+        parse_expect_jest_fn_call, type_assertion_wrapper_expression, validate_expect_type_of_call,
     },
 };
 
@@ -336,7 +336,9 @@ fn find_top_most_member_expression<'a, 'b>(
                 top_most_member_expression = Some(member_expr);
             }
             _ => {
-                if !parent.kind().is_member_expression_kind() {
+                if !parent.kind().is_member_expression_kind()
+                    && type_assertion_wrapper_expression(parent.kind()).is_none()
+                {
                     break;
                 }
             }

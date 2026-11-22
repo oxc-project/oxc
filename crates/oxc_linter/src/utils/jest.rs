@@ -300,7 +300,7 @@ pub fn iter_possible_jest_call_node_with_wrappers<'a, 'c>(
 }
 
 /// The parent-node counterpart to `Expression::get_inner_expression` for type assertions.
-fn type_assertion_wrapper_expression(kind: AstKind<'_>) -> Option<&Expression<'_>> {
+pub fn type_assertion_wrapper_expression(kind: AstKind<'_>) -> Option<&Expression<'_>> {
     Some(match kind {
         AstKind::ParenthesizedExpression(wrapper) => &wrapper.expression,
         AstKind::TSAsExpression(wrapper) => &wrapper.expression,
