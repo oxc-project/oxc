@@ -193,6 +193,8 @@ fn private_in() {
         ("a = o || (#x in o)", "a=o||(#x in o)"),
         ("a = (#x in o) ? 1 : 2", "a=(#x in o)?1:2"),
         ("a = () => (#x in o)", "a=()=>(#x in o)"),
+        ("a = 1 * (#x in o == 1)", "a=1*(#x in o==1)"),
+        ("a = (() => #x in o)", "a=(()=>#x in o)"),
     ] {
         let source = format!("class C {{ #x; m(o) {{ for ({init};;); }} }}");
         test(&source, &format!("class C {{\n\t#x;\n\tm(o) {{\n\t\tfor ({init};;);\n\t}}\n}}\n"));
