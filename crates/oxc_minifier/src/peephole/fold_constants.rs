@@ -13,10 +13,14 @@ use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, SPAN};
 use oxc_str::JSStr;
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
+use oxc_syntax::precedence::{GetPrecedence, Precedence};
 
 use crate::{TraverseCtx, generated::ancestor::Ancestor};
 
 use super::PeepholeOptimizations;
+
+/// `Number.MAX_SAFE_INTEGER`
+const MAX_SAFE_INTEGER: f64 = 9_007_199_254_740_991.0;
 
 /// Constant Folding
 ///
@@ -431,7 +435,10 @@ impl<'a> PeepholeOptimizations {
                 })
             }
             BinaryOperator::In => None,
-        };
+        }
+        // Last, so that operands which evaluate fold first: `void 0 - 0` becomes `NaN`, not
+        // `+void 0`.
+        .or_else(|| Self::try_fold_numeric_identity(e, ctx));
         if let Some(changed) = changed {
             ctx.replace_expression(expr, changed);
         }
@@ -514,7 +521,7 @@ impl<'a> PeepholeOptimizations {
     ) -> Option<Expression<'a>> {
         Self::extract_numeric_values(e, ctx)?;
         let result = e.evaluate_value(ctx)?.into_number()?;
-        let is_safe_integer = result.fract() == 0.0 && result.abs() <= 9_007_199_254_740_991.0;
+        let is_safe_integer = result.fract() == 0.0 && result.abs() <= MAX_SAFE_INTEGER;
         (is_safe_integer && Self::folded_numeric_expression_is_shorter(e, result) == Some(true))
             .then(|| ctx.value_to_expr(e.span, ConstantValue::Number(result)))
     }
@@ -625,19 +632,26 @@ impl<'a> PeepholeOptimizations {
         Self::try_fold_int32_add_sub(e, ctx)
     }
 
-    #[expect(clippy::cast_possible_truncation)]
-    fn safe_int_literal(expr: &Expression<'a>) -> Option<i64> {
+    /// The value of a numeric literal that is a safe integer.
+    fn safe_int_literal(expr: &Expression<'a>) -> Option<f64> {
         let Expression::NumericLiteral(lit) = expr else { return None };
-        (lit.value.fract() == 0.0 && lit.value.abs() <= 9_007_199_254_740_991.0)
-            .then(|| lit.value as i64)
+        (lit.value.fract() == 0.0 && lit.value.abs() <= MAX_SAFE_INTEGER).then_some(lit.value)
     }
 
-    #[expect(clippy::cast_precision_loss)]
+    /// Folds additive identities and constant offsets around an expression `A` known to be an
+    /// int32 or uint32, such as the result of a bitwise operator:
+    ///
+    /// * `A + 0`, `0 + A`, `A - 0` -> `A`
+    /// * `(A ± c1) ± c2` -> `A ± c`, or `A` when the offsets cancel out
     fn try_fold_int32_add_sub(
         e: &mut BinaryExpression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        const MAX_SAFE_OFFSET: i64 = ((1_i64 << 53) - 1) - (u32::MAX as i64);
+        // `A` is within `[-2^31, 2^32 - 1]`, so `A + k` for an integer `k` up to this bound is an
+        // integer within `[-MAX_SAFE_INTEGER, MAX_SAFE_INTEGER]`, which IEEE-754 computes exactly.
+        // `c1 ± c2` below is exact while it is at most `2^53`, and rounds to at least `2^53`
+        // otherwise, so either way the bound check is exact.
+        const MAX_SAFE_OFFSET: f64 = MAX_SAFE_INTEGER - 4_294_967_295.0;
 
         if e.right.is_number_0() && e.left.is_int32_or_uint32(ctx) {
             return Some(e.left.take_in(ctx));
@@ -662,20 +676,18 @@ impl<'a> PeepholeOptimizations {
         let s1 = if left_bin.operator == BinaryOperator::Addition { c1 } else { -c1 };
         let s2 = if e.operator == BinaryOperator::Addition { c2 } else { -c2 };
         let combined = s1 + s2;
-        // ECMA-262 IEEE-754 exactness requires `A + s1` and `A + (s1 + s2)` within `[-MAX_SAFE_INTEGER, MAX_SAFE_INTEGER]` for all `i32`/`u32` `A`.
         if s1.abs() > MAX_SAFE_OFFSET || combined.abs() > MAX_SAFE_OFFSET {
             return None;
         }
-        if combined == 0 {
+        if combined == 0.0 {
             return Some(left_bin.left.take_in(ctx));
         }
 
         let new_op =
-            if combined > 0 { BinaryOperator::Addition } else { BinaryOperator::Subtraction };
-        let new_abs = combined.unsigned_abs() as f64;
-        let original_len = 2
-            + Self::number_literal_source_len(c1 as f64)?
-            + Self::number_literal_source_len(c2 as f64)?;
+            if combined > 0.0 { BinaryOperator::Addition } else { BinaryOperator::Subtraction };
+        let new_abs = combined.abs();
+        let original_len =
+            2 + Self::number_literal_source_len(c1)? + Self::number_literal_source_len(c2)?;
         if 1 + Self::number_literal_source_len(new_abs)? > original_len {
             return None;
         }
@@ -689,6 +701,118 @@ impl<'a> PeepholeOptimizations {
             right,
             ctx,
         ))
+    }
+
+    /// Folds `A - 0`, `A * 1`, `1 * A` and `A / 1`.
+    ///
+    /// For every number `n`, `n - 0`, `n * 1` and `n / 1` are `n` (including `-0`, `NaN` and the
+    /// infinities), so when `A` is a number the operation is dropped. Otherwise each of them is
+    /// `ToNumber(A)` (and throws a `TypeError` for a `BigInt`, just like `+A`), so `A` is
+    /// converted with the shorter unary `+` instead.
+    fn try_fold_numeric_identity(
+        e: &mut BinaryExpression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        // This only shrinks code, so it is left out of tree-shake-only mode.
+        if ctx.is_tree_shake_only() {
+            return None;
+        }
+        let is_literal = |expr: &Expression<'a>, value: f64| {
+            matches!(expr, Expression::NumericLiteral(lit)
+                if lit.value.to_bits() == value.to_bits())
+        };
+        let operand = match e.operator {
+            BinaryOperator::Subtraction if is_literal(&e.right, 0.0) => &mut e.left,
+            BinaryOperator::Division | BinaryOperator::Multiplication
+                if is_literal(&e.right, 1.0) =>
+            {
+                &mut e.left
+            }
+            BinaryOperator::Multiplication if is_literal(&e.left, 1.0) => &mut e.right,
+            _ => return None,
+        };
+        let value_type = operand.value_type(ctx);
+        if value_type.is_bigint() {
+            return None;
+        }
+        // `delete (A - 0)` is `true`, but `delete A` would delete the reference `A`, e.g. the
+        // non-configurable `Math.PI`. Keep a conversion there; `delete +A` is still a value.
+        if value_type.is_number() && !Self::is_delete_argument(ctx) {
+            return Some(operand.take_in(ctx));
+        }
+        // `+A` needs parentheses when `A` binds less tightly than a prefix operator, and
+        // `+ ++a` needs a space; neither is shorter than the original.
+        let binds_loosely = matches!(
+            operand,
+            Expression::SequenceExpression(_)
+                | Expression::AssignmentExpression(_)
+                | Expression::YieldExpression(_)
+                | Expression::ArrowFunctionExpression(_)
+                | Expression::ConditionalExpression(_)
+                | Expression::LogicalExpression(_)
+                | Expression::BinaryExpression(_)
+                | Expression::PrivateInExpression(_)
+        ) || matches!(
+            operand,
+            Expression::UpdateExpression(u)
+                if u.prefix && u.operator == UpdateOperator::Increment
+        );
+        // A leading `+` printed right after another `+` needs a space (`a+ +b`), which costs the
+        // byte this saves, unless the original needed parentheses there (`a+(b-0)`). Then
+        // rewriting `a+1*b` only breaks up repeated text that compresses well.
+        let needs_space = Self::printed_after_plus(ctx, Precedence::Prefix) == Some(true);
+        let had_parens = Self::printed_after_plus(ctx, e.operator.precedence()).is_none();
+        let saves_bytes = had_parens || !needs_space;
+        (!binds_loosely && saves_bytes).then(|| {
+            Expression::new_unary_expression(
+                e.span,
+                UnaryOperator::UnaryPlus,
+                operand.take_in(ctx),
+                ctx,
+            )
+        })
+    }
+
+    /// How an expression with `precedence` would be printed in place of the current node:
+    /// `Some(true)` right after a `+` character, so that a leading `+` needs a space,
+    /// `Some(false)` after anything else, and `None` wrapped in parentheses.
+    fn printed_after_plus(ctx: &TraverseCtx<'a>, mut precedence: Precedence) -> Option<bool> {
+        for ancestor in ctx.ancestors() {
+            match ancestor {
+                // Printed first in `A op B`, so whatever precedes `A op B` precedes it.
+                Ancestor::BinaryExpressionLeft(parent) => {
+                    let parent_precedence = parent.operator().precedence();
+                    if precedence < parent_precedence
+                        || (precedence == parent_precedence
+                            && parent_precedence.is_right_associative())
+                        // `-a ** b` is a syntax error, so a prefix operand of `**` is wrapped.
+                        || (precedence == Precedence::Prefix
+                            && *parent.operator() == BinaryOperator::Exponential)
+                    {
+                        return None;
+                    }
+                    precedence = parent_precedence;
+                }
+                Ancestor::BinaryExpressionRight(parent) => {
+                    let parent_precedence = parent.operator().precedence();
+                    if precedence < parent_precedence
+                        || (precedence == parent_precedence
+                            && !parent_precedence.is_right_associative())
+                    {
+                        return None;
+                    }
+                    return Some(*parent.operator() == BinaryOperator::Addition);
+                }
+                Ancestor::UnaryExpressionArgument(parent) => {
+                    if precedence < Precedence::Prefix {
+                        return None;
+                    }
+                    return Some(*parent.operator() == UnaryOperator::UnaryPlus);
+                }
+                _ => return Some(false),
+            }
+        }
+        Some(false)
     }
 
     fn try_fold_add_op(
