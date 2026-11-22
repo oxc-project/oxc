@@ -712,6 +712,10 @@ impl<'a> PeepholeOptimizations {
         e: &mut BinaryExpression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
+        // This only shrinks code, so it is left out of tree-shake-only mode.
+        if ctx.is_tree_shake_only() {
+            return None;
+        }
         let is_literal = |expr: &Expression<'a>, value: f64| {
             matches!(expr, Expression::NumericLiteral(lit)
                 if lit.value.to_bits() == value.to_bits())
@@ -726,44 +730,53 @@ impl<'a> PeepholeOptimizations {
             BinaryOperator::Multiplication if is_literal(&e.left, 1.0) => &mut e.right,
             _ => return None,
         };
-        match operand.value_type(ctx) {
-            ValueType::Number => Some(operand.take_in(ctx)),
-            ValueType::BigInt => None,
-            _ => {
-                // `+A` needs parentheses when `A` binds less tightly than a prefix operator, and
-                // `+ ++a` needs a space; neither is shorter than the original.
-                let binds_loosely = matches!(
-                    operand,
-                    Expression::SequenceExpression(_)
-                        | Expression::AssignmentExpression(_)
-                        | Expression::YieldExpression(_)
-                        | Expression::ArrowFunctionExpression(_)
-                        | Expression::ConditionalExpression(_)
-                        | Expression::LogicalExpression(_)
-                        | Expression::BinaryExpression(_)
-                        | Expression::PrivateInExpression(_)
-                ) || matches!(operand, Expression::UpdateExpression(u) if u.prefix);
-                // After another `+`, `+A` needs a space (`a+ +b`), so it is no shorter than
-                // `a+1*b` and only breaks up repeated text that compresses well.
-                let follows_plus = match ctx.parent() {
-                    Ancestor::BinaryExpressionRight(parent) => {
-                        *parent.operator() == BinaryOperator::Addition
-                    }
-                    Ancestor::UnaryExpressionArgument(parent) => {
-                        *parent.operator() == UnaryOperator::UnaryPlus
-                    }
-                    _ => false,
-                };
-                (!binds_loosely && !follows_plus).then(|| {
-                    Expression::new_unary_expression(
-                        e.span,
-                        UnaryOperator::UnaryPlus,
-                        operand.take_in(ctx),
-                        ctx,
-                    )
-                })
-            }
+        let value_type = operand.value_type(ctx);
+        if value_type.is_bigint() {
+            return None;
         }
+        // `delete (A - 0)` is `true`, but `delete A` would delete the reference `A`, e.g. the
+        // non-configurable `Math.PI`. Keep a conversion there; `delete +A` is still a value.
+        if value_type.is_number() && !Self::is_delete_argument(ctx) {
+            return Some(operand.take_in(ctx));
+        }
+        // `+A` needs parentheses when `A` binds less tightly than a prefix operator, and
+        // `+ ++a` needs a space; neither is shorter than the original.
+        let binds_loosely = matches!(
+            operand,
+            Expression::SequenceExpression(_)
+                | Expression::AssignmentExpression(_)
+                | Expression::YieldExpression(_)
+                | Expression::ArrowFunctionExpression(_)
+                | Expression::ConditionalExpression(_)
+                | Expression::LogicalExpression(_)
+                | Expression::BinaryExpression(_)
+                | Expression::PrivateInExpression(_)
+        ) || matches!(
+            operand,
+            Expression::UpdateExpression(u)
+                if u.prefix && u.operator == UpdateOperator::Increment
+        );
+        // Directly after another `+`, `+A` needs a space (`a+ +b`), so rewriting `a+1*b`
+        // saves nothing and only breaks up repeated text that compresses well. When an
+        // enclosing operation folds away too, as in `a+(1*b-0)` -> `a+ +b`, the result
+        // is shorter, so that case is left to the outer fold.
+        let follows_plus = match ctx.parent() {
+            Ancestor::BinaryExpressionRight(parent) => {
+                *parent.operator() == BinaryOperator::Addition
+            }
+            Ancestor::UnaryExpressionArgument(parent) => {
+                *parent.operator() == UnaryOperator::UnaryPlus
+            }
+            _ => false,
+        };
+        (!binds_loosely && !follows_plus).then(|| {
+            Expression::new_unary_expression(
+                e.span,
+                UnaryOperator::UnaryPlus,
+                operand.take_in(ctx),
+                ctx,
+            )
+        })
     }
 
     fn try_fold_add_op(

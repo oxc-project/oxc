@@ -1194,3 +1194,9 @@ fn dce_inline_template_literal_does_not_create_octal_escape() {
     // Expressions with side effects must still remain interpolation expressions.
     test_same(r"export function makeKey(messageId) { return `${messageId}\0${sideEffect()}`; }");
 }
+
+#[test]
+fn keeps_numeric_identities() {
+    // Rewriting `a * 1` to `+a` only shrinks code, so tree-shake-only mode leaves it.
+    test_same("foo(a * 1), foo(b - 0), foo(1 * c / 1)");
+}

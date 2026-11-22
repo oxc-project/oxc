@@ -1972,12 +1972,18 @@ fn test_fold_numeric_identity() {
     fold_same("a * b - 0");
     fold_same("(a ? 1 : b) - 0");
     fold_same("++a - 0");
+    fold("--a - 0", "+--a");
     // After another `+`, `+A` needs a space (`a+ +b`) and saves nothing.
     fold_same("'a' + (a - 0)");
     fold_same("x = 0 * a + 1 * b + 1 * c");
     fold_same("x = +(a * 1)");
     fold("x = 1 * a + 0 * b", "x = +a + 0 * b");
     fold("x = c - 1 * a", "x = c - +a");
+    // Shorter when the enclosing operation folds away too.
+    fold("x = a + (1 * b - 0)", "x = a + +b");
+    // `delete A` would delete the reference `A`; `delete (Math.PI * 1)` is `true`.
+    fold("x = delete (Math.PI * 1)", "x = !0");
+    fold("x = delete (Number.MAX_VALUE - 0)", "x = !0");
     // `n - -0` is `+0` for `n === -0`, and `+` may concatenate.
     fold_same("a - -0");
     fold_same("(a * 2) - -0");
