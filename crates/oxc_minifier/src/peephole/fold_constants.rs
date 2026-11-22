@@ -13,6 +13,7 @@ use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, SPAN};
 use oxc_str::JSStr;
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
+use oxc_syntax::precedence::{GetPrecedence, Precedence};
 
 use crate::{TraverseCtx, generated::ancestor::Ancestor};
 
@@ -756,20 +757,13 @@ impl<'a> PeepholeOptimizations {
             Expression::UpdateExpression(u)
                 if u.prefix && u.operator == UpdateOperator::Increment
         );
-        // Directly after another `+`, `+A` needs a space (`a+ +b`), so rewriting `a+1*b`
-        // saves nothing and only breaks up repeated text that compresses well. When an
-        // enclosing operation folds away too, as in `a+(1*b-0)` -> `a+ +b`, the result
-        // is shorter, so that case is left to the outer fold.
-        let follows_plus = match ctx.parent() {
-            Ancestor::BinaryExpressionRight(parent) => {
-                *parent.operator() == BinaryOperator::Addition
-            }
-            Ancestor::UnaryExpressionArgument(parent) => {
-                *parent.operator() == UnaryOperator::UnaryPlus
-            }
-            _ => false,
-        };
-        (!binds_loosely && !follows_plus).then(|| {
+        // A leading `+` printed right after another `+` needs a space (`a+ +b`), which costs the
+        // byte this saves, unless the original needed parentheses there (`a+(b-0)`). Then
+        // rewriting `a+1*b` only breaks up repeated text that compresses well.
+        let needs_space = Self::printed_after_plus(ctx, Precedence::Prefix) == Some(true);
+        let had_parens = Self::printed_after_plus(ctx, e.operator.precedence()).is_none();
+        let saves_bytes = had_parens || !needs_space;
+        (!binds_loosely && saves_bytes).then(|| {
             Expression::new_unary_expression(
                 e.span,
                 UnaryOperator::UnaryPlus,
@@ -777,6 +771,48 @@ impl<'a> PeepholeOptimizations {
                 ctx,
             )
         })
+    }
+
+    /// How an expression with `precedence` would be printed in place of the current node:
+    /// `Some(true)` right after a `+` character, so that a leading `+` needs a space,
+    /// `Some(false)` after anything else, and `None` wrapped in parentheses.
+    fn printed_after_plus(ctx: &TraverseCtx<'a>, mut precedence: Precedence) -> Option<bool> {
+        for ancestor in ctx.ancestors() {
+            match ancestor {
+                // Printed first in `A op B`, so whatever precedes `A op B` precedes it.
+                Ancestor::BinaryExpressionLeft(parent) => {
+                    let parent_precedence = parent.operator().precedence();
+                    if precedence < parent_precedence
+                        || (precedence == parent_precedence
+                            && parent_precedence.is_right_associative())
+                        // `-a ** b` is a syntax error, so a prefix operand of `**` is wrapped.
+                        || (precedence == Precedence::Prefix
+                            && *parent.operator() == BinaryOperator::Exponential)
+                    {
+                        return None;
+                    }
+                    precedence = parent_precedence;
+                }
+                Ancestor::BinaryExpressionRight(parent) => {
+                    let parent_precedence = parent.operator().precedence();
+                    if precedence < parent_precedence
+                        || (precedence == parent_precedence
+                            && !parent_precedence.is_right_associative())
+                    {
+                        return None;
+                    }
+                    return Some(*parent.operator() == BinaryOperator::Addition);
+                }
+                Ancestor::UnaryExpressionArgument(parent) => {
+                    if precedence < Precedence::Prefix {
+                        return None;
+                    }
+                    return Some(*parent.operator() == UnaryOperator::UnaryPlus);
+                }
+                _ => return Some(false),
+            }
+        }
+        Some(false)
     }
 
     fn try_fold_add_op(

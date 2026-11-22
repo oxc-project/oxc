@@ -1933,7 +1933,7 @@ fn test_fold_int32_add_sub() {
     fold_same("(a << b) - 4 + 1");
     fold_same("~a + 0");
     fold_same("a + 0");
-    fold("(a * 1 - 5) + 1", "a - 5 + 1");
+    fold_same("(a * 2 - 5) + 1");
     fold_same("(a << 2) - 4.5 + 1");
     fold_same("(a ? -0 : b << 2) + 0");
     fold_same("(a << 2) + 9007194959773697 - 1");
@@ -1973,10 +1973,15 @@ fn test_fold_numeric_identity() {
     fold_same("(a ? 1 : b) - 0");
     fold_same("++a - 0");
     fold("--a - 0", "+--a");
-    // After another `+`, `+A` needs a space (`a+ +b`) and saves nothing.
-    fold_same("'a' + (a - 0)");
+    // Right after another `+`, `+A` needs a space (`a+ +b`), so it only saves bytes where the
+    // original needed parentheses.
     fold_same("x = 0 * a + 1 * b + 1 * c");
-    fold_same("x = +(a * 1)");
+    fold_same("x = a + 1 * b * c");
+    fold_same("x = a + (b * 1) % c");
+    fold("x = 'a' + (a - 0)", "x = 'a' + +a");
+    fold("x = a + (b - 0) / c", "x = a + +b / c");
+    fold("x = +(a * 1)", "x = + +a");
+    fold("(a * 1 - 5) + 1", "a - 5 + 1");
     fold("x = 1 * a + 0 * b", "x = +a + 0 * b");
     fold("x = c - 1 * a", "x = c - +a");
     // Shorter when the enclosing operation folds away too.
