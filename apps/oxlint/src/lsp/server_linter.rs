@@ -23,8 +23,9 @@ use oxc_linter::{
 
 use oxc_language_server::{
     Capabilities, ClientMessage, CodeActionParams, ConcurrentHashMap, DiagnosticMode,
-    DiagnosticResult, TextDocument, Tool, ToolBuildResult, ToolBuilder, ToolRestartChanges,
-    uri_utils::uri_to_file_path, utils::normalize_user_config_path_to_watch_pattern,
+    DiagnosticResult, LineIndex, TextDocument, Tool, ToolBuildResult, ToolBuilder,
+    ToolRestartChanges, uri_utils::uri_to_file_path,
+    utils::normalize_user_config_path_to_watch_pattern,
 };
 
 use crate::lsp::utils::{config_loader_error_to_message, oxc_diagnostic_to_client_message};
@@ -857,6 +858,7 @@ impl ServerLinter {
         let mut fs = LspFileSystem::default();
         fs.add_file(path.to_path_buf(), Arc::from(source_text));
 
+        let line_index = LineIndex::new(source_text);
         let mut messages: Vec<DiagnosticReport> =
             match self.runner.run_source(&[Arc::from(path.as_os_str())], &fs) {
                 Ok(results) => results
@@ -865,7 +867,7 @@ impl ServerLinter {
                         message_to_lsp_diagnostic(
                             message,
                             uri,
-                            source_text,
+                            &line_index,
                             self.rules_customization.as_ref(),
                         )
                     })
@@ -886,7 +888,7 @@ impl ServerLinter {
         if let Some(severity) = self.unused_directives_severity
             && let Some(directives) = directives
         {
-            messages.extend(create_unused_directives_report(&directives, severity, source_text));
+            messages.extend(create_unused_directives_report(&directives, severity, &line_index));
         }
         Ok(messages)
     }
