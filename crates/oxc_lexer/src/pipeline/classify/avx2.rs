@@ -52,9 +52,11 @@ pub(super) fn classify_avx2(ts: bool, src: &[[u8; 64]], n: usize, out: Planes, c
         let tb1 = v_wblo.shuffle_u8s(v1) & v_wbhi.shuffle_u8s(hn1);
         // Non-ASCII bytes count as identifier chars in `word` and are folded
         // into `misc` so `misc_pre` can re-classify Unicode whitespace.
-        // Blend and movemask read only the top bit, which adding 0x7f sets for ASCII word bytes.
-        let w0 = (tb0 & WORD_MASK).add_u8(0x7f) | v0;
-        let w1 = (tb1 & WORD_MASK).add_u8(0x7f) | v1;
+        // Blend and movemask read only the top bit, which `| v0` sets for non-ASCII bytes.
+        // `.opaque()` prevents LLVM from turning `v0` into a `0x00` / `0xFF` mask before the OR,
+        // which costs a compare and raises register pressure.
+        let w0 = (tb0 & WORD_MASK).gt_i8(0).opaque() | v0;
+        let w1 = (tb1 & WORD_MASK).gt_i8(0).opaque() | v1;
         let nws0 = (tb0 & WS_MASK).eq_u8(0);
         let nws1 = (tb1 & WS_MASK).eq_u8(0);
         let d0 = (tb0 & DIGIT_MASK).gt_i8(0);
