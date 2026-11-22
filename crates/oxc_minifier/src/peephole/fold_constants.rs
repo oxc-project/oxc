@@ -11,7 +11,7 @@ use oxc_ecmascript::{
 };
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, SPAN};
-use oxc_str::JSStr;
+use oxc_str::{JSStr, JSStrBuilder};
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 use oxc_syntax::precedence::{GetPrecedence, Precedence};
 
@@ -830,7 +830,7 @@ impl<'a> PeepholeOptimizations {
                 let mut right_quasis = right.quasis.drain(..);
                 Self::join_template_quasis(
                     left_last_quasi,
-                    right_quasis.next().expect("template literal must have at least one quasi"),
+                    &[right_quasis.next().expect("template literal must have at least one quasi")],
                     ctx,
                 );
                 left.quasis.extend(right_quasis);
@@ -1171,74 +1171,116 @@ impl<'a> PeepholeOptimizations {
         })
     }
 
-    pub fn flatten_nested_template_literals(
-        t: &mut TemplateLiteral<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if !t.expressions.iter().any(|expr| matches!(expr, Expression::TemplateLiteral(_))) {
-            return;
+    pub fn fold_template_literal(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let Expression::TemplateLiteral(template) = expr else { return };
+        if template.expressions.iter().any(|expr| matches!(expr, Expression::TemplateLiteral(_))) {
+            if matches!(ctx.parent(), Ancestor::TemplateLiteralExpressions(_))
+                && !matches!(ctx.ancestor(1), Ancestor::TaggedTemplateExpressionQuasi(_))
+            {
+                // Let the outer untagged template flatten the whole chain at once.
+                Self::inline_template_literal::<true>(template, ctx);
+                return;
+            }
+            Self::flatten_nested_template_literals(template, ctx);
         }
+        Self::inline_template_literal::<false>(template, ctx);
+        Self::substitute_template_literal(expr, ctx);
+    }
 
+    fn flatten_nested_template_literals(t: &mut TemplateLiteral<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut expressions = ArenaVec::with_capacity_in(t.expressions.len(), ctx);
         let mut quasis = ArenaVec::with_capacity_in(t.quasis.len(), ctx);
-        let mut outer_quasis = t.quasis.drain(..);
-        quasis.push(outer_quasis.next().unwrap());
-        for (expr, next_quasi) in t.expressions.drain(..).zip(outer_quasis) {
-            if let Expression::TemplateLiteral(nested) = expr {
-                let TemplateLiteral { quasis: nested_quasis, expressions: nested_exprs, .. } =
-                    nested.unbox();
-                let mut nested_quasis = nested_quasis.into_iter();
-                Self::join_template_quasis(
-                    quasis.last_mut().unwrap(),
-                    nested_quasis.next().unwrap(),
-                    ctx,
-                );
-                quasis.extend(nested_quasis);
-                expressions.extend(nested_exprs);
-                Self::join_template_quasis(quasis.last_mut().unwrap(), next_quasi, ctx);
-            } else {
-                expressions.push(expr);
-                quasis.push(next_quasi);
+        let mut parent_iters = Vec::new();
+        let mut pending_quasis = Vec::new();
+        let mut remaining_quasis = t.quasis.take_in(ctx).into_iter();
+        let mut remaining_exprs = t.expressions.take_in(ctx).into_iter();
+        pending_quasis.push(remaining_quasis.next().unwrap());
+        loop {
+            match remaining_exprs.next() {
+                Some(Expression::TemplateLiteral(nested)) => {
+                    let nested = nested.unbox();
+                    parent_iters.push((remaining_quasis, remaining_exprs));
+                    remaining_quasis = nested.quasis.into_iter();
+                    remaining_exprs = nested.expressions.into_iter();
+                }
+                Some(expr) => {
+                    quasis.push(Self::merge_pending_template_quasis(&mut pending_quasis, ctx));
+                    expressions.push(expr);
+                }
+                None => {
+                    let Some(parent) = parent_iters.pop() else { break };
+                    (remaining_quasis, remaining_exprs) = parent;
+                }
             }
+            pending_quasis.push(remaining_quasis.next().unwrap());
         }
+        quasis.push(Self::merge_pending_template_quasis(&mut pending_quasis, ctx));
         t.expressions = expressions;
         t.quasis = quasis;
         ctx.notice_change();
     }
 
+    fn merge_pending_template_quasis(
+        pending: &mut Vec<TemplateElement<'a>>,
+        ctx: &TraverseCtx<'a>,
+    ) -> TemplateElement<'a> {
+        let mut parts = pending.drain(..);
+        let mut first = parts.next().unwrap();
+        Self::join_template_quasis(&mut first, parts.as_slice(), ctx);
+        first
+    }
+
     fn join_template_quasis(
         left: &mut TemplateElement<'a>,
-        right: TemplateElement<'a>,
+        right: &[TemplateElement<'a>],
         ctx: &TraverseCtx<'a>,
     ) {
-        left.tail = right.tail;
-        if left.value.raw.is_empty() {
-            left.span = right.span;
-            left.value = right.value;
-        } else if !right.value.raw.is_empty() {
-            left.value.raw = Self::concat_template_literal_raw(
-                [left.value.raw.as_str(), right.value.raw.as_str()],
-                ctx,
-            );
-            left.value.cooked = left
-                .value
-                .cooked
-                .zip(right.value.cooked)
-                .map(|cooked| JSStr::from_js_strs_array_in(cooked.into(), ctx));
-        }
+        let Some(last) = right.last() else { return };
+        left.tail = last.tail;
+        let parts = std::iter::once(&*left).chain(right).filter(|part| !part.value.raw.is_empty());
+        let mut nonempty = parts.clone();
+        let first = nonempty.next().unwrap_or(last);
+        let span = first.span;
+        let value = if nonempty.next().is_some() {
+            let raw =
+                Self::concat_template_literal_raw(parts.clone().map(|q| q.value.raw.as_str()), ctx);
+            let cooked_len = parts.clone().try_fold(0usize, |len, part| {
+                Some(
+                    len.checked_add(part.value.cooked?.len())
+                        .expect("template literal cooked text is too long"),
+                )
+            });
+            let cooked = cooked_len.map(|len| {
+                let mut cooked = JSStrBuilder::with_capacity_in(len, ctx);
+                for part in parts {
+                    cooked.push_js_str(part.value.cooked.unwrap());
+                }
+                cooked.into_js_str()
+            });
+            TemplateElementValue { raw, cooked }
+        } else {
+            first.value.clone()
+        };
+        left.span = span;
+        left.value = value;
     }
 
     /// Inline constant values in template literals
     ///
     /// - `foo${1}bar${i}` => `foo1bar${i}`
-    pub fn inline_template_literal(t: &mut TemplateLiteral<'a>, ctx: &mut TraverseCtx<'a>) {
+    pub fn inline_template_literal<const DEFER_NESTED: bool>(
+        t: &mut TemplateLiteral<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         // Single pass: compute the side-effect / `evaluate_to_js_string` checks once (previously they
         // ran in an `.any()` pre-scan and then again in the drain loop) and collect the inline-able
         // expressions as `(index, value)`. Bail out cheaply when there is nothing to inline, leaving
         // `t.expressions` untouched (no drain, no allocation — `inline_exprs` only allocates on push).
         let mut inline_exprs = Vec::new();
         for (idx, expr) in t.expressions.iter().enumerate() {
-            if expr.may_have_side_effects(ctx) {
+            if (DEFER_NESTED && matches!(expr, Expression::TemplateLiteral(_)))
+                || expr.may_have_side_effects(ctx)
+            {
                 continue;
             }
             let Some(value) = evaluate_to_js_string(expr, ctx) else {

@@ -1621,6 +1621,9 @@ fn template_joins_preserve_raw_boundaries() {
     fold(r#"x = `${z}\0${""}1${w}`"#, r"x = `${z}\x001${w}`");
     fold(r"`$${`{a}${z}\0`}1`", r"`$\{a}${z}\x001`");
     fold(r"`\0${`1${z}$`}{a}`", r"`\x001${z}$\{a}`");
+    fold(r"`$${`{a}${`b${z}c\0`}1`}2`", r"`$\{a}b${z}c\x0012`");
+    fold(r"`$${`${`{a}${z}\0`}`}1`", r"`$\{a}${z}\x001`");
+    fold(r"`$${`{a}${`b${z}c\0`}${1}`}2`", r"`$\{a}b${z}c\x0012`");
     fold(r"`\uD800${`\uDC00${z}\uD800`}\uDC00`", r"`\uD800\uDC00${z}\uD800\uDC00`");
     // An escaped backslash followed by zero is not a null escape.
     fold(r#"x = `${z}\\0` + "1\uD800""#, r"x = `${z}\\01\ud800`");

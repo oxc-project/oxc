@@ -542,7 +542,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         if ctx.is_tree_shake_only() {
             match expr {
                 Expression::TemplateLiteral(t) => {
-                    Self::inline_template_literal(t, ctx);
+                    Self::inline_template_literal::<false>(t, ctx);
                 }
                 Expression::ObjectExpression(e) => Self::fold_object_exp(e, ctx),
                 Expression::BinaryExpression(_) => {
@@ -576,11 +576,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
             }
         } else {
             match expr {
-                Expression::TemplateLiteral(t) => {
-                    Self::flatten_nested_template_literals(t, ctx);
-                    Self::inline_template_literal(t, ctx);
-                    Self::substitute_template_literal(expr, ctx);
-                }
+                Expression::TemplateLiteral(_) => Self::fold_template_literal(expr, ctx),
                 Expression::ObjectExpression(e) => Self::fold_object_exp(e, ctx),
                 Expression::BinaryExpression(e) => {
                     Self::substitute_swap_binary_expressions(e);
