@@ -292,8 +292,6 @@ fn replacement_text(
     ctx: &LintContext,
     replacement_text: &str,
 ) -> String {
-    // `replacement` has already had its own parentheses stripped, so its text is never a single
-    // parenthesized group, even when it starts with `(` and ends with `)` (e.g. `(a) || (b)`).
     let mut text = if needs_parentheses(replacement, target, ctx) {
         format!("({replacement_text})")
     } else {
@@ -2265,6 +2263,10 @@ fn test() {
         ("!!!(f(a))", "!f(a)", None),
         ("!!!a", "!a", None),
         ("!Boolean(a)", "!a", None),
+        ("!Boolean((a) || (b))", "!((a) || (b))", None),
+        ("!Boolean((x > 0) && (y > 0))", "!((x > 0) && (y > 0))", None),
+        ("!Boolean((a) ? (b) : (c))", "!((a) ? (b) : (c))", None),
+        ("!!!((a) || (b))", "!((a) || (b))", None),
         (
             "if (!!(a, b) || !!(c, d)) {}",
             "if ((a, b) || (c, d)) {}",
