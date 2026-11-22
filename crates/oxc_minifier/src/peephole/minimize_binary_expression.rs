@@ -73,30 +73,32 @@ impl<'a> PeepholeOptimizations {
     /// In `(a | 0) OP b`, `b` is evaluated after `a` has been converted. Removing
     /// `| 0` moves that conversion after `b`, so `b` must not have side effects.
     fn remove_redundant_bitwise_or_zero(e: &mut BinaryExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if Self::is_bitwise_or_zero(&e.left)
+        if let Some(unwrap) = Self::bitwise_or_zero_unwrapper(&e.left)
             && e.right.value_type(ctx).is_number()
             && !e.right.may_have_side_effects(ctx)
         {
-            ctx.replace_expression_with(&mut e.left, Self::unwrap_bitwise_or_zero);
+            ctx.replace_expression_with(&mut e.left, unwrap);
         }
-        if Self::is_bitwise_or_zero(&e.right) && e.left.value_type(ctx).is_number() {
-            ctx.replace_expression_with(&mut e.right, Self::unwrap_bitwise_or_zero);
+        if let Some(unwrap) = Self::bitwise_or_zero_unwrapper(&e.right)
+            && e.left.value_type(ctx).is_number()
+        {
+            ctx.replace_expression_with(&mut e.right, unwrap);
         }
     }
 
-    fn is_bitwise_or_zero(expr: &Expression<'a>) -> bool {
-        matches!(
-            expr,
-            Expression::BinaryExpression(e)
-                if e.operator == BinaryOperator::BitwiseOR
-                    && (e.left.is_number_0() || e.right.is_number_0())
-        )
-    }
-
-    fn unwrap_bitwise_or_zero(e: Expression<'a>, _ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        let Expression::BinaryExpression(e) = e else { unreachable!() };
-        let e = e.unbox();
-        if e.right.is_number_0() { e.left } else { e.right }
+    fn bitwise_or_zero_unwrapper(
+        expr: &Expression<'a>,
+    ) -> Option<fn(Expression<'a>, &mut TraverseCtx<'a>) -> Expression<'a>> {
+        let Expression::BinaryExpression(e) = expr else { return None };
+        if e.operator != BinaryOperator::BitwiseOR {
+            None
+        } else if e.right.is_number_0() {
+            Some(Self::unwrap_left_from_binary_expr)
+        } else if e.left.is_number_0() {
+            Some(Self::unwrap_right_from_binary_expr)
+        } else {
+            None
+        }
     }
 
     fn is_bitwise_int(expr: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
