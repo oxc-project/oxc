@@ -6896,6 +6896,13 @@ export interface NoUselessUndefined {
    * Whether to check for useless `undefined` in arrow function bodies.
    */
   checkArrowFunctionBody?: boolean;
+  /**
+   * Whether to check for useless `undefined` in explicit `return` statements.
+   *
+   * Set to `false` to preserve `return undefined` when enforcing consistent return values.
+   * This does not affect checks for `yield undefined` or concise arrow function bodies.
+   */
+  checkReturnValue?: boolean;
 }
 export interface NumericSeparatorsStyleConfig {
   /**

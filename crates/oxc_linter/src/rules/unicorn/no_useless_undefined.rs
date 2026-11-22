@@ -1209,11 +1209,7 @@ fn test_check_return_value_option_interactions() {
                     ("let value = undefined;", "let value;", true),
                     ("function* f() { yield undefined; }", "function* f() { yield; }", true),
                     ("const {value = undefined} = {};", "const {value = undefined} = {};", true),
-                    (
-                        "function f(value = undefined) {}",
-                        "function f(value = undefined) {}",
-                        true,
-                    ),
+                    ("function f(value = undefined) {}", "function f(value = undefined) {}", true),
                     (
                         "function f(i, array) { return i >= 0 ? array[i] : undefined; }",
                         "function f(i, array) { return array[i]; }",
