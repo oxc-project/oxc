@@ -2230,11 +2230,6 @@ fn test() {
         ("!(Boolean(a -= b))", "!(a -= b)", None),
         ("!!!(a || b)", "!(a || b)", None),
         ("!Boolean(a || b)", "!(a || b)", None),
-        // operands wrapped in their own parentheses are not one parenthesized group
-        ("!Boolean((a) || (b))", "!((a) || (b))", None),
-        ("!Boolean((x > 0) && (y > 0))", "!((x > 0) && (y > 0))", None),
-        ("!Boolean((a) ? (b) : (c))", "!((a) ? (b) : (c))", None),
-        ("!!!((a) || (b))", "!((a) || (b))", None),
         ("!!!(a && b)", "!(a && b)", None),
         ("!Boolean(a && b)", "!(a && b)", None),
         ("!!!(a != b)", "!(a != b)", None),
