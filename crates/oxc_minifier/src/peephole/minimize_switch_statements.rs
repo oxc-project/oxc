@@ -66,7 +66,7 @@ impl<'a> PeepholeOptimizations {
     /// the first clause cannot fall through and neither clause declares a
     /// switch-scoped binding.
     ///
-    /// `switch (a) { case 1: b(); break; default: c() }` => `if (a === 1) b(); else c();`
+    /// `switch (a) { case 1: b(); break; default: c() }` => `if (a === 1) { b(); } else { c(); }`
     pub fn fold_switch_with_default_to_if(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::SwitchStatement(switch_stmt) = stmt else { return };
         if ctx.parent().is_labeled_statement() {
