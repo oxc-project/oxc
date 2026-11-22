@@ -2050,7 +2050,7 @@ impl GenExpr for BinaryExpression<'_> {
 
 impl GenExpr for PrivateInExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
-        p.wrap(precedence >= Precedence::Compare, |p| {
+        p.wrap(precedence >= Precedence::Compare || ctx.intersects(Context::FORBID_IN), |p| {
             p.add_source_mapping(self.span);
             self.left.print(p, ctx);
             p.print_str(" in ");

@@ -185,6 +185,26 @@ fn private_in() {
         "class Foo { #test; bar() { #field in {} << 0 } }",
         "class Foo {\n\t#test;\n\tbar() {\n\t\t#field in {} << 0;\n\t}\n}\n",
     );
+
+    for (init, minified) in [
+        ("(#x in o)", "(#x in o)"),
+        ("let a = (#x in o)", "let a=(#x in o)"),
+        ("a = (#x in o) || o", "a=(#x in o)||o"),
+        ("a = o || (#x in o)", "a=o||(#x in o)"),
+        ("a = (#x in o) ? 1 : 2", "a=(#x in o)?1:2"),
+        ("a = () => (#x in o)", "a=()=>(#x in o)"),
+        ("a = 1 * (#x in o == 1)", "a=1*(#x in o==1)"),
+        ("a = (() => #x in o)", "a=(()=>#x in o)"),
+    ] {
+        let source = format!("class C {{ #x; m(o) {{ for ({init};;); }} }}");
+        test(&source, &format!("class C {{\n\t#x;\n\tm(o) {{\n\t\tfor ({init};;);\n\t}}\n}}\n"));
+        test_minify(&source, &format!("class C{{#x;m(o){{for({minified};;);}}}}"));
+        crate::test_idempotency(&source);
+        crate::test_idempotency_options(
+            &source,
+            &CodegenOptions { minify: true, ..CodegenOptions::default() },
+        );
+    }
 }
 
 #[test]
