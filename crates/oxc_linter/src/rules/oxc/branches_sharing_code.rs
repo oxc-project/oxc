@@ -5,11 +5,9 @@ use oxc_ast::{
 };
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_ecmascript::BoundNames;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{ReferenceId, SymbolId};
+use oxc_semantic::ScopeId;
 use oxc_span::{ContentEq, GetSpan, Span};
-use rustc_hash::FxHashSet;
 use smallvec::SmallVec;
 
 use crate::{AstNode, ast_util::get_preceding_indent_str, context::LintContext, rule::Rule};
@@ -132,6 +130,7 @@ impl Rule for BranchesSharingCode {
 
             if start == 1
                 && let Some(indent) = get_preceding_indent_str(ctx.source_text(), if_stmt.span)
+                && !duplicated_code_references_branch_locals(&bodies, false, ctx)
             {
                 let delete_spans =
                     bodies.iter().map(|body| get_duplicated_delete_span(start, body, false));
@@ -158,7 +157,7 @@ impl Rule for BranchesSharingCode {
 
             if end == 1
                 && let Some(indent) = get_preceding_indent_str(ctx.source_text(), if_stmt.span)
-                && !duplicated_end_references_branch_locals(end, &bodies, ctx)
+                && !duplicated_code_references_branch_locals(&bodies, true, ctx)
             {
                 let delete_spans =
                     bodies.iter().map(|body| get_duplicated_delete_span(end, body, true));
@@ -215,64 +214,52 @@ fn get_duplicated_delete_span(count: usize, body: &Statement, reverse: bool) -> 
     )
 }
 
-fn duplicated_end_references_branch_locals(
-    count: usize,
-    bodies: &[&Statement],
-    ctx: &LintContext,
+fn duplicated_code_references_branch_locals<'a>(
+    bodies: &[&Statement<'a>],
+    reverse: bool,
+    ctx: &LintContext<'a>,
 ) -> bool {
     bodies.iter().any(|body| {
-        let stmts = get_block_statements(body);
-        let start_idx = stmts.len() - count;
-        let mut symbols = FxHashSet::default();
-
-        for stmt in &stmts[..start_idx] {
-            collect_lexical_declaration_symbols(stmt, &mut symbols);
-        }
-
-        if symbols.is_empty() {
+        let Statement::BlockStatement(block) = body else {
+            return false;
+        };
+        let scope_id = block.scope_id();
+        let scoping = ctx.scoping();
+        let may_have_hoisted_functions =
+            ctx.source_type().is_javascript() && !scoping.scope_flags(scope_id).is_strict_mode();
+        if !may_have_hoisted_functions && scoping.get_bindings(scope_id).is_empty() {
             return false;
         }
 
-        duplicated_statements(body, count, true).iter().any(|stmt| {
-            let mut references = ReferenceCollector::default();
-            references.visit_statement(stmt);
-            references.references.iter().any(|reference_id| {
-                ctx.scoping()
-                    .get_reference(*reference_id)
-                    .symbol_id()
-                    .is_some_and(|symbol_id| symbols.contains(&symbol_id))
-            })
-        })
+        let statement = if reverse { block.body.last() } else { block.body.first() };
+        let mut visitor = BranchLocalReferenceFinder { ctx, scope_id, found: false };
+        if let Some(statement) = statement {
+            visitor.visit_statement(statement);
+        }
+        visitor.found
     })
 }
 
-fn duplicated_statements<'a>(
-    body: &'a Statement<'a>,
-    count: usize,
-    reverse: bool,
-) -> &'a [Statement<'a>] {
-    let stmts = get_block_statements(body);
-    if reverse { &stmts[stmts.len() - count..] } else { &stmts[..count] }
+struct BranchLocalReferenceFinder<'c, 'a> {
+    ctx: &'c LintContext<'a>,
+    scope_id: ScopeId,
+    found: bool,
 }
 
-fn collect_lexical_declaration_symbols(stmt: &Statement, symbols: &mut FxHashSet<SymbolId>) {
-    if let Statement::VariableDeclaration(decl) = stmt
-        && decl.kind.is_lexical()
-    {
-        decl.bound_names(&mut |ident| {
-            symbols.insert(ident.symbol_id());
-        });
-    }
-}
-
-#[derive(Default)]
-struct ReferenceCollector {
-    references: FxHashSet<ReferenceId>,
-}
-
-impl<'a> Visit<'a> for ReferenceCollector {
+impl<'a> Visit<'a> for BranchLocalReferenceFinder<'_, 'a> {
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
-        self.references.insert(ident.reference_id());
+        if self.found {
+            return;
+        }
+        let scoping = self.ctx.scoping();
+        let Some(symbol_id) = scoping.get_reference(ident.reference_id()).symbol_id() else {
+            return;
+        };
+        // Annex B block functions can be recorded as bindings of the enclosing var scope.
+        self.found = scoping.symbol_scope_id(symbol_id) == self.scope_id
+            || (scoping.symbol_flags(symbol_id).is_function()
+                && self.ctx.nodes().get_node(scoping.symbol_declaration(symbol_id)).scope_id()
+                    == self.scope_id);
     }
 }
 
@@ -361,7 +348,34 @@ fn extract_if_sequence<'a>(
 
 #[test]
 fn test() {
-    use crate::{fixer::FixKind, tester::Tester};
+    use crate::{
+        fixer::FixKind,
+        tester::{ExpectFixTestCase, Tester},
+    };
+
+    let shared_suffix_references_class = r"
+        function f(flag, use, C) {
+            if (flag) {
+                class C {}
+                use(C);
+            } else {
+                class C { m() {} }
+                use(C);
+            }
+        }
+        ";
+
+    let shared_prefix_references_function = r"
+        function g(flag, use) {
+            if (flag) {
+                use(() => f());
+                first();
+            } else {
+                use(() => f());
+                function f() {}
+            }
+        }
+        ";
 
     let pass = vec![
         "if (condition) { foo(); } else { bar(); }",
@@ -512,6 +526,8 @@ fn test() {
             return 3;
         }
         ",
+        shared_suffix_references_class,
+        shared_prefix_references_function,
     ];
 
     let fix = vec![
@@ -725,7 +741,46 @@ fn test() {
             None,
             FixKind::Suggestion,
         ),
+        (shared_suffix_references_class, shared_suffix_references_class, None, FixKind::Suggestion),
+        (
+            shared_prefix_references_function,
+            shared_prefix_references_function,
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            r"
+        if (flag) {
+            class C {}
+            use(C => C);
+        } else {
+            class C { m() {} }
+            use(C => C);
+        }
+        ",
+            r"
+        if (flag) {
+            class C {}
+        } else {
+            class C { m() {} }
+        }
+        use(C => C);
+        ",
+            None,
+            FixKind::Suggestion,
+        ),
     ];
+
+    let mut fix: Vec<ExpectFixTestCase> = fix.into_iter().map(Into::into).collect();
+    fix.push(
+        (
+            shared_prefix_references_function,
+            shared_prefix_references_function,
+            None,
+            Some(std::path::PathBuf::from("branches_sharing_code.cjs")),
+        )
+            .into(),
+    );
 
     Tester::new(BranchesSharingCode::NAME, BranchesSharingCode::PLUGIN, pass, fail)
         .expect_fix(fix)
