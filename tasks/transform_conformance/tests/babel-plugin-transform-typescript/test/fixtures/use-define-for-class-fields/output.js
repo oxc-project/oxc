@@ -5,7 +5,9 @@ class Cls {
 }
 
 class StaticCls {
-  static y = 1;
+  static {
+    this.y = 1;
+  }
   @dce
   static z;
 }

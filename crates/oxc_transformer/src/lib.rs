@@ -352,6 +352,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
 
     fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         self.decorator.exit_class(class, ctx);
+        // Legacy decorators have taken the decorators off the fields they lowered, so TypeScript
+        // can now remove those fields if they have no initializer.
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.exit_class(class, ctx);
         }

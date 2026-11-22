@@ -1,0 +1,12 @@
+{
+  "plugins": [
+    "transform-legacy-decorator",
+    [
+      "transform-typescript",
+      {
+        "removeClassFieldsWithoutInitializer": true
+      }
+    ],
+    "transform-class-properties"
+  ]
+}

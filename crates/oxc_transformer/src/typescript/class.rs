@@ -3,13 +3,14 @@ use rustc_hash::FxHashSet;
 use oxc_allocator::{ArenaVec, CloneIn, GetAllocator, ReplaceWith, TakeIn};
 use oxc_ast::ast::*;
 use oxc_semantic::{ScopeFlags, ScopeId};
-use oxc_span::SPAN;
+use oxc_span::{SPAN, Span};
 use oxc_str::Ident;
 use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::BoundIdentifier;
 
 use crate::{
     common::{
+        class_lowering::ClassLowering,
         computed_key::{create_computed_key_temp_var, key_needs_temp_var},
         duplicate::duplicate_expression,
     },
@@ -97,16 +98,26 @@ impl<'a> TypeScript<'a> {
     /// The transformation way is also the same as `TypeScript`, the advantage from the implementation is that
     /// we don't need extra transformation for static properties, the output is the same as instance properties
     /// transformation, and the greatest advantage is we don't need to care about `this` usage in static block.
-    pub(super) fn transform_class_fields(&self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+    ///
+    /// Fields that `lowering` keeps for a downstream transform stay as written, and so do instance
+    /// fields before [`ClassLowering::first_movable_instance_field`].
+    pub(super) fn transform_class_fields(
+        &self,
+        class: &mut Class<'a>,
+        lowering: ClassLowering,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let first_movable_index = lowering.first_movable_instance_field(class);
         // When any non-private instance field has an initializer, all instance field
         // initializers (including private) must be hoisted to the constructor to preserve
         // execution order. This matches TypeScript's `WillHoistInitializersToConstructor`:
         // https://github.com/microsoft/TypeScript/blob/7b8cb3bdf8/src/compiler/transformers/classFields.ts#L339
-        let will_hoist_initializers_to_constructor = class.body.body.iter().any(|e| {
-            matches!(e, ClassElement::PropertyDefinition(prop)
-                if !prop.r#static && !prop.declare && !prop.key.is_private_identifier() && prop.value.is_some()
-            )
-        });
+        let will_hoist_initializers_to_constructor =
+            class.body.body[first_movable_index..].iter().any(|e| {
+                matches!(e, ClassElement::PropertyDefinition(prop)
+                    if !prop.r#static && !prop.declare && !prop.key.is_private_identifier() && prop.value.is_some()
+                )
+            });
 
         // Static blocks created below must be parented to the class body scope,
         // not the current traversal scope (which is the scope enclosing the class).
@@ -115,13 +126,16 @@ impl<'a> TypeScript<'a> {
         let mut constructor = None;
         let mut property_assignments = Vec::new();
         let mut computed_key_assignments = Vec::new();
-        for element in &mut class.body.body {
+        for (index, element) in class.body.body.iter_mut().enumerate() {
+            let kept = lowering.keeps_field(element);
             match element {
                 // Skip static private properties — converting them to static blocks
                 // would lose the private field declaration.
                 ClassElement::PropertyDefinition(prop)
-                    if !prop.key.is_private_identifier()
-                        || (!prop.r#static && will_hoist_initializers_to_constructor) =>
+                    if !kept
+                        && (prop.r#static || index >= first_movable_index)
+                        && (!prop.key.is_private_identifier()
+                            || (!prop.r#static && will_hoist_initializers_to_constructor)) =>
                 {
                     if let Some(value) = prop.value.take() {
                         // A static property is replaced by a static block below, and an instance
@@ -191,6 +205,12 @@ impl<'a> TypeScript<'a> {
                         &mut computed_key_assignments,
                         ctx,
                     );
+                }
+                // A computed key that stays in the class still evaluates after the keys before it.
+                ClassElement::PropertyDefinition(prop)
+                    if !prop.declare && prop.key.is_computed() =>
+                {
+                    Self::convert_computed_key(&mut prop.key, &mut computed_key_assignments, ctx);
                 }
                 _ => (),
             }
@@ -292,27 +312,45 @@ impl<'a> TypeScript<'a> {
     /// Skips parameter properties whose name matches an existing instance field declaration on
     /// the same class (matching TypeScript's dedup). Only static-identifier instance fields
     /// count — static, private, computed, and `declare`-only fields don't suppress the new field.
-    pub(super) fn add_parameter_property_fields(class: &mut Class<'a>, ctx: &TraverseCtx<'a>) {
-        let Some(params) = Self::find_constructor_params(class) else { return };
-
-        // Bail before allocating when there are no parameter properties to emit.
-        // Parameter properties are TS-specific and uncommon, so most classes hit this path.
-        if !params.iter().any(FormalParameter::has_modifier) {
-            return;
-        }
-
+    ///
+    /// `properties` comes from [`Self::collect_parameter_properties`] on class entry, before
+    /// parameter modifiers are erased. Fields are added on class exit, after fields without
+    /// initializers are removed, so neither the removal nor a removed field affects them.
+    pub(super) fn add_parameter_property_fields(
+        class: &mut Class<'a>,
+        properties: &[(Span, Ident<'a>)],
+        ctx: &TraverseCtx<'a>,
+    ) {
         let mut declared_names = Self::collect_instance_field_names(class);
         let fields = ArenaVec::from_iter_in(
-            params
+            properties
                 .iter()
-                .filter(|param| param.has_modifier())
-                .filter_map(|param| param.pattern.get_binding_identifier())
-                .filter(|id| declared_names.insert(id.name))
-                .map(|id| Self::build_uninitialized_field(id, ctx)),
+                .filter(|(_, name)| declared_names.insert(*name))
+                .map(|&(span, name)| Self::build_uninitialized_field(span, name, ctx)),
             ctx,
         );
 
         class.body.body.splice(0..0, fields);
+    }
+
+    /// Append the span and name of each constructor parameter property to `properties`.
+    ///
+    /// Safe to read `id.name` directly here: this runs on class entry, before any rename.
+    /// `convert_constructor_params` uses the span trick because it also runs alongside
+    /// class-properties.
+    pub(super) fn collect_parameter_properties(
+        class: &Class<'a>,
+        properties: &mut Vec<(Span, Ident<'a>)>,
+    ) {
+        if let Some(params) = Self::find_constructor_params(class) {
+            properties.extend(
+                params
+                    .iter()
+                    .filter(|param| param.has_modifier())
+                    .filter_map(|param| param.pattern.get_binding_identifier())
+                    .map(|id| (id.span, id.name)),
+            );
+        }
     }
 
     /// Returns the body-bearing constructor's parameter list, or `None` if the class has none.
@@ -360,19 +398,15 @@ impl<'a> TypeScript<'a> {
             .collect()
     }
 
-    /// Build `<id.name>;` — an uninitialized public class field declaration.
-    ///
-    /// Safe to read `id.name` directly here — `add_parameter_property_fields` is gated on
-    /// TypeScript handling fields itself, so no rename has happened.
-    /// `convert_constructor_params` uses the span trick because it also runs alongside
-    /// class-properties.
+    /// Build `<name>;` — an uninitialized public class field declaration.
     fn build_uninitialized_field(
-        id: &BindingIdentifier<'a>,
+        span: Span,
+        name: Ident<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> ClassElement<'a> {
-        let key = PropertyKey::new_static_identifier(id.span, id.name, ctx);
+        let key = PropertyKey::new_static_identifier(span, name, ctx);
         ClassElement::new_property_definition(
-            id.span,
+            span,
             PropertyDefinitionType::PropertyDefinition,
             [],
             key,
@@ -389,10 +423,13 @@ impl<'a> TypeScript<'a> {
         )
     }
 
+    /// Remove fields without initializers, as TypeScript erases them.
+    ///
+    /// Decorated fields stay, for a downstream transform or for legacy decorators to lower. See
+    /// `TransformerImpl::exit_class` for how this interacts with legacy decorators on class exit.
     pub(super) fn remove_uninitialized_class_fields(
         &self,
         class: &mut Class<'a>,
-        preserve_decorated_fields: bool,
         ctx: &TraverseCtx<'a>,
     ) {
         if !self.remove_class_fields_without_initializer {
@@ -402,8 +439,7 @@ impl<'a> TypeScript<'a> {
         class.body.body.retain(|element| {
             if let ClassElement::PropertyDefinition(prop) = element
                 && prop.value.is_none()
-                && ((self.set_public_class_fields && !preserve_decorated_fields)
-                    || prop.decorators.is_empty())
+                && prop.decorators.is_empty()
                 && !prop.key.is_private_identifier()
             {
                 if let Some(key) = prop.key.as_expression() {

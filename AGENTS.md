@@ -328,7 +328,7 @@ When changing linter codegen files such as `tasks/linter_codegen/**` or generate
 
 ## Pull request guidance
 
-Use the [PR guide skill](.agents/skills/pr-guide/SKILL.md) when writing a pull request title or before opening or updating a pull request. It covers title conventions, the required example layout and evidence for behavior fixes and optimizations, and when to include a playground link.
+Use the [PR writing skill](.agents/skills/pr-writer/SKILL.md) when writing a pull request title or before opening or updating a pull request. It covers title conventions, the required example layout and evidence for behavior fixes and optimizations, and when to include a playground link.
 
 ## Notes
 
