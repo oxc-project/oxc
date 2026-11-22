@@ -651,7 +651,7 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
                     .arguments
                     .iter()
                     .filter_map(Argument::as_expression)
-                    .any(|expr| is_invalid_code_point(expr, ctx))
+                    .any(|expr| is_provably_invalid_code_point(expr, ctx))
             {
                 return true;
             }
@@ -752,20 +752,16 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
     }
 }
 
-fn is_invalid_code_point<'a>(
+/// Whether `expr` is known to coerce to a number that makes `String.fromCodePoint`
+/// throw a `RangeError`.
+///
+/// Unknown coercion results leave the call eligible for removal.
+/// [`any_arg_throws_to_number`] handles BigInt arguments.
+fn is_provably_invalid_code_point<'a>(
     expr: &Expression<'a>,
     ctx: &impl MayHaveSideEffectsContext<'a>,
 ) -> bool {
-    let value = match expr {
-        Expression::UnaryExpression(unary) if unary.operator.is_void() => return true,
-        Expression::UnaryExpression(unary) if unary.operator.is_arithmetic() => {
-            unary.argument.to_number(ctx).map(|value| {
-                if unary.operator == UnaryOperator::UnaryNegation { -value } else { value }
-            })
-        }
-        _ => expr.to_number(ctx),
-    };
-    value
+    expr.to_number(ctx)
         .is_some_and(|value| !(0.0..=f64::from(0x10_FFFF)).contains(&value) || value.fract() != 0.0)
 }
 
