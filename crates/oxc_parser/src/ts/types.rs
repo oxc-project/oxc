@@ -919,10 +919,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
     ) -> Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>> {
         // The tokens which `re_lex_ts_l_angle` accepts.
-        if matches!(
-            self.cur_kind(),
-            Kind::LAngle | Kind::ShiftLeft | Kind::LtEq | Kind::ShiftLeftEq
-        ) {
+        if matches!(self.cur_kind(), Kind::LAngle | Kind::ShiftLeft | Kind::ShiftLeftEq) {
             self.try_parse_type_arguments_at_l_angle()
         } else {
             None
@@ -963,10 +960,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // Type references attach `<...>` only when `<` is on the same line as the name.
         // The contents of the list may span lines. The expression rule below is separate.
         if self.cur_token().is_on_new_line()
-            || !matches!(
-                self.cur_kind(),
-                Kind::LAngle | Kind::ShiftLeft | Kind::LtEq | Kind::ShiftLeftEq
-            )
+            || !matches!(self.cur_kind(), Kind::LAngle | Kind::ShiftLeft | Kind::ShiftLeftEq)
         {
             return None;
         }
@@ -1051,11 +1045,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>> {
         // A type-argument list can only open with `<`, or `<<` for nested generics like
         // `f<<T>() => U>()`. This mirrors TypeScript's `reScanLessThanToken`, which re-scans only
-        // `<`/`<<`. `<=`/`<<=` can never open one: splitting their leading angles eventually
-        // leaves `=` where a type or type parameter must start. `re_lex_ts_l_angle` also serves
-        // type-context callers and accepts them, but expression speculation can only fail. Bail
-        // before the checkpoint for any non-`<`-opening token (the common `a?.(`, `a?.b` paths),
-        // avoiding a checkpoint/rewind round-trip that returns `None` anyway.
+        // `<`/`<<`.
         if !matches!(self.cur_kind(), Kind::LAngle | Kind::ShiftLeft) {
             return None;
         }
@@ -1211,7 +1201,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             | Kind::Comma
             | Kind::LAngle
             | Kind::ShiftLeft
-            | Kind::LtEq
             | Kind::ShiftLeftEq
             | Kind::LBrack
             | Kind::Bang
