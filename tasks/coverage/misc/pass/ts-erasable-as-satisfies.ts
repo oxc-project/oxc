@@ -28,6 +28,11 @@ const x20 = 1 + 1 as any as number >= 2;
 const x21 = 1 + 1 as number >> 2;
 const x22 = 1 + 1 as any as number >> 2;
 
+type N = number;
+const x23 = 1 as N <= 2;
+const value: number = 1;
+const x24 = 1 as typeof value <= 2;
+
 const y01 = 1 satisfies number * 2;
 const y02 = 1 satisfies any satisfies number * 2;
 const y05 = 1 satisfies number + 1 * 2;
@@ -52,3 +57,4 @@ const y20 = 1 + 1 satisfies any satisfies number >= 2;
 
 const y21 = 1 + 1 satisfies number >> 2;
 const y22 = 1 + 1 satisfies any satisfies number >> 2;
+const y23 = 1 satisfies N <= 2;
