@@ -292,13 +292,10 @@ fn replacement_text(
     ctx: &LintContext,
     replacement_text: &str,
 ) -> String {
+    // `replacement` has already had its own parentheses stripped, so its text is never a single
+    // parenthesized group, even when it starts with `(` and ends with `)` (e.g. `(a) || (b)`).
     let mut text = if needs_parentheses(replacement, target, ctx) {
-        let trimmed = replacement_text.trim();
-        if trimmed.starts_with('(') && trimmed.ends_with(')') {
-            replacement_text.to_string()
-        } else {
-            format!("({replacement_text})")
-        }
+        format!("({replacement_text})")
     } else {
         replacement_text.to_string()
     };
@@ -2235,6 +2232,11 @@ fn test() {
         ("!(Boolean(a -= b))", "!(a -= b)", None),
         ("!!!(a || b)", "!(a || b)", None),
         ("!Boolean(a || b)", "!(a || b)", None),
+        // operands wrapped in their own parentheses are not one parenthesized group
+        ("!Boolean((a) || (b))", "!((a) || (b))", None),
+        ("!Boolean((x > 0) && (y > 0))", "!((x > 0) && (y > 0))", None),
+        ("!Boolean((a) ? (b) : (c))", "!((a) ? (b) : (c))", None),
+        ("!!!((a) || (b))", "!((a) || (b))", None),
         ("!!!(a && b)", "!(a && b)", None),
         ("!Boolean(a && b)", "!(a && b)", None),
         ("!!!(a != b)", "!(a != b)", None),
