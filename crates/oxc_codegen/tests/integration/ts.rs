@@ -623,3 +623,15 @@ fn ts_cast_assignment_target_is_parenthesized() {
     test_idempotency("(foo as Bar) = baz");
     test_idempotency("(foo satisfies Bar) = baz");
 }
+
+#[test]
+fn export_assignment_sequence_expression() {
+    let source = "export = (f(), value);";
+    test_ts(source, "export = (f(), value);\n");
+    test_options_with_source_type(
+        source,
+        "export = (f(),value);",
+        SourceType::ts(),
+        CodegenOptions::minify(),
+    );
+}

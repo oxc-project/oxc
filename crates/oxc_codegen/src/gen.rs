@@ -1163,7 +1163,7 @@ impl Gen for TSExportAssignment<'_> {
         p.print_indent();
         p.print_comments_at(self.span.start);
         p.print_str("export = ");
-        self.expression.print_expr(p, Precedence::Lowest, ctx);
+        self.expression.print_expr(p, Precedence::Comma, ctx);
         p.print_semicolon_after_statement();
     }
 }
