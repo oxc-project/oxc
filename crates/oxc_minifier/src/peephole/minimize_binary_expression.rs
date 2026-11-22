@@ -67,8 +67,8 @@ impl<'a> PeepholeOptimizations {
     /// - `b OP (a | 0)` -> `b OP a`
     ///
     /// Bitwise operators reduce their number operands modulo 2^32, so applying
-    /// `ToInt32` first is redundant. `b` must be a number because, for a BigInt `a`,
-    /// `a | 0` throws but `a OP b` succeeds when `b` is also a BigInt.
+    /// `ToInt32` first is redundant. `b` must be a number because `a | 0` throws for
+    /// a BigInt `a`, while every operator except `>>>` accepts two BigInts.
     ///
     /// In `(a | 0) OP b`, `b` is evaluated after `a` has been converted. Removing
     /// `| 0` moves that conversion after `b`, so `b` must not have side effects.
