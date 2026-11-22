@@ -42,7 +42,7 @@ pub const SHORT_DESCRIPTION: &str = "Enforce valid `expect()` usage.";
 pub const DOCUMENTATION: &str = r"### What it does
 
 Checks that `expect()` is called correctly.
-In Vitest, it also checks that `expectTypeOf()` calls use valid modifiers and invoke a matcher.
+`vitest/valid-expect` also checks that `expectTypeOf()` calls use valid modifiers and invoke a matcher.
 
 ### Why is this bad?
 
