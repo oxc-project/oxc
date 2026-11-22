@@ -762,5 +762,6 @@ fn type_assertions() {
     )
     .with_vitest_plugin(true)
     .intentionally_allow_no_fix_tests()
-    .test();
+    .with_snapshot_suffix("type_assertions")
+    .test_and_snapshot();
 }
