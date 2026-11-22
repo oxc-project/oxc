@@ -45,7 +45,7 @@ with (obj) {
 
 Looking up and calling `.toString()`, `.valueOf()`, and `[Symbol.toPrimitive]()` has no side effects, including when these methods are accessed through getters. The minifier uses `oxc_ecmascript` type conversion utilities that assume standard coercion behavior.
 
-The minifier may therefore change when a conversion happens relative to operands without side effects, such as `(a | 0) ^ 1` → `a ^ 1` or `+a - 1` → `a - 1`.
+The minifier may therefore move a conversion past an operand without side effects. For example, if `b` is a declared variable, `(a | 0) ^ (b ? 1 : 2)` becomes `a ^ (b ? 1 : 2)` and `+a - (b ? 1 : 2)` becomes `a - (b ? 1 : 2)`. If converting `a` assigned to `b`, the result would change.
 
 ```javascript
 // The minifier assumes this never happens:
