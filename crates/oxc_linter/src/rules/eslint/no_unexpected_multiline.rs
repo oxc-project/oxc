@@ -1,8 +1,8 @@
-use memchr::memchr;
 use oxc_ast::{AstKind, ast::BinaryOperator};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_syntax::line_terminator::is_line_terminator;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -189,11 +189,7 @@ impl Rule for NoUnexpectedMultiline {
                 let span = Span::new(binary_expr.left.span().end, parent_binary_expr.span().end);
                 let src = ctx.source_range(span);
 
-                let Some(newline) = memchr(b'\n', src.as_bytes()) else {
-                    return;
-                };
-                let Some(first_slash) = ctx.find_next_token_within(span.start, span.end, "/")
-                else {
+                let Some(first_slash) = has_newline_before(ctx, span, "/") else {
                     return;
                 };
                 let Some(second_slash) = ctx.find_prev_token_within(span.start, span.end, "/")
@@ -216,9 +212,7 @@ impl Rule for NoUnexpectedMultiline {
                     })
                     .collect::<String>();
 
-                if newline < parent_binary_expr.left.span().start as usize
-					// The identifier name should look like it was an attempt to use a regex
-					&& is_regex_flag(ident_name.as_str())
+                if is_regex_flag(ident_name.as_str())
 					// if it was a regex attempt, the second slash should be before the identifier
                     && second_slash + span.start + 1 == parent_binary_expr.right.span().start
                 {
@@ -257,7 +251,7 @@ fn has_newline_before(ctx: &LintContext, span: Span, token: &str) -> Option<u32>
     let target = ctx.find_next_token_within(span.start, span.end, token)?;
     let before_target = Span::new(span.start, span.start + target);
 
-    ctx.source_range(before_target).contains('\n').then_some(target)
+    ctx.source_range(before_target).contains(is_line_terminator).then_some(target)
 }
 
 #[test]
@@ -398,4 +392,36 @@ fn test() {
     Tester::new(NoUnexpectedMultiline::NAME, NoUnexpectedMultiline::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn line_terminators() {
+    use crate::tester::Tester;
+
+    let mut pass = vec![
+        "const a = b(x).foo()".to_string(),
+        "const a = b[0].foo()".to_string(),
+        "const a = b`foo`".to_string(),
+        "foo/bar/g".to_string(),
+    ];
+    let mut fail = Vec::new();
+    let mut fix = Vec::new();
+    for separator in ["\n", "\r", "\r\n", "\u{2028}", "\u{2029}"] {
+        pass.push(format!("const a = foo /{separator}bar/g"));
+        pass.push(format!("const a = foo / bar{separator}/g"));
+        for (prefix, suffix) in [
+            ("const a = b", "(x).foo()"),
+            ("const a = b", "[0].foo()"),
+            ("const a = b", "`foo`"),
+            ("foo", "/bar/g"),
+        ] {
+            let source = format!("{prefix}{separator}{suffix}");
+            fail.push(source.clone());
+            fix.push((source, format!("{prefix}{separator};{suffix}")));
+        }
+    }
+    let fix = fix.iter().map(|(source, expected)| (source.as_str(), expected.as_str())).collect();
+    Tester::new(NoUnexpectedMultiline::NAME, NoUnexpectedMultiline::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test();
 }

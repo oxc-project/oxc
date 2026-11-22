@@ -147,11 +147,11 @@ function _() {
 
 function _() { var x; try { throw 0 } catch (e) { var e } }
 function _() {
-	var e;
+	var t;
 	try {
 		throw 0;
-	} catch (t) {
-		var t;
+	} catch (e) {
+		var e;
 	}
 }
 
@@ -162,6 +162,20 @@ function _() {
 		throw 0;
 	} catch {
 		var t;
+	}
+}
+
+function _() { var y; try { throw 0 } catch (y) { var y = 2; () => { let w; y } } }
+function _() {
+	var y;
+	try {
+		throw 0;
+	} catch (y) {
+		var y = 2;
+		() => {
+			let e;
+			y;
+		};
 	}
 }
 
@@ -300,4 +314,12 @@ function _() {
 			var e;
 		}
 	};
+}
+
+function _() { var foo; try {} catch (foo) { var foo = function() {} } }
+function _() {
+	var foo;
+	try {} catch (foo) {
+		var foo = function() {};
+	}
 }

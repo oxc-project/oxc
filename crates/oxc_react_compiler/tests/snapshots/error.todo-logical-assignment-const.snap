@@ -1,0 +1,39 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.todo-logical-assignment-const.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Logical assignment to `const` variable `value` is not supported", labels: [LabeledSpan { label: Some("Cannot compile logical assignment to const `value`"), span: Span { start: 101, end: 106 }, primary: true }], help: Some("Declare `value` with `let` if it may be assigned, or write a nullish/logical expression instead of a logical assignment"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Advice, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Logical assignment to `const` variable `value` is not supported", labels: [LabeledSpan { label: Some("Cannot compile logical assignment to const `value`"), span: Span { start: 182, end: 187 }, primary: true }], help: Some("Declare `value` with `let` if it may be assigned, or write a nullish/logical expression instead of a logical assignment"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Advice, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Logical assignment to `const` variable `value` is not supported", labels: [LabeledSpan { label: Some("Cannot compile logical assignment to const `value`"), span: Span { start: 269, end: 274 }, primary: true }], help: Some("Declare `value` with `let` if it may be assigned, or write a nullish/logical expression instead of a logical assignment"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Advice, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Logical assignment to `const` variable `value` is not supported", labels: [LabeledSpan { label: Some("Cannot compile logical assignment to const `value`"), span: Span { start: 384, end: 389 }, primary: true }], help: Some("Declare `value` with `let` if it may be assigned, or write a nullish/logical expression instead of a logical assignment"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Advice, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Logical assignment to `const` variable `moduleValue` is not supported", labels: [LabeledSpan { label: Some("Cannot compile logical assignment to const `moduleValue`"), span: Span { start: 448, end: 459 }, primary: true }], help: Some("Declare `moduleValue` with `let` if it may be assigned, or write a nullish/logical expression instead of a logical assignment"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Advice, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
+
+// @panicThreshold:"none"
+const moduleValue = 1;
+function NullishComponent() {
+	const value = 1;
+	value ??= 2;
+	return value;
+}
+function OrComponent() {
+	const value = true;
+	value ||= false;
+	return value;
+}
+function AndComponent() {
+	const value = false;
+	value &&= true;
+	return value;
+}
+function CapturedComponent() {
+	const value = 1;
+	const read = () => value;
+	value ??= 2;
+	return read();
+}
+function ModuleComponent() {
+	moduleValue ??= 2;
+	return moduleValue;
+}

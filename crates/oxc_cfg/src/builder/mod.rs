@@ -208,7 +208,11 @@ impl<'a> ControlFlowGraphBuilder<'a> {
         self.push_instruction(InstructionKind::Continue(kind), Some(node));
         self.append_unreachable();
 
-        self.ctx(label).r#continue(bb);
+        if let Some(label) = label {
+            self.append_labeled_continue(label, bb);
+        } else {
+            self.ctx(None).r#continue(bb);
+        }
     }
 
     pub fn append_unreachable(&mut self) {

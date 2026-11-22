@@ -36,7 +36,7 @@
 use oxc_ast::ast::*;
 use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_span::SPAN;
-use oxc_syntax::{number::NumberBase, symbol::SymbolFlags};
+use oxc_syntax::symbol::SymbolFlags;
 use oxc_traverse::{BoundIdentifier, Traverse};
 
 use crate::{context::TraverseCtx, state::TransformState};
@@ -95,7 +95,7 @@ impl<'a> JsxSource<'a> {
         let kind = PropertyKind::Init;
         let key = PropertyKey::new_static_identifier(SPAN, SOURCE, ctx);
         let value = self.get_source_object(line, column, ctx);
-        ObjectPropertyKind::new_object_property(SPAN, kind, key, value, false, false, false, ctx)
+        ObjectPropertyKind::new_object_property(SPAN, kind, key, value, false, false, ctx)
     }
 
     /// `<sometag __source={ { fileName: 'this/file.js', lineNumber: 10, columnNumber: 1 } } />`
@@ -142,32 +142,19 @@ impl<'a> JsxSource<'a> {
         let filename = {
             let key = PropertyKey::new_static_identifier(SPAN, "fileName", ctx);
             let value = self.get_filename_var(ctx).create_read_expression(ctx);
-            ObjectPropertyKind::new_object_property(
-                SPAN, kind, key, value, false, false, false, ctx,
-            )
+            ObjectPropertyKind::new_object_property(SPAN, kind, key, value, false, false, ctx)
         };
 
         let line_number = {
             let key = PropertyKey::new_static_identifier(SPAN, "lineNumber", ctx);
-            let value =
-                Expression::new_numeric_literal(SPAN, line as f64, None, NumberBase::Decimal, ctx);
-            ObjectPropertyKind::new_object_property(
-                SPAN, kind, key, value, false, false, false, ctx,
-            )
+            let value = Expression::new_numeric_literal(SPAN, line as f64, None, ctx);
+            ObjectPropertyKind::new_object_property(SPAN, kind, key, value, false, false, ctx)
         };
 
         let column_number = {
             let key = PropertyKey::new_static_identifier(SPAN, "columnNumber", ctx);
-            let value = Expression::new_numeric_literal(
-                SPAN,
-                column as f64,
-                None,
-                NumberBase::Decimal,
-                ctx,
-            );
-            ObjectPropertyKind::new_object_property(
-                SPAN, kind, key, value, false, false, false, ctx,
-            )
+            let value = Expression::new_numeric_literal(SPAN, column as f64, None, ctx);
+            ObjectPropertyKind::new_object_property(SPAN, kind, key, value, false, false, ctx)
         };
 
         Expression::new_object_expression(SPAN, [filename, line_number, column_number], ctx)

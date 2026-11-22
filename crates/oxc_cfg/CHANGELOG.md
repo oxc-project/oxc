@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.158.0] - 2026-11-09
+
+### 🐛 Bug Fixes
+
+- a791a5b cfg: Resolve continues through stacked loop labels (#29016) (camc314)
+- b71234f cfg: Skip labeled contexts for unlabeled jumps (#29001) (camc314)
+
 ## [0.109.0] - 2026-01-19
 
 ### 🐛 Bug Fixes

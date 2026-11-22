@@ -286,11 +286,8 @@ impl<'a> Resolver<'_, 'a> {
                             .properties
                             .iter()
                             .find(|property| binding_symbol(&property.value) == Some(symbol_id))?;
-                        let key = if property.computed {
-                            match self.constant_of(
-                                property.key.as_expression()?,
-                                &mut FxHashSet::default(),
-                            )? {
+                        let key = if let Some(key) = property.key.as_expression() {
+                            match self.constant_of(key, &mut FxHashSet::default())? {
                                 Constant::String(key) => key,
                                 _ => return None,
                             }
@@ -497,7 +494,10 @@ impl<'a> Resolver<'_, 'a> {
                     let ObjectPropertyKind::ObjectProperty(property) = property else {
                         return None;
                     };
-                    if property.kind != PropertyKind::Init || property.method || property.computed {
+                    if property.kind != PropertyKind::Init
+                        || property.method
+                        || property.key.is_computed()
+                    {
                         return None;
                     }
                     self.constant_of(&property.value, seen)?;
@@ -590,12 +590,8 @@ impl<'a> Resolver<'_, 'a> {
                 signal = None;
                 continue;
             };
-            let key = if property.computed {
-                match property
-                    .key
-                    .as_expression()
-                    .and_then(|key| self.constant_of(key, &mut FxHashSet::default()))
-                {
+            let key = if let Some(key) = property.key.as_expression() {
+                match self.constant_of(key, &mut FxHashSet::default()) {
                     Some(Constant::String(key)) => Some(key),
                     _ => None,
                 }

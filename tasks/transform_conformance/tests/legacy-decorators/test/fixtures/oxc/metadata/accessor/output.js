@@ -77,11 +77,11 @@ babelHelpers.decorate([
 ], Entity.prototype, "list", null);
 babelHelpers.decorate([
   dec,
-  babelHelpers.decorateMetadata("design:type", String),
-  babelHelpers.decorateMetadata("design:paramtypes", [])
-], Entity, "sName", null);
-babelHelpers.decorate([
-  dec,
   babelHelpers.decorateMetadata("design:type", Number),
   babelHelpers.decorateMetadata("design:paramtypes", [])
 ], Entity.prototype, "computed", null);
+babelHelpers.decorate([
+  dec,
+  babelHelpers.decorateMetadata("design:type", String),
+  babelHelpers.decorateMetadata("design:paramtypes", [])
+], Entity, "sName", null);

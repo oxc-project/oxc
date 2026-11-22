@@ -58,7 +58,8 @@ declare_oxc_lint!(
     recommended,
     fix,
     version = "0.0.18",
-    short_description = "Prefer `String#startsWith()` and `String#endsWith()` over `RegExp#test()`.",
+    short_description =
+        "Prefer `String#startsWith()` and `String#endsWith()` over `RegExp#test()`.",
 );
 
 impl Rule for PreferStringStartsEndsWith {

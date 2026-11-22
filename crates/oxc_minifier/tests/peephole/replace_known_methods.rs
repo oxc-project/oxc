@@ -1329,7 +1329,7 @@ fn test_fold_encode_uri() {
     test("x = encodeURI('ABC-_abc.!~*()123')", "x = 'ABC-_abc.!~*()123'");
     test("x = encodeURI('hello<>\"')", "x = 'hello%3C%3E%22'");
     test("x = encodeURI('hello\\t\\n')", "x = 'hello%09%0A'");
-    test("x = encodeURI('café')", "x = 'caf%C3%A9'"); // spellchecker:disable-line
+    test("x = encodeURI('café')", "x = 'caf%C3%A9'");
     test("x = encodeURI('测试')", "x = '%E6%B5%8B%E8%AF%95'");
 
     test_same("x = encodeURI('a', 'b')");
@@ -1348,7 +1348,7 @@ fn test_fold_encode_uri_component() {
     test("x = encodeURIComponent('#')", "x = '%23'");
     test("x = encodeURIComponent('hello world')", "x = 'hello%20world'");
     test("x = encodeURIComponent('hello<>\"')", "x = 'hello%3C%3E%22'");
-    test("x = encodeURIComponent('café')", "x = 'caf%C3%A9'"); // spellchecker:disable-line
+    test("x = encodeURIComponent('café')", "x = 'caf%C3%A9'");
     test("x = encodeURIComponent('测试')", "x = '%E6%B5%8B%E8%AF%95'");
 
     test_same("x = encodeURIComponent('a', 'b')");
@@ -1369,7 +1369,7 @@ fn test_fold_decode_uri() {
     test("x = decodeURI('%23hash')", "x = '%23hash'");
     test("x = decodeURI('hello%3C%3E%22')", "x = 'hello<>\"'");
     test("x = decodeURI('hello%09%0A')", "x = 'hello\\t\\n'");
-    test("x = decodeURI('caf%C3%A9')", "x = 'café'"); // spellchecker:disable-line
+    test("x = decodeURI('caf%C3%A9')", "x = 'café'");
     test("x = decodeURI('%E6%B5%8B%E8%AF%95')", "x = '测试'");
 
     test_same("x = decodeURI('%ZZ')"); // URIError
@@ -1392,7 +1392,7 @@ fn test_fold_decode_uri_component() {
     test("x = decodeURIComponent('%23hash')", "x = '#hash'");
     test("x = decodeURIComponent('hello%3C%3E%22')", "x = 'hello<>\"'");
     test("x = decodeURIComponent('hello%09%0A')", "x = 'hello\\t\\n'");
-    test("x = decodeURIComponent('caf%C3%A9')", "x = 'café'"); // spellchecker:disable-line
+    test("x = decodeURIComponent('caf%C3%A9')", "x = 'café'");
     test("x = decodeURIComponent('%E6%B5%8B%E8%AF%95')", "x = '测试'");
 
     test_same("x = decodeURIComponent('%ZZ')"); // URIError

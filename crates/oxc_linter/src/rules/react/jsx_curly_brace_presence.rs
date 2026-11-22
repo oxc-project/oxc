@@ -483,7 +483,6 @@ impl JsxCurlyBracePresence {
                         ctx,
                         container.span,
                         string.span,
-                        string.value,
                     );
                 } else {
                     report_unnecessary_curly(ctx, container, string.span);
@@ -496,7 +495,9 @@ impl JsxCurlyBracePresence {
                     return;
                 };
                 let Some(string) = value.as_str() else { return };
+                let raw = ctx.source_range(template.span.shrink_left(1).shrink_right(1));
                 if !parent_is_attribute && contains_quote_characters(string)
+                    || raw.contains('\\')
                     || is_allowed_string_like_in_container(
                         ctx,
                         string,
@@ -512,7 +513,6 @@ impl JsxCurlyBracePresence {
                         ctx,
                         container.span,
                         template.span,
-                        value,
                     );
                 } else {
                     report_unnecessary_curly(ctx, container, template.span);
@@ -532,13 +532,15 @@ fn is_allowed_string_like_in_container<'a>(
 ) -> bool {
     is_whitespace(s)
         || s.contains(['\n', '\r'])
+        // A raw backslash means an escape sequence that a JSX attribute string
+        // (which does not process escapes) cannot preserve.
+        || s.contains('\\')
         || contains_html_entity(s)
         || is_prop && contains_both_quote_characters(s)
         || !is_prop && contains_disallowed_jsx_text_chars(s)
         || !is_prop && s.trim() != s
         || contains_multiline_comment(s)
         || contains_line_break_literal(s)
-        || contains_utf8_escape(s)
         || has_adjacent_jsx_expression_containers(ctx, container, node_id)
 }
 
@@ -572,10 +574,6 @@ fn contains_single_quote_characters(s: &str) -> bool {
 
 fn contains_both_quote_characters(s: &str) -> bool {
     contains_double_quote_characters(s) && contains_single_quote_characters(s)
-}
-
-fn contains_utf8_escape(s: &str) -> bool {
-    s.chars().zip(s.chars().skip(1)).any(|tuple| matches!(tuple, ('\\', 'u')))
 }
 
 pub static HTML_ENTITY_REGEX: Lazy<Regex> = lazy_regex!(r#"(&[A-Za-z\d#]+;)"#);
@@ -625,25 +623,24 @@ fn report_unnecessary_curly<'a>(
     });
 }
 
-fn report_unnecessary_curly_for_string_attribute_value<'a>(
-    ctx: &LintContext<'a>,
+fn report_unnecessary_curly_for_string_attribute_value(
+    ctx: &LintContext<'_>,
     container_span: Span,
     inner_span: Span,
-    value: JSStr<'a>,
 ) {
     ctx.diagnostic_with_fix(jsx_curly_brace_presence_unnecessary_diagnostic(inner_span), |fixer| {
-        let mut fix = fixer.codegen();
-
-        let Some(str) = value.as_str() else {
-            return fixer.noop();
-        };
-        if !contains_double_quote_characters(str) {
-            fix = fix.with_options(CodegenOptions::default());
-        }
-
-        fix.print_string(str);
-
-        fixer.replace(container_span, fix.into_source_text())
+        // A JSX attribute string is not a JS string literal: escape sequences
+        // are not processed. Splice the original raw text instead of
+        // re-serializing the cooked value, which would re-escape `\` (to `\\`)
+        // and U+00A0 (to `\xA0`) and change the attribute value.
+        // Strings containing a backslash never reach this fixer.
+        let raw = ctx.source_range(inner_span.shrink_left(1).shrink_right(1));
+        let quote = if raw.contains('"') { '\'' } else { '"' };
+        let mut fixed = String::with_capacity(raw.len() + 2);
+        fixed.push(quote);
+        fixed.push_str(raw);
+        fixed.push(quote);
+        fixer.replace(container_span, fixed)
     });
 }
 
@@ -878,6 +875,14 @@ fn test() {
         (r#"<MyComponent>{"<Foo />"}</MyComponent>"#, Some(json!(["never"]))),
         (r#"<MyComponent prop={"Hello \u1026 world"}>bar</MyComponent>"#, Some(json!(["never"]))),
         (r#"<MyComponent>{"Hello \u1026 world"}</MyComponent>"#, Some(json!(["never"]))),
+        // Strings whose raw text contains a backslash are never fixed, because
+        // a JSX attribute string does not process escape sequences
+        // (https://github.com/oxc-project/oxc/issues/29975).
+        (r#"<div title={"a\xa0b"} />"#, None),
+        (r#"<div title={"a\\b"} />"#, None),
+        (r"<div title={`a\xa0b`} />", None),
+        (r"<div title={`a\\b`} />", None),
+        (r#"<App>{"a\xa0b"}</App>"#, None),
         (r#"<MyComponent prop={"Hello &middot; world"}>bar</MyComponent>"#, Some(json!(["never"]))),
         (r#"<MyComponent>{"Hello &middot; world"}</MyComponent>"#, Some(json!(["never"]))),
         (r#"<MyComponent>{"Hello \n world"}</MyComponent>"#, Some(json!(["never"]))),
@@ -1549,6 +1554,14 @@ fn test() {
             Some(json!([{ "children": "always" }])),
         ),
         (r#"<Foo bar={'"'} />"#, r#"<Foo bar='"' />"#, Some(json!(["never"]))),
+        // The fix splices the raw text, so a literal U+00A0 is preserved
+        // (https://github.com/oxc-project/oxc/issues/29975).
+        (
+            "<div title={\"a\u{a0}b\"} />",
+            "<div title=\"a\u{a0}b\" />",
+            Some(json!([{ "props": "never" }])),
+        ),
+        ("<div title={`a\u{a0}b`} />", "<div title=\"a\u{a0}b\" />", Some(json!(["never"]))),
     ];
 
     Tester::new(JsxCurlyBracePresence::NAME, JsxCurlyBracePresence::PLUGIN, pass, fail)

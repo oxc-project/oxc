@@ -1,5 +1,11 @@
 use oxc_ast::ast::*;
-use oxc_ast_visit::{Visit, walk::walk_call_expression};
+use oxc_ast_visit::{
+    Visit,
+    walk::{walk_call_expression, walk_catch_parameter},
+};
+use oxc_semantic::Scoping;
+use oxc_span::Span;
+use oxc_syntax::symbol::SymbolId;
 
 use crate::state::PassChanges;
 
@@ -17,14 +23,73 @@ pub fn as_direct_eval_call<'a, 'b>(
     (ident.name == "eval").then_some(ident)
 }
 
+/// The redeclared symbols a binding identifier of `symbol_id` declares: the
+/// symbol itself and, for a `var` redeclaring a catch parameter, the enclosing
+/// var binding (see `Scoping::catch_var_binding`). Only these need to be kept in
+/// sync with `Scoping::symbol_redeclarations`. The catch parameter itself only
+/// declares its own symbol, so pass `is_catch_parameter` for that binding.
+pub fn redeclared_symbols(
+    symbol_id: SymbolId,
+    scoping: &Scoping,
+    is_catch_parameter: bool,
+) -> impl Iterator<Item = SymbolId> + '_ {
+    std::iter::once(symbol_id)
+        .chain((!is_catch_parameter).then(|| scoping.catch_var_binding(symbol_id)).flatten())
+        .filter(|&symbol_id| !scoping.symbol_redeclarations(symbol_id).is_empty())
+}
+
+/// The symbol of a simple catch parameter: the one binding [`redeclared_symbols`]
+/// must be told about, since it does not also declare the enclosing var binding.
+fn catch_parameter_symbol(it: &CatchParameter<'_>) -> Option<SymbolId> {
+    match &it.pattern {
+        BindingPattern::BindingIdentifier(ident) => ident.symbol_id.get(),
+        _ => None,
+    }
+}
+
+/// Calls `on_declaration` with `(symbol, binding span)` for every declaration of
+/// a redeclared symbol in the visited subtree, i.e. for every binding the
+/// [`DroppedSubtreeCollector`] would record in `PassChanges::removed_declarations`.
+/// Used by the pass flush and its debug checks to find the live declarations.
+pub struct RedeclaredBindings<'s, F> {
+    scoping: &'s Scoping,
+    catch_parameter: Option<SymbolId>,
+    on_declaration: F,
+}
+
+impl<'s, F: FnMut(SymbolId, Span)> RedeclaredBindings<'s, F> {
+    pub fn new(scoping: &'s Scoping, on_declaration: F) -> Self {
+        Self { scoping, catch_parameter: None, on_declaration }
+    }
+}
+
+impl<'a, F: FnMut(SymbolId, Span)> Visit<'a> for RedeclaredBindings<'_, F> {
+    fn visit_binding_identifier(&mut self, it: &BindingIdentifier<'a>) {
+        let Some(symbol_id) = it.symbol_id.get() else { return };
+        for symbol_id in
+            redeclared_symbols(symbol_id, self.scoping, self.catch_parameter == Some(symbol_id))
+        {
+            (self.on_declaration)(symbol_id, it.span);
+        }
+    }
+
+    fn visit_catch_parameter(&mut self, it: &CatchParameter<'a>) {
+        let previous = std::mem::replace(&mut self.catch_parameter, catch_parameter_symbol(it));
+        walk_catch_parameter(self, it);
+        self.catch_parameter = previous;
+    }
+}
+
 /// Walks AST subtrees being dropped or replaced, collecting
-/// `IdentifierReference`s and direct `eval(...)` calls into the per-pass
+/// `IdentifierReference`s, direct `eval(...)` calls and declarations of
+/// redeclared symbols into the per-pass
 /// [`PassChanges`] accumulator. Use via the `Visit` entry point matching the
 /// dropped node (`visit_expression`, `visit_variable_declarator`, ...).
 ///
 /// Mark-only semantics: every reference found in a dropped subtree is added
 /// to `pass_changes.removed_references`; every direct eval call sets
-/// `pass_changes.direct_eval_dropped = true`. Marks for unresolved references
+/// `pass_changes.direct_eval_dropped = true`; every binding of a redeclared
+/// symbol is added to `pass_changes.removed_declarations`. Marks for unresolved references
 /// are inert: the flush only filters per-symbol resolved-reference lists,
 /// which never contain unresolved ids (and `root_unresolved_references` is
 /// deliberately not pruned — no in-loop optimization consumes it and callers
@@ -35,14 +100,18 @@ pub fn as_direct_eval_call<'a, 'b>(
 /// moved out of the old slot into the new value leave id-less `TakeIn` dummies
 /// behind, so the removed-subtree walk never sees their ids; and replacements
 /// are built with fresh references, never cloned ids (see
-/// `substitute_is_object_and_not_null`).
+/// `substitute_is_object_and_not_null`). Bindings are the exception: `KeepVar`
+/// re-emits dropped `var`s with their symbol and span (see
+/// `PassChanges::reemitted_declarations`).
 pub struct DroppedSubtreeCollector<'a, 's> {
     pass_changes: &'s mut PassChanges<'a>,
+    scoping: &'s Scoping,
+    catch_parameter: Option<SymbolId>,
 }
 
 impl<'a, 's> DroppedSubtreeCollector<'a, 's> {
-    pub(crate) fn new(pass_changes: &'s mut PassChanges<'a>) -> Self {
-        Self { pass_changes }
+    pub(crate) fn new(pass_changes: &'s mut PassChanges<'a>, scoping: &'s Scoping) -> Self {
+        Self { pass_changes, scoping, catch_parameter: None }
     }
 }
 
@@ -61,6 +130,21 @@ impl<'a> Visit<'a> for DroppedSubtreeCollector<'a, '_> {
         if idx < self.pass_changes.removed_references.capacity() {
             self.pass_changes.removed_references.set_bit(idx);
         }
+    }
+
+    fn visit_binding_identifier(&mut self, it: &BindingIdentifier<'a>) {
+        let Some(symbol_id) = it.symbol_id.get() else { return };
+        for symbol_id in
+            redeclared_symbols(symbol_id, self.scoping, self.catch_parameter == Some(symbol_id))
+        {
+            self.pass_changes.removed_declarations.insert((symbol_id, it.span));
+        }
+    }
+
+    fn visit_catch_parameter(&mut self, it: &CatchParameter<'a>) {
+        let previous = std::mem::replace(&mut self.catch_parameter, catch_parameter_symbol(it));
+        walk_catch_parameter(self, it);
+        self.catch_parameter = previous;
     }
 
     fn visit_call_expression(&mut self, it: &CallExpression<'a>) {

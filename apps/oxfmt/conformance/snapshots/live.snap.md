@@ -26,7 +26,7 @@
 
 ## html-in-js
 
-### Option 1: 160/184 (86.96%)
+### Option 1: 159/184 (86.41%)
 
 ```json
 {"printWidth":80}
@@ -39,6 +39,8 @@
   - apps/oxfmt/DIVERGENCES.md#dynamic-tag-name-end-tag
 - [externals/webawesome/callout/callout.ts](diffs/html-in-js/externals__webawesome__callout__callout.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/webawesome/carousel/carousel.test.ts](diffs/html-in-js/externals__webawesome__carousel__carousel.test.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#assignment-class-heritage
 - [externals/webawesome/checkbox/checkbox.ts](diffs/html-in-js/externals__webawesome__checkbox__checkbox.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/webawesome/color-picker/color-picker.ts](diffs/html-in-js/externals__webawesome__color-picker__color-picker.ts.md)
@@ -83,7 +85,7 @@
 - [externals/webawesome/textarea/textarea.ts](diffs/html-in-js/externals__webawesome__textarea__textarea.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 
-### Option 2: 174/184 (94.57%)
+### Option 2: 173/184 (94.02%)
 
 ```json
 {"printWidth":100,"htmlWhitespaceSensitivity":"ignore"}
@@ -94,6 +96,8 @@
   - apps/oxfmt/DIVERGENCES.md#dynamic-tag-name-end-tag
 - [externals/webawesome/callout/callout.ts](diffs/html-in-js/externals__webawesome__callout__callout.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/webawesome/carousel/carousel.test.ts](diffs/html-in-js/externals__webawesome__carousel__carousel.test.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#assignment-class-heritage
 - [externals/webawesome/copy-button/copy-button.ts](diffs/html-in-js/externals__webawesome__copy-button__copy-button.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/webawesome/format-number/format-number.ts](diffs/html-in-js/externals__webawesome__format-number__format-number.ts.md)
@@ -109,6 +113,70 @@
 - [externals/webawesome/slider/slider.ts](diffs/html-in-js/externals__webawesome__slider__slider.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/webawesome/textarea/textarea.ts](diffs/html-in-js/externals__webawesome__textarea__textarea.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+
+## angular-in-js
+
+### Option 1: 222/240 (92.50%)
+
+```json
+{"printWidth":80}
+```
+
+- [externals/ng-zorro-antd/components/auto-complete/autocomplete.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__auto-complete__autocomplete.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#arrow-exact-fill-signature
+- [externals/ng-zorro-antd/components/button/button.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__button__button.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/cdk/overflow/overflow-container.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__cdk__overflow__overflow-container.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/date-picker/date-picker.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__date-picker__date-picker.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/date-picker/date-range-popup.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__date-picker__date-range-popup.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/date-picker/inner-popup.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__date-picker__inner-popup.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/drawer/drawer.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__drawer__drawer.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/empty/embed-empty.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__empty__embed-empty.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/empty/empty.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__empty__empty.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/form/form-control.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__form__form-control.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/form/form-item.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__form__form-item.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/modal/modal.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__modal__modal.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/slider/handle.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__slider__handle.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/slider/slider.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__slider__slider.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/steps/steps.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__steps__steps.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/time-picker/time-picker-panel.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__time-picker__time-picker-panel.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/tree-select/tree-select.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__tree-select__tree-select.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/upload/upload.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__upload__upload.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+
+### Option 2: 234/240 (97.50%)
+
+```json
+{"printWidth":100,"htmlWhitespaceSensitivity":"ignore"}
+```
+
+- [externals/ng-zorro-antd/components/date-picker/date-picker.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__date-picker__date-picker.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/dropdown/dropdown-menu.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__dropdown__dropdown-menu.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/empty/empty.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__empty__empty.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/form/form-control.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__form__form-control.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/resizable/resize-handle.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__resizable__resize-handle.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/tabs/tab-body.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__tabs__tab-body.component.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 
 ## svelte

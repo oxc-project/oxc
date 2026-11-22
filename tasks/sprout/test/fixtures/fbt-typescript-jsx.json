@@ -1,0 +1,5 @@
+{
+  "original": "import fbt from 'fbt';function Component({count}: {count: number}) {return <span>{fbt(`${fbt.param('count', count)} items`, 'Number of items')}</span>;}\nexport const FIXTURE_ENTRYPOINT = {fn: Component, params: [{count: 2}]};",
+  "compiled": "import fbt from 'fbt';function Component({count}: {count: number}) {return <span>{fbt(`${fbt.param('count', count)} items`, 'Number of items')}</span>;}\nexport const FIXTURE_ENTRYPOINT = {fn: Component, params: [{count: 2}]};",
+  "expected": "success"
+}

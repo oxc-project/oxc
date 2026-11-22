@@ -1,0 +1,31 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+@supports (text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-and-longer) {}
+a {
+  text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-long-long;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+@supports (
+  text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-and-longer
+) {
+}
+a {
+  text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-long-long;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+@supports (text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-and-longer) {
+}
+a {
+  text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-long-long;
+}
+
+===================== End =====================

@@ -3,7 +3,7 @@ use oxc_allocator::{ArenaVec, ReplaceWith};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
     constant_evaluation::{ConstantValue, DetermineValueType, ValueType},
-    side_effects::{is_typed_array_constructor, is_valid_regexp},
+    side_effects::{MayHaveSideEffects, is_pure_global_constructor, is_typed_array_constructor},
 };
 use oxc_semantic::IsGlobalReference;
 use oxc_syntax::scope::ScopeFlags;
@@ -316,13 +316,7 @@ impl<'a> Normalize {
                 if Self::is_unary_delete_ancestor(ctx.ancestors()) {
                     return None;
                 }
-                Some(Expression::new_numeric_literal(
-                    ident.span,
-                    f64::INFINITY,
-                    None,
-                    NumberBase::Decimal,
-                    ctx,
-                ))
+                Some(Expression::new_numeric_literal(ident.span, f64::INFINITY, None, ctx))
             }
             "NaN" if ident.is_global_reference(ctx.scoping()) => {
                 // `delete NaN` returns `false`
@@ -396,7 +390,11 @@ impl<'a> Normalize {
         };
         if let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id() {
             // Apply `/* #__NO_SIDE_EFFECTS__ */`
-            if ctx.scoping().no_side_effects().contains(&symbol_id) {
+            // The annotation only describes the function value at declaration, so a call
+            // cannot be treated as pure when the binding is reassigned to another value.
+            if ctx.scoping().no_side_effects().contains(&symbol_id)
+                && !ctx.scoping().symbol_is_mutated(symbol_id)
+            {
                 call_expr.pure = true;
             }
         }
@@ -416,7 +414,10 @@ impl<'a> Normalize {
         };
         if let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id() {
             // Apply `/* #__NO_SIDE_EFFECTS__ */`
-            if ctx.scoping().no_side_effects().contains(&symbol_id) {
+            // Same as calls: the annotation is invalid once the binding is reassigned.
+            if ctx.scoping().no_side_effects().contains(&symbol_id)
+                && !ctx.scoping().symbol_is_mutated(symbol_id)
+            {
                 new_expr.pure = true;
             }
             return;
@@ -476,14 +477,22 @@ impl<'a> Normalize {
                     ValueType::Object,
                 ],
             ),
-            "ArrayBuffer" | "Date" => (false, false, &[ValueType::BigInt]),
+            "Date" => (false, false, &[ValueType::BigInt]),
             "Boolean" | "Error" | "EvalError" | "RangeError" | "ReferenceError" | "SyntaxError"
             | "TypeError" | "URIError" | "Number" | "Object" | "String" => (false, false, &[]),
-            // RegExp needs special validation using the regex parser
-            "RegExp" => {
-                if Self::can_set_pure(ident, ctx) && is_valid_regexp(&new_expr.arguments, ctx) {
-                    new_expr.pure = true;
+            "ArrayBuffer" | "RegExp" => {
+                if !Self::can_set_pure(ident, ctx) {
+                    return;
                 }
+                // Preserve ArrayBuffer's conservative flagging: unlike RegExp,
+                // it previously required argument evaluation to be effect-free too.
+                if ident.name == "ArrayBuffer"
+                    && new_expr.arguments.iter().any(|arg| arg.may_have_side_effects(ctx))
+                {
+                    return;
+                }
+                new_expr.pure =
+                    is_pure_global_constructor(ident.name.as_str(), &new_expr.arguments, ctx);
                 return;
             }
             // Typed arrays allocate a zeroed buffer and run no user code when the

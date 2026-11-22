@@ -1,9 +1,9 @@
-commit: 6161772c
+commit: 5e32f324
 
 parser_typescript Summary:
-AST Parsed     : 9888/9900 (99.88%)
-Positive Passed: 9876/9900 (99.76%)
-Negative Passed: 1716/2818 (60.89%)
+AST Parsed     : 9909/9922 (99.87%)
+Positive Passed: 9897/9922 (99.75%)
+Negative Passed: 1723/2824 (61.01%)
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration4.ts
@@ -171,6 +171,10 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/constDeclarations-access2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/constEnumBadPropertyNames.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/constEnumInitializerTypeErasure.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/constEnumInitializerTypeErasureIsolated.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/constWithNonNull.ts
 
@@ -409,8 +413,6 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/exportInterfaceClassAndValueWithDuplicatesInImportList.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/exportStarFromEmptyModule.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/extBaseClass2.ts
 
@@ -759,8 +761,6 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/multipleExports.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/multivar.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/mutuallyRecursiveInference.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/namespaceFunctionReservedDefaultParameter.ts
 
@@ -1545,8 +1545,6 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conforma
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/externalModules/multipleExportDefault6.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/externalModules/rewriteRelativeImportExtensions/emit.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/externalModules/topLevelAwaitErrors.11.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/externalModules/topLevelAwaitNonModule.ts
 
@@ -2351,6 +2349,16 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/inc
  5 │ }
    ╰────
   help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
+Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/indexSignatureMissingType.ts
+
+  × TS(1021): An index signature must have a type annotation.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/indexSignatureMissingType.ts:2:5]
+ 1 │ export interface I {
+ 2 │     [key: string];
+   ·     ─────────────
+ 3 │ }
+   ╰────
 
 Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsdocThisTagWithThisParameter.ts
 
@@ -6473,6 +6481,21 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
 
+  × TS(1029): 'declare' modifier must precede 'abstract' modifier.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/declareAbstractModifierOrder.ts:2:10]
+ 1 │ declare abstract class A {}
+ 2 │ abstract declare class B {}
+   ·          ───────
+ 3 │ export declare abstract class C {}
+   ╰────
+
+  × TS(1029): 'declare' modifier must precede 'abstract' modifier.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/declareAbstractModifierOrder.ts:4:17]
+ 3 │ export declare abstract class C {}
+ 4 │ export abstract declare class D {}
+   ·                 ───────
+   ╰────
+
   × TS(1030): 'declare' modifier already seen.
    ╭─[typescript/tsc/testdata/tests/cases/compiler/declareAlreadySeen.ts:2:13]
  1 │ namespace M {
@@ -7719,6 +7742,303 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ·        ────────────────
    ╰────
 
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:6:1]
+ 5 │ // Assertions must not hide an invalid left operand of **.
+ 6 │ -x ** 2;
+   · ──
+ 7 │ +x ** 2;
+   ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '+' operator cannot be used as the left operand of an exponentiation expression
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:7:1]
+ 6 │ -x ** 2;
+ 7 │ +x ** 2;
+   · ──
+ 8 │ ~x ** 2;
+   ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '~' operator cannot be used as the left operand of an exponentiation expression
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:8:1]
+ 7 │ +x ** 2;
+ 8 │ ~x ** 2;
+   · ──
+ 9 │ !x ** 2;
+   ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '!' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:9:1]
+  8 │ ~x ** 2;
+  9 │ !x ** 2;
+    · ──
+ 10 │ typeof x ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the 'typeof' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:10:1]
+  9 │ !x ** 2;
+ 10 │ typeof x ** 2;
+    · ────────
+ 11 │ void x ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the 'void' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:11:1]
+ 10 │ typeof x ** 2;
+ 11 │ void x ** 2;
+    · ──────
+ 12 │ delete obj.p ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the 'delete' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:12:1]
+ 11 │ void x ** 2;
+ 12 │ delete obj.p ** 2;
+    · ────────────
+ 13 │ <number>x ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A type assertion cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:13:1]
+ 12 │ delete obj.p ** 2;
+ 13 │ <number>x ** 2;
+    · ─────────
+ 14 │ 
+    ╰────
+  help: Wrap the type assertion in parentheses to make the precedence explicit
+
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:15:1]
+ 14 │ 
+ 15 │ -x as any ** 2;
+    · ──
+ 16 │ +x as any ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '+' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:16:1]
+ 15 │ -x as any ** 2;
+ 16 │ +x as any ** 2;
+    · ──
+ 17 │ ~x as any ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '~' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:17:1]
+ 16 │ +x as any ** 2;
+ 17 │ ~x as any ** 2;
+    · ──
+ 18 │ !x as any ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '!' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:18:1]
+ 17 │ ~x as any ** 2;
+ 18 │ !x as any ** 2;
+    · ──
+ 19 │ typeof x as any ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the 'typeof' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:19:1]
+ 18 │ !x as any ** 2;
+ 19 │ typeof x as any ** 2;
+    · ────────
+ 20 │ void x as any ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the 'void' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:20:1]
+ 19 │ typeof x as any ** 2;
+ 20 │ void x as any ** 2;
+    · ──────
+ 21 │ delete obj.p as any ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the 'delete' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:21:1]
+ 20 │ void x as any ** 2;
+ 21 │ delete obj.p as any ** 2;
+    · ────────────
+ 22 │ 
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:23:1]
+ 22 │ 
+ 23 │ -x satisfies any ** 2;
+    · ──
+ 24 │ +x satisfies any ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '+' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:24:1]
+ 23 │ -x satisfies any ** 2;
+ 24 │ +x satisfies any ** 2;
+    · ──
+ 25 │ ~x satisfies any ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '~' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:25:1]
+ 24 │ +x satisfies any ** 2;
+ 25 │ ~x satisfies any ** 2;
+    · ──
+ 26 │ !x satisfies any ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '!' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:26:1]
+ 25 │ ~x satisfies any ** 2;
+ 26 │ !x satisfies any ** 2;
+    · ──
+ 27 │ typeof x satisfies any ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the 'typeof' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:27:1]
+ 26 │ !x satisfies any ** 2;
+ 27 │ typeof x satisfies any ** 2;
+    · ────────
+ 28 │ void x satisfies any ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the 'void' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:28:1]
+ 27 │ typeof x satisfies any ** 2;
+ 28 │ void x satisfies any ** 2;
+    · ──────
+ 29 │ delete obj.p satisfies any ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the 'delete' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:29:1]
+ 28 │ void x satisfies any ** 2;
+ 29 │ delete obj.p satisfies any ** 2;
+    · ────────────
+ 30 │ 
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:31:1]
+ 30 │ 
+ 31 │ -x as any as number ** 2;
+    · ──
+ 32 │ -x satisfies any satisfies number ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:32:1]
+ 31 │ -x as any as number ** 2;
+ 32 │ -x satisfies any satisfies number ** 2;
+    · ──
+ 33 │ -x as any satisfies number ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:33:1]
+ 32 │ -x satisfies any satisfies number ** 2;
+ 33 │ -x as any satisfies number ** 2;
+    · ──
+ 34 │ -x satisfies any as number ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:34:1]
+ 33 │ -x as any satisfies number ** 2;
+ 34 │ -x satisfies any as number ** 2;
+    · ──
+ 35 │ -(x) as number ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:35:1]
+ 34 │ -x satisfies any as number ** 2;
+ 35 │ -(x) as number ** 2;
+    · ────
+ 36 │ -x! satisfies number ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:36:1]
+ 35 │ -(x) as number ** 2;
+ 36 │ -x! satisfies number ** 2;
+    · ───
+ 37 │ <number>x as number ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A type assertion cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:37:1]
+ 36 │ -x! satisfies number ** 2;
+ 37 │ <number>x as number ** 2;
+    · ─────────
+ 38 │ <number>-x satisfies number ** 2;
+    ╰────
+  help: Wrap the type assertion in parentheses to make the precedence explicit
+
+  × A type assertion cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:38:1]
+ 37 │ <number>x as number ** 2;
+ 38 │ <number>-x satisfies number ** 2;
+    · ──────────
+ 39 │ const negated = -x as any ** 2;
+    ╰────
+  help: Wrap the type assertion in parentheses to make the precedence explicit
+
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:39:17]
+ 38 │ <number>-x satisfies number ** 2;
+ 39 │ const negated = -x as any ** 2;
+    ·                 ──
+ 40 │ -x as any ** 2 ** 3;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:40:1]
+ 39 │ const negated = -x as any ** 2;
+ 40 │ -x as any ** 2 ** 3;
+    · ──
+ 41 │ 2 ** -x as number ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:41:18]
+ 40 │ -x as any ** 2 ** 3;
+ 41 │ 2 ** -x as number ** 2;
+    ·                  ▲
+ 42 │ 
+    ╰────
+  help: Try inserting a semicolon here
+
   × TS(1030): 'export' modifier already seen.
    ╭─[typescript/tsc/testdata/tests/cases/compiler/exportAlreadySeen.ts:2:12]
  1 │ namespace M {
@@ -8023,6 +8343,180 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Try inserting a semicolon here
 
+  × TS(8020): JSDoc types can only be used inside documentation comments.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:9:21]
+  8 │ 
+  9 │ const WhatFoo = foo<?>;
+    ·                     ─
+ 10 │ const HuhFoo = foo<string?>;
+    ╰────
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:10:20]
+  9 │ const WhatFoo = foo<?>;
+ 10 │ const HuhFoo = foo<string?>;
+    ·                    ───────
+ 11 │ const NopeFoo = foo<?string>;
+    ╰────
+  help: Did you mean to write 'string | undefined'?
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:11:21]
+ 10 │ const HuhFoo = foo<string?>;
+ 11 │ const NopeFoo = foo<?string>;
+    ·                     ───────
+ 12 │ const ComeOnFoo = foo<?string?>;
+    ╰────
+  help: Did you mean to write 'string | null | undefined'?
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:12:24]
+ 11 │ const NopeFoo = foo<?string>;
+ 12 │ const ComeOnFoo = foo<?string?>;
+    ·                        ───────
+ 13 │ 
+    ╰────
+  help: Did you mean to write 'string | undefined'?
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:12:23]
+ 11 │ const NopeFoo = foo<?string>;
+ 12 │ const ComeOnFoo = foo<?string?>;
+    ·                       ────────
+ 13 │ 
+    ╰────
+  help: Did you mean to write 'string | null | undefined'?
+
+  × TS(8020): JSDoc types can only be used inside documentation comments.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:14:28]
+ 13 │ 
+ 14 │ type TWhatFoo = typeof foo<?>;
+    ·                            ─
+ 15 │ type THuhFoo = typeof foo<string?>;
+    ╰────
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:15:27]
+ 14 │ type TWhatFoo = typeof foo<?>;
+ 15 │ type THuhFoo = typeof foo<string?>;
+    ·                           ───────
+ 16 │ type TNopeFoo = typeof foo<?string>;
+    ╰────
+  help: Did you mean to write 'string | undefined'?
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:16:28]
+ 15 │ type THuhFoo = typeof foo<string?>;
+ 16 │ type TNopeFoo = typeof foo<?string>;
+    ·                            ───────
+ 17 │ type TComeOnFoo = typeof foo<?string?>;
+    ╰────
+  help: Did you mean to write 'string | null | undefined'?
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:17:31]
+ 16 │ type TNopeFoo = typeof foo<?string>;
+ 17 │ type TComeOnFoo = typeof foo<?string?>;
+    ·                               ───────
+ 18 │ 
+    ╰────
+  help: Did you mean to write 'string | undefined'?
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:17:30]
+ 16 │ type TNopeFoo = typeof foo<?string>;
+ 17 │ type TComeOnFoo = typeof foo<?string?>;
+    ·                              ────────
+ 18 │ 
+    ╰────
+  help: Did you mean to write 'string | null | undefined'?
+
+  × TS(8020): JSDoc types can only be used inside documentation comments.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:19:21]
+ 18 │ 
+ 19 │ const WhatBar = Bar<?>;
+    ·                     ─
+ 20 │ const HuhBar = Bar<string?>;
+    ╰────
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:20:20]
+ 19 │ const WhatBar = Bar<?>;
+ 20 │ const HuhBar = Bar<string?>;
+    ·                    ───────
+ 21 │ const NopeBar = Bar<?string>;
+    ╰────
+  help: Did you mean to write 'string | undefined'?
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:21:21]
+ 20 │ const HuhBar = Bar<string?>;
+ 21 │ const NopeBar = Bar<?string>;
+    ·                     ───────
+ 22 │ const ComeOnBar = Bar<?string?>;
+    ╰────
+  help: Did you mean to write 'string | null | undefined'?
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:22:24]
+ 21 │ const NopeBar = Bar<?string>;
+ 22 │ const ComeOnBar = Bar<?string?>;
+    ·                        ───────
+ 23 │ 
+    ╰────
+  help: Did you mean to write 'string | undefined'?
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:22:23]
+ 21 │ const NopeBar = Bar<?string>;
+ 22 │ const ComeOnBar = Bar<?string?>;
+    ·                       ────────
+ 23 │ 
+    ╰────
+  help: Did you mean to write 'string | null | undefined'?
+
+  × TS(8020): JSDoc types can only be used inside documentation comments.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:24:28]
+ 23 │ 
+ 24 │ type TWhatBar = typeof Bar<?>;
+    ·                            ─
+ 25 │ type THuhBar = typeof Bar<string?>;
+    ╰────
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:25:27]
+ 24 │ type TWhatBar = typeof Bar<?>;
+ 25 │ type THuhBar = typeof Bar<string?>;
+    ·                           ───────
+ 26 │ type TNopeBar = typeof Bar<?string>;
+    ╰────
+  help: Did you mean to write 'string | undefined'?
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:26:28]
+ 25 │ type THuhBar = typeof Bar<string?>;
+ 26 │ type TNopeBar = typeof Bar<?string>;
+    ·                            ───────
+ 27 │ type TComeOnBar = typeof Bar<?string?>;
+    ╰────
+  help: Did you mean to write 'string | null | undefined'?
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:27:31]
+ 26 │ type TNopeBar = typeof Bar<?string>;
+ 27 │ type TComeOnBar = typeof Bar<?string?>;
+    ·                               ───────
+    ╰────
+  help: Did you mean to write 'string | undefined'?
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:27:30]
+ 26 │ type TNopeBar = typeof Bar<?string>;
+ 27 │ type TComeOnBar = typeof Bar<?string?>;
+    ·                              ────────
+    ╰────
+  help: Did you mean to write 'string | null | undefined'?
+
   × await expression not allowed in formal parameter
    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionsForbiddenInParameterInitializers.ts:1:35]
  1 │ export async function foo({ foo = await import("./bar") }) {
@@ -8094,15 +8588,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  9 │     }
    ╰────
 
-  × Expected `,` or `)` but found `=>`
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/fatarrowfunctionsErrors.ts:2:8]
+  × Invalid arrow function parameter
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/fatarrowfunctionsErrors.ts:2:6]
  1 │ foo((...Far:any[])=>{return 0;})
  2 │ foo((1)=>{return 0;}); 
-   ·    ┬   ─┬
-   ·    │    ╰── `,` or `)` expected
-   ·    ╰── Opened here
+   ·      ─
  3 │ foo((x?)=>{return x;})
    ╰────
+  help: Expected an identifier or a destructuring pattern.
 
   × TS(1015): A parameter cannot have a question mark and an initializer.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/fatarrowfunctionsOptionalArgs.ts:60:10]
@@ -8163,18 +8656,18 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  5 │ 
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors2.ts:1:22]
+  × Invalid arrow function parameter
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors2.ts:1:15]
  1 │ var tt1 = (a, (b, c)) => a+b+c;
-   ·                      ▲
+   ·               ──────
  2 │ var tt2 = ((a), b, c) => a+b+c;
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
   × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors3.ts:1:2]
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors3.ts:1:5]
  1 │ (...) => 105;
-   ·  ───
+   ·     ─
    ╰────
 
   × TS(1015): A parameter cannot have a question mark and an initializer.
@@ -9212,6 +9705,12 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    · ─────────────
    ╰────
   help: TypeScript transforms 'import ... =' to 'const ... ='
+
+  × Cannot use import statement outside a module
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationImportEqualsSyntax.ts:1:1]
+ 1 │ import a = b;
+   · ──────
+   ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationInterfaceSyntax.ts:1:10]
@@ -10932,6 +11431,16 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
 
   × Expected `,` or `}` but found `?`
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/objectShorthandGrammar.ts:3:25]
+ 2 │ const valid = { value, other: value };
+ 3 │ const optional = { value? };
+   ·                  ┬      ┬
+   ·                  │      ╰── `,` or `}` expected
+   ·                  ╰── Opened here
+ 4 │ const definite = { value! };
+   ╰────
+
+  × Expected `,` or `}` but found `?`
    ╭─[typescript/tsc/testdata/tests/cases/compiler/objectTypeWithOptionalProperty1.ts:2:10]
  1 │     var b = {
    ·             ┬
@@ -11592,6 +12101,15 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
   help: Did you mean to write 'string'?
 
   × TS(17019): '!' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNonNullableTypes.ts:18:16]
+ 17 │ 
+ 18 │ const a = 1 as any!;
+    ·                ────
+ 19 │ const b: number! = 1;
+    ╰────
+  help: Did you mean to write 'any'?
+
+  × TS(17019): '!' at the end of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNonNullableTypes.ts:19:10]
  18 │ const a = 1 as any!;
  19 │ const b: number! = 1;
@@ -11599,6 +12117,15 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  20 │ 
     ╰────
   help: Did you mean to write 'number'?
+
+  × TS(17020): '!' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNonNullableTypes.ts:21:16]
+ 20 │ 
+ 21 │ const c = 1 as !any;
+    ·                ────
+ 22 │ const d: !number = 1;
+    ╰────
+  help: Did you mean to write 'any'?
 
   × TS(17020): '!' at the start of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNonNullableTypes.ts:22:10]
@@ -11623,7 +12150,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ·                ───────
  6 │ function f3(a: number?) {}
    ╰────
-  help: Did you mean to write 'string | null | undefined'?
+  help: Did you mean to write 'string | undefined'?
 
   × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:6:16]
@@ -11632,7 +12159,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ·                ───────
  7 │ 
    ╰────
-  help: Did you mean to write 'number | null | undefined'?
+  help: Did you mean to write 'number | undefined'?
 
   × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:8:16]
@@ -11662,13 +12189,31 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
   help: Did you mean to write 'string | null | undefined'?
 
   × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:15:16]
+ 14 │ 
+ 15 │ const a = 1 as any?;
+    ·                ────
+ 16 │ const b: number? = 1;
+    ╰────
+  help: Did you mean to write 'any'?
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:16:10]
  15 │ const a = 1 as any?;
  16 │ const b: number? = 1;
     ·          ───────
  17 │ 
     ╰────
-  help: Did you mean to write 'number | null | undefined'?
+  help: Did you mean to write 'number | undefined'?
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:18:16]
+ 17 │ 
+ 18 │ const c = 1 as ?any;
+    ·                ────
+ 19 │ const d: ?number = 1;
+    ╰────
+  help: Did you mean to write 'any'?
 
   × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:19:10]
@@ -11686,7 +12231,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·        ────────
  22 │ let f: never?;
     ╰────
-  help: Did you mean to write 'unknown | null | undefined'?
+  help: Did you mean to write 'unknown'?
 
   × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:22:8]
@@ -11695,7 +12240,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·        ──────
  23 │ let g: void?;
     ╰────
-  help: Did you mean to write 'never | null | undefined'?
+  help: Did you mean to write 'never'?
 
   × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:23:8]
@@ -11704,7 +12249,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·        ─────
  24 │ let h: undefined?;
     ╰────
-  help: Did you mean to write 'void | null | undefined'?
+  help: Did you mean to write 'void'?
 
   × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:24:8]
@@ -11712,7 +12257,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  24 │ let h: undefined?;
     ·        ──────────
     ╰────
-  help: Did you mean to write 'undefined | null | undefined'?
+  help: Did you mean to write 'undefined'?
 
   × Unexpected JSX expression
    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseJsxElementInUnaryExpressionNoCrash1.ts:1:2]
@@ -13549,6 +14094,39 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Try inserting a semicolon here
 
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/strictModeEvalOrArgumentsInClassName.ts:1:7]
+ 1 │ class arguments {}
+   ·       ─────────
+ 2 │ class eval {}
+   ╰────
+  note: Classes are always strict mode code
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/strictModeEvalOrArgumentsInClassName.ts:2:7]
+ 1 │ class arguments {}
+ 2 │ class eval {}
+   ·       ────
+ 3 │ export {};
+   ╰────
+  note: Classes are always strict mode code
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/strictModeEvalOrArgumentsInNonStrictScript.ts:1:7]
+ 1 │ class arguments {}
+   ·       ─────────
+ 2 │ const C = class eval {};
+   ╰────
+  note: Classes are always strict mode code
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/strictModeEvalOrArgumentsInNonStrictScript.ts:2:17]
+ 1 │ class arguments {}
+ 2 │ const C = class eval {};
+   ·                 ────
+   ╰────
+  note: Classes are always strict mode code
+
   × `let` cannot be declared as a variable name inside of a `let` declaration
    ╭─[typescript/tsc/testdata/tests/cases/compiler/strictModeReservedWord.ts:1:5]
  1 │ let let = 10;
@@ -14111,7 +14689,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  2 │ import public = require("1");
    ·        ──────
    ╰────
-  note: This identifier is reserved in strict mode code
+  note: Modules are always strict mode code
 
   × The keyword 'public' is reserved
    ╭─[typescript/tsc/testdata/tests/cases/compiler/strictModeReservedWordInModuleDeclaration.ts:2:11]
@@ -15749,11 +16327,11 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Try inserting a semicolon here
 
-  × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/async/es2017/asyncArrowFunction/asyncArrowFunction7_es2017.ts:3:29]
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/async/es2017/asyncArrowFunction/asyncArrowFunction7_es2017.ts:3:24]
  2 │   // 'await' here is an identifier, and not an await expression.
  3 │   var foo = async (a = await): Promise<void> => {
-   ·                             ─
+   ·                        ─────
  4 │   }
    ╰────
 
@@ -15839,11 +16417,11 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Try inserting a semicolon here
 
-  × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/async/es5/asyncArrowFunction/asyncArrowFunction7_es5.ts:3:29]
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/async/es5/asyncArrowFunction/asyncArrowFunction7_es5.ts:3:24]
  2 │   // 'await' here is an identifier, and not an await expression.
  3 │   var foo = async (a = await): Promise<void> => {
-   ·                             ─
+   ·                        ─────
  4 │   }
    ╰────
 
@@ -15977,11 +16555,11 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Try inserting a semicolon here
 
-  × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/async/es6/asyncArrowFunction/asyncArrowFunction7_es6.ts:3:29]
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/async/es6/asyncArrowFunction/asyncArrowFunction7_es6.ts:3:24]
  2 │   // 'await' here is an identifier, and not an await expression.
  3 │   var foo = async (a = await): Promise<void> => {
-   ·                             ─
+   ·                        ─────
  4 │   }
    ╰────
 
@@ -24968,6 +25546,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   note: The identifier `await` is reserved in module code
 
+  × The keyword 'await' is reserved
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/externalModules/topLevelAwaitErrors.11.ts:3:8]
+ 2 │ declare var require: any;
+ 3 │ import await = require("./other");
+   ·        ─────
+   ╰────
+  note: The identifier `await` is reserved in module code
+
   × Cannot use `await` as an identifier in an async context
    ╭─[typescript/tsc/testdata/tests/cases/conformance/externalModules/topLevelAwaitErrors.12.ts:5:8]
  4 │ // await disallowed in import=namespace when in a module
@@ -26633,33 +27219,33 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
 
-  × Invalid Character `
-  │ `
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript2021/numericSeparators/parser.numericSeparators.binaryNegative.ts:1:6]
+  × Numeric separators must appear between digits
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript2021/numericSeparators/parser.numericSeparators.binaryNegative.ts:1:5]
  1 │ 0b00_
-   ·      ▲
+   ·     ─
    ╰────
+  help: Remove the separator or place it between two digits
 
-  × Invalid Character `
-  │ `
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript2021/numericSeparators/parser.numericSeparators.decmialNegative.ts:1:4]
+  × Numeric separators must appear between digits
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript2021/numericSeparators/parser.numericSeparators.decmialNegative.ts:1:3]
  1 │ 10_
-   ·    ▲
+   ·   ─
    ╰────
+  help: Remove the separator or place it between two digits
 
-  × Invalid Character `
-  │ `
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript2021/numericSeparators/parser.numericSeparators.hexNegative.ts:1:6]
+  × Numeric separators must appear between digits
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript2021/numericSeparators/parser.numericSeparators.hexNegative.ts:1:5]
  1 │ 0x00_
-   ·      ▲
+   ·     ─
    ╰────
+  help: Remove the separator or place it between two digits
 
-  × Invalid Character `
-  │ `
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript2021/numericSeparators/parser.numericSeparators.octalNegative.ts:1:6]
+  × Numeric separators must appear between digits
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript2021/numericSeparators/parser.numericSeparators.octalNegative.ts:1:5]
  1 │ 0o00_
-   ·      ▲
+   ·     ─
    ╰────
+  help: Remove the separator or place it between two digits
 
   × Invalid escape sequence
    ╭─[typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript2021/numericSeparators/parser.numericSeparators.unicodeEscape.ts:1:2]
@@ -28714,12 +29300,12 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  2 │ 
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser512325.ts:1:21]
+  × Invalid arrow function parameter
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser512325.ts:1:14]
  1 │ var tt = (a, (b, c)) => a+b+c;
-   ·                     ▲
+   ·              ──────
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser519458.ts:1:21]
@@ -32674,6 +33260,15 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ·                ╰── Optional element seen here
  4 │ type T03 = [...string[]];
    ╰────
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/conformance/types/tuple/restTupleElements1.ts:10:16]
+  9 │ type T08 = [...string];  // Error
+ 10 │ type T09 = [...string?];  // Error
+    ·                ───────
+ 11 │ type T10 = [string, ...[...string[]]];
+    ╰────
+  help: Did you mean to write 'string | undefined'?
 
   × TS(1257): A required element cannot follow an optional element.
     ╭─[typescript/tsc/testdata/tests/cases/conformance/types/tuple/variadicTuples2.ts:9:21]

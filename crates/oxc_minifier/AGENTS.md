@@ -194,3 +194,15 @@ if let Expression::BinaryExpression(e) = expr {
 - Document assumptions clearly
 - Test with real-world code
 - Learn from other minifiers
+
+## Pull request guidance
+
+Follow the shared [PR writing skill](../../.agents/skills/pr-writer/SKILL.md) for titles and descriptions.
+
+For the before-and-after example in the PR description, capture the outputs with the minifier example. Save the input outside the repository and run the example before making the change:
+
+```sh
+cargo run -p oxc_minifier --example minifier -- /tmp/repro.js --nospace
+```
+
+Keep the printed JavaScript as the before output, apply the change, and run the same command again for the after output. The example compresses by default; add `--mangle` when the case needs identifier mangling. State the options used and keep them identical between runs. For readable output, omit `--nospace` from both runs; measure byte counts with `--nospace` enabled.

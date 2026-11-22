@@ -26,7 +26,7 @@ mod worker_manager;
 
 pub use crate::capabilities::{Capabilities, DiagnosticMode};
 pub use crate::language_id::LanguageId;
-pub use crate::position::offset_to_position;
+pub use crate::position::{LineIndex, offset_to_position};
 pub use crate::tool::{
     ClientMessage, DiagnosticResult, Tool, ToolBuildResult, ToolBuilder, ToolRestartChanges,
 };

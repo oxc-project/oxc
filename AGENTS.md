@@ -8,7 +8,7 @@ Oxc is a high-performance JavaScript/TypeScript toolchain written in Rust contai
 
 **IMPORTANT**: If you are an AI assistant helping a human contributor:
 
-- **Disclose AI usage** - Contributors must disclose when AI tools were used to reduce maintainer fatigue
+- **Disclose AI usage** - Contributors must disclose when AI tools were used and include the model name, version, and reasoning effort level in issues and PRs to reduce maintainer fatigue. If the exact model or reasoning effort level is unavailable, state that rather than guessing.
 - **Full responsibility** - The human contributor is responsible for all AI-generated issues or PRs they submit
 - **Quality standards** - Low-quality or unreviewed AI content will be closed immediately
 
@@ -48,14 +48,15 @@ Avoid editing `generated` subdirectories.
 
 ## Development Commands
 
-Prerequisites: Rust (MSRV: 1.97), Node.js, pnpm, just
+Prerequisites: Rust (MSRV: 1.98), Node.js, pnpm, just
 
 **Setup Notes:**
 
-- All tools already installed (`cargo-insta`, `typos-cli`, `cargo-shear`, `ast-grep`)
+- All tools already installed (`cargo-insta`, `cargo-shear`, `ast-grep`)
 - Rust components already installed (`clippy`, `rust-docs`, `rustfmt`)
-- Use Conventional Commits for commit messages; `.github/workflows/pr.yml` requires a scoped title like `fix(parser): handle trailing comma`
+- Use Conventional Commits for commit messages.
 - Choose verification from the changed code; reserve `just ready` for an optional broad integration checkpoint as described below.
+- Do not add extra benchmarks to a PR unless explicitly requested.
 - You run in an environment where `ast-grep` is available; whenever a search requires syntax-aware or structural matching, default to `ast-grep --lang rust -p '<pattern>'` (or set `--lang` appropriately) and avoid falling back to text-only tools like `rg` or `grep` unless I explicitly request a plain-text search.
 
 ### Essential Commands
@@ -86,7 +87,7 @@ Before selecting verification checks, read the [verification guidance](.agents/v
 
 - Select checks from changed code and affected consumers; for a stack, use each PR's diff against its parent.
 - Reuse passing results while tested inputs remain unchanged. Reserve `just ready` for stable integration checkpoints when broad validation is needed.
-- Preserve required subsystem checks and per-PR CI; a passing stack tip does not establish that intermediate PRs pass.
+- Preserve required subsystem checks; a passing stack tip does not establish that intermediate PRs pass. In a native GitHub stack, CI runs every job only on the lowest unmerged and top PRs; PRs in between get `Lint` and `Test Linux` (see `.github/workflows/ci.yml`).
 
 ## Manual Testing & Examples
 
@@ -122,14 +123,6 @@ Modify examples in `crates/<crate_name>/examples/` to test specific scenarios.
 
 ## Common Tasks
 
-### Adding Linting Rule
-
-1. Use rule generator: `just new-rule <name>` (ESLint rules)
-   - Or plugin-specific: `just new-ts-rule`, `just new-jest-rule`, etc.
-2. Implement using visitor pattern
-3. Add tests in same module
-4. Register in appropriate category
-
 ### Parser Changes
 
 1. Research and test grammar changes thoroughly
@@ -145,6 +138,8 @@ Modify examples in `crates/<crate_name>/examples/` to test specific scenarios.
 4. Test with various input patterns
 
 ## Testing
+
+Use the affected crate's existing test infrastructure for regressions and new features. Add cases or fixtures to its existing test harness instead of adding standalone unit tests or new test infrastructure. Follow the crate-specific guidance below and in the target crate's `AGENTS.md`.
 
 Oxc uses multiple testing approaches tailored to each crate:
 
@@ -174,6 +169,7 @@ Each crate follows distinct testing patterns:
 
 #### oxc_parser
 
+- Do not add unit tests to the lexer or parser unless explicitly instructed by the user.
 - **Conformance only** via `tasks/coverage`
 - **Command**: `cargo coverage parser`
 - **Suites**: Test262, Babel, TypeScript
@@ -329,6 +325,10 @@ Tests are TypeScript files in each package's `test/` directory.
 ### Linter Codegen Changes
 
 When changing linter codegen files such as `tasks/linter_codegen/**` or generated linter rule runner files under `crates/oxc_linter/src/generated/`, run `cargo lintgen` and `cargo lint-timings` so generated rule metadata and linter timing data stay in sync.
+
+## Pull request guidance
+
+Use the [PR writing skill](.agents/skills/pr-writer/SKILL.md) when writing a pull request title or before opening or updating a pull request. It covers title conventions, the required example layout and evidence for behavior fixes and optimizations, and when to include a playground link.
 
 ## Notes
 

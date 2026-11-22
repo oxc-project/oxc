@@ -38,10 +38,11 @@ use oxc_semantic::ReferenceFlags;
 use oxc_span::{SPAN, Span};
 use oxc_str::static_ident;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator};
-use oxc_traverse::{BoundIdentifier, Traverse};
+use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 
 use crate::{
     common::var_declarations::VarDeclarationsStore, context::TraverseCtx, state::TransformState,
+    utils::ast_builder::wrap_expression_in_arrow_function_iife,
 };
 
 pub struct ExponentiationOperator<'a> {
@@ -77,6 +78,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExponentiationOperator<'a> {
                     return;
                 }
 
+                if Self::needs_parameter_scope(assign_expr, ctx) {
+                    *expr = wrap_expression_in_arrow_function_iife(expr.take_in(ctx), ctx);
+                    return;
+                }
+
                 match &assign_expr.left {
                     AssignmentTarget::AssignmentTargetIdentifier(_) => {
                         self.convert_identifier_assignment(expr, ctx);
@@ -102,6 +108,57 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExponentiationOperator<'a> {
 }
 
 impl<'a> ExponentiationOperator<'a> {
+    fn needs_parameter_scope(assignment: &AssignmentExpression<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        let in_parameters = ctx.ancestors().find_map(|ancestor| match ancestor {
+            Ancestor::FormalParametersItems(_) | Ancestor::FormalParametersRest(_) => Some(true),
+            Ancestor::FunctionBody(_)
+            | Ancestor::ArrowFunctionExpressionBody(_)
+            | Ancestor::BlockStatementBody(_)
+            | Ancestor::StaticBlockBody(_)
+            | Ancestor::ProgramBody(_) => Some(false),
+            _ => None,
+        }) == Some(true);
+        if !in_parameters {
+            return false;
+        }
+
+        // Sloppy direct eval can introduce bindings used by later parameters and the body.
+        // A wrapper would hide those bindings in its own function scope.
+        if ctx.scoping().scope_flags(ctx.current_scope_id()).contains_direct_eval() {
+            return false;
+        }
+
+        let can_duplicate_object = |object: &Expression<'a>| match object {
+            Expression::Super(_) => true,
+            Expression::Identifier(ident) => {
+                ctx.scoping().get_reference(ident.reference_id()).symbol_id().is_some()
+            }
+            _ => false,
+        };
+        match &assignment.left {
+            AssignmentTarget::AssignmentTargetIdentifier(ident) => {
+                ctx.scoping().get_reference(ident.reference_id()).symbol_id().is_none()
+            }
+            AssignmentTarget::StaticMemberExpression(member) => {
+                !can_duplicate_object(&member.object)
+            }
+            AssignmentTarget::PrivateFieldExpression(member) => {
+                !can_duplicate_object(&member.object)
+            }
+            AssignmentTarget::ComputedMemberExpression(member) => {
+                !matches!(
+                    member.expression,
+                    Expression::BooleanLiteral(_)
+                        | Expression::NullLiteral(_)
+                        | Expression::NumericLiteral(_)
+                        | Expression::BigIntLiteral(_)
+                        | Expression::StringLiteral(_)
+                ) || !can_duplicate_object(&member.object)
+            }
+            _ => false,
+        }
+    }
+
     /// Convert `BinaryExpression`.
     ///
     /// `left ** right` -> `Math.pow(left, right)`
@@ -237,6 +294,7 @@ impl<'a> ExponentiationOperator<'a> {
         let mut temp_var_inits = ArenaVec::new_in(ctx);
         let obj = self.get_second_member_expression_object(
             &mut member_expr.object,
+            true,
             &mut temp_var_inits,
             ctx,
         );
@@ -275,11 +333,9 @@ impl<'a> ExponentiationOperator<'a> {
 
     /// Convert `AssignmentExpression` where assignee is a computed member expression.
     ///
-    /// `obj[prop] **= right` transformed to:
-    /// * If `obj` is a bound symbol:
-    ///   -> `var _prop; _prop = prop, obj[_prop] = Math.pow(obj[_prop], 2)`
-    /// * If `obj` is unbound:
-    ///   -> `var _obj, _prop; _obj = obj, _prop = prop, _obj[_prop] = Math.pow(_obj[_prop], 2)`
+    /// `obj[prop] **= right` is transformed to:
+    /// `var _obj, _prop; _obj = obj, _prop = prop, _obj[_prop] = Math.pow(_obj[_prop], right)`.
+    /// Primitive literal keys can be duplicated without capturing a bound object.
     ///
     /// `obj.foo.bar[qux] **= right` transformed to:
     /// ```js
@@ -290,8 +346,7 @@ impl<'a> ExponentiationOperator<'a> {
     /// Temporary variables are to avoid side-effects of getting `obj` / `obj.foo.bar` or `prop` being run twice.
     ///
     /// TODO(improve-on-babel):
-    /// 1. If `prop` is bound, it doesn't need a temp variable `_prop`.
-    /// 2. Temp var initializations could be inlined:
+    /// Temp var initializations could be inlined:
     ///    * Current: `(_obj = obj, _prop = prop, _obj[_prop] = Math.pow(_obj[_prop], 2))`
     ///    * Could be: `(_obj = obj)[_prop = prop] = Math.pow(_obj[_prop], 2)`
     //
@@ -332,6 +387,14 @@ impl<'a> ExponentiationOperator<'a> {
         let mut temp_var_inits = ArenaVec::new_in(ctx);
         let obj = self.get_second_member_expression_object(
             &mut member_expr.object,
+            matches!(
+                member_expr.expression,
+                Expression::BooleanLiteral(_)
+                    | Expression::NullLiteral(_)
+                    | Expression::NumericLiteral(_)
+                    | Expression::BigIntLiteral(_)
+                    | Expression::StringLiteral(_)
+            ),
             &mut temp_var_inits,
             ctx,
         );
@@ -415,6 +478,7 @@ impl<'a> ExponentiationOperator<'a> {
         let mut temp_var_inits = ArenaVec::new_in(ctx);
         let obj = self.get_second_member_expression_object(
             &mut field_expr.object,
+            true,
             &mut temp_var_inits,
             ctx,
         );
@@ -448,13 +512,13 @@ impl<'a> ExponentiationOperator<'a> {
     ///
     /// is transformed to:
     ///
-    /// If `obj` is a bound symbol:
+    /// If `obj` is a bound symbol and identifier duplication is allowed:
     /// ```js
     /// obj["prop"] = Math.pow(obj["prop"], 2)
     /// ^^^ not updated        ^^^ returned
     /// ```
     ///
-    /// If `obj` is unbound:
+    /// If `obj` is unbound or identifier duplication is disallowed:
     /// ```js
     /// var _obj;
     /// _obj = obj, _obj["prop"] = Math.pow(_obj["prop"], 2)
@@ -477,19 +541,15 @@ impl<'a> ExponentiationOperator<'a> {
     fn get_second_member_expression_object(
         &self,
         obj: &mut Expression<'a>,
+        can_duplicate_identifier: bool,
         temp_var_inits: &mut ArenaVec<'a, Expression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        // If the object reference that we need to save is locally declared, evaluating it multiple times
-        // will not trigger getters or setters. `super` cannot be directly assigned, so use it directly too.
-        // TODO(improve-on-babel): We could also skip creating a temp var for `this.x **= 2`.
         match obj {
             Expression::Super(super_) => return Expression::new_super(super_.span, ctx),
-            Expression::Identifier(ident) => {
+            Expression::Identifier(ident) if can_duplicate_identifier => {
                 let symbol_id = ctx.scoping().get_reference(ident.reference_id()).symbol_id();
                 if let Some(symbol_id) = symbol_id {
-                    // This variable is declared in scope so evaluating it multiple times can't trigger a getter.
-                    // No need for a temp var.
                     return ctx.create_bound_ident_expr(
                         SPAN,
                         ident.name,
@@ -497,12 +557,8 @@ impl<'a> ExponentiationOperator<'a> {
                         ReferenceFlags::Read,
                     );
                 }
-                // Unbound reference. Could possibly trigger a getter so we need to only evaluate it once.
-                // Assign to a temp var.
             }
-            _ => {
-                // Other expression. Assign to a temp var.
-            }
+            _ => {}
         }
 
         let binding = self.create_temp_var(obj.take_in(ctx), temp_var_inits, ctx);

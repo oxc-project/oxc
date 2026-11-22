@@ -2,9 +2,9 @@ use oxc_allocator::ArenaBox;
 use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
-        ClassElement, Expression, MethodDefinition, ObjectProperty, ObjectPropertyKind,
-        PropertyKey, PropertyKind, TSInterfaceBody, TSMethodSignature, TSMethodSignatureKind,
-        TSSignature, TSTypeLiteral,
+        ClassElement, MethodDefinition, ObjectProperty, ObjectPropertyKind, PropertyKey,
+        PropertyKind, TSInterfaceBody, TSMethodSignature, TSMethodSignatureKind, TSSignature,
+        TSTypeLiteral,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -215,7 +215,7 @@ impl Rule for GroupedAccessorPairs {
                     // in this example, a and ['a'] should be treated as a pair
                     // although the set access property is computed, but its key is Literal
                     let (key_name, is_literal) = get_key_name_and_check_literal(ctx, &obj_prop.key);
-                    let is_computed = if is_literal { false } else { obj_prop.computed };
+                    let is_computed = if is_literal { false } else { obj_prop.key.is_computed() };
                     prop_map.entry((key_name, is_computed)).or_default().push((idx, obj_prop));
                 }
 
@@ -265,7 +265,8 @@ impl Rule for GroupedAccessorPairs {
                     }
                     let (key_name, is_literal) =
                         get_key_name_and_check_literal(ctx, &method_define.key);
-                    let is_computed = if is_literal { false } else { method_define.computed };
+                    let is_computed =
+                        if is_literal { false } else { method_define.key.is_computed() };
                     let is_private = matches!(method_define.key, PropertyKey::PrivateIdentifier(_));
                     // for Class we need to focus on whether the key is static or private
                     // 1) class foo { static set [a+b](val){} static get [a+b](){} }
@@ -354,7 +355,7 @@ impl GroupedAccessorPairs {
                 continue;
             }
             let (key_name, is_literal) = get_key_name_and_check_literal(ctx, &method_sig.key);
-            let is_computed = if is_literal { false } else { method_sig.computed };
+            let is_computed = if is_literal { false } else { method_sig.key.is_computed() };
             prop_map.entry((key_name, is_computed)).or_default().push((idx, method_sig));
         }
 
@@ -399,22 +400,19 @@ fn get_key_name_and_check_literal<'a>(
             prop_key.as_expression().unwrap().span().source_text(ctx.source_text()),
         )
     });
-    let is_literal =
-        if matches!(prop_key, PropertyKey::StaticIdentifier(_) | PropertyKey::PrivateIdentifier(_))
-        {
-            false
-        } else {
-            matches!(
-                prop_key.as_expression().unwrap(),
-                Expression::BooleanLiteral(_)
-                    | Expression::NullLiteral(_)
-                    | Expression::StringLiteral(_)
-                    | Expression::RegExpLiteral(_)
-                    | Expression::BigIntLiteral(_)
-                    | Expression::NumericLiteral(_)
-                    | Expression::TemplateLiteral(_)
-            )
-        };
+    let is_literal = matches!(
+        prop_key,
+        PropertyKey::StaticStringLiteral(_)
+            | PropertyKey::StaticNumericLiteral(_)
+            | PropertyKey::StaticBigIntLiteral(_)
+            | PropertyKey::BooleanLiteral(_)
+            | PropertyKey::NullLiteral(_)
+            | PropertyKey::StringLiteral(_)
+            | PropertyKey::RegExpLiteral(_)
+            | PropertyKey::BigIntLiteral(_)
+            | PropertyKey::NumericLiteral(_)
+            | PropertyKey::TemplateLiteral(_)
+    );
     (key_name, is_literal)
 }
 

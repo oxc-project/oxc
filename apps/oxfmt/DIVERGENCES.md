@@ -61,6 +61,36 @@ Vue splits there too, and compiles neither (`@vue/compiler-dom` 3.5.45: `Error p
 The comment Prettier prints is not the user's (`/* a,b */`), which breaks the lossless contract;
 the string is uniform-rule (same construct, same output: a default value in `v-slot`'s params).
 
+## js-in-vue-for-alias-in-of-as-written
+
+- Why: semantics (Vue splits `v-for` at the first `in` / `of` with whitespace around it)
+- Pin: `conformance/fixtures/js-in-vue/for-alias-in-of.vue`
+
+```vue
+<!-- input -->
+<template>
+  <li v-for="({ a = 'k'in o }) in items">x</li>
+  <li v-for="({ a=of }) in items">x</li>
+</template>
+
+<!-- ours -->
+<template>
+  <li v-for="({ a = 'k'in o }) in items">x</li>
+  <li v-for="({ a=of }) in items">x</li>
+</template>
+
+<!-- prettier -->
+<template>
+  <li v-for="{ a = 'k' in o } in items">x</li>
+  <li v-for="{ a = of } in items">x</li>
+</template>
+```
+
+A `v-for` whose alias holds the word `in` or `of` prints as written.
+Formatting spaces an `in` operator or an `of` name in a default value, where Vue's split (`parseForExpression`) then reads the operator:
+Prettier's output reads as the alias `{ a = 'k'`, which does not compile (`@vue/compiler-dom` 3.5.45: `Error parsing JavaScript expression`).
+The word in a string or a comment counts too, and prints as written for nothing.
+
 ## js-in-vue-bitwise-or
 
 - Why: uniform-rule (same construct, same output: a `&&` chain in the same root)
@@ -117,6 +147,43 @@ Vue 3 removed Vue 2's filters (`@vue/compiler-dom` 3.5.45 compiles `{{ a | f }}`
 Prettier still reads `{{ }}`'s and a binding's `|` as filters, starting each line with `|`, and indents every `|` chain there.
 A migration build (`@vue/compat`'s `COMPILER_FILTERS`) still reads them as filters, which compile the same either way: only the line breaks differ.
 
+## js-in-vue-numeric-keys-unquoted
+
+- Why: uniform-rule (same construct, same output: an object key in the `<script>` of a JS file; prettier/prettier#10127)
+- Pin: `conformance/fixtures/js-in-vue/numeric-keys-unquoted.vue`
+
+```vue
+<!-- input -->
+<template>
+  <p :b="{ '1': 1, 'b': 2 }">{{ { '0': 'x' }[0] }}</p>
+</template>
+
+<script>
+const b = { '1': 1 };
+</script>
+
+<!-- ours -->
+<template>
+  <p :b="{ 1: 1, b: 2 }">{{ { 0: "x" }[0] }}</p>
+</template>
+
+<script>
+const b = { 1: 1 };
+</script>
+
+<!-- prettier -->
+<template>
+  <p :b="{ '1': 1, b: 2 }">{{ { "0": "x" }[0] }}</p>
+</template>
+
+<script>
+const b = { 1: 1 };
+</script>
+```
+
+A template expression of a JS file unquotes a numeric key under `quoteProps: "as-needed"`, as its `<script>` does;
+Prettier unquotes only an identifier key there, a numeric key only in the `<script>`.
+
 ## js-in-vue-removed-attributes-as-written
 
 - Why: semantics (Vue 3 passes `slot-scope` to the element as a string, which formatting changes)
@@ -163,11 +230,13 @@ it reads neither value of `setup` and `vars` (`@vue/compiler-sfc` 3.5.45 compile
 <!-- input -->
 <template>
   <div v-pre :a="b+c">{{a+b}} <span @click="x+y">{{c}}</span></div>
+  <p v-pre:arg>{{a+b}}</p>
 </template>
 
 <!-- ours -->
 <template>
   <div v-pre :a="b+c">{{a+b}} <span @click="x+y">{{c}}</span></div>
+  <p v-pre:arg>{{a+b}}</p>
 </template>
 
 <!-- prettier -->
@@ -175,12 +244,44 @@ it reads neither value of `setup` and `vars` (`@vue/compiler-sfc` 3.5.45 compile
   <div v-pre :a="b + c">
     {{ a + b }} <span @click="x + y">{{ c }}</span>
   </div>
+  <p v-pre:arg>{{ a + b }}</p>
 </template>
 ```
 
 In a `v-pre` element and its content, `{{ }}` is text and a directive a plain attribute, as Vue's compiler reads them:
 they print as written, and lay out as text and attributes do.
+`v-pre:arg` and `v-pre.mod` are `v-pre` too: Vue reads a directive by its name (`pre`), and renders `{{a+b}}` as written.
 Prettier formats them, which changes what renders (`{{ a + b }}`) and the attribute values (`:a` is `b + c`), as `@vue/compiler-dom` 3.5.45 compiles them.
+
+## js-in-vue-interpolation-ends-at-first-close
+
+- Why: uniform-rule (a `{{ }}` ends where its dialect's compiler ends it: Vue's at the first `}}`, Angular's past a `}}` in a string literal; prettier/prettier#20117)
+- Pin: `conformance/fixtures/js-in-vue/interpolation-ends-at-first-close.vue`
+- Conformance:
+  - `externals/prettier/vue/interpolation/double-brace-string.vue`
+
+```vue
+<!-- input -->
+<template>
+  <div>{{"{{first}} / {{second}} files selected"}}</div>
+</template>
+
+<!-- ours -->
+<template>
+  <div>{{"{{first}} / {{ second }} files selected"}}</div>
+</template>
+
+<!-- prettier -->
+<template>
+  <div>{{ "{{first}} / {{second}} files selected" }}</div>
+</template>
+```
+
+Vue's compiler ends a `{{ }}` at the first `}}`, inside a string literal too (`@vue/compiler-sfc` 3.5.25):
+the template above is `{{"{{first}}`, text, `{{second}}` and text, and does not compile (`Unterminated string constant`).
+We split it as Vue does and format each part as Vue reads it: the broken `{{ }}` as written, `{{second}}` as code.
+Angular's compiler reads past a `}}` in a string literal, and so does the Angular dialect.
+Prettier reads past it in Vue too since #20117 (a fix for Angular, prettier/prettier#18939); its output does not compile either.
 
 ## js-in-vue-handler-statements
 
@@ -224,10 +325,10 @@ Prettier formats them, which changes what renders (`{{ a + b }}`) and the attrib
 ```
 
 Under `semi: false`, `;` still separates an event handler's top-level statements, all but after the last,
-and ends a lone one that is no expression (`if (a) b();`); the statements in them follow `semi`.
+and ends a lone one (`if (a) b();`); the statements in them follow `semi`.
 Vue's compiler reads a handler as statements when its value holds a `;` (`exp.content.includes(';')`), wrapped in braces, and as an expression otherwise:
 Prettier drops every `;`, and the statements no longer compile (`@vue/compiler-dom` 3.5.45: `Error parsing JavaScript expression`).
-Under `semi: true` both print every `;` between and after the statements.
+Under `semi: true` both print the statements' own `;` (a known gap: `crates/oxc_formatter/AGENTS.md` "js-in-xxx").
 
 ```vue
 <!-- input (any semi) -->
@@ -241,8 +342,6 @@ Under `semi: true` both print every `;` between and after the statements.
 ```
 
 Statements without a `;` print as written: Vue reads them as an expression, which does not compile, and the `;` Prettier adds makes them compile.
-A `;` added or dropped in a handler's code otherwise (`a();` printing `a()`, a callback's body under `semi`) changes no more than its value,
-which is no part of what Vue reads (`crates/oxc_formatter_htmlish/AGENTS.md` "What Vue reads").
 
 ```vue
 <!-- input (any semi) -->
@@ -308,6 +407,40 @@ and a `{` a block. Prettier drops the parens, and the handler no longer compiles
 An arrow function reads as itself either way.
 A handler whose code holds a `;` already and starts so (`function () { a(); }`) prints as written:
 Vue reads it as statements, which do not compile, and the parens would make it compile.
+vue-tsc reads a `function` in parens otherwise, and the compiler wins (`crates/oxc_formatter_htmlish/AGENTS.md` "What Vue reads").
+
+## js-in-vue-handler-lone-statement
+
+- Why: semantics (Vue returns a handler's value only when its code holds no `;`, and vue-tsc types it; oxc#24361)
+- Pin: `conformance/fixtures/js-in-vue/handler-lone-statement.vue`
+- Conformance:
+  - `externals/prettier/vue/event-binding/assignment.vue`
+  - `externals/prettier/vue/vue/attributes.vue`
+
+```vue
+<!-- input (any semi) -->
+<template>
+  <button @click="a = !a;"></button>
+</template>
+
+<!-- ours -->
+<template>
+  <button @click="a = !a;"></button>
+</template>
+
+<!-- prettier -->
+<template>
+  <button @click="a = !a"></button>
+</template>
+```
+
+An event handler's lone expression statement keeps its `;`, whatever `semi` says.
+Vue's compiler reads `a = !a;` as statements and `a = !a` as an expression (DIVERGENCES.md#js-in-vue-handler-statements):
+both run the same, but only the expression returns its value, whose rejected promise Vue reports
+(`$event => { a = !a; }`, `$event => (a = !a)`; `@vue/compiler-dom` 3.5.45).
+vue-tsc reads it so too, and types the value (`@vue/language-core` 3.3.14):
+for a prop typed `() => void | Promise<void>`, `a = !a` does not type-check (`TS2322: Type '($event?: undefined) => boolean' is not assignable to type '() => void | Promise<void>'`).
+Prettier keeps the `;` of a reference only (`foo.bar;`, which Vue calls without it).
 
 ## tsx-in-vue-template-expressions
 
@@ -664,42 +797,6 @@ Prettier falls back to the source shape when the content fails to format, while 
 The verbatim content cannot be re-indented, so its source indentation stays and may look misaligned once hugged (as with any verbatim template Prettier hugs).
 Under `embeddedLanguageFormatting: off`, the source shape still decides, like Prettier.
 
-## nested-fence-length
-
-- Why: semantics (prettier/prettier#19908)
-- Pin: `conformance/fixtures/xxx-in-md/nested-fence-length.md`
-- Conformance:
-  - `externals/prettier/js/multiparser-markdown/codeblock.js`
-
-`````markdown
-<!-- input -->
-```md
-~~~js
-const  a = 1
-~~~
-```
-
-<!-- ours -->
-````md
-```js
-const a = 1;
-```
-````
-
-<!-- prettier -->
-```md
-```js
-const a = 1;
-```
-```
-`````
-
-A fenced code block's fence outnumbers the backtick (or tilde) runs of the content it prints, the embedded formatter's output included.
-Markdown in a code block formats its own fences, so `~~~` becomes a backtick fence the outer one must outnumber;
-Prettier keeps the outer fence at three and the inner fence closes it on the next parse.
-The same holds for markdown-in-js, whose fences are `~`.
-Prettier `main` counts the printed content since #19908; the pin (3.9.10) still counts the source.
-
 ## line-ranged-code-block
 
 - Why: uniform-rule (same construct, same output: `` ```js{1,3} ``)
@@ -918,6 +1015,34 @@ Same rule as `crates/oxc_formatter_css/DIVERGENCES.md#keyframe-selector-comment-
 the `;` is a terminator, so the comment may sit where it was (`crates/oxc_formatter_css/AGENTS.md` "Placement invariants").
 Prettier prints the `;` when a comment follows: its last-declaration check counts the comment as a node.
 
+## character-reference-in-code-as-written
+
+- Why: semantics (the HTML parser reads `&amp;` as `&` before the code runs)
+- Pin: `conformance/fixtures/html/character-reference-in-code-as-written.html`
+
+```html
+<!-- input -->
+<button onclick="x=a &amp; b">a</button>
+
+<!-- ours -->
+<button onclick="x=a &amp; b">a</button>
+
+<!-- prettier -->
+<button
+  onclick="
+    x = a & amp;
+    b;
+  "
+>
+  a
+</button>
+```
+
+An attribute value formatted as code (`style`, `on*`, a Vue directive, an Angular `[x]`) prints as written when it holds a character reference, `&name;` or `&#…`:
+its reader decodes the reference first (`x = a & b`), and the child would format its text as code.
+`&quot;` and `&apos;` are read back before, so they still format.
+Prettier formats the text, which makes `amp` a name and its `;` the end of a statement.
+
 ## doctype-case-in-script
 
 - Why: semantics (an html-in-js template is a JS string, and code reads its case; oxc#28793)
@@ -1017,7 +1142,7 @@ A `${}` expression in `pre`-like content (`pre`, `textarea`, ...) indents its li
 as an expression elsewhere does from the line its `${` starts on.
 A line of that content prints from the root, so the expression aligns there (`oxc_formatter_htmlish`'s `write_pre_like_text`);
 one on the line of an element before it (`<pre><b>x</b>${`) indents from that line, as elsewhere.
-Prettier 3.9.6 aligned an expression starting its line so; since 3.9.7 (prettier/prettier#19725, for idempotency) it indents it by the elements around the content instead,
+Prettier indents it by the elements around the content instead (prettier/prettier#19725, for idempotency),
 which leaves `})` right of the `${` it closes.
 Reformatting the expression changes no content: its source is code, not text in the element.
 

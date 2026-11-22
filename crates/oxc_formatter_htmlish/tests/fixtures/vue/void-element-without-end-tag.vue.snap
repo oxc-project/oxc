@@ -1,0 +1,41 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<template>
+  <div>
+      <img src=x><br>
+  </div>
+</template>
+
+<div>
+    <input type="text">
+      </div>
+<input type='text'>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<template>
+  <div><img src="x" /><br /></div>
+</template>
+
+<div>
+    <input type="text">
+      </div>
+<input type="text" />
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<template>
+  <div><img src="x" /><br /></div>
+</template>
+
+<div>
+    <input type="text">
+      </div>
+<input type="text" />
+
+===================== End =====================

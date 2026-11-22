@@ -11,7 +11,6 @@
 //! Analogous to TS `Optimization/PruneMaybeThrows.ts`.
 
 use oxc_index::IndexVec;
-use rustc_hash::FxHashSet;
 
 use oxc_diagnostics::OxcDiagnostic;
 
@@ -44,16 +43,9 @@ pub fn prune_maybe_throws<'a>(
         remove_dead_do_while_statements(&mut func.body);
         remove_unnecessary_try_catch(&mut func.body);
 
-        // Pruning a handler makes the catch block, and every block only it reaches,
-        // unreachable. Divergence from TS, which keeps references to those blocks:
-        // - Recompute predecessors, so the join after the `try` no longer counts
-        //   the removed blocks and can be merged into its only real predecessor.
-        //   A stale count leaves it unmerged as the target of a `break` that no
-        //   longer has a matching `try` fallthrough, and the code after the `try`
-        //   is silently dropped from the output.
-        // - Prune their phi operands and eliminate the phis this makes redundant,
-        //   as constant propagation does. Otherwise the join is left with a single
-        //   predecessor but a multi-operand phi, which MergeConsecutiveBlocks rejects.
+        // Unlike the TS implementation, remove phi operands for pruned edges even
+        // when their source blocks remain reachable through the successful path.
+        // Otherwise a catch phi retains a predecessor with no terminal mapping.
         mark_predecessors(&mut func.body);
         if prune_unreachable_phi_operands(func) {
             eliminate_redundant_phi(func, env);
@@ -102,16 +94,14 @@ pub fn prune_maybe_throws<'a>(
     Ok(())
 }
 
-/// Remove phi operands whose predecessor block is no longer in the CFG.
+/// Remove phi operands whose incoming edge is no longer in the CFG.
 /// Returns whether any operand was removed.
 fn prune_unreachable_phi_operands(func: &mut HirFunction) -> bool {
-    let blocks = &mut func.body.blocks;
-    let live_blocks: FxHashSet<BlockId> = blocks.keys().copied().collect();
     let mut pruned = false;
-    for block in blocks.values_mut() {
+    for block in func.body.blocks.values_mut() {
         for phi in &mut block.phis {
             let len = phi.operands.len();
-            phi.operands.retain(|pred, _operand| live_blocks.contains(pred));
+            phi.operands.retain(|pred, _operand| block.preds.contains(pred));
             pruned |= phi.operands.len() != len;
         }
     }

@@ -1,6 +1,8 @@
-//! ECMAScript Grammar Contexts: `[In`] `[Yield]` `[Await]`
+//! ECMAScript Grammar Contexts: `[In]` `[Yield]` `[Await]`
 
 use bitflags::bitflags;
+
+use crate::{ParserConfig as Config, ParserImpl};
 
 bitflags! {
     /// 5.1.5 Grammar Notation
@@ -167,6 +169,11 @@ impl Context {
     }
 
     #[inline]
+    pub(crate) fn and_top_level(self, include: bool) -> Self {
+        self.and(Self::TopLevel, include)
+    }
+
+    #[inline]
     fn and(self, flag: Self, set: bool) -> Self {
         if set { self | flag } else { self - flag }
     }
@@ -189,5 +196,46 @@ pub enum StatementContext {
 impl StatementContext {
     pub(crate) fn is_single_statement(self) -> bool {
         !matches!(self, Self::Program | Self::StatementList)
+    }
+}
+
+impl<C: Config> ParserImpl<'_, C> {
+    #[expect(clippy::inline_always)]
+    #[inline(always)] // inline because this is always on a hot path
+    pub(crate) fn context_add<F, T>(&mut self, add_flags: Context, cb: F) -> T
+    where
+        F: FnOnce(&mut Self) -> T,
+    {
+        let ctx = self.ctx;
+        self.ctx = ctx.union(add_flags);
+        let result = cb(self);
+        self.ctx = ctx;
+        result
+    }
+
+    #[expect(clippy::inline_always)]
+    #[inline(always)] // inline because this is always on a hot path
+    pub(crate) fn context_remove<F, T>(&mut self, remove_flags: Context, cb: F) -> T
+    where
+        F: FnOnce(&mut Self) -> T,
+    {
+        let ctx = self.ctx;
+        self.ctx = ctx.difference(remove_flags);
+        let result = cb(self);
+        self.ctx = ctx;
+        result
+    }
+
+    #[expect(clippy::inline_always)]
+    #[inline(always)] // inline because this is always on a hot path
+    pub(crate) fn context<F, T>(&mut self, add_flags: Context, remove_flags: Context, cb: F) -> T
+    where
+        F: FnOnce(&mut Self) -> T,
+    {
+        let ctx = self.ctx;
+        self.ctx = ctx.difference(remove_flags).union(add_flags);
+        let result = cb(self);
+        self.ctx = ctx;
+        result
     }
 }

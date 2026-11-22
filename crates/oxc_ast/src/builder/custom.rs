@@ -14,7 +14,7 @@ use std::{alloc::Layout, mem::MaybeUninit, slice, str};
 use oxc_allocator::{Allocator, ArenaBox, GetAllocator};
 use oxc_span::{SPAN, Span};
 use oxc_str::Str;
-use oxc_syntax::{number::NumberBase, operator::UnaryOperator, scope::ScopeId};
+use oxc_syntax::{operator::UnaryOperator, scope::ScopeId};
 
 use crate::ast::*;
 
@@ -25,7 +25,7 @@ impl<'a> Expression<'a> {
     #[inline]
     pub fn new_number_0(span: Span, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        Expression::new_numeric_literal(span, 0.0, None, NumberBase::Decimal, builder)
+        Expression::new_numeric_literal(span, 0.0, None, builder)
     }
 
     /// Build an [`Expression`] representing `void 0`.
@@ -46,7 +46,7 @@ impl<'a> Expression<'a> {
     #[inline]
     pub fn new_nan(span: Span, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        Expression::new_numeric_literal(span, f64::NAN, None, NumberBase::Decimal, builder)
+        Expression::new_numeric_literal(span, f64::NAN, None, builder)
     }
 }
 

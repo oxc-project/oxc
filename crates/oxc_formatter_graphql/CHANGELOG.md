@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.79.0] - 2026-11-16
+
+### 🚀 Features
+
+- 21e1fc1 formatter_graphql: Support empty selection sets and braced unicode escapes (#29345) (leaysgur)
+- 292f216 oxfmt: Bump prettier to 3.10.1 (#29333) (leaysgur)
+
+## [0.78.0] - 2026-11-09
+
+### 🐛 Bug Fixes
+
+- 5e1e02c formatter_graphql: Allow empty document (#28898) (leaysgur)
+
 ## [0.76.0] - 2026-11-02
 
 ### ⚡ Performance

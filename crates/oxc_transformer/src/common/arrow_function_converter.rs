@@ -1314,19 +1314,19 @@ impl<'a> VisitJsMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
             match element {
                 // `class Inner { @(super()) [super()]() {} }`
                 //                  ^^^^^^^   ^^^^^^^
-                ClassElement::MethodDefinition(method) if method.computed => {
+                ClassElement::MethodDefinition(method) if method.key.is_computed() => {
                     self.visit_decorators(&mut method.decorators);
                     self.visit_property_key(&mut method.key);
                 }
                 // `class Inner { @(super()) [super()] = 123; }`
                 //                  ^^^^^^^   ^^^^^^^
-                ClassElement::PropertyDefinition(prop) if prop.computed => {
+                ClassElement::PropertyDefinition(prop) if prop.key.is_computed() => {
                     self.visit_decorators(&mut prop.decorators);
                     self.visit_property_key(&mut prop.key);
                 }
                 // `class Inner { @(super()) accessor [super()] = 123; }`
                 //                  ^^^^^^^            ^^^^^^^
-                ClassElement::AccessorProperty(prop) if prop.computed => {
+                ClassElement::AccessorProperty(prop) if prop.key.is_computed() => {
                     self.visit_decorators(&mut prop.decorators);
                     self.visit_property_key(&mut prop.key);
                 }

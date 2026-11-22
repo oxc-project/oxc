@@ -1,12 +1,14 @@
 //! Words: which spellings are keywords here (contextual keywords), the statement keywords,
 //! plain names, and member keys with their modifiers.
 
-use crate::{
-    cpu::{BASELINE, cpu_version},
-    token::{OP_KIND_BASE, matches_tk, tk},
-};
+use oxc_simd::{BASELINE, cpu_version};
 
-use crate::pipeline::disambiguate::{common::Tokens, type_context::keyword_type};
+use crate::token::{OP_KIND_BASE, matches_tk, tk};
+
+use crate::pipeline::disambiguate::{
+    common::{Prev, TokensView},
+    type_context::{arrow_type_params_at, keyword_type},
+};
 
 use super::{
     frame::{Declarator, FrameKind, MOD_ASYNC, MOD_STATIC, Member, RegionRule, StmtReg},
@@ -17,7 +19,7 @@ use super::{
 impl Walk {
     /// Step the word at `pos`; returns its end.
     #[cpu_version(Generic)]
-    pub(super) fn step_word(&mut self, tokens: &Tokens, pos: usize) -> usize {
+    pub(super) fn step_word(&mut self, tokens: &TokensView, pos: usize) -> usize {
         let cpu = BASELINE;
 
         let end = tokens.next_start(pos + 1, cpu);
@@ -82,7 +84,7 @@ impl Walk {
     /// `satisfies`, `static`, `implements`, `from`) is a plain name (0) unless its position and
     /// the token after it say otherwise; every other code stands.
     #[cpu_version(Generic)]
-    fn resolve_keyword(&mut self, tokens: &Tokens, end: usize, kw: u8) -> u8 {
+    fn resolve_keyword(&mut self, tokens: &TokensView, end: usize, kw: u8) -> u8 {
         let cpu = BASELINE;
 
         let keyword = match kw {
@@ -110,7 +112,11 @@ impl Walk {
                 // a function / arrow head.
                 let nx = tokens.peek(end, cpu);
                 (matches_tk!(nx.kind, Ident | String | Number | PrivateIdent)
-                    || (nx.kind >= OP_KIND_BASE && matches!(nx.byte, b'(' | b'*' | b'[')))
+                    || (nx.kind >= OP_KIND_BASE
+                        && (matches!(nx.byte, b'(' | b'*' | b'[')
+                            || (nx.byte == b'<'
+                                && tokens.is_ts
+                                && arrow_type_params_at(tokens, nx.pos)))))
                     && !tokens.line_break_between(end, nx.pos, cpu)
             }
             tk!(KwType | KwInterface | KwNamespace | KwModule | KwDeclare) => {
@@ -119,7 +125,7 @@ impl Walk {
                 let at_stmt = self.at_stmt_start()
                     || self.prev_kw == tk!(KwDefault)
                     || (kw == tk!(KwNamespace) && self.stmt_reg() == StmtReg::ExportAs);
-                tokens.ts
+                tokens.is_ts
                     && matches_tk!(nx.kind, Ident | String)
                     && !tokens.line_break_between(end, nx.pos, cpu)
                     && at_stmt
@@ -130,7 +136,7 @@ impl Walk {
                 let export_as = kw == tk!(KwAs) && self.prev_kw == tk!(KwExport);
                 let in_module_clause = self.top_kind() == FrameKind::ModuleSpec
                     || matches!(self.stmt_reg(), StmtReg::Import | StmtReg::Export);
-                export_as || (tokens.ts && !self.operand_allowed() && !in_module_clause)
+                export_as || (tokens.is_ts && !self.operand_allowed() && !in_module_clause)
             }
             tk!(KwStatic) => {
                 self.top_kind() == FrameKind::ClassBody && self.top().member == Member::KeyPos
@@ -165,7 +171,7 @@ impl Walk {
 
     /// The transition of the keyword `kw` (0: a plain name) in expression or statement position.
     #[cpu_version(Generic)]
-    fn keyword_word(&mut self, tokens: &Tokens, end: usize, kw: u8) {
+    fn keyword_word(&mut self, tokens: &TokensView, end: usize, kw: u8) {
         let cpu = BASELINE;
 
         match kw {
@@ -294,6 +300,11 @@ impl Walk {
                 self.keyword(kw);
                 self.set_stmt_reg(StmtReg::DeclareModule);
             }
+            tk!(KwNamespace | KwModule) => {
+                // A namespace body is never async: `namespace N { await / 2 }` divides.
+                self.push(FrameKind::FnHead);
+                self.value_done();
+            }
             _ => {
                 // A plain name, or any other keyword spelling used as one.
                 self.plain_word();
@@ -312,9 +323,14 @@ impl Walk {
 
     /// A word at member-key position of an object literal or class body.
     #[cpu_version(Generic)]
-    fn member_word(&mut self, tokens: &Tokens, pos: usize, end: usize, kw: u8) -> usize {
+    fn member_word(&mut self, tokens: &TokensView, pos: usize, end: usize, kw: u8) -> usize {
         let cpu = BASELINE;
 
+        // A decorator name, dotted or not, comes before the key.
+        if self.after_dot || matches!(tokens.prev_token(pos, cpu), Prev::Op(_, b'@')) {
+            self.value_done();
+            return end;
+        }
         let is_class = self.top_kind() == FrameKind::ClassBody;
         // Modifiers apply when a key can follow on the same line.
         let nx = tokens.peek(end, cpu);

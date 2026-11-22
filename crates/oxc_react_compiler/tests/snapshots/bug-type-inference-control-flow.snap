@@ -22,32 +22,23 @@ import { arrayPush, CONST_NUMBER0, mutate } from "shared-runtime";
 *   [2,3]
 */
 function useFoo(t0) {
-	const $ = _c(5);
+	const $ = _c(3);
 	const { cond, value } = t0;
-	let x;
-	if ($[0] !== cond) {
-		x = { value: cond ? CONST_NUMBER0 : [] };
-		mutate(x);
-		$[0] = cond;
-		$[1] = x;
-	} else {
-		x = $[1];
-	}
-	const xValue = x.value;
 	let result;
-	if (typeof xValue === "number") {
-		result = xValue + 1;
-	} else {
-		let t1;
-		if ($[2] !== value || $[3] !== xValue) {
-			t1 = arrayPush(xValue, value);
-			$[2] = value;
-			$[3] = xValue;
-			$[4] = t1;
+	if ($[0] !== cond || $[1] !== value) {
+		const x = { value: cond ? CONST_NUMBER0 : [] };
+		mutate(x);
+		const xValue = x.value;
+		if (typeof xValue === "number") {
+			result = xValue + 1;
 		} else {
-			t1 = $[4];
+			result = arrayPush(xValue, value);
 		}
-		result = t1;
+		$[0] = cond;
+		$[1] = value;
+		$[2] = result;
+	} else {
+		result = $[2];
 	}
 	return result;
 }

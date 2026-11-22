@@ -280,22 +280,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         default_specifier: Option<BindingIdentifier<'a>>,
         import_kind: ImportOrExportKind,
     ) -> ArenaVec<'a, ImportDeclarationSpecifier<'a>> {
-        // If there is a default specifier, create a Vec with the default specifier in it,
-        // otherwise, create an empty Vec.
-        let mut specifiers = if default_specifier.is_some() {
-            ArenaVec::with_capacity_in(1, self)
-        } else {
-            ArenaVec::new_in(self)
-        };
-
-        if let Some(default_specifier) = default_specifier {
+        let specifiers = if let Some(default_specifier) = default_specifier {
             let default_span = default_specifier.span;
             let specifier = ImportDeclarationSpecifier::new_import_default_specifier(
                 default_specifier.span,
                 default_specifier,
                 self,
             );
-            specifiers.push(specifier);
             if self.eat(Kind::Comma) {
                 match self.cur_kind() {
                     // import defaultExport, * as name from "module-name";
@@ -305,8 +296,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                                 default_span,
                             ));
                         }
-                        let specifier = self.parse_import_namespace_specifier();
-                        specifiers.push(specifier);
+                        let namespace = self.parse_import_namespace_specifier();
+                        ArenaVec::from_array_in([specifier, namespace], self)
                     }
                     // import defaultExport, { export1 [ , [...] ] } from "module-name";
                     Kind::LCurly => {
@@ -315,19 +306,23 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                                 default_span,
                             ));
                         }
-                        self.parse_import_specifiers_into(&mut specifiers, import_kind);
+                        self.parse_import_specifiers(Some(specifier), import_kind)
                     }
                     _ => return self.unexpected(),
                 }
+            } else {
+                ArenaVec::from_value_in(specifier, self)
             }
         } else if self.at(Kind::Star) {
             // import * as name from "module-name";
             let specifier = self.parse_import_namespace_specifier();
-            specifiers.push(specifier);
+            ArenaVec::from_value_in(specifier, self)
         } else if self.at(Kind::LCurly) {
             // import { export1 , export2 as alias2 , [...] } from "module-name";
-            self.parse_import_specifiers_into(&mut specifiers, import_kind);
-        }
+            self.parse_import_specifiers(None, import_kind)
+        } else {
+            ArenaVec::new_in(self)
+        };
 
         self.expect(Kind::From);
         specifiers
@@ -344,24 +339,25 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     // import { export1 , export2 as alias2 , [...] } from "module-name";
-    fn parse_import_specifiers_into(
+    fn parse_import_specifiers(
         &mut self,
-        specifiers: &mut ArenaVec<'a, ImportDeclarationSpecifier<'a>>,
+        default_specifier: Option<ImportDeclarationSpecifier<'a>>,
         import_kind: ImportOrExportKind,
-    ) {
+    ) -> ArenaVec<'a, ImportDeclarationSpecifier<'a>> {
         debug_assert!(self.at(Kind::LCurly));
         let opening_span = self.cur_token().span();
         self.advance(Kind::LCurly);
-        self.context_remove(self.ctx, |p| {
-            let _ = p.parse_delimited_list_into(
-                specifiers,
+        let (specifiers, _) = self.context_remove(self.ctx, |p| {
+            p.parse_delimited_list_with_prefix(
+                default_specifier,
                 Kind::RCurly,
                 Kind::Comma,
                 opening_span,
                 |parser| parser.parse_import_specifier(import_kind),
-            );
+            )
         });
         self.expect(Kind::RCurly);
+        specifiers
     }
 
     /// [Import Attributes](https://tc39.es/proposal-import-attributes)
@@ -456,10 +452,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         let statement = if self.at(Kind::Import) { "import statement" } else { "export statement" };
         let span = self.cur_token().span();
-        if self.source_type.is_script() || self.source_type.is_commonjs() {
-            self.error(diagnostics::module_code(statement, span));
-        } else if stmt_ctx != StatementContext::Program {
+        if stmt_ctx != StatementContext::Program {
             self.error(diagnostics::top_level(statement, span));
+        } else if self.source_type.is_script() || self.source_type.is_commonjs() {
+            self.error(diagnostics::module_code(statement, span));
+        } else if self.source_type.is_unambiguous()
+            && !self.module_record_builder.has_module_syntax()
+        {
+            // Reported if no module syntax makes the source a module, e.g. `import a = b` in JS.
+            self.error_on_script(diagnostics::module_code(statement, span));
         }
     }
 

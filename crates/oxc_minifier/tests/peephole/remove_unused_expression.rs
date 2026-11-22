@@ -718,6 +718,43 @@ fn no_side_effects() {
     check("/* @__NO_SIDE_EFFECTS__ */ export const f = () => {}");
 }
 
+/// The `/* @__NO_SIDE_EFFECTS__ */` annotation applies to the function value
+/// declared at the annotated binding. Reassigning the binding invalidates the
+/// annotation, so calls must not be treated as pure afterwards.
+/// <https://github.com/oxc-project/oxc/issues/29972>
+#[test]
+fn no_side_effects_reassigned() {
+    // `function` declaration (function bindings are mutable, like `var`)
+    test(
+        "/* @__NO_SIDE_EFFECTS__ */ function f() {} f = () => console.log('x'); f()",
+        "/* @__NO_SIDE_EFFECTS__ */ function f(){}f=()=>console.log('x'),f()",
+    );
+    test(
+        "/* @__NO_SIDE_EFFECTS__ */ function f() {} f = () => {}; f()",
+        "/* @__NO_SIDE_EFFECTS__ */ function f(){}f=()=>{},f()",
+    );
+    test(
+        "/* @__NO_SIDE_EFFECTS__ */ function f() {} f = () => {}; new f()",
+        "/* @__NO_SIDE_EFFECTS__ */ function f(){}f=()=>{},new f()",
+    );
+    // `var` initialized with an annotated arrow function
+    test(
+        "/* @__NO_SIDE_EFFECTS__ */ var f = () => {}; f = () => console.log('x'); f()",
+        "/* @__NO_SIDE_EFFECTS__ */ var f=()=>{};f=()=>console.log('x'),f()",
+    );
+    // `let` initialized with an annotated function expression
+    test(
+        "/* @__NO_SIDE_EFFECTS__ */ let f = function() {}; f = () => console.log('x'); new f()",
+        "/* @__NO_SIDE_EFFECTS__ */ let f=function(){};f=()=>console.log('x'),new f()",
+    );
+    // Reassignment after the call: the conservative guard keeps the earlier
+    // call too, since the annotation no longer proves the binding's value.
+    test(
+        "/* @__NO_SIDE_EFFECTS__ */ var f = () => {}; f(); f = () => console.log('x')",
+        "/* @__NO_SIDE_EFFECTS__ */ var f=()=>{};f(),f=()=>console.log('x')",
+    );
+}
+
 #[test]
 fn treeshake_options_annotations_false() {
     let options = CompressOptions {
@@ -733,6 +770,14 @@ fn treeshake_options_annotations_false() {
     };
     test_options("function test() {} /* @__PURE__ */ test()", "function test() {}", &options);
     test_options("function test() {} /* @__PURE__ */ new test()", "function test() {}", &options);
+}
+
+#[test]
+fn remove_unused_assignment_keeps_eval_visible_catch_writes() {
+    test_smallest(
+        "function f() { try { throw 1 } catch (y) { var y; function set() { y = 2; } set(); console.log(eval('y')); } return y; } console.log(f());",
+        "function f() { try { throw 1 } catch (y) { var y; function set() { y = 2; } set(), console.log(eval('y')); } return y; } console.log(f());",
+    );
 }
 
 #[test]
@@ -878,6 +923,7 @@ fn remove_unused_class_expression() {
 
     // TypeError
     test_same_options("(class extends (() => {}) {})", &options);
+    test_same_options("(class { static ['prototype']() {} })", &options);
 }
 
 #[test]

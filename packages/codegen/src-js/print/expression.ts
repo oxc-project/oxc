@@ -585,9 +585,9 @@ function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): voi
     } else if (
       keyType === "Literal"
       && typeof key.value === "number"
-      && (key.value < 0 || Object.is(key.value, -0) || !Number.isFinite(key.value))
+      && (key.value < 0 || Object.is(key.value, -0) || Number.isNaN(key.value))
     ) {
-      // `{ -1: 0 }` and `{ 1/0: 0 }` must print as `{ [-1]: 0 }` / `{ [1 / 0]: 0 }`
+      // `{ -1: 0 }` must print as `{ [-1]: 0 }`
       computed = true;
     }
   }

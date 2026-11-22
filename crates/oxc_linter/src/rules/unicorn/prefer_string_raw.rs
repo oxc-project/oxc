@@ -98,22 +98,23 @@ impl Rule for PreferStringRaw {
                 return;
             }
             AstKind::ObjectProperty(prop) => {
-                if let PropertyKey::StringLiteral(key) = &prop.key
-                    && !prop.computed
+                if let PropertyKey::StaticStringLiteral(key) = &prop.key
                     && string_literal.span == key.span
                 {
                     return;
                 }
             }
             AstKind::TSPropertySignature(prop) => {
-                if let PropertyKey::StringLiteral(key) = &prop.key
+                if let PropertyKey::StaticStringLiteral(key) | PropertyKey::StringLiteral(key) =
+                    &prop.key
                     && string_literal.span == key.span
                 {
                     return;
                 }
             }
             AstKind::TSMethodSignature(method) => {
-                if let PropertyKey::StringLiteral(key) = &method.key
+                if let PropertyKey::StaticStringLiteral(key) | PropertyKey::StringLiteral(key) =
+                    &method.key
                     && string_literal.span == key.span
                 {
                     return;
@@ -213,11 +214,7 @@ fn ends_with_keyword(source: &str) -> bool {
         }
     }
 
-    if source.ends_with("of") {
-        return true;
-    }
-
-    false
+    source.ends_with("of")
 }
 
 #[test]

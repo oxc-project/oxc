@@ -11,6 +11,8 @@ pub struct SortableImport<'a> {
     pub import_line: SourceLine<'a>,
     // These are used for sorting and computed by `compute_import_metadata()`
     pub group_idx: usize,
+    /// Position of the matched entry within the group, used as a tiebreaker for the same source.
+    pub subgroup_idx: u32,
     pub normalized_source: Cow<'a, str>,
     pub is_side_effect: bool,
     pub is_ignored: bool,
@@ -145,7 +147,7 @@ fn sort_within_group(
     indices.copy_from_slice(&result);
 }
 
-/// Sort indices by their normalized source.
+/// Sort indices by their normalized source, then by subgroup order.
 fn sort_indices_by_source(
     indices: &mut [usize],
     imports: &[SortableImport],
@@ -157,10 +159,14 @@ fn sort_indices_by_source(
     // breaking stability and making sorting non-idempotent.
     // `Ordering::reverse()` keeps `Equal` as `Equal`,
     // so the stable `sort_by` preserves the original order of equal imports.
+    //
+    // For the same source, the subgroup order (e.g. `[["type-external", "value-external"]]`) is used.
+    // It is NOT affected by `desc`, just like the order of `groups`.
     indices.sort_by(|&a, &b| {
-        let ordering =
-            natord::compare(&imports[a].normalized_source, &imports[b].normalized_source);
-        if options.order.is_desc() { ordering.reverse() } else { ordering }
+        let (a, b) = (&imports[a], &imports[b]);
+        let ordering = natord::compare(&a.normalized_source, &b.normalized_source);
+        let ordering = if options.order.is_desc() { ordering.reverse() } else { ordering };
+        ordering.then(a.subgroup_idx.cmp(&b.subgroup_idx))
     });
 }
 

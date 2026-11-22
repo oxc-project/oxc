@@ -7,34 +7,7 @@ use std::cell::Cell;
 
 use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds};
 
-use crate::number::*;
 use crate::operator::*;
-
-impl<'new_alloc> CloneIn<'new_alloc> for NumberBase {
-    type Cloned = NumberBase;
-
-    #[inline(always)]
-    fn clone_in_impl(
-        &self,
-        _with_semantic_ids: CloneInSemanticIds,
-        allocator: &'new_alloc Allocator,
-    ) -> Self::Cloned {
-        *self
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for BigintBase {
-    type Cloned = BigintBase;
-
-    #[inline(always)]
-    fn clone_in_impl(
-        &self,
-        _with_semantic_ids: CloneInSemanticIds,
-        allocator: &'new_alloc Allocator,
-    ) -> Self::Cloned {
-        *self
-    }
-}
 
 impl<'new_alloc> CloneIn<'new_alloc> for AssignmentOperator {
     type Cloned = AssignmentOperator;

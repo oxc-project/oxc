@@ -1033,5 +1033,10 @@
       "electron": "12.0"
     },
     "es": "ES2022"
+  },
+  {
+    "name": "StandardDecorators",
+    "es": null,
+    "targets": {}
   }
 ]

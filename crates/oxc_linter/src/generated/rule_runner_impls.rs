@@ -1958,6 +1958,11 @@ impl RuleRunner for crate::rules::typescript::no_unsafe_call::NoUnsafeCall {
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
 }
 
+impl RuleRunner for crate::rules::typescript::no_unsafe_class_instance_assignment::NoUnsafeClassInstanceAssignment {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
+}
+
 impl RuleRunner
     for crate::rules::typescript::no_unsafe_declaration_merging::NoUnsafeDeclarationMerging
 {
@@ -3595,8 +3600,11 @@ impl RuleRunner for crate::rules::unicorn::no_useless_switch_case::NoUselessSwit
 }
 
 impl RuleRunner for crate::rules::unicorn::no_useless_undefined::NoUselessUndefined {
-    const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::CallExpression, AstType::IdentifierReference]));
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::CallExpression,
+        AstType::ConditionalExpression,
+        AstType::IdentifierReference,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

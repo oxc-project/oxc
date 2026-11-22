@@ -1,0 +1,39 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/sprout/gating-hoisted-rest-parameters.js
+---
+import { c as _c } from "react/compiler-runtime";
+import { isForgetEnabled_Fixtures } from "ReactForgetFeatureFlag";
+// @gating
+const render = Component;
+function Component_optimized(t0, ...t1) {
+	const $ = _c(2);
+	const { value } = t0;
+	const rest = t1;
+	const t2 = value + rest.length;
+	let t3;
+	if ($[0] !== t2) {
+		t3 = <span>{t2}</span>;
+		$[0] = t2;
+		$[1] = t3;
+	} else {
+		t3 = $[1];
+	}
+	return t3;
+}
+const isForgetEnabled_Fixtures_result = isForgetEnabled_Fixtures();
+function Component_unoptimized({ value }, ...rest) {
+	return <span>{value + rest.length}</span>;
+}
+function Component(arg0, ...arg1) {
+	if (isForgetEnabled_Fixtures_result) return Component_optimized(arg0, ...arg1);
+	return Component_unoptimized(arg0, ...arg1);
+}
+export const FIXTURE_ENTRYPOINT = {
+	fn: render,
+	params: [
+		{ value: 40 },
+		1,
+		2
+	]
+};

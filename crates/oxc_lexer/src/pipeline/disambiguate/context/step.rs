@@ -1,12 +1,11 @@
 //! Stepping one token: the line-break rules (ASI, restricted productions, the end of a
 //! type), literals, and the dispatch to words, punctuation, types and JSX.
 
-use crate::{
-    cpu::{BASELINE, cpu_version},
-    token::{OP_KIND_BASE, is_trivia_byte, matches_tk, tk},
-};
+use oxc_simd::{BASELINE, cpu_version};
 
-use crate::pipeline::disambiguate::common::Tokens;
+use crate::token::{OP_KIND_BASE, is_trivia_byte, matches_tk, tk};
+
+use crate::pipeline::disambiguate::common::TokensView;
 
 use super::{
     frame::{Declarator, FrameKind, Member, RegionRule, StmtReg},
@@ -16,7 +15,7 @@ use super::{
 /// Can `tok` (the token starting at `pos`) continue an expression that a value token ended on the
 /// previous line? Used for ASI.
 #[cpu_version(Generic)]
-fn continues_expression(tokens: &Tokens, pos: usize) -> bool {
+fn continues_expression(tokens: &TokensView, pos: usize) -> bool {
     let cpu = BASELINE;
 
     let k = tokens.base_kind(pos, cpu);
@@ -37,7 +36,7 @@ fn continues_expression(tokens: &Tokens, pos: usize) -> bool {
 
 impl Walk {
     #[cpu_version(Generic)]
-    pub(super) fn step(&mut self, tokens: &Tokens, pos: usize) -> usize {
+    pub(super) fn step(&mut self, tokens: &TokensView, pos: usize) -> usize {
         let cpu = BASELINE;
 
         self.last_start = pos;
@@ -62,7 +61,7 @@ impl Walk {
         }
 
         // ASI: a value ended the previous line and this token cannot continue it.
-        if newline && !self.operand_allowed() && !continues_expression(tokens, pos) {
+        if newline && !self.operand_allowed() && !self.continues_line(tokens, pos) {
             self.asi(tokens, pos);
         }
         // A binding that ended the line goes on with =, a comma or a type annotation only.
@@ -139,7 +138,7 @@ impl Walk {
 
     #[cpu_version(Generic)]
     #[inline(always)]
-    fn asi(&mut self, tokens: &Tokens, pos: usize) {
+    fn asi(&mut self, tokens: &TokensView, pos: usize) {
         let cpu = BASELINE;
 
         // Concise arrow bodies end with the statement.
@@ -170,21 +169,30 @@ impl Walk {
             return;
         }
         match self.top_kind() {
-            FrameKind::ClassBody => {
-                // Member initializer ended; a new member starts.
-                self.top_mut().next_member();
-                self.set_operand();
-            }
-            k if k.is_stmt_holder() => self.end_statement(),
+            k if k == FrameKind::ClassBody || k.is_stmt_holder() => self.end_statement(),
             // Lists, calls, literals and types hold no statements: nothing ends.
             _ => {}
         }
     }
 
+    /// Can the token at pos go on after the value that ended the previous line?
+    #[cpu_version(Generic)]
+    #[inline(always)]
+    fn continues_line(&self, tokens: &TokensView, pos: usize) -> bool {
+        let cpu = BASELINE;
+
+        // A class member key takes only its parameters, type parameters, type or initializer.
+        if self.top_kind() == FrameKind::ClassBody && self.top().member == Member::KeySeen {
+            return tokens.base_kind(pos, cpu) >= OP_KIND_BASE
+                && b"(<=:?!".contains(&tokens.src[pos]);
+        }
+        continues_expression(tokens, pos)
+    }
+
     /// Can the token at pos go on after a type that ended the previous line?
     #[cpu_version(Generic)]
     #[inline(always)]
-    fn continues_after_type_break(&self, tokens: &Tokens, pos: usize) -> bool {
+    fn continues_after_type_break(&self, tokens: &TokensView, pos: usize) -> bool {
         let cpu = BASELINE;
 
         if tokens.base_kind(pos, cpu) < OP_KIND_BASE {
@@ -206,22 +214,7 @@ impl Walk {
     fn end_region_by_break(&mut self) {
         let r = self.pop();
         match r.region {
-            RegionRule::Stmt => self.end_statement(),
-            RegionRule::Inline => {
-                // A declarator / member annotation ended by a line break.
-                match self.top_kind() {
-                    FrameKind::ClassBody => {
-                        self.top_mut().next_member();
-                        self.set_operand();
-                    }
-                    FrameKind::FnHead => {
-                        // Return type of a bodiless signature.
-                        self.pop();
-                        self.end_statement();
-                    }
-                    _ => self.end_statement(),
-                }
-            }
+            RegionRule::Stmt | RegionRule::Inline => self.end_statement(),
             RegionRule::Expr => {
                 // `x as T` then a new line: the value is complete.
                 self.set_value();
@@ -232,7 +225,7 @@ impl Walk {
     }
 
     #[cpu_version(Generic)]
-    fn literal(&mut self, tokens: &Tokens, k: u8, end: usize) {
+    fn literal(&mut self, tokens: &TokensView, k: u8, end: usize) {
         let cpu = BASELINE;
 
         if self.in_type() {

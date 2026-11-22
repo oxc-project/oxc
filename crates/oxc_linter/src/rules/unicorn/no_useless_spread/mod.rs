@@ -9,7 +9,9 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::ScopeId;
 use oxc_span::{GetSpan, SPAN, Span};
+use oxc_str::static_ident;
 
 mod const_eval;
 
@@ -246,16 +248,7 @@ fn check_useless_spread_in_list<'a>(
                 }) && call_expr_args_span.contains_inclusive(array_expr.span)
                 {
                     // compute replacer before the closure so we don't capture `ctx` by reference inside the fixer closure
-                    let replacer = if let Some(first) = array_expr.elements.first() {
-                        let mut snippet_span = first.span();
-                        if array_expr.elements.len() != 1 {
-                            let last = array_expr.elements.last().unwrap();
-                            snippet_span = Span::new(first.span().start, last.span().end);
-                        }
-                        ctx.source_range(snippet_span).to_string()
-                    } else {
-                        String::new()
-                    };
+                    let replacer = spread_arguments_text(array_expr, node.scope_id(), ctx);
 
                     ctx.diagnostic_with_fix(spread_in_arguments(span), move |fixer| {
                         fixer.replace(spread_elem.span(), replacer)
@@ -267,6 +260,39 @@ fn check_useless_spread_in_list<'a>(
             _ => false,
         },
     }
+}
+
+/// The elements of `array_expr` as arguments: `...[a, , b]` becomes `a, undefined, b`.
+/// A hole is not allowed in an argument list. Its span is the comma after it, which is
+/// kept, except after the last element: `...[a,,]` becomes `a,undefined`.
+/// Uses `void 0` when `undefined` is shadowed.
+fn spread_arguments_text(
+    array_expr: &ArrayExpression,
+    scope_id: ScopeId,
+    ctx: &LintContext,
+) -> String {
+    let (Some(first), Some(last)) = (array_expr.elements.first(), array_expr.elements.last())
+    else {
+        return String::new();
+    };
+    let undefined = if ctx.scoping().find_binding(scope_id, static_ident!("undefined")).is_some() {
+        "void 0"
+    } else {
+        "undefined"
+    };
+    let mut text = String::new();
+    let mut pos = first.span().start;
+    for element in &array_expr.elements {
+        if let ArrayExpressionElement::Elision(elision) = element {
+            text.push_str(ctx.source_range(Span::new(pos, elision.span.start)));
+            text.push_str(undefined);
+            pos = elision.span.start;
+        }
+    }
+    let end =
+        if matches!(last, ArrayExpressionElement::Elision(_)) { pos } else { last.span().end };
+    text.push_str(ctx.source_range(Span::new(pos, end)));
+    text
 }
 
 /// `...[ ...[] ]`. May contain multiple spread elements.
@@ -457,10 +483,6 @@ fn diagnostic_name<'a>(ctx: &LintContext<'a>, expr: &Expression<'a>) -> Option<&
     match expr {
         Expression::CallExpression(call) => diagnostic_name(ctx, &call.callee),
         Expression::AwaitExpression(expr) => diagnostic_name(ctx, &expr.argument),
-        Expression::SequenceExpression(expr) => {
-            let span_with_parens = expr.span().expand(1);
-            pretty_snippet(ctx.source_range(span_with_parens))
-        }
         _ => pretty_snippet(ctx.source_range(expr.span())),
     }
 }
@@ -766,6 +788,9 @@ fn test() {
                 )]",
         "[...(foo ? x.map(x => x) : await Promise.all(foo))]",
         "[...((0, []))]",
+        "[...(\u{00A0}0, [])]",
+        "[...(0, []\u{00A0})]",
+        "[...(\u{2003}0, []\u{2003})]",
         "[...arr.reduce((a, b) => a.push(b), [])]",
         // wait on non-promise value `v` produces `v` itself
         "[...arr.reduce((a, b) => a.push(b), await [])]",
@@ -777,6 +802,7 @@ fn test() {
         // useless object clones with complex expressions
         r"const obj = { ...(foo ? { a: 1 } : { a: 2 }) }",
         r"const obj = { ...(foo ? Object.entries(obj).reduce(fn, {}) : { a: 2 }) }",
+        "const obj = { ...(\u{00A0}0, {}\u{00A0}) }",
     ];
 
     let fix = vec![
@@ -786,6 +812,22 @@ fn test() {
         ("[...[1,2,3], ...x]", "[...[1,2,3], ...x]"),
         ("[...[...[1,2,3]]]", "[...[1,2,3]]"),
         ("const array = [...[a, , b,]]", "const array = [a, , b,]"),
+        ("foo(...[,])", "foo(undefined)"),
+        ("new Foo(...[,])", "new Foo(undefined)"),
+        ("foo(...[,,])", "foo(undefined,undefined)"),
+        ("foo(...[a, , b])", "foo(a, undefined, b)"),
+        ("foo(...[a,,])", "foo(a,undefined)"),
+        ("foo(...[a, /* hole */ , b])", "foo(a, /* hole */ undefined, b)"),
+        (
+            "foo(...[,, ,(( a )), ,,(0, b), ,,])",
+            "foo(undefined,undefined, undefined,(( a )), undefined,undefined,(0, b), undefined,undefined)",
+        ),
+        ("function f(undefined) { foo(...[,]); }", "function f(undefined) { foo(void 0); }"),
+        ("{ foo(...[,,]); const undefined = 1; }", "{ foo(void 0,void 0); const undefined = 1; }"),
+        (
+            "function f(undefined) { new Foo(...[1,,]); }",
+            "function f(undefined) { new Foo(1,void 0); }",
+        ),
         // object literals
         ("const obj = { a, ...{ b, c } }", "const obj = ({\n\ta,\n\tb,\n\tc\n})"),
         ("const obj = { a, ...{ b, c, } }", "const obj = ({\n\ta,\n\tb,\n\tc\n})"),
@@ -805,6 +847,10 @@ fn test() {
         (r"[...await Promise.all(foo)]", r"await Promise.all(foo)"),
         (r"[...Array.from(iterable)]", r"Array.from(iterable)"),
         ("[...((0, []))]", "((0, []))"),
+        ("[...(\u{00A0}0, [])]", "(\u{00A0}0, [])"),
+        ("[...(0, []\u{00A0})]", "(0, []\u{00A0})"),
+        ("[...(\u{2003}0, []\u{2003})]", "(\u{2003}0, []\u{2003})"),
+        ("const obj = { ...(\u{00A0}0, {}\u{00A0}) }", "const obj = (\u{00A0}0, {}\u{00A0})"),
         ("[...arr.reduce((a, b) => a.push(b), [])]", "arr.reduce((a, b) => a.push(b), [])"),
         // Issue: <https://github.com/oxc-project/oxc/issues/8115>
         ("setupServer(...[...importHandlers])", "setupServer(...importHandlers)"),

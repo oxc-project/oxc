@@ -6,7 +6,7 @@ use oxc_ecmascript::{ToInt32, ToUint32};
 use oxc_span::{GetSpan, SPAN};
 use oxc_str::{JSStr, JSStrBuilder};
 use oxc_syntax::{
-    number::{NumberBase, ToJsString},
+    number::ToJsString,
     operator::{BinaryOperator, UnaryOperator},
 };
 
@@ -34,6 +34,8 @@ impl<'a> IsolatedDeclarations<'a> {
                 }
 
                 computed_value
+            } else if decl.declare && !decl.r#const {
+                None
             } else if let Some(ConstantValue::Number(v)) = prev_initializer_value {
                 Some(ConstantValue::Number(v + 1.0))
             } else {
@@ -59,13 +61,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             Expression::new_identifier(SPAN, "Infinity", self)
                         } else {
                             let value = if is_negative { -v } else { v };
-                            Expression::new_numeric_literal(
-                                SPAN,
-                                value,
-                                None,
-                                NumberBase::Decimal,
-                                self,
-                            )
+                            Expression::new_numeric_literal(SPAN, value, None, self)
                         };
 
                         if is_negative {
@@ -164,8 +160,14 @@ impl<'a> IsolatedDeclarations<'a> {
             Expression::StringLiteral(lit) => Some(ConstantValue::String(lit.value)),
             Expression::TemplateLiteral(lit) => {
                 let mut value = JSStrBuilder::new_in(self);
-                for part in &lit.quasis {
-                    value.push_str(&part.value.raw);
+                for (index, part) in lit.quasis.iter().enumerate() {
+                    value.push_js_str(part.value.cooked?);
+                    if let Some(expression) = lit.expressions.get(index) {
+                        match self.evaluate(expression, enum_name, prev_members)? {
+                            ConstantValue::String(part) => value.push_js_str(part),
+                            ConstantValue::Number(number) => value.push_str(&number.to_js_string()),
+                        }
+                    }
                 }
                 Some(ConstantValue::String(value.into_js_str()))
             }

@@ -52,12 +52,15 @@ fn between(t: &Tree<'_>, prev: NodeId, next: NodeId) -> Between {
         } else if p.trailing_sensitive {
             Between::Line
         } else {
+            // Where whitespace is insignificant, a CDATA section glues to the texts around it
+            // (`a <![CDATA[x]]> b` -> `a<![CDATA[x]]>b`), where an inline element breaks apart, as Prettier prints it.
+            // Laying it out as an element would take it out of `text_like`, which every mode relies on.
             Between::Soft
         };
     }
 
     if (p.borrows.next_opening_start
-        && (n.prettier_ignore
+        && (n.suppressed
             // 123<a
             //      ~
             //   ><b>
@@ -234,8 +237,11 @@ enum Leading {
     IfPrevFlat(GroupId),
 }
 
+/// A blank line before the next sibling, from where the node's content ends (`<p>⏎  a⏎<div>` has none).
 fn force_next_empty_line(t: &Tree<'_>, id: NodeId) -> bool {
-    t[id].next.is_some_and(|next| t.line_breaks(t.source_end(id), t[next].span.start) >= 2)
+    t[id]
+        .next
+        .is_some_and(|next| t.line_breaks(super::end_with_content(t, id), t[next].span.start) >= 2)
 }
 
 fn prefer_hard_line_as_leading(t: &Tree<'_>, id: NodeId) -> bool {

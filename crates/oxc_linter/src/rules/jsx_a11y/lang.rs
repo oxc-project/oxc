@@ -5,7 +5,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::Span;
 
 use crate::{
     AstNode,
@@ -39,9 +39,10 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    /// <html>
     /// <html lang="foo">
     /// ```
+    ///
+    /// A missing `lang` attribute is reported by `jsx-a11y/html-has-lang`.
     ///
     /// Examples of **correct** code for this rule:
     /// ```jsx
@@ -56,7 +57,8 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     version = "0.1.1",
-    short_description = "The lang prop on the `<html>` element must be a valid IETF BCP 47 language tag.",
+    short_description =
+        "The lang prop on the `<html>` element must be a valid IETF BCP 47 language tag.",
 );
 
 impl Rule for Lang {
@@ -71,16 +73,12 @@ impl Rule for Lang {
             return;
         }
 
-        has_jsx_prop_ignore_case(jsx_el, "lang").map_or_else(
-            || ctx.diagnostic(lang_diagnostic(jsx_el.name.span())),
-            |lang_prop| {
-                if !is_valid_lang_prop(lang_prop)
-                    && let JSXAttributeItem::Attribute(attr) = lang_prop
-                {
-                    ctx.diagnostic(lang_diagnostic(attr.span));
-                }
-            },
-        );
+        if let Some(lang_prop) = has_jsx_prop_ignore_case(jsx_el, "lang")
+            && !is_valid_lang_prop(lang_prop)
+            && let JSXAttributeItem::Attribute(attr) = lang_prop
+        {
+            ctx.diagnostic(lang_diagnostic(attr.span));
+        }
     }
 }
 
@@ -137,6 +135,8 @@ fn test() {
         ("<html lang='zh-yue-Hant' />", None, None),
         ("<html lang='ja-Latn' />", None, None),
         ("<html lang={foo} />", None, None),
+        ("<html />", None, None),
+        ("<html><body /></html>", None, None),
         ("<HTML lang='foo' />", None, None),
         ("<Foo lang={undefined} />", None, None),
         ("<Foo lang='en' />", None, Some(settings())),

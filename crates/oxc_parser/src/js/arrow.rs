@@ -1,10 +1,24 @@
-use oxc_allocator::ArenaBox;
+//! Arrow functions.
+//!
+//! `( … )` and `async ( … )` are parsed once with the cover grammars in [`super::cover`],
+//! and refined to arrow function parameters if `=>` follows.
+
+use std::{mem, num::NonZeroU32};
+
+use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
-use oxc_span::FileExtension;
+use oxc_span::{FileExtension, Span};
+use oxc_str::Ident;
 use oxc_syntax::precedence::Precedence;
 
-use super::{FunctionKind, Tristate};
-use crate::{Context, ParserConfig as Config, ParserImpl, diagnostics, lexer::Kind};
+use super::{
+    FunctionKind, Tristate,
+    cover::{Cover, CoverElement, CoverIdentifier, CoverList},
+    operator::kind_to_precedence,
+};
+use crate::{
+    Context, ParserConfig as Config, ParserImpl, cursor::ParserCheckpoint, diagnostics, lexer::Kind,
+};
 
 struct ArrowFunctionHead<'a> {
     type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
@@ -15,66 +29,555 @@ struct ArrowFunctionHead<'a> {
 }
 
 impl<'a, C: Config> ParserImpl<'a, C> {
-    pub(super) fn try_parse_arrow_function_expression(
+    /// `CoverParenthesizedExpressionAndArrowParameterList`[Yield, Await] :
+    ///     ( `Expression`[+In, ?Yield, ?Await] )
+    ///     ( `Expression`[+In, ?Yield, ?Await] , )
+    ///     ( )
+    ///     ( ... `BindingIdentifier`[?Yield, ?Await] )
+    ///     ( ... `BindingPattern`[?Yield, ?Await] )
+    ///     ( `Expression`[+In, ?Yield, ?Await] , ... `BindingIdentifier`[?Yield, ?Await] )
+    ///     ( `Expression`[+In, ?Yield, ?Await] , ... `BindingPattern`[?Yield, ?Await] )
+    ///
+    /// Returns the expression, and whether it is an arrow function.
+    pub(super) fn parse_parenthesized_expression_or_arrow_function(
         &mut self,
         allow_return_type_in_arrow_function: bool,
-    ) -> Option<Expression<'a>> {
-        let kind = match self.cur_kind() {
-            Kind::Async => {
-                // Both async arrow forms share the token after `async`. Classify them under
-                // one checkpoint instead of restarting lookahead for a single parameter.
-                let checkpoint = self.checkpoint();
-                self.bump_any(); // bump `async`
-                if self.cur_token().is_on_new_line() {
-                    self.rewind(checkpoint);
-                    return None;
+        no_side_effects_comments: Option<(u32, NonZeroU32)>,
+    ) -> (Expression<'a>, bool) {
+        debug_assert!(self.at(Kind::LParen));
+        let start = self.cur_start();
+        self.bump_any(); // `(`
+        let first_start = self.cur_start();
+        let mut cover = Cover::new(
+            start,
+            start,
+            self.state.cover_elements.len(),
+            self.state.cover_parenthesized.len(),
+            /* is_async */ false,
+        );
+
+        let end = 'list: {
+            let kind = self.cur_kind();
+            let mut identifier = None;
+            if kind == Kind::Ident {
+                let ident = self.parse_cover_identifier();
+                // `(a)` and `(a) => …`
+                if self.at(Kind::RParen) {
+                    match self.parse_parenthesized_identifier_or_arrow_function(
+                        start,
+                        ident,
+                        allow_return_type_in_arrow_function,
+                    ) {
+                        Ok(result) => return result,
+                        Err(end) => break 'list end,
+                    }
                 }
-                let kind = match self.cur_kind() {
-                    Kind::LParen | Kind::LAngle => {
-                        self.is_parenthesized_arrow_function_expression_worker(true)
-                    }
-                    kind if kind.is_binding_identifier() => {
-                        self.bump_any();
-                        let is_arrow = self.at(Kind::Arrow);
-                        self.rewind(checkpoint);
-                        return is_arrow.then(|| {
-                            self.parse_async_simple_arrow_function_expression(
-                                allow_return_type_in_arrow_function,
-                            )
-                        });
-                    }
-                    _ => Tristate::False,
-                };
-                self.rewind(checkpoint);
-                kind
+                identifier = Some(ident);
             }
-            Kind::LParen => {
-                // This check only reads lexer tokens. Keep one checkpoint for both the
-                // literal fast path and the remaining lookahead, so the first token is read once.
-                let checkpoint = self.lexer.checkpoint();
-                let second = self.lexer.next_token().kind();
-                let result = if second.is_literal() {
-                    Tristate::False
-                } else {
-                    self.is_parenthesized_arrow_function_expression_after_lparen(second, false)
-                };
-                self.lexer.rewind(checkpoint);
-                result
+
+            // A first element that cannot be a `BindingElement` makes the list
+            // a parenthesized expression: `(a.b)`, `(a + b)`, `(!a)`, `(function () {})`,
+            // `(<div />)`.
+            let first_parsed = if identifier.is_some() {
+                Self::continues_identifier_expression(self.cur_kind())
+            } else {
+                Self::cannot_start_binding_element(kind)
+            };
+            if first_parsed {
+                match self.parse_parenthesized_expression_first_element(
+                    cover,
+                    identifier.take(),
+                    no_side_effects_comments,
+                ) {
+                    Ok(expression) => return (expression, false),
+                    Err(Some(end)) => break 'list end,
+                    Err(None) => {}
+                }
             }
-            Kind::LAngle => {
-                self.lookahead(|p| p.is_parenthesized_arrow_function_expression_worker(false))
+
+            match self.parse_cover_list(start, cover.base, false, first_parsed, identifier) {
+                CoverList::Parameters(params) => {
+                    let arrow = self.parse_cover_parameters_arrow_function(
+                        cover,
+                        params,
+                        allow_return_type_in_arrow_function,
+                    );
+                    return (arrow, true);
+                }
+                CoverList::Undecided { trailing_comma, end } => {
+                    cover.trailing_comma = trailing_comma;
+                    end
+                }
             }
-            _ => Tristate::False,
         };
-        match kind {
-            Tristate::False => None,
-            Tristate::True => Some(self.parse_parenthesized_arrow_function_expression(
-                allow_return_type_in_arrow_function,
-            )),
-            Tristate::Maybe => self.parse_possible_parenthesized_arrow_function_expression(
-                allow_return_type_in_arrow_function,
-            ),
+
+        if self.fatal_error.is_some() {
+            return (self.abandon_cover(cover), false);
         }
+        if let Some(arrow) =
+            self.try_parse_cover_arrow_function(cover, allow_return_type_in_arrow_function)
+        {
+            return (arrow, true);
+        }
+        let expression = self.cover_elements_to_parenthesized_expression(
+            cover,
+            first_start,
+            end,
+            no_side_effects_comments,
+        );
+        (expression, false)
+    }
+
+    /// Whether `kind` after an identifier continues an expression that is not a `BindingElement`.
+    #[inline]
+    fn continues_identifier_expression(kind: Kind) -> bool {
+        matches!(kind, Kind::Dot | Kind::QuestionDot | Kind::LParen | Kind::LBrack)
+            || kind.is_template_start_of_tagged_template()
+            || kind_to_precedence(kind).is_some()
+    }
+
+    /// Parse `(a)` or `(a) => …` after `a`.
+    ///
+    /// Returns `Err` with the end of `a`, pushed as a cover element, if a TypeScript `:` follows,
+    /// which may start a return type or end the consequent of a conditional expression.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn parse_parenthesized_identifier_or_arrow_function(
+        &mut self,
+        start: u32,
+        identifier: CoverIdentifier<'a>,
+        allow_return_type_in_arrow_function: bool,
+    ) -> Result<(Expression<'a>, bool), u32> {
+        let CoverIdentifier { span, name, .. } = identifier;
+        self.bump_any(); // `)`
+
+        match self.cur_kind() {
+            // `(a) => …`
+            Kind::Arrow => {
+                let pattern = BindingPattern::new_binding_identifier(span, name, self);
+                let param = FormalParameter::new_plain(span, pattern, self);
+                let params = FormalParameters::boxed(
+                    self.end_span(start),
+                    FormalParameterKind::ArrowFormalParameters,
+                    ArenaVec::from_value_in(param, self),
+                    None,
+                    self,
+                );
+                let arrow = self.parse_arrow_function_rest(
+                    start,
+                    false,
+                    params,
+                    None,
+                    allow_return_type_in_arrow_function,
+                );
+                Ok((arrow, true))
+            }
+            // `(a): T => …` or `c ? (a) : b`
+            Kind::Colon if self.is_ts => {
+                self.state.cover_elements.push(CoverElement::Identifier { span, name });
+                Err(span.end)
+            }
+            // `(a)`
+            _ => {
+                // An enclosing cover list cannot become a binding pattern with `(a)` in it.
+                if self.state.cover_depth > 0 {
+                    self.state.cover_parenthesized.push(span.start);
+                }
+                let expression = Expression::new_identifier(span, name, self);
+                let expression = if self.options.preserve_parens {
+                    Expression::new_parenthesized_expression(self.end_span(start), expression, self)
+                } else {
+                    expression
+                };
+                Ok((expression, false))
+            }
+        }
+    }
+
+    /// Whether an element that starts with `kind` cannot be a `BindingElement`.
+    ///
+    /// `<` starts a JSX element, a type assertion, or an arrow function with type parameters.
+    /// Most JSX elements which start an expression are directly inside parentheses.
+    #[inline]
+    fn cannot_start_binding_element(kind: Kind) -> bool {
+        kind.is_literal()
+            || kind.is_unary_operator()
+            || kind.is_update_operator()
+            || kind.is_template_start_of_tagged_template()
+            || matches!(
+                kind,
+                Kind::Function
+                    | Kind::Class
+                    | Kind::New
+                    | Kind::LParen
+                    | Kind::Slash
+                    | Kind::LAngle
+            )
+    }
+
+    /// Parse the first element of a list that cannot be arrow function parameters, and
+    /// `( Expression )` if it is the only element.
+    ///
+    /// Otherwise the element is pushed as a cover element, and returns `Err` with its end if
+    /// `)` follows it, or `Err(None)` if more elements follow.
+    fn parse_parenthesized_expression_first_element(
+        &mut self,
+        cover: Cover,
+        identifier: Option<CoverIdentifier<'a>>,
+        no_side_effects_comments: Option<(u32, NonZeroU32)>,
+    ) -> Result<Expression<'a>, Option<u32>> {
+        let ctx = self.ctx;
+        self.ctx = ctx.and_in(true).and_decorator(false);
+        // Record parentheses in it, as in `((a)) => {}`.
+        self.state.cover_depth += 1;
+        let expression = match identifier {
+            Some(identifier) => self.parse_cover_identifier_expression(identifier),
+            None => self.parse_assignment_expression_or_higher(),
+        };
+        self.state.cover_depth -= 1;
+        self.ctx = ctx;
+
+        if !self.at(Kind::RParen) || self.fatal_error.is_some() {
+            self.state.cover_elements.push(CoverElement::Expression(expression));
+            return Err(None);
+        }
+        let end = self.prev_token_end;
+        self.bump_any(); // `)`
+
+        // `(1) => {}` is reported by refining the list to parameters.
+        if self.at(Kind::Arrow) {
+            self.state.cover_elements.push(CoverElement::Expression(expression));
+            return Err(Some(end));
+        }
+        Ok(self.finish_parenthesized_expression(
+            cover.start,
+            cover.parenthesized_base,
+            expression,
+            no_side_effects_comments,
+        ))
+    }
+
+    /// `AsyncArrowFunction`[In, Yield, Await] :
+    ///     async [no `LineTerminator` here] `AsyncArrowBindingIdentifier`[?Yield] [no `LineTerminator` here] => `AsyncConciseBody`[?In]
+    ///     `CoverCallExpressionAndAsyncArrowHead`[?Yield, ?Await] [no `LineTerminator` here] => `AsyncConciseBody`[?In]
+    ///
+    /// Returns the expression, and whether it is an arrow function. If it is not, it is the
+    /// call `async(…)`. Returns `None` with the cursor at `async` if `async` is an identifier.
+    pub(super) fn try_parse_async_arrow_function_or_call(
+        &mut self,
+        allow_return_type_in_arrow_function: bool,
+    ) -> Option<(Expression<'a>, bool)> {
+        debug_assert!(self.at(Kind::Async));
+        if self.fatal_error.is_some() {
+            return None;
+        }
+        let start = self.cur_start();
+        let checkpoint = self.checkpoint();
+        // An escaped `async` is only an error in an arrow function.
+        let is_escaped = self.cur_token().escaped();
+        let (async_span, async_name) = self.parse_identifier_kind(Kind::Ident);
+
+        let token = self.cur_token();
+        if !token.is_on_new_line() {
+            let kind = token.kind();
+            if kind == Kind::LParen {
+                return self.parse_async_call_or_arrow_function(
+                    checkpoint,
+                    async_span,
+                    async_name,
+                    is_escaped,
+                    allow_return_type_in_arrow_function,
+                );
+            }
+            if kind == Kind::Ident {
+                // `async a => …`
+                let ident = self.parse_plain_binding_identifier();
+                if self.at(Kind::Arrow) {
+                    if is_escaped {
+                        self.error(diagnostics::escaped_keyword(async_span));
+                    }
+                    let arrow = self.parse_simple_arrow_function_expression(
+                        start,
+                        ident,
+                        /* async */ true,
+                        allow_return_type_in_arrow_function,
+                    );
+                    return Some((arrow, true));
+                }
+            } else if kind == Kind::LAngle && self.is_ts {
+                // `async <T>(x) => ...`.
+                // `is_ts` check above because in JS/JSX, `async <` is a comparison
+                // (`f(async < b, c)`).
+                self.rewind(checkpoint);
+                return self
+                    .try_parse_generic_arrow_function_expression(
+                        allow_return_type_in_arrow_function,
+                    )
+                    .map(|arrow| (arrow, true));
+            } else if kind.is_binding_identifier() {
+                // `async yield => …`
+                self.bump_any();
+                if self.at(Kind::Arrow) {
+                    self.rewind(checkpoint);
+                    let arrow = self.parse_async_simple_arrow_function_expression(
+                        allow_return_type_in_arrow_function,
+                    );
+                    return Some((arrow, true));
+                }
+            }
+        }
+        self.rewind(checkpoint);
+        None
+    }
+
+    /// `CoverCallExpressionAndAsyncArrowHead`[Yield, Await] :
+    ///     `MemberExpression`[?Yield, ?Await] `Arguments`[?Yield, ?Await]
+    ///
+    /// The cursor is at `(`, and `checkpoint` is at `async`.
+    fn parse_async_call_or_arrow_function(
+        &mut self,
+        checkpoint: ParserCheckpoint<'a>,
+        async_span: Span,
+        async_name: Ident<'a>,
+        is_escaped: bool,
+        allow_return_type_in_arrow_function: bool,
+    ) -> Option<(Expression<'a>, bool)> {
+        let start = async_span.start;
+        // `await` is reserved in the parameters of an async arrow function, but not in the
+        // arguments of a call outside of async code: the list may have to be parsed again.
+        let may_parse_again = !self.ctx.has_await();
+        let had_module_syntax = self.module_record_builder.has_module_syntax();
+        let deferred_script_errors_len = self.deferred_script_errors.len();
+        let lparen = self.cur_start();
+        self.bump_any(); // `(`
+        let mut cover = Cover::new(
+            start,
+            lparen,
+            self.state.cover_elements.len(),
+            self.state.cover_parenthesized.len(),
+            /* is_async */ true,
+        );
+        let base = cover.base;
+
+        let outer_mentions_await = mem::replace(&mut self.state.mentions_await, false);
+        let list = self.parse_cover_list(lparen, base, true, false, None);
+        let mentions_await = self.state.mentions_await;
+        self.state.mentions_await |= outer_mentions_await;
+
+        if may_parse_again
+            && mentions_await
+            && (matches!(list, CoverList::Parameters(_))
+                || self.fatal_error.is_some()
+                || self.at(Kind::Arrow)
+                || (self.is_ts && self.at(Kind::Colon)))
+        {
+            // Discard what `rewind` does not restore, and parse the list as parameters.
+            self.state.cover_elements.truncate(base);
+            self.state.cover_initialized_name.retain(|&start, _| start < lparen);
+            self.state.trailing_commas.retain(|&start, _| start < lparen);
+            self.deferred_script_errors.truncate(deferred_script_errors_len);
+            if !had_module_syntax {
+                self.module_record_builder.unset_module_syntax();
+            }
+            self.rewind(checkpoint);
+            return self
+                .parse_possible_parenthesized_arrow_function_expression(
+                    allow_return_type_in_arrow_function,
+                )
+                .map(|arrow| (arrow, true));
+        }
+
+        match list {
+            CoverList::Parameters(params) => {
+                if is_escaped {
+                    self.error(diagnostics::escaped_keyword(async_span));
+                }
+                let arrow = self.parse_cover_parameters_arrow_function(
+                    cover,
+                    params,
+                    allow_return_type_in_arrow_function,
+                );
+                return Some((arrow, true));
+            }
+            CoverList::Undecided { trailing_comma, .. } => cover.trailing_comma = trailing_comma,
+        }
+
+        if self.fatal_error.is_some() {
+            return Some((self.abandon_cover(cover), false));
+        }
+        if let Some(arrow) =
+            self.try_parse_cover_arrow_function(cover, allow_return_type_in_arrow_function)
+        {
+            if is_escaped {
+                self.error(diagnostics::escaped_keyword(async_span));
+            }
+            return Some((arrow, true));
+        }
+        let callee = Expression::new_identifier(async_span, async_name, self);
+        Some((self.cover_elements_to_call_expression(cover, callee), false))
+    }
+
+    /// Parse the rest of an arrow function after an undecided cover list, if `=>` or
+    /// a TypeScript return type follows.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn try_parse_cover_arrow_function(
+        &mut self,
+        cover: Cover,
+        allow_return_type_in_arrow_function: bool,
+    ) -> Option<Expression<'a>> {
+        let kind = self.cur_kind();
+        if kind == Kind::Arrow {
+            let params = self.cover_elements_to_parameters(cover, self.end_span(cover.lparen));
+            return Some(self.parse_arrow_function_rest(
+                cover.start,
+                cover.is_async,
+                params,
+                None,
+                allow_return_type_in_arrow_function,
+            ));
+        }
+        if kind == Kind::Colon && self.is_ts {
+            return self.try_parse_cover_arrow_function_with_return_type(
+                cover,
+                allow_return_type_in_arrow_function,
+            );
+        }
+        None
+    }
+
+    /// Parse `: Type => body` after an undecided cover list, if it is not the `:` of
+    /// a conditional expression.
+    fn try_parse_cover_arrow_function_with_return_type(
+        &mut self,
+        cover: Cover,
+        allow_return_type_in_arrow_function: bool,
+    ) -> Option<Expression<'a>> {
+        let params_span = self.end_span(cover.lparen);
+
+        if !cover.is_async && self.state.cover_elements.len() == cover.base {
+            // `(): T => …`: `()` is not an expression, so `:` starts a return type.
+            let params = self.cover_elements_to_parameters(cover, params_span);
+            let return_type = self.parse_ts_return_type_annotation();
+            return Some(self.parse_arrow_function_rest(
+                cover.start,
+                false,
+                params,
+                return_type,
+                allow_return_type_in_arrow_function,
+            ));
+        }
+
+        // `case (a.b): c => d` and `a ? (b + 1) : c => d` are not arrow functions.
+        if self.state.not_parenthesized_arrow.contains(&cover.start)
+            || !self.is_cover_parameter_list(cover)
+        {
+            return None;
+        }
+
+        let checkpoint = self.checkpoint();
+        let return_type = self.parse_cover_return_type(cover.is_async);
+        'reject: {
+            if self.fatal_error.is_some() || !self.at(Kind::Arrow) {
+                break 'reject;
+            }
+            self.expect_arrow();
+
+            if allow_return_type_in_arrow_function {
+                let params = self.cover_elements_to_parameters(cover, params_span);
+                let head = ArrowFunctionHead {
+                    type_parameters: None,
+                    params,
+                    return_type,
+                    r#async: cover.is_async,
+                    start: cover.start,
+                };
+                return Some(self.parse_arrow_function_expression_body(
+                    head,
+                    allow_return_type_in_arrow_function,
+                ));
+            }
+
+            // In the consequent of a conditional expression, a return type needs another `:`
+            // after the body, see `parse_possible_parenthesized_arrow_function_expression`.
+            let body =
+                self.parse_arrow_function_body(cover.is_async, allow_return_type_in_arrow_function);
+            if !self.at(Kind::Colon) {
+                break 'reject;
+            }
+            let params = self.cover_elements_to_parameters(cover, params_span);
+            return Some(Expression::new_arrow_function_expression(
+                self.end_span(cover.start),
+                cover.is_async,
+                None,
+                params,
+                return_type,
+                body,
+                self,
+            ));
+        }
+
+        self.state.not_parenthesized_arrow.insert(cover.start);
+        self.rewind(checkpoint);
+        None
+    }
+
+    /// Parse the rest of an arrow function whose parameters were decided inside `( … )`.
+    fn parse_cover_parameters_arrow_function(
+        &mut self,
+        cover: Cover,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        allow_return_type_in_arrow_function: bool,
+    ) -> Expression<'a> {
+        self.state.cover_parenthesized.truncate(cover.parenthesized_base);
+        let return_type =
+            if self.is_ts { self.parse_cover_return_type(cover.is_async) } else { None };
+        self.parse_arrow_function_rest(
+            cover.start,
+            cover.is_async,
+            params,
+            return_type,
+            allow_return_type_in_arrow_function,
+        )
+    }
+
+    /// Parse the return type of an arrow function at `:`.
+    fn parse_cover_return_type(
+        &mut self,
+        is_async: bool,
+    ) -> Option<ArenaBox<'a, TSTypeAnnotation<'a>>> {
+        let has_await = self.ctx.has_await();
+        self.ctx = self.ctx.union_await_if(is_async);
+        let return_type = self.parse_ts_return_type_annotation();
+        self.ctx = self.ctx.and_await(has_await);
+        return_type
+    }
+
+    pub(crate) fn parse_simple_arrow_function_expression(
+        &mut self,
+        start: u32,
+        ident: BindingIdentifier<'a>,
+        r#async: bool,
+        allow_return_type_in_arrow_function: bool,
+    ) -> Expression<'a> {
+        let span = ident.span;
+        let pattern = BindingPattern::BindingIdentifier(self.alloc(ident));
+        let formal_parameter = FormalParameter::new_plain(span, pattern, self);
+        let params = FormalParameters::boxed(
+            span,
+            FormalParameterKind::ArrowFormalParameters,
+            [formal_parameter],
+            None,
+            self,
+        );
+
+        self.parse_arrow_function_rest(
+            start,
+            r#async,
+            params,
+            None,
+            allow_return_type_in_arrow_function,
+        )
     }
 
     fn parse_async_simple_arrow_function_expression(
@@ -108,177 +611,143 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         )
     }
 
-    // `second` follows `(` and the lexer is positioned after it. Only lexer state changes;
-    // callers must rewind their checkpoint before parsing the expression.
-    fn is_parenthesized_arrow_function_expression_after_lparen(
+    /// Parse an arrow function with type parameters, if `<` starts one: `<T>(a: T) => a`.
+    ///
+    /// The cursor is at `<`, or at an `async` that is followed by `<` on the same line.
+    ///
+    /// In JS/JSX this always returns `None`, as type parameters are a TS-only thing.
+    /// This function is only called in a JS file for a `<` at the start of an expression,
+    /// which is a syntax error. Checking `is_ts` here, or before calling this function,
+    /// would add a branch to valid TS/TSX, just to bail out sooner on invalid JS (rare).
+    pub(super) fn try_parse_generic_arrow_function_expression(
         &mut self,
-        second: Kind,
-        is_async: bool,
-    ) -> Tristate {
-        match second {
-            // Simple cases: "() =>", "(): ", and "() {".
-            // This is an arrow function with no parameters.
-            // The last one is not actually an arrow function,
-            // but this is probably what the user intended.
-            Kind::RParen => {
-                let third = self.lexer.next_token().kind();
-                match third {
-                    // `async()` can be a call on the true side of a conditional.
-                    Kind::Colon if self.is_ts && is_async => Tristate::Maybe,
-                    // Bare `()` cannot be a parenthesized expression, so the colon
-                    // must start a return type, even inside a conditional expression.
-                    Kind::Colon if self.is_ts => Tristate::True,
-                    Kind::Arrow | Kind::LCurly => Tristate::True,
-                    _ => Tristate::False,
-                }
-            }
-            // If encounter "([" or "({", this could be the start of a binding pattern.
-            // Examples:
-            //      ([ x ]) => { }
-            //      ({ x }) => { }
-            //      ([ x ])
-            //      ({ x })
-            Kind::LBrack | Kind::LCurly => Tristate::Maybe,
-            // Simple case: "(..."
-            // This is an arrow function with a rest parameter.
-            Kind::Dot3 => {
-                let third = self.lexer.next_token().kind();
-                match third {
-                    // '(...ident' is a lambda
-                    Kind::Ident => Tristate::True,
-                    // '(...null' is not a lambda
-                    kind if kind.is_literal() => Tristate::False,
-                    _ => Tristate::Maybe,
-                }
-            }
-            _ => {
-                let third = self.lexer.next_token().kind();
+        allow_return_type_in_arrow_function: bool,
+    ) -> Option<Expression<'a>> {
+        let kind = self.lookahead(|p| {
+            p.bump(Kind::Async);
+            p.is_generic_arrow_function_expression()
+        });
+        // Most `<` do not start type parameters. Decide that here, without a call.
+        if kind == Tristate::False {
+            return None;
+        }
+        self.parse_generic_arrow_function_expression(kind, allow_return_type_in_arrow_function)
+    }
 
-                // Check for "(xxx yyy", where xxx is a modifier and yyy is an identifier. This
-                // isn't actually allowed, but we want to treat it as a lambda so we can provide
-                // a good error message.
-                if second.is_modifier_kind()
-                    && second != Kind::Async
-                    && third.is_binding_identifier()
-                {
-                    if third == Kind::As {
-                        return Tristate::False; // https://github.com/microsoft/TypeScript/issues/44466
-                    }
-                    return Tristate::True;
-                }
-
-                // If we had "(" followed by something that's not an identifier,
-                // then this definitely doesn't look like a lambda.  "this" is not
-                // valid, but we want to parse it and then give a semantic error.
-                if !second.is_binding_identifier() && second != Kind::This {
-                    return Tristate::False;
-                }
-
-                match third {
-                    // If we have something like "(a:", then we must have a
-                    // type-annotated parameter in an arrow function expression.
-                    Kind::Colon => Tristate::True,
-                    // If we have "(a?:" or "(a?," or "(a?=" or "(a?)" then it is definitely a lambda.
-                    Kind::Question => {
-                        let fourth = self.lexer.next_token().kind();
-                        if matches!(fourth, Kind::Colon | Kind::Comma | Kind::Eq | Kind::RParen) {
-                            return Tristate::True;
-                        }
-                        Tristate::False
-                    }
-                    // A single identifier needs no speculative parameter parse. Keep `await`,
-                    // `yield`, and `this` on the existing contextual/error-recovery paths.
-                    // A TS return type can still be ambiguous with a conditional's colon.
-                    Kind::RParen if second.is_identifier() => {
-                        match self.lexer.next_token().kind() {
-                            Kind::Arrow => Tristate::True,
-                            Kind::Colon if self.is_ts => Tristate::Maybe,
-                            _ => Tristate::False,
-                        }
-                    }
-                    // If we have "(a," or "(a=" or a context-sensitive keyword in "(a)",
-                    // this *could* be an arrow function.
-                    Kind::Comma | Kind::Eq | Kind::RParen => Tristate::Maybe,
-                    // It is definitely not an arrow function
-                    _ => Tristate::False,
-                }
-            }
+    /// Parse an arrow function with type parameters, given whether the tokens at the cursor
+    /// start one.
+    ///
+    /// The cursor is at `<`, or at an `async` that is followed by `<` on the same line.
+    pub(crate) fn parse_generic_arrow_function_expression(
+        &mut self,
+        kind: Tristate,
+        allow_return_type_in_arrow_function: bool,
+    ) -> Option<Expression<'a>> {
+        match kind {
+            Tristate::False => None,
+            Tristate::True => Some(self.parse_parenthesized_arrow_function_expression(
+                allow_return_type_in_arrow_function,
+            )),
+            Tristate::Maybe => self.parse_possible_parenthesized_arrow_function_expression(
+                allow_return_type_in_arrow_function,
+            ),
         }
     }
 
-    fn is_parenthesized_arrow_function_expression_worker(&mut self, is_async: bool) -> Tristate {
-        let first = self.cur_kind();
-        self.bump_any();
+    /// Whether the `<` at the cursor starts the type parameters of an arrow function.
+    ///
+    /// Called in TS, in TSX only after `async`, and in JS only for invalid code.
+    /// Never called in JSX.
+    fn is_generic_arrow_function_expression(&mut self) -> Tristate {
+        debug_assert!(self.at(Kind::LAngle));
+        self.bump_any(); // `<`
         let second = self.cur_kind();
 
-        match first {
-            Kind::LParen => {
-                self.is_parenthesized_arrow_function_expression_after_lparen(second, is_async)
-            }
-            Kind::LAngle => {
-                // If we have "<" not followed by an identifier,
-                // then this definitely is not an arrow function.
-                if !second.is_binding_identifier() && second != Kind::Const {
-                    return Tristate::False;
-                }
+        // If we have "<" not followed by an identifier,
+        // then this definitely is not an arrow function.
+        if !second.is_binding_identifier() && second != Kind::Const {
+            return Tristate::False;
+        }
 
-                // JSX overrides
-                if self.source_type.is_jsx() {
-                    // <const Ident extends Ident>
-                    //  ^^^^^ Optional
-                    self.bump(Kind::Const);
-                    self.bump_any();
-                    let third = self.cur_kind();
-                    return match third {
-                        Kind::Extends => {
-                            self.bump_any();
-                            let fourth = self.cur_kind();
-                            if matches!(fourth, Kind::Eq | Kind::RAngle | Kind::Slash) {
-                                Tristate::False
-                            } else if fourth.is_binding_identifier() {
-                                Tristate::Maybe
-                            } else {
-                                Tristate::True
-                            }
-                        }
-                        Kind::Eq | Kind::Comma => Tristate::True,
-                        _ => Tristate::False,
-                    };
+        // TSX overrides. Only `async <` gets here in TSX.
+        if self.source_type.is_jsx() {
+            debug_assert!(self.is_ts);
+            // <const Ident extends Ident>
+            //  ^^^^^ Optional
+            self.bump(Kind::Const);
+            self.bump_any(); // the name
+            return self.is_generic_arrow_function_expression_after_jsx_name();
+        }
+
+        // `<T>` may start an arrow function, which is then tried first. The exception is
+        // a type assertion that the next tokens give away, because trying to parse them as
+        // type parameters and parameters is certain to fail: the name of a type parameter is
+        // followed by `,`, `=`, `extends` or `>`, not by the rest of a type as in `<A.B>a`,
+        // `<A[]>a`, `<A | B>a` and `<A<B>>a`, and the `>` of type parameters is followed by
+        // `(`, not by an operand as in `<T>a` and `<any>{}`.
+        // JS only gets here for invalid code. `Maybe` gives it a better error for `<T,>`.
+        if !self.is_ts || second == Kind::Const {
+            return Tristate::Maybe;
+        }
+        self.bump_any(); // the name
+        match self.cur_kind() {
+            // `<T,` is not a type, so it can only start type parameters.
+            Kind::Comma => Tristate::True,
+            Kind::Dot | Kind::LBrack | Kind::Pipe | Kind::Amp | Kind::LAngle => Tristate::False,
+            Kind::RAngle => {
+                self.bump_any(); // `>`
+                let operand = self.cur_kind();
+                if operand.is_identifier_name()
+                    || operand.is_literal()
+                    || operand.is_template_start_of_tagged_template()
+                    || matches!(operand, Kind::LCurly | Kind::LBrack)
+                {
+                    Tristate::False
+                } else {
+                    Tristate::Maybe
                 }
-                Tristate::Maybe
             }
-            _ => unreachable!(),
+            _ => Tristate::Maybe,
         }
     }
 
-    pub(crate) fn parse_simple_arrow_function_expression(
-        &mut self,
-        start: u32,
-        ident: BindingIdentifier<'a>,
-        r#async: bool,
-        allow_return_type_in_arrow_function: bool,
-    ) -> Expression<'a> {
-        let span = ident.span;
-        let pattern = BindingPattern::BindingIdentifier(self.alloc(ident));
-        let formal_parameter = FormalParameter::new_plain(span, pattern, self);
-        let params = FormalParameters::boxed(
-            span,
-            FormalParameterKind::ArrowFormalParameters,
-            [formal_parameter],
-            None,
-            self,
-        );
-
-        if self.cur_token().is_on_new_line() {
-            self.error(diagnostics::lineterminator_before_arrow(self.cur_token().span()));
+    /// Whether `<` and a name start the type parameters of an arrow function in a TSX file,
+    /// where they can also start a JSX element. The cursor is at the token after the name,
+    /// and moves past an `extends`.
+    ///
+    /// ```text
+    /// TypeParameter     : `const`? BindingIdentifier (`extends` Type)? (`=` Type)?
+    /// JSXOpeningElement : `<` JSXElementName TypeArguments? JSXAttributes? `/`? `>`
+    /// JSXElementName    : JSXIdentifier ((`:` | `.`) JSXIdentifier)*
+    /// JSXAttributes     : (JSXAttributeName (`=` JSXAttributeValue)? | `{` `...` Expression `}`)*
+    /// ```
+    ///
+    /// The name of a type parameter is followed by `,`, `=`, `extends` or `>`. The name of
+    /// a JSX element is followed by `.`, `:`, `<`, `{`, `/`, `>` or an attribute name, which may
+    /// be `extends`. So `,` and `=` are type parameters, `extends` is decided by the token
+    /// after it, and everything else is a JSX element. That includes `<T>`, which is why
+    /// the type parameters of an arrow function are written `<T,>` in a TSX file.
+    #[expect(clippy::inline_always)]
+    #[inline(always)] // Keep `is_generic_arrow_function_expression` in one piece.
+    pub(crate) fn is_generic_arrow_function_expression_after_jsx_name(&mut self) -> Tristate {
+        debug_assert!(self.is_ts);
+        match self.cur_kind() {
+            Kind::Extends => {
+                self.bump_any();
+                let next = self.cur_kind();
+                if matches!(next, Kind::Eq | Kind::RAngle | Kind::Slash) {
+                    // An attribute: `<T extends={U}>`, `<T extends>`, `<T extends />`.
+                    Tristate::False
+                } else {
+                    // A constraint: `<T extends U>(a) => a`. `<T extends U` could also start an
+                    // element with attributes `extends` and `U`, but TypeScript always reads it
+                    // as type parameters, so `<T extends U>(a)</T>` is a syntax error.
+                    Tristate::True
+                }
+            }
+            Kind::Eq | Kind::Comma => Tristate::True,
+            _ => Tristate::False,
         }
-
-        self.expect(Kind::Arrow);
-
-        self.parse_arrow_function_expression_body(
-            ArrowFunctionHead { type_parameters: None, params, return_type: None, r#async, start },
-            allow_return_type_in_arrow_function,
-        )
     }
 
     fn parse_parenthesized_arrow_function_head(&mut self) -> ArrowFunctionHead<'a> {
@@ -314,53 +783,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         self.ctx = self.ctx.and_await(has_await);
 
-        if self.cur_token().is_on_new_line() {
-            self.error(diagnostics::lineterminator_before_arrow(self.cur_token().span()));
-        }
-
-        self.expect(Kind::Arrow);
-
         ArrowFunctionHead { type_parameters, params, return_type, r#async, start }
-    }
-
-    /// [ConciseBody](https://tc39.es/ecma262/#prod-ConciseBody)
-    ///     [lookahead ≠ {] `ExpressionBody`[?In, ~Await]
-    ///     { `FunctionBody`[~Yield, ~Await] }
-    /// `ExpressionBody`[In, Await] :
-    ///     `AssignmentExpression`[?In, ~Yield, ?Await]
-    fn parse_arrow_function_expression_body(
-        &mut self,
-        arrow_function_head: ArrowFunctionHead<'a>,
-        allow_return_type_in_arrow_function: bool,
-    ) -> Expression<'a> {
-        let ArrowFunctionHead { type_parameters, params, return_type, r#async, start } =
-            arrow_function_head;
-        let has_await = self.ctx.has_await();
-        let has_yield = self.ctx.has_yield();
-        self.ctx = self.ctx.and_await(r#async).and_yield(false);
-
-        let body = if self.at(Kind::LCurly) {
-            ArrowFunctionBody::FunctionBody(
-                self.context_add(Context::In, Self::parse_function_body),
-            )
-        } else {
-            let expr = self.context_remove(Context::TopLevel, |p| {
-                p.parse_assignment_expression_or_higher_impl(allow_return_type_in_arrow_function)
-            });
-            ArrowFunctionBody::from(expr)
-        };
-
-        self.ctx = self.ctx.and_await(has_await).and_yield(has_yield);
-
-        Expression::new_arrow_function_expression(
-            self.end_span(start),
-            r#async,
-            type_parameters,
-            params,
-            return_type,
-            body,
-            self,
-        )
     }
 
     /// Section [Arrow Function](https://tc39.es/ecma262/#sec-arrow-function-definitions)
@@ -371,6 +794,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
         let head = self.parse_parenthesized_arrow_function_head();
+        self.expect_arrow();
         self.parse_arrow_function_expression_body(head, allow_return_type_in_arrow_function)
     }
 
@@ -383,9 +807,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return None;
         }
 
-        let checkpoint = self.checkpoint_with_error_recovery();
+        let checkpoint = self.checkpoint();
 
         let head = self.parse_parenthesized_arrow_function_head();
+        // Rejected heads are rewound, so do not construct an error for the missing arrow.
+        if !self.at(Kind::Arrow) {
+            self.state.not_parenthesized_arrow.insert(pos);
+            self.rewind(checkpoint);
+            return None;
+        }
+        self.expect_arrow();
         if self.has_fatal_error() {
             self.state.not_parenthesized_arrow.insert(pos);
             self.rewind(checkpoint);
@@ -427,5 +858,75 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         Some(body)
+    }
+
+    fn expect_arrow(&mut self) {
+        if self.at(Kind::Arrow) && self.cur_token().is_on_new_line() {
+            self.error(diagnostics::lineterminator_before_arrow(self.cur_token().span()));
+        }
+        self.expect(Kind::Arrow);
+    }
+
+    /// [ConciseBody](https://tc39.es/ecma262/#prod-ConciseBody)
+    ///     [lookahead ≠ {] `ExpressionBody`[?In, ~Await]
+    ///     { `FunctionBody`[~Yield, ~Await] }
+    /// `ExpressionBody`[In, Await] :
+    ///     `AssignmentExpression`[?In, ~Yield, ?Await]
+    #[inline]
+    fn parse_arrow_function_body(
+        &mut self,
+        r#async: bool,
+        allow_return_type_in_arrow_function: bool,
+    ) -> ArrowFunctionBody<'a> {
+        let has_await = self.ctx.has_await();
+        let has_yield = self.ctx.has_yield();
+        self.ctx = self.ctx.and_await(r#async).and_yield(false);
+
+        let body = if self.at(Kind::LCurly) {
+            ArrowFunctionBody::FunctionBody(
+                self.context_add(Context::In, Self::parse_function_body),
+            )
+        } else {
+            let expr = self.context_remove(Context::TopLevel, |p| {
+                p.parse_assignment_expression_or_higher_impl(allow_return_type_in_arrow_function)
+            });
+            ArrowFunctionBody::from(expr)
+        };
+
+        self.ctx = self.ctx.and_await(has_await).and_yield(has_yield);
+        body
+    }
+
+    /// Parse `=> ConciseBody` after the parameters and return type.
+    fn parse_arrow_function_rest(
+        &mut self,
+        start: u32,
+        r#async: bool,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        allow_return_type_in_arrow_function: bool,
+    ) -> Expression<'a> {
+        self.expect_arrow();
+        let head = ArrowFunctionHead { type_parameters: None, params, return_type, r#async, start };
+        self.parse_arrow_function_expression_body(head, allow_return_type_in_arrow_function)
+    }
+
+    fn parse_arrow_function_expression_body(
+        &mut self,
+        arrow_function_head: ArrowFunctionHead<'a>,
+        allow_return_type_in_arrow_function: bool,
+    ) -> Expression<'a> {
+        let ArrowFunctionHead { type_parameters, params, return_type, r#async, start } =
+            arrow_function_head;
+        let body = self.parse_arrow_function_body(r#async, allow_return_type_in_arrow_function);
+        Expression::new_arrow_function_expression(
+            self.end_span(start),
+            r#async,
+            type_parameters,
+            params,
+            return_type,
+            body,
+            self,
+        )
     }
 }
