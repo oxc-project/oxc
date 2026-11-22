@@ -12,28 +12,27 @@ use smallvec::SmallVec;
 
 use crate::{AstNode, ast_util::get_preceding_indent_str, context::LintContext, rule::Rule};
 
+const MOVE_SHARED_CODE_HELP: &str =
+    "Move the shared code outside the `if` statement to reduce code duplication";
+
 fn branches_sharing_code_at_start_diagnostic(
     span: Span,
     duplicated_code_spans: impl Iterator<Item = Span>,
 ) -> OxcDiagnostic {
-    OxcDiagnostic::warn("All `if` blocks contain the same code at the start")
-        .with_help("Move the shared code outside the `if` statement to reduce code duplication")
-        .with_labels(
-            std::iter::once(span.primary_label("`if` statement declared here"))
-                .chain(duplicated_code_spans.map(Into::into)),
-        )
+    OxcDiagnostic::warn("All `if` blocks contain the same code at the start").with_labels(
+        std::iter::once(span.primary_label("`if` statement declared here"))
+            .chain(duplicated_code_spans.map(Into::into)),
+    )
 }
 
 fn branches_sharing_code_at_end_diagnostic(
     span: Span,
     duplicated_code_spans: impl Iterator<Item = Span>,
 ) -> OxcDiagnostic {
-    OxcDiagnostic::warn("All `if` blocks contain the same code at the end")
-        .with_help("Move the shared code outside the `if` statement to reduce code duplication")
-        .with_labels(
-            std::iter::once(span.primary_label("`if` statement declared here"))
-                .chain(duplicated_code_spans.map(Into::into)),
-        )
+    OxcDiagnostic::warn("All `if` blocks contain the same code at the end").with_labels(
+        std::iter::once(span.primary_label("`if` statement declared here"))
+            .chain(duplicated_code_spans.map(Into::into)),
+    )
 }
 
 #[derive(Debug, Default, Clone)]
@@ -135,6 +134,7 @@ impl Rule for BranchesSharingCode {
                 let delete_spans =
                     bodies.iter().map(|body| get_duplicated_delete_span(start, body, false));
                 let moved_code = ctx.source_range(spans[0]);
+                let diagnostic = diagnostic.with_help(MOVE_SHARED_CODE_HELP);
                 ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
                     let fixer = fixer.for_multifix();
                     let mut fix = fixer.new_fix_with_capacity(spans.len() + 1);
@@ -162,6 +162,7 @@ impl Rule for BranchesSharingCode {
                 let delete_spans =
                     bodies.iter().map(|body| get_duplicated_delete_span(end, body, true));
                 let moved_code = ctx.source_range(spans[0]);
+                let diagnostic = diagnostic.with_help(MOVE_SHARED_CODE_HELP);
                 ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
                     let fixer = fixer.for_multifix();
                     let mut fix = fixer.new_fix_with_capacity(spans.len() + 1);
