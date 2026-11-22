@@ -27,6 +27,16 @@ fn test_remove_unused_expression() {
 }
 
 #[test]
+fn preserve_throwing_from_code_point_calls() {
+    test_same("String.fromCodePoint('3.14')");
+    test("String.fromCodePoint(undefined)", "String.fromCodePoint(void 0)");
+    test_same("String.fromCodePoint(65, '0x110000')");
+    test_same("String.fromCodePoint('abc')");
+    test("String.fromCodePoint('65', '-0', null)", "");
+    test("String.fromCharCode('3.14', undefined)", "");
+}
+
+#[test]
 fn test_remove_unused_optional_chain_keeps_base_side_effects() {
     test("let log = []; (log.push('base'), null)?.x;", "[].push('base')");
 }
