@@ -992,6 +992,7 @@ export interface DummyRuleMap {
   "jest/padding-around-after-all-blocks"?: RuleNoConfig;
   "jest/padding-around-after-each-blocks"?: RuleNoConfig;
   "jest/padding-around-before-all-blocks"?: RuleNoConfig;
+  "jest/padding-around-before-each-blocks"?: RuleNoConfig;
   "jest/padding-around-test-blocks"?: RuleNoConfig;
   "jest/prefer-called-with"?: RuleNoConfig;
   "jest/prefer-comparison-matcher"?: RuleNoConfig;
@@ -1713,6 +1714,7 @@ export interface DummyRuleMap {
   "vitest/padding-around-after-all-blocks"?: RuleNoConfig;
   "vitest/padding-around-after-each-blocks"?: RuleNoConfig;
   "vitest/padding-around-before-all-blocks"?: RuleNoConfig;
+  "vitest/padding-around-before-each-blocks"?: RuleNoConfig;
   "vitest/padding-around-test-blocks"?: RuleNoConfig;
   "vitest/prefer-called-exactly-once-with"?: RuleNoConfig;
   "vitest/prefer-called-once"?: RuleNoConfig;
