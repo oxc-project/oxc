@@ -1100,6 +1100,7 @@ fn test_fold_multiply() {
     fold("x = -255 * 255", "x = -65025");
     fold("x = -255 * -255", "x = 65025");
     fold("x = 256 * 255", "x = 65280");
+    fold_same("x = 63.99218702310463 ** 2 * 2");
 }
 
 #[test]
@@ -1139,6 +1140,8 @@ fn test_fold_division() {
     fold_same("x = 4n / 2");
     fold_same("x = 4n / 0n");
     fold_same("x = y / 2 / 4");
+    fold_same("x = 4 ** .5 / 2");
+    fold_same("x = 63.99218702310463 ** 2 / 4095");
 }
 
 #[test]

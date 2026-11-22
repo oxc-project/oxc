@@ -466,6 +466,9 @@ impl<'a> PeepholeOptimizations {
 
     /// Lower bound for the minified size of a numeric expression. Parentheses are deliberately
     /// omitted, so accepting a fold based on this count cannot make the output longer.
+    ///
+    /// `**` is excluded because engines approximate exponentiation differently, so a folded
+    /// result could differ from the runtime value.
     fn numeric_expression_size_lower_bound(expr: &Expression<'a>) -> Option<usize> {
         match expr {
             Expression::NumericLiteral(lit) => Self::number_literal_source_len(lit.value),
@@ -485,7 +488,6 @@ impl<'a> PeepholeOptimizations {
                         | BinaryOperator::Multiplication
                         | BinaryOperator::Division
                         | BinaryOperator::Remainder
-                        | BinaryOperator::Exponential
                 ) =>
             {
                 Self::binary_numeric_expression_size_lower_bound(e)
