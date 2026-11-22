@@ -366,6 +366,27 @@ fn test_bind_to_call() {
 }
 
 #[test]
+fn test_rotate_string_addition() {
+    test(
+        "function f(a, b) { return typeof a + ('in ' + b) }",
+        "function f(a, b) { return typeof a + 'in ' + b }",
+    );
+    test(
+        "function f(a, b) { return typeof a() + ('in ' + b()) }",
+        "function f(a, b) { return typeof a() + 'in ' + b() }",
+    );
+    test(
+        "function f(a, b) { return a + ' is ' + ('in ' + b) }",
+        "function f(a, b) { return a + ' is in ' + b }",
+    );
+
+    test_same("function f(a, b) { return a + ('in ' + b) }");
+    test_same("function f(b) { return { valueOf() { return sideEffect() } } + ('in ' + b()) }");
+    test_same("function f(a, b) { return typeof a + (1 + b) }");
+    test_same("function f(b) { return 1e20 + ('in ' + b) }");
+}
+
+#[test]
 fn test_rotate_associative_operators() {
     test(
         "function f(a, b, c) { return a || (b || c) }",
