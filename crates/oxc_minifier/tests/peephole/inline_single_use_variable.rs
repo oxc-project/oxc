@@ -609,6 +609,31 @@ fn keep_script_root_var_in_nested_statement() {
 }
 
 #[test]
+fn keep_block_var_read_by_outer_direct_eval() {
+    test(
+        "function f(a, b) { { var x = a; b(x); } return eval('x') }",
+        "function f(a, b) { var x = a; return b(x), eval('x') }",
+    );
+    test_same("function f(a, b) { if (a) { var x = a; b(x); } return eval('x') }");
+    test_same(
+        "function f(a, b) { switch (a) { case 0: break; default: var x = a; b(x); } return eval('x') }",
+    );
+    test(
+        "function f(a, b) { { var x = a, y = x; b(y); } return eval('x') }",
+        "function f(a, b) { var x = a, y = x; return b(y), eval('x') }",
+    );
+    test(
+        "function f(a, b) { { var x = a; b(x); } return () => eval('x') }",
+        "function f(a, b) { var x = a; return b(x), () => eval('x') }",
+    );
+    // A block-scoped `let` is not visible to an eval outside the block.
+    test(
+        "function f(a, b) { { let x = a; b(x); } return eval('x') }",
+        "function f(a, b) { return b(a), eval('x') }",
+    );
+}
+
+#[test]
 fn keep_names() {
     test(
         "var x = function() {}; var y = x; console.log(y.name)",
