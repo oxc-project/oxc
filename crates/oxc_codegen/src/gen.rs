@@ -4226,7 +4226,7 @@ impl Gen for TSEnumMember<'_> {
             p.print_soft_space();
             p.print_equal();
             p.print_soft_space();
-            init.print_expr(p, Precedence::Lowest, ctx);
+            init.print_expr(p, Precedence::Comma, ctx);
         }
     }
 }
