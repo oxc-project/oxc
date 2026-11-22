@@ -373,35 +373,39 @@ impl Gen for ForInStatement<'_> {
 
 /// Whether the leading token a `for...of` head would emit is `let`, which is
 /// forbidden unparenthesized (`for ((let.x) of y)`).
-fn for_of_head_starts_with_let(left: &ForStatementLeft) -> bool {
+fn for_of_head_starts_with_let(left: &ForStatementLeft, p: &Codegen) -> bool {
     match left {
-        ForStatementLeft::AssignmentTargetIdentifier(id) => id.name == "let",
-        ForStatementLeft::ComputedMemberExpression(m) => computed_object_starts_with_let(m),
-        ForStatementLeft::StaticMemberExpression(m) => expr_starts_with_let(&m.object),
-        ForStatementLeft::PrivateFieldExpression(m) => expr_starts_with_let(&m.object),
-        ForStatementLeft::TSNonNullExpression(e) => expr_starts_with_let(&e.expression),
+        ForStatementLeft::AssignmentTargetIdentifier(id) => {
+            p.get_identifier_reference_name(id) == "let"
+        }
+        ForStatementLeft::ComputedMemberExpression(m) => computed_object_starts_with_let(m, p),
+        ForStatementLeft::StaticMemberExpression(m) => expr_starts_with_let(&m.object, p),
+        ForStatementLeft::PrivateFieldExpression(m) => expr_starts_with_let(&m.object, p),
+        ForStatementLeft::TSNonNullExpression(e) => expr_starts_with_let(&e.expression, p),
         _ => false,
     }
 }
 
-fn expr_starts_with_let(expr: &Expression) -> bool {
+fn expr_starts_with_let(expr: &Expression, p: &Codegen) -> bool {
     match expr {
-        Expression::Identifier(id) => id.name == "let",
-        Expression::ComputedMemberExpression(m) => computed_object_starts_with_let(m),
-        Expression::StaticMemberExpression(m) => expr_starts_with_let(&m.object),
-        Expression::PrivateFieldExpression(m) => expr_starts_with_let(&m.object),
-        Expression::TSNonNullExpression(e) => expr_starts_with_let(&e.expression),
-        // Codegen drops redundant parens around a `let` object (`(let).x` -> `let.x`).
-        Expression::ParenthesizedExpression(e) => expr_starts_with_let(&e.expression),
+        Expression::Identifier(id) => p.get_identifier_reference_name(id) == "let",
+        Expression::ComputedMemberExpression(m) => computed_object_starts_with_let(m, p),
+        Expression::StaticMemberExpression(m) => expr_starts_with_let(&m.object, p),
+        Expression::PrivateFieldExpression(m) => expr_starts_with_let(&m.object, p),
+        Expression::CallExpression(e) => expr_starts_with_let(&e.callee, p),
+        Expression::TaggedTemplateExpression(e) => expr_starts_with_let(&e.tag, p),
+        Expression::TSNonNullExpression(e) => expr_starts_with_let(&e.expression, p),
+        // Codegen drops redundant parens (`(let).x` -> `let.x`).
+        Expression::ParenthesizedExpression(e) => expr_starts_with_let(&e.expression, p),
         _ => false,
     }
 }
 
-/// `let[...]` is emitted as `(let)[...]` (the computed member wraps a bare `let`
-/// object), so it no longer starts with `let`.
-fn computed_object_starts_with_let(m: &ComputedMemberExpression) -> bool {
-    !m.object.get_identifier_reference().is_some_and(|r| r.name == "let")
-        && expr_starts_with_let(&m.object)
+/// A computed member whose object is a `let` identifier (ignoring parentheses and
+/// TS wrappers) prints as `(let)[...]`, so it doesn't start with `let`.
+fn computed_object_starts_with_let(m: &ComputedMemberExpression, p: &Codegen) -> bool {
+    m.object.get_identifier_reference().is_none_or(|r| p.get_identifier_reference_name(r) != "let")
+        && expr_starts_with_let(&m.object, p)
 }
 
 impl Gen for ForOfStatement<'_> {
@@ -418,9 +422,9 @@ impl Gen for ForOfStatement<'_> {
         p.print_ascii_byte(b'(');
         // A `for...of` head may not start with the `let` token (`for ((let.x) of y)`),
         // nor be the bare identifier `async` (`for ((async) of y)`, unless `await`).
-        let wrap = for_of_head_starts_with_let(&self.left)
+        let wrap = for_of_head_starts_with_let(&self.left, p)
             || (!self.r#await
-                && matches!(&self.left, ForStatementLeft::AssignmentTargetIdentifier(id) if id.name == "async"));
+                && matches!(&self.left, ForStatementLeft::AssignmentTargetIdentifier(id) if p.get_identifier_reference_name(id) == "async"));
         p.wrap(wrap, |p| self.left.print(p, ctx));
         p.print_soft_space();
         p.print_space_before_identifier();
@@ -1565,8 +1569,11 @@ impl GenExpr for MemberExpression<'_> {
 
 impl GenExpr for ComputedMemberExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, _precedence: Precedence, ctx: Context) {
-        // `(let[0] = 100);` -> `(let)[0] = 100`;
-        let wrap = self.object.get_identifier_reference().is_some_and(|r| r.name == "let");
+        // `let [` at the start of a statement or `for` head begins a declaration.
+        let wrap = self
+            .object
+            .get_identifier_reference()
+            .is_some_and(|r| p.get_identifier_reference_name(r) == "let");
         p.wrap(wrap, |p| {
             self.object.print_expr(p, Precedence::Postfix, ctx.intersection(Context::FORBID_CALL));
         });

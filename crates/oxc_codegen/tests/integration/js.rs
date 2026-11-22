@@ -334,6 +334,9 @@ fn for_stmt() {
     test("for ((let as any) of x);", "for ((let as any) of x);\n");
     test("for ((let as any).x of x);", "for ((let as any).x of x);\n");
     test("for ((let satisfies any).x of x);", "for ((let satisfies any).x of x);\n");
+    test("for ((let().x) of x);", "for ((let().x) of x);\n");
+    test("for ((let`t`.x) of x);", "for ((let`t`.x) of x);\n");
+    test("for ((let satisfies any)().x of x);", "for ((let satisfies any)().x of x);\n");
     // A leading `let` outside a for-of head is untouched.
     test("let.x;", "let.x;\n");
     // A nested for-of inside a `for` init is still wrapped correctly.
@@ -398,6 +401,30 @@ fn shorthand() {
     test("var obj = { __proto__: __proto__, };", "var obj = { __proto__: __proto__ };\n");
 }
 
+/// Print `source` after renaming its top-level binding `from` to `to`.
+#[track_caller]
+fn print_with_renamed_root_binding(
+    source: &str,
+    source_type: SourceType,
+    from: &str,
+    to: &str,
+    minify: bool,
+) -> String {
+    let allocator = Allocator::default();
+    let parsed = Parser::new(&allocator, source, source_type).parse();
+    assert!(parsed.diagnostics.is_empty(), "Parse errors: {:?}", parsed.diagnostics);
+    let semantic = SemanticBuilder::new().build(&parsed.program);
+    assert!(semantic.diagnostics.is_empty(), "Semantic errors: {:?}", semantic.diagnostics);
+    let mut scoping = semantic.semantic.into_scoping();
+    let symbol_id = scoping.get_binding(scoping.root_scope_id(), from.into()).unwrap();
+    scoping.set_symbol_name(symbol_id, to.into());
+    Codegen::new()
+        .with_options(CodegenOptions { minify, ..CodegenOptions::default() })
+        .with_scoping(Some(scoping))
+        .build(&parsed.program)
+        .code
+}
+
 #[test]
 fn renamed_proto_shorthand() {
     let source = "let __proto__; x = [{ __proto__ }, { __proto__: __proto__ }];";
@@ -405,18 +432,54 @@ fn renamed_proto_shorthand() {
         (false, "let a;\nx = [{ [\"__proto__\"]: a }, { __proto__: a }];\n"),
         (true, "let a;x=[{[\"__proto__\"]:a},{__proto__:a}];"),
     ] {
-        let allocator = Allocator::default();
-        let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
-        assert!(parsed.diagnostics.is_empty());
-        let mut scoping = SemanticBuilder::new().build(&parsed.program).semantic.into_scoping();
-        let symbol_id = scoping.get_binding(scoping.root_scope_id(), "__proto__".into()).unwrap();
-        scoping.set_symbol_name(symbol_id, "a".into());
-        let code = Codegen::new()
-            .with_options(CodegenOptions { minify, ..CodegenOptions::default() })
-            .with_scoping(Some(scoping))
-            .build(&parsed.program)
-            .code;
+        let code =
+            print_with_renamed_root_binding(source, SourceType::mjs(), "__proto__", "a", minify);
         assert_eq!(code, expected);
+    }
+}
+
+#[test]
+fn for_of_head_renamed_to_contextual_keyword() {
+    let source = "var x; for (x of y); for (x.z of y); for (x[0] of y); for (x().z of y);";
+    for (name, minify, expected) in [
+        (
+            "async",
+            false,
+            "var async;\nfor ((async) of y);\nfor (async.z of y);\nfor (async[0] of y);\nfor (async().z of y);\n",
+        ),
+        (
+            "async",
+            true,
+            "var async;for((async)of y);for(async.z of y);for(async[0]of y);for(async().z of y);",
+        ),
+        (
+            "let",
+            false,
+            "var let;\nfor ((let) of y);\nfor ((let.z) of y);\nfor ((let)[0] of y);\nfor ((let().z) of y);\n",
+        ),
+        (
+            "let",
+            true,
+            "var let;for((let)of y);for((let.z)of y);for((let)[0]of y);for((let().z)of y);",
+        ),
+    ] {
+        let code = print_with_renamed_root_binding(source, SourceType::script(), "x", name, minify);
+        assert_eq!(code, expected, "renamed to {name}, minify: {minify}");
+    }
+}
+
+#[test]
+fn for_of_head_renamed_from_contextual_keyword() {
+    for (source, from, expected) in [
+        (
+            "var let; for ((let) of y); for ((let).z of y); for ((let)[0] of y); (let)[1] = 0;",
+            "let",
+            "var a;\nfor (a of y);\nfor (a.z of y);\nfor (a[0] of y);\na[1] = 0;\n",
+        ),
+        ("var async; for ((async) of y);", "async", "var a;\nfor (a of y);\n"),
+    ] {
+        let code = print_with_renamed_root_binding(source, SourceType::script(), from, "a", false);
+        assert_eq!(code, expected, "renamed from {from}");
     }
 }
 
