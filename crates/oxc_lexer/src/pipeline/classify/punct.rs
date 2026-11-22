@@ -13,12 +13,15 @@
 //! The hash is perfect for the bytes which matter:
 //!
 //! - Each punctuator in `PUNCT_CHARS` lands in a slot holding its kind.
-//! - Every other byte in 0x20 - 0x7F lands in a slot holding `Invalid` (255),
+//! - Every other byte in 0x1F - 0x7F lands in a slot holding `Invalid` (255),
 //!   except identifier chars and whitespace. They can land anywhere,
 //!   because the SIMD implementations of `classify` overwrite their kind afterwards.
 //!
 //! Bytes below 0x20 and from 0x80 upwards don't use the hash.
 //! `punct_kinds` gives them `Invalid` directly.
+//!
+//! Except: AVX2's `punct_kinds` compares against 0x1F, not 0x20, so LLVM can reuse the splat
+//! of `WORD_MASK` (also 0x1F). So on AVX2, control char 0x1F uses the hash too.
 //!
 //! `test_punct_hash` checks the tables against `PUNCT_CHARS`.
 //! Nothing generates them, so a change to `PUNCT_CHARS` needs new values found for them.
@@ -79,7 +82,7 @@ pub(super) const PUNCT_CHARS: [PunctChar; 26] = [
 pub(super) const PUNCT_HASH_LO: VecData128 =
     VecData128::from_bytes([4, 13, 19, 20, 0, 14, 7, 8, 10, 26, 22, 0, 29, 23, 3, 2]);
 pub(super) const PUNCT_HASH_HI: VecData128 =
-    VecData128::from_bytes([24, 26, 2, 16, 31, 25, 19, 30, 0, 0, 0, 0, 0, 0, 0, 0]);
+    VecData128::from_bytes([24, 6, 2, 16, 31, 25, 19, 30, 0, 0, 0, 0, 0, 0, 0, 0]);
 
 // Every entry must be a declared TokenKind, which Kinds::new relies on.
 pub(super) const PUNCT_HASH_KINDS: VecData256 = VecData256::from_bytes([
@@ -108,8 +111,9 @@ mod tests {
         }
 
         for byte in 0..=255 {
-            // `is_word` returns `true` for all values >= 128, so non-ASCII bytes are skipped
-            if is_word(byte, BASELINE) || is_ws(byte, BASELINE) || byte < 0x20 {
+            // `is_word` returns `true` for all values >= 128, so non-ASCII bytes are skipped.
+            // 0x1F is checked, because AVX2's `punct_kinds` sends it through the hash.
+            if is_word(byte, BASELINE) || is_ws(byte, BASELINE) || byte < 0x1F {
                 continue;
             }
             assert!(
