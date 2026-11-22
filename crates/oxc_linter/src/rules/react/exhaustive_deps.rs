@@ -1443,10 +1443,6 @@ impl<'a> VisitJs<'a> for ExhaustiveDepsVisitor<'a, '_> {
                         return;
                     };
 
-                    // Upstream only records `useState` setters in `setStateCallSites`;
-                    // `useReducer`/`useActionState` dispatches are stable values but never
-                    // setState calls.
-                    // https://github.com/oxc-project/oxc/issues/29984
                     if name != "useState" {
                         return;
                     }
