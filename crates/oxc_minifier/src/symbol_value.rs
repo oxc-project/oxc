@@ -85,16 +85,6 @@ impl ReferenceCounts {
             && self.writes >= current.writes
     }
 
-    /// Whether these counts cover every reference in `live`: never fewer
-    /// reads, other-than-member-write-target reads, or writes.
-    #[cfg(debug_assertions)]
-    pub fn covers(self, live: Self) -> bool {
-        self.reads >= live.reads
-            && self.reads - self.member_write_target_reads
-                >= live.reads - live.member_write_target_reads
-            && self.writes >= live.writes
-    }
-
     #[inline]
     pub fn has_reads(self) -> bool {
         self.reads > 0
