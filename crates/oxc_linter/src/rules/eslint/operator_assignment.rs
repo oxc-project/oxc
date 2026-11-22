@@ -213,7 +213,8 @@ operator_assignment_diagnostic(mode, expr.span, expr.operator.as_str(), true),
                         Expression::AssignmentExpression(_)
                         | Expression::ArrowFunctionExpression(_)
                         | Expression::YieldExpression(_)
-                        | Expression::LogicalExpression(_) => {
+                        | Expression::LogicalExpression(_)
+                        | Expression::ConditionalExpression(_) => {
                             format!("{former}({right_expr_text})")
                         }
                         // For the rest
@@ -592,6 +593,8 @@ fn test() {
         ("foo+=/**/+bar", "foo= foo+/**/+bar", Some(serde_json::json!(["never"]))),
         ("foo+=+bar===baz", "foo= foo+(+bar===baz)", Some(serde_json::json!(["never"]))),
         ("x += () => {}", "x = x + (() => {})", Some(serde_json::json!(["never"]))),
+        ("x += c ? 1 : 2", "x = x + (c ? 1 : 2)", Some(serde_json::json!(["never"]))),
+        ("x *= c ? a : b", "x = x * (c ? a : b)", Some(serde_json::json!(["never"]))),
         ("x += + (() => {})", "x = x + + (() => {})", Some(serde_json::json!(["never"]))),
         (
             "x += + /** fooo */ (() => {})",
