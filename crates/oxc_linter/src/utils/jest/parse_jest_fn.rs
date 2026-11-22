@@ -300,8 +300,12 @@ fn find_modifiers_and_matcher(
     Err(ExpectError::MatcherNotFound)
 }
 
-/// Validate the matcher chain of a recognized Vitest type assertion.
-/// Returns `None` for calls that are not rooted in `expectTypeOf`.
+/// Validate the matcher chain of a Vitest `expectTypeOf` call.
+///
+/// The call is identified by name: `possible_jest_node.original` when present, otherwise the
+/// callee's first identifier. Returns `None` if that name is not `expectTypeOf` or the callee
+/// chain cannot be resolved, and `Some(Ok(()))` for a call whose chain continues into an outer
+/// call, which is validated instead.
 pub fn validate_expect_type_of_call<'a>(
     call_expr: &'a CallExpression<'a>,
     possible_jest_node: &PossibleJestNode<'a, '_>,

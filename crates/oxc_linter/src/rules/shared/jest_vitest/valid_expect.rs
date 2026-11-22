@@ -77,7 +77,7 @@ pub struct ValidExpectConfig {
     min_args: u32,
     /// Maximum number of arguments `expect` should be called with.
     max_args: u32,
-    /// Enable Vitest type assertions and custom assertion messages.
+    /// Whether to apply `vitest/valid-expect` behavior.
     #[serde(skip)]
     supports_vitest_syntax: bool,
     /// When `true`, async assertions must be awaited in all contexts (not just return statements).

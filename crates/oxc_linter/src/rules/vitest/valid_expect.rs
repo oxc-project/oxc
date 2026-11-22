@@ -702,8 +702,8 @@ fn type_assertions() {
 
     use crate::tester::Tester;
 
-    let pass = [
-        // Type assertion fixtures from eslint-plugin-vitest v1.6.28.
+    // https://github.com/vitest-dev/eslint-plugin-vitest/blob/c5df1054a25044a7ca5baf07461b7aee1f15f5f2/tests/valid-expect.test.ts
+    let upstream_pass = [
         "expectTypeOf().returns.toMatchTypeOf();",
         "expectTypeOf().branded.toMatchTypeOf();",
         "expectTypeOf().asserts.toMatchTypeOf();",
@@ -715,6 +715,10 @@ fn type_assertions() {
         "expectTypeOf().items.toMatchTypeOf();",
         "expectTypeOf(Promise.resolve(1)).resolves.toEqualTypeOf<number>();",
         "expectTypeOf(Promise.resolve({ a: 1 })).resolves.not.toEqualTypeOf<string>();",
+    ];
+    let upstream_fail = ["expectTypeOf(value).to.toMatchTypeOf();"];
+
+    let pass = [
         "expectTypeOf<number>().toEqualTypeOf<number>();",
         "(expectTypeOf<number>()).toBeNumber();",
         "(expectTypeOf<number>().toBeNumber)();",
@@ -743,8 +747,6 @@ fn type_assertions() {
         "consume((expectTypeOf<number>()));",
         "consume(expectTypeOf<number>());",
         "expectTypeOf(value).toEqualTypeOf;",
-        // The invalid type assertion fixture from eslint-plugin-vitest v1.6.28.
-        "expectTypeOf(value).to.toMatchTypeOf();",
         "expectTypeOf(value).returns();",
         "expectTypeOf(value).not.returns.not.toBeNumber();",
         "import { expectTypeOf as assertType } from 'vitest'; assertType(value);",
@@ -757,8 +759,8 @@ fn type_assertions() {
     Tester::new(
         ValidExpect::NAME,
         ValidExpect::PLUGIN,
-        pass.into_iter().map(type_test_case).collect(),
-        fail.into_iter().map(type_test_case).collect(),
+        upstream_pass.into_iter().chain(pass).map(type_test_case).collect(),
+        upstream_fail.into_iter().chain(fail).map(type_test_case).collect(),
     )
     .with_vitest_plugin(true)
     .intentionally_allow_no_fix_tests()
