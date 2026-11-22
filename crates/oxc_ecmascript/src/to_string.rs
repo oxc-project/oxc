@@ -140,10 +140,12 @@ impl<'a> ToJsString<'a> for ObjectExpression<'a> {
 
 impl<'a> ToJsString<'a> for RegExpLiteral<'a> {
     fn to_js_string(&self, _ctx: &impl GlobalContext<'a>) -> Option<Cow<'a, str>> {
+        let pattern = self.regex.pattern.text.as_str();
         if let Some(raw) = self.raw
-            && let Some((pattern, flags)) = raw.as_str().rsplit_once('/')
+            && let Some((prefix, flags)) = raw.as_str().rsplit_once('/')
             && flags == self.regex.flags.to_inline_string().as_str()
-            && pattern.strip_prefix('/') == Some(self.regex.pattern.text.as_str())
+            && let Some(raw_pattern) = prefix.strip_prefix('/')
+            && (std::ptr::eq(raw_pattern, pattern) || raw_pattern == pattern)
         {
             return Some(Cow::Borrowed(raw.as_str()));
         }
