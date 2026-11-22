@@ -66,6 +66,30 @@ fn vec128_test_u8(cpu: Neon) {
 }
 
 #[test_cpus]
+fn vec128_compare_u8(cpu: Neon) {
+    let (a, mut b): ([u8; 16], [u8; 16]) = (pattern(37, 11), pattern(101, 200));
+    b[3] = a[3];
+    let (va, vb) = (Vec128::read_unaligned(&a, cpu), Vec128::read_unaligned(&b, cpu));
+
+    let gt = to_bytes128(va.gt_u8(vb));
+    assert_eq!(gt, map2(a, b, |x, y| if x > y { 0xFF } else { 0 }));
+    let lt = to_bytes128(va.lt_u8(vb));
+    assert_eq!(lt, map2(a, b, |x, y| if x < y { 0xFF } else { 0 }));
+    assert_eq!((gt[3], lt[3]), (0, 0));
+
+    // Include values either side of the thresholds.
+    // Compares are unsigned, so 0x80 and above are greater than 0x7F.
+    let c: [u8; 16] = array::from_fn(|i| [0, 1, 0x1F, 0x20, 0x7F, 0x80, 0x81, 0xFF][i % 8]);
+    let vc = Vec128::read_unaligned(&c, cpu);
+    for n in [0, 0x20, 0x7F, 0x80, 0xFF] {
+        let gt = to_bytes128(vc.gt_u8(n));
+        assert_eq!(gt, c.map(|x| if x > n { 0xFF } else { 0 }));
+        let lt = to_bytes128(vc.lt_u8(n));
+        assert_eq!(lt, c.map(|x| if x < n { 0xFF } else { 0 }));
+    }
+}
+
+#[test_cpus]
 fn vec128_shuffle_u8s(cpu: Neon) {
     let bytes: [u8; 16] = pattern(37, 11);
     let v = Vec128::read_unaligned(&bytes, cpu);
