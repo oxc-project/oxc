@@ -466,6 +466,21 @@ fn for_of_head_renamed_to_contextual_keyword() {
 }
 
 #[test]
+fn for_of_head_renamed_from_contextual_keyword() {
+    for (source, from, expected) in [
+        (
+            "var let; for ((let) of y); for ((let).z of y); for ((let)[0] of y); (let)[1] = 0;",
+            "let",
+            "var a;\nfor (a of y);\nfor (a.z of y);\nfor (a[0] of y);\na[1] = 0;\n",
+        ),
+        ("var async; for ((async) of y);", "async", "var a;\nfor (a of y);\n"),
+    ] {
+        let code = print_with_renamed_root_binding(source, SourceType::script(), from, "a", false);
+        assert_eq!(code, expected, "renamed from {from}");
+    }
+}
+
+#[test]
 fn unicode_escape() {
     test("console.log('你好');", "console.log(\"你好\");\n");
     test("console.log('こんにちは');", "console.log(\"こんにちは\");\n");
