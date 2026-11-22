@@ -829,26 +829,11 @@ impl<'a> PeepholeOptimizations {
                 left.span = left.span.merge_within(right.span, parent_span).unwrap_or(SPAN);
                 let left_last_quasi =
                     left.quasis.last_mut().expect("template literal must have at least one quasi");
-                let right_first_quasi = right
-                    .quasis
-                    .first_mut()
-                    .expect("template literal must have at least one quasi");
-                left_last_quasi.value.raw = Self::concat_template_literal_raw(
-                    [left_last_quasi.value.raw.as_str(), right_first_quasi.value.raw.as_str()],
-                    ctx,
-                );
-                let new_cooked = if let (Some(cooked1), Some(cooked2)) =
-                    (left_last_quasi.value.cooked, right_first_quasi.value.cooked)
-                {
-                    Some(JSStr::from_js_strs_array_in([cooked1, cooked2], ctx))
-                } else {
-                    None
-                };
-                left_last_quasi.value.cooked = new_cooked;
-                if !right.quasis.is_empty() {
-                    left_last_quasi.tail = false;
-                }
-                left.quasis.extend(right.quasis.drain(1..)); // first quasi is already handled
+                let mut right_quasis = right.quasis.drain(..);
+                let right_first_quasi =
+                    right_quasis.next().expect("template literal must have at least one quasi");
+                Self::append_template_element(left_last_quasi, &right_first_quasi, ctx);
+                left.quasis.extend(right_quasis);
                 left.expressions.extend(right.expressions.drain(..));
                 return Some(left_expr.take_in(ctx));
             }
@@ -1290,7 +1275,6 @@ impl<'a> PeepholeOptimizations {
                 expressions.push(nested_expr);
             }
             Self::append_template_element(&mut quasi, &next_quasi, ctx);
-            quasi.tail = next_quasi.tail;
         }
         quasis.push(quasi);
         t.quasis = quasis;
@@ -1303,6 +1287,7 @@ impl<'a> PeepholeOptimizations {
         right: &TemplateElement<'a>,
         ctx: &TraverseCtx<'a>,
     ) {
+        left.tail = right.tail;
         if right.value.raw.is_empty() {
             return;
         }
