@@ -72,6 +72,62 @@ fn test_drop_unreachable_switch_cases_tdz_in_case() {
 }
 
 #[test]
+fn test_fold_switch_with_default_to_if() {
+    test(
+        "function mix(mode, a, b) { switch (mode) { case 2501: a(); break; case 2500: default: b(); } }",
+        "function mix(mode, a, b) { mode === 2501 ? a() : b(); }",
+    );
+    test("switch (x) { case 1: a(); break; default: b(); }", "x === 1 ? a() : b();");
+    test("switch (x) { default: b(); break; case 1: a(); }", "x === 1 ? a() : b();");
+    test("switch (x) { case y(): a(); break; default: b(); }", "x === y() ? a() : b();");
+    test("switch (x) { case 1: break; default: b(); }", "x === 1 || b();");
+    test(
+        "function f() { switch (x) { case 1: return a; default: b(); } }",
+        "function f() { if (x === 1) return a; b(); }",
+    );
+    test(
+        "for (;;) switch (x) { case 1: a(); continue; default: b(); }",
+        "for (;;) if (x === 1) { a(); continue; } else b();",
+    );
+    test("x: switch (a) { case 1: b(); break x; default: c(); }", "a === 1 ? b() : c();");
+    test(
+        "for (;;) switch (x) { case 1: a(); break; default: b(); }",
+        "for (;;) x === 1 ? a() : b();",
+    );
+    test(
+        "switch (x) { case 1: for (;;) { if (y()) break; } a(); break; default: b(); }",
+        "if (x === 1) { for (; !y();); a(); } else b();",
+    );
+    test(
+        "function f(x, a, b) { switch (x) { case 1: a(); break; default: var y = a(); b(y); return eval('y'); } }",
+        "function f(x, a, b) { if (x === 1) a(); else { var y = a(); return b(y), eval('y'); } }",
+    );
+    test(
+        "function f(x, a, b) { switch (x) { default: var y = a(); b(y); return eval('y'); case 1: a(); } }",
+        "function f(x, a, b) { if (x === 1) a(); else { var y = a(); return b(y), eval('y'); } }",
+    );
+    test(
+        "function f(x, a, b) { switch (x) { case 1: a(); break; default: var y = a(); b(y); return () => eval('y'); } }",
+        "function f(x, a, b) { if (x === 1) a(); else { var y = a(); return b(y), () => eval('y'); } }",
+    );
+
+    test_same("switch (x) { case 1: a(); default: b(); }");
+    test_same("switch (x) { case 1: for (;;) break; default: b(); }");
+    test_same("switch (x) { default: b(); case 1: a(); }");
+    test_same("switch (x) { case 1: if (y) break; a(); break; default: b(); }");
+    test_same("switch (x) { case 1: a(); break; default: if (y) break; b(); }");
+    test_same(
+        "switch (x) { case 1: l: { if (y) break; if (z) break l; a(); } break; default: b(); }",
+    );
+    test_same(
+        "switch (x) { case 1: try { if (y) break; a(); } finally { c(); } break; default: b(); }",
+    );
+    test_same("switch (x) { case 1: let y = a(); break; default: y = b(); }");
+    test_same("switch (x) { case 1: a(); break; default: function f() {} }");
+    test_same("switch (x) { case 1: a(); break; case 2: b(); }");
+}
+
+#[test]
 fn test_merge_identical_switch_cases() {
     test(
         "switch (x) { case 1: return a; case 2: return a; default: b(); }",

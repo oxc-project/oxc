@@ -2390,15 +2390,12 @@ fn test_remove_dead_expr_other() {
 #[test]
 fn prune_empty_case_before_default() {
     // Basic case: empty case with literal before default
-    test(
-        "switch (x) { case 0: foo(); break; case 1: default: bar() }",
-        "switch (x) { case 0: foo(); break; default: bar();}",
-    );
+    test("switch (x) { case 0: foo(); break; case 1: default: bar() }", "x === 0 ? foo() : bar();");
 
     // Multiple empty cases with literals before default
     test(
         "switch (x) { case 0: foo(); break; case 1: case 2: case 3: default: bar() }",
-        "switch (x) { case 0: foo(); break; default: bar();}",
+        "x === 0 ? foo() : bar();",
     );
 
     // Empty case with non-literal (identifier) should NOT be removed

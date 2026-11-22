@@ -606,7 +606,7 @@ impl<'a> PeepholeOptimizations {
             return false;
         }
 
-        case.consequent.is_empty() || !FindNestedBreak::has_unlabelled_break_in_switch_case(case)
+        !FindNestedBreak::has_unlabelled_break(&case.consequent)
     }
 
     fn handle_switch_statement(
@@ -2072,14 +2072,16 @@ impl<'a> PeepholeOptimizations {
 }
 
 #[derive(Default)]
-struct FindNestedBreak {
+pub(super) struct FindNestedBreak {
     found_unlabelled_break: bool,
 }
 
 impl FindNestedBreak {
-    fn has_unlabelled_break_in_switch_case(node: &SwitchCase) -> bool {
+    pub(super) fn has_unlabelled_break(stmts: &[Statement]) -> bool {
         let mut visitor = Self::default();
-        visitor.visit_switch_case(node);
+        for stmt in stmts {
+            visitor.visit_statement(stmt);
+        }
         visitor.found_unlabelled_break
     }
 }
