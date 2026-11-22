@@ -1577,9 +1577,13 @@ fn test_inline_nested_template_literals() {
     fold("`a${`b${c}d`}e`", "`ab${c}de`");
     fold("`a${`b${c}d${e}f`}g${h}`", "`ab${c}d${e}fg${h}`");
     fold("`a${`b${`c${d}e`}f`}g`", "`abc${d}efg`");
+    fold("`a${x}${`b${y}${`c${z}`}d`}e`", "`a${x}b${y}c${z}de`");
+    fold("`a${`b${`c${1}d`}e`}f`", "'abc1def'");
     fold("`${a()}${`${b()}`}${c()}`", "`${a()}${b()}${c()}`");
     fold_same("`a${tag`b${c}d`}e`");
     fold_same("tag`a${`b${c}d`}e`");
+    fold("tag`a${`b${`c${x}`}d`}e`", "tag`a${`bc${x}d`}e`");
+    fold("tag`${`a${`b${1}`}`}`", "tag`${'ab1'}`");
     fold(r"`$${`{${a}`}`", r"`$\{${a}`");
     fold(r"`${`${a}$`}{b`", r"`${a}$\{b`");
     fold(r"`\0${`1${a}`}`", r"`\x001${a}`");

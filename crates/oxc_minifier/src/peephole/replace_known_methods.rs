@@ -1,4 +1,4 @@
-use std::{borrow::Cow, fmt::Write, mem};
+use std::{borrow::Cow, fmt::Write, iter, mem};
 
 use cow_utils::CowUtils;
 
@@ -521,50 +521,54 @@ impl<'a> PeepholeOptimizations {
 
     /// Join untagged template raw text without forming an interpolation or a decimal escape
     /// across a boundary. Empty parts do not separate the neighboring source text.
-    pub(super) fn concat_template_literal_raw<const N: usize>(
-        mut parts: [&str; N],
+    pub(super) fn concat_template_literal_raw<'s, I>(
+        parts: I,
         ctx: &impl GetAllocator<'a>,
-    ) -> Str<'a> {
-        let mut suffixes = [""; N];
-        for index in 0..N {
-            let Some(next) =
-                parts[index + 1..].iter().find_map(|part| part.as_bytes().first().copied())
-            else {
-                break;
-            };
-            let raw = parts[index];
-            if raw.ends_with('$') && next == b'{' {
-                let backslashes =
-                    raw[..raw.len() - 1].bytes().rev().take_while(|&byte| byte == b'\\').count();
-                if backslashes % 2 == 0 {
-                    // Escape the opening brace, leaving any preceding backslashes unchanged.
-                    suffixes[index] = "\\";
-                }
-            } else if raw.ends_with("\\0") && next.is_ascii_digit() {
-                let prefix = &raw[..raw.len() - 1];
-                let backslashes = prefix.bytes().rev().take_while(|&byte| byte == b'\\').count();
-                if backslashes % 2 == 1 {
-                    parts[index] = prefix;
-                    suffixes[index] = "x00";
-                }
-            }
-        }
-        if suffixes.iter().all(|suffix| suffix.is_empty()) {
-            return Str::from_strs_array_in(parts, ctx);
-        }
-        let capacity = parts
-            .iter()
-            .zip(suffixes)
+    ) -> Str<'a>
+    where
+        I: IntoIterator<Item = &'s str>,
+        I::IntoIter: Clone,
+    {
+        let parts = parts.into_iter().filter(|part| !part.is_empty());
+        let joined_parts = || {
+            let mut parts = parts.clone().peekable();
+            iter::from_fn(move || {
+                let part = parts.next()?;
+                Some(match parts.peek() {
+                    Some(next) => Self::template_literal_raw_boundary(part, next.as_bytes()[0]),
+                    None => (part, ""),
+                })
+            })
+        };
+        let capacity = joined_parts()
             .try_fold(0usize, |length, (part, suffix)| {
                 length.checked_add(part.len())?.checked_add(suffix.len())
             })
             .expect("template literal raw text is too long");
         let mut raw = StringBuilder::with_capacity_in(capacity, ctx.allocator());
-        for (part, suffix) in parts.into_iter().zip(suffixes) {
+        for (part, suffix) in joined_parts() {
             raw.push_str(part);
             raw.push_str(suffix);
         }
         Str::from(raw.into_str())
+    }
+
+    fn template_literal_raw_boundary(raw: &str, next: u8) -> (&str, &'static str) {
+        if raw.ends_with('$') && next == b'{' {
+            let backslashes =
+                raw[..raw.len() - 1].bytes().rev().take_while(|&byte| byte == b'\\').count();
+            if backslashes % 2 == 0 {
+                // Escape the opening brace, leaving any preceding backslashes unchanged.
+                return (raw, "\\");
+            }
+        } else if raw.ends_with("\\0") && next.is_ascii_digit() {
+            let prefix = &raw[..raw.len() - 1];
+            let backslashes = prefix.bytes().rev().take_while(|&byte| byte == b'\\').count();
+            if backslashes % 2 == 1 {
+                return (prefix, "x00");
+            }
+        }
+        (raw, "")
     }
 
     /// Escape a string value as template literal raw text.

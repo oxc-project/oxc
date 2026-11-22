@@ -1,5 +1,3 @@
-use std::mem;
-
 use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
@@ -13,7 +11,7 @@ use oxc_ecmascript::{
 };
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, SPAN};
-use oxc_str::JSStr;
+use oxc_str::{JSStr, JSStrBuilder};
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 use oxc_syntax::precedence::{GetPrecedence, Precedence};
 
@@ -1239,47 +1237,41 @@ impl<'a> PeepholeOptimizations {
     /// - `` `a${`b${c}d`}e` `` => `` `ab${c}de` ``
     ///
     /// The nested template evaluates and converts its substitutions in the same order, and its
-    /// result is already a string.
+    /// result is already a string. Only the outermost untagged template flattens, so text from
+    /// each level is copied once.
     pub fn inline_nested_template_literals(t: &mut TemplateLiteral<'a>, ctx: &mut TraverseCtx<'a>) {
-        let (has_nested_template, expression_count) = t.expressions.iter().fold(
-            (false, 0),
-            |(has_nested_template, expression_count), expr| {
-                if let Expression::TemplateLiteral(nested) = expr {
-                    (true, expression_count + nested.expressions.len())
-                } else {
-                    (has_nested_template, expression_count + 1)
-                }
-            },
-        );
-        if !has_nested_template {
+        if !t.expressions.iter().any(|expr| matches!(expr, Expression::TemplateLiteral(_))) {
             return;
         }
-
-        let mut quasis = ArenaVec::with_capacity_in(expression_count + 1, ctx);
-        let mut expressions = ArenaVec::with_capacity_in(expression_count, ctx);
-        let mut outer_quasis = t.quasis.drain(..);
-        let mut quasi = outer_quasis.next().expect("template literal must have at least one quasi");
-        for (expr, next_quasi) in t.expressions.drain(..).zip(outer_quasis) {
-            let Expression::TemplateLiteral(mut nested) = expr else {
-                quasis.push(mem::replace(&mut quasi, next_quasi));
-                expressions.push(expr);
-                continue;
-            };
-            let nested = &mut *nested;
-            let mut nested_quasis = nested.quasis.drain(..);
-            let first_nested_quasi =
-                nested_quasis.next().expect("template literal must have at least one quasi");
-            Self::append_template_element(&mut quasi, &first_nested_quasi, ctx);
-            for (nested_expr, nested_quasi) in nested.expressions.drain(..).zip(nested_quasis) {
-                quasis.push(mem::replace(&mut quasi, nested_quasi));
-                expressions.push(nested_expr);
-            }
-            Self::append_template_element(&mut quasi, &next_quasi, ctx);
-        }
-        quasis.push(quasi);
-        t.quasis = quasis;
-        t.expressions = expressions;
+        let (quasi_count, expression_count) = Self::nested_template_element_counts(t);
+        let mut flattener = TemplateFlattener {
+            quasis: ArenaVec::with_capacity_in(quasi_count, ctx),
+            expressions: ArenaVec::with_capacity_in(expression_count, ctx),
+        };
+        flattener.push_template(t, ctx);
+        flattener.finish_quasi(ctx);
+        t.quasis = flattener.quasis;
+        t.expressions = flattener.expressions;
         ctx.notice_change();
+    }
+
+    /// Whether the current template is a substitution that its parent template will flatten.
+    pub fn is_untagged_template_substitution(ctx: &TraverseCtx<'a>) -> bool {
+        matches!(ctx.parent(), Ancestor::TemplateLiteralExpressions(_))
+            && !matches!(ctx.ancestor(1), Ancestor::TaggedTemplateExpressionQuasi(_))
+    }
+
+    /// Count the quasis before merging and the substitutions after flattening.
+    fn nested_template_element_counts(t: &TemplateLiteral<'a>) -> (usize, usize) {
+        t.expressions.iter().fold((t.quasis.len(), 0), |(quasi_count, expression_count), expr| {
+            if let Expression::TemplateLiteral(nested) = expr {
+                let (nested_quasi_count, nested_expression_count) =
+                    Self::nested_template_element_counts(nested);
+                (quasi_count + nested_quasi_count, expression_count + nested_expression_count)
+            } else {
+                (quasi_count, expression_count + 1)
+            }
+        })
     }
 
     fn append_template_element(
@@ -1307,6 +1299,64 @@ impl<'a> PeepholeOptimizations {
         } else {
             None
         };
+    }
+}
+
+struct TemplateFlattener<'a> {
+    /// Merged quasis, followed by the text elements that form the next one.
+    quasis: ArenaVec<'a, TemplateElement<'a>>,
+    expressions: ArenaVec<'a, Expression<'a>>,
+}
+
+impl<'a> TemplateFlattener<'a> {
+    fn push_template(&mut self, t: &mut TemplateLiteral<'a>, ctx: &TraverseCtx<'a>) {
+        let mut quasis = t.quasis.drain(..);
+        self.quasis.push(quasis.next().expect("template literal must have at least one quasi"));
+        for (expr, quasi) in t.expressions.drain(..).zip(quasis) {
+            if let Expression::TemplateLiteral(mut nested) = expr {
+                self.push_template(&mut nested, ctx);
+            } else {
+                self.finish_quasi(ctx);
+                self.expressions.push(expr);
+            }
+            self.quasis.push(quasi);
+        }
+    }
+
+    fn finish_quasi(&mut self, ctx: &TraverseCtx<'a>) {
+        let start = self.expressions.len();
+        let text = &self.quasis[start..];
+        if text.len() == 1 {
+            return;
+        }
+        let parts = || text.iter().filter(|quasi| !quasi.value.raw.is_empty());
+        let value = parts().nth(1).is_some().then(|| {
+            let raw = PeepholeOptimizations::concat_template_literal_raw(
+                parts().map(|quasi| quasi.value.raw.as_str()),
+                ctx,
+            );
+            let cooked = parts()
+                .map(|quasi| quasi.value.cooked.map(JSStr::len))
+                .sum::<Option<usize>>()
+                .map(|capacity| {
+                    let mut cooked = JSStrBuilder::with_capacity_in(capacity, ctx);
+                    for value in parts().filter_map(|quasi| quasi.value.cooked) {
+                        cooked.push_js_str(value);
+                    }
+                    cooked.into_js_str()
+                });
+            TemplateElementValue { raw, cooked }
+        });
+        let tail = text.last().expect("template literal must have at least one quasi").tail;
+        let index =
+            text.iter().position(|quasi| !quasi.value.raw.is_empty()).unwrap_or(text.len() - 1);
+        self.quasis.swap(start, start + index);
+        self.quasis.truncate(start + 1);
+        let quasi = &mut self.quasis[start];
+        quasi.tail = tail;
+        if let Some(value) = value {
+            quasi.value = value;
+        }
     }
 }
 
