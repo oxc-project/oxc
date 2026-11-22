@@ -402,6 +402,7 @@ fn shorthand() {
 }
 
 /// Print `source` after renaming its top-level binding `from` to `to`.
+#[track_caller]
 fn print_with_renamed_root_binding(
     source: &str,
     source_type: SourceType,
@@ -411,8 +412,10 @@ fn print_with_renamed_root_binding(
 ) -> String {
     let allocator = Allocator::default();
     let parsed = Parser::new(&allocator, source, source_type).parse();
-    assert!(parsed.diagnostics.is_empty());
-    let mut scoping = SemanticBuilder::new().build(&parsed.program).semantic.into_scoping();
+    assert!(parsed.diagnostics.is_empty(), "Parse errors: {:?}", parsed.diagnostics);
+    let semantic = SemanticBuilder::new().build(&parsed.program);
+    assert!(semantic.diagnostics.is_empty(), "Semantic errors: {:?}", semantic.diagnostics);
+    let mut scoping = semantic.semantic.into_scoping();
     let symbol_id = scoping.get_binding(scoping.root_scope_id(), from.into()).unwrap();
     scoping.set_symbol_name(symbol_id, to.into());
     Codegen::new()
