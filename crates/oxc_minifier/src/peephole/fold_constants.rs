@@ -1213,6 +1213,7 @@ impl<'a> PeepholeOptimizations {
     ) {
         left.tail = right.tail;
         if left.value.raw.is_empty() {
+            left.span = right.span;
             left.value = right.value;
         } else if !right.value.raw.is_empty() {
             left.value.raw = Self::concat_template_literal_raw(
