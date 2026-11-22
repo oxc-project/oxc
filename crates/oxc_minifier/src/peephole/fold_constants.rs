@@ -374,12 +374,7 @@ impl<'a> PeepholeOptimizations {
                     BinaryOperator::Multiplication => {
                         Self::try_fold_shorter_numeric_expression(e, ctx)
                     }
-                    // Number exponentiation is implementation-approximated, so only fold
-                    // integer-valued operands where the result is an exact safe integer.
-                    BinaryOperator::Exponential => Self::extract_numeric_values(e, ctx)
-                        .filter(|(base, exponent)| base.fract() == 0.0 && exponent.fract() == 0.0)
-                        .and_then(|_| Self::try_fold_safe_integer_numeric_expression(e, ctx)),
-                    BinaryOperator::Remainder => {
+                    BinaryOperator::Exponential | BinaryOperator::Remainder => {
                         Self::try_fold_safe_integer_numeric_expression(e, ctx)
                     }
                     _ => None,
@@ -466,9 +461,6 @@ impl<'a> PeepholeOptimizations {
 
     /// Lower bound for the minified size of a numeric expression. Parentheses are deliberately
     /// omitted, so accepting a fold based on this count cannot make the output longer.
-    ///
-    /// `**` is excluded because engines approximate exponentiation differently, so a folded
-    /// result could differ from the runtime value.
     fn numeric_expression_size_lower_bound(expr: &Expression<'a>) -> Option<usize> {
         match expr {
             // Minified codegen prints non-finite numbers as `1/0` or `-1/0`, which the next run
@@ -493,6 +485,7 @@ impl<'a> PeepholeOptimizations {
                         | BinaryOperator::Multiplication
                         | BinaryOperator::Division
                         | BinaryOperator::Remainder
+                        | BinaryOperator::Exponential
                 ) =>
             {
                 Self::binary_numeric_expression_size_lower_bound(e)

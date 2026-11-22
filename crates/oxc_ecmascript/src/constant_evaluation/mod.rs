@@ -289,22 +289,7 @@ fn binary_operation_evaluate_value_to<'a>(
         BinaryOperator::Exponential => {
             let lval = left.evaluate_value_to_number(ctx)?;
             let rval = right.evaluate_value_to_number(ctx)?;
-            // `Number::exponentiate` is not IEEE 754 `pow`, which `f64::powf`
-            // implements. `pow` returns `1` for a base of `1` whatever the
-            // exponent, and for an exponent of `0` whatever the base; the
-            // abstract operation instead returns `NaN` when the exponent is
-            // `NaN`, and when the base has magnitude `1` and the exponent is
-            // infinite. Only the exponent-is-zero case is shared, and `powf`
-            // already agrees there.
-            // <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Exponentiation>
-            // <https://tc39.es/ecma262/#sec-numeric-types-number-exponentiate>
-            #[expect(clippy::float_cmp)]
-            let base_is_one = lval.abs() == 1.0;
-            let result = if rval.is_nan() || (base_is_one && rval.is_infinite()) {
-                f64::NAN
-            } else {
-                lval.powf(rval)
-            };
+            let result = exponentiate(lval, rval)?;
             // For now, ignore the result if it large or has a decimal part
             // so that the output does not become bigger than the input.
             if result.is_finite() && (result.fract() != 0.0 || result.log10() > 4.0) {
@@ -464,6 +449,86 @@ fn add_primitive_values<'a>(
         (ConstantValue::BigInt(_), _) | (_, ConstantValue::BigInt(_)) => None,
         (lval, rval) => Some(ConstantValue::Number(lval.to_number(ctx)? + rval.to_number(ctx)?)),
     }
+}
+
+/// Apply `Number::exponentiate`, or return `None` if engines may approximate the result
+/// differently.
+///
+/// `Number::exponentiate` is not IEEE 754 `pow`, which `f64::powf` implements. `pow` returns `1`
+/// for a base of `1` whatever the exponent; the abstract operation instead returns `NaN` when the
+/// exponent is `NaN`, and when the base has magnitude `1` and the exponent is infinite. They agree
+/// on the other exactly specified cases. The remaining results are implementation-approximated,
+/// so only exact safe integers are returned for them.
+///
+/// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Exponentiation>
+/// <https://tc39.es/ecma262/#sec-numeric-types-number-exponentiate>
+fn exponentiate(base: f64, exponent: f64) -> Option<f64> {
+    #[expect(clippy::float_cmp)]
+    let base_is_one = base.abs() == 1.0;
+    if exponent.is_nan() || (base_is_one && exponent.is_infinite()) {
+        return Some(f64::NAN);
+    }
+    if !base.is_finite()
+        || !exponent.is_finite()
+        || base == 0.0
+        || exponent == 0.0
+        || (base < 0.0 && exponent.fract() != 0.0)
+    {
+        return Some(base.powf(exponent));
+    }
+    if base_is_one {
+        return Some(if base < 0.0 && exponent % 2.0 != 0.0 { -1.0 } else { 1.0 });
+    }
+    exact_safe_integer_power(base, exponent)
+}
+
+/// Raise a finite `base` whose magnitude is neither `0` nor `1` to a finite nonzero `exponent`,
+/// returning `None` unless the result is exactly a safe integer.
+fn exact_safe_integer_power(base: f64, exponent: f64) -> Option<f64> {
+    let (mut odd_factor, mut power_of_two) = split_power_of_two(base.abs());
+    let (exponent_odd_factor, exponent_power_of_two) = split_power_of_two(exponent.abs());
+    let exponent_magnitude = if exponent_power_of_two < 0 {
+        for _ in exponent_power_of_two..0 {
+            let root = odd_factor.isqrt();
+            if root * root != odd_factor || power_of_two % 2 != 0 {
+                return None;
+            }
+            odd_factor = root;
+            power_of_two /= 2;
+        }
+        u32::try_from(exponent_odd_factor).ok()?
+    } else {
+        exponent.abs().to_u32()?
+    };
+    if exponent < 0.0 {
+        if odd_factor != 1 {
+            return None;
+        }
+        power_of_two = -power_of_two;
+    }
+    let shift = u32::try_from(power_of_two).ok()?.checked_mul(exponent_magnitude)?;
+    let magnitude =
+        odd_factor.checked_pow(exponent_magnitude)?.checked_mul(1u64.checked_shl(shift)?)?;
+    if magnitude > 1 << 53 {
+        return None;
+    }
+    let magnitude = magnitude.to_f64()?;
+    Some(if base < 0.0 && exponent_magnitude % 2 == 1 { -magnitude } else { magnitude })
+}
+
+/// Split a finite positive `value` into an odd integer and a power of two whose product is
+/// `value`.
+fn split_power_of_two(value: f64) -> (u64, i64) {
+    let bits = value.to_bits();
+    let biased_exponent = (bits >> 52).cast_signed();
+    let fraction = bits & ((1 << 52) - 1);
+    let (significand, exponent) = if biased_exponent == 0 {
+        (fraction, -1074)
+    } else {
+        (fraction | (1 << 52), biased_exponent - 1075)
+    };
+    let trailing_zeros = significand.trailing_zeros();
+    (significand >> trailing_zeros, exponent + i64::from(trailing_zeros))
 }
 
 impl<'a> ConstantEvaluation<'a> for LogicalExpression<'a> {

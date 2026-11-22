@@ -1142,7 +1142,8 @@ fn test_fold_division() {
     fold_same("x = 4n / 2");
     fold_same("x = 4n / 0n");
     fold_same("x = y / 2 / 4");
-    fold_same("x = 4 ** .5 / 2");
+    fold("x = 4 ** .5 / 2", "x = 1");
+    fold_same("x = 2 ** .5 / 2");
     fold_same("x = 63.99218702310463 ** 2 / 4095");
 }
 
@@ -1169,9 +1170,13 @@ fn test_fold_exponential() {
     fold("x = 2 ** 3", "x = 8");
     fold("x = 10 ** 4", "x = 1e4");
     fold("x = (-2) ** 3", "x = -8");
+    fold("x = 0.5 ** -2", "x = 4");
+    fold("x = 4 ** 0.5", "x = 2");
+    fold("x = 0.25 ** -0.5", "x = 2");
+    fold("x = 16 ** 0.25", "x = 2");
 
-    fold_same("x = 0.5 ** -2");
-    fold_same("x = 4 ** 0.5");
+    fold_same("x = 2 ** 0.5");
+    fold_same("x = 63.99218702310463 ** 2");
     fold_same("x = (-5e-324) ** 3");
     fold_same("x = 2 ** -3");
     fold_same("x = 2 ** 50");
