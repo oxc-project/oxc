@@ -190,6 +190,7 @@ fn private_in() {
         ("(#x in o)", "(#x in o)"),
         ("let a = (#x in o)", "let a=(#x in o)"),
         ("a = (#x in o) || o", "a=(#x in o)||o"),
+        ("a = o || (#x in o)", "a=o||(#x in o)"),
         ("a = (#x in o) ? 1 : 2", "a=(#x in o)?1:2"),
         ("a = () => (#x in o)", "a=()=>(#x in o)"),
     ] {
