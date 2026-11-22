@@ -1392,6 +1392,12 @@ impl<'a> PeepholeOptimizations {
             if ctx.scoping().symbol_flags(prev_decl_id.symbol_id()).is_catch_variable() {
                 return true;
             }
+            // A `var` in a block is bound in the enclosing var scope, where a direct eval
+            // can read it even when the current block has no eval.
+            let binding_scope_id = ctx.scoping().symbol_scope_id(prev_decl_id.symbol_id());
+            if ctx.scoping().scope_flags(binding_scope_id).contains_direct_eval() {
+                return true;
+            }
             if ctx.is_expression_whose_name_needs_to_be_kept(prev_decl_init) {
                 return true;
             }
