@@ -186,15 +186,22 @@ fn private_in() {
         "class Foo {\n\t#test;\n\tbar() {\n\t\t#field in {} << 0;\n\t}\n}\n",
     );
 
-    let for_init = "class C { #x; m(o) { for ((#x in o);;); for (let a = (#x in o);;); for (a = (#x in o) || o;;); for (a = (#x in o) ? 1 : 2;;); for (a = () => (#x in o);;); } }";
-    test(
-        for_init,
-        "class C {\n\t#x;\n\tm(o) {\n\t\tfor ((#x in o);;);\n\t\tfor (let a = (#x in o);;);\n\t\tfor (a = (#x in o) || o;;);\n\t\tfor (a = (#x in o) ? 1 : 2;;);\n\t\tfor (a = () => (#x in o);;);\n\t}\n}\n",
-    );
-    test_minify(
-        for_init,
-        "class C{#x;m(o){for((#x in o);;);for(let a=(#x in o);;);for(a=(#x in o)||o;;);for(a=(#x in o)?1:2;;);for(a=()=>(#x in o);;);}}",
-    );
+    for (init, minified) in [
+        ("(#x in o)", "(#x in o)"),
+        ("let a = (#x in o)", "let a=(#x in o)"),
+        ("a = (#x in o) || o", "a=(#x in o)||o"),
+        ("a = (#x in o) ? 1 : 2", "a=(#x in o)?1:2"),
+        ("a = () => (#x in o)", "a=()=>(#x in o)"),
+    ] {
+        let source = format!("class C {{ #x; m(o) {{ for ({init};;); }} }}");
+        test(&source, &format!("class C {{\n\t#x;\n\tm(o) {{\n\t\tfor ({init};;);\n\t}}\n}}\n"));
+        test_minify(&source, &format!("class C{{#x;m(o){{for({minified};;);}}}}"));
+        crate::test_idempotency(&source);
+        crate::test_idempotency_options(
+            &source,
+            &CodegenOptions { minify: true, ..CodegenOptions::default() },
+        );
+    }
 }
 
 #[test]
