@@ -1419,18 +1419,17 @@ impl<'a> VisitJs<'a> for ExhaustiveDepsVisitor<'a, '_> {
     }
 
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
-        if self.skip_reporting_dependency {
-            return;
+        if !self.skip_reporting_dependency {
+            let reference_id = ident.reference_id();
+            let symbol_id = self.semantic.scoping().get_reference(reference_id).symbol_id();
+            self.found_dependencies.insert(Dependency {
+                name: ident.name.into(),
+                reference_id,
+                span: ident.span,
+                chain: vec![],
+                symbol_id,
+            });
         }
-        let reference_id = ident.reference_id();
-        let symbol_id = self.semantic.scoping().get_reference(reference_id).symbol_id();
-        self.found_dependencies.insert(Dependency {
-            name: ident.name.into(),
-            reference_id,
-            span: ident.span,
-            chain: vec![],
-            symbol_id,
-        });
 
         if let Some(decl) = get_declaration_of_variable(ident, self.semantic) {
             let is_set_state_call = match decl.kind() {
@@ -4469,6 +4468,12 @@ const Component = ({ filter }) => {
           const [, setState] = (useState(0)) as [number, (value: number) => void];
           useEffect(() => {
             setState(1);
+          });
+        }",
+        r"function MyComponent() {
+          const [, setState] = useState(0);
+          useEffect(() => {
+            setState.call(null, 1);
           });
         }",
     ];
