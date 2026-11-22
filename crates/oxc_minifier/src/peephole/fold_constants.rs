@@ -1,4 +1,4 @@
-use oxc_allocator::{ArenaVec, TakeIn};
+use oxc_allocator::{ArenaVec, GetAllocator, StringBuilder, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
     GlobalContext, ToJsString,
@@ -11,7 +11,7 @@ use oxc_ecmascript::{
 };
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, SPAN};
-use oxc_str::{JSStr, JSStrBuilder};
+use oxc_str::{JSStr, JSStrBuilder, Str};
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 use oxc_syntax::precedence::{GetPrecedence, Precedence};
 
@@ -1255,9 +1255,15 @@ impl<'a> PeepholeOptimizations {
         let mut nonempty = parts.clone();
         let first = nonempty.next().unwrap_or(last);
         let span = first.span;
-        let value = if nonempty.next().is_some() {
-            let raw =
-                Self::concat_template_literal_raw(parts.clone().map(|q| q.value.raw.as_str()), ctx);
+        let value = if let Some(second) = nonempty.next() {
+            let raw = if nonempty.next().is_none() {
+                Self::concat_template_literal_raw(
+                    [first.value.raw.as_str(), second.value.raw.as_str()],
+                    ctx,
+                )
+            } else {
+                Self::join_nested_template_raw(parts.clone().map(|q| q.value.raw.as_str()), ctx)
+            };
             let cooked_len = parts.clone().try_fold(0usize, |len, part| {
                 Some(
                     len.checked_add(part.value.cooked?.len())
@@ -1279,6 +1285,35 @@ impl<'a> PeepholeOptimizations {
         quasis[start].span = span;
         quasis[start].value = value;
         quasis.truncate(start + 1);
+    }
+
+    fn join_nested_template_raw<'s>(
+        parts: impl Iterator<Item = &'s str> + Clone,
+        ctx: &TraverseCtx<'a>,
+    ) -> Str<'a> {
+        let capacity = parts
+            .clone()
+            .map(str::len)
+            .try_fold(0, usize::checked_add)
+            .expect("template literal raw text is too long");
+        let mut raw = StringBuilder::with_capacity_in(capacity, ctx.allocator());
+        let mut parts = parts.peekable();
+        while let Some(part) = parts.next() {
+            let next = parts.peek().copied().unwrap_or_default();
+            if (part.ends_with('$') && next.starts_with('{'))
+                || (part.ends_with("\\0")
+                    && next.as_bytes().first().is_some_and(u8::is_ascii_digit))
+            {
+                let suffix_start = part[..part.len() - 1].trim_end_matches('\\').len();
+                let boundary =
+                    Self::concat_template_literal_raw([&part[suffix_start..], &next[..1]], ctx);
+                raw.push_str(&part[..suffix_start]);
+                raw.push_str(&boundary[..boundary.len() - 1]);
+            } else {
+                raw.push_str(part);
+            }
+        }
+        Str::from(raw.into_str())
     }
 
     /// Inline constant values in template literals

@@ -521,36 +521,46 @@ impl<'a> PeepholeOptimizations {
 
     /// Join untagged template raw text without forming an interpolation or a decimal escape
     /// across a boundary. Empty parts do not separate the neighboring source text.
-    pub(super) fn concat_template_literal_raw<'s>(
-        parts: impl IntoIterator<Item = &'s str, IntoIter: Clone>,
+    pub(super) fn concat_template_literal_raw<const N: usize>(
+        mut parts: [&str; N],
         ctx: &impl GetAllocator<'a>,
     ) -> Str<'a> {
-        let parts = parts.into_iter().filter(|part| !part.is_empty());
-        let pieces = parts.clone().zip(parts.skip(1).chain([""])).map(|(raw, next)| {
-            let next = next.as_bytes().first().copied();
-            if raw.ends_with('$') && next == Some(b'{') {
+        let mut suffixes = [""; N];
+        for index in 0..N {
+            let Some(next) =
+                parts[index + 1..].iter().find_map(|part| part.as_bytes().first().copied())
+            else {
+                break;
+            };
+            let raw = parts[index];
+            if raw.ends_with('$') && next == b'{' {
                 let backslashes =
                     raw[..raw.len() - 1].bytes().rev().take_while(|&byte| byte == b'\\').count();
                 if backslashes % 2 == 0 {
-                    return (raw, "\\");
+                    // Escape the opening brace, leaving any preceding backslashes unchanged.
+                    suffixes[index] = "\\";
                 }
-            } else if raw.ends_with("\\0") && next.is_some_and(|byte| byte.is_ascii_digit()) {
+            } else if raw.ends_with("\\0") && next.is_ascii_digit() {
                 let prefix = &raw[..raw.len() - 1];
                 let backslashes = prefix.bytes().rev().take_while(|&byte| byte == b'\\').count();
                 if backslashes % 2 == 1 {
-                    return (prefix, "x00");
+                    parts[index] = prefix;
+                    suffixes[index] = "x00";
                 }
             }
-            (raw, "")
-        });
-        let capacity = pieces
-            .clone()
+        }
+        if suffixes.iter().all(|suffix| suffix.is_empty()) {
+            return Str::from_strs_array_in(parts, ctx);
+        }
+        let capacity = parts
+            .iter()
+            .zip(suffixes)
             .try_fold(0usize, |length, (part, suffix)| {
                 length.checked_add(part.len())?.checked_add(suffix.len())
             })
             .expect("template literal raw text is too long");
         let mut raw = StringBuilder::with_capacity_in(capacity, ctx.allocator());
-        for (part, suffix) in pieces {
+        for (part, suffix) in parts.into_iter().zip(suffixes) {
             raw.push_str(part);
             raw.push_str(suffix);
         }
