@@ -18,7 +18,8 @@ use crate::{
         plugins::plugin_display_name,
     },
     disable_directives::{
-        DisableDirectives, DisableDirectivesBuilder, create_unused_directives_messages,
+        DisableDirectives, DisableDirectivesBuilder, KnownRuleIds,
+        create_unused_directives_messages,
     },
     fixer::{FixKind, Message},
     frameworks::FrameworkOptions,
@@ -394,11 +395,12 @@ impl<'a> ContextHost<'a> {
     }
 
     /// report unused enable/disable directives, add these as Messages to diagnostics
-    pub fn report_unused_directives(&self, severity: AllowWarnDeny) {
+    pub fn report_unused_directives(&self, severity: AllowWarnDeny, known_rule_ids: &KnownRuleIds) {
         self.append_diagnostics(create_unused_directives_messages(
             self.disable_directives(),
             severity,
             Some((self.fix, self.source_text())),
+            Some(known_rule_ids),
         ));
     }
 

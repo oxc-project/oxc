@@ -1900,6 +1900,22 @@ mod test {
     }
 
     #[test]
+    fn test_report_unused_directives_unknown_rule_ids() {
+        // Unknown rule IDs in `oxlint-*` directives are reported as errors
+        // ("Definition for rule '...' was not found") while valid but unused
+        // suppressions stay warnings. A rule that is known but disabled by the
+        // configuration still counts as a known rule ID, and `eslint-*`
+        // directives are not validated because they may reference rules from
+        // ESLint plugins that oxlint does not implement.
+        // See <https://github.com/oxc-project/oxc/issues/29775>.
+        let args = &["-c", ".oxlintrc.json"];
+
+        Tester::new()
+            .with_cwd("fixtures/cli/report_unused_directives_unknown_rule".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
     fn test_root_config_ancestor() {
         Tester::new()
             .with_cwd("fixtures/cli/root_config_ancestor/cwd".into())

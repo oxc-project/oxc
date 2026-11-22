@@ -1,9 +1,9 @@
 # Exit code
-0
+1
 
 # stdout
 ```
-  ! Unused oxlint-disable directive (no problems were reported from FORWARD).
+  x Definition for rule 'FORWARD' was not found
    ,-[files/test.vue:2:56]
  1 | <script setup lang="ts">
  2 | // oxlint-disable-next-line typescript/no-explicit-any FORWARD does not exist on Icon enum
@@ -11,7 +11,7 @@
  3 | const icon = Yoco.Icon.FORWARD as any;
    `----
 
-  ! Unused oxlint-disable directive (no problems were reported from does).
+  x Definition for rule 'does' was not found
    ,-[files/test.vue:2:64]
  1 | <script setup lang="ts">
  2 | // oxlint-disable-next-line typescript/no-explicit-any FORWARD does not exist on Icon enum
@@ -19,7 +19,7 @@
  3 | const icon = Yoco.Icon.FORWARD as any;
    `----
 
-  ! Unused oxlint-disable directive (no problems were reported from not).
+  x Definition for rule 'not' was not found
    ,-[files/test.vue:2:69]
  1 | <script setup lang="ts">
  2 | // oxlint-disable-next-line typescript/no-explicit-any FORWARD does not exist on Icon enum
@@ -27,7 +27,7 @@
  3 | const icon = Yoco.Icon.FORWARD as any;
    `----
 
-  ! Unused oxlint-disable directive (no problems were reported from exist).
+  x Definition for rule 'exist' was not found
    ,-[files/test.vue:2:73]
  1 | <script setup lang="ts">
  2 | // oxlint-disable-next-line typescript/no-explicit-any FORWARD does not exist on Icon enum
@@ -35,7 +35,7 @@
  3 | const icon = Yoco.Icon.FORWARD as any;
    `----
 
-  ! Unused oxlint-disable directive (no problems were reported from on).
+  x Definition for rule 'on' was not found
    ,-[files/test.vue:2:79]
  1 | <script setup lang="ts">
  2 | // oxlint-disable-next-line typescript/no-explicit-any FORWARD does not exist on Icon enum
@@ -43,7 +43,7 @@
  3 | const icon = Yoco.Icon.FORWARD as any;
    `----
 
-  ! Unused oxlint-disable directive (no problems were reported from Icon).
+  x Definition for rule 'Icon' was not found
    ,-[files/test.vue:2:82]
  1 | <script setup lang="ts">
  2 | // oxlint-disable-next-line typescript/no-explicit-any FORWARD does not exist on Icon enum
@@ -51,7 +51,7 @@
  3 | const icon = Yoco.Icon.FORWARD as any;
    `----
 
-  ! Unused oxlint-disable directive (no problems were reported from enum).
+  x Definition for rule 'enum' was not found
    ,-[files/test.vue:2:87]
  1 | <script setup lang="ts">
  2 | // oxlint-disable-next-line typescript/no-explicit-any FORWARD does not exist on Icon enum
@@ -59,7 +59,7 @@
  3 | const icon = Yoco.Icon.FORWARD as any;
    `----
 
-Found 7 warnings and 0 errors.
+Found 0 warnings and 7 errors.
 Finished in Xms on 1 file with 98 rules using X threads.
 ```
 
