@@ -2421,6 +2421,18 @@ impl RuleRunner
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner
+    for crate::rules::jest::padding_around_after_each_blocks::PaddingAroundAfterEachBlocks
+{
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::BlockStatement,
+        AstType::FunctionBody,
+        AstType::Program,
+        AstType::SwitchCase,
+    ]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner for crate::rules::jest::padding_around_test_blocks::PaddingAroundTestBlocks {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
         AstType::BlockStatement,
@@ -4990,6 +5002,18 @@ impl RuleRunner
 
 impl RuleRunner
     for crate::rules::vitest::padding_around_after_all_blocks::PaddingAroundAfterAllBlocks
+{
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::BlockStatement,
+        AstType::FunctionBody,
+        AstType::Program,
+        AstType::SwitchCase,
+    ]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
+impl RuleRunner
+    for crate::rules::vitest::padding_around_after_each_blocks::PaddingAroundAfterEachBlocks
 {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
         AstType::BlockStatement,
