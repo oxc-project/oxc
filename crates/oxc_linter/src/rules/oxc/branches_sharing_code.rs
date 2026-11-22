@@ -255,11 +255,22 @@ impl<'a> Visit<'a> for BranchLocalReferenceFinder<'_, 'a> {
         let Some(symbol_id) = scoping.get_reference(ident.reference_id()).symbol_id() else {
             return;
         };
+        if scoping.symbol_scope_id(symbol_id) == self.scope_id {
+            self.found = true;
+            return;
+        }
+        if !scoping.symbol_flags(symbol_id).is_function() {
+            return;
+        }
+
         // Annex B block functions can be recorded as bindings of the enclosing var scope.
-        self.found = scoping.symbol_scope_id(symbol_id) == self.scope_id
-            || (scoping.symbol_flags(symbol_id).is_function()
-                && self.ctx.nodes().get_node(scoping.symbol_declaration(symbol_id)).scope_id()
-                    == self.scope_id);
+        let declaration = scoping.symbol_declaration(symbol_id);
+        let nodes = self.ctx.nodes();
+        self.found = matches!(nodes.kind(declaration), AstKind::Function(func) if func.is_declaration())
+            && matches!(
+                nodes.ancestor_kinds(declaration).find(|kind| !matches!(kind, AstKind::LabeledStatement(_))),
+                Some(AstKind::BlockStatement(block)) if block.scope_id() == self.scope_id
+            );
     }
 }
 
@@ -743,6 +754,27 @@ fn test() {
         ),
         (shared_suffix_references_class, shared_suffix_references_class, None, FixKind::Suggestion),
         (
+            r"
+        if (flag) {
+            const x = 1;
+            use(function self() { return self; });
+        } else {
+            const x = 2;
+            use(function self() { return self; });
+        }
+        ",
+            r"
+        if (flag) {
+            const x = 1;
+        } else {
+            const x = 2;
+        }
+        use(function self() { return self; });
+        ",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
             shared_prefix_references_function,
             shared_prefix_references_function,
             None,
@@ -776,6 +808,30 @@ fn test() {
         (
             shared_prefix_references_function,
             shared_prefix_references_function,
+            None,
+            Some(std::path::PathBuf::from("branches_sharing_code.cjs")),
+        )
+            .into(),
+    );
+    fix.push(
+        (
+            r"
+        if (flag) {
+            use(typeof f);
+            if (which) function f() {}
+        } else {
+            use(typeof f);
+            other();
+        }
+        ",
+            r"
+        use(typeof f);
+        if (flag) {
+            if (which) function f() {}
+        } else {
+            other();
+        }
+        ",
             None,
             Some(std::path::PathBuf::from("branches_sharing_code.cjs")),
         )
