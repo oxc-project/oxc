@@ -542,7 +542,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         if ctx.is_tree_shake_only() {
             match expr {
                 Expression::TemplateLiteral(t) => {
-                    Self::inline_template_literal::<false>(t, ctx);
+                    Self::inline_template_literal(t, ctx);
                 }
                 Expression::ObjectExpression(e) => Self::fold_object_exp(e, ctx),
                 Expression::BinaryExpression(_) => {
@@ -576,11 +576,10 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
             }
         } else {
             match expr {
-                Expression::TemplateLiteral(_) => Self::fold_template_literal::<false>(expr, ctx),
-                Expression::TaggedTemplateExpression(tagged) => {
-                    for substitution in &mut tagged.quasi.expressions {
-                        Self::fold_template_literal::<true>(substitution, ctx);
-                    }
+                Expression::TemplateLiteral(t) => {
+                    Self::inline_template_literal(t, ctx);
+                    Self::inline_nested_template_literals(t, ctx);
+                    Self::substitute_template_literal(expr, ctx);
                 }
                 Expression::ObjectExpression(e) => Self::fold_object_exp(e, ctx),
                 Expression::BinaryExpression(e) => {
