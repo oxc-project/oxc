@@ -6,7 +6,10 @@ use smallvec::SmallVec;
 
 use oxc_ast::{
     AstKind, FunctionKind,
-    ast::{ArrowFunctionExpression, CallExpression, Expression, Function, NewExpression},
+    ast::{
+        ArrowFunctionExpression, CallExpression, Expression, Function, NewExpression,
+        SimpleAssignmentTarget,
+    },
 };
 use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_cfg::{ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind, graph::visit::EdgeRef};
@@ -359,12 +362,12 @@ impl Rule for RulesOfHooks {
                 //         useState(0);
                 //     }
                 // }
-                if ident.is_some_and(|name| !is_react_component_or_hook_name(&name)) {
+                if let Some(name) = ident.filter(|name| !is_react_component_or_hook_name(name)) {
                     return ctx.diagnostic(diagnostics::function_error(
                         call.callee.span(),
                         *span,
                         hook_name,
-                        "Anonymous",
+                        name.as_ref(),
                     ));
                 }
             }
@@ -969,6 +972,17 @@ fn get_declaration_identifier<'a>(
                 AstKind::AssignmentPattern(patt) => {
                     patt.left.get_identifier_name().map(|id| Cow::Borrowed(id.as_str()))
                 }
+                // ({useHook = () => {}} = {}); // assignment target with shorthand default
+                AstKind::AssignmentTargetPropertyIdentifier(target) => {
+                    Some(Cow::Borrowed(target.binding.name.as_str()))
+                }
+                // ({useHook: useHook = () => {}} = {});
+                // ([useHook = () => {}}] = []); // assignment target with default
+                AstKind::AssignmentTargetWithDefault(target) => target
+                    .binding
+                    .as_simple_assignment_target()
+                    .and_then(SimpleAssignmentTarget::get_identifier_name)
+                    .map(Cow::Borrowed),
                 // { useHook: () => {} }
                 // { useHook() {} }
                 AstKind::ObjectProperty(prop) => {

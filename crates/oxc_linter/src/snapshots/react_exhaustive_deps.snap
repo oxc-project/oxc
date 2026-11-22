@@ -1458,43 +1458,69 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'value3', 'asyncValue', 'value', 'value2', and 'value4'
-    ╭─[exhaustive_deps.tsx:19:14]
-  7 │           useEffect(() => {
-  8 │             if (value4) {
-    ·                 ──────
-  9 │               value = {};
-    ·               ─────
+  ⚠ react-hooks(exhaustive-deps): Assignments to the 'value2' variable from inside React Hook useEffect will be lost after each render. To preserve the value over time, store it in a useRef Hook and keep the mutable value in the '.current' property. Otherwise, you can move this variable directly inside useEffect.
+    ╭─[exhaustive_deps.tsx:11:22]
  10 │             }
  11 │             value2 = 100;
-    ·             ──────
+    ·                      ───
+ 12 │             value = 43;
+    ╰────
+
+  ⚠ react-hooks(exhaustive-deps): Assignments to the 'value' variable from inside React Hook useEffect will be lost after each render. To preserve the value over time, store it in a useRef Hook and keep the mutable value in the '.current' property. Otherwise, you can move this variable directly inside useEffect.
+    ╭─[exhaustive_deps.tsx:12:21]
+ 11 │             value2 = 100;
+ 12 │             value = 43;
+    ·                     ──
+ 13 │             value4 = true;
+    ╰────
+
+  ⚠ react-hooks(exhaustive-deps): Assignments to the 'value4' variable from inside React Hook useEffect will be lost after each render. To preserve the value over time, store it in a useRef Hook and keep the mutable value in the '.current' property. Otherwise, you can move this variable directly inside useEffect.
+    ╭─[exhaustive_deps.tsx:13:22]
  12 │             value = 43;
  13 │             value4 = true;
+    ·                      ────
  14 │             console.log(value2);
- 15 │             console.log(value3);
-    ·                         ──────
+    ╰────
+
+  ⚠ react-hooks(exhaustive-deps): Assignments to the 'asyncValue' variable from inside React Hook useEffect will be lost after each render. To preserve the value over time, store it in a useRef Hook and keep the mutable value in the '.current' property. Otherwise, you can move this variable directly inside useEffect.
+    ╭─[exhaustive_deps.tsx:17:28]
  16 │             setTimeout(() => {
  17 │               asyncValue = 100;
-    ·               ──────────
+    ·                            ───
  18 │             });
- 19 │           }, []);
-    ·              ──
- 20 │         }
     ╰────
-  help: Either include it or remove the dependency array.
 
-  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'asyncValue'
-    ╭─[exhaustive_deps.tsx:15:14]
+  ⚠ react-hooks(exhaustive-deps): Assignments to the 'value' variable from inside React Hook useEffect will be lost after each render. To preserve the value over time, store it in a useRef Hook and keep the mutable value in the '.current' property. Otherwise, you can move this variable directly inside useEffect.
+   ╭─[exhaustive_deps.tsx:7:21]
+ 6 │           useEffect(() => {
+ 7 │             value = {};
+   ·                     ──
+ 8 │             value2 = 100;
+   ╰────
+
+  ⚠ react-hooks(exhaustive-deps): Assignments to the 'value2' variable from inside React Hook useEffect will be lost after each render. To preserve the value over time, store it in a useRef Hook and keep the mutable value in the '.current' property. Otherwise, you can move this variable directly inside useEffect.
+   ╭─[exhaustive_deps.tsx:8:22]
+ 7 │             value = {};
+ 8 │             value2 = 100;
+   ·                      ───
+ 9 │             value = 43;
+   ╰────
+
+  ⚠ react-hooks(exhaustive-deps): Assignments to the 'asyncValue' variable from inside React Hook useEffect will be lost after each render. To preserve the value over time, store it in a useRef Hook and keep the mutable value in the '.current' property. Otherwise, you can move this variable directly inside useEffect.
+    ╭─[exhaustive_deps.tsx:13:28]
  12 │             setTimeout(() => {
  13 │               asyncValue = 100;
-    ·               ─────┬────
-    ·                    ╰── useEffect uses `asyncValue` here
+    ·                            ───
  14 │             });
- 15 │           }, [value, value2, value3]);
-    ·              ───────────────────────
- 16 │         }
     ╰────
-  help: Either include it or remove the dependency array.
+
+  ⚠ react-hooks(exhaustive-deps): Assignments to the 'x' variable from inside React Hook useEffect will be lost after each render. To preserve the value over time, store it in a useRef Hook and keep the mutable value in the '.current' property. Otherwise, you can move this variable directly inside useEffect.
+   ╭─[exhaustive_deps.tsx:3:33]
+ 2 │           let x = 0;
+ 3 │           useEffect(() => { x = props.a; }, [props.a]);
+   ·                                 ───────
+ 4 │           return x;
+   ╰────
 
   ⚠ react-hooks(exhaustive-deps): The ref's value `.current` is accessed directly in the effect cleanup function.
    ╭─[exhaustive_deps.tsx:6:26]
