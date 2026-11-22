@@ -69,10 +69,13 @@ fn minimize_bitwise_binary_expr() {
     fold("(a | 0) & 1", "a & 1");
     fold("1 & (a | 0)", "1 & a");
     fold("(0 | a) ^ 1", "a ^ 1");
+    fold("1 ^ (0 | a)", "1 ^ a");
     fold("(a | 0) ^ (b | 0)", "(a | 0) ^ b");
     fold("(b = 1) ^ (a | 0)", "(b = 1) ^ a");
 
     fold_same("(a | 0) ^ (b = 1)");
+    fold_same("(a | 1) ^ 2");
+    fold_same("2 ^ (a | 1)");
     fold_same("(a | 0) ^ 1n");
     fold_same("1n ^ (a | 0)");
     fold_same("(a | 0) + 1");
