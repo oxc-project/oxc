@@ -1412,6 +1412,13 @@ fn js_str_round_trip() {
 }
 
 #[test]
+fn jsx_sequence_expression() {
+    let source = "<X value={(a, b)}>{(c, d)}{...(e, f)}</X>";
+    test(source, "<X value={(a, b)}>{(c, d)}{...(e, f)}</X>;\n");
+    test_minify(source, "<X value={(a,b)}>{(c,d)}{...(e,f)}</X>;");
+}
+
+#[test]
 fn jsx_attribute_with_lone_surrogate_value() {
     use oxc_parser::Parser;
     use oxc_span::SourceType;

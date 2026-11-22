@@ -2752,7 +2752,7 @@ impl Gen for JSXExpression<'_> {
                 p.print_comments_at(start);
                 p.print_indent();
             }
-            p.print_expression(expr);
+            expr.print_expr(p, Precedence::Comma, Context::empty());
         }
     }
 }
@@ -2886,7 +2886,7 @@ impl Gen for JSXText<'_> {
 impl Gen for JSXSpreadChild<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_str("{...");
-        p.print_expression(&self.expression);
+        self.expression.print_expr(p, Precedence::Comma, Context::empty());
         p.print_ascii_byte(b'}');
     }
 }
