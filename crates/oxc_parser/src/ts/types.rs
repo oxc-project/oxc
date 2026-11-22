@@ -752,11 +752,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         } else {
             let entity_name = self.parse_ts_type_name(); // TODO: parseEntityName
             let entity_name = TSTypeQueryExprName::from(entity_name);
-            let type_arguments = if self.cur_token().is_on_new_line() {
-                None
-            } else {
-                self.try_parse_type_arguments()
-            };
+            let type_arguments = self.parse_type_arguments_of_type_reference();
             (entity_name, type_arguments)
         };
         TSType::new_ts_type_query(self.end_span(start), entity_name, type_arguments, self)
@@ -884,7 +880,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_ts_implement_name(&mut self) -> TSClassImplements<'a> {
         let start = self.cur_start();
         let type_name = self.parse_ts_type_name();
-        let type_parameters = self.parse_type_arguments_of_type_reference();
+        let type_parameters = self.try_parse_type_arguments();
         TSClassImplements::new(self.end_span(start), type_name, type_parameters, self)
     }
 
@@ -913,7 +909,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         left_name
     }
 
-    /// Parse `TypeArguments` if the cursor is at their `<`.
+    /// Parse `TypeArguments` which begin outside a type if the cursor is at their `<`,
+    /// as in `<C<T> />` and heritage clauses.
     #[inline] // Most callers are not at `<`. Decide that without a call.
     pub(crate) fn try_parse_type_arguments(
         &mut self,
@@ -941,15 +938,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 Kind::RAngle,
                 Kind::Comma,
                 opening_span,
-                Self::parse_type_argument,
+                Self::parse_type_argument_outside_type,
             );
             self.expect(Kind::RAngle);
             let span = self.end_span(start);
             if params.is_empty() {
                 self.error(diagnostics::ts_empty_type_argument_list(span));
-            }
-            if !self.is_ts {
-                self.error(diagnostics::type_arguments_in_ts(span));
             }
             return Some(TSTypeParameterInstantiation::boxed(span, params, self));
         }
@@ -1043,6 +1037,27 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.parse_ts_type()
     }
 
+    /// Parse one type in a `TypeArguments` list which begins outside a type, as in `f<T>()`.
+    ///
+    /// TypeScript parses types without `[Yield]` and `[Await]`, but checks the first token of
+    /// each type argument in the enclosing context. So `f<await>()` is invalid in an async
+    /// function, but `f<A<await>>()` is valid.
+    fn parse_type_argument_outside_type(&mut self) -> TSType<'a> {
+        if self.is_reserved_await_or_yield(self.cur_kind()) {
+            return self.unexpected();
+        }
+        self.parse_type_argument()
+    }
+
+    /// Whether `kind` is `await` or `yield` in a context which reserves it.
+    fn is_reserved_await_or_yield(&self, kind: Kind) -> bool {
+        match kind {
+            Kind::Await => self.ctx.has_await(),
+            Kind::Yield => self.ctx.has_yield(),
+            _ => false,
+        }
+    }
+
     /// Speculatively parse a `<T, U>` type-argument list in an expression
     /// position (e.g. `foo<T>(arg)` vs `foo < T`). Returns `None` if a cached failure
     /// rules it out, or rewinds to the checkpoint when a fresh attempt fails.
@@ -1111,7 +1126,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::RAngle,
             Kind::Comma,
             opening_span,
-            Self::parse_type_argument,
+            Self::parse_type_argument_outside_type,
         );
         // A contiguous `>=` remains a relational operator: `a < b >= c`. A separated
         // `> =` can end an instantiation before `=`; assignment validity is checked later.
@@ -1173,11 +1188,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///
     /// plus the JSDoc postfix `!` and `?`, which the type parser accepts in order to report them.
     /// Any other token ends the list early: `a < b;`, `a < b.c)`, `a < 0 &&`, `a < this.b`.
-    /// A reserved word which cannot start a type rules out the list at once: `a < class {}`.
+    /// A reserved word which cannot start a type rules out the list at once: `a < class {}`, and
+    /// `a < await b` in an async function.
     ///
     /// The lexer is positioned after `first`. The checks mirror `parse_non_array_type`,
-    /// `parse_postfix_type_rest`, `parse_type_argument` and their callers, and must be kept in
-    /// step with them.
+    /// `parse_postfix_type_rest`, `parse_type_argument_outside_type` and their callers, and must
+    /// be kept in step with them.
     fn can_start_type_argument_after(&mut self, first: Kind) -> bool {
         let is_name = matches!(
             first,
@@ -1197,7 +1213,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             && !matches!(first, Kind::Null | Kind::This | Kind::Str | Kind::True | Kind::False)
             && !first.is_number()
         {
-            return !is_reserved_non_type_start(first);
+            return !is_reserved_non_type_start(first) && !self.is_reserved_await_or_yield(first);
         }
         let mut next = self.lexer.next_token().kind();
         while is_name && next == Kind::Dot {
@@ -1312,6 +1328,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     pub(super) fn parse_tuple_element(&mut self) -> TSTupleElement<'a> {
+        // As in a type-argument list, a reserved word cannot begin a tuple element.
+        if is_reserved_non_type_start(self.cur_kind()) {
+            return self.unexpected();
+        }
         let start = self.cur_start();
         let is_rest_type = self.eat(Kind::Dot3);
 
@@ -2024,7 +2044,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
 /// Whether `kind` is a reserved word which cannot start a type.
 ///
-/// `await` and `yield` are excluded because outside their own contexts they are identifiers.
+/// `await` and `yield` are excluded because types are parsed outside their contexts, where they
+/// are identifiers. See [`ParserImpl::parse_type_argument_outside_type`] for lists which are not.
 const fn is_reserved_non_type_start(kind: Kind) -> bool {
     kind.is_reserved_keyword()
         && !matches!(
