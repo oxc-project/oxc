@@ -348,8 +348,8 @@ fn js_parser_test() {
     test("a = '' + 0b0n", "a = '0';");
     test("a = '' + 0o0n", "a = '0';");
     test("a = '' + 0x0n", "a = '0';");
-    test("a = '' + /a\\b/ig", "a = '/a\\\\b/ig';");
-    test("a = /a\\b/ig + ''", "a = '/a\\\\b/ig';");
+    test("a = '' + /a\\b/ig", "a = '/a\\\\b/gi';");
+    test("a = /a\\b/ig + ''", "a = '/a\\\\b/gi';");
     // test("a = '' + ''.constructor", "a = 'function String() { [native code] }';");
     // test("a = ''.constructor + ''", "a = 'function String() { [native code] }';");
     // test("a = '' + /./.constructor", "a = 'function RegExp() { [native code] }';");
@@ -489,7 +489,7 @@ fn js_parser_test() {
     test("a = NaN.toString()", "a = 'NaN';");
     test("a = Infinity.toString()", "a = 'Infinity';");
     test("a = (-Infinity).toString()", "a = '-Infinity';");
-    test("a = /a\\b/ig.toString()", "a = '/a\\\\b/ig';");
+    test("a = /a\\b/ig.toString()", "a = '/a\\\\b/gi';");
     test("a = 100 .toString(0)", "a = 100 .toString(0);");
     test("a = 100 .toString(1)", "a = 100 .toString(1);");
     test("a = 100 .toString(2)", "a = '1100100';");
