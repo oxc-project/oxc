@@ -226,9 +226,11 @@ fn duplicated_code_references_branch_locals<'a>(
         };
         let scope_id = block.scope_id();
         let scoping = ctx.scoping();
-        let may_have_hoisted_functions =
-            ctx.source_type().is_javascript() && !scoping.scope_flags(scope_id).is_strict_mode();
-        if !may_have_hoisted_functions && scoping.get_bindings(scope_id).is_empty() {
+        if scoping.get_bindings(scope_id).is_empty()
+            && (!ctx.source_type().is_javascript()
+                || scoping.scope_flags(scope_id).is_strict_mode()
+                || !block.body.iter().any(is_hoistable_block_function))
+        {
             return false;
         }
 
@@ -239,6 +241,13 @@ fn duplicated_code_references_branch_locals<'a>(
         }
         visitor.found
     })
+}
+
+fn is_hoistable_block_function(mut statement: &Statement) -> bool {
+    while let Statement::LabeledStatement(labeled) = statement {
+        statement = &labeled.body;
+    }
+    matches!(statement, Statement::FunctionDeclaration(func) if !func.r#async && !func.generator)
 }
 
 struct BranchLocalReferenceFinder<'c, 'a> {
