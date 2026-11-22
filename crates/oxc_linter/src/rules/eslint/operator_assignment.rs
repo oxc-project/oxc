@@ -593,14 +593,14 @@ fn test() {
         ("foo+=/**/+bar", "foo= foo+/**/+bar", Some(serde_json::json!(["never"]))),
         ("foo+=+bar===baz", "foo= foo+(+bar===baz)", Some(serde_json::json!(["never"]))),
         ("x += () => {}", "x = x + (() => {})", Some(serde_json::json!(["never"]))),
-        ("x += c ? 1 : 2", "x = x + (c ? 1 : 2)", Some(serde_json::json!(["never"]))),
-        ("x *= c ? a : b", "x = x * (c ? a : b)", Some(serde_json::json!(["never"]))),
         ("x += + (() => {})", "x = x + + (() => {})", Some(serde_json::json!(["never"]))),
         (
             "x += + /** fooo */ (() => {})",
             "x = x + + /** fooo */ (() => {})",
             Some(serde_json::json!(["never"])),
         ),
+        ("x += c ? 1 : 2", "x = x + (c ? 1 : 2)", Some(serde_json::json!(["never"]))),
+        ("x *= c ? a : b", "x = x * (c ? a : b)", Some(serde_json::json!(["never"]))),
     ];
     Tester::new(OperatorAssignment::NAME, OperatorAssignment::PLUGIN, pass, fail)
         .expect_fix(fix)
