@@ -408,6 +408,12 @@ fn test_nan_comparison() {
 }
 
 #[test]
+fn test_shadowed_nan_comparison() {
+    test_same("function f(x, NaN) { return NaN === x; }");
+    test_same("function f(x, NaN) { return x !== NaN; }");
+}
+
+#[test]
 fn test_object_comparison1() {
     fold("!new Date()", "!1");
     fold("!!new Date()", "!0");
