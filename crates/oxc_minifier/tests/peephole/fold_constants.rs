@@ -1578,6 +1578,15 @@ fn test_inline_nested_template_literals() {
     fold(r"`$${`{${a}`}`", r"`$\{${a}`");
     fold(r"`${`${a}$`}{b`", r"`${a}$\{b`");
     fold(r"`\0${`1${a}`}`", r"`\x001${a}`");
+    fold(r"`a${`b${c}$`}${`{${d}e`}f`", r"`ab${c}$\{${d}ef`");
+    test(
+        r"function f() { let y; y = 'Q'; return `\u0061${`b${y}c`}\u0064` }",
+        "function f() { let y = 'Q'; return 'abQcd' }",
+    );
+    test(
+        r"function f() { let y; y = 'Q'; return `\u0061${`b${y}$`}${`{${y}`}\u0064` }",
+        "function f() { let y = 'Q'; return 'abQ${Qd' }",
+    );
 }
 
 #[test]
