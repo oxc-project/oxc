@@ -545,6 +545,18 @@ fn ts_satisfies_expression() {
 }
 
 #[test]
+fn enum_initializer_sequence_expression() {
+    let source = "enum E { A = (f(), x = 2), B }";
+    test_ts(source, "enum E {\n\tA = (f(), x = 2),\n\tB\n}\n");
+    test_options_with_source_type(
+        source,
+        "enum E{A=(f(),x=2),B}",
+        SourceType::ts(),
+        CodegenOptions::minify(),
+    );
+}
+
+#[test]
 fn type_codegen_with_preserve_parens_off() {
     let parse_options = ParseOptions { preserve_parens: false, ..Default::default() };
 
