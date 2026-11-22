@@ -331,6 +331,9 @@ fn for_stmt() {
     test("for ((let[0]) of x);", "for ((let)[0] of x);\n");
     test("for ((async.x) of x);", "for (async.x of x);\n");
     test("for (((let).x) of x);", "for ((let.x) of x);\n");
+    test("for ((let as any) of x);", "for ((let as any) of x);\n");
+    test("for ((let as any).x of x);", "for ((let as any).x of x);\n");
+    test("for ((let satisfies any).x of x);", "for ((let satisfies any).x of x);\n");
     // A leading `let` outside a for-of head is untouched.
     test("let.x;", "let.x;\n");
     // A nested for-of inside a `for` init is still wrapped correctly.

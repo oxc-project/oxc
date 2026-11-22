@@ -379,8 +379,6 @@ fn for_of_head_starts_with_let(left: &ForStatementLeft) -> bool {
         ForStatementLeft::ComputedMemberExpression(m) => computed_object_starts_with_let(m),
         ForStatementLeft::StaticMemberExpression(m) => expr_starts_with_let(&m.object),
         ForStatementLeft::PrivateFieldExpression(m) => expr_starts_with_let(&m.object),
-        ForStatementLeft::TSAsExpression(e) => expr_starts_with_let(&e.expression),
-        ForStatementLeft::TSSatisfiesExpression(e) => expr_starts_with_let(&e.expression),
         ForStatementLeft::TSNonNullExpression(e) => expr_starts_with_let(&e.expression),
         _ => false,
     }
@@ -392,8 +390,6 @@ fn expr_starts_with_let(expr: &Expression) -> bool {
         Expression::ComputedMemberExpression(m) => computed_object_starts_with_let(m),
         Expression::StaticMemberExpression(m) => expr_starts_with_let(&m.object),
         Expression::PrivateFieldExpression(m) => expr_starts_with_let(&m.object),
-        Expression::TSAsExpression(e) => expr_starts_with_let(&e.expression),
-        Expression::TSSatisfiesExpression(e) => expr_starts_with_let(&e.expression),
         Expression::TSNonNullExpression(e) => expr_starts_with_let(&e.expression),
         // Codegen drops redundant parens around a `let` object (`(let).x` -> `let.x`).
         Expression::ParenthesizedExpression(e) => expr_starts_with_let(&e.expression),
