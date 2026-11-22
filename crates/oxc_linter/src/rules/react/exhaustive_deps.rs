@@ -1435,7 +1435,16 @@ impl<'a> VisitJs<'a> for ExhaustiveDepsVisitor<'a, '_> {
         if let Some(decl) = get_declaration_of_variable(ident, self.semantic) {
             let is_set_state_call = match decl.kind() {
                 AstKind::VariableDeclarator(var_decl) => {
-                    let Some(Expression::CallExpression(call_expr)) = &var_decl.init else {
+                    let Some(init) = &var_decl.init else {
+                        return;
+                    };
+
+                    let mut init = init.without_parentheses();
+                    while let Expression::TSAsExpression(as_expr) = init {
+                        init = as_expr.expression.without_parentheses();
+                    }
+
+                    let Expression::CallExpression(call_expr) = init else {
                         return;
                     };
 
@@ -4443,6 +4452,24 @@ const Component = ({ filter }) => {
         r"function MyComponent() {
           const [, setState] = useState(0);
           useCallback(() => setState(1), [setState.foo]);
+        }",
+        r"function MyComponent() {
+          const [, setState] = (useState(0));
+          useEffect(() => {
+            setState(1);
+          });
+        }",
+        r"function MyComponent() {
+          const [, setState] = useState(0) as [number, (value: number) => void];
+          useEffect(() => {
+            setState(1);
+          });
+        }",
+        r"function MyComponent() {
+          const [, setState] = (useState(0)) as [number, (value: number) => void];
+          useEffect(() => {
+            setState(1);
+          });
         }",
     ];
 
