@@ -4,7 +4,12 @@ static NEG_MAX_SAFE_FLOAT: f64 = -9_007_199_254_740_991_f64;
 static MAX_SAFE_INT: i64 = 9_007_199_254_740_991_i64;
 static NEG_MAX_SAFE_INT: i64 = -9_007_199_254_740_991_i64;
 
-use crate::{test, test_same, test_smallest};
+use oxc_allocator::Allocator;
+use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_parser::Parser;
+use oxc_span::SourceType;
+
+use crate::{Compressor, default_options, test, test_same, test_smallest};
 
 fn fold(source_text: &str, expected: &str) {
     let source_text = format!("NOOP({source_text})");
@@ -1587,6 +1592,35 @@ fn test_inline_nested_template_literals() {
         r"function f() { let y; y = 'Q'; return `\u0061${`b${y}$`}${`{${y}`}\u0064` }",
         "function f() { let y = 'Q'; return 'abQ${Qd' }",
     );
+}
+
+#[test]
+fn inline_nested_template_literals_preserves_quasi_mappings() {
+    let source = "export function demo(x, y) { return `${x}${`INNER${y}`}OUTER`; }";
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source, SourceType::mjs()).parse();
+    assert!(ret.diagnostics.is_empty());
+    let mut program = ret.program;
+    Compressor::new(&allocator).build(&mut program, default_options());
+    let result = Codegen::new()
+        .with_options(CodegenOptions {
+            source_map_path: Some("test.js".into()),
+            ..CodegenOptions::minify()
+        })
+        .build(&program);
+    assert_eq!(result.code, "export function demo(x,y){return`${x}INNER${y}OUTER`}");
+    let map = result.map.unwrap();
+    for text in ["INNER", "OUTER"] {
+        let src_col = u32::try_from(source.find(text).unwrap()).unwrap();
+        let dst_col = u32::try_from(result.code.find(text).unwrap()).unwrap();
+        assert!(
+            map.get_tokens().any(|token| {
+                (token.get_src_line(), token.get_src_col()) == (0, src_col)
+                    && (token.get_dst_line(), token.get_dst_col()) == (0, dst_col)
+            }),
+            "missing mapping for {text}"
+        );
+    }
 }
 
 #[test]

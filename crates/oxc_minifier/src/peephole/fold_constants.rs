@@ -1307,6 +1307,7 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         if left.value.raw.is_empty() {
+            left.span = right.span;
             left.value = right.value.clone();
             return;
         }
