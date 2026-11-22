@@ -395,14 +395,14 @@ fn expr_starts_with_let(expr: &Expression, p: &Codegen) -> bool {
         Expression::CallExpression(e) => expr_starts_with_let(&e.callee, p),
         Expression::TaggedTemplateExpression(e) => expr_starts_with_let(&e.tag, p),
         Expression::TSNonNullExpression(e) => expr_starts_with_let(&e.expression, p),
-        // Codegen drops redundant parens around a `let` object (`(let).x` -> `let.x`).
+        // Codegen drops redundant parens (`(let).x` -> `let.x`).
         Expression::ParenthesizedExpression(e) => expr_starts_with_let(&e.expression, p),
         _ => false,
     }
 }
 
-/// `let[...]` is emitted as `(let)[...]` (the computed member wraps a bare `let`
-/// object), so it no longer starts with `let`.
+/// A computed member whose object is a `let` identifier (ignoring parentheses and
+/// TS wrappers) prints as `(let)[...]`, so it doesn't start with `let`.
 fn computed_object_starts_with_let(m: &ComputedMemberExpression, p: &Codegen) -> bool {
     m.object.get_identifier_reference().is_none_or(|r| p.get_identifier_reference_name(r) != "let")
         && expr_starts_with_let(&m.object, p)
@@ -1569,7 +1569,7 @@ impl GenExpr for MemberExpression<'_> {
 
 impl GenExpr for ComputedMemberExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, _precedence: Precedence, ctx: Context) {
-        // `(let[0] = 100);` -> `(let)[0] = 100`;
+        // `let [` at the start of a statement or `for` head begins a declaration.
         let wrap = self
             .object
             .get_identifier_reference()
