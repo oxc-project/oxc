@@ -403,8 +403,8 @@ impl<'a> PeepholeOptimizations {
                         .and_then(|_| ctx.eval_binary(e))
                 })
             }
-            BinaryOperator::Division => Self::try_fold_safe_integer_numeric_expression(e, ctx)
-                .or_else(|| {
+            BinaryOperator::Division => {
+                Self::try_fold_shorter_numeric_expression(e, ctx).or_else(|| {
                     Self::extract_numeric_values(e, ctx)
                         .filter(|(left, right)| {
                             *left == 0.0
@@ -415,7 +415,8 @@ impl<'a> PeepholeOptimizations {
                                 || right.is_infinite()
                         })
                         .and_then(|_| ctx.eval_binary(e))
-                }),
+                })
+            }
             BinaryOperator::ShiftLeft => {
                 Self::extract_numeric_values(e, ctx).and_then(|(left, right)| {
                     let result = e.evaluate_value(ctx)?.into_number()?;
@@ -465,8 +466,16 @@ impl<'a> PeepholeOptimizations {
 
     /// Lower bound for the minified size of a numeric expression. Parentheses are deliberately
     /// omitted, so accepting a fold based on this count cannot make the output longer.
+    ///
+    /// `**` is excluded because engines approximate exponentiation differently, so a folded
+    /// result could differ from the runtime value.
     fn numeric_expression_size_lower_bound(expr: &Expression<'a>) -> Option<usize> {
         match expr {
+            // Minified codegen prints non-finite numbers as `1/0` or `-1/0`, which the next run
+            // measures as a division.
+            Expression::NumericLiteral(lit) if lit.value.is_infinite() => {
+                Some(usize::from(lit.value.is_sign_negative()) + "1/0".len())
+            }
             Expression::NumericLiteral(lit) => Self::number_literal_source_len(lit.value),
             Expression::UnaryExpression(e)
                 if matches!(
@@ -484,7 +493,6 @@ impl<'a> PeepholeOptimizations {
                         | BinaryOperator::Multiplication
                         | BinaryOperator::Division
                         | BinaryOperator::Remainder
-                        | BinaryOperator::Exponential
                 ) =>
             {
                 Self::binary_numeric_expression_size_lower_bound(e)
