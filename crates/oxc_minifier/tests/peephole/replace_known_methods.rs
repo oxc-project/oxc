@@ -1182,6 +1182,7 @@ fn test_to_string() {
     test("x = 1n.toString()", "x = '1'");
     test_same("254n.toString(16);"); // unimplemented
     test("console.log(/x/ig.toString())", "console.log('/x/gi')");
+    test(r"console.log(/a\\b/ig.toString())", r"console.log('/a\\\\b/gi')");
     test(r"console.log(/a\/b/yvsmigd.toString())", r"console.log('/a\\/b/dgimsvy')");
     test_same("null.toString()"); // type error
     test_same("x = (f(), 5).toString()");
