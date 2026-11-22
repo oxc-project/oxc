@@ -64,7 +64,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         modifiers: &Modifiers,
         decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> ArenaBox<'a, Class<'a>> {
-        self.bump_any(); // advance `class`
+        self.expect(Kind::Class);
 
         // Move span start to decorator position if this is a class expression.
         let mut start = start;
