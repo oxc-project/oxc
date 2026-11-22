@@ -54,13 +54,13 @@ test('thing one', () => {
 const EXPECT: PaddingStatement = PaddingStatement::Named(&["expect"]);
 const EXPECT_TYPE_OF: PaddingStatement = PaddingStatement::Named(&["expectTypeOf"]);
 
-const EXPECT_CONFIGS: &[PaddingConfig] = &[
+pub const EXPECT_CONFIGS: &[PaddingConfig] = &[
     PaddingConfig::always(PaddingStatement::Any, EXPECT),
     PaddingConfig::always(EXPECT, PaddingStatement::Any),
     PaddingConfig::any(EXPECT, EXPECT),
 ];
 
-const EXPECT_TYPE_OF_CONFIGS: &[PaddingConfig] = &[
+pub const EXPECT_TYPE_OF_CONFIGS: &[PaddingConfig] = &[
     PaddingConfig::always(PaddingStatement::Any, EXPECT_TYPE_OF),
     PaddingConfig::always(EXPECT_TYPE_OF, PaddingStatement::Any),
     PaddingConfig::any(EXPECT_TYPE_OF, EXPECT_TYPE_OF),
