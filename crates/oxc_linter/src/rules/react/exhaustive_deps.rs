@@ -1683,17 +1683,6 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        // https://github.com/oxc-project/oxc/issues/29984
-        // A `useReducer` dispatch is not a setState call, so an effect without a
-        // dependency array that calls it must not be reported.
-        r"import { useLayoutEffect, useReducer } from 'react';
-        export function useRerenderWhen(swapped) {
-          const [, bump] = useReducer((n) => n + 1, 0);
-          useLayoutEffect(() => {
-            if (!swapped) return;
-            bump();
-          });
-        }",
         // https://github.com/oxc-project/oxc/issues/27269
         r"function MyComponent({ x }) {
           const ref = useCustomRef();
@@ -2896,6 +2885,14 @@ const Component = ({ filter }) => {
         r"function MyComponent(props) {
           const isError = props.value instanceof Error;
           useMemo(() => isError, [isError]);
+        }",
+        r"import { useLayoutEffect, useReducer } from 'react';
+        export function useRerenderWhen(swapped) {
+          const [, bump] = useReducer((n) => n + 1, 0);
+          useLayoutEffect(() => {
+            if (!swapped) return;
+            bump();
+          });
         }",
     ];
 
