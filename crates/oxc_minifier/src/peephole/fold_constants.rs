@@ -1,3 +1,5 @@
+use std::mem;
+
 use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
@@ -1245,6 +1247,81 @@ impl<'a> PeepholeOptimizations {
                 quasi.tail = true;
             }
         }
+    }
+
+    /// Inline untagged template literals nested in template literal substitutions
+    ///
+    /// - `` `a${`b${c}d`}e` `` => `` `ab${c}de` ``
+    ///
+    /// The nested template evaluates and converts its substitutions in the same order, and its
+    /// result is already a string.
+    pub fn inline_nested_template_literals(t: &mut TemplateLiteral<'a>, ctx: &mut TraverseCtx<'a>) {
+        let (has_nested_template, expression_count) = t.expressions.iter().fold(
+            (false, 0),
+            |(has_nested_template, expression_count), expr| {
+                if let Expression::TemplateLiteral(nested) = expr {
+                    (true, expression_count + nested.expressions.len())
+                } else {
+                    (has_nested_template, expression_count + 1)
+                }
+            },
+        );
+        if !has_nested_template {
+            return;
+        }
+
+        let mut quasis = ArenaVec::with_capacity_in(expression_count + 1, ctx);
+        let mut expressions = ArenaVec::with_capacity_in(expression_count, ctx);
+        let mut outer_quasis = t.quasis.drain(..);
+        let mut quasi = outer_quasis.next().expect("template literal must have at least one quasi");
+        for (expr, next_quasi) in t.expressions.drain(..).zip(outer_quasis) {
+            let Expression::TemplateLiteral(mut nested) = expr else {
+                quasis.push(mem::replace(&mut quasi, next_quasi));
+                expressions.push(expr);
+                continue;
+            };
+            let nested = &mut *nested;
+            let mut nested_quasis = nested.quasis.drain(..);
+            let first_nested_quasi =
+                nested_quasis.next().expect("template literal must have at least one quasi");
+            Self::append_template_element(&mut quasi, &first_nested_quasi, ctx);
+            for (nested_expr, nested_quasi) in nested.expressions.drain(..).zip(nested_quasis) {
+                quasis.push(mem::replace(&mut quasi, nested_quasi));
+                expressions.push(nested_expr);
+            }
+            Self::append_template_element(&mut quasi, &next_quasi, ctx);
+            quasi.tail = next_quasi.tail;
+        }
+        quasis.push(quasi);
+        t.quasis = quasis;
+        t.expressions = expressions;
+        ctx.notice_change();
+    }
+
+    fn append_template_element(
+        left: &mut TemplateElement<'a>,
+        right: &TemplateElement<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) {
+        if right.value.raw.is_empty() {
+            return;
+        }
+        if left.value.raw.is_empty() {
+            left.span = right.span;
+            left.value = right.value.clone();
+            return;
+        }
+        left.value.raw = Self::concat_template_literal_raw(
+            [left.value.raw.as_str(), right.value.raw.as_str()],
+            ctx,
+        );
+        left.value.cooked = if let (Some(left_cooked), Some(right_cooked)) =
+            (left.value.cooked, right.value.cooked)
+        {
+            Some(JSStr::from_js_strs_array_in([left_cooked, right_cooked], ctx))
+        } else {
+            None
+        };
     }
 }
 
