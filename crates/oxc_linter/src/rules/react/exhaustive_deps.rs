@@ -1419,23 +1419,31 @@ impl<'a> VisitJs<'a> for ExhaustiveDepsVisitor<'a, '_> {
     }
 
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
-        if self.skip_reporting_dependency {
-            return;
+        if !self.skip_reporting_dependency {
+            let reference_id = ident.reference_id();
+            let symbol_id = self.semantic.scoping().get_reference(reference_id).symbol_id();
+            self.found_dependencies.insert(Dependency {
+                name: ident.name.into(),
+                reference_id,
+                span: ident.span,
+                chain: vec![],
+                symbol_id,
+            });
         }
-        let reference_id = ident.reference_id();
-        let symbol_id = self.semantic.scoping().get_reference(reference_id).symbol_id();
-        self.found_dependencies.insert(Dependency {
-            name: ident.name.into(),
-            reference_id,
-            span: ident.span,
-            chain: vec![],
-            symbol_id,
-        });
 
         if let Some(decl) = get_declaration_of_variable(ident, self.semantic) {
             let is_set_state_call = match decl.kind() {
                 AstKind::VariableDeclarator(var_decl) => {
-                    let Some(Expression::CallExpression(call_expr)) = &var_decl.init else {
+                    let Some(init) = &var_decl.init else {
+                        return;
+                    };
+
+                    let mut init = init.without_parentheses();
+                    while let Expression::TSAsExpression(as_expr) = init {
+                        init = as_expr.expression.without_parentheses();
+                    }
+
+                    let Expression::CallExpression(call_expr) = init else {
                         return;
                     };
 
@@ -1443,7 +1451,7 @@ impl<'a> VisitJs<'a> for ExhaustiveDepsVisitor<'a, '_> {
                         return;
                     };
 
-                    if name != "useState" && name != "useReducer" {
+                    if name != "useState" {
                         return;
                     }
 
@@ -2885,6 +2893,14 @@ const Component = ({ filter }) => {
         r"function MyComponent(props) {
           const isError = props.value instanceof Error;
           useMemo(() => isError, [isError]);
+        }",
+        r"import { useLayoutEffect, useReducer } from 'react';
+        export function useRerenderWhen(swapped) {
+          const [, bump] = useReducer((n) => n + 1, 0);
+          useLayoutEffect(() => {
+            if (!swapped) return;
+            bump();
+          });
         }",
     ];
 
@@ -4435,6 +4451,30 @@ const Component = ({ filter }) => {
         r"function MyComponent() {
           const [, setState] = useState(0);
           useCallback(() => setState(1), [setState.foo]);
+        }",
+        r"function MyComponent() {
+          const [, setState] = (useState(0));
+          useEffect(() => {
+            setState(1);
+          });
+        }",
+        r"function MyComponent() {
+          const [, setState] = useState(0) as [number, (value: number) => void];
+          useEffect(() => {
+            setState(1);
+          });
+        }",
+        r"function MyComponent() {
+          const [, setState] = (useState(0)) as [number, (value: number) => void];
+          useEffect(() => {
+            setState(1);
+          });
+        }",
+        r"function MyComponent() {
+          const [, setState] = useState(0);
+          useEffect(() => {
+            setState.call(null, 1);
+          });
         }",
     ];
 

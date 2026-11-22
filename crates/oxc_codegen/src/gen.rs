@@ -1163,7 +1163,7 @@ impl Gen for TSExportAssignment<'_> {
         p.print_indent();
         p.print_comments_at(self.span.start);
         p.print_str("export = ");
-        self.expression.print_expr(p, Precedence::Lowest, ctx);
+        self.expression.print_expr(p, Precedence::Comma, ctx);
         p.print_semicolon_after_statement();
     }
 }
@@ -1838,18 +1838,30 @@ impl Gen for ObjectProperty<'_> {
         }
 
         let mut shorthand = false;
+        let mut computed_proto_key = false;
         if let PropertyKey::StaticIdentifier(key) = &self.key {
+            let value_matches_key = matches!(
+                self.value.without_parentheses(),
+                Expression::Identifier(ident) if key.name == p.get_identifier_reference_name(ident)
+            );
             if key.name == "__proto__" {
-                shorthand = self.shorthand;
-            } else if let Expression::Identifier(ident) = self.value.without_parentheses()
-                && key.name == p.get_identifier_reference_name(ident)
-            {
-                shorthand = true;
+                shorthand = self.shorthand && value_matches_key;
+                // `__proto__: value` would set the prototype instead of defining a property.
+                computed_proto_key = self.shorthand && !value_matches_key;
+            } else {
+                shorthand = value_matches_key;
             }
         }
 
         if !shorthand {
-            self.key.print(p, ctx);
+            if computed_proto_key {
+                p.print_ascii_byte(b'[');
+                p.add_source_mapping(self.key.span());
+                p.print_string("__proto__");
+                p.print_ascii_byte(b']');
+            } else {
+                self.key.print(p, ctx);
+            }
             p.print_colon();
             p.print_soft_space();
         }
@@ -2740,7 +2752,7 @@ impl Gen for JSXExpression<'_> {
                 p.print_comments_at(start);
                 p.print_indent();
             }
-            p.print_expression(expr);
+            expr.print_expr(p, Precedence::Comma, Context::empty());
         }
     }
 }
@@ -2874,7 +2886,7 @@ impl Gen for JSXText<'_> {
 impl Gen for JSXSpreadChild<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_str("{...");
-        p.print_expression(&self.expression);
+        self.expression.print_expr(p, Precedence::Comma, Context::empty());
         p.print_ascii_byte(b'}');
     }
 }
@@ -4214,7 +4226,7 @@ impl Gen for TSEnumMember<'_> {
             p.print_soft_space();
             p.print_equal();
             p.print_soft_space();
-            init.print_expr(p, Precedence::Lowest, ctx);
+            init.print_expr(p, Precedence::Comma, ctx);
         }
     }
 }

@@ -348,8 +348,8 @@ fn js_parser_test() {
     test("a = '' + 0b0n", "a = '0';");
     test("a = '' + 0o0n", "a = '0';");
     test("a = '' + 0x0n", "a = '0';");
-    test("a = '' + /a\\b/ig", "a = '/a\\\\b/ig';");
-    test("a = /a\\b/ig + ''", "a = '/a\\\\b/ig';");
+    test("a = '' + /a\\b/ig", "a = '/a\\\\b/gi';");
+    test("a = /a\\b/ig + ''", "a = '/a\\\\b/gi';");
     // test("a = '' + ''.constructor", "a = 'function String() { [native code] }';");
     // test("a = ''.constructor + ''", "a = 'function String() { [native code] }';");
     // test("a = '' + /./.constructor", "a = 'function RegExp() { [native code] }';");
@@ -489,7 +489,7 @@ fn js_parser_test() {
     test("a = NaN.toString()", "a = 'NaN';");
     test("a = Infinity.toString()", "a = 'Infinity';");
     test("a = (-Infinity).toString()", "a = '-Infinity';");
-    test("a = /a\\b/ig.toString()", "a = '/a\\\\b/ig';");
+    test("a = /a\\b/ig.toString()", "a = '/a\\\\b/gi';");
     test("a = 100 .toString(0)", "a = 100 .toString(0);");
     test("a = 100 .toString(1)", "a = 100 .toString(1);");
     test("a = 100 .toString(2)", "a = '1100100';");
@@ -933,7 +933,7 @@ fn constant_evaluation_test() {
     test("x = 3 + 6", "x = 9;");
     test("x = 3 - 6", "x = -3;");
     test("x = 3 * 6", "x = 18;");
-    test("x = 3 / 6", "x = 3 / 6;");
+    test("x = 3 / 6", "x = .5;");
     test("x = 3 % 6", "x = 3;");
     test("x = 3 ** 6", "x = 729;");
     test("x = 0 / 0", "x = NaN;");
@@ -2390,15 +2390,12 @@ fn test_remove_dead_expr_other() {
 #[test]
 fn prune_empty_case_before_default() {
     // Basic case: empty case with literal before default
-    test(
-        "switch (x) { case 0: foo(); break; case 1: default: bar() }",
-        "switch (x) { case 0: foo(); break; default: bar();}",
-    );
+    test("switch (x) { case 0: foo(); break; case 1: default: bar() }", "x === 0 ? foo() : bar();");
 
     // Multiple empty cases with literals before default
     test(
         "switch (x) { case 0: foo(); break; case 1: case 2: case 3: default: bar() }",
-        "switch (x) { case 0: foo(); break; default: bar();}",
+        "x === 0 ? foo() : bar();",
     );
 
     // Empty case with non-literal (identifier) should NOT be removed

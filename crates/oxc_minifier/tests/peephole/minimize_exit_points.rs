@@ -241,7 +241,7 @@ fn test_do_continue_optimization() {
 
     test(
         "do { foo(); switch (x) { case 1: break; default: f()} } while(false)",
-        "do switch (foo(),x) { case 1: break; default: f() } while(0);",
+        "do foo(), x === 1 || f(); while(0);",
     );
 }
 

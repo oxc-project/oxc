@@ -42,6 +42,7 @@ fn test() {
     ),
         ("expect.hasAssertions", None),
         ("expect.hasAssertions()", None),
+        ("expectTypeOf();", None),
         ("expect('something').toEqual('else');", None),
         ("expect(true).toBeDefined();", None),
         ("expect([1, 2, 3]).toEqual([1, 2, 3]);", None),
