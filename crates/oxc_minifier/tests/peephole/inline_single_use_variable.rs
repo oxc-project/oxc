@@ -615,8 +615,9 @@ fn keep_block_var_read_by_outer_direct_eval() {
         "function f(a, b) { var x = a; return b(x), eval('x') }",
     );
     test_same("function f(a, b) { if (a) { var x = a; b(x); } return eval('x') }");
-    test_same(
+    test(
         "function f(a, b) { switch (a) { case 0: break; default: var x = a; b(x); } return eval('x') }",
+        "function f(a, b) { if (a !== 0) { var x = a; b(x); } return eval('x') }",
     );
     test(
         "function f(a, b) { { var x = a, y = x; b(y); } return eval('x') }",

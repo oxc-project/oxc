@@ -98,6 +98,18 @@ fn test_fold_switch_with_default_to_if() {
         "switch (x) { case 1: for (;;) { if (y()) break; } a(); break; default: b(); }",
         "if (x === 1) { for (; !y();); a(); } else b();",
     );
+    test(
+        "function f(x, a, b) { switch (x) { case 1: a(); break; default: var y = a(); b(y); return eval('y'); } }",
+        "function f(x, a, b) { if (x === 1) a(); else { var y = a(); return b(y), eval('y'); } }",
+    );
+    test(
+        "function f(x, a, b) { switch (x) { default: var y = a(); b(y); return eval('y'); case 1: a(); } }",
+        "function f(x, a, b) { if (x === 1) a(); else { var y = a(); return b(y), eval('y'); } }",
+    );
+    test(
+        "function f(x, a, b) { switch (x) { case 1: a(); break; default: var y = a(); b(y); return () => eval('y'); } }",
+        "function f(x, a, b) { if (x === 1) a(); else { var y = a(); return b(y), () => eval('y'); } }",
+    );
 
     test_same("switch (x) { case 1: a(); default: b(); }");
     test_same("switch (x) { case 1: for (;;) break; default: b(); }");

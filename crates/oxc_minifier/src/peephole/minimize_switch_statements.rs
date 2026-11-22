@@ -8,7 +8,6 @@ use oxc_ast::ast::{
 };
 use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, side_effects::MayHaveSideEffects};
-use oxc_semantic::ScopeFlags;
 use oxc_span::{ContentEq, SPAN};
 
 impl<'a> PeepholeOptimizations {
@@ -120,11 +119,13 @@ impl<'a> PeepholeOptimizations {
             let alternate = if default.consequent.is_empty() {
                 None
             } else {
-                let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
+                let flags = ctx.scoping().scope_flags(scope_id);
+                let alternate_scope_id =
+                    ctx.insert_scope_below_statements(&default.consequent, flags);
                 Some(Statement::new_block_statement_with_scope_id(
                     default.span,
                     default.consequent,
-                    scope_id,
+                    alternate_scope_id,
                     ctx,
                 ))
             };
