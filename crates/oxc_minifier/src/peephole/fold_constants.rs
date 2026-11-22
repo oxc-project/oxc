@@ -827,26 +827,13 @@ impl<'a> PeepholeOptimizations {
                 left.span = left.span.merge_within(right.span, parent_span).unwrap_or(SPAN);
                 let left_last_quasi =
                     left.quasis.last_mut().expect("template literal must have at least one quasi");
-                let right_first_quasi = right
-                    .quasis
-                    .first_mut()
-                    .expect("template literal must have at least one quasi");
-                left_last_quasi.value.raw = Self::concat_template_literal_raw(
-                    [left_last_quasi.value.raw.as_str(), right_first_quasi.value.raw.as_str()],
+                let mut right_quasis = right.quasis.drain(..);
+                Self::join_template_quasis(
+                    left_last_quasi,
+                    right_quasis.next().expect("template literal must have at least one quasi"),
                     ctx,
                 );
-                let new_cooked = if let (Some(cooked1), Some(cooked2)) =
-                    (left_last_quasi.value.cooked, right_first_quasi.value.cooked)
-                {
-                    Some(JSStr::from_js_strs_array_in([cooked1, cooked2], ctx))
-                } else {
-                    None
-                };
-                left_last_quasi.value.cooked = new_cooked;
-                if !right.quasis.is_empty() {
-                    left_last_quasi.tail = false;
-                }
-                left.quasis.extend(right.quasis.drain(1..)); // first quasi is already handled
+                left.quasis.extend(right_quasis);
                 left.expressions.extend(right.expressions.drain(..));
                 return Some(left_expr.take_in(ctx));
             }
@@ -1182,6 +1169,62 @@ impl<'a> PeepholeOptimizations {
                     )
             }
         })
+    }
+
+    pub fn flatten_nested_template_literals(
+        t: &mut TemplateLiteral<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if !t.expressions.iter().any(|expr| matches!(expr, Expression::TemplateLiteral(_))) {
+            return;
+        }
+
+        let mut expressions = ArenaVec::with_capacity_in(t.expressions.len(), ctx);
+        let mut quasis = ArenaVec::with_capacity_in(t.quasis.len(), ctx);
+        let mut outer_quasis = t.quasis.drain(..);
+        quasis.push(outer_quasis.next().unwrap());
+        for (expr, next_quasi) in t.expressions.drain(..).zip(outer_quasis) {
+            if let Expression::TemplateLiteral(nested) = expr {
+                let TemplateLiteral { quasis: nested_quasis, expressions: nested_exprs, .. } =
+                    nested.unbox();
+                let mut nested_quasis = nested_quasis.into_iter();
+                Self::join_template_quasis(
+                    quasis.last_mut().unwrap(),
+                    nested_quasis.next().unwrap(),
+                    ctx,
+                );
+                quasis.extend(nested_quasis);
+                expressions.extend(nested_exprs);
+                Self::join_template_quasis(quasis.last_mut().unwrap(), next_quasi, ctx);
+            } else {
+                expressions.push(expr);
+                quasis.push(next_quasi);
+            }
+        }
+        t.expressions = expressions;
+        t.quasis = quasis;
+        ctx.notice_change();
+    }
+
+    fn join_template_quasis(
+        left: &mut TemplateElement<'a>,
+        right: TemplateElement<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) {
+        left.tail = right.tail;
+        if left.value.raw.is_empty() {
+            left.value = right.value;
+        } else if !right.value.raw.is_empty() {
+            left.value.raw = Self::concat_template_literal_raw(
+                [left.value.raw.as_str(), right.value.raw.as_str()],
+                ctx,
+            );
+            left.value.cooked = left
+                .value
+                .cooked
+                .zip(right.value.cooked)
+                .map(|cooked| JSStr::from_js_strs_array_in(cooked.into(), ctx));
+        }
     }
 
     /// Inline constant values in template literals

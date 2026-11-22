@@ -1567,6 +1567,16 @@ fn test_inline_values_in_template_literal() {
 }
 
 #[test]
+fn flatten_nested_template_literals() {
+    fold("`${x} ${`A ${r}`}`", "`${x} A ${r}`");
+    fold("`${`${`${x}`}`}`", "`${x}`");
+    fold("`a${`b${f()}c${g()}d`}e${h()}f${`g${i()}h`}i`", "`ab${f()}c${g()}de${h()}fg${i()}hi`");
+    fold_same("`a${tag`b${x}c`}d`");
+    fold_same("tag`a${`b${x}c`}d`");
+    fold("tag`a${`b${`c${x}`}d`}e`", "tag`a${`bc${x}d`}e`");
+}
+
+#[test]
 fn template_joins_preserve_raw_boundaries() {
     fold(r#"x = `${z}$` + "{a}\uD800""#, r"x = `${z}$\{a}\ud800`");
     fold(r#"x = `$${"{a}\uD800"}${z}`"#, r"x = `$\{a}\ud800${z}`");
@@ -1575,6 +1585,9 @@ fn template_joins_preserve_raw_boundaries() {
     fold(r#"x = `${z}\0` + "1\uD800""#, r"x = `${z}\x001\ud800`");
     fold(r"x = `${z}\0` + `1${w}`", r"x = `${z}\x001${w}`");
     fold(r#"x = `${z}\0${""}1${w}`"#, r"x = `${z}\x001${w}`");
+    fold(r"`$${`{a}${z}\0`}1`", r"`$\{a}${z}\x001`");
+    fold(r"`\0${`1${z}$`}{a}`", r"`\x001${z}$\{a}`");
+    fold(r"`\uD800${`\uDC00${z}\uD800`}\uDC00`", r"`\uD800\uDC00${z}\uD800\uDC00`");
     // An escaped backslash followed by zero is not a null escape.
     fold(r#"x = `${z}\\0` + "1\uD800""#, r"x = `${z}\\01\ud800`");
     fold(r#"x = `${z}\\\0` + "1\uD800""#, r"x = `${z}\\\x001\ud800`");

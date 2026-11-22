@@ -577,6 +577,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         } else {
             match expr {
                 Expression::TemplateLiteral(t) => {
+                    Self::flatten_nested_template_literals(t, ctx);
                     Self::inline_template_literal(t, ctx);
                     Self::substitute_template_literal(expr, ctx);
                 }
