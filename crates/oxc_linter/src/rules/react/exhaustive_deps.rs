@@ -1443,7 +1443,7 @@ impl<'a> VisitJs<'a> for ExhaustiveDepsVisitor<'a, '_> {
                         return;
                     };
 
-                    if name != "useState" && name != "useReducer" {
+                    if name != "useState" {
                         return;
                     }
 
@@ -2885,6 +2885,14 @@ const Component = ({ filter }) => {
         r"function MyComponent(props) {
           const isError = props.value instanceof Error;
           useMemo(() => isError, [isError]);
+        }",
+        r"import { useLayoutEffect, useReducer } from 'react';
+        export function useRerenderWhen(swapped) {
+          const [, bump] = useReducer((n) => n + 1, 0);
+          useLayoutEffect(() => {
+            if (!swapped) return;
+            bump();
+          });
         }",
     ];
 
