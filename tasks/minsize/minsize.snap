@@ -21,7 +21,7 @@ Original    | minified    | minified    | gzip        | gzip        | Iterations
 
 3.20 MB     | 958,122 B   | 1.01 MB     | 316,904 B   | 331.56 kB   |           2 | echarts.js
 
-6.69 MB     | 2,119,398 B | 2.31 MB     | 452,871 B   | 488.28 kB   |           4 | antd.js
+6.69 MB     | 2,119,376 B | 2.31 MB     | 452,860 B   | 488.28 kB   |           4 | antd.js
 
-10.95 MB    | 3,302,659 B | 3.49 MB     | 844,492 B   | 915.50 kB   |           4 | typescript.js
+10.95 MB    | 3,302,505 B | 3.49 MB     | 844,518 B   | 915.50 kB   |           4 | typescript.js
 
