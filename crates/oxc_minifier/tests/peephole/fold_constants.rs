@@ -982,15 +982,15 @@ fn test_string_add() {
     fold("x = 1 + 1 + 'a'", "x = '2a'");
     fold("x = 1 + 1 + 'a'", "x = '2a'");
     fold("x = 'a' + (1 + 1)", "x = 'a2'");
-    // fold("x = '_' + p1 + '_' + ('' + p2)", "x = '_' + p1 + '_' + p2");
+    fold("x = '_' + p1 + '_' + ('' + p2)", "x = '_' + p1 + '_' + p2");
     fold("x = 'a' + ('_' + 1 + 1)", "x = 'a_11'");
     fold("x = 'a' + ('_' + 1) + 1", "x = 'a_11'");
     // fold("x = 1 + (p1 + '_') + ('' + p2)", "x = 1 + (p1 + '_') + p2");
     // fold("x = 1 + p1 + '_' + ('' + p2)", "x = 1 + p1 + '_' + p2");
     fold("x = 1 + 'a' + p1", "x = '1a' + p1");
     // fold("x = (p1 + (p2 + 'a')) + 'b'", "x = (p1 + (p2 + 'ab'))");
-    // fold("'a' + ('b' + p1) + 1", "'ab' + p1 + 1");
-    // fold("x = 'a' + ('b' + p1 + 'c')", "x = 'ab' + (p1 + 'c')");
+    fold("'a' + ('b' + p1) + 1", "'ab' + p1 + 1");
+    fold("x = 'a' + ('b' + p1 + 'c')", "x = 'ab' + p1 + 'c'");
     fold("void 0 + ''", "'undefined'");
 
     fold("`${a}` + `${b}`", "`${a}${b}`");
@@ -1007,7 +1007,7 @@ fn test_string_add() {
     fold_same("x = 'a' + (4 + p1 + 'a')");
     fold_same("x = p1 / 3 + 4");
     fold_same("foo() + 3 + 'a' + foo()");
-    fold_same("x = 'a' + ('b' + p1 + p2)");
+    fold("x = 'a' + ('b' + p1 + p2)", "x = 'ab' + p1 + p2");
     fold_same("x = 1 + ('a' + p1)");
     fold_same("x = p1 + '' + p2");
     fold_same("x = 'a' + (1 + p1)");
@@ -1413,8 +1413,9 @@ fn test_does_not_duplicate_large_tracked_strings_when_folding_addition() {
     test_same(
         "const p = 'PAYLOADpayload0123456789PAYLOADpayload0123456789'; export const a = atob(p); export const b = 'y' + p;",
     );
-    test_same(
+    test(
         "const p = 'PAYLOADpayload0123456789PAYLOADpayload0123456789'; export const a = atob(p); export const b = 'x' + ('y' + p);",
+        "const p = 'PAYLOADpayload0123456789PAYLOADpayload0123456789'; export const a = atob(p); export const b = 'xy' + p;",
     );
 
     // A large string with one read is still inlineable and foldable.
