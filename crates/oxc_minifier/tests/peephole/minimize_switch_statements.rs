@@ -94,12 +94,22 @@ fn test_fold_switch_with_default_to_if() {
         "for (;;) switch (x) { case 1: a(); break; default: b(); }",
         "for (;;) x === 1 ? a() : b();",
     );
+    test(
+        "switch (x) { case 1: for (;;) { if (y()) break; } a(); break; default: b(); }",
+        "if (x === 1) { for (; !y();); a(); } else b();",
+    );
 
     test_same("switch (x) { case 1: a(); default: b(); }");
     test_same("switch (x) { case 1: for (;;) break; default: b(); }");
     test_same("switch (x) { default: b(); case 1: a(); }");
     test_same("switch (x) { case 1: if (y) break; a(); break; default: b(); }");
     test_same("switch (x) { case 1: a(); break; default: if (y) break; b(); }");
+    test_same(
+        "switch (x) { case 1: l: { if (y) break; if (z) break l; a(); } break; default: b(); }",
+    );
+    test_same(
+        "switch (x) { case 1: try { if (y) break; a(); } finally { c(); } break; default: b(); }",
+    );
     test_same("switch (x) { case 1: let y = a(); break; default: y = b(); }");
     test_same("switch (x) { case 1: a(); break; default: function f() {} }");
     test_same("switch (x) { case 1: a(); break; case 2: b(); }");
