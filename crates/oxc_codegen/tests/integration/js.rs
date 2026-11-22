@@ -1,7 +1,9 @@
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_codegen::{Codegen, CodegenOptions, IndentChar};
-use oxc_span::SPAN;
+use oxc_parser::Parser;
+use oxc_semantic::SemanticBuilder;
+use oxc_span::{SPAN, SourceType};
 
 use crate::tester::{
     test, test_ascii, test_minify, test_minify_same, test_options, test_same,
@@ -391,6 +393,28 @@ fn shorthand() {
     // https://github.com/tc39/test262/blob/05c45a4c430ab6fee3e0c7f0d47d8a30d8876a6d/test/language/expressions/object/__proto__-permitted-dup-shorthand.js
     test("var obj = { __proto__, __proto__, };", "var obj = {\n\t__proto__,\n\t__proto__\n};\n");
     test("var obj = { __proto__: __proto__, };", "var obj = { __proto__: __proto__ };\n");
+}
+
+#[test]
+fn renamed_proto_shorthand() {
+    let source = "let __proto__; x = [{ __proto__ }, { __proto__: __proto__ }];";
+    for (minify, expected) in [
+        (false, "let a;\nx = [{ [\"__proto__\"]: a }, { __proto__: a }];\n"),
+        (true, "let a;x=[{[\"__proto__\"]:a},{__proto__:a}];"),
+    ] {
+        let allocator = Allocator::default();
+        let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
+        assert!(parsed.diagnostics.is_empty());
+        let mut scoping = SemanticBuilder::new().build(&parsed.program).semantic.into_scoping();
+        let symbol_id = scoping.get_binding(scoping.root_scope_id(), "__proto__".into()).unwrap();
+        scoping.set_symbol_name(symbol_id, "a".into());
+        let code = Codegen::new()
+            .with_options(CodegenOptions { minify, ..CodegenOptions::default() })
+            .with_scoping(Some(scoping))
+            .build(&parsed.program)
+            .code;
+        assert_eq!(code, expected);
+    }
 }
 
 #[test]
