@@ -1489,6 +1489,7 @@ export interface DummyRuleMap {
   "typescript/no-unsafe-argument"?: RuleNoConfig;
   "typescript/no-unsafe-assignment"?: RuleNoConfig;
   "typescript/no-unsafe-call"?: RuleNoConfig;
+  "typescript/no-unsafe-class-instance-assignment"?: RuleNoConfig;
   "typescript/no-unsafe-declaration-merging"?: RuleNoConfig;
   "typescript/no-unsafe-enum-assignment"?: RuleNoConfig;
   "typescript/no-unsafe-enum-comparison"?: RuleNoConfig;

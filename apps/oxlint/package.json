@@ -67,7 +67,7 @@
     "serialize-javascript": "^7.0.4",
     "tsdown": "catalog:",
     "tsx": "^4.21.0",
-    "type-fest": "^5.2.0",
+    "type-fest": "^6.0.0",
     "vite-plus": "catalog:",
     "vitest": "catalog:",
     "vscode-languageserver-protocol": "^3.17.5",

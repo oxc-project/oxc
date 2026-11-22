@@ -267,14 +267,8 @@ fn test_handle_switch_statement() {
     test("switch (a) { case 1: case 2: default: b(); break;}", "a, b();");
 
     test("switch (a) { default: break; case 1: break;}", "a;");
-    test(
-        "switch (a) { default: b();break;case 1: c();break;}",
-        "switch (a) { default: b();break;case 1: c();}",
-    ); // a === 1 ? c() : b();
-    test(
-        "switch (a) { default: {b();break;} case 1: {c();break;}}",
-        "switch (a) { default: b();break;case 1: c(); }",
-    ); // a === 1 ? c() : b();
+    test("switch (a) { default: b();break;case 1: c();break;}", "a === 1 ? c() : b();");
+    test("switch (a) { default: {b();break;} case 1: {c();break;}}", "a === 1 ? c() : b();");
 
     test("switch (a) { case b(): default:}", "switch (a) { case b(): }"); // a, b();
     test("switch (a) { case 2: case 1: break; default: break;}", "a;");

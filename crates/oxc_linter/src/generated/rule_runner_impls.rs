@@ -1958,6 +1958,11 @@ impl RuleRunner for crate::rules::typescript::no_unsafe_call::NoUnsafeCall {
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
 }
 
+impl RuleRunner for crate::rules::typescript::no_unsafe_class_instance_assignment::NoUnsafeClassInstanceAssignment {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
+}
+
 impl RuleRunner
     for crate::rules::typescript::no_unsafe_declaration_merging::NoUnsafeDeclarationMerging
 {

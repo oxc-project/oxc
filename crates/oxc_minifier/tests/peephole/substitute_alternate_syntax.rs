@@ -862,6 +862,15 @@ fn test_fold_number_constructor() {
     test("x = Number(true)", "x = 1");
     test("x = Number(false)", "x = 0");
     test("x = Number('foo')", "x = NaN");
+    test("x = Number(+'2.5')", "x = 2.5");
+    test("x = Number(-'2.5')", "x = -2.5");
+    test("x = Number(+-'2.5')", "x = -2.5");
+    test("x = Number(-'0')", "x = -0");
+    test("x = Number(-'foo')", "x = NaN");
+    test("x = Number(void 0)", "x = NaN");
+    test_same("x = Number(-y)");
+    test_same("x = Number(+1n)");
+    test_same("x = Number(-1n)");
     test_same("x = Number(void f())");
     test_same("x = Number([f(), 1])");
 }
