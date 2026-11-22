@@ -403,8 +403,8 @@ impl<'a> PeepholeOptimizations {
                         .and_then(|_| ctx.eval_binary(e))
                 })
             }
-            BinaryOperator::Division => Self::try_fold_safe_integer_numeric_expression(e, ctx)
-                .or_else(|| {
+            BinaryOperator::Division => {
+                Self::try_fold_shorter_numeric_expression(e, ctx).or_else(|| {
                     Self::extract_numeric_values(e, ctx)
                         .filter(|(left, right)| {
                             *left == 0.0
@@ -415,7 +415,8 @@ impl<'a> PeepholeOptimizations {
                                 || right.is_infinite()
                         })
                         .and_then(|_| ctx.eval_binary(e))
-                }),
+                })
+            }
             BinaryOperator::ShiftLeft => {
                 Self::extract_numeric_values(e, ctx).and_then(|(left, right)| {
                     let result = e.evaluate_value(ctx)?.into_number()?;

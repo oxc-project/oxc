@@ -1120,12 +1120,18 @@ fn test_fold_division() {
     fold("x = -0 / 1", "x = -0");
     fold("x = -5e-324 / 2", "x = -0");
     fold("x = 9007199254740992 / 2", "x = 4503599627370496");
+    fold("x = 1 / 2", "x = .5");
+    fold("x = 1 / 10", "x = .1");
+    fold("x = 2 / 4", "x = .5");
+    fold("x = -1 / 2", "x = -.5");
+    fold("x = 3 / 2", "x = 1.5");
+    fold("x = 1e-323 / 2", "x = 5e-324");
+    fold("x = 9007199254740991 / 0.5", "x = 18014398509481982");
 
-    fold_same("x = 2 / 4");
+    fold_same("x = 1 / 3");
+    fold_same("x = 1 / 8");
     fold_same("x = 0.3 / 0.1");
-    fold_same("x = 1e-323 / 2");
     fold_same("x = 1 / 1e-15");
-    fold_same("x = 9007199254740991 / 0.5");
     fold_same("x = f() / 2");
     fold("x = (void f()) / 1", "x = +void f()");
     fold_same("x = ({ valueOf: f }) / 2");
