@@ -1058,11 +1058,8 @@ impl<'a> Visit<'a> for ContainsSuspension {
 impl<'a> Visit<'a> for ClassBindingRebinder<'a, '_> {
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
         let reference_id = ident.reference_id();
-        let scoping = self.ctx.scoping_mut();
-        if scoping.get_reference(reference_id).symbol_id() == Some(self.outer_symbol) {
-            scoping.get_reference_mut(reference_id).set_symbol_id(self.inner_symbol);
-            scoping.delete_resolved_reference(self.outer_symbol, reference_id);
-            scoping.add_resolved_reference(self.inner_symbol, reference_id);
+        if self.ctx.scoping().get_reference(reference_id).symbol_id() == Some(self.outer_symbol) {
+            self.ctx.rebind_reference(reference_id, ident.name, self.inner_symbol);
         }
     }
 }

@@ -1402,23 +1402,15 @@ impl<'a, 'ctx> ClassReferenceChanger<'a, 'ctx> {
 impl<'a> VisitMut<'a> for ClassReferenceChanger<'a, '_> {
     #[inline]
     fn visit_identifier_reference(&mut self, ident: &mut IdentifierReference<'a>) {
-        let reference_id = ident.reference_id();
-        let class_symbol_id = self.class_binding.symbol_id;
-        if self.ctx.scoping().get_reference(reference_id).symbol_id() != Some(class_symbol_id) {
+        let symbol_id = self.ctx.scoping().get_reference(ident.reference_id()).symbol_id();
+        if symbol_id != Some(self.class_binding.symbol_id) {
             return;
         }
 
-        // Rewrite the reference to point to the class alias, keeping its `ReferenceId` and flags,
-        // and move it from the class symbol's resolved references to the alias symbol's.
+        // Rebind the reference to the class alias, keeping its `ReferenceId` and flags
         let alias_binding = self.class_alias_binding.get_or_insert_with(|| {
             VarDeclarationsStore::create_uid_var(&self.class_binding.name, self.ctx)
         });
-        ident.name = alias_binding.name;
-        let alias_symbol_id = alias_binding.symbol_id;
-
-        let scoping = self.ctx.scoping_mut();
-        scoping.get_reference_mut(reference_id).set_symbol_id(alias_symbol_id);
-        scoping.delete_resolved_reference(class_symbol_id, reference_id);
-        scoping.add_resolved_reference(alias_symbol_id, reference_id);
+        self.ctx.rebind_identifier_reference(ident, alias_binding);
     }
 }
