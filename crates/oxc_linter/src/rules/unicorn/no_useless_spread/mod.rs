@@ -316,11 +316,7 @@ fn diagnose_array_in_array_spread<'a>(
     scope_id: ScopeId,
 ) {
     if rest.is_empty() {
-        // Spreading an array makes its holes dense `undefined` elements, so an
-        // elision must be replaced, or the fix would change the behavior.
-        // `[...[,]]` becomes `[undefined]`.
         if inner_array.elements.iter().any(is_elision) {
-            // compute replacer before the closure so we don't capture `ctx` by reference inside the fixer closure
             let mut replacer = String::with_capacity(inner_array.span.size() as usize + 2);
             replacer.push('[');
             replacer.push_str(&spread_arguments_text(inner_array, scope_id, ctx));
@@ -840,8 +836,6 @@ fn test() {
         ("[...[1,2,3], ...[4,5,6]]", "[1, 2, 3, 4, 5, 6]"),
         ("[...[1,2,3], ...x]", "[...[1,2,3], ...x]"),
         ("[...[...[1,2,3]]]", "[...[1,2,3]]"),
-        // A spread hole becomes a dense `undefined` element, so elisions are
-        // replaced with `undefined` instead of staying holes.
         ("const arr = [...[,]]", "const arr = [undefined]"),
         ("const array = [...[,,]]", "const array = [undefined,undefined]"),
         ("const array = [...[a, , b,]]", "const array = [a, undefined, b]"),
