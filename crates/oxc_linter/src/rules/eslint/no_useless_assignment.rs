@@ -1006,12 +1006,6 @@ fn test() {
                         v = 'used-2'
                         console.log(v);
                     }",
-        "let callback = () => 1;
-                    if (condition) {
-                        callback();
-                    }
-                    callback = () => 2;
-                    callback();",
         "var foo = () => {
                         let v = 'used';
                         console.log(v);
@@ -1607,16 +1601,16 @@ function useResource(unsafe: (resource: { readonly release: () => void }) => voi
         "function f(p, q = (p = 1), r = (p = 2)) { return p; }",
         "function f(p, { [p = 1]: q } = (p = 2, {})) { return p; }",
         "function f(p, { a = (p = 1) } = (p = 2, {})) { return p; }",
+        "let callback = () => 1;
+                    if (condition) {
+                        callback();
+                    }
+                    callback = () => 2;
+                    callback();",
     ];
 
     let fail = vec![
         "function f() { try {} catch (e) { var e = 1; use(e); } e = 2; e = 3; use(e); }",
-        "let callback = () => 1;
-                        callback = () => 2;
-                        callback();",
-        "let callback = function () { return 1; };
-                        callback = () => 2;
-                        callback();",
         "let v = 'used';
                         console.log(v);
                         v = 'unused'",
@@ -1981,6 +1975,12 @@ function useResource(unsafe: (resource: { readonly release: () => void }) => voi
         "function f(p) { use(p); p = 1; }",
         "function f(p, q = p) { p = 1; return q; }",
         "function f(cb = p => { p = 1; p = 2; return p; }) { return cb; }",
+        "let callback = () => 1;
+                        callback = () => 2;
+                        callback();",
+        "let callback = function () { return 1; };
+                        callback = () => 2;
+                        callback();",
     ];
 
     Tester::new(NoUselessAssignment::NAME, NoUselessAssignment::PLUGIN, pass, fail)

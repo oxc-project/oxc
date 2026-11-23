@@ -10,22 +10,6 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing or reusing the assigned value.
 
   ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
-   ╭─[no_useless_assignment.tsx:1:5]
- 1 │ let callback = () => 1;
-   ·     ────────
- 2 │                         callback = () => 2;
-   ╰────
-  help: Consider removing or reusing the assigned value.
-
-  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
-   ╭─[no_useless_assignment.tsx:1:5]
- 1 │ let callback = function () { return 1; };
-   ·     ────────
- 2 │                         callback = () => 2;
-   ╰────
-  help: Consider removing or reusing the assigned value.
-
-  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
    ╭─[no_useless_assignment.tsx:3:25]
  2 │                         console.log(v);
  3 │                         v = 'unused'
@@ -723,5 +707,21 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:1:24]
  1 │ function f(cb = p => { p = 1; p = 2; return p; }) { return cb; }
    ·                        ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:5]
+ 1 │ let callback = () => 1;
+   ·     ────────
+ 2 │                         callback = () => 2;
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:5]
+ 1 │ let callback = function () { return 1; };
+   ·     ────────
+ 2 │                         callback = () => 2;
    ╰────
   help: Consider removing or reusing the assigned value.
