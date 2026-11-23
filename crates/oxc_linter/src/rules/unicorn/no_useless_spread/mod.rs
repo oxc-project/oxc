@@ -836,13 +836,7 @@ fn test() {
         ("[...[1,2,3], ...[4,5,6]]", "[1, 2, 3, 4, 5, 6]"),
         ("[...[1,2,3], ...x]", "[...[1,2,3], ...x]"),
         ("[...[...[1,2,3]]]", "[...[1,2,3]]"),
-        ("const arr = [...[,]]", "const arr = [undefined]"),
-        ("const array = [...[,,]]", "const array = [undefined,undefined]"),
         ("const array = [...[a, , b,]]", "const array = [a, undefined, b]"),
-        (
-            "function f(undefined) { const a = [...[,]]; }",
-            "function f(undefined) { const a = [void 0]; }",
-        ),
         ("foo(...[,])", "foo(undefined)"),
         ("new Foo(...[,])", "new Foo(undefined)"),
         ("foo(...[,,])", "foo(undefined,undefined)"),
@@ -896,6 +890,12 @@ fn test() {
       onClick: () => console.log('click'),
     });",
             "jsxEl(({\n\tclassName,\n\tonClick: () => console.log('click')\n}));",
+        ),
+        ("const arr = [...[,]]", "const arr = [undefined]"),
+        ("const array = [...[,,]]", "const array = [undefined,undefined]"),
+        (
+            "function f(undefined) { const a = [...[,]]; }",
+            "function f(undefined) { const a = [void 0]; }",
         ),
     ];
     Tester::new(NoUselessSpread::NAME, NoUselessSpread::PLUGIN, pass, fail)
