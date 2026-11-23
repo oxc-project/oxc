@@ -22,6 +22,7 @@ pub mod no_test_return_statement;
 pub mod no_unneeded_async_expect_function;
 pub mod padding_around_after_all_blocks;
 pub mod padding_around_after_each_blocks;
+pub mod padding_around_all;
 pub mod padding_around_before_all_blocks;
 pub mod padding_around_before_each_blocks;
 pub mod padding_around_describe_blocks;

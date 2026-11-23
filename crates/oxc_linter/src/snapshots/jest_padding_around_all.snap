@@ -1,0 +1,169 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ jest(padding-around-all): Expected blank line before this statement
+   ╭─[padding_around_all.tsx:3:1]
+ 2 │ const someText = 'abc';
+ 3 │ afterAll(() => {
+   · ▲
+ 4 │ });
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ jest(padding-around-all): Expected blank line before this statement
+   ╭─[padding_around_all.tsx:5:1]
+ 4 │ });
+ 5 │ describe('someText', () => {
+   · ▲
+ 6 │   const something = 'abc';
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ jest(padding-around-all): Expected blank line before this statement
+   ╭─[padding_around_all.tsx:8:3]
+ 7 │   // A comment
+ 8 │   afterAll(() => {
+   ·   ▲
+ 9 │     // stuff
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ jest(padding-around-all): Expected blank line before this statement
+    ╭─[padding_around_all.tsx:11:3]
+ 10 │   });
+ 11 │   afterAll(() => {
+    ·   ▲
+ 12 │     // other stuff
+    ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ jest(padding-around-all): Expected blank line before this statement
+    ╭─[padding_around_all.tsx:18:3]
+ 17 │   const something = 'abc';
+ 18 │   afterAll(() => {
+    ·   ▲
+ 19 │     // stuff
+    ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ jest(padding-around-all): Expected blank line before this statement
+   ╭─[padding_around_all.tsx:2:2]
+ 1 │ const someText = 'abc'
+ 2 │ ;afterEach(() => {})
+   ·  ▲
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ jest(padding-around-all): Expected blank line before this statement
+   ╭─[padding_around_all.tsx:2:1]
+ 1 │ const someText = 'abc';
+ 2 │ xyz:
+   · ▲
+ 3 │ afterEach(() => {});
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ jest(padding-around-all): Expected blank line before this statement
+   ╭─[padding_around_all.tsx:2:1]
+ 1 │ const expr = 'Papayas';
+ 2 │ beforeEach(() => {});
+   · ▲
+ 3 │ it('does something?', () => {
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ jest(padding-around-all): Expected blank line before this statement
+   ╭─[padding_around_all.tsx:3:1]
+ 2 │ beforeEach(() => {});
+ 3 │ it('does something?', () => {
+   · ▲
+ 4 │   switch (expr) {
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ jest(padding-around-all): Expected blank line before this statement
+   ╭─[padding_around_all.tsx:7:7]
+ 6 │       expect(expr).toBe('Oranges');
+ 7 │       break;
+   ·       ▲
+ 8 │     case 'Mangoes':
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ jest(padding-around-all): Expected blank line before this statement
+    ╭─[padding_around_all.tsx:11:7]
+ 10 │       const v = 1;
+ 11 │       expect(v).toBe(1);
+    ·       ▲
+ 12 │       console.log('Mangoes and papayas are $2.79 a pound.');
+    ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ jest(padding-around-all): Expected blank line before this statement
+    ╭─[padding_around_all.tsx:12:7]
+ 11 │       expect(v).toBe(1);
+ 12 │       console.log('Mangoes and papayas are $2.79 a pound.');
+    ·       ▲
+ 13 │       // Expected output: "Mangoes and papayas are $2.79 a pound."
+    ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ jest(padding-around-all): Expected blank line before this statement
+   ╭─[padding_around_all.tsx:2:1]
+ 1 │ const thing = 123;
+ 2 │ beforeEach(() => {});
+   · ▲
+ 3 │ test('foo', () => {
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ jest(padding-around-all): Expected blank line before this statement
+   ╭─[padding_around_all.tsx:3:1]
+ 2 │ beforeEach(() => {});
+ 3 │ test('foo', () => {
+   · ▲
+ 4 │   const value = 1;
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ jest(padding-around-all): Expected blank line before this statement
+   ╭─[padding_around_all.tsx:5:3]
+ 4 │   const value = 1;
+ 5 │   expect(value).toBe(1);
+   ·   ▲
+ 6 │ });
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ jest(padding-around-all): Expected blank line before this statement
+   ╭─[padding_around_all.tsx:2:1]
+ 1 │ describe('a', () => {});
+ 2 │ test('b', () => {});
+   · ▲
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ jest(padding-around-all): Expected blank line before this statement
+   ╭─[padding_around_all.tsx:2:1]
+ 1 │ beforeEach(() => {});
+ 2 │ afterEach(() => {});
+   · ▲
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ jest(padding-around-all): Expected blank line before this statement
+   ╭─[padding_around_all.tsx:2:1]
+ 1 │ test('a', () => {});
+ 2 │ expect(1).toBe(1);
+   · ▲
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ jest(padding-around-all): Expected blank line before this statement
+   ╭─[padding_around_all.tsx:2:1]
+ 1 │ expect(value).toBe(1);
+ 2 │ expectTypeOf(value).toBeNumber();
+   · ▲
+   ╰────
+  help: Insert a blank line before this statement
