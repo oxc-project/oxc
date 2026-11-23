@@ -36,6 +36,7 @@ use std::{
 
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
+use tracing::{debug, error, info, warn};
 
 use super::{
     Config, MessageType, TsGoLintDiagnostic, TsGoLintMessage, decode_message, read_frame,
@@ -161,6 +162,9 @@ struct Connection {
     /// The senders of the requests waiting for their terminal frame, by request id.
     pending: Pending,
     alive: Arc<AtomicBool>,
+    /// Set once the process is asked to shut down, so its exit is expected.
+    stopping: Arc<AtomicBool>,
+    pid: u32,
 }
 
 impl Connection {
@@ -180,6 +184,7 @@ impl Connection {
             .map(|(id, _)| *id)
             .collect();
         for id in ids {
+            debug!("canceling tsrs-lint server request {id}");
             let _ = self.send(CANCEL, &CancelMessage { id });
         }
     }
@@ -203,18 +208,28 @@ impl Connection {
 impl Drop for Connection {
     /// Asks the process to shut down, and kills it if it does not exit in time.
     fn drop(&mut self) {
+        self.stopping.store(true, Ordering::Release);
         if self.is_alive() {
+            debug!("asking tsrs-lint server (pid {}) to shut down", self.pid);
             let _ = self.send(SHUTDOWN, &serde_json::json!({}));
         }
         let child = self.child.get_mut().expect("tsrs-lint child mutex poisoned");
         let deadline = Instant::now() + SHUTDOWN_TIMEOUT;
         while Instant::now() < deadline {
             match child.try_wait() {
-                Ok(Some(_)) => return,
+                Ok(Some(status)) => {
+                    debug!("tsrs-lint server (pid {}) exited with {status}", self.pid);
+                    return;
+                }
                 Ok(None) => std::thread::sleep(Duration::from_millis(10)),
                 Err(_) => break,
             }
         }
+        warn!(
+            "tsrs-lint server (pid {}) did not exit within {} seconds, killing it",
+            self.pid,
+            SHUTDOWN_TIMEOUT.as_secs()
+        );
         let _ = child.kill();
         let _ = child.wait();
     }
@@ -316,6 +331,7 @@ impl TsrsLintServer {
     /// Panics if an internal mutex is poisoned.
     pub fn stop(&self) {
         let mut connection = self.connection.lock().expect("tsrs-lint connection mutex poisoned");
+        info!("stopping tsrs-lint server for `{}`", self.cwd.display());
         *self.disabled.lock().expect("tsrs-lint disabled mutex poisoned") =
             Some("tsrs-lint server was stopped".to_string());
         // Dropping the connection shuts the process down.
@@ -451,6 +467,7 @@ impl TsrsLintServer {
             connection
         };
 
+        let started = Instant::now();
         let mut diagnostics = vec![];
         let result = loop {
             match events.recv() {
@@ -462,6 +479,19 @@ impl TsrsLintServer {
             }
         };
         connection.pending.lock().expect("tsrs-lint pending mutex poisoned").remove(&id);
+        let elapsed = started.elapsed().as_millis();
+        match &result {
+            Ok(diagnostics) => debug!(
+                "tsrs-lint server request {id}: {} diagnostics in {elapsed} ms",
+                diagnostics.len()
+            ),
+            Err(LintError::Canceled) => {
+                debug!("tsrs-lint server request {id} canceled after {elapsed} ms");
+            }
+            Err(LintError::Failed(error)) => {
+                warn!("tsrs-lint server request {id} failed after {elapsed} ms: {error}");
+            }
+        }
         result
     }
 
@@ -490,16 +520,19 @@ impl TsrsLintServer {
                 START_WINDOW.as_secs(),
                 last_exit.as_deref().unwrap_or("unknown")
             );
+            error!("{reason}");
             *disabled = Some(reason.clone());
             return Err(reason);
         }
         let connection = match self.spawn() {
             Ok(connection) => Arc::new(connection),
             Err(SpawnError::Incompatible(reason)) => {
+                error!("{reason}");
                 *disabled = Some(reason.clone());
                 return Err(reason);
             }
             Err(SpawnError::Failed(error)) => {
+                warn!("{error}");
                 *self.last_exit.lock().expect("tsrs-lint last exit mutex poisoned") =
                     Some(error.clone());
                 return Err(error);
@@ -541,6 +574,7 @@ impl TsrsLintServer {
     /// Starts a process and completes the handshake with it.
     fn spawn(&self) -> Result<Connection, SpawnError> {
         let path = self.executable_path.display();
+        info!("starting tsrs-lint server `{path}` in `{}`", self.cwd.display());
         let mut child = type_aware_command(&self.executable_path, "server")
             .current_dir(&self.cwd)
             .spawn()
@@ -553,15 +587,23 @@ impl TsrsLintServer {
         let stdout = child.stdout.take().expect("Failed to open tsrs-lint stdout");
         let pending: Pending = Arc::default();
         let alive = Arc::new(AtomicBool::new(true));
+        let stopping = Arc::new(AtomicBool::new(false));
+        let pid = child.id();
         let (hello_sender, hello) = mpsc::channel();
         {
             let pending = Arc::clone(&pending);
             let alive = Arc::clone(&alive);
+            let stopping = Arc::clone(&stopping);
             let last_exit = Arc::clone(&self.last_exit);
             std::thread::Builder::new()
                 .name("tsrs-lint-reader".into())
                 .spawn(move || {
                     let exit_error = read_loop(stdout, &pending, &alive, &hello_sender);
+                    if stopping.load(Ordering::Acquire) {
+                        debug!("tsrs-lint server (pid {pid}) stopped: {exit_error}");
+                    } else {
+                        warn!("tsrs-lint server (pid {pid}) stopped unexpectedly: {exit_error}");
+                    }
                     *last_exit.lock().expect("tsrs-lint last exit mutex poisoned") =
                         Some(exit_error);
                 })
@@ -569,13 +611,25 @@ impl TsrsLintServer {
                     SpawnError::Failed(format!("Failed to start the tsrs-lint reader thread: {e}"))
                 })?;
         }
-        let connection =
-            Connection { child: Mutex::new(child), stdin: Mutex::new(stdin), pending, alive };
+        let connection = Connection {
+            child: Mutex::new(child),
+            stdin: Mutex::new(stdin),
+            pending,
+            alive,
+            stopping,
+            pid,
+        };
         // A `tsrs-lint` without server mode exits without reading its input, so the write may
         // fail: its answer, or the end of its output, tells what happened.
         let _ = connection.send(HELLO, &HelloMessage { protocol_version: PROTOCOL_VERSION });
         match hello.recv_timeout(HANDSHAKE_TIMEOUT) {
-            Ok(hello) if hello.protocol_version == PROTOCOL_VERSION => Ok(connection),
+            Ok(hello) if hello.protocol_version == PROTOCOL_VERSION => {
+                info!(
+                    "tsrs-lint server {} (pid {pid}, protocol {PROTOCOL_VERSION}) started",
+                    hello.version
+                );
+                Ok(connection)
+            }
             Ok(hello) => Err(SpawnError::Incompatible(format!(
                 "`{path}` is tsrs-lint {} and speaks server protocol {}, but this oxlint speaks \
                  protocol {PROTOCOL_VERSION}. Install matching versions of oxlint and tsrs-lint.",

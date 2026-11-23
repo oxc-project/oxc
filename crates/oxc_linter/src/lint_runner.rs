@@ -375,12 +375,15 @@ impl LintRunner {
         if let Some(type_aware_linter) = &self.type_aware_linter {
             match type_aware_linter.lint_source(files, file_system, &self.directives_store.map()) {
                 Ok(tsgo_messages) => messages.extend(tsgo_messages),
-                Err(error) => messages.push(Message::new(
-                    OxcDiagnostic::error("Type-aware linting failed")
-                        .with_help(error)
-                        .with_label(Span::default()),
-                    PossibleFixes::None,
-                )),
+                Err(error) => {
+                    tracing::warn!("type-aware linting failed: {error}");
+                    messages.push(Message::new(
+                        OxcDiagnostic::error("Type-aware linting failed")
+                            .with_help(error)
+                            .with_label(Span::default()),
+                        PossibleFixes::None,
+                    ));
+                }
             }
         }
 

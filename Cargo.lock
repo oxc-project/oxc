@@ -2345,6 +2345,7 @@ dependencies = [
  "simdutf8",
  "smallvec",
  "tempfile",
+ "tracing",
  "unicode-segmentation",
  "url",
 ]

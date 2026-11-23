@@ -298,7 +298,11 @@ impl ServerLinterBuilder {
         let type_aware = options.type_aware.unwrap_or(config_store.type_aware_enabled());
         let config_store_clone = config_store.clone();
         let workspace = self.workspace(root_uri);
-        let tsrs_server = if type_aware && tsrs_server_enabled(options.type_aware_server) {
+        let use_tsrs_server = tsrs_server_enabled(options.type_aware_server);
+        if type_aware && !use_tsrs_server {
+            debug!("tsrs-lint server is turned off for {}", root_uri.as_str());
+        }
+        let tsrs_server = if type_aware && use_tsrs_server {
             workspace.tsrs_server_for(&root_path)
         } else {
             workspace.stop_tsrs_server();
