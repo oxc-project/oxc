@@ -921,6 +921,31 @@ fn test_imports() {
         ("import * as foo from './foo';", "", None, FixKind::DangerousSuggestion),
         ("import { Foo } from './foo';", "", None, FixKind::DangerousSuggestion),
         ("import { Foo as Bar } from './foo';", "", None, FixKind::DangerousSuggestion),
+        // The line break after the import is removed with it
+        (
+            "import foo from './foo';\nexport {};\n",
+            "export {};\n",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "import foo from './foo';\r\nexport {};\r\n",
+            "export {};\r\n",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "import foo from './foo';\rexport {};\r",
+            "export {};\r",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "import foo from './foo';\n\r\nexport {};\n",
+            "\r\nexport {};\n",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
         // Some used
         (
             "import foo, { bar } from './foo'; bar();",
