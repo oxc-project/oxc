@@ -873,8 +873,10 @@ impl<'a> LegacyDecorator<'a> {
                             ctx,
                         );
                         let body = [class_alias_with_this_assignment];
-                        let scope_id =
-                            ctx.create_child_scope_of_current(ScopeFlags::ClassStaticBlock);
+                        let scope_id = ctx.create_child_scope(
+                            class.scope_id(),
+                            ScopeFlags::StrictMode | ScopeFlags::ClassStaticBlock,
+                        );
                         let element =
                             ClassElement::new_static_block_with_scope_id(SPAN, body, scope_id, ctx);
                         Some(element)
@@ -1400,27 +1402,23 @@ impl<'a, 'ctx> ClassReferenceChanger<'a, 'ctx> {
 impl<'a> VisitMut<'a> for ClassReferenceChanger<'a, '_> {
     #[inline]
     fn visit_identifier_reference(&mut self, ident: &mut IdentifierReference<'a>) {
-        if self.is_class_reference(ident) {
-            *ident = self.get_alias_ident_reference();
+        let reference_id = ident.reference_id();
+        let class_symbol_id = self.class_binding.symbol_id;
+        if self.ctx.scoping().get_reference(reference_id).symbol_id() != Some(class_symbol_id) {
+            return;
         }
-    }
-}
 
-impl<'a> ClassReferenceChanger<'a, '_> {
-    // Check if the identifier reference is a reference to the class
-    fn is_class_reference(&self, ident: &IdentifierReference<'a>) -> bool {
-        self.ctx
-            .scoping()
-            .get_reference(ident.reference_id())
-            .symbol_id()
-            .is_some_and(|symbol_id| self.class_binding.symbol_id == symbol_id)
-    }
-
-    fn get_alias_ident_reference(&mut self) -> IdentifierReference<'a> {
-        let binding = self.class_alias_binding.get_or_insert_with(|| {
+        // Rewrite the reference to point to the class alias, keeping its `ReferenceId` and flags,
+        // and move it from the class symbol's resolved references to the alias symbol's.
+        let alias_binding = self.class_alias_binding.get_or_insert_with(|| {
             VarDeclarationsStore::create_uid_var(&self.class_binding.name, self.ctx)
         });
+        ident.name = alias_binding.name;
+        let alias_symbol_id = alias_binding.symbol_id;
 
-        binding.create_read_reference(self.ctx)
+        let scoping = self.ctx.scoping_mut();
+        scoping.get_reference_mut(reference_id).set_symbol_id(alias_symbol_id);
+        scoping.delete_resolved_reference(class_symbol_id, reference_id);
+        scoping.add_resolved_reference(alias_symbol_id, reference_id);
     }
 }
