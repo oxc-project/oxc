@@ -191,6 +191,8 @@ fn test() {
         "Promise.notListedMethod([await promise])",
         "NotPromise.all([await promise])",
         "new Promise.all([await promise])",
+        "globalThis.Promise.all([await promise])",
+        r#"Promise["all"]([await promise])"#,
         "Promise.all([(async () => await promise)()])",
         "Promise.all([(async () => (await fetch(url)).json())(), ...otherPromises])",
         "Promise.all([async function () { await promise }])",
@@ -209,8 +211,6 @@ fn test() {
         "foo([await promise])",
         "foo([(await promise).bar])",
         "(Promise?.all)([await promise])",
-        "globalThis.Promise.all([await promise])",
-        r#"Promise["all"]([await promise])"#,
     ];
 
     let fail = vec![
