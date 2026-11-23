@@ -344,17 +344,6 @@ fn test() {
         ("if (foo.length !== 1) {}", None),
         ("if (foo.length > 1) {}", None),
         ("if (foo.length < 2) {}", None),
-        ("if (foo.length <= 1) {}", None),
-        ("if (foo.length >= 0) {}", None),
-        ("if (0 <= foo.length) {}", None),
-        ("if (1 >= foo.length) {}", None),
-        ("if (foo.length <= -1) {}", None),
-        (r#"if (foo.length <= "0") {}"#, None),
-        ("if (foo.length <= 0n) {}", None),
-        ("if (foo.length <= bar.length) {}", None),
-        ("if (foo?.length <= 0) {}", None),
-        ("if (0 >= foo?.length) {}", None),
-        ("class A { a() { if (this.length <= 0) {} } }", None),
         // need getStaticValue
         // With known static length value
         // (r#"const foo = { size: "small" }; if (foo.size) {}"#, None), // Not a number
@@ -375,6 +364,17 @@ fn test() {
         ("const hasList = Boolean(foo.list?.length)", None),
         ("const hasList = Boolean(foo?.list.length)", None),
         ("const hasList = Boolean(foo?.list?.length)", None),
+        ("if (foo.length <= 1) {}", None),
+        ("if (foo.length >= 0) {}", None),
+        ("if (0 <= foo.length) {}", None),
+        ("if (1 >= foo.length) {}", None),
+        ("if (foo.length <= -1) {}", None),
+        (r#"if (foo.length <= "0") {}"#, None),
+        ("if (foo.length <= 0n) {}", None),
+        ("if (foo.length <= bar.length) {}", None),
+        ("if (foo?.length <= 0) {}", None),
+        ("if (0 >= foo?.length) {}", None),
+        ("class A { a() { if (this.length <= 0) {} } }", None),
     ];
 
     let fail = vec![
@@ -411,23 +411,6 @@ fn test() {
         ("do {} while (foo.length);", "do {} while (foo.length > 0);", None),
         ("for (let i = 0; (bar && !foo.length); i ++) {}", "for (let i = 0; (bar && foo.length === 0); i ++) {}", None),
         ("const isEmpty = foo.length < 1;", "const isEmpty = foo.length === 0;", None),
-        ("const isEmpty = foo.length <= 0;", "const isEmpty = foo.length === 0;", None),
-        ("const isEmpty = 0 >= foo.length;", "const isEmpty = foo.length === 0;", None),
-        ("const isEmpty = foo.size <= 0;", "const isEmpty = foo.size === 0;", None),
-        ("const isEmpty = 0 >= foo.size;", "const isEmpty = foo.size === 0;", None),
-        ("if (!(foo.length <= 0)) {}", "if (foo.length > 0) {}", None),
-        ("if (!(0 >= foo.length)) {}", "if (foo.length > 0) {}", None),
-        (
-            "if (!(foo.length <= 0)) {}",
-            "if (foo.length !== 0) {}",
-            Some(serde_json::json!([{"non-zero": "not-equal"}])),
-        ),
-        (
-            "if (!(0 >= foo.length)) {}",
-            "if (foo.length !== 0) {}",
-            Some(serde_json::json!([{"non-zero": "not-equal"}])),
-        ),
-        ("const isEmpty = Boolean(foo.length <= 0);", "const isEmpty = foo.length === 0;", None),
         ("bar(foo.length >= 1)", "bar(foo.length > 0)", None),
         // ("const bar = void !foo.length;", "const bar = void (foo.length === 0);", None),
         ("const isNotEmpty = Boolean(foo.length)", "const isNotEmpty = foo.length > 0", None),
@@ -455,6 +438,23 @@ fn test() {
         ("switch(foo){case!foo.length:{}}", "switch(foo){case foo.length === 0:{}}", None),
         ("for(const a of!foo.length);", "for(const a of foo.length === 0);", None),
         ("for(const a in!foo.length);", "for(const a in foo.length === 0);", None),
+        ("const isEmpty = foo.length <= 0;", "const isEmpty = foo.length === 0;", None),
+        ("const isEmpty = 0 >= foo.length;", "const isEmpty = foo.length === 0;", None),
+        ("const isEmpty = foo.size <= 0;", "const isEmpty = foo.size === 0;", None),
+        ("const isEmpty = 0 >= foo.size;", "const isEmpty = foo.size === 0;", None),
+        ("if (!(foo.length <= 0)) {}", "if (foo.length > 0) {}", None),
+        ("if (!(0 >= foo.length)) {}", "if (foo.length > 0) {}", None),
+        (
+            "if (!(foo.length <= 0)) {}",
+            "if (foo.length !== 0) {}",
+            Some(serde_json::json!([{"non-zero": "not-equal"}])),
+        ),
+        (
+            "if (!(0 >= foo.length)) {}",
+            "if (foo.length !== 0) {}",
+            Some(serde_json::json!([{"non-zero": "not-equal"}])),
+        ),
+        ("const isEmpty = Boolean(foo.length <= 0);", "const isEmpty = foo.length === 0;", None),
     ];
     Tester::new(ExplicitLengthCheck::NAME, ExplicitLengthCheck::PLUGIN, pass, fail)
         .expect_fix(fixes)
