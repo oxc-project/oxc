@@ -1,7 +1,7 @@
 use std::iter::repeat_with;
 
 use crate::generated::ancestor::Ancestor;
-use oxc_allocator::{ArenaVec, CloneIn, GetAllocator, TakeIn};
+use oxc_allocator::{ArenaVec, CloneIn, GetAllocator, ReplaceWith, TakeIn};
 use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
@@ -19,7 +19,6 @@ use oxc_span::{GetSpan, SPAN};
 use oxc_str::static_ident;
 use oxc_syntax::{
     identifier::is_identifier_name_patched,
-    number::NumberBase,
     operator::{BinaryOperator, UnaryOperator},
     precedence::GetPrecedence,
 };
@@ -36,7 +35,8 @@ impl<'a> PeepholeOptimizations {
     pub fn substitute_object_property(prop: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {
         // <https://tc39.es/ecma262/2024/multipage/ecmascript-language-expressions.html#sec-runtime-semantics-propertydefinitionevaluation>
         if !prop.method
-            && let PropertyKey::StringLiteral(str) = &prop.key
+            && let PropertyKey::StringLiteral(str) | PropertyKey::StaticStringLiteral(str) =
+                &prop.key
         {
             // "{ __proto__ }" sets prototype, while "{ ['__proto__'] }" does not
             if str.value == "__proto__" {
@@ -47,7 +47,7 @@ impl<'a> PeepholeOptimizations {
         // Normalise the key before checking shorthand: `try_compress_property_key`
         // can turn `{ "x": x }` into `{ x: x }`, which then becomes a candidate
         // for shorthand normalisation in the same visit.
-        Self::try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
+        Self::try_compress_property_key(&mut prop.key, ctx);
         Self::normalize_object_property_shorthand(prop);
     }
 
@@ -64,7 +64,7 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         let Expression::Identifier(value) = &prop.value else { return };
-        if prop.computed || prop.method || prop.kind != PropertyKind::Init {
+        if prop.key.is_computed() || prop.method || prop.kind != PropertyKind::Init {
             return;
         }
         let PropertyKey::StaticIdentifier(key) = &prop.key else { return };
@@ -82,7 +82,7 @@ impl<'a> PeepholeOptimizations {
         prop: &mut AssignmentTargetPropertyProperty<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        Self::try_compress_property_key(&mut prop.name, &mut prop.computed, ctx);
+        Self::try_compress_property_key(&mut prop.name, ctx);
     }
 
     pub fn substitute_assignment_target_property(
@@ -122,7 +122,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn substitute_binding_property(prop: &mut BindingProperty<'a>, ctx: &mut TraverseCtx<'a>) {
-        Self::try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
+        Self::try_compress_property_key(&mut prop.key, ctx);
     }
 
     pub fn substitute_method_definition(
@@ -131,8 +131,7 @@ impl<'a> PeepholeOptimizations {
     ) {
         let property_key_parent: ClassPropertyKeyParent = prop.into();
         // Only check for computed property restrictions if this is actually a computed property
-        if prop.computed
-            && let PropertyKey::StringLiteral(str) = &prop.key
+        if let PropertyKey::StringLiteral(str) = &prop.key
             && str
                 .value
                 .as_str()
@@ -140,7 +139,7 @@ impl<'a> PeepholeOptimizations {
         {
             return;
         }
-        Self::try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
+        Self::try_compress_property_key(&mut prop.key, ctx);
     }
 
     pub fn substitute_property_definition(
@@ -149,8 +148,7 @@ impl<'a> PeepholeOptimizations {
     ) {
         let property_key_parent: ClassPropertyKeyParent = prop.into();
         // Only check for computed property restrictions if this is actually a computed property
-        if prop.computed
-            && let PropertyKey::StringLiteral(str) = &prop.key
+        if let PropertyKey::StringLiteral(str) = &prop.key
             && str
                 .value
                 .as_str()
@@ -158,7 +156,7 @@ impl<'a> PeepholeOptimizations {
         {
             return;
         }
-        Self::try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
+        Self::try_compress_property_key(&mut prop.key, ctx);
     }
 
     pub fn substitute_accessor_property(
@@ -167,8 +165,7 @@ impl<'a> PeepholeOptimizations {
     ) {
         let property_key_parent: ClassPropertyKeyParent = prop.into();
         // Only check for computed property restrictions if this is actually a computed property
-        if prop.computed
-            && let PropertyKey::StringLiteral(str) = &prop.key
+        if let PropertyKey::StringLiteral(str) = &prop.key
             && str
                 .value
                 .as_str()
@@ -176,7 +173,7 @@ impl<'a> PeepholeOptimizations {
         {
             return;
         }
-        Self::try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
+        Self::try_compress_property_key(&mut prop.key, ctx);
     }
 
     pub fn substitute_for_statement(stmt: &mut ForStatement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -387,6 +384,7 @@ impl<'a> PeepholeOptimizations {
 
     /// Rotate associative binary operators:
     /// - `a | (b | c)` -> `(a | b) | c`
+    /// - `typeof a + ('in ' + b)` -> `typeof a + 'in ' + b`
     ///
     /// Rotate commutative operators to reduce parentheses:
     /// - `a * (b % c)` -> `b % c * a`
@@ -397,15 +395,18 @@ impl<'a> PeepholeOptimizations {
     ) {
         let Expression::BinaryExpression(e) = expr else { return };
 
-        // Handle associative rotation
-        let is_associative = matches!(
-            e.operator,
-            BinaryOperator::BitwiseOR | BinaryOperator::BitwiseAnd | BinaryOperator::BitwiseXOR
-        );
-        if is_associative
-            && let Expression::BinaryExpression(right) = &e.right
+        if let Expression::BinaryExpression(right) = &e.right
             && right.operator == e.operator
-            && !right.right.may_have_side_effects(ctx)
+            && match e.operator {
+                BinaryOperator::BitwiseOR
+                | BinaryOperator::BitwiseAnd
+                | BinaryOperator::BitwiseXOR => !right.right.may_have_side_effects(ctx),
+                BinaryOperator::Addition => {
+                    // Rotation coerces the left operand before the last operand is evaluated.
+                    right.left.value_type(ctx).is_string() && e.left.value_type(ctx).is_string()
+                }
+                _ => false,
+            }
         {
             let Expression::BinaryExpression(right) = e.right.take_in(ctx) else {
                 return;
@@ -1019,7 +1020,7 @@ impl<'a> PeepholeOptimizations {
                     SPAN,
                     callee,
                     None,
-                    [Argument::new_numeric_literal(SPAN, offset, None, NumberBase::Decimal, ctx)],
+                    [Argument::new_numeric_literal(SPAN, offset, None, ctx)],
                     false,
                     ctx,
                 )
@@ -1173,7 +1174,6 @@ impl<'a> PeepholeOptimizations {
                     }
                 },
                 None,
-                NumberBase::Decimal,
                 ctx,
             )),
             // `BigInt(1n)` -> `1n`
@@ -1404,40 +1404,39 @@ impl<'a> PeepholeOptimizations {
     }
 
     // <https://github.com/swc-project/swc/blob/4e2dae558f60a9f5c6d2eac860743e6c0b2ec562/crates/swc_ecma_minifier/src/compress/pure/properties.rs>
-    fn try_compress_property_key(
-        key: &mut PropertyKey<'a>,
-        computed: &mut bool,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
+    fn try_compress_property_key(key: &mut PropertyKey<'a>, ctx: &mut TraverseCtx<'a>) {
         match key {
             // `-2`, `-0`, `Infinity` and `NaN` are not valid literal keys, so they keep their brackets.
-            PropertyKey::NumericLiteral(n)
-                if *computed && n.value.is_finite() && n.value.is_sign_positive() =>
-            {
-                // Bool field flip on an existing AST node, not a slot replacement.
-                *computed = false;
+            PropertyKey::NumericLiteral(n) if n.value.is_finite() && n.value.is_sign_positive() => {
+                key.replace_with(|key| {
+                    let PropertyKey::NumericLiteral(n) = key else { unreachable!() };
+                    PropertyKey::StaticNumericLiteral(n)
+                });
+                ctx.notice_change();
             }
-            PropertyKey::StringLiteral(s) => {
-                // Bool field flip on an existing AST node, not a slot replacement.
-                *computed = false;
+            PropertyKey::StringLiteral(s) | PropertyKey::StaticStringLiteral(s) => {
                 // A key with a lone surrogate is neither an identifier name nor a number.
-                let Some(value) = s.value.as_str() else { return };
-                if is_identifier_name_patched(value) {
-                    let new_key = PropertyKey::new_static_identifier(s.span, value, ctx);
-                    ctx.replace_property_key(key, new_key);
-                    return;
+                if let Some(value) = s.value.as_str() {
+                    if is_identifier_name_patched(value) {
+                        let new_key = PropertyKey::new_static_identifier(s.span, value, ctx);
+                        ctx.replace_property_key(key, new_key);
+                        return;
+                    }
+                    if let Some(value) = TraverseCtx::string_to_equivalent_number_value(value)
+                        && value >= 0.0
+                    {
+                        let new_key =
+                            PropertyKey::new_static_numeric_literal(s.span, value, None, ctx);
+                        ctx.replace_property_key(key, new_key);
+                        return;
+                    }
                 }
-                if let Some(value) = TraverseCtx::string_to_equivalent_number_value(value)
-                    && value >= 0.0
-                {
-                    let new_key = PropertyKey::new_numeric_literal(
-                        s.span,
-                        value,
-                        None,
-                        NumberBase::Decimal,
-                        ctx,
-                    );
-                    ctx.replace_property_key(key, new_key);
+                if key.is_computed() {
+                    key.replace_with(|key| {
+                        let PropertyKey::StringLiteral(s) = key else { unreachable!() };
+                        PropertyKey::StaticStringLiteral(s)
+                    });
+                    ctx.notice_change();
                 }
             }
             _ => {}
@@ -1609,13 +1608,8 @@ impl<'a> PeepholeOptimizations {
     /// Transforms boolean expression `true` => `!0` `false` => `!1`.
     pub fn substitute_boolean(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::BooleanLiteral(lit) = expr else { return };
-        let num = Expression::new_numeric_literal(
-            lit.span,
-            if lit.value { 0.0 } else { 1.0 },
-            None,
-            NumberBase::Decimal,
-            ctx,
-        );
+        let num =
+            Expression::new_numeric_literal(lit.span, if lit.value { 0.0 } else { 1.0 }, None, ctx);
         let new_value =
             Expression::new_unary_expression(lit.span, UnaryOperator::LogicalNot, num, ctx);
         ctx.replace_expression(expr, new_value);

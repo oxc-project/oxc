@@ -56,16 +56,16 @@ impl<'a, C: Config> Lexer<'a, C> {
     #[cold]
     fn handle_irregular_whitespace(&mut self, _c: char) -> Kind {
         self.consume_char();
-        self.trivia_builder.add_irregular_whitespace(self.token.start(), self.offset());
+        self.trivia_builder.add_irregular_whitespace(self.token_start, self.offset());
         Kind::Skip
     }
 
     #[cold]
     fn handle_irregular_line_terminator(&mut self, _c: char) -> Kind {
         self.consume_char();
-        self.token.set_is_on_new_line(true);
-        self.trivia_builder.handle_newline();
-        self.trivia_builder.add_irregular_whitespace(self.token.start(), self.offset());
+        self.pending.set_is_on_new_line();
+        self.trivia_builder.handle_newline(&mut self.pending);
+        self.trivia_builder.add_irregular_whitespace(self.token_start, self.offset());
         Kind::Skip
     }
 

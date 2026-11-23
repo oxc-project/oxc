@@ -452,10 +452,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         let statement = if self.at(Kind::Import) { "import statement" } else { "export statement" };
         let span = self.cur_token().span();
-        if self.source_type.is_script() || self.source_type.is_commonjs() {
-            self.error(diagnostics::module_code(statement, span));
-        } else if stmt_ctx != StatementContext::Program {
+        if stmt_ctx != StatementContext::Program {
             self.error(diagnostics::top_level(statement, span));
+        } else if self.source_type.is_script() || self.source_type.is_commonjs() {
+            self.error(diagnostics::module_code(statement, span));
+        } else if self.source_type.is_unambiguous()
+            && !self.module_record_builder.has_module_syntax()
+        {
+            // Reported if no module syntax makes the source a module, e.g. `import a = b` in JS.
+            self.error_on_script(diagnostics::module_code(statement, span));
         }
     }
 

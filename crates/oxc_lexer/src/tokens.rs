@@ -3,7 +3,7 @@ use oxc_span::Span;
 
 use crate::{
     error::Diagnostic,
-    pipeline::TokenLanes,
+    pipeline::Lanes,
     token::{SPAN_SENTINELS, StringSpan, TokenKind},
 };
 
@@ -11,7 +11,7 @@ use crate::{
 pub struct Tokens {
     pub(crate) kinds: Vec<TokenKind>,
     pub(crate) spans: Vec<Span>,
-    pub(crate) lanes: TokenLanes,
+    pub(crate) lanes: Lanes,
 }
 
 impl Tokens {

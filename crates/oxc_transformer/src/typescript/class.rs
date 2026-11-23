@@ -1,18 +1,23 @@
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::{ArenaVec, ReplaceWith, TakeIn};
+use oxc_allocator::{ArenaVec, CloneIn, GetAllocator, ReplaceWith, TakeIn};
 use oxc_ast::ast::*;
 use oxc_semantic::{ScopeFlags, ScopeId};
-use oxc_span::SPAN;
+use oxc_span::{SPAN, Span};
 use oxc_str::Ident;
 use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::BoundIdentifier;
 
 use crate::{
-    common::computed_key::{create_computed_key_temp_var, key_needs_temp_var},
+    common::{
+        class_lowering::ClassLowering,
+        computed_key::{create_computed_key_temp_var, key_needs_temp_var},
+        duplicate::duplicate_expression,
+    },
     context::TraverseCtx,
     utils::ast_builder::{
         create_class_constructor, create_this_property_access, create_this_property_assignment,
+        take_literal_property_key,
     },
 };
 
@@ -93,16 +98,26 @@ impl<'a> TypeScript<'a> {
     /// The transformation way is also the same as `TypeScript`, the advantage from the implementation is that
     /// we don't need extra transformation for static properties, the output is the same as instance properties
     /// transformation, and the greatest advantage is we don't need to care about `this` usage in static block.
-    pub(super) fn transform_class_fields(&self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+    ///
+    /// Fields that `lowering` keeps for a downstream transform stay as written, and so do instance
+    /// fields before [`ClassLowering::first_movable_instance_field`].
+    pub(super) fn transform_class_fields(
+        &self,
+        class: &mut Class<'a>,
+        lowering: ClassLowering,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let first_movable_index = lowering.first_movable_instance_field(class);
         // When any non-private instance field has an initializer, all instance field
         // initializers (including private) must be hoisted to the constructor to preserve
         // execution order. This matches TypeScript's `WillHoistInitializersToConstructor`:
         // https://github.com/microsoft/TypeScript/blob/7b8cb3bdf8/src/compiler/transformers/classFields.ts#L339
-        let will_hoist_initializers_to_constructor = class.body.body.iter().any(|e| {
-            matches!(e, ClassElement::PropertyDefinition(prop)
-                if !prop.r#static && !prop.declare && !prop.key.is_private_identifier() && prop.value.is_some()
-            )
-        });
+        let will_hoist_initializers_to_constructor =
+            class.body.body[first_movable_index..].iter().any(|e| {
+                matches!(e, ClassElement::PropertyDefinition(prop)
+                    if !prop.r#static && !prop.declare && !prop.key.is_private_identifier() && prop.value.is_some()
+                )
+            });
 
         // Static blocks created below must be parented to the class body scope,
         // not the current traversal scope (which is the scope enclosing the class).
@@ -111,18 +126,29 @@ impl<'a> TypeScript<'a> {
         let mut constructor = None;
         let mut property_assignments = Vec::new();
         let mut computed_key_assignments = Vec::new();
-        for element in &mut class.body.body {
+        for (index, element) in class.body.body.iter_mut().enumerate() {
+            let kept = lowering.keeps_field(element);
             match element {
                 // Skip static private properties — converting them to static blocks
                 // would lose the private field declaration.
                 ClassElement::PropertyDefinition(prop)
-                    if !prop.key.is_private_identifier()
-                        || (!prop.r#static && will_hoist_initializers_to_constructor) =>
+                    if !kept
+                        && (prop.r#static || index >= first_movable_index)
+                        && (!prop.key.is_private_identifier()
+                            || (!prop.r#static && will_hoist_initializers_to_constructor)) =>
                 {
                     if let Some(value) = prop.value.take() {
+                        // A static property is replaced by a static block below, and an instance
+                        // property is removed later when `remove_class_fields_without_initializer`
+                        // is `true`. Otherwise, the instance property declaration stays in the
+                        // class body (without its initializer), so its key is still evaluated
+                        // during class definition.
+                        let keep_declaration =
+                            !prop.r#static && !self.remove_class_fields_without_initializer;
                         let assignment = self.convert_property_definition(
                             &mut prop.key,
                             value,
+                            keep_declaration,
                             &mut computed_key_assignments,
                             ctx,
                         );
@@ -148,12 +174,24 @@ impl<'a> TypeScript<'a> {
                             // keeps and is evaluated in the same order as the original class field in static block.
                             computed_key_assignments.push(key.take_in(ctx));
                         }
+                    } else if !prop.declare && prop.key.is_computed() {
+                        // The property declaration without initializer is kept in the class body, so its
+                        // computed key is evaluated during class definition. Any pending computed key
+                        // assignments from previous elements must be evaluated before it.
+                        Self::convert_computed_key(
+                            &mut prop.key,
+                            &mut computed_key_assignments,
+                            ctx,
+                        );
                     }
                 }
                 ClassElement::MethodDefinition(method) => {
                     if method.kind == MethodDefinitionKind::Constructor {
                         constructor = Some(&mut method.value);
-                    } else {
+                    } else if method.key.is_computed() {
+                        // A non-computed key (e.g. `"m"() {}`) has no side effects, and can't hold
+                        // a sequence expression. Pending assignments go to the next computed key
+                        // or the static block instead.
                         Self::convert_computed_key(
                             &mut method.key,
                             &mut computed_key_assignments,
@@ -161,12 +199,18 @@ impl<'a> TypeScript<'a> {
                         );
                     }
                 }
-                ClassElement::AccessorProperty(accessor) => {
+                ClassElement::AccessorProperty(accessor) if accessor.key.is_computed() => {
                     Self::convert_computed_key(
                         &mut accessor.key,
                         &mut computed_key_assignments,
                         ctx,
                     );
+                }
+                // A computed key that stays in the class still evaluates after the keys before it.
+                ClassElement::PropertyDefinition(prop)
+                    if !prop.declare && prop.key.is_computed() =>
+                {
+                    Self::convert_computed_key(&mut prop.key, &mut computed_key_assignments, ctx);
                 }
                 _ => (),
             }
@@ -268,27 +312,45 @@ impl<'a> TypeScript<'a> {
     /// Skips parameter properties whose name matches an existing instance field declaration on
     /// the same class (matching TypeScript's dedup). Only static-identifier instance fields
     /// count — static, private, computed, and `declare`-only fields don't suppress the new field.
-    pub(super) fn add_parameter_property_fields(class: &mut Class<'a>, ctx: &TraverseCtx<'a>) {
-        let Some(params) = Self::find_constructor_params(class) else { return };
-
-        // Bail before allocating when there are no parameter properties to emit.
-        // Parameter properties are TS-specific and uncommon, so most classes hit this path.
-        if !params.iter().any(FormalParameter::has_modifier) {
-            return;
-        }
-
+    ///
+    /// `properties` comes from [`Self::collect_parameter_properties`] on class entry, before
+    /// parameter modifiers are erased. Fields are added on class exit, after fields without
+    /// initializers are removed, so neither the removal nor a removed field affects them.
+    pub(super) fn add_parameter_property_fields(
+        class: &mut Class<'a>,
+        properties: &[(Span, Ident<'a>)],
+        ctx: &TraverseCtx<'a>,
+    ) {
         let mut declared_names = Self::collect_instance_field_names(class);
         let fields = ArenaVec::from_iter_in(
-            params
+            properties
                 .iter()
-                .filter(|param| param.has_modifier())
-                .filter_map(|param| param.pattern.get_binding_identifier())
-                .filter(|id| declared_names.insert(id.name))
-                .map(|id| Self::build_uninitialized_field(id, ctx)),
+                .filter(|(_, name)| declared_names.insert(*name))
+                .map(|&(span, name)| Self::build_uninitialized_field(span, name, ctx)),
             ctx,
         );
 
         class.body.body.splice(0..0, fields);
+    }
+
+    /// Append the span and name of each constructor parameter property to `properties`.
+    ///
+    /// Safe to read `id.name` directly here: this runs on class entry, before any rename.
+    /// `convert_constructor_params` uses the span trick because it also runs alongside
+    /// class-properties.
+    pub(super) fn collect_parameter_properties(
+        class: &Class<'a>,
+        properties: &mut Vec<(Span, Ident<'a>)>,
+    ) {
+        if let Some(params) = Self::find_constructor_params(class) {
+            properties.extend(
+                params
+                    .iter()
+                    .filter(|param| param.has_modifier())
+                    .filter_map(|param| param.pattern.get_binding_identifier())
+                    .map(|id| (id.span, id.name)),
+            );
+        }
     }
 
     /// Returns the body-bearing constructor's parameter list, or `None` if the class has none.
@@ -336,19 +398,15 @@ impl<'a> TypeScript<'a> {
             .collect()
     }
 
-    /// Build `<id.name>;` — an uninitialized public class field declaration.
-    ///
-    /// Safe to read `id.name` directly here — `add_parameter_property_fields` is gated on
-    /// TypeScript handling fields itself, so no rename has happened.
-    /// `convert_constructor_params` uses the span trick because it also runs alongside
-    /// class-properties.
+    /// Build `<name>;` — an uninitialized public class field declaration.
     fn build_uninitialized_field(
-        id: &BindingIdentifier<'a>,
+        span: Span,
+        name: Ident<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> ClassElement<'a> {
-        let key = PropertyKey::new_static_identifier(id.span, id.name, ctx);
+        let key = PropertyKey::new_static_identifier(span, name, ctx);
         ClassElement::new_property_definition(
-            id.span,
+            span,
             PropertyDefinitionType::PropertyDefinition,
             [],
             key,
@@ -360,13 +418,20 @@ impl<'a> TypeScript<'a> {
             false,
             false,
             false,
-            false,
             None,
             ctx,
         )
     }
 
-    pub(super) fn transform_class_on_exit(&self, class: &mut Class<'a>, ctx: &TraverseCtx<'a>) {
+    /// Remove fields without initializers, as TypeScript erases them.
+    ///
+    /// Decorated fields stay, for a downstream transform or for legacy decorators to lower. See
+    /// `TransformerImpl::exit_class` for how this interacts with legacy decorators on class exit.
+    pub(super) fn remove_uninitialized_class_fields(
+        &self,
+        class: &mut Class<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) {
         if !self.remove_class_fields_without_initializer {
             return;
         }
@@ -374,6 +439,7 @@ impl<'a> TypeScript<'a> {
         class.body.body.retain(|element| {
             if let ClassElement::PropertyDefinition(prop) = element
                 && prop.value.is_none()
+                && prop.decorators.is_empty()
                 && !prop.key.is_private_identifier()
             {
                 if let Some(key) = prop.key.as_expression() {
@@ -428,12 +494,18 @@ impl<'a> TypeScript<'a> {
     /// * Static key:
     ///   `class C { x = 1; }` -> `class C { constructor() { this.x = 1; } }`
     ///
+    /// When `keep_declaration` is `true`, the property declaration stays in the class body, so
+    /// its key is still evaluated during class definition. In that case the temp var is assigned
+    /// inside the key itself, so the key expression is evaluated exactly once and in source order:
+    ///   `class C { [x()] = 1; }` -> `let _x; class C { constructor() { this[_x] = 1; } [_x = x()]; }`
+    ///
     /// Returns an assignment statement which would be inserted in the constructor body.
     #[expect(clippy::unused_self)]
     fn convert_property_definition(
         &self,
         key: &mut PropertyKey<'a>,
         value: Expression<'a>,
+        keep_declaration: bool,
         computed_key_assignments: &mut Vec<Expression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
@@ -452,16 +524,51 @@ impl<'a> TypeScript<'a> {
                     ctx,
                 )
             }
+            PropertyKey::StaticStringLiteral(_)
+            | PropertyKey::StaticNumericLiteral(_)
+            | PropertyKey::StaticBigIntLiteral(_) => {
+                // `class C { 'x' = true; 123 = false; }`
+                let new_key = if keep_declaration {
+                    // Keep the original key in the kept declaration, rather than leaving
+                    // the `NullLiteral` dummy from `take_in`, which would create a `null` property.
+                    // A literal key is side-effect free, so the copy can be used in the assignment.
+                    take_literal_property_key(&mut key.clone_in(ctx.allocator()), ctx)
+                } else {
+                    take_literal_property_key(key, ctx)
+                }
+                .unwrap();
+                MemberExpression::new_computed_member_expression(
+                    SPAN,
+                    Expression::new_this_expression(SPAN, ctx),
+                    new_key,
+                    false,
+                    ctx,
+                )
+            }
             key @ match_expression!(PropertyKey) => {
                 let key = key.to_expression_mut();
-                // Note: Key can also be static `StringLiteral` or `NumericLiteral`.
-                // `class C { 'x' = true; 123 = false; }`
-                // No temp var is created for these.
                 let new_key = if key_needs_temp_var(key, ctx) {
                     let taken_key = key.take_in(ctx);
                     let (assignment, ident) = create_computed_key_temp_var(taken_key, ctx);
-                    computed_key_assignments.push(assignment);
+                    if keep_declaration {
+                        // All computed keys are evaluated during class definition, before any
+                        // static block runs, so assigning the temp var in a static block would
+                        // leave it `undefined` when the kept declaration's key is evaluated.
+                        // Assign it in the key instead: `[x()] = 1` -> `[_x = x()];`.
+                        *key = assignment;
+                        Self::prepend_computed_key_assignments(key, computed_key_assignments, ctx);
+                    } else {
+                        computed_key_assignments.push(assignment);
+                    }
                     ident
+                } else if keep_declaration {
+                    // Keep the original key in the kept declaration, rather than leaving
+                    // the `NullLiteral` dummy from `take_in`, which would create a `null` property.
+                    // The key is side-effect free here, so it can be duplicated without a temp var.
+                    let (original_key, new_key) =
+                        duplicate_expression(key.take_in(ctx), false, ctx);
+                    *key = original_key;
+                    new_key
                 } else {
                     key.take_in(ctx)
                 };
@@ -527,23 +634,31 @@ impl<'a> TypeScript<'a> {
         assignments: &mut Vec<Expression<'a>>,
         ctx: &TraverseCtx<'a>,
     ) {
+        if let Some(key) = key.as_expression_mut() {
+            Self::prepend_computed_key_assignments(key, assignments, ctx);
+        }
+    }
+
+    /// Prepend pending computed key `assignments` to `key`: `key` -> `(_x = x(), key)`.
+    fn prepend_computed_key_assignments(
+        key: &mut Expression<'a>,
+        assignments: &mut Vec<Expression<'a>>,
+        ctx: &TraverseCtx<'a>,
+    ) {
         if assignments.is_empty() {
             return;
         }
-        if let Some(key) = key.as_expression_mut() {
-            // If the key is already an expression, we need to create a new expression sequence
-            // to insert the assignments into.
-            key.replace_with(|original_key| {
-                Expression::new_sequence_expression(
-                    SPAN,
-                    ArenaVec::from_iter_in(
-                        assignments.split_off(0).into_iter().chain(std::iter::once(original_key)),
-                        ctx,
-                    ),
+        // Create a new expression sequence to insert the assignments into.
+        key.replace_with(|original_key| {
+            Expression::new_sequence_expression(
+                SPAN,
+                ArenaVec::from_iter_in(
+                    assignments.drain(..).chain(std::iter::once(original_key)),
                     ctx,
-                )
-            });
-        }
+                ),
+                ctx,
+            )
+        });
     }
 
     /// Convert constructor parameters that include modifier to `this` assignments

@@ -894,7 +894,6 @@ mod tests {
             node_id: Cell::new(NodeId::DUMMY),
             value: 42.0,
             raw: None,
-            base: oxc_syntax::number::NumberBase::Decimal,
         };
         let num_kind = AstKind::NumericLiteral(&num_lit);
         assert!(!num_kind.has_argument_with_span(test_span));
@@ -915,7 +914,6 @@ mod tests {
             node_id: Cell::new(NodeId::DUMMY),
             value: 42.0,
             raw: None,
-            base: oxc_syntax::number::NumberBase::Decimal,
         };
         let num_kind = AstKind::NumericLiteral(&num_lit);
         assert!(!num_kind.is_callee_with_span(test_span));

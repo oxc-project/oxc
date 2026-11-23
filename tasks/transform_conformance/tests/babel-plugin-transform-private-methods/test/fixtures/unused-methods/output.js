@@ -11,7 +11,7 @@ function _method() { }
 class C2 { }
 function _method2() { }
 
-const C3 = (_Class_brand = /* @__PURE__ */ new WeakSet(), class {
+const C3 = (_Class_brand = /* @__PURE__ */ new WeakSet(), class C3 {
   constructor() {
     babelHelpers.classPrivateMethodInitSpec(this, _Class_brand);
   }

@@ -33,3 +33,15 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ───────────────────
  4 │             
    ╰────
+
+  ⚠ jest(no-restricted-jest-methods): Use of `spyOn` is not allowed
+   ╭─[no_restricted_jest_methods.tsx:1:6]
+ 1 │ jest.spyOn({m:()=>0}, 'm').mockImplementation(() => 1);
+   ·      ─────
+   ╰────
+
+  ⚠ jest(no-restricted-jest-methods): Use of `fn` is not allowed
+   ╭─[no_restricted_jest_methods.tsx:1:6]
+ 1 │ jest.fn().mockReturnValue(1);
+   ·      ──
+   ╰────

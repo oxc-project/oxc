@@ -2,7 +2,7 @@ use oxc_ast::ast::*;
 use oxc_str::JSStr;
 
 use crate::{
-    DetermineValueType, ToBigInt, ToIntegerIndex, ValueType, to_numeric::ToNumeric,
+    DetermineValueType, ToBigInt, ToIntegerIndex, ToNumber, ValueType, to_numeric::ToNumeric,
     to_primitive::ToPrimitive,
 };
 
@@ -334,7 +334,11 @@ impl<'a> MayHaveSideEffects<'a> for ObjectProperty<'a> {
 impl<'a> MayHaveSideEffects<'a> for PropertyKey<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         match self {
-            PropertyKey::StaticIdentifier(_) | PropertyKey::PrivateIdentifier(_) => false,
+            PropertyKey::StaticIdentifier(_)
+            | PropertyKey::StaticStringLiteral(_)
+            | PropertyKey::StaticNumericLiteral(_)
+            | PropertyKey::StaticBigIntLiteral(_)
+            | PropertyKey::PrivateIdentifier(_) => false,
             match_expression!(PropertyKey) => {
                 // ToPropertyKey(key) throws an error when ToPrimitive(key) throws an Error
                 // But we can ignore that by using the assumption.
@@ -641,14 +645,13 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
             if coerces_to_number && any_arg_throws_to_number(&self.arguments, ctx) {
                 return true;
             }
-            // `String.fromCodePoint(cp)` additionally throws a RangeError unless every
-            // `cp` is an integer in `[0, 0x10FFFF]`.
             if object == "String"
                 && name == "fromCodePoint"
                 && self
                     .arguments
                     .iter()
-                    .any(|arg| arg.as_expression().is_some_and(is_invalid_code_point_literal))
+                    .filter_map(Argument::as_expression)
+                    .any(|expr| is_provably_invalid_code_point(expr, ctx))
             {
                 return true;
             }
@@ -749,24 +752,17 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
     }
 }
 
-/// Whether `expr` is a numeric literal (optionally negated) that is not a valid Unicode
-/// code point — i.e. not an integer in `[0, 0x10FFFF]` — for which
-/// `String.fromCodePoint` throws a `RangeError`.
+/// Whether `expr` is known to coerce to a number that makes `String.fromCodePoint`
+/// throw a `RangeError`.
 ///
-/// Non-literal arguments return `false` (left droppable, matching how other undetermined
-/// coercions are treated); a BigInt literal is handled by [`any_arg_throws_to_number`].
-fn is_invalid_code_point_literal(expr: &Expression) -> bool {
-    let value = match expr {
-        Expression::NumericLiteral(n) => n.value,
-        Expression::UnaryExpression(u) if u.operator == UnaryOperator::UnaryNegation => {
-            match &u.argument {
-                Expression::NumericLiteral(n) => -n.value,
-                _ => return false,
-            }
-        }
-        _ => return false,
-    };
-    !(value.fract() == 0.0 && (0.0..=1_114_111.0).contains(&value))
+/// Unknown coercion results leave the call eligible for removal.
+/// [`any_arg_throws_to_number`] handles BigInt arguments.
+fn is_provably_invalid_code_point<'a>(
+    expr: &Expression<'a>,
+    ctx: &impl MayHaveSideEffectsContext<'a>,
+) -> bool {
+    expr.to_number(ctx)
+        .is_some_and(|value| !(0.0..=f64::from(0x10_FFFF)).contains(&value) || value.fract() != 0.0)
 }
 
 // `[ValueProperties]: PURE` in <https://github.com/rollup/rollup/blob/master/src/ast/nodes/shared/knownGlobals.ts>

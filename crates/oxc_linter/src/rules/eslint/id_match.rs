@@ -275,14 +275,15 @@ impl IdMatch {
                 if property.shorthand {
                     return;
                 }
-                if !self.options().properties && !property.computed {
+                if !self.options().properties && !property.key.is_computed() {
                     return;
                 }
             }
             AstKind::BindingProperty(property) => {
                 // A computed destructuring key is a reference expression, not
                 // a binding introduced by destructuring.
-                if property.computed && property.key.span().contains_inclusive(ident.span) {
+                if property.key.is_computed() && property.key.span().contains_inclusive(ident.span)
+                {
                     self.report_in_generic_context(ctx, node.span(), name, parent);
                 }
                 return;
@@ -298,7 +299,7 @@ impl IdMatch {
                 if property.name.span().contains_inclusive(ident.span) {
                     // Keep assignment destructuring consistent with binding
                     // destructuring for computed keys.
-                    if property.computed {
+                    if property.name.is_computed() {
                         self.report_in_generic_context(ctx, node.span(), name, parent);
                     }
                     return;
@@ -358,7 +359,8 @@ impl IdMatch {
                 return;
             }
             AstKind::ObjectProperty(property)
-                if property.key.span().contains_inclusive(ident.span) && !property.computed =>
+                if property.key.span().contains_inclusive(ident.span)
+                    && !property.key.is_computed() =>
             {
                 if !self.options().properties {
                     return;
@@ -370,7 +372,8 @@ impl IdMatch {
                 return;
             }
             AstKind::BindingProperty(property)
-                if property.key.span().contains_inclusive(ident.span) && !property.computed =>
+                if property.key.span().contains_inclusive(ident.span)
+                    && !property.key.is_computed() =>
             {
                 if self.options().ignore_destructuring
                     && binding_property_is_exact_key_value(property)
@@ -601,7 +604,7 @@ fn member_is_assignment_left<'a>(member_node: &AstNode<'a>, ctx: &LintContext<'a
 }
 
 fn binding_property_key_should_report(property: &BindingProperty) -> bool {
-    if property.computed {
+    if property.key.is_computed() {
         return false;
     }
     property.shorthand || binding_property_is_exact_key_value(property)
@@ -664,7 +667,7 @@ pub fn is_dynamic_import_attribute_object_property<'a>(
     property: &ObjectProperty<'a>,
     ctx: &LintContext<'a>,
 ) -> bool {
-    if property.computed {
+    if property.key.is_computed() {
         return false;
     }
 

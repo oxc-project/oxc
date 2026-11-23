@@ -19,7 +19,6 @@ pub fn is_valid_lone_unicode_property_of_strings(name_or_value: &str) -> bool {
     BINARY_UNICODE_PROPERTIES_OF_STRINGS.contains(name_or_value)
 }
 
-// spellchecker:off
 // # General_Category (gc)
 // https://unicode.org/Public/UCD/latest/ucd/PropertyValueAliases.txt
 static GC_PROPERTY_VALUES: Set<&'static str> = phf_set! {
@@ -356,4 +355,3 @@ static BINARY_UNICODE_PROPERTIES_OF_STRINGS: Set<&'static str> = phf_set! {
     "RGI_Emoji_ZWJ_Sequence",
     "RGI_Emoji",
 };
-// spellchecker:on

@@ -408,6 +408,15 @@ unsafe fn walk_property_key<'a, Tr: Traverse<'a>>(
         PropertyKey::StaticIdentifier(node) => {
             walk_identifier_name(traverser, (&mut **node) as *mut _, ctx)
         }
+        PropertyKey::StaticStringLiteral(node) => {
+            walk_string_literal(traverser, (&mut **node) as *mut _, ctx)
+        }
+        PropertyKey::StaticNumericLiteral(node) => {
+            walk_numeric_literal(traverser, (&mut **node) as *mut _, ctx)
+        }
+        PropertyKey::StaticBigIntLiteral(node) => {
+            walk_big_int_literal(traverser, (&mut **node) as *mut _, ctx)
+        }
         PropertyKey::PrivateIdentifier(node) => {
             walk_private_identifier(traverser, (&mut **node) as *mut _, ctx)
         }

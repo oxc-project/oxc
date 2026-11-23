@@ -852,15 +852,13 @@ export interface OxlintOverride {
    * Files matching these patterns are not globally ignored; this override
    * simply does not apply to them.
    *
-   * ## Example
-   * `[ "*.generated.ts", "fixtures/**" ]`
+   * Example: `[ "*.generated.ts", "fixtures/**" ]`
    */
   excludeFiles?: GlobSet;
   /**
    * A list of glob patterns to override.
    *
-   * ## Example
-   * `[ "*.test.ts", "*.spec.ts" ]`
+   * Example: `[ "*.test.ts", "*.spec.ts" ]`
    */
   files: GlobSet;
   /**
@@ -992,6 +990,12 @@ export interface DummyRuleMap {
   "jest/no-unneeded-async-expect-function"?: RuleNoConfig;
   "jest/no-untyped-mock-factory"?: RuleNoConfig;
   "jest/padding-around-after-all-blocks"?: RuleNoConfig;
+  "jest/padding-around-after-each-blocks"?: RuleNoConfig;
+  "jest/padding-around-all"?: RuleNoConfig;
+  "jest/padding-around-before-all-blocks"?: RuleNoConfig;
+  "jest/padding-around-before-each-blocks"?: RuleNoConfig;
+  "jest/padding-around-describe-blocks"?: RuleNoConfig;
+  "jest/padding-around-expect-groups"?: RuleNoConfig;
   "jest/padding-around-test-blocks"?: RuleNoConfig;
   "jest/prefer-called-with"?: RuleNoConfig;
   "jest/prefer-comparison-matcher"?: RuleNoConfig;
@@ -1492,6 +1496,7 @@ export interface DummyRuleMap {
   "typescript/no-unsafe-argument"?: RuleNoConfig;
   "typescript/no-unsafe-assignment"?: RuleNoConfig;
   "typescript/no-unsafe-call"?: RuleNoConfig;
+  "typescript/no-unsafe-class-instance-assignment"?: RuleNoConfig;
   "typescript/no-unsafe-declaration-merging"?: RuleNoConfig;
   "typescript/no-unsafe-enum-assignment"?: RuleNoConfig;
   "typescript/no-unsafe-enum-comparison"?: RuleNoConfig;
@@ -1711,6 +1716,12 @@ export interface DummyRuleMap {
   "vitest/no-test-return-statement"?: RuleNoConfig;
   "vitest/no-unneeded-async-expect-function"?: RuleNoConfig;
   "vitest/padding-around-after-all-blocks"?: RuleNoConfig;
+  "vitest/padding-around-after-each-blocks"?: RuleNoConfig;
+  "vitest/padding-around-all"?: RuleNoConfig;
+  "vitest/padding-around-before-all-blocks"?: RuleNoConfig;
+  "vitest/padding-around-before-each-blocks"?: RuleNoConfig;
+  "vitest/padding-around-describe-blocks"?: RuleNoConfig;
+  "vitest/padding-around-expect-groups"?: RuleNoConfig;
   "vitest/padding-around-test-blocks"?: RuleNoConfig;
   "vitest/prefer-called-exactly-once-with"?: RuleNoConfig;
   "vitest/prefer-called-once"?: RuleNoConfig;
@@ -4788,7 +4799,8 @@ export interface PreferRegexLiteralsConfig {
 }
 export interface PreserveCaughtErrorOptions {
   /**
-   * When set to `true`, requires that catch clauses always have a parameter.
+   * When set to `true`, requires catch clauses that throw a new error to have a
+   * caught error parameter, so the caught error is not discarded when re-throwing.
    */
   requireCatchParameter?: boolean;
 }

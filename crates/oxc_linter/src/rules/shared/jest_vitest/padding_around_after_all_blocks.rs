@@ -1,12 +1,8 @@
-use oxc_ast::AstKind;
 use oxc_semantic::AstNode;
 
 use crate::{
     context::LintContext,
-    utils::{
-        JestGeneralFnKind, ParsedGeneralJestFnCall, PossibleJestNode, parse_general_jest_fn_call,
-        report_missing_padding_before_jest_block,
-    },
+    utils::{PaddingConfig, PaddingStatement, check_padding},
 };
 
 pub const DOCUMENTATION: &str = r"### What it does
@@ -27,6 +23,7 @@ Examples of **incorrect** code for this rule:
 ```js
 const thing = 123;
 afterAll(() => {});
+describe('foo', () => {});
 ```
 
 Examples of **correct** code for this rule:
@@ -34,29 +31,18 @@ Examples of **correct** code for this rule:
 const thing = 123;
 
 afterAll(() => {});
+
+describe('foo', () => {});
 ```
 ";
 
+const AFTER_ALL: PaddingStatement = PaddingStatement::Named(&["afterAll"]);
+
+pub const CONFIGS: &[PaddingConfig] = &[
+    PaddingConfig::always(PaddingStatement::Any, AFTER_ALL),
+    PaddingConfig::always(AFTER_ALL, PaddingStatement::Any),
+];
+
 pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
-    let AstKind::CallExpression(call_expr) = node.kind() else {
-        return;
-    };
-    let Some(possible_jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx)
-    else {
-        return;
-    };
-    let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, &possible_jest_node, ctx) else {
-        return;
-    };
-    let ParsedGeneralJestFnCall { kind, name, .. } = &jest_fn_call;
-    let Some(kind) = kind.to_general() else {
-        return;
-    };
-    if kind != JestGeneralFnKind::Hook {
-        return;
-    }
-    if name != "afterAll" {
-        return;
-    }
-    report_missing_padding_before_jest_block(node, ctx, name);
+    check_padding(node, ctx, &[CONFIGS]);
 }

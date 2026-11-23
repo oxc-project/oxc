@@ -39,7 +39,7 @@ declare_oxc_lint!(
     NoDivRegex,
     eslint,
     restriction,
-    fix,
+    suggestion,
     version = "0.4.2",
     short_description = "Disallow equal signs explicitly at the beginning of regular expressions.",
 );
@@ -55,7 +55,7 @@ impl Rule for NoDivRegex {
                 .and_then(|it| it.body.first())
                 .is_some_and(is_leading_equals)
             {
-                ctx.diagnostic_with_fix(no_div_regex_diagnostic(lit.span), |fixer| {
+                ctx.diagnostic_with_suggestion(no_div_regex_diagnostic(lit.span), |fixer| {
                     let span = Span::sized(lit.span.start + 1, 1);
                     fixer.replace(span, "[=]")
                 });

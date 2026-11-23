@@ -11,7 +11,10 @@ use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
 pub use base54::base54;
 use oxc_allocator::{Allocator, ArenaVec, BitSet};
-use oxc_ast::ast::{Declaration, Program, Statement};
+use oxc_ast::{
+    AstKind,
+    ast::{Declaration, Program, Statement},
+};
 use oxc_data_structures::inline_string::InlineString;
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{AstNodes, Reference, Scoping, Semantic, SemanticBuilder, Stats, SymbolId};
@@ -20,6 +23,7 @@ use oxc_str::{ArenaIdentHashSet, CompactStr, Ident};
 
 pub(crate) mod base54;
 mod keep_names;
+mod labels;
 
 pub use keep_names::MangleOptionsKeepNames;
 
@@ -315,9 +319,9 @@ impl<'t> Mangler<'t> {
         self
     }
 
-    /// Mangles the program, returning scoping information with the mangled symbol names.
+    /// Mangles the program, returning scoping information with the mangled symbol and label names.
     ///
-    /// Semantic analysis renumbers the node IDs in `program`, but does not rewrite its symbol names.
+    /// Semantic analysis renumbers the node and label IDs in `program`, but does not rewrite its names.
     /// Pass the returned scoping and class private mappings to `oxc_codegen` to generate the mangled code.
     #[must_use]
     pub fn build(self, program: &Program<'_>) -> ManglerReturn {
@@ -338,18 +342,17 @@ impl<'t> Mangler<'t> {
         semantic: &mut Semantic<'_>,
         program: &Program<'_>,
     ) -> IndexVec<ClassId, FxHashMap<String, CompactStr>> {
-        let class_private_mappings = Self::collect_private_members_from_semantic(semantic);
         if self.options.debug {
-            self.build_with_semantic_impl(semantic, program, debug_name);
+            self.build_with_semantic_impl(semantic, program, debug_name)
         } else {
-            self.build_with_semantic_impl(semantic, program, base54);
+            self.build_with_semantic_impl(semantic, program, base54)
         }
-        class_private_mappings
     }
 
-    /// Mangle the program: rewrite local bindings to the shortest legal names.
+    /// Mangle the program: rewrite local bindings and labels to the shortest legal names.
     ///
-    /// Runs as a five-stage pipeline; each stage is one method and feeds the next:
+    /// Labels have their own namespace, so a final phase names them by nesting depth.
+    /// Local bindings run as a five-stage pipeline; each stage is one method and feeds the next:
     ///
     /// ```text
     ///  collect constraints → assign slots → tally frequencies → generate names → apply names
@@ -394,7 +397,9 @@ impl<'t> Mangler<'t> {
         semantic: &mut Semantic<'_>,
         program: &Program<'_>,
         generate_name: G,
-    ) {
+    ) -> IndexVec<ClassId, FxHashMap<String, CompactStr>> {
+        let class_private_mappings =
+            Self::collect_private_members_from_semantic(semantic, &generate_name);
         let (scoping, ast_nodes) = semantic.scoping_mut_and_nodes();
         let allocator = self.temp_allocator.as_ref();
 
@@ -407,15 +412,20 @@ impl<'t> Mangler<'t> {
         let ranking = SlotRanking::tally(allocator, scoping, &slots);
         // ── Phase 4: generate that many short, collision-free names. ──
         let names =
-            NameTable::generate(allocator, scoping, &constraints, &ranking, &slots, generate_name);
+            NameTable::generate(allocator, scoping, &constraints, &ranking, &slots, &generate_name);
         // ── Phase 5: give each slot its name and rewrite every reference. ──
         names.apply(allocator, scoping, &ranking);
+        // ── Phase 6: name labels by nesting depth. ──
+        labels::mangle_labels(allocator, scoping, generate_name);
+
+        class_private_mappings
     }
 
     /// Collects and generates mangled names for private members using semantic information
     /// Returns a Vec where each element corresponds to a class in declaration order
-    fn collect_private_members_from_semantic(
+    fn collect_private_members_from_semantic<const CAPACITY: usize>(
         semantic: &Semantic<'_>,
+        generate_name: impl Fn(u32) -> InlineString<CAPACITY, u8>,
     ) -> IndexVec<ClassId, FxHashMap<String, CompactStr>> {
         let classes = semantic.classes();
 
@@ -451,7 +461,7 @@ impl<'t> Mangler<'t> {
                     // We can improve this by reusing names that are not used in child classes,
                     // but nesting a class inside another class is not common
                     // and that would require liveness analysis.
-                    base54((parent_private_member_count + next_index) as u32).as_str(),
+                    generate_name((parent_private_member_count + next_index) as u32).as_str(),
                 );
                 entry.insert(mangled);
             }
@@ -537,10 +547,14 @@ impl<'a> Constraints<'a> {
         };
         let (keep_name_names, keep_name_symbols) =
             collect_keep_name_symbols(options.keep_names, allocator, scoping, ast_nodes);
-        let reserved = ArenaIdentHashSet::from_iter_in(
+        let mut reserved = ArenaIdentHashSet::from_iter_in(
             options.reserved.iter().map(|name| Ident::from(name.as_str())),
             allocator,
         );
+        // A `var` that redeclares a catch parameter prints one name for two bindings (see
+        // `Scoping::catch_var_binding`), and a block function in that catch can assign the same
+        // name (Annex B.3.3). Keep every binding with that name, as for `options.reserved`.
+        reserved.extend(scoping.catch_var_bindings().map(|(catch, _)| scoping.symbol_ident(catch)));
         Self {
             top_level,
             reserved,
@@ -680,6 +694,18 @@ impl<'a> SlotAssignment<'a> {
                 ancestor_set.set_bit(ancestor_id.index());
             }
 
+            // Catch parameters are bound in the catch clause scope, but a lexical declaration
+            // directly in the catch body must not take a parameter's name
+            // (`catch (e) { let e }` is a SyntaxError), even when the parameter is never
+            // referenced in the body. Treat every parameter as live in the body scope.
+            let catch_body_scope_id = if scoping.scope_flags(scope_id).is_catch_clause()
+                && let AstKind::CatchClause(clause) = ast_nodes.kind(scoping.get_node_id(scope_id))
+            {
+                Some(clause.body.scope_id())
+            } else {
+                None
+            };
+
             let scope_id_index = scope_id.index();
             for (&symbol_id, &assigned_slot) in tmp_bindings.iter().zip(&reusable_slots) {
                 debug_assert!(constraints.is_mangle_candidate(symbol_id, scoping));
@@ -699,8 +725,10 @@ impl<'a> SlotAssignment<'a> {
                 // The scopes this symbol is alive in: for each use, walk up to (but not including)
                 // `scope_id`, marking the descendant scopes it passes through.
                 let slot_liveness_bitset = &mut slot_liveness[assigned_slot as usize];
-                for used_scope_id in
-                    referenced_scope_ids.chain(redeclared_scope_ids).chain([declared_scope_id])
+                for used_scope_id in referenced_scope_ids
+                    .chain(redeclared_scope_ids)
+                    .chain([declared_scope_id])
+                    .chain(catch_body_scope_id)
                 {
                     for ancestor_id in scoping.scope_ancestors(used_scope_id) {
                         let ancestor_index = ancestor_id.index();

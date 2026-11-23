@@ -74,9 +74,11 @@ declare_oxc_lint!(
     /// ```javascript
     /// const isEmpty = foo.length == 0;
     /// const isEmpty = foo.length < 1;
+    /// const isEmpty = foo.length <= 0;
     /// const isEmpty = 0 === foo.length;
     /// const isEmpty = 0 == foo.length;
     /// const isEmpty = 1 > foo.length;
+    /// const isEmpty = 0 >= foo.length;
     ///
     /// const isEmpty = !foo.length;
     /// const isEmpty = !(foo.length > 0);
@@ -137,12 +139,14 @@ fn get_length_check_node<'a, 'b>(
                 || is_compare_right(binary_expr, BinaryOperator::Equality, 0.0)
                 // `foo.length < 1`
                 || is_compare_right(binary_expr, BinaryOperator::LessThan, 1.0)
+                || is_compare_right(binary_expr, BinaryOperator::LessEqualThan, 0.0)
                 // `0 === foo.length`
                 || is_compare_left(binary_expr, BinaryOperator::StrictEquality, 0.0)
                 // `0 == foo.length`
                 || is_compare_left(binary_expr, BinaryOperator::Equality, 0.0)
                 // `1 > foo.length`
                 || is_compare_left(binary_expr, BinaryOperator::GreaterThan, 1.0)
+                || is_compare_left(binary_expr, BinaryOperator::GreaterEqualThan, 0.0)
         {
             return Some((true, parent));
         }
@@ -360,6 +364,17 @@ fn test() {
         ("const hasList = Boolean(foo.list?.length)", None),
         ("const hasList = Boolean(foo?.list.length)", None),
         ("const hasList = Boolean(foo?.list?.length)", None),
+        ("if (foo.length <= 1) {}", None),
+        ("if (foo.length >= 0) {}", None),
+        ("if (0 <= foo.length) {}", None),
+        ("if (1 >= foo.length) {}", None),
+        ("if (foo.length <= -1) {}", None),
+        (r#"if (foo.length <= "0") {}"#, None),
+        ("if (foo.length <= 0n) {}", None),
+        ("if (foo.length <= bar.length) {}", None),
+        ("if (foo?.length <= 0) {}", None),
+        ("if (0 >= foo?.length) {}", None),
+        ("class A { a() { if (this.length <= 0) {} } }", None),
     ];
 
     let fail = vec![
@@ -423,6 +438,23 @@ fn test() {
         ("switch(foo){case!foo.length:{}}", "switch(foo){case foo.length === 0:{}}", None),
         ("for(const a of!foo.length);", "for(const a of foo.length === 0);", None),
         ("for(const a in!foo.length);", "for(const a in foo.length === 0);", None),
+        ("const isEmpty = foo.length <= 0;", "const isEmpty = foo.length === 0;", None),
+        ("const isEmpty = 0 >= foo.length;", "const isEmpty = foo.length === 0;", None),
+        ("const isEmpty = foo.size <= 0;", "const isEmpty = foo.size === 0;", None),
+        ("const isEmpty = 0 >= foo.size;", "const isEmpty = foo.size === 0;", None),
+        ("if (!(foo.length <= 0)) {}", "if (foo.length > 0) {}", None),
+        ("if (!(0 >= foo.length)) {}", "if (foo.length > 0) {}", None),
+        (
+            "if (!(foo.length <= 0)) {}",
+            "if (foo.length !== 0) {}",
+            Some(serde_json::json!([{"non-zero": "not-equal"}])),
+        ),
+        (
+            "if (!(0 >= foo.length)) {}",
+            "if (foo.length !== 0) {}",
+            Some(serde_json::json!([{"non-zero": "not-equal"}])),
+        ),
+        ("const isEmpty = Boolean(foo.length <= 0);", "const isEmpty = foo.length === 0;", None),
     ];
     Tester::new(ExplicitLengthCheck::NAME, ExplicitLengthCheck::PLUGIN, pass, fail)
         .expect_fix(fixes)

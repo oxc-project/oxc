@@ -673,7 +673,7 @@ impl<'a> VisitJsMut<'a> for ConstructorParamsSuperReplacer<'a, '_> {
         // Don't visit `type_annotation` field because can't contain `super()`.
         // TODO: Are decorators in scope?
         self.visit_decorators(&mut prop.decorators);
-        if prop.computed {
+        if prop.key.is_computed() {
             self.visit_property_key(&mut prop.key);
         }
     }
@@ -683,7 +683,7 @@ impl<'a> VisitJsMut<'a> for ConstructorParamsSuperReplacer<'a, '_> {
         // Visit computed `key` but not `value`, for same reasons as `visit_property_definition` above.
         // TODO: Are decorators in scope?
         self.visit_decorators(&mut prop.decorators);
-        if prop.computed {
+        if prop.key.is_computed() {
             self.visit_property_key(&mut prop.key);
         }
     }
@@ -859,7 +859,7 @@ impl<'a> VisitJsMut<'a> for ConstructorBodySuperReplacer<'a, '_> {
         // Don't visit `type_annotation` field because can't contain `super()`.
         // TODO: Are decorators in scope?
         self.visit_decorators(&mut prop.decorators);
-        if prop.computed {
+        if prop.key.is_computed() {
             self.visit_property_key(&mut prop.key);
         }
     }
@@ -869,7 +869,7 @@ impl<'a> VisitJsMut<'a> for ConstructorBodySuperReplacer<'a, '_> {
         // Visit computed `key` but not `value`, for same reasons as `visit_property_definition` above.
         // TODO: Are decorators in scope?
         self.visit_decorators(&mut prop.decorators);
-        if prop.computed {
+        if prop.key.is_computed() {
             self.visit_property_key(&mut prop.key);
         }
     }

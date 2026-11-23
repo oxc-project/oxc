@@ -2,64 +2,64 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ typescript(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.
-   ╭─[prefer_as_const.tsx:1:27]
+  ⚠ typescript(prefer-as-const): Expected a `const` instead of a literal type assertion.
+   ╭─[prefer_as_const.ts:1:27]
  1 │ let foo = { bar: 'baz' as 'baz' };
    ·                           ─────
    ╰────
-  help: You should use `as const` instead of type annotation.
+  help: Replace `'baz'` with `const`.
 
-  ⚠ typescript(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.
-   ╭─[prefer_as_const.tsx:1:23]
+  ⚠ typescript(prefer-as-const): Expected a `const` instead of a literal type assertion.
+   ╭─[prefer_as_const.ts:1:23]
  1 │ let foo = { bar: 1 as 1 };
    ·                       ─
    ╰────
-  help: You should use `as const` instead of type annotation.
+  help: Replace `1` with `const`.
 
   ⚠ typescript(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.
-   ╭─[prefer_as_const.tsx:1:9]
+   ╭─[prefer_as_const.ts:1:9]
  1 │ let []: 'bar' = 'bar';
    ·         ─────
    ╰────
   help: You should use `as const` instead of type annotation.
 
   ⚠ typescript(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.
-   ╭─[prefer_as_const.tsx:1:10]
+   ╭─[prefer_as_const.ts:1:10]
  1 │ let foo: 'bar' = 'bar';
    ·          ─────
    ╰────
   help: You should use `as const` instead of type annotation.
 
   ⚠ typescript(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.
-   ╭─[prefer_as_const.tsx:1:10]
+   ╭─[prefer_as_const.ts:1:10]
  1 │ let foo: 2 = 2;
    ·          ─
    ╰────
   help: You should use `as const` instead of type annotation.
 
   ⚠ typescript(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.
-   ╭─[prefer_as_const.tsx:1:16]
+   ╭─[prefer_as_const.ts:1:16]
  1 │ const example: 'hello' = 'hello';
    ·                ───────
    ╰────
   help: You should use `as const` instead of type annotation.
 
   ⚠ typescript(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.
-   ╭─[prefer_as_const.tsx:1:10]
+   ╭─[prefer_as_const.ts:1:10]
  1 │ let foo: 'bar' = "bar";
    ·          ─────
    ╰────
   help: You should use `as const` instead of type annotation.
 
   ⚠ typescript(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.
-   ╭─[prefer_as_const.tsx:1:12]
+   ╭─[prefer_as_const.ts:1:12]
  1 │ const foo: 2 = 2;
    ·            ─
    ╰────
   help: You should use `as const` instead of type annotation.
 
   ⚠ typescript(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.
-   ╭─[prefer_as_const.tsx:3:29]
+   ╭─[prefer_as_const.ts:3:29]
  2 │             class foo {
  3 │               readonly bar: 'baz' = 'baz';
    ·                             ─────
@@ -68,7 +68,7 @@ source: crates/oxc_linter/src/tester.rs
   help: You should use `as const` instead of type annotation.
 
   ⚠ typescript(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.
-   ╭─[prefer_as_const.tsx:3:27]
+   ╭─[prefer_as_const.ts:3:27]
  2 │             class foo {
  3 │               static bar: 2 = 2;
    ·                           ─
@@ -76,41 +76,43 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: You should use `as const` instead of type annotation.
 
-  ⚠ typescript(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.
-   ╭─[prefer_as_const.tsx:1:27]
+  ⚠ typescript(prefer-as-const): Expected a `const` instead of a literal type assertion.
+   ╭─[prefer_as_const.ts:1:27]
  1 │ let foo: 'bar' = 'bar' as 'bar';
    ·                           ─────
    ╰────
-  help: You should use `as const` instead of type annotation.
+  help: Replace `'bar'` with `const`.
 
-  × Unexpected token
-   ╭─[prefer_as_const.tsx:1:12]
+  ⚠ typescript(prefer-as-const): Expected a `const` instead of a literal type assertion.
+   ╭─[prefer_as_const.ts:1:12]
  1 │ let foo = <'bar'>'bar';
    ·            ─────
    ╰────
+  help: Replace `'bar'` with `const`.
 
-  × Unexpected token
-   ╭─[prefer_as_const.tsx:1:12]
+  ⚠ typescript(prefer-as-const): Expected a `const` instead of a literal type assertion.
+   ╭─[prefer_as_const.ts:1:12]
  1 │ let foo = <4>4;
    ·            ─
    ╰────
+  help: Replace `4` with `const`.
 
-  ⚠ typescript(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.
-   ╭─[prefer_as_const.tsx:1:20]
+  ⚠ typescript(prefer-as-const): Expected a `const` instead of a literal type assertion.
+   ╭─[prefer_as_const.ts:1:20]
  1 │ let foo = 'bar' as 'bar';
    ·                    ─────
    ╰────
-  help: You should use `as const` instead of type annotation.
+  help: Replace `'bar'` with `const`.
 
-  ⚠ typescript(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.
-   ╭─[prefer_as_const.tsx:1:16]
+  ⚠ typescript(prefer-as-const): Expected a `const` instead of a literal type assertion.
+   ╭─[prefer_as_const.ts:1:16]
  1 │ let foo = 5 as 5;
    ·                ─
    ╰────
-  help: You should use `as const` instead of type annotation.
+  help: Replace `5` with `const`.
 
   ⚠ typescript(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.
-   ╭─[prefer_as_const.tsx:3:20]
+   ╭─[prefer_as_const.ts:3:20]
  2 │             class foo {
  3 │               bar: 'baz' = 'baz';
    ·                    ─────
@@ -119,7 +121,7 @@ source: crates/oxc_linter/src/tester.rs
   help: You should use `as const` instead of type annotation.
 
   ⚠ typescript(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.
-   ╭─[prefer_as_const.tsx:3:20]
+   ╭─[prefer_as_const.ts:3:20]
  2 │             class foo {
  3 │               bar: 2 = 2;
    ·                    ─
@@ -127,28 +129,57 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: You should use `as const` instead of type annotation.
 
-  × Unexpected token
-   ╭─[prefer_as_const.tsx:3:22]
+  ⚠ typescript(prefer-as-const): Expected a `const` instead of a literal type assertion.
+   ╭─[prefer_as_const.ts:3:22]
  2 │             class foo {
  3 │               foo = <'bar'>'bar';
    ·                      ─────
  4 │             }
    ╰────
+  help: Replace `'bar'` with `const`.
 
-  ⚠ typescript(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.
-   ╭─[prefer_as_const.tsx:3:30]
+  ⚠ typescript(prefer-as-const): Expected a `const` instead of a literal type assertion.
+   ╭─[prefer_as_const.ts:3:30]
  2 │             class foo {
  3 │               foo = 'bar' as 'bar';
    ·                              ─────
  4 │             }
    ╰────
-  help: You should use `as const` instead of type annotation.
+  help: Replace `'bar'` with `const`.
 
-  ⚠ typescript(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.
-   ╭─[prefer_as_const.tsx:3:26]
+  ⚠ typescript(prefer-as-const): Expected a `const` instead of a literal type assertion.
+   ╭─[prefer_as_const.ts:3:26]
  2 │             class foo {
  3 │               foo = 5 as 5;
    ·                          ─
  4 │             }
    ╰────
-  help: You should use `as const` instead of type annotation.
+  help: Replace `5` with `const`.
+
+  ⚠ typescript(prefer-as-const): Expected a `const` instead of a literal type assertion.
+   ╭─[prefer_as_const.ts:1:19]
+ 1 │ export const x = <"baz">"baz";
+   ·                   ─────
+   ╰────
+  help: Replace `"baz"` with `const`.
+
+  ⚠ typescript(prefer-as-const): Expected a `const` instead of a literal type assertion.
+   ╭─[prefer_as_const.ts:1:12]
+ 1 │ let foo = <true>true;
+   ·            ────
+   ╰────
+  help: Replace `true` with `const`.
+
+  ⚠ typescript(prefer-as-const): Expected a `const` instead of a literal type assertion.
+   ╭─[prefer_as_const.ts:1:12]
+ 1 │ let foo = <4n>4n;
+   ·            ──
+   ╰────
+  help: Replace `4n` with `const`.
+
+  ⚠ typescript(prefer-as-const): Expected a `const` instead of a literal type assertion.
+   ╭─[prefer_as_const.ts:1:12]
+ 1 │ let foo = <'bar'>('bar');
+   ·            ─────
+   ╰────
+  help: Replace `'bar'` with `const`.

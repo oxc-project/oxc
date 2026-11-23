@@ -10,19 +10,22 @@ permissions: {}
 
 on:
   workflow_dispatch:
+  # No `paths` filter for PRs: GitHub applies it to a PR's own diff, so on the top PR of a native GitHub stack it'd miss
+  # the changes in the PRs below, which skip this workflow (see `if` below). `generate-benchmark-matrix.js` filters
+  # on PRs instead.
   pull_request:
     types: [opened, synchronize]
-    paths: &paths
+  push:
+    branches:
+      - main
+    # Keep in sync with `isRelevantFile` in `.github/scripts/generate-benchmark-matrix.js`.
+    paths:
       - "crates/**/*.rs"
       - "tasks/benchmark/**/*.rs"
       - "tasks/common/**/*.rs"
       - "Cargo.lock"
       - "rust-toolchain.toml"
       - ".github/workflows/benchmark.yml"
-  push:
-    branches:
-      - main
-    paths: *paths
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
@@ -32,11 +35,17 @@ jobs:
   determine-matrix:
     name: Determine Benchmark
     runs-on: ubuntu-latest
+    # Skip on PRs in the middle of a native GitHub stack. Same as `*not-mid-stack` in `ci.yml`, see comment there.
     if: >
       github.repository == 'oxc-project/oxc' &&
       (
         github.event_name != 'pull_request' ||
         !contains(github.event.pull_request.labels.*.name, '0-merge')
+      ) &&
+      (
+        github.event.pull_request.stack == null ||
+        github.event.pull_request.base.ref == github.event.pull_request.stack.base.ref ||
+        github.event.pull_request.stack.position == github.event.pull_request.stack.size
       )
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}

@@ -340,7 +340,9 @@ fn literal_element_name<'a>(expr: &Expression<'a>) -> Option<StaticPropertyName<
 /// is an identifier, not this variant).
 fn static_key_name<'a>(key: &PropertyKey<'a>) -> Option<StaticPropertyName<'a>> {
     match key {
-        PropertyKey::NumericLiteral(n) => Some(js_number_name(n.value)),
+        PropertyKey::StaticNumericLiteral(n) | PropertyKey::NumericLiteral(n) => {
+            Some(js_number_name(n.value))
+        }
         PropertyKey::BooleanLiteral(b) => {
             Some(StaticPropertyName::from(if b.value { "true" } else { "false" }))
         }

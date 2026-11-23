@@ -16,7 +16,7 @@ alias f := fix
 # Initialize the project by installing all necessary tools
 init:
   # Rust related init
-  cargo binstall watchexec-cli cargo-insta typos-cli cargo-shear@1.13.1 -y
+  cargo binstall watchexec-cli cargo-insta cargo-shear@1.13.1 -y
   # Node.js related init
   pnpm install
 
@@ -36,7 +36,6 @@ install-hook:
 ready:
   git diff --exit-code --quiet
   pnpm install
-  typos
   cargo lintgen
   just fmt
   just check
@@ -81,7 +80,6 @@ doc *args:
 fix:
   cargo clippy --fix --allow-staged --no-deps
   just fmt
-  typos -w
   git status
 
 # ==================== DEVELOPMENT TOOLS ====================

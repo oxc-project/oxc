@@ -65,6 +65,12 @@ pub fn has_comments_between(start: u32, end: u32, f: &CssFormatter<'_, '_>) -> b
     f.context().comments().iter_before(end).any(|c| c.span.start >= start)
 }
 
+/// `start` points at the `/` of a `/*`; returns the index just past its `*/`
+/// (the end of `text` when unterminated).
+fn block_comment_end(text: &str, start: usize) -> usize {
+    text[start + 2..].find("*/").map_or(text.len(), |end| start + end + 4)
+}
+
 /// Collapses any whitespace run in `raw` to a single space.
 pub fn normalize_whitespace(raw: &str) -> String {
     let mut out = String::with_capacity(raw.len());

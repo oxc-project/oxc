@@ -1,7 +1,7 @@
 name: Formatter diff report
 description: Report Oxfmt differences with Prettier
 title: "formatter: Diff with Prettier on ..."
-labels: ["A-formatter-prettier-diff"]
+labels: ["A-formatter", "F-output"]
 type: Bug
 
 body:
@@ -11,6 +11,15 @@ body:
         Thanks for helping us improve Oxfmt! Please fill out the sections below to help us understand and reproduce the issue you're experiencing.
 
         > **Tip:** You can use the "Report Diff" button in the [Oxc Playground](https://playground.oxc.rs/?t=formatter&formatterPanels=output,prettier) to auto-fill this form. Note: This currently only works for JavaScript/TypeScript code (js, jsx, ts, tsx).
+
+  - type: checkboxes
+    id: divergences
+    attributes:
+      label: Known divergences
+      description: Some diffs are intentional and listed in `DIVERGENCES.md`, such as [JS/TS](https://github.com/oxc-project/oxc/blob/main/crates/oxc_formatter/DIVERGENCES.md) and [embedded languages](https://github.com/oxc-project/oxc/blob/main/apps/oxfmt/DIVERGENCES.md). Other languages have one in each [`crates/oxc_formatter_*`](https://github.com/search?q=repo%3Aoxc-project%2Foxc+path%3ADIVERGENCES.md&type=code).
+      options:
+        - label: This diff is not listed in `DIVERGENCES.md`.
+          required: true
 
   - type: textarea
     id: input
@@ -52,13 +61,13 @@ body:
     attributes:
       label: Oxfmt playground link
       description: Optional link to Oxc playground https://playground.oxc.rs
-      placeholder: https://playground.oxc.rs/...
+      placeholder: "[Playground](https://playground.oxc.rs/...)"
 
   - type: textarea
     id: expect
     attributes:
       label: Prettier output
-      description: Paste the expected output from Prettier. If possible, please try `npx https://pkg.pr.new/prettier/prettier@864bb7c042d9935344c155ad9292de3213e0085b` (Our tracking Prettier `main` branch)
+      description: Paste the expected output from Prettier. Please use the Prettier version Oxfmt targets, `prettier` in [`apps/oxfmt/package.json`](https://github.com/oxc-project/oxc/blob/main/apps/oxfmt/package.json).
       value: |
         Prettier version: `X.Y.Z`
         ```tsx
@@ -71,8 +80,8 @@ body:
     id: prettier_playground
     attributes:
       label: Prettier playground link
-      description: Optional link to Prettier playground https://prettier.io/playground/
-      placeholder: https://prettier.io/playground/...
+      description: Optional link to Prettier playground https://prettier.io/playground/. Not needed for JS/TS, as the Oxc playground shows Prettier output too.
+      placeholder: "[Playground](https://prettier.io/playground/...)"
 
   - type: textarea
     id: notes

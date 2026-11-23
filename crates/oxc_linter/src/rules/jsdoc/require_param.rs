@@ -297,7 +297,7 @@ fn default_exempted_by() -> Vec<String> {
 }
 
 const DEFAULT_CHECK_TYPES_PATTERN: &str =
-    "^(?:[oO]bject|[aA]rray|PlainObject|Generic(?:Object|Array))$"; // spellchecker:disable-line
+    "^(?:[oO]bject|[aA]rray|PlainObject|Generic(?:Object|Array))$";
 
 fn default_check_types_pattern_str() -> String {
     DEFAULT_CHECK_TYPES_PATTERN.to_string()

@@ -240,8 +240,7 @@ impl<'a> ModuleRunnerTransform<'a> {
             if matches!(ctx.parent(), Ancestor::CallExpressionCallee(_)) {
                 // wrap with (0, ...) to avoid method binding `this`
                 // <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Property_accessors#method_binding>
-                let zero =
-                    Expression::new_numeric_literal(SPAN, 0f64, None, NumberBase::Decimal, ctx);
+                let zero = Expression::new_numeric_literal(SPAN, 0f64, None, ctx);
                 Expression::new_sequence_expression(ident.span, [zero, expr], ctx)
             } else {
                 expr
@@ -741,7 +740,6 @@ impl<'a> ModuleRunnerTransform<'a> {
             value,
             false,
             false,
-            false,
             ctx,
         );
         Argument::new_object_expression(SPAN, [imported_names], ctx)
@@ -793,7 +791,6 @@ impl<'a> ModuleRunnerTransform<'a> {
             PropertyKey::new_static_identifier(SPAN, key, ctx),
             value.unwrap_or_else(|| Expression::new_boolean_literal(SPAN, true, ctx)),
             is_method,
-            false,
             false,
             ctx,
         )

@@ -780,7 +780,10 @@ export interface SortImportsConfig {
    * - `wildcard`: Imports containing the wildcard (`* as`) specifier.
    * - `named`: Imports containing at least one named specifier.
    *
-   * Wrap groups in an array to sort them together as a single group (order within the array does not matter).
+   * Wrap groups in an array to sort them together as a single group.
+   * The order within the array is only used to break ties between imports from the same source,
+   * e.g. `["type-external", "value-external"]` puts `import type { T } from "a"` before `import { v } from "a"`.
+   * Like the order of groups, it is not reversed by `order: "desc"`.
    *
    * To override `newlinesBetween` at a specific group boundary,
    * put a `{ "newlinesBetween": boolean }` marker object at that position.
@@ -818,6 +821,9 @@ export interface SortImportsConfig {
   newlinesBetween?: boolean;
   /**
    * Sort in ascending or descending order.
+   *
+   * This applies to import sources only;
+   * the order of `groups` (and of entries within a group) is kept as is.
    *
    * - Default: `"asc"`
    */

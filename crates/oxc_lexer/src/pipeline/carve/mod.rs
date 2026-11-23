@@ -1,35 +1,27 @@
 use oxc_simd::{Cpu, cpu_multiversion};
 
-use crate::pipeline::{bitmap::Bitmap, lanes::Lanes};
+use crate::pipeline::lex::{Lex, LexState};
 
 mod comments;
 mod common;
 mod js;
 mod jsx;
 
+pub(super) use common::Substitutions;
 use js::carve_js;
+pub(super) use jsx::JsxFrame;
 use jsx::carve_jsx;
 
 #[cpu_multiversion]
 #[inline(never)]
-pub unsafe fn carve(
-    srcs: &[u8],
-    n: usize,
-    st: Bitmap,
-    kind: *mut u8,
-    opch: Bitmap,
-    word: Bitmap,
-    digit: Bitmap,
-    dot: Bitmap,
-    kwinit: Bitmap,
-    jsx: bool,
-    ts: bool,
-    lanes: &mut Lanes,
-    cpu: impl Cpu,
-) {
-    if jsx {
-        carve_jsx(srcs, n, st, kind, opch, word, digit, dot, kwinit, ts, lanes, cpu);
+pub fn carve(lex: Lex, state: &mut LexState, cpu: impl Cpu) {
+    // Cut the handles to the source's blocks and a spare, so a marker past them panics.
+    let blocks = lex.src.block_count() + 1;
+    let bitmaps = lex.bitmaps.first(blocks);
+    let lex = Lex { bitmaps: &bitmaps, kinds: lex.kinds.first(blocks * 64), ..lex };
+    if lex.options.jsx {
+        carve_jsx(lex, state, cpu);
     } else {
-        carve_js(srcs, n, st, kind, opch, word, ts, lanes, cpu);
+        carve_js(lex, state, cpu);
     }
 }

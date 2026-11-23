@@ -617,10 +617,10 @@ fn test() {
             }]),
         ),
         test_case_with_options(
-            "src/foo/BaRbAz.js", // spellchecker:disable-line
+            "src/foo/BaRbAz.js",
             serde_json::json!([{
                 "cases": { "kebabCase": true, "camelCase": true, "snakeCase": true, "pascalCase": true },
-                "ignore": [r"FOOBAR\.js", r"BaRbAz\.js"] // spellchecker:disable-line
+                "ignore": [r"FOOBAR\.js", r"BaRbAz\.js"]
             }]),
         ),
         test_case_with_options(
@@ -738,7 +738,7 @@ fn test() {
             "src/qux/FooBar.js",
             serde_json::json!([{
                 "cases": { "camelCase": true, "snakeCase": true },
-                "ignore": [r"BaRbAz\.js"] // spellchecker:disable-line
+                "ignore": [r"BaRbAz\.js"]
             }]),
         ),
         test_case_with_options(

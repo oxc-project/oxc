@@ -309,6 +309,10 @@ fn test() {
         //                 [] // ";" not required
         //                 "#,
         // ),
+        (
+            "// leading\nfoo() // trailing\n// above\nnew Array(1, 2)",
+            "// leading\nfoo() // trailing\n// above\n;[1, 2]",
+        ),
     ];
 
     Tester::new(NoArrayConstructor::NAME, NoArrayConstructor::PLUGIN, pass, fail)

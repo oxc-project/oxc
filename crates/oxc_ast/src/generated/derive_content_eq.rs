@@ -203,7 +203,6 @@ impl ContentEq for ObjectProperty<'_> {
             && ContentEq::content_eq(&self.value, &other.value)
             && ContentEq::content_eq(&self.method, &other.method)
             && ContentEq::content_eq(&self.shorthand, &other.shorthand)
-            && ContentEq::content_eq(&self.computed, &other.computed)
     }
 }
 
@@ -211,6 +210,9 @@ impl ContentEq for PropertyKey<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::StaticIdentifier(a), Self::StaticIdentifier(b)) => a.content_eq(b),
+            (Self::StaticStringLiteral(a), Self::StaticStringLiteral(b)) => a.content_eq(b),
+            (Self::StaticNumericLiteral(a), Self::StaticNumericLiteral(b)) => a.content_eq(b),
+            (Self::StaticBigIntLiteral(a), Self::StaticBigIntLiteral(b)) => a.content_eq(b),
             (Self::PrivateIdentifier(a), Self::PrivateIdentifier(b)) => a.content_eq(b),
             (Self::BooleanLiteral(a), Self::BooleanLiteral(b)) => a.content_eq(b),
             (Self::NullLiteral(a), Self::NullLiteral(b)) => a.content_eq(b),
@@ -620,7 +622,6 @@ impl ContentEq for AssignmentTargetPropertyProperty<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.name, &other.name)
             && ContentEq::content_eq(&self.binding, &other.binding)
-            && ContentEq::content_eq(&self.computed, &other.computed)
     }
 }
 
@@ -1038,7 +1039,6 @@ impl ContentEq for BindingProperty<'_> {
         ContentEq::content_eq(&self.key, &other.key)
             && ContentEq::content_eq(&self.value, &other.value)
             && ContentEq::content_eq(&self.shorthand, &other.shorthand)
-            && ContentEq::content_eq(&self.computed, &other.computed)
     }
 }
 
@@ -1251,7 +1251,6 @@ impl ContentEq for MethodDefinition<'_> {
             && ContentEq::content_eq(&self.key, &other.key)
             && ContentEq::content_eq(&self.value, &other.value)
             && ContentEq::content_eq(&self.kind, &other.kind)
-            && ContentEq::content_eq(&self.computed, &other.computed)
             && ContentEq::content_eq(&self.r#static, &other.r#static)
             && ContentEq::content_eq(&self.r#override, &other.r#override)
             && ContentEq::content_eq(&self.optional, &other.optional)
@@ -1272,7 +1271,6 @@ impl ContentEq for PropertyDefinition<'_> {
             && ContentEq::content_eq(&self.key, &other.key)
             && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
             && ContentEq::content_eq(&self.value, &other.value)
-            && ContentEq::content_eq(&self.computed, &other.computed)
             && ContentEq::content_eq(&self.r#static, &other.r#static)
             && ContentEq::content_eq(&self.declare, &other.declare)
             && ContentEq::content_eq(&self.r#override, &other.r#override)
@@ -1340,7 +1338,6 @@ impl ContentEq for AccessorProperty<'_> {
             && ContentEq::content_eq(&self.key, &other.key)
             && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
             && ContentEq::content_eq(&self.value, &other.value)
-            && ContentEq::content_eq(&self.computed, &other.computed)
             && ContentEq::content_eq(&self.r#static, &other.r#static)
             && ContentEq::content_eq(&self.r#override, &other.r#override)
             && ContentEq::content_eq(&self.definite, &other.definite)
@@ -2244,8 +2241,7 @@ impl ContentEq for TSInterfaceBody<'_> {
 
 impl ContentEq for TSPropertySignature<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.computed, &other.computed)
-            && ContentEq::content_eq(&self.optional, &other.optional)
+        ContentEq::content_eq(&self.optional, &other.optional)
             && ContentEq::content_eq(&self.readonly, &other.readonly)
             && ContentEq::content_eq(&self.key, &other.key)
             && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
@@ -2297,7 +2293,6 @@ impl ContentEq for TSMethodSignatureKind {
 impl ContentEq for TSMethodSignature<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.key, &other.key)
-            && ContentEq::content_eq(&self.computed, &other.computed)
             && ContentEq::content_eq(&self.optional, &other.optional)
             && ContentEq::content_eq(&self.kind, &other.kind)
             && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)

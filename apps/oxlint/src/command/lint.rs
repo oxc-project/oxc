@@ -1,7 +1,7 @@
 use std::{path::PathBuf, str::FromStr, sync::OnceLock};
 
 use bpaf::{Bpaf, doc::Style};
-use oxc_linter::{AllowWarnDeny, FixKind, LintPlugins};
+use oxc_linter::{AllowWarnDeny, FixKind, LintPlugins, OxlintOptions};
 
 use crate::output_formatter::OutputFormat;
 
@@ -85,6 +85,24 @@ pub struct SuppressionOptions {
 }
 
 impl LintCommand {
+    pub fn config_options(&self) -> OxlintOptions {
+        let mut options = OxlintOptions::default();
+        options.type_aware = (self.type_check_only || self.type_aware).then_some(true);
+        options.type_check = (self.type_check_only || self.type_check).then_some(true);
+        options.deny_warnings = self.warning_options.deny_warnings.then_some(true);
+        options.max_warnings = self.warning_options.max_warnings;
+        options.report_unused_disable_directives = if self.type_check_only {
+            Some(AllowWarnDeny::Allow)
+        } else {
+            match self.inline_config_options.report_unused_directives {
+                ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),
+                ReportUnusedDirectives::WithoutSeverity(false) => None,
+                ReportUnusedDirectives::WithSeverity(severity) => severity,
+            }
+        };
+        options
+    }
+
     pub fn handle_threads(&self) {
         Self::init_rayon_thread_pool(self.misc_options.threads);
     }

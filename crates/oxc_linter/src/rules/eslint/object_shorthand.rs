@@ -6,7 +6,8 @@ use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
         ArrowFunctionExpression, Expression, Function, IdentifierReference, NewTarget,
-        ObjectExpression, ObjectProperty, ObjectPropertyKind, PropertyKind, Super, ThisExpression,
+        ObjectExpression, ObjectProperty, ObjectPropertyKind, PropertyKey, PropertyKind, Super,
+        ThisExpression,
     },
 };
 use oxc_ast_visit::{Visit, walk};
@@ -226,7 +227,7 @@ fn make_function_shorthand<'a>(
         };
 
         let property_key_span = property.key.span();
-        let key_text = if property.computed {
+        let key_text = if property.key.is_computed() {
             let (Some(paren_start_offset), Some(paren_end_offset)) = (
                 ctx.find_prev_token_within(property.span.start, property_key_span.start, "["),
                 ctx.find_next_token_within(property_key_span.end, property.span.end, "]"),
@@ -317,7 +318,7 @@ fn make_function_long_form<'a>(
     };
     ctx.diagnostic_with_fix(diagnostic, |fixer| {
         let property_key_span = property.key.span();
-        let key_text_range = if property.computed {
+        let key_text_range = if property.key.is_computed() {
             let (Some(paren_start_offset), Some(paren_end_offset)) = (
                 ctx.find_prev_token_within(property.span.start, property_key_span.start, "["),
                 ctx.find_next_token_within(property_key_span.end, property.span.end, "]"),
@@ -580,7 +581,7 @@ fn is_property_value_anonymous_function(property: &ObjectProperty) -> bool {
 }
 
 fn is_property_key_string_literal(property: &ObjectProperty) -> bool {
-    matches!(property.key.as_expression(), Some(Expression::StringLiteral(_)))
+    matches!(property.key, PropertyKey::StaticStringLiteral(_) | PropertyKey::StringLiteral(_))
 }
 
 fn is_shorthand_property(property: &ObjectProperty) -> bool {
@@ -605,10 +606,8 @@ fn is_redundant_property(property: &ObjectProperty) -> bool {
 
 fn can_property_have_shorthand(property: &ObjectProperty) -> bool {
     property.kind == PropertyKind::Init
-        && (property.computed
-            || (!property.key.is_specific_id("__proto__")
-                && !property.key.is_specific_string_literal("__proto__")))
-        && (!property.computed || is_property_value_function(property))
+        && !property.key.is_specific_literal_name("__proto__")
+        && (!property.key.is_computed() || is_property_value_function(property))
 }
 
 #[test]

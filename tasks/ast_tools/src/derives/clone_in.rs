@@ -95,7 +95,7 @@ fn derive_struct(struct_def: &StructDef, schema: &Schema) -> TokenStream {
                 // Fields (or fields whose type is) marked `#[clone_in(default)]` always reset to their default
                 quote!( #field_ident: Default::default() )
             } else if struct_field_is_semantic_id_cell_option(field, schema) {
-                // `Cell<Option<Id>>` semantic ID fields (`scope_id`, `symbol_id`, `reference_id`)
+                // `Cell<Option<Id>>` semantic ID fields (`scope_id`, `symbol_id`, `reference_id`, `label_id`)
                 // clone via `SemanticId::clone_cell_option_id`, which keeps the ID or resets it to `None`,
                 // depending on `with_semantic_ids`.
                 //

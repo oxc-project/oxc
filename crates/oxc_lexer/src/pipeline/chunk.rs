@@ -1,19 +1,4 @@
-use std::ptr;
-
 use oxc_simd::{Neon, Vec128, VecData128, cpu_version};
-
-/// Load 64 bits starting at byte `i` as a `u64`.
-///
-/// The load is unaligned, so neither `src` nor `i` has any alignment requirement.
-///
-/// # SAFETY
-///
-/// `src.add(i)` must be valid for reads of 8 bytes.
-#[cpu_version(Generic)]
-#[inline(always)]
-pub unsafe fn load64(src: *const u8, i: usize) -> u64 {
-    ptr::read_unaligned(src.add(i) as *const u64)
-}
 
 /// Compare every byte of chunk `x` against `b`.
 ///

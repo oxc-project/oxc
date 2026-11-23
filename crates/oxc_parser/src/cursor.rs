@@ -7,16 +7,17 @@ use oxc_str::JSStr;
 
 use crate::{
     ParserConfig as Config, ParserImpl, diagnostics,
-    error_handler::FatalError,
     lexer::{Kind, LexerCheckpoint, Token, cold_branch},
 };
 
+#[derive(Clone, Copy)]
 pub struct ParserCheckpoint<'a> {
     lexer: LexerCheckpoint<'a>,
     cur_token: Token,
     prev_token_end: u32,
     errors_pos: usize,
-    fatal_error: Option<FatalError<'a>>,
+    cover_parenthesized_len: usize,
+    has_fatal_error: bool,
 }
 
 impl<'a, C: Config> ParserImpl<'a, C> {
@@ -143,6 +144,36 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.advance(self.cur_kind());
     }
 
+    /// Advance if `accept` holds for the token after the current one.
+    ///
+    /// Use this instead of [`Lexer::peek_token`] where the answer is nearly always yes, such as
+    /// a modifier keyword, which is nearly always followed by the member it modifies. The token
+    /// after is then lexed once and kept. Peeking lexes it, discards it, and leaves it to be
+    /// lexed again.
+    ///
+    /// [`Lexer::peek_token`]: crate::lexer::Lexer::peek_token
+    #[inline]
+    pub(crate) fn eat_if_next(&mut self, accept: impl FnOnce(Token) -> bool) -> bool {
+        let checkpoint = self.lexer.checkpoint();
+        let next = self.lexer.next_token();
+        if !accept(next) {
+            self.lexer.rewind(checkpoint);
+            return false;
+        }
+        self.advance_to(next);
+        true
+    }
+
+    /// Move to `next`, the token after the current one, which the lexer has already read.
+    #[inline]
+    pub(crate) fn advance_to(&mut self, next: Token) {
+        if self.token.escaped() && self.token.kind().is_any_keyword() {
+            self.report_escaped_keyword(self.token.span());
+        }
+        self.prev_token_end = self.token.end();
+        self.token = next;
+    }
+
     /// [Automatic Semicolon Insertion](https://tc39.es/ecma262/#sec-automatic-semicolon-insertion)
     /// # Errors
     pub(crate) fn asi(&mut self) {
@@ -256,6 +287,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Tell lexer to continue reading jsx identifier if the lexer character position is at `-` for `<component-name>`.
     ///
     /// Returns `true` if was continued.
+    #[inline]
     pub(crate) fn continue_lex_jsx_identifier(&mut self) -> bool {
         if let Some(token) = self.lexer.continue_lex_jsx_identifier(self.token.start()) {
             self.token = token;
@@ -284,7 +316,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return false;
         }
         let kind = self.cur_kind();
-        if kind == Kind::ShiftLeft || kind == Kind::LtEq {
+        if kind == Kind::ShiftLeft {
             self.token = self.lexer.re_lex_as_typescript_l_angle(2);
             true
         } else if kind == Kind::ShiftLeftEq {
@@ -311,35 +343,47 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
-    pub(crate) fn checkpoint(&mut self) -> ParserCheckpoint<'a> {
+    pub(crate) fn checkpoint(&self) -> ParserCheckpoint<'a> {
         ParserCheckpoint {
             lexer: self.lexer.checkpoint(),
             cur_token: self.token,
             prev_token_end: self.prev_token_end,
             errors_pos: self.errors.len(),
-            fatal_error: self.fatal_error.take(),
-        }
-    }
-
-    pub(crate) fn checkpoint_with_error_recovery(&mut self) -> ParserCheckpoint<'a> {
-        ParserCheckpoint {
-            lexer: self.lexer.checkpoint_with_error_recovery(),
-            cur_token: self.token,
-            prev_token_end: self.prev_token_end,
-            errors_pos: self.errors.len(),
-            fatal_error: self.fatal_error.take(),
+            cover_parenthesized_len: self.state.cover_parenthesized.len(),
+            has_fatal_error: self.fatal_error.is_some(),
         }
     }
 
     pub(crate) fn rewind(&mut self, checkpoint: ParserCheckpoint<'a>) {
-        let ParserCheckpoint { lexer, cur_token, prev_token_end, errors_pos, fatal_error } =
-            checkpoint;
+        let ParserCheckpoint {
+            lexer,
+            cur_token,
+            prev_token_end,
+            errors_pos,
+            cover_parenthesized_len,
+            has_fatal_error,
+        } = checkpoint;
 
+        // A fatal error set after the checkpoint is discarded. If it is a lexer error that
+        // `set_unexpected` took from the lexer, give it back.
+        if !has_fatal_error
+            && let Some(fatal_error) = self.fatal_error.take()
+            && self.lexer.errors.len() < lexer.errors_len()
+        {
+            self.lexer.errors.push(fatal_error.error);
+        }
         self.lexer.rewind(lexer);
         self.token = cur_token;
         self.prev_token_end = prev_token_end;
         self.errors.truncate(errors_pos);
-        self.fatal_error = fatal_error;
+        self.state.cover_parenthesized.truncate(cover_parenthesized_len);
+    }
+
+    /// Rewind to `checkpoint`, keeping the comments and irregular whitespace lexed after it.
+    /// Only for when the source after `checkpoint` is not all lexed again.
+    pub(crate) fn rewind_keeping_trivia(&mut self, mut checkpoint: ParserCheckpoint<'a>) {
+        self.lexer.keep_trivia(&mut checkpoint.lexer);
+        self.rewind(checkpoint);
     }
 
     pub(crate) fn lookahead<U>(&mut self, predicate: impl Fn(&mut ParserImpl<'a, C>) -> U) -> U {

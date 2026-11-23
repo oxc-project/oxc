@@ -369,6 +369,26 @@ fn test_inline_into_call_arguments() {
 }
 
 #[test]
+fn test_inline_eval_alias_stays_indirect() {
+    for kind in ["const", "let", "var"] {
+        test(
+            &format!("function f(a) {{ {kind} e = eval; return e('typeof a'); }}"),
+            "function f(a) { return (0, eval)('typeof a'); }",
+        );
+    }
+    test_same("function f(a) { return (0, eval)('typeof a'); }");
+    test_same("const e = eval; function f(a) { return e('typeof a'); }");
+    test(
+        "function f(a) { const e = eval; return e?.('typeof a'); }",
+        "function f(a) { return eval?.('typeof a'); }",
+    );
+    test_script(
+        "function f(a, eval) { const e = eval; return e('typeof a'); }",
+        "function f(a, eval) { return (0, eval)('typeof a'); }",
+    );
+}
+
+#[test]
 fn test_inline_into_callee_keeps_this() {
     test("function f(o) { var c = o.m; return c(1) }", "function f(o) { return (0, o.m)(1) }");
     test("function f(o) { var c = o?.m; return c(1) }", "function f(o) { return (0, o?.m)(1) }");
@@ -585,6 +605,32 @@ fn keep_script_root_var_in_nested_statement() {
     test_script(
         "(function (a) {})(1); try { var x = foo(); throw x } catch {}",
         "try { var x = foo(); throw x } catch {}",
+    );
+}
+
+#[test]
+fn keep_block_var_read_by_outer_direct_eval() {
+    test(
+        "function f(a, b) { { var x = a; b(x); } return eval('x') }",
+        "function f(a, b) { var x = a; return b(x), eval('x') }",
+    );
+    test_same("function f(a, b) { if (a) { var x = a; b(x); } return eval('x') }");
+    test(
+        "function f(a, b) { switch (a) { case 0: break; default: var x = a; b(x); } return eval('x') }",
+        "function f(a, b) { if (a !== 0) { var x = a; b(x); } return eval('x') }",
+    );
+    test(
+        "function f(a, b) { { var x = a, y = x; b(y); } return eval('x') }",
+        "function f(a, b) { var x = a, y = x; return b(y), eval('x') }",
+    );
+    test(
+        "function f(a, b) { { var x = a; b(x); } return () => eval('x') }",
+        "function f(a, b) { var x = a; return b(x), () => eval('x') }",
+    );
+    // A block-scoped `let` is not visible to an eval outside the block.
+    test(
+        "function f(a, b) { { let x = a; b(x); } return eval('x') }",
+        "function f(a, b) { return b(a), eval('x') }",
     );
 }
 

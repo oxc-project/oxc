@@ -456,7 +456,7 @@ const Foo = /* @__PURE__ */ (() => {})() satisfies X;
 ########## 28
 const Foo = /* @__PURE__ */ (() => {})()<X>
 ----------
-const Foo = /* @__PURE__ */ (() => {})()<X>;
+const Foo = (/* @__PURE__ */ (() => {})())<X>;
 
 ########## 29
 const Foo = /* @__PURE__ */ <Foo>(() => {})()!

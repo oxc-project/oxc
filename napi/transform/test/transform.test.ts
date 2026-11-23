@@ -305,6 +305,63 @@ describe("inject plugin", () => {
   });
 });
 
+describe("standard decorators", () => {
+  it("preserves decorators and auto-accessors while stripping types", () => {
+    const ret = transformSync(
+      "test.ts",
+      `
+        @decorate class Example<T> {
+          @decorate value: number = 1;
+          @decorate accessor count: number = 2;
+          @decorate method(value: T): T { return value; }
+        }
+        class Plain { accessor value: number = 1; }
+      `,
+      { target: "esnext" },
+    );
+    expect(ret.errors).toEqual([]);
+    expect(ret.helpersUsed).toEqual({});
+    expect(ret.code.match(/@decorate/g)).toHaveLength(4);
+    expect(ret.code).toContain("class Example {");
+    expect(ret.code).toContain("value = 1;");
+    expect(ret.code).toContain("accessor count = 2;");
+    expect(ret.code).toContain("accessor value = 1;");
+    expect(ret.code).toContain("method(value) {");
+    expect(ret.code).not.toContain(": number");
+    expect(ret.code).not.toContain(": T");
+  });
+
+  it("keeps unrelated target transforms enabled while decorators are preserved", () => {
+    const ret = transformSync(
+      "test.js",
+      "function run() { using resource = acquire(); @decorate class Example { @decorate method() {} } return Example; }",
+      { target: "es2022" },
+    );
+    expect(ret.errors).toEqual([]);
+    expect(ret.code).toContain("@decorate");
+    expect(ret.code).toContain("usingCtx");
+    expect(ret.code).not.toContain("using resource");
+    expect(ret.code).not.toContain("decorateElement");
+  });
+
+  test.each(["es2015", "es2020", "es2022", "esnext"])(
+    "preserves decorated fields targeting %s",
+    (target) => {
+      for (const setPublicClassFields of [false, true]) {
+        const ret = transformSync(
+          "test.ts",
+          "class Example { @decorate static value: number = 1; @decorate item: number = 2; }",
+          { target, assumptions: { setPublicClassFields } },
+        );
+        expect(ret.errors).toEqual([]);
+        expect(ret.code).toContain("@decorate static value = 1;");
+        expect(ret.code).toContain("@decorate item = 2;");
+        expect(ret.helpersUsed).toEqual({});
+      }
+    },
+  );
+});
+
 describe("legacy decorator", () => {
   it("matches output", () => {
     const code = `

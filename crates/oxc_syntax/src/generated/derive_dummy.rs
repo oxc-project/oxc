@@ -7,28 +7,7 @@ use std::cell::Cell;
 
 use oxc_allocator::{Allocator, Dummy};
 
-use crate::number::*;
 use crate::operator::*;
-
-impl<'a> Dummy<'a> for NumberBase {
-    /// Create a dummy [`NumberBase`].
-    ///
-    /// Does not allocate any data into arena.
-    #[inline(always)]
-    fn dummy(allocator: &'a Allocator) -> Self {
-        Self::Float
-    }
-}
-
-impl<'a> Dummy<'a> for BigintBase {
-    /// Create a dummy [`BigintBase`].
-    ///
-    /// Does not allocate any data into arena.
-    #[inline(always)]
-    fn dummy(allocator: &'a Allocator) -> Self {
-        Self::Decimal
-    }
-}
 
 impl<'a> Dummy<'a> for AssignmentOperator {
     /// Create a dummy [`AssignmentOperator`].

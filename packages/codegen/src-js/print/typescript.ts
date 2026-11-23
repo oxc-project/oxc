@@ -67,7 +67,12 @@ export function printTSAsOrSatisfiesExpression(
 
   printExpression(node.expression, state, PREC_EXPONENTIATION, ctx);
   write(state, node.type === "TSAsExpression" ? " as " : " satisfies ", CAT_OTHER);
-  printTSType(node.typeAnnotation, state);
+
+  const { typeAnnotation } = node;
+  const wrapType = endsWithAssertsReference(typeAnnotation);
+  if (wrapType) write(state, "(", CAT_OTHER);
+  printTSType(typeAnnotation, state);
+  if (wrapType) write(state, ")", CAT_CLOSE_BRACKET);
 
   if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
 }
@@ -192,8 +197,7 @@ function printTSType(node: ESTree.TSTupleElement | ESTree.TSQualifiedName, state
       printTSConditionalType(node, state);
       break;
     case "TSInferType":
-      write(state, "infer ", CAT_OTHER);
-      printTSTypeParameter(node.typeParameter, state);
+      printTSInferType(node, state);
       break;
     case "TSIndexedAccessType": {
       const wrap = parenthesizeTypeOfPostfixType(node.objectType);
@@ -690,6 +694,28 @@ export function printTypeParameters(
 }
 
 /**
+ * `infer U` or `infer U extends C`.
+ *
+ * An `infer` constraint is parsed with conditional types disallowed, so a conditional constraint is wrapped -
+ * `infer U extends A extends B ? C : D` would end the constraint at `A`.
+ *
+ * @param node - TS infer type
+ * @param state - Printer state
+ */
+function printTSInferType(node: ESTree.TSInferType, state: State): void {
+  const { name, constraint } = node.typeParameter;
+  write(state, "infer ", CAT_OTHER);
+  writeWithMapNamed(state, name.name, name.start, name.end, name);
+  if (constraint == null) return;
+
+  write(state, " extends ", CAT_OTHER);
+  const wrap = constraint.type === "TSConditionalType";
+  if (wrap) write(state, "(", CAT_OTHER);
+  printTSType(constraint, state);
+  if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
+}
+
+/**
  * One type parameter with its modifiers, constraint and default. The modifiers are independent flags, so
  * the fixed print order here - `const`, `in`, `out` - is what gives them an order at all.
  *
@@ -699,9 +725,8 @@ export function printTypeParameters(
 function printTSTypeParameter(node: ESTree.TSTypeParameter, state: State): void {
   // No `printSpaceBeforeIdentifier` needed, either here or before the name.
   //
-  // All 3 callers leave `last` as `CAT_LT` or `CAT_OTHER`:
-  // - `printTypeParameters` writes `<`, `, ` or a newline plus indent before each parameter.
-  // - `TSInferType` writes `infer `.
+  // `last` is always `CAT_LT` or `CAT_OTHER` here:
+  // - Each type parameter follows `<`, `, ` or a newline plus indent in its list.
   // - Each modifier below ends in a space.
   // So nothing an identifier could run into ever precedes one.
   //
@@ -775,8 +800,8 @@ function printTSTupleElement(node: ESTree.TSTupleElement, state: State): void {
 
 /**
  * `C extends E ? T : F`. The check type is wrapped when it is a function, constructor or conditional
- * type, and the extends type only when it is itself conditional - otherwise its `?` would be read as
- * this conditional's.
+ * type, or ends in a bare `asserts` reference. The extends type is wrapped only when it is itself
+ * conditional - otherwise its `?` would be read as this conditional's.
  *
  * @param node - TS conditional type
  * @param state - Printer state
@@ -787,7 +812,8 @@ function printTSConditionalType(node: ESTree.TSConditionalType, state: State): v
   const checkWrap =
     checkTypeType === "TSFunctionType"
     || checkTypeType === "TSConstructorType"
-    || checkTypeType === "TSConditionalType";
+    || checkTypeType === "TSConditionalType"
+    || endsWithAssertsReference(checkType);
 
   if (checkWrap) write(state, "(", CAT_OTHER);
   printTSType(checkType, state);
@@ -806,6 +832,66 @@ function printTSConditionalType(node: ESTree.TSConditionalType, state: State): v
 
   write(state, " : ", CAT_OTHER);
   printTSType(node.falseType, state);
+}
+
+/**
+ * Whether a type prints ending in a bare reference to a type named `asserts`.
+ *
+ * TypeScript reads `asserts` followed by an identifier or keyword on the same line as the start of an
+ * `asserts x` predicate, so `(asserts) extends T ? A : B` must keep its parentheses wherever a keyword
+ * can follow the type. The rightmost edge is walked through the nodes that print a child type last -
+ * the last member of a union or intersection, a type operator's operand, a function or constructor
+ * type's return type, a conditional's false type, a type predicate's type, an `infer` type's constraint,
+ * and the operand of a prefix `?` or `!`. A child the printer parenthesizes anyway may also count,
+ * which only adds redundant parentheses.
+ *
+ * @param ty - Type
+ */
+function endsWithAssertsReference(ty: ESTree.TSType): boolean {
+  for (;;) {
+    switch (ty.type) {
+      case "TSTypeReference":
+        return (
+          ty.typeArguments == null
+          && ty.typeName.type === "Identifier"
+          && ty.typeName.name === "asserts"
+        );
+      case "TSUnionType":
+      case "TSIntersectionType": {
+        const { types } = ty;
+        if (types.length === 0) return false;
+        ty = types[types.length - 1];
+        break;
+      }
+      case "TSTypeOperator":
+        ty = ty.typeAnnotation;
+        break;
+      case "TSFunctionType":
+      case "TSConstructorType":
+        ty = tsTypeAnnotationOf(ty.returnType);
+        break;
+      case "TSConditionalType":
+        ty = ty.falseType;
+        break;
+      case "TSTypePredicate":
+        if (ty.typeAnnotation == null) return false;
+        ty = tsTypeAnnotationOf(ty.typeAnnotation);
+        break;
+      case "TSInferType": {
+        const { constraint } = ty.typeParameter;
+        if (constraint == null) return false;
+        ty = constraint;
+        break;
+      }
+      case "TSJSDocNullableType":
+      case "TSJSDocNonNullableType":
+        if (ty.postfix) return false;
+        ty = tsTypeAnnotationOf(ty.typeAnnotation);
+        break;
+      default:
+        return false;
+    }
+  }
 }
 
 /**
@@ -834,7 +920,12 @@ function printTSMappedType(node: ESTree.TSMappedType, state: State): void {
 
   writeWithMapNamedNoLast(state, node.key.name, node.key.start, node.key.end, node.key);
   write(state, " in ", CAT_OTHER);
-  printTSType(node.constraint, state);
+
+  const { constraint } = node;
+  const constraintWrap = node.nameType != null && endsWithAssertsReference(constraint);
+  if (constraintWrap) write(state, "(", CAT_OTHER);
+  printTSType(constraint, state);
+  if (constraintWrap) write(state, ")", CAT_CLOSE_BRACKET);
 
   if (node.nameType != null) {
     write(state, " as ", CAT_OTHER);
@@ -1288,7 +1379,7 @@ function printTSEnumMember(node: ESTree.TSEnumMember, state: State): void {
 
   if (node.initializer != null) {
     write(state, " = ", CAT_OTHER);
-    printExpression(node.initializer, state, PREC_LOWEST, CTX_NONE);
+    printExpression(node.initializer, state, PREC_COMMA, CTX_NONE);
   }
 }
 

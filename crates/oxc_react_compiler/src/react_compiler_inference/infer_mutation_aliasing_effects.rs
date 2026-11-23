@@ -184,6 +184,7 @@ pub fn infer_mutation_aliasing_effects<'a>(
         catch_handlers: FxHashMap::default(),
         is_function_expression,
         hoisted_context_declarations,
+        hoisted_function_initializer: None,
         non_mutating_spreads,
         effect_value_id_cache: FxHashMap::default(),
         function_values: FxHashMap::default(),
@@ -768,6 +769,9 @@ struct Context<'a> {
     catch_handlers: FxHashMap<BlockId, Place>,
     is_function_expression: bool,
     hoisted_context_declarations: FxHashMap<DeclarationId, Option<Place>>,
+    /// Set while applying the effects of the `StoreContext` that initializes a
+    /// hoisted function declaration.
+    hoisted_function_initializer: Option<DeclarationId>,
     non_mutating_spreads: FxHashSet<IdentifierId>,
     /// Cache of ValueIds keyed by effect key, ensuring stable allocation-site identity
     /// across fixpoint iterations. Mirrors TS `effectInstructionValueCache`.
@@ -1430,6 +1434,13 @@ fn apply_signature<'a>(
                             &variable,
                             mutate_value.span,
                             ident.span,
+                            matches!(
+                                effect,
+                                AliasingEffect::Mutate {
+                                    reason: Some(MutationReason::AssignCurrentProperty),
+                                    ..
+                                }
+                            ),
                         );
                         let error =
                             env.intern_aliasing_diagnostic(mutate_value.identifier, diagnostic);
@@ -1447,9 +1458,20 @@ fn apply_signature<'a>(
     // Get the cached signature effects
     let sig = Rc::clone(context.instruction_signature_cache.get(&instr_idx).unwrap());
 
-    for effect in &sig.effects {
-        apply_effect_ref(context, state, effect, &mut initialized, &mut effects, env)?;
-    }
+    context.hoisted_function_initializer = match &instr.value {
+        InstructionValue::StoreContext { lvalue, .. }
+            if lvalue.kind == InstructionKind::Function =>
+        {
+            let decl_id = env.identifiers[lvalue.place.identifier].declaration_id;
+            context.hoisted_context_declarations.contains_key(&decl_id).then_some(decl_id)
+        }
+        _ => None,
+    };
+    let result = sig.effects.iter().try_for_each(|effect| {
+        apply_effect_ref(context, state, effect, &mut initialized, &mut effects, env)
+    });
+    context.hoisted_function_initializer = None;
+    result?;
 
     // If lvalue is not yet defined, initialize it with a default value.
     // The TS version asserts this as an invariant, but the Rust port may have
@@ -2033,6 +2055,18 @@ fn apply_effect_ref<'a>(
                 let decl_id = ident.declaration_id;
 
                 if mutation_kind == MutationResult::MutateFrozen
+                    && context.hoisted_function_initializer == Some(decl_id)
+                {
+                    // Unlike the TS implementation, do not report the initializer of a
+                    // hoisted function declaration as an access before declaration. The
+                    // binding is initialized on scope entry, so an earlier capture (e.g.
+                    // `useHook(() => fn())` before `function fn() {}`) always observes
+                    // the function. The TS implementation records this false positive
+                    // but then usually discards it when `PruneHoistedContexts` throws an
+                    // invariant, so `eslint-plugin-react-hooks` reports nothing. Keep the
+                    // `Mutate` so mutable ranges still cover the initialization.
+                    effects.push(effect.clone_in(context.alloc));
+                } else if mutation_kind == MutationResult::MutateFrozen
                     && context.hoisted_context_declarations.contains_key(&decl_id)
                 {
                     let variable = match &ident.name {
@@ -2067,8 +2101,19 @@ fn apply_effect_ref<'a>(
                         }
                         _ => "value".to_string(),
                     };
-                    let diagnostic =
-                        diagnostics::immutable_value(reason_str, &variable, value.span, ident.span);
+                    let diagnostic = diagnostics::immutable_value(
+                        reason_str,
+                        &variable,
+                        value.span,
+                        ident.span,
+                        matches!(
+                            effect,
+                            AliasingEffect::Mutate {
+                                reason: Some(MutationReason::AssignCurrentProperty),
+                                ..
+                            }
+                        ),
+                    );
 
                     let error = env.intern_aliasing_diagnostic(value.identifier, diagnostic);
                     let error_kind = if abstract_value.kind == ValueKind::Frozen {
@@ -2540,9 +2585,16 @@ fn compute_effects_for_legacy_signature<'a>(
         reason: return_value_reason,
     });
 
+    // Unlike the TS implementation, argument-dependent impurity (zero-argument
+    // `new Date()`) is only reported in the component or hook body, not inside
+    // nested functions. Callbacks passed to an unknown function such as
+    // `form.handleSubmit(onSubmit)` are assumed to run during render, which
+    // flagged `new Date()` in event-time callbacks after it became impure
+    // (oxc-project/oxc#29094). Always-impure functions such as `Date.now()` are
+    // unchanged.
     if signature.impure
         && env.config.validate_no_impure_functions_in_render
-        && (!signature.impure_if_no_args || args.is_empty())
+        && (!signature.impure_if_no_args || (args.is_empty() && !state.is_function_expression))
     {
         let diagnostic =
             diagnostics::impure_function(signature.canonical_name.as_deref(), span.copied());

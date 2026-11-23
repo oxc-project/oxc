@@ -34,7 +34,7 @@ var whole = x ? y : /** @type {D} */ (b.head ?? c);
 // arrow body sequence with a leading cast comment,
 const arrow = () => (/** @type {D} */ (a).b, x);
 
-// and return argument sequence; only the cast comment moves inside the added parens.
+// while a return argument sequence takes no added parens: the cast stays as written.
 function ret() {
   return (
     // c

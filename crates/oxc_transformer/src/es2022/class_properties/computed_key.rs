@@ -18,14 +18,10 @@ impl<'a> ClassProperties<'a> {
         method: &mut MethodDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        // Exit if key is not an `Expression`
-        // (`PropertyKey::StaticIdentifier` or `PropertyKey::PrivateIdentifier`)
         let Some(key) = method.key.as_expression_mut() else {
             return;
         };
 
-        // Exit if evaluating key cannot have side effects.
-        // This check also results in exit for non-computed keys e.g. `class C { 'x'() {} 123() {} }`.
         if !key_needs_temp_var(key, ctx) {
             return;
         }

@@ -4,7 +4,6 @@ use oxc_traverse::Traverse;
 
 use crate::{common::class_transform::ClassTransform, context::TraverseCtx, state::TransformState};
 
-mod class_name;
 mod class_properties;
 mod class_static_block;
 mod options;
@@ -31,7 +30,7 @@ impl ES2022<'_> {
         let (class_static_block, class_properties) = match class_transform {
             ClassTransform::None => (None, None),
             ClassTransform::StaticBlocks => (Some(ClassStaticBlock::new()), None),
-            ClassTransform::ClassProperties { options, transform_static_blocks } => (
+            ClassTransform::ClassProperties { options, transform_static_blocks, .. } => (
                 None,
                 Some(ClassProperties::new(
                     options,
@@ -53,6 +52,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
                 | Statement::ExportDefaultDeclaration(_)
         ) {
             return;
+        }
+        if let Some(class_properties) = &mut self.class_properties {
+            class_properties.enter_statement(stmt, ctx);
         }
         if let Some(class_static_block) = &mut self.class_static_block {
             class_static_block.enter_statement(stmt, ctx);

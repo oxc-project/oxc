@@ -74,6 +74,10 @@ declare_oxc_lint!(
     /// `import.meta.dirname` is equivalent to `path.dirname(import.meta.filename)`.
     /// This rule replaces legacy patterns with `import.meta.dirname` and `import.meta.filename`.
     ///
+    /// `fileURLToPath(new URL('.', import.meta.url))` and the equivalent `'./'` form are
+    /// allowed because they return a path with a trailing separator, unlike
+    /// `import.meta.dirname`.
+    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
@@ -84,7 +88,6 @@ declare_oxc_lint!(
     /// const filename = fileURLToPath(import.meta.url);
     /// const dirname = path.dirname(fileURLToPath(import.meta.url));
     /// const dirname = path.dirname(import.meta.filename)
-    /// const dirname = fileURLToPath(new URL('.', import.meta.url))
     /// ```
     ///
     /// Examples of **correct** code for this rule:
@@ -137,24 +140,11 @@ impl Rule for PreferImportMetaProperties {
                         return;
                     };
 
-                    if !is_url_file_url_to_path_call(url_parent, ctx)
-                        || !has_argument_expression(&url_parent.arguments, 0, new_url.span)
-                    {
-                        return;
-                    }
-
-                    if new_url.arguments.len() == 1
+                    if is_url_file_url_to_path_call(url_parent, ctx)
+                        && has_argument_expression(&url_parent.arguments, 0, new_url.span)
                         && has_argument_expression(&new_url.arguments, 0, member_expression_span)
                     {
                         iterate_problems_from_filename(url_parent.node_id(), true, ctx);
-                        return;
-                    }
-
-                    if new_url.arguments.len() == 2
-                        && is_parent_literal(&new_url.arguments[0])
-                        && has_argument_expression(&new_url.arguments, 1, member_expression_span)
-                    {
-                        report_problem(ctx, url_parent.span, ProblemKind::Dirname);
                     }
                 }
             }
@@ -183,13 +173,6 @@ fn is_process_get_builtin_module_call(call: &CallExpression<'_>, modules: &[&str
     )
 }
 
-fn is_parent_literal(argument: &Argument<'_>) -> bool {
-    matches!(
-        argument,
-        Argument::StringLiteral(lit) if lit.value == "." || lit.value == "./"
-    )
-}
-
 fn has_argument_expression(arguments: &[Argument<'_>], index: usize, node_span: Span) -> bool {
     arguments
         .get(index)
@@ -198,7 +181,7 @@ fn has_argument_expression(arguments: &[Argument<'_>], index: usize, node_span: 
 }
 
 fn is_url_constructor(new_expression: &NewExpression<'_>, ctx: &LintContext<'_>) -> bool {
-    if !(1..=2).contains(&new_expression.arguments.len()) {
+    if new_expression.arguments.len() != 1 {
         return false;
     }
 
@@ -347,7 +330,7 @@ fn check_variable_declarator(
         }
         BindingPattern::ObjectPattern(object_pattern) => {
             for property in &object_pattern.properties {
-                if property.computed {
+                if property.key.is_computed() {
                     continue;
                 }
                 let BindingPattern::BindingIdentifier(binding_identifier) = &property.value else {
@@ -489,6 +472,10 @@ fn test() {
             const filename = fileURLToPath(new URL("https://example.com"));"#,
         r#"import { fileURLToPath } from "url";
             const dirname = fileURLToPath(new URL(".", "https://example.com"));"#,
+        r#"import { fileURLToPath } from "url";
+            const dirname = fileURLToPath(new URL(".", import.meta.url));"#,
+        r#"import { fileURLToPath } from "url";
+            const dirname = fileURLToPath(new URL("./", import.meta.url));"#,
     ];
 
     let fail = vec![
@@ -497,10 +484,6 @@ fn test() {
             const dirname = path.dirname(fileURLToPath(import.meta.url));"#,
         r#"import path from "path";
             const dirname = path.dirname(import.meta.filename);"#,
-        r#"import { fileURLToPath } from "url";
-            const dirname = fileURLToPath(new URL(".", import.meta.url));"#,
-        r#"import { fileURLToPath } from "url";
-            const dirname = fileURLToPath(new URL("./", import.meta.url));"#,
         r#"import { fileURLToPath } from "url";
             const filename = fileURLToPath(import.meta.url);"#,
         r#"import { fileURLToPath } from "url";
@@ -556,14 +539,6 @@ fn test() {
             const dirname = path.dirname(fileURLToPath(import.meta.url));"#,
             r#"import path from "path";
             import { fileURLToPath } from "url";
-            const dirname = import.meta.dirname;"#,
-        )
-            .into(),
-        // dirname via new URL(".", …)
-        (
-            r#"import { fileURLToPath } from "url";
-            const dirname = fileURLToPath(new URL(".", import.meta.url));"#,
-            r#"import { fileURLToPath } from "url";
             const dirname = import.meta.dirname;"#,
         )
             .into(),

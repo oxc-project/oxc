@@ -12,7 +12,7 @@
 //!
 //! [`match_delim_back`]: crate::pipeline::disambiguate::TokensView::match_delim_back
 
-use oxc_simd::{Cpu, cpu_multiversion};
+use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
 
 use crate::token::{OP_KIND_BASE, matches_tk, tk};
 
@@ -23,8 +23,9 @@ use crate::pipeline::{
     },
     disambiguate::{
         FORWARD_SCAN_CAP,
-        common::{Closers, Open, TokensView, bits},
+        common::{Closers, Open, TokensView},
     },
+    kinds::Kinds,
 };
 
 /// Bytes the forward angle match reacts to. Everything else is skipped without touching a bitmap.
@@ -42,8 +43,8 @@ static GT_SCAN_DELIM: [bool; 256] = {
     t
 };
 
-/// True when the `<<` at `lt` is two type-argument/type-parameter openers
-/// rather than shift-left.
+/// True when what follows the `<<` at `lt` has the shape of two type-argument/type-parameter
+/// openers rather than shift-left. The context walk decides whether lists can open there.
 ///
 /// Only one TypeScript production puts two `<` next to each other: a
 /// type-argument list whose first argument is a function type. The second
@@ -61,7 +62,7 @@ static GT_SCAN_DELIM: [bool; 256] = {
 #[cpu_multiversion]
 #[inline(never)]
 pub fn lt_run_split(tokens: &TokensView, lt: usize, cpu: impl Cpu) -> bool {
-    let TokensView { src, st, n, .. } = *tokens;
+    let TokensView { src, token_start, n, .. } = *tokens;
     // A TypeParameter starts with an identifier (or the `const` modifier),
     // which is what makes `<<=` cost two bytes to reject.
     let head = skip_trivia_fwd(src, n, lt + 2, cpu);
@@ -73,7 +74,7 @@ pub fn lt_run_split(tokens: &TokensView, lt: usize, cpu: impl Cpu) -> bool {
         return false;
     }
     // Already fused by coalesce: a shift.
-    if !bits::get(st, lt + 1, cpu) {
+    if !token_start.get(lt + 1, cpu) {
         return false;
     }
     let Some(gt) = list_closer(tokens, lt + 1, cpu) else {
@@ -96,6 +97,18 @@ pub(super) fn arrow_after_params(tokens: &TokensView, lp: usize, cpu: impl Cpu) 
     };
     let ar = skip_trivia_fwd(src, n, rp + 1, cpu);
     ar < n && src[ar] == b'=' && src[ar + 1] == b'>'
+}
+
+/// Is the < at lt a list followed by a parameter list, as the type parameters of an arrow are?
+#[cpu_version(Generic)]
+pub fn arrow_type_params_at(tokens: &TokensView, lt: usize) -> bool {
+    let cpu = BASELINE;
+
+    let TokensView { src, n, .. } = *tokens;
+    list_closer(tokens, lt, cpu).is_some_and(|gt| {
+        let lp = skip_trivia_fwd(src, n, gt + 1, cpu);
+        lp < n && src[lp] == b'('
+    })
 }
 
 #[cpu_multiversion]
@@ -154,8 +167,8 @@ fn group_closer(tokens: &TokensView, lp: usize, cpu: impl Cpu) -> Option<usize> 
 #[cpu_multiversion]
 #[inline]
 fn past_raw(tokens: &TokensView, lim: usize, i: usize, cpu: impl Cpu) -> Option<usize> {
-    let (src, kind) = (tokens.src, tokens.kind);
-    let j = skip_raw_literal(src, kind, lim, i, cpu);
+    let (src, kinds) = (tokens.src, tokens.kinds);
+    let j = skip_raw_literal(src, kinds, lim, i, cpu);
     if j != i {
         return (j < lim).then_some(j);
     }
@@ -174,7 +187,7 @@ fn past_raw(tokens: &TokensView, lim: usize, i: usize, cpu: impl Cpu) -> Option<
 #[cpu_multiversion]
 #[inline(never)]
 fn resolve_lists(tokens: &TokensView, start: usize, cpu: impl Cpu) -> Option<usize> {
-    let TokensView { src, st, opch, n, closers, .. } = *tokens;
+    let TokensView { src, token_start, op_char, n, closers, .. } = *tokens;
     let budget = start + FORWARD_SCAN_CAP;
     let mut stack = closers.lists.borrow_mut();
     stack.clear();
@@ -182,7 +195,7 @@ fn resolve_lists(tokens: &TokensView, start: usize, cpu: impl Cpu) -> Option<usi
     let (mut parens, mut brackets, mut braces) = (0i32, 0i32, 0i32);
     let mut i = start + 1;
     while i < n {
-        if bits::get(st, i, cpu) {
+        if token_start.get(i, cpu) {
             match past_raw(tokens, n, i, cpu) {
                 Some(j) if j != i => {
                     i = j;
@@ -193,8 +206,8 @@ fn resolve_lists(tokens: &TokensView, start: usize, cpu: impl Cpu) -> Option<usi
             }
         }
         let c = src[i];
-        if GT_SCAN_DELIM[c as usize] && bits::get(st, i, cpu) {
-            let op = bits::get(opch, i, cpu);
+        if GT_SCAN_DELIM[c as usize] && token_start.get(i, cpu) {
+            let op = op_char.get(i, cpu);
             match c {
                 b'<' => {
                     if op && src[i + 1] != b'=' {
@@ -295,14 +308,14 @@ fn kill(
 #[cpu_multiversion]
 #[inline(never)]
 fn resolve_groups(tokens: &TokensView, start: usize, cpu: impl Cpu) -> Option<usize> {
-    let TokensView { src, st, n, closers, .. } = *tokens;
+    let TokensView { src, token_start, n, closers, .. } = *tokens;
     let budget = start + FORWARD_SCAN_CAP;
     let mut open = closers.groups.borrow_mut();
     open.clear();
     open.push(start as u32);
     let mut i = start + 1;
     while i < n {
-        if bits::get(st, i, cpu) {
+        if token_start.get(i, cpu) {
             match past_raw(tokens, n, i, cpu) {
                 Some(j) if j != i => {
                     i = j;
@@ -343,12 +356,12 @@ fn resolve_groups(tokens: &TokensView, start: usize, cpu: impl Cpu) -> Option<us
 #[inline]
 pub(super) fn skip_raw_literal(
     src: &[u8],
-    kind: &[u8],
+    kinds: Kinds,
     n: usize,
     i: usize,
     cpu: impl Cpu,
 ) -> usize {
-    if kind[i] < OP_KIND_BASE {
+    if kinds.get(i) < OP_KIND_BASE {
         return i;
     }
     let c = src[i];

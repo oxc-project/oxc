@@ -1,33 +1,32 @@
 use oxc_simd::{Neon, Vec128, cpu_version};
 
-use crate::pipeline::chunk::mm64;
+use crate::pipeline::{chunk::mm64, source::Source};
 
 use super::BRACKET_BYTES;
 
-/// First byte at or after i that is one of needles, or n.
+/// First byte at or after i that is one of needles, or src.len().
 ///
 /// 16 bytes at a time, as a nibble mask is the cheapest way to find the first hit on Neon.
 #[cpu_version(Neon)]
 #[inline]
-pub unsafe fn find_neon<const K: usize>(
-    src: *const u8,
-    n: usize,
-    mut i: usize,
-    needles: [u8; K],
-    cpu: Neon,
-) -> usize {
-    while i + 16 <= n {
-        let m = any_of(Vec128::load_unaligned(src.add(i), cpu), needles).nibble_mask();
+pub fn find_neon<const K: usize>(src: Source, mut i: usize, needles: [u8; K], cpu: Neon) -> usize {
+    let n = src.len();
+    if let Some(last) = n.checked_sub(16) {
+        while i <= last {
+            let m = any_of(Vec128::read_unaligned(src.window(i), cpu), needles).nibble_mask();
+            if m != 0 {
+                return i + (m.trailing_zeros() / 4) as usize;
+            }
+            i += 16;
+        }
+    }
+    if i < n {
+        // The last window reaches into the padding, so its nibbles past n are dropped.
+        let m = any_of(Vec128::read_unaligned(src.window(i), cpu), needles).nibble_mask();
+        let m = m & (u64::MAX >> (4 * (16 - (n - i))));
         if m != 0 {
             return i + (m.trailing_zeros() / 4) as usize;
         }
-        i += 16;
-    }
-    while i < n {
-        if needles.contains(&*src.add(i)) {
-            return i;
-        }
-        i += 1;
     }
     n
 }

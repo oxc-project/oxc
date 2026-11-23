@@ -5,8 +5,9 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, Ident, static_ident};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator};
+use oxc_syntax::scope::ScopeId;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -43,14 +44,35 @@ enum CoercionKind {
 }
 
 /// Reports an implicit coercion with an auto-fix suggestion
-fn report_coercion(ctx: &LintContext, span: Span, kind: CoercionKind, operand: &str) {
-    let (diagnostic, wrapper) = match kind {
-        CoercionKind::Boolean => (boolean_coercion_diagnostic(span), "Boolean"),
-        CoercionKind::Number => (number_coercion_diagnostic(span), "Number"),
-        CoercionKind::String => (string_coercion_diagnostic(span), "String"),
+///
+/// The fix replaces the shorthand with a call to the global `Boolean`, `Number`,
+/// or `String` constructor. If that name is shadowed by a binding in the
+/// enclosing scopes, the replacement would resolve to the shadowing binding
+/// and change the program's behavior, so only the diagnostic is reported and
+/// the fix is skipped.
+fn report_coercion(
+    ctx: &LintContext,
+    scope_id: ScopeId,
+    span: Span,
+    kind: CoercionKind,
+    operand: &str,
+) {
+    let diagnostic = match kind {
+        CoercionKind::Boolean => boolean_coercion_diagnostic(span),
+        CoercionKind::Number => number_coercion_diagnostic(span),
+        CoercionKind::String => string_coercion_diagnostic(span),
     };
+    let wrapper: Ident<'static> = match kind {
+        CoercionKind::Boolean => static_ident!("Boolean"),
+        CoercionKind::Number => static_ident!("Number"),
+        CoercionKind::String => static_ident!("String"),
+    };
+    if ctx.scoping().find_binding(scope_id, wrapper).is_some() {
+        ctx.diagnostic(diagnostic);
+        return;
+    }
     ctx.diagnostic_with_fix(diagnostic, |fixer| {
-        fixer.replace(span, format!("{wrapper}({operand})"))
+        fixer.replace(span, format!("{}({operand})", wrapper.as_str()))
     });
 }
 
@@ -201,7 +223,7 @@ impl Rule for NoImplicitCoercion {
                     && inner.operator == UnaryOperator::LogicalNot
                 {
                     let operand = get_operand_text(ctx, &inner.argument);
-                    report_coercion(ctx, unary_expr.span, CoercionKind::Boolean, operand);
+                    report_coercion(ctx, node.scope_id(), unary_expr.span, CoercionKind::Boolean, operand);
                     return;
                 }
 
@@ -213,7 +235,7 @@ impl Rule for NoImplicitCoercion {
                     && !is_already_numeric(&unary_expr.argument)
                 {
                     let operand = get_operand_text(ctx, &unary_expr.argument);
-                    report_coercion(ctx, unary_expr.span, CoercionKind::Number, operand);
+                    report_coercion(ctx, node.scope_id(), unary_expr.span, CoercionKind::Number, operand);
                     return;
                 }
 
@@ -228,7 +250,7 @@ impl Rule for NoImplicitCoercion {
                     && !is_already_numeric(&inner.argument)
                 {
                     let operand = get_operand_text(ctx, &inner.argument);
-                    report_coercion(ctx, unary_expr.span, CoercionKind::Number, operand);
+                    report_coercion(ctx, node.scope_id(), unary_expr.span, CoercionKind::Number, operand);
                     return;
                 }
 
@@ -254,7 +276,7 @@ impl Rule for NoImplicitCoercion {
                         // Check if this is part of a larger expression like `1 * a / 2`
                         // We should still report `1 * a` in such cases
                         let operand = get_operand_text(ctx, &bin_expr.right);
-                        report_coercion(ctx, bin_expr.span, CoercionKind::Number, operand);
+                        report_coercion(ctx, node.scope_id(), bin_expr.span, CoercionKind::Number, operand);
                         return;
                     }
                     if right_is_one
@@ -262,7 +284,7 @@ impl Rule for NoImplicitCoercion {
                         && !is_part_of_larger_binary_expression(ctx, node)
                     {
                         let operand = get_operand_text(ctx, &bin_expr.left);
-                        report_coercion(ctx, bin_expr.span, CoercionKind::Number, operand);
+                        report_coercion(ctx, node.scope_id(), bin_expr.span, CoercionKind::Number, operand);
                         return;
                     }
                 }
@@ -275,7 +297,7 @@ impl Rule for NoImplicitCoercion {
                     && !is_already_numeric(&bin_expr.left)
                 {
                     let operand = get_operand_text(ctx, &bin_expr.left);
-                    report_coercion(ctx, bin_expr.span, CoercionKind::Number, operand);
+                    report_coercion(ctx, node.scope_id(), bin_expr.span, CoercionKind::Number, operand);
                     return;
                 }
 
@@ -289,12 +311,12 @@ impl Rule for NoImplicitCoercion {
 
                     if left_is_empty_string && !is_string_literal_or_string_call(&bin_expr.right) {
                         let operand = get_operand_text(ctx, &bin_expr.right);
-                        report_coercion(ctx, bin_expr.span, CoercionKind::String, operand);
+                        report_coercion(ctx, node.scope_id(), bin_expr.span, CoercionKind::String, operand);
                         return;
                     }
                     if right_is_empty_string && !is_string_literal_or_string_call(&bin_expr.left) {
                         let operand = get_operand_text(ctx, &bin_expr.left);
-                        report_coercion(ctx, bin_expr.span, CoercionKind::String, operand);
+                        report_coercion(ctx, node.scope_id(), bin_expr.span, CoercionKind::String, operand);
                     }
                 }
             }
@@ -337,7 +359,7 @@ impl Rule for NoImplicitCoercion {
                         // Don't warn if the expression is already a string literal or String() call
                         if !is_string_literal_or_string_call(expr) {
                             let operand = get_operand_text(ctx, expr);
-                            report_coercion(ctx, template.span(), CoercionKind::String, operand);
+                            report_coercion(ctx, node.scope_id(), template.span(), CoercionKind::String, operand);
                         }
                     }
                 }
@@ -628,6 +650,7 @@ fn test() {
         ("(a * 1) / 2", None),
         ("a * 1 / (b * 1)", None),
         ("a * 1 + 2", None),
+        ("function f(Boolean) { return !!(foo + bar); }", None),
     ];
 
     let fix = vec![
@@ -643,6 +666,18 @@ fn test() {
             "String(foo)",
             Some(serde_json::json!([{ "disallowTemplateShorthand": true }])),
         ),
+        (
+            "function f(Boolean) { return !!(foo + bar); }",
+            "function f(Boolean) { return !!(foo + bar); }",
+            None,
+        ),
+        ("function f(Number) { return +(foo); }", "function f(Number) { return +(foo); }", None),
+        (
+            "function f(String) { return `` + foo; }",
+            "function f(String) { return `` + foo; }",
+            None,
+        ),
+        ("{ let Boolean; !!foo; }", "{ let Boolean; !!foo; }", None),
     ];
     Tester::new(NoImplicitCoercion::NAME, NoImplicitCoercion::PLUGIN, pass, fail)
         .expect_fix(fix)

@@ -32,7 +32,8 @@ use crate::{
     context::CssFormatContext,
     format::to_span,
     print::{
-        CssFormatter, format_with, is_glued, normalize_whitespace, scss, selector, statement,
+        CssFormatter, block_comment_end, format_with, is_glued, normalize_whitespace, scss,
+        selector, statement,
         value::{self, ValueContext},
         write_maybe_lowercase,
     },
@@ -386,6 +387,10 @@ fn write_block_or_semicolon<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, '
 /// queries split on top-level commas (`,` + line in a group),
 /// tokens joined by single spaces, `( feature : value )` re-spaced
 /// when the parser would have recognized it (spaces around the `:`), kept verbatim otherwise.
+///
+/// NOTE: the params are a typed `MediaQueryList` and the comments are in the comment store,
+/// so the structured printer placing them (`value::write_with_comments`) is possible.
+/// However, we rebuild from source for Prettier alignment (its layout follows postcss-media-query-parser tokens).
 fn write_commented_media_params<'a>(raw: &'a str, f: &mut CssFormatter<'_, 'a>) {
     let queries = split_top_level(raw, b',');
     let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
@@ -408,10 +413,13 @@ fn write_commented_media_params<'a>(raw: &'a str, f: &mut CssFormatter<'_, 'a>) 
 
 /// `@import` / `@supports` params containing comments,
 /// laid out the way Prettier's value parser + fill does.
-/// (Required because `oxc-css-parser` drops params-embedded comments, they only survive via this source-rebuild.)
 /// Separator breaks are simulated with static widths
 /// (Prettier's fill fit-checks the next item; our core fill measures only up to a hardline).
 /// `allow_commas`: comma chunks get an extra indent level for their internal wraps.
+///
+/// NOTE: the params are typed (`ImportPrelude` / `SupportsCondition`) and the comments are in the comment store
+/// (the AST holds none), so the structured printers placing them is possible.
+/// However, we rebuild from source for Prettier alignment (its layout follows postcss-value-parser tokens).
 fn write_commented_value_params<'a>(
     raw: &'a str,
     start_col: u32,
@@ -509,16 +517,6 @@ fn write_commented_value_params<'a>(
     write!(f, indent(&body));
 }
 
-/// `start` points at the `/` of a `/*`; returns the index of the closing `/`
-/// (clamped to the last byte when unterminated).
-fn block_comment_end(bytes: &[u8], start: usize) -> usize {
-    let mut i = start + 2;
-    while i + 1 < bytes.len() && !(bytes[i] == b'*' && bytes[i + 1] == b'/') {
-        i += 1;
-    }
-    (i + 1).min(bytes.len() - 1)
-}
-
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum TokenizeMode {
     /// `@import` / `@supports` values:
@@ -547,16 +545,16 @@ fn tokenize(raw: &str, mode: TokenizeMode) -> Vec<&str> {
                     if let Some(s) = start.take() {
                         tokens.push(&raw[s..i]);
                     }
-                    let end = block_comment_end(bytes, i);
-                    tokens.push(&raw[i..=end]);
-                    i = end;
+                    let end = block_comment_end(raw, i);
+                    tokens.push(&raw[i..end]);
+                    i = end - 1;
                 } else {
                     // depth > 0 OR AbsorbComments at depth 0:
                     // comment becomes part of the current token (or starts one if between tokens).
                     if start.is_none() {
                         start = Some(i);
                     }
-                    i = block_comment_end(bytes, i);
+                    i = block_comment_end(raw, i) - 1;
                 }
             }
             b'(' => {
@@ -668,7 +666,7 @@ fn split_top_level(raw: &str, sep: u8) -> Vec<&str> {
     while i < bytes.len() {
         match bytes[i] {
             b'/' if bytes.get(i + 1) == Some(&b'*') => {
-                i = block_comment_end(bytes, i);
+                i = block_comment_end(raw, i) - 1;
             }
             b'(' => depth += 1,
             b')' => depth -= 1,
@@ -726,7 +724,7 @@ fn find_outside_comments(raw: &str, needle: u8) -> Option<usize> {
     let mut i = 0usize;
     while i < bytes.len() {
         if bytes[i] == b'/' && bytes.get(i + 1) == Some(&b'*') {
-            i = block_comment_end(bytes, i) + 1;
+            i = block_comment_end(raw, i);
             continue;
         }
         if bytes[i] == needle {
@@ -2068,7 +2066,7 @@ fn write_media_in_parens<'a>(in_parens: &MediaInParens<'a>, f: &mut CssFormatter
             if f.context().source_text().text_for(&to_span(in_parens.span)).starts_with('(') {
                 write_general_enclosed(seq, f);
             } else {
-                write_token_seq_normalized(seq, f);
+                write_tokens_normalized(&seq.tokens, f);
             }
         }
     }
@@ -2076,41 +2074,41 @@ fn write_media_in_parens<'a>(in_parens: &MediaInParens<'a>, f: &mut CssFormatter
 
 /// `<general-enclosed>` prints its `TokenSeq` inside its own parens,
 /// tokens verbatim but whitespace normalized:
-/// a source gap becomes one space, paren inner edges stay tight, `:`/`,` space right only.
-/// Gap-based spacing never fuses tokens the source kept apart
-/// (`and (color)` can't collapse into a function token `and(`).
+/// a source gap becomes one space, and none before `)` / `]` / `,` / `;` or after `(` / `[`.
+/// Gap-based spacing never splits or fuses tokens the source kept glued or apart
+/// (`and (color)` can't collapse into a function token `and(`, `:hover` stays one pseudo-class).
 /// NOTE: Deliberately more normalized than Prettier.
 fn write_general_enclosed<'a>(seq: &TokenSeq<'a>, f: &mut CssFormatter<'_, 'a>) {
     write!(f, "(");
-    write_token_seq_normalized(seq, f);
+    write_tokens_normalized(&seq.tokens, f);
     write!(f, ")");
 }
 
-/// The `<general-enclosed>` token stream without the surrounding parens.
-fn write_token_seq_normalized<'a>(seq: &TokenSeq<'a>, f: &mut CssFormatter<'_, 'a>) {
+/// The `<general-enclosed>` tokens without the surrounding parens.
+fn write_tokens_normalized<'a, 'b>(
+    tokens: impl IntoIterator<Item = &'b TokenWithSpan<'a>>,
+    f: &mut CssFormatter<'_, 'a>,
+) where
+    'a: 'b,
+{
     let source = f.context().source_text();
-    for (i, tok) in seq.tokens.iter().enumerate() {
-        if i > 0 {
-            let prev = &seq.tokens[i - 1];
+    let mut prev: Option<&TokenWithSpan<'a>> = None;
+    for tok in tokens {
+        if let Some(prev) = prev {
             let needs_space = match (&prev.token, &tok.token) {
                 (Token::LParen(_) | Token::LBracket(_), _)
                 | (
                     _,
-                    Token::RParen(_)
-                    | Token::RBracket(_)
-                    | Token::Comma(_)
-                    | Token::Semicolon(_)
-                    | Token::Colon(_),
+                    Token::RParen(_) | Token::RBracket(_) | Token::Comma(_) | Token::Semicolon(_),
                 ) => false,
-                (Token::Comma(_) | Token::Colon(_), _) => true,
                 _ => !is_glued(prev.span, tok.span),
             };
             if needs_space {
                 write!(f, space());
             }
         }
-        let span = to_span(tok.span);
-        write!(f, text(source.text_for(&span)));
+        write!(f, text(source.text_for(&to_span(tok.span))));
+        prev = Some(tok);
     }
 }
 
@@ -2279,9 +2277,27 @@ fn write_supports_in_parens<'a>(in_parens: &SupportsInParens<'a>, f: &mut CssFor
                 });
                 write!(f, [indent(&body), hard_line_break(), ")"]);
             } else {
-                selector::write_selector_list(list, selector::SelectorListStyle::Line, f);
-                write!(f, ")");
+                // As a rule's selectors: one per line, the parens open when broken
+                let content = format_with(|f| {
+                    selector::write_selector_list(list, selector::SelectorListStyle::Hard, f);
+                });
+                write!(f, group(&format_args!(soft_block_indent(&content), ")")));
             }
+        }
+        // `selector()` with a non-selector argument (`selector(A < B)`) prints as `<general-enclosed>`
+        SupportsInParensKind::Function(func)
+            if value::function_name_text(func).eq_ignore_ascii_case("selector")
+                && func.args.iter().all(|arg| matches!(arg, ComponentValue::TokenWithSpan(_))) =>
+        {
+            write!(f, [text(source.text_for(&to_span(func.name.span()))), "("]);
+            write_tokens_normalized(
+                func.args.iter().filter_map(|arg| match arg {
+                    ComponentValue::TokenWithSpan(token) => Some(token),
+                    _ => None,
+                }),
+                f,
+            );
+            write!(f, ")");
         }
         SupportsInParensKind::Function(func) => {
             value::write_function(func, ValueContext::default(), f);

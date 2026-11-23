@@ -3,7 +3,7 @@ use oxc_span::GetSpan;
 
 use crate::{
     Format,
-    ast_nodes::{AstNode, AstNodes},
+    ast_nodes::AstNode,
     format_args,
     formatter::{
         prelude::*,
@@ -13,7 +13,6 @@ use crate::{
     utils::{
         expression::LeftSide,
         format_node_without_trailing_comments::format_content_without_comments_after,
-        typecast::format_leading_comments_and_open_paren,
     },
     write,
 };
@@ -29,6 +28,16 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ReturnStatement<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ThrowStatement<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         ReturnAndThrowStatement::ThrowStatement(self).fmt(f);
+    }
+}
+
+// `yield` lays out its argument as `return` and `throw` do
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, YieldExpression<'a>> {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        write!(f, ["yield", self.delegate().then_some("*")]);
+        if let Some(argument) = &self.argument() {
+            write!(f, [space(), FormatAdjacentArgument(argument)]);
+        }
     }
 }
 
@@ -130,28 +139,14 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ReturnAndThrowStatement<'a, '_> {
     }
 }
 
-pub struct FormatAdjacentArgument<'a, 'b>(pub &'b AstNode<'b, 'a, Expression<'a>>);
+struct FormatAdjacentArgument<'a, 'b>(pub &'b AstNode<'b, 'a, Expression<'a>>);
 
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatAdjacentArgument<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let argument = self.0;
 
         if !argument.is_jsx() && has_argument_leading_comments(argument, f) {
-            // When we have leading comments and a sequence expression, we need inner parentheses
-            // e.g. `return ( // comment\n a, b )` -> `return (\n  // comment\n  (a, b)\n)`
-            let inner = format_with(|f| {
-                if matches!(argument.as_ref(), Expression::SequenceExpression(_)) {
-                    // The argument's parentheses survive here,
-                    // so even a comment inside the first element's source parens stays inside:
-                    // bound at the span start.
-                    let span = argument.span();
-                    format_leading_comments_and_open_paren(span, span.start, true, f);
-                    write!(f, [argument, token(")")]);
-                } else {
-                    write!(f, argument);
-                }
-            });
-            write!(f, [token("("), &block_indent(&inner), token(")")]);
+            write!(f, [token("("), &block_indent(&argument), token(")")]);
         } else if argument.is_binaryish() {
             write!(
                 f,
@@ -202,13 +197,17 @@ fn has_argument_leading_comments(argument: &AstNode<Expression>, f: &JsFormatter
             })
         };
 
-        // Yield expressions only need to check the leading comments on the left side.
-        if matches!(argument.parent(), AstNodes::YieldExpression(_)) {
-            continue;
-        }
-
-        // This check is based on
-        // <https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js#L335-L349>
+        // Only for Prettier compatibility, the syntax does not need these parens:
+        // the argument still starts on the line of `return`, `throw` or `yield`.
+        // ```js
+        // return (
+        //   a
+        //     // c
+        //     .b()
+        // );
+        // ```
+        // Prettier attaches an own-line comment after a member's object as the member's leading comment,
+        // so the argument has a leading comment and gets wrapped.
         if let LeftSide::Expression(left_side) = left_side {
             let member = match left_side {
                 Expression::ChainExpression(chain) => chain.expression.as_member_expression(),

@@ -1526,7 +1526,7 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
             BindingPattern::BindingIdentifier(_) => {}
             BindingPattern::ObjectPattern(object) => {
                 for property in &object.properties {
-                    if property.computed {
+                    if property.key.is_computed() {
                         self.walk_property_key(&property.key);
                     }
                     self.walk_binding_pattern(&property.value);
@@ -1980,7 +1980,7 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
         match prop {
             ObjectPropertyKind::SpreadProperty(s) => self.walk_expression(&s.argument),
             ObjectPropertyKind::ObjectProperty(p) => {
-                if p.computed {
+                if p.key.is_computed() {
                     self.walk_property_key(&p.key);
                 }
                 // Object methods (`{ foo() {} }`, getters/setters): Babel modeled
@@ -3185,7 +3185,7 @@ fn ox_add_imports_to_program<'a>(
                     ox_atom(ast, &spec.name),
                     ast,
                 );
-                props.push(BindingProperty::new(import_span, key, value, false, false, ast));
+                props.push(BindingProperty::new(import_span, key, value, false, ast));
             }
             let object_pattern = BindingPattern::new_object_pattern(import_span, props, None, ast);
             let require_call = Expression::new_call_expression(
@@ -3284,21 +3284,26 @@ pub fn compile_program<'a, const EMIT: bool>(
     // Compute output mode once, up front
     let output_mode = CompilerOutputMode::from_opts(&options);
 
-    // Match babel-plugin-react-compiler 1.0.0: ESLint suppressions are an explicit
-    // function-level opt-out, independent of the compiler's internal validations.
-    let suppressions = if let Some(eslint_rules) = options.eslint_suppression_rules.as_deref() {
-        find_program_suppressions(
-            &program.comments,
-            program.source_text,
-            eslint_rules,
-            options.flow_suppressions,
-        )
+    // Don't check for ESLint suppressions if both validations are enabled: the
+    // compiler then validates what the suppressed React rules would have.
+    // Ported from upstream `main`: `compiler/crates/react_compiler/src/entrypoint/program.rs`
+    // (react@03e775554a, #36173), which ports `Entrypoint/Program.ts` from
+    // react@fca172e3f3 (#35184, "Ignore ESLint suppressions when ValidateMemoDeps enabled").
+    let validate_exhaustive = options.environment.validate_exhaustive_memoization_dependencies;
+    let validate_hooks = options.environment.validate_hooks_usage;
+    let comments = &program.comments;
+    let source_text = program.source_text;
+    let flow_suppressions = options.flow_suppressions;
+    let suppressions = if validate_exhaustive && validate_hooks {
+        find_program_suppressions::<&str>(comments, source_text, &[], flow_suppressions)
+    } else if let Some(eslint_rules) = options.eslint_suppression_rules.as_deref() {
+        find_program_suppressions(comments, source_text, eslint_rules, flow_suppressions)
     } else {
         find_program_suppressions(
-            &program.comments,
-            program.source_text,
+            comments,
+            source_text,
             DEFAULT_ESLINT_SUPPRESSIONS,
-            options.flow_suppressions,
+            flow_suppressions,
         )
     };
 

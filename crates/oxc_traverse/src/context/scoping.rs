@@ -375,6 +375,25 @@ impl<'a> TraverseScoping<'a> {
     pub fn delete_reference_for_identifier(&mut self, ident: &IdentifierReference) {
         self.delete_reference(ident.reference_id(), ident.name);
     }
+
+    /// Rebind an existing reference to `symbol_id`.
+    ///
+    /// The reference keeps its `ReferenceId` and flags. It is removed from the resolved references
+    /// of the symbol it currently points to (or from root unresolved references if it is
+    /// unresolved), and added to the resolved references of `symbol_id`.
+    ///
+    /// Provided `name` must be the current name of `reference_id`.
+    /// This does not change the name of the `IdentifierReference` in the AST.
+    pub fn rebind_reference(
+        &mut self,
+        reference_id: ReferenceId,
+        name: Ident<'_>,
+        symbol_id: SymbolId,
+    ) {
+        self.delete_reference(reference_id, name);
+        self.scoping.get_reference_mut(reference_id).set_symbol_id(symbol_id);
+        self.scoping.add_resolved_reference(symbol_id, reference_id);
+    }
 }
 
 // Methods used internally within crate
