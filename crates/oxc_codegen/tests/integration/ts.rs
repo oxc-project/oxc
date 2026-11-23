@@ -800,7 +800,8 @@ fn type_codegen_with_preserve_parens_off() {
         "type R = { [K in (?asserts) as K]: 1 };\n",
         parse_options,
     );
-    // An `infer` constraint is parsed with conditional types disallowed.
+    // A conditional `infer` constraint keeps its parentheses,
+    // but one in a function's return type needs none.
     test_with_parse_options(
         "type F = X extends infer U extends (true extends true ? string : number) ? U : never;",
         "type F = X extends infer U extends (true extends true ? string : number) ? U : never;\n",
