@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.80.0] - 2026-11-23
+
+### 🐛 Bug Fixes
+
+- 7053128 formatter_markdown: Handle empty footnote (#29735) (leaysgur)
+
 ## [0.79.0] - 2026-11-16
 
 ### 🚀 Features
