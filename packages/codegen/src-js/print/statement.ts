@@ -859,11 +859,15 @@ function forOfHeadNeedsWrapping(
         const leftName = (left as ESTree.IdentifierReference).name;
         return leftName === "let" || (wrapAsync && leftName === "async");
       }
-      case "MemberExpression":
+      case "MemberExpression": {
         typeAssertIs<ESTree.MemberExpression>(left);
-        if (left.computed && isLetIdentifier(left.object)) return false;
+        const computed = left.computed === true;
         left = left.object;
-        break;
+        leftType = left.type;
+        if (computed && isLetIdentifier(left, leftType)) return false;
+        wrapAsync = false;
+        continue;
+      }
       case "CallExpression":
         left = (left as ESTree.CallExpression).callee;
         break;
