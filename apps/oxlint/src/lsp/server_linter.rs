@@ -126,6 +126,17 @@ impl WorkspaceState {
     }
 }
 
+/// Whether type-aware linting with `tsrs-lint` uses a long-lived `tsrs-lint server`: the
+/// `OXLINT_TSRS_LINT_SERVER` environment variable (`true`/`1` or `false`/`0`) when set, else the
+/// `typeAwareServer` option, else `true`.
+fn tsrs_server_enabled(option: Option<bool>) -> bool {
+    match std::env::var("OXLINT_TSRS_LINT_SERVER").as_deref() {
+        Ok("true" | "1") => true,
+        Ok("false" | "0") => false,
+        _ => option.unwrap_or(true),
+    }
+}
+
 impl ServerLinterBuilder {
     pub fn new(
         external_linter: Option<ExternalLinter>,
@@ -287,7 +298,7 @@ impl ServerLinterBuilder {
         let type_aware = options.type_aware.unwrap_or(config_store.type_aware_enabled());
         let config_store_clone = config_store.clone();
         let workspace = self.workspace(root_uri);
-        let tsrs_server = if type_aware {
+        let tsrs_server = if type_aware && tsrs_server_enabled(options.type_aware_server) {
             workspace.tsrs_server_for(&root_path)
         } else {
             workspace.stop_tsrs_server();
@@ -1108,6 +1119,7 @@ impl ServerLinter {
             || old_options.unused_disable_directives != new_options.unused_disable_directives
             // TODO: only the TsgoLinter needs to be dropped or created
             || old_options.type_aware != new_options.type_aware
+            || old_options.type_aware_server != new_options.type_aware_server
     }
 
     /// Check if the linter is responsible for the given URI.
@@ -2015,6 +2027,37 @@ mod test_tsrs_lint {
         assert!(changes.tool.is_none());
 
         assert_eq!(lint(), [] as [String; 0]);
+    }
+
+    #[test]
+    fn test_tsrs_server_turned_off() {
+        if !link_tsrs_lint() {
+            return;
+        }
+        let options = json!({ "typeAware": true, "typeAwareServer": false });
+        let tester = Tester::new(SERVER_FIXTURE, options.clone());
+        let linter = tester.create_linter();
+        assert!(!linter.runner.has_tsrs_server());
+        assert!(linter.workspace.server().is_none());
+        let patterns = linter.get_watcher_patterns(options);
+        assert!(patterns.contains(&"**/tsconfig*.json".to_string()));
+        assert!(!patterns.contains(&SOURCES_PATTERN.to_string()));
+
+        // A one-shot `tsrs-lint headless` reports the same diagnostics.
+        tester.test_and_snapshot_open_file(
+            &linter,
+            "index.ts",
+            &unsaved_text("load();"),
+            "index.ts_headless",
+        );
+        assert!(linter.workspace.server().is_none());
+    }
+
+    /// A failing one-shot `tsrs-lint headless` adds one diagnostic, and keeps the others.
+    #[test]
+    fn test_tsrs_headless_failure_keeps_regular_diagnostics() {
+        Tester::new(FAILURE_FIXTURE, json!({ "typeAware": true, "typeAwareServer": false }))
+            .test_and_snapshot_single_file("index.ts");
     }
 
     /// A `tsrs-lint` without server mode adds one diagnostic, and keeps the others.

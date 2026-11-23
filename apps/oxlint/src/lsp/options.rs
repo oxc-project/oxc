@@ -93,6 +93,11 @@ pub struct LintOptions {
     /// Whether to enable/disable type-aware linting.
     /// It will override the root config's `typeAware` option if set.
     pub type_aware: Option<bool>,
+    /// Whether type-aware linting with `tsrs-lint` uses a long-lived `tsrs-lint server` process,
+    /// which keeps the programs of the workspace between lints. Defaults to `true`.
+    /// Set it to `false` to run `tsrs-lint` once for every lint instead.
+    /// The `OXLINT_TSRS_LINT_SERVER` environment variable (`true` or `false`) overrides it.
+    pub type_aware_server: Option<bool>,
     /// Whether to disable nested config support. Similar to `--disable-nested-config` CLI option.
     /// It gets automatically enabled when `configPath` is set.
     /// Nested config support is always disabled in Vite+ mode.
@@ -253,6 +258,7 @@ impl TryFrom<Value> for LintOptions {
                 .filter(|s| !s.is_empty())
                 .map(str::to_owned),
             type_aware: object.get("typeAware").and_then(Value::as_bool),
+            type_aware_server: object.get("typeAwareServer").and_then(Value::as_bool),
             disable_nested_config: object
                 .get("disableNestedConfig")
                 .and_then(Value::as_bool)

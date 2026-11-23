@@ -128,6 +128,17 @@ Whether to enable/disable type-aware linting.
 It will override the root config's `typeAware` option if set.
 
 
+## typeAwareServer
+
+type: `boolean`
+
+
+Whether type-aware linting with `tsrs-lint` uses a long-lived `tsrs-lint server` process,
+which keeps the programs of the workspace between lints. Defaults to `true`.
+Set it to `false` to run `tsrs-lint` once for every lint instead.
+The `OXLINT_TSRS_LINT_SERVER` environment variable (`true` or `false`) overrides it.
+
+
 ## unusedDisableDirectives
 
 type: `"allow" | "warn" | "deny"`
