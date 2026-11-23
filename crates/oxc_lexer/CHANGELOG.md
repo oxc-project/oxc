@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.160.0] - 2026-11-23
+
+### 🐛 Bug Fixes
+
+- bbc6772 lexer: Read << as a shift where TypeScript opens no type arguments (#30051) (Shanon Jackson)
+- f5022f2 lexer: Read yield and await by enclosing function in modules (#29890) (Shanon Jackson)
+- 168daf3 lexer: Keep async and generator scope across class members and generic async arrows (#29889) (Shanon Jackson)
+
+Full release notes: [0.160.0](https://github.com/oxc-project/oxc/blob/main/crates/CHANGELOG.md#01600---2026-11-23)
+
 ## [0.159.0] - 2026-11-16
 
 ### 🚀 Features

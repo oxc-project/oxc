@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.160.0] - 2026-11-23
+
+### 💥 BREAKING CHANGES
+
+- 8c2abc4 diagnostics: [**BREAKING**] Implement `SourceCode` for `&T` (#29852) (overlookmotel)
+- 2bc8e89 diagnostics: [**BREAKING**] `NamedSource` support `&str` as name (#29851) (overlookmotel)
+
+### ⚡ Performance
+
+- 892f086 various: Avoid copying source text in `OxcDiagnostic::render_with_source_code` callers (#29850) (overlookmotel)
+
+Full release notes: [0.160.0](https://github.com/oxc-project/oxc/blob/main/crates/CHANGELOG.md#01600---2026-11-23)
+
 ## [0.152.0] - 2026-09-28
 
 ### 🐛 Bug Fixes
