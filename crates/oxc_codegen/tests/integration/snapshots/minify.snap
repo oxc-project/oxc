@@ -134,7 +134,7 @@ c=foo<string> ;
 ########## 31
 new Map<string, number>();
 ----------
-new Map<string,number>;
+new Map<string,number>();
 ########## 32
 d = x satisfies y;
 ----------

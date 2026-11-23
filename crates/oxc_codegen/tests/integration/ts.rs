@@ -530,6 +530,21 @@ fn ts_instantiation_expression_precedence() {
 }
 
 #[test]
+fn minify_new_expression_type_arguments() {
+    for (source, minified) in [
+        ("new C<T>() + x", "new C<T>()+x;"),
+        ("new C<T>() - x", "new C<T>()-x;"),
+        ("new C<T>() < x", "new C<T>()<x;"),
+        ("new C<T>() > x", "new C<T>()>x;"),
+        ("new C<T>()", "new C<T>();"),
+        ("new C()", "new C;"),
+    ] {
+        test_options_with_source_type(source, minified, SourceType::ts(), CodegenOptions::minify());
+        test_ts(minified, &format!("{source};\n"));
+    }
+}
+
+#[test]
 fn ts_satisfies_expression() {
     test_same("(foo satisfies null) | ~\"\";\n");
     test_same("(foo satisfies null) & ~\"\";\n");
