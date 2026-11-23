@@ -323,3 +323,51 @@ function _() {
 		var foo = function() {};
 	}
 }
+
+function _() { var foo; var foo = function() { var x } }
+function _() {
+	var foo;
+	var foo = function() {
+		var e;
+	};
+}
+
+function _() { var foo = 1; var foo = () => { var x } }
+function _() {
+	var foo = 1;
+	var foo = () => {
+		var e;
+	};
+}
+
+function _() { var Foo; var Foo = class { foo() { var x } } }
+function _() {
+	var Foo;
+	var Foo = class {
+		foo() {
+			var e;
+		}
+	};
+}
+
+function _(foo) { var foo = function() { var x } }
+function _(foo) {
+	var foo = function() {
+		var e;
+	};
+}
+
+function _() { var foo; function foo() { var x } }
+function _() {
+	var foo;
+	function foo() {
+		var e;
+	}
+}
+
+function _(foo) { function foo() { var x } }
+function _(foo) {
+	function foo() {
+		var e;
+	}
+}
