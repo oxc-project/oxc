@@ -53,7 +53,6 @@ pub struct PreserveCaughtError(PreserveCaughtErrorOptions);
 
 struct ThrowFinder<'a, 'ctx> {
     catch_param: Option<&'a BindingPattern<'a>>,
-    require_catch_parameter: bool,
     ctx: &'ctx LintContext<'a>,
 }
 
@@ -74,9 +73,7 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
         };
 
         let Some(catch_param) = self.catch_param else {
-            if self.require_catch_parameter {
-                self.ctx.diagnostic(missing_catch_parameter_diagnostic(throw_stmt.span));
-            }
+            self.ctx.diagnostic(missing_catch_parameter_diagnostic(throw_stmt.span));
             return;
         };
 
@@ -327,22 +324,11 @@ impl PreserveCaughtError {
     }
 
     fn check_catch_clause<'a>(&self, catch_clause: &'a CatchClause<'a>, ctx: &LintContext<'a>) {
-        let Some(catch_param) = &catch_clause.param else {
-            if self.0.require_catch_parameter {
-                let mut finder: ThrowFinder<'a, '_> = ThrowFinder {
-                    catch_param: None,
-                    require_catch_parameter: self.0.require_catch_parameter,
-                    ctx,
-                };
-                finder.visit_block_statement(catch_clause.body.as_ref());
-            }
+        let catch_param = catch_clause.param.as_ref().map(|param| &param.pattern);
+        if catch_param.is_none() && !self.0.require_catch_parameter {
             return;
-        };
-        let mut finder: ThrowFinder<'a, '_> = ThrowFinder {
-            catch_param: Some(&catch_param.pattern),
-            require_catch_parameter: self.0.require_catch_parameter,
-            ctx,
-        };
+        }
+        let mut finder = ThrowFinder { catch_param, ctx };
         finder.visit_block_statement(catch_clause.body.as_ref());
     }
 }
