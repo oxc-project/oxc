@@ -9,6 +9,6 @@
     "strict": true,
     "skipLibCheck": true
   },
-  "include": ["scripts", "conformance/*.ts", "src-js", "test/**/*.ts"],
+  "include": ["scripts", "conformance/*.ts", "bench", "src-js", "test/**/*.ts"],
   "exclude": ["test/**/fixtures"]
 }
