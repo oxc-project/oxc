@@ -1,0 +1,46 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(no-await-in-promise-methods): Avoid `await` inside `Promise.all()` arguments to prevent delaying the call.
+   ╭─[no_await_in_promise_methods.tsx:1:36]
+ 1 │ async function f() { Promise.all([(await promise as Foo).bar]); }
+   ·                                    ─────
+   ╰────
+
+  ⚠ unicorn(no-await-in-promise-methods): Avoid `await` inside `Promise.all()` arguments to prevent delaying the call.
+   ╭─[no_await_in_promise_methods.tsx:1:36]
+ 1 │ async function f() { Promise.all([(await promise)!]); }
+   ·                                    ─────
+   ╰────
+
+  ⚠ unicorn(no-await-in-promise-methods): Promise in `Promise.all()` should not be awaited.
+   ╭─[no_await_in_promise_methods.tsx:1:35]
+ 1 │ async function f() { Promise.all([await promise!]); }
+   ·                                   ─────
+   ╰────
+  help: Remove the `await`
+
+  ⚠ unicorn(no-await-in-promise-methods): Avoid `await` inside `Promise.all()` arguments to prevent delaying the call.
+   ╭─[no_await_in_promise_methods.tsx:1:35]
+ 1 │ async function f() { Promise.all([await promise as Foo]); }
+   ·                                   ─────
+   ╰────
+
+  ⚠ unicorn(no-await-in-promise-methods): Avoid `await` inside `Promise.all()` arguments to prevent delaying the call.
+   ╭─[no_await_in_promise_methods.tsx:1:35]
+ 1 │ async function f() { Promise.all([await promise satisfies Foo]); }
+   ·                                   ─────
+   ╰────
+
+  ⚠ unicorn(no-await-in-promise-methods): Avoid `await` inside `Promise.all()` arguments to prevent delaying the call.
+   ╭─[no_await_in_promise_methods.tsx:1:41]
+ 1 │ async function f() { Promise.all([<div>{await promise}</div>, anotherPromise]); }
+   ·                                         ─────
+   ╰────
+
+  ⚠ unicorn(no-await-in-promise-methods): Avoid `await` inside `Promise.all()` arguments to prevent delaying the call.
+   ╭─[no_await_in_promise_methods.tsx:1:45]
+ 1 │ async function f() { Promise.all([<Foo bar={await promise} />, anotherPromise]); }
+   ·                                             ─────
+   ╰────
