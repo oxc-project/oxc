@@ -52,28 +52,6 @@ declare_oxc_lint!(
         "Prefer using the `node:` protocol when importing Node.js built-in modules.",
 );
 
-fn get_builtin_module_call<'a>(call: &'a CallExpression<'a>) -> Option<&'a StringLiteral<'a>> {
-    if call.arguments.len() != 1 {
-        return None;
-    }
-    let Expression::StaticMemberExpression(member_expr) = call.callee.without_parentheses() else {
-        return None;
-    };
-    if member_expr.optional || member_expr.property.name != "getBuiltinModule" {
-        return None;
-    }
-    let Expression::Identifier(obj) = member_expr.object.without_parentheses() else {
-        return None;
-    };
-    if obj.name != "process" {
-        return None;
-    }
-    match call.arguments[0].as_expression()?.without_parentheses() {
-        Expression::StringLiteral(str_lit) => Some(str_lit),
-        _ => None,
-    }
-}
-
 impl Rule for PreferNodeProtocol {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let string_lit_value_with_span = match node.kind() {
@@ -118,6 +96,28 @@ impl Rule for PreferNodeProtocol {
             let span = span.shrink_left(1).shrink_right(1);
             fixer.replace(span, format!("node:{module_name}"))
         });
+    }
+}
+
+fn get_builtin_module_call<'a>(call: &'a CallExpression<'a>) -> Option<&'a StringLiteral<'a>> {
+    if call.arguments.len() != 1 {
+        return None;
+    }
+    let Expression::StaticMemberExpression(member_expr) = call.callee.without_parentheses() else {
+        return None;
+    };
+    if member_expr.optional || member_expr.property.name != "getBuiltinModule" {
+        return None;
+    }
+    let Expression::Identifier(obj) = member_expr.object.without_parentheses() else {
+        return None;
+    };
+    if obj.name != "process" {
+        return None;
+    }
+    match call.arguments[0].as_expression()?.without_parentheses() {
+        Expression::StringLiteral(str_lit) => Some(str_lit),
+        _ => None,
     }
 }
 
