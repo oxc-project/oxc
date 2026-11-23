@@ -113,9 +113,16 @@ impl Rule for MaxLines {
 
         let final_lines = lines_in_file.max(1).saturating_sub(comment_lines) as u32;
         if final_lines > self.max {
-            // Point to end of the file for `eslint-disable max-lines` to work.
-            let end = ctx.source_text().len().saturating_sub(1) as u32;
-            ctx.diagnostic(max_lines_diagnostic(final_lines, self.max, Span::empty(end)));
+            // Point to end of the file for `eslint-disable max-lines` to work: the start of the
+            // last character, treating a trailing CRLF as one. This keeps the offset on a
+            // character boundary and out of the CRLF, which an LSP position cannot express.
+            let source_text = ctx.source_text();
+            let end = if source_text.ends_with("\r\n") {
+                source_text.len() - 2
+            } else {
+                source_text.char_indices().next_back().map_or(0, |(i, _)| i)
+            };
+            ctx.diagnostic(max_lines_diagnostic(final_lines, self.max, Span::empty(end as u32)));
         }
     }
 }
@@ -181,10 +188,15 @@ fn test() {
             ",
             Some(serde_json::json!([{ "max": 1 }])),
         ),
+        ("/* eslint-disable max-lines */\r\n\r\n;\r\n", Some(serde_json::json!([{ "max": 1 }]))),
     ];
 
     let fail = vec![
         ("var xyz;\nvar xyz;\nvar xyz;", Some(serde_json::json!([2]))),
+        // The diagnostic points before the final line break, not inside a trailing CRLF.
+        ("var xyz;\r\nvar xyz;\r\nvar xyz;\r\n", Some(serde_json::json!([2]))),
+        // The diagnostic points at a character boundary.
+        ("var xyz;\nvar xyz;\nvar é", Some(serde_json::json!([2]))),
         (
             "/* a multiline comment\n that goes to many lines*/\nvar xy;\nvar xy;",
             Some(serde_json::json!([2])),
