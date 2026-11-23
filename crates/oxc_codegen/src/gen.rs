@@ -3598,7 +3598,20 @@ impl Gen for TSConditionalType<'_> {
 impl Gen for TSInferType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str("infer ");
-        self.type_parameter.print(p, ctx);
+        let type_parameter = &self.type_parameter;
+        type_parameter.name.print(p, ctx);
+        if let Some(constraint) = &type_parameter.constraint {
+            p.print_str(" extends");
+            // An `infer` constraint is parsed with conditional types disallowed, so
+            // `infer U extends (A extends B ? C : D)` must keep its parentheses.
+            let wrap = matches!(constraint, TSType::TSConditionalType(_));
+            if wrap || type_starts_with_non_identifier(constraint) {
+                p.print_soft_space();
+            } else {
+                p.print_hard_space();
+            }
+            p.wrap(wrap, |p| constraint.print(p, ctx));
+        }
     }
 }
 

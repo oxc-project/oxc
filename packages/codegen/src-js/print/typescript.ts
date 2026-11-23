@@ -197,8 +197,7 @@ function printTSType(node: ESTree.TSTupleElement | ESTree.TSQualifiedName, state
       printTSConditionalType(node, state);
       break;
     case "TSInferType":
-      write(state, "infer ", CAT_OTHER);
-      printTSTypeParameter(node.typeParameter, state);
+      printTSInferType(node, state);
       break;
     case "TSIndexedAccessType": {
       const wrap = parenthesizeTypeOfPostfixType(node.objectType);
@@ -695,6 +694,28 @@ export function printTypeParameters(
 }
 
 /**
+ * `infer U` or `infer U extends C`.
+ *
+ * An `infer` constraint is parsed with conditional types disallowed, so a conditional constraint is wrapped -
+ * `infer U extends A extends B ? C : D` would end the constraint at `A`.
+ *
+ * @param node - TS infer type
+ * @param state - Printer state
+ */
+function printTSInferType(node: ESTree.TSInferType, state: State): void {
+  const { name, constraint } = node.typeParameter;
+  write(state, "infer ", CAT_OTHER);
+  writeWithMapNamed(state, name.name, name.start, name.end, name);
+  if (constraint == null) return;
+
+  write(state, " extends ", CAT_OTHER);
+  const wrap = constraint.type === "TSConditionalType";
+  if (wrap) write(state, "(", CAT_OTHER);
+  printTSType(constraint, state);
+  if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
+}
+
+/**
  * One type parameter with its modifiers, constraint and default. The modifiers are independent flags, so
  * the fixed print order here - `const`, `in`, `out` - is what gives them an order at all.
  *
@@ -704,9 +725,8 @@ export function printTypeParameters(
 function printTSTypeParameter(node: ESTree.TSTypeParameter, state: State): void {
   // No `printSpaceBeforeIdentifier` needed, either here or before the name.
   //
-  // All 3 callers leave `last` as `CAT_LT` or `CAT_OTHER`:
-  // - `printTypeParameters` writes `<`, `, ` or a newline plus indent before each parameter.
-  // - `TSInferType` writes `infer `.
+  // `last` is always `CAT_LT` or `CAT_OTHER` here:
+  // - Each type parameter follows `<`, `, ` or a newline plus indent in its list.
   // - Each modifier below ends in a space.
   // So nothing an identifier could run into ever precedes one.
   //
