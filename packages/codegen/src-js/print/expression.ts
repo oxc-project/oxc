@@ -48,7 +48,7 @@ import {
   unaryOperatorCode,
   updateOperatorCode,
 } from "./operators.ts";
-import { withoutParens } from "./parens.ts";
+import { isLetIdentifier, withoutParens } from "./parens.ts";
 import {
   PREC_ASSIGN,
   PREC_CALL,
@@ -305,15 +305,7 @@ export function printMemberExpression(
 ): void {
   const { object } = node;
   if (node.computed) {
-    // `(let)[0]` - a bare `let` object must be wrapped.
-    // `object` can be any expression, so its `type` is a megamorphic load - read it once while unwrapping parens.
-    let inner = object,
-      innerType = inner.type;
-    while (innerType === "ParenthesizedExpression") {
-      inner = (inner as ESTree.ParenthesizedExpression).expression;
-      innerType = inner.type;
-    }
-    const wrap = innerType === "Identifier" && (inner as ESTree.IdentifierReference).name === "let";
+    const wrap = isLetIdentifier(object);
 
     if (wrap) write(state, "(", CAT_OTHER);
     printExpression(object, state, PREC_POSTFIX, ctx & CTX_FORBID_CALL);

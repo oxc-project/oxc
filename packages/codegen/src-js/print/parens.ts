@@ -16,3 +16,28 @@ export function withoutParens(node: ESTree.Expression): ESTree.Expression {
   }
   return node;
 }
+
+/**
+ * Whether a computed member's object needs parentheses to avoid starting a `let` declaration.
+ * @param node - Computed member object
+ */
+export function isLetIdentifier(node: ESTree.Expression): boolean {
+  for (;;) {
+    switch (node.type) {
+      case "Identifier":
+        return node.name === "let";
+      /* IF TS */
+      case "TSAsExpression":
+      case "TSInstantiationExpression":
+      case "TSNonNullExpression":
+      case "TSSatisfiesExpression":
+      case "TSTypeAssertion":
+      /* END_IF */
+      case "ParenthesizedExpression":
+        node = node.expression;
+        break;
+      default:
+        return false;
+    }
+  }
+}
