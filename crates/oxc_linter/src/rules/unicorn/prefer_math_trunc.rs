@@ -167,80 +167,57 @@ impl Rule for PreferMathTrunc {
 }
 
 fn check_parse_int_call<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
-    if call_expr.optional || call_expr.arguments.len() != 2 {
-        return;
-    }
+    if !call_expr.optional
+        && call_expr.arguments.len() == 2
+        && let Some(parse_int_name) = get_parse_int_name(call_expr, ctx)
+        && let Some(first_arg) = call_expr.arguments[0].as_expression()
+        && let Some(radix_arg) = call_expr.arguments[1].as_expression()
+        && let Expression::NumericLiteral(radix) = radix_arg.without_parentheses()
+        && radix.value == 10.0
+        && let Expression::CallExpression(string_call) = first_arg.without_parentheses()
+        && !string_call.optional
+        && string_call.arguments.len() == 1
+        && let Some(inner_arg) = string_call.arguments[0].as_expression()
+        && let Expression::Identifier(string_ident) = string_call.callee.without_parentheses()
+        && string_ident.name == "String"
+        && ctx.is_reference_to_global_variable(string_ident)
+    {
+        let span = call_expr.span;
+        let diagnostic = prefer_math_trunc_parse_int_diagnostic(span, parse_int_name);
 
-    let Some(parse_int_name) = get_parse_int_name(call_expr, ctx) else {
-        return;
-    };
+        let search_start = string_call
+            .type_arguments
+            .as_ref()
+            .map_or_else(|| string_call.callee.span().end, |ta| ta.span.end);
+        let Some(open_paren) = (search_start < inner_arg.span().start)
+            .then(|| ctx.find_next_token_within(search_start, inner_arg.span().start, "("))
+            .flatten()
+            .map(|offset| search_start + offset)
+        else {
+            ctx.diagnostic(diagnostic);
+            return;
+        };
+        let close_paren = string_call.span.end.saturating_sub(1);
+        let bytes = ctx.source_text().as_bytes();
+        if close_paren <= open_paren || bytes.get(close_paren as usize) != Some(&b')') {
+            ctx.diagnostic(diagnostic);
+            return;
+        }
 
-    let Some(first_arg) = call_expr.arguments[0].as_expression() else {
-        return;
-    };
-    let Some(radix_arg) = call_expr.arguments[1].as_expression() else {
-        return;
-    };
+        let has_comments_outside = ctx.has_comments_between(Span::new(span.start, open_paren))
+            || ctx.has_comments_between(Span::new(close_paren, span.end));
+        if has_comments_outside {
+            ctx.diagnostic(diagnostic);
+            return;
+        }
 
-    let Expression::NumericLiteral(radix) = radix_arg.without_parentheses() else {
-        return;
+        ctx.diagnostic_with_suggestion(diagnostic, |fixer: RuleFixer<'_, 'a>| {
+            let argument_text = ctx.source_range(Span::new(open_paren + 1, close_paren));
+            let mut replacement = format!("Math.trunc({argument_text})");
+            pad_fix_with_token_boundary(ctx.source_text(), span, &mut replacement);
+            fixer.replace(span, replacement)
+        });
     };
-    #[expect(clippy::float_cmp)]
-    if radix.value != 10.0 {
-        return;
-    }
-
-    let Expression::CallExpression(string_call) = first_arg.without_parentheses() else {
-        return;
-    };
-    if string_call.optional || string_call.arguments.len() != 1 {
-        return;
-    }
-    let Some(inner_arg) = string_call.arguments[0].as_expression() else {
-        return;
-    };
-    let Expression::Identifier(string_ident) = string_call.callee.without_parentheses() else {
-        return;
-    };
-    if string_ident.name != "String" || !ctx.is_reference_to_global_variable(string_ident) {
-        return;
-    }
-
-    let span = call_expr.span;
-    let diagnostic = prefer_math_trunc_parse_int_diagnostic(span, parse_int_name);
-
-    let search_start = string_call
-        .type_arguments
-        .as_ref()
-        .map_or_else(|| string_call.callee.span().end, |ta| ta.span.end);
-    let Some(open_paren) = (search_start < inner_arg.span().start)
-        .then(|| ctx.find_next_token_within(search_start, inner_arg.span().start, "("))
-        .flatten()
-        .map(|offset| search_start + offset)
-    else {
-        ctx.diagnostic(diagnostic);
-        return;
-    };
-    let close_paren = string_call.span.end.saturating_sub(1);
-    let bytes = ctx.source_text().as_bytes();
-    if close_paren <= open_paren || bytes.get(close_paren as usize) != Some(&b')') {
-        ctx.diagnostic(diagnostic);
-        return;
-    }
-
-    let has_comments_outside = ctx.has_comments_between(Span::new(span.start, open_paren))
-        || ctx.has_comments_between(Span::new(close_paren, span.end));
-    if has_comments_outside {
-        ctx.diagnostic(diagnostic);
-        return;
-    }
-
-    ctx.diagnostic_with_suggestion(diagnostic, |fixer: RuleFixer<'_, 'a>| {
-        let argument_text = ctx.source_range(Span::new(open_paren + 1, close_paren));
-        let mut replacement = format!("Math.trunc({argument_text})");
-        pad_fix_with_token_boundary(ctx.source_text(), span, &mut replacement);
-        fixer.replace(span, replacement)
-    });
 }
 
 fn get_parse_int_name<'a>(
