@@ -586,12 +586,7 @@ fn classify_expr_for_array(expr: &Expression, ctx: &LintContext, depth: u8) -> A
             classify_expr_for_array(&non_null.expression, ctx, depth + 1)
         }
         Expression::TSSatisfiesExpression(sat) => {
-            let expr_kind = classify_expr_for_array(&sat.expression, ctx, depth + 1);
-            if expr_kind == ArrayTypeKind::Unknown {
-                classify_ts_type_for_array(&sat.type_annotation)
-            } else {
-                expr_kind
-            }
+            classify_expr_for_array(&sat.expression, ctx, depth + 1)
         }
         Expression::Identifier(ident) => {
             if matches!(ident.name.as_str(), "undefined" | "arguments")
@@ -1098,6 +1093,7 @@ fn test() {
         "_.flatten(/* keep */ array);",
         "_.flatten(array /* keep */,);",
         "function run(values: Object) { return _.flatten(values); }",
+        "_.flatten(values satisfies { length: number });",
     ];
 
     let fix = vec![
@@ -1253,6 +1249,12 @@ fn test() {
         (
             "function run(values: Object) { return _.flatten(values); }",
             "function run(values: Object) { return values.flat(); }",
+            None,
+            FixKind::DangerousFix,
+        ),
+        (
+            "_.flatten(values satisfies { length: number });",
+            "(values satisfies { length: number }).flat();",
             None,
             FixKind::DangerousFix,
         ),
