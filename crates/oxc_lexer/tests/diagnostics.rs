@@ -816,6 +816,24 @@ fn legacy_octal_adjacency_diagnostics(cpu: DynCpu) {
 }
 
 #[test_cpus]
+fn legacy_octal_values(cpu: DynCpu) {
+    for (code, want) in [
+        ("x = 070;", &[56.0][..]),
+        ("x = 0777;", &[511.0]),
+        ("x = 00;", &[0.0]),
+        ("x = 010.5;", &[8.0, 0.5]),
+        ("x = 010.toString();", &[8.0]),
+        ("x = 08;", &[8.0]),
+        ("x = 0779;", &[779.0]),
+        ("x = 08.5;", &[8.5]),
+        ("x = 09e1;", &[90.0]),
+    ] {
+        let res = lex_with_cpu(code, LexOptions::default(), cpu);
+        assert_eq!(res.numbers(), want, "{code:?}");
+    }
+}
+
+#[test_cpus]
 fn nested_jsx_shapes_never_flagged(cpu: DynCpu) {
     for code in [
         "const a = <Foo prop=<Bar><Baz /></Bar> />;",
