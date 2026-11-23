@@ -539,7 +539,7 @@ fn minify_new_expression_type_arguments() {
         ("new C()", "new C;"),
     ] {
         test_options_with_source_type(source, minified, SourceType::ts(), CodegenOptions::minify());
-        test_idempotency_options(source, &CodegenOptions::minify());
+        test_ts(minified, &format!("{source};\n"));
     }
 }
 
