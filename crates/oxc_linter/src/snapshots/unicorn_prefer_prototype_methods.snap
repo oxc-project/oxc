@@ -277,3 +277,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────
    ╰────
   help: Replace `globalThis[`toString`]` with `Object.prototype.toString`.
+
+  ⚠ unicorn(prefer-prototype-methods): Prefer using `Object.prototype.toString`.
+   ╭─[prefer_prototype_methods.tsx:1:1]
+ 1 │ globalThis?.toString.call(bar)
+   · ────────────────────
+   ╰────
+  help: Replace `globalThis?.toString` with `Object.prototype.toString`.

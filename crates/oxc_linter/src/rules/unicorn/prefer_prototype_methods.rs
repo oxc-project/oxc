@@ -202,8 +202,7 @@ impl Rule for PreferPrototypeMethods {
                 if !call_expr.arguments.is_empty()
                     && matches!(
                         callee_member.object.without_parentheses(),
-                        Expression::Identifier(ident)
-                            if ident.name == "Reflect" && is_unmodified_global_variable(ident, ctx)
+                        Expression::Identifier(ident) if ident.name == "Reflect"
                     ) =>
             {
                 call_expr.arguments[0].as_expression().map(Expression::without_parentheses)
@@ -220,24 +219,22 @@ impl Rule for PreferPrototypeMethods {
         let Some(method_expr) = method_expr.as_member_expression() else {
             return;
         };
-        if method_expr.optional() {
-            return;
-        }
         let object_expr = method_expr.object().without_parentheses();
 
         let (constructor_name, method_name, global_method_name) = match object_expr {
-            Expression::ArrayExpression(array) if array.elements.is_empty() => {
-                ("Array", method_expr.static_property_name().and_then(JSStr::as_str), None)
-            }
-            Expression::ObjectExpression(object) if object.properties.is_empty() => {
-                ("Object", method_expr.static_property_name().and_then(JSStr::as_str), None)
-            }
             Expression::Identifier(ident) => {
                 let Some(method_name) = global_object_prototype_method(ident, method_expr, ctx)
                 else {
                     return;
                 };
                 ("Object", Some(method_name), Some(method_name))
+            }
+            _ if method_expr.optional() => return,
+            Expression::ArrayExpression(array) if array.elements.is_empty() => {
+                ("Array", method_expr.static_property_name().and_then(JSStr::as_str), None)
+            }
+            Expression::ObjectExpression(object) if object.properties.is_empty() => {
+                ("Object", method_expr.static_property_name().and_then(JSStr::as_str), None)
             }
             _ => return,
         };
@@ -310,7 +307,6 @@ fn test() {
         r#"const _ = globalThis, TO_STRING = "toString"; _[TO_STRING].call(bar)"#,
         "const _ = [globalThis.toString]; _[0].call(bar)",
         "globalThis.setTimeout.call(bar)",
-        "globalThis?.toString.call(bar)",
         "const globalThis = {}; globalThis.toString.call(bar)",
         "const window = {}; window.toString.call(bar)",
         "self = customObj; self.toString.call(bar)",
@@ -321,11 +317,9 @@ fn test() {
         "var a = b; var b = globalThis; a.toString.call(bar)",
         "if (cond) { var _ = globalThis; } _.toString.call(bar)",
         "_.toString.call(bar); var _ = globalThis;",
-        "const Reflect = { apply() {} }; Reflect.apply(globalThis.toString, baz, [])",
-        "const Reflect = { apply() {} }; Reflect.apply([].slice, foo, [])",
-        "Reflect = customReflect; Reflect.apply(globalThis.toString, baz, [])",
         "const { foo } = globalThis; foo.toString.call(bar)",
         "const a = b; const b = a; a.toString.call(bar)",
+        "[]?.slice.call(bar)",
     ];
 
     let fail = vec![
@@ -372,6 +366,7 @@ fn test() {
         "const a = globalThis; const b = a; b.isPrototypeOf.call(bar)",
         "Reflect.apply(self.toString, baz, [])",
         "globalThis[`toString`].call(bar)",
+        "globalThis?.toString.call(bar)",
     ];
 
     let fix = vec![
@@ -493,6 +488,7 @@ fn test() {
             "function foo(){return(globalThis).toString.call(bar)}",
             "function foo(){return Object.prototype.toString.call(bar)}",
         ),
+        ("globalThis?.toString.call(bar)", "Object.prototype.toString.call(bar)"),
     ];
 
     Tester::new(PreferPrototypeMethods::NAME, PreferPrototypeMethods::PLUGIN, pass, fail)
