@@ -459,30 +459,9 @@ source: crates/oxc_linter/src/tester.rs
   help: Call `.flat()` on the array instead.
 
   ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
-   ╭─[prefer_array_flat.tsx:1:64]
- 1 │ function run(values: Array<number[]> | Set<number[]>) { return _.flatten(values); }
-   ·                                                                ─────────────────
-   ╰────
-  help: Call `.flat()` on the array instead.
-
-  ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
    ╭─[prefer_array_flat.tsx:1:28]
  1 │ const Items = new Array(); _.flatten(Items);
    ·                            ────────────────
-   ╰────
-  help: Call `.flat()` on the array instead.
-
-  ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
-   ╭─[prefer_array_flat.tsx:1:24]
- 1 │ const set = new Set(); _.flatten(set as unknown[][]);
-   ·                        ─────────────────────────────
-   ╰────
-  help: Call `.flat()` on the array instead.
-
-  ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
-   ╭─[prefer_array_flat.tsx:1:14]
- 1 │ const x = x; _.flatten(x);
-   ·              ────────────
    ╰────
   help: Call `.flat()` on the array instead.
 
@@ -648,13 +627,6 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[prefer_array_flat.tsx:1:1]
  1 │ _.flatten(array /* keep */,);
    · ────────────────────────────
-   ╰────
-  help: Call `.flat()` on the array instead.
-
-  ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
-   ╭─[prefer_array_flat.tsx:1:39]
- 1 │ function run(values: Object) { return _.flatten(values); }
-   ·                                       ─────────────────
    ╰────
   help: Call `.flat()` on the array instead.
 

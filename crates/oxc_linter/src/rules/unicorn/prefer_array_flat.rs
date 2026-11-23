@@ -2,8 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, ArrayExpressionElement, BindingPattern, CallExpression, ChainElement, Expression,
-        IdentifierReference, MemberExpression, NewExpression, TSType, TSTypeName,
-        VariableDeclarationKind,
+        IdentifierReference, MemberExpression, NewExpression,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -421,201 +420,22 @@ const TYPED_ARRAY_NAMES: &[&str] = &[
     "BigUint64Array",
 ];
 
-const NON_ARRAY_TYPE_NAMES: &[&str] = &[
-    "Map",
-    "ReadonlyMap",
-    "WeakMap",
-    "Set",
-    "ReadonlySet",
-    "WeakSet",
-    "URLSearchParams",
-    "Headers",
-    "FormData",
-    "CanvasRenderingContext2D",
-    "OffscreenCanvasRenderingContext2D",
-    "String",
-    "Number",
-    "Boolean",
-    "Symbol",
-    "BigInt",
-    "Function",
-];
-
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum ArrayTypeKind {
-    Array,
-    NonArray,
-    Unknown,
-}
-
-fn is_any_or_unknown_ts_type(ty: &TSType) -> bool {
-    matches!(ty.without_parenthesized(), TSType::TSAnyKeyword(_) | TSType::TSUnknownKeyword(_))
-}
-
-fn classify_ts_type_for_array(ty: &TSType) -> ArrayTypeKind {
-    match ty {
-        TSType::TSParenthesizedType(paren) => classify_ts_type_for_array(&paren.type_annotation),
-        TSType::TSArrayType(_) | TSType::TSTupleType(_) => ArrayTypeKind::Array,
-        TSType::TSBigIntKeyword(_)
-        | TSType::TSBooleanKeyword(_)
-        | TSType::TSNeverKeyword(_)
-        | TSType::TSNullKeyword(_)
-        | TSType::TSNumberKeyword(_)
-        | TSType::TSStringKeyword(_)
-        | TSType::TSSymbolKeyword(_)
-        | TSType::TSUndefinedKeyword(_)
-        | TSType::TSVoidKeyword(_)
-        | TSType::TSLiteralType(_)
-        | TSType::TSTypeLiteral(_)
-        | TSType::TSFunctionType(_)
-        | TSType::TSConstructorType(_) => ArrayTypeKind::NonArray,
-        TSType::TSTypeReference(type_ref) => {
-            if let TSTypeName::IdentifierReference(ident) = &type_ref.type_name {
-                let name = ident.name.as_str();
-                if matches!(name, "Array" | "ReadonlyArray") {
-                    return ArrayTypeKind::Array;
-                }
-                if TYPED_ARRAY_NAMES.contains(&name) || NON_ARRAY_TYPE_NAMES.contains(&name) {
-                    return ArrayTypeKind::NonArray;
-                }
-            }
-            ArrayTypeKind::Unknown
-        }
-        TSType::TSUnionType(union) => {
-            let mut all_array = true;
-            let mut all_non_array = true;
-            for member in &union.types {
-                match classify_ts_type_for_array(member) {
-                    ArrayTypeKind::Array => all_non_array = false,
-                    ArrayTypeKind::NonArray => all_array = false,
-                    ArrayTypeKind::Unknown => return ArrayTypeKind::Unknown,
-                }
-            }
-            if all_array {
-                ArrayTypeKind::Array
-            } else if all_non_array {
-                ArrayTypeKind::NonArray
-            } else {
-                ArrayTypeKind::Unknown
-            }
-        }
-        TSType::TSIntersectionType(intersection) => {
-            let mut has_array = false;
-            for member in &intersection.types {
-                match classify_ts_type_for_array(member) {
-                    ArrayTypeKind::Unknown => return ArrayTypeKind::Unknown,
-                    ArrayTypeKind::Array => has_array = true,
-                    ArrayTypeKind::NonArray => {}
-                }
-            }
-            if has_array { ArrayTypeKind::Array } else { ArrayTypeKind::NonArray }
-        }
-        _ => ArrayTypeKind::Unknown,
-    }
-}
-
-const MAX_ALIAS_DEPTH: u8 = 8;
-
-fn classify_expr_for_array(expr: &Expression, ctx: &LintContext, depth: u8) -> ArrayTypeKind {
-    if depth >= MAX_ALIAS_DEPTH {
-        return ArrayTypeKind::Unknown;
-    }
-
-    match expr.without_parentheses() {
-        Expression::UnaryExpression(_) => ArrayTypeKind::NonArray,
-        other if is_definitely_array_expression(other) => ArrayTypeKind::Array,
-        other if is_definitely_non_array_expression(other) => ArrayTypeKind::NonArray,
-        Expression::CallExpression(call_expr) => {
-            if !call_expr.optional
-                && let Expression::StaticMemberExpression(member) =
-                    call_expr.callee.without_parentheses()
-                && !member.optional
-                && matches!(member.property.name.as_str(), "from" | "of")
-                && let Expression::Identifier(ident) = member.object.without_parentheses()
-            {
-                let name = ident.name.as_str();
-                if name == "Array" {
-                    return ArrayTypeKind::Array;
-                }
-                if TYPED_ARRAY_NAMES.contains(&name) {
-                    return ArrayTypeKind::NonArray;
-                }
-            }
-            ArrayTypeKind::Unknown
-        }
-        Expression::TSAsExpression(ts_as) => {
-            classify_asserted_expr_for_array(&ts_as.type_annotation, &ts_as.expression, ctx, depth)
-        }
-        Expression::TSTypeAssertion(ts_assert) => classify_asserted_expr_for_array(
-            &ts_assert.type_annotation,
-            &ts_assert.expression,
-            ctx,
-            depth,
-        ),
-        Expression::TSNonNullExpression(non_null) => {
-            classify_expr_for_array(&non_null.expression, ctx, depth + 1)
-        }
-        Expression::TSSatisfiesExpression(sat) => {
-            classify_expr_for_array(&sat.expression, ctx, depth + 1)
-        }
+fn is_known_non_array(expr: &Expression, ctx: &LintContext) -> bool {
+    match expr.get_inner_expression() {
         Expression::Identifier(ident) => {
-            if matches!(ident.name.as_str(), "undefined" | "arguments")
-                && ident.is_global_reference(ctx.scoping())
-            {
-                return ArrayTypeKind::NonArray;
-            }
-            let Some(symbol_id) = get_symbol_id_of_variable(ident, ctx) else {
-                return ArrayTypeKind::Unknown;
-            };
-            match ctx.symbol_declaration(symbol_id).kind() {
-                AstKind::FormalParameter(param) if param.pattern.is_binding_identifier() => {
-                    param.type_annotation.as_deref().map_or(ArrayTypeKind::Unknown, |ann| {
-                        classify_ts_type_for_array(&ann.type_annotation)
-                    })
-                }
-                AstKind::VariableDeclarator(decl) if decl.id.is_binding_identifier() => {
-                    if let Some(ann) = decl.type_annotation.as_deref() {
-                        match classify_ts_type_for_array(&ann.type_annotation) {
-                            ArrayTypeKind::Unknown
-                                if is_any_or_unknown_ts_type(&ann.type_annotation) => {}
-                            kind => return kind,
-                        }
-                    }
-                    if variable_declaration_kind(decl, ctx.nodes())
-                        .is_some_and(VariableDeclarationKind::is_const)
-                        && let Some(init) = &decl.init
-                    {
-                        return classify_expr_for_array(init, ctx, depth + 1);
-                    }
-                    ArrayTypeKind::Unknown
-                }
-                _ => ArrayTypeKind::Unknown,
-            }
+            (matches!(ident.name.as_str(), "arguments" | "undefined")
+                && ident.is_global_reference(ctx.scoping()))
+                || matches!(
+                    const_variable_initializer_kind(ident, ctx),
+                    Some(ConstInitKind::NonArray)
+                )
         }
-        _ => ArrayTypeKind::Unknown,
-    }
-}
-
-fn classify_asserted_expr_for_array(
-    ty: &TSType,
-    expr: &Expression,
-    ctx: &LintContext,
-    depth: u8,
-) -> ArrayTypeKind {
-    match classify_ts_type_for_array(ty) {
-        ArrayTypeKind::Unknown if is_any_or_unknown_ts_type(ty) => {
-            classify_expr_for_array(expr, ctx, depth + 1)
+        Expression::CallExpression(call_expr) => {
+            is_method_call(call_expr, Some(TYPED_ARRAY_NAMES), Some(&["from", "of"]), None, None)
         }
-        kind => kind,
+        Expression::UnaryExpression(_) => true,
+        expr => is_definitely_non_array_expression(expr),
     }
-}
-
-fn is_arguments_object(expr: &Expression, ctx: &LintContext) -> bool {
-    matches!(
-        expr.get_inner_expression(),
-        Expression::Identifier(ident)
-            if ident.name == "arguments" && ident.is_global_reference(ctx.scoping())
-    )
 }
 
 fn new_expression_has_parens(new_expr: &NewExpression) -> bool {
@@ -719,9 +539,7 @@ fn check_lodash_flatten_case<'a>(
         return;
     }
 
-    if is_arguments_object(arg_expr, ctx)
-        || classify_expr_for_array(arg_expr, ctx, 0) == ArrayTypeKind::NonArray
-    {
+    if is_known_non_array(arg_expr, ctx) {
         return;
     }
 
@@ -965,10 +783,6 @@ fn test() {
         "function unicornRun() { return _.flatten((arguments)); }",
         "const set = new Set(); _.flatten(set);",
         "const Items = new lib.Array(); _.flatten(Items);",
-        "function run(values: Uint8Array) { return _.flatten(values); }",
-        "function run(values: () => string) { return _.flatten(values); }",
-        "function run(values: Set<number> | null) { return _.flatten(values); }",
-        "_.flatten(foo as Set<number>)",
         "const set = new Set(); _.flatten(set as (any));",
         "_.flatten(<div />);",
         "_.flatten(<></>);",
@@ -1048,10 +862,7 @@ fn test() {
             Array.prototype.concat.apply([], 1.0)",
         "const Items = [] as unknown[]; Items.flatMap(x => x);",
         "_.flatten(array,)",
-        "function run(values: Array<number[]> | Set<number[]>) { return _.flatten(values); }",
         "const Items = new Array(); _.flatten(Items);",
-        "const set = new Set(); _.flatten(set as unknown[][]);",
-        "const x = x; _.flatten(x);",
         "_.flatten(new Array)",
         "_.flatten(new Array())",
         "_.flatten(getArray())",
@@ -1075,7 +886,6 @@ fn test() {
         "before()\n_.flatten(({ a: [1] }).a);",
         "_.flatten(/* keep */ array);",
         "_.flatten(array /* keep */,);",
-        "function run(values: Object) { return _.flatten(values); }",
         "_.flatten(values satisfies { length: number });",
     ];
 
@@ -1125,24 +935,11 @@ fn test() {
         ("lodash.flatten(array)", "array.flat()", None, FixKind::DangerousFix),
         ("underscore.flatten(array)", "array.flat()", None, FixKind::DangerousFix),
         (
-            "function run(values: Array<number[]> | Set<number[]>) { return _.flatten(values); }",
-            "function run(values: Array<number[]> | Set<number[]>) { return values.flat(); }",
-            None,
-            FixKind::DangerousFix,
-        ),
-        (
             "const Items = new Array(); _.flatten(Items);",
             "const Items = new Array(); Items.flat();",
             None,
             FixKind::DangerousFix,
         ),
-        (
-            "const set = new Set(); _.flatten(set as unknown[][]);",
-            "const set = new Set(); (set as unknown[][]).flat();",
-            None,
-            FixKind::DangerousFix,
-        ),
-        ("const x = x; _.flatten(x);", "const x = x; x.flat();", None, FixKind::DangerousFix),
         ("_.flatten((0, array))", "(0, array).flat()", None, FixKind::DangerousFix),
         (
             "async function a() { return _.flatten(await getArray()); }",
@@ -1226,12 +1023,6 @@ fn test() {
         (
             "_.flatten(array /* keep */,);",
             "_.flatten(array /* keep */,);",
-            None,
-            FixKind::DangerousFix,
-        ),
-        (
-            "function run(values: Object) { return _.flatten(values); }",
-            "function run(values: Object) { return values.flat(); }",
             None,
             FixKind::DangerousFix,
         ),
