@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.160.0] - 2026-11-23
+
+### 💥 BREAKING CHANGES
+
+- 2bc8e89 diagnostics: [**BREAKING**] `NamedSource` support `&str` as name (#29851) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 41dbc08 mangler: Keep names set by redeclarations with keepNames (#30055) (Dunqing)
+- 0167451 parser: Treat `import x = require()` as module syntax (#29908) (camc314)
+- e27f727 semantic: Align JSDoc nullable type suggestions with TypeScript (#29947) (camc314)
+- e4e2ac4 parser,semantic: Reject invalid types in type arguments (#29945) (camc314)
+- 2f6a11f semantic: Keep catch parameters in the catch clause scope (#29635) (Dunqing)
+- f860f1b semantic: Resolve a private name to the enclosing class that declares it (#29714) (Nadir Ali)
+
+### ⚡ Performance
+
+- 27777a9 diagnostics: Loosen lifetime bound on `OxcDiagnostic::with_source_code` (#29849) (overlookmotel)
+- ec4090d semantic: Size the `Scoping` arena from symbol, reference and scope counts (#29809) (Boshen)
+
+Full release notes: [0.160.0](https://github.com/oxc-project/oxc/blob/main/crates/CHANGELOG.md#01600---2026-11-23)
+
 ## [0.159.0] - 2026-11-16
 
 ### 🚀 Features
