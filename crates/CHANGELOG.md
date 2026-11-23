@@ -57,6 +57,7 @@ Each package has its own changelog with only the changes relevant to it:
 
 ### 🚀 Features
 
+- 2384875 minifier: Remove redundant `| 0` under bitwise operators (#29991) (Cameron)
 - abf889f minifier: Flatten nested string concatenations (#30015) (Cameron)
 - 5f51bd3 minifier: Fold division with short numeric results (#29994) (Cameron)
 - 1102f24 minifier: Flatten nested untagged template literals (#29993) (Cameron)
@@ -69,6 +70,15 @@ Each package has its own changelog with only the changes relevant to it:
 
 ### 🐛 Bug Fixes
 
+- 38cd470 transformer: Share auto-accessor lowering and fix its private storage names (#29449) (Dunqing)
+- 6838760 packages/codegen: Parenthesize for-of targets that start with `let` (#30071) (Cameron)
+- 13dd5ac packages/codegen: Parenthesize comma expressions in enum initializers (#30070) (Cameron)
+- c4e4fcc packages/codegen: Parenthesize private `in` checks in for initializers (#30073) (Cameron)
+- 32882ef packages/codegen: Parenthesize comma expressions in export assignments (#30072) (Cameron)
+- 7d8998d packages/codegen: Parenthesize comma expressions in JSX containers (#30074) (Cameron)
+- c98b8b1 packages/codegen: Parenthesize TypeScript instantiation operands (#30068) (Cameron)
+- d615de4 codegen: Parenthesize TypeScript instantiation expressions used as operands (#30065) (Cameron)
+- 90b5af9 codegen: Keep `()` on minified `new` expressions with type arguments (#30062) (Cameron)
 - 4b1efd3 transformer/legacy-decorator: Move class self-references to alias symbol (#30056) (Dunqing)
 - adf284e mangler: Use debug names for private members (#30061) (Cameron)
 - bbe2fba transformer/legacy-decorator: Avoid class name shadowing in static setters (#30058) (Dunqing)

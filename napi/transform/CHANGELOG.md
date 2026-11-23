@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 ### 🐛 Bug Fixes
 
+- 38cd470 transformer: Share auto-accessor lowering and fix its private storage names (#29449) (Dunqing)
 - 4b1efd3 transformer/legacy-decorator: Move class self-references to alias symbol (#30056) (Dunqing)
 - bbe2fba transformer/legacy-decorator: Avoid class name shadowing in static setters (#30058) (Dunqing)
 - 8921865 transformer/legacy-decorator: Keep static private brand checks on the original class (#30054) (Dunqing)

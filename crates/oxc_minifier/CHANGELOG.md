@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 ### 🚀 Features
 
+- 2384875 minifier: Remove redundant `| 0` under bitwise operators (#29991) (Cameron)
 - abf889f minifier: Flatten nested string concatenations (#30015) (Cameron)
 - 5f51bd3 minifier: Fold division with short numeric results (#29994) (Cameron)
 - 1102f24 minifier: Flatten nested untagged template literals (#29993) (Cameron)

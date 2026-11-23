@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 ### 🚀 Features
 
+- 2384875 minifier: Remove redundant `| 0` under bitwise operators (#29991) (Cameron)
 - abf889f minifier: Flatten nested string concatenations (#30015) (Cameron)
 - 5f51bd3 minifier: Fold division with short numeric results (#29994) (Cameron)
 - 1102f24 minifier: Flatten nested untagged template literals (#29993) (Cameron)
@@ -21,6 +22,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 ### 🐛 Bug Fixes
 
+- d615de4 codegen: Parenthesize TypeScript instantiation expressions used as operands (#30065) (Cameron)
+- 90b5af9 codegen: Keep `()` on minified `new` expressions with type arguments (#30062) (Cameron)
 - adf284e mangler: Use debug names for private members (#30061) (Cameron)
 - 7fa5d50 codegen: Keep comments from ending a line after code (#29814) (Yuji Sugiura)
 - 41dbc08 mangler: Keep names set by redeclarations with keepNames (#30055) (Dunqing)

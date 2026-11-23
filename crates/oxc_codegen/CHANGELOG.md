@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 ### 🐛 Bug Fixes
 
+- d615de4 codegen: Parenthesize TypeScript instantiation expressions used as operands (#30065) (Cameron)
+- 90b5af9 codegen: Keep `()` on minified `new` expressions with type arguments (#30062) (Cameron)
 - 7fa5d50 codegen: Keep comments from ending a line after code (#29814) (Yuji Sugiura)
 - 8488767 codegen: Parenthesize private `in` tests in `for` initializers (#30037) (Cameron)
 - e9e80b1 codegen: Parenthesize for-of heads that print a leading `let` or `async` (#30025) (Cameron)
