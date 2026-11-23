@@ -66,7 +66,7 @@ fn test_keep_decorated_private_members() {
     test_same("class C { @dec accessor #unused = 1; method() { return 1; } } new C();");
     test_same("class C { @dec accessor #unused; method() { return 1; } } new C();");
     test_same("class C { @dec get #unused() {} method() { return 1; } } new C();");
-    test_same("class C { @dec #unused = foo(); method() { return 1; } } new C();");
+    test_same("class C { @dec(foo) #unused = 1; method() { return 1; } } new C();");
     // Undecorated elements are still removed.
     test(
         "class C { @dec #kept = 1; #unused = 2; } new C();",
