@@ -731,7 +731,7 @@ impl<'a> PeepholeOptimizations {
             };
             if can_merge_with_alternate {
                 // Don't do this transformation if the branch condition could
-                // potentially access symbols declared later on on this scope below.
+                // potentially access symbols declared later on in this scope below.
                 // If so, inverting the branch condition and nesting statements after
                 // this in a block would break that access which is a behavior change.
                 //
