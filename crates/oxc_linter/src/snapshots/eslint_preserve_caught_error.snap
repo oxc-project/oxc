@@ -179,11 +179,11 @@ source: crates/oxc_linter/src/tester.rs
   help: Preserve the original error by using the `cause` property when re-throwing errors.
 
   ⚠ eslint(preserve-caught-error): The caught error is not accessible because the catch clause has no error parameter.
-   ╭─[preserve_caught_error.tsx:3:8]
- 2 │                             doSomething();
- 3 │ ╭─▶                     } catch {
- 4 │ │                           throw new Error("Something went wrong");
- 5 │ ╰─▶                     }
+   ╭─[preserve_caught_error.tsx:4:7]
+ 3 │                     } catch {
+ 4 │                         throw new Error("Something went wrong");
+   ·                         ────────────────────────────────────────
+ 5 │                     }
    ╰────
   help: Add an error parameter to the catch clause to access the caught error.
 
@@ -277,3 +277,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                        ─────────────────────────────────────────────────────────────────────
    ╰────
   help: Preserve the original error by using the `cause` property when re-throwing errors.
+
+  ⚠ eslint(preserve-caught-error): The caught error is not accessible because the catch clause has no error parameter.
+   ╭─[preserve_caught_error.tsx:1:51]
+ 1 │ try { doSomething(); } catch { if (shouldThrow) { throw new Error("Something went wrong"); } }
+   ·                                                   ────────────────────────────────────────
+   ╰────
+  help: Add an error parameter to the catch clause to access the caught error.
