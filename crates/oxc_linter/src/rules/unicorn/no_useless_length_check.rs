@@ -2,14 +2,32 @@ use std::fmt::Debug;
 
 use oxc_ast::{
     AstKind,
-    ast::{Expression, LogicalExpression},
+    ast::{
+        BindingPattern, ChainElement, Expression, ForOfStatement, ForStatementLeft, IfStatement,
+        JSXText, LogicalExpression, MemberExpression, Statement, StringLiteral, TSType, TSTypeName,
+        TSTypeOperatorOperator, TemplateElement, VariableDeclarationKind,
+    },
 };
+use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::BoundNames;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
-use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
+use oxc_semantic::{IsGlobalReference, SymbolId};
+use oxc_span::{GetSpan, Span};
+use oxc_syntax::{
+    identifier::is_white_space,
+    line_terminator::is_line_terminator,
+    operator::{BinaryOperator, LogicalOperator},
+};
+use smallvec::SmallVec;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    ast_util::{get_symbol_id_of_variable, variable_declaration_kind},
+    context::LintContext,
+    rule::Rule,
+    utils::is_same_expression,
+};
 
 fn some(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Found a useless array length check")
@@ -33,11 +51,12 @@ pub struct NoUselessLengthCheck;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// It checks for an unnecessary array length check in a logical expression.
+    /// It checks for an unnecessary array length check in a logical expression or before a `for...of` loop.
     ///
     /// The cases are:
-    /// - `array.length === 0 || array.every(Boolean)` (`array.every` returns `true` if array is has elements)
+    /// - `array.length === 0 || array.every(Boolean)` (`array.every` returns `true` if array is empty)
     /// - `array.length > 0 && array.some(Boolean)` (`array.some` returns `false` if array is empty)
+    /// - `if (array.length > 0) { for (const x of array) {} }` (`for...of` skips empty arrays)
     ///
     /// ### Why is this bad?
     ///
@@ -50,6 +69,7 @@ declare_oxc_lint!(
     /// if (array.length === 0 || array.every(Boolean)) {
     ///    // do something!
     /// }
+    /// if (array.length > 0) { for (const x of array) { use(x); } }
     /// ```
     ///
     /// Examples of **correct** code for this rule:
@@ -57,12 +77,13 @@ declare_oxc_lint!(
     /// if (array.every(Boolean)) {
     ///    // do something!
     /// }
+    /// for (const x of array) { use(x); }
     /// ```
     NoUselessLengthCheck,
     unicorn,
     correctness,
     recommended,
-    pending,
+    conditional_fix,
     version = "0.0.19",
     short_description = "Disallow useless array length check.",
 );
@@ -160,19 +181,616 @@ fn is_useless_check<'a>(
 
 impl Rule for NoUselessLengthCheck {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::LogicalExpression(log_expr) = node.kind() {
-            if ![LogicalOperator::And, LogicalOperator::Or].contains(&log_expr.operator) {
-                return;
-            }
-            let mut flat_exprs = Vec::new();
-            make_flat_logical_expression(log_expr, &mut flat_exprs);
-            for window in flat_exprs.windows(2) {
-                if let Some(diag) = is_useless_check(window[0], window[1], log_expr.operator) {
-                    ctx.diagnostic(diag);
+        match node.kind() {
+            AstKind::LogicalExpression(log_expr) => {
+                if ![LogicalOperator::And, LogicalOperator::Or].contains(&log_expr.operator) {
+                    return;
                 }
+                let mut flat_exprs = Vec::new();
+                make_flat_logical_expression(log_expr, &mut flat_exprs);
+                for window in flat_exprs.windows(2) {
+                    if let Some(diag) = is_useless_check(window[0], window[1], log_expr.operator) {
+                        ctx.diagnostic(diag);
+                    }
+                }
+            }
+            AstKind::ForOfStatement(for_of_stmt) => {
+                check_for_of_statement(node, for_of_stmt, ctx);
+            }
+            _ => {}
+        }
+    }
+}
+
+fn for_of(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Found a useless array length check")
+        .with_help(
+            "The non-empty check is useless as `for...of` does not iterate over an empty array.",
+        )
+        .with_label(span)
+}
+
+const TYPED_ARRAY_NAMES: &[&str] = &[
+    "Int8Array",
+    "Uint8Array",
+    "Uint8ClampedArray",
+    "Int16Array",
+    "Uint16Array",
+    "Int32Array",
+    "Uint32Array",
+    "Float16Array",
+    "Float32Array",
+    "Float64Array",
+    "BigInt64Array",
+    "BigUint64Array",
+];
+
+const KNOWN_NON_INDEXED_COLLECTION_TYPE_NAMES: &[&str] = &[
+    "Map",
+    "ReadonlyMap",
+    "WeakMap",
+    "Set",
+    "ReadonlySet",
+    "WeakSet",
+    "URLSearchParams",
+    "Headers",
+    "FormData",
+    "CanvasRenderingContext2D",
+    "OffscreenCanvasRenderingContext2D",
+];
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum CollectionType {
+    Target,
+    NonTarget,
+    Nullish,
+    Any,
+    Unknown,
+}
+
+impl CollectionType {
+    fn normalize(self) -> Self {
+        match self {
+            Self::Nullish => Self::NonTarget,
+            Self::Any => Self::Unknown,
+            other => other,
+        }
+    }
+}
+
+fn check_for_of_statement<'a>(
+    node: &AstNode<'a>,
+    for_of_stmt: &ForOfStatement<'a>,
+    ctx: &LintContext<'a>,
+) {
+    if for_of_stmt.r#await {
+        return;
+    }
+
+    let Some(if_stmt) = get_enclosing_guard_if_statement(node, for_of_stmt, ctx) else {
+        return;
+    };
+
+    let Expression::BinaryExpression(test_bin) = if_stmt.test.get_inner_expression() else {
+        return;
+    };
+    if !matches!(test_bin.operator, BinaryOperator::GreaterThan | BinaryOperator::StrictInequality)
+        || !test_bin.right.get_inner_expression().is_specific_raw_number_literal("0")
+    {
+        return;
+    }
+
+    let Expression::StaticMemberExpression(length_member) = test_bin.left.get_inner_expression()
+    else {
+        return;
+    };
+    if length_member.optional || length_member.property.name != "length" {
+        return;
+    }
+
+    if !is_same_expression(
+        length_member.object.get_inner_expression(),
+        for_of_stmt.right.get_inner_expression(),
+        ctx,
+    ) || !optional_chains_match(&length_member.object, &for_of_stmt.right)
+        || has_loop_binding_reference_in_right(for_of_stmt, ctx)
+        || is_known_non_indexed_collection(&for_of_stmt.right, ctx)
+        || is_known_non_indexed_collection(&length_member.object, ctx)
+    {
+        return;
+    }
+
+    let diag = for_of(test_bin.span);
+    let for_of_text = ctx.source_range(for_of_stmt.span);
+    let is_single_line = !for_of_text.contains(is_line_terminator);
+    let source = ctx.source_text();
+    let indent_pair = if is_single_line {
+        Some(("", ""))
+    } else {
+        indent_at_line_start(source, for_of_stmt.span.start)
+            .zip(indent_at_line_start(source, if_stmt.span.start))
+    };
+
+    let Some((source_indent, target_indent)) = indent_pair else {
+        ctx.diagnostic(diag);
+        return;
+    };
+
+    let has_outer_comments = ctx
+        .has_comments_between(Span::new(if_stmt.span.start, for_of_stmt.span.start))
+        || ctx.has_comments_between(Span::new(for_of_stmt.span.end, if_stmt.span.end));
+
+    if has_outer_comments || (!is_single_line && has_multiline_token(for_of_stmt, ctx)) {
+        ctx.diagnostic(diag);
+        return;
+    }
+
+    ctx.diagnostic_with_fix(diag, |fixer| {
+        let mut replacement = if is_single_line {
+            for_of_text.to_owned()
+        } else {
+            reindent_text(for_of_text, source_indent, target_indent)
+        };
+        if matches!(if_stmt.consequent, Statement::BlockStatement(_))
+            && statement_ends_without_semicolon(&for_of_stmt.body, ctx)
+        {
+            replacement.push(';');
+        }
+        fixer.replace(if_stmt.span, replacement)
+    });
+}
+
+fn get_enclosing_guard_if_statement<'a, 'b>(
+    for_of_node: &AstNode<'a>,
+    for_of: &ForOfStatement<'a>,
+    ctx: &'b LintContext<'a>,
+) -> Option<&'b IfStatement<'a>> {
+    let parent = ctx.nodes().parent_node(for_of_node.id());
+    match parent.kind() {
+        AstKind::BlockStatement(block) => {
+            if block.body.len() != 1 || block.body[0].span() != for_of.span {
+                return None;
+            }
+            let grandparent = ctx.nodes().parent_node(parent.id());
+            let AstKind::IfStatement(if_stmt) = grandparent.kind() else {
+                return None;
+            };
+            (if_stmt.alternate.is_none()
+                && matches!(&if_stmt.consequent, Statement::BlockStatement(b) if b.span == block.span))
+            .then_some(if_stmt)
+        }
+        AstKind::IfStatement(if_stmt) => (if_stmt.alternate.is_none()
+            && matches!(&if_stmt.consequent, Statement::ForOfStatement(f) if f.span == for_of.span))
+        .then_some(if_stmt),
+        _ => None,
+    }
+}
+
+fn optional_chains_match<'a>(left: &Expression<'a>, right: &Expression<'a>) -> bool {
+    let left = left.get_inner_expression();
+    let right = right.get_inner_expression();
+    if let (Some(lm), Some(rm)) = (left.as_member_expression(), right.as_member_expression()) {
+        return members_optional_match(lm, rm);
+    }
+    match (left, right) {
+        (Expression::ChainExpression(lc), Expression::ChainExpression(rc)) => {
+            chain_elements_optional_match(&lc.expression, &rc.expression)
+        }
+        (Expression::ChainExpression(_), _) | (_, Expression::ChainExpression(_)) => false,
+        (Expression::CallExpression(lc), Expression::CallExpression(rc)) => {
+            lc.optional == rc.optional && optional_chains_match(&lc.callee, &rc.callee)
+        }
+        (Expression::BinaryExpression(lb), Expression::BinaryExpression(rb)) => {
+            optional_chains_match(&lb.left, &rb.left) && optional_chains_match(&lb.right, &rb.right)
+        }
+        (Expression::LogicalExpression(ll), Expression::LogicalExpression(rl)) => {
+            optional_chains_match(&ll.left, &rl.left) && optional_chains_match(&ll.right, &rl.right)
+        }
+        (Expression::UnaryExpression(lu), Expression::UnaryExpression(ru)) => {
+            optional_chains_match(&lu.argument, &ru.argument)
+        }
+        (Expression::TemplateLiteral(lt), Expression::TemplateLiteral(rt)) => {
+            lt.expressions.len() == rt.expressions.len()
+                && lt
+                    .expressions
+                    .iter()
+                    .zip(&rt.expressions)
+                    .all(|(l, r)| optional_chains_match(l, r))
+        }
+        _ => true,
+    }
+}
+
+fn members_optional_match<'a>(left: &MemberExpression<'a>, right: &MemberExpression<'a>) -> bool {
+    if left.optional() != right.optional() || !optional_chains_match(left.object(), right.object())
+    {
+        return false;
+    }
+    match (left, right) {
+        (
+            MemberExpression::ComputedMemberExpression(lc),
+            MemberExpression::ComputedMemberExpression(rc),
+        ) => optional_chains_match(&lc.expression, &rc.expression),
+        _ => true,
+    }
+}
+
+fn statement_ends_without_semicolon(stmt: &Statement, ctx: &LintContext) -> bool {
+    if ctx.source_range(stmt.span()).trim_end().ends_with(';') {
+        return false;
+    }
+    match stmt {
+        Statement::ExpressionStatement(_)
+        | Statement::VariableDeclaration(_)
+        | Statement::ReturnStatement(_)
+        | Statement::ThrowStatement(_)
+        | Statement::BreakStatement(_)
+        | Statement::ContinueStatement(_)
+        | Statement::DebuggerStatement(_) => true,
+        Statement::IfStatement(if_stmt) => statement_ends_without_semicolon(
+            if_stmt.alternate.as_ref().unwrap_or(&if_stmt.consequent),
+            ctx,
+        ),
+        Statement::LabeledStatement(s) => statement_ends_without_semicolon(&s.body, ctx),
+        Statement::WhileStatement(s) => statement_ends_without_semicolon(&s.body, ctx),
+        Statement::ForStatement(s) => statement_ends_without_semicolon(&s.body, ctx),
+        Statement::ForInStatement(s) => statement_ends_without_semicolon(&s.body, ctx),
+        Statement::ForOfStatement(s) => statement_ends_without_semicolon(&s.body, ctx),
+        Statement::WithStatement(s) => statement_ends_without_semicolon(&s.body, ctx),
+        _ => false,
+    }
+}
+
+fn chain_elements_optional_match<'a>(left: &ChainElement<'a>, right: &ChainElement<'a>) -> bool {
+    if let (Some(lm), Some(rm)) = (left.as_member_expression(), right.as_member_expression()) {
+        return members_optional_match(lm, rm);
+    }
+    matches!(
+        (left, right),
+        (ChainElement::CallExpression(lc), ChainElement::CallExpression(rc))
+            if lc.optional == rc.optional && optional_chains_match(&lc.callee, &rc.callee)
+    )
+}
+
+fn has_loop_binding_reference_in_right<'a>(
+    for_of: &ForOfStatement<'a>,
+    ctx: &LintContext<'a>,
+) -> bool {
+    let ForStatementLeft::VariableDeclaration(decl) = &for_of.left else {
+        return false;
+    };
+    if decl.kind == VariableDeclarationKind::Var {
+        return false;
+    }
+
+    let right_span = for_of.right.span();
+    let mut found = false;
+    decl.bound_names(&mut |ident| {
+        if found {
+            return;
+        }
+        for reference in ctx.semantic().symbol_references(ident.symbol_id()) {
+            let ref_span = ctx.nodes().get_node(reference.node_id()).span();
+            if right_span.contains_inclusive(ref_span) {
+                found = true;
+                break;
+            }
+        }
+    });
+    found
+}
+
+fn is_known_non_indexed_collection<'a>(expr: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
+    let mut visited = SmallVec::new();
+    classify_expr(expr, ctx, &mut visited).normalize() == CollectionType::NonTarget
+}
+
+fn combine_union_types(left: CollectionType, right: CollectionType) -> CollectionType {
+    if left == CollectionType::Any || right == CollectionType::Any {
+        return CollectionType::Any;
+    }
+    match (left.normalize(), right.normalize()) {
+        (CollectionType::Target, CollectionType::Target) => CollectionType::Target,
+        (CollectionType::NonTarget, CollectionType::NonTarget) => CollectionType::NonTarget,
+        _ => CollectionType::Unknown,
+    }
+}
+
+fn classify_expr<'a>(
+    expr: &Expression<'a>,
+    ctx: &LintContext<'a>,
+    visited: &mut SmallVec<[SymbolId; 4]>,
+) -> CollectionType {
+    match expr {
+        Expression::ParenthesizedExpression(e) => classify_expr(&e.expression, ctx, visited),
+        Expression::TSNonNullExpression(e) => classify_expr(&e.expression, ctx, visited),
+        Expression::TSInstantiationExpression(e) => classify_expr(&e.expression, ctx, visited),
+        Expression::TSSatisfiesExpression(e) => classify_expr(&e.expression, ctx, visited),
+        Expression::TSAsExpression(e) => {
+            classify_ts_cast(&e.type_annotation, &e.expression, ctx, visited)
+        }
+        Expression::TSTypeAssertion(e) => {
+            classify_ts_cast(&e.type_annotation, &e.expression, ctx, visited)
+        }
+        Expression::ArrayExpression(_) => CollectionType::Target,
+        Expression::ObjectExpression(_)
+        | Expression::FunctionExpression(_)
+        | Expression::ArrowFunctionExpression(_)
+        | Expression::ClassExpression(_)
+        | Expression::TemplateLiteral(_)
+        | Expression::NumericLiteral(_)
+        | Expression::StringLiteral(_)
+        | Expression::BooleanLiteral(_)
+        | Expression::NullLiteral(_)
+        | Expression::BigIntLiteral(_)
+        | Expression::RegExpLiteral(_) => CollectionType::NonTarget,
+        Expression::NewExpression(new_expr) => {
+            if let Expression::Identifier(ident) = new_expr.callee.get_inner_expression()
+                && ident.is_global_reference(ctx.scoping())
+                && (ident.name == "Array" || TYPED_ARRAY_NAMES.contains(&ident.name.as_str()))
+            {
+                CollectionType::Target
+            } else {
+                CollectionType::NonTarget
+            }
+        }
+        Expression::Identifier(ident) => classify_identifier(ident, ctx, visited),
+        _ => CollectionType::Unknown,
+    }
+}
+
+fn classify_ts_cast<'a>(
+    mut type_annotation: &TSType<'a>,
+    inner: &Expression<'a>,
+    ctx: &LintContext<'a>,
+    visited: &mut SmallVec<[SymbolId; 4]>,
+) -> CollectionType {
+    while let TSType::TSParenthesizedType(paren) = type_annotation {
+        type_annotation = &paren.type_annotation;
+    }
+    if matches!(type_annotation, TSType::TSAnyKeyword(_) | TSType::TSUnknownKeyword(_)) {
+        classify_expr(inner, ctx, visited)
+    } else {
+        classify_ts_type(type_annotation, ctx)
+    }
+}
+
+fn classify_identifier<'a>(
+    ident: &oxc_ast::ast::IdentifierReference<'a>,
+    ctx: &LintContext<'a>,
+    visited: &mut SmallVec<[SymbolId; 4]>,
+) -> CollectionType {
+    let Some(symbol_id) = get_symbol_id_of_variable(ident, ctx) else {
+        return CollectionType::Unknown;
+    };
+    if visited.contains(&symbol_id) || !ctx.scoping().symbol_redeclarations(symbol_id).is_empty() {
+        return CollectionType::Unknown;
+    }
+
+    visited.push(symbol_id);
+    let result = match ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id)).kind() {
+        AstKind::VariableDeclarator(decl)
+            if matches!(decl.id, BindingPattern::BindingIdentifier(_)) =>
+        {
+            let ann_ty = decl
+                .type_annotation
+                .as_ref()
+                .map_or(CollectionType::Unknown, |ann| classify_ts_type(&ann.type_annotation, ctx));
+            if !matches!(ann_ty, CollectionType::Any | CollectionType::Unknown) {
+                ann_ty
+            } else if variable_declaration_kind(decl, ctx.nodes())
+                == Some(VariableDeclarationKind::Const)
+                && let Some(init) = &decl.init
+            {
+                classify_expr(init, ctx, visited)
+            } else {
+                CollectionType::Unknown
+            }
+        }
+        AstKind::FormalParameter(param)
+            if matches!(param.pattern, BindingPattern::BindingIdentifier(_)) =>
+        {
+            if let Some(ann) = &param.type_annotation {
+                let ty = classify_ts_type(&ann.type_annotation, ctx);
+                if ty != CollectionType::Unknown && param.optional {
+                    combine_union_types(ty, CollectionType::Nullish)
+                } else {
+                    ty
+                }
+            } else {
+                CollectionType::Unknown
+            }
+        }
+        _ => CollectionType::Unknown,
+    };
+    visited.pop();
+    result
+}
+
+fn classify_ts_type<'a>(ts_type: &TSType<'a>, ctx: &LintContext<'a>) -> CollectionType {
+    match ts_type {
+        TSType::TSParenthesizedType(t) => classify_ts_type(&t.type_annotation, ctx),
+        TSType::TSTypeOperatorType(t) if t.operator == TSTypeOperatorOperator::Readonly => {
+            classify_ts_type(&t.type_annotation, ctx)
+        }
+        TSType::TSAnyKeyword(_) => CollectionType::Any,
+        TSType::TSArrayType(_) | TSType::TSTupleType(_) => CollectionType::Target,
+        TSType::TSNullKeyword(_) | TSType::TSUndefinedKeyword(_) => CollectionType::Nullish,
+        TSType::TSBigIntKeyword(_)
+        | TSType::TSBooleanKeyword(_)
+        | TSType::TSNeverKeyword(_)
+        | TSType::TSNumberKeyword(_)
+        | TSType::TSStringKeyword(_)
+        | TSType::TSSymbolKeyword(_)
+        | TSType::TSVoidKeyword(_)
+        | TSType::TSLiteralType(_)
+        | TSType::TSFunctionType(_)
+        | TSType::TSConstructorType(_) => CollectionType::NonTarget,
+        TSType::TSUnionType(u) => {
+            let mut acc: Option<CollectionType> = None;
+            for t in &u.types {
+                let ty = classify_ts_type(t, ctx);
+                acc = Some(match acc {
+                    None => ty,
+                    Some(prev) => combine_union_types(prev, ty),
+                });
+                if acc == Some(CollectionType::Any) {
+                    return CollectionType::Any;
+                }
+            }
+            acc.unwrap_or(CollectionType::NonTarget)
+        }
+        TSType::TSIntersectionType(i) => {
+            let mut has_target = false;
+            let mut has_non_target = false;
+            for t in &i.types {
+                match classify_ts_type(t, ctx) {
+                    CollectionType::Any => return CollectionType::Any,
+                    CollectionType::Target => has_target = true,
+                    CollectionType::NonTarget | CollectionType::Nullish => has_non_target = true,
+                    CollectionType::Unknown => {}
+                }
+            }
+            if has_target {
+                CollectionType::Target
+            } else if has_non_target {
+                CollectionType::NonTarget
+            } else {
+                CollectionType::Unknown
+            }
+        }
+        TSType::TSTypeReference(tr) => match &tr.type_name {
+            TSTypeName::IdentifierReference(ident)
+                if ctx.scoping().get_reference(ident.reference_id()).symbol_id().is_none() =>
+            {
+                if ident.name == "Readonly"
+                    && let Some(args) = &tr.type_arguments
+                    && args.params.len() == 1
+                {
+                    classify_ts_type(&args.params[0], ctx)
+                } else {
+                    classify_builtin_collection_name(&ident.name)
+                }
+            }
+            TSTypeName::QualifiedName(qn)
+                if matches!(
+                    &qn.left,
+                    TSTypeName::IdentifierReference(ns)
+                        if ns.name == "globalThis" && ns.is_global_reference(ctx.scoping())
+                ) =>
+            {
+                classify_builtin_collection_name(&qn.right.name)
+            }
+            _ => CollectionType::Unknown,
+        },
+        _ => CollectionType::Unknown,
+    }
+}
+
+fn classify_builtin_collection_name(name: &str) -> CollectionType {
+    if name == "Array" || name == "ReadonlyArray" || TYPED_ARRAY_NAMES.contains(&name) {
+        CollectionType::Target
+    } else if KNOWN_NON_INDEXED_COLLECTION_TYPE_NAMES.contains(&name) {
+        CollectionType::NonTarget
+    } else {
+        CollectionType::Unknown
+    }
+}
+
+fn indent_at_line_start(source: &str, offset: u32) -> Option<&str> {
+    let before = &source[..offset as usize];
+    let prefix = match before.rfind(is_line_terminator) {
+        Some(pos) => {
+            let ch_len = before[pos..].chars().next().map_or(0, char::len_utf8);
+            &before[pos + ch_len..]
+        }
+        None => before.strip_prefix('\u{FEFF}').unwrap_or(before),
+    };
+    prefix.chars().all(is_white_space).then_some(prefix)
+}
+
+fn reindent_text(text: &str, source_indent: &str, target_indent: &str) -> String {
+    let Some(first_lb) = text.find(is_line_terminator) else {
+        return text.to_owned();
+    };
+    let mut out = String::with_capacity(text.len());
+    out.push_str(&text[..first_lb]);
+    let mut rest = &text[first_lb..];
+    while !rest.is_empty() {
+        let lb_len = if rest.starts_with("\r\n") {
+            2
+        } else {
+            rest.chars().next().map_or(0, char::len_utf8)
+        };
+        out.push_str(&rest[..lb_len]);
+        rest = &rest[lb_len..];
+        let next_lb = rest.find(is_line_terminator).unwrap_or(rest.len());
+        let line = &rest[..next_lb];
+        rest = &rest[next_lb..];
+        if !line.chars().all(is_white_space) {
+            if let Some(stripped) = line.strip_prefix(source_indent) {
+                out.push_str(target_indent);
+                out.push_str(stripped);
+            } else {
+                out.push_str(line);
             }
         }
     }
+    out
+}
+
+struct MultilineTokenVisitor<'a, 'b> {
+    ctx: &'b LintContext<'a>,
+    found: bool,
+}
+
+impl<'a> Visit<'a> for MultilineTokenVisitor<'a, '_> {
+    fn visit_statement(&mut self, it: &Statement<'a>) {
+        if self.found {
+            return;
+        }
+        walk::walk_statement(self, it);
+    }
+
+    fn visit_expression(&mut self, it: &Expression<'a>) {
+        if self.found {
+            return;
+        }
+        walk::walk_expression(self, it);
+    }
+
+    fn visit_string_literal(&mut self, it: &StringLiteral<'a>) {
+        if self.found {
+            return;
+        }
+        if self.ctx.source_range(it.span).contains(is_line_terminator) {
+            self.found = true;
+        }
+    }
+
+    fn visit_template_element(&mut self, it: &TemplateElement<'a>) {
+        if self.found {
+            return;
+        }
+        if self.ctx.source_range(it.span).contains(is_line_terminator) {
+            self.found = true;
+        }
+    }
+
+    fn visit_jsx_text(&mut self, it: &JSXText<'a>) {
+        if self.found {
+            return;
+        }
+        if self.ctx.source_range(it.span).contains(is_line_terminator) {
+            self.found = true;
+        }
+    }
+}
+
+fn has_multiline_token<'a>(for_of: &ForOfStatement<'a>, ctx: &LintContext<'a>) -> bool {
+    let mut visitor = MultilineTokenVisitor { ctx, found: false };
+    visitor.visit_for_of_statement(for_of);
+    visitor.found
 }
 
 fn make_flat_logical_expression<'a>(
@@ -275,6 +893,42 @@ fn test() {
         "array.length === 0 || (array.every(Boolean) && foo)",
         "(foo || array.length > 0) && array.some(Boolean)",
         "array.length > 0 && (array.some(Boolean) || foo)",
+        "if (array.length === 0) { for (const element of array) {} }",
+        "if (array.length >= 0) { for (const element of array) {} }",
+        "if (array.length > 1) { for (const element of array) {} }",
+        "if (array.length != 0) { for (const element of array) {} }",
+        "if (array.length > 0 && condition) { for (const element of array) {} }",
+        "if (array.length > 0) { for (const element of otherArray) {} }",
+        "if (array.length > 0) { before(); for (const element of array) {} }",
+        "if (array.length > 0) { for (const element of array) {} after(); }",
+        "if (array.length > 0) { for (const element of array) {} } else { fallback(); }",
+        "if (array.length > 0) { for (const index in array) {} }",
+        "if (array.length > 0) { for (let index = 0; index < array.length; index++) {} }",
+        "if (array.length > 0) { while (condition) {} }",
+        "async function iterate() { if (array.length > 0) { for await (const element of array) {} } }",
+        "if (array?.length > 0) { for (const element of array) {} }",
+        "if (array[length] > 0) { for (const element of array) {} }",
+        r#"if (array["length"] > 0) { for (const element of array) {} }"#,
+        "if (array.length > 0.) { for (const element of array) {} }",
+        "if (array.length > 0x0) { for (const element of array) {} }",
+        "if (getArray().length > 0) { for (const element of getArray()) {} }",
+        "if ((a?.b).length > 0) { for (const element of a.b) {} }",
+        "if (a.b.length > 0) { for (const element of a?.b) {} }",
+        "const array = []; if (array.length > 0) { for (const array of array) {} }",
+        "const array = []; if (array.length > 0) { for (const {value: array} of array) {} }",
+        "const object = {array: []}; if (object.array.length > 0) { for (const object of object.array) {} }",
+        "function iterate(array: Set<number> & {length: number}) { if (array.length > 0) { for (const element of array) {} } }",
+        "function iterate(array: Map<string, number>) { if (array.length > 0) { for (const element of array) {} } }",
+        "function iterate(array: globalThis.Set<number>) { if (array.length > 0) { for (const element of array) {} } }",
+        "const items = new Set(); if (items.length > 0) { for (const item of items) {} }",
+        "const items = new Set(); if ((items as any).length > 0) { for (const item of (items as any)) {} }",
+        "if ((a?.b.c).length > 0) { for (const element of a.b?.c) {} }",
+        "if (a[!b?.c].length > 0) { for (const element of a[!b.c]) {} }",
+        "if (array?.length! > 0) { for (const element of array) {} }",
+        "function iterate(value: string) { if (value.length > 0) { for (const c of value) { use(c); } } }",
+        "function iterate(array: Set<number> & unknown) { if (array.length > 0) { for (const element of array) { use(element); } } }",
+        r#"if ((a.b ?? fallback)["c"].length > 0) { for (const x of (a?.b ?? fallback).c) { use(x); } }"#,
+        "if (array.length > 0) { 'use strict'; for (const element of array) {} }",
     ];
 
     let fail = vec![
@@ -347,8 +1001,167 @@ fn test() {
                     )
                 );
             }",
+        "if (((array.length > 0))) { for (const element of array) { use(element); } }",
+        "if (object.array.length !== 0) { for (const element of object.array) { use(element); } }",
+        "function iterate(array: Object) { if (array.length > 0) { for (const element of array) { use(element); } } }",
+        "function iterate(array: number[] | Set<number>) { if (array.length > 0) { for (const element of array) { use(element); } } }",
+        "const a = b; const b = a; if (a.length > 0) { for (const x of a) { use(x); } }",
+        "if (arrays.length > 0) {\n\tfor (const array of arrays) {\n\t\tif (array.length > 0) {\n\t\t\tfor (const element of array) {\n\t\t\t\tuse(element);\n\t\t\t}\n\t\t}\n\t}\n}",
     ];
 
+    let fix = vec![
+        (
+            "if (array.length > 0) {\n\tfor (const element of array) {\n\t\tuse(element);\n\t}\n}",
+            "for (const element of array) {\n\tuse(element);\n}",
+        ),
+        (
+            "if (array.length !== 0) {\n\tfor (const element of array) {\n\t\t// Do work.\n\t}\n}",
+            "for (const element of array) {\n\t// Do work.\n}",
+        ),
+        (
+            "function iterate(array) {\n\tif (array.length > 0) {\n\t\tfor (const element of array) {\n\t\t\tuse(element);\n\t\t}\n\t}\n}",
+            "function iterate(array) {\n\tfor (const element of array) {\n\t\tuse(element);\n\t}\n}",
+        ),
+        (
+            "if (array.length > 0) for (const element of array) { use(element); }",
+            "for (const element of array) { use(element); }",
+        ),
+        (
+            "if (array.length > 0) { for (const element of array) use(element); }",
+            "for (const element of array) use(element);",
+        ),
+        (
+            "if (array.length > 0) { for (const element of array) use(element) } [0].map(f);",
+            "for (const element of array) use(element); [0].map(f);",
+        ),
+        (
+            "if (array.length > 0) { for (const element of array) result = () => {} }\n(1);",
+            "for (const element of array) result = () => {};\n(1);",
+        ),
+        (
+            "outer: for (const y of b) { if (a.length > 0) { for (const x of a) break } outer; }",
+            "outer: for (const y of b) { for (const x of a) break; outer; }",
+        ),
+        (
+            r#"if (a["c"].length > 0) { for (const x of a.c) { use(x); } }"#,
+            "for (const x of a.c) { use(x); }",
+        ),
+        (
+            "function iterate(array: Set<number> & (string | any)) { if (array.length > 0) { for (const element of array) { use(element); } } }",
+            "function iterate(array: Set<number> & (string | any)) { for (const element of array) { use(element); } }",
+        ),
+        (
+            "if (array.length > 0) { for (const [key, value] of array) { use(key, value); } }",
+            "for (const [key, value] of array) { use(key, value); }",
+        ),
+        (
+            "if (array.length > 0) { for (const element of array) { /* Keep this comment. */ use(element); } }",
+            "for (const element of array) { /* Keep this comment. */ use(element); }",
+        ),
+        (
+            "if (array.length > 0) {\n\tfor (const element of array) {\n\t\t/*\n\t\tKeep this indentation.\n\t\t*/\n\t\tuse(element);\n\t}\n}",
+            "for (const element of array) {\n\t/*\n\tKeep this indentation.\n\t*/\n\tuse(element);\n}",
+        ),
+        (
+            "if (array.length > 0)\n\tfor (const element of array) {\n\t\tuse(element);\n\t}",
+            "for (const element of array) {\n\tuse(element);\n}",
+        ),
+        (
+            "function iterate(array) { if (array.length > 0) { for (var array of array) {} } }",
+            "function iterate(array) { for (var array of array) {} }",
+        ),
+        (
+            "if ((a?.b).length > 0) { for (const element of a?.b) { use(element); } }",
+            "for (const element of a?.b) { use(element); }",
+        ),
+        (
+            "if ((array as any[]).length > 0) { for (const element of (array as any[])) { use(element); } }",
+            "for (const element of (array as any[])) { use(element); }",
+        ),
+        (
+            "if (array!.length !== 0) { for (const element of array!) { use(element); } }",
+            "for (const element of array!) { use(element); }",
+        ),
+        (
+            "if ((array satisfies any[]).length > 0) { for (const element of (array satisfies any[])) { use(element); } }",
+            "for (const element of (array satisfies any[])) { use(element); }",
+        ),
+        (
+            "if ((array.length as number) > 0) { for (const element of array) { use(element); } }",
+            "for (const element of array) { use(element); }",
+        ),
+        (
+            "if (array.length! > 0) { for (const element of array) { use(element); } }",
+            "for (const element of array) { use(element); }",
+        ),
+        (
+            "if ((array.length satisfies number) > 0) { for (const element of array) { use(element); } }",
+            "for (const element of array) { use(element); }",
+        ),
+        (
+            "function iterate(array: Int8Array) { if (array.length > 0) { for (const element of array) { use(element); } } }",
+            "function iterate(array: Int8Array) { for (const element of array) { use(element); } }",
+        ),
+        (
+            "if (array.length > 0) {\n\tfor (const element of array) {\n\t\t/*\nKeep this column.\n\t\t*/\n\t}\n}",
+            "for (const element of array) {\n\t/*\nKeep this column.\n\t*/\n}",
+        ),
+        (
+            "if (array.length > 0) {\n\tfor (const element of array) {\nuse(element);\n\t}\n}",
+            "for (const element of array) {\nuse(element);\n}",
+        ),
+        (
+            "if (array.length > 0) {\r\n\tfor (const element of array) {\r\n\r\n\t\tuse(element);\r\n\t}\r\n}",
+            "for (const element of array) {\r\n\r\n\tuse(element);\r\n}",
+        ),
+        (
+            "if (array.length > 0) {\r\n\tfor (const element of array) {\r\n\r\n\t\tuse(element);\n\t\tuseAgain(element);\r\n\t}\r\n}",
+            "for (const element of array) {\r\n\r\n\tuse(element);\n\tuseAgain(element);\r\n}",
+        ),
+        (
+            "function run() {\n  if (array.length > 0) {\n    for (const element of array) {\n      use({\n        element,\n      });\n    }\n  }\n}",
+            "function run() {\n  for (const element of array) {\n    use({\n      element,\n    });\n  }\n}",
+        ),
+        (
+            "\u{FEFF}if (array.length > 0) {\n\tfor (const element of array) {\n\t\tuse(element);\n\t}\n}",
+            "\u{FEFF}for (const element of array) {\n\tuse(element);\n}",
+        ),
+        (
+            "if (array.length > 0) { /* Keep this comment. */ for (const element of array) { use(element); } }",
+            "if (array.length > 0) { /* Keep this comment. */ for (const element of array) { use(element); } }",
+        ),
+        (
+            "if (array.length /* Keep this comment. */ > 0) { for (const element of array) { use(element); } }",
+            "if (array.length /* Keep this comment. */ > 0) { for (const element of array) { use(element); } }",
+        ),
+        (
+            "if (array.length > 0) {\n\tfor (const element of array) {\n\t\tconst value = `\n\t\t\tKeep this indentation.\n\t\t`;\n\t}\n}",
+            "if (array.length > 0) {\n\tfor (const element of array) {\n\t\tconst value = `\n\t\t\tKeep this indentation.\n\t\t`;\n\t}\n}",
+        ),
+        (
+            "if (array.length > 0) { for (const element of array) {\n\tuse(element);\n} }",
+            "if (array.length > 0) { for (const element of array) {\n\tuse(element);\n} }",
+        ),
+        (
+            "before(); if (array.length > 0) {\n\tfor (const element of array) {\n\t\tuse(element);\n\t}\n}",
+            "before(); if (array.length > 0) {\n\tfor (const element of array) {\n\t\tuse(element);\n\t}\n}",
+        ),
+    ];
+
+    let pass: Vec<crate::tester::TestCase> = pass.into_iter().map(Into::into).collect();
+    let fail: Vec<crate::tester::TestCase> = fail.into_iter().map(Into::into).collect();
+    let mut fix: Vec<crate::tester::ExpectFixTestCase> = fix.into_iter().map(Into::into).collect();
+    fix.push(
+        (
+            "if ((<any[]>array).length > 0) { for (const element of (<any[]>array)) { use(element); } }",
+            "for (const element of (<any[]>array)) { use(element); }",
+            None,
+            Some(std::path::PathBuf::from("file.ts")),
+        )
+            .into(),
+    );
+
     Tester::new(NoUselessLengthCheck::NAME, NoUselessLengthCheck::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }
