@@ -169,6 +169,7 @@ oxc_transformer_plugins = { version = "0.160.0", path = "crates/oxc_transformer_
 oxc_traverse = { version = "0.160.0", path = "crates/oxc_traverse" } # AST traversal
 
 # publish = false
+oxc_cache = { path = "crates/oxc_cache" } # Caching for CLI tools
 oxc_config = { path = "crates/oxc_config" } # Config discovery
 oxc_formatter = { path = "crates/oxc_formatter" } # Code formatting
 oxc_formatter_core = { path = "crates/oxc_formatter_core" } # Language-agnostic formatter core
@@ -218,6 +219,7 @@ oxc_sourcemap = "10.0.0" # Source map generation
 allocator-api2 = "=0.2.21" # Allocator trait
 base64 = "0.23.0" # Base64 encoding
 bitflags = "2.13.0" # Bitflag types
+blake3 = "1.8.2" # Content hashing
 bpaf = "0.9.26" # CLI parser
 bytecount = "0.6.9" # Byte counting
 compact_str = "0.10.0" # Compact string type
@@ -242,6 +244,7 @@ itertools = "0.15.0" # Iterator utilities
 itoa = "1.0.18" # Integer to string
 language-tags = "0.3.2" # Language tag parsing
 lazy-regex = "3.6.0" # Lazy regex compilation
+libc = "0.2.186" # Raw C library bindings
 markdown = "1.0.0" # Markdown parsing
 memchr = "2.8.2" # Fast byte searching
 mimalloc-safe = "0.1.64" # Fast allocator
@@ -262,6 +265,9 @@ petgraph = { version = "0.8.3", default-features = false } # Graph data structur
 phf = "0.14.0" # Perfect hash function
 phf_codegen = "0.14.0" # PHF codegen
 pico-args = "0.5.0" # Minimal argument parser
+postcard = { version = "1.1.3", default-features = false, features = [
+  "use-std",
+] } # Compact serde encoding
 prettyplease = "0.3.0" # Rust code formatting
 project-root = "0.2.2" # Project root detection
 quickcheck = "1.1.0" # Property-based testing
