@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BinaryOperator, Expression, IdentifierReference, MemberExpression},
+    ast::{Expression, IdentifierReference, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -159,57 +159,42 @@ impl Rule for PreferPrototypeMethods {
 }
 
 fn is_unmodified_global_variable(ident: &IdentifierReference<'_>, ctx: &LintContext<'_>) -> bool {
-    if !ctx.is_reference_to_global_variable(ident) {
-        return false;
-    }
-    !ctx.scoping().root_unresolved_references().get(ident.name.as_str()).is_some_and(|refs| {
-        refs.iter().any(|&ref_id| ctx.scoping().get_reference(ref_id).is_write())
-    })
+    ctx.is_reference_to_global_variable(ident)
+        && !ctx.scoping().root_unresolved_references().get(ident.name.as_str()).is_some_and(
+            |refs| refs.iter().any(|&ref_id| ctx.scoping().get_reference(ref_id).is_write()),
+        )
 }
 
 fn is_global_object_reference(ident: &IdentifierReference<'_>, ctx: &LintContext<'_>) -> bool {
-    if GLOBAL_OBJECT_NAMES.contains(&ident.name.as_str())
-        && is_unmodified_global_variable(ident, ctx)
-    {
-        return true;
-    }
-
-    let Some(mut symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id() else {
-        return false;
-    };
-    for _ in 0..8 {
-        let decl_id = ctx.scoping().symbol_declaration(symbol_id);
-        let AstKind::VariableDeclarator(declarator) = ctx.nodes().kind(decl_id) else {
-            return false;
-        };
-        if !declarator.id.is_binding_identifier() {
-            return false;
-        }
-        if matches!(ctx.nodes().parent_kind(decl_id), AstKind::VariableDeclaration(decl) if decl.kind.is_var())
-        {
-            return false;
-        }
-        let Some(init) = &declarator.init else {
-            return false;
-        };
-        let Expression::Identifier(init_ident) = init.without_parentheses() else {
-            return false;
-        };
-        if ctx.scoping().symbol_is_mutated(symbol_id)
-            || !ctx.scoping().symbol_redeclarations(symbol_id).is_empty()
-        {
-            return false;
-        }
-        if GLOBAL_OBJECT_NAMES.contains(&init_ident.name.as_str())
-            && is_unmodified_global_variable(init_ident, ctx)
+    let mut ident = ident;
+    for _ in 0..=8 {
+        if GLOBAL_OBJECT_NAMES.contains(&ident.name.as_str())
+            && is_unmodified_global_variable(ident, ctx)
         {
             return true;
         }
-        let Some(next_id) = ctx.scoping().get_reference(init_ident.reference_id()).symbol_id()
+        let scoping = ctx.scoping();
+        let Some(symbol_id) = scoping.get_reference(ident.reference_id()).symbol_id() else {
+            return false;
+        };
+        let AstKind::VariableDeclarator(declarator) =
+            ctx.nodes().kind(scoping.symbol_declaration(symbol_id))
         else {
             return false;
         };
-        symbol_id = next_id;
+        if !declarator.id.is_binding_identifier()
+            || scoping.symbol_flags(symbol_id).is_function_scoped_declaration()
+            || scoping.symbol_is_mutated(symbol_id)
+            || !scoping.symbol_redeclarations(symbol_id).is_empty()
+        {
+            return false;
+        }
+        let Some(Expression::Identifier(init)) =
+            declarator.init.as_ref().map(Expression::without_parentheses)
+        else {
+            return false;
+        };
+        ident = init;
     }
     false
 }
@@ -219,47 +204,15 @@ fn global_object_prototype_method<'a>(
     member_expr: &MemberExpression<'a>,
     ctx: &LintContext<'a>,
 ) -> Option<&'a str> {
-    match member_expr {
-        MemberExpression::StaticMemberExpression(static_expr) => {
-            let method_name = static_expr.property.name.as_str();
-            (OBJECT_PROTOTYPE_METHODS.contains(&method_name)
-                && is_global_object_reference(ident, ctx))
-            .then_some(method_name)
-        }
+    let method_name = match member_expr {
+        MemberExpression::StaticMemberExpression(static_expr) => static_expr.property.name.as_str(),
         MemberExpression::ComputedMemberExpression(computed_expr) => {
-            match computed_expr.expression.get_inner_expression() {
-                Expression::StringLiteral(lit) => {
-                    let method_name = lit.value.as_str()?;
-                    (OBJECT_PROTOTYPE_METHODS.contains(&method_name)
-                        && is_global_object_reference(ident, ctx))
-                    .then_some(method_name)
-                }
-                Expression::TemplateLiteral(tpl) if tpl.is_no_substitution_template() => {
-                    let method_name = tpl.single_quasi()?.as_str()?;
-                    (OBJECT_PROTOTYPE_METHODS.contains(&method_name)
-                        && is_global_object_reference(ident, ctx))
-                    .then_some(method_name)
-                }
-                expr if matches!(expr, Expression::TemplateLiteral(_))
-                    || matches!(
-                        expr,
-                        Expression::BinaryExpression(bin)
-                            if bin.operator == BinaryOperator::Addition
-                    ) =>
-                {
-                    if !is_global_object_reference(ident, ctx) {
-                        return None;
-                    }
-                    let method_name =
-                        static_string_value(&computed_expr.expression, ctx.allocator())?
-                            .as_str()?;
-                    OBJECT_PROTOTYPE_METHODS.contains(&method_name).then_some(method_name)
-                }
-                _ => None,
-            }
+            static_string_value(&computed_expr.expression, ctx.allocator())?.as_str()?
         }
-        MemberExpression::PrivateFieldExpression(_) => None,
-    }
+        MemberExpression::PrivateFieldExpression(_) => return None,
+    };
+    (OBJECT_PROTOTYPE_METHODS.contains(&method_name) && is_global_object_reference(ident, ctx))
+        .then_some(method_name)
 }
 
 #[test]
