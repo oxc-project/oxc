@@ -419,8 +419,7 @@ fn test() {
         r#"const dirname = new URL(".", import.meta.url).pathname;"#,
         "const filename = new URL(import.meta.url).pathname;",
         "const filename = fileURLToPath(import.meta.url);",
-        r#"// Directory URLs convert to paths with a trailing separator, unlike `import.meta.dirname`.
-            import { fileURLToPath } from "url";
+        r#"import { fileURLToPath } from "url";
             const dirname = fileURLToPath(new URL(".", import.meta.url));"#,
         r#"import { fileURLToPath } from "url";
             const dirname = fileURLToPath(new URL("./", import.meta.url));"#,
