@@ -1,23 +1,26 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, ArrayExpressionElement, BindingPattern, CallExpression, Expression,
-        IdentifierReference, MemberExpression,
+        Argument, ArrayExpressionElement, BindingPattern, CallExpression, ChainElement, Expression,
+        IdentifierReference, MemberExpression, NewExpression,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_semantic::IsGlobalReference;
+use oxc_span::{GetSpan, Span};
+use oxc_syntax::precedence::Precedence;
 
 use crate::{
     AstNode,
-    ast_util::variable_declaration_kind,
-    ast_util::{get_symbol_id_of_variable, is_method_call},
+    ast_util::{
+        could_be_asi_hazard, get_symbol_id_of_variable, is_method_call, variable_declaration_kind,
+    },
     context::LintContext,
     rule::Rule,
     utils::{
-        get_first_parameter_name, get_return_identifier_name, is_empty_array_expression,
-        is_prototype_property,
+        get_first_parameter_name, get_precedence, get_return_identifier_name,
+        is_empty_array_expression, is_prototype_property, pad_fix_with_token_boundary,
     },
 };
 
@@ -52,6 +55,7 @@ declare_oxc_lint!(
     /// const foo = [].concat.apply([], array);
     /// const foo = Array.prototype.concat.apply([], array);
     /// const foo = Array.prototype.concat.call([], ...array);
+    /// const foo = _.flatten(array);
     /// ```
     ///
     /// Examples of **correct** code for this rule:
@@ -78,6 +82,7 @@ impl Rule for PreferArrayFlat {
         check_array_reduce_case(call_expr, ctx);
         check_array_concat_case(call_expr, ctx);
         check_array_prototype_concat_case(call_expr, ctx);
+        check_lodash_flatten_case(node, call_expr, ctx);
     }
 }
 
@@ -177,7 +182,7 @@ fn is_definitely_array_expression(expr: &Expression) -> bool {
     match expr {
         Expression::ArrayExpression(_) => true,
         Expression::NewExpression(new_expr) => {
-            matches!(&new_expr.callee, Expression::Identifier(ident) if ident.name == "Array")
+            matches!(new_expr.callee.without_parentheses(), Expression::Identifier(ident) if ident.name == "Array")
         }
         _ => false,
     }
@@ -195,9 +200,12 @@ fn is_definitely_non_array_expression(expr: &Expression) -> bool {
         | Expression::TemplateLiteral(_)
         | Expression::ArrowFunctionExpression(_)
         | Expression::FunctionExpression(_)
-        | Expression::ClassExpression(_) => true,
+        | Expression::ClassExpression(_)
+        | Expression::PrivateInExpression(_)
+        | Expression::JSXElement(_)
+        | Expression::JSXFragment(_) => true,
         Expression::NewExpression(new_expr) => {
-            matches!(&new_expr.callee, Expression::Identifier(ident) if ident.name != "Array")
+            !matches!(new_expr.callee.without_parentheses(), Expression::Identifier(ident) if ident.name == "Array")
         }
         _ => false,
     }
@@ -397,6 +405,176 @@ fn check_array_prototype_concat_case<'a>(call_expr: &CallExpression<'a>, ctx: &L
     }
 }
 
+const TYPED_ARRAY_NAMES: &[&str] = &[
+    "Int8Array",
+    "Uint8Array",
+    "Uint8ClampedArray",
+    "Int16Array",
+    "Uint16Array",
+    "Int32Array",
+    "Uint32Array",
+    "Float16Array",
+    "Float32Array",
+    "Float64Array",
+    "BigInt64Array",
+    "BigUint64Array",
+];
+
+fn is_known_non_array(expr: &Expression, ctx: &LintContext) -> bool {
+    match expr.get_inner_expression() {
+        Expression::Identifier(ident) => {
+            (matches!(ident.name.as_str(), "arguments" | "undefined")
+                && ident.is_global_reference(ctx.scoping()))
+                || matches!(
+                    const_variable_initializer_kind(ident, ctx),
+                    Some(ConstInitKind::NonArray)
+                )
+        }
+        Expression::CallExpression(call_expr) => {
+            is_method_call(call_expr, Some(TYPED_ARRAY_NAMES), Some(&["from", "of"]), None, None)
+        }
+        Expression::UnaryExpression(_) => true,
+        expr => is_definitely_non_array_expression(expr),
+    }
+}
+
+fn new_expression_has_parens(new_expr: &NewExpression) -> bool {
+    if !new_expr.arguments.is_empty() {
+        return true;
+    }
+    let after_callee =
+        new_expr.type_arguments.as_ref().map_or(new_expr.callee.span().end, |ta| ta.span.end);
+    new_expr.span.end > after_callee
+}
+
+fn starts_with_declaration_like_prefix(mut expr: &Expression) -> bool {
+    loop {
+        match expr {
+            Expression::ComputedMemberExpression(member) => {
+                if matches!(&member.object, Expression::Identifier(ident) if ident.name == "let") {
+                    return true;
+                }
+                expr = &member.object;
+            }
+            Expression::StaticMemberExpression(member) => expr = &member.object,
+            Expression::PrivateFieldExpression(member) => expr = &member.object,
+            Expression::CallExpression(call) => expr = &call.callee,
+            Expression::TaggedTemplateExpression(tagged) => expr = &tagged.tag,
+            Expression::TSNonNullExpression(non_null) => expr = &non_null.expression,
+            Expression::TSInstantiationExpression(inst) => expr = &inst.expression,
+            Expression::ChainExpression(chain) => match &chain.expression {
+                ChainElement::CallExpression(call) => expr = &call.callee,
+                ChainElement::StaticMemberExpression(member) => expr = &member.object,
+                ChainElement::ComputedMemberExpression(member) => {
+                    if matches!(
+                        &member.object,
+                        Expression::Identifier(ident) if ident.name == "let"
+                    ) {
+                        return true;
+                    }
+                    expr = &member.object;
+                }
+                ChainElement::PrivateFieldExpression(member) => expr = &member.object,
+                ChainElement::TSNonNullExpression(non_null) => expr = &non_null.expression,
+            },
+            Expression::ObjectExpression(_)
+            | Expression::FunctionExpression(_)
+            | Expression::ClassExpression(_) => return true,
+            _ => return false,
+        }
+    }
+}
+
+fn needs_member_object_parens(expr: &Expression) -> bool {
+    if starts_with_declaration_like_prefix(expr) {
+        return true;
+    }
+    match expr {
+        Expression::ParenthesizedExpression(_)
+        | Expression::CallExpression(_)
+        | Expression::ImportExpression(_)
+        | Expression::StaticMemberExpression(_)
+        | Expression::ComputedMemberExpression(_)
+        | Expression::PrivateFieldExpression(_)
+        | Expression::TaggedTemplateExpression(_)
+        | Expression::TSNonNullExpression(_) => false,
+        Expression::NewExpression(new_expr) => !new_expression_has_parens(new_expr),
+        Expression::ChainExpression(_)
+        | Expression::TSInstantiationExpression(_)
+        | Expression::JSXElement(_)
+        | Expression::JSXFragment(_)
+        | Expression::PrivateInExpression(_) => true,
+        _ => get_precedence(expr).is_some_and(|p| p < Precedence::Call),
+    }
+}
+
+// `_.flatten(array)`, `lodash.flatten(array)`, `underscore.flatten(array)`
+fn check_lodash_flatten_case<'a>(
+    node: &AstNode<'a>,
+    call_expr: &CallExpression<'a>,
+    ctx: &LintContext<'a>,
+) {
+    if call_expr.optional || call_expr.type_arguments.is_some() || call_expr.arguments.len() != 1 {
+        return;
+    }
+
+    let Some(arg_expr) = call_expr.arguments[0].as_expression() else {
+        return;
+    };
+
+    let Expression::StaticMemberExpression(member_expr) = call_expr.callee.without_parentheses()
+    else {
+        return;
+    };
+
+    if member_expr.optional || member_expr.property.name != "flatten" {
+        return;
+    }
+
+    let Expression::Identifier(ident) = member_expr.object.without_parentheses() else {
+        return;
+    };
+
+    if !matches!(ident.name.as_str(), "_" | "lodash" | "underscore") {
+        return;
+    }
+
+    if is_known_non_array(arg_expr, ctx) {
+        return;
+    }
+
+    let arg_span = arg_expr.span();
+    let has_comments = ctx.has_comments_between(Span::new(call_expr.span.start, arg_span.start))
+        || ctx.has_comments_between(Span::new(arg_span.end, call_expr.span.end));
+
+    let diagnostic = prefer_array_flat_diagnostic(call_expr.span);
+    if has_comments {
+        ctx.diagnostic(diagnostic);
+        return;
+    }
+
+    let mut replacement = {
+        let arg_text = ctx.source_range(arg_span);
+        if needs_member_object_parens(arg_expr) {
+            format!("({arg_text}).flat()")
+        } else {
+            format!("{arg_text}.flat()")
+        }
+    };
+
+    if matches!(replacement.as_bytes().first(), Some(b'(' | b'[' | b'`' | b'+' | b'-' | b'/'))
+        && could_be_asi_hazard(node, ctx)
+    {
+        replacement.insert(0, ';');
+    }
+
+    pad_fix_with_token_boundary(ctx.source_text(), call_expr.span, &mut replacement);
+
+    ctx.diagnostic_with_dangerous_fix(diagnostic, |fixer| {
+        fixer.replace(call_expr.span, replacement)
+    });
+}
+
 #[test]
 fn test() {
     use crate::{fixer::FixKind, tester::Tester};
@@ -581,6 +759,34 @@ fn test() {
         "array.reduce((a, ...b) => [...a, ...b], [])",
         "array.reduce((a, b, ...rest) => a.concat(b), [])",
         "array.reduce((a, b, ...rest) => [...a, ...b], [])",
+        "_.flatten()",
+        "lodash['flatten'](array)",
+        "_.flatten<number[]>(array)",
+        "_.flatten(1)",
+        "_.flatten(+1)",
+        "_.flatten(-1)",
+        "_.flatten(1n)",
+        r#"_.flatten("a")"#,
+        "_.flatten(`a`)",
+        "_.flatten({})",
+        "_.flatten(undefined)",
+        "_.flatten(null)",
+        "_.flatten(new Uint8Array())",
+        "_.flatten(new Set())",
+        "_.flatten(new Map())",
+        "_.flatten(Uint8Array.from(x))",
+        "_.flatten(function () {})",
+        "_.flatten(() => {})",
+        "_.flatten(class {})",
+        "_.flatten(new (class {})())",
+        "function unicornRun() { return _.flatten(arguments); }",
+        "function unicornRun() { return _.flatten((arguments)); }",
+        "const set = new Set(); _.flatten(set);",
+        "const Items = new lib.Array(); _.flatten(Items);",
+        "const set = new Set(); _.flatten(set as (any));",
+        "_.flatten(<div />);",
+        "_.flatten(<></>);",
+        "class Foo { #x; m(obj) { return _.flatten(#x in obj); } }",
     ];
 
     let fail = vec![
@@ -635,17 +841,17 @@ fn test() {
         "Array.prototype.concat.call([], ...[[foo]])",
         "/**/[].concat.apply([], array)",
         "Array.prototype.concat.apply([], array)",
-        // "_.flatten(array)",
-        // "lodash.flatten(array)",
-        // "underscore.flatten(array)",
+        "_.flatten(array)",
+        "lodash.flatten(array)",
+        "underscore.flatten(array)",
         "before()
             Array.prototype.concat.apply([], [array].concat(array))",
         "before()
             Array.prototype.concat.apply([], +1)",
         "Array.prototype.concat.apply([], (0, array))",
-        // "_.flatten((0, array))",
-        // "async function a() { return _.flatten(await getArray()); }",
-        // "async function a() { return _.flatten((await getArray())); }",
+        "_.flatten((0, array))",
+        "async function a() { return _.flatten(await getArray()); }",
+        "async function a() { return _.flatten((await getArray())); }",
         "before()
             Array.prototype.concat.apply([], 1)",
         "before()
@@ -655,6 +861,32 @@ fn test() {
         "before()
             Array.prototype.concat.apply([], 1.0)",
         "const Items = [] as unknown[]; Items.flatMap(x => x);",
+        "_.flatten(array,)",
+        "const Items = new Array(); _.flatten(Items);",
+        "_.flatten(new Array)",
+        "_.flatten(new Array())",
+        "_.flatten(getArray())",
+        "_.flatten(Array.from(x))",
+        "before()\n_.flatten(getArray())",
+        "_.flatten(foo?.bar)",
+        "_.flatten(getArrays<number>)",
+        "before()\n_.flatten([foo])",
+        "function foo() { return(_.flatten)(array); }",
+        "_.flatten(let[0]);",
+        "_.flatten(let[0]());",
+        "_.flatten(let[0]`a`);",
+        "_.flatten(let[0]?.a);",
+        "_.flatten({ a: [1] }.a);",
+        "_.flatten({ a: [1] }['a']);",
+        "const f = () => _.flatten({ a: [1] }.a);",
+        "_.flatten(function () { return [[1]]; }());",
+        "export default _.flatten(function () { return [[1]]; }());",
+        "_.flatten(class { static a = [[1]]; }.a);",
+        "before()\n_.flatten({ a: [1] }.a);",
+        "before()\n_.flatten(({ a: [1] }).a);",
+        "_.flatten(/* keep */ array);",
+        "_.flatten(array /* keep */,);",
+        "_.flatten(values satisfies { length: number });",
     ];
 
     let fix = vec![
@@ -698,6 +930,108 @@ fn test() {
         ),
         ("/**/[].concat.apply([], array)", "/**/array.flat()", None, FixKind::DangerousFix),
         ("Array.prototype.concat.apply([], array)", "array.flat()", None, FixKind::DangerousFix),
+        ("_.flatten(array)", "array.flat()", None, FixKind::DangerousFix),
+        ("_.flatten(array,)", "array.flat()", None, FixKind::DangerousFix),
+        ("lodash.flatten(array)", "array.flat()", None, FixKind::DangerousFix),
+        ("underscore.flatten(array)", "array.flat()", None, FixKind::DangerousFix),
+        (
+            "const Items = new Array(); _.flatten(Items);",
+            "const Items = new Array(); Items.flat();",
+            None,
+            FixKind::DangerousFix,
+        ),
+        ("_.flatten((0, array))", "(0, array).flat()", None, FixKind::DangerousFix),
+        (
+            "async function a() { return _.flatten(await getArray()); }",
+            "async function a() { return (await getArray()).flat(); }",
+            None,
+            FixKind::DangerousFix,
+        ),
+        (
+            "async function a() { return _.flatten((await getArray())); }",
+            "async function a() { return (await getArray()).flat(); }",
+            None,
+            FixKind::DangerousFix,
+        ),
+        ("_.flatten(new Array)", "(new Array).flat()", None, FixKind::DangerousFix),
+        ("_.flatten(new Array())", "new Array().flat()", None, FixKind::DangerousFix),
+        ("_.flatten(getArray())", "getArray().flat()", None, FixKind::DangerousFix),
+        ("_.flatten(Array.from(x))", "Array.from(x).flat()", None, FixKind::DangerousFix),
+        (
+            "before()\n_.flatten(getArray())",
+            "before()\ngetArray().flat()",
+            None,
+            FixKind::DangerousFix,
+        ),
+        ("_.flatten(foo?.bar)", "(foo?.bar).flat()", None, FixKind::DangerousFix),
+        ("_.flatten(getArrays<number>)", "(getArrays<number>).flat()", None, FixKind::DangerousFix),
+        ("before()\n_.flatten([foo])", "before()\n;[foo].flat()", None, FixKind::DangerousFix),
+        (
+            "function foo() { return(_.flatten)(array); }",
+            "function foo() { return array.flat(); }",
+            None,
+            FixKind::DangerousFix,
+        ),
+        ("_.flatten(let[0]);", "(let[0]).flat();", None, FixKind::DangerousFix),
+        ("_.flatten(let[0]());", "(let[0]()).flat();", None, FixKind::DangerousFix),
+        ("_.flatten(let[0]`a`);", "(let[0]`a`).flat();", None, FixKind::DangerousFix),
+        ("_.flatten(let[0]?.a);", "(let[0]?.a).flat();", None, FixKind::DangerousFix),
+        ("_.flatten({ a: [1] }.a);", "({ a: [1] }.a).flat();", None, FixKind::DangerousFix),
+        ("_.flatten({ a: [1] }['a']);", "({ a: [1] }['a']).flat();", None, FixKind::DangerousFix),
+        (
+            "const f = () => _.flatten({ a: [1] }.a);",
+            "const f = () => ({ a: [1] }.a).flat();",
+            None,
+            FixKind::DangerousFix,
+        ),
+        (
+            "_.flatten(function () { return [[1]]; }());",
+            "(function () { return [[1]]; }()).flat();",
+            None,
+            FixKind::DangerousFix,
+        ),
+        (
+            "export default _.flatten(function () { return [[1]]; }());",
+            "export default (function () { return [[1]]; }()).flat();",
+            None,
+            FixKind::DangerousFix,
+        ),
+        (
+            "_.flatten(class { static a = [[1]]; }.a);",
+            "(class { static a = [[1]]; }.a).flat();",
+            None,
+            FixKind::DangerousFix,
+        ),
+        (
+            "before()\n_.flatten({ a: [1] }.a);",
+            "before()\n;({ a: [1] }.a).flat();",
+            None,
+            FixKind::DangerousFix,
+        ),
+        (
+            "before()\n_.flatten(({ a: [1] }).a);",
+            "before()\n;({ a: [1] }).a.flat();",
+            None,
+            FixKind::DangerousFix,
+        ),
+        (
+            "_.flatten(/* keep */ array);",
+            "_.flatten(/* keep */ array);",
+            None,
+            FixKind::DangerousFix,
+        ),
+        (
+            "_.flatten(array /* keep */,);",
+            "_.flatten(array /* keep */,);",
+            None,
+            FixKind::DangerousFix,
+        ),
+        (
+            "_.flatten(values satisfies { length: number });",
+            "(values satisfies { length: number }).flat();",
+            None,
+            FixKind::DangerousFix,
+        ),
     ];
 
     Tester::new(PreferArrayFlat::NAME, PreferArrayFlat::PLUGIN, pass, fail)
