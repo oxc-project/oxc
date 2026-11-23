@@ -157,7 +157,13 @@ impl TsGoLintState {
     }
 
     /// The long-lived server, if this state lints through one.
+    ///
+    /// The server only lints with rules. Type checking, timings and Go profiling are only
+    /// available in a one-shot run, so with any of them the one-shot path is used instead.
     pub fn server(&self) -> Option<&Arc<TsrsLintServer>> {
+        if self.type_check || self.type_check_only || self.timings || go_profiling_requested() {
+            return None;
+        }
         self.server.as_ref()
     }
 
@@ -584,7 +590,7 @@ impl TsGoLintState {
         let path_file_name =
             Path::new(paths[0].as_ref()).file_name().unwrap_or_default().to_os_string();
 
-        if let Some(server) = &self.server {
+        if let Some(server) = self.server() {
             return self.lint_source_with_server(
                 server,
                 &json_input.configs,
@@ -2043,5 +2049,35 @@ mod test {
 
         // Identical rules should be deduplicated
         assert_eq!(rules.len(), 1, "BTreeSet should deduplicate identical rules");
+    }
+
+    #[test]
+    fn test_server_only_with_supported_options() {
+        use std::sync::Arc;
+
+        use rustc_hash::FxHashMap;
+
+        use crate::{
+            ConfigStore, ConfigStoreBuilder, ExternalPluginStore,
+            tsgolint::{TsGoLintState, TsrsLintServer},
+        };
+
+        let cwd = std::env::current_dir().expect("no current directory");
+        let state = || {
+            let config = ConfigStoreBuilder::empty()
+                .build(&mut ExternalPluginStore::default())
+                .expect("failed to build the config");
+            let store =
+                ConfigStore::new(config, FxHashMap::default(), ExternalPluginStore::default());
+            let state = TsGoLintState::new(&cwd, store, FixKind::None);
+            // The server is not started until it lints.
+            let server = Arc::new(TsrsLintServer::new(state.executable_path.clone(), cwd.clone()));
+            state.with_server(Some(server))
+        };
+
+        assert!(state().server().is_some());
+        assert!(state().with_type_check(true).server().is_none());
+        assert!(state().with_type_check_only(true).server().is_none());
+        assert!(state().with_timings(true).server().is_none());
     }
 }
