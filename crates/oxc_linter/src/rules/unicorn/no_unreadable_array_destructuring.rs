@@ -78,6 +78,33 @@ fn is_unreadable_array_destructuring<T, U>(
     false
 }
 
+impl Rule for NoUnreadableArrayDestructuring {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        match node.kind() {
+            AstKind::ArrayPattern(array_pattern)
+                if is_unreadable_array_destructuring(
+                    &array_pattern.elements,
+                    array_pattern.rest.as_ref(),
+                ) =>
+            {
+                ctx.diagnostic(no_unreadable_array_destructuring_diagnostic(array_pattern.span));
+            }
+            AstKind::ArrayAssignmentTarget(array_pattern) => {
+                if is_unreadable_array_destructuring(
+                    &array_pattern.elements,
+                    array_pattern.rest.as_ref(),
+                ) {
+                    ctx.diagnostic(no_unreadable_array_destructuring_diagnostic(
+                        array_pattern.span,
+                    ));
+                }
+                check_property_assignments(array_pattern, ctx);
+            }
+            _ => {}
+        }
+    }
+}
+
 fn member_expression_target_span(target: &SimpleAssignmentTarget<'_>) -> Option<Span> {
     if let Some(member_expr) = target.as_member_expression() {
         return Some(member_expr.span());
@@ -103,33 +130,6 @@ fn check_property_assignments(array_pattern: &ArrayAssignmentTarget<'_>, ctx: &L
             rest.target.as_simple_assignment_target().and_then(member_expression_target_span)
     {
         ctx.diagnostic(property_assignment_diagnostic(span));
-    }
-}
-
-impl Rule for NoUnreadableArrayDestructuring {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
-            AstKind::ArrayPattern(array_pattern)
-                if is_unreadable_array_destructuring(
-                    &array_pattern.elements,
-                    array_pattern.rest.as_ref(),
-                ) =>
-            {
-                ctx.diagnostic(no_unreadable_array_destructuring_diagnostic(array_pattern.span));
-            }
-            AstKind::ArrayAssignmentTarget(array_pattern) => {
-                if is_unreadable_array_destructuring(
-                    &array_pattern.elements,
-                    array_pattern.rest.as_ref(),
-                ) {
-                    ctx.diagnostic(no_unreadable_array_destructuring_diagnostic(
-                        array_pattern.span,
-                    ));
-                }
-                check_property_assignments(array_pattern, ctx);
-            }
-            _ => {}
-        }
     }
 }
 
