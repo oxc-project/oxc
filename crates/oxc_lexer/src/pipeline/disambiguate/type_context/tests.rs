@@ -97,6 +97,14 @@ fn gt_run_in_type_context_always_splits(cpu: DynCpu) {
         "class X extends React.Component<Props<T>> {}",
         "let x = <Foo<Bar<T>>>y;",
         "let x = <A<B<C<D>>>>y;",
+        // Annotations of for-head and `await using` bindings, and arrow return types in objects.
+        "for (let x: A<B<C>>= y; ;) {}",
+        "await using x: A<B<C>>= y;",
+        "({ k: (): A<B<C>>=> a });",
+        "({ k: x => (): A<B<C>>=> a });",
+        "for (let f = (): A<B<C>>=> a; ;) {}",
+        "for (using of: A<B<C>>= y; ;) {}",
+        "for (let x = c ? 'a' in o : b, f: A<B<C>>= g; ;) {}",
         "let x = <Map<K, Set<V>>>y;",
         "let s = <Foo<Bar<T>>>\"str\";",
         "let n = <Foo<Bar<T>>>-1;",
@@ -1031,6 +1039,17 @@ fn member_and_parameter_annotations_are_type_regions_for_the_jsx_diagnostic(cpu:
         "f(a, (s: <el>() => U) => 1);",
         "using a = f, o: <obj>() => U = g;",
         "let a = f, o: <obj>() => U;",
+        "({ k: (): <T>(x: T) => T => a });",
+        "({ k: x => (): <T>(x: T) => T => a });",
+        "for (let f: <T>(x: T) => T; ;) {}",
+        "for (using f: <T>(x: T) => T of a) {}",
+        "try {} catch (e: <T>(x: T) => T) {}",
+        "try {} catch ({ a }: <T>(x: T) => T) {}",
+        "await using f: <T>(x: T) => T = null!;",
+        "for (let f = (): <T>(x: T) => T => a; ;) {}",
+        "if ((a): <T>(x: T) => T => a) {}",
+        "for (using of: <T>(x: T) => T = f; ;) {}",
+        "for (await using of: <T>(x: T) => T of a) {}",
     ] {
         silent(code);
     }
