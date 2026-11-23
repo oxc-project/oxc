@@ -834,6 +834,31 @@ fn legacy_octal_values(cpu: DynCpu) {
 }
 
 #[test_cpus]
+fn radix_values_above_u64_max(cpu: DynCpu) {
+    let two_64 = 18_446_744_073_709_551_616.0;
+    let bin = format!("x = 0b1{};", "0".repeat(64));
+    let max = format!("x = 0x{}8{};", "f".repeat(13), "0".repeat(242));
+    let inf = format!("x = 0x1{};", "0".repeat(300));
+    for (code, want) in [
+        ("x = 0x10000000000000000;", two_64),
+        ("x = 0x1_0000_0000_0000_0000;", two_64),
+        ("x = 0x10000000000000000n;", two_64),
+        ("x = 0o2000000000000000000000;", two_64),
+        ("x = 02000000000000000000000;", two_64),
+        (bin.as_str(), two_64),
+        // Halfway between doubles rounds to even, anything above it rounds up.
+        ("x = 0x20000000000001000;", 36_893_488_147_419_103_232.0),
+        ("x = 0x20000000000001001;", 36_893_488_147_419_111_424.0),
+        ("x = 0x0000000000000000000001;", 1.0),
+        (max.as_str(), f64::MAX),
+        (inf.as_str(), f64::INFINITY),
+    ] {
+        let res = lex_with_cpu(code, LexOptions::default(), cpu);
+        assert_eq!(res.numbers(), [want], "{code:?}");
+    }
+}
+
+#[test_cpus]
 fn nested_jsx_shapes_never_flagged(cpu: DynCpu) {
     for code in [
         "const a = <Foo prop=<Bar><Baz /></Bar> />;",
