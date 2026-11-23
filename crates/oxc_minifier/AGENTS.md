@@ -122,6 +122,11 @@ fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'
 4. **Evaluation Order**: Preserve execution order
 5. **Edge Cases**: Test with `NaN`, `Infinity`, `-0`, etc.
 6. **Unsupported Syntax**: Do not add or imply support for TypeScript, TSX, or JSX syntax.
+   These inputs must be transformed to plain JavaScript before minification.
+7. **Parentheses**: The parser can preserve parentheses (`preserve_parens: true`).
+   `Normalize` removes `ParenthesizedExpression` nodes before the peephole passes,
+   so match expressions directly in those passes without calling
+   `get_inner_expression()` or `without_parentheses()`.
 
 ### Debugging
 
