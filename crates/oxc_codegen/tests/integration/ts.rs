@@ -535,6 +535,7 @@ fn minify_new_expression_type_arguments() {
         ("new C<T>() + x", "new C<T>()+x;"),
         ("new C<T>() - x", "new C<T>()-x;"),
         ("new C<T>() < x", "new C<T>()<x;"),
+        ("new C<T>() > x", "new C<T>()>x;"),
         ("new C<T>()", "new C<T>();"),
         ("new C()", "new C;"),
     ] {
