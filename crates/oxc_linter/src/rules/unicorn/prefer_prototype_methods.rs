@@ -359,19 +359,19 @@ fn test() {
         "const _ = globalThis; _.hasOwnProperty.call(bar)",
         r#"const _ = globalThis; _["hasOwnProperty"].call(bar)"#,
         r#"const _ = globalThis; _["hasOwn" + "Property"].call(bar)"#,
-        "const a = globalThis; const b = a; b.isPrototypeOf.call(bar)",
         "Reflect.apply(globalThis.toString, baz, [])",
         "Reflect.apply(window.toString, baz, [])",
         "Reflect.apply(global.toString, baz, [])",
-        "Reflect.apply(self.toString, baz, [])",
         r#"Reflect.apply(globalThis["toString"], baz, [])"#,
-        "globalThis[`toString`].call(bar)",
         "globalThis /* comment */ .toString.call(bar)",
         r#"Reflect.apply(globalThis[/* comment */ "toString"], baz, [])"#,
         "[] /* comment */ .slice.call(bar)",
         "[/* comment */].slice.call(bar)",
         "({/* keep */}).toString.call(o);",
         "function foo(){return(globalThis).toString.call(bar)}",
+        "const a = globalThis; const b = a; b.isPrototypeOf.call(bar)",
+        "Reflect.apply(self.toString, baz, [])",
+        "globalThis[`toString`].call(bar)",
     ];
 
     let fix = vec![
