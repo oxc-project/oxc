@@ -274,7 +274,6 @@ fn test() {
         ),
         ("Promise.all([await /* comment*/ promise])", "Promise.all([/* comment*/ promise])"),
         ("Promise.all(([(await promise)]))", "Promise.all(([(promise)]))"),
-        // Nested awaits should not be suggested for removal
         (
             "Promise.all([(await promise).foo, anotherPromise])",
             "Promise.all([(await promise).foo, anotherPromise])",
