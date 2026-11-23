@@ -2,7 +2,7 @@ commit: 2e58f87d
 
 runtime Summary:
 AST Parsed     : 18403/18403 (100.00%)
-Positive Passed: 17429/18403 (94.71%)
+Positive Passed: 17431/18403 (94.72%)
 codegen Error: tasks/coverage/test262/test/language/eval-code/direct/var-env-func-init-global-update-configurable.js
 Test262Error: f descriptor should be enumerable; f descriptor should be writable
 
@@ -903,12 +903,6 @@ Test262Error: reject reason Expected SameValue(«TypeError: The iterator does no
 
 transform Error: tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method-static/yield-star-sync-throw.js
 throw-arg-1
-
-transform Error: tasks/coverage/test262/test/language/expressions/class/elements/class-name-static-initializer-anonymous.js
-Test262Error: Expected SameValue(«"_Class"», «"C"») to be true
-
-transform Error: tasks/coverage/test262/test/language/expressions/class/elements/class-name-static-initializer-default-export.js
-Test262Error: Expected SameValue(«"_Class"», «"default"») to be true
 
 minify Error: tasks/coverage/test262/test/language/expressions/class/elements/class-name-static-initializer-expr.js
 Test262Error: Expected SameValue(«"expr"», «"C"») to be true

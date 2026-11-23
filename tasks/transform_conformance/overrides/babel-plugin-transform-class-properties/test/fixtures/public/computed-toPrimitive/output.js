@@ -1,6 +1,6 @@
 var _Class;
 const foo = { [Symbol.toPrimitive]: () => "foo" };
-expect((_Class = class {}, babelHelpers.defineProperty(_Class, foo, 0), _Class).foo).toBe(0);
+expect((_Class = (0, class {}), babelHelpers.defineProperty(_Class, foo, 0), _Class).foo).toBe(0);
 expect(class {
   static [foo]() {
     return 0;
@@ -24,7 +24,7 @@ expect(new class {
 const arrayLike = { [Symbol.toPrimitive]: () => [] };
 expect(() => {
   var _Class2;
-  return _Class2 = class {}, babelHelpers.defineProperty(_Class2, arrayLike, 0), _Class2;
+  return _Class2 = (0, class {}), babelHelpers.defineProperty(_Class2, arrayLike, 0), _Class2;
 }).toThrow("@@toPrimitive must return a primitive value.");
 expect(() => class {
   static [arrayLike]() {
