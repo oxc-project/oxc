@@ -88,14 +88,16 @@ impl WorkspaceState {
 
     /// The `tsrs-lint server` type-aware linting uses in this workspace, when the type-aware
     /// executable found from `root_path` is `tsrs-lint`. A new server is sent the open documents.
+    ///
+    /// A server that was disabled is replaced, so a configuration change tries again.
     fn tsrs_server_for(&self, root_path: &Path) -> Option<Arc<TsrsLintServer>> {
         let executable = try_find_tsgolint_executable(root_path)
             .ok()
             .filter(|path| is_tsrs_lint_executable(path))?;
         let mut slot = self.tsrs_server.lock().expect("tsrs server mutex poisoned");
-        if let Some(server) =
-            slot.as_ref().filter(|server| server.executable_path() == executable.as_path())
-        {
+        if let Some(server) = slot.as_ref().filter(|server| {
+            server.executable_path() == executable.as_path() && !server.is_disabled()
+        }) {
             return Some(Arc::clone(server));
         }
         let server = Arc::new(TsrsLintServer::new(executable, root_path.to_path_buf()));
@@ -1906,7 +1908,8 @@ mod test_tsrs_lint {
             &unsaved_text("load();"),
             "index.ts_server",
         );
-        assert!(linter.workspace.server().is_some());
+        let server = linter.workspace.server().expect("no tsrs-lint server");
+        assert!(!server.is_disabled());
 
         // An edit that fixes it reaches the server.
         let uri = tester.get_file_uri("index.ts");
@@ -1921,5 +1924,6 @@ mod test_tsrs_lint {
         let diagnostics = linter.run_diagnostic(document).expect("lint failed");
         assert_eq!(diagnostics.len(), 1);
         assert_eq!(codes(&diagnostics[0].1), [] as [String; 0]);
+        assert!(!server.is_disabled());
     }
 }

@@ -118,6 +118,7 @@ fn lint_routes_diagnostics_by_request_id() {
             "fix_suggestions": false,
         })
     );
+    assert!(!server.is_disabled());
 
     // The running process serves the next request.
     let diagnostics = lint(&server, &file).expect("second lint failed");
@@ -134,6 +135,7 @@ fn other_protocol_version_disables_the_server() {
     let error = failure(lint(&server, &file));
     assert!(error.contains("speaks server protocol 2"), "{error}");
     assert!(error.contains("this oxlint speaks protocol 1"), "{error}");
+    assert!(server.is_disabled());
 
     // The server is not started again.
     let second = failure(lint(&server, &file));
@@ -151,8 +153,30 @@ fn executable_without_server_mode_disables_the_server() {
 
     let error = failure(lint(&server, &file));
     assert!(error.contains("exited before the server handshake"), "{error}");
+    assert!(server.is_disabled());
 
     let second = failure(lint(&server, &file));
     assert_eq!(second, error);
     assert_eq!(fixture.starts(), 1);
+}
+
+#[test]
+fn process_that_keeps_exiting_is_not_started_again() {
+    let Some(fixture) = Fixture::new(&json!({ "lint": "exit" })) else { return };
+    let server = fixture.server();
+    let file = fixture.file("index.ts");
+
+    for attempt in 1..=3 {
+        let error = failure(lint(&server, &file));
+        assert!(!error.contains("times within"), "attempt {attempt}: {error}");
+        assert!(!server.is_disabled(), "attempt {attempt}");
+        assert_eq!(fixture.starts(), attempt);
+    }
+
+    let error = failure(lint(&server, &file));
+    assert!(error.contains("stopped 3 times within 60 seconds"), "{error}");
+    assert!(error.contains("Last error: tsrs-lint server exited"), "{error}");
+    assert!(server.is_disabled());
+    assert_eq!(fixture.starts(), 3);
+    assert_eq!(fixture.messages(LINT).len(), 3);
 }

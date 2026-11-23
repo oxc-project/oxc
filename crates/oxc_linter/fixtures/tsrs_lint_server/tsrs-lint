@@ -9,7 +9,7 @@
 //   as a `tsrs-lint` without server mode does.
 // - `protocol_version`: the protocol version it answers the handshake with (default 1).
 // - `lint`: "done" (default) answers a Lint with a diagnostic for another request id, a diagnostic
-//   for this one and Done.
+//   for this one and Done; "exit" exits.
 
 "use strict";
 
@@ -62,7 +62,9 @@ function handle(type, message) {
     // Lint
     case 20: {
       const mode = behavior.lint ?? "done";
-      {
+      if (mode === "exit") {
+        process.exit(1);
+      } else {
         const filePath = message.configs[0]?.file_paths[0] ?? "unknown.ts";
         write(1, diagnostic(message.id + 1000, filePath));
         write(1, diagnostic(message.id, filePath));

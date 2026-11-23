@@ -7,8 +7,12 @@
 //! A new process first answers a handshake with the protocol version it speaks. oxlint and
 //! `tsrs-lint` are installed separately, so a process that speaks another version, or a
 //! `tsrs-lint` without server mode, is reported once and not started again.
+//!
+//! A process that exits is started again on the next request, but at most [`MAX_STARTS`] times
+//! within [`START_WINDOW`]: a process that keeps exiting is not started again either.
 
 use std::{
+    collections::VecDeque,
     ffi::OsStr,
     io::{BufReader, Write},
     path::{Path, PathBuf},
@@ -18,7 +22,7 @@ use std::{
         atomic::{AtomicBool, AtomicU64, Ordering},
         mpsc::{self, RecvTimeoutError},
     },
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use rustc_hash::FxHashMap;
@@ -37,6 +41,10 @@ const PROTOCOL_VERSION: u32 = 1;
 
 /// How long a new process may take to answer the handshake.
 const HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(30);
+
+/// At most this many processes are started within [`START_WINDOW`].
+const MAX_STARTS: usize = 3;
+const START_WINDOW: Duration = Duration::from_mins(1);
 
 // Client -> server message types.
 const DID_OPEN: u8 = 16;
@@ -78,6 +86,10 @@ pub struct TsrsLintServer {
     connection: Mutex<Option<Arc<Connection>>>,
     /// Why the server is not started again, once it cannot be used.
     disabled: Mutex<Option<String>>,
+    /// When the recent processes were started, oldest first.
+    starts: Mutex<VecDeque<Instant>>,
+    /// Why the last process exited.
+    last_exit: Arc<Mutex<Option<String>>>,
     /// The open documents, sent again to a respawned process.
     open_documents: Mutex<FxHashMap<PathBuf, OpenDocument>>,
     next_id: AtomicU64,
@@ -210,6 +222,8 @@ impl TsrsLintServer {
             cwd,
             connection: Mutex::new(None),
             disabled: Mutex::new(None),
+            starts: Mutex::new(VecDeque::new()),
+            last_exit: Arc::default(),
             open_documents: Mutex::new(FxHashMap::default()),
             next_id: AtomicU64::new(1),
         }
@@ -218,6 +232,15 @@ impl TsrsLintServer {
     /// The executable this server runs.
     pub fn executable_path(&self) -> &Path {
         &self.executable_path
+    }
+
+    /// Whether the server is not started again: its executable cannot serve this client, or its
+    /// process kept exiting. A new server for the same executable starts afresh.
+    ///
+    /// # Panics
+    /// Panics if an internal mutex is poisoned.
+    pub fn is_disabled(&self) -> bool {
+        self.disabled.lock().expect("tsrs-lint disabled mutex poisoned").is_some()
     }
 
     /// A document was opened in the editor.
@@ -340,13 +363,29 @@ impl TsrsLintServer {
         }
         // Drop an exited process before starting the next one.
         *slot = None;
+        if !self.record_start() {
+            let last_exit = self.last_exit.lock().expect("tsrs-lint last exit mutex poisoned");
+            let reason = format!(
+                "tsrs-lint server stopped {MAX_STARTS} times within {} seconds, so type-aware \
+                 linting is off for this workspace until its configuration changes or the \
+                 language server restarts. Last error: {}",
+                START_WINDOW.as_secs(),
+                last_exit.as_deref().unwrap_or("unknown")
+            );
+            *disabled = Some(reason.clone());
+            return Err(reason);
+        }
         let connection = match self.spawn() {
             Ok(connection) => Arc::new(connection),
             Err(SpawnError::Incompatible(reason)) => {
                 *disabled = Some(reason.clone());
                 return Err(reason);
             }
-            Err(SpawnError::Failed(error)) => return Err(error),
+            Err(SpawnError::Failed(error)) => {
+                *self.last_exit.lock().expect("tsrs-lint last exit mutex poisoned") =
+                    Some(error.clone());
+                return Err(error);
+            }
         };
         drop(disabled);
         let documents =
@@ -364,6 +403,21 @@ impl TsrsLintServer {
         drop(documents);
         *slot = Some(Arc::clone(&connection));
         Ok(connection)
+    }
+
+    /// Records a process start, unless [`MAX_STARTS`] processes were started within
+    /// [`START_WINDOW`]. Returns whether one may start.
+    fn record_start(&self) -> bool {
+        let now = Instant::now();
+        let mut starts = self.starts.lock().expect("tsrs-lint starts mutex poisoned");
+        while starts.front().is_some_and(|start| now.duration_since(*start) >= START_WINDOW) {
+            starts.pop_front();
+        }
+        if starts.len() >= MAX_STARTS {
+            return false;
+        }
+        starts.push_back(now);
+        true
     }
 
     /// Starts a process and completes the handshake with it.
@@ -385,9 +439,14 @@ impl TsrsLintServer {
         {
             let pending = Arc::clone(&pending);
             let alive = Arc::clone(&alive);
+            let last_exit = Arc::clone(&self.last_exit);
             std::thread::Builder::new()
                 .name("tsrs-lint-reader".into())
-                .spawn(move || read_loop(stdout, &pending, &alive, &hello_sender))
+                .spawn(move || {
+                    let exit_error = read_loop(stdout, &pending, &alive, &hello_sender);
+                    *last_exit.lock().expect("tsrs-lint last exit mutex poisoned") =
+                        Some(exit_error);
+                })
                 .map_err(|e| {
                     SpawnError::Failed(format!("Failed to start the tsrs-lint reader thread: {e}"))
                 })?;
@@ -417,13 +476,14 @@ impl TsrsLintServer {
     }
 }
 
-/// Reads frames until the process exits, routing each to the request it belongs to.
+/// Reads frames until the process exits, routing each to the request it belongs to. Returns why
+/// it stopped.
 fn read_loop(
     stdout: ChildStdout,
     pending: &Pending,
     alive: &AtomicBool,
     hello: &mpsc::Sender<HelloPayload>,
-) {
+) -> String {
     let mut reader = BufReader::new(stdout);
     let exit_error = loop {
         let (message_type, payload) = match read_frame(&mut reader) {
@@ -472,6 +532,7 @@ fn read_loop(
     for (_, sender) in waiting {
         let _ = sender.send(Event::Error(exit_error.clone()));
     }
+    exit_error
 }
 
 fn send(pending: &Pending, id: u64, event: Event) {
