@@ -180,10 +180,16 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a> {
         // transform the newly created private backing fields.
         Self::lower_accessor_properties(class, ctx);
 
-        self.class_decorations_stack.push(
-            ClassDecorations::default()
-                .with_should_transform(!(class.is_expression() || class.declare)),
-        );
+        let should_transform = !(class.is_expression() || class.declare);
+        // Class-properties must see the same binding that decorators will use after the class.
+        if should_transform && class.id.is_none() && Self::check_class_has_decorated(class) {
+            let outer_scope_id = ctx.scoping().scope_parent_id(class.scope_id()).unwrap();
+            let binding = ctx.generate_uid("default", outer_scope_id, SymbolFlags::Class);
+            class.id = Some(binding.create_binding_identifier(ctx));
+        }
+
+        self.class_decorations_stack
+            .push(ClassDecorations::default().with_should_transform(should_transform));
 
         if self.emit_decorator_metadata {
             self.metadata.enter_class(class, ctx);
@@ -801,7 +807,11 @@ impl<'a> LegacyDecorator<'a> {
         // TODO(improve-on-typescript): we can take the class id without keeping it as-is.
         // Now: `class C {}` -> `let C = class C {}`
         // After: `class C {}` -> `let C = class {}`
-        let class_binding = class.id.as_ref().map(|ident| {
+        // `enter_class` names anonymous classes that have class or constructor-parameter
+        // decorators, so the class always has an id here.
+        let class_binding = {
+            let ident =
+                class.id.as_ref().expect("decorated class should have been named in `enter_class`");
             let binding_span = ident.span;
             let new_class_binding = ctx.generate_spanned_binding(
                 ident.name,
@@ -816,24 +826,17 @@ impl<'a> LegacyDecorator<'a> {
             *ctx.scoping_mut().symbol_flags_mut(old_class_symbol_id) =
                 SymbolFlags::BlockScopedVariable;
             BoundIdentifier::new(ident.name, old_class_symbol_id)
-        });
-        let class_alias_binding = class_binding.as_ref().and_then(|id| {
-            ClassReferenceChanger::new(id.clone(), ctx).get_class_alias_if_needed(&mut class.body)
-        });
+        };
+        let class_alias_binding = ClassReferenceChanger::new(class_binding.clone(), ctx)
+            .get_class_alias_if_needed(&mut class.body);
 
         let ClassDecorations {
-            class_binding: class_binding_tmp,
+            class_binding: _,
             mut decoration_stmts,
             static_decoration_stmts: _,
             class_has_private_in_expression_in_decorator,
             should_transform: _,
         } = current_class_decorations;
-
-        let class_binding = class_binding.unwrap_or_else(|| {
-            // `class_binding_tmp` maybe already generated a default class binding for unnamed classes, so use it.
-            class_binding_tmp
-                .unwrap_or_else(|| ctx.generate_uid_in_current_scope("default", SymbolFlags::Class))
-        });
 
         let constructor_decoration = self.transform_decorators_of_class_and_constructor(
             class,

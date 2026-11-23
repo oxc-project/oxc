@@ -1,6 +1,6 @@
 commit: 16a2d671
 
-Passed: 353/478
+Passed: 356/479
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -206,7 +206,7 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (25/111)
+# legacy-decorators (28/112)
 * oxc/accessor/input.ts
 x Output mismatch
 
@@ -255,11 +255,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["WeakMap", "babelHelpers"]
 rebuilt        : ["WeakMap", "a", "babelHelpers", "dec"]
-
-* oxc/class-without-name-with-decorated_class/input.ts
-Symbol flags mismatch for "_default":
-after transform: SymbolId(1): SymbolFlags(Class)
-rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
 
 * oxc/metadata/ambient-declared-class/input.ts
 Bindings mismatch:
@@ -573,11 +568,6 @@ rebuilt        : SymbolId(3): [ReferenceId(4), ReferenceId(8)]
 Symbol reference IDs mismatch for "Foo":
 after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6), ReferenceId(8), ReferenceId(10)]
 rebuilt        : SymbolId(3): [ReferenceId(4), ReferenceId(6), ReferenceId(10)]
-
-* oxc/with-class-private-properties-unnamed-default-export/input.ts
-Symbol flags mismatch for "_default":
-after transform: SymbolId(0): SymbolFlags(Class)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 * typescript/accessor/decoratorOnClassAccessor1/input.ts
 Bindings mismatch:
