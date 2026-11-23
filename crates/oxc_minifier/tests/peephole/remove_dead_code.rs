@@ -355,7 +355,6 @@ fn remove_unused_expressions_in_sequence() {
 
 #[test]
 fn keep_indirect_access_in_decorator() {
-    // https://github.com/oxc-project/oxc/issues/30082
     test("@((0, a.b)) class C {}", "@(0, a.b) class C {}");
     test("@((0, a[b])) class C {}", "@(0, a[b]) class C {}");
     test("@((true, a.b)) class C {}", "@(0, a.b) class C {}");
