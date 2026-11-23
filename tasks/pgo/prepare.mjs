@@ -4,7 +4,7 @@ import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { extname, join } from "node:path";
 import { workerData } from "node:worker_threads";
-import { CorpusWriter, verifyCorpus } from "./corpus.mjs";
+import { CorpusWriter, isBundle, verifyCorpus } from "./corpus.mjs";
 import { git, root, run } from "./utils.mjs";
 
 const { directory } = workerData;
@@ -67,7 +67,13 @@ async function install(checkout) {
 }
 
 async function collect(checkout, suite, prefix = "") {
-  for (const entry of await readdir(join(checkout, prefix), { withFileTypes: true })) {
+  const entries = await readdir(join(checkout, prefix), { withFileTypes: true });
+  const maps = new Set(
+    entries
+      .filter((entry) => entry.isFile() && entry.name.endsWith(".map"))
+      .map((entry) => entry.name),
+  );
+  for (const entry of entries) {
     const filename = join(prefix, entry.name);
     if (entry.isDirectory() && entry.name !== ".git") {
       await collect(checkout, suite, filename);
@@ -77,6 +83,12 @@ async function collect(checkout, suite, prefix = "") {
         { ".cjs": "commonjs", ".cts": "commonjs", ".mjs": "module", ".mts": "module" }[extension]
         ?? "unambiguous";
       const bytes = await readFile(join(checkout, filename));
+      const map = `${entry.name}.map`;
+      const bundle = await isBundle(
+        entry.name,
+        bytes.length,
+        maps.has(map) ? join(checkout, prefix, map) : undefined,
+      );
       const encoding =
         { fffe: "utf-16le", feff: "utf-16be" }[bytes.subarray(0, 2).toString("hex")] ?? "utf-8";
       await writer.add(
@@ -87,6 +99,7 @@ async function collect(checkout, suite, prefix = "") {
           options: { lang: language(filename), sourceType },
         },
         transformSync,
+        bundle,
       );
       extensions[extension] = (extensions[extension] ?? 0) + 1;
     }

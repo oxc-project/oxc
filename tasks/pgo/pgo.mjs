@@ -122,12 +122,21 @@ for (const name of command === "all" ? packages : [command]) {
   let trained = 0,
     skipped = 0,
     diagnostics = 0,
-    downlevelSkipped = 0;
+    downlevelSkipped = 0,
+    offset = 0;
+  const workloads = {};
   for (const shard of manifest.shards) {
     const result = JSON.parse(
       await run(
         process.execPath,
-        [join(root, "tasks/pgo/train.mjs"), name, instrumented, directory, shard.file],
+        [
+          join(root, "tasks/pgo/train.mjs"),
+          name,
+          instrumented,
+          directory,
+          shard.file,
+          String(offset),
+        ],
         {
           env: { ...process.env, LLVM_PROFILE_FILE: join(raw, "%m-%p.profraw") },
           capture: true,
@@ -138,11 +147,16 @@ for (const name of command === "all" ? packages : [command]) {
     skipped += result.skipped;
     diagnostics += result.diagnostics;
     downlevelSkipped += result.downlevelSkipped;
+    offset += shard.records;
+    for (const [workload, count] of Object.entries(result.workloads)) {
+      workloads[workload] = (workloads[workload] ?? 0) + count;
+    }
     console.log(
       `${name}: ${shard.file}: ${result.processed} trained (${result.diagnostics} diagnostics), ${result.skipped} skipped`,
     );
   }
   if (!trained) throw new Error(`No ${name} training inputs`);
+  console.log(`${name} workloads: ${JSON.stringify(workloads)}`);
   const profiles = (await readdir(raw)).filter((file) => file.endsWith(".profraw"));
   if (!profiles.length) throw new Error(`No profiles generated for ${name}/${target}`);
   // Merge the directory to avoid command-line length limits on Windows.
@@ -173,6 +187,7 @@ for (const name of command === "all" ? packages : [command]) {
         skipped,
         diagnostics,
         downlevelSkipped,
+        workloads,
         summary,
       },
       null,
