@@ -66,6 +66,47 @@ declare_oxc_lint!(
     short_description = "Disallow using `await` in `Promise` method parameters.",
 );
 
+impl Rule for NoAwaitInPromiseMethods {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::AwaitExpression(await_expr) = node.kind() else {
+            return;
+        };
+
+        let Some((property_name, is_direct_element)) = find_enclosing_promise_method(node, ctx)
+        else {
+            return;
+        };
+
+        let await_keyword_span = Span::sized(await_expr.span.start, 5);
+        if !is_direct_element {
+            ctx.diagnostic(nested_await_in_promise_methods_diagnostic(
+                await_keyword_span,
+                property_name,
+            ));
+            return;
+        }
+
+        ctx.diagnostic_with_suggestion(
+            no_await_in_promise_methods_diagnostic(await_keyword_span, property_name),
+            |fixer| {
+                let source = fixer.source_text();
+                let after_await = &source[(await_keyword_span.end as usize)..];
+
+                let trailing_spaces = after_await
+                    .chars()
+                    .take_while(|c| c.is_whitespace())
+                    .map(|c| {
+                        u32::try_from(c.len_utf8())
+                            .expect("Failed to convert char len usize to u32")
+                    })
+                    .sum();
+
+                fixer.delete_range(await_keyword_span.expand_right(trailing_spaces))
+            },
+        );
+    }
+}
+
 fn promise_method_name<'a>(
     array_node: &AstNode<'a>,
     array_span: Span,
@@ -128,47 +169,6 @@ fn find_enclosing_promise_method<'a>(
         }
     }
     None
-}
-
-impl Rule for NoAwaitInPromiseMethods {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::AwaitExpression(await_expr) = node.kind() else {
-            return;
-        };
-
-        let Some((property_name, is_direct_element)) = find_enclosing_promise_method(node, ctx)
-        else {
-            return;
-        };
-
-        let await_keyword_span = Span::sized(await_expr.span.start, 5);
-        if !is_direct_element {
-            ctx.diagnostic(nested_await_in_promise_methods_diagnostic(
-                await_keyword_span,
-                property_name,
-            ));
-            return;
-        }
-
-        ctx.diagnostic_with_suggestion(
-            no_await_in_promise_methods_diagnostic(await_keyword_span, property_name),
-            |fixer| {
-                let source = fixer.source_text();
-                let after_await = &source[(await_keyword_span.end as usize)..];
-
-                let trailing_spaces = after_await
-                    .chars()
-                    .take_while(|c| c.is_whitespace())
-                    .map(|c| {
-                        u32::try_from(c.len_utf8())
-                            .expect("Failed to convert char len usize to u32")
-                    })
-                    .sum();
-
-                fixer.delete_range(await_keyword_span.expand_right(trailing_spaces))
-            },
-        );
-    }
 }
 
 #[test]
