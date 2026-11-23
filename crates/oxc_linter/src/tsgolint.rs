@@ -699,7 +699,13 @@ impl TsGoLintState {
         if configs.is_empty() {
             return Ok(vec![]);
         }
-        let diagnostics = server.lint(configs, self.fix, self.fix_suggestions)?;
+        let diagnostics = match server.lint(configs, self.fix, self.fix_suggestions) {
+            Ok(diagnostics) => diagnostics,
+            Err(server::LintError::Canceled) => {
+                return Err("tsrs-lint server request was canceled".to_string());
+            }
+            Err(server::LintError::Failed(error)) => return Err(error),
+        };
         let disable_directives_map =
             disable_directives_map.lock().expect("disable_directives_map mutex poisoned");
         let mut result = vec![];

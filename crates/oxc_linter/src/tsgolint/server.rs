@@ -10,6 +10,9 @@
 //!
 //! A process that exits is started again on the next request, but at most [`MAX_STARTS`] times
 //! within [`START_WINDOW`]: a process that keeps exiting is not started again either.
+//!
+//! A request whose results can no longer be used, because a file it lints was closed, is
+//! canceled: the server stops it and answers with a canceled error.
 
 use std::{
     collections::VecDeque,
@@ -53,6 +56,7 @@ const DID_CLOSE: u8 = 18;
 const FILES_CHANGED: u8 = 19;
 const LINT: u8 = 20;
 const HELLO: u8 = 22;
+const CANCEL: u8 = 23;
 
 // Server -> client message types: the one-shot protocol's, the end of a request, and the
 // handshake's answer.
@@ -113,9 +117,31 @@ enum Event {
     Diagnostic(TsGoLintDiagnostic),
     Done,
     Error(String),
+    Canceled,
 }
 
-type Pending = Arc<Mutex<FxHashMap<u64, mpsc::Sender<Event>>>>;
+/// A request waiting for its terminal frame.
+struct PendingRequest {
+    sender: mpsc::Sender<Event>,
+    /// The files it lints, as sent.
+    file_paths: Vec<String>,
+}
+
+type Pending = Arc<Mutex<FxHashMap<u64, PendingRequest>>>;
+
+/// Why a lint request has no results.
+#[derive(Debug)]
+pub(super) enum LintError {
+    /// The request was canceled before it finished.
+    Canceled,
+    Failed(String),
+}
+
+impl From<String> for LintError {
+    fn from(error: String) -> Self {
+        Self::Failed(error)
+    }
+}
 
 struct Connection {
     child: Mutex<Child>,
@@ -128,6 +154,22 @@ struct Connection {
 impl Connection {
     fn is_alive(&self) -> bool {
         self.alive.load(Ordering::Acquire)
+    }
+
+    /// Cancels the pending requests that lint a file matching `matches`. Each still gets its
+    /// terminal frame: a canceled error, or its results if it finished first.
+    fn cancel_requests(&self, matches: impl Fn(&str) -> bool) {
+        let ids: Vec<u64> = self
+            .pending
+            .lock()
+            .expect("tsrs-lint pending mutex poisoned")
+            .iter()
+            .filter(|(_, request)| request.file_paths.iter().any(|path| matches(path)))
+            .map(|(id, _)| *id)
+            .collect();
+        for id in ids {
+            let _ = self.send(CANCEL, &CancelMessage { id });
+        }
     }
 
     fn send<T: Serialize>(&self, message_type: u8, message: &T) -> Result<(), String> {
@@ -167,6 +209,11 @@ struct CloseMessage<'a> {
 }
 
 #[derive(Serialize)]
+struct CancelMessage {
+    id: u64,
+}
+
+#[derive(Serialize)]
 struct FilesChangedMessage<'a> {
     changes: Vec<FileChange<'a>>,
 }
@@ -200,6 +247,9 @@ struct HelloPayload {
 #[derive(Deserialize)]
 struct IdPayload {
     id: Option<u64>,
+    /// On an error frame: the request was canceled.
+    #[serde(default)]
+    canceled: bool,
 }
 
 /// Why a process could not be started.
@@ -282,7 +332,10 @@ impl TsrsLintServer {
         if removed
             && let Some(connection) = connection.as_ref().filter(|connection| connection.is_alive())
         {
-            let _ = connection.send(DID_CLOSE, &CloseMessage { path: &path.to_string_lossy() });
+            let path = path.to_string_lossy();
+            // The results of a request for a closed file are not shown.
+            connection.cancel_requests(|file_path| file_path == path);
+            let _ = connection.send(DID_CLOSE, &CloseMessage { path: &path });
         }
     }
 
@@ -314,23 +367,29 @@ impl TsrsLintServer {
         configs: &[Config],
         fix: bool,
         fix_suggestions: bool,
-    ) -> Result<Vec<TsGoLintDiagnostic>, String> {
+    ) -> Result<Vec<TsGoLintDiagnostic>, LintError> {
         let id = self.next_id.fetch_add(1, Ordering::Relaxed);
         let (sender, events) = mpsc::channel();
+        let file_paths =
+            configs.iter().flat_map(|config| config.file_paths.iter().cloned()).collect();
         let connection = {
             let mut connection =
                 self.connection.lock().expect("tsrs-lint connection mutex poisoned");
             let connection = self.ensure_connection(&mut connection)?;
-            connection.pending.lock().expect("tsrs-lint pending mutex poisoned").insert(id, sender);
+            connection
+                .pending
+                .lock()
+                .expect("tsrs-lint pending mutex poisoned")
+                .insert(id, PendingRequest { sender, file_paths });
             // The reader may have stopped after the liveness check: it would never answer this request.
             if !connection.is_alive() {
                 connection.pending.lock().expect("tsrs-lint pending mutex poisoned").remove(&id);
-                return Err("tsrs-lint server exited".to_string());
+                return Err(LintError::Failed("tsrs-lint server exited".to_string()));
             }
             let message = LintMessage { id, configs, fix, fix_suggestions };
             if let Err(error) = connection.send(LINT, &message) {
                 connection.pending.lock().expect("tsrs-lint pending mutex poisoned").remove(&id);
-                return Err(error);
+                return Err(LintError::Failed(error));
             }
             connection
         };
@@ -340,8 +399,9 @@ impl TsrsLintServer {
             match events.recv() {
                 Ok(Event::Diagnostic(diagnostic)) => diagnostics.push(diagnostic),
                 Ok(Event::Done) => break Ok(diagnostics),
-                Ok(Event::Error(error)) => break Err(error),
-                Err(_) => break Err("tsrs-lint server exited".to_string()),
+                Ok(Event::Error(error)) => break Err(LintError::Failed(error)),
+                Ok(Event::Canceled) => break Err(LintError::Canceled),
+                Err(_) => break Err(LintError::Failed("tsrs-lint server exited".to_string())),
             }
         };
         connection.pending.lock().expect("tsrs-lint pending mutex poisoned").remove(&id);
@@ -504,13 +564,16 @@ fn read_loop(
             },
             ERROR | DIAGNOSTIC => {
                 // The frames of the one-shot protocol, with the id of the request they answer.
-                let id = match serde_json::from_slice::<IdPayload>(&payload) {
-                    Ok(IdPayload { id }) => id,
+                let (id, canceled) = match serde_json::from_slice::<IdPayload>(&payload) {
+                    Ok(IdPayload { id, canceled }) => (id, canceled),
                     Err(error) => break format!("Failed to parse tsrs-lint payload: {error}"),
                 };
                 match (decode_message(message_type, &payload), id) {
                     (Ok(TsGoLintMessage::Diagnostic(diagnostic)), Some(id)) => {
                         send(pending, id, Event::Diagnostic(diagnostic));
+                    }
+                    (Ok(TsGoLintMessage::Error(_)), Some(id)) if canceled => {
+                        send(pending, id, Event::Canceled);
                     }
                     (Ok(TsGoLintMessage::Error(error)), Some(id)) => {
                         send(pending, id, Event::Error(error.error));
@@ -529,15 +592,15 @@ fn read_loop(
     alive.store(false, Ordering::Release);
     let waiting: Vec<_> =
         pending.lock().expect("tsrs-lint pending mutex poisoned").drain().collect();
-    for (_, sender) in waiting {
-        let _ = sender.send(Event::Error(exit_error.clone()));
+    for (_, request) in waiting {
+        let _ = request.sender.send(Event::Error(exit_error.clone()));
     }
     exit_error
 }
 
 fn send(pending: &Pending, id: u64, event: Event) {
     let pending = pending.lock().expect("tsrs-lint pending mutex poisoned");
-    if let Some(sender) = pending.get(&id) {
-        let _ = sender.send(event);
+    if let Some(request) = pending.get(&id) {
+        let _ = request.sender.send(event);
     }
 }

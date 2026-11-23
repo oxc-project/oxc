@@ -7,12 +7,17 @@
 use std::{
     path::{Path, PathBuf},
     process::Command,
+    sync::{Arc, mpsc},
+    time::{Duration, Instant},
 };
 
 use serde_json::{Value, json};
 
-use super::{HELLO, LINT, TsrsLintServer};
+use super::{CANCEL, DID_CLOSE, DID_OPEN, HELLO, LINT, LintError, TsrsLintServer};
 use crate::tsgolint::{Config, Rule, TsGoLintDiagnostic};
+
+/// How long to wait for the fake to receive a frame.
+const WAIT_TIMEOUT: Duration = Duration::from_secs(10);
 
 struct Fixture {
     dir: tempfile::TempDir,
@@ -55,6 +60,15 @@ impl Fixture {
         log.lines().map(|line| serde_json::from_str(line).expect("invalid log line")).collect()
     }
 
+    /// The types of the frames the fake received, in order.
+    fn frame_types(&self) -> Vec<u8> {
+        self.events()
+            .iter()
+            .filter_map(|event| event["type"].as_u64())
+            .map(|frame_type| u8::try_from(frame_type).unwrap())
+            .collect()
+    }
+
     /// The messages of the frames of `frame_type` the fake received, in order.
     fn messages(&self, frame_type: u8) -> Vec<Value> {
         self.events()
@@ -68,6 +82,18 @@ impl Fixture {
     fn starts(&self) -> usize {
         self.events().iter().filter(|event| event["event"] == "start").count()
     }
+
+    /// Waits until the fake received a frame of `frame_type`.
+    fn wait_for_frame(&self, frame_type: u8) {
+        let deadline = Instant::now() + WAIT_TIMEOUT;
+        while !self.frame_types().contains(&frame_type) {
+            assert!(
+                Instant::now() < deadline,
+                "the fake did not receive a frame of type {frame_type} within {WAIT_TIMEOUT:?}"
+            );
+            std::thread::sleep(Duration::from_millis(10));
+        }
+    }
 }
 
 fn configs(file_path: &str) -> Vec<Config> {
@@ -77,13 +103,14 @@ fn configs(file_path: &str) -> Vec<Config> {
     }]
 }
 
-fn lint(server: &TsrsLintServer, file_path: &str) -> Result<Vec<TsGoLintDiagnostic>, String> {
+fn lint(server: &TsrsLintServer, file_path: &str) -> Result<Vec<TsGoLintDiagnostic>, LintError> {
     server.lint(&configs(file_path), false, false)
 }
 
-fn failure(result: Result<Vec<TsGoLintDiagnostic>, String>) -> String {
+fn failure(result: Result<Vec<TsGoLintDiagnostic>, LintError>) -> String {
     match result {
-        Err(error) => error,
+        Err(LintError::Failed(error)) => error,
+        Err(LintError::Canceled) => panic!("expected a failure, got a cancellation"),
         Ok(diagnostics) => panic!("expected a failure, got {} diagnostics", diagnostics.len()),
     }
 }
@@ -179,4 +206,37 @@ fn process_that_keeps_exiting_is_not_started_again() {
     assert!(server.is_disabled());
     assert_eq!(fixture.starts(), 3);
     assert_eq!(fixture.messages(LINT).len(), 3);
+}
+
+#[test]
+fn closing_a_document_cancels_its_request() {
+    let Some(fixture) = Fixture::new(&json!({ "lint": "hold" })) else { return };
+    let server = Arc::new(fixture.server());
+    let file = fixture.file("index.ts");
+    server.did_open(Path::new(&file), 1, Arc::from("Promise.resolve();\n"));
+
+    let (sender, result) = mpsc::channel();
+    {
+        let server = Arc::clone(&server);
+        let file = file.clone();
+        std::thread::spawn(move || sender.send(lint(&server, &file)));
+    }
+    fixture.wait_for_frame(LINT);
+    server.did_close(Path::new(&file));
+
+    let result = result.recv_timeout(WAIT_TIMEOUT).expect("the request did not end");
+    assert!(matches!(result, Err(LintError::Canceled)), "{result:?}");
+    fixture.wait_for_frame(DID_CLOSE);
+
+    // The open document reached the new process before the request, and the cancellation
+    // before the close.
+    assert_eq!(fixture.frame_types(), vec![HELLO, DID_OPEN, LINT, CANCEL, DID_CLOSE]);
+    assert_eq!(
+        fixture.messages(DID_OPEN),
+        vec![json!({ "path": file, "version": 1, "text": "Promise.resolve();\n" })]
+    );
+    let id = &fixture.messages(LINT)[0]["id"];
+    assert_eq!(fixture.messages(CANCEL), vec![json!({ "id": id })]);
+    assert_eq!(fixture.messages(DID_CLOSE), vec![json!({ "path": file })]);
+    assert!(!server.is_disabled());
 }

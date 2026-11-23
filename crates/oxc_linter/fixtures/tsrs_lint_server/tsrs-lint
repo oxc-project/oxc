@@ -9,7 +9,8 @@
 //   as a `tsrs-lint` without server mode does.
 // - `protocol_version`: the protocol version it answers the handshake with (default 1).
 // - `lint`: "done" (default) answers a Lint with a diagnostic for another request id, a diagnostic
-//   for this one and Done; "exit" exits.
+//   for this one and Done; "exit" exits; "hold" answers only after a Cancel for it, with a
+//   canceled error.
 
 "use strict";
 
@@ -52,6 +53,8 @@ if (behavior.start === "exit") {
   process.exit(0);
 }
 
+const held = new Set();
+
 function handle(type, message) {
   log({ type, message });
   switch (type) {
@@ -64,6 +67,8 @@ function handle(type, message) {
       const mode = behavior.lint ?? "done";
       if (mode === "exit") {
         process.exit(1);
+      } else if (mode === "hold") {
+        held.add(message.id);
       } else {
         const filePath = message.configs[0]?.file_paths[0] ?? "unknown.ts";
         write(1, diagnostic(message.id + 1000, filePath));
@@ -72,6 +77,12 @@ function handle(type, message) {
       }
       break;
     }
+    // Cancel
+    case 23:
+      if (held.delete(message.id)) {
+        write(0, { id: message.id, error: "request canceled", canceled: true });
+      }
+      break;
     default:
       break;
   }
