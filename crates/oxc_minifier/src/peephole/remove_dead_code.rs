@@ -780,8 +780,6 @@ impl<'a> PeepholeOptimizations {
     ///
     /// The shape is load-bearing: `remove_sequence_expression`'s idempotency
     /// gate recognizes exactly a 2-element sequence whose head `is_number_0`.
-    /// Sibling fold sites in `fold_constants.rs` / `try_fold_conditional_expression`
-    /// still build it inline; migrating them here is welcome.
     pub fn preserve_indirect_access(
         span: Span,
         expr: Expression<'a>,
