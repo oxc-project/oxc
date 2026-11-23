@@ -16,6 +16,9 @@
 //!
 //! [`TsrsLintServer::stop`] (or dropping the last reference) asks the process to shut down, and
 //! kills it if it has not exited within [`SHUTDOWN_TIMEOUT`].
+//!
+//! Changes on disk are collected and sent as one `FilesChanged` frame before the next frame, so a
+//! burst of watcher events (an install, a build) reaches the process as one batch.
 
 use std::{
     collections::VecDeque,
@@ -101,6 +104,8 @@ pub struct TsrsLintServer {
     starts: Mutex<VecDeque<Instant>>,
     /// Why the last process exited.
     last_exit: Arc<Mutex<Option<String>>>,
+    /// The changes on disk not sent yet, with the latest kind of each path.
+    file_changes: Mutex<FxHashMap<PathBuf, FileChangeKind>>,
     /// The open documents, sent again to a respawned process.
     open_documents: Mutex<FxHashMap<PathBuf, OpenDocument>>,
     next_id: AtomicU64,
@@ -293,6 +298,7 @@ impl TsrsLintServer {
             disabled: Mutex::new(None),
             starts: Mutex::new(VecDeque::new()),
             last_exit: Arc::default(),
+            file_changes: Mutex::default(),
             open_documents: Mutex::new(FxHashMap::default()),
             next_id: AtomicU64::new(1),
         }
@@ -341,6 +347,7 @@ impl TsrsLintServer {
         let connection = self.connection.lock().expect("tsrs-lint connection mutex poisoned");
         let path_str = path.to_string_lossy();
         if let Some(connection) = connection.as_ref().filter(|connection| connection.is_alive()) {
+            self.send_file_changes(connection);
             let _ = connection
                 .send(message_type, &DocumentMessage { path: &path_str, version, text: &text });
         }
@@ -368,6 +375,7 @@ impl TsrsLintServer {
             let path = path.to_string_lossy();
             // The results of a request for a closed file are not shown.
             connection.cancel_requests(|file_path| file_path == path);
+            self.send_file_changes(connection);
             let _ = connection.send(DID_CLOSE, &CloseMessage { path: &path });
         }
     }
@@ -381,17 +389,32 @@ impl TsrsLintServer {
             return;
         }
         let connection = self.connection.lock().expect("tsrs-lint connection mutex poisoned");
-        if let Some(connection) = connection.as_ref().filter(|connection| connection.is_alive()) {
-            let paths: Vec<_> = changes.iter().map(|(path, _)| path.to_string_lossy()).collect();
-            let message = FilesChangedMessage {
-                changes: paths
-                    .iter()
-                    .zip(changes)
-                    .map(|(path, (_, kind))| FileChange { path, kind: *kind as u8 })
-                    .collect(),
-            };
-            let _ = connection.send(FILES_CHANGED, &message);
+        if connection.as_ref().is_some_and(|connection| connection.is_alive()) {
+            self.file_changes
+                .lock()
+                .expect("tsrs-lint file changes mutex poisoned")
+                .extend(changes.iter().cloned());
         }
+    }
+
+    /// Sends the collected changes on disk as one frame. Called with the connection lock held,
+    /// before any other frame, so the process sees them in order.
+    fn send_file_changes(&self, connection: &Connection) {
+        let changes = std::mem::take(
+            &mut *self.file_changes.lock().expect("tsrs-lint file changes mutex poisoned"),
+        );
+        if changes.is_empty() {
+            return;
+        }
+        let paths: Vec<_> =
+            changes.iter().map(|(path, kind)| (path.to_string_lossy(), *kind)).collect();
+        let message = FilesChangedMessage {
+            changes: paths
+                .iter()
+                .map(|(path, kind)| FileChange { path, kind: *kind as u8 })
+                .collect(),
+        };
+        let _ = connection.send(FILES_CHANGED, &message);
     }
 
     /// Lints the files of `configs` and returns their diagnostics.
@@ -409,6 +432,7 @@ impl TsrsLintServer {
             let mut connection =
                 self.connection.lock().expect("tsrs-lint connection mutex poisoned");
             let connection = self.ensure_connection(&mut connection)?;
+            self.send_file_changes(&connection);
             connection
                 .pending
                 .lock()
@@ -454,8 +478,9 @@ impl TsrsLintServer {
         if let Some(reason) = disabled.as_ref() {
             return Err(reason.clone());
         }
-        // Drop an exited process before starting the next one.
+        // Drop an exited process before starting the next one. The next one reads the disk afresh.
         *slot = None;
+        self.file_changes.lock().expect("tsrs-lint file changes mutex poisoned").clear();
         if !self.record_start() {
             let last_exit = self.last_exit.lock().expect("tsrs-lint last exit mutex poisoned");
             let reason = format!(

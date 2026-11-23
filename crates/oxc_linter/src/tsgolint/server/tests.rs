@@ -14,7 +14,8 @@ use std::{
 use serde_json::{Value, json};
 
 use super::{
-    CANCEL, DID_CLOSE, DID_OPEN, HELLO, LINT, LintError, SHUTDOWN, SHUTDOWN_TIMEOUT, TsrsLintServer,
+    CANCEL, DID_CLOSE, DID_OPEN, FILES_CHANGED, FileChangeKind, HELLO, LINT, LintError, SHUTDOWN,
+    SHUTDOWN_TIMEOUT, TsrsLintServer,
 };
 use crate::tsgolint::{Config, Rule, TsGoLintDiagnostic};
 
@@ -241,6 +242,50 @@ fn closing_a_document_cancels_its_request() {
     assert_eq!(fixture.messages(CANCEL), vec![json!({ "id": id })]);
     assert_eq!(fixture.messages(DID_CLOSE), vec![json!({ "path": file })]);
     assert!(!server.is_disabled());
+}
+
+#[test]
+fn file_changes_are_sent_as_one_batch_before_the_next_frame() {
+    let Some(fixture) = Fixture::new(&json!({})) else { return };
+    let server = fixture.server();
+    let file = fixture.file("index.ts");
+    let a = PathBuf::from(fixture.file("a.ts"));
+    let b = PathBuf::from(fixture.file("b.ts"));
+
+    // A process that is not running reads the disk when it starts: nothing is sent.
+    server.files_changed(&[(a.clone(), FileChangeKind::Changed)]);
+    lint(&server, &file).expect("first lint failed");
+    assert_eq!(fixture.messages(FILES_CHANGED), [] as [Value; 0]);
+
+    server.files_changed(&[(a.clone(), FileChangeKind::Changed)]);
+    server.files_changed(&[(b.clone(), FileChangeKind::Created)]);
+    server.files_changed(&[(a.clone(), FileChangeKind::Deleted)]);
+    // Nothing is sent until the next frame.
+    std::thread::sleep(Duration::from_millis(100));
+    assert_eq!(fixture.messages(FILES_CHANGED), [] as [Value; 0]);
+
+    lint(&server, &file).expect("second lint failed");
+
+    assert_eq!(fixture.frame_types(), vec![HELLO, LINT, FILES_CHANGED, LINT]);
+    let batches = fixture.messages(FILES_CHANGED);
+    assert_eq!(batches.len(), 1);
+    let mut changes: Vec<(String, u64)> = batches[0]["changes"]
+        .as_array()
+        .expect("changes is not an array")
+        .iter()
+        .map(|change| {
+            (change["path"].as_str().unwrap().to_string(), change["kind"].as_u64().unwrap())
+        })
+        .collect();
+    changes.sort();
+    // The latest kind of each path.
+    assert_eq!(
+        changes,
+        vec![
+            (a.to_string_lossy().into_owned(), FileChangeKind::Deleted as u64),
+            (b.to_string_lossy().into_owned(), FileChangeKind::Created as u64),
+        ]
+    );
 }
 
 #[test]
