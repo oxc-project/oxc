@@ -946,7 +946,6 @@ fn test() {
         "object.Array.prototype.concat.apply([], array)",
         "new _.flatten(array)",
         "_.flatten",
-        "_.flatten()",
         "_.flatten(array, EXTRA_ARGUMENT)",
         "_.flatten(...array)",
         "_[flatten](array)",
@@ -955,6 +954,17 @@ fn test() {
         "_.flatten?.(array)",
         "_?.flatten(array)",
         "object._.flatten(array)",
+        "array.flat()",
+        "array.flat(1)",
+        "const effects = new Set() as Set<unknown>; effects.flatMap(x => x);",
+        r#"const text = "" as string; text.flatMap(x => x);"#,
+        "const handler = (() => {}) as Function; handler.flatMap(x => x);",
+        "const collection = new Foo() satisfies Foo; collection.flatMap(x => x);",
+        "array.reduce((a, ...b) => a.concat(b), [])",
+        "array.reduce((a, ...b) => [...a, ...b], [])",
+        "array.reduce((a, b, ...rest) => a.concat(b), [])",
+        "array.reduce((a, b, ...rest) => [...a, ...b], [])",
+        "_.flatten()",
         "lodash['flatten'](array)",
         "_.flatten<number[]>(array)",
         "_.flatten(1)",
@@ -986,16 +996,6 @@ fn test() {
         "_.flatten(<div />);",
         "_.flatten(<></>);",
         "class Foo { #x; m(obj) { return _.flatten(#x in obj); } }",
-        "array.flat()",
-        "array.flat(1)",
-        "const effects = new Set() as Set<unknown>; effects.flatMap(x => x);",
-        r#"const text = "" as string; text.flatMap(x => x);"#,
-        "const handler = (() => {}) as Function; handler.flatMap(x => x);",
-        "const collection = new Foo() satisfies Foo; collection.flatMap(x => x);",
-        "array.reduce((a, ...b) => a.concat(b), [])",
-        "array.reduce((a, ...b) => [...a, ...b], [])",
-        "array.reduce((a, b, ...rest) => a.concat(b), [])",
-        "array.reduce((a, b, ...rest) => [...a, ...b], [])",
     ];
 
     let fail = vec![
@@ -1051,13 +1051,8 @@ fn test() {
         "/**/[].concat.apply([], array)",
         "Array.prototype.concat.apply([], array)",
         "_.flatten(array)",
-        "_.flatten(array,)",
         "lodash.flatten(array)",
         "underscore.flatten(array)",
-        "function run(values: Array<number[]> | Set<number[]>) { return _.flatten(values); }",
-        "const Items = new Array(); _.flatten(Items);",
-        "const set = new Set(); _.flatten(set as unknown[][]);",
-        "const x = x; _.flatten(x);",
         "before()
             Array.prototype.concat.apply([], [array].concat(array))",
         "before()
@@ -1066,6 +1061,20 @@ fn test() {
         "_.flatten((0, array))",
         "async function a() { return _.flatten(await getArray()); }",
         "async function a() { return _.flatten((await getArray())); }",
+        "before()
+            Array.prototype.concat.apply([], 1)",
+        "before()
+            Array.prototype.concat.apply([], 1.)",
+        "before()
+            Array.prototype.concat.apply([], .1)",
+        "before()
+            Array.prototype.concat.apply([], 1.0)",
+        "const Items = [] as unknown[]; Items.flatMap(x => x);",
+        "_.flatten(array,)",
+        "function run(values: Array<number[]> | Set<number[]>) { return _.flatten(values); }",
+        "const Items = new Array(); _.flatten(Items);",
+        "const set = new Set(); _.flatten(set as unknown[][]);",
+        "const x = x; _.flatten(x);",
         "_.flatten(new Array)",
         "_.flatten(new Array())",
         "_.flatten(getArray())",
@@ -1089,15 +1098,6 @@ fn test() {
         "before()\n_.flatten(({ a: [1] }).a);",
         "_.flatten(/* keep */ array);",
         "_.flatten(array /* keep */,);",
-        "before()
-            Array.prototype.concat.apply([], 1)",
-        "before()
-            Array.prototype.concat.apply([], 1.)",
-        "before()
-            Array.prototype.concat.apply([], .1)",
-        "before()
-            Array.prototype.concat.apply([], 1.0)",
-        "const Items = [] as unknown[]; Items.flatMap(x => x);",
     ];
 
     let fix = vec![
