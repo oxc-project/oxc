@@ -3805,6 +3805,7 @@ impl RuleRunner for crate::rules::unicorn::prefer_math_trunc::PreferMathTrunc {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
         AstType::AssignmentExpression,
         AstType::BinaryExpression,
+        AstType::CallExpression,
         AstType::UnaryExpression,
     ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
