@@ -74,9 +74,6 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
         };
 
         let Some(catch_param) = self.catch_param else {
-            // The catch clause has no parameter. ESLint reports a missing catch parameter
-            // only when the catch block throws a new error, not when it recovers
-            // without throwing.
             if self.require_catch_parameter {
                 self.ctx.diagnostic(missing_catch_parameter_diagnostic(throw_stmt.span));
             }
@@ -331,9 +328,6 @@ impl PreserveCaughtError {
 
     fn check_catch_clause<'a>(&self, catch_clause: &'a CatchClause<'a>, ctx: &LintContext<'a>) {
         let Some(catch_param) = &catch_clause.param else {
-            // Only report a missing catch parameter when the catch block throws a new
-            // error, matching ESLint. The `ThrowFinder` visits throw statements and
-            // reports on the throw itself.
             if self.0.require_catch_parameter {
                 let mut finder: ThrowFinder<'a, '_> = ThrowFinder {
                     catch_param: None,
@@ -457,8 +451,6 @@ fn test() {
 				}"#,
             Some(serde_json::json!([{ "requireCatchParameter": false }])),
         ),
-        // A catch clause without a parameter is not reported when it does not
-        // re-throw a new error, even with `requireCatchParameter: true`.
         (
             "try {
 					return JSON.parse(text);
@@ -475,7 +467,6 @@ fn test() {
             r#"try { doSomething(); } catch { throw "failed"; }"#,
             Some(serde_json::json!([{ "requireCatchParameter": true }])),
         ),
-        // A throw inside a nested function is not directly related to the caught error.
         (
             r#"try {
 					doSomething();
