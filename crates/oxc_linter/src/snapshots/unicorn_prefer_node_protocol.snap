@@ -134,6 +134,19 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Prefer `node:fs` over `fs`.
 
+  × Unexpected token
+   ╭─[prefer_node_protocol.tsx:1:8]
+ 1 │ export fs from "fs";
+   ·        ──
+   ╰────
+
+  ⚠ unicorn(prefer-node-protocol): Prefer using the `node:` protocol when importing Node.js built-in modules.
+   ╭─[prefer_node_protocol.tsx:1:14]
+ 1 │ await import('assert/strict')
+   ·              ───────────────
+   ╰────
+  help: Prefer `node:assert/strict` over `assert/strict`.
+
   ⚠ unicorn(prefer-node-protocol): Prefer using the `node:` protocol when importing Node.js built-in modules.
    ╭─[prefer_node_protocol.tsx:1:37]
  1 │ const fs = process.getBuiltinModule('fs/promises')
@@ -210,16 +223,3 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                 ────
    ╰────
   help: Prefer `node:fs` over `fs`.
-
-  × Unexpected token
-   ╭─[prefer_node_protocol.tsx:1:8]
- 1 │ export fs from "fs";
-   ·        ──
-   ╰────
-
-  ⚠ unicorn(prefer-node-protocol): Prefer using the `node:` protocol when importing Node.js built-in modules.
-   ╭─[prefer_node_protocol.tsx:1:14]
- 1 │ await import('assert/strict')
-   ·              ───────────────
-   ╰────
-  help: Prefer `node:assert/strict` over `assert/strict`.

@@ -156,22 +156,22 @@ fn test() {
         r#"const fs = process.getBuiltinModule(...["fs"])"#,
         "const fs = process.getBuiltinModule()",
         r#"const fs = process.getBuiltinModule("unicorn")"#,
-        r#"const fs = process["getBuiltinModule"]("fs")"#,
-        r#"const fs = foo.process.getBuiltinModule("fs")"#,
-        "const fs = process.getBuiltinModule(fs)",
-        "const fs = process.getBuiltinModule(`fs`)",
-        r#"const fs = (process?.getBuiltinModule)("fs")"#,
         r#"import {getBuiltinModule} from 'node:process';
             const fs = getBuiltinModule("fs");"#,
         // This is a syntax error, can be ignored.
         // r#"export fs from "node:fs";"#,
         r#"const fs = require("node:fs") as "fs";"#,
-        r#"type fs = import("node:fs");"#,
-        r#"type fs = import("./fs");"#,
-        r#"type fs = import("unicorn");"#,
         r#"type fs = typeof import("node:fs");"#,
         r#"type fs = typeof SomeType<"fs">;"#,
         "type fs = typeof fs;",
+        r#"const fs = process["getBuiltinModule"]("fs")"#,
+        r#"const fs = foo.process.getBuiltinModule("fs")"#,
+        "const fs = process.getBuiltinModule(fs)",
+        "const fs = process.getBuiltinModule(`fs`)",
+        r#"const fs = (process?.getBuiltinModule)("fs")"#,
+        r#"type fs = import("node:fs");"#,
+        r#"type fs = import("./fs");"#,
+        r#"type fs = import("unicorn");"#,
     ];
 
     let fail = vec![
@@ -203,6 +203,8 @@ fn test() {
         r#"const {promises} = require("fs")"#,
         "const fs = require('fs/promises')",
         r#"const fs = process.getBuiltinModule("fs")"#,
+        r#"export fs from "fs";"#,
+        "await import('assert/strict')",
         "const fs = process.getBuiltinModule('fs/promises')",
         r#"const fs = (process).getBuiltinModule(("fs"))"#,
         r#"const fs = (process.getBuiltinModule)("fs")"#,
@@ -213,8 +215,6 @@ fn test() {
         r#"type Fs = import("fs", { with: { "resolution-mode": "import" } });"#,
         r#"const fs = require("fs") as typeof import("fs");"#,
         r#"const fs = someFunc() as SomeType<typeof import("fs")>;"#,
-        r#"export fs from "fs";"#,
-        "await import('assert/strict')",
     ];
 
     let fix = vec![
