@@ -50,6 +50,9 @@ export default defineConfig({
       "prettier-plugin-svelte",
       "prettier-plugin-astro",
 
+      // Talks to `vp run` when oxfmt runs under it, and is a no-op otherwise.
+      "@voidzero-dev/vite-task-client",
+
       // Cannot bundle: `cli-worker.js` runs in separate thread and can't resolve bundled chunks
       // Be sure to add it to "dependencies" in `npm/oxfmt/package.json`!
       // "tinypool",

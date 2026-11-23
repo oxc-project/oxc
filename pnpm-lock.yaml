@@ -269,6 +269,9 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 26.6.6
+      '@voidzero-dev/vite-task-client':
+        specifier: 0.2.0
+        version: 0.2.0
       diff:
         specifier: ^9.0.0
         version: 9.0.0
@@ -4383,6 +4386,10 @@ packages:
     engines: {node: '>=20.0.0'}
     cpu: [x64]
     os: [win32]
+
+  '@voidzero-dev/vite-task-client@0.2.0':
+    resolution: {integrity: sha512-y932hw4I0qrdlqbDhOC4VS7mtLad+MtXToSVJIZ79Cd7Ib6p4bRuoTRrx6OeedhdPm2yf9+r8ndlhJjn8LbsxQ==}
+    engines: {node: '>=18'}
 
   '@vue/compiler-core@3.5.25':
     resolution: {integrity: sha512-vay5/oQJdsNHmliWoZfHPoVZZRmnSWhug0BYT34njkYTPqClh3DNWLkZNJBVSjsNMrg0CCrBfoKkjZQPM/QVUw==}
@@ -10780,6 +10787,8 @@ snapshots:
 
   '@voidzero-dev/vite-plus-win32-x64-msvc@1.5.0':
     optional: true
+
+  '@voidzero-dev/vite-task-client@0.2.0': {}
 
   '@vue/compiler-core@3.5.25':
     dependencies:
