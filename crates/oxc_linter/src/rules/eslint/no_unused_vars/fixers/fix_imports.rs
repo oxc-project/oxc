@@ -95,14 +95,14 @@ impl NoUnusedVars {
             .sum();
         span.start -= leading_whitespace;
 
+        // Remove the line break after the import, keeping a CRLF together.
         let after_import = &source[(span.end as usize)..];
-        let trailing_newlines: u32 = after_import
-            .chars()
-            .take_while(|c| *c == '\n' || *c == '\r')
-            .take(1)
-            .map(|c| c.len_utf8() as u32)
-            .sum();
-        span.end += trailing_newlines;
+        let trailing_line_break = if after_import.starts_with("\r\n") {
+            2
+        } else {
+            u32::from(after_import.starts_with(['\n', '\r']))
+        };
+        span.end += trailing_line_break;
 
         fixer.delete_range(span)
     }
