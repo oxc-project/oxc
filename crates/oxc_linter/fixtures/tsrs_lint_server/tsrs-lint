@@ -83,6 +83,11 @@ function handle(type, message) {
         write(0, { id: message.id, error: "request canceled", canceled: true });
       }
       break;
+    // Shutdown
+    case 21:
+      log({ event: "exit" });
+      process.exit(0);
+      break;
     default:
       break;
   }

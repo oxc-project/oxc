@@ -13,7 +13,9 @@ use std::{
 
 use serde_json::{Value, json};
 
-use super::{CANCEL, DID_CLOSE, DID_OPEN, HELLO, LINT, LintError, TsrsLintServer};
+use super::{
+    CANCEL, DID_CLOSE, DID_OPEN, HELLO, LINT, LintError, SHUTDOWN, SHUTDOWN_TIMEOUT, TsrsLintServer,
+};
 use crate::tsgolint::{Config, Rule, TsGoLintDiagnostic};
 
 /// How long to wait for the fake to receive a frame.
@@ -239,4 +241,31 @@ fn closing_a_document_cancels_its_request() {
     assert_eq!(fixture.messages(CANCEL), vec![json!({ "id": id })]);
     assert_eq!(fixture.messages(DID_CLOSE), vec![json!({ "path": file })]);
     assert!(!server.is_disabled());
+}
+
+#[test]
+fn stop_shuts_the_process_down() {
+    let Some(fixture) = Fixture::new(&json!({})) else { return };
+    let server = fixture.server();
+    let file = fixture.file("index.ts");
+    lint(&server, &file).expect("lint failed");
+    let pid = fixture.events()[0]["pid"].as_u64().expect("no pid in the start event");
+
+    let started = Instant::now();
+    server.stop();
+
+    // The process exited on its own after the shutdown request, without being killed.
+    assert!(started.elapsed() < SHUTDOWN_TIMEOUT, "stop took {:?}", started.elapsed());
+    assert_eq!(fixture.messages(SHUTDOWN), vec![json!({})]);
+    assert_eq!(fixture.events().last().unwrap()["event"], "exit");
+    let alive = Command::new("kill")
+        .args(["-0", &pid.to_string()])
+        .output()
+        .is_ok_and(|output| output.status.success());
+    assert!(!alive, "the process {pid} is still running");
+
+    assert!(server.is_disabled());
+    let error = failure(lint(&server, &file));
+    assert_eq!(error, "tsrs-lint server was stopped");
+    assert_eq!(fixture.starts(), 1);
 }

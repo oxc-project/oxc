@@ -13,6 +13,9 @@
 //!
 //! A request whose results can no longer be used, because a file it lints was closed, is
 //! canceled: the server stops it and answers with a canceled error.
+//!
+//! [`TsrsLintServer::stop`] (or dropping the last reference) asks the process to shut down, and
+//! kills it if it has not exited within [`SHUTDOWN_TIMEOUT`].
 
 use std::{
     collections::VecDeque,
@@ -45,6 +48,9 @@ const PROTOCOL_VERSION: u32 = 1;
 /// How long a new process may take to answer the handshake.
 const HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(30);
 
+/// How long a process may take to exit after it is asked to shut down.
+const SHUTDOWN_TIMEOUT: Duration = Duration::from_secs(2);
+
 /// At most this many processes are started within [`START_WINDOW`].
 const MAX_STARTS: usize = 3;
 const START_WINDOW: Duration = Duration::from_mins(1);
@@ -55,6 +61,7 @@ const DID_CHANGE: u8 = 17;
 const DID_CLOSE: u8 = 18;
 const FILES_CHANGED: u8 = 19;
 const LINT: u8 = 20;
+const SHUTDOWN: u8 = 21;
 const HELLO: u8 = 22;
 const CANCEL: u8 = 23;
 
@@ -189,8 +196,20 @@ impl Connection {
 }
 
 impl Drop for Connection {
+    /// Asks the process to shut down, and kills it if it does not exit in time.
     fn drop(&mut self) {
+        if self.is_alive() {
+            let _ = self.send(SHUTDOWN, &serde_json::json!({}));
+        }
         let child = self.child.get_mut().expect("tsrs-lint child mutex poisoned");
+        let deadline = Instant::now() + SHUTDOWN_TIMEOUT;
+        while Instant::now() < deadline {
+            match child.try_wait() {
+                Ok(Some(_)) => return,
+                Ok(None) => std::thread::sleep(Duration::from_millis(10)),
+                Err(_) => break,
+            }
+        }
         let _ = child.kill();
         let _ = child.wait();
     }
@@ -284,8 +303,22 @@ impl TsrsLintServer {
         &self.executable_path
     }
 
-    /// Whether the server is not started again: its executable cannot serve this client, or its
-    /// process kept exiting. A new server for the same executable starts afresh.
+    /// Shuts the process down, and does not start another one. Pending requests end with an
+    /// error.
+    ///
+    /// # Panics
+    /// Panics if an internal mutex is poisoned.
+    pub fn stop(&self) {
+        let mut connection = self.connection.lock().expect("tsrs-lint connection mutex poisoned");
+        *self.disabled.lock().expect("tsrs-lint disabled mutex poisoned") =
+            Some("tsrs-lint server was stopped".to_string());
+        // Dropping the connection shuts the process down.
+        connection.take();
+    }
+
+    /// Whether the server is not started again: its executable cannot serve this client, its
+    /// process kept exiting, or it was stopped. A new server for the same executable starts
+    /// afresh.
     ///
     /// # Panics
     /// Panics if an internal mutex is poisoned.

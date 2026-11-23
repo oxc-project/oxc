@@ -89,16 +89,24 @@ impl WorkspaceState {
     /// The `tsrs-lint server` type-aware linting uses in this workspace, when the type-aware
     /// executable found from `root_path` is `tsrs-lint`. A new server is sent the open documents.
     ///
-    /// A server that was disabled is replaced, so a configuration change tries again.
+    /// A server that was disabled is replaced, so a configuration change tries again. The
+    /// previous server is stopped when it is replaced, or when there is no `tsrs-lint` anymore.
     fn tsrs_server_for(&self, root_path: &Path) -> Option<Arc<TsrsLintServer>> {
-        let executable = try_find_tsgolint_executable(root_path)
+        let Some(executable) = try_find_tsgolint_executable(root_path)
             .ok()
-            .filter(|path| is_tsrs_lint_executable(path))?;
+            .filter(|path| is_tsrs_lint_executable(path))
+        else {
+            self.stop_tsrs_server();
+            return None;
+        };
         let mut slot = self.tsrs_server.lock().expect("tsrs server mutex poisoned");
         if let Some(server) = slot.as_ref().filter(|server| {
             server.executable_path() == executable.as_path() && !server.is_disabled()
         }) {
             return Some(Arc::clone(server));
+        }
+        if let Some(previous) = slot.take() {
+            previous.stop();
         }
         let server = Arc::new(TsrsLintServer::new(executable, root_path.to_path_buf()));
         for document in self.open_documents.lock().expect("open documents mutex poisoned").values()
@@ -107,6 +115,14 @@ impl WorkspaceState {
         }
         *slot = Some(Arc::clone(&server));
         Some(server)
+    }
+
+    /// Stops the workspace's `tsrs-lint server`, if it has one.
+    fn stop_tsrs_server(&self) {
+        let server = self.tsrs_server.lock().expect("tsrs server mutex poisoned").take();
+        if let Some(server) = server {
+            server.stop();
+        }
     }
 }
 
@@ -271,7 +287,12 @@ impl ServerLinterBuilder {
         let type_aware = options.type_aware.unwrap_or(config_store.type_aware_enabled());
         let config_store_clone = config_store.clone();
         let workspace = self.workspace(root_uri);
-        let tsrs_server = if type_aware { workspace.tsrs_server_for(&root_path) } else { None };
+        let tsrs_server = if type_aware {
+            workspace.tsrs_server_for(&root_path)
+        } else {
+            workspace.stop_tsrs_server();
+            None
+        };
 
         // Send JS plugins config to JS side
         if let Some(external_linter) = external_linter {
@@ -391,7 +412,14 @@ impl ToolBuilder for ServerLinterBuilder {
 
     #[expect(unused)]
     fn shutdown(&self, root_uri: &Uri) {
-        // We don't currently destroy workspaces.
+        // The workspace's `tsrs-lint server` keeps the programs of its projects: stop it with the
+        // workspace.
+        let workspace = self.workspaces.lock().expect("workspaces mutex poisoned").remove(root_uri);
+        if let Some(workspace) = workspace {
+            workspace.stop_tsrs_server();
+        }
+
+        // We don't currently destroy JS workspaces.
         // See comment in `destroyWorkspace` in `src-js/workspace/index.ts` for explanation.
         return;
 
