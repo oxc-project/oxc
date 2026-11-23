@@ -108,6 +108,7 @@ fn cases() {
     test_same("type T = (A extends B ? C : D) extends E ? F : G;\n");
     test_same("type T = A & (B extends C ? D : E);\n");
     test_same("type T = (A | B) & C;\n");
+    test_same("type T = (keyof asserts) extends string ? 1 : 2;\n");
     test_same("declare interface A {}\n");
     test_same("interface I<in out T,> {}\n");
     test_same("function F<const T,>() {}\n");
@@ -798,11 +799,6 @@ fn type_codegen_with_preserve_parens_off() {
         "type R = { [K in ?(asserts) as K]: 1 };",
         "type R = { [K in (?asserts) as K]: 1 };\n",
         parse_options,
-    );
-    test_with_parse_options(
-        "type R = (keyof asserts) extends string ? 1 : 2;",
-        "type R = (keyof asserts) extends string ? 1 : 2;\n",
-        ParseOptions::default(),
     );
 }
 
