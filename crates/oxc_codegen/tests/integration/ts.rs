@@ -725,6 +725,11 @@ fn type_codegen_with_preserve_parens_off() {
         parse_options,
     );
     test_with_parse_options(
+        "type R = number & (asserts) extends string ? 1 : 2;",
+        "type R = (number & asserts) extends string ? 1 : 2;\n",
+        parse_options,
+    );
+    test_with_parse_options(
         "type R = { [K in (asserts) as K]: 1 };",
         "type R = { [K in (asserts) as K]: 1 };\n",
         parse_options,
@@ -732,6 +737,16 @@ fn type_codegen_with_preserve_parens_off() {
     test_with_parse_options(
         "type R = { [K in () => (asserts) as K]: 1 };",
         "type R = { [K in (() => asserts) as K]: 1 };\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type R = { [K in new () => (asserts) as K]: 1 };",
+        "type R = { [K in (new () => asserts) as K]: 1 };\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type R = { [K in string extends 1 ? 2 : (asserts) as K]: 1 };",
+        "type R = { [K in (string extends 1 ? 2 : asserts) as K]: 1 };\n",
         parse_options,
     );
     test_with_parse_options(
@@ -750,8 +765,18 @@ fn type_codegen_with_preserve_parens_off() {
         parse_options,
     );
     test_with_parse_options(
+        "let e = (x as (y: any) => y is (asserts)) in x;",
+        "let e = x as ((y: any) => y is asserts) in x;\n",
+        parse_options,
+    );
+    test_with_parse_options(
         "type R = (asserts)[] extends string ? 1 : 2;",
         "type R = asserts[] extends string ? 1 : 2;\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type R = asserts<string> extends string ? 1 : 2;",
+        "type R = asserts<string> extends string ? 1 : 2;\n",
         parse_options,
     );
     test_with_parse_options(
