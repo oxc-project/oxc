@@ -452,6 +452,14 @@ fn test() {
             Some(serde_json::json!([{ "requireCatchParameter": false }])),
         ),
         (
+            r#"try { doSomething(); } catch (errorA) { try { doSomethingElse(); } catch (errorB) { throw new Error( `The certificate key "${chalk.yellow(keyFile)}" is invalid.\n${errorA.message}`, { cause: errorB }); } }"#,
+            None,
+        ),
+        (
+            r#"try { doSomething(); } catch (error) { throw new AggregateError([error], "aggregate", { cause: error }); }"#,
+            None,
+        ),
+        (
             "try {
 					return JSON.parse(text);
 				} catch {
@@ -474,14 +482,6 @@ fn test() {
 					foo = { bar() { throw new Error("Something went wrong"); } };
 				}"#,
             Some(serde_json::json!([{ "requireCatchParameter": true }])),
-        ),
-        (
-            r#"try { doSomething(); } catch (errorA) { try { doSomethingElse(); } catch (errorB) { throw new Error( `The certificate key "${chalk.yellow(keyFile)}" is invalid.\n${errorA.message}`, { cause: errorB }); } }"#,
-            None,
-        ),
-        (
-            r#"try { doSomething(); } catch (error) { throw new AggregateError([error], "aggregate", { cause: error }); }"#,
-            None,
         ),
     ];
 
