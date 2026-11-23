@@ -68,12 +68,12 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// oldChildNode.replaceWith(newChildNode);
+    /// parentNode.replaceChild(newChildNode, oldChildNode);
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
-    /// parentNode.replaceChild(newChildNode, oldChildNode);
+    /// oldChildNode.replaceWith(newChildNode);
     /// ```
     PreferModernDomApis,
     unicorn,

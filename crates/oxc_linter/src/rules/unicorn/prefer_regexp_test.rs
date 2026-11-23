@@ -43,12 +43,12 @@ declare_oxc_lint!(
     /// ```javascript
     /// if (string.match(/unicorn/)) { }
     /// if (/unicorn/.exec(string)) {}
+    /// Boolean(string.match(/unicorn/))
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// if (/unicorn/.test(string)) {}
-    /// Boolean(string.match(/unicorn/))
     /// ```
     PreferRegexpTest,
     unicorn,
