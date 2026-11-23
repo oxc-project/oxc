@@ -248,9 +248,9 @@ export function printExpression(
       write(state, "!", CAT_OP_UN_NOT);
       break;
     case "TSInstantiationExpression": {
-      const wrap = precedence >= PREC_POSTFIX;
+      const wrap = precedence > PREC_CONDITIONAL;
       if (wrap) write(state, "(", CAT_OTHER);
-      printExpression(node.expression, state, PREC_PREFIX, ctx);
+      printExpression(node.expression, state, PREC_POSTFIX, ctx);
       printTypeArguments(node.typeArguments, state);
       if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
       break;
