@@ -1,9 +1,9 @@
-commit: 5e32f324
+commit: 01f1a759
 
 parser_typescript Summary:
-AST Parsed     : 9909/9922 (99.87%)
-Positive Passed: 9897/9922 (99.75%)
-Negative Passed: 1723/2824 (61.01%)
+AST Parsed     : 10027/10042 (99.85%)
+Positive Passed: 10015/10042 (99.73%)
+Negative Passed: 1726/2834 (60.90%)
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration4.ts
@@ -74,6 +74,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/bindingPatternCannotBeOnlyInferenceSource.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/boundedRecursiveTypeInferredThroughClosure.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/callOverloads1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/callOverloads2.ts
@@ -112,6 +114,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/circularDestructuring.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/circularIndexedPropertyInstantiation.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/classExpressionWithDecorator1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/classExtendingQualifiedName.ts
@@ -139,6 +143,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/cloduleWithDuplicateMember2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/cloduleWithPriorInstantiatedModule.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/closureNarrowingAssignmentInClassExtends.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/collisionExportsRequireAndAlias.ts
 
@@ -538,6 +544,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/interfaceDeclaration1.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/interfaceExtendsConstrainedTypeParameter.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/interfaceMemberValidation.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/interfaceWithMultipleDeclarations.ts
@@ -774,6 +782,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/narrowByClauseExpressionInSwitchTrue6.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/narrowedNeverAfterLoopWithAndCondition.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/networkPathReferences.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/noFlakyDiagnosticsBindingPatternInFunctionType2.ts
@@ -807,6 +817,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/nonexistentPropertyUnavailableOnPromisedType.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/nullKeyword.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/objectBindingPatternDefaultMissingElements.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/objectLiteralFunctionArgContextualTyping.ts
 
@@ -923,6 +935,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/scopeCheckInsideStaticMethod1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/selfReferencesInFunctionParameters.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/selfReferencingObjectLiteralErrorSharedChecker.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/setterWithReturn.ts
 
@@ -2206,6 +2220,16 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conforma
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/types/witness/witness.ts
 
+Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/checkOrderParameterInTypeQuery.ts
+
+  × Unexpected token
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/checkOrderParameterInTypeQuery.ts:9:36]
+  8 │         class C {
+  9 │             test1(a: C2): typeof a.#a {
+    ·                                    ──
+ 10 │                 return 1;
+    ╰────
+
 Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declarationEmitDefaultImportPrivateClass.ts
 
   × TS(2309): An export assignment cannot be used in a module with other exported elements
@@ -2317,6 +2341,16 @@ Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importA
  2 │     const database: {
    ╰────
   help: Try inserting a semicolon here
+
+Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributeValueCheckOrder.ts
+
+  × Only string literals are allowed as module attribute values.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeValueCheckOrder.ts:5:29]
+ 4 │ 
+ 5 │ import x from "x" with { a: 0 };
+   ·                             ─
+   ╰────
+  help: Wrap this with quotes
 
 Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributesDeclarationEmit.ts
 
@@ -5238,6 +5272,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Try inserting a semicolon here
 
+  × Invalid rest element target in destructuring pattern
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/commonjsExportNestedRestBinding.ts:2:18]
+ 1 │ declare const source: any;
+ 2 │ export const {...{object}} = source;
+   ·                  ────────
+   ╰────
+  help: Expected an identifier, like `...rest`.
+
   × A 'get' accessor must not have any formal parameters.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/complicatedPrivacy.ts:11:26]
  10 │         export class C2 implements m3.i3 {
@@ -6581,6 +6623,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·                   ────
  15 │         };
     ╰────
+
+  × Unexpected token
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/decoratorMissingClassExpression.ts:2:10]
+ 1 │ let x;
+ 2 │ x = @dec 1;
+   ·          ─
+ 3 │ x = @@a 1;
+   ╰────
 
   × Cannot assign to this expression
    ╭─[typescript/tsc/testdata/tests/cases/compiler/decrementAndIncrementOperators.ts:4:1]
@@ -9928,6 +9978,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·               ──
  19 │ 
     ╰────
+
+  × Unexpected token
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/jsxNamesStartingWithHash.tsx:8:12]
+ 7 │ 
+ 8 │ const a = <#a></#a>;
+   ·            ──
+ 9 │ const b = <div #b />;
+   ╰────
 
   × Unexpected token
    ╭─[typescript/tsc/testdata/tests/cases/compiler/jsxNamespacePrefixInName.tsx:7:32]
