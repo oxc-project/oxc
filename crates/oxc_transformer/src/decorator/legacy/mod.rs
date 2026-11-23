@@ -74,7 +74,7 @@ use crate::{
             create_accessor_method, create_assignment, create_export_default_class_reference,
             create_export_named_class_reference, create_prototype_member,
         },
-        decorated_class::class_is_decorated_by_legacy_decorators,
+        decorated_class::legacy_decorators_reassign_class_binding,
     },
 };
 use metadata::LegacyDecoratorMetadata;
@@ -185,8 +185,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a> {
 
         let should_transform = !(class.is_expression() || class.declare);
         // Class-properties must see the same binding that decorators will use after the class.
-        if should_transform && class.id.is_none() && class_is_decorated_by_legacy_decorators(class)
-        {
+        if class.id.is_none() && legacy_decorators_reassign_class_binding(class) {
             let outer_scope_id = ctx.scoping().scope_parent_id(class.scope_id()).unwrap();
             let binding = ctx.generate_uid("default", outer_scope_id, SymbolFlags::Class);
             class.id = Some(binding.create_binding_identifier(ctx));
@@ -681,10 +680,7 @@ impl<'a> LegacyDecorator<'a> {
 
         // Legacy decorator does not allow in class expression.
         if current_class_decorations.should_transform {
-            let class_or_constructor_parameter_is_decorated =
-                class_is_decorated_by_legacy_decorators(class);
-
-            if class_or_constructor_parameter_is_decorated {
+            if legacy_decorators_reassign_class_binding(class) {
                 self.transform_class_declaration_with_class_decorators(
                     class,
                     current_class_decorations,

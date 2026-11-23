@@ -27,11 +27,15 @@ pub fn class_body_has_decorators(body: &ClassBody<'_>) -> bool {
     })
 }
 
-/// Whether legacy decorators decorate the class itself, which reassigns the class binding
-/// to the value returned by `_decorate`.
+/// Whether legacy decorators lower this class by decorating the class itself, which reassigns
+/// the class binding to the value returned by `_decorate`.
 ///
-/// That is the case when the class or its constructor's parameters are decorated.
-pub fn class_is_decorated_by_legacy_decorators(class: &Class<'_>) -> bool {
+/// That is the case for a runtime class declaration whose class or constructor parameters are
+/// decorated.
+pub fn legacy_decorators_reassign_class_binding(class: &Class<'_>) -> bool {
+    if class.is_expression() || class.declare {
+        return false;
+    }
     !class.decorators.is_empty()
         || class.body.body.iter().any(|element| {
             matches!(element, ClassElement::MethodDefinition(method)

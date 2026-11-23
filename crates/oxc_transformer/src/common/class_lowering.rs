@@ -11,8 +11,8 @@ use smallvec::SmallVec;
 use crate::{
     decorator::DecoratorMode,
     utils::decorated_class::{
-        class_body_has_auto_accessors, class_has_decorators,
-        class_is_decorated_by_legacy_decorators, is_auto_accessor,
+        class_body_has_auto_accessors, class_has_decorators, is_auto_accessor,
+        legacy_decorators_reassign_class_binding,
     },
 };
 
@@ -146,8 +146,9 @@ impl ClassLoweringDecisions {
     pub fn record(&mut self, class: &Class<'_>) {
         // Legacy decorators run their own lowering, so options alone determine class ownership.
         if self.decorator_mode.is_legacy() {
-            if !(class.is_expression() || class.declare)
-                && class_is_decorated_by_legacy_decorators(class)
+            // Only class-properties reads `class_binding_is_reassigned`.
+            if matches!(self.class_transform, ClassTransform::ClassProperties { .. })
+                && legacy_decorators_reassign_class_binding(class)
             {
                 let lowering =
                     ClassLowering { class_binding_is_reassigned: true, ..self.default_decision() };

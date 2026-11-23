@@ -41,11 +41,6 @@ use crate::context::TraverseCtx;
 ///
 /// `static_private_fields_use_temp` is updated as transform moves through the class,
 /// to indicate which binding to use.
-///
-/// The exception is a class declaration whose binding legacy decorators reassign to the decorated
-/// class. Static private fields always use the temp var there, which keeps referring to the
-/// original class. e.g. `Foo = _decorate([dec], Foo)` must not change the result of
-/// `_assertClassBrand(_Foo, obj, _x)`.
 pub(super) struct ClassBindings<'a> {
     /// Binding for class name, if class has name
     pub name: Option<BoundIdentifier<'a>>,
@@ -122,7 +117,8 @@ impl<'a> ClassBindings<'a> {
     /// * In class expressions, this is always be temp binding.
     /// * In class declarations, it's the name binding when code is inside class body,
     ///   or a lexical alias if that name is shadowed, and temp binding outside class body.
-    /// * In class declarations whose name legacy decorators reassign, it's always temp binding.
+    /// * In class declarations whose name legacy decorators reassign, it's always temp binding,
+    ///   which keeps referring to the original class after `Foo = _decorate([dec], Foo)`.
     ///
     /// `static_private_fields_use_temp` is set accordingly at the right moments
     /// elsewhere in this transform.
