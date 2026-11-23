@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.80.0] - 2026-11-23
+
+### 🚀 Features
+
+- d3af78a formatter_htmlish/angular: Support Tailwind class sorting (#29737) (leaysgur)
+- 0fe3d0c formatter_htmlish/angular: Format template JS expressions (#29726) (leaysgur)
+- ae32aed formatter_htmlish/angular: Implement printer w/o JS expressions (#29657) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- f1816d8 formatter_htmlish: Count a blank line after unclosed element (#29881) (leaysgur)
+- 5952610 formatter_htmlish/angular: Do not break a parent for ICU (#29874) (leaysgur)
+- 596c70d formatter_htmlish/angular: Break as-written block parameters (#29873) (leaysgur)
+- 1fb897f formatter_htmlish: Keep blank lines before borrowed `}}` when preserved (#29872) (leaysgur)
+
 ## [0.79.0] - 2026-11-16
 
 ### 🐛 Bug Fixes

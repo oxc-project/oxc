@@ -4,6 +4,29 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.80.0] - 2026-11-23
+
+### 💥 BREAKING CHANGES
+
+- b90b3aa ast: [**BREAKING**] Remove `base` field from `NumericLiteral` and `BigIntLiteral` (#29919) (overlookmotel)
+
+### 🚀 Features
+
+- 42f62d6 formatter/sort_imports: Break ties for the same source by subgroup (#29817) (leaysgur)
+- 0fe3d0c formatter_htmlish/angular: Format template JS expressions (#29726) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 488a9fa formatter: Break an assigned class's heritage as a class anywhere else (#29869) (leaysgur)
+
+### ⚡ Performance
+
+- 892f086 various: Avoid copying source text in `OxcDiagnostic::render_with_source_code` callers (#29850) (overlookmotel)
+
+### 📚 Documentation
+
+- a5b1405 formatter: Move open debts out of comments and add heritage items (#29870) (leaysgur)
+
 ## [0.79.0] - 2026-11-16
 
 ### 🚀 Features

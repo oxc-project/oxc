@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.80.0] - 2026-11-23
+
+### 🚀 Features
+
+- 42f62d6 formatter/sort_imports: Break ties for the same source by subgroup (#29817) (leaysgur)
+- d3af78a formatter_htmlish/angular: Support Tailwind class sorting (#29737) (leaysgur)
+- 0fe3d0c formatter_htmlish/angular: Format template JS expressions (#29726) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- f1816d8 formatter_htmlish: Count a blank line after unclosed element (#29881) (leaysgur)
+- 488a9fa formatter: Break an assigned class's heritage as a class anywhere else (#29869) (leaysgur)
+- 7caf3be oxfmt: Run `WalkRunner` in `block_in_place()` to avoid hang with 1 Tokio worker (#29728) (Yuji Sugiura)
+
 ## [0.79.0] - 2026-11-16
 
 ### 🚀 Features
