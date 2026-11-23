@@ -593,6 +593,25 @@ fn enum_initializer_sequence_expression() {
 }
 
 #[test]
+fn decorator_parens_with_preserve_parens_off() {
+    let parse_options = ParseOptions { preserve_parens: false, ..Default::default() };
+    for (source, expected) in [
+        ("@(factory().decorate) class C {}", "@(factory().decorate) class C {}\n"),
+        ("@(factory()()) class C {}", "@(factory()()) class C {}\n"),
+        ("@(a.b().c()) class C {}", "@(a.b().c()) class C {}\n"),
+        ("@(this.x) class C {}", "@(this.x) class C {}\n"),
+        ("@(factory.decorate()) class C {}", "@factory.decorate() class C {}\n"),
+        (
+            "class A { #x; @(a.#x.y) m() {} @(f().#x) n() {} }",
+            "class A {\n\t#x;\n\t@a.#x.y m() {}\n\t@(f().#x) n() {}\n}\n",
+        ),
+        ("@(a.b<T>()) class C {}", "@a.b<T>() class C {}\n"),
+    ] {
+        test_with_parse_options(source, expected, parse_options);
+    }
+}
+
+#[test]
 fn type_codegen_with_preserve_parens_off() {
     let parse_options = ParseOptions { preserve_parens: false, ..Default::default() };
 
