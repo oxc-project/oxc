@@ -436,7 +436,6 @@ const KNOWN_NON_ARRAY_TYPE_NAMES: &[&str] = &[
     "Symbol",
     "BigInt",
     "Function",
-    "Object",
 ];
 
 const TYPED_ARRAY_NAMES: &[&str] = &[
@@ -1098,6 +1097,7 @@ fn test() {
         "before()\n_.flatten(({ a: [1] }).a);",
         "_.flatten(/* keep */ array);",
         "_.flatten(array /* keep */,);",
+        "function run(values: Object) { return _.flatten(values); }",
     ];
 
     let fix = vec![
@@ -1247,6 +1247,12 @@ fn test() {
         (
             "_.flatten(array /* keep */,);",
             "_.flatten(array /* keep */,);",
+            None,
+            FixKind::DangerousFix,
+        ),
+        (
+            "function run(values: Object) { return _.flatten(values); }",
+            "function run(values: Object) { return values.flat(); }",
             None,
             FixKind::DangerousFix,
         ),
