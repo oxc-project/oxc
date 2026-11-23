@@ -608,7 +608,6 @@ fn test() {
         ("!!foo", None),
         ("!!(foo + bar)", None),
         ("!!(foo + bar); var Boolean = null", None),
-        ("function f(Boolean) { return !!(foo + bar); }", None),
         ("~foo.indexOf(1)", None),
         ("~foo.bar.indexOf(2)", None),
         ("~foo.lastIndexOf(1)", None),
@@ -651,6 +650,7 @@ fn test() {
         ("(a * 1) / 2", None),
         ("a * 1 / (b * 1)", None),
         ("a * 1 + 2", None),
+        ("function f(Boolean) { return !!(foo + bar); }", None),
     ];
 
     let fix = vec![
