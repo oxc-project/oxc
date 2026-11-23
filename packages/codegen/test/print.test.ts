@@ -496,6 +496,34 @@ describe("for-of heads starting with `async` or `let`", () => {
   ]);
 });
 
+describe("__proto__ object properties", () => {
+  const property = node<ESTree.ObjectProperty>({
+    type: "Property",
+    key: id("__proto__"),
+    value: id("renamed"),
+    kind: "init",
+    computed: false,
+    method: false,
+    shorthand: true,
+  });
+  const object = (property: ESTree.ObjectProperty) =>
+    node<ESTree.ObjectExpression>({ type: "ObjectExpression", properties: [property] });
+
+  checkCases([
+    ["renamed shorthand", e(object(property)), '({ ["__proto__"]: renamed });\n'],
+    [
+      "ordinary shorthand",
+      e(object({ ...property, value: id("__proto__") })),
+      "({ __proto__ });\n",
+    ],
+    [
+      "prototype setter",
+      e(object({ ...property, shorthand: false })),
+      "({ __proto__: renamed });\n",
+    ],
+  ]);
+});
+
 // V8 runtime calls, e.g. `%DebugPrint(x)`. The parser only produces them with its `allowV8Intrinsics` option,
 // which neither `oxc-parser`'s Node.js API nor the conformance binding exposes, so only a hand-built AST reaches
 // them. Each expected output is what `oxc_codegen` prints for the same source, parsed with `allow_v8_intrinsics`.

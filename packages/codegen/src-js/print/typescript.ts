@@ -1288,7 +1288,7 @@ function printTSEnumMember(node: ESTree.TSEnumMember, state: State): void {
 
   if (node.initializer != null) {
     write(state, " = ", CAT_OTHER);
-    printExpression(node.initializer, state, PREC_LOWEST, CTX_NONE);
+    printExpression(node.initializer, state, PREC_COMMA, CTX_NONE);
   }
 }
 

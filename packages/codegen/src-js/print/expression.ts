@@ -48,7 +48,7 @@ import {
   unaryOperatorCode,
   updateOperatorCode,
 } from "./operators.ts";
-import { withoutParens } from "./parens.ts";
+import { isLetIdentifier, withoutParens } from "./parens.ts";
 import {
   PREC_ASSIGN,
   PREC_CALL,
@@ -123,7 +123,7 @@ export function printExpression(
       const leftType = node.left.type;
       if (leftType === "PrivateIdentifier") {
         typeAssertIs<ESTree.PrivateInExpression>(node);
-        printPrivateInExpression(node, state, precedence);
+        printPrivateInExpression(node, state, precedence, ctx);
       } else {
         typeAssertIs<ESTree.BinaryExpression>(node);
         printBinaryish(node, state, precedence, ctx, leftType);
@@ -305,15 +305,7 @@ export function printMemberExpression(
 ): void {
   const { object } = node;
   if (node.computed) {
-    // `(let)[0]` - a bare `let` object must be wrapped.
-    // `object` can be any expression, so its `type` is a megamorphic load - read it once while unwrapping parens.
-    let inner = object,
-      innerType = inner.type;
-    while (innerType === "ParenthesizedExpression") {
-      inner = (inner as ESTree.ParenthesizedExpression).expression;
-      innerType = inner.type;
-    }
-    const wrap = innerType === "Identifier" && (inner as ESTree.IdentifierReference).name === "let";
+    const wrap = isLetIdentifier(object);
 
     if (wrap) write(state, "(", CAT_OTHER);
     printExpression(object, state, PREC_POSTFIX, ctx & CTX_FORBID_CALL);
@@ -431,13 +423,15 @@ function printArguments(
  * @param node - Private-in expression
  * @param state - Printer state
  * @param precedence - Precedence of the position this expression sits in
+ * @param ctx - Context flags, including whether `in` is forbidden in a `for` initializer
  */
 export function printPrivateInExpression(
   node: ESTree.PrivateInExpression,
   state: State,
   precedence: number,
+  ctx: number,
 ): void {
-  const wrap = precedence >= PREC_COMPARE;
+  const wrap = precedence >= PREC_COMPARE || (ctx & CTX_FORBID_IN) !== 0;
   if (wrap) write(state, "(", CAT_OTHER);
 
   markMapStart(state, node.start, node.end, node);
@@ -551,22 +545,14 @@ function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): voi
     }
   }
 
-  // Shorthand is re-derived from names (matching Oxc), except `__proto__`
-  // which keeps its flag (`{ __proto__ }` and `{ __proto__: x }` differ).
-  let shorthand = false;
-  // The identifier a name-derived shorthand prints, which is known here without asking
-  // the expression printer what it is.
-  // A `__proto__` shorthand leaves this null, since its flag says nothing about the value it carries.
   let shorthandIdentifier: ESTree.IdentifierReference | null = null;
+  let computedProtoKey = false;
   let { computed } = node;
   if (!computed) {
     const keyType = key.type;
     if (keyType === "Identifier") {
       const keyName = key.name;
-      if (keyName === "__proto__") {
-        shorthand = node.shorthand === true;
-      } else {
-        // Unwrap any parens, starting from the `type` already read
+      if (keyName !== "__proto__" || node.shorthand === true) {
         let inner = value,
           innerType = valueType;
         while (innerType === "ParenthesizedExpression") {
@@ -576,11 +562,9 @@ function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): voi
 
         if (innerType === "Identifier") {
           typeAssertIs<ESTree.IdentifierReference>(inner);
-          if (inner.name === keyName) {
-            shorthand = true;
-            shorthandIdentifier = inner;
-          }
+          if (inner.name === keyName) shorthandIdentifier = inner;
         }
+        computedProtoKey = keyName === "__proto__" && shorthandIdentifier === null;
       }
     } else if (
       keyType === "Literal"
@@ -592,22 +576,22 @@ function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): voi
     }
   }
 
-  if (shorthand) {
-    if (shorthandIdentifier !== null) {
-      printSpaceBeforeIdentifier(state);
-      writeWithMapNamed(
-        state,
-        shorthandIdentifier.name,
-        shorthandIdentifier.start,
-        shorthandIdentifier.end,
-        shorthandIdentifier,
-      );
-    } else {
-      // `__proto__` shorthand, whose value can be anything. Print through any parens around it.
-      printExpression(withoutParens(value), state, PREC_COMMA, CTX_NONE);
-    }
+  if (shorthandIdentifier !== null) {
+    printSpaceBeforeIdentifier(state);
+    writeWithMapNamed(
+      state,
+      shorthandIdentifier.name,
+      shorthandIdentifier.start,
+      shorthandIdentifier.end,
+      shorthandIdentifier,
+    );
   } else {
-    if (computed) {
+    if (computedProtoKey) {
+      // A colon after a bare `__proto__` key would set the prototype.
+      write(state, "[", CAT_OTHER);
+      markMapStart(state, key.start, key.end, key);
+      write(state, '"__proto__"]', CAT_CLOSE_BRACKET);
+    } else if (computed) {
       write(state, "[", CAT_OTHER);
       typeAssertIs<ESTree.Expression>(key);
       printExpression(key, state, PREC_COMMA, CTX_NONE);
