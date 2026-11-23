@@ -4798,7 +4798,8 @@ export interface PreferRegexLiteralsConfig {
 }
 export interface PreserveCaughtErrorOptions {
   /**
-   * When set to `true`, requires that catch clauses always have a parameter.
+   * When set to `true`, requires catch clauses that throw a new error to have a
+   * caught error parameter, so the caught error is not discarded when re-throwing.
    */
   requireCatchParameter?: boolean;
 }
