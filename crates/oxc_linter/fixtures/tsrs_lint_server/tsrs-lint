@@ -5,6 +5,9 @@
 // (its start, and each frame it receives) as a JSON line to `frames.jsonl` there.
 //
 // behavior.json:
+// - `start`: "ok" (default) answers the handshake; "exit" exits at once without reading its input,
+//   as a `tsrs-lint` without server mode does.
+// - `protocol_version`: the protocol version it answers the handshake with (default 1).
 // - `lint`: "done" (default) answers a Lint with a diagnostic for another request id, a diagnostic
 //   for this one and Done.
 
@@ -45,9 +48,17 @@ function diagnostic(id, filePath) {
 
 log({ event: "start", pid: process.pid, argv: process.argv.slice(2) });
 
+if (behavior.start === "exit") {
+  process.exit(0);
+}
+
 function handle(type, message) {
   log({ type, message });
   switch (type) {
+    // Hello
+    case 22:
+      write(4, { protocol_version: behavior.protocol_version ?? 1, version: "0.0.0-fake" });
+      break;
     // Lint
     case 20: {
       const mode = behavior.lint ?? "done";

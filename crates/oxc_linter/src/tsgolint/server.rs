@@ -3,6 +3,10 @@
 //! The process keeps the programs of the workspace's projects between requests, so a request only
 //! re-parses what changed and re-checks what it needs. Messages use the headless framing in both
 //! directions: `u32 LE JSON length | u8 message type | UTF-8 JSON`.
+//!
+//! A new process first answers a handshake with the protocol version it speaks. oxlint and
+//! `tsrs-lint` are installed separately, so a process that speaks another version, or a
+//! `tsrs-lint` without server mode, is reported once and not started again.
 
 use std::{
     ffi::OsStr,
@@ -12,8 +16,9 @@ use std::{
     sync::{
         Arc, Mutex,
         atomic::{AtomicBool, AtomicU64, Ordering},
-        mpsc,
+        mpsc::{self, RecvTimeoutError},
     },
+    time::Duration,
 };
 
 use rustc_hash::FxHashMap;
@@ -27,17 +32,26 @@ use super::{
 #[cfg(all(test, unix))]
 mod tests;
 
+/// The version of the server protocol this client speaks. The server must speak the same one.
+const PROTOCOL_VERSION: u32 = 1;
+
+/// How long a new process may take to answer the handshake.
+const HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(30);
+
 // Client -> server message types.
 const DID_OPEN: u8 = 16;
 const DID_CHANGE: u8 = 17;
 const DID_CLOSE: u8 = 18;
 const FILES_CHANGED: u8 = 19;
 const LINT: u8 = 20;
+const HELLO: u8 = 22;
 
-// Server -> client message types: the one-shot protocol's, and the end of a request.
+// Server -> client message types: the one-shot protocol's, the end of a request, and the
+// handshake's answer.
 const ERROR: u8 = MessageType::Error as u8;
 const DIAGNOSTIC: u8 = MessageType::Diagnostic as u8;
 const DONE: u8 = 3;
+const SERVER_HELLO: u8 = 4;
 
 /// Kind of a file change on disk, as LSP's `FileChangeType`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -62,6 +76,8 @@ pub struct TsrsLintServer {
     executable_path: PathBuf,
     cwd: PathBuf,
     connection: Mutex<Option<Arc<Connection>>>,
+    /// Why the server is not started again, once it cannot be used.
+    disabled: Mutex<Option<String>>,
     /// The open documents, sent again to a respawned process.
     open_documents: Mutex<FxHashMap<PathBuf, OpenDocument>>,
     next_id: AtomicU64,
@@ -157,9 +173,28 @@ struct LintMessage<'a> {
     fix_suggestions: bool,
 }
 
+#[derive(Serialize)]
+struct HelloMessage {
+    protocol_version: u32,
+}
+
+#[derive(Deserialize)]
+struct HelloPayload {
+    protocol_version: u32,
+    #[serde(default)]
+    version: String,
+}
+
 #[derive(Deserialize)]
 struct IdPayload {
     id: Option<u64>,
+}
+
+/// Why a process could not be started.
+enum SpawnError {
+    /// This executable can never serve this client: it is not started again.
+    Incompatible(String),
+    Failed(String),
 }
 
 #[derive(Deserialize)]
@@ -174,6 +209,7 @@ impl TsrsLintServer {
             executable_path,
             cwd,
             connection: Mutex::new(None),
+            disabled: Mutex::new(None),
             open_documents: Mutex::new(FxHashMap::default()),
             next_id: AtomicU64::new(1),
         }
@@ -298,9 +334,21 @@ impl TsrsLintServer {
         if let Some(connection) = slot.as_ref().filter(|connection| connection.is_alive()) {
             return Ok(Arc::clone(connection));
         }
+        let mut disabled = self.disabled.lock().expect("tsrs-lint disabled mutex poisoned");
+        if let Some(reason) = disabled.as_ref() {
+            return Err(reason.clone());
+        }
         // Drop an exited process before starting the next one.
         *slot = None;
-        let connection = Arc::new(self.spawn()?);
+        let connection = match self.spawn() {
+            Ok(connection) => Arc::new(connection),
+            Err(SpawnError::Incompatible(reason)) => {
+                *disabled = Some(reason.clone());
+                return Err(reason);
+            }
+            Err(SpawnError::Failed(error)) => return Err(error),
+        };
+        drop(disabled);
         let documents =
             self.open_documents.lock().expect("tsrs-lint open documents mutex poisoned");
         for (path, document) in documents.iter() {
@@ -318,34 +366,64 @@ impl TsrsLintServer {
         Ok(connection)
     }
 
-    fn spawn(&self) -> Result<Connection, String> {
+    /// Starts a process and completes the handshake with it.
+    fn spawn(&self) -> Result<Connection, SpawnError> {
+        let path = self.executable_path.display();
         let mut child = type_aware_command(&self.executable_path, "server")
             .current_dir(&self.cwd)
             .spawn()
             .map_err(|e| {
-                format!(
-                    "Failed to spawn tsrs-lint server from path `{}`, with error: {e}",
-                    self.executable_path.display()
-                )
+                SpawnError::Failed(format!(
+                    "Failed to spawn tsrs-lint server from path `{path}`, with error: {e}"
+                ))
             })?;
         let stdin = child.stdin.take().expect("Failed to open tsrs-lint stdin");
         let stdout = child.stdout.take().expect("Failed to open tsrs-lint stdout");
         let pending: Pending = Arc::default();
         let alive = Arc::new(AtomicBool::new(true));
+        let (hello_sender, hello) = mpsc::channel();
         {
             let pending = Arc::clone(&pending);
             let alive = Arc::clone(&alive);
             std::thread::Builder::new()
                 .name("tsrs-lint-reader".into())
-                .spawn(move || read_loop(stdout, &pending, &alive))
-                .map_err(|e| format!("Failed to start the tsrs-lint reader thread: {e}"))?;
+                .spawn(move || read_loop(stdout, &pending, &alive, &hello_sender))
+                .map_err(|e| {
+                    SpawnError::Failed(format!("Failed to start the tsrs-lint reader thread: {e}"))
+                })?;
         }
-        Ok(Connection { child: Mutex::new(child), stdin: Mutex::new(stdin), pending, alive })
+        let connection =
+            Connection { child: Mutex::new(child), stdin: Mutex::new(stdin), pending, alive };
+        // A `tsrs-lint` without server mode exits without reading its input, so the write may
+        // fail: its answer, or the end of its output, tells what happened.
+        let _ = connection.send(HELLO, &HelloMessage { protocol_version: PROTOCOL_VERSION });
+        match hello.recv_timeout(HANDSHAKE_TIMEOUT) {
+            Ok(hello) if hello.protocol_version == PROTOCOL_VERSION => Ok(connection),
+            Ok(hello) => Err(SpawnError::Incompatible(format!(
+                "`{path}` is tsrs-lint {} and speaks server protocol {}, but this oxlint speaks \
+                 protocol {PROTOCOL_VERSION}. Install matching versions of oxlint and tsrs-lint.",
+                hello.version, hello.protocol_version
+            ))),
+            Err(RecvTimeoutError::Disconnected) => Err(SpawnError::Incompatible(format!(
+                "`{path}` exited before the server handshake. It may be a tsrs-lint without \
+                 `tsrs-lint server`: this oxlint needs one that speaks server protocol \
+                 {PROTOCOL_VERSION}."
+            ))),
+            Err(RecvTimeoutError::Timeout) => Err(SpawnError::Failed(format!(
+                "`{path}` did not answer the server handshake within {} seconds",
+                HANDSHAKE_TIMEOUT.as_secs()
+            ))),
+        }
     }
 }
 
 /// Reads frames until the process exits, routing each to the request it belongs to.
-fn read_loop(stdout: ChildStdout, pending: &Pending, alive: &AtomicBool) {
+fn read_loop(
+    stdout: ChildStdout,
+    pending: &Pending,
+    alive: &AtomicBool,
+    hello: &mpsc::Sender<HelloPayload>,
+) {
     let mut reader = BufReader::new(stdout);
     let exit_error = loop {
         let (message_type, payload) = match read_frame(&mut reader) {
@@ -354,6 +432,12 @@ fn read_loop(stdout: ChildStdout, pending: &Pending, alive: &AtomicBool) {
             Err(error) => break format!("Failed to read from tsrs-lint server: {error}"),
         };
         match message_type {
+            SERVER_HELLO => match serde_json::from_slice::<HelloPayload>(&payload) {
+                Ok(payload) => {
+                    let _ = hello.send(payload);
+                }
+                Err(error) => break format!("Failed to parse tsrs-lint hello payload: {error}"),
+            },
             DONE => match serde_json::from_slice::<DonePayload>(&payload) {
                 Ok(done) => send(pending, done.id, Event::Done),
                 Err(error) => break format!("Failed to parse tsrs-lint done payload: {error}"),

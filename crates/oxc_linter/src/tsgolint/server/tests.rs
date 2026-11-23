@@ -11,7 +11,7 @@ use std::{
 
 use serde_json::{Value, json};
 
-use super::{LINT, TsrsLintServer};
+use super::{HELLO, LINT, TsrsLintServer};
 use crate::tsgolint::{Config, Rule, TsGoLintDiagnostic};
 
 struct Fixture {
@@ -81,6 +81,13 @@ fn lint(server: &TsrsLintServer, file_path: &str) -> Result<Vec<TsGoLintDiagnost
     server.lint(&configs(file_path), false, false)
 }
 
+fn failure(result: Result<Vec<TsGoLintDiagnostic>, String>) -> String {
+    match result {
+        Err(error) => error,
+        Ok(diagnostics) => panic!("expected a failure, got {} diagnostics", diagnostics.len()),
+    }
+}
+
 #[test]
 fn lint_routes_diagnostics_by_request_id() {
     let Some(fixture) = Fixture::new(&json!({})) else { return };
@@ -99,6 +106,7 @@ fn lint_routes_diagnostics_by_request_id() {
     assert_eq!(diagnostic.file_path, PathBuf::from(&file));
 
     assert_eq!(fixture.events()[0]["argv"], json!(["server"]));
+    assert_eq!(fixture.messages(HELLO), vec![json!({ "protocol_version": 1 })]);
     let lints = fixture.messages(LINT);
     assert_eq!(lints.len(), 1);
     assert_eq!(
@@ -114,5 +122,37 @@ fn lint_routes_diagnostics_by_request_id() {
     // The running process serves the next request.
     let diagnostics = lint(&server, &file).expect("second lint failed");
     assert_eq!(diagnostics.len(), 1);
+    assert_eq!(fixture.starts(), 1);
+}
+
+#[test]
+fn other_protocol_version_disables_the_server() {
+    let Some(fixture) = Fixture::new(&json!({ "protocol_version": 2 })) else { return };
+    let server = fixture.server();
+    let file = fixture.file("index.ts");
+
+    let error = failure(lint(&server, &file));
+    assert!(error.contains("speaks server protocol 2"), "{error}");
+    assert!(error.contains("this oxlint speaks protocol 1"), "{error}");
+
+    // The server is not started again.
+    let second = failure(lint(&server, &file));
+    assert_eq!(second, error);
+    assert_eq!(fixture.starts(), 1);
+    assert_eq!(fixture.messages(HELLO).len(), 1);
+    assert_eq!(fixture.messages(LINT), [] as [Value; 0]);
+}
+
+#[test]
+fn executable_without_server_mode_disables_the_server() {
+    let Some(fixture) = Fixture::new(&json!({ "start": "exit" })) else { return };
+    let server = fixture.server();
+    let file = fixture.file("index.ts");
+
+    let error = failure(lint(&server, &file));
+    assert!(error.contains("exited before the server handshake"), "{error}");
+
+    let second = failure(lint(&server, &file));
+    assert_eq!(second, error);
     assert_eq!(fixture.starts(), 1);
 }
