@@ -26,3 +26,20 @@ pub fn class_body_has_decorators(body: &ClassBody<'_>) -> bool {
         ClassElement::StaticBlock(_) | ClassElement::TSIndexSignature(_) => false,
     })
 }
+
+/// Whether legacy decorators lower this class by decorating the class itself, which reassigns
+/// the class binding to the value returned by `_decorate`.
+///
+/// That is the case for a runtime class declaration whose class or constructor parameters are
+/// decorated.
+pub fn legacy_decorators_reassign_class_binding(class: &Class<'_>) -> bool {
+    if class.is_expression() || class.declare {
+        return false;
+    }
+    !class.decorators.is_empty()
+        || class.body.body.iter().any(|element| {
+            matches!(element, ClassElement::MethodDefinition(method)
+                if method.kind.is_constructor()
+                    && method.value.params.items.iter().any(|param| !param.decorators.is_empty()))
+        })
+}
