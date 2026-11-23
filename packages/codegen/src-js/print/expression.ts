@@ -305,7 +305,7 @@ export function printMemberExpression(
 ): void {
   const { object } = node;
   if (node.computed) {
-    const wrap = isLetIdentifier(object);
+    const wrap = isLetIdentifier(object, object.type);
 
     if (wrap) write(state, "(", CAT_OTHER);
     printExpression(object, state, PREC_POSTFIX, ctx & CTX_FORBID_CALL);
