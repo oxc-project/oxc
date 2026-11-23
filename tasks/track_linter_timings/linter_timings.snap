@@ -611,7 +611,7 @@ unicorn/prefer-keyboard-event-key                       |  77225
 unicorn/prefer-logical-operator-over-ternary            |   4722
 unicorn/prefer-math-min-max                             |   4722
 unicorn/prefer-math-trunc                               | 105321
-unicorn/prefer-modern-dom-apis                          |  62606
+unicorn/prefer-modern-dom-apis                          |  62817
 unicorn/prefer-modern-math-apis                         |  83210
 unicorn/prefer-module                                   | 226148
 unicorn/prefer-native-coercion-functions                |  16812

@@ -3813,7 +3813,7 @@ impl RuleRunner for crate::rules::unicorn::prefer_math_trunc::PreferMathTrunc {
 
 impl RuleRunner for crate::rules::unicorn::prefer_modern_dom_apis::PreferModernDomApis {
     const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression, AstType::WhileStatement]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
