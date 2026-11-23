@@ -6,7 +6,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         AssignmentExpression, AssignmentTarget as AstAssignmentTarget, BindingPattern,
-        ClassElement, Expression, VariableDeclarator,
+        ClassElement, VariableDeclarator,
     },
 };
 use oxc_cfg::{
@@ -164,22 +164,13 @@ impl Rule for NoUselessAssignment {
                 AstKind::FormalParameter(_) | AstKind::FormalParameterRest(_) => None,
                 _ => continue,
             };
-            if let Some(var_decl) = var_decl {
+            if var_decl.is_some() {
                 if let AstKind::VariableDeclaration(var_declaration) =
                     ctx.nodes().parent_node(decl_node.id()).kind()
                     && var_declaration.kind.is_const()
                 {
                     continue;
                 }
-                if matches!(
-                    &var_decl.init,
-                    Some(
-                        Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_)
-                    )
-                ) {
-                    continue;
-                }
-
                 if Self::is_exported(ctx, symbol_id, decl_node) {
                     continue;
                 }
@@ -1015,6 +1006,12 @@ fn test() {
                         v = 'used-2'
                         console.log(v);
                     }",
+        "let callback = () => 1;
+                    if (condition) {
+                        callback();
+                    }
+                    callback = () => 2;
+                    callback();",
         "var foo = () => {
                         let v = 'used';
                         console.log(v);
@@ -1614,6 +1611,12 @@ function useResource(unsafe: (resource: { readonly release: () => void }) => voi
 
     let fail = vec![
         "function f() { try {} catch (e) { var e = 1; use(e); } e = 2; e = 3; use(e); }",
+        "let callback = () => 1;
+                        callback = () => 2;
+                        callback();",
+        "let callback = function () { return 1; };
+                        callback = () => 2;
+                        callback();",
         "let v = 'used';
                         console.log(v);
                         v = 'unused'",
