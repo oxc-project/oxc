@@ -166,6 +166,7 @@ impl Rule for PreferMathTrunc {
     }
 }
 
+#[expect(clippy::float_cmp)]
 fn check_parse_int_call<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
     if !call_expr.optional
         && call_expr.arguments.len() == 2
@@ -217,7 +218,7 @@ fn check_parse_int_call<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a
             pad_fix_with_token_boundary(ctx.source_text(), span, &mut replacement);
             fixer.replace(span, replacement)
         });
-    };
+    }
 }
 
 fn get_parse_int_name<'a>(
