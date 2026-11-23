@@ -673,8 +673,9 @@ fn template_cooked_invalid_marker(cpu: DynCpu) {
 
 #[test_cpus]
 fn unterminated_jsx_element(cpu: DynCpu) {
-    assert_eq!(codes_tsx("var a = <T>(x: T) => x;", cpu), [DiagCode::UnterminatedJsxElement]);
-    assert_eq!(codes_tsx("f(<T>(x: T) => x);", cpu), [DiagCode::UnterminatedJsxElement]);
+    let want = [DiagCode::JsxTextInvalidCharacter, DiagCode::UnterminatedJsxElement];
+    assert_eq!(codes_tsx("var a = <T>(x: T) => x;", cpu), want);
+    assert_eq!(codes_tsx("f(<T>(x: T) => x);", cpu), want);
 }
 
 #[test_cpus]
@@ -684,6 +685,7 @@ fn generic_function_types_never_flagged(cpu: DynCpu) {
         "const r = f<{ m: <T>(x: T) => T }>(0);",
         "let h = <T,>(x: T) => x;",
         "const e = <T>(x)</T>;",
+        "const e = <T>(it's {'a) => b'}</T>;",
     ] {
         assert!(codes_tsx(code, cpu).is_empty(), "{code:?}");
     }

@@ -35,8 +35,6 @@ pub(super) enum After {
 pub(super) struct Site {
     /// Inside a type: annotation, alias, type argument list, type literal.
     pub in_type: bool,
-    /// An operand may start here, in expression context.
-    pub operand: bool,
     /// A `<` here opens the type-parameter list of a declaration or member.
     pub type_params: bool,
 }
