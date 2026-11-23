@@ -354,15 +354,10 @@ fn classify_ts_type(ty: &TSType) -> ReceiverTypeKind {
         | TSType::TSConstructorType(_) => ReceiverTypeKind::NonTarget,
         TSType::TSTypeReference(type_ref) => {
             if let TSTypeName::IdentifierReference(ident) = &type_ref.type_name {
-                let name = ident.name.as_str();
-                if NON_PARENT_NODE_TYPE_NAMES.contains(&name) {
-                    return ReceiverTypeKind::NonTarget;
-                }
-                if TARGET_PARENT_NODE_TYPE_NAMES.contains(&name) {
-                    return ReceiverTypeKind::Target;
-                }
+                classify_type_name(&ident.name)
+            } else {
+                ReceiverTypeKind::Unknown
             }
-            ReceiverTypeKind::Unknown
         }
         TSType::TSUnionType(union) => {
             let mut has_non_nullish = false;
@@ -410,15 +405,18 @@ fn classify_ts_type(ty: &TSType) -> ReceiverTypeKind {
     }
 }
 
-fn unwrap_ts_type_parens<'a>(mut ty: &'a TSType<'a>) -> &'a TSType<'a> {
-    while let TSType::TSParenthesizedType(paren) = ty {
-        ty = &paren.type_annotation;
+fn classify_type_name(name: &str) -> ReceiverTypeKind {
+    if NON_PARENT_NODE_TYPE_NAMES.contains(&name) {
+        ReceiverTypeKind::NonTarget
+    } else if TARGET_PARENT_NODE_TYPE_NAMES.contains(&name) {
+        ReceiverTypeKind::Target
+    } else {
+        ReceiverTypeKind::Unknown
     }
-    ty
 }
 
 fn is_any_or_unknown_ts_type(ty: &TSType) -> bool {
-    matches!(unwrap_ts_type_parens(ty), TSType::TSAnyKeyword(_) | TSType::TSUnknownKeyword(_))
+    matches!(ty.without_parenthesized(), TSType::TSAnyKeyword(_) | TSType::TSUnknownKeyword(_))
 }
 
 fn unwrap_parens_and_ts_assertions<'a>(mut expr: &'a Expression<'a>) -> &'a Expression<'a> {
@@ -462,15 +460,10 @@ fn classify_class_super(super_class: Option<&Expression>) -> ReceiverTypeKind {
         return ReceiverTypeKind::NonTarget;
     };
     if let Expression::Identifier(ident) = super_class.get_inner_expression() {
-        let name = ident.name.as_str();
-        if NON_PARENT_NODE_TYPE_NAMES.contains(&name) {
-            return ReceiverTypeKind::NonTarget;
-        }
-        if TARGET_PARENT_NODE_TYPE_NAMES.contains(&name) {
-            return ReceiverTypeKind::Target;
-        }
+        classify_type_name(&ident.name)
+    } else {
+        ReceiverTypeKind::Unknown
     }
-    ReceiverTypeKind::Unknown
 }
 
 fn classify_this_receiver(while_node: &AstNode, ctx: &LintContext) -> ReceiverTypeKind {
@@ -487,12 +480,10 @@ fn classify_this_receiver(while_node: &AstNode, ctx: &LintContext) -> ReceiverTy
                 if let Some(this_param) = &func.this_param
                     && let Some(annotation) = &this_param.type_annotation
                 {
-                    let kind = classify_ts_type(&annotation.type_annotation);
-                    if kind != ReceiverTypeKind::Unknown {
-                        return kind;
-                    }
-                    if !is_any_or_unknown_ts_type(&annotation.type_annotation) {
-                        return ReceiverTypeKind::Unknown;
+                    match classify_ts_type(&annotation.type_annotation) {
+                        ReceiverTypeKind::Unknown
+                            if is_any_or_unknown_ts_type(&annotation.type_annotation) => {}
+                        kind => return kind,
                     }
                 }
                 match ctx.nodes().parent_kind(ancestor.id()) {
@@ -544,25 +535,14 @@ fn classify_receiver_expression(
 ) -> ReceiverTypeKind {
     match expr.without_parentheses() {
         Expression::TSAsExpression(ts_as) => {
-            let kind = classify_ts_type(&ts_as.type_annotation);
-            if kind != ReceiverTypeKind::Unknown {
-                kind
-            } else if is_any_or_unknown_ts_type(&ts_as.type_annotation) {
-                classify_receiver_expression(&ts_as.expression, while_node, ctx)
-            } else {
-                ReceiverTypeKind::Unknown
-            }
+            classify_asserted_receiver(&ts_as.type_annotation, &ts_as.expression, while_node, ctx)
         }
-        Expression::TSTypeAssertion(ts_assert) => {
-            let kind = classify_ts_type(&ts_assert.type_annotation);
-            if kind != ReceiverTypeKind::Unknown {
-                kind
-            } else if is_any_or_unknown_ts_type(&ts_assert.type_annotation) {
-                classify_receiver_expression(&ts_assert.expression, while_node, ctx)
-            } else {
-                ReceiverTypeKind::Unknown
-            }
-        }
+        Expression::TSTypeAssertion(ts_assert) => classify_asserted_receiver(
+            &ts_assert.type_annotation,
+            &ts_assert.expression,
+            while_node,
+            ctx,
+        ),
         Expression::TSNonNullExpression(non_null) => {
             classify_receiver_expression(&non_null.expression, while_node, ctx)
         }
@@ -594,6 +574,20 @@ fn classify_receiver_expression(
         Expression::ThisExpression(_) => classify_this_receiver(while_node, ctx),
         Expression::Super(_) => classify_super_receiver(while_node, ctx),
         _ => ReceiverTypeKind::Unknown,
+    }
+}
+
+fn classify_asserted_receiver(
+    ty: &TSType,
+    expr: &Expression,
+    while_node: &AstNode,
+    ctx: &LintContext,
+) -> ReceiverTypeKind {
+    match classify_ts_type(ty) {
+        ReceiverTypeKind::Unknown if is_any_or_unknown_ts_type(ty) => {
+            classify_receiver_expression(expr, while_node, ctx)
+        }
+        kind => kind,
     }
 }
 
