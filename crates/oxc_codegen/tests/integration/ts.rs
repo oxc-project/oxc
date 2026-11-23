@@ -755,6 +755,26 @@ fn type_codegen_with_preserve_parens_off() {
         parse_options,
     );
     test_with_parse_options(
+        "type R = X extends { [K in infer U extends (asserts) as K]: 1 } ? U : never;",
+        "type R = X extends { [K in (infer U extends asserts) as K]: 1 } ? U : never;\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type R = X extends [(infer U extends (asserts)) extends string ? 1 : 2] ? U : never;",
+        "type R = X extends [(infer U extends asserts) extends string ? 1 : 2] ? U : never;\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "let d = (x as !(asserts)) in x;",
+        "let d = x as (!asserts) in x;\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type R = { [K in ?(asserts) as K]: 1 };",
+        "type R = { [K in (?asserts) as K]: 1 };\n",
+        parse_options,
+    );
+    test_with_parse_options(
         "type R = (keyof asserts) extends string ? 1 : 2;",
         "type R = (keyof asserts) extends string ? 1 : 2;\n",
         ParseOptions::default(),

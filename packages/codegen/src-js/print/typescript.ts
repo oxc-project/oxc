@@ -821,8 +821,9 @@ function printTSConditionalType(node: ESTree.TSConditionalType, state: State): v
  * `asserts x` predicate, so `(asserts) extends T ? A : B` must keep its parentheses wherever a keyword
  * can follow the type. The rightmost edge is walked through the nodes that print a child type last -
  * the last member of a union or intersection, a type operator's operand, a function or constructor
- * type's return type, a conditional's false type, and a type predicate's type. A child the printer
- * parenthesizes anyway may also count, which only adds redundant parentheses.
+ * type's return type, a conditional's false type, a type predicate's type, an `infer` type's constraint,
+ * and the operand of a prefix `?` or `!`. A child the printer parenthesizes anyway may also count,
+ * which only adds redundant parentheses.
  *
  * @param ty - Type
  */
@@ -854,6 +855,17 @@ function endsWithAssertsReference(ty: ESTree.TSType): boolean {
         break;
       case "TSTypePredicate":
         if (ty.typeAnnotation == null) return false;
+        ty = tsTypeAnnotationOf(ty.typeAnnotation);
+        break;
+      case "TSInferType": {
+        const { constraint } = ty.typeParameter;
+        if (constraint == null) return false;
+        ty = constraint;
+        break;
+      }
+      case "TSJSDocNullableType":
+      case "TSJSDocNonNullableType":
+        if (ty.postfix) return false;
         ty = tsTypeAnnotationOf(ty.typeAnnotation);
         break;
       default:

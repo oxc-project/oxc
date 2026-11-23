@@ -3505,7 +3505,8 @@ fn type_starts_with_non_identifier(ty: &TSType) -> bool {
 /// TypeScript reads `asserts` followed by an identifier or keyword on the same line as the start
 /// of an assertion predicate (`asserts x`), so `(asserts) extends T ? A : B` must keep its
 /// parentheses wherever a keyword can follow the type. The type is followed through the nodes
-/// that print a child type last, such as `keyof asserts`, `T | asserts`, and `() => asserts`.
+/// that print a child type last, such as `keyof asserts`, `T | asserts`, `() => asserts`,
+/// `infer U extends asserts`, and `!asserts`.
 /// A child the printer parenthesizes anyway may also count, which only adds redundant parentheses.
 fn ends_with_asserts_reference(ty: &TSType) -> bool {
     match ty {
@@ -3536,6 +3537,15 @@ fn ends_with_asserts_reference(ty: &TSType) -> bool {
             .type_annotation
             .as_ref()
             .is_some_and(|annotation| ends_with_asserts_reference(&annotation.type_annotation)),
+        TSType::TSInferType(infer) => {
+            infer.type_parameter.constraint.as_ref().is_some_and(ends_with_asserts_reference)
+        }
+        TSType::JSDocNullableType(nullable) => {
+            !nullable.postfix && ends_with_asserts_reference(&nullable.type_annotation)
+        }
+        TSType::JSDocNonNullableType(non_nullable) => {
+            !non_nullable.postfix && ends_with_asserts_reference(&non_nullable.type_annotation)
+        }
         _ => false,
     }
 }
