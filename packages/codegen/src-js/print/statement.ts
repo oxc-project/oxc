@@ -322,7 +322,7 @@ export function printStatement(node: ESTree.Statement, state: State): void {
     case "TSExportAssignment":
       printIndent(state);
       write(state, "export = ", CAT_OTHER);
-      printExpression(node.expression, state, PREC_LOWEST, CTX_NONE);
+      printExpression(node.expression, state, PREC_COMMA, CTX_NONE);
       write(state, ";\n", CAT_OTHER);
       break;
     case "TSNamespaceExportDeclaration":
