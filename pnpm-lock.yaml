@@ -312,8 +312,8 @@ importers:
         specifier: workspace:*
         version: link:../shared
       '@oxc-project/types':
-        specifier: ^0.159.0
-        version: 0.159.0
+        specifier: ^0.160.0
+        version: 0.160.0
       '@type-challenges/utils':
         specifier: ^0.1.1
         version: 0.1.1
@@ -2573,6 +2573,9 @@ packages:
 
   '@oxc-project/types@0.159.0':
     resolution: {integrity: sha512-QWjWhxheluOJ82kDHNyps00UvRpQCtI34B5A/SzpgQycUD/79FuvT4I0aQIfE/bdPwKmX4QPftnywFBH6FxJhQ==}
+
+  '@oxc-project/types@0.160.0':
+    resolution: {integrity: sha512-gw4k9syEmnckbOgw2A2FU1TBDdX9hfwV9jEn/uio65pguPzwWiXQS3OIJDMEhv9m06tj9XiEe6RoD0YA+LgreA==}
 
   '@oxfmt/binding-android-arm-eabi@0.64.0':
     resolution: {integrity: sha512-o6uzh/jTOQeAY5TdkAeXdqv7MBRcPxiRA08zrcBtkKj5cSu/FMu0Hl7Q6Fi1KCKyCWZ6lJVjBzdsJvsKltUsGQ==}
@@ -7221,32 +7224,40 @@ packages:
   yuku-ast@0.18.1:
     resolution: {integrity: sha512-Y9YgmYeExF+13IOm4r9pTgmQiCVJtrhq014st78eAckWlCkbjzNd2AVrQHng5uiLz9j31O4sGYhuP3znSKJv9w==}
     engines: {node: '>=14.18.0'}
+    deprecated: 'Yuku is now one package with one core. Use "yuku" instead: https://yuku.fyi/javascript/. Existing installs keep working but get no more fixes.'
 
   yuku-codegen@0.18.1:
     resolution: {integrity: sha512-0tNgBfNHW6+tEBGEf1N20C6tDsFR9Vj344Ey01wgAMeP+j0zR5WBF8dyzOu5oA/n6Yz6YqV1ZcASdi0cin+q8A==}
     engines: {node: '>=14.18.0'}
+    deprecated: 'Yuku is now one package with one core. Use "yuku" instead: https://yuku.fyi/javascript/. Existing installs keep working but get no more fixes.'
 
   yuku-codegen@0.5.48:
     resolution: {integrity: sha512-p7HxD5Xl4jzDzqMrGePAOeSHmRY4g58h4HuGq15weQFPxuPWd/W6e7nqp/+Lea6JfpOdBwJOAyXFqIZ/J9Zfnw==}
+    deprecated: 'Yuku is now one package with one core. Use "yuku" instead: https://yuku.fyi/javascript/. Existing installs keep working but get no more fixes.'
 
   yuku-core@0.18.1:
     resolution: {integrity: sha512-8PEOCKEi7r3nPY5cF0ZtJJSQj0ftwd0GC4En8fDQIP3nxw5ysSDwM0RcEuyHBblowRb82ad9AsExpqnKXAtC1Q==}
     engines: {node: '>=14.18.0'}
+    deprecated: 'Yuku is now one package with one core. Use "yuku" instead: https://yuku.fyi/javascript/. Existing installs keep working but get no more fixes.'
 
   yuku-core@0.19.0:
     resolution: {integrity: sha512-kYK9e1XdfirNhkipzW0wmMcSWcVF/CWnuugodfVYRCUwvoBefweL9HzB96OiKEhsx78V5WbUxbJqlizMX869Qg==}
     engines: {node: '>=14.18.0'}
+    deprecated: 'Yuku is now one package with one core. Use "yuku" instead: https://yuku.fyi/javascript/. Existing installs keep working but get no more fixes.'
 
   yuku-parser@0.18.1:
     resolution: {integrity: sha512-t5pANCF6k9rgJre7jk8DMAU4lEoI1oWWZgXk0fcvmCYQquFVWv0rf6Awwt56nnPiHb0E24dhtrpfgf9ChTCbrQ==}
     engines: {node: '>=14.18.0'}
+    deprecated: 'Yuku is now one package with one core. Use "yuku" instead: https://yuku.fyi/javascript/. Existing installs keep working but get no more fixes.'
 
   yuku-parser@0.19.0:
     resolution: {integrity: sha512-XrBh9ZiQK5mJVRxZBAvD6LwRyAYrK3MFtH3+onyuxFL5hFD44EC3QOmIC1FjTj6H2MMwq46/NAI+NZxLZPZgxg==}
     engines: {node: '>=14.18.0'}
+    deprecated: 'Yuku is now one package with one core. Use "yuku" instead: https://yuku.fyi/javascript/. Existing installs keep working but get no more fixes.'
 
   yuku-parser@0.5.48:
     resolution: {integrity: sha512-OWBfhrpgK9+/4+IXG9oT8Bao4AhViQA7vdyNNH7EUg8dQYgwa70XtIBWTpCEme1P1ECyoDNYkn0wT63f8XRcVA==}
+    deprecated: 'Yuku is now one package with one core. Use "yuku" instead: https://yuku.fyi/javascript/. Existing installs keep working but get no more fixes.'
 
   yup@1.7.1:
     resolution: {integrity: sha512-GKHFX2nXul2/4Dtfxhozv701jLQHdf6J34YDh2cEkpqoo8le5Mg6/LrdseVLrFarmFygZTlfIhHx/QKfb/QWXw==}
@@ -8945,6 +8956,8 @@ snapshots:
   '@oxc-project/types@0.157.0': {}
 
   '@oxc-project/types@0.159.0': {}
+
+  '@oxc-project/types@0.160.0': {}
 
   '@oxfmt/binding-android-arm-eabi@0.64.0':
     optional: true
