@@ -708,6 +708,57 @@ fn type_codegen_with_preserve_parens_off() {
         "type t = string | intrinsic;\n",
         parse_options,
     );
+    // A bare `asserts` reference followed by a keyword re-parses as an `asserts x` predicate.
+    test_with_parse_options(
+        "type R = (asserts) extends string ? 1 : 2;",
+        "type R = (asserts) extends string ? 1 : 2;\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type R = keyof (asserts) extends string ? 1 : 2;",
+        "type R = (keyof asserts) extends string ? 1 : 2;\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type R = number | (asserts) extends string ? 1 : 2;",
+        "type R = (number | asserts) extends string ? 1 : 2;\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type R = { [K in (asserts) as K]: 1 };",
+        "type R = { [K in (asserts) as K]: 1 };\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type R = { [K in () => (asserts) as K]: 1 };",
+        "type R = { [K in (() => asserts) as K]: 1 };\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type R = { [K in (asserts)]: 1 };",
+        "type R = { [K in asserts]: 1 };\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "let b = (x satisfies (asserts)) in x;",
+        "let b = x satisfies (asserts) in x;\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "let c = (x as (asserts)) instanceof Object;",
+        "let c = x as (asserts) instanceof Object;\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type R = (asserts)[] extends string ? 1 : 2;",
+        "type R = asserts[] extends string ? 1 : 2;\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type R = (keyof asserts) extends string ? 1 : 2;",
+        "type R = (keyof asserts) extends string ? 1 : 2;\n",
+        ParseOptions::default(),
+    );
 }
 
 #[test]
