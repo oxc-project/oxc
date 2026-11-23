@@ -780,7 +780,7 @@ function printTSTupleElement(node: ESTree.TSTupleElement, state: State): void {
 
 /**
  * `C extends E ? T : F`. The check type is wrapped when it is a function, constructor or conditional
- * type, or ends in a bare `asserts` reference, and the extends type only when it is itself
+ * type, or ends in a bare `asserts` reference. The extends type is wrapped only when it is itself
  * conditional - otherwise its `?` would be read as this conditional's.
  *
  * @param node - TS conditional type
