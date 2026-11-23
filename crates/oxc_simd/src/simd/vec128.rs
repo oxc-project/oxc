@@ -22,9 +22,9 @@
 use std::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not};
 
 #[cfg(target_arch = "aarch64")]
-use std::arch::aarch64::*;
+use std::arch::{aarch64::*, asm};
 #[cfg(target_arch = "x86_64")]
-use std::arch::x86_64::*;
+use std::arch::{asm, x86_64::*};
 
 use super::{
     CpuSimd, VecData128,
@@ -813,6 +813,75 @@ impl<C: CpuSimd> Vec128<C> {
             Neon => {
                 // SAFETY: `Neon` arm only runs if `self` is a `Vec128<Neon>`, so CPU supports Neon
                 unsafe { vgetq_lane_u64::<INDEX>(vreinterpretq_u64_u8(self.inner())) }
+            }
+            _ => unused!(self)
+        })
+    }
+}
+
+/// Optimizer control.
+impl<C: CpuSimd> Vec128<C> {
+    /// Hide the value of this [`Vec128`] from the compiler. Compiles to no instructions.
+    ///
+    /// LLVM can't see through the result, so it can't rewrite the operations which use it
+    /// based on what it knows about the value.
+    ///
+    /// Useful where LLVM "optimizes" code in a way that's actually a pessimization.
+    #[inline(always)]
+    pub fn opaque(self) -> Self {
+        cpu_select!(self.cpu(), {
+            Avx2 => {
+                /// Pass `v` through an empty `asm!` block.
+                ///
+                /// A separate function, because an `xmm_reg` operand needs SSE enabled
+                /// in the function containing the `asm!`.
+                #[target_feature(enable = "sse")]
+                #[inline]
+                fn opaque_inner(mut v: __m128i) -> __m128i {
+                    // SAFETY: The `asm!` block is empty, so it doesn't access memory
+                    // or change any state
+                    unsafe {
+                        // The template is only a comment, so it emits no instructions.
+                        // It contains `{0}` in a comment because `asm!` requires every operand
+                        // to appear somewhere in the template.
+                        asm!(
+                            "/* {0} */",
+                            inout(xmm_reg) v,
+                            options(pure, nomem, nostack, preserves_flags),
+                        );
+                    }
+                    v
+                }
+
+                // SAFETY: `Avx2` arm only runs if `self` is a `Vec128<Avx2>`, so CPU supports AVX2,
+                // which includes SSE
+                Self::new(unsafe { opaque_inner(self.inner()) }, self.cpu())
+            }
+            Neon => {
+                /// Pass `v` through an empty `asm!` block.
+                ///
+                /// A separate function, because a `vreg` operand needs Neon enabled
+                /// in the function containing the `asm!`.
+                #[target_feature(enable = "neon")]
+                #[inline]
+                fn opaque_inner(mut v: uint8x16_t) -> uint8x16_t {
+                    // SAFETY: The `asm!` block is empty, so it doesn't access memory
+                    // or change any state
+                    unsafe {
+                        // The template is only a comment, so it emits no instructions.
+                        // It contains `{0:v}` in a comment because `asm!` requires every operand
+                        // to appear somewhere in the template.
+                        asm!(
+                            "/* {0:v} */",
+                            inout(vreg) v,
+                            options(pure, nomem, nostack, preserves_flags),
+                        );
+                    }
+                    v
+                }
+
+                // SAFETY: `Neon` arm only runs if `self` is a `Vec128<Neon>`, so CPU supports Neon
+                Self::new(unsafe { opaque_inner(self.inner()) }, self.cpu())
             }
             _ => unused!(self)
         })
