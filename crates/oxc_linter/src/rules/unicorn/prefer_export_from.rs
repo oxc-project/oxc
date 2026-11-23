@@ -678,6 +678,16 @@ impl PreferExportFrom {
             violations.iter().map(|v| ctx.nodes().get_node(v.export_node_id)).collect();
         parent_nodes.sort_unstable_by_key(|node| node.span().start);
 
+        // The fix rewrites each of these export lists as a whole, so it would drop
+        // names in a list that don't come from this import
+        // (`import {a} from './x'; import {b} from './y'; export {a, b};`).
+        let drops_other_exports = parent_nodes.chunk_by(|a, b| a.id() == b.id()).any(|nodes| {
+            let AstKind::ExportNamedDeclaration(decl) = nodes[0].kind() else {
+                return false;
+            };
+            decl.specifiers.len() > nodes.len()
+        });
+
         let replace_export_spans: Vec<Span> = parent_nodes
             .iter()
             .map(|parent_node| Self::get_replace_span(ctx, parent_node.id()))
@@ -688,7 +698,7 @@ impl PreferExportFrom {
         let delete_span = Span::new(start, end);
 
         let re_export_source_text =
-            re_export_decl.map(|decl| ctx.source_range(decl.span())).unwrap_or_default();
+            re_export_decl.map_or_default(|decl| ctx.source_range(decl.span()));
 
         let joined_names = format_export_names(violations);
         let exported_specifiers: FxHashSet<SymbolId> =
@@ -697,7 +707,12 @@ impl PreferExportFrom {
         for violation in violations {
             let specifier_node = ctx.nodes().get_node(violation.import_specifier_id);
 
-            if violation.needs_source {
+            if drops_other_exports {
+                ctx.diagnostic(prefer_export_from_diagnostic(
+                    import_decl.span(),
+                    specifier_node.span(),
+                ));
+            } else if violation.needs_source {
                 let export_node = ctx.nodes().get_node(violation.export_node_id);
                 ctx.diagnostic_with_suggestion(
                     prefer_export_from_diagnostic(import_decl.span(), specifier_node.span()),
@@ -1027,8 +1042,7 @@ impl PreferExportFrom {
             let with_clause = import_decl
                 .with_clause
                 .as_ref()
-                .map(|with_clause| format!(" {}", ctx.source_range(with_clause.span)))
-                .unwrap_or_default();
+                .map_or_default(|with_clause| format!(" {}", ctx.source_range(with_clause.span)));
             let source = ctx.source_range(import_decl.source.span);
 
             format!("import{import_kind} {} from {source}{with_clause};\n", result_parts.join(", "))
@@ -1358,12 +1372,10 @@ fn test() {
             export {foo as 'foo'};",
         r#"import {'foo' as foo} from 'foo';
             export {foo as "foo"};"#,
-        // spellchecker:off
         "import {'fo\u{20}o' as foo} from 'foo';
             export {foo as \"fo o\"};",
         "import {'fo\\no' as foo} from 'foo';
            export {foo as \"fo\\u000ao\"};",
-        // spellchecker:on
         "import {'default' as foo} from 'foo';
             export {foo};",
         "import {'default' as foo} from 'foo';
@@ -1588,7 +1600,9 @@ fn test() {
             "import * as foo from 'foo';
           import * as bar from 'foo';
          export {foo, bar};",
-            "export * as foo from 'foo';\nimport * as bar from 'foo';\n         ",
+            "import * as foo from 'foo';
+          import * as bar from 'foo';
+         export {foo, bar};",
         ),
         (
             "import * as foo from 'foo';
@@ -1627,7 +1641,6 @@ fn test() {
             export {foo as "foo"};"#,
             "export { \"foo\" } from 'foo';\n",
         ),
-        // spellchecker:off
         (
             "import {'fo\u{20}o' as foo} from 'foo';
             export {foo as \"fo o\"};",
@@ -1643,7 +1656,6 @@ fn test() {
             export {foo as \"foo\"};",
             "export { 'fo o' as \"foo\" } from 'foo';\n",
         ),
-        // spellchecker:on
         (
             "import {'default' as foo} from 'foo';
             export {foo};",
@@ -1930,6 +1942,14 @@ fn test() {
         (
             "import {a} from \"\\uD800\";\nexport {a};\nexport {b} from \"\\uD800\";",
             "export {b, a} from \"\\uD800\";",
+        ),
+        (
+            "import { a } from './x';\nimport { b } from './y';\nexport { a, b };",
+            "import { a } from './x';\nimport { b } from './y';\nexport { a, b };",
+        ),
+        (
+            "import { a } from './x';\nconst local = 1;\nexport { a, local };",
+            "import { a } from './x';\nconst local = 1;\nexport { a, local };",
         ),
     ];
     Tester::new(PreferExportFrom::NAME, PreferExportFrom::PLUGIN, pass, fail)

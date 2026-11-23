@@ -1,0 +1,14 @@
+{
+  "assumptions": {
+    "setPublicClassFields": true
+  },
+  "plugins": [
+    "transform-class-properties",
+    [
+      "transform-typescript",
+      {
+        "removeClassFieldsWithoutInitializer": true
+      }
+    ]
+  ]
+}

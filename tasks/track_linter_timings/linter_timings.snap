@@ -442,7 +442,7 @@ react/preserve-manual-memoization                       |      4
 react/purity                                            |      4
 react/react-in-jsx-scope                                |    459
 react/refs                                              |      4
-react/require-render-return                             |   2604
+react/require-render-return                             |  16812
 react/rule-suppression                                  |      4
 react/rules-of-hooks                                    |  62606
 react/self-closing-comp                                 |    452
@@ -610,13 +610,13 @@ unicorn/prefer-includes                                 |  20604
 unicorn/prefer-keyboard-event-key                       |  77225
 unicorn/prefer-logical-operator-over-ternary            |   4722
 unicorn/prefer-math-min-max                             |   4722
-unicorn/prefer-math-trunc                               |  42715
-unicorn/prefer-modern-dom-apis                          |  62606
+unicorn/prefer-math-trunc                               | 105321
+unicorn/prefer-modern-dom-apis                          |  62817
 unicorn/prefer-modern-math-apis                         |  83210
 unicorn/prefer-module                                   | 226148
 unicorn/prefer-native-coercion-functions                |  16812
 unicorn/prefer-negative-index                           |  62606
-unicorn/prefer-node-protocol                            |  62732
+unicorn/prefer-node-protocol                            |  62735
 unicorn/prefer-number-coercion                          |  62606
 unicorn/prefer-number-properties                        | 157910
 unicorn/prefer-object-from-entries                      |  62606

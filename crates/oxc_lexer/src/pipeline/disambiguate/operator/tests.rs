@@ -1098,6 +1098,13 @@ fn of_after_any_value_in_a_for_head(cpu: DynCpu) {
     regex("for (var x: T of /re/g.exec(s)) {}", ScriptTS, cpu);
     regex("for (let x = 1 of /re/g.exec(s)) {}", ScriptTS, cpu);
     division("for (x = of / 2;;) {}", ScriptJS, cpu);
+    // A for-head binding goes on across a line break and ends at `;`, and `using of` is a name.
+    division("for (let x\nof {a} / b) {}", ScriptTS, cpu);
+    division("for (let x: T\nof {a} / b) {}", ScriptTS, cpu);
+    division("for (let i; n\n/ 2; i++) {}", ScriptTS, cpu);
+    division("for (using of {a} / b) {}", ScriptTS, cpu);
+    division("for (;; let[i]++ / 2) {}", ScriptJS, cpu);
+    regex("for (await using of of /re/g.exec(s)) {}", ScriptTS, cpu);
 }
 
 #[test_cpus]

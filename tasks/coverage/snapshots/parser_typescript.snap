@@ -1,9 +1,9 @@
-commit: f7973164
+commit: 01f1a759
 
 parser_typescript Summary:
-AST Parsed     : 9901/9914 (99.87%)
-Positive Passed: 9889/9914 (99.75%)
-Negative Passed: 1720/2823 (60.93%)
+AST Parsed     : 10027/10042 (99.85%)
+Positive Passed: 10015/10042 (99.73%)
+Negative Passed: 1726/2834 (60.90%)
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration4.ts
@@ -74,6 +74,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/bindingPatternCannotBeOnlyInferenceSource.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/boundedRecursiveTypeInferredThroughClosure.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/callOverloads1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/callOverloads2.ts
@@ -112,6 +114,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/circularDestructuring.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/circularIndexedPropertyInstantiation.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/classExpressionWithDecorator1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/classExtendingQualifiedName.ts
@@ -139,6 +143,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/cloduleWithDuplicateMember2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/cloduleWithPriorInstantiatedModule.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/closureNarrowingAssignmentInClassExtends.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/collisionExportsRequireAndAlias.ts
 
@@ -414,8 +420,6 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/exportStarFromEmptyModule.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/extBaseClass2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/extendFromAny.ts
@@ -539,6 +543,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/interfaceAssignmentCompat.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/interfaceDeclaration1.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/interfaceExtendsConstrainedTypeParameter.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/interfaceMemberValidation.ts
 
@@ -776,6 +782,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/narrowByClauseExpressionInSwitchTrue6.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/narrowedNeverAfterLoopWithAndCondition.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/networkPathReferences.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/noFlakyDiagnosticsBindingPatternInFunctionType2.ts
@@ -809,6 +817,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/nonexistentPropertyUnavailableOnPromisedType.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/nullKeyword.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/objectBindingPatternDefaultMissingElements.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/objectLiteralFunctionArgContextualTyping.ts
 
@@ -925,6 +935,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/scopeCheckInsideStaticMethod1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/selfReferencesInFunctionParameters.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/selfReferencingObjectLiteralErrorSharedChecker.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/setterWithReturn.ts
 
@@ -1547,8 +1559,6 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conforma
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/externalModules/multipleExportDefault6.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/externalModules/rewriteRelativeImportExtensions/emit.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/externalModules/topLevelAwaitErrors.11.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/externalModules/topLevelAwaitNonModule.ts
 
@@ -2210,6 +2220,16 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conforma
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/types/witness/witness.ts
 
+Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/checkOrderParameterInTypeQuery.ts
+
+  × Unexpected token
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/checkOrderParameterInTypeQuery.ts:9:36]
+  8 │         class C {
+  9 │             test1(a: C2): typeof a.#a {
+    ·                                    ──
+ 10 │                 return 1;
+    ╰────
+
 Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declarationEmitDefaultImportPrivateClass.ts
 
   × TS(2309): An export assignment cannot be used in a module with other exported elements
@@ -2321,6 +2341,16 @@ Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importA
  2 │     const database: {
    ╰────
   help: Try inserting a semicolon here
+
+Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributeValueCheckOrder.ts
+
+  × Only string literals are allowed as module attribute values.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeValueCheckOrder.ts:5:29]
+ 4 │ 
+ 5 │ import x from "x" with { a: 0 };
+   ·                             ─
+   ╰────
+  help: Wrap this with quotes
 
 Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributesDeclarationEmit.ts
 
@@ -5242,6 +5272,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Try inserting a semicolon here
 
+  × Invalid rest element target in destructuring pattern
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/commonjsExportNestedRestBinding.ts:2:18]
+ 1 │ declare const source: any;
+ 2 │ export const {...{object}} = source;
+   ·                  ────────
+   ╰────
+  help: Expected an identifier, like `...rest`.
+
   × A 'get' accessor must not have any formal parameters.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/complicatedPrivacy.ts:11:26]
  10 │         export class C2 implements m3.i3 {
@@ -6585,6 +6623,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·                   ────
  15 │         };
     ╰────
+
+  × Unexpected token
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/decoratorMissingClassExpression.ts:2:10]
+ 1 │ let x;
+ 2 │ x = @dec 1;
+   ·          ─
+ 3 │ x = @@a 1;
+   ╰────
 
   × Cannot assign to this expression
    ╭─[typescript/tsc/testdata/tests/cases/compiler/decrementAndIncrementOperators.ts:4:1]
@@ -8347,6 +8393,180 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Try inserting a semicolon here
 
+  × TS(8020): JSDoc types can only be used inside documentation comments.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:9:21]
+  8 │ 
+  9 │ const WhatFoo = foo<?>;
+    ·                     ─
+ 10 │ const HuhFoo = foo<string?>;
+    ╰────
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:10:20]
+  9 │ const WhatFoo = foo<?>;
+ 10 │ const HuhFoo = foo<string?>;
+    ·                    ───────
+ 11 │ const NopeFoo = foo<?string>;
+    ╰────
+  help: Did you mean to write 'string | undefined'?
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:11:21]
+ 10 │ const HuhFoo = foo<string?>;
+ 11 │ const NopeFoo = foo<?string>;
+    ·                     ───────
+ 12 │ const ComeOnFoo = foo<?string?>;
+    ╰────
+  help: Did you mean to write 'string | null | undefined'?
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:12:24]
+ 11 │ const NopeFoo = foo<?string>;
+ 12 │ const ComeOnFoo = foo<?string?>;
+    ·                        ───────
+ 13 │ 
+    ╰────
+  help: Did you mean to write 'string | undefined'?
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:12:23]
+ 11 │ const NopeFoo = foo<?string>;
+ 12 │ const ComeOnFoo = foo<?string?>;
+    ·                       ────────
+ 13 │ 
+    ╰────
+  help: Did you mean to write 'string | null | undefined'?
+
+  × TS(8020): JSDoc types can only be used inside documentation comments.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:14:28]
+ 13 │ 
+ 14 │ type TWhatFoo = typeof foo<?>;
+    ·                            ─
+ 15 │ type THuhFoo = typeof foo<string?>;
+    ╰────
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:15:27]
+ 14 │ type TWhatFoo = typeof foo<?>;
+ 15 │ type THuhFoo = typeof foo<string?>;
+    ·                           ───────
+ 16 │ type TNopeFoo = typeof foo<?string>;
+    ╰────
+  help: Did you mean to write 'string | undefined'?
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:16:28]
+ 15 │ type THuhFoo = typeof foo<string?>;
+ 16 │ type TNopeFoo = typeof foo<?string>;
+    ·                            ───────
+ 17 │ type TComeOnFoo = typeof foo<?string?>;
+    ╰────
+  help: Did you mean to write 'string | null | undefined'?
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:17:31]
+ 16 │ type TNopeFoo = typeof foo<?string>;
+ 17 │ type TComeOnFoo = typeof foo<?string?>;
+    ·                               ───────
+ 18 │ 
+    ╰────
+  help: Did you mean to write 'string | undefined'?
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:17:30]
+ 16 │ type TNopeFoo = typeof foo<?string>;
+ 17 │ type TComeOnFoo = typeof foo<?string?>;
+    ·                              ────────
+ 18 │ 
+    ╰────
+  help: Did you mean to write 'string | null | undefined'?
+
+  × TS(8020): JSDoc types can only be used inside documentation comments.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:19:21]
+ 18 │ 
+ 19 │ const WhatBar = Bar<?>;
+    ·                     ─
+ 20 │ const HuhBar = Bar<string?>;
+    ╰────
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:20:20]
+ 19 │ const WhatBar = Bar<?>;
+ 20 │ const HuhBar = Bar<string?>;
+    ·                    ───────
+ 21 │ const NopeBar = Bar<?string>;
+    ╰────
+  help: Did you mean to write 'string | undefined'?
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:21:21]
+ 20 │ const HuhBar = Bar<string?>;
+ 21 │ const NopeBar = Bar<?string>;
+    ·                     ───────
+ 22 │ const ComeOnBar = Bar<?string?>;
+    ╰────
+  help: Did you mean to write 'string | null | undefined'?
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:22:24]
+ 21 │ const NopeBar = Bar<?string>;
+ 22 │ const ComeOnBar = Bar<?string?>;
+    ·                        ───────
+ 23 │ 
+    ╰────
+  help: Did you mean to write 'string | undefined'?
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:22:23]
+ 21 │ const NopeBar = Bar<?string>;
+ 22 │ const ComeOnBar = Bar<?string?>;
+    ·                       ────────
+ 23 │ 
+    ╰────
+  help: Did you mean to write 'string | null | undefined'?
+
+  × TS(8020): JSDoc types can only be used inside documentation comments.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:24:28]
+ 23 │ 
+ 24 │ type TWhatBar = typeof Bar<?>;
+    ·                            ─
+ 25 │ type THuhBar = typeof Bar<string?>;
+    ╰────
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:25:27]
+ 24 │ type TWhatBar = typeof Bar<?>;
+ 25 │ type THuhBar = typeof Bar<string?>;
+    ·                           ───────
+ 26 │ type TNopeBar = typeof Bar<?string>;
+    ╰────
+  help: Did you mean to write 'string | undefined'?
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:26:28]
+ 25 │ type THuhBar = typeof Bar<string?>;
+ 26 │ type TNopeBar = typeof Bar<?string>;
+    ·                            ───────
+ 27 │ type TComeOnBar = typeof Bar<?string?>;
+    ╰────
+  help: Did you mean to write 'string | null | undefined'?
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:27:31]
+ 26 │ type TNopeBar = typeof Bar<?string>;
+ 27 │ type TComeOnBar = typeof Bar<?string?>;
+    ·                               ───────
+    ╰────
+  help: Did you mean to write 'string | undefined'?
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:27:30]
+ 26 │ type TNopeBar = typeof Bar<?string>;
+ 27 │ type TComeOnBar = typeof Bar<?string?>;
+    ·                              ────────
+    ╰────
+  help: Did you mean to write 'string | null | undefined'?
+
   × await expression not allowed in formal parameter
    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionsForbiddenInParameterInitializers.ts:1:35]
  1 │ export async function foo({ foo = await import("./bar") }) {
@@ -8418,15 +8638,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  9 │     }
    ╰────
 
-  × Expected `,` or `)` but found `=>`
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/fatarrowfunctionsErrors.ts:2:8]
+  × Invalid arrow function parameter
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/fatarrowfunctionsErrors.ts:2:6]
  1 │ foo((...Far:any[])=>{return 0;})
  2 │ foo((1)=>{return 0;}); 
-   ·    ┬   ─┬
-   ·    │    ╰── `,` or `)` expected
-   ·    ╰── Opened here
+   ·      ─
  3 │ foo((x?)=>{return x;})
    ╰────
+  help: Expected an identifier or a destructuring pattern.
 
   × TS(1015): A parameter cannot have a question mark and an initializer.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/fatarrowfunctionsOptionalArgs.ts:60:10]
@@ -8487,18 +8706,18 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  5 │ 
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors2.ts:1:22]
+  × Invalid arrow function parameter
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors2.ts:1:15]
  1 │ var tt1 = (a, (b, c)) => a+b+c;
-   ·                      ▲
+   ·               ──────
  2 │ var tt2 = ((a), b, c) => a+b+c;
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
   × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors3.ts:1:2]
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors3.ts:1:5]
  1 │ (...) => 105;
-   ·  ───
+   ·     ─
    ╰────
 
   × TS(1015): A parameter cannot have a question mark and an initializer.
@@ -9537,6 +9756,12 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: TypeScript transforms 'import ... =' to 'const ... ='
 
+  × Cannot use import statement outside a module
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationImportEqualsSyntax.ts:1:1]
+ 1 │ import a = b;
+   · ──────
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationInterfaceSyntax.ts:1:10]
  1 │ interface I { }
@@ -9753,6 +9978,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·               ──
  19 │ 
     ╰────
+
+  × Unexpected token
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/jsxNamesStartingWithHash.tsx:8:12]
+ 7 │ 
+ 8 │ const a = <#a></#a>;
+   ·            ──
+ 9 │ const b = <div #b />;
+   ╰────
 
   × Unexpected token
    ╭─[typescript/tsc/testdata/tests/cases/compiler/jsxNamespacePrefixInName.tsx:7:32]
@@ -11256,6 +11489,16 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
 
   × Expected `,` or `}` but found `?`
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/objectShorthandGrammar.ts:3:25]
+ 2 │ const valid = { value, other: value };
+ 3 │ const optional = { value? };
+   ·                  ┬      ┬
+   ·                  │      ╰── `,` or `}` expected
+   ·                  ╰── Opened here
+ 4 │ const definite = { value! };
+   ╰────
+
+  × Expected `,` or `}` but found `?`
    ╭─[typescript/tsc/testdata/tests/cases/compiler/objectTypeWithOptionalProperty1.ts:2:10]
  1 │     var b = {
    ·             ┬
@@ -11916,6 +12159,15 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
   help: Did you mean to write 'string'?
 
   × TS(17019): '!' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNonNullableTypes.ts:18:16]
+ 17 │ 
+ 18 │ const a = 1 as any!;
+    ·                ────
+ 19 │ const b: number! = 1;
+    ╰────
+  help: Did you mean to write 'any'?
+
+  × TS(17019): '!' at the end of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNonNullableTypes.ts:19:10]
  18 │ const a = 1 as any!;
  19 │ const b: number! = 1;
@@ -11923,6 +12175,15 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  20 │ 
     ╰────
   help: Did you mean to write 'number'?
+
+  × TS(17020): '!' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNonNullableTypes.ts:21:16]
+ 20 │ 
+ 21 │ const c = 1 as !any;
+    ·                ────
+ 22 │ const d: !number = 1;
+    ╰────
+  help: Did you mean to write 'any'?
 
   × TS(17020): '!' at the start of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNonNullableTypes.ts:22:10]
@@ -11947,7 +12208,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ·                ───────
  6 │ function f3(a: number?) {}
    ╰────
-  help: Did you mean to write 'string | null | undefined'?
+  help: Did you mean to write 'string | undefined'?
 
   × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:6:16]
@@ -11956,7 +12217,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ·                ───────
  7 │ 
    ╰────
-  help: Did you mean to write 'number | null | undefined'?
+  help: Did you mean to write 'number | undefined'?
 
   × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:8:16]
@@ -11986,13 +12247,31 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
   help: Did you mean to write 'string | null | undefined'?
 
   × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:15:16]
+ 14 │ 
+ 15 │ const a = 1 as any?;
+    ·                ────
+ 16 │ const b: number? = 1;
+    ╰────
+  help: Did you mean to write 'any'?
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:16:10]
  15 │ const a = 1 as any?;
  16 │ const b: number? = 1;
     ·          ───────
  17 │ 
     ╰────
-  help: Did you mean to write 'number | null | undefined'?
+  help: Did you mean to write 'number | undefined'?
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:18:16]
+ 17 │ 
+ 18 │ const c = 1 as ?any;
+    ·                ────
+ 19 │ const d: ?number = 1;
+    ╰────
+  help: Did you mean to write 'any'?
 
   × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:19:10]
@@ -12010,7 +12289,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·        ────────
  22 │ let f: never?;
     ╰────
-  help: Did you mean to write 'unknown | null | undefined'?
+  help: Did you mean to write 'unknown'?
 
   × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:22:8]
@@ -12019,7 +12298,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·        ──────
  23 │ let g: void?;
     ╰────
-  help: Did you mean to write 'never | null | undefined'?
+  help: Did you mean to write 'never'?
 
   × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:23:8]
@@ -12028,7 +12307,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·        ─────
  24 │ let h: undefined?;
     ╰────
-  help: Did you mean to write 'void | null | undefined'?
+  help: Did you mean to write 'void'?
 
   × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:24:8]
@@ -12036,7 +12315,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  24 │ let h: undefined?;
     ·        ──────────
     ╰────
-  help: Did you mean to write 'undefined | null | undefined'?
+  help: Did you mean to write 'undefined'?
 
   × Unexpected JSX expression
    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseJsxElementInUnaryExpressionNoCrash1.ts:1:2]
@@ -14468,7 +14747,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  2 │ import public = require("1");
    ·        ──────
    ╰────
-  note: This identifier is reserved in strict mode code
+  note: Modules are always strict mode code
 
   × The keyword 'public' is reserved
    ╭─[typescript/tsc/testdata/tests/cases/compiler/strictModeReservedWordInModuleDeclaration.ts:2:11]
@@ -16106,11 +16385,11 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Try inserting a semicolon here
 
-  × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/async/es2017/asyncArrowFunction/asyncArrowFunction7_es2017.ts:3:29]
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/async/es2017/asyncArrowFunction/asyncArrowFunction7_es2017.ts:3:24]
  2 │   // 'await' here is an identifier, and not an await expression.
  3 │   var foo = async (a = await): Promise<void> => {
-   ·                             ─
+   ·                        ─────
  4 │   }
    ╰────
 
@@ -16196,11 +16475,11 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Try inserting a semicolon here
 
-  × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/async/es5/asyncArrowFunction/asyncArrowFunction7_es5.ts:3:29]
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/async/es5/asyncArrowFunction/asyncArrowFunction7_es5.ts:3:24]
  2 │   // 'await' here is an identifier, and not an await expression.
  3 │   var foo = async (a = await): Promise<void> => {
-   ·                             ─
+   ·                        ─────
  4 │   }
    ╰────
 
@@ -16334,11 +16613,11 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Try inserting a semicolon here
 
-  × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/async/es6/asyncArrowFunction/asyncArrowFunction7_es6.ts:3:29]
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/async/es6/asyncArrowFunction/asyncArrowFunction7_es6.ts:3:24]
  2 │   // 'await' here is an identifier, and not an await expression.
  3 │   var foo = async (a = await): Promise<void> => {
-   ·                             ─
+   ·                        ─────
  4 │   }
    ╰────
 
@@ -25325,6 +25604,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   note: The identifier `await` is reserved in module code
 
+  × The keyword 'await' is reserved
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/externalModules/topLevelAwaitErrors.11.ts:3:8]
+ 2 │ declare var require: any;
+ 3 │ import await = require("./other");
+   ·        ─────
+   ╰────
+  note: The identifier `await` is reserved in module code
+
   × Cannot use `await` as an identifier in an async context
    ╭─[typescript/tsc/testdata/tests/cases/conformance/externalModules/topLevelAwaitErrors.12.ts:5:8]
  4 │ // await disallowed in import=namespace when in a module
@@ -29071,12 +29358,12 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  2 │ 
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser512325.ts:1:21]
+  × Invalid arrow function parameter
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser512325.ts:1:14]
  1 │ var tt = (a, (b, c)) => a+b+c;
-   ·                     ▲
+   ·              ──────
    ╰────
-  help: Try inserting a semicolon here
+  help: Expected an identifier or a destructuring pattern.
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser519458.ts:1:21]
@@ -33031,6 +33318,15 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ·                ╰── Optional element seen here
  4 │ type T03 = [...string[]];
    ╰────
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/conformance/types/tuple/restTupleElements1.ts:10:16]
+  9 │ type T08 = [...string];  // Error
+ 10 │ type T09 = [...string?];  // Error
+    ·                ───────
+ 11 │ type T10 = [string, ...[...string[]]];
+    ╰────
+  help: Did you mean to write 'string | undefined'?
 
   × TS(1257): A required element cannot follow an optional element.
     ╭─[typescript/tsc/testdata/tests/cases/conformance/types/tuple/variadicTuples2.ts:9:21]

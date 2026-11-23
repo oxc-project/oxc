@@ -18,6 +18,10 @@ declare_react_compiler_lint!(
     /// suppressions, since the suppressed violation may make compilation
     /// unsafe.
     ///
+    /// Like `eslint-plugin-react-hooks`, lint runs the compiler with its own
+    /// hooks and memoization dependency validations, which replace the
+    /// suppression check, so this rule currently reports nothing.
+    ///
     unlinked_upstream = "rule-suppression",
     ///
     /// ### Why is this bad?
@@ -80,10 +84,8 @@ function Component({value}) {
   return <div>{value}</div>;
 }
 ",
-    ];
-
-    let fail = vec![
-        // Derived from crates/oxc_react_compiler/fixtures cases.
+        // Lint does not consult React rule suppressions, like `eslint-plugin-react-hooks`.
+        // https://github.com/oxc-project/oxc/issues/26277
         "
 function Component({value}) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -92,6 +94,8 @@ function Component({value}) {
 }
 ",
     ];
+
+    let fail = vec![];
 
     Tester::new(RuleSuppression::NAME, RuleSuppression::PLUGIN, pass, fail).test_and_snapshot();
 }

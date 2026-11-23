@@ -4,13 +4,14 @@
 use oxc_allocator::ArenaVec;
 use oxc_formatter_core::{
     Format, FormatElement, Formatter,
-    builders::{FormatOnce, FormatWith, group, soft_space_or_block_indent, space, text, token},
+    builders::{FormatOnce, FormatWith, group, space, text, token},
     write,
 };
-use oxc_htmlish_parser::ast::{NodeId, NodeKind};
+use oxc_htmlish_parser::ast::{Interpolation, NodeId, NodeKind};
 
-use crate::{context::HtmlishFormatContext, tree::Tree};
+use crate::{context::HtmlishFormatContext, rules::TemplateExpressions, tree::Tree};
 
+mod angular;
 mod attribute;
 mod block;
 mod children;
@@ -20,6 +21,7 @@ mod tag;
 mod text;
 mod vue;
 
+pub use angular::JsInAngularTemplate;
 pub use embed::{CssInHtmlStyleAttribute, JsInHtmlEventHandler};
 pub use vue::JsInVueTemplate;
 
@@ -31,7 +33,7 @@ use tag::{
     opening_start_borrowed, opening_start_marker, opening_tag_prefix, write_closing_tag_end,
     write_opening_tag_start,
 };
-use text::{write_dedented_lines, write_text};
+use text::write_text;
 
 pub type HtmlishFormatter<'buf, 'a> = Formatter<'buf, 'a, HtmlishFormatContext<'a>>;
 
@@ -50,6 +52,15 @@ where
     T: Fn(&mut HtmlishFormatter<'_, 'a>),
 {
     FormatWith::new(formatter)
+}
+
+/// Wraps a closure run once in a [`FormatOnce`], its context pinned to [`HtmlishFormatContext`].
+#[inline]
+pub const fn format_once<'a, T>(formatter: T) -> FormatOnce<T>
+where
+    T: FnOnce(&mut HtmlishFormatter<'_, 'a>),
+{
+    FormatOnce::new(formatter)
 }
 
 /// Writes a child's IR (a dispatched part), once.
@@ -73,7 +84,7 @@ fn write_child<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'_, 'a>
     if opening_start_borrowed(t, id) {
         start += opening_start_marker(t, id).len();
     }
-    let mut end = ignored_end(t, id) as usize;
+    let mut end = end_with_content(t, id) as usize;
     // Whoever borrows the closing `>` prints it,
     // the parent included (DIVERGENCES.md#ignored-closing-end-once)
     if closing_end_borrowed(t, id) {
@@ -83,12 +94,12 @@ fn write_child<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'_, 'a>
     write!(f, [opening_tag_prefix(t, id), text(raw), closing_tag_suffix(t, id)]);
 }
 
-/// Where an ignored node's source ends: an unclosed element extends to its last child.
-fn ignored_end(t: &Tree<'_>, id: NodeId) -> u32 {
+/// Where a node's source ends, its content included: an unclosed element extends to its last child.
+fn end_with_content(t: &Tree<'_>, id: NodeId) -> u32 {
     let end = t.source_end(id);
     match t.kind(id) {
         NodeKind::Element(el) if el.end_tag.is_none() => {
-            t[id].last_child.map_or(end, |last| end.max(ignored_end(t, last)))
+            t[id].last_child.map_or(end, |last| end.max(end_with_content(t, last)))
         }
         _ => end,
     }
@@ -102,21 +113,28 @@ fn write_node<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'_, 'a>)
             write_opening_tag_start(t, id, f);
             write_closing_tag_end(t, id, f);
         }
-        NodeKind::Text(_) | NodeKind::Cdata => write_text(t, id, f),
-        // `{{ }}`: Vue's expression formatted; Angular's keeps its lines until it is formatted
+        NodeKind::Text(_) => write_text(t, id, f),
         NodeKind::Interpolation(interpolation) => {
-            let expression = interpolation.expression.slice(t.source());
+            let expression = Interpolation::expression(item.span).slice(t.source());
+            // TODO: A character reference is not checked, unlike in an attribute's value (`embed::dispatch_attribute_value`):
+            // Vue and Angular decode it before they read the code, so `{{ '&quot;' }}` printed `"&quot;"` reads `"""`.
+            // Left for now as rare (one, harmless, in the corpus), and the check's cost unmeasured
+            // Each its own type, borrowed as one
+            let (vue, angular);
+            let formatted: Option<&dyn Format<'a, _>> = match t.rules().template_expressions {
+                TemplateExpressions::Vue => {
+                    vue = vue::dispatch_interpolation(t, expression, f).map(format_ir);
+                    vue.as_ref().map(|ir| ir as _)
+                }
+                TemplateExpressions::Angular => {
+                    angular = angular::format_interpolation(interpolation.angular.as_deref(), f);
+                    angular.as_ref().map(|ir| ir as _)
+                }
+                // The parser reads `{{ }}` in Vue and Angular only
+                TemplateExpressions::None => None,
+            };
             write_opening_tag_start(t, id, f);
-            if t.rules().vue_sfc {
-                vue::write_interpolation(t, id, expression, f);
-            } else if !expression.trim_ascii().is_empty() {
-                write!(
-                    f,
-                    soft_space_or_block_indent(&format_with(|f| write_dedented_lines(
-                        expression, f
-                    )))
-                );
-            }
+            embed::write_interpolation(t, id, expression, formatted, f);
             write_closing_tag_end(t, id, f);
         }
         NodeKind::DocType(doctype) => {
@@ -136,9 +154,21 @@ fn write_node<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'_, 'a>)
             );
             write_closing_tag_end(t, id, f);
         }
-        // Comments are printed as written,
+        NodeKind::LetDeclaration(declaration) => {
+            write!(f, opening_tag_prefix(t, id));
+            if !angular::write_let(declaration, f) {
+                write!(f, text(item.span.slice(t.source())));
+            }
+            write!(f, closing_tag_suffix(t, id));
+        }
+        // Comments and CDATA sections are printed as written,
         // a `</ div>` too (DIVERGENCES.md#end-tag-with-space-is-comment), and an omitted element's end tag (`</body>`).
-        NodeKind::Comment(_) | NodeKind::EndTag(_) => write!(
+        // An Angular ICU expression too, whose message ID hashes it (DIVERGENCES.md#angular-i18n-content-as-written).
+        NodeKind::Comment(_)
+        | NodeKind::Cdata
+        | NodeKind::EndTag(_)
+        | NodeKind::Icu(_)
+        | NodeKind::IcuCase(_) => write!(
             f,
             [
                 opening_tag_prefix(t, id),

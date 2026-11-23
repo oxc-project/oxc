@@ -88,7 +88,7 @@ fn parse<'a>(
         })
         .parse();
     for error in ret.diagnostics {
-        println!("{}", error.render_with_source_code(source_text.to_string()));
+        println!("{}", error.render_with_source_code(source_text));
     }
     ret.program
 }

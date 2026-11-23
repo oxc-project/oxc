@@ -97,14 +97,14 @@ impl WalkRunner {
             }
         };
 
-        // Use `block_in_place()` to avoid nested async runtime access
+        // NOTE: The caller (`run_cli()`) runs this whole function in `block_in_place()`
         #[cfg(feature = "napi")]
-        if let Err(err) = tokio::task::block_in_place(|| {
-            self.external_services
-                .as_ref()
-                .expect("External services must be set when `napi` feature is enabled")
-                .init(num_of_threads)
-        }) {
+        if let Err(err) = self
+            .external_services
+            .as_ref()
+            .expect("External services must be set when `napi` feature is enabled")
+            .init(num_of_threads)
+        {
             utils::print_and_flush(stderr, &format!("Failed to setup external services.\n{err}\n"));
             return CliRunResult::InvalidOptionConfig;
         }

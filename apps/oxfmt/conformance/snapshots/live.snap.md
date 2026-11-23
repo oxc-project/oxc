@@ -26,7 +26,7 @@
 
 ## html-in-js
 
-### Option 1: 160/184 (86.96%)
+### Option 1: 159/184 (86.41%)
 
 ```json
 {"printWidth":80}
@@ -39,6 +39,8 @@
   - apps/oxfmt/DIVERGENCES.md#dynamic-tag-name-end-tag
 - [externals/webawesome/callout/callout.ts](diffs/html-in-js/externals__webawesome__callout__callout.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/webawesome/carousel/carousel.test.ts](diffs/html-in-js/externals__webawesome__carousel__carousel.test.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#assignment-class-heritage
 - [externals/webawesome/checkbox/checkbox.ts](diffs/html-in-js/externals__webawesome__checkbox__checkbox.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/webawesome/color-picker/color-picker.ts](diffs/html-in-js/externals__webawesome__color-picker__color-picker.ts.md)
@@ -83,7 +85,7 @@
 - [externals/webawesome/textarea/textarea.ts](diffs/html-in-js/externals__webawesome__textarea__textarea.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 
-### Option 2: 174/184 (94.57%)
+### Option 2: 173/184 (94.02%)
 
 ```json
 {"printWidth":100,"htmlWhitespaceSensitivity":"ignore"}
@@ -94,6 +96,8 @@
   - apps/oxfmt/DIVERGENCES.md#dynamic-tag-name-end-tag
 - [externals/webawesome/callout/callout.ts](diffs/html-in-js/externals__webawesome__callout__callout.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/webawesome/carousel/carousel.test.ts](diffs/html-in-js/externals__webawesome__carousel__carousel.test.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#assignment-class-heritage
 - [externals/webawesome/copy-button/copy-button.ts](diffs/html-in-js/externals__webawesome__copy-button__copy-button.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/webawesome/format-number/format-number.ts](diffs/html-in-js/externals__webawesome__format-number__format-number.ts.md)

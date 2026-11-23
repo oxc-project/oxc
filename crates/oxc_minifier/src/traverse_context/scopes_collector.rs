@@ -264,6 +264,9 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             _ => {
                 // Remaining variants do not contain scopes:
                 // `StaticIdentifier`
+                // `StaticStringLiteral`
+                // `StaticNumericLiteral`
+                // `StaticBigIntLiteral`
                 // `PrivateIdentifier`
                 // `BooleanLiteral`
                 // `NullLiteral`

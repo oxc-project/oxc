@@ -1,4 +1,4 @@
-let _default = class {
+let _default = class _default {
   constructor() {
     babelHelpers.defineProperty(this, "prop", 0);
   }

@@ -1,0 +1,6 @@
+{
+  "plugins": [
+    "syntax-decorators",
+    ["transform-typescript", { "removeClassFieldsWithoutInitializer": true }]
+  ]
+}

@@ -1,7 +1,9 @@
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_codegen::{Codegen, CodegenOptions, IndentChar};
-use oxc_span::SPAN;
+use oxc_parser::Parser;
+use oxc_semantic::SemanticBuilder;
+use oxc_span::{SPAN, SourceType};
 
 use crate::tester::{
     test, test_ascii, test_minify, test_minify_same, test_options, test_same,
@@ -138,7 +140,9 @@ fn expr() {
     test("x = y / 2e308", "x = y / 1e400;\n");
     test("x = 2e308 in y", "x = 1e400 in y;\n");
     test("x = y instanceof 2e308", "x = y instanceof 1e400;\n");
-    test("x = { 2e308: 0 }", "x = { [1e400]: 0 };\n");
+    test("x = { 2e308: 0 }", "x = { 1e400: 0 };\n");
+    test_minify("x = { 2e308: 0 }", "x={1e400:0};");
+    test_minify("x = { [2e308]: 0 }", "x={[1/0]:0};");
     test_minify("function f(Infinity) { return 2e308; }", "function f(Infinity){return 1/0}");
     test_minify("x = y / 2e308", "x=y/(1/0);");
 
@@ -181,6 +185,26 @@ fn private_in() {
         "class Foo { #test; bar() { #field in {} << 0 } }",
         "class Foo {\n\t#test;\n\tbar() {\n\t\t#field in {} << 0;\n\t}\n}\n",
     );
+
+    for (init, minified) in [
+        ("(#x in o)", "(#x in o)"),
+        ("let a = (#x in o)", "let a=(#x in o)"),
+        ("a = (#x in o) || o", "a=(#x in o)||o"),
+        ("a = o || (#x in o)", "a=o||(#x in o)"),
+        ("a = (#x in o) ? 1 : 2", "a=(#x in o)?1:2"),
+        ("a = () => (#x in o)", "a=()=>(#x in o)"),
+        ("a = 1 * (#x in o == 1)", "a=1*(#x in o==1)"),
+        ("a = (() => #x in o)", "a=(()=>#x in o)"),
+    ] {
+        let source = format!("class C {{ #x; m(o) {{ for ({init};;); }} }}");
+        test(&source, &format!("class C {{\n\t#x;\n\tm(o) {{\n\t\tfor ({init};;);\n\t}}\n}}\n"));
+        test_minify(&source, &format!("class C{{#x;m(o){{for({minified};;);}}}}"));
+        crate::test_idempotency(&source);
+        crate::test_idempotency_options(
+            &source,
+            &CodegenOptions { minify: true, ..CodegenOptions::default() },
+        );
+    }
 }
 
 #[test]
@@ -327,6 +351,12 @@ fn for_stmt() {
     test("for ((let[0]) of x);", "for ((let)[0] of x);\n");
     test("for ((async.x) of x);", "for (async.x of x);\n");
     test("for (((let).x) of x);", "for ((let.x) of x);\n");
+    test("for ((let as any) of x);", "for ((let as any) of x);\n");
+    test("for ((let as any).x of x);", "for ((let as any).x of x);\n");
+    test("for ((let satisfies any).x of x);", "for ((let satisfies any).x of x);\n");
+    test("for ((let().x) of x);", "for ((let().x) of x);\n");
+    test("for ((let`t`.x) of x);", "for ((let`t`.x) of x);\n");
+    test("for ((let satisfies any)().x of x);", "for ((let satisfies any)().x of x);\n");
     // A leading `let` outside a for-of head is untouched.
     test("let.x;", "let.x;\n");
     // A nested for-of inside a `for` init is still wrapped correctly.
@@ -389,6 +419,88 @@ fn shorthand() {
     // https://github.com/tc39/test262/blob/05c45a4c430ab6fee3e0c7f0d47d8a30d8876a6d/test/language/expressions/object/__proto__-permitted-dup-shorthand.js
     test("var obj = { __proto__, __proto__, };", "var obj = {\n\t__proto__,\n\t__proto__\n};\n");
     test("var obj = { __proto__: __proto__, };", "var obj = { __proto__: __proto__ };\n");
+}
+
+/// Print `source` after renaming its top-level binding `from` to `to`.
+#[track_caller]
+fn print_with_renamed_root_binding(
+    source: &str,
+    source_type: SourceType,
+    from: &str,
+    to: &str,
+    minify: bool,
+) -> String {
+    let allocator = Allocator::default();
+    let parsed = Parser::new(&allocator, source, source_type).parse();
+    assert!(parsed.diagnostics.is_empty(), "Parse errors: {:?}", parsed.diagnostics);
+    let semantic = SemanticBuilder::new().build(&parsed.program);
+    assert!(semantic.diagnostics.is_empty(), "Semantic errors: {:?}", semantic.diagnostics);
+    let mut scoping = semantic.semantic.into_scoping();
+    let symbol_id = scoping.get_binding(scoping.root_scope_id(), from.into()).unwrap();
+    scoping.set_symbol_name(symbol_id, to.into());
+    Codegen::new()
+        .with_options(CodegenOptions { minify, ..CodegenOptions::default() })
+        .with_scoping(Some(scoping))
+        .build(&parsed.program)
+        .code
+}
+
+#[test]
+fn renamed_proto_shorthand() {
+    let source = "let __proto__; x = [{ __proto__ }, { __proto__: __proto__ }];";
+    for (minify, expected) in [
+        (false, "let a;\nx = [{ [\"__proto__\"]: a }, { __proto__: a }];\n"),
+        (true, "let a;x=[{[\"__proto__\"]:a},{__proto__:a}];"),
+    ] {
+        let code =
+            print_with_renamed_root_binding(source, SourceType::mjs(), "__proto__", "a", minify);
+        assert_eq!(code, expected);
+    }
+}
+
+#[test]
+fn for_of_head_renamed_to_contextual_keyword() {
+    let source = "var x; for (x of y); for (x.z of y); for (x[0] of y); for (x().z of y);";
+    for (name, minify, expected) in [
+        (
+            "async",
+            false,
+            "var async;\nfor ((async) of y);\nfor (async.z of y);\nfor (async[0] of y);\nfor (async().z of y);\n",
+        ),
+        (
+            "async",
+            true,
+            "var async;for((async)of y);for(async.z of y);for(async[0]of y);for(async().z of y);",
+        ),
+        (
+            "let",
+            false,
+            "var let;\nfor ((let) of y);\nfor ((let.z) of y);\nfor ((let)[0] of y);\nfor ((let().z) of y);\n",
+        ),
+        (
+            "let",
+            true,
+            "var let;for((let)of y);for((let.z)of y);for((let)[0]of y);for((let().z)of y);",
+        ),
+    ] {
+        let code = print_with_renamed_root_binding(source, SourceType::script(), "x", name, minify);
+        assert_eq!(code, expected, "renamed to {name}, minify: {minify}");
+    }
+}
+
+#[test]
+fn for_of_head_renamed_from_contextual_keyword() {
+    for (source, from, expected) in [
+        (
+            "var let; for ((let) of y); for ((let).z of y); for ((let)[0] of y); (let)[1] = 0;",
+            "let",
+            "var a;\nfor (a of y);\nfor (a.z of y);\nfor (a[0] of y);\na[1] = 0;\n",
+        ),
+        ("var async; for ((async) of y);", "async", "var a;\nfor (a of y);\n"),
+    ] {
+        let code = print_with_renamed_root_binding(source, SourceType::script(), from, "a", false);
+        assert_eq!(code, expected, "renamed from {from}");
+    }
 }
 
 #[test]
@@ -464,7 +576,7 @@ fn assignment() {
     test_minify(r#"({"my-key": value} = obj);"#, r#"({"my-key":value}=obj);"#);
     test_minify(
         r#"({["computed"]: a, "literal": b} = obj);"#,
-        r#"({["computed"]:a,"literal":b}=obj);"#,
+        r#"({[`computed`]:a,"literal":b}=obj);"#,
     );
     test_minify(r#"let {"test-key": testKey} = obj;"#, r#"let{"test-key":testKey}=obj;"#);
 
@@ -815,8 +927,7 @@ fn negative_big_int_literal() {
     let allocator = Allocator::default();
     let ast = AstBuilder::new(&allocator);
 
-    let negative_one =
-        || Expression::new_big_int_literal(SPAN, "-1", None, BigintBase::Decimal, &ast);
+    let negative_one = || Expression::new_big_int_literal(SPAN, "-1", None, &ast);
     let expr_stmt = |expr| Statement::new_expression_statement(SPAN, expr, &ast);
     let cases = [
         // `-(-1n)`
@@ -1384,6 +1495,13 @@ fn js_str_round_trip() {
             assert_eq!(value.encode_utf16().collect::<Vec<_>>(), units, "{output}");
         }
     }
+}
+
+#[test]
+fn jsx_sequence_expression() {
+    let source = "<X value={(a, b)}>{(c, d)}{...(e, f)}</X>";
+    test(source, "<X value={(a, b)}>{(c, d)}{...(e, f)}</X>;\n");
+    test_minify(source, "<X value={(a,b)}>{(c,d)}{...(e,f)}</X>;");
 }
 
 #[test]

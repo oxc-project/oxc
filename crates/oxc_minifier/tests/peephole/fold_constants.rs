@@ -4,7 +4,12 @@ static NEG_MAX_SAFE_FLOAT: f64 = -9_007_199_254_740_991_f64;
 static MAX_SAFE_INT: i64 = 9_007_199_254_740_991_i64;
 static NEG_MAX_SAFE_INT: i64 = -9_007_199_254_740_991_i64;
 
-use crate::{test, test_same, test_smallest};
+use oxc_allocator::Allocator;
+use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_parser::Parser;
+use oxc_span::SourceType;
+
+use crate::{Compressor, default_options, test, test_same, test_smallest};
 
 fn fold(source_text: &str, expected: &str) {
     let source_text = format!("NOOP({source_text})");
@@ -400,6 +405,12 @@ fn test_nan_comparison() {
     fold("NaN === x", "x === NaN");
     fold_same("x !== NaN");
     fold("NaN==foo()", "foo()==NaN");
+}
+
+#[test]
+fn test_shadowed_nan_comparison() {
+    test_same("function f(x, NaN) { return NaN === x; }");
+    test_same("function f(x, NaN) { return x !== NaN; }");
 }
 
 #[test]
@@ -971,15 +982,15 @@ fn test_string_add() {
     fold("x = 1 + 1 + 'a'", "x = '2a'");
     fold("x = 1 + 1 + 'a'", "x = '2a'");
     fold("x = 'a' + (1 + 1)", "x = 'a2'");
-    // fold("x = '_' + p1 + '_' + ('' + p2)", "x = '_' + p1 + '_' + p2");
+    fold("x = '_' + p1 + '_' + ('' + p2)", "x = '_' + p1 + '_' + p2");
     fold("x = 'a' + ('_' + 1 + 1)", "x = 'a_11'");
     fold("x = 'a' + ('_' + 1) + 1", "x = 'a_11'");
     // fold("x = 1 + (p1 + '_') + ('' + p2)", "x = 1 + (p1 + '_') + p2");
     // fold("x = 1 + p1 + '_' + ('' + p2)", "x = 1 + p1 + '_' + p2");
     fold("x = 1 + 'a' + p1", "x = '1a' + p1");
     // fold("x = (p1 + (p2 + 'a')) + 'b'", "x = (p1 + (p2 + 'ab'))");
-    // fold("'a' + ('b' + p1) + 1", "'ab' + p1 + 1");
-    // fold("x = 'a' + ('b' + p1 + 'c')", "x = 'ab' + (p1 + 'c')");
+    fold("'a' + ('b' + p1) + 1", "'ab' + p1 + 1");
+    fold("x = 'a' + ('b' + p1 + 'c')", "x = 'ab' + p1 + 'c'");
     fold("void 0 + ''", "'undefined'");
 
     fold("`${a}` + `${b}`", "`${a}${b}`");
@@ -996,7 +1007,7 @@ fn test_string_add() {
     fold_same("x = 'a' + (4 + p1 + 'a')");
     fold_same("x = p1 / 3 + 4");
     fold_same("foo() + 3 + 'a' + foo()");
-    fold_same("x = 'a' + ('b' + p1 + p2)");
+    fold("x = 'a' + ('b' + p1 + p2)", "x = 'ab' + p1 + p2");
     fold_same("x = 1 + ('a' + p1)");
     fold_same("x = p1 + '' + p2");
     fold_same("x = 'a' + (1 + p1)");
@@ -1095,6 +1106,7 @@ fn test_fold_multiply() {
     fold("x = -255 * 255", "x = -65025");
     fold("x = -255 * -255", "x = 65025");
     fold("x = 256 * 255", "x = 65280");
+    fold_same("x = 63.99218702310463 ** 2 * 2");
 }
 
 #[test]
@@ -1115,19 +1127,29 @@ fn test_fold_division() {
     fold("x = -0 / 1", "x = -0");
     fold("x = -5e-324 / 2", "x = -0");
     fold("x = 9007199254740992 / 2", "x = 4503599627370496");
+    fold("x = 1 / 2", "x = .5");
+    fold("x = 1 / 10", "x = .1");
+    fold("x = 2 / 4", "x = .5");
+    fold("x = -1 / 2", "x = -.5");
+    fold("x = 3 / 2", "x = 1.5");
+    fold("x = 1e-323 / 2", "x = 5e-324");
+    fold("x = 9007199254740991 / 0.5", "x = 18014398509481982");
+    fold("x = 1 / 3 / Infinity", "x = 0");
+    fold("x = 1 / 3 / -Infinity", "x = -0");
 
-    fold_same("x = 2 / 4");
+    fold_same("x = 1 / 3");
+    fold_same("x = 1 / 8");
     fold_same("x = 0.3 / 0.1");
-    fold_same("x = 1e-323 / 2");
     fold_same("x = 1 / 1e-15");
-    fold_same("x = 9007199254740991 / 0.5");
     fold_same("x = f() / 2");
-    fold_same("x = (void f()) / 1");
+    fold("x = (void f()) / 1", "x = +void f()");
     fold_same("x = ({ valueOf: f }) / 2");
     fold_same("x = 4n / 2n");
     fold_same("x = 4n / 2");
     fold_same("x = 4n / 0n");
     fold_same("x = y / 2 / 4");
+    fold_same("x = 4 ** .5 / 2");
+    fold_same("x = 63.99218702310463 ** 2 / 4095");
 }
 
 #[test]
@@ -1355,8 +1377,8 @@ fn test_fold_left_child_op() {
     fold_same("1 + x - 2 + 1");
     fold_same("1 + x - 2 + 3");
     fold_same("1 + x - 2 + 3 - 1");
-    fold_same("f(x)-0");
-    fold_same("x-0-0"); // FIXME: want x - 0
+    fold("f(x)-0", "+f(x)");
+    fold("x-0-0", "+x");
     fold_same("x+2-2+2");
     fold_same("x+2-2+2-2");
     fold_same("x-2+2");
@@ -1391,8 +1413,9 @@ fn test_does_not_duplicate_large_tracked_strings_when_folding_addition() {
     test_same(
         "const p = 'PAYLOADpayload0123456789PAYLOADpayload0123456789'; export const a = atob(p); export const b = 'y' + p;",
     );
-    test_same(
+    test(
         "const p = 'PAYLOADpayload0123456789PAYLOADpayload0123456789'; export const a = atob(p); export const b = 'x' + ('y' + p);",
+        "const p = 'PAYLOADpayload0123456789PAYLOADpayload0123456789'; export const a = atob(p); export const b = 'xy' + p;",
     );
 
     // A large string with one read is still inlineable and foldable.
@@ -1564,6 +1587,58 @@ fn test_inline_values_in_template_literal() {
     fold("`foo${'${}'}`", "'foo${}'");
     fold("`foo${'${}'}${i}`", "`foo\\${}${i}`");
     fold_same("foo`foo${1}bar`");
+}
+
+#[test]
+fn test_inline_nested_template_literals() {
+    fold("`${x} ${`A ${r}`}`", "`${x} A ${r}`");
+    fold("`a${`b${c}d`}e`", "`ab${c}de`");
+    fold("`a${`b${c}d${e}f`}g${h}`", "`ab${c}d${e}fg${h}`");
+    fold("`a${`b${`c${d}e`}f`}g`", "`abc${d}efg`");
+    fold("`${a()}${`${b()}`}${c()}`", "`${a()}${b()}${c()}`");
+    fold_same("`a${tag`b${c}d`}e`");
+    fold_same("tag`a${`b${c}d`}e`");
+    fold(r"`$${`{${a}`}`", r"`$\{${a}`");
+    fold(r"`${`${a}$`}{b`", r"`${a}$\{b`");
+    fold(r"`\0${`1${a}`}`", r"`\x001${a}`");
+    fold(r"`a${`b${c}$`}${`{${d}e`}f`", r"`ab${c}$\{${d}ef`");
+    test(
+        r"function f() { let y; y = 'Q'; return `\u0061${`b${y}c`}\u0064` }",
+        "function f() { let y = 'Q'; return 'abQcd' }",
+    );
+    test(
+        r"function f() { let y; y = 'Q'; return `\u0061${`b${y}$`}${`{${y}`}\u0064` }",
+        "function f() { let y = 'Q'; return 'abQ${Qd' }",
+    );
+}
+
+#[test]
+fn inline_nested_template_literals_preserves_quasi_mappings() {
+    let source = "export function demo(x, y) { return `${x}${`INNER${y}`}OUTER`; }";
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source, SourceType::mjs()).parse();
+    assert!(ret.diagnostics.is_empty());
+    let mut program = ret.program;
+    Compressor::new(&allocator).build(&mut program, default_options());
+    let result = Codegen::new()
+        .with_options(CodegenOptions {
+            source_map_path: Some("test.js".into()),
+            ..CodegenOptions::minify()
+        })
+        .build(&program);
+    assert_eq!(result.code, "export function demo(x,y){return`${x}INNER${y}OUTER`}");
+    let map = result.map.unwrap();
+    for text in ["INNER", "OUTER"] {
+        let src_col = u32::try_from(source.find(text).unwrap()).unwrap();
+        let dst_col = u32::try_from(result.code.find(text).unwrap()).unwrap();
+        assert!(
+            map.get_tokens().any(|token| {
+                (token.get_src_line(), token.get_src_col()) == (0, src_col)
+                    && (token.get_dst_line(), token.get_dst_col()) == (0, dst_col)
+            }),
+            "missing mapping for {text}"
+        );
+    }
 }
 
 #[test]
@@ -1897,4 +1972,112 @@ fn test_fold_left_child_op_keeps_side_effects() {
     fold_same("(x ^ [(y = 9), 1].length) ^ 3");
     // Still folds when nothing has side effects.
     fold("(3 ^ x) ^ [1, 1].length", "x ^ 1");
+}
+
+#[test]
+fn test_fold_int32_add_sub() {
+    test_smallest(
+        "const SIZE = 4; const SIZE_SHIFT = 2; const START_OFFSET = 0; const TYPE_OFFSET = 1; export let start = buffer[(index << SIZE_SHIFT) + START_OFFSET]; export let previousType = buffer[(index << SIZE_SHIFT) - SIZE + TYPE_OFFSET];",
+        "export let start = buffer[index << 2]; export let previousType = buffer[(index << 2) - 3];",
+    );
+
+    fold("(a << 2) + 0", "a << 2");
+    fold("0 + (a << 2)", "a << 2");
+    fold("(a << 2) - 0", "a << 2");
+    fold("(a >>> b) + 0", "a >>> b");
+    fold("(~+a) + 0", "~+a");
+    fold("(a << 2) + -0", "a << 2");
+    fold("(f() << 2) + 0", "f() << 2");
+
+    fold("(a << 2) - 4 + 1", "(a << 2) - 3");
+    fold("(a << 2) + 4 - 1", "(a << 2) + 3");
+    fold("(a << 2) + 4 + 1", "(a << 2) + 5");
+    fold("(a << 2) - 4 - 1", "(a << 2) - 5");
+    fold("(a << 2) - 1 + 4", "(a << 2) + 3");
+    fold("(a << 2) - 4 + 4", "a << 2");
+    fold("(a << 2) - 4 + 1 + 2", "(a << 2) - 1");
+    fold("(a << 2) + 9007194959773696 - 1", "(a << 2) + 9007194959773695");
+    fold("(a << 2) + 1e9 - 1e9", "a << 2");
+    fold("(1e9 - 4) + 1", "1e9 - 3");
+    fold("(1e9 + 4) + 1", "1e9 + 5");
+    fold("(1e9 + 1) + 0", "1e9 + 1");
+    fold("(1e9 + 4) - 1", "1e9 + 3");
+
+    fold_same("0 - (a << 2)");
+    fold_same("(a << b) + 0");
+    fold_same("(a << b) - 4 + 1");
+    fold_same("~a + 0");
+    fold_same("a + 0");
+    fold_same("(a * 2 - 5) + 1");
+    fold_same("(a << 2) - 4.5 + 1");
+    fold_same("(a ? -0 : b << 2) + 0");
+    fold_same("(a << 2) + 9007194959773697 - 1");
+    fold_same("(a << 2) + 9007194959773696 + 1");
+    fold_same("(a << 2) - 1e9 - 1");
+    fold_same("(a << 2) + 0n");
+    fold_same("(a << 2) + NaN - NaN");
+}
+
+#[test]
+fn test_fold_numeric_identity() {
+    // `n - 0`, `n * 1` and `n / 1` are `n` for every number, including `-0` and `NaN`.
+    fold("(a << 2) * 1", "a << 2");
+    fold("1 * (a << 2)", "a << 2");
+    fold("(a << 2) / 1", "a << 2");
+    fold("(a * 2) - 0", "a * 2");
+    fold("(a * 2) * 1", "a * 2");
+    fold("(+a) - 0", "+a");
+    fold("2 ** a - 0", "2 ** a");
+    // Otherwise they are all `ToNumber(A)`, which `+A` does in fewer bytes.
+    fold("a - 0", "+a");
+    fold("a * 1", "+a");
+    fold("1 * a", "+a");
+    fold("a / 1", "+a");
+    fold("a.b - 0", "+a.b");
+    fold("f() * 1", "+f()");
+    fold("-a - 0", "+-a");
+    fold("typeof a - 0", "+typeof a");
+    fold("[a] - 0", "+[a]");
+    fold("`${a}` - 0", "+`${a}`");
+    fold("new A - 0", "+new A()");
+    fold("a?.b * 1", "+a?.b");
+    fold("tag`x` / 1", "+tag`x`");
+    fold("a++ - 0", "+a++");
+    // `+A` would need parentheses, or a space in `+ ++a`.
+    fold_same("a * b - 0");
+    fold_same("(a ? 1 : b) - 0");
+    fold_same("++a - 0");
+    fold("--a - 0", "+--a");
+    // Right after another `+`, `+A` needs a space (`a+ +b`), so it only saves bytes where the
+    // original needed parentheses.
+    fold_same("x = 0 * a + 1 * b + 1 * c");
+    fold_same("x = a + 1 * b * c");
+    fold_same("x = a + (b * 1) % c");
+    fold("x = 'a' + (a - 0)", "x = 'a' + +a");
+    fold("x = a + (b - 0) / c", "x = a + +b / c");
+    fold("x = +(a * 1)", "x = + +a");
+    fold("(a * 1 - 5) + 1", "a - 5 + 1");
+    fold("x = 1 * a + 0 * b", "x = +a + 0 * b");
+    fold("x = c - 1 * a", "x = c - +a");
+    // Shorter when the enclosing operation folds away too.
+    fold("x = a + (1 * b - 0)", "x = a + +b");
+    // `delete A` would delete the reference `A`; `delete (Math.PI * 1)` is `true`.
+    fold("x = delete (Math.PI * 1)", "x = !0");
+    fold("x = delete (Number.MAX_VALUE - 0)", "x = !0");
+    // `n - -0` is `+0` for `n === -0`, and `+` may concatenate.
+    fold_same("a - -0");
+    fold_same("(a * 2) - -0");
+    fold_same("a + 0");
+    fold_same("(a * 2) + 0");
+    // Not the identity element.
+    fold_same("a * -1");
+    fold_same("1 / a");
+    fold_same("0 - a");
+    // `BigInt` operands throw; leave them alone.
+    fold_same("1n - 0");
+    fold_same("a.b * 1n");
+    // Operands that evaluate fold to their value first, rather than becoming `+A`.
+    fold("x = void 0 - 0", "x = NaN");
+    fold("x = '3' * 1", "x = 3");
+    fold("x = null / 1", "x = 0");
 }

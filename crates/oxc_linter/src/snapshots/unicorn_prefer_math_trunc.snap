@@ -388,3 +388,167 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ───────
    ╰────
   help: Replace `bar | 0` with `Math.trunc(bar)`.
+
+  ⚠ unicorn(prefer-math-trunc): Use `Math.trunc` instead of `parseInt(String(...), 10)`.
+   ╭─[prefer_math_trunc.tsx:1:13]
+ 1 │ const foo = parseInt(String(number), 10);
+   ·             ────────────────────────────
+   ╰────
+  help: Replace `parseInt(String(number), 10)` with `Math.trunc(number)`.
+
+  ⚠ unicorn(prefer-math-trunc): Use `Math.trunc` instead of `Number.parseInt(String(...), 10)`.
+   ╭─[prefer_math_trunc.tsx:1:13]
+ 1 │ const foo = Number.parseInt(String(number), 10);
+   ·             ───────────────────────────────────
+   ╰────
+  help: Replace `Number.parseInt(String(number), 10)` with `Math.trunc(number)`.
+
+  ⚠ unicorn(prefer-math-trunc): Use `Math.trunc` instead of `Number.parseInt(String(...), 10)`.
+   ╭─[prefer_math_trunc.tsx:1:13]
+ 1 │ const foo = (Number).parseInt(String(number), 10);
+   ·             ─────────────────────────────────────
+   ╰────
+  help: Replace `(Number).parseInt(String(number), 10)` with `Math.trunc(number)`.
+
+  ⚠ unicorn(prefer-math-trunc): Use `Math.trunc` instead of `parseInt(String(...), 10)`.
+   ╭─[prefer_math_trunc.tsx:1:13]
+ 1 │ const foo = parseInt((String(number)), 10);
+   ·             ──────────────────────────────
+   ╰────
+  help: Replace `parseInt((String(number)), 10)` with `Math.trunc(number)`.
+
+  ⚠ unicorn(prefer-math-trunc): Use `Math.trunc` instead of `parseInt(String(...), 10)`.
+   ╭─[prefer_math_trunc.tsx:1:13]
+ 1 │ const foo = parseInt((String)(number), 10);
+   ·             ──────────────────────────────
+   ╰────
+  help: Replace `parseInt((String)(number), 10)` with `Math.trunc(number)`.
+
+  ⚠ unicorn(prefer-math-trunc): Use `Math.trunc` instead of `parseInt(String(...), 10)`.
+   ╭─[prefer_math_trunc.tsx:1:13]
+ 1 │ const foo = parseInt(String(number), (10));
+   ·             ──────────────────────────────
+   ╰────
+  help: Replace `parseInt(String(number), (10))` with `Math.trunc(number)`.
+
+  ⚠ unicorn(prefer-math-trunc): Use `Math.trunc` instead of `parseInt(String(...), 10)`.
+   ╭─[prefer_math_trunc.tsx:1:13]
+ 1 │ const foo = parseInt(String(number), 10.0);
+   ·             ──────────────────────────────
+   ╰────
+  help: Replace `parseInt(String(number), 10.0)` with `Math.trunc(number)`.
+
+  ⚠ unicorn(prefer-math-trunc): Use `Math.trunc` instead of `parseInt(String(...), 10)`.
+   ╭─[prefer_math_trunc.tsx:1:13]
+ 1 │ const foo = parseInt(String(number), 0xa);
+   ·             ─────────────────────────────
+   ╰────
+  help: Replace `parseInt(String(number), 0xa)` with `Math.trunc(number)`.
+
+  ⚠ unicorn(prefer-math-trunc): Use `Math.trunc` instead of `parseInt(String(...), 10)`.
+   ╭─[prefer_math_trunc.tsx:1:13]
+ 1 │ const foo = parseInt(String((number)), 10);
+   ·             ──────────────────────────────
+   ╰────
+  help: Replace `parseInt(String((number)), 10)` with `Math.trunc((number))`.
+
+  ⚠ unicorn(prefer-math-trunc): Use `Math.trunc` instead of `parseInt(String(...), 10)`.
+   ╭─[prefer_math_trunc.tsx:1:13]
+ 1 │ const foo = parseInt(String(number + 1), 10);
+   ·             ────────────────────────────────
+   ╰────
+  help: Replace `parseInt(String(number + 1), 10)` with `Math.trunc(number + 1)`.
+
+  ⚠ unicorn(prefer-math-trunc): Use `Math.trunc` instead of `parseInt(String(...), 10)`.
+   ╭─[prefer_math_trunc.tsx:1:13]
+ 1 │ const foo = parseInt(String(number,), 10);
+   ·             ─────────────────────────────
+   ╰────
+  help: Replace `parseInt(String(number,), 10)` with `Math.trunc(number,)`.
+
+  ⚠ unicorn(prefer-math-trunc): Use `Math.trunc` instead of `parseInt(String(...), 10)`.
+   ╭─[prefer_math_trunc.tsx:1:13]
+ 1 │ const foo = parseInt(String(/* comment */ number), 10);
+   ·             ──────────────────────────────────────────
+   ╰────
+  help: Replace `parseInt(String(/* comment */ number), 10)` with `Math.trunc(/* comment */ number)`.
+
+  ⚠ unicorn(prefer-math-trunc): Use `Math.trunc` instead of `parseInt(String(...), 10)`.
+   ╭─[prefer_math_trunc.tsx:1:13]
+ 1 │ const foo = parseInt(String(number /* comment */), 10);
+   ·             ──────────────────────────────────────────
+   ╰────
+  help: Replace `parseInt(String(number /* comment */), 10)` with `Math.trunc(number /* comment */)`.
+
+  ⚠ unicorn(prefer-math-trunc): Use `Math.trunc` instead of `parseInt(String(...), 10)`.
+   ╭─[prefer_math_trunc.tsx:1:13]
+ 1 │ const foo = parseInt(/* comment */ String(number), 10);
+   ·             ──────────────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(prefer-math-trunc): Use `Math.trunc` instead of `parseInt(String(...), 10)`.
+   ╭─[prefer_math_trunc.tsx:1:13]
+ 1 │ const foo = parseInt(String /* comment */ (number), 10);
+   ·             ───────────────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(prefer-math-trunc): Use `Math.trunc` instead of `parseInt(String(...), 10)`.
+   ╭─[prefer_math_trunc.tsx:1:13]
+ 1 │ const foo = parseInt(String(number) /* comment */, 10);
+   ·             ──────────────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(prefer-math-trunc): Use `Math.trunc` instead of `parseInt(String(...), 10)`.
+   ╭─[prefer_math_trunc.tsx:1:13]
+ 1 │ const foo = parseInt(String(number), /* comment */ 10);
+   ·             ──────────────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(prefer-math-trunc): Use `Math.trunc` instead of `parseInt(String(...), 10)`.
+   ╭─[prefer_math_trunc.tsx:1:13]
+ 1 │ const foo = parseInt(String((0, number)), 10);
+   ·             ─────────────────────────────────
+   ╰────
+  help: Replace `parseInt(String((0, number)), 10)` with `Math.trunc((0, number))`.
+
+  ⚠ unicorn(prefer-math-trunc): Use `Math.trunc` instead of `parseInt(String(...), 10)`.
+   ╭─[prefer_math_trunc.tsx:1:13]
+ 1 │ const foo = parseInt(String(number as number), 10);
+   ·             ──────────────────────────────────────
+   ╰────
+  help: Replace `parseInt(String(number as number), 10)` with `Math.trunc(number as number)`.
+
+  ⚠ unicorn(prefer-math-trunc): Use `Math.trunc` instead of `parseInt(String(...), 10)`.
+   ╭─[prefer_math_trunc.tsx:1:13]
+ 1 │ const foo = parseInt(String<() => number>(number), 10);
+   ·             ──────────────────────────────────────────
+   ╰────
+  help: Replace `parseInt(String<() => number>(number), 10)` with `Math.trunc(number)`.
+
+  ⚠ unicorn(prefer-math-trunc): Use `Math.trunc` instead of `parseInt(String(...), 10)`.
+   ╭─[prefer_math_trunc.tsx:1:13]
+ 1 │ const foo = parseInt(String(number!), 10);
+   ·             ─────────────────────────────
+   ╰────
+  help: Replace `parseInt(String(number!), 10)` with `Math.trunc(number!)`.
+
+  ⚠ unicorn(prefer-math-trunc): Use `Math.trunc` instead of `parseInt(String(...), 10)`.
+   ╭─[prefer_math_trunc.tsx:1:23]
+ 1 │ function foo() {return(parseInt)(String(read(/* keep */)), 10);}
+   ·                       ────────────────────────────────────────
+   ╰────
+  help: Replace `(parseInt)(String(read(/* keep */)), 10)` with ` Math.trunc(read(/* keep */))`.
+
+  ⚠ unicorn(prefer-math-trunc): Use `Math.trunc` instead of `Number.parseInt(String(...), 10)`.
+   ╭─[prefer_math_trunc.tsx:1:22]
+ 1 │ function foo() {throw(Number.parseInt)(String(read(/* keep */)), 10);}
+   ·                      ───────────────────────────────────────────────
+   ╰────
+  help: Replace `(Number.parseInt)(String(read(/* keep */)), 10)` with ` Math.trunc(read(/* keep */))`.
+
+  ⚠ unicorn(prefer-math-trunc): Use `Math.trunc` instead of `parseInt(String(...), 10)`.
+   ╭─[prefer_math_trunc.tsx:1:35]
+ 1 │ async function foo() {return await(parseInt)(String(read(/* keep */)), 10);}
+   ·                                   ────────────────────────────────────────
+   ╰────
+  help: Replace `(parseInt)(String(read(/* keep */)), 10)` with ` Math.trunc(read(/* keep */))`.

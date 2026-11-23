@@ -138,7 +138,7 @@ Tailwind class sorting (`sortTailwindcss`) splits responsibilities:
 
 - Rust collects classes into `FormatElement::TailwindClass`
   - `className` etc. in JS/TS, `@apply` in CSS — incl. css-in-js and JSDoc fenced blocks
-  - `class` and the listed attributes in HTML / Vue, and Vue's `:class` / bound listed attributes as JS
+  - `class` and the listed attributes in HTML / Vue / Angular, and as JS their bindings (Vue's `:a`, Angular's `[a]` and `[ngClass]`), read per dialect as prettier-plugin-tailwindcss reads `tailwindAttributes` (`oxc_formatter_htmlish`'s `TailwindAttributes`)
 - and the JS side sorts them in one batch
   - `sortTailwindClasses` → tailwind's `getClassOrder`, which needs the resolved Tailwind config
 

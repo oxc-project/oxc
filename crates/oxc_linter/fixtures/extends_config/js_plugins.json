@@ -1,0 +1,6 @@
+{
+  "jsPlugins": [
+    "eslint-plugin-inherited",
+    { "name": "custom", "specifier": "eslint-plugin-shared" }
+  ]
+}

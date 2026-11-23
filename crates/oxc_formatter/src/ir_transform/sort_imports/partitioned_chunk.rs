@@ -123,7 +123,7 @@ impl<'a> PartitionedChunk<'a> {
                     }
 
                     let is_side_effect = metadata.is_side_effect;
-                    let (group_idx, normalized_source, is_ignored) =
+                    let ((group_idx, subgroup_idx), normalized_source, is_ignored) =
                         compute_import_metadata(metadata, group_matcher, options);
 
                     sortable_imports.push(SortableImport {
@@ -131,6 +131,7 @@ impl<'a> PartitionedChunk<'a> {
                         import_line: line,
                         is_side_effect,
                         group_idx,
+                        subgroup_idx,
                         normalized_source,
                         is_ignored,
                     });

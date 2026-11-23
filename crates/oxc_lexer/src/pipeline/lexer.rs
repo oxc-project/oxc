@@ -1,4 +1,4 @@
-use std::{mem, slice};
+use std::mem;
 
 use oxc_simd::{Cpu, DynCpu, cpu_multiversion, cpu_version};
 use oxc_span::Span;
@@ -6,34 +6,37 @@ use oxc_span::Span;
 use crate::{
     PAD,
     options::LexOptions,
-    token::{SPAN_SENTINELS, debug_assert_kind_bytes},
+    token::{TokenKind, kind_bytes},
     tokens::Tokens,
 };
 
 use crate::pipeline::{
+    bitmap::{Bitmap, Bitmaps},
     carve::carve,
-    classify::classify,
-    coalesce::{KWB, coalesce},
-    compress::{STAGE_CAP, compress, init_pair_luts, write_sentinels},
-    lanes::Lanes,
+    classify::{Planes, classify},
+    coalesce::{BATCH_SLOTS, coalesce},
+    compress::{STAGE_CAP, compress, lanes_post},
+    kinds::Kinds,
+    lex::{Lex, LexState},
     misc::{misc_post, misc_pre, retain_code_whitespace},
-    unicode_leads::resolve_unicode_leads,
+    source::Source,
 };
 
 pub struct Lexer {
+    token_start: Vec<u64>,
     word: Vec<u64>,
-    st: Vec<u64>,
-    kwinit: Vec<u64>,
-    opch: Vec<u64>,
+    keyword_initial: Vec<u64>,
+    op_char: Vec<u64>,
     digit: Vec<u64>,
     dot: Vec<u64>,
     misc: Vec<u64>,
-    kind: Vec<u8>,
-    kwpos: Vec<u32>,
-    nb_cap: usize,
-    stage_pos: Vec<u32>,
-    stage_kind: Vec<u8>,
-    pub(super) lanes: Lanes,
+    kinds: Vec<u8>,
+    kw_candidates: Vec<u32>,
+    events: Vec<u32>,
+    block_capacity: usize,
+    stage_pos: Box<[u32; STAGE_CAP]>,
+    stage_kind: Box<[u8; STAGE_CAP]>,
+    pub(super) state: LexState,
     cpu: DynCpu,
 }
 
@@ -62,22 +65,21 @@ impl Lexer {
     #[cpu_version(Generic)]
     #[inline]
     pub(crate) fn new_with_cpu(cpu: DynCpu) -> Lexer {
-        init_pair_luts(cpu);
-
         Lexer {
+            token_start: Vec::new(),
             word: Vec::new(),
-            st: Vec::new(),
-            kwinit: Vec::new(),
-            opch: Vec::new(),
+            keyword_initial: Vec::new(),
+            op_char: Vec::new(),
             digit: Vec::new(),
             dot: Vec::new(),
             misc: Vec::new(),
-            kind: Vec::new(),
-            kwpos: Vec::new(),
-            nb_cap: 0,
-            stage_pos: vec![0; STAGE_CAP],
-            stage_kind: vec![0; STAGE_CAP],
-            lanes: Lanes::default(),
+            kinds: Vec::new(),
+            kw_candidates: Vec::new(),
+            events: Vec::new(),
+            block_capacity: 0,
+            stage_pos: Box::new([0; STAGE_CAP]),
+            stage_kind: Box::new([0; STAGE_CAP]),
+            state: LexState::default(),
             cpu,
         }
     }
@@ -87,153 +89,112 @@ impl Lexer {
     /// Panics if `src` does not extend at least [`PAD`] zeroed bytes past `n`.
     #[cpu_version(Generic)]
     pub fn lex(&mut self, src: &[u8], n: usize, options: LexOptions, tokens: &mut Tokens) {
+        // `n.saturating_add(PAD)` not `n + PAD` to ensure this assertion catches
+        // e.g. `src.len() == 100, n == usize::MAX`, where `n + PAD` would wrap around to `PAD - 1`
+        // so `src.len() >= n + PAD` would be true.
+        // Slices are at most `isize::MAX` bytes, so cannot be >= a saturated `usize::MAX`.
         assert!(
-            src.len() >= n + PAD,
-            "lexer: src must have >= {PAD} bytes of padding past len {n} (got {})",
-            src.len()
+            src.len() >= n.saturating_add(PAD),
+            "lexer: src must have >= {PAD} bytes of padding past len {n}"
         );
-        let capacity = n + PAD + SPAN_SENTINELS;
-        tokens.kinds.clear();
-        tokens.kinds.reserve(capacity);
-        tokens.spans.clear();
-        tokens.spans.reserve(capacity);
+        let src = Source::new(src, n);
         // Lend the caller's lane buffers to the stages, so they fill them in place.
-        self.lanes.out = mem::take(&mut tokens.lanes);
-        // SAFETY: lex_raw writes count + SPAN_SENTINELS valid kinds and spans into reserved space.
-        let count = unsafe {
-            let count = self.lex_raw(
-                src,
-                n,
-                tokens.kinds.as_mut_ptr().cast::<u8>(),
-                tokens.spans.as_mut_ptr(),
-                options.jsx,
-                options.ts,
-                options.source_type_module,
-                options.validate_utf8,
-            );
-            let len = count + SPAN_SENTINELS;
-            debug_assert_kind_bytes(slice::from_raw_parts(tokens.kinds.as_ptr().cast::<u8>(), len));
-            tokens.kinds.set_len(len);
-            tokens.spans.set_len(len);
-            count
-        };
-        if !self.lanes.unicode_leads.is_empty() && count > 0 {
-            let (kinds, spans) = (&tokens.kinds[..count], &tokens.spans[..count]);
-            resolve_unicode_leads(&mut self.lanes, &src[..n], kinds, spans);
-        }
-        if !self.lanes.diag_suppress.is_empty() {
-            let (diags, sup) = (&mut self.lanes.out.diags, &self.lanes.diag_suppress);
-            diags.retain(|d| !sup.iter().any(|&(a, b)| d.off >= a && d.off < b));
-        }
-        tokens.lanes = mem::take(&mut self.lanes.out);
+        self.state.begin(mem::take(&mut tokens.lanes), src.len(), &options, self.cpu);
+        let count = self.lex_raw(src, &mut tokens.kinds, &mut tokens.spans, options);
+        tokens.lanes =
+            self.state.finish(src.bytes(), &tokens.kinds[..count], &tokens.spans[..count]);
     }
 
-    /// Run the full pipeline over `src[..n]`, writing the trivia-free token
-    /// stream into `out_kinds`/`out_spans` ([`SPAN_SENTINELS`] EOF entries
-    /// spanning `(n, n)` follow the last token) and the value lanes and
-    /// diagnostics into `self.lanes`. Returns the significant token count,
-    /// excluding the sentinels.
-    ///
-    /// # SAFETY
-    ///
-    /// - `src` must extend at least [`PAD`] zeroed bytes past `n`.
-    /// - `out_kinds` must be valid for `n + PAD + SPAN_SENTINELS` byte writes
-    ///   and `out_spans` for the same number of [`Span`] writes: `build_spans`
-    ///   stores full 4-lane groups past the last token, and the sentinels
-    ///   follow it.
     #[cpu_version(Generic)]
-    unsafe fn lex_raw(
+    fn lex_raw(
         &mut self,
-        src: &[u8],
-        n: usize,
-        out_kinds: *mut u8,
-        out_spans: *mut Span,
-        jsx: bool,
-        ts: bool,
-        module: bool,
-        vutf8: bool,
+        src: Source,
+        out_kinds: &mut Vec<TokenKind>,
+        out_spans: &mut Vec<Span>,
+        options: LexOptions,
     ) -> usize {
-        self.lex_raw_impl(src, n, out_kinds, out_spans, jsx, ts, module, vutf8, self.cpu)
+        self.lex_raw_impl(src, out_kinds, out_spans, options, self.cpu)
     }
 
     #[cpu_multiversion]
-    unsafe fn lex_raw_impl(
+    fn lex_raw_impl(
         &mut self,
-        src: &[u8],
-        n: usize,
-        out_kinds: *mut u8,
-        out_spans: *mut Span,
-        jsx: bool,
-        ts: bool,
-        module: bool,
-        vutf8: bool,
+        src: Source,
+        out_kinds: &mut Vec<TokenKind>,
+        out_spans: &mut Vec<Span>,
+        options: LexOptions,
         cpu: impl Cpu,
     ) -> usize {
-        debug_assert!(src.len() >= n + PAD, "source must extend PAD zeroed bytes past n");
-        self.ensure(n, cpu);
-        self.lanes.clear(cpu);
-        self.lanes.module = module;
-        self.lanes.disambiguate.begin(n, module, cpu);
-        if n == 0 {
-            write_sentinels(0, out_spans, out_kinds, cpu);
-            return 0;
-        }
+        self.ensure(src, cpu);
+        let planes = Planes {
+            token_start: &mut self.token_start,
+            word: &mut self.word,
+            keyword_initial: &mut self.keyword_initial,
+            op_char: &mut self.op_char,
+            digit: &mut self.digit,
+            dot: &mut self.dot,
+            misc: &mut self.misc,
+            kinds: self.kinds.as_chunks_mut().0,
+        };
+        // Only TS input gets the TS keyword initials.
+        classify(src, options.ts, planes, cpu);
 
-        let nb = n.div_ceil(64);
-        let sp = src.as_ptr();
-        let word = self.word.as_mut_ptr();
-        let st = self.st.as_mut_ptr();
-        let kwinit = self.kwinit.as_mut_ptr();
-        let opch = self.opch.as_mut_ptr();
-        let digit = self.digit.as_mut_ptr();
-        let dot = self.dot.as_mut_ptr();
-        let misc = self.misc.as_mut_ptr();
-        let kind = self.kind.as_mut_ptr();
-        let kwpos = self.kwpos.as_mut_ptr();
-
-        // Keyword recognition is mode-scoped: the TS set (and its wider
-        // kwinit letter class) only ever sees TS input, so JS lexing is
-        // byte-identical to a build without it.
-        classify(ts, sp, n, nb, word, st, kwinit, opch, digit, dot, misc, kind, cpu);
-        let nesc = misc_pre(sp, n, nb, st, word, misc, kind, vutf8, &mut self.lanes, cpu);
-        carve(src, n, st, kind, opch, word, digit, dot, kwinit, jsx, ts, &mut self.lanes, cpu);
-        coalesce(sp, n, st, opch, word, digit, dot, kwinit, kind, kwpos, ts, &mut self.lanes, cpu);
-        misc_post(sp, n, st, word, misc, kind, nesc, cpu);
-        if !self.lanes.out.irregular_whitespaces.is_empty() {
-            retain_code_whitespace(&self.st, &self.kind, &mut self.lanes.out.irregular_whitespaces);
+        let bitmaps = &Bitmaps {
+            token_start: Bitmap::new(&mut self.token_start),
+            word: Bitmap::new(&mut self.word),
+            keyword_initial: Bitmap::new(&mut self.keyword_initial),
+            op_char: Bitmap::new(&mut self.op_char),
+            digit: Bitmap::new(&mut self.digit),
+            dot: Bitmap::new(&mut self.dot),
+            misc: Bitmap::new(&mut self.misc),
+        };
+        // SAFETY: zeroed is Eof, and classify and the stages write only declared kinds.
+        let kinds = unsafe { Kinds::new(&mut self.kinds) };
+        let lex = Lex { src, bitmaps, kinds, options: &options };
+        if src.len() == 0 {
+            return compress(
+                lex,
+                &mut self.stage_pos,
+                &mut self.stage_kind,
+                out_kinds,
+                out_spans,
+                cpu,
+            );
         }
-        compress(
-            src,
-            n,
-            nb,
-            st,
-            kind,
-            self.stage_pos.as_mut_ptr(),
-            self.stage_kind.as_mut_ptr(),
-            out_kinds,
-            out_spans,
-            &mut self.lanes,
-            cpu,
-        )
+        let escaped_ident_count = misc_pre(lex, &mut self.state, cpu);
+        carve(lex, &mut self.state, cpu);
+        coalesce(lex, &mut self.kw_candidates, &mut self.events, &mut self.state, cpu);
+        misc_post(lex, escaped_ident_count, cpu);
+        if !self.state.lanes.irregular_whitespaces.is_empty() {
+            let spans = &mut self.state.lanes.irregular_whitespaces;
+            retain_code_whitespace(bitmaps.token_start, kinds, spans);
+        }
+        let count =
+            compress(lex, &mut self.stage_pos, &mut self.stage_kind, out_kinds, out_spans, cpu);
+        let (values, spans) = (kind_bytes(&out_kinds[..count]), &out_spans[..count]);
+        lanes_post(src.padded(), values, spans, src.len() as u32, &mut self.state.lanes, cpu);
+        count
     }
 
     #[cpu_multiversion]
     #[inline(never)]
-    fn ensure(&mut self, n: usize, _cpu: impl Cpu) {
-        let nb = n.div_ceil(64) + 1;
-        if self.nb_cap < nb {
-            self.word.resize(nb, 0);
-            self.st.resize(nb, 0);
-            self.kwinit.resize(nb, 0);
-            self.opch.resize(nb, 0);
-            self.digit.resize(nb, 0);
-            self.dot.resize(nb, 0);
-            self.misc.resize(nb, 0);
-            self.kind.resize(nb * 64, 0);
-            self.nb_cap = nb;
+    fn ensure(&mut self, src: Source, _cpu: impl Cpu) {
+        // One spare block past the source, which the bit scans may read.
+        let blocks = src.block_count() + 1;
+        if self.block_capacity < blocks {
+            self.token_start.resize(blocks, 0);
+            self.word.resize(blocks, 0);
+            self.keyword_initial.resize(blocks, 0);
+            self.op_char.resize(blocks, 0);
+            self.digit.resize(blocks, 0);
+            self.dot.resize(blocks, 0);
+            self.misc.resize(blocks, 0);
+            self.kinds.resize(blocks * 64, 0);
+            self.block_capacity = blocks;
         }
-        if self.kwpos.is_empty() {
-            self.kwpos.resize(KWB * 64 + 8, 0);
+        if self.kw_candidates.is_empty() {
+            self.kw_candidates.resize(BATCH_SLOTS, 0);
+            self.events.resize(BATCH_SLOTS, 0);
         }
     }
 }
@@ -242,5 +203,22 @@ impl Default for Lexer {
     #[cpu_version(Generic)]
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use oxc_simd::{DynCpu, test_cpus};
+
+    use crate::{LexOptions, PAD, Tokens};
+
+    use super::Lexer;
+
+    #[test_cpus]
+    #[should_panic(expected = "bytes of padding past len")]
+    fn lex_panics_if_n_plus_pad_overflows(cpu: DynCpu) {
+        let src = [0; PAD];
+        let mut tokens = Tokens::new();
+        Lexer::new_with_cpu(cpu).lex(&src, usize::MAX, LexOptions::default(), &mut tokens);
     }
 }

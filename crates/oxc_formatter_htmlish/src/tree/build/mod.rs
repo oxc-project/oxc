@@ -5,7 +5,7 @@ use oxc_htmlish_parser::{
     ast::{Element, Namespace, Node, NodeId, NodeKind, Root, Whitespace},
 };
 
-use super::{Borrows, Facts, Tree, display::display_comment};
+use super::{Borrows, Facts, TailwindAttributes, Tree, display::display_comment};
 use crate::{HtmlishVariant, options::WhitespaceSensitivity, rules::DialectRules};
 
 mod merge;
@@ -19,6 +19,7 @@ impl<'a> Tree<'a> {
         sensitivity: WhitespaceSensitivity,
         variant: HtmlishVariant,
         standalone: bool,
+        tailwind: Option<&[String]>,
     ) -> Self {
         let facts = ArenaVec::from_iter_in(
             root.nodes.iter().map(|node| Facts { span: node.span, ..Facts::default() }),
@@ -33,6 +34,8 @@ impl<'a> Tree<'a> {
                 facts,
                 merged_texts: ArenaVec::new_in(&allocator),
                 vue_script_language: "js",
+                tailwind: tailwind
+                    .map(|listed| TailwindAttributes::new(allocator, listed, variant)),
             },
             sensitivity,
         };
@@ -110,7 +113,6 @@ impl Builder<'_> {
 
         let mut prev: Option<NodeId> = None;
         let mut pending_space = false;
-        let mut any_cdata = false;
         let mut any_hidden = false;
         for (id, node) in nodes() {
             if let Some(element) = self.absorbing_element(id) {
@@ -154,10 +156,6 @@ impl Builder<'_> {
             }
 
             self.node(id, whitespace_sensitive);
-            if matches!(node.kind, NodeKind::Cdata) {
-                any_cdata = true;
-                self.facts(id).has_cdata = true;
-            }
             let facts = self.facts(id);
             facts.parent = Some(parent);
             facts.prev = prev;
@@ -209,9 +207,6 @@ impl Builder<'_> {
             facts.ends_in_pre = ends_in_pre;
         }
 
-        if any_cdata {
-            self.merge_cdata(parent);
-        }
         self.merge_simple_elements(parent);
 
         let mut next = self.tree[parent].first_child;
@@ -285,8 +280,6 @@ impl Builder<'_> {
             }
             _ => {}
         }
-        // CDATA reads as text, merged with the texts around it,
-        // and prints as written (DIVERGENCES.md#cdata-as-written).
         let text_like = matches!(
             node.kind,
             NodeKind::Text(_) | NodeKind::Comment(_) | NodeKind::Cdata | NodeKind::EndTag(_)

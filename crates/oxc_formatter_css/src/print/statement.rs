@@ -22,8 +22,8 @@ use crate::{
     },
     format::to_span,
     print::{
-        CssFormatter, at_rule, format_with, has_comments_between, is_glued, less,
-        postcss_simple_vars, scss, selector,
+        CssFormatter, at_rule, block_comment_end, format_with, has_comments_between, is_glued,
+        less, postcss_simple_vars, scss, selector,
         value::{self, ValueContext},
         write_maybe_lowercase,
     },
@@ -37,6 +37,9 @@ pub(super) fn stmt_end(stmt: &Statement<'_>, f: &CssFormatter<'_, '_>) -> u32 {
 }
 
 /// Extends `end` over any whitespace, comments and a final `;` in the source.
+///
+/// NOTE: `oxc-css-parser` records no `;` span, so this scans the source.
+/// Recording it in the parser would retire the scan (the comments are in the comment store too).
 /// End of an at-rule's params region: the block start, or (without a block) the span end,
 /// extended over a trailing `;` and shrunk back so the `;` itself stays outside the region.
 pub(super) fn params_region_end<'a>(
@@ -63,13 +66,8 @@ pub(super) fn end_with_semicolon(end: u32, f: &CssFormatter<'_, '_>) -> u32 {
         }
         // Skip a block comment between the statement and its `;`
         if i + 1 < bytes.len() && bytes[i] == b'/' && bytes[i + 1] == b'*' {
-            match source[i + 2..].find("*/") {
-                Some(close) => {
-                    i = i + 2 + close + 2;
-                    continue;
-                }
-                None => break,
-            }
+            i = block_comment_end(&source, i);
+            continue;
         }
         break;
     }
@@ -373,7 +371,7 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
         && trimmed_between.rsplit(['\n', '\r']).next().unwrap_or(trimmed_between).contains("//");
     // A Less merge marker (`prop+: val` / `prop+_: val`)
     // glues to the property name and its spaces drop, leaving only `:`
-    // (Prettier 3.9.5 #19517; the SPACED `+_` is ours alone, postcss-less cannot parse it).
+    // (as Prettier since #19517; the SPACED `+_` is ours alone, postcss-less cannot parse it).
     // Comments around the marker keep the verbatim path.
     let merge_marker =
         decl.less_property_merge.as_ref().map(|merge| to_span(merge.span)).filter(|span| {
@@ -415,10 +413,12 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
             write!(f, text(trimmed_between));
         }
     }
+    // A custom property's whitespace-only value is printed as written, `!important` glued to it
+    let mut verbatim_empty_value = false;
     if decl.value.is_empty() {
         // An empty value prints as `prop:;`, except a custom property's whitespace-only value,
         // which is its value: `--x: ;` substitutes a space where `--x:;` substitutes nothing, so it is kept verbatim.
-        // Scan up to the `;` in the source.
+        // Scan up to the `;` (or the `!important`) in the source.
         if is_custom_property {
             let colon_end = decl.colon_span.end;
             let bytes = source.as_bytes();
@@ -426,7 +426,11 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
             while i < bytes.len() && (bytes[i] == b' ' || bytes[i] == b'\t') {
                 i += 1;
             }
-            if i < bytes.len() && bytes[i] == b';' && i > colon_end as usize {
+            verbatim_empty_value = match &decl.important {
+                Some(important) => i == important.span.start as usize,
+                None => i < bytes.len() && bytes[i] == b';',
+            };
+            if verbatim_empty_value && i > colon_end as usize {
                 write!(f, text(source.slice_range(colon_end, u32::try_from(i).unwrap())));
             }
         }
@@ -546,7 +550,11 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
         }
     }
     if let Some(important) = &decl.important {
-        value::write_trailing_important(important, f);
+        if verbatim_empty_value {
+            value::write_important_annotation(important, f);
+        } else {
+            value::write_trailing_important(important, f);
+        }
     }
     write_terminator_tail_comments(decl.span().end, f);
 }
@@ -655,10 +663,7 @@ fn find_colon_outside_comments(line: &str) -> Option<usize> {
     let mut i = 0;
     while i < bytes.len() {
         if bytes[i] == b'/' && bytes.get(i + 1) == Some(&b'*') {
-            match line[i + 2..].find("*/") {
-                Some(close) => i = i + 2 + close + 2,
-                None => return None,
-            }
+            i = block_comment_end(line, i);
             continue;
         }
         if bytes[i] == b':' {
@@ -682,10 +687,7 @@ fn respace_value_tokens(v: &str) -> String {
         }
         let start = i;
         if bytes[i] == b'/' && bytes.get(i + 1) == Some(&b'*') {
-            match v[i + 2..].find("*/") {
-                Some(close) => i = i + 2 + close + 2,
-                None => i = bytes.len(),
-            }
+            i = block_comment_end(v, i);
         } else {
             while i < bytes.len()
                 && !bytes[i].is_ascii_whitespace()

@@ -71,6 +71,19 @@ impl<'a, 'b: 'a, 't> NameSymbolCollector<'a, 'b, 't> {
                     || self.has_name_set_reference_node(*symbol_id)
             })
             .for_each(|symbol_id| symbol_ids.set_bit(symbol_id.index()));
+        // A redeclaration can also name the function: `var foo; var foo = function () {}`.
+        // Few symbols are redeclared, so check them here instead of looking up redeclarations
+        // for every symbol above. The first entry is the declaration already checked above.
+        for (symbol_id, redeclarations) in self.scoping.redeclared_symbols() {
+            if !symbol_ids.has_bit(symbol_id.index())
+                && redeclarations.iter().skip(1).any(|redeclaration| {
+                    let decl_node = self.ast_nodes.get_node(redeclaration.declaration);
+                    self.is_name_set_declare_node(decl_node, symbol_id)
+                })
+            {
+                symbol_ids.set_bit(symbol_id.index());
+            }
+        }
         symbol_ids
     }
 

@@ -8,7 +8,6 @@ use oxc_str::JSStr;
 use oxc_syntax::{
     identifier::is_white_space,
     line_terminator::is_line_terminator,
-    number::NumberBase,
     operator::{BinaryOperator, UnaryOperator},
 };
 
@@ -17,7 +16,10 @@ use crate::{
     ast_util::could_be_asi_hazard,
     context::LintContext,
     rule::Rule,
-    utils::{integer_literal_loses_precision, pad_fix_with_token_boundary},
+    utils::{
+        NumberBase, has_fraction_or_exponent, integer_literal_loses_precision, number_base,
+        pad_fix_with_token_boundary,
+    },
 };
 
 fn prefer_bigint_literals_diagnostic(span: Span) -> OxcDiagnostic {
@@ -129,22 +131,14 @@ impl Rule for PreferBigintLiterals {
                     return;
                 }
 
-                let raw_text = numeric_literal.raw.as_ref().map_or_else(
-                    || {
-                        debug_assert!(false, "ASTs from the linter should always have raw values");
-                        ctx.source_range(numeric_literal.span)
-                    },
-                    |raw| raw.as_str(),
-                );
+                let raw_text = numeric_literal.raw.unwrap().as_str();
 
                 if integer_literal_loses_precision(numeric_literal) {
                     ctx.diagnostic(
                         prefer_bigint_literals_diagnostic(arg.span())
                             .with_note("Integer literal loses precision"),
                     );
-                } else if let Some(mut replacement) =
-                    bigint_literal_from_numeric(raw_text, numeric_literal.base)
-                {
+                } else if let Some(mut replacement) = bigint_literal_from_numeric(raw_text) {
                     ctx.diagnostic_with_fix(
                         prefer_bigint_literals_diagnostic(arg.span()),
                         |fixer| {
@@ -237,12 +231,8 @@ fn trim_leading_zeros(raw: &str) -> &str {
     if trimmed.is_empty() { "0" } else { trimmed }
 }
 
-fn bigint_literal_from_numeric(raw: &str, base: NumberBase) -> Option<String> {
-    if raw.contains('e') || raw.contains('E') {
-        return None;
-    }
-
-    let literal = match base {
+fn bigint_literal_from_numeric(raw: &str) -> Option<String> {
+    let literal = match number_base(raw) {
         NumberBase::Binary | NumberBase::Hex => format!("{raw}n"),
         NumberBase::Octal => {
             if raw.starts_with("0o") || raw.starts_with("0O") {
@@ -252,8 +242,13 @@ fn bigint_literal_from_numeric(raw: &str, base: NumberBase) -> Option<String> {
                 format!("0o{}n", trim_leading_zeros(raw))
             }
         }
-        NumberBase::Decimal => format!("{}n", trim_leading_zeros(raw)),
-        NumberBase::Float => return None,
+        NumberBase::Decimal => {
+            // Fractions and exponents (`1.0`, `1e3`) are not valid in BigInt literals
+            if has_fraction_or_exponent(raw) {
+                return None;
+            }
+            format!("{}n", trim_leading_zeros(raw))
+        }
     };
     Some(literal)
 }
@@ -345,6 +340,7 @@ fn test() {
         (r"BigInt(1n).toString()", r"1n.toString()"),
         (r"BigInt(0B11_11)", "0B11_11n"),
         (r"BigInt(0O777_777)", "0O777_777n"),
+        (r"BigInt(0XFe_fE)", "0XFe_fEn"),
         (r"BigInt(0777)", "0o777n"),
         (r"BigInt(0888)", "888n"),
         (r"BigInt(1000000000000000100)", r"BigInt(1000000000000000100)"),

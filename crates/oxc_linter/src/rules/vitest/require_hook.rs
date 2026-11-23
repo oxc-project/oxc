@@ -714,7 +714,43 @@ fn tests() {
     ];
 
     pass.extend(vitest_pass);
+    pass.extend([
+        (
+            r"import { describe as suite, test as baseTest } from 'vitest';
+            const extendedTest = baseTest.extend({});
+            const customTest = extendedTest.extend({});
+            customTest('top level', () => { setup(); });
+            suite('suite', () => {
+                customTest.only('nested', () => { setup(); });
+                customTest.each([1])('parameterized', () => {});
+            });",
+            None,
+        ),
+        (
+            r"import { beforeEach as setup, test as customTest } from 'vitest';
+            setup(() => { initialize(); });
+            customTest('foo', () => {});",
+            None,
+        ),
+    ]);
     fail.extend(vitest_fail);
+    fail.extend([
+        (
+            r"import { describe as suite, test as baseTest } from 'vitest';
+            const customTest = baseTest.extend({});
+            suite('suite', () => {
+                setup();
+                customTest('foo', () => {});
+            });",
+            None,
+        ),
+        (
+            r"import { test as baseTest } from 'other';
+            const customTest = baseTest.extend({});
+            customTest('foo', () => {});",
+            None,
+        ),
+    ]);
 
     Tester::new(RequireHook::NAME, RequireHook::PLUGIN, pass, fail)
         .with_vitest_plugin(true)

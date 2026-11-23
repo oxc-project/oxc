@@ -301,13 +301,7 @@ mod substring_tests {
             let object = Expression::new_string_literal(SPAN, JSStr::from(text), None, &ctx);
             let args = ArenaVec::from_iter_in(
                 std::iter::once(start).chain(end).map(|value| {
-                    Argument::from(Expression::new_numeric_literal(
-                        SPAN,
-                        value,
-                        None,
-                        NumberBase::Decimal,
-                        &ctx,
-                    ))
+                    Argument::from(Expression::new_numeric_literal(SPAN, value, None, &ctx))
                 }),
                 &ctx,
             );

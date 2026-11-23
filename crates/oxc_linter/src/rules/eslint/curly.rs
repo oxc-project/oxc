@@ -1,13 +1,25 @@
-use crate::fixer::{RuleFix, RuleFixer};
-use crate::rule::TupleRuleConfig;
-use crate::{AstNode, context::LintContext, rule::Rule};
-use oxc_ast::{AstKind, ast::IfStatement, ast::Statement};
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+
+use oxc_ast::{
+    AstKind,
+    ast::{BlockStatement, IfStatement, Statement},
+};
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_span::{GetSpan, Span};
+use oxc_syntax::{
+    identifier::{is_identifier_part, is_white_space},
+    line_terminator::is_line_terminator,
+};
+
+use crate::{
+    AstNode,
+    context::LintContext,
+    fixer::{RuleFix, RuleFixer},
+    rule::{Rule, TupleRuleConfig},
+};
 
 fn curly_diagnostic(span: Span, keyword: &str, expected: bool) -> OxcDiagnostic {
     let condition_if_needed =
@@ -426,18 +438,85 @@ fn apply_rule_fix<'a>(
     let fixed = if should_have_braces {
         format!("{{{source}}}")
     } else {
-        let mut trimmed = source
-            .strip_prefix('{')
-            .and_then(|s| s.strip_suffix('}'))
-            .unwrap_or(source)
-            .to_string();
-        if is_do_while {
+        if let Statement::BlockStatement(block) = body
+            && needs_semicolon(block, ctx)
+        {
+            return fixer.noop();
+        }
+        let mut trimmed = source.strip_circumfix('{', '}').unwrap_or(source).to_string();
+        if is_do_while || needs_space_before(body, &trimmed, ctx) {
             trimmed.insert(0, ' ');
         }
         trimmed
     };
 
     fixer.replace(body.span(), fixed)
+}
+
+/// Whether removing the braces around `block` would need a semicolon after its
+/// statement, e.g. `if (foo) { bar() } baz()` or `if (foo) { bar }\n(1).toString()`.
+/// Ported from `needsSemicolon` in ESLint's `curly`.
+fn needs_semicolon(block: &BlockStatement, ctx: &LintContext) -> bool {
+    let Some(last) = block.body.last() else {
+        return false;
+    };
+    let last_text = ctx.source_range(last.span());
+    if last_text.ends_with(';') || ends_with_block(last) {
+        return false;
+    }
+    let Some((next_start, next_char)) = next_token(block.span.end, ctx) else {
+        return false;
+    };
+
+    let between = ctx.source_range(Span::new(last.span().end, next_start));
+    !between.contains(is_line_terminator)
+        || matches!(next_char, '(' | '[' | '/' | '`' | '+' | '-')
+        || last_text.ends_with("++")
+        || last_text.ends_with("--")
+}
+
+/// Whether `stmt` ends with the `}` of a block that is not a function expression body,
+/// e.g. `while (foo) {}`. No semicolon is needed after it.
+fn ends_with_block(stmt: &Statement) -> bool {
+    match stmt {
+        Statement::BlockStatement(_) | Statement::TryStatement(_) => true,
+        Statement::FunctionDeclaration(func) => func.body.is_some(),
+        Statement::IfStatement(stmt) => {
+            ends_with_block(stmt.alternate.as_ref().unwrap_or(&stmt.consequent))
+        }
+        Statement::ForStatement(stmt) => ends_with_block(&stmt.body),
+        Statement::ForInStatement(stmt) => ends_with_block(&stmt.body),
+        Statement::ForOfStatement(stmt) => ends_with_block(&stmt.body),
+        Statement::WhileStatement(stmt) => ends_with_block(&stmt.body),
+        Statement::WithStatement(stmt) => ends_with_block(&stmt.body),
+        Statement::LabeledStatement(stmt) => ends_with_block(&stmt.body),
+        _ => false,
+    }
+}
+
+/// The start and first character of the next token after `pos`, skipping whitespace
+/// and comments.
+fn next_token(mut pos: u32, ctx: &LintContext) -> Option<(u32, char)> {
+    loop {
+        let rest = &ctx.source_text()[pos as usize..];
+        let (offset, c) =
+            rest.char_indices().find(|&(_, c)| !is_white_space(c) && !is_line_terminator(c))?;
+        #[expect(clippy::cast_possible_truncation)]
+        let start = pos + offset as u32;
+        match ctx.semantic().get_comment_at(start) {
+            Some(comment) => pos = comment.span.end,
+            None => return Some((start, c)),
+        }
+    }
+}
+
+/// `else{foo()}` has to become `else foo()`, not `elsefoo()`.
+fn needs_space_before(body: &Statement, text: &str, ctx: &LintContext) -> bool {
+    ctx.source_text()[..body.span().start as usize]
+        .chars()
+        .next_back()
+        .is_some_and(is_identifier_part)
+        && text.chars().next().is_some_and(|c| is_identifier_part(c) || c == '\\')
 }
 
 fn report_if_needed<'a>(
@@ -1276,6 +1355,8 @@ fn test() {
         ("if (foo) { var foo = () => {} } else {}", Some(serde_json::json!(["multi"]))), // { "ecmaVersion": 6 },
         ("if (foo) { var foo = function() {} } else {}", Some(serde_json::json!(["multi"]))),
         ("if (foo) { var foo = function*() {} } else {}", Some(serde_json::json!(["multi"]))), // { "ecmaVersion": 6 },
+        ("if (foo) bar(); else{baz();}", Some(serde_json::json!(["multi"]))),
+        ("if (foo) bar(); else{if (baz) qux();}", Some(serde_json::json!(["multi"]))),
         (
             "if (true)
 			foo()
@@ -2081,6 +2162,62 @@ fn test() {
         ("if(I){if(t)s}þ", "if(I){if(t){s}}þ", None),
         ("if (foo) {while(bar){}}", "if (foo) while(bar){}", Some(serde_json::json!(["multi"]))),
         ("if (foo) {if(bar){}}", "if (foo) if(bar){}", Some(serde_json::json!(["multi"]))),
+        (
+            "if (a) { if (b) console.log(1); else console.log(2) } else console.log(3)",
+            "if (a) { if (b) console.log(1); else console.log(2) } else console.log(3)",
+            Some(serde_json::json!(["multi"])),
+        ),
+        ("if (foo) {bar()} baz()", "if (foo) {bar()} baz()", Some(serde_json::json!(["multi"]))),
+        (
+            "if (foo) { bar }\n++baz;",
+            "if (foo) { bar }\n++baz;",
+            Some(serde_json::json!(["multi"])),
+        ),
+        (
+            "if (foo) { bar++ }\nbaz;",
+            "if (foo) { bar++ }\nbaz;",
+            Some(serde_json::json!(["multi"])),
+        ),
+        (
+            "if (foo) { bar }\n[1, 2, 3].map(foo);",
+            "if (foo) { bar }\n[1, 2, 3].map(foo);",
+            Some(serde_json::json!(["multi"])),
+        ),
+        (
+            "if (foo) { bar }\n(1).toString();",
+            "if (foo) { bar }\n(1).toString();",
+            Some(serde_json::json!(["multi"])),
+        ),
+        (
+            "if (foo) { bar }\n/regex/.test('foo');",
+            "if (foo) { bar }\n/regex/.test('foo');",
+            Some(serde_json::json!(["multi"])),
+        ),
+        (
+            "if (foo) { var foo = () => {} } else {}",
+            "if (foo) { var foo = () => {} } else {}",
+            Some(serde_json::json!(["multi"])),
+        ),
+        (
+            "if (foo) { var foo = function() {} } else {}",
+            "if (foo) { var foo = function() {} } else {}",
+            Some(serde_json::json!(["multi"])),
+        ),
+        (
+            "if (foo) { var foo = function*() {} } else {}",
+            "if (foo) { var foo = function*() {} } else {}",
+            Some(serde_json::json!(["multi"])),
+        ),
+        (
+            "if (foo) bar(); else{baz();}",
+            "if (foo) bar(); else baz();",
+            Some(serde_json::json!(["multi"])),
+        ),
+        (
+            "if (foo) bar(); else{if (baz) qux();}",
+            "if (foo) bar(); else if (baz) qux();",
+            Some(serde_json::json!(["multi"])),
+        ),
     ];
     Tester::new(Curly::NAME, Curly::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }

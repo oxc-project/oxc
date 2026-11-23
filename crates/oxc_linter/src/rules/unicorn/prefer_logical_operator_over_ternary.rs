@@ -43,7 +43,8 @@ declare_oxc_lint!(
     recommended,
     suggestion,
     version = "0.0.15",
-    short_description = "This rule finds ternary expressions that can be simplified to a logical operator.",
+    short_description =
+        "This rule finds ternary expressions that can be simplified to a logical operator.",
 );
 
 impl Rule for PreferLogicalOperatorOverTernary {
@@ -58,9 +59,8 @@ impl Rule for PreferLogicalOperatorOverTernary {
                 &conditional_expression.test,
                 &conditional_expression.consequent,
             );
-            let test_text =
-                wrap_nullish_coalesce_operand(test_expr, ctx.source_range(test_expr.span()));
-            let alternate_text = wrap_nullish_coalesce_operand(
+            let test_text = wrap_logical_or_operand(test_expr, ctx.source_range(test_expr.span()));
+            let alternate_text = wrap_logical_or_operand(
                 &conditional_expression.alternate,
                 ctx.source_range(conditional_expression.alternate.span()),
             );
@@ -83,11 +83,9 @@ impl Rule for PreferLogicalOperatorOverTernary {
                 &conditional_expression.alternate,
                 ctx,
             );
-            let alternate_text = wrap_nullish_coalesce_operand(
-                alternate_expr,
-                ctx.source_range(alternate_expr.span()),
-            );
-            let consequent_text = wrap_nullish_coalesce_operand(
+            let alternate_text =
+                wrap_logical_or_operand(alternate_expr, ctx.source_range(alternate_expr.span()));
+            let consequent_text = wrap_logical_or_operand(
                 &conditional_expression.consequent,
                 ctx.source_range(conditional_expression.consequent.span()),
             );
@@ -136,16 +134,32 @@ fn preferred_alternate_expr<'a>(
     &inner_unary.argument
 }
 
-fn wrap_nullish_coalesce_operand(expr: &Expression, text: &str) -> String {
+fn wrap_logical_or_operand(expr: &Expression, text: &str) -> String {
     if matches!(expr, Expression::ParenthesizedExpression(_)) {
         return text.to_string();
     }
 
+    if needs_parentheses_as_logical_or_operand(expr) {
+        return format!("({text})");
+    }
+
+    text.to_string()
+}
+
+/// Whether `expr` needs parentheses when used as an operand of `||`.
+///
+/// Conditionals, arrow functions, assignments, `yield`, and sequences bind
+/// looser than `||` (or cannot appear unparenthesized as its operand), and a
+/// coalescing `??` expression cannot mix with `||` without parentheses.
+fn needs_parentheses_as_logical_or_operand(expr: &Expression) -> bool {
     match expr.without_parentheses() {
-        Expression::LogicalExpression(logical_expr) if logical_expr.operator.is_coalesce() => {
-            format!("({text})")
-        }
-        _ => text.to_string(),
+        Expression::ConditionalExpression(_)
+        | Expression::ArrowFunctionExpression(_)
+        | Expression::AssignmentExpression(_)
+        | Expression::YieldExpression(_)
+        | Expression::SequenceExpression(_) => true,
+        Expression::LogicalExpression(logical_expr) => logical_expr.operator.is_coalesce(),
+        _ => false,
     }
 }
 
@@ -218,6 +232,14 @@ fn test() {
          !+a ? b : +a",
         "const foo = [];
          a && b ? a && b : 1",
+        "foo ? foo : bar ? 1 : 2",
+        "foo ? foo : () => {}",
+        "foo ? foo : bar = baz",
+        "function* g() { foo ? foo : yield bar; }",
+        "!foo ? bar ? 1 : 2 : foo",
+        "!foo ? () => bar : foo",
+        "(foo = bar) ? foo = bar : baz",
+        "(foo ? 1 : 2) ? foo ? 1 : 2 : bar",
     ];
 
     let fix = vec![
@@ -239,6 +261,14 @@ fn test() {
         ("await a ? (await (a)) : (foo)", "await a || (foo)"),
         ("(await a) ? await (a) : (foo)", "await (a) || (foo)"),
         ("(await a) ? (await (a)) : (foo)", "await (a) || (foo)"),
+        ("foo ? foo : bar ? 1 : 2", "foo || (bar ? 1 : 2)"),
+        ("foo ? foo : () => {}", "foo || (() => {})"),
+        ("foo ? foo : bar = baz", "foo || (bar = baz)"),
+        ("function* g() { foo ? foo : yield bar; }", "function* g() { foo || (yield bar); }"),
+        ("!foo ? bar ? 1 : 2 : foo", "foo || (bar ? 1 : 2)"),
+        ("!foo ? () => bar : foo", "foo || (() => bar)"),
+        ("(foo = bar) ? foo = bar : baz", "(foo = bar) || baz"),
+        ("(foo ? 1 : 2) ? foo ? 1 : 2 : bar", "(foo ? 1 : 2) || bar"),
     ];
 
     Tester::new(

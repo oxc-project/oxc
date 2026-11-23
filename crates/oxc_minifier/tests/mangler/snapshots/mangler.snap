@@ -147,11 +147,11 @@ function _() {
 
 function _() { var x; try { throw 0 } catch (e) { var e } }
 function _() {
-	var e;
+	var t;
 	try {
 		throw 0;
-	} catch (t) {
-		var t;
+	} catch (e) {
+		var e;
 	}
 }
 
@@ -162,6 +162,20 @@ function _() {
 		throw 0;
 	} catch {
 		var t;
+	}
+}
+
+function _() { var y; try { throw 0 } catch (y) { var y = 2; () => { let w; y } } }
+function _() {
+	var y;
+	try {
+		throw 0;
+	} catch (y) {
+		var y = 2;
+		() => {
+			let e;
+			y;
+		};
 	}
 }
 
@@ -300,4 +314,60 @@ function _() {
 			var e;
 		}
 	};
+}
+
+function _() { var foo; try {} catch (foo) { var foo = function() {} } }
+function _() {
+	var foo;
+	try {} catch (foo) {
+		var foo = function() {};
+	}
+}
+
+function _() { var foo; var foo = function() { var x } }
+function _() {
+	var foo;
+	var foo = function() {
+		var e;
+	};
+}
+
+function _() { var foo = 1; var foo = () => { var x } }
+function _() {
+	var foo = 1;
+	var foo = () => {
+		var e;
+	};
+}
+
+function _() { var Foo; var Foo = class { foo() { var x } } }
+function _() {
+	var Foo;
+	var Foo = class {
+		foo() {
+			var e;
+		}
+	};
+}
+
+function _(foo) { var foo = function() { var x } }
+function _(foo) {
+	var foo = function() {
+		var e;
+	};
+}
+
+function _() { var foo; function foo() { var x } }
+function _() {
+	var foo;
+	function foo() {
+		var e;
+	}
+}
+
+function _(foo) { function foo() { var x } }
+function _(foo) {
+	function foo() {
+		var e;
+	}
 }

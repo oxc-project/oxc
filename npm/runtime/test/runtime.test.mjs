@@ -5,11 +5,19 @@ import { createRequire } from "node:module";
 import { test } from "node:test";
 import { runInNewContext } from "node:vm";
 
+import { getDecoratorHelperFiles } from "../scripts/generate-decorator-helpers.mjs";
+
 const require = createRequire(import.meta.url);
 const { exports: packageExports } = JSON.parse(
   readFileSync(new URL("../package.json", import.meta.url), "utf8"),
 );
 const upstream = JSON.parse(readFileSync(new URL("../upstream.json", import.meta.url), "utf8"));
+
+test("generated decorator helpers match their shared sources", async () => {
+  for (const [path, contents] of await getDecoratorHelperFiles()) {
+    assert.equal(readFileSync(path, "utf8"), contents, path);
+  }
+});
 
 test("vendored helpers match the upstream manifest and documented patches", () => {
   const helperDir = new URL("../src/helpers/", import.meta.url);
@@ -72,6 +80,265 @@ test("all helper exports load in CommonJS and ESM", async () => {
       }),
   );
 });
+
+for (const mode of ["commonjs", "esm", "coverage"]) {
+  test(`${mode}: decorator helpers share metadata and run initializers in order`, async () => {
+    let coverage;
+    if (mode === "coverage") {
+      coverage = {};
+      runInNewContext(
+        readFileSync(
+          new URL("../../../tasks/coverage/src/runtime/decoratorHelpers.js", import.meta.url),
+          "utf8",
+        ),
+        { babelHelpers: coverage },
+      );
+    }
+    const load = async (name) =>
+      mode === "coverage"
+        ? coverage[name]
+        : mode === "commonjs"
+          ? require(`@oxc-project/runtime/helpers/${name}`)
+          : (await import(`@oxc-project/runtime/helpers/esm/${name}`)).default;
+    const decorateElement = await load("decorateElement");
+    const decoratorStart = await load("decoratorStart");
+    const runInitializers = await load("runInitializers");
+    const decoratorMetadata = await load("decoratorMetadata");
+    const setClassName = await load("setClassName");
+    const symbolMetadata = Symbol.metadata || Symbol.for("Symbol.metadata");
+    const parentMetadata = { inherited: true };
+    class Base {}
+    Base[symbolMetadata] = parentMetadata;
+    class Target extends Base {
+      method() {
+        return this.value;
+      }
+    }
+    const array = decoratorStart(Base);
+    assert.equal(Object.getPrototypeOf(array[3]), parentMetadata);
+    const events = [];
+    let addInitializer;
+    const receiver = {};
+    decorateElement(
+      array,
+      1,
+      "method",
+      [
+        [
+          receiver,
+          function (method, context) {
+            assert.equal(this, receiver);
+            assert.equal(context.kind, "method");
+            assert.equal(context.metadata, array[3]);
+            context.metadata.decorated = true;
+            context.addInitializer(function () {
+              events.push("method extra");
+            });
+            addInitializer = context.addInitializer;
+            return function () {
+              return method.call(this) + 1;
+            };
+          },
+        ],
+      ],
+      Target,
+    );
+    assert.throws(() => addInitializer(() => {}), /after decoration was finished/);
+    decorateElement(
+      array,
+      5,
+      "value",
+      [
+        [
+          undefined,
+          function (_, context) {
+            context.addInitializer(function () {
+              events.push("field extra");
+            });
+            return function (value) {
+              events.push("field value");
+              return value * 2;
+            };
+          },
+        ],
+      ],
+      Target,
+    );
+    assert.equal(decorateElement(array, 0, "Renamed", [], Target), Target);
+    assert.equal(Target.name, "Renamed");
+    assert.equal(Target[symbolMetadata], array[3]);
+    assert.equal(Target[symbolMetadata].decorated, true);
+    const instance = new Target();
+    runInitializers(array, 5, instance);
+    instance.value = runInitializers(array, 8, instance, 3);
+    runInitializers(array, 11, instance);
+    assert.equal(instance.method(), 7);
+    assert.deepEqual(events, ["method extra", "field value", "field extra"]);
+    class Other extends Base {}
+    assert.equal(decoratorMetadata(array, Other), Other);
+    assert.equal(Object.getOwnPropertyDescriptor(Other, symbolMetadata).value, array[3]);
+    assert.equal(setClassName(Other, Symbol("Other")), Other);
+    assert.equal(Other.name, "[Other]");
+  });
+
+  test(`${mode}: decorator metadata defines an own property on replacement proxies`, async () => {
+    const coverage = {};
+    if (mode === "coverage") {
+      runInNewContext(
+        readFileSync(
+          new URL("../../../tasks/coverage/src/runtime/decoratorHelpers.js", import.meta.url),
+          "utf8",
+        ),
+        { babelHelpers: coverage },
+      );
+    }
+    const decoratorMetadata =
+      mode === "coverage"
+        ? coverage.decoratorMetadata
+        : mode === "commonjs"
+          ? require("@oxc-project/runtime/helpers/decoratorMetadata")
+          : (await import("@oxc-project/runtime/helpers/esm/decoratorMetadata")).default;
+    const symbolMetadata = Symbol.metadata || Symbol.for("Symbol.metadata");
+    for (const inherited of [false, true]) {
+      class Base {}
+      if (inherited) Base[symbolMetadata] = {};
+      const events = [];
+      const target = new Proxy(class extends Base {}, {
+        has(target, key) {
+          events.push("has");
+          return Reflect.has(target, key);
+        },
+        set() {
+          events.push("set");
+          return true;
+        },
+        defineProperty(target, key, descriptor) {
+          events.push("defineProperty");
+          return Reflect.defineProperty(target, key, descriptor);
+        },
+      });
+      const metadata = {};
+      assert.equal(decoratorMetadata([undefined, undefined, undefined, metadata], target), target);
+      assert.deepEqual(events, ["defineProperty"]);
+      assert.deepEqual(Object.getOwnPropertyDescriptor(target, symbolMetadata), {
+        configurable: true,
+        enumerable: true,
+        writable: true,
+        value: metadata,
+      });
+    }
+  });
+}
+
+for (const mode of ["commonjs", "esm", "coverage"]) {
+  test(`${mode}: colliding public elements retain their own descriptors and home objects`, async () => {
+    const coverage = {};
+    if (mode === "coverage") {
+      runInNewContext(
+        readFileSync(
+          new URL("../../../tasks/coverage/src/runtime/decoratorHelpers.js", import.meta.url),
+          "utf8",
+        ),
+        { babelHelpers: coverage },
+      );
+    }
+    const load = async (name) =>
+      mode === "coverage"
+        ? coverage[name]
+        : mode === "commonjs"
+          ? require(`@oxc-project/runtime/helpers/${name}`)
+          : (await import(`@oxc-project/runtime/helpers/esm/${name}`)).default;
+    const key = await load("decoratorKey");
+    const start = await load("decoratorStart");
+    const decorate = await load("decorateElement");
+    const keys = Array.from({ length: 6 }, () => key());
+    class Base {
+      method() {
+        return 10;
+      }
+    }
+    class C extends Base {
+      [keys[0]]() {
+        return super.method() + 1;
+      }
+      [keys[1]]() {
+        return super.method() + 2;
+      }
+      static get [keys[2]]() {
+        return this.value;
+      }
+      static set [keys[3]](value) {
+        this.value = value;
+      }
+      get [keys[4]]() {
+        return 1;
+      }
+      set [keys[4]](value) {}
+      get [keys[5]]() {
+        return 2;
+      }
+      set [keys[5]](value) {}
+    }
+    const name = Symbol("pair");
+    const array = start(Base, C, [
+      [1, "method", keys[0]],
+      [1, "method", keys[1]],
+      [10, name, keys[2]],
+      [11, name, keys[3]],
+      [4, "accessor", keys[4]],
+      [4, "accessor", keys[5]],
+    ]);
+    const initial = Object.getOwnPropertyDescriptor(C.prototype, "accessor");
+    assert.equal(initial.get, array.p[5].get);
+    assert.equal(initial.set, array.p[5].set);
+    assert.equal(initial.enumerable, false);
+    // The first element of each name reserves its position, as an undecorated method would be
+    // defined by the class body. Later elements of the same name replace it in place.
+    assert.equal(Object.getOwnPropertyDescriptor(C.prototype, "method").value, array.p[0].value);
+    assert.deepEqual(Object.getOwnPropertyNames(C.prototype), [
+      "constructor",
+      "method",
+      "accessor",
+    ]);
+    assert.deepEqual(Object.getOwnPropertySymbols(C), [name]);
+    assert.equal(Object.getOwnPropertySymbols(C.prototype).length, 0);
+    const seen = [];
+    const decorators = [
+      [
+        undefined,
+        (method, context) => {
+          seen.push([method.call(new C()), method.name, context.name]);
+          return function () {
+            return 99;
+          };
+        },
+      ],
+    ];
+    decorate(array, 1, "method", decorators, C, array.p[0]);
+    decorate(array, 1, "method", [], C, array.p[1]);
+    decorate(array, 10, name, [], C, array.p[2]);
+    decorate(array, 11, name, [], C, array.p[3]);
+    assert.deepEqual(seen, [[11, "method", "method"]]);
+    assert.equal(new C().method(), 12);
+    C[name] = 7;
+    assert.equal(C[name], 7);
+    const descriptor = Object.getOwnPropertyDescriptor(C, name);
+    assert.equal(descriptor.get.name, "get [pair]");
+    assert.equal(descriptor.set.name, "set [pair]");
+    assert.equal(descriptor.enumerable, false);
+    assert.equal(descriptor.configurable, true);
+    const slots = array.length;
+    decorate(array, 4, "accessor", [], C, {
+      get() {
+        return 1;
+      },
+      set(value) {},
+      configurable: true,
+      enumerable: false,
+    });
+    assert.equal(array.length, slots, "undecorated accessors do not shift initializer slots");
+  });
+}
 
 for (const mode of ["commonjs", "esm"]) {
   const load = async (name) =>
@@ -372,3 +639,16 @@ for (const mode of ["commonjs", "esm"]) {
     assert.equal(decorateMetadata("design:type", Function), undefined);
   });
 }
+
+test("the package ships esbuild's license notice for the adapted decorator helpers", () => {
+  const runtimeDir = new URL("../", import.meta.url);
+  const packageJson = JSON.parse(readFileSync(new URL("package.json", runtimeDir), "utf8"));
+  assert.ok(packageJson.files.includes("LICENSE-esbuild"));
+  const notice = readFileSync(new URL("LICENSE-esbuild", runtimeDir), "utf8");
+  assert.match(notice, /Copyright \(c\) 2020 Evan Wallace/);
+  assert.match(notice, /Permission is hereby granted, free of charge/);
+  for (const helper of ["decorateElement", "decoratorStart", "runInitializers"]) {
+    const source = readFileSync(new URL(`scripts/helpers/${helper}.js`, runtimeDir), "utf8");
+    assert.match(source, /Adapted from esbuild's runtime/);
+  }
+});

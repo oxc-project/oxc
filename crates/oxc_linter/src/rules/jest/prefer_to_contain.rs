@@ -11,7 +11,14 @@ use crate::{
 #[derive(Debug, Default, Clone)]
 pub struct PreferToContain;
 
-declare_oxc_lint!(PreferToContain, jest, style, fix, docs = DOCUMENTATION, version = "0.2.14",);
+declare_oxc_lint!(
+    PreferToContain,
+    jest,
+    style,
+    suggestion,
+    docs = DOCUMENTATION,
+    version = "0.2.14",
+);
 
 impl Rule for PreferToContain {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -26,7 +33,7 @@ impl Rule for PreferToContain {
 
 #[test]
 fn tests() {
-    use crate::tester::Tester;
+    use crate::{fixer::FixKind, tester::Tester};
 
     #[expect(clippy::literal_string_with_formatting_args)]
     let pass = vec![
@@ -105,6 +112,11 @@ fn tests() {
         ),
         // typescript
         ("expect(a.includes(b)).toEqual(false as boolean);", None),
+        ("expect([NaN].includes(NaN)).toBe(true);", None),
+        (
+            "class Tags { includes(tag: string) { return tag === 'a'; } } const tags = new Tags(); expect(tags.includes('a')).toBe(true);",
+            None,
+        ),
     ];
 
     #[expect(clippy::literal_string_with_formatting_args)]
@@ -198,6 +210,21 @@ fn tests() {
         ),
         ("expect(a.includes(b)).toEqual(false as boolean);", "expect(a).not.toContain(b);", None),
     ];
+
+    let mut fix = fix
+        .into_iter()
+        .map(|(source, expected, config)| (source, expected, config, FixKind::Suggestion))
+        .collect::<Vec<_>>();
+    for (source, expected) in [
+        ("expect([NaN].includes(NaN)).toBe(true);", "expect([NaN]).toContain(NaN);"),
+        (
+            "class Tags { includes(tag: string) { return tag === 'a'; } } const tags = new Tags(); expect(tags.includes('a')).toBe(true);",
+            "class Tags { includes(tag: string) { return tag === 'a'; } } const tags = new Tags(); expect(tags).toContain('a');",
+        ),
+    ] {
+        fix.push((source, source, None, FixKind::Fix));
+        fix.push((source, expected, None, FixKind::Suggestion));
+    }
 
     Tester::new(PreferToContain::NAME, PreferToContain::PLUGIN, pass, fail)
         .expect_fix(fix)

@@ -7,7 +7,10 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::identifier::is_identifier_part;
+use oxc_syntax::{
+    identifier::{is_identifier_part, is_white_space},
+    line_terminator::is_line_terminator,
+};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -188,11 +191,9 @@ impl Rule for PreferSingleCall {
 
                 // Determine separator. Check whether the target call ends with a
                 // trailing comma (like `push(a,)`) to avoid generating `push(a,, b)`.
-                let target_src = target_call.span.source_text(src);
-                let before_paren = target_src[..target_src.len().saturating_sub(1)].trim_end();
                 let separator = if target_call.arguments.is_empty() {
                     ""
-                } else if before_paren.ends_with(',') {
+                } else if has_trailing_comma(target_call, ctx) {
                     " "
                 } else {
                     ", "
@@ -219,6 +220,24 @@ impl Rule for PreferSingleCall {
 
             fix
         });
+    }
+}
+
+/// Whether the last token before the closing `)` of `call` is a `,`, skipping comments,
+/// e.g. `push(a, /* b */)`.
+fn has_trailing_comma(call: &CallExpression, ctx: &LintContext) -> bool {
+    let start = call.span.start;
+    let mut end = call.span.end - 1;
+    let mut comments = ctx.comments_range(start..end).rev();
+    loop {
+        let text = ctx
+            .source_range(Span::new(start, end))
+            .trim_end_matches(|c| is_white_space(c) || is_line_terminator(c));
+        let text_end = start + u32::try_from(text.len()).unwrap();
+        match comments.next() {
+            Some(comment) if comment.span.end >= text_end => end = comment.span.start,
+            _ => return text.ends_with(','),
+        }
     }
 }
 
@@ -454,6 +473,8 @@ mod tests {
             "foo.push(); foo.push(1);",
             // Trailing comma in first call.
             "foo.push(1,); foo.push(2);",
+            "foo.push(1, /* comment */); foo.push(2);",
+            "foo.push(1, // comment\n); foo.push(2);",
             // Multi-line, both with semicolons.
             "foo.push(1);\nfoo.push(2);",
             // ASI: first statement lacks a semicolon.
@@ -496,6 +517,24 @@ mod tests {
             ("foo.push(1); foo.push();", "foo.push(1);"),
             ("foo.push(); foo.push(1);", "foo.push(1);"),
             ("foo.push(1,); foo.push(2);", "foo.push(1, 2);"),
+            ("foo.push(1, /* comment */); foo.push(2);", "foo.push(1, /* comment */ 2);"),
+            ("foo.push(1, // comment\n); foo.push(2);", "foo.push(1, // comment\n 2);"),
+            ("foo.push(1, // comment \n); foo.push(2);", "foo.push(1, // comment \n 2);"),
+            ("foo.push(1, //\t\n); foo.push(2);", "foo.push(1, //\t\n 2);"),
+            ("foo.push(1 // comma, \n); foo.push(2);", "foo.push(1 // comma, \n, 2);"),
+            (
+                "foo.push(1, /* comment */\u{feff}); foo.push(2);",
+                "foo.push(1, /* comment */\u{feff} 2);",
+            ),
+            ("foo.unshift(1); foo.unshift(2, // comment \n);", "foo.unshift(2, // comment \n 1);"),
+            (
+                "foo.push(/* argument */ 1, /* first */ // second \n /* third */); foo.push(2);",
+                "foo.push(/* argument */ 1, /* first */ // second \n /* third */ 2);",
+            ),
+            (
+                "foo.push(/* argument */ 1 /* first */ /* second */); foo.push(2);",
+                "foo.push(/* argument */ 1 /* first */ /* second */, 2);",
+            ),
             ("foo.push(1);\nfoo.push(2);", "foo.push(1, 2);"),
             // ASI: semicolon from second statement is preserved.
             ("foo.push(1)\nfoo.push(2);", "foo.push(1, 2);"),

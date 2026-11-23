@@ -121,19 +121,4 @@ TextEdit: TextEdit {
 
 
 ########### Fix All Action
-CodeAction: 
-Title: fix all safe fixable oxlint issues
-Is Preferred: Some(true)
-TextEdit: TextEdit {
-    range: Range {
-        start: Position {
-            line: 0,
-            character: 16,
-        },
-        end: Position {
-            line: 0,
-            character: 18,
-        },
-    },
-    new_text: "/",
-}
+None

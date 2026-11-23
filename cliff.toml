@@ -40,6 +40,10 @@ body = """
     ## [Unreleased]{% raw %}\n\n{% endraw -%}
 {%- endif -%}
 
+{%- if commits | length == 0 -%}
+  No significant changes.{% raw %}\n\n{% endraw -%}
+{%- endif -%}
+
 {%- if commits | filter(attribute="breaking", value=true) | length != 0 -%}
   ### 💥 BREAKING CHANGES{% raw %}\n\n{% endraw -%}
   {%- for commit in commits | filter(attribute="breaking", value=true) -%}
@@ -57,6 +61,14 @@ body = """
     {% raw %}\n{% endraw -%}
   {%- endif -%}
 {%- endfor -%}
+
+{#- Link a package entry to the same version in the combined changelog of its release. -#}
+{%- if version and extra.changelog -%}
+  {%- set v = version | trim_start_matches(pat="v") -%}
+  Full release notes: [{{ v }}](https://github.com/oxc-project/oxc/blob/main/{{ extra.changelog }}\
+    #{{ v | replace(from=".", to="") }}---{{ timestamp | date(format="%Y-%m-%d") }})\
+  {% raw %}\n\n{% endraw -%}
+{%- endif -%}
 """
 
 [git]

@@ -12,7 +12,7 @@ import {
 } from "./write.ts";
 import { printExpression } from "./expression.ts";
 import { CTX_NONE } from "./operators.ts";
-import { PREC_COMMA, PREC_LOWEST } from "./precedence.ts";
+import { PREC_COMMA } from "./precedence.ts";
 import { printTypeArguments } from "./typescript.ts";
 import { throwUnknownNode } from "./types.ts";
 
@@ -193,7 +193,7 @@ function printJSXExpressionContainer(node: ESTree.JSXExpressionContainer, state:
   write(state, "{", CAT_OTHER);
 
   if (node.expression.type !== "JSXEmptyExpression") {
-    printExpression(node.expression, state, PREC_LOWEST, CTX_NONE);
+    printExpression(node.expression, state, PREC_COMMA, CTX_NONE);
   }
 
   // `}` needs no category. What follows it in either caller context (attribute value, child)
@@ -264,7 +264,7 @@ function printJSXChild(node: ESTree.JSXChild, state: State): void {
       break;
     case "JSXSpreadChild":
       write(state, "{...", CAT_OTHER);
-      printExpression(node.expression, state, PREC_LOWEST, CTX_NONE);
+      printExpression(node.expression, state, PREC_COMMA, CTX_NONE);
       writeNoLast(state, "}");
       break;
     default:

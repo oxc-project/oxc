@@ -48,7 +48,7 @@ import {
   unaryOperatorCode,
   updateOperatorCode,
 } from "./operators.ts";
-import { withoutParens } from "./parens.ts";
+import { isLetIdentifier, withoutParens } from "./parens.ts";
 import {
   PREC_ASSIGN,
   PREC_CALL,
@@ -123,7 +123,7 @@ export function printExpression(
       const leftType = node.left.type;
       if (leftType === "PrivateIdentifier") {
         typeAssertIs<ESTree.PrivateInExpression>(node);
-        printPrivateInExpression(node, state, precedence);
+        printPrivateInExpression(node, state, precedence, ctx);
       } else {
         typeAssertIs<ESTree.BinaryExpression>(node);
         printBinaryish(node, state, precedence, ctx, leftType);
@@ -248,9 +248,9 @@ export function printExpression(
       write(state, "!", CAT_OP_UN_NOT);
       break;
     case "TSInstantiationExpression": {
-      const wrap = precedence >= PREC_POSTFIX;
+      const wrap = precedence > PREC_CONDITIONAL;
       if (wrap) write(state, "(", CAT_OTHER);
-      printExpression(node.expression, state, PREC_PREFIX, ctx);
+      printExpression(node.expression, state, PREC_POSTFIX, ctx);
       printTypeArguments(node.typeArguments, state);
       if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
       break;
@@ -305,15 +305,7 @@ export function printMemberExpression(
 ): void {
   const { object } = node;
   if (node.computed) {
-    // `(let)[0]` - a bare `let` object must be wrapped.
-    // `object` can be any expression, so its `type` is a megamorphic load - read it once while unwrapping parens.
-    let inner = object,
-      innerType = inner.type;
-    while (innerType === "ParenthesizedExpression") {
-      inner = (inner as ESTree.ParenthesizedExpression).expression;
-      innerType = inner.type;
-    }
-    const wrap = innerType === "Identifier" && (inner as ESTree.IdentifierReference).name === "let";
+    const wrap = isLetIdentifier(object, object.type);
 
     if (wrap) write(state, "(", CAT_OTHER);
     printExpression(object, state, PREC_POSTFIX, ctx & CTX_FORBID_CALL);
@@ -431,13 +423,15 @@ function printArguments(
  * @param node - Private-in expression
  * @param state - Printer state
  * @param precedence - Precedence of the position this expression sits in
+ * @param ctx - Context flags, including whether `in` is forbidden in a `for` initializer
  */
 export function printPrivateInExpression(
   node: ESTree.PrivateInExpression,
   state: State,
   precedence: number,
+  ctx: number,
 ): void {
-  const wrap = precedence >= PREC_COMPARE;
+  const wrap = precedence >= PREC_COMPARE || (ctx & CTX_FORBID_IN) !== 0;
   if (wrap) write(state, "(", CAT_OTHER);
 
   markMapStart(state, node.start, node.end, node);
@@ -585,9 +579,9 @@ function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): voi
     } else if (
       keyType === "Literal"
       && typeof key.value === "number"
-      && (key.value < 0 || Object.is(key.value, -0) || !Number.isFinite(key.value))
+      && (key.value < 0 || Object.is(key.value, -0) || Number.isNaN(key.value))
     ) {
-      // `{ -1: 0 }` and `{ 1/0: 0 }` must print as `{ [-1]: 0 }` / `{ [1 / 0]: 0 }`
+      // `{ -1: 0 }` must print as `{ [-1]: 0 }`
       computed = true;
     }
   }

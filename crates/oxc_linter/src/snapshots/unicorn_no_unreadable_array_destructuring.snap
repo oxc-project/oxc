@@ -175,3 +175,147 @@ source: crates/oxc_linter/src/tester.rs
  1 │ let[]=[],[,,thirdElement] = foo;
    ·          ────────────────
    ╰────
+
+  ⚠ unicorn(no-unreadable-array-destructuring): Do not assign destructured values to object properties.
+   ╭─[no_unreadable_array_destructuring.tsx:1:2]
+ 1 │ [this.property] = array;
+   ·  ─────────────
+   ╰────
+
+  ⚠ unicorn(no-unreadable-array-destructuring): Do not assign destructured values to object properties.
+   ╭─[no_unreadable_array_destructuring.tsx:1:2]
+ 1 │ [object.property] = array;
+   ·  ───────────────
+   ╰────
+
+  ⚠ unicorn(no-unreadable-array-destructuring): Do not assign destructured values to object properties.
+   ╭─[no_unreadable_array_destructuring.tsx:1:2]
+ 1 │ [object[key]] = array;
+   ·  ───────────
+   ╰────
+
+  ⚠ unicorn(no-unreadable-array-destructuring): Do not assign destructured values to object properties.
+   ╭─[no_unreadable_array_destructuring.tsx:1:3]
+ 1 │ [(object.property)] = array;
+   ·   ───────────────
+   ╰────
+
+  ⚠ unicorn(no-unreadable-array-destructuring): Do not assign destructured values to object properties.
+   ╭─[no_unreadable_array_destructuring.tsx:1:2]
+ 1 │ [object.property = defaultValue] = array;
+   ·  ───────────────
+   ╰────
+
+  ⚠ unicorn(no-unreadable-array-destructuring): Do not assign destructured values to object properties.
+   ╭─[no_unreadable_array_destructuring.tsx:1:2]
+ 1 │ [object.property! = defaultValue] = array;
+   ·  ───────────────
+   ╰────
+
+  ⚠ unicorn(no-unreadable-array-destructuring): Do not assign destructured values to object properties.
+   ╭─[no_unreadable_array_destructuring.tsx:1:2]
+ 1 │ [(condition ? first : second).property] = array;
+   ·  ─────────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(no-unreadable-array-destructuring): Do not assign destructured values to object properties.
+   ╭─[no_unreadable_array_destructuring.tsx:1:2]
+ 1 │ [this.property.value] = array;
+   ·  ───────────────────
+   ╰────
+
+  ⚠ unicorn(no-unreadable-array-destructuring): Do not assign destructured values to object properties.
+   ╭─[no_unreadable_array_destructuring.tsx:1:5]
+ 1 │ [...object.property] = array;
+   ·     ───────────────
+   ╰────
+
+  ⚠ unicorn(no-unreadable-array-destructuring): Do not assign destructured values to object properties.
+   ╭─[no_unreadable_array_destructuring.tsx:1:6]
+ 1 │ [...[object.property]] = array;
+   ·      ───────────────
+   ╰────
+
+  ⚠ unicorn(no-unreadable-array-destructuring): Do not assign destructured values to object properties.
+   ╭─[no_unreadable_array_destructuring.tsx:1:2]
+ 1 │ [object.a, ...object.b] = array;
+   ·  ────────
+   ╰────
+
+  ⚠ unicorn(no-unreadable-array-destructuring): Do not assign destructured values to object properties.
+   ╭─[no_unreadable_array_destructuring.tsx:1:15]
+ 1 │ [object.a, ...object.b] = array;
+   ·               ────────
+   ╰────
+
+  ⚠ unicorn(no-unreadable-array-destructuring): Do not assign destructured values to object properties.
+   ╭─[no_unreadable_array_destructuring.tsx:1:2]
+ 1 │ [object.property!] = array;
+   ·  ───────────────
+   ╰────
+
+  ⚠ unicorn(no-unreadable-array-destructuring): Do not assign destructured values to object properties.
+   ╭─[no_unreadable_array_destructuring.tsx:1:2]
+ 1 │ [object.property as any] = array;
+   ·  ───────────────
+   ╰────
+
+  ⚠ unicorn(no-unreadable-array-destructuring): Do not assign destructured values to object properties.
+   ╭─[no_unreadable_array_destructuring.tsx:1:3]
+ 1 │ [(object.property as any)!] = array;
+   ·   ───────────────
+   ╰────
+
+  ⚠ unicorn(no-unreadable-array-destructuring): Do not assign destructured values to object properties.
+   ╭─[no_unreadable_array_destructuring.tsx:1:2]
+ 1 │ [object.property satisfies unknown] = array;
+   ·  ───────────────
+   ╰────
+
+  ⚠ unicorn(no-unreadable-array-destructuring): Do not assign destructured values to object properties.
+   ╭─[no_unreadable_array_destructuring.tsx:1:5]
+ 1 │ [...object.property!] = array;
+   ·     ───────────────
+   ╰────
+
+  ⚠ unicorn(no-unreadable-array-destructuring): Do not assign destructured values to object properties.
+   ╭─[no_unreadable_array_destructuring.tsx:1:45]
+ 1 │ class Foo { #prop; bar(array: unknown[]) { [this.#prop] = array; } }
+   ·                                             ──────────
+   ╰────
+
+  ⚠ unicorn(no-unreadable-array-destructuring): Do not assign destructured values to object properties.
+   ╭─[no_unreadable_array_destructuring.tsx:1:7]
+ 1 │ for ([this.property] of arrays) {}
+   ·       ─────────────
+   ╰────
+
+  ⚠ unicorn(no-unreadable-array-destructuring): Do not assign destructured values to object properties.
+   ╭─[no_unreadable_array_destructuring.tsx:1:7]
+ 1 │ for ([this.property] in obj) {}
+   ·       ─────────────
+   ╰────
+
+  ⚠ unicorn(no-unreadable-array-destructuring): Do not assign destructured values to object properties.
+   ╭─[no_unreadable_array_destructuring.tsx:1:11]
+ 1 │ ({parts: [this.property]} = object);
+   ·           ─────────────
+   ╰────
+
+  ⚠ unicorn(no-unreadable-array-destructuring): Do not assign destructured values to object properties.
+   ╭─[no_unreadable_array_destructuring.tsx:1:3]
+ 1 │ [[object.property]] = array;
+   ·   ───────────────
+   ╰────
+
+  ⚠ unicorn(no-unreadable-array-destructuring): Array destructuring may not contain consecutive ignored values.
+   ╭─[no_unreadable_array_destructuring.tsx:1:1]
+ 1 │ [,, object.property] = array;
+   · ────────────────────
+   ╰────
+
+  ⚠ unicorn(no-unreadable-array-destructuring): Do not assign destructured values to object properties.
+   ╭─[no_unreadable_array_destructuring.tsx:1:5]
+ 1 │ [,, object.property] = array;
+   ·     ───────────────
+   ╰────

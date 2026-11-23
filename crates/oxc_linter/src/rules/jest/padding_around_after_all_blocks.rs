@@ -22,8 +22,13 @@ declare_oxc_lint!(
 
 impl Rule for PaddingAroundAfterAllBlocks {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(_) = node.kind() else { return };
-        run(node, ctx);
+        match node.kind() {
+            AstKind::Program(_)
+            | AstKind::BlockStatement(_)
+            | AstKind::FunctionBody(_)
+            | AstKind::SwitchCase(_) => run(node, ctx),
+            _ => {}
+        }
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
@@ -40,11 +45,73 @@ fn test() {
         "const thing = 123;\n\nafterAll(() => {});",
         "describe('foo', () => {\nafterAll(() => {});\n});",
         "const thing = 123;\n\n/* one */\n/* two */\nafterAll(() => {});",
+        "const cleanUp = false; cleanUp && afterAll(() => {});",
+        "const cleanUp = false;\nif (cleanUp)\n  afterAll(() => {});",
+        "const cleanUp = false; if (cleanUp) afterAll(() => {});",
+        "const cleanUp = false; if (cleanUp)\n  afterAll(() => {});",
+        "const cleanUp = false; while (cleanUp) afterAll(() => {});",
+        "const cleanUp = false; for (; cleanUp;) afterAll(() => {});",
+        r"
+const someText = 'abc';
+
+afterAll(() => {
+});
+
+describe('someText', () => {
+  const something = 'abc';
+
+  // A comment
+  afterAll(() => {
+    // stuff
+  });
+
+  afterAll(() => {
+    // other stuff
+  });
+});
+
+describe('someText', () => {
+  const something = 'abc';
+
+  afterAll(() => {
+    // stuff
+  });
+});
+",
+        "afterAll(() => {});\n\nfoo();",
+        "label:\nafterAll(() => {});",
     ];
 
     let fail = vec![
         "const thing = 123;\nafterAll(() => {});",
         "const thing = 123;\n/* one */\n/* two */\nafterAll(() => {});",
+        r"
+const someText = 'abc';
+afterAll(() => {
+});
+describe('someText', () => {
+  const something = 'abc';
+  // A comment
+  afterAll(() => {
+    // stuff
+  });
+  afterAll(() => {
+    // other stuff
+  });
+});
+
+describe('someText', () => {
+  const something = 'abc';
+  afterAll(() => {
+    // stuff
+  });
+});
+",
+        "afterAll(() => {});\nfoo();",
+        "{\n  const thing = 123;\n  afterAll(() => {});\n}",
+        "switch (value) {\n  case 1:\n    afterAll(() => {});\n    foo();\n}",
+        "const thing = 123\n;afterAll(() => {})",
+        "const thing = 123;\nlabel: afterAll(() => {});",
     ];
 
     let fix = vec![
@@ -52,6 +119,91 @@ fn test() {
         (
             "const thing = 123;\n/* one */\n/* two */\nafterAll(() => {});",
             "const thing = 123;\n\n/* one */\n/* two */\nafterAll(() => {});",
+        ),
+        (
+            "const thing = 123; afterAll(() => {}), foo();",
+            "const thing = 123;\n\nafterAll(() => {}), foo();",
+        ),
+        (
+            "const thing = 123; afterAll(() => {}) && foo();",
+            "const thing = 123;\n\nafterAll(() => {}) && foo();",
+        ),
+        (
+            "const thing = 123; await afterAll(() => {});",
+            "const thing = 123;\n\nawait afterAll(() => {});",
+        ),
+        (
+            "const thing = 123;\nawait afterAll(() => {});",
+            "const thing = 123;\n\nawait afterAll(() => {});",
+        ),
+        (
+            "const thing = 123; await /* hook */ afterAll(() => {});",
+            "const thing = 123;\n\nawait /* hook */ afterAll(() => {});",
+        ),
+        (
+            r"
+const someText = 'abc';
+afterAll(() => {
+});
+describe('someText', () => {
+  const something = 'abc';
+  // A comment
+  afterAll(() => {
+    // stuff
+  });
+  afterAll(() => {
+    // other stuff
+  });
+});
+
+describe('someText', () => {
+  const something = 'abc';
+  afterAll(() => {
+    // stuff
+  });
+});
+",
+            r"
+const someText = 'abc';
+
+afterAll(() => {
+});
+
+describe('someText', () => {
+  const something = 'abc';
+
+  // A comment
+  afterAll(() => {
+    // stuff
+  });
+
+  afterAll(() => {
+    // other stuff
+  });
+});
+
+describe('someText', () => {
+  const something = 'abc';
+
+  afterAll(() => {
+    // stuff
+  });
+});
+",
+        ),
+        ("afterAll(() => {});\nfoo();", "afterAll(() => {});\n\nfoo();"),
+        (
+            "{\n  const thing = 123;\n  afterAll(() => {});\n}",
+            "{\n  const thing = 123;\n\n  afterAll(() => {});\n}",
+        ),
+        (
+            "switch (value) {\n  case 1:\n    afterAll(() => {});\n    foo();\n}",
+            "switch (value) {\n  case 1:\n    afterAll(() => {});\n\n    foo();\n}",
+        ),
+        ("const thing = 123\n;afterAll(() => {})", "const thing = 123\n\n;afterAll(() => {})"),
+        (
+            "const thing = 123;\nlabel: afterAll(() => {});",
+            "const thing = 123;\n\nlabel: afterAll(() => {});",
         ),
     ];
 
