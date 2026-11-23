@@ -646,13 +646,8 @@ impl Tool for ServerLinter {
             && let Some(path) = uri_to_file_path(&file_event.uri)
             && !self.is_lint_config_file(&path, &options)
         {
-            if !path.starts_with(&self.cwd) {
-                return ToolRestartChanges {
-                    tool: None,
-                    watch_patterns: None,
-                    client_messages: vec![],
-                };
-            }
+            // Changes outside the workspace are sent too: its programs can depend on files above
+            // the root, such as an extended `tsconfig.json`.
             let kind = match file_event.kind {
                 FileChangeType::Created => FileChangeKind::Created,
                 FileChangeType::Deleted => FileChangeKind::Deleted,
@@ -1863,11 +1858,14 @@ mod test_tsrs_lint {
         sync::atomic::{AtomicUsize, Ordering},
     };
 
-    use oxc_language_server::{LanguageId, TextDocument, Tool};
+    use oxc_language_server::{LanguageId, TextDocument, Tool, uri_utils::file_path_to_uri};
     use serde_json::json;
-    use tower_lsp_server::gen_lsp_types::{Code, Diagnostic};
+    use tower_lsp_server::gen_lsp_types::{Code, Diagnostic, FileChangeType, FileEvent};
 
-    use crate::lsp::tester::{Tester, get_file_path};
+    use crate::lsp::{
+        server_linter::ServerLinterBuilder,
+        tester::{Tester, get_file_path},
+    };
 
     /// The fixture whose `node_modules/.bin/tsrs-lint` links to a real `tsrs-lint`.
     const SERVER_FIXTURE: &str = "fixtures/lsp/tsrs_server";
@@ -1953,5 +1951,73 @@ mod test_tsrs_lint {
         assert_eq!(diagnostics.len(), 1);
         assert_eq!(codes(&diagnostics[0].1), [] as [String; 0]);
         assert!(!server.is_disabled());
+    }
+
+    /// A change to a file outside the workspace root reaches the server: the workspace's programs
+    /// can import it.
+    #[test]
+    #[expect(clippy::print_stderr, reason = "reports a skipped test")]
+    fn test_tsrs_server_sees_changes_outside_the_workspace() {
+        let Some(binary) = std::env::var_os("OXLINT_TSRS_LINT_TEST_BIN") else {
+            eprintln!("skipping tsrs-lint test: OXLINT_TSRS_LINT_TEST_BIN is not set");
+            return;
+        };
+        // `workspace/index.ts` imports `load` from `shared/load.ts`, next to the workspace.
+        let temp = tempfile::tempdir().expect("failed to create a temporary directory");
+        let dir = temp.path().canonicalize().expect("failed to resolve the temporary directory");
+        let root = dir.join("workspace");
+        let shared = dir.join("shared/load.ts");
+        std::fs::create_dir_all(root.join("node_modules/.bin"))
+            .expect("failed to create the workspace");
+        std::fs::create_dir_all(dir.join("shared")).expect("failed to create shared");
+        std::os::unix::fs::symlink(Path::new(&binary), root.join("node_modules/.bin/tsrs-lint"))
+            .expect("failed to link tsrs-lint");
+        std::fs::copy(
+            get_file_path(&format!("{SERVER_FIXTURE}/.oxlintrc.json")),
+            root.join(".oxlintrc.json"),
+        )
+        .expect("failed to copy .oxlintrc.json");
+        std::fs::write(
+            root.join("index.ts"),
+            "import { load } from \"../shared/load\";\n\nload();\n",
+        )
+        .expect("failed to write index.ts");
+        std::fs::write(
+            &shared,
+            "export async function load(): Promise<number> {\n  return 1;\n}\n",
+        )
+        .expect("failed to write load.ts");
+
+        let options = json!({ "typeAware": true });
+        let builder = ServerLinterBuilder::default();
+        let root_uri = file_path_to_uri(&root).expect("invalid workspace path");
+        let (linter, _) = builder.build(&root_uri, options.clone());
+        assert!(linter.runner.has_tsrs_server());
+        let uri = file_path_to_uri(root.join("index.ts")).expect("invalid index.ts path");
+        let lint = || {
+            let document = TextDocument {
+                uri: &uri,
+                language_id: LanguageId::default(),
+                text: None,
+                version: None,
+            };
+            let diagnostics = linter.run_diagnostic(document).expect("lint failed");
+            assert_eq!(diagnostics.len(), 1);
+            codes(&diagnostics[0].1)
+        };
+
+        assert_eq!(lint(), ["typescript(no-floating-promises)"]);
+
+        // `load` no longer returns a promise.
+        std::fs::write(&shared, "export function load(): number {\n  return 1;\n}\n")
+            .expect("failed to write load.ts");
+        let event = FileEvent {
+            uri: file_path_to_uri(&shared).expect("invalid load.ts path"),
+            kind: FileChangeType::Changed,
+        };
+        let changes = linter.handle_watched_file_event(&builder, &event, &root_uri, options);
+        assert!(changes.tool.is_none());
+
+        assert_eq!(lint(), [] as [String; 0]);
     }
 }
