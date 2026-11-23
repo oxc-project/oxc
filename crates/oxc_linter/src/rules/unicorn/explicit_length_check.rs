@@ -139,7 +139,6 @@ fn get_length_check_node<'a, 'b>(
                 || is_compare_right(binary_expr, BinaryOperator::Equality, 0.0)
                 // `foo.length < 1`
                 || is_compare_right(binary_expr, BinaryOperator::LessThan, 1.0)
-                // `foo.length <= 0`
                 || is_compare_right(binary_expr, BinaryOperator::LessEqualThan, 0.0)
                 // `0 === foo.length`
                 || is_compare_left(binary_expr, BinaryOperator::StrictEquality, 0.0)
@@ -147,7 +146,6 @@ fn get_length_check_node<'a, 'b>(
                 || is_compare_left(binary_expr, BinaryOperator::Equality, 0.0)
                 // `1 > foo.length`
                 || is_compare_left(binary_expr, BinaryOperator::GreaterThan, 1.0)
-                // `0 >= foo.length`
                 || is_compare_left(binary_expr, BinaryOperator::GreaterEqualThan, 0.0)
         {
             return Some((true, parent));
