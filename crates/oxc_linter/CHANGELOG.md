@@ -16,6 +16,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 ### 🐛 Bug Fixes
 
+- 11d16bd linter/eslint/prefer-object-spread: Prefix semicolon when the fix could merge with the previous statement (#30080) (oxc-captain[bot])
+- 106d301 linter/unicorn/prefer-math-trunc: Report `parseInt(String(...), 10)` (#30067) (Lê Văn Xuân Hoàn)
+- 226ba04 linter/unicorn/prefer-import-meta-properties: Stop flagging `fileURLToPath(new URL('.', import.meta.url))` (#30041) (oxc-captain[bot])
+- 04cdaec linter/unicorn/no-useless-spread: Replace holes with `undefined` in spread array literals (#30042) (oxc-captain[bot])
+- 7141c26 linter/eslint/no-implicit-coercion: Skip autofix when coercion constructor is shadowed (#30043) (oxc-captain[bot])
 - f22709d linter/eslint/no-unused-vars: Fixes remove a whole CRLF after an unused import (#30047) (Nicholas Rayburn)
 - 6998259 linter/eslint/max-lines: Report diagnostic at the start of the last character (#30046) (Nicholas Rayburn)
 - 48ed7f7 linter: Find tsgolint in case-sensitive directories on Windows (#26234) (Nicolas Stepien)
