@@ -419,10 +419,6 @@ fn test() {
         r#"const dirname = new URL(".", import.meta.url).pathname;"#,
         "const filename = new URL(import.meta.url).pathname;",
         "const filename = fileURLToPath(import.meta.url);",
-        r#"import { fileURLToPath } from "url";
-            const dirname = fileURLToPath(new URL(".", import.meta.url));"#,
-        r#"import { fileURLToPath } from "url";
-            const dirname = fileURLToPath(new URL("./", import.meta.url));"#,
         "const dirname = path.dirname(import.meta.filename);",
         r#"import path from "path";
             // It is the same as dirname on macOS but returns different results on Windows.
@@ -476,6 +472,10 @@ fn test() {
             const filename = fileURLToPath(new URL("https://example.com"));"#,
         r#"import { fileURLToPath } from "url";
             const dirname = fileURLToPath(new URL(".", "https://example.com"));"#,
+        r#"import { fileURLToPath } from "url";
+            const dirname = fileURLToPath(new URL(".", import.meta.url));"#,
+        r#"import { fileURLToPath } from "url";
+            const dirname = fileURLToPath(new URL("./", import.meta.url));"#,
     ];
 
     let fail = vec![
