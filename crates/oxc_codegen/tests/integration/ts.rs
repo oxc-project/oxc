@@ -800,6 +800,27 @@ fn type_codegen_with_preserve_parens_off() {
         "type R = { [K in (?asserts) as K]: 1 };\n",
         parse_options,
     );
+    // An `infer` constraint is parsed with conditional types disallowed.
+    test_with_parse_options(
+        "type F = X extends infer U extends (true extends true ? string : number) ? U : never;",
+        "type F = X extends infer U extends (true extends true ? string : number) ? U : never;\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type F = X extends [infer U extends (string extends X ? 1 : 2)] ? U : never;",
+        "type F = X extends [infer U extends (string extends X ? 1 : 2)] ? U : never;\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type F = X extends [infer U extends (string)] ? U : never;",
+        "type F = X extends [infer U extends string] ? U : never;\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type F = X extends [infer U extends () => (string extends X ? 1 : 2)] ? U : never;",
+        "type F = X extends [infer U extends () => string extends X ? 1 : 2] ? U : never;\n",
+        parse_options,
+    );
 }
 
 #[test]
