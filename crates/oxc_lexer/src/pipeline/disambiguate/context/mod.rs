@@ -12,7 +12,7 @@ mod types;
 mod walker;
 mod words;
 
-pub(super) use scan::{after, angles_before, before};
+pub(super) use scan::{after, angles_before, before, lt_run_opens};
 use walker::Walk;
 
 #[cfg(test)]

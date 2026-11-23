@@ -43,8 +43,8 @@ static GT_SCAN_DELIM: [bool; 256] = {
     t
 };
 
-/// True when the `<<` at `lt` is two type-argument/type-parameter openers
-/// rather than shift-left.
+/// True when what follows the `<<` at `lt` has the shape of two type-argument/type-parameter
+/// openers rather than shift-left. The context walk decides whether lists can open there.
 ///
 /// Only one TypeScript production puts two `<` next to each other: a
 /// type-argument list whose first argument is a function type. The second

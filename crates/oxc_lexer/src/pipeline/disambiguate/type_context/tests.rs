@@ -196,6 +196,35 @@ fn lt_lt_openers_close_with_a_split_gt_run(cpu: DynCpu) {
 }
 
 #[test_cpus]
+fn lt_lt_is_a_shift_where_tsc_opens_no_list(cpu: DynCpu) {
+    for code in [
+        // An operand starts here.
+        "var r = <<T>(x: T) => T>f;",
+        "if (c) <<T>(x: T) => T>f;",
+        "function g() { return <<T>(x: T) => T>f; }",
+        "x = y => <<T>(x: T) => T>f;",
+        // The token after the list can start an expression, so tsc reads no type arguments.
+        "f<<T>(x: T) => T>g;",
+        "class C extends B<<T>(x: T) => T> {}",
+        // A keyword type takes no type arguments.
+        "x = y as number<<T>(x: T) => T>(0);",
+    ] {
+        for file_type in [ScriptTS, ScriptTSX] {
+            let ks = kinds_of(code, file_type, cpu);
+            assert!(ks.contains(&TokenKind::LShift), "{code:?}: {ks:?}");
+        }
+    }
+    for code in [
+        "f<<T>(x: T) => T>;",
+        "class C implements I<<T>(x: T) => T>, J {}",
+        "let x: A<B<<T>(x: T) => T>>;",
+    ] {
+        let ks = kinds_of(code, ScriptTS, cpu);
+        assert!(!ks.contains(&TokenKind::LShift), "{code:?}: {ks:?}");
+    }
+}
+
+#[test_cpus]
 fn optional_call_type_arguments_are_never_jsx(cpu: DynCpu) {
     for code in [
         "a?.<T>(b);",
