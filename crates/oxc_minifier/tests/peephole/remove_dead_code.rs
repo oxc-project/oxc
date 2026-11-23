@@ -354,6 +354,23 @@ fn remove_unused_expressions_in_sequence() {
 }
 
 #[test]
+fn keep_indirect_access_in_decorator() {
+    // https://github.com/oxc-project/oxc/issues/30082
+    // A member expression decorator is invoked with the member's object as
+    // `this`, so folding away the indirection would change the decorator's `this`.
+    test_same("@(0, a.b) class C {}");
+    test("@((0, a.b)) class C {}", "@(0, a.b) class C {}");
+    test("@((0, a[b])) class C {}", "@(0, a[b]) class C {}");
+    test("@(true ? a.b : c) class D {}", "@(0, a.b) class D {}");
+    test("class E { @((0, a.b)) m() {} }", "class E { @(0, a.b) m() {} }");
+    test("class E { @((0, a.b)) p = 1 }", "class E { @(0, a.b) p = 1 }");
+    // Identifiers have no receiver, so the indirection folds.
+    test("@((0, foo)) class C {}", "@foo class C {}");
+    // Optional chains are invoked with `this === undefined` either way.
+    test("@((0, a?.b)) class C {}", "@(a?.b) class C {}");
+}
+
+#[test]
 fn remove_unused_expressions_in_for() {
     test("var i; for (i = 0, 0; i < 10; i++) foo(i);", "for (var i = 0; i < 10; i++) foo(i);");
     test("var i; for (i = 0; i < 10; 0, i++, 0) foo(i);", "for (var i = 0; i < 10; i++) foo(i);");

@@ -706,6 +706,8 @@ impl<'a> PeepholeOptimizations {
     /// Whether the indirect access should be kept.
     /// For example, `(0, foo.bar)()` should not be transformed to `foo.bar()`.
     /// Example case: `let o = { f() { assert.ok(this !== o); } }; (true && o.f)(); (true && o.f)``;`
+    /// Also applies to decorators: `@((0, foo.bar))` should not be
+    /// transformed to `@(foo.bar)`, as the decorator's `this` differs.
     ///
     /// * `access_value` - The expression that may need to be kept as indirect reference (`foo.bar` in the example above)
     pub fn should_keep_indirect_access(
@@ -730,6 +732,15 @@ impl<'a> PeepholeOptimizations {
                     }
                     _ => false,
                 }
+            }
+            Ancestor::DecoratorExpression(_) => {
+                // Example case: `@((0, foo.bar))` (decorator `this` is `undefined`)
+                // -> `@(foo.bar)` (decorator `this` is `foo`)
+                // A member expression decorator is invoked with the member's
+                // object as `this`, so the indirect access must be kept.
+                // Optional chains are not: `@(foo?.bar)` and `@((0, foo?.bar))`
+                // both invoke the decorator with `this === undefined`.
+                matches!(access_value, match_member_expression!(Expression))
             }
             Ancestor::UnaryExpressionArgument(unary) => match unary.operator() {
                 UnaryOperator::Typeof => {
