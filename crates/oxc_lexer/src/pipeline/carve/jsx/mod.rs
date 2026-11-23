@@ -201,7 +201,7 @@ impl JsxCarve<'_> {
         // A fragment or element, unless tsx reads a type-parameter list, which stays a less-than.
         if name_byte == b'>'
             || (is_id_start(name_byte, cpu)
-                && jsx_over_type_params(self.lex, s, name_pos, self.lanes, self.disambiguate, cpu))
+                && jsx_over_type_params(self.lex, s, name_pos, self.disambiguate, cpu))
         {
             self.open_tag(s, name_pos, cpu);
         }
