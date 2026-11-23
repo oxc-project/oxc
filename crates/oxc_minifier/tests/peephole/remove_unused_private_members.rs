@@ -55,9 +55,6 @@ fn test_remove_unused_private_accessors() {
 
 #[test]
 fn test_keep_decorated_private_members() {
-    // Evaluating a decorator is observable: the expression runs and the
-    // decorator is called during class definition evaluation, so decorated
-    // elements must be kept even when the private name is otherwise unused.
     // <https://github.com/oxc-project/oxc/issues/30092>
     test_same("class C { @dec #unused = 1; method() { return 1; } } new C();");
     test_same("class C { @dec static #unused = 1; method() { return 1; } } new C();");
@@ -67,7 +64,6 @@ fn test_keep_decorated_private_members() {
     test_same("class C { @dec accessor #unused; method() { return 1; } } new C();");
     test_same("class C { @dec get #unused() {} method() { return 1; } } new C();");
     test_same("class C { @dec(foo) #unused = 1; method() { return 1; } } new C();");
-    // Undecorated elements are still removed.
     test(
         "class C { @dec #kept = 1; #unused = 2; } new C();",
         "class C { @dec #kept = 1; } new C();",
