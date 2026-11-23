@@ -601,8 +601,10 @@ fn decorator_parens_with_preserve_parens_off() {
         ("@(a.b().c()) class C {}", "@(a.b().c()) class C {}\n"),
         ("@(this.x) class C {}", "@(this.x) class C {}\n"),
         ("@(factory.decorate()) class C {}", "@factory.decorate() class C {}\n"),
-        ("@(a.#b.c) class C {}", "@a.#b.c class C {}\n"),
-        ("@((a).b) class C {}", "@a.b class C {}\n"),
+        (
+            "class A { #x; @(a.#x.y) m() {} @(f().#x) n() {} }",
+            "class A {\n\t#x;\n\t@a.#x.y m() {}\n\t@(f().#x) n() {}\n}\n",
+        ),
         ("@(a.b<T>()) class C {}", "@a.b<T>() class C {}\n"),
     ] {
         test_with_parse_options(source, expected, parse_options);
