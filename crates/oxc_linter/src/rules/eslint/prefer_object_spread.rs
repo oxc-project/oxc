@@ -193,11 +193,6 @@ fn fix_object_assign<'c, 'a: 'c>(
     let callee_left_paren_span = Span::sized(call_expr.callee.span().end + paren_offset, 1);
 
     let (left, right) = if needs_paren {
-        // `(` is not a valid automatic semicolon insertion point, so a
-        // replacement starting with `(` would be parsed as a continuation of
-        // the previous statement when it lacks a terminator (e.g.
-        // `const result = f\n({ a: 1 });` becomes a call on `f`). Keep the
-        // statement boundary by prefixing a semicolon when required.
         if could_be_asi_hazard(node, ctx) { (";({", "})") } else { ("({", "})") }
     } else {
         ("{", "}")
@@ -1069,9 +1064,6 @@ fn test() {
             FixKind::All,
         ),
         ("Object.assign<{}, A>({}, foo);", "({ ...foo});", None, FixKind::All),
-        // The replacement starts with `(`, which is not an automatic semicolon
-        // insertion point; a semicolon must be added when the previous
-        // statement is not terminated. See issue #30079.
         (
             "
             const f = (x) => x
@@ -1100,9 +1092,6 @@ fn test() {
             None,
             FixKind::Suggestion,
         ),
-        // An `Object.assign` as an unbraced `if` body cannot be merged with a
-        // preceding expression (the token before it closes the `if` head), so
-        // no semicolon is inserted.
         (
             "
             const f = (x) => x
