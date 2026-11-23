@@ -1,8 +1,9 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, BindingPattern, CatchClause, Expression, Function, IdentifierReference,
-        ObjectExpression, ObjectPropertyKind, PropertyKey, ThrowStatement, TryStatement,
+        Argument, ArrowFunctionExpression, BindingPattern, CatchClause, Expression, Function,
+        IdentifierReference, ObjectExpression, ObjectPropertyKind, PropertyKey, StaticBlock,
+        ThrowStatement, TryStatement,
     },
 };
 use oxc_ast_visit::VisitJs;
@@ -209,8 +210,12 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
         });
     }
 
-    // Do not traverse into nested functions/closures within the catch block
+    // Do not traverse into nested functions/closures or static blocks within the catch block
     fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}
+
+    fn visit_arrow_function_expression(&mut self, _arrow: &ArrowFunctionExpression<'a>) {}
+
+    fn visit_static_block(&mut self, _block: &StaticBlock<'a>) {}
 
     // Do not traverse into nested catch clauses. They have their own caught error and will be
     // analyzed separately when visiting their associated `TryStatement`.
@@ -467,6 +472,22 @@ fn test() {
 				} catch {
 					foo = { bar() { throw new Error("Something went wrong"); } };
 				}"#,
+            Some(serde_json::json!([{ "requireCatchParameter": true }])),
+        ),
+        (
+            r#"try { doSomething(); } catch (err) { const fail = () => { throw new Error("Something went wrong"); }; }"#,
+            None,
+        ),
+        (
+            r#"try { doSomething(); } catch (err) { class Foo { static { throw new Error("Something went wrong"); } } }"#,
+            None,
+        ),
+        (
+            r#"try { doSomething(); } catch { const fail = () => { throw new Error("Something went wrong"); }; }"#,
+            Some(serde_json::json!([{ "requireCatchParameter": true }])),
+        ),
+        (
+            r#"try { doSomething(); } catch { class Foo { static { throw new Error("Something went wrong"); } } }"#,
             Some(serde_json::json!([{ "requireCatchParameter": true }])),
         ),
     ];
@@ -726,6 +747,10 @@ fn test() {
         (
             r#"try { doSomething(); } catch (error) { throw new AggregateError([error], "aggregate", { cause: unrelated }); }"#,
             None,
+        ),
+        (
+            r#"try { doSomething(); } catch { if (shouldThrow) { throw new Error("Something went wrong"); } }"#,
+            Some(serde_json::json!([{ "requireCatchParameter": true }])),
         ),
     ];
 
