@@ -2475,7 +2475,10 @@ impl GenExpr for NewExpression<'_> {
             }
 
             // Omit the "()" when minifying, but only when safe to do so
-            if !p.options.minify || !self.arguments.is_empty() || precedence >= Precedence::Postfix
+            if !p.options.minify
+                || !self.arguments.is_empty()
+                || self.type_arguments.is_some()
+                || precedence >= Precedence::Postfix
             {
                 p.print_arguments(self.span, &self.arguments, ctx);
             }
