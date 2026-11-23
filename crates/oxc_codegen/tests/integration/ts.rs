@@ -412,6 +412,41 @@ fn minify_conditional_type_space() {
 }
 
 #[test]
+fn minify_conditional_type_compound_space() {
+    let options = CodegenOptions::minify();
+    for (source, expected) in [
+        (
+            "type T<X> = X extends infer I & {} ? I : never;",
+            "type T<X>=X extends(infer I)&{}?I:never;",
+        ),
+        (
+            "type T<X> = X extends infer I | {} ? I : never;",
+            "type T<X>=X extends(infer I)|{}?I:never;",
+        ),
+        (
+            "type T<X> = X extends infer I & {} | [] ? I : never;",
+            "type T<X>=X extends(infer I)&{}|[]?I:never;",
+        ),
+        (
+            "type T<X> = X extends {} & infer I ? I : never;",
+            "type T<X>=X extends{}&(infer I)?I:never;",
+        ),
+        (
+            "type T<X> = X extends A | infer I ? I : never;",
+            "type T<X>=X extends A|(infer I)?I:never;",
+        ),
+        (
+            "type T<X> = X extends A & infer I ? I : never;",
+            "type T<X>=X extends A&(infer I)?I:never;",
+        ),
+        ("type T<X> = X extends infer I ? I : never;", "type T<X>=X extends infer I?I:never;"),
+    ] {
+        test_options_with_source_type(source, expected, SourceType::ts(), options.clone());
+        test_options_with_source_type(expected, expected, SourceType::ts(), options.clone());
+    }
+}
+
+#[test]
 fn minify_export_type_star() {
     let min = |src: &str, expected: &str| {
         test_options_with_source_type(src, expected, SourceType::ts(), CodegenOptions::minify());

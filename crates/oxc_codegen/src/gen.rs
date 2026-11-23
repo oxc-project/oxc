@@ -3483,10 +3483,13 @@ fn type_starts_with_non_identifier(ty: &TSType) -> bool {
         TSType::TSLiteralType(lit) => {
             matches!(&lit.literal, TSLiteral::TemplateLiteral(_) | TSLiteral::StringLiteral(_))
         }
-        TSType::TSUnionType(u) => u.types.first().is_some_and(type_starts_with_non_identifier),
-        TSType::TSIntersectionType(i) => {
-            i.types.first().is_some_and(type_starts_with_non_identifier)
-        }
+        TSType::TSUnionType(u) => u.types.first().is_some_and(|first| {
+            parenthesize_check_type_of_union_type(first) || type_starts_with_non_identifier(first)
+        }),
+        TSType::TSIntersectionType(i) => i.types.first().is_some_and(|first| {
+            parenthesize_check_type_of_intersection_type(first)
+                || type_starts_with_non_identifier(first)
+        }),
         _ => false,
     }
 }
