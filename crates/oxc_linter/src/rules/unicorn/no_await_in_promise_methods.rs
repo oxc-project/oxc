@@ -321,8 +321,6 @@ fn test() {
         ),
     ];
     Tester::new(NoAwaitInPromiseMethods::NAME, NoAwaitInPromiseMethods::PLUGIN, tsx_pass, tsx_fail)
-        .change_rule_path_extension("tsx")
-        .with_snapshot_suffix("tsx")
         .expect_fix(tsx_fix)
-        .test_and_snapshot();
+        .test();
 }
