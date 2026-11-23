@@ -112,36 +112,26 @@ fn promise_method_name<'a>(
     array_span: Span,
     ctx: &LintContext<'a>,
 ) -> Option<&'static str> {
-    let call_node = outermost_paren_parent(array_node, ctx)?;
-    let AstKind::CallExpression(call_expr) = call_node.kind() else {
-        return None;
-    };
-    if call_expr.optional || call_expr.arguments.len() != 1 {
-        return None;
-    }
-    let first_arg = call_expr.arguments[0].as_expression()?;
-    if first_arg.without_parentheses().span() != array_span {
-        return None;
-    }
-    let Expression::StaticMemberExpression(member_expr) = call_expr.callee.without_parentheses()
-    else {
-        return None;
-    };
-    if member_expr.optional {
-        return None;
-    }
-    let Expression::Identifier(obj) = member_expr.object.without_parentheses() else {
-        return None;
-    };
-    if obj.name != "Promise" {
-        return None;
-    }
-    match member_expr.property.name.as_str() {
-        "all" => Some("all"),
-        "allSettled" => Some("allSettled"),
-        "any" => Some("any"),
-        "race" => Some("race"),
-        _ => None,
+    if let AstKind::CallExpression(call_expr) = outermost_paren_parent(array_node, ctx)?.kind()
+        && !call_expr.optional
+        && call_expr.arguments.len() == 1
+        && let Some(first_arg) = call_expr.arguments[0].as_expression()
+        && first_arg.without_parentheses().span() == array_span
+        && let Expression::StaticMemberExpression(member_expr) =
+            call_expr.callee.without_parentheses()
+        && !member_expr.optional
+        && let Expression::Identifier(obj) = member_expr.object.without_parentheses()
+        && obj.name == "Promise"
+    {
+        match member_expr.property.name.as_str() {
+            "all" => Some("all"),
+            "allSettled" => Some("allSettled"),
+            "any" => Some("any"),
+            "race" => Some("race"),
+            _ => None,
+        }
+    } else {
+        None
     }
 }
 
