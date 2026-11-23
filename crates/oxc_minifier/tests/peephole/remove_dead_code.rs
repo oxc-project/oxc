@@ -366,8 +366,9 @@ fn keep_indirect_access_in_decorator() {
     test("class E { @((0, a.b)) p = 1 }", "class E { @(0, a.b) p = 1 }");
     // Identifiers have no receiver, so the indirection folds.
     test("@((0, foo)) class C {}", "@foo class C {}");
-    // Optional chains are invoked with `this === undefined` either way.
-    test("@((0, a?.b)) class C {}", "@(a?.b) class C {}");
+    test("@((0, a?.b)) class C {}", "@(0, a?.b) class C {}");
+    test("@((0, a?.b.c)) class C {}", "@(0, a?.b.c) class C {}");
+    test("@((0, a?.b())) class C {}", "@(a?.b()) class C {}");
 }
 
 #[test]

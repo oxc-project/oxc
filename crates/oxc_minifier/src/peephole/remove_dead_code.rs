@@ -733,15 +733,19 @@ impl<'a> PeepholeOptimizations {
                     _ => false,
                 }
             }
-            Ancestor::DecoratorExpression(_) => {
+            Ancestor::DecoratorExpression(_) => match access_value {
                 // Example case: `@((0, foo.bar))` (decorator `this` is `undefined`)
                 // -> `@(foo.bar)` (decorator `this` is `foo`)
                 // A member expression decorator is invoked with the member's
                 // object as `this`, so the indirect access must be kept.
-                // Optional chains are not: `@(foo?.bar)` and `@((0, foo?.bar))`
-                // both invoke the decorator with `this === undefined`.
-                matches!(access_value, match_member_expression!(Expression))
-            }
+                match_member_expression!(Expression) => true,
+                // Example case: `@((0, foo?.bar))` (decorator `this` is `undefined`)
+                // -> `@(foo?.bar)` (decorator `this` is `foo`)
+                Expression::ChainExpression(chain) => {
+                    matches!(&chain.expression, match_member_expression!(ChainElement))
+                }
+                _ => false,
+            },
             Ancestor::UnaryExpressionArgument(unary) => match unary.operator() {
                 UnaryOperator::Typeof => {
                     // Example case: `typeof (0, foo)` (error) -> `typeof foo` (no error)
