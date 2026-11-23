@@ -33,15 +33,26 @@ impl PaddingStatement {
     }
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum PaddingType {
+    Any,
+    Always,
+}
+
 #[derive(Clone, Copy)]
 pub struct PaddingConfig {
+    padding: PaddingType,
     prev: PaddingStatement,
     next: PaddingStatement,
 }
 
 impl PaddingConfig {
+    pub const fn any(prev: PaddingStatement, next: PaddingStatement) -> Self {
+        Self { padding: PaddingType::Any, prev, next }
+    }
+
     pub const fn always(prev: PaddingStatement, next: PaddingStatement) -> Self {
-        Self { prev, next }
+        Self { padding: PaddingType::Always, prev, next }
     }
 }
 
@@ -143,7 +154,8 @@ fn requires_padding(
         .iter()
         .rev()
         .flat_map(|configs| configs.iter().rev())
-        .any(|config| config.prev.matches(prev) && config.next.matches(next))
+        .find(|config| config.prev.matches(prev) && config.next.matches(next))
+        .is_some_and(|config| config.padding == PaddingType::Always)
 }
 
 fn report_missing_padding(prev: Span, next: Span, ctx: &LintContext<'_>) {
