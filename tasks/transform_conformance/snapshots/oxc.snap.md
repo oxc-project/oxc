@@ -1,6 +1,6 @@
 commit: 16a2d671
 
-Passed: 348/473
+Passed: 356/480
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -35,7 +35,7 @@ after transform: SymbolId(1) "C"
 rebuilt        : SymbolId(3) "C"
 
 
-# babel-plugin-transform-class-properties (37/41)
+# babel-plugin-transform-class-properties (40/44)
 * private-field-resolve-to-method/input.js
 x Output mismatch
 
@@ -49,7 +49,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (56/72)
+# babel-plugin-transform-typescript (57/73)
 * computed-constant-value/input.ts
 x Output mismatch
 
@@ -206,7 +206,7 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (24/110)
+# legacy-decorators (28/113)
 * oxc/accessor/input.ts
 x Output mismatch
 
@@ -255,11 +255,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["WeakMap", "babelHelpers"]
 rebuilt        : ["WeakMap", "a", "babelHelpers", "dec"]
-
-* oxc/class-without-name-with-decorated_class/input.ts
-Symbol flags mismatch for "_default":
-after transform: SymbolId(1): SymbolFlags(Class)
-rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
 
 * oxc/metadata/ambient-declared-class/input.ts
 Bindings mismatch:
@@ -574,10 +569,10 @@ Symbol reference IDs mismatch for "Foo":
 after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6), ReferenceId(8), ReferenceId(10)]
 rebuilt        : SymbolId(3): [ReferenceId(4), ReferenceId(6), ReferenceId(10)]
 
-* oxc/with-class-private-properties-unnamed-default-export/input.ts
-Symbol flags mismatch for "_default":
-after transform: SymbolId(0): SymbolFlags(Class)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+* oxc/static-private-brand-check-with-class-properties/input.ts
+Symbol reference IDs mismatch for "Foo":
+after transform: SymbolId(2): [ReferenceId(3), ReferenceId(15), ReferenceId(17), ReferenceId(19)]
+rebuilt        : SymbolId(5): [ReferenceId(14), ReferenceId(15), ReferenceId(19)]
 
 * typescript/accessor/decoratorOnClassAccessor1/input.ts
 Bindings mismatch:

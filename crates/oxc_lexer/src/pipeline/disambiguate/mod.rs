@@ -148,8 +148,9 @@ impl DisambiguateState {
 
     #[cpu_multiversion]
     #[inline(always)]
-    pub fn lt_run_split(&self, lex: Lex, lt: usize, cpu: impl Cpu) -> bool {
-        type_context::lt_run_split(&self.view(lex, 0, cpu), lt, cpu)
+    pub fn lt_run_split(&mut self, lex: Lex, lt: usize, cpu: impl Cpu) -> bool {
+        let (tokens, walks) = self.view_and_walks(lex, 0, cpu);
+        type_context::lt_run_split(&tokens, lt, cpu) && context::lt_run_opens(&tokens, walks, lt)
     }
 
     #[cpu_multiversion]

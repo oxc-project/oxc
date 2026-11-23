@@ -165,6 +165,13 @@ fn mangler() {
         "function _() { class Foo { foo() { var x } } }",
         "function _() { var Foo = class { foo() { var x } } }",
         "function _() { var foo; try {} catch (foo) { var foo = function() {} } }",
+        // A redeclaration, not the first declaration, sets the name.
+        "function _() { var foo; var foo = function() { var x } }",
+        "function _() { var foo = 1; var foo = () => { var x } }",
+        "function _() { var Foo; var Foo = class { foo() { var x } } }",
+        "function _(foo) { var foo = function() { var x } }",
+        "function _() { var foo; function foo() { var x } }",
+        "function _(foo) { function foo() { var x } }",
     ];
 
     let mut snapshot = String::new();

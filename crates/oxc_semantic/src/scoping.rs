@@ -487,6 +487,16 @@ impl Scoping {
         )
     }
 
+    /// Iterate redeclared symbols with their declarations, in unspecified order.
+    /// See [`Scoping::symbol_redeclarations`].
+    pub fn redeclared_symbols(&self) -> impl Iterator<Item = (SymbolId, &[Redeclaration])> + '_ {
+        self.cell
+            .borrow_dependent()
+            .symbol_redeclarations
+            .iter()
+            .map(|(&symbol_id, redeclarations)| (symbol_id, redeclarations.as_slice()))
+    }
+
     /// Get the enclosing var binding declared by a `var` that redeclares this catch parameter.
     ///
     /// In `catch (e) { var e = 1 }`, the `var` declares a binding in the enclosing var scope,

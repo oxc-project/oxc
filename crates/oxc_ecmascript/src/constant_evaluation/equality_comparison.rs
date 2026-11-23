@@ -119,10 +119,7 @@ pub(super) fn strict_equality_comparison<'a>(
         };
     }
 
-    // Then, try to evaluate based on the value of the expression.
-    // There's only one special case:
-    // Any strict equality comparison against NaN returns false.
-    if left_expr.is_nan() || right_expr.is_nan() {
+    if ctx.is_global_expr("NaN", left_expr) || ctx.is_global_expr("NaN", right_expr) {
         return Some(false);
     }
     None

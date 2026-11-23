@@ -191,4 +191,20 @@ impl Walk {
         }
         self.operand_done();
     }
+
+    /// Can a `<<` here be two list openers? TypeScript splits one only after a name in a type
+    /// (`Array<<T>() => T>`) or where it accepts type arguments after a value (`f<<T>() => T>(0)`),
+    /// and reads a shift anywhere else (`x = <<T>() => T>f`).
+    #[cpu_version(Generic)]
+    pub(super) fn lt_run_may_open(&self, tokens: &TokensView, pos: usize) -> bool {
+        let cpu = BASELINE;
+
+        if self.no_type_args {
+            return false;
+        }
+        if self.in_type() {
+            return !self.operand_allowed();
+        }
+        (!self.operand_allowed() || self.after_dot) && type_args_at(tokens, pos, cpu)
+    }
 }

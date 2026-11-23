@@ -158,7 +158,7 @@ impl<C: Config> ParserImpl<'_, C> {
                 Kind::Slash | Kind::SlashEq | Kind::TemplateHead | Kind::Undetermined => {
                     break true;
                 }
-                Kind::LAngle | Kind::ShiftLeft | Kind::LtEq | Kind::ShiftLeftEq => {
+                Kind::LAngle | Kind::ShiftLeft | Kind::ShiftLeftEq => {
                     if jsx && !groups.is_empty() {
                         // A computed-key expression may start JSX: its tag/text scanner
                         // gives `<` and `>` different roles. Without parsing the group we
@@ -166,8 +166,6 @@ impl<C: Config> ParserImpl<'_, C> {
                         break true;
                     }
                     // Count every leading `<`, including generic function type parameters.
-                    // Type-context re-lexing can split all four token kinds. `=` makes some
-                    // candidates invalid, but validating their contents belongs to the parser.
                     angles.push(token.start());
                     if matches!(kind, Kind::ShiftLeft | Kind::ShiftLeftEq) {
                         angles.push(token.start() + 1);

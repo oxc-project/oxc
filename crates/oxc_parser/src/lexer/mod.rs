@@ -510,7 +510,7 @@ impl<'a, C: Config> Lexer<'a, C> {
 
     /// Overwrite the last token in the collected token stream.
     ///
-    /// Used by `re_lex_as_typescript_l_angle` to replace a compound token (`<<`, `<=` or `<<=`)
+    /// Used by `re_lex_as_typescript_l_angle` to replace a compound token (`<<` or `<<=`)
     /// with the single `<` it re-lexed, and to restore the compound token when `try_parse`
     /// fails and rewinds.
     #[inline]

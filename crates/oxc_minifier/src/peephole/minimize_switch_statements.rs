@@ -1,8 +1,11 @@
-use super::PeepholeOptimizations;
+use super::{PeepholeOptimizations, minimize_statements::FindNestedBreak};
 use crate::keep_var::KeepVar;
 use crate::{TraverseCtx, is_terminated::IsTerminated};
 use oxc_allocator::{ArenaVec, TakeIn};
-use oxc_ast::ast::{Expression, Statement, TaggedTemplateExpression, VariableDeclaration};
+use oxc_ast::ast::{
+    BinaryOperator, Expression, Statement, SwitchStatement, TaggedTemplateExpression,
+    VariableDeclaration,
+};
 use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, side_effects::MayHaveSideEffects};
 use oxc_span::{ContentEq, SPAN};
@@ -56,6 +59,78 @@ impl<'a> PeepholeOptimizations {
             }
             _ => stmts,
         }
+    }
+
+    /// Lowers a switch with one case and a default to an `if` statement when
+    /// the first clause cannot fall through and neither clause declares a
+    /// switch-scoped binding.
+    ///
+    /// `switch (a) { case 1: b(); break; default: c() }` => `if (a === 1) { b(); } else { c(); }`
+    pub fn fold_switch_with_default_to_if(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        let Statement::SwitchStatement(switch_stmt) = stmt else { return };
+        if ctx.parent().is_labeled_statement() {
+            return;
+        }
+        let [first, second] = switch_stmt.cases.as_slice() else { return };
+        let default_is_first = match (first.is_default_case(), second.is_default_case()) {
+            (true, false) => true,
+            (false, true) => false,
+            _ => return,
+        };
+        if !first.consequent.is_terminated()
+            || [first, second].into_iter().any(|case| {
+                let consequent = Self::without_trailing_break(&case.consequent);
+                consequent.iter().any(Self::statement_cares_about_scope)
+                    || FindNestedBreak::has_unlabelled_break(consequent)
+            })
+        {
+            return;
+        }
+
+        ctx.replace_statement_with(stmt, |stmt, ctx| {
+            let Statement::SwitchStatement(switch_stmt) = stmt else { unreachable!() };
+            let scope_id = switch_stmt.scope_id();
+            let SwitchStatement { span, discriminant, mut cases, .. } = switch_stmt.unbox();
+            let mut second = cases.pop().unwrap();
+            let mut first = cases.pop().unwrap();
+            for case in [&mut first, &mut second] {
+                if matches!(
+                    case.consequent.last(),
+                    Some(Statement::BreakStatement(break_stmt)) if break_stmt.label.is_none()
+                ) {
+                    ctx.drop_statement(&case.consequent.pop().unwrap());
+                }
+            }
+            let (case, default) = if default_is_first { (second, first) } else { (first, second) };
+
+            let test = Expression::new_binary_expression(
+                SPAN,
+                discriminant,
+                BinaryOperator::StrictEquality,
+                case.test.unwrap(),
+                ctx,
+            );
+            let consequent = Statement::new_block_statement_with_scope_id(
+                case.span,
+                case.consequent,
+                scope_id,
+                ctx,
+            );
+            let alternate = if default.consequent.is_empty() {
+                None
+            } else {
+                let flags = ctx.scoping().scope_flags(scope_id);
+                let alternate_scope_id =
+                    ctx.insert_scope_below_statements(&default.consequent, flags);
+                Some(Statement::new_block_statement_with_scope_id(
+                    default.span,
+                    default.consequent,
+                    alternate_scope_id,
+                    ctx,
+                ))
+            };
+            Statement::new_if_statement(span, test, consequent, alternate, ctx)
+        });
     }
 
     fn statements_content_eq(left: &[Statement<'a>], right: &[Statement<'a>]) -> bool {

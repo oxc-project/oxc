@@ -1,0 +1,4 @@
+{
+  "plugins": ["transform-legacy-decorator"],
+  "presets": [["env", { "targets": { "chrome": "49" } }]]
+}

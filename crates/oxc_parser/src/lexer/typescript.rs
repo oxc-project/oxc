@@ -3,16 +3,12 @@ use crate::config::LexerConfig as Config;
 use super::{Kind, Lexer, Token};
 
 impl<C: Config> Lexer<'_, C> {
-    /// Re-tokenize `<<`, `<=`, or `<<=` to `<`.
+    /// Re-tokenize `<<` or `<<=` to `<`.
     ///
     /// Called when the parser encounters a compound token starting with `<` (e.g. `<<`)
     /// in a position where it could be the start of type arguments (e.g. `foo<<T>()>`).
     /// The lexer eagerly produces the compound token, but the parser needs a single `<`
     /// to speculatively try parsing type arguments.
-    ///
-    /// Only `<<` reaches here in code which parses. `<=` and `<<=` arrive only from the type-context
-    /// callers in `ts/types.rs` and always go on to fail, for the reason documented on
-    /// `parse_type_arguments_in_expression`, which rejects them before reaching here.
     ///
     /// The compound token was pushed to the collected token stream *before* `try_parse`
     /// created its checkpoint (since it was the "current" token at that point), so it is

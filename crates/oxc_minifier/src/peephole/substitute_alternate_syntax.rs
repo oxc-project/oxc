@@ -384,6 +384,7 @@ impl<'a> PeepholeOptimizations {
 
     /// Rotate associative binary operators:
     /// - `a | (b | c)` -> `(a | b) | c`
+    /// - `typeof a + ('in ' + b)` -> `typeof a + 'in ' + b`
     ///
     /// Rotate commutative operators to reduce parentheses:
     /// - `a * (b % c)` -> `b % c * a`
@@ -394,15 +395,18 @@ impl<'a> PeepholeOptimizations {
     ) {
         let Expression::BinaryExpression(e) = expr else { return };
 
-        // Handle associative rotation
-        let is_associative = matches!(
-            e.operator,
-            BinaryOperator::BitwiseOR | BinaryOperator::BitwiseAnd | BinaryOperator::BitwiseXOR
-        );
-        if is_associative
-            && let Expression::BinaryExpression(right) = &e.right
+        if let Expression::BinaryExpression(right) = &e.right
             && right.operator == e.operator
-            && !right.right.may_have_side_effects(ctx)
+            && match e.operator {
+                BinaryOperator::BitwiseOR
+                | BinaryOperator::BitwiseAnd
+                | BinaryOperator::BitwiseXOR => !right.right.may_have_side_effects(ctx),
+                BinaryOperator::Addition => {
+                    // Rotation coerces the left operand before the last operand is evaluated.
+                    right.left.value_type(ctx).is_string() && e.left.value_type(ctx).is_string()
+                }
+                _ => false,
+            }
         {
             let Expression::BinaryExpression(right) = e.right.take_in(ctx) else {
                 return;

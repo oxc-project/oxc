@@ -404,7 +404,12 @@ fn glue_number(
 /// Cold path. Kept out of line so it does not slow the coalesce loop.
 #[cpu_multiversion]
 #[inline(never)]
-fn munch_walk(lex: Lex, mut pos: usize, disambiguate: &DisambiguateState, cpu: impl Cpu) -> usize {
+fn munch_walk(
+    lex: Lex,
+    mut pos: usize,
+    disambiguate: &mut DisambiguateState,
+    cpu: impl Cpu,
+) -> usize {
     let Lex { src, bitmaps, kinds, options } = lex;
     let Bitmaps { token_start, op_char, .. } = *bitmaps;
     let is_ts = options.ts;

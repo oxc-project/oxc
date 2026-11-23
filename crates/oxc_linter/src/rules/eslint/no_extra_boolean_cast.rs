@@ -293,12 +293,7 @@ fn replacement_text(
     replacement_text: &str,
 ) -> String {
     let mut text = if needs_parentheses(replacement, target, ctx) {
-        let trimmed = replacement_text.trim();
-        if trimmed.starts_with('(') && trimmed.ends_with(')') {
-            replacement_text.to_string()
-        } else {
-            format!("({replacement_text})")
-        }
+        format!("({replacement_text})")
     } else {
         replacement_text.to_string()
     };
@@ -2263,6 +2258,10 @@ fn test() {
         ("!!!(f(a))", "!f(a)", None),
         ("!!!a", "!a", None),
         ("!Boolean(a)", "!a", None),
+        ("!Boolean((a) || (b))", "!((a) || (b))", None),
+        ("!Boolean((x > 0) && (y > 0))", "!((x > 0) && (y > 0))", None),
+        ("!Boolean((a) ? (b) : (c))", "!((a) ? (b) : (c))", None),
+        ("!!!((a) || (b))", "!((a) || (b))", None),
         (
             "if (!!(a, b) || !!(c, d)) {}",
             "if ((a, b) || (c, d)) {}",

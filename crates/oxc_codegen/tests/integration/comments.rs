@@ -30,10 +30,55 @@ fn test_comment_inside_pife_function_alternate_of_conditional() {
 // `? consequent : // comment\nalternate` (e.g. lowered optional chaining).
 #[test]
 fn test_line_comment_after_conditional_colon() {
-    test("x = cond ? a : // c\nb;", "x = cond ? a : // c\nb;\n");
+    test("x = cond ? a : // c\nb;", "x = cond ? a : \n// c\nb;\n");
     test_idempotency("x = cond ? a : // c\nb;");
     // Real-world shape: `a?.b() ?? c` with a leading comment, after lowering.
     test_idempotency("x = (_a = a) === null || _a === void 0 ? void 0 : // c1\n// c2\n_a.b();");
+}
+
+// A comment at the end of a line after code is a trailing comment on reparse, and dropped.
+// So a comment group that would break the line after such a comment starts on a new line.
+#[test]
+fn test_comments_not_stranded_at_line_end() {
+    // A break before a legal comment.
+    test("x = a ? b : /* c */ /*! L */ d;", "x = a ? b : \n/* c */\n/*! L */ d;\n");
+    test_idempotency("x = a ? b : /* c */ /*! L */ d;");
+    // Indented, as the next pass sees the legal comment at a line start.
+    test("x = { a: /* c */ /*! L */ b, c };", "x = {\n\ta: \n\t/* c */\n\t/*! L */ b,\n\tc\n};\n");
+    test_idempotency("x = { a: /* c */ /*! L */ b, c };");
+    // A line comment, which ends its line.
+    test("x = `a${( // c\nb)}c`;", "x = `a${\n// c\nb}c`;\n");
+    test_idempotency("x = `a${( // c\nb)}c`;");
+}
+
+// The groups on nested parentheses print back to back, so they are laid out as one group.
+// Caught on webpack's `BasicEvaluatedExpression.js`.
+#[test]
+fn test_comments_on_nested_parenthesized_operand() {
+    use oxc_codegen::{CodegenOptions, CommentOptions};
+
+    let source =
+        "x = a ? undefined : /** @type {A} */ (\n\t/** @type {B} */ (expression).range\n);";
+    test(source, "x = a ? undefined : \n/** @type {A} */\n/** @type {B} */ expression.range;\n");
+    test_idempotency(source);
+    // The conditional consequent prints only annotation comments, via a separate paren walk.
+    test_idempotency(
+        "x = a ? /* istanbul ignore next */ (\n\t/* istanbul ignore next */ (expression).range\n) : b;",
+    );
+    test_idempotency("a ? /* istanbul ignore next */ (\n  /* istanbul ignore next */\n  b\n) : c;");
+    test_idempotency("a ? /* istanbul ignore next */ (\n  // istanbul ignore next\n  b\n) : c;");
+    test_idempotency("x = a ? undefined : /*! A */ (\n  /** @type {B} */\n  /*! C */\n  expr\n);");
+    test_idempotency("x = a ? b : /* c1 */ (\n  /* c2 */ (\n    /*! L */\n    d\n  )\n);");
+    test_idempotency("x = a ? b : /* c1 */ (\n  /* c2 */ (\n    // c3\n    d\n  )\n);");
+    // A comment that ended its line still ends it when the next group started on the same line.
+    test("x = a ? b : // c1\n(/* c2 */ d);", "x = a ? b : \n// c1\n/* c2 */ d;\n");
+    test("x = a ? b :\n/* c1 */\n(/* c2 */ d);", "x = a ? b : \n/* c1 */\n/* c2 */ d;\n");
+    // Indented like a comment that started a line.
+    test_idempotency("x = { a:\n/* c1 */\n(/*! L */ b), c };");
+    // Minified, with comments kept.
+    let options =
+        CodegenOptions { comments: CommentOptions::default(), ..CodegenOptions::minify() };
+    test_idempotency_options("x = a ? b : /* c1 */ (\n  /* c2 */ /*! L */\n  d\n);", &options);
 }
 
 #[test]

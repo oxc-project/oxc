@@ -373,39 +373,39 @@ impl Gen for ForInStatement<'_> {
 
 /// Whether the leading token a `for...of` head would emit is `let`, which is
 /// forbidden unparenthesized (`for ((let.x) of y)`).
-fn for_of_head_starts_with_let(left: &ForStatementLeft) -> bool {
+fn for_of_head_starts_with_let(left: &ForStatementLeft, p: &Codegen) -> bool {
     match left {
-        ForStatementLeft::AssignmentTargetIdentifier(id) => id.name == "let",
-        ForStatementLeft::ComputedMemberExpression(m) => computed_object_starts_with_let(m),
-        ForStatementLeft::StaticMemberExpression(m) => expr_starts_with_let(&m.object),
-        ForStatementLeft::PrivateFieldExpression(m) => expr_starts_with_let(&m.object),
-        ForStatementLeft::TSAsExpression(e) => expr_starts_with_let(&e.expression),
-        ForStatementLeft::TSSatisfiesExpression(e) => expr_starts_with_let(&e.expression),
-        ForStatementLeft::TSNonNullExpression(e) => expr_starts_with_let(&e.expression),
+        ForStatementLeft::AssignmentTargetIdentifier(id) => {
+            p.get_identifier_reference_name(id) == "let"
+        }
+        ForStatementLeft::ComputedMemberExpression(m) => computed_object_starts_with_let(m, p),
+        ForStatementLeft::StaticMemberExpression(m) => expr_starts_with_let(&m.object, p),
+        ForStatementLeft::PrivateFieldExpression(m) => expr_starts_with_let(&m.object, p),
+        ForStatementLeft::TSNonNullExpression(e) => expr_starts_with_let(&e.expression, p),
         _ => false,
     }
 }
 
-fn expr_starts_with_let(expr: &Expression) -> bool {
+fn expr_starts_with_let(expr: &Expression, p: &Codegen) -> bool {
     match expr {
-        Expression::Identifier(id) => id.name == "let",
-        Expression::ComputedMemberExpression(m) => computed_object_starts_with_let(m),
-        Expression::StaticMemberExpression(m) => expr_starts_with_let(&m.object),
-        Expression::PrivateFieldExpression(m) => expr_starts_with_let(&m.object),
-        Expression::TSAsExpression(e) => expr_starts_with_let(&e.expression),
-        Expression::TSSatisfiesExpression(e) => expr_starts_with_let(&e.expression),
-        Expression::TSNonNullExpression(e) => expr_starts_with_let(&e.expression),
-        // Codegen drops redundant parens around a `let` object (`(let).x` -> `let.x`).
-        Expression::ParenthesizedExpression(e) => expr_starts_with_let(&e.expression),
+        Expression::Identifier(id) => p.get_identifier_reference_name(id) == "let",
+        Expression::ComputedMemberExpression(m) => computed_object_starts_with_let(m, p),
+        Expression::StaticMemberExpression(m) => expr_starts_with_let(&m.object, p),
+        Expression::PrivateFieldExpression(m) => expr_starts_with_let(&m.object, p),
+        Expression::CallExpression(e) => expr_starts_with_let(&e.callee, p),
+        Expression::TaggedTemplateExpression(e) => expr_starts_with_let(&e.tag, p),
+        Expression::TSNonNullExpression(e) => expr_starts_with_let(&e.expression, p),
+        // Codegen drops redundant parens (`(let).x` -> `let.x`).
+        Expression::ParenthesizedExpression(e) => expr_starts_with_let(&e.expression, p),
         _ => false,
     }
 }
 
-/// `let[...]` is emitted as `(let)[...]` (the computed member wraps a bare `let`
-/// object), so it no longer starts with `let`.
-fn computed_object_starts_with_let(m: &ComputedMemberExpression) -> bool {
-    !m.object.get_identifier_reference().is_some_and(|r| r.name == "let")
-        && expr_starts_with_let(&m.object)
+/// A computed member whose object is a `let` identifier (ignoring parentheses and
+/// TS wrappers) prints as `(let)[...]`, so it doesn't start with `let`.
+fn computed_object_starts_with_let(m: &ComputedMemberExpression, p: &Codegen) -> bool {
+    m.object.get_identifier_reference().is_none_or(|r| p.get_identifier_reference_name(r) != "let")
+        && expr_starts_with_let(&m.object, p)
 }
 
 impl Gen for ForOfStatement<'_> {
@@ -422,9 +422,9 @@ impl Gen for ForOfStatement<'_> {
         p.print_ascii_byte(b'(');
         // A `for...of` head may not start with the `let` token (`for ((let.x) of y)`),
         // nor be the bare identifier `async` (`for ((async) of y)`, unless `await`).
-        let wrap = for_of_head_starts_with_let(&self.left)
+        let wrap = for_of_head_starts_with_let(&self.left, p)
             || (!self.r#await
-                && matches!(&self.left, ForStatementLeft::AssignmentTargetIdentifier(id) if id.name == "async"));
+                && matches!(&self.left, ForStatementLeft::AssignmentTargetIdentifier(id) if p.get_identifier_reference_name(id) == "async"));
         p.wrap(wrap, |p| self.left.print(p, ctx));
         p.print_soft_space();
         p.print_space_before_identifier();
@@ -1163,7 +1163,7 @@ impl Gen for TSExportAssignment<'_> {
         p.print_indent();
         p.print_comments_at(self.span.start);
         p.print_str("export = ");
-        self.expression.print_expr(p, Precedence::Lowest, ctx);
+        self.expression.print_expr(p, Precedence::Comma, ctx);
         p.print_semicolon_after_statement();
     }
 }
@@ -1569,8 +1569,11 @@ impl GenExpr for MemberExpression<'_> {
 
 impl GenExpr for ComputedMemberExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, _precedence: Precedence, ctx: Context) {
-        // `(let[0] = 100);` -> `(let)[0] = 100`;
-        let wrap = self.object.get_identifier_reference().is_some_and(|r| r.name == "let");
+        // `let [` at the start of a statement or `for` head begins a declaration.
+        let wrap = self
+            .object
+            .get_identifier_reference()
+            .is_some_and(|r| p.get_identifier_reference_name(r) == "let");
         p.wrap(wrap, |p| {
             self.object.print_expr(p, Precedence::Postfix, ctx.intersection(Context::FORBID_CALL));
         });
@@ -1838,18 +1841,30 @@ impl Gen for ObjectProperty<'_> {
         }
 
         let mut shorthand = false;
+        let mut computed_proto_key = false;
         if let PropertyKey::StaticIdentifier(key) = &self.key {
+            let value_matches_key = matches!(
+                self.value.without_parentheses(),
+                Expression::Identifier(ident) if key.name == p.get_identifier_reference_name(ident)
+            );
             if key.name == "__proto__" {
-                shorthand = self.shorthand;
-            } else if let Expression::Identifier(ident) = self.value.without_parentheses()
-                && key.name == p.get_identifier_reference_name(ident)
-            {
-                shorthand = true;
+                shorthand = self.shorthand && value_matches_key;
+                // `__proto__: value` would set the prototype instead of defining a property.
+                computed_proto_key = self.shorthand && !value_matches_key;
+            } else {
+                shorthand = value_matches_key;
             }
         }
 
         if !shorthand {
-            self.key.print(p, ctx);
+            if computed_proto_key {
+                p.print_ascii_byte(b'[');
+                p.add_source_mapping(self.key.span());
+                p.print_string("__proto__");
+                p.print_ascii_byte(b']');
+            } else {
+                self.key.print(p, ctx);
+            }
             p.print_colon();
             p.print_soft_space();
         }
@@ -2035,7 +2050,7 @@ impl GenExpr for BinaryExpression<'_> {
 
 impl GenExpr for PrivateInExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
-        p.wrap(precedence >= Precedence::Compare, |p| {
+        p.wrap(precedence >= Precedence::Compare || ctx.intersects(Context::FORBID_IN), |p| {
             p.add_source_mapping(self.span);
             self.left.print(p, ctx);
             p.print_str(" in ");
@@ -2740,7 +2755,7 @@ impl Gen for JSXExpression<'_> {
                 p.print_comments_at(start);
                 p.print_indent();
             }
-            p.print_expression(expr);
+            expr.print_expr(p, Precedence::Comma, Context::empty());
         }
     }
 }
@@ -2874,7 +2889,7 @@ impl Gen for JSXText<'_> {
 impl Gen for JSXSpreadChild<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_str("{...");
-        p.print_expression(&self.expression);
+        self.expression.print_expr(p, Precedence::Comma, Context::empty());
         p.print_ascii_byte(b'}');
     }
 }
@@ -4214,7 +4229,7 @@ impl Gen for TSEnumMember<'_> {
             p.print_soft_space();
             p.print_equal();
             p.print_soft_space();
-            init.print_expr(p, Precedence::Lowest, ctx);
+            init.print_expr(p, Precedence::Comma, ctx);
         }
     }
 }

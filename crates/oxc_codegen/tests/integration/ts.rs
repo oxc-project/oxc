@@ -545,6 +545,18 @@ fn ts_satisfies_expression() {
 }
 
 #[test]
+fn enum_initializer_sequence_expression() {
+    let source = "enum E { A = (f(), x = 2), B }";
+    test_ts(source, "enum E {\n\tA = (f(), x = 2),\n\tB\n}\n");
+    test_options_with_source_type(
+        source,
+        "enum E{A=(f(),x=2),B}",
+        SourceType::ts(),
+        CodegenOptions::minify(),
+    );
+}
+
+#[test]
 fn type_codegen_with_preserve_parens_off() {
     let parse_options = ParseOptions { preserve_parens: false, ..Default::default() };
 
@@ -622,4 +634,16 @@ fn ts_cast_assignment_target_is_parenthesized() {
     );
     test_idempotency("(foo as Bar) = baz");
     test_idempotency("(foo satisfies Bar) = baz");
+}
+
+#[test]
+fn export_assignment_sequence_expression() {
+    let source = "export = (f(), value);";
+    test_ts(source, "export = (f(), value);\n");
+    test_options_with_source_type(
+        source,
+        "export = (f(),value);",
+        SourceType::ts(),
+        CodegenOptions::minify(),
+    );
 }

@@ -316,7 +316,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return false;
         }
         let kind = self.cur_kind();
-        if kind == Kind::ShiftLeft || kind == Kind::LtEq {
+        if kind == Kind::ShiftLeft {
             self.token = self.lexer.re_lex_as_typescript_l_angle(2);
             true
         } else if kind == Kind::ShiftLeftEq {
