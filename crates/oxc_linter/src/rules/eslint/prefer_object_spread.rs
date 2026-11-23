@@ -1064,46 +1064,6 @@ fn test() {
             FixKind::All,
         ),
         ("Object.assign<{}, A>({}, foo);", "({ ...foo});", None, FixKind::All),
-        (
-            "
-            const f = (x) => x
-            const result = f
-            Object.assign({}, { a: 1 });
-            ",
-            "
-            const f = (x) => x
-            const result = f
-            ;({ a: 1});
-            ",
-            None,
-            FixKind::Fix,
-        ),
-        (
-            "
-            const f = (x) => x
-            const result = f
-            Object.assign({}, foo);
-            ",
-            "
-            const f = (x) => x
-            const result = f
-            ;({ ...foo});
-            ",
-            None,
-            FixKind::Suggestion,
-        ),
-        (
-            "
-            const f = (x) => x
-            if (f) Object.assign({ a: 1 });
-            ",
-            "
-            const f = (x) => x
-            if (f) ({a: 1});
-            ",
-            None,
-            FixKind::Fix,
-        ),
         ("Object.assign({}, foo)", "Object.assign({}, foo)", None, FixKind::Fix),
         ("Object.assign({}, a, b())", "Object.assign({}, a, b())", None, FixKind::Fix),
         ("Object.assign({}, a, b())", "({ ...a, ...b()})", None, FixKind::Suggestion),
@@ -1155,6 +1115,46 @@ fn test() {
             FixKind::Suggestion,
         ),
         ("Object.assign(({ get x() {} }))", "Object.assign(({ get x() {} }))", None, FixKind::Fix),
+        (
+            "
+            const f = (x) => x
+            const result = f
+            Object.assign({}, { a: 1 });
+            ",
+            "
+            const f = (x) => x
+            const result = f
+            ;({ a: 1});
+            ",
+            None,
+            FixKind::Fix,
+        ),
+        (
+            "
+            const f = (x) => x
+            const result = f
+            Object.assign({}, foo);
+            ",
+            "
+            const f = (x) => x
+            const result = f
+            ;({ ...foo});
+            ",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "
+            const f = (x) => x
+            if (f) Object.assign({ a: 1 });
+            ",
+            "
+            const f = (x) => x
+            if (f) ({a: 1});
+            ",
+            None,
+            FixKind::Fix,
+        ),
     ];
     Tester::new(PreferObjectSpread::NAME, PreferObjectSpread::PLUGIN, pass, fail)
         .expect_fix(fix)
