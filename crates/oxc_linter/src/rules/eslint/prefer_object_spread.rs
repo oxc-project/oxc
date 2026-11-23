@@ -11,7 +11,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
-    ast_util::is_method_call,
+    ast_util::{could_be_asi_hazard, is_method_call},
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
@@ -192,7 +192,16 @@ fn fix_object_assign<'c, 'a: 'c>(
     };
     let callee_left_paren_span = Span::sized(call_expr.callee.span().end + paren_offset, 1);
 
-    let (left, right) = if needs_paren { ("({", "})") } else { ("{", "}") };
+    let (left, right) = if needs_paren {
+        // `(` is not a valid automatic semicolon insertion point, so a
+        // replacement starting with `(` would be parsed as a continuation of
+        // the previous statement when it lacks a terminator (e.g.
+        // `const result = f\n({ a: 1 });` becomes a call on `f`). Keep the
+        // statement boundary by prefixing a semicolon when required.
+        if could_be_asi_hazard(node, ctx) { (";({", "})") } else { ("({", "})") }
+    } else {
+        ("{", "}")
+    };
 
     rule_fixes
         .push(fixer.replace(Span::new(call_expr.span.start, callee_left_paren_span.end), left));
@@ -1030,7 +1039,7 @@ fn test() {
             ",
             "
             function foo () { var globalThis = bar; }
-            ({});
+            ;({});
             ",
             None,
             FixKind::All,
@@ -1060,6 +1069,52 @@ fn test() {
             FixKind::All,
         ),
         ("Object.assign<{}, A>({}, foo);", "({ ...foo});", None, FixKind::All),
+        // The replacement starts with `(`, which is not an automatic semicolon
+        // insertion point; a semicolon must be added when the previous
+        // statement is not terminated. See issue #30079.
+        (
+            "
+            const f = (x) => x
+            const result = f
+            Object.assign({}, { a: 1 });
+            ",
+            "
+            const f = (x) => x
+            const result = f
+            ;({ a: 1});
+            ",
+            None,
+            FixKind::Fix,
+        ),
+        (
+            "
+            const f = (x) => x
+            const result = f
+            Object.assign({}, foo);
+            ",
+            "
+            const f = (x) => x
+            const result = f
+            ;({ ...foo});
+            ",
+            None,
+            FixKind::Suggestion,
+        ),
+        // An `Object.assign` as an unbraced `if` body cannot be merged with a
+        // preceding expression (the token before it closes the `if` head), so
+        // no semicolon is inserted.
+        (
+            "
+            const f = (x) => x
+            if (f) Object.assign({ a: 1 });
+            ",
+            "
+            const f = (x) => x
+            if (f) ({a: 1});
+            ",
+            None,
+            FixKind::Fix,
+        ),
         ("Object.assign({}, foo)", "Object.assign({}, foo)", None, FixKind::Fix),
         ("Object.assign({}, a, b())", "Object.assign({}, a, b())", None, FixKind::Fix),
         ("Object.assign({}, a, b())", "({ ...a, ...b()})", None, FixKind::Suggestion),
