@@ -113,6 +113,10 @@ fn parse_number(src: &[u8], s: usize, e: usize, cpu: impl Cpu) -> f64 {
         };
         if radix != 0 {
             i = s + 2;
+        } else if d.is_ascii_digit() && src[s + 1..e].iter().all(|&c| matches!(c, b'0'..=b'7')) {
+            // Legacy octal: 070 is 56, while an 8 or 9 keeps the run decimal (08, 0779, 08.5).
+            radix = 8;
+            i = s + 1;
         }
     }
     if radix != 0 {
