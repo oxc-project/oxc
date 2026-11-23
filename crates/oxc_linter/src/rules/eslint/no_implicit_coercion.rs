@@ -608,7 +608,6 @@ fn test() {
         ("!!foo", None),
         ("!!(foo + bar)", None),
         ("!!(foo + bar); var Boolean = null", None),
-        // The diagnostic is still reported when `Boolean` is shadowed; only the fix is skipped.
         ("function f(Boolean) { return !!(foo + bar); }", None),
         ("~foo.indexOf(1)", None),
         ("~foo.bar.indexOf(2)", None),
@@ -667,9 +666,6 @@ fn test() {
             "String(foo)",
             Some(serde_json::json!([{ "disallowTemplateShorthand": true }])),
         ),
-        // When `Boolean`/`Number`/`String` is shadowed by a local binding, the
-        // replacement would call the shadowing binding instead of the global
-        // constructor, so no fix must be applied.
         (
             "function f(Boolean) { return !!(foo + bar); }",
             "function f(Boolean) { return !!(foo + bar); }",
@@ -681,7 +677,6 @@ fn test() {
             "function f(String) { return `` + foo; }",
             None,
         ),
-        // A shadowing declaration in an enclosing scope also suppresses the fix.
         ("{ let Boolean; !!foo; }", "{ let Boolean; !!foo; }", None),
     ];
     Tester::new(NoImplicitCoercion::NAME, NoImplicitCoercion::PLUGIN, pass, fail)
