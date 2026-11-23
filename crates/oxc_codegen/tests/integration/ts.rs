@@ -512,6 +512,27 @@ fn ts_instantiation_expression() {
 
 #[test]
 fn ts_instantiation_expression_precedence() {
+    for (source, expected, minified) in [
+        ("(f<T>) + x", "(f<T>) + x", "(f<T>)+x"),
+        ("(f<T>) - x", "(f<T>) - x", "(f<T>)-x"),
+        ("(f<T>) < x", "(f<T>) < x", "(f<T>)<x"),
+        ("(f<T>) > x", "(f<T>) > x", "(f<T>)>x"),
+        ("x + (f<T>) - y", "x + (f<T>) - y", "x+(f<T>)-y"),
+        ("(a++)<T>", "(a++)<T>", "(a++)<T> "),
+        ("(f<T>)<U>", "(f<T>)<U>", "(f<T>)<U> "),
+        ("(new C)<T>", "new C()<T>", "new C()<T> "),
+    ] {
+        let expected = format!("{expected};\n");
+        let minified = format!("{minified};");
+        test_ts(source, &expected);
+        test_options_with_source_type(
+            source,
+            &minified,
+            SourceType::ts(),
+            CodegenOptions::minify(),
+        );
+        test_ts(&minified, &expected);
+    }
     for source in
         ["(f<T>).x", "(f<T>)[x]", "(f<T>)()", "new (f<T>)()", "(f<T>)`text`", "((a ?? b)<T>).x"]
     {
