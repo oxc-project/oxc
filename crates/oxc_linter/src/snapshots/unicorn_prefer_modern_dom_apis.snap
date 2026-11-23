@@ -478,3 +478,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ─────────────────────────────────────────────────────────
    ╰────
   help: Replace the loop with `window.replaceChildren()`.
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer `(node satisfies Node).replaceChildren()` over directly removing `.firstChild` in a loop.
+   ╭─[prefer_modern_dom_apis.tsx:1:1]
+ 1 │ while ((node satisfies Node).firstChild) { (node satisfies Node).firstChild.remove(); }
+   · ───────────────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Replace the loop with `(node satisfies Node).replaceChildren()`.

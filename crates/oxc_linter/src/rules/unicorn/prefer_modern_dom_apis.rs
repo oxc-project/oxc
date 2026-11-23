@@ -305,12 +305,7 @@ fn classify_receiver_expression(
             classify_receiver_expression(&non_null.expression, while_node, ctx)
         }
         Expression::TSSatisfiesExpression(sat) => {
-            let expr_kind = classify_receiver_expression(&sat.expression, while_node, ctx);
-            if expr_kind == ReceiverTypeKind::Unknown {
-                classify_ts_type(&sat.type_annotation)
-            } else {
-                expr_kind
-            }
+            classify_receiver_expression(&sat.expression, while_node, ctx)
         }
         Expression::Identifier(ident) => {
             if matches!(ident.name.as_str(), "undefined" | "window" | "self" | "globalThis")
@@ -775,7 +770,6 @@ fn test() {
         "function foo(node: Element) { while ((node as Node).firstChild) { (node as Node).firstChild.remove(); } }",
         "function foo(node: Node) { while ((node as any).firstChild) { (node as any).firstChild.remove(); } }",
         "function foo(node: Node) { while ((node as (any)).firstChild) { (node as (any)).firstChild.remove(); } }",
-        "while ((node satisfies Node).firstChild) { (node satisfies Node).firstChild.remove(); }",
         "function foo(node: Node) { while (node!.firstChild) { node!.firstChild.remove(); } }",
         "const node: Node = getNode(); while (node.firstChild) { node.firstChild.remove(); }",
         "function foo(node: Node & string) { while (node.firstChild) { node.firstChild.remove(); } }",
@@ -880,6 +874,7 @@ fn test() {
         "while (node.firstChild) {\n\t// Keep this comment.\n\tnode.firstChild.remove();\n}",
         "while (/* keep */ node.firstChild) { node.firstChild.remove(); }",
         "function f(window) { while (window.firstChild) { window.firstChild.remove(); } }",
+        "while ((node satisfies Node).firstChild) { (node satisfies Node).firstChild.remove(); }",
     ];
 
     let fix = vec![
@@ -1060,6 +1055,10 @@ fn test() {
         (
             "function f(window) { while (window.firstChild) { window.firstChild.remove(); } }",
             "function f(window) { window.replaceChildren(); }",
+        ),
+        (
+            "while ((node satisfies Node).firstChild) { (node satisfies Node).firstChild.remove(); }",
+            "(node satisfies Node).replaceChildren();",
         ),
     ];
 
