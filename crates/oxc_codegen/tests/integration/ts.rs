@@ -1,6 +1,7 @@
-use oxc_codegen::CodegenOptions;
-use oxc_parser::ParseOptions;
-use oxc_span::SourceType;
+use oxc_allocator::Allocator;
+use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_parser::{ParseOptions, Parser};
+use oxc_span::{ContentEq, SourceType};
 
 use crate::{
     snapshot, snapshot_options, test_ts,
@@ -463,6 +464,52 @@ fn ts_as_expression_in_binary_expr() {
 fn ts_cast_expression_in_conditional_test() {
     test_same("let a = typeof ((\"a\" as unknown) ? /a/ : false);\n");
     test_same("let a = typeof ((\"a\" satisfies foo) ? /a/ : false);\n");
+}
+
+#[test]
+fn conditional_alternate_arrow_parameters() {
+    fn parse<'a>(
+        allocator: &'a Allocator,
+        text: &'a str,
+        source_type: SourceType,
+    ) -> oxc_ast::ast::Program<'a> {
+        let ret = Parser::new(allocator, text, source_type)
+            .with_options(ParseOptions { preserve_parens: false, ..ParseOptions::default() })
+            .parse();
+        assert!(ret.diagnostics.is_empty(), "{text}: {:?}", ret.diagnostics);
+        ret.program
+    }
+
+    for (source, compact) in [
+        ("a ? b ? async(x, x) : (c) => d : e;", "a?b?async(x,x):(c)=>d:e;"),
+        ("a ? b ? async(x = 1) : (c) => d : e;", "a?b?async(x=1):(c)=>d:e;"),
+        ("a ? b ? (x) : (c) => d : e;", "a?b?x:(c)=>d:e;"),
+        ("a ? b ? async(x) : (c) => d : e;", "a?b?async(x):(c)=>d:e;"),
+        ("a ? b ? async(x) : (c) => (d) => e : f;", "a?b?async(x):(c)=>(d)=>e:f;"),
+        ("a ? b ? async(x) : async (c) => d : e;", "a?b?async(x):async(c)=>d:e;"),
+        ("a ? b ? async(x) : ((c) => d) : e;", "a?b?async(x):((c)=>d):e;"),
+        ("a ? b : c ? async(x, x) : (d) => e;", "a?b:c?async(x,x):(d)=>e;"),
+        ("a ? b : (c) => d;", "a?b:(c)=>d;"),
+        ("const f = (x) => x;", "const f=x=>x;"),
+    ] {
+        for source_type in [SourceType::ts(), SourceType::tsx()] {
+            test_options_with_source_type(source, compact, source_type, CodegenOptions::minify());
+
+            let allocator = Allocator::default();
+            let original = parse(&allocator, source, source_type);
+            for options in [CodegenOptions::default(), CodegenOptions::minify()] {
+                let printed = Codegen::new().with_options(options).build(&original).code;
+                let reparsed = parse(&allocator, &printed, source_type);
+                assert!(original.content_eq(&reparsed), "{source} -> {printed}");
+            }
+        }
+    }
+    test_options_with_source_type(
+        "a ? b ? async(x, x) : (c) => d : e;",
+        "a?b?async(x,x):c=>d:e;",
+        SourceType::mjs(),
+        CodegenOptions::minify(),
+    );
 }
 
 #[test]

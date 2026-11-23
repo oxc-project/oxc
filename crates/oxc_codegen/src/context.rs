@@ -28,6 +28,8 @@ bitflags! {
         const TYPESCRIPT  = 1 << 2;
         /// The current template literal is tagged, so preserve its raw quasis.
         const TAGGED_TEMPLATE = 1 << 3;
+        /// Keep arrow parameters parenthesized after a TypeScript conditional colon.
+        const FORBID_ARROW_PARAMS_UNWRAP = 1 << 4;
     }
 }
 
