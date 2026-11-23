@@ -123,7 +123,7 @@ export function printExpression(
       const leftType = node.left.type;
       if (leftType === "PrivateIdentifier") {
         typeAssertIs<ESTree.PrivateInExpression>(node);
-        printPrivateInExpression(node, state, precedence);
+        printPrivateInExpression(node, state, precedence, ctx);
       } else {
         typeAssertIs<ESTree.BinaryExpression>(node);
         printBinaryish(node, state, precedence, ctx, leftType);
@@ -431,13 +431,15 @@ function printArguments(
  * @param node - Private-in expression
  * @param state - Printer state
  * @param precedence - Precedence of the position this expression sits in
+ * @param ctx - Context flags, including whether `in` is forbidden in a `for` initializer
  */
 export function printPrivateInExpression(
   node: ESTree.PrivateInExpression,
   state: State,
   precedence: number,
+  ctx: number,
 ): void {
-  const wrap = precedence >= PREC_COMPARE;
+  const wrap = precedence >= PREC_COMPARE || (ctx & CTX_FORBID_IN) !== 0;
   if (wrap) write(state, "(", CAT_OTHER);
 
   markMapStart(state, node.start, node.end, node);
