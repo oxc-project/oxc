@@ -43,7 +43,8 @@ fn missing_catch_parameter_diagnostic(span: Span) -> OxcDiagnostic {
 #[schemars(rename_all = "camelCase")]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct PreserveCaughtErrorOptions {
-    /// When set to `true`, requires that catch clauses always have a parameter.
+    /// When set to `true`, requires catch clauses that throw a new error to have a
+    /// caught error parameter, so the caught error is not discarded when re-throwing.
     require_catch_parameter: bool,
 }
 
@@ -51,7 +52,8 @@ struct PreserveCaughtErrorOptions {
 pub struct PreserveCaughtError(PreserveCaughtErrorOptions);
 
 struct ThrowFinder<'a, 'ctx> {
-    catch_param: &'a BindingPattern<'a>,
+    catch_param: Option<&'a BindingPattern<'a>>,
+    require_catch_parameter: bool,
     ctx: &'ctx LintContext<'a>,
 }
 
@@ -71,8 +73,18 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
             return;
         };
 
+        let Some(catch_param) = self.catch_param else {
+            // The catch clause has no parameter. ESLint reports a missing catch parameter
+            // only when the catch block throws a new error, not when it recovers
+            // without throwing.
+            if self.require_catch_parameter {
+                self.ctx.diagnostic(missing_catch_parameter_diagnostic(throw_stmt.span));
+            }
+            return;
+        };
+
         if let Some(Argument::ObjectExpression(obj_expr)) = args.get(options_argument_index)
-            && has_cause_property(obj_expr, self.catch_param, self.ctx)
+            && has_cause_property(obj_expr, catch_param, self.ctx)
         {
             return;
         }
@@ -83,12 +95,12 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
         }
 
         self.ctx.diagnostic_with_fix(preserve_caught_error_diagnostic(throw_stmt.span), |fixer| {
-            let Some(ident) = self.catch_param.get_identifier_name() else {
+            let Some(ident) = catch_param.get_identifier_name() else {
                 return fixer.noop();
             };
             // Keep the catch binding unchanged as part of each fix, so removing or renaming it
             // conflicts with inserting a reference to it (e.g. `prefer-optional-catch-binding`).
-            let preserve_catch_param = || fixer.replace_with(self.catch_param, self.catch_param);
+            let preserve_catch_param = || fixer.replace_with(catch_param, catch_param);
             let cause_prop_text = format!("cause: {}", ident.as_str());
 
             match args.len() {
@@ -163,7 +175,7 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
                         if let Some(cause_prop) = cause_prop {
                             // if the identifier name is not the catch parameter, replace it
                             if let ObjectPropertyKind::ObjectProperty(prop) = cause_prop
-                                && !is_catch_parameter(&prop.value, self.catch_param, self.ctx)
+                                && !is_catch_parameter(&prop.value, catch_param, self.ctx)
                             {
                                 if prop.shorthand || prop.method || prop.kind.is_accessor() {
                                     return fixer
@@ -318,13 +330,26 @@ impl PreserveCaughtError {
     }
 
     fn check_catch_clause<'a>(&self, catch_clause: &'a CatchClause<'a>, ctx: &LintContext<'a>) {
-        if let Some(catch_param) = &catch_clause.param {
-            let mut finder: ThrowFinder<'a, '_> =
-                ThrowFinder { catch_param: &catch_param.pattern, ctx };
-            finder.visit_block_statement(catch_clause.body.as_ref());
-        } else if self.0.require_catch_parameter {
-            ctx.diagnostic(missing_catch_parameter_diagnostic(catch_clause.span));
-        }
+        let Some(catch_param) = &catch_clause.param else {
+            // Only report a missing catch parameter when the catch block throws a new
+            // error, matching ESLint. The `ThrowFinder` visits throw statements and
+            // reports on the throw itself.
+            if self.0.require_catch_parameter {
+                let mut finder: ThrowFinder<'a, '_> = ThrowFinder {
+                    catch_param: None,
+                    require_catch_parameter: self.0.require_catch_parameter,
+                    ctx,
+                };
+                finder.visit_block_statement(catch_clause.body.as_ref());
+            }
+            return;
+        };
+        let mut finder: ThrowFinder<'a, '_> = ThrowFinder {
+            catch_param: Some(&catch_param.pattern),
+            require_catch_parameter: self.0.require_catch_parameter,
+            ctx,
+        };
+        finder.visit_block_statement(catch_clause.body.as_ref());
     }
 }
 
@@ -431,6 +456,33 @@ fn test() {
 					throw new Error("Something went wrong");
 				}"#,
             Some(serde_json::json!([{ "requireCatchParameter": false }])),
+        ),
+        // A catch clause without a parameter is not reported when it does not
+        // re-throw a new error, even with `requireCatchParameter: true`.
+        (
+            "try {
+					return JSON.parse(text);
+				} catch {
+					return {};
+				}",
+            Some(serde_json::json!([{ "requireCatchParameter": true }])),
+        ),
+        (
+            "try { doSomething(); } catch {}",
+            Some(serde_json::json!([{ "requireCatchParameter": true }])),
+        ),
+        (
+            r#"try { doSomething(); } catch { throw "failed"; }"#,
+            Some(serde_json::json!([{ "requireCatchParameter": true }])),
+        ),
+        // A throw inside a nested function is not directly related to the caught error.
+        (
+            r#"try {
+					doSomething();
+				} catch {
+					foo = { bar() { throw new Error("Something went wrong"); } };
+				}"#,
+            Some(serde_json::json!([{ "requireCatchParameter": true }])),
         ),
         (
             r#"try { doSomething(); } catch (errorA) { try { doSomethingElse(); } catch (errorB) { throw new Error( `The certificate key "${chalk.yellow(keyFile)}" is invalid.\n${errorA.message}`, { cause: errorB }); } }"#,
