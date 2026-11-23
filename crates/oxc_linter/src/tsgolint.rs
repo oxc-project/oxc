@@ -199,7 +199,26 @@ impl TsGoLintState {
             paths_buff
         };
 
-        let process = self.spawn_tsgolint(&json_input).map(|mut child| {
+        let process = self.spawn_process(&json_input);
+
+        TsGoLintRun {
+            started: Some(StartedRun {
+                state: self,
+                resolved_configs,
+                all_paths,
+                paths: paths.to_vec(),
+                process,
+            }),
+        }
+    }
+
+    /// Spawn the backend for `json_input` and start draining its stdout on a background thread.
+    ///
+    /// # Panics
+    /// - when `stdin` of subprocess cannot be opened
+    /// - when `stdout` of subprocess cannot be opened
+    fn spawn_process(&self, json_input: &Payload) -> Result<TsGoLintProcess, String> {
+        self.spawn_tsgolint(json_input).map(|mut child| {
             let stdout = child.stdout.take().expect("Failed to open tsgolint stdout");
             let (sender, messages) = mpsc::channel();
             // Drain stdout as it is written so `tsgolint` never blocks on a full pipe. Message
@@ -216,11 +235,7 @@ impl TsGoLintState {
                 }
             });
             TsGoLintProcess { child, messages, reader }
-        });
-
-        TsGoLintRun {
-            started: Some(StartedRun { state: self, resolved_configs, all_paths, process }),
-        }
+        })
     }
 }
 
@@ -234,6 +249,9 @@ struct StartedRun {
     state: TsGoLintState,
     resolved_configs: FxHashMap<PathBuf, ResolvedLinterState>,
     all_paths: Vec<PathBuf>,
+    /// The paths that were linted, kept to rebuild the payload when the run is retried
+    /// without a rule the backend rejected.
+    paths: Vec<Arc<OsStr>>,
     /// The spawned process, or the error from spawning it.
     process: Result<TsGoLintProcess, String>,
 }
@@ -262,7 +280,8 @@ impl TsGoLintRun {
         diff_manager: &Arc<DiffManager>,
         rule_timing_store: Option<&RuleTimingStore>,
     ) -> Result<(), String> {
-        let Some(StartedRun { state, resolved_configs, all_paths, process }) = self.started.take()
+        let Some(StartedRun { state, resolved_configs, all_paths, paths, process }) =
+            self.started.take()
         else {
             return Ok(());
         };
@@ -271,119 +290,196 @@ impl TsGoLintRun {
         let cwd = state.cwd.clone();
         let sender_for_fixes = error_sender.clone();
 
+        // Name of the backend that runs, so an error can say which one failed. The lookup
+        // prefers `tsrs-lint` over `tsgolint`, so the name is not always `tsgolint`.
+        let backend = state
+            .executable_path
+            .file_name()
+            .map_or_else(
+                || state.executable_path.to_string_lossy(),
+                std::ffi::OsStr::to_string_lossy,
+            )
+            .into_owned();
+        let backend_for_run = backend.clone();
+
         let diff_manager_clone_to_ts_go = Arc::<DiffManager>::clone(diff_manager);
 
+        // Share the resolved configs and paths between attempts without copying them: the
+        // per-attempt processing thread reads them, and a retry (rare) rebuilds the configs.
+        let mut resolved_configs = Arc::new(resolved_configs);
+        let all_paths = Arc::new(all_paths);
+
         let handler = std::thread::spawn(move || {
-            let TsGoLintProcess { mut child, messages, reader } = process?;
+            let mut process = process?;
 
-            // Process messages in a separate thread to send diagnostics as they arrive
-            let stdout_handler = std::thread::spawn(move || -> Result<TsGoLintOutput, String> {
-                let disable_directives_map =
-                    disable_directives_map.lock().expect("disable_directives_map mutex poisoned");
+            // Rules the backend rejected as unknown. The backend validates rules before
+            // linting and exits without reporting anything when it does not know one, so the
+            // run is retried with the rejected rule removed instead of failing outright:
+            // `tsrs` and `oxlint-tsgolint` releases can lag behind the rules oxlint enables.
+            let mut skipped_rules: Vec<String> = Vec::new();
 
-                let mut diagnostic_handler = DiagnosticHandler::new(
-                    state.cwd.clone(),
-                    state.silent,
-                    should_fix,
-                    error_sender,
-                );
-                let mut timings = vec![];
+            loop {
+                let TsGoLintProcess { mut child, messages, reader } = process;
 
-                for msg in messages {
-                    match msg {
-                        Ok(TsGoLintMessage::Error(err)) => {
-                            return Err(err.error);
-                        }
-                        Ok(TsGoLintMessage::Diagnostic(tsgolint_diagnostic)) => {
-                            match tsgolint_diagnostic {
-                                TsGoLintDiagnostic::Rule(tsgolint_diagnostic) => {
-                                    let path = &tsgolint_diagnostic.file_path;
+                // Every attempt gets its own copies of the state its processing consumes.
+                let cwd = state.cwd.clone();
+                let silent = state.silent;
+                let error_sender_for_attempt = error_sender.clone();
+                let disable_directives_map = Arc::clone(&disable_directives_map);
+                let diff_manager_clone_to_ts_go = Arc::clone(&diff_manager_clone_to_ts_go);
+                let resolved_configs_for_attempt = Arc::clone(&resolved_configs);
+                let all_paths_for_attempt = Arc::clone(&all_paths);
 
-                                    let severity = resolved_configs
-                                            .get(path)
-                                            .or_else(|| {
-                                                debug_assert!(false, "resolved_configs should have an entry for every file we linted {tsgolint_diagnostic:?}");
-                                                None
-                                            })
-                                            .and_then(|resolved_config| {
-                                                resolved_config
-                                                    .rules
-                                                    .iter()
-                                                    .find(|(rule, _)| {
-                                                        rule.is_tsgolint_rule()
-                                                            && rule.name() == tsgolint_diagnostic.rule
-                                                    })
-                                                    .map(|(_, config)| config.severity)
-                                            })
-                                            .or_else(|| {
-                                                debug_assert!(false, "resolved_config should have a matching rule for every diagnostic we received {tsgolint_diagnostic:?}");
-                                                None
-                                            });
-                                    let Some(severity) = severity else {
-                                        // If the severity is not found, we should not report
-                                        // the diagnostic
-                                        continue;
-                                    };
+                // Process messages in a separate thread to send diagnostics as they arrive
+                let stdout_handler = std::thread::spawn(
+                    move || -> Result<TsGoLintOutput, TsGoLintAttemptError> {
+                        let disable_directives_map = disable_directives_map
+                            .lock()
+                            .expect("disable_directives_map mutex poisoned");
 
-                                    if should_skip_diagnostic(
-                                        &disable_directives_map,
-                                        path,
-                                        &tsgolint_diagnostic,
-                                    ) {
-                                        continue;
-                                    }
+                        let mut diagnostic_handler = DiagnosticHandler::new(
+                            cwd,
+                            silent,
+                            should_fix,
+                            error_sender_for_attempt,
+                        );
+                        let mut timings = vec![];
 
-                                    diagnostic_handler.handle_rule_diagnostic(
-                                        tsgolint_diagnostic,
-                                        severity,
-                                        diff_manager_clone_to_ts_go.skip(),
-                                    );
+                        for msg in messages {
+                            match msg {
+                                Ok(TsGoLintMessage::Error(err)) => {
+                                    return Err(TsGoLintAttemptError {
+                                        error: err.error,
+                                        saw_diagnostics: diagnostic_handler.saw_diagnostics(),
+                                    });
                                 }
-                                TsGoLintDiagnostic::Internal(e) => {
-                                    diagnostic_handler.handle_internal_diagnostic(e);
+                                Ok(TsGoLintMessage::Diagnostic(tsgolint_diagnostic)) => {
+                                    match tsgolint_diagnostic {
+                                        TsGoLintDiagnostic::Rule(tsgolint_diagnostic) => {
+                                            let path = &tsgolint_diagnostic.file_path;
+
+                                            let severity = resolved_configs_for_attempt
+                                                    .get(path)
+                                                    .or_else(|| {
+                                                        debug_assert!(false, "resolved_configs should have an entry for every file we linted {tsgolint_diagnostic:?}");
+                                                        None
+                                                    })
+                                                    .and_then(|resolved_config| {
+                                                        resolved_config
+                                                            .rules
+                                                            .iter()
+                                                            .find(|(rule, _)| {
+                                                                rule.is_tsgolint_rule()
+                                                                    && rule.name() == tsgolint_diagnostic.rule
+                                                            })
+                                                            .map(|(_, config)| config.severity)
+                                                    })
+                                                    .or_else(|| {
+                                                        debug_assert!(false, "resolved_config should have a matching rule for every diagnostic we received {tsgolint_diagnostic:?}");
+                                                        None
+                                                    });
+                                            let Some(severity) = severity else {
+                                                // If the severity is not found, we should not report
+                                                // the diagnostic
+                                                continue;
+                                            };
+
+                                            if should_skip_diagnostic(
+                                                &disable_directives_map,
+                                                path,
+                                                &tsgolint_diagnostic,
+                                            ) {
+                                                continue;
+                                            }
+
+                                            diagnostic_handler.handle_rule_diagnostic(
+                                                tsgolint_diagnostic,
+                                                severity,
+                                                diff_manager_clone_to_ts_go.skip(),
+                                            );
+                                        }
+                                        TsGoLintDiagnostic::Internal(e) => {
+                                            diagnostic_handler.handle_internal_diagnostic(e);
+                                        }
+                                    }
+                                }
+                                Ok(TsGoLintMessage::Timing(payload)) => {
+                                    timings.extend(payload.rules);
+                                }
+                                Err(e) => {
+                                    return Err(TsGoLintAttemptError {
+                                        error: e,
+                                        saw_diagnostics: diagnostic_handler.saw_diagnostics(),
+                                    });
                                 }
                             }
                         }
-                        Ok(TsGoLintMessage::Timing(payload)) => {
-                            timings.extend(payload.rules);
+
+                        // The channel also closes when decoding panicked. Fail this thread then, as it
+                        // did when it decoded stdout itself.
+                        if let Err(panic) = reader.join() {
+                            std::panic::resume_unwind(panic);
                         }
-                        Err(e) => {
-                            return Err(e);
-                        }
-                    }
-                }
 
-                // The channel also closes when decoding panicked. Fail this thread then, as it
-                // did when it decoded stdout itself.
-                if let Err(panic) = reader.join() {
-                    std::panic::resume_unwind(panic);
-                }
-
-                Ok(TsGoLintOutput {
-                    messages_requiring_fixes: diagnostic_handler
-                        .into_messages_requiring_fixes(&diff_manager_clone_to_ts_go, all_paths),
-                    timings,
-                })
-            });
-
-            // Wait for process to complete and stdout processing to finish
-            let exit_status = child.wait().expect("Failed to wait for tsgolint process");
-            let stdout_result = stdout_handler.join();
-
-            if !exit_status.success() {
-                return Err(
-                    if let Some(err) = &stdout_result.ok().and_then(std::result::Result::err) {
-                        format!("exit status: {exit_status}, error: {err}")
-                    } else {
-                        format!("exit status: {exit_status}")
+                        Ok(TsGoLintOutput {
+                            messages_requiring_fixes: diagnostic_handler
+                                .into_messages_requiring_fixes(
+                                    &diff_manager_clone_to_ts_go,
+                                    &all_paths_for_attempt,
+                                ),
+                            timings,
+                        })
                     },
                 );
-            }
 
-            match stdout_result {
-                Ok(Ok(messages)) => Ok(messages),
-                Ok(Err(err)) => Err(format!("exit status: {exit_status}, error: {err}")),
-                Err(_) => Err("Failed to join stdout processing thread".to_string()),
+                // Wait for process to complete and stdout processing to finish
+                let exit_status = child.wait().expect("Failed to wait for tsgolint process");
+                let stdout_result = stdout_handler.join();
+
+                // A backend that rejects a rule it does not know does so before linting,
+                // without emitting any diagnostics. Retry the run with that rule removed, so
+                // a backend that predates one of the rules oxlint enables cannot fail the
+                // whole lint run. Stop when the backend keeps rejecting the same rule, which
+                // should never happen.
+                if let Ok(Err(attempt)) = &stdout_result
+                    && !attempt.saw_diagnostics
+                    && let Some(rule) = unknown_rule_name(&attempt.error)
+                    && !skipped_rules.iter().any(|skipped| skipped == rule)
+                {
+                    error_sender
+                        .send(vec![skipped_rule_warning(&backend_for_run, rule).into()])
+                        .expect("Failed to send diagnostics");
+                    skipped_rules.push(rule.to_string());
+
+                    // Rebuild the payload without the rejected rule. The resolved configs are
+                    // rebuilt as well: the paths resolve again, but a retry is rare.
+                    let mut configs: FxHashMap<PathBuf, ResolvedLinterState> = FxHashMap::default();
+                    let mut json_input = state.json_input(&paths, None, &mut configs);
+                    for config in &mut json_input.configs {
+                        config.rules.retain(|rule| !skipped_rules.contains(&rule.name));
+                    }
+                    resolved_configs = Arc::new(configs);
+                    process = state.spawn_process(&json_input)?;
+                    continue;
+                }
+
+                if !exit_status.success() {
+                    return Err(
+                        if let Some(err) = &stdout_result.ok().and_then(std::result::Result::err) {
+                            format!("exit status: {exit_status}, error: {}", err.error)
+                        } else {
+                            format!("exit status: {exit_status}")
+                        },
+                    );
+                }
+
+                return match stdout_result {
+                    Ok(Ok(messages)) => Ok(messages),
+                    Ok(Err(err)) => {
+                        Err(format!("exit status: {exit_status}, error: {}", err.error))
+                    }
+                    Err(_) => Err("Failed to join stdout processing thread".to_string()),
+                };
             }
         });
 
@@ -451,8 +547,8 @@ impl TsGoLintRun {
                 }
                 Ok(())
             }
-            Ok(Err(err)) => Err(format!("Error running tsgolint: {err:?}")),
-            Err(err) => Err(format!("Error running tsgolint: {err:?}")),
+            Ok(Err(err)) => Err(format!("Error running {backend}: {err:?}")),
+            Err(err) => Err(format!("Error running {backend}: {err:?}")),
         }
     }
 }
@@ -1172,6 +1268,32 @@ struct TsGoLintOutput {
     timings: Vec<TsGoLintRuleTiming>,
 }
 
+/// A failed backend run: the error it reported, and whether it emitted any diagnostics
+/// before failing.
+struct TsGoLintAttemptError {
+    error: String,
+    saw_diagnostics: bool,
+}
+
+/// Extracts the rule name from a backend error rejecting a rule it does not know, like
+/// `error running linter: unknown rule: no-unsafe-class-instance-assignment`.
+fn unknown_rule_name(error: &str) -> Option<&str> {
+    let (_, rule) = error.rsplit_once("unknown rule: ")?;
+    let rule = rule.trim();
+    (!rule.is_empty()).then_some(rule)
+}
+
+/// Warning diagnostic for a rule the backend does not support. The rule is skipped instead
+/// of failing the lint run.
+fn skipped_rule_warning(backend: &str, rule: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "The type-aware linter `{backend}` does not support the `{rule}` rule, so the rule was skipped."
+    ))
+    .with_help(format!(
+        "Update the `tsrs` or `oxlint-tsgolint` package so the `{rule}` rule can run."
+    ))
+}
+
 /// Handles streaming and collecting diagnostics from tsgolint.
 struct DiagnosticHandler {
     cwd: PathBuf,
@@ -1184,6 +1306,9 @@ struct DiagnosticHandler {
     /// Messages requiring fixes, grouped by file path: messages.
     messages_requiring_fixes: FxHashMap<PathBuf, Vec<Message>>,
     messages_not_requiring_fixes: FxHashMap<PathBuf, Vec<(TsGoLintRuleDiagnostic, AllowWarnDeny)>>,
+    /// Whether any diagnostic was handled. A backend run that failed without emitting
+    /// anything can be retried; one that reported partial results cannot.
+    saw_diagnostics: bool,
 }
 
 impl DiagnosticHandler {
@@ -1197,7 +1322,13 @@ impl DiagnosticHandler {
             error_sender,
             messages_requiring_fixes: FxHashMap::default(),
             messages_not_requiring_fixes: FxHashMap::default(),
+            saw_diagnostics: false,
         }
+    }
+
+    /// Whether any diagnostic was handled by this handler.
+    fn saw_diagnostics(&self) -> bool {
+        self.saw_diagnostics
     }
 
     fn get_source_text(&mut self, path: &Path) -> &str {
@@ -1215,6 +1346,7 @@ impl DiagnosticHandler {
         severity: AllowWarnDeny,
         ignore_suppression: bool,
     ) {
+        self.saw_diagnostics = true;
         let path = diagnostic.file_path.clone();
         let has_fixes =
             self.should_fix && (!diagnostic.fixes.is_empty() || !diagnostic.suggestions.is_empty());
@@ -1239,6 +1371,7 @@ impl DiagnosticHandler {
     }
 
     fn handle_internal_diagnostic(&mut self, e: TsGoLintInternalDiagnostic) {
+        self.saw_diagnostics = true;
         let file_path = e.file_path.clone();
         let oxc_diagnostic: OxcDiagnostic = e.into();
 
@@ -1288,16 +1421,16 @@ impl DiagnosticHandler {
     fn into_messages_requiring_fixes(
         self,
         diff_manager: &Arc<DiffManager>,
-        paths: Vec<PathBuf>,
+        paths: &[PathBuf],
     ) -> Vec<(PathBuf, String, Vec<Message>)> {
         let Self { messages_requiring_fixes, mut source_text_cache, should_fix, silent, .. } = self;
 
         if !diff_manager.skip() {
             for path in paths {
-                if let Some(messages) = self.messages_not_requiring_fixes.get(&path) {
-                    let source_text = source_text_cache.0.remove(&path).unwrap_or_else(|| {
+                if let Some(messages) = self.messages_not_requiring_fixes.get(path) {
+                    let source_text = source_text_cache.0.remove(path).unwrap_or_else(|| {
                         if !silent || should_fix {
-                            read_to_string(&path).unwrap_or_default()
+                            read_to_string(path).unwrap_or_default()
                         } else {
                             String::new()
                         }
@@ -1330,12 +1463,12 @@ impl DiagnosticHandler {
 
                     let diagnostics = DiagnosticService::wrap_diagnostics(
                         &self.cwd,
-                        &path,
+                        path,
                         source_text.as_str(),
                         filtered_messages,
                     );
                     self.error_sender.send(diagnostics).expect("Failed to send diagnostics");
-                } else if !messages_requiring_fixes.contains_key(&path) {
+                } else if !messages_requiring_fixes.contains_key(path) {
                     diff_manager.collect_empty_file(path.as_path(), self.cwd.as_path());
                 }
             }
@@ -1568,6 +1701,24 @@ mod test {
         fixer::{FixKind, Message, PossibleFixes},
         tsgolint::{Fix, LabeledRange, Range, RuleMessage, Suggestion, TsGoLintRuleDiagnostic},
     };
+
+    #[test]
+    fn test_unknown_rule_name() {
+        use super::unknown_rule_name;
+
+        // `tsrs` reports the rule it does not know in its error payload
+        assert_eq!(
+            unknown_rule_name(
+                "error running linter: unknown rule: no-unsafe-class-instance-assignment"
+            ),
+            Some("no-unsafe-class-instance-assignment")
+        );
+
+        // Errors that do not reject a rule do not name one
+        assert_eq!(unknown_rule_name("exit status: 1"), None);
+        assert_eq!(unknown_rule_name(""), None);
+        assert_eq!(unknown_rule_name("unknown rule: "), None);
+    }
 
     #[test]
     fn test_message_from_tsgo_lint_diagnostic_basic() {

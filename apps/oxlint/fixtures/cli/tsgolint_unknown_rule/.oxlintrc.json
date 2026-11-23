@@ -1,0 +1,9 @@
+{
+  "rules": {
+    "typescript/await-thenable": "error",
+    "typescript/no-unsafe-class-instance-assignment": "error"
+  },
+  "options": {
+    "typeAware": true
+  }
+}

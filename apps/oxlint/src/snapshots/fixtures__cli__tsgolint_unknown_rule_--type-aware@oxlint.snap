@@ -1,0 +1,31 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --type-aware
+working directory: fixtures/cli/tsgolint_unknown_rule
+----------
+
+  ! The type-aware linter `tsgolint` does not support the `no-unsafe-class-instance-assignment` rule, so the rule was skipped.
+  help: Update the `tsrs` or `oxlint-tsgolint` package so the `no-unsafe-class-instance-assignment` rule can run.
+
+  ! unicorn(no-unnecessary-await): Unexpected `await` on a non-Promise value
+   ,-[index.ts:1:1]
+ 1 | await 12;
+   : ^^^^^
+ 2 | 
+   `----
+  help: Consider removing the `await`
+
+  x typescript(await-thenable): Unexpected `await` of a non-Promise (non-Thenable) value.
+   ,-[index.ts:1:1]
+ 1 | await 12;
+   : ^^^^^^^^
+ 2 | 
+   `----
+
+Found 2 warnings and 1 error.
+Finished in <variable>ms on 1 file with 112 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

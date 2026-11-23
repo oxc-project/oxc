@@ -2150,6 +2150,16 @@ mod test {
         Tester::new().with_cwd("fixtures/cli/tsgolint".into()).test_and_snapshot(args);
     }
 
+    // The backend exits when it does not know one of the enabled rules, so the run is
+    // retried without the rejected rule, which warns, instead of failing the whole run.
+    // <https://github.com/oxc-project/oxc/issues/30129>
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_unknown_rule() {
+        let args = &["--type-aware"];
+        Tester::new().with_cwd("fixtures/cli/tsgolint_unknown_rule".into()).test_and_snapshot(args);
+    }
+
     #[test]
     #[cfg(not(target_endian = "big"))]
     fn test_tsgolint_silent() {
