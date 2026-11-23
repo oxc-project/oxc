@@ -73,6 +73,91 @@ declare_oxc_lint!(
         "This rule prefers borrowing methods from the prototype instead of the instance.",
 );
 
+impl Rule for PreferPrototypeMethods {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
+
+        if call_expr.optional {
+            return;
+        }
+        let Expression::StaticMemberExpression(callee_member) =
+            call_expr.callee.without_parentheses()
+        else {
+            return;
+        };
+        if callee_member.optional {
+            return;
+        }
+
+        let method_expr = match callee_member.property.name.as_str() {
+            // `Reflect.apply([].foo, …)`
+            // `Reflect.apply({}.foo, …)`
+            "apply"
+                if !call_expr.arguments.is_empty()
+                    && matches!(
+                        callee_member.object.without_parentheses(),
+                        Expression::Identifier(ident) if ident.name == "Reflect"
+                    ) =>
+            {
+                call_expr.arguments[0].as_expression().map(Expression::without_parentheses)
+            }
+            // `[].foo.{apply,bind,call}(…)`
+            // `({}).foo.{apply,bind,call}(…)`
+            "apply" | "bind" | "call" => Some(callee_member.object.without_parentheses()),
+            _ => return,
+        };
+
+        let Some(method_expr) = method_expr else {
+            return;
+        };
+        let Some(method_expr) = method_expr.as_member_expression() else {
+            return;
+        };
+        let object_expr = method_expr.object().without_parentheses();
+
+        let (constructor_name, method_name, global_method_name) = match object_expr {
+            Expression::Identifier(ident) => {
+                let Some(method_name) = global_object_prototype_method(ident, method_expr, ctx)
+                else {
+                    return;
+                };
+                ("Object", Some(method_name), Some(method_name))
+            }
+            _ if method_expr.optional() => return,
+            Expression::ArrayExpression(array) if array.elements.is_empty() => {
+                ("Array", method_expr.static_property_name().and_then(JSStr::as_str), None)
+            }
+            Expression::ObjectExpression(object) if object.properties.is_empty() => {
+                ("Object", method_expr.static_property_name().and_then(JSStr::as_str), None)
+            }
+            _ => return,
+        };
+
+        let diagnostic = method_name.map_or_else(
+            || unknown_method(method_expr.span(), constructor_name),
+            |method_name| known_method(method_expr.span(), constructor_name, method_name),
+        );
+        let replace_span =
+            if global_method_name.is_some() { method_expr.span() } else { object_expr.span() };
+
+        if ctx.has_comments_between(replace_span) {
+            ctx.diagnostic(diagnostic);
+            return;
+        }
+
+        ctx.diagnostic_with_fix(diagnostic, |fixer| {
+            let mut replacement = match global_method_name {
+                Some(method_name) => format!("{constructor_name}.prototype.{method_name}"),
+                None => format!("{constructor_name}.prototype"),
+            };
+            pad_fix_with_token_boundary(ctx.source_text(), replace_span, &mut replacement);
+            fixer.replace(replace_span, replacement)
+        });
+    }
+}
+
 fn is_unmodified_global_variable(ident: &IdentifierReference<'_>, ctx: &LintContext<'_>) -> bool {
     if !ctx.is_reference_to_global_variable(ident) {
         return false;
@@ -174,91 +259,6 @@ fn global_object_prototype_method<'a>(
             }
         }
         MemberExpression::PrivateFieldExpression(_) => None,
-    }
-}
-
-impl Rule for PreferPrototypeMethods {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else {
-            return;
-        };
-
-        if call_expr.optional {
-            return;
-        }
-        let Expression::StaticMemberExpression(callee_member) =
-            call_expr.callee.without_parentheses()
-        else {
-            return;
-        };
-        if callee_member.optional {
-            return;
-        }
-
-        let method_expr = match callee_member.property.name.as_str() {
-            // `Reflect.apply([].foo, …)`
-            // `Reflect.apply({}.foo, …)`
-            "apply"
-                if !call_expr.arguments.is_empty()
-                    && matches!(
-                        callee_member.object.without_parentheses(),
-                        Expression::Identifier(ident) if ident.name == "Reflect"
-                    ) =>
-            {
-                call_expr.arguments[0].as_expression().map(Expression::without_parentheses)
-            }
-            // `[].foo.{apply,bind,call}(…)`
-            // `({}).foo.{apply,bind,call}(…)`
-            "apply" | "bind" | "call" => Some(callee_member.object.without_parentheses()),
-            _ => return,
-        };
-
-        let Some(method_expr) = method_expr else {
-            return;
-        };
-        let Some(method_expr) = method_expr.as_member_expression() else {
-            return;
-        };
-        let object_expr = method_expr.object().without_parentheses();
-
-        let (constructor_name, method_name, global_method_name) = match object_expr {
-            Expression::Identifier(ident) => {
-                let Some(method_name) = global_object_prototype_method(ident, method_expr, ctx)
-                else {
-                    return;
-                };
-                ("Object", Some(method_name), Some(method_name))
-            }
-            _ if method_expr.optional() => return,
-            Expression::ArrayExpression(array) if array.elements.is_empty() => {
-                ("Array", method_expr.static_property_name().and_then(JSStr::as_str), None)
-            }
-            Expression::ObjectExpression(object) if object.properties.is_empty() => {
-                ("Object", method_expr.static_property_name().and_then(JSStr::as_str), None)
-            }
-            _ => return,
-        };
-
-        let diagnostic = method_name.map_or_else(
-            || unknown_method(method_expr.span(), constructor_name),
-            |method_name| known_method(method_expr.span(), constructor_name, method_name),
-        );
-        let replace_span =
-            if global_method_name.is_some() { method_expr.span() } else { object_expr.span() };
-
-        if ctx.has_comments_between(replace_span) {
-            ctx.diagnostic(diagnostic);
-            return;
-        }
-
-        ctx.diagnostic_with_fix(diagnostic, |fixer| {
-            let mut replacement = match global_method_name {
-                Some(method_name) => format!("{constructor_name}.prototype.{method_name}"),
-                None => format!("{constructor_name}.prototype"),
-            };
-            pad_fix_with_token_boundary(ctx.source_text(), replace_span, &mut replacement);
-            fixer.replace(replace_span, replacement)
-        });
     }
 }
 
