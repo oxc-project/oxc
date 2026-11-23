@@ -67,6 +67,10 @@ impl<'a> ClassProperties<'a> {
 
         // Get basic details about class
         let is_declaration = *class.r#type() == ClassType::ClassDeclaration;
+        // `export default class {}` converted to a class expression
+        let is_anonymous_default_export = !is_declaration
+            && class.id().is_none()
+            && matches!(ctx.ancestor(1), Ancestor::ExportDefaultDeclarationDeclaration(_));
         let mut class_name_binding = class.id().as_ref().map(BoundIdentifier::from_binding_ident);
         let class_scope_id = class.scope_id().get().unwrap();
         let has_super_class = class.heritage().is_some();
@@ -214,7 +218,11 @@ impl<'a> ClassProperties<'a> {
         // Initialize class binding vars.
         // Static prop in class expression or anonymous `export default class {}` always require
         // temp var for class. Static prop in class declaration doesn't.
-        let need_temp_var = has_static_prop && (!is_declaration || class_name_binding.is_none());
+        // Anonymous `export default class {}` with static elements always has a temp var,
+        // so that static blocks are evaluated after the class is defined.
+        let need_temp_var = (is_anonymous_default_export
+            && (has_static_prop || has_static_private_method_or_static_block))
+            || (has_static_prop && (!is_declaration || class_name_binding.is_none()));
 
         let outer_hoist_scope_id = ctx.current_hoist_scope_id();
         let class_temp_binding = if need_temp_var {
@@ -750,7 +758,7 @@ impl<'a> ClassProperties<'a> {
             }
 
             // `_Class = class {}`
-            let class_expr = expr.take_in(ctx);
+            let class_expr = Self::preserve_anonymous_class_name(expr.take_in(ctx), true, ctx);
             let assignment = create_assignment(binding, class_expr, SPAN, ctx);
 
             if exprs.is_empty() && self.insert_after_exprs.is_empty() {
@@ -779,7 +787,7 @@ impl<'a> ClassProperties<'a> {
                 return;
             }
 
-            let class_expr = expr.take_in(ctx);
+            let class_expr = Self::preserve_anonymous_class_name(expr.take_in(ctx), false, ctx);
             exprs.push(class_expr);
         }
 

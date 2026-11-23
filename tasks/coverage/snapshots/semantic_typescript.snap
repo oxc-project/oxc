@@ -15744,7 +15744,7 @@ Bindings mismatch:
 after transform: ScopeId(4): ["_Class3", "c"]
 rebuilt        : ScopeId(3): ["c"]
 Symbol scope ID mismatch for "_Class3":
-after transform: SymbolId(18): ScopeId(4)
+after transform: SymbolId(20): ScopeId(4)
 rebuilt        : SymbolId(3): ScopeId(0)
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/staticInitializersAndLegacyClassDecorators.ts
