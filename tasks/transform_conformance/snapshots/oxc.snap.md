@@ -1,6 +1,6 @@
 commit: 16a2d671
 
-Passed: 357/481
+Passed: 360/481
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -206,7 +206,7 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (29/114)
+# legacy-decorators (32/114)
 * oxc/accessor/input.ts
 x Output mismatch
 
@@ -552,27 +552,6 @@ rebuilt        : ReferenceId(5): ReferenceFlags(Read)
 Reference flags mismatch for "UnboundTypeReference":
 after transform: ReferenceId(3): ReferenceFlags(Read | Type)
 rebuilt        : ReferenceId(7): ReferenceFlags(Read)
-
-* oxc/static-field/input.ts
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(ClassStaticBlock)
-rebuilt        : ScopeId(4): ScopeFlags(StrictMode | ClassStaticBlock)
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(0))
-rebuilt        : ScopeId(4): Some(ScopeId(3))
-Symbol reference IDs mismatch for "Foo":
-after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6), ReferenceId(8)]
-rebuilt        : SymbolId(3): [ReferenceId(4), ReferenceId(8)]
-
-* oxc/static-field-with-class-properties/input.ts
-Symbol reference IDs mismatch for "Foo":
-after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6), ReferenceId(8), ReferenceId(10)]
-rebuilt        : SymbolId(3): [ReferenceId(4), ReferenceId(6), ReferenceId(10)]
-
-* oxc/static-private-brand-check-with-class-properties/input.ts
-Symbol reference IDs mismatch for "Foo":
-after transform: SymbolId(2): [ReferenceId(3), ReferenceId(15), ReferenceId(17), ReferenceId(19)]
-rebuilt        : SymbolId(5): [ReferenceId(14), ReferenceId(15), ReferenceId(19)]
 
 * typescript/accessor/decoratorOnClassAccessor1/input.ts
 Bindings mismatch:

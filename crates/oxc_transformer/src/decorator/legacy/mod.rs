@@ -873,8 +873,10 @@ impl<'a> LegacyDecorator<'a> {
                             ctx,
                         );
                         let body = [class_alias_with_this_assignment];
-                        let scope_id =
-                            ctx.create_child_scope_of_current(ScopeFlags::ClassStaticBlock);
+                        let scope_id = ctx.create_child_scope(
+                            class.scope_id(),
+                            ScopeFlags::StrictMode | ScopeFlags::ClassStaticBlock,
+                        );
                         let element =
                             ClassElement::new_static_block_with_scope_id(SPAN, body, scope_id, ctx);
                         Some(element)
@@ -1400,27 +1402,15 @@ impl<'a, 'ctx> ClassReferenceChanger<'a, 'ctx> {
 impl<'a> VisitMut<'a> for ClassReferenceChanger<'a, '_> {
     #[inline]
     fn visit_identifier_reference(&mut self, ident: &mut IdentifierReference<'a>) {
-        if self.is_class_reference(ident) {
-            *ident = self.get_alias_ident_reference();
+        let symbol_id = self.ctx.scoping().get_reference(ident.reference_id()).symbol_id();
+        if symbol_id != Some(self.class_binding.symbol_id) {
+            return;
         }
-    }
-}
 
-impl<'a> ClassReferenceChanger<'a, '_> {
-    // Check if the identifier reference is a reference to the class
-    fn is_class_reference(&self, ident: &IdentifierReference<'a>) -> bool {
-        self.ctx
-            .scoping()
-            .get_reference(ident.reference_id())
-            .symbol_id()
-            .is_some_and(|symbol_id| self.class_binding.symbol_id == symbol_id)
-    }
-
-    fn get_alias_ident_reference(&mut self) -> IdentifierReference<'a> {
-        let binding = self.class_alias_binding.get_or_insert_with(|| {
+        // Rebind the reference to the class alias, keeping its `ReferenceId` and flags
+        let alias_binding = self.class_alias_binding.get_or_insert_with(|| {
             VarDeclarationsStore::create_uid_var(&self.class_binding.name, self.ctx)
         });
-
-        binding.create_read_reference(self.ctx)
+        self.ctx.rebind_identifier_reference(ident, alias_binding);
     }
 }
