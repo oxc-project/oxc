@@ -1,8 +1,5 @@
 use oxc_ast::ast::*;
-use oxc_ecmascript::{
-    constant_evaluation::{DetermineValueType, IsInt32OrUint32},
-    side_effects::MayHaveSideEffects,
-};
+use oxc_ecmascript::constant_evaluation::{DetermineValueType, IsInt32OrUint32};
 use oxc_syntax::operator::BinaryOperator;
 
 use crate::TraverseCtx;
@@ -70,12 +67,12 @@ impl<'a> PeepholeOptimizations {
     /// `ToInt32` first is redundant. `b` must be a number because `a | 0` throws for
     /// a BigInt `a`, while every operator except `>>>` accepts two BigInts.
     ///
-    /// In `(a | 0) OP b`, `b` is evaluated after `a` has been converted. Removing
-    /// `| 0` moves that conversion after `b`, so `b` must not have side effects.
+    /// In `(a | 0) OP b`, `a | 0` can throw before `b` is evaluated. Removing
+    /// `| 0` delays that conversion until after `b`, so require `b` to be a
+    /// numeric literal: evaluating it cannot throw or run user code.
     fn remove_redundant_bitwise_or_zero(e: &mut BinaryExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Some(unwrap) = Self::bitwise_or_zero_unwrapper(&e.left)
-            && e.right.value_type(ctx).is_number()
-            && !e.right.may_have_side_effects(ctx)
+        if e.right.is_number()
+            && let Some(unwrap) = Self::bitwise_or_zero_unwrapper(&e.left)
         {
             ctx.replace_expression_with(&mut e.left, unwrap);
         }

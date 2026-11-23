@@ -43,9 +43,7 @@ with (obj) {
 
 ### Coercion Methods Are Pure
 
-Looking up and calling `.toString()`, `.valueOf()`, and `[Symbol.toPrimitive]()` has no side effects, including when these methods are accessed through getters. The minifier uses `oxc_ecmascript` type conversion utilities that assume standard coercion behavior.
-
-The minifier may therefore move a conversion past an operand without side effects. For example, if `b` is a declared variable, `(a | 0) ^ (b ? 1 : 2)` becomes `a ^ (b ? 1 : 2)` and `+a - (b ? 1 : 2)` becomes `a - (b ? 1 : 2)`. If converting `a` assigned to `b`, the result would change.
+`.toString()`, `.valueOf()`, and `[Symbol.toPrimitive]()` have no side effects. The minifier uses `oxc_ecmascript` type conversion utilities that assume standard coercion behavior.
 
 ```javascript
 // The minifier assumes this never happens:
@@ -56,14 +54,6 @@ const obj = {
   },
 };
 String(obj); // Would trigger side effect
-
-const objWithGetter = {
-  get valueOf() {
-    console.log("side effect!");
-    return () => 0;
-  },
-};
-objWithGetter | 0; // Would trigger side effect
 ```
 
 ### No TDZ Violation

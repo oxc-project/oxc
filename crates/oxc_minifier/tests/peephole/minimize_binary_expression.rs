@@ -1,4 +1,4 @@
-use crate::test;
+use crate::{test, test_same};
 
 // wrap with a function call so it doesn't get removed.
 fn fold(source_text: &str, expected: &str) {
@@ -99,4 +99,16 @@ fn minimize_bitwise_binary_expr() {
     fold_same("a | ~b");
     fold_same("~a | 0");
     fold_same("0 | ~a");
+}
+
+#[test]
+fn bitwise_or_zero_preserves_coercion_order() {
+    // The shift can throw a RangeError, but `a | 0` must throw first if `a` is a BigInt.
+    test_same(
+        "export function f(a, b) { return (a | 0) ^ ((1n << (b ? 1073741824n : 1073741825n)) ? 1 : 2) }",
+    );
+    // `instanceof` can run a proxy trap while walking the prototype chain.
+    test_same(
+        "export function f(a, p) { return (a | 0) ^ ({ __proto__: p } instanceof Object ? 1 : 2) }",
+    );
 }
