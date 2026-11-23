@@ -168,6 +168,10 @@ fn test() {
     ];
 
     let fail = vec![
+        // A source with a lone surrogate matches no allow glob.
+        (r"import './\uD800.css'", None),
+        (r"import './\uD800.css'", Some(json!([{ "allow": ["**"] }]))),
+        (r"require('./\uD800.css')", Some(json!([{ "allow": ["**/*.css"] }]))),
         ("require('should')", None),
         ("import 'foo'", None),
         ("import './styles/app.css'", Some(json!([{ "allow": ["styles/*.css"]}]))),

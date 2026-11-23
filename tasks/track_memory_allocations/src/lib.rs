@@ -15,6 +15,9 @@ use oxc_transformer::{TransformOptions, Transformer};
 use std::alloc::{GlobalAlloc, Layout};
 use std::sync::atomic::{AtomicUsize, Ordering::SeqCst};
 
+#[cfg(feature = "linter")]
+mod linter;
+
 #[global_allocator]
 static GLOBAL: TrackedAllocator = TrackedAllocator;
 
@@ -299,6 +302,11 @@ fn test() {
 /// # Errors
 pub fn run() -> Result<(), io::Error> {
     let files = TestFiles::complicated();
+
+    #[cfg(feature = "linter")]
+    if !cfg!(feature = "is_all_features") {
+        return linter::run(&files);
+    }
 
     let mut parser_entries = Vec::new();
     let mut semantic_entries = Vec::new();

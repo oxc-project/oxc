@@ -23,12 +23,12 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the unnecessary block statement. If you need to limit variable scope, consider using a function or module instead.
 
-  ⚠ eslint(no-lone-blocks): Block is unnecessary.
+  ⚠ eslint(no-lone-blocks): Nested block is redundant.
    ╭─[no_lone_blocks.tsx:1:19]
  1 │ function test() { { console.log(6); } }
    ·                   ───────────────────
    ╰────
-  help: Remove the unnecessary block statement. If you need to limit variable scope, consider using a function or module instead.
+  help: Remove the redundant nested block statement.
 
   ⚠ eslint(no-lone-blocks): Nested block is redundant.
    ╭─[no_lone_blocks.tsx:1:19]
@@ -52,12 +52,12 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the redundant nested block statement.
 
-  ⚠ eslint(no-lone-blocks): Block is unnecessary.
+  ⚠ eslint(no-lone-blocks): Nested block is redundant.
    ╭─[no_lone_blocks.tsx:1:25]
  1 │ function foo() { bar(); {} baz(); }
    ·                         ──
    ╰────
-  help: Remove the unnecessary block statement. If you need to limit variable scope, consider using a function or module instead.
+  help: Remove the redundant nested block statement.
 
   ⚠ eslint(no-lone-blocks): Nested block is redundant.
    ╭─[no_lone_blocks.tsx:1:15]
@@ -129,7 +129,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the unnecessary block statement. If you need to limit variable scope, consider using a function or module instead.
 
-  ⚠ eslint(no-lone-blocks): Block is unnecessary.
+  ⚠ eslint(no-lone-blocks): Nested block is redundant.
    ╭─[no_lone_blocks.tsx:3:17]
  2 │                 function foo () {
  3 │ ╭─▶                 {
@@ -137,9 +137,9 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶                 }
  6 │                 }
    ╰────
-  help: Remove the unnecessary block statement. If you need to limit variable scope, consider using a function or module instead.
+  help: Remove the redundant nested block statement.
 
-  ⚠ eslint(no-lone-blocks): Block is unnecessary.
+  ⚠ eslint(no-lone-blocks): Nested block is redundant.
    ╭─[no_lone_blocks.tsx:3:17]
  2 │                 function foo () {
  3 │ ╭─▶                 {
@@ -147,7 +147,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶                 }
  6 │                 }
    ╰────
-  help: Remove the unnecessary block statement. If you need to limit variable scope, consider using a function or module instead.
+  help: Remove the redundant nested block statement.
 
   ⚠ eslint(no-lone-blocks): Nested block is redundant.
    ╭─[no_lone_blocks.tsx:5:25]
@@ -256,5 +256,82 @@ source: crates/oxc_linter/src/tester.rs
  6 │ │                           block;
  7 │ ╰─▶                     }
  8 │                     }
+   ╰────
+  help: Remove the redundant nested block statement.
+
+  ⚠ eslint(no-lone-blocks): Nested block is redundant.
+   ╭─[no_lone_blocks.tsx:1:39]
+ 1 │ export function example() { before(); { notify(); } }
+   ·                                       ─────────────
+   ╰────
+  help: Remove the redundant nested block statement.
+
+  ⚠ eslint(no-lone-blocks): Nested block is redundant.
+   ╭─[no_lone_blocks.tsx:1:22]
+ 1 │ function example() { { notify(); } after(); }
+   ·                      ─────────────
+   ╰────
+  help: Remove the redundant nested block statement.
+
+  ⚠ eslint(no-lone-blocks): Nested block is redundant.
+   ╭─[no_lone_blocks.tsx:1:32]
+ 1 │ function example() { before(); { var value = 1; notify(value); } after(); }
+   ·                                ─────────────────────────────────
+   ╰────
+  help: Remove the redundant nested block statement.
+
+  ⚠ eslint(no-lone-blocks): Nested block is redundant.
+   ╭─[no_lone_blocks.tsx:1:19]
+ 1 │ function test() { { console.log(6); console.log(6) } }
+   ·                   ──────────────────────────────────
+   ╰────
+  help: Remove the redundant nested block statement.
+
+  ⚠ eslint(no-lone-blocks): Nested block is redundant.
+   ╭─[no_lone_blocks.tsx:1:41]
+ 1 │ const example = function () { before(); { notify(); } };
+   ·                                         ─────────────
+   ╰────
+  help: Remove the redundant nested block statement.
+
+  ⚠ eslint(no-lone-blocks): Nested block is redundant.
+   ╭─[no_lone_blocks.tsx:1:35]
+ 1 │ const example = () => { before(); { notify(); } };
+   ·                                   ─────────────
+   ╰────
+  help: Remove the redundant nested block statement.
+
+  ⚠ eslint(no-lone-blocks): Nested block is redundant.
+   ╭─[no_lone_blocks.tsx:1:38]
+ 1 │ class Example { method() { before(); { notify(); } } }
+   ·                                      ─────────────
+   ╰────
+  help: Remove the redundant nested block statement.
+
+  ⚠ eslint(no-lone-blocks): Nested block is redundant.
+   ╭─[no_lone_blocks.tsx:1:40]
+ 1 │ const example = { method() { before(); { notify(); } } };
+   ·                                        ─────────────
+   ╰────
+  help: Remove the redundant nested block statement.
+
+  ⚠ eslint(no-lone-blocks): Nested block is redundant.
+   ╭─[no_lone_blocks.tsx:1:38]
+ 1 │ async function example() { before(); { await notify(); } }
+   ·                                      ───────────────────
+   ╰────
+  help: Remove the redundant nested block statement.
+
+  ⚠ eslint(no-lone-blocks): Nested block is redundant.
+   ╭─[no_lone_blocks.tsx:1:33]
+ 1 │ function* example() { before(); { yield value; } }
+   ·                                 ────────────────
+   ╰────
+  help: Remove the redundant nested block statement.
+
+  ⚠ eslint(no-lone-blocks): Nested block is redundant.
+   ╭─[no_lone_blocks.tsx:1:22]
+ 1 │ function example() { { let value = 1; consume(value); } }
+   ·                      ──────────────────────────────────
    ╰────
   help: Remove the redundant nested block statement.

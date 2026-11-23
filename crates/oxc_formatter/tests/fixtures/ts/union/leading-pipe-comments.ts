@@ -55,3 +55,11 @@ type LineEndBreak = | (
   // force break
   | AmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLines
 );
+
+// A line-ending JSDoc comment after `=` breaks the same way, legal (`@license`) or not
+type LineEndJsdoc = /** c */
+  | { yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy: boolean }
+  | { xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx: boolean };
+type LineEndLegalJsdoc = /** @license c */
+  | { yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy: boolean }
+  | { xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx: boolean };

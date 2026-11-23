@@ -1,10 +1,11 @@
+use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::Rule,
     rules::shared::expect_expect::{DOCUMENTATION, ExpectExpectConfig, SHORT_DESCRIPTION},
-    utils::PossibleJestNode,
 };
 
 #[derive(Debug, Default, Clone)]
@@ -26,12 +27,13 @@ impl Rule for ExpectExpect {
         ExpectExpectConfig::from_configuration(&value).map(|config| Self(Box::new(config)))
     }
 
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        self.0.run_on_vitest_node(jest_node, ctx);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(_) = node.kind() else { return };
+        self.0.run_vitest(node, ctx);
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_test()
     }
 }
 
@@ -266,10 +268,28 @@ fn test() {
 
                 ",
             None,
-        )
+        ),
+        ("import { test } from 'vitest'; test('sum', async ({ bench }) => { await bench.compare(bench('reduce', () => [1, 2, 3].reduce((a, b) => a + b, 0)), bench('loop', () => {})); });", None),
+        ("test('sum', async ({ bench: measure }) => { await measure('sum', () => {}).run(); });", None),
+        ("test('sum', async (ctx) => { await ctx.bench('sum', () => {}).run(); });", None),
+        ("test('sum', function ({ bench }) { bench('sum', () => {}); });", None),
+        ("test('compare', ({ bench }) => bench.compare(...cases));", None),
+        ("test('computed', (ctx) => ctx['bench']('sum', () => {}));", None),
+        ("test('named', benchmark); function benchmark({ bench }) { bench('sum', () => {}); }", None),
     ];
 
     let fail = vec![
+        ("test.each([{ bench: () => {} }])('row', ({ bench }) => { bench(); });", None),
+        ("test('unused', ({ bench }) => {});", None),
+        ("test('unrelated', () => bench('sum', () => {}));", None),
+        (
+            "test('shadowed', ({ bench }) => { function other(bench) { bench('x', () => {}); } other(() => {}); });",
+            None,
+        ),
+        (
+            "test('shadowed context', (ctx) => { function other(ctx) { ctx.bench('x', () => {}); } other({}); });",
+            None,
+        ),
         ("it(\"should fail\", () => {});", None),
         ("it(\"should fail\", myTest); function myTest() {}", None),
         ("test(\"should fail\", () => {});", None),

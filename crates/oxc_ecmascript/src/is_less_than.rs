@@ -5,9 +5,10 @@ use num_traits::FromPrimitive;
 use oxc_ast::ast::Expression;
 
 use crate::{
-    ToBigInt, ToJsString,
+    ToBigInt,
     constant_evaluation::{
         ConstantEvaluation, ConstantEvaluationCtx, ConstantValue, DetermineValueType,
+        evaluate_to_js_string,
     },
 };
 
@@ -28,8 +29,10 @@ pub fn is_less_than<'a>(
 
     // 3. If px is a String and py is a String, then
     if px.is_string() && py.is_string() {
-        let left_string = x.to_js_string(ctx)?;
-        let right_string = y.to_js_string(ctx)?;
+        // The comparison is over UTF-16 code units, so values containing lone surrogates order like
+        // any other unit sequence.
+        let left_string = evaluate_to_js_string(x, ctx)?;
+        let right_string = evaluate_to_js_string(y, ctx)?;
         return Some(ConstantValue::Boolean(
             left_string.encode_utf16().cmp(right_string.encode_utf16()) == Ordering::Less,
         ));
@@ -38,14 +41,14 @@ pub fn is_less_than<'a>(
     // a. If px is a BigInt and py is a String, then
     if px.is_bigint() && py.is_string() {
         use crate::StringToBigInt;
-        let ny = y.to_js_string(ctx)?.as_ref().string_to_big_int();
+        let ny = evaluate_to_js_string(y, ctx)?.string_to_big_int();
         let Some(ny) = ny else { return Some(ConstantValue::Undefined) };
         return Some(ConstantValue::Boolean(x.to_big_int(ctx)? < ny));
     }
     // b. If px is a String and py is a BigInt, then
     if px.is_string() && py.is_bigint() {
         use crate::StringToBigInt;
-        let nx = x.to_js_string(ctx)?.as_ref().string_to_big_int();
+        let nx = evaluate_to_js_string(x, ctx)?.string_to_big_int();
         let Some(nx) = nx else { return Some(ConstantValue::Undefined) };
         return Some(ConstantValue::Boolean(nx < y.to_big_int(ctx)?));
     }

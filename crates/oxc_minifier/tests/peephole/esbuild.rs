@@ -138,10 +138,10 @@ fn js_parser_test() {
     test("class Foo { static { foo() } }", "class Foo { static { foo(); }}");
     test("x: break x", "");
     test("x: { break x; foo() }", "");
-    // test("y: while (foo()) x: { break x; foo() }", "for (; foo(); ) ;");
-    // test("y: while (foo()) x: { break y; foo() }", "y: for (; foo(); ) break y;");
-    // test("x: { y: { z: { foo(); break x; } } }", "x: { foo(); break x;}");
-    // test("x: { class X { static { new X } } }", "{ class X { static {  new X(); } }}");
+    test("y: while (foo()) x: { break x; foo() }", "for (; foo(); ) ;");
+    test("y: while (foo()) x: { break y; foo() }", "for (; foo(); ) break;");
+    test("x: { y: { z: { foo(); break x; } } }", "x: { foo(); break x;}");
+    test("x: { class X { static { new X } } }", "{ class X { static {  new X(); } }}");
     test("(() => {}) ? a : b", "a;");
     test("x = `a${1 + `b${2}c` + 3}d`", "x = 'a1b2c3d';");
     test("x = `${1}`", "x = '1';");
@@ -218,11 +218,8 @@ fn js_parser_test() {
     );
     test("while (x) { if (y) continue; z(); }", "for (; x; ) y || z();");
     test("while (x) { if (y) continue; else z(); w(); }", "for (; x; ) y || (z(), w());");
-    test("while (x) { t(); if (y) continue; z(); }", "for (; x; ) t(), !y && z();");
-    test(
-        "while (x) { t(); if (y) continue; else z(); w(); }",
-        "for (; x; ) t(), !y && (z(), w());",
-    );
+    test("while (x) { t(); if (y) continue; z(); }", "for (; x; ) t(), y || z();");
+    test("while (x) { t(); if (y) continue; else z(); w(); }", "for (; x; ) t(), y || (z(), w());");
     test("while (x) { debugger; if (y) continue; z(); }", "for (; x; ) { debugger; y || z(); }");
     test(
         "while (x) { debugger; if (y) continue; else z(); w(); }",
@@ -351,8 +348,8 @@ fn js_parser_test() {
     test("a = '' + 0b0n", "a = '0';");
     test("a = '' + 0o0n", "a = '0';");
     test("a = '' + 0x0n", "a = '0';");
-    test("a = '' + /a\\b/ig", "a = '/a\\\\b/ig';");
-    test("a = /a\\b/ig + ''", "a = '/a\\\\b/ig';");
+    test("a = '' + /a\\b/ig", "a = '/a\\\\b/gi';");
+    test("a = /a\\b/ig + ''", "a = '/a\\\\b/gi';");
     // test("a = '' + ''.constructor", "a = 'function String() { [native code] }';");
     // test("a = ''.constructor + ''", "a = 'function String() { [native code] }';");
     // test("a = '' + /./.constructor", "a = 'function RegExp() { [native code] }';");
@@ -371,12 +368,13 @@ fn js_parser_test() {
     test("a = 'abc'[-0]", "a = 'a';");
     test("a = 'abc'[0]", "a = 'a';");
     test("a = 'abc'[2]", "a = 'c';");
-    test("a = 'abc'[3]", "a = 'abc'[3];");
+    // esbuild keeps this; oxc assumes `String.prototype` has no index properties.
+    test("a = 'abc'[3]", "a = void 0;");
     test("a = 'abc'[NaN]", "a = 'abc'[NaN];");
     test("a = 'abc'[-1e100]", "a = 'abc'[-1e100];");
     test("a = 'abc'[1e100]", "a = 'abc'[1e100];");
-    test("a = 'abc'[-Infinity]", "a = 'abc'[-Infinity];");
-    test("a = 'abc'[Infinity]", "a = 'abc'[Infinity];");
+    test("a = 'abc'[-Infinity]", "a = 'abc'[-1e400];");
+    test("a = 'abc'[Infinity]", "a = 'abc'[1e400];");
     test("a = !(b == c)", "a = b != c;");
     test("a = !(b != c)", "a = b == c;");
     test("a = !(b === c)", "a = b !== c;");
@@ -491,7 +489,7 @@ fn js_parser_test() {
     test("a = NaN.toString()", "a = 'NaN';");
     test("a = Infinity.toString()", "a = 'Infinity';");
     test("a = (-Infinity).toString()", "a = '-Infinity';");
-    test("a = /a\\b/ig.toString()", "a = '/a\\\\b/ig';");
+    test("a = /a\\b/ig.toString()", "a = '/a\\\\b/gi';");
     test("a = 100 .toString(0)", "a = 100 .toString(0);");
     test("a = 100 .toString(1)", "a = 100 .toString(1);");
     test("a = 100 .toString(2)", "a = '1100100';");
@@ -716,28 +714,28 @@ fn js_parser_test() {
     );
     test(
         "x: while (x) y: while (y) { if (a) break x; if (b) break y; }",
-        "x: for (; x; ) y: for (; y; ) { if (a) break x; if (b) break y;}",
+        "x: for (; x; ) for (; y; ) { if (a) break x; if (b) break;}",
     );
-    // test(
-    // "x: while (x) y: while (y) { if (a) continue x; if (b) continue y; }",
-    // "x: for (; x; ) y: for (; y; ) { if (a) continue x; if (b) continue y;}",
-    // );
-    // test(
-    // "x: while (x) y: while (y) { if (a) break x; if (b) break x; }",
-    // "x: for (; x; ) for (; y; ) if (a || b) break x;",
-    // );
-    // test(
-    // "x: while (x) y: while (y) { if (a) continue x; if (b) continue x; }",
-    // "x: for (; x; ) for (; y; ) if (a || b) continue x;",
-    // );
-    // test(
-    // "x: while (x) y: while (y) { if (a) break y; if (b) break y; }",
-    // "for (; x; ) y: for (; y; ) if (a || b) break y;",
-    // );
-    // test(
-    // "x: while (x) y: while (y) { if (a) continue y; if (b) continue y; }",
-    // "for (; x; ) y: for (; y; ) if (a || b) continue y;",
-    // );
+    test(
+        "x: while (x) y: while (y) { if (a) continue x; if (b) continue y; }",
+        "x: for (; x; ) for (; y; ) { if (a) continue x; b;}",
+    );
+    test(
+        "x: while (x) y: while (y) { if (a) break x; if (b) break x; }",
+        "x: for (; x; ) for (; y; ) if (a || b) break x;",
+    );
+    test(
+        "x: while (x) y: while (y) { if (a) continue x; if (b) continue x; }",
+        "x: for (; x; ) for (; y; ) if (a || b) continue x;",
+    );
+    test(
+        "x: while (x) y: while (y) { if (a) break y; if (b) break y; }",
+        "for (; x; ) for (; y && !(a || b); );",
+    );
+    test(
+        "x: while (x) y: while (y) { if (a) continue y; if (b) continue y; }",
+        "for (; x; ) for (; y; ) if (a || b) continue;",
+    );
     test("if (x ? y : 0) foo()", "x && y && foo();");
     test("if (x ? y : 1) foo()", "(!x || y) && foo();");
     test("if (x ? 0 : y) foo()", "!x && y && foo();");
@@ -935,14 +933,14 @@ fn constant_evaluation_test() {
     test("x = 3 + 6", "x = 9;");
     test("x = 3 - 6", "x = -3;");
     test("x = 3 * 6", "x = 18;");
-    test("x = 3 / 6", "x = 3 / 6;");
+    test("x = 3 / 6", "x = .5;");
     test("x = 3 % 6", "x = 3;");
     test("x = 3 ** 6", "x = 729;");
     test("x = 0 / 0", "x = NaN;");
-    test("x = 123 / 0", "x = Infinity;");
-    test("x = 123 / -0", "x = -Infinity;");
-    test("x = -123 / 0", "x = -Infinity;");
-    test("x = -123 / -0", "x = Infinity;");
+    test("x = 123 / 0", "x = 1e400;");
+    test("x = 123 / -0", "x = -1e400;");
+    test("x = -123 / 0", "x = -1e400;");
+    test("x = -123 / -0", "x = 1e400;");
     test("x = 3 < 6", "x = !0;");
     test("x = 3 > 6", "x = !1;");
     test("x = 3 <= 6", "x = !0;");
@@ -1152,10 +1150,10 @@ fn test_minimize_exit_statements() {
     test("if (a) return b; else return c; return d;", "return a ? b : c;");
     test("function x() { if (y) return; z(); }", "function x() { y || z();}");
     test("function x() { if (y) return; else z(); w(); }", "function x() { y || (z(), w());}");
-    test("function x() { t(); if (y) return; z(); }", "function x() { t(), !y && z();}");
+    test("function x() { t(); if (y) return; z(); }", "function x() { t(), y || z();}");
     test(
         "function x() { t(); if (y) return; else z(); w(); }",
-        "function x() { t(), !y && (z(), w());}",
+        "function x() { t(), y || (z(), w());}",
     );
     test("function x() { debugger; if (y) return; z(); }", "function x() { debugger; y || z();}");
     test(
@@ -2227,37 +2225,38 @@ fn test_inline_single_use_variable() {
         "function wrapper(arg0, arg1) { let x = arg0.foo; x[bar]()}",
         "function wrapper(arg0, arg1) { arg0.foo[bar]();}",
     );
+    // esbuild keeps these; oxc inlines with `(0, ...)` to keep the call unbound.
     test(
         "function wrapper(arg0, arg1) { let x = arg0.foo; x()}",
-        "function wrapper(arg0, arg1) { let x = arg0.foo; x();}",
+        "function wrapper(arg0, arg1) { (0, arg0.foo)();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0[foo]; x()}",
-        "function wrapper(arg0, arg1) { let x = arg0[foo]; x();}",
+        "function wrapper(arg0, arg1) { (0, arg0[foo])();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0?.foo; x()}",
-        "function wrapper(arg0, arg1) { let x = arg0?.foo; x();}",
+        "function wrapper(arg0, arg1) { (0, arg0?.foo)();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0?.[foo]; x()}",
-        "function wrapper(arg0, arg1) { let x = arg0?.[foo]; x();}",
+        "function wrapper(arg0, arg1) { (0, arg0?.[foo])();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0.foo; (0, x)()}",
-        "function wrapper(arg0, arg1) { let x = arg0.foo; x();}",
+        "function wrapper(arg0, arg1) { (0, arg0.foo)();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0[foo]; (0, x)()}",
-        "function wrapper(arg0, arg1) { let x = arg0[foo]; x();}",
+        "function wrapper(arg0, arg1) { (0, arg0[foo])();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0?.foo; (0, x)()}",
-        "function wrapper(arg0, arg1) { let x = arg0?.foo; x();}",
+        "function wrapper(arg0, arg1) { (0, arg0?.foo)();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0?.[foo]; (0, x)()}",
-        "function wrapper(arg0, arg1) { let x = arg0?.[foo]; x();}",
+        "function wrapper(arg0, arg1) { (0, arg0?.[foo])();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0(); arg1() + x}",
@@ -2286,14 +2285,11 @@ fn test_remove_dead_expr_other() {
     test("if (1) a(); else { throw b }", "a();");
     test("if (1) a(); else { return b }", "a();");
     test("b: { if (x) a(); else { break b } }", "b: if (x) a(); else break b;");
-    // test("b: { if (1) a(); else { break b } }", "a();");
+    test("b: { if (1) a(); else { break b } }", "a();");
     test("b: { if (0) a(); else { break b } }", "");
-    test(
-        "b: while (1) if (x) a(); else { continue b }",
-        "b: for (;;) if (x) a(); else continue b;",
-    );
-    // test("b: while (1) if (1) a(); else { continue b }", "for (;;) a();");
-    test("b: while (1) if (0) a(); else { continue b }", "b: for (;;) continue b;");
+    test("b: while (1) if (x) a(); else { continue b }", "for (;;) if (x) a(); else continue;");
+    test("b: while (1) if (1) a(); else { continue b }", "for (;;) a();");
+    test("b: while (1) if (0) a(); else { continue b }", "for (;;) continue;");
     test("if (1) a(); else { class b {} }", "a();");
     test("if (1) a(); else { debugger }", "a();");
     test("if (1) a(); else { switch (1) { case 1: b() } }", "a();");
@@ -2394,15 +2390,12 @@ fn test_remove_dead_expr_other() {
 #[test]
 fn prune_empty_case_before_default() {
     // Basic case: empty case with literal before default
-    test(
-        "switch (x) { case 0: foo(); break; case 1: default: bar() }",
-        "switch (x) { case 0: foo(); break; default: bar();}",
-    );
+    test("switch (x) { case 0: foo(); break; case 1: default: bar() }", "x === 0 ? foo() : bar();");
 
     // Multiple empty cases with literals before default
     test(
         "switch (x) { case 0: foo(); break; case 1: case 2: case 3: default: bar() }",
-        "switch (x) { case 0: foo(); break; default: bar();}",
+        "x === 0 ? foo() : bar();",
     );
 
     // Empty case with non-literal (identifier) should NOT be removed

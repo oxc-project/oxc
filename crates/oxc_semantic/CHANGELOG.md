@@ -4,6 +4,73 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.160.0] - 2026-11-23
+
+### 💥 BREAKING CHANGES
+
+- 2bc8e89 diagnostics: [**BREAKING**] `NamedSource` support `&str` as name (#29851) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 41dbc08 mangler: Keep names set by redeclarations with keepNames (#30055) (Dunqing)
+- 0167451 parser: Treat `import x = require()` as module syntax (#29908) (camc314)
+- e27f727 semantic: Align JSDoc nullable type suggestions with TypeScript (#29947) (camc314)
+- e4e2ac4 parser,semantic: Reject invalid types in type arguments (#29945) (camc314)
+- 2f6a11f semantic: Keep catch parameters in the catch clause scope (#29635) (Dunqing)
+- f860f1b semantic: Resolve a private name to the enclosing class that declares it (#29714) (Nadir Ali)
+
+### ⚡ Performance
+
+- 27777a9 diagnostics: Loosen lifetime bound on `OxcDiagnostic::with_source_code` (#29849) (overlookmotel)
+- ec4090d semantic: Size the `Scoping` arena from symbol, reference and scope counts (#29809) (Boshen)
+
+Full release notes: [0.160.0](https://github.com/oxc-project/oxc/blob/main/crates/CHANGELOG.md#01600---2026-11-23)
+
+## [0.159.0] - 2026-11-16
+
+### 🚀 Features
+
+- 750033a semantic: Resolve labels to label IDs (#29612) (camc314)
+
+### 🐛 Bug Fixes
+
+- 1dc0ee9 semantic: Preserve catch and var binding identities (#28739) (Dunqing)
+
+## [0.158.0] - 2026-11-09
+
+### 🐛 Bug Fixes
+
+- a791a5b cfg: Resolve continues through stacked loop labels (#29016) (camc314)
+- ec327aa semantic: Keep block type bindings separate from hoisted vars (#28601) (YT)
+
+## [0.157.0] - 2026-11-02
+
+### 🐛 Bug Fixes
+
+- 128c67d semantic: Check strict eval and arguments writes by reference flags (#28445) (Boshen)
+- fc0eed3 semantic: Stop let-binding scans at arrow functions (#28444) (Boshen)
+
+### ⚡ Performance
+
+- d85ee3d semantic: Skip arguments ancestry checks outside classes (#28510) (Boshen)
+- cf81d07 semantic: Reuse private reference resolution (#28509) (Boshen)
+- a79eebc semantic: Avoid duplicate maps for public JavaScript members (#28508) (Boshen)
+- 235ca3b semantic: Skip escape checks for unescaped strings (#28507) (Boshen)
+- 04b20c0 semantic: Compute duplicate parameter policy once per list (#28446) (Boshen)
+
+## [0.156.0] - 2026-10-27
+
+### 🐛 Bug Fixes
+
+- f4dac9e semantic: Separate hoisted vars from block type bindings (#27936) (limadog9)
+- 5c84098 semantic,linter: Report names with lone surrogates in enum and lint checks (#27991) (Dunqing)
+
+## [0.155.0] - 2026-10-19
+
+### 💥 BREAKING CHANGES
+
+- e3c1b11 ast: [**BREAKING**] Preserve lone surrogates in static property names (#27095) (Dunqing)
+
 ## [0.154.0] - 2026-10-13
 
 ### 🐛 Bug Fixes

@@ -57,10 +57,9 @@ impl Rule for NoTemplateCurlyInString {
             return;
         };
 
-        let Some(text) = literal.value.as_str() else { return };
-        let Some(start) = text.find("${") else { return };
+        let Some(start) = literal.value.find("${") else { return };
 
-        if text[start + 2..].contains('}') {
+        if literal.value.rfind('}').is_some_and(|end| end >= start + 2) {
             ctx.diagnostic(no_template_curly_in_string_diagnostic(literal.span));
         }
     }
@@ -86,6 +85,9 @@ fn test() {
         "'{foo}'",
         r#"'{foo: "bar"}'"#,
         "const number = 3",
+        r"'\uD800'",
+        r"'${\uD800'",
+        r"'}\uD800${'",
     ];
 
     let fail = vec![
@@ -97,6 +99,9 @@ fn test() {
         r#"'Hello, ${name + " foo"}'"#,
         r#"'Hello, ${name || "foo"}'"#,
         r#"'Hello, ${{foo: "bar"}.foo}'"#,
+        r"'\uD800 ${name}'",
+        r"'${\uDC00}'",
+        r"'${name} \uD800'",
     ];
 
     Tester::new(NoTemplateCurlyInString::NAME, NoTemplateCurlyInString::PLUGIN, pass, fail)

@@ -650,7 +650,7 @@ defineExpose({
 ## Option 2
 
 `````json
-{"printWidth":100,"vueIndentScriptAndStyle":true,"singleQuote":true}
+{"printWidth":100,"vueIndentScriptAndStyle":true,"singleQuote":true,"semi":false}
 `````
 
 ### Diff
@@ -668,7 +668,7 @@ defineExpose({
 +    getComponentRef: <T = any>() => componentRef.value as T,
      /** 更新Api参数 */
      updateParam(newParams: Record<string, any>) {
-       innerParams.value = newParams;
+       innerParams.value = newParams
      },
 
 `````
@@ -677,63 +677,63 @@ defineExpose({
 
 `````vue
 <script lang="ts" setup>
-  import type { Component } from 'vue';
+  import type { Component } from 'vue'
 
-  import type { AnyPromiseFunction } from '@vben/types';
+  import type { AnyPromiseFunction } from '@vben/types'
 
-  import { computed, nextTick, ref, unref, useAttrs, watch } from 'vue';
+  import { computed, nextTick, ref, unref, useAttrs, watch } from 'vue'
 
-  import { LoaderCircle } from '@vben/icons';
+  import { LoaderCircle } from '@vben/icons'
 
-  import { cloneDeep, get, isEqual, isFunction } from '@vben-core/shared/utils';
+  import { cloneDeep, get, isEqual, isFunction } from '@vben-core/shared/utils'
 
-  import { objectOmit } from '@vueuse/core';
+  import { objectOmit } from '@vueuse/core'
 
   type OptionsItem = {
-    [name: string]: any;
-    children?: OptionsItem[];
-    disabled?: boolean;
-    label?: string;
-    value?: string;
-  };
+    [name: string]: any
+    children?: OptionsItem[]
+    disabled?: boolean
+    label?: string
+    value?: string
+  }
 
   interface Props {
     /** 组件 */
-    component: Component;
+    component: Component
     /** 是否将value从数字转为string */
-    numberToString?: boolean;
+    numberToString?: boolean
     /** 获取options数据的函数 */
-    api?: (arg?: any) => Promise<OptionsItem[] | Record<string, any>>;
+    api?: (arg?: any) => Promise<OptionsItem[] | Record<string, any>>
     /** 传递给api的参数 */
-    params?: Record<string, any>;
+    params?: Record<string, any>
     /** 从api返回的结果中提取options数组的字段名 */
-    resultField?: string;
+    resultField?: string
     /** label字段名 */
-    labelField?: string;
+    labelField?: string
     /** children字段名，需要层级数据的组件可用 */
-    childrenField?: string;
+    childrenField?: string
     /** value字段名 */
-    valueField?: string;
+    valueField?: string
     /** disabled字段名 */
-    disabledField?: string;
+    disabledField?: string
     /** 组件接收options数据的属性名 */
-    optionsPropName?: string;
+    optionsPropName?: string
     /** 是否立即调用api */
-    immediate?: boolean;
+    immediate?: boolean
     /** 每次`visibleEvent`事件发生时都重新请求数据 */
-    alwaysLoad?: boolean;
+    alwaysLoad?: boolean
     /** 在api请求之前的回调函数 */
-    beforeFetch?: AnyPromiseFunction<any, any>;
+    beforeFetch?: AnyPromiseFunction<any, any>
     /** 在api请求之后的回调函数 */
-    afterFetch?: AnyPromiseFunction<any, any>;
+    afterFetch?: AnyPromiseFunction<any, any>
     /** 直接传入选项数据，也作为api返回空数据时的后备数据 */
-    options?: OptionsItem[];
+    options?: OptionsItem[]
     /** 组件的插槽名称，用来显示一个"加载中"的图标 */
-    loadingSlot?: string;
+    loadingSlot?: string
     /** 触发api请求的事件名 */
-    visibleEvent?: string;
+    visibleEvent?: string
     /** 组件的v-model属性名，默认为modelValue。部分组件可能为value */
-    modelPropName?: string;
+    modelPropName?: string
     /**
      * 自动选择
      * - `first`：自动选择第一个选项
@@ -742,10 +742,10 @@ defineExpose({
      * - 函数：自定义选择逻辑，函数的参数为请求的结果数组，返回值为选择的选项
      * - false：不自动选择(默认)
      */
-    autoSelect?: 'first' | 'last' | 'one' | ((item: OptionsItem[]) => OptionsItem) | false;
+    autoSelect?: 'first' | 'last' | 'one' | ((item: OptionsItem[]) => OptionsItem) | false
   }
 
-  defineOptions({ name: 'ApiComponent', inheritAttrs: false });
+  defineOptions({ name: 'ApiComponent', inheritAttrs: false })
 
   const props = withDefaults(defineProps<Props>(), {
     labelField: 'label',
@@ -766,32 +766,32 @@ defineExpose({
     api: undefined,
     autoSelect: false,
     options: () => [],
-  });
+  })
 
   const emit = defineEmits<{
-    optionsChange: [OptionsItem[]];
-  }>();
+    optionsChange: [OptionsItem[]]
+  }>()
 
-  const modelValue = defineModel<any>({ default: undefined });
+  const modelValue = defineModel<any>({ default: undefined })
 
-  const attrs = useAttrs();
-  const innerParams = ref({});
-  const refOptions = ref<OptionsItem[]>([]);
-  const loading = ref(false);
+  const attrs = useAttrs()
+  const innerParams = ref({})
+  const refOptions = ref<OptionsItem[]>([])
+  const loading = ref(false)
   // 首次是否加载过了
-  const isFirstLoaded = ref(false);
+  const isFirstLoaded = ref(false)
   // 标记是否有待处理的请求
-  const hasPendingRequest = ref(false);
+  const hasPendingRequest = ref(false)
 
   const getOptions = computed(() => {
-    const { labelField, valueField, disabledField, childrenField, numberToString } = props;
+    const { labelField, valueField, disabledField, childrenField, numberToString } = props
 
-    const refOptionsData = unref(refOptions);
+    const refOptionsData = unref(refOptions)
 
     function transformData(data: OptionsItem[]): OptionsItem[] {
       return data.map((item) => {
-        const value = get(item, valueField);
-        const disabled = get(item, disabledField);
+        const value = get(item, valueField)
+        const disabled = get(item, disabledField)
         return {
           ...objectOmit(item, [labelField, valueField, disabled, childrenField]),
           label: get(item, labelField),
@@ -800,21 +800,21 @@ defineExpose({
           ...(childrenField && item[childrenField]
             ? { children: transformData(item[childrenField]) }
             : {}),
-        };
-      });
+        }
+      })
     }
 
-    const data: OptionsItem[] = transformData(refOptionsData);
+    const data: OptionsItem[] = transformData(refOptionsData)
 
-    return data.length > 0 ? data : props.options;
-  });
+    return data.length > 0 ? data : props.options
+  })
 
   const bindProps = computed(() => {
     return {
       [props.modelPropName]: unref(modelValue),
       [props.optionsPropName]: unref(getOptions),
       [`onUpdate:${props.modelPropName}`]: (val: string) => {
-        modelValue.value = val;
+        modelValue.value = val
       },
       ...objectOmit(attrs, [`onUpdate:${props.modelPropName}`]),
       ...(props.visibleEvent
@@ -822,55 +822,55 @@ defineExpose({
             [props.visibleEvent]: handleFetchForVisible,
           }
         : {}),
-    };
-  });
+    }
+  })
 
   async function fetchApi() {
-    const { api, beforeFetch, afterFetch, resultField } = props;
+    const { api, beforeFetch, afterFetch, resultField } = props
 
     if (!api || !isFunction(api)) {
-      return;
+      return
     }
 
     // 如果正在加载，标记有待处理的请求并返回
     if (loading.value) {
-      hasPendingRequest.value = true;
-      return;
+      hasPendingRequest.value = true
+      return
     }
 
-    refOptions.value = [];
+    refOptions.value = []
     try {
-      loading.value = true;
-      let finalParams = unref(mergedParams);
+      loading.value = true
+      let finalParams = unref(mergedParams)
       if (beforeFetch && isFunction(beforeFetch)) {
-        finalParams = (await beforeFetch(cloneDeep(finalParams))) || finalParams;
+        finalParams = (await beforeFetch(cloneDeep(finalParams))) || finalParams
       }
-      let res = await api(finalParams);
+      let res = await api(finalParams)
       if (afterFetch && isFunction(afterFetch)) {
-        res = (await afterFetch(res)) || res;
+        res = (await afterFetch(res)) || res
       }
-      isFirstLoaded.value = true;
+      isFirstLoaded.value = true
       if (Array.isArray(res)) {
-        refOptions.value = res;
-        emitChange();
-        return;
+        refOptions.value = res
+        emitChange()
+        return
       }
       if (resultField) {
-        refOptions.value = get(res, resultField) || [];
+        refOptions.value = get(res, resultField) || []
       }
-      emitChange();
+      emitChange()
     } catch (error) {
-      console.warn(error);
+      console.warn(error)
       // reset status
-      isFirstLoaded.value = false;
+      isFirstLoaded.value = false
     } finally {
-      loading.value = false;
+      loading.value = false
       // 如果有待处理的请求，立即触发新的请求
       if (hasPendingRequest.value) {
-        hasPendingRequest.value = false;
+        hasPendingRequest.value = false
         // 使用 nextTick 确保状态更新完成后再触发新请求
-        await nextTick();
-        fetchApi();
+        await nextTick()
+        fetchApi()
       }
     }
   }
@@ -878,9 +878,9 @@ defineExpose({
   async function handleFetchForVisible(visible: boolean) {
     if (visible) {
       if (props.alwaysLoad) {
-        await fetchApi();
+        await fetchApi()
       } else if (!props.immediate && !unref(isFirstLoaded)) {
-        await fetchApi();
+        await fetchApi()
       }
     }
   }
@@ -889,49 +889,49 @@ defineExpose({
     return {
       ...props.params,
       ...unref(innerParams),
-    };
-  });
+    }
+  })
 
   watch(
     mergedParams,
     (value, oldValue) => {
       if (isEqual(value, oldValue)) {
-        return;
+        return
       }
-      fetchApi();
+      fetchApi()
     },
     { deep: true, immediate: props.immediate },
-  );
+  )
 
   function emitChange() {
     if (modelValue.value === undefined && props.autoSelect && unref(getOptions).length > 0) {
-      let firstOption;
+      let firstOption
       if (isFunction(props.autoSelect)) {
-        firstOption = props.autoSelect(unref(getOptions));
+        firstOption = props.autoSelect(unref(getOptions))
       } else {
         switch (props.autoSelect) {
           case 'first': {
-            firstOption = unref(getOptions)[0];
-            break;
+            firstOption = unref(getOptions)[0]
+            break
           }
           case 'last': {
-            firstOption = unref(getOptions)[unref(getOptions).length - 1];
-            break;
+            firstOption = unref(getOptions)[unref(getOptions).length - 1]
+            break
           }
           case 'one': {
             if (unref(getOptions).length === 1) {
-              firstOption = unref(getOptions)[0];
+              firstOption = unref(getOptions)[0]
             }
-            break;
+            break
           }
         }
       }
 
-      if (firstOption) modelValue.value = firstOption.value;
+      if (firstOption) modelValue.value = firstOption.value
     }
-    emit('optionsChange', unref(getOptions));
+    emit('optionsChange', unref(getOptions))
   }
-  const componentRef = ref();
+  const componentRef = ref()
   defineExpose({
     /** 获取options数据 */
     getOptions: () => unref(getOptions),
@@ -941,9 +941,9 @@ defineExpose({
     getComponentRef: <T = any>() => componentRef.value as T,
     /** 更新Api参数 */
     updateParam(newParams: Record<string, any>) {
-      innerParams.value = newParams;
+      innerParams.value = newParams
     },
-  });
+  })
 </script>
 <template>
   <component
@@ -967,63 +967,63 @@ defineExpose({
 
 `````vue
 <script lang="ts" setup>
-  import type { Component } from 'vue';
+  import type { Component } from 'vue'
 
-  import type { AnyPromiseFunction } from '@vben/types';
+  import type { AnyPromiseFunction } from '@vben/types'
 
-  import { computed, nextTick, ref, unref, useAttrs, watch } from 'vue';
+  import { computed, nextTick, ref, unref, useAttrs, watch } from 'vue'
 
-  import { LoaderCircle } from '@vben/icons';
+  import { LoaderCircle } from '@vben/icons'
 
-  import { cloneDeep, get, isEqual, isFunction } from '@vben-core/shared/utils';
+  import { cloneDeep, get, isEqual, isFunction } from '@vben-core/shared/utils'
 
-  import { objectOmit } from '@vueuse/core';
+  import { objectOmit } from '@vueuse/core'
 
   type OptionsItem = {
-    [name: string]: any;
-    children?: OptionsItem[];
-    disabled?: boolean;
-    label?: string;
-    value?: string;
-  };
+    [name: string]: any
+    children?: OptionsItem[]
+    disabled?: boolean
+    label?: string
+    value?: string
+  }
 
   interface Props {
     /** 组件 */
-    component: Component;
+    component: Component
     /** 是否将value从数字转为string */
-    numberToString?: boolean;
+    numberToString?: boolean
     /** 获取options数据的函数 */
-    api?: (arg?: any) => Promise<OptionsItem[] | Record<string, any>>;
+    api?: (arg?: any) => Promise<OptionsItem[] | Record<string, any>>
     /** 传递给api的参数 */
-    params?: Record<string, any>;
+    params?: Record<string, any>
     /** 从api返回的结果中提取options数组的字段名 */
-    resultField?: string;
+    resultField?: string
     /** label字段名 */
-    labelField?: string;
+    labelField?: string
     /** children字段名，需要层级数据的组件可用 */
-    childrenField?: string;
+    childrenField?: string
     /** value字段名 */
-    valueField?: string;
+    valueField?: string
     /** disabled字段名 */
-    disabledField?: string;
+    disabledField?: string
     /** 组件接收options数据的属性名 */
-    optionsPropName?: string;
+    optionsPropName?: string
     /** 是否立即调用api */
-    immediate?: boolean;
+    immediate?: boolean
     /** 每次`visibleEvent`事件发生时都重新请求数据 */
-    alwaysLoad?: boolean;
+    alwaysLoad?: boolean
     /** 在api请求之前的回调函数 */
-    beforeFetch?: AnyPromiseFunction<any, any>;
+    beforeFetch?: AnyPromiseFunction<any, any>
     /** 在api请求之后的回调函数 */
-    afterFetch?: AnyPromiseFunction<any, any>;
+    afterFetch?: AnyPromiseFunction<any, any>
     /** 直接传入选项数据，也作为api返回空数据时的后备数据 */
-    options?: OptionsItem[];
+    options?: OptionsItem[]
     /** 组件的插槽名称，用来显示一个"加载中"的图标 */
-    loadingSlot?: string;
+    loadingSlot?: string
     /** 触发api请求的事件名 */
-    visibleEvent?: string;
+    visibleEvent?: string
     /** 组件的v-model属性名，默认为modelValue。部分组件可能为value */
-    modelPropName?: string;
+    modelPropName?: string
     /**
      * 自动选择
      * - `first`：自动选择第一个选项
@@ -1032,10 +1032,10 @@ defineExpose({
      * - 函数：自定义选择逻辑，函数的参数为请求的结果数组，返回值为选择的选项
      * - false：不自动选择(默认)
      */
-    autoSelect?: 'first' | 'last' | 'one' | ((item: OptionsItem[]) => OptionsItem) | false;
+    autoSelect?: 'first' | 'last' | 'one' | ((item: OptionsItem[]) => OptionsItem) | false
   }
 
-  defineOptions({ name: 'ApiComponent', inheritAttrs: false });
+  defineOptions({ name: 'ApiComponent', inheritAttrs: false })
 
   const props = withDefaults(defineProps<Props>(), {
     labelField: 'label',
@@ -1056,32 +1056,32 @@ defineExpose({
     api: undefined,
     autoSelect: false,
     options: () => [],
-  });
+  })
 
   const emit = defineEmits<{
-    optionsChange: [OptionsItem[]];
-  }>();
+    optionsChange: [OptionsItem[]]
+  }>()
 
-  const modelValue = defineModel<any>({ default: undefined });
+  const modelValue = defineModel<any>({ default: undefined })
 
-  const attrs = useAttrs();
-  const innerParams = ref({});
-  const refOptions = ref<OptionsItem[]>([]);
-  const loading = ref(false);
+  const attrs = useAttrs()
+  const innerParams = ref({})
+  const refOptions = ref<OptionsItem[]>([])
+  const loading = ref(false)
   // 首次是否加载过了
-  const isFirstLoaded = ref(false);
+  const isFirstLoaded = ref(false)
   // 标记是否有待处理的请求
-  const hasPendingRequest = ref(false);
+  const hasPendingRequest = ref(false)
 
   const getOptions = computed(() => {
-    const { labelField, valueField, disabledField, childrenField, numberToString } = props;
+    const { labelField, valueField, disabledField, childrenField, numberToString } = props
 
-    const refOptionsData = unref(refOptions);
+    const refOptionsData = unref(refOptions)
 
     function transformData(data: OptionsItem[]): OptionsItem[] {
       return data.map((item) => {
-        const value = get(item, valueField);
-        const disabled = get(item, disabledField);
+        const value = get(item, valueField)
+        const disabled = get(item, disabledField)
         return {
           ...objectOmit(item, [labelField, valueField, disabled, childrenField]),
           label: get(item, labelField),
@@ -1090,21 +1090,21 @@ defineExpose({
           ...(childrenField && item[childrenField]
             ? { children: transformData(item[childrenField]) }
             : {}),
-        };
-      });
+        }
+      })
     }
 
-    const data: OptionsItem[] = transformData(refOptionsData);
+    const data: OptionsItem[] = transformData(refOptionsData)
 
-    return data.length > 0 ? data : props.options;
-  });
+    return data.length > 0 ? data : props.options
+  })
 
   const bindProps = computed(() => {
     return {
       [props.modelPropName]: unref(modelValue),
       [props.optionsPropName]: unref(getOptions),
       [`onUpdate:${props.modelPropName}`]: (val: string) => {
-        modelValue.value = val;
+        modelValue.value = val
       },
       ...objectOmit(attrs, [`onUpdate:${props.modelPropName}`]),
       ...(props.visibleEvent
@@ -1112,55 +1112,55 @@ defineExpose({
             [props.visibleEvent]: handleFetchForVisible,
           }
         : {}),
-    };
-  });
+    }
+  })
 
   async function fetchApi() {
-    const { api, beforeFetch, afterFetch, resultField } = props;
+    const { api, beforeFetch, afterFetch, resultField } = props
 
     if (!api || !isFunction(api)) {
-      return;
+      return
     }
 
     // 如果正在加载，标记有待处理的请求并返回
     if (loading.value) {
-      hasPendingRequest.value = true;
-      return;
+      hasPendingRequest.value = true
+      return
     }
 
-    refOptions.value = [];
+    refOptions.value = []
     try {
-      loading.value = true;
-      let finalParams = unref(mergedParams);
+      loading.value = true
+      let finalParams = unref(mergedParams)
       if (beforeFetch && isFunction(beforeFetch)) {
-        finalParams = (await beforeFetch(cloneDeep(finalParams))) || finalParams;
+        finalParams = (await beforeFetch(cloneDeep(finalParams))) || finalParams
       }
-      let res = await api(finalParams);
+      let res = await api(finalParams)
       if (afterFetch && isFunction(afterFetch)) {
-        res = (await afterFetch(res)) || res;
+        res = (await afterFetch(res)) || res
       }
-      isFirstLoaded.value = true;
+      isFirstLoaded.value = true
       if (Array.isArray(res)) {
-        refOptions.value = res;
-        emitChange();
-        return;
+        refOptions.value = res
+        emitChange()
+        return
       }
       if (resultField) {
-        refOptions.value = get(res, resultField) || [];
+        refOptions.value = get(res, resultField) || []
       }
-      emitChange();
+      emitChange()
     } catch (error) {
-      console.warn(error);
+      console.warn(error)
       // reset status
-      isFirstLoaded.value = false;
+      isFirstLoaded.value = false
     } finally {
-      loading.value = false;
+      loading.value = false
       // 如果有待处理的请求，立即触发新的请求
       if (hasPendingRequest.value) {
-        hasPendingRequest.value = false;
+        hasPendingRequest.value = false
         // 使用 nextTick 确保状态更新完成后再触发新请求
-        await nextTick();
-        fetchApi();
+        await nextTick()
+        fetchApi()
       }
     }
   }
@@ -1168,9 +1168,9 @@ defineExpose({
   async function handleFetchForVisible(visible: boolean) {
     if (visible) {
       if (props.alwaysLoad) {
-        await fetchApi();
+        await fetchApi()
       } else if (!props.immediate && !unref(isFirstLoaded)) {
-        await fetchApi();
+        await fetchApi()
       }
     }
   }
@@ -1179,49 +1179,49 @@ defineExpose({
     return {
       ...props.params,
       ...unref(innerParams),
-    };
-  });
+    }
+  })
 
   watch(
     mergedParams,
     (value, oldValue) => {
       if (isEqual(value, oldValue)) {
-        return;
+        return
       }
-      fetchApi();
+      fetchApi()
     },
     { deep: true, immediate: props.immediate },
-  );
+  )
 
   function emitChange() {
     if (modelValue.value === undefined && props.autoSelect && unref(getOptions).length > 0) {
-      let firstOption;
+      let firstOption
       if (isFunction(props.autoSelect)) {
-        firstOption = props.autoSelect(unref(getOptions));
+        firstOption = props.autoSelect(unref(getOptions))
       } else {
         switch (props.autoSelect) {
           case 'first': {
-            firstOption = unref(getOptions)[0];
-            break;
+            firstOption = unref(getOptions)[0]
+            break
           }
           case 'last': {
-            firstOption = unref(getOptions)[unref(getOptions).length - 1];
-            break;
+            firstOption = unref(getOptions)[unref(getOptions).length - 1]
+            break
           }
           case 'one': {
             if (unref(getOptions).length === 1) {
-              firstOption = unref(getOptions)[0];
+              firstOption = unref(getOptions)[0]
             }
-            break;
+            break
           }
         }
       }
 
-      if (firstOption) modelValue.value = firstOption.value;
+      if (firstOption) modelValue.value = firstOption.value
     }
-    emit('optionsChange', unref(getOptions));
+    emit('optionsChange', unref(getOptions))
   }
-  const componentRef = ref();
+  const componentRef = ref()
   defineExpose({
     /** 获取options数据 */
     getOptions: () => unref(getOptions),
@@ -1231,9 +1231,9 @@ defineExpose({
     getComponentRef: <T = any,>() => componentRef.value as T,
     /** 更新Api参数 */
     updateParam(newParams: Record<string, any>) {
-      innerParams.value = newParams;
+      innerParams.value = newParams
     },
-  });
+  })
 </script>
 <template>
   <component

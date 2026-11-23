@@ -4,8 +4,8 @@ use serde::Deserialize;
 use oxc_ast::{
     AstKind,
     ast::{
-        CallExpression, ChainElement, ConditionalExpression, DoWhileStatement, Expression,
-        ForStatement, IfStatement, NewExpression, WhileStatement,
+        CallExpression, ConditionalExpression, DoWhileStatement, Expression, ForStatement,
+        IfStatement, NewExpression, WhileStatement,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -99,19 +99,17 @@ impl Rule for NoExtraBooleanCast {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::CallExpression(expr)
-                if !expr.optional
-                    && expr.callee.is_specific_id("Boolean")
-                    && is_flagged_ctx(node, ctx, self.enforce_for_inner_expressions) =>
-            {
-                report_boolean_call(expr, node, ctx);
-            }
-            AstKind::ChainExpression(chain)
-                if is_flagged_ctx(node, ctx, self.enforce_for_inner_expressions) =>
-            {
-                if let ChainElement::CallExpression(expr) = &chain.expression
-                    && expr.callee.is_specific_id("Boolean")
-                {
+            AstKind::CallExpression(expr) if is_global_boolean(&expr.callee, ctx) => {
+                let node = if expr.optional {
+                    let parent = ctx.nodes().parent_node(node.id());
+                    if !matches!(parent.kind(), AstKind::ChainExpression(_)) {
+                        return;
+                    }
+                    parent
+                } else {
+                    node
+                };
+                if is_flagged_ctx(node, ctx, self.enforce_for_inner_expressions) {
                     report_boolean_call(expr, node, ctx);
                 }
             }
@@ -198,7 +196,7 @@ fn is_flagged_ctx(node: &AstNode, ctx: &LintContext, enforce_for_logical_operand
 // Check if a node is in a context where its value would be coerced to a boolean at runtime
 fn is_bool_context(node: &AstNode, parent: Option<&AstNode>, ctx: &LintContext) -> bool {
     parent.is_some_and(|parent| {
-        (is_bool_fn_or_constructor_call(parent) && is_first_arg(node, parent))
+        (is_bool_fn_or_constructor_call(parent, ctx) && is_first_arg(node, parent))
             || is_inside_test_condition(node, ctx)
             || is_unary_negation(parent)
     })
@@ -228,12 +226,21 @@ fn is_inner_bool_context(
     }
 }
 
-fn is_bool_fn_or_constructor_call(node: &AstNode) -> bool {
+fn is_bool_fn_or_constructor_call(node: &AstNode, ctx: &LintContext) -> bool {
     match node.kind() {
         AstKind::CallExpression(CallExpression { callee, .. })
-        | AstKind::NewExpression(NewExpression { callee, .. }) => callee.is_specific_id("Boolean"),
+        | AstKind::NewExpression(NewExpression { callee, .. }) => is_global_boolean(callee, ctx),
         _ => false,
     }
+}
+
+/// `Boolean` that refers to the built-in, not to a local binding of that name.
+fn is_global_boolean(callee: &Expression, ctx: &LintContext) -> bool {
+    matches!(
+        callee.get_inner_expression(),
+        Expression::Identifier(ident)
+            if ident.name == "Boolean" && ctx.is_reference_to_global_variable(ident)
+    )
 }
 
 fn is_first_arg(node: &AstNode, parent: &AstNode) -> bool {
@@ -286,12 +293,7 @@ fn replacement_text(
     replacement_text: &str,
 ) -> String {
     let mut text = if needs_parentheses(replacement, target, ctx) {
-        let trimmed = replacement_text.trim();
-        if trimmed.starts_with('(') && trimmed.ends_with(')') {
-            replacement_text.to_string()
-        } else {
-            format!("({replacement_text})")
-        }
+        format!("({replacement_text})")
     } else {
         replacement_text.to_string()
     };
@@ -362,6 +364,8 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        ("if (Boolean?.(foo).value) {}", None),
+        ("if (Boolean?.(foo)()) {}", None),
         ("Boolean(bar, !!baz);", None),
         ("var foo = !!bar;", None),
         ("function foo() { return !!bar; }", None),
@@ -516,6 +520,10 @@ fn test() {
             "if ((1, Boolean(2), 3)) {}",
             Some(serde_json::json!([{ "enforceForInnerExpressions": true }])),
         ),
+        ("let Boolean = x => x; if (Boolean(bar)) {}", None),
+        ("function foo(Boolean) { return !!Boolean(bar); }", None),
+        ("function foo(Boolean) { if (Boolean(!!bar)) {} }", None),
+        ("function foo(Boolean) { if (new Boolean(!!bar)) {} }", None),
     ];
 
     let fail = vec![
@@ -1527,6 +1535,7 @@ fn test() {
     ];
 
     let fix = vec![
+        ("while (Boolean?.(foo)) {}", "while (foo) {}", None),
         ("if (!!foo) {}", "if (foo) {}", None),
         ("do {} while (!!foo)", "do {} while (foo)", None),
         ("while (!!foo) {}", "while (foo) {}", None),
@@ -2249,6 +2258,10 @@ fn test() {
         ("!!!(f(a))", "!f(a)", None),
         ("!!!a", "!a", None),
         ("!Boolean(a)", "!a", None),
+        ("!Boolean((a) || (b))", "!((a) || (b))", None),
+        ("!Boolean((x > 0) && (y > 0))", "!((x > 0) && (y > 0))", None),
+        ("!Boolean((a) ? (b) : (c))", "!((a) ? (b) : (c))", None),
+        ("!!!((a) || (b))", "!((a) || (b))", None),
         (
             "if (!!(a, b) || !!(c, d)) {}",
             "if ((a, b) || (c, d)) {}",

@@ -24,6 +24,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     pub(crate) fn parse_binding_pattern(&mut self) -> BindingPattern<'a> {
         match self.cur_kind() {
+            Kind::Ident => {
+                let ident = self.parse_plain_binding_identifier();
+                BindingPattern::BindingIdentifier(self.alloc(ident))
+            }
             Kind::LCurly => self.parse_object_binding_pattern(),
             Kind::LBrack => self.parse_array_binding_pattern(),
             _ => self.parse_binding_pattern_identifier(),
@@ -37,9 +41,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Section 14.3.3 Object Binding Pattern
     fn parse_object_binding_pattern(&mut self) -> BindingPattern<'a> {
+        debug_assert!(self.at(Kind::LCurly));
         let start = self.cur_start();
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LCurly);
+        self.advance(Kind::LCurly);
         let (list, rest) = self.parse_delimited_list_with_rest(
             Kind::RCurly,
             opening_span,
@@ -60,9 +65,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Section 14.3.3 Array Binding Pattern
     fn parse_array_binding_pattern(&mut self) -> BindingPattern<'a> {
+        debug_assert!(self.at(Kind::LBrack));
         let start = self.cur_start();
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LBrack);
+        self.advance(Kind::LBrack);
         let (list, rest) = self.parse_delimited_list_with_rest(
             Kind::RBrack,
             opening_span,
@@ -153,7 +159,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut shorthand = false;
         let is_binding_identifier = self.cur_kind().is_binding_identifier();
         let key_cur_kind = self.cur_kind();
-        let (key, computed) = self.parse_property_name();
+        let key = self.parse_property_name();
 
         let value = if is_binding_identifier && !self.at(Kind::Colon) {
             // let { a = b } = c
@@ -175,7 +181,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.parse_binding_pattern_with_initializer()
         };
 
-        BindingProperty::new(self.end_span(start), key, value, shorthand, computed, self)
+        BindingProperty::new(self.end_span(start), key, value, shorthand, self)
     }
 
     /// Initializer[In, Yield, Await] :

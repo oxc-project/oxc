@@ -1,29 +1,39 @@
+use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::Rule,
-    rules::shared::prefer_called_with::{DOCUMENTATION, run_on_jest_node},
-    utils::PossibleJestNode,
+    rules::shared::prefer_called_with::{DOCUMENTATION, run},
 };
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferCalledWith;
 
-declare_oxc_lint!(PreferCalledWith, vitest, style, fix, docs = DOCUMENTATION, version = "0.2.5",);
+declare_oxc_lint!(
+    PreferCalledWith,
+    vitest,
+    style,
+    suggestion,
+    docs = DOCUMENTATION,
+    version = "0.2.5",
+);
 
 impl Rule for PreferCalledWith {
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        run_on_jest_node(jest_node, ctx);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(_) = node.kind() else { return };
+        run(node, ctx);
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_test()
     }
 }
 
 #[test]
 fn test() {
+    use crate::fixer::FixKind;
     use crate::tester::Tester;
 
     let mut pass = vec![
@@ -49,9 +59,19 @@ fn test() {
     ];
 
     let mut fix = vec![
-        ("expect(fn).toBeCalled();", "expect(fn).toBeCalledWith();", None),
-        ("expect(fn).resolves.toBeCalled();", "expect(fn).resolves.toBeCalledWith();", None),
-        ("expect(fn).toHaveBeenCalled();", "expect(fn).toHaveBeenCalledWith();", None),
+        ("expect(fn).toBeCalled();", "expect(fn).toBeCalledWith();", None, FixKind::Suggestion),
+        (
+            "expect(fn).resolves.toBeCalled();",
+            "expect(fn).resolves.toBeCalledWith();",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "expect(fn).toHaveBeenCalled();",
+            "expect(fn).toHaveBeenCalledWith();",
+            None,
+            FixKind::Suggestion,
+        ),
     ];
 
     let vitest_pass = vec![
@@ -77,14 +97,36 @@ fn test() {
     ];
 
     let vitest_fix = vec![
-        ("expect(fn).toBeCalled();", "expect(fn).toBeCalledWith();", None),
-        ("expect(fn).resolves.toBeCalled();", "expect(fn).resolves.toBeCalledWith();", None),
-        ("expect(fn).toHaveBeenCalled();", "expect(fn).toHaveBeenCalledWith();", None),
+        ("expect(fn).toBeCalled();", "expect(fn).toBeCalledWith();", None, FixKind::Suggestion),
+        (
+            "expect(fn).resolves.toBeCalled();",
+            "expect(fn).resolves.toBeCalledWith();",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "expect(fn).toHaveBeenCalled();",
+            "expect(fn).toHaveBeenCalledWith();",
+            None,
+            FixKind::Suggestion,
+        ),
     ];
 
     pass.extend(vitest_pass);
     fail.extend(vitest_fail);
     fix.extend(vitest_fix);
+
+    fix.extend([
+        ("expect(fn).toBeCalled();", "expect(fn).toBeCalled();", None, FixKind::Fix),
+        ("expect(fn).toBeCalled();", "expect(fn).toBeCalledWith();", None, FixKind::Suggestion),
+        ("expect(fn).toHaveBeenCalled();", "expect(fn).toHaveBeenCalled();", None, FixKind::Fix),
+        (
+            "expect(fn).toHaveBeenCalled();",
+            "expect(fn).toHaveBeenCalledWith();",
+            None,
+            FixKind::Suggestion,
+        ),
+    ]);
 
     Tester::new(PreferCalledWith::NAME, PreferCalledWith::PLUGIN, pass, fail)
         .expect_fix(fix)

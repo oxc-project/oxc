@@ -204,7 +204,7 @@ export function Component({ value }: { value: string }) {
     expect(result.code).toContain("import { CSS_VAR }");
   });
 
-  it("honors ESLint suppressions when internal validations are enabled", () => {
+  it("ignores ESLint suppressions when internal validations are enabled", () => {
     const result = transformSync(
       "Counter.jsx",
       `import { useEffect, useRef, useState } from "react";
@@ -228,11 +228,11 @@ export function Component({ value }: { value: string }) {
 
     expect(result.fatal).toBe(false);
     expect(result.errors).toEqual([]);
-    expect(result.code).not.toContain("react/compiler-runtime");
-    expect(result.code).not.toContain("_c(");
+    expect(result.code).toContain("react/compiler-runtime");
+    expect(result.code).toContain("_c(");
   });
 
-  it("honors ESLint suppressions by default", () => {
+  it("ignores ESLint suppressions by default", () => {
     const result = transformSync(
       "Component.tsx",
       `function Component({ value }: { value: number }) {
@@ -244,8 +244,27 @@ export function Component({ value }: { value: string }) {
 
     expect(result.fatal).toBe(false);
     expect(result.errors).toEqual([]);
-    expect(result.code).not.toContain("react/compiler-runtime");
+    expect(result.code).toContain("react/compiler-runtime");
   });
+
+  it.each(["validateHooksUsage", "validateExhaustiveMemoizationDependencies"] as const)(
+    "honors ESLint suppressions when %s is disabled",
+    (validation) => {
+      const result = transformSync(
+        "Component.tsx",
+        `function Component({ value }: { value: number }) {
+          // eslint-disable-next-line react-hooks/exhaustive-deps
+          const doubled = value * 2;
+          return <div>{doubled}</div>;
+        }`,
+        { reactCompiler: { environment: { [validation]: false } } },
+      );
+
+      expect(result.fatal).toBe(false);
+      expect(result.errors).toEqual([]);
+      expect(result.code).not.toContain("react/compiler-runtime");
+    },
+  );
 
   it("allows ESLint suppression bailouts to be disabled", () => {
     const result = transformSync(
@@ -258,6 +277,7 @@ export function Component({ value }: { value: string }) {
       {
         reactCompiler: {
           eslintSuppressionRules: [],
+          environment: { validateExhaustiveMemoizationDependencies: false },
         },
       },
     );
@@ -290,22 +310,70 @@ export function Component({ value }: { value: string }) {
     expect(result.code).not.toContain("<span");
   });
 
-  it("does not enable manual memo dependency validation by default", () => {
-    const result = transformSync(
-      "Component.tsx",
-      `import { useMemo } from "react";
-      import { typedCapture, typedCreateFrom, typedMutate, ValidateMemoization } from "shared-runtime";
-      function Component({ a, b }: { a: number; b: number }) {
-        const x = useMemo(() => ({ a }), [a, b]);
-        const y = typedCapture(x);
-        const z = typedCreateFrom(y);
-        typedMutate(z, b);
-        return <ValidateMemoization inputs={[a, b]} output={x} />;
+  it.each([
+    [
+      "missing dependencies with rest props",
+      `export function List({ s, ...props }) {
+        const { items, children } = props;
+        const values = useMemo(() => sortBy(items, s ?? props.value), [items]);
+        return children(values);
       }`,
+    ],
+    [
+      "extra dependencies",
+      `export function Clock({ tick }) {
+        const now = useMemo(() => readGlobal(), [tick]);
+        return <span>{now}</span>;
+      }`,
+    ],
+    [
+      "partial callback dependencies",
+      `export function Label({ prefix, suffix }) {
+        const format = useCallback(() => prefix + suffix, [prefix]);
+        return <Text format={format} suffix={suffix} />;
+      }`,
+    ],
+    [
+      "callback property reads",
+      `export function Profile({ user, s }) {
+        const items = useMemo(() => sortBy(user.profile.items, s), [user.id]);
+        return <span>{items}</span>;
+      }`,
+    ],
+  ])("skips manual memoization with %s by default", (_name, component) => {
+    const result = transformSync(
+      "Component.jsx",
+      `import { useMemo, useCallback } from "react";
+      ${component}`,
     );
 
+    expect(result.fatal).toBe(false);
     expect(result.errors).toEqual([]);
+    expect(result.code).not.toContain("react/compiler-runtime");
+    expect(result.code).toMatch(/use(?:Memo|Callback)\(\(\) =>/);
+  });
+
+  it("compiles a sibling after a manual memoization bailout", () => {
+    const result = transformSync(
+      "Components.jsx",
+      `import { useMemo } from "react";
+      export function List({ s, ...props }) {
+        const { items, children } = props;
+        const values = useMemo(() => sortBy(items, s ?? props.value), [items]);
+        return children(values);
+      }
+      export function Component(props) {
+        return <span>{props.text}</span>;
+      }`,
+      { reactCompiler: { reportDiagnostics: true } },
+    );
+
+    expect(result.fatal).toBe(false);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0].message).toBe("Found missing memoization dependencies");
+    expect(result.code).toContain("useMemo(() => sortBy(items, s ?? props.value), [items])");
     expect(result.code).toContain("react/compiler-runtime");
+    expect(result.code).toContain("_c(");
   });
 
   it("compiles an unsuppressed sibling after a suppression bailout", () => {
@@ -319,6 +387,7 @@ export function Component({ value }: { value: string }) {
       export function Component(props: { text: string }) {
         return <span>{props.text}</span>;
       }`,
+      { reactCompiler: { environment: { validateExhaustiveMemoizationDependencies: false } } },
     );
 
     expect(result.fatal).toBe(false);
@@ -338,12 +407,13 @@ export function Component({ value }: { value: string }) {
       return <span>{props.text}</span>;
     }`;
 
-    const silent = transformSync("Components.tsx", source);
+    const environment = { validateExhaustiveMemoizationDependencies: false };
+    const silent = transformSync("Components.tsx", source, { reactCompiler: { environment } });
     expect(silent.fatal).toBe(false);
     expect(silent.errors).toEqual([]);
 
     const reported = transformSync("Components.tsx", source, {
-      reactCompiler: { reportDiagnostics: true },
+      reactCompiler: { reportDiagnostics: true, environment },
     });
     expect(reported.fatal).toBe(false);
     expect(reported.code).toBe(silent.code);
@@ -374,7 +444,12 @@ export function Component({ value }: { value: string }) {
       export function Component(props: { text: string }) {
         return <span>{props.text}</span>;
       }`,
-      { reactCompiler: { reportDiagnostics: true } },
+      {
+        reactCompiler: {
+          reportDiagnostics: true,
+          environment: { validateExhaustiveMemoizationDependencies: false },
+        },
+      },
     );
 
     expect(result.fatal).toBe(false);
@@ -393,7 +468,13 @@ export function Component({ value }: { value: string }) {
         const doubled = value * 2;
         return <div>{doubled}</div>;
       }`,
-      { reactCompiler: { outputMode: "lint", reportDiagnostics: true } },
+      {
+        reactCompiler: {
+          outputMode: "lint",
+          reportDiagnostics: true,
+          environment: { validateExhaustiveMemoizationDependencies: false },
+        },
+      },
     );
 
     expect(result.fatal).toBe(false);
@@ -416,6 +497,7 @@ export function Component({ value }: { value: string }) {
         {
           reactCompiler: {
             panicThreshold,
+            environment: { validateExhaustiveMemoizationDependencies: false },
           },
         },
       );

@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         AssignmentExpression, AssignmentOperator, ClassElement, Expression, MemberExpression,
-        MethodDefinitionKind, PropertyDefinitionType, Statement,
+        Statement,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -98,9 +98,9 @@ impl Rule for PreferClassFields {
         // Find constructor
         let Some(constructor) = class.body.body.iter().find_map(|element| {
             if let ClassElement::MethodDefinition(method) = element
-                && method.kind == MethodDefinitionKind::Constructor
+                && method.kind.is_constructor()
                 && !method.r#static
-                && !method.computed
+                && !method.key.is_computed()
             {
                 Some(method)
             } else {
@@ -142,11 +142,11 @@ impl Rule for PreferClassFields {
         // Check if there's an existing property definition with the same name
         let existing_property = class.body.body.iter().find(|element| {
             if let ClassElement::PropertyDefinition(prop) = element {
-                if prop.r#static || prop.computed {
+                if prop.r#static || prop.key.is_computed() {
                     return false;
                 }
 
-                if prop.r#type == PropertyDefinitionType::PropertyDefinition {
+                if !prop.r#type.is_abstract() {
                     return prop.key.name().is_some_and(|name| name == property_name);
                 }
             }

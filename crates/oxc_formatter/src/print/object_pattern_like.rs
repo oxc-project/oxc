@@ -19,8 +19,8 @@ use super::{
 };
 
 pub enum ObjectPatternLike<'a, 'b> {
-    ObjectPattern(&'b AstNode<'a, ObjectPattern<'a>>),
-    ObjectAssignmentTarget(&'b AstNode<'a, ObjectAssignmentTarget<'a>>),
+    ObjectPattern(&'b AstNode<'b, 'a, ObjectPattern<'a>>),
+    ObjectAssignmentTarget(&'b AstNode<'b, 'a, ObjectAssignmentTarget<'a>>),
 }
 
 impl GetSpan for ObjectPatternLike<'_, '_> {
@@ -129,10 +129,10 @@ impl<'a> ObjectPatternLike<'a, '_> {
                 Self::ObjectPattern(o) => o
                     .properties
                     .iter()
-                    .any(|property| should_preserve_quote(&property.key, property.computed, f)),
+                    .any(|property| should_preserve_quote(&property.key, f)),
                 Self::ObjectAssignmentTarget(o) => o.properties.iter().any(|property| {
                     matches!(property, AssignmentTargetProperty::AssignmentTargetPropertyProperty(property)
-                        if should_preserve_quote(&property.name, property.computed, f))
+                        if should_preserve_quote(&property.name, f))
                 }),
             };
             f.context_mut().push_quote_needed(quote_needed);

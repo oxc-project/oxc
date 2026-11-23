@@ -22,7 +22,7 @@ This means it is not locked to a specific GraphQL version and can parse a wide r
 On the other hand, `apollo-parser`, the upstream we selected, strictly follows its versioning and currently only supports syntax up to Oct2021.
 Therefore, we forked it as [`oxc-graphql-parser`](https://crates.io/crates/oxc-graphql-parser) and added some support ourselves, pinned via the workspace `Cargo.toml`.
 
-The fork aligns with graphql-js v17.x, which Prettier 3.9 targets:
+The fork aligns with graphql-js v17.x, which Prettier targets:
 
 - executable descriptions (Sep2025 spec) and directive extensions (`extend directive`) are always-on
 - fragment arguments (`...F(size: $size)`) are behind the `experimental_fragment_arguments` flag
@@ -54,11 +54,13 @@ This crate instead collects comment spans into a positional cursor, drained in s
 ### Strings
 
 Prettier prints `StringValue` from `graphql-js`'s _cooked_ value and re-encodes it.
-`oxc-graphql-parser`'s `StringValue.value` is cooked but not to spec (no block-string dedent / blank-line trimming, no surrogate pairing), so `src/print/string.rs` cooks from `raw` itself:
+`oxc-graphql-parser`'s `StringValue.value` is that for a regular string,
+but a block string's only has its line endings normalized, so `src/print/string.rs` adds:
 
 - the GraphQL spec `BlockStringValue` algorithm (dedent + blank-line trimming)
-- escape decoding for regular strings (incl. surrogate pairs)
 - Prettier's re-encoding (`"`/`\` escaped, newline as `\n`, `"""` as `\"""`)
+
+Dedenting in the parser would copy every indented block string into the arena: the formatter borrows its lines instead (measured +7.7% instructions on a description-heavy schema).
 
 Blank-line runs inside block strings are part of the string VALUE and are emitted with `exact_line_breaks()`. Values are written pre-trimmed, the core printer never trims.
 
@@ -67,8 +69,6 @@ Blank-line runs inside block strings are part of the string VALUE and are emitte
 - Blank-line preservation classifies the inter-token gap (`classify_gap`):
   a blank line is a whitespace-only line strictly inside the gap.
   Counting raw newlines would over-report when tokens (e.g. the `&` between two `implements` comments, or an insignificant comma) sit on their own line.
-- A cooked `\r` escape in a string value is re-emitted as `\r`
-  (Prettier emits a raw CR byte, which the core `text()` builder forbids; the string VALUE is identical).
 
 ## Verification
 

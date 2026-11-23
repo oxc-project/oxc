@@ -7,7 +7,7 @@ use tower_lsp_server::gen_lsp_types::{
 };
 
 use oxc_diagnostics::{OxcCode, Severity};
-use oxc_language_server::offset_to_position as lsp_offset_to_position;
+use oxc_language_server::LineIndex;
 use oxc_linter::{
     AllowWarnDeny, DisableDirectives, Fix, FixKind, Message, PossibleFixes, RuleCommentType,
 };
@@ -77,7 +77,7 @@ fn severity_to_lsp_severity(value: Severity) -> DiagnosticSeverity {
 pub fn message_to_lsp_diagnostic(
     message: Message,
     uri: &Uri,
-    source_text: &str,
+    line_index: &LineIndex,
     rules_customization: Option<&RulesCustomization>,
 ) -> Option<DiagnosticReport> {
     let severity = if let Some(rules_customization) = rules_customization {
@@ -101,8 +101,8 @@ pub fn message_to_lsp_diagnostic(
                 .iter()
                 .map(|span| {
                     let offset = span.offset();
-                    let start_position = lsp_offset_to_position(source_text, offset);
-                    let end_position = lsp_offset_to_position(source_text, offset + span.len());
+                    let start_position = line_index.position(offset);
+                    let end_position = line_index.position(offset + span.len());
 
                     DiagnosticRelatedInformation {
                         location: Location {
@@ -118,8 +118,8 @@ pub fn message_to_lsp_diagnostic(
         )
     };
 
-    let start_position = lsp_offset_to_position(source_text, message.span.start);
-    let end_position = lsp_offset_to_position(source_text, message.span.end);
+    let start_position = line_index.position(message.span.start);
+    let end_position = line_index.position(message.span.end);
     let range = Range::new(start_position, end_position);
 
     let code = message.error.code.to_string();
@@ -152,7 +152,7 @@ pub fn message_to_lsp_diagnostic(
         PossibleFixes::Single(fix) => {
             fixed_content.push(fix_to_fixed_content(
                 fix,
-                source_text,
+                line_index,
                 FixedContentKind::LintRule(message.error.code.clone()),
             ));
         }
@@ -160,7 +160,7 @@ pub fn message_to_lsp_diagnostic(
             fixed_content.extend(fixes.into_iter().map(|fix| {
                 fix_to_fixed_content(
                     fix,
-                    source_text,
+                    line_index,
                     FixedContentKind::LintRule(message.error.code.clone()),
                 )
             }));
@@ -176,9 +176,13 @@ pub fn message_to_lsp_diagnostic(
     Some(DiagnosticReport { diagnostic, code_action })
 }
 
-fn fix_to_fixed_content(fix: Fix, source_text: &str, fix_kind: FixedContentKind) -> FixedContent {
-    let start_position = lsp_offset_to_position(source_text, fix.span.start);
-    let end_position = lsp_offset_to_position(source_text, fix.span.end);
+fn fix_to_fixed_content(
+    fix: Fix,
+    line_index: &LineIndex,
+    fix_kind: FixedContentKind,
+) -> FixedContent {
+    let start_position = line_index.position(fix.span.start);
+    let end_position = line_index.position(fix.span.end);
 
     let message = fix.message.unwrap_or_else(|| {
         let rule_name = match &fix_kind {
@@ -244,8 +248,9 @@ pub fn generate_inverted_diagnostics(
 pub fn create_unused_directives_report(
     directives: &DisableDirectives,
     severity: AllowWarnDeny,
-    source_text: &str,
+    line_index: &LineIndex,
 ) -> Vec<DiagnosticReport> {
+    let source_text = line_index.text();
     let mut reports = Vec::new();
     let fix_message = "remove unused disable directive";
 
@@ -259,15 +264,14 @@ pub fn create_unused_directives_report(
     let unused_disable = directives.collect_unused_disable_comments();
     for unused_comment in unused_disable {
         let span = unused_comment.span;
-        let fix_span = unused_comment.fix_span;
         match unused_comment.r#type {
             RuleCommentType::All => {
                 reports.push(build_unused_disable_diagnostic_report(
                     unused_comment.directive_prefix.unused_disable_message(),
                     span,
                     severity,
-                    source_text,
-                    Some(Fix::delete(fix_span).with_message(fix_message)),
+                    line_index,
+                    Some(unused_comment.create_fix(source_text).with_message(fix_message)),
                 ));
             }
             RuleCommentType::Single(rules) => {
@@ -276,7 +280,7 @@ pub fn create_unused_directives_report(
                         rule.directive_prefix.unused_disable_rule_message(&rule.rule_name),
                         rule.name_span,
                         severity,
-                        source_text,
+                        line_index,
                         Some(rule.create_fix(source_text, span).with_message(fix_message)),
                     ));
                 }
@@ -293,10 +297,7 @@ pub fn create_unused_directives_report(
             directive_prefix.unused_enable_message()
         };
         reports.push(build_unused_disable_diagnostic_report(
-            message,
-            *span,
-            severity,
-            source_text,
+            message, *span, severity, line_index,
             // TODO: fixer
             // copy the structure of disable directives
             None,
@@ -310,11 +311,11 @@ fn build_unused_disable_diagnostic_report(
     message: String,
     span: Span,
     severity: DiagnosticSeverity,
-    source_text: &str,
+    line_index: &LineIndex,
     fix: Option<Fix>,
 ) -> DiagnosticReport {
-    let start_position = lsp_offset_to_position(source_text, span.start);
-    let end_position = lsp_offset_to_position(source_text, span.end);
+    let start_position = line_index.position(span.start);
+    let end_position = line_index.position(span.end);
     let range = Range::new(start_position, end_position);
 
     DiagnosticReport {
@@ -333,7 +334,7 @@ fn build_unused_disable_diagnostic_report(
             range,
             fixed_content: vec![fix_to_fixed_content(
                 fix,
-                source_text,
+                line_index,
                 FixedContentKind::UnusedDirective,
             )],
         }),

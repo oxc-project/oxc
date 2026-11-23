@@ -1,0 +1,1 @@
+interface GlobalValue { count: number; }

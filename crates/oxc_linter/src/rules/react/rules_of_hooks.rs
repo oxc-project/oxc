@@ -1,11 +1,12 @@
 use std::borrow::Cow;
 
 use lazy_regex::Regex;
-use rustc_hash::{FxBuildHasher, FxHashSet};
+use rustc_hash::FxHashSet;
+use smallvec::SmallVec;
 
 use oxc_ast::{
-    AstKind, StaticPropertyName,
-    ast::{ArrowFunctionExpression, CallExpression, Function, NewExpression},
+    AstKind, FunctionKind,
+    ast::{ArrowFunctionExpression, CallExpression, Expression, Function, NewExpression},
 };
 use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_cfg::{ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind, graph::visit::EdgeRef};
@@ -18,7 +19,10 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::Rule,
-    utils::{is_react_component_or_hook_name, is_react_function_call, is_react_hook},
+    utils::{
+        is_react_component_name, is_react_component_or_hook_name, is_react_function_call,
+        is_react_hook,
+    },
 };
 
 mod diagnostics {
@@ -284,7 +288,7 @@ impl Rule for RulesOfHooks {
 
         let is_use = is_react_function_call(call, "use");
 
-        let Some(parent_func) = parent_func(nodes, node) else {
+        let Some((parent_func, function)) = parent_func(nodes, node) else {
             return ctx.diagnostic(diagnostics::top_level_hook(span, hook_name));
         };
 
@@ -373,7 +377,7 @@ impl Rule for RulesOfHooks {
                 r#async: true,
                 ..
             }) => {
-                if is_directly_inside_component_or_hook(nodes, parent_func.id()) {
+                if is_directly_inside_component_or_hook(nodes, function) {
                     return ctx.diagnostic(diagnostics::async_component(
                         span,
                         async_keyword_span(ctx, *async_span),
@@ -616,11 +620,9 @@ fn has_conditional_path_accept_throw(
     let from_graph_id = nodes.cfg_id(from.id());
     let to_graph_id = nodes.cfg_id(to.id());
     let graph = cfg.graph();
-    let block_count = graph.node_count();
-    let mut stack = Vec::with_capacity(block_count);
+    let mut stack = SmallVec::<[_; 8]>::new();
     stack.push((from_graph_id, false));
-    let mut visited =
-        FxHashSet::with_capacity_and_hasher(block_count.saturating_mul(2), FxBuildHasher);
+    let mut visited = FxHashSet::default();
 
     while let Some((block_id, passed_hook)) = stack.pop() {
         if !visited.insert((block_id, passed_hook)) {
@@ -768,8 +770,15 @@ impl<'a> VisitJs<'a> for MayThrowBeforeHook {
     }
 }
 
-fn parent_func<'a>(nodes: &'a AstNodes<'a>, node: &AstNode) -> Option<&'a AstNode<'a>> {
-    nodes.ancestors(node.id()).find(|node| node.kind().is_function_like())
+fn parent_func<'a>(
+    nodes: &'a AstNodes<'a>,
+    node: &AstNode,
+) -> Option<(&'a AstNode<'a>, FunctionKind<'a, 'a>)> {
+    nodes.ancestors(node.id()).find_map(|node| match node.kind() {
+        AstKind::Function(function) => Some((node, FunctionKind::Function(function))),
+        AstKind::ArrowFunctionExpression(arrow) => Some((node, FunctionKind::Arrow(arrow))),
+        _ => None,
+    })
 }
 
 fn is_inside_try_catch(
@@ -859,9 +868,26 @@ fn is_effect_or_effect_event_call(
         || is_react_function_call(call, "useInsertionEffect")
         || is_react_function_call(call, "useEffectEvent")
         || additional_effect_hooks.is_some_and(|regex| {
-            call.callee_name()
-                .is_some_and(|name| is_react_function_call(call, name) && regex.is_match(name))
+            additional_effect_hook_name(&call.callee).is_some_and(|name| regex.is_match(name))
         })
+}
+
+/// Returns the name to match against `settings["react-hooks"].additionalEffectHooks`.
+///
+/// Accepts a bare call (`useMyEffect()`) and a call on a PascalCase namespace
+/// (`EffectHooks.useMyEffect()`, `React.useMyEffect()`, `React['useMyEffect']()`),
+/// which is the same namespace form this rule recognizes for hook calls
+/// (see [`is_react_hook`]).
+fn additional_effect_hook_name<'a>(callee: &'a Expression<'a>) -> Option<&'a str> {
+    if let Expression::Identifier(ident) = callee {
+        return Some(ident.name.as_str());
+    }
+    let member = callee.as_member_expression()?;
+    let object = member.object().get_identifier_reference()?;
+    if !is_react_component_name(&object.name) {
+        return None;
+    }
+    member.static_property_name()?.as_str()
 }
 
 fn is_reference_call_callee(nodes: &AstNodes<'_>, node_id: NodeId, span: Span) -> bool {
@@ -891,38 +917,25 @@ fn is_non_react_func_arg(nodes: &AstNodes, node_id: NodeId) -> bool {
 
 fn is_somewhere_inside_component_or_hook(nodes: &AstNodes, node_id: NodeId) -> bool {
     nodes
-        .ancestors(node_id)
-        .filter(|node| node.kind().is_function_like())
-        .map(|node| {
-            (
-                node.id(),
-                match node.kind() {
-                    AstKind::Function(func) => func.name().map(Cow::from),
-                    AstKind::ArrowFunctionExpression(_) => {
-                        get_declaration_identifier(nodes, node.id())
-                    }
-                    _ => unreachable!(),
-                },
-            )
+        .ancestor_kinds(node_id)
+        .filter_map(|kind| match kind {
+            AstKind::Function(function) => Some(FunctionKind::Function(function)),
+            AstKind::ArrowFunctionExpression(arrow) => Some(FunctionKind::Arrow(arrow)),
+            _ => None,
         })
-        .any(|(id, ident)| {
-            ident.is_some_and(|name| is_react_component_or_hook_name(&name))
-                || is_memo_or_forward_ref_callback(nodes, id)
-        })
+        .any(|function| is_directly_inside_component_or_hook(nodes, function))
 }
 
-fn is_directly_inside_component_or_hook(nodes: &AstNodes, node_id: NodeId) -> bool {
-    let node = nodes.get_node(node_id);
-    let directly_named = match node.kind() {
-        AstKind::Function(func) => {
-            func.name().is_some_and(|name| is_react_component_or_hook_name(name.as_str()))
+fn is_directly_inside_component_or_hook(nodes: &AstNodes, function: FunctionKind<'_, '_>) -> bool {
+    let (node_id, ident) = match function {
+        FunctionKind::Function(func) => (func.node_id(), func.name().map(Cow::from)),
+        FunctionKind::Arrow(arrow) => {
+            (arrow.node_id(), get_declaration_identifier(nodes, arrow.node_id()))
         }
-        AstKind::ArrowFunctionExpression(_) => get_declaration_identifier(nodes, node_id)
-            .is_some_and(|name| is_react_component_or_hook_name(&name)),
-        _ => unreachable!(),
     };
 
-    directly_named || is_memo_or_forward_ref_callback(nodes, node_id)
+    ident.is_some_and(|name| is_react_component_or_hook_name(&name))
+        || is_memo_or_forward_ref_callback(nodes, node_id)
 }
 
 fn get_declaration_identifier<'a>(
@@ -959,7 +972,16 @@ fn get_declaration_identifier<'a>(
                 // { useHook: () => {} }
                 // { useHook() {} }
                 AstKind::ObjectProperty(prop) => {
-                    prop.key.name().and_then(StaticPropertyName::into_cow_str)
+                    let name = prop.key.name()?;
+                    // The name is only classified as a component or hook name. A lone surrogate
+                    // is neither an uppercase letter nor a digit, and neither is U+FFFD.
+                    let replaced = name.as_str().is_none().then(|| {
+                        name.as_js_str()
+                            .chars()
+                            .map(|c| c.to_char().unwrap_or(char::REPLACEMENT_CHARACTER))
+                            .collect::<String>()
+                    });
+                    replaced.map(Cow::Owned).or_else(|| name.into_cow_str())
                 }
                 _ => None,
             }
@@ -988,6 +1010,8 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        // Valid because a key that starts with `useX` is a hook name, even with a lone surrogate.
+        r#"({"useX\uDC00": () => { useState(); }});"#,
         // Valid because components can use hooks.
         "
             function ComponentWithHook() {
@@ -1715,8 +1739,9 @@ fn test() {
         ",
     ];
 
-    let pass_additional_effect_hooks = vec![(
-        r"
+    let pass_additional_effect_hooks = vec![
+        (
+            r"
             function MyComponent({ theme }) {
               const onClick = useEffectEvent(() => {
                 showNotification(theme);
@@ -1729,15 +1754,54 @@ fn test() {
               });
             }
         ",
-        None,
-        Some(serde_json::json!({
-            "settings": {
-                "react-hooks": {
-                    "additionalEffectHooks": "(useMyEffect|useServerEffect)"
+            None,
+            Some(serde_json::json!({
+                "settings": {
+                    "react-hooks": {
+                        "additionalEffectHooks": "(useMyEffect|useServerEffect)"
+                    }
                 }
+            })),
+        ),
+        (
+            r"
+            function MyComponent({ theme }) {
+              const onClick = useEffectEvent(() => {
+                showNotification(theme);
+              });
+              EffectHooks.useMyEffect(() => {
+                onClick();
+              });
+              React.useMyEffect(() => {
+                onClick();
+              });
+              React['useMyEffect'](() => {
+                onClick();
+              });
+              EffectHooks['useMyEffect'](() => {
+                onClick();
+              });
+              (React).useMyEffect(() => {
+                onClick();
+              });
+              (React as typeof React).useMyEffect(() => {
+                onClick();
+              });
+              React!.useMyEffect(() => {
+                onClick();
+              });
             }
-        })),
-    )];
+        ",
+            None,
+            Some(serde_json::json!({
+                "settings": {
+                    "react-hooks": {
+                        "additionalEffectHooks": "^useMyEffect$"
+                    }
+                }
+            })),
+        ),
+    ];
 
     let fail = vec![
         // Invalid because it's dangerous and might not warn otherwise.
@@ -2131,6 +2195,8 @@ fn test() {
             const {j = () => { useState(); }} = {};
             ({k = () => { useState(); }} = {});
         ",
+        // A key with a lone surrogate is neither a component nor a hook name.
+        r#"({"f\uDC00": () => { useState(); }});"#,
         // Invalid because it's dangerous and might not warn otherwise.
         // This *must* be invalid.
         // errors: [conditionalError('useState', true)],
@@ -2627,8 +2693,9 @@ fn test() {
 }",
     ];
 
-    let fail_additional_effect_hooks = vec![(
-        r"
+    let fail_additional_effect_hooks = vec![
+        (
+            r"
             function MyComponent({ theme }) {
               const onClick = useEffectEvent(() => {
                 showNotification(theme);
@@ -2638,15 +2705,39 @@ fn test() {
               });
             }
         ",
-        None,
-        Some(serde_json::json!({
-            "settings": {
-                "react-hooks": {
-                    "additionalEffectHooks": "useMyEffect"
+            None,
+            Some(serde_json::json!({
+                "settings": {
+                    "react-hooks": {
+                        "additionalEffectHooks": "useMyEffect"
+                    }
                 }
+            })),
+        ),
+        (
+            r"
+            function MyComponent({ theme }) {
+              const onClick = useEffectEvent(() => {
+                showNotification(theme);
+              });
+              effectHooks.useMyEffect(() => {
+                onClick();
+              });
+              Hooks.Effects.useMyEffect(() => {
+                onClick();
+              });
             }
-        })),
-    )];
+        ",
+            None,
+            Some(serde_json::json!({
+                "settings": {
+                    "react-hooks": {
+                        "additionalEffectHooks": "useMyEffect"
+                    }
+                }
+            })),
+        ),
+    ];
 
     Tester::new(
         RulesOfHooks::NAME,

@@ -1,52 +1,83 @@
-use super::cpu::{Cpu, cpu_select};
+use oxc_simd::{Cpu, DynCpu, cpu_multiversion};
 
-#[cfg(target_arch = "x86_64")]
+use crate::pipeline::source::Source;
+
 mod avx2;
-#[cfg(target_arch = "x86_64")]
-use avx2::classify_avx2;
-
-#[cfg(target_arch = "aarch64")]
+mod generic;
+mod luts;
 mod neon;
-#[cfg(target_arch = "aarch64")]
+mod punct;
+
+use avx2::classify_avx2;
+use generic::classify_generic;
 use neon::classify_neon;
 
-mod generic;
-use generic::classify_generic;
+/// The bitmaps and kinds classify fills in, before the later stages share them.
+pub(super) struct Planes<'a> {
+    pub token_start: &'a mut [u64],
+    pub word: &'a mut [u64],
+    pub keyword_initial: &'a mut [u64],
+    pub op_char: &'a mut [u64],
+    pub digit: &'a mut [u64],
+    pub dot: &'a mut [u64],
+    pub misc: &'a mut [u64],
+    pub kinds: &'a mut [[u8; 64]],
+}
 
-#[cfg(any(test, target_arch = "x86_64", target_arch = "aarch64"))]
-mod luts;
-#[cfg(any(test, target_arch = "x86_64", target_arch = "aarch64"))]
-mod punct1_luts;
+impl Planes<'_> {
+    /// The first count blocks of each plane, checked once.
+    #[inline(always)]
+    fn first(self, count: usize) -> Self {
+        let Self { token_start, word, keyword_initial, op_char, digit, dot, misc, kinds } = self;
+        Self {
+            token_start: &mut token_start[..count],
+            word: &mut word[..count],
+            keyword_initial: &mut keyword_initial[..count],
+            op_char: &mut op_char[..count],
+            digit: &mut digit[..count],
+            dot: &mut dot[..count],
+            misc: &mut misc[..count],
+            kinds: &mut kinds[..count],
+        }
+    }
 
-mod punct1;
+    #[inline(always)]
+    fn clear_block(&mut self, block_idx: usize) {
+        let all = [
+            &mut *self.token_start,
+            &mut *self.word,
+            &mut *self.keyword_initial,
+            &mut *self.op_char,
+            &mut *self.digit,
+            &mut *self.dot,
+            &mut *self.misc,
+        ];
+        for plane in all {
+            plane[block_idx] = 0;
+        }
+    }
+}
 
+/// Clear the bits at and past n in the last block, which a kernel fills from the padding.
 #[inline(always)]
-pub(super) unsafe fn classify(
-    ts: bool,
-    src: *const u8,
-    n: usize,
-    nb: usize,
-    word: *mut u64,
-    st: *mut u64,
-    kwinit: *mut u64,
-    opch: *mut u64,
-    digit: *mut u64,
-    dot: *mut u64,
-    misc: *mut u64,
-    kind: *mut u8,
-    cpu: impl Cpu,
-) {
-    cpu_select!(cpu, {
-        Avx2(cpu) => classify_avx2(ts, src, n, word, st, kwinit, opch, digit, dot, misc, kind, cpu),
-        Neon(cpu) => classify_neon(ts, src, n, word, st, kwinit, opch, digit, dot, misc, kind, cpu),
-        Generic(_) => classify_generic(ts, src, n, word, st, kwinit, opch, digit, dot, misc, kind),
-    });
+fn mask_tail(planes: [&mut [u64]; 7], n: usize) {
+    let rem = n & 63;
+    if rem != 0 {
+        let keep = (1u64 << rem) - 1;
+        for plane in planes {
+            plane[n >> 6] &= keep;
+        }
+    }
+}
 
-    *word.add(nb) = 0;
-    *st.add(nb) = 0;
-    *kwinit.add(nb) = 0;
-    *opch.add(nb) = 0;
-    *digit.add(nb) = 0;
-    *dot.add(nb) = 0;
-    *misc.add(nb) = 0;
+#[cpu_multiversion]
+#[inline(always)]
+pub(super) fn classify(src: Source, ts: bool, mut planes: Planes, cpu: impl Cpu) {
+    planes.clear_block(src.block_count());
+    let (blocks, _) = src.padded().as_chunks::<64>();
+    match DynCpu::from(cpu) {
+        DynCpu::Avx2(cpu) => classify_avx2(ts, blocks, src.len(), planes, cpu),
+        DynCpu::Neon(cpu) => classify_neon(ts, blocks, src.len(), planes, cpu),
+        DynCpu::Generic(_) => classify_generic(ts, blocks, src.len(), planes),
+    }
 }

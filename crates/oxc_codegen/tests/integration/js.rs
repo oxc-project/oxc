@@ -1,7 +1,9 @@
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_codegen::{Codegen, CodegenOptions, IndentChar};
-use oxc_span::SPAN;
+use oxc_parser::Parser;
+use oxc_semantic::SemanticBuilder;
+use oxc_span::{SPAN, SourceType};
 
 use crate::tester::{
     test, test_ascii, test_minify, test_minify_same, test_options, test_same,
@@ -127,8 +129,22 @@ fn expr() {
     test_minify_same("throw await 1;");
     test_minify_same("await import(``);");
 
-    test("delete 2e308", "delete (0, Infinity);\n");
+    test("delete 2e308", "delete 1e400;\n");
     test_minify("delete 2e308", "delete(1/0);");
+
+    // Infinite literals must not print as `Infinity`, which a local binding can shadow.
+    test("function f(Infinity) { return 2e308; }", "function f(Infinity) {\n\treturn 1e400;\n}\n");
+    test("x = -2e308", "x = -1e400;\n");
+    test("x = (2e308).toString", "x = 1e400.toString;\n");
+    test("x = (-2e308) ** 2", "x = (-1e400) ** 2;\n");
+    test("x = y / 2e308", "x = y / 1e400;\n");
+    test("x = 2e308 in y", "x = 1e400 in y;\n");
+    test("x = y instanceof 2e308", "x = y instanceof 1e400;\n");
+    test("x = { 2e308: 0 }", "x = { 1e400: 0 };\n");
+    test_minify("x = { 2e308: 0 }", "x={1e400:0};");
+    test_minify("x = { [2e308]: 0 }", "x={[1/0]:0};");
+    test_minify("function f(Infinity) { return 2e308; }", "function f(Infinity){return 1/0}");
+    test_minify("x = y / 2e308", "x=y/(1/0);");
 
     test_minify_same(r#"({"http://a\r\" \n<'b:b@c\r\nd/e?f":{}});"#);
     test_minify_same("new(import(``),function(){});");
@@ -169,6 +185,26 @@ fn private_in() {
         "class Foo { #test; bar() { #field in {} << 0 } }",
         "class Foo {\n\t#test;\n\tbar() {\n\t\t#field in {} << 0;\n\t}\n}\n",
     );
+
+    for (init, minified) in [
+        ("(#x in o)", "(#x in o)"),
+        ("let a = (#x in o)", "let a=(#x in o)"),
+        ("a = (#x in o) || o", "a=(#x in o)||o"),
+        ("a = o || (#x in o)", "a=o||(#x in o)"),
+        ("a = (#x in o) ? 1 : 2", "a=(#x in o)?1:2"),
+        ("a = () => (#x in o)", "a=()=>(#x in o)"),
+        ("a = 1 * (#x in o == 1)", "a=1*(#x in o==1)"),
+        ("a = (() => #x in o)", "a=(()=>#x in o)"),
+    ] {
+        let source = format!("class C {{ #x; m(o) {{ for ({init};;); }} }}");
+        test(&source, &format!("class C {{\n\t#x;\n\tm(o) {{\n\t\tfor ({init};;);\n\t}}\n}}\n"));
+        test_minify(&source, &format!("class C{{#x;m(o){{for({minified};;);}}}}"));
+        crate::test_idempotency(&source);
+        crate::test_idempotency_options(
+            &source,
+            &CodegenOptions { minify: true, ..CodegenOptions::default() },
+        );
+    }
 }
 
 #[test]
@@ -315,6 +351,12 @@ fn for_stmt() {
     test("for ((let[0]) of x);", "for ((let)[0] of x);\n");
     test("for ((async.x) of x);", "for (async.x of x);\n");
     test("for (((let).x) of x);", "for ((let.x) of x);\n");
+    test("for ((let as any) of x);", "for ((let as any) of x);\n");
+    test("for ((let as any).x of x);", "for ((let as any).x of x);\n");
+    test("for ((let satisfies any).x of x);", "for ((let satisfies any).x of x);\n");
+    test("for ((let().x) of x);", "for ((let().x) of x);\n");
+    test("for ((let`t`.x) of x);", "for ((let`t`.x) of x);\n");
+    test("for ((let satisfies any)().x of x);", "for ((let satisfies any)().x of x);\n");
     // A leading `let` outside a for-of head is untouched.
     test("let.x;", "let.x;\n");
     // A nested for-of inside a `for` init is still wrapped correctly.
@@ -377,6 +419,88 @@ fn shorthand() {
     // https://github.com/tc39/test262/blob/05c45a4c430ab6fee3e0c7f0d47d8a30d8876a6d/test/language/expressions/object/__proto__-permitted-dup-shorthand.js
     test("var obj = { __proto__, __proto__, };", "var obj = {\n\t__proto__,\n\t__proto__\n};\n");
     test("var obj = { __proto__: __proto__, };", "var obj = { __proto__: __proto__ };\n");
+}
+
+/// Print `source` after renaming its top-level binding `from` to `to`.
+#[track_caller]
+fn print_with_renamed_root_binding(
+    source: &str,
+    source_type: SourceType,
+    from: &str,
+    to: &str,
+    minify: bool,
+) -> String {
+    let allocator = Allocator::default();
+    let parsed = Parser::new(&allocator, source, source_type).parse();
+    assert!(parsed.diagnostics.is_empty(), "Parse errors: {:?}", parsed.diagnostics);
+    let semantic = SemanticBuilder::new().build(&parsed.program);
+    assert!(semantic.diagnostics.is_empty(), "Semantic errors: {:?}", semantic.diagnostics);
+    let mut scoping = semantic.semantic.into_scoping();
+    let symbol_id = scoping.get_binding(scoping.root_scope_id(), from.into()).unwrap();
+    scoping.set_symbol_name(symbol_id, to.into());
+    Codegen::new()
+        .with_options(CodegenOptions { minify, ..CodegenOptions::default() })
+        .with_scoping(Some(scoping))
+        .build(&parsed.program)
+        .code
+}
+
+#[test]
+fn renamed_proto_shorthand() {
+    let source = "let __proto__; x = [{ __proto__ }, { __proto__: __proto__ }];";
+    for (minify, expected) in [
+        (false, "let a;\nx = [{ [\"__proto__\"]: a }, { __proto__: a }];\n"),
+        (true, "let a;x=[{[\"__proto__\"]:a},{__proto__:a}];"),
+    ] {
+        let code =
+            print_with_renamed_root_binding(source, SourceType::mjs(), "__proto__", "a", minify);
+        assert_eq!(code, expected);
+    }
+}
+
+#[test]
+fn for_of_head_renamed_to_contextual_keyword() {
+    let source = "var x; for (x of y); for (x.z of y); for (x[0] of y); for (x().z of y);";
+    for (name, minify, expected) in [
+        (
+            "async",
+            false,
+            "var async;\nfor ((async) of y);\nfor (async.z of y);\nfor (async[0] of y);\nfor (async().z of y);\n",
+        ),
+        (
+            "async",
+            true,
+            "var async;for((async)of y);for(async.z of y);for(async[0]of y);for(async().z of y);",
+        ),
+        (
+            "let",
+            false,
+            "var let;\nfor ((let) of y);\nfor ((let.z) of y);\nfor ((let)[0] of y);\nfor ((let().z) of y);\n",
+        ),
+        (
+            "let",
+            true,
+            "var let;for((let)of y);for((let.z)of y);for((let)[0]of y);for((let().z)of y);",
+        ),
+    ] {
+        let code = print_with_renamed_root_binding(source, SourceType::script(), "x", name, minify);
+        assert_eq!(code, expected, "renamed to {name}, minify: {minify}");
+    }
+}
+
+#[test]
+fn for_of_head_renamed_from_contextual_keyword() {
+    for (source, from, expected) in [
+        (
+            "var let; for ((let) of y); for ((let).z of y); for ((let)[0] of y); (let)[1] = 0;",
+            "let",
+            "var a;\nfor (a of y);\nfor (a.z of y);\nfor (a[0] of y);\na[1] = 0;\n",
+        ),
+        ("var async; for ((async) of y);", "async", "var a;\nfor (a of y);\n"),
+    ] {
+        let code = print_with_renamed_root_binding(source, SourceType::script(), from, "a", false);
+        assert_eq!(code, expected, "renamed from {from}");
+    }
 }
 
 #[test]
@@ -452,7 +576,7 @@ fn assignment() {
     test_minify(r#"({"my-key": value} = obj);"#, r#"({"my-key":value}=obj);"#);
     test_minify(
         r#"({["computed"]: a, "literal": b} = obj);"#,
-        r#"({["computed"]:a,"literal":b}=obj);"#,
+        r#"({[`computed`]:a,"literal":b}=obj);"#,
     );
     test_minify(r#"let {"test-key": testKey} = obj;"#, r#"let{"test-key":testKey}=obj;"#);
 
@@ -803,8 +927,7 @@ fn negative_big_int_literal() {
     let allocator = Allocator::default();
     let ast = AstBuilder::new(&allocator);
 
-    let negative_one =
-        || Expression::new_big_int_literal(SPAN, "-1", None, BigintBase::Decimal, &ast);
+    let negative_one = || Expression::new_big_int_literal(SPAN, "-1", None, &ast);
     let expr_stmt = |expr| Statement::new_expression_statement(SPAN, expr, &ast);
     let cases = [
         // `-(-1n)`
@@ -1370,6 +1493,97 @@ fn js_str_round_trip() {
                 _ => panic!("expected string value: {output}"),
             };
             assert_eq!(value.encode_utf16().collect::<Vec<_>>(), units, "{output}");
+        }
+    }
+}
+
+#[test]
+fn jsx_sequence_expression() {
+    let source = "<X value={(a, b)}>{(c, d)}{...(e, f)}</X>";
+    test(source, "<X value={(a, b)}>{(c, d)}{...(e, f)}</X>;\n");
+    test_minify(source, "<X value={(a,b)}>{(c,d)}{...(e,f)}</X>;");
+}
+
+#[test]
+fn jsx_attribute_with_lone_surrogate_value() {
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+    use oxc_str::{JSStr, JSStrBuilder};
+    use oxc_syntax::xml_entities::decode_entities;
+
+    // Generated attributes must preserve their JavaScript value after JSX entity decoding,
+    // including literal entity text next to a lone surrogate.
+    let allocator = Allocator::new();
+    let source_type = SourceType::jsx();
+    let mut parsed = Parser::new(
+        &allocator,
+        "<div a=\"x\" b=\"y\" c=\"z\" d=\"w\" e=\"x\" f=\"y\" />;",
+        source_type,
+    )
+    .parse();
+    assert!(parsed.diagnostics.is_empty());
+    let Statement::ExpressionStatement(statement) = &mut parsed.program.body[0] else {
+        panic!("expected expression statement");
+    };
+    let Expression::JSXElement(element) = &mut statement.expression else {
+        panic!("expected JSX element");
+    };
+    let values: [&[u16]; 6] = [
+        &[0x61, 0xD800, 0x62],
+        &[0x61, 0xD83D, 0xDE00, 0x22],
+        &[0xD800, 0x22, 0x27],
+        &[0x22, 0x27],
+        &[0xD800, 0x26, 0x61, 0x6D, 0x70, 0x3B], // Lone lead surrogate + literal &amp;
+        &[0xDC00, 0x26, 0x23, 0x78, 0x34, 0x31, 0x3B], // Lone trail surrogate + literal &#x41;
+    ];
+    for (attribute, units) in element.opening_element.attributes.iter_mut().zip(values) {
+        let JSXAttributeItem::Attribute(attribute) = attribute else {
+            panic!("expected attribute");
+        };
+        let Some(JSXAttributeValue::StringLiteral(literal)) = &mut attribute.value else {
+            panic!("expected string attribute value");
+        };
+        let mut builder = JSStrBuilder::new_in(&&allocator);
+        builder.push_utf16(units);
+        literal.value = builder.into_js_str();
+        literal.raw = None;
+    }
+
+    for minify in [false, true] {
+        let options = CodegenOptions { minify, ..CodegenOptions::default() };
+        let output = Codegen::new().with_options(options.clone()).build(&parsed.program).code;
+        let reparsed = Parser::new(&allocator, &output, source_type).parse();
+        assert!(reparsed.diagnostics.is_empty(), "{output}");
+        let Statement::ExpressionStatement(statement) = &reparsed.program.body[0] else {
+            panic!("expected expression statement: {output}");
+        };
+        let Expression::JSXElement(element) = &statement.expression else {
+            panic!("expected JSX element: {output}");
+        };
+        assert_eq!(element.opening_element.attributes.len(), values.len());
+        for (attribute, units) in element.opening_element.attributes.iter().zip(values) {
+            let JSXAttributeItem::Attribute(attribute) = attribute else {
+                panic!("expected attribute: {output}");
+            };
+            let value = match attribute.value.as_ref().unwrap() {
+                JSXAttributeValue::StringLiteral(literal) => {
+                    let raw = literal.value.as_str().unwrap();
+                    let mut decoded = None;
+                    decode_entities(raw, &mut decoded, raw.len(), &allocator);
+                    decoded.map_or_else(|| JSStr::from(raw), JSStrBuilder::into_js_str)
+                }
+                JSXAttributeValue::ExpressionContainer(container) => {
+                    let JSXExpression::StringLiteral(literal) = &container.expression else {
+                        panic!("expected string expression: {output}");
+                    };
+                    literal.value
+                }
+                _ => panic!("expected string attribute value: {output}"),
+            };
+            assert_eq!(value.encode_utf16().collect::<Vec<_>>(), units, "{output}");
+        }
+        if !minify {
+            assert_eq!(Codegen::new().with_options(options).build(&reparsed.program).code, output);
         }
     }
 }

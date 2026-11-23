@@ -476,10 +476,16 @@ impl OxcDiagnostic {
         self
     }
 
-    /// Add source code to this diagnostic and convert it into an [`Error`].
+    /// Add source code to this diagnostic and convert it into a boxed [`Diagnostic`].
+    ///
+    /// The box can't outlive `source_code`.
+    /// If `source_code` is `'static`, the box is an [`Error`].
     ///
     /// You should use a [`NamedSource`] if you have a file name as well as the source code.
-    pub fn with_source_code<T: SourceCode + 'static>(self, source_code: T) -> Error {
+    pub fn with_source_code<'s, T: SourceCode + 's>(
+        self,
+        source_code: T,
+    ) -> Box<dyn Diagnostic + Send + Sync + 's> {
         Box::new(DiagnosticWithSource { diagnostic: self, source_code })
     }
 

@@ -1,7 +1,4 @@
-use oxc_ast::{
-    AstKind,
-    ast::{JSXChild, JSXElementName},
-};
+use oxc_ast::{AstKind, ast::JSXElementName};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -13,6 +10,7 @@ use crate::{
     context::{ContextHost, LintContext},
     globals::HTML_TAG,
     rule::{DefaultRuleConfig, Rule},
+    utils::is_jsx_multiline_whitespace,
 };
 
 fn self_closing_comp_diagnostic(span: Span) -> OxcDiagnostic {
@@ -97,14 +95,8 @@ impl Rule for SelfClosingComp {
 
         // The eslint react rule disallows multiline whitespace lines, but allows lines with
         // whitespace
-        if jsx_el.children.len() == 1 {
-            let JSXChild::Text(jsx_text) = &jsx_el.children[0] else {
-                return;
-            };
-
-            if !(jsx_text.value.contains('\n') && jsx_text.value.chars().all(char::is_whitespace)) {
-                return;
-            }
+        if jsx_el.children.len() == 1 && !is_jsx_multiline_whitespace(&jsx_el.children[0]) {
+            return;
         }
 
         let Some(jsx_closing_elem) = &jsx_el.closing_element else {

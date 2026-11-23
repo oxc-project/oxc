@@ -53,9 +53,9 @@ macro_rules! format_args {
 /// assert_eq!(
 ///     f.into_vec().as_slice(),
 ///     [
-///         FormatElement::Token { text: "Hello" },
+///         FormatElement::token("Hello"),
 ///         FormatElement::Space,
-///         FormatElement::Token { text: "World" },
+///         FormatElement::token("World"),
 ///     ]
 /// );
 /// ```

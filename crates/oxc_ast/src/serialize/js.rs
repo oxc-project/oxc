@@ -869,6 +869,61 @@ impl ESTree for ArrowFunctionExpressionExpression<'_> {
     }
 }
 
+/// Serializer for the derived `computed` field of nodes with a [`PropertyKey`] `key` field.
+///
+/// Computed keys are the variants of [`PropertyKey`] inherited from [`Expression`],
+/// whose discriminants are all below 64.
+#[ast_meta]
+#[estree(
+    ts_type = "boolean",
+    raw_deser = "uint8[POS_OFFSET.key] < 64",
+    raw_deser_inline,
+    raw_deser_lazy
+)]
+pub struct PropertyKeyComputed<T>(pub T);
+
+macro_rules! impl_property_key_computed {
+    ($($ty:ident),+ $(,)?) => {
+        $(
+            impl ESTree for PropertyKeyComputed<&$ty<'_>> {
+                fn serialize<S: Serializer>(&self, serializer: S) {
+                    self.0.key.is_computed().serialize(serializer);
+                }
+            }
+        )+
+    };
+}
+
+impl_property_key_computed!(
+    ObjectProperty,
+    BindingProperty,
+    MethodDefinition,
+    PropertyDefinition,
+    AccessorProperty,
+    TSPropertySignature,
+    TSMethodSignature,
+);
+
+/// Serializer for the derived `computed` field of [`AssignmentTargetPropertyProperty`].
+///
+/// See [`PropertyKeyComputed`].
+#[ast_meta]
+#[estree(
+    ts_type = "boolean",
+    raw_deser = "uint8[POS_OFFSET.name] < 64",
+    raw_deser_inline,
+    raw_deser_lazy
+)]
+pub struct AssignmentTargetPropertyPropertyComputed<'a, 'b>(
+    pub &'b AssignmentTargetPropertyProperty<'a>,
+);
+
+impl ESTree for AssignmentTargetPropertyPropertyComputed<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        self.0.name.is_computed().serialize(serializer);
+    }
+}
+
 /// Serializer for `init` field of `AssignmentTargetPropertyIdentifier`
 /// (which is renamed to `value` in ESTree AST).
 #[ast_meta]

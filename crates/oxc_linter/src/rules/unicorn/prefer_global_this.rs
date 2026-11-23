@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, ast_util::iter_outer_expressions, context::LintContext, rule::Rule};
 
 fn prefer_global_this_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.")
@@ -70,6 +70,7 @@ impl Rule for PreferGlobalThis {
         let AstKind::IdentifierReference(ident) = node.kind() else { return };
 
         if !matches!(ident.name.as_str(), "window" | "self" | "global")
+            || is_typeof_operand(node, ctx)
             || is_computed_member_expression_object(node, ctx)
             || !ctx.is_reference_to_global_variable(ident)
         {
@@ -78,60 +79,46 @@ impl Rule for PreferGlobalThis {
 
         if let AstKind::StaticMemberExpression(e) = ctx.nodes().parent_kind(node.id())
             && let Expression::Identifier(ident) = &e.object
+            && ident.name == "window"
+            && WINDOW_SPECIFIC_APIS.contains(&e.property.name.as_str())
         {
-            if ident.name == "self" && WEB_WORKER_SPECIFIC_APIS.contains(&e.property.name.as_str())
-            {
-                return;
-            }
-
-            if ident.name == "window" && WINDOW_SPECIFIC_APIS.contains(&e.property.name.as_str()) {
-                if matches!(
-                    e.property.name.as_str(),
-                    "addEventListener" | "removeEventListener" | "dispatchEvent"
-                ) {
-                    let Some(AstKind::CallExpression(call_expr)) =
-                        ctx.nodes().ancestor_kinds(node.id()).nth(1)
-                    else {
-                        return;
-                    };
-                    if call_expr.callee.span() != e.span() {
-                        return;
-                    }
-                    if let Some(Expression::StringLiteral(lit)) =
-                        call_expr.arguments.first().and_then(|arg| arg.as_expression())
-                        && lit
-                            .value
-                            .as_str()
-                            .is_some_and(|value| WINDOW_SPECIFIC_EVENTS.contains(&value))
-                    {
-                        return;
-                    }
-                } else {
+            if matches!(
+                e.property.name.as_str(),
+                "addEventListener" | "removeEventListener" | "dispatchEvent"
+            ) {
+                let Some(AstKind::CallExpression(call_expr)) =
+                    ctx.nodes().ancestor_kinds(node.id()).nth(1)
+                else {
+                    return;
+                };
+                if call_expr.callee.span() != e.span() {
                     return;
                 }
+                if let Some(Expression::StringLiteral(lit)) =
+                    call_expr.arguments.first().and_then(|arg| arg.as_expression())
+                    && lit
+                        .value
+                        .as_str()
+                        .is_some_and(|value| WINDOW_SPECIFIC_EVENTS.contains(&value))
+                {
+                    return;
+                }
+            } else {
+                return;
             }
         }
 
         ctx.diagnostic_with_suggestion(prefer_global_this_diagnostic(ident.span), |fixer| {
-            let is_typeof = is_typeof_legacy_global(node, ctx);
-            let replacement = if is_typeof {
-                format!("globalThis.{}", ident.name)
-            } else {
-                "globalThis".to_string()
-            };
-            fixer.replace(ident.span, replacement)
+            fixer.replace(ident.span, "globalThis")
         });
     }
 }
 
-fn is_typeof_legacy_global(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
-    if let AstKind::UnaryExpression(unary) = ctx.nodes().parent_kind(node.id())
-        && unary.operator == UnaryOperator::Typeof
-        && let Expression::Identifier(arg_ident) = &unary.argument
-    {
-        return arg_ident.span == node.span();
-    }
-    false
+fn is_typeof_operand(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
+    matches!(
+        iter_outer_expressions(ctx.nodes(), node.id()).next(),
+        Some(AstKind::UnaryExpression(unary)) if unary.operator == UnaryOperator::Typeof
+    )
 }
 
 /// `window[foo]`, `self[bar]`, etc. are allowed.
@@ -144,26 +131,6 @@ fn is_computed_member_expression_object(node: &AstNode<'_>, ctx: &LintContext<'_
     };
     obj_ident.span == node.kind().span()
 }
-
-const WEB_WORKER_SPECIFIC_APIS: &[&str] = &[
-    // https://html.spec.whatwg.org/multipage/workers.html#the-workerglobalscope-common-interface
-    "addEventListener",
-    "removeEventListener",
-    "dispatchEvent",
-    "self",
-    "location",
-    "navigator",
-    "onerror",
-    "onlanguagechange",
-    "onoffline",
-    "ononline",
-    "onrejectionhandled",
-    "onunhandledrejection",
-    // https://html.spec.whatwg.org/multipage/workers.html#dedicated-workers-and-the-dedicatedworkerglobalscope-interface
-    "name",
-    "postMessage",
-    "onconnect",
-];
 
 const WINDOW_SPECIFIC_APIS: &[&str] = &[
     // Properties and methods
@@ -296,8 +263,6 @@ fn test() {
         "window.addEventListener",
         "window.innerWidth",
         "window.innerHeight",
-        "self.location",
-        "self.navigator",
         r#"window.addEventListener("resize", () => {})"#,
         "window.onresize = function () {}",
         // TODO: Get this passing.
@@ -313,6 +278,13 @@ fn test() {
         "expect(window.addEventListener).toHaveBeenCalled();",
         "expect(window.removeEventListener).toHaveBeenCalled();",
         "expect(window.dispatchEvent).toHaveBeenCalled();",
+        "typeof window",
+        r#"typeof window !== "undefined""#,
+        r#"typeof self !== "undefined""#,
+        r#"typeof global !== "undefined""#,
+        "typeof (window)",
+        "typeof ((self))",
+        "typeof (global)",
     ];
 
     let fail = vec![
@@ -394,15 +366,28 @@ fn test() {
         "foo[window.foo]",
         "'foo' in window",
         "'foo' in global",
-        r#"typeof window !== "undefined""#,
-        r#"typeof self !== "undefined""#,
-        r#"typeof global !== "undefined""#,
         r#"typeof window.something === "function""#,
         r#"typeof self.something === "function""#,
         r#"typeof global.something === "function""#,
         "global.global_did_not_declare_in_language_options",
         "window.window_did_not_declare_in_language_options",
         "self.self_did_not_declare_in_language_options",
+        "self.location",
+        "self.navigator",
+        "self.name",
+        r#"self.postMessage("done")"#,
+        r#"self.importScripts("a.js")"#,
+        "self.onconnect = function () {}",
+        "self.onerror = function () {}",
+        "self.onlanguagechange = function () {}",
+        "self.onoffline = function () {}",
+        "self.ononline = function () {}",
+        r#"self.addEventListener("message", () => {})"#,
+        r#"self.removeEventListener("message", () => {})"#,
+        r#"self.dispatchEvent(new Event("message"))"#,
+        "self.self",
+        "self.onrejectionhandled = function () {}",
+        "self.onunhandledrejection = function () {}",
     ];
 
     let fix = vec![
@@ -553,9 +538,6 @@ fn test() {
         ("[window.foo] = []", "[globalThis.foo] = []"),
         ("foo[window]", "foo[globalThis]"),
         ("foo[window.foo]", "foo[globalThis.foo]"),
-        (r#"typeof window !== "undefined""#, r#"typeof globalThis.window !== "undefined""#),
-        (r#"typeof self !== "undefined""#, r#"typeof globalThis.self !== "undefined""#),
-        (r#"typeof global !== "undefined""#, r#"typeof globalThis.global !== "undefined""#),
         (
             r#"typeof window.something === "function""#,
             r#"typeof globalThis.something === "function""#,
@@ -580,9 +562,90 @@ fn test() {
             "self.self_did_not_declare_in_language_options",
             "globalThis.self_did_not_declare_in_language_options",
         ),
+        ("self.location", "globalThis.location"),
+        ("self.navigator", "globalThis.navigator"),
+        ("self.name", "globalThis.name"),
+        (r#"self.postMessage("done")"#, r#"globalThis.postMessage("done")"#),
+        (r#"self.importScripts("a.js")"#, r#"globalThis.importScripts("a.js")"#),
+        ("self.onconnect = function () {}", "globalThis.onconnect = function () {}"),
+        ("self.onerror = function () {}", "globalThis.onerror = function () {}"),
+        ("self.onlanguagechange = function () {}", "globalThis.onlanguagechange = function () {}"),
+        ("self.onoffline = function () {}", "globalThis.onoffline = function () {}"),
+        ("self.ononline = function () {}", "globalThis.ononline = function () {}"),
+        (
+            r#"self.addEventListener("message", () => {})"#,
+            r#"globalThis.addEventListener("message", () => {})"#,
+        ),
+        (
+            r#"self.removeEventListener("message", () => {})"#,
+            r#"globalThis.removeEventListener("message", () => {})"#,
+        ),
+        (
+            r#"self.dispatchEvent(new Event("message"))"#,
+            r#"globalThis.dispatchEvent(new Event("message"))"#,
+        ),
+        ("self.self", "globalThis.self"),
+        (
+            "self.onrejectionhandled = function () {}",
+            "globalThis.onrejectionhandled = function () {}",
+        ),
+        (
+            "self.onunhandledrejection = function () {}",
+            "globalThis.onunhandledrejection = function () {}",
+        ),
+        (
+            r#"const root = typeof self !== "undefined" ? self : globalThis;"#,
+            r#"const root = typeof self !== "undefined" ? globalThis : globalThis;"#,
+        ),
     ];
 
     Tester::new(PreferGlobalThis::NAME, PreferGlobalThis::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_typeof_typescript() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        "typeof (window as unknown);",
+        "typeof (self as unknown);",
+        "typeof (global as unknown);",
+        "typeof (window satisfies unknown);",
+        "typeof (self satisfies unknown);",
+        "typeof (global satisfies unknown);",
+        "typeof (<unknown>window);",
+        "typeof (<unknown>self);",
+        "typeof (<unknown>global);",
+        "typeof window!;",
+        "typeof self!;",
+        "typeof global!;",
+        "typeof (window<unknown>);",
+        "typeof (self<unknown>);",
+        "typeof (global<unknown>);",
+        "typeof (((window as unknown)!) satisfies unknown);",
+    ];
+
+    let fail = vec![
+        "typeof (window as unknown).value;",
+        "typeof (<unknown>self).value;",
+        "typeof (global!).value;",
+        "typeof (0, window);",
+        "typeof !self;",
+    ];
+
+    let fix = vec![
+        ("typeof (window as unknown).value;", "typeof (globalThis as unknown).value;"),
+        ("typeof (<unknown>self).value;", "typeof (<unknown>globalThis).value;"),
+        ("typeof (global!).value;", "typeof (globalThis!).value;"),
+        ("typeof (0, window);", "typeof (0, globalThis);"),
+        ("typeof !self;", "typeof !globalThis;"),
+    ];
+
+    Tester::new(PreferGlobalThis::NAME, PreferGlobalThis::PLUGIN, pass, fail)
+        .change_rule_path_extension("ts")
+        .with_snapshot_suffix("typescript")
         .expect_fix(fix)
         .test_and_snapshot();
 }

@@ -83,11 +83,12 @@ fn parse<'a>(
     let ret = Parser::new(allocator, source_text, source_type)
         .with_options(ParseOptions {
             allow_return_outside_function: true,
+            enable_ident_hashes: false,
             ..ParseOptions::default()
         })
         .parse();
     for error in ret.diagnostics {
-        println!("{}", error.render_with_source_code(source_text.to_string()));
+        println!("{}", error.render_with_source_code(source_text));
     }
     ret.program
 }

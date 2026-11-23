@@ -23,7 +23,8 @@ use crate::{
 /// Membership means "gets the frame treatment", not "gets formatted":
 /// a member language without a serving formatter keeps its body verbatim (`PreserveOriginal`),
 /// but its EMPTY block still normalizes through the frame when a dispatcher is installed.
-/// Never fails; any refusal (`PreserveOriginal`, operational error, no dispatcher, non-embeddable language)
+/// Never fails; any refusal (`PreserveOriginal`, operational error, no dispatcher, non-embeddable language,
+/// a body starting with a delimiter)
 /// keeps the block's bytes as-is while the host document still formats.
 ///
 /// The composed shape (Prettier `embed.js` + its css/markdown printers):
@@ -42,14 +43,21 @@ pub fn write_front_matter<'a, C: FormatContext>(
             write_frame(fm, None, f);
             return;
         }
+        // An indented delimiter on the first line (` ---`) never closes the block,
+        // but trimmed and formatted it starts a line and closes it early on the next parse.
+        // Keep the block verbatim, see DIVERGENCES.md#front-matter-indented-delimiter.
+        //
         // The body is a Fragment:
         // front matter inside front matter must never acquire envelope semantics
         // (generic FM recursion).
-        if let Some(ir) = dispatch_fragment_ir(f, language, body, None) {
+        if !body.starts_with(fm.start_delimiter)
+            && !body.starts_with(fm.end_delimiter)
+            && let Some(ir) = dispatch_fragment_ir(f, language, body, None)
+        {
             write_frame(fm, Some(ir), f);
             return;
         }
-        // `PreserveOriginal` or an operational error:
+        // A body starting with a delimiter, `PreserveOriginal` or an operational error:
         // fall through to the verbatim block below.
     }
     write!(f, text(fm.raw));

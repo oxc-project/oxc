@@ -3,10 +3,10 @@ use oxc_ast::{
     AstKind,
     ast::{
         Class, ClassElement, ClassType, Declaration, ExportDefaultDeclarationKind, FormalParameter,
-        FormalParameterRest, Function, FunctionType, MethodDefinition, MethodDefinitionKind,
-        ModuleDeclaration, PropertyKey, Statement, TSCallSignatureDeclaration,
-        TSConstructSignatureDeclaration, TSMethodSignature, TSMethodSignatureKind, TSSignature,
-        TSThisParameter, TSType, TSTypeAnnotation, TSTypeParameter, TSTypeParameterDeclaration,
+        FormalParameterRest, Function, FunctionType, MethodDefinition, ModuleDeclaration,
+        PropertyKey, Statement, TSCallSignatureDeclaration, TSConstructSignatureDeclaration,
+        TSMethodSignature, TSMethodSignatureKind, TSSignature, TSThisParameter, TSType,
+        TSTypeAnnotation, TSTypeParameter, TSTypeParameterDeclaration,
     },
 };
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
@@ -231,11 +231,11 @@ impl UnifiedSignatures {
             let ClassElement::MethodDefinition(method) = element else {
                 continue;
             };
-            if method.value.body.is_some() || is_getter_or_setter_method(method.kind) {
+            if method.value.body.is_some() || method.kind.is_accessor() {
                 continue;
             }
 
-            let key = get_overload_key(method.computed, method.r#static, &method.key, source_text);
+            let key = get_overload_key(method.r#static, &method.key, source_text);
             overloads.entry(key).or_default().push(OverloadCandidate {
                 signature: SignatureDefinition::MethodDefinition(method),
                 comment_target_start: method.span.start,
@@ -279,12 +279,7 @@ impl UnifiedSignatures {
                 TSSignature::TSMethodSignature(method_signature)
                     if method_signature.kind == TSMethodSignatureKind::Method =>
                 {
-                    let key = get_overload_key(
-                        method_signature.computed,
-                        false,
-                        &method_signature.key,
-                        source_text,
-                    );
+                    let key = get_overload_key(false, &method_signature.key, source_text);
                     overloads.entry(key).or_default().push(OverloadCandidate {
                         signature: SignatureDefinition::TSMethodSignature(method_signature),
                         comment_target_start: method_signature.span.start,
@@ -321,15 +316,14 @@ impl UnifiedSignatures {
         type_parameters: Option<&'a TSTypeParameterDeclaration<'a>>,
         ctx: &LintContext<'a>,
     ) {
-        let outer_type_parameters: FxHashSet<&'a str> = type_parameters
-            .map(|type_parameters| {
+        let outer_type_parameters: FxHashSet<&'a str> =
+            type_parameters.map_or_default(|type_parameters| {
                 type_parameters
                     .params
                     .iter()
                     .map(|type_parameter| type_parameter.name.name.as_str())
                     .collect()
-            })
-            .unwrap_or_default();
+            });
 
         for signatures in overloads.values() {
             if signatures.len() < 2 {
@@ -431,12 +425,7 @@ fn overload_key_bit(value: bool) -> char {
     if value { '0' } else { '1' }
 }
 
-fn get_overload_key(
-    computed: bool,
-    r#static: bool,
-    key: &PropertyKey<'_>,
-    source_text: &str,
-) -> String {
+fn get_overload_key(r#static: bool, key: &PropertyKey<'_>, source_text: &str) -> String {
     let info = match key {
         PropertyKey::PrivateIdentifier(identifier) => {
             format!("private_identifier_{}", identifier.name)
@@ -445,11 +434,7 @@ fn get_overload_key(
         _ => key.span().source_text(source_text).to_string(),
     };
 
-    format!("{}{}{}", overload_key_bit(computed), overload_key_bit(r#static), info)
-}
-
-fn is_getter_or_setter_method(kind: MethodDefinitionKind) -> bool {
-    matches!(kind, MethodDefinitionKind::Get | MethodDefinitionKind::Set)
+    format!("{}{}{}", overload_key_bit(key.is_computed()), overload_key_bit(r#static), info)
 }
 
 fn compare_signatures<'a>(

@@ -1,0 +1,4 @@
+export const page = html`<!DOCTYPE html>
+  <html>
+    <head><title>x</title></head>
+  </html>`;

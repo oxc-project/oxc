@@ -139,12 +139,9 @@ fn collect_computed_names<'a>(options: &ObjectExpression<'a>) -> FxHashSet<&'a s
     computed_obj
         .properties
         .iter()
-        .filter_map(|entry| match entry {
-            ObjectPropertyKind::ObjectProperty(prop) if !prop.computed => Some(prop),
-            _ => None,
-        })
+        .filter_map(ObjectPropertyKind::as_property)
         // Numeric keys are not valid identifiers to reference via `this`.
-        .filter_map(|prop| match prop.key.static_name()? {
+        .filter_map(|prop| match prop.key.literal_name()? {
             StaticPropertyName::Borrowed(name) => name.as_str(),
             StaticPropertyName::Owned(_) => None,
         })

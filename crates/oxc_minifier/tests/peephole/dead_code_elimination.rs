@@ -556,6 +556,24 @@ fn dropped_direct_eval_converges_after_liveness_refresh() {
 }
 
 #[test]
+fn block_unwrap_needs_no_extra_pass() {
+    test_with_iterations("if (a) { foo() }", "if (a) foo();", 0);
+    test_with_iterations("for (;;) { if (a) { { foo() } } }", "for (;;) if (a) foo();", 0);
+    test_with_iterations(
+        "export function f() { if (a) { return b } }",
+        "export function f() { if (a) return b; }",
+        0,
+    );
+    // A direct body-list item keeps the conservative revisit: `var` symbol
+    // values depend on that position.
+    test_with_iterations(
+        "export function f() { { var x = 0; } return [x, x]; }",
+        "export function f() { var x = 0; return [x, x]; }",
+        1,
+    );
+}
+
+#[test]
 fn drop_labels() {
     let mut options = CompressOptions::dce();
     let mut drop_labels = FxHashSet::default();
@@ -1175,4 +1193,10 @@ fn dce_inline_template_literal_does_not_create_octal_escape() {
 
     // Expressions with side effects must still remain interpolation expressions.
     test_same(r"export function makeKey(messageId) { return `${messageId}\0${sideEffect()}`; }");
+}
+
+#[test]
+fn keeps_numeric_identities() {
+    // Rewriting `a * 1` to `+a` only shrinks code, so tree-shake-only mode leaves it.
+    test_same("foo(a * 1), foo(b - 0), foo(1 * c / 1)");
 }

@@ -229,6 +229,11 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        // A URL or base with a lone surrogate is not checked.
+        (r#"new URL("./a\uD800", "https://x.com/")"#, None),
+        (r#"new URL("a\uD800", "https://x.com/")"#, Some(serde_json::json!(["always"]))),
+        (r#"new URL("./foo", "https://x.com/\uD800/")"#, None),
+        (r#"new URL("foo", "https://x.com/\uD800/")"#, Some(serde_json::json!(["always"]))),
         // Default "never" option
         (r#"URL("./foo", base)"#, None),
         (r#"new URL(...["./foo"], base)"#, None),

@@ -4,6 +4,44 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.160.0] - 2026-11-23
+
+### 🐛 Bug Fixes
+
+- adf284e mangler: Use debug names for private members (#30061) (Cameron)
+- 41dbc08 mangler: Keep names set by redeclarations with keepNames (#30055) (Dunqing)
+- 2f6a11f semantic: Keep catch parameters in the catch clause scope (#29635) (Dunqing)
+
+### ⚡ Performance
+
+- 209f078 mangler: Include digits in trailing character frequency order (#29437) (camc314)
+
+Full release notes: [0.160.0](https://github.com/oxc-project/oxc/blob/main/crates/CHANGELOG.md#01600---2026-11-23)
+
+## [0.159.0] - 2026-11-16
+
+### 🚀 Features
+
+- eb1833e mangler: Mangle labels (#29614) (camc314)
+
+### 🐛 Bug Fixes
+
+- 1dc0ee9 semantic: Preserve catch and var binding identities (#28739) (Dunqing)
+
+### ⚡ Performance
+
+- 846adbb mangler: Skip a liveness walk that never marks a scope (#29391) (Dunqing)
+
+## [0.158.0] - 2026-11-09
+
+### ⚡ Performance
+
+- cc84126 mangler: Inline candidate checks during slot assignment (#28881) (Dunqing)
+
+### 📚 Documentation
+
+- 7acaa4e mangler: Correct naming strategy and pipeline order (#29073) (camc314)
+
 ## [0.154.0] - 2026-10-13
 
 ### 📚 Documentation

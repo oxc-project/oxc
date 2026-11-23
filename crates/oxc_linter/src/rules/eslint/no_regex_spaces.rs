@@ -53,7 +53,7 @@ declare_oxc_lint!(
     eslint,
     restriction,
     recommended,
-    fix,
+    suggestion,
     version = "0.0.18",
     short_description = "Disallow 2+ consecutive spaces in regular expressions.",
 );
@@ -63,7 +63,7 @@ impl Rule for NoRegexSpaces {
         match node.kind() {
             AstKind::RegExpLiteral(lit) => {
                 if let Some(span) = Self::find_literal_to_report(lit) {
-                    ctx.diagnostic_with_fix(no_regex_spaces_diagnostic(span), |fixer| {
+                    ctx.diagnostic_with_suggestion(no_regex_spaces_diagnostic(span), |fixer| {
                         Self::fix_spaces(fixer, span)
                     }); // /a  b/
                 }
@@ -71,7 +71,7 @@ impl Rule for NoRegexSpaces {
 
             AstKind::CallExpression(expr) if Self::is_regexp_call_expression(expr) => {
                 if let Some(span) = Self::find_expr_to_report(&expr.arguments, ctx) {
-                    ctx.diagnostic_with_fix(no_regex_spaces_diagnostic(span), |fixer| {
+                    ctx.diagnostic_with_suggestion(no_regex_spaces_diagnostic(span), |fixer| {
                         Self::fix_spaces(fixer, span)
                     }); // RegExp('a  b')
                 }
@@ -79,7 +79,7 @@ impl Rule for NoRegexSpaces {
 
             AstKind::NewExpression(expr) if Self::is_regexp_new_expression(expr) => {
                 if let Some(span) = Self::find_expr_to_report(&expr.arguments, ctx) {
-                    ctx.diagnostic_with_fix(no_regex_spaces_diagnostic(span), |fixer| {
+                    ctx.diagnostic_with_suggestion(no_regex_spaces_diagnostic(span), |fixer| {
                         Self::fix_spaces(fixer, span)
                     }); // new RegExp('a  b')
                 }
@@ -115,7 +115,7 @@ impl NoRegexSpaces {
         let Some(Argument::StringLiteral(pattern)) = args.first() else {
             return None;
         };
-        if !Self::has_double_space(pattern.value.as_str()?) {
+        if !pattern.value.contains("  ") {
             return None;
         }
 
@@ -276,6 +276,8 @@ fn test() {
         "var foo = /[[    ]    ]    /v;",
         "var foo = new RegExp('[   ]  ');",
         "var foo = new RegExp('[[    ]    ]    ', 'v');",
+        r"var foo = RegExp('\uD800  bar');",
+        r"var foo = new RegExp('bar  \uDC00');",
     ];
 
     let fix = vec![
@@ -309,9 +311,27 @@ fn test() {
             "var foo = new RegExp('[[    ] {4}]    ', 'v');",
             None,
         ),
+        (r"var foo = RegExp('\uD800  bar');", r"var foo = RegExp('\uD800 {2}bar');", None),
+        (r"var foo = new RegExp('bar  \uDC00');", r"var foo = new RegExp('bar {2}\uDC00');", None),
     ];
 
     Tester::new(NoRegexSpaces::NAME, NoRegexSpaces::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn test_suggestion_kind() {
+    use crate::{fixer::FixKind, tester::Tester};
+
+    // Regression for #29463: the rewrite must be exposed as a suggestion,
+    // not a safe fix, because it changes RegExp.prototype.source and
+    // RegExp.prototype.toString().
+    let pass = vec!["var foo = /foo/;"];
+    let fail = vec!["var foo = /  /;"];
+    let fix = vec![
+        ("const re = /a  b/;", "const re = /a {2}b/;", None, FixKind::Suggestion),
+        ("const re = RegExp('a  b');", "const re = RegExp('a {2}b');", None, FixKind::Suggestion),
+    ];
+    Tester::new(NoRegexSpaces::NAME, NoRegexSpaces::PLUGIN, pass, fail).expect_fix(fix).test();
 }

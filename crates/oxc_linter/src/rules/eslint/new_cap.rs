@@ -1,4 +1,5 @@
 use lazy_regex::Regex;
+use oxc_allocator::Allocator;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -9,7 +10,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, JSChar, JSStr, JSStrBuilder};
 
 use crate::{
     AstNode,
@@ -435,7 +436,7 @@ impl Rule for NewCap {
                     return;
                 }
 
-                let Some(name) = &extract_name_deep_from_expression(callee) else {
+                let Some(name) = extract_name_deep_from_expression(callee, ctx.allocator()) else {
                     return;
                 };
 
@@ -444,7 +445,7 @@ impl Rule for NewCap {
                     name,
                     self.new_is_cap_exceptions.iter().map(CompactStr::as_str),
                     self.new_is_cap_exception_pattern.as_ref(),
-                ) || (!self.properties && short_name != name.as_str());
+                ) || (!self.properties && short_name != name);
 
                 if !allowed {
                     ctx.diagnostic(new_cap_diagnostic(short_name_span, capitalization));
@@ -463,7 +464,7 @@ impl Rule for NewCap {
                     return;
                 }
 
-                let Some(name) = &extract_name_deep_from_expression(callee) else {
+                let Some(name) = extract_name_deep_from_expression(callee, ctx.allocator()) else {
                     return;
                 };
 
@@ -472,7 +473,8 @@ impl Rule for NewCap {
                     name,
                     self.cap_is_new_exceptions.iter().map(CompactStr::as_str).chain(CAPS_ALLOWED),
                     self.cap_is_new_exception_pattern.as_ref(),
-                ) || (!self.properties && short_name != name.as_str());
+                ) || (!self.properties && short_name != name)
+                    || is_global_date_utc(callee, ctx);
 
                 if !allowed {
                     ctx.diagnostic(new_cap_diagnostic(short_name_span, capitalization));
@@ -483,100 +485,63 @@ impl Rule for NewCap {
     }
 }
 
-fn extract_name_deep_from_expression(expression: &Expression) -> Option<CompactStr> {
+fn extract_name_deep_from_expression<'a>(
+    expression: &Expression<'a>,
+    allocator: &'a Allocator,
+) -> Option<JSStr<'a>> {
     if let Some(identifier) = expression.get_identifier_reference() {
         return Some(identifier.name.into());
     }
 
-    match expression.without_parentheses() {
-        Expression::StaticMemberExpression(expression) => {
-            let prop_name = expression.property.name.into_compact_str();
-            let obj_name =
-                extract_name_deep_from_expression(expression.object.without_parentheses());
+    let mut name = JSStrBuilder::new_in(&allocator);
+    append_name_deep(expression, &mut name)?;
+    Some(name.into_js_str())
+}
 
-            if let Some(obj_name) = obj_name {
-                let new_name = format!("{obj_name}.{prop_name}");
-                return Some(CompactStr::new(&new_name));
-            }
-
-            Some(prop_name)
-        }
-        Expression::ComputedMemberExpression(expression) => {
-            let (prop_name, _) = get_computed_member_name(expression)?;
-            let obj_name =
-                extract_name_deep_from_expression(expression.object.without_parentheses());
-
-            if let Some(obj_name) = obj_name {
-                let new_name = format!("{obj_name}.{prop_name}");
-                return Some(CompactStr::new(&new_name));
-            }
-
-            Some(prop_name.into())
-        }
-        Expression::ChainExpression(chain) => match &chain.expression {
-            ChainElement::CallExpression(call) => extract_name_deep_from_expression(&call.callee),
+fn append_name_deep(expression: &Expression<'_>, name: &mut JSStrBuilder<'_>) -> Option<()> {
+    if let Expression::ChainExpression(chain) = expression.without_parentheses() {
+        match &chain.expression {
+            ChainElement::CallExpression(call) => return append_name_deep(&call.callee, name),
             ChainElement::TSNonNullExpression(non_null) => {
-                extract_name_deep_from_expression(&non_null.expression)
+                return append_name_deep(&non_null.expression, name);
             }
-            ChainElement::StaticMemberExpression(expression) => {
-                let prop_name = expression.property.name.into_compact_str();
-                let obj_name =
-                    extract_name_deep_from_expression(expression.object.without_parentheses());
-
-                if let Some(obj_name) = obj_name {
-                    let new_name = format!("{obj_name}.{prop_name}");
-                    return Some(CompactStr::new(&new_name));
-                }
-
-                Some(prop_name)
-            }
-            ChainElement::ComputedMemberExpression(expression) => {
-                let (prop_name, _) = get_computed_member_name(expression)?;
-                let obj_name =
-                    extract_name_deep_from_expression(expression.object.without_parentheses());
-
-                if let Some(obj_name) = obj_name {
-                    let new_name = format!("{obj_name}.{prop_name}");
-                    return Some(CompactStr::new(&new_name));
-                }
-
-                Some(prop_name.into())
-            }
-            ChainElement::PrivateFieldExpression(_) => None,
-        },
-        _ => None,
+            _ => {}
+        }
     }
+
+    let (prop_name, _) = extract_name_from_expression(expression)?;
+    if let Some(member) = expression.get_member_expr()
+        && append_name_deep(member.object(), name).is_some()
+    {
+        name.push('.');
+    }
+    name.push_js_str(prop_name);
+    Some(())
 }
 
 fn get_computed_member_name<'a>(
     computed_member: &ComputedMemberExpression<'a>,
-) -> Option<(&'a str, Span)> {
+) -> Option<(JSStr<'a>, Span)> {
     let expression = computed_member.expression.without_parentheses();
 
     match &expression {
-        Expression::StringLiteral(lit) if !lit.value.is_empty() => {
-            Some((lit.value.as_str()?, lit.span))
+        Expression::StringLiteral(lit) if !lit.value.is_empty() => Some((lit.value, lit.span)),
+        Expression::TemplateLiteral(lit) => {
+            lit.single_quasi().filter(|value| !value.is_empty()).map(|value| (value, lit.span))
         }
-        Expression::TemplateLiteral(lit)
-            if lit.expressions.is_empty()
-                && lit.quasis.len() == 1
-                && !lit.quasis[0].value.raw.is_empty() =>
-        {
-            Some((lit.quasis[0].value.raw.as_str(), lit.span))
-        }
-        Expression::RegExpLiteral(lit) => lit.raw.as_ref().map(|x| (x.as_str(), lit.span)),
+        Expression::RegExpLiteral(lit) => lit.raw.map(|raw| (JSStr::from(raw), lit.span)),
         _ => None,
     }
 }
 
-fn extract_name_from_expression<'a>(expression: &Expression<'a>) -> Option<(&'a str, Span)> {
+fn extract_name_from_expression<'a>(expression: &Expression<'a>) -> Option<(JSStr<'a>, Span)> {
     if let Some(identifier) = expression.get_identifier_reference() {
-        return Some((identifier.name.as_str(), identifier.span));
+        return Some((JSStr::from(identifier.name), identifier.span));
     }
 
     match expression.without_parentheses() {
         Expression::StaticMemberExpression(expression) => {
-            Some((expression.property.name.as_str(), expression.property.span))
+            Some((JSStr::from(expression.property.name), expression.property.span))
         }
         Expression::ComputedMemberExpression(expression) => get_computed_member_name(expression),
         Expression::ChainExpression(chain) => match &chain.expression {
@@ -585,7 +550,7 @@ fn extract_name_from_expression<'a>(expression: &Expression<'a>) -> Option<(&'a 
                 extract_name_from_expression(&non_null.expression)
             }
             ChainElement::StaticMemberExpression(expression) => {
-                Some((expression.property.name.as_str(), expression.property.span))
+                Some((JSStr::from(expression.property.name), expression.property.span))
             }
             ChainElement::ComputedMemberExpression(expression) => {
                 get_computed_member_name(expression)
@@ -597,8 +562,8 @@ fn extract_name_from_expression<'a>(expression: &Expression<'a>) -> Option<(&'a 
 }
 
 fn is_cap_allowed_expression<'a, I>(
-    short_name: &str,
-    name: &CompactStr,
+    short_name: JSStr<'_>,
+    name: JSStr<'_>,
     exceptions: I,
     patterns: Option<&Regex>,
 ) -> bool
@@ -606,20 +571,44 @@ where
     I: Iterator<Item = &'a str>,
 {
     for exception in exceptions {
-        if exception == name.as_str() || exception == short_name {
+        if name == exception || short_name == exception {
             return true;
         }
     }
 
-    if name == "Date.UTC" {
-        return true;
-    }
-
     if let Some(pattern) = &patterns {
-        return pattern.find(name).is_some();
+        // A name with a lone surrogate matches no exception pattern.
+        return name.as_str().is_some_and(|name| pattern.is_match(name));
     }
 
     false
+}
+
+/// `Date.UTC`, where `Date` is the global built-in: `Date` itself, or `Date`
+/// read from the global object (`globalThis.Date`, `window.Date`, ...).
+fn is_global_date_utc(callee: &Expression, ctx: &LintContext) -> bool {
+    callee.get_member_expr().is_some_and(|member| {
+        extract_name_from_expression(callee).is_some_and(|(name, _)| name == "UTC")
+            && is_global_built_in(member.object(), "Date", ctx)
+    })
+}
+
+fn is_global_built_in(expr: &Expression, name: &str, ctx: &LintContext) -> bool {
+    let expr = expr.without_parentheses();
+    if let Some(member) = expr.get_member_expr() {
+        return extract_name_from_expression(expr).is_some_and(|(prop, _)| prop == name)
+            && matches!(
+                member.object().without_parentheses(),
+                Expression::Identifier(object)
+                    if matches!(object.name.as_str(), "global" | "globalThis" | "self" | "window")
+                        && ctx.is_reference_to_global_variable(object)
+            );
+    }
+    matches!(
+        expr,
+        Expression::Identifier(ident)
+            if ident.name == name && ctx.is_reference_to_global_variable(ident)
+    )
 }
 
 #[derive(PartialEq, Debug)]
@@ -629,8 +618,12 @@ enum GetCapResult {
     NonAlpha,
 }
 
-fn get_cap(string: &str) -> GetCapResult {
-    let first_char = string.chars().next().unwrap();
+fn get_cap(name: JSStr) -> GetCapResult {
+    // A lone surrogate has no case (`toUpperCase` leaves it unchanged),
+    // so ESLint classifies such a name as non-alphabetic.
+    let Some(first_char) = name.chars().next().and_then(JSChar::to_char) else {
+        return GetCapResult::NonAlpha;
+    };
 
     if !first_char.is_alphabetic() {
         return GetCapResult::NonAlpha;
@@ -648,6 +641,11 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        // Lone surrogates are part of the value.
+        // A search or prefix check must still see the rest.
+        (r#"var x = new o["\uD800a"]();"#, None),
+        (r#"var x = new o["a\uD800"]();"#, Some(serde_json::json!([{ "properties": false }]))),
+        (r#"var x = new o["A\uD83D\uDE00"]();"#, None),
         ("var x = new Constructor();", None),
         ("var x = new a.b.Constructor();", None),
         ("var x = new a.b['Constructor']();", None),
@@ -733,11 +731,60 @@ fn test() {
                 "capIsNewExceptions": ["services.registry.CreateDocumentForCurrentSession"]
             }])),
         ),
-        // Template literal property names use their raw text.
-        (r"services.registry[`\u0043reateDocumentForCurrentSession`]();", None),
+        (
+            r"services.registry[`\u0043reateDocumentForCurrentSession`]();",
+            Some(serde_json::json!([{
+                "capIsNewExceptions": ["services.registry.CreateDocumentForCurrentSession"]
+            }])),
+        ),
+        ("globalThis.Date.UTC(2000, 0);", None),
+        ("globalThis['Date'].UTC(2000, 0);", None),
+        ("globalThis?.Date.UTC(2000, 0);", None),
+        ("globalThis.Date?.UTC(2000, 0);", None),
+        ("window.Date.UTC(2000, 0);", None),
+        ("self.Date.UTC(2000, 0);", None),
+        ("global.Date.UTC(2000, 0);", None),
+        (
+            "const Date = { UTC() {} }; Date.UTC(2000, 0);",
+            Some(serde_json::json!([{ "capIsNewExceptions": ["UTC"] }])),
+        ),
+        ("Date[('UTC')](2000, 0);", None),
+        ("Date[(`UTC`)](2000, 0);", None),
+        ("Date?.[('UTC')](2000, 0);", None),
+        ("globalThis[('Date')].UTC(2000, 0);", None),
+        ("globalThis[(`Date`)].UTC(2000, 0);", None),
+        ("globalThis?.[('Date')]?.[('UTC')](2000, 0);", None),
     ];
 
     let fail = vec![
+        (
+            r"new o['a\uD800']();",
+            Some(serde_json::json!([{ "newIsCapExceptions": [r#"o."a\ud800""#] }])),
+        ),
+        (
+            r"o['A\uDC00']();",
+            Some(serde_json::json!([{ "capIsNewExceptions": [r#"o."A\udc00""#] }])),
+        ),
+        (
+            r"new o['a\uD800']();",
+            Some(serde_json::json!([{ "newIsCapExceptionPattern": "^other" }])),
+        ),
+        // A name with a lone surrogate matches no exception pattern.
+        (
+            r"new o['a\uD800']();",
+            Some(serde_json::json!([{ "newIsCapExceptionPattern": "^o\\.a" }])),
+        ),
+        (r"o['A\uDC00']();", Some(serde_json::json!([{ "capIsNewExceptionPattern": "^o\\.A" }]))),
+        (
+            r"(o?.['A\uDC00'])();",
+            Some(serde_json::json!([{ "capIsNewExceptionPattern": "^o\\.A" }])),
+        ),
+        (r"services.registry[`\u0043reateDocumentForCurrentSession`]();", None),
+        (r"new o[`a\uD800`]();", None),
+        // Lone surrogates are part of the value.
+        // A search or prefix check must still see the rest.
+        (r#"var x = new o["a\uD800"]();"#, None),
+        (r#"var x = o["A\uDC00"]();"#, None),
         ("var x = new c();", None),
         ("var x = new φ;", None),
         ("var x = new a.b.c;", None),
@@ -787,6 +834,13 @@ fn test() {
             }])),
         ),
         (r#"(services.registry?.["\u0043reateDocumentForCurrentSession"])();"#, None),
+        ("const Date = { UTC() {} }; Date.UTC(2000, 0);", None),
+        ("function foo(Date) { return Date.UTC(2000, 0); }", None),
+        ("import { Date } from 'foo'; Date?.UTC(2000, 0);", None),
+        ("function foo(globalThis) { return globalThis.Date.UTC(2000, 0); }", None),
+        ("globalThis.foo.UTC(2000, 0);", None),
+        ("function foo(Date) { Date[('UTC')](2000, 0); }", None),
+        ("function foo(globalThis) { globalThis[('Date')].UTC(2000, 0); }", None),
     ];
 
     Tester::new(NewCap::NAME, NewCap::PLUGIN, pass, fail).test_and_snapshot();

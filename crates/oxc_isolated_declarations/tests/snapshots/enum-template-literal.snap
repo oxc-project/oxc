@@ -1,0 +1,42 @@
+---
+source: crates/oxc_isolated_declarations/tests/mod.rs
+input_file: crates/oxc_isolated_declarations/tests/fixtures/enum-template-literal.ts
+---
+```
+==================== .D.TS ====================
+
+export declare enum Ev {
+	Prefix = "app",
+	Click = "app:click",
+	Multi = "line1\nline2",
+	Num = "x1y",
+	Empty = "",
+	Adjacent = "appx1y",
+	Qualified = "app:x1y",
+	Nested = "ab3cd",
+	Escapes = "AB😀	`$\\",
+	Surrogates = "𐀀\ud801",
+	Numbers = "0,-1.5,1e+21,Infinity,NaN",
+	Runtime
+}
+export declare const enum ConstEv {
+	Prefix = "app",
+	Click = "app:click",
+	Multi = "line1\nline2",
+	Num = "x1y",
+	Runtime
+}
+
+
+==================== Errors ====================
+
+  x TS2474: const enum member initializers must be constant expressions.
+    ,-[21:13]
+ 20 |   Num = `x${1}y`,
+ 21 |   Runtime = `prefix${Math.random()}suffix`,
+    :             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 22 | }
+    `----
+
+
+```

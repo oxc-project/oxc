@@ -10,7 +10,7 @@ use cow_utils::CowUtils;
 use oxc_formatter_core::arena_cow_str;
 use oxc_markdown_parser::{
     Constructs, Span,
-    ast::{CodeSpan, Emphasis, HardBreakKind, Inline, LinkKind, Strong},
+    ast::{CodeSpan, Emphasis, HardBreakKind, Inline, LinkKind, ReferenceKind, Strong},
     escapes_next, lexical, unicode,
 };
 
@@ -106,7 +106,7 @@ pub fn collect_phrasing<'a>(
 
 /// For every code span, the backtick run lengths (bit `n - 1` for a run of `n`) that occur
 /// before it in the content as literal text
-/// (outside code spans, HTML, autolinks, math, liquid, whose backticks never delimit):
+/// (outside the spans of `collect_opaque_spans`, whose backticks never delimit):
 /// a printed fence of such a length would pair with the run and move the span.
 fn code_span_literal_runs<'a>(
     children: &'a [Inline<'a>],
@@ -144,11 +144,13 @@ fn collect_opaque_spans<'a>(children: &'a [Inline<'a>], out: &mut Vec<(Span, boo
             | Inline::AutolinkLiteral(_)
             | Inline::MathSpan(_)
             | Inline::Liquid(_)
-            | Inline::WikiLink(_) => out.push((child.span(), false)),
+            | Inline::WikiLink(_)
+            | Inline::FootnoteReference(_) => out.push((child.span(), false)),
             Inline::Emphasis(e) => collect_opaque_spans(&e.children, out),
             Inline::Strong(s) => collect_opaque_spans(&s.children, out),
             Inline::Strikethrough(s) => collect_opaque_spans(&s.children, out),
-            // Link text is inline content; a reference label or a title is not
+            // Link text is inline content; a destination, a title or a full reference's label is not
+            // (a collapsed / shortcut one is the text itself)
             Inline::Link(l) => {
                 collect_opaque_spans(&l.children, out);
                 collect_link_kind_spans(&l.kind, out);
@@ -163,12 +165,16 @@ fn collect_opaque_spans<'a>(children: &'a [Inline<'a>], out: &mut Vec<(Span, boo
 }
 
 fn collect_link_kind_spans(kind: &LinkKind<'_>, out: &mut Vec<(Span, bool)>) {
-    let pieces = match kind {
-        LinkKind::Reference { label, .. } => label,
-        LinkKind::Inline { title: Some(title), .. } => title,
-        LinkKind::Inline { title: None, .. } => return,
-    };
-    out.extend(pieces.iter().map(|piece| (piece.span, false)));
+    match kind {
+        LinkKind::Reference { kind: ReferenceKind::Full, label } => {
+            out.extend(label.iter().map(|piece| (piece.span, false)));
+        }
+        LinkKind::Reference { .. } => {}
+        LinkKind::Inline { destination, title } => {
+            out.push((destination.span, false));
+            out.extend(title.iter().flatten().map(|piece| (piece.span, false)));
+        }
+    }
 }
 
 /// The emphasis marker as printed: `_` unless a word touches it (`1*2*3` is emphasis, `1_2_3` is not),
@@ -334,6 +340,9 @@ pub fn collect_inlines<'a>(
                     parts.push_str("\\");
                 }
                 let autolink_stretch = autolink_stretch(children, i, raw);
+                // A text never spans a line, so only `always` breaks its whitespace
+                // and reads the words a break would put at a line start
+                let always = f.options().prose_wrap == ProseWrap::Always;
                 let cx = words::TextContext {
                     autolink_stretch,
                     first_of_delimiter: parent.delimiter.filter(|_| i == 0),
@@ -346,8 +355,20 @@ pub fn collect_inlines<'a>(
                     ),
                     after_liquid: follows_liquid(children, i),
                     before_soft_break: matches!(children.get(i + 1), Some(Inline::SoftBreak(_))),
-                    next_word: next_word_of(children, i, parent.delimiter, f),
-                    glued_last_word: glued_last_word(children, i, raw, f),
+                    last_on_line: matches!(
+                        children.get(i + 1),
+                        None | Some(Inline::SoftBreak(_) | Inline::HardBreak(_))
+                    ),
+                    next_word: if always {
+                        next_word_of(children, i, parent.delimiter, f)
+                    } else {
+                        None
+                    },
+                    glued_last_word: if always {
+                        glued_last_word(children, i, raw, f)
+                    } else {
+                        None
+                    },
                     has_cjk,
                     ..words::TextContext::default()
                 };

@@ -67,7 +67,8 @@ declare_oxc_lint!(
     conditional_fix,
     config = DotNotationConfig,
     version = "1.49.0",
-    short_description = "Enforce dot notation whenever property access can be written safely as `obj.prop`.",
+    short_description =
+        "Enforce dot notation whenever property access can be written safely as `obj.prop`.",
 );
 
 impl Rule for DotNotation {

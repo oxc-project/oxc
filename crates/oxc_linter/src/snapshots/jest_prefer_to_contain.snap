@@ -234,3 +234,17 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ───────
    ╰────
   help: Replace `expect(a.includes(b)).toEqual(false as boolean)` with `expect(a).not.toContain(b)`.
+
+  ⚠ jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:29]
+ 1 │ expect([NaN].includes(NaN)).toBe(true);
+   ·                             ────
+   ╰────
+  help: Replace `expect([NaN].includes(NaN)).toBe(true)` with `expect([NaN]).toContain(NaN)`.
+
+  ⚠ jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:114]
+ 1 │ class Tags { includes(tag: string) { return tag === 'a'; } } const tags = new Tags(); expect(tags.includes('a')).toBe(true);
+   ·                                                                                                                  ────
+   ╰────
+  help: Replace `expect(tags.includes('a')).toBe(true)` with `expect(tags).toContain('a')`.

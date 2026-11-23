@@ -180,6 +180,15 @@ skip-tree = [
   # { name = "ansi_term", version = "=0.11.0", depth = 20 },
 ]
 
+# papaya enables seize's `fast-barrier` feature by default. On Linux it makes seize register
+# `MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED` when the first collector is created, and in a
+# multi-threaded process the kernel then waits for an RCU grace period (tens of ms, on every
+# oxlint run). The workspace disables papaya's default features. Cargo features are additive,
+# so this rule fails if any other crate enables the feature again and helps us notice that.
+[[bans.features]]
+crate = "seize"
+deny = ["fast-barrier"]
+
 # This section is considered when running `cargo deny check sources`.
 # More documentation about the 'sources' section can be found here:
 # https://embarkstudios.github.io/cargo-deny/checks/sources/cfg.html

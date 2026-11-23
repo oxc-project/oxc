@@ -10,8 +10,8 @@ use oxc_str::{CompactStr, Ident, JSStr};
 /// The JavaScript string value of a statically known property key.
 ///
 /// Static means statically determinable, not a `static` class member.
-/// Names already stored in the AST borrow their storage. Numeric keys own their Rust `f64`
-/// `Display` text, preserving the existing naming behavior. Both forms compare and hash by text,
+/// Names already stored in the AST borrow their storage. Formatted names own their storage.
+/// Both forms compare and hash by text,
 /// so `{ 1: a, "1": b }` declares the same name twice.
 #[derive(Clone)]
 pub enum StaticPropertyName<'a> {
@@ -33,6 +33,15 @@ impl StaticPropertyName<'_> {
     /// Borrow a UTF-8 name, if it contains no lone surrogate.
     pub fn as_str(&self) -> Option<&str> {
         self.as_js_str().as_str()
+    }
+
+    /// Display the name for diagnostics, escaping lone surrogates in the same lowercase spelling
+    /// as the Debug form and printed output.
+    ///
+    /// The output is not injective: `"\uD800"` and `"\\ud800"` both print as `\ud800`, so never
+    /// compare or key by it.
+    pub fn display(&self) -> impl fmt::Display + '_ {
+        self.as_js_str().display()
     }
 }
 
@@ -106,14 +115,6 @@ impl PartialEq<Ident<'_>> for StaticPropertyName<'_> {
     }
 }
 
-impl fmt::Display for StaticPropertyName<'_> {
-    /// Display a name for diagnostics, escaping lone surrogates in the same lowercase spelling as
-    /// the Debug form and printed output.
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Display::fmt(&self.as_js_str().display(), f)
-    }
-}
-
 impl PartialEq<JSStr<'_>> for StaticPropertyName<'_> {
     fn eq(&self, other: &JSStr<'_>) -> bool {
         self.as_js_str() == *other
@@ -130,7 +131,7 @@ impl fmt::Debug for StaticPropertyName<'_> {
 mod tests {
     use super::StaticPropertyName;
     use oxc_allocator::Allocator;
-    use oxc_str::{JSStr, JSStrBuilder, format_compact_str};
+    use oxc_str::{JSStr, JSStrBuilder};
     use rustc_hash::FxHashSet;
 
     #[test]
@@ -172,12 +173,22 @@ mod tests {
     }
 
     #[test]
-    fn numbers_are_named_by_f64_display() {
-        for value in [1e21, 1e-7, -f64::MAX, -5e-324, -f64::MIN_POSITIVE, f64::NAN, -0.0] {
-            let text = value.to_string();
-            let name = StaticPropertyName::Owned(format_compact_str!("{value}"));
-            assert_eq!(name.to_string(), text);
-            assert_eq!(name, StaticPropertyName::from(text.as_str()));
+    fn numeric_keys_use_javascript_names() {
+        use crate::{ast::PropertyKey, builder::AstBuilder};
+        use oxc_span::SPAN;
+
+        let allocator = Allocator::new();
+        let ast = AstBuilder::new(&allocator);
+        for (value, raw, name) in
+            [(1e21, "1e21", "1e+21"), (1e-7, "1e-7", "1e-7"), (f64::INFINITY, "2e308", "Infinity")]
+        {
+            let key = PropertyKey::new_static_numeric_literal(SPAN, value, Some(raw.into()), &ast);
+            assert_eq!(key.literal_name().unwrap(), name);
+            assert_eq!(key.static_name().unwrap(), name);
+
+            let key = PropertyKey::new_numeric_literal(SPAN, value, None, &ast);
+            assert!(key.literal_name().is_none());
+            assert_eq!(key.static_name().unwrap(), name);
         }
     }
 }

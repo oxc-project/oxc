@@ -62,9 +62,73 @@ fn test_remove_no_op_labelled_statement() {
     test("a: { break a; console.log('unreachable'); }", "");
     test("a: { break a; var x = 1; } x = 2;", "var x = 2;");
 
-    test("b: { var x = 1; } x = 2;", "b: var x = 1; x = 2;");
-    test("a: b: { var x = 1; } x = 2;", "a: b: var x = 1; x = 2;");
+    test("b: { var x = 1; } x = 2;", "var x = 1; x = 2;");
+    test("a: b: { var x = 1; } x = 2;", "var x = 1; x = 2;");
     test("foo:;", "");
+}
+
+#[test]
+fn test_remove_unused_labels() {
+    test("a: foo()", "foo()");
+    test("a: { foo(); bar() }", "foo(), bar()");
+    test("a: for (;;) foo()", "for (;;) foo()");
+    test("a: { if (false) break a; foo() }", "foo()");
+    test("a: { let x = foo(); bar(x, x) }", "{ let x = foo(); bar(x, x); }");
+
+    test("foo: while (true) { break foo; }", "for (;;) break;");
+    test("foo: for (x of y) { if (z) continue foo; bar() }", "for (x of y) z || bar();");
+    test("a: do { if (x) continue a; y(); } while (z)", "do x || y(); while (z);");
+    test("a: do { if (x) break a; y(); } while (z)", "do { if (x) break; y(); } while (z);");
+    test("foo: switch (x) { case 1: a(); break foo; }", "x === 1 && a();");
+    test("a: b: while (x) { if (y) break a; foo() }", "for (; x && !y;) foo();");
+    test("a: b: while (x) { if (y) continue b; foo() }", "for (; x;) y || foo();");
+    test(
+        "foo: while (x) { try { if (a) break foo; } finally { b() } bar: { if (c) continue foo; d() } switch (y) { case 1: continue foo; } }",
+        "for (; x;) { try { if (a) break; } finally { b(); } c || (d(), y); }",
+    );
+
+    test("foo: while (x) while (y) break foo;", "foo: for (; x;) for (; y;) break foo;");
+    test(
+        "foo: while (x) switch (y) { case 1: break foo; }",
+        "foo: for (; x;) switch (y) { case 1: break foo; }",
+    );
+    test(
+        "foo: while (x) { if (a) break foo; while (y) if (b) break foo; }",
+        "foo: for (; x && !a;) for (; y;) if (b) break foo;",
+    );
+    test("foo: { while (x) break foo; }", "foo: { for (; x;) break foo; }");
+
+    test("a: x = function () { a: for (;;) if (y) break a; }", "x = function() { for (; !y;); };");
+    test(
+        "a: x = function () { a: for (;;) for (;;) if (y) break a; }",
+        "x = function() { a: for (;;) for (;;) if (y) break a; };",
+    );
+    test(
+        "a: for (;;) { function g() { a: for (;;) for (;;) if (y) break a; } if (x) break a; h(g) }",
+        "for (;;) { function g() { a: for (;;) for (;;) if (y) break a; } if (x) break; h(g); }",
+    );
+    test(
+        "a: for (;;) { h(function () { a: for (;;) for (;;) if (y) break a; }); if (x) break a; }",
+        "for (; h(function() { a: for (;;) for (;;) if (y) break a; }), !x;);",
+    );
+    test(
+        "a: for (;;) { h(class { static { a: for (;;) for (;;) if (y) break a; } }); if (x) break a; }",
+        "for (; h(class { static { a: for (;;) for (;;) if (y) break a; } }), !x;);",
+    );
+
+    let script = SourceType::cjs().with_script(true);
+    test_same_options_source_type("a: function f() {}", script, &default_options());
+    test_same_options_source_type(
+        "{ let y = g(); a: function f() { h(y) } } f();",
+        script,
+        &default_options(),
+    );
+    test_options_source_type(
+        "a: b: function f() {}",
+        "b: function f() {}",
+        script,
+        &default_options(),
+    );
 }
 
 #[test]
@@ -290,6 +354,26 @@ fn remove_unused_expressions_in_sequence() {
 }
 
 #[test]
+fn keep_indirect_access_in_decorator() {
+    test("@((0, a.b)) class C {}", "@(0, a.b) class C {}");
+    test("@((0, a[b])) class C {}", "@(0, a[b]) class C {}");
+    test("@((true, a.b)) class C {}", "@(0, a.b) class C {}");
+    test("@((true, true, a.b)) class C {}", "@(0, a.b) class C {}");
+    test_same("@(x(), a.b) class C {}");
+    test("@(true ? a.b : c) class D {}", "@(0, a.b) class D {}");
+    test("var x; @(x ? a.b : a.b) class D {}", "var x; @(0, a.b) class D {}");
+    test("@(true && a.b) class C {}", "@(0, a.b) class C {}");
+    test("@(null ?? a.b) class C {}", "@(0, a.b) class C {}");
+    test("class E { @((0, a.b)) m() {} }", "class E { @(0, a.b) m() {} }");
+    test("class E { @((0, a.b)) p = 1 }", "class E { @(0, a.b) p = 1 }");
+    test("@((0, foo)) class C {}", "@foo class C {}");
+    test("@((0, a?.b)) class C {}", "@(0, a?.b) class C {}");
+    test("@((0, a?.b.c)) class C {}", "@(0, a?.b.c) class C {}");
+    test("@(true && a?.b) class C {}", "@(0, a?.b) class C {}");
+    test("@((0, a?.b())) class C {}", "@(a?.b()) class C {}");
+}
+
+#[test]
 fn remove_unused_expressions_in_for() {
     test("var i; for (i = 0, 0; i < 10; i++) foo(i);", "for (var i = 0; i < 10; i++) foo(i);");
     test("var i; for (i = 0; i < 10; 0, i++, 0) foo(i);", "for (var i = 0; i < 10; i++) foo(i);");
@@ -332,6 +416,21 @@ fn remove_empty_function() {
 
     test_same_options("function* foo({}) {} foo()", &options);
     test_options("var foo = function*({}) {}; foo()", "(function*({}) {})()", &options);
+}
+
+#[test]
+fn pure_function_preserves_rest_destructuring() {
+    test_same("function foo(...[v = side_effect()]) {} foo(), foo();");
+    test_same("function foo(...[v = side_effect()]) {} use(foo(), foo());");
+    test_same("var foo = function (...[v = side_effect()]) {}; foo(), foo();");
+    test_same("var foo = function (...[v = side_effect()]) {}; use(foo(), foo());");
+    test_same("var foo = (...[v = side_effect()]) => {}; foo(), foo();");
+    test_same("var foo = (...[v = side_effect()]) => {}; use(foo(), foo());");
+    test_same("function foo(...{0: v = side_effect()}) {} foo(), foo();");
+    test_same("function foo(...{0: v = side_effect()}) {} use(foo(), foo());");
+    test_same("function foo(...[[v]]) {} foo(), foo();");
+    test_same("function foo(...[[v]]) {} use(foo(), foo());");
+    test("function foo(...args) {} foo();", "function foo(...args) {}");
 }
 
 #[test]

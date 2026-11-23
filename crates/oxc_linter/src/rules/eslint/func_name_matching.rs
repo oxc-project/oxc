@@ -212,7 +212,7 @@ impl Rule for FuncNameMatching {
                 };
                 let Some(func_name) = function_expression_name(init) else { return };
 
-                self.report_if_should_warn(StaticPropertyName::from(name), &func_name, false, ctx);
+                self.report_if_should_warn(&StaticPropertyName::from(name), &func_name, false, ctx);
             }
             AstKind::AssignmentExpression(assign_expr) => {
                 let Some(func_name) = function_expression_name(&assign_expr.right) else { return };
@@ -231,7 +231,7 @@ impl Rule for FuncNameMatching {
                 }
 
                 self.report_if_should_warn(
-                    StaticPropertyName::from(name),
+                    &StaticPropertyName::from(name),
                     &func_name,
                     is_property,
                     ctx,
@@ -258,14 +258,14 @@ impl FuncNameMatching {
 
     fn report_if_should_warn(
         &self,
-        name: StaticPropertyName<'_>,
+        name: &StaticPropertyName<'_>,
         func_name: &FunctionName<'_>,
         is_property: bool,
         ctx: &LintContext,
     ) {
-        if self.should_warn(&name, func_name.name) {
+        if self.should_warn(name, func_name.name) {
             ctx.diagnostic(func_name_matching_diagnostic(
-                name,
+                name.display(),
                 func_name.name,
                 is_property,
                 self.0.0,
@@ -283,18 +283,18 @@ impl FuncNameMatching {
         let Some(function) = as_named_function(&property.value) else { return };
         let Some(function_name) = function_name(function) else { return };
 
-        if property_key_is_identifier(&property.key) && !property.computed {
+        if property_key_is_identifier(&property.key) {
             let Some(property_name) = property.key.static_name() else { return };
 
             if self.0.1.consider_property_descriptor && property_name == "value" {
                 match property_descriptor_name(node, ctx) {
                     DescriptorName::Name(descriptor_name) => {
-                        self.report_if_should_warn(descriptor_name, &function_name, true, ctx);
+                        self.report_if_should_warn(&descriptor_name, &function_name, true, ctx);
                     }
                     DescriptorName::Unresolved => {}
                     DescriptorName::NotDescriptor => {
                         self.report_if_should_warn(
-                            StaticPropertyName::from("value"),
+                            &StaticPropertyName::from("value"),
                             &function_name,
                             true,
                             ctx,
@@ -302,7 +302,7 @@ impl FuncNameMatching {
                     }
                 }
             } else {
-                self.report_if_should_warn(property_name, &function_name, true, ctx);
+                self.report_if_should_warn(&property_name, &function_name, true, ctx);
             }
 
             return;
@@ -312,7 +312,7 @@ impl FuncNameMatching {
             && is_valid_identifier(property_name)
         {
             self.report_if_should_warn(
-                StaticPropertyName::from(property_name),
+                &StaticPropertyName::from(property_name),
                 &function_name,
                 true,
                 ctx,
@@ -328,10 +328,10 @@ impl FuncNameMatching {
         let Some(value) = property.value.as_ref() else { return };
         let Some(function_name) = function_expression_name(value) else { return };
 
-        if property_key_is_identifier(&property.key) && !property.computed {
+        if property_key_is_identifier(&property.key) {
             let Some(property_name) = property.key.static_name() else { return };
 
-            self.report_if_should_warn(property_name, &function_name, true, ctx);
+            self.report_if_should_warn(&property_name, &function_name, true, ctx);
             return;
         }
 
@@ -339,7 +339,7 @@ impl FuncNameMatching {
             && is_valid_identifier(property_name)
         {
             self.report_if_should_warn(
-                StaticPropertyName::from(property_name),
+                &StaticPropertyName::from(property_name),
                 &function_name,
                 true,
                 ctx,
@@ -375,8 +375,7 @@ fn property_descriptor_name<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> De
                 })
         }
         AstKind::ObjectProperty(descriptor_property) => {
-            if descriptor_property.computed || !property_key_is_identifier(&descriptor_property.key)
-            {
+            if !property_key_is_identifier(&descriptor_property.key) {
                 return DescriptorName::Unresolved;
             }
 
@@ -467,14 +466,16 @@ fn property_key_is_identifier(key: &PropertyKey) -> bool {
 
 fn string_literal_key_name<'a>(key: &'a PropertyKey<'a>) -> Option<&'a str> {
     match key {
-        PropertyKey::StringLiteral(lit) => lit.value.as_str(),
+        PropertyKey::StaticStringLiteral(lit) | PropertyKey::StringLiteral(lit) => {
+            lit.value.as_str()
+        }
         _ => None,
     }
 }
 
-fn string_literal_argument<'a>(argument: &'a Argument<'a>) -> Option<&'a str> {
+fn string_literal_argument<'a>(argument: &'a Argument<'a>) -> Option<JSStr<'a>> {
     match argument.as_expression()?.without_parentheses() {
-        Expression::StringLiteral(lit) => lit.value.as_str(),
+        Expression::StringLiteral(lit) => Some(lit.value),
         _ => None,
     }
 }
@@ -841,6 +842,10 @@ fn test() {
             "(Object?.defineProperties)(foo, { bar: { value: function bar() {} } })",
             Some(serde_json::json!(["never", { "considerPropertyDescriptor": true }])),
         ), // { "ecmaVersion": 2020 },
+        (
+            r#"Object.defineProperty(o, "\uD800", { value: function foo() {} })"#,
+            Some(serde_json::json!(["always", { "considerPropertyDescriptor": true }])),
+        ),
         ("class C { x = function y() {}; }", Some(serde_json::json!(["always"]))), // { "ecmaVersion": 2022 },
         ("class C { x = function x() {}; }", Some(serde_json::json!(["never"]))), // { "ecmaVersion": 2022 },
         ("class C { 'x' = function y() {}; }", Some(serde_json::json!(["always"]))), // { "ecmaVersion": 2022 },

@@ -70,7 +70,8 @@ declare_oxc_lint!(
     restriction,
     none,
     version = "1.53.0",
-    short_description = "Prevents the usage of `React.cloneElement`, which is considered an anti-pattern in React.",
+    short_description =
+        "Prevents the usage of `React.cloneElement`, which is considered an anti-pattern in React.",
 );
 
 impl Rule for NoCloneElement {

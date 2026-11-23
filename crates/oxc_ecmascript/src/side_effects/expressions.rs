@@ -2,16 +2,14 @@ use oxc_ast::ast::*;
 use oxc_str::JSStr;
 
 use crate::{
-    DetermineValueType, ToBigInt, ToIntegerIndex, ValueType,
-    to_numeric::ToNumeric,
-    to_primitive::{ToPrimitive, ToPrimitiveResult},
+    DetermineValueType, ToBigInt, ToIntegerIndex, ToNumber, ValueType, to_numeric::ToNumeric,
+    to_primitive::ToPrimitive,
 };
 
 use super::known_globals::{
-    is_error_constructor, is_known_global_constructor, is_known_global_identifier,
-    is_known_global_property, is_known_global_property_deep, is_pure_callable_constructor,
-    is_pure_collection_constructor, is_pure_global_function, is_pure_global_method_call,
-    is_typed_array_constructor, is_unconditionally_pure_constructor, is_valid_regexp,
+    any_arg_throws_to_number, is_known_global_constructor, is_known_global_identifier,
+    is_known_global_property, is_known_global_property_deep, is_pure_global_constructor,
+    is_pure_global_function, is_pure_global_method_call,
 };
 use super::{MayHaveSideEffects, PropertyReadSideEffects, context::MayHaveSideEffectsContext};
 
@@ -165,7 +163,7 @@ impl<'a> MayHaveSideEffects<'a> for BinaryExpression<'a> {
                         && ctx.is_global_reference(right_ident)
                         && !self.left.value_type(ctx).is_undetermined()
                     {
-                        return false;
+                        return self.left.may_have_side_effects(ctx);
                     }
                 }
                 // instanceof can throw `TypeError`
@@ -336,7 +334,11 @@ impl<'a> MayHaveSideEffects<'a> for ObjectProperty<'a> {
 impl<'a> MayHaveSideEffects<'a> for PropertyKey<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         match self {
-            PropertyKey::StaticIdentifier(_) | PropertyKey::PrivateIdentifier(_) => false,
+            PropertyKey::StaticIdentifier(_)
+            | PropertyKey::StaticStringLiteral(_)
+            | PropertyKey::StaticNumericLiteral(_)
+            | PropertyKey::StaticBigIntLiteral(_)
+            | PropertyKey::PrivateIdentifier(_) => false,
             match_expression!(PropertyKey) => {
                 // ToPropertyKey(key) throws an error when ToPrimitive(key) throws an Error
                 // But we can ignore that by using the assumption.
@@ -603,54 +605,8 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
         if let Expression::Identifier(ident) = &self.callee
             && ctx.is_global_reference(ident)
         {
-            let name = ident.name.as_str();
-            // Number(Symbol()) throws (ToNumeric), Symbol(Symbol()) throws (ToString),
-            // Error(Symbol()) throws (ToString). ToPrimitive on objects assumed pure.
-            if name == "Number" || name == "Symbol" || is_error_constructor(name) {
-                if self.arguments.iter().any(|e| e.may_have_side_effects(ctx)) {
-                    return true;
-                }
-                return self.arguments.first().is_some_and(|arg| {
-                    arg.as_expression()
-                        .is_none_or(|expr| expr.to_primitive(ctx).is_symbol() != Some(false))
-                });
-            }
-            if name == "BigInt" {
-                if self.arguments.iter().any(|e| e.may_have_side_effects(ctx)) {
-                    return true;
-                }
-                // BigInt(value) throws for missing/invalid values and can execute user code during ToPrimitive.
-                let Some(expr) = self.arguments.first().and_then(Argument::as_expression) else {
-                    return true;
-                };
-                if matches!(
-                    expr.to_primitive(ctx),
-                    ToPrimitiveResult::Undetermined
-                        | ToPrimitiveResult::Undefined
-                        | ToPrimitiveResult::Null
-                        | ToPrimitiveResult::Symbol
-                ) {
-                    return true;
-                }
-                return expr.to_big_int(ctx).is_none();
-            }
-            if is_pure_global_function(name)
-                || is_pure_callable_constructor(name)
-                || (name == "RegExp" && is_valid_regexp(&self.arguments, ctx))
-            {
-                if self.arguments.iter().any(|e| e.may_have_side_effects(ctx)) {
-                    return true;
-                }
-                // `isNaN`/`isFinite` coerce their argument via `ToNumber`, which throws a
-                // TypeError on a BigInt. (The other pure globals — `parseInt`, `decodeURI`,
-                // `String()`, ... — `ToString`, which accepts BigInt.)
-                if matches!(name, "isNaN" | "isFinite")
-                    && any_arg_throws_to_number(&self.arguments, ctx)
-                {
-                    return true;
-                }
-                return false;
-            }
+            return !is_pure_global_function(ident.name.as_str(), &self.arguments, ctx)
+                || self.arguments.iter().any(|arg| arg.may_have_side_effects(ctx));
         }
 
         let (object, name) = match &self.callee {
@@ -689,14 +645,13 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
             if coerces_to_number && any_arg_throws_to_number(&self.arguments, ctx) {
                 return true;
             }
-            // `String.fromCodePoint(cp)` additionally throws a RangeError unless every
-            // `cp` is an integer in `[0, 0x10FFFF]`.
             if object == "String"
                 && name == "fromCodePoint"
                 && self
                     .arguments
                     .iter()
-                    .any(|arg| arg.as_expression().is_some_and(is_invalid_code_point_literal))
+                    .filter_map(Argument::as_expression)
+                    .any(|expr| is_provably_invalid_code_point(expr, ctx))
             {
                 return true;
             }
@@ -797,73 +752,17 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
     }
 }
 
-/// Whether any argument is provably a BigInt, for which `ToNumber` throws a `TypeError`.
+/// Whether `expr` is known to coerce to a number that makes `String.fromCodePoint`
+/// throw a `RangeError`.
 ///
-/// A Symbol argument also throws, but oxc can never prove a value is a Symbol (there is
-/// no `ValueType::Symbol`), so — like esbuild — that case is left droppable to avoid
-/// keeping every `Math.abs(x)` / `isNaN(x)` on an undetermined argument.
-fn any_arg_throws_to_number<'a>(
-    args: &[Argument<'a>],
+/// Unknown coercion results leave the call eligible for removal.
+/// [`any_arg_throws_to_number`] handles BigInt arguments.
+fn is_provably_invalid_code_point<'a>(
+    expr: &Expression<'a>,
     ctx: &impl MayHaveSideEffectsContext<'a>,
 ) -> bool {
-    args.iter().any(|arg| arg.as_expression().is_some_and(|e| e.value_type(ctx).is_bigint()))
-}
-
-/// Whether `expr` is a numeric literal (optionally negated) that is not a valid Unicode
-/// code point — i.e. not an integer in `[0, 0x10FFFF]` — for which
-/// `String.fromCodePoint` throws a `RangeError`.
-///
-/// Non-literal arguments return `false` (left droppable, matching how other undetermined
-/// coercions are treated); a BigInt literal is handled by [`any_arg_throws_to_number`].
-fn is_invalid_code_point_literal(expr: &Expression) -> bool {
-    let value = match expr {
-        Expression::NumericLiteral(n) => n.value,
-        Expression::UnaryExpression(u) if u.operator == UnaryOperator::UnaryNegation => {
-            match &u.argument {
-                Expression::NumericLiteral(n) => -n.value,
-                _ => return false,
-            }
-        }
-        _ => return false,
-    };
-    !(value.fract() == 0.0 && (0.0..=1_114_111.0).contains(&value))
-}
-
-/// Check that the first argument won't produce a Symbol from `ToPrimitive`.
-///
-/// Per the "Coercion Methods Are Pure" assumption, calling `ToPrimitive` on objects
-/// is side-effect-free. However, `ToString(Symbol)` / `ToNumber(Symbol)` still throws
-/// TypeError per spec, so we must verify the argument won't produce a Symbol value.
-///
-/// Used for `new String(arg)`, `new Number(arg)`, Error constructors.
-fn new_expr_first_arg_may_be_symbol<'a>(
-    expr: &NewExpression<'a>,
-    ctx: &impl MayHaveSideEffectsContext<'a>,
-) -> bool {
-    if expr.arguments.iter().any(|e| e.may_have_side_effects(ctx)) {
-        return true;
-    }
-    expr.arguments.first().is_some_and(|arg| {
-        arg.as_expression().is_none_or(|e| e.to_primitive(ctx).is_symbol() != Some(false))
-    })
-}
-
-/// Check that the first argument won't produce a Symbol or BigInt from `ToPrimitive`.
-///
-/// Like [`new_expr_first_arg_may_be_symbol`], but also checks for BigInt because
-/// `ToNumber(BigInt)` throws TypeError. Used for `new Date(arg)`, `new ArrayBuffer(arg)`.
-/// (`new String(0n)` and `new Number(0n)` do NOT throw — BigInt→String works and
-/// Number constructor converts BigInt→Number.)
-fn new_expr_first_arg_may_be_symbol_or_bigint<'a>(
-    expr: &NewExpression<'a>,
-    ctx: &impl MayHaveSideEffectsContext<'a>,
-) -> bool {
-    if expr.arguments.iter().any(|e| e.may_have_side_effects(ctx)) {
-        return true;
-    }
-    expr.arguments.first().is_some_and(|arg| {
-        arg.as_expression().is_none_or(|e| e.to_primitive(ctx).is_symbol_or_bigint() != Some(false))
-    })
+    expr.to_number(ctx)
+        .is_some_and(|value| !(0.0..=f64::from(0x10_FFFF)).contains(&value) || value.fract() != 0.0)
 }
 
 // `[ValueProperties]: PURE` in <https://github.com/rollup/rollup/blob/master/src/ast/nodes/shared/knownGlobals.ts>
@@ -875,52 +774,8 @@ impl<'a> MayHaveSideEffects<'a> for NewExpression<'a> {
         if let Expression::Identifier(ident) = &self.callee
             && ctx.is_global_reference(ident)
         {
-            let name = ident.name.as_str();
-
-            match name {
-                // new String(arg): ToString(Symbol) throws TypeError.
-                // new Number(arg): ToNumeric(Symbol) throws TypeError.
-                // (BigInt is fine: ToString(BigInt) works, Number converts BigInt→Number.)
-                "String" | "Number" => {
-                    return new_expr_first_arg_may_be_symbol(self, ctx);
-                }
-                // new Date(arg): ToPrimitive then ToNumber — both Symbol and BigInt throw.
-                // new ArrayBuffer(arg): ToIndex → ToNumber — same.
-                "Date" | "ArrayBuffer" => {
-                    return new_expr_first_arg_may_be_symbol_or_bigint(self, ctx);
-                }
-                // Error constructors: ToString(msg) throws on Symbol.
-                _ if is_error_constructor(name) => {
-                    return new_expr_first_arg_may_be_symbol(self, ctx);
-                }
-                _ if is_typed_array_constructor(name) => {
-                    // TypedArray constructors: 0 args safe; with object arg calls @@iterator,
-                    // with BigInt arg ToNumber throws.
-                    // Only known safe primitive value types are accepted.
-                    if self.arguments.iter().any(|e| e.may_have_side_effects(ctx)) {
-                        return true;
-                    }
-                    return self.arguments.first().is_some_and(|arg| {
-                        arg.as_expression().is_none_or(|e| {
-                            !matches!(
-                                e.value_type(ctx),
-                                ValueType::Number
-                                    | ValueType::String
-                                    | ValueType::Boolean
-                                    | ValueType::Null
-                                    | ValueType::Undefined
-                            )
-                        })
-                    });
-                }
-                _ if is_unconditionally_pure_constructor(name)
-                    || (name == "RegExp" && is_valid_regexp(&self.arguments, ctx))
-                    || is_pure_collection_constructor(name, &self.arguments, ctx) =>
-                {
-                    return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
-                }
-                _ => {}
-            }
+            return !is_pure_global_constructor(ident.name.as_str(), &self.arguments, ctx)
+                || self.arguments.iter().any(|arg| arg.may_have_side_effects(ctx));
         }
         true
     }

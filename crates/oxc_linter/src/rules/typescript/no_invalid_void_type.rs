@@ -131,7 +131,8 @@ declare_oxc_lint!(
     none,
     config = NoInvalidVoidTypeConfig,
     version = "1.47.0",
-    short_description = "Disallow `void` type usage outside return types and configured generic contexts.",
+    short_description =
+        "Disallow `void` type usage outside return types and configured generic contexts.",
 );
 
 impl Rule for NoInvalidVoidType {
@@ -411,7 +412,7 @@ fn has_function_overload_signatures(
         AstKind::ExportDefaultDeclaration(_) => FunctionStatementWrapper::ExportDefault,
         _ => FunctionStatementWrapper::Plain,
     };
-    let impl_name = function.id.as_ref().map(|id| id.name.as_str());
+    let impl_name = function.name().map(|name| name.as_str());
 
     for ancestor in ctx.nodes().ancestors(function_node.id()) {
         let has_match = match ancestor.kind() {
@@ -454,9 +455,9 @@ fn has_overload_in_statements(
             return false;
         }
 
-        match (impl_wrapper, impl_name, candidate.id.as_ref()) {
+        match (impl_wrapper, impl_name, candidate.name()) {
             (FunctionStatementWrapper::ExportDefault, None, None) => true,
-            (_, Some(name), Some(candidate_name)) => candidate_name.name == name,
+            (_, Some(name), Some(candidate_name)) => candidate_name == name,
             _ => false,
         }
     })

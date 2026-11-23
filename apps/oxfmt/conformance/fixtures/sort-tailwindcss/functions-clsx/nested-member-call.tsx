@@ -1,0 +1,1 @@
+const A = <div className={clsx("p-4 flex", input.split(" ").map(x => x))} />;

@@ -1,11 +1,8 @@
-use oxc_ast::AstKind;
+use oxc_semantic::AstNode;
 
 use crate::{
     context::LintContext,
-    utils::{
-        JestGeneralFnKind, ParsedGeneralJestFnCall, PossibleJestNode, parse_general_jest_fn_call,
-        report_missing_padding_before_jest_block,
-    },
+    utils::{PaddingConfig, PaddingStatement, check_padding},
 };
 
 pub const DOCUMENTATION: &str = r"### What it does
@@ -53,20 +50,14 @@ it('bar', () => {});
 ```
 ";
 
-pub fn run<'a>(jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-    let node = jest_node.node;
-    let AstKind::CallExpression(call_expr) = node.kind() else {
-        return;
-    };
-    let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, jest_node, ctx) else {
-        return;
-    };
-    let ParsedGeneralJestFnCall { kind, name, .. } = &jest_fn_call;
-    let Some(kind) = kind.to_general() else {
-        return;
-    };
-    if kind != JestGeneralFnKind::Test {
-        return;
-    }
-    report_missing_padding_before_jest_block(node, ctx, name);
+const TEST_BLOCKS: PaddingStatement =
+    PaddingStatement::Named(&["test", "it", "fit", "xit", "xtest"]);
+
+pub const CONFIGS: &[PaddingConfig] = &[
+    PaddingConfig::always(PaddingStatement::Any, TEST_BLOCKS),
+    PaddingConfig::always(TEST_BLOCKS, PaddingStatement::Any),
+];
+
+pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    check_padding(node, ctx, &[CONFIGS]);
 }

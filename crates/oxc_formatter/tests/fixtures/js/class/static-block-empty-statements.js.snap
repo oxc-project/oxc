@@ -1,0 +1,52 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+class A {
+  static {
+    ;
+  }
+}
+class B {
+  static {
+    ;
+    // comment
+    ;
+  }
+}
+class C {
+  static {}
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+class A {
+  static {}
+}
+class B {
+  static {
+    // comment
+  }
+}
+class C {
+  static {}
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+class A {
+  static {}
+}
+class B {
+  static {
+    // comment
+  }
+}
+class C {
+  static {}
+}
+
+===================== End =====================

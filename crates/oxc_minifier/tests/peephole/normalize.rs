@@ -365,3 +365,52 @@ fn preserve_legal_comment_above_removed_inner_function_use_strict() {
         "//! outer\nexport function f() {\n\t//! inner\n\tbar();\n}",
     );
 }
+
+#[test]
+fn preserve_throwing_buffer_lengths_and_uri_arguments() {
+    for expression in [
+        "new ArrayBuffer(-1)",
+        "new ArrayBuffer('-1')",
+        "new ArrayBuffer(Infinity)",
+        "new ArrayBuffer(9007199254740992)",
+        "new ArrayBuffer(0, { get maxByteLength() { foo(); } })",
+        "decodeURI('%')",
+        "decodeURIComponent('%')",
+        "decodeURIComponent('%C0%AF')",
+        "decodeURIComponent('%ED%A0%80')",
+        r#"encodeURI("\uD800")"#,
+        r#"encodeURIComponent("\uDC00")"#,
+        "decodeURIComponent(x)",
+        "encodeURI(x)",
+    ] {
+        let expected = if expression == "new ArrayBuffer(Infinity)" {
+            "new ArrayBuffer(1e400)"
+        } else {
+            expression
+        };
+        test(expression, expected);
+        test_options(
+            &format!("try {{ const unused = {expression}; after(); }} catch (e) {{ caught(e); }}"),
+            &format!("try {{ {expected}, after(); }} catch (e) {{ caught(e); }}"),
+            &CompressOptions::smallest(),
+        );
+    }
+    for expression in [
+        "new ArrayBuffer(-0.5)",
+        "new ArrayBuffer(NaN)",
+        "decodeURI('%23')",
+        "decodeURIComponent('%F0%9F%98%80')",
+        r#"encodeURI("\uD83D\uDE00")"#,
+        "encodeURIComponent(123)",
+    ] {
+        test(expression, "");
+    }
+}
+
+#[test]
+fn builtin_purity_preserves_argument_evaluation() {
+    // Preserve the existing conservative ArrayBuffer flagging and the RegExp
+    // handler's ability to discard the invocation while keeping argument effects.
+    test_same("new ArrayBuffer(void foo())");
+    test("new RegExp('x', 'g', foo())", "foo()");
+}

@@ -322,6 +322,20 @@ impl<'a, 'env> OxcContext<'a, 'env> {
         validated
     }
 
+    /// A new name that is not used anywhere in the function, unlike
+    /// `synthesize_name`, which returns the same name for the same input.
+    fn fresh_name(&mut self, name: &str) -> Ident<'a> {
+        let allocator = self.env.allocator;
+        let mut index = 0u32;
+        loop {
+            let candidate = format_ident!(allocator, "{name}{index}");
+            if self.unique_identifiers.insert(candidate) {
+                return candidate;
+            }
+            index += 1;
+        }
+    }
+
     fn record_error(&mut self, diagnostic: OxcDiagnostic) -> Result<(), OxcDiagnostic> {
         self.env.record_error(diagnostic)
     }
@@ -368,7 +382,7 @@ fn ox_number<'a>(
     value: f64,
     span: Span,
 ) -> oxc::Expression<'a> {
-    oxc_ast::ast::Expression::new_numeric_literal(span, value, None, oxc::NumberBase::Decimal, ast)
+    oxc_ast::ast::Expression::new_numeric_literal(span, value, None, ast)
 }
 
 /// Allocate a `&'a str` in the arena (satisfies the builders' `IntoIn` slots for
@@ -529,16 +543,9 @@ fn ox_convert_parameters<'a>(
                 } else {
                     ox_binding_for_identifier_at_span(cx, place.identifier, SPAN)?
                 };
-                items.push(oxc_ast::ast::FormalParameter::new(
+                items.push(oxc_ast::ast::FormalParameter::new_plain(
                     place.span.unwrap_or_default(),
-                    [],
                     binding,
-                    None,
-                    None,
-                    false,
-                    None,
-                    false,
-                    false,
                     &cx.ast,
                 ));
             }
@@ -729,11 +736,47 @@ fn ox_codegen_reactive_scope<'a>(
 
     let mut deps = scope_deps;
     deps.sort_unstable_by(|a, b| compare_scope_dependency(a, b, cx.env));
+    let reassigned_declarations = scope_reassignments
+        .iter()
+        .map(|id| cx.env.identifiers[*id].declaration_id)
+        .collect::<Vec<_>>();
 
     for dep in &deps {
         let index = cx.alloc_cache_index();
         let cache_name = cx.synthesize_name("$");
-        let dep_expr = ox_codegen_dependency(cx, dep)?;
+        let mut dep_expr = ox_codegen_dependency(cx, dep)?;
+        let mut dep_value = ox_codegen_dependency(cx, dep)?;
+        // The scope reassigns the dependency, so read it once before the scope runs:
+        // storing it afterwards would key the cache on the scope's output instead.
+        if reassigned_declarations.contains(&cx.env.identifiers[dep.identifier].declaration_id) {
+            let name = cx.fresh_name("t");
+            let binding = oxc_ast::ast::BindingPattern::new_binding_identifier(
+                SPAN,
+                ox_str(&cx.ast, &name),
+                &cx.ast,
+            );
+            let declarator = oxc_ast::ast::VariableDeclarator::new(
+                SPAN,
+                binding,
+                None,
+                Some(dep_expr),
+                false,
+                &cx.ast,
+            );
+            statements.push(oxc::Statement::VariableDeclaration(
+                oxc_ast::ast::VariableDeclaration::boxed(
+                    SPAN,
+                    oxc::VariableDeclarationKind::Const,
+                    [declarator],
+                    false,
+                    &cx.ast,
+                ),
+            ));
+            dep_expr =
+                oxc_ast::ast::Expression::new_identifier(SPAN, ox_str(&cx.ast, &name), &cx.ast);
+            dep_value =
+                oxc_ast::ast::Expression::new_identifier(SPAN, ox_str(&cx.ast, &name), &cx.ast);
+        }
         let comparison = oxc_ast::ast::Expression::new_binary_expression(
             SPAN,
             ox_cache_index(&cx.ast, &cache_name, index),
@@ -743,7 +786,6 @@ fn ox_codegen_reactive_scope<'a>(
         );
         change_exprs.push(comparison);
 
-        let dep_value = ox_codegen_dependency(cx, dep)?;
         let store = oxc_ast::ast::Expression::new_assignment_expression(
             SPAN,
             oxc::AssignmentOperator::Assign,
@@ -1804,24 +1846,7 @@ fn ox_codegen_instruction_value<'a>(
 /// spurious parens (e.g. `(a?.b)(d)` instead of `a?.b(d)`).
 fn ox_unwrap_chain(expr: oxc::Expression<'_>) -> oxc::Expression<'_> {
     match expr {
-        oxc::Expression::ChainExpression(chain) => {
-            let chain = chain.unbox();
-            match chain.expression {
-                oxc::ChainElement::CallExpression(call) => oxc::Expression::CallExpression(call),
-                oxc::ChainElement::ComputedMemberExpression(m) => {
-                    oxc::Expression::ComputedMemberExpression(m)
-                }
-                oxc::ChainElement::StaticMemberExpression(m) => {
-                    oxc::Expression::StaticMemberExpression(m)
-                }
-                oxc::ChainElement::PrivateFieldExpression(m) => {
-                    oxc::Expression::PrivateFieldExpression(m)
-                }
-                oxc::ChainElement::TSNonNullExpression(e) => {
-                    oxc::Expression::TSNonNullExpression(e)
-                }
-            }
-        }
+        oxc::Expression::ChainExpression(chain) => oxc::Expression::from(chain.unbox().expression),
         other => other,
     }
 }
@@ -2115,14 +2140,16 @@ fn ox_codegen_base_instruction_value<'a>(
             let expr = ox_codegen_place_to_expression(cx, value)?;
             Ok(OxValue::Expression(expr))
         }
-        InstructionValue::PostfixUpdate { operation, lvalue, .. } => {
+        InstructionValue::PostfixUpdateLocal { operation, lvalue, .. }
+        | InstructionValue::PostfixUpdateContext { operation, lvalue, .. } => {
             let arg = ox_codegen_place_to_expression(cx, lvalue)?;
             let target = ox_expression_to_simple_assignment_target(cx, arg)?;
             Ok(OxValue::Expression(oxc_ast::ast::Expression::new_update_expression(
                 span, *operation, false, target, &cx.ast,
             )))
         }
-        InstructionValue::PrefixUpdate { operation, lvalue, .. } => {
+        InstructionValue::PrefixUpdateLocal { operation, lvalue, .. }
+        | InstructionValue::PrefixUpdateContext { operation, lvalue, .. } => {
             let arg = ox_codegen_place_to_expression(cx, lvalue)?;
             let target = ox_expression_to_simple_assignment_target(cx, arg)?;
             Ok(OxValue::Expression(oxc_ast::ast::Expression::new_update_expression(
@@ -2224,9 +2251,22 @@ fn ox_codegen_base_instruction_value<'a>(
             };
             Ok(OxValue::Expression(wrapped))
         }
-        InstructionValue::JSXText { value, .. } => Ok(OxValue::JsxText(
-            oxc_ast::ast::JSXText::boxed(span, ox_str(&cx.ast, value), None, &cx.ast),
-        )),
+        InstructionValue::JSXText { value, .. } => Ok(match value.as_str() {
+            Some(value) => OxValue::JsxText(oxc_ast::ast::JSXText::boxed(
+                span,
+                ox_str(&cx.ast, value),
+                None,
+                &cx.ast,
+            )),
+            // JSX text cannot spell a lone surrogate, so emit it as a string expression,
+            // which the JSX child codegen wraps in a container.
+            None => OxValue::Expression(oxc_ast::ast::Expression::new_string_literal(
+                span,
+                value.clone_in(cx.ast.allocator()),
+                None,
+                &cx.ast,
+            )),
+        }),
         InstructionValue::JsxExpression {
             tag,
             props,
@@ -2540,28 +2580,25 @@ fn ox_codegen_object_pattern<'a>(
                     .or(obj_prop.place.span)
                     .or(pattern.span)
                     .unwrap_or_default();
-                let (key, computed) =
-                    ox_codegen_object_property_key(cx, &obj_prop.key, property_span)?;
+                let key = ox_codegen_object_property_key(cx, &obj_prop.key, property_span)?;
                 let span = ox_lvalue_identifier_span(cx, &obj_prop.place, pattern.span, context);
                 let value = ox_binding_for_identifier_at_span(
                     cx,
                     obj_prop.place.identifier,
                     span.unwrap_or_default(),
                 )?;
-                let shorthand = !computed
-                    && matches!(
-                        (&key, &value),
-                        (
-                            oxc::PropertyKey::StaticIdentifier(k),
-                            oxc::BindingPattern::BindingIdentifier(v),
-                        ) if k.name == v.name
-                    );
+                let shorthand = matches!(
+                    (&key, &value),
+                    (
+                        oxc::PropertyKey::StaticIdentifier(k),
+                        oxc::BindingPattern::BindingIdentifier(v),
+                    ) if k.name == v.name
+                );
                 properties.push(oxc_ast::ast::BindingProperty::new(
                     obj_prop.place.span.unwrap_or_default(),
                     key,
                     value,
                     shorthand,
-                    computed,
                     &cx.ast,
                 ));
             }
@@ -2588,30 +2625,26 @@ fn ox_codegen_object_pattern<'a>(
     ))
 }
 
-/// Build an object pattern key, returning `(key, computed)`.
+/// Build an object pattern key.
 fn ox_codegen_object_property_key<'a>(
     cx: &mut OxcContext<'a, '_>,
     key: &ObjectPropertyKey,
     span: Span,
-) -> Result<(oxc::PropertyKey<'a>, bool), OxcDiagnostic> {
+) -> Result<oxc::PropertyKey<'a>, OxcDiagnostic> {
     let span = key.span().unwrap_or(span);
     match key {
-        ObjectPropertyKey::String { name, .. } => Ok((
-            oxc::PropertyKey::from(oxc_ast::ast::Expression::new_string_literal(
-                span,
-                ox_str(&cx.ast, name),
-                None,
-                &cx.ast,
-            )),
-            false,
+        ObjectPropertyKey::String { name, .. } => Ok(oxc::PropertyKey::new_static_string_literal(
+            span,
+            ox_str(&cx.ast, name),
+            None,
+            &cx.ast,
         )),
-        ObjectPropertyKey::Identifier { name, .. } => Ok((
+        ObjectPropertyKey::Identifier { name, .. } => Ok(
             oxc_ast::ast::PropertyKey::new_static_identifier(span, ox_str(&cx.ast, name), &cx.ast),
-            false,
-        )),
+        ),
         ObjectPropertyKey::Computed { name, .. } => {
             let expr = ox_codegen_place_to_expression(cx, name)?;
-            Ok((oxc::PropertyKey::from(expr), true))
+            Ok(oxc::PropertyKey::from(expr))
         }
     }
 }
@@ -2803,11 +2836,7 @@ fn ox_binding_property_to_assignment_property<'a>(
     }
     let binding = ox_binding_pattern_to_maybe_default(cx, prop.value)?;
     Ok(oxc::AssignmentTargetProperty::new_assignment_target_property_property(
-        span,
-        prop.key,
-        binding,
-        prop.computed,
-        &cx.ast,
+        span, prop.key, binding, &cx.ast,
     ))
 }
 
@@ -2936,18 +2965,17 @@ fn ox_codegen_function_expression<'a>(
     // enableNameAnonymousFunctions: `({ "<hint>": <fn> })["<hint>"]`
     if cx.env.config.enable_name_anonymous_functions && name.is_none() && name_hint.is_some() {
         let hint = *name_hint.as_ref().unwrap();
-        let key = oxc::PropertyKey::from(oxc_ast::ast::Expression::new_string_literal(
+        let key = oxc::PropertyKey::new_static_string_literal(
             SPAN,
             ox_str(&cx.ast, &hint),
             None,
             &cx.ast,
-        ));
+        );
         let prop = oxc_ast::ast::ObjectPropertyKind::new_object_property(
             SPAN,
             oxc::PropertyKind::Init,
             key,
             value,
-            false,
             false,
             false,
             &cx.ast,
@@ -3010,19 +3038,15 @@ fn ox_codegen_object_expression<'a>(
         match prop {
             ObjectPropertyOrSpread::Property(obj_prop) => {
                 let property_span = obj_prop.key.span().or(obj_prop.place.span).unwrap_or(span);
-                let (key, key_computed) =
-                    ox_codegen_object_property_key(cx, &obj_prop.key, property_span)?;
+                let key = ox_codegen_object_property_key(cx, &obj_prop.key, property_span)?;
                 match obj_prop.property_type {
                     ObjectPropertyType::Property => {
                         let value = ox_codegen_place_to_expression(cx, &obj_prop.place)?;
-                        let shorthand = !key_computed
-                            && matches!(
-                                (&key, &value),
-                                (
-                                    oxc::PropertyKey::StaticIdentifier(k),
-                                    oxc::Expression::Identifier(v),
-                                ) if k.name == v.name
-                            );
+                        let shorthand = matches!(
+                            (&key, &value),
+                            (oxc::PropertyKey::StaticIdentifier(k), oxc::Expression::Identifier(v))
+                                if k.name == v.name
+                        );
                         let p = oxc_ast::ast::ObjectProperty::new(
                             obj_prop.place.span.unwrap_or_default(),
                             oxc::PropertyKind::Init,
@@ -3030,7 +3054,6 @@ fn ox_codegen_object_expression<'a>(
                             value,
                             false,
                             shorthand,
-                            key_computed,
                             &cx.ast,
                         );
                         props.push(oxc::ObjectPropertyKind::ObjectProperty(
@@ -3080,7 +3103,6 @@ fn ox_codegen_object_expression<'a>(
                             func_expr,
                             true,
                             false,
-                            key_computed,
                             &cx.ast,
                         );
                         props.push(oxc::ObjectPropertyKind::ObjectProperty(
@@ -3628,6 +3650,12 @@ fn ox_codegen_primitive_value<'a>(
             span,
             s.clone_in(ast.allocator()),
             None,
+            ast,
+        ),
+        PrimitiveValue::BigInt { value, raw } => oxc_ast::ast::Expression::new_big_int_literal(
+            span,
+            ox_str(ast, value.as_str()),
+            raw.as_ref().map(|r| oxc_str::Str::from(ox_str(ast, r.as_str()))),
             ast,
         ),
         PrimitiveValue::Null => oxc_ast::ast::Expression::new_null_literal(span, ast),

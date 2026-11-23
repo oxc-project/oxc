@@ -101,7 +101,8 @@ declare_oxc_lint!(
     recommended,
     config = AriaRoleConfig,
     version = "0.1.1",
-    short_description = "Enforce that elements with ARIA roles use a valid, non-abstract ARIA role.",
+    short_description =
+        "Enforce that elements with ARIA roles use a valid, non-abstract ARIA role.",
 );
 
 impl Rule for AriaRole {
@@ -126,7 +127,7 @@ impl Rule for AriaRole {
             match get_prop_value(aria_role) {
                 Some(JSXAttributeValue::ExpressionContainer(container)) => {
                     let jsexp = &container.expression;
-                    if matches!(jsexp, JSXExpression::NullLiteral(_)) || jsexp.is_undefined() {
+                    if matches!(jsexp, JSXExpression::NullLiteral(_)) {
                         ctx.diagnostic(aria_role_diagnostic(attr.span, ""));
                     }
                 }
@@ -186,6 +187,8 @@ fn test() {
         ("<div />", None, None),
         ("<div></div>", None, None),
         ("<div role={role} />", None, None),
+        ("<div role={undefined} />", None, None),
+        ("<Foo role={undefined} />", None, None),
         ("<div role={role || 'button'} />", None, None),
         ("<div role={role || 'foobar'} />", None, None),
         ("<div role='tabpanel row' />", None, None),

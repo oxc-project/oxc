@@ -9,8 +9,8 @@ use oxc_ast::{
     AstKind,
     ast::{
         BindingPattern, ExportFromDeclaration, ExportSpecifier, ImportAttributeKey,
-        ImportDeclaration, ImportDeclarationSpecifier, ModuleExportName, Program, Statement,
-        VariableDeclarationKind, VariableDeclarator, WithClause, WithClauseKeyword,
+        ImportDeclaration, ImportDeclarationSpecifier, ModuleExportName, Statement,
+        VariableDeclarator, WithClause, WithClauseKeyword,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -147,9 +147,7 @@ impl PreferExportFrom {
 
         let re_export_decl = find_corresponding_export(ctx, import_decl);
 
-        let Some(source) = import_decl.source.value.as_str() else {
-            return;
-        };
+        let source = ctx.source_range(import_decl.source.span);
         let with_clause = import_decl.with_clause.as_ref().map(|with_clause| {
             let keyword = match with_clause.keyword {
                 WithClauseKeyword::With => "with",
@@ -314,7 +312,7 @@ impl PreferExportFrom {
                 !matches!(
                     declaration_node.kind(),
                     AstKind::VariableDeclaration(variable_declaration)
-                        if variable_declaration.kind == VariableDeclarationKind::Const
+                        if variable_declaration.kind.is_const()
                             && matches!(
                                 ctx.nodes().parent_node(declaration_node.id()).kind(),
                                 AstKind::ExportDeclaration(_)
@@ -457,7 +455,7 @@ impl PreferExportFrom {
         let next_parent_node = ctx.nodes().parent_node(var_decl.node_id());
 
         if let AstKind::VariableDeclaration(var_declaration) = next_parent_node.kind()
-            && var_declaration.kind == VariableDeclarationKind::Const
+            && var_declaration.kind.is_const()
             && let AstKind::ExportDeclaration(export_named_decl) =
                 ctx.nodes().parent_node(next_parent_node.id()).kind()
         {
@@ -680,6 +678,16 @@ impl PreferExportFrom {
             violations.iter().map(|v| ctx.nodes().get_node(v.export_node_id)).collect();
         parent_nodes.sort_unstable_by_key(|node| node.span().start);
 
+        // The fix rewrites each of these export lists as a whole, so it would drop
+        // names in a list that don't come from this import
+        // (`import {a} from './x'; import {b} from './y'; export {a, b};`).
+        let drops_other_exports = parent_nodes.chunk_by(|a, b| a.id() == b.id()).any(|nodes| {
+            let AstKind::ExportNamedDeclaration(decl) = nodes[0].kind() else {
+                return false;
+            };
+            decl.specifiers.len() > nodes.len()
+        });
+
         let replace_export_spans: Vec<Span> = parent_nodes
             .iter()
             .map(|parent_node| Self::get_replace_span(ctx, parent_node.id()))
@@ -690,7 +698,7 @@ impl PreferExportFrom {
         let delete_span = Span::new(start, end);
 
         let re_export_source_text =
-            re_export_decl.map(|decl| ctx.source_range(decl.span())).unwrap_or_default();
+            re_export_decl.map_or_default(|decl| ctx.source_range(decl.span()));
 
         let joined_names = format_export_names(violations);
         let exported_specifiers: FxHashSet<SymbolId> =
@@ -699,7 +707,12 @@ impl PreferExportFrom {
         for violation in violations {
             let specifier_node = ctx.nodes().get_node(violation.import_specifier_id);
 
-            if violation.needs_source {
+            if drops_other_exports {
+                ctx.diagnostic(prefer_export_from_diagnostic(
+                    import_decl.span(),
+                    specifier_node.span(),
+                ));
+            } else if violation.needs_source {
                 let export_node = ctx.nodes().get_node(violation.export_node_id);
                 ctx.diagnostic_with_suggestion(
                     prefer_export_from_diagnostic(import_decl.span(), specifier_node.span()),
@@ -760,7 +773,7 @@ impl PreferExportFrom {
     }
 
     fn format_export_statement(exports: &str, source: &str, with_clause: Option<&str>) -> String {
-        let mut result = format!("export {{ {exports} }} from '{source}'");
+        let mut result = format!("export {{ {exports} }} from {source}");
 
         if let Some(clause) = with_clause {
             result.push(' ');
@@ -782,7 +795,7 @@ impl PreferExportFrom {
         let formatted_name =
             if is_typescript_type { format!("type {name}") } else { name.to_string() };
 
-        let mut result = format!("export {formatted_name} from '{source}'");
+        let mut result = format!("export {formatted_name} from {source}");
 
         if let Some(clause) = with_clause {
             result.push(' ');
@@ -1029,8 +1042,7 @@ impl PreferExportFrom {
             let with_clause = import_decl
                 .with_clause
                 .as_ref()
-                .map(|with_clause| format!(" {}", ctx.source_range(with_clause.span)))
-                .unwrap_or_default();
+                .map_or_default(|with_clause| format!(" {}", ctx.source_range(with_clause.span)));
             let source = ctx.source_range(import_decl.source.span);
 
             format!("import{import_kind} {} from {source}{with_clause};\n", result_parts.join(", "))
@@ -1075,23 +1087,11 @@ impl PreferExportFrom {
             .unwrap()
             .iter()
             .map(|specifier| {
-                let symbol_id = match specifier {
-                    ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
-                        specifier.local.symbol_id()
-                    }
-
-                    ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
-                        specifier.local.symbol_id()
-                    }
-
-                    ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => {
-                        specifier.local.symbol_id()
-                    }
-                };
+                let symbol_id = specifier.symbol_id();
 
                 let spec = SpecifierSpec {
                     specifier,
-                    name: specifier.local().name.to_string(),
+                    name: specifier.name().to_string(),
                     decl_type: import_decl.import_kind.is_type(),
                 };
 
@@ -1128,7 +1128,7 @@ fn has_matching_type_alias<'a>(
     let root_scope_id = scoping.root_scope_id();
 
     for specifier in specifiers {
-        let Some(symbol_id) = scoping.get_binding(root_scope_id, specifier.local().name) else {
+        let Some(symbol_id) = scoping.get_binding(root_scope_id, specifier.name()) else {
             continue;
         };
         for declaration_node_id in scoping.symbol_declarations(symbol_id) {
@@ -1146,19 +1146,15 @@ fn find_corresponding_export<'a>(
     ctx: &LintContext<'a>,
     import_decl: &'a ImportDeclaration<'a>,
 ) -> Option<&'a ExportFromDeclaration<'a>> {
-    let source = import_decl.source.value.as_str()?;
     let program = ctx.nodes().program();
 
-    for requested_module in ctx.module_record().requested_modules.get(source)? {
-        if requested_module.is_import {
-            continue;
-        }
-
-        let Some(export_decl) =
-            find_export_named_declaration_by_span(program, requested_module.statement_span)
-        else {
+    for statement in &program.body {
+        let Statement::ExportFromDeclaration(export_decl) = statement else {
             continue;
         };
+        if export_decl.source.value != import_decl.source.value {
+            continue;
+        }
 
         if is_matching_export_kind(import_decl, export_decl)
             && has_matching_with_clause(
@@ -1172,18 +1168,6 @@ fn find_corresponding_export<'a>(
     }
 
     None
-}
-
-fn find_export_named_declaration_by_span<'a>(
-    program: &'a Program<'a>,
-    span: Span,
-) -> Option<&'a ExportFromDeclaration<'a>> {
-    program.body.iter().find_map(|statement| {
-        let Statement::ExportFromDeclaration(export_decl) = statement else {
-            return None;
-        };
-        (export_decl.span() == span).then_some(export_decl.as_ref())
-    })
 }
 
 fn is_matching_export_kind(
@@ -1388,12 +1372,10 @@ fn test() {
             export {foo as 'foo'};",
         r#"import {'foo' as foo} from 'foo';
             export {foo as "foo"};"#,
-        // spellchecker:off
         "import {'fo\u{20}o' as foo} from 'foo';
             export {foo as \"fo o\"};",
         "import {'fo\\no' as foo} from 'foo';
            export {foo as \"fo\\u000ao\"};",
-        // spellchecker:on
         "import {'default' as foo} from 'foo';
             export {foo};",
         "import {'default' as foo} from 'foo';
@@ -1498,9 +1480,13 @@ fn test() {
         "import {foo} from './foo.json';
             export {foo};
                 export {bar} from './foo.json' with { type: 'unknown' };",
+        "import {a} from \"\\uD800\";\nexport {a};",
+        "import {a} from \"\\uD800\";\nexport {a};\nexport {b} from \"\\uD800\";",
     ];
 
     let fix = vec![
+        (r#"import {foo} from "foo'bar";export {foo};"#, "export { foo } from \"foo'bar\";\n"),
+        (r"import {foo} from 'foo\\bar';export {foo};", "export { foo } from 'foo\\\\bar';\n"),
         // the `{` inside the comment is not the start of the specifier list; the
         // exported name used to be swallowed into the comment
         (
@@ -1614,7 +1600,9 @@ fn test() {
             "import * as foo from 'foo';
           import * as bar from 'foo';
          export {foo, bar};",
-            "export * as foo from 'foo';\nimport * as bar from 'foo';\n         ",
+            "import * as foo from 'foo';
+          import * as bar from 'foo';
+         export {foo, bar};",
         ),
         (
             "import * as foo from 'foo';
@@ -1653,7 +1641,6 @@ fn test() {
             export {foo as "foo"};"#,
             "export { \"foo\" } from 'foo';\n",
         ),
-        // spellchecker:off
         (
             "import {'fo\u{20}o' as foo} from 'foo';
             export {foo as \"fo o\"};",
@@ -1669,7 +1656,6 @@ fn test() {
             export {foo as \"foo\"};",
             "export { 'fo o' as \"foo\" } from 'foo';\n",
         ),
-        // spellchecker:on
         (
             "import {'default' as foo} from 'foo';
             export {foo};",
@@ -1789,7 +1775,7 @@ fn test() {
             r#"import { foo } from "foo";
             export { foo };
             export type { bar } from "foo";"#,
-            "export { foo } from 'foo';\n\n            export type { bar } from \"foo\";",
+            "export { foo } from \"foo\";\n\n            export type { bar } from \"foo\";",
         ),
         (
             r#"import { foo } from "foo";
@@ -1864,7 +1850,7 @@ fn test() {
         (
             r#"import type foo from "foo";
             export default foo"#,
-            "export { type default } from 'foo';\n",
+            "export { type default } from \"foo\";\n",
         ),
         (
             "import {type foo} from 'foo';
@@ -1951,6 +1937,19 @@ fn test() {
             export {foo};
             export {bar,} from 'foo';",
             "export {bar, default as foo,} from 'foo';",
+        ),
+        ("import {a} from \"\\uD800\";\nexport {a};", "export { a } from \"\\uD800\";\n"),
+        (
+            "import {a} from \"\\uD800\";\nexport {a};\nexport {b} from \"\\uD800\";",
+            "export {b, a} from \"\\uD800\";",
+        ),
+        (
+            "import { a } from './x';\nimport { b } from './y';\nexport { a, b };",
+            "import { a } from './x';\nimport { b } from './y';\nexport { a, b };",
+        ),
+        (
+            "import { a } from './x';\nconst local = 1;\nexport { a, local };",
+            "import { a } from './x';\nconst local = 1;\nexport { a, local };",
         ),
     ];
     Tester::new(PreferExportFrom::NAME, PreferExportFrom::PLUGIN, pass, fail)

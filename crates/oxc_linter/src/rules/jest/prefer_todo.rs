@@ -1,10 +1,11 @@
+use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::Rule,
     rules::shared::prefer_todo::{DOCUMENTATION, run},
-    utils::PossibleJestNode,
 };
 
 #[derive(Debug, Default, Clone)]
@@ -13,12 +14,13 @@ pub struct PreferTodo;
 declare_oxc_lint!(PreferTodo, jest, style, fix, docs = DOCUMENTATION, version = "0.0.16",);
 
 impl Rule for PreferTodo {
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        possible_jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        run(possible_jest_node, ctx);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(_) = node.kind() else { return };
+        run(node, ctx);
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_test()
     }
 }
 
@@ -38,6 +40,15 @@ fn tests() {
         ("test('foo', 1)", None),
         ("test('stub', () => expect(1).toBe(1));", None),
         ("test.concurrent('stub', () => expect(1).toBe(1));", None),
+        ("test.only('focused test', () => {});", None),
+        ("test.only('focused test', function () {});", None),
+        ("test.fails('is expected to fail', () => {});", None),
+        ("test.fails('is expected to fail', function () {});", None),
+        ("test.concurrent('unimplemented');", None),
+        ("test.each([1, 2])('case %i', () => {});", None),
+        ("test.runIf(true)('runs on this platform', () => {});", None),
+        ("test.concurrent.skip('skipped concurrent test', () => {});", None),
+        ("test.concurrent['skip']('skipped concurrent test', function () {});", None),
         (
             "
                 supportsDone && params.length < test.length
@@ -61,41 +72,38 @@ fn tests() {
     ];
 
     let fix = vec![
+        ("test('title', () => {});", "test('title', () => {});"),
         (
-            "test.skip('i need to write this test');",
-            "test.todo('i need to write this test');",
-            None,
+            "test.skip('title', () => {}, registerTimeout());",
+            "test.skip('title', () => {}, registerTimeout());",
         ),
-        ("test('i need to write this test',);", "test.todo('i need to write this test',);", None),
-        ("test(`i need to write this test`);", "test.todo(`i need to write this test`);", None),
-        ("it.skip('foo', function () {})", "it.todo('foo')", None),
-        ("it(`i need to write this test`, () => {})", "it.todo(`i need to write this test`)", None),
-        ("it('foo', function () {})", "it.todo('foo')", None),
-        ("it('foo', () => {})", "it.todo('foo')", None),
+        (
+            "test['skip']('title', function () {}, ...timeouts);",
+            "test['skip']('title', function () {}, ...timeouts);",
+        ),
+        ("test('i need to write this test');", "test.todo('i need to write this test');"),
+        ("test('i need to write this test',);", "test.todo('i need to write this test',);"),
+        ("test(`i need to write this test`);", "test.todo(`i need to write this test`);"),
+        ("it.skip('foo', function () {})", "it.todo('foo')"),
         (
             "test.skip('i need to write this test', () => {});",
             "test.todo('i need to write this test');",
-            None,
         ),
         (
             "test.skip('i need to write this test', function() {});",
             "test.todo('i need to write this test');",
-            None,
         ),
         (
             "test['skip']('i need to write this test', function() {});",
             "test['todo']('i need to write this test');",
-            None,
         ),
         (
             "test['skip']('i need to write this test', () => {});",
             "test['todo']('i need to write this test');",
-            None,
         ),
         (
             "test['skip']('i need to write this test');",
             "test['todo']('i need to write this test');",
-            None,
         ),
     ];
 

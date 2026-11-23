@@ -473,3 +473,42 @@ source: crates/oxc_linter/src/tester.rs
  10 │                             />
     ╰────
   help: Move this component definition out of the parent component `ParentComponent` and pass data as props. If you want to allow component creation in props, set `allowAsProps` option to true.
+
+  ⚠ react(no-unstable-nested-components): Do not define components during render.
+   ╭─[no_unstable_nested_components.tsx:5:25]
+ 4 │                     <Column
+ 5 │ ╭─▶                   cell={(row) => {
+ 6 │ │                       if (!row.id) return null
+ 7 │ │                       return <span>{row.id}</span>
+ 8 │ ╰─▶                   }}
+ 9 │                     />
+   ╰────
+  help: Move this component definition out of the parent component `ParentComponent` and pass data as props. If you want to allow component creation in props, set `allowAsProps` option to true.
+
+  ⚠ react(no-unstable-nested-components): Do not define components during render.
+   ╭─[no_unstable_nested_components.tsx:1:43]
+ 1 │ function Parent() { return <Thing footer={() => { const element = <div />; return element; }} />; }
+   ·                                           ──────────────────────────────────────────────────
+   ╰────
+  help: Move this component definition out of the parent component `Parent` and pass data as props. If you want to allow component creation in props, set `allowAsProps` option to true.
+
+  ⚠ react(no-unstable-nested-components): Do not define components during render.
+   ╭─[no_unstable_nested_components.tsx:1:43]
+ 1 │ function Parent() { return <Thing footer={function () { const element = <div />; return element; }} />; }
+   ·                                           ────────────────────────────────────────────────────────
+   ╰────
+  help: Move this component definition out of the parent component `Parent` and pass data as props. If you want to allow component creation in props, set `allowAsProps` option to true.
+
+  ⚠ react(no-unstable-nested-components): Do not define components during render.
+   ╭─[no_unstable_nested_components.tsx:1:43]
+ 1 │ function Parent() { return <Thing footer={() => { const element = <>text</>; return element; }} />; }
+   ·                                           ────────────────────────────────────────────────────
+   ╰────
+  help: Move this component definition out of the parent component `Parent` and pass data as props. If you want to allow component creation in props, set `allowAsProps` option to true.
+
+  ⚠ react(no-unstable-nested-components): Do not define components during render.
+   ╭─[no_unstable_nested_components.tsx:1:43]
+ 1 │ function Parent() { return <Thing footer={function () { const element = <>text</>; return element; }} />; }
+   ·                                           ──────────────────────────────────────────────────────────
+   ╰────
+  help: Move this component definition out of the parent component `Parent` and pass data as props. If you want to allow component creation in props, set `allowAsProps` option to true.

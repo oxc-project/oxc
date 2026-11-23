@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.160.0] - 2026-11-23
+
+### 🐛 Bug Fixes
+
+- 4fb4887 allocator: Require Sync allocator for Drain Send (#26152) (Cameron)
+
+Full release notes: [0.160.0](https://github.com/oxc-project/oxc/blob/main/crates/CHANGELOG.md#01600---2026-11-23)
+
+## [0.159.0] - 2026-11-16
+
+### 🚀 Features
+
+- bfe9a81 data_structures: Add buffered vector batch reservations (#29365) (Boshen)
+
+## [0.158.0] - 2026-11-09
+
+### 📚 Documentation
+
+- 261c4a2 allocator: Clarify arena storage and memory reclamation (#29066) (camc314)
+
 ## [0.149.0] - 2026-09-07
 
 ### 🚀 Features

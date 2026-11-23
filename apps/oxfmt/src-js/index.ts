@@ -1,11 +1,6 @@
 // napi-JS `oxfmt` API entry point
 
-import {
-  formatFile,
-  formatEmbeddedCode,
-  formatEmbeddedDoc,
-  sortTailwindClasses,
-} from "./libs/apis";
+import { formatFile, formatEmbeddedDoc, sortTailwindClasses } from "./libs/apis";
 import { toFormatFileResult, toNullable } from "./libs/napi-callbacks";
 // Types are auto-generated from the JSON Schema.
 import type {
@@ -75,8 +70,8 @@ export function defineConfig<T extends OxfmtConfig>(config: T & OxfmtConfig): T 
 //    But when a nested config resolves "oxfmt" to a separate install (its own `node_modules`),
 //    it triggers a fresh re-entrant `dlopen` on the main thread, which hangs (observed on WSL2).
 //    See https://github.com/oxc-project/oxc/issues/23125
-// 2. `jsTextToDoc` (via prettier-plugin-oxfmt, runs in the worker process where the binding is NOT preloaded):
-//    deferring the load until it's actually called avoids paying the `dlopen` cost on runs that have no embedded code to format.
+// 2. `jsTextToDoc` (via prettier-plugin-oxfmt, runs in a worker thread where the binding is NOT loaded yet):
+//    deferring the load until it's actually called avoids the per-thread addon init on runs that have no embedded code to format.
 let BINDINGS_CACHE = null as typeof import("./bindings") | null;
 
 /**
@@ -95,7 +90,6 @@ export async function format(fileName: string, sourceText: string, options?: For
     sourceText,
     options ?? {},
     (options, code) => toFormatFileResult(formatFile({ options, code })),
-    (options, code) => toNullable(formatEmbeddedCode({ options, code })),
     (options, code) => toNullable(formatEmbeddedDoc({ options, code })),
     (options, classes) => toNullable(sortTailwindClasses({ options, classes })),
   );
@@ -108,16 +102,13 @@ export async function jsTextToDoc(
   sourceExt: string,
   sourceText: string,
   oxfmtPluginOptionsJson: string,
-  parentContext: string,
 ) {
   BINDINGS_CACHE ??= await import("./bindings");
   return BINDINGS_CACHE.jsTextToDoc(
     sourceExt,
     sourceText,
     oxfmtPluginOptionsJson,
-    parentContext,
     () => toFormatFileResult(Promise.reject("formatFile is unavailable for jsTextToDoc")),
-    (options, code) => toNullable(formatEmbeddedCode({ options, code })),
     (options, code) => toNullable(formatEmbeddedDoc({ options, code })),
     (options, classes) => toNullable(sortTailwindClasses({ options, classes })),
   );

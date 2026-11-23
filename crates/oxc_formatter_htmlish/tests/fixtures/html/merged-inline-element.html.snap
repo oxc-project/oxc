@@ -1,0 +1,29 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<div>
+  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa<b >x</b
+>c<i>y</i>d<em
+>z</em>e
+</div>
+<p>a<b >x</b>c<i>y</i>d<b >z</b>e and <i>q</i>r<u >s</u>t</p>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<div>
+  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa<b>x</b>c<i>y</i>d<em>z</em>e
+</div>
+<p>a<b>x</b>c<i>y</i>d<b>z</b>e and <i>q</i>r<u>s</u>t</p>
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<div>
+  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa<b>x</b>c<i>y</i>d<em>z</em>e
+</div>
+<p>a<b>x</b>c<i>y</i>d<b>z</b>e and <i>q</i>r<u>s</u>t</p>
+
+===================== End =====================

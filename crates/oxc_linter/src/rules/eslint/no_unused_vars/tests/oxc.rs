@@ -579,6 +579,10 @@ fn test_vars_catch() {
                 json!([{ "caughtErrors": "all", "caughtErrorsIgnorePattern": "^_", "reportUsedIgnorePattern": true }]),
             ),
         ),
+        // The `var` is unused, but its initializer writes the catch parameter.
+        ("function f() { try { throw 0 } catch (e) { var e = 1; console.log(e) } } f();", None),
+        // The catch parameter is unused, but the `var` initializer writes it.
+        ("function f() { try { throw 0 } catch (e) { var e = 1 } return e } f();", None),
     ];
 
     // these suggestion fixes are safe
@@ -621,6 +625,19 @@ fn test_vars_catch() {
             "try {} catch  { }",
             None,
             FixKind::Suggestion,
+        ),
+        // Removing either declaration would retarget the `var` initializer, so no fix applies.
+        (
+            "function f() { try { throw 0 } catch (e) { var e = 1; console.log(e) } } f();",
+            "function f() { try { throw 0 } catch (e) { var e = 1; console.log(e) } } f();",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "function f() { try { throw 0 } catch (e) { var e = 1 } return e } f();",
+            "function f() { try { throw 0 } catch (e) { var e = 1 } return e } f();",
+            None,
+            FixKind::DangerousSuggestion,
         ),
     ];
 
@@ -904,6 +921,31 @@ fn test_imports() {
         ("import * as foo from './foo';", "", None, FixKind::DangerousSuggestion),
         ("import { Foo } from './foo';", "", None, FixKind::DangerousSuggestion),
         ("import { Foo as Bar } from './foo';", "", None, FixKind::DangerousSuggestion),
+        // The line break after the import is removed with it
+        (
+            "import foo from './foo';\nexport {};\n",
+            "export {};\n",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "import foo from './foo';\r\nexport {};\r\n",
+            "export {};\r\n",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "import foo from './foo';\rexport {};\r",
+            "export {};\r",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "import foo from './foo';\n\r\nexport {};\n",
+            "\r\nexport {};\n",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
         // Some used
         (
             "import foo, { bar } from './foo'; bar();",
@@ -1360,6 +1402,141 @@ fn test_argument_parameter_rename_fix() {
     ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail).expect_fix(fix).test();
+}
+
+#[test]
+fn test_type_parameter_remove_fix() {
+    let pass: Vec<(&str, Option<serde_json::Value>)> = vec![];
+    let fail: Vec<(&str, Option<serde_json::Value>)> = vec![];
+    let fix = vec![
+        ("export type Foo<T> = {}", "export type Foo = {}", None, FixKind::DangerousSuggestion),
+        (
+            "export function foo<T>() {}",
+            "export function foo() {}",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "export const foo = <T,>() => {}",
+            "export const foo = () => {}",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "export class Foo { bar<T>() {} }",
+            "export class Foo { bar() {} }",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "export function foo<T, U>(u: U) { return u }",
+            "export function foo<U>(u: U) { return u }",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "export function foo<T, U>(t: T) { return t }",
+            "export function foo<T>(t: T) { return t }",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "export function foo<T, U, V>(t: T, v: V) { return [t, v] }",
+            "export function foo<T, V>(t: T, v: V) { return [t, v] }",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "export type Foo<T, U,> = T",
+            "export type Foo<T,> = T",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "export type Foo<T extends string = 'a'> = {}",
+            "export type Foo = {}",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        // `infer` type parameters can't simply be removed
+        (
+            "export type F<T> = T extends Array<infer R> ? string : never",
+            "export type F<T> = T extends Array<infer R> ? string : never",
+            None,
+            FixKind::None,
+        ),
+        // interfaces and classes can merge with other declarations, which must
+        // all declare identical type parameters
+        ("export interface Foo<T> {}", "export interface Foo<T> {}", None, FixKind::None),
+        ("export class Foo<T> {}", "export class Foo<T> {}", None, FixKind::None),
+        (
+            "export type Foo<T> = {}",
+            "export type Foo<T> = {}",
+            Some(json!([{ "fix": { "variables": "off" } }])),
+            FixKind::None,
+        ),
+        // removing a type parameter is dangerous, so it is not applied as a safe fix
+        (
+            "export type Foo<T> = {}",
+            "export type Foo<T> = {}",
+            Some(json!([{ "fix": { "variables": "safe-fix" } }])),
+            FixKind::SafeFix,
+        ),
+        (
+            "export type Foo<T> = {}",
+            "export type Foo = {}",
+            Some(json!([{ "fix": { "variables": "fix" } }])),
+            FixKind::DangerousFix,
+        ),
+    ];
+
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .change_rule_path_extension("ts")
+        .test();
+}
+
+#[test]
+fn test_type_parameter_remove_arrow_fix() {
+    for extension in ["ts", "tsx", "mts", "cts"] {
+        let fix = vec![
+            (
+                "export const foo = <T, U>(t: T) => t",
+                "export const foo = <T,>(t: T) => t",
+                None,
+                FixKind::DangerousSuggestion,
+            ),
+            (
+                "export const foo = <U, T>(t: T) => t",
+                "export const foo = <T,>(t: T) => t",
+                None,
+                FixKind::DangerousSuggestion,
+            ),
+            (
+                "export const foo = <T, U,>(t: T) => t",
+                "export const foo = <T,>(t: T) => t",
+                None,
+                FixKind::DangerousSuggestion,
+            ),
+            (
+                "export const foo = <U, T,>(t: T) => t",
+                "export const foo = <T,>(t: T) => t",
+                None,
+                FixKind::DangerousSuggestion,
+            ),
+            (
+                "export const foo = <T, U /* , */>(t: T) => t",
+                "export const foo = <T /* , */,>(t: T) => t",
+                None,
+                FixKind::DangerousSuggestion,
+            ),
+        ];
+
+        Tester::new::<&str>(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, vec![], vec![])
+            .expect_fix(fix)
+            .change_rule_path_extension(extension)
+            .test();
+    }
 }
 
 #[test]

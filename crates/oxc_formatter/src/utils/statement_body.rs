@@ -3,7 +3,7 @@ use oxc_formatter_core::Format;
 use oxc_span::GetSpan;
 
 use crate::{
-    ast_nodes::{AstNode, AstNodes},
+    ast_nodes::{AstNode, AstNodeKind, AstNodes},
     formatter::{
         JsFormatContext, JsFormatter, JsFormatterExt as _,
         prelude::{empty_line, format_once, hard_line_break, soft_line_indent_or_space, space},
@@ -208,12 +208,12 @@ pub fn write_comments_between_blocks<'a>(
 }
 
 pub struct FormatStatementBody<'a, 'b> {
-    body: &'b AstNode<'a, Statement<'a>>,
+    body: &'b AstNode<'b, 'a, Statement<'a>>,
     force_space: bool,
 }
 
 impl<'a, 'b> FormatStatementBody<'a, 'b> {
-    pub fn new(body: &'b AstNode<'a, Statement<'a>>) -> Self {
+    pub fn new(body: &'b AstNode<'b, 'a, Statement<'a>>) -> Self {
         Self { body, force_space: false }
     }
 
@@ -227,14 +227,15 @@ impl<'a, 'b> FormatStatementBody<'a, 'b> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatStatementBody<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if let AstNodes::EmptyStatement(empty) = self.body.as_ast_nodes() {
+        let kind = self.body.as_kind();
+        if let AstNodeKind::EmptyStatement(empty) = &kind {
             // The `;` IS the body (content), so the head-body separator applies before it too;
             // without comments no separator is written (`while (x);`).
             if f.context().comments().has_comment_before(empty.span.start) {
                 write_head_body_separator(empty.span.start, f);
             }
             write!(f, empty);
-        } else if let AstNodes::BlockStatement(block) = self.body.as_ast_nodes() {
+        } else if let AstNodeKind::BlockStatement(block) = &kind {
             write_head_body_separator(block.span().start, f);
             write!(f, [block]);
         } else if self.force_space {

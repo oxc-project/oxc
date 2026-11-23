@@ -26,17 +26,17 @@ pub(super) fn write_postcss_simple_var_declaration<'a>(
     f: &mut CssFormatter<'_, 'a>,
 ) {
     write_postcss_simple_var(&decl.name, f);
-    statement::write_colon_run(to_span(&decl.name.span).end, to_span(&decl.colon_span).end, f);
+    statement::write_colon_run(decl.name.span.end, decl.colon_span.end, f);
 
     // An empty value prints as `$x:;`, as Prettier does.
-    let end = to_span(&decl.span).end;
+    let end = decl.span.end;
     if !decl.value.is_empty() {
         write!(f, space());
         if decl.value_is_raw {
             // postcss-simple-vars substitutes the value textually,
             // so re-spacing a raw fallback would change the substituted token stream
             // (DIVERGENCES.md#postcss-simple-var-raw-verbatim).
-            let value_start = to_span(decl.value[0].span()).start;
+            let value_start = decl.value[0].span().start;
             value::write_verbatim_value(Span::new(value_start, end), f);
         } else {
             // The typed value stream (including any trailing `ImportantAnnotation` pushed by the parser)
@@ -53,6 +53,6 @@ pub(super) fn write_postcss_simple_var<'a>(
     f: &mut CssFormatter<'_, 'a>,
 ) {
     let source = f.context().source_text();
-    let span = to_span(&variable.span);
+    let span = to_span(variable.span);
     write!(f, text(source.text_for(&span)));
 }

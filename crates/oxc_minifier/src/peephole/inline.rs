@@ -125,7 +125,7 @@ impl<'a> PeepholeOptimizations {
         match cv {
             ConstantValue::Boolean(b) => !b,
             ConstantValue::Number(n) => n.is_nan() || *n == 0.0,
-            ConstantValue::String(s) => s.as_ref().is_empty(),
+            ConstantValue::String(s) => s.is_empty(),
             ConstantValue::Null | ConstantValue::Undefined => true,
             ConstantValue::BigInt(_) => false,
         }
@@ -220,13 +220,12 @@ impl<'a> PeepholeOptimizations {
                     matches!(
                         prop,
                         ObjectPropertyKind::ObjectProperty(p)
-                            if matches!(p.kind, PropertyKind::Set | PropertyKind::Get)
+                            if p.kind.is_accessor()
                                 || Self::expression_has_setter_or_getter(&p.value)
                                 // `{ __proto__: ... }` sets the prototype chain and could
                                 // install setters that make property writes side-effectful.
                                 || (p.kind == PropertyKind::Init
-                                    && !p.computed
-                                    && p.key.is_specific_static_name("__proto__"))
+                                    && p.key.is_specific_literal_name("__proto__"))
                     )
                 });
                 if has_side_effects { FreshValueKind::None } else { FreshValueKind::Object }
@@ -267,11 +266,7 @@ impl<'a> PeepholeOptimizations {
                     // A static getter OR setter makes a write to that key throw in
                     // strict mode (a get-only accessor has no [[Set]]; a setter runs
                     // on write), so neither is a droppable fresh-value write.
-                    || (method.r#static
-                        && matches!(
-                            method.kind,
-                            MethodDefinitionKind::Set | MethodDefinitionKind::Get
-                        ))
+                    || (method.r#static && method.kind.is_accessor())
             }
             // `static accessor foo` auto-generates a getter+setter pair.
             ClassElement::AccessorProperty(prop) => prop.r#static || !prop.decorators.is_empty(),
@@ -295,7 +290,7 @@ impl<'a> PeepholeOptimizations {
                 matches!(
                     prop,
                     ObjectPropertyKind::ObjectProperty(p)
-                        if matches!(p.kind, PropertyKind::Set | PropertyKind::Get)
+                        if p.kind.is_accessor()
                             || Self::expression_has_setter_or_getter(&p.value)
                 )
             }),

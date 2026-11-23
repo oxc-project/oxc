@@ -491,7 +491,7 @@ impl<'a> AstKind<'a> {
 
             Self::ObjectProperty(p) => format!(
                 "ObjectProperty({})",
-                p.key.name().unwrap_or_else(|| StaticPropertyName::from(COMPUTED))
+                p.key.name().unwrap_or_else(|| StaticPropertyName::from(COMPUTED)).display()
             )
             .into(),
             Self::ArrayAssignmentTarget(_) => "ArrayAssignmentTarget".into(),
@@ -894,7 +894,6 @@ mod tests {
             node_id: Cell::new(NodeId::DUMMY),
             value: 42.0,
             raw: None,
-            base: oxc_syntax::number::NumberBase::Decimal,
         };
         let num_kind = AstKind::NumericLiteral(&num_lit);
         assert!(!num_kind.has_argument_with_span(test_span));
@@ -915,7 +914,6 @@ mod tests {
             node_id: Cell::new(NodeId::DUMMY),
             value: 42.0,
             raw: None,
-            base: oxc_syntax::number::NumberBase::Decimal,
         };
         let num_kind = AstKind::NumericLiteral(&num_lit);
         assert!(!num_kind.is_callee_with_span(test_span));

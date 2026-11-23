@@ -4,6 +4,138 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.160.0] - 2026-11-23
+
+### 💥 BREAKING CHANGES
+
+- b90b3aa ast: [**BREAKING**] Remove `base` field from `NumericLiteral` and `BigIntLiteral` (#29919) (overlookmotel)
+
+### 🚀 Features
+
+- 2384875 minifier: Remove redundant `| 0` under bitwise operators (#29991) (Cameron)
+- abf889f minifier: Flatten nested string concatenations (#30015) (Cameron)
+- 5f51bd3 minifier: Fold division with short numeric results (#29994) (Cameron)
+- 1102f24 minifier: Flatten nested untagged template literals (#29993) (Cameron)
+- 12897a0 minifier: Fold switch with one case and default into if-else (#29990) (Cameron)
+- f9e90de minifier: Fold numeric identities like `x - 0` and `x * 1` (#29926) (Dunqing)
+- c265eda minifier,ecmascript: Fold additive zero and safe offsets on int32/uint32 expressions (#29865) (Andre_Ramirez)
+
+### 🐛 Bug Fixes
+
+- adf284e mangler: Use debug names for private members (#30061) (Cameron)
+- 41dbc08 mangler: Keep names set by redeclarations with keepNames (#30055) (Dunqing)
+- 64b7176 minifier: Preserve throwing `String.fromCodePoint` calls (#30014) (Cameron)
+- f17a216 ecmascript: Evaluate unary expressions in `ToNumber` (#30009) (Cameron)
+- 181dd40 ecmascript: Canonicalize RegExp flags in string conversion (#30008) (Cameron)
+- cf35a2e ecmascript: Respect shadowed `NaN` in strict equality (#30005) (Cameron)
+- 2d9246e minifier: Don't inline block-level vars visible to an outer direct eval (#29992) (Cameron)
+- 32798b3 minifier: Don't treat reassigned `@__NO_SIDE_EFFECTS__` functions as pure (#29974) (oxc-captain[bot])
+- c589002 minifier: Drop redeclarations of removed declarations (#29415) (Dunqing)
+- 2f6a11f semantic: Keep catch parameters in the catch clause scope (#29635) (Dunqing)
+- 60718a1 minifier: Keep unused classes with a static computed `prototype` key (#27966) (baltasarblanco)
+- b7e2beb minifier: Preserve indirect calls when inlining eval aliases (#29725) (Yunfei He)
+
+### ⚡ Performance
+
+- 7c39be0 minifier: Avoid rebuilding variable declarations when keeping all declarators (#29767) (camc314)
+
+### 📚 Documentation
+
+- 158fcf5 minifier: Fix duplicated word in comment (#30059) (Dunqing)
+- 3ff249b skills: Share PR title guidance with triagebot (#29980) (Cameron)
+- 1da6ea8 skills: Merge PR guidance into pr-guide skill (#29866) (Dunqing)
+- 9740083 minifier: Clarify when variable declarations are merged (#29768) (camc314)
+
+Full release notes: [0.160.0](https://github.com/oxc-project/oxc/blob/main/crates/CHANGELOG.md#01600---2026-11-23)
+
+## [0.159.0] - 2026-11-16
+
+### 🚀 Features
+
+- 63b8158 minifier: Inline single use function declaration to assignment (#28917) (Aadharsh  Pannirselvam)
+- eb1833e mangler: Mangle labels (#29614) (camc314)
+- ccca379 minifier: Remove unused labels (#29607) (camc314)
+- fa492d6 minifier: Merge adjacent switch cases with identical bodies (#29316) (camc314)
+- 8cc6101 minifier: Inline member reads into callees as indirect calls (#29305) (camc314)
+- e3d7d91 minifier: Inline member reads into `new` expressions (#29304) (camc314)
+- 57211d0 minifier: Inline member reads into call arguments (#29303) (camc314)
+
+### 🐛 Bug Fixes
+
+- 1dc0ee9 semantic: Preserve catch and var binding identities (#28739) (Dunqing)
+
+### 📚 Documentation
+
+- 9e5a2bb agents: Require runnable playground reproductions in PRs (#29450) (Dunqing)
+- c4d1024 minifier: Require examples in fix and optimization PRs (#29439) (Dunqing)
+
+## [0.158.0] - 2026-11-09
+
+### 🐛 Bug Fixes
+
+- 7243594 minifier: Preserve throwing ArrayBuffer and URI calls (#29012) (camc314)
+- 595f3c2 minifier: Preserve left-hand side effects in instanceof checks (#29011) (camc314)
+- 0b48483 minifier: Preserve UTF-16 boundaries in empty-search replaceAll folding (#28807) (huuya)
+- 1e57a4e codegen: Print infinite numeric literals as `1e400` instead of `Infinity` (#28812) (Dominic Elm)
+- ae7474e minifier: Keep array concat chain reads before later side effects (#28261) (Dunqing)
+
+## [0.157.0] - 2026-11-02
+
+### 🐛 Bug Fixes
+
+- eaa8e90 ecmascript: Avoid numeric `+` folding when an operand may be a string (#28544) (camc314)
+
+### ⚡ Performance
+
+- df42953 minifier: Don't request another pass for block unwrapping (#28315) (Dunqing)
+
+## [0.156.0] - 2026-10-27
+
+### 💥 BREAKING CHANGES
+
+- cf8296f ecmascript: [**BREAKING**] Fold surrogate strings with JSStr constants (#27098) (Dunqing)
+
+### 🚀 Features
+
+- dd6cb2b minifier: Fold out-of-bounds string indices to `void 0` (#28004) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 9ec6617 minifier: Keep brackets on negative and non-finite numeric keys (#27855) (Yunus Ozen)
+- 520a26e minifier: Keep the default in shorthand assignment targets (#28183) (waltu)
+- 6d7b372 minifier: Handle sequence exprs when folding if to expr statement (#27939) (Armano)
+- 09bdb80 minifier: Allow argument rewrite with with leading var assignments (#28056) (Armano)
+- ebcdcd9 minifier: Preserve rest destructuring side effects (#27981) (camc314)
+- bd70a9b ecmascript: Use ECMAScript whitespace when folding `parseFloat`/`parseInt`/`trim` (#27719) (Dunqing)
+- 4c0fa90 minifier,linter: Keep `delete` of constant members and later JSX keys (#27990) (Dunqing)
+
+### ⚡ Performance
+
+- 3493ce3 minifier: Reuse is_error_constructor and simplify substitute_global_new_expression (#28149) (Armano)
+
+## [0.155.0] - 2026-10-19
+
+### 🚀 Features
+
+- 7bb2697 minifier: Minimize array join expression (#27905) (Armano)
+- 6b5057b minifier: Add de morgan optimization for void expressions (#27375) (Armano)
+
+### 🐛 Bug Fixes
+
+- ce6a088 minifier: Fold string indices by UTF-16 code unit (#27096) (Dunqing)
+- bd37e78 ecmascript: Look through sequence expressions in `to_primitive` (#27837) (baltasarblanco)
+- d92789d minifier: Drop debugger statements in unbraced bodies (#27867) (camc314)
+- 863b359 ecmascript: Correct parseFloat decimal prefix scanning (#27695) (camc314)
+- a2534c6 minifier: Preserve lexical initializers in dead for loops (#27676) (camc314)
+- 3543672 ecmascript: Do not fold Number.isInteger / isSafeInteger of tiny non-integers to true (#27622) (Baltasar Blanco)
+- 6987a61 ecmascript: BigInt loose equality folding (unknown operands and `StringToBigInt`) (#27656) (Baltasar Blanco)
+- 40e5644 minifier: Preserve indirect access when folding into call targets (#27082) (waltu)
+- 022306f ecmascript: Do not fold `Math.cbrt` of a negative number to `NaN` (#27621) (Baltasar Blanco)
+
+### ⚡ Performance
+
+- 88b5c35 minifier: Reduce code branches when evaluating roots (#27906) (Armano)
+
 ## [0.154.0] - 2026-10-13
 
 ### 🚀 Features

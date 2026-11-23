@@ -81,7 +81,8 @@ declare_oxc_lint!(
     restriction,
     suggestion,
     version = "1.12.0",
-    short_description = "This rule enforces using `unknown` for catch clause variables instead of `any`.",
+    short_description =
+        "This rule enforces using `unknown` for catch clause variables instead of `any`.",
 );
 
 impl Rule for UseUnknownInCatchCallbackVariable {}

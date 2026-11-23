@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.160.0] - 2026-11-23
+
+### 🚀 Features
+
+- 22e4d0b runtime: Add standard decorator helpers (#29447) (Dunqing)
+
+Full release notes: [0.160.0](https://github.com/oxc-project/oxc/blob/main/crates/CHANGELOG.md#01600---2026-11-23)
+
+## [0.156.0] - 2026-10-27
+
+### 🐛 Bug Fixes
+
+- e3eca41 runtime: Align async iterator throw with Babel (#28059) (camc314)
+
 ## [0.154.0] - 2026-10-13
 
 ### 🐛 Bug Fixes

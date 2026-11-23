@@ -128,7 +128,13 @@ export interface ObjectProperty extends Span {
   parent: Node;
 }
 
-export type PropertyKey = IdentifierName | PrivateIdentifier | Expression;
+export type PropertyKey =
+  | IdentifierName
+  | StringLiteral
+  | NumericLiteral
+  | BigIntLiteral
+  | PrivateIdentifier
+  | Expression;
 
 export type PropertyKind = "init" | "get" | "set";
 

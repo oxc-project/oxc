@@ -338,15 +338,15 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// Re-tokenize the current `}` token for `TemplateSubstitutionTail`
     /// See Section 12, the parser needs to re-tokenize on `TemplateSubstitutionTail`,
     pub(crate) fn next_template_substitution_tail(&mut self) -> Token {
-        self.token.set_start(self.offset() - 1);
+        self.token_start = self.offset() - 1;
         let kind = self.read_template_literal(Kind::TemplateMiddle, Kind::TemplateTail);
         self.finish_next_retokenized(kind)
     }
 
     /// Save escaped template string
     fn save_template_string(&mut self, is_valid_escape_sequence: bool, s: JSStr<'a>) {
-        self.escaped_templates.insert(self.token.start(), is_valid_escape_sequence.then_some(s));
-        self.token.set_escaped(true);
+        self.escaped_templates.insert(self.token_start, is_valid_escape_sequence.then_some(s));
+        self.pending.set_escaped();
     }
 
     pub(crate) fn get_template_string(&self, start: u32) -> Option<JSStr<'a>> {
@@ -362,7 +362,7 @@ mod test {
 
     use crate::config::NoTokensLexerConfig;
 
-    use super::super::{Kind, Lexer, UniquePromise};
+    use super::super::{Kind, Lexer};
 
     #[test]
     fn template_literal_linebreaks() {
@@ -394,21 +394,25 @@ mod test {
         #[expect(clippy::items_after_statements, clippy::needless_pass_by_value)]
         fn run_test(source_text: String, expected_escaped: String, is_only_part: bool) {
             let allocator = Allocator::default();
-            let unique = UniquePromise::new_for_tests_and_benchmarks();
-            let mut lexer = Lexer::new(
+            Lexer::scope(
                 &allocator,
                 &source_text,
                 SourceType::default(),
                 NoTokensLexerConfig,
-                unique,
+                |mut lexer| {
+                    let token = lexer.first_token();
+                    assert_eq!(
+                        token.kind(),
+                        if is_only_part {
+                            Kind::NoSubstitutionTemplate
+                        } else {
+                            Kind::TemplateHead
+                        }
+                    );
+                    let escaped = lexer.escaped_templates[&token.start()];
+                    assert_eq!(escaped.and_then(JSStr::as_str), Some(expected_escaped.as_str()));
+                },
             );
-            let token = lexer.next_token();
-            assert_eq!(
-                token.kind(),
-                if is_only_part { Kind::NoSubstitutionTemplate } else { Kind::TemplateHead }
-            );
-            let escaped = lexer.escaped_templates[&token.start()];
-            assert_eq!(escaped.and_then(JSStr::as_str), Some(expected_escaped.as_str()));
         }
 
         for (source_fragment, escaped_fragment) in escapes {

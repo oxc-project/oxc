@@ -174,7 +174,6 @@ impl<'a> ReactDisplayName {
                 Expression::new_string_literal(SPAN, name, None, ctx),
                 false,
                 false,
-                false,
                 ctx,
             ),
         );

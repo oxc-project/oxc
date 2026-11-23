@@ -1,14 +1,24 @@
 //! Stepping one token: the line-break rules (ASI, restricted productions, the end of a
 //! type), literals, and the dispatch to words, punctuation, types and JSX.
 
+use oxc_simd::{BASELINE, cpu_version};
+
 use crate::token::{OP_KIND_BASE, is_trivia_byte, matches_tk, tk};
 
-use super::*;
+use crate::pipeline::disambiguate::common::TokensView;
+
+use super::{
+    frame::{Declarator, FrameKind, Member, RegionRule, StmtReg},
+    walker::Walk,
+};
 
 /// Can `tok` (the token starting at `pos`) continue an expression that a value token ended on the
 /// previous line? Used for ASI.
-fn continues_expression(tokens: &Tokens, pos: usize) -> bool {
-    let k = tokens.base_kind(pos);
+#[cpu_version(Generic)]
+fn continues_expression(tokens: &TokensView, pos: usize) -> bool {
+    let cpu = BASELINE;
+
+    let k = tokens.base_kind(pos, cpu);
     if k >= OP_KIND_BASE {
         let c = tokens.src[pos];
         let c1 = tokens.src[pos + 1];
@@ -19,19 +29,22 @@ fn continues_expression(tokens: &Tokens, pos: usize) -> bool {
     }
     // tsc ends the expression before an as or satisfies on a new line.
     if k == tk!(Ident) {
-        return matches_tk!(tokens.ident_kw(pos), KwIn | KwInstanceof);
+        return matches_tk!(tokens.ident_kw(pos, cpu), KwIn | KwInstanceof);
     }
     matches_tk!(k, TemplateHead | TemplateNoSub)
 }
 
 impl Walk {
-    pub(super) fn step(&mut self, tokens: &Tokens, pos: usize) -> usize {
+    #[cpu_version(Generic)]
+    pub(super) fn step(&mut self, tokens: &TokensView, pos: usize) -> usize {
+        let cpu = BASELINE;
+
         self.last_start = pos;
-        let k = tokens.base_kind(pos);
-        if is_trivia_byte(k) {
+        let k = tokens.base_kind(pos, cpu);
+        if is_trivia_byte(k, cpu) {
             return pos + 1;
         }
-        let newline = tokens.line_break_between(self.prev_end, pos);
+        let newline = tokens.line_break_between(self.prev_end, pos, cpu);
         self.stmt_done = false;
 
         // Skipping the inside of a closing JSX tag.
@@ -48,11 +61,16 @@ impl Walk {
         }
 
         // ASI: a value ended the previous line and this token cannot continue it.
-        if newline && !self.operand_allowed() && !continues_expression(tokens, pos) {
+        if newline && !self.operand_allowed() && !self.continues_line(tokens, pos) {
             self.asi(tokens, pos);
         }
-        // A binding that ended the line goes on with =, a comma or a type annotation only.
-        if newline && !self.operand_allowed() && self.top_declarator() == D_BOUND {
+        // A binding that ended the line goes on with =, a comma or a type annotation only; a for or
+        // catch head stays open.
+        if newline
+            && !self.operand_allowed()
+            && self.top().declarator == Declarator::Bound
+            && self.top_kind() != FrameKind::Head
+        {
             let c = tokens.src[pos];
             if !(k >= OP_KIND_BASE && matches!(c, b'=' | b',' | b':')) {
                 self.end_statement();
@@ -88,12 +106,12 @@ impl Walk {
         let end = match k {
             tk!(Ident) => self.step_word(tokens, pos),
             tk!(Number | BigInt | String | RegExp | TemplateNoSub | PrivateIdent) => {
-                let e = tokens.next_start(pos + 1);
+                let e = tokens.next_start(pos + 1, cpu);
                 self.literal(tokens, k, e);
                 e
             }
             tk!(TemplateHead | TemplateMiddle) => {
-                let e = tokens.next_start(pos + 1);
+                let e = tokens.next_start(pos + 1, cpu);
                 if k == tk!(TemplateMiddle) && self.pop_to(|k| k == FrameKind::Sub).is_none() {
                     self.unbalanced();
                 }
@@ -104,7 +122,7 @@ impl Walk {
                 e
             }
             tk!(TemplateTail) => {
-                let e = tokens.next_start(pos + 1);
+                let e = tokens.next_start(pos + 1, cpu);
                 if self.pop_to(|k| k == FrameKind::Sub).is_none() {
                     self.unbalanced();
                 }
@@ -123,11 +141,15 @@ impl Walk {
         end
     }
 
-    fn asi(&mut self, tokens: &Tokens, pos: usize) {
+    #[cpu_version(Generic)]
+    #[inline(always)]
+    fn asi(&mut self, tokens: &TokensView, pos: usize) {
+        let cpu = BASELINE;
+
         // Concise arrow bodies end with the statement.
         self.pop_concise();
         // An expression-embedded type region ends too.
-        while self.top_kind() == FrameKind::TypeRegion && self.top().state == R_EXPR {
+        while self.top_kind() == FrameKind::TypeRegion && self.top().region == RegionRule::Expr {
             self.pop();
         }
         if self.top_kind() == FrameKind::TypeRegion {
@@ -137,12 +159,12 @@ impl Walk {
         // A head continues onto the next line when its body (or more head) follows; otherwise the
         // break ends a bodiless signature.
         if matches!(self.top_kind(), FrameKind::FnHead | FrameKind::ClassHead) {
-            let k = tokens.base_kind(pos);
+            let k = tokens.base_kind(pos, cpu);
             // Right after `function` / `class`, the name (or a generator's `*`) may follow a
             // line break: nothing has been declared yet, so there is no signature to end.
             let unnamed = matches_tk!(self.prev_kw, KwFunction | KwClass);
             let goes_on = if k == tk!(Ident) {
-                unnamed || matches_tk!(tokens.ident_kw(pos), KwExtends | KwImplements)
+                unnamed || matches_tk!(tokens.ident_kw(pos, cpu), KwExtends | KwImplements)
             } else {
                 k >= OP_KIND_BASE && tokens.src[pos] == b'{'
             };
@@ -152,20 +174,33 @@ impl Walk {
             return;
         }
         match self.top_kind() {
-            FrameKind::ClassBody => {
-                // Member initializer ended; a new member starts.
-                self.top_mut().next_member();
-                self.set_operand();
-            }
-            k if k.is_stmt_holder() => self.end_statement(),
+            k if k == FrameKind::ClassBody || k.is_stmt_holder() => self.end_statement(),
             // Lists, calls, literals and types hold no statements: nothing ends.
             _ => {}
         }
     }
 
+    /// Can the token at pos go on after the value that ended the previous line?
+    #[cpu_version(Generic)]
+    #[inline(always)]
+    fn continues_line(&self, tokens: &TokensView, pos: usize) -> bool {
+        let cpu = BASELINE;
+
+        // A class member key takes only its parameters, type parameters, type or initializer.
+        if self.top_kind() == FrameKind::ClassBody && self.top().member == Member::KeySeen {
+            return tokens.base_kind(pos, cpu) >= OP_KIND_BASE
+                && b"(<=:?!".contains(&tokens.src[pos]);
+        }
+        continues_expression(tokens, pos)
+    }
+
     /// Can the token at pos go on after a type that ended the previous line?
-    fn continues_after_type_break(&self, tokens: &Tokens, pos: usize) -> bool {
-        if tokens.base_kind(pos) < OP_KIND_BASE {
+    #[cpu_version(Generic)]
+    #[inline(always)]
+    fn continues_after_type_break(&self, tokens: &TokensView, pos: usize) -> bool {
+        let cpu = BASELINE;
+
+        if tokens.base_kind(pos, cpu) < OP_KIND_BASE {
             return false;
         }
         let (c, c1) = (tokens.src[pos], tokens.src[pos + 1]);
@@ -180,35 +215,26 @@ impl Walk {
         }
     }
 
+    #[cpu_version(Generic)]
     fn end_region_by_break(&mut self) {
         let r = self.pop();
-        match r.state {
-            R_STMT => self.end_statement(),
-            R_INLINE => {
-                // A declarator / member annotation ended by a line break.
-                match self.top_kind() {
-                    FrameKind::ClassBody => {
-                        self.top_mut().next_member();
-                        self.set_operand();
-                    }
-                    FrameKind::FnHead => {
-                        // Return type of a bodiless signature.
-                        self.pop();
-                        self.end_statement();
-                    }
-                    _ => self.end_statement(),
-                }
-            }
-            R_EXPR => {
+        match r.region {
+            // `for (let x: T` then a new line: the head goes on.
+            RegionRule::Inline if self.top_kind() == FrameKind::Head => self.set_value(),
+            RegionRule::Stmt | RegionRule::Inline => self.end_statement(),
+            RegionRule::Expr => {
                 // `x as T` then a new line: the value is complete.
                 self.set_value();
                 self.no_type_args = true;
             }
-            _ => self.set_value(),
+            RegionRule::ArrowRet => self.set_value(),
         }
     }
 
-    fn literal(&mut self, tokens: &Tokens, k: u8, end: usize) {
+    #[cpu_version(Generic)]
+    fn literal(&mut self, tokens: &TokensView, k: u8, end: usize) {
+        let cpu = BASELINE;
+
         if self.in_type() {
             self.type_atom(false);
             return;
@@ -216,23 +242,24 @@ impl Walk {
         if k == tk!(String) {
             // Module specifier: `import "x"`, `... from "x"`.
             let reg = self.stmt_reg();
-            if (reg == S_IMPORT && matches_tk!(self.prev_kw, KwImport | KwFrom))
-                || (reg == S_EXPORT && self.prev_kw == tk!(KwFrom))
+            if (reg == StmtReg::Import && matches_tk!(self.prev_kw, KwImport | KwFrom))
+                || (reg == StmtReg::Export && self.prev_kw == tk!(KwFrom))
             {
                 self.value_done();
-                let nx = tokens.peek(end);
+                let nx = tokens.peek(end, cpu);
                 let attrs = nx.kind == tk!(Ident)
-                    && !tokens.line_break_between(end, nx.pos)
-                    && (tokens.ident_is(nx.pos, b"with") || tokens.ident_is(nx.pos, b"assert"));
+                    && !tokens.line_break_between(end, nx.pos, cpu)
+                    && (tokens.ident_is(nx.pos, b"with", cpu)
+                        || tokens.ident_is(nx.pos, b"assert", cpu));
                 if attrs {
-                    self.set_stmt_reg(S_ATTRS);
+                    self.set_stmt_reg(StmtReg::Attrs);
                     return;
                 }
                 self.stmt_done = true;
                 self.after_statement();
                 return;
             }
-            if reg == S_DECLARE_MODULE {
+            if reg == StmtReg::DeclareModule {
                 // `declare module "x"`: bodiless unless `{` follows.
                 self.value_done();
                 self.stmt_done = true;
@@ -241,8 +268,8 @@ impl Walk {
         }
         // Member keys.
         match self.top_kind() {
-            FrameKind::Object | FrameKind::ClassBody if self.top().state == M_KEY_POS => {
-                self.top_mut().state = M_KEY_SEEN;
+            FrameKind::Object | FrameKind::ClassBody if self.top().member == Member::KeyPos => {
+                self.top_mut().member = Member::KeySeen;
                 self.value_done();
                 return;
             }

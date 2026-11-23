@@ -45,7 +45,7 @@ declare_oxc_lint!(
     NoAriaHiddenOnFocusable,
     jsx_a11y,
     correctness,
-    fix,
+    suggestion,
     version = "0.0.22",
     short_description = "Enforces that `aria-hidden=\"true\"` is not set on focusable elements.",
 );
@@ -60,7 +60,7 @@ impl Rule for NoAriaHiddenOnFocusable {
             && is_focusable(ctx, jsx_el)
             && let JSXAttributeItem::Attribute(boxed_attr) = aria_hidden_prop
         {
-            ctx.diagnostic_with_fix(
+            ctx.diagnostic_with_suggestion(
                 no_aria_hidden_on_focusable_diagnostic(boxed_attr.span),
                 |fixer| fixer.delete(&boxed_attr.span),
             );
@@ -116,7 +116,7 @@ fn is_focusable<'a>(ctx: &LintContext<'a>, element: &JSXOpeningElement<'a>) -> b
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::{fixer::FixKind, tester::Tester};
 
     let pass = vec![
         "<div aria-hidden=\"true\" />;",
@@ -138,12 +138,42 @@ fn test() {
     ];
 
     let fix = vec![
-        (r#"<div aria-hidden="true" tabIndex="0" />;"#, r#"<div  tabIndex="0" />;"#),
-        (r#"<input aria-hidden="true" />;"#, "<input  />;"),
-        (r#"<a href="/" aria-hidden="true" />"#, r#"<a href="/"  />"#),
-        (r#"<button aria-hidden="true" />"#, "<button  />"),
-        (r#"<textarea aria-hidden="true" />"#, "<textarea  />"),
-        (r#"<p tabIndex="0" aria-hidden="true">text</p>;"#, r#"<p tabIndex="0" >text</p>;"#),
+        (
+            r#"<div aria-hidden="true" tabIndex="0" />;"#,
+            r#"<div  tabIndex="0" />;"#,
+            None::<serde_json::Value>,
+            FixKind::Suggestion,
+        ),
+        (
+            r#"<input aria-hidden="true" />;"#,
+            "<input  />;",
+            None::<serde_json::Value>,
+            FixKind::Suggestion,
+        ),
+        (
+            r#"<a href="/" aria-hidden="true" />"#,
+            r#"<a href="/"  />"#,
+            None::<serde_json::Value>,
+            FixKind::Suggestion,
+        ),
+        (
+            r#"<button aria-hidden="true" />"#,
+            "<button  />",
+            None::<serde_json::Value>,
+            FixKind::Suggestion,
+        ),
+        (
+            r#"<textarea aria-hidden="true" />"#,
+            "<textarea  />",
+            None::<serde_json::Value>,
+            FixKind::Suggestion,
+        ),
+        (
+            r#"<p tabIndex="0" aria-hidden="true">text</p>;"#,
+            r#"<p tabIndex="0" >text</p>;"#,
+            None::<serde_json::Value>,
+            FixKind::Suggestion,
+        ),
     ];
 
     Tester::new(NoAriaHiddenOnFocusable::NAME, NoAriaHiddenOnFocusable::PLUGIN, pass, fail)

@@ -1,10 +1,10 @@
 use cow_utils::CowUtils;
-use oxc_ast::{AstKind, ast::TSTypeName};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{context::LintContext, rule::Rule};
 
 fn no_wrapper_object_types(ident_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use wrapper object types.")
@@ -60,47 +60,34 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoWrapperObjectTypes {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let (ident_name, ident_span, reference_id) = match node.kind() {
-            AstKind::TSTypeReference(type_ref) => {
-                if let TSTypeName::IdentifierReference(type_name) = &type_ref.type_name {
-                    (type_name.name.as_str(), type_name.span, type_name.reference_id())
-                } else {
-                    return;
+    fn run_once(&self, ctx: &LintContext) {
+        let scoping = ctx.scoping();
+        for name in ["BigInt", "Boolean", "Number", "Object", "String", "Symbol"] {
+            let Some(reference_ids) = scoping.root_unresolved_references().get(name) else {
+                continue;
+            };
+            for &reference_id in reference_ids {
+                let reference = scoping.get_reference(reference_id);
+                if reference.symbol_id().is_some() {
+                    continue;
                 }
-            }
-            AstKind::TSClassImplements(ts_class_implements) => {
-                if let TSTypeName::IdentifierReference(type_name) = &ts_class_implements.expression
-                {
-                    (type_name.name.as_str(), type_name.span, type_name.reference_id())
+                let node = ctx.nodes().get_node(reference.node_id());
+                let AstKind::IdentifierReference(ident) = node.kind() else {
+                    continue;
+                };
+                let can_fix = match ctx.nodes().parent_kind(node.id()) {
+                    AstKind::TSTypeReference(_) => true,
+                    AstKind::TSClassImplements(_) | AstKind::TSInterfaceHeritage(_) => false,
+                    _ => continue,
+                };
+
+                if can_fix {
+                    ctx.diagnostic_with_fix(no_wrapper_object_types(name, ident.span), |fixer| {
+                        fixer.replace(ident.span, name.cow_to_ascii_lowercase().to_string())
+                    });
                 } else {
-                    return;
+                    ctx.diagnostic(no_wrapper_object_types(name, ident.span));
                 }
-            }
-            AstKind::TSInterfaceHeritage(ts_interface_heritage) => {
-                if let TSTypeName::IdentifierReference(type_name) = &ts_interface_heritage.type_name
-                {
-                    (type_name.name.as_str(), type_name.span, type_name.reference_id())
-                } else {
-                    return;
-                }
-            }
-            _ => return,
-        };
-
-        if matches!(ident_name, "BigInt" | "Boolean" | "Number" | "Object" | "String" | "Symbol") {
-            if ctx.scoping().get_reference(reference_id).symbol_id().is_some() {
-                return;
-            }
-
-            let can_fix = matches!(node.kind(), AstKind::TSTypeReference(_));
-
-            if can_fix {
-                ctx.diagnostic_with_fix(no_wrapper_object_types(ident_name, ident_span), |fixer| {
-                    fixer.replace(ident_span, ident_name.cow_to_ascii_lowercase().to_string())
-                });
-            } else {
-                ctx.diagnostic(no_wrapper_object_types(ident_name, ident_span));
             }
         }
     }
@@ -156,6 +143,11 @@ fn test() {
         "type Unknown = {};",
         "type Void = {};",
         "class MyClass extends Number {}",
+        "const value = Number(1); const object = new Object();",
+        "type Constructor = typeof Number;",
+        "let value: Number.Member;",
+        "interface Value extends Namespace.Number {}",
+        "class Value implements Namespace.Number {}",
         "
                   type Number = 0 | 1;
                   let value: Number;
@@ -185,6 +177,7 @@ fn test() {
         "class MyClass implements Number {}",
         "interface MyInterface extends Number {}",
         "type MyType = Number & String;",
+        "let globalValue: Number; function f() { type Number = string; let localValue: Number; }",
     ];
 
     let fix = vec![
@@ -200,6 +193,8 @@ fn test() {
         ("type MyType = Number;", "type MyType = number;"),
         ("type MyType = [Number];", "type MyType = [number];"),
         ("type MyType = Number & String;", "type MyType = number & string;"),
+        ("class Value implements Number {}", "class Value implements Number {}"),
+        ("interface Value extends Number {}", "interface Value extends Number {}"),
     ];
 
     Tester::new(NoWrapperObjectTypes::NAME, NoWrapperObjectTypes::PLUGIN, pass, fail)

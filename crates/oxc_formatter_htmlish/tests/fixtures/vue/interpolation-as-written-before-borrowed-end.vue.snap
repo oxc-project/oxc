@@ -1,0 +1,58 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<template>
+  <div>
+    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ({{ a }})
+  </div>
+  <div>
+    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ({{ a
+    }})
+  </div>
+  <div>({{ a
+
+  }})</div>
+</template>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<template>
+  <div>
+    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    ({{ a }})
+  </div>
+  <div>
+    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    ({{ a
+    }})
+  </div>
+  <div>
+    ({{ a
+
+    }})
+  </div>
+</template>
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<template>
+  <div>
+    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ({{ a
+    }})
+  </div>
+  <div>
+    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ({{ a
+    }})
+  </div>
+  <div>
+    ({{ a
+
+    }})
+  </div>
+</template>
+
+===================== End =====================

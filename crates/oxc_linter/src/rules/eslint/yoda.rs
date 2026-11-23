@@ -9,11 +9,13 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{ToBigInt, WithoutGlobalReferenceInformation};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
     AstNode,
+    ast_util::could_be_asi_hazard,
     context::LintContext,
     rule::{Rule, TupleRuleConfig},
     utils::is_same_expression,
@@ -254,12 +256,12 @@ impl Rule for Yoda {
 
         // never
         if allow_yoda == &AllowYoda::Never && is_yoda(expr) {
-            do_diagnostic_with_fix(expr, ctx, true);
+            do_diagnostic_with_fix(expr, node, ctx, true);
         }
 
         // always
         if allow_yoda == &AllowYoda::Always && is_not_yoda(expr) {
-            do_diagnostic_with_fix(expr, ctx, false);
+            do_diagnostic_with_fix(expr, node, ctx, false);
         }
     }
 }
@@ -275,8 +277,23 @@ fn is_not_yoda(expr: &BinaryExpression) -> bool {
 }
 
 #[expect(clippy::cast_possible_truncation)]
-fn do_diagnostic_with_fix(expr: &BinaryExpression, ctx: &LintContext, never: bool) {
+fn do_diagnostic_with_fix(expr: &BinaryExpression, node: &AstNode, ctx: &LintContext, never: bool) {
     ctx.diagnostic_with_fix(yoda_diagnostic(expr.span, never, expr.operator.as_str()), |fix| {
+        // The operands of a relational comparison are converted to primitives
+        // in a left-first order that is reversed when the operands are swapped.
+        // A regex literal is an object, so its conversion is observable and the
+        // swap is not behavior-preserving; skip the safe fix in that case.
+        if expr.operator.is_compare() {
+            let literal_expr = if never {
+                expr.left.get_inner_expression()
+            } else {
+                expr.right.get_inner_expression()
+            };
+            if matches!(literal_expr, Expression::RegExpLiteral(_)) {
+                return fix.noop();
+            }
+        }
+
         let left_span = expr.left.span();
         let right_span = expr.right.span();
 
@@ -312,9 +329,15 @@ fn do_diagnostic_with_fix(expr: &BinaryExpression, ctx: &LintContext, never: boo
         let left_str = ctx.source_range(left_span);
         let right_str = ctx.source_range(right_span);
         let flipped_operator_str = flip_operator(expr.operator).as_str();
+        let prefix = if right_str.starts_with(['[', '(', '/', '+', '-', '`']) && could_be_asi_hazard(node, ctx) {
+            ";"
+        } else if left_prev_token {
+            " "
+        } else {
+            ""
+        };
         let replacement = format!(
-            "{}{right_str}{str_between_left_and_operator}{flipped_operator_str}{str_between_operator_and_right}{left_str}{}",
-            if left_prev_token { " " } else { "" },
+            "{prefix}{right_str}{str_between_left_and_operator}{flipped_operator_str}{str_between_operator_and_right}{left_str}{}",
             if right_next_token { " " } else { "" }
         );
 
@@ -404,7 +427,7 @@ fn is_range(expr: &LogicalExpression, ctx: &LintContext) -> bool {
         if let (Some(left_left), Some(right_right)) =
             (get_string_literal(left_left), get_string_literal(right_right))
         {
-            return left_left <= right_right;
+            return is_string_le(left_left, right_right);
         }
 
         if let (Some(left_left), Some(right_right)) =
@@ -438,7 +461,7 @@ fn is_range(expr: &LogicalExpression, ctx: &LintContext) -> bool {
         if let (Some(left_right), Some(right_left)) =
             (get_string_literal(left_right), get_string_literal(right_left))
         {
-            return left_right <= right_left;
+            return is_string_le(left_right, right_left);
         }
 
         if let (Some(left_right), Some(right_left)) =
@@ -455,7 +478,7 @@ fn is_range(expr: &LogicalExpression, ctx: &LintContext) -> bool {
 
 fn is_simple_template_literal(expr: &Expression) -> bool {
     match expr {
-        Expression::TemplateLiteral(template) => template.quasis.len() == 1,
+        Expression::TemplateLiteral(template) => template.is_no_substitution_template(),
         _ => false,
     }
 }
@@ -468,15 +491,25 @@ fn is_target_literal(expr: &Expression) -> bool {
     get_string_literal(expr).is_some() || is_number(expr)
 }
 
-fn get_string_literal<'a>(expr: &'a Expression) -> Option<&'a str> {
+/// Compares strings by bytes.
+/// A string with a lone surrogate has no UTF-8 form, so it is compared by UTF-16 code unit.
+fn is_string_le(left: JSStr, right: JSStr) -> bool {
+    if left.has_lone_surrogate() || right.has_lone_surrogate() {
+        left.encode_utf16().le(right.encode_utf16())
+    } else {
+        left.as_bytes() <= right.as_bytes()
+    }
+}
+
+fn get_string_literal<'a>(expr: &Expression<'a>) -> Option<JSStr<'a>> {
     match expr {
-        Expression::StringLiteral(string) => string.value.as_str(),
+        Expression::StringLiteral(string) => Some(string.value),
         Expression::TemplateLiteral(template) => {
             if template.quasis.len() != 1 {
                 return None;
             }
 
-            template.quasis.first().map(|e| e.value.raw.as_str())
+            template.quasis.first().map(|e| JSStr::from(e.value.raw))
         }
         _ => None,
     }
@@ -523,6 +556,19 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        // A lone surrogate orders by its UTF-16 code unit.
+        (
+            r#"if ("\uD800" <= x && x <= "\uDBFF") {}"#,
+            Some(serde_json::json!(["never", { "exceptRange": true }])),
+        ),
+        (
+            r#"if ("\uDC00" <= x && x <= "\uDFFF") {}"#,
+            Some(serde_json::json!(["never", { "exceptRange": true }])),
+        ),
+        (
+            r#"if ("a\uD800" <= x && x <= "b") {}"#,
+            Some(serde_json::json!(["never", { "exceptRange": true }])),
+        ),
         (r#"if (value === "red") {}"#, Some(serde_json::json!(["never"]))),
         ("if (value === value) {}", Some(serde_json::json!(["never"]))),
         ("if (value != 5) {}", Some(serde_json::json!(["never"]))),
@@ -699,6 +745,11 @@ fn test() {
     ];
 
     let fail = vec![
+        // A lone surrogate orders by its UTF-16 code unit.
+        (
+            r#"if ("\uDBFF" <= x && x <= "\uD800") {}"#,
+            Some(serde_json::json!(["never", { "exceptRange": true }])),
+        ),
         (
             "if (x <= 'foo' || 'bar' < x) {}",
             Some(serde_json::json!(["always", { "exceptRange": true }])),
@@ -849,6 +900,10 @@ fn test() {
         ("if (0 < a && b < max) {}", Some(serde_json::json!(["never", { "exceptRange": true }]))),
         // Issue: <https://github.com/oxc-project/oxc/issues/7714>
         ("{( t=='' )}", Some(serde_json::json!(["always", { "onlyEquality": true }]))),
+        // Issue: <https://github.com/oxc-project/oxc/issues/29471>
+        ("if (/x/ < value) {}", Some(serde_json::json!(["never"]))),
+        ("if (value > /x/) {}", Some(serde_json::json!(["always"]))),
+        ("if (/x/ === value) {}", Some(serde_json::json!(["never"]))),
     ];
 
     let fix = vec![
@@ -1207,6 +1262,19 @@ fn test() {
             "function a(){return\"x\"===new Foo()}",
             "function a(){return new Foo()===\"x\"}",
             Some(serde_json::json!(["never"])),
+        ),
+        // Issue: <https://github.com/oxc-project/oxc/issues/29471>
+        ("if (/x/ < value) {}", "if (/x/ < value) {}", Some(serde_json::json!(["never"]))),
+        ("if (value > /x/) {}", "if (value > /x/) {}", Some(serde_json::json!(["always"]))),
+        ("if (/x/ === value) {}", "if (value === /x/) {}", Some(serde_json::json!(["never"]))),
+        ("foo()\n0 === [a, b].indexOf(x) && go()", "foo()\n;[a, b].indexOf(x) === 0 && go()", None),
+        ("foo()\n0 === (a || b) && go()", "foo()\n;(a || b) === 0 && go()", None),
+        ("foo()\n0 === -x && go()", "foo()\n;-x === 0 && go()", None),
+        ("a++\n0 === +x && go()", "a++\n;+x === 0 && go()", None),
+        (
+            "foo();\n0 === [a, b].indexOf(x) && go();",
+            "foo();\n[a, b].indexOf(x) === 0 && go();",
+            None,
         ),
     ];
 

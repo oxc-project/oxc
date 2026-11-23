@@ -1,4 +1,4 @@
-use std::ptr;
+use oxc_simd::{BASELINE, cpu_version};
 
 use crate::token::tk;
 
@@ -8,7 +8,7 @@ use crate::pipeline::{
     operators::is_op_char,
 };
 
-use super::punct1::PUNCT1;
+use super::{Planes, mask_tail, punct::PUNCT_CHARS};
 
 const FL_WORD: u32 = 0;
 const FL_WS: u32 = 1;
@@ -21,11 +21,14 @@ const FL_MISC: u32 = 6;
 static CLS_JS: [u16; 256] = cls_table(false);
 static CLS_TS: [u16; 256] = cls_table(true);
 
+/// Only called at compile time.
 const fn cls_table(ts: bool) -> [u16; 256] {
-    let mut punct = [tk!(Invalid); 256];
+    let cpu = BASELINE;
+
+    let mut punct_kinds = [tk!(Invalid); 256];
     let mut i = 0;
-    while i < PUNCT1.len() {
-        punct[PUNCT1[i].byte as usize] = PUNCT1[i].kind as u8;
+    while i < PUNCT_CHARS.len() {
+        punct_kinds[PUNCT_CHARS[i].byte as usize] = PUNCT_CHARS[i].kind as u8;
         i += 1;
     }
     let mut t = [0u16; 256];
@@ -33,33 +36,33 @@ const fn cls_table(ts: bool) -> [u16; 256] {
     while c < 256 {
         let b = c as u8;
         let mut f = 0u16;
-        if is_word(b) {
+        if is_word(b, cpu) {
             f |= 1 << FL_WORD;
         }
-        if is_ws(b) {
+        if is_ws(b, cpu) {
             f |= 1 << FL_WS;
         }
-        if is_digit(b) {
+        if is_digit(b, cpu) {
             f |= 1 << FL_DIGIT;
         }
         if b == b'.' {
             f |= 1 << FL_DOT;
         }
-        if is_op_char(b) {
+        if is_op_char(b, cpu) {
             f |= 1 << FL_OPCH;
         }
         if (ts && is_kw_init_ts(b)) || (!ts && is_kw_init(b)) {
             f |= 1 << FL_KWINIT;
         }
-        if b == b'#' || b == b'\\' || b >= 0x80 {
+        if b == b'#' || b == b'\\' || b >= 0x80 || b == 0x0b || b == 0x0c {
             f |= 1 << FL_MISC;
         }
-        let kd = if is_ws(b) {
+        let kd = if is_ws(b, cpu) {
             tk!(Whitespace)
-        } else if is_word(b) {
-            if is_digit(b) { tk!(Number) } else { tk!(Ident) }
+        } else if is_word(b, cpu) {
+            if is_digit(b, cpu) { tk!(Number) } else { tk!(Ident) }
         } else {
-            punct[c]
+            punct_kinds[c]
         };
         t[c] = (f << 8) | kd as u16;
         c += 1;
@@ -67,41 +70,40 @@ const fn cls_table(ts: bool) -> [u16; 256] {
     t
 }
 
+#[cpu_version(Generic)]
 #[inline(never)]
-pub(super) unsafe fn classify_generic(
-    ts: bool,
-    src: *const u8,
-    n: usize,
-    word: *mut u64,
-    st: *mut u64,
-    kwinit: *mut u64,
-    opch: *mut u64,
-    digit: *mut u64,
-    dot: *mut u64,
-    misc: *mut u64,
-    kind: *mut u8,
-) {
+pub(super) fn classify_generic(ts: bool, src: &[[u8; 64]], n: usize, out: Planes) {
     let t16: &[u16; 256] = if ts { &CLS_TS } else { &CLS_JS };
+    let nb_ceil = n.div_ceil(64);
+    let (src, out) = (&src[..nb_ceil], out.first(nb_ceil));
+    let Planes {
+        token_start: st,
+        word,
+        keyword_initial: kwinit,
+        op_char: opch,
+        digit,
+        dot,
+        misc,
+        kinds: kind,
+    } = out;
     let mut cw: u64 = 0;
     let mut cs: u64 = 0;
-    let nbf = n / 64;
-    for b in 0..nbf {
-        let base = b * 64;
+    for b in 0..nb_ceil {
         let (mut mw, mut ms, mut mdg, mut mdt, mut mop, mut mkw, mut mmi) =
             (0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64);
         let mut g = 0usize;
         while g < 8 {
-            let p = base + g * 8;
+            let p = g * 8;
             let mut fw = 0u64;
             let mut kw = 0u64;
             let mut j = 0usize;
             while j < 8 {
-                let v = t16[*src.add(p + j) as usize] as u64;
+                let v = t16[src[b][p + j] as usize] as u64;
                 fw |= (v >> 8) << (j * 8);
                 kw |= (v & 0xff) << (j * 8);
                 j += 1;
             }
-            ptr::write_unaligned(kind.add(p) as *mut u64, kw);
+            kind[b][p..p + 8].copy_from_slice(&kw.to_le_bytes());
             let sh = (g * 8) as u32;
             mw |= pk(fw, FL_WORD) << sh;
             ms |= pk(fw, FL_WS) << sh;
@@ -114,55 +116,22 @@ pub(super) unsafe fn classify_generic(
         }
         let wprev = (mw << 1) | cw;
         let sprev = (ms << 1) | cs;
-        *st.add(b) = (ms & !sprev) | (mw & !wprev) | (!ms & !mw);
+        // A byte starts a token unless it continues a whitespace or word run
+        st[b] = !((ms & sprev) | (mw & wprev));
         cw = mw >> 63;
         cs = ms >> 63;
-        *word.add(b) = mw;
-        *kwinit.add(b) = mkw;
-        *opch.add(b) = mop;
-        *digit.add(b) = mdg;
-        *dot.add(b) = mdt;
-        *misc.add(b) = mmi;
+        word[b] = mw;
+        kwinit[b] = mkw;
+        opch[b] = mop;
+        digit[b] = mdg;
+        dot[b] = mdt;
+        misc[b] = mmi;
     }
-    let i = nbf * 64;
-    if i < n {
-        let b = nbf;
-        let tail = n - i;
-        let (mut w, mut stw, mut kwi, mut opw, mut dgw, mut dtw, mut msw) =
-            (0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64);
-        let mut prev_word = cw & 1;
-        let mut prev_ws = cs & 1;
-        for kk in 0..tail {
-            let v = t16[*src.add(i + kk) as usize];
-            let f = (v >> 8) as u64;
-            w |= ((f >> FL_WORD) & 1) << kk;
-            kwi |= ((f >> FL_KWINIT) & 1) << kk;
-            opw |= ((f >> FL_OPCH) & 1) << kk;
-            dgw |= ((f >> FL_DIGIT) & 1) << kk;
-            dtw |= ((f >> FL_DOT) & 1) << kk;
-            msw |= ((f >> FL_MISC) & 1) << kk;
-            let isw = (f >> FL_WORD) & 1;
-            let isws = (f >> FL_WS) & 1;
-            let start = (isws != 0 && prev_ws == 0)
-                || (isw != 0 && prev_word == 0)
-                || (isws == 0 && isw == 0);
-            if start {
-                stw |= 1u64 << kk;
-            }
-            *kind.add(i + kk) = (v & 0xff) as u8;
-            prev_word = isw;
-            prev_ws = isws;
-        }
-        *word.add(b) = w;
-        *st.add(b) = stw;
-        *kwinit.add(b) = kwi;
-        *opch.add(b) = opw;
-        *digit.add(b) = dgw;
-        *dot.add(b) = dtw;
-        *misc.add(b) = msw;
-    }
+    // The last block is classified whole, padding included, like the vector kernels do.
+    mask_tail([st, word, kwinit, opch, digit, dot, misc], n);
 }
 
+#[cpu_version(Generic)]
 #[inline(always)]
 fn pk(fw: u64, bit: u32) -> u64 {
     (((fw >> bit) & 0x0101_0101_0101_0101).wrapping_mul(0x0102_0408_1020_4080)) >> 56

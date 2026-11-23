@@ -1,4 +1,65 @@
-use crate::{CompressOptions, test_options, test_options_with_iterations};
+use crate::{
+    CompressOptions, test_options, test_options_with_iterations, test_smallest,
+    test_unspanned_bindings,
+};
+
+#[test]
+fn unreachable_unused_redeclarations() {
+    for declarations in ["var x; var x", "var x, x", "{ var x } var x"] {
+        test_smallest(
+            &format!("export function f() {{ return; {declarations} }}"),
+            "export function f() {}",
+        );
+    }
+    test_smallest(
+        "export function f() { throw 1; var x; var x }",
+        "export function f() { throw 1 }",
+    );
+}
+
+#[test]
+fn redeclarations_with_synthetic_spans() {
+    test_unspanned_bindings(
+        "export function f(e) { try { x() } catch (e) { var e } return e }",
+        "export function f(e) { try { x() } catch (e) { var e } return e }",
+    );
+    // The catch parameter and the `var` share a span, so the dropped `var` is not
+    // pruned from the catch parameter's redeclarations; a second run removes it.
+    test_unspanned_bindings(
+        "export function f() { try { x() } catch (e) { var e } }",
+        "export function f() { try { x() } catch (e) {} }",
+    );
+    test_unspanned_bindings(
+        "export function f(e) { var e; return e }",
+        "export function f(e) { var e; return e }",
+    );
+    test_unspanned_bindings("export function f(e) { var e }", "export function f(e) {}");
+    test_unspanned_bindings("export function f(...e) { var e }", "export function f(...e) {}");
+    test_unspanned_bindings(
+        "export function f() { return; var x; var x }",
+        "export function f() {}",
+    );
+    test_unspanned_bindings(
+        "export function f() { try { x() } catch (e) { return; var e } return e }",
+        "export function f() { try { x() } catch (e) { return; var e } return e }",
+    );
+    test_unspanned_bindings(
+        "export function f() { try { x() } catch (e) { var e = 1; return e } }",
+        "export function f() { try { x() } catch (e) { var e = 1; return e } }",
+    );
+    test_unspanned_bindings(
+        "export function f() { try { x() } catch (e) { if (0) { try { y() } catch (e) { var e } } return e } }",
+        "export function f() { try { x() } catch (e) { return e } }",
+    );
+    test_unspanned_bindings(
+        "export function f() { try { x() } catch (e) { if (0) var e } return e }",
+        "export function f() { try { x() } catch (e) { if (0) var e } return e }",
+    );
+    test_unspanned_bindings(
+        "export function f() { var x; function x() {} }",
+        "export function f() {}",
+    );
+}
 
 #[test]
 fn iteration_counts() {

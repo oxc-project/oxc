@@ -10,6 +10,7 @@ use crate::context::TraverseCtx;
 ///
 /// 1. Existing binding for class name (if class has a name).
 /// 2. Temp var `_Class`, which may or may not be required.
+/// 3. Lexical alias for a shadowed class declaration name.
 ///
 /// Temp var is required in the following circumstances:
 ///
@@ -46,6 +47,9 @@ pub(super) struct ClassBindings<'a> {
     /// Temp var for class.
     /// e.g. `_Class` in `_Class = class {}, _Class.x = 1, _Class`
     pub temp: Option<BoundIdentifier<'a>>,
+    /// Lexical alias for a class declaration whose name is shadowed inside its body.
+    /// Unlike `temp`, this binding must be fresh each time the declaration is evaluated.
+    pub shadowed_name: Option<BoundIdentifier<'a>>,
     /// Temp var for WeakSet.
     pub brand: Option<BoundIdentifier<'a>>,
     /// `ScopeId` of hoist scope outside class (which temp `var` binding would be created in)
@@ -55,6 +59,9 @@ pub(super) struct ClassBindings<'a> {
     pub static_private_fields_use_temp: bool,
     /// `true` if temp var for class has been inserted
     pub temp_var_is_created: bool,
+    /// `true` if legacy decorators reassign the class binding after the class is defined,
+    /// so transpiled static private fields must always use temp binding
+    pub name_is_reassigned: bool,
 }
 
 impl<'a> ClassBindings<'a> {
@@ -70,10 +77,12 @@ impl<'a> ClassBindings<'a> {
         Self {
             name: name_binding,
             temp: temp_binding,
+            shadowed_name: None,
             brand: brand_binding,
             outer_hoist_scope_id: outer_scope_id,
             static_private_fields_use_temp,
             temp_var_is_created,
+            name_is_reassigned: false,
         }
     }
 
@@ -107,7 +116,9 @@ impl<'a> ClassBindings<'a> {
     ///
     /// * In class expressions, this is always be temp binding.
     /// * In class declarations, it's the name binding when code is inside class body,
-    ///   and temp binding when code is outside class body.
+    ///   or a lexical alias if that name is shadowed, and temp binding outside class body.
+    /// * In class declarations whose name legacy decorators reassign, it's always temp binding,
+    ///   which keeps referring to the original class after `Foo = _decorate([dec], Foo)`.
     ///
     /// `static_private_fields_use_temp` is set accordingly at the right moments
     /// elsewhere in this transform.
@@ -117,7 +128,7 @@ impl<'a> ClassBindings<'a> {
         &mut self,
         ctx: &mut TraverseCtx<'a>,
     ) -> &BoundIdentifier<'a> {
-        if self.static_private_fields_use_temp {
+        if self.static_private_fields_use_temp || self.name_is_reassigned {
             // Create temp binding if doesn't already exist
             self.temp.get_or_insert_with(|| {
                 Self::create_temp_binding(self.name.as_ref(), self.outer_hoist_scope_id, ctx)
@@ -126,7 +137,18 @@ impl<'a> ClassBindings<'a> {
             // `static_private_fields_use_temp` is always `true` for class expressions.
             // Class declarations always have a name binding if they have any static props.
             // So `unwrap` here cannot panic.
-            self.name.as_ref().unwrap()
+            let name = self.name.as_ref().unwrap();
+            if ctx.scoping().find_binding(ctx.current_scope_id(), name.name) == Some(name.symbol_id)
+            {
+                return name;
+            }
+
+            // A function-scoped temp would be shared by class declarations in a loop.
+            // Create the alias in the class name's scope so each evaluation keeps its own brand.
+            self.shadowed_name.get_or_insert_with(|| {
+                let scope_id = ctx.scoping().symbol_scope_id(name.symbol_id);
+                ctx.generate_uid(&name.name, scope_id, SymbolFlags::BlockScopedVariable)
+            })
         }
     }
 

@@ -11,7 +11,7 @@
 
 [package]
 name = "oxc_react_compiler"
-version = "0.143.0"
+version = "0.160.0"
 publish = false
 authors.workspace = true
 categories.workspace = true
@@ -28,6 +28,7 @@ include = ["src/**/*", "examples/**/*", "LICENSE", "README.md", "CHANGELOG.md"]
 doctest = false
 
 [dependencies]
+lazy-regex = { workspace = true }
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true }

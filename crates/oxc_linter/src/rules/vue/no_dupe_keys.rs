@@ -174,7 +174,7 @@ fn check_define_props<'a>(node: &AstNode<'a>, call: &'a CallExpression<'a>, ctx:
             }
             _ => decl.kind().span(),
         };
-        ctx.diagnostic(duplicate_key_diagnostic(span, prop_name));
+        ctx.diagnostic(duplicate_key_diagnostic(span, prop_name.display()));
     }
 }
 
@@ -309,7 +309,7 @@ fn report_or_add<'a>(
     ctx: &LintContext<'a>,
 ) {
     if seen.contains(&name) {
-        ctx.diagnostic(duplicate_key_diagnostic(span, name));
+        ctx.diagnostic(duplicate_key_diagnostic(span, name.display()));
     } else {
         seen.insert(name);
     }
@@ -340,7 +340,9 @@ fn literal_element_name<'a>(expr: &Expression<'a>) -> Option<StaticPropertyName<
 /// is an identifier, not this variant).
 fn static_key_name<'a>(key: &PropertyKey<'a>) -> Option<StaticPropertyName<'a>> {
     match key {
-        PropertyKey::NumericLiteral(n) => Some(js_number_name(n.value)),
+        PropertyKey::StaticNumericLiteral(n) | PropertyKey::NumericLiteral(n) => {
+            Some(js_number_name(n.value))
+        }
         PropertyKey::BooleanLiteral(b) => {
             Some(StaticPropertyName::from(if b.value { "true" } else { "false" }))
         }

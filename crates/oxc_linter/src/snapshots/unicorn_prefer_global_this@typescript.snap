@@ -1,0 +1,43 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.ts:1:9]
+ 1 │ typeof (window as unknown).value;
+   ·         ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis
+
+  ⚠ unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.ts:1:18]
+ 1 │ typeof (<unknown>self).value;
+   ·                  ────
+   ╰────
+  help: Replace the alias with `globalThis`.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis
+
+  ⚠ unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.ts:1:9]
+ 1 │ typeof (global!).value;
+   ·         ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis
+
+  ⚠ unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.ts:1:12]
+ 1 │ typeof (0, window);
+   ·            ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis
+
+  ⚠ unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.ts:1:9]
+ 1 │ typeof !self;
+   ·         ────
+   ╰────
+  help: Replace the alias with `globalThis`.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis

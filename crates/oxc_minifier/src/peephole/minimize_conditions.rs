@@ -136,7 +136,6 @@ impl<'a> PeepholeOptimizations {
                 e.left.span(),
                 if left_bool { 1.0 } else { 0.0 },
                 None,
-                NumberBase::Decimal,
                 ctx,
             );
             ctx.replace_expression(&mut e.left, new_left);
@@ -149,7 +148,6 @@ impl<'a> PeepholeOptimizations {
                 e.right.span(),
                 if right_bool { 1.0 } else { 0.0 },
                 None,
-                NumberBase::Decimal,
                 ctx,
             );
             ctx.replace_expression(&mut e.right, new_right);
@@ -163,7 +161,7 @@ impl<'a> PeepholeOptimizations {
         match expr {
             Expression::Identifier(id) => Some(id),
             Expression::AssignmentExpression(assign_expr) => {
-                if assign_expr.operator == AssignmentOperator::Assign
+                if assign_expr.operator.is_assign()
                     && let AssignmentTarget::AssignmentTargetIdentifier(id) = &assign_expr.left
                 {
                     return Some(id);

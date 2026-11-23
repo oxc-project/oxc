@@ -9,7 +9,6 @@ pub fn generate_rules_enum(rule_entries: &[RuleEntry<'_>]) -> String {
     let header = quote! {
         #![expect(
             clippy::default_constructed_unit_structs,  // Many rules are unit structs
-            clippy::semicolon_if_nothing_returned,     // Match arms in void-returning methods
             clippy::wrong_self_convention,             // from_configuration takes &self
             clippy::missing_errors_doc,                // Generated code
             clippy::match_same_arms,                   // plugin_name() has many same-body arms
@@ -108,7 +107,6 @@ fn generate_imports() -> TokenStream {
             context::{ContextHost, LintContext},
             rule::{Rule, RuleCategory, RuleFixMeta, RuleFlags, RuleMeta, RuleRunner, RuleRunFunctionsImplemented},
             timing::RuleTimingStat,
-            utils::PossibleJestNode,
             AstNode
         };
         #[cfg(feature = "ruledocs")]
@@ -225,14 +223,6 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
         .map(|rule| {
             let enum_name = make_enum_ident(rule);
             quote! { Self::#enum_name(rule) => rule.run_once(ctx) }
-        })
-        .collect();
-
-    let run_on_jest_node_arms: Vec<TokenStream> = rule_entries
-        .iter()
-        .map(|rule| {
-            let enum_name = make_enum_ident(rule);
-            quote! { Self::#enum_name(rule) => rule.run_on_jest_node(jest_node, ctx) }
         })
         .collect();
 
@@ -388,30 +378,6 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
                     timing_stat.expect("missing rule timing stat").time(|| self.run_once_dispatch(ctx));
                 } else {
                     self.run_once_dispatch(ctx);
-                }
-            }
-
-            #[inline(never)]
-            fn run_on_jest_node_dispatch<'a, 'c>(
-                &self,
-                jest_node: &PossibleJestNode<'a, 'c>,
-                ctx: &'c LintContext<'a>,
-            ) {
-                match self {
-                    #(#run_on_jest_node_arms),*
-                }
-            }
-
-            pub(crate) fn run_on_jest_node<'a, 'c, const TIMINGS: bool>(
-                &self,
-                jest_node: &PossibleJestNode<'a, 'c>,
-                ctx: &'c LintContext<'a>,
-                timing_stat: Option<&mut RuleTimingStat>,
-            ) {
-                if TIMINGS {
-                    timing_stat.expect("missing rule timing stat").time(|| self.run_on_jest_node_dispatch(jest_node, ctx));
-                } else {
-                    self.run_on_jest_node_dispatch(jest_node, ctx);
                 }
             }
 

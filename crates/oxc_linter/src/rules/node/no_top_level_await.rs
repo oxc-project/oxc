@@ -77,7 +77,7 @@ impl Rule for NoTopLevelAwait {
         let span = match node.kind() {
             AstKind::AwaitExpression(await_expr) => await_expr.span,
             AstKind::ForOfStatement(for_of) if for_of.r#await => for_of.span,
-            AstKind::VariableDeclaration(decl) if decl.kind.is_await() => decl.span,
+            AstKind::VariableDeclaration(decl) if decl.kind.is_await_using() => decl.span,
             _ => return,
         };
 

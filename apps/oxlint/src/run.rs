@@ -239,6 +239,7 @@ async fn lint_impl(
     // stdio is blocked by LineWriter, use a BufWriter to reduce syscalls.
     // See `https://github.com/rust-lang/rust/issues/60673`.
     let mut stdout = BufWriter::new(std::io::stdout());
+    let mut stderr = BufWriter::new(std::io::stderr());
 
     let mut cli_runner = CliRunner::new(command, external_linter);
     #[cfg(feature = "napi")]
@@ -246,7 +247,7 @@ async fn lint_impl(
         cli_runner = cli_runner.with_config_loader(js_config_loader);
     }
 
-    cli_runner.run(&mut stdout)
+    cli_runner.run(&mut stdout, &mut stderr)
 }
 
 #[cfg(all(target_pointer_width = "64", target_endian = "little"))]

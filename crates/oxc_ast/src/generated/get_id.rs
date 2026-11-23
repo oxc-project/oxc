@@ -3,7 +3,9 @@
 
 #![expect(clippy::inline_always)]
 #![expect(clippy::match_same_arms)]
-use oxc_syntax::{node::NodeId, reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
+use oxc_syntax::{
+    label::LabelId, node::NodeId, reference::ReferenceId, scope::ScopeId, symbol::SymbolId,
+};
 
 use crate::ast::*;
 
@@ -135,6 +137,21 @@ impl LabelIdentifier<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+
+    /// Get [`LabelId`] of [`LabelIdentifier`].
+    ///
+    /// Returns [`None`] before semantic analysis, and for a `break` or `continue` label
+    /// that does not resolve to an enclosing label.
+    #[inline]
+    pub fn label_id(&self) -> Option<LabelId> {
+        self.label_id.get()
+    }
+
+    /// Set [`LabelId`] of [`LabelIdentifier`].
+    #[inline]
+    pub fn set_label_id(&self, label_id: LabelId) {
+        self.label_id.set(Some(label_id));
     }
 }
 
@@ -3780,6 +3797,9 @@ impl PropertyKey<'_> {
     pub fn node_id(&self) -> NodeId {
         match self {
             Self::StaticIdentifier(it) => it.node_id(),
+            Self::StaticStringLiteral(it) => it.node_id(),
+            Self::StaticNumericLiteral(it) => it.node_id(),
+            Self::StaticBigIntLiteral(it) => it.node_id(),
             Self::PrivateIdentifier(it) => it.node_id(),
             Self::BooleanLiteral(it) => it.node_id(),
             Self::NullLiteral(it) => it.node_id(),
@@ -3833,6 +3853,9 @@ impl PropertyKey<'_> {
     pub fn set_node_id(&self, node_id: NodeId) {
         match self {
             Self::StaticIdentifier(it) => it.set_node_id(node_id),
+            Self::StaticStringLiteral(it) => it.set_node_id(node_id),
+            Self::StaticNumericLiteral(it) => it.set_node_id(node_id),
+            Self::StaticBigIntLiteral(it) => it.set_node_id(node_id),
             Self::PrivateIdentifier(it) => it.set_node_id(node_id),
             Self::BooleanLiteral(it) => it.set_node_id(node_id),
             Self::NullLiteral(it) => it.set_node_id(node_id),

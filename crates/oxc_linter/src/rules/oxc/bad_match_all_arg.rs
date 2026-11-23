@@ -50,6 +50,7 @@ declare_oxc_lint!(
     BadMatchAllArg,
     oxc,
     correctness,
+    recommended,
     version = "1.76.0",
     short_description = "Warn when `matchAll` is called with a non-global regular expression.",
 );
@@ -80,6 +81,8 @@ fn test() {
         r#""".matchAll(new RegExp("a", "g"));"#,
         r#""".matchAll(RegExp("a", "g"));"#,
         r#""".matchAll(globalThis.RegExp("a", "g"));"#,
+        r#""".matchAll(new RegExp(/a/g));"#,
+        r#"function test(pattern) { "".matchAll(new RegExp(pattern)); }"#,
         // Calls that cannot throw for a known non-global regular expression.
         r#""".matchAll("a");"#,
         r#""".matchAll();"#,
@@ -93,6 +96,11 @@ fn test() {
         r#"const pattern = new RegExp("a", condition ? "g" : "gi"); "".matchAll(pattern);"#,
         r#"const pattern = pattern; "".matchAll(pattern);"#,
         r#"const a = b; const b = a; "".matchAll(a);"#,
+        r#""".matchAll(new RegExp((/a/g)));"#,
+        r#""".matchAll(RegExp((/a/g)));"#,
+        r#""".matchAll(globalThis.RegExp(/a/g));"#,
+        r#""".matchAll(new RegExp(/a/, "g"));"#,
+        r#"function test(pattern) { "".matchAll(RegExp(pattern)); }"#,
     ];
 
     let fail = vec![
@@ -100,6 +108,8 @@ fn test() {
         r#""".matchAll(/a/u);"#,
         r#""".matchAll(new RegExp("a"));"#,
         r#""".matchAll(new RegExp("a", "i"));"#,
+        r#""".matchAll(new RegExp(/a/));"#,
+        r#""".matchAll(new RegExp(/a/i));"#,
         r#""".matchAll(RegExp("a"));"#,
         r#""".matchAll(globalThis.RegExp("a", "i"));"#,
         r#"""["matchAll"](/a/);"#,
@@ -107,6 +117,16 @@ fn test() {
         r#"const pattern = /a/; "".matchAll(pattern);"#,
         r#"const pattern = /a/i; "".matchAll(pattern);"#,
         r#"const pattern = new RegExp("a"); "".matchAll(pattern);"#,
+        r#""".matchAll(new RegExp((/a/)));"#,
+        r#""".matchAll(new RegExp(("a")));"#,
+        r#""".matchAll(new RegExp((`a`)));"#,
+        r#""".matchAll(new RegExp(/a/ as RegExp));"#,
+        r#""".matchAll(new RegExp(1));"#,
+        r#""".matchAll(RegExp(1n));"#,
+        r#""".matchAll(globalThis.RegExp(true));"#,
+        r#""".matchAll(new RegExp(null));"#,
+        r#""".matchAll(new RegExp());"#,
+        r#""".matchAll(new RegExp(/a/g, "i"));"#,
     ];
 
     Tester::new(BadMatchAllArg::NAME, BadMatchAllArg::PLUGIN, pass, fail).test_and_snapshot();

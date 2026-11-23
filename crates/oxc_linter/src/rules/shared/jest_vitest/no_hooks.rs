@@ -3,6 +3,7 @@ use serde::Deserialize;
 
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
 
@@ -75,29 +76,29 @@ pub struct NoHooksConfig {
 }
 
 impl NoHooksConfig {
-    pub fn run_on_jest_node<'a>(
-        &self,
-        possible_jest_node: &PossibleJestNode<'a, '_>,
-        ctx: &LintContext<'a>,
-    ) {
-        let node = possible_jest_node.node;
+    pub fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
+        let Expression::Identifier(ident) = &call_expr.callee else {
+            return;
+        };
+        let Some(possible_jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx)
+        else {
             return;
         };
         if !is_type_of_jest_fn_call(
             call_expr,
-            possible_jest_node,
+            &possible_jest_node,
             ctx,
             &[JestFnKind::General(JestGeneralFnKind::Hook)],
         ) {
             return;
         }
 
-        if let Expression::Identifier(ident) = &call_expr.callee {
-            let name = CompactStr::from(ident.name.as_str());
-            if !self.allow.contains(&name) {
-                ctx.diagnostic(unexpected_hook_diagnostic(call_expr.callee.span()));
-            }
+        let name = CompactStr::from(ident.name.as_str());
+        if !self.allow.contains(&name) {
+            ctx.diagnostic(unexpected_hook_diagnostic(call_expr.callee.span()));
         }
     }
 }

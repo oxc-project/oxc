@@ -96,7 +96,8 @@ declare_oxc_lint!(
     restriction,
     none,
     version = "1.53.0",
-    short_description = "Disallows the usage of `React.Children`, as it is considered a bad practice.",
+    short_description =
+        "Disallows the usage of `React.Children`, as it is considered a bad practice.",
 );
 
 impl Rule for NoReactChildren {

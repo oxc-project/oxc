@@ -4,6 +4,41 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ import(no-relative-parent-imports): Relative imports from parent directories are not allowed
    ╭─[index.js:1:17]
+ 1 │ import foo from "../\uD800"
+   ·                 ───────────
+   ╰────
+  help: Move the file to the same directory, use dependency injection, or convert to a package.
+
+  ⚠ import(no-relative-parent-imports): Relative imports from parent directories are not allowed
+   ╭─[index.js:1:17]
+ 1 │ import foo from "./../\uDC00.js"
+   ·                 ────────────────
+   ╰────
+  help: Move the file to the same directory, use dependency injection, or convert to a package.
+
+  ⚠ import(no-relative-parent-imports): Relative imports from parent directories are not allowed
+   ╭─[index.js:1:9]
+ 1 │ require("../\uD83D\uDE00")
+   ·         ─────────────────
+   ╰────
+  help: Move the file to the same directory, use dependency injection, or convert to a package.
+
+  ⚠ import(no-relative-parent-imports): Relative imports from parent directories are not allowed
+   ╭─[index.js:1:8]
+ 1 │ import("../\uD800")
+   ·        ───────────
+   ╰────
+  help: Move the file to the same directory, use dependency injection, or convert to a package.
+
+  ⚠ import(no-relative-parent-imports): Relative imports from parent directories are not allowed
+   ╭─[index.js:1:15]
+ 1 │ export * from "..\u002F\uDC00"
+   ·               ────────────────
+   ╰────
+  help: Move the file to the same directory, use dependency injection, or convert to a package.
+
+  ⚠ import(no-relative-parent-imports): Relative imports from parent directories are not allowed
+   ╭─[index.js:1:17]
  1 │ import foo from "../plugin.js"
    ·                 ──────────────
    ╰────

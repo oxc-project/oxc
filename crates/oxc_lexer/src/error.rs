@@ -1,5 +1,5 @@
+#[derive(Clone, Copy, PartialEq, Eq, Default, Debug)]
 #[repr(C)]
-#[derive(Clone, Copy, Default, Debug)]
 pub struct Diagnostic {
     pub off: u32,
     pub len: u32,
@@ -7,8 +7,8 @@ pub struct Diagnostic {
     pub severity: DiagSeverity,
 }
 
-#[repr(u16)]
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default, Debug)]
+#[repr(u16)]
 pub enum DiagCode {
     #[default]
     Ok = 0,
@@ -39,8 +39,8 @@ pub enum DiagCode {
     JsxTextInvalidCharacter = 25,
 }
 
-#[repr(u16)]
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default, Debug)]
+#[repr(u16)]
 pub enum DiagSeverity {
     #[default]
     Error = 0,

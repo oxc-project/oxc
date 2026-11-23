@@ -320,19 +320,8 @@ impl<'a> Comments<'a> {
     }
 
     /// Returns end-of-line comments that are after the given position.
-    pub fn end_of_line_comments_after(&self, mut pos: u32) -> &'a [Comment] {
-        let comments = self.comments_after(pos);
-        for (index, comment) in comments.iter().enumerate() {
-            if self.source_text.all_bytes_match(pos, comment.span.start, is_end_of_line_gap_byte) {
-                if comment.is_line() || comment.followed_by_newline() {
-                    return &comments[..=index];
-                }
-                pos = comment.span.end;
-            } else {
-                break;
-            }
-        }
-        &[]
+    pub fn end_of_line_comments_after(&self, pos: u32) -> &'a [Comment] {
+        self.end_of_line_run(self.comments_after(pos), pos)
     }
 
     /// Returns comments that occur before the first instance of a specific character (a lexical byte scan, see the module doc).
@@ -447,6 +436,9 @@ impl<'a> Comments<'a> {
 
         let mut comment_index = 0;
         let mut type_cast_comment = None;
+        // The following node starts at or after the enclosing end (spans are half-open),
+        // so every comment inside the enclosing node is trailing.
+        let following_is_outside = following_span_start >= enclosing_span.end;
 
         while let Some(comment) = comments.get(comment_index) {
             // Stop if the comment:
@@ -456,9 +448,8 @@ impl<'a> Comments<'a> {
                 break;
             }
 
-            if following_span_start > enclosing_span.end && comment.span.end <= enclosing_span.end {
-                // Do nothing; this comment is inside the enclosing node, and the following node is outside the enclosing node.
-                // So it must be a trailing comment, continue checking the next comment.
+            if following_is_outside {
+                // Inside the enclosing node by the check above, so continue checking the next comment.
             } else if self.is_type_cast_comment(comment) {
                 // `A || /* @type {Number} */ (B)`:
                 //      ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -608,6 +599,7 @@ impl<'a> Comments<'a> {
     ///   - none leads it, none is in it
     ///   - its trailing pass only claims comments that end in the parent ([`Self::get_trailing_comments`])
     /// - nothing suppresses it ([`Self::is_span_suppressed`])
+    ///   - no unprinted comment ends before it, so only the operator's mark is left of [`Self::is_suppressed`]
     /// - if it `can_be_cast_target`, no printed type cast comment makes it one ([`Self::printed_type_cast_comment_before`])
     ///
     /// Every comment the node's `write` prints is after these, so its trailing pass would still find none.
@@ -624,7 +616,7 @@ impl<'a> Comments<'a> {
             next.span.end > span.end
                 && next.span.end > enclosing_span().end
                 && !self.has_trailing_suppression_comment(span.end)
-        }) && !self.is_suppressed(span.start)
+        }) && self.operator_suppressed_start != Some(span.start)
             && !(can_be_cast_target && self.printed_type_cast_comment_before(span.start).is_some());
         debug_assert!(
             !quiet
@@ -703,6 +695,18 @@ impl<'a> Comments<'a> {
     /// Position-based variant of [`Self::comments_after`].
     fn all_comments_after(&self, pos: u32) -> &'a [Comment] {
         &self.inner[self.inner.partition_point(|comment| comment.span.end <= pos)..]
+    }
+
+    /// Position-based variant of [`Self::has_trailing_suppression_comment`].
+    pub fn has_any_trailing_suppression_comment(&self, pos: u32) -> bool {
+        self.source_text.next_byte_skipping(pos, is_end_of_line_gap_byte) == Some(b'/')
+            && self
+                .end_of_line_run(
+                    &self.inner[self.inner.partition_point(|c| c.span.end < pos)..],
+                    pos,
+                )
+                .iter()
+                .any(|comment| self.is_suppression_comment(comment))
     }
 
     /// Position-based variant of [`Self::has_comment_in_range`].
@@ -825,6 +829,21 @@ impl<'a> Comments<'a> {
         let run = self.comment_run_after(comments, pos);
         let end = run.last()?.span.end;
         self.source_text.next_non_whitespace_byte_is(end, b')').then_some(run)
+    }
+
+    /// The comments after `pos` still on its line, up to the one ending it (a prefix of `comments`, or empty)
+    fn end_of_line_run(&self, comments: &'a [Comment], mut pos: u32) -> &'a [Comment] {
+        for (index, comment) in comments.iter().enumerate() {
+            if self.source_text.all_bytes_match(pos, comment.span.start, is_end_of_line_gap_byte) {
+                if comment.is_line() || comment.followed_by_newline() {
+                    return &comments[..=index];
+                }
+                pos = comment.span.end;
+            } else {
+                break;
+            }
+        }
+        &[]
     }
 
     /// The run of comments after `pos` separated only by whitespace (a prefix of `comments`).

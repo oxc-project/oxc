@@ -94,9 +94,8 @@ impl Rule for RequireModuleAttributes {
                     let obj_prop = prop.as_property()?;
                     if !obj_prop.method
                         && !obj_prop.shorthand
-                        && !obj_prop.computed
                         && obj_prop.kind == PropertyKind::Init
-                        && obj_prop.key.is_specific_static_name("with")
+                        && obj_prop.key.is_specific_literal_name("with")
                         && is_empty_object_expression(obj_prop.value.get_inner_expression())
                     {
                         Some(obj_prop)

@@ -183,20 +183,13 @@ impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
             _ => EnvOptions::default(),
         };
         Ok(Self {
-            cwd: options.cwd.map(PathBuf::from).unwrap_or_default(),
-            assumptions: options.assumptions.map(Into::into).unwrap_or_default(),
+            cwd: options.cwd.map_or_default(PathBuf::from),
+            assumptions: options.assumptions.map_or_default(Into::into),
             typescript: options
                 .typescript
-                .map(oxc::transformer::TypeScriptOptions::from)
-                .unwrap_or_default(),
-            decorator: options
-                .decorator
-                .map(oxc::transformer::DecoratorOptions::from)
-                .unwrap_or_default(),
-            plugins: options
-                .plugins
-                .map(oxc::transformer::PluginsOptions::from)
-                .unwrap_or_default(),
+                .map_or_default(oxc::transformer::TypeScriptOptions::from),
+            decorator: options.decorator.map_or_default(oxc::transformer::DecoratorOptions::from),
+            plugins: options.plugins.map_or_default(oxc::transformer::PluginsOptions::from),
             jsx: match options.jsx {
                 Some(Either::A(s)) => {
                     if s == "preserve" {
@@ -739,7 +732,7 @@ pub enum HelperMode {
 impl From<Helpers> for HelperLoaderOptions {
     fn from(value: Helpers) -> Self {
         Self {
-            mode: value.mode.map(HelperLoaderMode::from).unwrap_or_default(),
+            mode: value.mode.map_or_default(HelperLoaderMode::from),
             ..HelperLoaderOptions::default()
         }
     }

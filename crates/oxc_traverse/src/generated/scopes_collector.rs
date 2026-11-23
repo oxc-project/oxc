@@ -264,6 +264,9 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             _ => {
                 // Remaining variants do not contain scopes:
                 // `StaticIdentifier`
+                // `StaticStringLiteral`
+                // `StaticNumericLiteral`
+                // `StaticBigIntLiteral`
                 // `PrivateIdentifier`
                 // `BooleanLiteral`
                 // `NullLiteral`
@@ -1095,12 +1098,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
         self.visit_decorators(&it.decorators);
         self.visit_property_key(&it.key);
         {
-            let flags = match it.kind {
-                MethodDefinitionKind::Get => ScopeFlags::Function | ScopeFlags::GetAccessor,
-                MethodDefinitionKind::Set => ScopeFlags::Function | ScopeFlags::SetAccessor,
-                MethodDefinitionKind::Constructor => ScopeFlags::Function | ScopeFlags::Constructor,
-                MethodDefinitionKind::Method => ScopeFlags::Function,
-            };
+            let flags = it.kind.scope_flags();
             self.visit_function(&it.value, flags);
         }
     }

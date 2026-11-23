@@ -10,9 +10,8 @@ mod typescript;
 
 mod tools;
 
-// Gated by `lexer` Cargo feature, because `oxc_lexer` is still incubating.
-// `oxc_lexer` only supports little endian at present.
-#[cfg(all(feature = "lexer", target_endian = "little"))]
+// `oxc_lexer` only supports little endian at present
+#[cfg(target_endian = "little")]
 mod lexer_diff;
 
 use std::{
@@ -328,6 +327,9 @@ impl AppArgs {
 
     fn run_conformance_suites(&self, data: &TestData) {
         self.run_parser(data);
+        // `oxc_lexer` only supports little endian at present
+        #[cfg(target_endian = "little")]
+        self.run_lexer(data);
         self.run_semantic(data);
         self.run_codegen(data);
         self.run_formatter(data);
@@ -369,20 +371,15 @@ impl AppArgs {
 
     /// Differential lexer conformance.
     ///
-    /// Compare `oxc_lexer`'s token spans against the parser's token stream over the corpora.
-    /// Opt-in (kept out of `run_all`) — requires `lexer` Cargo feature.
-    /// Runs against whichever of the lexer's implementations the build selects (see `oxc_lexer::IMPLEMENTATION`).
+    /// Compare `oxc_lexer`'s token spans and comments against the parser's over the corpora.
+    /// Lexes each fixture with every CPU feature set the CPU supports, and checks their outputs match.
     /// `oxc_lexer` only supports little endian at present.
     ///
     /// # Panics
-    /// Panics if `lexer` Cargo feature is not enabled, or on a big endian machine.
+    /// Panics on a big endian machine.
     pub fn run_lexer(&self, data: &TestData) {
-        #[cfg(all(feature = "lexer", target_endian = "little"))]
+        #[cfg(target_endian = "little")]
         {
-            // Report which implementation was built.
-            // CI checks this line to make sure the build it expected is the build it got.
-            println!("Lexer implementation: {}", oxc_lexer::IMPLEMENTATION);
-
             self.run_tool(
                 "lexer_test262",
                 TEST262_PATH,
@@ -399,10 +396,10 @@ impl AppArgs {
             self.run_tool("lexer_misc", MISC_PATH, &data.misc, lexer_diff::run_lexer_misc);
         }
 
-        #[cfg(not(all(feature = "lexer", target_endian = "little")))]
+        #[cfg(not(target_endian = "little"))]
         {
             let _ = (self, data);
-            panic!("`lexer` conformance requires `lexer` Cargo feature and a little-endian system");
+            panic!("`lexer` conformance requires a little-endian system");
         }
     }
 
@@ -516,7 +513,11 @@ impl AppArgs {
     /// Loads only test262 (not the other fixture suites), so it works in a checkout
     /// that has only the test262 submodule — load-bearing for monitor-oxc CI.
     pub fn run_runtime(&self) {
-        let files = load::load_test262(self.filter.as_deref());
+        let filter = self.filter.as_deref();
+        if filter.is_none() {
+            load::ensure_submodules(&[TEST262_PATH]);
+        }
+        let files = load::load_test262(filter);
         self.run_tool("runtime", TEST262_PATH, &files, runtime::run);
     }
 

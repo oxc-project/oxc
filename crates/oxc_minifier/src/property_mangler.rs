@@ -244,10 +244,6 @@ impl<'o, 'a> PropertyCollector<'o, 'a> {
     }
 
     fn candidate(&mut self, name: Ident<'a>) {
-        if let Some(count) = self.state.frequencies.get_mut(&name) {
-            *count = count.saturating_add(1);
-            return;
-        }
         let count = self.state.frequencies.entry(name).or_default();
         *count = count.saturating_add(1);
     }
@@ -316,8 +312,15 @@ impl<'o, 'a> PropertyCollector<'o, 'a> {
     fn classify_property_key(&mut self, key: &PropertyKey<'a>) {
         match key {
             PropertyKey::StaticIdentifier(identifier) => self.candidate(identifier.name),
-            PropertyKey::PrivateIdentifier(_) => {}
-            PropertyKey::NumericLiteral(literal) => {
+            PropertyKey::PrivateIdentifier(_) | PropertyKey::StaticBigIntLiteral(_) => {}
+            PropertyKey::StaticStringLiteral(literal) => {
+                if !self.special_literal(literal.span)
+                    && let Some(name) = literal.value.as_str()
+                {
+                    self.quoted(Ident::from(name));
+                }
+            }
+            PropertyKey::StaticNumericLiteral(literal) | PropertyKey::NumericLiteral(literal) => {
                 let name = numeric_key_string(literal.value);
                 self.occupy(Ident::from_str_in(&name, &self.allocator));
             }
@@ -566,7 +569,8 @@ impl<'a, 'p> PropertyRewriter<'a, '_, 'p> {
     }
 
     fn direct_string_key(key: &PropertyKey<'a>) -> Option<(Str<'a>, Span)> {
-        if let PropertyKey::StringLiteral(literal) = key {
+        if let PropertyKey::StaticStringLiteral(literal) | PropertyKey::StringLiteral(literal) = key
+        {
             literal.value.as_str().map(|name| (Str::from(name), literal.span))
         } else {
             None
@@ -576,7 +580,6 @@ impl<'a, 'p> PropertyRewriter<'a, '_, 'p> {
     fn rewrite_key_position(
         &self,
         key: &mut PropertyKey<'a>,
-        computed: &mut bool,
         original_string: Option<(Str<'a>, Span)>,
     ) {
         if let Some((original, span)) = original_string
@@ -588,10 +591,9 @@ impl<'a, 'p> PropertyRewriter<'a, '_, 'p> {
                 Ident::from_str_in(target.as_str(), &self.ast),
                 &self.ast,
             ));
-            *computed = false;
             return;
         }
-        if *computed && let Some(expression) = key.as_expression_mut() {
+        if let Some(expression) = key.as_expression_mut() {
             self.rename_key_expression(expression);
         }
     }
@@ -673,7 +675,7 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_, '_> {
         if expands_shorthand {
             property.shorthand = false;
         }
-        self.rewrite_key_position(&mut property.key, &mut property.computed, original_string);
+        self.rewrite_key_position(&mut property.key, original_string);
     }
 
     fn visit_binding_property(&mut self, property: &mut BindingProperty<'a>) {
@@ -684,7 +686,7 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_, '_> {
         if expands_shorthand {
             property.shorthand = false;
         }
-        self.rewrite_key_position(&mut property.key, &mut property.computed, original_string);
+        self.rewrite_key_position(&mut property.key, original_string);
     }
 
     fn visit_assignment_target_property(&mut self, property: &mut AssignmentTargetProperty<'a>) {
@@ -739,7 +741,7 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_, '_> {
                     &self.ast,
                 ));
                 *property = AssignmentTargetProperty::new_assignment_target_property_property(
-                    span, name, binding, false, &self.ast,
+                    span, name, binding, &self.ast,
                 );
             }
             return;
@@ -753,25 +755,25 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_, '_> {
     ) {
         let original_string = Self::direct_string_key(&property.name);
         walk_mut::walk_assignment_target_property_property(self, property);
-        self.rewrite_key_position(&mut property.name, &mut property.computed, original_string);
+        self.rewrite_key_position(&mut property.name, original_string);
     }
 
     fn visit_property_definition(&mut self, property: &mut PropertyDefinition<'a>) {
         let original_string = Self::direct_string_key(&property.key);
         walk_mut::walk_property_definition(self, property);
-        self.rewrite_key_position(&mut property.key, &mut property.computed, original_string);
+        self.rewrite_key_position(&mut property.key, original_string);
     }
 
     fn visit_accessor_property(&mut self, property: &mut AccessorProperty<'a>) {
         let original_string = Self::direct_string_key(&property.key);
         walk_mut::walk_accessor_property(self, property);
-        self.rewrite_key_position(&mut property.key, &mut property.computed, original_string);
+        self.rewrite_key_position(&mut property.key, original_string);
     }
 
     fn visit_method_definition(&mut self, method: &mut MethodDefinition<'a>) {
         let original_string = Self::direct_string_key(&method.key);
         walk_mut::walk_method_definition(self, method);
-        self.rewrite_key_position(&mut method.key, &mut method.computed, original_string);
+        self.rewrite_key_position(&mut method.key, original_string);
     }
 
     fn visit_binary_expression(&mut self, expression: &mut BinaryExpression<'a>) {

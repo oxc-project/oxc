@@ -22,7 +22,7 @@ fn test_err(allocator: &Allocator, pattern: &str, flags: Option<&str>) -> String
     .parse()
     .expect_err(&format!("{source} should fail to parse"));
 
-    let error = err.with_source_code(NamedSource::new(source.clone(), source));
+    let error = err.with_source_code(NamedSource::new(&source, source.as_str()));
     let handler = GraphicalReportHandler::new_themed(GraphicalTheme::unicode_nocolor());
     let mut output = String::new();
     handler.render_report(&mut output, error.as_ref()).unwrap();
