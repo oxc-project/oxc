@@ -1,6 +1,6 @@
 // Classes.
 
-import { typeAssertIs } from "../asserts.ts";
+import { debugAssert, typeAssertIs } from "../asserts.ts";
 import { printPropertyKey } from "./binding_pattern.ts";
 import {
   CAT_CLOSE_BRACKET,
@@ -149,14 +149,23 @@ export function printDecorators(decorators: ESTree.Decorator[], state: State): v
  * @param expr - Decorator's expression
  */
 function decoratorNeedsWrap(expr: ESTree.Expression): boolean {
-  if (expr.type === "CallExpression") expr = expr.callee;
+  // Access `.type` as few times as possible, as it's a megamorphic access
+  let exprType = expr.type;
+  if (exprType === "CallExpression") {
+    debugAssert(expr.type === exprType);
+    expr = expr.callee;
+    exprType = expr.type;
+  }
+
   for (;;) {
-    switch (expr.type) {
+    switch (exprType) {
       case "Identifier":
         return false;
       case "MemberExpression":
+        debugAssert(expr.type === exprType);
         if (expr.computed) return true;
         expr = expr.object;
+        exprType = expr.type;
         break;
       default:
         return true;
