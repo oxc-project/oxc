@@ -1,23 +1,27 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, ArrayExpressionElement, BindingPattern, CallExpression, Expression,
-        IdentifierReference, MemberExpression,
+        Argument, ArrayExpressionElement, BindingPattern, CallExpression, ChainElement, Expression,
+        IdentifierReference, MemberExpression, NewExpression, TSType, TSTypeName,
+        VariableDeclarationKind,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_semantic::IsGlobalReference;
+use oxc_span::{GetSpan, Span};
+use oxc_syntax::precedence::Precedence;
 
 use crate::{
     AstNode,
-    ast_util::variable_declaration_kind,
-    ast_util::{get_symbol_id_of_variable, is_method_call},
+    ast_util::{
+        could_be_asi_hazard, get_symbol_id_of_variable, is_method_call, variable_declaration_kind,
+    },
     context::LintContext,
     rule::Rule,
     utils::{
-        get_first_parameter_name, get_return_identifier_name, is_empty_array_expression,
-        is_prototype_property,
+        get_first_parameter_name, get_precedence, get_return_identifier_name,
+        is_empty_array_expression, is_prototype_property, pad_fix_with_token_boundary,
     },
 };
 
@@ -52,6 +56,7 @@ declare_oxc_lint!(
     /// const foo = [].concat.apply([], array);
     /// const foo = Array.prototype.concat.apply([], array);
     /// const foo = Array.prototype.concat.call([], ...array);
+    /// const foo = _.flatten(array);
     /// ```
     ///
     /// Examples of **correct** code for this rule:
@@ -78,6 +83,7 @@ impl Rule for PreferArrayFlat {
         check_array_reduce_case(call_expr, ctx);
         check_array_concat_case(call_expr, ctx);
         check_array_prototype_concat_case(call_expr, ctx);
+        check_lodash_flatten_case(node, call_expr, ctx);
     }
 }
 
@@ -177,7 +183,7 @@ fn is_definitely_array_expression(expr: &Expression) -> bool {
     match expr {
         Expression::ArrayExpression(_) => true,
         Expression::NewExpression(new_expr) => {
-            matches!(&new_expr.callee, Expression::Identifier(ident) if ident.name == "Array")
+            matches!(new_expr.callee.without_parentheses(), Expression::Identifier(ident) if ident.name == "Array")
         }
         _ => false,
     }
@@ -195,9 +201,12 @@ fn is_definitely_non_array_expression(expr: &Expression) -> bool {
         | Expression::TemplateLiteral(_)
         | Expression::ArrowFunctionExpression(_)
         | Expression::FunctionExpression(_)
-        | Expression::ClassExpression(_) => true,
+        | Expression::ClassExpression(_)
+        | Expression::PrivateInExpression(_)
+        | Expression::JSXElement(_)
+        | Expression::JSXFragment(_) => true,
         Expression::NewExpression(new_expr) => {
-            matches!(&new_expr.callee, Expression::Identifier(ident) if ident.name != "Array")
+            !matches!(new_expr.callee.without_parentheses(), Expression::Identifier(ident) if ident.name == "Array")
         }
         _ => false,
     }
@@ -397,6 +406,380 @@ fn check_array_prototype_concat_case<'a>(call_expr: &CallExpression<'a>, ctx: &L
     }
 }
 
+const KNOWN_NON_ARRAY_TYPE_NAMES: &[&str] = &[
+    "Int8Array",
+    "Uint8Array",
+    "Uint8ClampedArray",
+    "Int16Array",
+    "Uint16Array",
+    "Int32Array",
+    "Uint32Array",
+    "Float16Array",
+    "Float32Array",
+    "Float64Array",
+    "BigInt64Array",
+    "BigUint64Array",
+    "Map",
+    "ReadonlyMap",
+    "WeakMap",
+    "Set",
+    "ReadonlySet",
+    "WeakSet",
+    "URLSearchParams",
+    "Headers",
+    "FormData",
+    "CanvasRenderingContext2D",
+    "OffscreenCanvasRenderingContext2D",
+    "String",
+    "Number",
+    "Boolean",
+    "Symbol",
+    "BigInt",
+    "Function",
+    "Object",
+];
+
+const TYPED_ARRAY_NAMES: &[&str] = &[
+    "Int8Array",
+    "Uint8Array",
+    "Uint8ClampedArray",
+    "Int16Array",
+    "Uint16Array",
+    "Int32Array",
+    "Uint32Array",
+    "Float16Array",
+    "Float32Array",
+    "Float64Array",
+    "BigInt64Array",
+    "BigUint64Array",
+];
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum ArrayTypeKind {
+    Array,
+    NonArray,
+    Unknown,
+}
+
+fn unwrap_ts_type_parens<'a>(mut ty: &'a TSType<'a>) -> &'a TSType<'a> {
+    while let TSType::TSParenthesizedType(paren) = ty {
+        ty = &paren.type_annotation;
+    }
+    ty
+}
+
+fn is_any_or_unknown_ts_type(ty: &TSType) -> bool {
+    matches!(unwrap_ts_type_parens(ty), TSType::TSAnyKeyword(_) | TSType::TSUnknownKeyword(_))
+}
+
+fn classify_ts_type_for_array(ty: &TSType) -> ArrayTypeKind {
+    match ty {
+        TSType::TSParenthesizedType(paren) => classify_ts_type_for_array(&paren.type_annotation),
+        TSType::TSArrayType(_) | TSType::TSTupleType(_) => ArrayTypeKind::Array,
+        TSType::TSBigIntKeyword(_)
+        | TSType::TSBooleanKeyword(_)
+        | TSType::TSNeverKeyword(_)
+        | TSType::TSNullKeyword(_)
+        | TSType::TSNumberKeyword(_)
+        | TSType::TSStringKeyword(_)
+        | TSType::TSSymbolKeyword(_)
+        | TSType::TSUndefinedKeyword(_)
+        | TSType::TSVoidKeyword(_)
+        | TSType::TSLiteralType(_)
+        | TSType::TSTypeLiteral(_)
+        | TSType::TSFunctionType(_)
+        | TSType::TSConstructorType(_) => ArrayTypeKind::NonArray,
+        TSType::TSTypeReference(type_ref) => {
+            if let TSTypeName::IdentifierReference(ident) = &type_ref.type_name {
+                let name = ident.name.as_str();
+                if matches!(name, "Array" | "ReadonlyArray") {
+                    return ArrayTypeKind::Array;
+                }
+                if KNOWN_NON_ARRAY_TYPE_NAMES.contains(&name) {
+                    return ArrayTypeKind::NonArray;
+                }
+            }
+            ArrayTypeKind::Unknown
+        }
+        TSType::TSUnionType(union) => {
+            let mut all_array = true;
+            let mut all_non_array = true;
+            for member in &union.types {
+                match classify_ts_type_for_array(member) {
+                    ArrayTypeKind::Array => all_non_array = false,
+                    ArrayTypeKind::NonArray => all_array = false,
+                    ArrayTypeKind::Unknown => return ArrayTypeKind::Unknown,
+                }
+            }
+            if all_array {
+                ArrayTypeKind::Array
+            } else if all_non_array {
+                ArrayTypeKind::NonArray
+            } else {
+                ArrayTypeKind::Unknown
+            }
+        }
+        TSType::TSIntersectionType(intersection) => {
+            let mut has_array = false;
+            for member in &intersection.types {
+                match classify_ts_type_for_array(member) {
+                    ArrayTypeKind::Unknown => return ArrayTypeKind::Unknown,
+                    ArrayTypeKind::Array => has_array = true,
+                    ArrayTypeKind::NonArray => {}
+                }
+            }
+            if has_array { ArrayTypeKind::Array } else { ArrayTypeKind::NonArray }
+        }
+        _ => ArrayTypeKind::Unknown,
+    }
+}
+
+const MAX_ALIAS_DEPTH: u8 = 8;
+
+fn classify_expr_for_array(expr: &Expression, ctx: &LintContext, depth: u8) -> ArrayTypeKind {
+    if depth >= MAX_ALIAS_DEPTH {
+        return ArrayTypeKind::Unknown;
+    }
+
+    match expr.without_parentheses() {
+        Expression::UnaryExpression(_) => ArrayTypeKind::NonArray,
+        other if is_definitely_array_expression(other) => ArrayTypeKind::Array,
+        other if is_definitely_non_array_expression(other) => ArrayTypeKind::NonArray,
+        Expression::CallExpression(call_expr) => {
+            if !call_expr.optional
+                && let Expression::StaticMemberExpression(member) =
+                    call_expr.callee.without_parentheses()
+                && !member.optional
+                && matches!(member.property.name.as_str(), "from" | "of")
+                && let Expression::Identifier(ident) = member.object.without_parentheses()
+            {
+                let name = ident.name.as_str();
+                if name == "Array" {
+                    return ArrayTypeKind::Array;
+                }
+                if TYPED_ARRAY_NAMES.contains(&name) {
+                    return ArrayTypeKind::NonArray;
+                }
+            }
+            ArrayTypeKind::Unknown
+        }
+        Expression::TSAsExpression(ts_as) => {
+            let kind = classify_ts_type_for_array(&ts_as.type_annotation);
+            if kind != ArrayTypeKind::Unknown {
+                kind
+            } else if is_any_or_unknown_ts_type(&ts_as.type_annotation) {
+                classify_expr_for_array(&ts_as.expression, ctx, depth + 1)
+            } else {
+                ArrayTypeKind::Unknown
+            }
+        }
+        Expression::TSTypeAssertion(ts_assert) => {
+            let kind = classify_ts_type_for_array(&ts_assert.type_annotation);
+            if kind != ArrayTypeKind::Unknown {
+                kind
+            } else if is_any_or_unknown_ts_type(&ts_assert.type_annotation) {
+                classify_expr_for_array(&ts_assert.expression, ctx, depth + 1)
+            } else {
+                ArrayTypeKind::Unknown
+            }
+        }
+        Expression::TSNonNullExpression(non_null) => {
+            classify_expr_for_array(&non_null.expression, ctx, depth + 1)
+        }
+        Expression::TSSatisfiesExpression(sat) => {
+            let expr_kind = classify_expr_for_array(&sat.expression, ctx, depth + 1);
+            if expr_kind == ArrayTypeKind::Unknown {
+                classify_ts_type_for_array(&sat.type_annotation)
+            } else {
+                expr_kind
+            }
+        }
+        Expression::Identifier(ident) => {
+            if matches!(ident.name.as_str(), "undefined" | "arguments")
+                && ident.is_global_reference(ctx.scoping())
+            {
+                return ArrayTypeKind::NonArray;
+            }
+            let Some(symbol_id) = get_symbol_id_of_variable(ident, ctx) else {
+                return ArrayTypeKind::Unknown;
+            };
+            match ctx.symbol_declaration(symbol_id).kind() {
+                AstKind::FormalParameter(param) if param.pattern.is_binding_identifier() => {
+                    param.type_annotation.as_deref().map_or(ArrayTypeKind::Unknown, |ann| {
+                        classify_ts_type_for_array(&ann.type_annotation)
+                    })
+                }
+                AstKind::VariableDeclarator(decl) if decl.id.is_binding_identifier() => {
+                    if let Some(ann) = decl.type_annotation.as_deref() {
+                        let kind = classify_ts_type_for_array(&ann.type_annotation);
+                        if kind != ArrayTypeKind::Unknown
+                            || !is_any_or_unknown_ts_type(&ann.type_annotation)
+                        {
+                            return kind;
+                        }
+                    }
+                    if variable_declaration_kind(decl, ctx.nodes())
+                        .is_some_and(VariableDeclarationKind::is_const)
+                        && let Some(init) = &decl.init
+                    {
+                        return classify_expr_for_array(init, ctx, depth + 1);
+                    }
+                    ArrayTypeKind::Unknown
+                }
+                _ => ArrayTypeKind::Unknown,
+            }
+        }
+        _ => ArrayTypeKind::Unknown,
+    }
+}
+
+fn is_arguments_object(expr: &Expression, ctx: &LintContext) -> bool {
+    matches!(
+        expr.get_inner_expression(),
+        Expression::Identifier(ident)
+            if ident.name == "arguments" && ident.is_global_reference(ctx.scoping())
+    )
+}
+
+fn new_expression_has_parens(new_expr: &NewExpression) -> bool {
+    if !new_expr.arguments.is_empty() {
+        return true;
+    }
+    let after_callee =
+        new_expr.type_arguments.as_ref().map_or(new_expr.callee.span().end, |ta| ta.span.end);
+    new_expr.span.end > after_callee
+}
+
+fn starts_with_declaration_like_prefix(mut expr: &Expression) -> bool {
+    loop {
+        match expr {
+            Expression::ComputedMemberExpression(member) => {
+                if matches!(&member.object, Expression::Identifier(ident) if ident.name == "let") {
+                    return true;
+                }
+                expr = &member.object;
+            }
+            Expression::StaticMemberExpression(member) => expr = &member.object,
+            Expression::PrivateFieldExpression(member) => expr = &member.object,
+            Expression::CallExpression(call) => expr = &call.callee,
+            Expression::TaggedTemplateExpression(tagged) => expr = &tagged.tag,
+            Expression::TSNonNullExpression(non_null) => expr = &non_null.expression,
+            Expression::TSInstantiationExpression(inst) => expr = &inst.expression,
+            Expression::ChainExpression(chain) => match &chain.expression {
+                ChainElement::CallExpression(call) => expr = &call.callee,
+                ChainElement::StaticMemberExpression(member) => expr = &member.object,
+                ChainElement::ComputedMemberExpression(member) => {
+                    if matches!(
+                        &member.object,
+                        Expression::Identifier(ident) if ident.name == "let"
+                    ) {
+                        return true;
+                    }
+                    expr = &member.object;
+                }
+                ChainElement::PrivateFieldExpression(member) => expr = &member.object,
+                ChainElement::TSNonNullExpression(non_null) => expr = &non_null.expression,
+            },
+            Expression::ObjectExpression(_)
+            | Expression::FunctionExpression(_)
+            | Expression::ClassExpression(_) => return true,
+            _ => return false,
+        }
+    }
+}
+
+fn needs_member_object_parens(expr: &Expression) -> bool {
+    if starts_with_declaration_like_prefix(expr) {
+        return true;
+    }
+    match expr {
+        Expression::ParenthesizedExpression(_)
+        | Expression::CallExpression(_)
+        | Expression::ImportExpression(_)
+        | Expression::StaticMemberExpression(_)
+        | Expression::ComputedMemberExpression(_)
+        | Expression::PrivateFieldExpression(_)
+        | Expression::TaggedTemplateExpression(_)
+        | Expression::TSNonNullExpression(_) => false,
+        Expression::NewExpression(new_expr) => !new_expression_has_parens(new_expr),
+        Expression::ChainExpression(_)
+        | Expression::TSInstantiationExpression(_)
+        | Expression::JSXElement(_)
+        | Expression::JSXFragment(_)
+        | Expression::PrivateInExpression(_) => true,
+        _ => get_precedence(expr).is_some_and(|p| p < Precedence::Call),
+    }
+}
+
+// `_.flatten(array)`, `lodash.flatten(array)`, `underscore.flatten(array)`
+fn check_lodash_flatten_case<'a>(
+    node: &AstNode<'a>,
+    call_expr: &CallExpression<'a>,
+    ctx: &LintContext<'a>,
+) {
+    if call_expr.optional || call_expr.type_arguments.is_some() || call_expr.arguments.len() != 1 {
+        return;
+    }
+
+    let Some(arg_expr) = call_expr.arguments[0].as_expression() else {
+        return;
+    };
+
+    let Expression::StaticMemberExpression(member_expr) = call_expr.callee.without_parentheses()
+    else {
+        return;
+    };
+
+    if member_expr.optional || member_expr.property.name != "flatten" {
+        return;
+    }
+
+    let Expression::Identifier(ident) = member_expr.object.without_parentheses() else {
+        return;
+    };
+
+    if !matches!(ident.name.as_str(), "_" | "lodash" | "underscore") {
+        return;
+    }
+
+    if is_arguments_object(arg_expr, ctx)
+        || classify_expr_for_array(arg_expr, ctx, 0) == ArrayTypeKind::NonArray
+    {
+        return;
+    }
+
+    let arg_span = arg_expr.span();
+    let has_comments = ctx.has_comments_between(Span::new(call_expr.span.start, arg_span.start))
+        || ctx.has_comments_between(Span::new(arg_span.end, call_expr.span.end));
+
+    let diagnostic = prefer_array_flat_diagnostic(call_expr.span);
+    if has_comments {
+        ctx.diagnostic(diagnostic);
+        return;
+    }
+
+    let mut replacement = {
+        let arg_text = ctx.source_range(arg_span);
+        if needs_member_object_parens(arg_expr) {
+            format!("({arg_text}).flat()")
+        } else {
+            format!("{arg_text}.flat()")
+        }
+    };
+
+    if matches!(replacement.as_bytes().first(), Some(b'(' | b'[' | b'`' | b'+' | b'-' | b'/'))
+        && could_be_asi_hazard(node, ctx)
+    {
+        replacement.insert(0, ';');
+    }
+
+    pad_fix_with_token_boundary(ctx.source_text(), call_expr.span, &mut replacement);
+
+    ctx.diagnostic_with_dangerous_fix(diagnostic, |fixer| {
+        fixer.replace(call_expr.span, replacement)
+    });
+}
+
 #[test]
 fn test() {
     use crate::{fixer::FixKind, tester::Tester};
@@ -563,6 +946,7 @@ fn test() {
         "object.Array.prototype.concat.apply([], array)",
         "new _.flatten(array)",
         "_.flatten",
+        "_.flatten()",
         "_.flatten(array, EXTRA_ARGUMENT)",
         "_.flatten(...array)",
         "_[flatten](array)",
@@ -571,6 +955,37 @@ fn test() {
         "_.flatten?.(array)",
         "_?.flatten(array)",
         "object._.flatten(array)",
+        "lodash['flatten'](array)",
+        "_.flatten<number[]>(array)",
+        "_.flatten(1)",
+        "_.flatten(+1)",
+        "_.flatten(-1)",
+        "_.flatten(1n)",
+        r#"_.flatten("a")"#,
+        "_.flatten(`a`)",
+        "_.flatten({})",
+        "_.flatten(undefined)",
+        "_.flatten(null)",
+        "_.flatten(new Uint8Array())",
+        "_.flatten(new Set())",
+        "_.flatten(new Map())",
+        "_.flatten(Uint8Array.from(x))",
+        "_.flatten(function () {})",
+        "_.flatten(() => {})",
+        "_.flatten(class {})",
+        "_.flatten(new (class {})())",
+        "function unicornRun() { return _.flatten(arguments); }",
+        "function unicornRun() { return _.flatten((arguments)); }",
+        "const set = new Set(); _.flatten(set);",
+        "const Items = new lib.Array(); _.flatten(Items);",
+        "function run(values: Uint8Array) { return _.flatten(values); }",
+        "function run(values: () => string) { return _.flatten(values); }",
+        "function run(values: Set<number> | null) { return _.flatten(values); }",
+        "_.flatten(foo as Set<number>)",
+        "const set = new Set(); _.flatten(set as (any));",
+        "_.flatten(<div />);",
+        "_.flatten(<></>);",
+        "class Foo { #x; m(obj) { return _.flatten(#x in obj); } }",
         "array.flat()",
         "array.flat(1)",
         "const effects = new Set() as Set<unknown>; effects.flatMap(x => x);",
@@ -635,17 +1050,45 @@ fn test() {
         "Array.prototype.concat.call([], ...[[foo]])",
         "/**/[].concat.apply([], array)",
         "Array.prototype.concat.apply([], array)",
-        // "_.flatten(array)",
-        // "lodash.flatten(array)",
-        // "underscore.flatten(array)",
+        "_.flatten(array)",
+        "_.flatten(array,)",
+        "lodash.flatten(array)",
+        "underscore.flatten(array)",
+        "function run(values: Array<number[]> | Set<number[]>) { return _.flatten(values); }",
+        "const Items = new Array(); _.flatten(Items);",
+        "const set = new Set(); _.flatten(set as unknown[][]);",
+        "const x = x; _.flatten(x);",
         "before()
             Array.prototype.concat.apply([], [array].concat(array))",
         "before()
             Array.prototype.concat.apply([], +1)",
         "Array.prototype.concat.apply([], (0, array))",
-        // "_.flatten((0, array))",
-        // "async function a() { return _.flatten(await getArray()); }",
-        // "async function a() { return _.flatten((await getArray())); }",
+        "_.flatten((0, array))",
+        "async function a() { return _.flatten(await getArray()); }",
+        "async function a() { return _.flatten((await getArray())); }",
+        "_.flatten(new Array)",
+        "_.flatten(new Array())",
+        "_.flatten(getArray())",
+        "_.flatten(Array.from(x))",
+        "before()\n_.flatten(getArray())",
+        "_.flatten(foo?.bar)",
+        "_.flatten(getArrays<number>)",
+        "before()\n_.flatten([foo])",
+        "function foo() { return(_.flatten)(array); }",
+        "_.flatten(let[0]);",
+        "_.flatten(let[0]());",
+        "_.flatten(let[0]`a`);",
+        "_.flatten(let[0]?.a);",
+        "_.flatten({ a: [1] }.a);",
+        "_.flatten({ a: [1] }['a']);",
+        "const f = () => _.flatten({ a: [1] }.a);",
+        "_.flatten(function () { return [[1]]; }());",
+        "export default _.flatten(function () { return [[1]]; }());",
+        "_.flatten(class { static a = [[1]]; }.a);",
+        "before()\n_.flatten({ a: [1] }.a);",
+        "before()\n_.flatten(({ a: [1] }).a);",
+        "_.flatten(/* keep */ array);",
+        "_.flatten(array /* keep */,);",
         "before()
             Array.prototype.concat.apply([], 1)",
         "before()
@@ -698,6 +1141,115 @@ fn test() {
         ),
         ("/**/[].concat.apply([], array)", "/**/array.flat()", None, FixKind::DangerousFix),
         ("Array.prototype.concat.apply([], array)", "array.flat()", None, FixKind::DangerousFix),
+        ("_.flatten(array)", "array.flat()", None, FixKind::DangerousFix),
+        ("_.flatten(array,)", "array.flat()", None, FixKind::DangerousFix),
+        ("lodash.flatten(array)", "array.flat()", None, FixKind::DangerousFix),
+        ("underscore.flatten(array)", "array.flat()", None, FixKind::DangerousFix),
+        (
+            "function run(values: Array<number[]> | Set<number[]>) { return _.flatten(values); }",
+            "function run(values: Array<number[]> | Set<number[]>) { return values.flat(); }",
+            None,
+            FixKind::DangerousFix,
+        ),
+        (
+            "const Items = new Array(); _.flatten(Items);",
+            "const Items = new Array(); Items.flat();",
+            None,
+            FixKind::DangerousFix,
+        ),
+        (
+            "const set = new Set(); _.flatten(set as unknown[][]);",
+            "const set = new Set(); (set as unknown[][]).flat();",
+            None,
+            FixKind::DangerousFix,
+        ),
+        ("const x = x; _.flatten(x);", "const x = x; x.flat();", None, FixKind::DangerousFix),
+        ("_.flatten((0, array))", "(0, array).flat()", None, FixKind::DangerousFix),
+        (
+            "async function a() { return _.flatten(await getArray()); }",
+            "async function a() { return (await getArray()).flat(); }",
+            None,
+            FixKind::DangerousFix,
+        ),
+        (
+            "async function a() { return _.flatten((await getArray())); }",
+            "async function a() { return (await getArray()).flat(); }",
+            None,
+            FixKind::DangerousFix,
+        ),
+        ("_.flatten(new Array)", "(new Array).flat()", None, FixKind::DangerousFix),
+        ("_.flatten(new Array())", "new Array().flat()", None, FixKind::DangerousFix),
+        ("_.flatten(getArray())", "getArray().flat()", None, FixKind::DangerousFix),
+        ("_.flatten(Array.from(x))", "Array.from(x).flat()", None, FixKind::DangerousFix),
+        (
+            "before()\n_.flatten(getArray())",
+            "before()\ngetArray().flat()",
+            None,
+            FixKind::DangerousFix,
+        ),
+        ("_.flatten(foo?.bar)", "(foo?.bar).flat()", None, FixKind::DangerousFix),
+        ("_.flatten(getArrays<number>)", "(getArrays<number>).flat()", None, FixKind::DangerousFix),
+        ("before()\n_.flatten([foo])", "before()\n;[foo].flat()", None, FixKind::DangerousFix),
+        (
+            "function foo() { return(_.flatten)(array); }",
+            "function foo() { return array.flat(); }",
+            None,
+            FixKind::DangerousFix,
+        ),
+        ("_.flatten(let[0]);", "(let[0]).flat();", None, FixKind::DangerousFix),
+        ("_.flatten(let[0]());", "(let[0]()).flat();", None, FixKind::DangerousFix),
+        ("_.flatten(let[0]`a`);", "(let[0]`a`).flat();", None, FixKind::DangerousFix),
+        ("_.flatten(let[0]?.a);", "(let[0]?.a).flat();", None, FixKind::DangerousFix),
+        ("_.flatten({ a: [1] }.a);", "({ a: [1] }.a).flat();", None, FixKind::DangerousFix),
+        ("_.flatten({ a: [1] }['a']);", "({ a: [1] }['a']).flat();", None, FixKind::DangerousFix),
+        (
+            "const f = () => _.flatten({ a: [1] }.a);",
+            "const f = () => ({ a: [1] }.a).flat();",
+            None,
+            FixKind::DangerousFix,
+        ),
+        (
+            "_.flatten(function () { return [[1]]; }());",
+            "(function () { return [[1]]; }()).flat();",
+            None,
+            FixKind::DangerousFix,
+        ),
+        (
+            "export default _.flatten(function () { return [[1]]; }());",
+            "export default (function () { return [[1]]; }()).flat();",
+            None,
+            FixKind::DangerousFix,
+        ),
+        (
+            "_.flatten(class { static a = [[1]]; }.a);",
+            "(class { static a = [[1]]; }.a).flat();",
+            None,
+            FixKind::DangerousFix,
+        ),
+        (
+            "before()\n_.flatten({ a: [1] }.a);",
+            "before()\n;({ a: [1] }.a).flat();",
+            None,
+            FixKind::DangerousFix,
+        ),
+        (
+            "before()\n_.flatten(({ a: [1] }).a);",
+            "before()\n;({ a: [1] }).a.flat();",
+            None,
+            FixKind::DangerousFix,
+        ),
+        (
+            "_.flatten(/* keep */ array);",
+            "_.flatten(/* keep */ array);",
+            None,
+            FixKind::DangerousFix,
+        ),
+        (
+            "_.flatten(array /* keep */,);",
+            "_.flatten(array /* keep */,);",
+            None,
+            FixKind::DangerousFix,
+        ),
     ];
 
     Tester::new(PreferArrayFlat::NAME, PreferArrayFlat::PLUGIN, pass, fail)
