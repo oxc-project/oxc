@@ -1,7 +1,7 @@
 use nodejs_built_in_modules::is_nodejs_builtin_module;
 use oxc_ast::{
     AstKind,
-    ast::{Expression, TSModuleReference},
+    ast::{CallExpression, Expression, StringLiteral, TSModuleReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -34,11 +34,13 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// import fs from "fs";
+    /// const fsPromises = process.getBuiltinModule("fs/promises");
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// import fs from "node:fs";
+    /// const fsPromises = process.getBuiltinModule("node:fs/promises");
     /// ```
     PreferNodeProtocol,
     unicorn,
@@ -49,6 +51,28 @@ declare_oxc_lint!(
     short_description =
         "Prefer using the `node:` protocol when importing Node.js built-in modules.",
 );
+
+fn get_builtin_module_call<'a>(call: &'a CallExpression<'a>) -> Option<&'a StringLiteral<'a>> {
+    if call.arguments.len() != 1 {
+        return None;
+    }
+    let Expression::StaticMemberExpression(member_expr) = call.callee.without_parentheses() else {
+        return None;
+    };
+    if member_expr.optional || member_expr.property.name != "getBuiltinModule" {
+        return None;
+    }
+    let Expression::Identifier(obj) = member_expr.object.without_parentheses() else {
+        return None;
+    };
+    if obj.name != "process" {
+        return None;
+    }
+    match call.arguments[0].as_expression()?.without_parentheses() {
+        Expression::StringLiteral(str_lit) => Some(str_lit),
+        _ => None,
+    }
+}
 
 impl Rule for PreferNodeProtocol {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -63,9 +87,11 @@ impl Rule for PreferNodeProtocol {
                 }
                 _ => None,
             },
-            AstKind::CallExpression(call) if !call.optional => {
-                call.common_js_require().map(|s| (s.value, s.span))
-            }
+            AstKind::TSImportType(import) => Some((import.source.value, import.source.span)),
+            AstKind::CallExpression(call) if !call.optional => call
+                .common_js_require()
+                .or_else(|| get_builtin_module_call(call))
+                .map(|s| (s.value, s.span)),
             AstKind::ImportDeclaration(import) => Some((import.source.value, import.source.span)),
             AstKind::ExportFromDeclaration(export) => {
                 Some((export.source.value, export.source.span))
@@ -130,11 +156,19 @@ fn test() {
         r#"const fs = process.getBuiltinModule(...["fs"])"#,
         "const fs = process.getBuiltinModule()",
         r#"const fs = process.getBuiltinModule("unicorn")"#,
+        r#"const fs = process["getBuiltinModule"]("fs")"#,
+        r#"const fs = foo.process.getBuiltinModule("fs")"#,
+        "const fs = process.getBuiltinModule(fs)",
+        "const fs = process.getBuiltinModule(`fs`)",
+        r#"const fs = (process?.getBuiltinModule)("fs")"#,
         r#"import {getBuiltinModule} from 'node:process';
             const fs = getBuiltinModule("fs");"#,
         // This is a syntax error, can be ignored.
         // r#"export fs from "node:fs";"#,
         r#"const fs = require("node:fs") as "fs";"#,
+        r#"type fs = import("node:fs");"#,
+        r#"type fs = import("./fs");"#,
+        r#"type fs = import("unicorn");"#,
         r#"type fs = typeof import("node:fs");"#,
         r#"type fs = typeof SomeType<"fs">;"#,
         "type fs = typeof fs;",
@@ -168,7 +202,17 @@ fn test() {
         r#"import "timers/promises";"#,
         r#"const {promises} = require("fs")"#,
         "const fs = require('fs/promises')",
-        // r#"const fs = process.getBuiltinModule("fs")"#,
+        r#"const fs = process.getBuiltinModule("fs")"#,
+        "const fs = process.getBuiltinModule('fs/promises')",
+        r#"const fs = (process).getBuiltinModule(("fs"))"#,
+        r#"const fs = (process.getBuiltinModule)("fs")"#,
+        r#"import process from "node:process"; const fs = process.getBuiltinModule("fs");"#,
+        r#"type Fs = import("fs");"#,
+        "type Fs = import('fs/promises');",
+        r#"type Fs = import("fs").fs<"fs">;"#,
+        r#"type Fs = import("fs", { with: { "resolution-mode": "import" } });"#,
+        r#"const fs = require("fs") as typeof import("fs");"#,
+        r#"const fs = someFunc() as SomeType<typeof import("fs")>;"#,
         r#"export fs from "fs";"#,
         "await import('assert/strict')",
     ];
@@ -181,6 +225,37 @@ fn test() {
         ("import fs = require('fs');", "import fs = require('node:fs');"),
         (r#"import "child_process";"#, r#"import "node:child_process";"#),
         (r#"import fs from "fs/promises";"#, r#"import fs from "node:fs/promises";"#),
+        (
+            r#"const fs = process.getBuiltinModule("fs")"#,
+            r#"const fs = process.getBuiltinModule("node:fs")"#,
+        ),
+        (
+            "const fs = process.getBuiltinModule('fs/promises')",
+            "const fs = process.getBuiltinModule('node:fs/promises')",
+        ),
+        (
+            r#"const fs = (process).getBuiltinModule(("fs"))"#,
+            r#"const fs = (process).getBuiltinModule(("node:fs"))"#,
+        ),
+        (
+            r#"const fs = (process.getBuiltinModule)("fs")"#,
+            r#"const fs = (process.getBuiltinModule)("node:fs")"#,
+        ),
+        (r#"type Fs = import("fs");"#, r#"type Fs = import("node:fs");"#),
+        ("type Fs = import('fs/promises');", "type Fs = import('node:fs/promises');"),
+        (r#"type Fs = import("fs").fs<"fs">;"#, r#"type Fs = import("node:fs").fs<"fs">;"#),
+        (
+            r#"type Fs = import("fs", { with: { "resolution-mode": "import" } });"#,
+            r#"type Fs = import("node:fs", { with: { "resolution-mode": "import" } });"#,
+        ),
+        (
+            r#"const fs = require("fs") as typeof import("fs");"#,
+            r#"const fs = require("node:fs") as typeof import("node:fs");"#,
+        ),
+        (
+            r#"const fs = someFunc() as SomeType<typeof import("fs")>;"#,
+            r#"const fs = someFunc() as SomeType<typeof import("node:fs")>;"#,
+        ),
     ];
 
     Tester::new(PreferNodeProtocol::NAME, PreferNodeProtocol::PLUGIN, pass, fail)

@@ -3853,6 +3853,7 @@ impl RuleRunner for crate::rules::unicorn::prefer_node_protocol::PreferNodeProto
         AstType::ImportDeclaration,
         AstType::ImportExpression,
         AstType::TSImportEqualsDeclaration,
+        AstType::TSImportType,
     ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
