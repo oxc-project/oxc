@@ -2495,12 +2495,15 @@ impl GenExpr for TSAsExpression<'_> {
             p.print_soft_space();
             p.print_space_before_identifier();
             p.print_str("as");
-            if type_starts_with_non_identifier(&self.type_annotation) {
+            let wrap_type = ends_with_asserts_reference(&self.type_annotation);
+            if wrap_type || type_starts_with_non_identifier(&self.type_annotation) {
                 p.print_soft_space();
             } else {
                 p.print_hard_space();
             }
-            self.type_annotation.print(p, ctx);
+            p.wrap(wrap_type, |p| {
+                self.type_annotation.print(p, ctx);
+            });
         });
     }
 }
@@ -2514,12 +2517,15 @@ impl GenExpr for TSSatisfiesExpression<'_> {
             p.print_soft_space();
             p.print_space_before_identifier();
             p.print_str("satisfies");
-            if type_starts_with_non_identifier(&self.type_annotation) {
+            let wrap_type = ends_with_asserts_reference(&self.type_annotation);
+            if wrap_type || type_starts_with_non_identifier(&self.type_annotation) {
                 p.print_soft_space();
             } else {
                 p.print_hard_space();
             }
-            self.type_annotation.print(p, ctx);
+            p.wrap(wrap_type, |p| {
+                self.type_annotation.print(p, ctx);
+            });
         });
     }
 }
@@ -3494,6 +3500,56 @@ fn type_starts_with_non_identifier(ty: &TSType) -> bool {
     }
 }
 
+/// Whether `ty` prints ending in a bare reference to a type named `asserts`.
+///
+/// TypeScript reads `asserts` followed by an identifier or keyword on the same line as the start
+/// of an assertion predicate (`asserts x`), so `(asserts) extends T ? A : B` must keep its
+/// parentheses wherever a keyword can follow the type. The type is followed through the nodes
+/// that print a child type last, such as `keyof asserts`, `T | asserts`, `() => asserts`,
+/// `infer U extends asserts`, and `!asserts`.
+/// A child the printer parenthesizes anyway may also count, which only adds redundant parentheses.
+fn ends_with_asserts_reference(ty: &TSType) -> bool {
+    match ty {
+        TSType::TSTypeReference(reference) => {
+            reference.type_arguments.is_none()
+                && matches!(
+                    &reference.type_name,
+                    TSTypeName::IdentifierReference(ident) if ident.name == "asserts"
+                )
+        }
+        TSType::TSUnionType(union) => union.types.last().is_some_and(ends_with_asserts_reference),
+        TSType::TSIntersectionType(intersection) => {
+            intersection.types.last().is_some_and(ends_with_asserts_reference)
+        }
+        TSType::TSTypeOperatorType(operator) => {
+            ends_with_asserts_reference(&operator.type_annotation)
+        }
+        TSType::TSFunctionType(function) => {
+            ends_with_asserts_reference(&function.return_type.type_annotation)
+        }
+        TSType::TSConstructorType(constructor) => {
+            ends_with_asserts_reference(&constructor.return_type.type_annotation)
+        }
+        TSType::TSConditionalType(conditional) => {
+            ends_with_asserts_reference(&conditional.false_type)
+        }
+        TSType::TSTypePredicate(predicate) => predicate
+            .type_annotation
+            .as_ref()
+            .is_some_and(|annotation| ends_with_asserts_reference(&annotation.type_annotation)),
+        TSType::TSInferType(infer) => {
+            infer.type_parameter.constraint.as_ref().is_some_and(ends_with_asserts_reference)
+        }
+        TSType::JSDocNullableType(nullable) => {
+            !nullable.postfix && ends_with_asserts_reference(&nullable.type_annotation)
+        }
+        TSType::JSDocNonNullableType(non_nullable) => {
+            !non_nullable.postfix && ends_with_asserts_reference(&non_nullable.type_annotation)
+        }
+        _ => false,
+    }
+}
+
 impl Gen for TSConditionalType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.wrap(
@@ -3502,7 +3558,7 @@ impl Gen for TSConditionalType<'_> {
                 TSType::TSFunctionType(_)
                     | TSType::TSConstructorType(_)
                     | TSType::TSConditionalType(_)
-            ),
+            ) || ends_with_asserts_reference(&self.check_type),
             |p| {
                 self.check_type.print(p, ctx);
             },
@@ -3573,7 +3629,9 @@ impl Gen for TSMappedType<'_> {
         p.print_ascii_byte(b'[');
         self.key.print(p, ctx);
         p.print_str(" in ");
-        self.constraint.print(p, ctx);
+        p.wrap(self.name_type.is_some() && ends_with_asserts_reference(&self.constraint), |p| {
+            self.constraint.print(p, ctx);
+        });
         if let Some(name_type) = &self.name_type {
             p.print_str(" as ");
             name_type.print(p, ctx);
