@@ -346,11 +346,14 @@ pub fn create_accessor_method<'a>(
         let stmt = Statement::new_return_statement(SPAN, Some(field_expr), ctx);
         (params, stmt)
     } else {
-        let value_binding = ctx.generate_binding(
-            static_ident!("value"),
-            scope_id,
-            SymbolFlags::FunctionScopedVariable,
-        );
+        // The body reads `object_binding`, so a parameter with the same name would shadow it,
+        // as in `class value { static accessor x; }`. Use a unique name in that case.
+        let flags = SymbolFlags::FunctionScopedVariable;
+        let value_binding = if object_binding.is_some_and(|binding| binding.name == "value") {
+            ctx.generate_uid("value", scope_id, flags)
+        } else {
+            ctx.generate_binding(static_ident!("value"), scope_id, flags)
+        };
         let param =
             FormalParameter::new_plain(SPAN, value_binding.create_binding_pattern(ctx), ctx);
         let params =
