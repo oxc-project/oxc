@@ -255,7 +255,7 @@ impl<'a> ClassProperties<'a> {
         });
 
         let static_private_fields_use_temp = !is_declaration;
-        let class_bindings = ClassBindings::new(
+        let mut class_bindings = ClassBindings::new(
             class_name_binding,
             class_temp_binding,
             class_brand_binding,
@@ -263,6 +263,7 @@ impl<'a> ClassProperties<'a> {
             static_private_fields_use_temp,
             need_temp_var,
         );
+        class_bindings.name_is_reassigned = lowering.class_binding_is_reassigned();
 
         // Add entry to `classes_stack`
         self.classes_stack.push(ClassDetails {

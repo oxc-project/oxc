@@ -20687,9 +20687,6 @@ semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/e
 Bindings mismatch:
 after transform: ScopeId(0): ["C", "_C", "_assertClassBrand", "_classPrivateFieldInitSpec", "_decorate", "_decorateMetadata", "_defineProperty", "_get_x", "_get_z", "_method", "_set_x", "_set_z", "_y", "_z_accessor_storage", "_z_accessor_storage2", "dec"]
 rebuilt        : ScopeId(0): ["C", "_C", "_assertClassBrand", "_classPrivateFieldInitSpec", "_decorate", "_decorateMetadata", "_defineProperty", "_get_x", "_get_z", "_method", "_set_x", "_set_z", "_y", "_z_accessor_storage2"]
-Symbol reference IDs mismatch for "C":
-after transform: SymbolId(1): [ReferenceId(80), ReferenceId(86), ReferenceId(33), ReferenceId(38), ReferenceId(44), ReferenceId(48), ReferenceId(54), ReferenceId(56), ReferenceId(59), ReferenceId(65), ReferenceId(70), ReferenceId(76), ReferenceId(91), ReferenceId(93)]
-rebuilt        : SymbolId(6): [ReferenceId(26), ReferenceId(33), ReferenceId(41), ReferenceId(47), ReferenceId(54), ReferenceId(62), ReferenceId(69), ReferenceId(77), ReferenceId(83), ReferenceId(90), ReferenceId(91), ReferenceId(96)]
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -20909,9 +20906,6 @@ semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/e
 Bindings mismatch:
 after transform: ScopeId(0): ["C", "_C", "_assertClassBrand", "_classPrivateFieldInitSpec", "_decorate", "_decorateMetadata", "_defineProperty", "_get_x", "_get_z", "_method", "_set_x", "_set_z", "_y", "_z_accessor_storage", "_z_accessor_storage2", "dec"]
 rebuilt        : ScopeId(0): ["C", "_C", "_assertClassBrand", "_classPrivateFieldInitSpec", "_decorate", "_decorateMetadata", "_defineProperty", "_get_x", "_get_z", "_method", "_set_x", "_set_z", "_y", "_z_accessor_storage2"]
-Symbol reference IDs mismatch for "C":
-after transform: SymbolId(1): [ReferenceId(80), ReferenceId(86), ReferenceId(33), ReferenceId(38), ReferenceId(44), ReferenceId(48), ReferenceId(54), ReferenceId(56), ReferenceId(59), ReferenceId(65), ReferenceId(70), ReferenceId(76), ReferenceId(91), ReferenceId(93)]
-rebuilt        : SymbolId(6): [ReferenceId(26), ReferenceId(33), ReferenceId(41), ReferenceId(47), ReferenceId(54), ReferenceId(62), ReferenceId(69), ReferenceId(77), ReferenceId(83), ReferenceId(90), ReferenceId(91), ReferenceId(96)]
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -21555,8 +21549,8 @@ rebuilt        : ["dec", "module"]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/esDecorators/esDecorators-contextualTypes.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["C", "_C_brand", "_b_accessor_storage", "_b_accessor_storage2", "_c", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_classPrivateFieldSet", "_classPrivateMethodInitSpec", "_decorate", "_decorateMetadata", "_defineProperty", "_f", "_g", "_get_a", "_get_b", "_get_x", "_get_y", "_set_a", "_set_b", "_set_x", "_set_y", "_y_accessor_storage", "_y_accessor_storage2", "_z"]
-rebuilt        : ScopeId(0): ["C", "_C_brand", "_b_accessor_storage2", "_c", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_classPrivateFieldSet", "_classPrivateMethodInitSpec", "_decorate", "_decorateMetadata", "_defineProperty", "_f", "_g", "_get_a", "_get_b", "_get_x", "_get_y", "_set_a", "_set_b", "_set_x", "_set_y", "_y_accessor_storage2", "_z"]
+after transform: ScopeId(0): ["C", "_C", "_C_brand", "_b_accessor_storage", "_b_accessor_storage2", "_c", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_classPrivateFieldSet", "_classPrivateMethodInitSpec", "_decorate", "_decorateMetadata", "_defineProperty", "_f", "_g", "_get_a", "_get_b", "_get_x", "_get_y", "_set_a", "_set_b", "_set_x", "_set_y", "_y_accessor_storage", "_y_accessor_storage2", "_z"]
+rebuilt        : ScopeId(0): ["C", "_C", "_C_brand", "_b_accessor_storage2", "_c", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_classPrivateFieldSet", "_classPrivateMethodInitSpec", "_decorate", "_decorateMetadata", "_defineProperty", "_f", "_g", "_get_a", "_get_b", "_get_x", "_get_y", "_set_a", "_set_b", "_set_x", "_set_y", "_y_accessor_storage2", "_z"]
 Scope flags mismatch:
 after transform: ScopeId(19): ScopeFlags(StrictMode | Function | Arrow)
 rebuilt        : ScopeId(23): ScopeFlags(Function | Arrow)
@@ -21679,7 +21673,7 @@ after transform: ScopeId(18): Some(ScopeId(2))
 rebuilt        : ScopeId(42): Some(ScopeId(0))
 Symbol redeclarations mismatch for "_y_accessor_storage2":
 after transform: SymbolId(55): []
-rebuilt        : SymbolId(30): [Span { start: 0, end: 0 }, Span { start: 0, end: 0 }]
+rebuilt        : SymbolId(31): [Span { start: 0, end: 0 }, Span { start: 0, end: 0 }]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.2.ts
 Bindings mismatch:

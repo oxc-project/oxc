@@ -11,7 +11,8 @@ use smallvec::SmallVec;
 use crate::{
     decorator::DecoratorMode,
     utils::decorated_class::{
-        class_body_has_auto_accessors, class_has_decorators, is_auto_accessor,
+        class_body_has_auto_accessors, class_has_decorators,
+        class_is_decorated_by_legacy_decorators, is_auto_accessor,
     },
 };
 
@@ -34,6 +35,8 @@ pub struct ClassLowering {
     mode: ClassLoweringMode,
     has_decorators: bool,
     has_auto_accessor: bool,
+    /// Legacy decorators reassign the class binding after the class is defined.
+    class_binding_is_reassigned: bool,
 }
 
 impl ClassLowering {
@@ -49,7 +52,7 @@ impl ClassLowering {
                 ClassTransform::None | ClassTransform::StaticBlocks => ClassLoweringMode::Native,
             }
         };
-        Self { mode, has_decorators, has_auto_accessor }
+        Self { mode, has_decorators, has_auto_accessor, class_binding_is_reassigned: false }
     }
 
     /// Whether class-properties lowers the fields of this class.
@@ -105,6 +108,13 @@ impl ClassLowering {
         self.has_auto_accessor
     }
 
+    /// Whether legacy decorators reassign the class binding to the decorated class.
+    ///
+    /// e.g. `Foo` in `let Foo = class Foo {}; Foo = _decorate([dec], Foo);`
+    pub fn class_binding_is_reassigned(self) -> bool {
+        self.class_binding_is_reassigned
+    }
+
     fn depends_on_class_syntax(self) -> bool {
         self.has_decorators || self.has_auto_accessor
     }
@@ -136,6 +146,13 @@ impl ClassLoweringDecisions {
     pub fn record(&mut self, class: &Class<'_>) {
         // Legacy decorators run their own lowering, so options alone determine class ownership.
         if self.decorator_mode.is_legacy() {
+            if !(class.is_expression() || class.declare)
+                && class_is_decorated_by_legacy_decorators(class)
+            {
+                let lowering =
+                    ClassLowering { class_binding_is_reassigned: true, ..self.default_decision() };
+                self.insert(class.scope_id(), lowering);
+            }
             return;
         }
         let lowering = ClassLowering::compute(self.class_transform, class);
@@ -175,7 +192,12 @@ impl ClassLoweringDecisions {
             ClassTransform::ClassProperties { .. } => ClassLoweringMode::LowerAll,
             ClassTransform::None | ClassTransform::StaticBlocks => ClassLoweringMode::Native,
         };
-        ClassLowering { mode, has_decorators: false, has_auto_accessor: false }
+        ClassLowering {
+            mode,
+            has_decorators: false,
+            has_auto_accessor: false,
+            class_binding_is_reassigned: false,
+        }
     }
 }
 

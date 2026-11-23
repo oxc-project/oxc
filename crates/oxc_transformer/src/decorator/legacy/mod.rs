@@ -69,9 +69,12 @@ use crate::{
     context::TraverseCtx,
     decorator::DecoratorOptions,
     state::TransformState,
-    utils::ast_builder::{
-        create_accessor_method, create_assignment, create_export_default_class_reference,
-        create_export_named_class_reference, create_prototype_member,
+    utils::{
+        ast_builder::{
+            create_accessor_method, create_assignment, create_export_default_class_reference,
+            create_export_named_class_reference, create_prototype_member,
+        },
+        decorated_class::class_is_decorated_by_legacy_decorators,
     },
 };
 use metadata::LegacyDecoratorMetadata;
@@ -182,7 +185,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a> {
 
         let should_transform = !(class.is_expression() || class.declare);
         // Class-properties must see the same binding that decorators will use after the class.
-        if should_transform && class.id.is_none() && Self::check_class_has_decorated(class) {
+        if should_transform && class.id.is_none() && class_is_decorated_by_legacy_decorators(class)
+        {
             let outer_scope_id = ctx.scoping().scope_parent_id(class.scope_id()).unwrap();
             let binding = ctx.generate_uid("default", outer_scope_id, SymbolFlags::Class);
             class.id = Some(binding.create_binding_identifier(ctx));
@@ -678,7 +682,7 @@ impl<'a> LegacyDecorator<'a> {
         // Legacy decorator does not allow in class expression.
         if current_class_decorations.should_transform {
             let class_or_constructor_parameter_is_decorated =
-                Self::check_class_has_decorated(class);
+                class_is_decorated_by_legacy_decorators(class);
 
             if class_or_constructor_parameter_is_decorated {
                 self.transform_class_declaration_with_class_decorators(
@@ -1234,25 +1238,6 @@ impl<'a> LegacyDecorator<'a> {
         } else {
             expr
         }
-    }
-
-    /// Check if a class or its constructor parameters have decorators.
-    fn check_class_has_decorated(class: &Class<'a>) -> bool {
-        if !class.decorators.is_empty() {
-            return true;
-        }
-
-        class.body.body.iter().any(|element| {
-            matches!(element,
-                ClassElement::MethodDefinition(method) if method.kind.is_constructor() &&
-                    Self::class_method_parameter_is_decorated(&method.value)
-            )
-        })
-    }
-
-    /// Check if a class method parameter is decorated.
-    fn class_method_parameter_is_decorated(func: &Function<'a>) -> bool {
-        func.params.items.iter().any(|param| !param.decorators.is_empty())
     }
 
     /// * is_static is `true`: `Class`

@@ -26,3 +26,16 @@ pub fn class_body_has_decorators(body: &ClassBody<'_>) -> bool {
         ClassElement::StaticBlock(_) | ClassElement::TSIndexSignature(_) => false,
     })
 }
+
+/// Whether legacy decorators decorate the class itself, which reassigns the class binding
+/// to the value returned by `_decorate`.
+///
+/// That is the case when the class or its constructor's parameters are decorated.
+pub fn class_is_decorated_by_legacy_decorators(class: &Class<'_>) -> bool {
+    !class.decorators.is_empty()
+        || class.body.body.iter().any(|element| {
+            matches!(element, ClassElement::MethodDefinition(method)
+                if method.kind.is_constructor()
+                    && method.value.params.items.iter().any(|param| !param.decorators.is_empty()))
+        })
+}

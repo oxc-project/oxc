@@ -1,6 +1,6 @@
 commit: 16a2d671
 
-Passed: 356/479
+Passed: 356/480
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -206,7 +206,7 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (28/112)
+# legacy-decorators (28/113)
 * oxc/accessor/input.ts
 x Output mismatch
 
@@ -568,6 +568,11 @@ rebuilt        : SymbolId(3): [ReferenceId(4), ReferenceId(8)]
 Symbol reference IDs mismatch for "Foo":
 after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6), ReferenceId(8), ReferenceId(10)]
 rebuilt        : SymbolId(3): [ReferenceId(4), ReferenceId(6), ReferenceId(10)]
+
+* oxc/static-private-brand-check-with-class-properties/input.ts
+Symbol reference IDs mismatch for "Foo":
+after transform: SymbolId(2): [ReferenceId(3), ReferenceId(15), ReferenceId(17), ReferenceId(19)]
+rebuilt        : SymbolId(5): [ReferenceId(14), ReferenceId(15), ReferenceId(19)]
 
 * typescript/accessor/decoratorOnClassAccessor1/input.ts
 Bindings mismatch:
