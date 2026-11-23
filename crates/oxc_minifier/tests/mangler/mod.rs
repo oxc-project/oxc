@@ -239,6 +239,15 @@ fn private_member_mangling() {
     });
 }
 
+#[test]
+fn private_member_mangling_debug() {
+    test(
+        "class C { #field = 1; get() { return this.#field; } }",
+        "class C { #slot_0 = 1; get() { return this.#slot_0; } }",
+        &MangleOptions { debug: true, ..MangleOptions::default() },
+    );
+}
+
 /// A named function expression whose name is shadowed by a same-named declaration in its
 /// body must receive the same mangled name as the shadowing symbol; otherwise the emitted
 /// fn-expr name collides with whichever unrelated outer-scope variable happens to own slot 0.
