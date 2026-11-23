@@ -3251,8 +3251,8 @@ impl Gen for AssignmentPattern<'_> {
 
 impl Gen for Decorator<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
-        /// `DecoratorMemberExpression` in the decorators grammar, such as `foo`, `foo.bar` or
-        /// `foo.#bar`.
+        /// Whether `expr` is a `DecoratorMemberExpression` in the decorators grammar. Only that,
+        /// or a single call of it (`DecoratorCallExpression`), may follow `@` without parentheses.
         fn is_decorator_member_expression(expr: &Expression) -> bool {
             match expr {
                 Expression::Identifier(_) => true,
