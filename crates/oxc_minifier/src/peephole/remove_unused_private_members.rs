@@ -27,11 +27,6 @@ impl<'a> PeepholeOptimizations {
                 return true;
             }
 
-            // Decorators are evaluated and called during class definition
-            // evaluation, which is observable: they can throw, touch globals,
-            // register `addInitializer` callbacks, or replace the element.
-            // Always keep decorated elements, mirroring
-            // `class_may_have_property_side_effects` in `inline.rs`.
             if element.has_decorator() {
                 return true;
             }
